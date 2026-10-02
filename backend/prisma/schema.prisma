@@ -1,0 +1,466 @@
+datasource db {
+  provider = "postgresql"
+}
+
+// Application identity stays stable while auth and other JSON stores migrate.
+// Prisma owns DDL; the Python backend uses SQLAlchemy Core for queries.
+model User {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  authProviderId      String   @unique @map("auth_provider_id") @db.Text
+  displayName         String   @map("display_name") @db.VarChar(100)
+  email               String?  @db.VarChar(320)
+  timezone            String   @default("UTC") @db.Text
+  learningGoal        String   @default("") @map("learning_goal") @db.VarChar(300)
+  microphoneEnabled   Boolean  @default(true) @map("microphone_enabled")
+  cameraEnabled       Boolean  @default(true) @map("camera_enabled")
+  onboardingCompleted Boolean  @default(false) @map("onboarding_completed")
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  languageProfiles    LanguageProfile[]
+  mediaAssets         MediaAsset[]
+  vocabularyProgress  UserVocabularyProgress[]
+  xpEvents            XpEvent[]
+
+  @@map("users")
+}
+
+// SQL migration also owns case-insensitive pair uniqueness and the partial
+// unique index allowing at most one active profile per user.
+model LanguageProfile {
+  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId             String   @map("user_id") @db.Uuid
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  sourceLanguageCode String   @map("source_language_code") @db.VarChar(35)
+  targetLanguageCode String   @map("target_language_code") @db.VarChar(35)
+  proficiencyLevel   String   @map("proficiency_level") @db.VarChar(2)
+  isActive           Boolean  @default(true) @map("is_active")
+  preferredInputMode String   @default("both") @map("preferred_input_mode") @db.VarChar(6)
+  dailyGoalMinutes   Int?     @map("daily_goal_minutes")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  sessions           Session[]
+  journals           Journal[]
+  xpEvents           XpEvent[]
+
+  @@unique([id, userId])
+  @@index([userId])
+  @@map("language_profiles")
+}
+
+model PreloadedScene {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug         String @unique @db.Text
+  languageCode String @map("language_code") @db.VarChar(35)
+  language     String @db.Text
+  mediaAssetId String @map("media_asset_id") @db.Uuid
+  mediaAsset   MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  title        String @db.Text
+  description  String? @db.Text
+  difficulty   String @default("beginner") @db.VarChar(12)
+  content      Json @db.JsonB
+  sortOrder    Int @default(0) @map("sort_order")
+  isActive     Boolean @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@index([languageCode, isActive, sortOrder])
+  @@index([mediaAssetId])
+  @@map("preloaded_scenes")
+}
+
+// File bytes remain in object storage not PostgreSQL.
+model MediaAsset {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerUserId String?  @map("owner_user_id") @db.Uuid
+  owner       User?    @relation(fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  mediaType   String   @map("media_type") @db.VarChar(5)
+  source      String   @db.VarChar(10)
+  storageKey  String   @unique @map("storage_key") @db.Text
+  mimeType    String   @map("mime_type") @db.Text
+  width       Int?
+  height      Int?
+  durationMs  Int?     @map("duration_ms")
+  capturedAt  DateTime? @map("captured_at") @db.Timestamptz(6)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  pronunciationItems VocabularyItem[]
+  taskAttempts       TaskAttempt[]
+  journalAudio       Journal[]
+  journalMedia       JournalMedia[]
+  preloadedScenes    PreloadedScene[]
+  sessions           Session[]
+
+  @@index([ownerUserId])
+  @@map("media_assets")
+}
+
+model VocabularyItem {
+  id                        String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  languageCode              String @map("language_code") @db.VarChar(35)
+  lemma                     String @db.VarChar(200)
+  displayText               String @map("display_text") @db.VarChar(200)
+  partOfSpeech              String @map("part_of_speech") @db.VarChar(13)
+  gender                    String? @db.VarChar(50)
+  pluralForm                String? @map("plural_form") @db.VarChar(200)
+  phoneticText              String? @map("phonetic_text") @db.VarChar(300)
+  pronunciationAudioAssetId String? @map("pronunciation_audio_asset_id") @db.Uuid
+  pronunciationAudioAsset   MediaAsset? @relation(fields: [pronunciationAudioAssetId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  exampleSentence           String? @map("example_sentence") @db.VarChar(1000)
+  difficultyLevel           String? @map("difficulty_level") @db.VarChar(2)
+  createdAt                 DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  translations              VocabularyTranslation[]
+  progress                  UserVocabularyProgress[]
+  sceneObjects              SceneObject[]
+  tasks                     SessionTask[]
+  journalMentions            JournalWordMention[]
+
+  @@index([languageCode, lemma])
+  @@index([pronunciationAudioAssetId])
+  @@map("vocabulary_items")
+}
+
+enum SessionFailureCode {
+  imageUploadFailed
+  sceneAnalysisFailed
+  imageModerationFailed
+  noValidObjects
+  vocabularyMappingFailed
+  taskGenerationFailed
+
+  @@map("session_failure_code")
+}
+
+enum SessionStatus {
+  created
+  analyzingScene
+  awaitingObjectReview
+  generatingTasks
+  ready
+  inProgress
+  completed
+  abandoned
+  failed
+
+  @@map("session_status")
+}
+
+model Session {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  languageProfileId String @map("language_profile_id") @db.Uuid
+  languageProfile LanguageProfile @relation(fields: [languageProfileId, userId], references: [id, userId], onDelete: Cascade, onUpdate: Cascade, map: "sessions_profile_owner_fkey")
+  sceneMediaAssetId String @map("scene_media_asset_id") @db.Uuid
+  sceneMediaAsset MediaAsset @relation(fields: [sceneMediaAssetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  status SessionStatus @default(created) @map("session_status")
+  sessionTitle String? @map("session_title") @db.Text
+  sessionSummary String? @map("session_summary") @db.Text
+  analysisDraft Json? @map("analysis_draft") @db.JsonB
+  startedAt DateTime? @map("started_at") @db.Timestamptz(6)
+  completedAt DateTime? @map("completed_at") @db.Timestamptz(6)
+  abandonedAt DateTime? @map("abandoned_at") @db.Timestamptz(6)
+  failureCode SessionFailureCode? @map("failure_code")
+  idempotencyKey String? @map("idempotency_key") @db.VarChar(200)
+  sceneObjects SceneObject[]
+  tasks SessionTask[]
+  vocabularyEncounters VocabularyEncounter[]
+  xpEvents XpEvent[]
+
+  @@unique([id, userId])
+  @@unique([userId, languageProfileId, idempotencyKey])
+  @@index([languageProfileId, userId])
+  @@index([sceneMediaAssetId])
+  @@map("sessions")
+}
+
+model XpEvent {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String   @map("user_id") @db.Uuid
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  languageProfileId String?  @map("language_profile_id") @db.Uuid
+  languageProfile   LanguageProfile? @relation(fields: [languageProfileId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  sessionId         String?  @map("session_id") @db.Uuid
+  session           Session? @relation(fields: [sessionId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  eventType         String   @map("event_type") @db.VarChar(20)
+  amount            Int
+  idempotencyKey    String   @map("idempotency_key") @db.Text
+  occurredAt        DateTime @map("occurred_at") @db.Timestamptz(6)
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId])
+  @@index([sessionId])
+  @@map("xp_events")
+}
+
+model SceneObject {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId String @map("session_id") @db.Uuid
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: Cascade, map: "scene_objects_session_fkey")
+  label String @db.Text
+  boundingBox Json? @map("bounding_box") @db.JsonB
+  anchorPoint Json? @map("anchor_point") @db.JsonB
+  attributes Json? @db.JsonB
+  confidenceScore Decimal? @map("confidence_score") @db.Decimal(6, 5)
+  sourceObjectKey String? @map("source_object_key") @db.Text
+  vocabularyItemId String? @map("vocabulary_item_id") @db.Uuid
+  vocabularyItem VocabularyItem? @relation(fields: [vocabularyItemId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  tasks SessionTask[]
+  subjectRelations SceneObjectRelation[] @relation("RelationSubject")
+  referenceRelations SceneObjectRelation[] @relation("RelationReference")
+
+  @@unique([id, sessionId])
+  @@index([sessionId])
+  @@index([vocabularyItemId])
+  @@map("scene_objects")
+}
+
+// SQL additionally ensures both endpoints belong to the same session.
+model SceneObjectRelation {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subjectSceneObjectId String @map("subject_scene_object_id") @db.Uuid
+  subjectSceneObject SceneObject @relation("RelationSubject", fields: [subjectSceneObjectId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  relation String @db.Text
+  referenceSceneObjectId String @map("reference_scene_object_id") @db.Uuid
+  referenceSceneObject SceneObject @relation("RelationReference", fields: [referenceSceneObjectId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  sourceRelationKey String? @map("source_relation_key") @db.Text
+
+  @@index([subjectSceneObjectId])
+  @@index([referenceSceneObjectId])
+  @@map("scene_object_relations")
+}
+
+// SQL additionally enforces a case-insensitive unique source language per item.
+model VocabularyTranslation {
+  id                 String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  vocabularyItemId   String @map("vocabulary_item_id") @db.Uuid
+  vocabularyItem     VocabularyItem @relation(fields: [vocabularyItemId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  sourceLanguageCode String @map("source_language_code") @db.VarChar(35)
+  translatedText     String @map("translated_text") @db.VarChar(300)
+  shortDefinition    String? @map("short_definition") @db.VarChar(1000)
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("vocabulary_translations")
+}
+
+model UserVocabularyProgress {
+  id                   String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId               String @map("user_id") @db.Uuid
+  user                 User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  vocabularyItemId     String @map("vocabulary_item_id") @db.Uuid
+  vocabularyItem       VocabularyItem @relation(fields: [vocabularyItemId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  status               String @default("new") @db.VarChar(8)
+  exposureCount        Int @default(0) @map("exposure_count")
+  correctAttemptCount  Int @default(0) @map("correct_attempt_count")
+  masteryScore         Decimal @default(0) @map("mastery_score") @db.Decimal(6, 5)
+  firstLearnedAt       DateTime? @map("first_learned_at") @db.Timestamptz(6)
+  lastPractisedAt      DateTime? @map("last_practised_at") @db.Timestamptz(6)
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  encounters           VocabularyEncounter[]
+
+  @@unique([userId, vocabularyItemId])
+  @@index([vocabularyItemId])
+  @@map("user_vocabulary_progress")
+}
+
+model VocabularyEncounter {
+  id               String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String @map("user_id") @db.Uuid
+  vocabularyItemId String @map("vocabulary_item_id") @db.Uuid
+  progress         UserVocabularyProgress @relation(fields: [userId, vocabularyItemId], references: [userId, vocabularyItemId], onDelete: Cascade, onUpdate: Cascade)
+  sessionId        String @map("session_id") @db.Uuid
+  session          Session @relation(fields: [sessionId, userId], references: [id, userId], onDelete: Cascade, onUpdate: NoAction, map: "vocabulary_encounters_session_owner_fkey")
+  sessionTaskId    String @map("session_task_id") @db.Uuid
+  sessionTask      SessionTask @relation(fields: [sessionTaskId, sessionId], references: [id, sessionId], onDelete: Cascade, onUpdate: NoAction, map: "vocabulary_encounters_task_session_fkey")
+  encounterType    String @map("encounter_type") @db.VarChar(10)
+  outcome          String @db.VarChar(9)
+  occurredAt       DateTime @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  journalMentions  JournalWordMention[]
+
+  @@index([userId, vocabularyItemId, occurredAt])
+  @@index([sessionId])
+  @@index([sessionTaskId])
+  @@index([sessionId, userId])
+  @@index([sessionTaskId, sessionId])
+  @@map("vocabulary_encounters")
+}
+
+
+model SessionTask {
+  id               String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionId        String @map("session_id") @db.Uuid
+  session          Session @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  phase            String @db.VarChar(8)
+  kind             String @db.VarChar(22)
+  orderIndex       Int @map("order_index")
+  status           String @default("pending") @db.VarChar(10)
+  isSkippable      Boolean @default(true) @map("is_skippable")
+  publicContent    Json @map("public_content") @db.JsonB
+  answerKey        Json? @map("answer_key") @db.JsonB
+  vocabularyItemId String? @map("vocabulary_item_id") @db.Uuid
+  vocabularyItem   VocabularyItem? @relation(fields: [vocabularyItemId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  sceneObjectId    String? @map("scene_object_id") @db.Uuid
+  sceneObject      SceneObject? @relation(fields: [sceneObjectId, sessionId], references: [id, sessionId], onDelete: NoAction, onUpdate: Cascade, map: "session_tasks_scene_object_session_fkey")
+  startedAt        DateTime? @map("started_at") @db.Timestamptz(6)
+  completedAt      DateTime? @map("completed_at") @db.Timestamptz(6)
+  skippedAt        DateTime? @map("skipped_at") @db.Timestamptz(6)
+  skipReason       String? @map("skip_reason") @db.VarChar(500)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  attempts         TaskAttempt[]
+  hints            TaskHint[]
+  vocabularyEncounters VocabularyEncounter[]
+
+  @@unique([id, sessionId])
+  @@unique([sessionId, orderIndex])
+  @@index([vocabularyItemId])
+  @@index([sceneObjectId, sessionId])
+  @@map("session_tasks")
+}
+
+model TaskAttempt {
+  id                String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionTaskId     String @map("session_task_id") @db.Uuid
+  sessionTask       SessionTask @relation(fields: [sessionTaskId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  attemptNumber     Int @map("attempt_number")
+  inputMode         String @map("input_mode") @db.VarChar(16)
+  responsePayload   Json @map("response_payload") @db.JsonB
+  audioMediaAssetId String? @map("audio_media_asset_id") @db.Uuid
+  audioMediaAsset   MediaAsset? @relation(fields: [audioMediaAssetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  isCorrect         Boolean? @map("is_correct")
+  score             Decimal? @db.Decimal(6, 5)
+  feedback          Json? @db.JsonB
+  evaluationDetails Json? @map("evaluation_details") @db.JsonB
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([sessionTaskId, attemptNumber])
+  @@index([audioMediaAssetId])
+  @@map("task_attempts")
+}
+
+model TaskHint {
+  id            String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionTaskId String @map("session_task_id") @db.Uuid
+  sessionTask   SessionTask @relation(fields: [sessionTaskId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  hintLevel     Int @map("hint_level")
+  content       Json @db.JsonB
+  requestedAt   DateTime @default(now()) @map("requested_at") @db.Timestamptz(6)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([sessionTaskId, hintLevel])
+  @@map("task_hints")
+}
+
+
+model Journal {
+  id                String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String @map("user_id") @db.Uuid
+  languageProfileId String @map("language_profile_id") @db.Uuid
+  languageProfile   LanguageProfile @relation(fields: [languageProfileId, userId], references: [id, userId], onDelete: Cascade, onUpdate: Cascade, map: "journals_profile_owner_fkey")
+  localDate         DateTime @map("local_date") @db.Date
+  timezone          String @db.Text
+  title             String @default("Today's entry") @db.VarChar(200)
+  selectedWords     Json @default("[]") @map("selected_words") @db.JsonB
+  status            String @default("draft") @db.VarChar(9)
+  currentRevisionId String? @map("current_revision_id") @db.Uuid
+  // SQL makes this composite FK DEFERRABLE INITIALLY DEFERRED for atomic inserts.
+  currentRevision   JournalRevision? @relation("CurrentJournalRevision", fields: [currentRevisionId, id], references: [id, journalId], onDelete: NoAction, onUpdate: NoAction, map: "journals_current_revision_fkey")
+  audioMediaAssetId String? @map("audio_media_asset_id") @db.Uuid
+  audioMediaAsset   MediaAsset? @relation(fields: [audioMediaAssetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  completedAt       DateTime? @map("completed_at") @db.Timestamptz(6)
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  media             JournalMedia[]
+  revisions         JournalRevision[] @relation("JournalHistory")
+
+  @@unique([id, userId])
+  @@unique([userId, localDate])
+  @@index([languageProfileId, userId])
+  @@index([audioMediaAssetId])
+  @@index([currentRevisionId, id])
+  @@map("journals")
+}
+
+model JournalMedia {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  journalId    String @map("journal_id") @db.Uuid
+  journal      Journal @relation(fields: [journalId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  mediaAssetId String @map("media_asset_id") @db.Uuid
+  mediaAsset   MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  displayOrder Int @map("display_order")
+  caption      String? @db.VarChar(1000)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([journalId, mediaAssetId])
+  @@unique([journalId, displayOrder])
+  @@index([mediaAssetId])
+  @@map("journal_media")
+}
+
+model JournalRevision {
+  id             String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  journalId      String @map("journal_id") @db.Uuid
+  journal        Journal @relation("JournalHistory", fields: [journalId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  revisionNumber Int @map("revision_number")
+  content        String @db.VarChar(20000)
+  createdBy      String @map("created_by") @db.VarChar(6)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  currentFor     Journal[] @relation("CurrentJournalRevision")
+  suggestions    JournalSuggestion[]
+  wordMentions   JournalWordMention[]
+
+  @@unique([journalId, revisionNumber])
+  @@unique([id, journalId])
+  @@map("journal_revisions")
+}
+
+model JournalSuggestion {
+  id             String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  journalId      String @map("journal_id") @db.Uuid
+  baseRevisionId String @map("base_revision_id") @db.Uuid
+  baseRevision   JournalRevision @relation(fields: [baseRevisionId, journalId], references: [id, journalId], onDelete: Cascade, onUpdate: Cascade, map: "journal_suggestions_base_revision_fkey")
+  suggestionType String @map("suggestion_type") @db.VarChar(10)
+  startOffset    Int @map("start_offset")
+  endOffset      Int @map("end_offset")
+  originalText   String @map("original_text") @db.Text
+  suggestedText  String @map("suggested_text") @db.Text
+  explanation    String @db.Text
+  status         String @default("pending") @db.VarChar(8)
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@index([journalId, status])
+  @@index([baseRevisionId, journalId])
+  @@map("journal_suggestions")
+}
+
+model JournalWordMention {
+  id                String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  journalRevisionId String @map("journal_revision_id") @db.Uuid
+  journalRevision   JournalRevision @relation(fields: [journalRevisionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  vocabularyItemId  String @map("vocabulary_item_id") @db.Uuid
+  vocabularyItem    VocabularyItem @relation(fields: [vocabularyItemId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  startOffset       Int @map("start_offset")
+  endOffset         Int @map("end_offset")
+  matchedText       String @map("matched_text") @db.Text
+  matchMethod       String @map("match_method") @db.VarChar(13)
+  sourceEncounterId String? @map("source_encounter_id") @db.Uuid
+  sourceEncounter   VocabularyEncounter? @relation(fields: [sourceEncounterId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([journalRevisionId, vocabularyItemId, startOffset, endOffset], map: "journal_word_mentions_occurrence_key")
+  @@index([vocabularyItemId])
+  @@index([sourceEncounterId])
+  @@map("journal_word_mentions")
+}

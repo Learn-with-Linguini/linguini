@@ -1,0 +1,1135 @@
+/* ---------- Scrollytelling ---------- */
+
+.scrolly {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  margin: 12px 0;
+}
+
+.graphic {
+  position: sticky;
+  top: 84px;
+  z-index: 0;
+  display: grid;
+  gap: 10px;
+  padding: clamp(16px, 2.4vw, 26px);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line), var(--shadow-paper);
+}
+
+.graphicInner {
+  min-width: 0;
+}
+
+.dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0 !important;
+  list-style: none;
+}
+
+.dots li {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #e2d8c3;
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+.dots li::marker {
+  content: "";
+}
+
+.dots li[data-on] {
+  background: var(--tomato);
+  transform: scale(1.3);
+}
+
+.steps {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  padding-bottom: 10vh;
+}
+
+.step {
+  display: flex;
+  align-items: flex-start;
+  min-height: 60vh;
+  padding-top: 30vh;
+}
+
+.step:first-child {
+  padding-top: 40vh;
+}
+
+.card {
+  max-width: 420px;
+  padding: 18px 20px;
+  border-radius: var(--radius-md);
+  background: var(--paper);
+  box-shadow: 0 12px 30px -12px rgba(62, 45, 18, 0.35), inset 0 0 0 1px var(--line);
+  font-size: 16px;
+  line-height: 1.55;
+  opacity: 0.55;
+  transition: opacity 0.4s var(--ease-out);
+}
+
+.step[data-active] .card {
+  opacity: 1;
+}
+
+.card strong {
+  display: block;
+  margin-bottom: 4px;
+  font-family: var(--font-display);
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+@media (max-width: 979px) {
+  /* Passed cards would scroll over the pinned chart */
+  .step[data-past] .card {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .rulerBox {
+    --lw: 70px;
+  }
+
+  .rowLabel,
+  .markLabel {
+    font-size: 11px;
+  }
+
+  .long {
+    display: none;
+  }
+
+  .short {
+    display: inline !important;
+  }
+}
+
+.short {
+  display: none;
+}
+
+@media (min-width: 980px) {
+  .scrolly {
+    grid-template-columns: 340px minmax(0, 1fr);
+    gap: 40px;
+    width: min(1080px, 100vw - 2 * var(--gutter));
+    margin-left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .graphic {
+    grid-column: 2;
+    grid-row: 1;
+    top: calc(50vh - 190px);
+    align-self: start;
+  }
+
+  /* Each card is centred on its step, and a step is active while it crosses the middle
+     of the screen, so the active card sits level with the pinned chart. */
+  .steps {
+    grid-column: 1;
+    grid-row: 1;
+    padding: 0;
+  }
+
+  .step,
+  .step:first-child {
+    align-items: center;
+    min-height: 48vh;
+    padding: 0;
+  }
+
+  .step:first-child {
+    min-height: 40vh;
+  }
+
+  .card {
+    box-shadow: inset 0 0 0 1px var(--line);
+  }
+}
+
+/* ---------- Price ruler ---------- */
+
+.rulerHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+  margin-bottom: 18px;
+}
+
+.chartTitle {
+  font-weight: 800;
+}
+
+.chartSub {
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+
+.rulerBox {
+  --lw: 92px;
+}
+
+.ruler {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  padding: 34px 0 0 var(--lw);
+}
+
+.row {
+  position: relative;
+  height: 64px;
+  transition: opacity 0.5s var(--ease-out);
+}
+
+.row[data-state="hidden"] {
+  opacity: 0;
+}
+
+.row[data-state="dim"] {
+  opacity: 0.32;
+}
+
+.rowLabel {
+  position: absolute;
+  left: calc(-1 * var(--lw));
+  top: 50%;
+  width: calc(var(--lw) - 12px);
+  transform: translateY(-50%);
+  font-size: 13px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.rowTrack {
+  position: absolute;
+  inset: 50% 0 auto;
+  height: 2px;
+  background: #ece5d6;
+}
+
+.range,
+.dot {
+  position: absolute;
+  top: 50%;
+  background: var(--ink);
+  transition: transform 0.7s var(--ease-out), opacity 0.4s;
+}
+
+.range {
+  height: 16px;
+  margin-top: -8px;
+  border-radius: 8px;
+  transform-origin: left center;
+}
+
+.dot {
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 50%;
+}
+
+.row[data-state="hidden"] .range {
+  transform: scaleX(0);
+}
+
+.row[data-state="hidden"] .dot {
+  transform: translateY(-22px);
+  opacity: 0;
+}
+
+.range[data-soft] {
+  background: #d8cdb6;
+}
+
+.markLabel {
+  position: absolute;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-muted);
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.markLabel[data-pos="above"] {
+  bottom: calc(50% + 12px);
+}
+
+.markLabel[data-pos="below"] {
+  top: calc(50% + 12px);
+}
+
+.markLabel[data-align="end"] {
+  transform: translateX(-100%);
+}
+
+.markLabel[data-align="start"] {
+  transform: none;
+}
+
+.axis {
+  position: relative;
+  height: 22px;
+  margin: 4px 0 0 var(--lw);
+}
+
+.axis span {
+  position: absolute;
+  font-size: 12px;
+  color: var(--ink-muted);
+  transform: translateX(-50%);
+}
+
+.grid {
+  position: absolute;
+  top: 26px;
+  bottom: 26px;
+  width: 1px;
+  background: #efe8da;
+}
+
+.priceLine {
+  position: absolute;
+  top: 18px;
+  bottom: 26px;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--tomato);
+  transform-origin: bottom;
+  transition: transform 0.8s var(--ease-out), opacity 0.4s;
+}
+
+.priceLine[data-kind="founding"] {
+  background: repeating-linear-gradient(to bottom, #00968f 0 5px, transparent 5px 9px);
+}
+
+.priceLine[data-off] {
+  transform: scaleY(0);
+  opacity: 0;
+}
+
+.priceTag {
+  position: absolute;
+  top: -8px;
+  left: 8px;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--tomato);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.priceLine[data-kind="founding"] .priceTag {
+  left: auto;
+  right: 8px;
+  background: #e2f2ef;
+  color: var(--teal-deep);
+}
+
+/* ---------- Editorial lede ---------- */
+
+.lede {
+  font-size: clamp(19px, 2.1vw, 23px);
+  line-height: 1.55;
+  max-width: none !important;
+}
+
+.lede mark {
+  padding: 0 2px;
+  background: linear-gradient(transparent 58%, var(--pasta-soft) 58%) no-repeat;
+  background-size: 0% 100%;
+  color: inherit;
+  font-weight: 800;
+  transition: background-size 0.9s var(--ease-out);
+}
+
+.lede[data-inview] mark {
+  background-size: 100% 100%;
+}
+
+.lede[data-inview] mark:nth-of-type(2) { transition-delay: 0.15s; }
+.lede[data-inview] mark:nth-of-type(3) { transition-delay: 0.3s; }
+.lede[data-inview] mark:nth-of-type(4) { transition-delay: 0.45s; }
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+
+.status::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--pasta);
+  box-shadow: 0 0 0 4px var(--pasta-soft);
+}
+
+/* ---------- Shared reveal for static figures ---------- */
+
+.reveal > * {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.5s var(--ease-out), transform 0.6s var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 70ms);
+}
+
+.reveal[data-inview] > * {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---------- Break-even ---------- */
+
+.breakEven {
+  display: grid;
+  gap: 18px;
+  margin: 8px 0;
+}
+
+.verdict {
+  font-size: clamp(19px, 2.2vw, 24px);
+  line-height: 1.45;
+  max-width: none !important;
+}
+
+.verdict b {
+  font-weight: 800;
+}
+
+.verdict small {
+  display: block;
+  margin-top: 6px;
+  font-size: 15px;
+  color: var(--ink-muted);
+}
+
+.bigResult {
+  font-family: var(--font-display);
+  font-size: 1.5em;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.bigResult[data-sign="pos"] {
+  color: var(--teal-dark);
+}
+
+.bigResult[data-sign="neg"] {
+  color: var(--tomato-ink);
+}
+
+.lineChart {
+  position: relative;
+}
+
+.lineChart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  font-family: var(--font-ui);
+  touch-action: pan-y;
+}
+
+.lineChart text {
+  fill: var(--ink-muted);
+  font-size: 12px;
+}
+
+.lineChart .strong {
+  fill: var(--ink);
+  font-weight: 800;
+}
+
+.draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1.2s var(--ease-out);
+}
+
+.lineChart[data-inview] .draw {
+  stroke-dashoffset: 0;
+}
+
+.mover {
+  transition: transform 0.5s var(--ease-out);
+}
+
+.tip {
+  position: absolute;
+  z-index: 2;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  pointer-events: none;
+  transform: translate(-50%, calc(-100% - 12px));
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px 28px;
+}
+
+.control {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.controlHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.controlHead output {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.slider {
+  --fill: 50%;
+  width: 100%;
+  height: 22px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  appearance: none;
+}
+
+.slider::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(to right, var(--tomato) var(--fill), #ece5d6 var(--fill));
+}
+
+.slider::-moz-range-track {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(to right, var(--tomato) var(--fill), #ece5d6 var(--fill));
+}
+
+.slider::-webkit-slider-thumb {
+  width: 20px;
+  height: 20px;
+  margin-top: -7px;
+  border: 3px solid var(--paper);
+  border-radius: 50%;
+  background: var(--tomato);
+  box-shadow: 0 2px 6px rgba(62, 45, 18, 0.35);
+  appearance: none;
+}
+
+.slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 3px solid var(--paper);
+  border-radius: 50%;
+  background: var(--tomato);
+  box-shadow: 0 2px 6px rgba(62, 45, 18, 0.35);
+}
+
+/* ---------- Model choice map ---------- */
+
+.map {
+  position: relative;
+  container-type: size;
+  height: clamp(320px, 42vw, 420px);
+  margin: 8px 0 36px 30px;
+  border-left: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+}
+
+.mapWin {
+  position: absolute;
+  inset: 0 0 50% 50%;
+  border-radius: 0 16px 0 0;
+  background: #e3f2ef;
+  opacity: 0;
+  transform: scale(0.9);
+  transform-origin: top right;
+  transition: opacity 0.6s 1.1s, transform 0.8s var(--ease-out) 1.1s;
+}
+
+.mapWin span {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--teal-dark);
+}
+
+.map[data-inview] .mapWin {
+  opacity: 1;
+  transform: none;
+}
+
+.axisX,
+.axisY {
+  position: absolute;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.axisX {
+  right: 0;
+  bottom: -28px;
+}
+
+.axisY {
+  top: 0;
+  left: -26px;
+  transform: rotate(-90deg) translateX(-100%);
+  transform-origin: top left;
+}
+
+/* Points travel out from the origin to their place (transform only). */
+.point {
+  position: absolute;
+  left: calc(var(--x) * 1%);
+  top: calc(var(--y) * 1%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  transform: translate(calc(var(--x) * -1cqw - 9px), calc((100 - var(--y)) * 1cqh - 50%));
+  opacity: 0;
+  transition: transform 1s var(--ease-out), opacity 0.3s;
+  transition-delay: calc(var(--i, 0) * 120ms);
+  outline-offset: 4px;
+}
+
+.map[data-inview] .point {
+  transform: translate(-9px, -50%);
+  opacity: 1;
+}
+
+.point::before {
+  content: "";
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border: 3px solid var(--paper);
+  border-radius: 50%;
+  background: #b9ad95;
+  box-shadow: 0 2px 6px rgba(62, 45, 18, 0.25);
+}
+
+.point b {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+
+.point[data-flip] {
+  flex-direction: row-reverse;
+}
+
+.map[data-inview] .point[data-flip] {
+  transform: translate(calc(-100% + 9px), -50%);
+}
+
+.point[data-chosen]::before {
+  width: 26px;
+  height: 26px;
+  background: var(--tomato);
+  box-shadow: 0 0 0 0 rgba(239, 91, 50, 0.35);
+}
+
+.map[data-inview] .point[data-chosen]::before {
+  animation: ping 1.8s ease-out 1.4s 2;
+}
+
+.point[data-chosen] b {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.why {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 2;
+  width: 220px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: normal;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.point[data-flip] .why {
+  left: auto;
+  right: 0;
+}
+
+.point:hover .why,
+.point:focus-visible .why {
+  opacity: 1;
+  transform: none;
+}
+
+.point:hover::before {
+  background: var(--ink);
+}
+
+.callout {
+  position: absolute;
+  left: calc(var(--x) * 1% - 14px);
+  top: calc(var(--y) * 1% + 26px);
+  width: min(250px, 45%);
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--paper);
+  box-shadow: 0 10px 24px -10px rgba(62, 45, 18, 0.45), inset 0 0 0 1px var(--line);
+  font-size: 13px;
+  line-height: 1.45;
+  max-width: none !important;
+  opacity: 0;
+  transform: translate(-50%, 8px);
+  transition: opacity 0.5s 1.6s, transform 0.6s var(--ease-out) 1.6s;
+}
+
+.map[data-inview] .callout {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+@keyframes ping {
+  to {
+    box-shadow: 0 0 0 16px rgba(239, 91, 50, 0);
+  }
+}
+
+/* ---------- Plan matrix ---------- */
+
+.plansWrap {
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.plans {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.plans th,
+.plans td {
+  height: 54px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--line);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.plans tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.plans [data-col="plus"] {
+  background: #fff6e3;
+}
+
+.plans .feature {
+  width: 32%;
+  font-weight: 800;
+  text-align: left;
+}
+
+.plans .planHead {
+  height: 104px;
+  border-bottom-color: var(--ink);
+}
+
+.planHead b,
+.planHead strong,
+.planHead small {
+  display: block;
+}
+
+.planHead b {
+  font-family: var(--font-display);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.planHead strong {
+  margin-top: 4px;
+  font-family: var(--font-display);
+  font-size: clamp(24px, 3vw, 32px);
+  line-height: 1;
+}
+
+.planHead small {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+.plans .planHead[data-col="plus"] {
+  background: var(--teal-deep);
+  color: #fff;
+}
+
+.plans .planHead[data-col="plus"] small {
+  color: #c9dedb;
+}
+
+.big {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.big small {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+
+.yes {
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--teal);
+  color: #fff;
+}
+
+.no {
+  display: inline-block;
+  width: 14px;
+  height: 2px;
+  border-radius: 1px;
+  background: #d5ccbb;
+  vertical-align: middle;
+}
+
+/* ---------- App comparison ---------- */
+
+.apps {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0 !important;
+  list-style: none;
+}
+
+.appHead,
+.app {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 2fr) 84px 84px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+}
+
+.appHead {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink-muted);
+}
+
+.appHead span:nth-child(n + 3) {
+  text-align: center;
+}
+
+.app {
+  border-radius: 14px;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.app::marker {
+  content: "";
+}
+
+.app[data-ours] {
+  background: #fff6e3;
+  box-shadow: inset 0 0 0 2px var(--tomato);
+}
+
+.appName {
+  display: grid;
+  line-height: 1.25;
+}
+
+.appName b {
+  font-size: 15px;
+}
+
+.appName small {
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.appPrice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.appBar {
+  flex: 1;
+  height: 10px;
+  border-radius: 5px;
+  background: #f1eadb;
+  overflow: hidden;
+}
+
+.appBar i {
+  display: block;
+  height: 100%;
+  width: var(--w);
+  border-radius: 5px;
+  background: #b9ad95;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.9s var(--ease-out);
+  transition-delay: calc(var(--i, 0) * 90ms);
+}
+
+.app[data-ours] .appBar i {
+  background: var(--tomato);
+}
+
+.apps[data-inview] .appBar i {
+  transform: none;
+}
+
+.app > .check {
+  justify-self: center;
+}
+
+@media (max-width: 640px) {
+  .appHead,
+  .app {
+    grid-template-columns: minmax(0, 1fr) 56px 56px;
+  }
+
+  .appPrice {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .appHead span:nth-child(2) {
+    display: none;
+  }
+
+  .point b {
+    font-size: 12px;
+  }
+
+  .point[data-chosen] b {
+    font-size: 14px;
+  }
+
+  .map {
+    margin-bottom: 150px;
+  }
+
+  .callout {
+    left: -30px !important;
+    right: 0;
+    top: calc(100% + 44px);
+    width: auto;
+    transform: translateY(8px);
+  }
+
+  .map[data-inview] .callout {
+    transform: none;
+  }
+
+  .plans {
+    font-size: 13px;
+  }
+
+  .plans th,
+  .plans td {
+    padding: 8px 6px;
+  }
+}
+
+@media print {
+  .scrolly {
+    display: block;
+    width: auto;
+    margin-left: 0;
+    transform: none;
+  }
+
+  .graphic {
+    position: static;
+    box-shadow: inset 0 0 0 1px var(--line);
+    break-inside: avoid;
+  }
+
+  .dots {
+    display: none;
+  }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    padding: 10px 0 0;
+  }
+
+  .step,
+  .step:first-child {
+    min-height: 0;
+    padding: 0;
+  }
+
+  .card,
+  .step[data-past] .card {
+    max-width: none;
+    padding: 10px 12px;
+    opacity: 1 !important;
+    box-shadow: inset 0 0 0 1px var(--line);
+    font-size: 11px;
+  }
+
+  .card strong {
+    font-size: 14px;
+  }
+
+  .reveal > * {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .point {
+    transform: translate(-9px, -50%) !important;
+    opacity: 1 !important;
+  }
+
+  .point[data-flip] {
+    transform: translate(calc(-100% + 9px), -50%) !important;
+  }
+
+  .mapWin,
+  .callout {
+    opacity: 1 !important;
+  }
+
+  .appBar i {
+    transform: none !important;
+  }
+
+  .point::before {
+    box-shadow: none;
+  }
+
+  .lede mark {
+    background-size: 100% 100%;
+  }
+
+  .breakEven,
+  .plans,
+  .apps,
+  .map {
+    break-inside: avoid;
+  }
+}
+
+/* ---------- Figures ---------- */
+
+.figure {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  margin: 8px 0;
+}
+
+.figure figcaption {
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+/* The reasons behind the model map, which only hover shows on screen */
+.reasons {
+  display: none;
+}
+
+@media print {
+  .callout {
+    box-shadow: inset 0 0 0 1px var(--line) !important;
+  }
+
+  .figure {
+    break-inside: avoid;
+  }
+
+  .breakEven .controls {
+    display: none;
+  }
+
+  .reasons {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding-left: 1.1em;
+    font-size: 11px;
+  }
+}

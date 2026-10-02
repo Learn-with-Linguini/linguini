@@ -1,0 +1,253 @@
+{
+  "case_id": "grocery-crop-produce",
+  "image": "images/grocery-crop-produce.jpg",
+  "difficulty": "hard",
+  "tags": [
+    "indoor",
+    "cluttered",
+    "cropped",
+    "overlap",
+    "adjacent-objects"
+  ],
+  "derived_from": "grocery-clean",
+  "notes": "The overlap case. Produce and crates are packed edge to edge, so returned boxes will overlap heavily. Feed this one to the UI to check that adjacent bubbles stay tappable -- pairwise IoU between returned boxes is reported for exactly that purpose.",
+  "expectation": {
+    "mode": "objects",
+    "scene_title_accept": [
+      "grocery store",
+      "grocery shop",
+      "supermarket",
+      "market",
+      "corner shop",
+      "convenience store",
+      "food shop",
+      "greengrocer",
+      "produce market",
+      "shop",
+      "store",
+      "mini market",
+      "minimart",
+      "market stall"
+    ],
+    "anchors": [
+      {
+        "canonical": "crate",
+        "accept": [
+          "plastic crate",
+          "box",
+          "cardboard box",
+          "carton",
+          "tray",
+          "stacking crate",
+          "produce crate"
+        ]
+      }
+    ],
+    "acceptable": [
+      {
+        "canonical": "shelf",
+        "accept": [
+          "shelving",
+          "shelves",
+          "rack"
+        ]
+      },
+      {
+        "canonical": "orange",
+        "accept": [
+          "tangerine",
+          "clementine",
+          "citrus"
+        ]
+      },
+      {
+        "canonical": "apple",
+        "accept": []
+      },
+      {
+        "canonical": "tomato",
+        "accept": []
+      },
+      {
+        "canonical": "onion",
+        "accept": [
+          "onions",
+          "red onion"
+        ]
+      },
+      {
+        "canonical": "potato",
+        "accept": []
+      },
+      {
+        "canonical": "garlic",
+        "accept": []
+      },
+      {
+        "canonical": "bin",
+        "accept": [
+          "rubbish bin",
+          "trash can",
+          "garbage can",
+          "waste bin",
+          "dustbin"
+        ]
+      },
+      {
+        "canonical": "doormat",
+        "accept": [
+          "mat",
+          "floor mat",
+          "rug",
+          "carpet"
+        ]
+      },
+      {
+        "canonical": "paper towel",
+        "accept": [
+          "kitchen roll",
+          "paper roll",
+          "tissue roll"
+        ]
+      },
+      {
+        "canonical": "bag",
+        "accept": [
+          "sack",
+          "net bag",
+          "plastic bag"
+        ]
+      },
+      {
+        "canonical": "packet",
+        "accept": [
+          "package",
+          "pack"
+        ]
+      },
+      {
+        "canonical": "ceiling light",
+        "accept": [
+          "light",
+          "lamp",
+          "strip light"
+        ]
+      },
+      {
+        "canonical": "sign",
+        "accept": [
+          "signage",
+          "poster",
+          "banner"
+        ]
+      },
+      {
+        "canonical": "price tag",
+        "accept": [
+          "label",
+          "price label"
+        ]
+      },
+      {
+        "canonical": "bottle",
+        "accept": []
+      },
+      {
+        "canonical": "jar",
+        "accept": []
+      },
+      {
+        "canonical": "can",
+        "accept": [
+          "tin"
+        ]
+      },
+      {
+        "canonical": "pillar",
+        "accept": [
+          "post",
+          "column",
+          "pole"
+        ]
+      },
+      {
+        "canonical": "fruit",
+        "accept": []
+      },
+      {
+        "canonical": "vegetable",
+        "accept": [
+          "produce"
+        ]
+      },
+      {
+        "canonical": "bean",
+        "accept": [
+          "green bean",
+          "beans"
+        ]
+      },
+      {
+        "canonical": "pear",
+        "accept": []
+      },
+      {
+        "canonical": "nut",
+        "accept": [
+          "nuts"
+        ]
+      },
+      {
+        "canonical": "egg",
+        "accept": [
+          "eggs"
+        ]
+      },
+      {
+        "canonical": "freezer",
+        "accept": [
+          "fridge",
+          "refrigerator",
+          "chiller"
+        ]
+      },
+      {
+        "canonical": "floor",
+        "accept": []
+      },
+      {
+        "canonical": "ceiling",
+        "accept": []
+      },
+      {
+        "canonical": "wall",
+        "accept": []
+      }
+    ],
+    "relations": [],
+    "forbidden_labels": [
+      "person",
+      "people",
+      "man",
+      "woman",
+      "boy",
+      "girl",
+      "child",
+      "children",
+      "kid",
+      "student",
+      "pupil",
+      "teacher",
+      "shopper",
+      "customer",
+      "worker",
+      "shopkeeper",
+      "face",
+      "hair",
+      "hand",
+      "adult"
+    ],
+    "min_objects": 2,
+    "max_objects": 6
+  }
+}

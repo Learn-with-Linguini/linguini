@@ -1,0 +1,50 @@
+:root {
+  --tomato: #ef5b32;
+  --tomato-pressed: #c84725;
+  --pasta: #f9ae22;
+  --header:rgb(243, 213, 96);
+  --butter: #FBF8EF;
+  --cream: #fff2d6;
+  --paper: #fffdf8;
+  --sage: #dcebdd;
+  --teal: #2e9c99;
+  --teal-dark: #21716f;
+  --ink: #263238;
+  --ink-muted: #667579;
+  --line: #ded7c8;
+  --danger: #c94e2c;
+  --focus: #166c84;
+
+  --font-display: "Baloo 2", ui-rounded, sans-serif;
+  --font-ui: "Nunito Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --text-display: clamp(32px, 5vw, 64px);
+  --text-h1: 32px;
+  --text-h2: 24px;
+  --text-h3: 20px;
+  --text-body: 16px;
+  --text-small: 14px;
+  --text-label: 12px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+
+  --radius-sm: 12px;
+  --radius-md: 18px;
+  --radius-lg: 28px;
+  --radius-pill: 999px;
+  --stroke: 2px;
+  --shadow-card: 0 8px 22px rgba(86, 67, 34, 0.1);
+  --shadow-paper: 0 2px 0 rgba(255, 255, 255, 0.7) inset, 0 8px 20px rgba(86, 67, 34, 0.07);
+  --shadow-action: 0 4px 0 var(--tomato-pressed);
+
+  --nav-height: 68px;
+  --content-max: 520px;
+}

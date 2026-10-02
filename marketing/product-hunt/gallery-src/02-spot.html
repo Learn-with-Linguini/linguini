@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Linguini gallery 02 spot</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background: var(--cream); }
+  .photo { position: absolute; left: 64px; top: 50%; transform: translateY(-50%); }
+  .col {
+    position: absolute; right: 64px; top: 50%; transform: translateY(-50%);
+    width: 400px; display: flex; flex-direction: column;
+  }
+  .headline { font-size: 78px; }
+  .support { margin-top: 20px; }
+  .found { margin-top: 36px; }
+</style>
+</head>
+<body>
+  <div class="photo"><img class="ui" src="assets/s-review-photo.png" data-pad="56" data-scale="1.28"></div>
+  <div class="col">
+    <h1 class="headline">Your photo. <span class="hl">Your words.</span></h1>
+    <p class="support">Linguini spots what’s in the picture and names it for you.</p>
+    <div class="found"><img class="ui" src="assets/s-review-found.png" data-pad="20" data-scale="1.05"></div>
+  </div>
+<script src="ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Linguini social card</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { --w: 1200px; --h: 630px; background: var(--butter); }
+  .print { position: absolute; }
+  .print img { transform-origin: center; }
+  .center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 560px;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .wordmark { height: 56px; margin-bottom: 26px; }
+  .headline { font-size: 78px; }
+  .support { margin-top: 26px; font-size: 24px; }
+  .toggle { margin-top: 24px; }
+</style>
+</head>
+<body>
+  <!-- Real hero prints, captured flat from the landing and re-rotated like the live ring. -->
+  <div class="print" style="left:56px; top:40px; rotate:-6deg"><img class="ui" src="assets/print-0.png" data-pad="64" data-scale="0.86"></div>
+  <div class="print" style="left:104px; top:262px; rotate:5deg"><img class="ui" src="assets/print-1.png" data-pad="64" data-scale="1.02"></div>
+  <div class="print" style="left:60px; top:474px; rotate:-3deg"><img class="ui" src="assets/print-2.png" data-pad="64" data-scale="0.92"></div>
+
+  <div class="print" style="right:58px; top:56px; rotate:6deg"><img class="ui" src="assets/print-4.png" data-pad="64" data-scale="0.92"></div>
+  <div class="print" style="right:104px; top:236px; rotate:-5deg"><img class="ui" src="assets/print-5.png" data-pad="64" data-scale="0.98"></div>
+  <div class="print" style="right:58px; top:432px; rotate:3deg"><img class="ui" src="assets/print-6.png" data-pad="64" data-scale="0.8"></div>
+
+  <div class="center">
+    <img class="wordmark" src="brand/linguini-wordmark.png" alt="Linguini">
+    <h1 class="headline">Learn the language of <span class="hl squiggle">your day.</span></h1>
+    <p class="support">Any photo becomes a five-minute lesson.</p>
+    <div class="toggle"><img class="ui" src="assets/lang-toggle.png" data-pad="12" data-scale="1.1"></div>
+  </div>
+<script src="ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+node_modules/
+# 4x UI captures from the landing; regenerate with capture.mjs
+gallery-src/assets/

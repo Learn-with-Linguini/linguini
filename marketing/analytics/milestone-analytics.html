@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Milestone: Analytics</title>
+<!-- Open in a browser, press Cmd+A then Cmd+C, and paste into the Google Doc. -->
+<!-- Numbers were pulled from Contentsquare (project 1040724) through its MCP server on 25 Sep 2026 at about 09:40 UTC. All times are UTC. -->
+<style>
+  body { max-width: 720px; margin: 40px auto; padding: 0 20px; font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 1.4; color: #000; }
+  h2, h3 { font-family: "Times New Roman", Times, serif; font-weight: normal; }
+  h2 { font-size: 16pt; margin: 0 0 8pt; }
+  h3 { font-size: 13pt; margin: 14pt 0 4pt; }
+  p, li { margin: 0 0 6pt; }
+  ul, ol { margin: 0 0 6pt; }
+  table { width: 100%; border-collapse: collapse; margin: 4pt 0 8pt; font-family: "Times New Roman", Times, serif; font-size: 12pt; }
+  th, td { border: 1px solid #000; padding: 3pt 5pt; text-align: left; vertical-align: top; }
+  thead th { font-weight: bold; }
+  tbody th { font-weight: normal; }
+  figure { margin: 8pt 0 10pt; }
+  figure svg { display: block; max-width: 100%; height: auto; }
+  figcaption { font-size: 11pt; font-style: italic; margin-top: 3pt; }
+  .shot { border: 1px dashed #000; padding: 24pt 12pt; text-align: center; background: #fff8d6; }
+</style>
+</head>
+<body>
+
+<h2>Milestone: Embed analytics and learn from the data</h2>
+
+<p>We embedded Contentsquare in the Linguini web app on 23 September 2026. It records pageviews, route changes, time on page, scroll depth and navigation paths. We use it to answer one question: does Home send learners into a photo lesson?</p>
+
+<table>
+  <thead>
+    <tr><th>Requirement</th><th>How we meet it</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Embed an analytics tool</td><td>The Contentsquare tag loads on every screen of the learner app</td></tr>
+    <tr><td>Screenshot of the report</td><td>The site overview, the Home page group and the journey from Home, below</td></tr>
+    <tr><td>Insights and product decisions</td><td>Three insights, each with the decision it led to, plus the metrics we will track next</td></tr>
+    <tr><td>Verify events and route changes</td><td>Checked in the realtime view, and confirmed by multi-page journeys in a single visit</td></tr>
+  </tbody>
+</table>
+
+<h3>Set-up and checks</h3>
+<ul>
+  <li><b>Tag:</b> one async script in <code>frontend/index.html</code>, so every screen of the single-page app loads it.</li>
+  <li><b>Pages:</b> we map two page groups, Home (<code>/home</code>) and Practice (<code>/practice</code>), where a learner picks or uploads a photo.</li>
+  <li><b>Route changes:</b> sessions average 5–6 pageviews and the journey report shows Home → Practice → Home paths inside a single visit. So client-side navigation is recorded as separate pageviews, not only the first page load.</li>
+  <li><b>Live check:</b> before relying on the report, we opened the realtime view and confirmed that moving from Home to Practice in the app appeared there as a new pageview.</li>
+</ul>
+
+<figure>
+  <div class="shot">[Screenshot: Contentsquare realtime view showing a Home → Practice route change]</div>
+  <figcaption>Figure 1. Checking in the realtime view that route changes inside the single-page app are tracked.</figcaption>
+</figure>
+
+<h3>The report</h3>
+
+<figure>
+  <div class="shot">[Screenshot: Contentsquare site overview for 23–25 September, with visits, session time and bounce rate]</div>
+  <figcaption>Figure 2. Contentsquare site overview, 23–25 September 2026.</figcaption>
+</figure>
+
+<table>
+  <thead>
+    <tr><th>Day</th><th>Visits</th><th>Average session</th><th>Pages per visit</th><th>Bounce rate</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>23 Sep (tag installed)</td><td>2</td><td>1 s</td><td>1.0</td><td>100%</td></tr>
+    <tr><td>24 Sep</td><td>49</td><td>6 min 20 s</td><td>6.3</td><td>59%</td></tr>
+    <tr><td>25 Sep (to 09:30 UTC)</td><td>9</td><td>4 min 2 s</td><td>5.0</td><td>44%</td></tr>
+  </tbody>
+</table>
+
+<table>
+  <thead>
+    <tr><th>Device, 23–25 Sep</th><th>Visits</th><th>Average session</th><th>Bounce rate</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Desktop</td><td>48</td><td>6 min 24 s</td><td>58%</td></tr>
+    <tr><td>Mobile</td><td>10</td><td>2 min 9 s</td><td>70%</td></tr>
+  </tbody>
+</table>
+
+<h3>Insight 1: Home held attention but did not lead anywhere, so we redesigned it</h3>
+
+<p>The old Home had a welcome, a “Today’s plan” card and a total XP count. Learners scrolled all of it (93% scroll rate) but spent only 2.4 seconds of a 46-second visit interacting with it: there was little on it about their own progress. On 24 September we redesigned Home as a personal dashboard, with a seven-day streak rail, a daily chart of words learnt and one featured “start or continue” card. This is what changed on the Home page group:</p>
+
+<figure>
+  <div class="shot">[Screenshots: Home before (23 Sep) and after the redesign (25 Sep), side by side]</div>
+  <figcaption>Figure 3. Home before and after the 24 September redesign.</figcaption>
+</figure>
+
+<table>
+  <thead>
+    <tr><th>Home page</th><th>23–24 Sep (mostly old layout)</th><th>25 Sep (new layout)</th><th>Change</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Average time on page</td><td>46 s</td><td>79 s</td><td>+73%</td></tr>
+    <tr><td>Average time interacting</td><td>2.4 s</td><td>4.7 s</td><td>+92%</td></tr>
+    <tr><td>Activity rate (share of time interacting)</td><td>45%</td><td>27%</td><td>−18 points</td></tr>
+    <tr><td>Exit rate</td><td>10%</td><td>33%</td><td>+23 points</td></tr>
+    <tr><td>Scroll rate</td><td>93%</td><td>90%</td><td>−3 points</td></tr>
+    <tr><td>Views / visits / unique users</td><td>49 / 17 / 11</td><td>9 / 6 / 3</td><td></td></tr>
+  </tbody>
+</table>
+
+<figure>
+  <svg viewBox="0 0 640 170" role="img" aria-label="Bar chart: time on Home rose from 46 to 79 seconds, time interacting from 2.4 to 4.7 seconds" font-family="Times New Roman, Times, serif" font-size="13">
+    <text x="0" y="30">Time on Home</text>
+    <rect x="170" y="14" width="221" height="20" fill="#bbb"/><text x="398" y="29">46 s before</text>
+    <rect x="170" y="38" width="380" height="20" fill="#c8372d"/><text x="557" y="53">79 s after</text>
+    <text x="0" y="100">Time interacting</text>
+    <rect x="170" y="84" width="46" height="20" fill="#bbb"/><text x="223" y="99">2.4 s before</text>
+    <rect x="170" y="108" width="90" height="20" fill="#c8372d"/><text x="267" y="123">4.7 s after</text>
+    <text x="0" y="160" font-size="11">Interaction bars are drawn at 4× the scale of the time-on-page bars.</text>
+  </svg>
+  <figcaption>Figure 4. Learners stay on the new Home about 70% longer and interact with it about twice as long.</figcaption>
+</figure>
+
+<p><b>What we take from it:</b> the learner-specific stats work as intended. People read their streak and words learnt, and they stay about 70% longer. But the activity rate fell and the exit rate tripled: more of the extra time is spent reading, and one Home view in three now ends the visit. The dashboard is interesting, but it is not yet sending learners on to the next lesson.</p>
+
+<p><b>Decision:</b> keep the dashboard, but make the featured “start a photo lesson” card the first thing on screen, above the stats, and judge the next version on the Home → Practice rate and the Home exit rate instead of time on page. More time on Home is only good if learners then start a lesson.</p>
+
+<h3>Insight 2: Four in ten learners go from Home straight to a lesson</h3>
+
+<p>We used the journey report on the 23 sessions that started on Home to see where learners go next:</p>
+
+<figure>
+  <div class="shot">[Screenshot: Contentsquare journey analysis starting from Home]</div>
+  <figcaption>Figure 5. Where learners go after Home, 23–25 September.</figcaption>
+</figure>
+
+<table>
+  <thead>
+    <tr><th>Next step after Home</th><th>Sessions</th><th>Share</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Practice (choose or upload a photo)</td><td>9</td><td>39%</td></tr>
+    <tr><td>A page we have not mapped yet (journal, profile, vocabulary, a lesson step)</td><td>7</td><td>30%</td></tr>
+    <tr><td>Home again</td><td>3</td><td>13%</td></tr>
+    <tr><td>Left the app</td><td>4</td><td>17%</td></tr>
+  </tbody>
+</table>
+
+<p><b>Decision:</b> 39% is our baseline for Home → Practice, and the change in Insight 1 should raise it. The 30% going to unmapped pages is a gap in our tracking. We will add page groups for Journal, Vocabulary, Analysis, Learn and I-Spy, and a goal for “finished a photo lesson”, so the next report shows the whole learning loop as a funnel.</p>
+
+<h3>Insight 3: Mobile sessions are a third as long as desktop</h3>
+
+<p>Linguini is photo-led, so the phone should be its main device. Yet mobile visits last 2 minutes 9 seconds against 6 minutes 24 seconds on desktop, and bounce more (70% against 58%).</p>
+
+<p><b>Decision:</b> test the full loop on a phone every week and fix mobile layout first. On 25 September we already stacked the task and word-relation rows on narrow screens. We will check whether mobile session length and bounce rate improve in the next report.</p>
+
+<h3>How far we trust the data</h3>
+<ul>
+  <li><b>Small sample:</b> the comparison after the redesign rests on 6 visits from 3 users, so it is a direction to test, not a proven effect. We will repeat it with at least a week of data on each layout.</li>
+  <li><b>Mostly our own team:</b> most of the 60 visits are the team and a few classmates testing, which inflates session length on desktop. We now invite outside testers so the report reflects real learners.</li>
+  <li><b>Daily buckets:</b> Contentsquare reports page metrics by whole day, so 24 September, the day of the redesign, sits in the “before” column even though some of its visits saw the new layout.</li>
+  <li><b>Not in our plan:</b> frustration score and error analysis are not included in our Contentsquare plan, so we cannot yet measure rage clicks or JavaScript errors.</li>
+</ul>
+
+<h3>What we will measure next</h3>
+
+<table>
+  <thead>
+    <tr><th>Question</th><th>Metric</th><th>Now</th><th>Target</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Does Home start a lesson?</td><td>Home → Practice rate</td><td>39%</td><td>60%</td></tr>
+    <tr><td>Does Home lose people?</td><td>Home exit rate</td><td>33%</td><td>Under 15%</td></tr>
+    <tr><td>Does it work on phones?</td><td>Mobile average session</td><td>2 min 9 s</td><td>4 min</td></tr>
+    <tr><td>Does it stick?</td><td>Learners taking a second photo lesson within 7 days</td><td>Not tracked yet</td><td>Set once the goal exists</td></tr>
+  </tbody>
+</table>
+
+</body>
+</html>

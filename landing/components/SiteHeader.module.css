@@ -1,0 +1,140 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--butter);
+  transition: box-shadow 0.25s var(--ease-out);
+}
+
+.scrolled {
+  box-shadow: 0 1px 0 var(--line), 0 10px 24px -18px rgba(86, 67, 34, 0.45);
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: 72px;
+}
+
+.brand {
+  display: inline-flex;
+  flex-shrink: 0;
+  border-radius: 10px;
+}
+
+.wordmark {
+  width: auto;
+  height: 50px;
+  margin-block: -4px;
+}
+
+.nav {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+.links {
+  display: flex;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 16px;
+  text-decoration: none;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.link:hover {
+  background: var(--cream);
+  color: var(--tomato-ink);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.menuButton {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.menuButton:hover {
+  background: var(--cream);
+}
+
+.sheet {
+  border-top: 1px solid var(--line);
+  background: var(--butter);
+}
+
+.sheet ul {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding-block: 12px 20px;
+  list-style: none;
+}
+
+.sheet a {
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  padding-inline: 8px;
+  border-radius: 12px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 24px;
+  text-decoration: none;
+}
+
+.sheet a:hover {
+  background: var(--cream);
+}
+
+@media (max-width: 880px) {
+  .nav,
+  .login {
+    display: none;
+  }
+
+  .menuButton {
+    display: inline-flex;
+  }
+
+  .bar {
+    height: 64px;
+  }
+
+  .wordmark {
+    height: 44px;
+  }
+}
+
+@media (min-width: 881px) {
+  .sheet {
+    display: none;
+  }
+}

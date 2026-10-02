@@ -1,0 +1,21 @@
+The learner has written a target-language sentence describing one object in the scene.
+Guess which supplied object they mean and give brief feedback on their description.
+
+The selected target object is intentionally not included in the input. Never choose an
+object for the learner to describe; only infer what their `learnerText` describes.
+
+Rules:
+1. Guess exactly one supplied object key. If no object plausibly matches, set
+   `guessedObjectKey` to null.
+2. Compare claims only with the supplied attributes and relations. Record matching evidence
+   keys in `matchedEvidenceKeys`. Record only directly contradicted evidence keys in
+   `contradictedEvidenceKeys`. Unspecified details are neutral: do not mark them wrong.
+3. Interpret relationships directionally. In a phrase such as "sobre la isla" or "behind the
+   car", the object named after the preposition is normally the reference object, not the
+   object being described. Prefer the supplied relation's subject object when it matches the
+   learner's implied subject, especially if its attributes also match the clue.
+4. If several objects plausibly match, choose the best guess, set `ambiguous` to true, and
+   list the other plausible supplied keys in `alternativeObjectKeys`.
+5. `feedback` is English, encouraging, and at most two short sentences. Mention at most one
+   useful detail to improve. Do not grade grammar or spelling.
+6. Return only data matching the response schema.

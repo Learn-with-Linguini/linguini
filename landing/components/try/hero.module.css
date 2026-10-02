@@ -1,0 +1,336 @@
+.hero {
+  --px: 0;
+  --py: 0;
+  position: relative;
+  padding-block: 12px 72px;
+  overflow-x: clip;
+  scroll-margin-top: 72px;
+}
+
+.inSession {
+  padding-block: 20px 88px;
+  background: var(--butter);
+}
+
+.sessionWrap {
+  animation: sessionIn 0.5s var(--ease-out) both;
+}
+
+@keyframes sessionIn {
+  from {
+    opacity: 0;
+  }
+}
+
+.stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: clamp(720px, calc(100svh - 84px), 880px);
+}
+
+.copy {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  gap: 22px;
+  max-width: 600px;
+  padding-bottom: 96px;
+  text-align: center;
+}
+
+.title {
+  font-size: clamp(48px, 6.2vw, 88px);
+  line-height: 0.94;
+  letter-spacing: -0.025em;
+}
+
+.underline {
+  position: relative;
+  display: inline-block;
+  color: var(--tomato);
+  white-space: nowrap;
+}
+
+.underline::after {
+  content: "";
+  position: absolute;
+  left: 2%;
+  right: 4%;
+  bottom: -0.1em;
+  height: 0.2em;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cpath d='M3 12c20-9 38 7 58 0s40-9 60 0 38 7 76-4' fill='none' stroke='%23f9ae22' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  transform-origin: left center;
+  animation: draw 0.9s var(--ease-out) 0.35s both;
+}
+
+@keyframes draw {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.lede {
+  max-width: 50ch;
+  font-size: clamp(17px, 1.45vw, 19px);
+  color: #4c5a60;
+}
+
+.ctas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.prompt {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 12px;
+  margin-top: 8px;
+  font-size: 16px;
+  color: var(--ink-muted);
+}
+
+.prompt b {
+  color: var(--ink);
+}
+
+.noodle {
+  position: absolute;
+  right: calc(100% + 6px);
+  top: 18px;
+  width: 96px;
+  height: 48px;
+  fill: none;
+  stroke: var(--pasta);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transform: scale(-1, -1) rotate(-6deg);
+}
+
+/* Photo ring */
+.ring {
+  position: absolute;
+  inset: 0 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.slot {
+  position: absolute;
+  z-index: 1;
+  width: var(--w);
+  transform: translate(calc(var(--px) * var(--d) * -26px), calc(var(--py) * var(--d) * -18px));
+  transition: transform 0.9s var(--ease-out);
+  animation: printIn 0.9s var(--ease-out) both;
+  animation-delay: calc(var(--i) * 70ms + 120ms);
+}
+
+@keyframes printIn {
+  from {
+    opacity: 0;
+    translate: 0 36px;
+    scale: 0.92;
+  }
+}
+
+.print {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 8px 10px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--paper);
+  box-shadow: var(--shadow-photo);
+  text-align: left;
+  cursor: pointer;
+  rotate: var(--r);
+  animation: float 7s ease-in-out infinite alternate;
+  animation-delay: calc(var(--i) * -1.3s);
+  transition: rotate 0.45s var(--ease-out), scale 0.45s var(--ease-out), box-shadow 0.3s;
+}
+
+.print:hover,
+.print:focus-visible {
+  z-index: 3;
+  rotate: 0deg;
+  scale: 1.06;
+  box-shadow: 0 28px 50px -16px rgba(62, 45, 18, 0.45), 0 6px 14px rgba(62, 45, 18, 0.14);
+}
+
+.slot:has(.print:hover),
+.slot:has(.print:focus-visible) {
+  z-index: 3;
+}
+
+@keyframes float {
+  from {
+    translate: 0 -5px;
+  }
+  to {
+    translate: 0 6px;
+  }
+}
+
+.printImage {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #d8cdb5;
+}
+
+.printImg {
+  object-fit: cover;
+}
+
+.printCaption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-inline: 2px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.printCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--tomato-ink);
+  opacity: 0;
+  translate: -4px 0;
+  transition: opacity 0.25s, translate 0.25s var(--ease-out);
+}
+
+.print:hover .printCta,
+.print:focus-visible .printCta {
+  opacity: 1;
+  translate: 0 0;
+}
+
+/* Tablet and phone: headline first, then a swipeable strip of prints */
+@media (max-width: 1180px) {
+  .stage {
+    display: block;
+    min-height: 0;
+    place-items: normal;
+  }
+
+  .copy {
+    margin-inline: auto;
+    padding: 32px 0 36px;
+  }
+
+  .noodle {
+    display: none;
+  }
+
+  .ring {
+    position: relative;
+    display: flex;
+    gap: 18px;
+    margin-inline: calc(var(--gutter) * -1);
+    padding: 18px var(--gutter) 30px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+
+  .ring::-webkit-scrollbar {
+    display: none;
+  }
+
+  .slot {
+    position: relative;
+    inset: auto !important;
+    flex: 0 0 auto;
+    width: clamp(200px, 30vw, 240px);
+    transform: none;
+    scroll-snap-align: center;
+  }
+
+  .slot:nth-child(odd) .print {
+    rotate: -2.5deg;
+  }
+
+  .slot:nth-child(even) .print {
+    rotate: 2.5deg;
+  }
+
+  .printCta {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  .printImage {
+    aspect-ratio: 4 / 3 !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .hero {
+    padding-bottom: 40px;
+  }
+
+  .copy {
+    justify-items: start;
+    padding-top: 20px;
+    text-align: left;
+  }
+
+  .ctas,
+  .prompt {
+    justify-content: flex-start;
+  }
+
+  .ctas {
+    display: grid;
+    width: 100%;
+  }
+
+  .tryButton {
+    display: none;
+  }
+
+  .title {
+    font-size: clamp(44px, 12.5vw, 56px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .print {
+    animation: none;
+  }
+
+  .slot {
+    transform: none;
+  }
+}
+
+/* A strip of tape on some prints, matching the journal share card */
+.slot:nth-child(3n + 1) .print::before {
+  content: "";
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  z-index: 1;
+  width: 84px;
+  height: 24px;
+  border-radius: 2px;
+  background: rgba(249, 174, 34, 0.55);
+  box-shadow: 0 1px 2px rgba(120, 80, 0, 0.15);
+  transform: translateX(-50%) rotate(-4deg);
+}

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title description">
+  <title id="title">Sad Linguini mascot</title>
+  <desc id="description">A yellow pasta bowl with a gentle frown.</desc>
+  <g stroke="#d95b1a" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="260" cy="243" r="156" fill="#f9ae22" stroke-width="16" />
+    <circle cx="260" cy="243" r="140" fill="none" stroke="#fff2d6" stroke-width="13" />
+    <path d="M125 260c-27-108 51-201 159-189 104 11 170 109 135 207-28 78-111 125-190 101-42-13-75-44-92-82" fill="none" stroke-width="20" />
+    <path d="M124 259c-42-28-88 8-74 53 12 39 65 43 84 12 17-28-7-60-38-49" fill="none" stroke-width="16" />
+    <path d="M229 365c-41 27-77 62-101 105" fill="none" stroke-width="20" />
+    <path d="M128 470c-14 23 10 40 30 25l41-35" fill="none" stroke-width="20" />
+  </g>
+  <g fill="#e85d32">
+    <circle cx="210" cy="232" r="18" />
+    <circle cx="310" cy="232" r="18" />
+    <path d="M209 326c18-48 76-48 94 0v-20c-23-39-71-39-94 0z" />
+  </g>
+</svg>

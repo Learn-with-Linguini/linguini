@@ -1,0 +1,198 @@
+.section {
+  position: relative;
+}
+
+.toggle {
+  display: flex;
+  min-inline-size: 0;
+  border: 0;
+  width: max-content;
+  margin: 0 auto 40px;
+  padding: 5px;
+  border-radius: var(--radius-pill);
+  background: var(--cream);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.toggleOption {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 20px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink-muted);
+  font-weight: 800;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.25s var(--ease-out), color 0.25s, box-shadow 0.25s;
+}
+
+.toggleOption:has(input:focus-visible) {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.toggleOption:has(input:checked) {
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 2px 8px rgba(86, 67, 34, 0.14);
+}
+
+.save {
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--sage);
+  color: var(--teal-deep);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.plans {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  max-width: 920px;
+  margin-inline: auto;
+}
+
+.plan {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: clamp(28px, 4vw, 40px);
+  border-radius: var(--radius-lg);
+}
+
+.free {
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line), var(--shadow-card);
+}
+
+.plus {
+  background: var(--teal-deep);
+  color: #f5efe0;
+  box-shadow: 0 24px 48px -20px rgba(24, 79, 78, 0.55);
+}
+
+.bow {
+  position: absolute;
+  top: -34px;
+  right: 22px;
+  width: 92px;
+  height: auto;
+  transform: rotate(14deg);
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.22));
+}
+
+.planHead {
+  display: grid;
+  gap: 6px;
+}
+
+.planName {
+  font-size: 32px;
+}
+
+.planPitch {
+  color: var(--ink-muted);
+}
+
+.plus .planPitch {
+  color: #c9dedb;
+}
+
+.price {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  min-height: 72px;
+}
+
+.amount {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 64px;
+  line-height: 0.9;
+  font-variant-numeric: tabular-nums;
+}
+
+.per {
+  display: grid;
+  padding-bottom: 6px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.billed {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-muted);
+}
+
+.plus .billed {
+  color: #b7d3cf;
+}
+
+.features {
+  display: grid;
+  gap: 14px;
+  margin: 4px 0 0;
+  padding: 20px 0 0;
+  border-top: 1px solid var(--line);
+  list-style: none;
+}
+
+.plus .features {
+  border-top-color: rgba(255, 255, 255, 0.16);
+}
+
+.features li {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  line-height: 1.4;
+}
+
+.tick {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--teal);
+}
+
+.plus .tick {
+  color: var(--pasta);
+}
+
+.founding {
+  max-width: 920px;
+  margin: 24px auto 0;
+  padding: 16px 22px;
+  border-radius: var(--radius-md);
+  background: var(--pasta-soft);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.founding a {
+  margin-left: 6px;
+  color: var(--tomato-ink);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.note {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 15px;
+  color: var(--ink-muted);
+}
+
+@media (max-width: 760px) {
+  .plans {
+    grid-template-columns: 1fr;
+  }
+}

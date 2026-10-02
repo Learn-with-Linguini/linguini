@@ -1,0 +1,137 @@
+[
+  {
+    "scene_id": "study-es",
+    "targetLanguage": "es",
+    "sceneTitle": "Study Corner",
+    "sceneSummary": "A green book lies on a wooden table, a black bag sits under it and a small plant stands to its left.",
+    "notes": "Three relations and attributes on four of five objects: exercises all four task focuses.",
+    "objects": [
+      {"key": "object_1", "source": "book", "translation": "libro", "article": "el", "gender": "masculine", "box": {"x": 0.40, "y": 0.35, "width": 0.15, "height": 0.10}},
+      {"key": "object_2", "source": "table", "translation": "mesa", "article": "la", "gender": "feminine", "box": {"x": 0.25, "y": 0.45, "width": 0.50, "height": 0.35}},
+      {"key": "object_3", "source": "bag", "translation": "bolsa", "article": "la", "gender": "feminine", "box": {"x": 0.35, "y": 0.80, "width": 0.15, "height": 0.15}},
+      {"key": "object_4", "source": "plant", "translation": "planta", "article": "la", "gender": "feminine", "box": {"x": 0.05, "y": 0.30, "width": 0.12, "height": 0.30}},
+      {"key": "object_5", "source": "lamp", "translation": "lámpara", "article": "la", "gender": "feminine", "box": {"x": 0.72, "y": 0.10, "width": 0.10, "height": 0.30}}
+    ],
+    "attributes": [
+      {"key": "object_1:color", "source": "green", "translation": "verde"},
+      {"key": "object_2:material", "source": "wooden", "translation": "de madera"},
+      {"key": "object_3:color", "source": "black", "translation": "negro"},
+      {"key": "object_4:size", "source": "small", "translation": "pequeño"},
+      {"key": "object_5:color", "source": "yellow", "translation": "amarillo"}
+    ],
+    "relationships": [
+      {"key": "relation_1", "source": "on", "translation": "sobre", "subject": "object_1", "reference": "object_2"},
+      {"key": "relation_2", "source": "under", "translation": "debajo de", "subject": "object_3", "reference": "object_2"},
+      {"key": "relation_3", "source": "left_of", "translation": "a la izquierda de", "subject": "object_4", "reference": "object_2"}
+    ]
+  },
+  {
+    "scene_id": "kitchen-es",
+    "targetLanguage": "es",
+    "sceneTitle": "Kitchen Counter",
+    "sceneSummary": "A red cup, a spoon, a white plate and a large loaf of bread on a counter.",
+    "notes": "No relations: the backend must omit sceneDescription, and the model must not invent a relation for the sentence builder.",
+    "objects": [
+      {"key": "object_1", "source": "cup", "translation": "taza", "article": "la", "gender": "feminine", "box": {"x": 0.10, "y": 0.40, "width": 0.15, "height": 0.20}},
+      {"key": "object_2", "source": "spoon", "translation": "cuchara", "article": "la", "gender": "feminine", "box": {"x": 0.30, "y": 0.55, "width": 0.20, "height": 0.05}},
+      {"key": "object_3", "source": "plate", "translation": "plato", "article": "el", "gender": "masculine", "box": {"x": 0.55, "y": 0.45, "width": 0.25, "height": 0.15}},
+      {"key": "object_4", "source": "bread", "translation": "pan", "article": "el", "gender": "masculine", "box": {"x": 0.60, "y": 0.10, "width": 0.30, "height": 0.20}}
+    ],
+    "attributes": [
+      {"key": "object_1:color", "source": "red", "translation": "rojo"},
+      {"key": "object_3:color", "source": "white", "translation": "blanco"},
+      {"key": "object_4:size", "source": "large", "translation": "grande"}
+    ],
+    "relationships": []
+  },
+  {
+    "scene_id": "classroom-fr",
+    "targetLanguage": "fr",
+    "sceneTitle": "Classroom",
+    "sceneSummary": "A red notebook is on a wooden desk; a blue chair and a round clock are nearby.",
+    "notes": "Exactly one relation; horloge takes an elided article (l').",
+    "objects": [
+      {"key": "object_1", "source": "chair", "translation": "chaise", "article": "la", "gender": "feminine", "box": {"x": 0.10, "y": 0.50, "width": 0.20, "height": 0.35}},
+      {"key": "object_2", "source": "desk", "translation": "bureau", "article": "le", "gender": "masculine", "box": {"x": 0.35, "y": 0.45, "width": 0.45, "height": 0.30}},
+      {"key": "object_3", "source": "notebook", "translation": "cahier", "article": "le", "gender": "masculine", "box": {"x": 0.50, "y": 0.40, "width": 0.12, "height": 0.08}},
+      {"key": "object_4", "source": "clock", "translation": "horloge", "article": "l'", "gender": "feminine", "box": {"x": 0.70, "y": 0.05, "width": 0.10, "height": 0.12}}
+    ],
+    "attributes": [
+      {"key": "object_1:color", "source": "blue", "translation": "bleu"},
+      {"key": "object_2:material", "source": "wooden", "translation": "en bois"},
+      {"key": "object_3:color", "source": "red", "translation": "rouge"},
+      {"key": "object_4:shape", "source": "round", "translation": "rond"}
+    ],
+    "relationships": [
+      {"key": "relation_1", "source": "on", "translation": "sur", "subject": "object_3", "reference": "object_2"}
+    ]
+  },
+  {
+    "scene_id": "market-fr",
+    "targetLanguage": "fr",
+    "sceneTitle": "Market Stall",
+    "sceneSummary": "Red apples are inside a small basket; a green bottle stands next to the basket and an orange sits in front.",
+    "notes": "Two relations; 'petit' is a BAGS adjective, so placement must be explained if used.",
+    "objects": [
+      {"key": "object_1", "source": "apple", "translation": "pomme", "article": "la", "gender": "feminine", "box": {"x": 0.30, "y": 0.35, "width": 0.10, "height": 0.10}},
+      {"key": "object_2", "source": "basket", "translation": "panier", "article": "le", "gender": "masculine", "box": {"x": 0.20, "y": 0.30, "width": 0.35, "height": 0.30}},
+      {"key": "object_3", "source": "bottle", "translation": "bouteille", "article": "la", "gender": "feminine", "box": {"x": 0.65, "y": 0.15, "width": 0.10, "height": 0.40}},
+      {"key": "object_4", "source": "orange", "translation": "orange", "article": "l'", "gender": "feminine", "box": {"x": 0.40, "y": 0.70, "width": 0.10, "height": 0.10}}
+    ],
+    "attributes": [
+      {"key": "object_1:color", "source": "red", "translation": "rouge"},
+      {"key": "object_2:size", "source": "small", "translation": "petit"},
+      {"key": "object_3:color", "source": "green", "translation": "vert"}
+    ],
+    "relationships": [
+      {"key": "relation_1", "source": "inside", "translation": "dans", "subject": "object_1", "reference": "object_2"},
+      {"key": "relation_2", "source": "next_to", "translation": "à côté de", "subject": "object_3", "reference": "object_2"},
+      {"key": "relation_3", "source": "in_front_of", "translation": "devant", "subject": "object_4", "reference": "object_2"}
+    ]
+  },
+  {
+    "scene_id": "room-ja",
+    "targetLanguage": "ja",
+    "sceneTitle": "Bedroom Desk",
+    "sceneSummary": "A blue book is on a desk, a red chair is in front of the desk and a window is behind it.",
+    "notes": "Japanese: no articles or gender. Used for I-Spy only (the grammar prompt is Spanish/French-specific).",
+    "objects": [
+      {"key": "object_1", "source": "chair", "translation": "椅子", "box": {"x": 0.20, "y": 0.55, "width": 0.20, "height": 0.35}},
+      {"key": "object_2", "source": "desk", "translation": "机", "box": {"x": 0.30, "y": 0.40, "width": 0.45, "height": 0.30}},
+      {"key": "object_3", "source": "book", "translation": "本", "box": {"x": 0.45, "y": 0.35, "width": 0.12, "height": 0.08}},
+      {"key": "object_4", "source": "window", "translation": "窓", "box": {"x": 0.35, "y": 0.02, "width": 0.35, "height": 0.30}}
+    ],
+    "attributes": [
+      {"key": "object_1:color", "source": "red", "translation": "赤い"},
+      {"key": "object_3:color", "source": "blue", "translation": "青い"},
+      {"key": "object_4:size", "source": "large", "translation": "大きい"}
+    ],
+    "relationships": [
+      {"key": "relation_1", "source": "on", "translation": "上", "subject": "object_3", "reference": "object_2"},
+      {"key": "relation_2", "source": "in_front_of", "translation": "前", "subject": "object_1", "reference": "object_2"},
+      {"key": "relation_3", "source": "behind", "translation": "後ろ", "subject": "object_4", "reference": "object_2"}
+    ]
+  },
+  {
+    "scene_id": "park-ko",
+    "targetLanguage": "ko",
+    "sceneTitle": "Park",
+    "sceneSummary": "A yellow ball is under a brown wooden bench; a bicycle stands next to a tall tree.",
+    "notes": "Korean: no articles or gender. Used for I-Spy only.",
+    "objects": [
+      {"key": "object_1", "source": "tree", "translation": "나무", "box": {"x": 0.05, "y": 0.05, "width": 0.30, "height": 0.80}},
+      {"key": "object_2", "source": "bench", "translation": "벤치", "box": {"x": 0.45, "y": 0.50, "width": 0.40, "height": 0.25}},
+      {"key": "object_3", "source": "ball", "translation": "공", "box": {"x": 0.60, "y": 0.78, "width": 0.08, "height": 0.08}},
+      {"key": "object_4", "source": "bicycle", "translation": "자전거", "box": {"x": 0.28, "y": 0.50, "width": 0.20, "height": 0.30}}
+    ],
+    "attributes": [
+      {"key": "object_1:size", "source": "tall", "translation": "키가 큰"},
+      {"key": "object_2:color", "source": "brown", "translation": "갈색"},
+      {"key": "object_3:color", "source": "yellow", "translation": "노란색"}
+    ],
+    "relationships": [
+      {"key": "relation_1", "source": "under", "translation": "아래", "subject": "object_3", "reference": "object_2"},
+      {"key": "relation_2", "source": "next_to", "translation": "옆", "subject": "object_4", "reference": "object_1"}
+    ]
+  }
+]

@@ -1,0 +1,81 @@
+/* Shared tokens and type for the Product Hunt gallery compositions.
+   Canvas: 1270 x 760 (rendered at 1x and 2x). Safe area: 64px. */
+@font-face {
+  font-family: "Baloo 2";
+  src: url("fonts/Baloo2-ExtraBold.ttf") format("truetype");
+  font-weight: 800;
+}
+@font-face {
+  font-family: "Nunito Sans";
+  src: url("fonts/NunitoSans-Bold.ttf") format("truetype");
+  font-weight: 700;
+}
+
+:root {
+  --butter: #fbf8ef;
+  --cream: #fff2d6;
+  --paper: #fffdf8;
+  --tomato: #ef5b32;
+  --tomato-pressed: #c84725;
+  --pasta: #f9ae22;
+  --pasta-soft: #fde6b4;
+  --teal: #2e9c99;
+  --teal-dark: #21716f;
+  --teal-deep: #184f4e;
+  --sage: #dcebdd;
+  --ink: #263238;
+  --ink-muted: #5d6c70;
+  --safe: 64px;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  width: var(--w, 1270px);
+  height: var(--h, 760px);
+  overflow: hidden;
+  position: relative;
+  font-family: "Nunito Sans", system-ui, sans-serif;
+  font-weight: 700;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.headline {
+  margin: 0;
+  font-family: "Baloo 2", system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 84px;
+  line-height: 0.92;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+.support {
+  margin: 0;
+  font-size: 25px;
+  line-height: 1.32;
+  color: var(--ink-muted);
+  text-wrap: pretty;
+}
+
+.hl { color: var(--tomato); }
+.squiggle {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+}
+.squiggle::after {
+  content: "";
+  position: absolute;
+  left: 2%;
+  right: 4%;
+  bottom: -0.08em;
+  height: 0.2em;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cpath d='M3 12c20-9 38 7 58 0s40-9 60 0 38 7 76-4' fill='none' stroke='%23f9ae22' stroke-width='6' stroke-linecap='round'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
+
+/* Captured UI. Each PNG is a 4x capture that includes `pad` CSS px of
+   transparent margin (for the real shadow). ui.js sizes it by data-scale
+   and pulls the padding back with negative margins, so the layout box is
+   the element's own box. */
+img.ui { display: block; max-width: none; }

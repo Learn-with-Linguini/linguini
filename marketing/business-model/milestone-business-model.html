@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<title>Milestone: Monetisation and pricing strategy</title>
+<!-- Open in a browser, press Cmd+A then Cmd+C, and paste into the Google Doc. -->
+<style>
+  body { max-width: 720px; margin: 40px auto; padding: 0 20px; font-family: "Times New Roman", Times, serif; font-size: 12pt; line-height: 1.4; color: #000; }
+  h2, h3 { font-family: "Times New Roman", Times, serif; font-weight: normal; }
+  h2 { font-size: 16pt; margin: 0 0 8pt; }
+  h3 { font-size: 13pt; margin: 14pt 0 4pt; }
+  p, li { margin: 0 0 6pt; }
+  ul { margin: 0 0 6pt; }
+  table { width: 100%; border-collapse: collapse; margin: 4pt 0 8pt; font-family: "Times New Roman", Times, serif; font-size: 12pt; }
+  th, td { border: 1px solid #000; padding: 3pt 5pt; text-align: left; vertical-align: top; }
+  thead th { font-weight: bold; }
+  tbody th { font-weight: normal; }
+</style>
+</head>
+<body>
+
+<h2>Milestone 6: Come up with a monetisation and pricing strategy</h2>
+
+<p>Linguini is freemium. The free plan limits the one thing that costs us money, AI analysing a learner’s own photo, and keeps the full learning loop free.</p>
+
+<p>For the full cost model, interactive charts and sources, see our blog post: <a href="https://linguini-landing.vercel.app/blog/linguini-business-model">linguini-landing.vercel.app/blog/linguini-business-model</a>.</p>
+
+<table>
+  <thead>
+    <tr><th>Tier</th><th>Price</th><th>Features</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Free</td><td>$0</td><td>1 uploaded scene a day, unlimited preloaded scenes, the full loop (vocabulary review, I Spy, object description, feedback, saved progress), 1 journal page a day</td></tr>
+    <tr><td>Plus</td><td>$7.99 a month or $49.99 a year</td><td>Up to 10 uploaded scenes a day, speaking feedback, review mode, 10 photos per journal page</td></tr>
+    <tr><td>Founding Plus</td><td>$34.99 a year, first 300 members</td><td>Everything in Plus, early access to new modes and a vote on the roadmap</td></tr>
+  </tbody>
+</table>
+
+<p>Speaking feedback and review mode are future features from Milestone 5, so we will only charge for Plus once they ship.</p>
+
+<h3>Why this suits our users</h3>
+<ul>
+  <li><b>Most learners never pay:</b> only 2.3% of education-app downloads convert to paid (RevenueCat, 2026), and many of our users are students. The free plan must be useful on its own and cheap for us to give away.</li>
+  <li><b>They learn in short moments:</b> one uploaded scene a day builds a daily habit without interrupting a lesson with a paywall.</li>
+  <li><b>The upgrade moment is clear:</b> a learner who wants more than one photo a day, on a trip or in a new city, is getting the most value, so that is when we ask them to pay.</li>
+</ul>
+
+<h3>Factors behind the price</h3>
+
+<table>
+  <thead>
+    <tr><th>Factor</th><th>What we found</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>AI inference cost</td><td>One uploaded scene costs about 2.0¢ with the models we chose after testing them on our own prompts (all called through OpenRouter). Learning tasks are half of that and scene analysis over a third. The cheapest models our app accepted bring it to 0.8¢, but they score lower today. Preloaded scenes are analysed once, so replaying one costs about 0.2¢.</td></tr>
+    <tr><td>Other costs</td><td>Hosting is a fixed $52–70 a month. Stripe keeps 3.4% + 50¢ per payment, so we push the annual plan. After fees, a Plus learner brings in about $5.24 a month.</td></tr>
+    <tr><td>Competition</td><td>CapWords charges $20–30 a year but stops at flashcards. Duolingo ($84–96), HelloTalk ($79.99) and Babbel ($108) charge more. Anki is free apart from a $24.99 iPhone app, but learners make their own cards. We sit between the two groups.</td></tr>
+    <tr><td>Perceived value</td><td>The closest alternative to describing your surroundings with feedback is a tutor at $15–60 an hour (italki). A year of Linguini should cost less than one or two lessons.</td></tr>
+    <tr><td>Our stage</td><td>Before launch, learners and retention matter more than margin. Hence the free core loop, the 48% annual discount and Founding Plus, which trades margin for early payers who tell us what to build.</td></tr>
+  </tbody>
+</table>
+
+<p>Cost sets the floor (about $15 a year per Plus learner), competitors set the range, and a tutor sets the ceiling. $49.99 a year sits close to the $44.99 education-app median.</p>
+
+<h3>How costs scale with usage</h3>
+
+<p>Because AI is paid per scene, costs grow with use, not with sign-ups. A free learner who uses their scene every day costs $0.64 a month; a typical Plus learner costs $0.74 against $5.24 of revenue. Only a Plus learner using all ten scenes every day loses money ($7.13 a month), which is why Plus is capped at ten rather than unlimited.</p>
+
+<p>The real cost is the free learners each payer supports: about 42 at 2.3% conversion. On the chosen models, Linguini breaks even when about 4% of learners pay, so our target is 4.5%, enough to cover AI and hosting from 5,000 learners a month. With the cheapest models it would break even at about 1.6%, but they need to pass our tests first. Before a wide launch we will fix the lesson format problem that stops a cheaper lesson model from passing, retest the cheaper models, enforce the daily limits on the server and track the cost of every AI call.</p>
+
+<table>
+  <thead>
+    <tr><th>AI call</th><th>Model (via OpenRouter)</th><th>Cost per scene, with retries</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Scene analysis</td><td>Claude Haiku 4.5</td><td>0.74¢</td></tr>
+    <tr><td>Translation</td><td>GPT-4o-mini</td><td>0.03¢</td></tr>
+    <tr><td>Learning tasks</td><td>GPT-5.4-mini</td><td>1.02¢</td></tr>
+    <tr><td>I Spy clues</td><td>Gemini 3.1 Flash-Lite</td><td>0.05¢</td></tr>
+    <tr><td>I Spy guesses (about 3)</td><td>GPT-4.1-mini</td><td>0.17¢</td></tr>
+    <tr><td>Total</td><td></td><td>2.0¢</td></tr>
+  </tbody>
+</table>
+
+<h3>Why freemium</h3>
+
+<table>
+  <thead>
+    <tr><th>Model</th><th>Decision</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Freemium with daily limits</td><td>Chosen. Learners try the whole loop, and the limit caps what a free learner costs.</td></tr>
+    <tr><td>Usage-based credits</td><td>Rejected. It matches cost exactly, but counting credits discourages a daily habit.</td></tr>
+    <tr><td>Flat subscription</td><td>Rejected. Students will not pay before trying.</td></tr>
+    <tr><td>Lifetime deal</td><td>Rejected. AI costs continue after the one payment.</td></tr>
+    <tr><td>Advertising</td><td>Rejected. It earns little at our size, and ads next to personal photos would hurt trust.</td></tr>
+  </tbody>
+</table>
+
+<h3>Revenue streams</h3>
+<ul>
+  <li><b>Now:</b> Plus and Founding Plus subscriptions, sold on the web to avoid app-store fees.</li>
+  <li><b>Later:</b> a family plan (about $79.99 a year for 4), classroom licences and printed journals.</li>
+</ul>
+
+<h3>What success means at each stage</h3>
+
+<table>
+  <thead>
+    <tr><th>Stage</th><th>Success metric</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Beta</td><td>Learners return for a second session within 7 days, and words move from “learning” to “mastered”</td></tr>
+    <tr><td>Launch year</td><td>300 Founding Plus members</td></tr>
+    <tr><td>Growth</td><td>4.5% of monthly learners paying</td></tr>
+  </tbody>
+</table>
+
+</body>
+</html>

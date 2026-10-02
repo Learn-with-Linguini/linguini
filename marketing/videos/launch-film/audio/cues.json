@@ -1,0 +1,77 @@
+{
+  "tempo_bpm": 120,
+  "duration_seconds": 30,
+  "sample_rate_hz": 44100,
+  "editorial_cuts_seconds": [
+    0,
+    2,
+    5,
+    8,
+    12,
+    16,
+    19,
+    23,
+    27,
+    30
+  ],
+  "effects": [
+    {
+      "time": 0,
+      "effect": "camera shutter"
+    },
+    {
+      "time": 2,
+      "effect": "soft scene move"
+    },
+    {
+      "time": 5,
+      "effect": "word-pop sequence, five pops at half-second intervals"
+    },
+    {
+      "time": 8,
+      "effect": "soft scene move"
+    },
+    {
+      "time": 12,
+      "effect": "soft scene move"
+    },
+    {
+      "time": 14.85,
+      "effect": "I-Spy correct click and paired ding"
+    },
+    {
+      "time": 16,
+      "effect": "music cut accent"
+    },
+    {
+      "time": 19,
+      "effect": "soft scene move"
+    },
+    {
+      "time": 19.2,
+      "effect": "seven restrained sentence-token taps through 21.0s, every 0.3s"
+    },
+    {
+      "time": 23,
+      "effect": "journal page turn"
+    },
+    {
+      "time": 27,
+      "effect": "four-note brand mnemonic to 29.5s"
+    }
+  ],
+  "levels": {
+    "music": {
+      "peak_dBFS": -9.4,
+      "rms_dBFS": -27.5
+    },
+    "sfx": {
+      "peak_dBFS": -9.9,
+      "rms_dBFS": -33.9
+    },
+    "preview": {
+      "peak_dBFS": -6.9,
+      "rms_dBFS": -26.6
+    }
+  }
+}

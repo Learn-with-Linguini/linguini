@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Linguini gallery 06 habit</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background: var(--pasta-soft); }
+  .col { position: absolute; left: 64px; top: 50%; transform: translateY(-50%); width: 540px; }
+  .headline { font-size: 86px; }
+  .support { margin-top: 22px; }
+  .cta { margin-top: 36px; }
+  .right {
+    position: absolute; right: 64px; top: 50%; transform: translateY(-50%);
+    width: 557px; display: flex; flex-direction: column; gap: 36px;
+  }
+  .pick { display: flex; align-items: center; gap: 36px; }
+</style>
+</head>
+<body>
+  <div class="col">
+    <h1 class="headline">Five minutes. <span class="hl">Every day.</span></h1>
+    <p class="support">Free to start. Keep the streak, pick your pasta.</p>
+    <div class="cta"><img class="ui" src="assets/cta-start.png" data-pad="16" data-scale="1.3"></div>
+  </div>
+  <div class="right">
+    <div><img class="ui" src="assets/feat-streak-900.png" data-pad="30" data-scale="1.5"></div>
+    <div class="pick">
+      <div><img class="ui" src="assets/pasta-disc-900.png" data-pad="30" data-scale="1.2"></div>
+      <div><img class="ui" src="assets/pasta-picker-900.png" data-pad="14" data-scale="1.16"></div>
+    </div>
+  </div>
+<script src="ui.js"></script>
+</body>
+</html>

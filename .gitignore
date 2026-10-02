@@ -1,0 +1,54 @@
+# Dependency and build output
+node_modules/
+dist/
+dist-ssr/
+
+# Tool caches
+.vite/
+__pycache__/
+.ruff_cache/
+.venv/
+marketing/media/.cache/
+.Rhistory
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Local environment and configuration
+*.local
+.env
+.env.*
+!.env.example
+
+# Local credentials (keep the setup templates tracked)
+.env
+.env.*
+!.env.example
+
+# Generated TypeScript build state and test coverage
+*.tsbuildinfo
+coverage/
+
+# Local database backups; never commit user data
+.local-backups/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Regenerated media intermediates
+marketing/media/export/teaser-frames/
+marketing/videos/launch-film/audio/preview_mix.wav

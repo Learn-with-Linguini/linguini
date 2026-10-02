@@ -1,0 +1,40 @@
+{
+  "case_id": "gender-trap-es",
+  "target_language": "es",
+  "scene_title": "Kitchen Shelf",
+  "scene_summary": "Water, a shelf, a tomato and a door, seen from the kitchen.",
+  "objects": [
+    {
+      "key": "object_1",
+      "source": "water"
+    },
+    {
+      "key": "object_2",
+      "source": "shelf"
+    },
+    {
+      "key": "object_3",
+      "source": "tomato"
+    },
+    {
+      "key": "object_4",
+      "source": "door"
+    },
+    {
+      "key": "object_5",
+      "source": "light"
+    },
+    {
+      "key": "object_6",
+      "source": "wall"
+    }
+  ],
+  "attributes": [],
+  "relationships": [],
+  "tags": [
+    "gender",
+    "edge-case",
+    "hard"
+  ],
+  "notes": "Spanish agua is feminine but takes el in the singular, so article and gender genuinely disagree and the two fields must not be derived from each other. shelf also has two valid readings with different genders (el estante, la estanteria), so gender is only correct relative to the word the model actually chose."
+}

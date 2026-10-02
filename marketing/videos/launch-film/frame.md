@@ -1,0 +1,3 @@
+# Linguini for motion
+
+Canvas 1920x1080, 30 fps, 30 seconds. Brand: cream #faf7ee, ink #243238, tomato #f65a32, teal #168583, gold #ffb51b. Headings Baloo 2 ExtraBold; body Nunito Sans Bold. Keep the narration captions in y=930..1020 and the small mascot in x=1670..1860, y=770..960. Main content stops at y=870. Warm paper surfaces, real photo texture, precise object markers, press-depth buttons. Alternate expansive photography, giant vocabulary, and tight UI crops. Use deliberate 120 BPM cuts with 180-300 ms accents; readable holds after reveals. No random movements, infinite animations, fabricated metrics or speech grading.

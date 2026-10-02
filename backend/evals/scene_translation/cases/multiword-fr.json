@@ -1,0 +1,39 @@
+{
+  "case_id": "multiword-fr",
+  "target_language": "fr",
+  "scene_title": "Desk",
+  "scene_summary": "A water bottle and a pencil case are on the desk, with a backpack under it.",
+  "objects": [
+    {
+      "key": "object_1",
+      "source": "water bottle"
+    },
+    {
+      "key": "object_2",
+      "source": "pencil case"
+    },
+    {
+      "key": "object_3",
+      "source": "backpack"
+    },
+    {
+      "key": "object_4",
+      "source": "desk"
+    }
+  ],
+  "attributes": [],
+  "relationships": [
+    {
+      "key": "relation_1",
+      "source": "on"
+    },
+    {
+      "key": "relation_2",
+      "source": "under"
+    }
+  ],
+  "tags": [
+    "multiword"
+  ],
+  "notes": "Multiword English labels must come back as a single bare noun with its own article, not as a phrase carrying one."
+}

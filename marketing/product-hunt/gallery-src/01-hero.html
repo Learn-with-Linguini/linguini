@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Linguini gallery 01 hero</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background: var(--butter); }
+  .print { position: absolute; }
+  .print img { transform-origin: center; }
+  .center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 560px;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .wordmark { height: 64px; margin-bottom: 34px; }
+  .headline { font-size: 88px; }
+  .support { margin-top: 30px; font-size: 26px; }
+  .toggle { margin-top: 28px; }
+</style>
+</head>
+<body>
+  <!-- Real hero prints, captured flat from the landing and re-rotated like the live ring. -->
+  <div class="print" style="left:64px; top:58px; rotate:-6deg"><img class="ui" src="assets/print-0.png" data-pad="64" data-scale="1.06"></div>
+  <div class="print" style="left:118px; top:300px; rotate:5deg"><img class="ui" src="assets/print-1.png" data-pad="64" data-scale="1.18"></div>
+  <div class="print" style="left:70px; top:552px; rotate:-3deg"><img class="ui" src="assets/print-2.png" data-pad="64" data-scale="1.06"></div>
+
+  <div class="print" style="right:66px; top:72px; rotate:6deg"><img class="ui" src="assets/print-4.png" data-pad="64" data-scale="1.04"></div>
+  <div class="print" style="right:118px; top:278px; rotate:-5deg"><img class="ui" src="assets/print-5.png" data-pad="64" data-scale="1.12"></div>
+  <div class="print" style="right:66px; top:500px; rotate:3deg"><img class="ui" src="assets/print-6.png" data-pad="64" data-scale="0.98"></div>
+
+  <div class="center">
+    <img class="wordmark" src="brand/linguini-wordmark.png" alt="Linguini">
+    <h1 class="headline">Learn the language of <span class="hl squiggle">your day.</span></h1>
+    <p class="support">Any photo becomes a five-minute lesson.</p>
+    <div class="toggle"><img class="ui" src="assets/lang-toggle.png" data-pad="12" data-scale="1.1"></div>
+  </div>
+<script src="ui.js"></script>
+</body>
+</html>

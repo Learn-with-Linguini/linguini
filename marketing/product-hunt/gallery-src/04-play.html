@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Linguini gallery 04 play</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background: var(--sage); }
+  .top { position: absolute; left: 64px; right: 64px; top: 64px; display: flex; align-items: baseline; justify-content: space-between; gap: 32px; }
+  .headline { font-size: 82px; white-space: nowrap; }
+  .support { max-width: 520px; text-align: right; }
+  .photo { position: absolute; left: 64px; bottom: 64px; }
+  .right {
+    position: absolute; right: 64px; bottom: 64px; height: 464px;
+    width: 400px; display: flex; flex-direction: column; justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+  <div class="top">
+    <h1 class="headline">I-Spy, <span class="hl">both ways.</span></h1>
+    <p class="support">Guess Linguini’s clue, then give one back.</p>
+  </div>
+  <div class="photo"><img class="ui" src="assets/s-ispy-photo.png" data-pad="56" data-scale="1.307"></div>
+  <div class="right">
+    <div><img class="ui" src="assets/s-ispy-says.png" data-pad="48" data-scale="1.05"></div>
+    <div><img class="ui" src="assets/s-ispy-choices.png" data-pad="20" data-scale="1.05"></div>
+    <div><img class="ui" src="assets/s-ispy-feedback.png" data-pad="12" data-scale="1.05"></div>
+  </div>
+<script src="ui.js"></script>
+</body>
+</html>

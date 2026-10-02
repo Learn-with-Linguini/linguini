@@ -1,0 +1,166 @@
+{
+  "case_id": "classroom-unusable",
+  "image": "images/classroom-unusable.jpg",
+  "difficulty": "unusable",
+  "tags": [
+    "indoor",
+    "unusable",
+    "fallback"
+  ],
+  "derived_from": "classroom-clean",
+  "notes": "Mean luminance 11/255, stddev 4. Nothing is recoverable. The only correct answer is an empty objects array. Any object returned here is a pure hallucination and is the single most damaging failure in the whole set: it would teach a learner a word for something that is not there.",
+  "expectation": {
+    "mode": "empty",
+    "scene_title_accept": [],
+    "anchors": [],
+    "acceptable": [
+      {
+        "canonical": "bookshelf",
+        "accept": [
+          "book shelf",
+          "shelf",
+          "shelving",
+          "bookcase"
+        ]
+      },
+      {
+        "canonical": "book",
+        "accept": [
+          "books",
+          "textbook"
+        ]
+      },
+      {
+        "canonical": "water bottle",
+        "accept": [
+          "bottle",
+          "drink bottle",
+          "flask"
+        ]
+      },
+      {
+        "canonical": "pencil case",
+        "accept": [
+          "pencil pouch"
+        ]
+      },
+      {
+        "canonical": "backpack",
+        "accept": [
+          "rucksack",
+          "school bag",
+          "bag"
+        ]
+      },
+      {
+        "canonical": "notebook",
+        "accept": [
+          "exercise book",
+          "workbook"
+        ]
+      },
+      {
+        "canonical": "window",
+        "accept": [
+          "windows"
+        ]
+      },
+      {
+        "canonical": "potted plant",
+        "accept": [
+          "plant",
+          "houseplant",
+          "pot plant"
+        ]
+      },
+      {
+        "canonical": "apple",
+        "accept": []
+      },
+      {
+        "canonical": "orange",
+        "accept": [
+          "tangerine"
+        ]
+      },
+      {
+        "canonical": "pen",
+        "accept": []
+      },
+      {
+        "canonical": "pencil",
+        "accept": []
+      },
+      {
+        "canonical": "paper",
+        "accept": [
+          "sheet of paper",
+          "worksheet"
+        ]
+      },
+      {
+        "canonical": "cabinet",
+        "accept": [
+          "cupboard",
+          "drawer unit"
+        ]
+      },
+      {
+        "canonical": "noticeboard",
+        "accept": [
+          "notice board",
+          "pinboard",
+          "poster"
+        ]
+      },
+      {
+        "canonical": "glasses",
+        "accept": [
+          "eyeglasses",
+          "spectacles"
+        ]
+      },
+      {
+        "canonical": "radiator",
+        "accept": []
+      },
+      {
+        "canonical": "floor",
+        "accept": []
+      },
+      {
+        "canonical": "wall",
+        "accept": []
+      },
+      {
+        "canonical": "ceiling",
+        "accept": []
+      }
+    ],
+    "relations": [],
+    "forbidden_labels": [
+      "person",
+      "people",
+      "man",
+      "woman",
+      "boy",
+      "girl",
+      "child",
+      "children",
+      "kid",
+      "student",
+      "pupil",
+      "teacher",
+      "shopper",
+      "customer",
+      "worker",
+      "shopkeeper",
+      "face",
+      "hair",
+      "hand",
+      "adult"
+    ],
+    "min_objects": 0,
+    "max_objects": 0
+  }
+}

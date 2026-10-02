@@ -1,0 +1,241 @@
+{
+  "case_id": "grocery-low-res",
+  "image": "images/grocery-low-res.jpg",
+  "difficulty": "hard",
+  "tags": [
+    "indoor",
+    "cluttered",
+    "low-resolution"
+  ],
+  "derived_from": "grocery-clean",
+  "notes": "Downscaled to 200px wide and back up. Large structure survives; individual items do not.",
+  "expectation": {
+    "mode": "objects",
+    "scene_title_accept": [
+      "grocery store",
+      "grocery shop",
+      "supermarket",
+      "market",
+      "corner shop",
+      "convenience store",
+      "food shop",
+      "greengrocer",
+      "produce market",
+      "shop",
+      "store",
+      "mini market",
+      "minimart",
+      "market stall"
+    ],
+    "anchors": [
+      {
+        "canonical": "shelf",
+        "accept": [
+          "shelving",
+          "shelves",
+          "rack",
+          "display stand"
+        ]
+      }
+    ],
+    "acceptable": [
+      {
+        "canonical": "orange",
+        "accept": [
+          "tangerine",
+          "clementine",
+          "citrus"
+        ]
+      },
+      {
+        "canonical": "apple",
+        "accept": []
+      },
+      {
+        "canonical": "tomato",
+        "accept": []
+      },
+      {
+        "canonical": "onion",
+        "accept": [
+          "onions",
+          "red onion"
+        ]
+      },
+      {
+        "canonical": "potato",
+        "accept": []
+      },
+      {
+        "canonical": "garlic",
+        "accept": []
+      },
+      {
+        "canonical": "bin",
+        "accept": [
+          "rubbish bin",
+          "trash can",
+          "garbage can",
+          "waste bin",
+          "dustbin"
+        ]
+      },
+      {
+        "canonical": "doormat",
+        "accept": [
+          "mat",
+          "floor mat",
+          "rug",
+          "carpet"
+        ]
+      },
+      {
+        "canonical": "paper towel",
+        "accept": [
+          "kitchen roll",
+          "paper roll",
+          "tissue roll"
+        ]
+      },
+      {
+        "canonical": "bag",
+        "accept": [
+          "sack",
+          "net bag",
+          "plastic bag"
+        ]
+      },
+      {
+        "canonical": "packet",
+        "accept": [
+          "package",
+          "pack"
+        ]
+      },
+      {
+        "canonical": "ceiling light",
+        "accept": [
+          "light",
+          "lamp",
+          "strip light"
+        ]
+      },
+      {
+        "canonical": "sign",
+        "accept": [
+          "signage",
+          "poster",
+          "banner"
+        ]
+      },
+      {
+        "canonical": "price tag",
+        "accept": [
+          "label",
+          "price label"
+        ]
+      },
+      {
+        "canonical": "bottle",
+        "accept": []
+      },
+      {
+        "canonical": "jar",
+        "accept": []
+      },
+      {
+        "canonical": "can",
+        "accept": [
+          "tin"
+        ]
+      },
+      {
+        "canonical": "pillar",
+        "accept": [
+          "post",
+          "column",
+          "pole"
+        ]
+      },
+      {
+        "canonical": "fruit",
+        "accept": []
+      },
+      {
+        "canonical": "vegetable",
+        "accept": [
+          "produce"
+        ]
+      },
+      {
+        "canonical": "bean",
+        "accept": [
+          "green bean",
+          "beans"
+        ]
+      },
+      {
+        "canonical": "pear",
+        "accept": []
+      },
+      {
+        "canonical": "nut",
+        "accept": [
+          "nuts"
+        ]
+      },
+      {
+        "canonical": "egg",
+        "accept": [
+          "eggs"
+        ]
+      },
+      {
+        "canonical": "freezer",
+        "accept": [
+          "fridge",
+          "refrigerator",
+          "chiller"
+        ]
+      },
+      {
+        "canonical": "floor",
+        "accept": []
+      },
+      {
+        "canonical": "ceiling",
+        "accept": []
+      },
+      {
+        "canonical": "wall",
+        "accept": []
+      }
+    ],
+    "relations": [],
+    "forbidden_labels": [
+      "person",
+      "people",
+      "man",
+      "woman",
+      "boy",
+      "girl",
+      "child",
+      "children",
+      "kid",
+      "student",
+      "pupil",
+      "teacher",
+      "shopper",
+      "customer",
+      "worker",
+      "shopkeeper",
+      "face",
+      "hair",
+      "hand",
+      "adult"
+    ],
+    "min_objects": 1,
+    "max_objects": 6,
+    "max_confidence": 0.8
+  }
+}

@@ -1,0 +1,119 @@
+{
+  "title": "Linguini — Learn the language of your day",
+  "version": "curated-demo-30s",
+  "duration_seconds": 30,
+  "bpm": 120,
+  "seconds_per_beat": 0.5,
+  "narrator": "small cheerful Linguini bowl mascot avatar, lower right, mouth synced to English voiceover",
+  "source_scene": "hillside-street",
+  "source_url": "https://linguini-landing.vercel.app/",
+  "destination_url": "https://linguini-landing.vercel.app/",
+  "voiceover_words": 70,
+  "voiceover": "That red car has another name. El coche in Spanish. La voiture in French. The street hasn't changed. The words have. Pick the words you want. Hear them in context. Now Linguini plays I-Spy. Can you find that car? Next, turn those words into a sentence. Build it word by word. Get it right. Then watch this street become a journal page. Try Linguini. Learn the language of your day.",
+  "music": {
+    "description": "upbeat 120 BPM instrumental with a distinct hit on every visual transition",
+    "start_seconds": 0,
+    "end_seconds": 30,
+    "voiceover_ducking": "keep music clearly below narration",
+    "final_stop_seconds": 30
+  },
+  "shots": [
+    {
+      "start_seconds": 0,
+      "end_seconds": 2,
+      "start_beat": 0,
+      "end_beat": 4,
+      "voiceover": "That red car has another name.",
+      "headline": "That red car…",
+      "visual": "Cold open on red car in real hillside-street demo photograph; quick outline and 10% push-in; mascot avatar enters lower right.",
+      "sound": "shutter on beat 0; bass cut hit at 2.0"
+    },
+    {
+      "start_seconds": 2,
+      "end_seconds": 5,
+      "start_beat": 4,
+      "end_beat": 10,
+      "voiceover": "El coche in Spanish. La voiture in French.",
+      "headline": "el coche / la voiture",
+      "visual": "Two readable vocabulary flips over the same car, Spanish then French, using demo language toggle and actual terms.",
+      "sound": "pitched pops on flips; bright cut hit at 5.0"
+    },
+    {
+      "start_seconds": 5,
+      "end_seconds": 8,
+      "start_beat": 10,
+      "end_beat": 16,
+      "voiceover": "The street hasn't changed. The words have.",
+      "headline": "Same street. New words.",
+      "visual": "Pull back to full hillside-street photo; actual word markers appear on car, house, flowers, and street.",
+      "sound": "marker pops in rhythm; downbeat cut hit at 8.0"
+    },
+    {
+      "start_seconds": 8,
+      "end_seconds": 12,
+      "start_beat": 16,
+      "end_beat": 24,
+      "voiceover": "Pick the words you want. Hear them in context.",
+      "headline": "Choose. Hear. Remember.",
+      "visual": "Record demo review screen selecting words, then one word card and audio-button tap.",
+      "sound": "selection tick and quiet audio ping; cut hit at 12.0"
+    },
+    {
+      "start_seconds": 12,
+      "end_seconds": 16,
+      "start_beat": 24,
+      "end_beat": 32,
+      "voiceover": "Now Linguini plays I-Spy. Can you find that car?",
+      "headline": "I-Spy: find the car",
+      "visual": "Actual Spanish I-Spy clue and choices; pointer finds red car and selects el coche; show correct-answer reaction.",
+      "sound": "brief beat drop, answer chime, cut hit at 16.0"
+    },
+    {
+      "start_seconds": 16,
+      "end_seconds": 19,
+      "start_beat": 32,
+      "end_beat": 38,
+      "voiceover": "Next, turn those words into a sentence.",
+      "headline": "Words become a sentence",
+      "visual": "Actual gap sentence; choose flores, then whip-pan into sentence builder.",
+      "sound": "two key taps; cut hit at 19.0"
+    },
+    {
+      "start_seconds": 19,
+      "end_seconds": 23,
+      "start_beat": 38,
+      "end_beat": 46,
+      "voiceover": "Build it word by word. Get it right.",
+      "headline": "El coche rojo…",
+      "visual": "Arrange actual builder tokens into El coche rojo está en la calle.; hold completed line for readability.",
+      "sound": "tokens land on eighth notes; resolve chord and cut hit at 23.0"
+    },
+    {
+      "start_seconds": 23,
+      "end_seconds": 27,
+      "start_beat": 46,
+      "end_beat": 54,
+      "voiceover": "Then watch this street become a journal page.",
+      "headline": "A page for this moment",
+      "visual": "Transition to sample demo journal page with same street photograph and Spanish writing; hold one second.",
+      "sound": "open chord, page turn, cut hit at 27.0"
+    },
+    {
+      "start_seconds": 27,
+      "end_seconds": 30,
+      "start_beat": 54,
+      "end_beat": 60,
+      "voiceover": "Try Linguini. Learn the language of your day.",
+      "headline": "Try the mini session",
+      "secondary_text": "linguini-landing.vercel.app",
+      "visual": "Clean end card; mascot avatar grows into brand logo; wordmark, URL, and one CTA.",
+      "sound": "three-second musical lift, final hit and hard clean stop at 30.0"
+    }
+  ],
+  "truth_constraints": [
+    "Show the landing site's curated hillside-street demo rather than an invented live upload analysis.",
+    "Describe the journal screen as a sample demo page; do not imply account persistence.",
+    "Do not imply voice recognition or speech grading.",
+    "Keep full accessible narration captions in addition to short headline overlays."
+  ]
+}

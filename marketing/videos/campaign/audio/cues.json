@@ -1,0 +1,33 @@
+{
+  "tempo_bpm": 120,
+  "beat_grid_seconds": 0.5,
+  "sample_rate_hz": 32000,
+  "versions": {
+    "30": {
+      "tense_end": 6.0,
+      "build_end": 18.0,
+      "lift_end": 25.0,
+      "cta": 26.0
+    },
+    "20": {
+      "tense_end": 3.0,
+      "build_end": 11.0,
+      "lift_end": 15.0,
+      "cta": 16.0
+    },
+    "15": {
+      "tense_end": 2.0,
+      "build_end": 7.0,
+      "lift_end": 10.0,
+      "cta": 11.0
+    },
+    "6": {
+      "tense_end": 0.5,
+      "build_end": 0.5,
+      "lift_end": 1.0,
+      "cta": 2.0
+    }
+  },
+  "notes": "Each cutdown is composed separately; CTA occupies its final four seconds after a one-second music drop.",
+  "rights": "Original procedural score and SFX. No third-party samples or recordings."
+}
