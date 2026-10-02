@@ -9,15 +9,6 @@
 
 **Live application:** [Open Linguini](https://linguini-navy.vercel.app/) &nbsp;·&nbsp; **Landing page:** [linguini-landing](https://linguini-landing.vercel.app)
 
-## Group members
-
-| Matriculation number | Name | GitHub | Contribution to the assignment |
-| --- | --- | --- | --- |
-| `A0312075N` | `Jain Ananya` | [@ananyaj1515](https://github.com/ananyaj1515) | `Idea, Branding, Frontend (UI/UX), AI Core Tech, Pitch` |
-| `A0286908L` | `Govindaraj Roshni Daksha` | [@roshnidaksha](https://github.com/roshnidaksha) | `Backend API, Database, AI Core Tech` |
-| `A0307648W` | `Madrid Lim` | [@StarlightsJourney](https://github.com/StarlightsJourney) | `Landing Page, Marketing, User Analytics, Evaluation Dataset` |
-| `A0310636M` | `Shamit Gupta` | [@ShamitGupta](https://github.com/ShamitGupta) | `AI Model Analysis, OpenRouter Integration` |
-
 ## What Linguini is
 
 Most language apps teach a fixed syllabus of words you may never use. Linguini starts
