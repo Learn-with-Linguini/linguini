@@ -2,6 +2,7 @@
 
 import logging
 import os
+import threading
 from typing import Annotated
 from uuid import UUID
 
@@ -14,16 +15,8 @@ from app.ai import (
     load_ai_settings,
 )
 from app.ai.features.object_grounding import ObjectGroundingError
-from app.ai.features.scene_analysis import RoutedSceneAnalyzer
-from app.ai.registry import (
-    build_image_moderator,
-    build_ispy_clue_generator,
-    build_ispy_guess_generator,
-    build_learning_task_generator,
-    build_object_grounder,
-    build_scene_translator,
-    build_uploaded_scene_analyzer,
-)
+from app.ai.registry import build_image_moderator, build_object_grounder
+from app.ai.runtime import AiRuntime
 from app.api.auth import get_current_user_id
 from app.config import get_media_public_base_url, get_private_media_urls
 from app.repositories.journals import JournalRepository
@@ -52,7 +45,6 @@ from app.services.language_profiles import LanguageProfileService
 from app.services.learning import LearningService
 from app.services.media_assets import MediaAssetService
 from app.services.practice import PracticeService
-from app.services.scene_analysis import DeterministicSceneAnalyzer
 from app.services.scenes import SceneService
 from app.services.tasks import TaskService
 from app.services.users import UserService
@@ -133,6 +125,7 @@ _OBJECT_GROUNDER_UNINITIALIZED = object()
 _OBJECT_GROUNDER = _OBJECT_GROUNDER_UNINITIALIZED
 _IMAGE_MODERATOR_UNINITIALIZED = object()
 _IMAGE_MODERATOR = _IMAGE_MODERATOR_UNINITIALIZED
+_AI_RUNTIME_LOCK = threading.Lock()
 logger = logging.getLogger(__name__)
 
 
@@ -214,44 +207,34 @@ def get_ai_tracer(request: Request) -> AITracer:
     return getattr(request.app.state, "ai_tracer", None) or NoOpAITracer()
 
 
+def get_ai_runtime(request: Request) -> AiRuntime:
+    """The app-scoped AI runtime, rebuilt only if the app's settings or tracer change."""
+    settings = get_ai_settings(request)
+    tracer = get_ai_tracer(request)
+    with _AI_RUNTIME_LOCK:
+        runtime = getattr(request.app.state, "ai_runtime", None)
+        if runtime is None or runtime.settings is not settings or runtime.tracer is not tracer:
+            runtime = AiRuntime(
+                settings,
+                tracer,
+                storage=ImageStorage(
+                    os.getenv("SUPABASE_URL", "").strip(),
+                    os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip(),
+                ),
+                object_grounder=get_object_grounder(request, settings),
+                image_moderator=get_image_moderator(request, settings),
+            )
+            request.app.state.ai_runtime = runtime
+        return runtime
+
+
 def get_practice_repository(
     request: Request, user_id: Annotated[UUID, Depends(get_current_user_id)]
 ) -> PostgresWorkflowRepository:
-    engine = request.app.state.database_engine
-    settings = get_ai_settings(request)
-    deterministic = DeterministicSceneAnalyzer(engine)
-    analyzer = deterministic
-    storage = ImageStorage(
-        os.getenv("SUPABASE_URL", "").strip(),
-        os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip(),
-    )
-
-    tracer = get_ai_tracer(request)
-    object_grounder = get_object_grounder(request, settings)
-    image_moderator = get_image_moderator(request, settings)
-    uploaded_analyzer = build_uploaded_scene_analyzer(
-        settings,
-        storage,
-        tracer,
-        object_grounder=object_grounder,
-        image_moderator=image_moderator,
-    )
-    if uploaded_analyzer:
-        analyzer = RoutedSceneAnalyzer(deterministic, uploaded_analyzer)
-
-    translator = build_scene_translator(settings, tracer)
-
-    learning_task_generator = build_learning_task_generator(settings, tracer)
-
-    ispy_clue_generator = build_ispy_clue_generator(settings, tracer)
     return PostgresWorkflowRepository(
-        engine,
+        request.app.state.database_engine,
         user_id,
-        analyzer=analyzer,
-        translator=translator,
-        learning_task_generator=learning_task_generator,
-        ispy_clue_generator=ispy_clue_generator,
-        ispy_guess_generator=build_ispy_guess_generator(settings, tracer),
+        ai=get_ai_runtime(request),
         background=getattr(request.app.state, "background_runner", None),
     )
 
@@ -271,9 +254,7 @@ def get_task_service(
         PostgresTaskRepository(request.app.state.database_engine),
         users,
         request.app.state.database_engine,
-        ispy_guess_generator=build_ispy_guess_generator(
-            get_ai_settings(request), get_ai_tracer(request)
-        ),
+        ai=get_ai_runtime(request),
     )
 
 

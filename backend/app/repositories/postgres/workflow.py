@@ -1,10 +1,12 @@
 """Atomic normalized session workflow. Locks serialize each user's transitions."""
 
 import logging
+import time
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import timedelta
-from typing import Any
+from functools import partial
 from uuid import UUID, uuid5
 
 from sqlalchemy import DateTime, and_, delete, func, insert, select, update
@@ -14,6 +16,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.ai.features.ispy_clues import ISpyClueGenerationError
 from app.ai.features.ispy_guess import ISpyGuessError, ISpyGuessResult
 from app.ai.features.learning_tasks import required_task_focuses
+from app.ai.features.scene_analysis import RoutedSceneAnalyzer
 from app.repositories.postgres.language_profiles import language_profiles
 from app.repositories.postgres.media_assets import media_assets
 from app.repositories.postgres.practice import sessions
@@ -59,6 +62,7 @@ from app.schemas.tasks import (
     TaskActionResponse,
     TaskAttempt,
 )
+from app.schemas.translation import SceneTranslationResult
 from app.schemas.vocabulary import (
     VocabularyEncounter,
     VocabularyItem,
@@ -208,7 +212,9 @@ class GenerationClaim:
     revision: int
     session: Session
     profile: dict
-    detail: Any
+    title: str
+    objects: list[SceneObject]
+    relations: list[SceneObjectRelation]
 
 
 @dataclass(frozen=True)
@@ -228,7 +234,50 @@ class DescriptionEvaluation:
     guess: ISpyGuessResult | None
 
 
+@contextmanager
+def _timed(stage, session_id):
+    started = time.perf_counter()
+    try:
+        yield
+    finally:
+        logger.info(
+            "Task generation %s took %.0f ms for session %s.",
+            stage,
+            (time.perf_counter() - started) * 1000,
+            session_id,
+        )
+
+
+def _scene_title(session, scene):
+    return session.session_title or (scene["title"] if scene else "Your uploaded photo")
+
+
+def _translation_preview(session):
+    preview = (session.analysis_draft or {}).get("translationPreview")
+    return SceneTranslationResult.model_validate(preview) if preview else None
+
+
+def _ai_provider(name):
+    """A provider passed in directly, or built on first use by the shared AI runtime."""
+
+    def get(self):
+        provider = self._providers.get(name)
+        if provider is None and self.ai is not None:
+            return getattr(self.ai, name)()
+        return provider
+
+    def set(self, value):
+        self._providers[name] = value
+
+    return property(get, set)
+
+
 class PostgresWorkflowRepository:
+    translator = _ai_provider("translator")
+    learning_task_generator = _ai_provider("learning_task_generator")
+    ispy_clue_generator = _ai_provider("ispy_clue_generator")
+    ispy_guess_generator = _ai_provider("ispy_guess_generator")
+
     def __init__(
         self,
         engine,
@@ -239,17 +288,35 @@ class PostgresWorkflowRepository:
         ispy_clue_generator=None,
         ispy_guess_generator=None,
         background=None,
+        ai=None,
     ):
         self.engine, self.user_id = engine, user_id
-        self.analyzer = analyzer or DeterministicSceneAnalyzer(engine)
+        self.ai = ai
+        self._providers = {}
+        self._analyzer = analyzer
         self.translator = translator
         self.learning_task_generator = learning_task_generator
         self.ispy_clue_generator = ispy_clue_generator
         self.ispy_guess_generator = ispy_guess_generator
         self.background = background or InlineBackgroundRunner()
 
+    @property
+    def analyzer(self):
+        if self._analyzer is None:
+            deterministic = DeterministicSceneAnalyzer(self.engine)
+            uploaded = self.ai.uploaded_scene_analyzer() if self.ai else None
+            self._analyzer = (
+                RoutedSceneAnalyzer(deterministic, uploaded) if uploaded else deterministic
+            )
+        return self._analyzer
+
+    @analyzer.setter
+    def analyzer(self, value):
+        self._analyzer = value
+
     @contextmanager
     def transaction(self):
+        started = time.perf_counter()
         try:
             with self.engine.begin() as connection:
                 if (
@@ -262,6 +329,11 @@ class PostgresWorkflowRepository:
                 yield connection
         except SQLAlchemyError as exc:
             raise PracticeStorageError("Unable to save the session workflow.") from exc
+        finally:
+            logger.debug(
+                "Workflow transaction held the user lock for %.1f ms.",
+                (time.perf_counter() - started) * 1000,
+            )
 
     @contextmanager
     def read_connection(self):
@@ -365,7 +437,7 @@ class PostgresWorkflowRepository:
                 correct_option_id=correct_option_id,
             )
 
-    def _detail(self, c, session):
+    def _scene_media(self, c, session):
         asset = MediaAsset.model_validate(
             dict(
                 c.execute(
@@ -386,6 +458,9 @@ class PostgresWorkflowRepository:
             if asset.source == "preloaded"
             else None
         )
+        return asset, scene
+
+    def _scene_objects(self, c, session):
         draft = session.analysis_draft
         use_draft = bool(draft) and session.status in {
             "created",
@@ -426,6 +501,9 @@ class PostgresWorkflowRepository:
                             {k: row[f"r_{k}"] for k in SceneObjectRelation.model_fields}
                         )
                     )
+        return objects, relations
+
+    def _vocabulary(self, c, session, objects):
         ids = [o.vocabulary_item_id for o in objects if o.vocabulary_item_id]
         words = []
         translations = []
@@ -466,12 +544,19 @@ class PostgresWorkflowRepository:
                             {k: row[f"t_{k}"] for k in VocabularyTranslation.model_fields}
                         )
                     )
+        return words, translations
+
+    def _detail(self, c, session):
+        asset, scene = self._scene_media(c, session)
+        objects, relations = self._scene_objects(c, session)
+        words, translations = self._vocabulary(c, session, objects)
+        draft = session.analysis_draft
         tasks = self._tasks(c, session.id)
         return SessionDetailResponse(
             session=session,
             media_asset=asset,
             scene_id=scene["slug"] if scene else None,
-            title=session.session_title or (scene["title"] if scene else "Your uploaded photo"),
+            title=_scene_title(session, scene),
             analysis_mode=None if asset.source == "preloaded" else "placeholder",
             scene_objects=objects,
             scene_object_relations=relations,
@@ -1001,13 +1086,17 @@ class PostgresWorkflowRepository:
                 .mappings()
                 .one()
             )
+            _asset, scene = self._scene_media(c, session)
+            objects, relations = self._scene_objects(c, session)
             return GenerationClaim(
                 session_id,
                 profile_id,
                 revision,
                 session,
                 dict(profile),
-                self._detail(c, session),
+                _scene_title(session, scene),
+                objects,
+                relations,
             )
 
     def _current_generation(self, c, claim):
@@ -1030,17 +1119,17 @@ class PostgresWorkflowRepository:
         Model calls run with no transaction or user lock open. Each write first
         checks that ``claim`` is still the session's current generation.
         """
-        session_id, profile, detail = claim.session_id, claim.profile, claim.detail
+        session_id, profile = claim.session_id, claim.profile
         session = claim.session
         lessons = []
         ispy_clues = []
         ispy_descriptions = []
         introduction_id = None
-        objects = list(detail.scene_objects)
+        objects, relations = list(claim.objects), claim.relations
         if self.translator:
             payload = {
                 "targetLanguage": profile["target_language_code"],
-                "sceneTitle": session.session_title or detail.title,
+                "sceneTitle": claim.title,
                 "sceneSummary": session.session_summary or "Confirmed scene vocabulary.",
                 "objects": [
                     {"key": str(obj.id), "source": obj.label} for obj in objects
@@ -1056,10 +1145,11 @@ class PostgresWorkflowRepository:
                 ],
                 "relationships": [
                     {"key": str(row.id), "source": row.relation}
-                    for row in detail.scene_object_relations
+                    for row in relations
                 ],
             }
-            translated_scene = self.translator.translate(payload)
+            with _timed("translation", session_id):
+                translated_scene = self.translator.translate(payload)
 
         # Checkpoint: commit translations and task 1 before the slower lesson
         # and clue calls, so the learner can start while tasks are built.
@@ -1080,7 +1170,6 @@ class PostgresWorkflowRepository:
                     update(sessions).where(sessions.c.id == session.id)
                     .values(analysis_draft=draft)
                 )
-                session = self._session(c, session_id, claim.profile_id)
                 translated_objects = {row.key: row for row in translated_scene.objects}
                 for obj in objects:
                     translated = translated_objects[str(obj.id)]
@@ -1098,10 +1187,12 @@ class PostgresWorkflowRepository:
                         .where(scene_objects.c.id == obj.id)
                         .values(vocabulary_item_id=word.id)
                     )
-            detail = self._detail(c, session)
-            objects = list(detail.scene_objects)
-            words_by_id = {word.id: word for word in detail.vocabulary}
-            translations_by_id = {word.vocabulary_item_id: word for word in detail.translations}
+            objects, relations = self._scene_objects(c, session)
+            vocabulary, vocabulary_translations = self._vocabulary(c, session, objects)
+            words_by_id = {word.id: word for word in vocabulary}
+            translations_by_id = {
+                word.vocabulary_item_id: word for word in vocabulary_translations
+            }
             if any(
                 obj.vocabulary_item_id not in words_by_id
                 or obj.vocabulary_item_id not in translations_by_id
@@ -1116,7 +1207,7 @@ class PostgresWorkflowRepository:
                 words,
                 translations,
                 False,
-                getattr(detail, "translation_preview", None),
+                translated_scene if self.translator else _translation_preview(session),
             )
             introduction = next(
                 task for task in rebuilt if task.kind == "vocabularyIntroduction"
@@ -1146,39 +1237,14 @@ class PostgresWorkflowRepository:
                     )
 
         if self.translator:
-            if self.learning_task_generator:
-                try:
-                    lessons = build_grammar_lessons(
-                        session_id,
-                        self.learning_task_generator.generate(
-                            _learning_task_payload(
-                                payload, translated_scene, detail.scene_object_relations
-                            )
-                        ),
-                    )
-                except Exception:
-                    logger.exception(
-                        "Learning-task generation failed for session %s; "
-                        "using the deterministic lesson plan.", session_id,
-                    )
-            if self.ispy_clue_generator:
-                try:
-                    ispy_clues = build_ispy_clue_tasks(
-                        session_id,
-                        self.ispy_clue_generator.generate(
-                            _ispy_clue_payload(
-                                payload, translated_scene, objects, detail.scene_object_relations
-                            )
-                        ),
-                        objects, words,
-                    )
-                except ISpyClueGenerationError:
-                    logger.exception("I-Spy clue generation failed for session %s.", session_id)
+            lessons, ispy_clues = self._lessons_and_clues(
+                session_id, payload, translated_scene, objects, words, relations
+            )
             if self.ispy_guess_generator:
                 ispy_descriptions = build_ispy_description_tasks(
                     session_id, objects, words,
                     _ispy_guess_context(
-                        payload, translated_scene, objects, detail.scene_object_relations
+                        payload, translated_scene, objects, relations
                     ),
                 )
 
@@ -1210,6 +1276,57 @@ class PostgresWorkflowRepository:
                     .on_conflict_do_nothing(index_elements=["id"])
                 )
             self._transition(c, session, "inProgress")
+
+    def _lessons(self, session_id, payload, translated_scene, relations):
+        if not self.learning_task_generator:
+            return []
+        try:
+            with _timed("learning-task generation", session_id):
+                return build_grammar_lessons(
+                    session_id,
+                    self.learning_task_generator.generate(
+                        _learning_task_payload(payload, translated_scene, relations)
+                    ),
+                )
+        except Exception:
+            logger.exception(
+                "Learning-task generation failed for session %s; "
+                "using the deterministic lesson plan.", session_id,
+            )
+            return []
+
+    def _clues(self, session_id, payload, translated_scene, objects, words, relations):
+        if not self.ispy_clue_generator:
+            return []
+        try:
+            with _timed("I-Spy clue generation", session_id):
+                return build_ispy_clue_tasks(
+                    session_id,
+                    self.ispy_clue_generator.generate(
+                        _ispy_clue_payload(payload, translated_scene, objects, relations)
+                    ),
+                    objects, words,
+                )
+        except ISpyClueGenerationError:
+            logger.exception("I-Spy clue generation failed for session %s.", session_id)
+            return []
+
+    def _lessons_and_clues(self, session_id, payload, translated_scene, objects, words, relations):
+        """Run the two independent generation calls at once, each with its own fallback.
+
+        The clue call runs on a one-thread executor owned by this job rather than
+        the shared background pool, so each job adds at most one thread and a
+        saturated pool cannot deadlock waiting on itself.
+        """
+        lessons = partial(self._lessons, session_id, payload, translated_scene, relations)
+        clues = partial(
+            self._clues, session_id, payload, translated_scene, objects, words, relations
+        )
+        if not (self.learning_task_generator and self.ispy_clue_generator):
+            return lessons(), clues()
+        with ThreadPoolExecutor(max_workers=1, thread_name_prefix="ispy-clues") as pool:
+            pending = pool.submit(clues)
+            return lessons(), pending.result()
 
     def finish(self, session_id, profile_id, abandon=False):
         with self.transaction() as c:

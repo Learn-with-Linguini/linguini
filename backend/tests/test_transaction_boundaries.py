@@ -37,6 +37,8 @@ class NoTransactionProbe:
         self.user_id = user_id
         self.open = {}
         self.calls = 0
+        # Concurrent provider calls must not trip over each other's lock checks.
+        self._lock_check = threading.Lock()
         self.listeners = [
             ("begin", self._begin),
             ("commit", self._end),
@@ -58,7 +60,7 @@ class NoTransactionProbe:
         )
         if lock:
             # Raises if any connection still holds the per-user row lock.
-            with self.engine.connect() as connection:
+            with self._lock_check, self.engine.connect() as connection:
                 connection.execute(
                     select(users.c.id)
                     .where(users.c.id == self.user_id)

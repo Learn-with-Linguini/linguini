@@ -310,6 +310,36 @@ Tables use UUID identities and timezone-aware timestamps. Migrations define fore
 keys, checks, update triggers, RLS, and revoked browser-role grants. All access is
 through backend repositories; the frontend must not query these tables directly.
 
+### Backend performance
+
+Measured with `tests/test_performance.py` and a profiling run against local
+PostgreSQL. All five AI features were configured with test keys, and fake
+lesson and clue models each took 0.3 s.
+
+| Measurement | Before | After |
+| --- | --- | --- |
+| AI clients built per `GET /sessions/{id}` or `/sessions/active` | 5, on every request | 0; each client is built once per process, on first use |
+| Queries per `GET /sessions/{id}` / `/sessions/active` | 7 / 8 | 7 / 8 (no repeated reads found) |
+| Review until all tasks are ready | 0.85 s | 0.55 s |
+| Queries for review plus task generation | 57 | 51 |
+| Longest write transaction during generation | 18–22 ms | 19 ms |
+
+- `AiRuntime` (`app/ai/runtime.py`) is stored on `app.state` and shared by every
+  request. It builds a feature service only when a workflow first calls it, so
+  polling never constructs OpenAI or Gemini clients.
+- After translation, learning-task and I-Spy clue generation run at the same time.
+  The clue call uses a one-thread executor owned by the generation job, never the
+  shared background pool. That allows at most two model calls per
+  `BACKGROUND_WORKERS` slot and cannot deadlock the pool. Each call keeps its own
+  fallback: failed lessons keep generated clues, and failed clues keep generated
+  lessons.
+- The generation claim keeps only the session title, objects and relations. The
+  translation checkpoint reads only objects and vocabulary, so it no longer re-reads
+  the session, media asset, curated scene or the just-cleared task list.
+- No responses are cached. `app.repositories.postgres.workflow` logs
+  `Task generation <stage> took N ms` at INFO for translation, learning-task
+  generation and I-Spy clue generation, and transaction duration at DEBUG.
+
 ### AI observability
 
 AI calls can be traced to Langfuse. Tracing is off by default and strictly

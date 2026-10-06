@@ -10,11 +10,12 @@ def test_task_action_receives_the_ispy_guess_generator(monkeypatch):
     captured = {}
 
     class Workflow:
-        def __init__(self, engine, user_id, *, ispy_guess_generator=None):
+        def __init__(self, engine, user_id, *, ispy_guess_generator=None, ai=None):
             captured.update(
                 engine=engine,
                 user_id=user_id,
                 ispy_guess_generator=ispy_guess_generator,
+                ai=ai,
             )
 
         def task_action(self, task_id, action, request):
@@ -28,6 +29,7 @@ def test_task_action_receives_the_ispy_guess_generator(monkeypatch):
         users=SimpleNamespace(get_current_user=lambda: user),
         engine="engine",
         ispy_guess_generator=generator,
+        ai="runtime",
     )
 
     assert service.action(uuid4(), "attempt", object()) == "saved"
@@ -35,4 +37,5 @@ def test_task_action_receives_the_ispy_guess_generator(monkeypatch):
         "engine": "engine",
         "user_id": user.id,
         "ispy_guess_generator": generator,
+        "ai": "runtime",
     }
