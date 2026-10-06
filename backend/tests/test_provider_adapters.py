@@ -362,3 +362,32 @@ def test_errors_default_scope_from_code_and_keep_old_signature():
 
 def test_vision_and_text_share_one_config_contract():
     assert VisionModelConfig is TextModelConfig
+
+
+@pytest.mark.parametrize(
+    ("cls", "code"),
+    [
+        (OpenAITextClient, Code.PROVIDER_ERROR),
+        (OpenRouterTextClient, Code.PROVIDER_RATE_LIMITED),
+    ],
+)
+def test_only_declared_429_codes_mean_exhausted_credits(cls, code):
+    def handler(request):
+        return httpx.Response(429, json={"error": {"code": "insufficient_quota"}})
+
+    with pytest.raises(ProviderError) as raised:
+        responses_adapter(cls, handler).generate(text_request())
+
+    assert raised.value.code is code
+    assert raised.value.scope is Scope.QUOTA
+    assert raised.value.status_code == 429
+
+
+def test_plain_openai_429_stays_a_rate_limit():
+    def handler(request):
+        return httpx.Response(429, json={"error": {"code": "rate_limit_exceeded"}})
+
+    with pytest.raises(ProviderError) as raised:
+        responses_adapter(OpenAITextClient, handler).generate(text_request())
+
+    assert raised.value.code is Code.PROVIDER_RATE_LIMITED

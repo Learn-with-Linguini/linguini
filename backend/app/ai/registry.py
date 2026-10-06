@@ -20,10 +20,12 @@ from app.ai.features.object_grounding import GroundingDinoObjectGrounder, Object
 from app.ai.features.scene_analysis import UploadedSceneAnalyzer
 from app.ai.features.translation import SceneTranslationService
 from app.ai.observability import AITracer
+from app.ai.pool import PooledModelClient, ProviderPool
 from app.ai.settings import (
     AiFeature,
     AiProvider,
     AiSettings,
+    FeatureModelConfig,
     ImageModerationProvider,
     ObjectGroundingProvider,
 )
@@ -64,12 +66,34 @@ def build_vision_client(
     raise ValueError(f"unsupported vision provider {provider!r}")
 
 
+def _feature_client(
+    kind: str,
+    settings: AiSettings,
+    feature: FeatureModelConfig,
+    config: TextModelConfig | VisionModelConfig,
+    pool: ProviderPool | None,
+):
+    """A pooled client for the feature's deployment, or a direct one without it."""
+    build = build_text_client if kind == "text" else build_vision_client
+    pool = pool or ProviderPool.from_settings(settings)
+    if not pool.credentials.has_deployment(feature.deployment_id):
+        return build(feature.provider, settings, config, api_key=settings.secret_for(feature))
+    return PooledModelClient(
+        pool,
+        kind,
+        feature.deployment_id,
+        config,
+        lambda secret: build(feature.provider, settings, config, api_key=secret),
+    )
+
+
 def build_uploaded_scene_analyzer(
     settings: AiSettings,
     storage: ImageStorage,
     tracer: AITracer,
     object_grounder: ObjectGrounder | None = None,
     image_moderator: ImageModerator | None = None,
+    pool: ProviderPool | None = None,
 ) -> UploadedSceneAnalyzer | None:
     """Build the configured uploaded-photo analyzer, or ``None`` when off.
 
@@ -91,12 +115,7 @@ def build_uploaded_scene_analyzer(
         )
         return UploadedSceneAnalyzer(
             storage,
-            build_vision_client(
-                scene_config.provider,
-                settings,
-                vision_config,
-                api_key=settings.secret_for(scene_config),
-            ),
+            _feature_client("vision", settings, scene_config, vision_config, pool),
             vision_config,
             tracer=tracer,
             provider=scene_config.provider.value,
@@ -140,7 +159,7 @@ def build_image_moderator(settings: AiSettings) -> ImageModerator | None:
 
 
 def build_scene_translator(
-    settings: AiSettings, tracer: AITracer
+    settings: AiSettings, tracer: AITracer, *, pool: ProviderPool | None = None
 ) -> SceneTranslationService | None:
     """Build the configured scene translator, or ``None`` when turned off.
 
@@ -156,16 +175,14 @@ def build_scene_translator(
         max_retries=min(config.max_retries, 1),
         temperature=config.temperature,
     )
-    client = build_text_client(
-        config.provider, settings, text_config, api_key=settings.secret_for(config)
-    )
+    client = _feature_client("text", settings, config, text_config, pool)
     return SceneTranslationService(
         client, text_config, tracer=tracer, provider=config.provider.value
     )
 
 
 def build_learning_task_generator(
-    settings: AiSettings, tracer: AITracer
+    settings: AiSettings, tracer: AITracer, *, pool: ProviderPool | None = None
 ) -> LearningTaskService | None:
     """Build the configured learning-task generator, or ``None`` when off.
 
@@ -183,16 +200,14 @@ def build_learning_task_generator(
         max_retries=min(config.max_retries, 1),
         temperature=config.temperature,
     )
-    client = build_text_client(
-        config.provider, settings, text_config, api_key=settings.secret_for(config)
-    )
+    client = _feature_client("text", settings, config, text_config, pool)
     return LearningTaskService(
         client, text_config, tracer=tracer, provider=config.provider.value
     )
 
 
 def build_ispy_clue_generator(
-    settings: AiSettings, tracer: AITracer
+    settings: AiSettings, tracer: AITracer, *, pool: ProviderPool | None = None
 ) -> ISpyClueService | None:
     """Build the configured I-Spy clue generator, or ``None`` when off.
 
@@ -208,16 +223,14 @@ def build_ispy_clue_generator(
         max_retries=min(config.max_retries, 1),
         temperature=config.temperature,
     )
-    client = build_text_client(
-        config.provider, settings, text_config, api_key=settings.secret_for(config)
-    )
+    client = _feature_client("text", settings, config, text_config, pool)
     return ISpyClueService(
         client, text_config, tracer=tracer, provider=config.provider.value
     )
 
 
 def build_ispy_guess_generator(
-    settings: AiSettings, tracer: AITracer
+    settings: AiSettings, tracer: AITracer, *, pool: ProviderPool | None = None
 ) -> ISpyGuessService | None:
     """Build the configured target-blind I-Spy evaluator, or ``None`` when off.
 
@@ -234,9 +247,7 @@ def build_ispy_guess_generator(
         max_retries=min(config.max_retries, 1),
         temperature=config.temperature,
     )
-    client = build_text_client(
-        config.provider, settings, text_config, api_key=settings.secret_for(config)
-    )
+    client = _feature_client("text", settings, config, text_config, pool)
     return ISpyGuessService(
         client, text_config, tracer=tracer, provider=config.provider.value
     )

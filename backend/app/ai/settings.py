@@ -516,6 +516,7 @@ def _load_feature(
             timeout_seconds=_parse_timeout(env, feature, stem),
             max_output_tokens=max_output_tokens,
             credential_id="" if provider is AiProvider.NONE else provider.value,
+            deployment_id="" if provider is AiProvider.NONE else feature.value,
             # Translations, lessons and I-Spy clues are structured responses. One
             # repair attempt avoids replacing a usable session when a provider
             # misses a non-schema constraint; an explicit 0 still disables it.

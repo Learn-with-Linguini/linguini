@@ -18,6 +18,7 @@ from app.ai.config import (
     parse_ai_config,
     resolve_credential_secrets,
 )
+from app.ai.contracts.text import TextModelRequest, TextModelResponse
 from app.ai.observability import build_tracer
 from app.ai.settings import AiFeature, AiProvider, load_ai_settings
 
@@ -161,8 +162,22 @@ def test_route_uses_first_eligible_credential_with_a_secret(tmp_path, monkeypatc
         def __init__(self, key, config):
             seen.update(key=key, config=config)
 
+        def generate(self, request):
+            return TextModelResponse(
+                output_text="{}", model_name="m", prompt_version=request.prompt_version
+            )
+
     monkeypatch.setattr(registry, "OpenRouterTextClient", FakeClient)
-    assert registry.build_scene_translator(settings, build_tracer(settings)) is not None
+    translator = registry.build_scene_translator(settings, build_tracer(settings))
+    translator._client.generate(
+        TextModelRequest(
+            system_prompt="s",
+            user_content="u",
+            json_schema_name="n",
+            json_schema={},
+            prompt_version="v",
+        )
+    )
     assert seen["key"] == "sk-team"
     assert seen["config"].temperature == 0.3
 

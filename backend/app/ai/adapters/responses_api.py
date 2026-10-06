@@ -40,6 +40,8 @@ class ResponsesEndpoint:
     """Headers holding the request ID; the response body ``id`` is the fallback."""
     status_scopes: Mapping[int, ProviderFailureScope] = field(default_factory=dict)
     """Host-specific failure scopes that override the shared status mapping."""
+    quota_exhausted_codes: frozenset[str] = frozenset()
+    """429 body error codes meaning credits are exhausted, not a rate limit."""
 
 
 _FINISH_REASONS = {
@@ -148,6 +150,8 @@ class ResponsesApiClient:
 
         if response.status_code >= 400:
             code, scope = status_error(response.status_code)
+            if response.status_code == 429 and self._quota_exhausted(response):
+                code = ProviderErrorCode.PROVIDER_ERROR
             raise self._error(
                 code,
                 status_message(self._label, code),
@@ -159,6 +163,19 @@ class ResponsesApiClient:
             )
 
         return self._parse_response(response, version, start)
+
+    def _quota_exhausted(self, response: httpx.Response) -> bool:
+        if not self.ENDPOINT.quota_exhausted_codes:
+            return False
+        try:
+            error = response.json().get("error") or {}
+        except (ValueError, AttributeError):
+            return False
+        if not isinstance(error, dict):
+            return False
+        return bool(
+            {error.get("code"), error.get("type")} & self.ENDPOINT.quota_exhausted_codes
+        )
 
     def _parse_response(
         self, response: httpx.Response, version: str, start: float

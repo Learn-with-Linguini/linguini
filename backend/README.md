@@ -430,6 +430,37 @@ input/output/total tokens when the provider reports them. Every
 and API keys never appear in errors or logs. Validation and fallbacks stay in
 each feature.
 
+### Credential pool
+
+Every model call leases a credential from the app-wide `CredentialPool`
+(`app/ai/pool.py`), shared by all features through `AiRuntime`:
+
+- **Selection:** a deployment's eligible credentials are tried round robin,
+  skipping any without a secret, disabled, or cooling down (itself or its
+  `quota_group`). A lock guards only selection and health updates; it is
+  never held during a model call.
+- **Clients:** one immutable client per deployment, credential and model
+  config, built on first use and reused. A shared client's key or model is
+  never changed.
+- **Health** is tracked separately per credential, quota group and deployment:
+
+| Provider error | Effect |
+| --- | --- |
+| Authentication failure (`providerAuth`, `credentials` scope) | Disables that credential for the process |
+| Rate limit (`providerRateLimited`, `quota` scope) | Cools down the quota group for `retry_after_seconds`, else 10 s |
+| Credits exhausted (OpenRouter 402, Gemini `FAILED_PRECONDITION`, OpenAI `insufficient_quota`) | Cools down the quota group for `retry_after_seconds`, else 300 s |
+| `model` scope (e.g. 404) | Cools down the deployment for `retry_after_seconds`, else 30 s |
+| `service` scope with `retry_after_seconds` | Cools down the deployment for that long |
+| `service` scope without it, `request` or `response` scope | No cooldown; service failures only count toward deployment health |
+
+A plain 429 is treated as a rate limit, never as exhausted credits. A call
+never makes extra model requests: a feature's existing retry simply leases
+the next credential. When nothing is eligible the call fails at once, with no
+network request, as `providerRateLimited` (with the soonest retry-after) or
+`providerAuth`, and the feature falls back as before. Cooldowns use an
+injectable clock, and health lives behind the `PoolState` interface
+(`InMemoryPoolState` today). There are no per-user quotas.
+
 ### AI observability
 
 AI calls can be traced to Langfuse. Tracing is off by default and strictly

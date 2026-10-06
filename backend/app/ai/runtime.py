@@ -5,6 +5,7 @@ from collections.abc import Callable
 from typing import Any
 
 from app.ai.observability import AITracer
+from app.ai.pool import ProviderPool
 from app.ai.registry import (
     build_ispy_clue_generator,
     build_ispy_guess_generator,
@@ -37,6 +38,7 @@ class AiRuntime:
         self._storage = storage
         self._object_grounder = object_grounder
         self._image_moderator = image_moderator
+        self.provider_pool = ProviderPool.from_settings(settings)
         self._services: dict[str, Any] = {}
         self._lock = threading.Lock()
 
@@ -55,28 +57,37 @@ class AiRuntime:
                 self.tracer,
                 object_grounder=self._object_grounder,
                 image_moderator=self._image_moderator,
+                pool=self.provider_pool,
             ),
         )
 
     def translator(self):
         return self._service(
-            "translator", lambda: build_scene_translator(self.settings, self.tracer)
+            "translator", lambda: build_scene_translator(
+                self.settings, self.tracer, pool=self.provider_pool
+            )
         )
 
     def learning_task_generator(self):
         return self._service(
             "learning_task_generator",
-            lambda: build_learning_task_generator(self.settings, self.tracer),
+            lambda: build_learning_task_generator(
+                self.settings, self.tracer, pool=self.provider_pool
+            ),
         )
 
     def ispy_clue_generator(self):
         return self._service(
             "ispy_clue_generator",
-            lambda: build_ispy_clue_generator(self.settings, self.tracer),
+            lambda: build_ispy_clue_generator(
+                self.settings, self.tracer, pool=self.provider_pool
+            ),
         )
 
     def ispy_guess_generator(self):
         return self._service(
             "ispy_guess_generator",
-            lambda: build_ispy_guess_generator(self.settings, self.tracer),
+            lambda: build_ispy_guess_generator(
+                self.settings, self.tracer, pool=self.provider_pool
+            ),
         )
