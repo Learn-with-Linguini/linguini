@@ -1,0 +1,99 @@
+# Example AI configuration. Point AI_CONFIG_FILE at a copy of this file to
+# use it; without AI_CONFIG_FILE the per-feature AI_* environment variables
+# apply. This file holds no secrets: credentials name the environment
+# variables that do. Values here match the current environment defaults.
+#
+# Credentials: the first non-empty variable in `env` wins.
+# Deployments: adapter (openai | openrouter | gemini), api (responses for
+#   openai/openrouter, generateContent for gemini), model, capabilities
+#   (text | vision | jsonSchema), eligible credential IDs, generation defaults.
+# Routes: one per feature. `policy = "primary"` uses the first deployment.
+#   deadline_seconds and max_model_calls are validated but not yet enforced.
+
+[credentials.openrouter]
+adapter = "openrouter"
+env = ["AI_OPENROUTER_API_KEY", "OPENROUTER_API_KEY"]
+quota_group = "openrouter"
+billing_group = "openrouter"
+
+[credentials.openai]
+adapter = "openai"
+env = ["AI_OPENAI_API_KEY", "OPENAI_API_KEY"]
+quota_group = "openai"
+billing_group = "openai"
+
+[credentials.gemini]
+adapter = "gemini"
+env = ["AI_GEMINI_API_KEY", "GEMINI_API_KEY"]
+quota_group = "gemini"
+billing_group = "gemini"
+
+[deployments.scene-claude-haiku]
+adapter = "openrouter"
+api = "responses"
+model = "anthropic/claude-haiku-4.5"
+capabilities = ["vision", "jsonSchema"]
+credentials = ["openrouter"]
+defaults = { timeout_seconds = 120, max_retries = 0 }
+
+[deployments.translation-gpt-4o-mini]
+adapter = "openrouter"
+api = "responses"
+model = "openai/gpt-4o-mini"
+capabilities = ["text", "jsonSchema"]
+credentials = ["openrouter"]
+defaults = { timeout_seconds = 60, max_retries = 1 }
+
+[deployments.lessons-gpt-5-4-mini]
+adapter = "openrouter"
+api = "responses"
+model = "openai/gpt-5.4-mini"
+capabilities = ["text", "jsonSchema"]
+credentials = ["openrouter"]
+defaults = { timeout_seconds = 60, max_retries = 1 }
+
+[deployments.clues-gemini-flash-lite]
+adapter = "openrouter"
+api = "responses"
+model = "google/gemini-3.1-flash-lite"
+capabilities = ["text", "jsonSchema"]
+credentials = ["openrouter"]
+defaults = { timeout_seconds = 60, max_retries = 1 }
+
+[deployments.guess-gpt-4-1-mini]
+adapter = "openrouter"
+api = "responses"
+model = "openai/gpt-4.1-mini"
+capabilities = ["text", "jsonSchema"]
+credentials = ["openrouter"]
+defaults = { timeout_seconds = 60, max_retries = 0 }
+
+[routes.sceneAnalysis]
+deployments = ["scene-claude-haiku"]
+policy = "primary"
+deadline_seconds = 120
+max_model_calls = 1
+
+[routes.sceneTranslation]
+deployments = ["translation-gpt-4o-mini"]
+policy = "primary"
+deadline_seconds = 120
+max_model_calls = 2
+
+[routes.learningTask]
+deployments = ["lessons-gpt-5-4-mini"]
+policy = "primary"
+deadline_seconds = 120
+max_model_calls = 2
+
+[routes.ispyClue]
+deployments = ["clues-gemini-flash-lite"]
+policy = "primary"
+deadline_seconds = 120
+max_model_calls = 2
+
+[routes.ispyGuess]
+deployments = ["guess-gpt-4-1-mini"]
+policy = "primary"
+deadline_seconds = 60
+max_model_calls = 1

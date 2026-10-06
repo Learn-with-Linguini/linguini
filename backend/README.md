@@ -346,6 +346,60 @@ lesson and clue models each took 0.3 s.
   `Task generation <stage> took N ms` at INFO for translation, learning-task
   generation and I-Spy clue generation, and transaction duration at DEBUG.
 
+### AI configuration
+
+By default every AI setting comes from the environment, as listed in
+`.env.example`. To use structured configuration instead, set
+`AI_CONFIG_FILE` to a TOML file; `ai.example.toml` reproduces the current
+defaults. The file holds no secrets. It has three sections:
+
+- `[credentials.<id>]`: the `adapter` the credential is for, the `env` variables
+  that may hold its secret (the first non-empty one wins), and its shared
+  `quota_group` and `billing_group`.
+- `[deployments.<id>]`: `adapter`, `api` (`responses` or `generateContent`),
+  `model`, `capabilities` (`text`, `vision`, `jsonSchema`), the eligible
+  `credentials`, and generation `defaults` (`timeout_seconds`,
+  `max_output_tokens`, `max_retries`, `temperature`).
+- `[routes.<feature>]`, one for each of `sceneAnalysis`, `sceneTranslation`,
+  `learningTask`, `ispyClue` and `ispyGuess`:
+  - `enabled`;
+  - the approved `deployments`;
+  - `policy`: only `primary` exists so far, and it uses the first deployment
+    with its first credential that has a secret;
+  - `deadline_seconds` and `max_model_calls`: validated and exposed on
+    `AiSettings.ai_config`, but not yet enforced.
+
+Precedence:
+
+1. **`AI_CONFIG_FILE` set:** the file's credentials, deployments and routes
+   decide each feature's adapter, model and generation settings. Per-feature
+   variables such as `AI_SCENE_TRANSLATION_MODEL` or `TRANSLATION_PROVIDER` are
+   ignored. If any of them are set, one warning lists their names, never their
+   values.
+2. **`AI_CONFIG_FILE` unset:** the per-feature `AI_*` variables apply, then
+   their deprecated aliases, then the built-in defaults. They are mapped to one
+   deployment and one route per feature, so behaviour is unchanged.
+3. **Always from the environment:**
+   - secrets: the variables a credential names, or `AI_<PROVIDER>_API_KEY`
+     then `<PROVIDER>_API_KEY` without a file;
+   - `AI_MODE`;
+   - observability, image moderation and object grounding settings.
+
+Validation runs at startup and makes no network calls. It checks:
+- that every reference resolves, and each credential matches its deployment's
+  adapter;
+- that each adapter supports its deployment's API and capabilities, and each
+  route's deployments have the capabilities its feature needs (`sceneAnalysis`
+  needs `vision`);
+- that enabled routes have deployments, a deadline at least the primary
+  timeout, and a call budget covering its retries.
+
+With `AI_MODE=real`, every enabled route must also resolve a secret; with
+`demo`, a route without one falls back to deterministic behaviour.
+
+Error messages name keys and variables but never echo values, and secrets
+are excluded from `AiSettings` repr.
+
 ### AI providers
 
 Feature services in `app/ai/features/` depend only on the contracts in

@@ -31,26 +31,36 @@ from app.services.image_storage import ImageStorage
 
 
 def build_text_client(
-    provider: AiProvider, settings: AiSettings, config: TextModelConfig
+    provider: AiProvider,
+    settings: AiSettings,
+    config: TextModelConfig,
+    *,
+    api_key: str | None = None,
 ) -> TextModelClient:
+    key = settings.api_key_for(provider) if api_key is None else api_key
     if provider is AiProvider.OPENAI:
-        return OpenAITextClient(settings.openai_api_key, config)
+        return OpenAITextClient(key, config)
     if provider is AiProvider.GEMINI:
-        return GeminiTextClient(settings.gemini_api_key, config)
+        return GeminiTextClient(key, config)
     if provider is AiProvider.OPENROUTER:
-        return OpenRouterTextClient(settings.openrouter_api_key, config)
+        return OpenRouterTextClient(key, config)
     raise ValueError(f"unsupported text provider {provider!r}")
 
 
 def build_vision_client(
-    provider: AiProvider, settings: AiSettings, config: VisionModelConfig
+    provider: AiProvider,
+    settings: AiSettings,
+    config: VisionModelConfig,
+    *,
+    api_key: str | None = None,
 ) -> VisionModelClient:
+    key = settings.api_key_for(provider) if api_key is None else api_key
     if provider is AiProvider.OPENAI:
-        return OpenAIVisionClient(settings.openai_api_key, config)
+        return OpenAIVisionClient(key, config)
     if provider is AiProvider.GEMINI:
-        return GeminiVisionClient(settings.gemini_api_key, config)
+        return GeminiVisionClient(key, config)
     if provider is AiProvider.OPENROUTER:
-        return OpenRouterVisionClient(settings.openrouter_api_key, config)
+        return OpenRouterVisionClient(key, config)
     raise ValueError(f"unsupported vision provider {provider!r}")
 
 
@@ -77,10 +87,16 @@ def build_uploaded_scene_analyzer(
             timeout_seconds=scene_config.timeout_seconds,
             max_output_tokens=scene_config.max_output_tokens or 1500,
             max_retries=min(scene_config.max_retries, 1),
+            temperature=scene_config.temperature,
         )
         return UploadedSceneAnalyzer(
             storage,
-            build_vision_client(scene_config.provider, settings, vision_config),
+            build_vision_client(
+                scene_config.provider,
+                settings,
+                vision_config,
+                api_key=settings.secret_for(scene_config),
+            ),
             vision_config,
             tracer=tracer,
             provider=scene_config.provider.value,
@@ -138,8 +154,11 @@ def build_scene_translator(
         timeout_seconds=config.timeout_seconds,
         max_output_tokens=config.max_output_tokens or 1500,
         max_retries=min(config.max_retries, 1),
+        temperature=config.temperature,
     )
-    client = build_text_client(config.provider, settings, text_config)
+    client = build_text_client(
+        config.provider, settings, text_config, api_key=settings.secret_for(config)
+    )
     return SceneTranslationService(
         client, text_config, tracer=tracer, provider=config.provider.value
     )
@@ -162,8 +181,11 @@ def build_learning_task_generator(
         timeout_seconds=config.timeout_seconds,
         max_output_tokens=config.max_output_tokens or 4000,
         max_retries=min(config.max_retries, 1),
+        temperature=config.temperature,
     )
-    client = build_text_client(config.provider, settings, text_config)
+    client = build_text_client(
+        config.provider, settings, text_config, api_key=settings.secret_for(config)
+    )
     return LearningTaskService(
         client, text_config, tracer=tracer, provider=config.provider.value
     )
@@ -184,8 +206,11 @@ def build_ispy_clue_generator(
         timeout_seconds=config.timeout_seconds,
         max_output_tokens=config.max_output_tokens or 1500,
         max_retries=min(config.max_retries, 1),
+        temperature=config.temperature,
     )
-    client = build_text_client(config.provider, settings, text_config)
+    client = build_text_client(
+        config.provider, settings, text_config, api_key=settings.secret_for(config)
+    )
     return ISpyClueService(
         client, text_config, tracer=tracer, provider=config.provider.value
     )
@@ -207,8 +232,11 @@ def build_ispy_guess_generator(
         timeout_seconds=config.timeout_seconds,
         max_output_tokens=config.max_output_tokens or 500,
         max_retries=min(config.max_retries, 1),
+        temperature=config.temperature,
     )
-    client = build_text_client(config.provider, settings, text_config)
+    client = build_text_client(
+        config.provider, settings, text_config, api_key=settings.secret_for(config)
+    )
     return ISpyGuessService(
         client, text_config, tracer=tracer, provider=config.provider.value
     )

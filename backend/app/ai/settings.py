@@ -4,6 +4,7 @@ Pure configuration only: loading these models never constructs SDK clients
 and never performs network I/O.
 """
 
+import logging
 import os
 import re
 from collections.abc import Mapping
@@ -11,20 +12,34 @@ from enum import StrEnum
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.ai.config.loader import (
+    load_ai_config_file,
+    missing_secret_problems,
+    resolve_credential_secrets,
+    select_credential,
+    validate_ai_config,
+)
+from app.ai.config.models import (
+    DEFAULT_API,
+    FEATURE_CAPABILITIES,
+    AiConfig,
+    AiConfigurationError,
+    AiFeature,
+    AiProvider,
+    CredentialConfig,
+    DeploymentConfig,
+    GenerationDefaults,
+    RouteConfig,
+)
+
+logger = logging.getLogger(__name__)
+
+AI_CONFIG_FILE_VAR = "AI_CONFIG_FILE"
+
 
 class AiMode(StrEnum):
     REAL = "real"
     DEMO = "demo"
-
-
-class AiProvider(StrEnum):
-    OPENAI = "openai"
-    GEMINI = "gemini"
-    # OpenRouter fronts many vendors (Anthropic, Qwen, DeepSeek, Meta,
-    # Mistral) behind an OpenAI-compatible API, so the OpenAI adapters serve
-    # it with a different base URL and key.
-    OPENROUTER = "openrouter"
-    NONE = "none"
 
 
 class ObjectGroundingProvider(StrEnum):
@@ -37,18 +52,6 @@ class ImageModerationProvider(StrEnum):
     OPENAI = "openai"
 
 
-class AiFeature(StrEnum):
-    SCENE_ANALYSIS = "sceneAnalysis"
-    SCENE_TRANSLATION = "sceneTranslation"
-    LEARNING_TASK = "learningTask"
-    ISPY_CLUE = "ispyClue"
-    ISPY_GUESS = "ispyGuess"
-
-
-class AiConfigurationError(ValueError):
-    """Raised when AI environment configuration is invalid."""
-
-
 class FeatureModelConfig(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -58,6 +61,9 @@ class FeatureModelConfig(BaseModel):
     timeout_seconds: int = Field(gt=0)
     max_output_tokens: int | None = Field(default=None, gt=0)
     max_retries: int = Field(default=0, ge=0)
+    temperature: float = Field(default=0.0, ge=0, le=2)
+    deployment_id: str = ""
+    credential_id: str = ""
 
 
 class ObservabilitySettings(BaseModel):
@@ -66,7 +72,7 @@ class ObservabilitySettings(BaseModel):
     enabled: bool = False
     base_url: str = "https://cloud.langfuse.com"
     public_key: str = ""
-    secret_key: str = ""
+    secret_key: str = Field(default="", repr=False)
     environment: str = "development"
     capture_content: bool = False
 
@@ -97,10 +103,12 @@ class AiSettings(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     mode: AiMode
-    openai_api_key: str = ""
-    gemini_api_key: str = ""
-    openrouter_api_key: str = ""
-    general_api_key: str = ""
+    openai_api_key: str = Field(default="", repr=False)
+    gemini_api_key: str = Field(default="", repr=False)
+    openrouter_api_key: str = Field(default="", repr=False)
+    general_api_key: str = Field(default="", repr=False)
+    ai_config: AiConfig | None = None
+    credential_secrets: dict[str, str] = Field(default_factory=dict, repr=False)
     observability: ObservabilitySettings = ObservabilitySettings()
     object_grounding: ObjectGroundingSettings = ObjectGroundingSettings()
     image_moderation: ImageModerationSettings = ImageModerationSettings()
@@ -119,11 +127,17 @@ class AiSettings(BaseModel):
             return self.openrouter_api_key
         return ""
 
+    def secret_for(self, config: FeatureModelConfig) -> str:
+        """The secret of the credential selected for a feature's deployment."""
+        if config.credential_id:
+            return self.credential_secrets.get(config.credential_id, "")
+        return self.api_key_for(config.provider)
+
     def is_configured(self, config: FeatureModelConfig) -> bool:
         return (
             config.provider is not AiProvider.NONE
             and bool(config.model_name)
-            and bool(self.api_key_for(config.provider))
+            and bool(self.secret_for(config))
         )
 
     def feature(self, feature: AiFeature) -> FeatureModelConfig:
@@ -501,6 +515,7 @@ def _load_feature(
             model_name=_parse_model(env, feature, stem, provider),
             timeout_seconds=_parse_timeout(env, feature, stem),
             max_output_tokens=max_output_tokens,
+            credential_id="" if provider is AiProvider.NONE else provider.value,
             # Translations, lessons and I-Spy clues are structured responses. One
             # repair attempt avoids replacing a usable session when a provider
             # misses a non-schema constraint; an explicit 0 still disables it.
@@ -519,11 +534,129 @@ def _load_feature(
         ) from exc
 
 
+_LEGACY_KEY_VARS: dict[AiProvider, tuple[str, str]] = {
+    AiProvider.OPENAI: ("AI_OPENAI_API_KEY", "OPENAI_API_KEY"),
+    AiProvider.GEMINI: ("AI_GEMINI_API_KEY", "GEMINI_API_KEY"),
+    AiProvider.OPENROUTER: ("AI_OPENROUTER_API_KEY", "OPENROUTER_API_KEY"),
+}
+
+
+def _first(env: Mapping[str, str], names: tuple[str, ...]) -> str:
+    for name in names:
+        value = _read(env, name)
+        if value:
+            return value
+    return ""
+
+
+def _legacy_feature_vars(feature: AiFeature) -> list[str]:
+    spec = _LEGACY_SPECS[feature]
+    stem = feature.name
+    return [
+        f"AI_{stem}_PROVIDER",
+        f"AI_{stem}_MODEL",
+        f"AI_{stem}_TIMEOUT_SECONDS",
+        f"AI_{stem}_MAX_RETRIES",
+        f"AI_{stem}_MAX_OUTPUT_TOKENS",
+        spec.provider_var,
+        spec.timeout_var,
+        *spec.model_vars.values(),
+    ]
+
+
+def _compat_config(features: Mapping[AiFeature, FeatureModelConfig]) -> AiConfig:
+    """Express env-derived feature settings as one deployment per feature."""
+    credentials = {
+        provider.value: CredentialConfig(
+            adapter=provider,
+            env=names,
+            quota_group=provider.value,
+            billing_group=provider.value,
+        )
+        for provider, names in _LEGACY_KEY_VARS.items()
+    }
+    deployments: dict[str, DeploymentConfig] = {}
+    routes: dict[AiFeature, RouteConfig] = {}
+    for feature, config in features.items():
+        if config.provider is AiProvider.NONE or not config.model_name:
+            routes[feature] = RouteConfig(enabled=False)
+            continue
+        deployments[feature.value] = DeploymentConfig(
+            adapter=config.provider,
+            api=DEFAULT_API[config.provider],
+            model=config.model_name,
+            capabilities=FEATURE_CAPABILITIES[feature],
+            credentials=(config.provider.value,),
+            defaults=GenerationDefaults(
+                timeout_seconds=config.timeout_seconds,
+                max_output_tokens=config.max_output_tokens,
+                max_retries=config.max_retries,
+                temperature=config.temperature,
+            ),
+        )
+        attempts = 1 + min(config.max_retries, 1)
+        routes[feature] = RouteConfig(
+            deployments=(feature.value,),
+            deadline_seconds=config.timeout_seconds * attempts,
+            max_model_calls=attempts,
+        )
+    return AiConfig(credentials=credentials, deployments=deployments, routes=routes)
+
+
+def _features_from_config(
+    config: AiConfig, secrets: Mapping[str, str]
+) -> dict[AiFeature, FeatureModelConfig]:
+    features: dict[AiFeature, FeatureModelConfig] = {}
+    for feature in AiFeature:
+        primary = config.primary_deployment(feature)
+        if primary is None:
+            features[feature] = FeatureModelConfig(
+                feature=feature,
+                provider=AiProvider.NONE,
+                timeout_seconds=int(_LEGACY_SPECS[feature].timeout_default),
+            )
+            continue
+        deployment_id, deployment = primary
+        defaults = deployment.defaults
+        features[feature] = FeatureModelConfig(
+            feature=feature,
+            provider=deployment.adapter,
+            model_name=deployment.model,
+            timeout_seconds=defaults.timeout_seconds,
+            max_output_tokens=defaults.max_output_tokens,
+            max_retries=defaults.max_retries,
+            temperature=defaults.temperature,
+            deployment_id=deployment_id,
+            credential_id=select_credential(config, deployment.credentials, secrets),
+        )
+    return features
+
+
+def _env_feature_problems(settings: "AiSettings") -> list[str]:
+    problems: list[str] = []
+    for feature, field in _FEATURE_FIELDS.items():
+        config = getattr(settings, field)
+        if config.provider is AiProvider.NONE:
+            continue
+        stem = feature.name
+        if not config.model_name:
+            problems.append(f"{feature.value}: missing model name (set AI_{stem}_MODEL)")
+        if not settings.api_key_for(config.provider):
+            key_var = f"AI_{config.provider.value.upper()}_API_KEY"
+            problems.append(
+                f"{feature.value}: missing {config.provider.value} API key "
+                f"(set {key_var})"
+            )
+    return problems
+
+
 def load_ai_settings(env: Mapping[str, str] | None = None) -> AiSettings:
     """Load AI settings from ``env`` (defaults to ``os.environ``).
 
-    Pure: reads only the given mapping. Never constructs SDK clients or
-    opens sockets.
+    When ``AI_CONFIG_FILE`` names a TOML file, its credentials, deployments
+    and routes replace the per-feature environment variables. Secrets, the
+    mode, observability, moderation and object grounding always come from
+    ``env``. Pure: never constructs SDK clients or opens sockets.
     """
     if env is None:
         env = os.environ
@@ -536,44 +669,51 @@ def load_ai_settings(env: Mapping[str, str] | None = None) -> AiSettings:
             f"Invalid AI_MODE: {raw_mode!r} (allowed: {_ALLOWED_MODES})"
         ) from exc
 
+    config_file = _read(env, AI_CONFIG_FILE_VAR)
+    if config_file:
+        ai_config = load_ai_config_file(config_file)
+        secrets = resolve_credential_secrets(ai_config, env)
+        features = _features_from_config(ai_config, secrets)
+        ignored = sorted(
+            {
+                name
+                for feature in AiFeature
+                for name in _legacy_feature_vars(feature)
+                if _read(env, name)
+            }
+        )
+        if ignored:
+            logger.warning(
+                "%s is set; ignoring per-feature environment variables: %s",
+                AI_CONFIG_FILE_VAR,
+                ", ".join(ignored),
+            )
+    else:
+        features = {feature: _load_feature(env, feature) for feature in AiFeature}
+        ai_config = _compat_config(features)
+        validate_ai_config(ai_config)
+        secrets = resolve_credential_secrets(ai_config, env)
+
     settings = AiSettings(
         mode=mode,
-        openai_api_key=_read(env, "AI_OPENAI_API_KEY")
-        or _read(env, "OPENAI_API_KEY")
-        or "",
-        gemini_api_key=_read(env, "AI_GEMINI_API_KEY")
-        or _read(env, "GEMINI_API_KEY")
-        or "",
-        openrouter_api_key=_read(env, "AI_OPENROUTER_API_KEY")
-        or _read(env, "OPENROUTER_API_KEY")
-        or "",
+        openai_api_key=_first(env, _LEGACY_KEY_VARS[AiProvider.OPENAI]),
+        gemini_api_key=_first(env, _LEGACY_KEY_VARS[AiProvider.GEMINI]),
+        openrouter_api_key=_first(env, _LEGACY_KEY_VARS[AiProvider.OPENROUTER]),
         general_api_key=_read(env, "AI_API_KEY") or "",
         observability=_parse_observability(env),
         object_grounding=_parse_object_grounding(env),
         image_moderation=_parse_image_moderation(env),
-        **{
-            field: _load_feature(env, feature)
-            for feature, field in _FEATURE_FIELDS.items()
-        },
+        ai_config=ai_config,
+        credential_secrets=secrets,
+        **{_FEATURE_FIELDS[feature]: config for feature, config in features.items()},
     )
 
     if settings.mode is AiMode.REAL:
-        problems: list[str] = []
-        for feature, field in _FEATURE_FIELDS.items():
-            config = getattr(settings, field)
-            if config.provider is AiProvider.NONE:
-                continue
-            stem = feature.name
-            if not config.model_name:
-                problems.append(
-                    f"{feature.value}: missing model name (set AI_{stem}_MODEL)"
-                )
-            if not settings.api_key_for(config.provider):
-                key_var = f"AI_{config.provider.value.upper()}_API_KEY"
-                problems.append(
-                    f"{feature.value}: missing {config.provider.value} API key "
-                    f"(set {key_var})"
-                )
+        problems = (
+            missing_secret_problems(ai_config, secrets)
+            if config_file
+            else _env_feature_problems(settings)
+        )
         if (
             settings.image_moderation.provider is ImageModerationProvider.OPENAI
             and not settings.openai_api_key
