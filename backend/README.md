@@ -509,6 +509,49 @@ generation records the deployment, credential ID and model that served it,
 the route's attempts, the fallback reason and input/output/total tokens.
 `retry_count` counts every outbound call after the first.
 
+### AI result cache
+
+Scene translation, learning tasks and I-Spy clues share an in-memory cache of
+validated results (`app/ai/cache/`), one per API process, built once by
+`AiRuntime`. It is lost on restart and needs no migration; `CacheStore` is the
+interface for a shared store later.
+
+- **What is stored:** only results that passed the feature's validators.
+  Refusals, provider errors, invalid output and deterministic fallbacks are
+  never stored.
+- **Key:** SHA-256 of the canonical payload (scene title and summary, labels,
+  attributes, relations, anchor points), target language, the feature's
+  prompt, schema and validator versions, the model, temperature and max
+  output tokens of every deployment the route allows, and the scope.
+- **Session IDs:** object, attribute and relation keys are replaced by aliases
+  assigned from content (`o1`, `o1:color`, `r1`), so the same scene in another
+  session gets the same key. Duplicate objects keep separate aliases and
+  relations keep their endpoints. A hit is mapped back to the current IDs and
+  validated again; a result referencing an unknown key is never stored.
+- **Provenance:** each entry records its deployment, model, versions and
+  creation time. A hit whose deployment is no longer in the route is dropped.
+- **Scope:** an active preloaded scene whose objects, labels, attributes and
+  server-suggested relations are unchanged is shared by all users. Anything
+  else (uploaded photos, added objects, edited attributes or relations) is
+  scoped to the learner. The cache is consulted where the model was called,
+  after ownership checks, review, upload moderation and the generation claim;
+  revision guards still apply to cached results.
+- **Concurrent misses:** one request generates and the others wait, at most
+  for the route's deadline plus 5 s. If it fails, they all get the same
+  failure and use the feature's usual fallback, with no extra model calls.
+- **Controls:** `AI_RESULT_CACHE_ENABLED` (default `true`),
+  `AI_RESULT_CACHE_TTL_SECONDS` (default `86400`) and
+  `AI_RESULT_CACHE_MAX_ENTRIES` (default `2000`, least recently used evicted).
+  Passing `cache_scope=None` bypasses the cache (the precompute script never
+  uses it). `ResultCache.invalidate(feature=..., scope=...)` and `clear()`
+  drop entries. Bump a feature's `*_VALIDATOR_VERSION` when its validation
+  rules change.
+- **Output quality:** a hit already passed the same validators and is checked
+  again, and a miss sends the same request as before. Learners replaying a
+  curated scene get the same tasks within the TTL; with temperature 0 that
+  removes only incidental provider variation. Model updates behind an
+  unchanged model name appear once entries expire or are invalidated.
+
 ### AI observability
 
 AI calls can be traced to Langfuse. Tracing is off by default and strictly

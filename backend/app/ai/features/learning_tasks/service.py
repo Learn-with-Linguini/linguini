@@ -17,6 +17,15 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from app.ai.cache import (
+    CacheScope,
+    CacheWaitTimeout,
+    FeatureVersion,
+    Generated,
+    ResultCache,
+    generated,
+    run_cached,
+)
 from app.ai.contracts.errors import ProviderError
 from app.ai.contracts.schema import build_strict_json_schema
 from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelRequest
@@ -32,6 +41,7 @@ from app.ai.features.learning_tasks.schemas import (
     unpack_generated_tasks,
 )
 from app.ai.features.learning_tasks.validation import (
+    LEARNING_TASK_VALIDATOR_VERSION,
     LearningTaskGenerationError,
     normalize_learning_task_option_ids,
     normalize_learning_task_references,
@@ -45,6 +55,12 @@ from app.ai.settings import AiFeature
 logger = logging.getLogger(__name__)
 
 _LEARNING_TASKS_INVALID = "learningTasksInvalid"
+_VERSION = FeatureVersion(
+    AiFeature.LEARNING_TASK.value,
+    LEARNING_TASK_PROMPT_VERSION,
+    LEARNING_TASK_SCHEMA_VERSION,
+    LEARNING_TASK_VALIDATOR_VERSION,
+)
 _REPAIR_INSTRUCTION = """
 
 Your previous response was incomplete. Return a complete replacement JSON object.
@@ -64,17 +80,44 @@ class LearningTaskService:
         *,
         tracer: AITracer,
         provider: str,
+        cache: ResultCache | None = None,
     ) -> None:
         self._client = as_routed(client, config, kind="text")
+        self._cache = cache
         self._config = config
         self._tracer = tracer
         self._provider = provider
 
-    def generate(self, payload: dict[str, Any]) -> LearningTaskResult:
+    def generate(
+        self, payload: dict[str, Any], *, cache_scope: CacheScope | None = None
+    ) -> LearningTaskResult:
+        """Generate tasks for ``payload``; ``cache_scope=None`` bypasses the cache."""
         focuses = required_task_focuses(payload)
         payload = {**payload, "requiredTaskFocuses": list(focuses)}
         # Empty-scene guard raises LearningTaskGenerationError before any call.
         response_model = scene_generation_response_model(payload)
+
+        def decode(data: Any) -> LearningTaskResult:
+            result = LearningTaskResult.model_validate(data)
+            validate_learning_tasks(payload, result)
+            return result
+
+        try:
+            return run_cached(
+                self._cache,
+                self._client,
+                version=_VERSION,
+                scope=cache_scope,
+                payload=payload,
+                compute=lambda: self._generate(payload, focuses, response_model),
+                decode=decode,
+            )
+        except CacheWaitTimeout as error:
+            raise LearningTaskGenerationError("Learning task generation failed.") from error
+
+    def _generate(
+        self, payload: dict[str, Any], focuses: tuple[str, ...], response_model: Any
+    ) -> Generated[LearningTaskResult]:
         content = json.dumps(payload, ensure_ascii=False)
         request = TextModelRequest(
             system_prompt=LEARNING_TASK_SYSTEM_PROMPT,
@@ -182,7 +225,7 @@ class LearningTaskService:
                     root.update(
                         retry_count=invocation.retries, validation_result="valid"
                     )
-                    return result
+                    return generated(result, response)
                 except ProviderError as error:
                     root.update(
                         retry_count=invocation.retries,

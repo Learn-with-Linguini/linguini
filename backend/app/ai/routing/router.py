@@ -130,6 +130,24 @@ class RoutedModelClient:
         slowest = max(target.config.timeout_seconds for target in self._targets)
         return slowest * self._max_model_calls
 
+    @property
+    def approved_deployments(self) -> frozenset[str]:
+        return frozenset(target.deployment_id for target in self._targets)
+
+    @property
+    def generation_settings(self) -> list[dict[str, Any]]:
+        """Output-shaping settings of every deployment the route allows."""
+        return [
+            {
+                "deployment": target.deployment_id,
+                "provider": target.provider,
+                "model": target.config.model_name,
+                "temperature": target.config.temperature,
+                "maxOutputTokens": target.config.max_output_tokens,
+            }
+            for target in self._targets
+        ]
+
     def start_invocation(self) -> InvocationContext:
         return InvocationContext(
             self._max_model_calls,

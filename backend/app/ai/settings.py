@@ -101,6 +101,16 @@ class ImageModerationSettings(BaseModel):
     timeout_seconds: int = Field(default=30, gt=0)
 
 
+class ResultCacheSettings(BaseModel):
+    """Bounds for the in-process validated-result cache."""
+
+    model_config = ConfigDict(frozen=True)
+
+    enabled: bool = True
+    ttl_seconds: int = 86_400
+    max_entries: int = 2_000
+
+
 class AiSettings(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -114,6 +124,7 @@ class AiSettings(BaseModel):
     observability: ObservabilitySettings = ObservabilitySettings()
     object_grounding: ObjectGroundingSettings = ObjectGroundingSettings()
     image_moderation: ImageModerationSettings = ImageModerationSettings()
+    result_cache: ResultCacheSettings = ResultCacheSettings()
     scene_analysis: FeatureModelConfig
     scene_translation: FeatureModelConfig
     learning_task: FeatureModelConfig
@@ -268,6 +279,7 @@ _OBSERVABILITY_ALIASES: dict[str, tuple[str, ...]] = {
     "AI_OBSERVABILITY_SECRET_KEY": ("LANGFUSE_SECRET_KEY",),
     "AI_OBSERVABILITY_ENVIRONMENT": ("LANGFUSE_TRACING_ENVIRONMENT",),
     "AI_OBSERVABILITY_CAPTURE_CONTENT": (),
+    "AI_RESULT_CACHE_ENABLED": (),
 }
 
 
@@ -442,6 +454,18 @@ def _parse_positive_int(
             f"Invalid {kind}: {raw!r} ({name} must be a positive integer)"
         )
     return value
+
+
+def _parse_result_cache(env: Mapping[str, str]) -> ResultCacheSettings:
+    return ResultCacheSettings(
+        enabled=_parse_bool(env, "AI_RESULT_CACHE_ENABLED", True),
+        ttl_seconds=_parse_positive_int(
+            env, "AI_RESULT_CACHE_TTL_SECONDS", 86_400, "result cache TTL"
+        ),
+        max_entries=_parse_positive_int(
+            env, "AI_RESULT_CACHE_MAX_ENTRIES", 2_000, "result cache capacity"
+        ),
+    )
 
 
 def _parse_image_moderation(env: Mapping[str, str]) -> ImageModerationSettings:
@@ -712,6 +736,7 @@ def load_ai_settings(env: Mapping[str, str] | None = None) -> AiSettings:
         observability=_parse_observability(env),
         object_grounding=_parse_object_grounding(env),
         image_moderation=_parse_image_moderation(env),
+        result_cache=_parse_result_cache(env),
         ai_config=ai_config,
         credential_secrets=secrets,
         **{_FEATURE_FIELDS[feature]: config for feature, config in features.items()},

@@ -67,18 +67,18 @@ class SlowModels:
             raise error
         return result
 
-    def translate(self, payload):
+    def translate(self, payload, cache_scope=None):
         return SceneTranslationResult.model_validate({
             kind: [{**term, "translation": "mesa"} for term in payload[kind]]
             for kind in ("objects", "attributes", "relationships")
         })
 
-    def lessons(self, _payload):
+    def lessons(self, _payload, cache_scope=None):
         return self._run(
             "lessons", self.lesson_error, LearningTaskResult.model_validate(learning_tasks())
         )
 
-    def clues(self, payload):
+    def clues(self, payload, cache_scope=None):
         key = payload["objects"][0]["key"]
         return self._run("clues", self.clue_error, ISpyClueResult.model_validate({"clues": [{
             "clue": CLUE, "answerObjectKey": key, "objectKeys": [key], "relationshipKeys": [],

@@ -16,6 +16,15 @@ import time
 from dataclasses import replace
 from typing import Any
 
+from app.ai.cache import (
+    CacheScope,
+    CacheWaitTimeout,
+    FeatureVersion,
+    Generated,
+    ResultCache,
+    generated,
+    run_cached,
+)
 from app.ai.contracts.errors import ProviderError
 from app.ai.contracts.schema import build_strict_json_schema
 from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelRequest
@@ -29,6 +38,7 @@ from app.ai.features.ispy_clues.schemas import (
     scene_clue_response_model,
 )
 from app.ai.features.ispy_clues.validation import (
+    ISPY_CLUE_VALIDATOR_VERSION,
     ISpyClueGenerationError,
     validate_ispy_clues,
 )
@@ -39,6 +49,12 @@ from app.ai.settings import AiFeature
 logger = logging.getLogger(__name__)
 
 _ISPY_CLUES_INVALID = "ispyCluesInvalid"
+_VERSION = FeatureVersion(
+    AiFeature.ISPY_CLUE.value,
+    ISPY_CLUE_PROMPT_VERSION,
+    ISPY_CLUE_SCHEMA_VERSION,
+    ISPY_CLUE_VALIDATOR_VERSION,
+)
 _REPAIR_INSTRUCTION = """
 
 Your previous response was invalid. Return a complete replacement JSON object.
@@ -57,15 +73,42 @@ class ISpyClueService:
         *,
         tracer: AITracer,
         provider: str,
+        cache: ResultCache | None = None,
     ) -> None:
         self._client = as_routed(client, config, kind="text")
+        self._cache = cache
         self._config = config
         self._tracer = tracer
         self._provider = provider
 
-    def generate(self, payload: dict[str, Any]) -> ISpyClueResult:
+    def generate(
+        self, payload: dict[str, Any], *, cache_scope: CacheScope | None = None
+    ) -> ISpyClueResult:
+        """Generate clues for ``payload``; ``cache_scope=None`` bypasses the cache."""
         # Empty-scene guard raises ISpyClueGenerationError before any call.
         response_model = scene_clue_response_model(payload)
+
+        def decode(data: Any) -> ISpyClueResult:
+            result = ISpyClueResult.model_validate(data)
+            validate_ispy_clues(payload, result)
+            return result
+
+        try:
+            return run_cached(
+                self._cache,
+                self._client,
+                version=_VERSION,
+                scope=cache_scope,
+                payload=payload,
+                compute=lambda: self._generate(payload, response_model),
+                decode=decode,
+            )
+        except CacheWaitTimeout as error:
+            raise ISpyClueGenerationError("I-Spy clue generation failed.") from error
+
+    def _generate(
+        self, payload: dict[str, Any], response_model: Any
+    ) -> Generated[ISpyClueResult]:
         content = json.dumps(payload, ensure_ascii=False)
         request = TextModelRequest(
             system_prompt=ISPY_CLUE_SYSTEM_PROMPT,
@@ -158,7 +201,7 @@ class ISpyClueService:
                     root.update(
                         retry_count=invocation.retries, validation_result="valid"
                     )
-                    return result
+                    return generated(result, response)
                 except ProviderError as error:
                     root.update(
                         retry_count=invocation.retries,

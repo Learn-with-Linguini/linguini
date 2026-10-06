@@ -16,6 +16,15 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from app.ai.cache import (
+    CacheScope,
+    CacheWaitTimeout,
+    FeatureVersion,
+    Generated,
+    ResultCache,
+    generated,
+    run_cached,
+)
 from app.ai.contracts.errors import ProviderError
 from app.ai.contracts.schema import build_strict_json_schema
 from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelRequest
@@ -29,6 +38,7 @@ from app.ai.features.translation.schemas import (
     SceneTranslationResult,
 )
 from app.ai.features.translation.validation import (
+    SCENE_TRANSLATION_VALIDATOR_VERSION,
     SceneTranslationError,
     normalize_object_articles,
     validate_translation_terms,
@@ -40,6 +50,12 @@ from app.ai.settings import AiFeature
 logger = logging.getLogger(__name__)
 
 _TRANSLATION_INVALID = "translationInvalid"
+_VERSION = FeatureVersion(
+    AiFeature.SCENE_TRANSLATION.value,
+    SCENE_TRANSLATION_PROMPT_VERSION,
+    SCENE_TRANSLATION_SCHEMA_VERSION,
+    SCENE_TRANSLATION_VALIDATOR_VERSION,
+)
 
 
 def build_scene_translation_schema() -> dict[str, Any]:
@@ -57,14 +73,19 @@ class SceneTranslationService:
         *,
         tracer: AITracer,
         provider: str,
+        cache: ResultCache | None = None,
     ) -> None:
         self._client = as_routed(client, config, kind="text")
+        self._cache = cache
         self._config = config
         self._tracer = tracer
         self._provider = provider
         self._json_schema = build_scene_translation_schema()
 
-    def translate(self, payload: dict[str, Any]) -> SceneTranslationResult:
+    def translate(
+        self, payload: dict[str, Any], *, cache_scope: CacheScope | None = None
+    ) -> SceneTranslationResult:
+        """Translate ``payload``; ``cache_scope=None`` bypasses the result cache."""
         try:
             parsed_payload = SceneTranslationRequest.model_validate(payload)
         except ValidationError as error:
@@ -72,6 +93,27 @@ class SceneTranslationService:
                 "Translation request payload is invalid."
             ) from error
 
+        def decode(data: Any) -> SceneTranslationResult:
+            result = normalize_object_articles(SceneTranslationResult.model_validate(data))
+            validate_translation_terms(parsed_payload, result)
+            return result
+
+        try:
+            return run_cached(
+                self._cache,
+                self._client,
+                version=_VERSION,
+                scope=cache_scope,
+                payload=payload,
+                compute=lambda: self._generate(payload, parsed_payload),
+                decode=decode,
+            )
+        except CacheWaitTimeout as error:
+            raise SceneTranslationError("Scene translation failed.") from error
+
+    def _generate(
+        self, payload: dict[str, Any], parsed_payload: SceneTranslationRequest
+    ) -> Generated[SceneTranslationResult]:
         content = json.dumps(payload, ensure_ascii=False)
         request = TextModelRequest(
             system_prompt=SCENE_TRANSLATION_SYSTEM_PROMPT,
@@ -171,7 +213,7 @@ class SceneTranslationService:
                 generation.record_content(
                     input=request.user_content, output=response.output_text
                 )
-                return result
+                return generated(result, response)
 
             # Unreachable: every loop path either returns or raises.
             raise SceneTranslationError("Scene translation failed.")

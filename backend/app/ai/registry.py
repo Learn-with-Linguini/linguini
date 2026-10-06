@@ -12,6 +12,7 @@ from typing import Any
 from app.ai.adapters.gemini import GeminiTextClient, GeminiVisionClient
 from app.ai.adapters.openai import OpenAITextClient, OpenAIVisionClient
 from app.ai.adapters.openrouter import OpenRouterTextClient, OpenRouterVisionClient
+from app.ai.cache import ResultCache
 from app.ai.config.models import DeploymentConfig, SelectionPolicy, UpstreamFallback
 from app.ai.contracts import VisionModelClient, VisionModelConfig
 from app.ai.contracts.config import ModelConfig
@@ -243,7 +244,8 @@ def build_image_moderator(settings: AiSettings) -> ImageModerator | None:
 
 
 def build_scene_translator(
-    settings: AiSettings, tracer: AITracer, *, pool: ProviderPool | None = None
+    settings: AiSettings, tracer: AITracer, *, pool: ProviderPool | None = None,
+    cache: ResultCache | None = None,
 ) -> SceneTranslationService | None:
     """Build the configured scene translator, or ``None`` when turned off.
 
@@ -261,12 +263,14 @@ def build_scene_translator(
         tracer=tracer,
     )
     return SceneTranslationService(
-        client, text_config, tracer=tracer, provider=config.provider.value
+        client, text_config, tracer=tracer, provider=config.provider.value,
+        cache=cache,
     )
 
 
 def build_learning_task_generator(
-    settings: AiSettings, tracer: AITracer, *, pool: ProviderPool | None = None
+    settings: AiSettings, tracer: AITracer, *, pool: ProviderPool | None = None,
+    cache: ResultCache | None = None,
 ) -> LearningTaskService | None:
     """Build the configured learning-task generator, or ``None`` when off.
 
@@ -286,12 +290,14 @@ def build_learning_task_generator(
         tracer=tracer,
     )
     return LearningTaskService(
-        client, text_config, tracer=tracer, provider=config.provider.value
+        client, text_config, tracer=tracer, provider=config.provider.value,
+        cache=cache,
     )
 
 
 def build_ispy_clue_generator(
-    settings: AiSettings, tracer: AITracer, *, pool: ProviderPool | None = None
+    settings: AiSettings, tracer: AITracer, *, pool: ProviderPool | None = None,
+    cache: ResultCache | None = None,
 ) -> ISpyClueService | None:
     """Build the configured I-Spy clue generator, or ``None`` when off.
 
@@ -309,7 +315,8 @@ def build_ispy_clue_generator(
         tracer=tracer,
     )
     return ISpyClueService(
-        client, text_config, tracer=tracer, provider=config.provider.value
+        client, text_config, tracer=tracer, provider=config.provider.value,
+        cache=cache,
     )
 
 
