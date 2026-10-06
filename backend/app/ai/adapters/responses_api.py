@@ -51,7 +51,11 @@ _FINISH_REASONS = {
 
 
 class ResponsesApiClient:
-    """Posts one structured-output request to a Responses API endpoint."""
+    """Posts one structured-output request to a Responses API endpoint.
+
+    Makes exactly one HTTP request per ``generate`` call: ``httpx`` never
+    retries, so every attempt is counted by the router's call budget.
+    """
 
     ENDPOINT: ResponsesEndpoint
     KIND = "text"
@@ -119,7 +123,10 @@ class ResponsesApiClient:
         return body
 
     def _send(
-        self, request: TextModelRequest | VisionModelRequest, user_content: list[dict]
+        self,
+        request: TextModelRequest | VisionModelRequest,
+        user_content: list[dict],
+        timeout_seconds: float | None = None,
     ) -> tuple[str, ResponseMetadata]:
         start = time.monotonic()
         version = request.prompt_version
@@ -131,7 +138,7 @@ class ResponsesApiClient:
                     "Content-Type": "application/json",
                 },
                 json=self._request_body(request, user_content),
-                timeout=self._config.timeout_seconds,
+                timeout=timeout_seconds or self._config.timeout_seconds,
             )
         except httpx.TimeoutException:
             raise self._error(
@@ -280,9 +287,13 @@ class ResponsesApiClient:
 class ResponsesTextClient(ResponsesApiClient):
     KIND = "text"
 
-    def generate(self, request: TextModelRequest) -> TextModelResponse:
+    def generate(
+        self, request: TextModelRequest, *, timeout_seconds: float | None = None
+    ) -> TextModelResponse:
         text, metadata = self._send(
-            request, [{"type": "input_text", "text": request.user_content}]
+            request,
+            [{"type": "input_text", "text": request.user_content}],
+            timeout_seconds,
         )
         return TextModelResponse(
             output_text=text,
@@ -297,7 +308,9 @@ class ResponsesTextClient(ResponsesApiClient):
 class ResponsesVisionClient(ResponsesApiClient):
     KIND = "vision"
 
-    def generate(self, request: VisionModelRequest) -> VisionModelResponse:
+    def generate(
+        self, request: VisionModelRequest, *, timeout_seconds: float | None = None
+    ) -> VisionModelResponse:
         image_data = base64.b64encode(request.image.data).decode("ascii")
         text, metadata = self._send(
             request,
@@ -308,6 +321,7 @@ class ResponsesVisionClient(ResponsesApiClient):
                     "image_url": f"data:{request.image.mime_type};base64,{image_data}",
                 },
             ],
+            timeout_seconds,
         )
         return VisionModelResponse(
             output_text=text,

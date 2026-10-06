@@ -43,6 +43,9 @@ class Capability(StrEnum):
 
 class SelectionPolicy(StrEnum):
     PRIMARY = "primary"
+    """Use only the first deployment, rotating its credentials."""
+    PRIORITY = "priority"
+    """Try deployments in listed order, failing over on transient errors."""
 
 
 @dataclass(frozen=True)
@@ -94,6 +97,13 @@ class GenerationDefaults(_Config):
     temperature: float = Field(default=0.0, ge=0, le=2)
 
 
+class UpstreamFallback(_Config):
+    """OpenRouter's own fallback, inside one outbound request."""
+
+    allow_fallbacks: bool
+    models: tuple[Annotated[str, StringConstraints(min_length=1)], ...] = ()
+
+
 class DeploymentConfig(_Config):
     adapter: AiProvider
     api: ApiType
@@ -101,6 +111,8 @@ class DeploymentConfig(_Config):
     capabilities: frozenset[Capability] = Field(min_length=1)
     credentials: tuple[ConfigId, ...] = Field(min_length=1)
     defaults: GenerationDefaults
+    upstream_fallback: UpstreamFallback | None = None
+    """Required for OpenRouter deployments, rejected for others."""
 
 
 class RouteConfig(_Config):

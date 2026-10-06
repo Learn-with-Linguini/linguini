@@ -30,6 +30,8 @@ from app.ai.config.models import (
     DeploymentConfig,
     GenerationDefaults,
     RouteConfig,
+    SelectionPolicy,
+    UpstreamFallback,
 )
 
 logger = logging.getLogger(__name__)
@@ -594,10 +596,16 @@ def _compat_config(features: Mapping[AiFeature, FeatureModelConfig]) -> AiConfig
                 max_retries=config.max_retries,
                 temperature=config.temperature,
             ),
+            upstream_fallback=(
+                UpstreamFallback(allow_fallbacks=True)
+                if config.provider is AiProvider.OPENROUTER
+                else None
+            ),
         )
         attempts = 1 + min(config.max_retries, 1)
         routes[feature] = RouteConfig(
             deployments=(feature.value,),
+            policy=SelectionPolicy.PRIORITY,
             deadline_seconds=config.timeout_seconds * attempts,
             max_model_calls=attempts,
         )

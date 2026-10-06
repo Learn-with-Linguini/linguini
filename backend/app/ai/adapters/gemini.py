@@ -83,6 +83,12 @@ def _retry_info_seconds(details: Any) -> float | None:
     return None
 
 
+# One HTTP attempt per call. google-genai retries only when retry options are
+# set; pinning a single attempt keeps every outbound call visible to the
+# router's call budget instead of hidden inside the SDK.
+NO_SDK_RETRIES = types.HttpRetryOptions(attempts=1)
+
+
 class GeminiClient:
     """Calls ``models.generate_content`` with a JSON-schema response."""
 
@@ -101,7 +107,8 @@ class GeminiClient:
         self._client = client or genai.Client(
             api_key=api_key,
             http_options=types.HttpOptions(
-                timeout=int(config.timeout_seconds * 1_000)
+                timeout=int(config.timeout_seconds * 1_000),
+                retry_options=NO_SDK_RETRIES,
             ),
         )
 
@@ -148,7 +155,10 @@ class GeminiClient:
         )
 
     def _send(
-        self, request: TextModelRequest | VisionModelRequest, contents: list[Any]
+        self,
+        request: TextModelRequest | VisionModelRequest,
+        contents: list[Any],
+        timeout_seconds: float | None = None,
     ) -> tuple[str, ResponseMetadata]:
         start = time.monotonic()
         version = request.prompt_version
@@ -162,6 +172,11 @@ class GeminiClient:
                     response_mime_type="application/json",
                     response_json_schema=request.json_schema,
                     max_output_tokens=self._config.max_output_tokens,
+                    http_options=(
+                        None
+                        if timeout_seconds is None
+                        else types.HttpOptions(timeout=max(1, int(timeout_seconds * 1_000)))
+                    ),
                 ),
             )
         except (httpx.TimeoutException, TimeoutError):
@@ -252,8 +267,10 @@ class GeminiClient:
 class GeminiTextClient(GeminiClient):
     KIND = "text"
 
-    def generate(self, request: TextModelRequest) -> TextModelResponse:
-        text, metadata = self._send(request, [request.user_content])
+    def generate(
+        self, request: TextModelRequest, *, timeout_seconds: float | None = None
+    ) -> TextModelResponse:
+        text, metadata = self._send(request, [request.user_content], timeout_seconds)
         return TextModelResponse(
             output_text=text,
             model_name=self._config.model_name,
@@ -267,7 +284,9 @@ class GeminiTextClient(GeminiClient):
 class GeminiVisionClient(GeminiClient):
     KIND = "vision"
 
-    def generate(self, request: VisionModelRequest) -> VisionModelResponse:
+    def generate(
+        self, request: VisionModelRequest, *, timeout_seconds: float | None = None
+    ) -> VisionModelResponse:
         text, metadata = self._send(
             request,
             [
@@ -277,6 +296,7 @@ class GeminiVisionClient(GeminiClient):
                     mime_type=request.image.mime_type,
                 ),
             ],
+            timeout_seconds,
         )
         return VisionModelResponse(
             output_text=text,

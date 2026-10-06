@@ -113,7 +113,7 @@ def review(database, repo):
 
 
 class _FakeProviderClient:
-    def __init__(self, _key, _config):
+    def __init__(self, _key, _config, **_options):
         pass
 
     def generate(self, request):

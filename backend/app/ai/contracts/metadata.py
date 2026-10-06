@@ -35,3 +35,17 @@ class ResponseMetadata:
     finish_reason: str | None = None
     """The provider's own finish or status code, for diagnostics."""
     usage: TokenUsage = field(default_factory=TokenUsage)
+
+
+@dataclass(frozen=True)
+class RouteInfo:
+    """Which deployment and credential served a routed call."""
+
+    deployment_id: str
+    credential_id: str
+    model: str
+    """The model the provider reported, else the one requested."""
+    attempts: int
+    """Outbound calls this routed request made, including failed ones."""
+    fallback_reason: str | None = None
+    """Error code of the last failure the router moved past, if any."""

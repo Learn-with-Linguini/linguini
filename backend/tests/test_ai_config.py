@@ -75,7 +75,7 @@ def test_example_file_matches_the_environment_defaults():
         assert from_file.is_configured(from_file.feature(feature))
         assert from_file.secret_for(from_file.feature(feature)) == KEY
     route = from_file.ai_config.routes[AiFeature.SCENE_TRANSLATION]
-    assert route.policy is SelectionPolicy.PRIMARY
+    assert route.policy is SelectionPolicy.PRIORITY
     assert (route.deadline_seconds, route.max_model_calls) == (120, 2)
     assert from_file.scene_translation.deployment_id == TRANSLATION
 
@@ -159,8 +159,8 @@ def test_route_uses_first_eligible_credential_with_a_secret(tmp_path, monkeypatc
     seen = {}
 
     class FakeClient:
-        def __init__(self, key, config):
-            seen.update(key=key, config=config)
+        def __init__(self, key, config, **options):
+            seen.update(key=key, config=config, options=options)
 
         def generate(self, request):
             return TextModelResponse(
@@ -180,6 +180,7 @@ def test_route_uses_first_eligible_credential_with_a_secret(tmp_path, monkeypatc
     )
     assert seen["key"] == "sk-team"
     assert seen["config"].temperature == 0.3
+    assert seen["options"] == {"allow_fallbacks": True, "fallback_models": ()}
 
 
 def test_first_non_empty_variable_supplies_the_secret():

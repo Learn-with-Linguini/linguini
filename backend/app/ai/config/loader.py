@@ -13,6 +13,7 @@ from app.ai.config.models import (
     AiConfig,
     AiConfigurationError,
     AiFeature,
+    AiProvider,
 )
 
 
@@ -71,6 +72,14 @@ def validate_ai_config(config: AiConfig) -> None:
                 f"{where}: adapter {deployment.adapter.value!r} does not support "
                 f"{', '.join(sorted(unsupported))}"
             )
+        if deployment.adapter is AiProvider.OPENROUTER:
+            if deployment.upstream_fallback is None:
+                problems.append(
+                    f"{where}: OpenRouter deployments need upstream_fallback "
+                    "(set allow_fallbacks explicitly)"
+                )
+        elif deployment.upstream_fallback is not None:
+            problems.append(f"{where}: upstream_fallback is only supported for openrouter")
         for credential_id in deployment.credentials:
             credential = config.credentials.get(credential_id)
             if credential is None:

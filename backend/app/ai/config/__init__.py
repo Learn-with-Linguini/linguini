@@ -21,6 +21,7 @@ from app.ai.config.models import (
     GenerationDefaults,
     RouteConfig,
     SelectionPolicy,
+    UpstreamFallback,
 )
 
 __all__ = [
@@ -38,6 +39,7 @@ __all__ = [
     "GenerationDefaults",
     "RouteConfig",
     "SelectionPolicy",
+    "UpstreamFallback",
     "load_ai_config_file",
     "parse_ai_config",
     "resolve_credential_secrets",

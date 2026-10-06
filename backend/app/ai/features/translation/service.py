@@ -34,6 +34,7 @@ from app.ai.features.translation.validation import (
     validate_translation_terms,
 )
 from app.ai.observability import AITracer
+from app.ai.routing import as_routed, route_metadata, total_tokens
 from app.ai.settings import AiFeature
 
 logger = logging.getLogger(__name__)
@@ -57,7 +58,7 @@ class SceneTranslationService:
         tracer: AITracer,
         provider: str,
     ) -> None:
-        self._client = client
+        self._client = as_routed(client, config, kind="text")
         self._config = config
         self._tracer = tracer
         self._provider = provider
@@ -81,6 +82,7 @@ class SceneTranslationService:
         )
 
         attempts = 1 + self._config.max_retries
+        invocation = self._client.start_invocation()
         latency_ms = 0.0
         with self._tracer.generation(
             "scene-translation",
@@ -97,21 +99,12 @@ class SceneTranslationService:
             for attempt in range(1, attempts + 1):
                 call_start = time.perf_counter()
                 try:
-                    response = self._client.generate(request)
+                    response = self._client.generate(request, invocation=invocation)
                 except ProviderError as error:
                     latency_ms += (time.perf_counter() - call_start) * 1000
-                    if error.transient and attempt < attempts:
-                        logger.warning(
-                            "scene translation attempt failed, retrying",
-                            extra={
-                                "attempt": attempt,
-                                "code": error.code.value,
-                            },
-                        )
-                        continue
                     generation.update(
                         latency_ms=latency_ms,
-                        retry_count=attempt - 1,
+                        retry_count=invocation.retries,
                         validation_result="invalid",
                         error_code=error.code.value,
                     )
@@ -128,7 +121,7 @@ class SceneTranslationService:
                     )
                     validate_translation_terms(parsed_payload, result)
                 except (ValueError, SceneTranslationError) as error:
-                    if attempt < attempts:
+                    if attempt < attempts and invocation.can_call():
                         issues = (
                             error.errors(include_input=False, include_context=False,
                                          include_url=False)
@@ -158,7 +151,7 @@ class SceneTranslationService:
                         continue
                     generation.update(
                         latency_ms=latency_ms,
-                        retry_count=attempt - 1,
+                        retry_count=invocation.retries,
                         validation_result="invalid",
                         error_code=_TRANSLATION_INVALID,
                     )
@@ -170,7 +163,9 @@ class SceneTranslationService:
                     latency_ms=latency_ms,
                     input_tokens=response.input_tokens,
                     output_tokens=response.output_tokens,
-                    retry_count=attempt - 1,
+                    total_tokens=total_tokens(response),
+                    metadata=route_metadata(response),
+                    retry_count=invocation.retries,
                     validation_result="valid",
                 )
                 generation.record_content(

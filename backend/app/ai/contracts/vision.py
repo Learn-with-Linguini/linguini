@@ -11,7 +11,7 @@ from typing import Any, Protocol
 
 from app.ai.contracts.config import ModelConfig
 from app.ai.contracts.errors import ProviderError, ProviderErrorCode
-from app.ai.contracts.metadata import ResponseMetadata
+from app.ai.contracts.metadata import ResponseMetadata, RouteInfo
 from app.schemas.media import MAX_IMAGE_BYTES
 
 ALLOWED_IMAGE_MIME_TYPES = frozenset({"image/jpeg", "image/png", "image/webp"})
@@ -59,6 +59,7 @@ class VisionModelResponse:
     input_tokens: int | None = None
     output_tokens: int | None = None
     metadata: ResponseMetadata | None = None
+    route: RouteInfo | None = None
 
 
 class VisionModelClient(Protocol):

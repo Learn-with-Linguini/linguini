@@ -33,6 +33,7 @@ from app.ai.features.ispy_clues.validation import (
     validate_ispy_clues,
 )
 from app.ai.observability import AITracer
+from app.ai.routing import as_routed, route_metadata, total_tokens
 from app.ai.settings import AiFeature
 
 logger = logging.getLogger(__name__)
@@ -57,7 +58,7 @@ class ISpyClueService:
         tracer: AITracer,
         provider: str,
     ) -> None:
-        self._client = client
+        self._client = as_routed(client, config, kind="text")
         self._config = config
         self._tracer = tracer
         self._provider = provider
@@ -76,6 +77,7 @@ class ISpyClueService:
         )
 
         attempts = 1 + self._config.max_retries
+        invocation = self._client.start_invocation()
         latency_ms = 0.0
         with self._tracer.trace(
             "ispy-clues",
@@ -107,19 +109,21 @@ class ISpyClueService:
                         metadata={"attempt": attempt},
                     ) as generation:
                         try:
-                            response = self._client.generate(attempt_request)
+                            response = self._client.generate(attempt_request, invocation=invocation)
                         except ProviderError as error:
                             generation.update(
                                 error_code=error.code.value,
-                                retry_count=attempt - 1,
+                                retry_count=invocation.retries,
                             )
                             raise
                         latency_ms += (time.perf_counter() - call_start) * 1000
                         generation.update(
                             input_tokens=response.input_tokens,
                             output_tokens=response.output_tokens,
+                            total_tokens=total_tokens(response),
+                            metadata=route_metadata(response),
                             latency_ms=latency_ms,
-                            retry_count=attempt - 1,
+                            retry_count=invocation.retries,
                         )
                         generation.record_content(
                             input=attempt_request.user_content,
@@ -152,21 +156,12 @@ class ISpyClueService:
                             metadata={"clueCount": len(result.clues)},
                         )
                     root.update(
-                        retry_count=attempt - 1, validation_result="valid"
+                        retry_count=invocation.retries, validation_result="valid"
                     )
                     return result
                 except ProviderError as error:
-                    if error.transient and attempt < attempts:
-                        logger.warning(
-                            "ispy-clue attempt failed, retrying",
-                            extra={
-                                "attempt": attempt,
-                                "code": error.code.value,
-                            },
-                        )
-                        continue
                     root.update(
-                        retry_count=attempt - 1,
+                        retry_count=invocation.retries,
                         validation_result="invalid",
                         error_code=error.code.value,
                     )
@@ -174,14 +169,14 @@ class ISpyClueService:
                         "I-Spy clue generation failed."
                     ) from error
                 except (ValueError, ISpyClueGenerationError) as error:
-                    if attempt < attempts:
+                    if attempt < attempts and invocation.can_call():
                         logger.warning(
                             "ispy-clue output failed validation, retrying",
                             extra={"attempt": attempt},
                         )
                         continue
                     root.update(
-                        retry_count=attempt - 1,
+                        retry_count=invocation.retries,
                         validation_result="invalid",
                         error_code=_ISPY_CLUES_INVALID,
                     )

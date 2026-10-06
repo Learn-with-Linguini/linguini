@@ -7,10 +7,14 @@ deterministic fallbacks.
 
 from __future__ import annotations
 
+from typing import Any
+
 from app.ai.adapters.gemini import GeminiTextClient, GeminiVisionClient
 from app.ai.adapters.openai import OpenAITextClient, OpenAIVisionClient
 from app.ai.adapters.openrouter import OpenRouterTextClient, OpenRouterVisionClient
+from app.ai.config.models import DeploymentConfig, SelectionPolicy, UpstreamFallback
 from app.ai.contracts import VisionModelClient, VisionModelConfig
+from app.ai.contracts.config import ModelConfig
 from app.ai.contracts.text import TextModelClient, TextModelConfig
 from app.ai.features.ispy_clues import ISpyClueService
 from app.ai.features.ispy_guess import ISpyGuessService
@@ -20,12 +24,12 @@ from app.ai.features.object_grounding import GroundingDinoObjectGrounder, Object
 from app.ai.features.scene_analysis import UploadedSceneAnalyzer
 from app.ai.features.translation import SceneTranslationService
 from app.ai.observability import AITracer
-from app.ai.pool import PooledModelClient, ProviderPool
+from app.ai.pool import ProviderPool
+from app.ai.routing import RoutedModelClient, RouteTarget, as_routed
 from app.ai.settings import (
     AiFeature,
     AiProvider,
     AiSettings,
-    FeatureModelConfig,
     ImageModerationProvider,
     ObjectGroundingProvider,
 )
@@ -38,6 +42,7 @@ def build_text_client(
     config: TextModelConfig,
     *,
     api_key: str | None = None,
+    upstream_fallback: UpstreamFallback | None = None,
 ) -> TextModelClient:
     key = settings.api_key_for(provider) if api_key is None else api_key
     if provider is AiProvider.OPENAI:
@@ -45,7 +50,7 @@ def build_text_client(
     if provider is AiProvider.GEMINI:
         return GeminiTextClient(key, config)
     if provider is AiProvider.OPENROUTER:
-        return OpenRouterTextClient(key, config)
+        return OpenRouterTextClient(key, config, **_openrouter_options(upstream_fallback))
     raise ValueError(f"unsupported text provider {provider!r}")
 
 
@@ -55,6 +60,7 @@ def build_vision_client(
     config: VisionModelConfig,
     *,
     api_key: str | None = None,
+    upstream_fallback: UpstreamFallback | None = None,
 ) -> VisionModelClient:
     key = settings.api_key_for(provider) if api_key is None else api_key
     if provider is AiProvider.OPENAI:
@@ -62,29 +68,106 @@ def build_vision_client(
     if provider is AiProvider.GEMINI:
         return GeminiVisionClient(key, config)
     if provider is AiProvider.OPENROUTER:
-        return OpenRouterVisionClient(key, config)
+        return OpenRouterVisionClient(key, config, **_openrouter_options(upstream_fallback))
     raise ValueError(f"unsupported vision provider {provider!r}")
 
 
-def _feature_client(
+def _openrouter_options(upstream_fallback: UpstreamFallback | None) -> dict[str, Any]:
+    if upstream_fallback is None:
+        return {}
+    return {
+        "allow_fallbacks": upstream_fallback.allow_fallbacks,
+        "fallback_models": upstream_fallback.models,
+    }
+
+
+def _model_config(model: str, defaults: Any, default_max_output_tokens: int) -> ModelConfig:
+    return ModelConfig(
+        model_name=model,
+        timeout_seconds=defaults.timeout_seconds,
+        max_output_tokens=defaults.max_output_tokens or default_max_output_tokens,
+        max_retries=min(defaults.max_retries, 1),
+        temperature=defaults.temperature,
+    )
+
+
+def _route_target(
     kind: str,
     settings: AiSettings,
-    feature: FeatureModelConfig,
-    config: TextModelConfig | VisionModelConfig,
-    pool: ProviderPool | None,
-):
-    """A pooled client for the feature's deployment, or a direct one without it."""
+    deployment_id: str,
+    deployment: DeploymentConfig,
+    default_max_output_tokens: int,
+) -> RouteTarget:
     build = build_text_client if kind == "text" else build_vision_client
-    pool = pool or ProviderPool.from_settings(settings)
-    if not pool.credentials.has_deployment(feature.deployment_id):
-        return build(feature.provider, settings, config, api_key=settings.secret_for(feature))
-    return PooledModelClient(
-        pool,
-        kind,
-        feature.deployment_id,
+    config = _model_config(deployment.model, deployment.defaults, default_max_output_tokens)
+    return RouteTarget(
+        deployment_id,
+        deployment.adapter.value,
         config,
-        lambda secret: build(feature.provider, settings, config, api_key=secret),
+        lambda secret: build(
+            deployment.adapter,
+            settings,
+            config,
+            api_key=secret,
+            upstream_fallback=deployment.upstream_fallback,
+        ),
     )
+
+
+def build_routed_client(
+    kind: str,
+    settings: AiSettings,
+    feature: AiFeature,
+    *,
+    default_max_output_tokens: int = 1500,
+    pool: ProviderPool | None = None,
+    tracer: AITracer | None = None,
+) -> tuple[RoutedModelClient, ModelConfig]:
+    """The feature's routed client and its primary deployment's settings.
+
+    Clients are built lazily on first use. Settings without a configured
+    route fall back to one directly built client.
+    """
+    feature_config = settings.feature(feature)
+    pool = pool or ProviderPool.from_settings(settings)
+    route = settings.ai_config.routes.get(feature) if settings.ai_config else None
+    if route is None or not route.deployments or not all(
+        pool.credentials.has_deployment(deployment_id) for deployment_id in route.deployments
+    ):
+        config = _model_config(
+            feature_config.model_name, feature_config, default_max_output_tokens
+        )
+        build = build_text_client if kind == "text" else build_vision_client
+        client = build(
+            feature_config.provider, settings, config, api_key=settings.secret_for(feature_config)
+        )
+        return as_routed(client, config, kind=kind), config
+    deployment_ids = (
+        route.deployments
+        if route.policy is SelectionPolicy.PRIORITY
+        else route.deployments[:1]
+    )
+    targets = tuple(
+        _route_target(
+            kind,
+            settings,
+            deployment_id,
+            settings.ai_config.deployments[deployment_id],
+            default_max_output_tokens,
+        )
+        for deployment_id in deployment_ids
+    )
+    primary = targets[0].config
+    client = RoutedModelClient(
+        kind,
+        targets,
+        pool.credentials,
+        max_model_calls=route.max_model_calls or 1 + primary.max_retries,
+        deadline_seconds=route.deadline_seconds,
+        clients=pool.clients,
+        tracer=tracer,
+    )
+    return client, primary
 
 
 def build_uploaded_scene_analyzer(
@@ -106,16 +189,17 @@ def build_uploaded_scene_analyzer(
     ):
         if not settings.is_configured(scene_config):
             return None
-        vision_config = VisionModelConfig(
-            model_name=scene_config.model_name,
-            timeout_seconds=scene_config.timeout_seconds,
-            max_output_tokens=scene_config.max_output_tokens or 1500,
-            max_retries=min(scene_config.max_retries, 1),
-            temperature=scene_config.temperature,
+        client, vision_config = build_routed_client(
+            "vision",
+            settings,
+            AiFeature.SCENE_ANALYSIS,
+            default_max_output_tokens=1500,
+            pool=pool,
+            tracer=tracer,
         )
         return UploadedSceneAnalyzer(
             storage,
-            _feature_client("vision", settings, scene_config, vision_config, pool),
+            client,
             vision_config,
             tracer=tracer,
             provider=scene_config.provider.value,
@@ -168,14 +252,14 @@ def build_scene_translator(
     config = settings.feature(AiFeature.SCENE_TRANSLATION)
     if config.provider is AiProvider.NONE or not settings.is_configured(config):
         return None
-    text_config = TextModelConfig(
-        model_name=config.model_name,
-        timeout_seconds=config.timeout_seconds,
-        max_output_tokens=config.max_output_tokens or 1500,
-        max_retries=min(config.max_retries, 1),
-        temperature=config.temperature,
+    client, text_config = build_routed_client(
+        "text",
+        settings,
+        AiFeature.SCENE_TRANSLATION,
+        default_max_output_tokens=1500,
+        pool=pool,
+        tracer=tracer,
     )
-    client = _feature_client("text", settings, config, text_config, pool)
     return SceneTranslationService(
         client, text_config, tracer=tracer, provider=config.provider.value
     )
@@ -193,14 +277,14 @@ def build_learning_task_generator(
     config = settings.feature(AiFeature.LEARNING_TASK)
     if config.provider is AiProvider.NONE or not settings.is_configured(config):
         return None
-    text_config = TextModelConfig(
-        model_name=config.model_name,
-        timeout_seconds=config.timeout_seconds,
-        max_output_tokens=config.max_output_tokens or 4000,
-        max_retries=min(config.max_retries, 1),
-        temperature=config.temperature,
+    client, text_config = build_routed_client(
+        "text",
+        settings,
+        AiFeature.LEARNING_TASK,
+        default_max_output_tokens=4000,
+        pool=pool,
+        tracer=tracer,
     )
-    client = _feature_client("text", settings, config, text_config, pool)
     return LearningTaskService(
         client, text_config, tracer=tracer, provider=config.provider.value
     )
@@ -216,14 +300,14 @@ def build_ispy_clue_generator(
     config = settings.feature(AiFeature.ISPY_CLUE)
     if config.provider is AiProvider.NONE or not settings.is_configured(config):
         return None
-    text_config = TextModelConfig(
-        model_name=config.model_name,
-        timeout_seconds=config.timeout_seconds,
-        max_output_tokens=config.max_output_tokens or 1500,
-        max_retries=min(config.max_retries, 1),
-        temperature=config.temperature,
+    client, text_config = build_routed_client(
+        "text",
+        settings,
+        AiFeature.ISPY_CLUE,
+        default_max_output_tokens=1500,
+        pool=pool,
+        tracer=tracer,
     )
-    client = _feature_client("text", settings, config, text_config, pool)
     return ISpyClueService(
         client, text_config, tracer=tracer, provider=config.provider.value
     )
@@ -240,14 +324,14 @@ def build_ispy_guess_generator(
     config = settings.feature(AiFeature.ISPY_GUESS)
     if config.provider is AiProvider.NONE or not settings.is_configured(config):
         return None
-    text_config = TextModelConfig(
-        model_name=config.model_name,
-        timeout_seconds=config.timeout_seconds,
-        max_output_tokens=config.max_output_tokens or 500,
-        max_retries=min(config.max_retries, 1),
-        temperature=config.temperature,
+    client, text_config = build_routed_client(
+        "text",
+        settings,
+        AiFeature.ISPY_GUESS,
+        default_max_output_tokens=500,
+        pool=pool,
+        tracer=tracer,
     )
-    client = _feature_client("text", settings, config, text_config, pool)
     return ISpyGuessService(
         client, text_config, tracer=tracer, provider=config.provider.value
     )

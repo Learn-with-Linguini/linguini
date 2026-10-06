@@ -36,15 +36,17 @@ from sqlalchemy.dialects.postgresql import insert
 
 from app.ai.contracts.errors import ProviderError
 from app.ai.contracts.schema import build_strict_json_schema
-from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelRequest
+from app.ai.contracts.text import TextModelRequest
 from app.ai.features.translation.schemas import TranslatedTerm
 from app.ai.observability import NoOpAITracer
+from app.ai.pool import ProviderPool
 from app.ai.registry import (
     build_object_grounder,
+    build_routed_client,
     build_scene_translator,
-    build_text_client,
     build_uploaded_scene_analyzer,
 )
+from app.ai.routing import RoutedModelClient
 from app.ai.settings import AiFeature, load_ai_settings
 from app.database import create_database_engine, read_connection
 from app.repositories.postgres.media_assets import media_assets
@@ -352,12 +354,13 @@ def _load_base_scenes(engine, slugs: list[str]) -> list[dict[str, Any]]:
 
 
 def _fetch_examples(
-    client: TextModelClient,
+    client: RoutedModelClient,
     payload: dict[str, Any],
     expected_keys: set[str],
     json_schema: dict[str, Any],
 ) -> dict[str, tuple[str, str]]:
-    """One example sentence per word; retry once, then leave blanks."""
+    """One example sentence per word; repair within the route's call budget,
+    then leave blanks. Provider failover happens inside the routed client."""
     request = TextModelRequest(
         system_prompt=SCENE_EXAMPLES_SYSTEM_PROMPT,
         user_content=json.dumps(payload, ensure_ascii=False),
@@ -365,9 +368,16 @@ def _fetch_examples(
         json_schema=json_schema,
         prompt_version="scene-examples.v1",
     )
-    for attempt in range(1, 3):
+    invocation = client.start_invocation()
+    attempt = 0
+    while invocation.can_call():
+        attempt += 1
         try:
-            response = client.generate(request)
+            response = client.generate(request, invocation=invocation)
+        except ProviderError as error:
+            logger.warning("example sentences attempt %d failed: %s", attempt, error)
+            break
+        try:
             result = SceneExampleResult.model_validate_json(response.output_text)
             found = {example.key: example for example in result.examples}
             if expected_keys <= found.keys():
@@ -380,7 +390,7 @@ def _fetch_examples(
                 sorted(expected_keys - found.keys()),
                 attempt,
             )
-        except (ProviderError, ValidationError, ValueError) as error:
+        except (ValidationError, ValueError) as error:
             logger.warning("example sentences attempt %d failed: %s", attempt, error)
     logger.warning("leaving %d example sentences blank", len(expected_keys))
     return {}
@@ -553,29 +563,33 @@ def _compute_rows(
         os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip(),
     )
     tracer = NoOpAITracer()
+    pool = ProviderPool.from_settings(settings)
     analyzer = build_uploaded_scene_analyzer(
-        settings, storage, tracer, object_grounder=build_object_grounder(settings)
+        settings,
+        storage,
+        tracer,
+        object_grounder=build_object_grounder(settings),
+        pool=pool,
     )
     if analyzer is None:
         raise RuntimeError(
             "SCENE_ANALYSIS is not configured; set AI_SCENE_ANALYSIS_PROVIDER/"
             "AI_SCENE_ANALYSIS_MODEL and the matching API key."
         )
-    translator = build_scene_translator(settings, NoOpAITracer())
+    translator = build_scene_translator(settings, NoOpAITracer(), pool=pool)
     if translator is None:
         raise RuntimeError(
             "SCENE_TRANSLATION is not configured; set "
             "AI_SCENE_TRANSLATION_PROVIDER/AI_SCENE_TRANSLATION_MODEL "
             "and the matching API key."
         )
-    translation_config = settings.feature(AiFeature.SCENE_TRANSLATION)
-    text_config = TextModelConfig(
-        model_name=translation_config.model_name,
-        timeout_seconds=translation_config.timeout_seconds,
-        max_output_tokens=translation_config.max_output_tokens or 1500,
-        max_retries=min(translation_config.max_retries, 1),
+    text_client, _ = build_routed_client(
+        "text",
+        settings,
+        AiFeature.SCENE_TRANSLATION,
+        default_max_output_tokens=1500,
+        pool=pool,
     )
-    text_client = build_text_client(translation_config.provider, settings, text_config)
     examples_schema = build_strict_json_schema(SceneExampleResult)
 
     bases = _load_base_scenes(engine, slugs)

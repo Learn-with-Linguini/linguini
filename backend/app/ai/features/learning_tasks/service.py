@@ -39,6 +39,7 @@ from app.ai.features.learning_tasks.validation import (
     validate_learning_tasks,
 )
 from app.ai.observability import AITracer
+from app.ai.routing import as_routed, route_metadata, total_tokens
 from app.ai.settings import AiFeature
 
 logger = logging.getLogger(__name__)
@@ -64,7 +65,7 @@ class LearningTaskService:
         tracer: AITracer,
         provider: str,
     ) -> None:
-        self._client = client
+        self._client = as_routed(client, config, kind="text")
         self._config = config
         self._tracer = tracer
         self._provider = provider
@@ -85,6 +86,7 @@ class LearningTaskService:
         )
 
         attempts = 1 + self._config.max_retries
+        invocation = self._client.start_invocation()
         latency_ms = 0.0
         repair_context = ""
         with self._tracer.trace(
@@ -120,19 +122,21 @@ class LearningTaskService:
                         },
                     ) as generation:
                         try:
-                            response = self._client.generate(attempt_request)
+                            response = self._client.generate(attempt_request, invocation=invocation)
                         except ProviderError as error:
                             generation.update(
                                 error_code=error.code.value,
-                                retry_count=attempt - 1,
+                                retry_count=invocation.retries,
                             )
                             raise
                         latency_ms += (time.perf_counter() - call_start) * 1000
                         generation.update(
                             input_tokens=response.input_tokens,
                             output_tokens=response.output_tokens,
+                            total_tokens=total_tokens(response),
+                            metadata=route_metadata(response),
                             latency_ms=latency_ms,
-                            retry_count=attempt - 1,
+                            retry_count=invocation.retries,
                         )
                         generation.record_content(
                             input=attempt_request.user_content,
@@ -176,21 +180,12 @@ class LearningTaskService:
                             },
                         )
                     root.update(
-                        retry_count=attempt - 1, validation_result="valid"
+                        retry_count=invocation.retries, validation_result="valid"
                     )
                     return result
                 except ProviderError as error:
-                    if error.transient and attempt < attempts:
-                        logger.warning(
-                            "learning-task attempt failed, retrying",
-                            extra={
-                                "attempt": attempt,
-                                "code": error.code.value,
-                            },
-                        )
-                        continue
                     root.update(
-                        retry_count=attempt - 1,
+                        retry_count=invocation.retries,
                         validation_result="invalid",
                         error_code=error.code.value,
                     )
@@ -198,7 +193,7 @@ class LearningTaskService:
                         "Learning task generation failed."
                     ) from error
                 except (ValueError, LearningTaskGenerationError) as error:
-                    if attempt < attempts:
+                    if attempt < attempts and invocation.can_call():
                         # Include the actual failure and output so the retry can
                         # repair this question rather than regenerate blindly.
                         issues = (
@@ -218,7 +213,7 @@ class LearningTaskService:
                         )
                         continue
                     root.update(
-                        retry_count=attempt - 1,
+                        retry_count=invocation.retries,
                         validation_result="invalid",
                         error_code=_LEARNING_TASKS_INVALID,
                     )

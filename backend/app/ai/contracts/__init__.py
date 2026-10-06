@@ -2,7 +2,7 @@
 
 from app.ai.contracts.config import ModelConfig
 from app.ai.contracts.errors import ProviderError, ProviderErrorCode, ProviderFailureScope
-from app.ai.contracts.metadata import FinishStatus, ResponseMetadata, TokenUsage
+from app.ai.contracts.metadata import FinishStatus, ResponseMetadata, RouteInfo, TokenUsage
 from app.ai.contracts.schema import build_strict_json_schema
 from app.ai.contracts.text import (
     TextModelClient,
@@ -27,6 +27,7 @@ __all__ = [
     "ProviderErrorCode",
     "ProviderFailureScope",
     "ResponseMetadata",
+    "RouteInfo",
     "TextModelClient",
     "TextModelConfig",
     "TextModelRequest",

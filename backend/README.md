@@ -358,16 +358,17 @@ defaults. The file holds no secrets. It has three sections:
   `quota_group` and `billing_group`.
 - `[deployments.<id>]`: `adapter`, `api` (`responses` or `generateContent`),
   `model`, `capabilities` (`text`, `vision`, `jsonSchema`), the eligible
-  `credentials`, and generation `defaults` (`timeout_seconds`,
-  `max_output_tokens`, `max_retries`, `temperature`).
+  `credentials`, generation `defaults` (`timeout_seconds`,
+  `max_output_tokens`, `max_retries`, `temperature`), and, for OpenRouter
+  only, a required `upstream_fallback` (see [AI routing](#ai-routing)).
 - `[routes.<feature>]`, one for each of `sceneAnalysis`, `sceneTranslation`,
   `learningTask`, `ispyClue` and `ispyGuess`:
   - `enabled`;
   - the approved `deployments`;
-  - `policy`: only `primary` exists so far, and it uses the first deployment
-    with its first credential that has a secret;
-  - `deadline_seconds` and `max_model_calls`: validated and exposed on
-    `AiSettings.ai_config`, but not yet enforced.
+  - `policy`: `priority` tries the deployments in listed order; `primary` uses
+    only the first. Both rotate the deployment's credentials;
+  - `deadline_seconds` and `max_model_calls`: the deadline and total
+    outbound-call budget for one feature operation, enforced by the router.
 
 Precedence:
 
@@ -378,7 +379,8 @@ Precedence:
    values.
 2. **`AI_CONFIG_FILE` unset:** the per-feature `AI_*` variables apply, then
    their deprecated aliases, then the built-in defaults. They are mapped to one
-   deployment and one route per feature, so behaviour is unchanged.
+   deployment and one `priority` route per feature, so behaviour is
+   unchanged. OpenRouter deployments get `allow_fallbacks = true`.
 3. **Always from the environment:**
    - secrets: the variables a credential names, or `AI_<PROVIDER>_API_KEY`
      then `<PROVIDER>_API_KEY` without a file;
@@ -453,13 +455,59 @@ Every model call leases a credential from the app-wide `CredentialPool`
 | `service` scope with `retry_after_seconds` | Cools down the deployment for that long |
 | `service` scope without it, `request` or `response` scope | No cooldown; service failures only count toward deployment health |
 
-A plain 429 is treated as a rate limit, never as exhausted credits. A call
-never makes extra model requests: a feature's existing retry simply leases
-the next credential. When nothing is eligible the call fails at once, with no
-network request, as `providerRateLimited` (with the soonest retry-after) or
+A plain 429 is treated as a rate limit, never as exhausted credits. When
+nothing is eligible the call fails at once, with no network request, as `providerRateLimited` (with the soonest retry-after) or
 `providerAuth`, and the feature falls back as before. Cooldowns use an
 injectable clock, and health lives behind the `PoolState` interface
 (`InMemoryPoolState` today). There are no per-user quotas.
+
+### AI routing
+
+Feature services call `RoutedModelClient` (`app/ai/routing/`), which
+implements the text and vision contracts. Each feature operation opens one
+`InvocationContext` holding the route's `deadline_seconds` and
+`max_model_calls`; router failover and the feature's validation repair share
+it, so together they never exceed either.
+
+For each outbound call the router picks the route's next deployment in
+priority order, leases a credential round robin from the pool, reuses that
+deployment and credential's immutable client and caps the call's timeout at
+the time left. It never sleeps.
+
+| Failure | Router |
+| --- | --- |
+| Timeout, 5xx, rate limit, exhausted credits, unknown model | Next credential (quota) or next deployment (service, model) |
+| Authentication | Disables that credential, then the next credential or deployment |
+| Refusal, content filter, request or schema error (`request` scope) | Stops: terminal |
+| Invalid model output (`providerResponseInvalid`) | Returned to the feature's repair step |
+
+Failover stops once the budget or deadline is spent, and the last provider
+error is raised. Features no longer retry transport errors themselves; they
+keep only their validation repair, at most `max_retries` (≤ 1) repairs and
+only while the budget allows. With one deployment per route, call counts and
+fallbacks match the previous behaviour. A client injected directly into a
+feature (tests, scripts) gets a one-deployment route with a budget of
+`1 + max_retries` calls.
+
+**SDK retries:** every adapter makes exactly one HTTP request per call, so
+the budget counts every attempt we make. `httpx` never retries, Gemini pins
+`HttpRetryOptions(attempts=1)`, and the eval judge's OpenAI SDK uses
+`max_retries=0`.
+
+**OpenRouter upstream fallback:** OpenRouter deployments must set
+`upstream_fallback`, sent as `provider.allow_fallbacks` (plus `models` when
+fallback models are listed). The default keeps OpenRouter's fallback on, as
+before. OpenRouter's internal attempts on other hosts or models happen inside
+one HTTP request, so `max_model_calls` counts them as one call and cannot
+see or limit them; only the deadline bounds them.
+
+**Tracing:** each outbound call is a `model-call` span with the deployment,
+credential ID (never the secret), provider, requested model, attempt number,
+the fallback reason so far, the outcome (`success`, `failover`, `terminal`),
+error code, scope and status, latency and token usage. The feature's
+generation records the deployment, credential ID and model that served it,
+the route's attempts, the fallback reason and input/output/total tokens.
+`retry_count` counts every outbound call after the first.
 
 ### AI observability
 

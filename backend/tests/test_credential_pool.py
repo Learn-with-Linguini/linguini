@@ -16,9 +16,9 @@ from app.ai.pool import (
     HealthReason,
     HealthScope,
     InMemoryPoolState,
-    PooledModelClient,
     ProviderPool,
 )
+from app.ai.routing import RoutedModelClient, RouteTarget
 from app.ai.runtime import AiRuntime
 from app.ai.settings import AiFeature, load_ai_settings
 
@@ -60,6 +60,7 @@ def ai_config(groups: dict[str, str]):
                     "capabilities": ["text", "jsonSchema"],
                     "credentials": list(groups),
                     "defaults": {"timeout_seconds": 60},
+                    "upstream_fallback": {"allow_fallbacks": True},
                 }
             },
             "routes": routes,
@@ -305,12 +306,17 @@ class FakeClient:
 
 
 def pooled(credentials, factory, config=None):
-    return PooledModelClient(
-        ProviderPool(credentials),
+    """A one-deployment route with a one-call budget, so failures surface."""
+    return RoutedModelClient(
         "text",
-        DEPLOYMENT,
-        config or TextModelConfig(model_name="m"),
-        factory,
+        (
+            RouteTarget(
+                DEPLOYMENT, "openrouter", config or TextModelConfig(model_name="m"), factory
+            ),
+        ),
+        credentials,
+        max_model_calls=1,
+        clients=ProviderPool(credentials).clients,
     )
 
 
@@ -404,6 +410,7 @@ def two_key_settings(tmp_path, groups):
         'capabilities = ["text", "jsonSchema"]',
         f"credentials = {list(groups)!r}".replace("'", '"'),
         "defaults = { timeout_seconds = 60, max_retries = 1 }",
+        "upstream_fallback = { allow_fallbacks = true }",
     ]
     for feature in ("sceneTranslation", "ispyClue"):
         lines += [
@@ -425,7 +432,7 @@ def test_runtime_shares_pool_and_clients_across_features(tmp_path, monkeypatch):
     seen = []
     failures = {"sk-a": error(Code.PROVIDER_RATE_LIMITED, Scope.QUOTA, 60, 429)}
 
-    def fake(key, config):
+    def fake(key, config, **_options):
         seen.append(key)
         return FakeClient(key, config, failures)
 
@@ -434,12 +441,13 @@ def test_runtime_shares_pool_and_clients_across_features(tmp_path, monkeypatch):
     translation = runtime.translator()._client
     clues = runtime.ispy_clue_generator()._client
 
-    with pytest.raises(ProviderError):
-        translation.generate(REQUEST)
-    clues.generate(REQUEST)
-    clues.generate(REQUEST)
-    translation.generate(REQUEST)
+    first = translation.generate(REQUEST)
+    assert (first.route.credential_id, first.route.attempts) == ("b", 2)
+    assert first.route.fallback_reason == "providerRateLimited"
+    assert clues.generate(REQUEST).route.credential_id == "b"
+    assert translation.generate(REQUEST).route.attempts == 1
 
     health = runtime.provider_pool.credentials.health(HealthScope.QUOTA_GROUP, "g1")
     assert health.reason is HealthReason.RATE_LIMITED
     assert seen.count("sk-a") == 1
+    assert seen.count("sk-b") == 1

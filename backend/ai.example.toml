@@ -7,8 +7,14 @@
 # Deployments: adapter (openai | openrouter | gemini), api (responses for
 #   openai/openrouter, generateContent for gemini), model, capabilities
 #   (text | vision | jsonSchema), eligible credential IDs, generation defaults.
-# Routes: one per feature. `policy = "primary"` uses the first deployment.
-#   deadline_seconds and max_model_calls are validated but not yet enforced.
+#   OpenRouter deployments must set upstream_fallback: allow_fallbacks lets
+#   OpenRouter try other hosts for the same model and `models` lists fallback
+#   models. Those attempts happen inside one request, so max_model_calls
+#   counts them as one call.
+# Routes: one per feature. `policy = "priority"` tries deployments in listed
+#   order, failing over on transient errors; `"primary"` uses only the first.
+#   Every call for one feature operation, including failover and output
+#   repair, shares deadline_seconds and max_model_calls.
 
 [credentials.openrouter]
 adapter = "openrouter"
@@ -34,6 +40,7 @@ api = "responses"
 model = "anthropic/claude-haiku-4.5"
 capabilities = ["vision", "jsonSchema"]
 credentials = ["openrouter"]
+upstream_fallback = { allow_fallbacks = true }
 defaults = { timeout_seconds = 120, max_retries = 0 }
 
 [deployments.translation-gpt-4o-mini]
@@ -42,6 +49,7 @@ api = "responses"
 model = "openai/gpt-4o-mini"
 capabilities = ["text", "jsonSchema"]
 credentials = ["openrouter"]
+upstream_fallback = { allow_fallbacks = true }
 defaults = { timeout_seconds = 60, max_retries = 1 }
 
 [deployments.lessons-gpt-5-4-mini]
@@ -50,6 +58,7 @@ api = "responses"
 model = "openai/gpt-5.4-mini"
 capabilities = ["text", "jsonSchema"]
 credentials = ["openrouter"]
+upstream_fallback = { allow_fallbacks = true }
 defaults = { timeout_seconds = 60, max_retries = 1 }
 
 [deployments.clues-gemini-flash-lite]
@@ -58,6 +67,7 @@ api = "responses"
 model = "google/gemini-3.1-flash-lite"
 capabilities = ["text", "jsonSchema"]
 credentials = ["openrouter"]
+upstream_fallback = { allow_fallbacks = true }
 defaults = { timeout_seconds = 60, max_retries = 1 }
 
 [deployments.guess-gpt-4-1-mini]
@@ -66,34 +76,35 @@ api = "responses"
 model = "openai/gpt-4.1-mini"
 capabilities = ["text", "jsonSchema"]
 credentials = ["openrouter"]
+upstream_fallback = { allow_fallbacks = true }
 defaults = { timeout_seconds = 60, max_retries = 0 }
 
 [routes.sceneAnalysis]
 deployments = ["scene-claude-haiku"]
-policy = "primary"
+policy = "priority"
 deadline_seconds = 120
 max_model_calls = 1
 
 [routes.sceneTranslation]
 deployments = ["translation-gpt-4o-mini"]
-policy = "primary"
+policy = "priority"
 deadline_seconds = 120
 max_model_calls = 2
 
 [routes.learningTask]
 deployments = ["lessons-gpt-5-4-mini"]
-policy = "primary"
+policy = "priority"
 deadline_seconds = 120
 max_model_calls = 2
 
 [routes.ispyClue]
 deployments = ["clues-gemini-flash-lite"]
-policy = "primary"
+policy = "priority"
 deadline_seconds = 120
 max_model_calls = 2
 
 [routes.ispyGuess]
 deployments = ["guess-gpt-4-1-mini"]
-policy = "primary"
+policy = "priority"
 deadline_seconds = 60
 max_model_calls = 1

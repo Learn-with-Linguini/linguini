@@ -122,8 +122,11 @@ class CredentialPool:
         with self._lock:
             return self._state.get(scope, key)
 
-    def acquire(self, deployment_id: str) -> CredentialLease:
-        """Pick the next healthy credential, or raise without calling the provider."""
+    def acquire(
+        self, deployment_id: str, exclude: frozenset[str] = frozenset()
+    ) -> CredentialLease:
+        """Pick the next healthy credential not in ``exclude``, or raise
+        without calling the provider."""
         deployment = self._config.deployments[deployment_id]
         provider = deployment.adapter.value
         ids = deployment.credentials
@@ -149,7 +152,7 @@ class CredentialPool:
                 credential_id = ids[index]
                 secret = self._secrets.get(credential_id)
                 credential = self._state.get(HealthScope.CREDENTIAL, credential_id)
-                if not secret or credential.disabled:
+                if not secret or credential.disabled or credential_id in exclude:
                     continue
                 quota_group = self._config.credentials[credential_id].quota_group
                 group = self._state.get(HealthScope.QUOTA_GROUP, quota_group)
@@ -262,34 +265,3 @@ class ProviderPool:
         config = settings.ai_config or AiConfig(routes={})
         return cls(CredentialPool(config, settings.credential_secrets, **options))
 
-
-class PooledModelClient:
-    """Text or vision client that leases a credential for every call."""
-
-    def __init__(
-        self,
-        pool: ProviderPool,
-        kind: str,
-        deployment_id: str,
-        config: Hashable,
-        factory: Callable[[str], Any],
-    ) -> None:
-        self._pool = pool
-        self._kind = kind
-        self._deployment_id = deployment_id
-        self._config = config
-        self._factory = factory
-
-    def generate(self, request: Any) -> Any:
-        lease = self._pool.credentials.acquire(self._deployment_id)
-        client = self._pool.clients.get(
-            (self._kind, self._deployment_id, lease.credential_id, self._config),
-            lambda: self._factory(lease.secret),
-        )
-        try:
-            response = client.generate(request)
-        except ProviderError as error:
-            self._pool.credentials.report_failure(lease, error)
-            raise
-        self._pool.credentials.report_success(lease)
-        return response

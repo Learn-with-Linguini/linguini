@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import time
 from dataclasses import replace
 from typing import Any
@@ -33,6 +34,7 @@ from app.ai.features.ispy_guess.validation import (
     validate_ispy_guess,
 )
 from app.ai.observability import AITracer
+from app.ai.routing import as_routed, route_metadata, total_tokens
 from app.ai.settings import AiFeature
 
 logger = logging.getLogger(__name__)
@@ -63,15 +65,15 @@ class ISpyGuessService:
         tracer: AITracer,
         provider: str,
     ) -> None:
-        self._client = client
+        self._client = as_routed(client, config, kind="text")
         self._config = config
         self._tracer = tracer
         self._provider = provider
 
     @property
     def max_duration_seconds(self) -> int:
-        """Upper bound on one ``guess`` call, including retries."""
-        return self._config.timeout_seconds * (1 + self._config.max_retries)
+        """Upper bound on one ``guess`` call, including failover and repair."""
+        return math.ceil(self._client.max_duration_seconds)
 
     def guess(
         self,
@@ -112,6 +114,7 @@ class ISpyGuessService:
             prompt_version=ISPY_GUESS_PROMPT_VERSION,
         )
         attempts = 1 + self._config.max_retries
+        invocation = self._client.start_invocation()
         latency_ms = 0.0
         for attempt in range(1, attempts + 1):
             attempt_request = (
@@ -136,18 +139,20 @@ class ISpyGuessService:
                     metadata={"attempt": attempt},
                 ) as generation:
                     try:
-                        response = self._client.generate(attempt_request)
+                        response = self._client.generate(attempt_request, invocation=invocation)
                     except ProviderError as error:
                         generation.update(
-                            error_code=error.code.value, retry_count=attempt - 1
+                            error_code=error.code.value, retry_count=invocation.retries
                         )
                         raise
                     latency_ms += (time.perf_counter() - call_start) * 1000
                     generation.update(
                         input_tokens=response.input_tokens,
                         output_tokens=response.output_tokens,
+                        total_tokens=total_tokens(response),
+                        metadata=route_metadata(response),
                         latency_ms=latency_ms,
-                        retry_count=attempt - 1,
+                        retry_count=invocation.retries,
                     )
                     generation.record_content(
                         input=attempt_request.user_content,
@@ -168,34 +173,28 @@ class ISpyGuessService:
                         raise
                     validation.update(validation_result="valid")
                 root.update(
-                    retry_count=attempt - 1,
+                    retry_count=invocation.retries,
                     validation_result="valid",
                     metadata={"resultStatus": _result_status(result)},
                 )
                 return result
             except ProviderError as error:
-                if error.transient and attempt < attempts:
-                    logger.warning(
-                        "ispy-guess attempt failed, retrying",
-                        extra={"attempt": attempt, "code": error.code.value},
-                    )
-                    continue
                 root.update(
-                    retry_count=attempt - 1,
+                    retry_count=invocation.retries,
                     validation_result="invalid",
                     error_code=error.code.value,
                     metadata={"resultStatus": "providerError"},
                 )
                 raise ISpyGuessError("I-Spy guessing failed.") from error
             except (ValueError, ISpyGuessError) as error:
-                if attempt < attempts:
+                if attempt < attempts and invocation.can_call():
                     logger.warning(
                         "ispy-guess output failed validation, retrying",
                         extra={"attempt": attempt},
                     )
                     continue
                 root.update(
-                    retry_count=attempt - 1,
+                    retry_count=invocation.retries,
                     validation_result="invalid",
                     error_code=_ISPY_GUESS_INVALID,
                     metadata={"resultStatus": "invalidOutput"},

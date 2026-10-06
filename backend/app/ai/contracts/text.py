@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from typing import Any, Protocol
 
 from app.ai.contracts.config import ModelConfig
-from app.ai.contracts.metadata import ResponseMetadata
+from app.ai.contracts.metadata import ResponseMetadata, RouteInfo
 
 TextModelConfig = ModelConfig
 
@@ -32,6 +32,7 @@ class TextModelResponse:
     input_tokens: int | None = None
     output_tokens: int | None = None
     metadata: ResponseMetadata | None = None
+    route: RouteInfo | None = None
 
 
 class TextModelClient(Protocol):
