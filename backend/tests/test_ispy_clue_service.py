@@ -13,7 +13,7 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
-from app.ai.adapters.gemini import GeminiTextClient
+from app.ai.adapters.gemini import GeminiTextClient, _gemini_json_schema
 from app.ai.adapters.openai import OpenAITextClient
 from app.ai.contracts.errors import ProviderError, ProviderErrorCode
 from app.ai.contracts.schema import build_strict_json_schema
@@ -553,7 +553,7 @@ def test_both_providers_share_prompt_and_schema() -> None:
 
     gemini_config = gemini_captured["kwargs"]["config"]
     assert gemini_config.system_instruction == openai_system
-    assert gemini_config.response_json_schema == openai_schema
+    assert gemini_config.response_json_schema == _gemini_json_schema(openai_schema)
     assert gemini_captured["kwargs"]["contents"] == [openai_user]
 
 

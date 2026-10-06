@@ -6,7 +6,7 @@ import pytest
 from google.genai import types
 from google.genai.errors import ClientError, ServerError
 
-from app.ai.adapters.gemini import GeminiTextClient
+from app.ai.adapters.gemini import GeminiTextClient, _gemini_json_schema
 from app.ai.contracts.errors import ProviderError, ProviderErrorCode
 from app.ai.contracts.text import TextModelConfig, TextModelRequest
 from app.ai.features.translation import (
@@ -95,7 +95,7 @@ def test_adapter_success_and_request_shape() -> None:
     assert gemini_config.system_instruction == "sys"
     assert gemini_config.temperature == 0
     assert gemini_config.response_mime_type == "application/json"
-    assert gemini_config.response_json_schema == _request().json_schema
+    assert gemini_config.response_json_schema == _gemini_json_schema(_request().json_schema)
     assert gemini_config.max_output_tokens == 1500
 
 
