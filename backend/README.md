@@ -293,8 +293,14 @@ task generation claims `sessions.generation_revision`, calls the models with no
 transaction open, then persists only if its revision is still current, so a stale
 run never overwrites or fails a newer one. Model-graded I-Spy descriptions claim
 `session_tasks.evaluation_claim_id` with the attempt's idempotency-derived ID,
-evaluate outside the transaction, and save only while that claim is still held;
-concurrent retries return the same saved attempt. Learners can leave up to three unfinished sessions open and
+store a SHA-256 fingerprint of the request and a lease
+(`evaluation_claim_expires_at`: the model's timeout × attempts plus 15 s), evaluate
+outside the transaction, and save only while that claim is still held. Only the
+lease holder calls the model: a concurrent request with the same key polls (20–100 ms
+backoff) for the holder's saved attempt, the same key with different input gets 409
+before any model call, and an expired lease left by a crashed request is taken over.
+Unexpected failures release the lease at once, so one key yields one saved attempt,
+one model call and at most one XP award. Learners can leave up to three unfinished sessions open and
 resume an open session from the home screen. Task answers are private and are omitted
 from every public task response.
 

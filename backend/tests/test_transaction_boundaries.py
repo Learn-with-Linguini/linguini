@@ -1,9 +1,11 @@
 """Provider calls run with no database transaction open; stale results are dropped."""
 
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
+from datetime import timedelta
 from types import SimpleNamespace
-from uuid import UUID, uuid4
+from uuid import UUID, uuid4, uuid5
 
 import pytest
 from sqlalchemy import event, func, select, update
@@ -20,7 +22,10 @@ from app.repositories.postgres.tasks import (
     task_evaluation_claims,
 )
 from app.repositories.postgres.users import users
-from app.repositories.postgres.workflow import PostgresWorkflowRepository
+from app.repositories.postgres.workflow import (
+    PostgresWorkflowRepository,
+    _request_fingerprint,
+)
 from app.repositories.postgres.xp import xp_events
 from app.repositories.practice import PracticeConflictError
 from app.schemas.sessions import ReviewPracticeRequest
@@ -333,28 +338,125 @@ def test_ispy_evaluation_runs_without_a_transaction_and_retries_idempotently(
     assert ispy_xp_count(engine, sid) == 1
 
 
-def test_concurrent_retries_return_the_same_attempt_and_award_once(database, probe):
+def test_concurrent_retries_share_one_evaluation_and_award_once(database, probe):
     engine = database[0]
     repo, sid, task_id, guesser = described_session(database, probe, lock=False)
-    both_evaluating = threading.Barrier(2, timeout=10)
+    entered = threading.Barrier(4, timeout=10)
     original = guesser.guess
 
-    def guess(*args, **kwargs):
-        result = original(*args, **kwargs)
-        both_evaluating.wait()
-        return result
+    def slow_guess(*args, **kwargs):
+        time.sleep(0.2)
+        return original(*args, **kwargs)
 
-    guesser.guess = guess
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        responses = list(pool.map(
-            lambda _: repo.task_action(task_id, "attempt", describe("describe-race-1")),
-            range(2),
-        ))
-    assert guesser.calls == 2
-    assert responses[0].attempt.id == responses[1].attempt.id
+    def attempt(_):
+        entered.wait()
+        return repo.task_action(task_id, "attempt", describe("describe-race-1"))
+
+    guesser.guess = slow_guess
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        responses = list(pool.map(attempt, range(4)))
+    assert guesser.calls == 1
+    assert len({response.attempt.id for response in responses}) == 1
     assert attempt_count(engine, task_id) == 1
     assert ispy_xp_count(engine, sid) == 1
     assert claim_of(engine, task_id) is None
+
+
+def test_duplicate_waits_for_the_lease_holder_instead_of_calling_the_model(
+    database, probe
+):
+    repo, _sid, task_id, guesser = described_session(database, probe)
+    waiting = threading.Event()
+    original_wait = repo._await_evaluation
+
+    def await_evaluation(pending):
+        waiting.set()
+        return original_wait(pending)
+
+    repo._await_evaluation = await_evaluation
+    duplicates = []
+    duplicate = threading.Thread(target=lambda: duplicates.append(
+        repo.task_action(task_id, "attempt", describe("describe-wait-1"))
+    ))
+
+    def start_duplicate():
+        duplicate.start()
+        assert waiting.wait(10)
+
+    guesser.during = start_duplicate
+    first = repo.task_action(task_id, "attempt", describe("describe-wait-1"))
+    duplicate.join(10)
+    assert guesser.calls == 1
+    assert duplicates[0].attempt.id == first.attempt.id
+
+
+def test_key_reuse_with_different_input_is_rejected_before_the_model(database, probe):
+    engine = database[0]
+    repo, sid, task_id, guesser = described_session(database, probe)
+    other = SubmitTextAttemptRequest(text="Es una silla.", idempotency_key="describe-reuse-1")
+    rejected = []
+
+    def reuse_key():
+        with pytest.raises(PracticeConflictError, match="another answer"):
+            repo.task_action(task_id, "attempt", other)
+        rejected.append(True)
+
+    guesser.during = reuse_key
+    saved = repo.task_action(task_id, "attempt", describe("describe-reuse-1"))
+    assert rejected and saved.attempt.is_correct is True
+    with pytest.raises(PracticeConflictError, match="another answer"):
+        repo.task_action(task_id, "attempt", other)
+    assert guesser.calls == 1
+    assert attempt_count(engine, task_id) == 1
+    assert ispy_xp_count(engine, sid) == 1
+
+
+def abandon_claim(engine, task_id, key, expires_in):
+    with engine.begin() as connection:
+        connection.execute(
+            update(task_evaluation_claims)
+            .where(task_evaluation_claims.c.id == task_id)
+            .values(
+                evaluation_claim_id=uuid5(task_id, "attempt:" + key),
+                evaluation_claim_fingerprint=_request_fingerprint(describe(key)),
+                evaluation_claim_expires_at=func.now() + timedelta(seconds=expires_in),
+            )
+        )
+
+
+def test_expired_abandoned_claim_is_taken_over(database, probe):
+    engine = database[0]
+    repo, sid, task_id, guesser = described_session(database, probe)
+    abandon_claim(engine, task_id, "describe-crash-1", expires_in=-1)
+    response = repo.task_action(task_id, "attempt", describe("describe-crash-1"))
+    assert response.attempt.is_correct is True
+    assert guesser.calls == 1
+    assert claim_of(engine, task_id) is None
+    assert ispy_xp_count(engine, sid) == 1
+
+
+def test_live_abandoned_claim_is_recovered_when_its_lease_expires(database, probe):
+    engine = database[0]
+    repo, _sid, task_id, guesser = described_session(database, probe)
+    abandon_claim(engine, task_id, "describe-crash-2", expires_in=0.5)
+    started = time.monotonic()
+    response = repo.task_action(task_id, "attempt", describe("describe-crash-2"))
+    assert time.monotonic() - started >= 0.4
+    assert response.attempt.is_correct is True
+    assert guesser.calls == 1
+
+
+def test_unexpected_failure_releases_the_claim_for_a_retry(database, probe):
+    engine = database[0]
+    repo, _sid, task_id, guesser = described_session(database, probe)
+    guesser.error = RuntimeError("worker crashed")
+    with pytest.raises(RuntimeError):
+        repo.task_action(task_id, "attempt", describe("describe-boom-1"))
+    assert claim_of(engine, task_id) is None
+    guesser.error = None
+    response = repo.task_action(task_id, "attempt", describe("describe-boom-1"))
+    assert response.attempt.is_correct is True
+    assert guesser.calls == 2
 
 
 def test_replaced_claim_is_rejected_then_retry_succeeds(database, probe):

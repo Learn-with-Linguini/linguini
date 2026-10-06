@@ -80,6 +80,8 @@ task_evaluation_claims = Table(
     MetaData(),
     Column("id", Uuid, primary_key=True),
     Column("evaluation_claim_id", Uuid),
+    Column("evaluation_claim_fingerprint", String(64)),
+    Column("evaluation_claim_expires_at", DateTime(timezone=True)),
     schema="public",
 )
 

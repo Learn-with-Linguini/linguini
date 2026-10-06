@@ -313,6 +313,8 @@ model SessionTask {
   skippedAt        DateTime? @map("skipped_at") @db.Timestamptz(6)
   skipReason       String? @map("skip_reason") @db.VarChar(500)
   evaluationClaimId String? @map("evaluation_claim_id") @db.Uuid
+  evaluationClaimFingerprint String? @map("evaluation_claim_fingerprint") @db.VarChar(64)
+  evaluationClaimExpiresAt DateTime? @map("evaluation_claim_expires_at") @db.Timestamptz(6)
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
   attempts         TaskAttempt[]

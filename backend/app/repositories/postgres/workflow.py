@@ -1,5 +1,7 @@
 """Atomic normalized session workflow. Locks serialize each user's transitions."""
 
+import hashlib
+import json
 import logging
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -226,6 +228,24 @@ class DescriptionClaim:
     context: dict
     learner_text: str
     session_id: str
+
+
+@dataclass(frozen=True)
+class PendingEvaluation:
+    """Another request with the same idempotency key holds the evaluation lease."""
+
+    task_id: UUID
+    attempt_id: UUID
+
+
+DEFAULT_EVALUATION_SECONDS = 120
+EVALUATION_LEASE_MARGIN_SECONDS = 15
+EVALUATION_POLL_SECONDS = (0.02, 0.1)
+NO_EVALUATION_CLAIM = dict(
+    evaluation_claim_id=None,
+    evaluation_claim_fingerprint=None,
+    evaluation_claim_expires_at=None,
+)
 
 
 @dataclass(frozen=True)
@@ -1475,10 +1495,18 @@ class PostgresWorkflowRepository:
             and self.ispy_guess_generator
         )
 
-    def _claim_description(self, task_id, request):
-        """Claim a model-graded I-Spy attempt; ``None`` when no model call is due.
+    def _evaluation_lease(self):
+        seconds = getattr(
+            self.ispy_guess_generator, "max_duration_seconds", DEFAULT_EVALUATION_SECONDS
+        )
+        return timedelta(seconds=seconds + EVALUATION_LEASE_MARGIN_SECONDS)
 
-        Saved attempts, inactive tasks and invalid input fall through to
+    def _claim_description(self, task_id, request):
+        """Lease a model-graded I-Spy attempt; ``None`` when no model call is due.
+
+        A live lease for the same key yields ``PendingEvaluation`` (or a conflict
+        if the input differs). A missing, expired or other-key lease is taken
+        over. Saved attempts, inactive tasks and invalid input fall through to
         ``_apply_task_action``, which returns or rejects them.
         """
         with self.transaction() as c:
@@ -1495,10 +1523,28 @@ class PostgresWorkflowRepository:
                 or task.status in {"completed", "skipped"}
             ):
                 return None
+            fingerprint = _request_fingerprint(request)
+            held = c.execute(
+                select(
+                    task_evaluation_claims.c.evaluation_claim_id,
+                    task_evaluation_claims.c.evaluation_claim_fingerprint,
+                    (task_evaluation_claims.c.evaluation_claim_expires_at > func.now()).label(
+                        "live"
+                    ),
+                ).where(task_evaluation_claims.c.id == task.id)
+            ).one()
+            if held.live and held.evaluation_claim_id == attempt_id:
+                if held.evaluation_claim_fingerprint != fingerprint:
+                    raise PracticeConflictError("Attempt key already used for another answer.")
+                return PendingEvaluation(task.id, attempt_id)
             c.execute(
                 update(task_evaluation_claims)
                 .where(task_evaluation_claims.c.id == task.id)
-                .values(evaluation_claim_id=attempt_id)
+                .values(
+                    evaluation_claim_id=attempt_id,
+                    evaluation_claim_fingerprint=fingerprint,
+                    evaluation_claim_expires_at=func.now() + self._evaluation_lease(),
+                )
             )
             return DescriptionClaim(
                 task.id,
@@ -1517,16 +1563,66 @@ class PostgresWorkflowRepository:
             logger.exception("I-Spy description guess failed for task %s.", claim.task_id)
             return None
 
-    def task_action(self, task_id, action, request=None):
-        """Claim → model call with no transaction open → persist if still claimed."""
-        evaluation = None
-        if action == "attempt":
-            claim = self._claim_description(task_id, request)
-            if claim is not None:
-                evaluation = DescriptionEvaluation(
-                    claim.attempt_id, self._evaluate_description(claim)
+    def _await_evaluation(self, pending):
+        """Waits while the lease holder evaluates; ``False`` if another key took over."""
+        delay, max_delay = EVALUATION_POLL_SECONDS
+        while True:
+            time.sleep(delay)
+            with self.engine.connect() as c:
+                row = c.execute(
+                    select(
+                        task_evaluation_claims.c.evaluation_claim_id,
+                        (task_evaluation_claims.c.evaluation_claim_expires_at > func.now()).label(
+                            "live"
+                        ),
+                        select(task_attempts.c.id)
+                        .where(task_attempts.c.id == pending.attempt_id)
+                        .exists()
+                        .label("saved"),
+                    ).where(task_evaluation_claims.c.id == pending.task_id)
+                ).one()
+            if row.saved or row.evaluation_claim_id is None or not row.live:
+                return True
+            if row.evaluation_claim_id != pending.attempt_id:
+                return False
+            delay = min(delay * 2, max_delay)
+
+    def _release_claim(self, claim):
+        try:
+            with self.engine.begin() as c:
+                c.execute(
+                    update(task_evaluation_claims)
+                    .where(
+                        task_evaluation_claims.c.id == claim.task_id,
+                        task_evaluation_claims.c.evaluation_claim_id == claim.attempt_id,
+                    )
+                    .values(**NO_EVALUATION_CLAIM)
                 )
-        return self._apply_task_action(task_id, action, request, evaluation)
+        except SQLAlchemyError:
+            logger.exception("Could not release the evaluation claim for task %s.", claim.task_id)
+
+    def task_action(self, task_id, action, request=None):
+        """Lease → one model call with no transaction open → persist if still leased."""
+        if action != "attempt":
+            return self._apply_task_action(task_id, action, request, None)
+        while True:
+            claim = self._claim_description(task_id, request)
+            if not isinstance(claim, PendingEvaluation):
+                break
+            if not self._await_evaluation(claim):
+                raise PracticeConflictError(
+                    "This task changed while your description was evaluated. Retry the action."
+                )
+        if claim is None:
+            return self._apply_task_action(task_id, action, request, None)
+        try:
+            evaluation = DescriptionEvaluation(
+                claim.attempt_id, self._evaluate_description(claim)
+            )
+            return self._apply_task_action(task_id, action, request, evaluation)
+        except Exception:
+            self._release_claim(claim)
+            raise
 
     def _apply_task_action(self, task_id, action, request, evaluation):
         with self.transaction() as c:
@@ -1534,9 +1630,7 @@ class PostgresWorkflowRepository:
             session = self._session(c, task.session_id)
             attempt = None
             if action == "attempt":
-                payload = request.model_dump(
-                    mode="json", by_alias=False, exclude={"idempotency_key"}
-                )
+                payload = _response_payload(request)
                 attempt_id = _attempt_id(task, request)
                 saved = (
                     c.execute(select(task_attempts).where(task_attempts.c.id == attempt_id))
@@ -1665,7 +1759,7 @@ class PostgresWorkflowRepository:
                         c.execute(
                             update(task_evaluation_claims)
                             .where(task_evaluation_claims.c.id == task.id)
-                            .values(evaluation_claim_id=None)
+                            .values(**NO_EVALUATION_CLAIM)
                         )
                     if correct is True and task.phase == "ispy":
                         award(
@@ -1724,6 +1818,15 @@ class PostgresWorkflowRepository:
 
 def _attempt_id(task, request):
     return uuid5(task.id, "attempt:" + (request.idempotency_key or "single-evaluation"))
+
+
+def _response_payload(request):
+    return request.model_dump(mode="json", by_alias=False, exclude={"idempotency_key"})
+
+
+def _request_fingerprint(request):
+    canonical = json.dumps(_response_payload(request), sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(canonical.encode()).hexdigest()
 
 
 def evaluate(task, request):

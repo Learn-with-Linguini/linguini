@@ -68,6 +68,11 @@ class ISpyGuessService:
         self._tracer = tracer
         self._provider = provider
 
+    @property
+    def max_duration_seconds(self) -> int:
+        """Upper bound on one ``guess`` call, including retries."""
+        return self._config.timeout_seconds * (1 + self._config.max_retries)
+
     def guess(
         self,
         context: dict[str, Any],
