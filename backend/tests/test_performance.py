@@ -13,6 +13,7 @@ from test_postgres_sessions import database as database
 
 import app.ai.registry as registry
 from app.ai import NoOpAITracer, load_ai_settings
+from app.ai.contracts.text import TextModelRequest, TextModelResponse
 from app.ai.features.ispy_clues import ISpyClueGenerationError
 from app.ai.features.translation.schemas import SceneTranslationResult
 from app.ai.runtime import AiRuntime
@@ -66,18 +67,18 @@ class SlowModels:
             raise error
         return result
 
-    def translate(self, payload):
+    def translate(self, payload, cache_scope=None):
         return SceneTranslationResult.model_validate({
             kind: [{**term, "translation": "mesa"} for term in payload[kind]]
             for kind in ("objects", "attributes", "relationships")
         })
 
-    def lessons(self, _payload):
+    def lessons(self, _payload, cache_scope=None):
         return self._run(
             "lessons", self.lesson_error, LearningTaskResult.model_validate(learning_tasks())
         )
 
-    def clues(self, payload):
+    def clues(self, payload, cache_scope=None):
         key = payload["objects"][0]["key"]
         return self._run("clues", self.clue_error, ISpyClueResult.model_validate({"clues": [{
             "clue": CLUE, "answerObjectKey": key, "objectKeys": [key], "relationshipKeys": [],
@@ -111,7 +112,27 @@ def review(database, repo):
     return sid
 
 
-def test_runtime_builds_each_provider_client_once(built):
+class _FakeProviderClient:
+    def __init__(self, _key, _config, **_options):
+        pass
+
+    def generate(self, request, **_options):
+        return TextModelResponse(
+            output_text="{}", model_name="m", prompt_version=request.prompt_version
+        )
+
+
+_REQUEST = TextModelRequest(
+    system_prompt="s",
+    user_content="u",
+    json_schema_name="n",
+    json_schema={},
+    prompt_version="v",
+)
+
+
+def test_runtime_builds_each_provider_client_once(built, monkeypatch):
+    monkeypatch.setattr(registry, "OpenRouterTextClient", _FakeProviderClient)
     runtime = AiRuntime(load_ai_settings(CONFIGURED), NoOpAITracer())
     threads = [threading.Thread(target=runtime.translator) for _ in range(8)]
     for thread in threads:
@@ -121,6 +142,18 @@ def test_runtime_builds_each_provider_client_once(built):
 
     assert runtime.translator() is runtime.translator()
     assert runtime.ispy_guess_generator() is runtime.ispy_guess_generator()
+    assert built == []
+
+    threads = [
+        threading.Thread(target=service._client.generate, args=(_REQUEST,))
+        for service in (runtime.translator(), runtime.ispy_guess_generator())
+        for _ in range(4)
+    ]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
+
     assert len(built) == 2
 
 

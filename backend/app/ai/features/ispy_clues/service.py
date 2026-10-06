@@ -16,6 +16,19 @@ import time
 from dataclasses import replace
 from typing import Any
 
+from app.ai.cache import (
+    CacheScope,
+    CacheWaitTimeout,
+    FeatureVersion,
+    Generated,
+    ResultCache,
+    TemplateSet,
+    generated,
+    run_cached,
+)
+from app.ai.contracts.errors import ProviderError
+from app.ai.contracts.schema import build_strict_json_schema
+from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelRequest
 from app.ai.features.ispy_clues.prompt import (
     ISPY_CLUE_PROMPT_VERSION,
     ISPY_CLUE_SCHEMA_VERSION,
@@ -26,18 +39,23 @@ from app.ai.features.ispy_clues.schemas import (
     scene_clue_response_model,
 )
 from app.ai.features.ispy_clues.validation import (
+    ISPY_CLUE_VALIDATOR_VERSION,
     ISpyClueGenerationError,
     validate_ispy_clues,
 )
-from app.ai.model_errors import ProviderError
 from app.ai.observability import AITracer
+from app.ai.routing import as_routed, route_metadata, total_tokens
 from app.ai.settings import AiFeature
-from app.ai.text_model import TextModelClient, TextModelConfig, TextModelRequest
-from app.services.vision_model import build_strict_json_schema
 
 logger = logging.getLogger(__name__)
 
 _ISPY_CLUES_INVALID = "ispyCluesInvalid"
+_VERSION = FeatureVersion(
+    AiFeature.ISPY_CLUE.value,
+    ISPY_CLUE_PROMPT_VERSION,
+    ISPY_CLUE_SCHEMA_VERSION,
+    ISPY_CLUE_VALIDATOR_VERSION,
+)
 _REPAIR_INSTRUCTION = """
 
 Your previous response was invalid. Return a complete replacement JSON object.
@@ -56,15 +74,44 @@ class ISpyClueService:
         *,
         tracer: AITracer,
         provider: str,
+        cache: ResultCache | None = None,
     ) -> None:
-        self._client = client
+        self._client = as_routed(client, config, kind="text")
+        self._cache = cache
         self._config = config
         self._tracer = tracer
         self._provider = provider
 
-    def generate(self, payload: dict[str, Any]) -> ISpyClueResult:
+    def generate(
+        self, payload: dict[str, Any], *, cache_scope: CacheScope | None = None,
+        templates: TemplateSet | None = None,
+    ) -> ISpyClueResult:
+        """Generate clues for ``payload``; ``cache_scope=None`` bypasses the cache."""
         # Empty-scene guard raises ISpyClueGenerationError before any call.
         response_model = scene_clue_response_model(payload)
+
+        def decode(data: Any) -> ISpyClueResult:
+            result = ISpyClueResult.model_validate(data)
+            validate_ispy_clues(payload, result)
+            return result
+
+        try:
+            return run_cached(
+                self._cache,
+                self._client,
+                version=_VERSION,
+                scope=cache_scope,
+                payload=payload,
+                compute=lambda: self._generate(payload, response_model),
+                decode=decode,
+                templates=templates,
+            )
+        except CacheWaitTimeout as error:
+            raise ISpyClueGenerationError("I-Spy clue generation failed.") from error
+
+    def _generate(
+        self, payload: dict[str, Any], response_model: Any
+    ) -> Generated[ISpyClueResult]:
         content = json.dumps(payload, ensure_ascii=False)
         request = TextModelRequest(
             system_prompt=ISPY_CLUE_SYSTEM_PROMPT,
@@ -76,6 +123,7 @@ class ISpyClueService:
         )
 
         attempts = 1 + self._config.max_retries
+        invocation = self._client.start_invocation()
         latency_ms = 0.0
         with self._tracer.trace(
             "ispy-clues",
@@ -107,19 +155,21 @@ class ISpyClueService:
                         metadata={"attempt": attempt},
                     ) as generation:
                         try:
-                            response = self._client.generate(attempt_request)
+                            response = self._client.generate(attempt_request, invocation=invocation)
                         except ProviderError as error:
                             generation.update(
                                 error_code=error.code.value,
-                                retry_count=attempt - 1,
+                                retry_count=invocation.retries,
                             )
                             raise
                         latency_ms += (time.perf_counter() - call_start) * 1000
                         generation.update(
                             input_tokens=response.input_tokens,
                             output_tokens=response.output_tokens,
+                            total_tokens=total_tokens(response),
+                            metadata=route_metadata(response),
                             latency_ms=latency_ms,
-                            retry_count=attempt - 1,
+                            retry_count=invocation.retries,
                         )
                         generation.record_content(
                             input=attempt_request.user_content,
@@ -152,21 +202,12 @@ class ISpyClueService:
                             metadata={"clueCount": len(result.clues)},
                         )
                     root.update(
-                        retry_count=attempt - 1, validation_result="valid"
+                        retry_count=invocation.retries, validation_result="valid"
                     )
-                    return result
+                    return generated(result, response)
                 except ProviderError as error:
-                    if error.transient and attempt < attempts:
-                        logger.warning(
-                            "ispy-clue attempt failed, retrying",
-                            extra={
-                                "attempt": attempt,
-                                "code": error.code.value,
-                            },
-                        )
-                        continue
                     root.update(
-                        retry_count=attempt - 1,
+                        retry_count=invocation.retries,
                         validation_result="invalid",
                         error_code=error.code.value,
                     )
@@ -174,14 +215,14 @@ class ISpyClueService:
                         "I-Spy clue generation failed."
                     ) from error
                 except (ValueError, ISpyClueGenerationError) as error:
-                    if attempt < attempts:
+                    if attempt < attempts and invocation.can_call():
                         logger.warning(
                             "ispy-clue output failed validation, retrying",
                             extra={"attempt": attempt},
                         )
                         continue
                     root.update(
-                        retry_count=attempt - 1,
+                        retry_count=invocation.retries,
                         validation_result="invalid",
                         error_code=_ISPY_CLUES_INVALID,
                     )

@@ -13,6 +13,15 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
+from app.ai.adapters.gemini import GeminiTextClient, _gemini_json_schema
+from app.ai.adapters.openai import OpenAITextClient
+from app.ai.contracts.errors import ProviderError, ProviderErrorCode
+from app.ai.contracts.schema import build_strict_json_schema
+from app.ai.contracts.text import (
+    TextModelConfig,
+    TextModelRequest,
+    TextModelResponse,
+)
 from app.ai.features.ispy_clues import (
     ISPY_CLUE_PROMPT_VERSION,
     ISPY_CLUE_SCHEMA_VERSION,
@@ -23,18 +32,9 @@ from app.ai.features.ispy_clues import (
     scene_clue_response_model,
     validate_ispy_clues,
 )
-from app.ai.model_errors import ProviderError, ProviderErrorCode
 from app.ai.observability import NoOpAITracer
 from app.ai.registry import build_ispy_clue_generator
 from app.ai.settings import load_ai_settings
-from app.ai.text_gemini import GeminiTextClient
-from app.ai.text_model import (
-    TextModelConfig,
-    TextModelRequest,
-    TextModelResponse,
-)
-from app.ai.text_openai import OpenAITextClient
-from app.services.vision_model import build_strict_json_schema
 
 FAKE_API_KEY = "test-key-123"
 
@@ -553,19 +553,11 @@ def test_both_providers_share_prompt_and_schema() -> None:
 
     gemini_config = gemini_captured["kwargs"]["config"]
     assert gemini_config.system_instruction == openai_system
-    assert gemini_config.response_json_schema == openai_schema
+    assert gemini_config.response_json_schema == _gemini_json_schema(openai_schema)
     assert gemini_captured["kwargs"]["contents"] == [openai_user]
 
 
-def test_gemini_without_a_model_yields_no_generator() -> None:
-    settings = load_ai_settings(
-        env={
-            "AI_GEMINI_API_KEY": "gem-key",
-            "AI_ISPY_CLUE_PROVIDER": "gemini",
-            "AI_ISPY_CLUE_MODEL": "",
-            "GEMINI_ISPY_CLUE_MODEL": "",
-        }
-    )
-    assert settings.ispy_clue.provider.value == "gemini"
+def test_route_without_a_secret_yields_no_generator() -> None:
+    settings = load_ai_settings(env={"AI_GEMINI_API_KEY": "gem-key"})
     assert not settings.is_configured(settings.ispy_clue)
     assert build_ispy_clue_generator(settings, NoOpAITracer()) is None

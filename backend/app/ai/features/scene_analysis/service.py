@@ -13,6 +13,15 @@ from collections.abc import Mapping
 from enum import StrEnum
 from typing import Any
 
+from app.ai.contracts import (
+    ProviderError,
+    ProviderErrorCode,
+    VisionImage,
+    VisionModelClient,
+    VisionModelConfig,
+    VisionModelRequest,
+    build_strict_json_schema,
+)
 from app.ai.features.moderation import ImageModerationError, ImageModerator
 from app.ai.features.object_grounding import ObjectGrounder, ObjectGroundingError
 from app.ai.features.object_grounding.mapping import apply_object_grounding
@@ -29,6 +38,7 @@ from app.ai.features.scene_analysis.validation import (
     parse_scene_analysis,
 )
 from app.ai.observability import AITracer
+from app.ai.routing import as_routed, route_metadata, total_tokens
 from app.ai.settings import AiFeature
 from app.schemas.media import MediaAsset
 from app.schemas.sessions import Session
@@ -36,15 +46,6 @@ from app.services.image_storage import ImageStorage
 from app.services.scene_analysis import (
     SceneAnalysisError,
     SceneAnalysisResult,
-)
-from app.services.vision_model import (
-    VisionImage,
-    VisionModelClient,
-    VisionModelConfig,
-    VisionModelError,
-    VisionModelErrorCode,
-    VisionModelRequest,
-    build_strict_json_schema,
 )
 
 logger = logging.getLogger(__name__)
@@ -85,7 +86,7 @@ class UploadedSceneAnalyzer:
         image_moderator: ImageModerator | None = None,
     ) -> None:
         self._storage = storage
-        self._client = client
+        self._client = as_routed(client, config, kind="vision")
         self._config = config
         self._tracer = tracer
         self._provider = provider
@@ -123,7 +124,7 @@ class UploadedSceneAnalyzer:
                     ) from error
                 try:
                     image = VisionImage(data=data, mime_type=asset.mime_type)
-                except VisionModelError as error:
+                except ProviderError as error:
                     retrieval.update(
                         error_code=SceneAnalysisModelErrorCode.IMAGE_INVALID.value
                     )
@@ -161,10 +162,9 @@ class UploadedSceneAnalyzer:
                 )
 
             attempts = 1 + self._config.max_retries
-            attempts_used = 0
+            invocation = self._client.start_invocation()
             try:
                 for attempt in range(1, attempts + 1):
-                    attempts_used = attempt
                     try:
                         with self._tracer.generation(
                             "scene-analysis-generation",
@@ -180,23 +180,33 @@ class UploadedSceneAnalyzer:
                             metadata={"attempt": attempt},
                         ) as generation:
                             try:
-                                response = self._client.generate(request)
-                            except VisionModelError as error:
+                                response = self._client.generate(request, invocation=invocation)
+                            except ProviderError as error:
                                 generation.update(
                                     error_code=error.code.value,
-                                    retry_count=attempt - 1,
+                                    retry_count=invocation.retries,
                                 )
                                 raise
                             generation.update(
                                 input_tokens=response.input_tokens,
                                 output_tokens=response.output_tokens,
+                                total_tokens=total_tokens(response),
+                                metadata=route_metadata(response),
                             )
 
                         with self._tracer.span(
                             "output-validation", metadata={"attempt": attempt}
                         ) as validation:
                             try:
-                                parsed = parse_scene_analysis(response.output_text)
+                                response_provider = (
+                                    response.metadata.provider
+                                    if response.metadata is not None
+                                    else self._provider
+                                )
+                                parsed = parse_scene_analysis(
+                                    response.output_text,
+                                    normalize_gemini_coordinates=response_provider == "gemini",
+                                )
                             except SceneAnalysisValidationError as error:
                                 validation.update(
                                     validation_result="invalid",
@@ -274,39 +284,39 @@ class UploadedSceneAnalyzer:
                                             "scene image was rejected by moderation",
                                         )
                         root.update(
-                            retry_count=attempts_used - 1, validation_result="valid"
+                            retry_count=invocation.retries, validation_result="valid"
                         )
                         return domain
-                    except VisionModelError as error:
-                        retryable = error.transient or (
-                            error.code is VisionModelErrorCode.PROVIDER_RESPONSE_INVALID
+                    except ProviderError as error:
+                        retryable = (
+                            error.code is ProviderErrorCode.PROVIDER_RESPONSE_INVALID
                         )
-                        if retryable and attempt < attempts:
+                        if retryable and attempt < attempts and invocation.can_call():
                             logger.warning(
                                 "scene analysis attempt failed, retrying",
                                 extra={"attempt": attempt, "code": error.code.value},
                             )
                             continue
                         root.update(
-                            retry_count=attempts_used - 1,
+                            retry_count=invocation.retries,
                             validation_result="invalid",
                             error_code=error.code.value,
                         )
-                        if error.code is VisionModelErrorCode.PROVIDER_RESPONSE_INVALID:
+                        if error.code is ProviderErrorCode.PROVIDER_RESPONSE_INVALID:
                             raise SceneAnalysisModelError(
                                 SceneAnalysisModelErrorCode.MODEL_OUTPUT_INVALID,
                                 "scene analysis model returned invalid output",
                             ) from error
                         raise SceneAnalysisModelError(error.code.value, str(error)) from error
                     except SceneAnalysisValidationError as error:
-                        if attempt < attempts:
+                        if attempt < attempts and invocation.can_call():
                             logger.warning(
                                 "scene analysis output failed validation, retrying",
                                 extra={"attempt": attempt},
                             )
                             continue
                         root.update(
-                            retry_count=attempts_used - 1,
+                            retry_count=invocation.retries,
                             validation_result="invalid",
                             error_code=(
                                 SceneAnalysisModelErrorCode.MODEL_OUTPUT_INVALID.value
@@ -322,7 +332,7 @@ class UploadedSceneAnalyzer:
                     moderation_executor.shutdown(wait=False)
 
             root.update(
-                retry_count=attempts_used - 1, validation_result="invalid"
+                retry_count=invocation.retries, validation_result="invalid"
             )
             raise SceneAnalysisModelError(
                 SceneAnalysisModelErrorCode.MODEL_OUTPUT_INVALID,

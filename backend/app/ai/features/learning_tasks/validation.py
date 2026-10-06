@@ -16,6 +16,9 @@ from app.ai.features.learning_tasks.schemas import (
 )
 from app.services.scene_analysis import SceneAnalysisError
 
+LEARNING_TASK_VALIDATOR_VERSION = "learning-tasks-validator.v1"
+"""Bump when validation rules change, so cached results stop matching."""
+
 
 class LearningTaskGenerationError(SceneAnalysisError):
     """The scene vocabulary could not be turned into usable learning tasks."""

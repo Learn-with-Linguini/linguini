@@ -122,6 +122,7 @@ class SessionDetailResponse(ApiModel):
     vocabulary: list[VocabularyItem] = Field(default_factory=list)
     translations: list[VocabularyTranslation] = Field(default_factory=list)
     translation_preview: SceneTranslationResult | None = None
+    analysis_retryable: bool = False
     session: Session
     scene_object_relations: list[SceneObjectRelation] = Field(default_factory=list)
     scene_objects: list[SceneObject] = Field(default_factory=list)

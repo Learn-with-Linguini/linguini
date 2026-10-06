@@ -1,0 +1,113 @@
+# AI configuration: credentials, deployments and feature routes. The backend
+# loads this file unless AI_CONFIG_FILE names another one. It holds no
+# secrets: credentials name the environment variables that do. Model choices
+# are justified in MODEL_COMPARISON.md.
+#
+# Credentials: the first non-empty variable in `env` wins.
+# Deployments: adapter (openai | openrouter | gemini), api (responses for
+#   openai/openrouter, generateContent for gemini), model, capabilities
+#   (text | vision | jsonSchema), eligible credential IDs, generation defaults.
+#   OpenRouter deployments must set upstream_fallback: allow_fallbacks lets
+#   OpenRouter try other hosts for the same model and `models` lists fallback
+#   models. Those attempts happen inside one request, so max_model_calls
+#   counts them as one call.
+# Routes: one per feature. `policy = "priority"` tries deployments in listed
+#   order, failing over on transient errors; `"primary"` uses only the first.
+#   Every call for one feature operation, including failover and output
+#   repair, shares deadline_seconds and max_model_calls.
+
+[credentials.openrouter]
+adapter = "openrouter"
+env = ["AI_OPENROUTER_API_KEY"]
+quota_group = "openrouter"
+billing_group = "openrouter"
+
+[credentials.openai]
+adapter = "openai"
+env = ["AI_OPENAI_API_KEY"]
+quota_group = "openai"
+billing_group = "openai"
+
+[credentials.gemini]
+adapter = "gemini"
+env = ["AI_GEMINI_API_KEY"]
+quota_group = "gemini"
+billing_group = "gemini"
+
+[deployments.scene-claude-haiku]
+adapter = "openrouter"
+api = "responses"
+model = "anthropic/claude-haiku-4.5"
+capabilities = ["vision", "jsonSchema"]
+credentials = ["openrouter"]
+upstream_fallback = { allow_fallbacks = true }
+defaults = { timeout_seconds = 120, max_retries = 0 }
+
+# Mistral Small scored marginally higher but is served only by Mistral and
+# rate-limited upstream too often to be the default.
+[deployments.translation-gpt-4o-mini]
+adapter = "openrouter"
+api = "responses"
+model = "openai/gpt-4o-mini"
+capabilities = ["text", "jsonSchema"]
+credentials = ["openrouter"]
+upstream_fallback = { allow_fallbacks = true }
+defaults = { timeout_seconds = 60, max_retries = 1 }
+
+[deployments.lessons-gpt-5-4-mini]
+adapter = "openrouter"
+api = "responses"
+model = "openai/gpt-5.4-mini"
+capabilities = ["text", "jsonSchema"]
+credentials = ["openrouter"]
+upstream_fallback = { allow_fallbacks = true }
+# Four grammar tasks run past the shared 1500-token default.
+defaults = { timeout_seconds = 60, max_output_tokens = 4000, max_retries = 1 }
+
+[deployments.clues-gemini-flash-lite]
+adapter = "openrouter"
+api = "responses"
+model = "google/gemini-3.1-flash-lite"
+capabilities = ["text", "jsonSchema"]
+credentials = ["openrouter"]
+upstream_fallback = { allow_fallbacks = true }
+defaults = { timeout_seconds = 60, max_retries = 1 }
+
+[deployments.guess-gpt-4-1-mini]
+adapter = "openrouter"
+api = "responses"
+model = "openai/gpt-4.1-mini"
+capabilities = ["text", "jsonSchema"]
+credentials = ["openrouter"]
+upstream_fallback = { allow_fallbacks = true }
+defaults = { timeout_seconds = 60, max_retries = 0 }
+
+[routes.sceneAnalysis]
+deployments = ["scene-claude-haiku"]
+policy = "priority"
+deadline_seconds = 120
+max_model_calls = 1
+
+[routes.sceneTranslation]
+deployments = ["translation-gpt-4o-mini"]
+policy = "priority"
+deadline_seconds = 120
+max_model_calls = 2
+
+[routes.learningTask]
+deployments = ["lessons-gpt-5-4-mini"]
+policy = "priority"
+deadline_seconds = 120
+max_model_calls = 2
+
+[routes.ispyClue]
+deployments = ["clues-gemini-flash-lite"]
+policy = "priority"
+deadline_seconds = 120
+max_model_calls = 2
+
+[routes.ispyGuess]
+deployments = ["guess-gpt-4-1-mini"]
+policy = "priority"
+deadline_seconds = 60
+max_model_calls = 1

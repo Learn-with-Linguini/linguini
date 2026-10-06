@@ -16,6 +16,19 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from app.ai.cache import (
+    CacheScope,
+    CacheWaitTimeout,
+    FeatureVersion,
+    Generated,
+    ResultCache,
+    TemplateSet,
+    generated,
+    run_cached,
+)
+from app.ai.contracts.errors import ProviderError
+from app.ai.contracts.schema import build_strict_json_schema
+from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelRequest
 from app.ai.features.translation.prompt import (
     SCENE_TRANSLATION_PROMPT_VERSION,
     SCENE_TRANSLATION_SCHEMA_VERSION,
@@ -26,19 +39,24 @@ from app.ai.features.translation.schemas import (
     SceneTranslationResult,
 )
 from app.ai.features.translation.validation import (
+    SCENE_TRANSLATION_VALIDATOR_VERSION,
     SceneTranslationError,
     normalize_object_articles,
     validate_translation_terms,
 )
-from app.ai.model_errors import ProviderError
 from app.ai.observability import AITracer
+from app.ai.routing import as_routed, route_metadata, total_tokens
 from app.ai.settings import AiFeature
-from app.ai.text_model import TextModelClient, TextModelConfig, TextModelRequest
-from app.services.vision_model import build_strict_json_schema
 
 logger = logging.getLogger(__name__)
 
 _TRANSLATION_INVALID = "translationInvalid"
+_VERSION = FeatureVersion(
+    AiFeature.SCENE_TRANSLATION.value,
+    SCENE_TRANSLATION_PROMPT_VERSION,
+    SCENE_TRANSLATION_SCHEMA_VERSION,
+    SCENE_TRANSLATION_VALIDATOR_VERSION,
+)
 
 
 def build_scene_translation_schema() -> dict[str, Any]:
@@ -56,14 +74,20 @@ class SceneTranslationService:
         *,
         tracer: AITracer,
         provider: str,
+        cache: ResultCache | None = None,
     ) -> None:
-        self._client = client
+        self._client = as_routed(client, config, kind="text")
+        self._cache = cache
         self._config = config
         self._tracer = tracer
         self._provider = provider
         self._json_schema = build_scene_translation_schema()
 
-    def translate(self, payload: dict[str, Any]) -> SceneTranslationResult:
+    def translate(
+        self, payload: dict[str, Any], *, cache_scope: CacheScope | None = None,
+        templates: TemplateSet | None = None,
+    ) -> SceneTranslationResult:
+        """Translate ``payload``; ``cache_scope=None`` bypasses the result cache."""
         try:
             parsed_payload = SceneTranslationRequest.model_validate(payload)
         except ValidationError as error:
@@ -71,6 +95,28 @@ class SceneTranslationService:
                 "Translation request payload is invalid."
             ) from error
 
+        def decode(data: Any) -> SceneTranslationResult:
+            result = normalize_object_articles(SceneTranslationResult.model_validate(data))
+            validate_translation_terms(parsed_payload, result)
+            return result
+
+        try:
+            return run_cached(
+                self._cache,
+                self._client,
+                version=_VERSION,
+                scope=cache_scope,
+                payload=payload,
+                compute=lambda: self._generate(payload, parsed_payload),
+                decode=decode,
+                templates=templates,
+            )
+        except CacheWaitTimeout as error:
+            raise SceneTranslationError("Scene translation failed.") from error
+
+    def _generate(
+        self, payload: dict[str, Any], parsed_payload: SceneTranslationRequest
+    ) -> Generated[SceneTranslationResult]:
         content = json.dumps(payload, ensure_ascii=False)
         request = TextModelRequest(
             system_prompt=SCENE_TRANSLATION_SYSTEM_PROMPT,
@@ -81,6 +127,7 @@ class SceneTranslationService:
         )
 
         attempts = 1 + self._config.max_retries
+        invocation = self._client.start_invocation()
         latency_ms = 0.0
         with self._tracer.generation(
             "scene-translation",
@@ -97,21 +144,12 @@ class SceneTranslationService:
             for attempt in range(1, attempts + 1):
                 call_start = time.perf_counter()
                 try:
-                    response = self._client.generate(request)
+                    response = self._client.generate(request, invocation=invocation)
                 except ProviderError as error:
                     latency_ms += (time.perf_counter() - call_start) * 1000
-                    if error.transient and attempt < attempts:
-                        logger.warning(
-                            "scene translation attempt failed, retrying",
-                            extra={
-                                "attempt": attempt,
-                                "code": error.code.value,
-                            },
-                        )
-                        continue
                     generation.update(
                         latency_ms=latency_ms,
-                        retry_count=attempt - 1,
+                        retry_count=invocation.retries,
                         validation_result="invalid",
                         error_code=error.code.value,
                     )
@@ -128,7 +166,7 @@ class SceneTranslationService:
                     )
                     validate_translation_terms(parsed_payload, result)
                 except (ValueError, SceneTranslationError) as error:
-                    if attempt < attempts:
+                    if attempt < attempts and invocation.can_call():
                         issues = (
                             error.errors(include_input=False, include_context=False,
                                          include_url=False)
@@ -158,7 +196,7 @@ class SceneTranslationService:
                         continue
                     generation.update(
                         latency_ms=latency_ms,
-                        retry_count=attempt - 1,
+                        retry_count=invocation.retries,
                         validation_result="invalid",
                         error_code=_TRANSLATION_INVALID,
                     )
@@ -170,13 +208,15 @@ class SceneTranslationService:
                     latency_ms=latency_ms,
                     input_tokens=response.input_tokens,
                     output_tokens=response.output_tokens,
-                    retry_count=attempt - 1,
+                    total_tokens=total_tokens(response),
+                    metadata=route_metadata(response),
+                    retry_count=invocation.retries,
                     validation_result="valid",
                 )
                 generation.record_content(
                     input=request.user_content, output=response.output_text
                 )
-                return result
+                return generated(result, response)
 
             # Unreachable: every loop path either returns or raises.
             raise SceneTranslationError("Scene translation failed.")

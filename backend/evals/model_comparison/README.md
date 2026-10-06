@@ -52,7 +52,7 @@ family with the `claude-haiku-4.5` candidate; the report flags that.
 
 ## Requirements
 
-`OPENAI_API_KEY`, `GEMINI_API_KEY` and `OPENROUTER_API_KEY` in
+`AI_OPENAI_API_KEY`, `AI_GEMINI_API_KEY` and `AI_OPENROUTER_API_KEY` in
 `backend/.env.local`. Behind antivirus HTTPS inspection (for example Avast Web
 Shield), `pip install truststore` so Python trusts the Windows certificate
 store; the runner uses it when present. `matplotlib` is needed only to draw the

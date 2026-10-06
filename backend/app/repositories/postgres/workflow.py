@@ -15,6 +15,7 @@ from sqlalchemy import DateTime, and_, delete, func, insert, select, update
 from sqlalchemy.dialects.postgresql import insert as upsert
 from sqlalchemy.exc import SQLAlchemyError
 
+from app.ai.cache import CacheScope, TemplateSet
 from app.ai.features.ispy_clues import ISpyClueGenerationError
 from app.ai.features.ispy_guess import ISpyGuessError, ISpyGuessResult
 from app.ai.features.learning_tasks import required_task_focuses
@@ -84,6 +85,7 @@ logger = logging.getLogger(__name__)
 
 TERMINAL = {"completed", "abandoned", "failed"}
 MAX_ACTIVE_SESSIONS = 3
+MAX_ANALYSIS_ATTEMPTS = 3
 ALLOWED_TRANSITIONS = {
     "created": {"analyzingScene", "abandoned", "failed"},
     "analyzingScene": {"awaitingObjectReview", "abandoned", "failed"},
@@ -93,7 +95,7 @@ ALLOWED_TRANSITIONS = {
     "inProgress": {"completed", "abandoned", "failed"},
     "completed": set(),
     "abandoned": set(),
-    "failed": set(),
+    "failed": {"analyzingScene"},
 }
 READ_TASKS = {"vocabularyIntroduction", "grammarExplanation", "syntaxExplanation"}
 ANALYSIS_TIMEOUT = timedelta(minutes=15)
@@ -126,7 +128,45 @@ def task_progress(tasks):
     )
 
 
-def _learning_task_payload(translation_payload, translated_scene, scene_relations=()):
+def is_curated_content(session_id, content, objects, relations):
+    """Whether reviewed objects and relations are unchanged curated content.
+
+    Curated objects keep their ``curated:`` IDs, labels and attributes, and
+    only unchanged server suggestions keep a ``source_relation_key``.
+    """
+    items = {
+        uuid5(session_id, "curated:" + str(entry["id"])): entry
+        for entry in (content or {}).get("items", [])
+    }
+    for obj in objects:
+        entry = items.get(obj.id)
+        if (
+            entry is None
+            or obj.label != entry["translation"]
+            or (obj.attributes or None) != (entry.get("attributes") or None)
+        ):
+            return False
+    return all(row.source_relation_key for row in relations)
+
+
+def translation_payload(target_language, title, summary, objects, relations):
+    """The scene-translation payload for reviewed ``objects`` and ``relations``."""
+    return {
+        "targetLanguage": target_language,
+        "sceneTitle": title,
+        "sceneSummary": summary,
+        "objects": [{"key": str(obj.id), "source": obj.label} for obj in objects],
+        "attributes": [
+            {"key": f"{obj.id}:{attribute_type}", "source": value}
+            for obj in objects
+            for attribute_type, value in (obj.attributes or {}).items()
+            if isinstance(value, str) and value.strip()
+        ],
+        "relationships": [{"key": str(row.id), "source": row.relation} for row in relations],
+    }
+
+
+def learning_task_payload(translation_payload, translated_scene, scene_relations=()):
     """Reuse the translator payload, carrying the target-language terms it produced."""
     payload = {
         "targetLanguage": translation_payload["targetLanguage"],
@@ -151,9 +191,9 @@ def _learning_task_payload(translation_payload, translated_scene, scene_relation
     return payload
 
 
-def _ispy_clue_payload(translation_payload, translated_scene, objects, scene_relations=()):
+def ispy_clue_payload(translation_payload, translated_scene, objects, scene_relations=()):
     """Give the clue model translated scene facts and positions, never the image itself."""
-    payload = _learning_task_payload(translation_payload, translated_scene, scene_relations)
+    payload = learning_task_payload(translation_payload, translated_scene, scene_relations)
     positions = {
         str(obj.id): (
             obj.bounding_box.model_dump() if obj.bounding_box is not None else {}
@@ -172,7 +212,7 @@ def _ispy_clue_payload(translation_payload, translated_scene, objects, scene_rel
 
 def _ispy_guess_context(translation_payload, translated_scene, objects, scene_relations=()):
     """Persist translated scene facts; never persist or send a selected target."""
-    payload = _ispy_clue_payload(
+    payload = ispy_clue_payload(
         translation_payload, translated_scene, objects, scene_relations
     )
     return {
@@ -183,6 +223,19 @@ def _ispy_guess_context(translation_payload, translated_scene, objects, scene_re
             "relations": payload["relationships"],
         },
     }
+
+
+def analysis_attempts(session):
+    return (session.analysis_draft or {}).get("analysisAttempts", 1)
+
+
+def analysis_retryable(session):
+    """A temporary scene-analysis failure can rerun on the saved image."""
+    return (
+        session.status == "failed"
+        and session.failure_code == "sceneAnalysisFailed"
+        and analysis_attempts(session) < MAX_ANALYSIS_ATTEMPTS
+    )
 
 
 def parse_session(row):
@@ -217,6 +270,16 @@ class GenerationClaim:
     title: str
     objects: list[SceneObject]
     relations: list[SceneObjectRelation]
+    cache_scope: CacheScope | None = None
+    templates: TemplateSet | None = None
+
+    @property
+    def generation_options(self) -> dict:
+        """Keyword arguments for the generation services."""
+        options = {"cache_scope": self.cache_scope}
+        if self.templates:
+            options["templates"] = self.templates
+        return options
 
 
 @dataclass(frozen=True)
@@ -583,6 +646,7 @@ class PostgresWorkflowRepository:
             vocabulary=words,
             translations=translations,
             translation_preview=(draft or {}).get("translationPreview"),
+            analysis_retryable=analysis_retryable(session),
             tasks=[SessionTaskPublic.from_internal(t) for t in tasks],
             progress=task_progress(tasks),
             next_task_id=next(
@@ -731,18 +795,7 @@ class PostgresWorkflowRepository:
             )
             if existing is not None:
                 return self._detail(c, parse_session(existing))
-            active_count = c.execute(
-                select(func.count()).select_from(sessions).where(
-                    sessions.c.user_id == self.user_id,
-                    sessions.c.language_profile_id == request.language_profile_id,
-                    sessions.c.status.not_in(TERMINAL),
-                )
-            ).scalar_one()
-            if active_count >= MAX_ACTIVE_SESSIONS:
-                raise ActiveSessionLimitReachedError(
-                    "You can keep up to three unfinished practices open at once. "
-                    "Finish or leave one before starting another."
-                )
+            self._check_active_limit(c, request.language_profile_id)
             session = Session(
                 user_id=self.user_id,
                 language_profile_id=request.language_profile_id,
@@ -751,6 +804,20 @@ class PostgresWorkflowRepository:
             )
             c.execute(insert(sessions).values(**session.model_dump(by_alias=False)))
             return self._detail(c, session)
+
+    def _check_active_limit(self, c, profile_id):
+        active_count = c.execute(
+            select(func.count()).select_from(sessions).where(
+                sessions.c.user_id == self.user_id,
+                sessions.c.language_profile_id == profile_id,
+                sessions.c.status.not_in(TERMINAL),
+            )
+        ).scalar_one()
+        if active_count >= MAX_ACTIVE_SESSIONS:
+            raise ActiveSessionLimitReachedError(
+                "You can keep up to three unfinished practices open at once. "
+                "Finish or leave one before starting another."
+            )
 
     def _expire_stale(self, c, *scope):
         """Fail stale processing sessions inside `scope` with their status's code."""
@@ -779,55 +846,93 @@ class PostgresWorkflowRepository:
             if session.status != "created":
                 # analyzingScene/awaitingObjectReview/generatingTasks: never re-run the model.
                 return self._detail(c, session)
-            asset = MediaAsset.model_validate(
-                dict(
-                    c.execute(
-                        select(media_assets).where(
-                            media_assets.c.id == session.scene_media_asset_id
-                        )
-                    )
-                    .mappings()
-                    .one()
-                )
+            inputs = self._analysis_inputs(c, session)
+            claimed = self._transition(
+                c, session, "analyzingScene", analysis_draft={"analysisAttempts": 1}
             )
-            profile = (
+            detail = self._detail(c, claimed)
+        return self._start_analysis(session_id, profile_id, claimed, detail, *inputs)
+
+    def retry_analysis(self, session_id, profile_id):
+        """Rerun a temporarily failed analysis on the session's saved image."""
+        with self.transaction() as c:
+            session = self._session(c, session_id, profile_id)
+            if session.status in {"analyzingScene", "awaitingObjectReview"}:
+                # A concurrent retry already claimed the session.
+                return self._detail(c, session)
+            if not analysis_retryable(session):
+                raise PracticeConflictError("This practice cannot retry its scene analysis.")
+            self._check_active_limit(c, profile_id)
+            if c.execute(
+                select(sessions.c.id).where(
+                    sessions.c.user_id == self.user_id,
+                    sessions.c.language_profile_id == profile_id,
+                    sessions.c.scene_media_asset_id == session.scene_media_asset_id,
+                    sessions.c.status.not_in(TERMINAL),
+                )
+            ).first():
+                raise PracticeConflictError("This photo already has an open practice.")
+            inputs = self._analysis_inputs(c, session)
+            claimed = self._transition(
+                c,
+                session,
+                "analyzingScene",
+                failure_code=None,
+                analysis_draft={"analysisAttempts": analysis_attempts(session) + 1},
+            )
+            detail = self._detail(c, claimed)
+        return self._start_analysis(session_id, profile_id, claimed, detail, *inputs)
+
+    def _analysis_inputs(self, c, session):
+        asset = MediaAsset.model_validate(
+            dict(
                 c.execute(
-                    select(language_profiles).where(
-                        language_profiles.c.id == session.language_profile_id
+                    select(media_assets).where(
+                        media_assets.c.id == session.scene_media_asset_id
                     )
                 )
                 .mappings()
                 .one()
             )
-            scene = (
-                c.execute(
-                    select(preloaded_scenes).where(preloaded_scenes.c.media_asset_id == asset.id)
+        )
+        profile = (
+            c.execute(
+                select(language_profiles).where(
+                    language_profiles.c.id == session.language_profile_id
                 )
-                .mappings()
-                .first()
-                if asset.source == "preloaded"
-                else None
             )
-            if asset.source == "preloaded" and scene is None:
-                raise PracticeNotFoundError("Curated scene not found.")
-            claimed = self._transition(c, session, "analyzingScene")
-            detail = self._detail(c, claimed)
+            .mappings()
+            .one()
+        )
+        scene = (
+            c.execute(
+                select(preloaded_scenes)
+                .where(preloaded_scenes.c.media_asset_id == asset.id)
+                .order_by(
+                    (
+                        func.lower(preloaded_scenes.c.language_code)
+                        == profile["target_language_code"].lower()
+                    ).desc()
+                )
+            )
+            .mappings()
+            .first()
+            if asset.source == "preloaded"
+            else None
+        )
+        if asset.source == "preloaded" and scene is None:
+            raise PracticeNotFoundError("Curated scene not found.")
+        return asset, dict(profile), dict(scene) if scene else None
+
+    def _start_analysis(self, session_id, profile_id, claimed, detail, asset, profile, scene):
         if asset.source == "preloaded":
             # Curated scenes already have their objects, marker positions,
             # attributes and relations saved. Set up the fresh learner session
             # on this request instead of showing the uploaded-photo animation.
-            self._run_scene_analysis(
-                session_id, profile_id, claimed, asset, dict(profile), dict(scene)
-            )
+            self._run_scene_analysis(session_id, profile_id, claimed, asset, profile, scene)
             return self.get(session_id, profile_id)
         self.background.submit(
-            self._run_scene_analysis,
-            session_id,
-            profile_id,
-            claimed,
-            asset,
-            dict(profile),
-            dict(scene) if scene else None,
+            self._run_scene_analysis, session_id, profile_id, claimed, asset, profile, scene
         )
         return detail
 
@@ -1106,7 +1211,7 @@ class PostgresWorkflowRepository:
                 .mappings()
                 .one()
             )
-            _asset, scene = self._scene_media(c, session)
+            asset, scene = self._scene_media(c, session)
             objects, relations = self._scene_objects(c, session)
             return GenerationClaim(
                 session_id,
@@ -1117,7 +1222,29 @@ class PostgresWorkflowRepository:
                 _scene_title(session, scene),
                 objects,
                 relations,
+                *self._reuse(c, session, asset, objects, relations),
             )
+
+    def _reuse(self, c, session, asset, objects, relations):
+        """The cache scope and scene templates for this session's content.
+
+        Results are shared, and precomputed templates offered, only for
+        unchanged curated content.
+        """
+        if asset is not None and asset.source == "preloaded":
+            contents = [
+                content
+                for content in c.execute(
+                    select(preloaded_scenes.c.content).where(
+                        preloaded_scenes.c.media_asset_id == asset.id,
+                        preloaded_scenes.c.is_active.is_(True),
+                    )
+                ).scalars()
+                if is_curated_content(session.id, content, objects, relations)
+            ]
+            if contents:
+                return CacheScope.public(), TemplateSet.from_content(contents) or None
+        return CacheScope.user(self.user_id), None
 
     def _current_generation(self, c, claim):
         """The session while ``claim`` still owns it; ``None`` marks a stale result."""
@@ -1147,29 +1274,17 @@ class PostgresWorkflowRepository:
         introduction_id = None
         objects, relations = list(claim.objects), claim.relations
         if self.translator:
-            payload = {
-                "targetLanguage": profile["target_language_code"],
-                "sceneTitle": claim.title,
-                "sceneSummary": session.session_summary or "Confirmed scene vocabulary.",
-                "objects": [
-                    {"key": str(obj.id), "source": obj.label} for obj in objects
-                ],
-                "attributes": [
-                    {
-                        "key": f"{obj.id}:{attribute_type}",
-                        "source": value,
-                    }
-                    for obj in objects
-                    for attribute_type, value in (obj.attributes or {}).items()
-                    if isinstance(value, str) and value.strip()
-                ],
-                "relationships": [
-                    {"key": str(row.id), "source": row.relation}
-                    for row in relations
-                ],
-            }
+            payload = translation_payload(
+                profile["target_language_code"],
+                claim.title,
+                session.session_summary or "Confirmed scene vocabulary.",
+                objects,
+                relations,
+            )
             with _timed("translation", session_id):
-                translated_scene = self.translator.translate(payload)
+                translated_scene = self.translator.translate(
+                    payload, **claim.generation_options
+                )
 
         # Checkpoint: commit translations and task 1 before the slower lesson
         # and clue calls, so the learner can start while tasks are built.
@@ -1258,7 +1373,8 @@ class PostgresWorkflowRepository:
 
         if self.translator:
             lessons, ispy_clues = self._lessons_and_clues(
-                session_id, payload, translated_scene, objects, words, relations
+                session_id, payload, translated_scene, objects, words, relations,
+                claim.generation_options,
             )
             if self.ispy_guess_generator:
                 ispy_descriptions = build_ispy_description_tasks(
@@ -1297,7 +1413,7 @@ class PostgresWorkflowRepository:
                 )
             self._transition(c, session, "inProgress")
 
-    def _lessons(self, session_id, payload, translated_scene, relations):
+    def _lessons(self, session_id, payload, translated_scene, relations, options=None):
         if not self.learning_task_generator:
             return []
         try:
@@ -1305,7 +1421,8 @@ class PostgresWorkflowRepository:
                 return build_grammar_lessons(
                     session_id,
                     self.learning_task_generator.generate(
-                        _learning_task_payload(payload, translated_scene, relations)
+                        learning_task_payload(payload, translated_scene, relations),
+                        **(options or {}),
                     ),
                 )
         except Exception:
@@ -1315,7 +1432,10 @@ class PostgresWorkflowRepository:
             )
             return []
 
-    def _clues(self, session_id, payload, translated_scene, objects, words, relations):
+    def _clues(
+        self, session_id, payload, translated_scene, objects, words, relations,
+        options=None,
+    ):
         if not self.ispy_clue_generator:
             return []
         try:
@@ -1323,7 +1443,8 @@ class PostgresWorkflowRepository:
                 return build_ispy_clue_tasks(
                     session_id,
                     self.ispy_clue_generator.generate(
-                        _ispy_clue_payload(payload, translated_scene, objects, relations)
+                        ispy_clue_payload(payload, translated_scene, objects, relations),
+                        **(options or {}),
                     ),
                     objects, words,
                 )
@@ -1331,16 +1452,23 @@ class PostgresWorkflowRepository:
             logger.exception("I-Spy clue generation failed for session %s.", session_id)
             return []
 
-    def _lessons_and_clues(self, session_id, payload, translated_scene, objects, words, relations):
+    def _lessons_and_clues(
+        self, session_id, payload, translated_scene, objects, words, relations,
+        options=None,
+    ):
         """Run the two independent generation calls at once, each with its own fallback.
 
         The clue call runs on a one-thread executor owned by this job rather than
         the shared background pool, so each job adds at most one thread and a
         saturated pool cannot deadlock waiting on itself.
         """
-        lessons = partial(self._lessons, session_id, payload, translated_scene, relations)
+        lessons = partial(
+            self._lessons, session_id, payload, translated_scene, relations,
+            options=options,
+        )
         clues = partial(
-            self._clues, session_id, payload, translated_scene, objects, words, relations
+            self._clues, session_id, payload, translated_scene, objects, words, relations,
+            options=options,
         )
         if not (self.learning_task_generator and self.ispy_clue_generator):
             return lessons(), clues()

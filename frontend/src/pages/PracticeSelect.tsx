@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui";
 import { CameraIcon } from "../components/icons";
 import { ImageUpload } from "../components/ImageUpload";
-import { createPractice, getActivePractice } from "../lib/api";
+import { createPractice, getActivePractice, retryPracticeAnalysis } from "../lib/api";
 import { SceneVisual } from "../components/SceneVisual";
 import { SceneCatalogStatus } from "../components/SceneCatalogStatus";
 import { sessionDestination } from "../lib/sessionRoute";
@@ -14,7 +14,7 @@ import { useScenesQuery } from "../state/queries";
 
 export function PracticeSelect() {
   const navigate = useNavigate();
-  const notice = (useLocation().state as { practiceNotice?: string } | null)?.practiceNotice;
+  const { practiceNotice: notice, retrySessionId } = (useLocation().state as { practiceNotice?: string; retrySessionId?: string } | null) ?? {};
   const { learner, activeProfile } = useAppState();
   const { scenes } = useScenesQuery();
   const activeProfileId = activeProfile?.id;
@@ -72,10 +72,21 @@ export function PracticeSelect() {
       navigate(sessionDestination(fresh).path);
     } catch (reason) { setError(friendlyError(reason)); }
   };
+  const retrySaved = async (sessionId: string) => {
+    if (busy.current) return;
+    busy.current = true; setStarting(true); setError(null);
+    try {
+      const detail = await retryPracticeAnalysis(sessionId);
+      navigate(sessionDestination(detail).path);
+    } catch (reason) {
+      setError(friendlyError(reason));
+    }
+    finally { busy.current = false; setStarting(false); }
+  };
   const chooseAsset = (asset: string) => void start(asset);
   return <div className="stack practice-select">
     <h1>Capture a scene</h1>
-    {notice ? <p role="alert">{notice}</p> : null}
+    {notice ? <div className="stack-2"><p role="alert">{notice}</p>{retrySessionId ? <Button variant="secondary" disabled={interactionDisabled || uploading} onClick={() => void retrySaved(retrySessionId)}>Try this photo again</Button> : null}</div> : null}
     <p className="muted">Take a photo of the world around you, or start from a ready scene.</p>
     {activeCheckError ? <p role="alert">{activeCheckError} Reload to resume an open practice.</p> : null}
     <div className="dashed-capture">

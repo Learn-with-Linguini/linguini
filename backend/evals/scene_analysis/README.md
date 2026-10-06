@@ -32,8 +32,8 @@ later change to the scoring rules can be replayed over past runs rather than
 re-billed.
 
 The runner drives `VisionModelClient`, the provider-independent seam in
-`app/services/vision_model.py`. Today only the OpenAI adapter exists
-(`app/services/vision_openai.py`); a Gemini or Anthropic run needs an adapter
+`app/ai/contracts/vision.py`. Today only the OpenAI adapter exists
+(`app/ai/adapters/openai.py`); a Gemini or Anthropic run needs an adapter
 beside it, and nothing in this directory changes when one is added.
 
 ## What is in the dataset

@@ -11,6 +11,9 @@ from typing import Any
 
 import pytest
 
+from app.ai.contracts.errors import ProviderError, ProviderErrorCode
+from app.ai.contracts.schema import build_strict_json_schema
+from app.ai.contracts.text import TextModelConfig, TextModelRequest, TextModelResponse
 from app.ai.features.ispy_guess import (
     ISPY_GUESS_PROMPT_VERSION,
     ISPY_GUESS_SCHEMA_VERSION,
@@ -23,13 +26,11 @@ from app.ai.features.ispy_guess import (
     scene_guess_response_model,
     validate_ispy_guess,
 )
-from app.ai.model_errors import ProviderError, ProviderErrorCode
 from app.ai.observability import LangfuseAITracer, NoOpAITracer
 from app.ai.registry import build_ispy_guess_generator
 from app.ai.settings import load_ai_settings
-from app.ai.text_model import TextModelConfig, TextModelRequest, TextModelResponse
 from app.services.scene_analysis import SceneAnalysisError
-from app.services.vision_model import build_strict_json_schema
+from tests.test_ai_config import example, write
 
 SCENE = {
     "objects": [
@@ -356,12 +357,16 @@ def test_output_bounds_are_enforced(overrides) -> None:
         guess([verdict(**overrides)] * 2)
 
 
-def test_registry_caps_output_tokens_and_retries() -> None:
+def test_registry_caps_output_tokens_and_retries(tmp_path) -> None:
+    data = example()
+    deployment = data["deployments"]["guess-gpt-4-1-mini"]
+    deployment.update(adapter="openai", model="gpt-test", credentials=["openai"])
+    del deployment["upstream_fallback"]
+    deployment["defaults"]["max_retries"] = 5
+    data["routes"]["ispyGuess"].update(deadline_seconds=120, max_model_calls=2)
     settings = load_ai_settings(env={
-        "AI_ISPY_GUESS_PROVIDER": "openai",
-        "AI_ISPY_GUESS_MODEL": "gpt-test",
-        "AI_ISPY_GUESS_MAX_RETRIES": "5",
-        "OPENAI_API_KEY": "test-key",
+        "AI_CONFIG_FILE": write(tmp_path, data),
+        "AI_OPENAI_API_KEY": "test-key",
     })
     generator = build_ispy_guess_generator(settings, NoOpAITracer())
 
@@ -370,9 +375,14 @@ def test_registry_caps_output_tokens_and_retries() -> None:
     assert generator._config.max_retries == 1
 
 
-def test_registry_returns_none_when_disabled_or_unconfigured() -> None:
-    off = load_ai_settings(env={"AI_ISPY_GUESS_PROVIDER": "none"})
-    no_key = load_ai_settings(env={"AI_ISPY_GUESS_PROVIDER": "openai"})
+def test_registry_returns_none_when_disabled_or_unconfigured(tmp_path) -> None:
+    data = example()
+    data["routes"]["ispyGuess"] = {"enabled": False}
+    off = load_ai_settings(env={
+        "AI_CONFIG_FILE": write(tmp_path, data),
+        "AI_OPENROUTER_API_KEY": "sk-or",
+    })
+    no_key = load_ai_settings(env={})
     assert build_ispy_guess_generator(off, NoOpAITracer()) is None
     assert build_ispy_guess_generator(no_key, NoOpAITracer()) is None
 

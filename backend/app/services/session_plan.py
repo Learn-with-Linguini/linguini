@@ -109,6 +109,24 @@ def bootstrap_word(
     return item, translated
 
 
+def curated_scene_object(session_id, entry, vocabulary_item_id=None):
+    """The session object for one curated scene item."""
+    return SceneObject(
+        id=uuid5(session_id, "curated:" + entry["id"]),
+        session_id=session_id,
+        label=entry["translation"],
+        vocabulary_item_id=vocabulary_item_id,
+        bounding_box={
+            "x": min(float(entry["x"]) / 100, 0.95),
+            "y": min(float(entry["y"]) / 100, 0.95),
+            "width": 0.05,
+            "height": 0.05,
+        },
+        anchor_point={"x": float(entry["x"]) / 100, "y": float(entry["y"]) / 100},
+        attributes=entry.get("attributes") or None,
+    )
+
+
 def build_objects(connection, session, asset, profile, scene):
     objects, words, translations = [], [], []
     if profile["source_language_code"].lower() != "en":
@@ -128,20 +146,7 @@ def build_objects(connection, session, asset, profile, scene):
                 entry.get("gender"),
                 entry.get("example"),
             )
-            obj = SceneObject(
-                id=uuid5(session.id, "curated:" + entry["id"]),
-                session_id=session.id,
-                label=entry["translation"],
-                vocabulary_item_id=word.id,
-                bounding_box={
-                    "x": min(float(entry["x"]) / 100, 0.95),
-                    "y": min(float(entry["y"]) / 100, 0.95),
-                    "width": 0.05,
-                    "height": 0.05,
-                },
-                anchor_point={"x": float(entry["x"]) / 100, "y": float(entry["y"]) / 100},
-                attributes=entry.get("attributes") or None,
-            )
+            obj = curated_scene_object(session.id, entry, word.id)
             objects.append(obj)
             words.append(word)
             translations.append(translated)

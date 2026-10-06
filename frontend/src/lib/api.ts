@@ -336,6 +336,7 @@ export interface PracticeDetail {
   mediaAsset: { id: string; source: "preloaded" | "camera" | "userUpload" };
   sceneId: string | null; title: string;
   analysisMode: "placeholder" | null;
+  analysisRetryable: boolean;
   sceneObjects: SceneObject[];
   sceneObjectRelations: SceneObjectRelation[];
   vocabulary: { id: string; displayText: string; partOfSpeech: WordClass; gender: string | null; exampleSentence: string | null; languageCode: string }[];
@@ -379,6 +380,7 @@ export interface TaskActionResult {
   attempt: { id: string; isCorrect: boolean | null; feedback: { message?: string } | null; evaluationDetails?: { questionResults?: Record<string, boolean>; correctAnswers?: Record<string, string>; guessedObjectKey?: string | null; ambiguous?: boolean } | null } | null;
 }
 export const analyzePractice = (id: string) => write<PracticeDetail>(`/api/v1/sessions/${id}/analyze`, "POST", {});
+export const retryPracticeAnalysis = (id: string) => write<PracticeDetail>(`/api/v1/sessions/${id}/retry-analysis`, "POST", {});
 export interface PracticeReview {
   sceneTitle?: string;
   acceptedObjectIds: string[];

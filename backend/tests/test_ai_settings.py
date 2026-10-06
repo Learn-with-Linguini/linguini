@@ -1,4 +1,6 @@
-"""Tests for centralized AI settings loading (pure env-dict driven)."""
+"""Tests for AI settings loading: the TOML file plus environment settings."""
+
+from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
@@ -14,6 +16,8 @@ from app.ai import (
     ObjectGroundingProvider,
     load_ai_settings,
 )
+from app.ai.settings import DEFAULT_AI_CONFIG_FILE
+from tests.test_ai_config import example, write
 
 
 def test_object_grounding_is_off_by_default_and_can_use_grounding_dino():
@@ -84,177 +88,70 @@ def test_image_moderation_is_off_by_default_and_parses_openai_config():
 
 
 def test_real_mode_requires_openai_key_for_openai_moderation():
+    env = {
+        "AI_MODE": "real",
+        "AI_OPENROUTER_API_KEY": "sk-or",
+        "AI_IMAGE_MODERATION_PROVIDER": "openai",
+    }
     with pytest.raises(AiConfigurationError, match="imageModeration"):
-        load_ai_settings(
-            env={
-                "AI_MODE": "real",
-                "AI_GEMINI_API_KEY": "gem-key",
-                "AI_SCENE_ANALYSIS_PROVIDER": "gemini",
-                "AI_SCENE_ANALYSIS_MODEL": "m",
-                "AI_SCENE_TRANSLATION_PROVIDER": "gemini",
-                "AI_SCENE_TRANSLATION_MODEL": "m",
-                "AI_LEARNING_TASK_PROVIDER": "none",
-                "AI_ISPY_CLUE_PROVIDER": "none",
-                "AI_ISPY_GUESS_PROVIDER": "none",
-                "AI_IMAGE_MODERATION_PROVIDER": "openai",
-            }
-        )
-    # With the OpenAI key present the same configuration loads cleanly.
-    settings = load_ai_settings(
-        env={
-            "AI_MODE": "real",
-            "AI_GEMINI_API_KEY": "gem-key",
-            "AI_OPENAI_API_KEY": "sk-openai",
-            "AI_OPENROUTER_API_KEY": "sk-or",
-            "AI_SCENE_ANALYSIS_PROVIDER": "gemini",
-            "AI_SCENE_ANALYSIS_MODEL": "m",
-            "AI_SCENE_TRANSLATION_PROVIDER": "gemini",
-            "AI_SCENE_TRANSLATION_MODEL": "m",
-            "AI_LEARNING_TASK_MODEL": "m",
-            "AI_ISPY_CLUE_MODEL": "m",
-            "AI_ISPY_GUESS_MODEL": "m",
-            "AI_IMAGE_MODERATION_PROVIDER": "openai",
-        }
-    )
+        load_ai_settings(env=env)
+    settings = load_ai_settings(env={**env, "AI_OPENAI_API_KEY": "sk-openai"})
     assert settings.image_moderation.provider is ImageModerationProvider.OPENAI
+    assert settings.api_key_for(AiProvider.OPENAI) == "sk-openai"
 
 
-def test_translation_retries_once_by_default_and_respects_explicit_zero():
-    assert load_ai_settings(env={}).scene_translation.max_retries == 1
-    assert load_ai_settings(env={
-        "AI_SCENE_TRANSLATION_MAX_RETRIES": "0"
-    }).scene_translation.max_retries == 0
+def test_default_file_loads_from_any_working_directory(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    assert DEFAULT_AI_CONFIG_FILE == Path(__file__).resolve().parents[1] / "ai.toml"
+    settings = load_ai_settings(env={})
+    assert settings.scene_translation.max_retries == 1
+    assert settings.scene_translation.deployment_id == "translation-gpt-4o-mini"
 
 
-def test_openai_configuration_all_features():
+def test_custom_file_sets_each_feature_provider_and_key(tmp_path):
+    data = example()
+    data["deployments"]["translation-gpt-4o-mini"].update(
+        adapter="gemini", api="generateContent", model="gem-translate",
+        credentials=["gemini"],
+    )
+    del data["deployments"]["translation-gpt-4o-mini"]["upstream_fallback"]
+    data["deployments"]["guess-gpt-4-1-mini"].update(
+        adapter="openai", model="gpt-guess", credentials=["openai"],
+    )
+    del data["deployments"]["guess-gpt-4-1-mini"]["upstream_fallback"]
     settings = load_ai_settings(
         env={
             "AI_MODE": "real",
-            "AI_OPENAI_API_KEY": "sk-openai",
-            "AI_SCENE_ANALYSIS_PROVIDER": "openai",
-            "AI_SCENE_ANALYSIS_MODEL": "gpt-scene",
-            "AI_SCENE_ANALYSIS_TIMEOUT_SECONDS": "30",
-            "AI_SCENE_ANALYSIS_MAX_OUTPUT_TOKENS": "1000",
-            "AI_SCENE_ANALYSIS_MAX_RETRIES": "2",
-            "AI_SCENE_TRANSLATION_PROVIDER": "openai",
-            "AI_SCENE_TRANSLATION_MODEL": "gpt-translate",
-            "AI_SCENE_TRANSLATION_TIMEOUT_SECONDS": "45",
-            "AI_LEARNING_TASK_PROVIDER": "openai",
-            "AI_LEARNING_TASK_MODEL": "gpt-learn",
-            "AI_LEARNING_TASK_TIMEOUT_SECONDS": "50",
-            "AI_ISPY_CLUE_PROVIDER": "openai",
-            "AI_ISPY_CLUE_MODEL": "gpt-clue",
-            "AI_ISPY_CLUE_TIMEOUT_SECONDS": "25",
-            "AI_ISPY_GUESS_PROVIDER": "openai",
-            "AI_ISPY_GUESS_MODEL": "gpt-guess",
-            "AI_ISPY_GUESS_TIMEOUT_SECONDS": "15",
-        }
-    )
-    assert settings.mode is AiMode.REAL
-    assert settings.openai_api_key == "sk-openai"
-    for feature, model, timeout in [
-        (AiFeature.SCENE_ANALYSIS, "gpt-scene", 30),
-        (AiFeature.SCENE_TRANSLATION, "gpt-translate", 45),
-        (AiFeature.LEARNING_TASK, "gpt-learn", 50),
-        (AiFeature.ISPY_CLUE, "gpt-clue", 25),
-        (AiFeature.ISPY_GUESS, "gpt-guess", 15),
-    ]:
-        config = settings.feature(feature)
-        assert config.provider is AiProvider.OPENAI
-        assert config.model_name == model
-        assert config.timeout_seconds == timeout
-        assert settings.is_configured(config)
-    scene = settings.scene_analysis
-    assert scene.max_output_tokens == 1000
-    assert scene.max_retries == 2
-
-
-def test_gemini_configuration_for_supported_features():
-    settings = load_ai_settings(
-        env={
+            "AI_CONFIG_FILE": write(tmp_path, data),
+            "AI_OPENROUTER_API_KEY": "sk-or",
             "AI_GEMINI_API_KEY": "gem-key",
-            "AI_SCENE_ANALYSIS_PROVIDER": "gemini",
-            "AI_SCENE_ANALYSIS_MODEL": "gem-scene",
-            "AI_SCENE_TRANSLATION_PROVIDER": "gemini",
-            "AI_SCENE_TRANSLATION_MODEL": "gem-translate",
-            "AI_LEARNING_TASK_PROVIDER": "gemini",
-            "AI_LEARNING_TASK_MODEL": "gem-learn",
-        }
-    )
-    assert settings.gemini_api_key == "gem-key"
-    for feature, model in [
-        (AiFeature.SCENE_ANALYSIS, "gem-scene"),
-        (AiFeature.SCENE_TRANSLATION, "gem-translate"),
-        (AiFeature.LEARNING_TASK, "gem-learn"),
-    ]:
-        config = settings.feature(feature)
-        assert config.provider is AiProvider.GEMINI
-        assert config.model_name == model
-        assert settings.is_configured(config)
-
-
-def test_per_feature_mixed_providers():
-    settings = load_ai_settings(
-        env={
             "AI_OPENAI_API_KEY": "sk-openai",
-            "AI_GEMINI_API_KEY": "gem-key",
-            "AI_SCENE_ANALYSIS_PROVIDER": "gemini",
-            "AI_SCENE_ANALYSIS_MODEL": "gem-scene",
-            "AI_SCENE_TRANSLATION_PROVIDER": "openai",
-            "AI_SCENE_TRANSLATION_MODEL": "gpt-translate",
-            "AI_LEARNING_TASK_PROVIDER": "gemini",
-            "AI_LEARNING_TASK_MODEL": "gem-learn",
-            "AI_ISPY_CLUE_PROVIDER": "openai",
-            "AI_ISPY_CLUE_MODEL": "gpt-clue",
-            "AI_ISPY_GUESS_PROVIDER": "openai",
-            "AI_ISPY_GUESS_MODEL": "gpt-guess",
         }
     )
-    assert settings.scene_analysis.provider is AiProvider.GEMINI
-    assert settings.scene_translation.provider is AiProvider.OPENAI
-    assert settings.learning_task.provider is AiProvider.GEMINI
-    assert settings.ispy_clue.provider is AiProvider.OPENAI
+    assert settings.scene_translation.provider is AiProvider.GEMINI
+    assert settings.scene_translation.model_name == "gem-translate"
+    assert settings.secret_for(settings.scene_translation) == "gem-key"
     assert settings.ispy_guess.provider is AiProvider.OPENAI
+    assert settings.secret_for(settings.ispy_guess) == "sk-openai"
+    assert settings.learning_task.provider is AiProvider.OPENROUTER
     assert all(
         settings.is_configured(settings.feature(feature)) for feature in AiFeature
     )
 
 
-def test_invalid_provider_mode_and_timeout_raise_configuration_error():
-    with pytest.raises(AiConfigurationError, match="sceneAnalysis.*anthropic"):
-        load_ai_settings(env={"AI_SCENE_ANALYSIS_PROVIDER": "anthropic"})
+def test_invalid_mode_raises_configuration_error():
     with pytest.raises(AiConfigurationError, match="AI_MODE"):
         load_ai_settings(env={"AI_MODE": "bogus"})
-    with pytest.raises(AiConfigurationError, match="sceneAnalysis"):
-        load_ai_settings(env={"AI_SCENE_ANALYSIS_TIMEOUT_SECONDS": "soon"})
-    # Non-integer timeouts are rejected even though they parse as floats:
-    # provider constructors take int seconds.
-    with pytest.raises(AiConfigurationError, match="sceneAnalysis"):
-        load_ai_settings(env={"AI_SCENE_ANALYSIS_TIMEOUT_SECONDS": "60.5"})
 
 
-def test_real_mode_requires_key_and_model_for_enabled_features():
+def test_real_mode_requires_a_secret_for_every_enabled_route():
     with pytest.raises(AiConfigurationError) as excinfo:
-        load_ai_settings(env={"AI_MODE": "real"})
+        load_ai_settings(env={"AI_MODE": "real", "AI_OPENAI_API_KEY": "sk-openai"})
     message = str(excinfo.value)
-    # Default providers: gemini for analysis/translation, openai elsewhere —
-    # every feature lacks its provider key.
     for feature in AiFeature:
         assert feature.value in message
-
-    # Gemini scene provider with key set but empty model still fails.
-    with pytest.raises(AiConfigurationError, match="sceneAnalysis"):
-        load_ai_settings(
-            env={
-                "AI_MODE": "real",
-                "AI_GEMINI_API_KEY": "gem-key",
-                "AI_OPENAI_API_KEY": "sk-openai",
-                "AI_SCENE_TRANSLATION_PROVIDER": "none",
-                "AI_LEARNING_TASK_PROVIDER": "none",
-                "AI_ISPY_CLUE_PROVIDER": "none",
-                "AI_ISPY_GUESS_PROVIDER": "none",
-            }
-        )
+    assert "AI_OPENROUTER_API_KEY" in message
+    assert "sk-openai" not in message
 
 
 def test_demo_mode_with_no_keys_uses_deterministic_fallback():
@@ -265,7 +162,7 @@ def test_demo_mode_with_no_keys_uses_deterministic_fallback():
         assert settings.is_configured(config) is False
 
 
-def test_empty_env_reproduces_the_measured_defaults():
+def test_default_file_holds_the_measured_defaults():
     """Defaults are the models chosen in MODEL_COMPARISON.md."""
     settings = load_ai_settings(env={})
     assert settings.mode is AiMode.DEMO
@@ -285,6 +182,7 @@ def test_empty_env_reproduces_the_measured_defaults():
     assert learning.model_name == "openai/gpt-5.4-mini"
     assert learning.timeout_seconds == 60
     assert learning.max_retries == 1
+    assert learning.max_output_tokens == 4000
 
     clue = settings.ispy_clue
     assert clue.provider is AiProvider.OPENROUTER
@@ -301,53 +199,20 @@ def test_empty_env_reproduces_the_measured_defaults():
         assert config.max_output_tokens is None
 
 
-def test_legacy_aliases_produce_identical_settings():
-    legacy_env = {
-        "OPENAI_API_KEY": "sk-openai",
-        "GEMINI_API_KEY": "gem-key",
-        "SCENE_ANALYSIS_PROVIDER": "openai",
-        "SCENE_ANALYSIS_TIMEOUT_SECONDS": "90",
-        "OPENAI_SCENE_MODEL": "gpt-scene",
+def test_removed_environment_variables_have_no_effect():
+    removed = {
+        "AI_SCENE_TRANSLATION_PROVIDER": "openai",
+        "AI_SCENE_TRANSLATION_MODEL": "other/model",
+        "AI_LEARNING_TASK_MAX_OUTPUT_TOKENS": "10",
         "TRANSLATION_PROVIDER": "gemini",
-        "TRANSLATION_TIMEOUT_SECONDS": "45",
-        "GEMINI_TRANSLATION_MODEL": "gem-translate",
-        "LEARNING_TASK_PROVIDER": "openai",
-        "LEARNING_TASK_TIMEOUT_SECONDS": "30",
-        "OPENAI_LEARNING_TASK_MODEL": "gpt-learn",
-        "ISPY_CLUE_PROVIDER": "openai",
-        "ISPY_CLUE_TIMEOUT_SECONDS": "20",
-        "OPENAI_ISPY_CLUE_MODEL": "gpt-clue",
-        "ISPY_GUESS_PROVIDER": "none",
-        "ISPY_GUESS_TIMEOUT_SECONDS": "10",
-        "OPENAI_ISPY_GUESS_MODEL": "gpt-guess",
+        "OPENROUTER_TRANSLATION_MODEL": "legacy/model",
+        "OPENROUTER_API_KEY": "sk-legacy",
+        "AI_API_KEY": "general",
+        "VISION_MODEL_NAME": "gpt-legacy",
+        "LANGFUSE_PUBLIC_KEY": "pk-legacy",
+        "LANGFUSE_TRACING_ENABLED": "true",
     }
-    canonical_env = {
-        "AI_OPENAI_API_KEY": "sk-openai",
-        "AI_GEMINI_API_KEY": "gem-key",
-        "AI_SCENE_ANALYSIS_PROVIDER": "openai",
-        "AI_SCENE_ANALYSIS_TIMEOUT_SECONDS": "90",
-        "AI_SCENE_ANALYSIS_MODEL": "gpt-scene",
-        "AI_SCENE_TRANSLATION_PROVIDER": "gemini",
-        "AI_SCENE_TRANSLATION_TIMEOUT_SECONDS": "45",
-        "AI_SCENE_TRANSLATION_MODEL": "gem-translate",
-        "AI_LEARNING_TASK_PROVIDER": "openai",
-        "AI_LEARNING_TASK_TIMEOUT_SECONDS": "30",
-        "AI_LEARNING_TASK_MODEL": "gpt-learn",
-        "AI_ISPY_CLUE_PROVIDER": "openai",
-        "AI_ISPY_CLUE_TIMEOUT_SECONDS": "20",
-        "AI_ISPY_CLUE_MODEL": "gpt-clue",
-        "AI_ISPY_GUESS_PROVIDER": "none",
-        "AI_ISPY_GUESS_TIMEOUT_SECONDS": "10",
-        # No AI_ISPY_GUESS_MODEL: the legacy var is ignored when the provider
-        # is "none", so the canonical equivalent omits it too.
-    }
-    assert load_ai_settings(env=legacy_env) == load_ai_settings(env=canonical_env)
-
-    # Canonical wins when both are present.
-    both = dict(legacy_env)
-    both["AI_SCENE_ANALYSIS_MODEL"] = "canonical-model"
-    settings = load_ai_settings(env=both)
-    assert settings.scene_analysis.model_name == "canonical-model"
+    assert load_ai_settings(env=removed) == load_ai_settings(env={})
 
 
 def test_settings_are_plain_frozen_models_without_clients():
@@ -358,10 +223,8 @@ def test_settings_are_plain_frozen_models_without_clients():
         assert not callable(value)
     with pytest.raises(ValidationError):
         settings.scene_analysis.model_name = "changed"
-    # general_api_key is never substituted for a provider key.
-    keyed = load_ai_settings(env={"AI_API_KEY": "general"})
-    assert keyed.api_key_for(AiProvider.OPENAI) == ""
-    assert keyed.api_key_for(AiProvider.NONE) == ""
+    assert settings.api_key_for(AiProvider.OPENAI) == ""
+    assert settings.api_key_for(AiProvider.NONE) == ""
 
 
 def test_observability_defaults_and_canonical_names():
@@ -391,33 +254,11 @@ def test_observability_defaults_and_canonical_names():
     assert settings.capture_content is True
 
 
-def test_observability_langfuse_aliases_and_canonical_precedence():
-    settings = load_ai_settings(
-        env={
-            "LANGFUSE_TRACING_ENABLED": "yes",
-            "LANGFUSE_PUBLIC_KEY": "pk-alias",
-            "LANGFUSE_SECRET_KEY": "sk-alias",
-            "LANGFUSE_HOST": "https://host.example.com",
-            "LANGFUSE_TRACING_ENVIRONMENT": "prod",
-            # Canonical wins when both are present.
-            "AI_OBSERVABILITY_PUBLIC_KEY": "pk-canonical",
-            "AI_OBSERVABILITY_BASE_URL": "https://canonical.example.com",
-        }
-    ).observability
-    assert settings.enabled is True
-    assert settings.public_key == "pk-canonical"
-    assert settings.secret_key == "sk-alias"
-    assert settings.base_url == "https://canonical.example.com"
-    assert settings.environment == "prod"
-
-
 def test_observability_invalid_values_raise_configuration_error():
     with pytest.raises(
         AiConfigurationError, match="AI_OBSERVABILITY_ENABLED"
     ):
         load_ai_settings(env={"AI_OBSERVABILITY_ENABLED": "maybe"})
-    with pytest.raises(AiConfigurationError, match="'maybe'"):
-        load_ai_settings(env={"LANGFUSE_TRACING_ENABLED": "maybe"})
     with pytest.raises(AiConfigurationError, match="'Bad Env'"):
         load_ai_settings(env={"AI_OBSERVABILITY_ENVIRONMENT": "Bad Env"})
     with pytest.raises(AiConfigurationError, match="langfuse-prod"):
@@ -429,13 +270,7 @@ def test_real_mode_requires_langfuse_keys_when_observability_enabled():
         load_ai_settings(
             env={
                 "AI_MODE": "real",
-                "AI_OPENAI_API_KEY": "k",
-                "AI_GEMINI_API_KEY": "k",
-                "AI_SCENE_ANALYSIS_MODEL": "m",
-                "AI_SCENE_TRANSLATION_MODEL": "m",
-                "AI_LEARNING_TASK_MODEL": "m",
-                "AI_ISPY_CLUE_MODEL": "m",
-                "AI_ISPY_GUESS_MODEL": "m",
+                "AI_OPENROUTER_API_KEY": "k",
                 "AI_OBSERVABILITY_ENABLED": "true",
                 "AI_OBSERVABILITY_PUBLIC_KEY": "pk",
             }

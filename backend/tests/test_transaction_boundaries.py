@@ -123,7 +123,7 @@ def probe(database):
 
 
 def translate_with(probe, before=None):
-    def translate(payload):
+    def translate(payload, cache_scope=None):
         probe.check()
         if before:
             before.pop()()
@@ -139,7 +139,7 @@ def translate_with(probe, before=None):
 
 
 def generate_with(probe, error, before=None):
-    def generate(_payload):
+    def generate(_payload, cache_scope=None):
         probe.check()
         if before:
             before.pop()()
@@ -292,7 +292,7 @@ def test_stale_generation_failure_does_not_fail_the_newer_generation(database, p
     _engine, _owner, profile, _client = database
     newer = []
 
-    def translate(payload):
+    def translate(payload, cache_scope=None):
         if newer:
             newer.pop()()
             raise RuntimeError("provider timed out after a newer claim")
@@ -311,7 +311,7 @@ def test_stale_generation_failure_does_not_fail_the_newer_generation(database, p
 
 
 def test_current_generation_failure_still_fails_the_session(database, probe):
-    def translate(_payload):
+    def translate(_payload, cache_scope=None):
         probe.check()
         raise RuntimeError("provider unavailable")
 

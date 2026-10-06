@@ -5,12 +5,12 @@ from uuid import uuid4
 
 from PIL import Image
 
+from app.ai.contracts import VisionImage
 from app.ai.features.object_grounding import GroundedBox
 from app.ai.features.object_grounding.mapping import apply_object_grounding
 from app.ai.features.object_grounding.service import GroundingDinoObjectGrounder, _canonical_label
 from app.schemas.media import AnchorPoint, BoundingBox, SceneObject
 from app.services.scene_analysis import SceneAnalysisResult
-from app.services.vision_model import VisionImage
 
 
 class FakeGrounder:

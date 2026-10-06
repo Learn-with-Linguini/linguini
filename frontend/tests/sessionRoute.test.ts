@@ -15,10 +15,10 @@ function task(kind: keyof typeof contents, status: SessionTask["status"], orderI
     status, isSkippable: true, orderIndex, publicContent, vocabularyItemId: null, sceneObjectId: null };
 }
 
-function detail(status: SessionStatus, tasks: SessionTask[] = [], failureCode: PracticeDetail["session"]["failureCode"] = null): PracticeDetail {
+function detail(status: SessionStatus, tasks: SessionTask[] = [], failureCode: PracticeDetail["session"]["failureCode"] = null, analysisRetryable = false): PracticeDetail {
   return {
     session: { id: "s1", status, sceneMediaAssetId: "asset", sessionTitle: null, sessionSummary: null, failureCode },
-    mediaAsset: { id: "asset", source: "preloaded" }, sceneId: null, title: "Scene", analysisMode: null,
+    mediaAsset: { id: "asset", source: "preloaded" }, sceneId: null, title: "Scene", analysisMode: null, analysisRetryable,
     sceneObjects: [], sceneObjectRelations: [], vocabulary: [], translations: [],
     tasks, nextTaskId: null, progress: { completedTaskCount: 0, skippedTaskCount: 0, terminalTaskCount: 0, totalTaskCount: tasks.length },
   };
@@ -35,6 +35,17 @@ test("every session status maps to its canonical route", () => {
   assert.equal(sessionDestination(detail("abandoned")).path, "/practice");
   assert.match(sessionDestination(detail("abandoned")).notice ?? "", /discarded/);
   assert.equal(sessionDestination(detail("failed")).path, "/practice");
+});
+
+test("a retryable analysis failure reopens on the analysis page", () => {
+  const retryable = detail("failed", [], "sceneAnalysisFailed", true);
+  assert.deepEqual(sessionDestination(retryable), { path: "/practice/sessions/s1/analysis", notice: null });
+  assert.equal(isSessionRouteAllowed(retryable, "/practice/sessions/s1/analysis"), true);
+  assert.equal(isSessionRouteAllowed(retryable, "/practice/sessions/s1/learn"), false);
+  const exhausted = detail("failed", [], "sceneAnalysisFailed");
+  assert.equal(sessionDestination(exhausted).path, "/practice");
+  assert.match(sessionDestination(exhausted).notice ?? "", /couldn't read that photo/);
+  assert.equal(sessionDestination(detail("failed", [], "imageModerationFailed")).path, "/practice");
 });
 
 test("isPreTaskStep marks only the pre-task steps as auto-forwardable", () => {

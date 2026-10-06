@@ -24,9 +24,7 @@ from app.services.scene_analysis import SceneAnalysisError
 class SceneAnalysisValidationError(SceneAnalysisError):
     def __init__(self, issues: Sequence[SceneAnalysisIssue]) -> None:
         self.issues = tuple(issues)
-        summary = "; ".join(
-            f"{issue.code.value}: {issue.message}" for issue in self.issues
-        )
+        summary = "; ".join(f"{issue.code.value}: {issue.message}" for issue in self.issues)
         super().__init__(summary)
 
 
@@ -104,9 +102,7 @@ def validate_scene_analysis(
     box_fields = ("x", "y", "width", "height")
     for index, scene_object in enumerate(result.objects):
         box = scene_object.bounding_box
-        non_finite = [
-            field for field in box_fields if not math.isfinite(getattr(box, field))
-        ]
+        non_finite = [field for field in box_fields if not math.isfinite(getattr(box, field))]
         if non_finite:
             for field in non_finite:
                 value = getattr(box, field)
@@ -295,6 +291,8 @@ def validate_scene_analysis(
 
 def parse_scene_analysis(
     payload: Mapping[str, Any] | str | bytes,
+    *,
+    normalize_gemini_coordinates: bool = False,
 ) -> SceneAnalysisModelResult:
     try:
         if isinstance(payload, (str, bytes)):
@@ -311,4 +309,36 @@ def parse_scene_analysis(
             for error in exc.errors()
         ]
         raise SceneAnalysisValidationError(issues) from exc
+    if normalize_gemini_coordinates:
+        result = _normalize_gemini_coordinates(result)
     return validate_scene_analysis(result)
+
+
+def _normalize_gemini_coordinates(result: SceneAnalysisModelResult) -> SceneAnalysisModelResult:
+    """Convert coherent Gemini 0..1000 geometry, preserving ordinary 0..1 output.
+
+    Use the documented scale, never the largest observed coordinate. Reject
+    ambiguous mixed scales and invalid numbers through the usual validator.
+    """
+    if not result.objects:
+        return result
+    boxes = [obj.bounding_box for obj in result.objects]
+    box_values = [[box.x, box.y, box.width, box.height] for box in boxes]
+    if not all(max(values) > 1 for values in box_values):
+        return result
+    values = [value for coords in box_values for value in coords]
+    for obj in result.objects:
+        if obj.anchor_point is not None:
+            values.extend([obj.anchor_point.x, obj.anchor_point.y])
+    if any(not math.isfinite(value) or not 0 <= value <= 1000 for value in values):
+        return result
+    objects = []
+    for obj in result.objects:
+        box = obj.bounding_box.model_copy(
+            update={key: value / 1000 for key, value in obj.bounding_box.model_dump().items()}
+        )
+        anchor = obj.anchor_point
+        if anchor is not None:
+            anchor = anchor.model_copy(update={"x": anchor.x / 1000, "y": anchor.y / 1000})
+        objects.append(obj.model_copy(update={"bounding_box": box, "anchor_point": anchor}))
+    return result.model_copy(update={"objects": objects})
