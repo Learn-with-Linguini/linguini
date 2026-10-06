@@ -8,6 +8,7 @@ deterministic fallbacks.
 from __future__ import annotations
 
 from app.ai.features.ispy_clues import ISpyClueService
+from app.ai.features.ispy_guess import ISpyGuessService
 from app.ai.features.learning_tasks import LearningTaskService
 from app.ai.features.moderation import ImageModerator, OpenAIImageModerator
 from app.ai.features.object_grounding import GroundingDinoObjectGrounder, ObjectGrounder
@@ -193,5 +194,28 @@ def build_ispy_clue_generator(
     )
     client = build_text_client(config.provider, settings, text_config)
     return ISpyClueService(
+        client, text_config, tracer=tracer, provider=config.provider.value
+    )
+
+
+def build_ispy_guess_generator(
+    settings: AiSettings, tracer: AITracer
+) -> ISpyGuessService | None:
+    """Build the configured target-blind I-Spy evaluator, or ``None`` when off.
+
+    ``None`` keeps the workflow's deterministic reflection tasks. A small
+    output cap bounds the one short JSON verdict this call returns.
+    """
+    config = settings.feature(AiFeature.ISPY_GUESS)
+    if config.provider is AiProvider.NONE or not settings.is_configured(config):
+        return None
+    text_config = TextModelConfig(
+        model_name=config.model_name,
+        timeout_seconds=config.timeout_seconds,
+        max_output_tokens=config.max_output_tokens or 500,
+        max_retries=min(config.max_retries, 1),
+    )
+    client = build_text_client(config.provider, settings, text_config)
+    return ISpyGuessService(
         client, text_config, tracer=tracer, provider=config.provider.value
     )

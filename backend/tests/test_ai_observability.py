@@ -13,9 +13,7 @@ from app.ai import (
     build_tracer,
     load_ai_settings,
 )
-from app.ai.instrumentation import TracedISpyGuessGenerator
-from app.schemas.ispy_guess import ISpyGuessResult
-from app.services.ispy_guess import ISpyGuessError
+from app.ai.features.ispy_guess import ISpyGuessError
 
 
 class FakeObservation:
@@ -56,90 +54,9 @@ class FakeTracer:
         self.records.append(("shutdown", {}))
 
 
-class StubInner:
-    def __init__(self, result=None, error: Exception | None = None) -> None:
-        self.result = result
-        self.error = error
-        self.calls: list[tuple[dict[str, Any], str]] = []
-
-    def guess(self, context, learner_text):
-        self.calls.append((context, learner_text))
-        if self.error is not None:
-            raise self.error
-        return self.result
-
-
-def _result() -> ISpyGuessResult:
-    return ISpyGuessResult.model_validate(
-        {
-            "guessed_object_key": "cup",
-            "ambiguous": False,
-            "feedback": "Good description.",
-        }
-    )
-
-
-def _generator(tracer, inner):
-    return TracedISpyGuessGenerator(
-        inner, tracer, provider="openai", model="gpt-4o-mini", max_retries=0
-    )
-
-
 def test_fake_tracer_satisfies_protocol():
     assert isinstance(FakeTracer(), AITracer)
     assert isinstance(FakeObservation([]), AIObservation)
-
-
-def test_traced_guess_success_records_generation():
-    tracer = FakeTracer()
-    inner = StubInner(result=_result())
-    generator = _generator(tracer, inner)
-    result = generator.guess({"scene": "desk"}, "it is the red cup")
-    assert result == inner.result
-    (kind, call), *rest = tracer.records
-    assert kind == "generation"
-    assert call["name"] == "ispy-description-evaluation"
-    assert call["feature"] == "ispyGuess"
-    assert call["provider"] == "openai"
-    assert call["model"] == "gpt-4o-mini"
-    updates = [kw for tag, kw in rest if tag == "update"]
-    assert any(u.get("validation_result") == "valid" for u in updates)
-
-
-def test_traced_guess_error_records_invalid_and_reraises():
-    tracer = FakeTracer()
-    inner = StubInner(error=ISpyGuessError("bad guess"))
-    generator = _generator(tracer, inner)
-    with pytest.raises(ISpyGuessError):
-        generator.guess({}, "guess")
-    updates = [
-        kw for tag, kw in tracer.records if tag == "update" and kw
-    ]
-    failing = [
-        u for u in updates if u.get("validation_result") == "invalid"
-    ]
-    assert failing and failing[0]["error_code"] == "ISpyGuessError"
-
-
-def test_content_dropped_unless_capture_opted_in():
-    """The real _TracedObservation.record_content gate is the privacy seam."""
-    learner_text = "the blue notebook on the table"
-    feedback = "Good description."
-
-    client = RecordingClient()
-    tracer = LangfuseAITracer(client, capture_content=False)
-    _generator(tracer, StubInner(result=_result())).guess({}, learner_text)
-    recorded = repr((client.calls, client.updates))
-    assert learner_text not in recorded
-    assert feedback not in recorded
-
-    client = RecordingClient()
-    tracer = LangfuseAITracer(client, capture_content=True)
-    _generator(tracer, StubInner(result=_result())).guess({}, learner_text)
-    payloads = [u for u in client.updates if "input" in u or "output" in u]
-    assert payloads
-    assert payloads[0]["input"] == {"learnerText": learner_text}
-    assert feedback in repr(client.updates)
 
 
 def test_noop_tracer_satisfies_protocol_and_contexts_work():

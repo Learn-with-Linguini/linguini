@@ -11,7 +11,7 @@ test cases, with the **production prompts, schemas and validators**.
 | `translation` | `OpenAISceneTranslator`, `GeminiSceneTranslator` | 13 es/fr cases (`../scene_translation`) + 4 ja/ko probes (`cases/translation_cjk.json`) |
 | `learning_tasks` | `OpenAILearningTaskGenerator`, `GeminiLearningTaskGenerator` | 4 es/fr scenes (`cases/scenes.json`) |
 | `ispy_clues` | `OpenAIISpyClueGenerator`, `GeminiISpyClueGenerator` | 6 scenes in es, fr, ja, ko |
-| `ispy_guess` | `OpenAIISpyGuessGenerator`, `GeminiISpyGuessGenerator` | 22 learner descriptions with known answers (`cases/ispy_guess.json`) |
+| `ispy_guess` | `ISpyGuessService` (shared text client: OpenAI, Gemini, OpenRouter) | 22 learner descriptions with known answers (`cases/ispy_guess.json`) |
 
 ## How a candidate is called
 

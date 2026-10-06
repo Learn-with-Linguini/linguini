@@ -14,7 +14,6 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 from functools import cache
-from typing import Any
 
 from app.ai.observability import NoOpAITracer
 from app.ai.registry import build_text_client, build_vision_client
@@ -161,19 +160,4 @@ def recording_vision_client(
     inner = build_vision_client(cand.ai_provider, settings(), config)
     return RecordingClient(
         inner, facts()[cand.catalogue_id], gemini=cand.provider == "gemini"
-    )
-
-
-def openai_sdk_client(cand: Candidate, timeout_seconds: int) -> Any:
-    """Raw SDK client for the I-Spy guess adapter, which is not on the text seam."""
-    from openai import OpenAI
-
-    from app.ai.openrouter import OPENROUTER_BASE_URL
-
-    base_url = OPENROUTER_BASE_URL if cand.provider == "openrouter" else None
-    return OpenAI(
-        api_key=settings().api_key_for(cand.ai_provider),
-        timeout=timeout_seconds,
-        max_retries=0,
-        **({"base_url": base_url} if base_url else {}),
     )

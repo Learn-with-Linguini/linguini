@@ -106,36 +106,3 @@ class RecordingClient:
                 )
             return response
         raise AssertionError("unreachable")
-
-
-class RecordingResponsesClient:
-    """Recorder for the SDK-shaped I-Spy guess adapter (``responses.parse``)."""
-
-    def __init__(self, inner: Any, facts: ModelFacts) -> None:
-        self.inner = inner
-        self.facts = facts
-        self.record = CallRecord()
-        self.responses = self
-
-    def parse(self, **kwargs: Any) -> Any:
-        started = time.perf_counter()
-        try:
-            response = self.inner.responses.parse(**kwargs)
-        except Exception as error:  # noqa: BLE001 - recorded, then re-raised
-            self.record.latency_ms = (time.perf_counter() - started) * 1000
-            self.record.error = f"{type(error).__name__}: {str(error)[:300]}"
-            self.record.error_code = type(error).__name__
-            raise
-        self.record.latency_ms = (time.perf_counter() - started) * 1000
-        usage = getattr(response, "usage", None)
-        self.record.input_tokens = getattr(usage, "input_tokens", None)
-        self.record.output_tokens = getattr(usage, "output_tokens", None)
-        parsed = getattr(response, "output_parsed", None)
-        self.record.raw_text = (
-            parsed.model_dump_json(by_alias=True) if parsed is not None else None
-        )
-        if self.record.input_tokens is not None:
-            self.record.cost_usd = self.facts.cost(
-                self.record.input_tokens, self.record.output_tokens or 0
-            )
-        return response

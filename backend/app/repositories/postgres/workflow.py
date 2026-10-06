@@ -10,6 +10,7 @@ from sqlalchemy.dialects.postgresql import insert as upsert
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.ai.features.ispy_clues import ISpyClueGenerationError
+from app.ai.features.ispy_guess import ISpyGuessError
 from app.ai.features.learning_tasks import required_task_focuses
 from app.repositories.postgres.language_profiles import language_profiles
 from app.repositories.postgres.media_assets import media_assets
@@ -57,7 +58,6 @@ from app.schemas.vocabulary import (
     VocabularyTranslation,
 )
 from app.services.background import InlineBackgroundRunner
-from app.services.ispy_guess import ISpyGuessError
 from app.services.scene_analysis import DeterministicSceneAnalyzer
 from app.services.session_plan import (
     bootstrap_word,
@@ -1363,7 +1363,9 @@ class PostgresWorkflowRepository:
                             )
                         try:
                             guess = self.ispy_guess_generator.guess(
-                                task.answer_key.scene_description_context, request.text
+                                task.answer_key.scene_description_context,
+                                request.text,
+                                session_id=str(task.session_id),
                             )
                             correct = guess.guessed_object_key == str(task.scene_object_id)
                             feedback_message = guess.feedback

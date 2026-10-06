@@ -8,8 +8,6 @@ from uuid import UUID
 from fastapi import Depends, Request
 
 from app.ai import (
-    AiFeature,
-    AiProvider,
     AiSettings,
     AITracer,
     NoOpAITracer,
@@ -17,11 +15,10 @@ from app.ai import (
 )
 from app.ai.features.object_grounding import ObjectGroundingError
 from app.ai.features.scene_analysis import RoutedSceneAnalyzer
-from app.ai.instrumentation import TracedISpyGuessGenerator
-from app.ai.openrouter import OPENROUTER_BASE_URL
 from app.ai.registry import (
     build_image_moderator,
     build_ispy_clue_generator,
+    build_ispy_guess_generator,
     build_learning_task_generator,
     build_object_grounder,
     build_scene_translator,
@@ -54,7 +51,6 @@ from app.services.journals import JournalService
 from app.services.language_profiles import LanguageProfileService
 from app.services.learning import LearningService
 from app.services.media_assets import MediaAssetService
-from app.services.openai_ispy_guess import OpenAIISpyGuessGenerator
 from app.services.practice import PracticeService
 from app.services.scene_analysis import DeterministicSceneAnalyzer
 from app.services.scenes import SceneService
@@ -218,32 +214,6 @@ def get_ai_tracer(request: Request) -> AITracer:
     return getattr(request.app.state, "ai_tracer", None) or NoOpAITracer()
 
 
-def get_ispy_guess_generator(settings: AiSettings, tracer: AITracer | None = None):
-    """Build the target-blind I-Spy evaluator used by task generation and attempts."""
-    config = settings.feature(AiFeature.ISPY_GUESS)
-    if config.provider is AiProvider.NONE:
-        return None
-    if config.provider not in (AiProvider.OPENAI, AiProvider.OPENROUTER):
-        raise ValueError(f"Unsupported ISPY_GUESS_PROVIDER: {config.provider}")
-    if not settings.is_configured(config):
-        return None
-    return TracedISpyGuessGenerator(
-        OpenAIISpyGuessGenerator(
-            settings.api_key_for(config.provider),
-            config.model_name,
-            timeout_seconds=config.timeout_seconds,
-            base_url=(
-                OPENROUTER_BASE_URL
-                if config.provider is AiProvider.OPENROUTER else None
-            ),
-        ),
-        tracer or NoOpAITracer(),
-        provider=config.provider.value,
-        model=config.model_name,
-        max_retries=config.max_retries,
-    )
-
-
 def get_practice_repository(
     request: Request, user_id: Annotated[UUID, Depends(get_current_user_id)]
 ) -> PostgresWorkflowRepository:
@@ -281,9 +251,7 @@ def get_practice_repository(
         translator=translator,
         learning_task_generator=learning_task_generator,
         ispy_clue_generator=ispy_clue_generator,
-        ispy_guess_generator=get_ispy_guess_generator(
-            settings, get_ai_tracer(request)
-        ),
+        ispy_guess_generator=build_ispy_guess_generator(settings, tracer),
         background=getattr(request.app.state, "background_runner", None),
     )
 
@@ -303,7 +271,7 @@ def get_task_service(
         PostgresTaskRepository(request.app.state.database_engine),
         users,
         request.app.state.database_engine,
-        ispy_guess_generator=get_ispy_guess_generator(
+        ispy_guess_generator=build_ispy_guess_generator(
             get_ai_settings(request), get_ai_tracer(request)
         ),
     )
