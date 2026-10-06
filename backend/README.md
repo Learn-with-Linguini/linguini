@@ -93,6 +93,13 @@ SessionTasks -> attempts/completion/skipping -> progress`. The source is read fr
    `sessions.analysis_draft`. It creates no `scene_objects` or lesson tasks yet;
    `generate-plan` is an alias for this draft step. `GET` returns draft suggestions
    in `sceneObjects` until review is confirmed.
+   If analysis fails with `sceneAnalysisFailed` (provider error, invalid output or
+   a timed-out run), the image and its `media_assets` row stay saved and the
+   response sets `analysisRetryable`. `POST /api/v1/sessions/{id}/retry-analysis`
+   reruns analysis on that saved image without a new upload, up to three attempts
+   per session. It checks ownership and the open-practice limit, and concurrent
+   retries run the model once. `imageModerationFailed` and other failures cannot
+   be retried. Failed sessions stay out of `GET /sessions/active`.
    `GET /api/v1/sessions/{id}/review-word?label=chair` checks an English label
    against vocabulary for the active learning language.
    `PUT /api/v1/sessions/{id}/review` accepts `acceptedObjectIds` and `addedObjects`

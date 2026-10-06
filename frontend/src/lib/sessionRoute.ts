@@ -41,6 +41,7 @@ export function sessionDestination(detail: PracticeDetail): SessionDestination {
     case "abandoned":
       return { path: "/practice", notice: "That practice was discarded. Start a new one when you are ready." };
     case "failed":
+      if (detail.analysisRetryable) return { path: `${base}/analysis`, notice: null };
       return { path: "/practice", notice: (detail.session.failureCode && failureNotices[detail.session.failureCode]) || fallbackNotice };
     default:
       return { path: "/practice", notice: fallbackNotice };

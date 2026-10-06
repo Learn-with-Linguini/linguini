@@ -85,6 +85,7 @@ logger = logging.getLogger(__name__)
 
 TERMINAL = {"completed", "abandoned", "failed"}
 MAX_ACTIVE_SESSIONS = 3
+MAX_ANALYSIS_ATTEMPTS = 3
 ALLOWED_TRANSITIONS = {
     "created": {"analyzingScene", "abandoned", "failed"},
     "analyzingScene": {"awaitingObjectReview", "abandoned", "failed"},
@@ -94,7 +95,7 @@ ALLOWED_TRANSITIONS = {
     "inProgress": {"completed", "abandoned", "failed"},
     "completed": set(),
     "abandoned": set(),
-    "failed": set(),
+    "failed": {"analyzingScene"},
 }
 READ_TASKS = {"vocabularyIntroduction", "grammarExplanation", "syntaxExplanation"}
 ANALYSIS_TIMEOUT = timedelta(minutes=15)
@@ -222,6 +223,19 @@ def _ispy_guess_context(translation_payload, translated_scene, objects, scene_re
             "relations": payload["relationships"],
         },
     }
+
+
+def analysis_attempts(session):
+    return (session.analysis_draft or {}).get("analysisAttempts", 1)
+
+
+def analysis_retryable(session):
+    """A temporary scene-analysis failure can rerun on the saved image."""
+    return (
+        session.status == "failed"
+        and session.failure_code == "sceneAnalysisFailed"
+        and analysis_attempts(session) < MAX_ANALYSIS_ATTEMPTS
+    )
 
 
 def parse_session(row):
@@ -632,6 +646,7 @@ class PostgresWorkflowRepository:
             vocabulary=words,
             translations=translations,
             translation_preview=(draft or {}).get("translationPreview"),
+            analysis_retryable=analysis_retryable(session),
             tasks=[SessionTaskPublic.from_internal(t) for t in tasks],
             progress=task_progress(tasks),
             next_task_id=next(
@@ -780,18 +795,7 @@ class PostgresWorkflowRepository:
             )
             if existing is not None:
                 return self._detail(c, parse_session(existing))
-            active_count = c.execute(
-                select(func.count()).select_from(sessions).where(
-                    sessions.c.user_id == self.user_id,
-                    sessions.c.language_profile_id == request.language_profile_id,
-                    sessions.c.status.not_in(TERMINAL),
-                )
-            ).scalar_one()
-            if active_count >= MAX_ACTIVE_SESSIONS:
-                raise ActiveSessionLimitReachedError(
-                    "You can keep up to three unfinished practices open at once. "
-                    "Finish or leave one before starting another."
-                )
+            self._check_active_limit(c, request.language_profile_id)
             session = Session(
                 user_id=self.user_id,
                 language_profile_id=request.language_profile_id,
@@ -800,6 +804,20 @@ class PostgresWorkflowRepository:
             )
             c.execute(insert(sessions).values(**session.model_dump(by_alias=False)))
             return self._detail(c, session)
+
+    def _check_active_limit(self, c, profile_id):
+        active_count = c.execute(
+            select(func.count()).select_from(sessions).where(
+                sessions.c.user_id == self.user_id,
+                sessions.c.language_profile_id == profile_id,
+                sessions.c.status.not_in(TERMINAL),
+            )
+        ).scalar_one()
+        if active_count >= MAX_ACTIVE_SESSIONS:
+            raise ActiveSessionLimitReachedError(
+                "You can keep up to three unfinished practices open at once. "
+                "Finish or leave one before starting another."
+            )
 
     def _expire_stale(self, c, *scope):
         """Fail stale processing sessions inside `scope` with their status's code."""
@@ -828,62 +846,93 @@ class PostgresWorkflowRepository:
             if session.status != "created":
                 # analyzingScene/awaitingObjectReview/generatingTasks: never re-run the model.
                 return self._detail(c, session)
-            asset = MediaAsset.model_validate(
-                dict(
-                    c.execute(
-                        select(media_assets).where(
-                            media_assets.c.id == session.scene_media_asset_id
-                        )
-                    )
-                    .mappings()
-                    .one()
-                )
+            inputs = self._analysis_inputs(c, session)
+            claimed = self._transition(
+                c, session, "analyzingScene", analysis_draft={"analysisAttempts": 1}
             )
-            profile = (
+            detail = self._detail(c, claimed)
+        return self._start_analysis(session_id, profile_id, claimed, detail, *inputs)
+
+    def retry_analysis(self, session_id, profile_id):
+        """Rerun a temporarily failed analysis on the session's saved image."""
+        with self.transaction() as c:
+            session = self._session(c, session_id, profile_id)
+            if session.status in {"analyzingScene", "awaitingObjectReview"}:
+                # A concurrent retry already claimed the session.
+                return self._detail(c, session)
+            if not analysis_retryable(session):
+                raise PracticeConflictError("This practice cannot retry its scene analysis.")
+            self._check_active_limit(c, profile_id)
+            if c.execute(
+                select(sessions.c.id).where(
+                    sessions.c.user_id == self.user_id,
+                    sessions.c.language_profile_id == profile_id,
+                    sessions.c.scene_media_asset_id == session.scene_media_asset_id,
+                    sessions.c.status.not_in(TERMINAL),
+                )
+            ).first():
+                raise PracticeConflictError("This photo already has an open practice.")
+            inputs = self._analysis_inputs(c, session)
+            claimed = self._transition(
+                c,
+                session,
+                "analyzingScene",
+                failure_code=None,
+                analysis_draft={"analysisAttempts": analysis_attempts(session) + 1},
+            )
+            detail = self._detail(c, claimed)
+        return self._start_analysis(session_id, profile_id, claimed, detail, *inputs)
+
+    def _analysis_inputs(self, c, session):
+        asset = MediaAsset.model_validate(
+            dict(
                 c.execute(
-                    select(language_profiles).where(
-                        language_profiles.c.id == session.language_profile_id
+                    select(media_assets).where(
+                        media_assets.c.id == session.scene_media_asset_id
                     )
                 )
                 .mappings()
                 .one()
             )
-            scene = (
-                c.execute(
-                    select(preloaded_scenes)
-                    .where(preloaded_scenes.c.media_asset_id == asset.id)
-                    .order_by(
-                        (
-                            func.lower(preloaded_scenes.c.language_code)
-                            == profile["target_language_code"].lower()
-                        ).desc()
-                    )
+        )
+        profile = (
+            c.execute(
+                select(language_profiles).where(
+                    language_profiles.c.id == session.language_profile_id
                 )
-                .mappings()
-                .first()
-                if asset.source == "preloaded"
-                else None
             )
-            if asset.source == "preloaded" and scene is None:
-                raise PracticeNotFoundError("Curated scene not found.")
-            claimed = self._transition(c, session, "analyzingScene")
-            detail = self._detail(c, claimed)
+            .mappings()
+            .one()
+        )
+        scene = (
+            c.execute(
+                select(preloaded_scenes)
+                .where(preloaded_scenes.c.media_asset_id == asset.id)
+                .order_by(
+                    (
+                        func.lower(preloaded_scenes.c.language_code)
+                        == profile["target_language_code"].lower()
+                    ).desc()
+                )
+            )
+            .mappings()
+            .first()
+            if asset.source == "preloaded"
+            else None
+        )
+        if asset.source == "preloaded" and scene is None:
+            raise PracticeNotFoundError("Curated scene not found.")
+        return asset, dict(profile), dict(scene) if scene else None
+
+    def _start_analysis(self, session_id, profile_id, claimed, detail, asset, profile, scene):
         if asset.source == "preloaded":
             # Curated scenes already have their objects, marker positions,
             # attributes and relations saved. Set up the fresh learner session
             # on this request instead of showing the uploaded-photo animation.
-            self._run_scene_analysis(
-                session_id, profile_id, claimed, asset, dict(profile), dict(scene)
-            )
+            self._run_scene_analysis(session_id, profile_id, claimed, asset, profile, scene)
             return self.get(session_id, profile_id)
         self.background.submit(
-            self._run_scene_analysis,
-            session_id,
-            profile_id,
-            claimed,
-            asset,
-            dict(profile),
-            dict(scene) if scene else None,
+            self._run_scene_analysis, session_id, profile_id, claimed, asset, profile, scene
         )
         return detail
 
