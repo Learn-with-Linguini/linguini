@@ -185,9 +185,8 @@ analyses the six bundled scene images once per image with the configured
 scene-analysis provider, translates the detected objects into French and
 Spanish, and stores the assembled suggested words in
 `preloaded_scenes.content.items` so the Scene Analysis review screen opens
-with words already on the photo. Tasks are **not** precomputed — the runtime
-workflow still generates real tasks, rounds and prompts; the script only
-writes minimal placeholders for them.
+with words already on the photo. `content.tasks/rounds/prompts` stay minimal
+placeholders; real lessons and clues come from the templates below.
 
 ```sh
 python -m app.scripts.precompute_preloaded_scenes --dry-run --json out.json
@@ -205,6 +204,53 @@ never re-bills the model. `--emit-migration` writes an idempotent
 `INSERT ... ON CONFLICT (slug) DO UPDATE` migration; the generated French rows
 reuse the existing `media_assets` rows, so no asset inserts are emitted.
 Environment values are read from `backend/.env.local` (or `--env-file PATH`).
+
+##### Lesson and clue templates
+
+After building each row the script runs translation, learning tasks and I-Spy
+clues through the normal routed services and validators, using the same
+payload a learner session builds when it accepts every suggested object with
+its attributes and relations. Each validated result is stored server-only in
+`preloaded_scenes.content.generated` (`version: preloaded-templates.v1`) with:
+
+- `feature`, `language` and `variant` (`prompt|schema|validator` versions);
+- a `fingerprint` of the scene facts (title, summary, labels, attributes,
+  relations, marker positions) and language;
+- stable references (`o1`, `o1:color`, `r1`) instead of session IDs;
+- provenance (deployment, model, creation time).
+
+A new variant is added next to older ones. The public scene API never returns
+`generated` (`CONTENT_FIELDS` in `repositories/postgres/scenes.py`).
+
+At review time, unchanged curated content checks the templates first. A match
+is mapped onto the session's own object, attribute and relation IDs, validated
+again, and passed to the existing task builders, so each session gets fresh
+task records and answer keys stay in `session_tasks`. No model call is made.
+Ownership, claims, revision guards and idempotency are unchanged. Edited
+scenes, uploaded photos, partial selections, missing or stale templates and
+failed remapping fall back to the result cache and normal routed generation.
+A model or deployment change alone does not stale a template; rerun the
+script to refresh.
+
+```sh
+python -m app.scripts.precompute_preloaded_scenes --state state.json --report report.json
+python -m app.scripts.precompute_preloaded_scenes --from-json out.json --dry-run --report report.json
+python -m app.scripts.precompute_preloaded_scenes --from-json out.json --max-provider-calls 30 --only clues --force
+```
+
+- `--state PATH` saves progress after each scene and template; a rerun skips
+  finished rows and templates that still match.
+- `--max-provider-calls N` is a hard cap on model calls for the whole run. A
+  stage starts only if its route's full call budget still fits. `0` only
+  checks templates and reports missing ones; with `--from-json` the default
+  is `0`, otherwise unlimited.
+- `--only translation|lessons|clues` limits which stages may call a model;
+  `--force` regenerates them even when they match. `--skip-templates` skips
+  the stages.
+- `--report PATH` writes each scene, language and stage with its status
+  (`reused`, `generated`, `missing`, `failed`) and an error code only, never
+  scene text, provider bodies or keys. The script exits non-zero when a stage
+  fails; `missing` alone does not fail the run.
 
 Required environment: `DATABASE_URL`, `SUPABASE_URL`,
 `SUPABASE_SERVICE_ROLE_KEY`, `MEDIA_STORAGE_BUCKET`, plus the AI

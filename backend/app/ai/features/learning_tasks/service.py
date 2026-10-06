@@ -23,6 +23,7 @@ from app.ai.cache import (
     FeatureVersion,
     Generated,
     ResultCache,
+    TemplateSet,
     generated,
     run_cached,
 )
@@ -89,7 +90,8 @@ class LearningTaskService:
         self._provider = provider
 
     def generate(
-        self, payload: dict[str, Any], *, cache_scope: CacheScope | None = None
+        self, payload: dict[str, Any], *, cache_scope: CacheScope | None = None,
+        templates: TemplateSet | None = None,
     ) -> LearningTaskResult:
         """Generate tasks for ``payload``; ``cache_scope=None`` bypasses the cache."""
         focuses = required_task_focuses(payload)
@@ -111,6 +113,7 @@ class LearningTaskService:
                 payload=payload,
                 compute=lambda: self._generate(payload, focuses, response_model),
                 decode=decode,
+                templates=templates,
             )
         except CacheWaitTimeout as error:
             raise LearningTaskGenerationError("Learning task generation failed.") from error

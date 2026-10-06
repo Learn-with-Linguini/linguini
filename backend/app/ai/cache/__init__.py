@@ -16,8 +16,18 @@ from app.ai.cache.store import (
     InMemoryCacheStore,
     Provenance,
 )
+from app.ai.cache.templates import (
+    GENERATED_CONTENT_KEY,
+    TEMPLATE_ARTIFACT_VERSION,
+    Template,
+    TemplateMissing,
+    TemplateSet,
+    template_fingerprint,
+)
 
 __all__ = [
+    "GENERATED_CONTENT_KEY",
+    "TEMPLATE_ARTIFACT_VERSION",
     "CacheEntry",
     "CacheRequest",
     "CacheScope",
@@ -29,6 +39,10 @@ __all__ = [
     "Provenance",
     "ReferenceMap",
     "ResultCache",
+    "Template",
+    "TemplateMissing",
+    "TemplateSet",
     "generated",
     "run_cached",
+    "template_fingerprint",
 ]

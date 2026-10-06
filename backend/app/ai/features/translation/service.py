@@ -22,6 +22,7 @@ from app.ai.cache import (
     FeatureVersion,
     Generated,
     ResultCache,
+    TemplateSet,
     generated,
     run_cached,
 )
@@ -83,7 +84,8 @@ class SceneTranslationService:
         self._json_schema = build_scene_translation_schema()
 
     def translate(
-        self, payload: dict[str, Any], *, cache_scope: CacheScope | None = None
+        self, payload: dict[str, Any], *, cache_scope: CacheScope | None = None,
+        templates: TemplateSet | None = None,
     ) -> SceneTranslationResult:
         """Translate ``payload``; ``cache_scope=None`` bypasses the result cache."""
         try:
@@ -107,6 +109,7 @@ class SceneTranslationService:
                 payload=payload,
                 compute=lambda: self._generate(payload, parsed_payload),
                 decode=decode,
+                templates=templates,
             )
         except CacheWaitTimeout as error:
             raise SceneTranslationError("Scene translation failed.") from error

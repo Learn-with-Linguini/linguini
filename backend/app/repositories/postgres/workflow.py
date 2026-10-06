@@ -15,7 +15,7 @@ from sqlalchemy import DateTime, and_, delete, func, insert, select, update
 from sqlalchemy.dialects.postgresql import insert as upsert
 from sqlalchemy.exc import SQLAlchemyError
 
-from app.ai.cache import CacheScope
+from app.ai.cache import CacheScope, TemplateSet
 from app.ai.features.ispy_clues import ISpyClueGenerationError
 from app.ai.features.ispy_guess import ISpyGuessError, ISpyGuessResult
 from app.ai.features.learning_tasks import required_task_focuses
@@ -148,7 +148,24 @@ def is_curated_content(session_id, content, objects, relations):
     return all(row.source_relation_key for row in relations)
 
 
-def _learning_task_payload(translation_payload, translated_scene, scene_relations=()):
+def translation_payload(target_language, title, summary, objects, relations):
+    """The scene-translation payload for reviewed ``objects`` and ``relations``."""
+    return {
+        "targetLanguage": target_language,
+        "sceneTitle": title,
+        "sceneSummary": summary,
+        "objects": [{"key": str(obj.id), "source": obj.label} for obj in objects],
+        "attributes": [
+            {"key": f"{obj.id}:{attribute_type}", "source": value}
+            for obj in objects
+            for attribute_type, value in (obj.attributes or {}).items()
+            if isinstance(value, str) and value.strip()
+        ],
+        "relationships": [{"key": str(row.id), "source": row.relation} for row in relations],
+    }
+
+
+def learning_task_payload(translation_payload, translated_scene, scene_relations=()):
     """Reuse the translator payload, carrying the target-language terms it produced."""
     payload = {
         "targetLanguage": translation_payload["targetLanguage"],
@@ -173,9 +190,9 @@ def _learning_task_payload(translation_payload, translated_scene, scene_relation
     return payload
 
 
-def _ispy_clue_payload(translation_payload, translated_scene, objects, scene_relations=()):
+def ispy_clue_payload(translation_payload, translated_scene, objects, scene_relations=()):
     """Give the clue model translated scene facts and positions, never the image itself."""
-    payload = _learning_task_payload(translation_payload, translated_scene, scene_relations)
+    payload = learning_task_payload(translation_payload, translated_scene, scene_relations)
     positions = {
         str(obj.id): (
             obj.bounding_box.model_dump() if obj.bounding_box is not None else {}
@@ -194,7 +211,7 @@ def _ispy_clue_payload(translation_payload, translated_scene, objects, scene_rel
 
 def _ispy_guess_context(translation_payload, translated_scene, objects, scene_relations=()):
     """Persist translated scene facts; never persist or send a selected target."""
-    payload = _ispy_clue_payload(
+    payload = ispy_clue_payload(
         translation_payload, translated_scene, objects, scene_relations
     )
     return {
@@ -240,6 +257,15 @@ class GenerationClaim:
     objects: list[SceneObject]
     relations: list[SceneObjectRelation]
     cache_scope: CacheScope | None = None
+    templates: TemplateSet | None = None
+
+    @property
+    def generation_options(self) -> dict:
+        """Keyword arguments for the generation services."""
+        options = {"cache_scope": self.cache_scope}
+        if self.templates:
+            options["templates"] = self.templates
+        return options
 
 
 @dataclass(frozen=True)
@@ -824,7 +850,14 @@ class PostgresWorkflowRepository:
             )
             scene = (
                 c.execute(
-                    select(preloaded_scenes).where(preloaded_scenes.c.media_asset_id == asset.id)
+                    select(preloaded_scenes)
+                    .where(preloaded_scenes.c.media_asset_id == asset.id)
+                    .order_by(
+                        (
+                            func.lower(preloaded_scenes.c.language_code)
+                            == profile["target_language_code"].lower()
+                        ).desc()
+                    )
                 )
                 .mappings()
                 .first()
@@ -1140,24 +1173,29 @@ class PostgresWorkflowRepository:
                 _scene_title(session, scene),
                 objects,
                 relations,
-                self._cache_scope(c, session, asset, objects, relations),
+                *self._reuse(c, session, asset, objects, relations),
             )
 
-    def _cache_scope(self, c, session, asset, objects, relations):
-        """Share generated results only for unchanged curated content."""
+    def _reuse(self, c, session, asset, objects, relations):
+        """The cache scope and scene templates for this session's content.
+
+        Results are shared, and precomputed templates offered, only for
+        unchanged curated content.
+        """
         if asset is not None and asset.source == "preloaded":
-            contents = c.execute(
-                select(preloaded_scenes.c.content).where(
-                    preloaded_scenes.c.media_asset_id == asset.id,
-                    preloaded_scenes.c.is_active.is_(True),
-                )
-            ).scalars()
-            if any(
-                is_curated_content(session.id, content, objects, relations)
-                for content in contents
-            ):
-                return CacheScope.public()
-        return CacheScope.user(self.user_id)
+            contents = [
+                content
+                for content in c.execute(
+                    select(preloaded_scenes.c.content).where(
+                        preloaded_scenes.c.media_asset_id == asset.id,
+                        preloaded_scenes.c.is_active.is_(True),
+                    )
+                ).scalars()
+                if is_curated_content(session.id, content, objects, relations)
+            ]
+            if contents:
+                return CacheScope.public(), TemplateSet.from_content(contents) or None
+        return CacheScope.user(self.user_id), None
 
     def _current_generation(self, c, claim):
         """The session while ``claim`` still owns it; ``None`` marks a stale result."""
@@ -1187,30 +1225,16 @@ class PostgresWorkflowRepository:
         introduction_id = None
         objects, relations = list(claim.objects), claim.relations
         if self.translator:
-            payload = {
-                "targetLanguage": profile["target_language_code"],
-                "sceneTitle": claim.title,
-                "sceneSummary": session.session_summary or "Confirmed scene vocabulary.",
-                "objects": [
-                    {"key": str(obj.id), "source": obj.label} for obj in objects
-                ],
-                "attributes": [
-                    {
-                        "key": f"{obj.id}:{attribute_type}",
-                        "source": value,
-                    }
-                    for obj in objects
-                    for attribute_type, value in (obj.attributes or {}).items()
-                    if isinstance(value, str) and value.strip()
-                ],
-                "relationships": [
-                    {"key": str(row.id), "source": row.relation}
-                    for row in relations
-                ],
-            }
+            payload = translation_payload(
+                profile["target_language_code"],
+                claim.title,
+                session.session_summary or "Confirmed scene vocabulary.",
+                objects,
+                relations,
+            )
             with _timed("translation", session_id):
                 translated_scene = self.translator.translate(
-                    payload, cache_scope=claim.cache_scope
+                    payload, **claim.generation_options
                 )
 
         # Checkpoint: commit translations and task 1 before the slower lesson
@@ -1301,7 +1325,7 @@ class PostgresWorkflowRepository:
         if self.translator:
             lessons, ispy_clues = self._lessons_and_clues(
                 session_id, payload, translated_scene, objects, words, relations,
-                claim.cache_scope,
+                claim.generation_options,
             )
             if self.ispy_guess_generator:
                 ispy_descriptions = build_ispy_description_tasks(
@@ -1340,7 +1364,7 @@ class PostgresWorkflowRepository:
                 )
             self._transition(c, session, "inProgress")
 
-    def _lessons(self, session_id, payload, translated_scene, relations, cache_scope=None):
+    def _lessons(self, session_id, payload, translated_scene, relations, options=None):
         if not self.learning_task_generator:
             return []
         try:
@@ -1348,8 +1372,8 @@ class PostgresWorkflowRepository:
                 return build_grammar_lessons(
                     session_id,
                     self.learning_task_generator.generate(
-                        _learning_task_payload(payload, translated_scene, relations),
-                        cache_scope=cache_scope,
+                        learning_task_payload(payload, translated_scene, relations),
+                        **(options or {}),
                     ),
                 )
         except Exception:
@@ -1361,7 +1385,7 @@ class PostgresWorkflowRepository:
 
     def _clues(
         self, session_id, payload, translated_scene, objects, words, relations,
-        cache_scope=None,
+        options=None,
     ):
         if not self.ispy_clue_generator:
             return []
@@ -1370,8 +1394,8 @@ class PostgresWorkflowRepository:
                 return build_ispy_clue_tasks(
                     session_id,
                     self.ispy_clue_generator.generate(
-                        _ispy_clue_payload(payload, translated_scene, objects, relations),
-                        cache_scope=cache_scope,
+                        ispy_clue_payload(payload, translated_scene, objects, relations),
+                        **(options or {}),
                     ),
                     objects, words,
                 )
@@ -1381,7 +1405,7 @@ class PostgresWorkflowRepository:
 
     def _lessons_and_clues(
         self, session_id, payload, translated_scene, objects, words, relations,
-        cache_scope=None,
+        options=None,
     ):
         """Run the two independent generation calls at once, each with its own fallback.
 
@@ -1391,11 +1415,11 @@ class PostgresWorkflowRepository:
         """
         lessons = partial(
             self._lessons, session_id, payload, translated_scene, relations,
-            cache_scope=cache_scope,
+            options=options,
         )
         clues = partial(
             self._clues, session_id, payload, translated_scene, objects, words, relations,
-            cache_scope=cache_scope,
+            options=options,
         )
         if not (self.learning_task_generator and self.ispy_clue_generator):
             return lessons(), clues()

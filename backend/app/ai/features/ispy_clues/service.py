@@ -22,6 +22,7 @@ from app.ai.cache import (
     FeatureVersion,
     Generated,
     ResultCache,
+    TemplateSet,
     generated,
     run_cached,
 )
@@ -82,7 +83,8 @@ class ISpyClueService:
         self._provider = provider
 
     def generate(
-        self, payload: dict[str, Any], *, cache_scope: CacheScope | None = None
+        self, payload: dict[str, Any], *, cache_scope: CacheScope | None = None,
+        templates: TemplateSet | None = None,
     ) -> ISpyClueResult:
         """Generate clues for ``payload``; ``cache_scope=None`` bypasses the cache."""
         # Empty-scene guard raises ISpyClueGenerationError before any call.
@@ -102,6 +104,7 @@ class ISpyClueService:
                 payload=payload,
                 compute=lambda: self._generate(payload, response_model),
                 decode=decode,
+                templates=templates,
             )
         except CacheWaitTimeout as error:
             raise ISpyClueGenerationError("I-Spy clue generation failed.") from error
