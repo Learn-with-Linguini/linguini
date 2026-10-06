@@ -139,8 +139,12 @@ class Route:
                 provider.generate = generate
                 return provider
 
-            return RouteTarget(did, "openrouter", TextModelConfig(model_name=f"model-{did}",
-                               timeout_seconds=60), build)
+            return RouteTarget(
+                did,
+                "openrouter",
+                TextModelConfig(model_name=f"model-{did}", timeout_seconds=60),
+                build,
+            )
 
         self.tracer = RecordingTracer()
         self.client = RoutedModelClient(
@@ -313,9 +317,7 @@ def test_invocation_budget_is_shared_across_calls():
 
 def translator(route):
     config = TextModelConfig(model_name="model-primary", max_retries=1)
-    return SceneTranslationService(
-        route.client, config, tracer=route.tracer, provider="openrouter"
-    )
+    return SceneTranslationService(route.client, config, tracer=route.tracer, provider="openrouter")
 
 
 def test_feature_repair_shares_the_route_budget():
@@ -551,3 +553,21 @@ def test_eval_judge_disables_sdk_retries():
     source = (Path(__file__).resolve().parents[1] / "evals" / "judge.py").read_text()
     assert "max_retries=0" in source
     assert "max_retries=2" not in source
+
+
+@pytest.mark.parametrize("max_calls, expected_calls", [(1, 1), (2, 2), (5, 2)])
+def test_normalized_invalid_output_repair_uses_invocation_budget(max_calls, expected_calls):
+    invalid = error(Code.PROVIDER_RESPONSE_INVALID, Scope.RESPONSE)
+    route = Route(
+        {"primary": ["a"]}, {("primary", "a"): [invalid, invalid, invalid]}, max_calls=max_calls
+    )
+    with pytest.raises(SceneTranslationError):
+        translator(route).translate(PAYLOAD)
+    assert len(route.order) == expected_calls
+
+
+def test_normalized_invalid_output_is_repaired_when_budget_remains():
+    invalid = error(Code.PROVIDER_RESPONSE_INVALID, Scope.RESPONSE)
+    route = Route({"primary": ["a"]}, {("primary", "a"): [invalid, VALID_OUTPUT]}, max_calls=2)
+    assert translator(route).translate(PAYLOAD).objects[0].translation == "silla"
+    assert len(route.order) == 2

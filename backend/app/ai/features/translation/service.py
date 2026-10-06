@@ -26,7 +26,7 @@ from app.ai.cache import (
     generated,
     run_cached,
 )
-from app.ai.contracts.errors import ProviderError
+from app.ai.contracts.errors import ProviderError, ProviderErrorCode
 from app.ai.contracts.schema import build_strict_json_schema
 from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelRequest
 from app.ai.features.translation.prompt import (
@@ -146,6 +146,9 @@ class SceneTranslationService:
                 try:
                     response = self._client.generate(request, invocation=invocation)
                 except ProviderError as error:
+                    if (error.code is ProviderErrorCode.PROVIDER_RESPONSE_INVALID
+                            and attempt < attempts and invocation.can_call()):
+                        continue
                     latency_ms += (time.perf_counter() - call_start) * 1000
                     generation.update(
                         latency_ms=latency_ms,

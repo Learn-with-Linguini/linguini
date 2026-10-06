@@ -720,3 +720,12 @@ def test_broken_tracer_cannot_fail_translation() -> None:
         FakeTextClient([VALID_OUTPUT]), tracer=NoOpAITracer()
     ).translate(PAYLOAD)
     assert result.objects[0].translation == "silla"
+
+
+def test_adapter_invalid_output_receives_bounded_repair() -> None:
+    client = FakeTextClient([
+        provider_error(ProviderErrorCode.PROVIDER_RESPONSE_INVALID),
+        VALID_OUTPUT,
+    ])
+    service(client).translate(PAYLOAD)
+    assert len(client.requests) == 2

@@ -120,7 +120,7 @@ def test_adapter_success_and_request_body() -> None:
     [
         (429, ProviderErrorCode.PROVIDER_RATE_LIMITED),
         (401, ProviderErrorCode.PROVIDER_AUTH),
-        (403, ProviderErrorCode.PROVIDER_AUTH),
+        (403, ProviderErrorCode.PROVIDER_ERROR),
         (500, ProviderErrorCode.PROVIDER_UNAVAILABLE),
         (400, ProviderErrorCode.PROVIDER_ERROR),
     ],

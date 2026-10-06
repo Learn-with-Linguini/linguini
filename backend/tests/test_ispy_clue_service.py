@@ -561,3 +561,12 @@ def test_route_without_a_secret_yields_no_generator() -> None:
     settings = load_ai_settings(env={"AI_GEMINI_API_KEY": "gem-key"})
     assert not settings.is_configured(settings.ispy_clue)
     assert build_ispy_clue_generator(settings, NoOpAITracer()) is None
+
+
+def test_adapter_invalid_output_receives_bounded_repair() -> None:
+    client = FakeTextClient([
+        provider_error(ProviderErrorCode.PROVIDER_RESPONSE_INVALID),
+        raw(clues()),
+    ])
+    service(client).generate(INPUT)
+    assert len(client.requests) == 2

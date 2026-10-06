@@ -100,8 +100,9 @@ def test_openai_metadata_reports_actual_model_request_id_and_usage():
 
 
 def test_missing_usage_and_model_stay_unknown():
-    body = responses_body(usage=None, model=None, status="incomplete",
-                          incomplete_details={"reason": "other"})
+    body = responses_body(
+        usage=None, model=None, status="incomplete", incomplete_details={"reason": "other"}
+    )
     del body["id"]
 
     def handler(request):
@@ -169,12 +170,12 @@ def test_endpoint_options_are_explicit():
     ("cls", "status", "code", "scope"),
     [
         (OpenAITextClient, 401, Code.PROVIDER_AUTH, Scope.CREDENTIALS),
-        (OpenAITextClient, 403, Code.PROVIDER_AUTH, Scope.CREDENTIALS),
+        (OpenAITextClient, 403, Code.PROVIDER_ERROR, Scope.REQUEST),
         (OpenAITextClient, 404, Code.PROVIDER_ERROR, Scope.MODEL),
         (OpenAITextClient, 400, Code.PROVIDER_ERROR, Scope.REQUEST),
         (OpenAITextClient, 503, Code.PROVIDER_UNAVAILABLE, Scope.SERVICE),
         (OpenRouterTextClient, 402, Code.PROVIDER_ERROR, Scope.QUOTA),
-        (OpenRouterTextClient, 403, Code.PROVIDER_AUTH, Scope.REQUEST),
+        (OpenRouterTextClient, 403, Code.PROVIDER_ERROR, Scope.REQUEST),
         (OpenRouterTextClient, 401, Code.PROVIDER_AUTH, Scope.CREDENTIALS),
     ],
 )
@@ -246,8 +247,11 @@ def gemini(cls, *, response=None, error=None):
                 raise error
             return response
 
-    return cls(SECRET_KEY, TextModelConfig(model_name="gemini-flash"),
-               client=SimpleNamespace(models=Models()))
+    return cls(
+        SECRET_KEY,
+        TextModelConfig(model_name="gemini-flash"),
+        client=SimpleNamespace(models=Models()),
+    )
 
 
 def gemini_response(**overrides):
@@ -383,7 +387,7 @@ def test_gemini_rate_limit_reads_retry_info():
         (400, "FAILED_PRECONDITION", Code.PROVIDER_ERROR, Scope.QUOTA),
         (404, "NOT_FOUND", Code.PROVIDER_ERROR, Scope.MODEL),
         (400, "INVALID_ARGUMENT", Code.PROVIDER_ERROR, Scope.REQUEST),
-        (403, "PERMISSION_DENIED", Code.PROVIDER_AUTH, Scope.CREDENTIALS),
+        (403, "PERMISSION_DENIED", Code.PROVIDER_ERROR, Scope.REQUEST),
     ],
 )
 def test_gemini_rpc_status_sets_scope(status, rpc_status, code, scope, caplog):
@@ -454,3 +458,158 @@ def test_plain_openai_429_stays_a_rate_limit():
         responses_adapter(OpenAITextClient, handler).generate(text_request())
 
     assert raised.value.code is Code.PROVIDER_RATE_LIMITED
+
+
+@pytest.mark.parametrize("cls", [OpenAITextClient, OpenRouterTextClient])
+@pytest.mark.parametrize("http_status", [200, 403])
+@pytest.mark.parametrize(
+    ("identifier", "code", "scope"),
+    [
+        ("invalid_api_key", Code.PROVIDER_AUTH, Scope.CREDENTIALS),
+        ("permission_denied", Code.PROVIDER_ERROR, Scope.REQUEST),
+        ("model_not_found", Code.PROVIDER_ERROR, Scope.MODEL),
+        ("rate_limit_exceeded", Code.PROVIDER_RATE_LIMITED, Scope.QUOTA),
+        ("server_error", Code.PROVIDER_UNAVAILABLE, Scope.SERVICE),
+        ("content_filter", Code.PROVIDER_REFUSED, Scope.RESPONSE),
+    ],
+)
+@pytest.mark.parametrize("field", ["code", "type", "error_type", "metadata"])
+def test_structured_errors_in_http_and_failed_envelopes(
+    cls, http_status, identifier, code, scope, field, caplog
+):
+    error = {
+        field: {"error_type": identifier} if field == "metadata" else identifier,
+        "message": SECRET_KEY,
+    }
+    body = responses_body(status="failed", error=error)
+    with pytest.raises(ProviderError) as raised:
+        responses_adapter(cls, lambda request: httpx.Response(http_status, json=body)).generate(
+            text_request()
+        )
+    assert raised.value.code is code
+    assert raised.value.scope is scope
+    assert raised.value.status_code == http_status
+    assert SECRET_KEY not in str(raised.value)
+    assert SECRET_KEY not in caplog.text
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        None,
+        [],
+        "bad",
+        5,
+        responses_body(output=[None]),
+        responses_body(output={"bad": True}),
+        responses_body(output=[{"content": [None]}]),
+        responses_body(output=[{"content": [{"type": "output_text", "text": 42}]}]),
+        responses_body(usage="bad"),
+        responses_body(usage=[1]),
+        responses_body(status="incomplete", incomplete_details={"reason": []}),
+    ],
+)
+def test_malformed_responses_are_normalized(body):
+    with pytest.raises(ProviderError) as raised:
+        responses_adapter(
+            OpenAITextClient, lambda request: httpx.Response(200, json=body)
+        ).generate(text_request())
+    assert raised.value.code is Code.PROVIDER_RESPONSE_INVALID
+    assert raised.value.scope is Scope.RESPONSE
+
+
+def test_refusal_survives_malformed_siblings_and_metadata():
+    body = responses_body(output=[None, {"content": [None, {"type": "refusal"}]}], usage="bad")
+    with pytest.raises(ProviderError) as raised:
+        responses_adapter(
+            OpenAITextClient, lambda request: httpx.Response(200, json=body)
+        ).generate(text_request())
+    assert raised.value.code is Code.PROVIDER_REFUSED
+
+
+@pytest.mark.parametrize("status", [400, 403])
+def test_gemini_error_info_confirms_invalid_key(status):
+    error = ClientError(
+        status,
+        {
+            "error": {
+                "status": "PERMISSION_DENIED",
+                "details": [
+                    {
+                        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+                        "reason": "API_KEY_INVALID",
+                    }
+                ],
+            }
+        },
+    )
+    with pytest.raises(ProviderError) as raised:
+        gemini(GeminiTextClient, error=error).generate(text_request())
+    assert raised.value.code is Code.PROVIDER_AUTH
+    assert raised.value.scope is Scope.CREDENTIALS
+
+
+@pytest.mark.parametrize("text", [42, [], {"bad": True}, "   "])
+def test_gemini_malformed_text_is_normalized(text):
+    with pytest.raises(ProviderError) as raised:
+        gemini(GeminiTextClient, response=gemini_response(text=text)).generate(text_request())
+    assert raised.value.code is Code.PROVIDER_RESPONSE_INVALID
+
+
+def test_gemini_refusal_precedes_raising_text_property():
+    class Blocked:
+        prompt_feedback = None
+        candidates = [SimpleNamespace(finish_reason=types.FinishReason.SAFETY)]
+
+        @property
+        def text(self):
+            raise ValueError(SECRET_KEY)
+
+    with pytest.raises(ProviderError) as raised:
+        gemini(GeminiTextClient, response=Blocked()).generate(text_request())
+    assert raised.value.code is Code.PROVIDER_REFUSED
+
+
+@pytest.mark.parametrize("status", [200, 500])
+@pytest.mark.parametrize(
+    ("error_type", "code", "scope"),
+    [
+        ("authentication", Code.PROVIDER_AUTH, Scope.CREDENTIALS),
+        ("permission_denied", Code.PROVIDER_ERROR, Scope.REQUEST),
+        ("payment_required", Code.PROVIDER_ERROR, Scope.QUOTA),
+        ("timeout", Code.PROVIDER_TIMEOUT, Scope.SERVICE),
+        ("provider_overloaded", Code.PROVIDER_UNAVAILABLE, Scope.SERVICE),
+        ("invalid_request", Code.PROVIDER_ERROR, Scope.REQUEST),
+        ("max_tokens_exceeded", Code.PROVIDER_RESPONSE_INVALID, Scope.RESPONSE),
+    ],
+)
+def test_openrouter_top_level_error_type_overrides_lossy_server_code(
+    status, error_type, code, scope
+):
+    body = responses_body(status="failed", error={"code": "server_error"}, error_type=error_type)
+    with pytest.raises(ProviderError) as raised:
+        responses_adapter(
+            OpenRouterTextClient, lambda request: httpx.Response(status, json=body)
+        ).generate(text_request())
+    assert raised.value.code is code
+    assert raised.value.scope is scope
+
+
+@pytest.mark.parametrize("body", [[], None, {"error": []}, {"error": {"code": []}}])
+def test_malformed_http_error_does_not_disable_keys(body):
+    with pytest.raises(ProviderError) as raised:
+        responses_adapter(
+            OpenAITextClient, lambda request: httpx.Response(403, json=body)
+        ).generate(text_request())
+    assert raised.value.code is Code.PROVIDER_ERROR
+    assert raised.value.scope is Scope.REQUEST
+
+
+def test_unknown_openrouter_error_code_preserves_billing_scope():
+    with pytest.raises(ProviderError) as raised:
+        responses_adapter(
+            OpenRouterTextClient,
+            lambda request: httpx.Response(402, json={"error": {"code": "unknown_billing_code"}}),
+        ).generate(text_request())
+    assert raised.value.code is Code.PROVIDER_ERROR
+    assert raised.value.scope is Scope.QUOTA

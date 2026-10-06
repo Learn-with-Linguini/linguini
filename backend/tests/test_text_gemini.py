@@ -111,7 +111,7 @@ def test_timeout_maps_to_provider_timeout() -> None:
     ("status", "expected"),
     [
         (401, ProviderErrorCode.PROVIDER_AUTH),
-        (403, ProviderErrorCode.PROVIDER_AUTH),
+        (403, ProviderErrorCode.PROVIDER_ERROR),
         (429, ProviderErrorCode.PROVIDER_RATE_LIMITED),
         (400, ProviderErrorCode.PROVIDER_ERROR),
     ],

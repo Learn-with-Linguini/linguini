@@ -16,7 +16,7 @@ import time
 from dataclasses import replace
 from typing import Any
 
-from app.ai.contracts.errors import ProviderError
+from app.ai.contracts.errors import ProviderError, ProviderErrorCode
 from app.ai.contracts.schema import build_strict_json_schema
 from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelRequest
 from app.ai.features.ispy_guess.prompt import (
@@ -179,6 +179,9 @@ class ISpyGuessService:
                 )
                 return result
             except ProviderError as error:
+                if (error.code is ProviderErrorCode.PROVIDER_RESPONSE_INVALID
+                        and attempt < attempts and invocation.can_call()):
+                    continue
                 root.update(
                     retry_count=invocation.retries,
                     validation_result="invalid",

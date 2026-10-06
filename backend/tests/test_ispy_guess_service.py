@@ -486,3 +486,12 @@ def test_provider_error_trace_carries_no_learner_text() -> None:
     with pytest.raises(ISpyGuessError):
         service(client, tracer=tracer).guess(CONTEXT, LEARNER_TEXT)
     assert LEARNER_TEXT not in repr([e for e in tracer.events if e[1] != "content"])
+
+
+def test_adapter_invalid_output_receives_bounded_repair() -> None:
+    client = FakeTextClient([
+        provider_error(ProviderErrorCode.PROVIDER_RESPONSE_INVALID),
+        verdict(),
+    ])
+    service(client).guess(CONTEXT, LEARNER_TEXT)
+    assert len(client.requests) == 2

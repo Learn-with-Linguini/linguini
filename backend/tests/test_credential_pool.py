@@ -451,3 +451,17 @@ def test_runtime_shares_pool_and_clients_across_features(tmp_path, monkeypatch):
     assert health.reason is HealthReason.RATE_LIMITED
     assert seen.count("sk-a") == 1
     assert seen.count("sk-b") == 1
+
+
+@pytest.mark.parametrize("body", [
+    {"error": {"message": "invalid API key"}},
+    {"error": {"code": "permission_denied"}},
+    {"error": {"code": "model_not_found"}},
+])
+def test_normalized_403_never_disables_credentials(body):
+    from app.ai.adapters.common import payload_error
+
+    code, scope = payload_error(403, body)
+    credentials = pool({"a": "g"})
+    credentials.report_failure(credentials.acquire(DEPLOYMENT), error(code, scope, status=403))
+    assert not credentials.health(HealthScope.CREDENTIAL, "a").disabled

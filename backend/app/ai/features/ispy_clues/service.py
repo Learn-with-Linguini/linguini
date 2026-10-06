@@ -26,7 +26,7 @@ from app.ai.cache import (
     generated,
     run_cached,
 )
-from app.ai.contracts.errors import ProviderError
+from app.ai.contracts.errors import ProviderError, ProviderErrorCode
 from app.ai.contracts.schema import build_strict_json_schema
 from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelRequest
 from app.ai.features.ispy_clues.prompt import (
@@ -206,6 +206,9 @@ class ISpyClueService:
                     )
                     return generated(result, response)
                 except ProviderError as error:
+                    if (error.code is ProviderErrorCode.PROVIDER_RESPONSE_INVALID
+                            and attempt < attempts and invocation.can_call()):
+                        continue
                     root.update(
                         retry_count=invocation.retries,
                         validation_result="invalid",

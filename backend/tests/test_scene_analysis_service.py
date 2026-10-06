@@ -766,7 +766,7 @@ def test_gemini_client_error_statuses_map() -> None:
 
     for status, expected in [
         (401, ProviderErrorCode.PROVIDER_AUTH),
-        (403, ProviderErrorCode.PROVIDER_AUTH),
+        (403, ProviderErrorCode.PROVIDER_ERROR),
         (429, ProviderErrorCode.PROVIDER_RATE_LIMITED),
         (400, ProviderErrorCode.PROVIDER_ERROR),
     ]:

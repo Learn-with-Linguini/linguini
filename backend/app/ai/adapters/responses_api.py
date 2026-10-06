@@ -18,8 +18,8 @@ import httpx
 
 from app.ai.adapters.common import (
     parse_retry_after,
+    payload_error,
     provider_error,
-    status_error,
     status_message,
 )
 from app.ai.contracts.config import ModelConfig
@@ -156,9 +156,11 @@ class ResponsesApiClient:
             ) from None
 
         if response.status_code >= 400:
-            code, scope = status_error(response.status_code)
-            if response.status_code == 429 and self._quota_exhausted(response):
-                code = ProviderErrorCode.PROVIDER_ERROR
+            try:
+                body = response.json()
+            except ValueError:
+                body = None
+            code, scope = self._payload_error(response.status_code, body)
             raise self._error(
                 code,
                 status_message(self._label, code),
@@ -166,22 +168,19 @@ class ResponsesApiClient:
                 start,
                 status_code=response.status_code,
                 retry_after_seconds=parse_retry_after(response.headers),
-                scope=self.ENDPOINT.status_scopes.get(response.status_code, scope),
+                scope=scope,
             )
 
         return self._parse_response(response, version, start)
 
-    def _quota_exhausted(self, response: httpx.Response) -> bool:
-        if not self.ENDPOINT.quota_exhausted_codes:
-            return False
-        try:
-            error = response.json().get("error") or {}
-        except (ValueError, AttributeError):
-            return False
-        if not isinstance(error, dict):
-            return False
-        return bool(
-            {error.get("code"), error.get("type")} & self.ENDPOINT.quota_exhausted_codes
+    def _payload_error(
+        self, status: int | None, body: Any
+    ) -> tuple[ProviderErrorCode, ProviderFailureScope]:
+        return payload_error(
+            status,
+            body,
+            quota_exhausted_codes=self.ENDPOINT.quota_exhausted_codes,
+            fallback_scope=self.ENDPOINT.status_scopes.get(status),
         )
 
     def _parse_response(
@@ -198,32 +197,70 @@ class ResponsesApiClient:
                 status_code=response.status_code,
             ) from None
 
-        if self._is_refusal(body):
+        if isinstance(body, dict) and (body.get("status") == "failed" or body.get("error")):
+            error = body.get("error")
+            embedded_status = error.get("code") if isinstance(error, dict) else None
+            code, scope = self._payload_error(
+                embedded_status if type(embedded_status) is int else None, body
+            )
             raise self._error(
-                ProviderErrorCode.PROVIDER_REFUSED,
-                f"{self._label} refused the request",
+                code,
+                status_message(self._label, code),
                 version,
                 start,
                 status_code=response.status_code,
+                scope=scope,
+                retry_after_seconds=parse_retry_after(response.headers),
             )
 
-        output_text = self._extract_text(body)
-        incomplete_reason = self._incomplete_reason(body)
-        if not output_text or incomplete_reason == "max_output_tokens":
+        try:
+            if not isinstance(body, dict):
+                raise ValueError("response must be an object")
+            # Find refusals before parsing optional text or metadata.
+            if self._is_refusal(body):
+                raise self._error(
+                    ProviderErrorCode.PROVIDER_REFUSED,
+                    f"{self._label} refused the request",
+                    version,
+                    start,
+                    status_code=response.status_code,
+                )
+            outputs = body.get("output")
+            if outputs is not None and not isinstance(outputs, list):
+                raise ValueError("invalid output list")
+            for output in outputs or []:
+                if not isinstance(output, dict):
+                    raise ValueError("invalid output item")
+                content = output.get("content")
+                if content is not None and not isinstance(content, list):
+                    raise ValueError("invalid content list")
+                if any(not isinstance(part, dict) for part in content or []):
+                    raise ValueError("invalid content item")
+            output_text = self._extract_text(body)
+            incomplete_reason = self._incomplete_reason(body)
+            if not output_text.strip() or incomplete_reason == "max_output_tokens":
+                raise ValueError("incomplete output")
+            return output_text, self._metadata(response, body, incomplete_reason)
+        except (AttributeError, TypeError, ValueError, KeyError):
             raise self._error(
                 ProviderErrorCode.PROVIDER_RESPONSE_INVALID,
-                f"{self._label} returned incomplete output",
+                f"{self._label} returned invalid output",
                 version,
                 start,
                 status_code=response.status_code,
-            )
-
-        return output_text, self._metadata(response, body, incomplete_reason)
+            ) from None
 
     def _metadata(
         self, response: httpx.Response, body: dict[str, Any], incomplete_reason: str | None
     ) -> ResponseMetadata:
-        usage = body.get("usage") or {}
+        usage = body.get("usage")
+        if usage is not None and not isinstance(usage, dict):
+            raise ValueError("invalid usage")
+        usage = usage or {}
+        for key in ("input_tokens", "output_tokens", "total_tokens"):
+            count = usage.get(key)
+            if count is not None and (type(count) is not int or count < 0):
+                raise ValueError("invalid token count")
         status = body.get("status")
         request_id = next(
             (
@@ -260,14 +297,28 @@ class ResponsesApiClient:
         if body.get("status") != "incomplete":
             return None
         details = body.get("incomplete_details") or {}
-        return details.get("reason")
+        if not isinstance(details, dict):
+            raise ValueError("invalid incomplete details")
+        reason = details.get("reason")
+        if reason is not None and not isinstance(reason, str):
+            raise ValueError("invalid incomplete reason")
+        return reason
 
     def _is_refusal(self, body: dict[str, Any]) -> bool:
-        if self._incomplete_reason(body) == "content_filter":
+        details = body.get("incomplete_details")
+        if (
+            body.get("status") == "incomplete"
+            and isinstance(details, dict)
+            and details.get("reason") == "content_filter"
+        ):
             return True
-        for output in body.get("output") or []:
-            for content in output.get("content") or []:
-                if content.get("type") == "refusal":
+        outputs = body.get("output")
+        for output in outputs if isinstance(outputs, list) else []:
+            if not isinstance(output, dict):
+                continue
+            contents = output.get("content")
+            for content in contents if isinstance(contents, list) else []:
+                if isinstance(content, dict) and content.get("type") == "refusal":
                     return True
         return False
 
@@ -276,7 +327,9 @@ class ResponsesApiClient:
         parts = []
         for output in body.get("output") or []:
             for content in output.get("content") or []:
-                if content.get("type") == "output_text" and content.get("text"):
+                if content.get("type") == "output_text":
+                    if not isinstance(content.get("text"), str):
+                        raise ValueError("invalid text")
                     parts.append(content["text"])
         text = "".join(parts)
         if not text and isinstance(body.get("output_text"), str):

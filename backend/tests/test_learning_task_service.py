@@ -847,3 +847,12 @@ def test_both_providers_share_prompt_and_schema() -> None:
     assert gemini_config.system_instruction == openai_system
     assert gemini_config.response_json_schema == _gemini_json_schema(openai_schema)
     assert gemini_captured["kwargs"]["contents"] == [openai_user]
+
+
+def test_adapter_invalid_output_receives_bounded_repair() -> None:
+    client = FakeTextClient([
+        provider_error(ProviderErrorCode.PROVIDER_RESPONSE_INVALID),
+        response_body(LearningTaskResult.model_validate(tasks())),
+    ])
+    service(client).generate(INPUT)
+    assert len(client.requests) == 2

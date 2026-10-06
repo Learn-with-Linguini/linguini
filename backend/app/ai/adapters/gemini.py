@@ -17,8 +17,8 @@ from google.genai.errors import APIError
 
 from app.ai.adapters.common import (
     parse_retry_after,
+    payload_error,
     provider_error,
-    status_error,
     status_message,
 )
 from app.ai.contracts.config import ModelConfig
@@ -40,13 +40,6 @@ _REFUSAL_FINISH_REASONS = frozenset(
         types.FinishReason.IMAGE_PROHIBITED_CONTENT,
     }
 )
-
-# Google RPC statuses whose scope differs from what the HTTP code alone says:
-# FAILED_PRECONDITION (400) is how Gemini reports that billing is required.
-_STATUS_SCOPES = {
-    "FAILED_PRECONDITION": ProviderFailureScope.QUOTA,
-    "NOT_FOUND": ProviderFailureScope.MODEL,
-}
 
 _RETRY_INFO_TYPE = "type.googleapis.com/google.rpc.RetryInfo"
 
@@ -97,11 +90,7 @@ def _gemini_json_schema(value: Any) -> Any:
     on the generated output rather than Gemini's schema compiler.
     """
     if isinstance(value, dict):
-        return {
-            key: _gemini_json_schema(item)
-            for key, item in value.items()
-            if key != "maxItems"
-        }
+        return {key: _gemini_json_schema(item) for key, item in value.items() if key != "maxItems"}
     if isinstance(value, list):
         return [_gemini_json_schema(item) for item in value]
     return value
@@ -156,10 +145,8 @@ class GeminiClient:
 
     def _api_error(self, error: APIError, version: str, start: float) -> ProviderError:
         status_code = getattr(error, "code", None)
-        code, scope = status_error(status_code)
-        retry_after = parse_retry_after(
-            getattr(getattr(error, "response", None), "headers", None)
-        )
+        code, scope = payload_error(status_code, getattr(error, "details", None))
+        retry_after = parse_retry_after(getattr(getattr(error, "response", None), "headers", None))
         if retry_after is None:
             retry_after = _retry_info_seconds(getattr(error, "details", None))
         return self._error(
@@ -169,7 +156,7 @@ class GeminiClient:
             start,
             status_code=status_code,
             retry_after_seconds=retry_after,
-            scope=_STATUS_SCOPES.get(getattr(error, "status", None), scope),
+            scope=scope,
         )
 
     def _send(
@@ -236,11 +223,14 @@ class GeminiClient:
             prompt_feedback = getattr(response, "prompt_feedback", None)
             block_reason = getattr(prompt_feedback, "block_reason", None)
             candidates = getattr(response, "candidates", None) or []
-            finish_reason = (
-                getattr(candidates[0], "finish_reason", None)
-                if candidates
-                else None
-            )
+            finish_reason = getattr(candidates[0], "finish_reason", None) if candidates else None
+            if block_reason or finish_reason in _REFUSAL_FINISH_REASONS:
+                raise self._error(
+                    ProviderErrorCode.PROVIDER_REFUSED,
+                    f"{self._label} refused the request",
+                    version,
+                    start,
+                )
             output_text = getattr(response, "text", None) or ""
             usage = getattr(response, "usage_metadata", None)
             reported_model = getattr(response, "model_version", None)
@@ -260,6 +250,8 @@ class GeminiClient:
                     total_tokens=getattr(usage, "total_token_count", None),
                 ),
             )
+        except ProviderError:
+            raise
         except Exception:
             raise self._error(
                 ProviderErrorCode.PROVIDER_RESPONSE_INVALID,
@@ -276,7 +268,11 @@ class GeminiClient:
                 start,
             )
 
-        if not output_text or finish_reason is types.FinishReason.MAX_TOKENS:
+        if (
+            not isinstance(output_text, str)
+            or not output_text.strip()
+            or _reason_name(finish_reason) == "MAX_TOKENS"
+        ):
             raise self._error(
                 ProviderErrorCode.PROVIDER_RESPONSE_INVALID,
                 f"{self._label} returned incomplete output",
