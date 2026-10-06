@@ -17,6 +17,9 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from app.ai.contracts.errors import ProviderError
+from app.ai.contracts.schema import build_strict_json_schema
+from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelRequest
 from app.ai.features.learning_tasks.prompt import (
     LEARNING_TASK_PROMPT_VERSION,
     LEARNING_TASK_SCHEMA_VERSION,
@@ -35,11 +38,8 @@ from app.ai.features.learning_tasks.validation import (
     restore_missing_object_keys,
     validate_learning_tasks,
 )
-from app.ai.model_errors import ProviderError
 from app.ai.observability import AITracer
 from app.ai.settings import AiFeature
-from app.ai.text_model import TextModelClient, TextModelConfig, TextModelRequest
-from app.services.vision_model import build_strict_json_schema
 
 logger = logging.getLogger(__name__)
 

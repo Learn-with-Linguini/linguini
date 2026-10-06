@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import logging
 
+from app.ai.contracts import VisionImage
 from app.ai.features.object_grounding.service import ObjectGrounder
 from app.schemas.media import AnchorPoint, BoundingBox
 from app.services.scene_analysis import SceneAnalysisResult
-from app.services.vision_model import VisionImage
 
 logger = logging.getLogger("uvicorn.error")
 

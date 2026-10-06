@@ -11,6 +11,9 @@ from typing import Any
 
 import pytest
 
+from app.ai.contracts.errors import ProviderError, ProviderErrorCode
+from app.ai.contracts.schema import build_strict_json_schema
+from app.ai.contracts.text import TextModelConfig, TextModelRequest, TextModelResponse
 from app.ai.features.ispy_guess import (
     ISPY_GUESS_PROMPT_VERSION,
     ISPY_GUESS_SCHEMA_VERSION,
@@ -23,13 +26,10 @@ from app.ai.features.ispy_guess import (
     scene_guess_response_model,
     validate_ispy_guess,
 )
-from app.ai.model_errors import ProviderError, ProviderErrorCode
 from app.ai.observability import LangfuseAITracer, NoOpAITracer
 from app.ai.registry import build_ispy_guess_generator
 from app.ai.settings import load_ai_settings
-from app.ai.text_model import TextModelConfig, TextModelRequest, TextModelResponse
 from app.services.scene_analysis import SceneAnalysisError
-from app.services.vision_model import build_strict_json_schema
 
 SCENE = {
     "objects": [

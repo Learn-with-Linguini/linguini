@@ -15,6 +15,9 @@ import time
 from dataclasses import replace
 from typing import Any
 
+from app.ai.contracts.errors import ProviderError
+from app.ai.contracts.schema import build_strict_json_schema
+from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelRequest
 from app.ai.features.ispy_guess.prompt import (
     ISPY_GUESS_PROMPT_VERSION,
     ISPY_GUESS_SCHEMA_VERSION,
@@ -29,11 +32,8 @@ from app.ai.features.ispy_guess.validation import (
     build_guess_payload,
     validate_ispy_guess,
 )
-from app.ai.model_errors import ProviderError
 from app.ai.observability import AITracer
 from app.ai.settings import AiFeature
-from app.ai.text_model import TextModelClient, TextModelConfig, TextModelRequest
-from app.services.vision_model import build_strict_json_schema
 
 logger = logging.getLogger(__name__)
 

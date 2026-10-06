@@ -34,8 +34,10 @@ from pydantic import Field, ValidationError
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
+from app.ai.contracts.errors import ProviderError
+from app.ai.contracts.schema import build_strict_json_schema
+from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelRequest
 from app.ai.features.translation.schemas import TranslatedTerm
-from app.ai.model_errors import ProviderError
 from app.ai.observability import NoOpAITracer
 from app.ai.registry import (
     build_object_grounder,
@@ -44,7 +46,6 @@ from app.ai.registry import (
     build_uploaded_scene_analyzer,
 )
 from app.ai.settings import AiFeature, load_ai_settings
-from app.ai.text_model import TextModelClient, TextModelConfig, TextModelRequest
 from app.database import create_database_engine, read_connection
 from app.repositories.postgres.media_assets import media_assets
 from app.repositories.postgres.scenes import preloaded_scenes
@@ -53,7 +54,6 @@ from app.schemas.media import MediaAsset, SceneObject
 from app.schemas.scenes import PreloadedSceneDetail
 from app.schemas.sessions import Session
 from app.services.image_storage import ImageStorage
-from app.services.vision_model import build_strict_json_schema
 
 logger = logging.getLogger("precompute_preloaded_scenes")
 

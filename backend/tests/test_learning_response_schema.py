@@ -7,14 +7,14 @@ import pytest
 from openai.lib._pydantic import to_strict_json_schema
 from pydantic import ValidationError
 
+from app.ai.adapters.openai import OpenAITextClient
+from app.ai.contracts.schema import build_strict_json_schema
+from app.ai.contracts.text import TextModelConfig
 from app.ai.features.learning_tasks import (
     LearningTaskService,
     scene_generation_response_model,
 )
 from app.ai.observability import NoOpAITracer
-from app.ai.text_model import TextModelConfig
-from app.ai.text_openai import OpenAITextClient
-from app.services.vision_model import build_strict_json_schema
 from tests.test_learning_task_service import INPUT, tasks
 
 

@@ -8,10 +8,10 @@ different host and key.
 import pytest
 
 from app.ai import AiConfigurationError, AiFeature, AiProvider, load_ai_settings
-from app.ai.openrouter import OPENROUTER_BASE_URL
+from app.ai.adapters.openrouter import OPENROUTER_BASE_URL
+from app.ai.contracts import VisionModelConfig
+from app.ai.contracts.text import TextModelConfig
 from app.ai.registry import build_text_client, build_vision_client
-from app.ai.text_model import TextModelConfig
-from app.services.vision_model import VisionModelConfig
 
 
 def settings(**env):

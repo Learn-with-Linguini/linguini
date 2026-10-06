@@ -11,6 +11,15 @@ from contextlib import contextmanager
 import httpx
 import pytest
 
+from app.ai.adapters.gemini import GeminiTextClient
+from app.ai.adapters.openai import OpenAITextClient
+from app.ai.contracts.errors import ProviderError, ProviderErrorCode
+from app.ai.contracts.schema import build_strict_json_schema
+from app.ai.contracts.text import (
+    TextModelConfig,
+    TextModelRequest,
+    TextModelResponse,
+)
 from app.ai.features.learning_tasks import (
     LEARNING_TASK_PROMPT_VERSION,
     LEARNING_TASK_SCHEMA_VERSION,
@@ -22,16 +31,7 @@ from app.ai.features.learning_tasks import (
     required_task_focuses,
     scene_generation_response_model,
 )
-from app.ai.model_errors import ProviderError, ProviderErrorCode
 from app.ai.observability import NoOpAITracer
-from app.ai.text_gemini import GeminiTextClient
-from app.ai.text_model import (
-    TextModelConfig,
-    TextModelRequest,
-    TextModelResponse,
-)
-from app.ai.text_openai import OpenAITextClient
-from app.services.vision_model import build_strict_json_schema
 
 FAKE_API_KEY = "test-key-123"
 

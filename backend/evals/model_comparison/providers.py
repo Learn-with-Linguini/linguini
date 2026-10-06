@@ -15,11 +15,11 @@ import os
 from dataclasses import dataclass
 from functools import cache
 
+from app.ai.contracts import VisionModelConfig
+from app.ai.contracts.text import TextModelConfig
 from app.ai.observability import NoOpAITracer
 from app.ai.registry import build_text_client, build_vision_client
 from app.ai.settings import AiProvider, AiSettings, load_ai_settings
-from app.ai.text_model import TextModelConfig
-from app.services.vision_model import VisionModelConfig
 
 from . import pricing
 from .recording import Overrides, RecordingClient

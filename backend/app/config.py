@@ -5,9 +5,9 @@ from uuid import UUID
 
 import httpx
 
+from app.ai.adapters.openai import OpenAIVisionClient
+from app.ai.contracts import VisionModelClient, VisionModelConfig
 from app.services.media_urls import PrivateMediaUrls, SignedUrlCache
-from app.services.vision_model import VisionModelClient, VisionModelConfig
-from app.services.vision_openai import build_vision_client
 
 DEFAULT_DEMO_USER_ID = "11111111-1111-4111-8111-111111111111"
 
@@ -60,9 +60,7 @@ def get_openai_api_key() -> str:
 
 
 def get_vision_model_client(client: httpx.Client | None = None) -> VisionModelClient:
-    return build_vision_client(
-        get_vision_provider(),
-        get_openai_api_key(),
-        get_vision_model_config(),
-        client=client,
-    )
+    provider = get_vision_provider()
+    if provider != "openai":
+        raise ValueError(f"unknown vision provider {provider!r}")
+    return OpenAIVisionClient(get_openai_api_key(), get_vision_model_config(), client=client)

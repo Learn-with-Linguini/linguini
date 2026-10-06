@@ -346,6 +346,36 @@ lesson and clue models each took 0.3 s.
   `Task generation <stage> took N ms` at INFO for translation, learning-task
   generation and I-Spy clue generation, and transaction duration at DEBUG.
 
+### AI providers
+
+Feature services in `app/ai/features/` depend only on the contracts in
+`app/ai/contracts/`: `TextModelClient` and `VisionModelClient`, their
+request/response types, `ProviderError` and `build_strict_json_schema`.
+`app/ai/registry.py` picks an adapter from `app/ai/adapters/` for each
+configured provider:
+
+| Provider | Adapters | Endpoint |
+| --- | --- | --- |
+| OpenAI | `OpenAITextClient`, `OpenAIVisionClient` | Responses API |
+| OpenRouter | `OpenRouterTextClient`, `OpenRouterVisionClient` | OpenRouter's OpenAI-compatible Responses API |
+| Gemini | `GeminiTextClient`, `GeminiVisionClient` | `models.generate_content` (google-genai) |
+
+OpenAI and OpenRouter share the transport in `responses_api.py`. Each
+`ResponsesEndpoint` declares the options it is sent (temperature, strict JSON
+schema), where its request ID comes from and its own failure scopes. Image
+moderation and object grounding don't go through these adapters.
+
+Every successful response carries `metadata` (`ResponseMetadata`): provider,
+endpoint, requested model, the model the provider reports serving, request
+ID, a normalized `finish_status` plus the provider's own finish reason, and
+input/output/total tokens when the provider reports them. Every
+`ProviderError` carries a stable `code`, `provider`, HTTP `status_code`,
+`retry_after_seconds` (from `Retry-After`, `retry-after-ms` or Gemini's
+`RetryInfo`) and a `scope`: `request`, `response`, `model`, `credentials`,
+`quota` or `service`. Error messages are fixed text; provider response bodies
+and API keys never appear in errors or logs. Validation and fallbacks stay in
+each feature.
+
 ### AI observability
 
 AI calls can be traced to Langfuse. Tracing is off by default and strictly

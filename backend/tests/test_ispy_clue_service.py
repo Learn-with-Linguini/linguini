@@ -13,6 +13,15 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
+from app.ai.adapters.gemini import GeminiTextClient
+from app.ai.adapters.openai import OpenAITextClient
+from app.ai.contracts.errors import ProviderError, ProviderErrorCode
+from app.ai.contracts.schema import build_strict_json_schema
+from app.ai.contracts.text import (
+    TextModelConfig,
+    TextModelRequest,
+    TextModelResponse,
+)
 from app.ai.features.ispy_clues import (
     ISPY_CLUE_PROMPT_VERSION,
     ISPY_CLUE_SCHEMA_VERSION,
@@ -23,18 +32,9 @@ from app.ai.features.ispy_clues import (
     scene_clue_response_model,
     validate_ispy_clues,
 )
-from app.ai.model_errors import ProviderError, ProviderErrorCode
 from app.ai.observability import NoOpAITracer
 from app.ai.registry import build_ispy_clue_generator
 from app.ai.settings import load_ai_settings
-from app.ai.text_gemini import GeminiTextClient
-from app.ai.text_model import (
-    TextModelConfig,
-    TextModelRequest,
-    TextModelResponse,
-)
-from app.ai.text_openai import OpenAITextClient
-from app.services.vision_model import build_strict_json_schema
 
 FAKE_API_KEY = "test-key-123"
 

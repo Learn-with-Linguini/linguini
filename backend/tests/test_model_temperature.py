@@ -6,10 +6,9 @@ from unittest.mock import MagicMock
 import httpx
 import pytest
 
-from app.ai.text_model import TextModelConfig, TextModelRequest
-from app.ai.text_openai import OpenAITextClient
-from app.services.vision_model import VisionImage, VisionModelConfig, VisionModelRequest
-from app.services.vision_openai import OpenAIVisionClient
+from app.ai.adapters.openai import OpenAITextClient, OpenAIVisionClient
+from app.ai.contracts import VisionImage, VisionModelConfig, VisionModelRequest
+from app.ai.contracts.text import TextModelConfig, TextModelRequest
 
 SCHEMA = {"type": "object", "additionalProperties": False, "properties": {}, "required": []}
 
@@ -83,7 +82,7 @@ def test_temperature_outside_the_supported_range_is_rejected(value):
 
 
 def test_gemini_text_client_sends_the_configured_temperature():
-    from app.ai.text_gemini import GeminiTextClient
+    from app.ai.adapters.gemini import GeminiTextClient
 
     captured = {}
 

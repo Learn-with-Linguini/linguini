@@ -13,6 +13,15 @@ from collections.abc import Mapping
 from enum import StrEnum
 from typing import Any
 
+from app.ai.contracts import (
+    ProviderError,
+    ProviderErrorCode,
+    VisionImage,
+    VisionModelClient,
+    VisionModelConfig,
+    VisionModelRequest,
+    build_strict_json_schema,
+)
 from app.ai.features.moderation import ImageModerationError, ImageModerator
 from app.ai.features.object_grounding import ObjectGrounder, ObjectGroundingError
 from app.ai.features.object_grounding.mapping import apply_object_grounding
@@ -36,15 +45,6 @@ from app.services.image_storage import ImageStorage
 from app.services.scene_analysis import (
     SceneAnalysisError,
     SceneAnalysisResult,
-)
-from app.services.vision_model import (
-    VisionImage,
-    VisionModelClient,
-    VisionModelConfig,
-    VisionModelError,
-    VisionModelErrorCode,
-    VisionModelRequest,
-    build_strict_json_schema,
 )
 
 logger = logging.getLogger(__name__)
@@ -123,7 +123,7 @@ class UploadedSceneAnalyzer:
                     ) from error
                 try:
                     image = VisionImage(data=data, mime_type=asset.mime_type)
-                except VisionModelError as error:
+                except ProviderError as error:
                     retrieval.update(
                         error_code=SceneAnalysisModelErrorCode.IMAGE_INVALID.value
                     )
@@ -181,7 +181,7 @@ class UploadedSceneAnalyzer:
                         ) as generation:
                             try:
                                 response = self._client.generate(request)
-                            except VisionModelError as error:
+                            except ProviderError as error:
                                 generation.update(
                                     error_code=error.code.value,
                                     retry_count=attempt - 1,
@@ -277,9 +277,9 @@ class UploadedSceneAnalyzer:
                             retry_count=attempts_used - 1, validation_result="valid"
                         )
                         return domain
-                    except VisionModelError as error:
+                    except ProviderError as error:
                         retryable = error.transient or (
-                            error.code is VisionModelErrorCode.PROVIDER_RESPONSE_INVALID
+                            error.code is ProviderErrorCode.PROVIDER_RESPONSE_INVALID
                         )
                         if retryable and attempt < attempts:
                             logger.warning(
@@ -292,7 +292,7 @@ class UploadedSceneAnalyzer:
                             validation_result="invalid",
                             error_code=error.code.value,
                         )
-                        if error.code is VisionModelErrorCode.PROVIDER_RESPONSE_INVALID:
+                        if error.code is ProviderErrorCode.PROVIDER_RESPONSE_INVALID:
                             raise SceneAnalysisModelError(
                                 SceneAnalysisModelErrorCode.MODEL_OUTPUT_INVALID,
                                 "scene analysis model returned invalid output",

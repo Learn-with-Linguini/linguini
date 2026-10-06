@@ -16,6 +16,9 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from app.ai.contracts.errors import ProviderError
+from app.ai.contracts.schema import build_strict_json_schema
+from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelRequest
 from app.ai.features.translation.prompt import (
     SCENE_TRANSLATION_PROMPT_VERSION,
     SCENE_TRANSLATION_SCHEMA_VERSION,
@@ -30,11 +33,8 @@ from app.ai.features.translation.validation import (
     normalize_object_articles,
     validate_translation_terms,
 )
-from app.ai.model_errors import ProviderError
 from app.ai.observability import AITracer
 from app.ai.settings import AiFeature
-from app.ai.text_model import TextModelClient, TextModelConfig, TextModelRequest
-from app.services.vision_model import build_strict_json_schema
 
 logger = logging.getLogger(__name__)
 

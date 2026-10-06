@@ -15,8 +15,8 @@ from typing import Protocol
 
 import httpx
 
-from app.services.vision_model import VisionImage
-from app.services.vision_openai import DEFAULT_OPENAI_BASE_URL
+from app.ai.adapters.openai import DEFAULT_OPENAI_BASE_URL
+from app.ai.contracts import VisionImage
 
 logger = logging.getLogger(__name__)
 

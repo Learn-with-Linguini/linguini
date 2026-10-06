@@ -12,6 +12,10 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
+from app.ai.adapters.gemini import GeminiTextClient
+from app.ai.adapters.openai import OpenAITextClient
+from app.ai.contracts.errors import ProviderError, ProviderErrorCode
+from app.ai.contracts.text import TextModelConfig, TextModelRequest, TextModelResponse
 from app.ai.features.translation import (
     SCENE_TRANSLATION_PROMPT_VERSION,
     SCENE_TRANSLATION_SCHEMA_VERSION,
@@ -23,11 +27,7 @@ from app.ai.features.translation import (
     build_scene_translation_schema,
     normalize_object_articles,
 )
-from app.ai.model_errors import ProviderError, ProviderErrorCode
 from app.ai.observability import NoOpAITracer
-from app.ai.text_gemini import GeminiTextClient
-from app.ai.text_model import TextModelConfig, TextModelRequest, TextModelResponse
-from app.ai.text_openai import OpenAITextClient
 
 FAKE_API_KEY = "test-key-123"
 

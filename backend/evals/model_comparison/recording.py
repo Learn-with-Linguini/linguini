@@ -16,7 +16,7 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
-from app.ai.model_errors import ProviderError, ProviderErrorCode
+from app.ai.contracts.errors import ProviderError, ProviderErrorCode
 
 from .pricing import ModelFacts
 

@@ -6,13 +6,13 @@ import pytest
 from google.genai import types
 from google.genai.errors import ClientError, ServerError
 
+from app.ai.adapters.gemini import GeminiTextClient
+from app.ai.contracts.errors import ProviderError, ProviderErrorCode
+from app.ai.contracts.text import TextModelConfig, TextModelRequest
 from app.ai.features.translation import (
     SCENE_TRANSLATION_PROMPT_VERSION,
     build_scene_translation_schema,
 )
-from app.ai.model_errors import ProviderError, ProviderErrorCode
-from app.ai.text_gemini import GeminiTextClient
-from app.ai.text_model import TextModelConfig, TextModelRequest
 
 FAKE_API_KEY = "test-key-123"
 

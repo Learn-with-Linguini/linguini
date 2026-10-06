@@ -372,8 +372,8 @@ def _judge(
     system: str, payload: dict[str, Any], schema: type[BaseModel]
 ) -> tuple[Any, CallRecord]:
     """One judge verdict, through the same text seam the app uses."""
-    from app.ai.text_model import TextModelRequest
-    from app.services.vision_model import build_strict_json_schema
+    from app.ai.contracts.schema import build_strict_json_schema
+    from app.ai.contracts.text import TextModelRequest
 
     config = text_config("judge", JUDGE, Overrides())
     client = recording_text_client(JUDGE, config)
