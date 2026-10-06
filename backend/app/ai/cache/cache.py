@@ -68,6 +68,7 @@ class CacheWaitTimeout(TimeoutError):
 class _Flight:
     done: threading.Event = field(default_factory=threading.Event)
     value: str | None = None
+    references: ReferenceMap | None = None
     error: BaseException | None = None
 
 
@@ -175,16 +176,28 @@ class ResultCache:
         references: ReferenceMap,
     ) -> T:
         try:
+            # Another flight may have completed after our initial lookup but
+            # before we registered leadership. Publish that hit to our waiters.
+            cached = self._hit(key, request, references)
+            if cached is not None:
+                flight.value = json.dumps(request.encode(cached), ensure_ascii=False)
+                flight.references = references
+                return cached
             generated = request.compute()
-            flight.value = self._store_result(key, request, references, generated)
+            encoded = request.encode(generated.result)
+            # Sharing a successful generation does not depend on eligibility
+            # for persistent storage. JSON also isolates each waiter's result.
+            flight.value = json.dumps(encoded, ensure_ascii=False)
+            flight.references = references
+            self._store_result(key, request, references, generated, encoded)
             return generated.result
         except BaseException as error:
             flight.error = error
             raise
         finally:
             with self._lock:
+                flight.done.set()
                 self._flights.pop(key, None)
-            flight.done.set()
 
     def _store_result[T](
         self,
@@ -192,12 +205,13 @@ class ResultCache:
         request: CacheRequest[T],
         references: ReferenceMap,
         generated: Generated[T],
-    ) -> str | None:
+        encoded: Any,
+    ) -> None:
         if generated.deployment_id not in request.approved_deployments:
-            return None
-        aliased = references.to_aliases(request.encode(generated.result))
+            return
+        aliased = references.to_aliases(encoded)
         if aliased is None:
-            return None
+            return
         value = json.dumps(aliased, ensure_ascii=False)
         now = self._clock()
         version = request.version
@@ -218,15 +232,12 @@ class ResultCache:
                 expires_at=now + self._ttl,
             ),
         )
-        return value
 
-    def _follow[T](
-        self, flight: _Flight, request: CacheRequest[T], references: ReferenceMap
-    ) -> T:
+    def _follow[T](self, flight: _Flight, request: CacheRequest[T], references: ReferenceMap) -> T:
         if not flight.done.wait(request.wait_seconds):
             raise CacheWaitTimeout(f"{request.version.feature} generation still running")
         if flight.error is not None:
             raise flight.error
-        if flight.value is None:
-            return request.compute().result
-        return request.decode(references.from_aliases(json.loads(flight.value)))
+        assert flight.value is not None and flight.references is not None
+        shared = flight.references.remap(json.loads(flight.value), references)
+        return request.decode(shared)

@@ -572,3 +572,208 @@ def test_learning_task_hit_round_trips_and_revalidates():
     second = service.generate(INPUT, cache_scope=PUBLIC)
     assert client.calls == 1
     assert second == first
+
+
+class BarrierCache(ResultCache):
+    """Hold generation until every expected follower has joined the flight."""
+
+    def __init__(self, participants, **kwargs):
+        super().__init__(**kwargs)
+        self.joined = threading.Barrier(participants)
+
+    def _follow(self, flight, request, references):
+        self.joined.wait(timeout=5)
+        return super()._follow(flight, request, references)
+
+
+def join_threads(threads):
+    for thread in threads:
+        thread.join(5)
+    assert all(not thread.is_alive() for thread in threads)
+
+
+def test_leader_rechecks_entry_written_between_lookup_and_registration():
+    missed, resume_lookup = threading.Event(), threading.Event()
+    rechecking, resume_recheck, following = (
+        threading.Event(),
+        threading.Event(),
+        threading.Event(),
+    )
+
+    class PausedCache(ResultCache):
+        stale_lookups = 0
+
+        def _hit(self, key, request, references):
+            if threading.current_thread().name == "stale-lookup":
+                self.stale_lookups += 1
+                if self.stale_lookups == 1:
+                    value = super()._hit(key, request, references)
+                    assert value is None
+                    missed.set()
+                    assert resume_lookup.wait(5)
+                    return value
+                rechecking.set()
+                assert resume_recheck.wait(5)
+            return super()._hit(key, request, references)
+
+        def _follow(self, flight, request, references):
+            following.set()
+            return super()._follow(flight, request, references)
+
+    cache = PausedCache()
+    calls = []
+    request = direct_request(calls)
+    stale_request = replace(request, payload={"objects": [{"key": "y", "source": "cup"}]})
+    waiter_request = replace(request, payload={"objects": [{"key": "z", "source": "cup"}]})
+    stale, results, errors = run_concurrently(1, lambda: cache.get_or_generate(stale_request))
+    stale[0].name = "stale-lookup"
+    follower = []
+    try:
+        stale[0].start()
+        assert missed.wait(5)
+        assert cache.get_or_generate(request) == {"key": "x"}
+        assert cache.in_flight == 0
+        resume_lookup.set()
+        assert rechecking.wait(5)
+        follower, shared_results, shared_errors = run_concurrently(
+            1, lambda: cache.get_or_generate(waiter_request)
+        )
+        # A completed entry is already available to this caller. Force its
+        # initial miss to exercise publication to followers of the new leader.
+        original_hit = cache._hit
+
+        def miss_waiter_once(key, request, references):
+            if threading.current_thread() is follower[0]:
+                return None
+            return original_hit(key, request, references)
+
+        cache._hit = miss_waiter_once
+        follower[0].start()
+        assert following.wait(5)
+    finally:
+        resume_lookup.set()
+        resume_recheck.set()
+        join_threads([*stale, *follower])
+    assert len(calls) == 1
+    assert results == [{"key": "y"}] and errors == []
+    assert shared_results == [{"key": "z"}] and shared_errors == []
+    assert cache.in_flight == 0
+
+
+@pytest.mark.parametrize(
+    "reason", ["unknown-deployment", "unapproved-deployment", "unknown-reference"]
+)
+def test_waiters_share_success_that_cannot_be_persistently_cached(reason):
+    store = InMemoryCacheStore(10)
+    cache = BarrierCache(4, store=store)
+    started = threading.Event()
+    calls = []
+    served = (
+        None
+        if reason == "unknown-deployment"
+        else "outside"
+        if reason == "unapproved-deployment"
+        else "a"
+    )
+    result = {"objectKey": "x", "nested": [{"objectKeys": ["x"]}]}
+    if reason == "unknown-reference":
+        # This unknown key looks like an alias: sharing must leave it intact.
+        result["key"] = "o1"
+
+    def compute():
+        calls.append(1)
+        started.set()
+        cache.joined.wait(timeout=5)
+        return Generated(result, served, "model")
+
+    leader_request = direct_request(calls, compute=compute)
+    leader, results, errors = run_concurrently(1, lambda: cache.get_or_generate(leader_request))
+    leader[0].start()
+    assert started.wait(5)
+    followers = []
+    validation_calls = []
+    for key in ("y", "z", "w"):
+
+        def decode(value, expected=key):
+            assert value["objectKey"] == expected
+            assert value["nested"][0]["objectKeys"] == [expected]
+            if reason == "unknown-reference":
+                assert value["key"] == "o1"
+            validation_calls.append(expected)
+            return value
+
+        request = replace(
+            leader_request, payload={"objects": [{"key": key, "source": "cup"}]}, decode=decode
+        )
+        threads, values, failures = run_concurrently(1, lambda r=request: cache.get_or_generate(r))
+        followers.append((threads[0], values, failures))
+        threads[0].start()
+    join_threads([*leader, *(thread for thread, _, _ in followers)])
+    assert errors == [] and results == [result]
+    assert len(calls) == 1
+    assert sorted(validation_calls) == ["w", "y", "z"]
+    assert all(len(values) == 1 and not failures for _, values, failures in followers)
+    assert len(store) == 0 and cache.in_flight == 0
+    # Shared results must not share mutable state with the leader or one another.
+    followers[0][1][0]["nested"][0]["objectKeys"].append("mutation")
+    assert result["nested"][0]["objectKeys"] == ["x"]
+    assert followers[1][1][0]["nested"][0]["objectKeys"] == ["z"]
+    later = []
+    cache.get_or_generate(direct_request(later))
+    assert later == [1]
+
+
+def test_shared_uncacheable_success_still_requires_waiter_revalidation():
+    cache = BarrierCache(2)
+    started = threading.Event()
+    calls = []
+
+    def compute():
+        calls.append(1)
+        started.set()
+        cache.joined.wait(timeout=5)
+        return Generated({"key": "unknown"}, None, None)
+
+    request = direct_request(calls, compute=compute)
+    leader, values, failures = run_concurrently(1, lambda: cache.get_or_generate(request))
+    leader[0].start()
+    assert started.wait(5)
+
+    def reject(value):
+        assert value == {"key": "unknown"}
+        raise ValueError("unknown reference")
+
+    try:
+        with pytest.raises(ValueError, match="unknown reference"):
+            cache.get_or_generate(replace(request, decode=reject))
+    finally:
+        join_threads(leader)
+    assert values == [{"key": "unknown"}] and failures == []
+    assert calls == [1] and cache.in_flight == 0
+
+
+def test_barrier_waiters_share_failure_and_next_flight_can_succeed():
+    cache = BarrierCache(4)
+    started = threading.Event()
+    calls = []
+    failure = RuntimeError("provider down")
+
+    def compute():
+        calls.append(1)
+        started.set()
+        cache.joined.wait(timeout=5)
+        raise failure
+
+    request = direct_request(calls, compute=compute)
+    threads, results, errors = run_concurrently(4, lambda: cache.get_or_generate(request))
+    threads[0].start()
+    assert started.wait(5)
+    for thread in threads[1:]:
+        thread.start()
+    join_threads(threads)
+    assert calls == [1] and results == []
+    assert len(errors) == 4 and all(error is failure for error in errors)
+    assert cache.in_flight == 0
+    later = []
+    assert cache.get_or_generate(direct_request(later)) == {"key": "x"}
+    assert later == [1]

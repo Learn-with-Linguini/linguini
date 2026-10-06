@@ -132,6 +132,20 @@ class ReferenceMap:
             return None
         return _map(result, self._aliases)
 
+    def remap(self, result: Any, target: ReferenceMap) -> Any:
+        """Map known references directly to another payload, preserving unknowns.
+
+        Flights may share results containing references unsuitable for storage.
+        Direct mapping avoids mistaking an unknown key such as ``o1`` for an alias.
+        The receiver must still revalidate the mapped result.
+        """
+        keys = {
+            key: target._keys[alias]
+            for key, alias in self._aliases.items()
+            if alias in target._keys
+        }
+        return _map(result, keys)
+
     def from_aliases(self, cached: Any) -> Any:
         """A cached result with aliases replaced by this payload's references.
 
