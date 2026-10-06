@@ -73,6 +73,16 @@ task_attempts = Table(
     schema="public",
 )
 
+# Narrow view of ``session_tasks`` for the attempt-evaluation claim, so full
+# task rows keep validating as ``SessionTask``.
+task_evaluation_claims = Table(
+    "session_tasks",
+    MetaData(),
+    Column("id", Uuid, primary_key=True),
+    Column("evaluation_claim_id", Uuid),
+    schema="public",
+)
+
 task_hints = Table(
     "task_hints",
     MetaData(),

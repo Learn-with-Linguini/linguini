@@ -288,7 +288,13 @@ atomically. Prisma records the relations; SQL defines the deferred-check behavio
 
 Practice actions, evaluated attempts, encounters, and vocabulary counters commit in
 one transaction. Stable event identities and a user lock prevent duplicate credit
-under concurrent retries. Learners can leave up to three unfinished sessions open and
+under concurrent retries. No AI provider call runs inside a database transaction:
+task generation claims `sessions.generation_revision`, calls the models with no
+transaction open, then persists only if its revision is still current, so a stale
+run never overwrites or fails a newer one. Model-graded I-Spy descriptions claim
+`session_tasks.evaluation_claim_id` with the attempt's idempotency-derived ID,
+evaluate outside the transaction, and save only while that claim is still held;
+concurrent retries return the same saved attempt. Learners can leave up to three unfinished sessions open and
 resume an open session from the home screen. Task answers are private and are omitted
 from every public task response.
 

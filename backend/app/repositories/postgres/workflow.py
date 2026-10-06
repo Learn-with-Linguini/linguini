@@ -2,15 +2,17 @@
 
 import logging
 from contextlib import contextmanager
+from dataclasses import dataclass
 from datetime import timedelta
-from uuid import uuid5
+from typing import Any
+from uuid import UUID, uuid5
 
 from sqlalchemy import DateTime, and_, delete, func, insert, select, update
 from sqlalchemy.dialects.postgresql import insert as upsert
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.ai.features.ispy_clues import ISpyClueGenerationError
-from app.ai.features.ispy_guess import ISpyGuessError
+from app.ai.features.ispy_guess import ISpyGuessError, ISpyGuessResult
 from app.ai.features.learning_tasks import required_task_focuses
 from app.repositories.postgres.language_profiles import language_profiles
 from app.repositories.postgres.media_assets import media_assets
@@ -21,7 +23,12 @@ from app.repositories.postgres.scene_objects import (
     scene_objects,
 )
 from app.repositories.postgres.scenes import preloaded_scenes
-from app.repositories.postgres.tasks import entity_values, session_tasks, task_attempts
+from app.repositories.postgres.tasks import (
+    entity_values,
+    session_tasks,
+    task_attempts,
+    task_evaluation_claims,
+)
 from app.repositories.postgres.users import users
 from app.repositories.postgres.vocabulary import (
     record_vocabulary_evidence,
@@ -190,6 +197,35 @@ def _stale_processing(status=None):
         sessions.c.analysis_draft["processingStartedAt"].astext.cast(DateTime(timezone=True))
         < utc_now() - ANALYSIS_TIMEOUT,
     )
+
+
+@dataclass(frozen=True)
+class GenerationClaim:
+    """An immutable snapshot taken when a task-generation revision was claimed."""
+
+    session_id: UUID
+    profile_id: UUID
+    revision: int
+    session: Session
+    profile: dict
+    detail: Any
+
+
+@dataclass(frozen=True)
+class DescriptionClaim:
+    """The target-blind inputs of a claimed I-Spy description attempt."""
+
+    task_id: UUID
+    attempt_id: UUID
+    context: dict
+    learner_text: str
+    session_id: str
+
+
+@dataclass(frozen=True)
+class DescriptionEvaluation:
+    attempt_id: UUID
+    guess: ISpyGuessResult | None
 
 
 class PostgresWorkflowRepository:
@@ -786,14 +822,22 @@ class PostgresWorkflowRepository:
 
     def _run_task_generation(self, session_id, profile_id):
         """Translator + lesson generation, off the request path. Never re-raises."""
+        revision = None
         try:
-            self._generate_tasks(session_id, profile_id)
+            claim = self._claim_generation(session_id, profile_id)
+            if claim is None:
+                return
+            revision = claim.revision
+            self._generate_tasks(claim)
         except Exception:
             logger.exception("Task generation failed for session %s.", session_id)
             try:
                 with self.transaction() as c:
                     current = self._session(c, session_id)
-                    if current.status not in TERMINAL:
+                    # A newer claim owns the session, so this failure is stale.
+                    if current.status not in TERMINAL and revision in (
+                        None, self._generation_revision(c, session_id)
+                    ):
                         self._transition(
                             c, current, "failed", failure_code="taskGenerationFailed"
                         )
@@ -935,47 +979,97 @@ class PostgresWorkflowRepository:
                 session = self._transition(c, session, "generatingTasks")
             return self._detail(c, session)
 
-    def _generate_tasks(self, session_id, profile_id):
-        lessons = []
-        ispy_clues = []
-        ispy_descriptions = []
-        introduction_id = None
+    def _generation_revision(self, c, session_id):
+        return c.execute(
+            select(sessions.c.generation_revision).where(sessions.c.id == session_id)
+        ).scalar_one()
+
+    def _claim_generation(self, session_id, profile_id):
+        """Claim the next generation revision and snapshot what the model calls need."""
         with self.transaction() as c:
             session = self._session(c, session_id, profile_id)
+            if session.status in TERMINAL:
+                return None
+            revision = c.execute(
+                update(sessions)
+                .where(sessions.c.id == session_id)
+                .values(generation_revision=sessions.c.generation_revision + 1)
+                .returning(sessions.c.generation_revision)
+            ).scalar_one()
             profile = (
                 c.execute(select(language_profiles).where(language_profiles.c.id == profile_id))
                 .mappings()
                 .one()
             )
-            detail = self._detail(c, session)
-            # Phase A left exactly the accepted objects; rebuild tasks from scratch.
+            return GenerationClaim(
+                session_id,
+                profile_id,
+                revision,
+                session,
+                dict(profile),
+                self._detail(c, session),
+            )
+
+    def _current_generation(self, c, claim):
+        """The session while ``claim`` still owns it; ``None`` marks a stale result."""
+        session = self._session(c, claim.session_id, claim.profile_id)
+        if session.status in TERMINAL:
+            return None
+        if self._generation_revision(c, claim.session_id) != claim.revision:
+            logger.info(
+                "Discarding stale task generation %s for session %s.",
+                claim.revision,
+                claim.session_id,
+            )
+            return None
+        return session
+
+    def _generate_tasks(self, claim):
+        """Translate → checkpoint task 1 → lessons/clues → persist the full plan.
+
+        Model calls run with no transaction or user lock open. Each write first
+        checks that ``claim`` is still the session's current generation.
+        """
+        session_id, profile, detail = claim.session_id, claim.profile, claim.detail
+        session = claim.session
+        lessons = []
+        ispy_clues = []
+        ispy_descriptions = []
+        introduction_id = None
+        objects = list(detail.scene_objects)
+        if self.translator:
+            payload = {
+                "targetLanguage": profile["target_language_code"],
+                "sceneTitle": session.session_title or detail.title,
+                "sceneSummary": session.session_summary or "Confirmed scene vocabulary.",
+                "objects": [
+                    {"key": str(obj.id), "source": obj.label} for obj in objects
+                ],
+                "attributes": [
+                    {
+                        "key": f"{obj.id}:{attribute_type}",
+                        "source": value,
+                    }
+                    for obj in objects
+                    for attribute_type, value in (obj.attributes or {}).items()
+                    if isinstance(value, str) and value.strip()
+                ],
+                "relationships": [
+                    {"key": str(row.id), "source": row.relation}
+                    for row in detail.scene_object_relations
+                ],
+            }
+            translated_scene = self.translator.translate(payload)
+
+        # Checkpoint: commit translations and task 1 before the slower lesson
+        # and clue calls, so the learner can start while tasks are built.
+        with self.transaction() as c:
+            session = self._current_generation(c, claim)
+            if session is None:
+                return
+            # Rebuild tasks from scratch for the accepted objects.
             c.execute(delete(session_tasks).where(session_tasks.c.session_id == session_id))
-            objects = list(detail.scene_objects)
             if self.translator:
-                payload = {
-                    "targetLanguage": profile["target_language_code"],
-                    "sceneTitle": session.session_title or detail.title,
-                    "sceneSummary": session.session_summary or "Confirmed scene vocabulary.",
-                    "objects": [
-                        {"key": str(obj.id), "source": obj.label} for obj in objects
-                    ],
-                    "attributes": [
-                        {
-                            "key": f"{obj.id}:{attribute_type}",
-                            "source": value,
-                        }
-                        for obj in objects
-                        for attribute_type, value in (obj.attributes or {}).items()
-                        if isinstance(value, str) and value.strip()
-                    ],
-                    "relationships": [
-                        {"key": str(row.id), "source": row.relation}
-                        for row in detail.scene_object_relations
-                    ],
-                }
-                translated_scene = self.translator.translate(payload)
-                # Commit translations before the slower lesson/clue calls so
-                # polling clients can show useful content while tasks are built.
                 draft = {
                     **(session.analysis_draft or {}),
                     "translationPreview": translated_scene.model_dump(
@@ -986,11 +1080,10 @@ class PostgresWorkflowRepository:
                     update(sessions).where(sessions.c.id == session.id)
                     .values(analysis_draft=draft)
                 )
-                # The translation checkpoint also publishes task 1. Keep the
-                # vocabulary bootstrap in this transaction so the learner can
-                # start as soon as the translation response is committed.
+                session = self._session(c, session_id, claim.profile_id)
+                translated_objects = {row.key: row for row in translated_scene.objects}
                 for obj in objects:
-                    translated = {row.key: row for row in translated_scene.objects}[str(obj.id)]
+                    translated = translated_objects[str(obj.id)]
                     word, _source_translation = bootstrap_word(
                         c,
                         profile["target_language_code"],
@@ -1005,21 +1098,33 @@ class PostgresWorkflowRepository:
                         .where(scene_objects.c.id == obj.id)
                         .values(vocabulary_item_id=word.id)
                     )
-                detail = self._detail(c, session)
-                objects = list(detail.scene_objects)
-                words_by_id = {word.id: word for word in detail.vocabulary}
-                translations_by_id = {word.vocabulary_item_id: word for word in detail.translations}
-                words = [words_by_id[obj.vocabulary_item_id] for obj in objects]
-                translations = [translations_by_id[obj.vocabulary_item_id] for obj in objects]
-                rebuilt = build_tasks(
-                    session_id, objects, words, translations, False, translated_scene
-                )
-                introduction = next(
-                    task for task in rebuilt if task.kind == "vocabularyIntroduction"
-                )
-                introduction.order_index = 0
-                c.execute(insert(session_tasks).values(**entity_values(introduction)))
-                introduction_id = introduction.id
+            detail = self._detail(c, session)
+            objects = list(detail.scene_objects)
+            words_by_id = {word.id: word for word in detail.vocabulary}
+            translations_by_id = {word.vocabulary_item_id: word for word in detail.translations}
+            if any(
+                obj.vocabulary_item_id not in words_by_id
+                or obj.vocabulary_item_id not in translations_by_id
+                for obj in objects
+            ):
+                raise PracticeConflictError("Every selected object needs a word and translation.")
+            words = [words_by_id[obj.vocabulary_item_id] for obj in objects]
+            translations = [translations_by_id[obj.vocabulary_item_id] for obj in objects]
+            rebuilt = build_tasks(
+                session_id,
+                objects,
+                words,
+                translations,
+                False,
+                getattr(detail, "translation_preview", None),
+            )
+            introduction = next(
+                task for task in rebuilt if task.kind == "vocabularyIntroduction"
+            )
+            introduction.order_index = 0
+            c.execute(insert(session_tasks).values(**entity_values(introduction)))
+            introduction_id = introduction.id
+            if self.translator:
                 # Translation is the moment a learner has collected these
                 # words. Persist a "new" vocabulary record now, rather than
                 # waiting for task completion, so leaving the lesson does not
@@ -1040,62 +1145,6 @@ class PostgresWorkflowRepository:
                         ),
                     )
 
-        with self.transaction() as c:
-            session = self._session(c, session_id, profile_id)
-            if session.status in TERMINAL:
-                return
-            detail = self._detail(c, session)
-            objects = list(detail.scene_objects)
-            if self.translator:
-                translated_objects = {row.key: row for row in translated_scene.objects}
-                for obj in objects:
-                    translated = translated_objects[str(obj.id)]
-                    word, _source_translation = bootstrap_word(
-                        c,
-                        profile["target_language_code"],
-                        profile["source_language_code"],
-                        translated.translation,
-                        obj.label,
-                        gender=translated.gender,
-                        phonetic_text=translated.phonetic_text,
-                    )
-                    c.execute(
-                        update(scene_objects)
-                        .where(scene_objects.c.id == obj.id)
-                        .values(vocabulary_item_id=word.id)
-                    )
-                detail = self._detail(c, session)
-                objects = list(detail.scene_objects)
-            words_by_id = {word.id: word for word in detail.vocabulary}
-            translations_by_id = {word.vocabulary_item_id: word for word in detail.translations}
-            if any(
-                obj.vocabulary_item_id not in words_by_id
-                or obj.vocabulary_item_id not in translations_by_id
-                for obj in objects
-            ):
-                raise PracticeConflictError("Every selected object needs a word and translation.")
-            words = [words_by_id[obj.vocabulary_item_id] for obj in objects]
-            translations = [translations_by_id[obj.vocabulary_item_id] for obj in objects]
-            rebuilt = build_tasks(
-                session_id,
-                objects,
-                words,
-                translations,
-                False,
-                getattr(detail, "translation_preview", None),
-            )
-            if introduction_id is None:
-                # Deterministic/demo task generation has no translation
-                # checkpoint, so create task 1 with the regular task plan.
-                introduction = next(
-                    task for task in rebuilt if task.kind == "vocabularyIntroduction"
-                )
-                introduction.order_index = 0
-                c.execute(insert(session_tasks).values(**entity_values(introduction)))
-                introduction_id = introduction.id
-
-        # No transaction or user lock spans these slow calls: task 1 is committed
-        # and can be started, answered and completed while the rest is generated.
         if self.translator:
             if self.learning_task_generator:
                 try:
@@ -1134,8 +1183,8 @@ class PostgresWorkflowRepository:
                 )
 
         with self.transaction() as c:
-            session = self._session(c, session_id, profile_id)
-            if session.status in TERMINAL:
+            session = self._current_generation(c, claim)
+            if session is None:
                 return
             learning = [
                 task for task in rebuilt if task.kind not in {"ispyRound", "reflection"}
@@ -1155,7 +1204,11 @@ class PostgresWorkflowRepository:
                     # Preserve any progress/attempts already made in task 1.
                     continue
                 task.order_index = index
-                c.execute(insert(session_tasks).values(**entity_values(task)))
+                c.execute(
+                    upsert(session_tasks)
+                    .values(**entity_values(task))
+                    .on_conflict_do_nothing(index_elements=["id"])
+                )
             self._transition(c, session, "inProgress")
 
     def finish(self, session_id, profile_id, abandon=False):
@@ -1276,36 +1329,98 @@ class PostgresWorkflowRepository:
             encounter=event,
         )
 
-    def task_action(self, task_id, action, request=None):
-        with self.transaction() as c:
-            row = (
-                c.execute(
-                    select(session_tasks)
-                    .join(sessions, sessions.c.id == session_tasks.c.session_id)
-                    .join(
-                        language_profiles, language_profiles.c.id == sessions.c.language_profile_id
-                    )
-                    .where(
-                        session_tasks.c.id == task_id,
-                        sessions.c.user_id == self.user_id,
-                        language_profiles.c.is_active.is_(True),
-                    )
+    def _task_row(self, c, task_id):
+        row = (
+            c.execute(
+                select(session_tasks)
+                .join(sessions, sessions.c.id == session_tasks.c.session_id)
+                .join(
+                    language_profiles, language_profiles.c.id == sessions.c.language_profile_id
                 )
-                .mappings()
-                .one_or_none()
+                .where(
+                    session_tasks.c.id == task_id,
+                    sessions.c.user_id == self.user_id,
+                    language_profiles.c.is_active.is_(True),
+                )
             )
-            if row is None:
-                raise PracticeNotFoundError("Task not found.")
-            task = SessionTask.model_validate(dict(row))
+            .mappings()
+            .one_or_none()
+        )
+        if row is None:
+            raise PracticeNotFoundError("Task not found.")
+        return SessionTask.model_validate(dict(row))
+
+    def _evaluates_description(self, task):
+        return bool(
+            task.kind == "reflection"
+            and task.answer_key
+            and task.answer_key.scene_description_context
+            and self.ispy_guess_generator
+        )
+
+    def _claim_description(self, task_id, request):
+        """Claim a model-graded I-Spy attempt; ``None`` when no model call is due.
+
+        Saved attempts, inactive tasks and invalid input fall through to
+        ``_apply_task_action``, which returns or rejects them.
+        """
+        with self.transaction() as c:
+            task = self._task_row(c, task_id)
+            if not self._evaluates_description(task) or request.input_mode != "text":
+                return None
+            attempt_id = _attempt_id(task, request)
+            session = self._session(c, task.session_id)
+            if (
+                c.execute(
+                    select(task_attempts.c.id).where(task_attempts.c.id == attempt_id)
+                ).first()
+                or session.status != "inProgress"
+                or task.status in {"completed", "skipped"}
+            ):
+                return None
+            c.execute(
+                update(task_evaluation_claims)
+                .where(task_evaluation_claims.c.id == task.id)
+                .values(evaluation_claim_id=attempt_id)
+            )
+            return DescriptionClaim(
+                task.id,
+                attempt_id,
+                task.answer_key.scene_description_context,
+                request.text,
+                str(task.session_id),
+            )
+
+    def _evaluate_description(self, claim):
+        try:
+            return self.ispy_guess_generator.guess(
+                claim.context, claim.learner_text, session_id=claim.session_id
+            )
+        except ISpyGuessError:
+            logger.exception("I-Spy description guess failed for task %s.", claim.task_id)
+            return None
+
+    def task_action(self, task_id, action, request=None):
+        """Claim → model call with no transaction open → persist if still claimed."""
+        evaluation = None
+        if action == "attempt":
+            claim = self._claim_description(task_id, request)
+            if claim is not None:
+                evaluation = DescriptionEvaluation(
+                    claim.attempt_id, self._evaluate_description(claim)
+                )
+        return self._apply_task_action(task_id, action, request, evaluation)
+
+    def _apply_task_action(self, task_id, action, request, evaluation):
+        with self.transaction() as c:
+            task = self._task_row(c, task_id)
             session = self._session(c, task.session_id)
             attempt = None
             if action == "attempt":
                 payload = request.model_dump(
                     mode="json", by_alias=False, exclude={"idempotency_key"}
                 )
-                attempt_id = uuid5(
-                    task.id, "attempt:" + (request.idempotency_key or "single-evaluation")
-                )
+                attempt_id = _attempt_id(task, request)
                 saved = (
                     c.execute(select(task_attempts).where(task_attempts.c.id == attempt_id))
                     .mappings()
@@ -1351,29 +1466,33 @@ class PostgresWorkflowRepository:
                         self._encounter(c, task, task.id, "completed", introduced=True)
                 elif action == "attempt":
                     evaluation_details = None
-                    if (
-                        task.kind == "reflection"
-                        and task.answer_key
-                        and task.answer_key.scene_description_context
-                        and self.ispy_guess_generator
-                    ):
+                    if self._evaluates_description(task):
                         if request.input_mode != "text":
                             raise PracticeConflictError(
                                 "I-Spy descriptions must be submitted as text."
                             )
-                        try:
-                            guess = self.ispy_guess_generator.guess(
-                                task.answer_key.scene_description_context,
-                                request.text,
-                                session_id=str(task.session_id),
+                        if (
+                            evaluation is None
+                            or evaluation.attempt_id != attempt_id
+                            or c.execute(
+                                select(task_evaluation_claims.c.evaluation_claim_id).where(
+                                    task_evaluation_claims.c.id == task.id
+                                )
+                            ).scalar_one()
+                            != attempt_id
+                        ):
+                            raise PracticeConflictError(
+                                "This task changed while your description was evaluated. "
+                                "Retry the action."
                             )
+                        guess = evaluation.guess
+                        if guess is None:
+                            correct = None
+                            feedback_message = "Your description was saved. Keep using scene words."
+                        else:
                             correct = guess.guessed_object_key == str(task.scene_object_id)
                             feedback_message = guess.feedback
                             evaluation_details = guess.model_dump(mode="json", by_alias=True)
-                        except ISpyGuessError:
-                            logger.exception("I-Spy description guess failed for task %s.", task.id)
-                            correct = None
-                            feedback_message = "Your description was saved. Keep using scene words."
                     else:
                         correct = evaluate(task, request)
                         feedback_message = (
@@ -1425,6 +1544,12 @@ class PostgresWorkflowRepository:
                         evaluation_details=evaluation_details,
                     )
                     c.execute(insert(task_attempts).values(**entity_values(attempt)))
+                    if evaluation is not None:
+                        c.execute(
+                            update(task_evaluation_claims)
+                            .where(task_evaluation_claims.c.id == task.id)
+                            .values(evaluation_claim_id=None)
+                        )
                     if correct is True and task.phase == "ispy":
                         award(
                             c,
@@ -1478,6 +1603,10 @@ class PostgresWorkflowRepository:
                 ),
                 session_progress=task_progress(tasks),
             )
+
+
+def _attempt_id(task, request):
+    return uuid5(task.id, "attempt:" + (request.idempotency_key or "single-evaluation"))
 
 
 def evaluate(task, request):

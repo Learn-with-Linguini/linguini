@@ -161,6 +161,7 @@ model Session {
   abandonedAt DateTime? @map("abandoned_at") @db.Timestamptz(6)
   failureCode SessionFailureCode? @map("failure_code")
   idempotencyKey String? @map("idempotency_key") @db.VarChar(200)
+  generationRevision Int @default(0) @map("generation_revision")
   sceneObjects SceneObject[]
   tasks SessionTask[]
   vocabularyEncounters VocabularyEncounter[]
@@ -311,6 +312,7 @@ model SessionTask {
   completedAt      DateTime? @map("completed_at") @db.Timestamptz(6)
   skippedAt        DateTime? @map("skipped_at") @db.Timestamptz(6)
   skipReason       String? @map("skip_reason") @db.VarChar(500)
+  evaluationClaimId String? @map("evaluation_claim_id") @db.Uuid
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
   attempts         TaskAttempt[]
