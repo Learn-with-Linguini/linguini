@@ -22,11 +22,13 @@ from app.ai.adapters.common import (
     provider_error,
     status_message,
 )
+from app.ai.adapters.deadline import CallDeadline
 from app.ai.contracts.config import ModelConfig
 from app.ai.contracts.errors import ProviderError, ProviderErrorCode, ProviderFailureScope
 from app.ai.contracts.metadata import FinishStatus, ResponseMetadata, TokenUsage
 from app.ai.contracts.text import TextModelRequest, TextModelResponse
 from app.ai.contracts.vision import VisionModelRequest, VisionModelResponse
+from app.ai.routing.invocation import InvocationContext
 
 
 @dataclass(frozen=True)
@@ -59,20 +61,21 @@ class ResponsesApiClient:
 
     ENDPOINT: ResponsesEndpoint
     KIND = "text"
+    DEADLINE_AWARE = True
 
     def __init__(
         self,
         api_key: str,
         config: ModelConfig,
         base_url: str | None = None,
-        client: httpx.Client | None = None,
+        client: httpx.AsyncClient | None = None,
     ) -> None:
         if not api_key:
             raise ValueError("api_key must not be empty")
         self._api_key = api_key
         self._config = config
         self._base_url = (base_url or self.ENDPOINT.base_url).rstrip("/")
-        self._client = client or httpx.Client(timeout=config.timeout_seconds)
+        self._client = client
 
     @property
     def _label(self) -> str:
@@ -127,20 +130,40 @@ class ResponsesApiClient:
         request: TextModelRequest | VisionModelRequest,
         user_content: list[dict],
         timeout_seconds: float | None = None,
+        invocation: InvocationContext | None = None,
     ) -> tuple[str, ResponseMetadata]:
         start = time.monotonic()
         version = request.prompt_version
-        try:
-            response = self._client.post(
+        deadline = CallDeadline(
+            min(self._config.timeout_seconds, timeout_seconds)
+            if timeout_seconds is not None
+            else self._config.timeout_seconds,
+            invocation,
+        )
+
+        async def post(client: httpx.AsyncClient) -> httpx.Response:
+            body = self._request_body(request, user_content)
+            return await client.post(
                 f"{self._base_url}/responses",
                 headers={
                     "Authorization": f"Bearer {self._api_key}",
                     "Content-Type": "application/json",
                 },
-                json=self._request_body(request, user_content),
-                timeout=timeout_seconds or self._config.timeout_seconds,
+                json=body,
+                timeout=deadline.begin_io(),
             )
-        except httpx.TimeoutException:
+
+        async def send() -> httpx.Response:
+            if self._client is not None:
+                return await post(self._client)
+            # Per-call ownership keeps pools on this call's event loop and
+            # closes sockets before cancellation returns to routing.
+            async with httpx.AsyncClient() as client:
+                return await post(client)
+
+        try:
+            response = deadline.run(send)
+        except (httpx.TimeoutException, TimeoutError):
             raise self._error(
                 ProviderErrorCode.PROVIDER_TIMEOUT,
                 f"{self._label} timed out",
@@ -171,7 +194,14 @@ class ResponsesApiClient:
                 scope=scope,
             )
 
-        return self._parse_response(response, version, start)
+        result = self._parse_response(response, version, start)
+        try:
+            deadline.check()
+        except TimeoutError:
+            raise self._error(
+                ProviderErrorCode.PROVIDER_TIMEOUT, f"{self._label} timed out", version, start
+            ) from None
+        return result
 
     def _payload_error(
         self, status: int | None, body: Any
@@ -341,12 +371,17 @@ class ResponsesTextClient(ResponsesApiClient):
     KIND = "text"
 
     def generate(
-        self, request: TextModelRequest, *, timeout_seconds: float | None = None
+        self,
+        request: TextModelRequest,
+        *,
+        timeout_seconds: float | None = None,
+        invocation: InvocationContext | None = None,
     ) -> TextModelResponse:
         text, metadata = self._send(
             request,
             [{"type": "input_text", "text": request.user_content}],
             timeout_seconds,
+            invocation,
         )
         return TextModelResponse(
             output_text=text,
@@ -362,7 +397,11 @@ class ResponsesVisionClient(ResponsesApiClient):
     KIND = "vision"
 
     def generate(
-        self, request: VisionModelRequest, *, timeout_seconds: float | None = None
+        self,
+        request: VisionModelRequest,
+        *,
+        timeout_seconds: float | None = None,
+        invocation: InvocationContext | None = None,
     ) -> VisionModelResponse:
         image_data = base64.b64encode(request.image.data).decode("ascii")
         text, metadata = self._send(
@@ -375,6 +414,7 @@ class ResponsesVisionClient(ResponsesApiClient):
                 },
             ],
             timeout_seconds,
+            invocation,
         )
         return VisionModelResponse(
             output_text=text,

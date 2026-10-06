@@ -486,7 +486,7 @@ def responses_client(cls, handler, **options):
     return cls(
         "sk-test",
         TextModelConfig(model_name="m", timeout_seconds=60),
-        client=httpx.Client(transport=httpx.MockTransport(handler)),
+        client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
         **options,
     )
 
@@ -530,7 +530,8 @@ def test_responses_transport_uses_the_capped_timeout_for_one_call():
     client = responses_client(OpenAITextClient, handler)
     client.generate(REQUEST, timeout_seconds=12.5)
     client.generate(REQUEST)
-    assert timeouts == [12.5, 60]
+    assert 12 < timeouts[0] <= 12.5
+    assert 59 < timeouts[1] <= 60
 
 
 def test_gemini_sdk_retries_are_pinned_to_one_attempt(monkeypatch):
@@ -541,7 +542,10 @@ def test_gemini_sdk_retries_are_pinned_to_one_attempt(monkeypatch):
         return object()
 
     monkeypatch.setattr(gemini.genai, "Client", fake_client)
-    gemini.GeminiTextClient("key", TextModelConfig(model_name="gemini-x", timeout_seconds=30))
+    client = gemini.GeminiTextClient(
+        "key", TextModelConfig(model_name="gemini-x", timeout_seconds=30)
+    )
+    client._new_client()
     options = captured["http_options"]
     assert options.retry_options.attempts == 1
     assert options.timeout == 30_000

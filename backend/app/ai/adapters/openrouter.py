@@ -55,7 +55,7 @@ class _OpenRouterClient:
         api_key: str,
         config: ModelConfig,
         base_url: str | None = None,
-        client: httpx.Client | None = None,
+        client: httpx.AsyncClient | None = None,
         *,
         allow_fallbacks: bool = True,
         fallback_models: tuple[str, ...] = (),

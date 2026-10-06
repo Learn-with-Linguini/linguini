@@ -35,6 +35,7 @@ from app.ai.features.ispy_guess.validation import (
 )
 from app.ai.observability import AITracer
 from app.ai.routing import as_routed, route_metadata, total_tokens
+from app.ai.routing.invocation import InvocationContext
 from app.ai.settings import AiFeature
 
 logger = logging.getLogger(__name__)
@@ -82,6 +83,7 @@ class ISpyGuessService:
         *,
         session_id: str | None = None,
     ) -> ISpyGuessResult:
+        invocation = self._client.start_invocation()
         with self._tracer.trace(
             "ispy-guess",
             session_id=session_id,
@@ -101,9 +103,11 @@ class ISpyGuessService:
                     metadata={"resultStatus": "rejected"},
                 )
                 raise
-            return self._evaluate(root, payload, response_model)
+            return self._evaluate(root, payload, response_model, invocation)
 
-    def _evaluate(self, root, payload, response_model) -> ISpyGuessResult:
+    def _evaluate(
+        self, root, payload, response_model, invocation: InvocationContext
+    ) -> ISpyGuessResult:
         content = json.dumps(payload, ensure_ascii=False)
         request = TextModelRequest(
             system_prompt=ISPY_GUESS_SYSTEM_PROMPT,
@@ -114,7 +118,6 @@ class ISpyGuessService:
             prompt_version=ISPY_GUESS_PROMPT_VERSION,
         )
         attempts = 1 + self._config.max_retries
-        invocation = self._client.start_invocation()
         latency_ms = 0.0
         for attempt in range(1, attempts + 1):
             attempt_request = (

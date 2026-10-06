@@ -650,7 +650,7 @@ def _openai_adapter(captured):
     return OpenAITextClient(
         FAKE_API_KEY,
         config(),
-        client=httpx.Client(transport=httpx.MockTransport(handler)),
+        client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
     )
 
 

@@ -21,11 +21,13 @@ from app.ai.adapters.common import (
     provider_error,
     status_message,
 )
+from app.ai.adapters.deadline import CallDeadline
 from app.ai.contracts.config import ModelConfig
 from app.ai.contracts.errors import ProviderError, ProviderErrorCode, ProviderFailureScope
 from app.ai.contracts.metadata import FinishStatus, ResponseMetadata, TokenUsage
 from app.ai.contracts.text import TextModelRequest, TextModelResponse
 from app.ai.contracts.vision import VisionModelRequest, VisionModelResponse
+from app.ai.routing.invocation import InvocationContext
 
 GEMINI_PROVIDER = "gemini"
 GEMINI_ENDPOINT = "gemini.generate_content"
@@ -100,6 +102,7 @@ class GeminiClient:
     """Calls ``models.generate_content`` with a JSON-schema response."""
 
     KIND = "text"
+    DEADLINE_AWARE = True
 
     def __init__(
         self,
@@ -111,10 +114,14 @@ class GeminiClient:
         if not api_key:
             raise ValueError("api_key must not be empty")
         self._config = config
-        self._client = client or genai.Client(
-            api_key=api_key,
+        self._api_key = api_key
+        self._client = client
+
+    def _new_client(self):
+        return genai.Client(
+            api_key=self._api_key,
             http_options=types.HttpOptions(
-                timeout=int(config.timeout_seconds * 1_000),
+                timeout=int(self._config.timeout_seconds * 1_000),
                 retry_options=NO_SDK_RETRIES,
             ),
         )
@@ -164,6 +171,7 @@ class GeminiClient:
         request: TextModelRequest | VisionModelRequest,
         contents: list[Any],
         timeout_seconds: float | None = None,
+        invocation: InvocationContext | None = None,
     ) -> tuple[str, ResponseMetadata]:
         start = time.monotonic()
         version = request.prompt_version
@@ -172,23 +180,46 @@ class GeminiClient:
         sampling = {"temperature": self._config.temperature}
         if model_version and tuple(map(int, model_version.groups())) >= (3, 5):
             sampling = {}
-        try:
-            response = self._client.models.generate_content(
-                model=self._config.model_name,
-                contents=contents,
-                config=types.GenerateContentConfig(
-                    system_instruction=request.system_prompt,
-                    **sampling,
-                    response_mime_type="application/json",
-                    response_json_schema=_gemini_json_schema(request.json_schema),
-                    max_output_tokens=self._config.max_output_tokens,
-                    http_options=(
-                        None
-                        if timeout_seconds is None
-                        else types.HttpOptions(timeout=max(1, int(timeout_seconds * 1_000)))
-                    ),
-                ),
+        deadline = CallDeadline(
+            min(self._config.timeout_seconds, timeout_seconds)
+            if timeout_seconds is not None
+            else self._config.timeout_seconds,
+            invocation,
+        )
+
+        def call_options():
+            config = types.GenerateContentConfig(
+                system_instruction=request.system_prompt,
+                **sampling,
+                response_mime_type="application/json",
+                response_json_schema=_gemini_json_schema(request.json_schema),
+                max_output_tokens=self._config.max_output_tokens,
             )
+            # Recompute after schema conversion and SDK client construction.
+            config.http_options = types.HttpOptions(
+                timeout=max(1, int(deadline.remaining() * 1_000)),
+                retry_options=NO_SDK_RETRIES,
+            )
+            deadline.begin_io()
+            return dict(model=self._config.model_name, contents=contents, config=config)
+
+        async def send():
+            client = self._client if self._client is not None else self._new_client()
+            try:
+                return await client.aio.models.generate_content(**call_options())
+            finally:
+                if self._client is None:
+                    await client.aio.aclose()
+                    client.close()
+
+        try:
+            # Synchronous injected doubles perform no network I/O. Actual SDK
+            # clients always use aio so cancellation reaches the transport.
+            if self._client is not None and not hasattr(self._client, "aio"):
+                response = self._client.models.generate_content(**call_options())
+                deadline.check()
+            else:
+                response = deadline.run(send)
         except (httpx.TimeoutException, TimeoutError):
             raise self._error(
                 ProviderErrorCode.PROVIDER_TIMEOUT,
@@ -196,6 +227,8 @@ class GeminiClient:
                 version,
                 start,
             ) from None
+        except ProviderError:
+            raise
         except APIError as error:
             raise self._api_error(error, version, start) from None
         except Exception as error:
@@ -212,7 +245,14 @@ class GeminiClient:
                 scope=ProviderFailureScope.SERVICE,
             ) from None
 
-        return self._parse_response(response, version, start)
+        result = self._parse_response(response, version, start)
+        try:
+            deadline.check()
+        except TimeoutError:
+            raise self._error(
+                ProviderErrorCode.PROVIDER_TIMEOUT, f"{self._label} timed out", version, start
+            ) from None
+        return result
 
     def _parse_response(
         self, response: Any, version: str, start: float
@@ -287,9 +327,13 @@ class GeminiTextClient(GeminiClient):
     KIND = "text"
 
     def generate(
-        self, request: TextModelRequest, *, timeout_seconds: float | None = None
+        self,
+        request: TextModelRequest,
+        *,
+        timeout_seconds: float | None = None,
+        invocation: InvocationContext | None = None,
     ) -> TextModelResponse:
-        text, metadata = self._send(request, [request.user_content], timeout_seconds)
+        text, metadata = self._send(request, [request.user_content], timeout_seconds, invocation)
         return TextModelResponse(
             output_text=text,
             model_name=self._config.model_name,
@@ -304,7 +348,11 @@ class GeminiVisionClient(GeminiClient):
     KIND = "vision"
 
     def generate(
-        self, request: VisionModelRequest, *, timeout_seconds: float | None = None
+        self,
+        request: VisionModelRequest,
+        *,
+        timeout_seconds: float | None = None,
+        invocation: InvocationContext | None = None,
     ) -> VisionModelResponse:
         text, metadata = self._send(
             request,
@@ -316,6 +364,7 @@ class GeminiVisionClient(GeminiClient):
                 ),
             ],
             timeout_seconds,
+            invocation,
         )
         return VisionModelResponse(
             output_text=text,

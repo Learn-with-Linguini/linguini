@@ -69,7 +69,7 @@ def adapter(
     return OpenAIVisionClient(
         api_key=FAKE_API_KEY,
         config=cfg or config(),
-        client=httpx.Client(transport=httpx.MockTransport(handler)),
+        client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
     )
 
 

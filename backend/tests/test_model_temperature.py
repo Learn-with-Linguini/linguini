@@ -24,7 +24,7 @@ def http_client(body):
     transport = MagicMock(
         return_value=httpx.Response(200, json=body, request=httpx.Request("POST", "http://x"))
     )
-    return httpx.Client(transport=httpx.MockTransport(lambda request: transport(request)))
+    return httpx.AsyncClient(transport=httpx.MockTransport(lambda request: transport(request)))
 
 
 def response_body():
@@ -42,7 +42,7 @@ def sent_body(client_config, request, *, vision=False):
         return httpx.Response(200, json=response_body())
 
     transport = httpx.MockTransport(handler)
-    http = httpx.Client(transport=transport)
+    http = httpx.AsyncClient(transport=transport)
     cls = OpenAIVisionClient if vision else OpenAITextClient
     cls("key", client_config, client=http).generate(request)
     return captured

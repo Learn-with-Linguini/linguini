@@ -49,9 +49,7 @@ class FixedCredential:
 
     CREDENTIAL_ID = "direct"
 
-    def acquire(
-        self, deployment_id: str, exclude: frozenset[str] = frozenset()
-    ) -> CredentialLease:
+    def acquire(self, deployment_id: str, exclude: frozenset[str] = frozenset()) -> CredentialLease:
         if self.CREDENTIAL_ID in exclude:
             raise ProviderError(
                 ProviderErrorCode.PROVIDER_AUTH,
@@ -113,7 +111,12 @@ class RoutedModelClient:
         self._targets = tuple(targets)
         self._credentials = credentials
         self._max_model_calls = max_model_calls
-        self._deadline_seconds = deadline_seconds
+        self._explicit_deadline = deadline_seconds is not None
+        self._deadline_seconds = (
+            deadline_seconds
+            if deadline_seconds is not None
+            else max(target.config.timeout_seconds for target in targets) * max_model_calls
+        )
         self._clients = clients or ClientCache()
         self._tracer = tracer or NoOpAITracer()
         self._clock = clock
@@ -157,6 +160,11 @@ class RoutedModelClient:
 
     def generate(self, request: Any, invocation: InvocationContext | None = None) -> Any:
         invocation = invocation or self.start_invocation()
+        # A shared invocation cannot run replacement calls concurrently.
+        with invocation.call_lock:
+            return self._generate(request, invocation)
+
+    def _generate(self, request: Any, invocation: InvocationContext) -> Any:
         targets = self._targets
         exhausted: set[str] = set()
         excluded: dict[str, frozenset[str]] = {}
@@ -184,11 +192,12 @@ class RoutedModelClient:
                 fallback_reason = fallback_reason or unavailable.code.value
                 index = (index + 1) % len(targets)
                 continue
-            if not invocation.consume():
-                raise last_error or _budget_error()
+            remaining = invocation.remaining_seconds()
+            if remaining is not None and remaining <= 0:
+                raise _deadline_error()
             attempts += 1
             try:
-                response = self._call(target, lease, request, remaining, attempts, fallback_reason)
+                response = self._call(target, lease, request, invocation, attempts, fallback_reason)
             except ProviderError as error:
                 if not fails_over(error):
                     raise
@@ -221,7 +230,7 @@ class RoutedModelClient:
         target: RouteTarget,
         lease: CredentialLease,
         request: Any,
-        remaining: float | None,
+        invocation: InvocationContext,
         attempt: int,
         fallback_reason: str | None,
     ) -> Any:
@@ -238,11 +247,26 @@ class RoutedModelClient:
             attempt_metadata["fallbackReason"] = fallback_reason
         with self._tracer.span("model-call", metadata=attempt_metadata) as span:
             start = time.perf_counter()
+            remaining = invocation.remaining_seconds()
+            if remaining is not None and remaining <= 0:
+                raise _deadline_error()
+            if not getattr(client, "DEADLINE_AWARE", False) and not invocation.consume():
+                raise _budget_error()
             try:
-                if remaining is not None and remaining < target.config.timeout_seconds:
-                    response = client.generate(request, timeout_seconds=remaining)
+                options = {}
+                if getattr(client, "DEADLINE_AWARE", False):
+                    options["invocation"] = invocation
+                if (
+                    remaining is not None
+                    and remaining < target.config.timeout_seconds
+                    and (self._explicit_deadline or getattr(client, "DEADLINE_AWARE", False))
+                ):
+                    response = client.generate(request, timeout_seconds=remaining, **options)
                 else:
-                    response = client.generate(request)
+                    response = client.generate(request, **options)
+                remaining = invocation.remaining_seconds()
+                if remaining is not None and remaining <= 0:
+                    raise _deadline_error()
             except ProviderError as error:
                 self._credentials.report_failure(lease, error)
                 span.update(
@@ -264,9 +288,8 @@ class RoutedModelClient:
                 total_tokens=usage.total_tokens if usage else None,
                 metadata={
                     "outcome": "success",
-                    "servedModel": (
-                        response.metadata.model if response.metadata else None
-                    ) or target.config.model_name,
+                    "servedModel": (response.metadata.model if response.metadata else None)
+                    or target.config.model_name,
                 },
             )
             return response

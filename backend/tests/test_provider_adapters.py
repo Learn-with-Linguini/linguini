@@ -70,8 +70,8 @@ def responses_body(**overrides):
     return body
 
 
-def http_client(handler) -> httpx.Client:
-    return httpx.Client(transport=httpx.MockTransport(handler))
+def http_client(handler) -> httpx.AsyncClient:
+    return httpx.AsyncClient(transport=httpx.MockTransport(handler))
 
 
 def responses_adapter(cls, handler, **kwargs):

@@ -29,6 +29,7 @@ class InvocationContext:
         self._deadline = None if deadline_seconds is None else clock() + deadline_seconds
         self._calls = 0
         self._lock = threading.Lock()
+        self.call_lock = threading.Lock()
 
     @property
     def calls(self) -> int:
@@ -52,7 +53,7 @@ class InvocationContext:
     def consume(self) -> bool:
         """Take one call from the budget; ``False`` when none is left."""
         with self._lock:
-            if self._calls >= self.max_calls:
+            if not self.can_call():
                 return False
             self._calls += 1
             return True

@@ -42,7 +42,7 @@ def adapter(handler, cfg: TextModelConfig | None = None) -> OpenAITextClient:
     return OpenAITextClient(
         api_key=FAKE_API_KEY,
         config=cfg or config(),
-        client=httpx.Client(transport=httpx.MockTransport(handler)),
+        client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
     )
 
 

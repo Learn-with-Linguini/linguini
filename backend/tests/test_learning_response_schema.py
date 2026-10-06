@@ -111,7 +111,7 @@ def test_strict_schema_parsing_preserves_translations_through_provider():
     client = OpenAITextClient(
         "not-a-real-key",
         TextModelConfig(model_name="test-model"),
-        client=httpx.Client(transport=httpx.MockTransport(respond)),
+        client=httpx.AsyncClient(transport=httpx.MockTransport(respond)),
     )
     result = LearningTaskService(
         client,
