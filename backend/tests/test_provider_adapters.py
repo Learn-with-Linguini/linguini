@@ -2,6 +2,7 @@
 
 import json
 import logging
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from email.utils import format_datetime
 from types import SimpleNamespace
@@ -27,6 +28,7 @@ from app.ai.contracts import (
     VisionModelConfig,
     VisionModelRequest,
 )
+from app.ai.features.scene_analysis.service import build_scene_analysis_schema
 
 Code = ProviderErrorCode
 Scope = ProviderFailureScope
@@ -261,6 +263,61 @@ def gemini_response(**overrides):
     }
     values.update(overrides)
     return SimpleNamespace(**values)
+
+
+@pytest.mark.parametrize(
+    ("model", "expected_temperature"),
+    [
+        ("gemini-2.5-flash-lite", 0.0),
+        ("gemini-3.1-flash-lite", 0.0),
+        ("gemini-3.5-flash-lite", None),
+        ("models/gemini-3.5-flash-lite", None),
+        ("gemini-3.8-flash", None),
+    ],
+)
+def test_gemini_sampling_parameters_match_model_support(model, expected_temperature):
+    configs = []
+
+    class Models:
+        def generate_content(self, **kwargs):
+            configs.append(kwargs["config"].model_dump(exclude_none=True))
+            return gemini_response()
+
+    client = GeminiVisionClient(
+        SECRET_KEY,
+        VisionModelConfig(model_name=model),
+        client=SimpleNamespace(models=Models()),
+    )
+    client.generate(vision_request())
+    if expected_temperature is None:
+        assert "temperature" not in configs[0]
+    else:
+        assert configs[0]["temperature"] == expected_temperature
+
+
+def test_gemini_scene_schema_omits_nested_array_bounds_without_mutating_contract():
+    configs = []
+
+    class Models:
+        def generate_content(self, **kwargs):
+            configs.append(kwargs["config"].response_json_schema)
+            return gemini_response()
+
+    schema = build_scene_analysis_schema()
+    client = GeminiVisionClient(
+        SECRET_KEY,
+        VisionModelConfig(model_name="gemini-3.5-flash-lite"),
+        client=SimpleNamespace(models=Models()),
+    )
+    client.generate(replace(vision_request(), json_schema=schema))
+    outbound = configs[0]
+    objects = outbound["properties"]["objects"]
+    assert "maxItems" not in objects
+    assert "maxItems" not in objects["items"]["properties"]["attributes"]
+    assert "maxItems" not in outbound["properties"]["relations"]
+    assert objects["items"]["required"] == schema["properties"]["objects"]["items"]["required"]
+    assert schema["properties"]["objects"]["maxItems"] == 6
+    assert schema["properties"]["relations"]["maxItems"] == 12
 
 
 def test_gemini_metadata_reports_model_version_response_id_and_usage():

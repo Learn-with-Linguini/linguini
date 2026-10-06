@@ -6,6 +6,7 @@ Provider response text is never surfaced in errors or logs.
 
 from __future__ import annotations
 
+import re
 import time
 from typing import Any
 
@@ -89,6 +90,23 @@ def _retry_info_seconds(details: Any) -> float | None:
 NO_SDK_RETRIES = types.HttpRetryOptions(attempts=1)
 
 
+def _gemini_json_schema(value: Any) -> Any:
+    """Avoid nested array bounds that exceed Gemini's schema complexity budget.
+
+    The original contract remains unchanged; Pydantic enforces array limits
+    on the generated output rather than Gemini's schema compiler.
+    """
+    if isinstance(value, dict):
+        return {
+            key: _gemini_json_schema(item)
+            for key, item in value.items()
+            if key != "maxItems"
+        }
+    if isinstance(value, list):
+        return [_gemini_json_schema(item) for item in value]
+    return value
+
+
 class GeminiClient:
     """Calls ``models.generate_content`` with a JSON-schema response."""
 
@@ -162,15 +180,20 @@ class GeminiClient:
     ) -> tuple[str, ResponseMetadata]:
         start = time.monotonic()
         version = request.prompt_version
+        # Gemini 3.5 Flash-Lite and later reject sampling overrides.
+        model_version = re.match(r"(?:models/)?gemini-(\d+)\.(\d+)", self._config.model_name)
+        sampling = {"temperature": self._config.temperature}
+        if model_version and tuple(map(int, model_version.groups())) >= (3, 5):
+            sampling = {}
         try:
             response = self._client.models.generate_content(
                 model=self._config.model_name,
                 contents=contents,
                 config=types.GenerateContentConfig(
                     system_instruction=request.system_prompt,
-                    temperature=self._config.temperature,
+                    **sampling,
                     response_mime_type="application/json",
-                    response_json_schema=request.json_schema,
+                    response_json_schema=_gemini_json_schema(request.json_schema),
                     max_output_tokens=self._config.max_output_tokens,
                     http_options=(
                         None

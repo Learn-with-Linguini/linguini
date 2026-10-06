@@ -1,6 +1,7 @@
 """Tests for the provider-neutral scene-analysis service package."""
 
 import base64
+import copy
 import json
 import threading
 from contextlib import contextmanager
@@ -698,7 +699,13 @@ def test_both_providers_share_prompt_schema_and_result() -> None:
     gemini_kwargs = gemini_captured["gemini_kwargs"]
     gemini_config = gemini_kwargs["config"]
     assert gemini_config.system_instruction == openai_system
-    assert gemini_config.response_json_schema == openai_schema
+    # Gemini compiles the same contract without nested array bounds; the
+    # shared Pydantic output validation still enforces those bounds.
+    gemini_schema = copy.deepcopy(gemini_config.response_json_schema)
+    gemini_schema["properties"]["objects"]["maxItems"] = 6
+    gemini_schema["properties"]["objects"]["items"]["properties"]["attributes"]["maxItems"] = 6
+    gemini_schema["properties"]["relations"]["maxItems"] = 12
+    assert gemini_schema == openai_schema
     assert gemini_kwargs["contents"][0] == openai_user
 
 

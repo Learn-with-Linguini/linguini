@@ -198,7 +198,15 @@ class UploadedSceneAnalyzer:
                             "output-validation", metadata={"attempt": attempt}
                         ) as validation:
                             try:
-                                parsed = parse_scene_analysis(response.output_text)
+                                response_provider = (
+                                    response.metadata.provider
+                                    if response.metadata is not None
+                                    else self._provider
+                                )
+                                parsed = parse_scene_analysis(
+                                    response.output_text,
+                                    normalize_gemini_coordinates=response_provider == "gemini",
+                                )
                             except SceneAnalysisValidationError as error:
                                 validation.update(
                                     validation_result="invalid",
