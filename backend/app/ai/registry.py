@@ -233,10 +233,11 @@ def build_image_moderator(settings: AiSettings) -> ImageModerator | None:
     if config.provider is ImageModerationProvider.NONE:
         return None
     if config.provider is ImageModerationProvider.OPENAI:
-        if not settings.openai_api_key:
+        key = settings.api_key_for(AiProvider.OPENAI)
+        if not key:
             return None
         return OpenAIImageModerator(
-            settings.openai_api_key,
+            key,
             config.model_name,
             timeout_seconds=config.timeout_seconds,
         )

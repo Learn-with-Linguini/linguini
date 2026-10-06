@@ -3,10 +3,6 @@
 import os
 from uuid import UUID
 
-import httpx
-
-from app.ai.adapters.openai import OpenAIVisionClient
-from app.ai.contracts import VisionModelClient, VisionModelConfig
 from app.services.media_urls import PrivateMediaUrls, SignedUrlCache
 
 DEFAULT_DEMO_USER_ID = "11111111-1111-4111-8111-111111111111"
@@ -40,27 +36,3 @@ def get_allowed_origins() -> list[str]:
         for origin in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(",")
         if origin.strip()
     ]
-
-
-def get_vision_provider() -> str:
-    return os.getenv("VISION_PROVIDER", "openai").strip()
-
-
-def get_vision_model_config() -> VisionModelConfig:
-    return VisionModelConfig(
-        model_name=os.getenv("VISION_MODEL_NAME", "gpt-4.1-mini").strip(),
-        timeout_seconds=float(os.getenv("VISION_TIMEOUT_SECONDS", "30")),
-        max_output_tokens=int(os.getenv("VISION_MAX_OUTPUT_TOKENS", "1500")),
-        max_retries=int(os.getenv("VISION_MAX_RETRIES", "1")),
-    )
-
-
-def get_openai_api_key() -> str:
-    return os.getenv("OPENAI_API_KEY", "").strip()
-
-
-def get_vision_model_client(client: httpx.Client | None = None) -> VisionModelClient:
-    provider = get_vision_provider()
-    if provider != "openai":
-        raise ValueError(f"unknown vision provider {provider!r}")
-    return OpenAIVisionClient(get_openai_api_key(), get_vision_model_config(), client=client)

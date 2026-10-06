@@ -1,8 +1,7 @@
-"""TOML AI configuration: validation, compatibility mapping and precedence."""
+"""TOML AI configuration: the default file, custom files and validation."""
 
 import copy
 import json
-import logging
 import socket
 import tomllib
 from pathlib import Path
@@ -22,13 +21,13 @@ from app.ai.contracts.text import TextModelRequest, TextModelResponse
 from app.ai.observability import build_tracer
 from app.ai.settings import AiFeature, AiProvider, load_ai_settings
 
-EXAMPLE = Path(__file__).resolve().parents[1] / "ai.example.toml"
+DEFAULT = Path(__file__).resolve().parents[1] / "ai.toml"
 KEY = "sk-or-test-secret"
 TRANSLATION = "translation-gpt-4o-mini"
 
 
 def example() -> dict:
-    return copy.deepcopy(tomllib.loads(EXAMPLE.read_text()))
+    return copy.deepcopy(tomllib.loads(DEFAULT.read_text()))
 
 
 def _value(value) -> str:
@@ -54,86 +53,33 @@ def write(tmp_path: Path, data: dict) -> str:
     return str(path)
 
 
-def comparable(config):
-    return (
-        config.provider,
-        config.model_name,
-        config.timeout_seconds,
-        config.max_output_tokens,
-        config.max_retries,
-        config.temperature,
-    )
-
-
-def test_example_file_matches_the_environment_defaults():
+def test_default_file_loads_when_ai_config_file_is_unset():
     env = {"AI_OPENROUTER_API_KEY": KEY}
-    from_env = load_ai_settings(env)
-    from_file = load_ai_settings({**env, "AI_CONFIG_FILE": str(EXAMPLE)})
+    settings = load_ai_settings(env)
 
+    assert settings == load_ai_settings({**env, "AI_CONFIG_FILE": str(DEFAULT)})
     for feature in AiFeature:
-        assert comparable(from_file.feature(feature)) == comparable(from_env.feature(feature))
-        assert from_file.is_configured(from_file.feature(feature))
-        assert from_file.secret_for(from_file.feature(feature)) == KEY
-    route = from_file.ai_config.routes[AiFeature.SCENE_TRANSLATION]
+        config = settings.feature(feature)
+        assert config.provider is AiProvider.OPENROUTER
+        assert settings.is_configured(config)
+        assert settings.secret_for(config) == KEY
+    route = settings.ai_config.routes[AiFeature.SCENE_TRANSLATION]
     assert route.policy is SelectionPolicy.PRIORITY
     assert (route.deadline_seconds, route.max_model_calls) == (120, 2)
-    assert from_file.scene_translation.deployment_id == TRANSLATION
+    assert settings.scene_translation.deployment_id == TRANSLATION
+    deployment = settings.ai_config.deployments["scene-claude-haiku"]
+    assert deployment.api is ApiType.RESPONSES
+    assert Capability.VISION in deployment.capabilities
+    assert settings.ai_config.credentials["openrouter"].env == ("AI_OPENROUTER_API_KEY",)
 
 
-def test_environment_maps_to_one_deployment_per_feature():
-    config = load_ai_settings({}).ai_config
+def test_custom_file_replaces_the_default(tmp_path):
+    data = example()
+    data["deployments"][TRANSLATION]["model"] = "custom/model"
+    settings = load_ai_settings({"AI_CONFIG_FILE": write(tmp_path, data)})
 
-    for feature in AiFeature:
-        route = config.routes[feature]
-        assert route.enabled and route.deployments == (feature.value,)
-        deployment = config.deployments[feature.value]
-        assert deployment.adapter is AiProvider.OPENROUTER
-        assert deployment.api is ApiType.RESPONSES
-        assert deployment.credentials == ("openrouter",)
-    assert Capability.VISION in config.deployments["sceneAnalysis"].capabilities
-    assert config.credentials["openrouter"].env == ("AI_OPENROUTER_API_KEY", "OPENROUTER_API_KEY")
-    translation = config.routes[AiFeature.SCENE_TRANSLATION]
-    assert (translation.deadline_seconds, translation.max_model_calls) == (120, 2)
-    guess = config.routes[AiFeature.ISPY_GUESS]
-    assert (guess.deadline_seconds, guess.max_model_calls) == (60, 1)
-
-
-def test_environment_mapping_follows_provider_choice():
-    settings = load_ai_settings(
-        {"AI_ISPY_CLUE_PROVIDER": "none", "AI_SCENE_TRANSLATION_PROVIDER": "gemini"}
-    )
-    config = settings.ai_config
-
-    assert not config.routes[AiFeature.ISPY_CLUE].enabled
-    assert config.primary_deployment(AiFeature.ISPY_CLUE) is None
-    deployment = config.deployments["sceneTranslation"]
-    assert deployment.api is ApiType.GENERATE_CONTENT
-    assert deployment.credentials == ("gemini",)
-    assert settings.scene_translation.credential_id == "gemini"
-
-
-def test_toml_wins_and_ignored_variables_are_logged_by_name(caplog):
-    env = {
-        "AI_OPENROUTER_API_KEY": KEY,
-        "AI_CONFIG_FILE": str(EXAMPLE),
-        "AI_SCENE_TRANSLATION_MODEL": "other/model",
-        "OPENROUTER_TRANSLATION_MODEL": "legacy/model",
-        "AI_LEARNING_TASK_MAX_OUTPUT_TOKENS": "",
-    }
-    with caplog.at_level(logging.WARNING, logger="app.ai.settings"):
-        settings = load_ai_settings(env)
-
-    assert settings.scene_translation.model_name == "openai/gpt-4o-mini"
-    assert "AI_SCENE_TRANSLATION_MODEL" in caplog.text
-    assert "OPENROUTER_TRANSLATION_MODEL" in caplog.text
-    assert "AI_LEARNING_TASK_MAX_OUTPUT_TOKENS" not in caplog.text
-    assert "other/model" not in caplog.text and KEY not in caplog.text
-
-
-def test_no_warning_without_overridden_variables(caplog):
-    with caplog.at_level(logging.WARNING, logger="app.ai.settings"):
-        load_ai_settings({"AI_CONFIG_FILE": str(EXAMPLE)})
-    assert caplog.text == ""
+    assert settings.scene_translation.model_name == "custom/model"
+    assert load_ai_settings({}).scene_translation.model_name == "openai/gpt-4o-mini"
 
 
 def test_route_uses_first_eligible_credential_with_a_secret(tmp_path, monkeypatch):
@@ -184,11 +130,13 @@ def test_route_uses_first_eligible_credential_with_a_secret(tmp_path, monkeypatc
 
 
 def test_first_non_empty_variable_supplies_the_secret():
-    config = parse_ai_config(example())
+    data = example()
+    data["credentials"]["openrouter"]["env"] = ["AI_OPENROUTER_API_KEY", "TEAM_KEY"]
+    config = parse_ai_config(data)
     secrets = resolve_credential_secrets(
-        config, {"AI_OPENROUTER_API_KEY": "  ", "OPENROUTER_API_KEY": "sk-legacy"}
+        config, {"AI_OPENROUTER_API_KEY": "  ", "TEAM_KEY": "sk-team"}
     )
-    assert secrets == {"openrouter": "sk-legacy"}
+    assert secrets == {"openrouter": "sk-team"}
 
 
 def test_real_mode_names_missing_variables_without_values():
@@ -196,12 +144,12 @@ def test_real_mode_names_missing_variables_without_values():
         load_ai_settings(
             {
                 "AI_MODE": "real",
-                "AI_CONFIG_FILE": str(EXAMPLE),
+                "AI_CONFIG_FILE": str(DEFAULT),
                 "AI_OPENAI_API_KEY": "sk-openai-secret",
             }
         )
     message = str(raised.value)
-    assert "AI_OPENROUTER_API_KEY or OPENROUTER_API_KEY" in message
+    assert "(set AI_OPENROUTER_API_KEY)" in message
     assert "sceneAnalysis" in message
     assert "sk-openai-secret" not in message
 
@@ -306,14 +254,14 @@ def test_loading_makes_no_network_calls(monkeypatch):
     monkeypatch.setattr(socket, "create_connection", refuse)
     monkeypatch.setattr(socket, "getaddrinfo", refuse)
 
-    load_ai_settings({"AI_CONFIG_FILE": str(EXAMPLE), "AI_OPENROUTER_API_KEY": KEY})
+    load_ai_settings({"AI_CONFIG_FILE": str(DEFAULT), "AI_OPENROUTER_API_KEY": KEY})
     load_ai_settings({"AI_OPENROUTER_API_KEY": KEY})
 
 
 def test_secrets_are_kept_out_of_repr():
     settings = load_ai_settings(
         {
-            "AI_CONFIG_FILE": str(EXAMPLE),
+            "AI_CONFIG_FILE": str(DEFAULT),
             "AI_OPENROUTER_API_KEY": KEY,
             "AI_OBSERVABILITY_SECRET_KEY": "lf-secret",
         }

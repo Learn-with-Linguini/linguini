@@ -1,7 +1,7 @@
-# Example AI configuration. Point AI_CONFIG_FILE at a copy of this file to
-# use it; without AI_CONFIG_FILE the per-feature AI_* environment variables
-# apply. This file holds no secrets: credentials name the environment
-# variables that do. Values here match the current environment defaults.
+# AI configuration: credentials, deployments and feature routes. The backend
+# loads this file unless AI_CONFIG_FILE names another one. It holds no
+# secrets: credentials name the environment variables that do. Model choices
+# are justified in MODEL_COMPARISON.md.
 #
 # Credentials: the first non-empty variable in `env` wins.
 # Deployments: adapter (openai | openrouter | gemini), api (responses for
@@ -18,19 +18,19 @@
 
 [credentials.openrouter]
 adapter = "openrouter"
-env = ["AI_OPENROUTER_API_KEY", "OPENROUTER_API_KEY"]
+env = ["AI_OPENROUTER_API_KEY"]
 quota_group = "openrouter"
 billing_group = "openrouter"
 
 [credentials.openai]
 adapter = "openai"
-env = ["AI_OPENAI_API_KEY", "OPENAI_API_KEY"]
+env = ["AI_OPENAI_API_KEY"]
 quota_group = "openai"
 billing_group = "openai"
 
 [credentials.gemini]
 adapter = "gemini"
-env = ["AI_GEMINI_API_KEY", "GEMINI_API_KEY"]
+env = ["AI_GEMINI_API_KEY"]
 quota_group = "gemini"
 billing_group = "gemini"
 
@@ -43,6 +43,8 @@ credentials = ["openrouter"]
 upstream_fallback = { allow_fallbacks = true }
 defaults = { timeout_seconds = 120, max_retries = 0 }
 
+# Mistral Small scored marginally higher but is served only by Mistral and
+# rate-limited upstream too often to be the default.
 [deployments.translation-gpt-4o-mini]
 adapter = "openrouter"
 api = "responses"
@@ -59,7 +61,8 @@ model = "openai/gpt-5.4-mini"
 capabilities = ["text", "jsonSchema"]
 credentials = ["openrouter"]
 upstream_fallback = { allow_fallbacks = true }
-defaults = { timeout_seconds = 60, max_retries = 1 }
+# Four grammar tasks run past the shared 1500-token default.
+defaults = { timeout_seconds = 60, max_output_tokens = 4000, max_retries = 1 }
 
 [deployments.clues-gemini-flash-lite]
 adapter = "openrouter"

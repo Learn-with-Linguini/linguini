@@ -16,7 +16,6 @@ from app.ai.features.scene_analysis import (
     SCENE_ANALYSIS_PROMPT_VERSION,
     SceneAnalysisModelResult,
 )
-from app.config import get_vision_model_client
 
 PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"0" * 16
 FAKE_API_KEY = "test-key-123"
@@ -273,9 +272,3 @@ def test_config_validation() -> None:
         VisionModelConfig(model_name="m", timeout_seconds=0)
     with pytest.raises(ValueError):
         VisionModelConfig(model_name="m", max_output_tokens=0)
-
-
-def test_legacy_vision_client_rejects_unknown_provider(monkeypatch) -> None:
-    monkeypatch.setenv("VISION_PROVIDER", "gemini")
-    with pytest.raises(ValueError, match="unknown vision provider"):
-        get_vision_model_client()

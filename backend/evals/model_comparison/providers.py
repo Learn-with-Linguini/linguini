@@ -11,7 +11,6 @@ called directly, so their latency excludes OpenRouter's routing hop.
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
 from functools import cache
 
@@ -119,12 +118,9 @@ def facts() -> dict[str, pricing.ModelFacts]:
 @cache
 def settings() -> AiSettings:
     loaded = load_ai_settings()
-    for provider, name in (
-        (AiProvider.OPENAI, "OPENAI_API_KEY"),
-        (AiProvider.GEMINI, "GEMINI_API_KEY"),
-        (AiProvider.OPENROUTER, "OPENROUTER_API_KEY"),
-    ):
-        if not loaded.api_key_for(provider) and not os.getenv(name, "").strip():
+    for provider in (AiProvider.OPENAI, AiProvider.GEMINI, AiProvider.OPENROUTER):
+        if not loaded.api_key_for(provider):
+            name = f"AI_{provider.value.upper()}_API_KEY"
             raise SystemExit(f"{name} is not set; load backend/.env.local first")
     return loaded
 

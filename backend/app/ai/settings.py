@@ -9,6 +9,7 @@ import os
 import re
 from collections.abc import Mapping
 from enum import StrEnum
+from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -17,26 +18,18 @@ from app.ai.config.loader import (
     missing_secret_problems,
     resolve_credential_secrets,
     select_credential,
-    validate_ai_config,
 )
 from app.ai.config.models import (
-    DEFAULT_API,
-    FEATURE_CAPABILITIES,
     AiConfig,
     AiConfigurationError,
     AiFeature,
     AiProvider,
-    CredentialConfig,
-    DeploymentConfig,
-    GenerationDefaults,
-    RouteConfig,
-    SelectionPolicy,
-    UpstreamFallback,
 )
 
 logger = logging.getLogger(__name__)
 
 AI_CONFIG_FILE_VAR = "AI_CONFIG_FILE"
+DEFAULT_AI_CONFIG_FILE = Path(__file__).resolve().parents[2] / "ai.toml"
 
 
 class AiMode(StrEnum):
@@ -115,10 +108,6 @@ class AiSettings(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     mode: AiMode
-    openai_api_key: str = Field(default="", repr=False)
-    gemini_api_key: str = Field(default="", repr=False)
-    openrouter_api_key: str = Field(default="", repr=False)
-    general_api_key: str = Field(default="", repr=False)
     ai_config: AiConfig | None = None
     credential_secrets: dict[str, str] = Field(default_factory=dict, repr=False)
     observability: ObservabilitySettings = ObservabilitySettings()
@@ -132,19 +121,18 @@ class AiSettings(BaseModel):
     ispy_guess: FeatureModelConfig
 
     def api_key_for(self, provider: AiProvider) -> str:
-        if provider is AiProvider.OPENAI:
-            return self.openai_api_key
-        if provider is AiProvider.GEMINI:
-            return self.gemini_api_key
-        if provider is AiProvider.OPENROUTER:
-            return self.openrouter_api_key
+        """The first available secret among the credentials for ``provider``."""
+        if self.ai_config is None:
+            return ""
+        for credential_id, credential in self.ai_config.credentials.items():
+            secret = self.credential_secrets.get(credential_id)
+            if credential.adapter is provider and secret:
+                return secret
         return ""
 
     def secret_for(self, config: FeatureModelConfig) -> str:
         """The secret of the credential selected for a feature's deployment."""
-        if config.credential_id:
-            return self.credential_secrets.get(config.credential_id, "")
-        return self.api_key_for(config.provider)
+        return self.credential_secrets.get(config.credential_id, "")
 
     def is_configured(self, config: FeatureModelConfig) -> bool:
         return (
@@ -162,125 +150,11 @@ _FEATURE_FIELDS: dict[AiFeature, str] = {
 }
 
 
-class _LegacySpec:
-    """Legacy environment variable names and defaults for one feature."""
-
-    def __init__(
-        self,
-        provider_var: str,
-        provider_default: str,
-        timeout_var: str,
-        timeout_default: str,
-        model_vars: dict[AiProvider, str],
-        model_defaults: dict[AiProvider, str],
-    ) -> None:
-        self.provider_var = provider_var
-        self.provider_default = provider_default
-        self.timeout_var = timeout_var
-        self.timeout_default = timeout_default
-        self.model_vars = model_vars
-        self.model_defaults = model_defaults
-
-
-_LEGACY_SPECS: dict[AiFeature, _LegacySpec] = {
-    AiFeature.SCENE_ANALYSIS: _LegacySpec(
-        provider_var="SCENE_ANALYSIS_PROVIDER",
-        provider_default="openrouter",
-        timeout_var="SCENE_ANALYSIS_TIMEOUT_SECONDS",
-        timeout_default="120",
-        model_vars={
-            AiProvider.OPENAI: "OPENAI_SCENE_MODEL",
-            AiProvider.GEMINI: "GEMINI_SCENE_MODEL",
-            AiProvider.OPENROUTER: "OPENROUTER_SCENE_MODEL",
-        },
-        model_defaults={
-            AiProvider.OPENAI: "gpt-4o",
-            AiProvider.GEMINI: "",
-            AiProvider.OPENROUTER: "anthropic/claude-haiku-4.5",
-        },
-    ),
-    AiFeature.SCENE_TRANSLATION: _LegacySpec(
-        provider_var="TRANSLATION_PROVIDER",
-        provider_default="openrouter",
-        timeout_var="TRANSLATION_TIMEOUT_SECONDS",
-        timeout_default="60",
-        model_vars={
-            AiProvider.OPENAI: "OPENAI_TRANSLATION_MODEL",
-            AiProvider.GEMINI: "GEMINI_TRANSLATION_MODEL",
-            AiProvider.OPENROUTER: "OPENROUTER_TRANSLATION_MODEL",
-        },
-        model_defaults={
-            AiProvider.OPENAI: "gpt-4o-mini",
-            AiProvider.GEMINI: "gemini-3.5-flash-lite",
-            # Mistral Small scored marginally higher but is served only by
-            # Mistral and rate-limited upstream too often to be the default.
-            AiProvider.OPENROUTER: "openai/gpt-4o-mini",
-        },
-    ),
-    AiFeature.LEARNING_TASK: _LegacySpec(
-        provider_var="LEARNING_TASK_PROVIDER",
-        provider_default="openrouter",
-        timeout_var="LEARNING_TASK_TIMEOUT_SECONDS",
-        timeout_default="60",
-        model_vars={
-            AiProvider.OPENAI: "OPENAI_LEARNING_TASK_MODEL",
-            AiProvider.GEMINI: "GEMINI_LEARNING_TASK_MODEL",
-            AiProvider.OPENROUTER: "OPENROUTER_LEARNING_TASK_MODEL",
-        },
-        model_defaults={
-            AiProvider.OPENAI: "gpt-5.4-mini",
-            AiProvider.GEMINI: "gemini-3.5-flash-lite",
-            AiProvider.OPENROUTER: "openai/gpt-5.4-mini",
-        },
-    ),
-    AiFeature.ISPY_CLUE: _LegacySpec(
-        provider_var="ISPY_CLUE_PROVIDER",
-        provider_default="openrouter",
-        timeout_var="ISPY_CLUE_TIMEOUT_SECONDS",
-        timeout_default="60",
-        model_vars={
-            AiProvider.OPENAI: "OPENAI_ISPY_CLUE_MODEL",
-            AiProvider.GEMINI: "GEMINI_ISPY_CLUE_MODEL",
-            AiProvider.OPENROUTER: "OPENROUTER_ISPY_CLUE_MODEL",
-        },
-        model_defaults={
-            AiProvider.OPENAI: "gpt-4o-mini",
-            AiProvider.GEMINI: "gemini-3.1-flash-lite",
-            AiProvider.OPENROUTER: "google/gemini-3.1-flash-lite",
-        },
-    ),
-    AiFeature.ISPY_GUESS: _LegacySpec(
-        provider_var="ISPY_GUESS_PROVIDER",
-        provider_default="openrouter",
-        timeout_var="ISPY_GUESS_TIMEOUT_SECONDS",
-        timeout_default="60",
-        model_vars={
-            AiProvider.OPENAI: "OPENAI_ISPY_GUESS_MODEL",
-            AiProvider.OPENROUTER: "OPENROUTER_ISPY_GUESS_MODEL",
-        },
-        model_defaults={
-            AiProvider.OPENAI: "gpt-4.1-mini",
-            AiProvider.OPENROUTER: "openai/gpt-4.1-mini",
-        },
-    ),
-}
-
-_ALLOWED_PROVIDERS = ", ".join(provider.value for provider in AiProvider)
 _ALLOWED_MODES = ", ".join(mode.value for mode in AiMode)
 
 _TRUE_VALUES = {"1", "true", "yes", "on"}
 _FALSE_VALUES = {"0", "false", "no", "off"}
 _ENVIRONMENT_PATTERN = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
-
-_OBSERVABILITY_ALIASES: dict[str, tuple[str, ...]] = {
-    "AI_OBSERVABILITY_ENABLED": ("LANGFUSE_TRACING_ENABLED",),
-    "AI_OBSERVABILITY_BASE_URL": ("LANGFUSE_BASE_URL", "LANGFUSE_HOST"),
-    "AI_OBSERVABILITY_PUBLIC_KEY": ("LANGFUSE_PUBLIC_KEY",),
-    "AI_OBSERVABILITY_SECRET_KEY": ("LANGFUSE_SECRET_KEY",),
-    "AI_OBSERVABILITY_ENVIRONMENT": ("LANGFUSE_TRACING_ENVIRONMENT",),
-    "AI_OBSERVABILITY_CAPTURE_CONTENT": (),
-    "AI_RESULT_CACHE_ENABLED": (),
-}
 
 
 def _read(env: Mapping[str, str], name: str) -> str | None:
@@ -288,70 +162,8 @@ def _read(env: Mapping[str, str], name: str) -> str | None:
     return value.strip() if value is not None else None
 
 
-def _parse_provider(env: Mapping[str, str], feature: AiFeature, stem: str) -> AiProvider:
-    spec = _LEGACY_SPECS[feature]
-    raw = (
-        _read(env, f"AI_{stem}_PROVIDER")
-        or _read(env, spec.provider_var)
-        or spec.provider_default
-    ).casefold()
-    try:
-        return AiProvider(raw)
-    except ValueError as exc:
-        raise AiConfigurationError(
-            f"Invalid provider for {feature.value}: {raw!r} "
-            f"(allowed: {_ALLOWED_PROVIDERS})"
-        ) from exc
-
-
-def _parse_timeout(
-    env: Mapping[str, str], feature: AiFeature, stem: str
-) -> int:
-    spec = _LEGACY_SPECS[feature]
-    canonical = f"AI_{stem}_TIMEOUT_SECONDS"
-    raw = _read(env, canonical) or _read(env, spec.timeout_var) or spec.timeout_default
-    try:
-        value = int(raw)
-    except ValueError as exc:
-        raise AiConfigurationError(
-            f"Invalid timeout for {feature.value}: {raw!r} "
-            f"({canonical} must be a positive integer number of seconds)"
-        ) from exc
-    if value <= 0:
-        raise AiConfigurationError(
-            f"Invalid timeout for {feature.value}: {raw!r} "
-            f"({canonical} must be a positive integer number of seconds)"
-        )
-    return value
-
-
-def _parse_int(
-    env: Mapping[str, str], feature: AiFeature, name: str, kind: str
-) -> int | None:
-    raw = _read(env, name)
-    if raw is None or raw == "":
-        return None
-    try:
-        return int(raw)
-    except ValueError as exc:
-        raise AiConfigurationError(
-            f"Invalid {kind} for {feature.value}: {raw!r} ({name} must be an integer)"
-        ) from exc
-
-
-def _read_with_aliases(env: Mapping[str, str], canonical: str) -> str | None:
-    value = _read(env, canonical)
-    if value is not None:
-        return value
-    for alias in _OBSERVABILITY_ALIASES[canonical]:
-        value = _read(env, alias)
-        if value is not None:
-            return value
-    return None
-
-
 def _parse_bool(env: Mapping[str, str], canonical: str, default: bool) -> bool:
-    raw = _read_with_aliases(env, canonical)
+    raw = _read(env, canonical)
     if raw is None or raw == "":
         return default
     lowered = raw.casefold()
@@ -367,7 +179,7 @@ def _parse_bool(env: Mapping[str, str], canonical: str, default: bool) -> bool:
 
 def _parse_observability(env: Mapping[str, str]) -> ObservabilitySettings:
     environment = (
-        _read_with_aliases(env, "AI_OBSERVABILITY_ENVIRONMENT") or "development"
+        _read(env, "AI_OBSERVABILITY_ENVIRONMENT") or "development"
     )
     if not _ENVIRONMENT_PATTERN.fullmatch(environment) or environment.startswith(
         "langfuse"
@@ -378,10 +190,10 @@ def _parse_observability(env: Mapping[str, str]) -> ObservabilitySettings:
         )
     return ObservabilitySettings(
         enabled=_parse_bool(env, "AI_OBSERVABILITY_ENABLED", False),
-        base_url=_read_with_aliases(env, "AI_OBSERVABILITY_BASE_URL")
+        base_url=_read(env, "AI_OBSERVABILITY_BASE_URL")
         or "https://cloud.langfuse.com",
-        public_key=_read_with_aliases(env, "AI_OBSERVABILITY_PUBLIC_KEY") or "",
-        secret_key=_read_with_aliases(env, "AI_OBSERVABILITY_SECRET_KEY") or "",
+        public_key=_read(env, "AI_OBSERVABILITY_PUBLIC_KEY") or "",
+        secret_key=_read(env, "AI_OBSERVABILITY_SECRET_KEY") or "",
         environment=environment,
         capture_content=_parse_bool(env, "AI_OBSERVABILITY_CAPTURE_CONTENT", False),
     )
@@ -510,132 +322,6 @@ def _parse_image_moderation(env: Mapping[str, str]) -> ImageModerationSettings:
         ) from exc
 
 
-def _parse_model(
-    env: Mapping[str, str], feature: AiFeature, stem: str, provider: AiProvider
-) -> str:
-    canonical = _read(env, f"AI_{stem}_MODEL")
-    if canonical is not None:
-        return canonical
-    spec = _LEGACY_SPECS[feature]
-    legacy_var = spec.model_vars.get(provider)
-    if legacy_var is not None:
-        legacy = _read(env, legacy_var)
-        if legacy is not None:
-            return legacy
-    return spec.model_defaults.get(provider, "")
-
-
-def _load_feature(
-    env: Mapping[str, str], feature: AiFeature
-) -> FeatureModelConfig:
-    stem = feature.name
-    provider = _parse_provider(env, feature, stem)
-    max_retries = _parse_int(env, feature, f"AI_{stem}_MAX_RETRIES", "max retries")
-    max_output_tokens = _parse_int(
-        env, feature, f"AI_{stem}_MAX_OUTPUT_TOKENS", "max output tokens"
-    )
-    try:
-        return FeatureModelConfig(
-            feature=feature,
-            provider=provider,
-            model_name=_parse_model(env, feature, stem, provider),
-            timeout_seconds=_parse_timeout(env, feature, stem),
-            max_output_tokens=max_output_tokens,
-            credential_id="" if provider is AiProvider.NONE else provider.value,
-            deployment_id="" if provider is AiProvider.NONE else feature.value,
-            # Translations, lessons and I-Spy clues are structured responses. One
-            # repair attempt avoids replacing a usable session when a provider
-            # misses a non-schema constraint; an explicit 0 still disables it.
-            max_retries=(
-                1
-                if max_retries is None
-                and feature in {
-                    AiFeature.SCENE_TRANSLATION, AiFeature.LEARNING_TASK, AiFeature.ISPY_CLUE
-                }
-                else 0 if max_retries is None else max_retries
-            ),
-        )
-    except ValueError as exc:
-        raise AiConfigurationError(
-            f"Invalid configuration for {feature.value}: {exc}"
-        ) from exc
-
-
-_LEGACY_KEY_VARS: dict[AiProvider, tuple[str, str]] = {
-    AiProvider.OPENAI: ("AI_OPENAI_API_KEY", "OPENAI_API_KEY"),
-    AiProvider.GEMINI: ("AI_GEMINI_API_KEY", "GEMINI_API_KEY"),
-    AiProvider.OPENROUTER: ("AI_OPENROUTER_API_KEY", "OPENROUTER_API_KEY"),
-}
-
-
-def _first(env: Mapping[str, str], names: tuple[str, ...]) -> str:
-    for name in names:
-        value = _read(env, name)
-        if value:
-            return value
-    return ""
-
-
-def _legacy_feature_vars(feature: AiFeature) -> list[str]:
-    spec = _LEGACY_SPECS[feature]
-    stem = feature.name
-    return [
-        f"AI_{stem}_PROVIDER",
-        f"AI_{stem}_MODEL",
-        f"AI_{stem}_TIMEOUT_SECONDS",
-        f"AI_{stem}_MAX_RETRIES",
-        f"AI_{stem}_MAX_OUTPUT_TOKENS",
-        spec.provider_var,
-        spec.timeout_var,
-        *spec.model_vars.values(),
-    ]
-
-
-def _compat_config(features: Mapping[AiFeature, FeatureModelConfig]) -> AiConfig:
-    """Express env-derived feature settings as one deployment per feature."""
-    credentials = {
-        provider.value: CredentialConfig(
-            adapter=provider,
-            env=names,
-            quota_group=provider.value,
-            billing_group=provider.value,
-        )
-        for provider, names in _LEGACY_KEY_VARS.items()
-    }
-    deployments: dict[str, DeploymentConfig] = {}
-    routes: dict[AiFeature, RouteConfig] = {}
-    for feature, config in features.items():
-        if config.provider is AiProvider.NONE or not config.model_name:
-            routes[feature] = RouteConfig(enabled=False)
-            continue
-        deployments[feature.value] = DeploymentConfig(
-            adapter=config.provider,
-            api=DEFAULT_API[config.provider],
-            model=config.model_name,
-            capabilities=FEATURE_CAPABILITIES[feature],
-            credentials=(config.provider.value,),
-            defaults=GenerationDefaults(
-                timeout_seconds=config.timeout_seconds,
-                max_output_tokens=config.max_output_tokens,
-                max_retries=config.max_retries,
-                temperature=config.temperature,
-            ),
-            upstream_fallback=(
-                UpstreamFallback(allow_fallbacks=True)
-                if config.provider is AiProvider.OPENROUTER
-                else None
-            ),
-        )
-        attempts = 1 + min(config.max_retries, 1)
-        routes[feature] = RouteConfig(
-            deployments=(feature.value,),
-            policy=SelectionPolicy.PRIORITY,
-            deadline_seconds=config.timeout_seconds * attempts,
-            max_model_calls=attempts,
-        )
-    return AiConfig(credentials=credentials, deployments=deployments, routes=routes)
-
-
 def _features_from_config(
     config: AiConfig, secrets: Mapping[str, str]
 ) -> dict[AiFeature, FeatureModelConfig]:
@@ -646,7 +332,7 @@ def _features_from_config(
             features[feature] = FeatureModelConfig(
                 feature=feature,
                 provider=AiProvider.NONE,
-                timeout_seconds=int(_LEGACY_SPECS[feature].timeout_default),
+                timeout_seconds=60,
             )
             continue
         deployment_id, deployment = primary
@@ -665,31 +351,13 @@ def _features_from_config(
     return features
 
 
-def _env_feature_problems(settings: "AiSettings") -> list[str]:
-    problems: list[str] = []
-    for feature, field in _FEATURE_FIELDS.items():
-        config = getattr(settings, field)
-        if config.provider is AiProvider.NONE:
-            continue
-        stem = feature.name
-        if not config.model_name:
-            problems.append(f"{feature.value}: missing model name (set AI_{stem}_MODEL)")
-        if not settings.api_key_for(config.provider):
-            key_var = f"AI_{config.provider.value.upper()}_API_KEY"
-            problems.append(
-                f"{feature.value}: missing {config.provider.value} API key "
-                f"(set {key_var})"
-            )
-    return problems
-
-
 def load_ai_settings(env: Mapping[str, str] | None = None) -> AiSettings:
     """Load AI settings from ``env`` (defaults to ``os.environ``).
 
-    When ``AI_CONFIG_FILE`` names a TOML file, its credentials, deployments
-    and routes replace the per-feature environment variables. Secrets, the
-    mode, observability, moderation and object grounding always come from
-    ``env``. Pure: never constructs SDK clients or opens sockets.
+    Credentials, deployments and routes come from the TOML file named by
+    ``AI_CONFIG_FILE``, else ``backend/ai.toml``. Secrets, the mode, the result
+    cache, observability, moderation and object grounding come from ``env``.
+    Pure: never constructs SDK clients or opens sockets.
     """
     if env is None:
         env = os.environ
@@ -702,37 +370,11 @@ def load_ai_settings(env: Mapping[str, str] | None = None) -> AiSettings:
             f"Invalid AI_MODE: {raw_mode!r} (allowed: {_ALLOWED_MODES})"
         ) from exc
 
-    config_file = _read(env, AI_CONFIG_FILE_VAR)
-    if config_file:
-        ai_config = load_ai_config_file(config_file)
-        secrets = resolve_credential_secrets(ai_config, env)
-        features = _features_from_config(ai_config, secrets)
-        ignored = sorted(
-            {
-                name
-                for feature in AiFeature
-                for name in _legacy_feature_vars(feature)
-                if _read(env, name)
-            }
-        )
-        if ignored:
-            logger.warning(
-                "%s is set; ignoring per-feature environment variables: %s",
-                AI_CONFIG_FILE_VAR,
-                ", ".join(ignored),
-            )
-    else:
-        features = {feature: _load_feature(env, feature) for feature in AiFeature}
-        ai_config = _compat_config(features)
-        validate_ai_config(ai_config)
-        secrets = resolve_credential_secrets(ai_config, env)
-
+    ai_config = load_ai_config_file(_read(env, AI_CONFIG_FILE_VAR) or DEFAULT_AI_CONFIG_FILE)
+    secrets = resolve_credential_secrets(ai_config, env)
+    features = _features_from_config(ai_config, secrets)
     settings = AiSettings(
         mode=mode,
-        openai_api_key=_first(env, _LEGACY_KEY_VARS[AiProvider.OPENAI]),
-        gemini_api_key=_first(env, _LEGACY_KEY_VARS[AiProvider.GEMINI]),
-        openrouter_api_key=_first(env, _LEGACY_KEY_VARS[AiProvider.OPENROUTER]),
-        general_api_key=_read(env, "AI_API_KEY") or "",
         observability=_parse_observability(env),
         object_grounding=_parse_object_grounding(env),
         image_moderation=_parse_image_moderation(env),
@@ -743,14 +385,10 @@ def load_ai_settings(env: Mapping[str, str] | None = None) -> AiSettings:
     )
 
     if settings.mode is AiMode.REAL:
-        problems = (
-            missing_secret_problems(ai_config, secrets)
-            if config_file
-            else _env_feature_problems(settings)
-        )
+        problems = missing_secret_problems(ai_config, secrets)
         if (
             settings.image_moderation.provider is ImageModerationProvider.OPENAI
-            and not settings.openai_api_key
+            and not settings.api_key_for(AiProvider.OPENAI)
         ):
             problems.append(
                 "imageModeration: missing openai API key "

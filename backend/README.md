@@ -254,12 +254,9 @@ python -m app.scripts.precompute_preloaded_scenes --from-json out.json --max-pro
 
 Required environment: `DATABASE_URL`, `SUPABASE_URL`,
 `SUPABASE_SERVICE_ROLE_KEY`, `MEDIA_STORAGE_BUCKET`, plus the AI
-configuration. Canonical key names are `AI_OPENAI_API_KEY` and
-`AI_GEMINI_API_KEY`; plain `OPENAI_API_KEY`/`GEMINI_API_KEY` are accepted as
-fallbacks. Provider and model selection use `AI_SCENE_ANALYSIS_PROVIDER` /
-`AI_SCENE_ANALYSIS_MODEL` and `AI_SCENE_TRANSLATION_PROVIDER` /
-`AI_SCENE_TRANSLATION_MODEL`. Keep keys only in `backend/.env.local`; never
-commit them.
+configuration: the routes in `ai.toml` (see
+[AI configuration](#ai-configuration)) and the API keys their credentials
+name. Keep keys only in `backend/.env.local`; never commit them.
 
 | Data | Runtime storage |
 | --- | --- |
@@ -394,10 +391,10 @@ lesson and clue models each took 0.3 s.
 
 ### AI configuration
 
-By default every AI setting comes from the environment, as listed in
-`.env.example`. To use structured configuration instead, set
-`AI_CONFIG_FILE` to a TOML file; `ai.example.toml` reproduces the current
-defaults. The file holds no secrets. It has three sections:
+Credentials, deployments, models and routes come from a TOML file:
+`backend/ai.toml` by default, or the file named by `AI_CONFIG_FILE`. The
+default path is resolved from the package, so it loads from any working
+directory. The file holds no secrets. It has three sections:
 
 - `[credentials.<id>]`: the `adapter` the credential is for, the `env` variables
   that may hold its secret (the first non-empty one wins), and its shared
@@ -416,22 +413,18 @@ defaults. The file holds no secrets. It has three sections:
   - `deadline_seconds` and `max_model_calls`: the deadline and total
     outbound-call budget for one feature operation, enforced by the router.
 
-Precedence:
+There is no per-feature environment fallback. Variables such as
+`AI_SCENE_TRANSLATION_MODEL`, `TRANSLATION_PROVIDER`, `OPENAI_API_KEY` or
+`VISION_MODEL_NAME` are no longer read; change the TOML instead. The
+environment supplies only:
 
-1. **`AI_CONFIG_FILE` set:** the file's credentials, deployments and routes
-   decide each feature's adapter, model and generation settings. Per-feature
-   variables such as `AI_SCENE_TRANSLATION_MODEL` or `TRANSLATION_PROVIDER` are
-   ignored. If any of them are set, one warning lists their names, never their
-   values.
-2. **`AI_CONFIG_FILE` unset:** the per-feature `AI_*` variables apply, then
-   their deprecated aliases, then the built-in defaults. They are mapped to one
-   deployment and one `priority` route per feature, so behaviour is
-   unchanged. OpenRouter deployments get `allow_fallbacks = true`.
-3. **Always from the environment:**
-   - secrets: the variables a credential names, or `AI_<PROVIDER>_API_KEY`
-     then `<PROVIDER>_API_KEY` without a file;
-   - `AI_MODE`;
-   - observability, image moderation and object grounding settings.
+- secrets, from the variables each credential names (`AI_OPENROUTER_API_KEY`,
+  `AI_OPENAI_API_KEY`, `AI_GEMINI_API_KEY` in the default file). OpenAI image
+  moderation uses the first `openai` credential with a secret;
+- `AI_MODE` and, optionally, `AI_CONFIG_FILE`;
+- result cache, observability, image moderation and object grounding settings.
+
+`.env.example` lists exactly these.
 
 Validation runs at startup and makes no network calls. It checks:
 - that every reference resolves, and each credential matches its deployment's
@@ -608,8 +601,7 @@ description evaluation (`ispy-description-evaluation`), recorded as a
 generation with provider/model dimensions, validation outcome, latency and
 error codes.
 
-Canonical variables (the Langfuse-native `LANGFUSE_*` names are accepted as
-aliases when the canonical one is unset): `AI_OBSERVABILITY_ENABLED`,
+Variables: `AI_OBSERVABILITY_ENABLED`,
 `AI_OBSERVABILITY_BASE_URL`, `AI_OBSERVABILITY_PUBLIC_KEY`,
 `AI_OBSERVABILITY_SECRET_KEY`, `AI_OBSERVABILITY_ENVIRONMENT`, and
 `AI_OBSERVABILITY_CAPTURE_CONTENT`.

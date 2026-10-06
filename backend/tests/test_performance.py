@@ -116,7 +116,7 @@ class _FakeProviderClient:
     def __init__(self, _key, _config, **_options):
         pass
 
-    def generate(self, request):
+    def generate(self, request, **_options):
         return TextModelResponse(
             output_text="{}", model_name="m", prompt_version=request.prompt_version
         )

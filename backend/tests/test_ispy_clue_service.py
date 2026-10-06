@@ -557,15 +557,7 @@ def test_both_providers_share_prompt_and_schema() -> None:
     assert gemini_captured["kwargs"]["contents"] == [openai_user]
 
 
-def test_gemini_without_a_model_yields_no_generator() -> None:
-    settings = load_ai_settings(
-        env={
-            "AI_GEMINI_API_KEY": "gem-key",
-            "AI_ISPY_CLUE_PROVIDER": "gemini",
-            "AI_ISPY_CLUE_MODEL": "",
-            "GEMINI_ISPY_CLUE_MODEL": "",
-        }
-    )
-    assert settings.ispy_clue.provider.value == "gemini"
+def test_route_without_a_secret_yields_no_generator() -> None:
+    settings = load_ai_settings(env={"AI_GEMINI_API_KEY": "gem-key"})
     assert not settings.is_configured(settings.ispy_clue)
     assert build_ispy_clue_generator(settings, NoOpAITracer()) is None

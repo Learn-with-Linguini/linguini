@@ -620,15 +620,14 @@ def _compute_rows(
     )
     if analyzer is None:
         raise RuntimeError(
-            "SCENE_ANALYSIS is not configured; set AI_SCENE_ANALYSIS_PROVIDER/"
-            "AI_SCENE_ANALYSIS_MODEL and the matching API key."
+            "sceneAnalysis is not configured; enable routes.sceneAnalysis in the "
+            "AI config file and set its credential's API key."
         )
     translator = build_scene_translator(settings, tracer, pool=pool)
     if translator is None:
         raise RuntimeError(
-            "SCENE_TRANSLATION is not configured; set "
-            "AI_SCENE_TRANSLATION_PROVIDER/AI_SCENE_TRANSLATION_MODEL "
-            "and the matching API key."
+            "sceneTranslation is not configured; enable routes.sceneTranslation "
+            "in the AI config file and set its credential's API key."
         )
     text_client, _ = build_routed_client(
         "text",
