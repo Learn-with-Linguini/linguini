@@ -329,8 +329,10 @@ def test_gemini_rate_limit_reads_retry_info():
         (403, "PERMISSION_DENIED", Code.PROVIDER_AUTH, Scope.CREDENTIALS),
     ],
 )
-def test_gemini_rpc_status_sets_scope(status, rpc_status, code, scope):
-    error = ClientError(status, {"error": {"code": status, "status": rpc_status, "message": "x"}})
+def test_gemini_rpc_status_sets_scope(status, rpc_status, code, scope, caplog):
+    error = ClientError(
+        status, {"error": {"code": status, "status": rpc_status, "message": SECRET_KEY}}
+    )
 
     with pytest.raises(ProviderError) as raised:
         gemini(GeminiVisionClient, error=error).generate(vision_request())
@@ -339,6 +341,10 @@ def test_gemini_rpc_status_sets_scope(status, rpc_status, code, scope):
     assert raised.value.scope is scope
     assert raised.value.status_code == status
     assert raised.value.retry_after_seconds is None
+    message = caplog.records[-1].getMessage()
+    assert "vision provider error: provider=gemini model=gemini-flash" in message
+    assert f"status_code={status} code={code.value} scope={scope.value}" in message
+    assert SECRET_KEY not in caplog.text
 
 
 def test_gemini_server_error_is_service_scoped():

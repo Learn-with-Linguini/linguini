@@ -98,9 +98,19 @@ def provider_error(
         retry_after_seconds=retry_after_seconds,
         scope=scope,
     )
+    latency_seconds = round(time.monotonic() - start, 3)
     logger.warning(
-        "%s provider error",
+        "%s provider error: provider=%s model=%s endpoint=%s "
+        "status_code=%s code=%s scope=%s retry_after_seconds=%s latency_seconds=%s",
         kind,
+        provider,
+        model,
+        endpoint,
+        status_code,
+        code.value,
+        error.scope.value,
+        retry_after_seconds,
+        latency_seconds,
         extra={
             "code": code.value,
             "scope": error.scope.value,
@@ -110,7 +120,7 @@ def provider_error(
             "endpoint": endpoint,
             "model": model,
             "prompt_version": prompt_version,
-            "latency_seconds": round(time.monotonic() - start, 3),
+            "latency_seconds": latency_seconds,
         },
     )
     return error
