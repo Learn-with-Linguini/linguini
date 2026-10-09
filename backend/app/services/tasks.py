@@ -7,12 +7,18 @@ from app.services.users import UserService
 
 class TaskService:
     def __init__(
-        self, repository: TaskRepository, users: UserService, engine=None, ispy_guess_generator=None
+        self,
+        repository: TaskRepository,
+        users: UserService,
+        engine=None,
+        ispy_guess_generator=None,
+        ai=None,
     ) -> None:
         self.repository = repository
         self.users = users
         self.engine = engine
         self.ispy_guess_generator = ispy_guess_generator
+        self.ai = ai
 
     def get(self, task_id: UUID) -> SessionTaskPublic:
         task = self.repository.get(task_id, self.users.get_current_user().id)
@@ -25,7 +31,7 @@ class TaskService:
 
         user = self.users.get_current_user()
         return PostgresWorkflowRepository(
-            self.engine, user.id, ispy_guess_generator=self.ispy_guess_generator
+            self.engine, user.id, ispy_guess_generator=self.ispy_guess_generator, ai=self.ai
         ).task_action(task_id, action, request)
 
     def check_vocabulary_answer(

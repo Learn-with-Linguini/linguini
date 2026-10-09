@@ -1,18 +1,12 @@
-"""Provider-independent text-model client interface.
-
-Defines the request/response contract every text adapter implements. Adapters
-raise ``ProviderError`` (from ``app/ai/model_errors.py``) and contain no
-feature business rules.
-"""
+"""Per-call model settings shared by text and vision adapters."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Protocol
 
 
 @dataclass(frozen=True)
-class TextModelConfig:
+class ModelConfig:
     model_name: str
     timeout_seconds: float = 30.0
     max_output_tokens: int = 1500
@@ -32,25 +26,3 @@ class TextModelConfig:
             raise ValueError("max_retries must be 0 or 1: retry at most once")
         if not 0 <= self.temperature <= 2:
             raise ValueError("temperature must be between 0 and 2")
-
-
-@dataclass(frozen=True)
-class TextModelRequest:
-    system_prompt: str
-    user_content: str
-    json_schema_name: str
-    json_schema: dict[str, Any]
-    prompt_version: str
-
-
-@dataclass(frozen=True)
-class TextModelResponse:
-    output_text: str
-    model_name: str
-    prompt_version: str
-    input_tokens: int | None = None
-    output_tokens: int | None = None
-
-
-class TextModelClient(Protocol):
-    def generate(self, request: TextModelRequest) -> TextModelResponse: ...

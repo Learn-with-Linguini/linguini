@@ -12,6 +12,10 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
+from app.ai.adapters.gemini import GeminiTextClient, _gemini_json_schema
+from app.ai.adapters.openai import OpenAITextClient
+from app.ai.contracts.errors import ProviderError, ProviderErrorCode
+from app.ai.contracts.text import TextModelConfig, TextModelRequest, TextModelResponse
 from app.ai.features.translation import (
     SCENE_TRANSLATION_PROMPT_VERSION,
     SCENE_TRANSLATION_SCHEMA_VERSION,
@@ -23,11 +27,7 @@ from app.ai.features.translation import (
     build_scene_translation_schema,
     normalize_object_articles,
 )
-from app.ai.model_errors import ProviderError, ProviderErrorCode
 from app.ai.observability import NoOpAITracer
-from app.ai.text_gemini import GeminiTextClient
-from app.ai.text_model import TextModelConfig, TextModelRequest, TextModelResponse
-from app.ai.text_openai import OpenAITextClient
 
 FAKE_API_KEY = "test-key-123"
 
@@ -650,7 +650,7 @@ def _openai_adapter(captured):
     return OpenAITextClient(
         FAKE_API_KEY,
         config(),
-        client=httpx.Client(transport=httpx.MockTransport(handler)),
+        client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
     )
 
 
@@ -699,7 +699,7 @@ def test_both_providers_share_prompt_and_schema() -> None:
 
     gemini_config = gemini_captured["kwargs"]["config"]
     assert gemini_config.system_instruction == openai_system
-    assert gemini_config.response_json_schema == openai_schema
+    assert gemini_config.response_json_schema == _gemini_json_schema(openai_schema)
     assert gemini_captured["kwargs"]["contents"] == [openai_user]
 
 
@@ -720,3 +720,12 @@ def test_broken_tracer_cannot_fail_translation() -> None:
         FakeTextClient([VALID_OUTPUT]), tracer=NoOpAITracer()
     ).translate(PAYLOAD)
     assert result.objects[0].translation == "silla"
+
+
+def test_adapter_invalid_output_receives_bounded_repair() -> None:
+    client = FakeTextClient([
+        provider_error(ProviderErrorCode.PROVIDER_RESPONSE_INVALID),
+        VALID_OUTPUT,
+    ])
+    service(client).translate(PAYLOAD)
+    assert len(client.requests) == 2

@@ -160,7 +160,7 @@ class OpenAIJudge:
             from openai import OpenAI
 
             self.client = OpenAI(
-                api_key=api_key.strip(), timeout=timeout_seconds, max_retries=2
+                api_key=api_key.strip(), timeout=timeout_seconds, max_retries=0
             )
 
     def judge(self, system_prompt: str, payload: str) -> JudgeVerdict:

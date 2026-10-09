@@ -28,6 +28,9 @@ class PracticeService:
     def analyze(self, session_id):
         return self.repository.analyze(session_id, self._profile().id)
 
+    def retry_analysis(self, session_id):
+        return self.repository.retry_analysis(session_id, self._profile().id)
+
     def complete(self, session_id):
         return self.repository.finish(session_id, self._profile().id)
 

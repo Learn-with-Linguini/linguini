@@ -4,13 +4,20 @@
 Runs the configured scene analyzer once per bundled image, translates the
 returned object labels per target language, and stores the assembled items in
 ``preloaded_scenes.content`` so the Scene Analysis review screen opens with
-suggested words already on the photo. Tasks, rounds and prompts are
-placeholders only — the runtime workflow regenerates real activities.
+suggested words already on the photo. Public tasks, rounds and prompts are
+placeholders only.
+
+It then generates validated translation, lesson and I-Spy clue templates
+through the normal routed services and stores them server-only under
+``content["generated"]``. A learner session that accepts the scene unchanged
+maps them onto its own references and builds fresh tasks without a model
+call; anything else uses normal routed generation. Templates are reused on
+reruns while scene facts and prompt/schema/validator versions still match.
 
 Import-safe: all side effects live under ``main()``.
 
     python -m app.scripts.precompute_preloaded_scenes \
-        --dry-run --json out.json
+        --dry-run --json out.json --state state.json --report report.json
     python -m app.scripts.precompute_preloaded_scenes \
         --from-json out.json --emit-migration migration.sql
 """
@@ -34,17 +41,22 @@ from pydantic import Field, ValidationError
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
+from app.ai.cache import GENERATED_CONTENT_KEY
+from app.ai.contracts.errors import ProviderError
+from app.ai.contracts.schema import build_strict_json_schema
+from app.ai.contracts.text import TextModelRequest
 from app.ai.features.translation.schemas import TranslatedTerm
-from app.ai.model_errors import ProviderError
-from app.ai.observability import NoOpAITracer
+from app.ai.pool import ProviderPool
 from app.ai.registry import (
+    build_ispy_clue_generator,
+    build_learning_task_generator,
     build_object_grounder,
+    build_routed_client,
     build_scene_translator,
-    build_text_client,
     build_uploaded_scene_analyzer,
 )
+from app.ai.routing import RoutedModelClient
 from app.ai.settings import AiFeature, load_ai_settings
-from app.ai.text_model import TextModelClient, TextModelConfig, TextModelRequest
 from app.database import create_database_engine, read_connection
 from app.repositories.postgres.media_assets import media_assets
 from app.repositories.postgres.scenes import preloaded_scenes
@@ -52,8 +64,17 @@ from app.schemas.base import ApiModel, NonEmptyText
 from app.schemas.media import MediaAsset, SceneObject
 from app.schemas.scenes import PreloadedSceneDetail
 from app.schemas.sessions import Session
+from app.scripts.preloaded_templates import (
+    STAGE_FEATURES,
+    STAGES,
+    CallBudget,
+    CallCountingTracer,
+    StageOutcome,
+    error_code,
+    generate_row_templates,
+    route_calls,
+)
 from app.services.image_storage import ImageStorage
-from app.services.vision_model import build_strict_json_schema
 
 logger = logging.getLogger("precompute_preloaded_scenes")
 
@@ -352,12 +373,13 @@ def _load_base_scenes(engine, slugs: list[str]) -> list[dict[str, Any]]:
 
 
 def _fetch_examples(
-    client: TextModelClient,
+    client: RoutedModelClient,
     payload: dict[str, Any],
     expected_keys: set[str],
     json_schema: dict[str, Any],
 ) -> dict[str, tuple[str, str]]:
-    """One example sentence per word; retry once, then leave blanks."""
+    """One example sentence per word; repair within the route's call budget,
+    then leave blanks. Provider failover happens inside the routed client."""
     request = TextModelRequest(
         system_prompt=SCENE_EXAMPLES_SYSTEM_PROMPT,
         user_content=json.dumps(payload, ensure_ascii=False),
@@ -365,9 +387,16 @@ def _fetch_examples(
         json_schema=json_schema,
         prompt_version="scene-examples.v1",
     )
-    for attempt in range(1, 3):
+    invocation = client.start_invocation()
+    attempt = 0
+    while invocation.can_call():
+        attempt += 1
         try:
-            response = client.generate(request)
+            response = client.generate(request, invocation=invocation)
+        except ProviderError as error:
+            logger.warning("example sentences attempt %d failed: %s", attempt, error)
+            break
+        try:
             result = SceneExampleResult.model_validate_json(response.output_text)
             found = {example.key: example for example in result.examples}
             if expected_keys <= found.keys():
@@ -380,7 +409,7 @@ def _fetch_examples(
                 sorted(expected_keys - found.keys()),
                 attempt,
             )
-        except (ProviderError, ValidationError, ValueError) as error:
+        except (ValidationError, ValueError) as error:
             logger.warning("example sentences attempt %d failed: %s", attempt, error)
     logger.warning("leaving %d example sentences blank", len(expected_keys))
     return {}
@@ -519,7 +548,11 @@ def load_json_artifact(
                 raise ValueError("unknown mediaAssetId")
             PreloadedSceneDetail.model_validate(
                 {
-                    **row["content"],
+                    **{
+                        key: value
+                        for key, value in row["content"].items()
+                        if key != GENERATED_CONTENT_KEY
+                    },
                     "sceneId": row["slug"],
                     "languageCode": row["language_code"],
                     "language": row["language"],
@@ -542,40 +575,70 @@ def load_json_artifact(
     return rows, assets, failures
 
 
+def row_slug(base: dict[str, Any], language_code: str) -> tuple[str, str]:
+    """The slug and title of ``base``'s row in ``language_code``."""
+    if language_code == "es":
+        return base["slug"], base["title"]
+    return FRENCH_SLUG_TITLES[base["slug"]]
+
+
+def allowed_slugs(slugs: list[str]) -> set[str]:
+    return set(slugs) | {
+        FRENCH_SLUG_TITLES[slug][0] for slug in slugs if slug in FRENCH_SLUG_TITLES
+    }
+
+
 def _compute_rows(
     engine,
     settings,
     slugs: list[str],
     languages: list[str],
+    *,
+    tracer: CallCountingTracer,
+    budget: CallBudget,
+    outcomes: list[StageOutcome],
+    done: frozenset[str] = frozenset(),
+    checkpoint=None,
 ) -> tuple[list[dict[str, Any]], list[MediaAsset], int]:
+    """Analyze, translate and build rows for bases missing from ``done``.
+
+    A base starts only when its worst-case call count fits ``budget``.
+    ``checkpoint(rows, assets)`` runs after each base.
+    """
     storage = ImageStorage(
         os.getenv("SUPABASE_URL", "").strip(),
         os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip(),
     )
-    tracer = NoOpAITracer()
+    pool = ProviderPool.from_settings(settings)
+    grounder = build_object_grounder(settings)
     analyzer = build_uploaded_scene_analyzer(
-        settings, storage, tracer, object_grounder=build_object_grounder(settings)
+        settings,
+        storage,
+        tracer,
+        object_grounder=grounder,
+        pool=pool,
     )
     if analyzer is None:
         raise RuntimeError(
-            "SCENE_ANALYSIS is not configured; set AI_SCENE_ANALYSIS_PROVIDER/"
-            "AI_SCENE_ANALYSIS_MODEL and the matching API key."
+            "sceneAnalysis is not configured; enable routes.sceneAnalysis in the "
+            "AI config file and set its credential's API key."
         )
-    translator = build_scene_translator(settings, NoOpAITracer())
+    translator = build_scene_translator(settings, tracer, pool=pool)
     if translator is None:
         raise RuntimeError(
-            "SCENE_TRANSLATION is not configured; set "
-            "AI_SCENE_TRANSLATION_PROVIDER/AI_SCENE_TRANSLATION_MODEL "
-            "and the matching API key."
+            "sceneTranslation is not configured; enable routes.sceneTranslation "
+            "in the AI config file and set its credential's API key."
         )
-    translation_config = settings.feature(AiFeature.SCENE_TRANSLATION)
-    text_config = TextModelConfig(
-        model_name=translation_config.model_name,
-        timeout_seconds=translation_config.timeout_seconds,
-        max_output_tokens=translation_config.max_output_tokens or 1500,
-        max_retries=min(translation_config.max_retries, 1),
+    text_client, _ = build_routed_client(
+        "text",
+        settings,
+        AiFeature.SCENE_TRANSLATION,
+        default_max_output_tokens=1500,
+        pool=pool,
+        tracer=tracer,
     )
-    text_client = build_text_client(translation_config.provider, settings, text_config)
+    analysis_calls = route_calls(settings, AiFeature.SCENE_ANALYSIS) + (1 if grounder else 0)
+    translation_calls = route_calls(settings, AiFeature.SCENE_TRANSLATION)
     examples_schema = build_strict_json_schema(SceneExampleResult)
 
     bases = _load_base_scenes(engine, slugs)
@@ -588,15 +651,36 @@ def _compute_rows(
     failures = 0
     for base in bases:
         asset = base["asset"]
+        pending = [code for code in languages if row_slug(base, code)[0] not in done]
+        if not pending:
+            continue
         assets.append(asset)
+
+        def report(stage, status, reason, codes=pending, base=base):
+            for code in codes:
+                outcomes.append(StageOutcome(row_slug(base, code)[0], code, stage, status, reason))
+
+        if not budget.allows(analysis_calls + 2 * translation_calls * len(pending)):
+            report("analysis", "missing", "callBudget")
+            continue
         session = _synthetic_session(base["slug"], asset)
-        analysis = analyzer.analyze(session, asset, {}, None)
+        try:
+            analysis = analyzer.analyze(session, asset, {}, None)
+        except Exception as error:
+            failures += 1
+            logger.error("%s: analysis failed: %s", base["slug"], error_code(error))
+            report("analysis", "failed", error_code(error))
+            continue
+        finally:
+            if grounder:
+                budget.add_unrouted(1)
         objects = dedupe_objects(analysis.objects)
         if not objects:
             failures += 1
             logger.error("%s: analysis returned no objects", base["slug"])
+            report("analysis", "failed", "noObjects")
             continue
-        for language_code in languages:
+        for language_code in pending:
             try:
                 translated = translator.translate(
                     {
@@ -649,10 +733,7 @@ def _compute_rows(
                     if str(relation.subject_scene_object_id) in item_ids
                     and str(relation.reference_scene_object_id) in item_ids
                 ]
-                if language_code == "es":
-                    slug, title = base["slug"], base["title"]
-                else:
-                    slug, title = FRENCH_SLUG_TITLES[base["slug"]]
+                slug, title = row_slug(base, language_code)
                 content = build_scene_content(
                     slug=slug,
                     language_code=language_code,
@@ -667,8 +748,9 @@ def _compute_rows(
             except Exception as error:
                 failures += 1
                 logger.error(
-                    "%s (%s) failed: %s", base["slug"], language_code, error
+                    "%s (%s) failed: %s", base["slug"], language_code, error_code(error)
                 )
+                report("analysis", "failed", error_code(error), [language_code])
                 continue
             rows.append(
                 {
@@ -688,7 +770,36 @@ def _compute_rows(
             logger.info(
                 "%s (%s): %d objects", slug, language_code, len(objects)
             )
+        if checkpoint is not None:
+            checkpoint(rows, assets)
     return rows, assets, failures
+
+
+def _template_services(settings, tracer) -> dict[str, Any]:
+    pool = ProviderPool.from_settings(settings)
+    return {
+        "translation": build_scene_translator(settings, tracer, pool=pool),
+        "lessons": build_learning_task_generator(settings, tracer, pool=pool),
+        "clues": build_ispy_clue_generator(settings, tracer, pool=pool),
+    }
+
+
+def write_report(
+    path: Path, outcomes: list[StageOutcome], budget: CallBudget, *, dry_run: bool
+) -> None:
+    """A JSON report of every stage outcome: statuses and codes only."""
+    summary: dict[str, int] = {}
+    for outcome in outcomes:
+        summary[outcome.status] = summary.get(outcome.status, 0) + 1
+    document = {
+        "generatedAt": datetime.now(UTC).isoformat(),
+        "dryRun": dry_run,
+        "maxProviderCalls": budget.limit,
+        "providerCalls": budget.used,
+        "summary": summary,
+        "outcomes": [outcome.to_json() for outcome in outcomes],
+    }
+    path.write_text(json.dumps(document, indent=2))
 
 
 def _write_rows(engine, rows: list[dict[str, Any]]) -> None:
@@ -750,7 +861,44 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         "--from-json",
         type=Path,
         metavar="PATH",
-        help="load previously computed rows instead of calling any AI service",
+        help=(
+            "load previously computed rows instead of analyzing scenes; templates "
+            "are only checked unless --max-provider-calls is given"
+        ),
+    )
+    parser.add_argument(
+        "--state",
+        type=Path,
+        metavar="PATH",
+        help="resumable progress file, saved after each scene; rows in it are not recomputed",
+    )
+    parser.add_argument(
+        "--report",
+        type=Path,
+        metavar="PATH",
+        help="write a JSON report of every stage outcome (statuses and error codes only)",
+    )
+    parser.add_argument(
+        "--max-provider-calls",
+        type=int,
+        metavar="N",
+        help="hard cap on outbound model calls for the whole run; 0 only checks templates",
+    )
+    parser.add_argument(
+        "--only",
+        action="append",
+        choices=STAGES,
+        help="template stages allowed to call a provider (repeatable; default: all)",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="regenerate the selected templates even when they still match",
+    )
+    parser.add_argument(
+        "--skip-templates",
+        action="store_true",
+        help="do not check or generate lesson and clue templates",
     )
     parser.add_argument(
         "--emit-migration",
@@ -777,26 +925,84 @@ def main(argv: list[str] | None = None) -> int:
 
         load_dotenv(env_file, override=False)
 
+    if args.max_provider_calls is not None and args.max_provider_calls < 0:
+        logger.error("--max-provider-calls must be 0 or more")
+        return 2
     slugs = args.slugs or list(BASE_SLUGS)
     languages = args.languages or list(SUPPORTED_LANGUAGES)
+    allowed = allowed_slugs(slugs)
+
+    def wanted(row):
+        return row["slug"] in allowed and row["language_code"] in languages
+
+    settings = load_ai_settings()
+    tracer = CallCountingTracer()
+    limit = args.max_provider_calls
+    if limit is None and args.from_json:
+        limit = 0
+    budget = CallBudget(limit, tracer)
+    outcomes: list[StageOutcome] = []
+    saved: dict[str, dict[str, Any]] = {}
+    assets_by_id: dict[UUID, MediaAsset] = {}
+    if args.state and args.state.exists():
+        state_rows, state_assets, _ = load_json_artifact(args.state)
+        saved = {row["slug"]: row for row in state_rows if wanted(row)}
+        assets_by_id.update(state_assets)
+        logger.info("resuming %d rows from %s", len(saved), args.state)
+
+    def checkpoint(rows):
+        if args.state:
+            write_json_artifact(args.state, rows, list(assets_by_id.values()))
 
     if args.from_json:
         rows, loaded_assets, failures = load_json_artifact(args.from_json)
-        allowed = set(slugs) | {
-            FRENCH_SLUG_TITLES[slug][0]
-            for slug in slugs
-            if slug in FRENCH_SLUG_TITLES
-        }
-        rows = [
-            row
-            for row in rows
-            if row["slug"] in allowed and row["language_code"] in languages
-        ]
-        assets = list(loaded_assets.values())
+        rows = [saved.get(row["slug"], row) for row in rows if wanted(row)]
+        assets_by_id.update(loaded_assets)
     else:
-        settings = load_ai_settings()
         engine = create_database_engine()
-        rows, assets, failures = _compute_rows(engine, settings, slugs, languages)
+        kept = list(saved.values())
+
+        def save_computed(computed, computed_assets):
+            assets_by_id.update({asset.id: asset for asset in computed_assets})
+            checkpoint(kept + computed)
+
+        computed, computed_assets, failures = _compute_rows(
+            engine,
+            settings,
+            slugs,
+            languages,
+            tracer=tracer,
+            budget=budget,
+            outcomes=outcomes,
+            done=frozenset(saved),
+            checkpoint=save_computed,
+        )
+        assets_by_id.update({asset.id: asset for asset in computed_assets})
+        rows = kept + computed
+    assets = list(assets_by_id.values())
+
+    if not args.skip_templates:
+        services = _template_services(settings, tracer)
+        reserve = {
+            stage: route_calls(settings, feature) for stage, feature in STAGE_FEATURES.items()
+        }
+        for row in rows:
+            outcomes.extend(
+                generate_row_templates(
+                    row,
+                    services,
+                    budget,
+                    reserve,
+                    stages=frozenset(args.only or STAGES),
+                    force=args.force,
+                )
+            )
+            checkpoint(rows)
+    logger.info("provider calls: %d", budget.used)
+    if args.report:
+        write_report(args.report, outcomes, budget, dry_run=args.dry_run)
+        logger.info("wrote report to %s", args.report)
+    failures += sum(outcome.status == "failed" for outcome in outcomes)
 
     if args.json:
         write_json_artifact(args.json, rows, assets)

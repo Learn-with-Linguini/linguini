@@ -5,11 +5,11 @@ import json
 import httpx
 import pytest
 
+from app.ai.contracts import VisionImage
 from app.ai.features.moderation import (
     ImageModerationError,
     OpenAIImageModerator,
 )
-from app.services.vision_model import VisionImage
 
 PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"0" * 16
 FAKE_API_KEY = "test-key-123"

@@ -58,6 +58,52 @@ def valid_payload() -> dict:
     }
 
 
+def test_gemini_coordinates_use_fixed_scale_and_normalize_anchors():
+    payload = {
+        "suggestedSceneTitle": "Room",
+        "objects": [object_payload(x=372, y=619, width=54, height=68, anchor_x=399, anchor_y=653)],
+        "relations": [],
+    }
+    result = parse_scene_analysis(payload, normalize_gemini_coordinates=True)
+    box = result.objects[0].bounding_box
+    assert (box.x, box.y, box.width, box.height) == (0.372, 0.619, 0.054, 0.068)
+    assert result.objects[0].anchor_point.x == 0.399
+    assert result.objects[0].anchor_point.y == 0.653
+    assert payload["objects"][0]["boundingBox"]["x"] == 372
+    with pytest.raises(SceneAnalysisValidationError):
+        parse_scene_analysis(payload)
+
+
+def test_gemini_normalized_coordinates_are_unchanged():
+    payload = valid_payload()
+    assert parse_scene_analysis(payload, normalize_gemini_coordinates=True) == parse_scene_analysis(
+        payload
+    )
+
+
+@pytest.mark.parametrize("invalid", ["mixed", "negative", "nonfinite", "overflow", "outside"])
+def test_gemini_normalization_preserves_invalid_geometry_rejection(invalid):
+    first = object_payload(x=100, y=100, width=200, height=200, anchor_x=200, anchor_y=200)
+    second = copy.deepcopy(first)
+    second["objectKey"] = "table"
+    second["label"] = "table"
+    if invalid == "mixed":
+        second = object_payload("table")
+    elif invalid == "negative":
+        first["boundingBox"]["x"] = -10
+    elif invalid == "nonfinite":
+        first["boundingBox"]["x"] = math.inf
+    elif invalid == "overflow":
+        first["boundingBox"]["width"] = 1001
+    else:
+        first["boundingBox"]["x"] = 900
+    with pytest.raises(SceneAnalysisValidationError):
+        parse_scene_analysis(
+            {"suggestedSceneTitle": "Room", "objects": [first, second], "relations": []},
+            normalize_gemini_coordinates=True,
+        )
+
+
 def valid_result(
     *,
     objects: list[ModelSceneObject] | None = None,
@@ -248,13 +294,16 @@ def test_unknown_relation_object() -> None:
         validate_scene_analysis(valid_result(relations=[relation]))
 
     assert SceneAnalysisIssueCode.UNKNOWN_RELATION_OBJECT in issue_codes(raised.value)
-    assert len(
-        [
-            issue
-            for issue in raised.value.issues
-            if issue.code is SceneAnalysisIssueCode.UNKNOWN_RELATION_OBJECT
-        ]
-    ) == 2
+    assert (
+        len(
+            [
+                issue
+                for issue in raised.value.issues
+                if issue.code is SceneAnalysisIssueCode.UNKNOWN_RELATION_OBJECT
+            ]
+        )
+        == 2
+    )
 
 
 def test_self_relation() -> None:
@@ -345,16 +394,12 @@ def test_non_finite_and_out_of_range_anchor_points() -> None:
     scene_object.anchor_point = ModelAnchorPoint(x=math.nan, y=0.5)
     with pytest.raises(SceneAnalysisValidationError) as raised:
         validate_scene_analysis(valid_result(objects=[scene_object]))
-    assert (
-        SceneAnalysisIssueCode.NON_FINITE_ANCHOR_POINT in issue_codes(raised.value)
-    )
+    assert SceneAnalysisIssueCode.NON_FINITE_ANCHOR_POINT in issue_codes(raised.value)
 
     scene_object.anchor_point = ModelAnchorPoint(x=1.5, y=0.5)
     with pytest.raises(SceneAnalysisValidationError) as raised:
         validate_scene_analysis(valid_result(objects=[scene_object]))
-    assert (
-        SceneAnalysisIssueCode.ANCHOR_POINT_OUT_OF_RANGE in issue_codes(raised.value)
-    )
+    assert SceneAnalysisIssueCode.ANCHOR_POINT_OUT_OF_RANGE in issue_codes(raised.value)
 
 
 def test_in_box_anchor_outside_image_bounds_is_out_of_range() -> None:
@@ -362,9 +407,7 @@ def test_in_box_anchor_outside_image_bounds_is_out_of_range() -> None:
     scene_object.anchor_point = ModelAnchorPoint(x=-0.2, y=0.5)
     with pytest.raises(SceneAnalysisValidationError) as raised:
         validate_scene_analysis(valid_result(objects=[scene_object]))
-    assert (
-        SceneAnalysisIssueCode.ANCHOR_POINT_OUT_OF_RANGE in issue_codes(raised.value)
-    )
+    assert SceneAnalysisIssueCode.ANCHOR_POINT_OUT_OF_RANGE in issue_codes(raised.value)
 
 
 def test_non_finite_confidence_is_reported() -> None:
@@ -387,10 +430,7 @@ def test_inverse_duplicate_relation() -> None:
     ]
     with pytest.raises(SceneAnalysisValidationError) as raised:
         validate_scene_analysis(valid_result(relations=relations))
-    assert (
-        SceneAnalysisIssueCode.INVERSE_DUPLICATE_RELATION
-        in issue_codes(raised.value)
-    )
+    assert SceneAnalysisIssueCode.INVERSE_DUPLICATE_RELATION in issue_codes(raised.value)
 
 
 def test_non_inverse_reversed_relation_is_allowed() -> None:

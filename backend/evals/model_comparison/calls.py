@@ -31,15 +31,13 @@ from evals.scene_translation.ground_truth import load_cases as load_translation_
 from . import cjk_lexicon
 from .providers import (
     JUDGE,
-    TIMEOUTS,
     Candidate,
-    openai_sdk_client,
     recording_text_client,
     recording_vision_client,
     text_config,
     vision_config,
 )
-from .recording import CallRecord, Overrides, RecordingResponsesClient
+from .recording import CallRecord, Overrides
 
 EVALS = Path(__file__).resolve().parent.parent
 HERE = Path(__file__).resolve().parent
@@ -374,8 +372,8 @@ def _judge(
     system: str, payload: dict[str, Any], schema: type[BaseModel]
 ) -> tuple[Any, CallRecord]:
     """One judge verdict, through the same text seam the app uses."""
-    from app.ai.text_model import TextModelRequest
-    from app.services.vision_model import build_strict_json_schema
+    from app.ai.contracts.schema import build_strict_json_schema
+    from app.ai.contracts.text import TextModelRequest
 
     config = text_config("judge", JUDGE, Overrides())
     client = recording_text_client(JUDGE, config)
@@ -616,13 +614,13 @@ def judge_clues(quality: dict[str, Any], payload: dict[str, Any], result: Any) -
 
 
 def run_ispy_guess(cand: Candidate, overrides: Overrides, case: dict[str, Any]) -> dict:
-    from app.services.openai_ispy_guess import OpenAIISpyGuessGenerator
+    from app.ai.features.ispy_guess import ISpyGuessService
+    from app.ai.observability import NoOpAITracer
 
-    # The guess adapter still speaks the OpenAI SDK rather than the text seam.
-    timeout = TIMEOUTS.get("ispy_guess", 60)
-    client = RecordingResponsesClient(openai_sdk_client(cand, timeout), _facts_for(cand))
-    adapter = OpenAIISpyGuessGenerator(
-        "unused", cand.model, client=client, timeout_seconds=timeout
+    config = text_config("ispy_guess", cand, overrides)
+    client = recording_text_client(cand, config)
+    adapter = ISpyGuessService(
+        client, config, tracer=NoOpAITracer(), provider=cand.provider
     )
     scene = scenes()[case["scene_id"]]
     result, error = None, None

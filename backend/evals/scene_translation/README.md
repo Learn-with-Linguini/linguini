@@ -20,7 +20,7 @@ python -m evals.scene_translation.run_eval --compare evals/scene_translation/res
 ```
 
 Both adapters already exist in `app/services`, so a provider comparison needs
-no new integration work. Set `OPENAI_API_KEY` or `GEMINI_API_KEY`.
+no new integration work. Set `AI_OPENAI_API_KEY` or `AI_GEMINI_API_KEY`.
 
 ## How it is scored
 

@@ -1,6 +1,7 @@
 """Tests for the provider-neutral scene-analysis service package."""
 
 import base64
+import copy
 import json
 import threading
 from contextlib import contextmanager
@@ -10,6 +11,16 @@ from uuid import uuid4
 import httpx
 import pytest
 
+from app.ai.adapters.gemini import GeminiVisionClient
+from app.ai.adapters.openai import OpenAIVisionClient
+from app.ai.contracts import (
+    ProviderError,
+    ProviderErrorCode,
+    VisionImage,
+    VisionModelConfig,
+    VisionModelRequest,
+    VisionModelResponse,
+)
 from app.ai.features.moderation import (
     ImageModerationError,
     ImageModerationResult,
@@ -32,21 +43,11 @@ from app.ai.features.scene_analysis import (
     build_scene_analysis_schema,
 )
 from app.ai.observability import NoOpAITracer
-from app.ai.vision_gemini import GeminiVisionClient
 from app.schemas.enums import SceneRelationType
 from app.schemas.media import MediaAsset
 from app.schemas.sessions import Session
 from app.services.image_storage import UploadObjectMissing
 from app.services.scene_analysis import SceneAnalysisError
-from app.services.vision_model import (
-    VisionImage,
-    VisionModelConfig,
-    VisionModelError,
-    VisionModelErrorCode,
-    VisionModelRequest,
-    VisionModelResponse,
-)
-from app.services.vision_openai import OpenAIVisionClient
 
 PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"0" * 16
 FAKE_API_KEY = "test-key-123"
@@ -157,8 +158,8 @@ def analyzer(
     )
 
 
-def provider_error(code: VisionModelErrorCode) -> VisionModelError:
-    return VisionModelError(code, f"provider failure: {code.value}")
+def provider_error(code: ProviderErrorCode) -> ProviderError:
+    return ProviderError(code, f"provider failure: {code.value}")
 
 
 class RecordingObservation:
@@ -354,7 +355,7 @@ def test_semantically_invalid_output_retries_once_then_fails() -> None:
 
 def test_transient_failure_retries_then_succeeds() -> None:
     client = FakeVisionClient(
-        [provider_error(VisionModelErrorCode.PROVIDER_UNAVAILABLE), VALID_OUTPUT]
+        [provider_error(ProviderErrorCode.PROVIDER_UNAVAILABLE), VALID_OUTPUT]
     )
     result = analyzer(client).analyze(session(), asset(), {}, None)
     assert result.title == "Kitchen"
@@ -363,17 +364,17 @@ def test_transient_failure_retries_then_succeeds() -> None:
 
 def test_refusal_is_not_retried() -> None:
     client = FakeVisionClient(
-        [provider_error(VisionModelErrorCode.PROVIDER_REFUSED)]
+        [provider_error(ProviderErrorCode.PROVIDER_REFUSED)]
     )
     with pytest.raises(SceneAnalysisModelError) as raised:
         analyzer(client).analyze(session(), asset(), {}, None)
-    assert raised.value.code == VisionModelErrorCode.PROVIDER_REFUSED.value
+    assert raised.value.code == ProviderErrorCode.PROVIDER_REFUSED.value
     assert len(client.requests) == 1
 
 
 def test_max_retries_zero_disables_retry() -> None:
     client = FakeVisionClient(
-        [provider_error(VisionModelErrorCode.PROVIDER_UNAVAILABLE), VALID_OUTPUT]
+        [provider_error(ProviderErrorCode.PROVIDER_UNAVAILABLE), VALID_OUTPUT]
     )
     with pytest.raises(SceneAnalysisModelError):
         analyzer(client, cfg=config(max_retries=0)).analyze(
@@ -646,7 +647,7 @@ def _openai_adapter_client(captured):
     return OpenAIVisionClient(
         api_key=FAKE_API_KEY,
         config=config(),
-        client=httpx.Client(transport=httpx.MockTransport(handler)),
+        client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
     )
 
 
@@ -698,7 +699,13 @@ def test_both_providers_share_prompt_schema_and_result() -> None:
     gemini_kwargs = gemini_captured["gemini_kwargs"]
     gemini_config = gemini_kwargs["config"]
     assert gemini_config.system_instruction == openai_system
-    assert gemini_config.response_json_schema == openai_schema
+    # Gemini compiles the same contract without nested array bounds; the
+    # shared Pydantic output validation still enforces those bounds.
+    gemini_schema = copy.deepcopy(gemini_config.response_json_schema)
+    gemini_schema["properties"]["objects"]["maxItems"] = 6
+    gemini_schema["properties"]["objects"]["items"]["properties"]["attributes"]["maxItems"] = 6
+    gemini_schema["properties"]["relations"]["maxItems"] = 12
+    assert gemini_schema == openai_schema
     assert gemini_kwargs["contents"][0] == openai_user
 
 
@@ -749,24 +756,24 @@ def _gemini_client_returning(response):
 
 def test_gemini_timeout_maps_to_provider_timeout() -> None:
     client = _gemini_client_raising(httpx.ReadTimeout("t"))
-    with pytest.raises(VisionModelError) as raised:
+    with pytest.raises(ProviderError) as raised:
         client.generate(_gemini_request())
-    assert raised.value.code == VisionModelErrorCode.PROVIDER_TIMEOUT
+    assert raised.value.code == ProviderErrorCode.PROVIDER_TIMEOUT
 
 
 def test_gemini_client_error_statuses_map() -> None:
     from google.genai.errors import ClientError
 
     for status, expected in [
-        (401, VisionModelErrorCode.PROVIDER_AUTH),
-        (403, VisionModelErrorCode.PROVIDER_AUTH),
-        (429, VisionModelErrorCode.PROVIDER_RATE_LIMITED),
-        (400, VisionModelErrorCode.PROVIDER_ERROR),
+        (401, ProviderErrorCode.PROVIDER_AUTH),
+        (403, ProviderErrorCode.PROVIDER_ERROR),
+        (429, ProviderErrorCode.PROVIDER_RATE_LIMITED),
+        (400, ProviderErrorCode.PROVIDER_ERROR),
     ]:
         client = _gemini_client_raising(
             ClientError(status, {"error": {"message": "x"}})
         )
-        with pytest.raises(VisionModelError) as raised:
+        with pytest.raises(ProviderError) as raised:
             client.generate(_gemini_request())
         assert raised.value.code == expected
 
@@ -777,9 +784,9 @@ def test_gemini_server_error_maps_to_unavailable() -> None:
     client = _gemini_client_raising(
         ServerError(500, {"error": {"message": "x"}})
     )
-    with pytest.raises(VisionModelError) as raised:
+    with pytest.raises(ProviderError) as raised:
         client.generate(_gemini_request())
-    assert raised.value.code == VisionModelErrorCode.PROVIDER_UNAVAILABLE
+    assert raised.value.code == ProviderErrorCode.PROVIDER_UNAVAILABLE
 
 
 def test_gemini_safety_finish_reason_maps_to_refused() -> None:
@@ -789,9 +796,9 @@ def test_gemini_safety_finish_reason_maps_to_refused() -> None:
         text=None,
         candidates=[SimpleNamespace(finish_reason=types.FinishReason.SAFETY)],
     )
-    with pytest.raises(VisionModelError) as raised:
+    with pytest.raises(ProviderError) as raised:
         _gemini_client_returning(response).generate(_gemini_request())
-    assert raised.value.code == VisionModelErrorCode.PROVIDER_REFUSED
+    assert raised.value.code == ProviderErrorCode.PROVIDER_REFUSED
 
 
 def test_gemini_prompt_block_maps_to_refused() -> None:
@@ -800,9 +807,9 @@ def test_gemini_prompt_block_maps_to_refused() -> None:
         candidates=[],
         text=None,
     )
-    with pytest.raises(VisionModelError) as raised:
+    with pytest.raises(ProviderError) as raised:
         _gemini_client_returning(response).generate(_gemini_request())
-    assert raised.value.code == VisionModelErrorCode.PROVIDER_REFUSED
+    assert raised.value.code == ProviderErrorCode.PROVIDER_REFUSED
 
 
 def test_gemini_text_property_raising_maps_to_response_invalid() -> None:
@@ -815,9 +822,9 @@ def test_gemini_text_property_raising_maps_to_response_invalid() -> None:
         def text(self):
             raise ValueError("no text parts")
 
-    with pytest.raises(VisionModelError) as raised:
+    with pytest.raises(ProviderError) as raised:
         _gemini_client_returning(ExplodingText()).generate(_gemini_request())
-    assert raised.value.code == VisionModelErrorCode.PROVIDER_RESPONSE_INVALID
+    assert raised.value.code == ProviderErrorCode.PROVIDER_RESPONSE_INVALID
 
 
 def test_gemini_empty_text_maps_to_response_invalid() -> None:
@@ -825,9 +832,9 @@ def test_gemini_empty_text_maps_to_response_invalid() -> None:
         text=None,
         candidates=[SimpleNamespace(finish_reason="STOP")],
     )
-    with pytest.raises(VisionModelError) as raised:
+    with pytest.raises(ProviderError) as raised:
         _gemini_client_returning(response).generate(_gemini_request())
-    assert raised.value.code == VisionModelErrorCode.PROVIDER_RESPONSE_INVALID
+    assert raised.value.code == ProviderErrorCode.PROVIDER_RESPONSE_INVALID
 
 
 def test_gemini_usage_tokens_are_returned() -> None:

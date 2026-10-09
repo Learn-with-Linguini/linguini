@@ -3,13 +3,13 @@ import json
 import httpx
 import pytest
 
+from app.ai.adapters.openai import OpenAITextClient
+from app.ai.contracts.errors import ProviderError, ProviderErrorCode
+from app.ai.contracts.text import TextModelConfig, TextModelRequest
 from app.ai.features.translation import (
     SCENE_TRANSLATION_PROMPT_VERSION,
     build_scene_translation_schema,
 )
-from app.ai.model_errors import ProviderError, ProviderErrorCode
-from app.ai.text_model import TextModelConfig, TextModelRequest
-from app.ai.text_openai import OpenAITextClient
 
 FAKE_API_KEY = "test-key-123"
 
@@ -42,7 +42,7 @@ def adapter(handler, cfg: TextModelConfig | None = None) -> OpenAITextClient:
     return OpenAITextClient(
         api_key=FAKE_API_KEY,
         config=cfg or config(),
-        client=httpx.Client(transport=httpx.MockTransport(handler)),
+        client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
     )
 
 
@@ -94,7 +94,7 @@ def test_adapter_success_and_request_body() -> None:
     [
         (429, ProviderErrorCode.PROVIDER_RATE_LIMITED),
         (401, ProviderErrorCode.PROVIDER_AUTH),
-        (403, ProviderErrorCode.PROVIDER_AUTH),
+        (403, ProviderErrorCode.PROVIDER_ERROR),
         (500, ProviderErrorCode.PROVIDER_UNAVAILABLE),
         (400, ProviderErrorCode.PROVIDER_ERROR),
     ],

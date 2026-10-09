@@ -11,16 +11,14 @@ called directly, so their latency excludes OpenRouter's routing hop.
 
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
 from functools import cache
-from typing import Any
 
+from app.ai.contracts import VisionModelConfig
+from app.ai.contracts.text import TextModelConfig
 from app.ai.observability import NoOpAITracer
 from app.ai.registry import build_text_client, build_vision_client
 from app.ai.settings import AiProvider, AiSettings, load_ai_settings
-from app.ai.text_model import TextModelConfig
-from app.services.vision_model import VisionModelConfig
 
 from . import pricing
 from .recording import Overrides, RecordingClient
@@ -120,12 +118,9 @@ def facts() -> dict[str, pricing.ModelFacts]:
 @cache
 def settings() -> AiSettings:
     loaded = load_ai_settings()
-    for provider, name in (
-        (AiProvider.OPENAI, "OPENAI_API_KEY"),
-        (AiProvider.GEMINI, "GEMINI_API_KEY"),
-        (AiProvider.OPENROUTER, "OPENROUTER_API_KEY"),
-    ):
-        if not loaded.api_key_for(provider) and not os.getenv(name, "").strip():
+    for provider in (AiProvider.OPENAI, AiProvider.GEMINI, AiProvider.OPENROUTER):
+        if not loaded.api_key_for(provider):
+            name = f"AI_{provider.value.upper()}_API_KEY"
             raise SystemExit(f"{name} is not set; load backend/.env.local first")
     return loaded
 
@@ -161,19 +156,4 @@ def recording_vision_client(
     inner = build_vision_client(cand.ai_provider, settings(), config)
     return RecordingClient(
         inner, facts()[cand.catalogue_id], gemini=cand.provider == "gemini"
-    )
-
-
-def openai_sdk_client(cand: Candidate, timeout_seconds: int) -> Any:
-    """Raw SDK client for the I-Spy guess adapter, which is not on the text seam."""
-    from openai import OpenAI
-
-    from app.ai.openrouter import OPENROUTER_BASE_URL
-
-    base_url = OPENROUTER_BASE_URL if cand.provider == "openrouter" else None
-    return OpenAI(
-        api_key=settings().api_key_for(cand.ai_provider),
-        timeout=timeout_seconds,
-        max_retries=0,
-        **({"base_url": base_url} if base_url else {}),
     )

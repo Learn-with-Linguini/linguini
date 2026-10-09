@@ -35,6 +35,33 @@ class SceneAnalyzer(Protocol):
     ) -> SceneAnalysisResult: ...
 
 
+def scene_summary(scene: Mapping[str, Any] | None, objects: list[SceneObject]) -> str | None:
+    summary = scene["description"] if scene else None
+    if not summary and objects:
+        labels = ", ".join(obj.label for obj in objects)
+        summary = f"Words to practise in this photo: {labels}."
+    return summary
+
+
+def curated_relations(
+    scene: Mapping[str, Any], objects: list[SceneObject]
+) -> list[SceneObjectRelation]:
+    """The curated relations between ``objects``, built in item order from ``scene``."""
+    item_ids = {
+        entry["id"]: obj.id
+        for entry, obj in zip(scene["content"]["items"], objects, strict=True)
+    }
+    return [
+        SceneObjectRelation(
+            subject_scene_object_id=item_ids[row["subjectItemId"]],
+            relation=row["relation"],
+            reference_scene_object_id=item_ids[row["referenceItemId"]],
+            source_relation_key="precomputed-v1",
+        )
+        for row in scene["content"].get("relations", [])
+    ]
+
+
 class DeterministicSceneAnalyzer:
     """Placeholder analyzer; wraps the existing deterministic plan builder."""
 
@@ -53,26 +80,10 @@ class DeterministicSceneAnalyzer:
         with self.engine.begin() as connection:
             objects, _, _ = build_objects(connection, session, asset, profile, scene)
         title = scene["title"] if scene else "Your uploaded photo"
-        summary = scene["description"] if scene else None
-        if not summary and objects:
-            labels = ", ".join(obj.label for obj in objects)
-            summary = f"Words to practise in this photo: {labels}."
-        item_ids = {
-            entry["id"]: obj.id
-            for entry, obj in zip(scene["content"]["items"], objects, strict=True)
-        } if scene else {}
-        curated_relations = [
-            SceneObjectRelation(
-                subject_scene_object_id=item_ids[row["subjectItemId"]],
-                relation=row["relation"],
-                reference_scene_object_id=item_ids[row["referenceItemId"]],
-                source_relation_key="precomputed-v1",
-            )
-            for row in (scene["content"].get("relations", []) if scene else [])
-        ]
+        curated = curated_relations(scene, objects) if scene else []
         return SceneAnalysisResult(
-            title=title, summary=summary, objects=objects,
-            relations=curated_relations or self._relations(objects),
+            title=title, summary=scene_summary(scene, objects), objects=objects,
+            relations=curated or self._relations(objects),
         )
 
     @staticmethod

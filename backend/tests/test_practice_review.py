@@ -190,12 +190,22 @@ def test_review_rebuilds_tasks_only_for_selected_objects():
 
     repo.transaction = transaction
     repo._session = lambda *args: SimpleNamespace(
-        id=session_id, status="inProgress", started_at=None
+        id=session_id,
+        status="inProgress",
+        started_at=None,
+        session_title=None,
+        session_summary=None,
+        analysis_draft=None,
     )
     repo._tasks = lambda *args: []
-    # Both generation phases read only the accepted objects: translation, then
-    # the task build after the translation checkpoint has committed.
-    repo._detail = MagicMock(side_effect=[detail, detail, generated, generated])
+    repo._detail = MagicMock(side_effect=[detail, detail])
+    repo._scene_media = lambda *args: (None, None)
+    # Both generation phases read only the accepted objects: the claim snapshot,
+    # then the task build after the translation checkpoint has committed.
+    repo._scene_objects = MagicMock(
+        side_effect=[(generated.scene_objects, []), (generated.scene_objects, [])]
+    )
+    repo._vocabulary = lambda *args: (generated.vocabulary, generated.translations)
     repo.review(session_id, profile_id, ReviewPracticeRequest(accepted_object_ids=[objects[1].id]))
     inserted = [
         call.args[0].compile().params
