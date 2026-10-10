@@ -46,6 +46,13 @@ def analyze_session(session_id: UUID, service: PracticeServiceDep) -> SessionDet
     return service.analyze(session_id)
 
 
+@router.post("/{session_id}/retry-analysis", response_model=SessionDetailResponse)
+def retry_session_analysis(
+    session_id: UUID, service: PracticeServiceDep
+) -> SessionDetailResponse:
+    return service.retry_analysis(session_id)
+
+
 @router.post(
     "/{session_id}/generate-plan",
     response_model=SessionDetailResponse,

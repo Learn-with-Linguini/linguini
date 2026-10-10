@@ -97,6 +97,13 @@ SessionTasks -> attempts/completion/skipping -> progress`. The source is read fr
    `sessions.analysis_draft`. It creates no `scene_objects` or lesson tasks yet;
    `generate-plan` is an alias for this draft step. `GET` returns draft suggestions
    in `sceneObjects` until review is confirmed.
+   If analysis fails with `sceneAnalysisFailed` (provider error, invalid output or
+   a timed-out run), the image and its `media_assets` row stay saved and the
+   response sets `analysisRetryable`. `POST /api/v1/sessions/{id}/retry-analysis`
+   reruns analysis on that saved image without a new upload, up to three attempts
+   per session. It checks ownership and the open-practice limit, and concurrent
+   retries run the model once. `imageModerationFailed` and other failures cannot
+   be retried. Failed sessions stay out of `GET /sessions/active`.
    `GET /api/v1/sessions/{id}/review-word?label=chair` checks an English label
    against vocabulary for the active learning language.
    `PUT /api/v1/sessions/{id}/review` accepts `acceptedObjectIds` and `addedObjects`
@@ -189,9 +196,8 @@ analyses the six bundled scene images once per image with the configured
 scene-analysis provider, translates the detected objects into French and
 Spanish, and stores the assembled suggested words in
 `preloaded_scenes.content.items` so the Scene Analysis review screen opens
-with words already on the photo. Tasks are **not** precomputed — the runtime
-workflow still generates real tasks, rounds and prompts; the script only
-writes minimal placeholders for them.
+with words already on the photo. `content.tasks/rounds/prompts` stay minimal
+placeholders; real lessons and clues come from the templates below.
 
 ```sh
 python -m app.scripts.precompute_preloaded_scenes --dry-run --json out.json
@@ -210,14 +216,58 @@ never re-bills the model. `--emit-migration` writes an idempotent
 reuse the existing `media_assets` rows, so no asset inserts are emitted.
 Environment values are read from `backend/.env.local` (or `--env-file PATH`).
 
+##### Lesson and clue templates
+
+After building each row the script runs translation, learning tasks and I-Spy
+clues through the normal routed services and validators, using the same
+payload a learner session builds when it accepts every suggested object with
+its attributes and relations. Each validated result is stored server-only in
+`preloaded_scenes.content.generated` (`version: preloaded-templates.v1`) with:
+
+- `feature`, `language` and `variant` (`prompt|schema|validator` versions);
+- a `fingerprint` of the scene facts (title, summary, labels, attributes,
+  relations, marker positions) and language;
+- stable references (`o1`, `o1:color`, `r1`) instead of session IDs;
+- provenance (deployment, model, creation time).
+
+A new variant is added next to older ones. The public scene API never returns
+`generated` (`CONTENT_FIELDS` in `repositories/postgres/scenes.py`).
+
+At review time, unchanged curated content checks the templates first. A match
+is mapped onto the session's own object, attribute and relation IDs, validated
+again, and passed to the existing task builders, so each session gets fresh
+task records and answer keys stay in `session_tasks`. No model call is made.
+Ownership, claims, revision guards and idempotency are unchanged. Edited
+scenes, uploaded photos, partial selections, missing or stale templates and
+failed remapping fall back to the result cache and normal routed generation.
+A model or deployment change alone does not stale a template; rerun the
+script to refresh.
+
+```sh
+python -m app.scripts.precompute_preloaded_scenes --state state.json --report report.json
+python -m app.scripts.precompute_preloaded_scenes --from-json out.json --dry-run --report report.json
+python -m app.scripts.precompute_preloaded_scenes --from-json out.json --max-provider-calls 30 --only clues --force
+```
+
+- `--state PATH` saves progress after each scene and template; a rerun skips
+  finished rows and templates that still match.
+- `--max-provider-calls N` is a hard cap on model calls for the whole run. A
+  stage starts only if its route's full call budget still fits. `0` only
+  checks templates and reports missing ones; with `--from-json` the default
+  is `0`, otherwise unlimited.
+- `--only translation|lessons|clues` limits which stages may call a model;
+  `--force` regenerates them even when they match. `--skip-templates` skips
+  the stages.
+- `--report PATH` writes each scene, language and stage with its status
+  (`reused`, `generated`, `missing`, `failed`) and an error code only, never
+  scene text, provider bodies or keys. The script exits non-zero when a stage
+  fails; `missing` alone does not fail the run.
+
 Required environment: `DATABASE_URL`, `SUPABASE_URL`,
 `SUPABASE_SERVICE_ROLE_KEY`, `MEDIA_STORAGE_BUCKET`, plus the AI
-configuration. Canonical key names are `AI_OPENAI_API_KEY` and
-`AI_GEMINI_API_KEY`; plain `OPENAI_API_KEY`/`GEMINI_API_KEY` are accepted as
-fallbacks. Provider and model selection use `AI_SCENE_ANALYSIS_PROVIDER` /
-`AI_SCENE_ANALYSIS_MODEL` and `AI_SCENE_TRANSLATION_PROVIDER` /
-`AI_SCENE_TRANSLATION_MODEL`. Keep keys only in `backend/.env.local`; never
-commit them.
+configuration: the routes in `ai.toml` (see
+[AI configuration](#ai-configuration)) and the API keys their credentials
+name. Keep keys only in `backend/.env.local`; never commit them.
 
 | Data | Runtime storage |
 | --- | --- |
@@ -292,7 +342,19 @@ atomically. Prisma records the relations; SQL defines the deferred-check behavio
 
 Practice actions, evaluated attempts, encounters, and vocabulary counters commit in
 one transaction. Stable event identities and a user lock prevent duplicate credit
-under concurrent retries. Learners can leave up to three unfinished sessions open and
+under concurrent retries. No AI provider call runs inside a database transaction:
+task generation claims `sessions.generation_revision`, calls the models with no
+transaction open, then persists only if its revision is still current, so a stale
+run never overwrites or fails a newer one. Model-graded I-Spy descriptions claim
+`session_tasks.evaluation_claim_id` with the attempt's idempotency-derived ID,
+store a SHA-256 fingerprint of the request and a lease
+(`evaluation_claim_expires_at`: the model's timeout × attempts plus 15 s), evaluate
+outside the transaction, and save only while that claim is still held. Only the
+lease holder calls the model: a concurrent request with the same key polls (20–100 ms
+backoff) for the holder's saved attempt, the same key with different input gets 409
+before any model call, and an expired lease left by a crashed request is taken over.
+Unexpected failures release the lease at once, so one key yields one saved attempt,
+one model call and at most one XP award. Learners can leave up to three unfinished sessions open and
 resume an open session from the home screen. Task answers are private and are omitted
 from every public task response.
 
@@ -308,6 +370,238 @@ Tables use UUID identities and timezone-aware timestamps. Migrations define fore
 keys, checks, update triggers, RLS, and revoked browser-role grants. All access is
 through backend repositories; the frontend must not query these tables directly.
 
+### Backend performance
+
+Measured with `tests/test_performance.py` and a profiling run against local
+PostgreSQL. All five AI features were configured with test keys, and fake
+lesson and clue models each took 0.3 s.
+
+| Measurement | Before | After |
+| --- | --- | --- |
+| AI clients built per `GET /sessions/{id}` or `/sessions/active` | 5, on every request | 0; each client is built once per process, on first use |
+| Queries per `GET /sessions/{id}` / `/sessions/active` | 7 / 8 | 7 / 8 (no repeated reads found) |
+| Review until all tasks are ready | 0.85 s | 0.55 s |
+| Queries for review plus task generation | 57 | 51 |
+| Longest write transaction during generation | 18–22 ms | 19 ms |
+
+- `AiRuntime` (`app/ai/runtime.py`) is stored on `app.state` and shared by every
+  request. It builds a feature service only when a workflow first calls it, so
+  polling never constructs OpenAI or Gemini clients.
+- After translation, learning-task and I-Spy clue generation run at the same time.
+  The clue call uses a one-thread executor owned by the generation job, never the
+  shared background pool. That allows at most two model calls per
+  `BACKGROUND_WORKERS` slot and cannot deadlock the pool. Each call keeps its own
+  fallback: failed lessons keep generated clues, and failed clues keep generated
+  lessons.
+- The generation claim keeps only the session title, objects and relations. The
+  translation checkpoint reads only objects and vocabulary, so it no longer re-reads
+  the session, media asset, curated scene or the just-cleared task list.
+- No responses are cached. `app.repositories.postgres.workflow` logs
+  `Task generation <stage> took N ms` at INFO for translation, learning-task
+  generation and I-Spy clue generation, and transaction duration at DEBUG.
+
+### AI configuration
+
+Credentials, deployments, models and routes come from a TOML file:
+`backend/ai.toml` by default, or the file named by `AI_CONFIG_FILE`. The
+default path is resolved from the package, so it loads from any working
+directory. The file holds no secrets. It has three sections:
+
+- `[credentials.<id>]`: the `adapter` the credential is for, the `env` variables
+  that may hold its secret (the first non-empty one wins), and its shared
+  `quota_group` and `billing_group`.
+- `[deployments.<id>]`: `adapter`, `api` (`responses` or `generateContent`),
+  `model`, `capabilities` (`text`, `vision`, `jsonSchema`), the eligible
+  `credentials`, generation `defaults` (`timeout_seconds`,
+  `max_output_tokens`, `max_retries`, `temperature`), and, for OpenRouter
+  only, a required `upstream_fallback` (see [AI routing](#ai-routing)).
+- `[routes.<feature>]`, one for each of `sceneAnalysis`, `sceneTranslation`,
+  `learningTask`, `ispyClue` and `ispyGuess`:
+  - `enabled`;
+  - the approved `deployments`;
+  - `policy`: `priority` tries the deployments in listed order; `primary` uses
+    only the first. Both rotate the deployment's credentials;
+  - `deadline_seconds` and `max_model_calls`: the deadline and total
+    outbound-call budget for one feature operation, enforced by the router.
+
+There is no per-feature environment fallback. Variables such as
+`AI_SCENE_TRANSLATION_MODEL`, `TRANSLATION_PROVIDER`, `OPENAI_API_KEY` or
+`VISION_MODEL_NAME` are no longer read; change the TOML instead. The
+environment supplies only:
+
+- secrets, from the variables each credential names (`AI_OPENROUTER_API_KEY`,
+  `AI_OPENAI_API_KEY`, `AI_GEMINI_API_KEY` in the default file). OpenAI image
+  moderation uses the first `openai` credential with a secret;
+- `AI_MODE` and, optionally, `AI_CONFIG_FILE`;
+- result cache, observability, image moderation and object grounding settings.
+
+`.env.example` lists exactly these.
+
+Validation runs at startup and makes no network calls. It checks:
+- that every reference resolves, and each credential matches its deployment's
+  adapter;
+- that each adapter supports its deployment's API and capabilities, and each
+  route's deployments have the capabilities its feature needs (`sceneAnalysis`
+  needs `vision`);
+- that enabled routes have deployments, a deadline at least the primary
+  timeout, and a call budget covering its retries.
+
+With `AI_MODE=real`, every enabled route must also resolve a secret; with
+`demo`, a route without one falls back to deterministic behaviour.
+
+Error messages name keys and variables but never echo values, and secrets
+are excluded from `AiSettings` repr.
+
+### AI providers
+
+Feature services in `app/ai/features/` depend only on the contracts in
+`app/ai/contracts/`: `TextModelClient` and `VisionModelClient`, their
+request/response types, `ProviderError` and `build_strict_json_schema`.
+`app/ai/registry.py` picks an adapter from `app/ai/adapters/` for each
+configured provider:
+
+| Provider | Adapters | Endpoint |
+| --- | --- | --- |
+| OpenAI | `OpenAITextClient`, `OpenAIVisionClient` | Responses API |
+| OpenRouter | `OpenRouterTextClient`, `OpenRouterVisionClient` | OpenRouter's OpenAI-compatible Responses API |
+| Gemini | `GeminiTextClient`, `GeminiVisionClient` | `models.generate_content` (google-genai) |
+
+OpenAI and OpenRouter share the transport in `responses_api.py`. Each
+`ResponsesEndpoint` declares the options it is sent (temperature, strict JSON
+schema), where its request ID comes from and its own failure scopes. Image
+moderation and object grounding don't go through these adapters.
+
+Every successful response carries `metadata` (`ResponseMetadata`): provider,
+endpoint, requested model, the model the provider reports serving, request
+ID, a normalized `finish_status` plus the provider's own finish reason, and
+input/output/total tokens when the provider reports them. Every
+`ProviderError` carries a stable `code`, `provider`, HTTP `status_code`,
+`retry_after_seconds` (from `Retry-After`, `retry-after-ms` or Gemini's
+`RetryInfo`) and a `scope`: `request`, `response`, `model`, `credentials`,
+`quota` or `service`. Error messages are fixed text; provider response bodies
+and API keys never appear in errors or logs. Validation and fallbacks stay in
+each feature.
+
+### Credential pool
+
+Every model call leases a credential from the app-wide `CredentialPool`
+(`app/ai/pool.py`), shared by all features through `AiRuntime`:
+
+- **Selection:** a deployment's eligible credentials are tried round robin,
+  skipping any without a secret, disabled, or cooling down (itself or its
+  `quota_group`). A lock guards only selection and health updates; it is
+  never held during a model call.
+- **Clients:** one immutable client per deployment, credential and model
+  config, built on first use and reused. A shared client's key or model is
+  never changed.
+- **Health** is tracked separately per credential, quota group and deployment:
+
+| Provider error | Effect |
+| --- | --- |
+| Authentication failure (`providerAuth`, `credentials` scope) | Disables that credential for the process |
+| Rate limit (`providerRateLimited`, `quota` scope) | Cools down the quota group for `retry_after_seconds`, else 10 s |
+| Credits exhausted (OpenRouter 402, Gemini `FAILED_PRECONDITION`, OpenAI `insufficient_quota`) | Cools down the quota group for `retry_after_seconds`, else 300 s |
+| `model` scope (e.g. 404) | Cools down the deployment for `retry_after_seconds`, else 30 s |
+| `service` scope with `retry_after_seconds` | Cools down the deployment for that long |
+| `service` scope without it, `request` or `response` scope | No cooldown; service failures only count toward deployment health |
+
+A plain 429 is treated as a rate limit, never as exhausted credits. When
+nothing is eligible the call fails at once, with no network request, as `providerRateLimited` (with the soonest retry-after) or
+`providerAuth`, and the feature falls back as before. Cooldowns use an
+injectable clock, and health lives behind the `PoolState` interface
+(`InMemoryPoolState` today). There are no per-user quotas.
+
+### AI routing
+
+Feature services call `RoutedModelClient` (`app/ai/routing/`), which
+implements the text and vision contracts. Each feature operation opens one
+`InvocationContext` holding the route's `deadline_seconds` and
+`max_model_calls`; router failover and the feature's validation repair share
+it, so together they never exceed either.
+
+For each outbound call the router picks the route's next deployment in
+priority order, leases a credential round robin from the pool, reuses that
+deployment and credential's immutable client and caps the call's timeout at
+the time left. It never sleeps.
+
+| Failure | Router |
+| --- | --- |
+| Timeout, 5xx, rate limit, exhausted credits, unknown model | Next credential (quota) or next deployment (service, model) |
+| Authentication | Disables that credential, then the next credential or deployment |
+| Refusal, content filter, request or schema error (`request` scope) | Stops: terminal |
+| Invalid model output (`providerResponseInvalid`) | Returned to the feature's repair step |
+
+Failover stops once the budget or deadline is spent, and the last provider
+error is raised. Features no longer retry transport errors themselves; they
+keep only their validation repair, at most `max_retries` (≤ 1) repairs and
+only while the budget allows. With one deployment per route, call counts and
+fallbacks match the previous behaviour. A client injected directly into a
+feature (tests, scripts) gets a one-deployment route with a budget of
+`1 + max_retries` calls.
+
+**SDK retries:** every adapter makes exactly one HTTP request per call, so
+the budget counts every attempt we make. `httpx` never retries, Gemini pins
+`HttpRetryOptions(attempts=1)`, and the eval judge's OpenAI SDK uses
+`max_retries=0`.
+
+**OpenRouter upstream fallback:** OpenRouter deployments must set
+`upstream_fallback`, sent as `provider.allow_fallbacks` (plus `models` when
+fallback models are listed). The default keeps OpenRouter's fallback on, as
+before. OpenRouter's internal attempts on other hosts or models happen inside
+one HTTP request, so `max_model_calls` counts them as one call and cannot
+see or limit them; only the deadline bounds them.
+
+**Tracing:** each outbound call is a `model-call` span with the deployment,
+credential ID (never the secret), provider, requested model, attempt number,
+the fallback reason so far, the outcome (`success`, `failover`, `terminal`),
+error code, scope and status, latency and token usage. The feature's
+generation records the deployment, credential ID and model that served it,
+the route's attempts, the fallback reason and input/output/total tokens.
+`retry_count` counts every outbound call after the first.
+
+### AI result cache
+
+Scene translation, learning tasks and I-Spy clues share an in-memory cache of
+validated results (`app/ai/cache/`), one per API process, built once by
+`AiRuntime`. It is lost on restart and needs no migration; `CacheStore` is the
+interface for a shared store later.
+
+- **What is stored:** only results that passed the feature's validators.
+  Refusals, provider errors, invalid output and deterministic fallbacks are
+  never stored.
+- **Key:** SHA-256 of the canonical payload (scene title and summary, labels,
+  attributes, relations, anchor points), target language, the feature's
+  prompt, schema and validator versions, the model, temperature and max
+  output tokens of every deployment the route allows, and the scope.
+- **Session IDs:** object, attribute and relation keys are replaced by aliases
+  assigned from content (`o1`, `o1:color`, `r1`), so the same scene in another
+  session gets the same key. Duplicate objects keep separate aliases and
+  relations keep their endpoints. A hit is mapped back to the current IDs and
+  validated again; a result referencing an unknown key is never stored.
+- **Provenance:** each entry records its deployment, model, versions and
+  creation time. A hit whose deployment is no longer in the route is dropped.
+- **Scope:** an active preloaded scene whose objects, labels, attributes and
+  server-suggested relations are unchanged is shared by all users. Anything
+  else (uploaded photos, added objects, edited attributes or relations) is
+  scoped to the learner. The cache is consulted where the model was called,
+  after ownership checks, review, upload moderation and the generation claim;
+  revision guards still apply to cached results.
+- **Concurrent misses:** one request generates and the others wait, at most
+  for the route's deadline plus 5 s. If it fails, they all get the same
+  failure and use the feature's usual fallback, with no extra model calls.
+- **Controls:** `AI_RESULT_CACHE_ENABLED` (default `true`),
+  `AI_RESULT_CACHE_TTL_SECONDS` (default `86400`) and
+  `AI_RESULT_CACHE_MAX_ENTRIES` (default `2000`, least recently used evicted).
+  Passing `cache_scope=None` bypasses the cache (the precompute script never
+  uses it). `ResultCache.invalidate(feature=..., scope=...)` and `clear()`
+  drop entries. Bump a feature's `*_VALIDATOR_VERSION` when its validation
+  rules change.
+- **Output quality:** a hit already passed the same validators and is checked
+  again, and a miss sends the same request as before. Learners replaying a
+  curated scene get the same tasks within the TTL; with temperature 0 that
+  removes only incidental provider variation. Model updates behind an
+  unchanged model name appear once entries expire or are invalidated.
+
 ### AI observability
 
 AI calls can be traced to Langfuse. Tracing is off by default and strictly
@@ -318,8 +612,7 @@ description evaluation (`ispy-description-evaluation`), recorded as a
 generation with provider/model dimensions, validation outcome, latency and
 error codes.
 
-Canonical variables (the Langfuse-native `LANGFUSE_*` names are accepted as
-aliases when the canonical one is unset): `AI_OBSERVABILITY_ENABLED`,
+Variables: `AI_OBSERVABILITY_ENABLED`,
 `AI_OBSERVABILITY_BASE_URL`, `AI_OBSERVABILITY_PUBLIC_KEY`,
 `AI_OBSERVABILITY_SECRET_KEY`, `AI_OBSERVABILITY_ENVIRONMENT`, and
 `AI_OBSERVABILITY_CAPTURE_CONTENT`.

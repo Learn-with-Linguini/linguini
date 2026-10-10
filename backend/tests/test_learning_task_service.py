@@ -11,6 +11,15 @@ from contextlib import contextmanager
 import httpx
 import pytest
 
+from app.ai.adapters.gemini import GeminiTextClient, _gemini_json_schema
+from app.ai.adapters.openai import OpenAITextClient
+from app.ai.contracts.errors import ProviderError, ProviderErrorCode
+from app.ai.contracts.schema import build_strict_json_schema
+from app.ai.contracts.text import (
+    TextModelConfig,
+    TextModelRequest,
+    TextModelResponse,
+)
 from app.ai.features.learning_tasks import (
     LEARNING_TASK_PROMPT_VERSION,
     LEARNING_TASK_SCHEMA_VERSION,
@@ -22,16 +31,7 @@ from app.ai.features.learning_tasks import (
     required_task_focuses,
     scene_generation_response_model,
 )
-from app.ai.model_errors import ProviderError, ProviderErrorCode
 from app.ai.observability import NoOpAITracer
-from app.ai.text_gemini import GeminiTextClient
-from app.ai.text_model import (
-    TextModelConfig,
-    TextModelRequest,
-    TextModelResponse,
-)
-from app.ai.text_openai import OpenAITextClient
-from app.services.vision_model import build_strict_json_schema
 
 FAKE_API_KEY = "test-key-123"
 
@@ -801,7 +801,7 @@ def _openai_adapter(captured, text):
     return OpenAITextClient(
         FAKE_API_KEY,
         config(),
-        client=httpx.Client(transport=httpx.MockTransport(handler)),
+        client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
     )
 
 
@@ -845,5 +845,14 @@ def test_both_providers_share_prompt_and_schema() -> None:
 
     gemini_config = gemini_captured["kwargs"]["config"]
     assert gemini_config.system_instruction == openai_system
-    assert gemini_config.response_json_schema == openai_schema
+    assert gemini_config.response_json_schema == _gemini_json_schema(openai_schema)
     assert gemini_captured["kwargs"]["contents"] == [openai_user]
+
+
+def test_adapter_invalid_output_receives_bounded_repair() -> None:
+    client = FakeTextClient([
+        provider_error(ProviderErrorCode.PROVIDER_RESPONSE_INVALID),
+        response_body(LearningTaskResult.model_validate(tasks())),
+    ])
+    service(client).generate(INPUT)
+    assert len(client.requests) == 2

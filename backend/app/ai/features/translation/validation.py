@@ -16,6 +16,9 @@ from app.ai.features.translation.schemas import (
 )
 from app.services.scene_analysis import SceneAnalysisError
 
+SCENE_TRANSLATION_VALIDATOR_VERSION = "scene-translation-validator.v1"
+"""Bump when validation rules change, so cached results stop matching."""
+
 
 class SceneTranslationError(SceneAnalysisError):
     """The confirmed scene could not be translated reliably."""

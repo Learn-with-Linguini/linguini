@@ -18,6 +18,9 @@ from typing import Any
 from app.ai.features.ispy_clues.schemas import ISpyClueResult
 from app.services.scene_analysis import SceneAnalysisError
 
+ISPY_CLUE_VALIDATOR_VERSION = "ispy-clues-validator.v1"
+"""Bump when validation rules change, so cached results stop matching."""
+
 
 class ISpyClueGenerationError(SceneAnalysisError):
     """The provider did not return safe, scene-grounded I-Spy clues."""

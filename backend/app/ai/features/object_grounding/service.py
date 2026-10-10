@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from io import BytesIO
 from typing import Protocol
 
-from app.services.vision_model import VisionImage
+from app.ai.contracts import VisionImage
 
 logger = logging.getLogger(__name__)
 

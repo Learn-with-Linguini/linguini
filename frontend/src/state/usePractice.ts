@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { analyzePractice, ApiError, completePractice, createPractice, getPractice, getPracticeSummary, getSceneDetail, reviewPractice, taskAction } from "../lib/api";
+import { analyzePractice, ApiError, completePractice, createPractice, getPractice, getPracticeSummary, getSceneDetail, retryPracticeAnalysis, reviewPractice, taskAction } from "../lib/api";
 import type { PracticeReview } from "../lib/api";
 import type { PracticeDetail, SessionStatus, TaskAnswer, TaskActionResult } from "../lib/api";
 import { applyTaskResult, keepClientProgress } from "../lib/practiceUpdates";
@@ -75,6 +75,24 @@ export function usePractice(_userId: string, profileId: string, onLearningChange
       setError(friendlyError(error));
       setStalled(true);
     }
+  }, [loadSession]);
+  const retryAnalysis = useCallback(async (id: string) => {
+    if (busy.current) return;
+    busy.current = true; setSaving(true); setError(null);
+    let data: PracticeDetail;
+    try {
+      try { data = await retryPracticeAnalysis(id); }
+      catch (error) {
+        // A concurrent retry or a changed session: show its current state.
+        if (!(error instanceof ApiError && error.code === "practice_conflict")) throw error;
+        data = await getPractice(id);
+      }
+    } catch (error) {
+      setError(friendlyError(error));
+      return;
+    } finally { busy.current = false; setSaving(false); }
+    try { await loadSession(id, data); }
+    catch (error) { setError(friendlyError(error)); }
   }, [loadSession]);
   const startSession = useCallback(async (sceneId: string) => {
     const scene = await getSceneDetail(sceneId);
@@ -161,5 +179,5 @@ export function usePractice(_userId: string, profileId: string, onLearningChange
       return false;
     } finally { busy.current = false; setSaving(false); }
   }, [session, loadSession, applySession, withClientProgress]);
-  return { session, practiceSaving, practiceError, practiceStalled, startSession, loadSession, retryProcessing, actOnTask, completeSession, completionPending: completion.isPending, completionError, retryCompletion, flushLearningChanges, saveReview, micReady, setMicReady };
+  return { session, practiceSaving, practiceError, practiceStalled, startSession, loadSession, retryProcessing, retryAnalysis, actOnTask, completeSession, completionPending: completion.isPending, completionError, retryCompletion, flushLearningChanges, saveReview, micReady, setMicReady };
 }

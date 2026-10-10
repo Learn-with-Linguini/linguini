@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import (
     Column,
     DateTime,
+    Integer,
     MetaData,
     String,
     Table,
@@ -54,6 +55,7 @@ sessions = Table(
         ),
     ),
     Column("idempotency_key", String(200)),
+    Column("generation_revision", Integer, nullable=False, server_default="0"),
     schema="public",
 )
 

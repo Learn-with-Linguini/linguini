@@ -173,11 +173,6 @@ def main(argv: list[str] | None = None) -> int:
                 continue
             if call == "scene_analysis" and not facts()[cand.catalogue_id].vision:
                 continue
-            if call == "ispy_guess" and cand.provider == "gemini":
-                # That adapter speaks the OpenAI SDK; Gemini models are
-                # reached through OpenRouter instead.
-                print(f"skip {cand} for ispy_guess: use openrouter:google/*", file=sys.stderr)
-                continue
             for overrides in grid:
                 for run in range(runs):
                     for case in cases:

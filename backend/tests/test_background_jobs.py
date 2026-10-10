@@ -29,7 +29,7 @@ def test_translations_are_committed_before_lesson_generation(database):
     attempts = []
     completions = []
 
-    def translate(payload):
+    def translate(payload, cache_scope=None):
         return SceneTranslationResult.model_validate({
             kind: [
                 {**term, "translation": "mesa", "phoneticText": "MEH-sah"}
@@ -38,7 +38,7 @@ def test_translations_are_committed_before_lesson_generation(database):
             for kind in ("objects", "attributes", "relationships")
         })
 
-    def generate(_payload):
+    def generate(_payload, cache_scope=None):
         # A separate reader must see the checkpoint before this slow call ends.
         observed.append(repo.get(sid, profile.id))
         intro = observed[-1].tasks[0]
@@ -165,7 +165,7 @@ def test_task_generation_failure_fails_the_session_without_escaping(database):
     repo = PostgresWorkflowRepository(
         engine,
         owner.id,
-        translator=SimpleNamespace(translate=lambda *args: 1 / 0),
+        translator=SimpleNamespace(translate=lambda *args, **kwargs: 1 / 0),
         background=runner,
     )
     sid = UUID(create_run(client, profile)["session"]["id"])

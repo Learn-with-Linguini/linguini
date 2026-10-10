@@ -3,19 +3,19 @@ import json
 import httpx
 import pytest
 
+from app.ai.adapters.openai import OpenAIVisionClient
+from app.ai.contracts import (
+    ProviderError,
+    ProviderErrorCode,
+    VisionImage,
+    VisionModelConfig,
+    VisionModelRequest,
+    build_strict_json_schema,
+)
 from app.ai.features.scene_analysis import (
     SCENE_ANALYSIS_PROMPT_VERSION,
     SceneAnalysisModelResult,
 )
-from app.services.vision_model import (
-    VisionImage,
-    VisionModelConfig,
-    VisionModelError,
-    VisionModelErrorCode,
-    VisionModelRequest,
-    build_strict_json_schema,
-)
-from app.services.vision_openai import OpenAIVisionClient, build_vision_client
 
 PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"0" * 16
 FAKE_API_KEY = "test-key-123"
@@ -69,7 +69,7 @@ def adapter(
     return OpenAIVisionClient(
         api_key=FAKE_API_KEY,
         config=cfg or config(),
-        client=httpx.Client(transport=httpx.MockTransport(handler)),
+        client=httpx.AsyncClient(transport=httpx.MockTransport(handler)),
     )
 
 
@@ -118,18 +118,18 @@ def test_adapter_success_and_request_body() -> None:
 @pytest.mark.parametrize(
     ("status_code", "expected"),
     [
-        (429, VisionModelErrorCode.PROVIDER_RATE_LIMITED),
-        (401, VisionModelErrorCode.PROVIDER_AUTH),
-        (403, VisionModelErrorCode.PROVIDER_AUTH),
-        (500, VisionModelErrorCode.PROVIDER_UNAVAILABLE),
-        (400, VisionModelErrorCode.PROVIDER_ERROR),
+        (429, ProviderErrorCode.PROVIDER_RATE_LIMITED),
+        (401, ProviderErrorCode.PROVIDER_AUTH),
+        (403, ProviderErrorCode.PROVIDER_ERROR),
+        (500, ProviderErrorCode.PROVIDER_UNAVAILABLE),
+        (400, ProviderErrorCode.PROVIDER_ERROR),
     ],
 )
-def test_adapter_maps_http_errors(status_code: int, expected: VisionModelErrorCode) -> None:
+def test_adapter_maps_http_errors(status_code: int, expected: ProviderErrorCode) -> None:
     def handler(req: httpx.Request) -> httpx.Response:
         return httpx.Response(status_code, json={"error": {"message": "nope"}})
 
-    with pytest.raises(VisionModelError) as raised:
+    with pytest.raises(ProviderError) as raised:
         adapter(handler).generate(request())
 
     assert raised.value.code == expected
@@ -139,10 +139,10 @@ def test_adapter_timeout_maps_to_provider_timeout() -> None:
     def handler(req: httpx.Request) -> httpx.Response:
         raise httpx.ReadTimeout("timed out", request=req)
 
-    with pytest.raises(VisionModelError) as raised:
+    with pytest.raises(ProviderError) as raised:
         adapter(handler).generate(request())
 
-    assert raised.value.code == VisionModelErrorCode.PROVIDER_TIMEOUT
+    assert raised.value.code == ProviderErrorCode.PROVIDER_TIMEOUT
     assert raised.value.transient
 
 
@@ -161,10 +161,10 @@ def test_adapter_refusal_content_part() -> None:
             },
         )
 
-    with pytest.raises(VisionModelError) as raised:
+    with pytest.raises(ProviderError) as raised:
         adapter(handler).generate(request())
 
-    assert raised.value.code == VisionModelErrorCode.PROVIDER_REFUSED
+    assert raised.value.code == ProviderErrorCode.PROVIDER_REFUSED
 
 
 def test_adapter_incomplete_content_filter_is_refusal() -> None:
@@ -178,10 +178,10 @@ def test_adapter_incomplete_content_filter_is_refusal() -> None:
             },
         )
 
-    with pytest.raises(VisionModelError) as raised:
+    with pytest.raises(ProviderError) as raised:
         adapter(handler).generate(request())
 
-    assert raised.value.code == VisionModelErrorCode.PROVIDER_REFUSED
+    assert raised.value.code == ProviderErrorCode.PROVIDER_REFUSED
 
 
 def test_adapter_incomplete_max_tokens_is_response_invalid() -> None:
@@ -200,20 +200,20 @@ def test_adapter_incomplete_max_tokens_is_response_invalid() -> None:
             },
         )
 
-    with pytest.raises(VisionModelError) as raised:
+    with pytest.raises(ProviderError) as raised:
         adapter(handler).generate(request())
 
-    assert raised.value.code == VisionModelErrorCode.PROVIDER_RESPONSE_INVALID
+    assert raised.value.code == ProviderErrorCode.PROVIDER_RESPONSE_INVALID
 
 
 def test_adapter_empty_output_is_response_invalid() -> None:
     def handler(req: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json={"status": "completed", "output": []})
 
-    with pytest.raises(VisionModelError) as raised:
+    with pytest.raises(ProviderError) as raised:
         adapter(handler).generate(request())
 
-    assert raised.value.code == VisionModelErrorCode.PROVIDER_RESPONSE_INVALID
+    assert raised.value.code == ProviderErrorCode.PROVIDER_RESPONSE_INVALID
 
 
 def test_adapter_accepts_top_level_output_text() -> None:
@@ -229,14 +229,14 @@ def test_adapter_accepts_top_level_output_text() -> None:
 
 
 def test_vision_image_rejects_disallowed_inputs() -> None:
-    with pytest.raises(VisionModelError) as raised:
+    with pytest.raises(ProviderError) as raised:
         VisionImage(data=PNG_BYTES, mime_type="image/gif")
-    assert raised.value.code == VisionModelErrorCode.INVALID_IMAGE
+    assert raised.value.code == ProviderErrorCode.INVALID_IMAGE
 
-    with pytest.raises(VisionModelError):
+    with pytest.raises(ProviderError):
         VisionImage(data=b"", mime_type="image/png")
 
-    with pytest.raises(VisionModelError):
+    with pytest.raises(ProviderError):
         VisionImage(data=b"x" * (10 * 1024 * 1024 + 1), mime_type="image/png")
 
 
@@ -258,7 +258,7 @@ def test_error_hygiene_no_provider_body_or_key_leak() -> None:
     def handler(req: httpx.Request) -> httpx.Response:
         return httpx.Response(500, text=f"failure {secret}")
 
-    with pytest.raises(VisionModelError) as raised:
+    with pytest.raises(ProviderError) as raised:
         adapter(handler).generate(request())
 
     assert secret not in str(raised.value)
@@ -272,8 +272,3 @@ def test_config_validation() -> None:
         VisionModelConfig(model_name="m", timeout_seconds=0)
     with pytest.raises(ValueError):
         VisionModelConfig(model_name="m", max_output_tokens=0)
-
-
-def test_build_vision_client_rejects_unknown_provider() -> None:
-    with pytest.raises(ValueError, match="unknown vision provider"):
-        build_vision_client("gemini", FAKE_API_KEY, config())

@@ -30,7 +30,7 @@ function relationLabel(relation: string) {
 export function PracticeAnalysis() {
   const navigate = useNavigate();
   const scene = useScene();
-  const { session, saveReview, practiceSaving, practiceError, practiceStalled, retryProcessing } = useAppState();
+  const { session, saveReview, practiceSaving, practiceError, practiceStalled, retryProcessing, retryAnalysis } = useAppState();
   const [removed, setRemoved] = useState<string[]>([]);
   const [added, setAdded] = useState<PracticeReview["addedObjects"]>([]);
   const [relations, setRelations] = useState<PracticeReview["relations"]>(() => session?.sceneObjectRelations ?? []);
@@ -51,6 +51,23 @@ export function PracticeAnalysis() {
   const photoRef = useRef<HTMLDivElement>(null);
   const base = `/practice/sessions/${scene.sessionId}`;
   if (!session) return null;
+  if (session.session.status === "failed" && session.analysisRetryable) return <div className="stack analysis-page">
+    <h1>Scene analysis</h1>
+    <section className="analysis-loading" aria-live="polite">
+      <div className="analysis-loading__copy">
+        <h2>We couldn't read that photo</h2>
+        <p className="muted">The image service may be busy. Your photo is saved, so you can try again without uploading it.</p>
+        {practiceError ? <p role="alert">{practiceError}</p> : null}
+        <div className="stack-2">
+          <Button disabled={practiceSaving} onClick={() => void retryAnalysis(session.session.id)}>Try again</Button>
+          <Button variant="secondary" disabled={practiceSaving} onClick={() => navigate("/practice", { state: {
+            practiceNotice: "Your last photo is still saved. You can try it again or choose another one.",
+            retrySessionId: session.session.id,
+          } })}>Choose another photo</Button>
+        </div>
+      </div>
+    </section>
+  </div>;
   if (["completed", "failed", "abandoned"].includes(session.session.status)) {
     const dest = sessionDestination(session);
     return <Navigate to={dest.path} replace state={dest.notice ? { practiceNotice: dest.notice } : undefined} />;

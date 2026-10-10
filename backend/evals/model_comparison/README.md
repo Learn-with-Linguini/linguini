@@ -11,7 +11,7 @@ test cases, with the **production prompts, schemas and validators**.
 | `translation` | `OpenAISceneTranslator`, `GeminiSceneTranslator` | 13 es/fr cases (`../scene_translation`) + 4 ja/ko probes (`cases/translation_cjk.json`) |
 | `learning_tasks` | `OpenAILearningTaskGenerator`, `GeminiLearningTaskGenerator` | 4 es/fr scenes (`cases/scenes.json`) |
 | `ispy_clues` | `OpenAIISpyClueGenerator`, `GeminiISpyClueGenerator` | 6 scenes in es, fr, ja, ko |
-| `ispy_guess` | `OpenAIISpyGuessGenerator`, `GeminiISpyGuessGenerator` | 22 learner descriptions with known answers (`cases/ispy_guess.json`) |
+| `ispy_guess` | `ISpyGuessService` (shared text client: OpenAI, Gemini, OpenRouter) | 22 learner descriptions with known answers (`cases/ispy_guess.json`) |
 
 ## How a candidate is called
 
@@ -52,7 +52,7 @@ family with the `claude-haiku-4.5` candidate; the report flags that.
 
 ## Requirements
 
-`OPENAI_API_KEY`, `GEMINI_API_KEY` and `OPENROUTER_API_KEY` in
+`AI_OPENAI_API_KEY`, `AI_GEMINI_API_KEY` and `AI_OPENROUTER_API_KEY` in
 `backend/.env.local`. Behind antivirus HTTPS inspection (for example Avast Web
 Shield), `pip install truststore` so Python trusts the Windows certificate
 store; the runner uses it when present. `matplotlib` is needed only to draw the
