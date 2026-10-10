@@ -7,6 +7,7 @@ import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { practiceStages, taskDone } from "../lib/practiceTasks";
 import type { SessionTask } from "../lib/api";
+import { ReportIssueLink } from "../components/ReportIssueLink";
 
 export function ISpyPhase2() {
   const scene = useScene();
@@ -76,7 +77,17 @@ function Reflection({ task, index, total, onNext }: { task: SessionTask; index: 
     <Card><div className="stack-2"><span className="label muted">Describe this object</span><h2>{target?.word}</h2><span className="small muted">{target?.translation}</span><p>{content.prompt}</p></div></Card>
     <div className="stack-2"><span className="label muted">Words from this scene</span><div className="chip-row">{suggestions.map(word => <button key={word} type="button" className="chip" disabled={answered || practiceSaving} onClick={() => setText(value => `${value} ${word}`.trim())}>{word}</button>)}</div></div>
     <div className="field"><label className="field__label" htmlFor="reflection">Your clue</label><p className="ispy-opening">{opening}</p><input id="reflection" className="input" value={text} maxLength={2000} disabled={answered || practiceSaving} onChange={event => setText(event.target.value)} /></div>
-    {answered || feedback ? <Feedback><div className="stack-2" role="status">{guess ? <strong>Linguini guessed: {guess}</strong> : null}<span>{task.status === "skipped" ? "Skipped — no XP earned." : feedback ?? "Reflection saved."}</span></div></Feedback> : null}
+    {answered || feedback ? <>
+      <Feedback><div className="stack-2" role="status">{guess ? <strong>Linguini guessed: {guess}</strong> : null}<span>{task.status === "skipped" ? "Skipped — no XP earned." : feedback ?? "Reflection saved."}</span></div></Feedback>
+      {task.status !== "skipped" ? <ReportIssueLink label="Report a wrong guess" reportType="I-Spy guess" fields={[
+        ["Task ID", task.id],
+        ["Object shown", target?.word],
+        ["Your clue", `${opening} ${text.trim()}`],
+        ["Linguini guessed", guess],
+        ["Displayed feedback", feedback],
+        ["Language", scene.languageCode],
+      ]} /> : null}
+    </> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {answered ? <Button block disabled={practiceSaving} onClick={onNext}>{index === total - 1 ? "Finish session" : "Next item"} <ArrowRightIcon /></Button> : <>
       <Button block disabled={!text.trim() || practiceSaving} onClick={() => void submit()}>Send my response</Button>

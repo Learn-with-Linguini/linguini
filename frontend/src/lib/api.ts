@@ -154,9 +154,41 @@ export interface LanguageProfile {
 export type UserPatch = Partial<Pick<User, "displayName" | "timezone" | "onboardingCompleted" | "learningGoal" | "microphoneEnabled" | "cameraEnabled">>;
 export type LanguageProfilePatch = Partial<Pick<LanguageProfile, "proficiencyLevel" | "isActive" | "dailyGoalMinutes" | "preferredInputMode">>;
 
+export type SupportIssueType = "general" | "technical" | "content" | "account";
+export interface SupportAttachmentInput {
+  fileName: string;
+  mimeType: "image/jpeg" | "image/png" | "image/webp" | "application/pdf" | "text/plain";
+  dataBase64: string;
+}
+export interface SupportRequestInput {
+  subject: string;
+  description: string;
+  issueType: SupportIssueType;
+  attachments: SupportAttachmentInput[];
+}
+export interface PublicSupportRequestInput extends SupportRequestInput {
+  email: string;
+}
+export type LessonReportIssue = "answer_marked_incorrectly" | "solution_incorrect" | "wording_unclear" | "audio_incorrect" | "other";
+export interface LessonReportInput {
+  reportType: string;
+  issue: LessonReportIssue;
+  additionalDetails: string;
+  context: Array<{ label: string; value: string }>;
+}
+
 function write<T>(path: string, method: string, body: unknown): Promise<T> {
   return request(path, undefined, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 }
+
+export const submitSupportRequest = (payload: SupportRequestInput) =>
+  write<{ status: "sent" }>("/api/v1/support/requests", "POST", payload);
+
+export const submitPublicSupportRequest = (payload: PublicSupportRequestInput) =>
+  write<{ status: "sent" }>("/api/v1/support/public-requests", "POST", payload);
+
+export const submitLessonReport = (payload: LessonReportInput) =>
+  write<{ status: "sent" }>("/api/v1/support/lesson-reports", "POST", payload);
 
 export const getLanguageProfiles = (signal?: AbortSignal) => request<LanguageProfile[]>("/api/v1/me/language-profiles", signal);
 export const updateUser = (patch: UserPatch) => write<User>("/api/v1/me", "PATCH", patch);

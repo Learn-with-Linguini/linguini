@@ -28,6 +28,10 @@ export function Why() {
           <p className={styles.body}>
             Because every word is pinned to a photo you took, it comes back each time you pass that place again.
           </p>
+          <p className={styles.body}>
+            Language has nuance, and beta software can get an answer wrong. Every checked exercise includes a simple
+            report link, so learners can show us the exact prompt, answer, and solution that needs another look.
+          </p>
         </Reveal>
 
         <div className={styles.compare}>
