@@ -23,10 +23,6 @@ function formatDate(value: string): string {
   return Number.isNaN(date.getTime()) ? value : dateFormat.format(date);
 }
 
-function repoUrl(repo: string): string {
-  return /^https?:\/\//.test(repo) ? repo : `https://github.com/${repo}`;
-}
-
 export default function CreditsPage() {
   return (
     <main className={styles.page}>
@@ -74,9 +70,7 @@ export default function CreditsPage() {
                 <div>
                   <dt>Source</dt>
                   <dd>
-                    <a href={repoUrl(photo.sourceRepo)} target="_blank" rel="noopener noreferrer">
-                      {photo.sourceRepo}
-                    </a>
+                    <span>{photo.sourceRepo}</span>
                     <code className={styles.path}>{photo.sourcePath}</code>
                   </dd>
                 </div>

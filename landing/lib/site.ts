@@ -1,5 +1,6 @@
 /** The deployed learner app (the `frontend/` Vercel project). */
 const productionAppUrl = "https://linguini-navy.vercel.app";
+const defaultSupportEmail = "linguini-support@googlegroups.com";
 
 function resolveAppUrl(): string {
   if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
@@ -20,15 +21,13 @@ const productHunt = {
   postId: process.env.NEXT_PUBLIC_PRODUCT_HUNT_POST_ID ?? "",
 };
 
-const repoUrl = "https://github.com/CS3216-A3-G7/linguini";
-
 export const site = {
   name: "Linguini",
   url: resolveSiteUrl().replace(/\/$/, ""),
-  repoUrl,
   productHunt,
+  supportEmail: process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || defaultSupportEmail,
   /** Official profiles, for Organization `sameAs`. Add social accounts here once they exist. */
-  sameAs: [repoUrl, productHunt.url].filter(Boolean),
+  sameAs: [productHunt.url].filter(Boolean),
   appUrl: resolveAppUrl().replace(/\/$/, ""),
   title: "Linguini — Learn a language from the photos you take",
   shortTitle: "Linguini",
@@ -53,4 +52,5 @@ export const site = {
 export const appLinks = {
   signUp: `${site.appUrl}/login?mode=signup`,
   signIn: `${site.appUrl}/login`,
+  contact: `${site.appUrl}/contact`,
 };

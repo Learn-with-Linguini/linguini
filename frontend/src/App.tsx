@@ -21,6 +21,7 @@ import { SceneRoute } from "./components/SceneRoute";
 import { SessionRoute } from "./components/SessionRoute";
 import { ProfileEdit } from "./pages/ProfileEdit";
 import { Progress } from "./pages/Progress";
+import { Contact } from "./pages/Contact";
 import { AppStateProvider } from "./state/AppState";
 import { useAuth } from "./state/Auth";
 import { LoadingScreen } from "./components/LoadingScreen";
@@ -79,6 +80,7 @@ export default function App() {
         <Route path="/journal/:entryId" element={<JournalEntryPage />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/edit" element={<ProfileEdit />} />
+        <Route path="/contact" element={<Contact />} />
           </Route>
         </Route>
       </Route>

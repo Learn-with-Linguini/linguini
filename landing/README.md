@@ -17,6 +17,7 @@ Copy `.env.example` to `.env.local` to point the site at real URLs:
 | --- | --- |
 | `NEXT_PUBLIC_SITE_URL` | Canonical URL, sitemap and absolute OG image links. On Vercel it falls back to the production domain. |
 | `NEXT_PUBLIC_APP_URL` | Where “Start learning” and “Log in” go. Production builds (including Vercel) default to the live app, https://linguini-navy.vercel.app; development uses `http://localhost:5173`. |
+| `NEXT_PUBLIC_SUPPORT_EMAIL` | Public support and privacy contact shown on the legal pages and in the footer. Defaults to the beta Google Group. |
 | `REDIRECT_FROM_HOSTS` | Optional. After moving to a custom domain, old hosts (e.g. `linguini-landing.vercel.app`) that should 301 to `NEXT_PUBLIC_SITE_URL`. |
 | `GOOGLE_SITE_VERIFICATION`, `BING_SITE_VERIFICATION` | Optional. Search Console and Bing Webmaster Tools ownership meta tags (the `content` value only). |
 | `INDEXNOW_KEY` | Optional. Served at `/indexnow-key.txt`; `node scripts/indexnow.mjs <site-url>` then asks Bing and partners to re-crawl the sitemap. |

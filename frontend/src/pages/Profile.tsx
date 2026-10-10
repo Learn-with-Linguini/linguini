@@ -97,6 +97,19 @@ export function Profile() {
         </p>
       </aside>
 
+      <section className="profile-section">
+        <h2>Help and feedback</h2>
+        <Card plain className="profile-settings-card">
+          <button type="button" className="profile-setting profile-support-link" onClick={() => navigate("/contact")}>
+            <span>
+              <strong>Contact us</strong>
+              <small>Report a problem or tell us what would make Linguini better</small>
+            </span>
+            <ChevronRightIcon size={20} />
+          </button>
+        </Card>
+      </section>
+
       <Button block className="profile-logout" onClick={() => void signOut()}>
         Log Out
       </Button>

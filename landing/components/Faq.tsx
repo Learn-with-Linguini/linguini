@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { faq } from "@/data/faq";
 import type { FaqItem } from "./JsonLd";
 import { Plus } from "./icons";
 import styles from "./Faq.module.css";
+import { appLinks } from "@/lib/site";
 
 export function Faq({ items = faq, title = "Questions, answered" }: { items?: FaqItem[]; title?: string }) {
   return (
@@ -10,8 +12,10 @@ export function Faq({ items = faq, title = "Questions, answered" }: { items?: Fa
         <div className={styles.intro}>
           <h2 id="faq-title" className="section-title">{title}</h2>
           <p className="section-lede">
-            Something we missed? Ask the team on{" "}
-            <a href="https://github.com/CS3216-A3-G7/linguini" className={styles.mail}>GitHub</a>.
+            Linguini is in beta, and learner reports help us improve it. Report a questionable answer directly after an
+            exercise, or <a href={appLinks.contact} className={styles.mail}>contact us</a> with general feedback. See our{" "}
+            <Link href="/privacy" className={styles.mail}>privacy policy</Link> and{" "}
+            <Link href="/terms" className={styles.mail}>terms of service</Link>.
           </p>
         </div>
         <div className={styles.list}>

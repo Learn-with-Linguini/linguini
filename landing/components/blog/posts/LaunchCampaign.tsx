@@ -207,10 +207,9 @@ export function LaunchCampaign() {
 
       <h2 id="checklist">Our checklist</h2>
       <p>
-        We copied the shape of <a href="https://gist.github.com/yangshun/1e84ae8461975e7fa9a7d153621c3756">Yangshun
-        Tay’s launch dashboard for Docusaurus 2.0</a>, which won Product of the Day: links, a timed run, checkboxes,
-        then channel lists. Ours is in the repo as <code>marketing/product-hunt/plan.md</code>. Here’s the first task of
-        each week. Open it up for all of them; it ticks, and remembers your progress in this browser.
+        We copied the shape of Yangshun Tay’s launch dashboard for Docusaurus 2.0, which won Product of the Day:
+        links, a timed run, checkboxes, then channel lists. Here’s the first task of each week. Open it up for all of
+        them; it ticks, and remembers your progress in this browser.
       </p>
       <Checklist />
 
@@ -246,7 +245,7 @@ export function LaunchCampaign() {
         <a href="https://www.nushackers.org/">NUS Hackers</a> ·{" "}
         <a href="https://lindiebotes.com/about/">Lindie Botes</a> ·{" "}
         <a href="https://amplitude.com/blog/7-percent-retention-rule">Amplitude 7% rule</a> ·{" "}
-        <a href="https://gist.github.com/yangshun/1e84ae8461975e7fa9a7d153621c3756">Docusaurus 2.0 launch dashboard</a>.
+        Docusaurus 2.0 launch dashboard.
         Subreddit rules and community sizes change often; we recheck each one the week before.
       </p>
     </div>

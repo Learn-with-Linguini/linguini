@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { appLinks, site } from "@/lib/site";
+import { appLinks } from "@/lib/site";
 import styles from "./SiteFooter.module.css";
 
 export function SiteFooter() {
@@ -31,7 +31,9 @@ export function SiteFooter() {
           <Link href="/blog">Blog</Link>
           <Link href="/blog/linguini-vs-duolingo">Compare apps</Link>
           <Link href="/credits">Photo credits</Link>
-          <a href={site.repoUrl}>GitHub</a>
+          <Link href="/privacy">Privacy policy</Link>
+          <Link href="/terms">Terms of service</Link>
+          <a href={appLinks.contact}>Contact us</a>
         </nav>
       </div>
       <div className={`container ${styles.base}`}>
