@@ -5,9 +5,15 @@ from uuid import UUID
 
 import pytest
 
-from app.api.routes.support import create_lesson_report, create_support_request, decode_attachments
+from app.api.routes.support import (
+    create_lesson_report,
+    create_public_support_request,
+    create_support_request,
+    decode_attachments,
+)
 from app.schemas.support import (
     CreateLessonReportRequest,
+    CreatePublicSupportRequest,
     CreateSupportRequest,
     LessonReportContextField,
     SupportAttachmentRequest,
@@ -29,9 +35,17 @@ class FakeMailer:
         self.sent = kwargs
 
 
+class FakeUsers:
+    def __init__(self, email: str | None = "account@example.com") -> None:
+        self.user_id = USER_ID
+        self.email = email
+
+    def get_current_user(self) -> object:
+        return type("FakeUser", (), {"email": self.email})()
+
+
 def support_request(**overrides: object) -> CreateSupportRequest:
     values: dict[str, object] = {
-        "email": "learner@example.com",
         "subject": "A translation looks wrong",
         "description": "The displayed answer does not match the photograph.",
         "issue_type": "content",
@@ -63,16 +77,34 @@ def test_support_route_passes_reply_address_and_context_to_mailer() -> None:
     mailer = FakeMailer()
     request = support_request()
 
-    response = asyncio.run(create_support_request(request, USER_ID, mailer))
+    response = asyncio.run(create_support_request(request, FakeUsers(), mailer))
 
     assert response.status == "sent"
     assert mailer.sent is not None
-    assert mailer.sent["learner_email"] == "learner@example.com"
+    assert mailer.sent["learner_email"] == "account@example.com"
     assert mailer.sent["user_id"] == USER_ID
     assert mailer.sent["issue_type"] == "content"
 
 
-def test_lesson_report_does_not_pass_a_learner_email() -> None:
+def test_public_support_route_uses_visitor_email_without_a_user_id() -> None:
+    mailer = FakeMailer()
+    request = CreatePublicSupportRequest(
+        email="visitor@example.com",
+        subject="I have a question",
+        description="I would like to know more about Linguini.",
+        issue_type="general",
+        attachments=[],
+    )
+
+    response = asyncio.run(create_public_support_request(request, mailer))
+
+    assert response.status == "sent"
+    assert mailer.sent is not None
+    assert mailer.sent["learner_email"] == "visitor@example.com"
+    assert mailer.sent["user_id"] is None
+
+
+def test_lesson_report_uses_database_account_email() -> None:
     mailer = FakeMailer()
     request = CreateLessonReportRequest(
         report_type="Vocabulary answer",
@@ -81,11 +113,11 @@ def test_lesson_report_does_not_pass_a_learner_email() -> None:
         context=[LessonReportContextField(label="Task ID", value="task-123")],
     )
 
-    response = asyncio.run(create_lesson_report(request, USER_ID, mailer))
+    response = asyncio.run(create_lesson_report(request, FakeUsers(), mailer))
 
     assert response.status == "sent"
     assert mailer.sent is not None
-    assert mailer.sent["learner_email"] is None
+    assert mailer.sent["learner_email"] == "account@example.com"
     assert mailer.sent["issue_type"] == "lesson report"
     assert "The displayed solution is incorrect" in str(mailer.sent["description"])
     assert "Task ID: task-123" in str(mailer.sent["description"])
@@ -147,7 +179,7 @@ def test_smtp_mailer_uses_support_recipient_and_learner_reply_to(
     assert message["Subject"] == "[Linguini technical] Upload failed"
 
 
-def test_smtp_lesson_report_omits_reply_to(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_smtp_lesson_report_includes_account_reply_to(monkeypatch: pytest.MonkeyPatch) -> None:
     captured: list[EmailMessage] = []
 
     class FakeSmtp:
@@ -186,7 +218,7 @@ def test_smtp_lesson_report_omits_reply_to(monkeypatch: pytest.MonkeyPatch) -> N
 
     mailer.send(
         user_id=USER_ID,
-        learner_email=None,
+        learner_email="account@example.com",
         issue_type="lesson report",
         subject="Grammar answer",
         description="Selected issue: The displayed solution is incorrect",
@@ -194,5 +226,5 @@ def test_smtp_lesson_report_omits_reply_to(monkeypatch: pytest.MonkeyPatch) -> N
     )
 
     assert len(captured) == 1
-    assert captured[0]["Reply-To"] is None
-    assert "Learner email: not collected" in captured[0].get_content()
+    assert captured[0]["Reply-To"] == "account@example.com"
+    assert "Learner email: account@example.com" in captured[0].get_content()

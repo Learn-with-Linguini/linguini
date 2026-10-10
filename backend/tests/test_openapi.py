@@ -22,6 +22,7 @@ def test_openapi_contains_core_workflow_routes() -> None:
         "/api/v1/journal/{local_date}/context",
         "/api/v1/journals/{journal_id}/revisions",
         "/api/v1/support/requests",
+        "/api/v1/support/public-requests",
         "/api/v1/support/lesson-reports",
     }
 

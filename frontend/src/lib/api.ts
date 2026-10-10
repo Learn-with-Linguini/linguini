@@ -161,11 +161,13 @@ export interface SupportAttachmentInput {
   dataBase64: string;
 }
 export interface SupportRequestInput {
-  email: string;
   subject: string;
   description: string;
   issueType: SupportIssueType;
   attachments: SupportAttachmentInput[];
+}
+export interface PublicSupportRequestInput extends SupportRequestInput {
+  email: string;
 }
 export type LessonReportIssue = "answer_marked_incorrectly" | "solution_incorrect" | "wording_unclear" | "audio_incorrect" | "other";
 export interface LessonReportInput {
@@ -181,6 +183,9 @@ function write<T>(path: string, method: string, body: unknown): Promise<T> {
 
 export const submitSupportRequest = (payload: SupportRequestInput) =>
   write<{ status: "sent" }>("/api/v1/support/requests", "POST", payload);
+
+export const submitPublicSupportRequest = (payload: PublicSupportRequestInput) =>
+  write<{ status: "sent" }>("/api/v1/support/public-requests", "POST", payload);
 
 export const submitLessonReport = (payload: LessonReportInput) =>
   write<{ status: "sent" }>("/api/v1/support/lesson-reports", "POST", payload);

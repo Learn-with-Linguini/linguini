@@ -1,4 +1,4 @@
-"""Authenticated learner support submission endpoint."""
+"""Public and authenticated learner support submission endpoints."""
 
 from __future__ import annotations
 
@@ -7,14 +7,15 @@ import base64
 import binascii
 import logging
 from typing import Annotated
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.api.auth import get_current_user_id
+from app.api.dependencies import get_user_service
 from app.schemas.support import (
     CreateLessonReportRequest,
+    CreatePublicSupportRequest,
     CreateSupportRequest,
+    SupportRequestDetails,
     SupportRequestResponse,
 )
 from app.services.support_mail import (
@@ -24,6 +25,7 @@ from app.services.support_mail import (
     SupportMailDeliveryError,
     load_support_mail_settings,
 )
+from app.services.users import UserService
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/support", tags=["support"])
@@ -44,7 +46,7 @@ def get_support_mailer() -> SmtpSupportMailer:
     return SmtpSupportMailer(load_support_mail_settings())
 
 
-def decode_attachments(request: CreateSupportRequest) -> list[SupportAttachment]:
+def decode_attachments(request: SupportRequestDetails) -> list[SupportAttachment]:
     decoded: list[SupportAttachment] = []
     total_bytes = 0
     for attachment in request.attachments:
@@ -82,6 +84,19 @@ def decode_attachments(request: CreateSupportRequest) -> list[SupportAttachment]
     return decoded
 
 
+def account_email(users: UserService) -> str:
+    email = users.get_current_user().email
+    if not email:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": "account_email_missing",
+                "message": "Your account does not have an email address.",
+            },
+        )
+    return email
+
+
 @router.post(
     "/requests",
     response_model=SupportRequestResponse,
@@ -89,15 +104,16 @@ def decode_attachments(request: CreateSupportRequest) -> list[SupportAttachment]
 )
 async def create_support_request(
     request: CreateSupportRequest,
-    user_id: Annotated[UUID, Depends(get_current_user_id)],
+    users: Annotated[UserService, Depends(get_user_service)],
     mailer: Annotated[SmtpSupportMailer, Depends(get_support_mailer)],
 ) -> SupportRequestResponse:
     attachments = decode_attachments(request)
+    learner_email = account_email(users)
     try:
         await asyncio.to_thread(
             mailer.send,
-            user_id=user_id,
-            learner_email=request.email,
+            user_id=users.user_id,
+            learner_email=learner_email,
             issue_type=request.issue_type,
             subject=request.subject,
             description=request.description,
@@ -124,15 +140,56 @@ async def create_support_request(
 
 
 @router.post(
+    "/public-requests",
+    response_model=SupportRequestResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_public_support_request(
+    request: CreatePublicSupportRequest,
+    mailer: Annotated[SmtpSupportMailer, Depends(get_support_mailer)],
+) -> SupportRequestResponse:
+    attachments = decode_attachments(request)
+    try:
+        await asyncio.to_thread(
+            mailer.send,
+            user_id=None,
+            learner_email=request.email,
+            issue_type=request.issue_type,
+            subject=request.subject,
+            description=request.description,
+            attachments=attachments,
+        )
+    except SupportMailConfigurationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "code": "support_unavailable",
+                "message": "Support submissions are being set up. Please try again later.",
+            },
+        ) from exc
+    except SupportMailDeliveryError as exc:
+        logger.warning("Public support email delivery failed", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail={
+                "code": "support_delivery_failed",
+                "message": "We could not send your request. Please try again.",
+            },
+        ) from exc
+    return SupportRequestResponse()
+
+
+@router.post(
     "/lesson-reports",
     response_model=SupportRequestResponse,
     status_code=status.HTTP_201_CREATED,
 )
 async def create_lesson_report(
     request: CreateLessonReportRequest,
-    user_id: Annotated[UUID, Depends(get_current_user_id)],
+    users: Annotated[UserService, Depends(get_user_service)],
     mailer: Annotated[SmtpSupportMailer, Depends(get_support_mailer)],
 ) -> SupportRequestResponse:
+    learner_email = account_email(users)
     context = "\n".join(f"{field.label}: {field.value}" for field in request.context)
     description_parts = [f"Selected issue: {LESSON_ISSUE_LABELS[request.issue]}"]
     if request.additional_details.strip():
@@ -142,8 +199,8 @@ async def create_lesson_report(
     try:
         await asyncio.to_thread(
             mailer.send,
-            user_id=user_id,
-            learner_email=None,
+            user_id=users.user_id,
+            learner_email=learner_email,
             issue_type="lesson report",
             subject=request.report_type,
             description="\n".join(description_parts),

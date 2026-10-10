@@ -40,25 +40,34 @@ class SupportAttachmentRequest(ApiModel):
         return name
 
 
-class CreateSupportRequest(ApiModel):
-    email: Annotated[str, Field(min_length=3, max_length=320)]
+class SupportRequestDetails(ApiModel):
     subject: Annotated[str, Field(min_length=3, max_length=160)]
     description: Annotated[str, Field(min_length=10, max_length=4_000)]
     issue_type: IssueType
     attachments: list[SupportAttachmentRequest] = Field(default_factory=list, max_length=3)
-
-    @field_validator("email")
-    @classmethod
-    def email_must_be_valid(cls, value: str) -> str:
-        if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", value):
-            raise ValueError("email must be a valid email address")
-        return value
 
     @field_validator("subject")
     @classmethod
     def subject_must_not_contain_newlines(cls, value: str) -> str:
         if "\r" in value or "\n" in value:
             raise ValueError("subject must be a single line")
+        return value
+
+
+class CreateSupportRequest(SupportRequestDetails):
+    """Support request from a signed-in learner; email comes from the database."""
+
+
+class CreatePublicSupportRequest(SupportRequestDetails):
+    """Support request from a visitor who has no Linguini account session."""
+
+    email: Annotated[str, Field(min_length=3, max_length=320)]
+
+    @field_validator("email")
+    @classmethod
+    def email_must_be_valid(cls, value: str) -> str:
+        if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", value):
+            raise ValueError("email must be a valid email address")
         return value
 
 

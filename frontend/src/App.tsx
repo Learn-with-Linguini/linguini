@@ -54,6 +54,7 @@ export default function App() {
         <Route path="/" element={<Welcome />} />
         <Route path="/login" element={<Login />} />
         <Route path="/onboarding" element={<OnboardingRoute />} />
+        <Route path="/contact" element={<Contact />} />
       </Route>
       <Route element={<RequireAuth />}>
         <Route element={<AuthenticatedApp />}>
@@ -80,7 +81,6 @@ export default function App() {
         <Route path="/journal/:entryId" element={<JournalEntryPage />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/edit" element={<ProfileEdit />} />
-        <Route path="/contact" element={<Contact />} />
           </Route>
         </Route>
       </Route>

@@ -66,7 +66,7 @@ class SmtpSupportMailer:
     def send(
         self,
         *,
-        user_id: UUID,
+        user_id: UUID | None,
         learner_email: str | None,
         issue_type: str,
         subject: str,
@@ -87,12 +87,17 @@ class SmtpSupportMailer:
             if learner_email
             else "Learner email: not collected"
         )
+        user_line = (
+            f"Authenticated user ID: {user_id}"
+            if user_id
+            else "Authenticated user ID: public submission"
+        )
         message.set_content(
             "\n".join(
                 (
                     f"Issue type: {issue_type}",
                     learner_line,
-                    f"Authenticated user ID: {user_id}",
+                    user_line,
                     "",
                     "Description:",
                     description,

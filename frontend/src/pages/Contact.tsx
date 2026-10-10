@@ -1,7 +1,9 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button, Card, Feedback } from "../components/ui";
-import { submitSupportRequest, type SupportAttachmentInput, type SupportIssueType } from "../lib/api";
+import { submitPublicSupportRequest, submitSupportRequest, type SupportAttachmentInput, type SupportIssueType } from "../lib/api";
+import { useAuth } from "../state/Auth";
+import { LoadingScreen } from "../components/LoadingScreen";
 
 const topics = {
   general: "General feedback",
@@ -25,6 +27,7 @@ const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
 });
 
 export function Contact() {
+  const { session, loading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
   const initialType = searchParams.get("type");
   const [topic, setTopic] = useState<SupportIssueType>(initialType && initialType in topics ? initialType as SupportIssueType : "general");
@@ -76,13 +79,14 @@ export function Contact() {
         mimeType: file.type as SupportAttachmentInput["mimeType"],
         dataBase64: await toBase64(file),
       })));
-      await submitSupportRequest({
-        email: email.trim(),
+      const request = {
         subject: subject.trim(),
         description: details.trim(),
         issueType: topic,
         attachments: encodedAttachments,
-      });
+      };
+      if (session) await submitSupportRequest(request);
+      else await submitPublicSupportRequest({ ...request, email: email.trim() });
       setSent(true);
       setSubject("");
       setDetails("");
@@ -95,6 +99,8 @@ export function Contact() {
     }
   };
 
+  if (authLoading) return <LoadingScreen label="Preparing support…" />;
+
   return (
     <div className="stack contact-page">
       <div>
@@ -104,11 +110,11 @@ export function Contact() {
 
       <Card plain className="contact-card">
         <form className="stack" onSubmit={send}>
-          <div className="field">
+          {!session ? <div className="field">
             <label className="field__label" htmlFor="feedback-email">Your email address</label>
             <input id="feedback-email" className="input" type="email" autoComplete="email" required maxLength={320} value={email} onChange={event => setEmail(event.target.value)} />
             <span className="small muted">We will only use this to reply to your request.</span>
-          </div>
+          </div> : <p className="panel-note small">We’ll use the email address associated with your Linguini account so our team can reply.</p>}
 
           <div className="field">
             <label className="field__label" htmlFor="feedback-topic">What can we help with?</label>
@@ -157,10 +163,10 @@ export function Contact() {
             {attachmentError ? <p role="alert" className="contact-error">{attachmentError}</p> : null}
           </div>
 
-          <Button block type="submit" disabled={submitting || !!attachmentError || !email.trim() || subject.trim().length < 3 || details.trim().length < 10}>
+          <Button block type="submit" disabled={submitting || !!attachmentError || (!session && !email.trim()) || subject.trim().length < 3 || details.trim().length < 10}>
             {submitting ? "Sending…" : "Submit request"}
           </Button>
-          {sent ? <Feedback tone="good"><p role="status">Thanks — your request was sent to Linguini Support. We’ll reply to {email.trim()}.</p></Feedback> : null}
+          {sent ? <Feedback tone="good"><p role="status">Thanks — your request was sent to Linguini Support. We’ll reply to {session ? "the email address on your account" : email.trim()}.</p></Feedback> : null}
           {submitError ? <Feedback tone="warn"><p role="alert">{submitError}</p></Feedback> : null}
         </form>
       </Card>
