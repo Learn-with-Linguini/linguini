@@ -31,6 +31,7 @@ class User(EntityModel):
     email: Annotated[str, Field(max_length=320)] | None = None
     timezone: str = "UTC"
     onboarding_completed: bool = False
+    walkthrough_version_seen: Annotated[int, Field(ge=0, le=1000)] = 0
 
     _timezone_is_valid = field_validator("timezone")(_validate_timezone)
 
@@ -42,6 +43,7 @@ class UpdateUserRequest(ApiModel):
     display_name: Annotated[str, Field(min_length=1, max_length=100)] | None = None
     timezone: str | None = None
     onboarding_completed: bool | None = None
+    walkthrough_version_seen: Annotated[int, Field(ge=0, le=1000)] | None = None
 
     _timezone_is_valid = field_validator("timezone")(_validate_timezone)
 

@@ -96,6 +96,7 @@ export interface User {
   email: string | null;
   timezone: string;
   onboardingCompleted: boolean;
+  walkthroughVersionSeen: number;
 }
 
 export class ApiError extends Error {
@@ -155,7 +156,7 @@ export interface LanguageProfile {
   preferredInputMode: "speech" | "text" | "both";
 }
 
-export type UserPatch = Partial<Pick<User, "displayName" | "timezone" | "onboardingCompleted" | "learningGoal" | "microphoneEnabled" | "cameraEnabled">>;
+export type UserPatch = Partial<Pick<User, "displayName" | "timezone" | "onboardingCompleted" | "walkthroughVersionSeen" | "learningGoal" | "microphoneEnabled" | "cameraEnabled">>;
 export type LanguageProfilePatch = Partial<Pick<LanguageProfile, "proficiencyLevel" | "isActive" | "dailyGoalMinutes" | "preferredInputMode">>;
 
 export type SupportIssueType = "general" | "technical" | "content" | "account";
