@@ -18,6 +18,7 @@ from app.schemas.tasks import (
     SubmitTaskAttemptRequest,
     VocabularyIntroductionContent,
 )
+from app.schemas.users import UpdateUserRequest
 
 
 def test_api_models_accept_and_emit_camel_case() -> None:
@@ -27,6 +28,13 @@ def test_api_models_accept_and_emit_camel_case() -> None:
 
     assert "sceneObjectId" in dumped
     assert "scene_object_id" not in dumped
+
+
+def test_walkthrough_version_is_bounded_and_emitted_in_camel_case() -> None:
+    request = UpdateUserRequest.model_validate({"walkthroughVersionSeen": 1})
+    assert request.model_dump(mode="json")["walkthroughVersionSeen"] == 1
+    with pytest.raises(ValidationError):
+        UpdateUserRequest(walkthrough_version_seen=-1)
 
 
 def test_bounding_box_must_remain_inside_image() -> None:

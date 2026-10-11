@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -11,6 +11,8 @@ import { friendlyError, queryError, queryKeys } from "../lib/queryKeys";
 import { useAppState } from "../state/useAppState";
 import { useVocabularyQuery } from "../state/queries";
 import type { VocabRecord } from "../data/types";
+import { WalkthroughCoachmark } from "../components/WalkthroughCoachmark";
+import { FIRST_LESSON_WALKTHROUGH_VERSION, needsFirstLessonWalkthrough } from "../lib/walkthrough";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -91,7 +93,7 @@ function WordsLearntChart({ dates, vocabulary, loading, error }: { dates: string
 
 export function Home() {
   const navigate = useNavigate();
-  const { learner, activeProfile, progress, progressLoading, progressError } = useAppState();
+  const { learner, user, activeProfile, progress, progressLoading, progressError, profileSaving, saveUser } = useAppState();
   const { vocabulary, vocabularyLoading, vocabularyError } = useVocabularyQuery();
   const queryClient = useQueryClient();
   const profileId = activeProfile?.id ?? "";
@@ -101,6 +103,9 @@ export function Home() {
   });
   const resumeError = queryError(resumeQueryError);
   const [continueError, setContinueError] = useState<string | null>(null);
+  const [walkthroughDismissed, setWalkthroughDismissed] = useState(false);
+  const [walkthroughError, setWalkthroughError] = useState<string | null>(null);
+  const beginPracticeRef = useRef<HTMLDivElement>(null);
   const streak = progress?.streak;
   const activeDays = streak?.days.filter(day => day.active).length ?? 0;
   const streakCaption = streak
@@ -128,6 +133,22 @@ export function Home() {
       setContinueError(friendlyError(reason));
     }
   };
+
+  const finishWalkthrough = async () => {
+    setWalkthroughError(null);
+    const saved = await saveUser({ walkthroughVersionSeen: FIRST_LESSON_WALKTHROUGH_VERSION });
+    if (saved) setWalkthroughDismissed(true);
+    else setWalkthroughError("We couldn't save this choice. Please try again.");
+  };
+
+  const walkthroughOpen = !walkthroughDismissed
+    && !progressLoading
+    && !progressError
+    && !resumeLoading
+    && !resumeError
+    && !resume
+    && Boolean(user?.onboardingCompleted)
+    && needsFirstLessonWalkthrough(user?.walkthroughVersionSeen);
 
   return (
     <div className="home stack">
@@ -183,9 +204,11 @@ export function Home() {
             <div className="home-featured__body">
               <h3>Turn a place into a lesson</h3>
               <p className="home-featured__description">Choose a photo or one of our ready-made scenes.</p>
-              <Button block onClick={() => navigate("/practice")}>
-                Begin a new practice <ChevronRightIcon size={20} />
-              </Button>
+              <div ref={beginPracticeRef}>
+                <Button block onClick={() => navigate("/practice")}>
+                  Begin a new practice <ChevronRightIcon size={20} />
+                </Button>
+              </div>
             </div>
           </Card>
         )}
@@ -215,6 +238,20 @@ export function Home() {
         loading={vocabularyLoading}
         error={vocabularyError}
       />
+      {walkthroughOpen ? (
+        <WalkthroughCoachmark
+          targetRef={beginPracticeRef}
+          step={1}
+          totalSteps={3}
+          title="Start with the world around you"
+          description="Linguini turns a photo or one of our ready-made scenes into a speaking lesson."
+          nextLabel="Show me"
+          saving={profileSaving}
+          error={walkthroughError}
+          onNext={() => navigate("/practice")}
+          onSkip={() => void finishWalkthrough()}
+        />
+      ) : null}
     </div>
   );
 }

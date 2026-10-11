@@ -18,6 +18,7 @@ def test_profile_preferences_and_restart(database):
         "microphoneEnabled": False,
         "cameraEnabled": False,
         "onboardingCompleted": True,
+        "walkthroughVersionSeen": 1,
     }
     response = client.patch("/api/v1/me", json=settings)
     assert response.status_code == 200

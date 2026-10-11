@@ -27,11 +27,10 @@ import { useAuth } from "./state/Auth";
 import { LoadingScreen } from "./components/LoadingScreen";
 
 function RequireAuth() {
- 
   const { session, loading } = useAuth();
   const location = useLocation();
-  if (import.meta.env.DEV) return <Outlet />;
   if (loading) return <LoadingScreen label="Checking your account…" />;
+  if (import.meta.env.DEV) return <Outlet />;
   if (!session) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   return <Outlet />;
 }

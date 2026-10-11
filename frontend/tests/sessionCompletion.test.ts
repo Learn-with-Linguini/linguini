@@ -79,10 +79,10 @@ writeFileSync(entryPath, [
   'export { createRoot } from "react-dom/client";',
   'export { MemoryRouter, Route, Routes } from "react-router-dom";',
   'export { QueryClient, QueryClientProvider } from "@tanstack/react-query";',
-  `export { SessionRoute } from "${join(here, "../src/components/SessionRoute")}";`,
-  `export { ISpyPhase2 } from "${join(here, "../src/pages/ISpyPhase2")}";`,
-  `export { AppStateProvider } from "${join(here, "../src/state/AppState")}";`,
-  `export { useAppState } from "${join(here, "../src/state/useAppState")}";`,
+  `export { SessionRoute } from "${pathToFileURL(join(here, "../src/components/SessionRoute")).href}";`,
+  `export { ISpyPhase2 } from "${pathToFileURL(join(here, "../src/pages/ISpyPhase2")).href}";`,
+  `export { AppStateProvider } from "${pathToFileURL(join(here, "../src/state/AppState")).href}";`,
+  `export { useAppState } from "${pathToFileURL(join(here, "../src/state/useAppState")).href}";`,
 ].join("\n"));
 let bundleCode: string;
 try {

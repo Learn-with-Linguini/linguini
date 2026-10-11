@@ -1,13 +1,54 @@
+import { useEffect, useId, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Card } from "../components/ui";
-import { ChevronRightIcon } from "../components/icons";
+import { Button, Card, IconButton } from "../components/ui";
+import { ChevronRightIcon, CloseIcon } from "../components/icons";
+import { deleteCurrentAccount } from "../lib/api";
 import { useAppState } from "../state/useAppState";
 import { useAuth } from "../state/Auth";
 
 export function Profile() {
   const navigate = useNavigate();
-  const { signOut } = useAuth();
+  const { clearDeletedAccountSession, signOut } = useAuth();
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const deleteTitleId = useId();
   const { learner, user, activeProfile, progressLoading, progressError, profileError, profileSaving, setLanguage, saveLanguageProfile, saveUser } = useAppState();
+
+  useEffect(() => {
+    if (!deleteOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !deleting) setDeleteOpen(false);
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [deleteOpen, deleting]);
+
+  const closeDeleteDialog = () => {
+    if (deleting) return;
+    setDeleteOpen(false);
+    setDeleteError("");
+  };
+
+  const logOut = async () => {
+    await signOut();
+    navigate("/", { replace: true });
+  };
+
+  const deleteAccount = async () => {
+    if (deleting) return;
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      await deleteCurrentAccount();
+      localStorage.removeItem("linguini-avatar");
+      await clearDeletedAccountSession();
+      navigate("/", { replace: true });
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : "We couldn't delete your account. Please try again.");
+      setDeleting(false);
+    }
+  };
 
   return (
     <div className="stack profile-page">
@@ -85,7 +126,7 @@ export function Profile() {
           Linguini uses AI in a few specific places: it detects the objects in your scene
           photos, translates that vocabulary into your learning language, and writes the
           I-Spy clues and practice tasks from the words you keep. Every suggestion is yours
-          to review — you decide what to keep, change, or remove before a lesson starts.
+          to review: you decide what to keep, change, or remove before a lesson starts.
         </p>
       </aside>
 
@@ -110,9 +151,54 @@ export function Profile() {
         </Card>
       </section>
 
-      <Button block className="profile-logout" onClick={() => void signOut()}>
+      <Button block className="profile-logout" onClick={() => void logOut()}>
         Log Out
       </Button>
+
+      <section className="profile-danger-zone" aria-labelledby="delete-account-heading">
+        <h2 id="delete-account-heading">Delete account</h2>
+        <p>Permanently remove your Linguini account and everything associated with it.</p>
+        <Button variant="quiet" block className="profile-delete-trigger" onClick={() => setDeleteOpen(true)}>
+          Delete my account
+        </Button>
+      </section>
+
+      {deleteOpen ? (
+        <div className="help-modal__backdrop" onMouseDown={closeDeleteDialog}>
+          <section
+            className="help-modal account-delete-modal"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby={deleteTitleId}
+            aria-describedby={`${deleteTitleId}-description`}
+            onMouseDown={event => event.stopPropagation()}
+          >
+            <div className="help-modal__header">
+              <h2 id={deleteTitleId}>Delete your account?</h2>
+              <IconButton label="Keep my account" disabled={deleting} onClick={closeDeleteDialog}>
+                <CloseIcon />
+              </IconButton>
+            </div>
+            <div id={`${deleteTitleId}-description`} className="account-delete-summary">
+              <p>This will permanently delete:</p>
+              <ul>
+                <li>Your profile and sign-in account</li>
+                <li>Your lessons, vocabulary progress, and XP history</li>
+                <li>Your journal entries and revisions</li>
+                <li>Your uploaded photos and generated image copies</li>
+              </ul>
+              <strong>This action is irreversible.</strong>
+            </div>
+            {deleteError ? <p className="account-delete-error" role="alert">{deleteError}</p> : null}
+            <div className="account-delete-actions">
+              <Button variant="quiet" block disabled={deleting} onClick={closeDeleteDialog}>Keep my account</Button>
+              <Button block disabled={deleting} onClick={() => void deleteAccount()}>
+                {deleting ? "Deleting account…" : "Permanently delete account"}
+              </Button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   );
 }

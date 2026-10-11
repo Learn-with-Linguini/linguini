@@ -113,18 +113,59 @@ class ImageStorage:
             raise MediaUrlError("Unable to store derived image.") from exc
 
     def delete(self, key: str) -> None:
+        self.delete_many([key])
+
+    def delete_many(self, keys: list[str]) -> None:
         self._check()
         try:
-            response = httpx.request(
-                "DELETE",
-                f"{self.url}/object/media-assets",
-                headers=self.headers,
-                json={"prefixes": [key]},
-                timeout=15,
-            )
-            response.raise_for_status()
+            # Keep requests comfortably below Storage API payload limits.
+            for start in range(0, len(keys), 100):
+                response = httpx.request(
+                    "DELETE",
+                    f"{self.url}/object/media-assets",
+                    headers=self.headers,
+                    json={"prefixes": keys[start : start + 100]},
+                    timeout=15,
+                )
+                response.raise_for_status()
         except httpx.HTTPError as exc:
-            raise MediaUrlError("Unable to remove invalid upload; retry confirmation.") from exc
+            raise MediaUrlError("Unable to remove stored media.") from exc
+
+    def delete_prefixes(self, prefixes: list[str]) -> None:
+        """Remove every object below known user-specific folders."""
+        self._check()
+        try:
+            keys: list[str] = []
+            for prefix in prefixes:
+                offset = 0
+                while True:
+                    response = httpx.post(
+                        f"{self.url}/object/list/media-assets",
+                        headers=self.headers,
+                        json={
+                            "prefix": prefix.strip("/"),
+                            "limit": 100,
+                            "offset": offset,
+                            "sortBy": {"column": "name", "order": "asc"},
+                        },
+                        timeout=15,
+                    )
+                    response.raise_for_status()
+                    page = response.json()
+                    if not isinstance(page, list):
+                        raise ValueError("Invalid Storage listing")
+                    names = [
+                        item.get("name")
+                        for item in page
+                        if isinstance(item, dict) and isinstance(item.get("name"), str)
+                    ]
+                    keys.extend(f"{prefix.strip('/')}/{name}" for name in names)
+                    if len(page) < 100:
+                        break
+                    offset += len(page)
+            self.delete_many(keys)
+        except (httpx.HTTPError, ValueError) as exc:
+            raise MediaUrlError("Unable to find all stored media.") from exc
 
     def read_url(self, key: str) -> str:
         url = self.signer.resolve([key]).get(key)

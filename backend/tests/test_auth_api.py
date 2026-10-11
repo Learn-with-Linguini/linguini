@@ -11,9 +11,11 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from fastapi.testclient import TestClient
 from sqlalchemy import func, select
 
+from app.api import auth as api_auth
 from app.main import create_app
 from app.repositories.postgres.users import users
 from app.services import auth
+from app.services.account_deletion import SupabaseAuthAdmin
 
 SUPABASE_URL = "https://project.supabase.co"
 ISSUER = f"{SUPABASE_URL}/auth/v1"
@@ -70,6 +72,26 @@ def test_garbage_bearer_token_returns_401(monkeypatch):
     assert response.json()["detail"]["code"] == "unauthenticated"
 
 
+def test_deleted_auth_identity_cannot_be_reprovisioned(monkeypatch):
+    monkeypatch.setenv("AUTH_MODE", "supabase")
+    monkeypatch.setenv("SUPABASE_URL", SUPABASE_URL)
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "test-service-key")
+    monkeypatch.setattr(auth.jwt, "PyJWKClient", _FakeJWKClient)
+    monkeypatch.setattr(
+        api_auth,
+        "PostgresUserRepository",
+        lambda engine: SimpleNamespace(get_by_auth_provider_id=lambda subject: None),
+    )
+    monkeypatch.setattr(SupabaseAuthAdmin, "user_exists", lambda self, subject: False)
+
+    response = TestClient(_app_without_lifespan()).get(
+        "/api/v1/me", headers=_bearer(str(uuid4()))
+    )
+
+    assert response.status_code == 401
+    assert response.json()["detail"]["code"] == "unauthenticated"
+
+
 @pytest.fixture
 def supabase_client(monkeypatch):
     if not os.getenv("TEST_DATABASE_URL"):
@@ -77,7 +99,9 @@ def supabase_client(monkeypatch):
     monkeypatch.setenv("DATABASE_URL", os.environ["TEST_DATABASE_URL"])
     monkeypatch.setenv("AUTH_MODE", "supabase")
     monkeypatch.setenv("SUPABASE_URL", SUPABASE_URL)
+    monkeypatch.setenv("SUPABASE_SERVICE_ROLE_KEY", "test-service-key")
     monkeypatch.setattr(auth.jwt, "PyJWKClient", _FakeJWKClient)
+    monkeypatch.setattr(SupabaseAuthAdmin, "user_exists", lambda self, subject: True)
     with TestClient(create_app()) as client:
         yield client
 

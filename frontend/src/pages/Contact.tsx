@@ -166,7 +166,7 @@ export function Contact() {
           <Button block type="submit" disabled={submitting || !!attachmentError || (!session && !email.trim()) || subject.trim().length < 3 || details.trim().length < 10}>
             {submitting ? "Sending…" : "Submit request"}
           </Button>
-          {sent ? <Feedback tone="good"><p role="status">Thanks — your request was sent to Linguini Support. We’ll reply to {session ? "the email address on your account" : email.trim()}.</p></Feedback> : null}
+          {sent ? <Feedback tone="good"><p role="status">Thank you. Your request has been sent to Linguini Support. We’ll reply to {session ? "the email address on your account" : email.trim()}.</p></Feedback> : null}
           {submitError ? <Feedback tone="warn"><p role="alert">{submitError}</p></Feedback> : null}
         </form>
       </Card>

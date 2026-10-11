@@ -168,6 +168,82 @@
   }
 }
 
+/* First-lesson walkthrough */
+.walkthrough-overlay {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  background: rgba(25, 37, 42, 0.72);
+  animation: help-modal-fade 160ms ease-out;
+}
+
+.walkthrough-target {
+  position: relative !important;
+  z-index: 101 !important;
+  border-radius: var(--radius-lg);
+  outline: 4px solid var(--paper);
+  box-shadow: 0 0 0 8px var(--tomato), 0 18px 48px rgba(25, 37, 42, 0.35) !important;
+  pointer-events: none;
+}
+
+.walkthrough-coachmark {
+  position: fixed;
+  z-index: 102;
+  left: 50%;
+  bottom: max(var(--space-5), env(safe-area-inset-bottom));
+  width: min(calc(100% - 2 * var(--space-4)), 480px);
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  box-shadow: 0 18px 48px rgba(25, 37, 42, 0.3);
+  transform: translateX(-50%);
+  animation: walkthrough-coachmark-enter 180ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.walkthrough-coachmark__step {
+  color: var(--tomato);
+  font-size: var(--text-small);
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.walkthrough-coachmark h2 {
+  margin-top: var(--space-2);
+  color: var(--ink);
+}
+
+.walkthrough-coachmark > p {
+  margin: var(--space-2) 0 var(--space-4);
+  color: var(--ink-muted);
+  line-height: 1.5;
+}
+
+.walkthrough-coachmark .walkthrough-coachmark__error {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.walkthrough-coachmark__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+@media (max-width: 520px) {
+  .walkthrough-coachmark__actions .btn {
+    flex: 1 1 auto;
+  }
+}
+
+@keyframes walkthrough-coachmark-enter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px) scale(0.98);
+  }
+}
+
 @keyframes help-modal-enter {
   from {
     opacity: 0;
@@ -4000,6 +4076,56 @@ p[role="alert"]::before { content: "!"; }
 }
 
 .profile-logout { margin-top: var(--space-2); }
+
+.profile-danger-zone {
+  display: grid;
+  gap: var(--space-2);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--line);
+}
+
+.profile-danger-zone p {
+  color: var(--ink-muted);
+  font-size: var(--text-small);
+  line-height: 1.45;
+}
+
+.profile-delete-trigger.btn--quiet {
+  justify-content: flex-start;
+  padding-inline: 0;
+  color: var(--danger);
+}
+
+.account-delete-summary {
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+.account-delete-modal .account-delete-summary p { margin: 0; }
+
+.account-delete-summary ul {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-5);
+  color: var(--ink-muted);
+  font-size: var(--text-small);
+  line-height: 1.45;
+}
+
+.account-delete-summary > strong { color: var(--danger); }
+
+.account-delete-modal .account-delete-error {
+  margin: 0 0 var(--space-4);
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.account-delete-actions {
+  display: grid;
+  gap: var(--space-3);
+}
 
 /* Support and contextual content reports */
 .contact-page {

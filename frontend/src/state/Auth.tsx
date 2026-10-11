@@ -6,6 +6,7 @@ type AuthContextValue = {
   session: Session | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  clearDeletedAccountSession: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -45,6 +46,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut: async () => {
       if (!supabase) return;
       const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+    },
+    clearDeletedAccountSession: async () => {
+      if (!supabase) return;
+      const { error } = await supabase.auth.signOut({ scope: "local" });
       if (error) throw error;
     },
   }), [loading, session]);

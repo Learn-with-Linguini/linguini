@@ -11,11 +11,14 @@ import { friendlyError, queryError, queryKeys } from "../lib/queryKeys";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAppState } from "../state/useAppState";
 import { useScenesQuery } from "../state/queries";
+import { WalkthroughCoachmark } from "../components/WalkthroughCoachmark";
+import { FIRST_LESSON_WALKTHROUGH_VERSION, needsFirstLessonWalkthrough } from "../lib/walkthrough";
 
 export function PracticeSelect() {
   const navigate = useNavigate();
-  const { practiceNotice: notice, retrySessionId } = (useLocation().state as { practiceNotice?: string; retrySessionId?: string } | null) ?? {};
-  const { learner, activeProfile } = useAppState();
+  const location = useLocation();
+  const { practiceNotice: notice, retrySessionId } = (location.state as { practiceNotice?: string; retrySessionId?: string } | null) ?? {};
+  const { learner, user, activeProfile, profileSaving, saveUser } = useAppState();
   const { scenes } = useScenesQuery();
   const activeProfileId = activeProfile?.id;
   const [uploading, setUploading] = useState(false);
@@ -23,7 +26,12 @@ export function PracticeSelect() {
   const [starting, setStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [dismissedSessionId, setDismissedSessionId] = useState<string | null>(null);
+  const [walkthroughStep, setWalkthroughStep] = useState<2 | 3>(2);
+  const [walkthroughDismissed, setWalkthroughDismissed] = useState(false);
+  const [walkthroughError, setWalkthroughError] = useState<string | null>(null);
   const busy = useRef(false);
+  const captureRef = useRef<HTMLDivElement>(null);
+  const readyScenesRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
   const dialogTitleId = useId();
   const request = useRef<{ asset: string; key: string } | null>(null);
@@ -83,13 +91,25 @@ export function PracticeSelect() {
     }
     finally { busy.current = false; setStarting(false); }
   };
+  const finishWalkthrough = async () => {
+    setWalkthroughError(null);
+    const saved = await saveUser({ walkthroughVersionSeen: FIRST_LESSON_WALKTHROUGH_VERSION });
+    if (saved) setWalkthroughDismissed(true);
+    else setWalkthroughError("We couldn't save this choice. Please try again.");
+  };
+  const walkthroughOpen = !walkthroughDismissed
+    && !activeCheck.isPending
+    && !activeCheckError
+    && !resumeDialogOpen
+    && Boolean(user?.onboardingCompleted)
+    && needsFirstLessonWalkthrough(user?.walkthroughVersionSeen);
   const chooseAsset = (asset: string) => void start(asset);
   return <div className="stack practice-select">
     <h1>Capture a scene</h1>
     {notice ? <div className="stack-2"><p role="alert">{notice}</p>{retrySessionId ? <Button variant="secondary" disabled={interactionDisabled || uploading} onClick={() => void retrySaved(retrySessionId)}>Try this photo again</Button> : null}</div> : null}
     <p className="muted">Take a photo of the world around you, or start from a ready scene.</p>
     {activeCheckError ? <p role="alert">{activeCheckError} Reload to resume an open practice.</p> : null}
-    <div className="dashed-capture">
+    <div ref={captureRef} className="dashed-capture">
       <span style={{ color: "var(--teal-dark)" }}><CameraIcon size={44} /></span>
       <ImageUpload compact disabled={interactionDisabled} cameraEnabled={learner.cameraOn}
         onBusyChange={setUploading} onUploaded={image => chooseAsset(image.id)} />
@@ -99,7 +119,7 @@ export function PracticeSelect() {
     {!activeProfile ? <p role="alert">Choose a learning language in Profile to start.</p> : null}
     <h2>Or practise with the below</h2>
     <SceneCatalogStatus />
-    <div className="grid-2">
+    <div ref={readyScenesRef} className="grid-2">
       {scenes.map(scene => <button key={scene.id} type="button" className="scene-pick"
         disabled={interactionDisabled || uploading} aria-label={`Choose ${scene.title}`} onClick={() => chooseAsset(scene.mediaAssetId)}>
         <SceneVisual scene={scene} />
@@ -117,5 +137,22 @@ export function PracticeSelect() {
         </div>
       </section>
     </div> : null}
+    {walkthroughOpen ? (
+      <WalkthroughCoachmark
+        targetRef={walkthroughStep === 2 ? captureRef : readyScenesRef}
+        step={walkthroughStep}
+        totalSteps={3}
+        title={walkthroughStep === 2 ? "Make your surroundings the lesson" : "Or start instantly"}
+        description={walkthroughStep === 2
+          ? "Take a photo or choose one from your device. Linguini will find useful words in the scene."
+          : "Choose a ready-made scene whenever you want to practise without taking a photo."}
+        nextLabel={walkthroughStep === 2 ? "Next" : "Start practising"}
+        saving={profileSaving}
+        error={walkthroughError}
+        onBack={() => walkthroughStep === 2 ? navigate("/home") : setWalkthroughStep(2)}
+        onNext={() => walkthroughStep === 2 ? setWalkthroughStep(3) : void finishWalkthrough()}
+        onSkip={() => void finishWalkthrough()}
+      />
+    ) : null}
   </div>;
 }
