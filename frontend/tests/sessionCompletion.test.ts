@@ -366,7 +366,8 @@ test("guided frames compose an editable clue, block the target word and restore 
   const [first] = taskRequests.splice(0);
   assert.equal(first.body.text, "Es roja. Está sobre la silla grande.", "the evaluator gets the displayed clue");
   assert.deepEqual(first.body.assistance, { version: "ispy-clue-assistance.v1", practiceMode: "guided", targetWordShown: true,
-    offeredFrameIds: ["colour", "location"], selectedFrameIds: ["colour", "location"], insertedChips: ["roja", "sobre la silla"] });
+    offeredFrameIds: ["colour", "location"], selectedFrameIds: ["colour", "location"], insertedChips: ["roja", "sobre la silla"],
+    selectedSlots: [], revealedHelpFrameIds: [] });
   assert.match(body(), /Linguini guessed: silla/);
 
   await click("Improve my clue");
@@ -516,5 +517,110 @@ test("a photo without description support explains why there is no describing ro
   await flush();
   assert.ok(dom.window.document.querySelector("[data-testid=no-description-round]"));
   assert.ok(button("Finish session"));
+  root.unmount();
+});
+
+const slotFrames = [
+  { frameId: "colour", prefix: "Es", meaning: "colour meaning", example: "La manzana es roja.", chips: [], template: "Es [colour]",
+    slots: [{ slotId: "colour", label: "colour", chips: [{ text: "azul", meaning: "blue" }, { text: "roja", meaning: "red" }] }], help: ["roja"] },
+  { frameId: "location", prefix: "Está", meaning: "location meaning", example: "El libro está sobre la mesa.", chips: [],
+    template: "Está [position] [reference object]",
+    slots: [
+      { slotId: "position", label: "position", chips: [{ text: "sobre", meaning: "on", example: "El libro está sobre la mesa." },
+        { text: "debajo de", meaning: "under", example: "El gato está debajo de la silla." }, { text: "al lado de", meaning: "next to", example: "La silla está al lado de la puerta." }] },
+      { slotId: "reference", label: "reference object", chips: [{ text: "el libro" }, { text: "la mesa" }, { text: "la silla" }] },
+    ],
+    phrases: Object.fromEntries(["sobre", "debajo de", "al lado de"].flatMap(position => ["el libro", "la mesa", "la silla"].map(reference =>
+      [`${position}|${reference}`, position.endsWith(" de") && reference.startsWith("el ") ? `${position.slice(0, -3)} del ${reference.slice(3)}` : `${position} ${reference}`]))),
+    help: ["sobre la mesa"] },
+] as NonNullable<Extract<SessionTask["publicContent"], { kind: "reflection" }>["clueFrames"]>;
+const slotTask = (status: SessionTask["status"]): SessionTask => ({ ...guessTask, status,
+  publicContent: { kind: "reflection", prompt: "Describe it", clueFrames: slotFrames, avoidWords: ["taza", "tazas", "cup"] } });
+
+async function mountSlots(status: SessionTask["status"]) {
+  fixture = { ...detail("inProgress", [task("learn", "completed", 0), task("clues", "completed", 1), slotTask(status)]),
+    sceneObjects: [sceneObject("obj-target", "taza", 0.3), sceneObject("obj-other", "mesa", 0.7)] };
+  const container = dom.window.document.createElement("div");
+  dom.window.document.body.replaceChildren(container);
+  const root = createRoot(container);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { gcTime: 0 } } });
+  mountedClients.push(client);
+  await act(async () => {
+    root.render(h(QueryClientProvider, { client }, h(AppStateProvider, null,
+      h(MemoryRouter, { initialEntries: [`${BASE}/ispy-2`] }, h(Routes, null,
+        h(Route, { path: "/practice/sessions/:sessionId", element: h(SessionRoute) },
+          h(Route, { path: "ispy-2", element: h(ISpyPhase2) }),
+        ),
+      )),
+    )));
+  });
+  await flush();
+  return root;
+}
+
+const slotReply = (attemptId: string, text: string, assistance: Record<string, unknown>) => () => Response.json({
+  task: slotTask("inProgress"), nextTaskId: null,
+  sessionProgress: { completedTaskCount: 2, skippedTaskCount: 0, terminalTaskCount: 2, totalTaskCount: 3 },
+  attempt: { id: attemptId, attemptNumber: 1, isCorrect: null, feedback: { message: "Not quite." },
+    responsePayload: { input_mode: "text", text, assistance }, evaluationDetails: evaluation("noMatch", "obj-other") },
+});
+
+test("learners build a Location clue from separate position and reference chips, with optional help", async () => {
+  const root = await mountSlots("pending");
+  const text = () => dom.window.document.body.textContent ?? "";
+  await click("Location");
+  assert.match(text(), /Está \[position\] \[reference object\]/);
+  assert.match(dom.window.document.querySelector("[data-testid=position-meanings]")?.textContent ?? "", /sobre — on · El libro está sobre la mesa\./);
+  assert.equal(button("la taza"), undefined, "the target is never a chip");
+  assert.equal(button("sobre la mesa"), undefined, "the correct phrase stays behind Help me");
+  await click("sobre");
+  assert.equal(clue().value, "Está sobre");
+  await click("la mesa");
+  assert.equal(clue().value, "Está sobre la mesa");
+  await click("debajo de");
+  assert.equal(clue().value, "Está debajo de la mesa", "changing the position keeps the reference");
+  await click("al lado de");
+  await click("el libro");
+  assert.equal(clue().value, "Está al lado del libro");
+  await click("Colour");
+  await click("azul");
+  assert.equal(clue().value, "Está al lado del libro. Es azul", "other sentences are preserved");
+  await click("Help me");
+  assert.ok(button("roja"), "help reveals the suggested phrase");
+  await type(`${clue().value} y pequeña.`);
+
+  taskReplies.push(slotReply("s1", "Está al lado del libro. Es azul y pequeña.", { selected_frame_ids: ["location", "colour"],
+    inserted_chips: ["al lado de", "el libro"], revealed_help_frame_ids: ["colour"],
+    selected_slots: [{ frame_id: "location", slot_id: "position", chip: "al lado de" }, { frame_id: "location", slot_id: "reference", chip: "el libro" },
+      { frame_id: "colour", slot_id: "colour", chip: "azul" }] }));
+  await click("Send my response");
+  const [sent] = taskRequests.splice(0);
+  assert.equal(sent.body.text, "Está al lado del libro. Es azul y pequeña.", "an incorrect combination still reaches the evaluator");
+  const assistance = sent.body.assistance as Record<string, unknown>;
+  assert.deepEqual(assistance.selectedSlots, [{ frameId: "location", slotId: "position", chip: "al lado de" },
+    { frameId: "location", slotId: "reference", chip: "el libro" }, { frameId: "colour", slotId: "colour", chip: "azul" }]);
+  assert.deepEqual(assistance.revealedHelpFrameIds, ["colour"], "opening help is recorded as assistance");
+  assert.equal(assistance.practiceMode, "guided");
+  await click("Improve my clue");
+  await click("Location");
+  assert.equal(button("al lado de")?.getAttribute("aria-pressed"), "true", "revision keeps the selected slots");
+  assert.equal(clue().value, "Está al lado del libro. Es azul y pequeña.");
+  root.unmount();
+});
+
+test("selected slots, revealed help and free edits survive a reload", async () => {
+  latestReplies.push(() => Response.json({ attempt: { id: "s2", attemptNumber: 2, text: "Está sobre la mesa. Es pequeña.", feedback: "Saved feedback.",
+    evaluationDetails: evaluation("noMatch", "obj-other"),
+    assistance: { version: "ispy-clue-assistance.v1", practiceMode: "guided", targetWordShown: true, offeredFrameIds: ["colour", "location"],
+      selectedFrameIds: ["location"], insertedChips: ["sobre", "la mesa"], revealedHelpFrameIds: ["location"],
+      selectedSlots: [{ frameId: "location", slotId: "position", chip: "sobre" }, { frameId: "location", slotId: "reference", chip: "la mesa" }] } } }));
+  const root = await mountSlots("inProgress");
+  assert.equal(clue().value, "Está sobre la mesa. Es pequeña.");
+  await click("Improve my clue");
+  assert.equal(button("sobre")?.getAttribute("aria-pressed"), "true");
+  assert.equal(button("la mesa")?.getAttribute("aria-pressed"), "true");
+  assert.ok(button("sobre la mesa"), "revealed help stays revealed");
+  await click("debajo de");
+  assert.equal(clue().value, "Está debajo de la mesa. Es pequeña.", "the restored sentence is edited in place");
   root.unmount();
 });

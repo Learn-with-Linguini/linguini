@@ -129,8 +129,11 @@ def test_backend_selects_two_ispy_description_targets_without_storing_one_in_con
 
     # The table has only an uninflectable colour and is the reference, not subject, of "on".
     assert [task.scene_object_id for task in tasks] == [objects[0].id, objects[2].id]
-    assert tasks[0].public_content.clue_frames[0].example == "Elle est sur la table"
-    assert tasks[1].public_content.clue_frames[0].example == "Il est blanc"
+    cup_location = tasks[0].public_content.clue_frames[0]
+    assert cup_location.template == "Elle est [position] [reference object]"
+    assert cup_location.help == ["sur la table"]
+    assert [chip.text for chip in cup_location.slots[1].chips] == ["la table", "le livre"]
+    assert tasks[1].public_content.clue_frames[0].help == ["blanc"]
     assert build_ispy_description_tasks(
         session_id, objects, words, {"targetLanguage": "fr", "sceneObjects": {"objects": []}}
     ) == []

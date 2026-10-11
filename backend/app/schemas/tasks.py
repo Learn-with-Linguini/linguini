@@ -155,17 +155,41 @@ class ISpyRoundContent(ApiModel):
 
 
 type ClueFrameId = Literal["name", "colour", "location"]
+type ClueSlotId = Literal["position", "reference", "colour"]
 type ClueChip = Annotated[str, Field(min_length=1, max_length=200)]
 
 
+class ClueSlotChip(ApiModel):
+    """A vocabulary choice for one slot; a language option, not a claim about the scene."""
+
+    text: ClueChip
+    meaning: str | None = Field(default=None, max_length=200)
+    example: str | None = Field(default=None, max_length=200)
+
+
+class ClueSlot(ApiModel):
+    slot_id: ClueSlotId
+    label: NonEmptyText = Field(max_length=40)
+    chips: list[ClueSlotChip] = Field(default_factory=list, max_length=12)
+
+
 class ClueFrame(ApiModel):
-    """An optional sentence starter; ``prefix`` is shown once and chips fill its slot."""
+    """An optional sentence starter; ``prefix`` is shown once and slots fill the rest.
+
+    ``chips`` holds complete phrases on tasks saved before slots existed. ``phrases``
+    maps ``"position|reference"`` to the composed text, so contractions stay server-side.
+    ``help`` holds complete phrases from confirmed facts, shown only on request.
+    """
 
     frame_id: ClueFrameId
     prefix: NonEmptyText = Field(max_length=40)
     meaning: NonEmptyText = Field(max_length=200)
     example: NonEmptyText = Field(max_length=200)
+    template: str | None = Field(default=None, max_length=80)
     chips: list[ClueChip] = Field(default_factory=list, max_length=20)
+    slots: list[ClueSlot] = Field(default_factory=list, max_length=2)
+    phrases: dict[str, ClueChip] = Field(default_factory=dict, max_length=144)
+    help: list[ClueChip] = Field(default_factory=list, max_length=12)
 
 
 class ReflectionContent(ApiModel):
@@ -322,6 +346,12 @@ class TaskHint(EntityModel):
 CLUE_ASSISTANCE_VERSION = "ispy-clue-assistance.v1"
 
 
+class ClueSlotChoice(ApiModel):
+    frame_id: ClueFrameId
+    slot_id: ClueSlotId
+    chip: ClueChip
+
+
 class ClueAssistance(ApiModel):
     """Support visible while a clue was written: guided practice, never independent recall."""
 
@@ -331,6 +361,8 @@ class ClueAssistance(ApiModel):
     offered_frame_ids: list[ClueFrameId] = Field(default_factory=list, max_length=3)
     selected_frame_ids: list[ClueFrameId] = Field(default_factory=list, max_length=3)
     inserted_chips: list[ClueChip] = Field(default_factory=list, max_length=20)
+    selected_slots: list[ClueSlotChoice] = Field(default_factory=list, max_length=6)
+    revealed_help_frame_ids: list[ClueFrameId] = Field(default_factory=list, max_length=3)
 
 
 class LatestClueAttempt(ApiModel):

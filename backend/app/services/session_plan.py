@@ -282,13 +282,15 @@ def build_ispy_clue_tasks(session_id, result: ISpyClueResult, objects, words):
 def build_ispy_description_tasks(session_id, objects, words, description_context):
     """Choose up to two describable targets in code; the guess model never sees these IDs.
 
-    A target qualifies only with at least one confirmed colour or spatial clue, so
+    A target qualifies only with a confirmed colour, or a confirmed relation to another
+    lesson word, so
     a photo without such facts yields no description tasks rather than invented ones.
     """
     tasks = []
+    introduced = [str(obj.id) for obj in objects]
     for obj, word in zip(objects, words, strict=True):
-        frames, avoid_words = build_clue_support(description_context, obj, word)
-        if any(frame.chips for frame in frames):
+        frames, avoid_words = build_clue_support(description_context, obj, word, introduced)
+        if any(frame.help for frame in frames):
             tasks.append(
                 _ispy_description_task(
                     session_id, obj, word, words, description_context, frames, avoid_words

@@ -9,9 +9,8 @@ import { useAppState } from "../state/useAppState";
 import { practiceStages, taskDone } from "../lib/practiceTasks";
 import { CLUE_ASSISTANCE_VERSION, descriptionEvaluation, getLatestAttempt } from "../lib/api";
 import { queryKeys } from "../lib/queryKeys";
-import type { ClueAssistance, ClueFrame, ClueFrameId, ISpyDescriptionEvaluation, ISpyDescriptionOutcome, SessionTask, TaskAnswer } from "../lib/api";
-import { applyFrame, fillSlot, mentionsTarget, restoreSentences, savedAssistance, visibleFrames } from "../lib/clueFrames";
-import type { FrameSentences } from "../lib/clueFrames";
+import type { ClueAssistance, ClueFrame, ClueFrameId, ClueSlotId, ISpyDescriptionEvaluation, ISpyDescriptionOutcome, SessionTask, TaskAnswer } from "../lib/api";
+import { applyFrame, choicesFromSlots, fillSlot, mentionsTarget, nearTarget, restoreSentences, savedAssistance, slotSentence, slotsFromChoices, visibleFrames, writeSentence, type FrameSentences, type SlotChoices } from "../lib/clueFrames";
 import type { LanguageItem } from "../data/types";
 import { ReportIssueLink } from "../components/ReportIssueLink";
 
@@ -60,6 +59,8 @@ function Reflection({ task, index, total, onNext }: { task: SessionTask; index: 
   const [selectedFrameIds, setSelectedFrameIds] = useState<ClueFrameId[]>([]);
   const [insertedChips, setInsertedChips] = useState<string[]>([]);
   const [sentences, setSentences] = useState<FrameSentences>({});
+  const [choices, setChoices] = useState<SlotChoices>({});
+  const [revealedHelp, setRevealedHelp] = useState<ClueFrameId[]>([]);
   // A pending task has no attempts; any other task restores its latest one before taking input.
   const [hydrated, setHydrated] = useState(task.status === "pending");
   const latest = useQuery({
@@ -81,7 +82,10 @@ function Reflection({ task, index, total, onNext }: { task: SessionTask; index: 
     setSelectedFrameIds(frameIds);
     setInsertedChips(chips);
     setActiveFrameId(frameIds.at(-1) ?? null);
-    setSentences(restoreSentences(saved.text, savedFrames, chips));
+    const restored = choicesFromSlots(saved.assistance?.selectedSlots ?? []);
+    setChoices(restored);
+    setRevealedHelp(saved.assistance?.revealedHelpFrameIds ?? []);
+    setSentences(restoreSentences(saved.text, savedFrames, chips, restored));
     const evaluation = saved.evaluationDetails;
     if (evaluation) setGuess({ attemptId: saved.id, evaluation, feedback: saved.feedback });
     if (task.status === "completed") setFeedback(evaluation?.outcome === "clearMatch" ? "Linguini found your object!" : saved.feedback ?? "Reflection saved.");
@@ -98,6 +102,7 @@ function Reflection({ task, index, total, onNext }: { task: SessionTask; index: 
   const frames = visibleFrames(content.clueFrames);
   const activeFrame = frames.find(frame => frame.frameId === activeFrameId) ?? null;
   const namesTarget = mentionsTarget(text, content.avoidWords ?? []);
+  const nearName = !namesTarget && nearTarget(text, content.avoidWords ?? []);
   const chooseFrame = (frame: ClueFrame) => {
     setActiveFrameId(frame.frameId);
     setSelectedFrameIds(ids => ids.includes(frame.frameId) ? ids : [...ids, frame.frameId]);
@@ -111,6 +116,18 @@ function Reflection({ task, index, total, onNext }: { task: SessionTask; index: 
     setSentences(next.sentences);
     setInsertedChips(chips => chips.includes(chip) ? chips : [...chips, chip]);
   };
+  const chooseSlotChip = (frame: ClueFrame, slotId: ClueSlotId, chip: string) => {
+    const picks = { ...choices[frame.frameId], [slotId]: chip };
+    const next = writeSentence({ text, sentences }, frame.frameId, slotSentence(frame, picks));
+    setText(next.text);
+    setSentences(next.sentences);
+    setChoices(all => ({ ...all, [frame.frameId]: picks }));
+    setInsertedChips(chips => chips.includes(chip) ? chips : [...chips, chip]);
+  };
+  const chooseHelp = (frame: ClueFrame, phrase: string) => {
+    chooseChip(frame, phrase);
+    setChoices(all => ({ ...all, [frame.frameId]: undefined }));
+  };
   const answered = taskDone(task);
   const restoreFailed = !hydrated && latest.isError;
   const locked = answered || practiceSaving || guess !== null || !hydrated;
@@ -122,6 +139,7 @@ function Reflection({ task, index, total, onNext }: { task: SessionTask; index: 
     const assistance: ClueAssistance | null = frames.length ? {
       version: CLUE_ASSISTANCE_VERSION, practiceMode: "guided", targetWordShown: true,
       offeredFrameIds: frames.map(frame => frame.frameId), selectedFrameIds, insertedChips,
+      selectedSlots: slotsFromChoices(choices), revealedHelpFrameIds: revealedHelp,
     } : null;
     const body: TaskAnswer = assistance ? { inputMode: "text", text: answer, assistance } : { inputMode: "text", text: answer };
     const fingerprint = JSON.stringify(body);
@@ -137,6 +155,8 @@ function Reflection({ task, index, total, onNext }: { task: SessionTask; index: 
           setSelectedFrameIds(saved.selectedFrameIds);
           setInsertedChips(saved.insertedChips);
           setActiveFrameId(saved.selectedFrameIds.at(-1) ?? null);
+          setChoices(choicesFromSlots(saved.selectedSlots));
+          setRevealedHelp(saved.revealedHelpFrameIds);
         }
         const evaluation = descriptionEvaluation(result.attempt);
         if (result.attempt && evaluation) setGuess({ attemptId: result.attempt.id, evaluation, feedback: result.attempt.feedback?.message ?? null });
@@ -162,15 +182,27 @@ function Reflection({ task, index, total, onNext }: { task: SessionTask; index: 
       <span className="label muted">Clue frames (optional)</span>
       <div className="chip-row">{frames.map(frame => <button key={frame.frameId} type="button" className={`chip${frame.frameId === activeFrameId ? " chip--selected" : ""}`} aria-pressed={frame.frameId === activeFrameId} disabled={locked} onClick={() => chooseFrame(frame)}>{FRAME_LABELS[frame.frameId]}</button>)}</div>
       {activeFrame ? <div className="clue-frame stack-2" data-testid="clue-frame">
-        <strong lang={scene.languageCode}>{activeFrame.prefix} …</strong>
+        <strong lang={scene.languageCode}>{activeFrame.template ?? `${activeFrame.prefix} …`}</strong>
         <span className="small">{activeFrame.meaning}</span>
         <span className="small muted">Example: <span lang={scene.languageCode}>{activeFrame.example}</span></span>
         {activeFrame.chips.length ? <div className="chip-row">{activeFrame.chips.map(chip => <button key={chip} type="button" className={`chip${insertedChips.includes(chip) ? " chip--selected" : ""}`} disabled={locked} onClick={() => chooseChip(activeFrame, chip)}>{chip}</button>)}</div> : null}
+        {(activeFrame.slots ?? []).map(slot => <div key={slot.slotId} className="stack-2" data-testid={`clue-slot-${slot.slotId}`}>
+          <span className="small muted">Choose a {slot.label}</span>
+          <div className="chip-row">{slot.chips.map(chip => {
+            const picked = choices[activeFrame.frameId]?.[slot.slotId] === chip.text;
+            return <button key={chip.text} type="button" lang={scene.languageCode} title={chip.meaning ?? undefined} className={`chip${picked ? " chip--selected" : ""}`} aria-pressed={picked} disabled={locked} onClick={() => chooseSlotChip(activeFrame, slot.slotId, chip.text)}>{chip.text}</button>;
+          })}</div>
+          {slot.slotId === "position" ? <ul className="small muted" data-testid="position-meanings">{slot.chips.filter(chip => chip.meaning).map(chip => <li key={chip.text}><span lang={scene.languageCode}>{chip.text}</span> — {chip.meaning}{chip.example ? <> · <span lang={scene.languageCode}>{chip.example}</span></> : null}</li>)}</ul> : null}
+        </div>)}
+        {activeFrame.help?.length ? revealedHelp.includes(activeFrame.frameId)
+          ? <div className="stack-2" data-testid="clue-help"><span className="small muted">Suggested phrases (guided help)</span><div className="chip-row">{activeFrame.help.map(phrase => <button key={phrase} type="button" lang={scene.languageCode} className={`chip${insertedChips.includes(phrase) ? " chip--selected" : ""}`} disabled={locked} onClick={() => chooseHelp(activeFrame, phrase)}>{phrase}</button>)}</div></div>
+          : <Button variant="secondary" disabled={locked} onClick={() => setRevealedHelp(ids => [...ids, activeFrame.frameId])}>Help me</Button> : null}
       </div> : null}
     </div> : null}
     <div className="field"><label className="field__label" htmlFor="reflection">Your clue</label><input id="reflection" ref={input} className="input" value={text} maxLength={2000} disabled={locked} onChange={event => setText(event.target.value)} /></div>
     {!hydrated && !restoreFailed ? <p className="small muted" role="status" data-testid="restoring">Loading your last clue…</p> : null}
     {restoreFailed ? <div className="stack-2" role="alert" data-testid="restore-error"><span>We couldn't load your saved clue, so this task can't continue yet.</span><Button variant="secondary" onClick={() => void latest.refetch()}>Try again</Button></div> : null}
+    {nearName && !locked ? <p className="small muted" data-testid="clue-near-warning">One word looks close to this object's name. If it's a different word, you can still send it.</p> : null}
     {namesTarget && !locked ? <p className="clue-warning" data-testid="clue-warning" role="alert">Your clue uses the word for this object. Change your clue to describe it without naming it.</p> : null}
     {answered || feedback || guess ? <Feedback><div className="stack-2" role="status">
       {outcome && outcome !== "evaluationFailed" ? <strong>{guessed ? `Linguini guessed: ${guessed.word}` : "Linguini couldn't match your clue to an object."}</strong> : null}

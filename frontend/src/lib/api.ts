@@ -354,12 +354,21 @@ export type TaskContent =
   | { kind: "ispyRound"; clue: string; clueTranslation?: string | null; encouragement?: string | null; options: { optionId: string; label: string; sceneObjectId: string }[] }
   | { kind: "reflection"; prompt: string; clueFrames?: ClueFrame[]; avoidWords?: string[] };
 export type ClueFrameId = "name" | "colour" | "location";
-export interface ClueFrame { frameId: ClueFrameId; prefix: string; meaning: string; example: string; chips: string[] }
+export type ClueSlotId = "position" | "reference" | "colour";
+export interface ClueSlotChip { text: string; meaning?: string | null; example?: string | null }
+export interface ClueSlot { slotId: ClueSlotId; label: string; chips: ClueSlotChip[] }
+/** `chips` are legacy complete phrases; `phrases` maps "position|reference" to composed text; `help` is shown on request. */
+export interface ClueFrame {
+  frameId: ClueFrameId; prefix: string; meaning: string; example: string; chips: string[];
+  template?: string | null; slots?: ClueSlot[]; phrases?: Record<string, string>; help?: string[];
+}
+export interface ClueSlotChoice { frameId: ClueFrameId; slotId: ClueSlotId; chip: string }
 export const CLUE_ASSISTANCE_VERSION = "ispy-clue-assistance.v1";
 /** Support visible while writing a clue; recorded as guided practice, never as independent recall. */
 export interface ClueAssistance {
   version: typeof CLUE_ASSISTANCE_VERSION; practiceMode: "guided"; targetWordShown: true;
   offeredFrameIds: ClueFrameId[]; selectedFrameIds: ClueFrameId[]; insertedChips: string[];
+  selectedSlots?: ClueSlotChoice[]; revealedHelpFrameIds?: ClueFrameId[];
 }
 export interface SessionTask {
   id: string; kind: TaskContent["kind"]; phase: "learning" | "ispy";

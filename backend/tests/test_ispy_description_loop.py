@@ -310,7 +310,8 @@ def test_described_tasks_publish_frames_and_target_words_outside_the_model_conte
     replies.append(result(target))
 
     assert [frame.frame_id for frame in content.clue_frames] == ["colour"]
-    assert content.clue_frames[0].chips == ["azul"]
+    assert content.clue_frames[0].help == ["azul"]
+    assert "azul" in [chip.text for chip in content.clue_frames[0].slots[0].chips]
     assert content.avoid_words
     clue = "Veo algo. Es marrón y está a la izquierda."
     submit(repo, task_id, "complete", clue)

@@ -5,7 +5,13 @@ import unicodedata
 
 from app.repositories.practice import ClueNamesTargetError, PracticeConflictError
 from app.schemas.enums import SYMMETRIC_SCENE_RELATION_TYPES
-from app.schemas.tasks import ClueAssistance, ClueFrame, ReflectionContent
+from app.schemas.tasks import (
+    ClueAssistance,
+    ClueFrame,
+    ClueSlot,
+    ClueSlotChip,
+    ReflectionContent,
+)
 
 DEFINITE_ARTICLES = {
     "es": {"masculine": "el", "feminine": "la"},
@@ -18,6 +24,33 @@ CONTRACTIONS = {
 MEANINGS = {
     "colour": "It is … — say what colour your object is.",
     "location": "It is … — say where your object is, using another object as a reference.",
+}
+# A small introduced bank: (expression, meaning, teaching example about other objects).
+POSITIONS = {
+    "es": [
+        ("sobre", "on", "El libro está sobre la mesa."),
+        ("debajo de", "under", "El gato está debajo de la silla."),
+        ("al lado de", "next to", "La silla está al lado de la puerta."),
+        ("delante de", "in front of", "El perro está delante de la casa."),
+        ("detrás de", "behind", "El árbol está detrás de la casa."),
+    ],
+    "fr": [
+        ("sur", "on", "Le livre est sur la table."),
+        ("sous", "under", "Le chat est sous la chaise."),
+        ("à côté de", "next to", "La chaise est à côté de la porte."),
+        ("devant", "in front of", "Le chien est devant la maison."),
+        ("derrière", "behind", "L'arbre est derrière la maison."),
+    ],
+}
+COLOUR_BANK = {
+    "es": [("rojo", "red"), ("azul", "blue"), ("verde", "green"), ("blanco", "white"),
+           ("negro", "black"), ("amarillo", "yellow")],
+    "fr": [("rouge", "red"), ("bleu", "blue"), ("vert", "green"), ("blanc", "white"),
+           ("noir", "black"), ("jaune", "yellow")],
+}
+TEACHING_EXAMPLES = {
+    "es": {"colour": "La manzana es roja.", "location": "El libro está sobre la mesa."},
+    "fr": {"colour": "La pomme est rouge.", "location": "Le livre est sur la table."},
 }
 # Singular (masculine, feminine) forms. A colour missing here is never suggested,
 # because its agreement with the target noun cannot be established safely.
@@ -91,8 +124,13 @@ def _unique(values):
     return result
 
 
-def build_clue_support(context, target, word):
-    """Colour and Location frames from confirmed facts, plus the target's own word forms."""
+def build_clue_support(context, target, word, introduced_keys=()):
+    """Colour and Location frames whose slots offer introduced vocabulary banks.
+
+    Choices are language options, not scene claims, so they include plausible wrong
+    answers; the correct phrases from confirmed facts are kept as optional ``help``.
+    Reference nouns come only from ``introduced_keys`` (this session's lesson words).
+    """
     language = context.get("targetLanguage")
     if language not in SUPPORTED_LANGUAGES:
         return [], []
@@ -100,14 +138,46 @@ def build_clue_support(context, target, word):
     objects = {term["key"]: term for term in facts.get("objects", [])}
     target_key = str(target.id)
     target_term = objects.get(target_key, {})
+    gender = target_term.get("gender")
     forms = _target_forms(language, target, word, target_term)
-    colour_chips = [
-        agree_colour(language, term["translation"], target_term.get("gender"))
+    prefixes = _prefixes(language, gender)
+    frames = []
+
+    confirmed_colours = [
+        (agree_colour(language, term["translation"], gender), term.get("source"))
         for term in facts.get("attributes", [])
         if term.get("objectKey") == target_key
         and term["key"].rsplit(":", 1)[-1] in COLOUR_ATTRIBUTE_TYPES
     ]
-    place_chips = []
+    colour_help = _allowed([form for form, _ in confirmed_colours], forms)
+    if colour_help:
+        bank = {}
+        bank_colours = [(agree_colour(language, c, gender), m) for c, m in COLOUR_BANK[language]]
+        for form, meaning in [*bank_colours, *confirmed_colours]:
+            if form and not mentions_target(form, forms):
+                bank.setdefault(_fold(form), (form, meaning))
+        frames.append(ClueFrame(
+            frame_id="colour",
+            prefix=prefixes["colour"],
+            meaning=MEANINGS["colour"],
+            example=TEACHING_EXAMPLES[language]["colour"],
+            template=f"{prefixes['colour']} [colour]",
+            slots=[ClueSlot(slot_id="colour", label="colour", chips=[
+                ClueSlotChip(text=form, meaning=meaning)
+                for _, (form, meaning) in sorted(bank.items())
+            ])],
+            help=colour_help,
+        ))
+
+    references = {}
+    for key in introduced_keys:
+        term = objects.get(str(key))
+        article = term and _definite(language, term)
+        if str(key) != target_key and article:
+            text = _with_article(article, term["translation"])
+            if not mentions_target(text, forms):
+                references.setdefault(_fold(text), (text, term))
+    location_help, extra_positions = [], []
     for relation in facts.get("relations", []):
         subject, reference = relation.get("subjectObjectKey"), relation.get("referenceObjectKey")
         if subject != target_key and not (
@@ -116,25 +186,47 @@ def build_clue_support(context, target, word):
             continue
         other_key = reference if subject == target_key else subject
         other = objects.get(other_key)
-        if other and other_key != target_key:
-            place_chips.append(_place(language, relation["translation"], other))
-    chips = {
-        "colour": [c for c in _unique(colour_chips) if not mentions_target(c, forms)],
-        "location": [c for c in _unique(place_chips) if not mentions_target(c, forms)],
-    }
-    prefixes = _prefixes(language, target_term.get("gender"))
-    frames = [
-        ClueFrame(
-            frame_id=frame_id,
-            prefix=prefixes[frame_id],
-            meaning=MEANINGS[frame_id],
-            example=f"{prefixes[frame_id]} {chips[frame_id][0]}",
-            chips=chips[frame_id][:20],
-        )
-        for frame_id in ("colour", "location")
-        if chips[frame_id]
-    ]
+        if other and other_key != target_key and _fold(_with_article(
+            _definite(language, other) or "", other["translation"]
+        )) in references:
+            location_help.append(_place(language, relation["translation"], other))
+            extra_positions.append((relation["translation"], relation.get("source"), None))
+    location_help = _allowed(location_help, forms)
+    if location_help and references:
+        positions = {}
+        for text, meaning, example in [*POSITIONS[language], *extra_positions]:
+            if not _fold(text).startswith(LOCATION_VERB_STARTS):
+                positions.setdefault(_fold(text), (text, meaning, example))
+        phrases = {
+            f"{position}|{reference}": phrase
+            for position, _, _ in positions.values()
+            for reference, term in references.values()
+            if (phrase := _place(language, position, term))
+        }
+        frames.append(ClueFrame(
+            frame_id="location",
+            prefix=prefixes["location"],
+            meaning=MEANINGS["location"],
+            example=TEACHING_EXAMPLES[language]["location"],
+            template=f"{prefixes['location']} [position] [reference object]",
+            slots=[
+                ClueSlot(slot_id="position", label="position", chips=[
+                    ClueSlotChip(text=text, meaning=meaning, example=example)
+                    for text, meaning, example in positions.values()
+                ][:12]),
+                ClueSlot(slot_id="reference", label="reference object", chips=[
+                    ClueSlotChip(text=text, meaning=term.get("source"))
+                    for text, term in sorted(references.values())
+                ][:12]),
+            ],
+            phrases=phrases,
+            help=location_help,
+        ))
     return frames, forms
+
+
+def _allowed(values, forms):
+    return [value for value in _unique(values) if not mentions_target(value, forms)][:12]
 
 
 def _target_forms(language, target, word, target_term):
@@ -157,40 +249,15 @@ def _fold(text):
     return "".join(char for char in decomposed if not unicodedata.combining(char))
 
 
-def _squeeze(word):
-    return re.sub(r"(\w)\1+", r"\1", word)
-
-
-def _one_edit(a, b):
-    if abs(len(a) - len(b)) > 1:
-        return False
-    if len(a) > len(b):
-        a, b = b, a
-    i = 0
-    while i < len(a) and a[i] == b[i]:
-        i += 1
-    return a[i + (len(a) == len(b)):] == b[i + 1:]
-
-
 def mentions_target(text, avoid_words):
-    """Whole words ignoring case and accents; single words also match one-letter misspellings.
-
-    "Tazas", "TAZA", "mesaa" and "mesaaa" all count for their targets; words of
-    under four letters must match exactly so short unrelated words stay allowed.
-    """
+    """Whole target forms ignoring case and accents; near-misses only warn client-side."""
     folded = _fold(text)
-    tokens = [_squeeze(token) for token in re.findall(r"\w+", folded)]
-    for word in avoid_words:
-        parts = _fold(word).split()
-        if parts and re.search(
+    return any(
+        parts and re.search(
             r"(?<!\w)" + r"\s+".join(map(re.escape, parts)) + r"(?!\w)", folded
-        ):
-            return True
-        if len(parts) == 1 and len(parts[0]) >= 4:
-            form = _squeeze(parts[0])
-            if any(len(token) >= 4 and _one_edit(form, token) for token in tokens):
-                return True
-    return False
+        )
+        for parts in (_fold(word).split() for word in avoid_words)
+    )
 
 
 def check_clue(content, request):
@@ -206,14 +273,36 @@ def check_clue(content, request):
 
 
 def _check_assistance(content, assistance: ClueAssistance):
-    """Offered frames are the task's frames in order; legacy tasks may hide a Name frame."""
+    """Assistance must name offered frames, slots and chips; legacy Name frames stay valid."""
     frames = {frame.frame_id: frame for frame in content.clue_frames}
     offered = assistance.offered_frame_ids
+    selected_ids = set(assistance.selected_frame_ids)
     selected = [frames.get(frame_id) for frame_id in assistance.selected_frame_ids]
+    revealed = set(assistance.revealed_help_frame_ids)
     if (
         None in selected
         or offered != [frame_id for frame_id in frames if frame_id in offered]
-        or not set(assistance.selected_frame_ids) <= set(offered)
-        or not set(assistance.inserted_chips) <= {c for frame in selected for c in frame.chips}
+        or not selected_ids <= set(offered)
+        or not revealed <= set(offered)
     ):
+        raise PracticeConflictError("Clue assistance does not match this task.")
+    allowed = {
+        chip
+        for frame in selected
+        for chip in [
+            *frame.chips,
+            *(frame.help if frame.frame_id in revealed else []),
+            *frame.phrases.values(),
+            *(choice.text for slot in frame.slots for choice in slot.chips),
+        ]
+    }
+    slots_ok = all(
+        choice.frame_id in selected_ids
+        and any(
+            slot.slot_id == choice.slot_id and choice.chip in {c.text for c in slot.chips}
+            for slot in frames[choice.frame_id].slots
+        )
+        for choice in assistance.selected_slots
+    )
+    if not set(assistance.inserted_chips) <= allowed or not slots_ok:
         raise PracticeConflictError("Clue assistance does not match this task.")

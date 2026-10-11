@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ClueFrame } from "../src/lib/api.ts";
-import { applyFrame, fillSlot, mentionsTarget, restoreSentences, savedAssistance, visibleFrames } from "../src/lib/clueFrames.ts";
+import { applyFrame, choicesFromSlots, fillSlot, mentionsTarget, nearTarget, restoreSentences, savedAssistance, slotSentence, slotsFromChoices, visibleFrames, writeSentence } from "../src/lib/clueFrames.ts";
 
 const frame = (frameId: ClueFrame["frameId"], prefix: string, chips: string[] = []): ClueFrame =>
   ({ frameId, prefix, meaning: "meaning", example: "example", chips });
@@ -73,8 +73,11 @@ test("the target word is found whole, ignoring case, accents and one-letter miss
   assert.equal(mentionsTarget("a cup", avoid), true);
   assert.equal(mentionsTarget("Es un tazón", avoid), false);
   assert.equal(mentionsTarget("Está sobre la mesa", avoid), false, "other objects stay usable as references");
-  assert.equal(mentionsTarget("Es una mesaa", ["mesa", "mesas"]), true);
-  assert.equal(mentionsTarget("Es una mesaaa", ["mesa", "mesas"]), true);
+  assert.equal(mentionsTarget("Es una mesaa", ["mesa", "mesas"]), false, "similar spellings are not hard rejections");
+  assert.equal(mentionsTarget("Es de la misa", ["mesa", "mesas"]), false);
+  assert.equal(nearTarget("Es una mesaa", ["mesa", "mesas"]), true, "but they get a soft warning");
+  assert.equal(nearTarget("Es una mesa", ["mesa", "mesas"]), false);
+  assert.equal(nearTarget("Es de este mes", ["mesa", "mesas"]), false);
   assert.equal(mentionsTarget("Es de este mes", ["mesa", "mesas"]), false);
   assert.equal(mentionsTarget("Veo una taza", []), false);
 });
@@ -82,8 +85,50 @@ test("the target word is found whole, ignoring case, accents and one-letter miss
 test("saved assistance is restored from the stored attempt payload", () => {
   assert.deepEqual(
     savedAssistance({ text: "Es roja", assistance: { selected_frame_ids: ["colour", "bogus"], inserted_chips: ["roja", 3] } }),
-    { selectedFrameIds: ["colour"], insertedChips: ["roja"] },
+    { selectedFrameIds: ["colour"], insertedChips: ["roja"], selectedSlots: [], revealedHelpFrameIds: [] },
+  );
+  assert.deepEqual(
+    savedAssistance({ text: "Está sobre la mesa", assistance: { selected_frame_ids: ["location"], inserted_chips: ["sobre", "la mesa"],
+      selected_slots: [{ frame_id: "location", slot_id: "position", chip: "sobre" }, { frame_id: "location", slot_id: "bogus", chip: "x" }],
+      revealed_help_frame_ids: ["location"] } }),
+    { selectedFrameIds: ["location"], insertedChips: ["sobre", "la mesa"], selectedSlots: [{ frameId: "location", slotId: "position", chip: "sobre" }], revealedHelpFrameIds: ["location"] },
   );
   assert.equal(savedAssistance({ text: "free typing" }), null);
   assert.equal(savedAssistance(undefined), null);
+});
+
+const colourSlots: ClueFrame = { frameId: "colour", prefix: "Elle est", meaning: "m", example: "La pomme est rouge.", chips: [],
+  template: "Elle est [colour]", slots: [{ slotId: "colour", label: "colour", chips: [{ text: "blanche" }, { text: "rouge" }] }], help: ["blanche"] };
+const locationSlots: ClueFrame = { frameId: "location", prefix: "Elle est", meaning: "m", example: "Le livre est sur la table.", chips: [],
+  template: "Elle est [position] [reference object]",
+  slots: [{ slotId: "position", label: "position", chips: [{ text: "sur" }, { text: "à côté de" }] },
+    { slotId: "reference", label: "reference object", chips: [{ text: "la table" }, { text: "le livre" }] }],
+  phrases: { "sur|la table": "sur la table", "sur|le livre": "sur le livre", "à côté de|la table": "à côté de la table", "à côté de|le livre": "à côté du livre" },
+  help: ["sur la table"] };
+
+test("separate slots compose contractions and changing one slot keeps the other slots and sentences", () => {
+  let c = applyFrame({ text: "", sentences: {} }, colourSlots);
+  c = writeSentence(c, "colour", slotSentence(colourSlots, { colour: "rouge" }));
+  c = applyFrame(c, locationSlots);
+  c = writeSentence(c, "location", slotSentence(locationSlots, { position: "à côté de" }));
+  assert.equal(c.text, "Elle est rouge. Elle est à côté de");
+  c = writeSentence(c, "location", slotSentence(locationSlots, { position: "à côté de", reference: "le livre" }));
+  assert.equal(c.text, "Elle est rouge. Elle est à côté du livre", "the server's composed phrase supplies the contraction");
+  c = writeSentence(c, "location", slotSentence(locationSlots, { position: "sur", reference: "le livre" }));
+  assert.equal(c.text, "Elle est rouge. Elle est sur le livre");
+  c = writeSentence(c, "colour", slotSentence(colourSlots, { colour: "blanche" }));
+  assert.equal(c.text, "Elle est blanche. Elle est sur le livre", "French Colour and Location share a prefix without overwriting");
+});
+
+test("slot picks and free edits survive a reload", () => {
+  const picks = { colour: { colour: "blanche" }, location: { position: "sur", reference: "le livre" } } as const;
+  const saved = slotsFromChoices(picks);
+  assert.deepEqual(saved, [{ frameId: "colour", slotId: "colour", chip: "blanche" },
+    { frameId: "location", slotId: "position", chip: "sur" }, { frameId: "location", slotId: "reference", chip: "le livre" }]);
+  const choices = choicesFromSlots(saved);
+  assert.deepEqual(choices, picks);
+  assert.deepEqual(restoreSentences("Elle est blanche. Elle est sur le livre. Elle est petite.", [colourSlots, locationSlots], [], choices),
+    { colour: "Elle est blanche", location: "Elle est sur le livre" });
+  assert.deepEqual(restoreSentences("Elle est sur la table", [locationSlots], ["sur la table"]), { location: "Elle est sur la table" }, "revealed help phrases restore too");
+  assert.deepEqual(slotsFromChoices({ location: undefined }), []);
 });
