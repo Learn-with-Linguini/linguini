@@ -58,7 +58,9 @@ from app.schemas.enums import (
 from app.schemas.media import MediaAsset, SceneObject, SceneObjectRelation
 from app.schemas.sessions import Session, SessionDetailResponse, SessionSummaryResponse
 from app.schemas.tasks import (
+    ISPY_DESCRIPTION_EVALUATION_VERSION,
     CheckVocabularyAnswerResponse,
+    ISpyDescriptionEvaluation,
     SessionProgress,
     SessionTask,
     SessionTaskPublic,
@@ -72,6 +74,11 @@ from app.schemas.vocabulary import (
     VocabularyTranslation,
 )
 from app.services.background import InlineBackgroundRunner
+from app.services.ispy_descriptions import (
+    EVALUATION_FAILED_MESSAGE,
+    OUTCOME_CORRECTNESS,
+    interpret_guess,
+)
 from app.services.scene_analysis import DeterministicSceneAnalyzer
 from app.services.session_plan import (
     bootstrap_word,
@@ -1547,20 +1554,35 @@ class PostgresWorkflowRepository:
             )
 
     def _ispy_summary(self, c, session_id):
-        outcomes = (
-            c.execute(
-                select(task_attempts.c.is_correct)
-                .join(session_tasks, session_tasks.c.id == task_attempts.c.session_task_id)
-                .where(
-                    session_tasks.c.session_id == session_id, session_tasks.c.phase == "ispy"
-                )
+        """Count graded clue attempts, plus one round per described task.
+
+        A described task succeeds only once its clear match is confirmed, so
+        unresolved, ambiguous and failed evaluations never count as correct.
+        """
+        rows = c.execute(
+            select(
+                session_tasks.c.id,
+                session_tasks.c.status,
+                task_attempts.c.is_correct,
+                task_attempts.c.evaluation_details["version"].astext.label("version"),
             )
-            .scalars()
-            .all()
-        )
+            .join(session_tasks, session_tasks.c.id == task_attempts.c.session_task_id)
+            .where(
+                session_tasks.c.session_id == session_id, session_tasks.c.phase == "ispy"
+            )
+        ).all()
+        graded = [
+            row.is_correct for row in rows if row.version != ISPY_DESCRIPTION_EVALUATION_VERSION
+        ]
+        rounds = {
+            row.id: row.status == "completed"
+            for row in rows
+            if row.version == ISPY_DESCRIPTION_EVALUATION_VERSION
+        }
         return {
-            "ispy_correct_count": sum(outcome is True for outcome in outcomes),
-            "ispy_attempt_count": sum(outcome is not None for outcome in outcomes),
+            "ispy_correct_count": sum(outcome is True for outcome in graded)
+            + sum(rounds.values()),
+            "ispy_attempt_count": sum(outcome is not None for outcome in graded) + len(rounds),
         }
 
     def _encounter(
@@ -1616,12 +1638,7 @@ class PostgresWorkflowRepository:
         return SessionTask.model_validate(dict(row))
 
     def _evaluates_description(self, task):
-        return bool(
-            task.kind == "reflection"
-            and task.answer_key
-            and task.answer_key.scene_description_context
-            and self.ispy_guess_generator
-        )
+        return bool(_describes_object(task) and self.ispy_guess_generator)
 
     def _evaluation_lease(self):
         seconds = getattr(
@@ -1824,14 +1841,14 @@ class PostgresWorkflowRepository:
                                 "This task changed while your description was evaluated. "
                                 "Retry the action."
                             )
-                        guess = evaluation.guess
-                        if guess is None:
-                            correct = None
-                            feedback_message = "Your description was saved. Keep using scene words."
-                        else:
-                            correct = guess.guessed_object_key == str(task.scene_object_id)
-                            feedback_message = guess.feedback
-                            evaluation_details = guess.model_dump(mode="json", by_alias=True)
+                        interpretation = interpret_guess(evaluation.guess, task.scene_object_id)
+                        correct = OUTCOME_CORRECTNESS[interpretation.outcome]
+                        feedback_message = (
+                            EVALUATION_FAILED_MESSAGE
+                            if evaluation.guess is None
+                            else evaluation.guess.feedback
+                        )
+                        evaluation_details = interpretation.model_dump(mode="json", by_alias=True)
                     else:
                         correct = evaluate(task, request)
                         feedback_message = (
@@ -1874,7 +1891,7 @@ class PostgresWorkflowRepository:
                     attempt = TaskAttempt(
                         id=attempt_id,
                         session_task_id=task.id,
-                        attempt_number=1,
+                        attempt_number=_next_attempt_number(c, task.id),
                         input_mode=request.input_mode,
                         response_payload=payload,
                         is_correct=correct,
@@ -1889,7 +1906,7 @@ class PostgresWorkflowRepository:
                             .where(task_evaluation_claims.c.id == task.id)
                             .values(**NO_EVALUATION_CLAIM)
                         )
-                    if correct is True and task.phase == "ispy":
+                    if correct is True and task.phase == "ispy" and evaluation is None:
                         award(
                             c,
                             user_id=self.user_id,
@@ -1898,12 +1915,15 @@ class PostgresWorkflowRepository:
                             language_profile_id=session.language_profile_id,
                             session_id=task.session_id,
                         )
-                    self._encounter(
-                        c,
-                        task,
-                        attempt.id,
-                        "completed" if correct is None else ("correct" if correct else "incorrect"),
-                    )
+                    if evaluation is None:
+                        self._encounter(
+                            c,
+                            task,
+                            attempt.id,
+                            "completed"
+                            if correct is None
+                            else ("correct" if correct else "incorrect"),
+                        )
                     if task.kind == "vocabularyIntroduction" and task.public_content.words:
                         for learning_word in task.public_content.words:
                             self._encounter(
@@ -1914,34 +1934,123 @@ class PostgresWorkflowRepository:
                                 introduced=True,
                                 vocabulary_item_id=learning_word.vocabulary_item_id,
                             )
-                    values = dict(
-                        status="completed",
-                        completed_at=utc_now(),
-                        started_at=task.started_at or utc_now(),
-                    )
+                    if evaluation is None:
+                        values = dict(
+                            status="completed",
+                            completed_at=utc_now(),
+                            started_at=task.started_at or utc_now(),
+                        )
+                    else:
+                        # Described tasks finish only via ``confirm_guess``.
+                        values = dict(status="inProgress", started_at=task.started_at or utc_now())
                 else:
                     raise PracticeConflictError("Unknown task action.")
                 c.execute(
                     update(session_tasks).where(session_tasks.c.id == task.id).values(**values)
                 )
                 if values["status"] == "completed":
-                    award(
-                        c,
-                        user_id=self.user_id,
-                        event_type="taskCompleted",
-                        idempotency_key=f"task:{task.id}",
-                        language_profile_id=session.language_profile_id,
-                        session_id=task.session_id,
-                    )
-            tasks = self._tasks(c, task.session_id)
-            return TaskActionResponse(
-                task=SessionTaskPublic.from_internal(next(t for t in tasks if t.id == task.id)),
-                attempt=attempt,
-                next_task_id=next(
-                    (t.id for t in tasks if t.status not in {"completed", "skipped"}), None
-                ),
-                session_progress=task_progress(tasks),
+                    self._award_completion(c, task, session)
+            return self._action_response(c, task, attempt)
+
+    def confirm_guess(self, task_id, attempt_id):
+        """Complete a described task when the learner accepts its latest clear match.
+
+        Confirming an older attempt, a non-clear outcome, or while a newer clue
+        is being evaluated is rejected; repeating a confirmation is a no-op.
+        """
+        with self.transaction() as c:
+            task = self._task_row(c, task_id)
+            if not _describes_object(task):
+                raise PracticeConflictError("Only I-Spy descriptions can confirm a guess.")
+            latest = (
+                c.execute(
+                    select(task_attempts)
+                    .where(task_attempts.c.session_task_id == task.id)
+                    .order_by(task_attempts.c.attempt_number.desc())
+                    .limit(1)
+                )
+                .mappings()
+                .one_or_none()
             )
+            if latest is None or latest["id"] != attempt_id:
+                raise PracticeConflictError("Only the latest guess can be confirmed.")
+            attempt = TaskAttempt.model_validate(dict(latest))
+            try:
+                outcome = ISpyDescriptionEvaluation.model_validate(
+                    attempt.evaluation_details or {}
+                ).outcome
+            except ValueError:
+                outcome = None
+            if outcome != "clearMatch":
+                raise PracticeConflictError("Only a clear match can be confirmed.")
+            if task.status != "completed":
+                session = self._session(c, task.session_id)
+                if session.status != "inProgress" or task.status == "skipped":
+                    raise PracticeConflictError(
+                        f"Task or session is not active; session is '{session.status}'."
+                    )
+                if c.execute(
+                    select(task_evaluation_claims.c.evaluation_claim_id).where(
+                        task_evaluation_claims.c.id == task.id,
+                        task_evaluation_claims.c.evaluation_claim_expires_at > func.now(),
+                    )
+                ).scalar_one_or_none():
+                    raise PracticeConflictError("A newer clue is still being checked.")
+                now = utc_now()
+                c.execute(
+                    update(session_tasks)
+                    .where(session_tasks.c.id == task.id)
+                    .values(status="completed", completed_at=now, started_at=task.started_at or now)
+                )
+                award(
+                    c,
+                    user_id=self.user_id,
+                    event_type="ispyCorrect",
+                    idempotency_key=f"ispy-correct:{task.id}",
+                    language_profile_id=session.language_profile_id,
+                    session_id=task.session_id,
+                )
+                self._encounter(c, task, task.id, "completed")
+                self._award_completion(c, task, session)
+            return self._action_response(c, task, attempt)
+
+    def _award_completion(self, c, task, session):
+        award(
+            c,
+            user_id=self.user_id,
+            event_type="taskCompleted",
+            idempotency_key=f"task:{task.id}",
+            language_profile_id=session.language_profile_id,
+            session_id=task.session_id,
+        )
+
+    def _action_response(self, c, task, attempt):
+        tasks = self._tasks(c, task.session_id)
+        return TaskActionResponse(
+            task=SessionTaskPublic.from_internal(next(t for t in tasks if t.id == task.id)),
+            attempt=attempt,
+            next_task_id=next(
+                (t.id for t in tasks if t.status not in {"completed", "skipped"}), None
+            ),
+            session_progress=task_progress(tasks),
+        )
+
+
+def _describes_object(task):
+    return bool(
+        task.kind == "reflection"
+        and task.phase == "ispy"
+        and task.answer_key
+        and task.answer_key.scene_description_context
+    )
+
+
+def _next_attempt_number(c, task_id):
+    return c.execute(
+        select(func.coalesce(func.max(task_attempts.c.attempt_number), 0) + 1).where(
+            task_attempts.c.session_task_id == task_id
+        )
+    ).scalar_one()
 
 
 def _attempt_id(task, request):

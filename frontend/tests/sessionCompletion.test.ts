@@ -34,7 +34,7 @@ function task(kind: string, status: SessionTask["status"], orderIndex: number): 
     status, isSkippable: true, orderIndex, publicContent, vocabularyItemId: null, sceneObjectId: null };
 }
 
-const fixture = detail("inProgress", [task("learn", "completed", 0), task("clues", "completed", 1), task("reflection", "completed", 2)]);
+let fixture = detail("inProgress", [task("learn", "completed", 0), task("clues", "completed", 1), task("reflection", "completed", 2)]);
 
 function detail(status: PracticeDetail["session"]["status"], tasks: SessionTask[] = []): PracticeDetail {
   return {
@@ -55,10 +55,16 @@ const apiFixtures: Record<string, unknown> = {
 };
 
 let resolveComplete: ((response: Response) => void) | null = null;
+const taskRequests: { path: string; body: Record<string, unknown> }[] = [];
+const taskReplies: (() => Response)[] = [];
 
-globals.fetch = async (input: unknown) => {
+globals.fetch = async (input: unknown, init?: RequestInit) => {
   const url = typeof input === "string" ? input : (input as Request).url;
   const path = url.replace(/^https?:\/\/[^/]+/, "");
+  if (path.startsWith("/api/v1/tasks/")) {
+    taskRequests.push({ path, body: JSON.parse(String(init?.body ?? "{}")) });
+    return taskReplies.shift()?.() ?? new Response("no reply", { status: 500 });
+  }
   if (path === `/api/v1/sessions/${SESSION_ID}/complete`) return new Promise<Response>(resolve => { resolveComplete = resolve; });
   if (path === `/api/v1/sessions/${SESSION_ID}`) return Response.json(fixture);
   if (path === "/api/v1/media/asset") {
@@ -201,4 +207,93 @@ test("finishing a session lands on /summary while the completion write is still 
   await act(async () => { resolveComplete?.(Response.json({ id: SESSION_ID, status: "completed" })); await sleep(50); });
   await flush();
   assert.equal(shown(), "page-summary");
+});
+
+function described(attemptId: string, outcome: string, guessedObjectKey: string | null, status: SessionTask["status"] = "inProgress") {
+  return () => Response.json({
+    task: { ...guessTask, status }, nextTaskId: null,
+    sessionProgress: { completedTaskCount: 2, skippedTaskCount: 0, terminalTaskCount: 2, totalTaskCount: 3 },
+    attempt: { id: attemptId, attemptNumber: 1, isCorrect: null, feedback: { message: `feedback ${attemptId}` },
+      evaluationDetails: { version: "ispy-description-evaluation.v1", outcome, guessedObjectKey, ambiguous: false,
+        alternativeObjectKeys: [], matchedEvidenceKeys: [], contradictedEvidenceKeys: [], targetAmongAlternatives: false } },
+  });
+}
+
+const guessTask: SessionTask = { ...task("reflection", "inProgress", 2), sceneObjectId: "obj-target" };
+const sceneObject = (id: string, label: string, x: number) => ({ id, sessionId: SESSION_ID, label, vocabularyItemId: null,
+  boundingBox: null, anchorPoint: { x, y: 0.5 }, attributes: null, confidenceScore: null, sourceObjectKey: null });
+
+const buttons = () => [...dom.window.document.querySelectorAll("button")];
+const button = (label: string) => buttons().find(item => item.textContent?.trim() === label);
+const click = (label: string) => act(async () => {
+  const target = button(label);
+  assert.ok(target, `expected a "${label}" button`);
+  target.dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true }));
+  await sleep(30);
+});
+const clue = () => dom.window.document.querySelector<HTMLInputElement>("#reflection")!;
+const type = (value: string) => act(async () => {
+  const setter = Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, "value")!.set!;
+  setter.call(clue(), value);
+  clue().dispatchEvent(new dom.window.Event("input", { bubbles: true }));
+});
+
+test("round two keeps the task active until the learner confirms the latest clear match", async () => {
+  fixture = { ...detail("inProgress", [task("learn", "completed", 0), task("clues", "completed", 1), guessTask]),
+    sceneObjects: [sceneObject("obj-target", "mesa", 0.3), sceneObject("obj-other", "silla", 0.7)] };
+  const container = dom.window.document.createElement("div");
+  dom.window.document.body.replaceChildren(container);
+  const root = createRoot(container);
+  // Zero gcTime so no garbage-collection timer keeps the test process alive.
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { gcTime: 0 } } });
+  mountedClients.push(client);
+  await act(async () => {
+    root.render(h(QueryClientProvider, { client }, h(AppStateProvider, null,
+      h(MemoryRouter, { initialEntries: [`${BASE}/ispy-2`] }, h(Routes, null,
+        h(Route, { path: "/practice/sessions/:sessionId", element: h(SessionRoute) },
+          h(Route, { path: "ispy-2", element: h(ISpyPhase2) }),
+          h(Route, { path: "summary", element: h(stub("summary")) }),
+        ),
+      )),
+    )));
+  });
+  await flush();
+  await type("Es roja.");
+
+  taskReplies.push(() => new Response("unavailable", { status: 503 }), described("a1", "evaluationFailed", null));
+  await click("Send my response");
+  await click("Send my response");
+  const [lost, retried] = taskRequests.splice(0);
+  assert.equal(retried.body.idempotencyKey, lost.body.idempotencyKey, "a network retry reuses its key");
+  assert.ok(button("Retry guessing"));
+  assert.equal(button("That's it"), undefined);
+  assert.equal(clue().value, "Es roja.");
+
+  taskReplies.push(described("a2", "noMatch", "obj-other"));
+  await click("Retry guessing");
+  const [retry] = taskRequests.splice(0);
+  assert.notEqual(retry.body.idempotencyKey, lost.body.idempotencyKey, "Retry guessing uses a new key");
+  assert.match(dom.window.document.body.textContent ?? "", /Linguini guessed: silla/);
+  assert.ok(dom.window.document.querySelector(".scene__marker--active"), "the assigned target stays marked");
+  assert.ok(dom.window.document.querySelector(".scene__marker--guess"), "the guessed object is marked separately");
+  assert.match(dom.window.document.querySelector("[data-testid=guess-legend]")?.textContent ?? "", /marker 1 .* marker 2/);
+  assert.equal(button("That's it"), undefined);
+
+  await click("Improve my clue");
+  assert.equal(clue().disabled, false);
+  await type("Es una mesa roja.");
+  taskReplies.push(described("a3", "clearMatch", "obj-target"));
+  await click("Send my response");
+  const [revision] = taskRequests.splice(0);
+  assert.notEqual(revision.body.idempotencyKey, retry.body.idempotencyKey, "a revised clue uses a new key");
+  assert.equal(dom.window.document.querySelector(".scene__marker--guess"), null);
+  assert.equal(button("Finish session"), undefined, "a clear match is not complete until confirmed");
+
+  taskReplies.push(described("a3", "clearMatch", "obj-target", "completed"));
+  await click("That's it");
+  const [confirmation] = taskRequests.splice(0);
+  assert.equal(confirmation.path, `/api/v1/tasks/${guessTask.id}/confirm-guess`);
+  assert.deepEqual(confirmation.body, { attemptId: "a3" });
+  assert.ok(button("Finish session"));
+  root.unmount();
 });

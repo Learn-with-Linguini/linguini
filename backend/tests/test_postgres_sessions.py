@@ -539,6 +539,10 @@ def test_other_user_cannot_access_sessions_or_tasks(database, monkeypatch):
         task = detail["tasks"][0]["id"]
         assert client.get(f"/api/v1/tasks/{task}").status_code == 404
         assert client.post(f"/api/v1/tasks/{task}/complete").status_code == 404
+        confirm = client.post(
+            f"/api/v1/tasks/{task}/confirm-guess", json={"attemptId": str(uuid4())}
+        )
+        assert confirm.status_code == 404
         assert client.post(f"/api/v1/sessions/{sid}/analyze").status_code == 404
     finally:
         with engine.begin() as c:

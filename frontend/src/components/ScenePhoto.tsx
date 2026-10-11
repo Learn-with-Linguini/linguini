@@ -6,6 +6,7 @@ type Props = {
   scene: Scene;
   items?: LanguageItem[];
   activeItemId?: string | null;
+  guessItemId?: string | null;
   onMarkerClick?: (item: LanguageItem) => void;
   onLocationSelect?: (position: { x: number; y: number }) => void;
   locationLabel?: string;
@@ -16,6 +17,7 @@ export function ScenePhoto({
   scene,
   items,
   activeItemId,
+  guessItemId,
   onMarkerClick,
   onLocationSelect,
   locationLabel,
@@ -58,6 +60,7 @@ export function ScenePhoto({
           "scene__marker",
           custom ? "scene__marker--custom" : "",
           active ? "scene__marker--active" : "",
+          item.id === guessItemId && !active ? "scene__marker--guess" : "",
           item.y < 12 ? "scene__marker--below" : "",
           item.x > 86 ? "scene__marker--left" : "",
         ]

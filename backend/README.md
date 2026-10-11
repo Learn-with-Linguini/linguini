@@ -350,7 +350,22 @@ lease holder calls the model: a concurrent request with the same key polls (20â€
 backoff) for the holder's saved attempt, the same key with different input gets 409
 before any model call, and an expired lease left by a crashed request is taken over.
 Unexpected failures release the lease at once, so one key yields one saved attempt,
-one model call and at most one XP award. Learners can leave up to three unfinished sessions open and
+one model call and at most one XP award.
+
+Round-two I-Spy descriptions (reflection tasks in the `ispy` phase with a
+`sceneDescriptionContext`) are a guess-and-revise loop. Each clue saves a new
+attempt with the next `attemptNumber` and versioned `evaluationDetails`
+(`ispy-description-evaluation.v1`) whose `outcome` is `clearMatch` (target guessed,
+not ambiguous, nothing contradicted), `needsClarification` (ambiguous, or the target
+is only an alternative), `needsRevision` (target guessed with contradicted
+evidence), `noMatch` or `evaluationFailed` (the provider failed; the clue is kept).
+The task stays `inProgress` until `POST /tasks/{id}/confirm-guess` names the latest
+`clearMatch` attempt; older attempts and other outcomes get 409. Confirmation is
+the only path that awards `ispyCorrect` (`ispy-correct:{taskId}`) and
+`taskCompleted` (`task:{taskId}`), and it records a `completed` vocabulary
+encounter rather than a correct one, because the model naming the object does not
+show that the learner produced the noun. The session summary counts each described
+task as one round that succeeds only once confirmed. Learners can leave up to three unfinished sessions open and
 resume an open session from the home screen. Task answers are private and are omitted
 from every public task response.
 

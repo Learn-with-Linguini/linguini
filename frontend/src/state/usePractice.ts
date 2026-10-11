@@ -2,7 +2,7 @@ import { useCallback, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { analyzePractice, ApiError, completePractice, createPractice, getPractice, getPracticeSummary, getSceneDetail, retryPracticeAnalysis, reviewPractice, taskAction } from "../lib/api";
 import type { PracticeReview } from "../lib/api";
-import type { PracticeDetail, SessionStatus, TaskAnswer, TaskActionResult } from "../lib/api";
+import type { ConfirmGuessBody, PracticeDetail, SessionStatus, TaskAnswer, TaskActionResult } from "../lib/api";
 import { applyTaskResult, keepClientProgress } from "../lib/practiceUpdates";
 import { friendlyError, queryKeys } from "../lib/queryKeys";
 
@@ -101,7 +101,7 @@ export function usePractice(_userId: string, profileId: string, onLearningChange
     creation.current = null;
     return result;
   }, [profileId]);
-  const actOnTask = useCallback(async (taskId: string, action: "complete" | "skip" | "attempts", answer?: TaskAnswer, key?: string): Promise<TaskActionResult | null> => {
+  const actOnTask = useCallback(async (taskId: string, action: "complete" | "skip" | "attempts" | "confirm-guess", answer?: TaskAnswer | ConfirmGuessBody, key?: string): Promise<TaskActionResult | null> => {
     if (!session || busy.current) return null;
     busy.current = true; setSaving(true); setError(null);
     try {

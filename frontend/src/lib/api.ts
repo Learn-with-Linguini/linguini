@@ -375,10 +375,29 @@ export interface GrammarLessonQuestion {
   translation?: string | null;
 }
 export type TaskAnswer = { inputMode: "text"; text: string } | { inputMode: "multipleChoice"; optionId: string } | { inputMode: "objectSelection"; sceneObjectId: string } | { inputMode: "vocabularyReview"; answers: Record<string, string>; typedAnswers: Record<string, string> };
-export interface TaskActionResult {
-  task: SessionTask; nextTaskId: string | null; sessionProgress: SessionProgress;
-  attempt: { id: string; isCorrect: boolean | null; feedback: { message?: string } | null; evaluationDetails?: { questionResults?: Record<string, boolean>; correctAnswers?: Record<string, string>; guessedObjectKey?: string | null; ambiguous?: boolean } | null } | null;
+export type ConfirmGuessBody = { attemptId: string };
+export interface VocabularyReviewDetails { questionResults: Record<string, boolean>; correctAnswers: Record<string, string> }
+export type ISpyDescriptionOutcome = "clearMatch" | "needsClarification" | "needsRevision" | "noMatch" | "evaluationFailed";
+export const ISPY_DESCRIPTION_EVALUATION_VERSION = "ispy-description-evaluation.v1";
+export interface ISpyDescriptionEvaluation {
+  version: typeof ISPY_DESCRIPTION_EVALUATION_VERSION; outcome: ISpyDescriptionOutcome; guessedObjectKey: string | null; ambiguous: boolean;
+  alternativeObjectKeys: string[]; matchedEvidenceKeys: string[]; contradictedEvidenceKeys: string[]; targetAmongAlternatives: boolean;
 }
+export interface TaskAttemptResult {
+  id: string; attemptNumber: number; isCorrect: boolean | null; feedback: { message?: string } | null;
+  evaluationDetails?: VocabularyReviewDetails | ISpyDescriptionEvaluation | null;
+}
+export interface TaskActionResult {
+  task: SessionTask; nextTaskId: string | null; sessionProgress: SessionProgress; attempt: TaskAttemptResult | null;
+}
+export const descriptionEvaluation = (attempt: TaskAttemptResult | null): ISpyDescriptionEvaluation | null => {
+  const details = attempt?.evaluationDetails;
+  return details && "version" in details && details.version === ISPY_DESCRIPTION_EVALUATION_VERSION ? details : null;
+};
+export const reviewDetails = (attempt: TaskAttemptResult | null): VocabularyReviewDetails | null => {
+  const details = attempt?.evaluationDetails;
+  return details && "questionResults" in details ? details : null;
+};
 export const analyzePractice = (id: string) => write<PracticeDetail>(`/api/v1/sessions/${id}/analyze`, "POST", {});
 export const retryPracticeAnalysis = (id: string) => write<PracticeDetail>(`/api/v1/sessions/${id}/retry-analysis`, "POST", {});
 export interface PracticeReview {
@@ -395,7 +414,7 @@ export const getActivePractice = () => request<PracticeDetail | null>("/api/v1/s
 export const createPractice = (profileId: string, assetId: string, key: string) => write<PracticeDetail>("/api/v1/sessions", "POST", {
   languageProfileId: profileId, mediaAssetId: assetId, idempotencyKey: key,
 });
-export const taskAction = (id: string, action: "start" | "complete" | "skip" | "attempts", body: unknown = {}) => write<TaskActionResult>(`/api/v1/tasks/${id}/${action}`, "POST", body);
+export const taskAction = (id: string, action: "start" | "complete" | "skip" | "attempts" | "confirm-guess", body: unknown = {}) => write<TaskActionResult>(`/api/v1/tasks/${id}/${action}`, "POST", body);
 export const checkVocabularyAnswer = (id: string, questionId: string, optionId: string) =>
   write<{ questionId: string; isCorrect: boolean; correctOptionId: string }>(`/api/v1/tasks/${id}/check-vocabulary-answer`, "POST", { questionId, optionId });
 export const completePractice = (id: string) => write<{ id: string; status: string }>(`/api/v1/sessions/${id}/complete`, "POST", {});

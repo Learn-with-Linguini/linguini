@@ -269,6 +269,26 @@ class TaskAttempt(EntityModel):
         return self
 
 
+ISPY_DESCRIPTION_EVALUATION_VERSION = "ispy-description-evaluation.v1"
+
+type ISpyDescriptionOutcome = Literal[
+    "clearMatch", "needsClarification", "needsRevision", "noMatch", "evaluationFailed"
+]
+
+
+class ISpyDescriptionEvaluation(ApiModel):
+    """``evaluationDetails`` of a model-guessed I-Spy description attempt."""
+
+    version: Literal["ispy-description-evaluation.v1"] = ISPY_DESCRIPTION_EVALUATION_VERSION
+    outcome: ISpyDescriptionOutcome
+    guessed_object_key: str | None = None
+    ambiguous: bool = False
+    alternative_object_keys: list[str] = Field(default_factory=list)
+    matched_evidence_keys: list[str] = Field(default_factory=list)
+    contradicted_evidence_keys: list[str] = Field(default_factory=list)
+    target_among_alternatives: bool = False
+
+
 class TaskHint(EntityModel):
     session_task_id: UUID
     hint_level: Annotated[int, Field(ge=1)]
@@ -333,6 +353,10 @@ type SubmitTaskAttemptRequest = Annotated[
     | SubmitVocabularyReviewAttemptRequest,
     Field(discriminator="input_mode"),
 ]
+
+
+class ConfirmGuessRequest(ApiModel):
+    attempt_id: UUID
 
 
 class SkipTaskRequest(ApiModel):

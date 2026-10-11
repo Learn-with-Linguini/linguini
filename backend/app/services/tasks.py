@@ -34,6 +34,12 @@ class TaskService:
             self.engine, user.id, ispy_guess_generator=self.ispy_guess_generator, ai=self.ai
         ).task_action(task_id, action, request)
 
+    def confirm_guess(self, task_id, attempt_id):
+        from app.repositories.postgres.workflow import PostgresWorkflowRepository
+
+        user = self.users.get_current_user()
+        return PostgresWorkflowRepository(self.engine, user.id).confirm_guess(task_id, attempt_id)
+
     def check_vocabulary_answer(
         self, task_id, question_id, option_id
     ) -> CheckVocabularyAnswerResponse:
