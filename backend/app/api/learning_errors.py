@@ -13,6 +13,7 @@ from app.repositories.media_assets import MediaAssetConflictError, MediaAssetSto
 from app.repositories.practice import (
     ActiveSessionExistsError,
     ActiveSessionLimitReachedError,
+    ClueNamesTargetError,
     PracticeConflictError,
     PracticeNotFoundError,
     PracticeStorageError,
@@ -99,6 +100,11 @@ def register_learning_errors(app: FastAPI) -> None:
             502,
             "learning_task_generation_failed",
             "We couldn't create your learning tasks. Please try again.",
+        ),
+        ClueNamesTargetError: (
+            422,
+            "clue_names_target",
+            "Your clue uses the word for this object. Describe it without naming it.",
         ),
         PracticeConflictError: (
             409,

@@ -6,7 +6,7 @@ import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { choiceOrder, practiceStages, taskDone, taskTitle } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
-import { checkVocabularyAnswer, type SessionTask, type TaskAnswer, type VocabularyLearningWord } from "../lib/api";
+import { checkVocabularyAnswer, reviewDetails, type SessionTask, type TaskAnswer, type VocabularyLearningWord } from "../lib/api";
 import { ReportIssueLink } from "../components/ReportIssueLink";
 
 export function LearningTaskPage() {
@@ -148,7 +148,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
     const result = await actOnTask(task.id, "attempts", { inputMode: "vocabularyReview", answers, typedAnswers }, requestKey.current);
     if (result) {
       setFeedback("Vocabulary practice saved.");
-      setQuestionResults(result.attempt?.evaluationDetails?.questionResults ?? {});
+      setQuestionResults(reviewDetails(result.attempt)?.questionResults ?? {});
     }
   };
   const finishReview = () => page < pageCount - 1 ? setPage(value => value + 1) : setStage("quiz");
@@ -263,8 +263,8 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
       const result = await actOnTask(task.id, "attempts", { inputMode: "vocabularyReview", answers: taskAnswers, typedAnswers: {} }, requestKey.current);
       if (result) {
         setFeedback(result.attempt?.feedback?.message ?? "Grammar practice saved.");
-        setQuestionResults(result.attempt?.evaluationDetails?.questionResults ?? {});
-        setCorrectAnswers(result.attempt?.evaluationDetails?.correctAnswers ?? {});
+        setQuestionResults(reviewDetails(result.attempt)?.questionResults ?? {});
+        setCorrectAnswers(reviewDetails(result.attempt)?.correctAnswers ?? {});
       }
     } finally {
       setChecking(false);

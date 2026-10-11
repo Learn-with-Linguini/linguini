@@ -30,8 +30,7 @@ from app.repositories.postgres.xp import xp_events
 from app.repositories.practice import PracticeConflictError
 from app.schemas.sessions import ReviewPracticeRequest
 from app.schemas.tasks import SubmitTextAttemptRequest
-
-FALLBACK = "Your description was saved. Keep using scene words."
+from app.services.ispy_descriptions import EVALUATION_FAILED_MESSAGE
 
 
 class NoTransactionProbe:
@@ -122,6 +121,14 @@ def probe(database):
     probe.close()
 
 
+def _stub_colours(payload):
+    """Every object is blue, so described tasks have confirmed guided support."""
+    return [
+        {"key": f"{term['key']}:color", "source": "blue", "translation": "azul"}
+        for term in payload["objects"]
+    ]
+
+
 def translate_with(probe, before=None):
     def translate(payload, cache_scope=None):
         probe.check()
@@ -131,7 +138,7 @@ def translate_with(probe, before=None):
             kind: [
                 {**term, "translation": "mesa", "phoneticText": "MEH-sah"}
                 for term in payload[kind]
-            ]
+            ] + (_stub_colours(payload) if kind == "attributes" else [])
             for kind in ("objects", "attributes", "relationships")
         })
 
@@ -196,7 +203,7 @@ def described_session(database, probe, *, lock=True):
 
 
 def describe(key):
-    return SubmitTextAttemptRequest(text="Es una mesa marrón.", idempotency_key=key)
+    return SubmitTextAttemptRequest(text="Es marrón y está a la izquierda.", idempotency_key=key)
 
 
 def attempt_count(engine, task_id):
@@ -335,6 +342,8 @@ def test_ispy_evaluation_runs_without_a_transaction_and_retries_idempotently(
     assert retry.attempt.id == first.attempt.id
     assert guesser.calls == 1
     assert attempt_count(engine, task_id) == 1
+    assert ispy_xp_count(engine, sid) == 0
+    repo.confirm_guess(task_id, first.attempt.id)
     assert ispy_xp_count(engine, sid) == 1
 
 
@@ -358,7 +367,7 @@ def test_concurrent_retries_share_one_evaluation_and_award_once(database, probe)
     assert guesser.calls == 1
     assert len({response.attempt.id for response in responses}) == 1
     assert attempt_count(engine, task_id) == 1
-    assert ispy_xp_count(engine, sid) == 1
+    assert ispy_xp_count(engine, sid) == 0
     assert claim_of(engine, task_id) is None
 
 
@@ -408,7 +417,7 @@ def test_key_reuse_with_different_input_is_rejected_before_the_model(database, p
         repo.task_action(task_id, "attempt", other)
     assert guesser.calls == 1
     assert attempt_count(engine, task_id) == 1
-    assert ispy_xp_count(engine, sid) == 1
+    assert ispy_xp_count(engine, sid) == 0
 
 
 def abandon_claim(engine, task_id, key, expires_in):
@@ -432,7 +441,7 @@ def test_expired_abandoned_claim_is_taken_over(database, probe):
     assert response.attempt.is_correct is True
     assert guesser.calls == 1
     assert claim_of(engine, task_id) is None
-    assert ispy_xp_count(engine, sid) == 1
+    assert ispy_xp_count(engine, sid) == 0
 
 
 def test_live_abandoned_claim_is_recovered_when_its_lease_expires(database, probe):
@@ -479,7 +488,7 @@ def test_replaced_claim_is_rejected_then_retry_succeeds(database, probe):
     retried = repo.task_action(task_id, "attempt", describe("describe-stale-1"))
     assert retried.attempt.is_correct is True
     assert attempt_count(engine, task_id) == 1
-    assert ispy_xp_count(engine, sid) == 1
+    assert ispy_xp_count(engine, sid) == 0
 
 
 def test_attempt_finished_during_evaluation_rejects_the_stale_one(database, probe):
@@ -493,17 +502,19 @@ def test_attempt_finished_during_evaluation_rejects_the_stale_one(database, prob
         repo.task_action(task_id, "attempt", describe("describe-older-1"))
     assert saved[0].attempt.is_correct is True
     assert attempt_count(engine, task_id) == 1
-    assert ispy_xp_count(engine, sid) == 1
+    assert ispy_xp_count(engine, sid) == 0
 
 
-def test_provider_failure_saves_the_ungraded_fallback(database, probe):
+def test_provider_failure_saves_an_evaluation_failure(database, probe):
     engine = database[0]
     repo, sid, task_id, guesser = described_session(database, probe)
     guesser.error = ISpyGuessError("provider unavailable")
     response = repo.task_action(task_id, "attempt", describe("describe-down-1"))
     assert guesser.calls == 1
     assert response.attempt.is_correct is None
-    assert FALLBACK in response.attempt.feedback.values()
+    assert response.attempt.feedback == {"message": EVALUATION_FAILED_MESSAGE}
+    assert response.attempt.evaluation_details["outcome"] == "evaluationFailed"
+    assert response.task.status == "inProgress"
     assert ispy_xp_count(engine, sid) == 0
     assert claim_of(engine, task_id) is None
     retry = repo.task_action(task_id, "attempt", describe("describe-down-1"))

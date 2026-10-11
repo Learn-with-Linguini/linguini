@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import AwareDatetime, Field, model_validator
+from pydantic import AwareDatetime, Field, ValidationError, model_validator
 
 from app.schemas.base import ApiModel, EntityModel, JsonObject, NonEmptyText, UnitScore, utc_now
 from app.schemas.enums import (
@@ -154,12 +154,59 @@ class ISpyRoundContent(ApiModel):
     hint_available: bool = True
 
 
+type ClueFrameId = Literal["name", "colour", "location"]
+type ClueSlotId = Literal["position", "reference", "colour"]
+type ClueChip = Annotated[str, Field(min_length=1, max_length=200)]
+
+
+class ClueSlotChip(ApiModel):
+    """A vocabulary choice for one slot; a language option, not a claim about the scene."""
+
+    text: ClueChip
+    meaning: str | None = Field(default=None, max_length=200)
+    example: str | None = Field(default=None, max_length=200)
+
+
+class ClueSlot(ApiModel):
+    slot_id: ClueSlotId
+    label: NonEmptyText = Field(max_length=40)
+    chips: list[ClueSlotChip] = Field(default_factory=list, max_length=12)
+
+
+class ClueFrame(ApiModel):
+    """An optional sentence starter; ``prefix`` is shown once and slots fill the rest.
+
+    ``chips`` holds complete phrases on tasks saved before slots existed. ``phrases``
+    maps ``"position|reference"`` to the composed text, so contractions stay server-side.
+    ``help`` holds complete phrases from confirmed facts, shown only on request.
+    """
+
+    frame_id: ClueFrameId
+    prefix: NonEmptyText = Field(max_length=40)
+    meaning: NonEmptyText = Field(max_length=200)
+    example: NonEmptyText = Field(max_length=200)
+    template: str | None = Field(default=None, max_length=80)
+    chips: list[ClueChip] = Field(default_factory=list, max_length=20)
+    slots: list[ClueSlot] = Field(default_factory=list, max_length=2)
+    phrases: dict[str, ClueChip] = Field(default_factory=dict, max_length=144)
+    help: list[ClueChip] = Field(default_factory=list, max_length=12)
+
+
 class ReflectionContent(ApiModel):
     kind: Literal["reflection"] = "reflection"
     prompt: NonEmptyText
     suggested_vocabulary_ids: list[UUID] = Field(default_factory=list)
     allow_speech: bool = True
     allow_text: bool = True
+    clue_frames: list[ClueFrame] = Field(default_factory=list, max_length=3)
+    avoid_words: list[ClueChip] = Field(default_factory=list, max_length=20)
+
+    @model_validator(mode="after")
+    def validate_frames(self) -> ReflectionContent:
+        ids = [frame.frame_id for frame in self.clue_frames]
+        if len(ids) != len(set(ids)):
+            raise ValueError("clueFrames cannot repeat a frameId")
+        return self
 
 
 type TaskPublicContent = Annotated[
@@ -269,6 +316,26 @@ class TaskAttempt(EntityModel):
         return self
 
 
+ISPY_DESCRIPTION_EVALUATION_VERSION = "ispy-description-evaluation.v1"
+
+type ISpyDescriptionOutcome = Literal[
+    "clearMatch", "needsClarification", "needsRevision", "noMatch", "evaluationFailed"
+]
+
+
+class ISpyDescriptionEvaluation(ApiModel):
+    """``evaluationDetails`` of a model-guessed I-Spy description attempt."""
+
+    version: Literal["ispy-description-evaluation.v1"] = ISPY_DESCRIPTION_EVALUATION_VERSION
+    outcome: ISpyDescriptionOutcome
+    guessed_object_key: str | None = None
+    ambiguous: bool = False
+    alternative_object_keys: list[str] = Field(default_factory=list)
+    matched_evidence_keys: list[str] = Field(default_factory=list)
+    contradicted_evidence_keys: list[str] = Field(default_factory=list)
+    target_among_alternatives: bool = False
+
+
 class TaskHint(EntityModel):
     session_task_id: UUID
     hint_level: Annotated[int, Field(ge=1)]
@@ -276,9 +343,68 @@ class TaskHint(EntityModel):
     requested_at: AwareDatetime = Field(default_factory=utc_now)
 
 
+CLUE_ASSISTANCE_VERSION = "ispy-clue-assistance.v1"
+
+
+class ClueSlotChoice(ApiModel):
+    frame_id: ClueFrameId
+    slot_id: ClueSlotId
+    chip: ClueChip
+
+
+class ClueAssistance(ApiModel):
+    """Support visible while a clue was written: guided practice, never independent recall."""
+
+    version: Literal["ispy-clue-assistance.v1"] = CLUE_ASSISTANCE_VERSION
+    practice_mode: Literal["guided"] = "guided"
+    target_word_shown: Literal[True] = True
+    offered_frame_ids: list[ClueFrameId] = Field(default_factory=list, max_length=3)
+    selected_frame_ids: list[ClueFrameId] = Field(default_factory=list, max_length=3)
+    inserted_chips: list[ClueChip] = Field(default_factory=list, max_length=20)
+    selected_slots: list[ClueSlotChoice] = Field(default_factory=list, max_length=6)
+    revealed_help_frame_ids: list[ClueFrameId] = Field(default_factory=list, max_length=3)
+
+
+class LatestClueAttempt(ApiModel):
+    """The owner's latest round-two attempt: only what the client needs to restore it."""
+
+    id: UUID
+    attempt_number: Annotated[int, Field(ge=1)]
+    text: str
+    feedback: str | None = None
+    evaluation_details: ISpyDescriptionEvaluation | None = None
+    assistance: ClueAssistance | None = None
+
+    @classmethod
+    def from_attempt(cls, attempt: TaskAttempt) -> LatestClueAttempt:
+        payload = attempt.response_payload
+        text = payload.get("text")
+        message = (attempt.feedback or {}).get("message")
+        return cls(
+            id=attempt.id,
+            attempt_number=attempt.attempt_number,
+            text=text if isinstance(text, str) else "",
+            feedback=message if isinstance(message, str) else None,
+            evaluation_details=_optional(ISpyDescriptionEvaluation, attempt.evaluation_details),
+            assistance=_optional(ClueAssistance, payload.get("assistance")),
+        )
+
+
+def _optional(model, value):
+    try:
+        return model.model_validate(value) if isinstance(value, dict) else None
+    except ValidationError:
+        return None
+
+
+class LatestAttemptResponse(ApiModel):
+    attempt: LatestClueAttempt | None = None
+
+
 class SubmitTextAttemptRequest(ApiModel):
     input_mode: Literal["text"] = "text"
     text: Annotated[str, Field(min_length=1, max_length=2_000)]
+    assistance: ClueAssistance | None = None
     idempotency_key: Annotated[str, Field(min_length=8, max_length=200)] | None = None
 
 
@@ -333,6 +459,10 @@ type SubmitTaskAttemptRequest = Annotated[
     | SubmitVocabularyReviewAttemptRequest,
     Field(discriminator="input_mode"),
 ]
+
+
+class ConfirmGuessRequest(ApiModel):
+    attempt_id: UUID
 
 
 class SkipTaskRequest(ApiModel):

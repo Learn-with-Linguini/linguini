@@ -8,6 +8,8 @@ from app.api.errors import service_not_implemented
 from app.schemas.tasks import (
     CheckVocabularyAnswerRequest,
     CheckVocabularyAnswerResponse,
+    ConfirmGuessRequest,
+    LatestAttemptResponse,
     SessionTaskPublic,
     SkipTaskRequest,
     SubmitTaskAttemptRequest,
@@ -32,11 +34,23 @@ def start_task(task_id: UUID, service: TaskServiceDep) -> TaskActionResponse:
     return service.action(task_id, "start")
 
 
+@router.get("/{task_id}/latest-attempt", response_model=LatestAttemptResponse)
+def get_latest_task_attempt(task_id: UUID, service: TaskServiceDep) -> LatestAttemptResponse:
+    return service.latest_attempt(task_id)
+
+
 @router.post("/{task_id}/attempts", response_model=TaskActionResponse)
 def submit_task_attempt(
     task_id: UUID, request: SubmitTaskAttemptRequest, service: TaskServiceDep
 ) -> TaskActionResponse:
     return service.action(task_id, "attempt", request)
+
+
+@router.post("/{task_id}/confirm-guess", response_model=TaskActionResponse)
+def confirm_task_guess(
+    task_id: UUID, request: ConfirmGuessRequest, service: TaskServiceDep
+) -> TaskActionResponse:
+    return service.confirm_guess(task_id, request.attempt_id)
 
 
 @router.post("/{task_id}/check-vocabulary-answer", response_model=CheckVocabularyAnswerResponse)

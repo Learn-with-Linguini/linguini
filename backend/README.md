@@ -354,9 +354,54 @@ lease holder calls the model: a concurrent request with the same key polls (20�
 backoff) for the holder's saved attempt, the same key with different input gets 409
 before any model call, and an expired lease left by a crashed request is taken over.
 Unexpected failures release the lease at once, so one key yields one saved attempt,
-one model call and at most one XP award. Learners can leave up to three unfinished sessions open and
-resume an open session from the home screen. Task answers are private and are omitted
-from every public task response.
+one model call and at most one XP award.
+
+Round-two I-Spy descriptions (reflection tasks in the `ispy` phase with a
+`sceneDescriptionContext`) are a guess-and-revise loop. Each clue saves a new
+attempt with the next `attemptNumber` and versioned `evaluationDetails`
+(`ispy-description-evaluation.v1`) whose `outcome` is `clearMatch` (target guessed,
+not ambiguous, nothing contradicted), `needsClarification` (ambiguous, or the target
+is only an alternative), `needsRevision` (target guessed with contradicted
+evidence), `noMatch` or `evaluationFailed` (the provider failed; the clue is kept).
+The task stays `inProgress` until `POST /tasks/{id}/confirm-guess` names the latest
+`clearMatch` attempt; older attempts and other outcomes get 409. Confirmation is
+the only path that awards `ispyCorrect` (`ispy-correct:{taskId}`) and
+`taskCompleted` (`task:{taskId}`), and it records a `completed` vocabulary
+encounter rather than a correct one, because the model naming the object does not
+show that the learner produced the noun. The session summary counts each described
+task as one round that succeeds only once confirmed.
+
+Described tasks also publish optional `clueFrames` and `avoidWords` in their
+`ReflectionContent` (`app/services/ispy_clue_frames.py`). Frames separate sentence
+structure from vocabulary choices: Spanish and French get a Colour frame (`Es [colour]` /
+`Elle est [colour]`) when the target has a confirmed colour, and a Location frame
+(`Está [position] [reference object]` / `Il/Elle est …`) when a confirmed relation
+links the target to another word from this session's vocabulary lesson. Slots offer
+small banks rather than the answer: five introduced position expressions (each with a
+meaning and an example about other objects), the other lesson words as article + noun
+(never the target), and common colours agreed with the target's gender. A chip is a
+language option, not a scene claim; the guess model still evaluates the finished clue
+against confirmed facts. `phrases` maps `"position|reference"` to the composed text so
+contractions (`al lado del libro`, `à côté du livre`) stay server-side. The correct
+whole phrases sit in `help`, shown only after **Help me**. Frame examples are generic
+teaching sentences, so they never reveal the target's clue. New tasks have no Name frame;
+Name frames and whole-phrase `chips` saved on older tasks still validate. Up to two
+targets are chosen, only those with at least one `help` phrase; a photo without any
+yields no described tasks. Other languages and older tasks without frames keep free
+typing only.
+
+Before any provider call, `check_clue` rejects a clue containing an actual target form
+(whole words, ignoring case and accents, including plurals and the source label) with
+`clue_names_target`. Similar spellings are never hard rejections, because they may be a
+different valid word (`misa`, `mes`); the frontend only shows a soft warning for them.
+Each frame owns its own sentence, so French Colour and Location can share `Elle est`,
+and changing one slot rewrites only that frame's sentence. The submitted `assistance`
+(`ispy-clue-assistance.v1`: offered and selected frame IDs, inserted chips,
+`selectedSlots`, `revealedHelpFrameIds`, `practiceMode: guided`) is validated against
+the task's frames and stored in `responsePayload`; it records guided practice and never
+changes correctness or vocabulary credit. Frames stay in `publicContent`, so the guess
+model never sees them, and `GET /tasks/{id}/latest-attempt` returns the saved assistance
+so slot picks and revealed help survive a reload.
 
 Journals are unique per user/local date across all target languages. Saves append
 immutable revisions, with identical retries avoiding duplicate revisions. Media

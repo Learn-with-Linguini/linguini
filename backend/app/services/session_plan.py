@@ -13,6 +13,7 @@ from app.schemas.media import SceneObject
 from app.schemas.tasks import SessionTask
 from app.schemas.vocabulary import VocabularyItem, VocabularyTranslation
 from app.services.image_analysis import PlaceholderImageExtractor
+from app.services.ispy_clue_frames import build_clue_support
 
 # Fixed, deliberately small upload vocabulary. Unknown languages fail explicitly.
 UPLOAD_WORDS = {
@@ -279,30 +280,52 @@ def build_ispy_clue_tasks(session_id, result: ISpyClueResult, objects, words):
 
 
 def build_ispy_description_tasks(session_id, objects, words, description_context):
-    """Choose up to two targets in code; the guess model never sees these IDs."""
-    return [
-        SessionTask(
-            id=uuid5(session_id, f"ispy-descriptions-v1:{obj.id}"),
-            session_id=session_id,
-            phase="ispy",
+    """Choose up to two describable targets in code; the guess model never sees these IDs.
+
+    A target qualifies only with a confirmed colour, or a confirmed relation to another
+    lesson word, so
+    a photo without such facts yields no description tasks rather than invented ones.
+    """
+    tasks = []
+    introduced = [str(obj.id) for obj in objects]
+    for obj, word in zip(objects, words, strict=True):
+        frames, avoid_words = build_clue_support(description_context, obj, word, introduced)
+        if any(frame.help for frame in frames):
+            tasks.append(
+                _ispy_description_task(
+                    session_id, obj, word, words, description_context, frames, avoid_words
+                )
+            )
+        if len(tasks) == 2:
+            break
+    return tasks
+
+
+def _ispy_description_task(
+    session_id, obj, word, words, description_context, frames, avoid_words
+):
+    return SessionTask(
+        id=uuid5(session_id, f"ispy-descriptions-v1:{obj.id}"),
+        session_id=session_id,
+        phase="ispy",
+        kind="reflection",
+        order_index=0,
+        public_content=dict(
             kind="reflection",
-            order_index=0,
-            public_content=dict(
-                kind="reflection",
-                prompt=(
-                    "Describe this object in your learning language. "
-                    "Use any words below that help."
-                ),
-                suggested_vocabulary_ids=[word.id for word in words],
-                allow_speech=False,
-                allow_text=True,
+            prompt=(
+                "Describe this object in your learning language without saying its word. "
+                "Pick a clue frame for help, or type your own clue."
             ),
-            answer_key=dict(scene_description_context=description_context),
-            vocabulary_item_id=word.id,
-            scene_object_id=obj.id,
-        )
-        for obj, word in list(zip(objects, words, strict=True))[:2]
-    ]
+            suggested_vocabulary_ids=[item.id for item in words],
+            allow_speech=False,
+            allow_text=True,
+            clue_frames=frames,
+            avoid_words=avoid_words,
+        ),
+        answer_key=dict(scene_description_context=description_context),
+        vocabulary_item_id=word.id,
+        scene_object_id=obj.id,
+    )
 
 
 def build_tasks(session_id, objects, words, translations, uploaded, translated_scene=None):

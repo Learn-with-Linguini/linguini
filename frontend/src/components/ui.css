@@ -639,6 +639,11 @@ p[role="alert"]::before { content: "!"; }
   color: #b87500;
 }
 
+.scene__marker--guess .scene__marker-label {
+  border-style: dashed;
+  background: #e3f1ef;
+}
+
 .scene__marker--active .scene__marker-label {
   background: var(--tomato);
   color: #fffaf2;
@@ -1539,11 +1544,17 @@ p[role="alert"]::before { content: "!"; }
   color: var(--teal-dark);
 }
 
-/* Target-language I-Spy opening shown above the learner's own clue. */
-.ispy-opening {
+/* Optional I-Spy clue frame: its starter, meaning, example and slot chips. */
+.clue-frame {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 1px dashed var(--line);
+  background: var(--paper);
+}
+
+.clue-warning {
   color: var(--ink);
-  font-family: var(--font-display);
-  font-size: var(--text-h3);
+  font-weight: 700;
 }
 
 .input,

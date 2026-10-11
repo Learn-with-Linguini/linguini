@@ -1,7 +1,12 @@
 from uuid import UUID
 
 from app.repositories.tasks import TaskNotFoundError, TaskRepository
-from app.schemas.tasks import CheckVocabularyAnswerResponse, SessionTaskPublic
+from app.schemas.tasks import (
+    CheckVocabularyAnswerResponse,
+    LatestAttemptResponse,
+    LatestClueAttempt,
+    SessionTaskPublic,
+)
 from app.services.users import UserService
 
 
@@ -26,6 +31,19 @@ class TaskService:
             raise TaskNotFoundError("Task not found.")
         return SessionTaskPublic.from_internal(task)
 
+    def latest_attempt(self, task_id: UUID) -> LatestAttemptResponse:
+        """Restore a round-two clue; other task kinds have nothing to restore here."""
+        user_id = self.users.get_current_user().id
+        task = self.repository.get(task_id, user_id)
+        if task is None:
+            raise TaskNotFoundError("Task not found.")
+        if task.kind != "reflection":
+            return LatestAttemptResponse()
+        attempts = self.repository.list_attempts(task_id, user_id)
+        return LatestAttemptResponse(
+            attempt=LatestClueAttempt.from_attempt(attempts[-1]) if attempts else None
+        )
+
     def action(self, task_id, action, request=None):
         from app.repositories.postgres.workflow import PostgresWorkflowRepository
 
@@ -33,6 +51,12 @@ class TaskService:
         return PostgresWorkflowRepository(
             self.engine, user.id, ispy_guess_generator=self.ispy_guess_generator, ai=self.ai
         ).task_action(task_id, action, request)
+
+    def confirm_guess(self, task_id, attempt_id):
+        from app.repositories.postgres.workflow import PostgresWorkflowRepository
+
+        user = self.users.get_current_user()
+        return PostgresWorkflowRepository(self.engine, user.id).confirm_guess(task_id, attempt_id)
 
     def check_vocabulary_answer(
         self, task_id, question_id, option_id
