@@ -10,6 +10,7 @@ import { CLUE_ASSISTANCE_VERSION, descriptionEvaluation } from "../lib/api";
 import type { ClueAssistance, ClueFrame, ClueFrameId, ISpyDescriptionEvaluation, ISpyDescriptionOutcome, SessionTask, TaskAnswer } from "../lib/api";
 import { applyFrame, fillSlot, mentionsTarget, savedAssistance } from "../lib/clueFrames";
 import type { LanguageItem } from "../data/types";
+import { ReportIssueLink } from "../components/ReportIssueLink";
 
 export function ISpyPhase2() {
   const scene = useScene();
@@ -142,6 +143,14 @@ function Reflection({ task, index, total, onNext }: { task: SessionTask; index: 
         {feedback || (answered && !guess) ? <span>{feedback ?? "Reflection saved."}</span> : null}
       </>}
     </div></Feedback> : null}
+    {(answered || guess) && task.status !== "skipped" ? <ReportIssueLink label="Report a wrong guess" reportType="I-Spy guess" fields={[
+      ["Task ID", task.id],
+      ["Object shown", target?.word],
+      ["Your clue", text.trim()],
+      ["Linguini guessed", guessed?.word],
+      ["Displayed feedback", guess?.feedback ?? feedback],
+      ["Language", scene.languageCode],
+    ]} /> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {answered ? <Button block disabled={practiceSaving} onClick={onNext}>{index === total - 1 ? "Finish session" : "Next item"} <ArrowRightIcon /></Button> : <>
       {!guess ? <Button block disabled={!text.trim() || namesTarget || practiceSaving} onClick={() => void submit()}>Send my response</Button> : null}

@@ -29,6 +29,10 @@ Fill these variables in `backend/.env.local`:
 | `AUTH_ALLOW_ANONYMOUS` | `true` accepts Supabase anonymous-sign-in tokens (`is_anonymous` claim). |
 | `CORS_ALLOWED_ORIGINS` | Comma-separated frontend origins, including the port; defaults to `http://localhost:5173`. |
 | `MEDIA_PUBLIC_BASE_URL` | Public Supabase Storage bucket URL, e.g. `https://PROJECT.supabase.co/storage/v1/object/public/media-assets`. Shared base URL for public media assets in this bucket. |
+| `SUPPORT_SMTP_HOST`, `SUPPORT_SMTP_PORT`, `SUPPORT_SMTP_USE_TLS` | SMTP connection used by `POST /api/v1/support/requests`; Gmail uses `smtp.gmail.com`, port `587`, and TLS. |
+| `SUPPORT_SMTP_USERNAME`, `SUPPORT_SMTP_PASSWORD` | Credentials for the real mailbox that sends support requests. With Gmail, use a dedicated mailbox and an app password; never commit it. |
+| `SUPPORT_FROM_EMAIL`, `SUPPORT_FROM_NAME` | Sender displayed on automatically submitted support mail. `SUPPORT_FROM_EMAIL` must match the authenticated mailbox. |
+| `SUPPORT_TO_EMAIL` | Support destination; defaults to `linguini-support@googlegroups.com`. The learner-supplied address is used as `Reply-To`. |
 
 Database URLs stay on the backend. No Supabase anon key, service-role key, or AI
 provider key is needed for database access. Do not append Prisma's `pgbouncer=true`

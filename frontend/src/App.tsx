@@ -21,6 +21,7 @@ import { SceneRoute } from "./components/SceneRoute";
 import { SessionRoute } from "./components/SessionRoute";
 import { ProfileEdit } from "./pages/ProfileEdit";
 import { Progress } from "./pages/Progress";
+import { Contact } from "./pages/Contact";
 import { AppStateProvider } from "./state/AppState";
 import { useAuth } from "./state/Auth";
 import { LoadingScreen } from "./components/LoadingScreen";
@@ -53,6 +54,7 @@ export default function App() {
         <Route path="/" element={<Welcome />} />
         <Route path="/login" element={<Login />} />
         <Route path="/onboarding" element={<OnboardingRoute />} />
+        <Route path="/contact" element={<Contact />} />
       </Route>
       <Route element={<RequireAuth />}>
         <Route element={<AuthenticatedApp />}>
