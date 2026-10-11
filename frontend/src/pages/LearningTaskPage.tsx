@@ -7,6 +7,7 @@ import { useAppState } from "../state/useAppState";
 import { choiceOrder, practiceStages, taskDone, taskTitle } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
 import { checkVocabularyAnswer, type SessionTask, type TaskAnswer, type VocabularyLearningWord } from "../lib/api";
+import { ReportIssueLink } from "../components/ReportIssueLink";
 
 export function LearningTaskPage() {
   const { taskId } = useParams();
@@ -92,7 +93,16 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit }: { 
     {content.kind === "sentenceBuilding" ? <><p>{content.sourceText}</p><div className="chip-row">{content.tokenBank.map((token, i) => <button key={i} className="chip" disabled={terminal || practiceSaving} onClick={() => setText(value => (value + " " + token).trim())}>{token}</button>)}</div></> : null}
     {!reading && content.kind !== "grammarPractice" ? <div className="field"><label className="field__label" htmlFor="task-answer">Your answer</label><input id="task-answer" className="input" value={text} maxLength={2000} disabled={terminal || practiceSaving} onChange={event => setText(event.target.value)} /></div> : null}
     {checking ? <p className="choice-checking" role="status">Checking your answer…</p> : null}
-    {feedback ? <Feedback><p role="status">{feedback}</p></Feedback> : null}
+    {feedback ? <>
+      <Feedback><p role="status">{feedback}</p></Feedback>
+      <ReportIssueLink reportType={taskTitle(task)} fields={[
+        ["Task ID", task.id],
+        ["Prompt", "prompt" in content ? content.prompt : taskTitle(task)],
+        ["Your answer", content.kind === "grammarPractice" ? choice : text],
+        ["Displayed feedback", feedback],
+        ["Language", scene.languageCode],
+      ]} />
+    </> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {terminal ? <Button block disabled={practiceSaving} onClick={onNext}>{index < total - 1 ? "Next task" : "Go to I-Spy"}</Button> : <>
       <Button block disabled={practiceSaving || checking || (!reading && !(content.kind === "grammarPractice" ? choice : text.trim()))} onClick={() => void submit()}>{reading ? "Mark complete" : "Submit answer"}</Button>
@@ -200,7 +210,17 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
         return <button key={option.optionId} className={`choice${state}`} aria-pressed={selected} disabled={!!answers[question.questionId] || checkingQuestion || !!feedback} onClick={() => void chooseAnswer(option.optionId)}>{option.label}</button>;
       })}</div>
       {checkingQuestion ? <p className="choice-checking" role="status">Checking your answer…</p> : null}
-      {answers[question.questionId] ? <Feedback tone={questionResults[question.questionId] ? "good" : "warn"}><p role="status">{questionResults[question.questionId] ? "Correct!" : <>Incorrect. The correct answer is <strong>{question.options.find(option => option.optionId === correctOptionIds[question.questionId])?.label}</strong>.</>}</p></Feedback> : null}
+      {answers[question.questionId] ? <>
+        <Feedback tone={questionResults[question.questionId] ? "good" : "warn"}><p role="status">{questionResults[question.questionId] ? "Correct!" : <>Incorrect. The correct answer is <strong>{question.options.find(option => option.optionId === correctOptionIds[question.questionId])?.label}</strong>.</>}</p></Feedback>
+        <ReportIssueLink reportType="Vocabulary answer" fields={[
+          ["Task ID", task.id],
+          ["Question ID", question.questionId],
+          ["Prompt", question.prompt],
+          ["Your answer", question.options.find(option => option.optionId === answers[question.questionId])?.label],
+          ["Displayed solution", question.options.find(option => option.optionId === correctOptionIds[question.questionId])?.label],
+          ["Language", scene.languageCode],
+        ]} />
+      </> : null}
       <Button block disabled={!answers[question.questionId]} onClick={finishQuestion}>{questionIndex < content.questions.length - 1 ? "Next question" : "Continue"}</Button>
     </div></Card> : null}
     {!terminal && stage === "typing" && typingWord ? <Card plain><div className="stack">
@@ -279,9 +299,18 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
             onClick={() => setAnswers(value => ({ ...value, [question.questionId]: option.optionId }))}>{option.label}</button>;
         })}</div>
       </>}
-      {questionResults[question.questionId] !== undefined ? <Feedback tone={questionResults[question.questionId] ? "good" : "warn"}><p role="status">{questionResults[question.questionId]
-        ? "Correct!"
-        : <>Not quite.{correctAnswers[question.questionId] ? <> The correct answer is <strong>{question.options.find(option => option.optionId === correctAnswers[question.questionId])?.label ?? correctAnswers[question.questionId]}</strong>.</> : null}</>}</p></Feedback> : null}
+      {questionResults[question.questionId] !== undefined ? <>
+        <Feedback tone={questionResults[question.questionId] ? "good" : "warn"}><p role="status">{questionResults[question.questionId]
+          ? "Correct!"
+          : <>Not quite.{correctAnswers[question.questionId] ? <> The correct answer is <strong>{question.options.find(option => option.optionId === correctAnswers[question.questionId])?.label ?? correctAnswers[question.questionId]}</strong>.</> : null}</>}</p></Feedback>
+        <ReportIssueLink reportType="Grammar answer" fields={[
+          ["Task ID", task.id],
+          ["Question ID", question.questionId],
+          ["Prompt", question.translation || question.prompt],
+          ["Your answer", answerFor(question)],
+          ["Displayed solution", question.options.find(option => option.optionId === correctAnswers[question.questionId])?.label ?? correctAnswers[question.questionId]],
+        ]} />
+      </> : null}
     </div></Card>)}
     {checking ? <p className="choice-checking" role="status">Checking your answers…</p> : null}
     {feedback ? <Feedback><p role="status">{feedback}</p></Feedback> : null}

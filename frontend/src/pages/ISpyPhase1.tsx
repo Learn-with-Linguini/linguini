@@ -8,6 +8,7 @@ import { useAppState } from "../state/useAppState";
 import { choiceOrder, practiceStages, taskDone } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
 import type { SessionTask, TaskActionResult } from "../lib/api";
+import { ReportIssueLink } from "../components/ReportIssueLink";
 
 export function ISpyPhase1() {
   const scene = useScene();
@@ -79,7 +80,17 @@ function ClueRound({ task, index, total, onNext }: { task: SessionTask; index: n
       </button>;
     })}</div>
     {checking ? <p className="choice-checking" role="status">Checking your answer…</p> : null}
-    {answered || result ? <Feedback tone={result?.attempt?.isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status"><strong>{task.status === "skipped" ? "Skipped — no XP earned." : result?.attempt?.feedback?.message ?? "Answer saved."}</strong>{content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}</div></Feedback> : null}
+    {answered || result ? <>
+      <Feedback tone={result?.attempt?.isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status"><strong>{task.status === "skipped" ? "Skipped — no XP earned." : result?.attempt?.feedback?.message ?? "Answer saved."}</strong>{content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}</div></Feedback>
+      {task.status !== "skipped" ? <ReportIssueLink reportType="I-Spy answer" fields={[
+        ["Task ID", task.id],
+        ["Clue", `${opening} ${content.clue}`],
+        ["Clue translation", content.clueTranslation],
+        ["Your answer", selected?.label],
+        ["Displayed feedback", result?.attempt?.feedback?.message],
+        ["Language", scene.languageCode],
+      ]} /> : null}
+    </> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     <Button block disabled={!answered || practiceSaving} onClick={() => index === total - 1 ? navigate(`/practice/sessions/${scene.sessionId}/ispy-2`) : onNext()}>{index === total - 1 ? "Your turn" : "Next clue"} <ArrowRightIcon /></Button>
     {!answered ? <Button variant="quiet" block disabled={practiceSaving} onClick={() => void actOnTask(task.id, "skip")}>Skip task</Button> : null}

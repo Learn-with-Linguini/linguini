@@ -17,7 +17,8 @@ export function AppShell() {
   const isDetailPage =
     pathname === "/journal/new" ||
     /^\/journal\/[^/]+$/.test(pathname) ||
-    pathname === "/profile/edit";
+    pathname === "/profile/edit" ||
+    pathname === "/contact";
   const usesWideCanvas =
     ["/home", "/practice", "/vocabulary", "/journal"].includes(pathname) ||
     pathname === "/journal/new" ||
