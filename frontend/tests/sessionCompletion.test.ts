@@ -265,6 +265,9 @@ test("round two keeps the task active until the learner confirms the latest clea
   await click("Send my response");
   const [lost, retried] = taskRequests.splice(0);
   assert.equal(retried.body.idempotencyKey, lost.body.idempotencyKey, "a network retry reuses its key");
+  assert.equal(dom.window.document.querySelector("[data-testid=clue-frames]"), null, "tasks without frames keep free typing only");
+  assert.equal(lost.body.assistance, undefined);
+  assert.equal(lost.body.text, "Es roja.");
   assert.ok(button("Retry guessing"));
   assert.equal(button("That's it"), undefined);
   assert.equal(clue().value, "Es roja.");
@@ -295,5 +298,83 @@ test("round two keeps the task active until the learner confirms the latest clea
   assert.equal(confirmation.path, `/api/v1/tasks/${guessTask.id}/confirm-guess`);
   assert.deepEqual(confirmation.body, { attemptId: "a3" });
   assert.ok(button("Finish session"));
+  root.unmount();
+});
+
+const frame = (frameId: string, prefix: string, example: string, chips: string[]) =>
+  ({ frameId, prefix, meaning: `${frameId} meaning`, example, chips });
+const framedTask: SessionTask = { ...guessTask, publicContent: { kind: "reflection", prompt: "Describe it",
+  clueFrames: [
+    frame("name", "Veo", "Veo una taza", ["una silla"]),
+    frame("colour", "Es", "Es roja", ["roja"]),
+    frame("location", "Está", "Está sobre la mesa", ["sobre la silla"]),
+  ] as NonNullable<Extract<SessionTask["publicContent"], { kind: "reflection" }>["clueFrames"]>,
+  avoidWords: ["mesa", "mesas", "table"] } };
+
+function framedReply(attemptId: string, text: string, assistance: Record<string, unknown>) {
+  return () => Response.json({
+    task: framedTask, nextTaskId: null,
+    sessionProgress: { completedTaskCount: 2, skippedTaskCount: 0, terminalTaskCount: 2, totalTaskCount: 3 },
+    attempt: { id: attemptId, attemptNumber: 1, isCorrect: null, feedback: { message: "Not quite." },
+      responsePayload: { input_mode: "text", text, assistance },
+      evaluationDetails: { version: "ispy-description-evaluation.v1", outcome: "noMatch", guessedObjectKey: "obj-other", ambiguous: false,
+        alternativeObjectKeys: [], matchedEvidenceKeys: [], contradictedEvidenceKeys: [], targetAmongAlternatives: false } },
+  });
+}
+
+test("guided frames compose an editable clue, block the target word and restore saved support", async () => {
+  fixture = { ...detail("inProgress", [task("learn", "completed", 0), task("clues", "completed", 1), framedTask]),
+    sceneObjects: [sceneObject("obj-target", "mesa", 0.3), sceneObject("obj-other", "silla", 0.7)] };
+  const container = dom.window.document.createElement("div");
+  dom.window.document.body.replaceChildren(container);
+  const root = createRoot(container);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { gcTime: 0 } } });
+  mountedClients.push(client);
+  await act(async () => {
+    root.render(h(QueryClientProvider, { client }, h(AppStateProvider, null,
+      h(MemoryRouter, { initialEntries: [`${BASE}/ispy-2`] }, h(Routes, null,
+        h(Route, { path: "/practice/sessions/:sessionId", element: h(SessionRoute) },
+          h(Route, { path: "ispy-2", element: h(ISpyPhase2) }),
+        ),
+      )),
+    )));
+  });
+  await flush();
+  const body = () => dom.window.document.body.textContent ?? "";
+  const send = () => button("Send my response")!;
+
+  await type("Es una Mesa roja");
+  assert.ok(dom.window.document.querySelector("[data-testid=clue-warning]"), "the target word triggers a warning");
+  assert.equal(send().disabled, true);
+  await type("");
+  assert.equal(dom.window.document.querySelector("[data-testid=clue-warning]"), null);
+
+  await click("Colour");
+  assert.match(dom.window.document.querySelector("[data-testid=clue-frame]")?.textContent ?? "", /colour meaning.*Example: Es roja/);
+  assert.equal(button("sobre la silla"), undefined, "chips belong to the selected frame");
+  await click("roja");
+  await click("Location");
+  await click("sobre la silla");
+  assert.equal(clue().value, "Es roja. Está sobre la silla");
+  await type(`${clue().value} grande.`);
+
+  taskReplies.push(framedReply("f1", "Es roja. Está sobre la silla grande.", { selected_frame_ids: ["colour"], inserted_chips: ["roja"] }));
+  await click("Send my response");
+  const [first] = taskRequests.splice(0);
+  assert.equal(first.body.text, "Es roja. Está sobre la silla grande.", "the evaluator gets the displayed clue");
+  assert.deepEqual(first.body.assistance, { version: "ispy-clue-assistance.v1", practiceMode: "guided", targetWordShown: true,
+    offeredFrameIds: ["name", "colour", "location"], selectedFrameIds: ["colour", "location"], insertedChips: ["roja", "sobre la silla"] });
+  assert.match(body(), /Linguini guessed: silla/);
+
+  await click("Improve my clue");
+  assert.equal(button("Colour")?.getAttribute("aria-pressed"), "true", "the saved frame is restored");
+  assert.ok(button("roja")?.className.includes("chip--selected"));
+  await type("Es roja y pequeña.");
+  taskReplies.push(framedReply("f2", "Es roja y pequeña.", { selected_frame_ids: ["colour"], inserted_chips: ["roja"] }));
+  await click("Send my response");
+  const [revision] = taskRequests.splice(0);
+  assert.notEqual(revision.body.idempotencyKey, first.body.idempotencyKey);
+  assert.equal(revision.body.text, "Es roja y pequeña.");
+  assert.deepEqual((revision.body.assistance as { selectedFrameIds: string[] }).selectedFrameIds, ["colour"]);
   root.unmount();
 });

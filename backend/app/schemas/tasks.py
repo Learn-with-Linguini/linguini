@@ -154,12 +154,35 @@ class ISpyRoundContent(ApiModel):
     hint_available: bool = True
 
 
+type ClueFrameId = Literal["name", "colour", "location"]
+type ClueChip = Annotated[str, Field(min_length=1, max_length=200)]
+
+
+class ClueFrame(ApiModel):
+    """An optional sentence starter; ``prefix`` is shown once and chips fill its slot."""
+
+    frame_id: ClueFrameId
+    prefix: NonEmptyText = Field(max_length=40)
+    meaning: NonEmptyText = Field(max_length=200)
+    example: NonEmptyText = Field(max_length=200)
+    chips: list[ClueChip] = Field(default_factory=list, max_length=20)
+
+
 class ReflectionContent(ApiModel):
     kind: Literal["reflection"] = "reflection"
     prompt: NonEmptyText
     suggested_vocabulary_ids: list[UUID] = Field(default_factory=list)
     allow_speech: bool = True
     allow_text: bool = True
+    clue_frames: list[ClueFrame] = Field(default_factory=list, max_length=3)
+    avoid_words: list[ClueChip] = Field(default_factory=list, max_length=20)
+
+    @model_validator(mode="after")
+    def validate_frames(self) -> ReflectionContent:
+        ids = [frame.frame_id for frame in self.clue_frames]
+        if len(ids) != len(set(ids)):
+            raise ValueError("clueFrames cannot repeat a frameId")
+        return self
 
 
 type TaskPublicContent = Annotated[
@@ -296,9 +319,24 @@ class TaskHint(EntityModel):
     requested_at: AwareDatetime = Field(default_factory=utc_now)
 
 
+CLUE_ASSISTANCE_VERSION = "ispy-clue-assistance.v1"
+
+
+class ClueAssistance(ApiModel):
+    """Support visible while a clue was written: guided practice, never independent recall."""
+
+    version: Literal["ispy-clue-assistance.v1"] = CLUE_ASSISTANCE_VERSION
+    practice_mode: Literal["guided"] = "guided"
+    target_word_shown: Literal[True] = True
+    offered_frame_ids: list[ClueFrameId] = Field(default_factory=list, max_length=3)
+    selected_frame_ids: list[ClueFrameId] = Field(default_factory=list, max_length=3)
+    inserted_chips: list[ClueChip] = Field(default_factory=list, max_length=20)
+
+
 class SubmitTextAttemptRequest(ApiModel):
     input_mode: Literal["text"] = "text"
     text: Annotated[str, Field(min_length=1, max_length=2_000)]
+    assistance: ClueAssistance | None = None
     idempotency_key: Annotated[str, Field(min_length=8, max_length=200)] | None = None
 
 

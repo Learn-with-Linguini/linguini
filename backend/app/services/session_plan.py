@@ -13,6 +13,7 @@ from app.schemas.media import SceneObject
 from app.schemas.tasks import SessionTask
 from app.schemas.vocabulary import VocabularyItem, VocabularyTranslation
 from app.services.image_analysis import PlaceholderImageExtractor
+from app.services.ispy_clue_frames import build_clue_support
 
 # Fixed, deliberately small upload vocabulary. Unknown languages fail explicitly.
 UPLOAD_WORDS = {
@@ -281,28 +282,35 @@ def build_ispy_clue_tasks(session_id, result: ISpyClueResult, objects, words):
 def build_ispy_description_tasks(session_id, objects, words, description_context):
     """Choose up to two targets in code; the guess model never sees these IDs."""
     return [
-        SessionTask(
-            id=uuid5(session_id, f"ispy-descriptions-v1:{obj.id}"),
-            session_id=session_id,
-            phase="ispy",
-            kind="reflection",
-            order_index=0,
-            public_content=dict(
-                kind="reflection",
-                prompt=(
-                    "Describe this object in your learning language. "
-                    "Use any words below that help."
-                ),
-                suggested_vocabulary_ids=[word.id for word in words],
-                allow_speech=False,
-                allow_text=True,
-            ),
-            answer_key=dict(scene_description_context=description_context),
-            vocabulary_item_id=word.id,
-            scene_object_id=obj.id,
-        )
+        _ispy_description_task(session_id, obj, word, words, description_context)
         for obj, word in list(zip(objects, words, strict=True))[:2]
     ]
+
+
+def _ispy_description_task(session_id, obj, word, words, description_context):
+    frames, avoid_words = build_clue_support(description_context, obj, word)
+    return SessionTask(
+        id=uuid5(session_id, f"ispy-descriptions-v1:{obj.id}"),
+        session_id=session_id,
+        phase="ispy",
+        kind="reflection",
+        order_index=0,
+        public_content=dict(
+            kind="reflection",
+            prompt=(
+                "Describe this object in your learning language without saying its word. "
+                "Pick a clue frame for help, or type your own clue."
+            ),
+            suggested_vocabulary_ids=[item.id for item in words],
+            allow_speech=False,
+            allow_text=True,
+            clue_frames=frames,
+            avoid_words=avoid_words,
+        ),
+        answer_key=dict(scene_description_context=description_context),
+        vocabulary_item_id=word.id,
+        scene_object_id=obj.id,
+    )
 
 
 def build_tasks(session_id, objects, words, translations, uploaded, translated_scene=None):

@@ -19,8 +19,17 @@ from app.repositories.postgres.users import users
 from app.repositories.postgres.vocabulary import user_vocabulary_progress
 from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.repositories.postgres.xp import xp_events
-from app.repositories.practice import PracticeConflictError, PracticeNotFoundError
-from app.schemas.tasks import SkipTaskRequest, SubmitTextAttemptRequest
+from app.repositories.practice import (
+    ClueNamesTargetError,
+    PracticeConflictError,
+    PracticeNotFoundError,
+)
+from app.schemas.tasks import (
+    ClueAssistance,
+    ReflectionContent,
+    SkipTaskRequest,
+    SubmitTextAttemptRequest,
+)
 from app.schemas.users import User
 from app.services.ispy_descriptions import (
     EVALUATION_FAILED_MESSAGE,
@@ -60,7 +69,7 @@ def loop(database, probe):
     return repo, sid, task_id, guesser, target, other, replies
 
 
-def submit(repo, task_id, key, text="Es una mesa marrón."):
+def submit(repo, task_id, key, text="Es marrón y está a la izquierda."):
     return repo.task_action(
         task_id, "attempt", SubmitTextAttemptRequest(text=text, idempotency_key=f"loop-{key}")
     )
@@ -181,7 +190,7 @@ def test_provider_failure_keeps_the_clue_and_allows_a_new_key(database, loop):
     failed = submit(repo, task_id, "down-1")
     assert failed.attempt.evaluation_details["outcome"] == "evaluationFailed"
     assert failed.attempt.feedback == {"message": EVALUATION_FAILED_MESSAGE}
-    assert failed.attempt.response_payload["text"] == "Es una mesa marrón."
+    assert failed.attempt.response_payload["text"] == "Es marrón y está a la izquierda."
     assert failed.attempt.is_correct is None
     assert failed.task.status == "inProgress"
     with pytest.raises(PracticeConflictError):
@@ -204,7 +213,7 @@ def test_revision_allocates_attempt_numbers_and_rejects_stale_confirmation(datab
     assert [first.attempt.attempt_number, second.attempt.attempt_number] == [1, 2]
     with pytest.raises(PracticeConflictError, match="latest"):
         repo.confirm_guess(task_id, first.attempt.id)
-    third = submit(repo, task_id, "revise-3", "Es una mesa grande.")
+    third = submit(repo, task_id, "revise-3", "Es grande y marrón.")
     assert third.attempt.attempt_number == 3
     with pytest.raises(PracticeConflictError, match="latest"):
         repo.confirm_guess(task_id, first.attempt.id)
@@ -265,3 +274,92 @@ def test_confirmation_is_owner_scoped_and_description_only(database, loop):
         ).scalars().first()
     with pytest.raises(PracticeConflictError, match="I-Spy descriptions"):
         repo.confirm_guess(other_task, saved.attempt.id)
+
+
+def described_content(engine, task_id):
+    with engine.connect() as connection:
+        row = connection.execute(
+            select(session_tasks.c.public_content).where(session_tasks.c.id == task_id)
+        ).scalar_one()
+    return ReflectionContent.model_validate(row)
+
+
+def guided(content, text, key, **assistance):
+    return SubmitTextAttemptRequest(
+        text=text,
+        idempotency_key=f"loop-{key}",
+        assistance=ClueAssistance(
+            offered_frame_ids=[frame.frame_id for frame in content.clue_frames], **assistance
+        ),
+    )
+
+
+def test_described_tasks_publish_frames_and_target_words_outside_the_model_context(
+    database, loop
+):
+    repo, _sid, task_id, guesser, target, _other, replies = loop
+    content = described_content(database[0], task_id)
+    seen = []
+    wrapped = guesser.guess
+
+    def record(context, learner_text, **kwargs):
+        seen.append((context, learner_text))
+        return wrapped(context, learner_text, **kwargs)
+
+    guesser.guess = record
+    replies.append(result(target))
+
+    assert [frame.frame_id for frame in content.clue_frames][0] == "name"
+    assert content.avoid_words
+    clue = "Veo algo. Es marrón y está a la izquierda."
+    submit(repo, task_id, "complete", clue)
+
+    context, learner_text = seen[0]
+    assert learner_text == clue
+    assert target not in str(context.get("selectedTargetObjectKey", ""))
+    assert "avoidWords" not in str(context) and "clueFrames" not in str(context)
+
+
+def test_a_clue_naming_the_target_is_rejected_before_any_model_call(database, loop):
+    repo, _sid, task_id, guesser, _target, _other, _replies = loop
+    word = described_content(database[0], task_id).avoid_words[0]
+
+    with pytest.raises(ClueNamesTargetError):
+        submit(repo, task_id, "names-target", f"Veo una {word.upper()} grande.")
+
+    assert guesser.calls == 0
+    assert attempt_count(database[0], task_id) == 0
+
+
+def test_guided_support_is_recorded_per_attempt_and_restored_on_retry(database, loop):
+    repo, _sid, task_id, _guesser, target, other, replies = loop
+    engine = database[0]
+    content = described_content(engine, task_id)
+    name = content.clue_frames[0]
+    replies.extend([result(other), result(target)])
+
+    first = repo.task_action(
+        task_id, "attempt", guided(content, "Veo algo marrón.", "guided-1",
+                                   selected_frame_ids=[name.frame_id]),
+    )
+    restored = ClueAssistance.model_validate(first.attempt.response_payload["assistance"])
+    assert restored.selected_frame_ids == ["name"]
+    assert restored.practice_mode == "guided" and restored.target_word_shown is True
+    assert first.attempt.response_payload["text"] == "Veo algo marrón."
+
+    retry = repo.task_action(
+        task_id, "attempt", guided(content, "Veo algo marrón.", "guided-1",
+                                   selected_frame_ids=[name.frame_id]),
+    )
+    assert retry.attempt.id == first.attempt.id
+
+    revised = submit(repo, task_id, "guided-2", "Es marrón y está a la izquierda.")
+    assert "assistance" not in revised.attempt.response_payload
+    assert revised.attempt.attempt_number == 2
+    with pytest.raises(PracticeConflictError):
+        repo.task_action(
+            task_id, "attempt", guided(content, "Es roja.", "guided-3",
+                                       selected_frame_ids=[name.frame_id],
+                                       inserted_chips=["not offered"]),
+        )
+    assert correct_attempts(engine, database[1].id) == 0

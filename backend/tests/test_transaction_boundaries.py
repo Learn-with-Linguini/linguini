@@ -195,7 +195,7 @@ def described_session(database, probe, *, lock=True):
 
 
 def describe(key):
-    return SubmitTextAttemptRequest(text="Es una mesa marrón.", idempotency_key=key)
+    return SubmitTextAttemptRequest(text="Es marrón y está a la izquierda.", idempotency_key=key)
 
 
 def attempt_count(engine, task_id):

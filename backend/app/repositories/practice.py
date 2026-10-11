@@ -21,3 +21,7 @@ class ActiveSessionExistsError(PracticeConflictError):
 
 class ActiveSessionLimitReachedError(PracticeConflictError):
     pass
+
+
+class ClueNamesTargetError(Exception):
+    """A described I-Spy clue uses the word for the object it describes."""

@@ -320,7 +320,15 @@ export type TaskContent =
   | { kind: "syntaxExplanation"; title: string; sentencePattern: string; explanation: string; examples: string[] }
   | { kind: "sentenceBuilding"; prompt: string; sourceText: string | null; tokenBank: string[] }
   | { kind: "ispyRound"; clue: string; clueTranslation?: string | null; encouragement?: string | null; options: { optionId: string; label: string; sceneObjectId: string }[] }
-  | { kind: "reflection"; prompt: string };
+  | { kind: "reflection"; prompt: string; clueFrames?: ClueFrame[]; avoidWords?: string[] };
+export type ClueFrameId = "name" | "colour" | "location";
+export interface ClueFrame { frameId: ClueFrameId; prefix: string; meaning: string; example: string; chips: string[] }
+export const CLUE_ASSISTANCE_VERSION = "ispy-clue-assistance.v1";
+/** Support visible while writing a clue; recorded as guided practice, never as independent recall. */
+export interface ClueAssistance {
+  version: typeof CLUE_ASSISTANCE_VERSION; practiceMode: "guided"; targetWordShown: true;
+  offeredFrameIds: ClueFrameId[]; selectedFrameIds: ClueFrameId[]; insertedChips: string[];
+}
 export interface SessionTask {
   id: string; kind: TaskContent["kind"]; phase: "learning" | "ispy";
   status: "pending" | "inProgress" | "completed" | "skipped";
@@ -374,7 +382,7 @@ export interface GrammarLessonQuestion {
   tokenBank: string[];
   translation?: string | null;
 }
-export type TaskAnswer = { inputMode: "text"; text: string } | { inputMode: "multipleChoice"; optionId: string } | { inputMode: "objectSelection"; sceneObjectId: string } | { inputMode: "vocabularyReview"; answers: Record<string, string>; typedAnswers: Record<string, string> };
+export type TaskAnswer = { inputMode: "text"; text: string; assistance?: ClueAssistance } | { inputMode: "multipleChoice"; optionId: string } | { inputMode: "objectSelection"; sceneObjectId: string } | { inputMode: "vocabularyReview"; answers: Record<string, string>; typedAnswers: Record<string, string> };
 export type ConfirmGuessBody = { attemptId: string };
 export interface VocabularyReviewDetails { questionResults: Record<string, boolean>; correctAnswers: Record<string, string> }
 export type ISpyDescriptionOutcome = "clearMatch" | "needsClarification" | "needsRevision" | "noMatch" | "evaluationFailed";
@@ -385,6 +393,7 @@ export interface ISpyDescriptionEvaluation {
 }
 export interface TaskAttemptResult {
   id: string; attemptNumber: number; isCorrect: boolean | null; feedback: { message?: string } | null;
+  responsePayload?: Record<string, unknown>;
   evaluationDetails?: VocabularyReviewDetails | ISpyDescriptionEvaluation | null;
 }
 export interface TaskActionResult {

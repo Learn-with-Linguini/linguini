@@ -74,6 +74,7 @@ from app.schemas.vocabulary import (
     VocabularyTranslation,
 )
 from app.services.background import InlineBackgroundRunner
+from app.services.ispy_clue_frames import check_clue
 from app.services.ispy_descriptions import (
     EVALUATION_FAILED_MESSAGE,
     OUTCOME_CORRECTNESS,
@@ -1656,6 +1657,8 @@ class PostgresWorkflowRepository:
         """
         with self.transaction() as c:
             task = self._task_row(c, task_id)
+            if request.input_mode == "text":
+                check_clue(task.public_content, request)
             if not self._evaluates_description(task) or request.input_mode != "text":
                 return None
             attempt_id = _attempt_id(task, request)
@@ -1786,6 +1789,8 @@ class PostgresWorkflowRepository:
                     attempt = TaskAttempt.model_validate(dict(saved))
                     if attempt.response_payload != payload:
                         raise PracticeConflictError("Attempt key already used for another answer.")
+                elif request.input_mode == "text":
+                    check_clue(task.public_content, request)
             retry = (
                 attempt is not None
                 or (action == "complete" and task.status == "completed")
@@ -2058,7 +2063,10 @@ def _attempt_id(task, request):
 
 
 def _response_payload(request):
-    return request.model_dump(mode="json", by_alias=False, exclude={"idempotency_key"})
+    exclude = {"idempotency_key"}
+    if getattr(request, "assistance", False) is None:
+        exclude.add("assistance")
+    return request.model_dump(mode="json", by_alias=False, exclude=exclude)
 
 
 def _request_fingerprint(request):
