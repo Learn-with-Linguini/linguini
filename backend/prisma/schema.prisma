@@ -15,6 +15,7 @@ model User {
   cameraEnabled       Boolean  @default(true) @map("camera_enabled")
   onboardingCompleted Boolean  @default(false) @map("onboarding_completed")
   walkthroughVersionSeen Int   @default(0) @map("walkthrough_version_seen")
+  tier                String   @default("beta") @db.VarChar(16)
   createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
   languageProfiles    LanguageProfile[]

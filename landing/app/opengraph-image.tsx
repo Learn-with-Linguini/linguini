@@ -175,7 +175,7 @@ export default async function OpengraphImage() {
               color: ogColors.paper,
             }}
           >
-            Free to start
+            Public beta
           </div>
           <div style={{ display: "flex" }}>Spanish · French</div>
         </div>

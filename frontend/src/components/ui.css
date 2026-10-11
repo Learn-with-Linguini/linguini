@@ -3951,6 +3951,40 @@ p[role="alert"]::before { content: "!"; }
 
 .profile-section { display: grid; gap: var(--space-3); }
 
+.profile-tier-card {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  background: var(--sage);
+}
+
+.profile-tier-card > div {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.profile-tier-card strong { color: var(--teal-dark); }
+
+.profile-tier-card p {
+  margin: 0;
+  color: var(--ink);
+}
+
+.profile-tier-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--teal-dark);
+  color: white;
+  font-size: var(--text-label);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
 .profile-section__heading span {
   color: var(--ink-muted);
   font-size: var(--text-small);

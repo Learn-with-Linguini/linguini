@@ -38,6 +38,7 @@ users = Table(
     Column("camera_enabled", Boolean, nullable=False),
     Column("onboarding_completed", Boolean, nullable=False),
     Column("walkthrough_version_seen", Integer, nullable=False),
+    Column("tier", String(16), nullable=False),
     Column("created_at", DateTime(timezone=True), nullable=False),
     Column("updated_at", DateTime(timezone=True), nullable=False),
     schema="public",

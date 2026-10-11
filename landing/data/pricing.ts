@@ -1,6 +1,15 @@
 /** Plans and prices. Read by the pricing section, the SoftwareApplication JSON-LD and /llms.txt. */
 export const pricing = {
   currency: "USD",
+  currentTier: "beta",
+  beta: [
+    "Unlimited photo lessons every day during the public beta",
+    "Learn from your own photos or ready-made scenes",
+    "Spanish and French, from English",
+    "Word cards, I-Spy and sentence games",
+    "Vocabulary progress, journals, streaks and XP",
+    "No payment card required",
+  ],
   plusMonthly: 7.99,
   plusYearly: 49.99,
   foundingYearly: 34.99,

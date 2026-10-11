@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button, Card, IconButton } from "../components/ui";
 import { ChevronRightIcon, CloseIcon } from "../components/icons";
 import { deleteCurrentAccount } from "../lib/api";
+import { accountTiers } from "../lib/accountTiers";
 import { useAppState } from "../state/useAppState";
 import { useAuth } from "../state/Auth";
 
@@ -14,6 +15,7 @@ export function Profile() {
   const [deleting, setDeleting] = useState(false);
   const deleteTitleId = useId();
   const { learner, user, activeProfile, progressLoading, progressError, profileError, profileSaving, setLanguage, saveLanguageProfile, saveUser } = useAppState();
+  const tier = accountTiers[user?.tier ?? "beta"];
 
   useEffect(() => {
     if (!deleteOpen) return;
@@ -70,6 +72,16 @@ export function Profile() {
       {progressError ? <p role="alert">{progressError} Reload to retry.</p> : null}
       {profileError ? <p role="alert">{profileError}</p> : null}
 
+      <section className="profile-section" aria-labelledby="account-tier-heading">
+        <h2 id="account-tier-heading">Your plan</h2>
+        <Card plain className="profile-tier-card">
+          <div>
+            <span className="profile-tier-badge">{tier.label}</span>
+            <strong>{tier.description}</strong>
+          </div>
+          <p>{tier.allowance}</p>
+        </Card>
+      </section>
 
       <section className="profile-section">
         <h2>Learning setup</h2>

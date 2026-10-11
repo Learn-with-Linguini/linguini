@@ -83,6 +83,8 @@ export async function uploadImage(file: File, source: "camera" | "userUpload", o
   }
 }
 
+export type AccountTier = "beta" | "free" | "plus";
+
 // Matches the camelCase User response from GET /api/v1/me.
 export interface User {
   learningGoal: string;
@@ -97,6 +99,7 @@ export interface User {
   timezone: string;
   onboardingCompleted: boolean;
   walkthroughVersionSeen: number;
+  tier: AccountTier;
 }
 
 export class ApiError extends Error {

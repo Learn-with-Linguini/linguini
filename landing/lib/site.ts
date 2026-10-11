@@ -32,7 +32,7 @@ export const site = {
   title: "Linguini — Learn a language from the photos you take",
   shortTitle: "Linguini",
   description:
-    "Snap a café, a street, a sunset. Linguini finds the words in your photo and turns them into bite-size Spanish or French games and a journal page. Free to start.",
+    "Snap a café, a street, a sunset. Linguini turns the words in your photo into bite-size Spanish or French games and a journal page. Join the public beta for unlimited photo lessons.",
   tagline: "Learn the language of your day.",
   locale: "en_US",
   ogImageAlt:
