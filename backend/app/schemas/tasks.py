@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import AwareDatetime, Field, model_validator
+from pydantic import AwareDatetime, Field, ValidationError, model_validator
 
 from app.schemas.base import ApiModel, EntityModel, JsonObject, NonEmptyText, UnitScore, utc_now
 from app.schemas.enums import (
@@ -331,6 +331,42 @@ class ClueAssistance(ApiModel):
     offered_frame_ids: list[ClueFrameId] = Field(default_factory=list, max_length=3)
     selected_frame_ids: list[ClueFrameId] = Field(default_factory=list, max_length=3)
     inserted_chips: list[ClueChip] = Field(default_factory=list, max_length=20)
+
+
+class LatestClueAttempt(ApiModel):
+    """The owner's latest round-two attempt: only what the client needs to restore it."""
+
+    id: UUID
+    attempt_number: Annotated[int, Field(ge=1)]
+    text: str
+    feedback: str | None = None
+    evaluation_details: ISpyDescriptionEvaluation | None = None
+    assistance: ClueAssistance | None = None
+
+    @classmethod
+    def from_attempt(cls, attempt: TaskAttempt) -> LatestClueAttempt:
+        payload = attempt.response_payload
+        text = payload.get("text")
+        message = (attempt.feedback or {}).get("message")
+        return cls(
+            id=attempt.id,
+            attempt_number=attempt.attempt_number,
+            text=text if isinstance(text, str) else "",
+            feedback=message if isinstance(message, str) else None,
+            evaluation_details=_optional(ISpyDescriptionEvaluation, attempt.evaluation_details),
+            assistance=_optional(ClueAssistance, payload.get("assistance")),
+        )
+
+
+def _optional(model, value):
+    try:
+        return model.model_validate(value) if isinstance(value, dict) else None
+    except ValidationError:
+        return None
+
+
+class LatestAttemptResponse(ApiModel):
+    attempt: LatestClueAttempt | None = None
 
 
 class SubmitTextAttemptRequest(ApiModel):

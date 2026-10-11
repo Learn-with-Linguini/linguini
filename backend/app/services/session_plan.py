@@ -280,15 +280,28 @@ def build_ispy_clue_tasks(session_id, result: ISpyClueResult, objects, words):
 
 
 def build_ispy_description_tasks(session_id, objects, words, description_context):
-    """Choose up to two targets in code; the guess model never sees these IDs."""
-    return [
-        _ispy_description_task(session_id, obj, word, words, description_context)
-        for obj, word in list(zip(objects, words, strict=True))[:2]
-    ]
+    """Choose up to two describable targets in code; the guess model never sees these IDs.
+
+    A target qualifies only with at least one confirmed colour or spatial clue, so
+    a photo without such facts yields no description tasks rather than invented ones.
+    """
+    tasks = []
+    for obj, word in zip(objects, words, strict=True):
+        frames, avoid_words = build_clue_support(description_context, obj, word)
+        if any(frame.chips for frame in frames):
+            tasks.append(
+                _ispy_description_task(
+                    session_id, obj, word, words, description_context, frames, avoid_words
+                )
+            )
+        if len(tasks) == 2:
+            break
+    return tasks
 
 
-def _ispy_description_task(session_id, obj, word, words, description_context):
-    frames, avoid_words = build_clue_support(description_context, obj, word)
+def _ispy_description_task(
+    session_id, obj, word, words, description_context, frames, avoid_words
+):
     return SessionTask(
         id=uuid5(session_id, f"ispy-descriptions-v1:{obj.id}"),
         session_id=session_id,

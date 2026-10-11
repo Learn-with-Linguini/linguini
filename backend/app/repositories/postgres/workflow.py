@@ -1278,7 +1278,7 @@ class PostgresWorkflowRepository:
         session = claim.session
         lessons = []
         ispy_clues = []
-        ispy_descriptions = []
+        ispy_descriptions = None
         introduction_id = None
         objects, relations = list(claim.objects), claim.relations
         if self.translator:
@@ -1400,9 +1400,12 @@ class PostgresWorkflowRepository:
                 task for task in rebuilt if task.kind not in {"ispyRound", "reflection"}
             ]
             clues = ispy_clues or [task for task in rebuilt if task.kind == "ispyRound"]
-            descriptions = ispy_descriptions or [
-                task for task in rebuilt if task.kind == "reflection"
-            ]
+            # An empty list means no target had confirmed description facts.
+            descriptions = (
+                ispy_descriptions
+                if ispy_descriptions is not None
+                else [task for task in rebuilt if task.kind == "reflection"]
+            )
             if lessons:
                 # Generated lessons replace deterministic grammar/syntax exercises.
                 learning = [

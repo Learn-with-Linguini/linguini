@@ -428,6 +428,13 @@ export interface TaskAttemptResult {
   responsePayload?: Record<string, unknown>;
   evaluationDetails?: VocabularyReviewDetails | ISpyDescriptionEvaluation | null;
 }
+/** The owner's latest round-two attempt, as much as is needed to restore it after a reload. */
+export interface LatestClueAttempt {
+  id: string; attemptNumber: number; text: string; feedback: string | null;
+  evaluationDetails: ISpyDescriptionEvaluation | null; assistance: ClueAssistance | null;
+}
+export const getLatestAttempt = (taskId: string, signal?: AbortSignal) =>
+  request<{ attempt: LatestClueAttempt | null }>(`/api/v1/tasks/${taskId}/latest-attempt`, signal);
 export interface TaskActionResult {
   task: SessionTask; nextTaskId: string | null; sessionProgress: SessionProgress; attempt: TaskAttemptResult | null;
 }

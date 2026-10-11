@@ -10,6 +10,7 @@ export const queryKeys = {
   sessionScene: (sessionId: string) => ["session", sessionId, "scene"] as const,
   sceneSession: (sceneId: string) => ["scene", sceneId, "session"] as const,
   sessionSummary: (sessionId: string) => ["session", sessionId, "summary"] as const,
+  latestAttempt: (taskId: string) => ["task", taskId, "latest-attempt"] as const,
 };
 
 export function friendlyError(error: unknown): string {

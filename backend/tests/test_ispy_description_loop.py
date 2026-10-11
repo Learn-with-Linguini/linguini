@@ -309,7 +309,8 @@ def test_described_tasks_publish_frames_and_target_words_outside_the_model_conte
     guesser.guess = record
     replies.append(result(target))
 
-    assert [frame.frame_id for frame in content.clue_frames][0] == "name"
+    assert [frame.frame_id for frame in content.clue_frames] == ["colour"]
+    assert content.clue_frames[0].chips == ["azul"]
     assert content.avoid_words
     clue = "Veo algo. Es marrón y está a la izquierda."
     submit(repo, task_id, "complete", clue)
@@ -335,21 +336,21 @@ def test_guided_support_is_recorded_per_attempt_and_restored_on_retry(database, 
     repo, _sid, task_id, _guesser, target, other, replies = loop
     engine = database[0]
     content = described_content(engine, task_id)
-    name = content.clue_frames[0]
+    colour = content.clue_frames[0]
     replies.extend([result(other), result(target)])
 
     first = repo.task_action(
-        task_id, "attempt", guided(content, "Veo algo marrón.", "guided-1",
-                                   selected_frame_ids=[name.frame_id]),
+        task_id, "attempt", guided(content, "Es azul.", "guided-1",
+                                   selected_frame_ids=[colour.frame_id], inserted_chips=["azul"]),
     )
     restored = ClueAssistance.model_validate(first.attempt.response_payload["assistance"])
-    assert restored.selected_frame_ids == ["name"]
+    assert restored.selected_frame_ids == ["colour"]
     assert restored.practice_mode == "guided" and restored.target_word_shown is True
-    assert first.attempt.response_payload["text"] == "Veo algo marrón."
+    assert first.attempt.response_payload["text"] == "Es azul."
 
     retry = repo.task_action(
-        task_id, "attempt", guided(content, "Veo algo marrón.", "guided-1",
-                                   selected_frame_ids=[name.frame_id]),
+        task_id, "attempt", guided(content, "Es azul.", "guided-1",
+                                   selected_frame_ids=[colour.frame_id], inserted_chips=["azul"]),
     )
     assert retry.attempt.id == first.attempt.id
 
@@ -359,7 +360,85 @@ def test_guided_support_is_recorded_per_attempt_and_restored_on_retry(database, 
     with pytest.raises(PracticeConflictError):
         repo.task_action(
             task_id, "attempt", guided(content, "Es roja.", "guided-3",
-                                       selected_frame_ids=[name.frame_id],
+                                       selected_frame_ids=[colour.frame_id],
                                        inserted_chips=["not offered"]),
         )
     assert correct_attempts(engine, database[1].id) == 0
+
+
+LATEST_FIELDS = {"id", "attemptNumber", "text", "feedback", "evaluationDetails", "assistance"}
+
+
+def latest(client, task_id):
+    response = client.get(f"/api/v1/tasks/{task_id}/latest-attempt")
+    assert response.status_code == 200, response.text
+    return response.json()["attempt"]
+
+
+def test_latest_attempt_restores_a_pending_clear_match_then_confirms_it(database, loop):
+    engine, _owner, _profile, client = database
+    repo, _sid, task_id, _guesser, target, other, replies = loop
+    content = described_content(engine, task_id)
+    assert latest(client, task_id) is None
+
+    replies.extend([result(other), result(target)])
+    submit(repo, task_id, "restore-1")
+    saved = repo.task_action(
+        task_id, "attempt", guided(content, "Es azul.", "restore-2",
+                                   selected_frame_ids=["colour"], inserted_chips=["azul"]),
+    )
+
+    restored = latest(client, task_id)
+    assert set(restored) == LATEST_FIELDS
+    assert restored["id"] == str(saved.attempt.id) and restored["attemptNumber"] == 2
+    assert restored["text"] == "Es azul."
+    assert restored["evaluationDetails"]["outcome"] == "clearMatch"
+    assert restored["evaluationDetails"]["guessedObjectKey"] == target
+    assert restored["assistance"]["selectedFrameIds"] == ["colour"]
+    assert restored["assistance"]["insertedChips"] == ["azul"]
+    assert "sceneDescriptionContext" not in str(restored) and "answerKey" not in str(restored)
+
+    confirmed = repo.confirm_guess(task_id, UUID(restored["id"]))
+    assert confirmed.task.status == "completed"
+    assert latest(client, task_id)["id"] == restored["id"]
+
+
+def test_latest_attempt_restores_failed_and_skipped_tasks(database, loop):
+    client = database[3]
+    repo, _sid, task_id, _guesser, _target, _other, replies = loop
+    replies.append(ISpyGuessError("provider down"))
+    submit(repo, task_id, "restore-failed")
+
+    failed = latest(client, task_id)
+    assert failed["evaluationDetails"]["outcome"] == "evaluationFailed"
+    assert failed["text"] == "Es marrón y está a la izquierda."
+
+    repo.task_action(task_id, "skip", SkipTaskRequest())
+    assert latest(client, task_id)["id"] == failed["id"]
+
+
+def test_latest_attempt_is_owner_scoped_and_description_only(database, loop):
+    from types import SimpleNamespace
+
+    from app.repositories.postgres.tasks import PostgresTaskRepository
+    from app.repositories.tasks import TaskNotFoundError
+    from app.services.tasks import TaskService
+
+    engine = database[0]
+    repo, sid, task_id, _guesser, target, _other, replies = loop
+    replies.append(result(target))
+    submit(repo, task_id, "scoped-1")
+    stranger = SimpleNamespace(id=uuid4())
+    service = TaskService(
+        PostgresTaskRepository(engine), SimpleNamespace(get_current_user=lambda: stranger)
+    )
+    with pytest.raises(TaskNotFoundError):
+        service.latest_attempt(task_id)
+
+    with engine.connect() as c:
+        other_task = c.execute(
+            select(session_tasks.c.id).where(
+                session_tasks.c.session_id == sid, session_tasks.c.kind != "reflection"
+            )
+        ).scalars().first()
+    assert latest(database[3], other_task) is None

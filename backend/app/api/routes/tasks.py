@@ -9,6 +9,7 @@ from app.schemas.tasks import (
     CheckVocabularyAnswerRequest,
     CheckVocabularyAnswerResponse,
     ConfirmGuessRequest,
+    LatestAttemptResponse,
     SessionTaskPublic,
     SkipTaskRequest,
     SubmitTaskAttemptRequest,
@@ -31,6 +32,11 @@ def get_task(
 @router.post("/{task_id}/start", response_model=TaskActionResponse)
 def start_task(task_id: UUID, service: TaskServiceDep) -> TaskActionResponse:
     return service.action(task_id, "start")
+
+
+@router.get("/{task_id}/latest-attempt", response_model=LatestAttemptResponse)
+def get_latest_task_attempt(task_id: UUID, service: TaskServiceDep) -> LatestAttemptResponse:
+    return service.latest_attempt(task_id)
 
 
 @router.post("/{task_id}/attempts", response_model=TaskActionResponse)

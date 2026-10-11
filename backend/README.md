@@ -373,21 +373,33 @@ task as one round that succeeds only once confirmed.
 
 Described tasks also publish optional `clueFrames` and `avoidWords` in their
 `ReflectionContent` (`app/services/ispy_clue_frames.py`). Spanish and French get a
-Name frame (“Veo una ___” / “Je vois une ___”, chips are the other taught scene
-nouns), a Colour frame (“Es roja” / “Elle est rouge”) only when the target has a
-confirmed `color` attribute, and a Location frame (“Está sobre la mesa” / “Elle est
-sur la table”) only when a confirmed relation has the target as its subject (or
-either side of `next_to`/`near`); articles, gender and contractions (`del`, `du`)
-come from the translated scene, and nothing else is inferred. Other languages and
-older tasks have no frames and keep free typing. `avoidWords` lists the target's
-lemma, display text, plural, simple plurals and source label: a text attempt that
-contains one (whole word, ignoring case and accents) gets 422 `clue_names_target`
-before any lease or model call. The frontend shows the same check as a warning.
+Colour frame (“Es roja” / “Elle est rouge”) only when the target has a confirmed
+`color` attribute whose form agrees with the target's gender (a small explicit
+table maps dictionary forms such as `rojo` → `roja`, `blanc` → `blanche`; unknown
+colours or genders are left out), and a Location frame (“Está sobre la mesa” /
+“Elle est sur la table”) only when a confirmed relation has the target as its
+subject (or either side of `next_to`/`near`). Articles, gender and contractions
+(`del`, `du`) come from the translated scene; nothing else is inferred. New tasks
+have no Name frame; Name frames saved on older tasks still validate but are not
+shown. Up to two targets are chosen, and only targets with at least one chip qualify;
+if none do, the session has no round two and the page says the photo lacks enough
+confirmed colours or positions. Other languages and older tasks without frames
+keep free typing. `avoidWords` lists the target's lemma, display text, plural,
+simple plurals and source label: a text attempt containing one (whole word,
+ignoring case, accents and repeated letters, plus one-letter misspellings of words
+of four or more letters, so `mesaa` counts for `mesa`) gets 422 `clue_names_target`
+before any lease or model call. Other objects' names stay allowed as references.
+The frontend shows the same check as a warning. Each frame owns its own sentence,
+so Colour and Location can share a prefix (“Elle est rouge. Elle est sur la table”).
 Text attempts may carry `assistance` (`ispy-clue-assistance.v1`: offered and
 selected frame IDs, inserted chips, `practiceMode: guided`), validated against the
 task's frames and stored in `responsePayload`; it records guided practice and never
 changes correctness or vocabulary credit. Frames stay in `publicContent`, so the
 guess model still sees only the learner's text and the target-blind scene context.
+`GET /tasks/{id}/latest-attempt` returns the owner's latest attempt on a reflection
+task (`id`, `attemptNumber`, `text`, `feedback`, `evaluationDetails`, `assistance`;
+never answer keys), or `attempt: null`; the page uses it to restore a pending
+match, an unresolved or failed guess, or a finished task after a reload.
 Learners can leave up to three unfinished sessions open and
 resume an open session from the home screen. Task answers are private and are omitted
 from every public task response.

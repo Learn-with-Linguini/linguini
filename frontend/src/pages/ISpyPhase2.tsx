@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Button, Card, Feedback, ProgressTrail, TopBar } from "../components/ui";
 import { ArrowRightIcon } from "../components/icons";
@@ -6,9 +7,11 @@ import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { practiceStages, taskDone } from "../lib/practiceTasks";
-import { CLUE_ASSISTANCE_VERSION, descriptionEvaluation } from "../lib/api";
+import { CLUE_ASSISTANCE_VERSION, descriptionEvaluation, getLatestAttempt } from "../lib/api";
+import { queryKeys } from "../lib/queryKeys";
 import type { ClueAssistance, ClueFrame, ClueFrameId, ISpyDescriptionEvaluation, ISpyDescriptionOutcome, SessionTask, TaskAnswer } from "../lib/api";
-import { applyFrame, fillSlot, mentionsTarget, savedAssistance } from "../lib/clueFrames";
+import { applyFrame, fillSlot, mentionsTarget, restoreSentences, savedAssistance, visibleFrames } from "../lib/clueFrames";
+import type { FrameSentences } from "../lib/clueFrames";
 import type { LanguageItem } from "../data/types";
 import { ReportIssueLink } from "../components/ReportIssueLink";
 
@@ -30,7 +33,7 @@ export function ISpyPhase2() {
   const task = reflection[index];
   const finish = () => { if (completeSession()) navigate(`${base}/summary`); };
   const alerts = [practiceError, completionError].filter(Boolean);
-  if (!task) return <div className="stack"><TopBar title="Practice complete" />{alerts.map((message, alertIndex) => <p key={alertIndex} role="alert">{message}</p>)}<Button disabled={completionPending} onClick={finish}>Finish session</Button></div>;
+  if (!task) return <div className="stack"><TopBar title="Practice complete" />{reflection.length ? null : <p data-testid="no-description-round">This photo doesn't have enough confirmed colours or positions for a describing round, so there's nothing to describe this time.</p>}{alerts.map((message, alertIndex) => <p key={alertIndex} role="alert">{message}</p>)}<Button disabled={completionPending} onClick={finish}>Finish session</Button></div>;
   return <Reflection key={task.id} task={task} index={index} total={reflection.length} onNext={() => index === reflection.length - 1 ? finish() : setIndex(value => value + 1)} />;
 }
 
@@ -56,6 +59,33 @@ function Reflection({ task, index, total, onNext }: { task: SessionTask; index: 
   const [activeFrameId, setActiveFrameId] = useState<ClueFrameId | null>(null);
   const [selectedFrameIds, setSelectedFrameIds] = useState<ClueFrameId[]>([]);
   const [insertedChips, setInsertedChips] = useState<string[]>([]);
+  const [sentences, setSentences] = useState<FrameSentences>({});
+  // A pending task has no attempts; any other task restores its latest one before taking input.
+  const [hydrated, setHydrated] = useState(task.status === "pending");
+  const latest = useQuery({
+    queryKey: queryKeys.latestAttempt(task.id),
+    queryFn: ({ signal }) => getLatestAttempt(task.id, signal),
+    enabled: task.status !== "pending",
+    staleTime: 0,
+    refetchOnMount: "always",
+  });
+  useEffect(() => {
+    if (hydrated || !latest.isSuccess || latest.isFetching) return;
+    setHydrated(true);
+    const saved = latest.data.attempt;
+    if (!saved) return;
+    const savedFrames = task.publicContent.kind === "reflection" ? visibleFrames(task.publicContent.clueFrames) : [];
+    const chips = saved.assistance?.insertedChips ?? [];
+    const frameIds = saved.assistance?.selectedFrameIds ?? [];
+    setText(current => current || saved.text);
+    setSelectedFrameIds(frameIds);
+    setInsertedChips(chips);
+    setActiveFrameId(frameIds.at(-1) ?? null);
+    setSentences(restoreSentences(saved.text, savedFrames, chips));
+    const evaluation = saved.evaluationDetails;
+    if (evaluation) setGuess({ attemptId: saved.id, evaluation, feedback: saved.feedback });
+    if (task.status === "completed") setFeedback(evaluation?.outcome === "clearMatch" ? "Linguini found your object!" : saved.feedback ?? "Reflection saved.");
+  }, [hydrated, latest.isSuccess, latest.isFetching, latest.data, task.publicContent, task.status]);
   const request = useRef<{ fingerprint: string; key: string } | null>(null);
   const submitting = useRef(false);
   const input = useRef<HTMLInputElement>(null);
@@ -65,24 +95,29 @@ function Reflection({ task, index, total, onNext }: { task: SessionTask; index: 
   const guessed = guessedId ? scene.items.find(item => item.id === guessedId) ?? null : null;
   const content = task.publicContent;
   if (content.kind !== "reflection") return null;
-  const frames = content.clueFrames ?? [];
+  const frames = visibleFrames(content.clueFrames);
   const activeFrame = frames.find(frame => frame.frameId === activeFrameId) ?? null;
   const namesTarget = mentionsTarget(text, content.avoidWords ?? []);
   const chooseFrame = (frame: ClueFrame) => {
     setActiveFrameId(frame.frameId);
     setSelectedFrameIds(ids => ids.includes(frame.frameId) ? ids : [...ids, frame.frameId]);
-    setText(value => applyFrame(value, frame));
+    const next = applyFrame({ text, sentences }, frame);
+    setText(next.text);
+    setSentences(next.sentences);
   };
   const chooseChip = (frame: ClueFrame, chip: string) => {
-    setText(value => fillSlot(value, frame, chip));
+    const next = fillSlot({ text, sentences }, frame, chip);
+    setText(next.text);
+    setSentences(next.sentences);
     setInsertedChips(chips => chips.includes(chip) ? chips : [...chips, chip]);
   };
   const answered = taskDone(task);
-  const locked = answered || practiceSaving || guess !== null;
+  const restoreFailed = !hydrated && latest.isError;
+  const locked = answered || practiceSaving || guess !== null || !hydrated;
   const markers = [target, guessed && guessed.id !== target?.id ? guessed : null].filter((item): item is LanguageItem => Boolean(item));
   const submit = async () => {
     const answer = text.trim();
-    if (!answer || namesTarget || answered || practiceSaving || submitting.current) return;
+    if (!answer || namesTarget || answered || practiceSaving || !hydrated || submitting.current) return;
     submitting.current = true;
     const assistance: ClueAssistance | null = frames.length ? {
       version: CLUE_ASSISTANCE_VERSION, practiceMode: "guided", targetWordShown: true,
@@ -134,6 +169,8 @@ function Reflection({ task, index, total, onNext }: { task: SessionTask; index: 
       </div> : null}
     </div> : null}
     <div className="field"><label className="field__label" htmlFor="reflection">Your clue</label><input id="reflection" ref={input} className="input" value={text} maxLength={2000} disabled={locked} onChange={event => setText(event.target.value)} /></div>
+    {!hydrated && !restoreFailed ? <p className="small muted" role="status" data-testid="restoring">Loading your last clue…</p> : null}
+    {restoreFailed ? <div className="stack-2" role="alert" data-testid="restore-error"><span>We couldn't load your saved clue, so this task can't continue yet.</span><Button variant="secondary" onClick={() => void latest.refetch()}>Try again</Button></div> : null}
     {namesTarget && !locked ? <p className="clue-warning" data-testid="clue-warning" role="alert">Your clue uses the word for this object. Change your clue to describe it without naming it.</p> : null}
     {answered || feedback || guess ? <Feedback><div className="stack-2" role="status">
       {outcome && outcome !== "evaluationFailed" ? <strong>{guessed ? `Linguini guessed: ${guessed.word}` : "Linguini couldn't match your clue to an object."}</strong> : null}
@@ -152,7 +189,7 @@ function Reflection({ task, index, total, onNext }: { task: SessionTask; index: 
       ["Language", scene.languageCode],
     ]} /> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
-    {answered ? <Button block disabled={practiceSaving} onClick={onNext}>{index === total - 1 ? "Finish session" : "Next item"} <ArrowRightIcon /></Button> : <>
+    {!hydrated ? null : answered ? <Button block disabled={practiceSaving} onClick={onNext}>{index === total - 1 ? "Finish session" : "Next item"} <ArrowRightIcon /></Button> : <>
       {!guess ? <Button block disabled={!text.trim() || namesTarget || practiceSaving} onClick={() => void submit()}>Send my response</Button> : null}
       {outcome === "clearMatch" ? <Button block disabled={practiceSaving} onClick={() => void confirm()}>That's it</Button> : null}
       {outcome === "evaluationFailed" ? <Button block disabled={practiceSaving} onClick={() => void submit()}>Retry guessing</Button> : null}

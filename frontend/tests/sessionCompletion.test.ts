@@ -57,10 +57,12 @@ const apiFixtures: Record<string, unknown> = {
 let resolveComplete: ((response: Response) => void) | null = null;
 const taskRequests: { path: string; body: Record<string, unknown> }[] = [];
 const taskReplies: (() => Response)[] = [];
+const latestReplies: (() => Response | Promise<Response>)[] = [];
 
 globals.fetch = async (input: unknown, init?: RequestInit) => {
   const url = typeof input === "string" ? input : (input as Request).url;
   const path = url.replace(/^https?:\/\/[^/]+/, "");
+  if (path.endsWith("/latest-attempt")) return latestReplies.shift()?.() ?? Response.json({ attempt: null });
   if (path.startsWith("/api/v1/tasks/")) {
     taskRequests.push({ path, body: JSON.parse(String(init?.body ?? "{}")) });
     return taskReplies.shift()?.() ?? new Response("no reply", { status: 500 });
@@ -305,7 +307,7 @@ const frame = (frameId: string, prefix: string, example: string, chips: string[]
   ({ frameId, prefix, meaning: `${frameId} meaning`, example, chips });
 const framedTask: SessionTask = { ...guessTask, publicContent: { kind: "reflection", prompt: "Describe it",
   clueFrames: [
-    frame("name", "Veo", "Veo una taza", ["una silla"]),
+    frame("name", "Veo", "Veo una silla", ["una silla"]),
     frame("colour", "Es", "Es roja", ["roja"]),
     frame("location", "Está", "Está sobre la mesa", ["sobre la silla"]),
   ] as NonNullable<Extract<SessionTask["publicContent"], { kind: "reflection" }>["clueFrames"]>,
@@ -349,6 +351,7 @@ test("guided frames compose an editable clue, block the target word and restore 
   await type("");
   assert.equal(dom.window.document.querySelector("[data-testid=clue-warning]"), null);
 
+  assert.equal(button("Name"), undefined, "saved Name frames from older tasks are hidden");
   await click("Colour");
   assert.match(dom.window.document.querySelector("[data-testid=clue-frame]")?.textContent ?? "", /colour meaning.*Example: Es roja/);
   assert.equal(button("sobre la silla"), undefined, "chips belong to the selected frame");
@@ -363,7 +366,7 @@ test("guided frames compose an editable clue, block the target word and restore 
   const [first] = taskRequests.splice(0);
   assert.equal(first.body.text, "Es roja. Está sobre la silla grande.", "the evaluator gets the displayed clue");
   assert.deepEqual(first.body.assistance, { version: "ispy-clue-assistance.v1", practiceMode: "guided", targetWordShown: true,
-    offeredFrameIds: ["name", "colour", "location"], selectedFrameIds: ["colour", "location"], insertedChips: ["roja", "sobre la silla"] });
+    offeredFrameIds: ["colour", "location"], selectedFrameIds: ["colour", "location"], insertedChips: ["roja", "sobre la silla"] });
   assert.match(body(), /Linguini guessed: silla/);
 
   await click("Improve my clue");
@@ -376,5 +379,142 @@ test("guided frames compose an editable clue, block the target word and restore 
   assert.notEqual(revision.body.idempotencyKey, first.body.idempotencyKey);
   assert.equal(revision.body.text, "Es roja y pequeña.");
   assert.deepEqual((revision.body.assistance as { selectedFrameIds: string[] }).selectedFrameIds, ["colour"]);
+  root.unmount();
+});
+
+const evaluation = (outcome: string, guessed: string | null) => ({ version: "ispy-description-evaluation.v1", outcome, guessedObjectKey: guessed,
+  ambiguous: false, alternativeObjectKeys: [], matchedEvidenceKeys: [], contradictedEvidenceKeys: [], targetAmongAlternatives: false });
+const savedClue = (id: string, outcome: string | null, guessed: string | null, text = "Es roja. Está sobre la silla") => ({ attempt: {
+  id, attemptNumber: 2, text, feedback: "Saved feedback.",
+  evaluationDetails: outcome ? evaluation(outcome, guessed) : null,
+  assistance: outcome ? { version: "ispy-clue-assistance.v1", practiceMode: "guided", targetWordShown: true,
+    offeredFrameIds: ["colour", "location"], selectedFrameIds: ["colour", "location"], insertedChips: ["roja", "sobre la silla"] } : null,
+} });
+
+async function mountTask(status: SessionTask["status"]) {
+  const restoredTask = { ...framedTask, status };
+  fixture = { ...detail("inProgress", [task("learn", "completed", 0), task("clues", "completed", 1), restoredTask]),
+    sceneObjects: [sceneObject("obj-target", "mesa", 0.3), sceneObject("obj-other", "silla", 0.7)] };
+  const container = dom.window.document.createElement("div");
+  dom.window.document.body.replaceChildren(container);
+  const root = createRoot(container);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { gcTime: 0 } } });
+  mountedClients.push(client);
+  await act(async () => {
+    root.render(h(QueryClientProvider, { client }, h(AppStateProvider, null,
+      h(MemoryRouter, { initialEntries: [`${BASE}/ispy-2`] }, h(Routes, null,
+        h(Route, { path: "/practice/sessions/:sessionId", element: h(SessionRoute) },
+          h(Route, { path: "ispy-2", element: h(ISpyPhase2) }),
+          h(Route, { path: "summary", element: h(stub("summary")) }),
+        ),
+      )),
+    )));
+  });
+  await flush();
+  return { root, client, body: () => dom.window.document.body.textContent ?? "" };
+}
+
+test("a reload restores a pending clear match and confirms its saved attempt", async () => {
+  let release: (response: Response) => void = () => {};
+  latestReplies.push(() => new Promise<Response>(resolve => { release = resolve; }));
+  const { root, body } = await mountTask("inProgress");
+  assert.ok(dom.window.document.querySelector("[data-testid=restoring]"), "a loading state shows while the attempt loads");
+  assert.equal(button("Send my response"), undefined);
+  assert.equal(clue().disabled, true);
+
+  await act(async () => { release(Response.json(savedClue("r1", "clearMatch", "obj-target"))); await sleep(30); });
+  assert.equal(dom.window.document.querySelector("[data-testid=restoring]"), null);
+  assert.equal(clue().value, "Es roja. Está sobre la silla");
+  assert.match(body(), /Linguini guessed: mesa/);
+  assert.equal(button("Location")?.getAttribute("aria-pressed"), "true", "the last saved frame is reopened");
+  assert.ok(button("sobre la silla")?.className.includes("chip--selected"), "saved assistance is restored");
+
+  taskReplies.push(described("r1", "clearMatch", "obj-target", "completed"));
+  await click("That's it");
+  const [confirmation] = taskRequests.splice(0);
+  assert.deepEqual(confirmation.body, { attemptId: "r1" });
+  assert.ok(button("Finish session"));
+  root.unmount();
+});
+
+test("a reload restores unresolved and failed guesses with their controls, keeping unsent edits", async () => {
+  latestReplies.push(() => Response.json(savedClue("r2", "noMatch", "obj-other")));
+  const unresolved = await mountTask("inProgress");
+  assert.match(unresolved.body(), /Linguini guessed: silla/);
+  assert.equal(button("That's it"), undefined);
+  await click("Improve my clue");
+  await type("Es roja y grande.");
+  latestReplies.push(() => Response.json(savedClue("r2", "noMatch", "obj-other", "Server copy")));
+  await act(async () => { await unresolved.client.invalidateQueries(); await sleep(30); });
+  assert.equal(clue().value, "Es roja y grande.", "a background refresh keeps unsent edits");
+  unresolved.root.unmount();
+
+  latestReplies.push(() => Response.json(savedClue("r3", "evaluationFailed", null)));
+  const failed = await mountTask("inProgress");
+  assert.ok(button("Retry guessing"));
+  assert.equal(clue().value, "Es roja. Está sobre la silla");
+  taskReplies.push(described("r4", "noMatch", "obj-other"));
+  await click("Retry guessing");
+  const [retry] = taskRequests.splice(0);
+  assert.equal(retry.body.text, "Es roja. Está sobre la silla");
+  failed.root.unmount();
+});
+
+test("a reload restores completed, skipped and legacy tasks without a fresh form", async () => {
+  latestReplies.push(() => Response.json(savedClue("r5", "clearMatch", "obj-target")));
+  const completed = await mountTask("completed");
+  assert.match(completed.body(), /Linguini found your object!/);
+  assert.ok(button("Finish session"));
+  assert.equal(button("Send my response"), undefined);
+  completed.root.unmount();
+
+  latestReplies.push(() => Response.json(savedClue("r6", "noMatch", "obj-other")));
+  const skipped = await mountTask("skipped");
+  assert.match(skipped.body(), /Skipped — no XP earned\./);
+  assert.equal(button("Send my response"), undefined);
+  skipped.root.unmount();
+
+  latestReplies.push(() => Response.json(savedClue("r7", null, null, "Old reflection")));
+  const legacy = await mountTask("completed");
+  assert.equal(clue().value, "Old reflection");
+  assert.match(legacy.body(), /Saved feedback\./);
+  assert.doesNotMatch(legacy.body(), /Linguini found your object/);
+  legacy.root.unmount();
+});
+
+test("a failed restore never looks like a fresh unanswered task", async () => {
+  latestReplies.push(() => new Response("down", { status: 500 }));
+  const { root } = await mountTask("inProgress");
+  assert.ok(dom.window.document.querySelector("[data-testid=restore-error]"));
+  assert.equal(button("Send my response"), undefined);
+  assert.equal(button("Skip task"), undefined);
+  latestReplies.push(() => Response.json(savedClue("r8", "needsClarification", "obj-other")));
+  await click("Try again");
+  await flush();
+  assert.equal(dom.window.document.querySelector("[data-testid=restore-error]"), null);
+  assert.ok(button("Improve my clue"));
+  root.unmount();
+});
+
+test("a photo without description support explains why there is no describing round", async () => {
+  fixture = detail("inProgress", [{ ...task("learn", "completed", 0), kind: "vocabularyIntroduction" } as SessionTask,
+    { ...task("clues", "completed", 1), kind: "ispyRound" } as SessionTask]);
+  const container = dom.window.document.createElement("div");
+  dom.window.document.body.replaceChildren(container);
+  const root = createRoot(container);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { gcTime: 0 } } });
+  mountedClients.push(client);
+  await act(async () => {
+    root.render(h(QueryClientProvider, { client }, h(AppStateProvider, null,
+      h(MemoryRouter, { initialEntries: [`${BASE}/ispy-2`] }, h(Routes, null,
+        h(Route, { path: "/practice/sessions/:sessionId", element: h(SessionRoute) },
+          h(Route, { path: "ispy-2", element: h(ISpyPhase2) }),
+        ),
+      )),
+    )));
+  });
+  await flush();
+  assert.ok(dom.window.document.querySelector("[data-testid=no-description-round]"));
+  assert.ok(button("Finish session"));
   root.unmount();
 });

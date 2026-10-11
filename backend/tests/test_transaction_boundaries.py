@@ -121,6 +121,14 @@ def probe(database):
     probe.close()
 
 
+def _stub_colours(payload):
+    """Every object is blue, so described tasks have confirmed guided support."""
+    return [
+        {"key": f"{term['key']}:color", "source": "blue", "translation": "azul"}
+        for term in payload["objects"]
+    ]
+
+
 def translate_with(probe, before=None):
     def translate(payload, cache_scope=None):
         probe.check()
@@ -130,7 +138,7 @@ def translate_with(probe, before=None):
             kind: [
                 {**term, "translation": "mesa", "phoneticText": "MEH-sah"}
                 for term in payload[kind]
-            ]
+            ] + (_stub_colours(payload) if kind == "attributes" else [])
             for kind in ("objects", "attributes", "relationships")
         })
 

@@ -107,11 +107,33 @@ def test_backend_selects_two_ispy_description_targets_without_storing_one_in_con
         SceneObject(session_id=session_id, label=label, vocabulary_item_id=word.id)
         for label, word in zip(["cup", "table", "book"], words, strict=True)
     ]
-    context = {"targetLanguage": "fr", "sceneObjects": {"objects": []}}
+    cup, table, book = (str(obj.id) for obj in objects)
+    context = {"targetLanguage": "fr", "sceneObjects": {
+        "objects": [
+            {"key": cup, "source": "cup", "translation": "tasse", "gender": "feminine"},
+            {"key": table, "source": "table", "translation": "table", "gender": "feminine"},
+            {"key": book, "source": "book", "translation": "livre", "gender": "masculine"},
+        ],
+        "attributes": [
+            {"key": f"{book}:color", "source": "white", "translation": "blanc", "objectKey": book},
+            {"key": f"{table}:color", "source": "purple", "translation": "pourpre",
+             "objectKey": table},
+        ],
+        "relations": [
+            {"key": "r1", "source": "on", "translation": "sur",
+             "subjectObjectKey": cup, "referenceObjectKey": table},
+        ],
+    }}
 
     tasks = build_ispy_description_tasks(session_id, objects, words, context)
 
-    assert [task.scene_object_id for task in tasks] == [objects[0].id, objects[1].id]
+    # The table has only an uninflectable colour and is the reference, not subject, of "on".
+    assert [task.scene_object_id for task in tasks] == [objects[0].id, objects[2].id]
+    assert tasks[0].public_content.clue_frames[0].example == "Elle est sur la table"
+    assert tasks[1].public_content.clue_frames[0].example == "Il est blanc"
+    assert build_ispy_description_tasks(
+        session_id, objects, words, {"targetLanguage": "fr", "sceneObjects": {"objects": []}}
+    ) == []
     assert all(task.phase == "ispy" for task in tasks)
     assert all(task.answer_key.scene_description_context == context for task in tasks)
     assert "selectedTargetObjectKey" not in str(tasks[0].answer_key.scene_description_context)
