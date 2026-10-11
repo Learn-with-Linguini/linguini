@@ -24,7 +24,7 @@ export const faq = [
     a: "Linguini runs in your browser on phone, tablet or laptop, so there is nothing to install. On your phone you can add it to your home screen and it opens like an app.",
   },
   {
-    q: "Is the free plan really free?",
-    a: "Yes. One new photo lesson and one journal page every day, unlimited replays of our curated scenes and every game, with no card required. Plus adds up to 10 photo lessons a day, pronunciation feedback and review mode.",
+    q: "What does public beta access include?",
+    a: "Everyone who signs up during the public beta gets the Beta tier with unlimited photo lessons every day, plus ready-made scenes, vocabulary games, progress and journals. No payment card is required. Free and Plus tiers may be introduced after the beta.",
   },
 ];

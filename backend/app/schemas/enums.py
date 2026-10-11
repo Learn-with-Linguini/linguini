@@ -19,6 +19,12 @@ class PreferredInputMode(StrEnum):
     BOTH = "both"
 
 
+class AccountTier(StrEnum):
+    BETA = "beta"
+    FREE = "free"
+    PLUS = "plus"
+
+
 class MediaType(StrEnum):
     IMAGE = "image"
     AUDIO = "audio"

@@ -128,9 +128,10 @@ export function Hero() {
               words inside the picture, turns them into a five-minute game in Spanish or French, and keeps the day in your
               journal.
             </p>
+            <p className={styles.betaNote}>Public beta · Free access · Unlimited photo lessons</p>
             <div className={styles.ctas}>
               <a href={appLinks.signUp} className="btn">
-                Start learning free
+                Join the public beta
               </a>
               <button type="button" className={`btn btn--teal ${styles.tryButton}`} onClick={() => pick(scenes[0].id, document.querySelector<HTMLElement>(`[data-print="${scenes[0].id}"]`))}>
                 Try it on a photo <ArrowRight size={20} />

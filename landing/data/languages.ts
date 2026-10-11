@@ -1,5 +1,4 @@
 import { faq } from "./faq";
-import { pricing } from "./pricing";
 import type { Lang } from "./types";
 
 export type LanguagePage = {
@@ -21,7 +20,7 @@ function languageFaq(name: string, other: string, examples: string): LanguagePag
   return [
     {
       q: `Can I learn ${name} for free with Linguini?`,
-      a: `Yes. The free plan gives you one new photo lesson and one journal page every day, unlimited replays of our curated scenes and every game, with no card required. Plus ($${pricing.plusMonthly} a month or $${pricing.plusYearly} a year) raises that to 10 photo lessons a day and adds pronunciation feedback and review mode.`,
+      a: "Yes. Everyone who signs up during the public beta gets the Beta tier with unlimited photo lessons every day, plus ready-made scenes, vocabulary games, progress and journals. No payment card is required.",
     },
     {
       q: `What level of ${name} is Linguini for?`,
@@ -49,7 +48,7 @@ export const languagePages: LanguagePage[] = [
     name: "Spanish",
     sceneId: "hillside-street",
     description:
-      "Learn Spanish from photos of your day. Linguini names what’s in the picture, with the article and audio, and turns it into a five-minute game. Free to start.",
+      "Learn Spanish from photos of your day. Linguini names what’s in the picture, with the article and audio, and turns it into a five-minute game. Public beta access includes unlimited photo lessons.",
     lede: "Photograph the café you’re sitting in or the street you walked down. Linguini finds the things in the picture and teaches you their Spanish names, with the article, pronunciation and audio, then turns them into a five-minute game and a journal page.",
     other: { slug: "french", name: "French" },
     faq: languageFaq("Spanish", "French", "el coche, la calle"),
@@ -60,7 +59,7 @@ export const languagePages: LanguagePage[] = [
     name: "French",
     sceneId: "sunlit-promenade",
     description:
-      "Learn French from photos of your day. Linguini names what’s in the picture, with the article and audio, and turns it into a five-minute game. Free to start.",
+      "Learn French from photos of your day. Linguini names what’s in the picture, with the article and audio, and turns it into a five-minute game. Public beta access includes unlimited photo lessons.",
     lede: "Photograph the promenade on your evening walk or the view from your window. Linguini finds the things in the picture and teaches you their French names, with the article, pronunciation and audio, then turns them into a five-minute game and a journal page.",
     other: { slug: "spanish", name: "Spanish" },
     faq: languageFaq("French", "Spanish", "la voiture, le pont"),

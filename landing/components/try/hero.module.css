@@ -77,6 +77,15 @@
   color: #4c5a60;
 }
 
+.betaNote {
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--sage);
+  color: var(--teal-deep);
+  font-size: 14px;
+  font-weight: 900;
+}
+
 .ctas {
   display: flex;
   flex-wrap: wrap;

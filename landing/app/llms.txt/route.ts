@@ -1,7 +1,7 @@
 import { faq } from "@/data/faq";
 import { languagePages } from "@/data/languages";
 import { posts } from "@/data/posts";
-import { pricing, yearlyPerMonth } from "@/data/pricing";
+import { pricing } from "@/data/pricing";
 import { steps } from "@/data/steps";
 import { appLinks, site } from "@/lib/site";
 
@@ -23,12 +23,10 @@ export function GET() {
     "",
     ...steps.map((step, i) => `${i + 1}. **${step.title}.** ${step.body}`),
     "",
-    "## Pricing",
+    "## Public beta access",
     "",
-    `- **Free ($0, forever):** ${pricing.free.join("; ")}.`,
-    `- **Plus ($${pricing.plusMonthly}/month, or $${pricing.plusYearly}/year ≈ $${yearlyPerMonth}/month):** ${pricing.plus.join("; ")}. ${pricing.trialDays}-day free trial.`,
-    `- **Founding Plus:** the first ${pricing.foundingSeats} members pay $${pricing.foundingYearly}/year.`,
-    `- Prices in ${pricing.currency}. Cancel any time; the journal stays on the free plan.`,
+    `- **Beta ($0 during the public beta):** ${pricing.beta.join("; ")}.`,
+    "- Everyone who signs up during the public beta receives the Beta tier. Free and Plus tiers may be introduced after the beta.",
     "",
     "## FAQ",
     "",
@@ -40,7 +38,7 @@ export function GET() {
     ...languagePages.map(
       page => `- [Learn ${page.name} with photos](${site.url}/learn/${page.slug}): every ${page.name} word in the demo scenes, with article, gender and pronunciation, and a worked session`,
     ),
-    `- [Start learning free](${appLinks.signUp})`,
+    `- [Join the public beta](${appLinks.signUp})`,
     `- [Blog](${site.url}/blog)`,
     ...posts.map(post => `- [${post.title}](${site.url}/blog/${post.slug}): ${post.summary}`),
     `- [Photo credits](${site.url}/credits): source and licence of every photo on the site`,
