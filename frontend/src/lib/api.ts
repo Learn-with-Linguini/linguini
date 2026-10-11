@@ -140,6 +140,10 @@ export function getCurrentUser(signal?: AbortSignal): Promise<User> {
   return request<User>("/api/v1/me", signal);
 }
 
+export function deleteCurrentAccount(): Promise<void> {
+  return request<void>("/api/v1/me", undefined, { method: "DELETE" });
+}
+
 export interface LanguageProfile {
   id: string;
   userId: string;

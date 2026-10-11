@@ -38,6 +38,7 @@ from app.repositories.postgres.vocabulary import PostgresVocabularyRepository
 from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.repositories.scenes import SceneRepository
 from app.repositories.users import UserRepository
+from app.services.account_deletion import AccountDeletionService, SupabaseAuthAdmin
 from app.services.image_derivatives import ImageDerivatives
 from app.services.image_storage import ImageStorage
 from app.services.journals import JournalService
@@ -69,6 +70,16 @@ def get_user_service(
     user_id: Annotated[UUID, Depends(get_current_user_id)],
 ) -> UserService:
     return UserService(repository, user_id)
+
+
+def get_account_deletion_service(request: Request) -> AccountDeletionService:
+    supabase_url = os.getenv("SUPABASE_URL", "").strip()
+    service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    return AccountDeletionService(
+        request.app.state.database_engine,
+        ImageStorage(supabase_url, service_key),
+        SupabaseAuthAdmin(supabase_url, service_key),
+    )
 
 
 def get_language_profile_service(

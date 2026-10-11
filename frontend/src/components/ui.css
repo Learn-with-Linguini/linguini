@@ -4001,6 +4001,56 @@ p[role="alert"]::before { content: "!"; }
 
 .profile-logout { margin-top: var(--space-2); }
 
+.profile-danger-zone {
+  display: grid;
+  gap: var(--space-2);
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--line);
+}
+
+.profile-danger-zone p {
+  color: var(--ink-muted);
+  font-size: var(--text-small);
+  line-height: 1.45;
+}
+
+.profile-delete-trigger.btn--quiet {
+  justify-content: flex-start;
+  padding-inline: 0;
+  color: var(--danger);
+}
+
+.account-delete-summary {
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+}
+
+.account-delete-modal .account-delete-summary p { margin: 0; }
+
+.account-delete-summary ul {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+  padding-left: var(--space-5);
+  color: var(--ink-muted);
+  font-size: var(--text-small);
+  line-height: 1.45;
+}
+
+.account-delete-summary > strong { color: var(--danger); }
+
+.account-delete-modal .account-delete-error {
+  margin: 0 0 var(--space-4);
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.account-delete-actions {
+  display: grid;
+  gap: var(--space-3);
+}
+
 /* Support and contextual content reports */
 .contact-page {
   gap: var(--space-6);
