@@ -6,7 +6,7 @@ import threading
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, Request
+from fastapi import Depends, HTTPException, Request
 
 from app.ai import (
     AiSettings,
@@ -23,6 +23,7 @@ from app.repositories.journals import JournalRepository
 from app.repositories.language_profiles import LanguageProfileRepository
 from app.repositories.learning import LearningRepository
 from app.repositories.media_assets import MediaAssetRepository
+from app.repositories.postgres.game_resources import reward_basil, spend_sauce
 from app.repositories.postgres.journals import PostgresJournalRepository
 from app.repositories.postgres.language_profiles import (
     PostgresLanguageProfileRepository,
@@ -31,6 +32,7 @@ from app.repositories.postgres.media_assets import PostgresMediaAssetRepository
 from app.repositories.postgres.practice import (
     SessionBackedLearningRepository,
 )
+from app.repositories.postgres.rooms import PostgresRoomRepository, RoomUnavailableError
 from app.repositories.postgres.scenes import PostgresSceneRepository
 from app.repositories.postgres.tasks import PostgresTaskRepository
 from app.repositories.postgres.users import PostgresUserRepository
@@ -46,6 +48,8 @@ from app.services.language_profiles import LanguageProfileService
 from app.services.learning import LearningService
 from app.services.media_assets import MediaAssetService
 from app.services.practice import PracticeService
+from app.services.room_photos import RoomPhotoPreparer
+from app.services.rooms import RoomService
 from app.services.scenes import SceneService
 from app.services.tasks import TaskService
 from app.services.users import UserService
@@ -274,3 +278,31 @@ def get_learning_service(
     users: Annotated[UserService, Depends(get_user_service)],
 ) -> LearningService:
     return LearningService(repository, users)
+
+
+def get_room_service(
+    request: Request, user_id: Annotated[UUID, Depends(get_current_user_id)]
+) -> RoomService:
+    if os.getenv("PLAY_TOGETHER_ENABLED", "false").strip().lower() != "true":
+        raise HTTPException(404, detail={"code": "feature_disabled", "message": "Unavailable."})
+    secret = os.getenv("ROOM_INVITE_SECRET", "").strip()
+    if len(secret) < 32 or not get_private_media_urls():
+        raise RoomUnavailableError()
+    settings = get_ai_settings(request)
+    runtime = get_ai_runtime(request)
+    storage = ImageStorage(
+        os.getenv("SUPABASE_URL", "").strip(),
+        os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip(),
+    )
+    preparer = RoomPhotoPreparer(
+        runtime.uploaded_scene_analyzer(), runtime.translator(), storage=storage,
+        image_moderator=get_image_moderator(request, settings),
+    )
+    return RoomService(
+        PostgresRoomRepository(
+            request.app.state.database_engine, user_id, secret,
+            spend_sauce=spend_sauce, reward_basil=reward_basil,
+        ),
+        preparer, getattr(request.app.state, "background_runner", None),
+        image_reader=lambda asset, width: get_image_derivatives().get(asset.storage_key, width),
+    )

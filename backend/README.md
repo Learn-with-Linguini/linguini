@@ -56,6 +56,28 @@ local environment files. Missing database configuration fails at startup; connec
 or query failures never fall back to JSON. The application creates one SQLAlchemy
 engine per process and disposes it at shutdown.
 
+### Sauce and photo rooms
+
+Apply the game resource and uploaded photo room migrations before enabling these
+features. Set `GAME_RESOURCES_ENABLED=true` and `PLAY_TOGETHER_ENABLED=true` on the
+API, with matching `VITE_GAME_RESOURCES_ENABLED` and `VITE_PLAY_TOGETHER_ENABLED`
+flags when building the frontend. Both features are disabled by default.
+
+`DAILY_SAUCE_CAPACITY` defaults to 10 (allowed range: 1–100). Sauce refills at
+00:00 UTC and applies to every account tier, including beta. Starting a solo
+lesson or a photo room costs one Sauce per player. Resuming does not spend again;
+failed setup and lessons left before any practice return the reserved Sauce.
+Basil leaves reward submitted practice; 20 leaves unlock a Sauce jar appearance.
+
+Rooms require a stable `ROOM_INVITE_SECRET` of at least 32 random characters on
+every API worker. They support two players learning English to Spanish or French
+at the same A1/A2 level, with 2–4 photos uploaded by either player. Photo sharing
+requires configured image moderation and fails closed if moderation is unavailable.
+Invitations expire after 10 minutes; setup and play each expire after 30 minutes.
+Room images use an authenticated, uncached endpoint; ordinary media access stays
+restricted to the photo owner. Rooms require `MEDIA_STORAGE_PRIVATE=true`; the
+Supabase bucket must also be configured as private.
+
 ## Persistence and remaining static content
 
 ### Image uploads
