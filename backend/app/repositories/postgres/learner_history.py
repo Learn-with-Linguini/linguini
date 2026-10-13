@@ -43,7 +43,9 @@ def _normalized(value: str) -> str:
 
 def _without_article(value: str, language: str) -> str:
     value = _normalized(value)
-    if language.startswith("es"):
+    if language.startswith("en"):
+        value = re.sub(r"^(?:the|a|an) ", "", value)
+    elif language.startswith("es"):
         value = re.sub(r"^(?:el|la|los|las|un|una|unos|unas) ", "", value)
     elif language.startswith("fr"):
         value = re.sub(r"^(?:(?:le|la|les|un|une|des) |l')", "", value)
@@ -163,10 +165,12 @@ def snapshot_learner_history(
         term, source = _safe_term(term), _safe_term(source)
         if term is None or source is None:
             return None
-        key = (_without_article(term, target_language), source)
-        if not key[0]:
+        key = (
+            _without_article(term, target_language), _without_article(source, source_language),
+        )
+        if not all(key):
             return None
-        word = words.setdefault(key, _Word(term=key[0], source=source))
+        word = words.setdefault(key, _Word(term=key[0], source=key[1]))
         return key, word
 
     source_text = (
@@ -358,7 +362,10 @@ def snapshot_learner_history(
     if not words and not graded_attempts and not reading and not journal_count:
         return None
 
-    labels = {_without_article(label, target_language) for label in scene_labels}
+    labels = {
+        _without_article(label, language)
+        for label in scene_labels for language in (source_language, target_language)
+    }
     ranked = sorted(words.values(), key=lambda word: (
         -(word.term in labels or word.source in labels),
         -(word.outcome == "incorrect"),

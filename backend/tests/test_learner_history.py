@@ -452,3 +452,53 @@ def test_grouped_aggregate_and_ambiguous_keys_do_not_become_word_accuracy(histor
     other = history.learn(history.session(), [entry("rojo", "red", "red")])
     history.attempt(other, correct=False)
     assert words_by_term(history.snapshot())["rojo"]["incorrectCount"] == 0
+
+
+@pytest.mark.parametrize("source_language,term,source,with_article", [
+    ("en", "mesa", "table", "the table"),
+    ("en", "mesa", "table", "a table"),
+    ("en", "objeto", "object", "an object"),
+    ("es", "table", "mesa", "la mesa"),
+    ("fr", "mesa", "table", "la table"),
+    ("fr", "hombre", "homme", "l’homme"),
+])
+def test_source_articles_merge_concept_counts_and_latest_outcome(
+    history, source_language, term, source, with_article,
+):
+    profile = history.profile if source_language == "en" else history.add_profile(
+        history.owner.id, source=source_language, target="fr" if source_language == "es" else "es",
+    )
+    old = history.now - timedelta(days=90)
+    history.learn(
+        history.session(profile), [entry(term, source, "old")],
+        {"word-old": False}, occurred_at=old,
+    )
+    history.learn(
+        history.session(profile), [entry(term, with_article, "new")],
+        {"word-new": True}, occurred_at=history.now,
+    )
+    snapshot = history.snapshot(profile=profile, labels=[with_article])
+    assert len(snapshot["words"]) == 1
+    word = snapshot["words"][0]
+    assert word["term"] == term and word["source"] == source
+    assert word["seenCount"] == 2
+    assert word["correctCount"] == word["incorrectCount"] == 1
+    assert word["lastOutcome"] == "correct"
+    assert word["relevant"] is True
+
+
+def test_article_normalization_preserves_distinct_meanings(history):
+    history.learn(
+        history.session(), [entry("el banco", "a bank", "bank")],
+        {"word-bank": False}, occurred_at=history.now - timedelta(days=1),
+    )
+    history.learn(
+        history.session(), [entry("banco", "the bench", "bench")],
+        {"word-bench": True}, occurred_at=history.now,
+    )
+    words = {(word["term"], word["source"]): word for word in history.snapshot()["words"]}
+    assert set(words) == {("banco", "bank"), ("banco", "bench")}
+    assert words[("banco", "bank")]["lastOutcome"] == "incorrect"
+    assert words[("banco", "bank")]["correctCount"] == 0
+    assert words[("banco", "bench")]["lastOutcome"] == "correct"
+    assert words[("banco", "bench")]["incorrectCount"] == 0
