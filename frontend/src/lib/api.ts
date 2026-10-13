@@ -388,6 +388,13 @@ export interface SessionProgress {
   completedTaskCount: number; skippedTaskCount: number; terminalTaskCount: number; totalTaskCount: number;
 }
 export type SessionStatus = "created" | "analyzingScene" | "awaitingObjectReview" | "generatingTasks" | "ready" | "inProgress" | "completed" | "abandoned" | "failed";
+export type PracticeFocus = "genderNumberAgreement" | "pluralNounForm" | "sceneDescription" | "chainedDescription";
+export interface SessionPersonalization {
+  /** Counts completed sessions; earlier practice evidence can exist when this is zero. */
+  previousSessions: number;
+  returningWords: { word: string; needsReview: boolean }[];
+  practiceFocuses: PracticeFocus[];
+}
 export interface PracticeDetail {
   session: { id: string; status: SessionStatus; sceneMediaAssetId: string; sessionTitle: string | null; sessionSummary: string | null; failureCode: "imageUploadFailed" | "sceneAnalysisFailed" | "imageModerationFailed" | "noValidObjects" | "vocabularyMappingFailed" | "taskGenerationFailed" | null };
   mediaAsset: { id: string; source: "preloaded" | "camera" | "userUpload" };
@@ -404,6 +411,7 @@ export interface PracticeDetail {
     relationships: TranslatedTerm[];
   } | null;
   tasks: SessionTask[]; nextTaskId: string | null; progress: SessionProgress;
+  personalization?: SessionPersonalization | null;
 }
 interface TranslatedTerm { key: string; source: string; translation: string }
 export interface SceneObject {
