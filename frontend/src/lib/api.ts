@@ -448,7 +448,7 @@ export interface TaskAttemptResult {
 }
 /** The owner's latest round-two attempt, as much as is needed to restore it after a reload. */
 export interface LatestClueAttempt {
-  id: string; attemptNumber: number; text: string; feedback: string | null;
+  id: string; attemptNumber: number; text: string; optionId: string | null; isCorrect: boolean | null; feedback: string | null;
   evaluationDetails: ISpyDescriptionEvaluation | null; assistance: ClueAssistance | null;
 }
 export const getLatestAttempt = (taskId: string, signal?: AbortSignal) =>

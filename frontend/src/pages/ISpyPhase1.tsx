@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { sessionDestination, sessionPaths } from "../lib/sessionRoute";
 import { Button, Feedback, IconButton, ProgressTrail } from "../components/ui";
@@ -8,7 +9,9 @@ import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { choiceOrder, practiceStages, taskDone } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
+import { getLatestAttempt } from "../lib/api";
 import type { SessionTask, TaskActionResult } from "../lib/api";
+import { queryKeys } from "../lib/queryKeys";
 import { ReportIssueLink } from "../components/ReportIssueLink";
 
 export function ISpyPhase1() {
@@ -50,6 +53,11 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
   const [checking, setChecking] = useState(false);
   const request = useRef<{ answer: string; key: string } | null>(null);
   const submitting = useRef(false);
+  const restored = useQuery({
+    queryKey: queryKeys.latestAttempt(task.id),
+    queryFn: ({ signal }) => getLatestAttempt(task.id, signal),
+    enabled: task.status === "completed" && !result?.attempt,
+  }).data?.attempt;
   const content = task.publicContent;
   if (content.kind !== "ispyRound") return null;
   const opening = scene.languageCode === "es"
@@ -74,26 +82,28 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
       setChecking(false);
     }
   };
-  const selected = content.options.find(option => option.optionId === picked);
+  const isCorrect = result?.attempt?.isCorrect ?? restored?.isCorrect ?? null;
+  const shownPick = picked ?? restored?.optionId ?? null;
+  const selected = content.options.find(option => option.optionId === shownPick);
   return <div className="stack">
     <h2 className="text-center">I-Spy · Linguini's clues</h2>
     <p>Use the clues to find the word</p>
     <ProgressTrail value={index + (answered ? 1 : 0)} total={total} label={`${index + 1} / ${total}`} />
-    <ScenePhoto scene={scene} activeItemId={result?.attempt?.isCorrect ? selected?.sceneObjectId : null} />
+    <ScenePhoto scene={scene} activeItemId={isCorrect ? selected?.sceneObjectId : null} />
     <div className="card card--lifted stack-2">
       <div className="spread"><span className="label muted">Linguini says</span><IconButton label="Hear the clue" onClick={() => speak(`${opening} ${content.clue}`, scene.languageCode)}><SpeakerIcon /></IconButton></div>
       <h3>{opening} {content.clue}</h3>
       {content.clueTranslation ? showTranslation ? <p className="small muted">{content.clueTranslation}</p> : <button type="button" className="text-link text-link--muted" onClick={() => setShowTranslation(true)}>See translation</button> : null}
     </div>
     <div className="choice-grid">{choiceOrder(content.options, task.id, option => option.optionId).map(option => {
-      const state = picked !== option.optionId ? "" : result?.attempt?.isCorrect != null ? (result.attempt.isCorrect ? " choice--correct" : " choice--incorrect") : " choice--selected";
-      return <button key={option.optionId} type="button" className={`choice${state}`} aria-pressed={picked === option.optionId} disabled={answered || practiceSaving || checking} onClick={() => void choose(option.optionId)}>
-        {result?.attempt?.isCorrect && picked === option.optionId ? <CheckIcon size={16} /> : null}{option.label}
+      const state = shownPick !== option.optionId ? "" : isCorrect != null ? (isCorrect ? " choice--correct" : " choice--incorrect") : " choice--selected";
+      return <button key={option.optionId} type="button" className={`choice${state}`} aria-pressed={shownPick === option.optionId} disabled={answered || practiceSaving || checking} onClick={() => void choose(option.optionId)}>
+        {isCorrect && shownPick === option.optionId ? <CheckIcon size={16} /> : null}{option.label}
       </button>;
     })}</div>
     {checking ? <p className="choice-checking" role="status">Checking your answer…</p> : null}
     {answered || result ? <>
-      <Feedback tone={result?.attempt?.isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status"><strong>{task.status === "skipped" ? "Skipped — no XP earned." : result?.attempt?.feedback?.message ?? "Answer saved."}</strong>{content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}</div></Feedback>
+      <Feedback tone={isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status"><strong>{task.status === "skipped" ? "Skipped — no XP earned." : result?.attempt?.feedback?.message ?? restored?.feedback ?? "Answer saved."}</strong>{content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}</div></Feedback>
       {task.status !== "skipped" ? <ReportIssueLink reportType="I-Spy answer" fields={[
         ["Task ID", task.id],
         ["Clue", `${opening} ${content.clue}`],
