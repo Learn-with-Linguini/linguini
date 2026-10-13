@@ -277,16 +277,28 @@ def test_photo_list_pages_own_photos_once_with_playability(database, repos):
     )).session.id
     workflow.analyze(sid, profile.id)
     unused = upload_asset(engine, owner)
+    failed = upload_asset(engine, owner)
+    reviewed_then_failed = upload_asset(engine, owner)
+
+    def fail(sid):
+        with engine.begin() as c:
+            c.execute(update(sessions).where(sessions.c.id == sid).values(status="failed"))
+
+    fail(workflow.create(CreateSessionRequest(
+        language_profile_id=profile.id, media_asset_id=failed, idempotency_key="lesson-key-9b"
+    )).session.id)
+    fail(confirmed_lesson(workflow, profile, reviewed_then_failed, "lesson-key-9c")[0])
     start(games, profile, confirmed)
 
-    first = games.photos(limit=1)
-    assert len(first.photos) == 1 and first.next_cursor
-    second = games.photos(first.next_cursor, limit=1)
+    first = games.photos(limit=2)
+    assert len(first.photos) == 2 and first.next_cursor
+    second = games.photos(first.next_cursor, limit=2)
     assert second.next_cursor is None
     photos = {p.media_asset.id: p for p in first.photos + second.photos}
-    assert set(photos) == {confirmed, pending}
-    assert unused not in photos
+    assert set(photos) == {confirmed, pending, reviewed_then_failed}
+    assert unused not in photos and failed not in photos
     assert photos[confirmed].playable and photos[confirmed].confirmed_at
+    assert photos[reviewed_then_failed].playable
     assert not photos[pending].playable
 
 

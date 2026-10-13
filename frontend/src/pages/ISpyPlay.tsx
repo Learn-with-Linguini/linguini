@@ -66,12 +66,12 @@ export function ISpyPlay() {
       {photos.isSuccess && !mine.length ? <p className="muted">Photos you use in a lesson appear here. <Link to="/practice">Start a lesson</Link> with a photo, or play a preloaded scene.</p> : null}
       <div className="grid-2">
         {mine.map(photo => <button key={photo.mediaAsset.id} type="button" className="scene-pick"
-          disabled={disabled || !photo.playable} aria-label={photo.playable ? "Play with this photo" : "Confirm this photo's scene review before playing"}
+          disabled={disabled || !photo.playable} aria-label={photo.playable ? "Play with this photo" : "Finish this photo's scene review in a lesson before playing"}
           onClick={() => void start(photo.mediaAsset.id)}>
           <MediaImage assetId={photo.mediaAsset.id} title="Your photo" width={320} lazy />
           <span className="small">{photo.playable && photo.confirmedAt
             ? `Confirmed ${new Date(photo.confirmedAt).toLocaleDateString()}`
-            : "Confirm the scene review in a lesson first"}</span>
+            : "Finish the scene review in a lesson first"}</span>
         </button>)}
       </div>
       {photos.hasNextPage ? <Button variant="secondary" disabled={photos.isFetchingNextPage} onClick={() => void photos.fetchNextPage()}>

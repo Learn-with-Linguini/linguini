@@ -11,7 +11,7 @@ import binascii
 from datetime import datetime
 from uuid import UUID, uuid5
 
-from sqlalchemy import and_, delete, exists, func, insert, select, tuple_, update
+from sqlalchemy import and_, delete, exists, func, insert, or_, select, tuple_, update
 
 from app.ai.features.translation.schemas import SceneTranslationResult
 from app.repositories.postgres.language_profiles import language_profiles
@@ -100,7 +100,11 @@ class PostgresISpyGameRepository:
         self.user_id = workflow.user_id
 
     def photos(self, cursor=None, limit=PHOTO_PAGE_SIZE):
-        """The user's own practice photos, newest first, once per media asset."""
+        """The user's own practice photos, newest first, once per media asset.
+
+        Photos whose only lessons failed before review are left out: they can
+        never gain confirmed facts.
+        """
         confirmed_at = (
             select(func.max(sessions.c.scene_confirmed_at))
             .where(
@@ -119,6 +123,10 @@ class PostgresISpyGameRepository:
                     sessions.c.user_id == self.user_id,
                     sessions.c.mode == SessionMode.LESSON,
                     sessions.c.scene_media_asset_id == media_assets.c.id,
+                    or_(
+                        sessions.c.status != "failed",
+                        sessions.c.scene_confirmed_at.is_not(None),
+                    ),
                 ),
             )
             .order_by(media_assets.c.created_at.desc(), media_assets.c.id.desc())
