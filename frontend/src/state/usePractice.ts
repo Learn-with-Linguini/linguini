@@ -5,10 +5,11 @@ import type { PracticeReview } from "../lib/api";
 import type { ConfirmGuessBody, PracticeDetail, SessionStatus, TaskAnswer, TaskActionResult } from "../lib/api";
 import { applyTaskResult, keepClientProgress } from "../lib/practiceUpdates";
 import { friendlyError, queryKeys } from "../lib/queryKeys";
+import { gameResourceKeys, gameResourcesEnabled } from "../lib/gameResources";
 
 const PROCESSING = ["analyzingScene", "generatingTasks"];
 
-export function usePractice(_userId: string, profileId: string, onLearningChanged: (scope: "task" | "session") => void) {
+export function usePractice(userId: string, profileId: string, onLearningChanged: (scope: "task" | "session") => void) {
   const queryClient = useQueryClient();
   const [session, setSession] = useState<PracticeDetail | null>(null);
   const sessionRef = useRef<PracticeDetail | null>(null);
@@ -58,6 +59,7 @@ export function usePractice(_userId: string, profileId: string, onLearningChange
     if (version === loadVersion.current) {
       applySession(data);
       setStalled(PROCESSING.includes(data.session.status));
+      if (gameResourcesEnabled) void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
     }
     return data;
     })();
@@ -67,7 +69,7 @@ export function usePractice(_userId: string, profileId: string, onLearningChange
     };
     void request.then(clear, clear);
     return request;
-  }, [applySession, withClientProgress]);
+  }, [applySession, withClientProgress, queryClient, userId]);
   const retryProcessing = useCallback(async (id: string) => {
     setError(null);
     try { await loadSession(id); }
@@ -90,17 +92,21 @@ export function usePractice(_userId: string, profileId: string, onLearningChange
     } catch (error) {
       setError(friendlyError(error));
       return;
-    } finally { busy.current = false; setSaving(false); }
+    } finally {
+      busy.current = false; setSaving(false);
+      if (gameResourcesEnabled) void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
+    }
     try { await loadSession(id, data); }
     catch (error) { setError(friendlyError(error)); }
-  }, [loadSession]);
+  }, [loadSession, queryClient, userId]);
   const startSession = useCallback(async (sceneId: string) => {
     const scene = await getSceneDetail(sceneId);
     if (creation.current?.asset !== scene.mediaAssetId) creation.current = { asset: scene.mediaAssetId, key: crypto.randomUUID() };
     const result = await createPractice(profileId, scene.mediaAssetId, creation.current.key);
+    if (gameResourcesEnabled) void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
     creation.current = null;
     return result;
-  }, [profileId]);
+  }, [profileId, queryClient, userId]);
   const actOnTask = useCallback(async (taskId: string, action: "complete" | "skip" | "attempts" | "confirm-guess", answer?: TaskAnswer | ConfirmGuessBody, key?: string): Promise<TaskActionResult | null> => {
     if (!session || busy.current) return null;
     busy.current = true; setSaving(true); setError(null);
@@ -108,10 +114,11 @@ export function usePractice(_userId: string, profileId: string, onLearningChange
       const result = await taskAction(taskId, action, answer ? { ...answer, idempotencyKey: key } : {});
       applySession(value => applyTaskResult(value, session.session.id, result));
       learningDirty.current = true;
+      if (gameResourcesEnabled) void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
       return result;
     } catch (e) { setError(friendlyError(e)); return null; }
     finally { busy.current = false; setSaving(false); }
-  }, [session, applySession]);
+  }, [session, applySession, queryClient, userId]);
   const flushLearningChanges = useCallback(() => {
     if (learningDirty.current) {
       learningDirty.current = false;
@@ -131,6 +138,7 @@ export function usePractice(_userId: string, profileId: string, onLearningChange
         ? { ...current, session: { ...current.session, status: completed.status as SessionStatus } }
         : current);
       flushLearningChanges();
+      if (gameResourcesEnabled) void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
       // Refetch the final XP, and warm the cache when the summary screen has
       // not mounted yet so it renders without a visible fetch.
       void queryClient.invalidateQueries({ queryKey: queryKeys.sessionSummary(sessionId) });

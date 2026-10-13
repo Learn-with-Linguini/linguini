@@ -25,13 +25,15 @@ import { Contact } from "./pages/Contact";
 import { AppStateProvider } from "./state/AppState";
 import { useAuth } from "./state/Auth";
 import { LoadingScreen } from "./components/LoadingScreen";
+import { Rooms } from "./pages/Rooms";
+import { Room } from "./pages/Room";
 
 function RequireAuth() {
   const { session, loading } = useAuth();
   const location = useLocation();
   if (loading) return <LoadingScreen label="Checking your account…" />;
   if (import.meta.env.DEV) return <Outlet />;
-  if (!session) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  if (!session) return <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}` }} />;
   return <Outlet />;
 }
 
@@ -58,6 +60,7 @@ export default function App() {
       <Route element={<RequireAuth />}>
         <Route element={<AuthenticatedApp />}>
           <Route element={<FocusShell />}>
+        <Route path="/rooms/:roomId" element={<Room />} />
         <Route path="/practice/sessions/:sessionId" element={<SessionRoute />}>
           <Route path="analysis" element={<PracticeAnalysis />} />
           <Route path="mic-test" element={<MicTest />} />
@@ -71,6 +74,7 @@ export default function App() {
           </Route>
           <Route element={<AppShell />}>
         <Route path="/home" element={<Home />} />
+        <Route path="/rooms" element={<Rooms />} />
         <Route path="/practice" element={<PracticeSelect />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/vocabulary" element={<Vocabulary />} />

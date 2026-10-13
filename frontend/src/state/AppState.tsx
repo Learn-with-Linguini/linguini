@@ -10,6 +10,7 @@ import { usePractice } from "./usePractice";
 import { getProgress, saveJournal } from "../lib/api";
 import type { JournalDraft } from "../lib/api";
 import { friendlyError, queryError, queryKeys } from "../lib/queryKeys";
+import { gameResourceKeys, gameResourcesEnabled } from "../lib/gameResources";
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
   const account = useAccount();
@@ -32,7 +33,8 @@ function LoadedAppState({ account, children }: { account: ReturnType<typeof useA
       void queryClient.invalidateQueries({ queryKey: queryKeys.vocabulary(profileId) });
     }
     void queryClient.invalidateQueries({ queryKey: queryKeys.activeSession(profileId) });
-  }, [queryClient, profileId]);
+    if (gameResourcesEnabled) void queryClient.invalidateQueries({ queryKey: gameResourceKeys(account.user?.id ?? "") });
+  }, [queryClient, profileId, account.user?.id]);
 
   const practice = usePractice(account.user?.id ?? "", profileId, onLearningChanged);
   const journalSave = useMutation({

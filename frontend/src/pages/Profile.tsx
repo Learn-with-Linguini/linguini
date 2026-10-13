@@ -6,6 +6,9 @@ import { deleteCurrentAccount } from "../lib/api";
 import { accountTiers } from "../lib/accountTiers";
 import { useAppState } from "../state/useAppState";
 import { useAuth } from "../state/Auth";
+import { GameResources } from "../components/GameResources";
+import { gameResourcesEnabled } from "../lib/gameResources";
+import { playTogetherEnabled } from "../lib/rooms";
 
 export function Profile() {
   const navigate = useNavigate();
@@ -79,9 +82,16 @@ export function Profile() {
             <span className="profile-tier-badge">{tier.label}</span>
             <strong>{tier.description}</strong>
           </div>
-          <p>{tier.allowance}</p>
+          <p>{gameResourcesEnabled && (user?.tier ?? "beta") === "beta"
+            ? "Public beta includes a daily Sauce refill. New photo lessons and games each use 1 Sauce; resuming does not spend more."
+            : tier.allowance}</p>
         </Card>
       </section>
+
+      {gameResourcesEnabled ? <section className="profile-section" aria-labelledby="profile-sauce-heading">
+        <h2 id="profile-sauce-heading">Your Sauce and Basil leaves</h2>
+        <GameResources shop />
+      </section> : null}
 
       <section className="profile-section">
         <h2>Learning setup</h2>
@@ -145,8 +155,9 @@ export function Profile() {
       <aside className="profile-ai-note">
         <strong>Your privacy</strong>
         <p>
-          Your photos are stored securely and are only used to generate your own lessons.
-          They are never shared with other learners and never used to train AI models.
+          {playTogetherEnabled
+            ? "Your photos are stored securely for learning. Photos you add to a private room are shared with the friend in that room. Your solo photos stay private and are never used to train AI models."
+            : "Your photos are stored securely and are only used to generate your own lessons. They are never shared with other learners and never used to train AI models."}
         </p>
       </aside>
 
