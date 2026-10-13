@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
+import { sessionDestination, sessionPaths } from "../lib/sessionRoute";
 import { Button, Feedback, IconButton, ProgressTrail } from "../components/ui";
 import { ArrowRightIcon, CheckIcon, SpeakerIcon } from "../components/icons";
 import { ScenePhoto } from "../components/ScenePhoto";
@@ -11,8 +12,7 @@ import type { SessionTask, TaskActionResult } from "../lib/api";
 import { ReportIssueLink } from "../components/ReportIssueLink";
 
 export function ISpyPhase1() {
-  const scene = useScene();
-  const { session } = useAppState();
+  const { session, practiceStalled, practiceError, retryProcessing } = useAppState();
   const [index, setIndex] = useState(() => {
     const clues = practiceStages(session?.tasks ?? []).clues;
     const next = clues.findIndex(task => !taskDone(task));
@@ -20,15 +20,27 @@ export function ISpyPhase1() {
   });
   if (!session) return null;
   const { learning, clues } = practiceStages(session.tasks);
-  const base = `/practice/sessions/${scene.sessionId}`;
-  if (session.session.status === "completed") return <Navigate to={`${base}/summary`} replace />;
-  if (!learning.every(taskDone) || ["abandoned", "failed"].includes(session.session.status)) return <Navigate to={`${base}/learn`} replace />;
+  const paths = sessionPaths(session);
+  const game = session.session.mode === "ispy";
+  if (session.session.status === "completed") return <Navigate to={paths.done} replace />;
+  if (game && ["abandoned", "failed"].includes(session.session.status)) {
+    const exit = sessionDestination(session);
+    return <Navigate to={exit.path} replace state={exit.notice ? { practiceNotice: exit.notice } : undefined} />;
+  }
+  if (!learning.every(taskDone) || ["abandoned", "failed"].includes(session.session.status)) return <Navigate to={paths.exit} replace />;
+  if (game && !clues.length) return <div className="stack">
+    <h2 className="text-center">I-Spy · Linguini's clues</h2>
+    {practiceStalled
+      ? <><p role="status">Linguini is still choosing objects to spy.</p><Button block onClick={() => void retryProcessing(session.session.id)}>Check again</Button></>
+      : <p role="status">Linguini is choosing objects to spy...</p>}
+    {practiceError ? <p role="alert">{practiceError}</p> : null}
+  </div>;
   const task = clues[index];
-  if (!task) return <Navigate to={`${base}/ispy-2`} replace />;
-  return <ClueRound key={task.id} task={task} index={index} total={clues.length} onNext={() => setIndex(value => value + 1)} />;
+  if (!task) return <Navigate to={paths.describe} replace />;
+  return <ClueRound key={task.id} task={task} index={index} total={clues.length} describePath={paths.describe} onNext={() => setIndex(value => value + 1)} />;
 }
 
-function ClueRound({ task, index, total, onNext }: { task: SessionTask; index: number; total: number; onNext: () => void }) {
+function ClueRound({ task, index, total, describePath, onNext }: { task: SessionTask; index: number; total: number; describePath: string; onNext: () => void }) {
   const navigate = useNavigate();
   const scene = useScene();
   const { actOnTask, practiceSaving, practiceError } = useAppState();
@@ -92,7 +104,7 @@ function ClueRound({ task, index, total, onNext }: { task: SessionTask; index: n
       ]} /> : null}
     </> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
-    <Button block disabled={!answered || practiceSaving} onClick={() => index === total - 1 ? navigate(`/practice/sessions/${scene.sessionId}/ispy-2`) : onNext()}>{index === total - 1 ? "Your turn" : "Next clue"} <ArrowRightIcon /></Button>
+    <Button block disabled={!answered || practiceSaving} onClick={() => index === total - 1 ? navigate(describePath) : onNext()}>{index === total - 1 ? "Your turn" : "Next clue"} <ArrowRightIcon /></Button>
     {!answered ? <Button variant="quiet" block disabled={practiceSaving} onClick={() => void actOnTask(task.id, "skip")}>Skip task</Button> : null}
   </div>;
 }

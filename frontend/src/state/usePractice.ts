@@ -7,6 +7,8 @@ import { applyTaskResult, keepClientProgress } from "../lib/practiceUpdates";
 import { friendlyError, queryKeys } from "../lib/queryKeys";
 
 const PROCESSING = ["analyzingScene", "generatingTasks"];
+// Games and partly built lessons wait out slower clue calls; a fresh lesson polls quickly for task 1.
+const patient = (detail: PracticeDetail) => detail.tasks.length > 0 || detail.session.mode === "ispy";
 
 export function usePractice(_userId: string, profileId: string, onLearningChanged: (scope: "task" | "session") => void) {
   const queryClient = useQueryClient();
@@ -47,10 +49,10 @@ export function usePractice(_userId: string, profileId: string, onLearningChange
     // Once task 1 is usable, keep checking in the background through slower
     // lesson/clue calls and their retries (up to five minutes).
     if (version === loadVersion.current) applySession(data);
-    for (let attempt = 0; attempt < (data.tasks.length ? 200 : 40) && PROCESSING.includes(data.session.status); attempt += 1) {
+    for (let attempt = 0; attempt < (patient(data) ? 200 : 40) && PROCESSING.includes(data.session.status); attempt += 1) {
       // Poll quickly until the first vocabulary task is committed, then use a
       // slower cadence while the remaining AI calls finish in the background.
-      await new Promise(resolve => setTimeout(resolve, data.tasks.length ? 1500 : 300));
+      await new Promise(resolve => setTimeout(resolve, patient(data) ? 1500 : 300));
       if (version !== loadVersion.current) break;
       data = withClientProgress(await getPractice(id));
       if (version === loadVersion.current) applySession(data);

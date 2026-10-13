@@ -387,9 +387,10 @@ export interface SessionTask {
 export interface SessionProgress {
   completedTaskCount: number; skippedTaskCount: number; terminalTaskCount: number; totalTaskCount: number;
 }
+export type SessionMode = "lesson" | "ispy";
 export type SessionStatus = "created" | "analyzingScene" | "awaitingObjectReview" | "generatingTasks" | "ready" | "inProgress" | "completed" | "abandoned" | "failed";
 export interface PracticeDetail {
-  session: { id: string; status: SessionStatus; sceneMediaAssetId: string; sessionTitle: string | null; sessionSummary: string | null; failureCode: "imageUploadFailed" | "sceneAnalysisFailed" | "imageModerationFailed" | "noValidObjects" | "vocabularyMappingFailed" | "taskGenerationFailed" | null };
+  session: { id: string; mode: SessionMode; sourceSessionId: string | null; status: SessionStatus; sceneMediaAssetId: string; sessionTitle: string | null; sessionSummary: string | null; failureCode: "imageUploadFailed" | "sceneAnalysisFailed" | "imageModerationFailed" | "noValidObjects" | "vocabularyMappingFailed" | "taskGenerationFailed" | null };
   mediaAsset: { id: string; source: "preloaded" | "camera" | "userUpload" };
   sceneId: string | null; title: string;
   analysisMode: "placeholder" | null;
@@ -486,4 +487,12 @@ export const completePractice = (id: string) => write<{ id: string; status: stri
 export const abandonPractice = (id: string) => write<{ id: string; status: string }>(`/api/v1/sessions/${id}/abandon`, "POST", {});
 export const getPracticeSummary = (id: string) => request<{ progress: SessionProgress; learnedVocabularyIds: string[]; xpEarned: number; ispyCorrectCount: number; ispyAttemptCount: number }>(`/api/v1/sessions/${id}/summary`);
 
+export interface ISpyPhoto { mediaAsset: { id: string; source: "camera" | "userUpload"; createdAt: string }; playable: boolean; confirmedAt: string | null }
+export interface ISpyPhotoPage { photos: ISpyPhoto[]; nextCursor: string | null }
+export const getISpyPhotos = (cursor: string | null, signal?: AbortSignal) =>
+  request<ISpyPhotoPage>(`/api/v1/ispy/photos${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`, signal);
+export const getActiveISpyGame = (signal?: AbortSignal) => request<PracticeDetail | null>("/api/v1/ispy/games/active", signal);
+export const startISpyGame = (profileId: string, assetId: string, key: string) => write<PracticeDetail>("/api/v1/ispy/games", "POST", {
+  languageProfileId: profileId, mediaAssetId: assetId, idempotencyKey: key,
+});
 export const checkPracticeWord = (id: string, label: string) => request<{ available: boolean }>(`/api/v1/sessions/${id}/review-word?label=${encodeURIComponent(label)}`);
