@@ -199,6 +199,11 @@ Spanish, and stores the assembled suggested words in
 with words already on the photo. `content.tasks/rounds/prompts` stay minimal
 placeholders; real lessons and clues come from the templates below.
 
+Each item's `attributes.color` and the scene's `content.relations` are curated from
+the images (migration `20261013010000_preloaded_scene_facts`), so preloaded lessons and
+I-Spy games get describing rounds. Re-running the script with `--emit-migration`
+replaces them with detected facts; review those before applying.
+
 ```sh
 python -m app.scripts.precompute_preloaded_scenes --dry-run --json out.json
 python -m app.scripts.precompute_preloaded_scenes --slug calle-mayor --language fr
@@ -401,7 +406,9 @@ and changing one slot rewrites only that frame's sentence. The submitted `assist
 the task's frames and stored in `responsePayload`; it records guided practice and never
 changes correctness or vocabulary credit. Frames stay in `publicContent`, so the guess
 model never sees them, and `GET /tasks/{id}/latest-attempt` returns the saved assistance
-so slot picks and revealed help survive a reload.
+so slot picks and revealed help survive a reload. For round-one clues it returns the
+chosen `optionId`, `isCorrect` and feedback, so an answered clue still shows its grade
+when the original response was lost.
 
 Journals are unique per user/local date across all target languages. Saves append
 immutable revisions, with identical retries avoiding duplicate revisions. Media

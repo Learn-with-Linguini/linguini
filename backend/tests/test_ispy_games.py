@@ -15,12 +15,14 @@ from app.ai.features.translation.schemas import SceneTranslationResult
 from app.repositories.postgres.ispy_games import CONFIRM_SCENE_FIRST, PostgresISpyGameRepository
 from app.repositories.postgres.language_profiles import PostgresLanguageProfileRepository
 from app.repositories.postgres.practice import sessions
+from app.repositories.postgres.scenes import preloaded_scenes
 from app.repositories.postgres.users import users
 from app.repositories.postgres.vocabulary import vocabulary_encounters
 from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.repositories.postgres.xp import xp_events
 from app.repositories.practice import PracticeConflictError, PracticeNotFoundError
 from app.schemas.base import utc_now
+from app.schemas.enums import SceneRelationType
 from app.schemas.ispy import StartISpyGameRequest
 from app.schemas.media import SceneObjectRelation
 from app.schemas.sessions import (
@@ -29,7 +31,7 @@ from app.schemas.sessions import (
     RepositionedPracticeObject,
     ReviewPracticeRequest,
 )
-from app.schemas.tasks import SkipTaskRequest
+from app.schemas.tasks import LatestClueAttempt, SkipTaskRequest, TaskAttempt
 from app.schemas.users import LanguageProfile, User
 
 
@@ -391,3 +393,73 @@ def profiles_table():
     from app.repositories.postgres.language_profiles import language_profiles
 
     return language_profiles
+
+
+SPANISH_COLOURS = {
+    "black": "negro", "blue": "azul", "brown": "marrón", "green": "verde", "grey": "gris",
+    "orange": "naranja", "red": "rojo", "white": "blanco", "yellow": "amarillo",
+}
+
+
+class SpanishTranslator(Translator):
+    def translate(self, payload, cache_scope=None, **_options):
+        self.payloads.append(payload)
+        return SceneTranslationResult.model_validate({
+            "objects": [
+                {**term, "translation": f"es-{term['source']}", "phoneticText": "AH",
+                 "gender": "masculine", "article": "el"}
+                for term in payload["objects"]
+            ],
+            "attributes": [
+                {**term, "translation": SPANISH_COLOURS[term["source"]], "phoneticText": "AH"}
+                for term in payload["attributes"]
+            ],
+            "relationships": [
+                {**term, "translation": f"está cerca de {term['source']}", "phoneticText": "AH"}
+                for term in payload["relationships"]
+            ],
+        })
+
+
+def test_preloaded_catalog_facts_reference_their_own_items(database):
+    engine = database[0]
+    with engine.connect() as c:
+        rows = c.execute(select(preloaded_scenes.c.slug, preloaded_scenes.c.content)).all()
+    assert rows
+    for slug, content in rows:
+        ids = {item["id"] for item in content["items"]}
+        colours = [
+            item["attributes"]["color"] for item in content["items"] if item.get("attributes")
+        ]
+        assert colours and set(colours) <= set(SPANISH_COLOURS), slug
+        assert content["relations"], slug
+        for row in content["relations"]:
+            assert {row["subjectItemId"], row["referenceItemId"]} <= ids, slug
+            SceneRelationType(row["relation"])
+
+
+def test_preloaded_scene_game_gets_describing_rounds(database):
+    engine, owner, profile, client = database
+    workflow = PostgresWorkflowRepository(
+        engine, owner.id, translator=SpanishTranslator(),
+        ispy_clue_generator=Clues(), ispy_guess_generator=Guesser(),
+    )
+    asset = create_run(client, profile, "preloaded-describe-key")["mediaAsset"]["id"]
+    game = workflow.get(
+        start(PostgresISpyGameRepository(workflow), profile, asset).session.id, profile.id
+    )
+    assert game.session.source_session_id is None
+    assert any(obj.attributes for obj in game.scene_objects)
+    assert [t.kind for t in game.tasks].count("reflection") >= 1
+
+
+def test_latest_attempt_restores_a_graded_clue_choice():
+    attempt = TaskAttempt(
+        id=uuid4(), session_task_id=uuid4(), attempt_number=1, input_mode="multipleChoice",
+        response_payload={"optionId": "taxi"}, is_correct=False,
+        feedback={"message": "Not quite."},
+    )
+    restored = LatestClueAttempt.from_attempt(attempt)
+    assert (restored.option_id, restored.is_correct, restored.feedback) == (
+        "taxi", False, "Not quite."
+    )

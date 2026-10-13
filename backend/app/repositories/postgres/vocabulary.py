@@ -290,7 +290,15 @@ class PostgresVocabularyRepository:
                                 sessions.c.id,
                                 sessions.c.scene_media_asset_id,
                                 sessions.c.session_title,
-                            ).where(
+                                func.lower(language_profiles.c.target_language_code).label(
+                                    "language_code"
+                                ),
+                            )
+                            .join(
+                                language_profiles,
+                                language_profiles.c.id == sessions.c.language_profile_id,
+                            )
+                            .where(
                                 sessions.c.user_id == user_id,
                                 sessions.c.id.in_(
                                     {sid for ids in word_sessions.values() for sid in ids}
@@ -303,10 +311,13 @@ class PostgresVocabularyRepository:
                 )
                 scene_rows = (
                     {
-                        row["media_asset_id"]: row
+                        (row["media_asset_id"], row["language_code"]): row
                         for row in connection.execute(
                             select(
                                 preloaded_scenes.c.media_asset_id,
+                                func.lower(preloaded_scenes.c.language_code).label(
+                                    "language_code"
+                                ),
                                 preloaded_scenes.c.slug,
                                 preloaded_scenes.c.title,
                             ).where(
@@ -320,13 +331,15 @@ class PostgresVocabularyRepository:
                     else {}
                 )
 
-                def scene(row):
-                    scene_row = scene_rows.get(
-                        scene_assets.get(latest_session.get(row["vocabulary_item_id"]), {}).get(
-                            "scene_media_asset_id"
-                        )
+                def scene_row(session):
+                    return scene_rows.get(
+                        (session.get("scene_media_asset_id"), session.get("language_code"))
                     )
-                    return scene_row
+
+                def scene(row):
+                    return scene_row(
+                        scene_assets.get(latest_session.get(row["vocabulary_item_id"]), {})
+                    )
 
                 def word_scenes(item_id):
                     photos = {}
@@ -334,7 +347,7 @@ class PostgresVocabularyRepository:
                         if session_id not in word_sessions.get(item_id, set()):
                             continue
                         asset_id = session["scene_media_asset_id"]
-                        ready_scene = scene_rows.get(asset_id, {})
+                        ready_scene = scene_row(session) or {}
                         photos[asset_id] = VocabularyScene(
                             media_asset_id=asset_id,
                             title=(
