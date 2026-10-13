@@ -736,6 +736,9 @@ def test_api_requires_actor_and_rejects_room_image_access_outside_membership(db)
         path = f"/api/v1/rooms/{room_id}/photos/{photo_id}/image"
         image = client.get(path, headers={"Authorization": "Bearer 1"})
         assert image.status_code == 200 and image.content == b"webp-image"
+        for width in (320, 640, 1280):
+            resized = client.get(f"{path}?width={width}", headers={"Authorization": "Bearer 1"})
+            assert resized.status_code == 200 and resized.content == b"webp-image"
         assert image.headers["cache-control"] == "private, no-store"
         assert client.get(path, headers={"Authorization": "Bearer 2"}).status_code == 404
         assert (

@@ -1,6 +1,6 @@
 """Authenticated invite-only photo rooms; the dependency owns feature gating."""
 
-from typing import Annotated, Literal
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
@@ -85,8 +85,12 @@ def room_photo_image(
     room_id: UUID,
     photo_id: UUID,
     service: RoomServiceDep,
-    width: Annotated[Literal[320, 640, 1280], Query()] = 640,
+    width: Annotated[int, Query()] = 640,
 ):
+    if width not in {320, 640, 1280}:
+        raise HTTPException(422, detail={
+            "code": "invalid_width", "message": "Width must be one of 320, 640 or 1280.",
+        })
     data = _call(service.read_image, room_id, photo_id, width)
     return Response(
         content=data,
