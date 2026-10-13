@@ -16,7 +16,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import ENUM, JSONB
 
-from app.schemas.enums import SessionFailureCode, SessionStatus
+from app.schemas.enums import SessionFailureCode, SessionMode, SessionStatus
 from app.schemas.progress import StoredProgress
 
 sessions = Table(
@@ -38,6 +38,21 @@ sessions = Table(
         key="status",
         nullable=False,
     ),
+    Column(
+        "session_mode",
+        ENUM(
+            SessionMode,
+            name="session_mode",
+            schema="public",
+            values_callable=lambda modes: [mode.value for mode in modes],
+            create_type=False,
+        ),
+        key="mode",
+        nullable=False,
+        server_default=SessionMode.LESSON.value,
+    ),
+    Column("source_session_id", Uuid),
+    Column("scene_confirmed_at", DateTime(timezone=True)),
     Column("started_at", DateTime(timezone=True)),
     Column("completed_at", DateTime(timezone=True)),
     Column("abandoned_at", DateTime(timezone=True)),
@@ -114,6 +129,7 @@ class SessionBackedLearningRepository:
                 )
                 .where(
                     sessions.c.user_id == user_id,
+                    sessions.c.mode == SessionMode.LESSON,
                     sessions.c.status.in_(["inProgress", "completed"]),
                 )
                 .order_by(sessions.c.started_at)

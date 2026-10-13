@@ -184,6 +184,7 @@ def test_wrong_session_object_and_owned_audio_constraints(context):
         )
         # Mapping iteration uses database column names; writes use SQLAlchemy keys.
         copied.pop("session_status")
+        copied["mode"] = copied.pop("session_mode")
         copied.update(id=other.session_id, status="failed", idempotency_key=None)
         connection.execute(insert(sessions).values(**copied))
         connection.execute(insert(session_tasks).values(**entity_values(other)))
