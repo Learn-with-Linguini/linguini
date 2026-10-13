@@ -81,6 +81,17 @@ class _Counts:
             self.last = stamp
             self.outcome = "correct" if result else "incorrect"
 
+    def observe_batch(self, results: list[bool], occurred_at: datetime, event_id) -> None:
+        """Keep question counts, but summarize the latest grammar attempt as a whole."""
+        if not results:
+            return
+        self.correct += sum(results)
+        self.incorrect += len(results) - sum(results)
+        stamp = (occurred_at, str(event_id), "")
+        if stamp > self.last:
+            self.last = stamp
+            self.outcome = "correct" if all(results) else "incorrect"
+
     def summary(self) -> dict:
         return {
             "correctCount": self.correct,
@@ -264,17 +275,19 @@ def snapshot_learner_history(
             graded_attempts += 1
         results = attempt["results"]
         if isinstance(results, dict):
+            valid_results = []
             for question_id, result in results.items():
                 if type(result) is not bool or question_id not in task["question_ids"]:
                     continue
+                valid_results.append(result)
                 if key := task["question_words"].get(question_id):
                     word = words[key]
                     word.observe(result, attempt["created_at"], attempt["id"], question_id)
                     word.recent = max(word.recent, attempt["created_at"])
-                if task["kind"] == "grammarLesson" and task["focus"] in grammar:
-                    grammar[task["focus"]].observe(
-                        result, attempt["created_at"], attempt["id"], question_id,
-                    )
+            if task["kind"] == "grammarLesson" and task["focus"] in grammar:
+                grammar[task["focus"]].observe_batch(
+                    valid_results, attempt["created_at"], attempt["id"],
+                )
         if type(attempt["is_correct"]) is bool and (
             key := task.get("legacy_word") or (
                 vocabulary_keys.get(str(task["vocabulary_item_id"]))

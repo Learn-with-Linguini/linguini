@@ -266,6 +266,33 @@ def test_grammar_counts_only_saved_questions_and_real_booleans(history):
     }
 
 
+@pytest.mark.parametrize("wrong_id,right_id", [("a", "z"), ("z", "a"), ("q-42", "q-1")])
+def test_latest_grammar_batch_outcome_does_not_depend_on_question_ids(history, wrong_id, right_id):
+    task = history.task(history.session(), "grammarLesson", {
+        "focus": "pluralNounForm",
+        "questions": [
+            {"question_id": question_id} for question_id in (wrong_id, right_id, "ungraded")
+        ],
+    })
+    history.attempt(task, {
+        wrong_id: False, right_id: True, "ungraded": "false", "unknown": False,
+    })
+    assert history.snapshot()["grammar"]["pluralNounForm"] == {
+        "correctCount": 1, "incorrectCount": 1, "lastOutcome": "incorrect",
+    }
+    # A newer batch without valid saved-question grading provides no outcome.
+    history.attempt(task, {"ungraded": "true", "unknown": False},
+                    occurred_at=history.now + timedelta(seconds=1))
+    assert history.snapshot()["grammar"]["pluralNounForm"] == {
+        "correctCount": 1, "incorrectCount": 1, "lastOutcome": "incorrect",
+    }
+    history.attempt(task, {wrong_id: True, right_id: True}, correct=True,
+                    occurred_at=history.now + timedelta(seconds=2))
+    assert history.snapshot()["grammar"]["pluralNounForm"] == {
+        "correctCount": 3, "incorrectCount": 1, "lastOutcome": "correct",
+    }
+
+
 def test_journals_use_current_completed_content_and_separate_assisted_selection(history):
     sid = history.session()
     history.learn(sid, [entry("taza", "cup"), entry("plato", "plate"), entry("rojo", "red")])

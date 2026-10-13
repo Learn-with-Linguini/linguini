@@ -114,6 +114,21 @@ class ReviewPracticeRequest(ApiModel):
         return self
 
 
+class ReturningPracticeWord(ApiModel):
+    word: Annotated[str, Field(min_length=1, max_length=200)]
+    needs_review: bool = False
+
+
+class SessionPersonalization(ApiModel):
+    previous_sessions: Annotated[int, Field(ge=0)]
+    returning_words: Annotated[list[ReturningPracticeWord], Field(max_length=6)] = Field(
+        default_factory=list
+    )
+    practice_focuses: list[Literal[
+        "genderNumberAgreement", "pluralNounForm", "sceneDescription", "chainedDescription",
+    ]] = Field(default_factory=list)
+
+
 class SessionDetailResponse(ApiModel):
     analysis_mode: Literal["placeholder"] | None = None
     media_asset: MediaAsset
@@ -123,6 +138,7 @@ class SessionDetailResponse(ApiModel):
     translations: list[VocabularyTranslation] = Field(default_factory=list)
     translation_preview: SceneTranslationResult | None = None
     analysis_retryable: bool = False
+    personalization: SessionPersonalization | None = None
     session: Session
     scene_object_relations: list[SceneObjectRelation] = Field(default_factory=list)
     scene_objects: list[SceneObject] = Field(default_factory=list)

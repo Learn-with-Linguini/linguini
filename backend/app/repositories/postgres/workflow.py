@@ -3,6 +3,7 @@
 import hashlib
 import json
 import logging
+import os
 import time
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
@@ -21,6 +22,7 @@ from app.ai.features.ispy_guess import ISpyGuessError, ISpyGuessResult
 from app.ai.features.learning_tasks import required_task_focuses
 from app.ai.features.scene_analysis import RoutedSceneAnalyzer
 from app.repositories.postgres.language_profiles import language_profiles
+from app.repositories.postgres.learner_history import snapshot_learner_history
 from app.repositories.postgres.media_assets import media_assets
 from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.scene_objects import (
@@ -56,7 +58,11 @@ from app.schemas.enums import (
     VocabularyEncounterType,
 )
 from app.schemas.media import MediaAsset, SceneObject, SceneObjectRelation
-from app.schemas.sessions import Session, SessionDetailResponse, SessionSummaryResponse
+from app.schemas.sessions import (
+    Session,
+    SessionDetailResponse,
+    SessionSummaryResponse,
+)
 from app.schemas.tasks import (
     ISPY_DESCRIPTION_EVALUATION_VERSION,
     CheckVocabularyAnswerResponse,
@@ -81,6 +87,11 @@ from app.services.ispy_descriptions import (
     interpret_guess,
 )
 from app.services.scene_analysis import DeterministicSceneAnalyzer
+from app.services.session_personalization import (
+    lesson_history,
+    personalization_summary,
+    personalize_introduction,
+)
 from app.services.session_plan import (
     bootstrap_word,
     build_grammar_lessons,
@@ -280,6 +291,7 @@ class GenerationClaim:
     relations: list[SceneObjectRelation]
     cache_scope: CacheScope | None = None
     templates: TemplateSet | None = None
+    learner_history: dict | None = None
 
     @property
     def generation_options(self) -> dict:
@@ -655,6 +667,7 @@ class PostgresWorkflowRepository:
             translations=translations,
             translation_preview=(draft or {}).get("translationPreview"),
             analysis_retryable=analysis_retryable(session),
+            personalization=(draft or {}).get("personalization"),
             tasks=[SessionTaskPublic.from_internal(t) for t in tasks],
             progress=task_progress(tasks),
             next_task_id=next(
@@ -1221,6 +1234,15 @@ class PostgresWorkflowRepository:
             )
             asset, scene = self._scene_media(c, session)
             objects, relations = self._scene_objects(c, session)
+            history = None
+            if os.getenv("LEARNER_MEMORY_ENABLED", "false").strip().lower() == "true":
+                labels = [obj.label for obj in objects]
+                labels.extend(value for obj in objects for value in (obj.attributes or {}).values()
+                              if isinstance(value, str))
+                labels.extend(row.relation for row in relations)
+                history = snapshot_learner_history(
+                    c, self.user_id, dict(profile), session_id, labels,
+                )
             return GenerationClaim(
                 session_id,
                 profile_id,
@@ -1231,6 +1253,7 @@ class PostgresWorkflowRepository:
                 objects,
                 relations,
                 *self._reuse(c, session, asset, objects, relations),
+                learner_history=history,
             )
 
     def _reuse(self, c, session, asset, objects, relations):
@@ -1355,6 +1378,22 @@ class PostgresWorkflowRepository:
             introduction = next(
                 task for task in rebuilt if task.kind == "vocabularyIntroduction"
             )
+            introduction = personalize_introduction(introduction, claim.learner_history)
+            rebuilt = [introduction if task.id == introduction.id else task for task in rebuilt]
+            summary = personalization_summary(
+                claim.learner_history, introduction, has_relations=bool(relations),
+            )
+            if claim.learner_history or (session.analysis_draft or {}).get("personalization"):
+                draft = dict(c.execute(select(sessions.c.analysis_draft).where(
+                    sessions.c.id == session.id,
+                )).scalar_one() or {})
+                if summary:
+                    draft["personalization"] = summary.model_dump(mode="json", by_alias=True)
+                else:
+                    draft.pop("personalization", None)
+                c.execute(update(sessions).where(sessions.c.id == session.id).values(
+                    analysis_draft=draft,
+                ))
             introduction.order_index = 0
             c.execute(insert(session_tasks).values(**entity_values(introduction)))
             introduction_id = introduction.id
@@ -1383,6 +1422,8 @@ class PostgresWorkflowRepository:
             lessons, ispy_clues = self._lessons_and_clues(
                 session_id, payload, translated_scene, objects, words, relations,
                 claim.generation_options,
+                history=lesson_history(claim.learner_history, introduction),
+                history_scope=CacheScope.user(f"{self.user_id}:{claim.profile_id}"),
             )
             if self.ispy_guess_generator:
                 ispy_descriptions = build_ispy_description_tasks(
@@ -1412,6 +1453,18 @@ class PostgresWorkflowRepository:
                     task for task in learning if task.kind == "vocabularyIntroduction"
                 ] + lessons
             rebuilt = [*learning, *clues, *descriptions]
+            if summary and summary.practice_focuses:
+                available = {task.public_content.focus for task in lessons}
+                summary.practice_focuses = [focus for focus in summary.practice_focuses
+                                           if focus in available]
+                draft = dict(session.analysis_draft or {})
+                if summary.returning_words or summary.practice_focuses:
+                    draft["personalization"] = summary.model_dump(mode="json", by_alias=True)
+                else:
+                    draft.pop("personalization", None)
+                c.execute(update(sessions).where(sessions.c.id == session_id).values(
+                    analysis_draft=draft,
+                ))
             for index, task in enumerate(rebuilt):
                 if task.id == introduction_id:
                     # Preserve any progress/attempts already made in task 1.
@@ -1424,16 +1477,23 @@ class PostgresWorkflowRepository:
                 )
             self._transition(c, session, "inProgress")
 
-    def _lessons(self, session_id, payload, translated_scene, relations, options=None):
+    def _lessons(
+        self, session_id, payload, translated_scene, relations, options=None,
+        *, history=None, history_scope=None,
+    ):
         if not self.learning_task_generator:
             return []
         try:
+            lesson_payload = learning_task_payload(payload, translated_scene, relations)
+            lesson_options = options or {}
+            if history:
+                lesson_payload["learnerHistory"] = history
+                lesson_options = {"cache_scope": history_scope, "templates": None}
             with _timed("learning-task generation", session_id):
                 return build_grammar_lessons(
                     session_id,
                     self.learning_task_generator.generate(
-                        learning_task_payload(payload, translated_scene, relations),
-                        **(options or {}),
+                        lesson_payload, **lesson_options,
                     ),
                 )
         except Exception:
@@ -1466,6 +1526,7 @@ class PostgresWorkflowRepository:
     def _lessons_and_clues(
         self, session_id, payload, translated_scene, objects, words, relations,
         options=None,
+        *, history=None, history_scope=None,
     ):
         """Run the two independent generation calls at once, each with its own fallback.
 
@@ -1473,9 +1534,12 @@ class PostgresWorkflowRepository:
         the shared background pool, so each job adds at most one thread and a
         saturated pool cannot deadlock waiting on itself.
         """
+        lesson_options = {"options": options}
+        if history:
+            lesson_options.update(history=history, history_scope=history_scope)
         lessons = partial(
             self._lessons, session_id, payload, translated_scene, relations,
-            options=options,
+            **lesson_options,
         )
         clues = partial(
             self._clues, session_id, payload, translated_scene, objects, words, relations,

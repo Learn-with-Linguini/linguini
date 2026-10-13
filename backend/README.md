@@ -149,6 +149,23 @@ PostgreSQL database with all Prisma migrations applied, then run
 `python -m pytest tests/test_postgres_sessions.py tests/test_api_workflows.py`
 from `backend`. These tests write records; use a separate test database.
 
+### Personalizing new photo lessons
+
+Set `LEARNER_MEMORY_ENABLED=true` to use the learner's existing history for their
+language profile. Previously missed words in the current photo appear first;
+grammar exercises can give more practice on earlier mistakes. A short session
+summary shows returning words and the skills being revisited. Empty history and
+the default `false` setting retain the existing lesson generation path.
+
+History is read from existing practice and completed journal records; no schema
+change or separate model call is required. Exposure, graded answers, journal
+selections and assisted writing remain separate observations. Only a bounded
+summary (up to 16 terms and 6 KiB) reaches grammar generation, without journal
+prose or submitted answers. Only current-photo vocabulary is eligible for the
+exercises. Personalized grammar uses a user-and-profile cache and bypasses
+shared curated grammar templates, which can add a grammar model call for a
+curated scene. Translation and I-Spy keep their existing template and cache paths.
+
 ### Preloaded scene images
 
 For a private bucket, set these backend-only variables in `backend/.env.local`:
