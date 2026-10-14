@@ -38,6 +38,7 @@ export function friendlyError(error: unknown): string {
       scene_analysis_failed: "We couldn't read that photo. Try another photo when you're ready.",
       learning_task_generation_failed: "We couldn't prepare the next activity. Please try again.",
     };
+    if (apiError.code === "mission_photo_not_ready" && error instanceof Error) return error.message;
     if (typeof apiError.code === "string" && codeMessages[apiError.code]) return codeMessages[apiError.code];
     if (apiError.status === 401) return "Your sign-in has expired. Please sign in again.";
     if (apiError.status === 403) return "You don't have access to that yet.";

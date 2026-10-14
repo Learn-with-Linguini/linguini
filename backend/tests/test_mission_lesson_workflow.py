@@ -18,8 +18,9 @@ from app.ai.features.learning_tasks.mission import (
 from app.repositories.postgres.language_profiles import language_profiles
 from app.repositories.postgres.tasks import session_tasks, task_attempts
 from app.repositories.postgres.vocabulary import vocabulary_encounters
-from app.repositories.postgres.workflow import PostgresWorkflowRepository, PracticeConflictError
+from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.repositories.postgres.xp import xp_events
+from app.repositories.practice import MissionPhotoNotReadyError
 from app.schemas.sessions import ReviewPracticeRequest
 from app.schemas.tasks import SkipTaskRequest
 
@@ -160,7 +161,7 @@ def test_unsuitable_photo_can_be_reviewed_again_without_a_substitute_scene(curat
             object_attributes={coloured.id: coloured.attributes},
         ), "Confirm at least 2 different objects."),
     ]:
-        with pytest.raises(PracticeConflictError, match="not ready for this lesson") as error:
+        with pytest.raises(MissionPhotoNotReadyError, match="not ready for this lesson") as error:
             repository.review(sid, profile.id, request)
         assert reason in str(error.value) and "choose another image" in str(error.value)
         detail = repository.get(sid, profile.id)

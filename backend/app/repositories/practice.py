@@ -13,6 +13,10 @@ class PracticeConflictError(Exception):
     pass
 
 
+class MissionPhotoNotReadyError(PracticeConflictError):
+    """The confirmed scene lacks the facts the selected mission needs."""
+
+
 class ActiveSessionExistsError(PracticeConflictError):
     def __init__(self, message: str, active_session_id) -> None:
         super().__init__(message)

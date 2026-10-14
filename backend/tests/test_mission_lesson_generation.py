@@ -3,6 +3,8 @@
 from types import SimpleNamespace
 
 import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
 
 from app.ai.features.learning_tasks.mission import (
     MissionLessonResult,
@@ -10,7 +12,9 @@ from app.ai.features.learning_tasks.mission import (
     validate_m01_lesson,
 )
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
+from app.api.learning_errors import register_learning_errors
 from app.missions import get_mission
+from app.repositories.practice import MissionPhotoNotReadyError
 from app.services.mission_eligibility import agreed_colour, lesson_mission, m01_eligibility
 
 MISSION = get_mission("M01", "A1", 1)
@@ -94,3 +98,17 @@ def test_validator_rejects_unconfirmed_or_unanswerable_lessons(change):
     change(data)
     with pytest.raises((ValueError, LearningTaskGenerationError)):
         validate_m01_lesson(payload(), MissionLessonResult.model_validate(data))
+
+
+def test_an_unready_photo_reaches_the_client_with_its_reasons():
+    app = FastAPI()
+    register_learning_errors(app)
+    reason = "This photo is not ready for this lesson. Confirm at least 2 different objects."
+
+    @app.post("/review")
+    def review():
+        raise MissionPhotoNotReadyError(reason)
+
+    response = TestClient(app).post("/review")
+    assert response.status_code == 409
+    assert response.json()["detail"] == {"code": "mission_photo_not_ready", "message": reason}

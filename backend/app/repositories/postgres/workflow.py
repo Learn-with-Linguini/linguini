@@ -49,6 +49,7 @@ from app.repositories.postgres.vocabulary import (
 from app.repositories.postgres.xp import award, xp_events
 from app.repositories.practice import (
     ActiveSessionLimitReachedError,
+    MissionPhotoNotReadyError,
     PracticeConflictError,
     PracticeNotFoundError,
     PracticeStorageError,
@@ -1259,7 +1260,7 @@ class PostgresWorkflowRepository:
                 eligibility = m01_eligibility(mission, confirmed)
                 if not eligibility.eligible:
                     # Rolls the review back so the learner can add facts or pick another image.
-                    raise PracticeConflictError(
+                    raise MissionPhotoNotReadyError(
                         "This photo is not ready for this lesson. "
                         + " ".join(eligibility.reasons)
                         + " Review the objects and colours, or choose another image."

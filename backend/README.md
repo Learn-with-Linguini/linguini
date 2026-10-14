@@ -514,7 +514,7 @@ mission is snapshotted on the generation claim and on each task.
 1. **Eligibility** (`app/services/mission_eligibility.py`). Confirming the scene
    checks only the facts the learner confirmed: at least two objects with different
    names and at least one reviewed colour. Otherwise the review is rolled back with a
-   409 naming what is missing, and the learner can add facts or choose another image.
+   409 `mission_photo_not_ready` naming what is missing, and the learner can add facts or choose another image.
    Nothing is inferred and no scene is substituted.
 2. **Teaching.** Translation and the vocabulary introduction are checkpointed first, as
    before; the introduction carries the mission fields.

@@ -39,7 +39,7 @@ export function SessionSummary() {
     {data ? <>
       <div className="stat-grid">
         <div className="stat"><div className="stat__value">{data.xpEarned}</div><span className="stat__label">XP earned</span></div>
-        <div className="stat"><div className="stat__value">{data.ispyCorrectCount}/{data.ispyAttemptCount}</div><span className="stat__label">I-Spy correct</span></div>
+        {data.ispyAttemptCount ? <div className="stat"><div className="stat__value">{data.ispyCorrectCount}/{data.ispyAttemptCount}</div><span className="stat__label">I-Spy correct</span></div> : null}
         <div className="stat"><div className="stat__value">{data.learnedVocabularyIds.length}</div><span className="stat__label">Words learned</span></div>
       </div>
       <Card><div className="stack-2">

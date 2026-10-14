@@ -21,6 +21,7 @@ from app.repositories.practice import (
     ActiveSessionExistsError,
     ActiveSessionLimitReachedError,
     ClueNamesTargetError,
+    MissionPhotoNotReadyError,
     PracticeConflictError,
     PracticeNotFoundError,
     PracticeStorageError,
@@ -126,6 +127,11 @@ def register_learning_errors(app: FastAPI) -> None:
             409,
             "practice_conflict",
             "This practice action is not valid for the current session.",
+        ),
+        MissionPhotoNotReadyError: (
+            409,
+            "mission_photo_not_ready",
+            "This photo is not ready for this lesson.",
         ),
         ActiveSessionExistsError: (
             409,
