@@ -44,9 +44,9 @@ examples = { es = ["la mesa", "el libro"], fr = ["la table", "le livre"] }
 [[language_patterns]]
 pattern_id = "copula-colour"
 target_id = "describe-colour"
-structure = "[it is] [colour agreeing with the noun]"
+structure = "[article] [noun] [is] [colour agreeing with the noun]"
 clue_frame_id = "colour"
-examples = { es = ["Es roja.", "Es verde."], fr = ["Elle est rouge.", "Il est vert."] }
+examples = { es = ["La mesa es blanca.", "El libro es rojo."], fr = ["La table est blanche.", "Le livre est rouge."] }
 
 [[language_patterns]]
 pattern_id = "copula-position-reference"
@@ -56,7 +56,7 @@ clue_frame_id = "location"
 examples = { es = ["Está al lado de la puerta."], fr = ["Il est à côté de la porte."] }
 
 [teaching]
-task_sequence = ["vocabularyIntroduction", "grammarLesson", "ispyRound", "reflection"]
+task_sequence = ["vocabularyIntroduction", "grammarLesson"]
 teach_before_assessment = ["name-object", "describe-colour", "describe-location"]
 max_new_words = 6
 
@@ -125,7 +125,7 @@ description = "Uses a position expression and reference object that match the ph
 evidence_types = ["recognition", "construction", "production"]
 
 [expected_performance]
-min_assessed_questions = 4
+min_assessed_questions = 2
 min_correct_ratio = 0.75
 min_independent_correct = 2
 required_target_groups = [

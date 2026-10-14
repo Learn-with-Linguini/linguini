@@ -502,8 +502,42 @@ beside the unchanged `questionResults` and `correctAnswers`. Each outcome is `co
 evaluation metadata), and records the supports used; `assistanceUsed` is true only for
 supports the mission counts as assistance. Outcomes describe the existing grading:
 correctness, score, XP, vocabulary progress and learner history still come from
-`questionResults`. Nothing creates mission tasks yet; task selection and generation
-are unchanged.
+`questionResults`.
+
+#### M01 A1 lesson path
+
+Set `MISSION_LESSONS_ENABLED=true` to turn it on. It applies only to lesson sessions
+whose active language profile is A1 and whose target language has reviewed colour
+forms (`es`, `fr`); every other session keeps the existing lesson. The selected
+mission is snapshotted on the generation claim and on each task.
+
+1. **Eligibility** (`app/services/mission_eligibility.py`). Confirming the scene
+   checks only the facts the learner confirmed: at least two objects with different
+   names and at least one reviewed colour. Otherwise the review is rolled back with a
+   409 naming what is missing, and the learner can add facts or choose another image.
+   Nothing is inferred and no scene is substituted.
+2. **Teaching.** Translation and the vocabulary introduction are checkpointed first, as
+   before; the introduction carries the mission fields.
+3. **Lesson** (`app/ai/features/learning_tasks/mission.py`,
+   `app/services/mission_lessons.py`). Exactly one `grammarLesson` with 2–4 questions:
+   object recognition and at most one colour recognition (multiple choice), then one
+   word-bank sentence (`La taza es roja.`) using the one `copula-colour` pattern. The
+   model input holds only confirmed nouns and reviewed agreed colours. The validator
+   checks every referenced fact, offered option and token; the deterministic fallback
+   used after any model failure passes the same validator. The cache identity is
+   `learning-tasks.m01-a1.v1:M01-A1.v1` with its own schema and validator versions,
+   and preloaded templates are never used, so legacy lessons cannot be reused. No old
+   grammar sequence, I-Spy or reflection task is added.
+4. **Grading.** Answers are graded from the private answer key. Each
+   `questionOutcomes` entry names its targets; evidence type is derived from the
+   interaction (`recognition` for multiple choice, `construction` for sentence
+   building) and the word bank is always recorded as support, so a sentence counts as
+   supported practice, not independent writing. Supports a question does not offer are
+   rejected with a 409. Each word's vocabulary evidence uses only the questions that
+   assess it. Replays with the same idempotency key return the saved attempt without
+   new results or XP.
+5. **Completion.** With no I-Spy tasks, the final learning step shows "Finish lesson"
+   and completes the session through the existing lifecycle and completion XP.
 
 ### Backend performance
 

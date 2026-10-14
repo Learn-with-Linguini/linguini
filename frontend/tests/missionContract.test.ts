@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { descriptionEvaluation, reviewDetails, ISPY_DESCRIPTION_EVALUATION_VERSION } from "../src/lib/api.ts";
 import type { ISpyDescriptionEvaluation, SessionTask, TaskAttemptResult, TaskContent } from "../src/lib/api.ts";
-import { taskTitle } from "../src/lib/practiceTasks.ts";
+import { finishesWithoutISpy, taskTitle } from "../src/lib/practiceTasks.ts";
 
 const lesson: TaskContent = {
   kind: "grammarLesson", focus: "genderNumberAgreement", title: "Describe the cup", explanation: "Colours agree.",
@@ -46,4 +46,12 @@ test("standalone I-Spy evaluations are not read as grouped review details", () =
   };
   assert.equal(reviewDetails(attempt(evaluation)), null);
   assert.deepEqual(descriptionEvaluation(attempt(evaluation)), evaluation);
+});
+
+test("only mission sessions without I-Spy finish from the last learning task", () => {
+  const mission = task({ ...lesson, missionId: "M01", practiceLevel: "A1", contentVersion: 1 });
+  const clue = task({ kind: "ispyRound", clue: "Veo algo rojo.", options: [] });
+  assert.equal(finishesWithoutISpy([mission]), true);
+  assert.equal(finishesWithoutISpy([mission, clue]), false);
+  assert.equal(finishesWithoutISpy([task(lesson)]), false);
 });

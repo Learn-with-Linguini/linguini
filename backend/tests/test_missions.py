@@ -118,11 +118,11 @@ def test_m01_a1_definition_covers_the_mission_contract():
         None, "colour", "location",
     }
     assert all({"es", "fr"} <= set(item.examples) for item in mission.language_patterns)
-    assert mission.teaching.task_sequence[-1] == "reflection"
+    assert mission.teaching.task_sequence == ["vocabularyIntroduction", "grammarLesson"]
     assert not mission.counts_as_assistance("translation")
     assert mission.counts_as_assistance("hint")
     assert {item.target_id for item in mission.evaluation_criteria} == set(mission.targets)
-    assert mission.expected_performance.min_assessed_questions == 4
+    assert mission.expected_performance.min_assessed_questions == 2
     assert get_mission("M01", "A1", 2) is None
     assert get_mission("M01", "A2", 1) is None
 

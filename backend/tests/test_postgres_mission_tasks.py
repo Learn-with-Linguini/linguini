@@ -2,6 +2,7 @@ from uuid import UUID, uuid4
 
 import pytest
 from sqlalchemy import delete, select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from test_missions import (
     HIDDEN_OBJECT,
     HIDDEN_WORD,
@@ -16,7 +17,9 @@ from test_postgres_sessions import database as database
 from app.repositories.postgres.learner_history import snapshot_learner_history
 from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.tasks import PostgresTaskRepository, session_tasks, task_attempts
+from app.repositories.postgres.vocabulary import vocabulary_items
 from app.schemas.tasks import SessionTask
+from app.schemas.vocabulary import VocabularyItem
 
 ANSWERS = {"colour": "rojo", "build": "La taza es roja.", "extra": "taza"}
 
@@ -27,6 +30,11 @@ def lessons(database):
     sid = create_run(client, profile)["session"]["id"]
     analyze(client, sid)
     repository = PostgresTaskRepository(engine)
+    with engine.begin() as connection:
+        connection.execute(pg_insert(vocabulary_items).values(**VocabularyItem(
+            id=HIDDEN_WORD, language_code="es", lemma="taza-oculta", display_text="taza",
+            part_of_speech="noun",
+        ).model_dump(by_alias=False)).on_conflict_do_nothing())
 
     def lesson(order_index, content, key):
         task = SessionTask(
@@ -76,7 +84,7 @@ def test_mission_attempt_adds_outcomes_and_keeps_legacy_contract(lessons):
     engine, owner, profile, client, _repository, mission, legacy = lessons
     results = {}
     for task, extra in [
-        (mission, {"questionAssistance": [{"questionId": "extra", "supports": ["hint"]}]}),
+        (mission, {"questionAssistance": [{"questionId": "extra", "supports": ["audio"]}]}),
         (legacy, {}),
     ]:
         response = client.post(f"/api/v1/tasks/{task.id}/attempts", json={
@@ -96,9 +104,10 @@ def test_mission_attempt_adds_outcomes_and_keeps_legacy_contract(lessons):
     ]}
     assert [outcomes[key]["outcome"] for key in ANSWERS] == ["incorrect", "correct", "unassessed"]
     assert outcomes["colour"]["mistakes"][0]["mistake"] == "wrongGender"
-    assert outcomes["extra"]["assistanceUsed"] is True
+    assert outcomes["extra"]["assistance"] == ["audio"]
+    assert outcomes["extra"]["assistanceUsed"] is False
     payload = stored(engine, task_attempts, task_attempts.c.response_payload, mission.id)
-    assert payload["question_assistance"] == [{"question_id": "extra", "supports": ["hint"]}]
+    assert payload["question_assistance"] == [{"question_id": "extra", "supports": ["audio"]}]
     assert "question_assistance" not in stored(
         engine, task_attempts, task_attempts.c.response_payload, legacy.id
     )

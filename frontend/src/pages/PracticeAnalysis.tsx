@@ -11,7 +11,8 @@ import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { sessionDestination } from "../lib/sessionRoute";
 import { humanizeTerm } from "../lib/termLabel";
-import type { PracticeReview } from "../lib/api";
+import { abandonPractice, type PracticeReview } from "../lib/api";
+import { MISSION_PHOTO_NOT_READY } from "../lib/practiceTasks";
 import type { LanguageItem } from "../data/types";
 
 const ATTRIBUTE_TYPES = ["color", "size", "shape", "material", "pattern", "state", "quantity"] as const;
@@ -299,6 +300,8 @@ export function PracticeAnalysis() {
           </Card>
         </section> : null}
         {error || practiceError ? <p role="alert">{error ?? practiceError}</p> : null}
+        {(error ?? practiceError)?.includes(MISSION_PHOTO_NOT_READY) ? <Button variant="secondary" block disabled={practiceSaving}
+          onClick={async () => { await abandonPractice(session.session.id); navigate("/practice"); }}>Choose another image</Button> : null}
         <Button block className="analysis-continue" disabled={practiceSaving || !!placementLabel || (!kept.length && !added.length)} onClick={() => void proceed()}>
           {practiceSaving ? "Saving your words..." : "Continue"} <ArrowRightIcon />
         </Button>

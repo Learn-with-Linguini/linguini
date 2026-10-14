@@ -8,10 +8,39 @@ def normalize_answer(value):
     return " ".join(value.casefold().strip().split()).rstrip(".!?\u3002")
 
 
+# Supports each interaction can offer; a word bank is part of every sentence builder.
+_OFFERED_SUPPORTS = {
+    "multipleChoice": {"translation", "audio"},
+    "sentenceBuilding": {"translation", "audio", "wordBank"},
+}
+_BUILT_IN_SUPPORTS = {"sentenceBuilding": ["wordBank"]}
+
+
+def _interaction(question):
+    return getattr(question, "interaction_type", "multipleChoice")
+
+
+def offered_supports(question):
+    return _OFFERED_SUPPORTS[_interaction(question)]
+
+
 def _default_evidence(question):
-    if getattr(question, "interaction_type", "multipleChoice") == "sentenceBuilding":
+    """Evidence follows the interaction, never a client claim of independence."""
+    if _interaction(question) == "sentenceBuilding":
         return "construction"
     return "recognition"
+
+
+def word_results(task, question_results):
+    """Each word's result from only the graded questions that assess it."""
+    results = {}
+    for evaluation in task.answer_key.question_evaluations:
+        correct = question_results.get(evaluation.question_id)
+        if correct is None:
+            continue
+        for vocabulary_item_id in evaluation.vocabulary_item_ids:
+            results[vocabulary_item_id] = results.get(vocabulary_item_id, True) and correct
+    return results
 
 
 def _mistakes(evaluation, answer):
@@ -40,14 +69,16 @@ def review_details(task: SessionTask, request, question_results, correct_answers
     outcomes = []
     for question in task.public_content.questions:
         question_id = question.question_id
-        supports = assistance.get(question_id, [])
+        supports = list(dict.fromkeys(
+            [*assistance.get(question_id, []), *_BUILT_IN_SUPPORTS.get(_interaction(question), [])]
+        ))
         evaluation = evaluations.get(question_id)
         common = dict(
             question_id=question_id,
             assistance=supports,
             assistance_used=any(mission.counts_as_assistance(item) for item in supports),
         )
-        if evaluation is None:
+        if evaluation is None or question_id not in question_results:
             outcomes.append(
                 QuestionOutcome(
                     **common, outcome="unassessed", evidence_type=_default_evidence(question)
@@ -61,7 +92,7 @@ def review_details(task: SessionTask, request, question_results, correct_answers
                 outcome="correct" if correct else "incorrect",
                 objective_id=evaluation.objective_id,
                 target_ids=evaluation.target_ids,
-                evidence_type=evaluation.evidence_type,
+                evidence_type=_default_evidence(question),
                 mistakes=(
                     [] if correct else _mistakes(evaluation, request.answers.get(question_id))
                 ),

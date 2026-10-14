@@ -4,14 +4,14 @@ import { Button, Card, Feedback, IconButton, ProgressTrail } from "../components
 import { CloseIcon, SpeakerIcon } from "../components/icons";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
-import { choiceOrder, practiceStages, taskDone, taskTitle } from "../lib/practiceTasks";
+import { choiceOrder, finishesWithoutISpy, practiceStages, taskDone, taskTitle } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
-import { checkVocabularyAnswer, reviewDetails, type SessionTask, type TaskAnswer, type VocabularyLearningWord } from "../lib/api";
+import { checkVocabularyAnswer, reviewDetails, type SessionTask, type QuestionOutcome, type TaskAnswer, type VocabularyLearningWord } from "../lib/api";
 import { ReportIssueLink } from "../components/ReportIssueLink";
 
 export function LearningTaskPage() {
   const { taskId } = useParams();
-  const { session } = useAppState();
+  const { session, completeSession } = useAppState();
   const navigate = useNavigate();
   const scene = useScene();
   const base = `/practice/sessions/${scene.sessionId}`;
@@ -23,10 +23,17 @@ export function LearningTaskPage() {
   if (!task || ["abandoned", "failed"].includes(session.session.status)) return <Navigate to={`${base}/learn`} replace />;
   const next = tasks[index + 1];
   return <div className="stack learning-task-page"><LearningTaskContent key={task.id} task={task} index={index} total={tasks.length}
-    onNext={() => navigate(next ? `${base}/learn/${next.id}` : session.session.status === "generatingTasks" ? `${base}/learn` : `${base}/ispy-1`)} onClose={() => navigate(`${base}/learn`)} onExit={() => navigate("/home")} /></div>;
+    onNext={() => {
+      if (!next && session.session.status !== "generatingTasks" && finishesWithoutISpy(session.tasks)) {
+        if (completeSession()) navigate(`${base}/summary`);
+        return;
+      }
+      navigate(next ? `${base}/learn/${next.id}` : session.session.status === "generatingTasks" ? `${base}/learn` : `${base}/ispy-1`);
+    }} onClose={() => navigate(`${base}/learn`)} onExit={() => navigate("/home")} /></div>;
 }
 
 function LearningTaskContent({ task, index, total, onNext, onClose, onExit }: { task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void }) {
+  const lastStep = useLastStepLabel();
   const scene = useScene();
   const { actOnTask, practiceSaving, practiceError } = useAppState();
   const [text, setText] = useState("");
@@ -104,7 +111,7 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit }: { 
       ]} />
     </> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
-    {terminal ? <Button block disabled={practiceSaving} onClick={onNext}>{index < total - 1 ? "Next task" : "Go to I-Spy"}</Button> : <>
+    {terminal ? <Button block disabled={practiceSaving} onClick={onNext}>{index < total - 1 ? "Next task" : lastStep}</Button> : <>
       <Button block disabled={practiceSaving || checking || (!reading && !(content.kind === "grammarPractice" ? choice : text.trim()))} onClick={() => void submit()}>{reading ? "Mark complete" : "Submit answer"}</Button>
       <Button variant="quiet" block disabled={practiceSaving} onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip task</Button>
     </>}
@@ -121,6 +128,7 @@ function BackToTasks({ onClose }: { onClose: () => void }) {
 }
 
 function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }: { task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void }) {
+  const lastStep = useLastStepLabel();
   const scene = useScene();
   const { actOnTask, practiceSaving, practiceError, session } = useAppState();
   const [stage, setStage] = useState<"review" | "quiz" | "typing">("review");
@@ -231,17 +239,19 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
     </div></Card> : null}
     {feedback ? <Feedback><p role="status">{feedback}</p></Feedback> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
-    {terminal ? <Button block onClick={onNext}>{session?.session.status === "generatingTasks" ? "Back to tasks" : index < total - 1 ? "Next task" : "Go to I-Spy"}</Button> : null}
+    {terminal ? <Button block onClick={onNext}>{session?.session.status === "generatingTasks" ? "Back to tasks" : index < total - 1 ? "Next task" : lastStep}</Button> : null}
     <BackToTasks onClose={onClose} />
   </div>;
 }
 
 function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void }) {
+  const lastStep = useLastStepLabel();
   const { actOnTask, practiceSaving, practiceError } = useAppState();
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [builtTokenIndexes, setBuiltTokenIndexes] = useState<Record<string, number[]>>({});
   const [questionResults, setQuestionResults] = useState<Record<string, boolean>>({});
   const [correctAnswers, setCorrectAnswers] = useState<Record<string, string>>({});
+  const [outcomes, setOutcomes] = useState<Record<string, QuestionOutcome>>({});
   const [feedback, setFeedback] = useState<string | null>(null);
   const [checking, setChecking] = useState(false);
   const requestKey = useRef(crypto.randomUUID());
@@ -265,6 +275,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         setFeedback(result.attempt?.feedback?.message ?? "Grammar practice saved.");
         setQuestionResults(reviewDetails(result.attempt)?.questionResults ?? {});
         setCorrectAnswers(reviewDetails(result.attempt)?.correctAnswers ?? {});
+        setOutcomes(Object.fromEntries((reviewDetails(result.attempt)?.questionOutcomes ?? []).map(item => [item.questionId, item])));
       }
     } finally {
       setChecking(false);
@@ -303,6 +314,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         <Feedback tone={questionResults[question.questionId] ? "good" : "warn"}><p role="status">{questionResults[question.questionId]
           ? "Correct!"
           : <>Not quite.{correctAnswers[question.questionId] ? <> The correct answer is <strong>{question.options.find(option => option.optionId === correctAnswers[question.questionId])?.label ?? correctAnswers[question.questionId]}</strong>.</> : null}</>}</p></Feedback>
+        <QuestionOutcomeNotes outcome={outcomes[question.questionId]} />
         <ReportIssueLink reportType="Grammar answer" fields={[
           ["Task ID", task.id],
           ["Question ID", question.questionId],
@@ -315,7 +327,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
     {checking ? <p className="choice-checking" role="status">Checking your answers…</p> : null}
     {feedback ? <Feedback><p role="status">{feedback}</p></Feedback> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
-    {terminal ? <Button block onClick={onNext}>{index < total - 1 ? "Next task" : "Go to I-Spy"}</Button> : <>
+    {terminal ? <Button block onClick={onNext}>{index < total - 1 ? "Next task" : lastStep}</Button> : <>
       <Button block disabled={!answered || practiceSaving || checking} onClick={() => void submit()}>Submit answers</Button>
       <Button variant="quiet" block disabled={practiceSaving} onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip task</Button>
     </>}
@@ -331,4 +343,17 @@ function VocabularyLearningCard({ word, languageCode }: { word: VocabularyLearni
     {word.pluralForm ? <p className="small"><strong>Plural:</strong> {word.pluralForm}</p> : null}
     {word.phoneticText ? <p className="small muted" aria-label="Pronunciation">{word.phoneticText}</p> : null}
   </article>;
+}
+
+function useLastStepLabel() {
+  const { session } = useAppState();
+  return session && finishesWithoutISpy(session.tasks) ? "Finish lesson" : "Go to I-Spy";
+}
+
+function QuestionOutcomeNotes({ outcome }: { outcome?: QuestionOutcome }) {
+  if (!outcome) return null;
+  return <>
+    {outcome.mistakes.map((mistake, position) => mistake.explanation ? <p key={position} className="small">{mistake.explanation}</p> : null)}
+    {outcome.assistance.includes("wordBank") ? <p className="small muted">Supported practice: built with the word bank.</p> : null}
+  </>;
 }

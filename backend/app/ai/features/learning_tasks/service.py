@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import replace
 from typing import Annotated, Any, Literal
 
@@ -30,6 +31,14 @@ from app.ai.cache import (
 from app.ai.contracts.errors import ProviderError, ProviderErrorCode
 from app.ai.contracts.schema import build_strict_json_schema
 from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelRequest
+from app.ai.features.learning_tasks.mission import (
+    M01_PROMPT_VERSION,
+    M01_SCHEMA_VERSION,
+    M01_SYSTEM_PROMPT,
+    M01_VALIDATOR_VERSION,
+    MissionLessonResult,
+    validate_m01_lesson,
+)
 from app.ai.features.learning_tasks.prompt import (
     LEARNING_TASK_MEMORY_PROMPT_VERSION,
     LEARNING_TASK_MEMORY_SYSTEM_PROMPT,
@@ -57,6 +66,14 @@ from app.ai.settings import AiFeature
 from app.schemas.base import ApiModel
 
 logger = logging.getLogger(__name__)
+
+
+def _result_counts(result: Any) -> dict[str, int]:
+    tasks = getattr(result, "tasks", [result])
+    return {
+        "taskCount": len(tasks),
+        "questionCount": sum(len(task.questions) for task in tasks),
+    }
 
 _LEARNING_TASKS_INVALID = "learningTasksInvalid"
 _VERSION = FeatureVersion(
@@ -245,6 +262,44 @@ class LearningTaskService:
         except CacheWaitTimeout as error:
             raise LearningTaskGenerationError("Learning task generation failed.") from error
 
+    def generate_mission(
+        self, payload: dict[str, Any], *, mission_version: str,
+        cache_scope: CacheScope | None = None,
+    ) -> MissionLessonResult:
+        """Generate the M01 lesson; its cache identity includes the mission version."""
+        version = FeatureVersion(
+            AiFeature.LEARNING_TASK.value,
+            f"{M01_PROMPT_VERSION}:{mission_version}",
+            M01_SCHEMA_VERSION,
+            M01_VALIDATOR_VERSION,
+        )
+
+        def decode(data: Any) -> MissionLessonResult:
+            result = MissionLessonResult.model_validate(data)
+            validate_m01_lesson(payload, result)
+            return result
+
+        try:
+            return run_cached(
+                self._cache,
+                self._client,
+                version=version,
+                scope=cache_scope,
+                payload=payload,
+                compute=lambda: self._generate(
+                    payload,
+                    (mission_version,),
+                    MissionLessonResult,
+                    prompt_version=version.prompt_version,
+                    system_prompt=M01_SYSTEM_PROMPT,
+                    parse=lambda text: decode(json.loads(text)),
+                    json_schema_name="mission_lesson_m01_v1",
+                ),
+                decode=decode,
+            )
+        except CacheWaitTimeout as error:
+            raise LearningTaskGenerationError("Mission lesson generation failed.") from error
+
     def _generate(
         self,
         payload: dict[str, Any],
@@ -253,12 +308,14 @@ class LearningTaskService:
         *,
         prompt_version: str = LEARNING_TASK_PROMPT_VERSION,
         system_prompt: str = LEARNING_TASK_SYSTEM_PROMPT,
-    ) -> Generated[LearningTaskResult]:
+        parse: Callable[[str], Any] | None = None,
+        json_schema_name: str = "learning_tasks_v2",
+    ) -> Generated[Any]:
         content = json.dumps(payload, ensure_ascii=False)
         request = TextModelRequest(
             system_prompt=system_prompt,
             user_content=content,
-            json_schema_name="learning_tasks_v2",
+            json_schema_name=json_schema_name,
             # Per-payload: key enums are built from this scene's keys.
             json_schema=build_strict_json_schema(response_model),
             prompt_version=prompt_version,
@@ -327,19 +384,22 @@ class LearningTaskService:
                         metadata={"attempt": attempt},
                     ) as validation:
                         try:
-                            result = unpack_generated_tasks(
-                                payload,
-                                response_model.model_validate(
-                                    restore_missing_object_keys(
-                                        payload, json.loads(response.output_text)
-                                    )
-                                ),
-                            )
-                            result = normalize_learning_task_references(
-                                payload, result
-                            )
-                            result = normalize_learning_task_option_ids(result)
-                            validate_learning_tasks(payload, result)
+                            if parse is not None:
+                                result = parse(response.output_text)
+                            else:
+                                result = unpack_generated_tasks(
+                                    payload,
+                                    response_model.model_validate(
+                                        restore_missing_object_keys(
+                                            payload, json.loads(response.output_text)
+                                        )
+                                    ),
+                                )
+                                result = normalize_learning_task_references(
+                                    payload, result
+                                )
+                                result = normalize_learning_task_option_ids(result)
+                                validate_learning_tasks(payload, result)
                         except (
                             ValueError,
                             LearningTaskGenerationError,
@@ -351,12 +411,7 @@ class LearningTaskService:
                             raise error
                         validation.update(
                             validation_result="valid",
-                            metadata={
-                                "taskCount": len(result.tasks),
-                                "questionCount": sum(
-                                    len(task.questions) for task in result.tasks
-                                ),
-                            },
+                            metadata=_result_counts(result),
                         )
                     root.update(
                         retry_count=invocation.retries, validation_result="valid"
