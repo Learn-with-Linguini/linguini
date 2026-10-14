@@ -111,9 +111,21 @@ export function usePractice(_userId: string, profileId: string, onLearningChange
       applySession(value => applyTaskResult(value, session.session.id, result));
       learningDirty.current = true;
       return result;
-    } catch (e) { setError(friendlyError(e)); return null; }
+    } catch (e) {
+      setError(friendlyError(e));
+      if (e instanceof ApiError && e.code === "task_conflict" && sessionRef.current?.session.id === session.session.id) {
+        try {
+          const refreshed = await loadSession(session.session.id);
+          const status = refreshed.tasks.find(task => task.id === taskId)?.status;
+          if (status === "completed" || status === "skipped") setError(null);
+        } catch {
+          // Keep the conflict visible when the saved task cannot be recovered.
+        }
+      }
+      return null;
+    }
     finally { busy.current = false; setSaving(false); }
-  }, [session, applySession]);
+  }, [session, applySession, loadSession]);
   const flushLearningChanges = useCallback(() => {
     if (learningDirty.current) {
       learningDirty.current = false;

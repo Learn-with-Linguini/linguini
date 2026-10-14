@@ -83,7 +83,12 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
     }
   };
   const isCorrect = result?.attempt?.isCorrect ?? restored?.isCorrect ?? null;
-  const shownPick = picked ?? restored?.optionId ?? null;
+  const acceptedOption = result?.attempt?.responsePayload?.optionId;
+  const acceptedPick = typeof acceptedOption === "string" ? acceptedOption : result?.attempt ? picked : null;
+  // A later tap may have been rejected after an earlier response was lost.
+  // Only the accepted answer can be paired with a stored grade.
+  const shownPick = acceptedPick ?? restored?.optionId ?? (answered ? null : picked);
+  const feedback = result?.attempt?.feedback?.message ?? restored?.feedback;
   const selected = content.options.find(option => option.optionId === shownPick);
   return <div className="stack">
     <h2 className="text-center">I-Spy · Linguini's clues</h2>
@@ -103,13 +108,13 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
     })}</div>
     {checking ? <p className="choice-checking" role="status">Checking your answer…</p> : null}
     {answered || result ? <>
-      <Feedback tone={isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status"><strong>{task.status === "skipped" ? "Skipped — no XP earned." : result?.attempt?.feedback?.message ?? restored?.feedback ?? "Answer saved."}</strong>{content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}</div></Feedback>
+      <Feedback tone={isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status"><strong>{task.status === "skipped" ? "Skipped — no XP earned." : feedback ?? "Answer saved."}</strong>{content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}</div></Feedback>
       {task.status !== "skipped" ? <ReportIssueLink reportType="I-Spy answer" fields={[
         ["Task ID", task.id],
         ["Clue", `${opening} ${content.clue}`],
         ["Clue translation", content.clueTranslation],
         ["Your answer", selected?.label],
-        ["Displayed feedback", result?.attempt?.feedback?.message],
+        ["Displayed feedback", feedback],
         ["Language", scene.languageCode],
       ]} /> : null}
     </> : null}
