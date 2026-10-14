@@ -5,6 +5,7 @@ import { ArrowRightIcon, CloseIcon } from "../components/icons";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { AnalysisScan } from "../components/AnalysisScan";
 import { TranslationPreview } from "../components/TranslationPreview";
+import { SessionPersonalization } from "../components/SessionPersonalization";
 import { LeaveSession } from "../components/LeaveSession";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
@@ -76,6 +77,7 @@ export function PracticeAnalysis() {
     <h1>Scene analysis</h1>
     {session.session.status === "generatingTasks" && session.translationPreview ? <>
       <TranslationPreview preview={session.translationPreview} scene={scene} />
+      <SessionPersonalization personalization={session.personalization} languageCode={scene.languageCode} />
       <section role="status" className="panel-note">
         {session.tasks.some(task => task.kind === "vocabularyIntroduction") ? <>
           <Button block onClick={() => navigate(`${base}/learn/${session.tasks.find(task => task.kind === "vocabularyIntroduction")!.id}`)}>

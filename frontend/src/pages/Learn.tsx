@@ -2,6 +2,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui";
 import { ArrowRightIcon, CheckIcon, CloseIcon } from "../components/icons";
 import { TranslationPreview } from "../components/TranslationPreview";
+import { SessionPersonalization } from "../components/SessionPersonalization";
 import { useScene } from "../state/useScene";
 import { practiceStages, taskDone, taskTitle } from "../lib/practiceTasks";
 import { useAppState } from "../state/useAppState";
@@ -39,6 +40,7 @@ export function Learn() {
       {practiceError ? <p role="alert">{practiceError}</p> : null}
 
       {session.translationPreview ? <TranslationPreview preview={session.translationPreview} scene={scene} /> : null}
+      <SessionPersonalization personalization={session.personalization} languageCode={scene.languageCode} />
 
       <div className="task-list" aria-label="Learning tasks">
         {tasks.map((task, index) => {

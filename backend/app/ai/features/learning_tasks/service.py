@@ -13,9 +13,9 @@ import json
 import logging
 import time
 from dataclasses import replace
-from typing import Any
+from typing import Annotated, Any, Literal
 
-from pydantic import ValidationError
+from pydantic import ConfigDict, Field, ValidationError
 
 from app.ai.cache import (
     CacheScope,
@@ -31,6 +31,8 @@ from app.ai.contracts.errors import ProviderError, ProviderErrorCode
 from app.ai.contracts.schema import build_strict_json_schema
 from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelRequest
 from app.ai.features.learning_tasks.prompt import (
+    LEARNING_TASK_MEMORY_PROMPT_VERSION,
+    LEARNING_TASK_MEMORY_SYSTEM_PROMPT,
     LEARNING_TASK_PROMPT_VERSION,
     LEARNING_TASK_SCHEMA_VERSION,
     LEARNING_TASK_SYSTEM_PROMPT,
@@ -52,6 +54,7 @@ from app.ai.features.learning_tasks.validation import (
 from app.ai.observability import AITracer
 from app.ai.routing import as_routed, route_metadata, total_tokens
 from app.ai.settings import AiFeature
+from app.schemas.base import ApiModel
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +65,7 @@ _VERSION = FeatureVersion(
     LEARNING_TASK_SCHEMA_VERSION,
     LEARNING_TASK_VALIDATOR_VERSION,
 )
+_MEMORY_VERSION = replace(_VERSION, prompt_version=LEARNING_TASK_MEMORY_PROMPT_VERSION)
 _REPAIR_INSTRUCTION = """
 
 Your previous response was incomplete. Return a complete replacement JSON object.
@@ -69,6 +73,113 @@ Every task must include a non-empty title and 2 to 4 questions. Every question
 must include at least one object key. Sentence-building questions must include a
 non-empty English translation of their completed correct sentence.
 """
+
+_Count = Annotated[int, Field(ge=0)]
+_Term = Annotated[str, Field(min_length=1, max_length=64)]
+_MAX_HISTORY_BYTES = 6 * 1024
+
+
+class _HistoryModel(ApiModel):
+    model_config = ConfigDict(strict=True, extra="forbid")
+
+
+class _HistoryProfile(_HistoryModel):
+    source_language: Annotated[str, Field(min_length=2, max_length=35)]
+    target_language: Annotated[str, Field(min_length=2, max_length=35)]
+    proficiency_level: Literal["A1", "A2", "B1", "B2", "C1", "C2"]
+
+
+class _HistoryTotals(_HistoryModel):
+    sessions_completed: _Count
+    graded_attempts: _Count
+    reading_tasks_completed: _Count
+    journals_completed: _Count
+
+
+class _HistoryGraded(_HistoryModel):
+    correct_count: _Count
+    incorrect_count: _Count
+    last_outcome: Literal["correct", "incorrect"] | None
+
+
+class _HistoryWord(_HistoryGraded):
+    term: _Term
+    source: _Term
+    seen_count: _Count
+    journal_mentions: _Count
+    assisted_journal_mentions: _Count
+    journal_selections: _Count
+    relevant: bool
+
+
+class _HistoryGrammar(_HistoryModel):
+    gender_number_agreement: _HistoryGraded
+    plural_noun_form: _HistoryGraded
+    scene_description: _HistoryGraded
+    chained_description: _HistoryGraded
+
+
+class _HistoryCorrections(_HistoryModel):
+    grammar: _Count
+    spelling: _Count
+    syntax: _Count
+    vocabulary: _Count
+    clarity: _Count
+
+
+class _HistoryJournal(_HistoryModel):
+    accepted_corrections: _HistoryCorrections
+
+
+class _LearnerHistory(_HistoryModel):
+    version: Literal[1]
+    profile: _HistoryProfile
+    totals: _HistoryTotals
+    words: Annotated[list[_HistoryWord], Field(max_length=16)]
+    grammar: _HistoryGrammar
+    journal: _HistoryJournal
+
+
+def _history_payload(payload):
+    """Keep prose/identifiers and unbounded history out of the model boundary."""
+    history = payload.get("learnerHistory")
+    if history is None:
+        return {key: value for key, value in payload.items() if key != "learnerHistory"}, False
+    if not isinstance(history, dict) or type(history.get("version")) is not int:
+        raise LearningTaskGenerationError("Learner history must be a bounded versioned summary.")
+    try:
+        encoded = json.dumps(history, ensure_ascii=False).encode("utf-8")
+    except (TypeError, ValueError, UnicodeError):
+        raise LearningTaskGenerationError(
+            "Learner history must be a bounded versioned summary."
+        ) from None
+    if len(encoded) > _MAX_HISTORY_BYTES:
+        raise LearningTaskGenerationError("Learner history exceeds the summary size limit.")
+    try:
+        validated = _LearnerHistory.model_validate(history)
+    except ValidationError:
+        raise LearningTaskGenerationError(
+            "Learner history must be a bounded versioned summary."
+        ) from None
+    if (
+        validated.profile.target_language.casefold()
+        != str(payload.get("targetLanguage", "")).casefold()
+    ):
+        raise LearningTaskGenerationError(
+            "Learner history must match the current learning language."
+        )
+    expected_profile = {
+        "sourceLanguage": validated.profile.source_language,
+        "proficiencyLevel": validated.profile.proficiency_level,
+    }
+    if any(
+        key in payload and str(payload[key]).casefold() != value.casefold()
+        for key, value in expected_profile.items()
+    ):
+        raise LearningTaskGenerationError(
+            "Learner history must match the current learning profile."
+        )
+    return {**payload, "learnerHistory": validated.model_dump(mode="json", by_alias=True)}, True
 
 
 class LearningTaskService:
@@ -94,6 +205,16 @@ class LearningTaskService:
         templates: TemplateSet | None = None,
     ) -> LearningTaskResult:
         """Generate tasks for ``payload``; ``cache_scope=None`` bypasses the cache."""
+        payload, personal = _history_payload(payload)
+        version = _MEMORY_VERSION if personal else _VERSION
+        system_prompt = (
+            LEARNING_TASK_MEMORY_SYSTEM_PROMPT if personal else LEARNING_TASK_SYSTEM_PROMPT
+        )
+        if personal:
+            # A curated scene's templates must never store or replace a personal lesson.
+            templates = None
+            if cache_scope == CacheScope.public():
+                cache_scope = None
         focuses = required_task_focuses(payload)
         payload = {**payload, "requiredTaskFocuses": list(focuses)}
         # Empty-scene guard raises LearningTaskGenerationError before any call.
@@ -108,10 +229,16 @@ class LearningTaskService:
             return run_cached(
                 self._cache,
                 self._client,
-                version=_VERSION,
+                version=version,
                 scope=cache_scope,
                 payload=payload,
-                compute=lambda: self._generate(payload, focuses, response_model),
+                compute=lambda: self._generate(
+                    payload,
+                    focuses,
+                    response_model,
+                    prompt_version=version.prompt_version,
+                    system_prompt=system_prompt,
+                ),
                 decode=decode,
                 templates=templates,
             )
@@ -119,16 +246,22 @@ class LearningTaskService:
             raise LearningTaskGenerationError("Learning task generation failed.") from error
 
     def _generate(
-        self, payload: dict[str, Any], focuses: tuple[str, ...], response_model: Any
+        self,
+        payload: dict[str, Any],
+        focuses: tuple[str, ...],
+        response_model: Any,
+        *,
+        prompt_version: str = LEARNING_TASK_PROMPT_VERSION,
+        system_prompt: str = LEARNING_TASK_SYSTEM_PROMPT,
     ) -> Generated[LearningTaskResult]:
         content = json.dumps(payload, ensure_ascii=False)
         request = TextModelRequest(
-            system_prompt=LEARNING_TASK_SYSTEM_PROMPT,
+            system_prompt=system_prompt,
             user_content=content,
             json_schema_name="learning_tasks_v2",
             # Per-payload: key enums are built from this scene's keys.
             json_schema=build_strict_json_schema(response_model),
-            prompt_version=LEARNING_TASK_PROMPT_VERSION,
+            prompt_version=prompt_version,
         )
 
         attempts = 1 + self._config.max_retries
@@ -156,7 +289,7 @@ class LearningTaskService:
                         feature=AiFeature.LEARNING_TASK.value,
                         provider=self._provider,
                         model=self._config.model_name,
-                        prompt_version=LEARNING_TASK_PROMPT_VERSION,
+                        prompt_version=prompt_version,
                         schema_version=LEARNING_TASK_SCHEMA_VERSION,
                         model_parameters={
                             "maxOutputTokens": self._config.max_output_tokens,
