@@ -139,7 +139,7 @@ function RoomSession({ roomId }: { roomId: string }) {
       </section>
       <Card className="stack"><h2>Ready to play?</h2><ul className="rooms-members">{data.members.map(member =>
         <li key={member.userId}><strong>{member.userId === owner ? "You" : member.displayName}</strong><span>{member.ready ? "Ready" : "Preparing"}</span></li>)}</ul>
-        <p className="small muted">Starting uses 1 Sauce each. You’ll take turns in {data.photos.length || "2–4"} different photos.</p>
+        <p className="small muted">Starting uses 1 Sauce each. You’ll take turns across 2–4 different photos.</p>
         {canStartRoom(data) ? <Button disabled={blocked} onClick={() => void act("start")}>Start together</Button> :
           <Button variant={me?.ready ? "secondary" : "primary"} disabled={blocked || data.photos.length < 2 || data.photos.some(photo => photo.status !== "ready") || !partner}
             onClick={() => void act("ready", { ready: !me?.ready })}>{me?.ready ? "Keep preparing" : "I’m ready"}</Button>}
@@ -327,6 +327,6 @@ function RoomPlay({ roomId, room, turn, disabled, acknowledged, onClue, onGuess,
 function RoomContributions({ room }: { room: RoomSnapshot }) {
   return <section className="stack-2" aria-label="Each person’s practice"><h3>Your own practice</h3>{room.contributions.map(item =>
     <div key={item.userId} className="rooms-contribution"><strong>{item.userId === room.meId ? "You" : room.members.find(member => member.userId === item.userId)?.displayName ?? "Your friend"}</strong>
-      <span>{item.cluesSent} clues sent · {item.guessesMade} guesses · {item.correctGuesses} found</span>
+      <span>{item.cluesSent} {item.cluesSent === 1 ? "clue" : "clues"} sent · {item.guessesMade} {item.guessesMade === 1 ? "guess" : "guesses"} · {item.correctGuesses} found</span>
       <span className="small muted">+{item.basilEarned} Basil leaves · +{item.xpEarned} XP</span></div>)}</section>;
 }
