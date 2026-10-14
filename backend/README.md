@@ -468,6 +468,43 @@ Tables use UUID identities and timezone-aware timestamps. Migrations define fore
 keys, checks, update triggers, RLS, and revoked browser-role grants. All access is
 through backend repositories; the frontend must not query these tables directly.
 
+### Mission contracts
+
+A mission is a versioned definition of one lesson goal at one practice level. Definitions
+live in `app/missions/definitions/{missionId}-{practiceLevel}.v{contentVersion}.toml`,
+are validated by `MissionDefinition` (`app/schemas/missions.py`) and are read through
+`app.missions.get_mission`. A definition is immutable once tasks reference it; change
+content by adding the next version. The first is `M01-A1.v1.toml`, "Identify and
+describe an object": photo eligibility, one objective with its targets, permitted
+language patterns (linked to the existing I-Spy clue frames), teaching sequence and
+support rules, evaluation criteria and expected performance.
+
+Missions reuse the existing task storage; no table or migration is involved:
+
+| Data | Column | Visibility |
+| --- | --- | --- |
+| `missionId`, `practiceLevel`, `contentVersion` | `session_tasks.public_content` | public |
+| `questionEvaluations` (objective, targets, evidence type, accepted answers or rubric criteria, corrections, hidden vocabulary/object targets) | `session_tasks.answer_key` | private |
+| `question_assistance` (supports opened per question) | `task_attempts.response_payload` | owner |
+| `questionOutcomes` | `task_attempts.evaluation_details` | released with the graded attempt |
+
+The three mission fields are set together or not at all, must name a known definition,
+and are omitted from JSON when absent, so tasks and saved sessions without a mission
+keep their stored shape. `questionEvaluations` requires mission metadata, may only name
+the task's own questions (`task` for tasks without grouped questions), and must agree
+with the definition's objective, targets, evidence types and rubric criteria. A question's
+accepted answer is its existing answer-key entry; `acceptedAnswers` is only for questions
+without one.
+
+Grouped-lesson attempts on tasks with `questionEvaluations` add `questionOutcomes`
+beside the unchanged `questionResults` and `correctAnswers`. Each outcome is `correct`,
+`incorrect` (with the matching correction rules as `mistakes`) or `unassessed` (no
+evaluation metadata), and records the supports used; `assistanceUsed` is true only for
+supports the mission counts as assistance. Outcomes describe the existing grading:
+correctness, score, XP, vocabulary progress and learner history still come from
+`questionResults`. Nothing creates mission tasks yet; task selection and generation
+are unchanged.
+
 ### Backend performance
 
 Measured with `tests/test_performance.py` and a profiling run against local

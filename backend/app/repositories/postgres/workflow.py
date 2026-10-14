@@ -88,6 +88,7 @@ from app.services.ispy_descriptions import (
     OUTCOME_CORRECTNESS,
     interpret_guess,
 )
+from app.services.question_outcomes import normalize_answer, review_details
 from app.services.scene_analysis import DeterministicSceneAnalyzer
 from app.services.session_personalization import (
     lesson_history,
@@ -122,17 +123,13 @@ READ_TASKS = {"vocabularyIntroduction", "grammarExplanation", "syntaxExplanation
 ANALYSIS_TIMEOUT = timedelta(minutes=15)
 
 
-def _normalize_answer(value):
-    return " ".join(value.casefold().strip().split()).rstrip(".!?\u3002")
-
-
 def _lesson_answer_is_correct(task, question_id, answer):
     question = next(
         item for item in task.public_content.questions if item.question_id == question_id
     )
     expected = task.answer_key.correct_option_ids.get(question_id)
     return (
-        _normalize_answer(answer) == _normalize_answer(expected)
+        normalize_answer(answer) == normalize_answer(expected)
         if getattr(question, "interaction_type", "multipleChoice") == "sentenceBuilding"
         else answer == expected
     )
@@ -2000,10 +1997,14 @@ class PostgresWorkflowRepository:
                                 )
                             )
                         }
-                        evaluation_details = {
-                            "questionResults": question_results,
-                            "correctAnswers": correct_answers,
-                        }
+                        evaluation_details = (
+                            review_details(task, request, question_results, correct_answers)
+                            if task.answer_key.question_evaluations
+                            else {
+                                "questionResults": question_results,
+                                "correctAnswers": correct_answers,
+                            }
+                        )
                         feedback_message = (
                             f"{correct_count} of {len(question_results)} questions correct."
                         )
@@ -2192,8 +2193,10 @@ def _attempt_id(task, request):
 
 def _response_payload(request):
     exclude = {"idempotency_key"}
-    if getattr(request, "assistance", False) is None:
-        exclude.add("assistance")
+    # Optional support records are left out when absent so older payloads keep their shape.
+    for name in ("assistance", "question_assistance"):
+        if getattr(request, name, False) is None:
+            exclude.add(name)
     return request.model_dump(mode="json", by_alias=False, exclude=exclude)
 
 
@@ -2243,6 +2246,10 @@ def evaluate(task, request):
             key.accepted_text_answers_by_vocabulary_id
         ):
             raise PracticeConflictError("Typing practice contains an unknown word.")
+        if any(
+            item.question_id not in questions_by_id for item in request.question_assistance or []
+        ):
+            raise PracticeConflictError("Assistance names a question this lesson does not have.")
         return all(
             _lesson_answer_is_correct(task, question_id, answer)
             for question_id, answer in request.answers.items()
@@ -2258,6 +2265,6 @@ def evaluate(task, request):
             raise PracticeConflictError("Select one of the offered choices.")
         return request.option_id == key.correct_option_id
 
-    return _normalize_answer(request.text) in {
-        _normalize_answer(answer) for answer in key.accepted_text_answers
+    return normalize_answer(request.text) in {
+        normalize_answer(answer) for answer in key.accepted_text_answers
     }

@@ -162,7 +162,7 @@ export interface LanguageProfile {
   userId: string;
   sourceLanguageCode: string;
   targetLanguageCode: string;
-  proficiencyLevel: "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+  proficiencyLevel: ProficiencyLevel;
   isActive: boolean;
   dailyGoalMinutes: number | null;
   preferredInputMode: "speech" | "text" | "both";
@@ -361,7 +361,10 @@ export async function saveJournal(draft: JournalDraft, profileId: string, id?: s
   return getJournal(row.id);
 }
 
-export type TaskContent =
+export type ProficiencyLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+/** Links task content to a versioned backend mission definition; absent on tasks without a mission. */
+export interface MissionTaskFields { missionId?: string; practiceLevel?: ProficiencyLevel; contentVersion?: number }
+export type TaskContent = MissionTaskFields & (
   | { kind: "vocabularyIntroduction"; title: string; words: VocabularyLearningWord[]; questions: VocabularyQuestion[]; allowTypingPractice: boolean; targetText?: string | null; translation?: string | null; partOfSpeech?: WordClass | null; exampleSentence?: string | null }
   | { kind: "grammarLesson"; focus: string; title: string; explanation: string; questions: GrammarLessonQuestion[] }
   | { kind: "grammarExplanation"; title: string; explanation: string; examples: string[] }
@@ -369,7 +372,8 @@ export type TaskContent =
   | { kind: "syntaxExplanation"; title: string; sentencePattern: string; explanation: string; examples: string[] }
   | { kind: "sentenceBuilding"; prompt: string; sourceText: string | null; tokenBank: string[] }
   | { kind: "ispyRound"; clue: string; clueTranslation?: string | null; encouragement?: string | null; options: { optionId: string; label: string; sceneObjectId: string }[] }
-  | { kind: "reflection"; prompt: string; clueFrames?: ClueFrame[]; avoidWords?: string[] };
+  | { kind: "reflection"; prompt: string; clueFrames?: ClueFrame[]; avoidWords?: string[] }
+);
 export type ClueFrameId = "name" | "colour" | "location";
 export type ClueSlotId = "position" | "reference" | "colour";
 export interface ClueSlotChip { text: string; meaning?: string | null; example?: string | null }
@@ -449,9 +453,22 @@ export interface GrammarLessonQuestion {
   tokenBank: string[];
   translation?: string | null;
 }
-export type TaskAnswer = { inputMode: "text"; text: string; assistance?: ClueAssistance } | { inputMode: "multipleChoice"; optionId: string } | { inputMode: "objectSelection"; sceneObjectId: string } | { inputMode: "vocabularyReview"; answers: Record<string, string>; typedAnswers: Record<string, string> };
+export type TaskAnswer = { inputMode: "text"; text: string; assistance?: ClueAssistance } | { inputMode: "multipleChoice"; optionId: string } | { inputMode: "objectSelection"; sceneObjectId: string } | { inputMode: "vocabularyReview"; answers: Record<string, string>; typedAnswers: Record<string, string>; questionAssistance?: QuestionAssistance[] };
 export type ConfirmGuessBody = { attemptId: string };
-export interface VocabularyReviewDetails { questionResults: Record<string, boolean>; correctAnswers: Record<string, string> }
+export type SupportKind = "translation" | "audio" | "example" | "wordBank" | "clueFrame" | "helpPhrase" | "hint" | "answerReveal";
+export type EvidenceType = "recognition" | "objectSelection" | "construction" | "production" | "participation";
+export type MistakeType = "wrongObject" | "wrongWord" | "wrongArticle" | "wrongGender" | "wrongColour" | "wrongPosition" | "wordOrder" | "missingWord" | "spelling" | "targetNamed";
+/** Supports the learner opened for one grouped-lesson question. */
+export interface QuestionAssistance { questionId: string; supports: SupportKind[] }
+export interface MistakeDetail { mistake: MistakeType; answer: string | null; correction: string; explanation: string | null }
+/** `assistanceUsed` is true only when a support counts as assistance under the mission's rules. */
+export interface QuestionOutcome {
+  questionId: string; outcome: "correct" | "incorrect" | "unassessed";
+  objectiveId: string | null; targetIds: string[]; evidenceType: EvidenceType;
+  assistance: SupportKind[]; assistanceUsed: boolean; mistakes: MistakeDetail[];
+}
+/** `questionOutcomes` is present only for tasks with mission evaluation metadata. */
+export interface VocabularyReviewDetails { questionResults: Record<string, boolean>; correctAnswers: Record<string, string>; questionOutcomes?: QuestionOutcome[] }
 export type ISpyDescriptionOutcome = "clearMatch" | "needsClarification" | "needsRevision" | "noMatch" | "evaluationFailed";
 export const ISPY_DESCRIPTION_EVALUATION_VERSION = "ispy-description-evaluation.v1";
 export interface ISpyDescriptionEvaluation {

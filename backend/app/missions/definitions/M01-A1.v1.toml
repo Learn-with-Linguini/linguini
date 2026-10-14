@@ -1,0 +1,135 @@
+mission_id = "M01"
+practice_level = "A1"
+content_version = 1
+title = "Identify and describe an object"
+
+[photo_requirements]
+media_sources = ["preloaded", "camera", "userUpload"]
+# A target plus at least one other object, so identification has a distractor.
+min_confirmed_objects = 2
+min_describable_objects = 1
+describable_by = ["colour", "relation"]
+relations = ["on", "under", "next_to", "near", "in_front_of", "behind"]
+
+[objective]
+objective_id = "identify-describe-object"
+can_do = "I can find an object in a photo, name it, and say what colour it is or where it is."
+
+[[objective.targets]]
+target_id = "identify-object"
+summary = "Pick out the object that a target-language clue describes."
+evidence_types = ["objectSelection", "recognition"]
+
+[[objective.targets]]
+target_id = "name-object"
+summary = "Name a photo object with its article and noun."
+evidence_types = ["recognition", "construction", "production"]
+
+[[objective.targets]]
+target_id = "describe-colour"
+summary = "Say an object's colour with a colour adjective that agrees with its noun."
+evidence_types = ["recognition", "construction", "production"]
+
+[[objective.targets]]
+target_id = "describe-location"
+summary = "Say where an object is with a position expression and another photo object."
+evidence_types = ["recognition", "construction", "production"]
+
+[[language_patterns]]
+pattern_id = "article-noun"
+target_id = "name-object"
+structure = "[article] [noun]"
+examples = { es = ["la mesa", "el libro"], fr = ["la table", "le livre"] }
+
+[[language_patterns]]
+pattern_id = "copula-colour"
+target_id = "describe-colour"
+structure = "[it is] [colour agreeing with the noun]"
+clue_frame_id = "colour"
+examples = { es = ["Es roja.", "Es verde."], fr = ["Elle est rouge.", "Il est vert."] }
+
+[[language_patterns]]
+pattern_id = "copula-position-reference"
+target_id = "describe-location"
+structure = "[it is] [position] [article] [reference noun]"
+clue_frame_id = "location"
+examples = { es = ["Está al lado de la puerta."], fr = ["Il est à côté de la porte."] }
+
+[teaching]
+task_sequence = ["vocabularyIntroduction", "grammarLesson", "ispyRound", "reflection"]
+teach_before_assessment = ["name-object", "describe-colour", "describe-location"]
+max_new_words = 6
+
+[[teaching.supports]]
+support = "translation"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "audio"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "example"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "wordBank"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "clueFrame"
+availability = "onRequest"
+counts_as_assistance = true
+
+[[teaching.supports]]
+support = "helpPhrase"
+availability = "onRequest"
+counts_as_assistance = true
+
+[[teaching.supports]]
+support = "hint"
+availability = "onRequest"
+counts_as_assistance = true
+
+[[teaching.supports]]
+support = "answerReveal"
+availability = "onRequest"
+counts_as_assistance = true
+
+[[evaluation_criteria]]
+criterion_id = "selects-described-object"
+target_id = "identify-object"
+description = "Selects the photo object that the clue describes."
+evidence_types = ["objectSelection", "recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "article-matches-noun"
+target_id = "name-object"
+description = "Uses the object's noun with the article that matches its gender and number."
+evidence_types = ["recognition", "construction", "production"]
+
+[[evaluation_criteria]]
+criterion_id = "colour-matches-photo"
+target_id = "describe-colour"
+description = "Uses a colour that matches the photo and agrees with the noun."
+evidence_types = ["recognition", "construction", "production"]
+
+[[evaluation_criteria]]
+criterion_id = "position-matches-photo"
+target_id = "describe-location"
+description = "Uses a position expression and reference object that match the photo."
+evidence_types = ["recognition", "construction", "production"]
+
+[expected_performance]
+min_assessed_questions = 4
+min_correct_ratio = 0.75
+min_independent_correct = 2
+required_target_groups = [
+  ["identify-object"],
+  ["name-object"],
+  ["describe-colour", "describe-location"],
+]
