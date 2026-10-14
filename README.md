@@ -177,7 +177,7 @@ Full tables, including optional AI and SEO settings, are in each app's README.
 
 ## Contributing
 
-- Branch from `main` with a plain descriptive slug, e.g. `session-lifecycle`, and open one pull request per slice of work.
+- Branch from `dev` with a plain descriptive slug, e.g. `session-lifecycle`, and open one pull request per slice of work against `dev`.
 - Commits and pull requests are attributed to the team member who requested the work. AI agents must not add themselves as authors or co-authors, or add "Generated with" lines; the CI `attribution` job rejects pull requests that do.
 - Run the checks before opening a pull request:
 

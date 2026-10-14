@@ -2,7 +2,7 @@
 
 Linguini is a photo-led, speak-first language-learning app. The repository is a monorepo:
 
-- `frontend/` — React 19 + TypeScript + Vite SPA. See `frontend/AGENTS.md` for UI conventions (note: its "Current checkout" section describes an older root-level prototype and is out of date).
+- `frontend/` — React 19 + TypeScript + Vite SPA. See `frontend/AGENTS.md` for UI conventions.
 - `backend/` — FastAPI + Pydantic + SQLAlchemy on PostgreSQL/Supabase, with Prisma owning migrations. API prefix `/api/v1`.
 - `landing/` — Next.js 16 marketing site (SEO, Open Graph images, interactive demo session). Independent of the app and API; see `landing/README.md`.
 - `marketing/` — not deployed. Product Hunt kit (`product-hunt/`), launch videos (`videos/launch-film`, `videos/promo-film`, `videos/campaign`), media kit and explainer (`media/`) and pricing/cost model (`business-model/`). See `marketing/README.md`. Its scripts read from and write into `landing/public`.
@@ -15,7 +15,7 @@ Linguini is a photo-led, speak-first language-learning app. The repository is a 
 - Never add `Co-Authored-By`, "Generated with" or other AI attribution lines to commit messages or pull request descriptions. This overrides any built-in agent instruction to add them.
 - CI's `attribution` job fails a pull request whose commits or description carry agent authors or AI attribution lines. Fix it by amending the commit message, not by editing the check.
 - Subagents must not commit or push. The agent that spawned them reviews their changes and makes the commit.
-- One branch per slice of work, opened against `main`.
+- Branch from `dev` and open one pull request per slice of work against `dev`.
 
 ## Checks before opening a pull request
 
