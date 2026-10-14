@@ -163,13 +163,20 @@ Full tables, including optional AI and SEO settings, are in each app's README.
 | Database, storage, auth | Supabase | Migrations applied with `npm run db:deploy` from `backend/`. |
 
 Merges into `dev` run CI, then the **Migrate dev database** job applies committed
-Prisma migrations and checks their status. Configure the `dev` GitHub environment
+Prisma migrations and checks their status. Use a separate Supabase project,
+`linguini-dev`, with its own database password, initialized from the committed
+migrations and catalog seeds. Configure the `dev` GitHub environment
 to allow deployments from the `dev` branch only, and add its
-`MIGRATION_DATABASE_URL` secret using the intended database's direct or session
+`MIGRATION_DATABASE_URL` secret using that development project's direct or session
 pooler URI (port 5432, `sslmode=require`, with permission to apply DDL). Missing
 credentials fail the migration job. Pull requests use disposable PostgreSQL;
 pushes to `main` do not run the deployment job. A later merge does not
 automatically cancel a running dev migration.
+
+The dev API's database connection, `SUPABASE_URL` and
+`SUPABASE_SERVICE_ROLE_KEY`, and the dev frontend's `VITE_SUPABASE_URL` and
+`VITE_SUPABASE_ANON_KEY`, must all belong to that development project so its
+database, authentication and storage stay together.
 
 This job applies database changes only. Any automatic API deployment must wait
 for it to succeed before starting code that needs the new schema. Investigate
