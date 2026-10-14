@@ -23,6 +23,7 @@ from app.repositories.journals import JournalRepository
 from app.repositories.language_profiles import LanguageProfileRepository
 from app.repositories.learning import LearningRepository
 from app.repositories.media_assets import MediaAssetRepository
+from app.repositories.postgres.ispy_games import PostgresISpyGameRepository
 from app.repositories.postgres.journals import PostgresJournalRepository
 from app.repositories.postgres.language_profiles import (
     PostgresLanguageProfileRepository,
@@ -41,6 +42,7 @@ from app.repositories.users import UserRepository
 from app.services.account_deletion import AccountDeletionService, SupabaseAuthAdmin
 from app.services.image_derivatives import ImageDerivatives
 from app.services.image_storage import ImageStorage
+from app.services.ispy_games import ISpyGameService
 from app.services.journals import JournalService
 from app.services.language_profiles import LanguageProfileService
 from app.services.learning import LearningService
@@ -256,6 +258,13 @@ def get_practice_service(
     profiles: Annotated[LanguageProfileService, Depends(get_language_profile_service)],
 ) -> PracticeService:
     return PracticeService(repository, users, profiles)
+
+
+def get_ispy_game_service(
+    repository: Annotated[PostgresWorkflowRepository, Depends(get_practice_repository)],
+    profiles: Annotated[LanguageProfileService, Depends(get_language_profile_service)],
+) -> ISpyGameService:
+    return ISpyGameService(PostgresISpyGameRepository(repository), profiles)
 
 
 def get_task_service(

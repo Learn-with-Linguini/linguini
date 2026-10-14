@@ -112,6 +112,11 @@ class SessionStatus(StrEnum):
     FAILED = "failed"
 
 
+class SessionMode(StrEnum):
+    LESSON = "lesson"
+    ISPY = "ispy"
+
+
 class SessionFailureCode(StrEnum):
     IMAGE_UPLOAD_FAILED = "imageUploadFailed"
     SCENE_ANALYSIS_FAILED = "sceneAnalysisFailed"

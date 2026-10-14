@@ -366,11 +366,13 @@ class ClueAssistance(ApiModel):
 
 
 class LatestClueAttempt(ApiModel):
-    """The owner's latest round-two attempt: only what the client needs to restore it."""
+    """The owner's latest I-Spy attempt: only what the client needs to restore it."""
 
     id: UUID
     attempt_number: Annotated[int, Field(ge=1)]
     text: str
+    option_id: str | None = None
+    is_correct: bool | None = None
     feedback: str | None = None
     evaluation_details: ISpyDescriptionEvaluation | None = None
     assistance: ClueAssistance | None = None
@@ -379,11 +381,14 @@ class LatestClueAttempt(ApiModel):
     def from_attempt(cls, attempt: TaskAttempt) -> LatestClueAttempt:
         payload = attempt.response_payload
         text = payload.get("text")
+        option_id = payload.get("optionId")
         message = (attempt.feedback or {}).get("message")
         return cls(
             id=attempt.id,
             attempt_number=attempt.attempt_number,
             text=text if isinstance(text, str) else "",
+            option_id=option_id if isinstance(option_id, str) else None,
+            is_correct=attempt.is_correct,
             feedback=message if isinstance(message, str) else None,
             evaluation_details=_optional(ISpyDescriptionEvaluation, attempt.evaluation_details),
             assistance=_optional(ClueAssistance, payload.get("assistance")),

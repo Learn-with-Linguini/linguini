@@ -83,6 +83,7 @@ class PostgresMediaAssetRepository:
                     )
                     .where(
                         sessions.c.user_id == user_id,
+                        sessions.c.mode == "lesson",
                         sessions.c.status == "completed",
                         sessions.c.completed_at >= start,
                         sessions.c.completed_at < end,
@@ -123,6 +124,7 @@ class PostgresMediaAssetRepository:
                     select(sessions.c.analysis_draft).where(
                         sessions.c.user_id == user_id,
                         sessions.c.language_profile_id == language_profile_id,
+                        sessions.c.mode == "lesson",
                         sessions.c.started_at >= start,
                         sessions.c.started_at < end,
                     ).order_by(sessions.c.started_at.asc(), sessions.c.id.asc())

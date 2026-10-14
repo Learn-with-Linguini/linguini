@@ -8,7 +8,7 @@ from uuid import UUID, uuid4
 from pydantic import AwareDatetime, Field, model_validator
 
 from app.schemas.base import ApiModel, JsonObject
-from app.schemas.enums import SessionFailureCode, SessionStatus
+from app.schemas.enums import SessionFailureCode, SessionMode, SessionStatus
 from app.schemas.media import AnchorPoint, MediaAsset, SceneObject, SceneObjectRelation
 from app.schemas.tasks import SessionProgress, SessionTaskPublic
 from app.schemas.translation import SceneTranslationResult
@@ -21,6 +21,9 @@ class Session(ApiModel):
     language_profile_id: UUID
     scene_media_asset_id: UUID
     status: SessionStatus = SessionStatus.CREATED
+    mode: SessionMode = SessionMode.LESSON
+    source_session_id: UUID | None = None
+    scene_confirmed_at: AwareDatetime | None = None
     started_at: AwareDatetime | None = None
     completed_at: AwareDatetime | None = None
     abandoned_at: AwareDatetime | None = None

@@ -113,7 +113,7 @@ def test_review_cannot_change_terminal_sessions(status):
         yield connection
 
     repo.transaction = transaction
-    repo._session = lambda *args: SimpleNamespace(status=status)
+    repo._session = lambda *args: SimpleNamespace(status=status, mode="lesson")
     with pytest.raises(PracticeConflictError):
         repo.review(uuid4(), uuid4(), ReviewPracticeRequest(accepted_object_ids=[uuid4()]))
     connection.execute.assert_not_called()
@@ -129,7 +129,7 @@ def test_review_cannot_replace_started_tasks(status):
         yield connection
 
     repo.transaction = transaction
-    repo._session = lambda *args: SimpleNamespace(status="inProgress")
+    repo._session = lambda *args: SimpleNamespace(status="inProgress", mode="lesson")
     repo._tasks = lambda *args: [SimpleNamespace(status=status)]
     with pytest.raises(PracticeConflictError):
         repo.review(uuid4(), uuid4(), ReviewPracticeRequest(accepted_object_ids=[uuid4()]))
@@ -190,6 +190,7 @@ def test_review_rebuilds_tasks_only_for_selected_objects():
 
     repo.transaction = transaction
     repo._session = lambda *args: SimpleNamespace(
+        mode="lesson",
         id=session_id,
         status="inProgress",
         started_at=None,

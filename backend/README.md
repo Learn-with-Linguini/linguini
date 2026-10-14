@@ -157,7 +157,8 @@ grammar exercises can give more practice on earlier mistakes. A short session
 summary shows returning words and the skills being revisited. Empty history and
 the default `false` setting retain the existing lesson generation path.
 
-History is read from existing practice and completed journal records; no schema
+History is read from lesson practice and completed journal records; standalone
+I-Spy games do not enter this lesson history. No additional schema
 change or separate model call is required. Exposure, graded answers, journal
 selections and assisted writing remain separate observations. Only a bounded
 summary (up to 16 terms and 6 KiB) reaches grammar generation, without journal
@@ -215,6 +216,11 @@ Spanish, and stores the assembled suggested words in
 `preloaded_scenes.content.items` so the Scene Analysis review screen opens
 with words already on the photo. `content.tasks/rounds/prompts` stay minimal
 placeholders; real lessons and clues come from the templates below.
+
+Each item's `attributes.color` and the scene's `content.relations` are curated from
+the images (migration `20261013010000_preloaded_scene_facts`), so preloaded lessons and
+I-Spy games get describing rounds. Re-running the script with `--emit-migration`
+replaces them with detected facts; review those before applying.
 
 ```sh
 python -m app.scripts.precompute_preloaded_scenes --dry-run --json out.json
@@ -418,7 +424,9 @@ and changing one slot rewrites only that frame's sentence. The submitted `assist
 the task's frames and stored in `responsePayload`; it records guided practice and never
 changes correctness or vocabulary credit. Frames stay in `publicContent`, so the guess
 model never sees them, and `GET /tasks/{id}/latest-attempt` returns the saved assistance
-so slot picks and revealed help survive a reload.
+so slot picks and revealed help survive a reload. For round-one clues it returns the
+chosen `optionId`, `isCorrect` and feedback, so an answered clue still shows its grade
+when the original response was lost.
 
 Journals are unique per user/local date across all target languages. Saves append
 immutable revisions, with identical retries avoiding duplicate revisions. Media

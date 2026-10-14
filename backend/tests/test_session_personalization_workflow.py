@@ -14,12 +14,62 @@ from test_preloaded_templates_workflow import curated as curated
 
 from app.ai.cache import CacheScope
 from app.main import create_app
+from app.repositories.postgres.ispy_games import PostgresISpyGameRepository
 from app.repositories.postgres.learner_history import snapshot_learner_history
 from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.tasks import session_tasks, task_attempts
 from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.schemas.base import utc_now
+from app.schemas.ispy import StartISpyGameRequest
 from app.schemas.sessions import ReviewPracticeRequest
+from app.schemas.tasks import SkipTaskRequest, SubmitMultipleChoiceAttemptRequest
+
+
+def test_standalone_game_skips_memory_loading_and_does_not_change_lesson_history(
+    curated, monkeypatch,
+):
+    engine, owner, profile, *_ = curated
+    repository, _records = _recorded_repository(curated, SceneModel())
+    sid, request = _prepare(curated, repository)
+    repository.review(sid, profile.id, request)
+    excluded = uuid4()
+    with engine.connect() as connection:
+        before = snapshot_learner_history(
+            connection, owner.id, profile.model_dump(by_alias=False), excluded, [],
+        )
+    monkeypatch.setenv("LEARNER_MEMORY_ENABLED", "true")
+    loaded = []
+
+    def unexpected_history(*_args, **_kwargs):
+        loaded.append(True)
+        raise AssertionError("Standalone games must not load lesson memory")
+
+    monkeypatch.setattr(
+        "app.repositories.postgres.workflow.snapshot_learner_history", unexpected_history,
+    )
+    game = PostgresISpyGameRepository(repository).start(StartISpyGameRequest(
+        language_profile_id=profile.id, media_asset_id=curated[4].id,
+        idempotency_key="memory-free-game",
+    ))
+    detail = repository.get(game.session.id, profile.id)
+    assert detail.session.status == "inProgress"
+    assert detail.personalization is None
+    assert loaded == []
+    clue = next(task for task in detail.tasks if task.kind == "ispyRound")
+    repository.task_action(clue.id, "attempt", SubmitMultipleChoiceAttemptRequest(
+        option_id=clue.public_content.options[0].option_id,
+        idempotency_key="memory-free-game-answer",
+    ))
+    for task in repository.get(game.session.id, profile.id).tasks:
+        if task.status not in {"completed", "skipped"}:
+            repository.task_action(task.id, "skip", SkipTaskRequest())
+    repository.finish(game.session.id, profile.id)
+    with engine.connect() as connection:
+        after = snapshot_learner_history(
+            connection, owner.id, profile.model_dump(by_alias=False), excluded, [],
+        )
+    assert after == before
+    assert repository.get(sid, profile.id).session.status == "inProgress"
 
 
 def test_failed_grammar_generation_keeps_word_review_without_claiming_missing_focus(

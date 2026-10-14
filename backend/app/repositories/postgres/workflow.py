@@ -53,6 +53,7 @@ from app.repositories.practice import (
 )
 from app.schemas.base import utc_now
 from app.schemas.enums import (
+    SessionMode,
     SessionStatus,
     VocabularyEncounterOutcome,
     VocabularyEncounterType,
@@ -675,7 +676,7 @@ class PostgresWorkflowRepository:
             ),
         )
 
-    def _active_row(self, c, profile_id):
+    def _active_row(self, c, profile_id, mode):
         return (
             c.execute(
                 select(
@@ -685,6 +686,7 @@ class PostgresWorkflowRepository:
                 .where(
                     sessions.c.user_id == self.user_id,
                     sessions.c.language_profile_id == profile_id,
+                    sessions.c.mode == mode,
                     sessions.c.status.not_in(TERMINAL),
                 )
                 .order_by(sessions.c.started_at.desc().nulls_last(), sessions.c.id)
@@ -712,7 +714,7 @@ class PostgresWorkflowRepository:
             )
             return self._detail(c, self._session(c, session_id, profile_id))
 
-    def active(self, profile_id):
+    def active(self, profile_id, mode=SessionMode.LESSON):
         try:
             with self.read_connection() as c:
                 if (
@@ -722,7 +724,7 @@ class PostgresWorkflowRepository:
                     is None
                 ):
                     return None
-                row = self._active_row(c, profile_id)
+                row = self._active_row(c, profile_id, mode)
                 if row is None:
                     return None
                 if not row["is_stale"]:
@@ -730,56 +732,61 @@ class PostgresWorkflowRepository:
             # Only an expired processing session needs the write path.
             with self.transaction() as c:
                 self._reap(c, profile_id)
-                row = self._active_row(c, profile_id)
+                row = self._active_row(c, profile_id, mode)
                 return self._detail(c, parse_session(row)) if row else None
         except PracticeNotFoundError:
             return None
 
+    def _practice_media(self, c, profile_id, asset_id):
+        """The active profile and an image this user may practise with."""
+        profile = (
+            c.execute(
+                select(language_profiles).where(
+                    language_profiles.c.id == profile_id,
+                    language_profiles.c.user_id == self.user_id,
+                    language_profiles.c.is_active.is_(True),
+                )
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if profile is None:
+            raise PracticeConflictError("Select the active language profile.")
+        asset = (
+            c.execute(select(media_assets).where(media_assets.c.id == asset_id))
+            .mappings()
+            .one_or_none()
+        )
+        if (
+            not asset
+            or asset["media_type"] != "image"
+            or not (
+                (asset["source"] == "preloaded" and asset["owner_user_id"] is None)
+                or (
+                    asset["source"] in {"camera", "userUpload"}
+                    and asset["owner_user_id"] == self.user_id
+                )
+            )
+        ):
+            raise PracticeNotFoundError("Image not found.")
+        if (
+            asset["source"] == "preloaded"
+            and c.execute(
+                select(preloaded_scenes.c.id).where(
+                    preloaded_scenes.c.media_asset_id == asset["id"],
+                    preloaded_scenes.c.is_active.is_(True),
+                    func.lower(preloaded_scenes.c.language_code)
+                    == profile["target_language_code"].lower(),
+                )
+            ).first()
+            is None
+        ):
+            raise PracticeNotFoundError("Scene not found for this language.")
+        return profile, asset
+
     def create(self, request):
         with self.transaction() as c:
-            profile = (
-                c.execute(
-                    select(language_profiles).where(
-                        language_profiles.c.id == request.language_profile_id,
-                        language_profiles.c.user_id == self.user_id,
-                        language_profiles.c.is_active.is_(True),
-                    )
-                )
-                .mappings()
-                .one_or_none()
-            )
-            if profile is None:
-                raise PracticeConflictError("Select the active language profile.")
-            asset = (
-                c.execute(select(media_assets).where(media_assets.c.id == request.media_asset_id))
-                .mappings()
-                .one_or_none()
-            )
-            if (
-                not asset
-                or asset["media_type"] != "image"
-                or not (
-                    (asset["source"] == "preloaded" and asset["owner_user_id"] is None)
-                    or (
-                        asset["source"] in {"camera", "userUpload"}
-                        and asset["owner_user_id"] == self.user_id
-                    )
-                )
-            ):
-                raise PracticeNotFoundError("Image not found.")
-            if (
-                asset["source"] == "preloaded"
-                and c.execute(
-                    select(preloaded_scenes.c.id).where(
-                        preloaded_scenes.c.media_asset_id == asset["id"],
-                        preloaded_scenes.c.is_active.is_(True),
-                        func.lower(preloaded_scenes.c.language_code)
-                        == profile["target_language_code"].lower(),
-                    )
-                ).first()
-                is None
-            ):
-                raise PracticeNotFoundError("Scene not found for this language.")
+            self._practice_media(c, request.language_profile_id, request.media_asset_id)
             if request.idempotency_key:
                 existing = (
                     c.execute(
@@ -793,7 +800,10 @@ class PostgresWorkflowRepository:
                     .one_or_none()
                 )
                 if existing:
-                    if existing["scene_media_asset_id"] != request.media_asset_id:
+                    if (
+                        existing["scene_media_asset_id"] != request.media_asset_id
+                        or existing["mode"] != SessionMode.LESSON
+                    ):
                         raise PracticeConflictError("This request key was used for another image.")
                     return self._detail(c, parse_session(existing))
             self._reap(c, request.language_profile_id)
@@ -806,6 +816,7 @@ class PostgresWorkflowRepository:
                         sessions.c.user_id == self.user_id,
                         sessions.c.language_profile_id == request.language_profile_id,
                         sessions.c.scene_media_asset_id == request.media_asset_id,
+                        sessions.c.mode == SessionMode.LESSON,
                         sessions.c.status.not_in(TERMINAL),
                     )
                     .order_by(sessions.c.started_at.desc().nulls_last(), sessions.c.id.desc())
@@ -826,11 +837,12 @@ class PostgresWorkflowRepository:
             c.execute(insert(sessions).values(**session.model_dump(by_alias=False)))
             return self._detail(c, session)
 
-    def _check_active_limit(self, c, profile_id):
+    def _check_active_limit(self, c, profile_id, mode=SessionMode.LESSON):
         active_count = c.execute(
             select(func.count()).select_from(sessions).where(
                 sessions.c.user_id == self.user_id,
                 sessions.c.language_profile_id == profile_id,
+                sessions.c.mode == mode,
                 sessions.c.status.not_in(TERMINAL),
             )
         ).scalar_one()
@@ -860,6 +872,8 @@ class PostgresWorkflowRepository:
     def analyze(self, session_id, profile_id):
         with self.transaction() as c:
             session = self._session(c, session_id, profile_id)
+            if session.mode == SessionMode.ISPY:
+                raise PracticeConflictError("I-Spy games reuse a confirmed scene.")
             if session.status in TERMINAL:
                 raise PracticeConflictError("Cannot analyze a terminal session.")
             if session.status in {"ready", "inProgress"}:
@@ -889,6 +903,7 @@ class PostgresWorkflowRepository:
                     sessions.c.user_id == self.user_id,
                     sessions.c.language_profile_id == profile_id,
                     sessions.c.scene_media_asset_id == session.scene_media_asset_id,
+                    sessions.c.mode == SessionMode.LESSON,
                     sessions.c.status.not_in(TERMINAL),
                 )
             ).first():
@@ -1051,7 +1066,7 @@ class PostgresWorkflowRepository:
         self.background.submit(self._run_task_generation, session_id, profile_id)
         return detail
 
-    def _run_task_generation(self, session_id, profile_id):
+    def _run_task_generation(self, session_id, profile_id, generate=None):
         """Translator + lesson generation, off the request path. Never re-raises."""
         revision = None
         try:
@@ -1059,7 +1074,7 @@ class PostgresWorkflowRepository:
             if claim is None:
                 return
             revision = claim.revision
-            self._generate_tasks(claim)
+            (generate or self._generate_tasks)(claim)
         except Exception:
             logger.exception("Task generation failed for session %s.", session_id)
             try:
@@ -1081,6 +1096,8 @@ class PostgresWorkflowRepository:
     def _review(self, session_id, profile_id, request):
         with self.transaction() as c:
             session = self._session(c, session_id, profile_id)
+            if session.mode == SessionMode.ISPY:
+                raise PracticeConflictError("I-Spy games reuse a confirmed scene.")
             if session.status == "generatingTasks":
                 raise PracticeConflictError("The confirmed scene is already generating tasks.")
             if session.status in TERMINAL:
@@ -1206,6 +1223,12 @@ class PostgresWorkflowRepository:
                         source_relation_key=source_key,
                     )
                 )
+            c.execute(
+                update(sessions)
+                .where(sessions.c.id == session_id)
+                .values(scene_confirmed_at=utc_now())
+            )
+            session = self._session(c, session_id, profile_id)
             if session.status not in {"ready", "inProgress"}:
                 session = self._transition(c, session, "generatingTasks")
             return self._detail(c, session)
@@ -1235,7 +1258,8 @@ class PostgresWorkflowRepository:
             asset, scene = self._scene_media(c, session)
             objects, relations = self._scene_objects(c, session)
             history = None
-            if os.getenv("LEARNER_MEMORY_ENABLED", "false").strip().lower() == "true":
+            if (session.mode == SessionMode.LESSON
+                    and os.getenv("LEARNER_MEMORY_ENABLED", "false").strip().lower() == "true"):
                 labels = [obj.label for obj in objects]
                 labels.extend(value for obj in objects for value in (obj.attributes or {}).values()
                               if isinstance(value, str))
@@ -1326,47 +1350,9 @@ class PostgresWorkflowRepository:
             # Rebuild tasks from scratch for the accepted objects.
             c.execute(delete(session_tasks).where(session_tasks.c.session_id == session_id))
             if self.translator:
-                draft = {
-                    **(session.analysis_draft or {}),
-                    "translationPreview": translated_scene.model_dump(
-                        mode="json", by_alias=True
-                    ),
-                }
-                c.execute(
-                    update(sessions).where(sessions.c.id == session.id)
-                    .values(analysis_draft=draft)
-                )
-                translated_objects = {row.key: row for row in translated_scene.objects}
-                for obj in objects:
-                    translated = translated_objects[str(obj.id)]
-                    word, _source_translation = bootstrap_word(
-                        c,
-                        profile["target_language_code"],
-                        profile["source_language_code"],
-                        translated.translation,
-                        obj.label,
-                        gender=translated.gender,
-                        phonetic_text=translated.phonetic_text,
-                    )
-                    c.execute(
-                        update(scene_objects)
-                        .where(scene_objects.c.id == obj.id)
-                        .values(vocabulary_item_id=word.id)
-                    )
+                self._store_translation(c, session, profile, objects, translated_scene)
             objects, relations = self._scene_objects(c, session)
-            vocabulary, vocabulary_translations = self._vocabulary(c, session, objects)
-            words_by_id = {word.id: word for word in vocabulary}
-            translations_by_id = {
-                word.vocabulary_item_id: word for word in vocabulary_translations
-            }
-            if any(
-                obj.vocabulary_item_id not in words_by_id
-                or obj.vocabulary_item_id not in translations_by_id
-                for obj in objects
-            ):
-                raise PracticeConflictError("Every selected object needs a word and translation.")
-            words = [words_by_id[obj.vocabulary_item_id] for obj in objects]
-            translations = [translations_by_id[obj.vocabulary_item_id] for obj in objects]
+            words, translations = self._words(c, session, objects)
             rebuilt = build_tasks(
                 session_id,
                 objects,
@@ -1477,6 +1463,47 @@ class PostgresWorkflowRepository:
                 )
             self._transition(c, session, "inProgress")
 
+    def _store_translation(self, c, session, profile, objects, translated_scene):
+        """Keep the scene translation and link each object to its vocabulary item."""
+        draft = {
+            **(session.analysis_draft or {}),
+            "translationPreview": translated_scene.model_dump(mode="json", by_alias=True),
+        }
+        c.execute(update(sessions).where(sessions.c.id == session.id).values(analysis_draft=draft))
+        translated_objects = {row.key: row for row in translated_scene.objects}
+        for obj in objects:
+            translated = translated_objects[str(obj.id)]
+            word, _source_translation = bootstrap_word(
+                c,
+                profile["target_language_code"],
+                profile["source_language_code"],
+                translated.translation,
+                obj.label,
+                gender=translated.gender,
+                phonetic_text=translated.phonetic_text,
+            )
+            c.execute(
+                update(scene_objects)
+                .where(scene_objects.c.id == obj.id)
+                .values(vocabulary_item_id=word.id)
+            )
+
+    def _words(self, c, session, objects):
+        """Each object's vocabulary item and translation, in object order."""
+        vocabulary, vocabulary_translations = self._vocabulary(c, session, objects)
+        words_by_id = {word.id: word for word in vocabulary}
+        translations_by_id = {word.vocabulary_item_id: word for word in vocabulary_translations}
+        if any(
+            obj.vocabulary_item_id not in words_by_id
+            or obj.vocabulary_item_id not in translations_by_id
+            for obj in objects
+        ):
+            raise PracticeConflictError("Every selected object needs a word and translation.")
+        return (
+            [words_by_id[obj.vocabulary_item_id] for obj in objects],
+            [translations_by_id[obj.vocabulary_item_id] for obj in objects],
+        )
+
     def _lessons(
         self, session_id, payload, translated_scene, relations, options=None,
         *, history=None, history_scope=None,
@@ -1566,7 +1593,7 @@ class PostgresWorkflowRepository:
             ):
                 raise PracticeConflictError("Complete or skip every task first.")
             session = self._transition(c, session, target)
-            if not abandon:
+            if not abandon and session.mode == SessionMode.LESSON:
                 award(
                     c,
                     user_id=self.user_id,
@@ -1654,11 +1681,13 @@ class PostgresWorkflowRepository:
         }
 
     def _encounter(
-        self, c, task, event_id, outcome, introduced=False, vocabulary_item_id=None
+        self, c, task, event_id, outcome, introduced=False, vocabulary_item_id=None,
+        session=None,
     ):
         explicit_vocabulary_item_id = vocabulary_item_id
         resolved_vocabulary_item_id = vocabulary_item_id or task.vocabulary_item_id
-        if not resolved_vocabulary_item_id:
+        # Standalone I-Spy games never advance vocabulary proficiency.
+        if not resolved_vocabulary_item_id or (session and session.mode == SessionMode.ISPY):
             return
         # A grouped vocabulary-introduction attempt writes one encounter per
         # taught word. Give explicitly supplied words distinct event IDs even
@@ -1891,7 +1920,9 @@ class PostgresWorkflowRepository:
                         started_at=task.started_at or utc_now(),
                     )
                     if task.kind == "vocabularyIntroduction":
-                        self._encounter(c, task, task.id, "completed", introduced=True)
+                        self._encounter(
+                            c, task, task.id, "completed", introduced=True, session=session
+                        )
                 elif action == "attempt":
                     evaluation_details = None
                     if self._evaluates_description(task):
@@ -1978,7 +2009,12 @@ class PostgresWorkflowRepository:
                             .where(task_evaluation_claims.c.id == task.id)
                             .values(**NO_EVALUATION_CLAIM)
                         )
-                    if correct is True and task.phase == "ispy" and evaluation is None:
+                    if (
+                        correct is True
+                        and task.phase == "ispy"
+                        and evaluation is None
+                        and session.mode == SessionMode.LESSON
+                    ):
                         award(
                             c,
                             user_id=self.user_id,
@@ -1995,6 +2031,7 @@ class PostgresWorkflowRepository:
                             "completed"
                             if correct is None
                             else ("correct" if correct else "incorrect"),
+                            session=session,
                         )
                     if task.kind == "vocabularyIntroduction" and task.public_content.words:
                         for learning_word in task.public_content.words:
@@ -2005,6 +2042,7 @@ class PostgresWorkflowRepository:
                                 "correct" if correct else "incorrect",
                                 introduced=True,
                                 vocabulary_item_id=learning_word.vocabulary_item_id,
+                                session=session,
                             )
                     if evaluation is None:
                         values = dict(
@@ -2074,19 +2112,22 @@ class PostgresWorkflowRepository:
                     .where(session_tasks.c.id == task.id)
                     .values(status="completed", completed_at=now, started_at=task.started_at or now)
                 )
-                award(
-                    c,
-                    user_id=self.user_id,
-                    event_type="ispyCorrect",
-                    idempotency_key=f"ispy-correct:{task.id}",
-                    language_profile_id=session.language_profile_id,
-                    session_id=task.session_id,
-                )
-                self._encounter(c, task, task.id, "completed")
+                if session.mode == SessionMode.LESSON:
+                    award(
+                        c,
+                        user_id=self.user_id,
+                        event_type="ispyCorrect",
+                        idempotency_key=f"ispy-correct:{task.id}",
+                        language_profile_id=session.language_profile_id,
+                        session_id=task.session_id,
+                    )
+                self._encounter(c, task, task.id, "completed", session=session)
                 self._award_completion(c, task, session)
             return self._action_response(c, task, attempt)
 
     def _award_completion(self, c, task, session):
+        if session.mode != SessionMode.LESSON:
+            return
         award(
             c,
             user_id=self.user_id,

@@ -387,6 +387,7 @@ export interface SessionTask {
 export interface SessionProgress {
   completedTaskCount: number; skippedTaskCount: number; terminalTaskCount: number; totalTaskCount: number;
 }
+export type SessionMode = "lesson" | "ispy";
 export type SessionStatus = "created" | "analyzingScene" | "awaitingObjectReview" | "generatingTasks" | "ready" | "inProgress" | "completed" | "abandoned" | "failed";
 export type PracticeFocus = "genderNumberAgreement" | "pluralNounForm" | "sceneDescription" | "chainedDescription";
 export interface SessionPersonalization {
@@ -396,7 +397,7 @@ export interface SessionPersonalization {
   practiceFocuses: PracticeFocus[];
 }
 export interface PracticeDetail {
-  session: { id: string; status: SessionStatus; sceneMediaAssetId: string; sessionTitle: string | null; sessionSummary: string | null; failureCode: "imageUploadFailed" | "sceneAnalysisFailed" | "imageModerationFailed" | "noValidObjects" | "vocabularyMappingFailed" | "taskGenerationFailed" | null };
+  session: { id: string; mode: SessionMode; sourceSessionId: string | null; status: SessionStatus; sceneMediaAssetId: string; sessionTitle: string | null; sessionSummary: string | null; failureCode: "imageUploadFailed" | "sceneAnalysisFailed" | "imageModerationFailed" | "noValidObjects" | "vocabularyMappingFailed" | "taskGenerationFailed" | null };
   mediaAsset: { id: string; source: "preloaded" | "camera" | "userUpload" };
   sceneId: string | null; title: string;
   analysisMode: "placeholder" | null;
@@ -455,7 +456,7 @@ export interface TaskAttemptResult {
 }
 /** The owner's latest round-two attempt, as much as is needed to restore it after a reload. */
 export interface LatestClueAttempt {
-  id: string; attemptNumber: number; text: string; feedback: string | null;
+  id: string; attemptNumber: number; text: string; optionId: string | null; isCorrect: boolean | null; feedback: string | null;
   evaluationDetails: ISpyDescriptionEvaluation | null; assistance: ClueAssistance | null;
 }
 export const getLatestAttempt = (taskId: string, signal?: AbortSignal) =>
@@ -494,4 +495,12 @@ export const completePractice = (id: string) => write<{ id: string; status: stri
 export const abandonPractice = (id: string) => write<{ id: string; status: string }>(`/api/v1/sessions/${id}/abandon`, "POST", {});
 export const getPracticeSummary = (id: string) => request<{ progress: SessionProgress; learnedVocabularyIds: string[]; xpEarned: number; ispyCorrectCount: number; ispyAttemptCount: number }>(`/api/v1/sessions/${id}/summary`);
 
+export interface ISpyPhoto { mediaAsset: { id: string; source: "camera" | "userUpload"; createdAt: string }; playable: boolean; confirmedAt: string | null }
+export interface ISpyPhotoPage { photos: ISpyPhoto[]; nextCursor: string | null }
+export const getISpyPhotos = (cursor: string | null, signal?: AbortSignal) =>
+  request<ISpyPhotoPage>(`/api/v1/ispy/photos${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`, signal);
+export const getActiveISpyGame = (signal?: AbortSignal) => request<PracticeDetail | null>("/api/v1/ispy/games/active", signal);
+export const startISpyGame = (profileId: string, assetId: string, key: string) => write<PracticeDetail>("/api/v1/ispy/games", "POST", {
+  languageProfileId: profileId, mediaAssetId: assetId, idempotencyKey: key,
+});
 export const checkPracticeWord = (id: string, label: string) => request<{ available: boolean }>(`/api/v1/sessions/${id}/review-word?label=${encodeURIComponent(label)}`);

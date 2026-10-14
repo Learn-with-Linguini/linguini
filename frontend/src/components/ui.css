@@ -1291,6 +1291,19 @@ p[role="alert"]::before { content: "!"; }
   display: none;
 }
 
+@media (max-width: 420px) {
+  .bottom-nav {
+    gap: 0;
+    padding-inline: var(--space-1);
+  }
+
+  .bottom-nav__item {
+    font-size: 11px;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+  }
+}
+
 .bottom-nav__item.is-active svg {
   fill: none;
   stroke: currentColor;

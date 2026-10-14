@@ -23,6 +23,7 @@ from app.repositories.postgres.vocabulary import (
     vocabulary_translations,
 )
 from app.schemas.base import utc_now
+from app.schemas.enums import SessionMode
 from app.schemas.media import MediaAsset
 from app.schemas.users import LanguageProfile, User
 from app.schemas.vocabulary import UserVocabularyProgress, VocabularyItem, VocabularyTranslation
@@ -55,7 +56,7 @@ class History:
         )
         return profile
 
-    def session(self, profile=None, status="completed"):
+    def session(self, profile=None, status="completed", mode=SessionMode.LESSON):
         profile = profile or self.profile
         asset_id = self.asset_id
         if profile.user_id != self.owner.id:
@@ -68,7 +69,7 @@ class History:
         session_id = uuid4()
         self.connection.execute(insert(sessions).values(
             id=session_id, user_id=profile.user_id, language_profile_id=profile.id,
-            scene_media_asset_id=asset_id, status=status,
+            scene_media_asset_id=asset_id, status=status, mode=mode,
             started_at=self.now, completed_at=self.now if status == "completed" else None,
             abandoned_at=self.now if status == "abandoned" else None,
         ))
@@ -79,7 +80,8 @@ class History:
         order = self.task_numbers.get(session_id, 0)
         self.task_numbers[session_id] = order + 1
         self.connection.execute(insert(session_tasks).values(
-            id=task_id, session_id=session_id, phase="learning", kind=kind, order_index=order,
+            id=task_id, session_id=session_id,
+            phase="ispy" if kind == "ispyRound" else "learning", kind=kind, order_index=order,
             status=status, public_content={"kind": kind, **content}, vocabulary_item_id=item_id,
             completed_at=(occurred_at or self.now) if status == "completed" else None,
             skipped_at=(occurred_at or self.now) if status == "skipped" else None,
@@ -87,13 +89,14 @@ class History:
         ))
         return task_id
 
-    def attempt(self, task_id, results=None, correct=False, occurred_at=None, private=None):
+    def attempt(self, task_id, results=None, correct=False, occurred_at=None, private=None,
+                input_mode="vocabularyReview"):
         attempt_id = uuid4()
         attempt_number = self.attempt_numbers.get(task_id, 0) + 1
         self.attempt_numbers[task_id] = attempt_number
         self.connection.execute(insert(task_attempts).values(
             id=attempt_id, session_task_id=task_id, attempt_number=attempt_number,
-            input_mode="vocabularyReview",
+            input_mode=input_mode,
             response_payload=private or {"answers": {"private": "never sent to the model"}},
             is_correct=correct, created_at=occurred_at or self.now,
             updated_at=occurred_at or self.now,
@@ -208,6 +211,31 @@ def test_cold_start_ignores_manual_mastery_drafts_skips_and_current_session(hist
     current = history.session()
     history.learn(current, [entry("la taza", "cup", item_id=item)])
     assert history.snapshot(excluded=current) is None
+
+
+def test_standalone_game_observations_never_enter_lesson_history(history):
+    game = history.session(mode=SessionMode.ISPY)
+    hidden_word = history.word("secreto", "secret")
+    round_id = history.task(game, "ispyRound", {
+        "prompt": "Choose the described object", "options": ["hidden", "other"],
+    }, item_id=hidden_word)
+    history.encounter(game, round_id, hidden_word, outcome="correct")
+    history.attempt(round_id, correct=True, input_mode="multipleChoice")
+    assert history.snapshot() is None
+
+    lesson = history.session()
+    cup = history.word("taza", "cup")
+    introduction = history.learn(lesson, [entry("la taza", "cup", item_id=cup)], {
+        f"word-{cup}": False,
+    })
+    history.encounter(lesson, introduction, cup)
+    snapshot = history.snapshot()
+    assert snapshot["totals"]["sessionsCompleted"] == 1
+    assert snapshot["totals"]["gradedAttempts"] == 1
+    assert [word["term"] for word in snapshot["words"]] == ["taza"]
+    assert snapshot["words"][0]["incorrectCount"] == 1
+    assert snapshot == history.snapshot(excluded=game)
+    assert history.snapshot(excluded=lesson) is None
 
 
 def test_exact_word_results_include_adjectives_and_prepositions_without_group_scoring(history):

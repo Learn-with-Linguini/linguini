@@ -26,6 +26,7 @@ from app.repositories.postgres.vocabulary import (
     vocabulary_items,
     vocabulary_translations,
 )
+from app.schemas.enums import SessionMode
 
 MAX_WORDS = 16
 MAX_CONTEXT_BYTES = 6 * 1024
@@ -153,6 +154,7 @@ def snapshot_learner_history(
     scope = (
         sessions.c.user_id == user_id,
         sessions.c.language_profile_id == profile["id"],
+        sessions.c.mode == SessionMode.LESSON,
         sessions.c.id != excluded_session_id,
     )
     completed = connection.execute(
