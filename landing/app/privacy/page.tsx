@@ -11,7 +11,7 @@ export const metadata: Metadata = pageMetadata({
   path: "/privacy",
 });
 
-const effectiveDate = "10 October 2026";
+const effectiveDate = "13 October 2026";
 
 function Contact() {
   if (site.supportEmail) {
@@ -94,7 +94,10 @@ export default function PrivacyPage() {
               <li>Respond to support requests and conduct beta research with your permission.</li>
               <li>Meet legal obligations and establish, exercise or defend legal claims.</li>
             </ul>
-            <p>We do not sell your personal information or display your private photos to other learners.</p>
+            <p>
+              We do not sell your personal information. Your solo photos stay private. If you add a photo to a
+              private learning room, it is shared with the friend you invite to that room.
+            </p>
           </section>
 
           <section className={styles.section}>

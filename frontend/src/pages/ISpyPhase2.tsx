@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
+import { sessionDestination, sessionPaths } from "../lib/sessionRoute";
 import { Button, Card, Feedback, ProgressTrail, TopBar } from "../components/ui";
 import { ArrowRightIcon } from "../components/icons";
 import { ScenePhoto } from "../components/ScenePhoto";
@@ -15,7 +16,6 @@ import type { LanguageItem } from "../data/types";
 import { ReportIssueLink } from "../components/ReportIssueLink";
 
 export function ISpyPhase2() {
-  const scene = useScene();
   const navigate = useNavigate();
   const { session, completeSession, completionPending, completionError, practiceError } = useAppState();
   const [index, setIndex] = useState(() => {
@@ -25,15 +25,21 @@ export function ISpyPhase2() {
   });
   if (!session) return null;
   const { learning, clues, reflection } = practiceStages(session.tasks);
-  const base = `/practice/sessions/${scene.sessionId}`;
-  if (session.session.status === "completed") return <Navigate to={`${base}/summary`} replace />;
-  if (!learning.every(taskDone) || ["abandoned", "failed"].includes(session.session.status)) return <Navigate to={`${base}/learn`} replace />;
-  if (!clues.every(taskDone)) return <Navigate to={`${base}/ispy-1`} replace />;
+  const paths = sessionPaths(session);
+  const game = session.session.mode === "ispy";
+  if (session.session.status === "completed") return <Navigate to={paths.done} replace />;
+  if (game && ["abandoned", "failed"].includes(session.session.status)) {
+    const exit = sessionDestination(session);
+    return <Navigate to={exit.path} replace state={exit.notice ? { practiceNotice: exit.notice } : undefined} />;
+  }
+  if (!learning.every(taskDone) || ["abandoned", "failed"].includes(session.session.status)) return <Navigate to={paths.exit} replace />;
+  if (!clues.every(taskDone)) return <Navigate to={paths.clues} replace />;
   const task = reflection[index];
-  const finish = () => { if (completeSession()) navigate(`${base}/summary`); };
+  const finishLabel = game ? "See results" : "Finish session";
+  const finish = () => { if (completeSession()) navigate(paths.done); };
   const alerts = [practiceError, completionError].filter(Boolean);
-  if (!task) return <div className="stack"><TopBar title="Practice complete" />{reflection.length ? null : <p data-testid="no-description-round">This photo doesn't have enough confirmed colours or positions for a describing round, so there's nothing to describe this time.</p>}{alerts.map((message, alertIndex) => <p key={alertIndex} role="alert">{message}</p>)}<Button disabled={completionPending} onClick={finish}>Finish session</Button></div>;
-  return <Reflection key={task.id} task={task} index={index} total={reflection.length} onNext={() => index === reflection.length - 1 ? finish() : setIndex(value => value + 1)} />;
+  if (!task) return <div className="stack"><TopBar title={game ? "Game complete" : "Practice complete"} />{reflection.length ? null : <p data-testid="no-description-round">This photo doesn't have enough confirmed colours or positions for a describing round, so there's nothing to describe this time.</p>}{alerts.map((message, alertIndex) => <p key={alertIndex} role="alert">{message}</p>)}<Button disabled={completionPending} onClick={finish}>{finishLabel}</Button></div>;
+  return <Reflection key={task.id} task={task} index={index} total={reflection.length} finishLabel={finishLabel} onNext={() => index === reflection.length - 1 ? finish() : setIndex(value => value + 1)} />;
 }
 
 const OUTCOME_PROMPTS: Record<ISpyDescriptionOutcome, string> = {
@@ -48,7 +54,7 @@ const FRAME_LABELS: Record<ClueFrameId, string> = { name: "Name", colour: "Colou
 
 type LatestGuess = { attemptId: string; evaluation: ISpyDescriptionEvaluation; feedback: string | null };
 
-function Reflection({ task, index, total, onNext }: { task: SessionTask; index: number; total: number; onNext: () => void }) {
+function Reflection({ task, index, total, finishLabel, onNext }: { task: SessionTask; index: number; total: number; finishLabel: string; onNext: () => void }) {
   const scene = useScene();
   const { actOnTask, practiceSaving, practiceError } = useAppState();
   const [text, setText] = useState("");
@@ -221,7 +227,7 @@ function Reflection({ task, index, total, onNext }: { task: SessionTask; index: 
       ["Language", scene.languageCode],
     ]} /> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
-    {!hydrated ? null : answered ? <Button block disabled={practiceSaving} onClick={onNext}>{index === total - 1 ? "Finish session" : "Next item"} <ArrowRightIcon /></Button> : <>
+    {!hydrated ? null : answered ? <Button block disabled={practiceSaving} onClick={onNext}>{index === total - 1 ? finishLabel : "Next item"} <ArrowRightIcon /></Button> : <>
       {!guess ? <Button block disabled={!text.trim() || namesTarget || practiceSaving} onClick={() => void submit()}>Send my response</Button> : null}
       {outcome === "clearMatch" ? <Button block disabled={practiceSaving} onClick={() => void confirm()}>That's it</Button> : null}
       {outcome === "evaluationFailed" ? <Button block disabled={practiceSaving} onClick={() => void submit()}>Retry guessing</Button> : null}

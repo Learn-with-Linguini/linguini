@@ -11,6 +11,9 @@ import { Learn } from "./pages/Learn";
 import { LearningTaskPage } from "./pages/LearningTaskPage";
 import { ISpyPhase1 } from "./pages/ISpyPhase1";
 import { ISpyPhase2 } from "./pages/ISpyPhase2";
+import { ISpyModes } from "./pages/ISpyModes";
+import { ISpyPlay } from "./pages/ISpyPlay";
+import { ISpyResults } from "./pages/ISpyResults";
 import { SessionSummary } from "./pages/SessionSummary";
 import { Vocabulary } from "./pages/Vocabulary";
 import { Journal } from "./pages/Journal";
@@ -25,18 +28,26 @@ import { Contact } from "./pages/Contact";
 import { AppStateProvider } from "./state/AppState";
 import { useAuth } from "./state/Auth";
 import { LoadingScreen } from "./components/LoadingScreen";
+import { Rooms } from "./pages/Rooms";
+import { Room } from "./pages/Room";
 
 function RequireAuth() {
   const { session, loading } = useAuth();
   const location = useLocation();
   if (loading) return <LoadingScreen label="Checking your account…" />;
   if (import.meta.env.DEV) return <Outlet />;
-  if (!session) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  if (!session) return <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}` }} />;
   return <Outlet />;
 }
 
 function AuthenticatedApp() {
   return <AppStateProvider><Outlet /></AppStateProvider>;
+}
+
+/** Keep existing private invitation URLs while placing their lobby under I-Spy. */
+function RoomInvitationRoute() {
+  const { search, state } = useLocation();
+  return <Navigate to={`/ispy/friends${search}`} state={state} replace />;
 }
 
 function OnboardingRoute() {
@@ -58,6 +69,7 @@ export default function App() {
       <Route element={<RequireAuth />}>
         <Route element={<AuthenticatedApp />}>
           <Route element={<FocusShell />}>
+        <Route path="/rooms/:roomId" element={<Room />} />
         <Route path="/practice/sessions/:sessionId" element={<SessionRoute />}>
           <Route path="analysis" element={<PracticeAnalysis />} />
           <Route path="mic-test" element={<MicTest />} />
@@ -67,11 +79,20 @@ export default function App() {
           <Route path="ispy-2" element={<ISpyPhase2 />} />
           <Route path="summary" element={<SessionSummary />} />
         </Route>
+        <Route path="/ispy/games/:sessionId" element={<SessionRoute />}>
+          <Route path="clues" element={<ISpyPhase1 />} />
+          <Route path="describe" element={<ISpyPhase2 />} />
+          <Route path="results" element={<ISpyResults />} />
+        </Route>
         <Route path="/practice/:sceneId/*" element={<SceneRoute />} />
           </Route>
           <Route element={<AppShell />}>
         <Route path="/home" element={<Home />} />
+        <Route path="/rooms" element={<RoomInvitationRoute />} />
         <Route path="/practice" element={<PracticeSelect />} />
+        <Route path="/ispy" element={<ISpyModes />} />
+        <Route path="/ispy/play" element={<ISpyPlay />} />
+        <Route path="/ispy/friends" element={<Rooms />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/vocabulary" element={<Vocabulary />} />
         <Route path="/journal" element={<Journal />} />

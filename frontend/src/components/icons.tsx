@@ -21,6 +21,13 @@ export const HomeIcon = ({ size = 22, className }: IconProps) => (
   </svg>
 );
 
+export const EyeIcon = ({ size = 22, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
 export const CameraIcon = ({ size = 22, className }: IconProps) => (
   <svg {...base(size)} className={className}>
     <path d="M3 8.5h3.5L8 6h8l1.5 2.5H21V19H3z" />

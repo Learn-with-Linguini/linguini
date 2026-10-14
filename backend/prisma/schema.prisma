@@ -22,8 +22,50 @@ model User {
   mediaAssets         MediaAsset[]
   vocabularyProgress  UserVocabularyProgress[]
   xpEvents            XpEvent[]
+  gameAccount         GameAccount?
+  gameResourceEvents  GameResourceEvent[]
+  hostedRooms         LearningRoom[] @relation("RoomHost")
+  roomMemberships     RoomMember[]
+  roomPhotos          RoomPhoto[] @relation("RoomPhotoOwner")
+  sentRoomTurns       RoomTurn[] @relation("RoomSender")
+  guessedRoomTurns    RoomTurn[] @relation("RoomGuesser")
+  roomCommands        RoomCommand[]
+  roomContributions   RoomContribution[]
 
   @@map("users")
+}
+
+model GameAccount {
+  userId           String @id @map("user_id") @db.Uuid
+  user             User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  sauceRemaining   Int @map("sauce_remaining")
+  sauceCapacity    Int @map("sauce_capacity")
+  saucePeriodStart DateTime @map("sauce_period_start") @db.Timestamptz(6)
+  sauceRefillsAt   DateTime @map("sauce_refills_at") @db.Timestamptz(6)
+  basilBalance     Int @default(0) @map("basil_balance")
+  appearance       String @default("default") @db.VarChar(10)
+  ownedAppearances Json @default("[\"default\"]") @map("owned_appearances") @db.JsonB
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("game_accounts")
+}
+
+model GameResourceEvent {
+  id               String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String @map("user_id") @db.Uuid
+  user             User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  sourceKey        String @map("source_key") @db.Text
+  kind             String @db.VarChar(20)
+  sauceDelta       Int @default(0) @map("sauce_delta")
+  basilDelta       Int @default(0) @map("basil_delta")
+  saucePeriodStart DateTime? @map("sauce_period_start") @db.Timestamptz(6)
+  payload          Json @default("{}") @db.JsonB
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([userId, sourceKey], map: "game_resource_events_source_key")
+  @@index([userId, createdAt], map: "game_resource_events_user_time_idx")
+  @@map("game_resource_events")
 }
 
 // SQL migration also owns case-insensitive pair uniqueness and the partial
@@ -42,6 +84,7 @@ model LanguageProfile {
   updatedAt          DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
   sessions           Session[]
   journals           Journal[]
+  roomMembers        RoomMember[]
   xpEvents           XpEvent[]
 
   @@unique([id, userId])
@@ -91,6 +134,7 @@ model MediaAsset {
   journalMedia       JournalMedia[]
   preloadedScenes    PreloadedScene[]
   sessions           Session[]
+  roomPhotos         RoomPhoto[]
 
   @@index([ownerUserId])
   @@map("media_assets")
@@ -147,6 +191,13 @@ enum SessionStatus {
   @@map("session_status")
 }
 
+enum SessionMode {
+  lesson
+  ispy
+
+  @@map("session_mode")
+}
+
 model Session {
   id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId String @map("user_id") @db.Uuid
@@ -155,6 +206,11 @@ model Session {
   sceneMediaAssetId String @map("scene_media_asset_id") @db.Uuid
   sceneMediaAsset MediaAsset @relation(fields: [sceneMediaAssetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   status SessionStatus @default(created) @map("session_status")
+  mode SessionMode @default(lesson) @map("session_mode")
+  sourceSessionId String? @map("source_session_id") @db.Uuid
+  sourceSession Session? @relation("SessionSnapshotSource", fields: [sourceSessionId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  snapshots Session[] @relation("SessionSnapshotSource")
+  sceneConfirmedAt DateTime? @map("scene_confirmed_at") @db.Timestamptz(6)
   sessionTitle String? @map("session_title") @db.Text
   sessionSummary String? @map("session_summary") @db.Text
   analysisDraft Json? @map("analysis_draft") @db.JsonB
@@ -173,6 +229,7 @@ model Session {
   @@unique([userId, languageProfileId, idempotencyKey])
   @@index([languageProfileId, userId])
   @@index([sceneMediaAssetId])
+  @@index([userId, sceneMediaAssetId])
   @@map("sessions")
 }
 
@@ -469,4 +526,143 @@ model JournalWordMention {
   @@index([vocabularyItemId])
   @@index([sourceEncounterId])
   @@map("journal_word_mentions")
+}
+
+model LearningRoom {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  hostUserId String? @map("host_user_id") @db.Uuid
+  host User? @relation("RoomHost", fields: [hostUserId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  sourceLanguageCode String @map("source_language_code") @db.VarChar(35)
+  targetLanguageCode String @map("target_language_code") @db.VarChar(35)
+  proficiencyLevel String @map("proficiency_level") @db.VarChar(2)
+  status String @db.VarChar(16)
+  revision Int @default(0)
+  inviteHash String @unique @map("invite_hash") @db.VarChar(64)
+  inviteCode String? @map("invite_code") @db.VarChar(64)
+  inviteExpiresAt DateTime @map("invite_expires_at") @db.Timestamptz(6)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  endedAt DateTime? @map("ended_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  members RoomMember[]
+  photos RoomPhoto[]
+  turns RoomTurn[]
+  commands RoomCommand[]
+  contributions RoomContribution[]
+
+  @@map("learning_rooms")
+}
+
+model RoomMember {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roomId String @map("room_id") @db.Uuid
+  room LearningRoom @relation(fields: [roomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String @map("user_id") @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  languageProfileId String? @map("language_profile_id") @db.Uuid
+  languageProfile LanguageProfile? @relation(fields: [languageProfileId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  seat Int
+  ready Boolean @default(false)
+  active Boolean @default(true)
+  joinedAt DateTime @default(now()) @map("joined_at") @db.Timestamptz(6)
+
+  @@unique([roomId, userId])
+  @@unique([roomId, seat])
+  @@index([userId, joinedAt], map: "room_members_user_joined_idx")
+  @@map("room_members")
+}
+
+model RoomPhoto {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roomId String @map("room_id") @db.Uuid
+  room LearningRoom @relation(fields: [roomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  ownerUserId String? @map("owner_user_id") @db.Uuid
+  owner User? @relation("RoomPhotoOwner", fields: [ownerUserId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  mediaAssetId String? @map("media_asset_id") @db.Uuid
+  mediaAsset MediaAsset? @relation(fields: [mediaAssetId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  status String @db.VarChar(20)
+  moderationPassed Boolean @default(false) @map("moderation_passed")
+  contentHash String? @map("content_hash") @db.VarChar(64)
+  analysis Json? @db.JsonB
+  review Json? @db.JsonB
+  pack Json? @db.JsonB
+  processingClaimId String? @map("processing_claim_id") @db.Uuid
+  claimExpiresAt DateTime? @map("claim_expires_at") @db.Timestamptz(6)
+  analysisAttempts Int @default(0) @map("analysis_attempts")
+  preparationAttempts Int @default(0) @map("preparation_attempts")
+  errorCode String? @map("error_code") @db.VarChar(60)
+  errorMessage String? @map("error_message") @db.VarChar(300)
+  retryable Boolean @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  turns RoomTurn[]
+
+  @@unique([roomId, mediaAssetId])
+  @@index([ownerUserId], map: "room_photos_owner_idx")
+  @@index([mediaAssetId], map: "room_photos_media_idx")
+  @@map("room_photos")
+}
+
+model RoomTurn {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roomId String @map("room_id") @db.Uuid
+  room LearningRoom @relation(fields: [roomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  photoId String? @map("photo_id") @db.Uuid
+  photo RoomPhoto? @relation(fields: [photoId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  turnIndex Int @map("turn_index")
+  senderUserId String? @map("sender_user_id") @db.Uuid
+  sender User? @relation("RoomSender", fields: [senderUserId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  guesserUserId String? @map("guesser_user_id") @db.Uuid
+  guesser User? @relation("RoomGuesser", fields: [guesserUserId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  phase String @db.VarChar(16)
+  targetObjectKey String? @map("target_object_key") @db.VarChar(100)
+  clueOptionId String? @map("clue_option_id") @db.VarChar(100)
+  clue String? @db.Text
+  guessedObjectKeys Json @default("[]") @map("guessed_object_keys") @db.JsonB
+  isCorrect Boolean? @map("is_correct")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  resolvedAt DateTime? @map("resolved_at") @db.Timestamptz(6)
+  contributions RoomContribution[]
+
+  @@unique([roomId, turnIndex])
+  @@unique([roomId, photoId])
+  @@unique([id, roomId])
+  @@map("room_turns")
+}
+
+model RoomCommand {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roomId String @map("room_id") @db.Uuid
+  room LearningRoom @relation(fields: [roomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String @map("user_id") @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  commandId String @map("command_id") @db.Uuid
+  kind String @db.VarChar(80)
+  fingerprint String @db.VarChar(64)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([roomId, userId, commandId])
+  @@map("room_commands")
+}
+
+model RoomContribution {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roomId String @map("room_id") @db.Uuid
+  room LearningRoom @relation(fields: [roomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  turnId String @map("turn_id") @db.Uuid
+  turn RoomTurn @relation(fields: [turnId, roomId], references: [id, roomId], onDelete: Cascade, onUpdate: Cascade)
+  userId String @map("user_id") @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  clueSent Boolean @default(false) @map("clue_sent")
+  guessCount Int @default(0) @map("guess_count")
+  correctGuess Boolean @default(false) @map("correct_guess")
+  acknowledged Boolean @default(false)
+  basilEarned Int @default(0) @map("basil_earned")
+  xpEarned Int @default(0) @map("xp_earned")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([turnId, userId])
+  @@index([userId], map: "room_contributions_user_idx")
+  @@map("room_contributions")
 }

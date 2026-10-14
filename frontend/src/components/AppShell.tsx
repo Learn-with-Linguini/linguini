@@ -1,5 +1,5 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { BookIcon, CameraIcon, HomeIcon, JournalIcon, PersonIcon } from "./icons";
+import { BookIcon, CameraIcon, EyeIcon, HomeIcon, JournalIcon, PersonIcon } from "./icons";
 import { BrandBar } from "./ui";
 import { BackActionProvider, useRegisteredBackAction } from "./BackAction";
 import { useAuth } from "../state/Auth";
@@ -7,6 +7,7 @@ import { useAuth } from "../state/Auth";
 const items = [
   { to: "/home", label: "Home", Icon: HomeIcon },
   { to: "/practice", label: "Practice", Icon: CameraIcon },
+  { to: "/ispy", label: "I-Spy", Icon: EyeIcon },
   { to: "/vocabulary", label: "Vocabulary", Icon: BookIcon },
   { to: "/journal", label: "Journal", Icon: JournalIcon },
   { to: "/profile", label: "Profile", Icon: PersonIcon },
@@ -18,9 +19,11 @@ export function AppShell() {
     pathname === "/journal/new" ||
     /^\/journal\/[^/]+$/.test(pathname) ||
     pathname === "/profile/edit" ||
+    pathname === "/ispy/play" ||
+    pathname === "/ispy/friends" ||
     pathname === "/contact";
   const usesWideCanvas =
-    ["/home", "/practice", "/vocabulary", "/journal"].includes(pathname) ||
+    ["/home", "/practice", "/ispy/play", "/vocabulary", "/journal"].includes(pathname) ||
     pathname === "/journal/new" ||
     /^\/journal\/[^/]+$/.test(pathname);
 

@@ -114,7 +114,7 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, signal?: AbortSignal, options?: RequestInit): Promise<T> {
+async function requestResponse(path: string, signal?: AbortSignal, options?: RequestInit): Promise<Response> {
   if (!apiBaseUrl) {
     throw new Error("The app is still being set up. Please try again in a moment.");
   }
@@ -136,8 +136,17 @@ async function request<T>(path: string, signal?: AbortSignal, options?: RequestI
     const activeSessionId = typeof body?.detail?.activeSessionId === "string" ? body.detail.activeSessionId : null;
     throw new ApiError(message, response.status, code, activeSessionId);
   }
+  return response;
+}
+
+export async function request<T>(path: string, signal?: AbortSignal, options?: RequestInit): Promise<T> {
+  const response = await requestResponse(path, signal, options);
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
+}
+
+export async function requestBlob(path: string, signal?: AbortSignal): Promise<Blob> {
+  return (await requestResponse(path, signal, { cache: "no-store" })).blob();
 }
 
 export function getCurrentUser(signal?: AbortSignal): Promise<User> {
@@ -185,7 +194,7 @@ export interface LessonReportInput {
   context: Array<{ label: string; value: string }>;
 }
 
-function write<T>(path: string, method: string, body: unknown): Promise<T> {
+export function write<T>(path: string, method: string, body: unknown): Promise<T> {
   return request(path, undefined, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 }
 
@@ -387,9 +396,17 @@ export interface SessionTask {
 export interface SessionProgress {
   completedTaskCount: number; skippedTaskCount: number; terminalTaskCount: number; totalTaskCount: number;
 }
+export type SessionMode = "lesson" | "ispy";
 export type SessionStatus = "created" | "analyzingScene" | "awaitingObjectReview" | "generatingTasks" | "ready" | "inProgress" | "completed" | "abandoned" | "failed";
+export type PracticeFocus = "genderNumberAgreement" | "pluralNounForm" | "sceneDescription" | "chainedDescription";
+export interface SessionPersonalization {
+  /** Counts completed sessions; earlier practice evidence can exist when this is zero. */
+  previousSessions: number;
+  returningWords: { word: string; needsReview: boolean }[];
+  practiceFocuses: PracticeFocus[];
+}
 export interface PracticeDetail {
-  session: { id: string; status: SessionStatus; sceneMediaAssetId: string; sessionTitle: string | null; sessionSummary: string | null; failureCode: "imageUploadFailed" | "sceneAnalysisFailed" | "imageModerationFailed" | "noValidObjects" | "vocabularyMappingFailed" | "taskGenerationFailed" | null };
+  session: { id: string; mode: SessionMode; sourceSessionId: string | null; status: SessionStatus; sceneMediaAssetId: string; sessionTitle: string | null; sessionSummary: string | null; failureCode: "imageUploadFailed" | "sceneAnalysisFailed" | "imageModerationFailed" | "noValidObjects" | "vocabularyMappingFailed" | "taskGenerationFailed" | null };
   mediaAsset: { id: string; source: "preloaded" | "camera" | "userUpload" };
   sceneId: string | null; title: string;
   analysisMode: "placeholder" | null;
@@ -404,6 +421,7 @@ export interface PracticeDetail {
     relationships: TranslatedTerm[];
   } | null;
   tasks: SessionTask[]; nextTaskId: string | null; progress: SessionProgress;
+  personalization?: SessionPersonalization | null;
 }
 interface TranslatedTerm { key: string; source: string; translation: string }
 export interface SceneObject {
@@ -447,7 +465,7 @@ export interface TaskAttemptResult {
 }
 /** The owner's latest round-two attempt, as much as is needed to restore it after a reload. */
 export interface LatestClueAttempt {
-  id: string; attemptNumber: number; text: string; feedback: string | null;
+  id: string; attemptNumber: number; text: string; optionId: string | null; isCorrect: boolean | null; feedback: string | null;
   evaluationDetails: ISpyDescriptionEvaluation | null; assistance: ClueAssistance | null;
 }
 export const getLatestAttempt = (taskId: string, signal?: AbortSignal) =>
@@ -486,4 +504,12 @@ export const completePractice = (id: string) => write<{ id: string; status: stri
 export const abandonPractice = (id: string) => write<{ id: string; status: string }>(`/api/v1/sessions/${id}/abandon`, "POST", {});
 export const getPracticeSummary = (id: string) => request<{ progress: SessionProgress; learnedVocabularyIds: string[]; xpEarned: number; ispyCorrectCount: number; ispyAttemptCount: number }>(`/api/v1/sessions/${id}/summary`);
 
+export interface ISpyPhoto { mediaAsset: { id: string; source: "camera" | "userUpload"; createdAt: string }; playable: boolean; confirmedAt: string | null }
+export interface ISpyPhotoPage { photos: ISpyPhoto[]; nextCursor: string | null }
+export const getISpyPhotos = (cursor: string | null, signal?: AbortSignal) =>
+  request<ISpyPhotoPage>(`/api/v1/ispy/photos${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`, signal);
+export const getActiveISpyGame = (signal?: AbortSignal) => request<PracticeDetail | null>("/api/v1/ispy/games/active", signal);
+export const startISpyGame = (profileId: string, assetId: string, key: string) => write<PracticeDetail>("/api/v1/ispy/games", "POST", {
+  languageProfileId: profileId, mediaAssetId: assetId, idempotencyKey: key,
+});
 export const checkPracticeWord = (id: string, label: string) => request<{ available: boolean }>(`/api/v1/sessions/${id}/review-word?label=${encodeURIComponent(label)}`);

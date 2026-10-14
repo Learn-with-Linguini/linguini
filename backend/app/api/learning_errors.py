@@ -10,6 +10,13 @@ from app.repositories.language_profiles import (
 )
 from app.repositories.learning import LearningStorageError
 from app.repositories.media_assets import MediaAssetConflictError, MediaAssetStorageError
+from app.repositories.postgres.game_resources import (
+    GameResourcesUnavailableError,
+    InsufficientBasilError,
+    ResourceCommandConflictError,
+    SauceExhaustedError,
+)
+from app.repositories.postgres.rooms import RoomError
 from app.repositories.practice import (
     ActiveSessionExistsError,
     ActiveSessionLimitReachedError,
@@ -42,6 +49,15 @@ from app.services.users import UserNotFoundError
 
 def register_learning_errors(app: FastAPI) -> None:
     errors = {
+        GameResourcesUnavailableError: (
+            503, "game_resources_unavailable", "Game resources are unavailable right now."
+        ),
+        InsufficientBasilError: (
+            409, "insufficient_basil", "Collect 20 Basil leaves to unlock this appearance."
+        ),
+        ResourceCommandConflictError: (
+            409, "resource_command_conflict", "This request was used for another appearance."
+        ),
         InvalidImageUpload: (
             422,
             "invalid_image_upload",
@@ -173,3 +189,17 @@ def register_learning_errors(app: FastAPI) -> None:
 
     for error_type in errors:
         app.add_exception_handler(error_type, handle_error)
+
+    async def handle_sauce(request: Request, exc: SauceExhaustedError) -> JSONResponse:
+        return JSONResponse(status_code=409, content={"detail": {
+            "code": "sauce_empty", "message": str(exc),
+            "remaining": 0, "refillsAt": exc.refills_at.isoformat(),
+        }})
+
+    async def handle_room(request: Request, exc: RoomError) -> JSONResponse:
+        return JSONResponse(status_code=exc.status_code, content={"detail": {
+            "code": exc.code, "message": exc.message,
+        }})
+
+    app.add_exception_handler(SauceExhaustedError, handle_sauce)
+    app.add_exception_handler(RoomError, handle_room)

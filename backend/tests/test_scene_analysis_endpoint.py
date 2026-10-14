@@ -109,7 +109,7 @@ def test_analyze_persists_title_summary_and_draft(database):
     for relation in relations:
         assert relation["subjectSceneObjectId"] in ids
         assert relation["referenceSceneObjectId"] in ids
-        assert relation["sourceRelationKey"].startswith("deterministic-v1:")
+        assert relation["sourceRelationKey"] == "precomputed-v1"
     saved = client.get(f"/api/v1/sessions/{sid}").json()["session"]
     assert saved["sessionTitle"]
     assert saved["sessionSummary"]
