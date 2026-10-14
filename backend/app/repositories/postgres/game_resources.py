@@ -70,10 +70,6 @@ class GameResourcesUnavailableError(Exception):
     pass
 
 
-def game_resources_enabled() -> bool:
-    return os.getenv("GAME_RESOURCES_ENABLED", "false").strip().lower() == "true"
-
-
 def sauce_capacity() -> int:
     try:
         capacity = int(os.getenv("DAILY_SAUCE_CAPACITY", "10"))
@@ -126,8 +122,6 @@ def _insert_event(connection, user_id, source_key, kind, *, sauce=0, basil=0,
 
 
 def spend_sauce(connection, user_id: UUID, activity_key: str) -> int:
-    if not game_resources_enabled():
-        return 0
     account = _account(connection, user_id)
     key = f"sauce:{activity_key}"
     if _event(connection, user_id, key):
@@ -143,12 +137,10 @@ def spend_sauce(connection, user_id: UUID, activity_key: str) -> int:
 
 
 def refund_sauce(connection, user_id: UUID, activity_key: str) -> int:
-    # The flag can change while a generation job runs; a recorded charge still gets refunded.
-    account = _account(connection, user_id) if game_resources_enabled() else None
     charge = _event(connection, user_id, f"sauce:{activity_key}")
     if charge is None:
         return 0
-    account = account or _account(connection, user_id)
+    account = _account(connection, user_id)
     key = f"refund:{activity_key}"
     if _event(connection, user_id, key):
         return 0
@@ -162,8 +154,6 @@ def refund_sauce(connection, user_id: UUID, activity_key: str) -> int:
 
 
 def reward_basil(connection, user_id: UUID, source_key: str) -> int:
-    if not game_resources_enabled():
-        return 0
     _account(connection, user_id)
     key = f"basil:{source_key}"
     if _event(connection, user_id, key):

@@ -11,6 +11,9 @@ import { Learn } from "./pages/Learn";
 import { LearningTaskPage } from "./pages/LearningTaskPage";
 import { ISpyPhase1 } from "./pages/ISpyPhase1";
 import { ISpyPhase2 } from "./pages/ISpyPhase2";
+import { ISpyModes } from "./pages/ISpyModes";
+import { ISpyPlay } from "./pages/ISpyPlay";
+import { ISpyResults } from "./pages/ISpyResults";
 import { SessionSummary } from "./pages/SessionSummary";
 import { Vocabulary } from "./pages/Vocabulary";
 import { Journal } from "./pages/Journal";
@@ -39,6 +42,12 @@ function RequireAuth() {
 
 function AuthenticatedApp() {
   return <AppStateProvider><Outlet /></AppStateProvider>;
+}
+
+/** Keep existing private invitation URLs while placing their lobby under I-Spy. */
+function RoomInvitationRoute() {
+  const { search, state } = useLocation();
+  return <Navigate to={`/ispy/friends${search}`} state={state} replace />;
 }
 
 function OnboardingRoute() {
@@ -70,12 +79,20 @@ export default function App() {
           <Route path="ispy-2" element={<ISpyPhase2 />} />
           <Route path="summary" element={<SessionSummary />} />
         </Route>
+        <Route path="/ispy/games/:sessionId" element={<SessionRoute />}>
+          <Route path="clues" element={<ISpyPhase1 />} />
+          <Route path="describe" element={<ISpyPhase2 />} />
+          <Route path="results" element={<ISpyResults />} />
+        </Route>
         <Route path="/practice/:sceneId/*" element={<SceneRoute />} />
           </Route>
           <Route element={<AppShell />}>
         <Route path="/home" element={<Home />} />
-        <Route path="/rooms" element={<Rooms />} />
+        <Route path="/rooms" element={<RoomInvitationRoute />} />
         <Route path="/practice" element={<PracticeSelect />} />
+        <Route path="/ispy" element={<ISpyModes />} />
+        <Route path="/ispy/play" element={<ISpyPlay />} />
+        <Route path="/ispy/friends" element={<Rooms />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/vocabulary" element={<Vocabulary />} />
         <Route path="/journal" element={<Journal />} />

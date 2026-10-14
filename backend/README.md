@@ -58,19 +58,24 @@ engine per process and disposes it at shutdown.
 
 ### Sauce and photo rooms
 
-Apply the game resource and uploaded photo room migrations before enabling these
-features. Set `GAME_RESOURCES_ENABLED=true` and `PLAY_TOGETHER_ENABLED=true` on the
-API, with matching `VITE_GAME_RESOURCES_ENABLED` and `VITE_PLAY_TOGETHER_ENABLED`
-flags when building the frontend. Both features are disabled by default.
+Apply the game resource, uploaded photo room and room invite migrations before
+deploying. Sauce, Basil and two-player rooms are available automatically; they
+require no feature switches in the API or frontend. The I-Spy tab offers both
+standalone play with AI and a friend-room lobby.
 
 `DAILY_SAUCE_CAPACITY` defaults to 10 (allowed range: 1–100). Sauce refills at
 00:00 UTC and applies to every account tier, including beta. Starting a solo
 lesson or a photo room costs one Sauce per player. Resuming does not spend again;
 failed setup and lessons left before any practice return the reserved Sauce.
-Basil leaves reward submitted practice; 20 leaves unlock a Sauce jar appearance.
+Basil leaves reward submitted lesson and room practice; 20 leaves unlock a Sauce
+jar appearance. Standalone AI I-Spy games remain free and do not award Basil, XP
+or vocabulary progress.
 
-Rooms require a stable `ROOM_INVITE_SECRET` of at least 32 random characters on
-every API worker. They support two players learning English to Spanish or French
+Rooms store random invitations privately in the database, so a host can recover
+an invitation after reload or an API restart without a separate room secret.
+The invite migration rotates existing live invitations; hosts should copy the
+new code after deployment. Rooms support two players learning English to Spanish
+or French
 at the same A1/A2 level, with 2–4 photos uploaded by either player. Photo sharing
 requires configured image moderation and fails closed if moderation is unavailable.
 Invitations expire after 10 minutes; setup and play each expire after 30 minutes.
@@ -220,6 +225,11 @@ Spanish, and stores the assembled suggested words in
 `preloaded_scenes.content.items` so the Scene Analysis review screen opens
 with words already on the photo. `content.tasks/rounds/prompts` stay minimal
 placeholders; real lessons and clues come from the templates below.
+
+Each item's `attributes.color` and the scene's `content.relations` are curated from
+the images (migration `20261013010000_preloaded_scene_facts`), so preloaded lessons and
+I-Spy games get describing rounds. Re-running the script with `--emit-migration`
+replaces them with detected facts; review those before applying.
 
 ```sh
 python -m app.scripts.precompute_preloaded_scenes --dry-run --json out.json
@@ -423,7 +433,9 @@ and changing one slot rewrites only that frame's sentence. The submitted `assist
 the task's frames and stored in `responsePayload`; it records guided practice and never
 changes correctness or vocabulary credit. Frames stay in `publicContent`, so the guess
 model never sees them, and `GET /tasks/{id}/latest-attempt` returns the saved assistance
-so slot picks and revealed help survive a reload.
+so slot picks and revealed help survive a reload. For round-one clues it returns the
+chosen `optionId`, `isCorrect` and feedback, so an answered clue still shows its grade
+when the original response was lost.
 
 Journals are unique per user/local date across all target languages. Saves append
 immutable revisions, with identical retries avoiding duplicate revisions. Media

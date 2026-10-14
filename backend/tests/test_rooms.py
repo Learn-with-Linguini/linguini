@@ -4,6 +4,7 @@ import hashlib
 import os
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
+from pathlib import Path
 from types import SimpleNamespace
 from typing import Annotated
 from uuid import uuid4
@@ -11,7 +12,8 @@ from uuid import uuid4
 import pytest
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.testclient import TestClient
-from sqlalchemy import delete, func, insert, select, update
+from sqlalchemy import delete, func, insert, select, text, update
+from sqlalchemy.exc import IntegrityError
 
 from app.api.auth import get_current_user_id
 from app.api.dependencies import get_room_service
@@ -31,7 +33,6 @@ from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.rooms import (
     PostgresRoomRepository,
     RoomError,
-    RoomUnavailableError,
     cleanup_room_account,
     learning_rooms,
     room_contributions,
@@ -57,8 +58,6 @@ from app.schemas.users import LanguageProfile, User
 from app.services.background import InlineBackgroundRunner
 from app.services.room_photos import RoomPhotoError
 from app.services.rooms import RoomService
-
-SECRET = "room-tests-stable-secret-with-32-characters"
 
 
 class PhotoPreparer:
@@ -129,7 +128,6 @@ def db(monkeypatch):
     if not os.getenv("TEST_DATABASE_URL"):
         pytest.skip("Requires migrated disposable PostgreSQL")
     monkeypatch.setenv("DATABASE_URL", os.environ["TEST_DATABASE_URL"])
-    monkeypatch.setenv("GAME_RESOURCES_ENABLED", "true")
     monkeypatch.setenv("DAILY_SAUCE_CAPACITY", "10")
     engine = create_database_engine()
     if os.getenv("TEST_DATABASE_SCHEMA"):
@@ -167,7 +165,7 @@ def db(monkeypatch):
     preparer = PhotoPreparer()
     repos = [
         PostgresRoomRepository(
-            engine, p.id, SECRET, spend_sauce=spend_sauce, reward_basil=reward_basil
+            engine, p.id, spend_sauce=spend_sauce, reward_basil=reward_basil
         )
         for p in people
     ]
@@ -563,7 +561,7 @@ def test_photo_leases_restart_retry_and_stale_completion(db):
             .where(room_photos.c.id == photo_id)
             .values(claim_expires_at=utc_now() - timedelta(seconds=1))
         )
-    restored = PostgresRoomRepository(db.engine, db.people[0].id, SECRET).get(room_id)
+    restored = PostgresRoomRepository(db.engine, db.people[0].id).get(room_id)
     assert restored.photos[0].retryable and restored.photos[0].status == "failed"
     db.repos[0].retry_photo(room_id, photo_id, command(restored))
     newer = db.repos[0].claim_photo(room_id, photo_id)
@@ -629,7 +627,7 @@ def test_expiry_survives_restart_releases_slot_and_blocks_media(db):
                 created_at=utc_now() - timedelta(hours=1),
             )
         )
-    fresh = PostgresRoomRepository(db.engine, db.people[0].id, SECRET)
+    fresh = PostgresRoomRepository(db.engine, db.people[0].id)
     assert fresh.get(room_id).status == "expired" and fresh.active() is None
     with pytest.raises(RoomError):
         fresh.authorized_photo_asset(db.people[0].id, room_id, photo_id)
@@ -662,6 +660,9 @@ def test_account_cleanup_revokes_photos_but_retains_partner_rewards(db, phase, d
             select(users.c.id).where(users.c.id == db.people[deleted_actor].id).with_for_update()
         ).all()
         cleanup_room_account(c, db.people[deleted_actor].id)
+        assert c.execute(select(learning_rooms.c.invite_code).where(
+            learning_rooms.c.id == room_id,
+        )).scalar_one() is None
         owned = list(
             c.execute(
                 select(room_photos).where(
@@ -747,9 +748,158 @@ def test_api_requires_actor_and_rejects_room_image_access_outside_membership(db)
         )
 
 
-def test_missing_stable_invite_secret_fails_closed(db):
-    with pytest.raises(RoomUnavailableError):
-        PostgresRoomRepository(db.engine, db.people[0].id, "short")
+def test_durable_random_invite_survives_restart_without_external_secret(db, monkeypatch):
+    monkeypatch.delenv("ROOM_INVITE_SECRET", raising=False)
+    request = CreateRoomRequest(command_id=uuid4(), language_profile_id=db.profiles[0].id)
+    access = db.repos[0].create(request)
+    code = access.invite_code
+    assert len(code) == 64 and all(character in "0123456789abcdef" for character in code)
+    with db.engine.connect() as c:
+        stored = c.execute(select(learning_rooms).where(
+            learning_rooms.c.id == access.room.id,
+        )).mappings().one()
+    assert stored["invite_code"] == code
+    assert stored["invite_hash"] == hashlib.sha256(code.encode()).hexdigest()
+    fresh = PostgresRoomRepository(db.engine, db.people[0].id)
+    assert fresh.get(access.room.id).invite_code == code
+    assert fresh.active().invite_code == code
+    replay = fresh.create(request)
+    assert replay.invite_code == code and replay.room.invite_code == code
+    with pytest.raises(RoomError):
+        db.repos[2].get(access.room.id)
+    joined = db.repos[1].join(JoinRoomRequest(
+        command_id=uuid4(), language_profile_id=db.profiles[1].id, invite_code=code,
+    ))
+    assert joined.invite_code is None and joined.room.invite_code is None
+    assert code not in joined.model_dump_json()
+
+
+def test_concurrent_create_replays_persist_one_invitation(db):
+    request = CreateRoomRequest(command_id=uuid4(), language_profile_id=db.profiles[0].id)
+    workers = [PostgresRoomRepository(db.engine, db.people[0].id) for _ in range(2)]
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        access = list(pool.map(lambda repo: repo.create(request), workers))
+    assert access[0].room.id == access[1].room.id
+    assert access[0].invite_code == access[1].invite_code
+    with db.engine.connect() as c:
+        assert c.execute(select(func.count()).select_from(learning_rooms).where(
+            learning_rooms.c.host_user_id == db.people[0].id,
+        )).scalar_one() == 1
+
+
+@pytest.mark.parametrize("revocation", ["leave", "invite_expiry", "room_expiry"])
+def test_revoked_invitation_is_erased_and_cannot_be_recovered_by_create_replay(db, revocation):
+    request = CreateRoomRequest(command_id=uuid4(), language_profile_id=db.profiles[0].id)
+    access = db.repos[0].create(request)
+    if revocation == "leave":
+        db.services[0].leave(access.room.id, command(access.room))
+    else:
+        with db.engine.begin() as c:
+            values = {"invite_expires_at": utc_now() - timedelta(seconds=1)}
+            if revocation == "room_expiry":
+                values = {
+                    "expires_at": utc_now() - timedelta(seconds=1),
+                    "created_at": utc_now() - timedelta(hours=1),
+                }
+            c.execute(update(learning_rooms).where(
+                learning_rooms.c.id == access.room.id,
+            ).values(**values))
+    fresh = PostgresRoomRepository(db.engine, db.people[0].id)
+    assert fresh.get(access.room.id).invite_code is None
+    with db.engine.connect() as c:
+        assert c.execute(select(learning_rooms.c.invite_code).where(
+            learning_rooms.c.id == access.room.id,
+        )).scalar_one() is None
+    replay = fresh.create(request)
+    assert replay.invite_code is None and replay.room.invite_code is None
+    assert access.invite_code not in replay.model_dump_json()
+    with pytest.raises(RoomError):
+        db.repos[1].join(JoinRoomRequest(
+            command_id=uuid4(), language_profile_id=db.profiles[1].id,
+            invite_code=access.invite_code,
+        ))
+
+
+def test_start_revokes_durable_invite_for_both_players(db):
+    room_id, _ = prepared_game(db)
+    code = db.repos[0].get(room_id).invite_code
+    snapshot = start(db, room_id)
+    assert snapshot.invite_code is None
+    assert db.repos[0].get(room_id).invite_code is None
+    assert db.repos[1].get(room_id).invite_code is None
+    with db.engine.connect() as c:
+        assert c.execute(select(learning_rooms.c.invite_code).where(
+            learning_rooms.c.id == room_id,
+        )).scalar_one() is None
+    with pytest.raises(RoomError):
+        db.repos[2].join(JoinRoomRequest(
+            command_id=uuid4(), language_profile_id=db.profiles[2].id, invite_code=code,
+        ))
+
+
+def test_database_rejects_mismatched_invite_hash(db):
+    access = create(db)
+    with db.engine.begin() as c:
+        with pytest.raises(IntegrityError):
+            with c.begin_nested():
+                c.execute(update(learning_rooms).where(
+                    learning_rooms.c.id == access.room.id,
+                ).values(invite_code="f" * 64))
+    assert db.repos[0].get(access.room.id).invite_code == access.invite_code
+
+
+def test_invite_migration_rotates_only_live_hosted_lobby_codes_using_core_functions(db):
+    """Run the actual migration on an isolated legacy-shaped table, never public data."""
+    schema = "room_invite_test_" + uuid4().hex
+    migration = (Path(__file__).parents[1] / "prisma" / "migrations"
+                 / "20261014000000_room_invites" / "migration.sql").read_text()
+    sql = migration.strip().removeprefix("BEGIN;").removesuffix("COMMIT;")
+    sql = sql.replace("public.learning_rooms", f"{schema}.learning_rooms")
+    now = utc_now()
+    legacy = [
+        ("lobby", uuid4(), now + timedelta(minutes=5)),
+        ("lobby", uuid4(), now + timedelta(minutes=5)),
+        ("lobby", uuid4(), now - timedelta(seconds=1)),
+        ("playing", uuid4(), now + timedelta(minutes=5)),
+        ("lobby", None, now + timedelta(minutes=5)),
+    ]
+    ids, old_hashes = [], []
+    with db.engine.begin() as c:
+        c.exec_driver_sql(f"CREATE SCHEMA {schema}")
+        c.exec_driver_sql(
+            f"CREATE TABLE {schema}.learning_rooms (LIKE public.learning_rooms INCLUDING DEFAULTS)"
+        )
+        c.exec_driver_sql(f"ALTER TABLE {schema}.learning_rooms DROP COLUMN invite_code")
+        for status, host, expiry in legacy:
+            room_id, old_hash = uuid4(), hashlib.sha256(uuid4().bytes).hexdigest()
+            ids.append(room_id)
+            old_hashes.append(old_hash)
+            c.execute(text(f"""
+                INSERT INTO {schema}.learning_rooms
+                    (id, host_user_id, source_language_code, target_language_code,
+                     proficiency_level, status, invite_hash, invite_expires_at, expires_at)
+                VALUES (:id, :host, 'en', 'es', 'A1', :status, :hash, :expiry, :end)
+            """), {"id": room_id, "host": host, "status": status, "hash": old_hash,
+                   "expiry": expiry, "end": now + timedelta(minutes=30)})
+        c.exec_driver_sql(sql)
+        rows = {row["id"]: row for row in c.execute(text(
+            f"SELECT * FROM {schema}.learning_rooms"
+        )).mappings()}
+        codes = []
+        for index, room_id in enumerate(ids):
+            row = rows[room_id]
+            if index < 2:
+                code = row["invite_code"]
+                assert len(code) == 64 and code != old_hashes[index]
+                assert row["invite_hash"] == hashlib.sha256(code.encode()).hexdigest()
+                assert row["invite_hash"] != old_hashes[index]
+                assert row["revision"] == 1
+                codes.append(code)
+            else:
+                assert row["invite_code"] is None and row["invite_hash"] == old_hashes[index]
+                assert row["invite_expires_at"] <= utc_now()
+        assert len(set(codes)) == 2
+        c.exec_driver_sql(f"DROP SCHEMA {schema} CASCADE")
 
 
 def test_photo_count_ready_reset_and_owner_removal(db):

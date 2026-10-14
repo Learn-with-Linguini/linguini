@@ -1,10 +1,6 @@
 import { request, requestBlob, write } from "./api.ts";
 import type { LanguageProfile } from "./api.ts";
 
-const roomFlag = import.meta.env?.VITE_PLAY_TOGETHER_ENABLED
-  ?? (globalThis as { process?: { env?: { VITE_PLAY_TOGETHER_ENABLED?: string } } }).process?.env?.VITE_PLAY_TOGETHER_ENABLED;
-export const playTogetherEnabled = roomFlag === "true";
-
 export type RoomStatus = "lobby" | "playing" | "completed" | "ended" | "expired";
 export type RoomRelationType = "left_of" | "right_of" | "above" | "below" | "on" | "under" | "inside" | "in_front_of" | "behind" | "next_to" | "near";
 export interface RoomReviewObject { key: string; label: string; x: number; y: number; color: string | null }

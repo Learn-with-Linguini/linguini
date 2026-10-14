@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { isPreTaskStep, isSessionRouteAllowed, sessionDestination, sessionLoadingCopy } from "../src/lib/sessionRoute.ts";
+import { isPreTaskStep, isSessionRouteAllowed, sessionDestination, sessionLoadingCopy, sessionPaths } from "../src/lib/sessionRoute.ts";
 import type { PracticeDetail, SessionStatus, SessionTask, TaskContent } from "../src/lib/api.ts";
 
 const contents: Record<string, TaskContent> = {
@@ -168,4 +168,29 @@ test("failed sessions carry a notice per failure code", () => {
     assert.ok(dest.notice?.length);
   }
   assert.ok(sessionDestination(detail("failed", [], null)).notice?.length);
+});
+
+function game(status: SessionStatus, tasks: SessionTask[] = []): PracticeDetail {
+  const lesson = detail(status, tasks);
+  return { ...lesson, session: { ...lesson.session, id: "g1", mode: "ispy", sourceSessionId: "s1" } };
+}
+
+test("standalone games route through their own clue, describe and results steps", () => {
+  for (const status of ["created", "generatingTasks", "ready"] as const) {
+    assert.deepEqual(sessionDestination(game(status)), { path: "/ispy/games/g1/clues", notice: null });
+  }
+  assert.equal(sessionDestination(game("inProgress", [task("clues", "pending", 0), task("reflection", "pending", 1)])).path, "/ispy/games/g1/clues");
+  assert.equal(sessionDestination(game("inProgress", [task("clues", "skipped", 0), task("reflection", "pending", 1)])).path, "/ispy/games/g1/describe");
+  assert.equal(sessionDestination(game("completed")).path, "/ispy/games/g1/results");
+  for (const status of ["abandoned", "failed"] as const) {
+    const exit = sessionDestination(game(status));
+    assert.equal(exit.path, "/ispy/play");
+    assert.ok(exit.notice);
+  }
+  assert.deepEqual(sessionPaths(game("inProgress")), {
+    clues: "/ispy/games/g1/clues", describe: "/ispy/games/g1/describe", done: "/ispy/games/g1/results", exit: "/ispy/play",
+  });
+  assert.equal(sessionPaths(detail("inProgress")).clues, "/practice/sessions/s1/ispy-1");
+  assert.equal(sessionLoadingCopy("/ispy/games/g1/clues").title, "I-Spy");
+  assert.equal(isPreTaskStep("/ispy/games/g1/clues"), false);
 });

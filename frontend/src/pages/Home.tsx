@@ -14,7 +14,6 @@ import type { VocabRecord } from "../data/types";
 import { WalkthroughCoachmark } from "../components/WalkthroughCoachmark";
 import { FIRST_LESSON_WALKTHROUGH_VERSION, needsFirstLessonWalkthrough } from "../lib/walkthrough";
 import { GameResources } from "../components/GameResources";
-import { playTogetherEnabled } from "../lib/rooms";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -218,9 +217,9 @@ export function Home() {
         )}
       </section>
 
-      {playTogetherEnabled ? <Button variant="quiet" block className="home-play-together" onClick={() => navigate("/rooms")}>
+      <Button variant="quiet" block className="home-play-together" onClick={() => navigate("/ispy/friends")}>
         <PersonIcon size={22} /><span>I Spy with a friend</span>
-      </Button> : null}
+      </Button>
 
       <section className="home-tiles" aria-labelledby="home-tiles-title">
         <h2 id="home-tiles-title">More ways to learn</h2>

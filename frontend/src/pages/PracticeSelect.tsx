@@ -13,8 +13,7 @@ import { useAppState } from "../state/useAppState";
 import { useScenesQuery } from "../state/queries";
 import { WalkthroughCoachmark } from "../components/WalkthroughCoachmark";
 import { FIRST_LESSON_WALKTHROUGH_VERSION, needsFirstLessonWalkthrough } from "../lib/walkthrough";
-import { playTogetherEnabled } from "../lib/rooms";
-import { gameResourceKeys, gameResourcesEnabled } from "../lib/gameResources";
+import { gameResourceKeys } from "../lib/gameResources";
 
 export function PracticeSelect() {
   const navigate = useNavigate();
@@ -75,7 +74,7 @@ export function PracticeSelect() {
     }
     finally {
       busy.current = false; setStarting(false);
-      if (gameResourcesEnabled) void queryClient.invalidateQueries({ queryKey: gameResourceKeys(user?.id ?? "") });
+      void queryClient.invalidateQueries({ queryKey: gameResourceKeys(user?.id ?? "") });
     }
   };
   const continueActive = async () => {
@@ -96,7 +95,7 @@ export function PracticeSelect() {
     }
     finally {
       busy.current = false; setStarting(false);
-      if (gameResourcesEnabled) void queryClient.invalidateQueries({ queryKey: gameResourceKeys(user?.id ?? "") });
+      void queryClient.invalidateQueries({ queryKey: gameResourceKeys(user?.id ?? "") });
     }
   };
   const finishWalkthrough = async () => {
@@ -116,7 +115,7 @@ export function PracticeSelect() {
     <h1>Capture a scene</h1>
     {notice ? <div className="stack-2"><p role="alert">{notice}</p>{retrySessionId ? <Button variant="secondary" disabled={interactionDisabled || uploading} onClick={() => void retrySaved(retrySessionId)}>Try this photo again</Button> : null}</div> : null}
     <p className="muted">Take a photo of the world around you, or start from a ready scene.</p>
-    {playTogetherEnabled ? <Button variant="secondary" disabled={starting || uploading} onClick={() => navigate("/rooms")}>I Spy with a friend</Button> : null}
+    <Button variant="secondary" disabled={starting || uploading} onClick={() => navigate("/ispy/friends")}>I Spy with a friend</Button>
     {activeCheckError ? <p role="alert">{activeCheckError} Reload to resume an open practice.</p> : null}
     <div ref={captureRef} className="dashed-capture">
       <span style={{ color: "var(--teal-dark)" }}><CameraIcon size={44} /></span>

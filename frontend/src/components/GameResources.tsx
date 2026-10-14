@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../lib/api";
-import { appearanceCommand, gameResourceKeys, gameResourcesEnabled, getGameResources, selectAppearance, saucePercent } from "../lib/gameResources";
+import { appearanceCommand, gameResourceKeys, getGameResources, selectAppearance, saucePercent } from "../lib/gameResources";
 import type { Appearance, GameResourceSnapshot } from "../lib/gameResources";
 import { friendlyError } from "../lib/queryKeys";
 import { useAppState } from "../state/useAppState";
@@ -21,11 +21,10 @@ const accents: { appearance: Appearance; label: string }[] = [
 
 export function GameResources(props: GameResourcesProps) {
   const { user } = useAppState();
-  if (!gameResourcesEnabled) return null;
-  return <EnabledGameResources key={user?.id} {...props} />;
+  return <ResourceJar key={user?.id} {...props} />;
 }
 
-function EnabledGameResources({ shop = false, onChanged }: GameResourcesProps) {
+function ResourceJar({ shop = false, onChanged }: GameResourcesProps) {
   const { user } = useAppState();
   const client = useQueryClient();
   const key = gameResourceKeys(user?.id ?? "");

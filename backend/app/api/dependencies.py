@@ -6,7 +6,7 @@ import threading
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, Request
+from fastapi import Depends, Request
 
 from app.ai import (
     AiSettings,
@@ -24,6 +24,7 @@ from app.repositories.language_profiles import LanguageProfileRepository
 from app.repositories.learning import LearningRepository
 from app.repositories.media_assets import MediaAssetRepository
 from app.repositories.postgres.game_resources import reward_basil, spend_sauce
+from app.repositories.postgres.ispy_games import PostgresISpyGameRepository
 from app.repositories.postgres.journals import PostgresJournalRepository
 from app.repositories.postgres.language_profiles import (
     PostgresLanguageProfileRepository,
@@ -43,6 +44,7 @@ from app.repositories.users import UserRepository
 from app.services.account_deletion import AccountDeletionService, SupabaseAuthAdmin
 from app.services.image_derivatives import ImageDerivatives
 from app.services.image_storage import ImageStorage
+from app.services.ispy_games import ISpyGameService
 from app.services.journals import JournalService
 from app.services.language_profiles import LanguageProfileService
 from app.services.learning import LearningService
@@ -262,6 +264,13 @@ def get_practice_service(
     return PracticeService(repository, users, profiles)
 
 
+def get_ispy_game_service(
+    repository: Annotated[PostgresWorkflowRepository, Depends(get_practice_repository)],
+    profiles: Annotated[LanguageProfileService, Depends(get_language_profile_service)],
+) -> ISpyGameService:
+    return ISpyGameService(PostgresISpyGameRepository(repository), profiles)
+
+
 def get_task_service(
     request: Request, users: Annotated[UserService, Depends(get_user_service)]
 ) -> TaskService:
@@ -283,10 +292,7 @@ def get_learning_service(
 def get_room_service(
     request: Request, user_id: Annotated[UUID, Depends(get_current_user_id)]
 ) -> RoomService:
-    if os.getenv("PLAY_TOGETHER_ENABLED", "false").strip().lower() != "true":
-        raise HTTPException(404, detail={"code": "feature_disabled", "message": "Unavailable."})
-    secret = os.getenv("ROOM_INVITE_SECRET", "").strip()
-    if len(secret) < 32 or not get_private_media_urls():
+    if not get_private_media_urls():
         raise RoomUnavailableError()
     settings = get_ai_settings(request)
     runtime = get_ai_runtime(request)
@@ -300,7 +306,7 @@ def get_room_service(
     )
     return RoomService(
         PostgresRoomRepository(
-            request.app.state.database_engine, user_id, secret,
+            request.app.state.database_engine, user_id,
             spend_sauce=spend_sauce, reward_basil=reward_basil,
         ),
         preparer, getattr(request.app.state, "background_runner", None),

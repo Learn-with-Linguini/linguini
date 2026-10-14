@@ -6,6 +6,7 @@ from app.api.routes import (
     game_resources,
     health,
     home,
+    ispy,
     journals,
     media,
     progress,
@@ -25,6 +26,7 @@ api_router.include_router(rooms.router)
 api_router.include_router(home.router)
 api_router.include_router(media.router)
 api_router.include_router(sessions.router)
+api_router.include_router(ispy.router)
 api_router.include_router(support.router)
 api_router.include_router(tasks.router)
 api_router.include_router(vocabulary.router)

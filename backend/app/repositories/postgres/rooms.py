@@ -1,7 +1,6 @@
 """Durable two-person rooms. All game authority lives in PostgreSQL."""
 
 import hashlib
-import hmac
 import json
 import secrets
 from contextlib import contextmanager
@@ -22,6 +21,7 @@ from sqlalchemy import (
     delete,
     func,
     insert,
+    or_,
     select,
     update,
 )
@@ -65,6 +65,7 @@ learning_rooms = Table(
     Column("status", String(16), nullable=False),
     Column("revision", Integer, nullable=False),
     Column("invite_hash", String(64), nullable=False),
+    Column("invite_code", String(64)),
     _time("invite_expires_at"),
     _time("expires_at"),
     _time("ended_at", True),
@@ -222,6 +223,9 @@ def cleanup_room_account(c, user_id):
         .with_for_update()
     ).all()
     now = utc_now()
+    c.execute(update(learning_rooms).where(learning_rooms.c.id.in_(ids)).values(
+        invite_code=None, invite_expires_at=now,
+    ))
     c.execute(
         update(learning_rooms)
         .where(
@@ -278,11 +282,8 @@ def cleanup_room_account(c, user_id):
 
 
 class PostgresRoomRepository:
-    def __init__(self, engine, user_id, invite_secret, *, spend_sauce=None, reward_basil=None):
+    def __init__(self, engine, user_id, *, spend_sauce=None, reward_basil=None):
         self.engine, self.user_id = engine, user_id
-        if not invite_secret or len(invite_secret) < 32:
-            raise RoomUnavailableError()
-        self.invite_secret = invite_secret.encode()
         self.spend_sauce, self.reward_basil = spend_sauce, reward_basil
 
     @contextmanager
@@ -354,6 +355,8 @@ class PostgresRoomRepository:
                             .where(learning_rooms.c.id.in_(expired))
                             .values(
                                 status="expired",
+                                invite_code=None,
+                                invite_expires_at=now,
                                 ended_at=now,
                                 updated_at=now,
                                 revision=learning_rooms.c.revision + 1,
@@ -364,6 +367,11 @@ class PostgresRoomRepository:
                             .where(room_members.c.room_id.in_(expired))
                             .values(active=False)
                         )
+                    c.execute(update(learning_rooms).where(
+                        learning_rooms.c.id.in_(room_ids),
+                        learning_rooms.c.invite_code.is_not(None),
+                        self._stale_invitation(now),
+                    ).values(invite_code=None))
                 yield c
         except SQLAlchemyError as exc:
             raise RoomError(
@@ -506,6 +514,8 @@ class PostgresRoomRepository:
         return room, False
 
     def _bump(self, c, room_id, **values):
+        if values.get("status") and values["status"] != "lobby":
+            values["invite_code"] = None
         c.execute(
             update(learning_rooms)
             .where(learning_rooms.c.id == room_id)
@@ -519,8 +529,14 @@ class PostgresRoomRepository:
     def _reset_ready(self, c, room_id):
         c.execute(update(room_members).where(room_members.c.room_id == room_id).values(ready=False))
 
-    def _invite(self, room_id):
-        return hmac.new(self.invite_secret, str(room_id).encode(), hashlib.sha256).hexdigest()
+    @staticmethod
+    def _stale_invitation(now):
+        return or_(
+            learning_rooms.c.status != "lobby",
+            learning_rooms.c.invite_expires_at <= now,
+            learning_rooms.c.expires_at <= now,
+            learning_rooms.c.host_user_id.is_(None),
+        )
 
     def create(self, request):
         room_id = uuid5(self.user_id, f"room:{request.command_id}")
@@ -537,6 +553,7 @@ class PostgresRoomRepository:
                 self._no_active_room(c)
                 self._setup_rate(c)
                 now = utc_now()
+                invite_code = secrets.token_hex(32)
                 c.execute(
                     insert(learning_rooms).values(
                         id=room_id,
@@ -546,7 +563,8 @@ class PostgresRoomRepository:
                         proficiency_level=profile["proficiency_level"],
                         status="lobby",
                         revision=0,
-                        invite_hash=hashlib.sha256(self._invite(room_id).encode()).hexdigest(),
+                        invite_hash=hashlib.sha256(invite_code.encode()).hexdigest(),
+                        invite_code=invite_code,
                         invite_expires_at=now + INVITE_DURATION,
                         expires_at=now + LOBBY_DURATION,
                         ended_at=None,
@@ -557,7 +575,7 @@ class PostgresRoomRepository:
                 self._add_member(c, room_id, profile["id"], 0)
                 self._remember(c, room_id, "create", request)
             snapshot = self._snapshot(c, room_id)
-        return RoomAccessResponse(room=snapshot, invite_code=self._invite(room_id))
+        return RoomAccessResponse(room=snapshot, invite_code=snapshot.invite_code)
 
     def _add_member(self, c, room_id, profile_id, seat):
         c.execute(
@@ -618,7 +636,18 @@ class PostgresRoomRepository:
     def get(self, room_id):
         try:
             with self.engine.connect().execution_options(isolation_level="REPEATABLE READ") as c:
-                return self._snapshot(c, room_id)
+                snapshot = self._snapshot(c, room_id)
+                expired_invitation = c.execute(select(learning_rooms.c.id).where(
+                    learning_rooms.c.id == room_id,
+                    learning_rooms.c.invite_code.is_not(None),
+                    self._stale_invitation(utc_now()),
+                )).scalar_one_or_none()
+            if expired_invitation:
+                # Normal polling remains read-only. Expired credentials are
+                # cleared under the same lock order as room commands.
+                with self._locked(room_id) as c:
+                    return self._snapshot(c, room_id)
+            return snapshot
         except SQLAlchemyError as exc:
             raise RoomError(
                 "room_storage_error", "The room could not be loaded. Try again.", 503
@@ -639,7 +668,8 @@ class PostgresRoomRepository:
                     learning_rooms.c.expires_at > utc_now(),
                 )
             ).scalar_one_or_none()
-            return self._snapshot(c, room_id) if room_id else None
+        snapshot = self.get(room_id) if room_id else None
+        return snapshot if snapshot and snapshot.status in LIVE else None
 
     def _photos(self, c, room_id):
         return [
@@ -1396,7 +1426,7 @@ class PostgresRoomRepository:
             successful_rounds=success,
             round_count=len(photos),
             contributions=public_contributions,
-            invite_code=self._invite(room_id)
+            invite_code=room["invite_code"]
             if (
                 self.user_id == room["host_user_id"]
                 and status == "lobby"

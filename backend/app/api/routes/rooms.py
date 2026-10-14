@@ -1,4 +1,4 @@
-"""Authenticated invite-only photo rooms; the dependency owns feature gating."""
+"""Authenticated invite-only photo rooms."""
 
 from typing import Annotated
 from uuid import UUID

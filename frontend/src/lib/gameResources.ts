@@ -1,9 +1,5 @@
 import { request, write } from "./api.ts";
 
-const resourceFlag = import.meta.env?.VITE_GAME_RESOURCES_ENABLED
-  ?? (globalThis as { process?: { env?: { VITE_GAME_RESOURCES_ENABLED?: string } } }).process?.env?.VITE_GAME_RESOURCES_ENABLED;
-export const gameResourcesEnabled = resourceFlag === "true";
-
 export type Appearance = "default" | "herb" | "pasta";
 export interface GameResourceSnapshot {
   sauce: { remaining: number; capacity: number; refillsAt: string };

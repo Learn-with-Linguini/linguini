@@ -191,6 +191,13 @@ enum SessionStatus {
   @@map("session_status")
 }
 
+enum SessionMode {
+  lesson
+  ispy
+
+  @@map("session_mode")
+}
+
 model Session {
   id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId String @map("user_id") @db.Uuid
@@ -199,6 +206,11 @@ model Session {
   sceneMediaAssetId String @map("scene_media_asset_id") @db.Uuid
   sceneMediaAsset MediaAsset @relation(fields: [sceneMediaAssetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   status SessionStatus @default(created) @map("session_status")
+  mode SessionMode @default(lesson) @map("session_mode")
+  sourceSessionId String? @map("source_session_id") @db.Uuid
+  sourceSession Session? @relation("SessionSnapshotSource", fields: [sourceSessionId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  snapshots Session[] @relation("SessionSnapshotSource")
+  sceneConfirmedAt DateTime? @map("scene_confirmed_at") @db.Timestamptz(6)
   sessionTitle String? @map("session_title") @db.Text
   sessionSummary String? @map("session_summary") @db.Text
   analysisDraft Json? @map("analysis_draft") @db.JsonB
@@ -217,6 +229,7 @@ model Session {
   @@unique([userId, languageProfileId, idempotencyKey])
   @@index([languageProfileId, userId])
   @@index([sceneMediaAssetId])
+  @@index([userId, sceneMediaAssetId])
   @@map("sessions")
 }
 
@@ -525,6 +538,7 @@ model LearningRoom {
   status String @db.VarChar(16)
   revision Int @default(0)
   inviteHash String @unique @map("invite_hash") @db.VarChar(64)
+  inviteCode String? @map("invite_code") @db.VarChar(64)
   inviteExpiresAt DateTime @map("invite_expires_at") @db.Timestamptz(6)
   expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
   endedAt DateTime? @map("ended_at") @db.Timestamptz(6)

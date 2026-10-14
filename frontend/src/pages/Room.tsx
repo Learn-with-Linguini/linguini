@@ -3,9 +3,9 @@ import type { FormEvent } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../lib/api";
-import { canStartRoom, getRoom, getRoomPhoto, playTogetherEnabled, prepareRoomCommand, roomQueryKeys, roomReviewPayload, sendRoomCommand } from "../lib/rooms";
+import { canStartRoom, getRoom, getRoomPhoto, prepareRoomCommand, roomQueryKeys, roomReviewPayload, sendRoomCommand } from "../lib/rooms";
 import type { PendingRoomCommand, RoomObject, RoomPhoto, RoomPhotoReview, RoomRelationType, RoomSnapshot, RoomTurn } from "../lib/rooms";
-import { gameResourceKeys, gameResourcesEnabled } from "../lib/gameResources";
+import { gameResourceKeys } from "../lib/gameResources";
 import { friendlyError, queryKeys } from "../lib/queryKeys";
 import { useAppState } from "../state/useAppState";
 import { Button, Card, Feedback } from "../components/ui";
@@ -16,11 +16,11 @@ import "../components/rooms.css";
 export function Room() {
   const { roomId } = useParams();
   const { user, activeProfile } = useAppState();
-  if (!playTogetherEnabled || !roomId) return <Navigate to="/home" replace />;
-  return <EnabledRoom key={`${user?.id}:${activeProfile?.id}:${roomId}`} roomId={roomId} />;
+  if (!roomId) return <Navigate to="/ispy/friends" replace />;
+  return <RoomSession key={`${user?.id}:${activeProfile?.id}:${roomId}`} roomId={roomId} />;
 }
 
-function EnabledRoom({ roomId }: { roomId: string }) {
+function RoomSession({ roomId }: { roomId: string }) {
   const { user, activeProfile } = useAppState();
   const location = useLocation();
   const navigate = useNavigate();
@@ -59,7 +59,7 @@ function EnabledRoom({ roomId }: { roomId: string }) {
     // The partner can start the room or finish a turn while this page only polls.
     // Repeated snapshots of the same status/credit do not trigger extra reads.
     if (previous === resourceState || (previous === null && resourceState.startsWith("lobby:"))) return;
-    if (gameResourcesEnabled) void client.invalidateQueries({ queryKey: gameResourceKeys(owner) });
+    void client.invalidateQueries({ queryKey: gameResourceKeys(owner) });
     void client.invalidateQueries({ queryKey: queryKeys.progress(profile) });
   }, [resourceState, client, owner, profile]);
 
@@ -97,7 +97,7 @@ function EnabledRoom({ roomId }: { roomId: string }) {
   if (room.isPending) return <p role="status">Opening your room…</p>;
   if (!room.data) return <div className="stack rooms-page"><h1>Room unavailable</h1>
     <p role="alert">{room.error instanceof ApiError ? room.error.message : "We couldn’t open this room. Check your connection and try again."}</p>
-    <Button onClick={() => void room.refetch()}>Try again</Button><Button variant="quiet" onClick={() => navigate("/rooms")}>Find your room</Button></div>;
+    <Button onClick={() => void room.refetch()}>Try again</Button><Button variant="quiet" onClick={() => navigate("/ispy/friends")}>Find your room</Button></div>;
   const data = room.data;
   const inviteCode = entryInviteCode ?? data.inviteCode;
   const blocked = busy || uploading || Boolean(pendingIntent);
@@ -139,7 +139,7 @@ function EnabledRoom({ roomId }: { roomId: string }) {
       </section>
       <Card className="stack"><h2>Ready to play?</h2><ul className="rooms-members">{data.members.map(member =>
         <li key={member.userId}><strong>{member.userId === owner ? "You" : member.displayName}</strong><span>{member.ready ? "Ready" : "Preparing"}</span></li>)}</ul>
-        <p className="small muted">{gameResourcesEnabled ? "Starting uses 1 Sauce each. " : ""}You’ll take turns in {data.photos.length || "2–4"} different photos.</p>
+        <p className="small muted">Starting uses 1 Sauce each. You’ll take turns in {data.photos.length || "2–4"} different photos.</p>
         {canStartRoom(data) ? <Button disabled={blocked} onClick={() => void act("start")}>Start together</Button> :
           <Button variant={me?.ready ? "secondary" : "primary"} disabled={blocked || data.photos.length < 2 || data.photos.some(photo => photo.status !== "ready") || !partner}
             onClick={() => void act("ready", { ready: !me?.ready })}>{me?.ready ? "Keep preparing" : "I’m ready"}</Button>}
@@ -154,7 +154,7 @@ function EnabledRoom({ roomId }: { roomId: string }) {
       <Card className="stack"><h2>{data.status === "completed" ? "You played every photo!" : data.status === "expired" ? "This room has expired" : "This game has ended"}</h2>
         <p>{data.status === "completed" ? `${data.successfulRounds} of ${data.roundCount} objects found together.` : "Your accepted practice is saved. Start a fresh room when you’re ready."}</p>
         <RoomContributions room={data} />
-        <Button onClick={() => navigate("/rooms", { replace: true })}>Play again</Button>
+        <Button onClick={() => navigate("/ispy/friends", { replace: true })}>Play again</Button>
         <Button variant="quiet" onClick={() => navigate("/home")}>Back home</Button></Card>}
   </div>;
 }

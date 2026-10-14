@@ -5,9 +5,11 @@ import type { PracticeReview } from "../lib/api";
 import type { ConfirmGuessBody, PracticeDetail, SessionStatus, TaskAnswer, TaskActionResult } from "../lib/api";
 import { applyTaskResult, keepClientProgress } from "../lib/practiceUpdates";
 import { friendlyError, queryKeys } from "../lib/queryKeys";
-import { gameResourceKeys, gameResourcesEnabled } from "../lib/gameResources";
+import { gameResourceKeys } from "../lib/gameResources";
 
 const PROCESSING = ["analyzingScene", "generatingTasks"];
+// Games and partly built lessons wait out slower clue calls; a fresh lesson polls quickly for task 1.
+const patient = (detail: PracticeDetail) => detail.tasks.length > 0 || detail.session.mode === "ispy";
 
 export function usePractice(userId: string, profileId: string, onLearningChanged: (scope: "task" | "session") => void) {
   const queryClient = useQueryClient();
@@ -48,10 +50,10 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
     // Once task 1 is usable, keep checking in the background through slower
     // lesson/clue calls and their retries (up to five minutes).
     if (version === loadVersion.current) applySession(data);
-    for (let attempt = 0; attempt < (data.tasks.length ? 200 : 40) && PROCESSING.includes(data.session.status); attempt += 1) {
+    for (let attempt = 0; attempt < (patient(data) ? 200 : 40) && PROCESSING.includes(data.session.status); attempt += 1) {
       // Poll quickly until the first vocabulary task is committed, then use a
       // slower cadence while the remaining AI calls finish in the background.
-      await new Promise(resolve => setTimeout(resolve, data.tasks.length ? 1500 : 300));
+      await new Promise(resolve => setTimeout(resolve, patient(data) ? 1500 : 300));
       if (version !== loadVersion.current) break;
       data = withClientProgress(await getPractice(id));
       if (version === loadVersion.current) applySession(data);
@@ -59,7 +61,7 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
     if (version === loadVersion.current) {
       applySession(data);
       setStalled(PROCESSING.includes(data.session.status));
-      if (gameResourcesEnabled) void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
+      void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
     }
     return data;
     })();
@@ -94,7 +96,7 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
       return;
     } finally {
       busy.current = false; setSaving(false);
-      if (gameResourcesEnabled) void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
+      void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
     }
     try { await loadSession(id, data); }
     catch (error) { setError(friendlyError(error)); }
@@ -103,7 +105,7 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
     const scene = await getSceneDetail(sceneId);
     if (creation.current?.asset !== scene.mediaAssetId) creation.current = { asset: scene.mediaAssetId, key: crypto.randomUUID() };
     const result = await createPractice(profileId, scene.mediaAssetId, creation.current.key);
-    if (gameResourcesEnabled) void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
+    void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
     creation.current = null;
     return result;
   }, [profileId, queryClient, userId]);
@@ -114,11 +116,23 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
       const result = await taskAction(taskId, action, answer ? { ...answer, idempotencyKey: key } : {});
       applySession(value => applyTaskResult(value, session.session.id, result));
       learningDirty.current = true;
-      if (gameResourcesEnabled) void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
+      void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
       return result;
-    } catch (e) { setError(friendlyError(e)); return null; }
+    } catch (e) {
+      setError(friendlyError(e));
+      if (e instanceof ApiError && e.code === "task_conflict" && sessionRef.current?.session.id === session.session.id) {
+        try {
+          const refreshed = await loadSession(session.session.id);
+          const status = refreshed.tasks.find(task => task.id === taskId)?.status;
+          if (status === "completed" || status === "skipped") setError(null);
+        } catch {
+          // Keep the conflict visible when the saved task cannot be recovered.
+        }
+      }
+      return null;
+    }
     finally { busy.current = false; setSaving(false); }
-  }, [session, applySession, queryClient, userId]);
+  }, [session, applySession, loadSession, queryClient, userId]);
   const flushLearningChanges = useCallback(() => {
     if (learningDirty.current) {
       learningDirty.current = false;
@@ -138,7 +152,7 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
         ? { ...current, session: { ...current.session, status: completed.status as SessionStatus } }
         : current);
       flushLearningChanges();
-      if (gameResourcesEnabled) void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
+      void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
       // Refetch the final XP, and warm the cache when the summary screen has
       // not mounted yet so it renders without a visible fetch.
       void queryClient.invalidateQueries({ queryKey: queryKeys.sessionSummary(sessionId) });

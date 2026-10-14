@@ -1,22 +1,20 @@
 import { useRef, useState } from "react";
-import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../lib/api";
-import { createRoom, getActiveRoom, joinRoom, playTogetherEnabled, roomMatchesProfile, roomQueryKeys } from "../lib/rooms";
+import { createRoom, getActiveRoom, joinRoom, roomMatchesProfile, roomQueryKeys } from "../lib/rooms";
 import { friendlyError } from "../lib/queryKeys";
 import { useAppState } from "../state/useAppState";
 import { Button, Card } from "../components/ui";
 import { GameResources } from "../components/GameResources";
-import { gameResourcesEnabled } from "../lib/gameResources";
 import "../components/rooms.css";
 
 export function Rooms() {
   const { user, activeProfile } = useAppState();
-  if (!playTogetherEnabled) return <Navigate to="/home" replace />;
-  return <EnabledRooms key={`${user?.id}:${activeProfile?.id}`} />;
+  return <RoomLobby key={`${user?.id}:${activeProfile?.id}`} />;
 }
 
-function EnabledRooms() {
+function RoomLobby() {
   const { user, activeProfile } = useAppState();
   const navigate = useNavigate();
   const client = useQueryClient();
@@ -74,7 +72,7 @@ function EnabledRooms() {
         <Button disabled={busy} onClick={() => navigate(`/rooms/${encodeURIComponent(active.data!.id)}`)}>Return to room</Button></Card> :
       <Card className="stack"><h2>Start a private room</h2><p>Invite one friend, then add 2–4 photos. Each photo becomes one round.</p>
         <Button disabled={!activeProfile || busy || Boolean(pendingKind)} onClick={() => void enter("create")}>Create a room</Button>
-        {gameResourcesEnabled ? <p className="small muted">Starting the game uses 1 Sauce for each person.</p> : null}</Card>}
+        <p className="small muted">Starting the game uses 1 Sauce for each person.</p></Card>}
     {!active.data ? <Card className="stack"><h2>Have an invitation?</h2>
       <label className="field">Room code<input className="input" value={code} autoComplete="off" autoCapitalize="none" spellCheck={false}
         maxLength={100} disabled={busy || Boolean(pendingKind)} onChange={event => setCode(event.target.value)} placeholder="Paste your friend’s code" /></label>

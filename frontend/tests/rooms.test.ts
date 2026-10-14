@@ -86,9 +86,9 @@ test("review payload omits analysis provenance that the strict review API reject
 });
 
 const here = dirname(fileURLToPath(import.meta.url));
-async function bundle(enabled = true) {
+async function bundle() {
   const folder = mkdtempSync(join(tmpdir(), "linguini-room-test-"));
-  const entry = join(here, `.rooms-entry-${enabled}-${crypto.randomUUID()}.ts`);
+  const entry = join(here, `.rooms-entry-${crypto.randomUUID()}.ts`);
   writeFileSync(entry, [
     'export { createElement as h, act } from "react";', 'export { createRoot } from "react-dom/client";',
     'export { MemoryRouter, Route, Routes } from "react-router-dom";',
@@ -96,13 +96,14 @@ async function bundle(enabled = true) {
     'export { AppStateContext } from "../src/state/context";',
     'export { Room } from "../src/pages/Room";', 'export { Rooms } from "../src/pages/Rooms";',
     'export { GameResources } from "../src/components/GameResources";',
+    'export { default as App } from "../src/App";',
+    'export { AuthProvider } from "../src/state/Auth";',
   ].join("\n"));
   try {
     const bundler = await rolldown({ input: entry, platform: "node", resolve: { extensions: [".tsx", ".ts", ".js"] },
       plugins: [{ name: "test-environment", transform: code => code
         .replaceAll("import.meta.env?.VITE_API_BASE_URL", '"http://api.test"')
-        .replaceAll("import.meta.env?.VITE_PLAY_TOGETHER_ENABLED", JSON.stringify(String(enabled)))
-        .replaceAll("import.meta.env?.VITE_GAME_RESOURCES_ENABLED", JSON.stringify(String(enabled))) },
+        .replaceAll("import.meta.env.DEV", "true") },
       { name: "test-css", resolveId: id => id.endsWith(".css") ? "\0empty-css" : null, load: id => id === "\0empty-css" ? "export default {};" : null }],
     });
     const { output } = await bundler.generate({ format: "esm" });
@@ -112,7 +113,7 @@ async function bundle(enabled = true) {
     return await import(pathToFileURL(outputPath).href);
   } finally { rmSync(entry, { force: true }); rmSync(folder, { recursive: true, force: true }); }
 }
-const enabled = await bundle();
+const surface = await bundle();
 const mountedCleanups = new Set<() => Promise<void>>();
 function registerCleanup(dispose: () => Promise<void>) {
   let closed = false;
@@ -146,6 +147,10 @@ globals.fetch = async (input: unknown, init?: RequestInit) => {
   readPaths.push(path);
   if (path.endsWith("/image?width=640")) return new Response(new Blob(["photo"], { type: "image/png" }));
   if (path === "/api/v1/me/game-resources") return Response.json(resourceSnapshot);
+  if (path === "/api/v1/me") return Response.json(state.user);
+  if (path === "/api/v1/me/language-profiles") return Response.json([{ ...state.activeProfile, isActive: true }]);
+  if (path === "/api/v1/me/progress") return Response.json({ xp: 0 });
+  if (path === "/api/v1/ispy/games/active") return Response.json(null);
   if (path === "/api/v1/rooms/active") return Response.json(activeSnapshot);
   if (path === "/api/v1/rooms/r1") return Response.json(snapshot);
   return new Response("not found", { status: 404 });
@@ -154,7 +159,7 @@ const state = { user: { id: "u1", cameraEnabled: true }, activeProfile: { id: "p
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const text = () => dom.window.document.body.textContent ?? "";
 const button = (label: string) => [...dom.window.document.querySelectorAll("button")].find(item => item.textContent?.trim() === label);
-async function waitFor(assertion: () => void, source = enabled, timeoutMs = 2_500) {
+async function waitFor(assertion: () => void, source = surface, timeoutMs = 2_500) {
   const deadline = Date.now() + timeoutMs;
   let lastError: unknown;
   do {
@@ -164,7 +169,7 @@ async function waitFor(assertion: () => void, source = enabled, timeoutMs = 2_50
   throw lastError;
 }
 async function click(label: string) {
-  await enabled.act(async () => {
+  await surface.act(async () => {
     const element = button(label);
     assert.ok(element, `expected button ${label}`);
     assert.equal(element.disabled, false, `${label} should be usable`);
@@ -172,7 +177,7 @@ async function click(label: string) {
   });
   await waitFor(() => assert.doesNotMatch(text(), /Saving your action…|Saving your jar…|Creating your room…|Joining your friend…/));
 }
-async function mount(which: "Room" | "Rooms" = "Room", source = enabled) {
+async function mount(which: "Room" | "Rooms" = "Room", source = surface) {
   const container = dom.window.document.createElement("div");
   dom.window.document.body.replaceChildren(container);
   const root = source.createRoot(container);
@@ -188,6 +193,19 @@ async function mount(which: "Room" | "Rooms" = "Room", source = enabled) {
         source.h(source.Route, { path: "/home", element: source.h("p", null, "Home destination") }),
       ))))));
   await waitFor(() => assert.ok(dom.window.document.querySelector('[aria-label="Sauce remaining"]') || text().includes("Home destination")), source);
+  return { client, close };
+}
+
+async function mountApp(path: string) {
+  const container = dom.window.document.createElement("div");
+  dom.window.document.body.replaceChildren(container);
+  const root = surface.createRoot(container);
+  const client = new surface.QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { gcTime: 0 } } });
+  const close = registerCleanup(async () => {
+    try { await surface.act(async () => root.unmount()); } finally { client.clear(); }
+  });
+  await surface.act(async () => root.render(surface.h(surface.QueryClientProvider, { client },
+    surface.h(surface.AuthProvider, null, surface.h(surface.MemoryRouter, { initialEntries: [path] }, surface.h(surface.App))))));
   return { client, close };
 }
 
@@ -233,7 +251,7 @@ test("a peer sees the Sauce charge when the host starts, without needing a local
   assert.equal(dom.window.document.querySelector('[aria-label="Sauce remaining"]')?.getAttribute("aria-valuenow"), "10");
   snapshot = { ...fixture(), revision: 8, hostUserId: "u2" };
   resourceSnapshot = { ...resourceSnapshot, sauce: { ...resourceSnapshot.sauce, remaining: 9 } };
-  await enabled.act(async () => {
+  await surface.act(async () => {
     await view.client.invalidateQueries({ queryKey: ["rooms", "u1", "profile1", "r1"] });
   });
   await waitFor(() => {
@@ -245,7 +263,7 @@ test("a peer sees the Sauce charge when the host starts, without needing a local
   assert.equal(view.client.getQueryState(["progress", "profile1"])?.isInvalidated, true);
   const resourceReads = readPaths.filter(path => path === "/api/v1/me/game-resources").length;
   snapshot = { ...snapshot, revision: 9 };
-  await enabled.act(async () => {
+  await surface.act(async () => {
     await view.client.invalidateQueries({ queryKey: ["rooms", "u1", "profile1", "r1"] });
   });
   await waitFor(() => {
@@ -258,7 +276,7 @@ test("a peer sees the Sauce charge when the host starts, without needing a local
   snapshot = { ...snapshot, contributions: snapshot.contributions.map(item => item.userId === "u1"
     ? { ...item, basilEarned: 1, xpEarned: 10 } : item) };
   resourceSnapshot = { ...resourceSnapshot, basilLeaves: 3 };
-  await enabled.act(async () => {
+  await surface.act(async () => {
     await view.client.invalidateQueries({ queryKey: ["rooms", "u1", "profile1", "r1"] });
   });
   await waitFor(() => {
@@ -358,12 +376,40 @@ test("room entry retries creation with the same command identity", async () => {
   await view.close();
 });
 
-test("disabled room routes return home without making room or resource requests", async () => {
-  const off = await bundle(false);
+test("I-Spy offers a working friend lobby and normal resources without feature configuration", async () => {
+  activeSnapshot = null;
   readPaths.length = 0;
-  const view = await mount("Room", off);
-  assert.match(text(), /Home destination/);
-  assert.equal(readPaths.length, 0);
+  const view = await mountApp("/ispy");
+  await waitFor(() => assert.ok(button("Play with a friend")));
+  assert.equal(dom.window.document.querySelectorAll('nav[aria-label="Main"] a').length, 6);
+  assert.doesNotMatch(text(), /Coming soon/);
+  await click("Play with a friend");
+  await waitFor(() => assert.ok(button("Create a room")));
+  assert.match(text(), /Starting the game uses 1 Sauce for each person/);
+  await waitFor(() => assert.ok(dom.window.document.querySelector('[aria-label="Sauce remaining"]')));
+  assert.ok(readPaths.includes("/api/v1/rooms/active"));
+  assert.ok(readPaths.includes("/api/v1/me/game-resources"));
+  assert.equal(dom.window.document.querySelector('nav[aria-label="Main"] a[aria-current="page"]')?.getAttribute("href"), "/ispy");
+  assert.ok(dom.window.document.querySelector('button[aria-label="Go back"]'), "the friend lobby uses the shared back control");
+  await view.close();
+});
+
+test("existing invitation links preserve their code and enter the friend room", async () => {
+  activeSnapshot = null;
+  writes.length = 0;
+  snapshot = { ...fixture(), status: "lobby", currentTurn: null, photos: [] };
+  const code = "private invite code";
+  const view = await mountApp(`/rooms?code=${encodeURIComponent(code)}`);
+  await waitFor(() => assert.ok(button("Join room") && !button("Join room")!.disabled));
+  const input = dom.window.document.querySelector<HTMLInputElement>('input[placeholder="Paste your friend’s code"]');
+  assert.equal(input?.value, code);
+  assert.equal(dom.window.document.querySelector('nav[aria-label="Main"] a[aria-current="page"]')?.getAttribute("href"), "/ispy");
+  replies.push(() => Response.json({ room: snapshot }));
+  await click("Join room");
+  await waitFor(() => assert.match(text(), /I Spy together/));
+  assert.equal(writes[0].path, "/api/v1/rooms/join");
+  assert.equal(writes[0].body.inviteCode, code);
+  assert.equal(writes[0].body.languageProfileId, "profile1");
   await view.close();
 });
 
@@ -372,13 +418,13 @@ test("the accent shop keeps the old balance until accepted and safely retries a 
   resourceSnapshot = { ...resourceSnapshot, basilLeaves: 42 };
   const container = dom.window.document.createElement("div");
   dom.window.document.body.replaceChildren(container);
-  const root = enabled.createRoot(container);
-  const client = new enabled.QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  const root = surface.createRoot(container);
+  const client = new surface.QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   const close = registerCleanup(async () => {
-    try { await enabled.act(async () => root.unmount()); } finally { client.clear(); }
+    try { await surface.act(async () => root.unmount()); } finally { client.clear(); }
   });
-  await enabled.act(async () => root.render(enabled.h(enabled.QueryClientProvider, { client },
-    enabled.h(enabled.AppStateContext.Provider, { value: state }, enabled.h(enabled.GameResources, { shop: true })))));
+  await surface.act(async () => root.render(surface.h(surface.QueryClientProvider, { client },
+    surface.h(surface.AppStateContext.Provider, { value: state }, surface.h(surface.GameResources, { shop: true })))));
   await waitFor(() => assert.ok(button("Get accent")));
   replies.push(() => Response.json({ detail: { message: "Purchase reply interrupted" } }, { status: 500 }));
   await click("Get accent");

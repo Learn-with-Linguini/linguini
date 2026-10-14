@@ -13,6 +13,7 @@ from sqlalchemy import delete, func, insert, select, update
 from app.database import create_database_engine
 from app.main import create_app
 from app.repositories.postgres.game_resources import (
+    GameResourcesUnavailableError,
     InsufficientBasilError,
     ResourceCommandConflictError,
     SauceExhaustedError,
@@ -23,6 +24,7 @@ from app.repositories.postgres.game_resources import (
     refund_sauce,
     resource_snapshot,
     reward_basil,
+    sauce_capacity,
     spend_sauce,
 )
 from app.repositories.postgres.language_profiles import PostgresLanguageProfileRepository
@@ -42,7 +44,7 @@ def resources(monkeypatch):
     if not os.getenv("TEST_DATABASE_URL"):
         pytest.skip("Requires migrated test PostgreSQL")
     monkeypatch.setenv("DATABASE_URL", os.environ["TEST_DATABASE_URL"])
-    monkeypatch.setenv("GAME_RESOURCES_ENABLED", "true")
+    monkeypatch.delenv("GAME_RESOURCES_ENABLED", raising=False)
     monkeypatch.setenv("DAILY_SAUCE_CAPACITY", "10")
     monkeypatch.setenv("MEDIA_STORAGE_PRIVATE", "false")
     engine = create_database_engine()
@@ -119,13 +121,25 @@ def test_parallel_starts_cannot_overspend_or_repeat(resources, monkeypatch):
         )).scalar_one() == 1
 
 
-def test_refund_is_once_and_survives_disabling_feature(resources, monkeypatch):
+def test_refund_is_once_even_if_legacy_feature_flag_is_false(resources, monkeypatch):
     engine, owner, *_ = resources
     assert atomic(engine, owner, spend_sauce, "setup") == 1
     monkeypatch.setenv("GAME_RESOURCES_ENABLED", "false")
     assert atomic(engine, owner, refund_sauce, "setup") == 1
     assert atomic(engine, owner, refund_sauce, "setup") == 0
     assert balance(engine, owner).sauce.remaining == 10
+
+
+def test_refund_without_charge_does_not_initialize_resources(resources):
+    engine, owner, *_ = resources
+    assert atomic(engine, owner, refund_sauce, "never-started") == 0
+    with engine.connect() as c:
+        assert not c.execute(select(game_accounts).where(
+            game_accounts.c.user_id == owner.id,
+        )).first()
+        assert not c.execute(select(game_resource_events).where(
+            game_resource_events.c.user_id == owner.id,
+        )).first()
 
 
 def test_old_refund_cannot_refill_new_period(resources, monkeypatch):
@@ -175,21 +189,28 @@ def test_appearance_command_replay_does_not_reequip_or_accept_changed_payload(re
         atomic(engine, owner, equip_appearance, "pasta", command)
 
 
-def test_feature_disabled_preserves_solo_and_has_no_resource_events(resources, monkeypatch):
+@pytest.mark.parametrize("legacy_flag", [None, "false"])
+def test_resources_are_automatic_without_feature_switch(resources, monkeypatch, legacy_flag):
     engine, owner, _, profile, asset, client = resources
-    monkeypatch.setenv("GAME_RESOURCES_ENABLED", "false")
-    assert client.get("/api/v1/me/game-resources").status_code == 404
+    if legacy_flag is not None:
+        monkeypatch.setenv("GAME_RESOURCES_ENABLED", legacy_flag)
+    response = client.get("/api/v1/me/game-resources")
+    assert response.status_code == 200, response.text
+    assert response.json()["sauce"]["remaining"] == 10
     response = create_solo(client, profile, asset)
     assert response.status_code == 202, response.text
     sid = response.json()["session"]["id"]
+    assert balance(engine, owner).sauce.remaining == 9
+    assert atomic(engine, owner, reward_basil, "submitted-task") == 1
     assert client.post(f"/api/v1/sessions/{sid}/abandon").status_code == 200
+    state = client.get("/api/v1/me/game-resources").json()
+    assert state["sauce"]["remaining"] == 10
+    assert state["basilLeaves"] == 1
     with engine.connect() as c:
-        assert not c.execute(select(game_accounts).where(
-            game_accounts.c.user_id == owner.id,
-        )).first()
-        assert not c.execute(select(game_resource_events).where(
+        events = c.execute(select(game_resource_events.c.kind).where(
             game_resource_events.c.user_id == owner.id,
-        )).first()
+        )).scalars().all()
+    assert sorted(events) == ["basilEarned", "sauceRefund", "sauceSpend"]
 
 
 def test_beta_uses_sauce_and_empty_start_is_atomic(resources, monkeypatch):
@@ -282,17 +303,19 @@ def test_resources_api_rejects_invalid_appearance_and_insufficient_funds(resourc
     }).status_code == 422
 
 
-@pytest.mark.parametrize("enabled,secret,private,status", [
-    ("false", "valid-secret-of-more-than-thirty-two-characters", "true", 404),
-    ("true", "too-short", "true", 503),
-    ("true", "valid-secret-of-more-than-thirty-two-characters", "false", 503),
+@pytest.mark.parametrize("legacy_flag,private,status", [
+    (None, "false", 503),
+    ("false", "false", 503),
+    (None, "true", 200),
+    ("false", "true", 200),
 ])
-def test_room_rollout_requires_flag_secret_and_private_media(
-    resources, monkeypatch, enabled, secret, private, status,
+def test_rooms_require_private_storage_without_feature_switch(
+    resources, monkeypatch, legacy_flag, private, status,
 ):
     *_, client = resources
-    monkeypatch.setenv("PLAY_TOGETHER_ENABLED", enabled)
-    monkeypatch.setenv("ROOM_INVITE_SECRET", secret)
+    monkeypatch.delenv("PLAY_TOGETHER_ENABLED", raising=False)
+    if legacy_flag is not None:
+        monkeypatch.setenv("PLAY_TOGETHER_ENABLED", legacy_flag)
     monkeypatch.setenv("MEDIA_STORAGE_PRIVATE", private)
     response = client.get("/api/v1/rooms/active")
     assert response.status_code == status, response.text
@@ -306,3 +329,18 @@ def test_new_solo_request_is_charged_in_the_same_transaction(resources):
     assert balance(engine, owner).sauce.remaining == 9
     assert repository.create(request).session.id == detail.session.id
     assert balance(engine, owner).sauce.remaining == 9
+
+
+@pytest.mark.parametrize("configured,expected", [(None, 10), ("1", 1), ("100", 100)])
+def test_daily_sauce_default_and_capacity_bounds(monkeypatch, configured, expected):
+    monkeypatch.delenv("DAILY_SAUCE_CAPACITY", raising=False)
+    if configured is not None:
+        monkeypatch.setenv("DAILY_SAUCE_CAPACITY", configured)
+    assert sauce_capacity() == expected
+
+
+@pytest.mark.parametrize("configured", ["0", "101", "ten", ""])
+def test_invalid_daily_sauce_capacity_is_reported(monkeypatch, configured):
+    monkeypatch.setenv("DAILY_SAUCE_CAPACITY", configured)
+    with pytest.raises(GameResourcesUnavailableError):
+        sauce_capacity()
