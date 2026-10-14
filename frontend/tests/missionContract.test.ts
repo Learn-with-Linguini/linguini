@@ -57,6 +57,9 @@ test("only mission sessions without I-Spy finish from the last learning task", (
   assert.equal(finishesWithoutISpy([task(lesson)]), false);
   assert.equal(isMissionSession([mission, clue]), true);
   assert.equal(isMissionSession([task(lesson), clue]), false);
+  const where = task({ ...lesson, title: "Ask where it is", missionId: "M02", practiceLevel: "A1", contentVersion: 1 });
+  assert.equal(finishesWithoutISpy([mission, where]), true);
+  assert.equal(finishesWithoutISpy([mission, where, clue]), false);
 });
 
 test("a photo that is not ready for the mission keeps the server's reasons", () => {
