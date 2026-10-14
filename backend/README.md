@@ -504,21 +504,36 @@ supports the mission counts as assistance. Outcomes describe the existing gradin
 correctness, score, XP, vocabulary progress and learner history still come from
 `questionResults`.
 
-#### M01 A1 lesson path
+#### Mission lesson planning
 
 Set `MISSION_LESSONS_ENABLED=true` to turn it on. It applies only to lesson sessions
-whose active language profile is A1 and whose target language has reviewed colour
-forms (`es`, `fr`); every other session keeps the existing lesson. The selected
-mission is snapshotted on the generation claim and on each task.
+whose active language profile is A1 and whose target language has reviewed forms
+(`es`, `fr`); every other session keeps the existing lesson.
 
-1. **Eligibility** (`app/services/mission_eligibility.py`). Confirming the scene
-   checks only the facts the learner confirmed: at least two objects with different
-   names and at least one reviewed colour. Otherwise the review is rolled back with a
-   409 `mission_photo_not_ready` naming what is missing, and the learner can add facts or choose another image.
-   Nothing is inferred and no scene is substituted.
-2. **Teaching.** Translation and the vocabulary introduction are checkpointed first, as
-   before; the introduction carries the mission fields.
-3. **Lesson** (`app/ai/features/learning_tasks/mission.py`,
+- **Photo requirements.** Each definition names only the confirmed facts it needs:
+  `minConfirmedObjects` (different names), `minColouredObjects` (reviewed colours) and
+  `minRelations` with the accepted `relations` types. M01 needs two objects and a
+  colour; M02 needs two objects and an on/under/next-to/in-front-of/behind relation.
+- **Planner** (`app/services/mission_eligibility.py`). Confirming the scene checks every
+  implemented A1 mission (M01, then M02) against only the facts the learner confirmed.
+  Each mission teaches one new pattern, so two missions are planned only when the
+  learner already passed one of them (met its `minCorrectRatio`) in an earlier session
+  of the same profile; otherwise the first eligible mission is used. The plan is saved as
+  `analysisDraft.missionPlan` before generation and generation reads only that snapshot.
+  Sessions reviewed before plans were saved keep M01.
+- **Not ready.** When no mission qualifies, the review is rolled back with a 409
+  `mission_photo_not_ready` naming what each mission is missing, and the learner can add
+  facts or choose another image. Nothing is inferred and no scene is substituted.
+- **Shared teaching.** Translation and one vocabulary introduction are checkpointed first,
+  as before. The introduction carries no mission fields because it teaches the nouns for
+  every planned mission; its per-word evidence still follows each word's own result.
+- **Tasks.** Each planned mission adds one `grammarLesson` carrying its own mission fields,
+  in plan order, before the bonus I-Spy rounds. `app/services/mission_registry.py` maps each
+  mission to its payload builder, generation spec and task builder.
+
+#### M01 A1 lesson path
+
+1. **Lesson** (`app/ai/features/learning_tasks/mission.py`,
    `app/services/mission_lessons.py`). Exactly one `grammarLesson` with 2–4 questions:
    object recognition and at most one colour recognition (multiple choice), then one
    word-bank sentence (`La taza es roja.`) using the one `copula-colour` pattern. The
@@ -528,11 +543,11 @@ mission is snapshotted on the generation claim and on each task.
    `learning-tasks.m01-a1.v1:M01-A1.v1` with its own schema and validator versions,
    and preloaded templates are never used, so legacy lessons cannot be reused. No old
    grammar sequence is added.
-4. **Bonus I-Spy.** The existing AI I-Spy clue and describing rounds are generated
+2. **Bonus I-Spy.** The existing AI I-Spy clue and describing rounds are generated
    alongside the lesson, as in the legacy path, and placed last without mission
    fields. They unlock once the learning tasks are done and are labelled as the
    bonus round.
-5. **Grading.** Answers are graded from the private answer key. Each
+3. **Grading.** Answers are graded from the private answer key. Each
    `questionOutcomes` entry names its targets; evidence type is derived from the
    interaction (`recognition` for multiple choice, `construction` for sentence
    building) and the word bank is always recorded as support, so a sentence counts as
@@ -540,9 +555,34 @@ mission is snapshotted on the generation claim and on each task.
    rejected with a 409. Each word's vocabulary evidence uses only the questions that
    assess it. Replays with the same idempotency key return the saved attempt without
    new results or XP.
-6. **Completion.** The session completes through the existing lifecycle and completion
-   XP once every task, including the bonus rounds, is completed or skipped. If no I-Spy
-   task was generated, the final learning step shows "Finish lesson" instead.
+4. **Completion.** The session completes through the existing lifecycle and completion
+   XP once every task, including every mission task and the bonus rounds, is completed or
+   skipped. If no I-Spy task was generated, the final learning step shows "Finish lesson"
+   instead.
+
+#### M02 A1 lesson path
+
+`M02-A1.v1.toml`, "Ask where it is": ask a memorised location question and understand a
+short, supported answer. This is supported A1 practice, not independent A2 location
+production, and the I-Spy rule against naming the target does not apply.
+
+1. **Payload** (`app/services/mission_lessons_m02.py`). Confirmed objects with their
+   reviewed `whereQuestion` (`¿Dónde está la taza?`, `Où est la tasse ?`) and the confirmed
+   relations of one selected position, each with its reviewed answer
+   (`La taza está sobre la mesa.`, contractions such as `al lado del` / `à côté du`
+   applied), English meaning and wrong-position meanings. Positions reuse the I-Spy
+   reviewed bank (`sobre`/`sur`, `debajo de`/`sous`, `al lado de`/`à côté de`,
+   `delante de`/`devant`, `detrás de`/`derrière`).
+2. **Lesson** (`app/ai/features/learning_tasks/mission_m02.py`). Exactly one
+   `grammarLesson` with 2–4 questions in order: at most one question recognition
+   (multiple choice), one word-bank question (`buildQuestion`), then one or two answer
+   comprehension questions quoting a confirmed relation's answer. The explanation teaches
+   the question chunk and the selected expression first. Its validator and fallback check
+   the same facts, and its cache identity is `learning-tasks.m02-a1.v1:M02-A1.v1`, so M01
+   and legacy content are never reused.
+3. **Grading** follows M01: recognition for multiple choice, supported construction for
+   the word bank, `wrongPosition` corrections for misread answers, and per-word evidence
+   only from the questions that name the object.
 
 ### Backend performance
 
