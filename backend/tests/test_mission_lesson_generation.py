@@ -15,7 +15,7 @@ from app.ai.features.learning_tasks.validation import LearningTaskGenerationErro
 from app.api.learning_errors import register_learning_errors
 from app.missions import get_mission
 from app.repositories.practice import MissionPhotoNotReadyError
-from app.services.mission_eligibility import agreed_colour, lesson_mission, m01_eligibility
+from app.services.mission_eligibility import agreed_colour, lesson_missions, photo_eligibility
 
 MISSION = get_mission("M01", "A1", 1)
 CUP = "11111111-1111-1111-1111-111111111111"
@@ -51,7 +51,7 @@ def payload(language="fr"):
     ([obj("cup", color="sparkly"), obj("book")], ("Confirm the colour of at least one object.",)),
 ])
 def test_eligibility_uses_only_confirmed_names_and_reviewed_colours(objects, reasons):
-    result = m01_eligibility(MISSION, objects)
+    result = photo_eligibility(MISSION, objects)
     assert (result.eligible, result.reasons) == (not reasons, reasons)
 
 
@@ -76,7 +76,7 @@ def test_mission_path_needs_the_flag_an_a1_profile_and_a_supported_language(
 ):
     monkeypatch.setenv("MISSION_LESSONS_ENABLED", enabled)
     profile = {"proficiency_level": level, "target_language_code": language}
-    assert (lesson_mission(mode, profile) is not None) is selected
+    assert bool(lesson_missions(mode, profile)) is selected
 
 
 def test_fallback_meets_the_lesson_rules_in_french():

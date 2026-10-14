@@ -31,14 +31,7 @@ from app.ai.cache import (
 from app.ai.contracts.errors import ProviderError, ProviderErrorCode
 from app.ai.contracts.schema import build_strict_json_schema
 from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelRequest
-from app.ai.features.learning_tasks.mission import (
-    M01_PROMPT_VERSION,
-    M01_SCHEMA_VERSION,
-    M01_SYSTEM_PROMPT,
-    M01_VALIDATOR_VERSION,
-    MissionLessonResult,
-    validate_m01_lesson,
-)
+from app.ai.features.learning_tasks.mission import MissionGeneration
 from app.ai.features.learning_tasks.prompt import (
     LEARNING_TASK_MEMORY_PROMPT_VERSION,
     LEARNING_TASK_MEMORY_SYSTEM_PROMPT,
@@ -263,20 +256,20 @@ class LearningTaskService:
             raise LearningTaskGenerationError("Learning task generation failed.") from error
 
     def generate_mission(
-        self, payload: dict[str, Any], *, mission_version: str,
-        cache_scope: CacheScope | None = None,
-    ) -> MissionLessonResult:
-        """Generate the M01 lesson; its cache identity includes the mission version."""
+        self, payload: dict[str, Any], generation: MissionGeneration, *,
+        mission_version: str, cache_scope: CacheScope | None = None,
+    ) -> Any:
+        """Generate one mission's lesson; its cache identity includes the mission version."""
         version = FeatureVersion(
             AiFeature.LEARNING_TASK.value,
-            f"{M01_PROMPT_VERSION}:{mission_version}",
-            M01_SCHEMA_VERSION,
-            M01_VALIDATOR_VERSION,
+            f"{generation.prompt_version}:{mission_version}",
+            generation.schema_version,
+            generation.validator_version,
         )
 
-        def decode(data: Any) -> MissionLessonResult:
-            result = MissionLessonResult.model_validate(data)
-            validate_m01_lesson(payload, result)
+        def decode(data: Any) -> Any:
+            result = generation.result_model.model_validate(data)
+            generation.validate(payload, result)
             return result
 
         try:
@@ -289,11 +282,11 @@ class LearningTaskService:
                 compute=lambda: self._generate(
                     payload,
                     (mission_version,),
-                    MissionLessonResult,
+                    generation.result_model,
                     prompt_version=version.prompt_version,
-                    system_prompt=M01_SYSTEM_PROMPT,
+                    system_prompt=generation.system_prompt,
                     parse=lambda text: decode(json.loads(text)),
-                    json_schema_name="mission_lesson_m01_v1",
+                    json_schema_name=generation.json_schema_name,
                 ),
                 decode=decode,
             )

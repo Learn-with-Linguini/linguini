@@ -109,7 +109,8 @@ def test_m01_a1_definition_covers_the_mission_contract():
     mission = get_mission("M01", "A1", 1)
     assert mission.title == "Identify and describe an object"
     assert mission.photo_requirements.min_confirmed_objects == 2
-    assert {"colour", "relation"} == set(mission.photo_requirements.describable_by)
+    assert mission.photo_requirements.min_coloured_objects == 1
+    assert mission.photo_requirements.min_relations == 0
     assert mission.objective.objective_id == "identify-describe-object"
     assert set(mission.targets) == {
         "identify-object", "name-object", "describe-colour", "describe-location",
@@ -141,7 +142,9 @@ def test_definition_files_are_named_by_their_version(tmp_path):
     )))
     with pytest.raises(MissionConfigurationError, match="describe-size"):
         load_missions(tmp_path)
-    assert [path.name for path in Path(DEFINITIONS_DIR).glob("*.toml")] == ["M01-A1.v1.toml"]
+    assert sorted(path.name for path in Path(DEFINITIONS_DIR).glob("*.toml")) == [
+        "M01-A1.v1.toml", "M02-A1.v1.toml",
+    ]
 
 
 def test_legacy_tasks_keep_their_saved_json_shape():

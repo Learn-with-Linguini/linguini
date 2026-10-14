@@ -7,9 +7,7 @@ title = "Identify and describe an object"
 media_sources = ["preloaded", "camera", "userUpload"]
 # A target plus at least one other object, so identification has a distractor.
 min_confirmed_objects = 2
-min_describable_objects = 1
-describable_by = ["colour", "relation"]
-relations = ["on", "under", "next_to", "near", "in_front_of", "behind"]
+min_coloured_objects = 1
 
 [objective]
 objective_id = "identify-describe-object"

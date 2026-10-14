@@ -49,7 +49,7 @@ def with_mission(task, mission):
     return SessionTask.model_validate(data)
 
 
-def _gender(term, word):
+def noun_gender(term, word):
     if term is not None and term.gender:
         return term.gender
     return getattr(word.gender, "value", word.gender)
@@ -73,7 +73,7 @@ def m01_payload(mission, language, objects, words, translated_scene):
     rows, colours, genders = [], [], {}
     for obj, word in zip(objects, words, strict=True):
         term = terms.get(str(obj.id))
-        gender = _gender(term, word)
+        gender = noun_gender(term, word)
         rows.append(dict(
             key=str(obj.id), source=obj.label, nounPhrase=_with_article(word.display_text, term)
         ))
@@ -143,32 +143,35 @@ def _corrections(payload, question, correct_label):
     return rules
 
 
-def mission_lesson_task(session_id, mission, payload, result, vocabulary_ids):
-    """One mission-tagged grammar lesson whose private key grades every question."""
+def correct_label(question):
+    if question.interaction_type == "multipleChoice":
+        return next(
+            option.label for option in question.options
+            if option.option_id == question.correct_option_id
+        )
+    return question.correct_text
+
+
+def build_mission_task(session_id, mission, focus, result, evaluate):
+    """One mission-tagged grammar lesson whose private key grades every question.
+
+    ``evaluate(question, label)`` returns the question's evaluation fields.
+    """
     questions = result.questions
     correct = {}
     evaluations = []
     for question in questions:
-        if question.interaction_type == "multipleChoice":
-            correct[question.question_id] = question.correct_option_id
-            label = next(
-                option.label for option in question.options
-                if option.option_id == question.correct_option_id
-            )
-        else:
-            correct[question.question_id] = question.correct_text
-            label = question.correct_text
-        target_ids, evidence_type, criteria = _EVALUATIONS[question.purpose]
-        vocabulary_id = vocabulary_ids.get(question.object_key)
+        label = correct_label(question)
+        correct[question.question_id] = (
+            question.correct_option_id
+            if question.interaction_type == "multipleChoice"
+            else question.correct_text
+        )
         evaluations.append(dict(
             question_id=question.question_id,
             objective_id=mission.objective.objective_id,
-            target_ids=target_ids,
-            evidence_type=evidence_type,
-            rubric_criterion_ids=criteria,
-            vocabulary_item_ids=[vocabulary_id] if vocabulary_id else [],
             scene_object_id=UUID(question.object_key),
-            corrections=_corrections(payload, question, label),
+            **evaluate(question, label),
         ))
     return SessionTask(
         id=uuid5(session_id, f"mission:{mission_version(mission)}:lesson"),
@@ -178,7 +181,7 @@ def mission_lesson_task(session_id, mission, payload, result, vocabulary_ids):
         order_index=0,
         public_content=dict(
             kind="grammarLesson",
-            focus=M01_FOCUS,
+            focus=focus,
             title=result.title,
             explanation=result.explanation,
             questions=[
@@ -200,3 +203,20 @@ def mission_lesson_task(session_id, mission, payload, result, vocabulary_ids):
         answer_key=dict(correct_option_ids=correct, question_evaluations=evaluations),
         scene_object_id=UUID(questions[-1].object_key),
     )
+
+
+def mission_lesson_task(session_id, mission, payload, result, vocabulary_ids):
+    """The M01 lesson task from a validated result."""
+
+    def evaluate(question, label):
+        target_ids, evidence_type, criteria = _EVALUATIONS[question.purpose]
+        vocabulary_id = vocabulary_ids.get(question.object_key)
+        return dict(
+            target_ids=target_ids,
+            evidence_type=evidence_type,
+            rubric_criterion_ids=criteria,
+            vocabulary_item_ids=[vocabulary_id] if vocabulary_id else [],
+            corrections=_corrections(payload, question, label),
+        )
+
+    return build_mission_task(session_id, mission, M01_FOCUS, result, evaluate)

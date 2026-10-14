@@ -20,7 +20,6 @@ from app.ai.cache import CacheScope, TemplateSet
 from app.ai.features.ispy_clues import ISpyClueGenerationError
 from app.ai.features.ispy_guess import ISpyGuessError, ISpyGuessResult
 from app.ai.features.learning_tasks import required_task_focuses
-from app.ai.features.learning_tasks.mission import fallback_m01_lesson
 from app.ai.features.scene_analysis import RoutedSceneAnalyzer
 from app.repositories.postgres.game_resources import refund_sauce, reward_basil, spend_sauce
 from app.repositories.postgres.language_profiles import language_profiles
@@ -91,13 +90,16 @@ from app.services.ispy_descriptions import (
     OUTCOME_CORRECTNESS,
     interpret_guess,
 )
-from app.services.mission_eligibility import lesson_mission, m01_eligibility
-from app.services.mission_lessons import (
-    m01_payload,
-    mission_lesson_task,
-    mission_version,
-    with_mission,
+from app.services.mission_eligibility import (
+    M01_A1,
+    lesson_missions,
+    mission_snapshot,
+    photo_eligibility,
+    plan_missions,
+    snapshot_missions,
 )
+from app.services.mission_lessons import mission_version
+from app.services.mission_registry import MISSION_LESSONS
 from app.services.question_outcomes import (
     normalize_answer,
     offered_supports,
@@ -306,7 +308,7 @@ class GenerationClaim:
     cache_scope: CacheScope | None = None
     templates: TemplateSet | None = None
     learner_history: dict | None = None
-    mission: MissionDefinition | None = None
+    missions: tuple[MissionDefinition, ...] = ()
 
     @property
     def generation_options(self) -> dict:
@@ -1255,16 +1257,17 @@ class PostgresWorkflowRepository:
                         source_relation_key=source_key,
                     )
                 )
-            mission = lesson_mission(session.mode, profile)
-            if mission is not None:
-                eligibility = m01_eligibility(mission, confirmed)
-                if not eligibility.eligible:
-                    # Rolls the review back so the learner can add facts or pick another image.
-                    raise MissionPhotoNotReadyError(
-                        "This photo is not ready for this lesson. "
-                        + " ".join(eligibility.reasons)
-                        + " Review the objects and colours, or choose another image."
-                    )
+            self._plan_missions(c, session, profile, confirmed, [
+                relation.model_copy(update=dict(
+                    subject_scene_object_id=manual_ids.get(
+                        relation.subject_scene_object_id, relation.subject_scene_object_id
+                    ),
+                    reference_scene_object_id=manual_ids.get(
+                        relation.reference_scene_object_id, relation.reference_scene_object_id
+                    ),
+                ))
+                for relation in request.relations
+            ])
             c.execute(
                 update(sessions)
                 .where(sessions.c.id == session_id)
@@ -1320,8 +1323,67 @@ class PostgresWorkflowRepository:
                 relations,
                 *self._reuse(c, session, asset, objects, relations),
                 learner_history=history,
-                mission=lesson_mission(session.mode, dict(profile)),
+                missions=tuple(self._planned_missions(session, dict(profile))),
             )
+
+    def _plan_missions(self, c, session, profile, objects, relations):
+        """Snapshot the lesson's mission plan from the confirmed facts before generation."""
+        candidates = lesson_missions(session.mode, profile)
+        if not candidates:
+            return
+        passed = self._passed_missions(c, session, candidates)
+        plan = plan_missions(candidates, objects, relations, passed)
+        if not plan:
+            # Rolls the review back so the learner can add facts or pick another image.
+            reasons = [
+                f"{mission.title}: "
+                + " ".join(photo_eligibility(mission, objects, relations).reasons)
+                for mission in candidates
+            ]
+            raise MissionPhotoNotReadyError(
+                "This photo is not ready for this lesson. " + " ".join(reasons)
+                + " Review the objects, colours and positions, or choose another image."
+            )
+        draft = dict(c.execute(select(sessions.c.analysis_draft).where(
+            sessions.c.id == session.id,
+        )).scalar_one() or {})
+        draft["missionPlan"] = [mission_snapshot(mission) for mission in plan]
+        c.execute(update(sessions).where(sessions.c.id == session.id).values(
+            analysis_draft=draft,
+        ))
+
+    def _passed_missions(self, c, session, candidates):
+        """Missions this profile met the expected performance for in earlier sessions."""
+        ratios = {m.mission_id: m.expected_performance.min_correct_ratio for m in candidates}
+        mission_id = session_tasks.c.public_content["missionId"].astext
+        rows = c.execute(
+            select(mission_id, task_attempts.c.evaluation_details)
+            .join(task_attempts, task_attempts.c.session_task_id == session_tasks.c.id)
+            .join(sessions, sessions.c.id == session_tasks.c.session_id)
+            .where(
+                sessions.c.language_profile_id == session.language_profile_id,
+                sessions.c.id != session.id,
+                session_tasks.c.kind == "grammarLesson",
+                mission_id.in_(list(ratios)),
+            )
+        ).all()
+        passed = set()
+        for mission, details in rows:
+            results = list(((details or {}).get("questionResults") or {}).values())
+            if results and sum(map(bool, results)) / len(results) >= ratios[mission]:
+                passed.add(mission)
+        return passed
+
+    def _planned_missions(self, session, profile):
+        if not lesson_missions(session.mode, profile):
+            return []
+        draft = session.analysis_draft or {}
+        if "missionPlan" in draft:
+            return snapshot_missions(draft["missionPlan"])
+        # Sessions reviewed before mission plans were saved used M01 alone.
+        return snapshot_missions([dict(
+            missionId=M01_A1[0], practiceLevel=M01_A1[1], contentVersion=M01_A1[2],
+        )])
 
     def _reuse(self, c, session, asset, objects, relations):
         """The cache scope and scene templates for this session's content.
@@ -1408,8 +1470,6 @@ class PostgresWorkflowRepository:
                 task for task in rebuilt if task.kind == "vocabularyIntroduction"
             )
             introduction = personalize_introduction(introduction, claim.learner_history)
-            if claim.mission is not None:
-                introduction = with_mission(introduction, claim.mission)
             rebuilt = [introduction if task.id == introduction.id else task for task in rebuilt]
             summary = personalization_summary(
                 claim.learner_history, introduction, has_relations=bool(relations),
@@ -1449,20 +1509,20 @@ class PostgresWorkflowRepository:
                         ),
                     )
 
-        mission_lesson = None
-        if claim.mission is not None:
-            # The mission lesson replaces the fixed grammar sequence; I-Spy stays as the bonus.
+        mission_lessons = []
+        if claim.missions:
+            # Mission lessons replace the fixed grammar sequence; I-Spy stays as the bonus.
             lesson = partial(
-                self._mission_lesson,
-                claim, objects, words, translated_scene if self.translator else None,
+                self._mission_lessons,
+                claim, objects, relations, words, translated_scene if self.translator else None,
             )
             if self.translator:
-                mission_lesson, ispy_clues = self._alongside_clues(lesson, partial(
+                mission_lessons, ispy_clues = self._alongside_clues(lesson, partial(
                     self._clues, session_id, payload, translated_scene, objects, words,
                     relations, options=claim.generation_options,
                 ))
             else:
-                mission_lesson = lesson()
+                mission_lessons = lesson()
         elif self.translator:
             lessons, ispy_clues = self._lessons_and_clues(
                 session_id, payload, translated_scene, objects, words, relations,
@@ -1496,10 +1556,10 @@ class PostgresWorkflowRepository:
                     task for task in learning if task.kind == "vocabularyIntroduction"
                 ] + lessons
             rebuilt = [*learning, *clues, *descriptions]
-            if mission_lesson is not None:
+            if mission_lessons:
                 rebuilt = [
                     *(task for task in rebuilt if task.id == introduction_id),
-                    mission_lesson, *clues, *descriptions,
+                    *mission_lessons, *clues, *descriptions,
                 ]
             if summary and summary.practice_focuses:
                 available = {task.public_content.focus for task in lessons}
@@ -1525,30 +1585,34 @@ class PostgresWorkflowRepository:
                 )
             self._transition(c, session, "inProgress")
 
-    def _mission_lesson(self, claim, objects, words, translated_scene):
-        """The validated mission lesson; a generation failure uses the deterministic one."""
-        mission = claim.mission
-        payload = m01_payload(
-            mission, claim.profile["target_language_code"], objects, words, translated_scene
-        )
-        result = None
-        if self.learning_task_generator:
-            try:
-                with _timed("mission lesson generation", claim.session_id):
-                    result = self.learning_task_generator.generate_mission(
-                        payload,
-                        mission_version=mission_version(mission),
-                        cache_scope=claim.cache_scope,
-                    )
-            except Exception:
-                logger.exception(
-                    "Mission lesson generation failed for session %s; "
-                    "using the deterministic mission lesson.", claim.session_id,
-                )
-        if result is None:
-            result = fallback_m01_lesson(payload)
+    def _mission_lessons(self, claim, objects, relations, words, translated_scene):
+        """One validated lesson per planned mission; a generation failure uses its fallback."""
+        language = claim.profile["target_language_code"]
         vocabulary_ids = {str(obj.id): word.id for obj, word in zip(objects, words, strict=True)}
-        return mission_lesson_task(claim.session_id, mission, payload, result, vocabulary_ids)
+        lessons = []
+        for mission in claim.missions:
+            spec = MISSION_LESSONS[mission.mission_id]
+            payload = spec.payload(mission, language, objects, relations, words, translated_scene)
+            result = None
+            if self.learning_task_generator:
+                try:
+                    with _timed("mission lesson generation", claim.session_id):
+                        result = self.learning_task_generator.generate_mission(
+                            payload,
+                            spec.generation,
+                            mission_version=mission_version(mission),
+                            cache_scope=claim.cache_scope,
+                        )
+                except Exception:
+                    logger.exception(
+                        "%s lesson generation failed for session %s; "
+                        "using the deterministic mission lesson.",
+                        mission.mission_id, claim.session_id,
+                    )
+            if result is None:
+                result = spec.generation.fallback(payload)
+            lessons.append(spec.task(claim.session_id, mission, payload, result, vocabulary_ids))
+        return lessons
 
     def _store_translation(self, c, session, profile, objects, translated_scene):
         """Keep the scene translation and link each object to its vocabulary item."""
@@ -2133,7 +2197,9 @@ class PostgresWorkflowRepository:
                             session=session,
                         )
                     if task.kind == "vocabularyIntroduction" and task.public_content.words:
-                        mission_task = task.public_content.mission_key is not None
+                        mission_task = task.public_content.mission_key is not None or bool(
+                            (session.analysis_draft or {}).get("missionPlan")
+                        )
                         for learning_word in task.public_content.words:
                             word_correct = (
                                 question_results.get(f"word-{learning_word.learning_key}", correct)

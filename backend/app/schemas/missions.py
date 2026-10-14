@@ -25,20 +25,20 @@ def _unique(values, message):
 
 
 class PhotoRequirements(ApiModel):
-    """What a reviewed photo must contain before the mission can use it."""
+    """The confirmed facts this mission needs; facts it does not list are not required."""
 
     media_sources: Annotated[list[MediaSource], Field(min_length=1)]
     min_confirmed_objects: Annotated[int, Field(ge=1)]
-    min_describable_objects: Annotated[int, Field(ge=1)]
-    describable_by: Annotated[list[Literal["colour", "relation"]], Field(min_length=1)]
+    min_coloured_objects: Annotated[int, Field(ge=0)] = 0
+    min_relations: Annotated[int, Field(ge=0)] = 0
     relations: list[SceneRelationType] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_requirements(self) -> PhotoRequirements:
-        if self.min_describable_objects > self.min_confirmed_objects:
-            raise ValueError("describable objects cannot exceed confirmed objects")
-        if ("relation" in self.describable_by) != bool(self.relations):
-            raise ValueError("relations are listed exactly when objects are describable by them")
+        if self.min_coloured_objects > self.min_confirmed_objects:
+            raise ValueError("coloured objects cannot exceed confirmed objects")
+        if bool(self.min_relations) != bool(self.relations):
+            raise ValueError("relation types are listed exactly when relations are required")
         return self
 
 

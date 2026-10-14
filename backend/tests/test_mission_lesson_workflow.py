@@ -111,7 +111,8 @@ def test_suitable_photo_builds_one_mission_lesson_after_the_vocabulary(curated, 
     kinds = [task.kind for task in detail.tasks]
     assert kinds[:2] == ["vocabularyIntroduction", "grammarLesson"]
     assert "ispyRound" in kinds[2:] and set(kinds[2:]) <= {"ispyRound", "reflection"}
-    assert all(task.public_content.mission_key == M01 for task in detail.tasks[:2])
+    assert detail.tasks[0].public_content.mission_key is None
+    assert detail.tasks[1].public_content.mission_key == M01
     assert all(task.public_content.mission_key is None for task in detail.tasks[2:])
     lesson = detail.tasks[1]
     questions = lesson.public_content.questions
