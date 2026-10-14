@@ -294,7 +294,6 @@ def get_room_service(
 ) -> RoomService:
     if not get_private_media_urls():
         raise RoomUnavailableError()
-    settings = get_ai_settings(request)
     runtime = get_ai_runtime(request)
     storage = ImageStorage(
         os.getenv("SUPABASE_URL", "").strip(),
@@ -302,7 +301,6 @@ def get_room_service(
     )
     preparer = RoomPhotoPreparer(
         runtime.uploaded_scene_analyzer(), runtime.translator(), storage=storage,
-        image_moderator=get_image_moderator(request, settings),
     )
     return RoomService(
         PostgresRoomRepository(
