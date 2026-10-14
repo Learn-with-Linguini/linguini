@@ -72,7 +72,6 @@ class PhotoPreparer:
             "ownerId": str(owner_id),
             "title": "A private photo",
             "summary": "Two objects",
-            "moderationPassed": True,
             "contentHash": hashlib.sha256(asset.storage_key.encode()).hexdigest(),
             "objects": [
                 {"key": str(uuid4()), "label": "cup", "x": 25, "y": 50, "color": "red"},
@@ -83,7 +82,7 @@ class PhotoPreparer:
 
     def build_pack(self, photo_id, owner_id, profile, analysis, review):
         self.calls.append(("pack", photo_id))
-        assert profile["room_id"] and analysis["moderationPassed"]
+        assert profile["room_id"] and analysis["objects"]
         return {
             "version": 1,
             "objects": [
@@ -296,6 +295,11 @@ def test_complete_unique_photo_game_records_only_own_contributions(db, count):
     assert sum(c.basil_earned for c in final.contributions) == count * 2
     assert sum(c.xp_earned for c in final.contributions) == count * 15
     with db.engine.connect() as c:
+        photos = c.execute(select(
+            room_photos.c.moderation_passed, room_photos.c.analysis,
+        ).where(room_photos.c.room_id == room_id)).all()
+        assert len(photos) == count
+        assert all(not passed and "moderationPassed" not in analysis for passed, analysis in photos)
         assert (
             c.execute(
                 select(func.count())
@@ -363,7 +367,7 @@ def test_profile_ownership_language_and_one_active_room(db):
     assert len(db.services[0].get(access.room.id).members) == 1
 
 
-def test_photo_owner_review_and_moderation_privacy(db):
+def test_photo_owner_review_and_analysis_privacy(db):
     room_id = paired(db)
     snapshot = db.services[0].get(room_id)
     with pytest.raises(RoomError) as error:
@@ -378,6 +382,11 @@ def test_photo_owner_review_and_moderation_privacy(db):
     )
     photo_id = added.photos[0].id
     assert added.photos[0].image_url is not None
+    with db.engine.begin() as c:
+        # A legacy verdict alone must not grant access to an unanalyzed photo.
+        c.execute(update(room_photos).where(room_photos.c.id == photo_id).values(
+            moderation_passed=True,
+        ))
     peer = db.services[1].get(room_id).photos[0]
     assert peer.image_url is None and peer.media_asset_id is None and peer.review is None
     with pytest.raises(RoomError):
@@ -404,6 +413,35 @@ def test_photo_owner_review_and_moderation_privacy(db):
                 review={"objects": owner.photos[0].review["objects"], "relations": []},
             ),
         )
+
+
+@pytest.mark.parametrize(
+    "invalid", ["missing_hash", "foreign_owner", "foreign_photo", "no_objects"]
+)
+def test_invalid_analysis_cannot_publish_a_photo_to_the_partner(db, invalid):
+    room_id = paired(db)
+    snapshot = db.repos[0].get(room_id)
+    added = db.repos[0].add_photo(
+        room_id, command(snapshot, AddRoomPhotoRequest, media_asset_id=db.assets[0][0].id)
+    )
+    photo_id = added.photos[0].id
+    job = db.repos[0].claim_photo(room_id, photo_id)
+    result = db.preparer.analyze(job.photo_id, job.owner_user_id, job.asset, job.profile)
+    if invalid == "missing_hash":
+        result.pop("contentHash")
+    elif invalid == "foreign_owner":
+        result["ownerId"] = str(db.people[1].id)
+    elif invalid == "foreign_photo":
+        result["photoId"] = str(uuid4())
+    else:
+        result["objects"] = []
+    db.repos[0].finish_photo(job, result=result)
+    photo = db.repos[1].get(room_id).photos[0]
+    assert photo.status == "failed" and photo.retryable
+    assert photo.error_code == "room_photo_analysis_failed"
+    assert photo.image_url is None and photo.review is None
+    with pytest.raises(RoomError):
+        db.repos[1].authorized_photo_asset(db.people[1].id, room_id, photo_id)
 
 
 def test_hidden_current_target_future_turns_and_future_media(db):
@@ -598,7 +636,7 @@ def test_reuploaded_identical_bytes_cannot_form_two_photos(db):
         db.repos[0].authorized_photo_asset(db.people[0].id, room_id, second_id)
 
 
-def test_unsafe_photo_stays_private_and_cannot_retry(db):
+def test_failed_analysis_stays_private_and_honors_retry_limit(db):
     room_id = paired(db)
     snapshot = db.repos[0].get(room_id)
     added = db.repos[0].add_photo(
@@ -606,7 +644,9 @@ def test_unsafe_photo_stays_private_and_cannot_retry(db):
     )
     job = db.repos[0].claim_photo(room_id, added.photos[0].id)
     db.repos[0].finish_photo(
-        job, error=RoomPhotoError("room_photo_unsafe", "Choose another photo.", retryable=False)
+        job, error=RoomPhotoError(
+            "room_photo_analysis_failed", "Choose another photo.", retryable=False
+        )
     )
     snapshot = db.repos[0].get(room_id)
     assert not snapshot.photos[0].retryable

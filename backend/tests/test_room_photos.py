@@ -1,6 +1,7 @@
 """Room preparation gates sharing, reuses real provider seams and respects owner edits."""
 
 import copy
+import hashlib
 import json
 from uuid import uuid4, uuid5
 
@@ -129,13 +130,12 @@ def setup_photo():
         "source_language_code": "en",
         "target_language_code": "es",
     }
-    analyzer, translator, storage, moderator = (
+    analyzer, translator, storage = (
         FakeAnalyzer(),
         FakeTranslator(),
         FakeStorage(),
-        FakeModerator(),
     )
-    helper = RoomPhotoPreparer(analyzer, translator, storage=storage, image_moderator=moderator)
+    helper = RoomPhotoPreparer(analyzer, translator, storage=storage)
     return helper, photo_id, owner, asset, profile
 
 
@@ -152,41 +152,26 @@ def test_analysis_is_private_owner_review_and_does_not_translate_or_create_a_ses
     identity = helper.analyzer.calls[0][0]
     assert identity.id == photo_id
     assert identity.user_id == owner
-    assert result["moderationPassed"] is True
+    assert "moderationPassed" not in result
+    assert result["contentHash"] == hashlib.sha256(helper.storage.data).hexdigest()
     assert result["photoId"] == str(photo_id) and result["ownerId"] == str(owner)
     assert result["objects"][0]["x"] == 20
     assert result["objects"][0]["color"] == "red"
     assert result["relations"][0]["relation"] == "next_to"
     assert not helper.translator.calls
-    assert len(helper.image_moderator.calls) == 1
 
 
-@pytest.mark.parametrize(
-    "verdict,code,retryable",
-    [
-        (ImageModerationResult(True, ("violence",)), "room_photo_unsafe", False),
-        (
-            ImageModerationError("secret provider details"),
-            "room_photo_moderation_unavailable",
-            True,
-        ),
-        ({"flagged": False}, "room_photo_moderation_unavailable", True),
-        (ImageModerationResult(None), "room_photo_moderation_unavailable", True),
-    ],
-)
-def test_moderation_rejection_or_missing_verdict_never_starts_analysis(
-    setup_photo, verdict, code, retryable
-):
+def test_room_analysis_and_review_work_without_a_moderator_or_openai_key(setup_photo, monkeypatch):
     helper, photo_id, owner, asset, profile = setup_photo
-    helper.image_moderator = FakeModerator(verdict)
-    with pytest.raises(RoomPhotoError) as caught:
-        helper.analyze(photo_id, owner, asset, profile)
-    assert caught.value.code == code and caught.value.retryable is retryable
-    assert "secret" not in str(caught.value)
-    assert helper.analyzer.calls == [] and helper.translator.calls == []
+    monkeypatch.delenv("AI_OPENAI_API_KEY", raising=False)
+    monkeypatch.setenv("AI_IMAGE_MODERATION_PROVIDER", "none")
+    analysis = helper.analyze(photo_id, owner, asset, profile)
+    pack = helper.build_pack(photo_id, owner, profile, analysis, review_of(analysis))
+    assert len(pack["targets"]) == 2
+    assert "moderationPassed" not in analysis
 
 
-@pytest.mark.parametrize("missing", ["analyzer", "image_moderator", "storage"])
+@pytest.mark.parametrize("missing", ["analyzer", "storage"])
 def test_unconfigured_required_services_fail_closed(setup_photo, missing):
     helper, photo_id, owner, asset, profile = setup_photo
     setattr(helper, missing, None)
@@ -200,13 +185,13 @@ def test_foreign_upload_is_rejected_before_bytes_or_provider_calls(setup_photo):
     with pytest.raises(RoomPhotoError) as caught:
         helper.analyze(photo_id, uuid4(), asset, profile)
     assert caught.value.code == "room_photo_review_invalid"
-    assert not helper.storage.calls and not helper.image_moderator.calls
+    assert not helper.storage.calls and not helper.analyzer.calls
 
 
 def test_supported_language_case_matches_room_admission(setup_photo):
     helper, photo_id, owner, asset, profile = setup_photo
     profile.update(source_language_code="EN", target_language_code="ES")
-    assert helper.analyze(photo_id, owner, asset, profile)["moderationPassed"] is True
+    assert helper.analyze(photo_id, owner, asset, profile)["objects"]
 
 
 @pytest.mark.parametrize("problem", ["storage", "analysis"])
@@ -244,15 +229,17 @@ def test_owner_corrections_are_the_only_facts_translated_and_use_private_room_sc
     assert len(result["targets"]) == 2
 
 
-@pytest.mark.parametrize("change", ["foreign_owner", "unchecked", "foreign_photo", "new_object"])
+@pytest.mark.parametrize(
+    "change", ["foreign_owner", "missing_analysis", "foreign_photo", "new_object"]
+)
 def test_untrusted_or_other_photo_review_cannot_reach_translation(setup_photo, change):
     helper, photo_id, owner, asset, profile = setup_photo
     analysis = helper.analyze(photo_id, owner, asset, profile)
     review = review_of(analysis)
     if change == "foreign_owner":
         owner = uuid4()
-    elif change == "unchecked":
-        analysis["moderationPassed"] = False
+    elif change == "missing_analysis":
+        analysis.pop("objects")
     elif change == "foreign_photo":
         photo_id = uuid4()
     else:
@@ -299,7 +286,7 @@ def test_translation_failure_and_ambiguous_facts_allow_owner_to_correct_the_phot
     with pytest.raises(RoomPhotoError) as caught:
         helper.build_pack(photo_id, owner, profile, analysis, review)
     assert caught.value.code == "room_photo_no_clues" and caught.value.retryable
-    assert analysis["moderationPassed"] is True
+    assert [obj["color"] for obj in analysis["objects"]] == ["red", "blue"]
 
 
 class FakeVisionClient:
@@ -324,8 +311,11 @@ class FakeGrounder:
         return {"cup": GroundedBox(x=0.6, y=0.2, width=0.2, height=0.2, score=0.99)}
 
 
-def test_actual_uploaded_analyzer_reuses_grounding_and_one_moderation_without_shared_mutation(
-    setup_photo,
+@pytest.mark.parametrize(
+    "verdict", [None, ImageModerationError("offline"), ImageModerationResult(True)]
+)
+def test_actual_uploaded_analyzer_reuses_bytes_and_grounding_without_moderation_or_shared_mutation(
+    setup_photo, verdict,
 ):
     helper, photo_id, owner, asset, profile = setup_photo
     output = {
@@ -344,23 +334,27 @@ def test_actual_uploaded_analyzer_reuses_grounding_and_one_moderation_without_sh
         "relations": [],
     }
     client, grounder = FakeVisionClient(output), FakeGrounder()
-    original_moderator = FakeModerator(ImageModerationError("should not be called"))
+    original_moderator = FakeModerator(verdict) if verdict is not None else None
     analyzer = UploadedSceneAnalyzer(
         helper.storage,
         client,
         VisionModelConfig(model_name="test-model", max_retries=0),
         tracer=NoOpAITracer(),
-        provider="openai",
+        provider="openrouter",
         object_grounder=grounder,
         image_moderator=original_moderator,
     )
     helper.analyzer = analyzer
     result = helper.analyze(photo_id, owner, asset, profile)
-    assert len(helper.storage.calls) == len(helper.image_moderator.calls) == len(client.calls) == 1
+    assert len(helper.storage.calls) == len(client.calls) == 1
+    assert client.calls[0].image.data == helper.storage.data
+    assert result["contentHash"] == hashlib.sha256(helper.storage.data).hexdigest()
+    assert "moderationPassed" not in result
     assert grounder.calls[0][1] == ["cup", "book"]
     assert result["objects"][0]["key"] == str(uuid5(photo_id, "scene-object:cup"))
     assert result["objects"][0]["x"] == pytest.approx(70)
     assert result["objects"][0]["y"] == pytest.approx(30)
     assert analyzer._storage is helper.storage
     assert analyzer._image_moderator is original_moderator
-    assert original_moderator.calls == []
+    if original_moderator is not None:
+        assert original_moderator.calls == []

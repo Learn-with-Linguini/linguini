@@ -75,9 +75,10 @@ Rooms store random invitations privately in the database, so a host can recover
 an invitation after reload or an API restart without a separate room secret.
 The invite migration rotates existing live invitations; hosts should copy the
 new code after deployment. Rooms support two players learning English to Spanish
-or French
-at the same A1/A2 level, with 2–4 photos uploaded by either player. Photo sharing
-requires configured image moderation and fails closed if moderation is unavailable.
+or French at the same A1/A2 level, with 2–4 photos uploaded by either player. Room photos use
+the configured scene analyzer and translator, then require the owner's fact review.
+Rooms do not require or call OpenAI image moderation. Photos remain private to the
+owner until analysis succeeds, then become accessible only to the invited partner.
 Invitations expire after 10 minutes; setup and play each expire after 30 minutes.
 Room images use an authenticated, uncached endpoint; ordinary media access stays
 restricted to the photo owner. Rooms require `MEDIA_STORAGE_PRIVATE=true`; the

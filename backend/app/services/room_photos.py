@@ -1,4 +1,4 @@
-"""Fail-closed uploaded-room preparation; owns no sessions or database writes."""
+"""Private uploaded-room preparation; owns no sessions or database writes."""
 
 import copy
 import hashlib
@@ -9,7 +9,6 @@ from pydantic import Field, ValidationError, field_validator, model_validator
 
 from app.ai.cache import CacheScope
 from app.ai.contracts import VisionImage
-from app.ai.features.moderation import ImageModerationError, ImageModerationResult
 from app.ai.features.scene_analysis import UploadedSceneAnalyzer
 from app.ai.features.translation.schemas import SceneTranslationResult
 from app.ai.features.translation.validation import (
@@ -84,8 +83,8 @@ class RoomPhotoReview(ApiModel):
         return self
 
 
-class _PreparedStorage:
-    """Analyze precisely the bytes that passed moderation, without a second download."""
+class _PhotoStorage:
+    """Analyze the downloaded bytes used for duplicate hashing without a second download."""
 
     def __init__(self, storage_key: str, data: bytes):
         self.key, self.data = storage_key, data
@@ -96,31 +95,17 @@ class _PreparedStorage:
         return self.data
 
 
-class _PassedModerator:
-    """Per-call moderation memo; never changes the application-scoped analyzer."""
-
-    def __init__(self, image: VisionImage, verdict: ImageModerationResult):
-        self.digest = hashlib.sha256(image.data).digest()
-        self.mime_type = image.mime_type
-        self.verdict = verdict
-
-    def moderate(self, image: VisionImage) -> ImageModerationResult:
-        if self.mime_type != image.mime_type or self.digest != hashlib.sha256(image.data).digest():
-            raise RoomPhotoError("room_photo_analysis_failed", "The photo changed during analysis.")
-        return self.verdict
-
-
 class RoomPhotoPreparer:
-    """Injected runtime analyzer/translator, with explicit strict sharing moderation.
+    """Prepare private room photos with the runtime analyzer and translator.
 
     Room services own authorization, leases, bounded job retries and revisions.
     These synchronous helpers must run outside their database transactions. A
     successful analysis permits sharing; translation waits for owner confirmation.
     """
 
-    def __init__(self, analyzer, translator, *, storage, image_moderator):
+    def __init__(self, analyzer, translator, *, storage):
         self.analyzer, self.translator = analyzer, translator
-        self.storage, self.image_moderator = storage, image_moderator
+        self.storage = storage
 
     @staticmethod
     def _language(profile: dict) -> str:
@@ -144,11 +129,10 @@ class RoomPhotoPreparer:
             raise RoomPhotoError(
                 "room_photo_review_invalid", "Choose one of your uploaded photos.", retryable=False
             )
-        if self.analyzer is None or self.image_moderator is None or self.storage is None:
+        if self.analyzer is None or self.storage is None:
             raise RoomPhotoError(
                 "room_photo_unavailable",
-                "Photo analysis and image moderation must be configured "
-                "before a room can share uploads.",
+                "Photo analysis and storage must be configured before preparing room uploads.",
             )
         try:
             image = VisionImage(
@@ -159,32 +143,14 @@ class RoomPhotoPreparer:
                 "room_photo_analysis_failed",
                 "This photo could not be opened. Try uploading it again.",
             ) from error
-        try:
-            verdict = self.image_moderator.moderate(image)
-            if not isinstance(verdict, ImageModerationResult) or not isinstance(
-                verdict.flagged, bool
-            ):
-                raise ImageModerationError("Moderation returned no usable verdict.")
-        except Exception as error:
-            raise RoomPhotoError(
-                "room_photo_moderation_unavailable",
-                "Image checks are unavailable. This photo stays private; please try again.",
-            ) from error
-        if verdict.flagged:
-            raise RoomPhotoError(
-                "room_photo_unsafe",
-                "This photo could not be shared. Choose a different photo.",
-                retryable=False,
-            )
-
         # Shallow-copy only this concrete analyzer, sharing its immutable provider
-        # client and grounder while replacing per-call image/moderation seams.
-        # Its usual fail-open moderation behavior remains untouched for solo use.
+        # client and grounder. Room uploads do not use the optional solo moderator;
+        # the application-scoped analyzer and its solo behavior stay untouched.
         analyzer = self.analyzer
         if isinstance(analyzer, UploadedSceneAnalyzer):
             analyzer = copy.copy(analyzer)
-            analyzer._storage = _PreparedStorage(asset.storage_key, image.data)
-            analyzer._image_moderator = _PassedModerator(image, verdict)
+            analyzer._storage = _PhotoStorage(asset.storage_key, image.data)
+            analyzer._image_moderator = None
         identity = Session(
             id=photo_id,
             user_id=owner_id,
@@ -248,7 +214,6 @@ class RoomPhotoPreparer:
             "ownerId": str(owner_id),
             "title": result.title[:100],
             "summary": result.summary,
-            "moderationPassed": True,
             "contentHash": hashlib.sha256(image.data).hexdigest(),
             "objects": [row.model_dump(mode="json", by_alias=True) for row in rows],
             "relations": [row.model_dump(mode="json", by_alias=True) for row in relation_rows],
@@ -264,13 +229,12 @@ class RoomPhotoPreparer:
     ) -> dict:
         language = self._language(profile)
         if (
-            analysis.get("moderationPassed") is not True
-            or analysis.get("photoId") != str(photo_id)
+            analysis.get("photoId") != str(photo_id)
             or analysis.get("ownerId") != str(owner_id)
         ):
             raise RoomPhotoError(
                 "room_photo_review_invalid",
-                "Review your own checked photo before preparing the game.",
+                "Review your own analyzed photo before preparing the game.",
                 retryable=False,
             )
         try:

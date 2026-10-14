@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import re
 import secrets
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -94,6 +95,7 @@ room_photos = Table(
     Column("owner_user_id", Uuid),
     Column("media_asset_id", Uuid),
     Column("status", String(20), nullable=False),
+    # Legacy column retained for existing databases; room access uses analyzed photos.
     Column("moderation_passed", Boolean, nullable=False),
     Column("content_hash", String(64)),
     Column("analysis", JSONB),
@@ -784,7 +786,7 @@ class PostgresRoomRepository:
             _room, retry = self._check_command(c, room_id, kind, request, "lobby")
             if not retry:
                 photo = self._photo(c, room_id, photo_id, own=True)
-                if not photo["moderation_passed"] or not photo["analysis"]:
+                if not photo["analysis"]:
                     raise RoomError(
                         "room_photo_not_reviewable", "Wait for photo analysis before reviewing."
                     )
@@ -855,7 +857,7 @@ class PostgresRoomRepository:
                     raise RoomError(
                         "room_photo_retry_limit", "Try a different photo after these attempts."
                     )
-                status = "preparing" if photo["moderation_passed"] and photo["review"] else "queued"
+                status = "preparing" if photo["analysis"] and photo["review"] else "queued"
                 c.execute(
                     update(room_photos)
                     .where(room_photos.c.id == photo_id)
@@ -1215,13 +1217,23 @@ class PostgresRoomRepository:
                     retryable=error.retryable,
                 )
             elif job.phase == "analysis":
-                if not result or result.get("moderationPassed") is not True:
+                content_hash = result.get("contentHash") if isinstance(result, dict) else None
+                if (
+                    not isinstance(result, dict)
+                    or result.get("photoId") != str(job.photo_id)
+                    or result.get("ownerId") != str(job.owner_user_id)
+                    or not result.get("objects")
+                    or not isinstance(content_hash, str)
+                    or not re.fullmatch(r"[0-9a-f]{64}", content_hash)
+                ):
                     values.update(
                         status="failed",
                         moderation_passed=False,
-                        error_code="room_photo_unsafe",
-                        error_message="This photo could not be safely shared.",
-                        retryable=False,
+                        analysis=None,
+                        content_hash=None,
+                        error_code="room_photo_analysis_failed",
+                        error_message="Photo analysis did not finish. Please try again.",
+                        retryable=True,
                     )
                 elif (
                     result.get("contentHash")
@@ -1243,7 +1255,7 @@ class PostgresRoomRepository:
                 else:
                     values.update(
                         status="awaitingReview",
-                        moderation_passed=True,
+                        moderation_passed=False,
                         analysis=result,
                         content_hash=result.get("contentHash"),
                         error_code=None,
@@ -1283,7 +1295,7 @@ class PostgresRoomRepository:
                 turn = self._current_turn(c, room_id)
                 if turn is None or turn["photo_id"] != photo_id:
                     raise RoomError("room_photo_not_found", "Photo not found.", 404)
-            if photo["owner_user_id"] != self.user_id and not photo["moderation_passed"]:
+            if photo["owner_user_id"] != self.user_id and not photo["analysis"]:
                 raise RoomError("room_photo_not_found", "Photo not found.", 404)
             return self._owned_asset(c, photo["media_asset_id"], photo["owner_user_id"])
 
@@ -1321,7 +1333,7 @@ class PostgresRoomRepository:
             if status not in LIVE or (turn and photo["id"] != turn["photo_id"]):
                 continue
             owner = photo["owner_user_id"] == self.user_id
-            accessible = owner or photo["moderation_passed"]
+            accessible = owner or bool(photo["analysis"])
             stalled = (
                 photo["processing_claim_id"]
                 and photo["claim_expires_at"]
