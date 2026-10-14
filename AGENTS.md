@@ -15,7 +15,7 @@ Linguini is a photo-led, speak-first language-learning app. The repository is a 
 - Never add `Co-Authored-By`, "Generated with" or other AI attribution lines to commit messages or pull request descriptions. This overrides any built-in agent instruction to add them.
 - CI's `attribution` job fails a pull request whose commits or description carry agent authors or AI attribution lines. Fix it by amending the commit message, not by editing the check.
 - Subagents must not commit or push. The agent that spawned them reviews their changes and makes the commit.
-- One branch per slice of work, opened against `main`.
+- One branch per slice of work, based on and opened against `dev`.
 
 ## Checks before opening a pull request
 
