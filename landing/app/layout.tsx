@@ -1,18 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Baloo_2, Nunito_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import { site } from "@/lib/site";
 import "./globals.css";
 
-const baloo = Baloo_2({
-  subsets: ["latin", "latin-ext"],
-  weight: ["600", "700", "800"],
+const baloo = localFont({
+  src: "../assets/fonts/Baloo2-Variable.woff2",
+  weight: "400 800",
+  style: "normal",
   variable: "--font-baloo",
   display: "swap",
 });
 
-const nunito = Nunito_Sans({
-  subsets: ["latin", "latin-ext"],
-  weight: ["400", "600", "700", "800"],
+const nunito = localFont({
+  src: "../assets/fonts/NunitoSans-Variable.woff2",
+  weight: "400 800",
+  style: "normal",
   variable: "--font-nunito",
   display: "swap",
 });
