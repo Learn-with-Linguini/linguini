@@ -1451,10 +1451,18 @@ class PostgresWorkflowRepository:
 
         mission_lesson = None
         if claim.mission is not None:
-            # The mission lesson replaces the fixed grammar sequence and I-Spy tasks.
-            mission_lesson = self._mission_lesson(
-                claim, objects, words, translated_scene if self.translator else None
+            # The mission lesson replaces the fixed grammar sequence; I-Spy stays as the bonus.
+            lesson = partial(
+                self._mission_lesson,
+                claim, objects, words, translated_scene if self.translator else None,
             )
+            if self.translator:
+                mission_lesson, ispy_clues = self._alongside_clues(lesson, partial(
+                    self._clues, session_id, payload, translated_scene, objects, words,
+                    relations, options=claim.generation_options,
+                ))
+            else:
+                mission_lesson = lesson()
         elif self.translator:
             lessons, ispy_clues = self._lessons_and_clues(
                 session_id, payload, translated_scene, objects, words, relations,
@@ -1462,13 +1470,11 @@ class PostgresWorkflowRepository:
                 history=lesson_history(claim.learner_history, introduction),
                 history_scope=CacheScope.user(f"{self.user_id}:{claim.profile_id}"),
             )
-            if self.ispy_guess_generator:
-                ispy_descriptions = build_ispy_description_tasks(
-                    session_id, objects, words,
-                    _ispy_guess_context(
-                        payload, translated_scene, objects, relations
-                    ),
-                )
+        if self.translator and self.ispy_guess_generator:
+            ispy_descriptions = build_ispy_description_tasks(
+                session_id, objects, words,
+                _ispy_guess_context(payload, translated_scene, objects, relations),
+            )
 
         with self.transaction() as c:
             session = self._current_generation(c, claim)
@@ -1492,7 +1498,8 @@ class PostgresWorkflowRepository:
             rebuilt = [*learning, *clues, *descriptions]
             if mission_lesson is not None:
                 rebuilt = [
-                    *(task for task in rebuilt if task.id == introduction_id), mission_lesson
+                    *(task for task in rebuilt if task.id == introduction_id),
+                    mission_lesson, *clues, *descriptions,
                 ]
             if summary and summary.practice_focuses:
                 available = {task.public_content.focus for task in lessons}
@@ -1652,6 +1659,9 @@ class PostgresWorkflowRepository:
             self._clues, session_id, payload, translated_scene, objects, words, relations,
             options=options,
         )
+        return self._alongside_clues(lessons, clues)
+
+    def _alongside_clues(self, lessons, clues):
         if not (self.learning_task_generator and self.ispy_clue_generator):
             return lessons(), clues()
         with ThreadPoolExecutor(max_workers=1, thread_name_prefix="ispy-clues") as pool:

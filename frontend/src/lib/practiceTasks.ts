@@ -50,6 +50,9 @@ export function taskDescription(task: SessionTask) {
 
 export const MISSION_PHOTO_NOT_READY = "This photo is not ready for this lesson.";
 
-/** Mission lessons have no I-Spy stage, so the last learning task finishes the session. */
+export const isMissionSession = (tasks: SessionTask[]) =>
+  tasks.some(task => task.publicContent.missionId);
+
+/** A mission session with no I-Spy rounds finishes after its last learning task. */
 export const finishesWithoutISpy = (tasks: SessionTask[]) =>
   tasks.some(task => task.publicContent.missionId) && !tasks.some(task => task.kind === "ispyRound" || task.kind === "reflection");

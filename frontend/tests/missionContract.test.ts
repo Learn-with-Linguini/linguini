@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { ApiError, descriptionEvaluation, reviewDetails, ISPY_DESCRIPTION_EVALUATION_VERSION } from "../src/lib/api.ts";
 import type { ISpyDescriptionEvaluation, SessionTask, TaskAttemptResult, TaskContent } from "../src/lib/api.ts";
-import { finishesWithoutISpy, MISSION_PHOTO_NOT_READY, taskTitle } from "../src/lib/practiceTasks.ts";
+import { finishesWithoutISpy, isMissionSession, MISSION_PHOTO_NOT_READY, taskTitle } from "../src/lib/practiceTasks.ts";
 import { friendlyError } from "../src/lib/queryKeys.ts";
 
 const lesson: TaskContent = {
@@ -55,6 +55,8 @@ test("only mission sessions without I-Spy finish from the last learning task", (
   assert.equal(finishesWithoutISpy([mission]), true);
   assert.equal(finishesWithoutISpy([mission, clue]), false);
   assert.equal(finishesWithoutISpy([task(lesson)]), false);
+  assert.equal(isMissionSession([mission, clue]), true);
+  assert.equal(isMissionSession([task(lesson), clue]), false);
 });
 
 test("a photo that is not ready for the mission keeps the server's reasons", () => {

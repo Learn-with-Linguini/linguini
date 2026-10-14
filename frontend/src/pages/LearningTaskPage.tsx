@@ -4,7 +4,7 @@ import { Button, Card, Feedback, IconButton, ProgressTrail } from "../components
 import { CloseIcon, SpeakerIcon } from "../components/icons";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
-import { choiceOrder, finishesWithoutISpy, practiceStages, taskDone, taskTitle } from "../lib/practiceTasks";
+import { choiceOrder, finishesWithoutISpy, isMissionSession, practiceStages, taskDone, taskTitle } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
 import { checkVocabularyAnswer, reviewDetails, type SessionTask, type QuestionOutcome, type TaskAnswer, type VocabularyLearningWord } from "../lib/api";
 import { ReportIssueLink } from "../components/ReportIssueLink";
@@ -347,7 +347,8 @@ function VocabularyLearningCard({ word, languageCode }: { word: VocabularyLearni
 
 function useLastStepLabel() {
   const { session } = useAppState();
-  return session && finishesWithoutISpy(session.tasks) ? "Finish lesson" : "Go to I-Spy";
+  if (session && finishesWithoutISpy(session.tasks)) return "Finish lesson";
+  return session && isMissionSession(session.tasks) ? "Go to bonus I-Spy" : "Go to I-Spy";
 }
 
 function QuestionOutcomeNotes({ outcome }: { outcome?: QuestionOutcome }) {

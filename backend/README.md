@@ -527,8 +527,12 @@ mission is snapshotted on the generation claim and on each task.
    used after any model failure passes the same validator. The cache identity is
    `learning-tasks.m01-a1.v1:M01-A1.v1` with its own schema and validator versions,
    and preloaded templates are never used, so legacy lessons cannot be reused. No old
-   grammar sequence, I-Spy or reflection task is added.
-4. **Grading.** Answers are graded from the private answer key. Each
+   grammar sequence is added.
+4. **Bonus I-Spy.** The existing AI I-Spy clue and describing rounds are generated
+   alongside the lesson, as in the legacy path, and placed last without mission
+   fields. They unlock once the learning tasks are done and are labelled as the
+   bonus round.
+5. **Grading.** Answers are graded from the private answer key. Each
    `questionOutcomes` entry names its targets; evidence type is derived from the
    interaction (`recognition` for multiple choice, `construction` for sentence
    building) and the word bank is always recorded as support, so a sentence counts as
@@ -536,8 +540,9 @@ mission is snapshotted on the generation claim and on each task.
    rejected with a 409. Each word's vocabulary evidence uses only the questions that
    assess it. Replays with the same idempotency key return the saved attempt without
    new results or XP.
-5. **Completion.** With no I-Spy tasks, the final learning step shows "Finish lesson"
-   and completes the session through the existing lifecycle and completion XP.
+6. **Completion.** The session completes through the existing lifecycle and completion
+   XP once every task, including the bonus rounds, is completed or skipped. If no I-Spy
+   task was generated, the final learning step shows "Finish lesson" instead.
 
 ### Backend performance
 
