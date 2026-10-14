@@ -20,6 +20,7 @@ export function AppShell() {
     /^\/journal\/[^/]+$/.test(pathname) ||
     pathname === "/profile/edit" ||
     pathname === "/ispy/play" ||
+    pathname === "/ispy/friends" ||
     pathname === "/contact";
   const usesWideCanvas =
     ["/home", "/practice", "/ispy/play", "/vocabulary", "/journal"].includes(pathname) ||

@@ -114,7 +114,7 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, signal?: AbortSignal, options?: RequestInit): Promise<T> {
+async function requestResponse(path: string, signal?: AbortSignal, options?: RequestInit): Promise<Response> {
   if (!apiBaseUrl) {
     throw new Error("The app is still being set up. Please try again in a moment.");
   }
@@ -136,8 +136,17 @@ async function request<T>(path: string, signal?: AbortSignal, options?: RequestI
     const activeSessionId = typeof body?.detail?.activeSessionId === "string" ? body.detail.activeSessionId : null;
     throw new ApiError(message, response.status, code, activeSessionId);
   }
+  return response;
+}
+
+export async function request<T>(path: string, signal?: AbortSignal, options?: RequestInit): Promise<T> {
+  const response = await requestResponse(path, signal, options);
   if (response.status === 204) return undefined as T;
   return response.json() as Promise<T>;
+}
+
+export async function requestBlob(path: string, signal?: AbortSignal): Promise<Blob> {
+  return (await requestResponse(path, signal, { cache: "no-store" })).blob();
 }
 
 export function getCurrentUser(signal?: AbortSignal): Promise<User> {
@@ -185,7 +194,7 @@ export interface LessonReportInput {
   context: Array<{ label: string; value: string }>;
 }
 
-function write<T>(path: string, method: string, body: unknown): Promise<T> {
+export function write<T>(path: string, method: string, body: unknown): Promise<T> {
   return request(path, undefined, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 }
 

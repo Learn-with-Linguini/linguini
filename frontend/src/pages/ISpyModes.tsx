@@ -30,12 +30,13 @@ export function ISpyModes() {
     <Card lifted><div className="stack-2">
       <h2>Play with AI</h2>
       <p className="muted">Guess Linguini's clues, then describe objects for Linguini to guess.</p>
+      <p className="small muted">Revisit a confirmed photo without using Sauce.</p>
       <Button block onClick={() => navigate("/ispy/play")}>Play with AI <ArrowRightIcon /></Button>
     </div></Card>
     <Card><div className="stack-2">
-      <div className="spread"><h2>Two-player</h2><span className="pill pill--new">Coming soon</span></div>
-      <p className="muted">Take turns spying objects with a friend.</p>
-      <Button variant="secondary" block disabled>Two-player — Coming soon</Button>
+      <h2>Play with a friend</h2>
+      <p className="muted">Add 2–4 photos in a private room, then take turns giving clues and spotting objects.</p>
+      <Button variant="secondary" block onClick={() => navigate("/ispy/friends")}>Play with a friend <ArrowRightIcon /></Button>
     </div></Card>
   </div>;
 }

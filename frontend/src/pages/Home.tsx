@@ -3,7 +3,7 @@ import type { CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button, Card } from "../components/ui";
-import { BookIcon, CameraIcon, ChevronRightIcon, JournalIcon } from "../components/icons";
+import { BookIcon, CameraIcon, ChevronRightIcon, JournalIcon, PersonIcon } from "../components/icons";
 import { MediaImage } from "../components/MediaImage";
 import { getActivePractice } from "../lib/api";
 import { sessionDestination } from "../lib/sessionRoute";
@@ -13,6 +13,7 @@ import { useVocabularyQuery } from "../state/queries";
 import type { VocabRecord } from "../data/types";
 import { WalkthroughCoachmark } from "../components/WalkthroughCoachmark";
 import { FIRST_LESSON_WALKTHROUGH_VERSION, needsFirstLessonWalkthrough } from "../lib/walkthrough";
+import { GameResources } from "../components/GameResources";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -159,6 +160,8 @@ export function Home() {
         </div>
       </header>
 
+      <GameResources />
+
       <section className="home-streak" aria-label="Your seven day learning streak">
         <div className="home-streak__heading">
           <h2>Your {streak?.days.length ?? 7}-day streak</h2>
@@ -213,6 +216,10 @@ export function Home() {
           </Card>
         )}
       </section>
+
+      <Button variant="quiet" block className="home-play-together" onClick={() => navigate("/ispy/friends")}>
+        <PersonIcon size={22} /><span>I Spy with a friend</span>
+      </Button>
 
       <section className="home-tiles" aria-labelledby="home-tiles-title">
         <h2 id="home-tiles-title">More ways to learn</h2>
