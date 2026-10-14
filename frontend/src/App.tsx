@@ -11,6 +11,9 @@ import { Learn } from "./pages/Learn";
 import { LearningTaskPage } from "./pages/LearningTaskPage";
 import { ISpyPhase1 } from "./pages/ISpyPhase1";
 import { ISpyPhase2 } from "./pages/ISpyPhase2";
+import { ISpyModes } from "./pages/ISpyModes";
+import { ISpyPlay } from "./pages/ISpyPlay";
+import { ISpyResults } from "./pages/ISpyResults";
 import { SessionSummary } from "./pages/SessionSummary";
 import { Vocabulary } from "./pages/Vocabulary";
 import { Journal } from "./pages/Journal";
@@ -67,11 +70,18 @@ export default function App() {
           <Route path="ispy-2" element={<ISpyPhase2 />} />
           <Route path="summary" element={<SessionSummary />} />
         </Route>
+        <Route path="/ispy/games/:sessionId" element={<SessionRoute />}>
+          <Route path="clues" element={<ISpyPhase1 />} />
+          <Route path="describe" element={<ISpyPhase2 />} />
+          <Route path="results" element={<ISpyResults />} />
+        </Route>
         <Route path="/practice/:sceneId/*" element={<SceneRoute />} />
           </Route>
           <Route element={<AppShell />}>
         <Route path="/home" element={<Home />} />
         <Route path="/practice" element={<PracticeSelect />} />
+        <Route path="/ispy" element={<ISpyModes />} />
+        <Route path="/ispy/play" element={<ISpyPlay />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/vocabulary" element={<Vocabulary />} />
         <Route path="/journal" element={<Journal />} />

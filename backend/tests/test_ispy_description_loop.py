@@ -367,7 +367,10 @@ def test_guided_support_is_recorded_per_attempt_and_restored_on_retry(database, 
     assert correct_attempts(engine, database[1].id) == 0
 
 
-LATEST_FIELDS = {"id", "attemptNumber", "text", "feedback", "evaluationDetails", "assistance"}
+LATEST_FIELDS = {
+    "id", "attemptNumber", "text", "optionId", "isCorrect", "feedback", "evaluationDetails",
+    "assistance",
+}
 
 
 def latest(client, task_id):

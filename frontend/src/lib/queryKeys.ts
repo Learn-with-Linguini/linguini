@@ -11,6 +11,8 @@ export const queryKeys = {
   sceneSession: (sceneId: string) => ["scene", sceneId, "session"] as const,
   sessionSummary: (sessionId: string) => ["session", sessionId, "summary"] as const,
   latestAttempt: (taskId: string) => ["task", taskId, "latest-attempt"] as const,
+  ispyPhotos: (profileId: string) => ["ispy", "photos", profileId] as const,
+  activeGame: (profileId: string) => ["ispy", "active", profileId] as const,
 };
 
 export function friendlyError(error: unknown): string {
@@ -45,6 +47,12 @@ export function friendlyError(error: unknown): string {
   return error instanceof Error
     ? "We couldn't connect just now. Check your connection and try again."
     : "We couldn't load this right now. Please try again.";
+}
+
+/** A photo that can't be played yet is explained in the server's words. */
+export function gameStartError(error: unknown): string {
+  if (error instanceof Error && "code" in error && error.code === "practice_conflict" && error.message !== "Request failed.") return error.message;
+  return friendlyError(error);
 }
 
 export function queryError(error: unknown): string | null {
