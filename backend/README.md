@@ -56,6 +56,33 @@ local environment files. Missing database configuration fails at startup; connec
 or query failures never fall back to JSON. The application creates one SQLAlchemy
 engine per process and disposes it at shutdown.
 
+### Sauce and photo rooms
+
+Apply the game resource, uploaded photo room and room invite migrations before
+deploying. Sauce, Basil and two-player rooms are available automatically; they
+require no feature switches in the API or frontend. The I-Spy tab offers both
+standalone play with AI and a friend-room lobby.
+
+`DAILY_SAUCE_CAPACITY` defaults to 10 (allowed range: 1–100). Sauce refills at
+00:00 UTC and applies to every account tier, including beta. Starting a solo
+lesson or a photo room costs one Sauce per player. Resuming does not spend again;
+failed setup and lessons left before any practice return the reserved Sauce.
+Basil leaves reward submitted lesson and room practice; 20 leaves unlock a Sauce
+jar appearance. Standalone AI I-Spy games remain free and do not award Basil, XP
+or vocabulary progress.
+
+Rooms store random invitations privately in the database, so a host can recover
+an invitation after reload or an API restart without a separate room secret.
+The invite migration rotates existing live invitations; hosts should copy the
+new code after deployment. Rooms support two players learning English to Spanish
+or French
+at the same A1/A2 level, with 2–4 photos uploaded by either player. Photo sharing
+requires configured image moderation and fails closed if moderation is unavailable.
+Invitations expire after 10 minutes; setup and play each expire after 30 minutes.
+Room images use an authenticated, uncached endpoint; ordinary media access stays
+restricted to the photo owner. Rooms require `MEDIA_STORAGE_PRIVATE=true`; the
+Supabase bucket must also be configured as private.
+
 ## Persistence and remaining static content
 
 ### Image uploads

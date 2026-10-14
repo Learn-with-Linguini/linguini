@@ -21,6 +21,7 @@ from app.ai.features.ispy_clues import ISpyClueGenerationError
 from app.ai.features.ispy_guess import ISpyGuessError, ISpyGuessResult
 from app.ai.features.learning_tasks import required_task_focuses
 from app.ai.features.scene_analysis import RoutedSceneAnalyzer
+from app.repositories.postgres.game_resources import refund_sauce, reward_basil, spend_sauce
 from app.repositories.postgres.language_profiles import language_profiles
 from app.repositories.postgres.learner_history import snapshot_learner_history
 from app.repositories.postgres.media_assets import media_assets
@@ -489,7 +490,21 @@ class PostgresWorkflowRepository:
             raise PracticeConflictError(
                 "Session changed while this request was running. Retry the action."
             )
+        practiced = target == "abandoned" and c.execute(
+            select(task_attempts.c.id).join(
+                session_tasks, session_tasks.c.id == task_attempts.c.session_task_id,
+            ).where(session_tasks.c.session_id == session.id).limit(1)
+        ).first()
+        if session.mode == SessionMode.LESSON and (
+            target == "failed"
+            or (target == "abandoned" and session.started_at is None and not practiced)
+        ):
+            refund_sauce(c, self.user_id, self._sauce_key(session))
         return session.model_copy(update={**values, "status": SessionStatus(target)})
+
+    @staticmethod
+    def _sauce_key(session, attempt=None):
+        return f"session:{session.id}:analysis:{attempt or max(1, analysis_attempts(session))}"
 
     def _tasks(self, c, session_id):
         return [
@@ -834,6 +849,7 @@ class PostgresWorkflowRepository:
                 scene_media_asset_id=request.media_asset_id,
                 idempotency_key=request.idempotency_key,
             )
+            spend_sauce(c, self.user_id, self._sauce_key(session))
             c.execute(insert(sessions).values(**session.model_dump(by_alias=False)))
             return self._detail(c, session)
 
@@ -855,11 +871,9 @@ class PostgresWorkflowRepository:
     def _expire_stale(self, c, *scope):
         """Fail stale processing sessions inside `scope` with their status's code."""
         for status, failure_code in PROCESSING_FAILURE_CODES.items():
-            c.execute(
-                update(sessions)
-                .where(*scope, _stale_processing(status))
-                .values(status="failed", failure_code=failure_code)
-            )
+            stale = c.execute(select(sessions).where(*scope, _stale_processing(status))).mappings()
+            for row in stale:
+                self._transition(c, parse_session(row), "failed", failure_code=failure_code)
 
     def _reap(self, c, profile_id):
         """Expire stale non-terminal sessions so a crashed request cannot block a new run."""
@@ -909,6 +923,7 @@ class PostgresWorkflowRepository:
             ).first():
                 raise PracticeConflictError("This photo already has an open practice.")
             inputs = self._analysis_inputs(c, session)
+            spend_sauce(c, self.user_id, self._sauce_key(session, analysis_attempts(session) + 1))
             claimed = self._transition(
                 c,
                 session,
@@ -989,6 +1004,7 @@ class PostgresWorkflowRepository:
                     session_title=result.title,
                     session_summary=result.summary,
                     analysis_draft={
+                        "analysisAttempts": analysis_attempts(current),
                         "objects": [
                             obj.model_dump(mode="json", by_alias=False)
                             for obj in result.objects
@@ -2003,6 +2019,10 @@ class PostgresWorkflowRepository:
                         evaluation_details=evaluation_details,
                     )
                     c.execute(insert(task_attempts).values(**entity_values(attempt)))
+                    if session.mode == SessionMode.LESSON and (
+                        evaluation is None or evaluation.guess is not None
+                    ):
+                        reward_basil(c, self.user_id, f"task:{task.id}")
                     if evaluation is not None:
                         c.execute(
                             update(task_evaluation_claims)
