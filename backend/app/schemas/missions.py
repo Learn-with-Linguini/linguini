@@ -32,6 +32,9 @@ class PhotoRequirements(ApiModel):
     min_coloured_objects: Annotated[int, Field(ge=0)] = 0
     min_relations: Annotated[int, Field(ge=0)] = 0
     relations: list[SceneRelationType] = Field(default_factory=list)
+    min_counted_groups: Annotated[int, Field(ge=0)] = 0
+    min_quantity: Annotated[int, Field(ge=1, le=10)] = 1
+    max_quantity: Annotated[int, Field(ge=1, le=10)] = 10
 
     @model_validator(mode="after")
     def validate_requirements(self) -> PhotoRequirements:
@@ -39,6 +42,8 @@ class PhotoRequirements(ApiModel):
             raise ValueError("coloured objects cannot exceed confirmed objects")
         if bool(self.min_relations) != bool(self.relations):
             raise ValueError("relation types are listed exactly when relations are required")
+        if self.min_quantity > self.max_quantity:
+            raise ValueError("minQuantity cannot exceed maxQuantity")
         return self
 
 

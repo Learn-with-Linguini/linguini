@@ -63,6 +63,7 @@ from app.schemas.enums import (
 from app.schemas.media import MediaAsset, SceneObject, SceneObjectRelation
 from app.schemas.missions import MissionDefinition
 from app.schemas.sessions import (
+    CountedGroup,
     Session,
     SessionDetailResponse,
     SessionSummaryResponse,
@@ -96,10 +97,12 @@ from app.services.mission_eligibility import (
     mission_snapshot,
     photo_eligibility,
     plan_missions,
+    saved_counted_groups,
     snapshot_missions,
 )
 from app.services.mission_lessons import mission_version
 from app.services.mission_registry import MISSION_LESSONS
+from app.services.quantities import suggested_quantity
 from app.services.question_outcomes import (
     normalize_answer,
     offered_supports,
@@ -309,6 +312,7 @@ class GenerationClaim:
     templates: TemplateSet | None = None
     learner_history: dict | None = None
     missions: tuple[MissionDefinition, ...] = ()
+    counted_groups: tuple[dict, ...] = ()
 
     @property
     def generation_options(self) -> dict:
@@ -699,6 +703,7 @@ class PostgresWorkflowRepository:
             translation_preview=(draft or {}).get("translationPreview"),
             analysis_retryable=analysis_retryable(session),
             personalization=(draft or {}).get("personalization"),
+            counted_groups=saved_counted_groups(draft),
             tasks=[SessionTaskPublic.from_internal(t) for t in tasks],
             progress=task_progress(tasks),
             next_task_id=next(
@@ -1257,7 +1262,10 @@ class PostgresWorkflowRepository:
                         source_relation_key=source_key,
                     )
                 )
-            self._plan_missions(c, session, profile, confirmed, [
+            counted = self._save_counted_groups(
+                c, session_id, request, confirmed, existing, manual_ids
+            )
+            self._plan_missions(c, session, profile, confirmed, counted, [
                 relation.model_copy(update=dict(
                     subject_scene_object_id=manual_ids.get(
                         relation.subject_scene_object_id, relation.subject_scene_object_id
@@ -1324,25 +1332,62 @@ class PostgresWorkflowRepository:
                 *self._reuse(c, session, asset, objects, relations),
                 learner_history=history,
                 missions=tuple(self._planned_missions(session, dict(profile))),
+                counted_groups=tuple(saved_counted_groups(session.analysis_draft)),
             )
 
-    def _plan_missions(self, c, session, profile, objects, relations):
+    def _save_counted_groups(self, c, session_id, request, confirmed, existing, manual_ids):
+        """Save the learner's counts, one per group of same-named confirmed objects."""
+        by_id = {obj.id: obj for obj in confirmed}
+        groups = {}
+        for object_id, quantity in request.object_counts.items():
+            obj = by_id[manual_ids.get(object_id, object_id)]
+            label = obj.label.strip().casefold()
+            if label in groups:
+                raise PracticeConflictError("Count each group of matching objects once.")
+            original = existing.get(object_id)
+            suggested = suggested_quantity(
+                ((original.attributes if original else None) or {}).get("quantity")
+            )
+            groups[label] = CountedGroup(
+                scene_object_ids=[
+                    item.id for item in confirmed if item.label.strip().casefold() == label
+                ],
+                label=obj.label,
+                quantity=quantity,
+                suggested_quantity=suggested,
+                source=(
+                    "entered" if suggested is None
+                    else "confirmed" if suggested == quantity else "corrected"
+                ),
+            ).model_dump(mode="json", by_alias=True)
+        draft = dict(c.execute(select(sessions.c.analysis_draft).where(
+            sessions.c.id == session_id,
+        )).scalar_one() or {})
+        draft["countedGroups"] = list(groups.values())
+        c.execute(update(sessions).where(sessions.c.id == session_id).values(
+            analysis_draft=draft,
+        ))
+        return draft["countedGroups"]
+
+    def _plan_missions(self, c, session, profile, objects, counted_groups, relations):
         """Snapshot the lesson's mission plan from the confirmed facts before generation."""
         candidates = lesson_missions(session.mode, profile)
         if not candidates:
             return
         passed = self._passed_missions(c, session, candidates)
-        plan = plan_missions(candidates, objects, relations, passed)
+        plan = plan_missions(candidates, objects, relations, passed, counted_groups)
         if not plan:
             # Rolls the review back so the learner can add facts or pick another image.
             reasons = [
                 f"{mission.title}: "
-                + " ".join(photo_eligibility(mission, objects, relations).reasons)
+                + " ".join(
+                    photo_eligibility(mission, objects, relations, counted_groups).reasons
+                )
                 for mission in candidates
             ]
             raise MissionPhotoNotReadyError(
                 "This photo is not ready for this lesson. " + " ".join(reasons)
-                + " Review the objects, colours and positions, or choose another image."
+                + " Review the objects, colours, positions and counts, or choose another image."
             )
         draft = dict(c.execute(select(sessions.c.analysis_draft).where(
             sessions.c.id == session.id,
@@ -1509,12 +1554,13 @@ class PostgresWorkflowRepository:
                         ),
                     )
 
-        mission_lessons = []
+        mission_lessons, skipped_missions = [], []
         if claim.missions:
             # Mission lessons replace the fixed grammar sequence; I-Spy stays as the bonus.
             lesson = partial(
                 self._mission_lessons,
                 claim, objects, relations, words, translated_scene if self.translator else None,
+                skipped_missions,
             )
             if self.translator:
                 mission_lessons, ispy_clues = self._alongside_clues(lesson, partial(
@@ -1556,6 +1602,13 @@ class PostgresWorkflowRepository:
                     task for task in learning if task.kind == "vocabularyIntroduction"
                 ] + lessons
             rebuilt = [*learning, *clues, *descriptions]
+            if skipped_missions:
+                draft = dict(session.analysis_draft or {})
+                draft["skippedMissions"] = skipped_missions
+                c.execute(update(sessions).where(sessions.c.id == session_id).values(
+                    analysis_draft=draft,
+                ))
+                session = session.model_copy(update={"analysis_draft": draft})
             if mission_lessons:
                 rebuilt = [
                     *(task for task in rebuilt if task.id == introduction_id),
@@ -1585,14 +1638,27 @@ class PostgresWorkflowRepository:
                 )
             self._transition(c, session, "inProgress")
 
-    def _mission_lessons(self, claim, objects, relations, words, translated_scene):
-        """One validated lesson per planned mission; a generation failure uses its fallback."""
+    def _mission_lessons(self, claim, objects, relations, words, translated_scene, skipped):
+        """One validated lesson per planned mission; a generation failure uses its fallback.
+
+        A mission whose confirmed facts give no reviewed content is skipped and recorded.
+        """
         language = claim.profile["target_language_code"]
         vocabulary_ids = {str(obj.id): word.id for obj, word in zip(objects, words, strict=True)}
         lessons = []
         for mission in claim.missions:
             spec = MISSION_LESSONS[mission.mission_id]
-            payload = spec.payload(mission, language, objects, relations, words, translated_scene)
+            payload = spec.payload(
+                mission, language, objects, relations, words, translated_scene,
+                claim.counted_groups,
+            )
+            if not spec.ready(payload):
+                logger.warning(
+                    "%s has no reviewed content for session %s; skipping it.",
+                    mission.mission_id, claim.session_id,
+                )
+                skipped.append(dict(missionId=mission.mission_id, reason="noReviewedContent"))
+                continue
             result = None
             if self.learning_task_generator:
                 try:

@@ -8,9 +8,9 @@ from app.schemas.enums import SessionMode
 from app.services.ispy_clue_frames import COLOUR_ATTRIBUTE_TYPES, POSITIONS, SUPPORTED_LANGUAGES
 
 M01_A1 = ("M01", "A1", 1)
-# Implemented A1 variants in catalogue order; a lesson assesses at most two.
-IMPLEMENTED_MISSIONS = {"A1": (M01_A1, ("M02", "A1", 1))}
-MAX_LESSON_MISSIONS = 2
+# Implemented A1 variants in catalogue order; a lesson assesses at most three.
+IMPLEMENTED_MISSIONS = {"A1": (M01_A1, ("M02", "A1", 1), ("M03", "A1", 1))}
+MAX_LESSON_MISSIONS = 3
 
 # Reviewed singular (masculine, feminine) colour forms for each supported lesson language.
 REVIEWED_COLOURS = {
@@ -61,19 +61,23 @@ def lesson_missions(session_mode, profile):
     return [mission for key in keys if (mission := get_mission(*key)) is not None]
 
 
-def plan_missions(candidates, objects, relations, passed_mission_ids):
+def plan_missions(candidates, objects, relations, passed_mission_ids, counted_groups=()):
     """Eligible missions for this photo, in catalogue order.
 
-    Each mission brings one new pattern, so a second mission joins only when the
-    learner already passed one of the pair in an earlier session.
+    Each mission brings one new pattern, so a lesson holds at most one mission the
+    learner has not passed in an earlier session, alongside eligible passed ones.
     """
-    eligible = [
-        mission for mission in candidates
-        if photo_eligibility(mission, objects, relations).eligible
-    ][:MAX_LESSON_MISSIONS]
-    if len(eligible) > 1 and not {m.mission_id for m in eligible} & set(passed_mission_ids):
-        return eligible[:1]
-    return eligible
+    passed = set(passed_mission_ids)
+    plan, new_pattern = [], False
+    for mission in candidates:
+        if not photo_eligibility(mission, objects, relations, counted_groups).eligible:
+            continue
+        if mission.mission_id not in passed:
+            if new_pattern:
+                continue
+            new_pattern = True
+        plan.append(mission)
+    return plan[:MAX_LESSON_MISSIONS]
 
 
 def mission_snapshot(mission):
@@ -123,7 +127,20 @@ class Eligibility:
     reasons: tuple[str, ...] = ()
 
 
-def photo_eligibility(mission, objects, relations=()):
+def saved_counted_groups(draft):
+    """The learner-confirmed counts saved with the session's review."""
+    return list((draft or {}).get("countedGroups") or [])
+
+
+def countable_groups(mission, counted_groups):
+    requirements = mission.photo_requirements
+    return [
+        group for group in counted_groups
+        if requirements.min_quantity <= group["quantity"] <= requirements.max_quantity
+    ]
+
+
+def photo_eligibility(mission, objects, relations=(), counted_groups=()):
     """Check only the confirmed facts this mission's photo requirements name."""
     requirements = mission.photo_requirements
     labels = {obj.label.strip().casefold() for obj in objects}
@@ -140,6 +157,11 @@ def photo_eligibility(mission, objects, relations=()):
     ):
         reasons.append(
             "Confirm where one object is on, under, next to, in front of or behind another."
+        )
+    if len(countable_groups(mission, counted_groups)) < requirements.min_counted_groups:
+        reasons.append(
+            f"Count a group of {requirements.min_quantity} to {requirements.max_quantity} "
+            "matching objects."
         )
     return Eligibility(not reasons, tuple(reasons))
 

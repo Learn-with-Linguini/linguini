@@ -32,7 +32,7 @@ type SupportKind = Literal[
 ]
 type MistakeType = Literal[
     "wrongObject", "wrongWord", "wrongArticle", "wrongGender", "wrongColour", "wrongPosition",
-    "wordOrder", "missingWord", "spelling", "targetNamed",
+    "wordOrder", "missingWord", "spelling", "targetNamed", "wrongQuantity", "pluralForm",
 ]
 type QuestionOutcomeStatus = Literal["correct", "incorrect", "unassessed"]
 

@@ -44,7 +44,13 @@ def word_results(task, question_results):
 
 
 def _mistakes(evaluation, answer):
+    """Rules naming this answer; rules without answers apply only when none does."""
     given = normalize_answer(answer or "")
+    specific = [
+        rule for rule in evaluation.corrections
+        if given in {normalize_answer(item) for item in rule.answers}
+    ]
+    rules = specific or [rule for rule in evaluation.corrections if not rule.answers]
     return [
         dict(
             mistake=rule.mistake,
@@ -52,8 +58,7 @@ def _mistakes(evaluation, answer):
             correction=rule.correction,
             explanation=rule.explanation,
         )
-        for rule in evaluation.corrections
-        if not rule.answers or given in {normalize_answer(item) for item in rule.answers}
+        for rule in rules
     ]
 
 

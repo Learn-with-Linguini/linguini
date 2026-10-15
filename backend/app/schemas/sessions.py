@@ -70,6 +70,19 @@ class RepositionedPracticeObject(ApiModel):
     anchor_point: AnchorPoint
 
 
+Quantity = Annotated[int, Field(ge=1, le=10)]
+
+
+class CountedGroup(ApiModel):
+    """A learner-confirmed count of the confirmed objects sharing one name."""
+
+    scene_object_ids: Annotated[list[UUID], Field(min_length=1)]
+    label: Annotated[str, Field(min_length=1, max_length=200)]
+    quantity: Quantity
+    suggested_quantity: Quantity | None = None
+    source: Literal["confirmed", "corrected", "entered"]
+
+
 class ReviewPracticeRequest(ApiModel):
     scene_title: Annotated[str, Field(min_length=1, max_length=200)] | None = None
     relations: Annotated[list[SceneObjectRelation], Field(max_length=100)] = Field(
@@ -83,6 +96,7 @@ class ReviewPracticeRequest(ApiModel):
     repositioned_objects: Annotated[list[RepositionedPracticeObject], Field(max_length=50)] = Field(
         default_factory=list
     )
+    object_counts: dict[UUID, Quantity] = Field(default_factory=dict)
 
     @model_validator(mode="after")
     def unique_selection(self):
@@ -92,6 +106,8 @@ class ReviewPracticeRequest(ApiModel):
         selected = set(ids)
         if not set(self.object_attributes) <= selected:
             raise ValueError("Attributes must reference selected objects.")
+        if not set(self.object_counts) <= selected:
+            raise ValueError("Counts must reference selected objects.")
         moved_ids = [item.id for item in self.repositioned_objects]
         if len(moved_ids) != len(set(moved_ids)):
             raise ValueError("Each object can have only one marker position.")
@@ -142,6 +158,7 @@ class SessionDetailResponse(ApiModel):
     translation_preview: SceneTranslationResult | None = None
     analysis_retryable: bool = False
     personalization: SessionPersonalization | None = None
+    counted_groups: list[CountedGroup] = Field(default_factory=list)
     session: Session
     scene_object_relations: list[SceneObjectRelation] = Field(default_factory=list)
     scene_objects: list[SceneObject] = Field(default_factory=list)
