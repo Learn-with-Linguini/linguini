@@ -43,7 +43,7 @@ export function PracticeAnalysis() {
   const [panel, setPanel] = useState<AnalysisPanel>("objects");
   const [attributes, setAttributes] = useState<Record<string, Record<string, string>>>(() =>
     Object.fromEntries((session?.sceneObjects ?? []).map(item => [item.id,
-      Object.fromEntries(Object.entries(item.attributes ?? {}).filter((entry): entry is [string, string] => typeof entry[1] === "string"))])));
+      Object.fromEntries(Object.entries(item.attributes ?? {}).filter((entry): entry is [string, string] => entry[0] !== "quantity" && typeof entry[1] === "string"))])));
   const [attributeObjectId, setAttributeObjectId] = useState(session?.sceneObjects[0]?.id ?? "");
   const [counts, setCounts] = useState<Record<string, string>>(() => savedCounts(session?.countedGroups));
   const [subject, setSubject] = useState("");
