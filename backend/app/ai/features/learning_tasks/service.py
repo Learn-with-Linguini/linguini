@@ -96,7 +96,7 @@ class _HistoryModel(ApiModel):
 class _HistoryProfile(_HistoryModel):
     source_language: Annotated[str, Field(min_length=2, max_length=35)]
     target_language: Annotated[str, Field(min_length=2, max_length=35)]
-    proficiency_level: Literal["A1", "A2", "B1", "B2", "C1", "C2"]
+    proficiency_level: Literal["A0", "A1", "A2", "B1", "B2", "C1", "C2"]
 
 
 class _HistoryTotals(_HistoryModel):

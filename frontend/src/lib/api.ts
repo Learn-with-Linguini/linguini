@@ -361,7 +361,8 @@ export async function saveJournal(draft: JournalDraft, profileId: string, id?: s
   return getJournal(row.id);
 }
 
-export type ProficiencyLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+export type ProficiencyLevel = "A0" | "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+export const proficiencyLabel = (level: ProficiencyLevel) => (level === "A0" ? "Pre-A1" : level);
 /** Links task content to a versioned backend mission definition; absent on tasks without a mission. */
 export interface MissionTaskFields { missionId?: string; practiceLevel?: ProficiencyLevel; contentVersion?: number }
 export type TaskContent = MissionTaskFields & (

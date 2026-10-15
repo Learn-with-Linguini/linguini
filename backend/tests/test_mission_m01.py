@@ -68,6 +68,7 @@ def test_colour_forms_agree_only_when_the_gender_is_known():
     ("true", "lesson", "A1", "fr", True),
     ("false", "lesson", "A1", "es", False),
     ("true", "lesson", "A2", "es", False),
+    ("true", "lesson", "A0", "es", False),
     ("true", "lesson", "A1", "de", False),
     ("true", "ispyGame", "A1", "es", False),
 ])

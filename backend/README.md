@@ -363,6 +363,10 @@ can be active. Switching profiles filters vocabulary and the scene catalog. Name
 learning goal, preferences, level, and daily minutes persist in PostgreSQL. Browser
 camera/microphone permissions remain separate from saved preferences.
 
+Proficiency levels are `A0`–`C2`; `A0` stores Pre-A1 in the existing two-character level
+columns, and the frontend shows it as "Pre-A1". Pre-A1 has no missions yet, so its lessons
+use the regular lesson plan. Photo rooms accept only A1/A2 profiles.
+
 Vocabulary reads use the active target language and its source-language translation
 in one database snapshot. Missing translations remain null. Trusted backend events
 use `PostgresVocabularyRepository.record_encounter` to atomically record an event
