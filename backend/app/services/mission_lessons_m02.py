@@ -16,6 +16,9 @@ M02_FOCUS = "findAndLocate"
 QUESTION_CHUNKS = {"es": "¿Dónde está…?", "fr": "Où est… ?"}
 _QUESTION_FRAMES = {"es": "¿Dónde está {}?", "fr": "Où est {} ?"}
 _LOCATION_VERBS = {"es": "está", "fr": "est"}
+_YES_NO = {"es": {"yes": "Sí", "no": "No"}, "fr": {"yes": "Oui", "no": "Non"}}
+# Positions that a confirmed position rules out for the same pair.
+_OPPOSITE = {"on": "under", "under": "on", "in_front_of": "behind", "behind": "in_front_of"}
 _INVERSE = {
     "on": "under", "under": "on", "next_to": "next_to",
     "in_front_of": "behind", "behind": "in_front_of",
@@ -26,20 +29,20 @@ _PROMPTS = {
         "choosePosition": "Elige la posición: {subject} ___ {reference}.",
         "describeLocation": "Describe la posición {of_subject}.",
         "askWhere": "Pregunta por la ubicación {of_subject}.",
-        "understandAnswer": "\u201c{answer}\u201d ¿Qué dibujo lo muestra?",
+        "checkAnswer": "\u201c{proposal}\u201d ¿Coincide con la foto?",
     },
     "fr": {
         "choosePosition": "Choisis la position : {subject} ___ {reference}.",
         "describeLocation": "Décris la position {of_subject}.",
         "askWhere": "Pose une question sur l'emplacement {of_subject}.",
-        "understandAnswer": "\u00ab {answer} \u00bb Quel dessin le montre ?",
+        "checkAnswer": "\u00ab {proposal} \u00bb Est-ce que ça correspond à la photo ?",
     },
 }
 _TRANSLATIONS = {
     "choosePosition": "Choose the position: the {subject} ___ the {reference}.",
     "describeLocation": "Describe the position of the {subject}.",
     "askWhere": "Ask where the {subject} is.",
-    "understandAnswer": "Which picture shows this?",
+    "checkAnswer": "Does this match the photo?",
 }
 _EVALUATIONS = {
     "choosePosition": (["recognise-position"], "recognition", ["position-matches-photo"]),
@@ -53,7 +56,7 @@ _EVALUATIONS = {
         "construction",
         ["question-names-object", "article-matches-noun"],
     ),
-    "understandAnswer": (["understand-location"], "recognition", ["answer-matches-diagram"]),
+    "checkAnswer": (["understand-location"], "recognition", ["answer-matches-photo"]),
 }
 
 
@@ -100,7 +103,7 @@ def _true_positions(subject, reference, relations):
 
 
 def _select(found, familiarity):
-    """The least familiar relation, then preferably another pair or position for Task 2."""
+    """The least familiar relation, and another pair or position for the answer check."""
     if not found:
         return []
     ranked = sorted(found, key=lambda row: familiarity(row["expression"]))
@@ -109,9 +112,20 @@ def _select(found, familiarity):
     others = ranked[1:]
     second = next(
         (row for row in others if {row["subjectKey"], row["referenceKey"]} != pair),
-        next((row for row in others if row["position"] != first["position"]), first),
+        next((row for row in others if row["position"] != first["position"]), None),
     )
-    return [first["key"], second["key"]]
+    return [first["key"]] if second is None else [first["key"], second["key"]]
+
+
+def _statement(language, subject, position, place):
+    split = _place_tiles(language, REVIEWED_POSITIONS[position][language], place)
+    if split is None:
+        return None
+    phrase_tile, tail = split
+    return [
+        *tokens(_capitalised(subject["nounPhrase"])), _LOCATION_VERBS[language], phrase_tile,
+        *tail, ".",
+    ]
 
 
 def m02_payload(mission, language, objects, relations, words, translated_scene, progress=None):
@@ -147,10 +161,8 @@ def m02_payload(mission, language, objects, relations, words, translated_scene, 
         if split is None or not subject["hasArticle"]:
             continue
         phrase_tile, tail = split
-        verb = _LOCATION_VERBS[language]
-        statement_tiles = [
-            *tokens(_capitalised(subject["nounPhrase"])), verb, phrase_tile, *tail, ".",
-        ]
+        reference_place = places[relation.reference_scene_object_id]
+        statement_tiles = _statement(language, subject, kind, reference_place)
         place = " ".join([phrase_tile, _joined(tail)])
         true_positions = _true_positions(
             relation.subject_scene_object_id, relation.reference_scene_object_id, usable,
@@ -164,12 +176,21 @@ def m02_payload(mission, language, objects, relations, words, translated_scene, 
         subject_place = places[relation.subject_scene_object_id]
         if _definite(language, subject_place) is None:
             continue
+        contradicted = sorted(
+            {_OPPOSITE[p] for p in true_positions if p in _OPPOSITE} - true_positions
+        )
+        check = dict(proposal=_joined(statement_tiles), position=kind)
+        if contradicted and relation.id.int % 2:
+            check = dict(
+                proposal=_joined(_statement(language, subject, contradicted[0], reference_place)),
+                position=contradicted[0],
+            )
         prompts = {
             purpose: template.format(
                 subject=_definite_phrase(language, subject_place),
-                reference=_definite_phrase(language, places[relation.reference_scene_object_id]),
+                reference=_definite_phrase(language, reference_place),
                 of_subject=_of(language, subject_place),
-                answer=answer,
+                proposal=check["proposal"],
             )
             for purpose, template in _PROMPTS[language].items()
         }
@@ -179,6 +200,8 @@ def m02_payload(mission, language, objects, relations, words, translated_scene, 
             referenceKey=reference["key"], referenceSource=reference["source"],
             position=kind, expression=expression,
             truePositions=sorted(true_positions),
+            contradicted=contradicted,
+            check=check,
             statement=_joined(statement_tiles),
             statementTiles=statement_tiles,
             extraTile=extra,
@@ -194,6 +217,7 @@ def m02_payload(mission, language, objects, relations, words, translated_scene, 
         "contentVersion": mission.content_version,
         "questionChunk": QUESTION_CHUNKS[language],
         "positions": positions,
+        "yesNo": _YES_NO[language],
         "relations": found,
         "selected": _select(found, lambda expression: known.get(fold(expression), 0.0)),
     }
@@ -213,14 +237,19 @@ def _corrections(payload, question, label):
             mistake="wordOrder", correction=question.correct_text,
             explanation="Start with the question words, then the object.",
         )]
+    if question.purpose == "checkAnswer":
+        return [dict(
+            mistake="wrongPosition", answers=[option.option_id], correction=relation["statement"],
+            explanation=(
+                f"The {relation['subjectSource']} is "
+                f"{phrases[relation['position']]['meaning']} the {relation['referenceSource']}."
+            ),
+        ) for option in question.options if option.option_id != question.correct_option_id]
     corrections = []
     for option in question.options:
         if option.option_id == question.correct_option_id:
             continue
-        chosen = (
-            by_text[fold(option.label)] if question.purpose == "choosePosition"
-            else phrases[option.option_id]
-        )
+        chosen = by_text[fold(option.label)]
         corrections.append(dict(
             mistake="wrongPosition", answers=[option.option_id], correction=label,
             explanation=(
@@ -233,7 +262,7 @@ def _corrections(payload, question, label):
 
 
 def m02_lesson_task(session_id, mission, payload, result, vocabulary_ids):
-    """The M02 lesson task: the four questions in order, from a validated result."""
+    """The M02 lesson task: its three or four questions in order, from a validated result."""
     relations = {row["key"]: row for row in payload["relations"]}
 
     def evaluate(question, label):
@@ -258,11 +287,6 @@ def m02_lesson_task(session_id, mission, payload, result, vocabulary_ids):
         translation = _TRANSLATIONS[question.purpose].format(
             subject=relation["subjectSource"], reference=relation["referenceSource"],
         )
-        if question.purpose == "understandAnswer":
-            return dict(
-                object_label=subject, reference_label=reference, diagram_options=True,
-                prompt_translation=translation,
-            )
         fields = dict(
             scene_object_id=question.object_key, object_label=subject,
             prompt_translation=translation,

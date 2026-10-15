@@ -49,7 +49,7 @@ MISSION_LESSONS = {
     ),
     "M02": MissionLessonSpec(
         _m02_payload, M02_GENERATION, m02_lesson_task,
-        lambda payload: len(payload["selected"]) == 2,
+        lambda payload: bool(payload["selected"]),
     ),
     "M03": MissionLessonSpec(
         _m03_payload, M03_GENERATION, m03_lesson_task,

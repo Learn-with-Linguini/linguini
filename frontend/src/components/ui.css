@@ -4656,11 +4656,3 @@ p[role="alert"]::before { content: "!"; }
 .object-preview__legend > span { display: inline-flex; align-items: center; gap: var(--space-1); }
 .object-preview__key { width: 14px; height: 14px; border-radius: 50%; border: 3px solid var(--tomato); }
 .object-preview__key--reference { border-color: var(--teal); border-style: dashed; }
-.diagram-choices { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
-.diagram-choices .choice { display: grid; gap: var(--space-1); justify-items: center; }
-.position-diagram { width: 100%; max-width: 180px; height: auto; }
-.position-diagram__ground { stroke: var(--line); stroke-width: 2; }
-.position-diagram__reference rect { fill: var(--teal); }
-.position-diagram__target rect { fill: var(--tomato); stroke: var(--paper); stroke-width: 2; }
-.position-diagram__label { fill: var(--ink); font-size: 11px; font-weight: 700; }
-.position-diagram__label--target { fill: var(--tomato-pressed); }

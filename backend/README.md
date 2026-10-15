@@ -580,32 +580,35 @@ lesson.
 #### M02 A1 lesson path
 
 `M02-A1.toml`, "Find and locate": say where a photo object is, ask where it is and
-understand a short answer. This is supported A1 practice, not independent A2 location
-production.
+check a short answer against the photo. This is supported A1 practice, not independent
+A2 location production.
 
 1. **Payload** (`app/services/mission_lessons_m02.py`). Each confirmed relation whose
    position has a reviewed phrase and whose objects have reviewed articles, with its
    statement tiles (`La` / `taza` / `está` / `al lado del` / `libro` / `.`; a contracted
-   or multiword phrase is one tile), `whereQuestion` (`¿Dónde está la taza?`), short answer
-   (`Está sobre la mesa.`, `Elle est sur la table.`) and the positions true for that pair,
-   including inverse relations. Positions reuse the I-Spy reviewed bank.
+   or multiword phrase is one tile), `whereQuestion` (`¿Dónde está la taza?`), the
+   positions true for that pair (including inverse relations), the positions they
+   contradict (on/under, in front of/behind) and a proposed answer for the optional check.
+   Positions reuse the I-Spy reviewed bank.
 2. **Selection.** Relations are ranked by the learner-history correct ratio of their
    position phrase (snapshot only with `LEARNER_MEMORY_ENABLED=true`; otherwise every
-   phrase is unseen), ties in photo order. Questions 1–2 use the least familiar; questions
-   3–4 prefer another object pair, then another position, and reuse the first relation
-   only when there is no other. The selection is stored in the generated task.
+   phrase is unseen), ties in photo order. The core questions use the least familiar. A
+   second relation is selected only if it has another object pair or position; otherwise
+   M02 has three questions. The selection is stored in the generated task.
 3. **Lesson** (`app/ai/features/learning_tasks/mission_m02.py`). Built without a model
-   call and validated: one `grammarLesson`, "Find and locate", with four questions in
-   order: pick the phrase from three, none of the wrong ones true for the pair
-   (`Elige la posición: la taza ___ la mesa.`); build the statement with one extra phrase
-   tile (`Describe la posición de la taza.`); build the where-question
-   (`Pregunta por la ubicación del libro.`); and match the quoted answer to one of three
-   position diagrams, option IDs being relation keys drawn by the frontend. Prompts are in
-   the target language with an English `promptTranslation`, and never contain the
-   sentence the learner builds. Questions carry `sceneObjectId`/`objectLabel` and
-   `referenceObjectId`/`referenceLabel`; the diagram question has no photo and sets
-   `diagramOptions`.
-4. **Grading.** The four questions are one task attempt. Phrase and diagram choices are
+   call and validated: one `grammarLesson`, "Find and locate", with three core questions
+   about the first relation — pick the phrase from three, none of the wrong ones true for
+   the pair (`Elige la posición: la taza ___ la mesa.`); build the statement with one
+   extra phrase tile (`Describe la posición de la taza.`); build the where-question
+   (`Pregunta por la ubicación de la taza.`) — and, only with a second relation, a Yes/No
+   check on the photo (`“El libro está debajo de la mesa.” ¿Coincide con la foto?`). The
+   proposal is the true statement or, for about half the relations, an opposite position
+   the confirmed relation contradicts; the feedback gives the correct statement. Every
+   question uses the learner's photo with `sceneObjectId`/`objectLabel` (and
+   `referenceObjectId`/`referenceLabel` except the where-question). Prompts are in the
+   target language with an English `promptTranslation`, and never contain the sentence
+   the learner builds.
+4. **Grading.** The questions are one task attempt. Phrase and Yes/No choices are
    recognition with `wrongPosition` corrections; the statement and question are supported
    construction (`wordBank`), and only those name object words for evidence.
    `GET /tasks/{id}/latest-attempt` also returns the saved `answers` and `reviewDetails`

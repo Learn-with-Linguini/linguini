@@ -11,7 +11,6 @@ import { speak } from "../lib/speech";
 import { checkVocabularyAnswer, getLatestAttempt, reviewDetails, type SessionTask, type QuestionOutcome, type TaskAnswer, type VocabularyLearningWord } from "../lib/api";
 import { ReportIssueLink } from "../components/ReportIssueLink";
 import { ObjectPreview } from "../components/ObjectPreview";
-import { isDiagramPosition, PositionDiagram } from "../components/PositionDiagram";
 
 export function LearningTaskPage() {
   const { taskId } = useParams();
@@ -323,20 +322,15 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
       </> : <>
         <h2>{content.focus === "sceneDescription" ? question.translation || "Choose the sentence that describes the scene." : question.prompt}</h2>
         <PromptTranslation text={question.promptTranslation} />
-        {question.diagramOptions ? <p className="small muted">These drawings are examples, not your photo.</p> : null}
-        <div className={question.diagramOptions ? "choice-grid diagram-choices" : "choice-grid"}>{choiceOrder(question.options, `${task.id}:${question.questionId}`, option => option.optionId).map((option, optionIndex) => {
+        <div className="choice-grid">{choiceOrder(question.options, `${task.id}:${question.questionId}`, option => option.optionId).map(option => {
           const selected = chosen[question.questionId] === option.optionId;
           const graded = results[question.questionId];
           const state = graded !== undefined && solutions[question.questionId] === option.optionId ? " choice--correct"
             : !selected ? ""
               : graded === undefined ? " choice--selected" : graded ? " choice--correct" : " choice--incorrect";
           return <button key={option.optionId} className={`choice${state}`} aria-pressed={selected} disabled={terminal || practiceSaving || checking || graded !== undefined}
-            aria-label={question.diagramOptions ? `Picture ${optionIndex + 1}: ${option.label}` : undefined}
             onClick={() => setAnswers(value => ({ ...value, [question.questionId]: option.optionId }))}>
-            {question.diagramOptions && isDiagramPosition(option.optionId) ? <>
-              <PositionDiagram position={option.optionId} target={question.objectLabel ?? ""} reference={question.referenceLabel ?? ""} />
-              <span>Picture {optionIndex + 1}</span>
-            </> : option.label}</button>;
+            {option.label}</button>;
         })}</div>
       </>}
       {results[question.questionId] !== undefined ? <>

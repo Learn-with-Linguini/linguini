@@ -83,7 +83,7 @@ def _parts(detail):
     return [task for task in detail.tasks if task.public_content.mission_id == "M02"]
 
 
-def test_relation_only_scene_plans_one_m02_task_with_four_questions(curated):
+def test_one_relation_plans_one_m02_task_with_the_three_core_questions(curated):
     engine, _owner, profile, client, *_ = curated
     model = SceneModel()
     repository, sid, detail = _lesson(curated, _relations_only, model)
@@ -95,7 +95,7 @@ def test_relation_only_scene_plans_one_m02_task_with_four_questions(curated):
     assert not any("m02" in name for name in model.requests)
     content = lesson.public_content
     assert content.title == "Find and locate" and content.explanation is None
-    choose, describe, ask, understand = content.questions
+    choose, describe, ask = content.questions
     assert choose.prompt == "Elige la posición: la taza ___ la mesa."
     assert choose.prompt_translation == "Choose the position: the cup ___ the table."
     assert (choose.object_label, choose.reference_label) == ("Cup", "Table")
@@ -106,15 +106,12 @@ def test_relation_only_scene_plans_one_m02_task_with_four_questions(curated):
     assert (ask.prompt, ask.prompt_translation) == (
         "Pregunta por la ubicación de la taza.", "Ask where the cup is.",
     )
-    assert understand.scene_object_id is None and understand.diagram_options is True
-    assert "Está sobre la mesa." in understand.prompt
     key = _answer_key(engine, lesson.id)
     assert key["correctOptionIds"]["describe-location"] == "La taza está sobre la mesa."
     assert key["correctOptionIds"]["ask-where"] == "¿Dónde está la taza?"
-    assert key["correctOptionIds"]["understand-answer"] == "on"
     assert [item["targetIds"] for item in key["questionEvaluations"]] == [
         ["recognise-position"], ["describe-location", "name-object"],
-        ["build-question", "name-object"], ["understand-location"],
+        ["build-question", "name-object"],
     ]
     public = json.dumps(client.get(f"/api/v1/sessions/{sid}").json())
     assert "questionEvaluations" not in public and "correctOptionIds" not in public
@@ -127,7 +124,7 @@ def test_relation_only_scene_plans_one_m02_task_with_four_questions(curated):
 
 
 @pytest.mark.parametrize("scenario", ["correct", "incorrect"])
-def test_m02_is_graded_once_across_its_four_questions(curated, scenario):
+def test_m02_is_graded_once_across_its_questions(curated, scenario):
     engine, _owner, _profile, client, *_ = curated
     _repository_, sid, detail = _lesson(curated, _relations_only)
     (task,) = _parts(detail)
@@ -156,7 +153,7 @@ def test_m02_is_graded_once_across_its_four_questions(curated, scenario):
     assert saved["answers"] == answers
     assert saved["reviewDetails"]["questionResults"] == details["questionResults"]
     outcomes = {item["questionId"]: item for item in details["questionOutcomes"]}
-    assert len(outcomes) == 4
+    assert len(outcomes) == len(answers) == 3
     for question in task.public_content.questions:
         outcome = outcomes[question.question_id]
         if question.interaction_type == "sentenceBuilding":

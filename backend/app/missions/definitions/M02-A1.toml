@@ -12,7 +12,7 @@ relations = ["on", "under", "next_to", "in_front_of", "behind"]
 
 [objective]
 objective_id = "find-and-locate"
-can_do = "I can say where an object in my photo is, ask where it is and understand a short answer."
+can_do = "I can say where an object in my photo is, ask where it is and check a short answer."
 
 [[objective.targets]]
 target_id = "recognise-position"
@@ -36,7 +36,7 @@ evidence_types = ["construction"]
 
 [[objective.targets]]
 target_id = "understand-location"
-summary = "Understand a short answer saying where an object is relative to another."
+summary = "Check whether a short answer about where an object is matches the photo."
 evidence_types = ["recognition"]
 
 [[language_patterns]]
@@ -112,17 +112,16 @@ description = "Uses the object's noun with the article that matches its gender a
 evidence_types = ["construction"]
 
 [[evaluation_criteria]]
-criterion_id = "answer-matches-diagram"
+criterion_id = "answer-matches-photo"
 target_id = "understand-location"
-description = "Picks the diagram that shows the position in the short answer."
+description = "Says whether a proposed location answer matches the photo."
 evidence_types = ["recognition"]
 
 [expected_performance]
-min_assessed_questions = 4
+min_assessed_questions = 3
 min_correct_ratio = 0.75
 min_independent_correct = 1
 required_target_groups = [
   ["describe-location"],
   ["build-question"],
-  ["understand-location"],
 ]

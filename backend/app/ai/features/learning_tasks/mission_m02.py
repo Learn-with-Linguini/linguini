@@ -1,4 +1,4 @@
-"""M02 A1 mission lesson: say where an object is, ask where it is and understand the answer.
+"""M02 A1 mission lesson: say where an object is, ask where it is and check an answer.
 
 The lesson is built deterministically from learner-confirmed objects and relations with
 reviewed target-language forms, and accepted only through ``validate_m02_lesson``.
@@ -22,18 +22,18 @@ from app.ai.features.learning_tasks.schemas import GeneratedChoice
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.schemas.base import ApiModel, NonEmptyText
 
-M02_PROMPT_VERSION = "learning-tasks.m02-a1.v2"
-M02_SCHEMA_VERSION = "learning-tasks-m02-result.v2"
-M02_VALIDATOR_VERSION = "learning-tasks-m02-validator.v2"
+M02_PROMPT_VERSION = "learning-tasks.m02-a1.v3"
+M02_SCHEMA_VERSION = "learning-tasks-m02-result.v3"
+M02_VALIDATOR_VERSION = "learning-tasks-m02-validator.v3"
 
-type M02Purpose = Literal["choosePosition", "describeLocation", "askWhere", "understandAnswer"]
+type M02Purpose = Literal["choosePosition", "describeLocation", "askWhere", "checkAnswer"]
 
-_ORDER: list[M02Purpose] = ["choosePosition", "describeLocation", "askWhere", "understandAnswer"]
+_CORE: list[M02Purpose] = ["choosePosition", "describeLocation", "askWhere"]
 _INTERACTIONS = {
     "choosePosition": "multipleChoice",
     "describeLocation": "sentenceBuilding",
     "askWhere": "sentenceBuilding",
-    "understandAnswer": "multipleChoice",
+    "checkAnswer": "multipleChoice",
 }
 
 
@@ -59,7 +59,7 @@ class M02Question(ApiModel):
 
 class M02LessonResult(ApiModel):
     title: NonEmptyText = Field(max_length=80)
-    questions: Annotated[list[M02Question], Field(min_length=4, max_length=4)]
+    questions: Annotated[list[M02Question], Field(min_length=3, max_length=4)]
 
 
 def _choices(question):
@@ -88,25 +88,45 @@ def _joined(tiles):
     return text
 
 
+def _validate_check(payload, question, first, second):
+    if second is None or second["key"] == first["key"]:
+        raise LearningTaskGenerationError("The answer check needs another confirmed relation.")
+    if question.object_key != second["subjectKey"]:
+        raise LearningTaskGenerationError("Questions must be about the relation's object.")
+    labels = _choices(question)
+    if set(labels) != {"yes", "no"}:
+        raise LearningTaskGenerationError("The answer check offers yes and no.")
+    check = second["check"]
+    if fold(check["proposal"]) not in fold(question.prompt):
+        raise LearningTaskGenerationError("The answer check must quote its proposed answer.")
+    matches = check["position"] in second["truePositions"]
+    if not matches and check["position"] not in second["contradicted"]:
+        raise LearningTaskGenerationError("A wrong proposal must contradict the photo.")
+    if question.correct_option_id != ("yes" if matches else "no"):
+        raise LearningTaskGenerationError("The answer check key must match the photo.")
+
+
 def validate_m02_lesson(payload: dict[str, Any], result: M02LessonResult) -> None:
-    """Check confirmed-fact references, the fixed four-part order and single answers."""
+    """Check confirmed-fact references, the core order, the optional check and single answers."""
     relations = {row["key"]: row for row in payload["relations"]}
     questions = result.questions
     unique_question_ids(questions)
-    if [question.purpose for question in questions] != _ORDER:
-        raise LearningTaskGenerationError("Parts go: position, statement, question, answer.")
-    first, second = (relations.get(questions[index].relation_key) for index in (0, 2))
-    if first is None or second is None:
-        raise LearningTaskGenerationError("Every part must use a confirmed relation.")
-    if questions[1].relation_key != first["key"] or questions[3].relation_key != second["key"]:
-        raise LearningTaskGenerationError("Both parts of a task use the same relation.")
-    for question, relation in zip(questions, [first, first, second, second], strict=True):
-        if question.object_key != relation["subjectKey"]:
-            raise LearningTaskGenerationError("Questions must be about the relation's object.")
-    choose, describe, ask, understand = questions
+    extra = [question.purpose for question in questions[3:]]
+    if [question.purpose for question in questions[:3]] != _CORE or extra not in ([], [
+        "checkAnswer"
+    ]):
+        raise LearningTaskGenerationError("Questions go: position, statement, question, check.")
+    if bool(extra) != (len(payload["selected"]) == 2):
+        raise LearningTaskGenerationError("Add the answer check only for a second relation.")
+    first = relations.get(questions[0].relation_key)
+    if first is None:
+        raise LearningTaskGenerationError("Every question must use a confirmed relation.")
+    for question in questions[:3]:
+        if question.relation_key != first["key"] or question.object_key != first["subjectKey"]:
+            raise LearningTaskGenerationError("The core questions use the same relation.")
+    choose, describe, ask = questions[:3]
     labels = _choices(choose)
     phrases = {row["position"]: row["expression"] for row in payload["positions"]}
-    true_for_pair = set(first["truePositions"])
     if fold(labels[choose.correct_option_id]) != fold(first["expression"]):
         raise LearningTaskGenerationError("The correct phrase must be the confirmed position.")
     offered = {fold(text): position for position, text in phrases.items()}
@@ -114,20 +134,14 @@ def validate_m02_lesson(payload: dict[str, Any], result: M02LessonResult) -> Non
         position = offered.get(fold(label))
         if position is None:
             raise LearningTaskGenerationError("Phrases must be reviewed positions.")
-        if option_id != choose.correct_option_id and position in true_for_pair:
+        if option_id != choose.correct_option_id and position in first["truePositions"]:
             raise LearningTaskGenerationError("Only one phrase may match the photo.")
     _check_tiles(describe, first["statementTiles"], [first["extraTile"]])
-    if fold(ask.correct_text or "") != fold(second["whereQuestion"]):
+    if fold(ask.correct_text or "") != fold(first["whereQuestion"]):
         raise LearningTaskGenerationError("The question must be the reviewed where-question.")
     checked_answer(ask)
-    labels = _choices(understand)
-    if understand.correct_option_id != second["position"] or fold(second["answer"]) not in fold(
-        understand.prompt
-    ):
-        raise LearningTaskGenerationError("The answer must quote the confirmed relation.")
-    wrong = set(labels) - {second["position"]}
-    if not wrong <= set(phrases) or wrong & set(second["truePositions"]):
-        raise LearningTaskGenerationError("Diagram options must show other positions only.")
+    if extra:
+        _validate_check(payload, questions[3], first, relations.get(questions[3].relation_key))
 
 
 def _relation_choices(relation, positions):
@@ -137,16 +151,15 @@ def _relation_choices(relation, positions):
 
 
 def fallback_m02_lesson(payload: dict[str, Any]) -> M02LessonResult:
-    """The four-part lesson from the selected relations; it passes the same validator."""
-    if len(payload["relations"]) < 1 or len(payload["selected"]) != 2:
+    """Three core questions, plus the answer check when a second relation was selected."""
+    if not payload["selected"]:
         raise LearningTaskGenerationError("The lesson needs a confirmed relation.")
     relations = {row["key"]: row for row in payload["relations"]}
-    first, second = (relations[key] for key in payload["selected"])
+    first = relations[payload["selected"][0]]
     phrases = {row["position"]: row for row in payload["positions"]}
     shown = _relation_choices(first, payload["positions"])
     order = sorted(shown, key=lambda position: fold(phrases[position]["expression"]))
     describe_bank = [*first["statementTiles"], first["extraTile"]]
-    understand = _relation_choices(second, payload["positions"])
     questions = [
         dict(
             question_id="choose-position", purpose="choosePosition",
@@ -171,30 +184,28 @@ def fallback_m02_lesson(payload: dict[str, Any]) -> M02LessonResult:
         ),
         dict(
             question_id="ask-where", purpose="askWhere",
-            prompt=second["prompts"]["askWhere"],
+            prompt=first["prompts"]["askWhere"],
             interaction_type="sentenceBuilding", options=[], correct_option_id=None,
-            correct_text=second["whereQuestion"],
-            token_bank=list(reversed(tokens(second["whereQuestion"]))),
-            translation=f"Where is the {second['subjectSource']}?",
-            object_key=second["subjectKey"], relation_key=second["key"],
-        ),
-        dict(
-            question_id="understand-answer", purpose="understandAnswer",
-            prompt=second["prompts"]["understandAnswer"],
-            interaction_type="multipleChoice",
-            options=[
-                dict(
-                    option_id=position,
-                    label=f"The {second['subjectSource']} is {phrases[position]['meaning']} "
-                    f"the {second['referenceSource']}.",
-                )
-                for position in sorted(understand)
-            ],
-            correct_option_id=second["position"],
-            correct_text=None, token_bank=[], translation=None,
-            object_key=second["subjectKey"], relation_key=second["key"],
+            correct_text=first["whereQuestion"],
+            token_bank=list(reversed(tokens(first["whereQuestion"]))),
+            translation=f"Where is the {first['subjectSource']}?",
+            object_key=first["subjectKey"], relation_key=first["key"],
         ),
     ]
+    if len(payload["selected"]) == 2:
+        second = relations[payload["selected"][1]]
+        matches = second["check"]["position"] in second["truePositions"]
+        questions.append(dict(
+            question_id="check-answer", purpose="checkAnswer",
+            prompt=second["prompts"]["checkAnswer"],
+            interaction_type="multipleChoice",
+            options=[
+                dict(option_id=key, label=label) for key, label in payload["yesNo"].items()
+            ],
+            correct_option_id="yes" if matches else "no",
+            correct_text=None, token_bank=[], translation=None,
+            object_key=second["subjectKey"], relation_key=second["key"],
+        ))
     result = M02LessonResult.model_validate(dict(title="Find and locate", questions=questions))
     validate_m02_lesson(payload, result)
     return result
@@ -208,6 +219,6 @@ M02_GENERATION = MissionGeneration(
     M02LessonResult,
     validate_m02_lesson,
     fallback_m02_lesson,
-    "mission_lesson_m02_v2",
+    "mission_lesson_m02_v3",
     uses_model=False,
 )

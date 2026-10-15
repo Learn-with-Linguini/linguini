@@ -1,7 +1,7 @@
 """Multiple-mission planning, per-mission photo eligibility and the M02 A1 lesson."""
 
 from types import SimpleNamespace
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -114,9 +114,18 @@ def test_statement_groups_the_contracted_position_into_one_tile():
     assert spanish["whereQuestion"] == "¿Dónde está la taza?"
 
 
-def test_one_relation_is_reused_for_both_tasks():
+def test_one_relation_gives_only_the_three_core_questions():
     payload = _payload()
-    assert payload["selected"][0] == payload["selected"][1]
+    assert len(payload["selected"]) == 1
+    result = fallback_m02_lesson(payload)
+    assert [q.purpose for q in result.questions] == [
+        "choosePosition", "describeLocation", "askWhere",
+    ]
+
+
+def test_more_objects_without_another_relation_add_no_check():
+    same = [rel(CUP, "on", TABLE), rel(CUP, "on", TABLE)]
+    assert len(_payload("es", same)["selected"]) == 1
 
 
 def test_task_two_prefers_another_pair_and_unfamiliar_phrases_come_first():
@@ -127,18 +136,22 @@ def test_task_two_prefers_another_pair_and_unfamiliar_phrases_come_first():
     assert [_relation(familiar, i)["position"] for i in (0, 1)] == ["under", "on"]
 
 
-def test_fallback_builds_four_parts_in_order_from_confirmed_facts():
-    relations = [rel(CUP, "on", TABLE), rel(BOOK, "under", TABLE)]
-    payload = _payload("es", relations)
-    result = fallback_m02_lesson(payload)
+def _numbered(subject, relation, reference, number):
+    made = rel(subject, relation, reference)
+    made.id = UUID(int=number)
+    return made
+
+
+def test_fallback_builds_core_questions_and_a_true_check_from_confirmed_facts():
+    relations = [_numbered(CUP, "on", TABLE, 2), _numbered(BOOK, "under", TABLE, 4)]
+    result = fallback_m02_lesson(_payload("es", relations))
     assert [q.purpose for q in result.questions] == [
-        "choosePosition", "describeLocation", "askWhere", "understandAnswer",
+        "choosePosition", "describeLocation", "askWhere", "checkAnswer",
     ]
-    choose, describe, ask, understand = result.questions
+    choose, describe, ask, check = result.questions
     assert choose.prompt == "Elige la posición: la taza ___ la mesa."
     assert describe.prompt == "Describe la posición de la taza."
-    assert ask.prompt == "Pregunta por la ubicación del libro."
-    assert understand.prompt == "\u201cEstá debajo de la mesa.\u201d ¿Qué dibujo lo muestra?"
+    assert ask.prompt == "Pregunta por la ubicación de la taza."
     labels = {o.option_id: o.label for o in choose.options}
     assert labels[choose.correct_option_id] == "sobre"
     assert set(labels.values()) == {"sobre", "debajo de", "al lado de"}
@@ -146,19 +159,36 @@ def test_fallback_builds_four_parts_in_order_from_confirmed_facts():
     assert sorted(describe.token_bank) == sorted(
         ["La", "taza", "está", "sobre", "la", "mesa", ".", "debajo de"]
     )
-    assert ask.correct_text == "¿Dónde está el libro?"
-    assert "Está debajo de la mesa." in understand.prompt
-    assert understand.correct_option_id == "under"
-    assert {o.option_id for o in understand.options} == {"under", "on", "next_to"}
+    assert ask.correct_text == "¿Dónde está la taza?"
+    assert check.prompt == "\u201cEl libro está debajo de la mesa.\u201d ¿Coincide con la foto?"
+    assert {o.option_id: o.label for o in check.options} == {"yes": "Sí", "no": "No"}
+    assert check.correct_option_id == "yes" and check.object_key == str(BOOK)
+
+
+def test_a_wrong_proposal_uses_the_position_the_photo_contradicts():
+    relations = [_numbered(CUP, "on", TABLE, 2), _numbered(BOOK, "under", TABLE, 3)]
+    check = fallback_m02_lesson(_payload("es", relations)).questions[3]
+    assert check.prompt == "\u201cEl libro está sobre la mesa.\u201d ¿Coincide con la foto?"
+    assert check.correct_option_id == "no"
+
+
+def test_next_to_has_no_contradicting_position_so_its_proposal_is_true():
+    relations = [_numbered(CUP, "on", TABLE, 2), _numbered(BOOK, "next_to", TABLE, 3)]
+    check = fallback_m02_lesson(_payload("es", relations)).questions[3]
+    assert "El libro está al lado de la mesa." in check.prompt
+    assert check.correct_option_id == "yes"
 
 
 def test_french_prompts_are_in_french_and_never_contain_the_built_sentence():
-    payload = _payload("fr", [rel(CUP, "on", TABLE), rel(BOOK, "under", TABLE)])
-    choose, describe, ask, understand = fallback_m02_lesson(payload).questions
+    relations = [_numbered(CUP, "on", TABLE, 2), _numbered(BOOK, "under", TABLE, 4)]
+    choose, describe, ask, check = fallback_m02_lesson(_payload("fr", relations)).questions
     assert choose.prompt == "Choisis la position : la tasse ___ la table."
     assert describe.prompt == "Décris la position de la tasse."
-    assert ask.prompt == "Pose une question sur l'emplacement du livre."
-    assert understand.prompt == "\u00ab Il est sous la table. \u00bb Quel dessin le montre ?"
+    assert ask.prompt == "Pose une question sur l'emplacement de la tasse."
+    assert check.prompt == (
+        "\u00ab Le livre est sous la table. \u00bb Est-ce que ça correspond à la photo ?"
+    )
+    assert {o.label for o in check.options} == {"Oui", "Non"}
     for question in (describe, ask):
         assert question.correct_text.casefold() not in question.prompt.casefold()
 
@@ -171,8 +201,9 @@ def test_inverse_relations_are_not_offered_as_wrong_phrases():
 
 @pytest.mark.parametrize("change", [
     lambda data: data["questions"][0].update(correct_option_id="phrase-9"),
-    lambda data: data["questions"][3].update(correct_option_id="next_to"),
-    lambda data: data["questions"][3].update(prompt="Which picture?"),
+    lambda data: data["questions"][3].update(correct_option_id="no"),
+    lambda data: data["questions"][3].update(prompt="¿Coincide con la foto?"),
+    lambda data: data["questions"].pop(3),
     lambda data: data["questions"].reverse(),
     lambda data: data["questions"][1].update(token_bank=["La", "tasse"]),
     lambda data: data["questions"][2].update(correct_text="Où est le livre ?"),
@@ -180,7 +211,7 @@ def test_inverse_relations_are_not_offered_as_wrong_phrases():
     lambda data: data["questions"].pop(2),
 ])
 def test_validator_rejects_unconfirmed_or_unanswerable_lessons(change):
-    payload = _payload()
+    payload = _payload("fr", [_numbered(CUP, "on", TABLE, 2), _numbered(BOOK, "under", TABLE, 4)])
     data = fallback_m02_lesson(payload).model_dump()
     change(data)
     with pytest.raises((ValueError, LearningTaskGenerationError)):
