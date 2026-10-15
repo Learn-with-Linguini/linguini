@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import pytest
 from sqlalchemy import func, select, update
-from test_mission_lesson_workflow import (
+from test_mission_m01_workflow import (
     _analyzed,
     _answer_key,
     _attempt,
@@ -13,8 +13,8 @@ from test_mission_lesson_workflow import (
     _review,
     _scalar,
 )
-from test_mission_lesson_workflow import missions as missions
-from test_mission_planning_workflow import (
+from test_mission_m01_workflow import missions as missions
+from test_mission_m02_workflow import (
     _colours_only,
     _planned,
     _relations_only,

@@ -3,10 +3,11 @@
 from collections.abc import Callable
 from dataclasses import dataclass
 
-from app.ai.features.learning_tasks.mission import M01_GENERATION, MissionGeneration
+from app.ai.features.learning_tasks.mission import MissionGeneration
+from app.ai.features.learning_tasks.mission_m01 import M01_GENERATION
 from app.ai.features.learning_tasks.mission_m02 import M02_GENERATION
 from app.ai.features.learning_tasks.mission_m03 import M03_GENERATION
-from app.services.mission_lessons import m01_payload, mission_lesson_task
+from app.services.mission_lessons_m01 import m01_lesson_task, m01_payload
 from app.services.mission_lessons_m02 import m02_lesson_task, m02_payload
 from app.services.mission_lessons_m03 import m03_lesson_task, m03_payload
 
@@ -31,7 +32,7 @@ def _m02_payload(mission, language, objects, relations, words, translated_scene,
 
 
 MISSION_LESSONS = {
-    "M01": MissionLessonSpec(_m01_payload, M01_GENERATION, mission_lesson_task),
+    "M01": MissionLessonSpec(_m01_payload, M01_GENERATION, m01_lesson_task),
     "M02": MissionLessonSpec(_m02_payload, M02_GENERATION, m02_lesson_task),
     "M03": MissionLessonSpec(
         m03_payload, M03_GENERATION, m03_lesson_task,

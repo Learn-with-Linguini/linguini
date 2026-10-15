@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 from sqlalchemy import func, select
-from test_mission_lesson_workflow import (
+from test_mission_m01_workflow import (
     _analyzed,
     _answer_key,
     _attempt,
@@ -13,7 +13,7 @@ from test_mission_lesson_workflow import (
     _review,
     _scalar,
 )
-from test_mission_lesson_workflow import missions as missions
+from test_mission_m01_workflow import missions as missions
 from test_postgres_sessions import database as database
 from test_preloaded_templates import SceneModel, TextModelResponse, services
 from test_preloaded_templates_workflow import curated as curated

@@ -15,8 +15,8 @@ from pydantic import Field, model_validator
 
 from app.ai.features.learning_tasks.mission import (
     MissionGeneration,
-    _fold,
     checked_answer,
+    fold,
     tokens,
     unique_question_ids,
 )
@@ -91,13 +91,13 @@ def validate_m03_lesson(payload: dict[str, Any], result: M03LessonResult) -> Non
         raise LearningTaskGenerationError("Questions go: understand, choose, then build, once each.")
     if "buildQuantity" not in purposes or len(purposes) < 2:
         raise LearningTaskGenerationError("The lesson builds the quantity sentence after a comprehension question.")
-    explanation = _fold(result.explanation)
-    if any(_fold(group[key]) not in explanation for key in ("numberWord", "plural", "statement")):
+    explanation = fold(result.explanation)
+    if any(fold(group[key]) not in explanation for key in ("numberWord", "plural", "statement")):
         raise LearningTaskGenerationError("The explanation must teach the number, plural and sentence.")
-    meanings = {_fold(group["meaning"]), *(_fold(row["meaning"]) for row in payload["wrongQuantities"])}
+    meanings = {fold(group["meaning"]), *(fold(row["meaning"]) for row in payload["wrongQuantities"])}
     statements = {
-        _fold(group["statement"]), _fold(payload["singularStatement"]),
-        *(_fold(row["statement"]) for row in payload["wrongQuantities"]),
+        fold(group["statement"]), fold(payload["singularStatement"]),
+        *(fold(row["statement"]) for row in payload["wrongQuantities"]),
     }
     for question in questions:
         if question.object_key != group["objectKey"]:
@@ -105,20 +105,20 @@ def validate_m03_lesson(payload: dict[str, Any], result: M03LessonResult) -> Non
         if question.purpose == "buildQuantity":
             if question.options or question.correct_option_id is not None:
                 raise LearningTaskGenerationError("Sentence building cannot offer options.")
-            if not (question.translation or "").strip() or _fold(question.correct_text or "") != _fold(group["statement"]):
+            if not (question.translation or "").strip() or fold(question.correct_text or "") != fold(group["statement"]):
                 raise LearningTaskGenerationError("The built sentence must be the confirmed quantity statement.")
-            expected = Counter(map(_fold, [*tokens(group["statement"]), *payload["distractorTokens"]]))
-            if Counter(map(_fold, question.token_bank)) != expected:
+            expected = Counter(map(fold, [*tokens(group["statement"]), *payload["distractorTokens"]]))
+            if Counter(map(fold, question.token_bank)) != expected:
                 raise LearningTaskGenerationError("The word bank must hold the answer's tokens and the two distractors.")
             continue
         correct = checked_answer(question)
-        labels = {_fold(option.label) for option in question.options}
+        labels = {fold(option.label) for option in question.options}
         if question.purpose == "understandQuantity":
-            if _fold(group["statement"]) not in _fold(question.prompt):
+            if fold(group["statement"]) not in fold(question.prompt):
                 raise LearningTaskGenerationError("The prompt must quote the confirmed statement.")
-            if correct != _fold(group["meaning"]) or not labels <= meanings:
+            if correct != fold(group["meaning"]) or not labels <= meanings:
                 raise LearningTaskGenerationError("Meanings must come from the confirmed quantity.")
-        elif correct != _fold(group["statement"]) or not labels <= statements:
+        elif correct != fold(group["statement"]) or not labels <= statements:
             raise LearningTaskGenerationError("Sentences must come from the confirmed quantity.")
 
 

@@ -6,8 +6,8 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.ai.features.learning_tasks.mission import (
-    MissionLessonResult,
+from app.ai.features.learning_tasks.mission_m01 import (
+    M01LessonResult,
     fallback_m01_lesson,
     validate_m01_lesson,
 )
@@ -97,7 +97,7 @@ def test_validator_rejects_unconfirmed_or_unanswerable_lessons(change):
     data = fallback_m01_lesson(payload()).model_dump()
     change(data)
     with pytest.raises((ValueError, LearningTaskGenerationError)):
-        validate_m01_lesson(payload(), MissionLessonResult.model_validate(data))
+        validate_m01_lesson(payload(), M01LessonResult.model_validate(data))
 
 
 def test_an_unready_photo_reaches_the_client_with_its_reasons():

@@ -10,7 +10,7 @@ from test_preloaded_templates import SceneModel, TextModelResponse, services
 from test_preloaded_templates_workflow import curated as curated
 
 from app.ai.features.learning_tasks import service as learning_service
-from app.ai.features.learning_tasks.mission import (
+from app.ai.features.learning_tasks.mission_m01 import (
     M01_PROMPT_VERSION,
     M01_SCHEMA_VERSION,
     fallback_m01_lesson,

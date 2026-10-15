@@ -14,8 +14,8 @@ from pydantic import Field, model_validator
 
 from app.ai.features.learning_tasks.mission import (
     MissionGeneration,
-    _fold,
     checked_answer,
+    fold,
     tokens,
     unique_question_ids,
 )
@@ -91,7 +91,7 @@ def validate_m02_lesson(payload: dict[str, Any], result: M02LessonResult) -> Non
         raise LearningTaskGenerationError("The lesson builds one question and recognises at most one.")
     if "understandAnswer" not in purposes:
         raise LearningTaskGenerationError("The lesson needs an answer to understand.")
-    questions_asked = {_fold(row["whereQuestion"]) for row in objects.values()}
+    questions_asked = {fold(row["whereQuestion"]) for row in objects.values()}
     for question in questions:
         obj = objects.get(question.object_key)
         if obj is None:
@@ -101,19 +101,19 @@ def validate_m02_lesson(payload: dict[str, Any], result: M02LessonResult) -> Non
             relation = relations.get(question.relation_key)
             if relation is None or relation["subjectKey"] != question.object_key:
                 raise LearningTaskGenerationError("Answers must quote a confirmed relation of their object.")
-            if _fold(relation["answer"]) not in _fold(question.prompt):
+            if fold(relation["answer"]) not in fold(question.prompt):
                 raise LearningTaskGenerationError("The prompt must quote the confirmed answer.")
-            meanings = {_fold(relation["meaning"]), *map(_fold, relation["wrongMeanings"])}
-            if correct != _fold(relation["meaning"]) or any(
-                _fold(option.label) not in meanings for option in question.options
+            meanings = {fold(relation["meaning"]), *map(fold, relation["wrongMeanings"])}
+            if correct != fold(relation["meaning"]) or any(
+                fold(option.label) not in meanings for option in question.options
             ):
                 raise LearningTaskGenerationError("Answer meanings must come from the confirmed relation.")
             continue
         if question.relation_key is not None:
             raise LearningTaskGenerationError("Only answers quote a relation.")
-        if correct != _fold(obj["whereQuestion"]):
+        if correct != fold(obj["whereQuestion"]):
             raise LearningTaskGenerationError("Questions must be the reviewed where-question.")
-        if any(_fold(option.label) not in questions_asked for option in question.options):
+        if any(fold(option.label) not in questions_asked for option in question.options):
             raise LearningTaskGenerationError("Question options must ask about confirmed objects.")
 
 
@@ -128,7 +128,7 @@ def fallback_m02_lesson(payload: dict[str, Any]) -> M02LessonResult:
     english = f'Where is the {subject["source"]}?'
     others = [
         row["whereQuestion"] for row in payload["objects"]
-        if _fold(row["whereQuestion"]) != _fold(question)
+        if fold(row["whereQuestion"]) != fold(question)
     ]
     choices = list(dict.fromkeys([question, *others]))[:4]
     questions = []

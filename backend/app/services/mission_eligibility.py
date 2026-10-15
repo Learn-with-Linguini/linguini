@@ -9,8 +9,10 @@ from app.schemas.enums import SessionMode
 from app.services.ispy_clue_frames import COLOUR_ATTRIBUTE_TYPES, POSITIONS, SUPPORTED_LANGUAGES
 
 M01_A1 = ("M01", "A1", 1)
+M02_A1 = ("M02", "A1", 1)
+M03_A1 = ("M03", "A1", 1)
 # Implemented A1 variants in catalogue order; a lesson assesses at most three.
-IMPLEMENTED_MISSIONS = {"A1": (M01_A1, ("M02", "A1", 1), ("M03", "A1", 1))}
+IMPLEMENTED_MISSIONS = {"A1": (M01_A1, M02_A1, M03_A1)}
 MAX_LESSON_MISSIONS = 3
 
 # Reviewed singular (masculine, feminine) colour forms for each supported lesson language.

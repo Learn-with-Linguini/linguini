@@ -542,8 +542,8 @@ whose active language profile is A1 and whose target language has reviewed forms
 
 #### M01 A1 lesson path
 
-1. **Lesson** (`app/ai/features/learning_tasks/mission.py`,
-   `app/services/mission_lessons.py`). Exactly one `grammarLesson` with 2–4 questions:
+1. **Lesson** (`app/ai/features/learning_tasks/mission_m01.py`,
+   `app/services/mission_lessons_m01.py`). Exactly one `grammarLesson` with 2–4 questions:
    object recognition and at most one colour recognition (multiple choice), then one
    word-bank sentence (`La taza es roja.`) using the one `copula-colour` pattern. The
    model input holds only confirmed nouns and reviewed agreed colours. The validator
