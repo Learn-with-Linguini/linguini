@@ -317,7 +317,10 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
       {questionResults[question.questionId] !== undefined ? <>
         <Feedback tone={questionResults[question.questionId] ? "good" : "warn"}><p role="status">{questionResults[question.questionId]
           ? "Correct!"
-          : <>Not quite.{correctAnswers[question.questionId] ? <> The correct answer is <strong>{question.options.find(option => option.optionId === correctAnswers[question.questionId])?.label ?? correctAnswers[question.questionId]}</strong>.</> : null}</>}</p></Feedback>
+          : <>Not quite.{correctAnswers[question.questionId] ? (() => {
+            const solution = question.options.find(option => option.optionId === correctAnswers[question.questionId])?.label ?? correctAnswers[question.questionId];
+            return <> The correct answer is <strong>{solution}</strong>{/[.!?]$/.test(solution) ? "" : "."}</>;
+          })() : null}</>}</p></Feedback>
         <QuestionOutcomeNotes outcome={outcomes[question.questionId]} />
         <ReportIssueLink reportType="Grammar answer" fields={[
           ["Task ID", task.id],
