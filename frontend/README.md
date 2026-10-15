@@ -185,6 +185,7 @@ Run these inside `frontend/`:
 | `npm ci` | Install dependencies from the committed lockfile |
 | `npm run dev` | Start the development server |
 | `npm run build` | Typecheck and build production assets into `dist/` |
+| `npm run build:landing` | Build production assets into `landing/public/app/` for the combined deployment |
 | `npm run lint` | Run Oxlint |
 | `npm run preview` | Preview an existing production build locally |
 

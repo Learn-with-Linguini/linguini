@@ -7,7 +7,7 @@
 
 <p align="center"><strong>Learn the language of your day</strong></p>
 
-**Live application:** [Open Linguini](https://linguini-navy.vercel.app/) &nbsp;·&nbsp; **Landing page:** [linguini-landing](https://linguini-landing.vercel.app)
+**Live application and landing page:** [Open Linguini](https://linguini-landing.vercel.app/)
 
 ## What Linguini is
 
@@ -96,7 +96,7 @@ flowchart TD
   api --> ai
 ```
 
-`landing/` is a separate Next.js site and does not call the API.
+`landing/` is built with the learner app and serves both the Next.js marketing site and the frontend SPA from the same origin. Only the learner app calls the API.
 
 - API JSON is camelCase; Python attributes are snake_case. The API prefix is `/api/v1`.
 - PostgreSQL is required: there is no in-memory or JSON fallback, and missing database
@@ -115,7 +115,7 @@ flowchart TD
 | [`landing/`](landing) | Marketing site with an interactive demo session | Next.js 16 (App Router) | [landing/README.md](landing/README.md) |
 | [`marketing/`](marketing) | Product Hunt launch kit, launch videos, media kit and business model | Markdown, Python/Pillow, FFmpeg, Hyperframes | [marketing/README.md](marketing/README.md) |
 
-Each app manages its own dependencies and deploys on its own. `marketing/` is not deployed; it holds source files and finished exports.
+Each app manages its own dependencies; the landing deployment builds and serves the learner app from the same origin. `marketing/` is not deployed; it holds source files and finished exports.
 
 ## Quick start
 
@@ -157,8 +157,7 @@ Full tables, including optional AI and SEO settings, are in each app's README.
 
 | Piece | Where | Notes |
 | --- | --- | --- |
-| Learner app | Vercel project, root directory `frontend` | https://linguini-navy.vercel.app |
-| Landing page | Vercel project `linguini-landing`, root directory `landing` | https://linguini-landing.vercel.app |
+| Landing page and learner app | Vercel project `linguini-landing`, root directory `landing` | https://linguini-landing.vercel.app |
 | API | uvicorn/ASGI host | Needs the backend environment variables above; `AUTH_MODE=supabase`. |
 | Database, storage, auth | Supabase | Migrations applied with `npm run db:deploy` from `backend/`. |
 

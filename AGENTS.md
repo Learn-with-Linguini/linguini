@@ -4,7 +4,7 @@ Linguini is a photo-led, speak-first language-learning app. The repository is a 
 
 - `frontend/` — React 19 + TypeScript + Vite SPA. See `frontend/AGENTS.md` for UI conventions.
 - `backend/` — FastAPI + Pydantic + SQLAlchemy on PostgreSQL/Supabase, with Prisma owning migrations. API prefix `/api/v1`.
-- `landing/` — Next.js 16 marketing site (SEO, Open Graph images, interactive demo session). Independent of the app and API; see `landing/README.md`.
+- `landing/` — Next.js 16 marketing site (SEO, Open Graph images, interactive demo session), deployed with the learner app from one Vercel project. The API remains separate; see `landing/README.md`.
 - `marketing/` — not deployed. Product Hunt kit (`product-hunt/`), launch videos (`videos/launch-film`, `videos/promo-film`, `videos/campaign`), media kit and explainer (`media/`) and pricing/cost model (`business-model/`). See `marketing/README.md`. Its scripts read from and write into `landing/public`.
 
 ## Branch and pull request conventions

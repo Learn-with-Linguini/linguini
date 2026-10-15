@@ -48,7 +48,7 @@ export function JsonLd({ faq }: JsonLdProps) {
       name: site.name,
       description: site.description,
       url: `${site.url}/`,
-      installUrl: appLinks.signUp,
+      installUrl: new URL(appLinks.signUp, site.url).toString(),
       applicationCategory: "EducationalApplication",
       operatingSystem: "Web",
       image: `${site.url}/opengraph-image`,

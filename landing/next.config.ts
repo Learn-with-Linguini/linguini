@@ -1,5 +1,11 @@
+import { existsSync, readdirSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { NextConfig } from "next";
 import { movedPosts } from "./data/posts";
+
+const publicAppPath = path.join(path.dirname(fileURLToPath(import.meta.url)), "public", "app");
+const publicAppIndexPath = path.join(publicAppPath, "index.html");
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -23,6 +29,44 @@ const nextConfig: NextConfig = {
         destination: `${canonical}/:path*`,
         permanent: true,
       })),
+    ];
+  },
+  async rewrites() {
+    if (!existsSync(publicAppIndexPath)) return { fallback: [] };
+
+    const appAssetRewrites = readdirSync(publicAppPath, { withFileTypes: true })
+      .filter(entry => entry.name !== "index.html" && entry.name !== "assets")
+      .flatMap(entry => {
+        if (entry.isDirectory()) {
+          return [{
+            source: `/${entry.name}/:path*`,
+            destination: `/app/${entry.name}/:path*`,
+          }];
+        }
+        if (entry.isFile()) {
+          return [{
+            source: `/${entry.name}`,
+            destination: `/app/${entry.name}`,
+          }];
+        }
+        return [];
+      });
+
+    return {
+      fallback: [
+        ...appAssetRewrites,
+        { source: "/:path*", destination: "/app/index.html" },
+      ],
+    };
+  },
+  async headers() {
+    return [
+      {
+        source: "/app/assets/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
     ];
   },
   images: {
