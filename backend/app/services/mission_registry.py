@@ -14,7 +14,8 @@ from app.services.mission_lessons_m03 import m03_lesson_task, m03_payload
 
 @dataclass(frozen=True)
 class MissionLessonSpec:
-    """``payload(mission, language, objects, relations, words, translated_scene, counts)``;
+    """``payload(mission, language, objects, relations, words, translated_scene, counts,
+    progress)``;
     ``ready(payload)`` is false when the confirmed facts give no reviewed content."""
 
     payload: Callable[..., dict]
@@ -23,19 +24,32 @@ class MissionLessonSpec:
     ready: Callable[[dict], bool] = lambda payload: True
 
 
-def _m01_payload(mission, language, objects, _relations, words, translated_scene, _counts):
-    return m01_payload(mission, language, objects, words, translated_scene)
+def _m01_payload(
+    mission, language, objects, _relations, words, translated_scene, _counts, progress,
+):
+    return m01_payload(mission, language, objects, words, translated_scene, progress)
 
 
-def _m02_payload(mission, language, objects, relations, words, translated_scene, _counts):
+def _m02_payload(
+    mission, language, objects, relations, words, translated_scene, _counts, _progress,
+):
     return m02_payload(mission, language, objects, relations, words, translated_scene)
 
 
+def _m03_payload(
+    mission, language, objects, relations, words, translated_scene, counts, _progress,
+):
+    return m03_payload(mission, language, objects, relations, words, translated_scene, counts)
+
+
 MISSION_LESSONS = {
-    "M01": MissionLessonSpec(_m01_payload, M01_GENERATION, m01_lesson_task),
+    "M01": MissionLessonSpec(
+        _m01_payload, M01_GENERATION, m01_lesson_task,
+        lambda payload: len(payload["pairs"]) == 2,
+    ),
     "M02": MissionLessonSpec(_m02_payload, M02_GENERATION, m02_lesson_task),
     "M03": MissionLessonSpec(
-        m03_payload, M03_GENERATION, m03_lesson_task,
+        _m03_payload, M03_GENERATION, m03_lesson_task,
         lambda payload: payload["group"] is not None,
     ),
 }

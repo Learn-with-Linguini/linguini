@@ -517,7 +517,7 @@ lesson.
 - **Photo requirements.** Each definition names only the confirmed facts it needs:
   `minConfirmedObjects` (different names), `minColouredObjects` (reviewed colours) and
   `minRelations` with the accepted `relations` types, and `minCountedGroups` with the
-  `minQuantity`–`maxQuantity` range. M01 needs two objects and a colour; M02 needs two
+  `minQuantity`–`maxQuantity` range. M01 needs two objects with a colour each; M02 needs two
   objects and an on/under/next-to/in-front-of/behind relation; M03 needs one counted
   group of 2–10.
 - **Counts.** The review's Counts tab sends `objectCounts` (object ID → 1–10). Each count
@@ -544,16 +544,23 @@ lesson.
 
 #### M01 A1 lesson path
 
-1. **Lesson** (`app/ai/features/learning_tasks/mission_m01.py`,
-   `app/services/mission_lessons_m01.py`). Exactly one `grammarLesson` with 2–4 questions:
-   object recognition and at most one colour recognition (multiple choice), then one
-   word-bank sentence (`La taza es roja.`) using the one `copula-colour` pattern. The
-   model input holds only confirmed nouns and reviewed agreed colours. The validator
-   checks every referenced fact, offered option and token; the deterministic fallback
-   used after any model failure passes the same validator. The cache identity is
-   `learning-tasks.m01-a1.v1:M01-A1.v1` with its own schema and validator versions,
-   and preloaded templates are never used, so legacy lessons cannot be reused. No old
-   grammar sequence is added.
+1. **Lesson** (`M01-A1.v2`; `app/ai/features/learning_tasks/mission_m01.py`,
+   `app/services/mission_lessons_m01.py`). M01 needs two differently named confirmed
+   objects that each have a confirmed colour with a reviewed form. Two object-colour
+   pairs are chosen when the lesson is generated and saved in the task, so resuming
+   keeps them. Pairs are ranked least familiar first: the object's
+   `user_vocabulary_progress.mastery_score` in the target language plus the colour's
+   past correct ratio from the learner-history snapshot (only when
+   `LEARNER_MEMORY_ENABLED=true`; colours have no word-progress rows). Words without
+   progress or history count as unseen; ties keep scene order. The `grammarLesson` has
+   exactly four questions: identify object 1 (`¿Qué es esto?` / `Qu'est-ce que c'est ?`,
+   choose `una taza` etc.), describe it with word tiles (`Es una taza roja.` /
+   `C'est une tasse rouge.`), then the same for object 2. Identification distractors
+   are nouns taught in this lesson or earlier for the same language, with a known
+   gender, without duplicates. Every question carries `sceneObjectId` and the English
+   `objectLabel`; the app crops the object from its bounding box or rings it on the
+   photo. The lesson is built and validated deterministically with no model call.
+   Saved `M01-A1.v1` lessons keep grading from their stored answer keys.
 2. **Bonus I-Spy.** The existing AI I-Spy clue and describing rounds are generated
    alongside the lesson, as in the legacy path, and placed last without mission
    fields. They unlock once the learning tasks are done and are labelled as the

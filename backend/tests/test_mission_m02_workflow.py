@@ -9,6 +9,7 @@ from test_mission_m01_workflow import (
     _analyzed,
     _answer_key,
     _attempt,
+    _colours,
     _repository,
     _review,
     _scalar,
@@ -62,9 +63,7 @@ def _relations_only(detail):
 def _colours_only(detail):
     return ReviewPracticeRequest(
         accepted_object_ids=[obj.id for obj in detail.scene_objects],
-        object_attributes={
-            obj.id: obj.attributes for obj in detail.scene_objects if obj.attributes
-        },
+        object_attributes=_colours(detail),
     )
 
 

@@ -142,6 +142,9 @@ class GrammarLessonQuestion(ApiModel):
     options: list[VocabularyChoice] = Field(default_factory=list)
     token_bank: list[NonEmptyText] = Field(default_factory=list)
     translation: str | None = None
+    # The photo object a question is about, shown with its English label.
+    scene_object_id: UUID | None = Field(default=None, exclude_if=_is_none)
+    object_label: str | None = Field(default=None, exclude_if=_is_none)
 
     @model_validator(mode="after")
     def validate_interaction(self) -> GrammarLessonQuestion:

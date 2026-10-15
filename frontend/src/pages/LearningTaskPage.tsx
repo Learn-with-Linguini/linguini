@@ -8,6 +8,7 @@ import { choiceOrder, finishesWithoutISpy, isMissionSession, practiceStages, tas
 import { speak } from "../lib/speech";
 import { checkVocabularyAnswer, reviewDetails, type SessionTask, type QuestionOutcome, type TaskAnswer, type VocabularyLearningWord } from "../lib/api";
 import { ReportIssueLink } from "../components/ReportIssueLink";
+import { ObjectPreview } from "../components/ObjectPreview";
 
 export function LearningTaskPage() {
   const { taskId } = useParams();
@@ -246,7 +247,8 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
 
 function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void }) {
   const lastStep = useLastStepLabel();
-  const { actOnTask, practiceSaving, practiceError } = useAppState();
+  const scene = useScene();
+  const { actOnTask, practiceSaving, practiceError, session } = useAppState();
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [builtTokenIndexes, setBuiltTokenIndexes] = useState<Record<string, number[]>>({});
   const [questionResults, setQuestionResults] = useState<Record<string, boolean>>({});
@@ -287,8 +289,10 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
     <div className="panel-note">{content.explanation}</div>
     {content.questions.map((question, position) => <Card key={question.questionId} plain><div className="stack">
       <span className="label muted">Question {position + 1} of {content.questions.length}</span>
+      {question.sceneObjectId ? <ObjectPreview scene={scene} label={question.objectLabel ?? ""}
+        object={session?.sceneObjects.find(object => object.id === question.sceneObjectId)} /> : null}
       {question.interactionType === "sentenceBuilding" ? <>
-        {question.translation ? <h2>{question.translation}</h2> : null}
+        {question.sceneObjectId ? <h2>{question.prompt}</h2> : question.translation ? <h2>{question.translation}</h2> : null}
         <div className="sentence-builder__answer" aria-label="Your sentence">
           {(builtTokenIndexes[question.questionId] ?? []).length ? (builtTokenIndexes[question.questionId] ?? []).map((tokenIndex, tokenPosition) => <button key={`${tokenIndex}-${tokenPosition}`} className="sentence-builder__token" disabled={terminal || practiceSaving}
             onClick={() => setBuiltTokenIndexes(value => ({ ...value, [question.questionId]: (value[question.questionId] ?? []).filter((_, index) => index !== tokenPosition) }))}>{question.tokenBank[tokenIndex]}</button>) : <span className="muted">Choose the words to build your sentence.</span>}

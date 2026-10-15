@@ -39,10 +39,11 @@ def correct_label(question):
     return question.correct_text
 
 
-def build_mission_task(session_id, mission, focus, result, evaluate):
+def build_mission_task(session_id, mission, focus, result, evaluate, shown=lambda question: {}):
     """One mission-tagged grammar lesson whose private key grades every question.
 
-    ``evaluate(question, label)`` returns the question's evaluation fields.
+    ``evaluate(question, label)`` returns the question's evaluation fields and
+    ``shown(question)`` any extra public question fields.
     """
     questions = result.questions
     correct = {}
@@ -82,6 +83,7 @@ def build_mission_task(session_id, mission, focus, result, evaluate):
                     ],
                     token_bank=question.token_bank,
                     translation=question.translation,
+                    **shown(question),
                 )
                 for question in questions
             ],

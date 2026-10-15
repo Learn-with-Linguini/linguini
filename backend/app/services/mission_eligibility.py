@@ -7,7 +7,7 @@ from app.missions import get_mission
 from app.schemas.enums import SessionMode
 from app.services.ispy_clue_frames import COLOUR_ATTRIBUTE_TYPES, POSITIONS, SUPPORTED_LANGUAGES
 
-M01_A1 = ("M01", "A1", 1)
+M01_A1 = ("M01", "A1", 2)
 M02_A1 = ("M02", "A1", 1)
 M03_A1 = ("M03", "A1", 1)
 # Implemented A1 variants in catalogue order; a lesson assesses at most three.
@@ -143,7 +143,12 @@ def photo_eligibility(mission, objects, relations=(), counted_groups=()):
         )
     coloured = {obj.label.strip().casefold() for obj in objects if confirmed_colour(obj)}
     if len(coloured) < requirements.min_coloured_objects:
-        reasons.append("Confirm the colour of at least one object.")
+        reasons.append(
+            "Confirm the colour of at least one object."
+            if requirements.min_coloured_objects == 1
+            else f"Confirm the colours of at least {requirements.min_coloured_objects} "
+            "different objects."
+        )
     if requirements.min_relations and (
         len(confirmed_relations(mission, objects, relations)) < requirements.min_relations
     ):

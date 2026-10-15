@@ -126,13 +126,13 @@ def test_m01_a1_definition_covers_the_mission_contract():
     assert mission.counts_as_assistance("hint")
     assert {item.target_id for item in mission.evaluation_criteria} == set(mission.targets)
     assert mission.expected_performance.min_assessed_questions == 2
-    assert get_mission("M01", "A1", 2) is None
+    assert get_mission("M01", "A1", 3) is None
     assert get_mission("M01", "A2", 1) is None
 
 
 def test_definition_files_are_named_by_their_version(tmp_path):
     source = (DEFINITIONS_DIR / "M01-A1.v1.toml").read_text()
-    renamed = tmp_path / "M01-A1.v2.toml"
+    renamed = tmp_path / "M01-A1.v3.toml"
     renamed.write_text(source)
     with pytest.raises(MissionConfigurationError, match="must be named M01-A1.v1.toml"):
         load_mission_file(renamed)
@@ -143,7 +143,7 @@ def test_definition_files_are_named_by_their_version(tmp_path):
     with pytest.raises(MissionConfigurationError, match="describe-size"):
         load_missions(tmp_path)
     assert sorted(path.name for path in Path(DEFINITIONS_DIR).glob("*.toml")) == [
-        "M01-A1.v1.toml", "M02-A1.v1.toml", "M03-A1.v1.toml",
+        "M01-A1.v1.toml", "M01-A1.v2.toml", "M02-A1.v1.toml", "M03-A1.v1.toml",
     ]
 
 

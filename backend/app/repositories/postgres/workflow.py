@@ -42,6 +42,7 @@ from app.repositories.postgres.tasks import (
 from app.repositories.postgres.users import users
 from app.repositories.postgres.vocabulary import (
     record_vocabulary_evidence,
+    user_vocabulary_progress,
     vocabulary_encounters,
     vocabulary_items,
     vocabulary_translations,
@@ -312,6 +313,7 @@ class GenerationClaim:
     learner_history: dict | None = None
     missions: tuple[MissionDefinition, ...] = ()
     counted_groups: tuple[dict, ...] = ()
+    mission_progress: dict | None = None
 
     @property
     def generation_options(self) -> dict:
@@ -1320,6 +1322,7 @@ class PostgresWorkflowRepository:
                 history = snapshot_learner_history(
                     c, self.user_id, dict(profile), session_id, labels,
                 )
+            missions = tuple(self._planned_missions(session, dict(profile)))
             return GenerationClaim(
                 session_id,
                 profile_id,
@@ -1331,9 +1334,49 @@ class PostgresWorkflowRepository:
                 relations,
                 *self._reuse(c, session, asset, objects, relations),
                 learner_history=history,
-                missions=tuple(self._planned_missions(session, dict(profile))),
+                missions=missions,
                 counted_groups=tuple(saved_counted_groups(session.analysis_draft)),
+                mission_progress=(
+                    self._mission_progress(c, dict(profile), history) if missions else None
+                ),
             )
+
+    def _mission_progress(self, c, profile, history):
+        """Existing word progress in the target language, and colour results from history.
+
+        Colours have no word-progress rows, so their familiarity comes only from the
+        learner-history snapshot; without one they count as unseen.
+        """
+        rows = c.execute(
+            select(
+                vocabulary_items.c.id, vocabulary_items.c.display_text,
+                vocabulary_items.c.gender, vocabulary_items.c.part_of_speech,
+                user_vocabulary_progress.c.mastery_score,
+            )
+            .join(
+                user_vocabulary_progress,
+                user_vocabulary_progress.c.vocabulary_item_id == vocabulary_items.c.id,
+            )
+            .where(
+                user_vocabulary_progress.c.user_id == self.user_id,
+                func.lower(vocabulary_items.c.language_code)
+                == profile["target_language_code"].lower(),
+            )
+            .order_by(vocabulary_items.c.display_text, vocabulary_items.c.id)
+        ).mappings().all()
+        colours = {}
+        for word in (history or {}).get("words", []):
+            total = word.get("correctCount", 0) + word.get("incorrectCount", 0)
+            if word.get("term") and total:
+                colours[word["term"].casefold()] = word["correctCount"] / total
+        return dict(
+            objects={str(row["id"]): float(row["mastery_score"]) for row in rows},
+            taught_nouns=[
+                dict(text=row["display_text"], gender=row["gender"])
+                for row in rows if row["part_of_speech"] == "noun" and row["gender"]
+            ],
+            colours=colours,
+        )
 
     def _save_counted_groups(self, c, session_id, request, confirmed, existing, manual_ids):
         """Save the learner's counts, one per group of same-named confirmed objects."""
@@ -1619,7 +1662,7 @@ class PostgresWorkflowRepository:
             spec = MISSION_LESSONS[mission.mission_id]
             payload = spec.payload(
                 mission, language, objects, relations, words, translated_scene,
-                claim.counted_groups,
+                claim.counted_groups, claim.mission_progress or {},
             )
             if not spec.ready(payload):
                 logger.warning(
@@ -1629,7 +1672,7 @@ class PostgresWorkflowRepository:
                 skipped.append(dict(missionId=mission.mission_id, reason="noReviewedContent"))
                 continue
             result = None
-            if self.learning_task_generator:
+            if self.learning_task_generator and spec.generation.uses_model:
                 try:
                     with _timed("mission lesson generation", claim.session_id):
                         result = self.learning_task_generator.generate_mission(

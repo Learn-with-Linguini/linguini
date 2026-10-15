@@ -63,3 +63,4 @@ class MissionGeneration:
     validate: Callable[[dict[str, Any], Any], None]
     fallback: Callable[[dict[str, Any]], Any]
     json_schema_name: str
+    uses_model: bool = True

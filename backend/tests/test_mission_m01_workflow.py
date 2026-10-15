@@ -9,15 +9,12 @@ from test_postgres_sessions import database as database
 from test_preloaded_templates import SceneModel, TextModelResponse, services
 from test_preloaded_templates_workflow import curated as curated
 
-from app.ai.features.learning_tasks import service as learning_service
 from app.ai.features.learning_tasks.mission_m01 import (
-    M01_PROMPT_VERSION,
-    M01_SCHEMA_VERSION,
     fallback_m01_lesson,
 )
 from app.repositories.postgres.language_profiles import language_profiles
 from app.repositories.postgres.tasks import session_tasks, task_attempts
-from app.repositories.postgres.vocabulary import vocabulary_encounters
+from app.repositories.postgres.vocabulary import user_vocabulary_progress, vocabulary_encounters
 from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.repositories.postgres.xp import xp_events
 from app.repositories.practice import PracticeConflictError
@@ -72,12 +69,15 @@ def _analyzed(curated, repository):
     return sid, repository.get(sid, profile.id)
 
 
+def _colours(detail):
+    """The analysed colours, with the uncoloured objects confirmed as white."""
+    return {obj.id: obj.attributes or {"color": "white"} for obj in detail.scene_objects}
+
+
 def _review(detail):
     return ReviewPracticeRequest(
         accepted_object_ids=[obj.id for obj in detail.scene_objects],
-        object_attributes={
-            obj.id: obj.attributes for obj in detail.scene_objects if obj.attributes
-        },
+        object_attributes=_colours(detail),
         relations=detail.scene_object_relations,
     )
 
@@ -118,38 +118,50 @@ def test_suitable_photo_builds_one_mission_lesson_after_the_vocabulary(curated):
     assert all(task.public_content.mission_key is None for task in detail.tasks[2:])
     lesson = detail.tasks[1]
     questions = lesson.public_content.questions
-    assert 2 <= len(questions) <= 4
-    assert [q.interaction_type for q in questions][-1] == "sentenceBuilding"
-    assert {q.interaction_type for q in questions[:-1]} == {"multipleChoice"}
-    # The scripted model has no mission answer, so the deterministic lesson is used.
-    assert "mission_lesson_m01_v1" in model.requests
+    assert [q.interaction_type for q in questions] == [
+        "multipleChoice", "sentenceBuilding", "multipleChoice", "sentenceBuilding",
+    ]
+    assert [q.prompt for q in questions] == [
+        "¿Qué es esto?", "Describe this object.", "¿Qué es esto?", "Describe this object.",
+    ]
+    objects = [q.scene_object_id for q in questions]
+    assert objects[0] == objects[1] != objects[2] == objects[3]
+    labels = [q.object_label for q in questions]
+    assert labels[0] == labels[1] != labels[2] == labels[3]
+    # M01 is built from the confirmed facts without a model call.
+    assert not any(name.startswith("mission_lesson_m01") for name in model.requests)
     assert lesson.public_content.title == "Name it and say its colour"
     key = _answer_key(engine, lesson.id)
-    assert key["correctOptionIds"][questions[-1].question_id] == "La taza es roja."
+    described = {key["correctOptionIds"][q.question_id] for q in questions[1::2]}
+    assert described == {"Es una taza roja.", "Es una mesa blanca."}
+    public = lesson.public_content.model_dump_json()
+    assert not any(sentence in public for sentence in described)
     evaluations = key["questionEvaluations"]
     assert [item["questionId"] for item in evaluations] == [q.question_id for q in questions]
     assert evaluations[0]["targetIds"] == ["identify-object", "name-object"]
-    assert evaluations[-1]["targetIds"] == ["name-object", "describe-colour"]
+    assert evaluations[1]["targetIds"] == ["name-object", "describe-colour"]
     public = json.dumps(client.get(f"/api/v1/sessions/{sid}").json())
     assert "questionEvaluations" not in public and "correctOptionIds" not in public
 
 
-def test_valid_model_lesson_is_used_under_a_mission_cache_identity(
-    curated, monkeypatch,
-):
-    versions = []
-    original = learning_service.run_cached
-
-    def recording(*args, **kwargs):
-        versions.append(kwargs["version"])
-        return original(*args, **kwargs)
-
-    monkeypatch.setattr(learning_service, "run_cached", recording)
-    _repository_, _sid, detail = _lesson(curated, MissionModel())
-    assert detail.tasks[1].public_content.title == "Model lesson"
-    assert [(v.prompt_version, v.schema_version) for v in versions] == [
-        (f"{M01_PROMPT_VERSION}:M01-A1.v1", M01_SCHEMA_VERSION)
-    ]
+def test_less_familiar_pairs_come_first_and_resume_keeps_them(curated):
+    engine, owner, profile, *_ = curated
+    earlier, first_sid, first = _lesson(curated)
+    earlier.finish(first_sid, profile.id, abandon=True)
+    order = [q.object_label for q in first.tasks[1].public_content.questions[::2]]
+    familiar = next(
+        obj.vocabulary_item_id for obj in first.scene_objects if obj.label.title() == order[0]
+    )
+    with engine.begin() as connection:
+        connection.execute(update(user_vocabulary_progress).where(
+            user_vocabulary_progress.c.user_id == owner.id,
+            user_vocabulary_progress.c.vocabulary_item_id == familiar,
+        ).values(mastery_score=1))
+    repository, sid, detail = _lesson(curated)
+    questions = detail.tasks[1].public_content.questions
+    assert [q.object_label for q in questions[::2]] == list(reversed(order))
+    resumed = repository.get(sid, profile.id).tasks[1]
+    assert resumed.public_content == detail.tasks[1].public_content
 
 
 def test_a_photo_no_mission_fits_gets_the_regular_lesson_with_tips(curated):
@@ -208,7 +220,7 @@ def test_submissions_grade_each_question_and_word_once(curated, scenario):
     wrong = {
         q.question_id: next(
             o.option_id for o in q.options if o.option_id != correct[q.question_id]
-        ) if q.interaction_type == "multipleChoice" else "roja es taza La"
+        ) if q.interaction_type == "multipleChoice" else " ".join(reversed(q.token_bank))
         for q in questions
     }
     last = questions[-1].question_id
@@ -245,7 +257,7 @@ def test_submissions_grade_each_question_and_word_once(curated, scenario):
         assert outcome["assistanceUsed"] is False
         assert bool(outcome["mistakes"]) is not expected[question.question_id]
     if not expected[last]:
-        assert outcomes[last]["mistakes"][0]["correction"] == "La taza es roja."
+        assert outcomes[last]["mistakes"][0]["correction"] == correct[last]
     words = {}
     for item in key["questionEvaluations"]:
         for word in item["vocabularyItemIds"]:
