@@ -240,10 +240,7 @@ def _corrections(payload, question, label):
     if question.purpose == "checkAnswer":
         return [dict(
             mistake="wrongPosition", answers=[option.option_id], correction=relation["statement"],
-            explanation=(
-                f"The {relation['subjectSource']} is "
-                f"{phrases[relation['position']]['meaning']} the {relation['referenceSource']}."
-            ),
+            explanation=f"The photo shows: {relation['statement']}",
         ) for option in question.options if option.option_id != question.correct_option_id]
     corrections = []
     for option in question.options:
