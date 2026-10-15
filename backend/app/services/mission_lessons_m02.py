@@ -5,6 +5,7 @@ from app.services.mission_eligibility import (
     POSITION_MEANINGS,
     REVIEWED_POSITIONS,
     confirmed_relations,
+    relation_type,
 )
 from app.services.mission_lessons import build_mission_task, noun_gender
 from app.services.session_plan import _with_article
@@ -51,16 +52,16 @@ def m02_payload(mission, language, objects, relations, words, translated_scene):
         )
     selected, found = None, []
     for relation in confirmed_relations(mission, objects, relations):
-        if selected not in (None, relation.relation):
+        if selected not in (None, relation_type(relation)):
             continue
-        expression = REVIEWED_POSITIONS[relation.relation][language]
+        expression = REVIEWED_POSITIONS[relation_type(relation)][language]
         place = _place(language, expression, places[relation.reference_scene_object_id])
         if place is None:
             continue
-        selected = relation.relation
+        selected = relation_type(relation)
         subject = rows[relation.subject_scene_object_id]
         reference = rows[relation.reference_scene_object_id]
-        meaning = POSITION_MEANINGS[relation.relation]
+        meaning = POSITION_MEANINGS[relation_type(relation)]
         found.append(dict(
             key=str(relation.id),
             subjectKey=subject["key"],

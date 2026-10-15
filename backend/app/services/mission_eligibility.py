@@ -1,6 +1,7 @@
 """Mission planning and per-mission photo eligibility from learner-confirmed scene facts."""
 
 import os
+import re
 from dataclasses import dataclass
 
 from app.missions import get_mission
@@ -108,13 +109,18 @@ def confirmed_colour(obj):
     return None
 
 
+def relation_type(relation):
+    """The relation's snake_case type, as review sends camelCase keys such as ``nextTo``."""
+    return re.sub(r"(?<=[a-z])(?=[A-Z])", "_", relation.relation).lower()
+
+
 def confirmed_relations(mission, objects, relations):
     """Confirmed relations of an accepted type between two differently named objects."""
     labels = {obj.id: obj.label.strip().casefold() for obj in objects}
     allowed = set(mission.photo_requirements.relations)
     return [
         relation for relation in relations
-        if relation.relation in allowed
+        if relation_type(relation) in allowed
         and relation.subject_scene_object_id in labels
         and relation.reference_scene_object_id in labels
         and labels[relation.subject_scene_object_id] != labels[relation.reference_scene_object_id]

@@ -42,6 +42,8 @@ ON = [rel(CUP, "on", BOOK)]
     (COLOURED, ON, True, True),
     (PLAIN, [], False, False),
     (PLAIN, [rel(CUP, "inside", BOOK)], False, False),
+    (PLAIN, [rel(CUP, "nextTo", BOOK)], False, True),
+    (PLAIN, [rel(CUP, "inFrontOf", BOOK)], False, True),
     ([obj(CUP, "cup"), obj(BOOK, "Cup ")], ON, False, False),
 ])
 def test_each_mission_checks_only_the_facts_it_needs(objects, relations, m01, m02):
@@ -83,6 +85,11 @@ def _payload(language="fr", relation="next_to"):
         SimpleNamespace(key=str(BOOK), article="le", gender="masculine"),
     ])
     return m02_payload(M02, language, objects, [rel(CUP, relation, BOOK)], words, scene)
+
+
+def test_review_relation_keys_get_their_reviewed_answer():
+    (relation,) = _payload(relation="inFrontOf")["relations"]
+    assert relation["answer"] == "La tasse est devant le livre."
 
 
 def test_payload_uses_reviewed_questions_and_contracted_answers():
