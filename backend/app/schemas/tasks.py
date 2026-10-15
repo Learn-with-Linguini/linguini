@@ -586,9 +586,12 @@ class LatestClueAttempt(ApiModel):
     feedback: str | None = None
     evaluation_details: ISpyDescriptionEvaluation | None = None
     assistance: ClueAssistance | None = None
+    # Grouped-question answers and results, for mission lessons restored after a reload.
+    answers: dict[str, str] | None = Field(default=None, exclude_if=_is_none)
+    review_details: QuestionReviewDetails | None = Field(default=None, exclude_if=_is_none)
 
     @classmethod
-    def from_attempt(cls, attempt: TaskAttempt) -> LatestClueAttempt:
+    def from_attempt(cls, attempt: TaskAttempt, grouped: bool = False) -> LatestClueAttempt:
         payload = attempt.response_payload
         text = payload.get("text")
         option_id = payload.get("optionId")
@@ -602,6 +605,13 @@ class LatestClueAttempt(ApiModel):
             feedback=message if isinstance(message, str) else None,
             evaluation_details=_optional(ISpyDescriptionEvaluation, attempt.evaluation_details),
             assistance=_optional(ClueAssistance, payload.get("assistance")),
+            **(dict(
+                answers={
+                    key: value for key, value in (payload.get("answers") or {}).items()
+                    if isinstance(value, str)
+                },
+                review_details=_optional(QuestionReviewDetails, attempt.evaluation_details),
+            ) if grouped else {}),
         )
 
 

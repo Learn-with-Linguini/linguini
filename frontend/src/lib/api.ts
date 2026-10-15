@@ -497,6 +497,7 @@ export interface TaskAttemptResult {
 export interface LatestClueAttempt {
   id: string; attemptNumber: number; text: string; optionId: string | null; isCorrect: boolean | null; feedback: string | null;
   evaluationDetails: ISpyDescriptionEvaluation | null; assistance: ClueAssistance | null;
+  answers?: Record<string, string> | null; reviewDetails?: VocabularyReviewDetails | null;
 }
 export const getLatestAttempt = (taskId: string, signal?: AbortSignal) =>
   request<{ attempt: LatestClueAttempt | null }>(`/api/v1/tasks/${taskId}/latest-attempt`, signal);

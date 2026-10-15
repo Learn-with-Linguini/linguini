@@ -606,6 +606,9 @@ production. `M02-A1.v1` stays only so saved lessons keep loading and grading.
 4. **Grading.** Each part is its own task attempt. Phrase and diagram choices are
    recognition with `wrongPosition` corrections; the statement and question are supported
    construction (`wordBank`), and only those name object words for evidence.
+   `GET /tasks/{id}/latest-attempt` also returns the saved `answers` and `reviewDetails`
+   for mission lessons, so a reloaded graded part still shows its answer, grade and
+   correction.
 
 #### M03 A1 lesson path
 

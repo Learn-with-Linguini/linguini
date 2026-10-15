@@ -148,6 +148,9 @@ def test_each_m02_part_is_graded_once(curated, scenario):
         )) == 1
         details = first.json()["attempt"]["evaluationDetails"]
         assert details["questionResults"] == {question.question_id: scenario == "correct"}
+        saved = client.get(f"/api/v1/tasks/{task.id}/latest-attempt").json()["attempt"]
+        assert saved["answers"] == answer
+        assert saved["reviewDetails"]["questionResults"] == details["questionResults"]
         (outcome,) = details["questionOutcomes"]
         if question.interaction_type == "sentenceBuilding":
             assert outcome["evidenceType"] == "construction"

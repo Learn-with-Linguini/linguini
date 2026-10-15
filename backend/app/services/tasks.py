@@ -32,16 +32,19 @@ class TaskService:
         return SessionTaskPublic.from_internal(task)
 
     def latest_attempt(self, task_id: UUID) -> LatestAttemptResponse:
-        """Restore an answered I-Spy round; other task kinds have nothing to restore here."""
+        """Restore an answered I-Spy round or mission lesson; other kinds have nothing here."""
         user_id = self.users.get_current_user().id
         task = self.repository.get(task_id, user_id)
         if task is None:
             raise TaskNotFoundError("Task not found.")
-        if task.kind not in {"reflection", "ispyRound"}:
+        grouped = task.kind == "grammarLesson" and bool(
+            getattr(task.public_content, "mission_id", None)
+        )
+        if task.kind not in {"reflection", "ispyRound"} and not grouped:
             return LatestAttemptResponse()
         attempts = self.repository.list_attempts(task_id, user_id)
         return LatestAttemptResponse(
-            attempt=LatestClueAttempt.from_attempt(attempts[-1]) if attempts else None
+            attempt=LatestClueAttempt.from_attempt(attempts[-1], grouped) if attempts else None
         )
 
     def action(self, task_id, action, request=None):

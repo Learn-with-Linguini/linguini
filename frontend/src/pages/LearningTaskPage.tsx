@@ -1,4 +1,6 @@
 import { useRef, useState, type TouchEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "../lib/queryKeys";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { Button, Card, Feedback, IconButton, ProgressTrail } from "../components/ui";
 import { CloseIcon, SpeakerIcon } from "../components/icons";
@@ -6,7 +8,7 @@ import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { choiceOrder, finishesWithoutISpy, isMissionSession, practiceStages, taskDone, taskTitle } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
-import { checkVocabularyAnswer, reviewDetails, type SessionTask, type QuestionOutcome, type TaskAnswer, type VocabularyLearningWord } from "../lib/api";
+import { checkVocabularyAnswer, getLatestAttempt, reviewDetails, type SessionTask, type QuestionOutcome, type TaskAnswer, type VocabularyLearningWord } from "../lib/api";
 import { ReportIssueLink } from "../components/ReportIssueLink";
 import { ObjectPreview } from "../components/ObjectPreview";
 import { isDiagramPosition, PositionDiagram } from "../components/PositionDiagram";
@@ -259,8 +261,21 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
   const [checking, setChecking] = useState(false);
   const requestKey = useRef(crypto.randomUUID());
   const content = task.publicContent;
+  const restorable = content.kind === "grammarLesson" && Boolean(content.missionId) && task.status === "completed";
+  const saved = useQuery({
+    queryKey: queryKeys.latestAttempt(task.id),
+    queryFn: ({ signal }) => getLatestAttempt(task.id, signal),
+    enabled: restorable && !Object.keys(questionResults).length,
+  }).data?.attempt;
   if (content.kind !== "grammarLesson") return null;
   const terminal = taskDone(task);
+  const restored = !Object.keys(questionResults).length && saved?.reviewDetails ? saved : null;
+  const results = restored?.reviewDetails?.questionResults ?? questionResults;
+  const solutions = restored?.reviewDetails?.correctAnswers ?? correctAnswers;
+  const outcomeFor: Record<string, QuestionOutcome> = restored
+    ? Object.fromEntries((restored.reviewDetails?.questionOutcomes ?? []).map(item => [item.questionId, item]))
+    : outcomes;
+  const chosen = restored?.answers ?? answers;
   const sentence = (tokens: string[]) => tokens.reduce((value, token) => {
     const joinsPrevious = /^[,.;:!?…]$/.test(token) || value.endsWith("'");
     return value ? `${value}${joinsPrevious ? "" : " "}${token}` : token;
@@ -297,7 +312,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
       {question.interactionType === "sentenceBuilding" ? <>
         {question.sceneObjectId ? <><h2>{question.prompt}</h2><PromptTranslation text={question.promptTranslation} /></> : question.translation ? <h2>{question.translation}</h2> : null}
         <div className="sentence-builder__answer" aria-label="Your sentence">
-          {(builtTokenIndexes[question.questionId] ?? []).length ? (builtTokenIndexes[question.questionId] ?? []).map((tokenIndex, tokenPosition) => <button key={`${tokenIndex}-${tokenPosition}`} className="sentence-builder__token" disabled={terminal || practiceSaving}
+          {restored?.answers?.[question.questionId] ? <span>{restored.answers[question.questionId]}</span> : (builtTokenIndexes[question.questionId] ?? []).length ? (builtTokenIndexes[question.questionId] ?? []).map((tokenIndex, tokenPosition) => <button key={`${tokenIndex}-${tokenPosition}`} className="sentence-builder__token" disabled={terminal || practiceSaving}
             onClick={() => setBuiltTokenIndexes(value => ({ ...value, [question.questionId]: (value[question.questionId] ?? []).filter((_, index) => index !== tokenPosition) }))}>{question.tokenBank[tokenIndex]}</button>) : <span className="muted">Choose the words to build your sentence.</span>}
         </div>
         <div className="chip-row" aria-label="Sentence building words">{question.tokenBank.map((token, tokenIndex) => {
@@ -310,9 +325,9 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         <PromptTranslation text={question.promptTranslation} />
         {question.diagramOptions ? <p className="small muted">These drawings are examples, not your photo.</p> : null}
         <div className={question.diagramOptions ? "choice-grid diagram-choices" : "choice-grid"}>{choiceOrder(question.options, `${task.id}:${question.questionId}`, option => option.optionId).map((option, optionIndex) => {
-          const selected = answers[question.questionId] === option.optionId;
-          const graded = questionResults[question.questionId];
-          const state = graded !== undefined && correctAnswers[question.questionId] === option.optionId ? " choice--correct"
+          const selected = chosen[question.questionId] === option.optionId;
+          const graded = results[question.questionId];
+          const state = graded !== undefined && solutions[question.questionId] === option.optionId ? " choice--correct"
             : !selected ? ""
               : graded === undefined ? " choice--selected" : graded ? " choice--correct" : " choice--incorrect";
           return <button key={option.optionId} className={`choice${state}`} aria-pressed={selected} disabled={terminal || practiceSaving || checking || graded !== undefined}
@@ -324,25 +339,25 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
             </> : option.label}</button>;
         })}</div>
       </>}
-      {questionResults[question.questionId] !== undefined ? <>
-        <Feedback tone={questionResults[question.questionId] ? "good" : "warn"}><p role="status">{questionResults[question.questionId]
+      {results[question.questionId] !== undefined ? <>
+        <Feedback tone={results[question.questionId] ? "good" : "warn"}><p role="status">{results[question.questionId]
           ? "Correct!"
-          : <>Not quite.{correctAnswers[question.questionId] ? (() => {
-            const solution = question.options.find(option => option.optionId === correctAnswers[question.questionId])?.label ?? correctAnswers[question.questionId];
+          : <>Not quite.{solutions[question.questionId] ? (() => {
+            const solution = question.options.find(option => option.optionId === solutions[question.questionId])?.label ?? solutions[question.questionId];
             return <> The correct answer is <strong>{solution}</strong>{/[.!?]$/.test(solution) ? "" : "."}</>;
           })() : null}</>}</p></Feedback>
-        <QuestionOutcomeNotes outcome={outcomes[question.questionId]} />
+        <QuestionOutcomeNotes outcome={outcomeFor[question.questionId]} />
         <ReportIssueLink reportType="Grammar answer" fields={[
           ["Task ID", task.id],
           ["Question ID", question.questionId],
           ["Prompt", question.translation || question.prompt],
           ["Your answer", answerFor(question)],
-          ["Displayed solution", question.options.find(option => option.optionId === correctAnswers[question.questionId])?.label ?? correctAnswers[question.questionId]],
+          ["Displayed solution", question.options.find(option => option.optionId === solutions[question.questionId])?.label ?? solutions[question.questionId]],
         ]} />
       </> : null}
     </div></Card>)}
     {checking ? <p className="choice-checking" role="status">Checking your answers…</p> : null}
-    {feedback ? <Feedback><p role="status">{feedback}</p></Feedback> : null}
+    {feedback ?? restored?.feedback ? <Feedback><p role="status">{feedback ?? restored?.feedback}</p></Feedback> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {terminal ? <Button block onClick={onNext}>{index < total - 1 ? "Next task" : lastStep}</Button> : <>
       <Button block disabled={!answered || practiceSaving || checking} onClick={() => void submit()}>Submit answers</Button>
