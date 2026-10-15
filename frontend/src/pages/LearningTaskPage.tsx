@@ -292,7 +292,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
       {question.sceneObjectId ? <ObjectPreview scene={scene} label={question.objectLabel ?? ""}
         object={session?.sceneObjects.find(object => object.id === question.sceneObjectId)} /> : null}
       {question.interactionType === "sentenceBuilding" ? <>
-        {question.sceneObjectId ? <h2>{question.prompt}</h2> : question.translation ? <h2>{question.translation}</h2> : null}
+        {question.sceneObjectId ? <><h2>{question.prompt}</h2><PromptTranslation text={question.promptTranslation} /></> : question.translation ? <h2>{question.translation}</h2> : null}
         <div className="sentence-builder__answer" aria-label="Your sentence">
           {(builtTokenIndexes[question.questionId] ?? []).length ? (builtTokenIndexes[question.questionId] ?? []).map((tokenIndex, tokenPosition) => <button key={`${tokenIndex}-${tokenPosition}`} className="sentence-builder__token" disabled={terminal || practiceSaving}
             onClick={() => setBuiltTokenIndexes(value => ({ ...value, [question.questionId]: (value[question.questionId] ?? []).filter((_, index) => index !== tokenPosition) }))}>{question.tokenBank[tokenIndex]}</button>) : <span className="muted">Choose the words to build your sentence.</span>}
@@ -304,6 +304,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         })}</div>
       </> : <>
         <h2>{content.focus === "sceneDescription" ? question.translation || "Choose the sentence that describes the scene." : question.prompt}</h2>
+        <PromptTranslation text={question.promptTranslation} />
         <div className="choice-grid">{choiceOrder(question.options, `${task.id}:${question.questionId}`, option => option.optionId).map(option => {
           const selected = answers[question.questionId] === option.optionId;
           const graded = questionResults[question.questionId];
@@ -364,4 +365,11 @@ function QuestionOutcomeNotes({ outcome }: { outcome?: QuestionOutcome }) {
     {outcome.mistakes.map((mistake, position) => mistake.explanation ? <p key={position} className="small">{mistake.explanation}</p> : null)}
     {outcome.assistance.includes("wordBank") ? <p className="small muted">Supported practice: built with the word bank.</p> : null}
   </>;
+}
+
+function PromptTranslation({ text }: { text?: string | null }) {
+  const [shown, setShown] = useState(false);
+  if (!text) return null;
+  return shown ? <p className="small muted">{text}</p>
+    : <button type="button" className="analysis-location-action" onClick={() => setShown(true)}>Show translation</button>;
 }

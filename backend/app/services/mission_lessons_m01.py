@@ -9,6 +9,8 @@ from app.services.mission_lessons import build_mission_task, noun_gender
 
 M01_FOCUS = "identifyDescribeObject"
 IDENTIFY_PROMPTS = {"es": "¿Qué es esto?", "fr": "Qu'est-ce que c'est ?"}
+DESCRIBE_PROMPTS = {"es": "Describe este objeto.", "fr": "Décris cet objet."}
+PROMPT_TRANSLATIONS = {"identifyObject": "What is this?", "describeObject": "Describe this object."}
 SENTENCE_STARTS = {"es": "Es", "fr": "C'est"}
 INDEFINITE_ARTICLES = {
     "es": {"masculine": "un", "feminine": "una"},
@@ -104,6 +106,7 @@ def m01_payload(mission, language, objects, words, translated_scene, progress=No
         "pairs": pairs,
         "distractors": distractors,
         "identifyPrompt": IDENTIFY_PROMPTS[language],
+        "describePrompt": DESCRIBE_PROMPTS[language],
         "sentenceStart": SENTENCE_STARTS[language],
         "example": example,
     }
@@ -145,6 +148,7 @@ def m01_lesson_task(session_id, mission, payload, result, vocabulary_ids):
         return dict(
             scene_object_id=question.object_key,
             object_label=f"{label[:1].upper()}{label[1:]}",
+            prompt_translation=PROMPT_TRANSLATIONS[question.purpose],
         )
 
     return build_mission_task(session_id, mission, M01_FOCUS, result, evaluate, shown)

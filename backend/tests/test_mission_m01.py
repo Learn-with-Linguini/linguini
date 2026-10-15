@@ -35,7 +35,8 @@ def payload(language="fr"):
         "targetLanguage": language, "missionId": "M01", "practiceLevel": "A1",
         "contentVersion": 2, "pairs": pairs,
         "distractors": {CUP: ["un livre", "une table"], BOOK: ["une tasse"]},
-        "identifyPrompt": "Qu'est-ce que c'est ?", "sentenceStart": "C'est",
+        "identifyPrompt": "Qu'est-ce que c'est ?", "describePrompt": "Décris cet objet.",
+        "sentenceStart": "C'est",
         "example": "C'est une table blanche.",
     }
 

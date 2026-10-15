@@ -461,6 +461,7 @@ export interface GrammarLessonQuestion {
   translation?: string | null;
   sceneObjectId?: string | null;
   objectLabel?: string | null;
+  promptTranslation?: string | null;
 }
 export type TaskAnswer = { inputMode: "text"; text: string; assistance?: ClueAssistance } | { inputMode: "multipleChoice"; optionId: string } | { inputMode: "objectSelection"; sceneObjectId: string } | { inputMode: "vocabularyReview"; answers: Record<string, string>; typedAnswers: Record<string, string>; questionAssistance?: QuestionAssistance[] };
 export type ConfirmGuessBody = { attemptId: string };

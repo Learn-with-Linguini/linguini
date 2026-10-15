@@ -122,7 +122,10 @@ def test_suitable_photo_builds_one_mission_lesson_after_the_vocabulary(curated):
         "multipleChoice", "sentenceBuilding", "multipleChoice", "sentenceBuilding",
     ]
     assert [q.prompt for q in questions] == [
-        "¿Qué es esto?", "Describe this object.", "¿Qué es esto?", "Describe this object.",
+        "¿Qué es esto?", "Describe este objeto.", "¿Qué es esto?", "Describe este objeto.",
+    ]
+    assert [q.prompt_translation for q in questions[:2]] == [
+        "What is this?", "Describe this object.",
     ]
     objects = [q.scene_object_id for q in questions]
     assert objects[0] == objects[1] != objects[2] == objects[3]

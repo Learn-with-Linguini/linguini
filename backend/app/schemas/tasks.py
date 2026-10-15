@@ -145,6 +145,7 @@ class GrammarLessonQuestion(ApiModel):
     # The photo object a question is about, shown with its English label.
     scene_object_id: UUID | None = Field(default=None, exclude_if=_is_none)
     object_label: str | None = Field(default=None, exclude_if=_is_none)
+    prompt_translation: str | None = Field(default=None, exclude_if=_is_none)
 
     @model_validator(mode="after")
     def validate_interaction(self) -> GrammarLessonQuestion:

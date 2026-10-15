@@ -1,33 +1,24 @@
-import { useState } from "react";
 import type { Scene } from "../data/types";
 import type { SceneObject } from "../lib/api";
 import { SceneVisual } from "./SceneVisual";
 
-const box = (object?: SceneObject) => {
-  const value = object?.boundingBox;
-  if (!value) return null;
-  const [x, y, width, height] = [value.x, value.y, value.width, value.height].map(Number);
-  const valid = [x, y, width, height].every(Number.isFinite) && width > 0 && height > 0
-    && x >= 0 && y >= 0 && x + width <= 1.001 && y + height <= 1.001;
-  return valid ? { x, y, width, height } : null;
+const marker = (object?: SceneObject) => {
+  if (object?.anchorPoint) return { x: Number(object.anchorPoint.x), y: Number(object.anchorPoint.y) };
+  const box = object?.boundingBox;
+  if (!box) return null;
+  return { x: Number(box.x) + Number(box.width) / 2, y: Number(box.y) + Number(box.height) / 2 };
 };
 
-/** One photo object cropped from its bounding box, or the photo with the object ringed. */
+/** The whole photo with a marker on one object, and the object's English label. */
 export function ObjectPreview({ scene, object, label }: { scene: Scene; object?: SceneObject; label: string }) {
-  const [failed, setFailed] = useState(false);
-  const [ratio, setRatio] = useState<number | null>(null);
-  const crop = scene.imageUrl && !failed ? box(object) : null;
-  const anchor = object?.anchorPoint;
+  const point = marker(object);
+  const usable = point && Number.isFinite(point.x) && Number.isFinite(point.y);
   return <figure className="object-preview">
-    {crop ? <div className="object-preview__crop" style={{ aspectRatio: ratio ? String((crop.width * ratio) / crop.height) : "1" }}>
-      <img src={scene.imageUrl!} alt={label} onError={() => setFailed(true)}
-        onLoad={event => setRatio(event.currentTarget.naturalWidth / event.currentTarget.naturalHeight)}
-        style={{ width: `${100 / crop.width}%`, height: `${100 / crop.height}%`, left: `${(-crop.x / crop.width) * 100}%`, top: `${(-crop.y / crop.height) * 100}%` }} />
-    </div> : <div className="object-preview__scene">
+    <div className="object-preview__scene">
       <SceneVisual scene={scene} />
-      {anchor ? <span className="object-preview__ring" aria-hidden="true"
-        style={{ left: `${Number(anchor.x) * 100}%`, top: `${Number(anchor.y) * 100}%` }} /> : null}
-    </div>}
+      {usable ? <span className="object-preview__ring" aria-hidden="true"
+        style={{ left: `${point.x * 100}%`, top: `${point.y * 100}%` }} /> : null}
+    </div>
     <figcaption><strong>{label}</strong></figcaption>
   </figure>;
 }

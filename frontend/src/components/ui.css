@@ -4649,7 +4649,5 @@ p[role="alert"]::before { content: "!"; }
 }
 
 .object-preview { margin: 0; display: grid; gap: var(--space-2); justify-items: center; }
-.object-preview__crop { position: relative; overflow: hidden; width: min(100%, 220px); border-radius: 12px; }
-.object-preview__crop img { position: absolute; max-width: none; }
 .object-preview__scene { position: relative; width: min(100%, 320px); }
 .object-preview__ring { position: absolute; width: 56px; height: 56px; transform: translate(-50%, -50%); border: 3px solid var(--tomato); border-radius: 50%; pointer-events: none; }

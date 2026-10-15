@@ -25,7 +25,6 @@ from app.schemas.base import ApiModel, NonEmptyText
 M01_PROMPT_VERSION = "learning-tasks.m01-a1.v2"
 M01_SCHEMA_VERSION = "learning-tasks-m01-result.v2"
 M01_VALIDATOR_VERSION = "learning-tasks-m01-validator.v2"
-DESCRIBE_PROMPT = "Describe this object."
 
 type M01Purpose = Literal["identifyObject", "describeObject"]
 
@@ -123,7 +122,7 @@ def fallback_m01_lesson(payload: dict[str, Any]) -> M01LessonResult:
             dict(
                 question_id=f"describe-object-{number}",
                 purpose="describeObject",
-                prompt=DESCRIBE_PROMPT,
+                prompt=payload["describePrompt"],
                 interaction_type="sentenceBuilding",
                 options=[], correct_option_id=None,
                 correct_text=sentence,
