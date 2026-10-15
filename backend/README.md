@@ -512,13 +512,22 @@ whose active language profile is A1 and whose target language has reviewed forms
 
 - **Photo requirements.** Each definition names only the confirmed facts it needs:
   `minConfirmedObjects` (different names), `minColouredObjects` (reviewed colours) and
-  `minRelations` with the accepted `relations` types. M01 needs two objects and a
-  colour; M02 needs two objects and an on/under/next-to/in-front-of/behind relation.
+  `minRelations` with the accepted `relations` types, and `minCountedGroups` with the
+  `minQuantity`–`maxQuantity` range. M01 needs two objects and a colour; M02 needs two
+  objects and an on/under/next-to/in-front-of/behind relation; M03 needs one counted
+  group of 2–10.
+- **Counts.** The review's Counts tab sends `objectCounts` (object ID → 1–10). Each count
+  is saved for the group of every confirmed object with the same name, so a group is
+  counted once and a second count of it is a 409. Groups are stored in
+  `analysisDraft.countedGroups` with `sceneObjectIds`, `label`, `quantity`,
+  `suggestedQuantity` and `source` (`confirmed`, `corrected` or `entered`), and returned
+  as `countedGroups`. A scene-analysis quantity is only offered as a suggestion, and a
+  detected label never implies a count. No migration is needed.
 - **Planner** (`app/services/mission_eligibility.py`). Confirming the scene checks every
-  implemented A1 mission (M01, then M02) against only the facts the learner confirmed.
-  Each mission teaches one new pattern, so two missions are planned only when the
-  learner already passed one of them (met its `minCorrectRatio`) in an earlier session
-  of the same profile; otherwise the first eligible mission is used. The plan is saved as
+  implemented A1 mission (M01, M02, then M03) against only the facts the learner
+  confirmed. Each mission teaches one new pattern, so a lesson holds at most one
+  eligible mission the learner has not passed (met its `minCorrectRatio`) in an earlier
+  session of the same profile, alongside any eligible passed ones, up to three. The plan is saved as
   `analysisDraft.missionPlan` before generation and generation reads only that snapshot.
   Sessions reviewed before plans were saved keep M01.
 - **Not ready.** When no mission qualifies, the review is rolled back with a 409
@@ -583,6 +592,29 @@ production, and the I-Spy rule against naming the target does not apply.
 3. **Grading** follows M01: recognition for multiple choice, supported construction for
    the word bank, `wrongPosition` corrections for misread answers, and per-word evidence
    only from the questions that name the object.
+
+#### M03 A1 lesson path
+
+`M03-A1.v1.toml`, "Say how many": say a confirmed quantity with the taught pattern
+(`Hay tres libros.`, `Il y a trois livres.`) and the noun's regular plural.
+
+1. **Payload** (`app/services/mission_lessons_m03.py`, `app/services/quantities.py`). The
+   first counted group of 2–10 whose translated noun has a reviewed regular plural, with
+   its reviewed number word, singular, plural, statement, English meaning and nearby
+   wrong quantities. Plurals come only from regular rules (es vowel + `s`, `-d/-l/-r/-j`
+   + `es` without accent changes; fr + `s`, excluding `-s/-x/-z/-au/-eu/-al/-ail` and the
+   `-ou` exceptions) and must match any recorded plural. Otherwise the session records
+   `analysisDraft.skippedMissions` and keeps its other tasks; with no mission task left
+   the regular lesson is used.
+2. **Lesson** (`app/ai/features/learning_tasks/mission_m03.py`). Exactly one
+   `grammarLesson` with 2–4 questions: quantity comprehension, choosing the statement
+   (distractors use a wrong number or the singular), then a word-bank statement whose
+   bank adds the singular and a wrong number. The explanation teaches the number, the
+   plural and the statement first. Its validator and fallback check the group, quantity
+   and plural, and its cache identity is `learning-tasks.m03-a1.v1:M03-A1.v1`.
+3. **Grading** follows M01. Corrections name `wrongQuantity` or `pluralForm` when the
+   answer shows which (both for a wrong number with a singular noun), and `wordOrder`
+   otherwise. A rule without listed answers applies only when no specific rule matches.
 
 ### Backend performance
 
