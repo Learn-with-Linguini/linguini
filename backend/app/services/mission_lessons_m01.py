@@ -46,7 +46,7 @@ def _pairs(language, objects, words, terms, progress):
     so a familiar object with an unfamiliar colour still ranks well. Words with no
     progress or history count as unseen (0).
     """
-    known, colour_results = progress.get("objects", {}), progress.get("colours", {})
+    known, colour_results = progress.get("objects", {}), progress.get("terms", {})
     candidates = []
     for index, (obj, word) in enumerate(zip(objects, words, strict=True)):
         gender = noun_gender(terms.get(str(obj.id)), word)

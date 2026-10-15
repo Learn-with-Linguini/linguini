@@ -9,16 +9,28 @@ const marker = (object?: SceneObject) => {
   return { x: Number(box.x) + Number(box.width) / 2, y: Number(box.y) + Number(box.height) / 2 };
 };
 
-/** The whole photo with a marker on one object, and the object's English label. */
-export function ObjectPreview({ scene, object, label }: { scene: Scene; object?: SceneObject; label: string }) {
+function Ring({ object, tone }: { object?: SceneObject; tone: "target" | "reference" }) {
   const point = marker(object);
-  const usable = point && Number.isFinite(point.x) && Number.isFinite(point.y);
+  if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return null;
+  return <span className={`object-preview__ring object-preview__ring--${tone}`} aria-hidden="true"
+    style={{ left: `${point.x * 100}%`, top: `${point.y * 100}%` }} />;
+}
+
+/** The whole photo with a marker on one object, or two, and their English labels. */
+export function ObjectPreview({ scene, object, label, reference, referenceLabel }: {
+  scene: Scene; object?: SceneObject; label: string; reference?: SceneObject; referenceLabel?: string | null;
+}) {
   return <figure className="object-preview">
     <div className="object-preview__scene">
       <SceneVisual scene={scene} />
-      {usable ? <span className="object-preview__ring" aria-hidden="true"
-        style={{ left: `${point.x * 100}%`, top: `${point.y * 100}%` }} /> : null}
+      <Ring object={object} tone="target" />
+      {referenceLabel ? <Ring object={reference} tone="reference" /> : null}
     </div>
-    <figcaption><strong>{label}</strong></figcaption>
+    <figcaption className="object-preview__legend">
+      {referenceLabel ? <>
+        <span><span className="object-preview__key object-preview__key--target" aria-hidden="true" /><strong>{label}</strong></span>
+        <span><span className="object-preview__key object-preview__key--reference" aria-hidden="true" /><strong>{referenceLabel}</strong></span>
+      </> : <strong>{label}</strong>}
+    </figcaption>
   </figure>;
 }

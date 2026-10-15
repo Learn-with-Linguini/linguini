@@ -580,27 +580,32 @@ lesson.
 
 #### M02 A1 lesson path
 
-`M02-A1.v1.toml`, "Ask where it is": ask a memorised location question and understand a
-short, supported answer. This is supported A1 practice, not independent A2 location
-production, and the I-Spy rule against naming the target does not apply.
+`M02-A1.v2.toml`, "Find and locate": say where a photo object is, ask where it is and
+understand a short answer. This is supported A1 practice, not independent A2 location
+production. `M02-A1.v1` stays only so saved lessons keep loading and grading.
 
-1. **Payload** (`app/services/mission_lessons_m02.py`). Confirmed objects with their
-   reviewed `whereQuestion` (`¿Dónde está la taza?`, `Où est la tasse ?`) and the confirmed
-   relations of one selected position, each with its reviewed answer
-   (`La taza está sobre la mesa.`, contractions such as `al lado del` / `à côté du`
-   applied), English meaning and wrong-position meanings. Positions reuse the I-Spy
-   reviewed bank (`sobre`/`sur`, `debajo de`/`sous`, `al lado de`/`à côté de`,
-   `delante de`/`devant`, `detrás de`/`derrière`).
-2. **Lesson** (`app/ai/features/learning_tasks/mission_m02.py`). Exactly one
-   `grammarLesson` with 2–4 questions in order: at most one question recognition
-   (multiple choice), one word-bank question (`buildQuestion`), then one or two answer
-   comprehension questions quoting a confirmed relation's answer. The explanation teaches
-   the question chunk and the selected expression first. Its validator and fallback check
-   the same facts, and its cache identity is `learning-tasks.m02-a1.v1:M02-A1.v1`, so M01
-   and legacy content are never reused.
-3. **Grading** follows M01: recognition for multiple choice, supported construction for
-   the word bank, `wrongPosition` corrections for misread answers, and per-word evidence
-   only from the questions that name the object.
+1. **Payload** (`app/services/mission_lessons_m02.py`). Each confirmed relation whose
+   position has a reviewed phrase and whose objects have reviewed articles, with its
+   statement tiles (`La` / `taza` / `está` / `al lado del` / `libro` / `.`; a contracted
+   or multiword phrase is one tile), `whereQuestion` (`¿Dónde está la taza?`), short answer
+   (`Está sobre la mesa.`, `Elle est sur la table.`) and the positions true for that pair,
+   including inverse relations. Positions reuse the I-Spy reviewed bank.
+2. **Selection.** Relations are ranked by the learner-history correct ratio of their
+   position phrase (snapshot only with `LEARNER_MEMORY_ENABLED=true`; otherwise every
+   phrase is unseen), ties in photo order. Task 1 takes the least familiar; Task 2 prefers
+   another object pair, then another position, and reuses Task 1's relation only when
+   there is no other. The selection is stored in the generated tasks.
+3. **Lesson** (`app/ai/features/learning_tasks/mission_m02.py`). Built without a model
+   call and validated: four single-question `grammarLesson` tasks in order, "Describe the
+   location" (Part 1 picks the phrase from three, none of the wrong ones true for the
+   pair; Part 2 builds the statement with one extra phrase tile) and "Ask and understand"
+   (Part 1 builds the where-question; Part 2 quotes the answer and offers three position
+   diagrams, option IDs being relation keys drawn by the frontend). Questions carry
+   `sceneObjectId`/`objectLabel` and `referenceObjectId`/`referenceLabel`; Part 2 of Task 2
+   has no photo and sets `diagramOptions`.
+4. **Grading.** Each part is its own task attempt. Phrase and diagram choices are
+   recognition with `wrongPosition` corrections; the statement and question are supported
+   construction (`wordBank`), and only those name object words for evidence.
 
 #### M03 A1 lesson path
 

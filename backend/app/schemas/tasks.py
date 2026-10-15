@@ -146,6 +146,11 @@ class GrammarLessonQuestion(ApiModel):
     scene_object_id: UUID | None = Field(default=None, exclude_if=_is_none)
     object_label: str | None = Field(default=None, exclude_if=_is_none)
     prompt_translation: str | None = Field(default=None, exclude_if=_is_none)
+    # A second photo object the question relates the first to.
+    reference_object_id: UUID | None = Field(default=None, exclude_if=_is_none)
+    reference_label: str | None = Field(default=None, exclude_if=_is_none)
+    # Options are position IDs drawn as diagrams of the two labelled objects.
+    diagram_options: bool | None = Field(default=None, exclude_if=_is_none)
 
     @model_validator(mode="after")
     def validate_interaction(self) -> GrammarLessonQuestion:

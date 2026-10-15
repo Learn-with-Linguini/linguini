@@ -9,6 +9,7 @@ import { speak } from "../lib/speech";
 import { checkVocabularyAnswer, reviewDetails, type SessionTask, type QuestionOutcome, type TaskAnswer, type VocabularyLearningWord } from "../lib/api";
 import { ReportIssueLink } from "../components/ReportIssueLink";
 import { ObjectPreview } from "../components/ObjectPreview";
+import { isDiagramPosition, PositionDiagram } from "../components/PositionDiagram";
 
 export function LearningTaskPage() {
   const { taskId } = useParams();
@@ -288,9 +289,11 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
     <div className="learning-title-row"><h1>{content.title}</h1><ExitToHome onExit={onExit} /></div>
     <div className="panel-note">{content.explanation}</div>
     {content.questions.map((question, position) => <Card key={question.questionId} plain><div className="stack">
-      <span className="label muted">Question {position + 1} of {content.questions.length}</span>
+      {content.questions.length > 1 ? <span className="label muted">Question {position + 1} of {content.questions.length}</span> : null}
       {question.sceneObjectId ? <ObjectPreview scene={scene} label={question.objectLabel ?? ""}
-        object={session?.sceneObjects.find(object => object.id === question.sceneObjectId)} /> : null}
+        object={session?.sceneObjects.find(object => object.id === question.sceneObjectId)}
+        reference={session?.sceneObjects.find(object => object.id === question.referenceObjectId)}
+        referenceLabel={question.referenceLabel} /> : null}
       {question.interactionType === "sentenceBuilding" ? <>
         {question.sceneObjectId ? <><h2>{question.prompt}</h2><PromptTranslation text={question.promptTranslation} /></> : question.translation ? <h2>{question.translation}</h2> : null}
         <div className="sentence-builder__answer" aria-label="Your sentence">
@@ -305,14 +308,20 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
       </> : <>
         <h2>{content.focus === "sceneDescription" ? question.translation || "Choose the sentence that describes the scene." : question.prompt}</h2>
         <PromptTranslation text={question.promptTranslation} />
-        <div className="choice-grid">{choiceOrder(question.options, `${task.id}:${question.questionId}`, option => option.optionId).map(option => {
+        {question.diagramOptions ? <p className="small muted">These drawings are examples, not your photo.</p> : null}
+        <div className={question.diagramOptions ? "choice-grid diagram-choices" : "choice-grid"}>{choiceOrder(question.options, `${task.id}:${question.questionId}`, option => option.optionId).map((option, optionIndex) => {
           const selected = answers[question.questionId] === option.optionId;
           const graded = questionResults[question.questionId];
           const state = graded !== undefined && correctAnswers[question.questionId] === option.optionId ? " choice--correct"
             : !selected ? ""
               : graded === undefined ? " choice--selected" : graded ? " choice--correct" : " choice--incorrect";
           return <button key={option.optionId} className={`choice${state}`} aria-pressed={selected} disabled={terminal || practiceSaving || checking || graded !== undefined}
-            onClick={() => setAnswers(value => ({ ...value, [question.questionId]: option.optionId }))}>{option.label}</button>;
+            aria-label={question.diagramOptions ? `Picture ${optionIndex + 1}: ${option.label}` : undefined}
+            onClick={() => setAnswers(value => ({ ...value, [question.questionId]: option.optionId }))}>
+            {question.diagramOptions && isDiagramPosition(option.optionId) ? <>
+              <PositionDiagram position={option.optionId} target={question.objectLabel ?? ""} reference={question.referenceLabel ?? ""} />
+              <span>Picture {optionIndex + 1}</span>
+            </> : option.label}</button>;
         })}</div>
       </>}
       {questionResults[question.questionId] !== undefined ? <>

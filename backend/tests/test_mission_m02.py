@@ -16,7 +16,7 @@ from app.services.mission_eligibility import photo_eligibility, plan_missions
 from app.services.mission_lessons_m02 import m02_payload
 
 M01 = get_mission("M01", "A1", 1)
-M02 = get_mission("M02", "A1", 1)
+M02 = get_mission("M02", "A1", 2)
 CUP, BOOK, TABLE = uuid4(), uuid4(), uuid4()
 
 
@@ -71,61 +71,99 @@ def test_every_mission_the_photo_fits_is_planned(objects, relations, planned):
     assert [mission.mission_id for mission in plan] == planned
 
 
-def _payload(language="fr", relation="next_to"):
-    objects = [obj(CUP, "cup"), obj(BOOK, "book")]
+def _payload(language="fr", relations=None, progress=None):
+    objects = [obj(CUP, "cup"), obj(BOOK, "book"), obj(TABLE, "table")]
     words = [
         SimpleNamespace(display_text="tasse", gender="feminine"),
         SimpleNamespace(display_text="livre", gender="masculine"),
+        SimpleNamespace(display_text="table", gender="feminine"),
+    ] if language == "fr" else [
+        SimpleNamespace(display_text="taza", gender="feminine"),
+        SimpleNamespace(display_text="libro", gender="masculine"),
+        SimpleNamespace(display_text="mesa", gender="feminine"),
     ]
+    articles = {"fr": ("la", "le", "la"), "es": ("la", "el", "la")}[language]
     scene = SimpleNamespace(objects=[
-        SimpleNamespace(key=str(CUP), article="la", gender="feminine"),
-        SimpleNamespace(key=str(BOOK), article="le", gender="masculine"),
+        SimpleNamespace(key=str(key), article=article, gender=gender)
+        for key, article, gender in zip(
+            (CUP, BOOK, TABLE), articles, ("feminine", "masculine", "feminine"), strict=True,
+        )
     ])
-    return m02_payload(M02, language, objects, [rel(CUP, relation, BOOK)], words, scene)
+    relations = relations if relations is not None else [rel(CUP, "next_to", BOOK)]
+    return m02_payload(M02, language, objects, relations, words, scene, progress)
+
+
+def _relation(payload, index):
+    keys = {row["key"]: row for row in payload["relations"]}
+    return keys[payload["selected"][index]]
 
 
 def test_review_relation_keys_get_their_reviewed_answer():
-    (relation,) = _payload(relation="inFrontOf")["relations"]
-    assert relation["answer"] == "La tasse est devant le livre."
+    (relation,) = _payload(relations=[rel(CUP, "inFrontOf", BOOK)])["relations"]
+    assert relation["statement"] == "La tasse est devant le livre."
+    assert relation["answer"] == "Elle est devant le livre."
 
 
-def test_payload_uses_reviewed_questions_and_contracted_answers():
+def test_statement_groups_the_contracted_position_into_one_tile():
+    (relation,) = _payload()["relations"]
+    assert relation["statementTiles"] == ["La", "tasse", "est", "à côté du", "livre", "."]
+    assert relation["statement"] == "La tasse est à côté du livre."
+    (spanish,) = _payload("es")["relations"]
+    assert spanish["statement"] == "La taza está al lado del libro."
+    assert spanish["answer"] == "Está al lado del libro."
+    assert spanish["whereQuestion"] == "¿Dónde está la taza?"
+
+
+def test_one_relation_is_reused_for_both_tasks():
     payload = _payload()
-    assert [row["whereQuestion"] for row in payload["objects"]] == [
-        "Où est la tasse ?", "Où est le livre ?",
-    ]
-    (relation,) = payload["relations"]
-    assert relation["answer"] == "La tasse est à côté du livre."
-    assert relation["meaning"] == "The cup is next to the book."
-    assert payload["languagePattern"]["expression"] == "à côté de"
+    assert payload["selected"][0] == payload["selected"][1]
 
 
-def test_fallback_builds_and_quotes_a_confirmed_answer_in_spanish():
-    words = [
-        SimpleNamespace(display_text="taza", gender="feminine"),
-        SimpleNamespace(display_text="libro", gender="masculine"),
-    ]
-    scene = SimpleNamespace(objects=[
-        SimpleNamespace(key=str(CUP), article="la", gender="feminine"),
-        SimpleNamespace(key=str(BOOK), article="el", gender="masculine"),
-    ])
-    payload = m02_payload(M02, "es", PLAIN, [rel(CUP, "next_to", BOOK)], words, scene)
+def test_task_two_prefers_another_pair_and_unfamiliar_phrases_come_first():
+    relations = [rel(CUP, "on", TABLE), rel(BOOK, "under", TABLE)]
+    unseen = _payload("es", relations)
+    assert [_relation(unseen, i)["position"] for i in (0, 1)] == ["on", "under"]
+    familiar = _payload("es", relations, {"terms": {"sobre": 0.9}})
+    assert [_relation(familiar, i)["position"] for i in (0, 1)] == ["under", "on"]
+
+
+def test_fallback_builds_four_parts_in_order_from_confirmed_facts():
+    relations = [rel(CUP, "on", TABLE), rel(BOOK, "under", TABLE)]
+    payload = _payload("es", relations)
     result = fallback_m02_lesson(payload)
-    purposes = [question.purpose for question in result.questions]
-    assert purposes == ["recogniseQuestion", "buildQuestion", "understandAnswer"]
-    build = result.questions[1]
-    assert build.correct_text == "¿Dónde está la taza?"
-    assert sorted(build.token_bank) == sorted(["¿Dónde", "está", "la", "taza", "?"])
-    assert "La taza está al lado del libro." in result.questions[2].prompt
+    assert [q.purpose for q in result.questions] == [
+        "choosePosition", "describeLocation", "askWhere", "understandAnswer",
+    ]
+    choose, describe, ask, understand = result.questions
+    assert choose.prompt == "Where is the cup in relation to the table?"
+    labels = {o.option_id: o.label for o in choose.options}
+    assert labels[choose.correct_option_id] == "sobre"
+    assert set(labels.values()) == {"sobre", "debajo de", "al lado de"}
+    assert describe.correct_text == "La taza está sobre la mesa."
+    assert sorted(describe.token_bank) == sorted(
+        ["La", "taza", "está", "sobre", "la", "mesa", ".", "debajo de"]
+    )
+    assert ask.correct_text == "¿Dónde está el libro?"
+    assert ask.prompt == "Ask where the book is."
+    assert "Está debajo de la mesa." in understand.prompt
+    assert understand.correct_option_id == "under"
+    assert {o.option_id for o in understand.options} == {"under", "on", "next_to"}
+
+
+def test_inverse_relations_are_not_offered_as_wrong_phrases():
+    payload = _payload("es", [rel(CUP, "next_to", BOOK), rel(BOOK, "under", CUP)])
+    choose = fallback_m02_lesson(payload).questions[0]
+    assert {o.label for o in choose.options} == {"al lado de", "debajo de", "delante de"}
 
 
 @pytest.mark.parametrize("change", [
-    lambda data: data["questions"][2].update(correct_option_id="answer-2"),
-    lambda data: data["questions"][2].update(relation_key=None),
-    lambda data: data["questions"][2].update(prompt="What does it mean?"),
+    lambda data: data["questions"][0].update(correct_option_id="phrase-9"),
+    lambda data: data["questions"][3].update(correct_option_id="next_to"),
+    lambda data: data["questions"][3].update(prompt="Which picture?"),
     lambda data: data["questions"].reverse(),
-    lambda data: data["questions"][1].update(token_bank=["Où", "est", "la"]),
-    lambda data: data["questions"][1].update(correct_text="Où est le livre ?"),
+    lambda data: data["questions"][1].update(token_bank=["La", "tasse"]),
+    lambda data: data["questions"][2].update(correct_text="Où est le livre ?"),
+    lambda data: data["questions"][1].update(relation_key="other"),
     lambda data: data["questions"].pop(2),
 ])
 def test_validator_rejects_unconfirmed_or_unanswerable_lessons(change):

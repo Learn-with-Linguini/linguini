@@ -116,7 +116,7 @@ def test_pairs_prefer_unfamiliar_words_and_spanish_uses_indefinite_articles():
              word(TABLE, "mesa", "feminine")]
     unseen = m01_payload(mission, "es", objects, words, None, {})
     assert [p["source"] for p in unseen["pairs"]] == ["cup", "book"]
-    progress = {"objects": {CUP: 0.9}, "colours": {"verde": 1.0},
+    progress = {"objects": {CUP: 0.9}, "terms": {"verde": 1.0},
                 "taught_nouns": [{"text": "el gato", "gender": "masculine"}]}
     chosen = m01_payload(mission, "es", objects, words, None, progress)
     assert [p["source"] for p in chosen["pairs"]] == ["table", "cup"]

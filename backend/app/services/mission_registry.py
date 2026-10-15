@@ -31,9 +31,9 @@ def _m01_payload(
 
 
 def _m02_payload(
-    mission, language, objects, relations, words, translated_scene, _counts, _progress,
+    mission, language, objects, relations, words, translated_scene, _counts, progress,
 ):
-    return m02_payload(mission, language, objects, relations, words, translated_scene)
+    return m02_payload(mission, language, objects, relations, words, translated_scene, progress)
 
 
 def _m03_payload(
@@ -47,7 +47,10 @@ MISSION_LESSONS = {
         _m01_payload, M01_GENERATION, m01_lesson_task,
         lambda payload: len(payload["pairs"]) == 2,
     ),
-    "M02": MissionLessonSpec(_m02_payload, M02_GENERATION, m02_lesson_task),
+    "M02": MissionLessonSpec(
+        _m02_payload, M02_GENERATION, m02_lesson_task,
+        lambda payload: len(payload["selected"]) == 2,
+    ),
     "M03": MissionLessonSpec(
         _m03_payload, M03_GENERATION, m03_lesson_task,
         lambda payload: payload["group"] is not None,

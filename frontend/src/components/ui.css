@@ -4651,3 +4651,16 @@ p[role="alert"]::before { content: "!"; }
 .object-preview { margin: 0; display: grid; gap: var(--space-2); justify-items: center; }
 .object-preview__scene { position: relative; width: min(100%, 320px); }
 .object-preview__ring { position: absolute; width: 56px; height: 56px; transform: translate(-50%, -50%); border: 3px solid var(--tomato); border-radius: 50%; pointer-events: none; }
+.object-preview__ring--reference { border-color: var(--teal); border-style: dashed; }
+.object-preview__legend { display: flex; flex-wrap: wrap; gap: var(--space-3); justify-content: center; }
+.object-preview__legend > span { display: inline-flex; align-items: center; gap: var(--space-1); }
+.object-preview__key { width: 14px; height: 14px; border-radius: 50%; border: 3px solid var(--tomato); }
+.object-preview__key--reference { border-color: var(--teal); border-style: dashed; }
+.diagram-choices { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+.diagram-choices .choice { display: grid; gap: var(--space-1); justify-items: center; }
+.position-diagram { width: 100%; max-width: 180px; height: auto; }
+.position-diagram__ground { stroke: var(--line); stroke-width: 2; }
+.position-diagram__reference rect { fill: var(--teal); }
+.position-diagram__target rect { fill: var(--tomato); stroke: var(--paper); stroke-width: 2; }
+.position-diagram__label { fill: var(--ink); font-size: 11px; font-weight: 700; }
+.position-diagram__label--target { fill: var(--tomato-pressed); }

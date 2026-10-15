@@ -20,6 +20,7 @@ from app.ai.cache import CacheScope, TemplateSet
 from app.ai.features.ispy_clues import ISpyClueGenerationError
 from app.ai.features.ispy_guess import ISpyGuessError, ISpyGuessResult
 from app.ai.features.learning_tasks import required_task_focuses
+from app.ai.features.learning_tasks.mission import fold
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.ai.features.scene_analysis import RoutedSceneAnalyzer
 from app.repositories.postgres.game_resources import refund_sauce, reward_basil, spend_sauce
@@ -1342,10 +1343,10 @@ class PostgresWorkflowRepository:
             )
 
     def _mission_progress(self, c, profile, history):
-        """Existing word progress in the target language, and colour results from history.
+        """Existing word progress in the target language, and term results from history.
 
-        Colours have no word-progress rows, so their familiarity comes only from the
-        learner-history snapshot; without one they count as unseen.
+        Colours and position phrases have no word-progress rows, so their familiarity
+        comes only from the learner-history snapshot; without one they count as unseen.
         """
         rows = c.execute(
             select(
@@ -1364,18 +1365,18 @@ class PostgresWorkflowRepository:
             )
             .order_by(vocabulary_items.c.display_text, vocabulary_items.c.id)
         ).mappings().all()
-        colours = {}
+        terms = {}
         for word in (history or {}).get("words", []):
             total = word.get("correctCount", 0) + word.get("incorrectCount", 0)
             if word.get("term") and total:
-                colours[word["term"].casefold()] = word["correctCount"] / total
+                terms[fold(word["term"])] = word["correctCount"] / total
         return dict(
             objects={str(row["id"]): float(row["mastery_score"]) for row in rows},
             taught_nouns=[
                 dict(text=row["display_text"], gender=row["gender"])
                 for row in rows if row["part_of_speech"] == "noun" and row["gender"]
             ],
-            colours=colours,
+            terms=terms,
         )
 
     def _save_counted_groups(self, c, session_id, request, confirmed, existing, manual_ids):
@@ -1697,7 +1698,8 @@ class PostgresWorkflowRepository:
                     )
                     skipped.append(dict(missionId=mission.mission_id, reason="noReviewedContent"))
                     continue
-            lessons.append(spec.task(claim.session_id, mission, payload, result, vocabulary_ids))
+            built = spec.task(claim.session_id, mission, payload, result, vocabulary_ids)
+            lessons.extend(built if isinstance(built, list) else [built])
         return lessons
 
     def _store_translation(self, c, session, profile, objects, translated_scene):
