@@ -14,7 +14,7 @@ from app.missions import get_mission
 from app.services.mission_eligibility import agreed_colour, lesson_missions, photo_eligibility
 from app.services.mission_lessons_m01 import m01_payload
 
-MISSION = get_mission("M01", "A1", 2)
+MISSION = get_mission("M01", "A1", 1)
 CUP = "11111111-1111-1111-1111-111111111111"
 BOOK = "22222222-2222-2222-2222-222222222222"
 TABLE = "33333333-3333-3333-3333-333333333333"

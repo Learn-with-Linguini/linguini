@@ -109,7 +109,7 @@ def test_m01_a1_definition_covers_the_mission_contract():
     mission = get_mission("M01", "A1", 1)
     assert mission.title == "Identify and describe an object"
     assert mission.photo_requirements.min_confirmed_objects == 2
-    assert mission.photo_requirements.min_coloured_objects == 1
+    assert mission.photo_requirements.min_coloured_objects == 2
     assert mission.photo_requirements.min_relations == 0
     assert mission.objective.objective_id == "identify-describe-object"
     assert set(mission.targets) == {
@@ -125,25 +125,25 @@ def test_m01_a1_definition_covers_the_mission_contract():
     assert not mission.counts_as_assistance("translation")
     assert mission.counts_as_assistance("hint")
     assert {item.target_id for item in mission.evaluation_criteria} == set(mission.targets)
-    assert mission.expected_performance.min_assessed_questions == 2
-    assert get_mission("M01", "A1", 3) is None
+    assert mission.expected_performance.min_assessed_questions == 4
+    assert get_mission("M01", "A1", 2) is None
     assert get_mission("M01", "A2", 1) is None
 
 
-def test_definition_files_are_named_by_their_version(tmp_path):
-    source = (DEFINITIONS_DIR / "M01-A1.v1.toml").read_text()
+def test_definition_files_are_named_by_their_mission(tmp_path):
+    source = (DEFINITIONS_DIR / "M01-A1.toml").read_text()
     renamed = tmp_path / "M01-A1.v3.toml"
     renamed.write_text(source)
-    with pytest.raises(MissionConfigurationError, match="must be named M01-A1.v1.toml"):
+    with pytest.raises(MissionConfigurationError, match="must be named M01-A1.toml"):
         load_mission_file(renamed)
-    broken = tmp_path / "M01-A1.v1.toml"
+    broken = tmp_path / "M01-A1.toml"
     broken.write_text(source.replace('target_id = "describe-colour"\ndescription', (
         'target_id = "describe-size"\ndescription'
     )))
     with pytest.raises(MissionConfigurationError, match="describe-size"):
         load_missions(tmp_path)
     assert sorted(path.name for path in Path(DEFINITIONS_DIR).glob("*.toml")) == [
-        "M01-A1.v1.toml", "M01-A1.v2.toml", "M02-A1.v1.toml", "M02-A1.v2.toml", "M03-A1.v1.toml",
+        "M01-A1.toml", "M02-A1.toml", "M03-A1.toml",
     ]
 
 

@@ -34,7 +34,7 @@ def counted(quantity, ids=(BOOK,), label="book"):
 ON = [SimpleNamespace(
     id=uuid4(), subject_scene_object_id=CUP, relation="on", reference_scene_object_id=BOOK,
 )]
-FULL = [obj(CUP, "cup", color="red"), obj(BOOK, "book")]
+FULL = [obj(CUP, "cup", color="red"), obj(BOOK, "book", color="blue")]
 
 
 @pytest.mark.parametrize(("groups", "eligible"), [

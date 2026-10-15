@@ -133,7 +133,7 @@ def test_a_photo_with_only_a_count_plans_m03(curated):
     assert bonus and {task.kind for task in bonus} <= {"ispyRound", "reflection"}
     assert "mission_lesson_m03_v1" in model.requests
     assert lesson.public_content.title == "Say how many"
-    assert "Hay tres tazas." in lesson.public_content.explanation
+    assert lesson.public_content.explanation is None
     questions = lesson.public_content.questions
     assert [q.interaction_type for q in questions] == [
         "multipleChoice", "multipleChoice", "sentenceBuilding",

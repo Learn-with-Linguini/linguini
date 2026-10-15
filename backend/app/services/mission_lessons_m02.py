@@ -1,7 +1,5 @@
 """Build the M02 A1 lesson tasks from confirmed objects, relations and a validated result."""
 
-from types import SimpleNamespace
-
 from app.ai.features.learning_tasks.mission import fold, tokens
 from app.ai.features.learning_tasks.mission_m02 import _joined
 from app.services.ispy_clue_frames import CONTRACTIONS, _definite, _prefixes, _with_article
@@ -22,11 +20,26 @@ _INVERSE = {
     "on": "under", "under": "on", "next_to": "next_to",
     "in_front_of": "behind", "behind": "in_front_of",
 }
-_PARTS = {
-    "choosePosition": ("Describe the location · Part 1 of 2", "lesson-1a"),
-    "describeLocation": ("Describe the location · Part 2 of 2", "lesson-1b"),
-    "askWhere": ("Ask and understand · Part 1 of 2", "lesson-2a"),
-    "understandAnswer": ("Ask and understand · Part 2 of 2", "lesson-2b"),
+# Prompts never contain the sentence the learner builds.
+_PROMPTS = {
+    "es": {
+        "choosePosition": "Elige la posición: {subject} ___ {reference}.",
+        "describeLocation": "Describe la posición {of_subject}.",
+        "askWhere": "Pregunta por la ubicación {of_subject}.",
+        "understandAnswer": "\u201c{answer}\u201d ¿Qué dibujo lo muestra?",
+    },
+    "fr": {
+        "choosePosition": "Choisis la position : {subject} ___ {reference}.",
+        "describeLocation": "Décris la position {of_subject}.",
+        "askWhere": "Pose une question sur l'emplacement {of_subject}.",
+        "understandAnswer": "\u00ab {answer} \u00bb Quel dessin le montre ?",
+    },
+}
+_TRANSLATIONS = {
+    "choosePosition": "Choose the position: the {subject} ___ the {reference}.",
+    "describeLocation": "Describe the position of the {subject}.",
+    "askWhere": "Ask where the {subject} is.",
+    "understandAnswer": "Which picture shows this?",
 }
 _EVALUATIONS = {
     "choosePosition": (["recognise-position"], "recognition", ["position-matches-photo"]),
@@ -58,6 +71,20 @@ def _place_tiles(language, expression, place):
     if contracted:
         return " ".join([*words[:-1], contracted]), tokens(place["translation"])
     return expression, tokens(_with_article(article, place["translation"]))
+
+
+def _definite_phrase(language, place):
+    article = _definite(language, place)
+    return _with_article(article, place["translation"]) if article else None
+
+
+def _of(language, place):
+    """\u201cof the object\u201d, contracted where the language requires it (del, du)."""
+    article = _definite(language, place)
+    contracted = CONTRACTIONS[language].get(("de", article.casefold()))
+    if contracted:
+        return f"{contracted} {place['translation']}"
+    return f"de {_with_article(article, place['translation'])}"
 
 
 def _true_positions(subject, reference, relations):
@@ -133,6 +160,19 @@ def m02_payload(mission, language, objects, relations, words, translated_scene, 
         )
         pronoun = _prefixes(language, subject["gender"])["location"]
         reference = rows[relation.reference_scene_object_id]
+        answer = f"{pronoun} {place}." if pronoun != "C'est" else _joined(statement_tiles)
+        subject_place = places[relation.subject_scene_object_id]
+        if _definite(language, subject_place) is None:
+            continue
+        prompts = {
+            purpose: template.format(
+                subject=_definite_phrase(language, subject_place),
+                reference=_definite_phrase(language, places[relation.reference_scene_object_id]),
+                of_subject=_of(language, subject_place),
+                answer=answer,
+            )
+            for purpose, template in _PROMPTS[language].items()
+        }
         found.append(dict(
             key=str(relation.id),
             subjectKey=subject["key"], subjectSource=subject["source"],
@@ -143,7 +183,8 @@ def m02_payload(mission, language, objects, relations, words, translated_scene, 
             statementTiles=statement_tiles,
             extraTile=extra,
             whereQuestion=subject["whereQuestion"],
-            answer=(f"{pronoun} {place}." if pronoun != "C'est" else _joined(statement_tiles)),
+            answer=answer,
+            prompts=prompts,
         ))
     known = (progress or {}).get("terms", {})
     return {
@@ -192,17 +233,8 @@ def _corrections(payload, question, label):
 
 
 def m02_lesson_task(session_id, mission, payload, result, vocabulary_ids):
-    """The four M02 part tasks, in order, from a validated result."""
+    """The M02 lesson task: the four questions in order, from a validated result."""
     relations = {row["key"]: row for row in payload["relations"]}
-    verb = _LOCATION_VERBS[payload["targetLanguage"]]
-    explanations = {
-        "choosePosition": result.explanation,
-        "describeLocation": f"Now say it in a full sentence: the object, \u201c{verb}\u201d, "
-        "the position, then the other object.",
-        "askWhere": f"Ask where something is with \u201c{payload['questionChunk']}\u201d "
-        "and the object.",
-        "understandAnswer": "Read the answer, then choose the picture that shows it.",
-    }
 
     def evaluate(question, label):
         target_ids, evidence_type, criteria = _EVALUATIONS[question.purpose]
@@ -223,20 +255,20 @@ def m02_lesson_task(session_id, mission, payload, result, vocabulary_ids):
         relation = relations[question.relation_key]
         subject = _capitalised(relation["subjectSource"])
         reference = _capitalised(relation["referenceSource"])
+        translation = _TRANSLATIONS[question.purpose].format(
+            subject=relation["subjectSource"], reference=relation["referenceSource"],
+        )
         if question.purpose == "understandAnswer":
-            return dict(object_label=subject, reference_label=reference, diagram_options=True)
-        fields = dict(scene_object_id=question.object_key, object_label=subject)
+            return dict(
+                object_label=subject, reference_label=reference, diagram_options=True,
+                prompt_translation=translation,
+            )
+        fields = dict(
+            scene_object_id=question.object_key, object_label=subject,
+            prompt_translation=translation,
+        )
         if question.purpose != "askWhere":
             fields.update(reference_object_id=relation["referenceKey"], reference_label=reference)
         return fields
 
-    tasks = []
-    for question in result.questions:
-        title, key = _PARTS[question.purpose]
-        part = SimpleNamespace(
-            title=title, explanation=explanations[question.purpose], questions=[question],
-        )
-        tasks.append(build_mission_task(
-            session_id, mission, M02_FOCUS, part, evaluate, shown, key=key,
-        ))
-    return tasks
+    return build_mission_task(session_id, mission, M02_FOCUS, result, evaluate, shown)

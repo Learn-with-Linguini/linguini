@@ -1,8 +1,4 @@
-"""Registry of versioned mission definitions stored as TOML in ``definitions/``.
-
-A definition is immutable once tasks reference it: change content by adding a file
-with the next ``content_version`` instead of editing a published one.
-"""
+"""Registry of mission definitions: one TOML file per mission in ``definitions/``."""
 
 import tomllib
 from functools import cache
@@ -21,7 +17,7 @@ class MissionConfigurationError(ValueError):
 
 
 def definition_file_name(mission: MissionDefinition) -> str:
-    return f"{mission.mission_id}-{mission.practice_level}.v{mission.content_version}.toml"
+    return f"{mission.mission_id}-{mission.practice_level}.toml"
 
 
 def load_mission_file(path: Path) -> MissionDefinition:

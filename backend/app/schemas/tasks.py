@@ -167,7 +167,7 @@ class GrammarLessonContent(MissionTaskFields):
     kind: Literal["grammarLesson"] = "grammarLesson"
     focus: NonEmptyText
     title: NonEmptyText
-    explanation: NonEmptyText
+    explanation: NonEmptyText | None = Field(default=None, exclude_if=_is_none)
     questions: Annotated[list[GrammarLessonQuestion], Field(min_length=1)]
 
 

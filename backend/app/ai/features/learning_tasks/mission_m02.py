@@ -59,7 +59,6 @@ class M02Question(ApiModel):
 
 class M02LessonResult(ApiModel):
     title: NonEmptyText = Field(max_length=80)
-    explanation: NonEmptyText = Field(max_length=400)
     questions: Annotated[list[M02Question], Field(min_length=4, max_length=4)]
 
 
@@ -151,8 +150,7 @@ def fallback_m02_lesson(payload: dict[str, Any]) -> M02LessonResult:
     questions = [
         dict(
             question_id="choose-position", purpose="choosePosition",
-            prompt=f"Where is the {first['subjectSource']} in relation to the "
-            f"{first['referenceSource']}?",
+            prompt=first["prompts"]["choosePosition"],
             interaction_type="multipleChoice",
             options=[
                 dict(option_id=f"phrase-{index}", label=phrases[position]["expression"])
@@ -164,7 +162,7 @@ def fallback_m02_lesson(payload: dict[str, Any]) -> M02LessonResult:
         ),
         dict(
             question_id="describe-location", purpose="describeLocation",
-            prompt=f"Describe where the {first['subjectSource']} is.",
+            prompt=first["prompts"]["describeLocation"],
             interaction_type="sentenceBuilding", options=[], correct_option_id=None,
             correct_text=first["statement"],
             token_bank=sorted(describe_bank, key=fold),
@@ -173,7 +171,7 @@ def fallback_m02_lesson(payload: dict[str, Any]) -> M02LessonResult:
         ),
         dict(
             question_id="ask-where", purpose="askWhere",
-            prompt=f"Ask where the {second['subjectSource']} is.",
+            prompt=second["prompts"]["askWhere"],
             interaction_type="sentenceBuilding", options=[], correct_option_id=None,
             correct_text=second["whereQuestion"],
             token_bank=list(reversed(tokens(second["whereQuestion"]))),
@@ -182,7 +180,7 @@ def fallback_m02_lesson(payload: dict[str, Any]) -> M02LessonResult:
         ),
         dict(
             question_id="understand-answer", purpose="understandAnswer",
-            prompt=f"\u201c{second['answer']}\u201d Which picture shows this?",
+            prompt=second["prompts"]["understandAnswer"],
             interaction_type="multipleChoice",
             options=[
                 dict(
@@ -197,15 +195,7 @@ def fallback_m02_lesson(payload: dict[str, Any]) -> M02LessonResult:
             object_key=second["subjectKey"], relation_key=second["key"],
         ),
     ]
-    taught = "; ".join(
-        f"\u201c{phrases[position]['expression']}\u201d = {phrases[position]['meaning']}"
-        for position in order
-    )
-    result = M02LessonResult.model_validate(dict(
-        title="Find and locate",
-        explanation=f"Say where something is with a position phrase: {taught}.",
-        questions=questions,
-    ))
+    result = M02LessonResult.model_validate(dict(title="Find and locate", questions=questions))
     validate_m02_lesson(payload, result)
     return result
 

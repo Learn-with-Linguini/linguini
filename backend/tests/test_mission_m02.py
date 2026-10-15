@@ -16,7 +16,7 @@ from app.services.mission_eligibility import photo_eligibility, plan_missions
 from app.services.mission_lessons_m02 import m02_payload
 
 M01 = get_mission("M01", "A1", 1)
-M02 = get_mission("M02", "A1", 2)
+M02 = get_mission("M02", "A1", 1)
 CUP, BOOK, TABLE = uuid4(), uuid4(), uuid4()
 
 
@@ -31,7 +31,7 @@ def rel(subject, relation, reference):
     )
 
 
-COLOURED = [obj(CUP, "cup", color="red"), obj(BOOK, "book")]
+COLOURED = [obj(CUP, "cup", color="red"), obj(BOOK, "book", color="blue")]
 PLAIN = [obj(CUP, "cup"), obj(BOOK, "book")]
 ON = [rel(CUP, "on", BOOK)]
 
@@ -56,7 +56,7 @@ def test_missing_relations_are_named_for_m02_only():
         "Confirm where one object is on, under, next to, in front of or behind another.",
     )
     assert photo_eligibility(M01, PLAIN, []).reasons == (
-        "Confirm the colour of at least one object.",
+        "Confirm the colours of at least 2 different objects.",
     )
 
 
@@ -135,7 +135,10 @@ def test_fallback_builds_four_parts_in_order_from_confirmed_facts():
         "choosePosition", "describeLocation", "askWhere", "understandAnswer",
     ]
     choose, describe, ask, understand = result.questions
-    assert choose.prompt == "Where is the cup in relation to the table?"
+    assert choose.prompt == "Elige la posición: la taza ___ la mesa."
+    assert describe.prompt == "Describe la posición de la taza."
+    assert ask.prompt == "Pregunta por la ubicación del libro."
+    assert understand.prompt == "\u201cEstá debajo de la mesa.\u201d ¿Qué dibujo lo muestra?"
     labels = {o.option_id: o.label for o in choose.options}
     assert labels[choose.correct_option_id] == "sobre"
     assert set(labels.values()) == {"sobre", "debajo de", "al lado de"}
@@ -144,10 +147,20 @@ def test_fallback_builds_four_parts_in_order_from_confirmed_facts():
         ["La", "taza", "está", "sobre", "la", "mesa", ".", "debajo de"]
     )
     assert ask.correct_text == "¿Dónde está el libro?"
-    assert ask.prompt == "Ask where the book is."
     assert "Está debajo de la mesa." in understand.prompt
     assert understand.correct_option_id == "under"
     assert {o.option_id for o in understand.options} == {"under", "on", "next_to"}
+
+
+def test_french_prompts_are_in_french_and_never_contain_the_built_sentence():
+    payload = _payload("fr", [rel(CUP, "on", TABLE), rel(BOOK, "under", TABLE)])
+    choose, describe, ask, understand = fallback_m02_lesson(payload).questions
+    assert choose.prompt == "Choisis la position : la tasse ___ la table."
+    assert describe.prompt == "Décris la position de la tasse."
+    assert ask.prompt == "Pose une question sur l'emplacement du livre."
+    assert understand.prompt == "\u00ab Il est sous la table. \u00bb Quel dessin le montre ?"
+    for question in (describe, ask):
+        assert question.correct_text.casefold() not in question.prompt.casefold()
 
 
 def test_inverse_relations_are_not_offered_as_wrong_phrases():

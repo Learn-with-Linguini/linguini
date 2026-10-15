@@ -474,12 +474,11 @@ through backend repositories; the frontend must not query these tables directly.
 
 ### Mission contracts
 
-A mission is a versioned definition of one lesson goal at one practice level. Definitions
-live in `app/missions/definitions/{missionId}-{practiceLevel}.v{contentVersion}.toml`,
-are validated by `MissionDefinition` (`app/schemas/missions.py`) and are read through
-`app.missions.get_mission`. A definition is immutable once tasks reference it; change
-content by adding the next version. The first is `M01-A1.v1.toml`, "Identify and
-describe an object": photo eligibility, one objective with its targets, permitted
+A mission is the definition of one lesson goal at one practice level. Each mission has
+one definition file, `app/missions/definitions/{missionId}-{practiceLevel}.toml`,
+validated by `MissionDefinition` (`app/schemas/missions.py`) and read through
+`app.missions.get_mission`; its `content_version` is stored on the tasks it creates. The
+first is `M01-A1.toml`, "Identify and describe an object": photo eligibility, one objective with its targets, permitted
 language patterns (linked to the existing I-Spy clue frames), teaching sequence and
 support rules, evaluation criteria and expected performance.
 
@@ -539,12 +538,13 @@ lesson.
   as before. The introduction carries no mission fields because it teaches the nouns for
   every planned mission; its per-word evidence still follows each word's own result.
 - **Tasks.** Each planned mission adds one `grammarLesson` carrying its own mission fields,
-  in plan order, before the bonus I-Spy rounds. `app/services/mission_registry.py` maps each
+  in plan order, before the bonus I-Spy rounds. Mission lessons publish no `explanation`,
+  so the task page shows only the questions and, after submitting, the feedback. `app/services/mission_registry.py` maps each
   mission to its payload builder, generation spec and task builder.
 
 #### M01 A1 lesson path
 
-1. **Lesson** (`M01-A1.v2`; `app/ai/features/learning_tasks/mission_m01.py`,
+1. **Lesson** (`M01-A1.toml`; `app/ai/features/learning_tasks/mission_m01.py`,
    `app/services/mission_lessons_m01.py`). M01 needs two differently named confirmed
    objects that each have a confirmed colour with a reviewed form. Two object-colour
    pairs are chosen when the lesson is generated and saved in the task, so resuming
@@ -560,7 +560,6 @@ lesson.
    gender, without duplicates. Every question carries `sceneObjectId` and the English
    `objectLabel`; the app crops the object from its bounding box or rings it on the
    photo. The lesson is built and validated deterministically with no model call.
-   Saved `M01-A1.v1` lessons keep grading from their stored answer keys.
 2. **Bonus I-Spy.** The existing AI I-Spy clue and describing rounds are generated
    alongside the lesson, as in the legacy path, and placed last without mission
    fields. They unlock once the learning tasks are done and are labelled as the
@@ -580,9 +579,9 @@ lesson.
 
 #### M02 A1 lesson path
 
-`M02-A1.v2.toml`, "Find and locate": say where a photo object is, ask where it is and
+`M02-A1.toml`, "Find and locate": say where a photo object is, ask where it is and
 understand a short answer. This is supported A1 practice, not independent A2 location
-production. `M02-A1.v1` stays only so saved lessons keep loading and grading.
+production.
 
 1. **Payload** (`app/services/mission_lessons_m02.py`). Each confirmed relation whose
    position has a reviewed phrase and whose objects have reviewed articles, with its
@@ -592,27 +591,30 @@ production. `M02-A1.v1` stays only so saved lessons keep loading and grading.
    including inverse relations. Positions reuse the I-Spy reviewed bank.
 2. **Selection.** Relations are ranked by the learner-history correct ratio of their
    position phrase (snapshot only with `LEARNER_MEMORY_ENABLED=true`; otherwise every
-   phrase is unseen), ties in photo order. Task 1 takes the least familiar; Task 2 prefers
-   another object pair, then another position, and reuses Task 1's relation only when
-   there is no other. The selection is stored in the generated tasks.
+   phrase is unseen), ties in photo order. Questions 1–2 use the least familiar; questions
+   3–4 prefer another object pair, then another position, and reuse the first relation
+   only when there is no other. The selection is stored in the generated task.
 3. **Lesson** (`app/ai/features/learning_tasks/mission_m02.py`). Built without a model
-   call and validated: four single-question `grammarLesson` tasks in order, "Describe the
-   location" (Part 1 picks the phrase from three, none of the wrong ones true for the
-   pair; Part 2 builds the statement with one extra phrase tile) and "Ask and understand"
-   (Part 1 builds the where-question; Part 2 quotes the answer and offers three position
-   diagrams, option IDs being relation keys drawn by the frontend). Questions carry
-   `sceneObjectId`/`objectLabel` and `referenceObjectId`/`referenceLabel`; Part 2 of Task 2
-   has no photo and sets `diagramOptions`.
-4. **Grading.** Each part is its own task attempt. Phrase and diagram choices are
+   call and validated: one `grammarLesson`, "Find and locate", with four questions in
+   order: pick the phrase from three, none of the wrong ones true for the pair
+   (`Elige la posición: la taza ___ la mesa.`); build the statement with one extra phrase
+   tile (`Describe la posición de la taza.`); build the where-question
+   (`Pregunta por la ubicación del libro.`); and match the quoted answer to one of three
+   position diagrams, option IDs being relation keys drawn by the frontend. Prompts are in
+   the target language with an English `promptTranslation`, and never contain the
+   sentence the learner builds. Questions carry `sceneObjectId`/`objectLabel` and
+   `referenceObjectId`/`referenceLabel`; the diagram question has no photo and sets
+   `diagramOptions`.
+4. **Grading.** The four questions are one task attempt. Phrase and diagram choices are
    recognition with `wrongPosition` corrections; the statement and question are supported
    construction (`wordBank`), and only those name object words for evidence.
    `GET /tasks/{id}/latest-attempt` also returns the saved `answers` and `reviewDetails`
-   for mission lessons, so a reloaded graded part still shows its answer, grade and
-   correction.
+   for mission lessons, so a reloaded graded lesson still shows its answers, grades and
+   corrections.
 
 #### M03 A1 lesson path
 
-`M03-A1.v1.toml`, "Say how many": say a confirmed quantity with the taught pattern
+`M03-A1.toml`, "Say how many": say a confirmed quantity with the taught pattern
 (`Hay tres libros.`, `Il y a trois livres.`) and the noun's regular plural.
 
 1. **Payload** (`app/services/mission_lessons_m03.py`, `app/services/quantities.py`). The
@@ -626,8 +628,7 @@ production. `M02-A1.v1` stays only so saved lessons keep loading and grading.
 2. **Lesson** (`app/ai/features/learning_tasks/mission_m03.py`). Exactly one
    `grammarLesson` with 2–4 questions: quantity comprehension, choosing the statement
    (distractors use a wrong number or the singular), then a word-bank statement whose
-   bank adds the singular and a wrong number. The explanation teaches the number, the
-   plural and the statement first. Its validator and fallback check the group, quantity
+   bank adds the singular and a wrong number. Its validator and fallback check the group, quantity
    and plural, and its cache identity is `learning-tasks.m03-a1.v1:M03-A1.v1`.
 3. **Grading** follows M01. Corrections name `wrongQuantity` or `pluralForm` when the
    answer shows which (both for a wrong number with a singular noun), and `wordOrder`

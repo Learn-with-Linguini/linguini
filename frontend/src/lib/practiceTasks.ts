@@ -40,6 +40,7 @@ export function taskTitle(task: SessionTask) {
 export function taskDescription(task: SessionTask) {
   const content = task.publicContent;
   if ("prompt" in content) return content.prompt;
+  if (content.kind === "grammarLesson") return content.explanation ?? `${content.questions.length} questions`;
   if ("explanation" in content) return content.explanation;
   if (content.kind === "vocabularyIntroduction") {
     if (content.words?.length) return `${content.words.length} words from your scene`;

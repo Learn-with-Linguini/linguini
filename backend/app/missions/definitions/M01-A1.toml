@@ -5,9 +5,9 @@ title = "Identify and describe an object"
 
 [photo_requirements]
 media_sources = ["preloaded", "camera", "userUpload"]
-# A target plus at least one other object, so identification has a distractor.
+# Two different objects, each described by its own confirmed colour.
 min_confirmed_objects = 2
-min_coloured_objects = 1
+min_coloured_objects = 2
 
 [objective]
 objective_id = "identify-describe-object"
@@ -36,15 +36,15 @@ evidence_types = ["recognition", "construction", "production"]
 [[language_patterns]]
 pattern_id = "article-noun"
 target_id = "name-object"
-structure = "[article] [noun]"
-examples = { es = ["la mesa", "el libro"], fr = ["la table", "le livre"] }
+structure = "[indefinite article] [noun]"
+examples = { es = ["una mesa", "un libro"], fr = ["une table", "un livre"] }
 
 [[language_patterns]]
 pattern_id = "copula-colour"
 target_id = "describe-colour"
-structure = "[article] [noun] [is] [colour agreeing with the noun]"
+structure = "[it is] [indefinite article] [noun] [colour agreeing with the noun]"
 clue_frame_id = "colour"
-examples = { es = ["La mesa es blanca.", "El libro es rojo."], fr = ["La table est blanche.", "Le livre est rouge."] }
+examples = { es = ["Es una mesa blanca.", "Es un libro rojo."], fr = ["C'est une table blanche.", "C'est un livre rouge."] }
 
 [[language_patterns]]
 pattern_id = "copula-position-reference"
@@ -123,7 +123,7 @@ description = "Uses a position expression and reference object that match the ph
 evidence_types = ["recognition", "construction", "production"]
 
 [expected_performance]
-min_assessed_questions = 2
+min_assessed_questions = 4
 min_correct_ratio = 0.75
 min_independent_correct = 2
 required_target_groups = [

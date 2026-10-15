@@ -1698,8 +1698,7 @@ class PostgresWorkflowRepository:
                     )
                     skipped.append(dict(missionId=mission.mission_id, reason="noReviewedContent"))
                     continue
-            built = spec.task(claim.session_id, mission, payload, result, vocabulary_ids)
-            lessons.extend(built if isinstance(built, list) else [built])
+            lessons.append(spec.task(claim.session_id, mission, payload, result, vocabulary_ids))
         return lessons
 
     def _store_translation(self, c, session, profile, objects, translated_scene):

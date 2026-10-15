@@ -83,34 +83,36 @@ def _parts(detail):
     return [task for task in detail.tasks if task.public_content.mission_id == "M02"]
 
 
-def test_relation_only_scene_plans_four_m02_parts_after_the_shared_vocabulary(curated):
+def test_relation_only_scene_plans_one_m02_task_with_four_questions(curated):
     engine, _owner, profile, client, *_ = curated
     model = SceneModel()
     repository, sid, detail = _lesson(curated, _relations_only, model)
     assert _planned(detail) == ["M02"]
-    introduction, *rest = detail.tasks
-    parts, bonus = rest[:4], rest[4:]
+    introduction, lesson, *bonus = detail.tasks
     assert introduction.kind == "vocabularyIntroduction"
-    assert parts == _parts(detail)
+    assert [lesson] == _parts(detail)
     assert bonus and {task.kind for task in bonus} <= {"ispyRound", "reflection"}
     assert not any("m02" in name for name in model.requests)
-    assert [task.public_content.title for task in parts] == [
-        "Describe the location · Part 1 of 2", "Describe the location · Part 2 of 2",
-        "Ask and understand · Part 1 of 2", "Ask and understand · Part 2 of 2",
-    ]
-    choose, describe, ask, understand = (task.public_content.questions[0] for task in parts)
-    assert choose.prompt == "Where is the cup in relation to the table?"
+    content = lesson.public_content
+    assert content.title == "Find and locate" and content.explanation is None
+    choose, describe, ask, understand = content.questions
+    assert choose.prompt == "Elige la posición: la taza ___ la mesa."
+    assert choose.prompt_translation == "Choose the position: the cup ___ the table."
     assert (choose.object_label, choose.reference_label) == ("Cup", "Table")
     assert choose.scene_object_id and choose.reference_object_id
     assert describe.scene_object_id == choose.scene_object_id
-    assert ask.reference_object_id is None and ask.prompt == "Ask where the cup is."
+    assert describe.prompt == "Describe la posición de la taza."
+    assert ask.reference_object_id is None
+    assert (ask.prompt, ask.prompt_translation) == (
+        "Pregunta por la ubicación de la taza.", "Ask where the cup is.",
+    )
     assert understand.scene_object_id is None and understand.diagram_options is True
     assert "Está sobre la mesa." in understand.prompt
-    keys = [_answer_key(engine, task.id) for task in parts]
-    assert keys[1]["correctOptionIds"]["describe-location"] == "La taza está sobre la mesa."
-    assert keys[2]["correctOptionIds"]["ask-where"] == "¿Dónde está la taza?"
-    assert keys[3]["correctOptionIds"]["understand-answer"] == "on"
-    assert [key["questionEvaluations"][0]["targetIds"] for key in keys] == [
+    key = _answer_key(engine, lesson.id)
+    assert key["correctOptionIds"]["describe-location"] == "La taza está sobre la mesa."
+    assert key["correctOptionIds"]["ask-where"] == "¿Dónde está la taza?"
+    assert key["correctOptionIds"]["understand-answer"] == "on"
+    assert [item["targetIds"] for item in key["questionEvaluations"]] == [
         ["recognise-position"], ["describe-location", "name-object"],
         ["build-question", "name-object"], ["understand-location"],
     ]
@@ -118,45 +120,50 @@ def test_relation_only_scene_plans_four_m02_parts_after_the_shared_vocabulary(cu
     assert "questionEvaluations" not in public and "correctOptionIds" not in public
     draft = _scalar(engine, select(sessions.c.analysis_draft).where(sessions.c.id == sid))
     assert draft["missionPlan"] == [
-        {"missionId": "M02", "practiceLevel": "A1", "contentVersion": 2}
+        {"missionId": "M02", "practiceLevel": "A1", "contentVersion": 1}
     ]
     resumed = repository.get(sid, profile.id)
-    assert [t.public_content for t in _parts(resumed)] == [t.public_content for t in parts]
+    assert [t.public_content for t in _parts(resumed)] == [content]
 
 
 @pytest.mark.parametrize("scenario", ["correct", "incorrect"])
-def test_each_m02_part_is_graded_once(curated, scenario):
+def test_m02_is_graded_once_across_its_four_questions(curated, scenario):
     engine, _owner, _profile, client, *_ = curated
     _repository_, sid, detail = _lesson(curated, _relations_only)
+    (task,) = _parts(detail)
     xp = select(func.count()).select_from(xp_events).where(xp_events.c.session_id == sid)
-    for task in _parts(detail):
-        question = task.public_content.questions[0]
-        correct = _correct_answers(engine, task)[question.question_id]
+    correct = _correct_answers(engine, task)
+    answers = {}
+    for question in task.public_content.questions:
+        right = correct[question.question_id]
         wrong = next(
-            (o.option_id for o in question.options if o.option_id != correct),
+            (o.option_id for o in question.options if o.option_id != right),
             "mesa la sobre está taza La .",
         )
-        answer = {question.question_id: correct if scenario == "correct" else wrong}
-        first = _attempt(client, task, answer, key=f"m02-{task.id}")
-        assert first.status_code == 200, first.text
-        awarded = _scalar(engine, xp)
-        repeat = _attempt(client, task, answer, key=f"m02-{task.id}")
-        assert repeat.json()["attempt"]["id"] == first.json()["attempt"]["id"]
-        assert _scalar(engine, xp) == awarded
-        assert _scalar(engine, select(func.count()).select_from(task_attempts).where(
-            task_attempts.c.session_task_id == task.id
-        )) == 1
-        details = first.json()["attempt"]["evaluationDetails"]
-        assert details["questionResults"] == {question.question_id: scenario == "correct"}
-        saved = client.get(f"/api/v1/tasks/{task.id}/latest-attempt").json()["attempt"]
-        assert saved["answers"] == answer
-        assert saved["reviewDetails"]["questionResults"] == details["questionResults"]
-        (outcome,) = details["questionOutcomes"]
+        answers[question.question_id] = right if scenario == "correct" else wrong
+    first = _attempt(client, task, answers, key=f"m02-{task.id}")
+    assert first.status_code == 200, first.text
+    awarded = _scalar(engine, xp)
+    repeat = _attempt(client, task, answers, key=f"m02-{task.id}")
+    assert repeat.json()["attempt"]["id"] == first.json()["attempt"]["id"]
+    assert _scalar(engine, xp) == awarded
+    assert _scalar(engine, select(func.count()).select_from(task_attempts).where(
+        task_attempts.c.session_task_id == task.id
+    )) == 1
+    details = first.json()["attempt"]["evaluationDetails"]
+    assert details["questionResults"] == {qid: scenario == "correct" for qid in answers}
+    saved = client.get(f"/api/v1/tasks/{task.id}/latest-attempt").json()["attempt"]
+    assert saved["answers"] == answers
+    assert saved["reviewDetails"]["questionResults"] == details["questionResults"]
+    outcomes = {item["questionId"]: item for item in details["questionOutcomes"]}
+    assert len(outcomes) == 4
+    for question in task.public_content.questions:
+        outcome = outcomes[question.question_id]
         if question.interaction_type == "sentenceBuilding":
             assert outcome["evidenceType"] == "construction"
             assert outcome["assistance"] == ["wordBank"]
-        elif scenario == "incorrect":
-            assert outcome["mistakes"][0]["mistake"] == "wrongPosition"
+    if scenario == "incorrect":
+        assert outcomes["choose-position"]["mistakes"][0]["mistake"] == "wrongPosition"
 
 
 def test_a_photo_fitting_both_plans_both_and_the_lesson_finishes_after_both(curated):
