@@ -9,17 +9,16 @@ type Props = {
   lazy?: boolean;
 };
 
-export function SceneImage({ scene, className, lazy }: Props) {
+/** Resolve a possibly protected media URL to a renderable URL (blob for /api/v1/media/). */
+export function useResolvedImageUrl(imageUrl: string | null | undefined) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
-  const [resolvedUrl, setResolvedUrl] = useState<string | null>(scene.imageUrl);
+  const [resolvedUrl, setResolvedUrl] = useState<string | null>(imageUrl ?? null);
   const [loading, setLoading] = useState(false);
-  const isProtectedMediaUrl = Boolean(scene.imageUrl?.includes("/api/v1/media/"));
 
   useEffect(() => {
-    const imageUrl = scene.imageUrl;
     setFailedUrl(null);
     if (!imageUrl || !imageUrl.includes("/api/v1/media/")) {
-      setResolvedUrl(imageUrl);
+      setResolvedUrl(imageUrl ?? null);
       setLoading(false);
       return;
     }
@@ -51,9 +50,17 @@ export function SceneImage({ scene, className, lazy }: Props) {
       cancelled = true;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [scene.imageUrl]);
+  }, [imageUrl]);
 
-  if (!scene.imageUrl || failedUrl === scene.imageUrl) {
+  return { resolvedUrl, loading, failed: imageUrl != null && failedUrl === imageUrl };
+}
+
+export function SceneImage({ scene, className, lazy }: Props) {
+  const { resolvedUrl, loading, failed } = useResolvedImageUrl(scene.imageUrl);
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const isProtectedMediaUrl = Boolean(scene.imageUrl?.includes("/api/v1/media/"));
+
+  if (!scene.imageUrl || failed || failedUrl === scene.imageUrl) {
     return (
       <span
         className={`scene-image scene-image--error${className ? ` ${className}` : ""}`}

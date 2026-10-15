@@ -18,39 +18,16 @@ from test_mission_m02_workflow import (
     _without_clue_model,
 )
 from test_postgres_sessions import database as database
-from test_preloaded_templates import SceneModel, TextModelResponse
+from test_preloaded_templates import SceneModel
 from test_preloaded_templates_workflow import curated as curated
 
-from app.ai.features.learning_tasks import service as learning_service
-from app.ai.features.learning_tasks.mission_m03 import (
-    M03_PROMPT_VERSION,
-    M03_SCHEMA_VERSION,
-    fallback_m03_lesson,
-)
 from app.repositories.postgres.practice import sessions
-from app.repositories.postgres.tasks import task_attempts
+from app.repositories.postgres.tasks import PostgresTaskRepository, task_attempts
 from app.repositories.postgres.xp import xp_events
 from app.repositories.practice import PracticeConflictError
 from app.schemas.sessions import AddedPracticeObject, ReviewPracticeRequest
-from app.schemas.tasks import SkipTaskRequest
+from app.schemas.tasks import SessionTask, SkipTaskRequest
 from app.services import mission_lessons_m03
-
-
-class M03Model(SceneModel):
-    """Answers the M03 lesson request with valid content of its own."""
-
-    def generate(self, request, **options):
-        if request.json_schema_name != "mission_lesson_m03_v1":
-            return super().generate(request, **options)
-        self.requests.append(request.json_schema_name)
-        result = fallback_m03_lesson(json.loads(request.user_content))
-        body = result.model_copy(update={"title": "Model lesson"}).model_dump(
-            mode="json", by_alias=True
-        )
-        return TextModelResponse(
-            output_text=json.dumps(body), model_name="test-text-model",
-            prompt_version=request.prompt_version, input_tokens=10, output_tokens=10,
-        )
 
 
 def _cup(detail):
@@ -131,23 +108,46 @@ def test_a_photo_with_only_a_count_plans_m03(curated):
     introduction, lesson, *bonus = detail.tasks
     assert introduction.kind == "vocabularyIntroduction"
     assert bonus and {task.kind for task in bonus} <= {"ispyRound", "reflection"}
-    assert "mission_lesson_m03_v1" in model.requests
+    # M03 is deterministic: the lesson model is never asked.
+    assert not any(name.startswith("mission_lesson_m03") for name in model.requests)
     assert lesson.public_content.title == "Say how many"
     assert lesson.public_content.explanation is None
     questions = lesson.public_content.questions
-    assert [q.interaction_type for q in questions] == [
-        "multipleChoice", "multipleChoice", "sentenceBuilding",
+    assert [q.question_id for q in questions] == [
+        "choose-quantity", "build-quantity", "match-quantity",
     ]
+    assert [q.interaction_type for q in questions] == [
+        "multipleChoice", "sentenceBuilding", "multipleChoice",
+    ]
+    choose, build, match = questions
+    assert choose.prompt == "¿Cuántas tazas hay?"
+    assert choose.section == "Task 1 · Count in your photo"
+    assert choose.group_object_ids == [_cup(detail).id]
+    assert match.section == "Task 2 · Practice board"
+    assert match.board_object_id is not None and match.quantity_word
+    assert len(set(match.board_counts.values())) == len(match.board_counts)
     key = _answer_key(engine, lesson.id)
-    assert key["correctOptionIds"][questions[-1].question_id] == "Hay tres tazas."
+    assert key["correctOptionIds"][build.question_id] == "Hay tres tazas."
     assert [item["targetIds"] for item in key["questionEvaluations"]] == [
-        ["understand-quantity"], ["say-quantity", "plural-noun"], ["say-quantity", "plural-noun"],
+        ["say-quantity"], ["say-quantity", "plural-noun"], ["understand-quantity"],
     ]
     public = json.dumps(client.get(f"/api/v1/sessions/{sid}").json())
     assert "questionEvaluations" not in public and "correctOptionIds" not in public
     assert _draft(engine, sid)["missionPlan"] == [
         {"missionId": "M03", "practiceLevel": "A1", "contentVersion": 1}
     ]
+
+
+def test_a_second_get_returns_the_same_m03_content(curated):
+    profile, client = curated[2], curated[3]
+    repository, sid, detail = _lesson(curated, _counts_only())
+    again = repository.get(sid, profile.id)
+    assert _m03(again).public_content == _m03(detail).public_content
+    fetched = client.get(f"/api/v1/sessions/{sid}").json()
+    repeated = client.get(f"/api/v1/sessions/{sid}").json()
+    lesson = next(t for t in fetched["tasks"] if t["publicContent"].get("missionId") == "M03")
+    other = next(t for t in repeated["tasks"] if t["publicContent"].get("missionId") == "M03")
+    assert lesson == other
 
 
 @pytest.mark.parametrize("quantity", [None, 1])
@@ -180,39 +180,26 @@ def test_a_group_of_matching_objects_is_counted_once(curated):
         repository.review(sid, profile.id, request)
 
 
-def test_valid_m03_model_lesson_uses_its_own_cache_identity(curated, monkeypatch):
-    versions = []
-    original = learning_service.run_cached
-
-    def recording(*args, **kwargs):
-        versions.append(kwargs["version"])
-        return original(*args, **kwargs)
-
-    monkeypatch.setattr(learning_service, "run_cached", recording)
-    _repository_, _sid, detail = _lesson(curated, _counts_only(), M03Model())
-    assert _m03(detail).public_content.title == "Model lesson"
-    assert [(v.prompt_version, v.schema_version) for v in versions] == [
-        (f"{M03_PROMPT_VERSION}:M03-A1.v1", M03_SCHEMA_VERSION)
-    ]
-
-
 @pytest.mark.parametrize("scenario", ["correct", "partial", "incorrect"])
 def test_m03_submissions_grade_each_question_once(curated, scenario):
     engine, _owner, _profile, client, *_ = curated
     _repository_, sid, detail = _lesson(curated, _counts_only())
     lesson = _m03(detail)
-    understand, choose, build = lesson.public_content.questions
+    choose, build, match = lesson.public_content.questions
     correct = _answer_key(engine, lesson.id)["correctOptionIds"]
-    singular = next(o.option_id for o in choose.options if o.label == "Hay tres taza.")
-    wrong_meaning = next(
-        o.option_id for o in understand.options if o.option_id != correct[understand.question_id]
+    wrong_number = next(
+        o.option_id for o in choose.options if o.option_id != correct[choose.question_id]
+    )
+    wrong_board = next(
+        o.option_id for o in match.options if o.option_id != correct[match.question_id]
     )
     answers = {
         "correct": correct,
         "partial": {**correct, build.question_id: "Hay cuatro tazas."},
-        "incorrect": {understand.question_id: wrong_meaning, choose.question_id: singular,
-                      build.question_id: "Hay tres taza."},
+        "incorrect": {choose.question_id: wrong_number, build.question_id: "Hay tres taza.",
+                      match.question_id: wrong_board},
     }[scenario]
+    counted_groups = _draft(engine, sid)["countedGroups"]
     first = _attempt(client, lesson, answers, key="m03-answer")
     assert first.status_code == 200, first.text
     xp = select(func.count()).select_from(xp_events).where(xp_events.c.session_id == sid)
@@ -223,6 +210,8 @@ def test_m03_submissions_grade_each_question_once(curated, scenario):
     assert _scalar(engine, select(func.count()).select_from(task_attempts).where(
         task_attempts.c.session_task_id == lesson.id
     )) == 1
+    # Grading never rewrites the learner's saved counts.
+    assert _draft(engine, sid)["countedGroups"] == counted_groups
     details = first.json()["attempt"]["evaluationDetails"]
     assert details["questionResults"] == {qid: answers[qid] == correct[qid] for qid in correct}
     outcomes = {item["questionId"]: item for item in details["questionOutcomes"]}
@@ -233,11 +222,11 @@ def test_m03_submissions_grade_each_question_once(curated, scenario):
         for qid, outcome in outcomes.items()
     }
     expected = {
-        "correct": {understand.question_id: [], choose.question_id: [], build.question_id: []},
-        "partial": {understand.question_id: [], choose.question_id: [],
+        "correct": {qid: [] for qid in correct},
+        "partial": {choose.question_id: [], match.question_id: [],
                     build.question_id: ["wrongQuantity"]},
-        "incorrect": {understand.question_id: ["wrongQuantity"],
-                      choose.question_id: ["pluralForm"], build.question_id: ["pluralForm"]},
+        "incorrect": {choose.question_id: ["wrongQuantity"], match.question_id: ["wrongQuantity"],
+                      build.question_id: ["pluralForm"]},
     }[scenario]
     assert mistakes == expected
 
@@ -263,6 +252,54 @@ def test_a_photo_fitting_all_three_plans_all_three(curated):
         repository.task_action(task.id, "skip", SkipTaskRequest())
     repository.finish(sid, profile.id)
     assert repository.get(sid, profile.id).session.status == "completed"
+
+
+def test_a_saved_old_shape_m03_lesson_still_validates_and_loads(curated):
+    """M03 v1 model-era lessons keep their saved public shape."""
+    engine, owner, profile, client, *_ = curated
+    _repository_, sid, _detail = _lesson(curated, _counts_only())
+    content = {
+        "kind": "grammarLesson", "focus": "sayHowMany", "title": "Say how many",
+        "explanation": "Say how many with “Hay”, the number and the plural noun.",
+        "questions": [
+            {
+                "questionId": "understand-quantity",
+                "prompt": "What does “Hay tres tazas.” mean?",
+                "options": [
+                    {"optionId": "meaning-1", "label": "There are three cups."},
+                    {"optionId": "meaning-2", "label": "There are four cups."},
+                ],
+            },
+            {
+                "questionId": "choose-quantity",
+                "prompt": "How many cups are in your photo? Choose the sentence.",
+                "options": [
+                    {"optionId": "sentence-1", "label": "Hay tres tazas."},
+                    {"optionId": "sentence-2", "label": "Hay tres taza."},
+                    {"optionId": "sentence-3", "label": "Hay cuatro tazas."},
+                ],
+            },
+            {
+                "questionId": "build-quantity",
+                "prompt": "Build the sentence with the word bank.",
+                "interactionType": "sentenceBuilding",
+                "tokenBank": ["tazas", "Hay", "tres", "."],
+                "translation": "There are three cups.",
+            },
+        ],
+        "missionId": "M03", "practiceLevel": "A1", "contentVersion": 1,
+    }
+    repository = PostgresTaskRepository(engine)
+    saved = repository.create_task(SessionTask(
+        session_id=sid, phase="learning", kind="grammarLesson", order_index=90,
+        public_content=content,
+        answer_key={"correctOptionIds": {}, "questionEvaluations": []},
+    ), owner.id)
+    assert repository.get(saved.id, owner.id).public_content == saved.public_content
+    response = client.get(f"/api/v1/tasks/{saved.id}")
+    assert response.status_code == 200, response.text
+    loaded = _repository_.get(sid, profile.id)
+    assert saved.id in {task.id for task in loaded.tasks}
 
 
 def test_a_noun_without_a_reviewed_plural_skips_m03_for_the_regular_lesson(

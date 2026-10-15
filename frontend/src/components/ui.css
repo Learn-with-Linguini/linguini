@@ -4656,3 +4656,27 @@ p[role="alert"]::before { content: "!"; }
 .object-preview__legend > span { display: inline-flex; align-items: center; gap: var(--space-1); }
 .object-preview__key { width: 14px; height: 14px; border-radius: 50%; border: 3px solid var(--tomato); }
 .object-preview__key--reference { border-color: var(--teal); border-style: dashed; }
+
+.learning-section { display: grid; gap: var(--space-3); }
+.learning-section__title { margin: 0; font-size: var(--text-h3); }
+
+.practice-boards { display: grid; gap: var(--space-3); }
+.practice-boards > p { margin: 0; }
+.practice-boards__preload { position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none; }
+.practice-boards__row { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+.practice-board { display: grid; gap: var(--space-2); justify-items: center; align-content: start; padding: var(--space-3); }
+.practice-board__tiles { display: grid; gap: 4px; }
+.practice-board__tile-row { display: flex; gap: 4px; }
+.practice-board__tile {
+  width: 26px; height: 26px; border-radius: 6px; overflow: hidden;
+  background-color: var(--cream); background-repeat: no-repeat;
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.practice-board__tile--fallback {
+  box-shadow: none; background-color: transparent;
+  border: 3px solid var(--tomato); border-radius: 50%;
+  width: 20px; height: 20px;
+}
+.practice-board__meta { display: flex; align-items: baseline; gap: var(--space-2); }
+.practice-board__label { font-weight: 700; }
+.practice-board__count { font-weight: 700; color: var(--ink-muted); }

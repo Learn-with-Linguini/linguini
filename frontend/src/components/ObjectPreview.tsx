@@ -16,14 +16,16 @@ function Ring({ object, tone }: { object?: SceneObject; tone: "target" | "refere
     style={{ left: `${point.x * 100}%`, top: `${point.y * 100}%` }} />;
 }
 
-/** The whole photo with a marker on one object, or two, and their English labels. */
-export function ObjectPreview({ scene, object, label, reference, referenceLabel }: {
-  scene: Scene; object?: SceneObject; label: string; reference?: SceneObject; referenceLabel?: string | null;
+/** The whole photo with a marker on one object, a counted group, or two, and English labels. */
+export function ObjectPreview({ scene, object, label, reference, referenceLabel, group }: {
+  scene: Scene; object?: SceneObject; label: string; reference?: SceneObject;
+  referenceLabel?: string | null; group?: SceneObject[];
 }) {
   return <figure className="object-preview">
     <div className="object-preview__scene">
       <SceneVisual scene={scene} />
-      <Ring object={object} tone="target" />
+      {group ? group.map(item => <Ring key={item.id} object={item} tone="target" />)
+        : <Ring object={object} tone="target" />}
       {referenceLabel ? <Ring object={reference} tone="reference" /> : null}
     </div>
     <figcaption className="object-preview__legend">

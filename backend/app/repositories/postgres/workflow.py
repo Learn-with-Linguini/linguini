@@ -1663,7 +1663,7 @@ class PostgresWorkflowRepository:
             spec = MISSION_LESSONS[mission.mission_id]
             payload = spec.payload(
                 mission, language, objects, relations, words, translated_scene,
-                claim.counted_groups, claim.mission_progress or {},
+                claim.counted_groups, claim.mission_progress or {}, claim.session_id,
             )
             if not spec.ready(payload):
                 logger.warning(
