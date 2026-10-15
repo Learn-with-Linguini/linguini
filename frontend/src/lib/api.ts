@@ -426,6 +426,11 @@ export interface PracticeDetail {
   } | null;
   tasks: SessionTask[]; nextTaskId: string | null; progress: SessionProgress;
   personalization?: SessionPersonalization | null;
+  countedGroups?: CountedGroup[];
+}
+export interface CountedGroup {
+  sceneObjectIds: string[]; label: string; quantity: number;
+  suggestedQuantity: number | null; source: "confirmed" | "corrected" | "entered";
 }
 interface TranslatedTerm { key: string; source: string; translation: string }
 export interface SceneObject {
@@ -457,7 +462,7 @@ export type TaskAnswer = { inputMode: "text"; text: string; assistance?: ClueAss
 export type ConfirmGuessBody = { attemptId: string };
 export type SupportKind = "translation" | "audio" | "example" | "wordBank" | "clueFrame" | "helpPhrase" | "hint" | "answerReveal";
 export type EvidenceType = "recognition" | "objectSelection" | "construction" | "production" | "participation";
-export type MistakeType = "wrongObject" | "wrongWord" | "wrongArticle" | "wrongGender" | "wrongColour" | "wrongPosition" | "wordOrder" | "missingWord" | "spelling" | "targetNamed";
+export type MistakeType = "wrongObject" | "wrongWord" | "wrongArticle" | "wrongGender" | "wrongColour" | "wrongPosition" | "wordOrder" | "missingWord" | "spelling" | "targetNamed" | "wrongQuantity" | "pluralForm";
 /** Supports the learner opened for one grouped-lesson question. */
 export interface QuestionAssistance { questionId: string; supports: SupportKind[] }
 export interface MistakeDetail { mistake: MistakeType; answer: string | null; correction: string; explanation: string | null }
@@ -507,6 +512,7 @@ export interface PracticeReview {
   addedObjects: { id: string; label: string; x: number; y: number }[];
   objectAttributes: Record<string, Record<string, string>>;
   repositionedObjects: { id: string; anchorPoint: { x: number; y: number } }[];
+  objectCounts: Record<string, number>;
 }
 export const reviewPractice = (id: string, review: PracticeReview) => write<PracticeDetail>(`/api/v1/sessions/${id}/review`, "PUT", review);
 export const getPractice = (id: string) => request<PracticeDetail>(`/api/v1/sessions/${id}`);
