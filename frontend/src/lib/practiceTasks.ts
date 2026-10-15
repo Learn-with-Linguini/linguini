@@ -2,6 +2,16 @@ import type { SessionTask } from "./api";
 
 export const taskDone = (task: SessionTask) => task.status === "completed" || task.status === "skipped";
 
+export function taskXp(task: SessionTask): { xp: number; bonus: number } | null {
+  return task.xpReward === 0 && task.xpBonus === 0
+    ? null
+    : { xp: task.xpReward, bonus: task.xpBonus };
+}
+
+export function xpEarnedText(xp: number | undefined): string | null {
+  return xp && xp > 0 ? `+${xp} XP earned` : null;
+}
+
 /** Keep answer choices stable for a task while varying their position between questions. */
 export function choiceOrder<T>(options: readonly T[], seed: string, value: (option: T) => string): T[] {
   const rank = (input: string) => {

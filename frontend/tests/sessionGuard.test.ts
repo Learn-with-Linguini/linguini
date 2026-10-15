@@ -37,7 +37,8 @@ const contents: Record<string, SessionTask["publicContent"]> = {
 function task(kind: keyof typeof contents, status: SessionTask["status"], orderIndex: number): SessionTask {
   const publicContent = contents[kind];
   return { id: `${kind}-${orderIndex}`, kind: publicContent.kind, phase: kind === "clues" ? "ispy" : "learning",
-    status, isSkippable: true, orderIndex, publicContent, vocabularyItemId: null, sceneObjectId: null };
+    status, isSkippable: true, orderIndex, publicContent, vocabularyItemId: null, sceneObjectId: null,
+    xpReward: 0, xpBonus: 0 };
 }
 
 let fixture = detail("inProgress");

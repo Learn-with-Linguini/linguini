@@ -684,7 +684,7 @@ class PostgresWorkflowRepository:
             translation_preview=(draft or {}).get("translationPreview"),
             analysis_retryable=analysis_retryable(session),
             personalization=(draft or {}).get("personalization"),
-            tasks=[SessionTaskPublic.from_internal(t) for t in tasks],
+            tasks=[SessionTaskPublic.from_internal(t, mode=session.mode) for t in tasks],
             progress=task_progress(tasks),
             next_task_id=next(
                 (t.id for t in tasks if t.status not in {"completed", "skipped"}), None
@@ -2159,13 +2159,32 @@ class PostgresWorkflowRepository:
 
     def _action_response(self, c, task, attempt):
         tasks = self._tasks(c, task.session_id)
+        session = self._session(c, task.session_id)
+        attempt_ids = c.execute(
+            select(task_attempts.c.id).where(task_attempts.c.session_task_id == task.id)
+        ).scalars()
+        idempotency_keys = [
+            f"task:{task.id}",
+            f"ispy-correct:{task.id}",
+            *(f"attempt:{attempt_id}" for attempt_id in attempt_ids),
+        ]
+        xp_earned = c.execute(
+            select(func.coalesce(func.sum(xp_events.c.amount), 0)).where(
+                xp_events.c.user_id == self.user_id,
+                xp_events.c.session_id == task.session_id,
+                xp_events.c.idempotency_key.in_(idempotency_keys),
+            )
+        ).scalar_one()
         return TaskActionResponse(
-            task=SessionTaskPublic.from_internal(next(t for t in tasks if t.id == task.id)),
+            task=SessionTaskPublic.from_internal(
+                next(t for t in tasks if t.id == task.id), mode=session.mode
+            ),
             attempt=attempt,
             next_task_id=next(
                 (t.id for t in tasks if t.status not in {"completed", "skipped"}), None
             ),
             session_progress=task_progress(tasks),
+            xp_earned=xp_earned,
         )
 
 

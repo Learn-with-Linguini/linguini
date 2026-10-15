@@ -174,8 +174,8 @@ export function StatusPill({ status }: { status: "new" | "learning" | "mastered"
   return <span className={`pill pill--${status}`}>{copy}</span>;
 }
 
-export function XpPill({ xp }: { xp: number }) {
-  return <span className="pill pill--xp">+{xp} XP</span>;
+export function XpPill({ xp, bonus }: { xp: number; bonus?: number }) {
+  return <span className="pill pill--xp">+{xp} XP{bonus && bonus > 0 ? ` · +${bonus} if correct` : ""}</span>;
 }
 
 export function Tabs<T extends string>({

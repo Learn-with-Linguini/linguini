@@ -25,6 +25,7 @@ from app.database import read_connection
 from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.users import users
 from app.repositories.tasks import TaskConflictError, TaskNotFoundError, TaskStorageError
+from app.schemas.enums import SessionMode
 from app.schemas.tasks import SessionTask, TaskAttempt, TaskHint
 
 
@@ -141,6 +142,20 @@ class PostgresTaskRepository:
     def get(self, task_id: UUID, user_id: UUID) -> SessionTask | None:
         rows = self._read(session_tasks, SessionTask, user_id, session_tasks.c.id == task_id)
         return rows[0] if rows else None
+
+    def get_session_mode(self, session_id: UUID, user_id: UUID) -> SessionMode | None:
+        statement = (
+            select(sessions.c.mode)
+            .join(session_tasks, session_tasks.c.session_id == sessions.c.id)
+            .where(sessions.c.id == session_id, sessions.c.user_id == user_id)
+            .limit(1)
+        )
+        try:
+            with read_connection(self.engine) as connection:
+                mode = connection.execute(statement).scalar_one_or_none()
+                return SessionMode(mode) if mode is not None else None
+        except SQLAlchemyError as exc:
+            raise TaskStorageError("Unable to load task session.") from exc
 
     def list_for_session(self, session_id: UUID, user_id: UUID) -> list[SessionTask]:
         return self._read(

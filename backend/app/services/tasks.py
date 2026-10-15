@@ -26,10 +26,14 @@ class TaskService:
         self.ai = ai
 
     def get(self, task_id: UUID) -> SessionTaskPublic:
-        task = self.repository.get(task_id, self.users.get_current_user().id)
+        user_id = self.users.get_current_user().id
+        task = self.repository.get(task_id, user_id)
         if task is None:
             raise TaskNotFoundError("Task not found.")
-        return SessionTaskPublic.from_internal(task)
+        mode = self.repository.get_session_mode(task.session_id, user_id)
+        if mode is None:
+            raise TaskNotFoundError("Task not found.")
+        return SessionTaskPublic.from_internal(task, mode=mode)
 
     def latest_attempt(self, task_id: UUID) -> LatestAttemptResponse:
         """Restore an answered I-Spy round; other task kinds have nothing to restore here."""

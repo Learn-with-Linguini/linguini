@@ -2,12 +2,12 @@ import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { sessionDestination, sessionPaths } from "../lib/sessionRoute";
-import { Button, Feedback, IconButton, ProgressTrail } from "../components/ui";
+import { Button, Feedback, IconButton, ProgressTrail, XpPill } from "../components/ui";
 import { ArrowRightIcon, CheckIcon, SpeakerIcon } from "../components/icons";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
-import { choiceOrder, practiceStages, taskDone } from "../lib/practiceTasks";
+import { choiceOrder, practiceStages, taskDone, taskXp, xpEarnedText } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
 import { getLatestAttempt } from "../lib/api";
 import type { SessionTask, TaskActionResult } from "../lib/api";
@@ -90,8 +90,10 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
   const shownPick = acceptedPick ?? restored?.optionId ?? (answered ? null : picked);
   const feedback = result?.attempt?.feedback?.message ?? restored?.feedback;
   const selected = content.options.find(option => option.optionId === shownPick);
+  const reward = !answered ? taskXp(task) : null;
+  const earnedText = xpEarnedText(result?.xpEarned);
   return <div className="stack">
-    <h2 className="text-center">I-Spy · Linguini's clues</h2>
+    <div className="spread"><h2 className="text-center">I-Spy · Linguini's clues</h2>{reward ? <XpPill {...reward} /> : null}</div>
     <p>Use the clues to find the word</p>
     <ProgressTrail value={index + (answered ? 1 : 0)} total={total} label={`${index + 1} / ${total}`} />
     <ScenePhoto scene={scene} activeItemId={isCorrect ? selected?.sceneObjectId : null} />
@@ -108,7 +110,7 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
     })}</div>
     {checking ? <p className="choice-checking" role="status">Checking your answer…</p> : null}
     {answered || result ? <>
-      <Feedback tone={isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status"><strong>{task.status === "skipped" ? "Skipped — no XP earned." : feedback ?? "Answer saved."}</strong>{content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}</div></Feedback>
+      <Feedback tone={isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status"><strong>{task.status === "skipped" ? "Skipped — no XP earned." : feedback ?? "Answer saved."}</strong>{content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback>
       {task.status !== "skipped" ? <ReportIssueLink reportType="I-Spy answer" fields={[
         ["Task ID", task.id],
         ["Clue", `${opening} ${content.clue}`],
