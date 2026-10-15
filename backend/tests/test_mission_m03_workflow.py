@@ -13,11 +13,8 @@ from test_mission_m01_workflow import (
     _review,
     _scalar,
 )
-from test_mission_m01_workflow import missions as missions
 from test_mission_m02_workflow import (
-    _colours_only,
     _planned,
-    _relations_only,
     _without_clue_model,
 )
 from test_postgres_sessions import database as database
@@ -33,7 +30,7 @@ from app.ai.features.learning_tasks.mission_m03 import (
 from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.tasks import task_attempts
 from app.repositories.postgres.xp import xp_events
-from app.repositories.practice import MissionPhotoNotReadyError, PracticeConflictError
+from app.repositories.practice import PracticeConflictError
 from app.schemas.sessions import AddedPracticeObject, ReviewPracticeRequest
 from app.schemas.tasks import SkipTaskRequest
 from app.services import mission_lessons_m03
@@ -113,7 +110,7 @@ def _m03(detail):
     ("3", 3, "confirmed"), ("two", 3, "corrected"), (None, 3, "entered"),
 ])
 def test_the_learners_count_is_saved_with_its_group(
-    curated, missions, suggestion, quantity, source,
+    curated, suggestion, quantity, source,
 ):
     engine = curated[0]
     _repository_, sid, detail = _lesson(curated, _counts_only(quantity), suggestion=suggestion)
@@ -126,7 +123,7 @@ def test_the_learners_count_is_saved_with_its_group(
     assert [item.quantity for item in detail.counted_groups] == [quantity]
 
 
-def test_a_photo_with_only_a_count_plans_m03(curated, missions):
+def test_a_photo_with_only_a_count_plans_m03(curated):
     engine, _owner, _profile, client, *_ = curated
     model = SceneModel()
     _repository_, sid, detail = _lesson(curated, _counts_only(), model)
@@ -154,7 +151,7 @@ def test_a_photo_with_only_a_count_plans_m03(curated, missions):
 
 
 @pytest.mark.parametrize("quantity", [None, 1])
-def test_a_missing_or_single_count_does_not_qualify(curated, missions, quantity):
+def test_a_missing_or_single_count_does_not_qualify(curated, quantity):
     profile = curated[2]
     repository = _repository(curated, SceneModel())
     sid, analyzed = _analyzed(curated, repository)
@@ -162,13 +159,14 @@ def test_a_missing_or_single_count_does_not_qualify(curated, missions, quantity)
         accepted_object_ids=[obj.id for obj in analyzed.scene_objects],
         object_counts={} if quantity is None else {_cup(analyzed).id: quantity},
     )
-    with pytest.raises(MissionPhotoNotReadyError) as error:
-        repository.review(sid, profile.id, request)
-    assert "Say how many: Count a group of 2 to 10 matching objects." in str(error.value)
-    assert repository.get(sid, profile.id).tasks == []
+    repository.review(sid, profile.id, request)
+    detail = repository.get(sid, profile.id)
+    tips = " ".join(detail.mission_guidance)
+    assert "Say how many: Count a group of 2 to 10 matching objects." in tips
+    assert all(task.public_content.mission_key is None for task in detail.tasks)
 
 
-def test_a_group_of_matching_objects_is_counted_once(curated, missions):
+def test_a_group_of_matching_objects_is_counted_once(curated):
     profile = curated[2]
     repository = _repository(curated, SceneModel())
     sid, analyzed = _analyzed(curated, repository)
@@ -182,7 +180,7 @@ def test_a_group_of_matching_objects_is_counted_once(curated, missions):
         repository.review(sid, profile.id, request)
 
 
-def test_valid_m03_model_lesson_uses_its_own_cache_identity(curated, missions, monkeypatch):
+def test_valid_m03_model_lesson_uses_its_own_cache_identity(curated, monkeypatch):
     versions = []
     original = learning_service.run_cached
 
@@ -199,7 +197,7 @@ def test_valid_m03_model_lesson_uses_its_own_cache_identity(curated, missions, m
 
 
 @pytest.mark.parametrize("scenario", ["correct", "partial", "incorrect"])
-def test_m03_submissions_grade_each_question_once(curated, missions, scenario):
+def test_m03_submissions_grade_each_question_once(curated, scenario):
     engine, _owner, _profile, client, *_ = curated
     _repository_, sid, detail = _lesson(curated, _counts_only())
     lesson = _m03(detail)
@@ -244,15 +242,8 @@ def test_m03_submissions_grade_each_question_once(curated, missions, scenario):
     assert mistakes == expected
 
 
-def test_all_three_missions_join_once_two_were_passed(curated, missions):
-    engine, _owner, profile, client, *_ = curated
-    for review, mission_id in ((_colours_only, "M01"), (_relations_only, "M02")):
-        earlier, sid, detail = _lesson(curated, review)
-        assert _planned(detail) == [mission_id]
-        task = detail.tasks[1]
-        passed = _attempt(client, task, _answer_key(engine, task.id)["correctOptionIds"])
-        assert passed.status_code == 200, passed.text
-        earlier.finish(sid, profile.id, abandon=True)
+def test_a_photo_fitting_all_three_plans_all_three(curated):
+    engine, _owner, profile, *_ = curated
     repository, sid, detail = _lesson(curated, _everything)
     assert _planned(detail) == ["M01", "M02", "M03"]
     kinds = [task.kind for task in detail.tasks]
@@ -274,13 +265,8 @@ def test_all_three_missions_join_once_two_were_passed(curated, missions):
     assert repository.get(sid, profile.id).session.status == "completed"
 
 
-def test_m03_waits_its_turn_when_m01_is_the_new_pattern(curated, missions):
-    _repository_, _sid, detail = _lesson(curated, _everything)
-    assert _planned(detail) == ["M01"]
-
-
 def test_a_noun_without_a_reviewed_plural_skips_m03_for_the_regular_lesson(
-    curated, missions, monkeypatch,
+    curated, monkeypatch,
 ):
     engine = curated[0]
     monkeypatch.setattr(mission_lessons_m03, "regular_plural", lambda *_: None)

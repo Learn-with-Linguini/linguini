@@ -510,9 +510,9 @@ correctness, score, XP, vocabulary progress and learner history still come from
 
 #### Mission lesson planning
 
-Set `MISSION_LESSONS_ENABLED=true` to turn it on. It applies only to lesson sessions
-whose active language profile is A1 and whose target language has reviewed forms
-(`es`, `fr`); every other session keeps the existing lesson.
+Mission lessons apply to lesson sessions whose active language profile is A1 and whose
+target language has reviewed forms (`es`, `fr`); every other session keeps the existing
+lesson.
 
 - **Photo requirements.** Each definition names only the confirmed facts it needs:
   `minConfirmedObjects` (different names), `minColouredObjects` (reviewed colours) and
@@ -529,14 +529,12 @@ whose active language profile is A1 and whose target language has reviewed forms
   detected label never implies a count. No migration is needed.
 - **Planner** (`app/services/mission_eligibility.py`). Confirming the scene checks every
   implemented A1 mission (M01, M02, then M03) against only the facts the learner
-  confirmed. Each mission teaches one new pattern, so a lesson holds at most one
-  eligible mission the learner has not passed (met its `minCorrectRatio`) in an earlier
-  session of the same profile, alongside any eligible passed ones, up to three. The plan is saved as
+  confirmed, and plans every mission the photo supports, up to three. The plan is saved as
   `analysisDraft.missionPlan` before generation and generation reads only that snapshot.
-  Sessions reviewed before plans were saved keep M01.
-- **Not ready.** When no mission qualifies, the review is rolled back with a 409
-  `mission_photo_not_ready` naming what each mission is missing, and the learner can add
-  facts or choose another image. Nothing is inferred and no scene is substituted.
+  Sessions reviewed before plans were saved keep the regular lesson.
+- **No mission fits.** The regular lesson runs and `analysisDraft.missionGuidance`
+  (returned as `missionGuidance`) lists what each mission is missing; the lesson page
+  shows it as a short note. Nothing is inferred and no scene is substituted.
 - **Shared teaching.** Translation and one vocabulary introduction are checkpointed first,
   as before. The introduction carries no mission fields because it teaches the nouns for
   every planned mission; its per-word evidence still follows each word's own result.

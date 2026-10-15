@@ -159,6 +159,7 @@ class SessionDetailResponse(ApiModel):
     analysis_retryable: bool = False
     personalization: SessionPersonalization | None = None
     counted_groups: list[CountedGroup] = Field(default_factory=list)
+    mission_guidance: list[str] = Field(default_factory=list)
     session: Session
     scene_object_relations: list[SceneObjectRelation] = Field(default_factory=list)
     scene_objects: list[SceneObject] = Field(default_factory=list)

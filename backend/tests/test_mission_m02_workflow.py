@@ -13,7 +13,6 @@ from test_mission_m01_workflow import (
     _review,
     _scalar,
 )
-from test_mission_m01_workflow import missions as missions
 from test_postgres_sessions import database as database
 from test_preloaded_templates import SceneModel, TextModelResponse, services
 from test_preloaded_templates_workflow import curated as curated
@@ -28,7 +27,7 @@ from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.tasks import task_attempts
 from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.repositories.postgres.xp import xp_events
-from app.repositories.practice import MissionPhotoNotReadyError, PracticeConflictError
+from app.repositories.practice import PracticeConflictError
 from app.schemas.enums import SessionMode
 from app.schemas.sessions import ReviewPracticeRequest
 from app.schemas.tasks import SkipTaskRequest
@@ -99,12 +98,12 @@ def _correct_answers(engine, task):
     return _answer_key(engine, task.id)["correctOptionIds"]
 
 
-def test_colour_only_scene_plans_m01(curated, missions):
+def test_colour_only_scene_plans_m01(curated):
     _repository_, _sid, detail = _lesson(curated, _colours_only)
     assert _planned(detail) == ["M01"]
 
 
-def test_relation_only_scene_plans_m02_after_the_shared_vocabulary(curated, missions):
+def test_relation_only_scene_plans_m02_after_the_shared_vocabulary(curated):
     engine, _owner, _profile, client, *_ = curated
     model = SceneModel()
     _repository_, sid, detail = _lesson(curated, _relations_only, model)
@@ -135,7 +134,7 @@ def test_relation_only_scene_plans_m02_after_the_shared_vocabulary(curated, miss
     ]
 
 
-def test_valid_m02_model_lesson_uses_its_own_cache_identity(curated, missions, monkeypatch):
+def test_valid_m02_model_lesson_uses_its_own_cache_identity(curated, monkeypatch):
     versions = []
     original = learning_service.run_cached
 
@@ -152,7 +151,7 @@ def test_valid_m02_model_lesson_uses_its_own_cache_identity(curated, missions, m
 
 
 @pytest.mark.parametrize("scenario", ["correct", "partial", "incorrect"])
-def test_m02_submissions_grade_each_question_once(curated, missions, scenario):
+def test_m02_submissions_grade_each_question_once(curated, scenario):
     engine, _owner, _profile, client, *_ = curated
     _repository_, sid, detail = _lesson(curated, _relations_only)
     lesson = detail.tasks[1]
@@ -188,15 +187,8 @@ def test_m02_submissions_grade_each_question_once(curated, missions, scenario):
         assert outcomes[last]["mistakes"][0]["mistake"] == "wrongPosition"
 
 
-def test_both_missions_join_once_one_was_passed_and_the_lesson_finishes_after_both(
-    curated, missions,
-):
+def test_a_photo_fitting_both_plans_both_and_the_lesson_finishes_after_both(curated):
     engine, _owner, profile, client, *_ = curated
-    earlier, first_sid, first = _lesson(curated)
-    assert _planned(first) == ["M01"]
-    passed = _attempt(client, first.tasks[1], _correct_answers(engine, first.tasks[1]))
-    assert passed.status_code == 200, passed.text
-    earlier.finish(first_sid, profile.id, abandon=True)
     repository, sid, detail = _lesson(curated)
     assert _planned(detail) == ["M01", "M02"]
     kinds = [task.kind for task in detail.tasks]
@@ -218,26 +210,22 @@ def test_both_missions_join_once_one_was_passed_and_the_lesson_finishes_after_bo
     )) == 1
 
 
-def test_a_photo_no_mission_supports_gets_guidance_for_each(curated, missions):
+def test_a_photo_no_mission_supports_gets_the_regular_lesson_and_tips_for_each(curated):
     profile = curated[2]
     repository = _repository(curated, SceneModel())
     sid, analyzed = _analyzed(curated, repository)
-    status = analyzed.session.status
-    request = ReviewPracticeRequest(
+    repository.review(sid, profile.id, ReviewPracticeRequest(
         accepted_object_ids=[obj.id for obj in analyzed.scene_objects]
-    )
-    with pytest.raises(MissionPhotoNotReadyError) as error:
-        repository.review(sid, profile.id, request)
-    message = str(error.value)
-    assert message.startswith("This photo is not ready for this lesson.")
-    assert "Identify and describe an object: Confirm the colour" in message
-    assert "Ask where it is: Confirm where one object is" in message
-    assert message.endswith("or choose another image.")
+    ))
     detail = repository.get(sid, profile.id)
-    assert detail.session.status == status and detail.tasks == []
+    tips = " ".join(detail.mission_guidance)
+    assert "Identify and describe an object: Confirm the colour" in tips
+    assert "Ask where it is: Confirm where one object is" in tips
+    assert detail.session.analysis_draft["missionPlan"] == []
+    assert all(task.public_content.mission_key is None for task in detail.tasks)
 
 
-def test_sessions_saved_before_mission_plans_keep_m01(curated, missions, monkeypatch):
+def test_sessions_saved_before_mission_plans_keep_the_regular_lesson(curated):
     repository = _repository(curated, SceneModel())
     lesson = SessionMode.LESSON
 
@@ -245,9 +233,8 @@ def test_sessions_saved_before_mission_plans_keep_m01(curated, missions, monkeyp
         session = SimpleNamespace(mode=lesson, analysis_draft=draft)
         return [m.mission_id for m in repository._planned_missions(session, A1_ES)]
 
-    assert planned({}) == ["M01"]
+    assert planned({}) == []
+    assert planned({"missionPlan": []}) == []
     assert planned({"missionPlan": [
         {"missionId": "M02", "practiceLevel": "A1", "contentVersion": 1}
     ]}) == ["M02"]
-    monkeypatch.setenv("MISSION_LESSONS_ENABLED", "false")
-    assert planned({}) == []

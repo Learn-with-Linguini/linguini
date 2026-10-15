@@ -1,9 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ApiError, descriptionEvaluation, reviewDetails, ISPY_DESCRIPTION_EVALUATION_VERSION } from "../src/lib/api.ts";
+import { descriptionEvaluation, reviewDetails, ISPY_DESCRIPTION_EVALUATION_VERSION } from "../src/lib/api.ts";
 import type { ISpyDescriptionEvaluation, SessionTask, TaskAttemptResult, TaskContent } from "../src/lib/api.ts";
-import { finishesWithoutISpy, isMissionSession, MISSION_PHOTO_NOT_READY, taskTitle } from "../src/lib/practiceTasks.ts";
-import { friendlyError } from "../src/lib/queryKeys.ts";
+import { finishesWithoutISpy, isMissionSession, taskTitle } from "../src/lib/practiceTasks.ts";
 
 const lesson: TaskContent = {
   kind: "grammarLesson", focus: "genderNumberAgreement", title: "Describe the cup", explanation: "Colours agree.",
@@ -60,10 +59,4 @@ test("only mission sessions without I-Spy finish from the last learning task", (
   const where = task({ ...lesson, title: "Ask where it is", missionId: "M02", practiceLevel: "A1", contentVersion: 1 });
   assert.equal(finishesWithoutISpy([mission, where]), true);
   assert.equal(finishesWithoutISpy([mission, where, clue]), false);
-});
-
-test("a photo that is not ready for the mission keeps the server's reasons", () => {
-  const reason = `${MISSION_PHOTO_NOT_READY} Confirm the colour of at least one object.`;
-  assert.equal(friendlyError(new ApiError(reason, 409, "mission_photo_not_ready", null)), reason);
-  assert.notEqual(friendlyError(new ApiError("Session changed.", 409, "practice_conflict", null)), "Session changed.");
 });

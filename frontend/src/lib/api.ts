@@ -428,6 +428,7 @@ export interface PracticeDetail {
   tasks: SessionTask[]; nextTaskId: string | null; progress: SessionProgress;
   personalization?: SessionPersonalization | null;
   countedGroups?: CountedGroup[];
+  missionGuidance?: string[];
 }
 export interface CountedGroup {
   sceneObjectIds: string[]; label: string; quantity: number;

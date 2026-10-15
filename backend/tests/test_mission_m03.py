@@ -53,19 +53,14 @@ def test_a_count_alone_never_satisfies_m01_or_m02():
     assert not photo_eligibility(M02, objects, [], groups).eligible
 
 
-@pytest.mark.parametrize(("objects", "relations", "groups", "passed", "planned"), [
-    ([obj(BOOK, "book")], [], [counted(3)], set(), ["M03"]),
-    (FULL, ON, [counted(3)], set(), ["M01"]),
-    (FULL, ON, [counted(3)], {"M01"}, ["M01", "M02"]),
-    (FULL, ON, [counted(3)], {"M01", "M02"}, ["M01", "M02", "M03"]),
-    (FULL, ON, [counted(3)], {"M03"}, ["M01", "M03"]),
-    (FULL, ON, [counted(1)], {"M01", "M02"}, ["M01", "M02"]),
-    (FULL, [], [counted(3)], {"M01"}, ["M01", "M03"]),
+@pytest.mark.parametrize(("objects", "relations", "groups", "planned"), [
+    ([obj(BOOK, "book")], [], [counted(3)], ["M03"]),
+    (FULL, ON, [counted(3)], ["M01", "M02", "M03"]),
+    (FULL, ON, [counted(1)], ["M01", "M02"]),
+    (FULL, [], [counted(3)], ["M01", "M03"]),
 ])
-def test_three_missions_join_with_at_most_one_new_pattern(
-    objects, relations, groups, passed, planned,
-):
-    plan = plan_missions([M01, M02, M03], objects, relations, passed, groups)
+def test_every_mission_the_photo_fits_is_planned_up_to_three(objects, relations, groups, planned):
+    plan = plan_missions([M01, M02, M03], objects, relations, groups)
     assert [mission.mission_id for mission in plan] == planned
 
 

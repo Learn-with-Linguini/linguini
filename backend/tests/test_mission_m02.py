@@ -60,17 +60,14 @@ def test_missing_relations_are_named_for_m02_only():
     )
 
 
-@pytest.mark.parametrize(("objects", "relations", "passed", "planned"), [
-    (COLOURED, [], set(), ["M01"]),
-    (PLAIN, ON, set(), ["M02"]),
-    (COLOURED, ON, set(), ["M01"]),
-    (COLOURED, ON, {"M01"}, ["M01", "M02"]),
-    (COLOURED, ON, {"M02"}, ["M01", "M02"]),
-    (PLAIN, ON, {"M01"}, ["M02"]),
-    (PLAIN, [], {"M01", "M02"}, []),
+@pytest.mark.parametrize(("objects", "relations", "planned"), [
+    (COLOURED, [], ["M01"]),
+    (PLAIN, ON, ["M02"]),
+    (COLOURED, ON, ["M01", "M02"]),
+    (PLAIN, [], []),
 ])
-def test_a_second_mission_joins_only_after_one_was_passed(objects, relations, passed, planned):
-    plan = plan_missions([M01, M02], objects, relations, passed)
+def test_every_mission_the_photo_fits_is_planned(objects, relations, planned):
+    plan = plan_missions([M01, M02], objects, relations)
     assert [mission.mission_id for mission in plan] == planned
 
 

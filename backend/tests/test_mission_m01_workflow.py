@@ -20,11 +20,18 @@ from app.repositories.postgres.tasks import session_tasks, task_attempts
 from app.repositories.postgres.vocabulary import vocabulary_encounters
 from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.repositories.postgres.xp import xp_events
-from app.repositories.practice import MissionPhotoNotReadyError, PracticeConflictError
+from app.repositories.practice import PracticeConflictError
 from app.schemas.sessions import ReviewPracticeRequest
 from app.schemas.tasks import SkipTaskRequest
+from app.services import mission_eligibility, mission_lessons_m01
 
 M01 = ("M01", "A1", 1)
+
+
+@pytest.fixture(autouse=True)
+def m01_only(monkeypatch):
+    """Keep these photos to the M01 lesson; M02 and M03 have their own workflow tests."""
+    monkeypatch.setitem(mission_eligibility.IMPLEMENTED_MISSIONS, "A1", (M01,))
 
 
 class MissionModel(SceneModel):
@@ -42,11 +49,6 @@ class MissionModel(SceneModel):
             output_text=json.dumps(body), model_name="test-text-model",
             prompt_version=request.prompt_version, input_tokens=10, output_tokens=10,
         )
-
-
-@pytest.fixture
-def missions(monkeypatch):
-    monkeypatch.setenv("MISSION_LESSONS_ENABLED", "true")
 
 
 def _repository(curated, model):
@@ -103,11 +105,11 @@ def _attempt(client, task, answers, key="m01-answer", **extra):
     })
 
 
-def test_suitable_photo_builds_one_mission_lesson_after_the_vocabulary(curated, missions):
+def test_suitable_photo_builds_one_mission_lesson_after_the_vocabulary(curated):
     engine, _owner, _profile, client, *_ = curated
     model = SceneModel()
     _repository_, sid, detail = _lesson(curated, model)
-    assert detail.session.status == "inProgress"
+    assert detail.session.status == "inProgress" and detail.mission_guidance == []
     kinds = [task.kind for task in detail.tasks]
     assert kinds[:2] == ["vocabularyIntroduction", "grammarLesson"]
     assert "ispyRound" in kinds[2:] and set(kinds[2:]) <= {"ispyRound", "reflection"}
@@ -133,7 +135,7 @@ def test_suitable_photo_builds_one_mission_lesson_after_the_vocabulary(curated, 
 
 
 def test_valid_model_lesson_is_used_under_a_mission_cache_identity(
-    curated, missions, monkeypatch,
+    curated, monkeypatch,
 ):
     versions = []
     original = learning_service.run_cached
@@ -150,36 +152,41 @@ def test_valid_model_lesson_is_used_under_a_mission_cache_identity(
     ]
 
 
-def test_unsuitable_photo_can_be_reviewed_again_without_a_substitute_scene(curated, missions):
-    profile = curated[2]
+def test_a_photo_no_mission_fits_gets_the_regular_lesson_with_tips(curated):
+    _engine, _owner, profile, client, *_ = curated
     repository = _repository(curated, SceneModel())
     sid, analyzed = _analyzed(curated, repository)
-    objects = analyzed.scene_objects
-    status = analyzed.session.status
-    coloured = next(obj for obj in objects if obj.attributes)
-    for request, reason in [
-        (ReviewPracticeRequest(accepted_object_ids=[obj.id for obj in objects]),
-         "Confirm the colour of at least one object."),
-        (ReviewPracticeRequest(
-            accepted_object_ids=[coloured.id],
-            object_attributes={coloured.id: coloured.attributes},
-        ), "Confirm at least 2 different objects."),
-    ]:
-        with pytest.raises(MissionPhotoNotReadyError, match="not ready for this lesson") as error:
-            repository.review(sid, profile.id, request)
-        assert reason in str(error.value) and "choose another image" in str(error.value)
-        detail = repository.get(sid, profile.id)
-        assert detail.session.status == status and detail.tasks == []
-    repository.review(sid, profile.id, _review(analyzed))
-    assert repository.get(sid, profile.id).session.status == "inProgress"
+    coloured = next(obj for obj in analyzed.scene_objects if obj.attributes)
+    repository.review(sid, profile.id, ReviewPracticeRequest(
+        accepted_object_ids=[coloured.id],
+        object_attributes={coloured.id: coloured.attributes},
+    ))
+    detail = repository.get(sid, profile.id)
+    assert detail.session.status == "inProgress"
+    assert detail.session.analysis_draft["missionPlan"] == []
+    assert all(task.public_content.mission_key is None for task in detail.tasks)
+    tips = " ".join(detail.mission_guidance)
+    assert "Identify and describe an object: Confirm at least 2 different objects." in tips
+    response = client.get(f"/api/v1/sessions/{sid}").json()
+    assert response["missionGuidance"] == detail.mission_guidance
 
 
-@pytest.mark.parametrize(("enabled", "level"), [("false", "A1"), ("true", "A2")])
-def test_flag_off_and_other_levels_keep_the_existing_lesson(
-    curated, monkeypatch, enabled, level,
+
+def test_a_colour_without_a_reviewed_form_skips_m01_for_the_regular_lesson(
+    curated, monkeypatch,
 ):
+    monkeypatch.setattr(mission_lessons_m01, "agreed_colour", lambda *_: None)
+    _repository_, _sid, detail = _lesson(curated)
+    assert detail.session.status == "inProgress"
+    assert detail.session.analysis_draft["skippedMissions"] == [
+        {"missionId": "M01", "reason": "noReviewedContent"}
+    ]
+    assert "ispyRound" in {task.kind for task in detail.tasks}
+    assert all(task.public_content.mission_key is None for task in detail.tasks)
+
+@pytest.mark.parametrize("level", ["A0", "A2"])
+def test_other_levels_keep_the_existing_lesson(curated, level):
     engine, _owner, profile, *_ = curated
-    monkeypatch.setenv("MISSION_LESSONS_ENABLED", enabled)
     with engine.begin() as connection:
         connection.execute(update(language_profiles).where(
             language_profiles.c.id == profile.id
@@ -187,10 +194,11 @@ def test_flag_off_and_other_levels_keep_the_existing_lesson(
     _repository_, _sid, detail = _lesson(curated)
     assert "ispyRound" in {task.kind for task in detail.tasks}
     assert all(task.public_content.mission_key is None for task in detail.tasks)
+    assert detail.mission_guidance == []
 
 
 @pytest.mark.parametrize("scenario", ["correct", "partial", "incorrect"])
-def test_submissions_grade_each_question_and_word_once(curated, missions, scenario):
+def test_submissions_grade_each_question_and_word_once(curated, scenario):
     engine, _owner, _profile, client, *_ = curated
     _repository_, sid, detail = _lesson(curated)
     lesson = detail.tasks[1]
@@ -251,7 +259,7 @@ def test_submissions_grade_each_question_and_word_once(curated, missions, scenar
     }
 
 
-def test_offered_support_is_recorded_and_the_lesson_finishes_after_bonus_ispy(curated, missions):
+def test_offered_support_is_recorded_and_the_lesson_finishes_after_bonus_ispy(curated):
     engine, _owner, profile, client, *_ = curated
     repository, sid, detail = _lesson(curated)
     introduction, lesson, *bonus = detail.tasks

@@ -41,6 +41,10 @@ export function Learn() {
 
       {session.translationPreview ? <TranslationPreview preview={session.translationPreview} scene={scene} /> : null}
       <SessionPersonalization personalization={session.personalization} languageCode={scene.languageCode} />
+      {session.missionGuidance?.length ? <section className="panel-note" role="note">
+        <p><strong>This photo didn't fit a mission</strong>, so this is the regular lesson.</p>
+        <p className="small muted">For a mission next time: {session.missionGuidance.join(" ")}</p>
+      </section> : null}
 
       <div className="task-list" aria-label="Learning tasks">
         {tasks.map((task, index) => {

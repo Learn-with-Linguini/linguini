@@ -3,8 +3,6 @@
 from types import SimpleNamespace
 
 import pytest
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
 
 from app.ai.features.learning_tasks.mission_m01 import (
     M01LessonResult,
@@ -12,9 +10,7 @@ from app.ai.features.learning_tasks.mission_m01 import (
     validate_m01_lesson,
 )
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
-from app.api.learning_errors import register_learning_errors
 from app.missions import get_mission
-from app.repositories.practice import MissionPhotoNotReadyError
 from app.services.mission_eligibility import agreed_colour, lesson_missions, photo_eligibility
 
 MISSION = get_mission("M01", "A1", 1)
@@ -63,19 +59,17 @@ def test_colour_forms_agree_only_when_the_gender_is_known():
     assert agreed_colour("red", "de", "masculine") is None
 
 
-@pytest.mark.parametrize(("enabled", "mode", "level", "language", "selected"), [
-    ("true", "lesson", "A1", "es", True),
-    ("true", "lesson", "A1", "fr", True),
-    ("false", "lesson", "A1", "es", False),
-    ("true", "lesson", "A2", "es", False),
-    ("true", "lesson", "A0", "es", False),
-    ("true", "lesson", "A1", "de", False),
-    ("true", "ispyGame", "A1", "es", False),
+@pytest.mark.parametrize(("mode", "level", "language", "selected"), [
+    ("lesson", "A1", "es", True),
+    ("lesson", "A1", "fr", True),
+    ("lesson", "A0", "es", False),
+    ("lesson", "A2", "es", False),
+    ("lesson", "A1", "de", False),
+    ("ispyGame", "A1", "es", False),
 ])
-def test_mission_path_needs_the_flag_an_a1_profile_and_a_supported_language(
-    monkeypatch, enabled, mode, level, language, selected,
+def test_mission_path_needs_an_a1_lesson_in_a_supported_language(
+    mode, level, language, selected,
 ):
-    monkeypatch.setenv("MISSION_LESSONS_ENABLED", enabled)
     profile = {"proficiency_level": level, "target_language_code": language}
     assert bool(lesson_missions(mode, profile)) is selected
 
@@ -100,16 +94,3 @@ def test_validator_rejects_unconfirmed_or_unanswerable_lessons(change):
     with pytest.raises((ValueError, LearningTaskGenerationError)):
         validate_m01_lesson(payload(), M01LessonResult.model_validate(data))
 
-
-def test_an_unready_photo_reaches_the_client_with_its_reasons():
-    app = FastAPI()
-    register_learning_errors(app)
-    reason = "This photo is not ready for this lesson. Confirm at least 2 different objects."
-
-    @app.post("/review")
-    def review():
-        raise MissionPhotoNotReadyError(reason)
-
-    response = TestClient(app).post("/review")
-    assert response.status_code == 409
-    assert response.json()["detail"] == {"code": "mission_photo_not_ready", "message": reason}

@@ -1,6 +1,5 @@
 """Mission planning and per-mission photo eligibility from learner-confirmed scene facts."""
 
-import os
 import re
 from dataclasses import dataclass
 
@@ -36,10 +35,6 @@ REVIEWED_COLOURS = {
 SUPPORTED_COLOURS = set(REVIEWED_COLOURS)
 
 
-def mission_lessons_enabled():
-    return os.getenv("MISSION_LESSONS_ENABLED", "false").strip().lower() == "true"
-
-
 # Relation types with reviewed location expressions, keyed by the I-Spy position meanings.
 POSITION_MEANINGS = {
     "on": "on", "under": "under", "next_to": "next to",
@@ -56,7 +51,7 @@ REVIEWED_POSITIONS = {
 
 def lesson_missions(session_mode, profile):
     """Implemented missions a new lesson may plan from; empty keeps the existing lesson path."""
-    if not mission_lessons_enabled() or session_mode != SessionMode.LESSON:
+    if session_mode != SessionMode.LESSON:
         return []
     if profile["target_language_code"].lower() not in SUPPORTED_LANGUAGES:
         return []
@@ -64,23 +59,12 @@ def lesson_missions(session_mode, profile):
     return [mission for key in keys if (mission := get_mission(*key)) is not None]
 
 
-def plan_missions(candidates, objects, relations, passed_mission_ids, counted_groups=()):
-    """Eligible missions for this photo, in catalogue order.
-
-    Each mission brings one new pattern, so a lesson holds at most one mission the
-    learner has not passed in an earlier session, alongside eligible passed ones.
-    """
-    passed = set(passed_mission_ids)
-    plan, new_pattern = [], False
-    for mission in candidates:
-        if not photo_eligibility(mission, objects, relations, counted_groups).eligible:
-            continue
-        if mission.mission_id not in passed:
-            if new_pattern:
-                continue
-            new_pattern = True
-        plan.append(mission)
-    return plan[:MAX_LESSON_MISSIONS]
+def plan_missions(candidates, objects, relations, counted_groups=()):
+    """Every mission this photo supports, in catalogue order."""
+    return [
+        mission for mission in candidates
+        if photo_eligibility(mission, objects, relations, counted_groups).eligible
+    ][:MAX_LESSON_MISSIONS]
 
 
 def mission_snapshot(mission):

@@ -20,6 +20,7 @@ from app.ai.cache import CacheScope, TemplateSet
 from app.ai.features.ispy_clues import ISpyClueGenerationError
 from app.ai.features.ispy_guess import ISpyGuessError, ISpyGuessResult
 from app.ai.features.learning_tasks import required_task_focuses
+from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.ai.features.scene_analysis import RoutedSceneAnalyzer
 from app.repositories.postgres.game_resources import refund_sauce, reward_basil, spend_sauce
 from app.repositories.postgres.language_profiles import language_profiles
@@ -48,7 +49,6 @@ from app.repositories.postgres.vocabulary import (
 from app.repositories.postgres.xp import award, xp_events
 from app.repositories.practice import (
     ActiveSessionLimitReachedError,
-    MissionPhotoNotReadyError,
     PracticeConflictError,
     PracticeNotFoundError,
     PracticeStorageError,
@@ -92,7 +92,6 @@ from app.services.ispy_descriptions import (
     interpret_guess,
 )
 from app.services.mission_eligibility import (
-    M01_A1,
     lesson_missions,
     mission_snapshot,
     photo_eligibility,
@@ -704,6 +703,7 @@ class PostgresWorkflowRepository:
             analysis_retryable=analysis_retryable(session),
             personalization=(draft or {}).get("personalization"),
             counted_groups=saved_counted_groups(draft),
+            mission_guidance=(draft or {}).get("missionGuidance", []),
             tasks=[SessionTaskPublic.from_internal(t) for t in tasks],
             progress=task_progress(tasks),
             next_task_id=next(
@@ -1374,61 +1374,30 @@ class PostgresWorkflowRepository:
         candidates = lesson_missions(session.mode, profile)
         if not candidates:
             return
-        passed = self._passed_missions(c, session, candidates)
-        plan = plan_missions(candidates, objects, relations, passed, counted_groups)
+        plan = plan_missions(candidates, objects, relations, counted_groups)
+        draft = dict(c.execute(select(sessions.c.analysis_draft).where(
+            sessions.c.id == session.id,
+        )).scalar_one() or {})
+        draft["missionPlan"] = [mission_snapshot(mission) for mission in plan]
+        draft.pop("missionGuidance", None)
         if not plan:
-            # Rolls the review back so the learner can add facts or pick another image.
-            reasons = [
+            # No mission fits, so the regular lesson runs with tips for a future photo.
+            draft["missionGuidance"] = [
                 f"{mission.title}: "
                 + " ".join(
                     photo_eligibility(mission, objects, relations, counted_groups).reasons
                 )
                 for mission in candidates
             ]
-            raise MissionPhotoNotReadyError(
-                "This photo is not ready for this lesson. " + " ".join(reasons)
-                + " Review the objects, colours, positions and counts, or choose another image."
-            )
-        draft = dict(c.execute(select(sessions.c.analysis_draft).where(
-            sessions.c.id == session.id,
-        )).scalar_one() or {})
-        draft["missionPlan"] = [mission_snapshot(mission) for mission in plan]
         c.execute(update(sessions).where(sessions.c.id == session.id).values(
             analysis_draft=draft,
         ))
 
-    def _passed_missions(self, c, session, candidates):
-        """Missions this profile met the expected performance for in earlier sessions."""
-        ratios = {m.mission_id: m.expected_performance.min_correct_ratio for m in candidates}
-        mission_id = session_tasks.c.public_content["missionId"].astext
-        rows = c.execute(
-            select(mission_id, task_attempts.c.evaluation_details)
-            .join(task_attempts, task_attempts.c.session_task_id == session_tasks.c.id)
-            .join(sessions, sessions.c.id == session_tasks.c.session_id)
-            .where(
-                sessions.c.language_profile_id == session.language_profile_id,
-                sessions.c.id != session.id,
-                session_tasks.c.kind == "grammarLesson",
-                mission_id.in_(list(ratios)),
-            )
-        ).all()
-        passed = set()
-        for mission, details in rows:
-            results = list(((details or {}).get("questionResults") or {}).values())
-            if results and sum(map(bool, results)) / len(results) >= ratios[mission]:
-                passed.add(mission)
-        return passed
-
     def _planned_missions(self, session, profile):
         if not lesson_missions(session.mode, profile):
             return []
-        draft = session.analysis_draft or {}
-        if "missionPlan" in draft:
-            return snapshot_missions(draft["missionPlan"])
-        # Sessions reviewed before mission plans were saved used M01 alone.
-        return snapshot_missions([dict(
-            missionId=M01_A1[0], practiceLevel=M01_A1[1], contentVersion=M01_A1[2],
-        )])
+        # Sessions reviewed before mission plans were saved keep the regular lesson.
+        return snapshot_missions((session.analysis_draft or {}).get("missionPlan"))
 
     def _reuse(self, c, session, asset, objects, relations):
         """The cache scope and scene templates for this session's content.
@@ -1676,7 +1645,15 @@ class PostgresWorkflowRepository:
                         mission.mission_id, claim.session_id,
                     )
             if result is None:
-                result = spec.generation.fallback(payload)
+                try:
+                    result = spec.generation.fallback(payload)
+                except LearningTaskGenerationError:
+                    logger.warning(
+                        "%s has no buildable lesson for session %s; skipping it.",
+                        mission.mission_id, claim.session_id,
+                    )
+                    skipped.append(dict(missionId=mission.mission_id, reason="noReviewedContent"))
+                    continue
             lessons.append(spec.task(claim.session_id, mission, payload, result, vocabulary_ids))
         return lessons
 

@@ -48,8 +48,6 @@ export function taskDescription(task: SessionTask) {
   return content.clue;
 }
 
-export const MISSION_PHOTO_NOT_READY = "This photo is not ready for this lesson.";
-
 export const isMissionSession = (tasks: SessionTask[]) =>
   tasks.some(task => task.publicContent.missionId);
 
