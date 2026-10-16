@@ -367,6 +367,20 @@ def test_profile_ownership_language_and_one_active_room(db):
     assert len(db.services[0].get(access.room.id).members) == 1
 
 
+def test_pre_a1_profiles_cannot_open_photo_rooms(db):
+    from app.repositories.postgres.language_profiles import language_profiles
+
+    with db.engine.begin() as c:
+        c.execute(
+            update(language_profiles)
+            .where(language_profiles.c.id == db.profiles[0].id)
+            .values(proficiency_level="A0")
+        )
+    with pytest.raises(RoomError) as error:
+        create(db)
+    assert error.value.code == "room_language_unsupported"
+
+
 def test_photo_owner_review_and_analysis_privacy(db):
     room_id = paired(db)
     snapshot = db.services[0].get(room_id)

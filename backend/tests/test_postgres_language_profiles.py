@@ -2,12 +2,13 @@
 
 import os
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import delete, insert
+from sqlalchemy import delete, insert, text
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from app.database import create_database_engine
@@ -22,6 +23,7 @@ from app.repositories.postgres.language_profiles import (
     language_profiles,
 )
 from app.repositories.postgres.users import users
+from app.schemas.enums import ProficiencyLevel
 from app.schemas.users import LanguageProfile, UpdateLanguageProfileRequest, User
 
 
@@ -151,6 +153,7 @@ def test_concurrent_activation(database):
     [
         {"daily_goal_minutes": 241},
         {"proficiency_level": "D1"},
+        {"proficiency_level": "A3"},
         {"preferred_input_mode": "voice"},
         {"target_language_code": "EN"},
         {"target_language_code": "invalid_code"},
@@ -177,3 +180,52 @@ def test_database_active_constraint_and_cascade(database):
     with engine.begin() as connection:
         connection.execute(delete(users).where(users.c.id == owners[0].id))
     assert repository.list_for_user(owners[0].id) == []
+
+
+def test_pre_a1_profile_is_stored_as_a0(database):
+    engine, owners = database
+    repository = PostgresLanguageProfileRepository(engine)
+    created = repository.create(
+        profile(owners[0].id).model_copy(update={"proficiency_level": ProficiencyLevel.A0})
+    )
+    assert [row.proficiency_level for row in repository.list_for_user(owners[0].id)] == ["A0"]
+    updated = repository.update(
+        owners[0].id, created.id, UpdateLanguageProfileRequest(proficiency_level="A1")
+    )
+    assert updated.proficiency_level == "A1"
+
+
+def test_pre_a1_migration_allows_a0_levels_only_in_isolated_tables(database):
+    engine, _ = database
+    schema = "pre_a1_test_" + uuid4().hex
+    migration = (Path(__file__).parents[1] / "prisma" / "migrations"
+                 / "20261015000000_pre_a1_level" / "migration.sql").read_text()
+    sql = "\n".join(line for line in migration.splitlines() if not line.startswith("--"))
+    sql = sql.strip().removeprefix("BEGIN;").removesuffix("COMMIT;")
+    for table in ("language_profiles", "vocabulary_items"):
+        sql = sql.replace(f"public.{table}", f"{schema}.{table}")
+    levels = {
+        "language_profiles": ("proficiency_level", "language_profiles_level"),
+        "vocabulary_items": ("difficulty_level", "vocabulary_items_difficulty_level_check"),
+    }
+    try:
+        with engine.begin() as connection:
+            connection.exec_driver_sql(f"CREATE SCHEMA {schema}")
+            for table, (column, constraint) in levels.items():
+                connection.exec_driver_sql(
+                    f"CREATE TABLE {schema}.{table} ({column} VARCHAR(2) CONSTRAINT {constraint} "
+                    f"CHECK ({column} IN ('A1', 'A2', 'B1', 'B2', 'C1', 'C2')))"
+                )
+                connection.exec_driver_sql(f"INSERT INTO {schema}.{table} VALUES ('B2')")
+            connection.exec_driver_sql(sql)
+            for table, (column, _) in levels.items():
+                connection.exec_driver_sql(f"INSERT INTO {schema}.{table} VALUES ('A0')")
+                assert connection.execute(text(
+                    f"SELECT {column} FROM {schema}.{table} ORDER BY {column}"
+                )).scalars().all() == ["A0", "B2"]
+        for table in levels:
+            with pytest.raises(IntegrityError), engine.begin() as connection:
+                connection.exec_driver_sql(f"INSERT INTO {schema}.{table} VALUES ('A3')")
+    finally:
+        with engine.begin() as connection:
+            connection.exec_driver_sql(f"DROP SCHEMA IF EXISTS {schema} CASCADE")

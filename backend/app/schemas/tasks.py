@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import AwareDatetime, Field, ValidationError, model_validator
+from pydantic import AwareDatetime, Field, StringConstraints, ValidationError, model_validator
 
 from app.repositories.postgres.xp import task_xp
 from app.schemas.base import ApiModel, EntityModel, JsonObject, NonEmptyText, UnitScore, utc_now
@@ -13,11 +13,70 @@ from app.schemas.enums import (
     AttemptInputMode,
     ISpyInteractionMode,
     PartOfSpeech,
+    ProficiencyLevel,
     SessionMode,
     TaskKind,
     TaskPhase,
     TaskStatus,
 )
+
+type MissionId = Annotated[str, StringConstraints(pattern=r"^M\d{2}$")]
+type ContentVersion = Annotated[int, Field(ge=1)]
+type ContractId = Annotated[
+    str, StringConstraints(pattern=r"^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$", max_length=60)
+]
+type EvidenceType = Literal[
+    "recognition", "objectSelection", "construction", "production", "participation"
+]
+type SupportKind = Literal[
+    "translation", "audio", "example", "wordBank", "clueFrame", "helpPhrase", "hint",
+    "answerReveal",
+]
+type MistakeType = Literal[
+    "wrongObject", "wrongWord", "wrongArticle", "wrongGender", "wrongColour", "wrongPosition",
+    "wordOrder", "missingWord", "spelling", "targetNamed", "wrongQuantity", "pluralForm",
+]
+type QuestionOutcomeStatus = Literal["correct", "incorrect", "unassessed"]
+
+# Question ID used by evaluation metadata and results of tasks without grouped questions.
+TASK_QUESTION_ID = "task"
+
+
+def _is_none(value) -> bool:
+    return value is None
+
+
+def _is_empty(value) -> bool:
+    return not value
+
+
+def _unique(values, message):
+    if len(values) != len(set(values)):
+        raise ValueError(message)
+
+
+class MissionTaskFields(ApiModel):
+    """Optional link from task content to a versioned mission definition.
+
+    Omitted from JSON when unset, so content without a mission keeps its saved shape.
+    """
+
+    mission_id: MissionId | None = Field(default=None, exclude_if=_is_none)
+    practice_level: ProficiencyLevel | None = Field(default=None, exclude_if=_is_none)
+    content_version: ContentVersion | None = Field(default=None, exclude_if=_is_none)
+
+    @model_validator(mode="after")
+    def validate_mission(self) -> MissionTaskFields:
+        values = (self.mission_id, self.practice_level, self.content_version)
+        if None in values and any(value is not None for value in values):
+            raise ValueError("missionId, practiceLevel and contentVersion must be set together")
+        return self
+
+    @property
+    def mission_key(self) -> tuple[str, ProficiencyLevel, int] | None:
+        if self.mission_id is None:
+            return None
+        return self.mission_id, self.practice_level, self.content_version
 
 
 class VocabularyLearningWord(ApiModel):
@@ -49,7 +108,7 @@ class VocabularyQuestion(ApiModel):
     correct_option_id: NonEmptyText | None = None
 
 
-class VocabularyIntroductionContent(ApiModel):
+class VocabularyIntroductionContent(MissionTaskFields):
     kind: Literal["vocabularyIntroduction"] = "vocabularyIntroduction"
     title: NonEmptyText
     words: list[VocabularyLearningWord] = Field(default_factory=list)
@@ -85,6 +144,22 @@ class GrammarLessonQuestion(ApiModel):
     options: list[VocabularyChoice] = Field(default_factory=list)
     token_bank: list[NonEmptyText] = Field(default_factory=list)
     translation: str | None = None
+    # The photo object a question is about, shown with its English label.
+    scene_object_id: UUID | None = Field(default=None, exclude_if=_is_none)
+    object_label: str | None = Field(default=None, exclude_if=_is_none)
+    prompt_translation: str | None = Field(default=None, exclude_if=_is_none)
+    # A second photo object the question relates the first to.
+    reference_object_id: UUID | None = Field(default=None, exclude_if=_is_none)
+    reference_label: str | None = Field(default=None, exclude_if=_is_none)
+    # An optional section heading grouping this question with its neighbours.
+    section: str | None = Field(default=None, exclude_if=_is_none)
+    # Every scene object of a counted group, highlighted together in the photo.
+    group_object_ids: list[UUID] | None = Field(default=None, exclude_if=_is_none)
+    # A practice board: option id -> how many objects that board shows.
+    board_counts: dict[str, int] | None = Field(default=None, exclude_if=_is_none)
+    board_object_id: UUID | None = Field(default=None, exclude_if=_is_none)
+    # The number word already visible in the prompt, revealed with its digit after grading.
+    quantity_word: str | None = Field(default=None, exclude_if=_is_none)
 
     @model_validator(mode="after")
     def validate_interaction(self) -> GrammarLessonQuestion:
@@ -94,18 +169,24 @@ class GrammarLessonQuestion(ApiModel):
             raise ValueError("sentence-building questions require a token bank")
         if self.interaction_type == "sentenceBuilding" and self.options:
             raise ValueError("sentence-building questions cannot have answer options")
+        if self.board_counts is not None:
+            if set(self.board_counts) != {option.option_id for option in self.options}:
+                raise ValueError("board counts must cover exactly the answer options")
+            if not all(1 <= count <= 20 for count in self.board_counts.values()):
+                raise ValueError("board counts must be between 1 and 20")
+            _unique(list(self.board_counts.values()), "board counts must be distinct")
         return self
 
 
-class GrammarLessonContent(ApiModel):
+class GrammarLessonContent(MissionTaskFields):
     kind: Literal["grammarLesson"] = "grammarLesson"
     focus: NonEmptyText
     title: NonEmptyText
-    explanation: NonEmptyText
+    explanation: NonEmptyText | None = Field(default=None, exclude_if=_is_none)
     questions: Annotated[list[GrammarLessonQuestion], Field(min_length=1)]
 
 
-class GrammarExplanationContent(ApiModel):
+class GrammarExplanationContent(MissionTaskFields):
     kind: Literal["grammarExplanation"] = "grammarExplanation"
     title: NonEmptyText
     explanation: NonEmptyText
@@ -113,7 +194,7 @@ class GrammarExplanationContent(ApiModel):
     related_vocabulary_ids: list[UUID] = Field(default_factory=list)
 
 
-class GrammarPracticeContent(ApiModel):
+class GrammarPracticeContent(MissionTaskFields):
     kind: Literal["grammarPractice"] = "grammarPractice"
     prompt: NonEmptyText
     options: list[NonEmptyText] = Field(default_factory=list)
@@ -121,7 +202,7 @@ class GrammarPracticeContent(ApiModel):
     allow_text_answer: bool = True
 
 
-class SyntaxExplanationContent(ApiModel):
+class SyntaxExplanationContent(MissionTaskFields):
     kind: Literal["syntaxExplanation"] = "syntaxExplanation"
     title: NonEmptyText
     sentence_pattern: NonEmptyText
@@ -130,7 +211,7 @@ class SyntaxExplanationContent(ApiModel):
     related_vocabulary_ids: list[UUID] = Field(default_factory=list)
 
 
-class SentenceBuildingContent(ApiModel):
+class SentenceBuildingContent(MissionTaskFields):
     kind: Literal["sentenceBuilding"] = "sentenceBuilding"
     prompt: NonEmptyText
     source_text: str | None = None
@@ -146,7 +227,7 @@ class ISpyChoice(ApiModel):
     scene_object_id: UUID | None = None
 
 
-class ISpyRoundContent(ApiModel):
+class ISpyRoundContent(MissionTaskFields):
     kind: Literal["ispyRound"] = "ispyRound"
     clue: NonEmptyText
     clue_translation: str | None = None
@@ -194,7 +275,7 @@ class ClueFrame(ApiModel):
     help: list[ClueChip] = Field(default_factory=list, max_length=12)
 
 
-class ReflectionContent(ApiModel):
+class ReflectionContent(MissionTaskFields):
     kind: Literal["reflection"] = "reflection"
     prompt: NonEmptyText
     suggested_vocabulary_ids: list[UUID] = Field(default_factory=list)
@@ -224,6 +305,41 @@ type TaskPublicContent = Annotated[
 ]
 
 
+class CorrectionRule(ApiModel):
+    """Feedback for a recognisable mistake; empty ``answers`` matches any incorrect answer."""
+
+    mistake: MistakeType
+    answers: list[NonEmptyText] = Field(default_factory=list, max_length=20)
+    correction: NonEmptyText
+    explanation: str | None = None
+
+
+class QuestionEvaluation(ApiModel):
+    """Private link from one question to the mission objective and targets it assesses.
+
+    The accepted answer is the question's existing answer-key entry when it has one;
+    ``acceptedAnswers`` serves questions without one, and ``rubricCriterionIds`` names
+    the mission criteria for answers judged against a rubric. ``vocabularyItemIds`` and
+    ``sceneObjectId`` are hidden targets.
+    """
+
+    question_id: NonEmptyText
+    objective_id: ContractId
+    target_ids: Annotated[list[ContractId], Field(min_length=1)]
+    evidence_type: EvidenceType
+    accepted_answers: list[NonEmptyText] = Field(default_factory=list)
+    rubric_criterion_ids: list[ContractId] = Field(default_factory=list)
+    vocabulary_item_ids: list[UUID] = Field(default_factory=list)
+    scene_object_id: UUID | None = None
+    corrections: list[CorrectionRule] = Field(default_factory=list, max_length=20)
+
+    @model_validator(mode="after")
+    def validate_ids(self) -> QuestionEvaluation:
+        _unique(self.target_ids, "targetIds cannot repeat")
+        _unique(self.rubric_criterion_ids, "rubricCriterionIds cannot repeat")
+        return self
+
+
 class TaskAnswerKey(ApiModel):
     """Private evaluation data; never expose this schema in public responses."""
 
@@ -236,6 +352,33 @@ class TaskAnswerKey(ApiModel):
     correct_option_ids: dict[str, str] = Field(default_factory=dict)
     accepted_text_answers_by_vocabulary_id: dict[str, list[str]] = Field(default_factory=dict)
     scene_description_context: JsonObject | None = None
+    question_evaluations: list[QuestionEvaluation] = Field(
+        default_factory=list, exclude_if=_is_empty
+    )
+
+    @model_validator(mode="after")
+    def validate_question_evaluations(self) -> TaskAnswerKey:
+        _unique(
+            [item.question_id for item in self.question_evaluations],
+            "questionEvaluations cannot repeat a questionId",
+        )
+        for item in self.question_evaluations:
+            keyed = self.has_answer_for(item.question_id)
+            if keyed and item.accepted_answers:
+                raise ValueError("acceptedAnswers cannot repeat an existing answer key")
+            if not (keyed or item.accepted_answers or item.rubric_criterion_ids):
+                raise ValueError("each question evaluation needs an accepted answer or rubric")
+        return self
+
+    def has_answer_for(self, question_id: str) -> bool:
+        if question_id in self.correct_option_ids:
+            return True
+        return question_id == TASK_QUESTION_ID and bool(
+            self.correct_option_id
+            or self.correct_scene_object_id
+            or self.accepted_text_answers
+            or self.expected_token_order
+        )
 
 
 class SessionTask(EntityModel):
@@ -273,7 +416,28 @@ class SessionTask(EntityModel):
             raise ValueError("skipped tasks require skippedAt")
         if self.completed_at is not None and self.skipped_at is not None:
             raise ValueError("a task cannot be both completed and skipped")
+        self._validate_mission()
         return self
+
+    def _validate_mission(self) -> None:
+        evaluations = self.answer_key.question_evaluations if self.answer_key else []
+        key = self.public_content.mission_key
+        if key is None:
+            if evaluations:
+                raise ValueError("questionEvaluations require mission metadata")
+            return
+        # Imported here because the mission registry depends on these schemas.
+        from app.missions import get_mission
+
+        mission = get_mission(*key)
+        if mission is None:
+            raise ValueError("publicContent names an unknown mission definition")
+        questions = getattr(self.public_content, "questions", None)
+        known = {item.question_id for item in questions} if questions else {TASK_QUESTION_ID}
+        for evaluation in evaluations:
+            if evaluation.question_id not in known:
+                raise ValueError("questionEvaluations name a question this task does not have")
+            mission.check_evaluation(evaluation)
 
 
 class SessionTaskPublic(ApiModel):
@@ -348,6 +512,65 @@ class ISpyDescriptionEvaluation(ApiModel):
     target_among_alternatives: bool = False
 
 
+class MistakeDetail(ApiModel):
+    mistake: MistakeType
+    answer: str | None = None
+    correction: NonEmptyText
+    explanation: str | None = None
+
+
+class QuestionOutcome(ApiModel):
+    """Structured result of one question.
+
+    ``assistance`` lists every support the learner opened; ``assistanceUsed`` is true
+    only when one of them counts as assistance under the mission's support rules.
+    """
+
+    question_id: NonEmptyText
+    outcome: QuestionOutcomeStatus
+    objective_id: ContractId | None = None
+    target_ids: list[ContractId] = Field(default_factory=list)
+    evidence_type: EvidenceType
+    assistance: list[SupportKind] = Field(default_factory=list)
+    assistance_used: bool = False
+    mistakes: list[MistakeDetail] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_outcome(self) -> QuestionOutcome:
+        _unique(self.assistance, "assistance cannot repeat a support")
+        if self.assistance_used and not self.assistance:
+            raise ValueError("assistanceUsed requires the supports that were used")
+        if self.mistakes and self.outcome != "incorrect":
+            raise ValueError("only incorrect outcomes carry mistakes")
+        if self.outcome != "unassessed" and not (self.objective_id and self.target_ids):
+            raise ValueError("assessed outcomes require objectiveId and targetIds")
+        return self
+
+
+class QuestionReviewDetails(ApiModel):
+    """``evaluationDetails`` of a grouped-question attempt.
+
+    ``questionResults`` and ``correctAnswers`` keep their original meaning;
+    ``questionOutcomes`` is added only for tasks with question evaluation metadata.
+    """
+
+    question_results: dict[str, bool]
+    correct_answers: dict[str, str] = Field(default_factory=dict)
+    question_outcomes: list[QuestionOutcome] = Field(default_factory=list, exclude_if=_is_empty)
+
+    @model_validator(mode="after")
+    def validate_outcomes(self) -> QuestionReviewDetails:
+        _unique(
+            [item.question_id for item in self.question_outcomes],
+            "questionOutcomes cannot repeat a questionId",
+        )
+        for item in self.question_outcomes:
+            graded = self.question_results.get(item.question_id)
+            if item.outcome != "unassessed" and graded is not (item.outcome == "correct"):
+                raise ValueError("questionOutcomes must agree with questionResults")
+        return self
+
+
 class TaskHint(EntityModel):
     session_task_id: UUID
     hint_level: Annotated[int, Field(ge=1)]
@@ -388,9 +611,12 @@ class LatestClueAttempt(ApiModel):
     feedback: str | None = None
     evaluation_details: ISpyDescriptionEvaluation | None = None
     assistance: ClueAssistance | None = None
+    # Grouped-question answers and results, for mission lessons restored after a reload.
+    answers: dict[str, str] | None = Field(default=None, exclude_if=_is_none)
+    review_details: QuestionReviewDetails | None = Field(default=None, exclude_if=_is_none)
 
     @classmethod
-    def from_attempt(cls, attempt: TaskAttempt) -> LatestClueAttempt:
+    def from_attempt(cls, attempt: TaskAttempt, grouped: bool = False) -> LatestClueAttempt:
         payload = attempt.response_payload
         text = payload.get("text")
         option_id = payload.get("optionId")
@@ -404,6 +630,13 @@ class LatestClueAttempt(ApiModel):
             feedback=message if isinstance(message, str) else None,
             evaluation_details=_optional(ISpyDescriptionEvaluation, attempt.evaluation_details),
             assistance=_optional(ClueAssistance, payload.get("assistance")),
+            **(dict(
+                answers={
+                    key: value for key, value in (payload.get("answers") or {}).items()
+                    if isinstance(value, str)
+                },
+                review_details=_optional(QuestionReviewDetails, attempt.evaluation_details),
+            ) if grouped else {}),
         )
 
 
@@ -444,16 +677,33 @@ class SubmitMultipleChoiceAttemptRequest(ApiModel):
     idempotency_key: Annotated[str, Field(min_length=8, max_length=200)] | None = None
 
 
+class QuestionAssistance(ApiModel):
+    """Supports the learner opened for one question, saved in ``responsePayload``."""
+
+    question_id: NonEmptyText
+    supports: Annotated[list[SupportKind], Field(min_length=1, max_length=8)]
+
+    @model_validator(mode="after")
+    def validate_supports(self) -> QuestionAssistance:
+        _unique(self.supports, "supports cannot repeat")
+        return self
+
+
 class SubmitVocabularyReviewAttemptRequest(ApiModel):
     input_mode: Literal["vocabularyReview"] = "vocabularyReview"
     answers: dict[str, NonEmptyText]
     typed_answers: dict[str, str] = Field(default_factory=dict)
+    question_assistance: Annotated[list[QuestionAssistance], Field(max_length=50)] | None = None
     idempotency_key: Annotated[str, Field(min_length=8, max_length=200)] | None = None
 
     @model_validator(mode="after")
     def validate_answers(self) -> SubmitVocabularyReviewAttemptRequest:
         if not self.answers:
             raise ValueError("answers cannot be empty")
+        _unique(
+            [item.question_id for item in self.question_assistance or []],
+            "questionAssistance cannot repeat a questionId",
+        )
         return self
 
 

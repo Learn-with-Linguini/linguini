@@ -1,17 +1,22 @@
 import { useRef, useState, type TouchEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { queryKeys } from "../lib/queryKeys";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { Button, Card, Feedback, IconButton, ProgressTrail, XpPill } from "../components/ui";
 import { CloseIcon, SpeakerIcon } from "../components/icons";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
-import { choiceOrder, practiceStages, taskDone, taskTitle, taskXp, xpEarnedText } from "../lib/practiceTasks";
+import { choiceOrder, finishesWithoutISpy, isMissionSession, practiceStages, taskDone, taskTitle, taskXp, xpEarnedText } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
-import { checkVocabularyAnswer, reviewDetails, type SessionTask, type TaskActionResult, type TaskAnswer, type VocabularyLearningWord } from "../lib/api";
+import { checkVocabularyAnswer, getLatestAttempt, reviewDetails, type GrammarLessonQuestion, type SceneObject, type SessionTask, type QuestionOutcome, type TaskActionResult, type TaskAnswer, type VocabularyLearningWord } from "../lib/api";
 import { ReportIssueLink } from "../components/ReportIssueLink";
+import { ObjectPreview } from "../components/ObjectPreview";
+import { useResolvedImageUrl } from "../components/SceneImage";
+import { boardRows, squareCrop } from "../lib/practiceBoard";
 
 export function LearningTaskPage() {
   const { taskId } = useParams();
-  const { session } = useAppState();
+  const { session, completeSession } = useAppState();
   const navigate = useNavigate();
   const scene = useScene();
   const base = `/practice/sessions/${scene.sessionId}`;
@@ -23,10 +28,17 @@ export function LearningTaskPage() {
   if (!task || ["abandoned", "failed"].includes(session.session.status)) return <Navigate to={`${base}/learn`} replace />;
   const next = tasks[index + 1];
   return <div className="stack learning-task-page"><LearningTaskContent key={task.id} task={task} index={index} total={tasks.length}
-    onNext={() => navigate(next ? `${base}/learn/${next.id}` : session.session.status === "generatingTasks" ? `${base}/learn` : `${base}/ispy-1`)} onClose={() => navigate(`${base}/learn`)} onExit={() => navigate("/home")} /></div>;
+    onNext={() => {
+      if (!next && session.session.status !== "generatingTasks" && finishesWithoutISpy(session.tasks)) {
+        if (completeSession()) navigate(`${base}/summary`);
+        return;
+      }
+      navigate(next ? `${base}/learn/${next.id}` : session.session.status === "generatingTasks" ? `${base}/learn` : `${base}/ispy-1`);
+    }} onClose={() => navigate(`${base}/learn`)} onExit={() => navigate("/home")} /></div>;
 }
 
 function LearningTaskContent({ task, index, total, onNext, onClose, onExit }: { task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void }) {
+  const lastStep = useLastStepLabel();
   const scene = useScene();
   const { actOnTask, practiceSaving, practiceError } = useAppState();
   const [text, setText] = useState("");
@@ -108,7 +120,7 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit }: { 
       ]} />
     </> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
-    {terminal ? <Button block disabled={practiceSaving} onClick={onNext}>{index < total - 1 ? "Next task" : "Go to I-Spy"}</Button> : <>
+    {terminal ? <Button block disabled={practiceSaving} onClick={onNext}>{index < total - 1 ? "Next task" : lastStep}</Button> : <>
       <Button block disabled={practiceSaving || checking || (!reading && !(content.kind === "grammarPractice" ? choice : text.trim()))} onClick={() => void submit()}>{reading ? "Mark complete" : "Submit answer"}</Button>
       <Button variant="quiet" block disabled={practiceSaving} onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip task</Button>
     </>}
@@ -125,6 +137,7 @@ function BackToTasks({ onClose }: { onClose: () => void }) {
 }
 
 function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }: { task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void }) {
+  const lastStep = useLastStepLabel();
   const scene = useScene();
   const { actOnTask, practiceSaving, practiceError, session } = useAppState();
   const [stage, setStage] = useState<"review" | "quiz" | "typing">("review");
@@ -239,26 +252,44 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
     </div></Card> : null}
     {feedback || earnedText ? <Feedback><div className="stack-2" role="status">{feedback ? <p>{feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
-    {terminal ? <Button block onClick={onNext}>{session?.session.status === "generatingTasks" ? "Back to tasks" : index < total - 1 ? "Next task" : "Go to I-Spy"}</Button> : null}
+    {terminal ? <Button block onClick={onNext}>{session?.session.status === "generatingTasks" ? "Back to tasks" : index < total - 1 ? "Next task" : lastStep}</Button> : null}
     <BackToTasks onClose={onClose} />
   </div>;
 }
 
 function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void }) {
-  const { actOnTask, practiceSaving, practiceError } = useAppState();
+  const lastStep = useLastStepLabel();
+  const scene = useScene();
+  const { actOnTask, practiceSaving, practiceError, session } = useAppState();
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [builtTokenIndexes, setBuiltTokenIndexes] = useState<Record<string, number[]>>({});
   const [questionResults, setQuestionResults] = useState<Record<string, boolean>>({});
   const [correctAnswers, setCorrectAnswers] = useState<Record<string, string>>({});
+  const [outcomes, setOutcomes] = useState<Record<string, QuestionOutcome>>({});
   const [feedback, setFeedback] = useState<string | null>(null);
   const [actionResult, setActionResult] = useState<TaskActionResult | null>(null);
   const [checking, setChecking] = useState(false);
   const requestKey = useRef(crypto.randomUUID());
   const content = task.publicContent;
+  const { resolvedUrl: sceneImageUrl } = useResolvedImageUrl(scene.imageUrl);
+  const [boardImageSize, setBoardImageSize] = useState<{ width: number; height: number } | null>(null);
+  const restorable = content.kind === "grammarLesson" && Boolean(content.missionId) && task.status === "completed";
+  const saved = useQuery({
+    queryKey: queryKeys.latestAttempt(task.id),
+    queryFn: ({ signal }) => getLatestAttempt(task.id, signal),
+    enabled: restorable && !Object.keys(questionResults).length,
+  }).data?.attempt;
   if (content.kind !== "grammarLesson") return null;
   const terminal = taskDone(task);
   const reward = !terminal ? taskXp(task) : null;
   const earnedText = xpEarnedText(actionResult?.xpEarned);
+  const restored = !Object.keys(questionResults).length && saved?.reviewDetails ? saved : null;
+  const results = restored?.reviewDetails?.questionResults ?? questionResults;
+  const solutions = restored?.reviewDetails?.correctAnswers ?? correctAnswers;
+  const outcomeFor: Record<string, QuestionOutcome> = restored
+    ? Object.fromEntries((restored.reviewDetails?.questionOutcomes ?? []).map(item => [item.questionId, item]))
+    : outcomes;
+  const chosen = restored?.answers ?? answers;
   const sentence = (tokens: string[]) => tokens.reduce((value, token) => {
     const joinsPrevious = /^[,.;:!?…]$/.test(token) || value.endsWith("'");
     return value ? `${value}${joinsPrevious ? "" : " "}${token}` : token;
@@ -277,6 +308,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         setFeedback(result.attempt?.feedback?.message ?? "Grammar practice saved.");
         setQuestionResults(reviewDetails(result.attempt)?.questionResults ?? {});
         setCorrectAnswers(reviewDetails(result.attempt)?.correctAnswers ?? {});
+        setOutcomes(Object.fromEntries((reviewDetails(result.attempt)?.questionOutcomes ?? []).map(item => [item.questionId, item])));
       }
     } finally {
       setChecking(false);
@@ -285,13 +317,26 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
   return <div className="stack vocabulary-flow">
     <ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />
     <div className="learning-title-row"><div><h1>{content.title}</h1>{reward ? <XpPill {...reward} /> : null}</div><ExitToHome onExit={onExit} /></div>
-    <div className="panel-note">{content.explanation}</div>
-    {content.questions.map((question, position) => <Card key={question.questionId} plain><div className="stack">
-      <span className="label muted">Question {position + 1} of {content.questions.length}</span>
+    {content.explanation ? <div className="panel-note">{content.explanation}</div> : null}
+    {content.questions.map((question, position) => {
+      const groupObjects = question.groupObjectIds
+        ?.map(id => session?.sceneObjects.find(object => object.id === id))
+        .filter((object): object is SceneObject => Boolean(object));
+      const section = question.section && question.section !== content.questions[position - 1]?.section
+        ? question.section : null;
+      return <div key={question.questionId} className="learning-section">
+        {section ? <h2 className="learning-section__title">{section}</h2> : null}
+        <Card plain><div className="stack">
+      {content.questions.length > 1 ? <span className="label muted">Question {position + 1} of {content.questions.length}</span> : null}
+      {question.sceneObjectId ? <ObjectPreview scene={scene} label={question.objectLabel ?? ""}
+        object={session?.sceneObjects.find(object => object.id === question.sceneObjectId)}
+        group={groupObjects?.length ? groupObjects : undefined}
+        reference={session?.sceneObjects.find(object => object.id === question.referenceObjectId)}
+        referenceLabel={question.referenceLabel} /> : null}
       {question.interactionType === "sentenceBuilding" ? <>
-        {question.translation ? <h2>{question.translation}</h2> : null}
+        {question.promptTranslation ? <><h2>{question.prompt}</h2><PromptTranslation text={question.promptTranslation} /></> : question.translation ? <h2>{question.translation}</h2> : null}
         <div className="sentence-builder__answer" aria-label="Your sentence">
-          {(builtTokenIndexes[question.questionId] ?? []).length ? (builtTokenIndexes[question.questionId] ?? []).map((tokenIndex, tokenPosition) => <button key={`${tokenIndex}-${tokenPosition}`} className="sentence-builder__token" disabled={terminal || practiceSaving}
+          {restored?.answers?.[question.questionId] ? <span>{restored.answers[question.questionId]}</span> : (builtTokenIndexes[question.questionId] ?? []).length ? (builtTokenIndexes[question.questionId] ?? []).map((tokenIndex, tokenPosition) => <button key={`${tokenIndex}-${tokenPosition}`} className="sentence-builder__token" disabled={terminal || practiceSaving}
             onClick={() => setBuiltTokenIndexes(value => ({ ...value, [question.questionId]: (value[question.questionId] ?? []).filter((_, index) => index !== tokenPosition) }))}>{question.tokenBank[tokenIndex]}</button>) : <span className="muted">Choose the words to build your sentence.</span>}
         </div>
         <div className="chip-row" aria-label="Sentence building words">{question.tokenBank.map((token, tokenIndex) => {
@@ -301,33 +346,51 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         })}</div>
       </> : <>
         <h2>{content.focus === "sceneDescription" ? question.translation || "Choose the sentence that describes the scene." : question.prompt}</h2>
-        <div className="choice-grid">{choiceOrder(question.options, `${task.id}:${question.questionId}`, option => option.optionId).map(option => {
-          const selected = answers[question.questionId] === option.optionId;
-          const graded = questionResults[question.questionId];
-          const state = graded !== undefined && correctAnswers[question.questionId] === option.optionId ? " choice--correct"
+        <PromptTranslation text={question.promptTranslation} />
+        {question.boardCounts ? <PracticeBoards question={question} sceneImageUrl={sceneImageUrl}
+          imageSize={boardImageSize} onImageSize={setBoardImageSize}
+          boardObject={session?.sceneObjects.find(object => object.id === question.boardObjectId)}
+          ordered={question.options}
+          chosen={chosen[question.questionId]} graded={results[question.questionId]}
+          solution={solutions[question.questionId]}
+          disabled={terminal || practiceSaving || checking || results[question.questionId] !== undefined}
+          onChoose={optionId => setAnswers(value => ({ ...value, [question.questionId]: optionId }))} />
+        : <div className="choice-grid">{choiceOrder(question.options, `${task.id}:${question.questionId}`, option => option.optionId).map(option => {
+          const selected = chosen[question.questionId] === option.optionId;
+          const graded = results[question.questionId];
+          const state = graded !== undefined && solutions[question.questionId] === option.optionId ? " choice--correct"
             : !selected ? ""
               : graded === undefined ? " choice--selected" : graded ? " choice--correct" : " choice--incorrect";
           return <button key={option.optionId} className={`choice${state}`} aria-pressed={selected} disabled={terminal || practiceSaving || checking || graded !== undefined}
-            onClick={() => setAnswers(value => ({ ...value, [question.questionId]: option.optionId }))}>{option.label}</button>;
-        })}</div>
+            onClick={() => setAnswers(value => ({ ...value, [question.questionId]: option.optionId }))}>
+            {option.label}</button>;
+        })}</div>}
       </>}
-      {questionResults[question.questionId] !== undefined ? <>
-        <Feedback tone={questionResults[question.questionId] ? "good" : "warn"}><p role="status">{questionResults[question.questionId]
+      {results[question.questionId] !== undefined ? <>
+        <Feedback tone={results[question.questionId] ? "good" : "warn"}><p role="status">{results[question.questionId]
           ? "Correct!"
-          : <>Not quite.{correctAnswers[question.questionId] ? <> The correct answer is <strong>{question.options.find(option => option.optionId === correctAnswers[question.questionId])?.label ?? correctAnswers[question.questionId]}</strong>.</> : null}</>}</p></Feedback>
+          : <>Not quite.{solutions[question.questionId] ? (() => {
+            const solution = question.options.find(option => option.optionId === solutions[question.questionId])?.label ?? solutions[question.questionId];
+            return <> The correct answer is <strong>{solution}</strong>{/[.!?]$/.test(solution) ? "" : "."}</>;
+          })() : null}</>}</p></Feedback>
+        {question.quantityWord && question.boardCounts ? <p className="small">
+          {question.quantityWord} = {question.boardCounts[solutions[question.questionId] ?? ""] ?? "?"}
+        </p> : null}
+        <QuestionOutcomeNotes outcome={outcomeFor[question.questionId]} />
         <ReportIssueLink reportType="Grammar answer" fields={[
           ["Task ID", task.id],
           ["Question ID", question.questionId],
           ["Prompt", question.translation || question.prompt],
           ["Your answer", answerFor(question)],
-          ["Displayed solution", question.options.find(option => option.optionId === correctAnswers[question.questionId])?.label ?? correctAnswers[question.questionId]],
+          ["Displayed solution", question.options.find(option => option.optionId === solutions[question.questionId])?.label ?? solutions[question.questionId]],
         ]} />
       </> : null}
-    </div></Card>)}
+    </div></Card></div>;
+    })}
     {checking ? <p className="choice-checking" role="status">Checking your answers…</p> : null}
-    {feedback || earnedText ? <Feedback><div className="stack-2" role="status">{feedback ? <p>{feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback> : null}
+    {feedback ?? restored?.feedback ?? earnedText ? <Feedback><div className="stack-2" role="status">{feedback ?? restored?.feedback ? <p>{feedback ?? restored?.feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
-    {terminal ? <Button block onClick={onNext}>{index < total - 1 ? "Next task" : "Go to I-Spy"}</Button> : <>
+    {terminal ? <Button block onClick={onNext}>{index < total - 1 ? "Next task" : lastStep}</Button> : <>
       <Button block disabled={!answered || practiceSaving || checking} onClick={() => void submit()}>Submit answers</Button>
       <Button variant="quiet" block disabled={practiceSaving} onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip task</Button>
     </>}
@@ -343,4 +406,75 @@ function VocabularyLearningCard({ word, languageCode }: { word: VocabularyLearni
     {word.pluralForm ? <p className="small"><strong>Plural:</strong> {word.pluralForm}</p> : null}
     {word.phoneticText ? <p className="small muted" aria-label="Pronunciation">{word.phoneticText}</p> : null}
   </article>;
+}
+
+const BOARD_TILE = 26;
+
+function PracticeBoards({ question, sceneImageUrl, imageSize, onImageSize, boardObject, ordered, chosen, graded, solution, disabled, onChoose }: {
+  question: GrammarLessonQuestion;
+  sceneImageUrl: string | null;
+  imageSize: { width: number; height: number } | null;
+  onImageSize: (size: { width: number; height: number }) => void;
+  boardObject?: SceneObject;
+  ordered: { optionId: string; label: string }[];
+  chosen: string | undefined;
+  graded: boolean | undefined;
+  solution: string | undefined;
+  disabled: boolean;
+  onChoose: (optionId: string) => void;
+}) {
+  const crop = imageSize ? squareCrop(boardObject?.boundingBox, imageSize.width, imageSize.height) : null;
+  return <div className="practice-boards">
+    <p className="small muted">Choose the board that matches the sentence.</p>
+    {sceneImageUrl && !imageSize ? <img className="practice-boards__preload" src={sceneImageUrl} alt="" aria-hidden="true"
+      onLoad={event => onImageSize({ width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })} /> : null}
+    <div className="practice-boards__row">
+      {ordered.map(option => {
+        const count = question.boardCounts?.[option.optionId] ?? 0;
+        const selected = chosen === option.optionId;
+        const state = graded !== undefined && solution === option.optionId ? " choice--correct"
+          : !selected ? ""
+            : graded === undefined ? " choice--selected" : graded ? " choice--correct" : " choice--incorrect";
+        const tile = crop && sceneImageUrl ? {
+          backgroundImage: `url(${sceneImageUrl})`,
+          backgroundSize: `${imageSize!.width * BOARD_TILE / crop.size}px ${imageSize!.height * BOARD_TILE / crop.size}px`,
+          backgroundPosition: `-${crop.x * BOARD_TILE / crop.size}px -${crop.y * BOARD_TILE / crop.size}px`,
+        } : undefined;
+        return <button key={option.optionId} type="button" className={`choice practice-board${state}`}
+          aria-label={option.label} aria-pressed={selected} disabled={disabled} onClick={() => onChoose(option.optionId)}>
+          <span className="practice-board__tiles" aria-hidden="true">
+            {boardRows(count).map((row, rowIndex) => <span key={rowIndex} className="practice-board__tile-row">
+              {Array.from({ length: row }, (_, tileIndex) => <span key={tileIndex}
+                className={`practice-board__tile${tile ? "" : " practice-board__tile--fallback"}`} style={tile} />)}
+            </span>)}
+          </span>
+          <span className="practice-board__meta">
+            <span className="practice-board__label">{option.label}</span>
+            {graded !== undefined ? <span className="practice-board__count">{count}</span> : null}
+          </span>
+        </button>;
+      })}
+    </div>
+  </div>;
+}
+
+function useLastStepLabel() {
+  const { session } = useAppState();
+  if (session && finishesWithoutISpy(session.tasks)) return "Finish lesson";
+  return session && isMissionSession(session.tasks) ? "Go to bonus I-Spy" : "Go to I-Spy";
+}
+
+function QuestionOutcomeNotes({ outcome }: { outcome?: QuestionOutcome }) {
+  if (!outcome) return null;
+  return <>
+    {outcome.mistakes.map((mistake, position) => mistake.explanation ? <p key={position} className="small">{mistake.explanation}</p> : null)}
+    {outcome.assistance.includes("wordBank") ? <p className="small muted">Supported practice: built with the word bank.</p> : null}
+  </>;
+}
+
+function PromptTranslation({ text }: { text?: string | null }) {
+  const [shown, setShown] = useState(false);
+  if (!text) return null;
+  return shown ? <p className="small muted">{text}</p>
+    : <button type="button" className="analysis-location-action" onClick={() => setShown(true)}>Show translation</button>;
 }

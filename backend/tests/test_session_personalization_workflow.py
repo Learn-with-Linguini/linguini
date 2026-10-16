@@ -23,6 +23,13 @@ from app.schemas.base import utc_now
 from app.schemas.ispy import StartISpyGameRequest
 from app.schemas.sessions import ReviewPracticeRequest
 from app.schemas.tasks import SkipTaskRequest, SubmitMultipleChoiceAttemptRequest
+from app.services import mission_eligibility
+
+
+@pytest.fixture(autouse=True)
+def regular_lesson(monkeypatch):
+    """These tests cover the regular lesson, which A1 uses when no mission is planned."""
+    monkeypatch.setitem(mission_eligibility.IMPLEMENTED_MISSIONS, "A1", ())
 
 
 def test_standalone_game_skips_memory_loading_and_does_not_change_lesson_history(
@@ -75,6 +82,7 @@ def test_standalone_game_skips_memory_loading_and_does_not_change_lesson_history
 def test_failed_grammar_generation_keeps_word_review_without_claiming_missing_focus(
     curated, monkeypatch,
 ):
+
     monkeypatch.setenv("LEARNER_MEMORY_ENABLED", "true")
     previous = _earlier_mixed_session(curated, monkeypatch)
     engine, _owner, profile, *_ = curated

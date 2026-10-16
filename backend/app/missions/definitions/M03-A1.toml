@@ -1,0 +1,98 @@
+mission_id = "M03"
+practice_level = "A1"
+content_version = 1
+title = "Say how many"
+
+[photo_requirements]
+media_sources = ["preloaded", "camera", "userUpload"]
+# One learner-counted group of repeated objects; a single object has no plural to practise.
+min_confirmed_objects = 1
+min_counted_groups = 1
+min_quantity = 2
+max_quantity = 10
+
+[objective]
+objective_id = "say-how-many"
+can_do = "I can say how many of an object there are in my photo."
+
+[[objective.targets]]
+target_id = "understand-quantity"
+summary = "Understand a short sentence saying how many of an object there are."
+evidence_types = ["recognition"]
+
+[[objective.targets]]
+target_id = "say-quantity"
+summary = "Give the confirmed quantity with the taught quantity pattern."
+evidence_types = ["recognition", "construction"]
+
+[[objective.targets]]
+target_id = "plural-noun"
+summary = "Use the regular plural of the counted object's noun after a number."
+evidence_types = ["recognition", "construction"]
+
+[[language_patterns]]
+pattern_id = "quantity-statement"
+target_id = "say-quantity"
+structure = "[there is/are] [number] [plural noun]."
+examples = { es = ["Hay dos libros.", "Hay tres tazas."], fr = ["Il y a deux livres.", "Il y a trois tasses."] }
+
+[teaching]
+task_sequence = ["vocabularyIntroduction", "grammarLesson", "ispyRound", "reflection"]
+teach_before_assessment = ["understand-quantity", "say-quantity", "plural-noun"]
+max_new_words = 6
+
+[[teaching.supports]]
+support = "translation"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "audio"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "example"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "wordBank"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "hint"
+availability = "onRequest"
+counts_as_assistance = true
+
+[[teaching.supports]]
+support = "answerReveal"
+availability = "onRequest"
+counts_as_assistance = true
+
+[[evaluation_criteria]]
+criterion_id = "quantity-matches-photo"
+target_id = "say-quantity"
+description = "Gives or understands the quantity the learner confirmed for the group."
+evidence_types = ["recognition", "construction"]
+
+[[evaluation_criteria]]
+criterion_id = "understands-quantity"
+target_id = "understand-quantity"
+description = "Matches a quantity sentence to its meaning."
+evidence_types = ["recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "plural-form-correct"
+target_id = "plural-noun"
+description = "Uses the noun's regular plural after the number."
+evidence_types = ["recognition", "construction"]
+
+[expected_performance]
+min_assessed_questions = 2
+min_correct_ratio = 0.75
+min_independent_correct = 1
+required_target_groups = [
+  ["say-quantity"],
+]

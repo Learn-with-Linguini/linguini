@@ -50,6 +50,7 @@ export function taskTitle(task: SessionTask) {
 export function taskDescription(task: SessionTask) {
   const content = task.publicContent;
   if ("prompt" in content) return content.prompt;
+  if (content.kind === "grammarLesson") return content.explanation ?? `${content.questions.length} questions`;
   if ("explanation" in content) return content.explanation;
   if (content.kind === "vocabularyIntroduction") {
     if (content.words?.length) return `${content.words.length} words from your scene`;
@@ -57,3 +58,10 @@ export function taskDescription(task: SessionTask) {
   }
   return content.clue;
 }
+
+export const isMissionSession = (tasks: SessionTask[]) =>
+  tasks.some(task => task.publicContent.missionId);
+
+/** A mission session with no I-Spy rounds finishes after its last learning task. */
+export const finishesWithoutISpy = (tasks: SessionTask[]) =>
+  tasks.some(task => task.publicContent.missionId) && !tasks.some(task => task.kind === "ispyRound" || task.kind === "reflection");

@@ -20,6 +20,8 @@ from app.ai.cache import CacheScope, TemplateSet
 from app.ai.features.ispy_clues import ISpyClueGenerationError
 from app.ai.features.ispy_guess import ISpyGuessError, ISpyGuessResult
 from app.ai.features.learning_tasks import required_task_focuses
+from app.ai.features.learning_tasks.mission import fold
+from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.ai.features.scene_analysis import RoutedSceneAnalyzer
 from app.repositories.postgres.game_resources import refund_sauce, reward_basil, spend_sauce
 from app.repositories.postgres.language_profiles import language_profiles
@@ -41,6 +43,7 @@ from app.repositories.postgres.tasks import (
 from app.repositories.postgres.users import users
 from app.repositories.postgres.vocabulary import (
     record_vocabulary_evidence,
+    user_vocabulary_progress,
     vocabulary_encounters,
     vocabulary_items,
     vocabulary_translations,
@@ -60,7 +63,9 @@ from app.schemas.enums import (
     VocabularyEncounterType,
 )
 from app.schemas.media import MediaAsset, SceneObject, SceneObjectRelation
+from app.schemas.missions import MissionDefinition
 from app.schemas.sessions import (
+    CountedGroup,
     Session,
     SessionDetailResponse,
     SessionSummaryResponse,
@@ -87,6 +92,23 @@ from app.services.ispy_descriptions import (
     EVALUATION_FAILED_MESSAGE,
     OUTCOME_CORRECTNESS,
     interpret_guess,
+)
+from app.services.mission_eligibility import (
+    lesson_missions,
+    mission_snapshot,
+    photo_eligibility,
+    plan_missions,
+    saved_counted_groups,
+    snapshot_missions,
+)
+from app.services.mission_lessons import mission_version
+from app.services.mission_registry import MISSION_LESSONS
+from app.services.quantities import suggested_quantity
+from app.services.question_outcomes import (
+    normalize_answer,
+    offered_supports,
+    review_details,
+    word_results,
 )
 from app.services.scene_analysis import DeterministicSceneAnalyzer
 from app.services.session_personalization import (
@@ -122,17 +144,13 @@ READ_TASKS = {"vocabularyIntroduction", "grammarExplanation", "syntaxExplanation
 ANALYSIS_TIMEOUT = timedelta(minutes=15)
 
 
-def _normalize_answer(value):
-    return " ".join(value.casefold().strip().split()).rstrip(".!?\u3002")
-
-
 def _lesson_answer_is_correct(task, question_id, answer):
     question = next(
         item for item in task.public_content.questions if item.question_id == question_id
     )
     expected = task.answer_key.correct_option_ids.get(question_id)
     return (
-        _normalize_answer(answer) == _normalize_answer(expected)
+        normalize_answer(answer) == normalize_answer(expected)
         if getattr(question, "interaction_type", "multipleChoice") == "sentenceBuilding"
         else answer == expected
     )
@@ -294,6 +312,9 @@ class GenerationClaim:
     cache_scope: CacheScope | None = None
     templates: TemplateSet | None = None
     learner_history: dict | None = None
+    missions: tuple[MissionDefinition, ...] = ()
+    counted_groups: tuple[dict, ...] = ()
+    mission_progress: dict | None = None
 
     @property
     def generation_options(self) -> dict:
@@ -684,6 +705,8 @@ class PostgresWorkflowRepository:
             translation_preview=(draft or {}).get("translationPreview"),
             analysis_retryable=analysis_retryable(session),
             personalization=(draft or {}).get("personalization"),
+            counted_groups=saved_counted_groups(draft),
+            mission_guidance=(draft or {}).get("missionGuidance", []),
             tasks=[SessionTaskPublic.from_internal(t, mode=session.mode) for t in tasks],
             progress=task_progress(tasks),
             next_task_id=next(
@@ -1149,6 +1172,7 @@ class PostgresWorkflowRepository:
                 .mappings()
                 .one()
             )
+            confirmed = []
             positions = {item.id: item.anchor_point for item in request.repositioned_objects}
             for object_id in request.accepted_object_ids:
                 obj = existing[object_id].model_copy(
@@ -1157,6 +1181,7 @@ class PostgresWorkflowRepository:
                         "anchor_point": positions.get(object_id, existing[object_id].anchor_point),
                     }
                 )
+                confirmed.append(obj)
                 values = object_values(obj)
                 c.execute(
                     upsert(scene_objects)
@@ -1181,6 +1206,7 @@ class PostgresWorkflowRepository:
                     bounding_box={"x": added.x, "y": added.y, "width": 0.01, "height": 0.01},
                     attributes=request.object_attributes.get(added.id) or None,
                 )
+                confirmed.append(obj)
                 values = object_values(obj)
                 c.execute(
                     upsert(scene_objects)
@@ -1239,6 +1265,20 @@ class PostgresWorkflowRepository:
                         source_relation_key=source_key,
                     )
                 )
+            counted = self._save_counted_groups(
+                c, session_id, request, confirmed, existing, manual_ids
+            )
+            self._plan_missions(c, session, profile, confirmed, counted, [
+                relation.model_copy(update=dict(
+                    subject_scene_object_id=manual_ids.get(
+                        relation.subject_scene_object_id, relation.subject_scene_object_id
+                    ),
+                    reference_scene_object_id=manual_ids.get(
+                        relation.reference_scene_object_id, relation.reference_scene_object_id
+                    ),
+                ))
+                for relation in request.relations
+            ])
             c.execute(
                 update(sessions)
                 .where(sessions.c.id == session_id)
@@ -1283,6 +1323,7 @@ class PostgresWorkflowRepository:
                 history = snapshot_learner_history(
                     c, self.user_id, dict(profile), session_id, labels,
                 )
+            missions = tuple(self._planned_missions(session, dict(profile)))
             return GenerationClaim(
                 session_id,
                 profile_id,
@@ -1294,7 +1335,113 @@ class PostgresWorkflowRepository:
                 relations,
                 *self._reuse(c, session, asset, objects, relations),
                 learner_history=history,
+                missions=missions,
+                counted_groups=tuple(saved_counted_groups(session.analysis_draft)),
+                mission_progress=(
+                    self._mission_progress(c, dict(profile), history) if missions else None
+                ),
             )
+
+    def _mission_progress(self, c, profile, history):
+        """Existing word progress in the target language, and term results from history.
+
+        Colours and position phrases have no word-progress rows, so their familiarity
+        comes only from the learner-history snapshot; without one they count as unseen.
+        """
+        rows = c.execute(
+            select(
+                vocabulary_items.c.id, vocabulary_items.c.display_text,
+                vocabulary_items.c.gender, vocabulary_items.c.part_of_speech,
+                user_vocabulary_progress.c.mastery_score,
+            )
+            .join(
+                user_vocabulary_progress,
+                user_vocabulary_progress.c.vocabulary_item_id == vocabulary_items.c.id,
+            )
+            .where(
+                user_vocabulary_progress.c.user_id == self.user_id,
+                func.lower(vocabulary_items.c.language_code)
+                == profile["target_language_code"].lower(),
+            )
+            .order_by(vocabulary_items.c.display_text, vocabulary_items.c.id)
+        ).mappings().all()
+        terms = {}
+        for word in (history or {}).get("words", []):
+            total = word.get("correctCount", 0) + word.get("incorrectCount", 0)
+            if word.get("term") and total:
+                terms[fold(word["term"])] = word["correctCount"] / total
+        return dict(
+            objects={str(row["id"]): float(row["mastery_score"]) for row in rows},
+            taught_nouns=[
+                dict(text=row["display_text"], gender=row["gender"])
+                for row in rows if row["part_of_speech"] == "noun" and row["gender"]
+            ],
+            terms=terms,
+        )
+
+    def _save_counted_groups(self, c, session_id, request, confirmed, existing, manual_ids):
+        """Save the learner's counts, one per group of same-named confirmed objects."""
+        by_id = {obj.id: obj for obj in confirmed}
+        groups = {}
+        for object_id, quantity in request.object_counts.items():
+            obj = by_id[manual_ids.get(object_id, object_id)]
+            label = obj.label.strip().casefold()
+            if label in groups:
+                raise PracticeConflictError("Count each group of matching objects once.")
+            original = existing.get(object_id)
+            suggested = suggested_quantity(
+                ((original.attributes if original else None) or {}).get("quantity")
+            )
+            groups[label] = CountedGroup(
+                scene_object_ids=[
+                    item.id for item in confirmed if item.label.strip().casefold() == label
+                ],
+                label=obj.label,
+                quantity=quantity,
+                suggested_quantity=suggested,
+                source=(
+                    "entered" if suggested is None
+                    else "confirmed" if suggested == quantity else "corrected"
+                ),
+            ).model_dump(mode="json", by_alias=True)
+        draft = dict(c.execute(select(sessions.c.analysis_draft).where(
+            sessions.c.id == session_id,
+        )).scalar_one() or {})
+        draft["countedGroups"] = list(groups.values())
+        c.execute(update(sessions).where(sessions.c.id == session_id).values(
+            analysis_draft=draft,
+        ))
+        return draft["countedGroups"]
+
+    def _plan_missions(self, c, session, profile, objects, counted_groups, relations):
+        """Snapshot the lesson's mission plan from the confirmed facts before generation."""
+        candidates = lesson_missions(session.mode, profile)
+        if not candidates:
+            return
+        plan = plan_missions(candidates, objects, relations, counted_groups)
+        draft = dict(c.execute(select(sessions.c.analysis_draft).where(
+            sessions.c.id == session.id,
+        )).scalar_one() or {})
+        draft["missionPlan"] = [mission_snapshot(mission) for mission in plan]
+        draft.pop("missionGuidance", None)
+        if not plan:
+            # No mission fits, so the regular lesson runs with tips for a future photo.
+            draft["missionGuidance"] = [
+                f"{mission.title}: "
+                + " ".join(
+                    photo_eligibility(mission, objects, relations, counted_groups).reasons
+                )
+                for mission in candidates
+            ]
+        c.execute(update(sessions).where(sessions.c.id == session.id).values(
+            analysis_draft=draft,
+        ))
+
+    def _planned_missions(self, session, profile):
+        if not lesson_missions(session.mode, profile):
+            return []
+        # Sessions reviewed before mission plans were saved keep the regular lesson.
+        return snapshot_missions((session.analysis_draft or {}).get("missionPlan"))
 
     def _reuse(self, c, session, asset, objects, relations):
         """The cache scope and scene templates for this session's content.
@@ -1420,20 +1567,33 @@ class PostgresWorkflowRepository:
                         ),
                     )
 
-        if self.translator:
+        mission_lessons, skipped_missions = [], []
+        if claim.missions:
+            # Mission lessons replace the fixed grammar sequence; I-Spy stays as the bonus.
+            lesson = partial(
+                self._mission_lessons,
+                claim, objects, relations, words, translated_scene if self.translator else None,
+                skipped_missions,
+            )
+            if self.translator:
+                mission_lessons, ispy_clues = self._alongside_clues(lesson, partial(
+                    self._clues, session_id, payload, translated_scene, objects, words,
+                    relations, options=claim.generation_options,
+                ))
+            else:
+                mission_lessons = lesson()
+        elif self.translator:
             lessons, ispy_clues = self._lessons_and_clues(
                 session_id, payload, translated_scene, objects, words, relations,
                 claim.generation_options,
                 history=lesson_history(claim.learner_history, introduction),
                 history_scope=CacheScope.user(f"{self.user_id}:{claim.profile_id}"),
             )
-            if self.ispy_guess_generator:
-                ispy_descriptions = build_ispy_description_tasks(
-                    session_id, objects, words,
-                    _ispy_guess_context(
-                        payload, translated_scene, objects, relations
-                    ),
-                )
+        if self.translator and self.ispy_guess_generator:
+            ispy_descriptions = build_ispy_description_tasks(
+                session_id, objects, words,
+                _ispy_guess_context(payload, translated_scene, objects, relations),
+            )
 
         with self.transaction() as c:
             session = self._current_generation(c, claim)
@@ -1455,6 +1615,18 @@ class PostgresWorkflowRepository:
                     task for task in learning if task.kind == "vocabularyIntroduction"
                 ] + lessons
             rebuilt = [*learning, *clues, *descriptions]
+            if skipped_missions:
+                draft = dict(session.analysis_draft or {})
+                draft["skippedMissions"] = skipped_missions
+                c.execute(update(sessions).where(sessions.c.id == session_id).values(
+                    analysis_draft=draft,
+                ))
+                session = session.model_copy(update={"analysis_draft": draft})
+            if mission_lessons:
+                rebuilt = [
+                    *(task for task in rebuilt if task.id == introduction_id),
+                    *mission_lessons, *clues, *descriptions,
+                ]
             if summary and summary.practice_focuses:
                 available = {task.public_content.focus for task in lessons}
                 summary.practice_focuses = [focus for focus in summary.practice_focuses
@@ -1478,6 +1650,56 @@ class PostgresWorkflowRepository:
                     .on_conflict_do_nothing(index_elements=["id"])
                 )
             self._transition(c, session, "inProgress")
+
+    def _mission_lessons(self, claim, objects, relations, words, translated_scene, skipped):
+        """One validated lesson per planned mission; a generation failure uses its fallback.
+
+        A mission whose confirmed facts give no reviewed content is skipped and recorded.
+        """
+        language = claim.profile["target_language_code"]
+        vocabulary_ids = {str(obj.id): word.id for obj, word in zip(objects, words, strict=True)}
+        lessons = []
+        for mission in claim.missions:
+            spec = MISSION_LESSONS[mission.mission_id]
+            payload = spec.payload(
+                mission, language, objects, relations, words, translated_scene,
+                claim.counted_groups, claim.mission_progress or {}, claim.session_id,
+            )
+            if not spec.ready(payload):
+                logger.warning(
+                    "%s has no reviewed content for session %s; skipping it.",
+                    mission.mission_id, claim.session_id,
+                )
+                skipped.append(dict(missionId=mission.mission_id, reason="noReviewedContent"))
+                continue
+            result = None
+            if self.learning_task_generator and spec.generation.uses_model:
+                try:
+                    with _timed("mission lesson generation", claim.session_id):
+                        result = self.learning_task_generator.generate_mission(
+                            payload,
+                            spec.generation,
+                            mission_version=mission_version(mission),
+                            cache_scope=claim.cache_scope,
+                        )
+                except Exception:
+                    logger.exception(
+                        "%s lesson generation failed for session %s; "
+                        "using the deterministic mission lesson.",
+                        mission.mission_id, claim.session_id,
+                    )
+            if result is None:
+                try:
+                    result = spec.generation.fallback(payload)
+                except LearningTaskGenerationError:
+                    logger.warning(
+                        "%s has no buildable lesson for session %s; skipping it.",
+                        mission.mission_id, claim.session_id,
+                    )
+                    skipped.append(dict(missionId=mission.mission_id, reason="noReviewedContent"))
+                    continue
+            lessons.append(spec.task(claim.session_id, mission, payload, result, vocabulary_ids))
+        return lessons
 
     def _store_translation(self, c, session, profile, objects, translated_scene):
         """Keep the scene translation and link each object to its vocabulary item."""
@@ -1588,6 +1810,9 @@ class PostgresWorkflowRepository:
             self._clues, session_id, payload, translated_scene, objects, words, relations,
             options=options,
         )
+        return self._alongside_clues(lessons, clues)
+
+    def _alongside_clues(self, lessons, clues):
         if not (self.learning_task_generator and self.ispy_clue_generator):
             return lessons(), clues()
         with ThreadPoolExecutor(max_workers=1, thread_name_prefix="ispy-clues") as pool:
@@ -1941,6 +2166,7 @@ class PostgresWorkflowRepository:
                         )
                 elif action == "attempt":
                     evaluation_details = None
+                    question_results = {}
                     if self._evaluates_description(task):
                         if request.input_mode != "text":
                             raise PracticeConflictError(
@@ -2000,10 +2226,14 @@ class PostgresWorkflowRepository:
                                 )
                             )
                         }
-                        evaluation_details = {
-                            "questionResults": question_results,
-                            "correctAnswers": correct_answers,
-                        }
+                        evaluation_details = (
+                            review_details(task, request, question_results, correct_answers)
+                            if task.answer_key.question_evaluations
+                            else {
+                                "questionResults": question_results,
+                                "correctAnswers": correct_answers,
+                            }
+                        )
                         feedback_message = (
                             f"{correct_count} of {len(question_results)} questions correct."
                         )
@@ -2054,14 +2284,37 @@ class PostgresWorkflowRepository:
                             session=session,
                         )
                     if task.kind == "vocabularyIntroduction" and task.public_content.words:
+                        mission_task = task.public_content.mission_key is not None or bool(
+                            (session.analysis_draft or {}).get("missionPlan")
+                        )
                         for learning_word in task.public_content.words:
+                            word_correct = (
+                                question_results.get(f"word-{learning_word.learning_key}", correct)
+                                if mission_task
+                                else correct
+                            )
                             self._encounter(
                                 c,
                                 task,
                                 attempt.id,
-                                "correct" if correct else "incorrect",
+                                "correct" if word_correct else "incorrect",
                                 introduced=True,
                                 vocabulary_item_id=learning_word.vocabulary_item_id,
+                                session=session,
+                            )
+                    if (
+                        task.kind == "grammarLesson"
+                        and task.public_content.mission_key is not None
+                    ):
+                        for vocabulary_item_id, word_correct in word_results(
+                            task, question_results
+                        ).items():
+                            self._encounter(
+                                c,
+                                task,
+                                attempt.id,
+                                "correct" if word_correct else "incorrect",
+                                vocabulary_item_id=vocabulary_item_id,
                                 session=session,
                             )
                     if evaluation is None:
@@ -2211,8 +2464,10 @@ def _attempt_id(task, request):
 
 def _response_payload(request):
     exclude = {"idempotency_key"}
-    if getattr(request, "assistance", False) is None:
-        exclude.add("assistance")
+    # Optional support records are left out when absent so older payloads keep their shape.
+    for name in ("assistance", "question_assistance"):
+        if getattr(request, name, False) is None:
+            exclude.add(name)
     return request.model_dump(mode="json", by_alias=False, exclude=exclude)
 
 
@@ -2262,6 +2517,15 @@ def evaluate(task, request):
             key.accepted_text_answers_by_vocabulary_id
         ):
             raise PracticeConflictError("Typing practice contains an unknown word.")
+        if any(
+            item.question_id not in questions_by_id for item in request.question_assistance or []
+        ):
+            raise PracticeConflictError("Assistance names a question this lesson does not have.")
+        if task.public_content.mission_key is not None and any(
+            not set(item.supports) <= offered_supports(questions_by_id[item.question_id])
+            for item in request.question_assistance or []
+        ):
+            raise PracticeConflictError("Assistance names support this question does not offer.")
         return all(
             _lesson_answer_is_correct(task, question_id, answer)
             for question_id, answer in request.answers.items()
@@ -2277,6 +2541,6 @@ def evaluate(task, request):
             raise PracticeConflictError("Select one of the offered choices.")
         return request.option_id == key.correct_option_id
 
-    return _normalize_answer(request.text) in {
-        _normalize_answer(answer) for answer in key.accepted_text_answers
+    return normalize_answer(request.text) in {
+        normalize_answer(answer) for answer in key.accepted_text_answers
     }
