@@ -7,7 +7,7 @@ from app.ai.features.learning_tasks.mission import fold
 from app.ai.features.learning_tasks.mission_m01 import capitalised, description
 from app.services.ispy_clue_frames import COLOUR_ATTRIBUTE_TYPES
 from app.services.mission_eligibility import REVIEWED_COLOURS, agreed_colour, confirmed_colour
-from app.services.mission_lessons import build_mission_task, noun_gender
+from app.services.mission_lessons import build_mission_task, mission_gender
 
 M01_FOCUS = "identifyDescribeObject"
 IDENTIFY_PROMPTS = {"es": "¿Qué es esto?", "fr": "Qu'est-ce que c'est ?"}
@@ -88,7 +88,7 @@ def _candidates(language, objects, words, terms, progress):
     known, colour_results = progress.get("objects", {}), progress.get("terms", {})
     candidates = []
     for index, (obj, word) in enumerate(zip(objects, words, strict=True)):
-        gender = noun_gender(terms.get(str(obj.id)), word)
+        gender = mission_gender(terms.get(str(obj.id)), word)
         colour = confirmed_colour(obj)
         form = colour and agreed_colour(colour, language, gender)
         phrase = indefinite(word.display_text, gender, language)
@@ -167,7 +167,7 @@ def m01_payload(
     taught = list(dict.fromkeys(phrase for phrase in [
         *(pair["nounPhrase"] for pair in pairs),
         *(
-            indefinite(word.display_text, noun_gender(terms.get(str(obj.id)), word), language)
+            indefinite(word.display_text, mission_gender(terms.get(str(obj.id)), word), language)
             for obj, word in zip(objects, words, strict=True)
         ),
         *(

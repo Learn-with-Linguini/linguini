@@ -269,3 +269,17 @@ def test_validator_rejects_unconfirmed_or_unanswerable_lessons(change):
         validate_m01_lesson(data, M01LessonResult.model_validate(
             change(result).model_dump(by_alias=True)
         ))
+
+
+@pytest.mark.parametrize("language", ["es", "fr"])
+def test_catalog_genders_recorded_as_articles_still_agree(language):
+    articles = {"es": ("la", "el", "la"), "fr": ("la", "le", "la")}[language]
+    canonical = build(language)
+    words = [word(item.id, item.display_text, article) for item, article in zip(
+        {"fr": [word(CUP, "tasse", ""), word(BOOK, "livre", ""), word(TABLE, "table", "")],
+         "es": [word(CUP, "taza", ""), word(BOOK, "libro", ""), word(TABLE, "mesa", "")]}[language],
+        articles, strict=True,
+    )]
+    payload = build(language, words=words)
+    assert payload["pairs"] == canonical["pairs"]
+    validate_m01_lesson(payload, fallback_m01_lesson(payload))

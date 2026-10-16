@@ -268,3 +268,11 @@ def test_built_french_questions_match_their_spaced_question_mark():
     ask = fallback_m02_lesson(_payload("fr", [rel(CUP, "on", TABLE)])).questions[2]
     assert ask.correct_text == "Où est la tasse ?"
     assert normalize_answer("Où est la tasse?") == normalize_answer(ask.correct_text)
+
+
+def test_elided_article_genders_fall_back_to_the_word():
+    from app.services.mission_lessons import mission_gender
+    term = SimpleNamespace(gender="l'")
+    assert mission_gender(term, SimpleNamespace(gender="feminine")) == "feminine"
+    assert mission_gender(SimpleNamespace(gender="le"), SimpleNamespace(gender=None)) == "masculine"
+    assert mission_gender(None, SimpleNamespace(gender="la")) == "feminine"

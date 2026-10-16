@@ -30,6 +30,20 @@ def noun_gender(term, word):
     return getattr(word.gender, "value", word.gender)
 
 
+# Catalog content may record a noun's gender as its definite article.
+_ARTICLE_GENDERS = {"el": "masculine", "le": "masculine", "la": "feminine"}
+
+
+def mission_gender(term, word):
+    """``noun_gender`` with article-style genders mapped; elided ``l'`` falls back to the word."""
+    for gender in (term.gender if term is not None else None,
+                   getattr(word.gender, "value", word.gender)):
+        gender = _ARTICLE_GENDERS.get(str(gender).casefold(), gender) if gender else None
+        if gender in {"masculine", "feminine"}:
+            return gender
+    return noun_gender(term, word)
+
+
 def correct_label(question):
     if question.interaction_type == "multipleChoice":
         return next(

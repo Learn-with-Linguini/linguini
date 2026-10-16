@@ -11,7 +11,7 @@ from app.services.mission_eligibility import (
     confirmed_relations,
     relation_type,
 )
-from app.services.mission_lessons import build_mission_task, noun_gender
+from app.services.mission_lessons import build_mission_task, mission_gender
 from app.services.session_plan import _with_article as _noun_phrase
 
 M02_FOCUS = "findAndLocate"
@@ -149,11 +149,11 @@ def m02_payload(
             key=str(obj.id), source=obj.label, nounPhrase=phrase,
             hasArticle=bool(term and term.article),
             whereQuestion=_QUESTION_FRAMES[language].format(phrase),
-            gender=noun_gender(term, word),
+            gender=mission_gender(term, word),
         )
         places[obj.id] = dict(
             article=term.article if term else None,
-            gender=noun_gender(term, word),
+            gender=mission_gender(term, word),
             translation=word.display_text,
         )
     positions = [
