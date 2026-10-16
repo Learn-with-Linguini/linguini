@@ -1,31 +1,18 @@
-import { StrictMode } from "react";
+import { StrictMode, Suspense, lazy } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import App from "./App";
-import { AuthProvider } from "./state/Auth";
-import "./styles/global.css";
+import { isMarketingPath } from "./marketing/paths";
 
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 30_000,
-      gcTime: 5 * 60_000,
-      retry: 1,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: true,
-    },
-  },
-});
+const LearnerRoot = lazy(() => import("./LearnerRoot"));
+const MarketingApp = lazy(() => import("./marketing/MarketingApp"));
+const Root = isMarketingPath(window.location.pathname) ? MarketingApp : LearnerRoot;
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <App />
-        </AuthProvider>
-      </QueryClientProvider>
+      <Suspense fallback={null}>
+        <Root />
+      </Suspense>
     </BrowserRouter>
   </StrictMode>,
 );

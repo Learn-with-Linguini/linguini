@@ -15,9 +15,9 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter
 ROOT = Path(__file__).resolve().parents[2]
 OUT = Path(__file__).resolve().parent / "export"
 OUT.mkdir(exist_ok=True)
-PHOTO = ROOT / "landing/public/photos"
-BRAND = ROOT / "landing/public/brand"
-FONTS = ROOT / "landing/assets/fonts"
+PHOTO = ROOT / "frontend/public/photos"
+BRAND = ROOT / "frontend/public/brand"
+FONTS = ROOT / "frontend/src/marketing/assets/fonts"
 
 W, H = 1270, 760
 CREAM = "#FBF8EF"
@@ -278,7 +278,7 @@ def teaser_frames():
     txt(d, (100, 241), "Make today\na lesson.", 88, INK, True)
     txt(d, (104, 491), "Try the interactive demo", 30, MUTED)
     rr(d, (101, 559, 929, 625), 18, TOMATO)
-    txt(d, (126, 569), "linguini-landing.vercel.app", 30, PAPER)
+    txt(d, (126, 569), "www.learnwithlinguini.com", 30, PAPER)
     mascot(c, 999, 406, 185)
     rr(d, (927, 18, 1250, 53), 13, INK)
     txt(d, (942, 25), "ILLUSTRATED PRODUCT TEASER", 16, PAPER)

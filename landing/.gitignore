@@ -1,8 +1,0 @@
-node_modules/
-.next/
-out/
-next-env.d.ts
-*.tsbuildinfo
-.vercel
-.env*.local
-public/app/

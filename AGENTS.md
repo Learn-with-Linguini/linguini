@@ -4,8 +4,8 @@ Linguini is a photo-led, speak-first language-learning app. The repository is a 
 
 - `frontend/` — React 19 + TypeScript + Vite SPA. See `frontend/AGENTS.md` for UI conventions.
 - `backend/` — FastAPI + Pydantic + SQLAlchemy on PostgreSQL/Supabase, with Prisma owning migrations. API prefix `/api/v1`.
-- `landing/` — Next.js 16 marketing site (SEO, Open Graph images, interactive demo session), deployed with the learner app from one Vercel project. The API remains separate; see `landing/README.md`.
-- `marketing/` — not deployed. Product Hunt kit (`product-hunt/`), launch videos (`videos/launch-film`, `videos/promo-film`, `videos/campaign`), media kit and explainer (`media/`) and pricing/cost model (`business-model/`). See `marketing/README.md`. Its scripts read from and write into `landing/public`.
+- `frontend/src/marketing/` — marketing site routes, copy, assets and interactive demo, served by the Vite frontend alongside learner routes. The API remains separate; see `frontend/README.md`.
+- `marketing/` — not deployed. Product Hunt kit (`product-hunt/`), launch videos (`videos/launch-film`, `videos/promo-film`, `videos/campaign`), media kit and explainer (`media/`) and pricing/cost model (`business-model/`). See `marketing/README.md`. Its scripts read from and write into `frontend/public`.
 
 ## Branch and pull request conventions
 
@@ -20,9 +20,8 @@ Linguini is a photo-led, speak-first language-learning app. The repository is a 
 ## Checks before opening a pull request
 
 ```sh
-cd frontend && npm ci && npm run lint && npm run build
+cd frontend && npm ci && npm run lint && npm test && npm run build
 cd backend  && ruff check . && pytest
-cd landing  && npm ci && npm run lint && npm run build
 ```
 
 Backend tests need `TEST_DATABASE_URL` pointing at a disposable PostgreSQL database; without it the PostgreSQL integration tests skip silently. Prisma migrations are validated with `npm run db:validate` and applied with `npm run db:deploy` from `backend/`.

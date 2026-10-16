@@ -1,13 +1,13 @@
 # Launch posts, outreach and replies: Linguini on Product Hunt
 
-Replace `[PH_POST_URL]` with the launch URL once Product Hunt creates the post. The demo link is the landing page, which has a no-signup demo on real photos: https://linguini-landing.vercel.app . No messages below have been sent. Images are in `marketing/media/export/banners/` unless noted.
+Replace `[PH_POST_URL]` with the launch URL once Product Hunt creates the post. The demo link is the landing page, which has a no-signup demo on real photos: https://www.learnwithlinguini.com . No messages below have been sent. Images are in `marketing/media/export/banners/` unless noted.
 
 House rules for every post: ask people to **try it and tell us what they think**. Never ask for upvotes. Product Hunt forbids it, and that includes jokes and "you know what to do". Post from personal accounts. Don't claim users, reviews or numbers we don't have. Share to communities only where the team has participated and the post fits their rules.
 
 Three kinds of copy below:
 
 - **Preview:** points to the live landing demo; usable now, before the Product Hunt post exists.
-- **Launch day, final draft:** written for 17 October. These match the mockups in the launch blog post ([`landing/components/blog/launch/content.ts`](../../landing/components/blog/launch/content.ts)).
+- **Launch day, final draft:** written for 17 October. These match the mockups in the launch blog post ([`frontend/src/marketing/components/blog/launch/content.ts`](../../frontend/src/marketing/components/blog/launch/content.ts)).
 - **Launch day, alternate:** from the earlier draft. Longer, and it says Linguini finds the objects in your photo, takes 5 minutes and is free.
 
 > **Open decision: which launch-day set.** The final drafts are primary: they say only what the demo does today and name the 50-second explainer. The alternates are more detailed but depend on claims that need the release checks in [listing.md](listing.md#product-hunt-full-release-use-only-after-the-release-checks) (object detection in your own photo, 5-minute sessions, free pricing). Pick one set per channel so the messaging matches the listing.
@@ -21,7 +21,7 @@ Three kinds of copy below:
 ```
 A café table. A street corner. Your own desk. Each one is full of words worth learning.
 
-We built Linguini around that idea: short Spanish and French practice from everyday photos. Try the interactive mini session and tell us which part should make it into the app next: https://linguini-landing.vercel.app/
+We built Linguini around that idea: short Spanish and French practice from everyday photos. Try the interactive mini session and tell us which part should make it into the app next: https://www.learnwithlinguini.com/
 ```
 
 ### Launch day, final draft (3 posts, image on post 1: `launch-card-1200x630.png`)
@@ -81,7 +81,7 @@ Your streak is a row of farfalle. Obviously.
 **4/5** (191 characters)
 ```
 Try it without signing up. The demo on our landing page runs on real photos:
-https://linguini-landing.vercel.app
+https://www.learnwithlinguini.com
 
 It runs in the browser on phone, tablet or laptop. Nothing to install, and free to start.
 ```
@@ -109,7 +109,7 @@ We kept seeing the same gap in language learning: vocabulary lists are easy to f
 
 Linguini starts with a photo, places useful Spanish or French words inside it, and turns them into a short practice loop that ends in a journal page. Our new site has an interactive mini session you can complete in your browser.
 
-We’d value concrete feedback from learners, teachers and product makers: which step would make you return tomorrow? Try it here: https://linguini-landing.vercel.app/
+We’d value concrete feedback from learners, teachers and product makers: which step would make you return tomorrow? Try it here: https://www.learnwithlinguini.com/
 ```
 
 ### Launch day, final draft
@@ -131,7 +131,7 @@ Word lists don't know where you live.
 
 That's the idea behind Linguini, which our student team at NUS launched on Product Hunt today. Photograph a moment from your day, like a hawker stall, a bookshelf or a bus stop, and Linguini turns it into a 5-minute Spanish or French lesson. It finds the objects in the photo. You choose which words to keep. Then you learn them through word cards with audio, I-Spy, fill-in-the-blank and sentence building. Each day is saved as a journal page, with your photos and the words you used.
 
-It runs in the browser, it's free, and you can try the demo without signing up: https://linguini-landing.vercel.app
+It runs in the browser, it's free, and you can try the demo without signing up: https://www.learnwithlinguini.com
 
 We'd really value your feedback on the launch page: [PH_POST_URL]
 ```
@@ -145,7 +145,7 @@ We'd really value your feedback on the launch page: [PH_POST_URL]
 ```
 Your everyday photos already have a story. What if they could teach you the words to tell it in Spanish or French? 📷
 
-Pick a scene, play through a short lesson, and end on a journal page in our interactive Linguini demo. Link in bio: https://linguini-landing.vercel.app/
+Pick a scene, play through a short lesson, and end on a journal page in our interactive Linguini demo. Link in bio: https://www.learnwithlinguini.com/
 
 Tell us the first thing you’d photograph for a lesson.
 ```
@@ -176,7 +176,7 @@ Built by our student team in Singapore, and live on Product Hunt today. Try the 
 #languagelearning #learnspanish #learnfrench #spanishvocabulary #frenchvocabulary #studygram #producthunt #NUS
 ```
 
-Link in bio: the demo (https://linguini-landing.vercel.app) and `[PH_POST_URL]`. For the TikTok, use a screen recording: photo → markers pop onto the objects → one word card with audio → the journal page. 15–20 seconds, with on-screen text rather than voice-over. Record native aspect ratios and use an actual app/demo capture.
+Link in bio: the demo (https://www.learnwithlinguini.com) and `[PH_POST_URL]`. For the TikTok, use a screen recording: photo → markers pop onto the objects → one word card with audio → the journal page. 15–20 seconds, with on-screen text rather than voice-over. Record native aspect ratios and use an actual app/demo capture.
 
 ---
 
@@ -195,7 +195,7 @@ hey all! our CS3216 app Linguini just went up on Product Hunt 🍝 you pick a ph
 ```
 Hey! Our team just launched Linguini on Product Hunt 🍝
 Take a photo of your day and it becomes a 5-min Spanish or French lesson.
-Try the demo (no sign-up): https://linguini-landing.vercel.app
+Try the demo (no sign-up): https://www.learnwithlinguini.com
 If you've got 2 minutes, we'd love a comment on the launch with what you think, good or bad: [PH_POST_URL]
 ```
 
@@ -215,7 +215,7 @@ Today our team launched Linguini on Product Hunt, the language app we've been bu
 The idea is simple: word lists don't know where you live. You take a photo of a moment from your day (your desk, a café, the walk home), Linguini finds the objects in it, and you learn those words in a 5-minute Spanish or French session with word cards, audio, I-Spy and fill-in-the-blank. Each day ends up in a little photo journal.
 
 You can try it in a minute, with no sign-up, on real photos:
-https://linguini-landing.vercel.app
+https://www.learnwithlinguini.com
 
 And if you have a thought, good or bad, we'd really appreciate a comment on the launch page. That's where we're collecting feedback today:
 [PH_POST_URL]
@@ -238,7 +238,7 @@ Check each community's self-promotion rules first (see the lists in [plan.md](pl
 ```
 We made a photo-based Spanish/French mini lesson. Would this help you remember vocabulary?
 
-We’re a small team testing an idea: learn words from a place you recognise, then use them in I-Spy, sentence tasks and a journal page. There’s an interactive demo with sample scenes here: https://linguini-landing.vercel.app/ . We’re especially interested in whether the photo context helps retention or simply looks nice. If you try it, what would you change?
+We’re a small team testing an idea: learn words from a place you recognise, then use them in I-Spy, sentence tasks and a journal page. There’s an interactive demo with sample scenes here: https://www.learnwithlinguini.com/ . We’re especially interested in whether the photo context helps retention or simply looks nice. If you try it, what would you change?
 ```
 
 ### Launch day, final draft (r/Spanish weekly self-promotion thread, after messaging the mods)
@@ -254,7 +254,7 @@ Small student team here. The idea: learn words from a place you recognise (a str
 ```
 Show HN: Linguini – language practice from photos of your day
 
-We built a browser-based Spanish/French learning loop: start from a photo, select useful words, practise them in short tasks, then write a journal entry. Here’s the live demo and app: https://linguini-landing.vercel.app/ . We’d welcome feedback on whether grounding vocabulary in your own surroundings makes practice more useful.
+We built a browser-based Spanish/French learning loop: start from a photo, select useful words, practise them in short tasks, then write a journal entry. Here’s the live demo and app: https://www.learnwithlinguini.com/ . We’d welcome feedback on whether grounding vocabulary in your own surroundings makes practice more useful.
 ```
 
 *(Before posting, verify the production user-photo workflow and replace this note with one concrete implementation detail or a measured observation. Show HN rejects a landing page or signup-only pitch.)*
@@ -266,13 +266,13 @@ We built a browser-based Spanish/French learning loop: start from a photo, selec
 ### Personal message to a close connection (send one to one, personalised)
 
 ```
-Hey [name] — our team just put up an interactive preview of Linguini, a language-learning project built around everyday photos. You can play through a Spanish or French mini session here: https://linguini-landing.vercel.app/ . I’d really value your honest take, especially on [specific part they would care about]. What felt clear, and what felt confusing? No pressure to share it.
+Hey [name] — our team just put up an interactive preview of Linguini, a language-learning project built around everyday photos. You can play through a Spanish or French mini session here: https://www.learnwithlinguini.com/ . I’d really value your honest take, especially on [specific part they would care about]. What felt clear, and what felt confusing? No pressure to share it.
 ```
 
 ### T−3 heads-up to the personal list
 
 ```
-We launch on Saturday at 3 pm SGT. Here's the demo if you want a sneak peek: https://linguini-landing.vercel.app
+We launch on Saturday at 3 pm SGT. Here's the demo if you want a sneak peek: https://www.learnwithlinguini.com
 ```
 
 No upvote ask. Adjust the day if the launch date changes.
@@ -282,7 +282,7 @@ No upvote ask. Adjust the day if the launch date changes.
 **Subject:** A photo-based Spanish/French practice idea for your learners
 
 ```
-Hi [name], I liked your [specific post/resource] about [specific topic]. Our team built Linguini because we think everyday scenes can make beginner vocabulary easier to use. The interactive mini session shows the idea in Spanish and French: https://linguini-landing.vercel.app/ . If this fits your audience, I’d value your critique of the learning loop. I can send a short demo clip and the exact feature status. No obligation to cover it.
+Hi [name], I liked your [specific post/resource] about [specific topic]. Our team built Linguini because we think everyday scenes can make beginner vocabulary easier to use. The interactive mini session shows the idea in Spanish and French: https://www.learnwithlinguini.com/ . If this fits your audience, I’d value your critique of the learning loop. I can send a short demo clip and the exact feature status. No obligation to cover it.
 ```
 
 ### Launch-day Product Hunt share (after the post exists)
