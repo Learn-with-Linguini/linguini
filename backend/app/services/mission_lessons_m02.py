@@ -137,22 +137,35 @@ def _shuffled(seed, size):
     return order
 
 
-def scene_markers(objects):
-    """Photo marker numbers as the learner sees them: the confirmed objects in ID order."""
-    ordered = sorted(objects, key=lambda obj: obj.id)
+_ENGLISH_ARTICLE = re.compile(r"^(?:the|an?)\s+", re.IGNORECASE)
+
+
+def _english(label):
+    """The English label without a leading article, as explanations add their own."""
+    return _ENGLISH_ARTICLE.sub("", label.strip())
+
+
+def scene_markers(objects, review_markers=None):
+    """Photo marker numbers from the review screen, else the confirmed objects in ID order."""
+    numbers = review_markers or {}
+    if not all(str(obj.id) in numbers for obj in objects):
+        numbers = {str(obj.id): number for number, obj in enumerate(
+            sorted(objects, key=lambda obj: obj.id), 1,
+        )}
+    ordered = sorted(objects, key=lambda obj: numbers[str(obj.id)])
     return ordered, [
-        dict(key=str(obj.id), marker=number, source=obj.label.strip())
-        for number, obj in enumerate(ordered, 1)
+        dict(key=str(obj.id), marker=numbers[str(obj.id)], source=_english(obj.label))
+        for obj in ordered
     ]
 
 
 def m02_payload(
     mission, language, objects, relations, words, translated_scene, progress=None,
-    session_id=None,
+    session_id=None, review_markers=None,
 ):
     """Confirmed relations with reviewed forms, and the one selected for the lesson."""
     language = language.lower()
-    ordered, markers = scene_markers(objects)
+    ordered, markers = scene_markers(objects, review_markers)
     terms = {term.key: term for term in translated_scene.objects} if translated_scene else {}
     rows, places = {}, {}
     for obj, word in zip(objects, words, strict=True):
@@ -160,7 +173,7 @@ def m02_payload(
         article, noun = _article_and_noun(word.display_text, term)
         phrase = _with_article(article, noun) if article else noun
         rows[obj.id] = dict(
-            key=str(obj.id), source=obj.label, nounPhrase=phrase,
+            key=str(obj.id), source=_english(obj.label), nounPhrase=phrase,
             hasArticle=bool(article),
             whereQuestion=_QUESTION_FRAMES[language].format(phrase),
             gender=mission_gender(term, word),

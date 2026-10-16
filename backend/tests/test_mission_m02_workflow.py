@@ -2,6 +2,7 @@
 
 import json
 from types import SimpleNamespace
+from uuid import UUID
 
 import pytest
 from sqlalchemy import func, select, update
@@ -102,8 +103,10 @@ def test_one_relation_plans_one_m02_task_with_four_questions_on_it(curated):
     ]
     assert find.prompt == "La taza está sobre la mesa."
     assert find.scene_object_id is None and find.reference_object_id is None
-    # Marker numbers are the confirmed objects' positions in the reviewed scene.
-    numbers = {obj.id: index for index, obj in enumerate(detail.scene_objects, 1)}
+    # Marker numbers are the objects' numbers on the review screen (the analysed order).
+    draft = _scalar(engine, select(sessions.c.analysis_draft).where(sessions.c.id == sid))
+    numbers = {UUID(obj["id"]): index for index, obj in enumerate(draft["objects"], 1)}
+    assert {UUID(key): number for key, number in draft["reviewMarkers"].items()} == numbers
     assert {o.option_id: o.label for o in find.options} == {
         option_id: str(numbers[object_id])
         for option_id, object_id in find.marker_object_ids.items()

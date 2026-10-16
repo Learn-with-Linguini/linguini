@@ -72,12 +72,13 @@ export function questionOptions(question: Pick<GrammarLessonQuestion, "options" 
   return question.keepOptionOrder ? [...question.options] : choiceOrder(question.options, seed, option => option.optionId);
 }
 
-/** The photo markers a marker question offers, with the scene's own marker numbers. */
+/** The photo markers a marker question offers, numbered as on the review screen. */
 export function markerChoices(question: Pick<GrammarLessonQuestion, "options" | "markerObjectIds">, scene: Pick<Scene, "items">) {
   const objects = question.markerObjectIds ?? {};
   return question.options.flatMap(option => {
     const item = scene.items.find(candidate => candidate.id === objects[option.optionId]);
-    return item ? [{ option, item }] : [];
+    // The saved label is the object's number on the review screen.
+    return item ? [{ option, item: { ...item, marker: Number(option.label) || item.marker } }] : [];
   }) satisfies { option: GrammarLessonQuestion["options"][number]; item: LanguageItem }[];
 }
 

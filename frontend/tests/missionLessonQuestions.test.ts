@@ -24,6 +24,12 @@ const findObject: GrammarLessonQuestion = {
   markerObjectIds: { "marker-1": "book", "marker-2": "table", "marker-3": "cup" }, keepOptionOrder: true,
 };
 
+test("marker badges show the review-screen numbers saved on the options", () => {
+  const reviewed = { ...findObject, options: [{ optionId: "marker-2", label: "2" }, { optionId: "marker-5", label: "5" }],
+    markerObjectIds: { "marker-2": "cup", "marker-5": "book" } };
+  assert.deepEqual(markerChoices(reviewed, scene).map(({ item }) => [item.id, item.marker]), [["cup", 2], ["book", 5]]);
+});
+
 test("marker options use the reviewed photo's marker numbers", () => {
   const markers = markerChoices(findObject, scene);
   assert.deepEqual(markers.map(({ option, item }) => [option.optionId, item.id, item.marker]), [

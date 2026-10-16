@@ -4356,6 +4356,11 @@ p[role="alert"]::before { content: "!"; }
 .object-preview__key { width: 14px; height: 14px; border-radius: 50%; border: 3px solid var(--tomato); }
 .object-preview__key--reference { border-color: var(--teal); border-style: dashed; }
 
+/* Marker badges near the top edge stay readable over a small photo. */
+.mission-markers { padding-top: var(--space-5); }
+.mission-markers .scene { overflow: visible; }
+.mission-markers .scene__art { border-radius: calc(var(--radius-md) - var(--stroke)); overflow: hidden; }
+
 .learning-section { display: grid; gap: var(--space-3); }
 .learning-section__title { margin: 0; font-size: var(--text-h3); }
 

@@ -156,6 +156,17 @@ def _lesson_answer_is_correct(task, question_id, answer):
     )
 
 
+def review_marker_numbers(detected, accepted_ids, added_ids):
+    """Review numbering: detected objects keep their place, added ones follow them in order."""
+    accepted = {str(item) for item in accepted_ids}
+    numbers = {
+        str(obj["id"]): number for number, obj in enumerate(detected, 1)
+        if str(obj["id"]) in accepted
+    }
+    numbers.update({str(item): len(detected) + number for number, item in enumerate(added_ids, 1)})
+    return numbers
+
+
 def task_progress(tasks):
     complete = sum(t.status == "completed" for t in tasks)
     skipped = sum(t.status == "skipped" for t in tasks)
@@ -1276,6 +1287,7 @@ class PostgresWorkflowRepository:
             counted = self._save_counted_groups(
                 c, session_id, request, confirmed, existing, manual_ids
             )
+            self._save_review_markers(c, session_id, request, manual_ids)
             self._plan_missions(c, session, profile, confirmed, counted, [
                 relation.model_copy(update=dict(
                     subject_scene_object_id=manual_ids.get(
@@ -1420,6 +1432,19 @@ class PostgresWorkflowRepository:
             analysis_draft=draft,
         ))
         return draft["countedGroups"]
+
+    def _save_review_markers(self, c, session_id, request, manual_ids):
+        """The photo marker number each kept object had on the review screen."""
+        draft = dict(c.execute(select(sessions.c.analysis_draft).where(
+            sessions.c.id == session_id,
+        )).scalar_one() or {})
+        draft["reviewMarkers"] = review_marker_numbers(
+            draft.get("objects", []), request.accepted_object_ids,
+            [manual_ids[item.id] for item in request.added_objects],
+        )
+        c.execute(update(sessions).where(sessions.c.id == session_id).values(
+            analysis_draft=draft,
+        ))
 
     def _plan_missions(self, c, session, profile, objects, counted_groups, relations):
         """Snapshot the lesson's mission plan from the confirmed facts before generation."""
@@ -1673,6 +1698,7 @@ class PostgresWorkflowRepository:
             payload = spec.payload(
                 mission, language, objects, relations, words, translated_scene,
                 claim.counted_groups, claim.mission_progress or {}, claim.session_id,
+                review_markers=(claim.session.analysis_draft or {}).get("reviewMarkers"),
             )
             if not spec.ready(payload):
                 logger.warning(

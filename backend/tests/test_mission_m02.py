@@ -75,8 +75,8 @@ def test_every_mission_the_photo_fits_is_planned(objects, relations, planned):
     assert [mission.mission_id for mission in plan] == planned
 
 
-def _payload(language="fr", relations=None, progress=None):
-    objects = [obj(CUP, "cup"), obj(BOOK, "book"), obj(TABLE, "table")]
+def _payload(language="fr", relations=None, progress=None, review=None, objects=None):
+    objects = objects or [obj(CUP, "cup"), obj(BOOK, "book"), obj(TABLE, "table")]
     words = [
         SimpleNamespace(display_text="tasse", gender="feminine"),
         SimpleNamespace(display_text="livre", gender="masculine"),
@@ -94,7 +94,9 @@ def _payload(language="fr", relations=None, progress=None):
         )
     ])
     relations = relations if relations is not None else [rel(CUP, "next_to", BOOK)]
-    return m02_payload(M02, language, objects, relations, words, scene, progress, SESSION)
+    return m02_payload(
+        M02, language, objects, relations, words, scene, progress, SESSION, review,
+    )
 
 
 def _relation(payload):
@@ -292,3 +294,27 @@ def test_catalog_words_with_inline_articles_build_without_a_translated_scene():
         validate_m02_lesson(payload, result)
         assert result.questions[0].prompt == statement
         assert result.questions[2].correct_text == "¿Dónde está la silla?"
+
+
+def test_markers_keep_review_numbers_with_gaps_for_removed_objects():
+    review = {str(CUP): 4, str(BOOK): 1, str(TABLE): 2}
+    payload = _payload("es", [rel(CUP, "on", TABLE)], review=review, objects=[
+        obj(CUP, "the cup"), obj(BOOK, "book"), obj(TABLE, "table"),
+    ])
+    find = fallback_m02_lesson(payload).questions[0]
+    assert [(row["source"], row["marker"]) for row in payload["markers"]] == [
+        ("book", 1), ("table", 2), ("cup", 4),
+    ]
+    assert find.correct_option_id == "marker-4"
+    assert _labels(find) == {"marker-1": "1", "marker-2": "2", "marker-4": "4"}
+    partial = _payload("es", [rel(CUP, "on", TABLE)], review={str(CUP): 4})
+    assert [row["marker"] for row in partial["markers"]] == [1, 2, 3]
+
+
+def test_review_numbers_follow_detection_then_added_order():
+    from app.repositories.postgres.workflow import review_marker_numbers
+    detected = [{"id": str(TABLE)}, {"id": str(BOOK)}, {"id": str(CUP)}]
+    added = [uuid4(), uuid4()]
+    assert review_marker_numbers(detected, [TABLE, CUP], added) == {
+        str(TABLE): 1, str(CUP): 3, str(added[0]): 4, str(added[1]): 5,
+    }

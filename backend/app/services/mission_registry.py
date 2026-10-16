@@ -16,7 +16,7 @@ from app.services.mission_lessons_m03 import m03_lesson_task, m03_payload
 @dataclass(frozen=True)
 class MissionLessonSpec:
     """``payload(mission, language, objects, relations, words, translated_scene, counts,
-    progress, session_id)``;
+    progress, session_id, review_markers=)``;
     ``ready(payload)`` is false when the confirmed facts give no reviewed content."""
 
     payload: Callable[..., dict]
@@ -29,23 +29,24 @@ class MissionLessonSpec:
 
 def _m01_payload(
     mission, language, objects, _relations, words, translated_scene, _counts, progress,
-    session_id,
+    session_id, review_markers=None,
 ):
     return m01_payload(mission, language, objects, words, translated_scene, progress, session_id)
 
 
 def _m02_payload(
     mission, language, objects, relations, words, translated_scene, _counts, progress,
-    session_id,
+    session_id, review_markers=None,
 ):
     return m02_payload(
         mission, language, objects, relations, words, translated_scene, progress, session_id,
+        review_markers,
     )
 
 
 def _m03_payload(
     mission, language, objects, relations, words, translated_scene, counts, progress,
-    session_id,
+    session_id, review_markers=None,
 ):
     return m03_payload(
         mission, language, objects, relations, words, translated_scene, counts,
