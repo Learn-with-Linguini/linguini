@@ -64,6 +64,7 @@ const { h, act, createRoot, MemoryRouter, Route, Routes, QueryClient, QueryClien
 const clue: SessionTask = {
   id: "clue1", kind: "ispyRound", phase: "ispy", status: "pending", orderIndex: 0,
   isSkippable: true, sceneObjectId: "object-a", vocabularyItemId: null,
+  xpReward: 0, xpBonus: 0,
   publicContent: { kind: "ispyRound", clue: "es roja", clueTranslation: "it is red", options: [
     { optionId: "a", label: "taza", sceneObjectId: "object-a" },
     { optionId: "b", label: "mesa", sceneObjectId: "object-b" },
@@ -171,6 +172,7 @@ function commit(isCorrect: boolean) {
   fixture = { ...fixture, tasks: [{ ...fixture.tasks[0], status: "completed" }, fixture.tasks[1]],
     progress: { ...fixture.progress, completedTaskCount: 1, terminalTaskCount: 1 }, nextTaskId: "clue2" };
   return { task: fixture.tasks[0], sessionProgress: fixture.progress, nextTaskId: "clue2",
+    xpEarned: isCorrect ? 25 : 10,
     attempt: { id: "answer1", attemptNumber: 1, isCorrect, responsePayload: { optionId: "a" }, feedback: { message: "Saved answer feedback." } } };
 }
 
@@ -196,6 +198,7 @@ for (const mode of ["ispy", "lesson"] as const) {
     assert.equal(choice("taza")?.getAttribute("aria-pressed"), "true");
     assert.equal(choice("mesa")?.classList.contains("choice--incorrect"), false);
     assert.match(dom.window.document.body.textContent ?? "", /Saved answer feedback\./);
+    assert.doesNotMatch(dom.window.document.body.textContent ?? "", /\+\d+ XP earned/);
     assert.equal(next()?.disabled, false, "the recovered round can advance");
     assert.equal(requests.length, 2, "recovery must not submit another answer");
   });
@@ -209,6 +212,7 @@ test("retrying an unanswered response reuses its command key and displays the ac
   await until(() => Boolean(choice("taza") && !choice("taza")!.disabled), "the interrupted answer should be retryable");
   await click(choice("taza"));
   await until(() => Boolean(choice("taza")?.classList.contains("choice--correct")), "the accepted answer should show its saved grade");
+  assert.match(dom.window.document.body.textContent ?? "", /\+25 XP earned/);
   assert.equal(requests.length, 2);
   assert.equal(requests[0].idempotencyKey, requests[1].idempotencyKey);
   assert.equal(typeof requests[0].idempotencyKey, "string");

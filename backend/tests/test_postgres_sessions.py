@@ -22,7 +22,7 @@ from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.repositories.postgres.xp import award
 from app.repositories.practice import PracticeConflictError
 from app.schemas.base import utc_now
-from app.schemas.enums import TaskKind
+from app.schemas.enums import SessionMode, TaskKind
 from app.schemas.media import MediaAsset
 from app.schemas.users import LanguageProfile, User
 
@@ -248,6 +248,100 @@ def test_normalized_workflow_and_idempotent_progress(database, source):
     with TestClient(create_app()) as restarted:
         assert restarted.get(endpoint).json()["progress"] == summary["progress"]
     assert PostgresWorkflowRepository(engine, uuid4()).active(profile.id) is None
+
+
+def test_task_xp_metadata_follows_session_mode(database):
+    engine, _, profile, client = database
+    sid = create_run(client, profile)["session"]["id"]
+    detail = analyze(client, sid)
+    for task in detail["tasks"]:
+        assert task["xpReward"] == 10
+        assert task["xpBonus"] == (15 if task["phase"] == "ispy" else 0)
+
+    with engine.begin() as connection:
+        connection.execute(
+            update(sessions)
+            .where(sessions.c.id == UUID(sid))
+            .values(mode=SessionMode.ISPY)
+        )
+    game_detail = client.get(f"/api/v1/sessions/{sid}").json()
+    assert all(task["xpReward"] == task["xpBonus"] == 0 for task in game_detail["tasks"])
+    for task in game_detail["tasks"]:
+        response = client.get(f"/api/v1/tasks/{task['id']}")
+        assert response.status_code == 200
+        assert response.json()["xpReward"] == response.json()["xpBonus"] == 0
+
+
+def test_task_action_xp_is_stable_on_replay_and_skips_earn_nothing(database):
+    _, _, profile, client = database
+    sid = create_run(client, profile)["session"]["id"]
+    detail = analyze(client, sid)
+    task = next(task for task in detail["tasks"] if task["kind"] == "vocabularyIntroduction")
+    endpoint = f"/api/v1/tasks/{task['id']}/attempts"
+    request = vocabulary_answer(task["publicContent"]) | {"idempotencyKey": "xp-award-replay"}
+    first = client.post(endpoint, json=request)
+    replay = client.post(endpoint, json=request)
+    assert first.status_code == replay.status_code == 200
+    assert first.json()["xpEarned"] == replay.json()["xpEarned"] == 10
+
+    skip_task = next(item for item in detail["tasks"] if item["id"] != task["id"])
+    skipped = client.post(f"/api/v1/tasks/{skip_task['id']}/skip", json={})
+    assert skipped.status_code == 200
+    assert skipped.json()["xpEarned"] == 0
+
+
+@pytest.mark.parametrize(("correct", "expected_xp"), [(True, 25), (False, 10)])
+def test_ispy_attempt_action_reports_xp(database, correct, expected_xp):
+    engine, _, profile, client = database
+    sid = create_run(client, profile)["session"]["id"]
+    detail = analyze(client, sid)
+    task = next(task for task in detail["tasks"] if task["kind"] == "ispyRound")
+    with engine.connect() as connection:
+        correct_id = connection.execute(
+            select(session_tasks.c.answer_key["correctSceneObjectId"].astext).where(
+                session_tasks.c.id == UUID(task["id"])
+            )
+        ).scalar_one()
+    endpoint = f"/api/v1/tasks/{task['id']}/attempts"
+
+    def submit(scene_object_id, key):
+        return client.post(
+            endpoint,
+            json={
+                "inputMode": "objectSelection",
+                "sceneObjectId": scene_object_id,
+                "idempotencyKey": key,
+            },
+        )
+
+    if correct:
+        response = submit(correct_id, "ispy-xp-correct")
+    else:
+        wrong_ids = [str(uuid4()), str(uuid4())]
+        content = task["publicContent"] | {
+            "options": [
+                *task["publicContent"]["options"],
+                *(
+                    {"optionId": wrong_id, "label": label, "sceneObjectId": wrong_id}
+                    for wrong_id, label in zip(wrong_ids, ("Not this", "Nor this"), strict=True)
+                ),
+            ]
+        }
+        with engine.begin() as connection:
+            connection.execute(
+                update(session_tasks)
+                .where(session_tasks.c.id == UUID(task["id"]))
+                .values(public_content=content)
+            )
+        first = submit(wrong_ids[0], "ispy-xp-first-miss")
+        assert first.status_code == 200, first.text
+        assert first.json()["task"]["status"] == "inProgress"
+        assert first.json()["xpEarned"] == 0
+        response = submit(wrong_ids[1], "ispy-xp-final-miss")
+    assert response.status_code == 200, response.text
+    assert response.json()["task"]["status"] == "completed"
+    assert response.json()["attempt"]["isCorrect"] is correct
+    assert response.json()["xpEarned"] == expected_xp
 
 
 def test_skip_all_adds_no_learning_credit(database):

@@ -81,8 +81,8 @@ class AiRuntime:
             )
         else:
             logger.warning(
-                "Uploaded-image scene analyzer not built; uploaded photos fall back "
-                "to deterministic placeholder analysis."
+                "Uploaded-image scene analyzer not built; uploaded photos will fail "
+                "scene analysis with a retryable error."
             )
         return analyzer
 

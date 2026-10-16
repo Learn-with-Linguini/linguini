@@ -12,7 +12,8 @@ const contents: Record<string, TaskContent> = {
 function task(kind: keyof typeof contents, status: SessionTask["status"], orderIndex: number): SessionTask {
   const publicContent = contents[kind];
   return { id: `${kind}-${orderIndex}`, kind: publicContent.kind, phase: kind === "clues" ? "ispy" : "learning",
-    status, isSkippable: true, orderIndex, publicContent, vocabularyItemId: null, sceneObjectId: null };
+    status, isSkippable: true, orderIndex, publicContent, vocabularyItemId: null, sceneObjectId: null,
+    xpReward: 0, xpBonus: 0 };
 }
 
 function detail(status: SessionStatus, tasks: SessionTask[] = [], failureCode: PracticeDetail["session"]["failureCode"] = null, analysisRetryable = false): PracticeDetail {
@@ -44,7 +45,7 @@ test("a retryable analysis failure reopens on the analysis page", () => {
   assert.equal(isSessionRouteAllowed(retryable, "/practice/sessions/s1/learn"), false);
   const exhausted = detail("failed", [], "sceneAnalysisFailed");
   assert.equal(sessionDestination(exhausted).path, "/practice");
-  assert.match(sessionDestination(exhausted).notice ?? "", /couldn't read that photo/);
+  assert.match(sessionDestination(exhausted).notice ?? "", /still couldn't analyse that photo/);
   assert.equal(sessionDestination(detail("failed", [], "imageModerationFailed")).path, "/practice");
 });
 

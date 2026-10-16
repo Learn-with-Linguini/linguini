@@ -197,7 +197,8 @@ def build_uploaded_scene_analyzer(
 ) -> UploadedSceneAnalyzer | None:
     """Build the configured uploaded-photo analyzer, or ``None`` when off.
 
-    ``None`` preserves the workflow's deterministic scene fallback. The
+    ``None`` makes the workflow fail uploaded-photo analysis with a retryable
+    ``analysisUnavailable`` error. The
     caller routes only non-preloaded media through the returned analyzer.
     """
     scene_config = settings.feature(AiFeature.SCENE_ANALYSIS)
@@ -215,7 +216,7 @@ def build_uploaded_scene_analyzer(
                 reason = "no model is configured"
             logger.warning(
                 "Uploaded-image scene analysis is disabled: the sceneAnalysis route "
-                "uses provider %s but %s; uploaded photos will get placeholder objects.",
+                "uses provider %s but %s; uploaded-photo analysis will fail until it is set.",
                 scene_config.provider.value,
                 reason,
             )

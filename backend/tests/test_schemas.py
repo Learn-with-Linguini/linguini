@@ -6,6 +6,7 @@ from pydantic import TypeAdapter, ValidationError
 from app.schemas.enums import (
     ISpyInteractionMode,
     PartOfSpeech,
+    SessionMode,
     TaskKind,
     TaskPhase,
 )
@@ -74,7 +75,7 @@ def test_public_task_does_not_serialize_answer_key() -> None:
         answer_key={"correctSceneObjectId": str(uuid4())},
     )
 
-    public = SessionTaskPublic.from_internal(internal)
+    public = SessionTaskPublic.from_internal(internal, mode=SessionMode.LESSON)
 
     assert "answerKey" not in public.model_dump(mode="json")
 

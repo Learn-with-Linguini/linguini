@@ -10,7 +10,7 @@ const lesson: TaskContent = {
 };
 const task = (publicContent: TaskContent): SessionTask => ({
   id: "task", kind: publicContent.kind, phase: "learning", status: "pending", isSkippable: true, orderIndex: 0,
-  publicContent, vocabularyItemId: null, sceneObjectId: null,
+  publicContent, vocabularyItemId: null, sceneObjectId: null, xpReward: 10, xpBonus: 0,
 });
 const attempt = (evaluationDetails: TaskAttemptResult["evaluationDetails"]): TaskAttemptResult => ({
   id: "attempt", attemptNumber: 1, isCorrect: false, feedback: null, evaluationDetails,

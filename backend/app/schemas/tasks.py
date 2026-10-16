@@ -7,12 +7,14 @@ from uuid import UUID
 
 from pydantic import AwareDatetime, Field, StringConstraints, ValidationError, model_validator
 
+from app.repositories.postgres.xp import task_xp
 from app.schemas.base import ApiModel, EntityModel, JsonObject, NonEmptyText, UnitScore, utc_now
 from app.schemas.enums import (
     AttemptInputMode,
     ISpyInteractionMode,
     PartOfSpeech,
     ProficiencyLevel,
+    SessionMode,
     TaskKind,
     TaskPhase,
     TaskStatus,
@@ -447,6 +449,8 @@ class SessionTaskPublic(ApiModel):
     kind: TaskKind
     order_index: Annotated[int, Field(ge=0)]
     status: TaskStatus
+    xp_reward: Annotated[int, Field(ge=0)] = 0
+    xp_bonus: Annotated[int, Field(ge=0)] = 0
     is_skippable: Literal[True] = True
     public_content: TaskPublicContent
     vocabulary_item_id: UUID | None = None
@@ -458,8 +462,16 @@ class SessionTaskPublic(ApiModel):
     updated_at: AwareDatetime
 
     @classmethod
-    def from_internal(cls, task: SessionTask) -> SessionTaskPublic:
-        return cls.model_validate(task, from_attributes=True)
+    def from_internal(
+        cls, task: SessionTask, *, mode: SessionMode
+    ) -> SessionTaskPublic:
+        reward, bonus = task_xp(task.phase, mode)
+        return cls.model_validate(
+            task.model_dump(
+                by_alias=False, exclude={"answer_key", "skip_reason"}
+            )
+            | {"xp_reward": reward, "xp_bonus": bonus}
+        )
 
 
 class TaskAttempt(EntityModel):
@@ -757,3 +769,4 @@ class TaskActionResponse(ApiModel):
     attempt: TaskAttempt | None = None
     next_task_id: UUID | None = None
     session_progress: SessionProgress
+    xp_earned: Annotated[int, Field(ge=0)] = 0

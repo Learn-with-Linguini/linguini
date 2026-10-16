@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { sessionDestination, sessionPaths } from "../lib/sessionRoute";
-import { Button, Card, Feedback, ProgressTrail, TopBar } from "../components/ui";
+import { Button, Card, Feedback, ProgressTrail, TopBar, XpPill } from "../components/ui";
 import { ArrowRightIcon } from "../components/icons";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
-import { practiceStages, taskDone } from "../lib/practiceTasks";
+import { practiceStages, taskDone, taskXp, xpEarnedText } from "../lib/practiceTasks";
 import { CLUE_ASSISTANCE_VERSION, descriptionEvaluation, getLatestAttempt } from "../lib/api";
 import { queryKeys } from "../lib/queryKeys";
 import type { ClueAssistance, ClueFrame, ClueFrameId, ClueSlotId, ISpyDescriptionEvaluation, ISpyDescriptionOutcome, SessionTask, TaskAnswer } from "../lib/api";
@@ -59,6 +59,7 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
   const { actOnTask, practiceSaving, practiceError, activeProfile } = useAppState();
   const [text, setText] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [xpEarned, setXpEarned] = useState<number>();
   const [guess, setGuess] = useState<LatestGuess | null>(null);
   const [revising, setRevising] = useState(false);
   const [activeFrameId, setActiveFrameId] = useState<ClueFrameId | null>(null);
@@ -142,6 +143,7 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
     setChoices(all => ({ ...all, [frame.frameId]: undefined }));
   };
   const answered = taskDone(task);
+  const reward = !answered ? taskXp(task) : null;
   const restoreFailed = !hydrated && latest.isError;
   const locked = answered || practiceSaving || guess !== null || !hydrated;
   const markers = [target, guessed && guessed.id !== target?.id ? guessed : null].filter((item): item is LanguageItem => Boolean(item));
@@ -179,7 +181,11 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
   };
   const confirm = async () => {
     if (!guess) return;
-    if (await actOnTask(task.id, "confirm-guess", { attemptId: guess.attemptId })) setFeedback("Linguini found your object!");
+    const result = await actOnTask(task.id, "confirm-guess", { attemptId: guess.attemptId });
+    if (result) {
+      setFeedback("Linguini found your object!");
+      setXpEarned(result.xpEarned);
+    }
   };
   const improve = () => { setGuess(null); setRevising(true); };
   const outcome = guess?.evaluation.outcome;
@@ -190,7 +196,7 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
     {guessed && target ? <p className="small muted" data-testid="guess-legend">{guessed.id === target.id
       ? `Linguini's guess is your object (marker ${target.marker}).`
       : `Your object: marker ${target.marker} · Linguini's guess: marker ${guessed.marker} (dashed)`}</p> : null}
-    <Card><div className="stack-2"><span className="label muted">Describe this object</span><h2>{target?.word}</h2><span className="small muted">{target?.translation}</span><p>{content.prompt}</p></div></Card>
+    <Card><div className="stack-2"><div className="spread"><span className="label muted">Describe this object</span>{reward ? <XpPill {...reward} /> : null}</div><h2>{target?.word}</h2><span className="small muted">{target?.translation}</span><p>{content.prompt}</p></div></Card>
     {beginner ? <Card><div className="stack-2" data-testid="beginner-guide">
       <strong>How to give a clue</strong>
       <span>1. Tap Colour or Location to start a sentence.</span>
@@ -231,6 +237,7 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
         {outcome === "clearMatch" && guess?.evaluation.ambiguous ? <span>Other objects could fit this clue too — next time add a colour or a position.</span> : null}
         {outcome && !answered ? <span>{OUTCOME_PROMPTS[outcome]}</span> : null}
         {feedback || (answered && !guess) ? <span>{feedback ?? "Reflection saved."}</span> : null}
+        {xpEarnedText(xpEarned) ? <strong>{xpEarnedText(xpEarned)}</strong> : null}
       </>}
     </div></Feedback> : null}
     {(answered || guess) && task.status !== "skipped" ? <ReportIssueLink label="Report a wrong guess" reportType="I-Spy guess" fields={[

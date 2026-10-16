@@ -7,7 +7,7 @@ from sqlalchemy import Column, DateTime, Integer, MetaData, String, Table, Text,
 from sqlalchemy.dialects.postgresql import insert
 
 from app.schemas.base import utc_now
-from app.schemas.enums import XpEventType
+from app.schemas.enums import SessionMode, TaskPhase, XpEventType
 from app.schemas.progress import XpEvent
 
 metadata = MetaData()
@@ -35,6 +35,16 @@ XP_AMOUNTS = {
     "perfectSession": 10,
     "journalEntry": 20,
 }
+
+
+def task_xp(phase: TaskPhase, mode: SessionMode) -> tuple[int, int]:
+    reward = XP_AMOUNTS["taskCompleted"] if mode == SessionMode.LESSON else 0
+    bonus = (
+        XP_AMOUNTS["ispyCorrect"]
+        if mode == SessionMode.LESSON and phase == TaskPhase.ISPY
+        else 0
+    )
+    return reward, bonus
 
 
 def award(

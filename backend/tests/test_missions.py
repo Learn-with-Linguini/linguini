@@ -11,6 +11,7 @@ from app.missions import (
     load_mission_file,
     load_missions,
 )
+from app.schemas.enums import SessionMode
 from app.schemas.tasks import (
     QuestionReviewDetails,
     SessionTask,
@@ -229,7 +230,9 @@ def test_unkeyed_questions_need_accepted_answers_or_a_rubric():
 
 def test_public_task_carries_mission_metadata_without_private_evaluation():
     task = mission_task()
-    public = SessionTaskPublic.from_internal(task).model_dump(mode="json", by_alias=True)
+    public = SessionTaskPublic.from_internal(
+        task, mode=SessionMode.LESSON
+    ).model_dump(mode="json", by_alias=True)
     assert {key: public["publicContent"][key] for key in MISSION} == MISSION
     serialized = str(public)
     for private in ["questionEvaluations", "correctOptionIds", "Taza is feminine", "wrongGender",

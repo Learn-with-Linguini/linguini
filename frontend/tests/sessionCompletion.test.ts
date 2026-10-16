@@ -31,7 +31,8 @@ const BASE = `/practice/sessions/${SESSION_ID}`;
 function task(kind: string, status: SessionTask["status"], orderIndex: number): SessionTask {
   const publicContent = { kind: "reflection" as const, prompt: "Reflect on your words" };
   return { id: `${kind}-${orderIndex}`, kind: publicContent.kind, phase: "ispy",
-    status, isSkippable: true, orderIndex, publicContent, vocabularyItemId: null, sceneObjectId: null };
+    status, isSkippable: true, orderIndex, publicContent, vocabularyItemId: null, sceneObjectId: null,
+    xpReward: 0, xpBonus: 0 };
 }
 
 let fixture = detail("inProgress", [task("learn", "completed", 0), task("clues", "completed", 1), task("reflection", "completed", 2)]);
@@ -215,6 +216,7 @@ function described(attemptId: string, outcome: string, guessedObjectKey: string 
   return () => Response.json({
     task: { ...guessTask, status }, nextTaskId: null,
     sessionProgress: { completedTaskCount: 2, skippedTaskCount: 0, terminalTaskCount: 2, totalTaskCount: 3 },
+    xpEarned: 0,
     attempt: { id: attemptId, attemptNumber: 1, isCorrect: null, feedback: { message: `feedback ${attemptId}` },
       evaluationDetails: { version: "ispy-description-evaluation.v1", outcome, guessedObjectKey, ambiguous: false,
         alternativeObjectKeys: [], matchedEvidenceKeys: [], contradictedEvidenceKeys: [], targetAmongAlternatives: false } },
@@ -320,6 +322,7 @@ function framedReply(attemptId: string, text: string, assistance: Record<string,
   return () => Response.json({
     task: framedTask, nextTaskId: null,
     sessionProgress: { completedTaskCount: 2, skippedTaskCount: 0, terminalTaskCount: 2, totalTaskCount: 3 },
+    xpEarned: 0,
     attempt: { id: attemptId, attemptNumber: 1, isCorrect: null, feedback: { message: "Not quite." },
       responsePayload: { input_mode: "text", text, assistance },
       evaluationDetails: { version: "ispy-description-evaluation.v1", outcome: "noMatch", guessedObjectKey: "obj-other", ambiguous: false,
@@ -564,6 +567,7 @@ async function mountSlots(status: SessionTask["status"]) {
 const slotReply = (attemptId: string, text: string, assistance: Record<string, unknown>) => () => Response.json({
   task: slotTask("inProgress"), nextTaskId: null,
   sessionProgress: { completedTaskCount: 2, skippedTaskCount: 0, terminalTaskCount: 2, totalTaskCount: 3 },
+  xpEarned: 0,
   attempt: { id: attemptId, attemptNumber: 1, isCorrect: null, feedback: { message: "Not quite." },
     responsePayload: { input_mode: "text", text, assistance }, evaluationDetails: evaluation("noMatch", "obj-other") },
 });
