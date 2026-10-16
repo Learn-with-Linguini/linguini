@@ -363,6 +363,10 @@ can be active. Switching profiles filters vocabulary and the scene catalog. Name
 learning goal, preferences, level, and daily minutes persist in PostgreSQL. Browser
 camera/microphone permissions remain separate from saved preferences.
 
+Proficiency levels are `A0`–`C2`; `A0` stores Pre-A1 in the existing two-character level
+columns, and the frontend shows it as "Pre-A1". Pre-A1 has no missions yet, so its lessons
+use the regular lesson plan. Photo rooms accept only A1/A2 profiles.
+
 Vocabulary reads use the active target language and its source-language translation
 in one database snapshot. Missing translations remain null. Trusted backend events
 use `PostgresVocabularyRepository.record_encounter` to atomically record an event
@@ -467,6 +471,171 @@ cascade when their journal is deleted; referenced media/vocabulary remain protec
 Tables use UUID identities and timezone-aware timestamps. Migrations define foreign
 keys, checks, update triggers, RLS, and revoked browser-role grants. All access is
 through backend repositories; the frontend must not query these tables directly.
+
+### Mission contracts
+
+A mission is the definition of one lesson goal at one practice level. Each mission has
+one definition file, `app/missions/definitions/{missionId}-{practiceLevel}.toml`,
+validated by `MissionDefinition` (`app/schemas/missions.py`) and read through
+`app.missions.get_mission`; its `content_version` is stored on the tasks it creates. The
+first is `M01-A1.toml`, "Identify and describe an object": photo eligibility, one objective with its targets, permitted
+language patterns (linked to the existing I-Spy clue frames), teaching sequence and
+support rules, evaluation criteria and expected performance.
+
+Missions reuse the existing task storage; no table or migration is involved:
+
+| Data | Column | Visibility |
+| --- | --- | --- |
+| `missionId`, `practiceLevel`, `contentVersion` | `session_tasks.public_content` | public |
+| `questionEvaluations` (objective, targets, evidence type, accepted answers or rubric criteria, corrections, hidden vocabulary/object targets) | `session_tasks.answer_key` | private |
+| `question_assistance` (supports opened per question) | `task_attempts.response_payload` | owner |
+| `questionOutcomes` | `task_attempts.evaluation_details` | released with the graded attempt |
+
+The three mission fields are set together or not at all, must name a known definition,
+and are omitted from JSON when absent, so tasks and saved sessions without a mission
+keep their stored shape. `questionEvaluations` requires mission metadata, may only name
+the task's own questions (`task` for tasks without grouped questions), and must agree
+with the definition's objective, targets, evidence types and rubric criteria. A question's
+accepted answer is its existing answer-key entry; `acceptedAnswers` is only for questions
+without one.
+
+Grouped-lesson attempts on tasks with `questionEvaluations` add `questionOutcomes`
+beside the unchanged `questionResults` and `correctAnswers`. Each outcome is `correct`,
+`incorrect` (with the matching correction rules as `mistakes`) or `unassessed` (no
+evaluation metadata), and records the supports used; `assistanceUsed` is true only for
+supports the mission counts as assistance. Outcomes describe the existing grading:
+correctness, score, XP, vocabulary progress and learner history still come from
+`questionResults`.
+
+#### Mission lesson planning
+
+Mission lessons apply to lesson sessions whose active language profile is A1 and whose
+target language has reviewed forms (`es`, `fr`); every other session keeps the existing
+lesson.
+
+- **Photo requirements.** Each definition names only the confirmed facts it needs:
+  `minConfirmedObjects` (different names), `minColouredObjects` (reviewed colours) and
+  `minRelations` with the accepted `relations` types, and `minCountedGroups` with the
+  `minQuantity`–`maxQuantity` range. M01 needs two objects with a colour each; M02 needs two
+  objects and an on/under/next-to/in-front-of/behind relation; M03 needs one counted
+  group of 2–10.
+- **Counts.** The review's Counts tab sends `objectCounts` (object ID → 1–10). Each count
+  is saved for the group of every confirmed object with the same name, so a group is
+  counted once and a second count of it is a 409. Groups are stored in
+  `analysisDraft.countedGroups` with `sceneObjectIds`, `label`, `quantity`,
+  `suggestedQuantity` and `source` (`confirmed`, `corrected` or `entered`), and returned
+  as `countedGroups`. A scene-analysis quantity is only offered as a suggestion, and a
+  detected label never implies a count. No migration is needed.
+- **Planner** (`app/services/mission_eligibility.py`). Confirming the scene checks every
+  implemented A1 mission (M01, M02, then M03) against only the facts the learner
+  confirmed, and plans every mission the photo supports, up to three. The plan is saved as
+  `analysisDraft.missionPlan` before generation and generation reads only that snapshot.
+  Sessions reviewed before plans were saved keep the regular lesson.
+- **No mission fits.** The regular lesson runs and `analysisDraft.missionGuidance`
+  (returned as `missionGuidance`) lists what each mission is missing; the lesson page
+  shows it as a short note. Nothing is inferred and no scene is substituted.
+- **Shared teaching.** Translation and one vocabulary introduction are checkpointed first,
+  as before. The introduction carries no mission fields because it teaches the nouns for
+  every planned mission; its per-word evidence still follows each word's own result.
+- **Tasks.** Each planned mission adds one `grammarLesson` carrying its own mission fields,
+  in plan order, before the bonus I-Spy rounds. Mission lessons publish no `explanation`,
+  so the task page shows only the questions and, after submitting, the feedback. `app/services/mission_registry.py` maps each
+  mission to its payload builder, generation spec and task builder.
+
+#### M01 A1 lesson path
+
+1. **Lesson** (`M01-A1.toml`; `app/ai/features/learning_tasks/mission_m01.py`,
+   `app/services/mission_lessons_m01.py`). M01 needs two differently named confirmed
+   objects that each have a confirmed colour with a reviewed form. Two object-colour
+   pairs are chosen when the lesson is generated and saved in the task, so resuming
+   keeps them. Pairs are ranked least familiar first: the object's
+   `user_vocabulary_progress.mastery_score` in the target language plus the colour's
+   past correct ratio from the learner-history snapshot (only when
+   `LEARNER_MEMORY_ENABLED=true`; colours have no word-progress rows). Words without
+   progress or history count as unseen; ties keep scene order. The `grammarLesson` has
+   exactly four questions: identify object 1 (`¿Qué es esto?` / `Qu'est-ce que c'est ?`,
+   choose `una taza` etc.), describe it with word tiles (`Es una taza roja.` /
+   `C'est une tasse rouge.`), then the same for object 2. Identification distractors
+   are nouns taught in this lesson or earlier for the same language, with a known
+   gender, without duplicates. Every question carries `sceneObjectId` and the English
+   `objectLabel`; the app crops the object from its bounding box or rings it on the
+   photo. The lesson is built and validated deterministically with no model call.
+2. **Bonus I-Spy.** The existing AI I-Spy clue and describing rounds are generated
+   alongside the lesson, as in the legacy path, and placed last without mission
+   fields. They unlock once the learning tasks are done and are labelled as the
+   bonus round.
+3. **Grading.** Answers are graded from the private answer key. Each
+   `questionOutcomes` entry names its targets; evidence type is derived from the
+   interaction (`recognition` for multiple choice, `construction` for sentence
+   building) and the word bank is always recorded as support, so a sentence counts as
+   supported practice, not independent writing. Supports a question does not offer are
+   rejected with a 409. Each word's vocabulary evidence uses only the questions that
+   assess it. Replays with the same idempotency key return the saved attempt without
+   new results or XP.
+4. **Completion.** The session completes through the existing lifecycle and completion
+   XP once every task, including every mission task and the bonus rounds, is completed or
+   skipped. If no I-Spy task was generated, the final learning step shows "Finish lesson"
+   instead.
+
+#### M02 A1 lesson path
+
+`M02-A1.toml`, "Find and locate": say where a photo object is, ask where it is and
+check a short answer against the photo. This is supported A1 practice, not independent
+A2 location production.
+
+1. **Payload** (`app/services/mission_lessons_m02.py`). Each confirmed relation whose
+   position has a reviewed phrase and whose objects have reviewed articles, with its
+   statement tiles (`La` / `taza` / `está` / `al lado del` / `libro` / `.`; a contracted
+   or multiword phrase is one tile), `whereQuestion` (`¿Dónde está la taza?`), the
+   positions true for that pair (including inverse relations), the positions they
+   contradict (on/under, in front of/behind) and a proposed answer for the optional check.
+   Positions reuse the I-Spy reviewed bank.
+2. **Selection.** Relations are ranked by the learner-history correct ratio of their
+   position phrase (snapshot only with `LEARNER_MEMORY_ENABLED=true`; otherwise every
+   phrase is unseen), ties in photo order. The core questions use the least familiar. A
+   second relation is selected only if it has another object pair or position; otherwise
+   M02 has three questions. The selection is stored in the generated task.
+3. **Lesson** (`app/ai/features/learning_tasks/mission_m02.py`). Built without a model
+   call and validated: one `grammarLesson`, "Find and locate", with three core questions
+   about the first relation — pick the phrase from three, none of the wrong ones true for
+   the pair (`Elige la posición: la taza ___ la mesa.`); build the statement with one
+   extra phrase tile (`Describe la posición de la taza.`); build the where-question
+   (`Pregunta por la ubicación de la taza.`) — and, only with a second relation, a Yes/No
+   check on the photo (`“El libro está debajo de la mesa.” ¿Coincide con la foto?`). The
+   proposal is the true statement or, for about half the relations, an opposite position
+   the confirmed relation contradicts; the feedback gives the correct statement. Every
+   question uses the learner's photo with `sceneObjectId`/`objectLabel` (and
+   `referenceObjectId`/`referenceLabel` except the where-question). Prompts are in the
+   target language with an English `promptTranslation`, and never contain the sentence
+   the learner builds.
+4. **Grading.** The questions are one task attempt. Phrase and Yes/No choices are
+   recognition with `wrongPosition` corrections; the statement and question are supported
+   construction (`wordBank`), and only those name object words for evidence.
+   `GET /tasks/{id}/latest-attempt` also returns the saved `answers` and `reviewDetails`
+   for mission lessons, so a reloaded graded lesson still shows its answers, grades and
+   corrections.
+
+#### M03 A1 lesson path
+
+`M03-A1.toml`, "Say how many": say a confirmed quantity with the taught pattern
+(`Hay tres libros.`, `Il y a trois livres.`) and the noun's regular plural.
+
+1. **Payload** (`app/services/mission_lessons_m03.py`, `app/services/quantities.py`). The
+   first counted group of 2–10 whose translated noun has a reviewed regular plural, with
+   its reviewed number word, singular, plural, statement, English meaning and nearby
+   wrong quantities. Plurals come only from regular rules (es vowel + `s`, `-d/-l/-r/-j`
+   + `es` without accent changes; fr + `s`, excluding `-s/-x/-z/-au/-eu/-al/-ail` and the
+   `-ou` exceptions) and must match any recorded plural. Otherwise the session records
+   `analysisDraft.skippedMissions` and keeps its other tasks; with no mission task left
+   the regular lesson is used.
+2. **Lesson** (`app/ai/features/learning_tasks/mission_m03.py`). Exactly one
+   `grammarLesson` with 2–4 questions: quantity comprehension, choosing the statement
+   (distractors use a wrong number or the singular), then a word-bank statement whose
+   bank adds the singular and a wrong number. Its validator and fallback check the group, quantity
+   and plural, and its cache identity is `learning-tasks.m03-a1.v1:M03-A1.v1`.
+3. **Grading** follows M01. Corrections name `wrongQuantity` or `pluralForm` when the
+   answer shows which (both for a wrong number with a singular noun), and `wordOrder`
+   otherwise. A rule without listed answers applies only when no specific rule matches.
 
 ### Backend performance
 

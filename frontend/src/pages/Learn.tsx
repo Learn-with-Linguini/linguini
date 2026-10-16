@@ -4,13 +4,13 @@ import { ArrowRightIcon, CheckIcon, CloseIcon } from "../components/icons";
 import { TranslationPreview } from "../components/TranslationPreview";
 import { SessionPersonalization } from "../components/SessionPersonalization";
 import { useScene } from "../state/useScene";
-import { practiceStages, taskDone, taskTitle } from "../lib/practiceTasks";
+import { finishesWithoutISpy, isMissionSession, practiceStages, taskDone, taskTitle } from "../lib/practiceTasks";
 import { useAppState } from "../state/useAppState";
 
 export function Learn() {
   const navigate = useNavigate();
   const scene = useScene();
-  const { session, practiceSaving, practiceError, practiceStalled, retryProcessing } = useAppState();
+  const { session, practiceSaving, practiceError, practiceStalled, retryProcessing, completeSession } = useAppState();
   if (!session) return null;
   const base = `/practice/sessions/${scene.sessionId}`;
   if (session.session.status === "completed") return <Navigate to={`${base}/summary`} replace />;
@@ -41,6 +41,10 @@ export function Learn() {
 
       {session.translationPreview ? <TranslationPreview preview={session.translationPreview} scene={scene} /> : null}
       <SessionPersonalization personalization={session.personalization} languageCode={scene.languageCode} />
+      {session.missionGuidance?.length ? <section className="panel-note" role="note">
+        <p><strong>This photo didn't fit a mission</strong>, so this is the regular lesson.</p>
+        <p className="small muted">For a mission next time: {session.missionGuidance.join(" ")}</p>
+      </section> : null}
 
       <div className="task-list" aria-label="Learning tasks">
         {tasks.map((task, index) => {
@@ -71,8 +75,10 @@ export function Learn() {
       </section> : null}
 
       {allDone ? (
-        <Button block disabled={practiceSaving} onClick={() => navigate(`${base}/ispy-1`)}>
-          Play I-Spy <ArrowRightIcon />
+        finishesWithoutISpy(session.tasks) ? <Button block disabled={practiceSaving} onClick={() => { if (completeSession()) navigate(`${base}/summary`); }}>
+          Finish lesson <ArrowRightIcon />
+        </Button> : <Button block disabled={practiceSaving} onClick={() => navigate(`${base}/ispy-1`)}>
+          {isMissionSession(session.tasks) ? "Play bonus I-Spy" : "Play I-Spy"} <ArrowRightIcon />
         </Button>
       ) : (
         <Button block disabled={practiceSaving || !nextTask} onClick={() => nextTask && openTask(nextTask.id)}>

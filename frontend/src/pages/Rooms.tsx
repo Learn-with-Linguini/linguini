@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ApiError } from "../lib/api";
+import { ApiError, proficiencyLabel } from "../lib/api";
 import { createRoom, getActiveRoom, joinRoom, roomMatchesProfile, roomQueryKeys } from "../lib/rooms";
 import { friendlyError } from "../lib/queryKeys";
 import { useAppState } from "../state/useAppState";
@@ -62,7 +62,7 @@ function RoomLobby() {
     <p>Add a few photos together. Take turns giving a clue and spotting the object in a fresh photo.</p>
     <GameResources />
     {!activeProfile ? <p role="alert">Choose your learning language in Profile before joining a room.</p> :
-      <p className="small muted">Your room uses {activeProfile.targetLanguageCode.toUpperCase()} · {activeProfile.proficiencyLevel}.
+      <p className="small muted">Your room uses {activeProfile.targetLanguageCode.toUpperCase()} · {proficiencyLabel(activeProfile.proficiencyLevel)}.
         Your friend needs the same learning language, explanation language, and level.</p>}
     {active.isPending && activeProfile ? <p role="status">Checking for an open room…</p> : active.error ?
       <div className="stack-2"><p role="alert">We couldn’t check your open room.</p>

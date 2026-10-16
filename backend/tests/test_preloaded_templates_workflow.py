@@ -20,6 +20,13 @@ from app.repositories.postgres.tasks import session_tasks
 from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.schemas.sessions import ReviewPracticeRequest
 from app.scripts.preloaded_templates import generate_row_templates
+from app.services import mission_eligibility
+
+
+@pytest.fixture(autouse=True)
+def regular_lesson(monkeypatch):
+    """These tests cover the regular lesson, which A1 uses when no mission is planned."""
+    monkeypatch.setitem(mission_eligibility.IMPLEMENTED_MISSIONS, "A1", ())
 
 
 @pytest.fixture
