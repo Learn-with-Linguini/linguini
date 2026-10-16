@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { AppShell, FocusShell } from "./components/AppShell";
 import { Home } from "./pages/Home";
@@ -57,11 +58,23 @@ function OnboardingRoute() {
   return <AppStateProvider><Onboarding /></AppStateProvider>;
 }
 
+function RootRoute() {
+  const hostedUnderLanding = import.meta.env.BASE_URL !== "/";
+
+  useEffect(() => {
+    if (hostedUnderLanding) window.location.replace("/");
+  }, [hostedUnderLanding]);
+
+  return hostedUnderLanding
+    ? <LoadingScreen label="Returning to the landing page…" />
+    : <Welcome />;
+}
+
 export default function App() {
   return (
     <Routes>
       <Route element={<FocusShell />}>
-        <Route path="/" element={<Welcome />} />
+        <Route path="/" element={<RootRoute />} />
         <Route path="/login" element={<Login />} />
         <Route path="/onboarding" element={<OnboardingRoute />} />
         <Route path="/contact" element={<Contact />} />

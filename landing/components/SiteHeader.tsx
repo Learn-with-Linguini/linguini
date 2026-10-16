@@ -58,7 +58,7 @@ export function SiteHeader() {
 
         <div className={styles.actions}>
           <a href={appLinks.signIn} className={`btn-quiet ${styles.login}`}>Log in</a>
-          <a href={appLinks.signUp} className="btn btn--small">Start free</a>
+          <a href={appLinks.signUp} className="btn btn--small">Get started</a>
           <button
             type="button"
             className={styles.menuButton}

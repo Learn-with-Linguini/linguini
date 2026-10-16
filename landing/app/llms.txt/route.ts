@@ -38,7 +38,7 @@ export function GET() {
     ...languagePages.map(
       page => `- [Learn ${page.name} with photos](${site.url}/learn/${page.slug}): every ${page.name} word in the demo scenes, with article, gender and pronunciation, and a worked session`,
     ),
-    `- [Join the public beta](${appLinks.signUp})`,
+    `- [Join the public beta](${new URL(appLinks.signUp, site.url).toString()})`,
     `- [Blog](${site.url}/blog)`,
     ...posts.map(post => `- [${post.title}](${site.url}/blog/${post.slug}): ${post.summary}`),
     `- [Photo credits](${site.url}/credits): source and licence of every photo on the site`,

@@ -5,5 +5,5 @@
   "rules": {
     "react/react-in-jsx-scope": "off"
   },
-  "ignorePatterns": [".next", "node_modules", "next-env.d.ts"]
+  "ignorePatterns": [".next", "node_modules", "next-env.d.ts", "public/app"]
 }

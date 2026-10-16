@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:landing": "tsc -b && vite build --base /app/ --outDir ../landing/public/app --emptyOutDir",
     "lint": "oxlint",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "preview": "vite preview"

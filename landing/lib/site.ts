@@ -1,11 +1,9 @@
-/** The deployed learner app (the `frontend/` Vercel project). */
-const productionAppUrl = "https://linguini-navy.vercel.app";
 const defaultSupportEmail = "linguini-support@googlegroups.com";
 
 function resolveAppUrl(): string {
   if (process.env.NEXT_PUBLIC_APP_URL) return process.env.NEXT_PUBLIC_APP_URL;
-  // `VERCEL` is not inlined into browser bundles; `NODE_ENV` is, so client components get the same URL.
-  return process.env.NODE_ENV === "production" ? productionAppUrl : "http://localhost:5173";
+  // In production the learner app shares this origin; local development runs Vite separately.
+  return process.env.NODE_ENV === "production" ? "" : "http://localhost:5173";
 }
 
 function resolveSiteUrl(): string {

@@ -1,6 +1,6 @@
 # Linguini landing page
 
-The public marketing site for Linguini. It is a Next.js 16 App Router project that lives apart from the learner app (`frontend/`) and the API (`backend/`), so it builds and deploys on its own.
+The public marketing site for Linguini. It is a Next.js 16 App Router project; its production build also bundles the learner app (`frontend/`) so both are served from one deployment. The API (`backend/`) remains separate.
 
 ## Run it
 
@@ -16,7 +16,7 @@ Copy `.env.example` to `.env.local` to point the site at real URLs:
 | Variable | Used for |
 | --- | --- |
 | `NEXT_PUBLIC_SITE_URL` | Canonical URL, sitemap and absolute OG image links. On Vercel it falls back to the production domain. |
-| `NEXT_PUBLIC_APP_URL` | Where “Start learning” and “Log in” go. Production builds (including Vercel) default to the live app, https://linguini-navy.vercel.app; development uses `http://localhost:5173`. |
+| `NEXT_PUBLIC_APP_URL` | Where “Get started” and “Log in” go. Defaults to the same origin in production and `http://localhost:5173` in development. |
 | `NEXT_PUBLIC_SUPPORT_EMAIL` | Public support and privacy contact shown on the legal pages and in the footer. Defaults to the beta Google Group. |
 | `REDIRECT_FROM_HOSTS` | Optional. After moving to a custom domain, old hosts (e.g. `linguini-landing.vercel.app`) that should 301 to `NEXT_PUBLIC_SITE_URL`. |
 | `GOOGLE_SITE_VERIFICATION`, `BING_SITE_VERIFICATION` | Optional. Search Console and Bing Webmaster Tools ownership meta tags (the `content` value only). |
@@ -26,6 +26,10 @@ Copy `.env.example` to `.env.local` to point the site at real URLs:
 Check every page's search and share tags against a running build with `node scripts/check-seo.mjs http://localhost:3000` (or the production URL). It crawls the sitemap and fails on a missing title, description, canonical, single `h1`, OG/X tag, broken OG image or invalid JSON-LD.
 
 Live at https://linguini-landing.vercel.app (Vercel project `linguini-landing`, **Root Directory** `landing`).
+
+## Combined deployment
+
+`npm run build` first builds the learner app into `public/app/`, then builds Next.js; rewrites serve learner routes and public assets from the same origin. The landing Vercel project needs the frontend's `VITE_API_BASE_URL`, `VITE_SUPABASE_URL`, and `VITE_SUPABASE_ANON_KEY` build variables.
 
 ## What’s inside
 

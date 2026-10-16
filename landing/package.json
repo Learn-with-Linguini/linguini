@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "next dev --port 3000",
-    "build": "next build",
+    "build:app": "npm --prefix ../frontend ci && npm --prefix ../frontend run build:landing",
+    "build": "npm run build:app && next build",
     "start": "next start --port 3000",
     "lint": "oxlint && tsc --noEmit"
   },
