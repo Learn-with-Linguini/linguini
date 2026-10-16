@@ -1,4 +1,4 @@
-import type { KeyboardEvent, MouseEvent } from "react";
+import type { CSSProperties, KeyboardEvent, MouseEvent } from "react";
 import { SceneVisual } from "./SceneVisual";
 import type { LanguageItem, Scene } from "../data/types";
 
@@ -53,7 +53,7 @@ export function ScenePhoto({
       aria-label={onLocationSelect ? locationLabel ?? "Choose a location in the scene" : undefined}
     >
       <SceneVisual scene={scene} className="scene__art" lazy={lazy} />
-      {markers.map((item) => {
+      {markers.map((item, index) => {
         const active = item.id === activeItemId;
         const custom = item.id.startsWith("custom-");
         const className = [
@@ -66,7 +66,18 @@ export function ScenePhoto({
         ]
           .filter(Boolean)
           .join(" ");
-        const style = { left: `${item.x}%`, top: `${item.y}%` };
+        const collisionIndex = markers.slice(0, index).filter(other =>
+          Math.abs(other.x - item.x) < 4 && Math.abs(other.y - item.y) < 4
+        ).length;
+        const collisionOffsets = [[0, 0], [0, -34], [34, 0], [0, 34], [-34, 0], [34, -34], [-34, -34]];
+        const [offsetX, offsetY] = collisionOffsets[collisionIndex % collisionOffsets.length];
+        const style = {
+          left: `${item.x}%`,
+          top: `${item.y}%`,
+          zIndex: 2 + index,
+          "--marker-offset-x": `${offsetX}px`,
+          "--marker-offset-y": `${offsetY}px`,
+        } as CSSProperties;
         // Placement mode has one keyboard target, without nested marker buttons.
         return onMarkerClick && !onLocationSelect ? (
           <button

@@ -431,6 +431,8 @@ export interface PracticeDetail {
   analysisRetryable: boolean;
   sceneObjects: SceneObject[];
   sceneObjectRelations: SceneObjectRelation[];
+  sceneActionSuggestions: SceneActionSuggestion[];
+  scenePriceSuggestions: ScenePriceSuggestion[];
   vocabulary: { id: string; displayText: string; partOfSpeech: WordClass; gender: string | null; exampleSentence: string | null; languageCode: string }[];
   translations: { vocabularyItemId: string; translatedText: string }[];
   translationPreview: {
@@ -442,6 +444,14 @@ export interface PracticeDetail {
   personalization?: SessionPersonalization | null;
   countedGroups?: CountedGroup[];
   missionGuidance?: string[];
+  provisionalMissionPlan?: MissionTaskFields[];
+  suggestedSceneObjectIds?: string[];
+}
+export interface SceneActionSuggestion {
+  actionKey: string; action: string; sceneObjectIds: string[]; confidenceScore: number | string;
+}
+export interface ScenePriceSuggestion {
+  priceKey: string; sceneObjectId: string; displayedPrice: string; confidenceScore: number | string;
 }
 export interface CountedGroup {
   sceneObjectIds: string[]; label: string; quantity: number;

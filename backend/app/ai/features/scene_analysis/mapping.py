@@ -9,12 +9,19 @@ from app.ai.features.scene_analysis.schemas import (
     ModelBoundingBox,
     SceneAnalysisModelResult,
 )
-from app.schemas.media import SceneObject, SceneObjectRelation
+from app.schemas.media import (
+    SceneActionSuggestion,
+    SceneObject,
+    SceneObjectRelation,
+    ScenePriceSuggestion,
+)
 from app.schemas.sessions import Session
 from app.services.scene_analysis import SceneAnalysisError, SceneAnalysisResult
 
 MIN_OBJECT_CONFIDENCE = 0.7
 MIN_RELATION_CONFIDENCE = 0.7
+MIN_ACTION_CONFIDENCE = 0.7
+MIN_PRICE_CONFIDENCE = 0.7
 _ANCHOR_TOLERANCE = 1e-9
 
 
@@ -58,7 +65,12 @@ def model_result_to_domain(
             attributes={
                 attribute.type.value: attribute.value
                 for attribute in item.attributes
-            },
+            }
+            | (
+                {"quantity": str(item.suggested_group_count)}
+                if item.suggested_group_count > 1
+                else {}
+            ),
             confidence_score=item.confidence,
             source_object_key=item.key,
         )
@@ -77,9 +89,33 @@ def model_result_to_domain(
         and item.source_object_key in object_ids
         and item.target_object_key in object_ids
     ]
+    actions = [
+        SceneActionSuggestion(
+            action_key=item.action_key,
+            action=item.action,
+            scene_object_ids=[object_ids[key] for key in item.related_object_keys],
+            confidence_score=item.confidence_score,
+        )
+        for item in result.actions
+        if item.confidence_score >= MIN_ACTION_CONFIDENCE
+        and all(key in object_ids for key in item.related_object_keys)
+    ]
+    prices = [
+        ScenePriceSuggestion(
+            price_key=item.price_key,
+            scene_object_id=object_ids[item.object_key],
+            displayed_price=item.displayed_price,
+            confidence_score=item.confidence_score,
+        )
+        for item in result.price_suggestions
+        if item.confidence_score >= MIN_PRICE_CONFIDENCE
+        and item.object_key in object_ids
+    ]
     return SceneAnalysisResult(
         title=result.title,
         summary=result.summary,
         objects=objects,
         relations=relations,
+        action_suggestions=actions,
+        price_suggestions=prices,
     )

@@ -135,9 +135,22 @@ model MediaAsset {
   preloadedScenes    PreloadedScene[]
   sessions           Session[]
   roomPhotos         RoomPhoto[]
+  sceneAnalysis      MediaSceneAnalysis?
 
   @@index([ownerUserId])
   @@map("media_assets")
+}
+
+model MediaSceneAnalysis {
+  mediaAssetId  String   @id @map("media_asset_id") @db.Uuid
+  mediaAsset    MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  promptVersion String   @map("prompt_version") @db.VarChar(80)
+  schemaVersion String   @map("schema_version") @db.VarChar(80)
+  inventory     Json     @db.JsonB
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@map("media_scene_analyses")
 }
 
 model VocabularyItem {

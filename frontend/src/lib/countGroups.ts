@@ -28,7 +28,23 @@ export function countGroups(objects: CountableObject[]): CountGroup[] {
     group.suggested ??= suggestedCount(object.attributes?.quantity);
     groups.set(key, group);
   }
-  return [...groups.values()];
+  // The analyzer returns one object per visible instance. Keep the suggested
+  // count consistent with the pointers the learner can actually verify.
+  return [...groups.values()].map(group => ({
+    ...group,
+    suggested: Math.min(group.objectIds.length, MAX_COUNT),
+  }));
+}
+
+/** Prefill every visible group from analysis, while learner-saved values win. */
+export function initialCounts(
+  objects: CountableObject[],
+  saved: CountedGroup[] | undefined,
+): Record<string, string> {
+  return {
+    ...Object.fromEntries(countGroups(objects).map(group => [group.key, String(group.suggested)])),
+    ...savedCounts(saved),
+  };
 }
 
 export function savedCounts(saved: CountedGroup[] | undefined): Record<string, string> {
