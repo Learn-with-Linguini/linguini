@@ -1039,13 +1039,18 @@ class PostgresWorkflowRepository:
                     },
                 )
         except Exception as error:
-            logger.exception("Scene analysis failed for session %s.", session_id)
+            error_code = getattr(error, "code", None)
+            logger.exception(
+                "Scene analysis failed for session %s (code=%s).",
+                session_id,
+                error_code or "unknown",
+            )
             try:
                 # Compare by value: the enum is a StrEnum and importing the
                 # scene-analysis feature here would create an import cycle.
                 failure_code = (
                     "imageModerationFailed"
-                    if getattr(error, "code", None) == "imageModerationFailed"
+                    if error_code == "imageModerationFailed"
                     else "sceneAnalysisFailed"
                 )
                 with self.transaction() as c:
