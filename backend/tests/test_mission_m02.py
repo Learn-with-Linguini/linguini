@@ -276,3 +276,19 @@ def test_elided_article_genders_fall_back_to_the_word():
     assert mission_gender(term, SimpleNamespace(gender="feminine")) == "feminine"
     assert mission_gender(SimpleNamespace(gender="le"), SimpleNamespace(gender=None)) == "masculine"
     assert mission_gender(None, SimpleNamespace(gender="la")) == "feminine"
+
+
+def test_catalog_words_with_inline_articles_build_without_a_translated_scene():
+    objects = [obj(CUP, "chair"), obj(TABLE, "table"), obj(BOOK, "counter")]
+    words = [SimpleNamespace(display_text=text, gender=gender) for text, gender in (
+        ("la silla", "la"), ("la mesa", "la"), ("el mostrador", "el"),
+    )]
+    for relation, statement in (
+        (rel(CUP, "next_to", TABLE), "La silla está al lado de la mesa."),
+        (rel(CUP, "behind", BOOK), "La silla está detrás del mostrador."),
+    ):
+        payload = m02_payload(M02, "es", objects, [relation], words, None, None, SESSION)
+        result = fallback_m02_lesson(payload)
+        validate_m02_lesson(payload, result)
+        assert result.questions[0].prompt == statement
+        assert result.questions[2].correct_text == "¿Dónde está la silla?"

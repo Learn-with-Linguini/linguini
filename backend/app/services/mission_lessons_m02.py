@@ -1,6 +1,7 @@
 """Build the M02 A1 lesson task from confirmed objects, relations and a validated result."""
 
 import random
+import re
 
 from app.ai.features.learning_tasks.mission import fold, tokens
 from app.ai.features.learning_tasks.mission_m02 import _joined
@@ -12,7 +13,6 @@ from app.services.mission_eligibility import (
     relation_type,
 )
 from app.services.mission_lessons import build_mission_task, mission_gender
-from app.services.session_plan import _with_article as _noun_phrase
 
 M02_FOCUS = "findAndLocate"
 QUESTION_CHUNKS = {"es": "¿Dónde está…?", "fr": "Où est… ?"}
@@ -57,6 +57,19 @@ _EVALUATIONS = {
         ["statement-in-order", "article-matches-noun"],
     ),
 }
+
+
+# Catalog words may carry their definite article ("la mesa", "l'arbre").
+_LEADING_DEFINITE = re.compile(r"^(el|la|le|los|las|les)\s+|^(l)['’]", re.IGNORECASE)
+
+
+def _article_and_noun(text, term):
+    """The definite article (the translated term's, else the word's own) and the bare noun."""
+    text = text.strip()
+    match = _LEADING_DEFINITE.match(text)
+    noun = text[match.end():] if match else text
+    own = (match.group(1) or f"{match.group(2)}'").casefold() if match else None
+    return (term.article if term is not None and term.article else own), noun
 
 
 def _capitalised(text):
@@ -144,17 +157,16 @@ def m02_payload(
     rows, places = {}, {}
     for obj, word in zip(objects, words, strict=True):
         term = terms.get(str(obj.id))
-        phrase = _noun_phrase(word.display_text, term)
+        article, noun = _article_and_noun(word.display_text, term)
+        phrase = _with_article(article, noun) if article else noun
         rows[obj.id] = dict(
             key=str(obj.id), source=obj.label, nounPhrase=phrase,
-            hasArticle=bool(term and term.article),
+            hasArticle=bool(article),
             whereQuestion=_QUESTION_FRAMES[language].format(phrase),
             gender=mission_gender(term, word),
         )
         places[obj.id] = dict(
-            article=term.article if term else None,
-            gender=mission_gender(term, word),
-            translation=word.display_text,
+            article=article, gender=mission_gender(term, word), translation=noun,
         )
     positions = [
         dict(position=key, expression=REVIEWED_POSITIONS[key][language], meaning=meaning)
