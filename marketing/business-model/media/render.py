@@ -33,7 +33,7 @@ CREAM, PAPER, INK, MUTED, TOMATO, TEAL_DARK, PASTA, SAGE, LINE = (
 # Chart marks: tomato + a more saturated teal that passes the categorical palette
 # checks on PAPER (lightness band, chroma, CVD and normal-vision separation).
 MARK_A, MARK_B, MARK_NEUTRAL, GRID = TOMATO, "#00968F", "#C9C1B2", "#ECE5D6"
-PHOTO, PASTA_IMG = ROOT / "landing/public/photos", ROOT / "landing/public/pasta"
+PHOTO, PASTA_IMG = ROOT / "frontend/public/photos", ROOT / "frontend/public/pasta"
 W, H = 1270, 760
 
 
@@ -145,7 +145,7 @@ def founding_square():
     rr(d, (78, 770, 470, 836), 20, TOMATO)
     txt(d, (104, 783), "Become a founding member", 27, PAPER)
     txt(d, (80, 880), wrap("Proposed offer for launch. Opens only when Plus checkout works end to end.", 520, 19), 19, MUTED, spacing=6)
-    txt(d, (79, 1022), "linguini-landing.vercel.app", 21, TEAL_DARK)
+    txt(d, (79, 1022), "www.learnwithlinguini.com", 21, TEAL_DARK)
     save(c, "founding-plus-square.png")
 
 

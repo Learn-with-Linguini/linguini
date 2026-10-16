@@ -1,6 +1,6 @@
 # Linguini Product Hunt listing
 
-**Working draft · 24 September 2026.** Everything to paste into the Product Hunt launch form, in form order. Primary destination: https://linguini-landing.vercel.app/ . The learner app is at https://linguini-navy.vercel.app/ . The landing site is live; use the **preview** listing below until the production app can complete and save a real user-photo session. The **full release** copy is reserved for that later milestone. Replace `[PH_POST_URL]` only after Product Hunt creates the post. Nothing below has been submitted.
+**Working draft · 24 September 2026.** Everything to paste into the Product Hunt launch form, in form order. Primary destination: https://www.learnwithlinguini.com/ . The learner app is at https://www.learnwithlinguini.com/ . The landing site is live; use the **preview** listing below until the production app can complete and save a real user-photo session. The **full release** copy is reserved for that later milestone. Replace `[PH_POST_URL]` only after Product Hunt creates the post. Nothing below has been submitted.
 
 Limits were checked against Product Hunt's own pages on 24 September 2026 (sources are in [plan.md](plan.md#product-hunt-rules-what-we-verified-24-september-2026)). Where Product Hunt's pages disagree with each other, this kit follows the stricter limit.
 
@@ -31,8 +31,8 @@ Limits were checked against Product Hunt's own pages on 24 September 2026 (sourc
 | Field | Proposed content |
 | --- | --- |
 | Product name | Linguini |
-| Primary URL | https://linguini-landing.vercel.app/ (no tracking parameters) |
-| Additional link: the app | https://linguini-navy.vercel.app |
+| Primary URL | https://www.learnwithlinguini.com/ (no tracking parameters) |
+| Additional link: the app | https://www.learnwithlinguini.com |
 | Tagline | **Explore language lessons hidden in everyday photos** |
 | Description | **Explore photo scenes in Spanish or French through word cards, I-Spy and sentence games, then finish with a journal page. Try a complete interactive mini session in your browser and tell us what should make the leap into the learner app.** |
 | Availability | Mark as beta/not fully released if that option matches the actual launch state. |
@@ -117,12 +117,12 @@ Do **not** choose "Paid (with a free trial or plan)" until billing works and a p
 
 | Field | Value |
 |---|---|
-| Website (primary) | `https://linguini-landing.vercel.app/` |
-| Additional link: the app | `https://linguini-navy.vercel.app` |
+| Website (primary) | `https://www.learnwithlinguini.com/` |
+| Additional link: the app | `https://www.learnwithlinguini.com` |
 
 The primary link goes to the landing page because its no-signup demo on real photos is the quickest way for a Product Hunt visitor to try the idea. The app needs an email and password first. Product Hunt may add its own `ref` parameter to outbound links, so check in the preview that the combined URL still works.
 
-> **Open decision: tracking on the primary URL.** The preview draft uses the plain URL with no tracking parameters (Product Hunt asks for a direct URL). The other draft uses `https://linguini-landing.vercel.app/?utm_source=producthunt&utm_medium=launch`, and the dashboard suggests `?utm_source=producthunt&utm_medium=launch&utm_campaign=linguini_launch` for measurement. Without UTM, attribute Product Hunt visits by referrer.
+> **Open decision: tracking on the primary URL.** The preview draft uses the plain URL with no tracking parameters (Product Hunt asks for a direct URL). The other draft uses `https://www.learnwithlinguini.com/?utm_source=producthunt&utm_medium=launch`, and the dashboard suggests `?utm_source=producthunt&utm_medium=launch&utm_campaign=linguini_launch` for measurement. Without UTM, attribute Product Hunt visits by referrer.
 
 ### Thumbnail
 
@@ -210,7 +210,7 @@ Post this within the first minute of the launch. No request for upvotes.
 | Field | Proposed content |
 | --- | --- |
 | Product name | Linguini |
-| Primary URL | https://linguini-landing.vercel.app/ |
+| Primary URL | https://www.learnwithlinguini.com/ |
 | Tagline | **Learn Spanish or French from the photos you take** |
 | Description | **Take a photo of your day. Linguini finds useful Spanish or French words in it, then helps you hear, say and use them through quick games. Finish with a journal page that connects your new words to a moment you actually lived.** |
 | Pricing | Use actual live pricing. Do not advertise a trial or Plus features until checkout and entitlements work end to end. |
@@ -236,12 +236,12 @@ Record the **live landing demo** for the preview launch. Capture at 1080p with t
 | 10–19 s | Open two word cards with articles and audio. | “Meet the words in their place.” |
 | 19–30 s | Show I-Spy, fill-the-blank and sentence builder in sequence. | “Hear them. Play with them. Make a sentence.” |
 | 30–38 s | Save/finish the demo journal page. | “Keep the moment in your journal.” |
-| 38–45 s | End card with URL and one CTA. | “Try a mini session at linguini-landing.vercel.app.” |
+| 38–45 s | End card with URL and one CTA. | “Try a mini session at www.learnwithlinguini.com.” |
 
-Video title: **Linguini in 40 seconds — a photo becomes a language lesson**. Description: “Try the interactive Spanish or French mini session: https://linguini-landing.vercel.app/ .” Choose a thumbnail showing the photo and one readable translated word.
+Video title: **Linguini in 40 seconds — a photo becomes a language lesson**. Description: “Try the interactive Spanish or French mini session: https://www.learnwithlinguini.com/ .” Choose a thumbnail showing the photo and one readable translated word.
 
 ## Claim and publishing notes
 
-The live landing page returns HTTP 200 and contains the interactive mini session, Spanish/French demo content, sample journal and calls to create an account. The repo’s current `landing/README.md`, `landing/components/try/`, `landing/data/scenes.ts` and `landing/components/Pricing.tsx` support the site-demo descriptions. `backend/README.md` is the source of the production feature caveats above. These files should be rechecked against the deployed build before a full launch.
+The live landing page returns HTTP 200 and contains the interactive mini session, Spanish/French demo content, sample journal and calls to create an account. The repo’s current `frontend/README.md#landing-site`, `frontend/src/marketing/components/try/`, `frontend/src/marketing/data/scenes.ts` and `frontend/src/marketing/components/Pricing.tsx` support the site-demo descriptions. `backend/README.md` is the source of the production feature caveats above. These files should be rechecked against the deployed build before a full launch.
 
 Product Hunt’s current [posting help](https://help.producthunt.com/en/articles/479557-how-to-post-a-product) says the name should be just the name, the primary URL should be direct, a first comment should be included, gallery images should be 1270 × 760 px, and YouTube videos need a full non-private URL. Its [preparation guide](https://www.producthunt.com/launch/preparing-for-launch) caps taglines at 60 characters and lists a 500-character description, while the help article says 260 characters; **every description above fits within 260 characters** to satisfy either UI. Product Hunt’s [sharing guide](https://www.producthunt.com/launch/sharing-your-launch) asks makers to seek comments and feedback rather than upvotes. Yangshun’s [Docusaurus 2.0 launch dashboard](https://gist.github.com/yangshun/1e84ae8461975e7fa9a7d153621c3756) informed the channel-specific copy, asset list and first-comment preparation; adapt its outreach model to this product’s actual learner communities.

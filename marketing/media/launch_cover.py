@@ -2,7 +2,7 @@
 
 Run from any directory with: python3 marketing/media/launch_cover.py
 Requires Pillow and ffmpeg. Writes cover-loop.mp4 and cover-loop-poster.jpg to
-landing/public/blog/launch/. Same composition as banners.blog_cover(): headline on
+frontend/public/blog/launch/. Same composition as banners.blog_cover(): headline on
 the left, the real launch banners landing one by one on the right, then the stack
 clears and the loop starts again. Frame 0 and the last frame match.
 """
@@ -17,7 +17,7 @@ from PIL import Image, ImageDraw, ImageFilter
 
 from render import BRAND, CREAM, INK, MUTED, PAPER, ROOT, TEAL_DARK, TOMATO, font, txt
 
-WEB = ROOT / "landing/public/blog/launch"
+WEB = ROOT / "frontend/public/blog/launch"
 W, H = 1280, 800
 FPS = 30
 SECONDS = 9

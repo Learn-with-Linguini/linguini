@@ -1,8 +1,6 @@
-import { useEffect } from "react";
 import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { AppShell, FocusShell } from "./components/AppShell";
 import { Home } from "./pages/Home";
-import { Welcome } from "./pages/Welcome";
 import { Onboarding } from "./pages/Onboarding";
 import { Login } from "./pages/Login";
 import { PracticeSelect } from "./pages/PracticeSelect";
@@ -31,6 +29,8 @@ import { useAuth } from "./state/Auth";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { Rooms } from "./pages/Rooms";
 import { Room } from "./pages/Room";
+import { FullReload } from "./components/FullReload";
+import { isMarketingPath } from "./marketing/paths";
 
 function RequireAuth() {
   const { session, loading } = useAuth();
@@ -58,23 +58,16 @@ function OnboardingRoute() {
   return <AppStateProvider><Onboarding /></AppStateProvider>;
 }
 
-function RootRoute() {
-  const hostedUnderLanding = import.meta.env.BASE_URL !== "/";
-
-  useEffect(() => {
-    if (hostedUnderLanding) window.location.replace("/");
-  }, [hostedUnderLanding]);
-
-  return hostedUnderLanding
-    ? <LoadingScreen label="Returning to the landing page…" />
-    : <Welcome />;
+function UnknownRoute() {
+  const { pathname } = useLocation();
+  return isMarketingPath(pathname) ? <FullReload /> : <Navigate to="/home" replace />;
 }
 
 export default function App() {
   return (
     <Routes>
       <Route element={<FocusShell />}>
-        <Route path="/" element={<RootRoute />} />
+        <Route path="/" element={<FullReload />} />
         <Route path="/login" element={<Login />} />
         <Route path="/onboarding" element={<OnboardingRoute />} />
         <Route path="/contact" element={<Contact />} />
@@ -117,7 +110,7 @@ export default function App() {
           </Route>
         </Route>
       </Route>
-      <Route path="*" element={<Navigate to="/home" replace />} />
+      <Route path="*" element={<UnknownRoute />} />
     </Routes>
   );
 }

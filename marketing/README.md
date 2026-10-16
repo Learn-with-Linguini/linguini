@@ -1,6 +1,6 @@
 # Linguini marketing
 
-Everything for launching and selling Linguini outside the app: the Product Hunt kit, launch videos, the media kit and the business model. The public marketing site itself lives in [`landing/`](../landing), because it deploys on its own.
+Everything for launching and selling Linguini outside the app: the Product Hunt kit, launch videos, the media kit and the business model. The public marketing site itself lives in [`frontend/src/marketing/`](../frontend/src/marketing), because it deploys on its own.
 
 | Path | What it is |
 | --- | --- |
@@ -24,7 +24,7 @@ Everything for launching and selling Linguini outside the app: the Product Hunt 
 
 Which one becomes the Product Hunt listing video is an open decision in the [launch kit](product-hunt/README.md#team-decision-checklist).
 
-Where each one plays on the landing site: the promo film is the home-page film (`landing/public/film/`), the narrated launch film is in the blog post "Why we teach with your photos" (`landing/public/blog/photos/`), and the explainer is in the launch post (`landing/public/blog/launch/`). All three start muted with a "Sound on" button. The launch post's card cover is a silent loop rendered by `media/launch_cover.py`.
+Where each one plays on the landing site: the promo film is the home-page film (`frontend/public/film/`), the narrated launch film is in the blog post "Why we teach with your photos" (`frontend/public/blog/photos/`), and the explainer is in the launch post (`frontend/public/blog/launch/`). All three start muted with a "Sound on" button. The launch post's card cover is a silent loop rendered by `media/launch_cover.py`.
 
 ## Rebuilding
 
@@ -48,4 +48,4 @@ marketing/media/.venv/bin/python marketing/media/explainer.py
 python3 marketing/business-model/model/cost_model.py && python3 marketing/business-model/media/render.py
 ```
 
-Several scripts read photos, fonts and brand art from `landing/public` and `landing/assets`, and some write web-sized copies back into `landing/public/blog`. Keep the two in step when you change an asset.
+Several scripts read photos, fonts and brand art from `frontend/public` and `frontend/src/marketing/assets`, and some write web-sized copies back into `frontend/public/blog`. Keep the two in step when you change an asset.

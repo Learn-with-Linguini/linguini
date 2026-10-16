@@ -28,10 +28,10 @@ from PIL import Image, ImageDraw, ImageFont
 
 ROOT = Path(__file__).resolve().parents[2]
 OUT = Path(__file__).resolve().parent / "export"
-PHOTO = ROOT / "landing/public/photos"
-BRAND = ROOT / "landing/public/brand"
-PASTA_DIR = ROOT / "landing/public/pasta"
-FONTS = ROOT / "landing/assets/fonts"
+PHOTO = ROOT / "frontend/public/photos"
+BRAND = ROOT / "frontend/public/brand"
+PASTA_DIR = ROOT / "frontend/public/pasta"
+FONTS = ROOT / "frontend/src/marketing/assets/fonts"
 
 W, H, FPS, TRANSITION = 1920, 1080, 24, 0.5
 # While the video renders, burst() records (global time, radius, x) here for the sound effects.
@@ -798,7 +798,7 @@ def s13_end(p, t):
         p.rr((960 - 230 * s, 692 + press, 960 + 230 * s, 788 + press), 26, TOMATO)
         if s > 0.8:
             p.text((960, 740 + press), "Try a mini session", 40, "#FFFFFF", False, "mm")
-    p.text((960, 870), "linguini-landing.vercel.app", 38, rgba(PASTA, seg(t, 1.5, 1.9)), False, "mm")
+    p.text((960, 870), "www.learnwithlinguini.com", 38, rgba(PASTA, seg(t, 1.5, 1.9)), False, "mm")
 
 
 # (original length, final length, scene, name, voiceover cues as (seconds into scene, text)).

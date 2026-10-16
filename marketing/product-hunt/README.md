@@ -1,6 +1,6 @@
 # Linguini Product Hunt launch kit
 
-**Status: prepared for team review; no Product Hunt post has been published and no message has been sent.** The public [landing page](https://linguini-landing.vercel.app/) offers a curated-photo mini session. The recommended next step is a supervised learner beta, followed by a Product Hunt launch once the checks in the [launch dashboard](plan.md) pass. The planning slot is **Saturday 17 October 2026 at 00:01 PDT / 15:01 SGT** (moved from Tuesday 13 October: Saturdays have about a third as many launches, and Product Hunt reports 15% more visit clicks on weekends). Move it if readiness slips.
+**Status: prepared for team review; no Product Hunt post has been published and no message has been sent.** The public [landing page](https://www.learnwithlinguini.com/) offers a curated-photo mini session. The recommended next step is a supervised learner beta, followed by a Product Hunt launch once the checks in the [launch dashboard](plan.md) pass. The planning slot is **Saturday 17 October 2026 at 00:01 PDT / 15:01 SGT** (moved from Tuesday 13 October: Saturdays have about a third as many launches, and Product Hunt reports 15% more visit clicks on weekends). Move it if readiness slips.
 
 > **Open decision: launch date.** This kit merges two drafts. The newer one plans **Sat 17 October, 15:01 SGT**. The older readiness review proposed **Wed 14 October, 15:01 SGT** (a mid-week day with normal traffic, two weeks after 30 September to clear the must-fix list), with Tue 13 October or the following week as fallbacks if it clashes with midterms or CS3216 deadlines. Pick one, then check it against everyone's timetable. Don't launch on a day when two of the four of us have exams.
 
@@ -13,7 +13,7 @@
 | [social-posts.md](social-posts.md) | Every channel post (X, LinkedIn, Instagram, TikTok, Telegram/WhatsApp, email, Reddit, Show HN), one-to-one and creator outreach, and the reply bank for Product Hunt comments. |
 | [milestone-launch-campaign.html](milestone-launch-campaign.html) | The launch-campaign milestone write-up. Open it in a browser, copy all and paste into the Google Doc, like `business-model/milestone-business-model.html`. |
 | [gallery/](gallery/) | Six 1270 × 760 gallery images (`01-hero` to `06-habit`, each with an `@2x`), the 240 × 240 thumbnail (PNG and GIF) and the 1200 × 630 social card. |
-| [gallery-src/](gallery-src/) | HTML compositions for the gallery, built from 4× captures of the running landing page. The captures aren't committed; `capture.mjs` regenerates them from `landing/` on port 3200, then `render.mjs` and `thumb.mjs` export the PNGs and GIF. |
+| [gallery-src/](gallery-src/) | HTML compositions for the gallery, built from 4× captures of the running landing page. The captures aren't committed; `capture.mjs` regenerates them from `frontend/src/marketing/` on port 3200, then `render.mjs` and `thumb.mjs` export the PNGs and GIF. |
 
 ## Elsewhere in the repo
 
@@ -25,7 +25,7 @@
 | [Media kit](../media/README.md) | Four illustrative Product Hunt gallery images, icon, social square, banners, the animated explainer (`export/explainer.mp4` + `.srt`) and editable sources. |
 | [Explainer video script](../media/explainer-script.md) | Script and production notes for the 50-second animated explainer: visual system, second-by-second voiceover, visuals and motion notes, audio, and claims to verify. The rendered video, captions and style frames are in the media kit. |
 | [Business model](../business-model/README.md) | Pricing proposal (Free, Plus, Founding Plus), cost model and the metrics to watch. |
-| [Launch campaign blog post](../../landing/components/blog/posts/LaunchCampaign.tsx) | Public write-up at `/blog/launch-week`, organised around the milestone questions: launch time (and why a Singapore team launches on Product Hunt's Pacific clock), open demo versus invite list, the listing and explainer, a sideways-scrolling rail of every channel draft, banners, who we tell (circles, communities, creators, where we're not posting), the three launch-day shifts and on-call roles, the week-one return target and the next launch. The checklist shows the first task of each week and expands to all of them ([`Checklist.tsx`](../../landing/components/blog/launch/Checklist.tsx), diagrams in [`Plan.tsx`](../../landing/components/blog/launch/Plan.tsx), post text in [`content.ts`](../../landing/components/blog/launch/content.ts)). Keep it in step with [plan.md](plan.md) and [social-posts.md](social-posts.md). |
+| [Launch campaign blog post](../../frontend/src/marketing/components/blog/posts/LaunchCampaign.tsx) | Public write-up at `/blog/launch-week`, organised around the milestone questions: launch time (and why a Singapore team launches on Product Hunt's Pacific clock), open demo versus invite list, the listing and explainer, a sideways-scrolling rail of every channel draft, banners, who we tell (circles, communities, creators, where we're not posting), the three launch-day shifts and on-call roles, the week-one return target and the next launch. The checklist shows the first task of each week and expands to all of them ([`Checklist.tsx`](../../frontend/src/marketing/components/blog/launch/Checklist.tsx), diagrams in [`Plan.tsx`](../../frontend/src/marketing/components/blog/launch/Plan.tsx), post text in [`content.ts`](../../frontend/src/marketing/components/blog/launch/content.ts)). Keep it in step with [plan.md](plan.md) and [social-posts.md](social-posts.md). |
 
 ## Team decision checklist
 
@@ -41,4 +41,6 @@
 - [ ] Have the team review the Product Hunt listing, tagline, gallery order, first comment and outreach text.
 - [ ] Run the beta and go/no-go checklist in [plan.md](plan.md#go--no-go-at-t1), then schedule the listing. Replace `[PH_POST_URL]` after Product Hunt creates the post.
 
-The source fix in `landing/lib/site.ts` makes production builds use the deployed learner-app URL when `NEXT_PUBLIC_APP_URL` is unset, including in browser-rendered components. Development keeps the local app URL. Setting that environment variable explicitly remains the preferred deployment configuration.
+Marketing and learner routes now share one origin, so CTAs use same-origin paths.
+Set `VITE_SITE_URL` in the Vite deployment to the production canonical URL; it controls
+metadata and generated site files, not the app-link destination.
