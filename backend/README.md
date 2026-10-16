@@ -110,8 +110,8 @@ private `media-assets` bucket. Install backend dependencies to include Pillow.
 
 The frontend supports file selection and device camera capture, validation, upload
 status, error feedback, and a signed-image preview. Journal uploads can be selected
-and saved as attachments. Uploaded images can start a session and run the placeholder
-analysis workflow below. Desktop browsers may open a file picker for the camera control.
+and saved as attachments. Uploaded images can start a session and run the analysis
+workflow below. Desktop browsers may open a file picker for the camera control.
 
 ### Unified image sessions
 
@@ -716,14 +716,12 @@ Validation runs at startup and makes no network calls. It checks:
 With `AI_MODE=real`, every enabled route must also resolve a secret; with
 `demo`, a route without one falls back to deterministic behaviour.
 
-Uploaded-image analysis runs on the `sceneAnalysis` route, which in the default
-`ai.toml` uses OpenRouter, so `AI_OPENROUTER_API_KEY` is required for real
-analysis of uploaded photos. In `demo` mode a missing key does not fail startup:
-the analyzer is not built and uploaded photos silently get deterministic
-placeholder objects. The backend logs a warning naming the missing variable(s)
-when the analyzer is built, and "Scene analysis failed" log lines carry the
-failure `code` (e.g. `imageUnavailable`, `providerAuth`,
-`imageModerationFailed`).
+Uploaded-image analysis runs on the `sceneAnalysis` route, which uses OpenRouter
+in the default `ai.toml`; `AI_OPENROUTER_API_KEY` is required. In `demo` mode,
+missing this secret does not prevent startup, but uploaded photos fail analysis
+with a retryable “We couldn't analyse that photo” error instead of receiving
+placeholder objects. The backend warning names the missing variable, and this
+failure is logged with `code=analysisUnavailable`. Curated scenes are unaffected.
 
 Error messages name keys and variables but never echo values, and secrets
 are excluded from `AiSettings` repr.
@@ -902,8 +900,11 @@ dimensions and caller-supplied metadata.
 
 ## Remaining integration work
 
-Speech evaluation is not implemented. Uploaded images use deterministic
-placeholder objects only when the `sceneAnalysis` route has no secret (see
+Speech evaluation is not implemented. Without the `sceneAnalysis` secret
+(`AI_OPENROUTER_API_KEY` by default), demo mode still starts, but uploaded photos
+fail analysis with a retryable “We couldn't analyse that photo” error instead
+of getting placeholder objects. The backend logs the missing variable and
+`code=analysisUnavailable`; curated scenes are unaffected (see
 [AI configuration](#ai-configuration)). Vocabulary "Move" is still local frontend state. Session learning credit comes from persisted
 vocabulary encounters; analysis and skipped tasks award none. Daily vocabulary, home aggregation, and other unfinished
 routes return an explicit 501. Journal eligible-photo/learned-word recommendations

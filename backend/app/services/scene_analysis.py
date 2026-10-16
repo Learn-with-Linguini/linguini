@@ -25,6 +25,25 @@ class SceneAnalysisError(Exception):
     """Raised when a scene-analysis provider fails."""
 
 
+class SceneAnalysisUnavailableError(SceneAnalysisError):
+    code = "analysisUnavailable"
+
+
+class UnavailableSceneAnalyzer:
+    """Fails uploaded-photo analysis clearly when no provider is configured."""
+
+    def analyze(
+        self,
+        session: Session,
+        asset: MediaAsset,
+        profile: Mapping[str, Any],
+        scene: Mapping[str, Any] | None,
+    ) -> SceneAnalysisResult:
+        raise SceneAnalysisUnavailableError(
+            "No scene-analysis provider is configured for uploaded photos."
+        )
+
+
 class SceneAnalyzer(Protocol):
     def analyze(
         self,
@@ -63,7 +82,7 @@ def curated_relations(
 
 
 class DeterministicSceneAnalyzer:
-    """Placeholder analyzer; wraps the existing deterministic plan builder."""
+    """Analyzes curated scenes; tests also use it for uploaded-photo fixtures."""
 
     def __init__(self, engine):
         self.engine = engine
