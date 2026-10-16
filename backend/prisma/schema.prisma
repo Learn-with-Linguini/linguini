@@ -31,8 +31,48 @@ model User {
   guessedRoomTurns    RoomTurn[] @relation("RoomGuesser")
   roomCommands        RoomCommand[]
   roomContributions   RoomContribution[]
+  placementAttempts   OnboardingPlacementAttempt[]
 
   @@map("users")
+}
+
+model OnboardingPlacementQuestion {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  languageCode   String   @map("language_code") @db.VarChar(35)
+  questionKey    String   @map("question_key") @db.VarChar(80)
+  orderIndex     Int      @map("order_index")
+  prompt         String   @db.Text
+  promptTranslation String @map("prompt_translation") @db.Text
+  skill          String   @db.VarChar(32)
+  difficulty     String   @db.VarChar(2)
+  options        Json     @db.JsonB
+  correctOption  String   @map("correct_option") @db.VarChar(40)
+  isActive       Boolean  @default(true) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([languageCode, questionKey])
+  @@index([languageCode, isActive, orderIndex])
+  @@map("onboarding_placement_questions")
+}
+
+model OnboardingPlacementAttempt {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  languageCode     String   @map("language_code") @db.VarChar(35)
+  pathway          String   @db.VarChar(16)
+  answers          Json     @default("{}") @db.JsonB
+  correctCount     Int      @map("correct_count")
+  assignedLevel    String   @map("assigned_level") @db.VarChar(2)
+  scoringVersion   String   @default("placement-v1") @map("scoring_version") @db.VarChar(40)
+  completedAt      DateTime @default(now()) @map("completed_at") @db.Timestamptz(6)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  @@index([userId, completedAt])
+  @@index([languageCode])
+  @@map("onboarding_placement_attempts")
 }
 
 model GameAccount {

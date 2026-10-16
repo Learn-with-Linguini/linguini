@@ -6,6 +6,7 @@ export type OnboardingDraft = {
   microphoneEnabled: boolean;
   cameraEnabled: boolean;
   avatar: string;
+  proficiencyLevel?: "A0" | "A1" | "A2";
 };
 
 const storageKey = "linguini-onboarding-draft";
@@ -29,7 +30,8 @@ export function readOnboardingDraft(): OnboardingDraft | null {
     if (!value) return null;
     const parsed = JSON.parse(value) as Partial<OnboardingDraft>;
     if (typeof parsed.name !== "string" || typeof parsed.languageCode !== "string" || typeof parsed.goal !== "string" || typeof parsed.minutes !== "number") return null;
-    return { name: parsed.name, languageCode: parsed.languageCode, goal: parsed.goal, minutes: parsed.minutes, microphoneEnabled: Boolean(parsed.microphoneEnabled), cameraEnabled: Boolean(parsed.cameraEnabled), avatar: typeof parsed.avatar === "string" ? parsed.avatar : "farfalle" };
+    const proficiencyLevel = ["A0", "A1", "A2"].includes(parsed.proficiencyLevel ?? "") ? parsed.proficiencyLevel as "A0" | "A1" | "A2" : undefined;
+    return { name: parsed.name, languageCode: parsed.languageCode, goal: parsed.goal, minutes: parsed.minutes, microphoneEnabled: Boolean(parsed.microphoneEnabled), cameraEnabled: Boolean(parsed.cameraEnabled), avatar: typeof parsed.avatar === "string" ? parsed.avatar : "farfalle", proficiencyLevel };
   } catch { return null; }
 }
 

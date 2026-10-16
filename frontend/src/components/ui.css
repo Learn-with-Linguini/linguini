@@ -4379,3 +4379,35 @@ p[role="alert"]::before { content: "!"; }
 .practice-board__meta { display: flex; align-items: baseline; gap: var(--space-2); }
 .practice-board__label { font-weight: 700; }
 .practice-board__count { font-weight: 700; color: var(--ink-muted); }
+
+.onboarding-flow { width: min(100%, 720px); margin-inline: auto; }
+.language-choice__flag { font-size: 28px; }
+.onboarding-path {
+  display: grid; gap: var(--space-1); width: 100%; min-height: 76px;
+  padding: var(--space-4); text-align: left; color: var(--ink);
+  background: var(--cream); border: 2px solid var(--line); border-radius: var(--radius-md);
+}
+.onboarding-path:hover, .onboarding-path:focus-visible { border-color: var(--teal); background: var(--sage); }
+.onboarding-path strong { color: var(--teal-dark); font-size: 18px; }
+.onboarding-path span { color: var(--ink-muted); }
+.placement-test__image {
+  display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover;
+  border: var(--stroke) solid var(--teal-dark); border-radius: var(--radius-md);
+}
+.placement-test h2 { margin-block: var(--space-2); }
+.placement-question { padding: var(--space-4); background: var(--cream); border: 1px solid var(--line); border-radius: var(--radius-md); }
+.placement-translation-toggle, .placement-unknown {
+  min-height: 44px; padding: var(--space-2) 0; color: var(--teal-dark); font-weight: 800;
+  background: transparent; border: 0; text-decoration: underline; text-underline-offset: 3px;
+}
+.placement-question__translation { margin: var(--space-1) 0 0; color: var(--ink-muted); }
+.placement-choice-grid { grid-template-columns: 1fr; }
+.placement-question .choice { width: 100%; min-height: 56px; text-align: left; }
+.placement-unknown { width: 100%; margin-top: var(--space-2); color: var(--ink-muted); }
+.placement-unknown--selected { color: var(--danger); }
+.placement-feedback { padding: var(--space-3); border-radius: var(--radius-sm); }
+.placement-feedback--correct { color: var(--teal-dark); background: var(--sage); }
+.placement-feedback--incorrect { color: var(--danger); background: #fff0ea; }
+.onboarding-success { width: min(100%, 520px); margin: 10vh auto 0; text-align: center; align-items: center; }
+.onboarding-success__mascot { width: min(180px, 45vw); height: auto; }
+.onboarding-success .button { width: 100%; }
