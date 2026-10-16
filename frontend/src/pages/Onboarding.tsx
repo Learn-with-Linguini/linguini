@@ -1,4 +1,5 @@
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { OnboardingSteps } from "../components/OnboardingSteps";
 import type { OnboardingDraft } from "../lib/onboardingDraft";
 import { languages } from "../config/languages";
@@ -6,7 +7,7 @@ import { useAppState } from "../state/useAppState";
 
 const defaultDraft: OnboardingDraft = {
   name: "", languageCode: languages[0].code, goal: "", minutes: 10,
-  microphoneEnabled: false, cameraEnabled: false, avatar: "farfalle",
+  microphoneEnabled: false, cameraEnabled: false, avatar: "farfalle", proficiencyLevel: "A0",
 };
 
 /** Collect preferences once, after a learner has created their account. */
@@ -14,8 +15,9 @@ export function Onboarding() {
   const navigate = useNavigate();
   const location = useLocation();
   const { learner, user, completeOnboarding, profileSaving, profileError } = useAppState();
+  const [completionStarted, setCompletionStarted] = useState(false);
   const destination = (location.state as { from?: string } | null)?.from ?? "/home";
-  if (user?.onboardingCompleted) return <Navigate to={destination} replace />;
+  if (user?.onboardingCompleted && !completionStarted) return <Navigate to={destination} replace />;
   const initial: OnboardingDraft = {
     name: learner.name,
     languageCode: learner.languageCode || languages[0].code,
@@ -24,9 +26,11 @@ export function Onboarding() {
     microphoneEnabled: learner.micOn,
     cameraEnabled: learner.cameraOn,
     avatar: localStorage.getItem("linguini-avatar") ?? "farfalle",
+    proficiencyLevel: "A0",
   };
-  return <OnboardingSteps initial={initial} saving={profileSaving} error={profileError} onComplete={async values => {
-    const saved = await completeOnboarding(values.languageCode, values.minutes, {
+  return <OnboardingSteps initial={initial} saving={profileSaving} error={profileError} onFinish={() => navigate(destination)} onComplete={async values => {
+    setCompletionStarted(true);
+    const saved = await completeOnboarding(values.languageCode, values.minutes, values.proficiencyLevel ?? "A0", {
       displayName: values.name || learner.name,
       learningGoal: values.goal,
       microphoneEnabled: values.microphoneEnabled,
@@ -35,7 +39,9 @@ export function Onboarding() {
     });
     if (saved) {
       localStorage.setItem("linguini-avatar", values.avatar);
-      navigate(destination);
+    } else {
+      setCompletionStarted(false);
     }
+    return saved;
   }} />;
 }

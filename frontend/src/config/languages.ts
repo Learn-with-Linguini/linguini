@@ -2,4 +2,6 @@
 export const languages = [
   { code: "es", name: "Spanish", flag: "🇪🇸" },
   { code: "fr", name: "French", flag: "🇫🇷" },
+  { code: "de", name: "German", flag: "🇩🇪" },
+  { code: "ko", name: "Korean", flag: "🇰🇷" },
 ];

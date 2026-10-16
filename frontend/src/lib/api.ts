@@ -222,9 +222,22 @@ export const submitLessonReport = (payload: LessonReportInput) =>
 export const getLanguageProfiles = (signal?: AbortSignal) => request<LanguageProfile[]>("/api/v1/me/language-profiles", signal);
 export const updateUser = (patch: UserPatch) => write<User>("/api/v1/me", "PATCH", patch);
 export const updateLanguageProfile = (id: string, patch: LanguageProfilePatch) => write<LanguageProfile>(`/api/v1/me/language-profiles/${id}`, "PATCH", patch);
-export const createLanguageProfile = (code: string, minutes = 10) => write<LanguageProfile>("/api/v1/me/language-profiles", "POST", {
-  sourceLanguageCode: "en", targetLanguageCode: code, proficiencyLevel: "A1", dailyGoalMinutes: minutes,
+export const createLanguageProfile = (code: string, minutes = 10, proficiencyLevel: ProficiencyLevel = "A1") => write<LanguageProfile>("/api/v1/me/language-profiles", "POST", {
+  sourceLanguageCode: "en", targetLanguageCode: code, proficiencyLevel, dailyGoalMinutes: minutes,
 });
+
+export interface PlacementQuestion {
+  id: string; questionKey: string; orderIndex: number; prompt: string; promptTranslation: string; skill: string;
+  difficulty: "A0" | "A1" | "A2";
+  options: Array<{ value: string; label: string }>;
+}
+export interface PlacementTest { languageCode: string; imagePath: string; questions: PlacementQuestion[] }
+export const getPlacementTest = (languageCode: string) =>
+  request<PlacementTest>(`/api/v1/onboarding/placement?languageCode=${encodeURIComponent(languageCode)}`);
+export const submitPlacement = (languageCode: string, pathway: "beginner" | "placement", answers: Record<string, string> = {}) =>
+  write<{ proficiencyLevel: "A0" | "A1" | "A2"; message: string }>("/api/v1/onboarding/placement", "POST", { languageCode, pathway, answers });
+export const checkPlacementAnswer = (questionId: string, answer: string) =>
+  write<{ correct: boolean; correctOption: string }>("/api/v1/onboarding/placement/check", "POST", { questionId, answer });
 
 export interface ProgressResponse {
   xp: number;

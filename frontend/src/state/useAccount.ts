@@ -86,11 +86,11 @@ export function useAccount() {
     if (!data?.profiles.some((profile) => profile.id === id)) throw new Error("Language profile not found.");
     return updateLanguageProfile(id, { isActive: true });
   }), [data, run]);
-  const completeOnboarding = useCallback((code: string, minutes: number, patch: UserPatch) => run(async () => {
+  const completeOnboarding = useCallback((code: string, minutes: number, proficiencyLevel: "A0" | "A1" | "A2", patch: UserPatch) => run(async () => {
     await updateUser(patch);
     const profile = data?.profiles.find((row) => row.targetLanguageCode === code && row.sourceLanguageCode === "en");
-    if (profile) await updateLanguageProfile(profile.id, { isActive: true, dailyGoalMinutes: minutes });
-    else await createLanguageProfile(code, minutes);
+    if (profile) await updateLanguageProfile(profile.id, { isActive: true, dailyGoalMinutes: minutes, proficiencyLevel });
+    else await createLanguageProfile(code, minutes, proficiencyLevel);
   }), [data, run]);
   const saveLanguageProfile = useCallback((patch: LanguageProfilePatch) => run(() => {
     if (!activeProfile) throw new Error("Choose a language first.");
