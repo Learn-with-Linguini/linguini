@@ -10,7 +10,7 @@ export interface SessionDestination {
 
 const failureNotices: Record<string, string> = {
   imageUploadFailed: "We couldn't save your photo. Start a new practice when you are ready.",
-  sceneAnalysisFailed: "We couldn't read that photo. Try a new practice with a clearer view.",
+  sceneAnalysisFailed: "We still couldn't analyse that photo. Please try again in a moment, or choose another photo.",
   imageModerationFailed: "That photo can't be used for practice. Choose a different photo and try again.",
   noValidObjects: "We couldn't find anything to learn in that photo. Try a busier scene.",
   vocabularyMappingFailed: "We couldn't turn that scene into words. Start a new practice when you are ready.",

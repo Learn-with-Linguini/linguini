@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from uuid import UUID, uuid4
 
+import pytest
 from sqlalchemy import delete, func, insert, select, update
 from test_postgres_sessions import create_run
 from test_postgres_sessions import database as database
@@ -9,10 +10,14 @@ from app.repositories.postgres.language_profiles import PostgresLanguageProfileR
 from app.repositories.postgres.media_assets import media_assets
 from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.users import users
-from app.repositories.postgres.workflow import MAX_ANALYSIS_ATTEMPTS
+from app.repositories.postgres.workflow import MAX_ANALYSIS_ATTEMPTS, PostgresWorkflowRepository
 from app.schemas.sessions import Session
 from app.schemas.users import LanguageProfile, User
-from app.services.scene_analysis import DeterministicSceneAnalyzer
+from app.services.scene_analysis import (
+    DeterministicSceneAnalyzer,
+    SceneAnalysisUnavailableError,
+    UnavailableSceneAnalyzer,
+)
 
 ORIGINAL = DeterministicSceneAnalyzer.analyze
 
@@ -33,6 +38,16 @@ def failed_run(client, profile, monkeypatch, key="retry-session-key"):
     assert failed["session"]["failureCode"] == "sceneAnalysisFailed"
     assert failed["analysisRetryable"] is True
     return sid, failed
+
+
+@pytest.mark.real_upload_analysis
+def test_missing_uploaded_analyzer_fails_clearly():
+    repo = PostgresWorkflowRepository(None, uuid4())
+
+    assert isinstance(repo.analyzer.uploaded, UnavailableSceneAnalyzer)
+    with pytest.raises(SceneAnalysisUnavailableError) as error:
+        repo.analyzer.uploaded.analyze(None, None, {}, None)
+    assert error.value.code == "analysisUnavailable"
 
 
 def asset_count(engine):

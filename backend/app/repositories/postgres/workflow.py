@@ -110,7 +110,7 @@ from app.services.question_outcomes import (
     review_details,
     word_results,
 )
-from app.services.scene_analysis import DeterministicSceneAnalyzer
+from app.services.scene_analysis import DeterministicSceneAnalyzer, UnavailableSceneAnalyzer
 from app.services.session_personalization import (
     lesson_history,
     personalization_summary,
@@ -431,10 +431,13 @@ class PostgresWorkflowRepository:
         if self._analyzer is None:
             deterministic = DeterministicSceneAnalyzer(self.engine)
             uploaded = self.ai.uploaded_scene_analyzer() if self.ai else None
-            self._analyzer = (
-                RoutedSceneAnalyzer(deterministic, uploaded) if uploaded else deterministic
+            self._analyzer = RoutedSceneAnalyzer(
+                deterministic, uploaded or self._uploaded_fallback_analyzer()
             )
         return self._analyzer
+
+    def _uploaded_fallback_analyzer(self):
+        return UnavailableSceneAnalyzer()
 
     @analyzer.setter
     def analyzer(self, value):

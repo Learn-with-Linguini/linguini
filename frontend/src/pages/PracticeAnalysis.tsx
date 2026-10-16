@@ -58,8 +58,8 @@ export function PracticeAnalysis() {
     <h1>Scene analysis</h1>
     <section className="analysis-loading" aria-live="polite">
       <div className="analysis-loading__copy">
-        <h2>We couldn't read that photo</h2>
-        <p className="muted">The image service may be busy. Your photo is saved, so you can try again without uploading it.</p>
+        <h2>We couldn't analyse that photo</h2>
+        <p className="muted">Something went wrong while finding objects in your photo. Your photo is saved, so you can try again without uploading it.</p>
         {practiceError ? <p role="alert">{practiceError}</p> : null}
         <div className="stack-2">
           <Button disabled={practiceSaving} onClick={() => void retryAnalysis(session.session.id)}>Try again</Button>

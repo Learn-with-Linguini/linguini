@@ -26,7 +26,7 @@ def test_uploaded_scene_analyzer_logs_unconfigured_state_once(caplog):
     assert any(
         record.name == "app.ai.runtime"
         and record.levelno == logging.WARNING
-        and "placeholder" in record.getMessage()
+        and "retryable error" in record.getMessage()
         for record in caplog.records
     )
 
