@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 from app.ai.features.translation.schemas import TranslatedTerm
+from app.schemas.enums import SessionMode
 from app.schemas.ispy_clues import ISpyClueResult
 from app.schemas.learning_tasks import LearningTaskResult
 from app.schemas.media import SceneObject
@@ -35,7 +36,9 @@ def test_generated_lessons_become_private_grammar_lesson_tasks():
     scene = lessons[2]
     assert scene.public_content.questions[0].translation == "The cup is red."
     assert scene.answer_key.correct_option_ids == {"scene-1": "scene-1-a", "scene-2": "scene-2-a"}
-    public = SessionTaskPublic.from_internal(scene).model_dump(mode="json")
+    public = SessionTaskPublic.from_internal(
+        scene, mode=SessionMode.LESSON
+    ).model_dump(mode="json")
     assert "answerKey" not in public and "correctOptionIds" not in str(public)
 
 
@@ -60,7 +63,9 @@ def test_generated_ispy_clues_keep_the_answer_key_private():
 
     assert tasks[0].public_content.clue == "es roja y está a la izquierda"
     assert tasks[0].answer_key.correct_scene_object_id == objects[0].id
-    public = SessionTaskPublic.from_internal(tasks[0]).model_dump(mode="json")
+    public = SessionTaskPublic.from_internal(
+        tasks[0], mode=SessionMode.LESSON
+    ).model_dump(mode="json")
     assert "answerKey" not in public
     assert len(public["publicContent"]["options"]) == 2
 

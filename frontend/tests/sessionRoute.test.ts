@@ -12,7 +12,8 @@ const contents: Record<string, TaskContent> = {
 function task(kind: keyof typeof contents, status: SessionTask["status"], orderIndex: number): SessionTask {
   const publicContent = contents[kind];
   return { id: `${kind}-${orderIndex}`, kind: publicContent.kind, phase: kind === "clues" ? "ispy" : "learning",
-    status, isSkippable: true, orderIndex, publicContent, vocabularyItemId: null, sceneObjectId: null };
+    status, isSkippable: true, orderIndex, publicContent, vocabularyItemId: null, sceneObjectId: null,
+    xpReward: 0, xpBonus: 0 };
 }
 
 function detail(status: SessionStatus, tasks: SessionTask[] = [], failureCode: PracticeDetail["session"]["failureCode"] = null, analysisRetryable = false): PracticeDetail {

@@ -1,10 +1,10 @@
 import { Navigate, useNavigate } from "react-router-dom";
-import { Button } from "../components/ui";
+import { Button, XpPill } from "../components/ui";
 import { ArrowRightIcon, CheckIcon, CloseIcon } from "../components/icons";
 import { TranslationPreview } from "../components/TranslationPreview";
 import { SessionPersonalization } from "../components/SessionPersonalization";
 import { useScene } from "../state/useScene";
-import { finishesWithoutISpy, isMissionSession, practiceStages, taskDone, taskTitle } from "../lib/practiceTasks";
+import { finishesWithoutISpy, isMissionSession, practiceStages, taskDone, taskTitle, taskXp } from "../lib/practiceTasks";
 import { useAppState } from "../state/useAppState";
 
 export function Learn() {
@@ -49,6 +49,7 @@ export function Learn() {
       <div className="task-list" aria-label="Learning tasks">
         {tasks.map((task, index) => {
           const isDone = taskDone(task);
+          const reward = !isDone ? taskXp(task) : null;
           return (
             <button
               key={task.id}
@@ -62,7 +63,10 @@ export function Learn() {
               <span className="grow stack-2">
                 <strong>{taskTitle(task)}</strong>
               </span>
-              {isDone ? <span className="pill pill--mastered">{task.status === "skipped" ? "Skipped" : ""}</span> : <ArrowRightIcon />}
+              {isDone ? <span className="pill pill--mastered">{task.status === "skipped" ? "Skipped" : ""}</span> : <>
+                {reward ? <XpPill {...reward} /> : null}
+                <ArrowRightIcon />
+              </>}
             </button>
           );
         })}

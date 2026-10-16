@@ -409,6 +409,7 @@ export interface SessionTask {
   status: "pending" | "inProgress" | "completed" | "skipped";
   isSkippable: true; orderIndex: number; publicContent: TaskContent;
   vocabularyItemId: string | null; sceneObjectId: string | null;
+  xpReward: number; xpBonus: number;
 }
 export interface SessionProgress {
   completedTaskCount: number; skippedTaskCount: number; terminalTaskCount: number; totalTaskCount: number;
@@ -519,6 +520,7 @@ export const getLatestAttempt = (taskId: string, signal?: AbortSignal) =>
   request<{ attempt: LatestClueAttempt | null }>(`/api/v1/tasks/${taskId}/latest-attempt`, signal);
 export interface TaskActionResult {
   task: SessionTask; nextTaskId: string | null; sessionProgress: SessionProgress; attempt: TaskAttemptResult | null;
+  xpEarned: number;
 }
 export const descriptionEvaluation = (attempt: TaskAttemptResult | null): ISpyDescriptionEvaluation | null => {
   const details = attempt?.evaluationDetails;

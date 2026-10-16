@@ -8,7 +8,7 @@ from pydantic import TypeAdapter
 
 from app.repositories.postgres.workflow import evaluate
 from app.repositories.practice import PracticeConflictError
-from app.schemas.enums import TaskKind
+from app.schemas.enums import SessionMode, TaskKind
 from app.schemas.media import MediaAsset
 from app.schemas.sessions import Session
 from app.schemas.tasks import SessionTaskPublic, SubmitTaskAttemptRequest
@@ -87,7 +87,9 @@ def test_every_task_kind_is_persistable_skippable_and_private(uploaded):
         for t in tasks
     )
     for task in tasks:
-        public = SessionTaskPublic.from_internal(task).model_dump(mode="json")
+        public = SessionTaskPublic.from_internal(
+            task, mode=SessionMode.LESSON
+        ).model_dump(mode="json")
         assert "answerKey" not in public
         assert "acceptedTextAnswers" not in str(public)
 

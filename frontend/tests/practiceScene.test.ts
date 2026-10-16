@@ -19,8 +19,9 @@ const imageUrl = "https://example.test/image?width=1280";
 const saved: TaskActionResult = {
   task: { id: "task", kind: "reflection", phase: "learning", status: "completed", isSkippable: true,
     orderIndex: 7, publicContent: { kind: "reflection", prompt: "Reflect", suggestedVocabularyIds: [], allowSpeech: false },
-    vocabularyItemId: "word", sceneObjectId: "object" },
+    vocabularyItemId: "word", sceneObjectId: "object", xpReward: 0, xpBonus: 0 },
   nextTaskId: null, sessionProgress: { ...detail.progress, completedTaskCount: 1, terminalTaskCount: 1 }, attempt: null,
+  xpEarned: 10,
 };
 
 test("a delayed task response cannot overwrite another session's progress", () => {

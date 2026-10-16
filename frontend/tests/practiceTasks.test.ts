@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { practiceStages, taskDone, taskTitle, taskDescription } from "../src/lib/practiceTasks.ts";
+import { practiceStages, taskDone, taskTitle, taskDescription, taskXp, xpEarnedText } from "../src/lib/practiceTasks.ts";
 import type { SessionTask, TaskContent } from "../src/lib/api.ts";
 
 const contents: TaskContent[] = [
@@ -16,6 +16,7 @@ const contents: TaskContent[] = [
 const tasks: SessionTask[] = contents.map((publicContent, orderIndex) => ({
   id: "task-" + orderIndex, kind: publicContent.kind, phase: publicContent.kind === "ispyRound" ? "ispy" : "learning",
   status: "pending", isSkippable: true, orderIndex, publicContent, vocabularyItemId: "word", sceneObjectId: "object",
+  xpReward: 10, xpBonus: publicContent.kind === "ispyRound" ? 15 : 0,
 }));
 
 test("the original three screens expose all eight persisted tasks exactly once in order", () => {
@@ -41,4 +42,16 @@ test("task list copy comes from public content and all kinds have a label", () =
   }
   assert.equal(taskDescription(tasks[0]), "mesa · table");
   assert.equal(taskTitle(tasks[2]), "Grammar");
+});
+
+test("task reward metadata is presented without frontend XP constants", () => {
+  assert.deepEqual(taskXp(tasks[0]), { xp: 10, bonus: 0 });
+  assert.deepEqual(taskXp(tasks[6]), { xp: 10, bonus: 15 });
+  assert.equal(taskXp({ ...tasks[0], xpReward: 0, xpBonus: 0 }), null);
+});
+
+test("earned XP copy is shown only for positive action results", () => {
+  assert.equal(xpEarnedText(25), "+25 XP earned");
+  assert.equal(xpEarnedText(0), null);
+  assert.equal(xpEarnedText(undefined), null);
 });
