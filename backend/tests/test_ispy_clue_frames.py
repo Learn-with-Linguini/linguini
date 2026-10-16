@@ -5,7 +5,11 @@ from uuid import uuid4
 import pytest
 from pydantic import ValidationError
 
-from app.repositories.practice import ClueNamesTargetError, PracticeConflictError
+from app.repositories.practice import (
+    ClueNamesTargetError,
+    ClueNotTargetLanguageError,
+    PracticeConflictError,
+)
 from app.schemas.media import SceneObject
 from app.schemas.tasks import (
     ClueAssistance,
@@ -15,7 +19,12 @@ from app.schemas.tasks import (
     SubmitTextAttemptRequest,
 )
 from app.schemas.vocabulary import VocabularyItem
-from app.services.ispy_clue_frames import build_clue_support, check_clue, mentions_target
+from app.services.ispy_clue_frames import (
+    build_clue_support,
+    check_clue,
+    mentions_target,
+    uses_english,
+)
 from app.services.session_plan import build_ispy_description_tasks
 
 
@@ -354,6 +363,32 @@ def test_check_clue_rejects_the_target_word_and_unoffered_assistance():
     ]:
         with pytest.raises(PracticeConflictError):
             check_clue(content, attempt("Es roja", **bad))
+
+
+@pytest.mark.parametrize("text", ["It is red", "Está next to la silla"])
+def test_check_clue_rejects_english_markers_for_supported_target_languages(text):
+    with pytest.raises(ClueNotTargetLanguageError):
+        check_clue(content_with_frames(), attempt(text), language="es")
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("It is red", True),
+        ("it's beside the object", True),
+        ("Está next to la silla", True),
+        ("Es roja", False),
+        ("Il est sur la table", False),
+        ("Está al lado de la puerta", False),
+        ("on a de red color front top are rose orange marron beige violet", False),
+    ],
+)
+def test_uses_english_matches_whole_markers_only(text, expected):
+    assert uses_english(text) is expected
+
+
+def test_check_clue_skips_language_detection_without_supported_language():
+    check_clue(content_with_frames(), attempt("It is red"))
 
 
 def test_legacy_name_frames_still_validate_whether_shown_or_hidden():

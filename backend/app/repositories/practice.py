@@ -25,3 +25,7 @@ class ActiveSessionLimitReachedError(PracticeConflictError):
 
 class ClueNamesTargetError(Exception):
     """A described I-Spy clue uses the word for the object it describes."""
+
+
+class ClueNotTargetLanguageError(Exception):
+    """A described I-Spy clue is written in a language other than the target language."""

@@ -11,7 +11,7 @@ import { practiceStages, taskDone, taskXp, xpEarnedText } from "../lib/practiceT
 import { CLUE_ASSISTANCE_VERSION, descriptionEvaluation, getLatestAttempt } from "../lib/api";
 import { queryKeys } from "../lib/queryKeys";
 import type { ClueAssistance, ClueFrame, ClueFrameId, ClueSlotId, ISpyDescriptionEvaluation, ISpyDescriptionOutcome, SessionTask, TaskAnswer } from "../lib/api";
-import { applyFrame, choicesFromSlots, fillSlot, mentionsTarget, nearTarget, restoreSentences, savedAssistance, slotSentence, slotsFromChoices, visibleFrames, writeSentence, type FrameSentences, type SlotChoices } from "../lib/clueFrames";
+import { applyFrame, choicesFromSlots, fillSlot, mentionsTarget, nearTarget, restoreSentences, savedAssistance, slotSentence, slotsFromChoices, usesEnglish, visibleFrames, writeSentence, type FrameSentences, type SlotChoices } from "../lib/clueFrames";
 import type { LanguageItem } from "../data/types";
 import { ReportIssueLink } from "../components/ReportIssueLink";
 
@@ -56,7 +56,7 @@ type LatestGuess = { attemptId: string; evaluation: ISpyDescriptionEvaluation; f
 
 function Reflection({ task, index, total, finishLabel, onNext }: { task: SessionTask; index: number; total: number; finishLabel: string; onNext: () => void }) {
   const scene = useScene();
-  const { actOnTask, practiceSaving, practiceError } = useAppState();
+  const { actOnTask, practiceSaving, practiceError, activeProfile } = useAppState();
   const [text, setText] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
   const [xpEarned, setXpEarned] = useState<number>();
@@ -93,7 +93,10 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
     setChoices(restored);
     setRevealedHelp(saved.assistance?.revealedHelpFrameIds ?? []);
     setSentences(restoreSentences(saved.text, savedFrames, chips, restored));
-    const evaluation = saved.evaluationDetails;
+    const savedEvaluation = saved.evaluationDetails;
+    const evaluation = savedEvaluation && "outcome" in savedEvaluation
+      ? savedEvaluation
+      : null;
     if (evaluation) setGuess({ attemptId: saved.id, evaluation, feedback: saved.feedback });
     if (task.status === "completed") setFeedback(evaluation?.outcome === "clearMatch" ? "Linguini found your object!" : saved.feedback ?? "Reflection saved.");
   }, [hydrated, latest.isSuccess, latest.isFetching, latest.data, task.publicContent, task.status]);
@@ -109,7 +112,11 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
   const frames = visibleFrames(content.clueFrames);
   const activeFrame = frames.find(frame => frame.frameId === activeFrameId) ?? null;
   const namesTarget = mentionsTarget(text, content.avoidWords ?? []);
+  const englishClue = usesEnglish(text);
   const nearName = !namesTarget && nearTarget(text, content.avoidWords ?? []);
+  const beginner = ["A0", "A1"].includes(activeProfile?.proficiencyLevel ?? "");
+  const languageName = scene.languageCode === "es" ? "Spanish"
+    : scene.languageCode === "fr" ? "French" : "your learning language";
   const chooseFrame = (frame: ClueFrame) => {
     setActiveFrameId(frame.frameId);
     setSelectedFrameIds(ids => ids.includes(frame.frameId) ? ids : [...ids, frame.frameId]);
@@ -142,7 +149,7 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
   const markers = [target, guessed && guessed.id !== target?.id ? guessed : null].filter((item): item is LanguageItem => Boolean(item));
   const submit = async () => {
     const answer = text.trim();
-    if (!answer || namesTarget || answered || practiceSaving || !hydrated || submitting.current) return;
+    if (!answer || namesTarget || englishClue || answered || practiceSaving || !hydrated || submitting.current) return;
     submitting.current = true;
     const assistance: ClueAssistance | null = frames.length ? {
       version: CLUE_ASSISTANCE_VERSION, practiceMode: "guided", targetWordShown: true,
@@ -190,6 +197,12 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
       ? `Linguini's guess is your object (marker ${target.marker}).`
       : `Your object: marker ${target.marker} · Linguini's guess: marker ${guessed.marker} (dashed)`}</p> : null}
     <Card><div className="stack-2"><div className="spread"><span className="label muted">Describe this object</span>{reward ? <XpPill {...reward} /> : null}</div><h2>{target?.word}</h2><span className="small muted">{target?.translation}</span><p>{content.prompt}</p></div></Card>
+    {beginner ? <Card><div className="stack-2" data-testid="beginner-guide">
+      <strong>How to give a clue</strong>
+      <span>1. Tap Colour or Location to start a sentence.</span>
+      <span>2. Tap words to fill it in — each shows its English meaning.</span>
+      <span>3. Stuck? Tap Help me for phrases that fit your object.</span>
+    </div></Card> : null}
     {frames.length ? <div className="stack-2" data-testid="clue-frames">
       <span className="label muted">Clue frames (optional)</span>
       <div className="chip-row">{frames.map(frame => <button key={frame.frameId} type="button" className={`chip${frame.frameId === activeFrameId ? " chip--selected" : ""}`} aria-pressed={frame.frameId === activeFrameId} disabled={locked} onClick={() => chooseFrame(frame)}>{FRAME_LABELS[frame.frameId]}</button>)}</div>
@@ -202,7 +215,7 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
           <span className="small muted">Choose a {slot.label}</span>
           <div className="chip-row">{slot.chips.map(chip => {
             const picked = choices[activeFrame.frameId]?.[slot.slotId] === chip.text;
-            return <button key={chip.text} type="button" lang={scene.languageCode} title={chip.meaning ?? undefined} className={`chip${picked ? " chip--selected" : ""}`} aria-pressed={picked} disabled={locked} onClick={() => chooseSlotChip(activeFrame, slot.slotId, chip.text)}>{chip.text}</button>;
+            return <button key={chip.text} type="button" lang={scene.languageCode} title={!beginner ? chip.meaning ?? undefined : undefined} className={`chip${picked ? " chip--selected" : ""}${beginner && chip.meaning ? " chip--meaning" : ""}`} aria-pressed={picked} disabled={locked} onClick={() => chooseSlotChip(activeFrame, slot.slotId, chip.text)}>{chip.text}{beginner && chip.meaning ? <small className="chip__meaning">{chip.meaning}</small> : null}</button>;
           })}</div>
           {slot.slotId === "position" ? <ul className="small muted" data-testid="position-meanings">{slot.chips.filter(chip => chip.meaning).map(chip => <li key={chip.text}><span lang={scene.languageCode}>{chip.text}</span> — {chip.meaning}{chip.example ? <> · <span lang={scene.languageCode}>{chip.example}</span></> : null}</li>)}</ul> : null}
         </div>)}
@@ -216,10 +229,12 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
     {restoreFailed ? <div className="stack-2" role="alert" data-testid="restore-error"><span>We couldn't load your saved clue, so this task can't continue yet.</span><Button variant="secondary" onClick={() => void latest.refetch()}>Try again</Button></div> : null}
     {nearName && !locked ? <p className="small muted" data-testid="clue-near-warning">One word looks close to this object's name. If it's a different word, you can still send it.</p> : null}
     {namesTarget && !locked ? <p className="clue-warning" data-testid="clue-warning" role="alert">Your clue uses the word for this object. Change your clue to describe it without naming it.</p> : null}
+    {englishClue && !locked ? <p className="clue-warning" data-testid="clue-language-warning" role="alert">Write your clue in {languageName}, not English.</p> : null}
     {answered || feedback || guess ? <Feedback><div className="stack-2" role="status">
       {outcome && outcome !== "evaluationFailed" ? <strong>{guessed ? `Linguini guessed: ${guessed.word}` : "Linguini couldn't match your clue to an object."}</strong> : null}
       {task.status === "skipped" ? <span>Skipped — no XP earned.</span> : <>
         {guess?.feedback ? <span>{guess.feedback}</span> : null}
+        {outcome === "clearMatch" && guess?.evaluation.ambiguous ? <span>Other objects could fit this clue too — next time add a colour or a position.</span> : null}
         {outcome && !answered ? <span>{OUTCOME_PROMPTS[outcome]}</span> : null}
         {feedback || (answered && !guess) ? <span>{feedback ?? "Reflection saved."}</span> : null}
         {xpEarnedText(xpEarned) ? <strong>{xpEarnedText(xpEarned)}</strong> : null}
@@ -235,7 +250,7 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
     ]} /> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {!hydrated ? null : answered ? <Button block disabled={practiceSaving} onClick={onNext}>{index === total - 1 ? finishLabel : "Next item"} <ArrowRightIcon /></Button> : <>
-      {!guess ? <Button block disabled={!text.trim() || namesTarget || practiceSaving} onClick={() => void submit()}>Send my response</Button> : null}
+      {!guess ? <Button block disabled={!text.trim() || namesTarget || englishClue || practiceSaving} onClick={() => void submit()}>Send my response</Button> : null}
       {outcome === "clearMatch" ? <Button block disabled={practiceSaving} onClick={() => void confirm()}>That's it</Button> : null}
       {outcome === "evaluationFailed" ? <Button block disabled={practiceSaving} onClick={() => void submit()}>Retry guessing</Button> : null}
       {guess ? <Button variant="secondary" block disabled={practiceSaving} onClick={improve}>Improve my clue</Button> : null}

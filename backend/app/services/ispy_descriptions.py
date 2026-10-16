@@ -21,7 +21,7 @@ OUTCOME_CORRECTNESS = {
 
 
 def interpret_guess(
-    guess: ISpyGuessResult | None, target_object_id: UUID | None
+    guess: ISpyGuessResult | None, target_object_id: UUID | None, context=None
 ) -> ISpyDescriptionEvaluation:
     if guess is None:
         return ISpyDescriptionEvaluation(outcome="evaluationFailed")
@@ -29,11 +29,39 @@ def interpret_guess(
     alternatives = list(guess.alternative_object_keys)
     ambiguous = guess.ambiguous or bool(alternatives)
     among_alternatives = target is not None and target in alternatives
+    contradicted = list(guess.contradicted_evidence_keys)
+    if context is None:
+        target_contradictions = contradicted
+    else:
+        scene_objects = context.get("sceneObjects", {})
+        attributes = {
+            row.get("key"): row
+            for row in scene_objects.get("attributes", [])
+            if isinstance(row, dict)
+        }
+        relations = {
+            row.get("key"): row
+            for row in scene_objects.get("relations", [])
+            if isinstance(row, dict)
+        }
+        target_contradictions = []
+        for evidence_key in contradicted:
+            attribute = attributes.get(evidence_key)
+            relation = relations.get(evidence_key)
+            if attribute:
+                object_key = attribute.get("objectKey")
+                if object_key is None and isinstance(attribute.get("key"), str):
+                    object_key = attribute["key"].rsplit(":", 1)[0]
+                if object_key == target:
+                    target_contradictions.append(evidence_key)
+            elif relation and (
+                relation.get("subjectObjectKey") == target
+                or relation.get("referenceObjectKey") == target
+            ):
+                target_contradictions.append(evidence_key)
     if target is not None and guess.guessed_object_key == target:
-        if guess.contradicted_evidence_keys:
+        if target_contradictions:
             outcome = "needsRevision"
-        elif ambiguous:
-            outcome = "needsClarification"
         else:
             outcome = "clearMatch"
     elif among_alternatives:
@@ -46,6 +74,6 @@ def interpret_guess(
         ambiguous=ambiguous,
         alternative_object_keys=alternatives,
         matched_evidence_keys=list(guess.matched_evidence_keys),
-        contradicted_evidence_keys=list(guess.contradicted_evidence_keys),
+        contradicted_evidence_keys=contradicted,
         target_among_alternatives=among_alternatives,
     )

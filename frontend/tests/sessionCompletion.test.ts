@@ -228,7 +228,10 @@ const sceneObject = (id: string, label: string, x: number) => ({ id, sessionId: 
   boundingBox: null, anchorPoint: { x, y: 0.5 }, attributes: null, confidenceScore: null, sourceObjectKey: null });
 
 const buttons = () => [...dom.window.document.querySelectorAll("button")];
-const button = (label: string) => buttons().find(item => item.textContent?.trim() === label);
+const button = (label: string) => buttons().find(item =>
+  item.textContent?.trim() === label
+  || (item.classList.contains("chip--meaning") && item.firstChild?.textContent?.trim() === label)
+);
 const click = (label: string) => act(async () => {
   const target = button(label);
   assert.ok(target, `expected a "${label}" button`);

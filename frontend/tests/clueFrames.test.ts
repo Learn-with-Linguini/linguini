@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { ClueFrame } from "../src/lib/api.ts";
-import { applyFrame, choicesFromSlots, fillSlot, mentionsTarget, nearTarget, restoreSentences, savedAssistance, slotSentence, slotsFromChoices, visibleFrames, writeSentence } from "../src/lib/clueFrames.ts";
+import { applyFrame, choicesFromSlots, fillSlot, mentionsTarget, nearTarget, restoreSentences, savedAssistance, slotSentence, slotsFromChoices, usesEnglish, visibleFrames, writeSentence } from "../src/lib/clueFrames.ts";
 
 const frame = (frameId: ClueFrame["frameId"], prefix: string, chips: string[] = []): ClueFrame =>
   ({ frameId, prefix, meaning: "meaning", example: "example", chips });
@@ -80,6 +80,16 @@ test("the target word is found whole, ignoring case, accents and one-letter miss
   assert.equal(nearTarget("Es de este mes", ["mesa", "mesas"]), false);
   assert.equal(mentionsTarget("Es de este mes", ["mesa", "mesas"]), false);
   assert.equal(mentionsTarget("Veo una taza", []), false);
+});
+
+test("English markers match whole words without blocking Spanish or French words", () => {
+  assert.equal(usesEnglish("It is red"), true);
+  assert.equal(usesEnglish("it's beside the object"), true);
+  assert.equal(usesEnglish("Está next to la silla"), true);
+  assert.equal(usesEnglish("Es roja"), false);
+  assert.equal(usesEnglish("Il est sur la table"), false);
+  assert.equal(usesEnglish("Está al lado de la puerta"), false);
+  assert.equal(usesEnglish("on a de red color front top are rose orange marron beige violet"), false);
 });
 
 test("saved assistance is restored from the stored attempt payload", () => {

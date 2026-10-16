@@ -2,10 +2,21 @@ import type { ClueAssistance, ClueFrame, ClueFrameId, ClueSlotChoice, ClueSlotId
 
 const fold = (text: string) => text.toLocaleLowerCase().normalize("NFKD").replace(/\p{M}/gu, "");
 const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const ENGLISH_MARKERS = new Set([
+  "the", "is", "it", "its", "this", "that", "there", "and", "with", "of", "to",
+  "next", "behind", "under", "above", "below", "beside", "between", "near", "left",
+  "right", "bottom", "colour", "black", "white", "blue", "green", "yellow", "brown",
+  "purple", "grey", "gray", "pink", "my", "object", "thing", "something",
+]);
 
 const squeeze = (word: string) => word.replace(/(\p{L})\1+/gu, "$1");
 const wholePhrase = (parts: string[]) => new RegExp(`(?<![\\p{L}\\p{N}_])${parts.map(escape).join("\\s+")}(?![\\p{L}\\p{N}_])`, "u");
 const formParts = (word: string) => fold(word).split(/\s+/).filter(Boolean);
+
+/** Mirrors the backend precheck for whole-word English markers. */
+export function usesEnglish(text: string): boolean {
+  return (text.match(/\p{L}+/gu) ?? []).some(token => ENGLISH_MARKERS.has(fold(token)));
+}
 
 function oneEdit(a: string, b: string): boolean {
   if (Math.abs(a.length - b.length) > 1) return false;

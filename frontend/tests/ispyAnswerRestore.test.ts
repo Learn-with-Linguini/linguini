@@ -65,20 +65,29 @@ const clue: SessionTask = {
   id: "clue1", kind: "ispyRound", phase: "ispy", status: "pending", orderIndex: 0,
   isSkippable: true, sceneObjectId: "object-a", vocabularyItemId: null,
   xpReward: 0, xpBonus: 0,
-  publicContent: { kind: "ispyRound", clue: "es roja", options: [
+  publicContent: { kind: "ispyRound", clue: "es roja", clueTranslation: "it is red", options: [
     { optionId: "a", label: "taza", sceneObjectId: "object-a" },
     { optionId: "b", label: "mesa", sceneObjectId: "object-b" },
+    { optionId: "c", label: "libro", sceneObjectId: "object-c" },
   ] },
 };
 
-function detail(mode: SessionMode): PracticeDetail {
+function detail(mode: SessionMode, tasks: SessionTask[] = [
+  structuredClone(clue), { ...structuredClone(clue), id: "clue2", orderIndex: 1 },
+]): PracticeDetail {
   return {
     session: { id: "s1", mode, sourceSessionId: mode === "ispy" ? "lesson1" : null, status: "inProgress",
       sceneMediaAssetId: "asset", sessionTitle: "Table", sessionSummary: null, failureCode: null },
     mediaAsset: { id: "asset", source: "preloaded" }, sceneId: null, title: "Table", analysisMode: null, analysisRetryable: false,
     sceneObjects: [], sceneObjectRelations: [], vocabulary: [], translations: [],
-    tasks: [structuredClone(clue), { ...structuredClone(clue), id: "clue2", orderIndex: 1 }], nextTaskId: "clue1",
-    progress: { completedTaskCount: 0, skippedTaskCount: 0, terminalTaskCount: 0, totalTaskCount: 2 },
+    tasks,
+    nextTaskId: tasks.find(task => !["completed", "skipped"].includes(task.status))?.id ?? null,
+    progress: {
+      completedTaskCount: tasks.filter(task => task.status === "completed").length,
+      skippedTaskCount: tasks.filter(task => task.status === "skipped").length,
+      terminalTaskCount: tasks.filter(task => ["completed", "skipped"].includes(task.status)).length,
+      totalTaskCount: tasks.length,
+    },
   };
 }
 
@@ -131,8 +140,12 @@ const click = (button: HTMLButtonElement | undefined) => act(async () => {
   button.dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true }));
 });
 
-async function mount(mode: SessionMode) {
-  fixture = detail(mode); sessionReads = 0; requests.length = 0; taskReplies.length = 0; latestReply = null;
+async function mount(
+  mode: SessionMode,
+  tasks?: SessionTask[],
+  savedAttempt?: () => Response | Promise<Response>,
+) {
+  fixture = detail(mode, tasks); sessionReads = 0; requests.length = 0; taskReplies.length = 0; latestReply = savedAttempt ?? null;
   const container = dom.window.document.createElement("div");
   dom.window.document.body.appendChild(container);
   const root = createRoot(container);
@@ -204,4 +217,57 @@ test("retrying an unanswered response reuses its command key and displays the ac
   assert.equal(requests[0].idempotencyKey, requests[1].idempotencyKey);
   assert.equal(typeof requests[0].idempotencyKey, "string");
   assert.equal(next()?.disabled, false);
+});
+
+test("an in-progress round restores the wrong first choice and leaves other choices available", async () => {
+  await mount("ispy", [{ ...structuredClone(clue), status: "inProgress" }], () => Response.json({ attempt: {
+    id: "wrong1", attemptNumber: 1, text: "", optionId: "b", isCorrect: false,
+    feedback: "Not quite. Have another look and try once more.",
+    evaluationDetails: { retriesLeft: 1 }, assistance: null,
+  } }));
+
+  await until(
+    () => Boolean(choice("mesa")?.classList.contains("choice--incorrect") && choice("mesa")?.disabled),
+    "the restored first wrong choice should be marked and disabled",
+  );
+  assert.equal(choice("taza")?.disabled, false);
+  assert.match(dom.window.document.body.textContent ?? "", /Not quite — that's not it\. Try once more\./);
+  assert.match(dom.window.document.body.textContent ?? "", /it is red/);
+});
+
+test("a completed final-wrong answer reveals the correct choice", async () => {
+  await mount("ispy");
+  taskReplies.push(
+    () => Response.json({
+      task: { ...fixture.tasks[0], status: "inProgress" },
+      nextTaskId: "clue1",
+      sessionProgress: fixture.progress,
+      attempt: {
+        id: "wrong-first", attemptNumber: 1, isCorrect: false,
+        responsePayload: { optionId: "b" },
+        feedback: { message: "Not quite. Have another look and try once more." },
+        evaluationDetails: { retriesLeft: 1 },
+      },
+    }),
+    () => Response.json({
+      task: { ...fixture.tasks[0], status: "completed" },
+      nextTaskId: null,
+      sessionProgress: { ...fixture.progress, completedTaskCount: 1, terminalTaskCount: 1 },
+      attempt: {
+        id: "wrong-final", attemptNumber: 2, isCorrect: false,
+        responsePayload: { optionId: "c" },
+        feedback: { message: "Not quite. The answer was taza." },
+        evaluationDetails: { correctOptionId: "a" },
+      },
+    }),
+  );
+
+  await click(choice("mesa"));
+  await click(choice("libro"));
+  await until(() => Boolean(dom.window.document.querySelector('[data-testid="ispy-reveal"]')),
+    "the completed wrong answer should reveal the correct choice");
+  assert.match(dom.window.document.querySelector('[data-testid="ispy-reveal"]')?.textContent ?? "", /The answer was taza/);
+  assert.match(dom.window.document.querySelector('[data-testid="ispy-reveal"]')?.textContent ?? "", /Linguini's clue meant: “it is red”/);
+  assert.equal(choice("taza")?.classList.contains("choice--correct"), true);
+  assert.equal(choice("libro")?.classList.contains("choice--incorrect"), true);
 });

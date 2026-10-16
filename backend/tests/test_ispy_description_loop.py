@@ -102,7 +102,7 @@ def summary(repo, engine, sid):
     ("kwargs", "outcome", "correct"),
     [
         (dict(guessed="target"), "clearMatch", True),
-        (dict(guessed="target", ambiguous=True), "needsClarification", None),
+        (dict(guessed="target", ambiguous=True), "clearMatch", True),
         (
             dict(guessed="other", ambiguous=True, alternatives=["target"]),
             "needsClarification",
@@ -126,6 +126,59 @@ def test_interpretation_requires_an_unambiguous_uncontradicted_target(kwargs, ou
     assert interpretation.outcome == outcome
     assert interpretation.version == "ispy-description-evaluation.v1"
     assert OUTCOME_CORRECTNESS[outcome] is correct
+
+
+def test_interpretation_ignores_other_object_contradictions_but_keeps_all_evidence():
+    target_id = UUID(int=1)
+    target, other = str(target_id), str(UUID(int=2))
+    contradicted = ["other:color", "target:color", "target:relation"]
+    context = {
+        "sceneObjects": {
+            "attributes": [
+                {"key": "other:color", "objectKey": other},
+                {"key": "target:color"},
+            ],
+            "relations": [
+                {
+                    "key": "target:relation",
+                    "subjectObjectKey": target,
+                    "referenceObjectKey": other,
+                }
+            ],
+        }
+    }
+
+    other_only = interpret_guess(
+        result(target, ambiguous=True, contradicted=["other:color"]), target_id, context
+    )
+    assert other_only.outcome == "clearMatch"
+    assert OUTCOME_CORRECTNESS[other_only.outcome] is True
+    assert other_only.contradicted_evidence_keys == ["other:color"]
+
+    target_evidence = interpret_guess(result(target, contradicted=contradicted), target_id, context)
+    assert target_evidence.outcome == "needsRevision"
+    assert target_evidence.contradicted_evidence_keys == contradicted
+
+
+def test_english_clue_error_returns_the_target_language_api_error(database, loop):
+    _engine, _owner, _profile, client = database
+    _repo, _sid, task_id, _guesser, _target, _other, _replies = loop
+
+    response = client.post(
+        f"/api/v1/tasks/{task_id}/attempts",
+        json={
+            "inputMode": "text",
+            "text": "It is red",
+            "idempotencyKey": "english-clue-api",
+        },
+    )
+
+    assert response.status_code == 422
+    assert response.json()["detail"]["code"] == "clue_not_target_language"
+    assert response.json()["detail"]["message"] == (
+        "Write your clue in your learning language, not English."
+    )
+    assert attempt_count(_engine, task_id) == 0
 
 
 def test_clear_match_waits_for_confirmation_then_rewards_once(database, loop):
@@ -169,7 +222,25 @@ def test_unresolved_outcomes_stay_active_and_cannot_be_confirmed(
 ):
     engine = database[0]
     repo, sid, task_id, _guesser, target, other, replies = loop
-    replies.append(reply(target, other))
+    if outcome == "needsRevision":
+        context = scalar(
+            engine,
+            select(session_tasks.c.answer_key).where(session_tasks.c.id == task_id),
+        )["sceneDescriptionContext"]
+        scene_objects = context["sceneObjects"]
+        target_evidence = next(
+            row["key"]
+            for row in [*scene_objects["attributes"], *scene_objects["relations"]]
+            if (
+                row.get("objectKey") == target
+                or row.get("subjectObjectKey") == target
+                or row.get("referenceObjectKey") == target
+                or row.get("key", "").rsplit(":", 1)[0] == target
+            )
+        )
+        replies.append(result(target, contradicted=[target_evidence]))
+    else:
+        replies.append(reply(target, other))
     saved = submit(repo, task_id, "unresolved-1")
     assert saved.attempt.evaluation_details["outcome"] == outcome
     assert saved.attempt.is_correct is correct

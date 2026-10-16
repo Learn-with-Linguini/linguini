@@ -129,6 +129,7 @@ logger = logging.getLogger(__name__)
 TERMINAL = {"completed", "abandoned", "failed"}
 MAX_ACTIVE_SESSIONS = 3
 MAX_ANALYSIS_ATTEMPTS = 3
+ISPY_ROUND_ATTEMPTS = 2
 ALLOWED_TRANSITIONS = {
     "created": {"analyzingScene", "abandoned", "failed"},
     "analyzingScene": {"awaitingObjectReview", "abandoned", "failed"},
@@ -1898,7 +1899,7 @@ class PostgresWorkflowRepository:
             )
 
     def _ispy_summary(self, c, session_id):
-        """Count graded clue attempts, plus one round per described task.
+        """Count graded clue rounds, plus one round per described task.
 
         A described task succeeds only once its clear match is confirmed, so
         unresolved, ambiguous and failed evaluations never count as correct.
@@ -1907,6 +1908,7 @@ class PostgresWorkflowRepository:
             select(
                 session_tasks.c.id,
                 session_tasks.c.status,
+                task_attempts.c.attempt_number,
                 task_attempts.c.is_correct,
                 task_attempts.c.evaluation_details["version"].astext.label("version"),
             )
@@ -1915,18 +1917,23 @@ class PostgresWorkflowRepository:
                 session_tasks.c.session_id == session_id, session_tasks.c.phase == "ispy"
             )
         ).all()
-        graded = [
-            row.is_correct for row in rows if row.version != ISPY_DESCRIPTION_EVALUATION_VERSION
-        ]
         rounds = {
             row.id: row.status == "completed"
             for row in rows
             if row.version == ISPY_DESCRIPTION_EVALUATION_VERSION
         }
+        clue_attempts = {}
+        for row in rows:
+            if row.version == ISPY_DESCRIPTION_EVALUATION_VERSION:
+                continue
+            current = clue_attempts.get(row.id)
+            if current is None or row.attempt_number > current.attempt_number:
+                clue_attempts[row.id] = row
+        graded = [row for row in clue_attempts.values() if row.is_correct is not None]
         return {
-            "ispy_correct_count": sum(outcome is True for outcome in graded)
+            "ispy_correct_count": sum(row.is_correct is True for row in graded)
             + sum(rounds.values()),
-            "ispy_attempt_count": sum(outcome is not None for outcome in graded) + len(rounds),
+            "ispy_attempt_count": len(graded) + len(rounds),
         }
 
     def _encounter(
@@ -2003,7 +2010,14 @@ class PostgresWorkflowRepository:
         with self.transaction() as c:
             task = self._task_row(c, task_id)
             if request.input_mode == "text":
-                check_clue(task.public_content, request)
+                check_clue(
+                    task.public_content,
+                    request,
+                    language=(
+                        (task.answer_key.scene_description_context or {}).get("targetLanguage")
+                        if task.answer_key else None
+                    ),
+                )
             if not self._evaluates_description(task) or request.input_mode != "text":
                 return None
             attempt_id = _attempt_id(task, request)
@@ -2134,8 +2148,42 @@ class PostgresWorkflowRepository:
                     attempt = TaskAttempt.model_validate(dict(saved))
                     if attempt.response_payload != payload:
                         raise PracticeConflictError("Attempt key already used for another answer.")
-                elif request.input_mode == "text":
-                    check_clue(task.public_content, request)
+                else:
+                    if task.kind == "ispyRound":
+                        answer_field = None
+                        if request.input_mode == "multipleChoice":
+                            answer_field = ("option_id", "optionId", request.option_id)
+                        elif request.input_mode == "objectSelection":
+                            answer_field = (
+                                "scene_object_id",
+                                "sceneObjectId",
+                                str(request.scene_object_id),
+                            )
+                        if answer_field:
+                            prior_answers = c.execute(
+                                select(task_attempts.c.response_payload).where(
+                                    task_attempts.c.session_task_id == task.id
+                                )
+                            ).scalars()
+                            if any(
+                                payload.get(answer_field[0], payload.get(answer_field[1]))
+                                == answer_field[2]
+                                for payload in prior_answers
+                            ):
+                                raise PracticeConflictError(
+                                    "You already tried that answer. Pick another one."
+                                )
+                    if request.input_mode == "text":
+                        check_clue(
+                            task.public_content,
+                            request,
+                            language=(
+                                (task.answer_key.scene_description_context or {}).get(
+                                    "targetLanguage"
+                                )
+                                if task.answer_key else None
+                            ),
+                        )
             retry = (
                 attempt is not None
                 or (action == "complete" and task.status == "completed")
@@ -2194,7 +2242,11 @@ class PostgresWorkflowRepository:
                                 "This task changed while your description was evaluated. "
                                 "Retry the action."
                             )
-                        interpretation = interpret_guess(evaluation.guess, task.scene_object_id)
+                        interpretation = interpret_guess(
+                            evaluation.guess,
+                            task.scene_object_id,
+                            task.answer_key.scene_description_context,
+                        )
                         correct = OUTCOME_CORRECTNESS[interpretation.outcome]
                         feedback_message = (
                             EVALUATION_FAILED_MESSAGE
@@ -2213,6 +2265,37 @@ class PostgresWorkflowRepository:
                                 else "Not quite. Review this word and try it in another session."
                             )
                         )
+                    attempt_number = _next_attempt_number(c, task.id)
+                    ispy_round_retry = (
+                        task.kind == "ispyRound"
+                        and correct is False
+                        and attempt_number < ISPY_ROUND_ATTEMPTS
+                    )
+                    if task.kind == "ispyRound":
+                        if ispy_round_retry:
+                            feedback_message = "Not quite. Have another look and try once more."
+                            evaluation_details = {
+                                "retriesLeft": ISPY_ROUND_ATTEMPTS - attempt_number
+                            }
+                        else:
+                            key = task.answer_key
+                            answer = next(
+                                (
+                                    option
+                                    for option in task.public_content.options
+                                    if option.option_id == key.correct_option_id
+                                    or (
+                                        key.correct_option_id is None
+                                        and option.scene_object_id is not None
+                                        and option.scene_object_id == key.correct_scene_object_id
+                                    )
+                                ),
+                                None,
+                            )
+                            if answer is not None:
+                                evaluation_details = {"correctOptionId": answer.option_id}
+                                if correct is False:
+                                    feedback_message = f"Not quite. The answer was {answer.label}."
                     if request.input_mode == "vocabularyReview":
                         question_results = {
                             question.question_id: _lesson_answer_is_correct(
@@ -2248,7 +2331,7 @@ class PostgresWorkflowRepository:
                     attempt = TaskAttempt(
                         id=attempt_id,
                         session_task_id=task.id,
-                        attempt_number=_next_attempt_number(c, task.id),
+                        attempt_number=attempt_number,
                         input_mode=request.input_mode,
                         response_payload=payload,
                         is_correct=correct,
@@ -2325,7 +2408,9 @@ class PostgresWorkflowRepository:
                                 vocabulary_item_id=vocabulary_item_id,
                                 session=session,
                             )
-                    if evaluation is None:
+                    if task.kind == "ispyRound" and ispy_round_retry:
+                        values = dict(status="inProgress", started_at=task.started_at or utc_now())
+                    elif evaluation is None:
                         values = dict(
                             status="completed",
                             completed_at=utc_now(),

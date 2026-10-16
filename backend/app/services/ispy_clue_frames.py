@@ -3,7 +3,11 @@
 import re
 import unicodedata
 
-from app.repositories.practice import ClueNamesTargetError, PracticeConflictError
+from app.repositories.practice import (
+    ClueNamesTargetError,
+    ClueNotTargetLanguageError,
+    PracticeConflictError,
+)
 from app.schemas.enums import SYMMETRIC_SCENE_RELATION_TYPES
 from app.schemas.tasks import (
     ClueAssistance,
@@ -71,6 +75,12 @@ COLOUR_FORMS = {
     ],
 }
 SUPPORTED_LANGUAGES = set(COLOUR_FORMS)
+ENGLISH_MARKERS = frozenset({
+    "the", "is", "it", "its", "this", "that", "there", "and", "with", "of", "to",
+    "next", "behind", "under", "above", "below", "beside", "between", "near", "left",
+    "right", "bottom", "colour", "black", "white", "blue", "green", "yellow", "brown",
+    "purple", "grey", "gray", "pink", "my", "object", "thing", "something",
+})
 COLOUR_ATTRIBUTE_TYPES = {"color", "colour"}
 LOCATION_VERB_STARTS = ("esta ", "es ", "est ", "il est ", "elle est ")
 
@@ -249,6 +259,14 @@ def _fold(text):
     return "".join(char for char in decomposed if not unicodedata.combining(char))
 
 
+def uses_english(text):
+    """Return whether a clue contains a whole-word English marker."""
+    return any(
+        _fold(token) in ENGLISH_MARKERS
+        for token in re.findall(r"[^\W\d_]+", text, re.UNICODE)
+    )
+
+
 def mentions_target(text, avoid_words):
     """Whole target forms ignoring case and accents; near-misses only warn client-side."""
     folded = _fold(text)
@@ -260,7 +278,7 @@ def mentions_target(text, avoid_words):
     )
 
 
-def check_clue(content, request):
+def check_clue(content, request, language=None):
     """Reject a clue naming its target and assistance that this task never offered."""
     if not isinstance(content, ReflectionContent):
         if request.assistance is not None:
@@ -268,6 +286,10 @@ def check_clue(content, request):
         return
     if mentions_target(request.text, content.avoid_words):
         raise ClueNamesTargetError("Your clue uses the word for this object.")
+    if language in SUPPORTED_LANGUAGES and uses_english(request.text):
+        raise ClueNotTargetLanguageError(
+            "Write your clue in your learning language, not English."
+        )
     if request.assistance is not None:
         _check_assistance(content, request.assistance)
 
