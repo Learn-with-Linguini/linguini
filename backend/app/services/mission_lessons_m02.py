@@ -1,8 +1,10 @@
-"""Build the M02 A1 lesson tasks from confirmed objects, relations and a validated result."""
+"""Build the M02 A1 lesson task from confirmed objects, relations and a validated result."""
+
+import random
 
 from app.ai.features.learning_tasks.mission import fold, tokens
 from app.ai.features.learning_tasks.mission_m02 import _joined
-from app.services.ispy_clue_frames import CONTRACTIONS, _definite, _prefixes, _with_article
+from app.services.ispy_clue_frames import CONTRACTIONS, _definite, _with_article
 from app.services.mission_eligibility import (
     POSITION_MEANINGS,
     REVIEWED_POSITIONS,
@@ -16,7 +18,6 @@ M02_FOCUS = "findAndLocate"
 QUESTION_CHUNKS = {"es": "¿Dónde está…?", "fr": "Où est… ?"}
 _QUESTION_FRAMES = {"es": "¿Dónde está {}?", "fr": "Où est {} ?"}
 _LOCATION_VERBS = {"es": "está", "fr": "est"}
-_YES_NO = {"es": {"yes": "Sí", "no": "No"}, "fr": {"yes": "Oui", "no": "Non"}}
 # Positions that a confirmed position rules out for the same pair.
 _OPPOSITE = {"on": "under", "under": "on", "in_front_of": "behind", "behind": "in_front_of"}
 _INVERSE = {
@@ -26,37 +27,35 @@ _INVERSE = {
 # Prompts never contain the sentence the learner builds.
 _PROMPTS = {
     "es": {
-        "choosePosition": "Elige la posición: {subject} ___ {reference}.",
-        "describeLocation": "Describe la posición {of_subject}.",
         "askWhere": "Pregunta por la ubicación {of_subject}.",
-        "checkAnswer": "\u201c{proposal}\u201d ¿Coincide con la foto?",
+        "answerWhere": "Responde con la posición que muestra la foto.",
     },
     "fr": {
-        "choosePosition": "Choisis la position : {subject} ___ {reference}.",
-        "describeLocation": "Décris la position {of_subject}.",
         "askWhere": "Pose une question sur l'emplacement {of_subject}.",
-        "checkAnswer": "\u00ab {proposal} \u00bb Est-ce que ça correspond à la photo ?",
+        "answerWhere": "Réponds avec la position que montre la photo.",
     },
 }
 _TRANSLATIONS = {
-    "choosePosition": "Choose the position: the {subject} ___ the {reference}.",
-    "describeLocation": "Describe the position of the {subject}.",
+    "findObject": "Tap the numbered marker on the object this sentence describes.",
+    "chooseLocation": "Choose where it is in the photo.",
     "askWhere": "Ask where the {subject} is.",
-    "checkAnswer": "Does this match the photo?",
+    "answerWhere": "Answer with the position the photo shows.",
 }
+MAX_MARKERS = 4
+MAX_PLACES = 4
 _EVALUATIONS = {
-    "choosePosition": (["recognise-position"], "recognition", ["position-matches-photo"]),
-    "describeLocation": (
-        ["describe-location", "name-object"],
-        "construction",
-        ["statement-in-order", "article-matches-noun"],
-    ),
+    "findObject": (["understand-location"], "recognition", ["answer-matches-photo"]),
+    "chooseLocation": (["recognise-position"], "recognition", ["position-matches-photo"]),
     "askWhere": (
         ["build-question", "name-object"],
         "construction",
         ["question-names-object", "article-matches-noun"],
     ),
-    "checkAnswer": (["understand-location"], "recognition", ["answer-matches-photo"]),
+    "answerWhere": (
+        ["describe-location", "name-object"],
+        "construction",
+        ["statement-in-order", "article-matches-noun"],
+    ),
 }
 
 
@@ -103,18 +102,9 @@ def _true_positions(subject, reference, relations):
 
 
 def _select(found, familiarity):
-    """The least familiar relation, and another pair or position for the answer check."""
-    if not found:
-        return []
+    """The least familiar confirmed relation; every question reuses it."""
     ranked = sorted(found, key=lambda row: familiarity(row["expression"]))
-    first = ranked[0]
-    pair = {first["subjectKey"], first["referenceKey"]}
-    others = ranked[1:]
-    second = next(
-        (row for row in others if {row["subjectKey"], row["referenceKey"]} != pair),
-        next((row for row in others if row["position"] != first["position"]), None),
-    )
-    return [first["key"]] if second is None else [first["key"], second["key"]]
+    return [ranked[0]["key"]] if ranked else []
 
 
 def _statement(language, subject, position, place):
@@ -128,9 +118,28 @@ def _statement(language, subject, position, place):
     ]
 
 
-def m02_payload(mission, language, objects, relations, words, translated_scene, progress=None):
-    """Confirmed relations with reviewed forms, and the two selected for the lesson."""
+def _shuffled(seed, size):
+    order = list(range(size))
+    random.Random(seed).shuffle(order)
+    return order
+
+
+def scene_markers(objects):
+    """Photo marker numbers as the learner sees them: the confirmed objects in ID order."""
+    ordered = sorted(objects, key=lambda obj: obj.id)
+    return ordered, [
+        dict(key=str(obj.id), marker=number, source=obj.label.strip())
+        for number, obj in enumerate(ordered, 1)
+    ]
+
+
+def m02_payload(
+    mission, language, objects, relations, words, translated_scene, progress=None,
+    session_id=None,
+):
+    """Confirmed relations with reviewed forms, and the one selected for the lesson."""
     language = language.lower()
+    ordered, markers = scene_markers(objects)
     terms = {term.key: term for term in translated_scene.objects} if translated_scene else {}
     rows, places = {}, {}
     for obj, word in zip(objects, words, strict=True):
@@ -167,46 +176,47 @@ def m02_payload(mission, language, objects, relations, words, translated_scene, 
         true_positions = _true_positions(
             relation.subject_scene_object_id, relation.reference_scene_object_id, usable,
         )
-        extra = next(
-            row["expression"] for row in positions if row["position"] not in true_positions
-        )
-        pronoun = _prefixes(language, subject["gender"])["location"]
         reference = rows[relation.reference_scene_object_id]
-        answer = f"{pronoun} {place}." if pronoun != "C'est" else _joined(statement_tiles)
         subject_place = places[relation.subject_scene_object_id]
         if _definite(language, subject_place) is None:
             continue
-        contradicted = sorted(
-            {_OPPOSITE[p] for p in true_positions if p in _OPPOSITE} - true_positions
-        )
-        check = dict(proposal=_joined(statement_tiles), position=kind)
-        if contradicted and relation.id.int % 2:
-            check = dict(
-                proposal=_joined(_statement(language, subject, contradicted[0], reference_place)),
-                position=contradicted[0],
-            )
+        untrue = [row for row in positions if row["position"] not in true_positions]
+        untrue.sort(key=lambda row: row["position"] != _OPPOSITE.get(kind))
+        place_options = [dict(position=kind, label=place)]
+        for row in untrue[:MAX_PLACES - 1]:
+            other_tile, other_tail = _place_tiles(language, row["expression"], reference_place)
+            place_options.append(dict(
+                position=row["position"], label=" ".join([other_tile, _joined(other_tail)]),
+            ))
+        wrong = untrue[0]
+        extra = _place_tiles(language, wrong["expression"], reference_place)[0]
+        contradiction = _joined(_statement(language, subject, wrong["position"], reference_place))
+        same = fold(subject["source"])
+        distractors = [reference["key"]] + [
+            str(obj.id) for obj in ordered
+            if str(obj.id) not in {subject["key"], reference["key"]}
+            and fold(rows[obj.id]["source"]) != same
+        ]
+        if fold(reference["source"]) == same:
+            continue
         prompts = {
-            purpose: template.format(
-                subject=_definite_phrase(language, subject_place),
-                reference=_definite_phrase(language, reference_place),
-                of_subject=_of(language, subject_place),
-                proposal=check["proposal"],
-            )
+            purpose: template.format(of_subject=_of(language, subject_place))
             for purpose, template in _PROMPTS[language].items()
         }
         found.append(dict(
             key=str(relation.id),
             subjectKey=subject["key"], subjectSource=subject["source"],
             referenceKey=reference["key"], referenceSource=reference["source"],
-            position=kind, expression=expression,
+            position=kind, expression=expression, meaning=POSITION_MEANINGS[kind],
             truePositions=sorted(true_positions),
-            contradicted=contradicted,
-            check=check,
             statement=_joined(statement_tiles),
             statementTiles=statement_tiles,
-            extraTile=extra,
+            answerExtra=extra,
+            contradiction=contradiction,
             whereQuestion=subject["whereQuestion"],
-            answer=answer,
+            markerOptions=[subject["key"], *distractors[:MAX_MARKERS - 1]],
+            placeOptions=place_options,
+            placeOrder=_shuffled(f"{session_id}:M02:{relation.id}", len(place_options)),
             prompts=prompts,
         ))
     known = (progress or {}).get("terms", {})
@@ -217,7 +227,7 @@ def m02_payload(mission, language, objects, relations, words, translated_scene, 
         "contentVersion": mission.content_version,
         "questionChunk": QUESTION_CHUNKS[language],
         "positions": positions,
-        "yesNo": _YES_NO[language],
+        "markers": markers,
         "relations": found,
         "selected": _select(found, lambda expression: known.get(fold(expression), 0.0)),
     }
@@ -225,48 +235,59 @@ def m02_payload(mission, language, objects, relations, words, translated_scene, 
 
 def _corrections(payload, question, label):
     relation = next(row for row in payload["relations"] if row["key"] == question.relation_key)
-    phrases = {row["position"]: row for row in payload["positions"]}
-    by_text = {fold(row["expression"]): row for row in payload["positions"]}
-    if question.purpose == "describeLocation":
-        return [dict(
-            mistake="wordOrder", correction=question.correct_text,
-            explanation="Say the object first, then the verb, the position and the other object.",
-        )]
+    wrong = [
+        option for option in question.options if option.option_id != question.correct_option_id
+    ]
+    if question.purpose == "answerWhere":
+        return [
+            dict(
+                mistake="wrongPosition", answers=[relation["contradiction"]],
+                correction=question.correct_text,
+                explanation=(
+                    f"The photo shows the {relation['subjectSource']} {relation['meaning']} "
+                    f"the {relation['referenceSource']}."
+                ),
+            ),
+            dict(
+                mistake="wordOrder", correction=question.correct_text,
+                explanation="Say the object, then the verb, the position and the other object.",
+            ),
+        ]
     if question.purpose == "askWhere":
         return [dict(
             mistake="wordOrder", correction=question.correct_text,
             explanation="Start with the question words, then the object.",
         )]
-    if question.purpose == "checkAnswer":
+    if question.purpose == "findObject":
+        sources = {row["key"]: row["source"] for row in payload["markers"]}
         return [dict(
-            mistake="wrongPosition", answers=[option.option_id], correction=relation["statement"],
-            explanation=f"The photo shows: {relation['statement']}",
-        ) for option in question.options if option.option_id != question.correct_option_id]
-    corrections = []
-    for option in question.options:
-        if option.option_id == question.correct_option_id:
-            continue
-        chosen = by_text[fold(option.label)]
-        corrections.append(dict(
-            mistake="wrongPosition", answers=[option.option_id], correction=label,
+            mistake="wrongObject", answers=[option.option_id], correction=label,
             explanation=(
-                f"\u201c{chosen['expression']}\u201d means {chosen['meaning']}; the "
-                f"{relation['subjectSource']} is {phrases[relation['position']]['meaning']} "
-                f"the {relation['referenceSource']}."
+                f"Marker {option.label} is the {sources[question.marker_keys[option.option_id]]}; "
+                f"the sentence describes the {relation['subjectSource']} (marker {label})."
             ),
-        ))
-    return corrections
+        ) for option in wrong]
+    meanings = {row["position"]: row["meaning"] for row in payload["positions"]}
+    places = {fold(row["label"]): row["position"] for row in relation["placeOptions"]}
+    return [dict(
+        mistake="wrongPosition", answers=[option.option_id], correction=label,
+        explanation=(
+            f"\u201c{option.label}\u201d means {meanings[places[fold(option.label)]]} the "
+            f"{relation['referenceSource']}; the {relation['subjectSource']} is "
+            f"{relation['meaning']} the {relation['referenceSource']}."
+        ),
+    ) for option in wrong]
 
 
 def m02_lesson_task(session_id, mission, payload, result, vocabulary_ids):
-    """The M02 lesson task: its three or four questions in order, from a validated result."""
+    """The M02 lesson task: four questions on one confirmed relation, from a validated result."""
     relations = {row["key"]: row for row in payload["relations"]}
 
     def evaluate(question, label):
         target_ids, evidence_type, criteria = _EVALUATIONS[question.purpose]
         relation = relations[question.relation_key]
         named = {
-            "describeLocation": [relation["subjectKey"], relation["referenceKey"]],
+            "answerWhere": [relation["subjectKey"], relation["referenceKey"]],
             "askWhere": [relation["subjectKey"]],
         }.get(question.purpose, [])
         return dict(
@@ -279,17 +300,26 @@ def m02_lesson_task(session_id, mission, payload, result, vocabulary_ids):
 
     def shown(question):
         relation = relations[question.relation_key]
-        subject = _capitalised(relation["subjectSource"])
-        reference = _capitalised(relation["referenceSource"])
-        translation = _TRANSLATIONS[question.purpose].format(
-            subject=relation["subjectSource"], reference=relation["referenceSource"],
-        )
         fields = dict(
-            scene_object_id=question.object_key, object_label=subject,
-            prompt_translation=translation,
+            section=question.section,
+            prompt_translation=_TRANSLATIONS[question.purpose].format(
+                subject=relation["subjectSource"],
+            ),
+        )
+        if question.purpose == "findObject":
+            # No highlight: the learner finds the object from the sentence.
+            return dict(fields, marker_object_ids=question.marker_keys, keep_option_order=True)
+        fields.update(
+            scene_object_id=question.object_key,
+            object_label=_capitalised(relation["subjectSource"]),
         )
         if question.purpose != "askWhere":
-            fields.update(reference_object_id=relation["referenceKey"], reference_label=reference)
+            fields.update(
+                reference_object_id=relation["referenceKey"],
+                reference_label=_capitalised(relation["referenceSource"]),
+            )
+        if question.interaction_type == "multipleChoice":
+            fields["keep_option_order"] = True
         return fields
 
     return build_mission_task(session_id, mission, M02_FOCUS, result, evaluate, shown)

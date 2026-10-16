@@ -11,6 +11,8 @@ type Props = {
   onLocationSelect?: (position: { x: number; y: number }) => void;
   locationLabel?: string;
   lazy?: boolean;
+  /** Name markers by number only, when the word is what the learner is asked to find. */
+  hideWords?: boolean;
 };
 
 export function ScenePhoto({
@@ -22,6 +24,7 @@ export function ScenePhoto({
   onLocationSelect,
   locationLabel,
   lazy,
+  hideWords,
 }: Props) {
   const markers = items ?? scene.items;
 
@@ -75,7 +78,7 @@ export function ScenePhoto({
             className={className}
             style={style}
             onClick={() => onMarkerClick(item)}
-            aria-label={`Marker ${item.marker}: ${item.word}`}
+            aria-label={hideWords ? `Marker ${item.marker}` : `Marker ${item.marker}: ${item.word}`}
             aria-pressed={active}
           >
             <span className="scene__marker-label">{item.marker}</span>

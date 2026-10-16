@@ -28,11 +28,11 @@ export function ObjectPreview({ scene, object, label, reference, referenceLabel,
         : <Ring object={object} tone="target" />}
       {referenceLabel ? <Ring object={reference} tone="reference" /> : null}
     </div>
-    <figcaption className="object-preview__legend">
+    {label || referenceLabel ? <figcaption className="object-preview__legend">
       {referenceLabel ? <>
         <span><span className="object-preview__key object-preview__key--target" aria-hidden="true" /><strong>{label}</strong></span>
         <span><span className="object-preview__key object-preview__key--reference" aria-hidden="true" /><strong>{referenceLabel}</strong></span>
       </> : <strong>{label}</strong>}
-    </figcaption>
+    </figcaption> : null}
   </figure>;
 }

@@ -4,7 +4,7 @@ import json
 from types import SimpleNamespace
 
 import pytest
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from test_mission_m01_workflow import (
     _analyzed,
     _answer_key,
@@ -19,7 +19,7 @@ from test_preloaded_templates import SceneModel, services
 from test_preloaded_templates_workflow import curated as curated
 
 from app.repositories.postgres.practice import sessions
-from app.repositories.postgres.tasks import task_attempts
+from app.repositories.postgres.tasks import session_tasks, task_attempts
 from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.repositories.postgres.xp import xp_events
 from app.repositories.practice import PracticeConflictError
@@ -83,7 +83,7 @@ def _parts(detail):
     return [task for task in detail.tasks if task.public_content.mission_id == "M02"]
 
 
-def test_one_relation_plans_one_m02_task_with_the_three_core_questions(curated):
+def test_one_relation_plans_one_m02_task_with_four_questions_on_it(curated):
     engine, _owner, profile, client, *_ = curated
     model = SceneModel()
     repository, sid, detail = _lesson(curated, _relations_only, model)
@@ -95,29 +95,42 @@ def test_one_relation_plans_one_m02_task_with_the_three_core_questions(curated):
     assert not any("m02" in name for name in model.requests)
     content = lesson.public_content
     assert content.title == "Find and locate" and content.explanation is None
-    choose, describe, ask = content.questions
-    assert choose.prompt == "Elige la posición: la taza ___ la mesa."
-    assert choose.prompt_translation == "Choose the position: the cup ___ the table."
+    find, choose, ask, answer = content.questions
+    assert [q.section for q in content.questions] == [
+        "Task 1 · Find it in your photo", "Task 1 · Find it in your photo",
+        "Task 2 · Ask and answer where", "Task 2 · Ask and answer where",
+    ]
+    assert find.prompt == "La taza está sobre la mesa."
+    assert find.scene_object_id is None and find.reference_object_id is None
+    # Marker numbers are the confirmed objects' positions in the reviewed scene.
+    numbers = {obj.id: index for index, obj in enumerate(detail.scene_objects, 1)}
+    assert {o.option_id: o.label for o in find.options} == {
+        option_id: str(numbers[object_id])
+        for option_id, object_id in find.marker_object_ids.items()
+    }
+    cup = next(obj.id for obj in detail.scene_objects if obj.label == "cup")
+    table = next(obj.id for obj in detail.scene_objects if obj.label == "table")
+    assert choose.prompt == "¿Dónde está la taza?"
     assert (choose.object_label, choose.reference_label) == ("Cup", "Table")
-    assert choose.scene_object_id and choose.reference_object_id
-    assert describe.scene_object_id == choose.scene_object_id
-    assert describe.prompt == "Describe la posición de la taza."
+    assert (choose.scene_object_id, choose.reference_object_id) == (cup, table)
     assert ask.reference_object_id is None
     assert (ask.prompt, ask.prompt_translation) == (
         "Pregunta por la ubicación de la taza.", "Ask where the cup is.",
     )
+    assert answer.reference_object_id == table
     key = _answer_key(engine, lesson.id)
-    assert key["correctOptionIds"]["describe-location"] == "La taza está sobre la mesa."
+    assert find.marker_object_ids[key["correctOptionIds"]["find-object"]] == cup
+    assert key["correctOptionIds"]["answer-where"] == "La taza está sobre la mesa."
     assert key["correctOptionIds"]["ask-where"] == "¿Dónde está la taza?"
     assert [item["targetIds"] for item in key["questionEvaluations"]] == [
-        ["recognise-position"], ["describe-location", "name-object"],
-        ["build-question", "name-object"],
+        ["understand-location"], ["recognise-position"], ["build-question", "name-object"],
+        ["describe-location", "name-object"],
     ]
     public = json.dumps(client.get(f"/api/v1/sessions/{sid}").json())
     assert "questionEvaluations" not in public and "correctOptionIds" not in public
     draft = _scalar(engine, select(sessions.c.analysis_draft).where(sessions.c.id == sid))
     assert draft["missionPlan"] == [
-        {"missionId": "M02", "practiceLevel": "A1", "contentVersion": 1}
+        {"missionId": "M02", "practiceLevel": "A1", "contentVersion": 2}
     ]
     resumed = repository.get(sid, profile.id)
     assert [t.public_content for t in _parts(resumed)] == [content]
@@ -153,14 +166,15 @@ def test_m02_is_graded_once_across_its_questions(curated, scenario):
     assert saved["answers"] == answers
     assert saved["reviewDetails"]["questionResults"] == details["questionResults"]
     outcomes = {item["questionId"]: item for item in details["questionOutcomes"]}
-    assert len(outcomes) == len(answers) == 3
+    assert len(outcomes) == len(answers) == 4
     for question in task.public_content.questions:
         outcome = outcomes[question.question_id]
         if question.interaction_type == "sentenceBuilding":
             assert outcome["evidenceType"] == "construction"
             assert outcome["assistance"] == ["wordBank"]
     if scenario == "incorrect":
-        assert outcomes["choose-position"]["mistakes"][0]["mistake"] == "wrongPosition"
+        assert outcomes["find-object"]["mistakes"][0]["mistake"] == "wrongObject"
+        assert outcomes["choose-location"]["mistakes"][0]["mistake"] == "wrongPosition"
 
 
 def test_a_photo_fitting_both_plans_both_and_the_lesson_finishes_after_both(curated):
@@ -214,3 +228,61 @@ def test_sessions_saved_before_mission_plans_keep_the_regular_lesson(curated):
     assert planned({"missionPlan": [
         {"missionId": "M02", "practiceLevel": "A1", "contentVersion": 1}
     ]}) == ["M02"]
+
+
+def _legacy_lesson(engine, task):
+    """Rewrite ``task`` as a lesson saved with M02 content version 1 (three questions)."""
+    key = _answer_key(engine, task.id)
+    content = task.public_content.model_dump(by_alias=True, mode="json")
+    find, choose, ask, answer = content["questions"]
+    for question in (choose, ask, answer):
+        question.pop("section", None)
+        question.pop("keepOptionOrder", None)
+    choose = {**choose, "questionId": "choose-position",
+              "prompt": "Elige la posición: la taza ___ la mesa."}
+    answer = {**answer, "questionId": "describe-location",
+              "prompt": "Describe la posición de la taza."}
+    correct = key["correctOptionIds"]
+    evaluations = {item["questionId"]: item for item in key["questionEvaluations"]}
+    legacy_key = {
+        "correctOptionIds": {
+            "choose-position": correct["choose-location"],
+            "describe-location": correct["answer-where"],
+            "ask-where": correct["ask-where"],
+        },
+        "questionEvaluations": [
+            {**evaluations["choose-location"], "questionId": "choose-position"},
+            {**evaluations["answer-where"], "questionId": "describe-location"},
+            evaluations["ask-where"],
+        ],
+    }
+    content = {**content, "questions": [choose, answer, ask], "contentVersion": 1}
+    with engine.begin() as connection:
+        connection.execute(update(session_tasks).where(session_tasks.c.id == task.id).values(
+            public_content=content, answer_key=legacy_key,
+        ))
+    return legacy_key["correctOptionIds"]
+
+
+def test_lessons_saved_with_three_questions_still_load_grade_and_restore(curated):
+    engine, _owner, profile, client, *_ = curated
+    repository, sid, detail = _lesson(curated, _relations_only)
+    (task,) = _parts(detail)
+    correct = _legacy_lesson(engine, task)
+    (loaded,) = _parts(repository.get(sid, profile.id))
+    assert loaded.public_content.mission_key == ("M02", "A1", 1)
+    assert [q.question_id for q in loaded.public_content.questions] == [
+        "choose-position", "describe-location", "ask-where",
+    ]
+    answers = {**correct, "ask-where": "taza la está Dónde ¿ ?"}
+    first = _attempt(client, loaded, answers, key=f"m02-legacy-{task.id}")
+    assert first.status_code == 200, first.text
+    details = first.json()["attempt"]["evaluationDetails"]
+    assert details["questionResults"] == {
+        "choose-position": True, "describe-location": True, "ask-where": False,
+    }
+    repeat = _attempt(client, loaded, answers, key=f"m02-legacy-{task.id}")
+    assert repeat.json()["attempt"]["id"] == first.json()["attempt"]["id"]
+    saved = client.get(f"/api/v1/tasks/{task.id}/latest-attempt").json()["attempt"]
+    assert saved["answers"] == answers
+    assert saved["reviewDetails"]["questionResults"] == details["questionResults"]

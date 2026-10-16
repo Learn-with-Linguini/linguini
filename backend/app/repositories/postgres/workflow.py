@@ -102,7 +102,7 @@ from app.services.mission_eligibility import (
     snapshot_missions,
 )
 from app.services.mission_lessons import mission_version
-from app.services.mission_registry import MISSION_LESSONS
+from app.services.mission_registry import MISSION_LESSONS, lesson_mission
 from app.services.quantities import suggested_quantity
 from app.services.question_outcomes import (
     normalize_answer,
@@ -1667,7 +1667,8 @@ class PostgresWorkflowRepository:
         language = claim.profile["target_language_code"]
         vocabulary_ids = {str(obj.id): word.id for obj, word in zip(objects, words, strict=True)}
         lessons = []
-        for mission in claim.missions:
+        for planned in claim.missions:
+            mission = lesson_mission(planned)
             spec = MISSION_LESSONS[mission.mission_id]
             payload = spec.payload(
                 mission, language, objects, relations, words, translated_scene,

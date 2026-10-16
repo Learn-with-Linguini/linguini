@@ -495,6 +495,10 @@ export interface GrammarLessonQuestion {
   boardCounts?: Record<string, number>;
   boardObjectId?: string | null;
   quantityWord?: string | null;
+  /** Mission options already shuffled and saved by the backend; show them as stored. */
+  keepOptionOrder?: boolean | null;
+  /** Marker questions: each option's scene object, numbered as on the reviewed photo. */
+  markerObjectIds?: Record<string, string> | null;
 }
 export type TaskAnswer = { inputMode: "text"; text: string; assistance?: ClueAssistance } | { inputMode: "multipleChoice"; optionId: string } | { inputMode: "objectSelection"; sceneObjectId: string } | { inputMode: "vocabularyReview"; answers: Record<string, string>; typedAnswers: Record<string, string>; questionAssistance?: QuestionAssistance[] };
 export type ConfirmGuessBody = { attemptId: string };
