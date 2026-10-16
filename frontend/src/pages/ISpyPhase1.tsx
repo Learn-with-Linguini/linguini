@@ -9,7 +9,7 @@ import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { choiceOrder, practiceStages, taskDone } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
-import { getLatestAttempt } from "../lib/api";
+import { getLatestAttempt, roundCorrectOption } from "../lib/api";
 import type { SessionTask, TaskActionResult } from "../lib/api";
 import { queryKeys } from "../lib/queryKeys";
 import { ReportIssueLink } from "../components/ReportIssueLink";
@@ -46,20 +46,23 @@ export function ISpyPhase1() {
 function ClueRound({ task, index, total, describePath, onNext }: { task: SessionTask; index: number; total: number; describePath: string; onNext: () => void }) {
   const navigate = useNavigate();
   const scene = useScene();
-  const { actOnTask, practiceSaving, practiceError } = useAppState();
+  const { actOnTask, practiceSaving, practiceError, activeProfile } = useAppState();
   const [picked, setPicked] = useState<string | null>(null);
   const [result, setResult] = useState<TaskActionResult | null>(null);
   const [showTranslation, setShowTranslation] = useState(false);
   const [checking, setChecking] = useState(false);
   const request = useRef<{ answer: string; key: string } | null>(null);
   const submitting = useRef(false);
-  const restored = useQuery({
+  const latest = useQuery({
     queryKey: queryKeys.latestAttempt(task.id),
     queryFn: ({ signal }) => getLatestAttempt(task.id, signal),
-    enabled: task.status === "completed" && !result?.attempt,
-  }).data?.attempt;
+    enabled: task.status !== "pending" && !result?.attempt,
+  });
+  const restored = latest.data?.attempt;
+  const restoring = task.status !== "pending" && !result?.attempt && latest.isFetching;
   const content = task.publicContent;
   if (content.kind !== "ispyRound") return null;
+  const beginner = activeProfile?.proficiencyLevel === "A0";
   const opening = scene.languageCode === "es"
     ? "Veo, veo, algo que"
     : scene.languageCode === "fr"
@@ -84,31 +87,58 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
   };
   const isCorrect = result?.attempt?.isCorrect ?? restored?.isCorrect ?? null;
   const acceptedOption = result?.attempt?.responsePayload?.optionId;
-  const acceptedPick = typeof acceptedOption === "string" ? acceptedOption : result?.attempt ? picked : null;
+  const acceptedOptionId = typeof acceptedOption === "string"
+    ? acceptedOption
+    : result?.attempt?.responsePayload?.option_id;
+  const acceptedPick = typeof acceptedOptionId === "string" ? acceptedOptionId : result?.attempt ? picked : null;
   // A later tap may have been rejected after an earlier response was lost.
   // Only the accepted answer can be paired with a stored grade.
   const shownPick = acceptedPick ?? restored?.optionId ?? (answered ? null : picked);
   const feedback = result?.attempt?.feedback?.message ?? restored?.feedback;
   const selected = content.options.find(option => option.optionId === shownPick);
+  const correctOptionId = roundCorrectOption(result?.attempt ?? restored);
+  const correctOption = content.options.find(option => option.optionId === correctOptionId);
+  const firstWrong = !answered && isCorrect === false;
+  const finalWrong = answered && isCorrect === false;
+  const revealTranslation = correctOption?.sceneObjectId
+    ? scene.items.find(item => item.id === correctOption.sceneObjectId)?.translation
+    : undefined;
+  const displayedFeedback = firstWrong
+    ? "Not quite — that's not it. Try once more."
+    : feedback;
   return <div className="stack">
     <h2 className="text-center">I-Spy · Linguini's clues</h2>
     <p>Use the clues to find the word</p>
     <ProgressTrail value={index + (answered ? 1 : 0)} total={total} label={`${index + 1} / ${total}`} />
-    <ScenePhoto scene={scene} activeItemId={isCorrect ? selected?.sceneObjectId : null} />
+    <ScenePhoto scene={scene} activeItemId={
+      finalWrong ? correctOption?.sceneObjectId : isCorrect ? selected?.sceneObjectId : null
+    } />
     <div className="card card--lifted stack-2">
       <div className="spread"><span className="label muted">Linguini says</span><IconButton label="Hear the clue" onClick={() => speak(`${opening} ${content.clue}`, scene.languageCode)}><SpeakerIcon /></IconButton></div>
       <h3>{opening} {content.clue}</h3>
-      {content.clueTranslation ? showTranslation ? <p className="small muted">{content.clueTranslation}</p> : <button type="button" className="text-link text-link--muted" onClick={() => setShowTranslation(true)}>See translation</button> : null}
+      {content.clueTranslation ? showTranslation || beginner || firstWrong
+        ? <p className="small muted">{content.clueTranslation}</p>
+        : <button type="button" className="text-link text-link--muted" onClick={() => setShowTranslation(true)}>See translation</button> : null}
     </div>
     <div className="choice-grid">{choiceOrder(content.options, task.id, option => option.optionId).map(option => {
-      const state = shownPick !== option.optionId ? "" : isCorrect != null ? (isCorrect ? " choice--correct" : " choice--incorrect") : " choice--selected";
-      return <button key={option.optionId} type="button" className={`choice${state}`} aria-pressed={shownPick === option.optionId} disabled={answered || practiceSaving || checking} onClick={() => void choose(option.optionId)}>
-        {isCorrect && shownPick === option.optionId ? <CheckIcon size={16} /> : null}{option.label}
+      const isReveal = finalWrong && option.optionId === correctOptionId;
+      const isWrongPick = shownPick === option.optionId && isCorrect === false;
+      const isSelectedCorrect = shownPick === option.optionId && isCorrect === true;
+      const state = isReveal || isSelectedCorrect ? " choice--correct"
+        : isWrongPick ? " choice--incorrect"
+          : shownPick === option.optionId ? " choice--selected" : "";
+      const disabledWrongPick = firstWrong && shownPick === option.optionId;
+      return <button key={option.optionId} type="button" className={`choice${state}`} aria-pressed={shownPick === option.optionId} disabled={answered || practiceSaving || checking || restoring || disabledWrongPick} onClick={() => void choose(option.optionId)}>
+        {isReveal || isSelectedCorrect ? <CheckIcon size={16} /> : null}{option.label}
       </button>;
     })}</div>
     {checking ? <p className="choice-checking" role="status">Checking your answer…</p> : null}
-    {answered || result ? <>
-      <Feedback tone={isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status"><strong>{task.status === "skipped" ? "Skipped — no XP earned." : feedback ?? "Answer saved."}</strong>{content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}</div></Feedback>
+    {answered || result || restored ? <>
+      <Feedback tone={isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status"><strong>{task.status === "skipped" ? "Skipped — no XP earned." : displayedFeedback ?? "Answer saved."}</strong>{content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}</div></Feedback>
+      {finalWrong && correctOption ? <div className="card stack-2" data-testid="ispy-reveal">
+        <p>The answer was <strong>{correctOption.label}</strong>{revealTranslation ? <> — {revealTranslation}</> : null}.</p>
+        {content.clueTranslation ? <p>Linguini&apos;s clue meant: “{content.clueTranslation}”</p> : null}
+      </div> : null}
       {task.status !== "skipped" ? <ReportIssueLink reportType="I-Spy answer" fields={[
         ["Task ID", task.id],
         ["Clue", `${opening} ${content.clue}`],

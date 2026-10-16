@@ -30,6 +30,7 @@ export function friendlyError(error: unknown): string {
       insufficient_basil: "Collect 20 Basil leaves to unlock this accent.",
       practice_conflict: "This practice has changed. Refresh the page and try again.",
       clue_names_target: "Your clue uses the word for this object. Describe it without naming it.",
+      clue_not_target_language: "Write your clue in your learning language, not English.",
       task_conflict: "That activity has already been updated. Refresh to see where you are now.",
       journal_conflict: "This journal entry changed while you were editing. Refresh and try again.",
       practice_not_found: "We couldn't find that practice. Choose another photo to continue.",

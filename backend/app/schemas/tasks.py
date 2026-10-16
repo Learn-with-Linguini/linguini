@@ -595,6 +595,7 @@ class LatestClueAttempt(ApiModel):
     attempt_number: Annotated[int, Field(ge=1)]
     text: str
     option_id: str | None = None
+    correct_option_id: str | None = Field(default=None, exclude_if=_is_none)
     is_correct: bool | None = None
     feedback: str | None = None
     evaluation_details: ISpyDescriptionEvaluation | None = None
@@ -607,13 +608,25 @@ class LatestClueAttempt(ApiModel):
     def from_attempt(cls, attempt: TaskAttempt, grouped: bool = False) -> LatestClueAttempt:
         payload = attempt.response_payload
         text = payload.get("text")
-        option_id = payload.get("optionId")
+        option_id = payload.get(
+            "option_id",
+            payload.get(
+                "optionId",
+                payload.get("scene_object_id", payload.get("sceneObjectId")),
+            ),
+        )
         message = (attempt.feedback or {}).get("message")
         return cls(
             id=attempt.id,
             attempt_number=attempt.attempt_number,
             text=text if isinstance(text, str) else "",
             option_id=option_id if isinstance(option_id, str) else None,
+            correct_option_id=(
+                attempt.evaluation_details.get("correctOptionId")
+                if isinstance(attempt.evaluation_details, dict)
+                and isinstance(attempt.evaluation_details.get("correctOptionId"), str)
+                else None
+            ),
             is_correct=attempt.is_correct,
             feedback=message if isinstance(message, str) else None,
             evaluation_details=_optional(ISpyDescriptionEvaluation, attempt.evaluation_details),

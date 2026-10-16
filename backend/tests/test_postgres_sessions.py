@@ -518,6 +518,113 @@ def test_all_task_kinds_complete_with_server_evaluation(database):
     assert client.get("/api/v1/me/progress").json()["xp"] == 115
 
 
+@pytest.mark.parametrize("input_mode", ["multipleChoice", "objectSelection"])
+@pytest.mark.parametrize("second_answer_correct", [False, True])
+def test_ispy_round_allows_one_retry_and_reveals_the_answer_at_the_end(
+    database, second_answer_correct, input_mode
+):
+    engine, _owner, _profile, client = database
+    sid = create_run(client, _profile, f"ispy-retry-{second_answer_correct}")["session"]["id"]
+    task = next(task for task in analyze(client, sid)["tasks"] if task["kind"] == "ispyRound")
+    options = task["publicContent"]["options"]
+    with engine.connect() as connection:
+        key = connection.execute(
+            select(session_tasks.c.answer_key).where(
+                session_tasks.c.id == UUID(task["id"])
+            )
+        ).scalar_one()
+        stored_content = connection.execute(
+            select(session_tasks.c.public_content).where(
+                session_tasks.c.id == UUID(task["id"])
+            )
+        ).scalar_one()
+    correct_option_id = key["correctOptionId"]
+    correct_label = next(
+        option["label"] for option in options if option["optionId"] == correct_option_id
+    )
+    correct_option = next(
+        option for option in options if option["optionId"] == correct_option_id
+    )
+    wrong_options = [
+        {
+            "optionId": str(UUID(int=index)),
+            "label": label,
+            "sceneObjectId": str(UUID(int=index)),
+        }
+        for index, label in ((101, "libro"), (102, "silla"))
+    ]
+    stored_options = stored_content["options"]
+    option_id_key = "optionId" if "optionId" in stored_options[0] else "option_id"
+    scene_id_key = "sceneObjectId" if "sceneObjectId" in stored_options[0] else "scene_object_id"
+    stored_content["options"] = [
+        stored_options[0],
+        *[
+            {
+                option_id_key: option["optionId"],
+                "label": option["label"],
+                scene_id_key: option["sceneObjectId"],
+            }
+            for option in wrong_options
+        ],
+    ]
+    with engine.begin() as connection:
+        connection.execute(
+            update(session_tasks)
+            .where(session_tasks.c.id == UUID(task["id"]))
+            .values(public_content=stored_content)
+        )
+    options = [correct_option, *wrong_options]
+
+    endpoint = f"/api/v1/tasks/{task['id']}/attempts"
+    def submit(option, key):
+        answer = (
+            {"inputMode": "multipleChoice", "optionId": option["optionId"]}
+            if input_mode == "multipleChoice"
+            else {"inputMode": "objectSelection", "sceneObjectId": option["sceneObjectId"]}
+        )
+        return client.post(endpoint, json=answer | {"idempotencyKey": key})
+
+    first = submit(wrong_options[0], "ispy-round-first-attempt")
+    assert first.status_code == 200, first.text
+    assert first.json()["task"]["status"] == "inProgress"
+    assert first.json()["attempt"]["isCorrect"] is False
+    assert first.json()["attempt"]["feedback"]["message"] == (
+        "Not quite. Have another look and try once more."
+    )
+    assert first.json()["attempt"]["evaluationDetails"] == {"retriesLeft": 1}
+    restored_first = client.get(f"/api/v1/tasks/{task['id']}/latest-attempt").json()["attempt"]
+    assert "correctOptionId" not in restored_first
+
+    duplicate = submit(wrong_options[0], "ispy-round-repeat-answer")
+    assert duplicate.status_code == 409
+    assert duplicate.json()["detail"]["message"] == (
+        "You already tried that answer. Pick another one."
+    )
+
+    second_option = (
+        wrong_options[1]
+        if not second_answer_correct
+        else next(option for option in options if option["optionId"] == correct_option_id)
+    )
+    second = submit(second_option, "ispy-round-second-attempt")
+    assert second.status_code == 200, second.text
+    assert second.json()["task"]["status"] == "completed"
+    assert second.json()["attempt"]["isCorrect"] is second_answer_correct
+    assert second.json()["attempt"]["evaluationDetails"] == {
+        "correctOptionId": correct_option_id
+    }
+    assert second.json()["attempt"]["feedback"]["message"] == (
+        "Correct." if second_answer_correct else f"Not quite. The answer was {correct_label}."
+    )
+    restored_second = client.get(f"/api/v1/tasks/{task['id']}/latest-attempt").json()["attempt"]
+    assert restored_second["correctOptionId"] == correct_option_id
+    repository = PostgresWorkflowRepository(engine, _profile.user_id)
+    with engine.connect() as connection:
+        summary = repository._ispy_summary(connection, UUID(sid))
+    assert summary["ispy_attempt_count"] == 1
+    assert summary["ispy_correct_count"] == int(second_answer_correct)
+
+
 def test_other_user_cannot_access_sessions_or_tasks(database, monkeypatch):
     engine, owner, profile, client = database
     sid = create_run(client, profile)["session"]["id"]

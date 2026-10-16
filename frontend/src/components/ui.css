@@ -302,6 +302,19 @@
   border-color: var(--tomato);
 }
 
+.chip--meaning {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 0;
+}
+
+.chip__meaning {
+  display: block;
+  color: var(--ink-muted);
+  font-size: var(--text-small);
+  font-weight: 600;
+}
+
 .chip__marker {
   display: inline-flex;
   align-items: center;

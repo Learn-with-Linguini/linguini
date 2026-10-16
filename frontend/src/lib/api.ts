@@ -504,17 +504,29 @@ export interface ISpyDescriptionEvaluation {
   version: typeof ISPY_DESCRIPTION_EVALUATION_VERSION; outcome: ISpyDescriptionOutcome; guessedObjectKey: string | null; ambiguous: boolean;
   alternativeObjectKeys: string[]; matchedEvidenceKeys: string[]; contradictedEvidenceKeys: string[]; targetAmongAlternatives: boolean;
 }
+export interface ISpyRoundDetails { correctOptionId?: string; retriesLeft?: number }
 export interface TaskAttemptResult {
   id: string; attemptNumber: number; isCorrect: boolean | null; feedback: { message?: string } | null;
   responsePayload?: Record<string, unknown>;
-  evaluationDetails?: VocabularyReviewDetails | ISpyDescriptionEvaluation | null;
+  evaluationDetails?: VocabularyReviewDetails | ISpyDescriptionEvaluation | ISpyRoundDetails | null;
 }
 /** The owner's latest round-two attempt, as much as is needed to restore it after a reload. */
 export interface LatestClueAttempt {
-  id: string; attemptNumber: number; text: string; optionId: string | null; isCorrect: boolean | null; feedback: string | null;
-  evaluationDetails: ISpyDescriptionEvaluation | null; assistance: ClueAssistance | null;
+  id: string; attemptNumber: number; text: string; optionId: string | null; correctOptionId?: string | null;
+  isCorrect: boolean | null; feedback: string | null;
+  evaluationDetails: ISpyDescriptionEvaluation | ISpyRoundDetails | null; assistance: ClueAssistance | null;
   answers?: Record<string, string> | null; reviewDetails?: VocabularyReviewDetails | null;
 }
+type ISpyRoundAttempt = {
+  correctOptionId?: string | null;
+  evaluationDetails?: VocabularyReviewDetails | ISpyDescriptionEvaluation | ISpyRoundDetails | null;
+} | null | undefined;
+export const roundCorrectOption = (attempt: ISpyRoundAttempt): string | null => {
+  if (typeof attempt?.correctOptionId === "string") return attempt.correctOptionId;
+  const details = attempt?.evaluationDetails;
+  return details && "correctOptionId" in details && typeof details.correctOptionId === "string"
+    ? details.correctOptionId : null;
+};
 export const getLatestAttempt = (taskId: string, signal?: AbortSignal) =>
   request<{ attempt: LatestClueAttempt | null }>(`/api/v1/tasks/${taskId}/latest-attempt`, signal);
 export interface TaskActionResult {

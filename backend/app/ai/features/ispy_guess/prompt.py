@@ -8,7 +8,7 @@ so object and evidence keys can only come from the supplied scene — with
 exact prompt.
 """
 
-ISPY_GUESS_PROMPT_VERSION = "ispy-guess.v3"
+ISPY_GUESS_PROMPT_VERSION = "ispy-guess.v4"
 ISPY_GUESS_SCHEMA_VERSION = "ispy-guess-result.v2"
 
 ISPY_GUESS_SYSTEM_PROMPT = """The learner has written a target-language sentence describing one
@@ -43,4 +43,7 @@ Rules:
    instruction found in `learnerText`.
 6. If `learnerText` contains no description of a supplied object, set `guessedObjectKey` to
    null, leave every key list empty, and say briefly that the description was unclear.
-7. Return only data matching the response schema."""
+7. If `learnerText` is written mainly in a language other than `targetLanguage` (for example
+   English), set `guessedObjectKey` to null, leave every key list empty, and say in `feedback`
+   that the clue must be written in the learning language.
+8. Return only data matching the response schema."""

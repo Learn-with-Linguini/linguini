@@ -463,3 +463,20 @@ def test_latest_attempt_restores_a_graded_clue_choice():
     assert (restored.option_id, restored.is_correct, restored.feedback) == (
         "taxi", False, "Not quite."
     )
+
+
+def test_latest_attempt_exposes_the_correct_clue_option_only_when_present():
+    attempt = TaskAttempt(
+        id=uuid4(), session_task_id=uuid4(), attempt_number=2, input_mode="multipleChoice",
+        response_payload={"optionId": "wrong"}, is_correct=False,
+        feedback={"message": "Not quite. The answer was mesa."},
+        evaluation_details={"correctOptionId": "mesa"},
+    )
+    restored = LatestClueAttempt.from_attempt(attempt)
+    assert restored.correct_option_id == "mesa"
+    assert restored.model_dump(by_alias=True)["correctOptionId"] == "mesa"
+
+    attempt.evaluation_details = {"retriesLeft": 1}
+    restored = LatestClueAttempt.from_attempt(attempt)
+    assert restored.correct_option_id is None
+    assert "correctOptionId" not in restored.model_dump(by_alias=True)

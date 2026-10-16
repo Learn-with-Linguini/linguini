@@ -21,6 +21,7 @@ from app.repositories.practice import (
     ActiveSessionExistsError,
     ActiveSessionLimitReachedError,
     ClueNamesTargetError,
+    ClueNotTargetLanguageError,
     PracticeConflictError,
     PracticeNotFoundError,
     PracticeStorageError,
@@ -121,6 +122,11 @@ def register_learning_errors(app: FastAPI) -> None:
             422,
             "clue_names_target",
             "Your clue uses the word for this object. Describe it without naming it.",
+        ),
+        ClueNotTargetLanguageError: (
+            422,
+            "clue_not_target_language",
+            "Write your clue in your learning language, not English.",
         ),
         PracticeConflictError: (
             409,
