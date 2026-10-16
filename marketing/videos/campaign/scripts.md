@@ -1,6 +1,6 @@
 # Linguini human-voice campaign scripts
 
-Three original, shootable concepts for the **curated photo mini session** at https://linguini-landing.vercel.app/ . Record a real narrator. The copy is meant to sound like a person noticing and deciding, with a warm first half and a firm invitation at the end. Each table gives the exact spoken line, its delivery window, and the image that earns it. Hold the final word inside its window; leave the remaining fraction of a second to music and the cut.
+Three original, shootable concepts for the **curated photo mini session** at https://www.learnwithlinguini.com/ . Record a real narrator. The copy is meant to sound like a person noticing and deciding, with a warm first half and a firm invitation at the end. Each table gives the exact spoken line, its delivery window, and the image that earns it. Hold the final word inside its window; leave the remaining fraction of a second to music and the cut.
 
 The 30-second film is the hero option for Product Hunt and the landing page. The 20-second cut is a stronger social argument; the 15-second cut is a product-first opener. The six-second hooks are separate paid/organic openers, not cropped endings of the longer scripts. All have a visible **Try the mini session** CTA and landing URL at the end.
 
@@ -74,5 +74,5 @@ Each hook is a complete micro ad with the CTA visible for at least the final two
 
 ## Product and reference notes for the editor
 
-- The landing mini session uses **curated, ready-made scenes**. The red car, `el coche` / `la voiture`, I-Spy clue, sentence and journal draft all come from `landing/data/scenes.ts` and `landing/components/try/Session.tsx`. Present the journal as a sample demo page. Show the demo’s real controls or clearly stylised recreations of its *curated* content. These scripts make no claim of live analysis of a new photo or speech grading.
+- The landing mini session uses **curated, ready-made scenes**. The red car, `el coche` / `la voiture`, I-Spy clue, sentence and journal draft all come from `frontend/src/marketing/data/scenes.ts` and `frontend/src/marketing/components/try/Session.tsx`. Present the journal as a sample demo page. Show the demo’s real controls or clearly stylised recreations of its *curated* content. These scripts make no claim of live analysis of a new photo or speech grading.
 - The reference supplied by the team is [Zoom’s “I Use Zoom!” video](https://www.youtube.com/watch?v=WNIDnCv9t7I). The video was not accessible for direct inspection here. [Zoom’s own campaign note](https://news.zoom.com/zoom-ahead-brand-campaign/) describes a dramatic, human-led spot built around an everyday frustration; that is the level of inspiration used here. The Linguini premises, words, scenes and lines are original. Use no Zoom footage, music, dialogue, costumes or actor imitation.

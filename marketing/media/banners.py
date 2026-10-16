@@ -2,7 +2,7 @@
 
 Run from any directory with: python3 marketing/media/banners.py
 Requires Pillow. Writes PNGs to marketing/media/export/banners/ and web JPEGs to
-landing/public/blog/launch/ for the launch campaign post.
+frontend/public/blog/launch/ for the launch campaign post.
 """
 
 from __future__ import annotations
@@ -17,13 +17,13 @@ from render import (
 )
 
 OUT = Path(__file__).resolve().parent / "export" / "banners"
-WEB = ROOT / "landing/public/blog/launch"
+WEB = ROOT / "frontend/public/blog/launch"
 OUT.mkdir(parents=True, exist_ok=True)
 WEB.mkdir(parents=True, exist_ok=True)
 
 LAUNCH = "Sat 17 Oct · 3:01pm SGT"
 
-# Word positions are percentages of the source photo, copied from landing/data/scenes.ts.
+# Word positions are percentages of the source photo, copied from frontend/src/marketing/data/scenes.ts.
 SCENES = {
     "hillside-street": [(47, 62, "el coche"), (58, 33, "la casa"), (18, 66, "la flor"), (50, 86, "la calle")],
     "golden-gate-bridge": [(60, 61, "el puente"), (65, 84, "el mar"), (45, 22, "la colina")],

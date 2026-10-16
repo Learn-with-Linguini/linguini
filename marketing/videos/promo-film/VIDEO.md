@@ -52,8 +52,8 @@ To change a word or swap a shot, edit `SHOTS` in `edit.py` and run `./render.sh`
 ```
 Everything in your day has a word. Photograph a moment and Linguini finds the words inside it, then turns them into a five-minute Spanish or French session and keeps the day in your journal.
 
-Try it on a real photo, no sign-up: https://linguini-landing.vercel.app
-Open the app: https://linguini-navy.vercel.app
+Try it on a real photo, no sign-up: https://www.learnwithlinguini.com
+Open the app: https://www.learnwithlinguini.com
 
 Footage: Mixkit (mixkit.co). Piano: University of Iowa Musical Instrument Samples.
 ```
