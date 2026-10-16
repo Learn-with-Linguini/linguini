@@ -2,7 +2,7 @@ import { GENDER_ARTICLES } from "../data/types.ts";
 import type { Gender, LeaderboardRow, ScenarioProgress, Streak, VocabRecord, VocabularyScene, VocabStatus, WordClass } from "../data/types";
 import type { Scene, SceneSummary } from "../data/types";
 import type { JournalEntry } from "../data/types";
-import { getAccessToken } from "./supabase.ts";
+import { getAccessToken, waitForAccessToken } from "./supabase.ts";
 
 // The Node test runner has no import.meta.env; read process.env there.
 const envBaseUrl = import.meta.env?.VITE_API_BASE_URL
@@ -19,6 +19,11 @@ export interface UploadedImage {
 
 export function mediaImageUrl(assetId: string, width: 320 | 640 | 1280): string {
   return `${apiBaseUrl ?? ""}/api/v1/media/${encodeURIComponent(assetId)}/image?width=${width}`;
+}
+
+export function protectedMediaPath(url: string | null | undefined): string | null {
+  const prefix = `${apiBaseUrl ?? ""}/api/v1/media/`;
+  return apiBaseUrl && url?.startsWith(prefix) ? url.slice(apiBaseUrl.length) : null;
 }
 
 const MAX_UPLOAD_EDGE = 1600;
@@ -114,7 +119,14 @@ export class ApiError extends Error {
   }
 }
 
-async function requestResponse(path: string, signal?: AbortSignal, options?: RequestInit): Promise<Response> {
+type TokenProvider = (signal?: AbortSignal) => Promise<string | null>;
+
+async function requestResponse(
+  path: string,
+  signal?: AbortSignal,
+  options?: RequestInit,
+  tokenProvider: TokenProvider = () => getAccessToken(),
+): Promise<Response> {
   if (!apiBaseUrl) {
     throw new Error("The app is still being set up. Please try again in a moment.");
   }
@@ -122,7 +134,7 @@ async function requestResponse(path: string, signal?: AbortSignal, options?: Req
   let response: Response;
   try {
     const headers = new Headers(options?.headers);
-    const token = await getAccessToken();
+    const token = await tokenProvider(signal);
     if (token) headers.set("Authorization", `Bearer ${token}`);
     response = await fetch(`${apiBaseUrl}${path}`, { ...options, headers, signal });
   } catch (error) {
@@ -146,7 +158,7 @@ export async function request<T>(path: string, signal?: AbortSignal, options?: R
 }
 
 export async function requestBlob(path: string, signal?: AbortSignal): Promise<Blob> {
-  return (await requestResponse(path, signal, { cache: "no-store" })).blob();
+  return (await requestResponse(path, signal, { cache: "no-store" }, waitForAccessToken)).blob();
 }
 
 export function getCurrentUser(signal?: AbortSignal): Promise<User> {

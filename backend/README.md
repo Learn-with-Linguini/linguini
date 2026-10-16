@@ -716,6 +716,15 @@ Validation runs at startup and makes no network calls. It checks:
 With `AI_MODE=real`, every enabled route must also resolve a secret; with
 `demo`, a route without one falls back to deterministic behaviour.
 
+Uploaded-image analysis runs on the `sceneAnalysis` route, which in the default
+`ai.toml` uses OpenRouter, so `AI_OPENROUTER_API_KEY` is required for real
+analysis of uploaded photos. In `demo` mode a missing key does not fail startup:
+the analyzer is not built and uploaded photos silently get deterministic
+placeholder objects. The backend logs a warning naming the missing variable(s)
+when the analyzer is built, and "Scene analysis failed" log lines carry the
+failure `code` (e.g. `imageUnavailable`, `providerAuth`,
+`imageModerationFailed`).
+
 Error messages name keys and variables but never echo values, and secrets
 are excluded from `AiSettings` repr.
 
@@ -893,9 +902,9 @@ dimensions and caller-supplied metadata.
 
 ## Remaining integration work
 
-Real image analysis, AI generation and speech evaluation
-are not implemented. Uploaded images use validated storage uploads and deterministic
-placeholder objects. Vocabulary "Move" is still local frontend state. Session learning credit comes from persisted
+Speech evaluation is not implemented. Uploaded images use deterministic
+placeholder objects only when the `sceneAnalysis` route has no secret (see
+[AI configuration](#ai-configuration)). Vocabulary "Move" is still local frontend state. Session learning credit comes from persisted
 vocabulary encounters; analysis and skipped tasks award none. Daily vocabulary, home aggregation, and other unfinished
 routes return an explicit 501. Journal eligible-photo/learned-word recommendations
 and automatic annotations remain unpopulated. Creating tables does not implement
