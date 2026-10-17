@@ -28,8 +28,22 @@ export function Login() {
   const requestedPath = (location.state as { from?: string } | null)?.from;
 
   useEffect(() => {
+    const requested = searchParams.get("mode");
+    if (requested === "signup") setMode("signup");
+    else if (requested === "forgot") setMode("forgot");
+    else setMode("signin");
+  }, [searchParams]);
+
+  useEffect(() => {
     if (session && !loading) navigate("/onboarding", { replace: true, state: { from: requestedPath } });
   }, [loading, navigate, requestedPath, session]);
+
+  const switchMode = (newMode: "signin" | "signup" | "forgot") => {
+    setMode(newMode);
+    setError(null);
+    setMessage(null);
+    navigate(`/login?mode=${newMode}`);
+  };
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -103,7 +117,7 @@ export function Login() {
                 type="button"
                 className="btn btn--quiet"
                 style={{ fontSize: "0.85rem", padding: 0, height: "auto", minHeight: "unset" }}
-                onClick={() => { setMode("forgot"); setError(null); setMessage(null); }}
+                onClick={() => switchMode("forgot")}
               >
                 Forgot password?
               </button>
@@ -122,21 +136,21 @@ export function Login() {
       {mode === "forgot" ? (
         <>
           Remember your password?{" "}
-          <button type="button" className="btn btn--quiet" onClick={() => { setMode("signin"); setError(null); setMessage(null); }}>
+          <button type="button" className="btn btn--quiet" onClick={() => switchMode("signin")}>
             Sign in
           </button>
         </>
       ) : mode === "signin" ? (
         <>
           New to Linguini?{" "}
-          <button type="button" className="btn btn--quiet" onClick={() => { setMode("signup"); setError(null); setMessage(null); }}>
+          <button type="button" className="btn btn--quiet" onClick={() => switchMode("signup")}>
             Create an account
           </button>
         </>
       ) : (
         <>
           Already have an account?{" "}
-          <button type="button" className="btn btn--quiet" onClick={() => { setMode("signin"); setError(null); setMessage(null); }}>
+          <button type="button" className="btn btn--quiet" onClick={() => switchMode("signin")}>
             Sign in
           </button>
         </>

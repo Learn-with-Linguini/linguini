@@ -135,10 +135,25 @@ export function Wordmark({ size = 26 }: { size?: number }) {
 /** Centered Linguini wordmark in the shared brand strip at the top of every screen. */
 export function BrandBar({ back = false, onBack, backLabel, homeTo = "/" }: { back?: boolean; onBack?: () => void; backLabel?: string; homeTo?: string }) {
   const navigate = useNavigate();
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+    const historyIdx = (window.history.state as { idx?: number } | null)?.idx;
+    const canGoBack = typeof historyIdx === "number" ? historyIdx > 0 : window.history.length > 1;
+    if (canGoBack) {
+      navigate(-1);
+    } else {
+      navigate(homeTo);
+    }
+  };
+
   return (
     <header className="brandbar" aria-label="Linguini">
       {back ? (
-        <IconButton className="brandbar__back" label={backLabel ?? "Go back"} onClick={onBack ?? (() => navigate(-1))}>
+        <IconButton className="brandbar__back" label={backLabel ?? "Go back"} onClick={handleBack}>
           <ChevronLeftIcon />
         </IconButton>
       ) : null}
