@@ -1,5 +1,6 @@
 """Build the M03 A1 lesson task from a learner-counted group and a validated result."""
 
+import re
 from collections import Counter
 
 from app.ai.features.learning_tasks.mission import fold, tokens
@@ -32,8 +33,17 @@ _EVALUATIONS = {
 
 
 def _plural(language, word):
-    plural = regular_plural(language, word.display_text)
     recorded = getattr(word, "plural_form", None)
+    if language == "de":
+        if not isinstance(recorded, str):
+            return None
+        recorded = recorded.strip()
+        return (
+            recorded if re.fullmatch(r"[^\W\d_]+", recorded)
+            and recorded.casefold() != word.display_text.casefold()
+            else None
+        )
+    plural = regular_plural(language, word.display_text)
     if plural is None or (recorded and recorded.casefold() != plural.casefold()):
         return None
     return plural
@@ -54,6 +64,8 @@ def _how_many(language, plural, gender):
         if first in _VOWELS:
             return f"Combien d'{plural} y a-t-il ?"
         return f"Combien de {plural} y a-t-il ?"
+    if language == "de":
+        return f"Wie viele {plural} gibt es?"
     return None
 
 
@@ -63,7 +75,7 @@ def m03_payload(
 ):
     """The first counted group with a taught quantity and a phraseable question."""
     language = language.lower()
-    numbers, source = taught_numbers(mission, progress)
+    numbers, source = taught_numbers(mission, progress, language)
     taught = set(numbers)
     by_id = {str(obj.id): (obj, word) for obj, word in zip(objects, words, strict=True)}
     terms = {term.key: term for term in translated_scene.objects} if translated_scene else {}

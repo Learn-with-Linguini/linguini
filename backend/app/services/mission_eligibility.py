@@ -1,44 +1,64 @@
 """Mission planning and per-mission photo eligibility from learner-confirmed scene facts."""
 
 import re
+from collections import Counter
 from dataclasses import dataclass
 
 from app.missions import get_mission
 from app.schemas.enums import SessionMode
-from app.services.ispy_clue_frames import COLOUR_ATTRIBUTE_TYPES, POSITIONS, SUPPORTED_LANGUAGES
+from app.services.ispy_clue_frames import COLOUR_ATTRIBUTE_TYPES, GENDERS, POSITIONS
 from app.services.mission_language_a2 import A2_ENABLED_LANGUAGES
+
+MISSION_LANGUAGES = {"es", "fr", "de"}
 
 M01_A1 = ("M01", "A1", 1)
 M02_A1 = ("M02", "A1", 2)
 M03_A1 = ("M03", "A1", 1)
+M04_A1 = ("M04", "A1", 1)
+M05_A1 = ("M05", "A1", 1)
 # Implemented A1 variants in catalogue order; a lesson assesses at most three.
 M01_A2 = ("M01", "A2", 1)
 M02_A2 = ("M02", "A2", 1)
 M03_A2 = ("M03", "A2", 1)
 M04_A2 = ("M04", "A2", 1)
 IMPLEMENTED_MISSIONS = {
-    "A1": (M01_A1, M02_A1, M03_A1),
+    "A1": (M01_A1, M02_A1, M03_A1, M04_A1, M05_A1),
     "A2": (M01_A2, M02_A2, M03_A2, M04_A2),
 }
 MAX_LESSON_MISSIONS = {"A1": 3, "A2": 4}
 
-# Reviewed singular (masculine, feminine) colour forms for each supported lesson language.
+# Reviewed singular attributive colour forms for each supported lesson language.
 REVIEWED_COLOURS = {
-    "red": {"es": ("rojo", "roja"), "fr": ("rouge", "rouge")},
-    "white": {"es": ("blanco", "blanca"), "fr": ("blanc", "blanche")},
-    "black": {"es": ("negro", "negra"), "fr": ("noir", "noire")},
-    "yellow": {"es": ("amarillo", "amarilla"), "fr": ("jaune", "jaune")},
-    "purple": {"es": ("morado", "morada"), "fr": ("violet", "violette")},
-    "gold": {"es": ("dorado", "dorada"), "fr": ("doré", "dorée")},
-    "silver": {"es": ("plateado", "plateada"), "fr": ("argenté", "argentée")},
-    "blue": {"es": ("azul", "azul"), "fr": ("bleu", "bleue")},
-    "green": {"es": ("verde", "verde"), "fr": ("vert", "verte")},
-    "grey": {"es": ("gris", "gris"), "fr": ("gris", "grise")},
-    "gray": {"es": ("gris", "gris"), "fr": ("gris", "grise")},
-    "brown": {"es": ("marrón", "marrón"), "fr": ("marron", "marron")},
-    "pink": {"es": ("rosa", "rosa"), "fr": ("rose", "rose")},
-    "orange": {"es": ("naranja", "naranja"), "fr": ("orange", "orange")},
-    "beige": {"es": ("beige", "beige"), "fr": ("beige", "beige")},
+    "red": {"es": ("rojo", "roja"), "fr": ("rouge", "rouge"),
+            "de": ("roter", "rote", "rotes")},
+    "white": {"es": ("blanco", "blanca"), "fr": ("blanc", "blanche"),
+              "de": ("weißer", "weiße", "weißes")},
+    "black": {"es": ("negro", "negra"), "fr": ("noir", "noire"),
+              "de": ("schwarzer", "schwarze", "schwarzes")},
+    "yellow": {"es": ("amarillo", "amarilla"), "fr": ("jaune", "jaune"),
+               "de": ("gelber", "gelbe", "gelbes")},
+    "purple": {"es": ("morado", "morada"), "fr": ("violet", "violette"),
+               "de": ("lila", "lila", "lila")},
+    "gold": {"es": ("dorado", "dorada"), "fr": ("doré", "dorée"),
+             "de": ("goldener", "goldene", "goldenes")},
+    "silver": {"es": ("plateado", "plateada"), "fr": ("argenté", "argentée"),
+               "de": ("silberner", "silberne", "silbernes")},
+    "blue": {"es": ("azul", "azul"), "fr": ("bleu", "bleue"),
+             "de": ("blauer", "blaue", "blaues")},
+    "green": {"es": ("verde", "verde"), "fr": ("vert", "verte"),
+              "de": ("grüner", "grüne", "grünes")},
+    "grey": {"es": ("gris", "gris"), "fr": ("gris", "grise"),
+             "de": ("grauer", "graue", "graues")},
+    "gray": {"es": ("gris", "gris"), "fr": ("gris", "grise"),
+             "de": ("grauer", "graue", "graues")},
+    "brown": {"es": ("marrón", "marrón"), "fr": ("marron", "marron"),
+              "de": ("brauner", "braune", "braunes")},
+    "pink": {"es": ("rosa", "rosa"), "fr": ("rose", "rose"),
+             "de": ("rosa", "rosa", "rosa")},
+    "orange": {"es": ("naranja", "naranja"), "fr": ("orange", "orange"),
+               "de": ("orangefarbener", "orangefarbene", "orangefarbenes")},
+    "beige": {"es": ("beige", "beige"), "fr": ("beige", "beige"),
+              "de": ("beige", "beige", "beige")},
 }
 SUPPORTED_COLOURS = set(REVIEWED_COLOURS)
 
@@ -48,47 +68,64 @@ SUPPORTED_COLOURS = set(REVIEWED_COLOURS)
 REVIEWED_ATTRIBUTES = {
     "size": {
         "big": dict(aliases=("large", "huge"), es=("grande", "grande"), fr=("grand", "grande"),
-                    before=True, contrasts=("small",)),
+                    de=("großer", "große", "großes"), before=True, contrasts=("small",)),
         "small": dict(aliases=("little", "tiny"), es=("pequeño", "pequeña"),
-                      fr=("petit", "petite"), before=True, contrasts=("big",)),
-        "long": dict(es=("largo", "larga"), fr=("long", "longue"), before=True,
-                     contrasts=("short",)),
-        "short": dict(es=("corto", "corta"), fr=("court", "courte"), contrasts=("long",)),
+                      fr=("petit", "petite"), de=("kleiner", "kleine", "kleines"),
+                      before=True, contrasts=("big",)),
+        "long": dict(es=("largo", "larga"), fr=("long", "longue"),
+                     de=("langer", "lange", "langes"), before=True, contrasts=("short",)),
+        "short": dict(es=("corto", "corta"), fr=("court", "courte"),
+                      de=("kurzer", "kurze", "kurzes"), before=True, contrasts=("long",)),
     },
     "shape": {
         "round": dict(aliases=("circular",), es=("redondo", "redonda"), fr=("rond", "ronde"),
+                      de=("runder", "runde", "rundes"),
                       contrasts=("square", "rectangular")),
         "square": dict(es=("cuadrado", "cuadrada"), fr=("carré", "carrée"),
+                       de=("quadratischer", "quadratische", "quadratisches"),
                        contrasts=("round",)),
         "rectangular": dict(es=("rectangular", "rectangular"),
-                            fr=("rectangulaire", "rectangulaire"), contrasts=("round",)),
+                            fr=("rectangulaire", "rectangulaire"),
+                            de=("rechteckiger", "rechteckige", "rechteckiges"),
+                            contrasts=("round",)),
     },
     "material": {
         "wooden": dict(aliases=("wood",), es=("de madera",) * 2, fr=("en bois",) * 2,
-                       contrasts=("metal", "plastic", "glass")),
+                       de=("aus Holz",) * 3, contrasts=("metal", "plastic", "glass")),
         "metal": dict(aliases=("metallic", "steel", "iron"), es=("de metal",) * 2,
-                      fr=("en métal",) * 2, contrasts=("wooden", "glass", "fabric")),
+                      fr=("en métal",) * 2, de=("aus Metall",) * 3,
+                      contrasts=("wooden", "glass", "fabric")),
         "plastic": dict(es=("de plástico",) * 2, fr=("en plastique",) * 2,
-                        contrasts=("wooden", "metal", "fabric")),
-        "glass": dict(es=("de vidrio",) * 2, fr=("en verre",) * 2,
+                        de=("aus Plastik",) * 3, contrasts=("wooden", "metal", "fabric")),
+        "glass": dict(es=("de vidrio",) * 2, fr=("en verre",) * 2, de=("aus Glas",) * 3,
                       contrasts=("wooden", "metal", "fabric")),
         "fabric": dict(aliases=("cloth",), es=("de tela",) * 2, fr=("en tissu",) * 2,
-                       contrasts=("wooden", "metal", "glass")),
+                       de=("aus Stoff",) * 3, contrasts=("wooden", "metal", "glass")),
         "stone": dict(es=("de piedra",) * 2, fr=("en pierre",) * 2,
-                      contrasts=("wooden", "plastic", "fabric")),
+                      de=("aus Stein",) * 3, contrasts=("wooden", "plastic", "fabric")),
     },
     "pattern": {
-        "striped": dict(es=("de rayas",) * 2, fr=("rayé", "rayée"), contrasts=("spotted",)),
+        "striped": dict(es=("de rayas",) * 2, fr=("rayé", "rayée"),
+                        de=("gestreifter", "gestreifte", "gestreiftes"),
+                        contrasts=("spotted",)),
         "spotted": dict(aliases=("polka-dot", "dotted"), es=("de lunares",) * 2,
-                        fr=("à pois",) * 2, contrasts=("striped",)),
+                        fr=("à pois",) * 2, de=("gepunkteter", "gepunktete", "gepunktetes"),
+                        contrasts=("striped",)),
     },
     "state": {
-        "open": dict(es=("abierto", "abierta"), fr=("ouvert", "ouverte"), contrasts=("closed",)),
-        "closed": dict(es=("cerrado", "cerrada"), fr=("fermé", "fermée"), contrasts=("open",)),
-        "empty": dict(es=("vacío", "vacía"), fr=("vide", "vide"), contrasts=("full",)),
-        "full": dict(es=("lleno", "llena"), fr=("plein", "pleine"), contrasts=("empty",)),
-        "clean": dict(es=("limpio", "limpia"), fr=("propre", "propre"), contrasts=("dirty",)),
-        "dirty": dict(es=("sucio", "sucia"), fr=("sale", "sale"), contrasts=("clean",)),
+        "open": dict(es=("abierto", "abierta"), fr=("ouvert", "ouverte"),
+                     de=("offener", "offene", "offenes"), contrasts=("closed",)),
+        "closed": dict(es=("cerrado", "cerrada"), fr=("fermé", "fermée"),
+                       de=("geschlossener", "geschlossene", "geschlossenes"),
+                       contrasts=("open",)),
+        "empty": dict(es=("vacío", "vacía"), fr=("vide", "vide"),
+                      de=("leerer", "leere", "leeres"), contrasts=("full",)),
+        "full": dict(es=("lleno", "llena"), fr=("plein", "pleine"),
+                     de=("voller", "volle", "volles"), contrasts=("empty",)),
+        "clean": dict(es=("limpio", "limpia"), fr=("propre", "propre"),
+                      de=("sauberer", "saubere", "sauberes"), contrasts=("dirty",)),
+        "dirty": dict(es=("sucio", "sucia"), fr=("sale", "sale"),
+                      de=("schmutziger", "schmutzige", "schmutziges"), contrasts=("clean",)),
     },
 }
 ATTRIBUTE_ORDER = ("size", "shape", "material", "pattern", "state")
@@ -102,7 +139,7 @@ POSITION_MEANINGS = {
 REVIEWED_POSITIONS = {
     relation: {
         language: next(expression for expression, sense, _ in positions if sense == meaning)
-        for language, positions in POSITIONS.items()
+        for language, positions in POSITIONS.items() if language in MISSION_LANGUAGES
     }
     for relation, meaning in POSITION_MEANINGS.items()
 }
@@ -115,21 +152,30 @@ def lesson_missions(session_mode, profile):
     language = profile["target_language_code"].lower()
     if profile["proficiency_level"] == "A2" and language not in A2_ENABLED_LANGUAGES:
         return []
-    if language not in SUPPORTED_LANGUAGES:
+    if language not in MISSION_LANGUAGES:
         return []
     keys = IMPLEMENTED_MISSIONS.get(profile["proficiency_level"], ())
     return [mission for key in keys if (mission := get_mission(*key)) is not None]
 
 
-def plan_missions(candidates, objects, relations, counted_groups=()):
-    """Every mission this photo supports, in catalogue order."""
+def plan_missions(candidates, objects, relations, counted_groups=(), history=()):
+    """Select least-planned eligible missions, returning them in catalogue order."""
     if not candidates:
         return []
-    cap = MAX_LESSON_MISSIONS.get(str(candidates[0].practice_level), 3)
-    return [
+    eligible = [
         mission for mission in candidates
         if photo_eligibility(mission, objects, relations, counted_groups).eligible
-    ][:cap]
+    ]
+    counts = Counter(history)
+    cap = MAX_LESSON_MISSIONS.get(str(candidates[0].practice_level), 3)
+    selected = {
+        mission.mission_id
+        for _index, mission in sorted(
+            enumerate(eligible),
+            key=lambda item: (counts[item[1].mission_id], item[0]),
+        )[:cap]
+    }
+    return [mission for mission in eligible if mission.mission_id in selected]
 
 
 def suggested_counted_groups(objects):
@@ -298,16 +344,21 @@ def agreed_attribute(kind, value, language, gender):
     """``(form agreeing with a singular noun, placed before it)``, or ``None`` when unknown."""
     if kind == "colour":
         form = agreed_colour(value, language, gender)
-        return (form, False) if form else None
+        return (form, language == "de") if form else None
     entry = REVIEWED_ATTRIBUTES.get(kind, {}).get(value) or {}
     forms = entry.get(language)
     if not forms:
         return None
-    masculine, feminine = forms
-    form = masculine if masculine == feminine else {
-        "masculine": masculine, "feminine": feminine,
-    }.get(gender)
-    return (form, language == "fr" and bool(entry.get("before"))) if form else None
+    form = (
+        forms[0]
+        if len(set(forms)) == 1
+        else dict(zip(GENDERS, forms, strict=False)).get(gender)
+    )
+    before = (
+        language == "fr" and bool(entry.get("before"))
+        or language == "de" and not form.startswith("aus ")
+    ) if form else False
+    return (form, before) if form else None
 
 
 def attribute_contrasts(kind, value):
@@ -357,7 +408,6 @@ def agreed_colour(colour, language, gender):
     forms = REVIEWED_COLOURS.get(colour, {}).get(language)
     if forms is None:
         return None
-    masculine, feminine = forms
-    if masculine == feminine:
-        return masculine
-    return {"masculine": masculine, "feminine": feminine}.get(gender)
+    if len(set(forms)) == 1:
+        return forms[0]
+    return dict(zip(GENDERS, forms, strict=False)).get(gender)

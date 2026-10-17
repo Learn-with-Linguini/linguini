@@ -10,6 +10,7 @@ from app.ai.features.learning_tasks.mission import tokens
 from app.ai.features.learning_tasks.mission_a2 import (
     A2_GENERATIONS,
     MissionA2Question,
+    _sentence_starts_are_uppercase,
     validate_a2_lesson,
 )
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
@@ -127,6 +128,7 @@ def test_gating_preserves_the_a1_plan_and_excludes_a0_and_other_a2_languages():
     )
     assert [(mission.mission_id, mission.practice_level) for mission in a1] == [
         ("M01", "A1"), ("M02", "A1"), ("M03", "A1"),
+        ("M04", "A1"), ("M05", "A1"),
     ]
     assert lesson_missions(
         "lesson", {"proficiency_level": "A0", "target_language_code": "es"}
@@ -473,6 +475,11 @@ def test_long_builds_use_phrase_chunks_and_short_builds_use_word_tiles(language)
             chunk in punctuation or not chunk.endswith(tuple(punctuation))
             for chunk in question.distractor_chunks
         )
+        assert all(
+            next(character for character in sentence if character.isalpha()).isupper()
+            for sentence in question.correct_text.split(".")
+            if sentence.strip()
+        )
 
     for mission_id, short_index in (
         ("M01", 1),
@@ -484,6 +491,35 @@ def test_long_builds_use_phrase_chunks_and_short_builds_use_word_tiles(language)
         _payload, result = _built(mission_id, language)
         question = result.questions[short_index]
         assert question.answer_chunks == tokens(question.correct_text)
+
+
+def test_sentence_validator_rejects_a_lowercase_sentence_start():
+    assert _sentence_starts_are_uppercase("¿Dónde? ¡Hola.")
+    payload, result = _built("M04")
+    correct_text = result.questions[4].correct_text or ""
+    first, second = correct_text.split(". ", 1)
+    assert second[0].isupper()
+    result = _replace_sentence(result, 4, f"{first}. {second[0].lower()}{second[1:]}")
+
+    with pytest.raises(LearningTaskGenerationError, match="uppercase"):
+        validate_a2_lesson(payload, result)
+
+
+def test_m01_planning_facts_are_compact_and_article_bearing():
+    payload, result = _built("M01")
+    planning_facts = payload["planningFacts"]
+
+    assert result.questions[3].planning_facts == planning_facts
+    assert {"the cup: red", "the cup: on the table"} <= set(planning_facts)
+    assert planning_facts[-1].startswith("also: a ")
+
+
+def test_m01_long_distractors_use_a_grammatical_indefinite_subject():
+    _payload, result = _built("M01")
+    distractors = result.questions[3].distractor_chunks
+
+    assert "Hay una taza azul" in distractors
+    assert "hay la taza azul" not in " ".join(distractors).casefold()
 
 
 def test_roleplay_highlights_are_present_on_clarification_questions():

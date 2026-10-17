@@ -31,15 +31,33 @@ def noun_gender(term, word):
 
 
 # Catalog content may record a noun's gender as its definite article.
-_ARTICLE_GENDERS = {"el": "masculine", "le": "masculine", "la": "feminine"}
+_ARTICLE_GENDERS = {
+    "el": "masculine",
+    "le": "masculine",
+    "la": "feminine",
+    "der": "masculine",
+    "den": "masculine",
+    "dem": "masculine",
+    "des": "masculine",
+    "die": "feminine",
+    "das": "neuter",
+}
+
+
+def normalized_gender(value):
+    value = getattr(value, "value", value)
+    if not isinstance(value, str):
+        return None
+    gender = _ARTICLE_GENDERS.get(value.strip().casefold(), value.strip().casefold())
+    return gender if gender in {"masculine", "feminine", "neuter"} else None
 
 
 def mission_gender(term, word):
     """``noun_gender`` with article-style genders mapped; elided ``l'`` falls back to the word."""
     for gender in (term.gender if term is not None else None,
                    getattr(word.gender, "value", word.gender)):
-        gender = _ARTICLE_GENDERS.get(str(gender).casefold(), gender) if gender else None
-        if gender in {"masculine", "feminine"}:
+        gender = normalized_gender(gender)
+        if gender in {"masculine", "feminine", "neuter"}:
             return gender
     return noun_gender(term, word)
 
@@ -53,7 +71,9 @@ def correct_label(question):
     return question.correct_text
 
 
-def build_mission_task(session_id, mission, focus, result, evaluate, shown=lambda question: {}):
+def build_mission_task(
+    session_id, mission, focus, result, evaluate, shown=lambda question: {}, content_fields=None,
+):
     """One mission-tagged grammar lesson whose private key grades every question.
 
     ``evaluate(question, label)`` returns the question's evaluation fields and
@@ -106,6 +126,7 @@ def build_mission_task(session_id, mission, focus, result, evaluate, shown=lambd
                 for question in questions
             ],
             **mission_fields(mission),
+            **(content_fields or {}),
         ),
         answer_key=dict(correct_option_ids=correct, question_evaluations=evaluations),
         scene_object_id=UUID(questions[-1].object_key),

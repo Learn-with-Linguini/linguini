@@ -27,7 +27,17 @@ from app.repositories.postgres.xp import xp_events
 from app.repositories.practice import PracticeConflictError
 from app.schemas.sessions import AddedPracticeObject, ReviewPracticeRequest
 from app.schemas.tasks import SessionTask, SkipTaskRequest
-from app.services import mission_lessons_m03
+from app.services import mission_eligibility, mission_lessons_m03
+
+
+@pytest.fixture(autouse=True)
+def existing_a1_missions(monkeypatch):
+    """Keep legacy mission workflows independent of the newly added M04/M05 variants."""
+    monkeypatch.setitem(
+        mission_eligibility.IMPLEMENTED_MISSIONS,
+        "A1",
+        (("M01", "A1", 1), ("M02", "A1", 2), ("M03", "A1", 1)),
+    )
 
 
 def _cup(detail):

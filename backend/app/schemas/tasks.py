@@ -19,6 +19,7 @@ from app.schemas.enums import (
     TaskPhase,
     TaskStatus,
 )
+from app.schemas.roleplay import RoleplayFact
 
 type MissionId = Annotated[str, StringConstraints(pattern=r"^M\d{2}$")]
 type ContentVersion = Annotated[int, Field(ge=1)]
@@ -161,9 +162,9 @@ class GrammarLessonQuestion(ApiModel):
     board_object_id: UUID | None = Field(default=None, exclude_if=_is_none)
     # The number word already visible in the prompt, revealed with its digit after grading.
     quantity_word: str | None = Field(default=None, exclude_if=_is_none)
+    roleplay_premise: str | None = Field(default=None, exclude_if=_is_none)
     # Options are shown in their saved, already shuffled order.
     keep_option_order: bool | None = Field(default=None, exclude_if=_is_none)
-    roleplay_premise: str | None = Field(default=None, exclude_if=_is_none)
     planning_facts: list[NonEmptyText] | None = Field(default=None, exclude_if=_is_none)
     # A marker choice: option id -> the scene object whose photo marker answers it.
     marker_object_ids: dict[str, UUID] | None = Field(default=None, exclude_if=_is_none)
@@ -196,6 +197,7 @@ class GrammarLessonContent(MissionTaskFields):
     explanation: NonEmptyText | None = Field(default=None, exclude_if=_is_none)
     questions: Annotated[list[GrammarLessonQuestion], Field(min_length=1)]
     check_each_question: bool | None = Field(default=None, exclude_if=_is_none)
+    roleplay_facts: list[RoleplayFact] | None = Field(default=None, exclude_if=_is_none)
 
 
 class GrammarExplanationContent(MissionTaskFields):

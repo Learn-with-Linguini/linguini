@@ -5,7 +5,12 @@ import re
 
 from app.ai.features.learning_tasks.mission import fold, tokens
 from app.ai.features.learning_tasks.mission_m02 import _joined
-from app.services.ispy_clue_frames import CONTRACTIONS, _definite, _with_article
+from app.services.ispy_clue_frames import (
+    CONTRACTIONS,
+    DATIVE_ARTICLES,
+    _definite,
+    _with_article,
+)
 from app.services.mission_eligibility import (
     POSITION_MEANINGS,
     REVIEWED_POSITIONS,
@@ -15,9 +20,11 @@ from app.services.mission_eligibility import (
 from app.services.mission_lessons import build_mission_task, mission_gender
 
 M02_FOCUS = "findAndLocate"
-QUESTION_CHUNKS = {"es": "¿Dónde está…?", "fr": "Où est… ?"}
-_QUESTION_FRAMES = {"es": "¿Dónde está {}?", "fr": "Où est {} ?"}
-_LOCATION_VERBS = {"es": "está", "fr": "est"}
+QUESTION_CHUNKS = {"es": "¿Dónde está…?", "fr": "Où est… ?", "de": "Wo ist…?"}
+_QUESTION_FRAMES = {
+    "es": "¿Dónde está {}?", "fr": "Où est {} ?", "de": "Wo ist {}?",
+}
+_LOCATION_VERBS = {"es": "está", "fr": "est", "de": "ist"}
 # Positions that a confirmed position rules out for the same pair.
 _OPPOSITE = {"on": "under", "under": "on", "in_front_of": "behind", "behind": "in_front_of"}
 _INVERSE = {
@@ -33,6 +40,10 @@ _PROMPTS = {
     "fr": {
         "askWhere": "Pose une question sur l'emplacement {of_subject}.",
         "answerWhere": "Réponds avec la position que montre la photo.",
+    },
+    "de": {
+        "askWhere": "Frag, wo {subject} ist.",
+        "answerWhere": "Antworte mit der Position, die das Foto zeigt.",
     },
 }
 _TRANSLATIONS = {
@@ -60,7 +71,9 @@ _EVALUATIONS = {
 
 
 # Catalog words may carry their definite article ("la mesa", "l'arbre").
-_LEADING_DEFINITE = re.compile(r"^(el|la|le|los|las|les)\s+|^(l)['’]", re.IGNORECASE)
+_LEADING_DEFINITE = re.compile(
+    r"^(el|la|le|los|las|les|der|die|das)\s+|^(l)['’]", re.IGNORECASE,
+)
 
 
 def _article_and_noun(text, term):
@@ -82,6 +95,10 @@ def _place_tiles(language, expression, place):
     if not article:
         return None
     words = expression.split()
+    if language == "de":
+        article = DATIVE_ARTICLES["de"].get(place.get("gender"))
+        if not article:
+            return None
     contracted = CONTRACTIONS[language].get((words[-1].casefold(), article.casefold()))
     if contracted:
         return " ".join([*words[:-1], contracted]), tokens(place["translation"])
@@ -224,10 +241,14 @@ def m02_payload(
         ]
         if fold(reference["source"]) == same:
             continue
-        prompts = {
-            purpose: template.format(of_subject=_of(language, subject_place))
-            for purpose, template in _PROMPTS[language].items()
-        }
+        prompts = {}
+        for purpose, template in _PROMPTS[language].items():
+            values = {}
+            if "{of_subject}" in template:
+                values["of_subject"] = _of(language, subject_place)
+            if "{subject}" in template:
+                values["subject"] = subject["nounPhrase"]
+            prompts[purpose] = template.format(**values)
         found.append(dict(
             key=str(relation.id),
             subjectKey=subject["key"], subjectSource=subject["source"],

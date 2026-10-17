@@ -7,7 +7,6 @@ from app.ai.features.learning_tasks.mission import tokens
 from app.ai.features.learning_tasks.mission_a2 import MissionA2Question, MissionA2Result
 from app.services.ispy_clue_frames import _with_article
 from app.services.mission_eligibility import (
-    REVIEWED_COLOURS,
     REVIEWED_POSITIONS,
     agreed_attribute,
     attribute_contrasts,
@@ -149,28 +148,6 @@ _META = {
         ),
     },
 }
-_EXTRA_TEXT = {
-    "es": {
-        "no": "No",
-        "yes": "Sí",
-        "es": "es",
-        "está": "está",
-        "hay": "hay",
-        "not": "no",
-        "attribute": "atributo",
-        "existence": "objeto",
-    },
-    "fr": {
-        "no": "Non",
-        "yes": "Oui",
-        "es": "est",
-        "está": "est",
-        "hay": "Il y a",
-        "not": "pas",
-        "attribute": "détail",
-        "existence": "objet",
-    },
-}
 
 
 def _fold(text):
@@ -234,12 +211,12 @@ def _group_map(facts):
 
 
 def _sentence_chunks(text, *, distractors=(), rng, language=None, phrase_chunks=False):
+    text = _capitalize_sentence_starts(text)
     answer = _phrase_chunks(text, language) if phrase_chunks else tokens(text)
     if phrase_chunks:
         distractors = [
-            chunk
-            for distractor in distractors
-            for chunk in _phrase_chunks(distractor, language)
+            chunk for distractor in distractors
+            for chunk in _phrase_chunks(_capitalize_sentence_starts(distractor), language)
         ]
     else:
         distractors = [token for distractor in distractors for token in tokens(distractor)]
@@ -248,6 +225,18 @@ def _sentence_chunks(text, *, distractors=(), rng, language=None, phrase_chunks=
     return dict(
         correct_text=text, answer_chunks=answer, token_bank=bank, distractor_chunks=distractors
     )
+
+
+def _capitalize_sentence_starts(text):
+    chars = list(text)
+    sentence_start = True
+    for index, char in enumerate(chars):
+        if sentence_start and char.isalpha():
+            chars[index] = char.upper()
+            sentence_start = False
+        elif char in ".!?":
+            sentence_start = True
+    return "".join(chars)
 
 
 def _option_rows(question_id, rows, correct_id, rng):
@@ -380,13 +369,27 @@ def _relation_sentence(language, subject, relation):
 def _english_fact(facts, kind, row):
     objects = _object_map(facts)
     if kind == "attribute":
-        return f"{objects[row['objectKey']]['englishLabel']} is {row['value']}."
+        noun = _english_noun_phrase(objects[row["objectKey"]]["englishLabel"], True)
+        return f"{noun}: {row['value']}"
     if kind == "relation":
-        return (
-            f"{objects[row['subjectKey']]['englishLabel']} is {row['position']} "
-            f"{objects[row['referenceKey']]['englishLabel']}."
-        )
-    return f"{objects[row['key']]['englishLabel']} is in the scene."
+        subject = _english_noun_phrase(objects[row["subjectKey"]]["englishLabel"], True)
+        reference = _english_noun_phrase(objects[row["referenceKey"]]["englishLabel"], True)
+        return f"{subject}: {row['position'].replace('_', ' ')} {reference}"
+    noun = _english_noun_phrase(objects[row["key"]]["englishLabel"], False)
+    return f"also: {noun}"
+
+
+def _english_noun_phrase(label, definite):
+    label = label.strip()
+    for article in ("the ", "a ", "an "):
+        if label.casefold().startswith(article):
+            label = label[len(article):]
+            break
+    label = f"{label[:1].lower()}{label[1:]}"
+    if definite:
+        return f"the {label}"
+    article = "an" if label[:1] in "aeiou" else "a"
+    return f"{article} {label}"
 
 
 def _m01_payload(
@@ -471,10 +474,9 @@ def _m01_payload(
             alt_agreement = agreed_attribute(f1["kind"], alternate, language, f1_obj["gender"])
             alt_form = alt_agreement[0] if alt_agreement else None
         if alt_form:
-            false_obj = _object_with_attribute(
-                f1_obj, {**f1, "form": alt_form, "before": alt_agreement[1]}
+            false_first = _existence(
+                language, f1_obj, {**f1, "form": alt_form, "before": alt_agreement[1]}
             )
-            false_first = f"{_EXTRA_TEXT[language]['hay']} {false_obj}."
         else:
             false_first = (
                 f"Hay {_indefinite(language, f1_obj)} que no es {f1['form']}."
@@ -1187,21 +1189,13 @@ def _m01_questions(payload):
         for index, value in enumerate(values):
             if len(attribute_options) == 3:
                 break
-            if attribute["kind"] == "colour":
-                info = REVIEWED_COLOURS.get(value, {}).get(payload["targetLanguage"])
-                form = (
-                    info[0 if f["firstObject"]["gender"] == "masculine" else 1]
-                    if info
-                    else None
-                )
-            else:
-                agreement = agreed_attribute(
-                    attribute["kind"],
-                    value,
-                    payload["targetLanguage"],
-                    f["firstObject"]["gender"],
-                )
-                form = agreement[0] if agreement else None
+            agreement = agreed_attribute(
+                attribute["kind"],
+                value,
+                payload["targetLanguage"],
+                f["firstObject"]["gender"],
+            )
+            form = agreement[0] if agreement else None
             if form and _fold(form) not in {_fold(row[1]) for row in attribute_options}:
                 attribute_options.append((f"detail-{index}", form))
     else:
@@ -1547,6 +1541,7 @@ def _mission_payload(
     progress,
     session_id,
     review_markers=None,
+    context=None,
 ):
     return a2_payload(
         mission,

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { builtSentence, choiceOrder, markerChoices, optionText, questionOptions } from "../src/lib/practiceTasks.ts";
+import { builtSentence, choiceOrder, markerChoices, optionText, questionOptions, sentenceEnding } from "../src/lib/practiceTasks.ts";
 import { practiceScene } from "../src/lib/practiceScene.ts";
 import type { GrammarLessonQuestion, PracticeDetail } from "../src/lib/api.ts";
 
@@ -72,4 +72,10 @@ test("word tiles build the sentence the backend grades", () => {
   assert.equal(builtSentence(["¿Dónde", "está", "la", "taza", "?"]), "¿Dónde está la taza?");
   assert.equal(builtSentence(["La", "tasse", "est", "à côté du", "livre", "."]), "La tasse est à côté du livre.");
   assert.equal(builtSentence([]), "");
+});
+
+test("answer feedback only adds a period when the answer lacks ending punctuation", () => {
+  assert.equal(sentenceEnding("No, es la silla de Marta."), "");
+  assert.equal(sentenceEnding("Est-ce vrai ?"), "");
+  assert.equal(sentenceEnding("No, es la silla de Marta"), ".");
 });

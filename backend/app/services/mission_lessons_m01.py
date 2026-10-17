@@ -15,25 +15,33 @@ from app.services.mission_eligibility import (
 from app.services.mission_lessons import build_mission_task, mission_gender
 
 M01_FOCUS = "identifyDescribeObject"
-CONFIRM_PROMPTS = {"es": "¿Es {noun}?", "fr": "Est-ce {noun} ?"}
+CONFIRM_PROMPTS = {"es": "¿Es {noun}?", "fr": "Est-ce {noun} ?", "de": "Ist das {noun}?"}
 # Q3 asks about the first object's detail; the prompt names its attribute type.
 ATTRIBUTE_PROMPTS = {
-    "colour": ({"es": "¿De qué color es?", "fr": "De quelle couleur est-ce ?"},
+    "colour": ({"es": "¿De qué color es?", "fr": "De quelle couleur est-ce ?",
+                "de": "Welche Farbe hat es?"},
                "What colour is it?"),
-    "material": ({"es": "¿De qué material es?", "fr": "C'est en quoi ?"},
+    "material": ({"es": "¿De qué material es?", "fr": "C'est en quoi ?",
+                  "de": "Woraus ist es?"},
                  "What is it made of?"),
 }
-OTHER_ATTRIBUTE_PROMPT = ({"es": "¿Cómo es?", "fr": "C'est comment ?"}, "What is it like?")
-DESCRIBE_PROMPTS = {"es": "Describe este objeto.", "fr": "Décris cet objet."}
+OTHER_ATTRIBUTE_PROMPT = (
+    {"es": "¿Cómo es?", "fr": "C'est comment ?", "de": "Wie ist es?"},
+    "What is it like?",
+)
+DESCRIBE_PROMPTS = {
+    "es": "Describe este objeto.", "fr": "Décris cet objet.", "de": "Beschreib dieses Objekt.",
+}
 PROMPT_TRANSLATIONS = {
     "confirmObject": "Is it this? Answer with a full sentence.",
     "describeObject": "Describe this object.",
 }
-SENTENCE_STARTS = {"es": "Es", "fr": "C'est"}
-YES_NO = {"es": ("Sí", "No"), "fr": ("Oui", "Non")}
+SENTENCE_STARTS = {"es": "Es", "fr": "C'est", "de": "Das ist"}
+YES_NO = {"es": ("Sí", "No"), "fr": ("Oui", "Non"), "de": ("Ja", "Nein")}
 INDEFINITE_ARTICLES = {
     "es": {"masculine": "un", "feminine": "una"},
     "fr": {"masculine": "un", "feminine": "une"},
+    "de": {"masculine": "ein", "feminine": "eine", "neuter": "ein"},
 }
 MAX_COLOUR_OPTIONS = 3
 # Colours a photo can make look alike; they are never each other's distractors.
@@ -56,7 +64,10 @@ SIMILAR_COLOURS = {
 }
 _PATTERN_ID = "copula-colour"
 # Legacy vocabulary rows may keep their article inside the display text.
-_LEADING_ARTICLE = re.compile(r"^(?:el|la|los|las|le|les|un|una|une)\s+|^l['’]", re.IGNORECASE)
+_LEADING_ARTICLE = re.compile(
+    r"^(?:el|la|los|las|le|les|un|una|une|der|die|das|ein|eine)\s+|^l['’]",
+    re.IGNORECASE,
+)
 _EVALUATIONS = {
     "confirmObject": (
         ["identify-object", "name-object"],
@@ -221,7 +232,9 @@ def m01_payload(
     extras = []
     if pairs:
         second = pairs[1]
-        other = {"masculine": "feminine", "feminine": "masculine"}.get(second["gender"])
+        other = {
+            "masculine": "feminine", "feminine": "masculine", "neuter": "masculine",
+        }.get(second["gender"])
         wrong = other and agreed_attribute(
             second["attributeType"], second["attributeSource"], language, other,
         )

@@ -7,7 +7,7 @@ import { Button, Card, Feedback, IconButton, ProgressTrail, XpPill } from "../co
 import { CloseIcon, SpeakerIcon } from "../components/icons";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
-import { builtSentence, choiceOrder, finishesWithoutISpy, isMissionSession, markerChoices, optionText, practiceStages, questionOptions, taskDone, taskTitle, taskXp, xpEarnedText } from "../lib/practiceTasks";
+import { builtSentence, choiceOrder, finishesWithoutISpy, isMissionSession, markerChoices, optionText, practiceStages, questionOptions, sentenceEnding, taskDone, taskTitle, taskXp, xpEarnedText } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
 import { checkLessonAnswer, checkVocabularyAnswer, getLatestAttempt, getLessonChecks, reviewDetails, type GrammarLessonQuestion, type LessonAnswerCheck, type SceneObject, type SessionTask, type QuestionOutcome, type TaskActionResult, type TaskAnswer, type VocabularyLearningWord } from "../lib/api";
 import { mergeLessonChecks, visibleLessonQuestionIndex } from "../lib/missionLessonFlow";
@@ -16,6 +16,7 @@ import { ObjectPreview } from "../components/ObjectPreview";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useResolvedImageUrl } from "../components/SceneImage";
 import { boardRows, squareCrop } from "../lib/practiceBoard";
+import { questionMarkerObjects } from "../lib/missionMarkers";
 
 export function LearningTaskPage() {
   const { taskId } = useParams();
@@ -237,7 +238,10 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
       })}</div>
       {checkingQuestion ? <InlineLoader compact label="Checking your answer…" /> : null}
       {answers[question.questionId] ? <>
-        <Feedback tone={questionResults[question.questionId] ? "good" : "warn"}><p role="status">{questionResults[question.questionId] ? "Correct!" : <>Incorrect. The correct answer is <strong>{question.options.find(option => option.optionId === correctOptionIds[question.questionId])?.label}</strong>.</>}</p></Feedback>
+        <Feedback tone={questionResults[question.questionId] ? "good" : "warn"}><p role="status">{questionResults[question.questionId] ? "Correct!" : (() => {
+          const answer = question.options.find(option => option.optionId === correctOptionIds[question.questionId])?.label ?? "";
+          return <>Incorrect. The correct answer is <strong>{answer}</strong>{answer ? sentenceEnding(answer) : ""}</>;
+        })()}</p></Feedback>
         <ReportIssueLink reportType="Vocabulary answer" fields={[
           ["Task ID", task.id],
           ["Question ID", question.questionId],
@@ -398,9 +402,9 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
         })}</div>}
         {checks[question.questionId] ? <>
           <Feedback tone={checks[question.questionId].isCorrect ? "good" : "warn"}>
-            <p role="status">{checks[question.questionId].isCorrect
+          <p role="status">{checks[question.questionId].isCorrect
               ? "Correct!"
-              : <>Not quite. The correct answer is <strong>{checks[question.questionId].correctAnswer}</strong>.</>}</p>
+              : <>Not quite. The correct answer is <strong>{checks[question.questionId].correctAnswer}</strong>{sentenceEnding(checks[question.questionId].correctAnswer)}</>}</p>
           </Feedback>
           <QuestionOutcomeNotes outcome={checks[question.questionId].outcome} />
           <ReportIssueLink reportType="Grammar answer" fields={[
@@ -484,19 +488,32 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
     <div className="learning-title-row"><div><h1>{content.title}</h1>{reward ? <XpPill {...reward} /> : null}</div><ExitToHome onExit={onExit} /></div>
     {content.explanation ? <div className="panel-note">{content.explanation}</div> : null}
     {content.questions.map((question, position) => {
+      const questionMarkers = question.roleplayPremise
+        ? questionMarkerObjects(
+          question.sceneObjectId,
+          session?.sceneObjects ?? [],
+          scene.items,
+        )
+        : undefined;
       const groupObjects = question.groupObjectIds
         ?.map(id => session?.sceneObjects.find(object => object.id === id))
         .filter((object): object is SceneObject => Boolean(object));
-      const markers = markerChoices(question, scene);
+      const markers = question.roleplayPremise ? [] : markerChoices(question, scene);
       const section = question.section && question.section !== content.questions[position - 1]?.section
         ? question.section : null;
       return <div key={question.questionId} className="learning-section">
         {section ? <h2 className="learning-section__title">{section}</h2> : null}
         <Card plain><div className="stack">
+      {question.roleplayPremise ? <div className="roleplay-premise" role="note">
+        <span className="roleplay-premise__label">For this practice</span>
+        <p className="roleplay-premise__text">{question.roleplayPremise}</p>
+        <p className="roleplay-premise__disclaimer">Pretend only — not about your real things.</p>
+      </div> : null}
       {content.questions.length > 1 ? <span className="label muted">Question {position + 1} of {content.questions.length}</span> : null}
       {question.sceneObjectId ? <ObjectPreview scene={scene} label={question.objectLabel ?? ""}
         object={session?.sceneObjects.find(object => object.id === question.sceneObjectId)}
         group={groupObjects?.length ? groupObjects : undefined}
+        markers={questionMarkers}
         reference={session?.sceneObjects.find(object => object.id === question.referenceObjectId)}
         referenceLabel={question.referenceLabel} /> : null}
       {question.interactionType === "sentenceBuilding" ? <>
@@ -549,7 +566,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
           : <>Not quite.{solutions[question.questionId] ? (() => {
             const label = question.options.find(option => option.optionId === solutions[question.questionId])?.label;
             const solution = label ? optionText(question, label) : solutions[question.questionId];
-            return <> The correct answer is <strong>{solution}</strong>{/[.!?]$/.test(solution) ? "" : "."}</>;
+            return <> The correct answer is <strong>{solution}</strong>{sentenceEnding(solution)}</>;
           })() : null}</>}</p></Feedback>
         {question.quantityWord && question.boardCounts ? <p className="small">
           {question.quantityWord} = {question.boardCounts[solutions[question.questionId] ?? ""] ?? "?"}

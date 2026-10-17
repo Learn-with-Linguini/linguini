@@ -38,21 +38,21 @@ evidence_types = ["recognition", "construction", "production"]
 pattern_id = "article-noun"
 target_id = "name-object"
 structure = "[indefinite article] [noun]"
-examples = { es = ["una mesa", "un libro"], fr = ["une table", "un livre"] }
+examples = { es = ["una mesa", "un libro"], fr = ["une table", "un livre"], de = ["eine Lampe", "ein Tisch"] }
 
 [[language_patterns]]
 pattern_id = "copula-colour"
 target_id = "describe-colour"
 structure = "[it is] [indefinite article] [noun] [colour or detail agreeing with the noun]"
 clue_frame_id = "colour"
-examples = { es = ["Es una mesa blanca.", "Es un libro rojo."], fr = ["C'est une table blanche.", "C'est un livre rouge."] }
+examples = { es = ["Es una mesa blanca.", "Es un libro rojo."], fr = ["C'est une table blanche.", "C'est un livre rouge."], de = ["Das ist ein roter Tisch.", "Das ist eine weiße Lampe."] }
 
 [[language_patterns]]
 pattern_id = "copula-position-reference"
 target_id = "describe-location"
 structure = "[it is] [position] [article] [reference noun]"
 clue_frame_id = "location"
-examples = { es = ["Está al lado de la puerta."], fr = ["Il est à côté de la porte."] }
+examples = { es = ["Está al lado de la puerta."], fr = ["Il est à côté de la porte."], de = ["Er ist neben der Tür."] }
 
 [teaching]
 task_sequence = ["vocabularyIntroduction", "grammarLesson", "ispyRound", "reflection"]

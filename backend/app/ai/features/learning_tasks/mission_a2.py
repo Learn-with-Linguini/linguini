@@ -302,6 +302,20 @@ def _check_sentence_chunks(question):
         raise LearningTaskGenerationError("Only listed distractor chunks may extend the bank.")
 
 
+def _sentence_starts_are_uppercase(text):
+    sentence_start = True
+    for character in text:
+        if sentence_start:
+            if character.isspace() or character in "¿¡":
+                continue
+            if not character.isalpha() or not character.isupper():
+                return False
+            sentence_start = False
+        elif character in ".!?":
+            sentence_start = True
+    return True
+
+
 def _check_m02(payload, questions):
     facts = _approved(payload)
     selection = payload["selection"]
@@ -361,7 +375,7 @@ def _check_m02(payload, questions):
     )
     if choices.get(questions[0].correct_option_id) != correct_meaning:
         raise LearningTaskGenerationError("M02 Q1 must translate the selected attribute.")
-    if questions[1].correct_text != payload["facts"]["locationClue"]:
+    if fold(questions[1].correct_text or "") != fold(payload["facts"]["locationClue"]):
         raise LearningTaskGenerationError("M02 Q2 must build the selected relation clue.")
     marker_map = questions[2].marker_object_ids or {}
     marker_options = {option.option_id for option in questions[2].options}
@@ -427,7 +441,7 @@ def _check_m03(payload, questions):
             option.label for option in questions[0].options
             if option.option_id == questions[0].correct_option_id
         ) != first_word
-        or questions[1].correct_text != payload["facts"]["secondSentence"]
+        or fold(questions[1].correct_text or "") != fold(payload["facts"]["secondSentence"])
     ):
         raise LearningTaskGenerationError("M03 count answers must match the confirmed groups.")
     comparison = next(
@@ -469,7 +483,7 @@ def _check_m03(payload, questions):
         )
     ):
         raise LearningTaskGenerationError("The fictional count must not appear in the answer.")
-    if questions[4].correct_text != payload["facts"]["combined"]:
+    if fold(questions[4].correct_text or "") != fold(payload["facts"]["combined"]):
         raise LearningTaskGenerationError("M03 Q5 must report and compare both confirmed counts.")
     low, high = payload["quantityRange"]["min"], payload["quantityRange"]["max"]
     all_text = " ".join(
@@ -675,6 +689,10 @@ def validate_a2_lesson(payload: dict[str, Any], result: MissionA2Result) -> None
     unique_question_ids(questions)
     check_closed_facts(payload, result)
     for question in questions:
+        if question.correct_text and not _sentence_starts_are_uppercase(question.correct_text):
+            raise LearningTaskGenerationError(
+                "Every sentence in a correct answer must start with an uppercase letter."
+            )
         if question.interaction_type == "sentenceBuilding":
             _check_sentence_chunks(question)
         elif question.distractor_chunks or question.answer_chunks:
