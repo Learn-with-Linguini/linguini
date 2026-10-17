@@ -65,7 +65,11 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
     ? "Veo, veo, algo que"
     : scene.languageCode === "fr"
       ? "Je vois, je vois, quelque chose qui"
-      : "I spy with my little eye, something that";
+      : scene.languageCode === "de"
+        ? "Ich sehe etwas, das"
+        : scene.languageCode === "ko"
+          ? "나는 무언가를 보고 있어요:"
+          : "I spy with my little eye, something that";
   const answered = taskDone(task);
   const choose = async (optionId: string) => {
     if (answered || practiceSaving || submitting.current) return;

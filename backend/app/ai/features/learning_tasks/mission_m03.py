@@ -40,7 +40,10 @@ _INTERACTIONS = {
 _ORDER = ["chooseQuantity", "buildQuantity", "matchQuantity"]
 SECTION_PHOTO = "Task 1 · Count in your photo"
 SECTION_BOARD = "Task 2 · Practice board"
-_ANSWER_PROMPTS = {"es": "Responde con una frase.", "fr": "Réponds avec une phrase."}
+_ANSWER_PROMPTS = {
+    "es": "Responde con una frase.", "fr": "Réponds avec une phrase.",
+    "de": "Antworte mit einem Satz.",
+}
 _BOARD_LETTERS = "abc"
 _DIGIT = re.compile(r"\d")
 

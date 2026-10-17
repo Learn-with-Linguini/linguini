@@ -11,6 +11,10 @@ NUMBER_WORDS = {
            9: "neuf", 10: "dix", 11: "onze", 12: "douze", 13: "treize", 14: "quatorze",
            15: "quinze", 16: "seize", 17: "dix-sept", 18: "dix-huit", 19: "dix-neuf",
            20: "vingt"},
+    "de": {2: "zwei", 3: "drei", 4: "vier", 5: "fünf", 6: "sechs", 7: "sieben",
+           8: "acht", 9: "neun", 10: "zehn", 11: "elf", 12: "zwölf", 13: "dreizehn",
+           14: "vierzehn", 15: "fünfzehn", 16: "sechzehn", 17: "siebzehn",
+           18: "achtzehn", 19: "neunzehn", 20: "zwanzig"},
 }
 ENGLISH_NUMBERS = {
     1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven", 8: "eight",
@@ -18,7 +22,7 @@ ENGLISH_NUMBERS = {
     15: "fifteen", 16: "sixteen", 17: "seventeen", 18: "eighteen", 19: "nineteen",
     20: "twenty",
 }
-QUANTITY_FRAMES = {"es": "Hay", "fr": "Il y a"}
+QUANTITY_FRAMES = {"es": "Hay", "fr": "Il y a", "de": "Es gibt"}
 _FRENCH_OUX = {"bijou", "caillou", "chou", "genou", "hibou", "joujou", "pou"}
 _SPANISH_ACCENTS = set("áéíóú")
 
@@ -70,7 +74,7 @@ def quantity_meaning(quantity, label):
     return f"There are {ENGLISH_NUMBERS[quantity]} {english_plural(label)}."
 
 
-def taught_numbers(mission, progress):
+def taught_numbers(mission, progress, language="es"):
     """The numbers practice may use, and where they came from.
 
     An explicit ``taught_number_range`` in progress widens the range to at most
@@ -83,7 +87,10 @@ def taught_numbers(mission, progress):
     else:
         requirements = mission.photo_requirements
         low, high, source = requirements.min_quantity, requirements.max_quantity, "missionDefault"
-    return tuple(number for number in range(low, high + 1) if number in NUMBER_WORDS["es"]), source
+    numbers = tuple(
+        number for number in range(low, high + 1) if number in NUMBER_WORDS[language]
+    )
+    return numbers, source
 
 
 def wrong_quantities(quantity, low, high):

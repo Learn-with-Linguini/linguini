@@ -88,15 +88,27 @@ def _payload(language="fr", relations=None, progress=None, review=None, objects=
         SimpleNamespace(display_text="livre", gender="masculine"),
         SimpleNamespace(display_text="table", gender="feminine"),
     ] if language == "fr" else [
+        SimpleNamespace(display_text="Tasse", gender="feminine"),
+        SimpleNamespace(display_text="Stuhl", gender="masculine"),
+        SimpleNamespace(display_text="Tisch", gender="masculine"),
+    ] if language == "de" else [
         SimpleNamespace(display_text="taza", gender="feminine"),
         SimpleNamespace(display_text="libro", gender="masculine"),
         SimpleNamespace(display_text="mesa", gender="feminine"),
     ]
-    articles = {"fr": ("la", "le", "la"), "es": ("la", "el", "la")}[language]
+    articles = {
+        "fr": ("la", "le", "la"), "es": ("la", "el", "la"),
+        "de": ("die", "der", "der"),
+    }[language]
     scene = SimpleNamespace(objects=[
         SimpleNamespace(key=str(key), article=article, gender=gender)
         for key, article, gender in zip(
-            (CUP, BOOK, TABLE), articles, ("feminine", "masculine", "feminine"), strict=True,
+            (CUP, BOOK, TABLE),
+            articles,
+            {"de": ("feminine", "masculine", "masculine")}.get(
+                language, ("feminine", "masculine", "feminine"),
+            ),
+            strict=True,
         )
     ])
     relations = relations if relations is not None else [rel(CUP, "next_to", BOOK)]
@@ -129,6 +141,17 @@ def test_statement_groups_the_contracted_position_into_one_tile():
     spanish = _relation(_payload("es"))
     assert spanish["statement"] == "La taza está al lado del libro."
     assert spanish["whereQuestion"] == "¿Dónde está la taza?"
+
+
+def test_german_location_mission_uses_nominative_questions_and_dative_tiles():
+    payload = _payload("de", [rel(CUP, "on", TABLE)])
+    relation = _relation(payload)
+    assert relation["statement"] == "Die Tasse ist auf dem Tisch."
+    assert relation["whereQuestion"] == "Wo ist die Tasse?"
+    result = fallback_m02_lesson(payload)
+    assert result.questions[2].prompt == "Frag, wo die Tasse ist."
+    assert result.questions[3].prompt == "Antworte mit der Position, die das Foto zeigt."
+    validate_m02_lesson(payload, result)
 
 
 def test_one_relation_is_selected_even_when_more_are_confirmed():

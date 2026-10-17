@@ -111,10 +111,10 @@ class RoomPhotoPreparer:
     def _language(profile: dict) -> str:
         language = str(profile.get("target_language_code", "")).lower()
         source = str(profile.get("source_language_code", "en")).lower()
-        if language not in {"es", "fr"} or source != "en":
+        if language not in {"es", "fr", "de"} or source != "en":
             raise RoomPhotoError(
                 "room_photo_unavailable",
-                "Photo rooms currently support English to Spanish or French.",
+                "Photo rooms currently support English to Spanish, French or German.",
                 retryable=False,
             )
         return language
@@ -299,7 +299,7 @@ class RoomPhotoPreparer:
                     cache_scope=CacheScope(f"user:{owner_id}:room:{room_id}"),
                 )
             )
-            translated = normalize_object_articles(translated)
+            translated = normalize_object_articles(translated, payload["targetLanguage"])
             validate_translation_terms(payload, translated)
             if any(
                 len(rows) != len({row.key for row in rows})
