@@ -1,6 +1,4 @@
-"""A1-only mission gating and history-weighted mission rotation."""
-
-import pytest
+"""Mission gating and history-weighted mission rotation."""
 
 from app.schemas.enums import SessionMode
 from app.services import mission_eligibility
@@ -27,12 +25,11 @@ def test_proficiency_level_is_trimmed_and_case_normalized():
     ]
 
 
-@pytest.mark.parametrize("level", ["A0", "A2"])
-def test_other_levels_are_not_eligible_even_after_onboarding(level):
+def test_a0_is_not_eligible_even_after_onboarding():
     missions = lesson_missions(
         SessionMode.LESSON,
         {
-            "proficiency_level": level,
+            "proficiency_level": "A0",
             "target_language_code": "es",
             "onboarding_completed": True,
         },

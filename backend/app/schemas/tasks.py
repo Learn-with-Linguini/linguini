@@ -165,6 +165,7 @@ class GrammarLessonQuestion(ApiModel):
     roleplay_premise: str | None = Field(default=None, exclude_if=_is_none)
     # Options are shown in their saved, already shuffled order.
     keep_option_order: bool | None = Field(default=None, exclude_if=_is_none)
+    planning_facts: list[NonEmptyText] | None = Field(default=None, exclude_if=_is_none)
     # A marker choice: option id -> the scene object whose photo marker answers it.
     marker_object_ids: dict[str, UUID] | None = Field(default=None, exclude_if=_is_none)
 
@@ -195,6 +196,7 @@ class GrammarLessonContent(MissionTaskFields):
     title: NonEmptyText
     explanation: NonEmptyText | None = Field(default=None, exclude_if=_is_none)
     questions: Annotated[list[GrammarLessonQuestion], Field(min_length=1)]
+    check_each_question: bool | None = Field(default=None, exclude_if=_is_none)
     roleplay_facts: list[RoleplayFact] | None = Field(default=None, exclude_if=_is_none)
 
 
@@ -372,6 +374,7 @@ class TaskAnswerKey(ApiModel):
     question_evaluations: list[QuestionEvaluation] = Field(
         default_factory=list, exclude_if=_is_empty
     )
+    mission_state: JsonObject | None = Field(default=None, exclude_if=_is_none)
     # Yes/no statement questions: question id -> whether the statement is true.
     statement_correct: dict[str, bool] = Field(default_factory=dict, exclude_if=_is_empty)
 
@@ -739,6 +742,27 @@ class CheckVocabularyAnswerResponse(ApiModel):
     question_id: NonEmptyText
     is_correct: bool
     correct_option_id: NonEmptyText
+
+
+class CheckLessonAnswerRequest(ApiModel):
+    question_id: NonEmptyText
+    answer: Annotated[str, Field(min_length=1, max_length=2_000)]
+
+
+class LessonAnswerCheck(ApiModel):
+    question_id: NonEmptyText
+    answer: NonEmptyText
+    is_correct: bool
+    correct_answer: NonEmptyText
+    outcome: QuestionOutcome
+
+
+class CheckLessonAnswerResponse(LessonAnswerCheck):
+    pass
+
+
+class LessonChecksResponse(ApiModel):
+    checks: list[LessonAnswerCheck] = Field(default_factory=list)
 
 
 type SubmitTaskAttemptRequest = Annotated[

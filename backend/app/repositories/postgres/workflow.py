@@ -78,6 +78,9 @@ from app.schemas.tasks import (
     ISPY_DESCRIPTION_EVALUATION_VERSION,
     CheckVocabularyAnswerResponse,
     ISpyDescriptionEvaluation,
+    LessonAnswerCheck,
+    LessonChecksResponse,
+    QuestionOutcome,
     SessionProgress,
     SessionTask,
     SessionTaskPublic,
@@ -618,6 +621,98 @@ class PostgresWorkflowRepository:
                 is_correct=correct_option_id == option_id,
                 correct_option_id=correct_option_id,
             )
+
+    @staticmethod
+    def _lesson_check(task, question_id, answer, is_correct):
+        question = next(
+            item for item in task.public_content.questions if item.question_id == question_id
+        )
+        expected = task.answer_key.correct_option_ids.get(question_id)
+        correct_answer = expected
+        if question.interaction_type == "multipleChoice":
+            correct_answer = next(
+                option.label for option in question.options if option.option_id == expected
+            )
+        evaluation = next(
+            item for item in task.answer_key.question_evaluations
+            if item.question_id == question_id
+        )
+        return LessonAnswerCheck(
+            question_id=question_id,
+            answer=answer,
+            is_correct=is_correct,
+            correct_answer=correct_answer,
+            outcome=QuestionOutcome(
+                question_id=question_id,
+                outcome="correct" if is_correct else "incorrect",
+                objective_id=evaluation.objective_id,
+                target_ids=evaluation.target_ids,
+                evidence_type=evaluation.evidence_type,
+            ),
+        )
+
+    def check_lesson_answer(self, task_id, question_id, answer):
+        """Lock the first submitted answer without recording lesson evidence."""
+        with self.transaction() as c:
+            task = self._task_row(c, task_id)
+            if task.kind != "grammarLesson" or not task.public_content.check_each_question:
+                raise PracticeConflictError("This lesson does not support per-question checking.")
+            session_row = c.execute(
+                select(sessions)
+                .where(sessions.c.id == task.session_id, sessions.c.user_id == self.user_id)
+                .with_for_update()
+            ).mappings().one_or_none()
+            if session_row is None:
+                raise PracticeNotFoundError("Task not found.")
+            session = parse_session(session_row)
+            draft = dict(session.analysis_draft or {})
+            mission_checks = dict(draft.get("missionChecks") or {})
+            task_checks = dict(mission_checks.get(str(task.id)) or {})
+            stored = task_checks.get(question_id)
+            if stored is not None:
+                return self._lesson_check(
+                    task, question_id, stored["answer"], stored["isCorrect"]
+                )
+            question_ids = [item.question_id for item in task.public_content.questions]
+            if question_id not in question_ids:
+                raise PracticeConflictError("Choose a question from this lesson.")
+            position = question_ids.index(question_id)
+            if any(question not in task_checks for question in question_ids[:position]):
+                raise PracticeConflictError("Check each lesson question in order.")
+            question = task.public_content.questions[position]
+            if question.interaction_type == "multipleChoice" and answer not in {
+                option.option_id for option in question.options
+            }:
+                raise PracticeConflictError("Choose one of the offered answers.")
+            if session.status != "inProgress" or task.status in {"completed", "skipped"}:
+                raise PracticeConflictError("This lesson is not active.")
+            is_correct = _lesson_answer_is_correct(task, question_id, answer)
+            task_checks[question_id] = {"answer": answer, "isCorrect": is_correct}
+            mission_checks[str(task.id)] = task_checks
+            draft["missionChecks"] = mission_checks
+            c.execute(
+                update(sessions).where(sessions.c.id == session.id).values(analysis_draft=draft)
+            )
+            return self._lesson_check(task, question_id, answer, is_correct)
+
+    def lesson_checks(self, task_id):
+        """Restore checks already saved for one sequential A2 lesson."""
+        with self.read_connection() as c:
+            task = self._task_row(c, task_id)
+            if task.kind != "grammarLesson" or not task.public_content.check_each_question:
+                raise PracticeConflictError("This lesson does not support per-question checking.")
+            session = self._session(c, task.session_id)
+            task_checks = (
+                (session.analysis_draft or {}).get("missionChecks", {}).get(str(task.id), {})
+            )
+            checks = []
+            for question in task.public_content.questions:
+                stored = task_checks.get(question.question_id)
+                if stored is not None:
+                    checks.append(self._lesson_check(
+                        task, question.question_id, stored["answer"], stored["isCorrect"]
+                    ))
+            return LessonChecksResponse(checks=checks)
 
     def _scene_media(self, c, session):
         asset = MediaAsset.model_validate(
@@ -1713,6 +1808,11 @@ class PostgresWorkflowRepository:
                 return
             # Rebuild tasks from scratch for the accepted objects.
             c.execute(delete(session_tasks).where(session_tasks.c.session_id == session_id))
+            draft = dict(session.analysis_draft or {})
+            draft.pop("missionChecks", None)
+            c.execute(
+                update(sessions).where(sessions.c.id == session_id).values(analysis_draft=draft)
+            )
             if self.translator:
                 self._store_translation(c, session, profile, objects, translated_scene)
             objects, relations = self._scene_objects(c, session)
@@ -1871,7 +1971,7 @@ class PostgresWorkflowRepository:
         lessons = []
         for planned in claim.missions:
             mission = lesson_mission(planned)
-            spec = MISSION_LESSONS[mission.mission_id]
+            spec = MISSION_LESSONS[(mission.mission_id, str(mission.practice_level))]
             payload = spec.payload(
                 mission, language, objects, relations, words, translated_scene,
                 claim.counted_groups, claim.mission_progress or {}, claim.session_id,
@@ -2413,6 +2513,32 @@ class PostgresWorkflowRepository:
                         )
                         evaluation_details = interpretation.model_dump(mode="json", by_alias=True)
                     else:
+                        if (
+                            task.kind == "grammarLesson"
+                            and task.public_content.check_each_question
+                        ):
+                            stored_checks = (
+                                (session.analysis_draft or {})
+                                .get("missionChecks", {})
+                                .get(str(task.id), {})
+                            )
+                            question_ids = {
+                                question.question_id
+                                for question in task.public_content.questions
+                            }
+                            if set(stored_checks) != question_ids:
+                                raise PracticeConflictError(
+                                    "Check every lesson question before submitting."
+                            )
+                            if any(
+                                request.answers.get(question_id)
+                                != stored_checks[question_id]["answer"]
+                                for question_id in question_ids
+                            ):
+                                raise PracticeConflictError(
+                                    "Submitted answers must match the answers checked in "
+                                    "this lesson."
+                                )
                         correct = evaluate(task, request)
                         feedback_message = (
                             "Reflection recorded."

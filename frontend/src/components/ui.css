@@ -318,6 +318,9 @@
   color: var(--ink);
   font-size: var(--text-small);
   font-weight: 700;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
   cursor: pointer;
 }
 
@@ -351,6 +354,23 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
+}
+
+.roleplay-premise,
+.mission-planning-facts {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: var(--space-3);
+  background: #f3ead7;
+}
+
+.roleplay-premise p,
+.mission-planning-facts ul {
+  margin: var(--space-1) 0 0;
+}
+
+.mission-planning-facts ul {
+  padding-left: var(--space-4);
 }
 
 /* Tabs */

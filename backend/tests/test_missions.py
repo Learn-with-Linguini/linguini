@@ -129,7 +129,7 @@ def test_m01_a1_definition_covers_the_mission_contract():
     assert {item.target_id for item in mission.evaluation_criteria} == set(mission.targets)
     assert mission.expected_performance.min_assessed_questions == 4
     assert get_mission("M01", "A1", 2) is None
-    assert get_mission("M01", "A2", 1) is None
+    assert get_mission("M01", "A2", 1) is not None
 
 
 def test_definition_files_are_named_by_their_mission(tmp_path):
@@ -145,8 +145,9 @@ def test_definition_files_are_named_by_their_mission(tmp_path):
     with pytest.raises(MissionConfigurationError, match="describe-size"):
         load_missions(tmp_path)
     assert sorted(path.name for path in Path(DEFINITIONS_DIR).glob("*.toml")) == [
-        "M01-A1.toml", "M02-A1-2.toml", "M02-A1.toml", "M03-A1.toml",
-        "M04-A1.toml", "M05-A1.toml",
+        "M01-A1.toml", "M01-A2.toml", "M02-A1-2.toml", "M02-A1.toml",
+        "M02-A2.toml", "M03-A1.toml", "M03-A2.toml", "M04-A1.toml",
+        "M04-A2.toml", "M05-A1.toml",
     ]
 
 
