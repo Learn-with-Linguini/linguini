@@ -250,7 +250,7 @@ def test_confirm_and_attribute_questions_have_specific_correct_feedback():
     choose = result.questions[2]
     pair = next(row for row in data["pairs"] if row["key"] == choose.object_key)
     choose_evaluation = evaluations[choose.question_id]
-    correct_note = f"This {pair['source']} is {pair['attributeSource']}: {pair['agreedForm']}."
+    correct_note = f"The {pair['source']} is {pair['attributeSource']}: {pair['agreedForm']}."
     assert choose_evaluation.correct_note == correct_note
     assert data["attributeMeanings"][fold("Roja")] == "red"
     assert data["attributeMeanings"][fold("Verde")] == "green"
@@ -264,7 +264,7 @@ def test_confirm_and_attribute_questions_have_specific_correct_feedback():
         )
         assert rule.note == f"“{option.label}” means {meaning}."
         assert rule.explanation == (
-            f"“{option.label}” means {meaning}; this {pair['source']} is "
+            f"“{option.label}” means {meaning}; the {pair['source']} is "
             f"{pair['attributeSource']}: {pair['agreedForm']}."
         )
 
@@ -279,6 +279,40 @@ def test_confirm_and_attribute_questions_have_specific_correct_feedback():
     assert legacy_evaluation.corrections[0].note is None
     assert legacy_evaluation.corrections[0].explanation == correct_note
     assert evaluations[result.questions[3].question_id].correct_note is None
+
+
+def test_attribute_feedback_does_not_duplicate_an_existing_english_article():
+    objects = [
+        scene_object(CUP, "the taxi", "yellow"),
+        scene_object(BOOK, "book", "green"),
+        scene_object(TABLE, "table", "white"),
+    ]
+    words = [
+        word(CUP, "taxi", "masculine"),
+        word(BOOK, "libro", "masculine"),
+        word(TABLE, "mesa", "feminine"),
+    ]
+    data = build("es", objects=objects, words=words)
+    result = fallback_m01_lesson(data)
+    task = m01_lesson_task(SESSION, MISSION, data, result, {})
+    question = result.questions[2]
+    pair = next(row for row in data["pairs"] if row["key"] == question.object_key)
+    evaluation = next(
+        item for item in task.answer_key.question_evaluations
+        if item.question_id == question.question_id
+    )
+
+    assert pair["source"] == "the taxi"
+    assert evaluation.correct_note == "The taxi is yellow: amarillo."
+    feedback = [
+        evaluation.correct_note,
+        *(rule.note or "" for rule in evaluation.corrections),
+        *(rule.explanation or "" for rule in evaluation.corrections),
+    ]
+    assert all(
+        "the the" not in text.casefold() and "this the" not in text.casefold()
+        for text in feedback
+    )
 
 
 def test_m01_correct_outcomes_show_notes_only_for_other_attribute_options():

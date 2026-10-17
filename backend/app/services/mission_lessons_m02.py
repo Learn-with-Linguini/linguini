@@ -12,7 +12,7 @@ from app.services.mission_eligibility import (
     confirmed_relations,
     relation_type,
 )
-from app.services.mission_lessons import build_mission_task, mission_gender
+from app.services.mission_lessons import build_mission_task, definite, mission_gender
 
 M02_FOCUS = "findAndLocate"
 QUESTION_CHUNKS = {"es": "¿Dónde está…?", "fr": "Où est… ?"}
@@ -74,10 +74,6 @@ def _article_and_noun(text, term):
 
 def _capitalised(text):
     return f"{text[:1].upper()}{text[1:]}"
-
-
-def _the(source):
-    return f"the {re.sub(r'^(?:a|an|the)\s+', '', source, flags=re.IGNORECASE)}"
 
 
 def _place_tiles(language, expression, place):
@@ -289,29 +285,29 @@ def _corrections(payload, question, label):
         )], None
     if question.purpose == "findObject":
         sources = {row["key"]: row["source"] for row in payload["markers"]}
-        correct_note = f"Marker {label} is {_the(relation['subjectSource'])}."
+        correct_note = f"Marker {label} is {definite(relation['subjectSource'])}."
         rules = []
         for option in wrong:
             source = sources[question.marker_keys[option.option_id]]
             rules.append(dict(
                 mistake="wrongObject", answers=[option.option_id], correction=label,
-                note=f"Marker {option.label} is {_the(source)}.",
+                note=f"Marker {option.label} is {definite(source)}.",
                 explanation=(
-                    f"Marker {option.label} is {_the(source)}; the sentence describes "
-                    f"{_the(relation['subjectSource'])} (marker {label})."
+                    f"Marker {option.label} is {definite(source)}; the sentence describes "
+                    f"{definite(relation['subjectSource'])} (marker {label})."
                 ),
             ))
         return rules, correct_note
     meanings = {row["position"]: row["meaning"] for row in payload["positions"]}
     places = {fold(row["label"]): row["position"] for row in relation["placeOptions"]}
     correct_note = _capitalised(
-        f"{_the(relation['subjectSource'])} is {relation['meaning']} "
-        f"{_the(relation['referenceSource'])}."
+        f"{definite(relation['subjectSource'])} is {relation['meaning']} "
+        f"{definite(relation['referenceSource'])}."
     )
     rules = []
     for option in wrong:
         meaning = meanings[places[fold(option.label)]]
-        note = f"“{option.label}” means {meaning} {_the(relation['referenceSource'])}."
+        note = f"“{option.label}” means {meaning} {definite(relation['referenceSource'])}."
         rules.append(dict(
             mistake="wrongPosition", answers=[option.option_id], correction=label,
             note=note,

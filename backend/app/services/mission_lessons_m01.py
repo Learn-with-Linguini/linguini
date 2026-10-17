@@ -12,7 +12,7 @@ from app.services.mission_eligibility import (
     confirmed_attributes,
     confirmed_colour,
 )
-from app.services.mission_lessons import build_mission_task, mission_gender
+from app.services.mission_lessons import build_mission_task, definite, mission_gender
 
 M01_FOCUS = "identifyDescribeObject"
 CONFIRM_PROMPTS = {"es": "¿Es {noun}?", "fr": "Est-ce {noun} ?"}
@@ -308,14 +308,16 @@ def _corrections(payload, question, correct_label):
             mistake="wrongObject", answers=[option.option_id], correction=correct_label,
             explanation=explanation, note=correct_note,
         ) for option in wrong], correct_note
-    correct_note = f"This {pair['source']} is {pair['attributeSource']}: {pair['agreedForm']}."
+    correct_note = capitalised(
+        f"{definite(pair['source'])} is {pair['attributeSource']}: {pair['agreedForm']}."
+    )
     meanings = payload.get("attributeMeanings", {})
     rules = []
     for option in wrong:
         meaning = meanings.get(fold(option.label))
         note = f"“{option.label}” means {meaning}." if meaning else None
         explanation = (
-            f"“{option.label}” means {meaning}; this {pair['source']} is "
+            f"“{option.label}” means {meaning}; {definite(pair['source'])} is "
             f"{pair['attributeSource']}: {pair['agreedForm']}."
             if meaning else correct_note
         )
