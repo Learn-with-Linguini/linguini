@@ -1,0 +1,211 @@
+import assert from "node:assert/strict";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import test from "node:test";
+import { JSDOM } from "jsdom";
+import { rolldown } from "rolldown";
+import type { PracticeDetail, PracticeReview } from "../src/lib/api.ts";
+import type { Scene } from "../src/data/types.ts";
+import type { AppState } from "../src/state/context.ts";
+
+const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://localhost/" });
+Object.defineProperty(globalThis, "window", { value: dom.window, configurable: true });
+Object.defineProperty(globalThis, "document", { value: dom.window.document, configurable: true });
+(globalThis as Record<string, unknown>).IS_REACT_ACT_ENVIRONMENT = true;
+dom.window.HTMLElement.prototype.scrollIntoView = () => {};
+Object.defineProperty(dom.window, "matchMedia", { value: () => ({ matches: true }) });
+const NativeMessageChannel = globalThis.MessageChannel;
+const messageChannels: MessageChannel[] = [];
+globalThis.MessageChannel = class extends NativeMessageChannel {
+  constructor() { super(); messageChannels.push(this); }
+};
+
+// Bundle the real page once, as node's type stripping does not support TSX.
+const here = dirname(fileURLToPath(import.meta.url));
+const workdir = mkdtempSync(join(tmpdir(), "practice-analysis-"));
+const entry = join(here, ".practiceAnalysis.entry.ts");
+writeFileSync(entry, [
+  'export { createElement as h, act } from "react";',
+  'export { createRoot } from "react-dom/client";',
+  'export { MemoryRouter, Route, Routes, Outlet } from "react-router-dom";',
+  `export { PracticeAnalysis } from "${pathToFileURL(join(here, "../src/pages/PracticeAnalysis")).href}";`,
+  `export { AppStateContext } from "${pathToFileURL(join(here, "../src/state/context")).href}";`,
+].join("\n"));
+let bundled: unknown;
+try {
+  const bundler = await rolldown({
+    input: entry,
+    platform: "node",
+    resolve: { extensions: [".tsx", ".ts", ".js"] },
+    plugins: [{
+      name: "stub-css",
+      resolveId: (id: string) => id.endsWith(".css") ? "\0empty-css" : null,
+      load: (id: string) => id === "\0empty-css" ? "export default {};" : null,
+    }],
+  });
+  const { output } = await bundler.generate({ format: "esm" });
+  await bundler.close();
+  const bundlePath = join(workdir, "bundle.mjs");
+  writeFileSync(bundlePath, output[0].code);
+  bundled = await import(pathToFileURL(bundlePath).href);
+} finally {
+  rmSync(entry, { force: true });
+  rmSync(workdir, { recursive: true, force: true });
+}
+const { h, act, createRoot, MemoryRouter, Route, Routes, Outlet, PracticeAnalysis, AppStateContext } = bundled as {
+  h: typeof import("react").createElement;
+  act: typeof import("react").act;
+  createRoot: typeof import("react-dom/client").createRoot;
+  MemoryRouter: typeof import("react-router-dom").MemoryRouter;
+  Route: typeof import("react-router-dom").Route;
+  Routes: typeof import("react-router-dom").Routes;
+  Outlet: typeof import("react-router-dom").Outlet;
+  PracticeAnalysis: typeof import("../src/pages/PracticeAnalysis.tsx").PracticeAnalysis;
+  AppStateContext: typeof import("../src/state/context.ts").AppStateContext;
+};
+
+const scene: Scene = {
+  id: "scene", sessionId: "session", mediaAssetId: "photo", imageUrl: "/photo.jpg",
+  languageCode: "es", language: "Spanish", title: "Kitchen", blurb: "",
+  items: ["table", "cup", "cup"].map((word, index) => ({
+    id: `object-${index}`, word, translation: word, marker: index + 1, x: 20 + index * 20, y: 40,
+    wordClass: "noun", gender: null, example: "", exampleTranslation: "",
+  })),
+};
+const relation = {
+  id: "relation", subjectSceneObjectId: "object-1", referenceSceneObjectId: "object-2",
+  relation: "nextTo", sourceRelationKey: "original-relation",
+};
+function detail(): PracticeDetail {
+  return {
+    session: { id: "session", mode: "lesson", sourceSessionId: null, status: "awaitingObjectReview",
+      sceneMediaAssetId: "photo", sessionTitle: null, sessionSummary: null, failureCode: null },
+    mediaAsset: { id: "photo", source: "userUpload" }, sceneId: null, title: "Kitchen",
+    analysisMode: null, analysisRetryable: false, sceneObjectRelations: [relation],
+    sceneObjects: scene.items.map(item => ({ id: item.id, sessionId: "session", label: item.translation,
+      vocabularyItemId: null, boundingBox: null, anchorPoint: { x: item.x / 100, y: item.y / 100 },
+      attributes: item.translation === "cup" ? { quantity: "two", color: "white" } : {},
+      confidenceScore: null, sourceObjectKey: item.id })),
+    vocabulary: [], translations: [], translationPreview: null, tasks: [], nextTaskId: null,
+    progress: { completedTaskCount: 0, skippedTaskCount: 0, terminalTaskCount: 0, totalTaskCount: 0 },
+  };
+}
+
+let root: ReturnType<typeof createRoot> | null = null;
+let reviews: PracticeReview[] = [];
+async function mount(session = detail()) {
+  reviews = [];
+  const state = { session, practiceSaving: false, practiceError: null, practiceStalled: false,
+    saveReview: async (review: PracticeReview) => { reviews.push(review); },
+  } as unknown as AppState;
+  const container = dom.window.document.createElement("div");
+  dom.window.document.body.appendChild(container);
+  root = createRoot(container);
+  await act(async () => {
+    root!.render(h(MemoryRouter, { initialEntries: ["/analysis"] },
+      h(AppStateContext.Provider, { value: state },
+        h(Routes, null, h(Route, { element: h(Outlet, { context: scene }) },
+          h(Route, { path: "/analysis", element: h(PracticeAnalysis) }))))));
+  });
+}
+async function click(element: Element | null) {
+  assert.ok(element, "the requested control is present");
+  await act(async () => { (element as HTMLElement).click(); });
+}
+function button(text: string) {
+  return [...dom.window.document.querySelectorAll("button")].find(element => element.textContent?.trim() === text) ?? null;
+}
+async function input(id: string, value: string) {
+  const element = dom.window.document.getElementById(id) as HTMLInputElement | null;
+  assert.ok(element, `${id} is present`);
+  await act(async () => {
+    Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, "value")!.set!.call(element, value);
+    element.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
+  });
+}
+function numbers(selector: string) {
+  return [...dom.window.document.querySelectorAll(selector)].map(element => Number(element.textContent));
+}
+function assertMarkers(expected: number[]) {
+  assert.deepEqual(numbers(".analysis-word-row__marker"), expected);
+  assert.deepEqual(numbers(".scene__marker-label"), expected);
+}
+async function addWord(word: string) {
+  await input("analysis-new-word", word);
+  await click(button("Select location"));
+  const photo = dom.window.document.querySelector(".scene[role=button]");
+  assert.ok(photo);
+  await act(async () => {
+    photo.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+  });
+}
+
+test.afterEach(async () => {
+  await act(async () => { root?.unmount(); });
+  root = null;
+  dom.window.document.body.replaceChildren();
+});
+test.after(() => {
+  dom.window.close();
+  for (const channel of messageChannels) { channel.port1.close(); channel.port2.close(); }
+  globalThis.MessageChannel = NativeMessageChannel;
+});
+
+test("removing and restoring words keeps photo numbers sequential without changing saved object identities", async () => {
+  await mount();
+  assertMarkers([1, 2, 3]);
+  await click(dom.window.document.querySelector('[aria-label="Remove table"]'));
+  assertMarkers([1, 2]);
+  await addWord("window");
+  await addWord("door");
+  assertMarkers([1, 2, 3, 4]);
+  await click(dom.window.document.querySelector('[aria-label="Remove window"]'));
+  assertMarkers([1, 2, 3]);
+  await click(button("Restore removed words"));
+  assertMarkers([1, 2, 3, 4]);
+  await click(dom.window.document.querySelector('[aria-label="Remove table"]'));
+  await click(button("Continue"));
+  assert.equal(reviews.length, 1);
+  assert.deepEqual(reviews[0].acceptedObjectIds, ["object-1", "object-2"]);
+  assert.deepEqual(reviews[0].relations, [relation]);
+  assert.equal(reviews[0].addedObjects.length, 1);
+  assert.equal(reviews[0].addedObjects[0].label, "door");
+  assert.deepEqual({ x: reviews[0].addedObjects[0].x, y: reviews[0].addedObjects[0].y }, { x: 0.5, y: 0.5 });
+  assert.ok(reviews[0].addedObjects[0].id);
+  assert.deepEqual(scene.items.map(item => item.marker), [1, 2, 3]);
+});
+
+test("counts live in Objects, stay grouped and retain values when switching details or removing an object", async () => {
+  await mount();
+  const tabs = [...dom.window.document.querySelectorAll('[role="tab"]')];
+  assert.deepEqual(tabs.map(tab => tab.textContent?.replace(/\d/g, "")), ["Objects", "Attributes", "Relations"]);
+  const objects = dom.window.document.querySelector('[aria-labelledby="analysis-found-title"]');
+  assert.ok(objects?.querySelector('[aria-labelledby="analysis-counts-title"]'));
+  assert.equal(dom.window.document.querySelectorAll(".analysis-count-row").length, 2);
+  await click(button("Use suggested count: 2"));
+  assert.equal((dom.window.document.getElementById("count-cup") as HTMLInputElement).value, "2");
+  await click(tabs[1]);
+  assert.equal(dom.window.document.getElementById("count-cup"), null);
+  await click(tabs[0]);
+  assert.equal((dom.window.document.getElementById("count-cup") as HTMLInputElement).value, "2");
+  await click(dom.window.document.querySelector('[aria-label="Remove cup"]'));
+  assert.equal(dom.window.document.querySelectorAll(".analysis-count-row").length, 2);
+  await click(button("Continue"));
+  assert.deepEqual(reviews[0].objectCounts, { "object-2": 2 });
+  assert.deepEqual(reviews[0].relations, []);
+});
+
+test("invalid counts explain the problem and block Continue until corrected", async () => {
+  await mount();
+  await input("count-cup", "11");
+  const count = dom.window.document.getElementById("count-cup")!;
+  assert.equal(count.getAttribute("aria-invalid"), "true");
+  assert.match(dom.window.document.getElementById(count.getAttribute("aria-describedby")!)!.textContent!, /Counts go from 1 to 10/);
+  assert.equal((button("Continue") as HTMLButtonElement).disabled, true);
+  await input("count-cup", "3");
+  assert.equal((button("Continue") as HTMLButtonElement).disabled, false);
+  await click(button("Continue"));
+  assert.deepEqual(reviews[0].objectCounts, { "object-1": 3 });
+});
