@@ -1,7 +1,5 @@
 """Build the M05 A1 preference payload and its validated grammar lesson."""
 
-from uuid import UUID
-
 from app.schemas.roleplay import parse_roleplay_facts
 from app.services.mission_lessons import build_mission_task, noun_gender
 from app.services.possessives import definite_noun_phrase
@@ -34,9 +32,6 @@ _EXPLANATIONS = {
     ),
 }
 _EVALUATIONS = {
-    "matchPreference": (
-        ["understand-preference"], "recognition", ["matches-assigned-preference"]
-    ),
     "choosePreference": (["choose-preference"], "recognition", ["chooses-preference"]),
     "buildMyPreference": (
         ["say-my-preference"], "construction", ["says-my-preference"]
@@ -73,15 +68,6 @@ def _premise(fact, label):
         return f"Let's pretend you {preference} the {label}."
     verb = "likes" if fact.preference == "like" else "doesn't like"
     return f"Let's pretend {subject} {verb} the {label}."
-
-
-def _match_premise(fact):
-    subject = "you" if fact.subject_type == "learner" else _subject(fact)
-    if fact.subject_type == "learner":
-        verb = "like" if fact.preference == "like" else "don't like"
-    else:
-        verb = "likes" if fact.preference == "like" else "doesn't like"
-    return f"Let's pretend {subject} {verb} one of these things."
 
 
 def _build_prompt(person, language, name, noun):
@@ -173,7 +159,6 @@ def m05_payload(mission, language, objects, words, translated_scene, session_id,
             contrast=contrast,
             nounPhrase=noun_phrase,
             premise=_premise(fact, obj.label.strip()),
-            matchPremise=_match_premise(fact),
             subjectType=fact.subject_type,
             subjectNames=fact.subject_names,
             preference=fact.preference,
@@ -247,7 +232,6 @@ def m05_ready(payload):
         and learner.get("build_prompt")
         and ana.get("sentence")
         and ana.get("contrast")
-        and ana.get("matchPremise")
         and ana.get("build_prompt")
         and leo.get("sentence")
         and leo.get("contrast")
@@ -273,10 +257,12 @@ def m05_lesson_task(session_id, mission, payload, result, vocabulary_ids):
         corrections = (
             [
                 dict(
-                    mistake="wrongObject",
+                    mistake="wrongWord",
                     answers=[option.option_id],
                     correction=label,
-                    explanation="That marker isn't the thing in the sentence.",
+                    explanation=(
+                        "Check whether the sentence matches the pretend like or dislike fact."
+                    ),
                 )
                 for option in question.options if option.option_id != question.correct_option_id
             ]
@@ -301,17 +287,10 @@ def m05_lesson_task(session_id, mission, payload, result, vocabulary_ids):
         )
         return dict(
             scene_object_id=question.object_key,
-            object_label=(
-                None if question.purpose == "matchPreference"
-                else detail["label"].capitalize()
-            ),
+            object_label=detail["label"].capitalize(),
             section=question.section,
             roleplay_premise=question.roleplay_premise,
             prompt_translation=question.prompt_translation,
-            marker_object_ids=(
-                {key: UUID(value) for key, value in question.option_object_ids.items()}
-                if question.option_object_ids is not None else None
-            ),
             keep_option_order=(
                 True if question.interaction_type == "multipleChoice" else None
             ),

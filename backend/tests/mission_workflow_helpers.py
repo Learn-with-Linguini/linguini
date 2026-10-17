@@ -116,20 +116,22 @@ def review_lesson(
     assert serialized["roleplayFacts"] == facts
     fact_ids = {fact["sceneObjectId"] for fact in facts}
     assert fact_ids <= set(markers)
-    for question in task.public_content.questions:
-        question_objects = (
-            {str(object_id) for object_id in question.marker_object_ids.values()}
-            if question.marker_object_ids is not None
-            else ({str(question.scene_object_id)} if question.scene_object_id else set())
-        )
-        assert question_objects <= fact_ids
-    match = task.public_content.questions[0]
-    assert {str(object_id) for object_id in match.marker_object_ids.values()} == fact_ids
-    answer_key = _answer_key(engine, task.id)["correctOptionIds"]
-    assert str(match.marker_object_ids[answer_key[match.question_id]]) == next(
-        fact["sceneObjectId"] for fact in facts
-        if fact.get("ownerNames", fact.get("subjectNames")) == ["Ana"]
+    questions = task.public_content.questions
+    assert len(questions) == 3
+    assert all(question.marker_object_ids is None for question in questions)
+    assert all(
+        str(question.scene_object_id) in fact_ids
+        and markers[str(question.scene_object_id)] > 0
+        for question in questions
     )
+    role_object_ids = {
+        tuple(fact.get("ownerNames", fact.get("subjectNames")) or []):
+            fact["sceneObjectId"]
+        for fact in facts
+    }
+    assert [
+        str(question.scene_object_id) for question in questions
+    ] == [role_object_ids[("Leo",)], role_object_ids[()], role_object_ids[("Ana",)]]
     first_get = task.public_content
     second_get = lesson_task(repo.get(session_id, profile.id), mission_id).public_content
     assert first_get == second_get

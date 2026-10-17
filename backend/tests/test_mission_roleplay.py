@@ -8,7 +8,7 @@ from pydantic import ValidationError
 
 from app.schemas.roleplay import OwnershipFact, PreferenceFact, parse_roleplay_facts
 from app.services.mission_roleplay import assign_roleplay
-from app.services.possessives import ownership_statement, possessive_sentence
+from app.services.possessives import possessive_sentence
 from app.services.preferences import preference_sentence
 
 
@@ -143,17 +143,6 @@ def test_possessives_refuse_unknown_gender_french_h_and_non_letter_nouns():
     assert possessive_sentence("fr", "first", None, "livre", None) is None
     assert possessive_sentence("fr", "first", None, "haricot", "masculine") is None
     assert possessive_sentence("es", "first", None, "libro!", "masculine") is None
-
-
-@pytest.mark.parametrize(("language", "owner", "noun", "gender", "expected"), [
-    ("es", "Ana", "taza", "la", "Es la taza de Ana."),
-    ("fr", "Ana", "tasse", "feminine", "C'est la tasse d'Ana."),
-    ("fr", "Leo", "assiette", "la", "C'est l'assiette de Leo."),
-    ("de", "Leo", "Buch", "das", "Das ist Leos Buch."),
-    ("ko", "Ana", "책", "masculine", "아나의 책이에요."),
-])
-def test_ownership_statements(language, owner, noun, gender, expected):
-    assert ownership_statement(language, owner, noun, gender) == expected
 
 
 @pytest.mark.parametrize(("language", "person", "name", "like", "noun", "gender", "expected"), [

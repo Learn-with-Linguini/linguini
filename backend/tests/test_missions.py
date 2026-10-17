@@ -149,6 +149,15 @@ def test_definition_files_are_named_by_their_mission(tmp_path):
     ]
 
 
+def test_m04_m05_definitions_cover_three_assessed_questions():
+    for mission_id in ("M04", "M05"):
+        mission = get_mission(mission_id, "A1", 1)
+        assert len(mission.targets) == len(mission.evaluation_criteria) == 3
+        assert mission.expected_performance.min_assessed_questions == 2
+        assert mission.expected_performance.min_correct_ratio == 0.75
+        assert mission.expected_performance.min_independent_correct == 1
+
+
 def test_legacy_tasks_keep_their_saved_json_shape():
     task = mission_task(content=lesson_content(), key=answer_key())
     assert task.public_content.mission_key is None

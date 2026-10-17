@@ -20,17 +20,12 @@ from app.services.mission_roleplay import assign_roleplay
 M05 = get_mission("M05", "A1", 1)
 
 
-def _marker_points_to_non_fact(data):
-    options = data["questions"][0]["option_object_ids"]
-    options[next(iter(options))] = "00000000-0000-0000-0000-000000000000"
-
-
 def _plural_answer(data):
-    data["questions"][2]["correct_text"] = "Me gusta los libros."
+    data["questions"][1]["correct_text"] = "Me gusta los libros."
 
 
 def _add_excess_bank_tokens(data):
-    data["questions"][2]["token_bank"].extend(["extra-one", "extra-two", "extra-three"])
+    data["questions"][1]["token_bank"].extend(["extra-one", "extra-two", "extra-three"])
 
 
 def _payload(language="es", object_count=3):
@@ -83,11 +78,11 @@ def test_fallback_is_deterministic_and_passes_the_m05_validator():
     second = fallback_m05_lesson(payload)
     assert first.model_dump() == second.model_dump()
     validate_m05_lesson(payload, first)
-    assert [question.purpose for question in first.questions] == [
-        "matchPreference", "choosePreference", "buildMyPreference", "buildTheirPreference",
-    ]
+    purposes = [question.purpose for question in first.questions]
+    assert not any(purpose.startswith("match") for purpose in purposes)
+    assert purposes == ["choosePreference", "buildMyPreference", "buildTheirPreference"]
     assert [question.section for question in first.questions] == [
-        "Task 1 · Who likes what?", "Task 1 · Who likes what?",
+        "Task 1 · Who likes what?",
         "Task 2 · Say what you like", "Task 2 · Say what you like",
     ]
 
@@ -95,9 +90,7 @@ def test_fallback_is_deterministic_and_passes_the_m05_validator():
 def test_m05_correct_answers_include_positive_and_negative_forms():
     payload, _objects = _payload()
     result = fallback_m05_lesson(payload)
-    match, choose, mine, theirs = result.questions
-    assert match.prompt == payload["ana"]["sentence"]
-    assert match.roleplay_premise == "Let's pretend Ana doesn't like one of these things."
+    choose, mine, theirs = result.questions
     assert "Me gusta" in mine.correct_text
     assert "no me gusta" not in mine.correct_text.casefold()
     assert " no le gusta " in theirs.correct_text.casefold()
@@ -117,13 +110,10 @@ def test_french_third_person_build_prompt_elides_only_before_vowel_names():
     assert "qu'Leo" not in payload["leo"]["build_prompt"]
 
 
-def test_m05_marker_choices_refer_only_to_fact_objects_and_are_unique():
+def test_m05_questions_highlight_only_their_assigned_fact_objects():
     payload, _objects = _payload(object_count=3)
     result = fallback_m05_lesson(payload)
-    match, choose, mine, theirs = result.questions
-    assert match.option_object_ids[match.correct_option_id] == payload["ana"]["objectKey"]
-    assert len(set(match.option_object_ids.values())) == len(match.options) == 3
-    assert match.markers == payload["all_markers"]
+    choose, mine, theirs = result.questions
     assert choose.markers == {payload["choice"]["objectKey"]: payload["choice"]["marker"]}
     assert mine.markers == {payload["learner"]["objectKey"]: payload["learner"]["marker"]}
     assert theirs.markers == {payload["ana"]["objectKey"]: payload["ana"]["marker"]}
@@ -135,7 +125,8 @@ def test_public_task_keeps_fictional_facts_and_has_no_vocabulary_evaluations():
     task = m05_lesson_task(uuid4(), M05, payload, result, {})
     task_content = task.public_content.model_dump(mode="json", by_alias=True)
     assert task_content["roleplayFacts"] == payload["facts"]
-    assert task.public_content.questions[0].object_label is None
+    assert task.public_content.questions[0].object_label
+    assert all(question.marker_object_ids is None for question in task.public_content.questions)
     assert task.public_content.explanation.startswith(
         "For this practice, the likes are pretend."
     )
@@ -150,11 +141,10 @@ def test_public_task_keeps_fictional_facts_and_has_no_vocabulary_evaluations():
 
 
 @pytest.mark.parametrize("mutation", [
-    _marker_points_to_non_fact,
     _plural_answer,
     _add_excess_bank_tokens,
 ])
-def test_m05_validator_rejects_wrong_marker_plural_and_extra_bank_tokens(mutation):
+def test_m05_validator_rejects_bad_build_forms_and_extra_bank_tokens(mutation):
     payload, _objects = _payload()
     result = fallback_m05_lesson(payload)
     data = result.model_dump(by_alias=False)
@@ -164,7 +154,7 @@ def test_m05_validator_rejects_wrong_marker_plural_and_extra_bank_tokens(mutatio
         validate_m05_lesson(payload, invalid)
 
 
-def test_m05_validator_rejects_inferred_facts_without_a_roleplay_premise():
+def test_m05_validator_rejects_inferred_facts_and_empty_question_premise():
     payload, _objects = _payload()
     result = fallback_m05_lesson(payload)
     invalid_payload = deepcopy(payload)
@@ -177,16 +167,6 @@ def test_m05_validator_rejects_inferred_facts_without_a_roleplay_premise():
         M05LessonResult.model_validate(data)
 
 
-def test_m05_validator_requires_object_agnostic_polarity_premise():
-    payload, _objects = _payload()
-    result = fallback_m05_lesson(payload)
-    data = result.model_dump(by_alias=False)
-    data["questions"][0]["roleplay_premise"] = "Let's pretend Ana doesn't like the cup."
-    invalid = M05LessonResult.model_validate(data)
-    with pytest.raises(LearningTaskGenerationError):
-        validate_m05_lesson(payload, invalid)
-
-
 def test_m05_readiness_requires_leos_sentence_contrast_and_other_object_sentence():
     payload, _objects = _payload()
     assert m05_ready(payload)
@@ -195,27 +175,16 @@ def test_m05_readiness_requires_leos_sentence_contrast_and_other_object_sentence
     assert not m05_ready(missing_leo)
 
 
-def test_m05_validator_rejects_two_options_for_the_same_assigned_object():
-    payload, _objects = _payload()
-    result = fallback_m05_lesson(payload)
-    data = result.model_dump(by_alias=False)
-    options = data["questions"][0]["option_object_ids"]
-    first, second = list(options)[:2]
-    options[second] = options[first]
-    with pytest.raises(LearningTaskGenerationError):
-        validate_m05_lesson(payload, M05LessonResult.model_validate(data))
-
-
 def test_m05_questions_only_use_assigned_taught_forms():
     payload, _objects = _payload()
     result = fallback_m05_lesson(payload)
-    choose = result.questions[1]
+    choose, mine, theirs = result.questions
     assert {option.label for option in choose.options} == {
         payload["choice"][key]
         for key in ("sentence", "contrast", "other_object_sentence")
     }
-    assert result.questions[2].correct_text == payload["learner"]["sentence"]
-    assert result.questions[3].correct_text == payload["ana"]["sentence"]
+    assert mine.correct_text == payload["learner"]["sentence"]
+    assert theirs.correct_text == payload["ana"]["sentence"]
     assert sum(
         option.option_id == choose.correct_option_id for option in choose.options
     ) == 1

@@ -114,26 +114,3 @@ def possessive_sentence(language, person, owner_name, noun, gender):
     if person == "first":
         return f"제 {noun}{ending}."
     return f"{_CAST_NAMES[owner_name]}의 {noun}{ending}."
-
-
-def ownership_statement(language, owner_name, noun, gender):
-    """A reviewed named-character ownership statement for the question prompt."""
-    noun = _noun(language, noun, gender)
-    if language not in {"es", "fr", "de", "ko"} or noun is None or _name(owner_name) is None:
-        return None
-    if language == "es":
-        article = _article(language, noun, gender)
-        return f"Es {_with_article(article, noun)} de {owner_name}."
-    if language == "fr":
-        phrase = definite_noun_phrase(language, noun, gender)
-        owner = (
-            f"d'{owner_name}"
-            if owner_name[0].casefold() in _FRENCH_VOWELS
-            else f"de {owner_name}"
-        )
-        return f"C'est {phrase} {owner}."
-    if language == "de":
-        possessive = "Anas" if owner_name == "Ana" else "Leos"
-        return f"Das ist {possessive} {noun[:1].upper()}{noun[1:]}."
-    ending = _korean_ending(noun)
-    return f"{_CAST_NAMES[owner_name]}의 {noun}{ending}." if ending else None

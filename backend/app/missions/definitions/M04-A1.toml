@@ -12,11 +12,6 @@ objective_id = "say-what-is-yours"
 can_do = "I can say whose thing it is in a pretend situation: mine or a named person's."
 
 [[objective.targets]]
-target_id = "understand-ownership"
-summary = "Understand a short ownership statement about a pretend object."
-evidence_types = ["recognition"]
-
-[[objective.targets]]
 target_id = "choose-possessive"
 summary = "Choose the possessive that matches a pretend owner."
 evidence_types = ["recognition"]
@@ -43,15 +38,9 @@ target_id = "say-theirs"
 structure = "[copula] [third-person singular possessive] [singular noun]."
 examples = { es = ["Es su taza."], fr = ["C'est sa tasse."] }
 
-[[language_patterns]]
-pattern_id = "ownership-statement"
-target_id = "understand-ownership"
-structure = "[copula] [definite noun phrase] de [named owner]."
-examples = { es = ["Es la taza de Ana."], fr = ["C'est la tasse d'Ana."] }
-
 [teaching]
 task_sequence = ["vocabularyIntroduction", "grammarLesson", "ispyRound", "reflection"]
-teach_before_assessment = ["understand-ownership", "choose-possessive", "say-mine", "say-theirs"]
+teach_before_assessment = ["choose-possessive", "say-mine", "say-theirs"]
 max_new_words = 6
 
 [[teaching.supports]]
@@ -85,12 +74,6 @@ availability = "onRequest"
 counts_as_assistance = true
 
 [[evaluation_criteria]]
-criterion_id = "matches-assigned-owner"
-target_id = "understand-ownership"
-description = "Matches a pretend ownership statement to its assigned owner."
-evidence_types = ["recognition"]
-
-[[evaluation_criteria]]
 criterion_id = "chooses-possessive"
 target_id = "choose-possessive"
 description = "Chooses the taught possessive for the assigned perspective."
@@ -109,7 +92,7 @@ description = "Builds the named character's third-person singular possessive sta
 evidence_types = ["construction"]
 
 [expected_performance]
-min_assessed_questions = 3
+min_assessed_questions = 2
 min_correct_ratio = 0.75
 min_independent_correct = 1
 required_target_groups = [

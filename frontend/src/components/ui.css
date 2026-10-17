@@ -4606,7 +4606,6 @@ p[role="alert"]::before { content: "!"; }
 .object-preview__scene { position: relative; width: min(100%, 320px); }
 .object-preview__legend { display: flex; flex-wrap: wrap; gap: var(--space-3); justify-content: center; }
 .object-preview__legend > span { display: inline-flex; align-items: center; gap: var(--space-1); }
-.object-preview__marker-note { color: var(--ink-muted); font-size: var(--text-small); }
 /* Legend discs repeat the photo's marker numbers: tomato for the asked object. */
 .object-preview__key { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font-size: var(--text-small, 0.8125rem); font-weight: 800; color: var(--ink); background: var(--cream, #fffaf0); border: 2px solid var(--ink); }
 .object-preview__key--target { color: #fff; background: var(--tomato); border-color: var(--tomato); }

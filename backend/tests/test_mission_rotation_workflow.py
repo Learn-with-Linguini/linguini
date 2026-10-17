@@ -53,3 +53,7 @@ def test_next_lesson_selects_missions_planned_least_on_same_profile_and_photo(cu
     assert {
         task.public_content.mission_id for task in detail.tasks
     } >= {"M04", "M05"}
+    assert all(
+        len(task.public_content.questions) == 3
+        for task in detail.tasks if task.public_content.mission_id in {"M04", "M05"}
+    )

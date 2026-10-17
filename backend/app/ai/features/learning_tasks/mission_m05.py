@@ -1,4 +1,4 @@
-"""Deterministic, validated four-question lesson for A1 mission M05."""
+"""Deterministic, validated three-question lesson for A1 mission M05."""
 
 from __future__ import annotations
 
@@ -24,16 +24,15 @@ M05_SCHEMA_VERSION = "learning-tasks-m05-result.v1"
 M05_VALIDATOR_VERSION = "learning-tasks-m05-validator.v1"
 
 type M05Purpose = Literal[
-    "matchPreference", "choosePreference", "buildMyPreference", "buildTheirPreference"
+    "choosePreference", "buildMyPreference", "buildTheirPreference"
 ]
 
 _INTERACTIONS = {
-    "matchPreference": "multipleChoice",
     "choosePreference": "multipleChoice",
     "buildMyPreference": "sentenceBuilding",
     "buildTheirPreference": "sentenceBuilding",
 }
-_ORDER = ["matchPreference", "choosePreference", "buildMyPreference", "buildTheirPreference"]
+_ORDER = ["choosePreference", "buildMyPreference", "buildTheirPreference"]
 SECTION_MATCH = "Task 1 · Who likes what?"
 SECTION_BUILD = "Task 2 · Say what you like"
 
@@ -53,7 +52,6 @@ class M05Question(ApiModel):
     roleplay_premise: NonEmptyText = Field(max_length=240)
     prompt_translation: Annotated[str, Field(max_length=300)] | None
     markers: dict[str, int]
-    option_object_ids: dict[str, str] | None = None
 
     @model_validator(mode="after")
     def validate_interaction(self) -> M05Question:
@@ -64,7 +62,7 @@ class M05Question(ApiModel):
 
 class M05LessonResult(ApiModel):
     title: NonEmptyText = Field(max_length=80)
-    questions: Annotated[list[M05Question], Field(min_length=4, max_length=4)]
+    questions: Annotated[list[M05Question], Field(min_length=3, max_length=3)]
 
 
 def _fail(message):
@@ -88,7 +86,7 @@ def _facts(payload):
     if len(facts) != 3:
         _fail("M05 requires exactly three assigned preference facts.")
     if roles != expected_roles or len(roles) != len(facts):
-        _fail("M05 facts must match its learner, Ana, and optional Leo assignment.")
+        _fail("M05 facts must match its learner, Ana, and Leo assignment.")
     object_ids = {str(fact.scene_object_id) for fact in facts}
     if (
         not facts
@@ -127,53 +125,16 @@ def _validate_bank(question, answer, contrast):
 
 
 def validate_m05_lesson(payload: dict[str, Any], result: M05LessonResult) -> None:
-    """Require the four taught preference questions and explicitly assigned facts."""
-    facts = _facts(payload)
-    facts_by_id = {str(fact.scene_object_id): fact for fact in facts}
+    """Require the three taught preference questions and explicitly assigned facts."""
+    _facts(payload)
     learner, ana = payload["learner"], payload["ana"]
     if result.title != "Say what you like":
         _fail("The lesson title must match M05.")
     questions = result.questions
     unique_question_ids(questions)
     if [question.purpose for question in questions] != _ORDER:
-        _fail("M05 questions go: match, choose, then build your and their preferences.")
-    match, choose, mine, theirs = questions
-
-    expected_match_premise = "Let's pretend Ana doesn't like one of these things."
-    if ana.get("matchPremise") != expected_match_premise:
-        _fail("The preference match premise must not name an object.")
-    if (
-        match.section != SECTION_MATCH
-        or match.prompt != ana["sentence"]
-        or match.roleplay_premise != expected_match_premise
-        or match.markers != payload["all_markers"]
-        or match.object_key != ana["objectKey"]
-        or match.option_object_ids is None
-    ):
-        _fail("The matching question must show Ana's assigned dislike and its object markers.")
-    if match.interaction_type != "multipleChoice" or match.translation is not None:
-        _fail("The matching question must be untranslated multiple choice.")
-    if set(match.option_object_ids) != {option.option_id for option in match.options}:
-        _fail("Marker choices must map to exactly one option each.")
-    option_objects = list(match.option_object_ids.values())
-    fact_objects = set(facts_by_id)
-    if len(option_objects) != len(set(option_objects)) or set(option_objects) != fact_objects:
-        _fail("Each marker option must map to a different assigned fact object.")
-    expected_options = {
-        f"marker-{number}": (object_id, str(number))
-        for object_id, number in payload["all_markers"].items()
-    }
-    if {
-        option.option_id: (match.option_object_ids[option.option_id], option.label)
-        for option in match.options
-    } != expected_options:
-        _fail("Marker choices must use the assigned objects and review numbers.")
-    if match.correct_option_id != f"marker-{ana['marker']}":
-        _fail("Ana's assigned object is the only correct match.")
-    if len(match.options) != len(facts) or match.correct_option_id not in match.option_object_ids:
-        _fail("The matching question must offer exactly one option per assigned fact.")
-    if match.prompt_translation is not None:
-        _fail("The matching question uses Ana's target-language preference statement.")
+        _fail("M05 questions go: choose, then build your and their preferences.")
+    choose, mine, theirs = questions
 
     choice = payload["choice"]
     leo = payload["leo"]
@@ -190,7 +151,6 @@ def validate_m05_lesson(payload: dict[str, Any], result: M05LessonResult) -> Non
         or choose.roleplay_premise != choice["premise"]
         or choose.markers != {choice["objectKey"]: choice["marker"]}
         or choose.object_key != choice["objectKey"]
-        or choose.option_object_ids is not None
         or choose.prompt_translation != payload["choose_prompt_translation"]
         or choose.translation is not None
     ):
@@ -243,32 +203,6 @@ def fallback_m05_lesson(payload: dict[str, Any]) -> M05LessonResult:
     _facts(payload)
     rng = random.Random(payload.get("seed") or "M05")
     ana = payload["ana"]
-    match_options = [
-        dict(option_id=f"marker-{number}", label=str(number))
-        for number in payload["all_markers"].values()
-    ]
-    match_objects = {
-        f"marker-{number}": object_id
-        for object_id, number in payload["all_markers"].items()
-    }
-    rng.shuffle(match_options)
-    match = dict(
-        question_id="match-preference",
-        purpose="matchPreference",
-        prompt=ana["sentence"],
-        interaction_type="multipleChoice",
-        options=match_options,
-        correct_option_id=f"marker-{ana['marker']}",
-        correct_text=None,
-        token_bank=[],
-        translation=None,
-        object_key=ana["objectKey"],
-        section=SECTION_MATCH,
-        roleplay_premise=ana["matchPremise"],
-        prompt_translation=None,
-        markers=payload["all_markers"],
-        option_object_ids=match_objects,
-    )
     choice = payload["choice"]
     choose_options = [
         dict(option_id="preference-correct", label=choice["sentence"]),
@@ -291,7 +225,6 @@ def fallback_m05_lesson(payload: dict[str, Any]) -> M05LessonResult:
         roleplay_premise=choice["premise"],
         prompt_translation=payload["choose_prompt_translation"],
         markers={choice["objectKey"]: choice["marker"]},
-        option_object_ids=None,
     )
     build_questions = []
     for question_id, purpose, fact in (
@@ -313,10 +246,9 @@ def fallback_m05_lesson(payload: dict[str, Any]) -> M05LessonResult:
             roleplay_premise=fact["premise"],
             prompt_translation=fact["build_prompt_translation"],
             markers={fact["objectKey"]: fact["marker"]},
-            option_object_ids=None,
         ))
     result = M05LessonResult.model_validate(dict(
-        title="Say what you like", questions=[match, choose, *build_questions],
+        title="Say what you like", questions=[choose, *build_questions],
     ))
     validate_m05_lesson(payload, result)
     return result

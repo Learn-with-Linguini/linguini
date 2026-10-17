@@ -1,4 +1,4 @@
-"""Deterministic, validated four-question lesson for A1 mission M04."""
+"""Deterministic, validated three-question lesson for A1 mission M04."""
 
 from __future__ import annotations
 
@@ -18,21 +18,19 @@ from app.ai.features.learning_tasks.schemas import GeneratedChoice
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.schemas.base import ApiModel, NonEmptyText
 from app.schemas.roleplay import parse_roleplay_facts
-from app.services.possessives import ownership_statement
 
 M04_PROMPT_VERSION = "learning-tasks.m04-a1.v1"
 M04_SCHEMA_VERSION = "learning-tasks-m04-result.v1"
 M04_VALIDATOR_VERSION = "learning-tasks-m04-validator.v1"
 
-type M04Purpose = Literal["matchOwner", "chooseOwner", "buildMine", "buildTheirs"]
+type M04Purpose = Literal["chooseOwner", "buildMine", "buildTheirs"]
 
 _INTERACTIONS = {
-    "matchOwner": "multipleChoice",
     "chooseOwner": "multipleChoice",
     "buildMine": "sentenceBuilding",
     "buildTheirs": "sentenceBuilding",
 }
-_ORDER = ["matchOwner", "chooseOwner", "buildMine", "buildTheirs"]
+_ORDER = ["chooseOwner", "buildMine", "buildTheirs"]
 SECTION_MATCH = "Task 1 · Whose is it?"
 SECTION_BUILD = "Task 2 · Say whose it is"
 
@@ -52,7 +50,6 @@ class M04Question(ApiModel):
     roleplay_premise: NonEmptyText = Field(max_length=240)
     prompt_translation: Annotated[str, Field(max_length=300)] | None
     markers: dict[str, int]
-    option_object_ids: dict[str, str] | None = None
 
     @model_validator(mode="after")
     def validate_interaction(self) -> M04Question:
@@ -63,7 +60,7 @@ class M04Question(ApiModel):
 
 class M04LessonResult(ApiModel):
     title: NonEmptyText = Field(max_length=80)
-    questions: Annotated[list[M04Question], Field(min_length=4, max_length=4)]
+    questions: Annotated[list[M04Question], Field(min_length=3, max_length=3)]
 
 
 def _fail(message):
@@ -84,7 +81,7 @@ def _facts(payload):
     if len(facts) != 3:
         _fail("M04 requires exactly three assigned ownership facts.")
     if roles != expected_roles or len(roles) != len(facts):
-        _fail("M04 facts must match its learner, Ana, and optional Leo assignment.")
+        _fail("M04 facts must match its learner, Ana, and Leo assignment.")
     object_ids = {str(fact.scene_object_id) for fact in facts}
     if (
         not facts
@@ -114,63 +111,18 @@ def _validate_bank(question, answer, contrast):
 
 
 def validate_m04_lesson(payload: dict[str, Any], result: M04LessonResult) -> None:
-    """Require the four taught ownership questions and facts from this pretend plan."""
+    """Require the three taught ownership questions and facts from this pretend plan."""
     facts = _facts(payload)
-    facts_by_id = {str(fact.scene_object_id): fact for fact in facts}
+    fact_ids = {str(fact.scene_object_id) for fact in facts}
     details = {item["objectKey"]: item for item in payload["fact_details"]}
     learner, ana = payload["learner"], payload["ana"]
-    expected_statement = ownership_statement(
-        payload["targetLanguage"], "Ana", ana["noun"], ana["gender"],
-    )
-    expected_match_premise = "Let's pretend one of these things is Ana's."
-    if (
-        not expected_statement
-        or ana.get("statement") != expected_statement
-        or ana.get("matchPremise") != expected_match_premise
-    ):
-        _fail("Ana's fact must store the reviewed statement and object-agnostic premise.")
     if result.title != "Say what is yours":
         _fail("The lesson title must match M04.")
     questions = result.questions
     unique_question_ids(questions)
     if [question.purpose for question in questions] != _ORDER:
-        _fail("M04 questions go: match, choose, then build mine and theirs.")
-    match, choose, mine, theirs = questions
-
-    if (
-        match.section != SECTION_MATCH
-        or match.prompt != ana["statement"]
-        or match.roleplay_premise != expected_match_premise
-        or match.markers != payload["all_markers"]
-        or match.object_key != ana["objectKey"]
-        or match.option_object_ids is None
-    ):
-        _fail("The matching question must show Ana's assigned fact and its object markers.")
-    if match.interaction_type != "multipleChoice" or match.translation is not None:
-        _fail("The matching question must be untranslated multiple choice.")
-    if match.options and set(match.option_object_ids) != {
-        option.option_id for option in match.options
-    }:
-        _fail("Marker choices must map to exactly one option each.")
-    option_objects = list(match.option_object_ids.values())
-    fact_objects = set(facts_by_id)
-    if len(option_objects) != len(set(option_objects)) or set(option_objects) != fact_objects:
-        _fail("Each marker option must map to a different assigned fact object.")
-    expected_options = {
-        f"marker-{markers}": (object_id, str(markers))
-        for object_id, markers in payload["all_markers"].items()
-    }
-    if {
-        option.option_id: (match.option_object_ids[option.option_id], option.label)
-        for option in match.options
-    } != expected_options:
-        _fail("Marker choices must use the assigned objects and review numbers.")
-    if match.correct_option_id != f"marker-{ana['marker']}":
-        _fail("Ana's assigned object is the only correct match.")
-    if len(match.options) != len(facts) or match.correct_option_id not in match.option_object_ids:
-        _fail("The matching question must offer exactly one option per assigned fact.")
-    if match.prompt_translation is not None:
-        _fail("The matching question uses the target-language ownership statement.")
+        _fail("M04 questions go: choose, then build mine and theirs.")
+    choose, mine, theirs = questions
 
     choice = payload["choice"]
     leo = payload["leo"]
@@ -188,7 +140,6 @@ def validate_m04_lesson(payload: dict[str, Any], result: M04LessonResult) -> Non
         or choose.roleplay_premise != choice["premise"]
         or choose.markers != expected_choice_markers
         or choose.object_key != choice["objectKey"]
-        or choose.option_object_ids is not None
         or choose.prompt_translation != payload["choose_prompt_translation"]
         or choose.translation is not None
     ):
@@ -236,7 +187,7 @@ def validate_m04_lesson(payload: dict[str, Any], result: M04LessonResult) -> Non
         ):
             _fail("Sentence builders must use the assigned singular owner and taught prompt.")
         _validate_bank(question, expected["sentence"], expected["contrast"])
-    if set(details) != fact_objects:
+    if set(details) != fact_ids:
         _fail("Every fact object must have a reviewed rendering.")
 
 
@@ -245,35 +196,6 @@ def fallback_m04_lesson(payload: dict[str, Any]) -> M04LessonResult:
     _facts(payload)
     rng = random.Random(payload.get("seed") or "M04")
     ana = payload["ana"]
-    match_options = [
-        dict(
-            option_id=f"marker-{number}",
-            label=str(number),
-        )
-        for number in payload["all_markers"].values()
-    ]
-    match_objects = {
-        f"marker-{number}": object_id
-        for object_id, number in payload["all_markers"].items()
-    }
-    rng.shuffle(match_options)
-    match = dict(
-        question_id="match-owner",
-        purpose="matchOwner",
-        prompt=ana["statement"],
-        interaction_type="multipleChoice",
-        options=match_options,
-        correct_option_id=f"marker-{ana['marker']}",
-        correct_text=None,
-        token_bank=[],
-        translation=None,
-        object_key=ana["objectKey"],
-        section=SECTION_MATCH,
-        roleplay_premise=ana["matchPremise"],
-        prompt_translation=None,
-        markers=payload["all_markers"],
-        option_object_ids=match_objects,
-    )
     choice = payload["choice"]
     choose_options = [
         dict(option_id="owner-correct", label=choice["sentence"]),
@@ -296,7 +218,6 @@ def fallback_m04_lesson(payload: dict[str, Any]) -> M04LessonResult:
         roleplay_premise=choice["premise"],
         prompt_translation=payload["choose_prompt_translation"],
         markers={choice["objectKey"]: choice["marker"]},
-        option_object_ids=None,
     )
     build_questions = []
     for question_id, purpose, fact in (
@@ -318,10 +239,9 @@ def fallback_m04_lesson(payload: dict[str, Any]) -> M04LessonResult:
             roleplay_premise=fact["premise"],
             prompt_translation=fact["build_prompt_translation"],
             markers={fact["objectKey"]: fact["marker"]},
-            option_object_ids=None,
         ))
     result = M04LessonResult.model_validate(dict(
-        title="Say what is yours", questions=[match, choose, *build_questions],
+        title="Say what is yours", questions=[choose, *build_questions],
     ))
     validate_m04_lesson(payload, result)
     return result

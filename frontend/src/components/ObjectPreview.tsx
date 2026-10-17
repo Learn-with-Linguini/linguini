@@ -29,9 +29,6 @@ export function ObjectPreview({ scene, object, label, reference, referenceLabel,
     </div>
     {markerMode ? selectedMarkers.length || label.trim() ? <figcaption className="object-preview__legend">
       {label.trim() ? <strong>{label}</strong> : null}
-      {selectedMarkers.length ? <span className="object-preview__marker-note">
-        Numbered markers match your scene review.
-      </span> : null}
     </figcaption> : null : label || referenceLabel ? <figcaption className="object-preview__legend">
       {referenceLabel ? <>
         <span><span className="object-preview__key object-preview__key--target" aria-hidden="true">{number(object)}</span><strong>{label}</strong></span>

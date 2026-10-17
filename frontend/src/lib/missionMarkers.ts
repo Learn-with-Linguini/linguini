@@ -7,14 +7,11 @@ export interface MissionMarker {
 }
 
 export function questionMarkerObjects(
-  markerObjectIds: Record<string, string> | null | undefined,
   sceneObjectId: string | null | undefined,
   sceneObjects: readonly SceneObject[],
   sceneItems: readonly LanguageItem[],
 ): MissionMarker[] {
-  const ids = markerObjectIds
-    ? Object.values(markerObjectIds)
-    : sceneObjectId ? [sceneObjectId] : [];
+  const ids = sceneObjectId ? [sceneObjectId] : [];
   const objectsById = new Map(sceneObjects.map(object => [object.id, object]));
   const itemsById = new Map(sceneItems.map(item => [item.id, item]));
   return [...new Set(ids)]
@@ -26,16 +23,4 @@ export function questionMarkerObjects(
         : [];
     })
     .sort((left, right) => left.number - right.number || left.object.id.localeCompare(right.object.id));
-}
-
-export function optionMarkerNumber(
-  optionId: string,
-  markerObjectIds: Record<string, string> | null | undefined,
-  sceneItems: readonly LanguageItem[],
-): number | null {
-  const objectId = markerObjectIds?.[optionId];
-  const number = objectId
-    ? sceneItems.find(item => item.id === objectId)?.marker
-    : undefined;
-  return typeof number === "number" && Number.isInteger(number) && number > 0 ? number : null;
 }

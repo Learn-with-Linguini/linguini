@@ -12,11 +12,6 @@ objective_id = "say-what-you-like"
 can_do = "I can say what I or a named person likes in a pretend situation."
 
 [[objective.targets]]
-target_id = "understand-preference"
-summary = "Understand a short pretend like or dislike statement."
-evidence_types = ["recognition"]
-
-[[objective.targets]]
 target_id = "choose-preference"
 summary = "Choose the preference statement that matches a pretend subject."
 evidence_types = ["recognition"]
@@ -57,7 +52,7 @@ examples = { es = ["A Leo no le gusta el libro."], fr = ["Leo n'aime pas le livr
 
 [teaching]
 task_sequence = ["vocabularyIntroduction", "grammarLesson", "ispyRound", "reflection"]
-teach_before_assessment = ["understand-preference", "choose-preference", "say-my-preference", "say-their-preference"]
+teach_before_assessment = ["choose-preference", "say-my-preference", "say-their-preference"]
 max_new_words = 6
 
 [[teaching.supports]]
@@ -91,12 +86,6 @@ availability = "onRequest"
 counts_as_assistance = true
 
 [[evaluation_criteria]]
-criterion_id = "matches-assigned-preference"
-target_id = "understand-preference"
-description = "Matches a pretend preference statement to its assigned subject."
-evidence_types = ["recognition"]
-
-[[evaluation_criteria]]
 criterion_id = "chooses-preference"
 target_id = "choose-preference"
 description = "Chooses the taught preference statement for the assigned subject."
@@ -115,7 +104,7 @@ description = "Builds a named character's third-person singular preference state
 evidence_types = ["construction"]
 
 [expected_performance]
-min_assessed_questions = 3
+min_assessed_questions = 2
 min_correct_ratio = 0.75
 min_independent_correct = 1
 required_target_groups = [

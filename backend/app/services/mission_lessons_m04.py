@@ -1,12 +1,9 @@
 """Build the M04 A1 ownership payload and its validated grammar lesson."""
 
-from uuid import UUID
-
 from app.schemas.roleplay import parse_roleplay_facts
 from app.services.mission_lessons import build_mission_task, noun_gender
 from app.services.possessives import (
     definite_noun_phrase,
-    ownership_statement,
     possessive_sentence,
 )
 
@@ -31,9 +28,6 @@ _EXPLANATIONS = {
     ),
 }
 _EVALUATIONS = {
-    "matchOwner": (
-        ["understand-ownership"], "recognition", ["matches-assigned-owner"]
-    ),
     "chooseOwner": (["choose-possessive"], "recognition", ["chooses-possessive"]),
     "buildMine": (["say-mine"], "construction", ["says-mine"]),
     "buildTheirs": (["say-theirs"], "construction", ["says-theirs"]),
@@ -125,16 +119,8 @@ def m04_payload(mission, language, objects, words, translated_scene, session_id,
             gender=gender,
             sentence=sentence,
             contrast=contrast,
-            statement=(
-                ownership_statement(language, "Ana", word.display_text, gender)
-                if fact.owner_names == ["Ana"] else None
-            ),
             nounPhrase=noun_phrase,
             premise=_premise(fact, obj.label.strip()),
-            matchPremise=(
-                "Let's pretend one of these things is Ana's."
-                if fact.owner_names == ["Ana"] else None
-            ),
             ownerType=fact.owner_type,
             ownerNames=fact.owner_names,
         ))
@@ -196,8 +182,6 @@ def m04_ready(payload):
         and learner.get("build_prompt")
         and ana.get("sentence")
         and ana.get("contrast")
-        and ana.get("statement")
-        and ana.get("matchPremise")
         and ana.get("build_prompt")
         and leo.get("sentence")
         and leo.get("contrast")
@@ -223,10 +207,10 @@ def m04_lesson_task(session_id, mission, payload, result, vocabulary_ids):
         corrections = (
             [
                 dict(
-                    mistake="wrongObject",
+                    mistake="wrongWord",
                     answers=[option.option_id],
                     correction=label,
-                    explanation="That marker isn't the thing in the sentence.",
+                    explanation="Check whose pretend thing the sentence describes.",
                 )
                 for option in question.options if option.option_id != question.correct_option_id
             ]
@@ -251,17 +235,10 @@ def m04_lesson_task(session_id, mission, payload, result, vocabulary_ids):
         )
         return dict(
             scene_object_id=question.object_key,
-            object_label=(
-                None if question.purpose == "matchOwner"
-                else detail["label"].capitalize()
-            ),
+            object_label=detail["label"].capitalize(),
             section=question.section,
             roleplay_premise=question.roleplay_premise,
             prompt_translation=question.prompt_translation,
-            marker_object_ids=(
-                {key: UUID(value) for key, value in question.option_object_ids.items()}
-                if question.option_object_ids is not None else None
-            ),
             keep_option_order=(
                 True if question.interaction_type == "multipleChoice" else None
             ),

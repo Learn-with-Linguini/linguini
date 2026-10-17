@@ -39,7 +39,7 @@ def test_m04_plan_facts_markers_and_resumed_content_are_persisted(curated):
         for obj in detail.scene_objects
     )
     assert len(markers) == len(detail.scene_objects)
-    assert len(task.public_content.questions) == 4
+    assert len(task.public_content.questions) == 3
     assert all(question.roleplay_premise for question in task.public_content.questions)
 
 

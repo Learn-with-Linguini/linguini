@@ -15,7 +15,7 @@ import { ObjectPreview } from "../components/ObjectPreview";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useResolvedImageUrl } from "../components/SceneImage";
 import { boardRows, squareCrop } from "../lib/practiceBoard";
-import { optionMarkerNumber, questionMarkerObjects } from "../lib/missionMarkers";
+import { questionMarkerObjects } from "../lib/missionMarkers";
 
 export function LearningTaskPage() {
   const { taskId } = useParams();
@@ -320,7 +320,6 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
     {content.questions.map((question, position) => {
       const questionMarkers = question.roleplayPremise
         ? questionMarkerObjects(
-          question.markerObjectIds,
           question.sceneObjectId,
           session?.sceneObjects ?? [],
           scene.items,
@@ -383,17 +382,12 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         <div className="choice-grid">{questionOptions(question, `${task.id}:${question.questionId}`).map(option => {
           const selected = chosen[question.questionId] === option.optionId;
           const graded = results[question.questionId];
-          const markerNumber = question.roleplayPremise
-            ? optionMarkerNumber(option.optionId, question.markerObjectIds, scene.items)
-            : null;
           const state = graded !== undefined && solutions[question.questionId] === option.optionId ? " choice--correct"
             : !selected ? ""
               : graded === undefined ? " choice--selected" : graded ? " choice--correct" : " choice--incorrect";
           return <button key={option.optionId} className={`choice${state}`} aria-pressed={selected} disabled={terminal || practiceSaving || checking || graded !== undefined}
-            aria-label={markerNumber === null ? undefined : `Marker ${markerNumber}`}
             onClick={() => setAnswers(value => ({ ...value, [question.questionId]: option.optionId }))}>
-            {markerNumber === null ? optionText(question, option.label)
-              : <span className="object-preview__key object-preview__key--target">{markerNumber}</span>}</button>;
+            {optionText(question, option.label)}</button>;
         })}</div></>}
       </>}
       {results[question.questionId] !== undefined ? <>
