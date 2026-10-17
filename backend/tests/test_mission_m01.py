@@ -62,7 +62,7 @@ def test_colour_forms_agree_only_when_the_gender_is_known():
     assert agreed_colour("green", "fr", "feminine") == "verte"
     assert agreed_colour("blue", "es", None) == "azul"
     assert agreed_colour("red", "es", None) is None
-    assert agreed_colour("red", "de", "masculine") is None
+    assert agreed_colour("red", "de", "masculine") == "roter"
 
 
 @pytest.mark.parametrize(("mode", "level", "language", "selected"), [
@@ -74,7 +74,8 @@ def test_colour_forms_agree_only_when_the_gender_is_known():
     ("lesson", "A2", "es", False),
     ("lesson", "B1", "fr", False),
     ("lesson", None, "es", False),
-    ("lesson", "A1", "de", False),
+    ("lesson", "A1", "de", True),
+    ("lesson", "A1", "ko", False),
     ("ispyGame", "A1", "es", False),
 ])
 def test_mission_path_needs_an_a1_lesson_in_a_supported_language(
@@ -97,6 +98,8 @@ def build(language="fr", objects=None, words=None, progress=None, session_id=SES
                word(TABLE, "table", "feminine")],
         "es": [word(CUP, "taza", "feminine"), word(BOOK, "libro", "masculine"),
                word(TABLE, "mesa", "feminine")],
+        "de": [word(CUP, "Tisch", "masculine"), word(BOOK, "Buch", "neuter"),
+               word(TABLE, "Lampe", "feminine")],
     }[language]
     return m01_payload(MISSION, language, objects, words, None, progress, session_id)
 
@@ -193,6 +196,16 @@ def test_description_has_article_noun_then_agreed_colour_and_a_wrong_gender_tile
     assert "verte" in describe.token_bank
 
 
+def test_german_neuter_description_uses_indefinite_article_and_agreed_colour():
+    objects = [scene_object(CUP, "cup", "green"), scene_object(BOOK, "book", "red")]
+    words = [word(CUP, "Tisch", "masculine"), word(BOOK, "Buch", "neuter")]
+    data = build("de", objects=objects, words=words)
+    result = fallback_m01_lesson(data)
+    assert data["pairs"][1]["nounPhrase"] == "ein Buch"
+    assert result.questions[3].correct_text == "Das ist ein rotes Buch."
+    validate_m01_lesson(data, result)
+
+
 def test_option_order_is_shuffled_per_session_and_stable_on_rebuild():
     one = fallback_m01_lesson(build("es"))
     again = fallback_m01_lesson(build("es"))
@@ -277,13 +290,19 @@ def test_validator_rejects_unconfirmed_or_unanswerable_lessons(change):
         ))
 
 
-@pytest.mark.parametrize("language", ["es", "fr"])
+@pytest.mark.parametrize("language", ["es", "fr", "de"])
 def test_catalog_genders_recorded_as_articles_still_agree(language):
-    articles = {"es": ("la", "el", "la"), "fr": ("la", "le", "la")}[language]
+    articles = {
+        "es": ("la", "el", "la"), "fr": ("la", "le", "la"),
+        "de": ("der", "das", "die"),
+    }[language]
     canonical = build(language)
     words = [word(item.id, item.display_text, article) for item, article in zip(
         {"fr": [word(CUP, "tasse", ""), word(BOOK, "livre", ""), word(TABLE, "table", "")],
-         "es": [word(CUP, "taza", ""), word(BOOK, "libro", ""), word(TABLE, "mesa", "")]}[language],
+         "es": [word(CUP, "taza", ""), word(BOOK, "libro", ""), word(TABLE, "mesa", "")],
+         "de": [
+             word(CUP, "Tisch", ""), word(BOOK, "Buch", ""), word(TABLE, "Lampe", ""),
+         ]}[language],
         articles, strict=True,
     )]
     payload = build(language, words=words)

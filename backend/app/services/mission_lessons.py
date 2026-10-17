@@ -31,7 +31,10 @@ def noun_gender(term, word):
 
 
 # Catalog content may record a noun's gender as its definite article.
-_ARTICLE_GENDERS = {"el": "masculine", "le": "masculine", "la": "feminine"}
+_ARTICLE_GENDERS = {
+    "el": "masculine", "le": "masculine", "la": "feminine",
+    "der": "masculine", "die": "feminine", "das": "neuter",
+}
 
 
 def mission_gender(term, word):
@@ -39,7 +42,7 @@ def mission_gender(term, word):
     for gender in (term.gender if term is not None else None,
                    getattr(word.gender, "value", word.gender)):
         gender = _ARTICLE_GENDERS.get(str(gender).casefold(), gender) if gender else None
-        if gender in {"masculine", "feminine"}:
+        if gender in {"masculine", "feminine", "neuter"}:
             return gender
     return noun_gender(term, word)
 

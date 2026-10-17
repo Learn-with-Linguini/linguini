@@ -9,12 +9,13 @@ from app.schemas.enums import SYMMETRIC_SCENE_RELATION_TYPES
 from app.schemas.media import SceneObject, SceneObjectRelation
 from app.schemas.vocabulary import VocabularyItem
 from app.services.ispy_clue_frames import (
-    SUPPORTED_LANGUAGES,
     _place,
     agree_colour,
     build_clue_support,
     mentions_target,
 )
+
+ROOM_LANGUAGES = {"es", "fr", "de"}
 
 
 class RoomClueError(ValueError):
@@ -48,8 +49,10 @@ def build_room_pack(
     reference ID, so duplicate reference nouns cannot create false uniqueness.
     Marker coordinates never invent colour or spatial relationships.
     """
-    if language not in SUPPORTED_LANGUAGES:
-        raise RoomClueError("Guided photo rooms currently support Spanish and French.")
+    if language not in ROOM_LANGUAGES:
+        raise RoomClueError(
+            "Guided photo rooms currently support Spanish, French and German."
+        )
     if not 2 <= len(objects) <= 6 or len({obj.id for obj in objects}) != len(objects):
         raise RoomClueError("Choose between two and six different objects in this photo.")
     selected = {obj.id for obj in objects}
@@ -63,7 +66,8 @@ def build_room_pack(
     terms = {row.key: row for row in translated.objects}
     if len(terms) != len(objects) or set(terms) != {str(obj.id) for obj in objects}:
         raise RoomClueError("Translate exactly the reviewed objects before starting the game.")
-    articles = {"es": {"el", "la"}, "fr": {"le", "la", "l'"}}
+    articles = {"es": {"el", "la"}, "fr": {"le", "la", "l'"},
+                "de": {"der", "die", "das"}}
     if any(
         (term.article or "").lower().replace("’", "'") not in articles[language]
         for term in terms.values()
@@ -186,7 +190,7 @@ def build_room_pack(
                 )
                 if phrase:
                     signatures[subject].add(("location", phrase.casefold()))
-    conjunction = " y " if language == "es" else " et "
+    conjunction = {"es": " y ", "fr": " et ", "de": " und "}[language]
     targets = []
     for obj in objects:
         key = str(obj.id)

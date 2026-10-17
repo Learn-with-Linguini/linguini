@@ -16,7 +16,7 @@ from app.ai.features.translation.schemas import (
 )
 from app.services.scene_analysis import SceneAnalysisError
 
-SCENE_TRANSLATION_VALIDATOR_VERSION = "scene-translation-validator.v1"
+SCENE_TRANSLATION_VALIDATOR_VERSION = "scene-translation-validator.v2"
 """Bump when validation rules change, so cached results stop matching."""
 
 
@@ -25,12 +25,14 @@ class SceneTranslationError(SceneAnalysisError):
 
 
 _LEADING_ARTICLE = re.compile(
-    r"^((?:el|la|los|las|le|les)\s+|l['’])", re.IGNORECASE
+    r"^((?:el|la|los|las|le|les|der|die|das)\s+|l['’])", re.IGNORECASE
 )
+_GERMAN_ARTICLES = {"der", "die", "das"}
 
 
 def normalize_object_articles(
     result: SceneTranslationResult,
+    language: str | None = None,
 ) -> SceneTranslationResult:
     """Move a definite article inlined in an object ``translation`` into ``article``.
 
@@ -39,8 +41,11 @@ def normalize_object_articles(
     the stored term article-free so downstream rendering stays idempotent.
     """
     objects = []
+    language = (language or "").lower()
     for term in result.objects:
         match = _LEADING_ARTICLE.match(term.translation)
+        if match and match.group(1).strip().casefold() in _GERMAN_ARTICLES and language != "de":
+            match = None
         remainder = term.translation[match.end():] if match else ""
         if not match or not remainder:
             objects.append(term)
@@ -73,7 +78,11 @@ def validate_translation_terms(
             raise SceneTranslationError(
                 f"Translation changed or omitted supplied {field}."
             )
-    if any(not row.article for row in result.objects):
+    language = (
+        payload.target_language if isinstance(payload, SceneTranslationRequest)
+        else payload.get("targetLanguage", payload.get("target_language", ""))
+    ).lower()
+    if language != "ko" and any(not row.article for row in result.objects):
         raise SceneTranslationError(
             "Every translated object requires a definite article."
         )

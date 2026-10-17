@@ -96,7 +96,9 @@ class SceneTranslationService:
             ) from error
 
         def decode(data: Any) -> SceneTranslationResult:
-            result = normalize_object_articles(SceneTranslationResult.model_validate(data))
+            result = normalize_object_articles(
+                SceneTranslationResult.model_validate(data), parsed_payload.target_language
+            )
             validate_translation_terms(parsed_payload, result)
             return result
 
@@ -163,9 +165,8 @@ class SceneTranslationService:
 
                 try:
                     result = normalize_object_articles(
-                        SceneTranslationResult.model_validate_json(
-                            response.output_text
-                        )
+                        SceneTranslationResult.model_validate_json(response.output_text),
+                        parsed_payload.target_language,
                     )
                     validate_translation_terms(parsed_payload, result)
                 except (ValueError, SceneTranslationError) as error:
