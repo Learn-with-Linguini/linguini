@@ -2,6 +2,7 @@ import { request, requestBlob, write } from "./api.ts";
 import type { LanguageProfile } from "./api.ts";
 
 export type RoomStatus = "lobby" | "playing" | "completed" | "ended" | "expired";
+export type RoomAction = "inviteFriend" | "preparePhotos" | "ready" | "sendClue" | "guess" | "viewResult" | "waiting" | "finished";
 export type RoomRelationType = "left_of" | "right_of" | "above" | "below" | "on" | "under" | "inside" | "in_front_of" | "behind" | "next_to" | "near";
 export interface RoomReviewObject { key: string; label: string; x: number; y: number; color: string | null }
 export interface RoomRelation { key: string; subjectObjectKey: string; relation: RoomRelationType; referenceObjectKey: string }
@@ -20,7 +21,7 @@ export interface RoomTurn {
   result?: { isCorrect: boolean; targetObjectKey?: string; message?: string; explanation?: string } | null;
 }
 export interface RoomSnapshot {
-  id: string; status: RoomStatus; revision: number; expiresAt: string; meId: string;
+  id: string; status: RoomStatus; revision: number; expiresAt: string; inviteExpiresAt: string; updatedAt: string; actionRequired: RoomAction; meId: string;
   hostUserId?: string | null; inviteCode?: string | null;
   sourceLanguageCode: string; targetLanguageCode: string; proficiencyLevel: LanguageProfile["proficiencyLevel"];
   members: { userId: string; displayName: string; seat: number; ready: boolean; acknowledged: boolean }[];
@@ -29,8 +30,15 @@ export interface RoomSnapshot {
 }
 export interface RoomEntry { room: RoomSnapshot; inviteCode?: string | null }
 export interface PendingRoomCommand { intent: string; body: { commandId: string; expectedRevision: number } & Record<string, unknown> }
+export interface Friend {
+  userId: string; displayName: string; sourceLanguageCode: string | null; targetLanguageCode: string | null;
+  proficiencyLevel: string | null; canChallenge: boolean;
+}
+export interface FriendInvitation { inviteCode: string; expiresAt: string }
 
 export const roomQueryKeys = {
+  list: (owner: string, profile: string) => ["rooms", owner, profile, "list"] as const,
+  friends: (owner: string, profile: string) => ["friends", owner, profile] as const,
   active: (owner: string, profile: string) => ["rooms", owner, profile, "active"] as const,
   snapshot: (owner: string, profile: string, room: string) => ["rooms", owner, profile, room] as const,
 };
@@ -68,10 +76,17 @@ export const getActiveRoom = async (signal?: AbortSignal): Promise<RoomSnapshot 
   const room = await request<RoomSnapshot | null>("/api/v1/rooms/active", signal);
   return room ? sanitizeRoomSnapshot(room) : null;
 };
+export const getRooms = async (signal?: AbortSignal) =>
+  (await request<RoomSnapshot[]>("/api/v1/rooms", signal)).map(sanitizeRoomSnapshot);
+export const getFriends = (signal?: AbortSignal) => request<Friend[]>("/api/v1/friends", signal);
+export const inviteFriend = (commandId: string) => write<FriendInvitation>("/api/v1/friends/invite", "POST", { commandId });
+export const acceptFriend = (inviteCode: string, commandId: string) =>
+  write<Friend>("/api/v1/friends/accept", "POST", { inviteCode, commandId });
+export const removeFriend = (userId: string) => write<void>(`/api/v1/friends/${encodeURIComponent(userId)}`, "DELETE", undefined);
 export const getRoom = async (id: string, signal?: AbortSignal) =>
   sanitizeRoomSnapshot(await request<RoomSnapshot>(`/api/v1/rooms/${encodeURIComponent(id)}`, signal));
-export const createRoom = async (languageProfileId: string, commandId: string): Promise<RoomEntry> => {
-  const entry = await write<RoomEntry>("/api/v1/rooms", "POST", { languageProfileId, commandId });
+export const createRoom = async (languageProfileId: string, commandId: string, friendUserId?: string): Promise<RoomEntry> => {
+  const entry = await write<RoomEntry>("/api/v1/rooms", "POST", { languageProfileId, commandId, ...(friendUserId ? { friendUserId } : {}) });
   return { ...entry, room: sanitizeRoomSnapshot(entry.room) };
 };
 export const joinRoom = async (languageProfileId: string, inviteCode: string, commandId: string): Promise<RoomEntry> => {
@@ -94,4 +109,16 @@ export function roomMatchesProfile(room: RoomSnapshot, profile: LanguageProfile 
   return Boolean(profile && room.targetLanguageCode.toLowerCase() === profile.targetLanguageCode.toLowerCase()
     && room.sourceLanguageCode.toLowerCase() === profile.sourceLanguageCode.toLowerCase()
     && room.proficiencyLevel === profile.proficiencyLevel);
+}
+
+export function roomActionLabel(room: RoomSnapshot): string {
+  return {
+    inviteFriend: "Invite your friend", preparePhotos: "Prepare photos", ready: "Get ready",
+    sendClue: "Your turn · send a clue", guess: "Your turn · find the object", viewResult: "See your result",
+    waiting: "Waiting for your friend", finished: room.status === "completed" ? "Completed" : room.status === "expired" ? "Expired" : "Ended",
+  }[room.actionRequired];
+}
+
+export function roomDeadline(value: string): string {
+  return new Date(value).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }

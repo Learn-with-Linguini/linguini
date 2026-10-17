@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import test from "node:test";
 import { JSDOM } from "jsdom";
 import { rolldown } from "rolldown";
-import type { RoomSnapshot } from "../src/lib/rooms.ts";
+import type { Friend, RoomSnapshot } from "../src/lib/rooms.ts";
 
 process.env.VITE_API_BASE_URL = "http://api.test";
 const { canStartRoom, prepareRoomCommand, roomReviewPayload, sanitizeRoomSnapshot } = await import("../src/lib/rooms.ts");
@@ -30,7 +30,8 @@ globals.MessageChannel = class extends NativeMessageChannel {
 };
 
 function fixture(role: "sender" | "guesser" = "guesser", phase: "compose" | "guess" | "reveal" = "guess"): RoomSnapshot {
-  return { id: "r1", status: "playing", revision: 7, meId: "u1", expiresAt: "2099-01-01T00:00:00Z",
+  return { id: "r1", status: "playing", revision: 7, meId: "u1", expiresAt: "2099-01-15T00:00:00Z",
+    inviteExpiresAt: "2099-01-01T00:00:00Z", updatedAt: "2098-12-25T00:00:00Z", actionRequired: phase === "reveal" ? "viewResult" : "guess",
     sourceLanguageCode: "en", targetLanguageCode: "es", proficiencyLevel: "A1", successfulRounds: 0, roundCount: 2,
     members: [{ userId: "u1", displayName: "Learner", seat: 0, ready: true, acknowledged: false },
       { userId: "u2", displayName: "Friend", seat: 1, ready: true, acknowledged: false }],
@@ -136,6 +137,8 @@ test.after(async () => {
 });
 let snapshot = fixture();
 let activeSnapshot: RoomSnapshot | null = null;
+let roomList: RoomSnapshot[] | null = null;
+let friendsSnapshot: Friend[] = [];
 const writes: { path: string; body: Record<string, unknown> }[] = [];
 const readPaths: string[] = [];
 const replies: (() => Response | Promise<Response>)[] = [];
@@ -143,7 +146,7 @@ let resourceSnapshot = { sauce: { remaining: 9, capacity: 10, refillsAt: "2099-0
   appearance: "default", ownedAppearances: ["default"] };
 globals.fetch = async (input: unknown, init?: RequestInit) => {
   const path = String(input).replace("http://api.test", "");
-  if (init?.method === "POST") { writes.push({ path, body: JSON.parse(String(init.body)) }); return replies.shift()?.() ?? Response.json(snapshot); }
+  if (init?.method === "POST" || init?.method === "DELETE") { writes.push({ path, body: init.body ? JSON.parse(String(init.body)) : {} }); return replies.shift()?.() ?? Response.json(snapshot); }
   readPaths.push(path);
   if (path.endsWith("/image?width=640")) return new Response(new Blob(["photo"], { type: "image/png" }));
   if (path === "/api/v1/me/game-resources") return Response.json(resourceSnapshot);
@@ -151,11 +154,20 @@ globals.fetch = async (input: unknown, init?: RequestInit) => {
   if (path === "/api/v1/me/language-profiles") return Response.json([{ ...state.activeProfile, isActive: true }]);
   if (path === "/api/v1/me/progress") return Response.json({ xp: 0 });
   if (path === "/api/v1/ispy/games/active") return Response.json(null);
+  if (path === "/api/v1/rooms") return Response.json(roomList ?? (activeSnapshot ? [activeSnapshot] : []));
+  if (path === "/api/v1/friends") return Response.json(friendsSnapshot);
   if (path === "/api/v1/rooms/active") return Response.json(activeSnapshot);
   if (path === "/api/v1/rooms/r1") return Response.json(snapshot);
   return new Response("not found", { status: 404 });
 };
 const state = { user: { id: "u1", cameraEnabled: true }, activeProfile: { id: "profile1", userId: "u1", targetLanguageCode: "es", sourceLanguageCode: "en", proficiencyLevel: "A1" } };
+test.beforeEach(() => {
+  roomList = null;
+  friendsSnapshot = [];
+  replies.length = 0;
+  writes.length = 0;
+  activeSnapshot = null;
+});
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const text = () => dom.window.document.body.textContent ?? "";
 const button = (label: string) => [...dom.window.document.querySelectorAll("button")].find(item => item.textContent?.trim() === label);
@@ -177,7 +189,7 @@ async function click(label: string) {
   });
   await waitFor(() => assert.doesNotMatch(text(), /Saving your action…|Saving your jar…|Creating your room…|Joining your friend…/));
 }
-async function mount(which: "Room" | "Rooms" = "Room", source = surface) {
+async function mount(which: "Room" | "Rooms" = "Room", source = surface, appState = state) {
   const container = dom.window.document.createElement("div");
   dom.window.document.body.replaceChildren(container);
   const root = source.createRoot(container);
@@ -185,15 +197,17 @@ async function mount(which: "Room" | "Rooms" = "Room", source = surface) {
   const close = registerCleanup(async () => {
     try { await source.act(async () => root.unmount()); } finally { client.clear(); }
   });
-  await source.act(async () => root.render(source.h(source.QueryClientProvider, { client },
-    source.h(source.AppStateContext.Provider, { value: state }, source.h(source.MemoryRouter, { initialEntries: [which === "Room" ? "/rooms/r1" : "/rooms"] },
+  const render = async (value = appState) => source.act(async () => root.render(source.h(source.QueryClientProvider, { client },
+    source.h(source.AppStateContext.Provider, { value }, source.h(source.MemoryRouter, { initialEntries: [which === "Room" ? "/rooms/r1" : "/rooms"] },
       source.h(source.Routes, null,
         source.h(source.Route, { path: "/rooms/:roomId", element: source.h(source.Room) }),
         source.h(source.Route, { path: "/rooms", element: source.h(source.Rooms) }),
+        source.h(source.Route, { path: "/ispy/friends", element: source.h(source.Rooms) }),
         source.h(source.Route, { path: "/home", element: source.h("p", null, "Home destination") }),
       ))))));
+  await render();
   await waitFor(() => assert.ok(dom.window.document.querySelector('[aria-label="Sauce remaining"]') || text().includes("Home destination")), source);
-  return { client, close };
+  return { client, close, render };
 }
 
 async function mountApp(path: string) {
@@ -338,7 +352,7 @@ test("refresh restores the retry and reveal phases rather than offering a new cl
   snapshot.members[0].acknowledged = true;
   view = await mount();
   assert.match(text(), /Marker 1: mesa/);
-  assert.equal(button("Waiting for your friend…")?.disabled, true);
+  assert.equal(button("Next photo")?.disabled, false);
   assert.equal(button("Check my guess"), undefined);
   await view.close();
 });
@@ -368,7 +382,7 @@ test("room entry retries creation with the same command identity", async () => {
   activeSnapshot = null;
   const view = await mount("Rooms");
   replies.push(() => Response.json({ detail: { message: "Create reply interrupted" } }, { status: 500 }));
-  await click("Create a room");
+  await click("Create a challenge");
   replies.push(() => Response.json({ room: { ...fixture(), status: "lobby", currentTurn: null }, inviteCode: "a".repeat(32) }));
   await click("Retry request");
   assert.equal(writes[0].body.commandId, writes[1].body.commandId);
@@ -384,10 +398,10 @@ test("I-Spy offers a working friend lobby and normal resources without feature c
   assert.equal(dom.window.document.querySelectorAll('nav[aria-label="Main"] a').length, 6);
   assert.doesNotMatch(text(), /Coming soon/);
   await click("Play with a friend");
-  await waitFor(() => assert.ok(button("Create a room")));
+  await waitFor(() => assert.ok(button("Create a challenge")));
   assert.match(text(), /Starting the game uses 1 Sauce for each person/);
   await waitFor(() => assert.ok(dom.window.document.querySelector('[aria-label="Sauce remaining"]')));
-  assert.ok(readPaths.includes("/api/v1/rooms/active"));
+  assert.ok(readPaths.includes("/api/v1/rooms"));
   assert.ok(readPaths.includes("/api/v1/me/game-resources"));
   assert.equal(dom.window.document.querySelector('nav[aria-label="Main"] a[aria-current="page"]')?.getAttribute("href"), "/ispy");
   assert.ok(dom.window.document.querySelector('button[aria-label="Go back"]'), "the friend lobby uses the shared back control");
@@ -436,4 +450,151 @@ test("the accent shop keeps the old balance until accepted and safely retries a 
   assert.match(text(), /22 Basil leaves/);
   assert.equal(dom.window.document.querySelectorAll(".game-resources--herb button:disabled").length, 1);
   await close();
+});
+
+const savedFriend: Friend = { userId: "u2", displayName: "Friend", sourceLanguageCode: "en", targetLanguageCode: "es", proficiencyLevel: "A1", canChallenge: true };
+
+test("the inbox keeps multiple active challenges, pending completed results and recent recaps", async () => {
+  roomList = [fixture(), { ...fixture(), id: "r2", actionRequired: "waiting" },
+    { ...fixture("guesser", "reveal"), id: "r3", status: "completed", actionRequired: "viewResult" },
+    { ...fixture(), id: "r4", status: "completed", currentTurn: null, actionRequired: "finished" }];
+  friendsSnapshot = [savedFriend];
+  const view = await mount("Rooms");
+  await waitFor(() => assert.equal(dom.window.document.querySelectorAll('button[aria-label^="Open challenge"]').length, 3));
+  assert.match(text(), /Your turn · find the object/);
+  assert.match(text(), /Waiting for your friend/);
+  assert.match(text(), /See your result/);
+  assert.match(text(), /Recent challenges · 1/);
+  assert.ok(button("Create a challenge"), "an existing challenge does not prevent starting another");
+  assert.equal(view.client.getQueryData(["rooms", "u1", "profile1", "list"]) instanceof Array, true);
+  assert.deepEqual(view.client.getQueryData(["friends", "u1", "profile1"]), [savedFriend]);
+  await view.close();
+});
+
+test("a saved friend gets a direct challenge without being marked ready or charged by the browser", async () => {
+  friendsSnapshot = [savedFriend, { ...savedFriend, userId: "u3", displayName: "Other learner", canChallenge: false }];
+  snapshot = { ...fixture(), status: "lobby", currentTurn: null, actionRequired: "preparePhotos", hostUserId: "u1" };
+  snapshot.members = snapshot.members.map(member => ({ ...member, ready: false }));
+  const view = await mount("Rooms");
+  await waitFor(() => assert.ok(dom.window.document.querySelector('button[aria-label="Challenge Friend"]')));
+  assert.equal(dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Challenge Other learner"]')?.disabled, true);
+  replies.push(() => Response.json({ room: snapshot }));
+  await surface.act(async () => dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Challenge Friend"]')!.click());
+  await waitFor(() => assert.match(text(), /I Spy together/));
+  assert.equal(writes.length, 1);
+  assert.equal(writes[0].path, "/api/v1/rooms");
+  assert.equal(writes[0].body.friendUserId, "u2");
+  assert.equal(writes[0].body.languageProfileId, "profile1");
+  assert.equal(button("I’m ready")?.disabled, false);
+  assert.match(text(), /FriendPreparing/);
+  await view.close();
+});
+
+test("a friend invitation URL requires explicit acceptance and retries an unknown outcome with the same identity", async () => {
+  const code = "f".repeat(64);
+  const view = await mountApp(`/ispy/friends?friendCode=${code}`);
+  await waitFor(() => assert.ok(button("Accept friend invitation")));
+  assert.equal(writes.length, 0, "opening a link does not create a friendship");
+  assert.equal(dom.window.document.querySelector<HTMLInputElement>('input[placeholder="Paste a friend invitation code"]')?.value, code);
+  replies.push(() => Response.json({ detail: { message: "Acceptance reply interrupted" } }, { status: 500 }));
+  await click("Accept friend invitation");
+  await waitFor(() => assert.match(text(), /Acceptance reply interrupted/));
+  friendsSnapshot = [savedFriend];
+  replies.push(() => Response.json(savedFriend));
+  await click("Retry request");
+  await waitFor(() => assert.match(text(), /Friend is now in your friends/));
+  assert.equal(writes[0].path, "/api/v1/friends/accept");
+  assert.deepEqual(writes[0].body, writes[1].body);
+  assert.equal(writes[0].body.inviteCode, code);
+  assert.match(text(), /Ready for a challenge/);
+  await view.close();
+});
+
+test("friend invitations show a private expiring link and friends can be removed", async () => {
+  friendsSnapshot = [savedFriend];
+  const view = await mount("Rooms");
+  replies.push(() => Response.json({ inviteCode: "new-private-friend-code", expiresAt: "2099-01-01T00:00:00Z" }));
+  await click("Invite a friend");
+  await waitFor(() => assert.ok([...dom.window.document.querySelectorAll<HTMLInputElement>("input[readonly]")].some(input => input.value.includes("friendCode=new-private-friend-code"))));
+  assert.match(text(), /They must accept to become your friend/);
+  friendsSnapshot = [];
+  replies.push(() => new Response(null, { status: 204 }));
+  await surface.act(async () => dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Remove Friend from friends"]')!.click());
+  await waitFor(() => assert.match(text(), /Friend removed/));
+  assert.equal(writes[1].path, "/api/v1/friends/u2");
+  await view.close();
+});
+
+test("a host can get ready before a friend joins", async () => {
+  snapshot = { ...fixture(), status: "lobby", currentTurn: null, hostUserId: "u1", actionRequired: "ready" };
+  snapshot.members = [{ ...snapshot.members[0], ready: false }];
+  const view = await mount();
+  assert.equal(button("I’m ready")?.disabled, false);
+  replies.push(() => Response.json({ ...snapshot, revision: 8, members: [{ ...snapshot.members[0], ready: true }], actionRequired: "waiting" }));
+  await click("I’m ready");
+  assert.equal(writes[0].path, "/api/v1/rooms/r1/ready");
+  assert.equal(writes[0].body.ready, true);
+  assert.match(text(), /We’ll keep your place/);
+  await view.close();
+});
+
+test("returning to challenges saves the room without ending it", async () => {
+  snapshot = fixture();
+  roomList = [snapshot];
+  const view = await mount();
+  await click("Save and return to challenges");
+  await waitFor(() => assert.match(text(), /Challenges with friends/));
+  assert.equal(writes.length, 0);
+  assert.equal(button("Open")?.disabled, false);
+  await view.close();
+});
+
+test("ending a challenge needs confirmation, keeps modal focus and can retry a lost reply", async () => {
+  snapshot = fixture();
+  const view = await mount();
+  await click("End challenge");
+  assert.equal(writes.length, 0);
+  const dialog = dom.window.document.querySelector('[role="dialog"]');
+  assert.ok(dialog);
+  assert.match(dialog.textContent ?? "", /ends the challenge for both/);
+  assert.equal(dom.window.document.activeElement?.textContent, "Keep challenge");
+  replies.push(() => Response.json({ detail: { message: "End reply interrupted" } }, { status: 500 }));
+  await click("End for both");
+  assert.match(dialog.textContent ?? "", /End reply interrupted/);
+  replies.push(() => Response.json({ ...snapshot, status: "ended", currentTurn: null, revision: 8, actionRequired: "finished" }));
+  await click("Retry ending challenge");
+  assert.deepEqual(writes[0].body, writes[1].body);
+  assert.equal(writes[0].path, "/api/v1/rooms/r1/leave");
+  assert.equal(dom.window.document.querySelector('[role="dialog"]'), null);
+  assert.match(text(), /This game has ended/);
+  await view.close();
+});
+
+test("an offline player sees their final result before the completed recap and acknowledges independently", async () => {
+  snapshot = { ...fixture("guesser", "reveal"), status: "completed", actionRequired: "viewResult" };
+  snapshot.currentTurn!.index = 1;
+  const view = await mount();
+  assert.match(text(), /Marker 1: mesa/);
+  assert.equal(button("See our recap")?.disabled, false);
+  replies.push(() => Response.json({ ...snapshot, revision: 8, currentTurn: null, actionRequired: "finished" }));
+  await click("See our recap");
+  assert.equal(writes[0].path, "/api/v1/rooms/r1/turns/t1/ack");
+  assert.match(text(), /You played every photo/);
+  assert.match(text(), /Your own practice/);
+  await view.close();
+});
+
+test("switching accounts scopes the inbox and saved friends to the new account", async () => {
+  roomList = [fixture()];
+  friendsSnapshot = [savedFriend];
+  const view = await mount("Rooms");
+  await waitFor(() => assert.match(text(), /With Friend/));
+  roomList = [];
+  friendsSnapshot = [{ ...savedFriend, userId: "u4", displayName: "New account friend" }];
+  await view.render({ ...state, user: { ...state.user, id: "new-account" }, activeProfile: { ...state.activeProfile, id: "new-profile", userId: "new-account" } });
+  await waitFor(() => assert.match(text(), /New account friend/));
+  assert.doesNotMatch(text(), /With Friend/);
+  assert.deepEqual(view.client.getQueryData(["rooms", "new-account", "new-profile", "list"]), []);
+  assert.deepEqual(view.client.getQueryData(["friends", "new-account", "new-profile"]), friendsSnapshot);
+  await view.close();
 });
