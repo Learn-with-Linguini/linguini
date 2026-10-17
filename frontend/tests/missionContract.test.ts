@@ -32,10 +32,12 @@ test("structured outcomes extend grouped review details", () => {
     questionOutcomes: [{
       questionId: "colour", outcome: "correct", objectiveId: "identify-describe-object", targetIds: ["describe-colour"],
       evidenceType: "recognition", assistance: ["hint"], assistanceUsed: true,
-      mistakes: [], optionNotes: ["Taza is feminine."],
+      mistakes: [], correctNote: "The circled object is a crosswalk.",
+      optionNotes: ["Taza is feminine."],
     }],
   }));
   assert.equal(details?.questionResults.colour, true);
+  assert.equal(details?.questionOutcomes?.[0].correctNote, "The circled object is a crosswalk.");
   assert.deepEqual(details?.questionOutcomes?.[0].optionNotes, ["Taza is feminine."]);
   assert.equal(descriptionEvaluation(attempt(details)), null);
 });

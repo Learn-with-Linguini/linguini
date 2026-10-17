@@ -231,31 +231,41 @@ def _corrections(payload, question, label):
         return [dict(
             mistake="wordOrder", correction=question.correct_text,
             explanation="Say the object first, then the verb, the position and the other object.",
-        )]
+        )], None
     if question.purpose == "askWhere":
         return [dict(
             mistake="wordOrder", correction=question.correct_text,
             explanation="Start with the question words, then the object.",
-        )]
+        )], None
     if question.purpose == "checkAnswer":
-        return [dict(
-            mistake="wrongPosition", answers=[option.option_id], correction=relation["statement"],
-            explanation=f"The photo shows: {relation['statement']}",
-        ) for option in question.options if option.option_id != question.correct_option_id]
+        correct_note = f"The photo shows: {relation['statement']}"
+        corrections = [
+            dict(
+                mistake="wrongPosition", answers=[option.option_id],
+                correction=relation["statement"], explanation=correct_note,
+            )
+            for option in question.options if option.option_id != question.correct_option_id
+        ]
+        return corrections, correct_note
     corrections = []
+    position_meaning = phrases[relation["position"]]["meaning"]
+    correct_note = _capitalised(
+        f"the {relation['subjectSource']} is {position_meaning} "
+        f"the {relation['referenceSource']}."
+    )
     for option in question.options:
         if option.option_id == question.correct_option_id:
             continue
         chosen = by_text[fold(option.label)]
         corrections.append(dict(
             mistake="wrongPosition", answers=[option.option_id], correction=label,
+            note=f"“{chosen['expression']}” means {chosen['meaning']}.",
             explanation=(
-                f"\u201c{chosen['expression']}\u201d means {chosen['meaning']}; the "
-                f"{relation['subjectSource']} is {phrases[relation['position']]['meaning']} "
-                f"the {relation['referenceSource']}."
+                f"\u201c{chosen['expression']}\u201d means {chosen['meaning']}; "
+                f"{correct_note[0].lower()}{correct_note[1:]}"
             ),
         ))
-    return corrections
+    return corrections, correct_note
 
 
 def m02_lesson_task(session_id, mission, payload, result, vocabulary_ids):
@@ -265,6 +275,7 @@ def m02_lesson_task(session_id, mission, payload, result, vocabulary_ids):
     def evaluate(question, label):
         target_ids, evidence_type, criteria = _EVALUATIONS[question.purpose]
         relation = relations[question.relation_key]
+        corrections, correct_note = _corrections(payload, question, label)
         named = {
             "describeLocation": [relation["subjectKey"], relation["referenceKey"]],
             "askWhere": [relation["subjectKey"]],
@@ -274,7 +285,8 @@ def m02_lesson_task(session_id, mission, payload, result, vocabulary_ids):
             evidence_type=evidence_type,
             rubric_criterion_ids=criteria,
             vocabulary_item_ids=[vocabulary_ids[key] for key in named if key in vocabulary_ids],
-            corrections=_corrections(payload, question, label),
+            corrections=corrections,
+            correct_note=correct_note,
         )
 
     def shown(question):

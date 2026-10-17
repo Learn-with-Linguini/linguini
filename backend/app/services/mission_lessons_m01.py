@@ -140,12 +140,17 @@ def _corrections(question, correct_label, payload, source):
     return [
         dict(
             mistake="wrongWord", answers=[option.option_id], correction=correct_label,
-            explanation=(
-                f"“{option.label}” means {_english(meaning)}, but the circled object is "
-                f"{_english(source)}."
+            note=(
+                f"“{option.label}” means {_english(meaning)}."
                 if (meaning := payload.get("meanings", {}).get(
                     fold(_LEADING_ARTICLE.sub("", option.label))
                 ))
+                else f"“{option.label}” names a different object."
+            ),
+            explanation=(
+                f"“{option.label}” means {_english(meaning)}, but the circled object is "
+                f"{_english(source)}."
+                if meaning
                 else f"“{option.label}” names a different object; the circled object is "
                      f"{_english(source)}."
             ),
@@ -167,6 +172,10 @@ def m01_lesson_task(session_id, mission, payload, result, vocabulary_ids):
             rubric_criterion_ids=criteria,
             vocabulary_item_ids=[vocabulary_id] if vocabulary_id else [],
             corrections=_corrections(question, label, payload, labels[question.object_key]),
+            correct_note=(
+                f"The circled object is {_english(labels[question.object_key])}."
+                if question.purpose == "identifyObject" else None
+            ),
         )
 
     def shown(question):

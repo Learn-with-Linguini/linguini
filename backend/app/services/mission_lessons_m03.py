@@ -148,31 +148,35 @@ def _corrections(payload, question, label):
                 explanation=f"Start with {QUANTITY_FRAMES[language]}, "
                             "then the number, then the plural noun.",
             ),
-        ]
+        ], None
     if question.purpose == "matchQuantity":
         target = (question.board_counts or {}).get(question.correct_option_id)
+        correct_note = f"“{question.quantity_word}” means {target}."
         return [
             dict(
                 mistake="wrongQuantity", answers=[option.option_id], correction=label,
-                explanation=f"“{question.quantity_word}” means {target}.",
+                explanation=correct_note,
             )
             for option in question.options if option.option_id != question.correct_option_id
-        ]
+        ], correct_note
     reverse_numbers = {
         fold(number_word): number for number, number_word in NUMBER_WORDS[language].items()
     }
+    correct_note = f"You counted {group['quantity']}: {group['numberWord']}."
     return [
         dict(
             mistake="wrongQuantity", answers=[option.option_id], correction=label,
+            note=(
+                f"“{option.label}” means {number}."
+                if (number := reverse_numbers.get(fold(option.label))) is not None else None
+            ),
             explanation=(
-                f"“{option.label}” means {number}; you counted {group['quantity']}: "
-                f"{group['numberWord']}."
-                if (number := reverse_numbers.get(fold(option.label))) is not None
-                else f"You counted {group['quantity']}: {group['numberWord']}."
+                f"“{option.label}” means {number}; {correct_note[0].lower()}{correct_note[1:]}"
+                if number is not None else correct_note
             ),
         )
         for option in question.options if option.option_id != question.correct_option_id
-    ]
+    ], correct_note
 
 
 def m03_lesson_task(session_id, mission, payload, result, vocabulary_ids):
@@ -187,6 +191,7 @@ def m03_lesson_task(session_id, mission, payload, result, vocabulary_ids):
     def evaluate(question, label):
         target_ids, evidence_type, criteria = _EVALUATIONS[question.purpose]
         vocabulary_id = vocabulary_ids.get(question.object_key)
+        corrections, correct_note = _corrections(payload, question, label)
         return dict(
             target_ids=target_ids,
             evidence_type=evidence_type,
@@ -195,7 +200,8 @@ def m03_lesson_task(session_id, mission, payload, result, vocabulary_ids):
                 [vocabulary_id]
                 if vocabulary_id and question.purpose == "buildQuantity" else []
             ),
-            corrections=_corrections(payload, question, label),
+            corrections=corrections,
+            correct_note=correct_note,
         )
 
     def shown(question):

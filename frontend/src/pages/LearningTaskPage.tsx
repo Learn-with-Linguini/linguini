@@ -369,7 +369,8 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
       </>}
       {results[question.questionId] !== undefined ? <>
         <Feedback tone={results[question.questionId] ? "good" : "warn"}><p role="status">{results[question.questionId]
-          ? "Correct!"
+          ? <>Correct!{outcomeFor[question.questionId]?.correctNote
+            ? ` ${outcomeFor[question.questionId]?.correctNote}` : ""}</>
           : <>Not quite.{solutions[question.questionId] ? (() => {
             const solution = question.options.find(option => option.optionId === solutions[question.questionId])?.label ?? solutions[question.questionId];
             return <> The correct answer is <strong>{solution}</strong>{/[.!?]$/.test(solution) ? "" : "."}</>;

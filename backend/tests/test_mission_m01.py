@@ -154,20 +154,26 @@ def test_identify_corrections_explain_wrong_words_with_and_without_meanings():
         uuid4(), MISSION, data, result, {CUP: CUP, BOOK: BOOK},
     )
     identify = result.questions[0]
-    corrections = task.answer_key.question_evaluations[0].corrections
+    identify_evaluation = task.answer_key.question_evaluations[0]
+    assert identify_evaluation.correct_note == "The circled object is a cup."
+    assert task.answer_key.question_evaluations[1].correct_note is None
     by_option = {
         option.option_id: next(
-            rule.explanation for rule in corrections if option.option_id in rule.answers
+            rule for rule in identify_evaluation.corrections if option.option_id in rule.answers
         )
         for option in identify.options if option.option_id != identify.correct_option_id
     }
     labels = {option.option_id: option.label for option in identify.options}
-    assert by_option[next(key for key, label in labels.items() if label == "Un livre")] == (
+    with_meaning = by_option[next(key for key, label in labels.items() if label == "Un livre")]
+    assert with_meaning.explanation == (
         "“Un livre” means a book, but the circled object is a cup."
     )
-    assert by_option[next(key for key, label in labels.items() if label == "Une table")] == (
+    assert with_meaning.note == "“Un livre” means a book."
+    without_meaning = by_option[next(key for key, label in labels.items() if label == "Une table")]
+    assert without_meaning.explanation == (
         "“Une table” names a different object; the circled object is a cup."
     )
+    assert without_meaning.note == "“Une table” names a different object."
 
 
 def test_a_single_usable_pair_builds_no_lesson():

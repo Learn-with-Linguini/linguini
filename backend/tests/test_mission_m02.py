@@ -13,7 +13,7 @@ from app.ai.features.learning_tasks.mission_m02 import (
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.missions import get_mission
 from app.services.mission_eligibility import photo_eligibility, plan_missions
-from app.services.mission_lessons_m02 import m02_payload
+from app.services.mission_lessons_m02 import m02_lesson_task, m02_payload
 
 M01 = get_mission("M01", "A1", 1)
 M02 = get_mission("M02", "A1", 1)
@@ -163,6 +163,45 @@ def test_fallback_builds_core_questions_and_a_true_check_from_confirmed_facts():
     assert check.prompt == "\u201cEl libro está debajo de la mesa.\u201d ¿Coincide con la foto?"
     assert {o.option_id: o.label for o in check.options} == {"yes": "Sí", "no": "No"}
     assert check.correct_option_id == "yes" and check.object_key == str(BOOK)
+
+
+def test_position_choices_have_short_notes_and_correct_answers_have_correct_notes():
+    payload = _payload("es", [
+        _numbered(CUP, "on", TABLE, 2), _numbered(BOOK, "under", TABLE, 4),
+    ])
+    result = fallback_m02_lesson(payload)
+    task = m02_lesson_task(uuid4(), M02, payload, result, {})
+    evaluations = {item.question_id: item for item in task.answer_key.question_evaluations}
+    choose, _, _, check = result.questions
+    choose_evaluation = evaluations[choose.question_id]
+    relation = next(row for row in payload["relations"] if row["key"] == choose.relation_key)
+    position = next(
+        row for row in payload["positions"] if row["position"] == relation["position"]
+    )
+    correct_note = (
+        f"The {relation['subjectSource']} is {position['meaning']} "
+        f"the {relation['referenceSource']}."
+    )
+    assert choose_evaluation.correct_note == correct_note
+    for option in choose.options:
+        if option.option_id == choose.correct_option_id:
+            continue
+        phrase = next(row for row in payload["positions"] if row["expression"] == option.label)
+        rule = next(
+            rule for rule in choose_evaluation.corrections if option.option_id in rule.answers
+        )
+        assert rule.note == f"“{phrase['expression']}” means {phrase['meaning']}."
+        assert rule.explanation == (
+            f"“{phrase['expression']}” means {phrase['meaning']}; "
+            f"{correct_note[0].lower()}{correct_note[1:]}"
+        )
+
+    check_evaluation = evaluations[check.question_id]
+    check_relation = next(
+        row for row in payload["relations"] if row["key"] == check.relation_key
+    )
+    assert check_evaluation.correct_note == f"The photo shows: {check_relation['statement']}"
+    assert all(rule.note is None for rule in check_evaluation.corrections)
 
 
 def test_a_wrong_proposal_uses_the_position_the_photo_contradicts():
