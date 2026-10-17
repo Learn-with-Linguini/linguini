@@ -51,18 +51,25 @@ def make_plan(uploaded=True, language="es"):
                 "items": [
                     dict(
                         id="one",
-                        word="puerta",
                         translation="door",
                         wordClass="noun",
                         x=99,
                         y=99,
-                        example="La puerta es azul.",
                     )
                 ]
             }
         }
     )
-    with patch("app.services.session_plan.bootstrap_word", side_effect=bootstrap):
+    def catalog(connection, profile, label):
+        return bootstrap(
+            connection, profile["target_language_code"], "en", "puerta", label,
+            "noun", None, "La puerta es azul.",
+        )
+
+    with (
+        patch("app.services.session_plan.bootstrap_word", side_effect=bootstrap),
+        patch("app.services.session_plan.curated_word", side_effect=catalog),
+    ):
         objects, words, translations = build_objects(
             MagicMock(),
             session,

@@ -91,9 +91,9 @@ def test_api_and_visibility(scene_record):
         connection.execute(
             update(preloaded_scenes)
             .where(preloaded_scenes.c.slug == slug)
-            .values(is_active=True, language_code="fr")
+            .values(is_active=True)
         )
-    assert client.get(f"/api/v1/preloaded-scenes/{slug}").status_code == 404
+    assert client.get(f"/api/v1/preloaded-scenes/{slug}").status_code == 200
     assert (
         next(r for r in PostgresSceneRepository(engine).list_scenes() if r.scene_id == slug).title
         == "Live edit"
@@ -126,7 +126,7 @@ def test_media_integrity_and_rls(scene_record):
 def test_transaction_rolls_back_media_on_invalid_scene(database, source):
     engine, *_ = database
     row = source
-    row["languageCode"] = "not a language"
+    row["sceneId"] = PostgresSceneRepository(engine).list_scenes()[0].scene_id
     with pytest.raises(IntegrityError), engine.begin() as connection:
         store_scene(connection, PreloadedSceneDetail.model_validate(row))
     with engine.connect() as connection:
@@ -138,22 +138,21 @@ def test_transaction_rolls_back_media_on_invalid_scene(database, source):
         )
 
 
-def test_french_scene_round_trip(database, source):
+def test_scenes_are_language_independent(database, source):
     engine, *_ = database
-    source["languageCode"] = "fr"
-    source["language"] = "French"
-    source["items"][0]["gender"] = "le"
-    source["items"][1]["gender"] = "l'"
     scene = PreloadedSceneDetail.model_validate(source)
     with engine.begin() as connection:
         store_scene(connection, scene)
     try:
         service = SceneService(PostgresSceneRepository(engine))
-        french = service.list_scenes("fr")
-        assert source["sceneId"] in {row.scene_id for row in french}
-        assert service.list_scenes("es")
-        fetched = service.get_scene(source["sceneId"], "fr")
-        assert [item.gender for item in fetched.items][:2] == ["le", "l'"]
+        listed = service.list_scenes()
+        assert source["sceneId"] in {row.scene_id for row in listed}
+        assert all("language" not in row.model_dump() for row in listed)
+        fetched = service.get_scene(source["sceneId"])
+        assert [item.translation for item in fetched.items] == [
+            item["translation"] for item in source["items"]
+        ]
+        assert all({"word", "gender", "example"}.isdisjoint(item) for item in source["items"])
     finally:
         with engine.begin() as connection:
             connection.execute(
@@ -176,14 +175,12 @@ def test_database_errors_are_controlled():
 
 
 def test_precompute_helpers_build_valid_content():
-    from app.ai.features.translation.schemas import TranslatedTerm
     from app.schemas.media import AnchorPoint, BoundingBox, MediaAsset, SceneObject
     from app.scripts.precompute_preloaded_scenes import (
         build_items,
         build_scene_content,
         dedupe_objects,
         marker_percent,
-        normalized_gender,
     )
 
     session_id = uuid4()
@@ -205,30 +202,10 @@ def test_precompute_helpers_build_valid_content():
     assert marker_percent(kept[0]) == (30.0, 30.0)
     assert marker_percent(kept[1]) == (50.0, 50.0)
 
-    terms = [
-        TranslatedTerm(
-            key=str(kept[0].id), source="Street", translation="rue",
-            article="la", gender="feminine",
-        ),
-        TranslatedTerm(
-            key=str(kept[1].id), source="school", translation="école",
-            article="l'", gender="feminine",
-        ),
-    ]
-    examples = {str(kept[0].id): ("La rue est calme.", "The street is quiet.")}
-    items = build_items(kept, terms, examples, "fr")
-    assert items[0]["id"] == "street"
-    assert items[0]["word"] == "la rue"
-    assert items[0]["translation"] == "the Street"
-    assert items[0]["gender"] == "la"
-    assert items[1]["id"] == "school"
-    assert items[1]["word"] == "l'école"
-    assert items[1]["gender"] == "l'"
-    assert items[1]["example"] == ""
-
-    assert normalized_gender("du", "masculine", "fr") == "le"
-    assert normalized_gender("du", "feminine", "es") == "la"
-    assert normalized_gender(None, None, "es") is None
+    items = build_items(kept)
+    assert [item["id"] for item in items] == ["street", "school"]
+    assert [item["translation"] for item in items] == ["the Street", "the school"]
+    assert all({"word", "gender", "example"}.isdisjoint(item) for item in items)
 
     asset = MediaAsset(
         media_type="image", source="preloaded",
@@ -236,16 +213,14 @@ def test_precompute_helpers_build_valid_content():
         width=320, height=200,
     )
     content = build_scene_content(
-        slug="rue-principale", language_code="fr", language="French",
-        title="A walk downtown", description="A busy street.",
+        slug="street", title="A walk downtown", description="A busy street.",
         difficulty="beginner", media_asset=asset, items=items,
     )
+    assert content["rounds"][0]["clue"] == "the Street"
     detail = PreloadedSceneDetail.model_validate(
         {
             **content,
-            "sceneId": "rue-principale",
-            "languageCode": "fr",
-            "language": "French",
+            "sceneId": "street",
             "title": "A walk downtown",
             "description": "A busy street.",
             "difficulty": "beginner",

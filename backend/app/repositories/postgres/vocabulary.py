@@ -311,13 +311,10 @@ class PostgresVocabularyRepository:
                 )
                 scene_rows = (
                     {
-                        (row["media_asset_id"], row["language_code"]): row
+                        row["media_asset_id"]: row
                         for row in connection.execute(
                             select(
                                 preloaded_scenes.c.media_asset_id,
-                                func.lower(preloaded_scenes.c.language_code).label(
-                                    "language_code"
-                                ),
                                 preloaded_scenes.c.slug,
                                 preloaded_scenes.c.title,
                             ).where(
@@ -332,9 +329,7 @@ class PostgresVocabularyRepository:
                 )
 
                 def scene_row(session):
-                    return scene_rows.get(
-                        (session.get("scene_media_asset_id"), session.get("language_code"))
-                    )
+                    return scene_rows.get(session.get("scene_media_asset_id"))
 
                 def scene(row):
                     return scene_row(
