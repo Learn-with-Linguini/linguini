@@ -128,9 +128,7 @@ class MediaAssetResponse(MediaAsset):
 
 class PreloadedScene(ApiModel):
     image_url: str | None = None
-    language_code: NonEmptyText = "es"
     scene_id: NonEmptyText
-    language: NonEmptyText
     media_asset: MediaAsset
     title: NonEmptyText
     description: str | None = None

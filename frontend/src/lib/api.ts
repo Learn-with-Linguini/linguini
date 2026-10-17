@@ -1,6 +1,6 @@
 import { GENDER_ARTICLES } from "../data/types.ts";
 import type { Gender, LeaderboardRow, ScenarioProgress, Streak, VocabRecord, VocabularyScene, VocabStatus, WordClass } from "../data/types";
-import type { Scene, SceneSummary } from "../data/types";
+import type { SceneSummary } from "../data/types";
 import type { JournalEntry } from "../data/types";
 import { getAccessToken, waitForAccessToken } from "./supabase.ts";
 
@@ -269,15 +269,13 @@ export function getProgress(signal?: AbortSignal): Promise<ProgressResponse> {
 interface PreloadedScene {
   imageUrl?: string | null;
   mediaAsset: { id: string };
-  languageCode: string;
   sceneId: string;
   title: string;
   description: string | null;
-  language: string;
 }
 
 function sceneSummary(row: PreloadedScene): SceneSummary {
-  return { id: row.sceneId, mediaAssetId: row.mediaAsset.id, imageUrl: row.imageUrl ?? null, title: row.title, blurb: row.description ?? "", language: row.language, languageCode: row.languageCode };
+  return { id: row.sceneId, mediaAssetId: row.mediaAsset.id, imageUrl: row.imageUrl ?? null, title: row.title, blurb: row.description ?? "" };
 }
 
 export async function getScenes(signal?: AbortSignal): Promise<SceneSummary[]> {
@@ -285,11 +283,9 @@ export async function getScenes(signal?: AbortSignal): Promise<SceneSummary[]> {
   return rows.map(sceneSummary);
 }
 
-export async function getSceneDetail(id: string, signal?: AbortSignal): Promise<Scene> {
-  const row = await request<PreloadedScene & Pick<Scene, "items">>(
-    `/api/v1/preloaded-scenes/${encodeURIComponent(id)}`, signal,
-  );
-  return { ...sceneSummary(row), items: row.items };
+export async function getSceneDetail(id: string, signal?: AbortSignal): Promise<SceneSummary> {
+  const row = await request<PreloadedScene>(`/api/v1/preloaded-scenes/${encodeURIComponent(id)}`, signal);
+  return sceneSummary(row);
 }
 
 export async function getVocabulary(signal?: AbortSignal): Promise<VocabRecord[]> {

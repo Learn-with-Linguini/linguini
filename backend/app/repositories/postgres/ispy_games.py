@@ -206,7 +206,7 @@ class PostgresISpyGameRepository:
             if source is None:
                 if asset["source"] != "preloaded":
                     raise PracticeConflictError(CONFIRM_SCENE_FIRST)
-                scene = self._curated_scene(c, asset["id"], profile)
+                scene = self._curated_scene(c, asset["id"])
             game = Session(
                 user_id=self.user_id,
                 language_profile_id=profile_id,
@@ -252,14 +252,12 @@ class PostgresISpyGameRepository:
             .first()
         )
 
-    def _curated_scene(self, c, asset_id, profile):
+    def _curated_scene(self, c, asset_id):
         return dict(
             c.execute(
                 select(preloaded_scenes).where(
                     preloaded_scenes.c.media_asset_id == asset_id,
                     preloaded_scenes.c.is_active.is_(True),
-                    func.lower(preloaded_scenes.c.language_code)
-                    == profile["target_language_code"].lower(),
                 )
             )
             .mappings()

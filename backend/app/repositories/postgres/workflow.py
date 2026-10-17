@@ -816,13 +816,11 @@ class PostgresWorkflowRepository:
                 select(preloaded_scenes.c.id).where(
                     preloaded_scenes.c.media_asset_id == asset["id"],
                     preloaded_scenes.c.is_active.is_(True),
-                    func.lower(preloaded_scenes.c.language_code)
-                    == profile["target_language_code"].lower(),
                 )
             ).first()
             is None
         ):
-            raise PracticeNotFoundError("Scene not found for this language.")
+            raise PracticeNotFoundError("Scene not found.")
         return profile, asset
 
     def create(self, request):
@@ -983,14 +981,7 @@ class PostgresWorkflowRepository:
         )
         scene = (
             c.execute(
-                select(preloaded_scenes)
-                .where(preloaded_scenes.c.media_asset_id == asset.id)
-                .order_by(
-                    (
-                        func.lower(preloaded_scenes.c.language_code)
-                        == profile["target_language_code"].lower()
-                    ).desc()
-                )
+                select(preloaded_scenes).where(preloaded_scenes.c.media_asset_id == asset.id)
             )
             .mappings()
             .first()
