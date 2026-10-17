@@ -15,6 +15,12 @@ from app.missions import get_mission
 from app.services.mission_eligibility import agreed_colour, lesson_missions, photo_eligibility
 from app.services.mission_lessons_m01 import m01_lesson_task, m01_payload
 
+DETAIL_REASON = (
+    "Confirm a colour, size, shape, material, pattern or state of at least 2 different objects."
+)
+ONE_DETAIL_REASON = (
+    "Confirm a colour, size, shape, material, pattern or state of at least one object."
+)
 MISSION = get_mission("M01", "A1", 1)
 CUP = "11111111-1111-1111-1111-111111111111"
 BOOK = "22222222-2222-2222-2222-222222222222"
@@ -37,13 +43,13 @@ def scene_object(item_id, label, colour):
     ([obj("cup", color="red"), obj("book", color="green")], ()),
     ([obj("cup", color="red"), obj("Cup ", color="blue")], (
         "Confirm at least 2 different objects.",
-        "Confirm the colours of at least 2 different objects.",
+        DETAIL_REASON,
     )),
     ([obj("cup", color="red"), obj("book", material="paper")], (
-        "Confirm the colours of at least 2 different objects.",
+        DETAIL_REASON,
     )),
     ([obj("cup", color="sparkly"), obj("book", color="green")], (
-        "Confirm the colours of at least 2 different objects.",
+        DETAIL_REASON,
     )),
 ])
 def test_eligibility_uses_only_confirmed_names_and_reviewed_colours(objects, reasons):
@@ -108,58 +114,57 @@ def test_two_tasks_ask_four_questions_about_two_different_confirmed_objects(lang
     data = build(language)
     result = fallback_m01_lesson(data)
     first, second = data["pairs"]
-    identify, confirm, colour, describe = result.questions
+    check_first, check_second, colour, describe = result.questions
     assert first["key"] != second["key"] and first["source"] != second["source"]
     assert [q.purpose for q in result.questions] == [
-        "identifyObject", "confirmObject", "chooseColour", "describeObject",
+        "confirmObject", "confirmObject", "chooseAttribute", "describeObject",
     ]
+    assert [q.question_id for q in result.questions[:2]] == ["confirm-first", "confirm-second"]
     assert [q.object_key for q in result.questions] == [
         first["key"], second["key"], first["key"], second["key"],
     ]
     assert [q.section for q in result.questions] == [
         "Task 1 · Identify objects in your photo", "Task 1 · Identify objects in your photo",
-        "Task 2 · Describe their colours", "Task 2 · Describe their colours",
+        "Task 2 · Describe them", "Task 2 · Describe them",
     ]
-    assert identify.prompt == {"fr": "Qu'est-ce que c'est ?", "es": "¿Qué es esto?"}[language]
-    assert correct(identify).casefold() == first["nounPhrase"]
-    assert all(q.translation is None for q in (identify, confirm, colour))
-    assert colour.attribute_keys == [first["colourKey"]]
-    assert describe.attribute_keys == [second["colourKey"]]
+    assert all(q.translation is None for q in (check_first, check_second, colour))
+    assert colour.attribute_keys == [first["attributeKey"]]
+    assert describe.attribute_keys == [second["attributeKey"]]
 
 
-def test_identification_options_are_taught_nouns_with_exactly_one_correct():
-    data = build("es")
-    identify = fallback_m01_lesson(data).questions[0]
-    assert {label.casefold() for label in labels(identify)} <= set(data["taughtNouns"])
-    assert sorted(label.casefold() for label in labels(identify)) == [
-        "un libro", "una mesa", "una taza",
-    ]
-    assert [o.label.casefold() for o in identify.options].count(
-        data["pairs"][0]["nounPhrase"]
-    ) == 1
-
-
-@pytest.mark.parametrize(("truth", "prompt", "right", "contrast"), [
-    (True, "¿Es un libro?", "Sí, es un libro.", "No, es una taza."),
-    (False, "¿Es una taza?", "No, es un libro.", "Sí, es una taza."),
+@pytest.mark.parametrize(("index", "truth", "prompt", "right", "contrast"), [
+    (0, True, "¿Es una taza?", "Sí, es una taza.", "No, es un libro."),
+    (0, False, "¿Es un libro?", "No, es una taza.", "Sí, es un libro."),
+    (1, True, "¿Es un libro?", "Sí, es un libro.", "No, es una taza."),
+    (1, False, "¿Es una taza?", "No, es un libro.", "Sí, es una taza."),
 ])
-def test_yes_no_statement_answers_with_taught_chunks(truth, prompt, right, contrast):
+def test_is_it_this_checks_answer_with_taught_chunks(index, truth, prompt, right, contrast):
     data = build("es")
-    data["layout"]["statementCorrect"] = truth
-    confirm = fallback_m01_lesson(data).questions[1]
-    assert data["pairs"][1]["source"] == "book"
-    assert confirm.statement_correct is truth
-    assert confirm.prompt == prompt
-    assert correct(confirm) == right
-    assert set(labels(confirm)) == {right, contrast}
+    data["layout"]["statementCorrect"][index] = truth
+    check = fallback_m01_lesson(data).questions[index]
+    assert [pair["source"] for pair in data["pairs"]] == ["cup", "book"]
+    assert check.statement_correct is truth
+    assert check.prompt == prompt
+    assert correct(check) == right
+    assert set(labels(check)) == {right, contrast}
+
+
+def test_statement_truths_are_drawn_independently_per_question():
+    truths = {
+        tuple(build("es", session_id=UUID(int=n))["layout"]["statementCorrect"])
+        for n in range(40)
+    }
+    assert truths == {(True, True), (True, False), (False, True), (False, False)}
 
 
 def test_french_statement_uses_oui_non_and_cest():
     data = build("fr")
-    data["layout"]["statementCorrect"] = False
-    confirm = fallback_m01_lesson(data).questions[1]
-    assert confirm.prompt == "Est-ce une tasse ?"
-    assert set(labels(confirm)) == {"Non, c'est un livre.", "Oui, c'est une tasse."}
+    data["layout"]["statementCorrect"] = [True, False]
+    check_first, check_second = fallback_m01_lesson(data).questions[:2]
+    assert check_first.prompt == "Est-ce une tasse ?"
+    assert correct(check_first) == "Oui, c'est une tasse."
+    assert check_second.prompt == "Est-ce une tasse ?"
+    assert set(labels(check_second)) == {"Non, c'est un livre.", "Oui, c'est une tasse."}
 
 
 def test_colour_options_agree_and_skip_visually_similar_colours():
@@ -193,7 +198,7 @@ def test_option_order_is_shuffled_per_session_and_stable_on_rebuild():
     again = fallback_m01_lesson(build("es"))
     assert [labels(q) for q in one.questions] == [labels(q) for q in again.questions]
     orders = {
-        tuple(labels(fallback_m01_lesson(build("es", session_id=UUID(int=n))).questions[0]))
+        tuple(labels(fallback_m01_lesson(build("es", session_id=UUID(int=n))).questions[2]))
         for n in range(12)
     }
     assert len(orders) > 1
@@ -204,14 +209,15 @@ def test_task_persists_statement_truth_privately_and_keeps_order():
     result = fallback_m01_lesson(data)
     task = m01_lesson_task(SESSION, MISSION, data, result, {CUP: CUP, BOOK: BOOK})
     questions = task.public_content.questions
-    assert task.answer_key.statement_correct == {"confirm-object": data["layout"][
-        "statementCorrect"
-    ]}
+    assert task.answer_key.statement_correct == dict(zip(
+        ["confirm-first", "confirm-second"], data["layout"]["statementCorrect"], strict=True,
+    ))
     assert "statementCorrect" not in task.public_content.model_dump_json(by_alias=True)
     assert [q.keep_option_order for q in questions] == [True, True, True, None]
     assert [q.object_label for q in questions[:2]] == [None, None]
     assert [str(q.scene_object_id) for q in questions] == [CUP, BOOK, CUP, BOOK]
     assert [o.label for o in questions[0].options] == labels(result.questions[0])
+    assert questions[3].token_bank and "." not in questions[3].token_bank
     rules = {e.question_id: e for e in task.answer_key.question_evaluations}
     assert [rule.mistake for rule in rules["describe-object"].corrections] == ["wordOrder"]
     data = build("fr")
@@ -283,3 +289,59 @@ def test_catalog_genders_recorded_as_articles_still_agree(language):
     payload = build(language, words=words)
     assert payload["pairs"] == canonical["pairs"]
     validate_m01_lesson(payload, fallback_m01_lesson(payload))
+
+
+def detailed(item_id, label, **attributes):
+    return SimpleNamespace(id=item_id, label=label, attributes=attributes)
+
+
+def test_other_confirmed_details_are_described_with_agreement_and_placement():
+    objects = [detailed(CUP, "cup", color="red"), detailed(BOOK, "book", size="small"),
+               detailed(TABLE, "table", color="green")]
+    data = build("fr", objects=objects)
+    first, second = data["pairs"]
+    assert (first["attributeType"], second["attributeType"]) == ("colour", "size")
+    describe = fallback_m01_lesson(data).questions[3]
+    # French petit goes before the noun and agrees with it.
+    assert describe.correct_text == "C'est un petit livre."
+    assert describe.translation == "It's a small book."
+    assert "petite" in describe.token_bank
+    spanish = fallback_m01_lesson(build("es", objects=objects)).questions[3]
+    assert spanish.correct_text == "Es un libro pequeño."
+
+
+def test_second_object_prefers_a_non_colour_detail():
+    objects = [detailed(CUP, "cup", color="red"),
+               detailed(BOOK, "book", color="green", material="wooden"),
+               detailed(TABLE, "table")]
+    second = build("es", objects=objects)["pairs"][1]
+    assert (second["attributeType"], second["agreedForm"]) == ("material", "de madera")
+    describe = fallback_m01_lesson(build("es", objects=objects)).questions[3]
+    assert describe.correct_text == "Es un libro de madera."
+
+
+def test_detail_choice_uses_reviewed_contrasts_and_a_type_prompt():
+    objects = [detailed(CUP, "cup", state="empty"), detailed(BOOK, "book", material="wood"),
+               detailed(TABLE, "table")]
+    data = build("es", objects=objects)
+    choose = fallback_m01_lesson(data).questions[2]
+    assert choose.purpose == "chooseAttribute"
+    assert choose.prompt == "¿Cómo es?"
+    assert correct(choose) == "Vacía"
+    assert set(labels(choose)) == {"Vacía", "Llena"}
+    task = m01_lesson_task(SESSION, MISSION, data, fallback_m01_lesson(data), {})
+    shown = task.public_content.questions[2]
+    assert shown.prompt_translation == "What is it like?"
+    rules = {e.question_id: e for e in task.answer_key.question_evaluations}
+    assert rules["choose-attribute"].corrections[0].mistake == "wrongAttribute"
+
+
+def test_details_without_reviewed_forms_or_contrasts_are_not_used():
+    unknown = [detailed(CUP, "cup", material="velvet"), detailed(BOOK, "book", size="medium"),
+               detailed(TABLE, "table")]
+    assert build("es", objects=unknown)["pairs"] == []
+    no_contrast = [detailed(CUP, "cup", pattern="striped"), detailed(BOOK, "book", state="open"),
+                   detailed(TABLE, "table")]
+    data = build("es", objects=no_contrast)
+    assert [pair["attributeType"] for pair in data["pairs"]] == ["pattern", "state"]
+    assert data["attributeOptions"] == ["de rayas", "de lunares"]

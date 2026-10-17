@@ -1,10 +1,12 @@
-"""M01 A1 mission lesson: identify two photo objects, then describe their colours.
+"""M01 A1 mission lesson: identify two photo objects, then describe them.
 
-Task 1 identifies objects: Q1 names the first object by choice and Q2 confirms or
-rejects a statement about the second. Task 2 describes them: Q3 chooses the first
-object's colour and Q4 builds the second object's description. The payload holds the
-two learner-confirmed object-colour pairs with reviewed target-language forms and the
-taught nouns and colours that may appear as options. The lesson is built
+Task 1 identifies objects: Q1 and Q2 each show one object and ask "is it this?",
+answered with a full yes/no chunk; each statement is independently true or names
+the other object. Task 2 describes them: Q3 chooses a detail of the first object
+(colour preferred) and Q4 builds the second object's description, preferring another
+confirmed detail (size, shape, material, pattern or state). The payload holds the two
+learner-confirmed object-detail pairs with reviewed target-language forms and the
+taught nouns and details that may appear as options. The lesson is built
 deterministically and accepted only through ``validate_m01_lesson``.
 """
 
@@ -25,25 +27,26 @@ from app.ai.features.learning_tasks.schemas import GeneratedChoice
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.schemas.base import ApiModel, NonEmptyText
 
-M01_PROMPT_VERSION = "learning-tasks.m01-a1.v3"
-M01_SCHEMA_VERSION = "learning-tasks-m01-result.v3"
-M01_VALIDATOR_VERSION = "learning-tasks-m01-validator.v3"
+M01_PROMPT_VERSION = "learning-tasks.m01-a1.v4"
+M01_SCHEMA_VERSION = "learning-tasks-m01-result.v4"
+M01_VALIDATOR_VERSION = "learning-tasks-m01-validator.v4"
 
-type M01Purpose = Literal["identifyObject", "confirmObject", "chooseColour", "describeObject"]
+type M01Purpose = Literal["confirmObject", "chooseAttribute", "describeObject"]
 
 IDENTIFY_SECTION = "Task 1 · Identify objects in your photo"
-DESCRIBE_SECTION = "Task 2 · Describe their colours"
-_ORDER: list[M01Purpose] = ["identifyObject", "confirmObject", "chooseColour", "describeObject"]
+DESCRIBE_SECTION = "Task 2 · Describe them"
+CONFIRM_IDS = ("confirm-first", "confirm-second")
+_ORDER: list[M01Purpose] = [
+    "confirmObject", "confirmObject", "chooseAttribute", "describeObject",
+]
 _INTERACTIONS = {
-    "identifyObject": "multipleChoice",
     "confirmObject": "multipleChoice",
-    "chooseColour": "multipleChoice",
+    "chooseAttribute": "multipleChoice",
     "describeObject": "sentenceBuilding",
 }
 _SECTIONS = {
-    "identifyObject": IDENTIFY_SECTION,
     "confirmObject": IDENTIFY_SECTION,
-    "chooseColour": DESCRIBE_SECTION,
+    "chooseAttribute": DESCRIBE_SECTION,
     "describeObject": DESCRIBE_SECTION,
 }
 
@@ -84,8 +87,12 @@ def capitalised(text: str) -> str:
 
 
 def description(payload: dict[str, Any], pair: dict[str, Any]) -> str:
-    """The taught sentence for one pair, e.g. ``Es una manzana roja.``"""
-    return f"{payload['sentenceStart']} {pair['nounPhrase']} {pair['agreedForm']}."
+    """The taught sentence for one pair: ``Es una manzana roja.``, ``C'est une petite tasse.``"""
+    article, noun = pair["nounPhrase"].split(" ", 1)
+    words = [article, pair["agreedForm"], noun] if pair["before"] else [
+        article, noun, pair["agreedForm"],
+    ]
+    return f"{payload['sentenceStart']} {' '.join(words)}."
 
 
 def statement(payload: dict[str, Any], noun_phrase: str) -> str:
@@ -122,7 +129,7 @@ def validate_m01_lesson(payload: dict[str, Any], result: M01LessonResult) -> Non
         raise LearningTaskGenerationError("The lesson needs two different confirmed objects.")
     first, second = pairs
     if [question.purpose for question in questions] != _ORDER:
-        raise LearningTaskGenerationError("Identify, confirm, choose a colour, then describe.")
+        raise LearningTaskGenerationError("Confirm both objects, choose a detail, then describe.")
     if [question.object_key for question in questions] != [
         first["key"], second["key"], first["key"], second["key"]
     ]:
@@ -132,37 +139,32 @@ def validate_m01_lesson(payload: dict[str, Any], result: M01LessonResult) -> Non
             raise LearningTaskGenerationError("Questions belong to their task.")
         if question.interaction_type == "multipleChoice" and question.translation:
             raise LearningTaskGenerationError("Choices never reveal a translation.")
-    identify, confirm, colour, describe = questions
+    first_check, second_check, attribute, describe = questions
+    for confirm, shown, other in ((first_check, first, second), (second_check, second, first)):
+        correct = checked_answer(confirm)
+        named = other if confirm.statement_correct is False else shown
+        right, contrast = confirm_answers(payload, shown, other)[confirm.statement_correct]
+        if fold(confirm.prompt) != fold(statement(payload, named["nounPhrase"])):
+            raise LearningTaskGenerationError(
+                "A statement names the shown object or the other confirmed object."
+            )
+        if confirm.attribute_keys or correct != fold(right) or set(_labels(confirm)) != {
+            fold(right), fold(contrast)
+        }:
+            raise LearningTaskGenerationError("Yes/no answers are the two taught chunks.")
 
-    correct = checked_answer(identify)
-    taught = {fold(noun) for noun in payload["taughtNouns"]}
-    if identify.attribute_keys or correct != fold(first["nounPhrase"]):
-        raise LearningTaskGenerationError("Identification answers name the shown object.")
-    if not set(_labels(identify)) <= taught or fold(second["nounPhrase"]) not in _labels(identify):
-        raise LearningTaskGenerationError("Identification options are taught object names.")
-
-    correct = checked_answer(confirm)
-    named = first if confirm.statement_correct is False else second
-    right, contrast = confirm_answers(payload, second, first)[confirm.statement_correct]
-    if fold(confirm.prompt) != fold(statement(payload, named["nounPhrase"])):
-        raise LearningTaskGenerationError("A false statement names the other confirmed object.")
-    if confirm.attribute_keys or correct != fold(right) or set(_labels(confirm)) != {
-        fold(right), fold(contrast)
-    }:
-        raise LearningTaskGenerationError("Yes/no answers are the two taught chunks.")
-
-    correct = checked_answer(colour)
-    allowed = {fold(form) for form in payload["colourOptions"]}
-    if colour.attribute_keys != [first["colourKey"]] or correct != fold(first["agreedForm"]):
-        raise LearningTaskGenerationError("The colour answer is the confirmed, agreed colour.")
-    if not set(_labels(colour)) <= allowed:
-        raise LearningTaskGenerationError("Colour options are taught, clearly different colours.")
+    correct = checked_answer(attribute)
+    allowed = {fold(form) for form in payload["attributeOptions"]}
+    if attribute.attribute_keys != [first["attributeKey"]] or correct != fold(first["agreedForm"]):
+        raise LearningTaskGenerationError("The answer is the confirmed detail's agreed form.")
+    if not set(_labels(attribute)) <= allowed:
+        raise LearningTaskGenerationError("Options are taught, clearly different details.")
 
     sentence = description(payload, second)
     built = fold(describe.correct_text or "")
-    if describe.attribute_keys != [second["colourKey"]] or built != fold(sentence):
+    if describe.attribute_keys != [second["attributeKey"]] or built != fold(sentence):
         raise LearningTaskGenerationError(
-            "Descriptions use the taught pattern with the object's confirmed colour."
+            "Descriptions use the taught pattern with the object's confirmed detail."
         )
     extras = [fold(word) for word in payload["describeExtras"]]
     checked_answer(describe.model_copy(update={"token_bank": [
@@ -170,6 +172,10 @@ def validate_m01_lesson(payload: dict[str, Any], result: M01LessonResult) -> Non
     ]}))
     if len(describe.token_bank) != len(tokens(sentence)) + len(extras):
         raise LearningTaskGenerationError("Extra tiles are only the reviewed agreement forms.")
+
+
+def _a(word: str) -> str:
+    return f"{'an' if word[:1].casefold() in 'aeiou' else 'a'} {word}"
 
 
 def _options(prefix: str, labels: list[str], order: list[int]) -> list[dict[str, str]]:
@@ -182,58 +188,56 @@ def _options(prefix: str, labels: list[str], order: list[int]) -> list[dict[str,
 def fallback_m01_lesson(payload: dict[str, Any]) -> M01LessonResult:
     """The deterministic M01 lesson; it passes the same validator.
 
-    Option order and the yes/no statement come from ``payload['layout']``, which the
-    payload derives from the session, so a rebuilt lesson matches the saved one.
+    Option order and each yes/no statement's truth come from ``payload['layout']``,
+    which the payload derives from the session, so a rebuilt lesson matches the saved one.
     """
     pairs = payload["pairs"]
     if len(pairs) != 2:
         raise LearningTaskGenerationError("The lesson needs two confirmed object-colour pairs.")
     first, second = pairs
     layout = payload["layout"]
-    nouns = payload["identifyOptions"]
-    identify = _options("identify", nouns, layout["identifyOrder"])
-    truth = layout["statementCorrect"]
-    named = second if truth else first
-    right, contrast = confirm_answers(payload, second, first)[truth]
-    confirm_labels = [right, contrast]
-    confirm = _options("confirm", confirm_labels, layout["confirmOrder"])
-    colours = payload["colourOptions"]
-    colour = _options("colour", colours, layout["colourOrder"])
+    details = _options("attribute", payload["attributeOptions"], layout["attributeOrder"])
     sentence = description(payload, second)
 
     def picked(options, label):
         return next(item["option_id"] for item in options if fold(item["label"]) == fold(label))
 
     base = dict(correct_text=None, token_bank=[], translation=None, attribute_keys=[])
+    checks = []
+    for index, (shown, other) in enumerate(((first, second), (second, first))):
+        truth = layout["statementCorrect"][index]
+        named = shown if truth else other
+        right, contrast = confirm_answers(payload, shown, other)[truth]
+        options = _options("confirm", [right, contrast], layout["confirmOrders"][index])
+        checks.append(dict(
+            base, question_id=CONFIRM_IDS[index], purpose="confirmObject",
+            section=IDENTIFY_SECTION, prompt=statement(payload, named["nounPhrase"]),
+            interaction_type="multipleChoice", options=options,
+            correct_option_id=picked(options, right), object_key=shown["key"],
+            statement_correct=truth,
+        ))
     questions = [
-        dict(base, question_id="identify-object", purpose="identifyObject",
-             section=IDENTIFY_SECTION, prompt=payload["identifyPrompt"],
-             interaction_type="multipleChoice", options=identify,
-             correct_option_id=picked(identify, first["nounPhrase"]), object_key=first["key"]),
-        dict(base, question_id="confirm-object", purpose="confirmObject",
-             section=IDENTIFY_SECTION, prompt=statement(payload, named["nounPhrase"]),
-             interaction_type="multipleChoice", options=confirm,
-             correct_option_id=picked(confirm, right), object_key=second["key"],
-             statement_correct=truth),
-        dict(base, question_id="choose-colour", purpose="chooseColour",
-             section=DESCRIBE_SECTION, prompt=payload["colourPrompt"],
-             interaction_type="multipleChoice", options=colour,
-             correct_option_id=picked(colour, first["agreedForm"]), object_key=first["key"],
-             attribute_keys=[first["colourKey"]]),
+        *checks,
+        dict(base, question_id="choose-attribute", purpose="chooseAttribute",
+             section=DESCRIBE_SECTION, prompt=payload["attributePrompt"],
+             interaction_type="multipleChoice", options=details,
+             correct_option_id=picked(details, first["agreedForm"]), object_key=first["key"],
+             attribute_keys=[first["attributeKey"]]),
         dict(question_id="describe-object", purpose="describeObject",
              section=DESCRIBE_SECTION, prompt=payload["describePrompt"],
              interaction_type="sentenceBuilding", options=[], correct_option_id=None,
              correct_text=sentence,
              token_bank=sorted([*tokens(sentence), *payload["describeExtras"]], key=fold),
-             translation=f"It's a {second['colourSource']} {second['source']}.",
-             object_key=second["key"], attribute_keys=[second["colourKey"]]),
+             translation=f"It's {_a(second['attributeSource'])} {second['source']}.",
+             object_key=second["key"], attribute_keys=[second["attributeKey"]]),
     ]
     example = payload["example"]
     result = M01LessonResult.model_validate(dict(
-        title="Name it and say its colour",
+        title="Name it and describe it",
         explanation=(
-            "Say what each object is, then describe it: the object, then its colour, "
-            "which matches the noun." + (f" For example: {example}" if example else "")
+            "Say what each object is, then describe it with a detail from your photo, such "
+            "as its colour, size or material, matching the noun."
+            + (f" For example: {example}" if example else "")
         ),
         questions=questions,
     ))

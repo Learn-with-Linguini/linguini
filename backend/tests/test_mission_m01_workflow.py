@@ -121,12 +121,12 @@ def test_suitable_photo_builds_one_mission_lesson_after_the_vocabulary(curated):
     assert [q.interaction_type for q in questions] == [
         "multipleChoice", "multipleChoice", "multipleChoice", "sentenceBuilding",
     ]
-    assert questions[0].prompt == "¿Qué es esto?"
-    assert questions[1].prompt in {"¿Es una taza?", "¿Es una mesa?"}
+    assert {questions[0].prompt, questions[1].prompt} <= {"¿Es una taza?", "¿Es una mesa?"}
+    assert all(o.label.startswith(("Sí, es ", "No, es ")) for q in questions[:2] for o in q.options)
     assert [q.prompt for q in questions[2:]] == ["¿De qué color es?", "Describe este objeto."]
     assert [q.section for q in questions] == [
         "Task 1 · Identify objects in your photo", "Task 1 · Identify objects in your photo",
-        "Task 2 · Describe their colours", "Task 2 · Describe their colours",
+        "Task 2 · Describe them", "Task 2 · Describe them",
     ]
     objects = [q.scene_object_id for q in questions]
     assert objects[0] == objects[2] != objects[1] == objects[3]
@@ -136,11 +136,12 @@ def test_suitable_photo_builds_one_mission_lesson_after_the_vocabulary(curated):
     assert [q.keep_option_order for q in questions] == [True, True, True, None]
     # M01 is built from the confirmed facts without a model call.
     assert not any(name.startswith("mission_lesson_m01") for name in model.requests)
-    assert lesson.public_content.title == "Name it and say its colour"
+    assert lesson.public_content.title == "Name it and describe it"
     key = _answer_key(engine, lesson.id)
     described = key["correctOptionIds"]["describe-object"]
     assert described in {"Es una taza roja.", "Es una mesa blanca."}
-    assert key["statementCorrect"].keys() == {"confirm-object"}
+    assert key["statementCorrect"].keys() == {"confirm-first", "confirm-second"}
+    assert "." not in questions[3].token_bank
     public = lesson.public_content.model_dump_json()
     assert described not in public and "statementCorrect" not in public
     evaluations = key["questionEvaluations"]
@@ -195,7 +196,7 @@ def test_a_photo_no_mission_fits_gets_the_regular_lesson_with_tips(curated):
 def test_a_colour_without_a_reviewed_form_skips_m01_for_the_regular_lesson(
     curated, monkeypatch,
 ):
-    monkeypatch.setattr(mission_lessons_m01, "agreed_colour", lambda *_: None)
+    monkeypatch.setattr(mission_lessons_m01, "agreed_attribute", lambda *_: None)
     _repository_, _sid, detail = _lesson(curated)
     assert detail.session.status == "inProgress"
     assert detail.session.analysis_draft["skippedMissions"] == [

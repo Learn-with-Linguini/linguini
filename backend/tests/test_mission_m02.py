@@ -16,6 +16,12 @@ from app.services.mission_eligibility import photo_eligibility, plan_missions
 from app.services.mission_lessons_m02 import m02_lesson_task, m02_payload
 from app.services.question_outcomes import normalize_answer
 
+DETAIL_REASON = (
+    "Confirm a colour, size, shape, material, pattern or state of at least 2 different objects."
+)
+ONE_DETAIL_REASON = (
+    "Confirm a colour, size, shape, material, pattern or state of at least one object."
+)
 M01 = get_mission("M01", "A1", 1)
 M02 = get_mission("M02", "A1", 2)
 CUP = UUID("33333333-0000-0000-0000-000000000000")
@@ -60,7 +66,7 @@ def test_missing_relations_are_named_for_m02_only():
         "Confirm where one object is on, under, next to, in front of or behind another.",
     )
     assert photo_eligibility(M01, PLAIN, []).reasons == (
-        "Confirm the colours of at least 2 different objects.",
+        DETAIL_REASON,
     )
 
 

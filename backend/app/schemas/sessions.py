@@ -160,6 +160,8 @@ class SessionDetailResponse(ApiModel):
     personalization: SessionPersonalization | None = None
     counted_groups: list[CountedGroup] = Field(default_factory=list)
     mission_guidance: list[str] = Field(default_factory=list)
+    # Reviewed sessions: scene object id -> its marker number on the review screen.
+    review_markers: dict[str, int] = Field(default_factory=dict)
     session: Session
     scene_object_relations: list[SceneObjectRelation] = Field(default_factory=list)
     scene_objects: list[SceneObject] = Field(default_factory=list)

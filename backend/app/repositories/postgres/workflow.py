@@ -156,6 +156,9 @@ def _lesson_answer_is_correct(task, question_id, answer):
     )
 
 
+_REVIEW_STATUSES = {"created", "analyzingScene", "awaitingObjectReview"}
+
+
 def review_marker_numbers(detected, accepted_ids, added_ids):
     """Review numbering: detected objects keep their place, added ones follow them in order."""
     accepted = {str(item) for item in accepted_ids}
@@ -721,6 +724,10 @@ class PostgresWorkflowRepository:
             personalization=(draft or {}).get("personalization"),
             counted_groups=saved_counted_groups(draft),
             mission_guidance=(draft or {}).get("missionGuidance", []),
+            review_markers=(
+                {} if session.status in _REVIEW_STATUSES
+                else (draft or {}).get("reviewMarkers") or {}
+            ),
             tasks=[SessionTaskPublic.from_internal(t, mode=session.mode) for t in tasks],
             progress=task_progress(tasks),
             next_task_id=next(

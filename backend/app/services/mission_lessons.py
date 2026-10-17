@@ -94,7 +94,8 @@ def build_mission_task(session_id, mission, focus, result, evaluate, shown=lambd
                         dict(option_id=option.option_id, label=option.label)
                         for option in question.options
                     ],
-                    token_bank=question.token_bank,
+                    # A full-stop tile adds nothing; grading ignores the final stop.
+                    token_bank=[token for token in question.token_bank if token != "."],
                     translation=question.translation,
                     **shown(question),
                 )

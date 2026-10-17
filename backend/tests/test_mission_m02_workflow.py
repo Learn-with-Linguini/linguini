@@ -107,6 +107,8 @@ def test_one_relation_plans_one_m02_task_with_four_questions_on_it(curated):
     draft = _scalar(engine, select(sessions.c.analysis_draft).where(sessions.c.id == sid))
     numbers = {UUID(obj["id"]): index for index, obj in enumerate(draft["objects"], 1)}
     assert {UUID(key): number for key, number in draft["reviewMarkers"].items()} == numbers
+    assert {UUID(key): number for key, number in detail.review_markers.items()} == numbers
+    assert all("." not in q.token_bank for q in content.questions)
     assert {o.option_id: o.label for o in find.options} == {
         option_id: str(numbers[object_id])
         for option_id, object_id in find.marker_object_ids.items()
@@ -212,7 +214,7 @@ def test_a_photo_no_mission_supports_gets_the_regular_lesson_and_tips_for_each(c
     ))
     detail = repository.get(sid, profile.id)
     tips = " ".join(detail.mission_guidance)
-    assert "Identify and describe an object: Confirm the colour" in tips
+    assert "Identify and describe an object: Confirm a colour" in tips
     assert "Find and locate: Confirm where one object is" in tips
     assert detail.session.analysis_draft["missionPlan"] == []
     assert all(task.public_content.mission_key is None for task in detail.tasks)
