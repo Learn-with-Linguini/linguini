@@ -128,6 +128,46 @@ def curated_scene_object(session_id, entry, vocabulary_item_id=None):
     )
 
 
+def curated_word(connection, profile, label):
+    """The oldest catalog word translated as ``label``; curated scenes carry no words."""
+    row = (
+        connection.execute(
+            select(
+                vocabulary_items,
+                *[
+                    column.label(f"translation_{column.name}")
+                    for column in vocabulary_translations.c
+                ],
+            )
+            .join(
+                vocabulary_translations,
+                vocabulary_translations.c.vocabulary_item_id == vocabulary_items.c.id,
+            )
+            .where(
+                func.lower(vocabulary_items.c.language_code)
+                == profile["target_language_code"].lower(),
+                func.lower(vocabulary_translations.c.source_language_code)
+                == profile["source_language_code"].lower(),
+                func.lower(vocabulary_translations.c.translated_text) == label.strip().lower(),
+            )
+            .order_by(vocabulary_items.c.created_at, vocabulary_items.c.id)
+            .limit(1)
+        )
+        .mappings()
+        .first()
+    )
+    if row is None:
+        return None
+    return (
+        VocabularyItem.model_validate(
+            {column.name: row[column.name] for column in vocabulary_items.c}
+        ),
+        VocabularyTranslation.model_validate(
+            {column.name: row[f"translation_{column.name}"] for column in vocabulary_translations.c}
+        ),
+    )
+
+
 def build_objects(connection, session, asset, profile, scene):
     objects, words, translations = [], [], []
     if profile["source_language_code"].lower() != "en":
@@ -135,22 +175,13 @@ def build_objects(connection, session, asset, profile, scene):
             "Placeholder plans currently support English as the source language."
         )
     if scene:
-        entries = scene["content"]["items"]
-        for entry in entries:
-            word, translated = bootstrap_word(
-                connection,
-                profile["target_language_code"],
-                profile["source_language_code"],
-                entry["word"],
-                entry["translation"],
-                entry.get("wordClass", entry.get("word_class", "noun")),
-                entry.get("gender"),
-                entry.get("example"),
-            )
-            obj = curated_scene_object(session.id, entry, word.id)
-            objects.append(obj)
-            words.append(word)
-            translations.append(translated)
+        # Without a catalog word, the session translator supplies one at review.
+        for entry in scene["content"]["items"]:
+            match = curated_word(connection, profile, entry["translation"])
+            objects.append(curated_scene_object(session.id, entry, match[0].id if match else None))
+            if match:
+                words.append(match[0])
+                translations.append(match[1])
     else:
         language = profile["target_language_code"].lower()
         if language not in UPLOAD_WORDS:

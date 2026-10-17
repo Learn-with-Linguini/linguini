@@ -15,6 +15,16 @@ def test_a1_lesson_catalogue_contains_missions_m01_through_m05():
     ]
 
 
+def test_proficiency_level_is_trimmed_and_case_normalized():
+    missions = lesson_missions(
+        SessionMode.LESSON,
+        {"proficiency_level": " a1 ", "target_language_code": "es"},
+    )
+    assert [mission.mission_id for mission in missions] == [
+        "M01", "M02", "M03", "M04", "M05",
+    ]
+
+
 def test_a0_is_not_eligible_even_after_onboarding():
     missions = lesson_missions(
         SessionMode.LESSON,

@@ -1,6 +1,6 @@
 import { GENDER_ARTICLES } from "../data/types.ts";
 import type { Gender, LeaderboardRow, ScenarioProgress, Streak, VocabRecord, VocabularyScene, VocabStatus, WordClass } from "../data/types";
-import type { Scene, SceneSummary } from "../data/types";
+import type { SceneSummary } from "../data/types";
 import type { JournalEntry } from "../data/types";
 import { getAccessToken, waitForAccessToken } from "./supabase.ts";
 
@@ -222,7 +222,7 @@ export const submitLessonReport = (payload: LessonReportInput) =>
 export const getLanguageProfiles = (signal?: AbortSignal) => request<LanguageProfile[]>("/api/v1/me/language-profiles", signal);
 export const updateUser = (patch: UserPatch) => write<User>("/api/v1/me", "PATCH", patch);
 export const updateLanguageProfile = (id: string, patch: LanguageProfilePatch) => write<LanguageProfile>(`/api/v1/me/language-profiles/${id}`, "PATCH", patch);
-export const createLanguageProfile = (code: string, minutes = 10, proficiencyLevel: ProficiencyLevel = "A1") => write<LanguageProfile>("/api/v1/me/language-profiles", "POST", {
+export const createLanguageProfile = (code: string, minutes: number, proficiencyLevel: ProficiencyLevel) => write<LanguageProfile>("/api/v1/me/language-profiles", "POST", {
   sourceLanguageCode: "en", targetLanguageCode: code, proficiencyLevel, dailyGoalMinutes: minutes,
 });
 
@@ -269,15 +269,13 @@ export function getProgress(signal?: AbortSignal): Promise<ProgressResponse> {
 interface PreloadedScene {
   imageUrl?: string | null;
   mediaAsset: { id: string };
-  languageCode: string;
   sceneId: string;
   title: string;
   description: string | null;
-  language: string;
 }
 
 function sceneSummary(row: PreloadedScene): SceneSummary {
-  return { id: row.sceneId, mediaAssetId: row.mediaAsset.id, imageUrl: row.imageUrl ?? null, title: row.title, blurb: row.description ?? "", language: row.language, languageCode: row.languageCode };
+  return { id: row.sceneId, mediaAssetId: row.mediaAsset.id, imageUrl: row.imageUrl ?? null, title: row.title, blurb: row.description ?? "" };
 }
 
 export async function getScenes(signal?: AbortSignal): Promise<SceneSummary[]> {
@@ -285,11 +283,9 @@ export async function getScenes(signal?: AbortSignal): Promise<SceneSummary[]> {
   return rows.map(sceneSummary);
 }
 
-export async function getSceneDetail(id: string, signal?: AbortSignal): Promise<Scene> {
-  const row = await request<PreloadedScene & Pick<Scene, "items">>(
-    `/api/v1/preloaded-scenes/${encodeURIComponent(id)}`, signal,
-  );
-  return { ...sceneSummary(row), items: row.items };
+export async function getSceneDetail(id: string, signal?: AbortSignal): Promise<SceneSummary> {
+  const row = await request<PreloadedScene>(`/api/v1/preloaded-scenes/${encodeURIComponent(id)}`, signal);
+  return sceneSummary(row);
 }
 
 export async function getVocabulary(signal?: AbortSignal): Promise<VocabRecord[]> {
@@ -532,6 +528,7 @@ export interface QuestionOutcome {
   questionId: string; outcome: "correct" | "incorrect" | "unassessed";
   objectiveId: string | null; targetIds: string[]; evidenceType: EvidenceType;
   assistance: SupportKind[]; assistanceUsed: boolean; mistakes: MistakeDetail[];
+  correctNote?: string; optionNotes?: string[];
 }
 export interface LessonAnswerCheck {
   questionId: string; answer: string; isCorrect: boolean; correctAnswer: string; outcome: QuestionOutcome;

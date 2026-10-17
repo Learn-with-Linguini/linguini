@@ -129,7 +129,7 @@ and seed missing catalog entries. No JSON imports are required.
 The SVG artwork remains in frontend components.
 
 The catalog retains the existing scene slugs, so practice links still work. Open
-`/practice` to select a scene or `/practice/calle-mayor/analysis` to test a direct
+`/practice` to select a scene or `/practice/street/analysis` to test a direct
 link. Loading, empty catalog, missing scene, and API failures have visible states.
 Unknown scene IDs no longer fall back to the first scene. Reload the browser after
 editing database scene content. Scene content remains static; camera uploads and AI generation

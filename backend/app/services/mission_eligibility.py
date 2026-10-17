@@ -150,11 +150,12 @@ def lesson_missions(session_mode, profile):
     if session_mode != SessionMode.LESSON:
         return []
     language = profile["target_language_code"].lower()
-    if profile["proficiency_level"] == "A2" and language not in A2_ENABLED_LANGUAGES:
+    level = str(profile["proficiency_level"] or "").strip().upper()
+    if level == "A2" and language not in A2_ENABLED_LANGUAGES:
         return []
     if language not in MISSION_LANGUAGES:
         return []
-    keys = IMPLEMENTED_MISSIONS.get(profile["proficiency_level"], ())
+    keys = IMPLEMENTED_MISSIONS.get(level, ())
     return [mission for key in keys if (mission := get_mission(*key)) is not None]
 
 

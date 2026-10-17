@@ -13,6 +13,7 @@ from app.ai.features.learning_tasks.mission_m01 import (
     fallback_m01_lesson,
 )
 from app.repositories.postgres.language_profiles import language_profiles
+from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.tasks import session_tasks, task_attempts
 from app.repositories.postgres.users import users
 from app.repositories.postgres.vocabulary import user_vocabulary_progress, vocabulary_encounters
@@ -193,16 +194,67 @@ def test_a_photo_no_mission_fits_gets_the_regular_lesson_with_tips(curated):
     assert response["missionGuidance"] == detail.mission_guidance
 
 
+def test_a_session_confirmed_without_a_mission_plan_is_planned_at_generation(curated):
+    engine, _owner, profile, *_ = curated
+    repository = _repository(curated, SceneModel())
+    sid, analyzed = _analyzed(curated, repository)
+    repository._review(sid, profile.id, _review(analyzed))
+    with engine.begin() as connection:
+        draft = connection.execute(
+            select(sessions.c.analysis_draft).where(sessions.c.id == sid)
+        ).scalar_one()
+        draft.pop("missionPlan")
+        connection.execute(
+            update(sessions).where(sessions.c.id == sid).values(analysis_draft=draft)
+        )
+
+    claim = repository._claim_generation(sid, profile.id)
+    assert [mission.mission_id for mission in claim.missions] == ["M01"]
+    repository._generate_tasks(claim)
+
+    detail = repository.get(sid, profile.id)
+    assert detail.session.status == "inProgress"
+    assert detail.tasks[1].public_content.mission_key == M01
+    assert any(
+        entry["missionId"] == "M01"
+        for entry in detail.session.analysis_draft["missionPlan"]
+    )
+
+
+def test_an_empty_saved_mission_plan_stays_unplanned(curated):
+    engine, _owner, profile, *_ = curated
+    repository = _repository(curated, SceneModel())
+    sid, analyzed = _analyzed(curated, repository)
+    repository._review(sid, profile.id, _review(analyzed))
+    with engine.begin() as connection:
+        draft = connection.execute(
+            select(sessions.c.analysis_draft).where(sessions.c.id == sid)
+        ).scalar_one()
+        draft["missionPlan"] = []
+        connection.execute(
+            update(sessions).where(sessions.c.id == sid).values(analysis_draft=draft)
+        )
+
+    claim = repository._claim_generation(sid, profile.id)
+    assert claim.missions == ()
+
+
 
 def test_a_colour_without_a_reviewed_form_skips_m01_for_the_regular_lesson(
     curated, monkeypatch,
 ):
     monkeypatch.setattr(mission_lessons_m01, "agreed_attribute", lambda *_: None)
-    _repository_, _sid, detail = _lesson(curated)
+    model = SceneModel()
+    _repository_, _sid, detail = _lesson(curated, model)
     assert detail.session.status == "inProgress"
     assert detail.session.analysis_draft["skippedMissions"] == [
         {"missionId": "M01", "reason": "noReviewedContent"}
     ]
+    assert "learning_tasks_v2" in model.requests
+    assert any(
+        task.kind == "grammarLesson" and task.public_content.mission_key is None
+        for task in detail.tasks
+    )
     assert "ispyRound" in {task.kind for task in detail.tasks}
     assert all(task.public_content.mission_key is None for task in detail.tasks)
 

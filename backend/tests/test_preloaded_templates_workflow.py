@@ -1,5 +1,6 @@
 """Learner sessions reuse precomputed templates only for unchanged curated scenes."""
 
+from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 import pytest
@@ -37,7 +38,7 @@ def curated(database):
         update={"id": uuid4(), "storage_key": f"test/{uuid4()}"}
     )
     row = scene_row(asset)
-    generate_row_templates(row, services(SceneModel()), unlimited(), RESERVE)
+    generate_row_templates(row, "es", services(SceneModel()), unlimited(), RESERVE)
     with engine.begin() as connection:
         connection.execute(insert(media_assets).values(**asset.model_dump(by_alias=False)))
         connection.execute(
@@ -181,3 +182,23 @@ def test_partial_selection_uses_routed_generation(curated):
     model = SceneModel()
     run(curated, model, "template-partial", accept=1)
     assert "scene_translation_v1" in model.requests
+
+
+def test_same_preloaded_image_serves_another_target_language(curated):
+    engine, owner, _, client, asset, row = curated
+    response = client.post(
+        "/api/v1/me/language-profiles",
+        json={"sourceLanguageCode": "en", "targetLanguageCode": "fr", "proficiencyLevel": "A1"},
+    )
+    assert response.status_code == 201, response.text
+    french = SimpleNamespace(id=UUID(response.json()["id"]))
+    model = SceneModel()
+    session_id, tasks = run((engine, owner, french, client, asset, row), model, "template-fr")
+    # Only Spanish templates are cached, so French is translated at session time.
+    assert "scene_translation_v1" in model.requests
+    assert {task["session_id"] for task in tasks} == {session_id}
+    with engine.connect() as connection:
+        scenes = connection.execute(
+            select(preloaded_scenes.c.slug).where(preloaded_scenes.c.media_asset_id == asset.id)
+        ).all()
+    assert scenes == [(row["slug"],)]

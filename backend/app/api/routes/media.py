@@ -4,7 +4,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 
-from app.api.dependencies import get_active_language, get_media_asset_service, get_scene_service
+from app.api.dependencies import get_current_user_id, get_media_asset_service, get_scene_service
 from app.schemas.media import (
     ConfirmMediaUploadRequest,
     CreateUploadUrlRequest,
@@ -77,18 +77,18 @@ def confirm_upload(
 @router.get("/preloaded-scenes", response_model=list[PreloadedScene])
 def list_preloaded_scenes(
     service: Annotated[SceneService, Depends(get_scene_service)],
-    language: Annotated[str, Depends(get_active_language)],
+    _user_id: Annotated[UUID, Depends(get_current_user_id)],
 ) -> list[PreloadedScene]:
-    return service.list_scenes(language)
+    return service.list_scenes()
 
 
 @router.get("/preloaded-scenes/{scene_id}", response_model=PreloadedSceneCatalogDetail)
 def get_preloaded_scene(
     scene_id: str,
     service: Annotated[SceneService, Depends(get_scene_service)],
-    language: Annotated[str, Depends(get_active_language)],
+    _user_id: Annotated[UUID, Depends(get_current_user_id)],
 ) -> PreloadedSceneCatalogDetail:
-    detail = service.get_scene(scene_id, language)
+    detail = service.get_scene(scene_id)
     return PreloadedSceneCatalogDetail.model_validate(
         detail.model_dump(include=set(PreloadedSceneCatalogDetail.model_fields))
     )

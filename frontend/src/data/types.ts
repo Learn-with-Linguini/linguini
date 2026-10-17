@@ -34,7 +34,7 @@ export type Scene = {
   items: LanguageItem[];
 };
 
-export type SceneSummary = Pick<Scene, "id" | "mediaAssetId" | "imageUrl" | "title" | "blurb" | "language" | "languageCode">;
+export type SceneSummary = Pick<Scene, "id" | "mediaAssetId" | "imageUrl" | "title" | "blurb">;
 
 export type ScenarioProgress = {
   sceneId: string;

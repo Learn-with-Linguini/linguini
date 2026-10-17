@@ -199,6 +199,73 @@ def test_marker_question_picks_the_subject_with_scene_review_numbers():
     assert find.correct_option_id == "marker-3"
 
 
+def test_marker_and_location_feedback_use_short_article_safe_notes():
+    payload = _payload("es", [rel(CUP, "on", TABLE)])
+    relation = _relation(payload)
+    relation["subjectSource"] = "the cup"
+    relation["referenceSource"] = "the table"
+    for marker in payload["markers"]:
+        if marker["key"] == str(CUP):
+            marker["source"] = "the cup"
+        elif marker["key"] == str(TABLE):
+            marker["source"] = "the table"
+    result = fallback_m02_lesson(payload)
+    task = m02_lesson_task(SESSION, M02, payload, result, {})
+    evaluations = {item.question_id: item for item in task.answer_key.question_evaluations}
+
+    find = result.questions[0]
+    find_evaluation = evaluations[find.question_id]
+    correct_marker = next(
+        option.label for option in find.options if option.option_id == find.correct_option_id
+    )
+    assert correct_marker == "3"
+    assert find_evaluation.correct_note == "Marker 3 is the cup."
+    sources = {row["key"]: row["source"] for row in payload["markers"]}
+    for option in find.options:
+        if option.option_id == find.correct_option_id:
+            continue
+        source = sources[find.marker_keys[option.option_id]]
+        rule = next(
+            rule for rule in find_evaluation.corrections if option.option_id in rule.answers
+        )
+        assert rule.note == f"Marker {option.label} is the {source.removeprefix('the ')}."
+        assert rule.explanation == (
+            f"Marker {option.label} is the {source.removeprefix('the ')}; "
+            "the sentence describes the cup (marker 3)."
+        )
+
+    choose = result.questions[1]
+    choose_evaluation = evaluations[choose.question_id]
+    correct_note = f"The cup is {relation['meaning']} the table."
+    assert choose_evaluation.correct_note == correct_note
+    for option in choose.options:
+        if option.option_id == choose.correct_option_id:
+            continue
+        place = next(row for row in relation["placeOptions"] if row["label"] == option.label)
+        meaning = next(
+            row["meaning"] for row in payload["positions"] if row["position"] == place["position"]
+        )
+        rule = next(
+            rule for rule in choose_evaluation.corrections if option.option_id in rule.answers
+        )
+        note = f"“{option.label}” means {meaning} the table."
+        assert rule.note == note
+        assert rule.explanation == (
+            f"{note[:-1]}; {correct_note[0].lower()}{correct_note[1:]}"
+        )
+    assert evaluations[result.questions[2].question_id].correct_note is None
+    assert evaluations[result.questions[3].question_id].correct_note is None
+    assert all(
+        "the the" not in text.casefold()
+        for item in (find_evaluation, choose_evaluation)
+        for text in [
+            item.correct_note,
+            *(rule.note or "" for rule in item.corrections),
+            *(rule.explanation or "" for rule in item.corrections),
+        ]
+    )
+
+
 def test_objects_named_like_the_subject_are_never_marker_distractors():
     objects = [obj(CUP, "cup"), obj(BOOK, "cup"), obj(TABLE, "table")]
     words = [SimpleNamespace(display_text=text, gender="feminine")

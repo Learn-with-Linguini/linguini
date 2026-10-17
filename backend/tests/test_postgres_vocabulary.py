@@ -691,7 +691,6 @@ def test_scene_and_topic_derived_from_latest_encounter(database, encounter_task)
                 sessions.c.scene_media_asset_id == preloaded_scenes.c.media_asset_id,
             )
             .where(sessions.c.id == encounter_task.session_id)
-            .where(preloaded_scenes.c.language_code == "es")
         ).one()
     items = {row.vocabulary.id: row for row in repository.list_vocabulary(owner.id)}
     assert items[ids[0]].scene_id == slug and items[ids[0]].topic == title

@@ -12,7 +12,7 @@ from app.services.mission_eligibility import (
     confirmed_attributes,
     confirmed_colour,
 )
-from app.services.mission_lessons import build_mission_task, mission_gender
+from app.services.mission_lessons import build_mission_task, definite, mission_gender
 
 M01_FOCUS = "identifyDescribeObject"
 CONFIRM_PROMPTS = {"es": "¿Es {noun}?", "fr": "Est-ce {noun} ?", "de": "Ist das {noun}?"}
@@ -160,11 +160,14 @@ def _detail_options(language, gender, detail, taught_colours):
     else:
         others = list(attribute_contrasts(kind, value))
     options = [detail["agreedForm"]]
+    meanings = {fold(detail["agreedForm"]): detail["attributeSource"]}
     for other in others:
         agreed = agreed_attribute(kind, other, language, gender)
         if agreed and fold(agreed[0]) not in map(fold, options):
             options.append(agreed[0])
-    return options[:MAX_COLOUR_OPTIONS]
+            meanings[fold(agreed[0])] = other
+    options = options[:MAX_COLOUR_OPTIONS]
+    return options, {fold(option): meanings[fold(option)] for option in options}
 
 
 def _order(rng, size):
@@ -185,7 +188,7 @@ def _select(language, ranked, taught_colours):
     """
     for first in ranked:
         for asked in first["details"]:
-            options = _detail_options(language, first["gender"], asked, taught_colours)
+            options, meanings = _detail_options(language, first["gender"], asked, taught_colours)
             if len(options) < 2:
                 continue
             for second in ranked:
@@ -194,8 +197,12 @@ def _select(language, ranked, taught_colours):
                 described = next((
                     detail for detail in second["details"] if detail["attributeType"] != "colour"
                 ), second["details"][0])
-                return [_with_detail(first, asked), _with_detail(second, described)], options
-    return [], []
+                return (
+                    [_with_detail(first, asked), _with_detail(second, described)],
+                    options,
+                    meanings,
+                )
+    return [], [], {}
 
 
 def m01_payload(
@@ -212,7 +219,9 @@ def m01_payload(
     progress = progress or {}
     terms = {term.key: term for term in translated_scene.objects} if translated_scene else {}
     ranked = _candidates(language, objects, words, terms, progress)
-    pairs, options = _select(language, ranked, _taught_colours(language, objects, progress))
+    pairs, options, attribute_meanings = _select(
+        language, ranked, _taught_colours(language, objects, progress),
+    )
     taught = list(dict.fromkeys(phrase for phrase in [
         *(pair["nounPhrase"] for pair in pairs),
         *(
@@ -259,6 +268,7 @@ def m01_payload(
         "pairs": pairs,
         "taughtNouns": nouns,
         "attributeOptions": options,
+        "attributeMeanings": attribute_meanings,
         "describeExtras": extras,
         "layout": dict(
             confirmOrders=[_order(rng, 2), _order(rng, 2)],
@@ -299,8 +309,9 @@ def _corrections(payload, question, correct_label):
                 correction=question.correct_text,
                 explanation=f"The word agrees with {pair['nounPhrase']}: {pair['agreedForm']}.",
             ))
-        return rules
+        return rules, None
     if question.purpose == "confirmObject":
+        correct_note = f"This is {pair['nounPhrase']} ({pair['source']})."
         explanation = (
             f"Yes — this is {pair['nounPhrase']} ({pair['source']})."
             if question.statement_correct
@@ -308,13 +319,27 @@ def _corrections(payload, question, correct_label):
         )
         return [dict(
             mistake="wrongObject", answers=[option.option_id], correction=correct_label,
-            explanation=explanation,
-        ) for option in wrong]
-    return [dict(
-        mistake="wrongColour" if pair["attributeType"] == "colour" else "wrongAttribute",
-        answers=[option.option_id], correction=correct_label,
-        explanation=f"This {pair['source']} is {pair['attributeSource']}: {pair['agreedForm']}.",
-    ) for option in wrong]
+            explanation=explanation, note=correct_note,
+        ) for option in wrong], correct_note
+    correct_note = capitalised(
+        f"{definite(pair['source'])} is {pair['attributeSource']}: {pair['agreedForm']}."
+    )
+    meanings = payload.get("attributeMeanings", {})
+    rules = []
+    for option in wrong:
+        meaning = meanings.get(fold(option.label))
+        note = f"“{option.label}” means {meaning}." if meaning else None
+        explanation = (
+            f"“{option.label}” means {meaning}; {definite(pair['source'])} is "
+            f"{pair['attributeSource']}: {pair['agreedForm']}."
+            if meaning else correct_note
+        )
+        rules.append(dict(
+            mistake="wrongColour" if pair["attributeType"] == "colour" else "wrongAttribute",
+            answers=[option.option_id], correction=correct_label,
+            explanation=explanation, note=note,
+        ))
+    return rules, correct_note
 
 
 def m01_lesson_task(session_id, mission, payload, result, vocabulary_ids):
@@ -325,12 +350,14 @@ def m01_lesson_task(session_id, mission, payload, result, vocabulary_ids):
         target_ids, evidence_type, criteria = _EVALUATIONS[question.purpose]
         vocabulary_id = vocabulary_ids.get(question.object_key)
         assessed = vocabulary_id and question.purpose != "chooseAttribute"
+        corrections, correct_note = _corrections(payload, question, label)
         return dict(
             target_ids=target_ids,
             evidence_type=evidence_type,
             rubric_criterion_ids=criteria,
             vocabulary_item_ids=[vocabulary_id] if assessed else [],
-            corrections=_corrections(payload, question, label),
+            corrections=corrections,
+            correct_note=correct_note,
         )
 
     def shown(question):

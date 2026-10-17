@@ -27,15 +27,18 @@ test("structured outcomes extend grouped review details", () => {
   const legacy = { questionResults: { colour: false }, correctAnswers: { colour: "roja" } };
   assert.deepEqual(reviewDetails(attempt(legacy)), legacy);
   const details = reviewDetails(attempt({
-    ...legacy,
+    questionResults: { colour: true },
+    correctAnswers: { colour: "roja" },
     questionOutcomes: [{
-      questionId: "colour", outcome: "incorrect", objectiveId: "identify-describe-object", targetIds: ["describe-colour"],
+      questionId: "colour", outcome: "correct", objectiveId: "identify-describe-object", targetIds: ["describe-colour"],
       evidenceType: "recognition", assistance: ["hint"], assistanceUsed: true,
-      mistakes: [{ mistake: "wrongGender", answer: "rojo", correction: "La taza es roja.", explanation: null }],
+      mistakes: [], correctNote: "The circled object is a crosswalk.",
+      optionNotes: ["Taza is feminine."],
     }],
   }));
-  assert.equal(details?.questionResults.colour, false);
-  assert.equal(details?.questionOutcomes?.[0].mistakes[0].correction, "La taza es roja.");
+  assert.equal(details?.questionResults.colour, true);
+  assert.equal(details?.questionOutcomes?.[0].correctNote, "The circled object is a crosswalk.");
+  assert.deepEqual(details?.questionOutcomes?.[0].optionNotes, ["Taza is feminine."]);
   assert.equal(descriptionEvaluation(attempt(details)), null);
 });
 

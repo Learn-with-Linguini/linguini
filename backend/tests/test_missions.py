@@ -13,6 +13,7 @@ from app.missions import (
 )
 from app.schemas.enums import SessionMode
 from app.schemas.tasks import (
+    CorrectionRule,
     QuestionReviewDetails,
     SessionTask,
     SessionTaskPublic,
@@ -298,8 +299,116 @@ def test_review_details_add_outcomes_without_changing_results():
     )
     assert wrong_order["questionOutcomes"][1]["mistakes"] == [{
         "mistake": "wordOrder", "answer": "Es la taza roja", "correction": "La taza es roja.",
-        "explanation": None,
+        "explanation": "You have the right words in the wrong order.",
     }]
+
+
+def test_correct_outcomes_explain_other_options_once_but_incorrect_outcomes_do_not():
+    task = mission_task()
+    evaluation = task.answer_key.question_evaluations[0]
+    updated = evaluation.model_copy(update={
+        "corrections": [
+            CorrectionRule(
+                mistake="wrongGender", answers=["rojo"], correction="La taza es roja.",
+                explanation="Taza is feminine, so use roja.", note="Taza is feminine.",
+            ),
+            CorrectionRule(
+                mistake="wrongGender", answers=["verde"], correction="La taza es roja.",
+                explanation="Taza is feminine.",
+            ),
+            CorrectionRule(
+                mistake="wrongGender", answers=["amarillo"], correction="La taza es roja.",
+                explanation="The colour does not match.",
+            ),
+            CorrectionRule(
+                mistake="wrongGender", answers=["azul"], correction="La taza es roja.",
+                explanation="The circled object is a cup.", note="The circled object is a cup.",
+            ),
+            CorrectionRule(
+                mistake="wrongGender", answers=["roja"], correction="La taza es roja.",
+                explanation="The learner's answer is correct.",
+            ),
+        ],
+        "correct_note": "The circled object is a cup.",
+    })
+    task.answer_key = task.answer_key.model_copy(
+        update={"question_evaluations": [updated, *task.answer_key.question_evaluations[1:]]}
+    )
+    request = SubmitVocabularyReviewAttemptRequest(answers={"colour": "roja"})
+    correct = review_details(task, request, {"colour": True}, {})
+    assert correct["questionOutcomes"][0]["correctNote"] == "The circled object is a cup."
+    assert correct["questionOutcomes"][0]["optionNotes"] == [
+        "Taza is feminine.", "The colour does not match.",
+    ]
+
+    incorrect = review_details(
+        task, request.model_copy(update={"answers": {"colour": "rojo"}}), {"colour": False}, {},
+    )
+    assert "optionNotes" not in incorrect["questionOutcomes"][0]
+    assert "correctNote" not in incorrect["questionOutcomes"][0]
+
+
+@pytest.mark.parametrize(
+    ("answer", "expected"),
+    [
+        (
+            "Un taxi es amarillo",
+            "You have the right words in the wrong order. "
+            "Start with the verb, then the object, then its colour.",
+        ),
+        (
+            "Es un taxi rojo",
+            "“rojo” doesn't belong here; the sentence needs “amarillo”.",
+        ),
+        ("Es un taxi", "You left out “amarillo”."),
+        (
+            "Un taxi es rojo",
+            "“rojo” doesn't belong here; the sentence needs “amarillo”. "
+            "Start with the verb, then the object, then its colour.",
+        ),
+    ],
+)
+def test_sentence_building_fallback_explains_word_differences(answer, expected):
+    task = mission_task()
+    explanation = "Start with the verb, then the object, then its colour."
+    evaluation = task.answer_key.question_evaluations[1].model_copy(update={
+        "corrections": [CorrectionRule(
+            mistake="wordOrder", correction="Es un taxi amarillo.", explanation=explanation,
+        )],
+    })
+    task.answer_key = task.answer_key.model_copy(update={
+        "question_evaluations": [task.answer_key.question_evaluations[0], evaluation],
+    })
+    request = SubmitVocabularyReviewAttemptRequest(answers={"build": answer})
+    details = review_details(task, request, {"build": False}, {})
+    mistake = details["questionOutcomes"][1]["mistakes"][0]
+    assert mistake["explanation"] == expected
+    assert mistake["answer"] == answer
+    assert mistake["correction"] == "Es un taxi amarillo."
+
+
+def test_sentence_building_specific_answer_rules_keep_their_explanation():
+    task = mission_task()
+    evaluation = task.answer_key.question_evaluations[1].model_copy(update={
+        "corrections": [
+            CorrectionRule(
+                mistake="pluralForm", answers=["Es un taxi rojo"],
+                correction="Es un taxi amarillo.", explanation="Specific rule explanation.",
+            ),
+            CorrectionRule(
+                mistake="wordOrder", correction="Es un taxi amarillo.",
+                explanation="Generic rule explanation.",
+            ),
+        ],
+    })
+    task.answer_key = task.answer_key.model_copy(update={
+        "question_evaluations": [task.answer_key.question_evaluations[0], evaluation],
+    })
+    request = SubmitVocabularyReviewAttemptRequest(answers={"build": "Es un taxi rojo"})
+    details = review_details(task, request, {"build": False}, {})
+    mistake = details["questionOutcomes"][1]["mistakes"][0]
+    assert mistake["mistake"] == "pluralForm"
+    assert mistake["explanation"] == "Specific rule explanation."
 
 
 @pytest.mark.parametrize(
