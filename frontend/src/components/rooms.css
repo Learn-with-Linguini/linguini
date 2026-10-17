@@ -66,3 +66,15 @@
   .game-resources__accent .game-resources__swatch { grid-row: span 2; }
   .game-resources__accent .btn { grid-column: 1 / -1; }
 }
+.rooms-challenges, .rooms-friends { list-style: none; margin: 0; padding: 0; }
+.rooms-challenges > .rooms-challenge, .rooms-friend { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line); }
+.rooms-challenge > div, .rooms-friend > div { min-width: 0; overflow-wrap: anywhere; }
+.rooms-challenge__status { color: var(--teal-dark); font-weight: 700; }
+.rooms-challenge > .btn { flex-shrink: 0; }
+.rooms-friend__actions { display: flex; align-items: center; flex-shrink: 0; gap: 8px; }
+@media (max-width: 480px) {
+  .rooms-friend { align-items: flex-start; flex-direction: column; gap: 8px; }
+  .rooms-friend__actions { width: 100%; }
+  .rooms-friend__actions .btn--secondary { flex: 1; }
+  .rooms-challenges > .rooms-challenge { gap: 8px; }
+}

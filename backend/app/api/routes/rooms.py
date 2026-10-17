@@ -38,6 +38,11 @@ def _call(fn, *args):
         ) from error
 
 
+@router.get("", response_model=list[RoomSnapshot])
+def list_rooms(service: RoomServiceDep):
+    return _call(service.list)
+
+
 @router.post("", response_model=RoomAccessResponse, status_code=201)
 def create_room(request: CreateRoomRequest, service: RoomServiceDep):
     return _call(service.create, request)

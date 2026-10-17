@@ -23,6 +23,7 @@ from app.repositories.journals import JournalRepository
 from app.repositories.language_profiles import LanguageProfileRepository
 from app.repositories.learning import LearningRepository
 from app.repositories.media_assets import MediaAssetRepository
+from app.repositories.postgres.friends import PostgresFriendRepository
 from app.repositories.postgres.game_resources import reward_basil, spend_sauce
 from app.repositories.postgres.ispy_games import PostgresISpyGameRepository
 from app.repositories.postgres.journals import PostgresJournalRepository
@@ -310,3 +311,9 @@ def get_room_service(
         preparer, getattr(request.app.state, "background_runner", None),
         image_reader=lambda asset, width: get_image_derivatives().get(asset.storage_key, width),
     )
+
+
+def get_friend_repository(
+    request: Request, user_id: Annotated[UUID, Depends(get_current_user_id)]
+) -> PostgresFriendRepository:
+    return PostgresFriendRepository(request.app.state.database_engine, user_id)

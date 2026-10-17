@@ -58,10 +58,11 @@ engine per process and disposes it at shutdown.
 
 ### Sauce and photo rooms
 
-Apply the game resource, uploaded photo room and room invite migrations before
+Apply the game resource, uploaded photo room, room invite and asynchronous
+challenge migrations before
 deploying. Sauce, Basil and two-player rooms are available automatically; they
 require no feature switches in the API or frontend. The I-Spy tab offers both
-standalone play with AI and a friend-room lobby.
+standalone play with AI, saved friends and a challenge inbox.
 
 `DAILY_SAUCE_CAPACITY` defaults to 10 (allowed range: 1–100). Sauce refills at
 00:00 UTC and applies to every account tier, including beta. Starting a solo
@@ -79,7 +80,41 @@ or French at the same A1/A2 level, with 2–4 photos uploaded by either player. 
 the configured scene analyzer and translator, then require the owner's fact review.
 Rooms do not require or call OpenAI image moderation. Photos remain private to the
 owner until analysis succeeds, then become accessible only to the invited partner.
-Invitations expire after 10 minutes; setup and play each expire after 30 minutes.
+Room invitations and preparation expire after seven days; started challenges last
+14 days. A host can prepare and consent before their partner joins. The final
+player to get ready starts the game automatically, so the host can be offline.
+Both players consent before either spends Sauce. If Sauce is unavailable, the
+final ready command and all charges roll back and can be retried after a refill.
+
+`GET /api/v1/rooms` returns every active challenge and completed challenge with
+an unread result (up to ten together per learner), plus up to 20 other recent
+finished challenges, ordered by `updatedAt`. The older
+`GET /api/v1/rooms/active` returns the most recently updated active challenge.
+Snapshots include `inviteExpiresAt`, `updatedAt` and `actionRequired` for the
+inbox: `inviteFriend`, `preparePhotos`, `ready`, `sendClue`, `guess`, `viewResult`,
+`waiting` or `finished`. Setup remains limited to five newly created or joined
+rooms per hour. Returning to the inbox does not end a challenge; the explicit
+leave command ends it for both players.
+
+Results are acknowledged separately. The first acknowledgement advances the
+shared round; a returning partner sees their own oldest unread result before
+the current round, including the final result after completion. Only that
+partner's pending result photo remains accessible after completion. Ending,
+expiry and account deletion revoke room photo access. Clues and guesses retain
+server-owned, idempotent Basil and XP awards.
+
+Friends use explicit, single-use private invitations without email or account
+search. `POST /api/v1/friends/invite` accepts a `commandId` and returns a durable
+`inviteCode` and `expiresAt` (seven days); `POST /api/v1/friends/accept` accepts
+`commandId` and `inviteCode` to create a mutual friendship. `GET /api/v1/friends`
+returns display names and active learning setups with `canChallenge`.
+`DELETE /api/v1/friends/{userId}` unlinks both sides. Consumed invitations cannot
+re-add an unlinked friend; a fresh invitation is required. Invitation creation
+is limited to ten per hour and acceptance to 20 per hour. Room partners are
+never saved automatically. Creating a room with `friendUserId` adds only an
+accepted friend with a matching active learning language and level; it appears
+in their inbox without spending Sauce. Removing a friend prevents future direct
+challenges; an existing challenge can still be resumed or explicitly ended.
 Room images use an authenticated, uncached endpoint; ordinary media access stays
 restricted to the photo owner. Rooms require `MEDIA_STORAGE_PRIVATE=true`; the
 Supabase bucket must also be configured as private.
