@@ -1,5 +1,7 @@
 """Build the M02 A1 lesson tasks from confirmed objects, relations and a validated result."""
 
+import re
+
 from app.ai.features.learning_tasks.mission import fold, tokens
 from app.ai.features.learning_tasks.mission_m02 import _joined
 from app.services.ispy_clue_frames import CONTRACTIONS, _definite, _prefixes, _with_article
@@ -62,6 +64,10 @@ _EVALUATIONS = {
 
 def _capitalised(text):
     return f"{text[:1].upper()}{text[1:]}"
+
+
+def _the(source):
+    return f"the {re.sub(r'^(?:a|an|the)\s+', '', source, flags=re.IGNORECASE)}"
 
 
 def _place_tiles(language, expression, place):
@@ -250,8 +256,8 @@ def _corrections(payload, question, label):
     corrections = []
     position_meaning = phrases[relation["position"]]["meaning"]
     correct_note = _capitalised(
-        f"the {relation['subjectSource']} is {position_meaning} "
-        f"the {relation['referenceSource']}."
+        f"{_the(relation['subjectSource'])} is {position_meaning} "
+        f"{_the(relation['referenceSource'])}."
     )
     for option in question.options:
         if option.option_id == question.correct_option_id:
