@@ -16,6 +16,7 @@ import { ScenePhoto } from "../components/ScenePhoto";
 import { useResolvedImageUrl } from "../components/SceneImage";
 import { boardRows, squareCrop } from "../lib/practiceBoard";
 import { questionMarkerObjects } from "../lib/missionMarkers";
+import { completeSlot, speechAvailable, writtenPromptShown } from "../lib/missionA0";
 
 export function LearningTaskPage() {
   const { taskId } = useParams();
@@ -272,8 +273,10 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
   const [feedback, setFeedback] = useState<string | null>(null);
   const [actionResult, setActionResult] = useState<TaskActionResult | null>(null);
   const [checking, setChecking] = useState(false);
+  const [revealed, setRevealed] = useState<Record<string, boolean>>({});
   const requestKey = useRef(crypto.randomUUID());
   const content = task.publicContent;
+  const audio = speechAvailable();
   const { resolvedUrl: sceneImageUrl } = useResolvedImageUrl(scene.imageUrl);
   const [boardImageSize, setBoardImageSize] = useState<{ width: number; height: number } | null>(null);
   const restorable = content.kind === "grammarLesson" && Boolean(content.missionId) && task.status === "completed";
@@ -317,6 +320,13 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
     <ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />
     <div className="learning-title-row"><div><h1>{content.title}</h1>{reward ? <XpPill {...reward} /> : null}</div><ExitToHome onExit={onExit} /></div>
     {content.explanation ? <div className="panel-note">{content.explanation}</div> : null}
+    {content.prep?.length ? <Card plain><div className="stack-2 lesson-prep" aria-label="Learn first">
+      <span className="label muted">Learn first</span>
+      {content.prep.map(card => <div key={card.text} className="lesson-prep__card">
+        <div><strong lang={scene.languageCode}>{card.text}</strong>{card.translation ? <span className="muted small"> — {card.translation}</span> : null}</div>
+        {audio ? <IconButton label={`Hear ${card.text}`} onClick={() => speak(card.text, scene.languageCode)}><SpeakerIcon /></IconButton> : null}
+      </div>)}
+    </div></Card> : null}
     {content.questions.map((question, position) => {
       const questionMarkers = question.roleplayPremise
         ? questionMarkerObjects(
@@ -340,6 +350,17 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         <p className="roleplay-premise__disclaimer">Pretend only — not about your real things.</p>
       </div> : null}
       {content.questions.length > 1 ? <span className="label muted">Question {position + 1} of {content.questions.length}</span> : null}
+      {question.instruction ? <p className="small lesson-instruction">{question.instruction}</p> : null}
+      {question.audioText && audio ? <div className="lesson-audio">
+        <IconButton label={question.listenFirst ? "Play the word" : `Hear ${question.audioText}`} onClick={() => speak(question.audioText ?? "", scene.languageCode)}><SpeakerIcon /></IconButton>
+        {question.listenFirst && !writtenPromptShown(question, { revealed: Boolean(revealed[question.questionId]), graded: results[question.questionId] !== undefined, audio })
+          ? <Button variant="quiet" onClick={() => setRevealed(value => ({ ...value, [question.questionId]: true }))}>Show the written word</Button> : null}
+      </div> : null}
+      {question.listenFirst && !audio ? <p className="small muted" role="note">Audio isn't available here, so read the word instead.</p> : null}
+      {question.displayCount ? <div className="count-board" aria-label="Practice board">
+        {Array.from({ length: question.displayCount }, (_, tile) => <div key={tile} className="count-board__tile">
+          <ObjectPreview scene={scene} label="" object={session?.sceneObjects.find(object => object.id === question.boardObjectId)} /></div>)}
+      </div> : null}
       {question.sceneObjectId ? <ObjectPreview scene={scene} label={question.objectLabel ?? ""}
         object={session?.sceneObjects.find(object => object.id === question.sceneObjectId)}
         group={groupObjects?.length ? groupObjects : undefined}
@@ -358,8 +379,10 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
             onClick={() => setBuiltTokenIndexes(value => ({ ...value, [question.questionId]: [...(value[question.questionId] ?? []), tokenIndex] }))}>{token}</button>;
         })}</div>
       </> : <>
-        <h2>{content.focus === "sceneDescription" ? question.translation || "Choose the sentence that describes the scene." : question.prompt}</h2>
-        <PromptTranslation text={question.promptTranslation} />
+        {writtenPromptShown(question, { revealed: Boolean(revealed[question.questionId]), graded: results[question.questionId] !== undefined, audio })
+          ? <><h2 lang={question.audioText ? scene.languageCode : undefined}>{content.focus === "sceneDescription" ? question.translation || "Choose the sentence that describes the scene." : question.prompt}</h2>
+            <PromptTranslation text={question.promptTranslation} /></>
+          : <h2 className="muted">Listen to the word.</h2>}
         {question.boardCounts ? <PracticeBoards question={question} sceneImageUrl={sceneImageUrl}
           imageSize={boardImageSize} onImageSize={setBoardImageSize}
           boardObject={session?.sceneObjects.find(object => object.id === question.boardObjectId)}
@@ -399,6 +422,12 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
             const solution = label ? optionText(question, label) : solutions[question.questionId];
             return <> The correct answer is <strong>{solution}</strong>{/[.!?]$/.test(solution) ? "" : "."}</>;
           })() : null}</>}</p></Feedback>
+        {question.slotTemplate && solutions[question.questionId] ? (() => {
+          const form = question.options.find(option => option.optionId === solutions[question.questionId])?.label ?? "";
+          const chunk = question.completeChunk ?? completeSlot(question.slotTemplate, form);
+          return <div className="lesson-audio"><p>Complete: <strong lang={scene.languageCode}>{chunk}</strong></p>
+            {audio ? <IconButton label={`Hear ${chunk}`} onClick={() => speak(chunk, scene.languageCode)}><SpeakerIcon /></IconButton> : null}</div>;
+        })() : null}
         {question.quantityWord && question.boardCounts ? <p className="small">
           {question.quantityWord} = {question.boardCounts[solutions[question.questionId] ?? ""] ?? "?"}
         </p> : null}
