@@ -100,6 +100,16 @@ def test_only_confirmed_colours_become_complete_options_with_stable_numbered_mar
     assert pack(parts) == result
 
 
+def test_german_photo_room_builds_gendered_colour_clues():
+    result = pack(photo(
+        {"book": ("Buch", "das", "neuter"), "cup": ("Tasse", "die", "feminine")},
+        colours={"book": "rot", "cup": "blau"},
+        language="de",
+    ))
+    assert len(result["targets"]) == 2
+    assert result["objects"][0]["word"] == "das Buch"
+
+
 def test_combination_can_distinguish_an_object_when_neither_single_cue_does():
     parts = photo(
         {

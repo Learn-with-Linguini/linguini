@@ -79,9 +79,9 @@ from app.services.image_storage import ImageStorage
 logger = logging.getLogger("precompute_preloaded_scenes")
 
 MAX_OBJECTS = 6
-SUPPORTED_LANGUAGES = ("fr", "es")
-DISPLAY_LANGUAGE = {"es": "Spanish", "fr": "French"}
-GENDER_ARTICLES = {"la", "el", "le", "l'"}
+SUPPORTED_LANGUAGES = ("fr", "es", "de", "ko")
+DISPLAY_LANGUAGE = {"es": "Spanish", "fr": "French", "de": "German", "ko": "Korean"}
+GENDER_ARTICLES = {"la", "el", "le", "l'", "der", "die", "das"}
 ENGLISH_ARTICLES = ("the ", "a ", "an ")
 
 BASE_SLUGS = (
@@ -93,15 +93,33 @@ BASE_SLUGS = (
     "el-parque",
 )
 
-# French rows get their own slug and title; the base row supplies the English
+# Translated rows get their own slug and title; the base row supplies the English
 # description, media asset, difficulty and sort order.
-FRENCH_SLUG_TITLES = {
-    "calle-mayor": ("rue-principale", "A walk downtown"),
-    "cafe-plaza": ("cafe-de-la-place", "At the café"),
-    "mercado-central": ("marche-central", "At the market"),
-    "mi-cuarto": ("ma-chambre", "My bedroom"),
-    "la-cocina": ("la-cuisine", "In the kitchen"),
-    "el-parque": ("le-parc", "In the park"),
+LANGUAGE_SLUG_TITLES = {
+    "fr": {
+        "calle-mayor": ("rue-principale", "A walk downtown"),
+        "cafe-plaza": ("cafe-de-la-place", "At the café"),
+        "mercado-central": ("marche-central", "At the market"),
+        "mi-cuarto": ("ma-chambre", "My bedroom"),
+        "la-cocina": ("la-cuisine", "In the kitchen"),
+        "el-parque": ("le-parc", "In the park"),
+    },
+    "de": {
+        "calle-mayor": ("hauptstrasse", "A walk downtown"),
+        "cafe-plaza": ("cafe-am-platz", "At the café"),
+        "mercado-central": ("zentralmarkt", "At the market"),
+        "mi-cuarto": ("mein-zimmer", "My bedroom"),
+        "la-cocina": ("die-kueche", "In the kitchen"),
+        "el-parque": ("der-park", "In the park"),
+    },
+    "ko": {
+        "calle-mayor": ("ko-main-street", "A walk downtown"),
+        "cafe-plaza": ("ko-cafe", "At the café"),
+        "mercado-central": ("ko-market", "At the market"),
+        "mi-cuarto": ("ko-bedroom", "My bedroom"),
+        "la-cocina": ("ko-kitchen", "In the kitchen"),
+        "el-parque": ("ko-park", "In the park"),
+    },
 }
 
 SCENE_EXAMPLES_SYSTEM_PROMPT = """You write beginner example sentences for a language-learning app.
@@ -159,14 +177,16 @@ def combined_word(article: str | None, translation: str) -> str:
 def normalized_gender(
     article: str | None, gender: str | None, language_code: str
 ) -> str | None:
+    if language_code == "ko":
+        return None
     raw = (article or "").casefold().strip()
     if raw in GENDER_ARTICLES:
         return raw
-    if gender not in {"masculine", "feminine"}:
-        return None
-    if gender == "feminine":
-        return "la"
-    return "el" if language_code == "es" else "le"
+    return {
+        "es": {"masculine": "el", "feminine": "la"},
+        "fr": {"masculine": "le", "feminine": "la"},
+        "de": {"masculine": "der", "feminine": "die", "neuter": "das"},
+    }.get(language_code, {}).get(gender)
 
 
 def english_translation(label: str) -> str:
@@ -579,13 +599,17 @@ def row_slug(base: dict[str, Any], language_code: str) -> tuple[str, str]:
     """The slug and title of ``base``'s row in ``language_code``."""
     if language_code == "es":
         return base["slug"], base["title"]
-    return FRENCH_SLUG_TITLES[base["slug"]]
+    return LANGUAGE_SLUG_TITLES[language_code][base["slug"]]
 
 
 def allowed_slugs(slugs: list[str]) -> set[str]:
-    return set(slugs) | {
-        FRENCH_SLUG_TITLES[slug][0] for slug in slugs if slug in FRENCH_SLUG_TITLES
+    translated = {
+        translated_slug
+        for language_titles in LANGUAGE_SLUG_TITLES.values()
+        for slug, (translated_slug, _title) in language_titles.items()
+        if slug in slugs
     }
+    return set(slugs) | translated
 
 
 def _compute_rows(
@@ -844,7 +868,7 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         action="append",
         choices=SUPPORTED_LANGUAGES,
         dest="languages",
-        help="target language (repeatable; default: fr and es)",
+        help="target language (repeatable; default: fr, es, de and ko)",
     )
     parser.add_argument(
         "--dry-run",

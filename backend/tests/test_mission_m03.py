@@ -236,6 +236,17 @@ def test_build_uses_the_plural_and_a_bank_with_one_wrong_number(
     assert wrong in words and wrong != "tres"
 
 
+def test_german_counting_uses_recorded_plural_and_number_words():
+    payload = _payload(
+        "de", display="Buch", gender="neuter", plural_form="Bücher", label="book",
+    )
+    result = fallback_m03_lesson(payload)
+    assert payload["group"]["question"] == "Wie viele Bücher gibt es?"
+    assert _build(result).correct_text == "Es gibt drei Bücher."
+    assert _choose(result).options
+    assert validate_m03_lesson(payload, result) is None
+
+
 @pytest.mark.parametrize(("display", "gender", "question"), [
     ("libro", "masculine", "¿Cuántos libros hay?"),
     ("taza", "feminine", "¿Cuántas tazas hay?"),

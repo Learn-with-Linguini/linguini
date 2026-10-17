@@ -57,7 +57,7 @@ def mission_gender(term, word):
     for gender in (term.gender if term is not None else None,
                    getattr(word.gender, "value", word.gender)):
         gender = normalized_gender(gender)
-        if gender in {"masculine", "feminine"}:
+        if gender in {"masculine", "feminine", "neuter"}:
             return gender
     return noun_gender(term, word)
 

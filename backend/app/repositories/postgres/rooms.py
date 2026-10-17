@@ -432,12 +432,12 @@ class PostgresRoomRepository:
             raise RoomError("room_profile_invalid", "Choose your active learning language.", 422)
         if (
             row["source_language_code"].lower() != "en"
-            or row["target_language_code"].lower() not in {"es", "fr"}
+            or row["target_language_code"].lower() not in {"es", "fr", "de"}
             or row["proficiency_level"] not in {"A1", "A2"}
         ):
             raise RoomError(
                 "room_language_unsupported",
-                "Photo rooms support A1/A2 English to Spanish or French.",
+                "Photo rooms support A1/A2 English to Spanish, French or German.",
                 422,
             )
         return dict(row)
