@@ -1,3 +1,4 @@
+import { InlineLoader } from "../components/LoadingScreen";
 import { useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { useNavigate } from "react-router-dom";
@@ -66,7 +67,7 @@ function WordsLearntChart({ dates, vocabulary, loading, error }: { dates: string
         <div><h2 id="home-words-title">Words learnt each day</h2><p>The last seven days of new words.</p></div>
         <strong>{total} this week</strong>
       </div>
-      {loading ? <p role="status">Loading your words…</p> : error ? null : (
+      {loading ? <InlineLoader label="Loading your words…" /> : error ? null : (
         <>
           <ol className="home-words__chart" aria-label="New words learnt on each of the last seven days">
             {dates.map((date, index) => (
@@ -167,7 +168,7 @@ export function Home() {
           <h2>Your {streak?.days.length ?? 7}-day streak</h2>
           <strong className="home-streak__xp">{progressLoading || progressError ? "--" : progress?.xp ?? 0} XP</strong>
         </div>
-        {progressLoading ? <p role="status">Loading your streak…</p> : progressError ? null : (
+        {progressLoading ? <InlineLoader label="Loading your streak…" /> : progressError ? null : (
           <div className="home-streak__body">
             <ol className="home-streak__week">
               {streak?.days.map((day, index) => (
@@ -186,7 +187,7 @@ export function Home() {
       </section>
 
       <section className="home-plan" aria-label="Today's plan">
-        {progressLoading || resumeLoading ? <p role="status">Loading your practice...</p> : progressError || resumeError ? (
+        {progressLoading || resumeLoading ? <InlineLoader label="Loading your practice…" /> : progressError || resumeError ? (
           <p role="alert">{progressError ?? resumeError} Reload to retry.</p>
         ) : resume ? (
           <Card className="home-featured home-featured--resume">

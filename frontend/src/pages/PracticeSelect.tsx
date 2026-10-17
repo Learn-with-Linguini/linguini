@@ -1,3 +1,4 @@
+import { LoadingScreen } from "../components/LoadingScreen";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui";
@@ -122,7 +123,7 @@ export function PracticeSelect() {
       <ImageUpload compact disabled={interactionDisabled} cameraEnabled={learner.cameraOn}
         onBusyChange={setUploading} onUploaded={image => chooseAsset(image.id)} />
     </div>
-    {starting ? <p role="status">Starting analysis...</p> : null}
+    {starting ? <LoadingScreen label="Starting analysis…" /> : null}
     {error ? <div className="stack-2"><p role="alert">{error}</p><Button disabled={starting || uploading} onClick={() => request.current && void start(request.current.asset)}>Retry</Button></div> : null}
     {!activeProfile ? <p role="alert">Choose a learning language in Profile to start.</p> : null}
     <h2>Or practise with the below</h2>

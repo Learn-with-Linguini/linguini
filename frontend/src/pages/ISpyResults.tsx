@@ -1,3 +1,4 @@
+import { LoadingScreen } from "../components/LoadingScreen";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -42,7 +43,7 @@ export function ISpyResults() {
       <Noodle className="noodle-divider summary__noodle" />
       <p className="muted">You played I-Spy with {scene.title.toLowerCase()}.</p>
     </div>
-    {isPending ? <p role="status">Loading your results...</p> : null}
+    {isPending ? <LoadingScreen label="Loading your results…" /> : null}
     {error ? <p role="alert">{error}</p> : null}
     {completionError ? <><p role="alert">{completionError}</p><Button onClick={retryCompletion}>Retry saving your game</Button></> : null}
     {data ? <div className="stat-grid">

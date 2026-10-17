@@ -1,3 +1,4 @@
+import { InlineLoader } from "../components/LoadingScreen";
 import { useEffect, useId, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card, IconButton } from "../components/ui";
@@ -69,7 +70,7 @@ export function Profile() {
           <ChevronRightIcon size={20} />
         </button>
       </section>
-      {progressLoading ? <p role="status">Loading your profile...</p> : null}
+      {progressLoading ? <InlineLoader label="Loading your profile…" /> : null}
       {progressError ? <p role="alert">{progressError} Reload to retry.</p> : null}
       {profileError ? <p role="alert">{profileError}</p> : null}
 

@@ -1,3 +1,4 @@
+import { InlineLoader } from "../components/LoadingScreen";
 import { useRef, useState, type TouchEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "../lib/queryKeys";
@@ -108,7 +109,7 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit }: { 
     })}</div> : null}
     {content.kind === "sentenceBuilding" ? <><p>{content.sourceText}</p><div className="chip-row">{content.tokenBank.map((token, i) => <button key={i} className="chip" disabled={terminal || practiceSaving} onClick={() => setText(value => (value + " " + token).trim())}>{token}</button>)}</div></> : null}
     {!reading && content.kind !== "grammarPractice" ? <div className="field"><label className="field__label" htmlFor="task-answer">Your answer</label><input id="task-answer" className="input" value={text} maxLength={2000} disabled={terminal || practiceSaving} onChange={event => setText(event.target.value)} /></div> : null}
-    {checking ? <p className="choice-checking" role="status">Checking your answer…</p> : null}
+    {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
     {feedback || earnedText ? <>
       <Feedback><div className="stack-2" role="status">{feedback ? <p>{feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback>
       <ReportIssueLink reportType={taskTitle(task)} fields={[
@@ -230,7 +231,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
             : result === undefined ? " choice--selected" : result ? " choice--correct" : " choice--incorrect";
         return <button key={option.optionId} className={`choice${state}`} aria-pressed={selected} disabled={!!answers[question.questionId] || checkingQuestion || !!feedback} onClick={() => void chooseAnswer(option.optionId)}>{option.label}</button>;
       })}</div>
-      {checkingQuestion ? <p className="choice-checking" role="status">Checking your answer…</p> : null}
+      {checkingQuestion ? <InlineLoader compact label="Checking your answer…" /> : null}
       {answers[question.questionId] ? <>
         <Feedback tone={questionResults[question.questionId] ? "good" : "warn"}><p role="status">{questionResults[question.questionId] ? "Correct!" : <>Incorrect. The correct answer is <strong>{question.options.find(option => option.optionId === correctOptionIds[question.questionId])?.label}</strong>.</>}</p></Feedback>
         <ReportIssueLink reportType="Vocabulary answer" fields={[
@@ -387,7 +388,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
       </> : null}
     </div></Card></div>;
     })}
-    {checking ? <p className="choice-checking" role="status">Checking your answers…</p> : null}
+    {checking ? <InlineLoader compact label="Checking your answers…" /> : null}
     {feedback ?? restored?.feedback ?? earnedText ? <Feedback><div className="stack-2" role="status">{feedback ?? restored?.feedback ? <p>{feedback ?? restored?.feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {terminal ? <Button block onClick={onNext}>{index < total - 1 ? "Next task" : lastStep}</Button> : <>

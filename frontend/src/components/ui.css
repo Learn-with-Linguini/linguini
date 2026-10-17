@@ -528,7 +528,7 @@ p[role="alert"]::before { content: "!"; }
   border-radius: var(--radius-sm);
 }
 
-.scene-image__loading-label {
+.loading-inline.scene-image__loading-label {
   position: relative;
   z-index: 1;
   padding: var(--space-2) var(--space-3);
@@ -1550,27 +1550,6 @@ p[role="alert"]::before { content: "!"; }
 .choice--incorrect {
   border: var(--stroke) solid var(--tomato);
   background: #fde7de;
-}
-
-.choice-checking {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  margin: 0;
-  color: var(--teal-dark);
-  font-size: var(--text-small);
-  font-weight: 800;
-}
-
-.choice-checking::before {
-  width: 0.9rem;
-  height: 0.9rem;
-  border: 2px solid rgba(31, 122, 120, 0.25);
-  border-top-color: var(--teal);
-  border-radius: 50%;
-  content: "";
-  animation: choice-check-spin 700ms linear infinite;
 }
 
 .sentence-builder__answer {

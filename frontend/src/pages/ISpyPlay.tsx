@@ -1,3 +1,4 @@
+import { InlineLoader, LoadingScreen } from "../components/LoadingScreen";
 import { useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useInfiniteQuery } from "@tanstack/react-query";
@@ -58,10 +59,10 @@ export function ISpyPlay() {
     <p className="muted">Linguini plays with the objects you confirmed for a photo, so nothing is analysed again.</p>
     <Tabs options={SOURCES} value={source} onChange={setSource} />
     {!activeProfile ? <p role="alert">Choose a learning language in Profile to start.</p> : null}
-    {starting ? <p role="status">Setting up your game...</p> : null}
+    {starting ? <LoadingScreen label="Setting up your game…" /> : null}
     {error ? <p role="alert">{error}</p> : null}
     {source === "mine" ? <>
-      {photos.isPending && activeProfile ? <p role="status">Loading your photos...</p> : null}
+      {photos.isPending && activeProfile ? <InlineLoader label="Loading your photos…" /> : null}
       {photosError ? <div className="stack-2"><p role="alert">{photosError}</p><Button variant="secondary" onClick={() => void photos.refetch()}>Try again</Button></div> : null}
       {photos.isSuccess && !mine.length ? <p className="muted">Photos you use in a lesson appear here. <Link to="/practice">Start a lesson</Link> with a photo, or play a preloaded scene.</p> : null}
       <div className="grid-2">

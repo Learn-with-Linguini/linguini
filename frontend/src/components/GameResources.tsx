@@ -1,3 +1,4 @@
+import { InlineLoader } from "./LoadingScreen";
 import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../lib/api";
@@ -56,7 +57,7 @@ function ResourceJar({ shop = false, onChanged }: GameResourcesProps) {
     } finally { busyRef.current = false; setBusy(false); }
   };
 
-  if (resources.isPending) return <p className="small muted" role="status">Checking your Sauce…</p>;
+  if (resources.isPending) return <InlineLoader compact label="Checking your Sauce…" />;
   if (!resources.data) return <div className="stack-2"><p role="alert">We couldn’t check your Sauce.</p>
     <Button variant="quiet" onClick={() => void resources.refetch()}>Try again</Button></div>;
   const data = resources.data;
@@ -94,7 +95,7 @@ function ResourceJar({ shop = false, onChanged }: GameResourcesProps) {
       })}</div>
       {error ? <div className="stack-2"><p role="alert">{error}</p>{pendingAppearance ?
         <Button variant="secondary" disabled={busy} onClick={() => void choose(pendingAppearance)}>Retry purchase</Button> : null}</div> : null}
-      {busy ? <p role="status">Saving your jar…</p> : null}
+      {busy ? <InlineLoader compact label="Saving your jar…" /> : null}
     </div> : null}
   </section>;
 }
