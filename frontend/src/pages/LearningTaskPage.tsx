@@ -516,6 +516,8 @@ function PracticeBoards({ question, sceneImageUrl, imageSize, onImageSize, board
 }
 
 /** A practice board of `count` cropped copies of one object, shown without numbers. */
+const COUNT_TILE = 72;
+
 function CountBoard({ count, sceneImageUrl, imageSize, onImageSize, boardObject }: {
   count: number;
   sceneImageUrl: string | null;
@@ -525,9 +527,10 @@ function CountBoard({ count, sceneImageUrl, imageSize, onImageSize, boardObject 
 }) {
   const crop = imageSize ? squareCrop(boardObject?.boundingBox, imageSize.width, imageSize.height) : null;
   const tile = crop && sceneImageUrl && imageSize ? {
+    width: COUNT_TILE, height: COUNT_TILE,
     backgroundImage: `url(${sceneImageUrl})`,
-    backgroundSize: `${imageSize.width * BOARD_TILE / crop.size}px ${imageSize.height * BOARD_TILE / crop.size}px`,
-    backgroundPosition: `-${crop.x * BOARD_TILE / crop.size}px -${crop.y * BOARD_TILE / crop.size}px`,
+    backgroundSize: `${imageSize.width * COUNT_TILE / crop.size}px ${imageSize.height * COUNT_TILE / crop.size}px`,
+    backgroundPosition: `-${crop.x * COUNT_TILE / crop.size}px -${crop.y * COUNT_TILE / crop.size}px`,
   } : undefined;
   return <div className="practice-boards" aria-label="Practice board">
     {sceneImageUrl && !imageSize ? <img className="practice-boards__preload" src={sceneImageUrl} alt="" aria-hidden="true"
@@ -535,7 +538,7 @@ function CountBoard({ count, sceneImageUrl, imageSize, onImageSize, boardObject 
     <div className="practice-board count-board" aria-hidden="true"><span className="practice-board__tiles">
       {boardRows(count).map((row, rowIndex) => <span key={rowIndex} className="practice-board__tile-row">
         {Array.from({ length: row }, (_, tileIndex) => <span key={tileIndex}
-          className={`practice-board__tile${tile ? "" : " practice-board__tile--fallback"}`} style={tile} />)}
+          className={`practice-board__tile${tile ? "" : " practice-board__tile--fallback"}`} style={tile ?? { width: COUNT_TILE, height: COUNT_TILE }} />)}
       </span>)}
     </span></div>
   </div>;
