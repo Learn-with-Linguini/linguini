@@ -6,10 +6,13 @@ from fastapi import APIRouter, Depends
 from app.api.dependencies import get_task_service
 from app.api.errors import service_not_implemented
 from app.schemas.tasks import (
+    CheckLessonAnswerRequest,
+    CheckLessonAnswerResponse,
     CheckVocabularyAnswerRequest,
     CheckVocabularyAnswerResponse,
     ConfirmGuessRequest,
     LatestAttemptResponse,
+    LessonChecksResponse,
     SessionTaskPublic,
     SkipTaskRequest,
     SubmitTaskAttemptRequest,
@@ -58,6 +61,18 @@ def check_vocabulary_answer(
     task_id: UUID, request: CheckVocabularyAnswerRequest, service: TaskServiceDep
 ) -> CheckVocabularyAnswerResponse:
     return service.check_vocabulary_answer(task_id, request.question_id, request.option_id)
+
+
+@router.post("/{task_id}/check-lesson-answer", response_model=CheckLessonAnswerResponse)
+def check_lesson_answer(
+    task_id: UUID, request: CheckLessonAnswerRequest, service: TaskServiceDep
+) -> CheckLessonAnswerResponse:
+    return service.check_lesson_answer(task_id, request.question_id, request.answer)
+
+
+@router.get("/{task_id}/lesson-checks", response_model=LessonChecksResponse)
+def get_lesson_checks(task_id: UUID, service: TaskServiceDep) -> LessonChecksResponse:
+    return service.lesson_checks(task_id)
 
 
 @router.post("/{task_id}/hints", response_model=TaskHint)

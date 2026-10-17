@@ -3,7 +3,7 @@
 from uuid import UUID, uuid4
 
 import pytest
-from sqlalchemy import delete, insert, select
+from sqlalchemy import delete, insert, select, update
 from test_postgres_sessions import database as database
 from test_preloaded_templates import (
     RESERVE,
@@ -13,6 +13,7 @@ from test_preloaded_templates import (
     unlimited,
 )
 
+from app.repositories.postgres.language_profiles import language_profiles
 from app.repositories.postgres.media_assets import media_assets
 from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.scenes import PostgresSceneRepository, preloaded_scenes
@@ -111,6 +112,51 @@ def test_unchanged_scene_builds_fresh_tasks_from_templates_without_calls(curated
         {task["id"] for task in second_tasks}
     )
     assert {task["session_id"] for task in first_tasks} == {first}
+
+
+def test_a2_lesson_reuses_unchanged_preloaded_templates(curated):
+    engine, owner, profile, client, asset, _ = curated
+    with engine.begin() as connection:
+        connection.execute(
+            update(language_profiles)
+            .where(language_profiles.c.id == profile.id)
+            .values(proficiency_level="A2")
+        )
+    model = SceneModel(error=AssertionError("provider must not be called"))
+    response = client.post(
+        "/api/v1/sessions",
+        json={
+            "languageProfileId": str(profile.id),
+            "mediaAssetId": str(asset.id),
+            "idempotencyKey": "a2-template-compatibility",
+        },
+    )
+    assert response.status_code == 202, response.text
+    session_id = UUID(response.json()["session"]["id"])
+    feature = services(model)
+    repo = PostgresWorkflowRepository(
+        engine,
+        owner.id,
+        translator=feature["translation"],
+        learning_task_generator=feature["lessons"],
+        ispy_clue_generator=feature["clues"],
+    )
+    repo.analyze(session_id, profile.id)
+    detail = repo.get(session_id, profile.id)
+    objects = {obj.label: obj for obj in detail.scene_objects}
+    request = ReviewPracticeRequest(
+        accepted_object_ids=[obj.id for obj in detail.scene_objects],
+        object_attributes={
+            obj.id: obj.attributes for obj in detail.scene_objects if obj.attributes
+        },
+        relations=detail.scene_object_relations,
+        object_counts={objects["cup"].id: 2, objects["table"].id: 3},
+    )
+    repo.review(session_id, profile.id, request)
+    tasks = repo.get(session_id, profile.id).tasks
+    missions = {task.public_content.mission_id for task in tasks}
+    assert "M04" in missions
+    assert model.requests == []
 
 
 def test_template_answers_stay_out_of_public_scene_responses(curated):

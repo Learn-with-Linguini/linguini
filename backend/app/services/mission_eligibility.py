@@ -6,13 +6,21 @@ from dataclasses import dataclass
 from app.missions import get_mission
 from app.schemas.enums import SessionMode
 from app.services.ispy_clue_frames import COLOUR_ATTRIBUTE_TYPES, POSITIONS, SUPPORTED_LANGUAGES
+from app.services.mission_language_a2 import A2_ENABLED_LANGUAGES
 
 M01_A1 = ("M01", "A1", 1)
 M02_A1 = ("M02", "A1", 2)
 M03_A1 = ("M03", "A1", 1)
 # Implemented A1 variants in catalogue order; a lesson assesses at most three.
-IMPLEMENTED_MISSIONS = {"A1": (M01_A1, M02_A1, M03_A1)}
-MAX_LESSON_MISSIONS = 3
+M01_A2 = ("M01", "A2", 1)
+M02_A2 = ("M02", "A2", 1)
+M03_A2 = ("M03", "A2", 1)
+M04_A2 = ("M04", "A2", 1)
+IMPLEMENTED_MISSIONS = {
+    "A1": (M01_A1, M02_A1, M03_A1),
+    "A2": (M01_A2, M02_A2, M03_A2, M04_A2),
+}
+MAX_LESSON_MISSIONS = {"A1": 3, "A2": 4}
 
 # Reviewed singular (masculine, feminine) colour forms for each supported lesson language.
 REVIEWED_COLOURS = {
@@ -104,7 +112,10 @@ def lesson_missions(session_mode, profile):
     """Implemented missions a new lesson may plan from; empty keeps the existing lesson path."""
     if session_mode != SessionMode.LESSON:
         return []
-    if profile["target_language_code"].lower() not in SUPPORTED_LANGUAGES:
+    language = profile["target_language_code"].lower()
+    if profile["proficiency_level"] == "A2" and language not in A2_ENABLED_LANGUAGES:
+        return []
+    if language not in SUPPORTED_LANGUAGES:
         return []
     keys = IMPLEMENTED_MISSIONS.get(profile["proficiency_level"], ())
     return [mission for key in keys if (mission := get_mission(*key)) is not None]
@@ -112,10 +123,13 @@ def lesson_missions(session_mode, profile):
 
 def plan_missions(candidates, objects, relations, counted_groups=()):
     """Every mission this photo supports, in catalogue order."""
+    if not candidates:
+        return []
+    cap = MAX_LESSON_MISSIONS.get(str(candidates[0].practice_level), 3)
     return [
         mission for mission in candidates
         if photo_eligibility(mission, objects, relations, counted_groups).eligible
-    ][:MAX_LESSON_MISSIONS]
+    ][:cap]
 
 
 def suggested_counted_groups(objects):
@@ -329,6 +343,12 @@ def photo_eligibility(mission, objects, relations=(), counted_groups=()):
             f"Count a group of {requirements.min_quantity} to {requirements.max_quantity} "
             "matching objects."
         )
+    if requirements.eligibility_rule:
+        from app.services.mission_eligibility_a2 import eligibility_reasons
+
+        reasons.extend(eligibility_reasons(
+            requirements.eligibility_rule, mission, objects, relations, counted_groups,
+        ))
     return Eligibility(not reasons, tuple(reasons))
 
 
