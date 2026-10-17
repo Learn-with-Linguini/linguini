@@ -1,3 +1,4 @@
+import { LoadingScreen } from "../components/LoadingScreen";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -33,7 +34,7 @@ export function SessionSummary() {
       <img className="mascot" src="/linguini-logo.png" width={120} height={120} alt="Linguini mascot" /><h1>{completed ? "Good job!" : "Your session"}</h1><Noodle className="noodle-divider summary__noodle" />
       <p className="muted">You practised {scene.title.toLowerCase()}.</p>
     </div>
-    {loading ? <p role="status">Loading your results...</p> : null}
+    {loading ? <LoadingScreen label="Loading your results…" /> : null}
     {error || startError ? <p role="alert">{error || startError}</p> : null}
     {completionError ? <><p role="alert">{completionError}</p><Button onClick={retryCompletion}>Retry saving your session</Button></> : null}
     {data ? <>

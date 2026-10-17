@@ -1,3 +1,4 @@
+import { InlineLoader } from "../components/LoadingScreen";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
@@ -34,8 +35,8 @@ export function ISpyPhase1() {
   if (game && !clues.length) return <div className="stack">
     <h2 className="text-center">I-Spy · Linguini's clues</h2>
     {practiceStalled
-      ? <><p role="status">Linguini is still choosing objects to spy.</p><Button block onClick={() => void retryProcessing(session.session.id)}>Check again</Button></>
-      : <p role="status">Linguini is choosing objects to spy...</p>}
+      ? <><InlineLoader label="Linguini is still choosing objects to spy…" /><Button block onClick={() => void retryProcessing(session.session.id)}>Check again</Button></>
+      : <InlineLoader label="Linguini is choosing objects to spy…" />}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
   </div>;
   const task = clues[index];
@@ -108,7 +109,7 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
         {isCorrect && shownPick === option.optionId ? <CheckIcon size={16} /> : null}{option.label}
       </button>;
     })}</div>
-    {checking ? <p className="choice-checking" role="status">Checking your answer…</p> : null}
+    {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
     {answered || result ? <>
       <Feedback tone={isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status"><strong>{task.status === "skipped" ? "Skipped — no XP earned." : feedback ?? "Answer saved."}</strong>{content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback>
       {task.status !== "skipped" ? <ReportIssueLink reportType="I-Spy answer" fields={[

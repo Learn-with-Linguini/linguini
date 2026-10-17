@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { SceneSummary } from "../data/types";
 import { protectedMediaPath, requestBlob } from "../lib/api";
 import { imageLoadingAttrs } from "../lib/imageLoading";
+import { InlineLoader } from "./LoadingScreen";
 
 type Props = {
   scene: Pick<SceneSummary, "imageUrl" | "title">;
@@ -66,8 +67,8 @@ export function SceneImage({ scene, className, lazy }: Props) {
   }
   if (isProtectedMediaUrl && !resolvedUrl) {
     return (
-      <span className={`scene-image scene-image--loading${className ? ` ${className}` : ""}`} role="status">
-        <span className="scene-image__loading-label">Preparing photo…</span>
+      <span className={`scene-image scene-image--loading${className ? ` ${className}` : ""}`}>
+        <InlineLoader compact className="scene-image__loading-label" label="Preparing photo…" />
       </span>
     );
   }

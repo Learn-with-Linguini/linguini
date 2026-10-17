@@ -1,3 +1,4 @@
+import { LoadingScreen } from "../components/LoadingScreen";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card } from "../components/ui";
@@ -38,7 +39,7 @@ export function ProfileEdit() {
       </section>
 
       {profileError ? <p role="alert">{profileError} Your changes are still here.</p> : null}
-      {profileSaving ? <p role="status">Saving profile...</p> : null}
+      {profileSaving ? <LoadingScreen label="Saving profile…" /> : null}
       <Button block disabled={profileSaving || !name.trim()} onClick={() => void saveProfile()}>Save changes</Button>
     </div>
   );
