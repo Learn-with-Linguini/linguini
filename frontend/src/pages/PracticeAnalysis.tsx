@@ -22,7 +22,7 @@ const RELATION_OPTIONS = [
   ["behind", "Behind"], ["nextTo", "Next to"], ["near", "Near"],
 ] as const;
 const RELATION_CHOICES = RELATION_OPTIONS.map(([value, label]) => ({ value, label }));
-type AnalysisPanel = "objects" | "attributes" | "relations" | "counts";
+type AnalysisPanel = "objects" | "attributes" | "relations";
 
 function relationLabel(relation: string) {
   return RELATION_OPTIONS.find(([value]) => value === relation)?.[1]
@@ -102,9 +102,10 @@ export function PracticeAnalysis() {
     </>}
   </div>;
   const locked = session.tasks.some(task => task.status !== "pending");
-  const kept = scene.items.filter(item => !removed.includes(item.id));
+  const kept = scene.items.filter(item => !removed.includes(item.id))
+    .map((item, index) => ({ ...item, marker: index + 1 }));
   const custom: LanguageItem[] = added.map((item, index) => ({ id: `custom-${item.id}`, word: item.label,
-    translation: item.label, wordClass: "noun", gender: null, marker: scene.items.length + index + 1,
+    translation: item.label, wordClass: "noun", gender: null, marker: kept.length + index + 1,
     x: item.x * 100, y: item.y * 100, attributes: attributes[item.id] ?? {}, example: "", exampleTranslation: "" }));
   const positionedKept = kept.map(item => {
     const position = positions[item.id];
@@ -123,7 +124,6 @@ export function PracticeAnalysis() {
     }),
     ...added.map(item => ({ id: item.id, label: item.label })),
   ]);
-  const countedCount = Object.keys(objectCounts(groups, counts)).length;
   const countInvalid = groups.some(group => countError(counts[group.key]));
   const setCount = (key: string, value: string) => setCounts(current => ({ ...current, [key]: value }));
   const visibleRelations = relations.filter(row => selectedIds.has(row.subjectSceneObjectId) && selectedIds.has(row.referenceSceneObjectId));
@@ -206,10 +206,10 @@ export function PracticeAnalysis() {
             locationLabel={placementLabel ? `Choose the location of ${placementLabel}` : undefined} />
         </div>
         <div className="analysis-panel-tabs" role="tablist" aria-label="Scene analysis details">
-          {(["objects", "attributes", "relations", "counts"] as const).map(value => <button key={value} type="button" role="tab"
+          {(["objects", "attributes", "relations"] as const).map(value => <button key={value} type="button" role="tab"
             aria-selected={panel === value} className={panel === value ? "is-active" : ""} onClick={() => setPanel(value)}>
             {value[0].toUpperCase() + value.slice(1)}
-            <span>{value === "objects" ? kept.length + added.length : value === "attributes" ? attributeCount : value === "relations" ? visibleRelations.length : countedCount}</span>
+            <span>{value === "objects" ? kept.length + added.length : value === "attributes" ? attributeCount : visibleRelations.length}</span>
           </button>)}
         </div>
       </div>
@@ -235,7 +235,7 @@ export function PracticeAnalysis() {
                   onClick={() => setRemoved(current => [...current, item.id])}><CloseIcon size={18} /></button> : null}
               </div>)}
               {added.map((item, index) => <div className="analysis-word-row" key={item.id}>
-                <span className="analysis-word-row__marker analysis-word-row__marker--custom">{scene.items.length + index + 1}</span>
+                <span className="analysis-word-row__marker analysis-word-row__marker--custom">{kept.length + index + 1}</span>
                 <div className="grow"><strong>{item.label}</strong>
                   <button className="analysis-location-action" type="button" disabled={practiceSaving || !!placementLabel}
                     onClick={() => replaceLocation(item)}>Change location</button>
@@ -260,6 +260,41 @@ export function PracticeAnalysis() {
               <Button variant="secondary" type="submit" disabled={!label.trim() || !!placementLabel || practiceSaving || added.length >= 20}>Select location</Button>
             </div>
           </form> : null}
+          <section className="analysis-results" aria-labelledby="analysis-counts-title">
+            <div><h2 id="analysis-counts-title">How many are there?</h2>
+              <p className="muted">Count only what you can clearly see, from {MIN_COUNT} to {MAX_COUNT}. Leave a group blank if you are not sure.</p></div>
+            <Card plain className="analysis-word-card">
+              <div className="analysis-word-list">
+                {groups.map(group => {
+                  const value = counts[group.key] ?? "";
+                  const problem = countError(value);
+                  const number = Number(value);
+                  const status = !value.trim() ? "Not counted yet."
+                    : problem ? problem
+                    : group.suggested === null ? "Counted by you."
+                    : group.suggested === number ? "Matches the suggestion." : `Corrected from ${group.suggested}.`;
+                  return <div className="analysis-count-row" key={group.key}>
+                    <div className="grow">
+                      <label htmlFor={`count-${group.key}`}><strong>{humanizeTerm(group.label)}</strong></label>
+                      <p className={`small ${problem ? "analysis-count-row__error" : "muted"}`} id={`count-${group.key}-status`}>{status}</p>
+                      {group.suggested !== null && !value.trim() && !locked ? <button type="button" className="analysis-location-action"
+                        disabled={practiceSaving} onClick={() => setCount(group.key, String(group.suggested))}>Use suggested count: {group.suggested}</button> : null}
+                    </div>
+                    <div className="analysis-count-stepper">
+                      <button type="button" aria-label={`Fewer ${group.label}`} disabled={locked || practiceSaving || !value.trim() || number <= MIN_COUNT}
+                        onClick={() => setCount(group.key, String(Math.min(MAX_COUNT, number - 1)))}>−</button>
+                      <input id={`count-${group.key}`} className={`input${value.trim() && !problem ? " is-filled" : ""}`} inputMode="numeric"
+                        aria-describedby={`count-${group.key}-status`} aria-invalid={!!problem} placeholder="–" value={value}
+                        disabled={locked || practiceSaving} onChange={event => setCount(group.key, event.target.value.replace(/[^\d]/g, ""))} />
+                      <button type="button" aria-label={`More ${group.label}`} disabled={locked || practiceSaving || (!!value.trim() && number >= MAX_COUNT)}
+                        onClick={() => setCount(group.key, String(value.trim() && !problem ? number + 1 : group.suggested ?? MIN_COUNT))}>+</button>
+                    </div>
+                  </div>;
+                })}
+                {!groups.length ? <p className="small muted">Select a word first, then count it here.</p> : null}
+              </div>
+            </Card>
+          </section>
         </section> : null}
         {panel === "attributes" ? <section className="analysis-results" aria-labelledby="analysis-attributes-title">
           <div><h2 id="analysis-attributes-title">Visible attributes</h2><p className="muted">Correct only what you can clearly see in the photo.</p></div>
@@ -309,41 +344,6 @@ export function PracticeAnalysis() {
                 onChange={setReference} />
               <Button type="submit" variant="secondary" disabled={practiceSaving || !relationText.trim() || subject === reference || !selectedIds.has(subject) || !selectedIds.has(reference) || visibleRelations.length >= 100}>Add connection</Button>
             </form> : null}
-          </Card>
-        </section> : null}
-        {panel === "counts" ? <section className="analysis-results" aria-labelledby="analysis-counts-title">
-          <div><h2 id="analysis-counts-title">How many are there?</h2>
-            <p className="muted">Count only what you can clearly see, from {MIN_COUNT} to {MAX_COUNT}. Leave a group blank if you are not sure.</p></div>
-          <Card plain className="analysis-word-card">
-            <div className="analysis-word-list">
-              {groups.map(group => {
-                const value = counts[group.key] ?? "";
-                const problem = countError(value);
-                const number = Number(value);
-                const status = !value.trim() ? "Not counted yet."
-                  : problem ? problem
-                  : group.suggested === null ? "Counted by you."
-                  : group.suggested === number ? "Matches the suggestion." : `Corrected from ${group.suggested}.`;
-                return <div className="analysis-count-row" key={group.key}>
-                  <div className="grow">
-                    <label htmlFor={`count-${group.key}`}><strong>{humanizeTerm(group.label)}</strong></label>
-                    <p className={`small ${problem ? "analysis-count-row__error" : "muted"}`} id={`count-${group.key}-status`}>{status}</p>
-                    {group.suggested !== null && !value.trim() && !locked ? <button type="button" className="analysis-location-action"
-                      disabled={practiceSaving} onClick={() => setCount(group.key, String(group.suggested))}>Use suggested count: {group.suggested}</button> : null}
-                  </div>
-                  <div className="analysis-count-stepper">
-                    <button type="button" aria-label={`Fewer ${group.label}`} disabled={locked || practiceSaving || !value.trim() || number <= MIN_COUNT}
-                      onClick={() => setCount(group.key, String(Math.min(MAX_COUNT, number - 1)))}>−</button>
-                    <input id={`count-${group.key}`} className={`input${value.trim() && !problem ? " is-filled" : ""}`} inputMode="numeric"
-                      aria-describedby={`count-${group.key}-status`} aria-invalid={!!problem} placeholder="–" value={value}
-                      disabled={locked || practiceSaving} onChange={event => setCount(group.key, event.target.value.replace(/[^\d]/g, ""))} />
-                    <button type="button" aria-label={`More ${group.label}`} disabled={locked || practiceSaving || (!!value.trim() && number >= MAX_COUNT)}
-                      onClick={() => setCount(group.key, String(value.trim() && !problem ? number + 1 : group.suggested ?? MIN_COUNT))}>+</button>
-                  </div>
-                </div>;
-              })}
-              {!groups.length ? <p className="small muted">Select a word first, then count it here.</p> : null}
-            </div>
           </Card>
         </section> : null}
         {error || practiceError ? <p role="alert">{error ?? practiceError}</p> : null}
