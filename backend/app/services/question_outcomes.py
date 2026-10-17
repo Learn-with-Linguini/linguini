@@ -62,6 +62,19 @@ def _mistakes(evaluation, answer):
     ]
 
 
+def _option_notes(evaluation, answer):
+    """Explanations for ruled-out options, preserving correction-rule order."""
+    given = normalize_answer(answer or "")
+    notes = []
+    for rule in evaluation.corrections:
+        answers = {normalize_answer(item) for item in rule.answers}
+        if not answers or given in answers or not rule.explanation:
+            continue
+        if rule.explanation not in notes:
+            notes.append(rule.explanation)
+    return notes
+
+
 def review_details(task: SessionTask, request, question_results, correct_answers):
     """Grouped-lesson ``evaluationDetails`` with ``questionOutcomes`` added.
 
@@ -100,6 +113,10 @@ def review_details(task: SessionTask, request, question_results, correct_answers
                 evidence_type=_default_evidence(question),
                 mistakes=(
                     [] if correct else _mistakes(evaluation, request.answers.get(question_id))
+                ),
+                option_notes=(
+                    _option_notes(evaluation, request.answers.get(question_id))
+                    if correct and _interaction(question) == "multipleChoice" else []
                 ),
             )
         )

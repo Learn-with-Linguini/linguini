@@ -524,6 +524,7 @@ class QuestionOutcome(ApiModel):
 
     ``assistance`` lists every support the learner opened; ``assistanceUsed`` is true
     only when one of them counts as assistance under the mission's support rules.
+    ``optionNotes`` explains why the unselected options do not fit a correct answer.
     """
 
     question_id: NonEmptyText
@@ -534,6 +535,7 @@ class QuestionOutcome(ApiModel):
     assistance: list[SupportKind] = Field(default_factory=list)
     assistance_used: bool = False
     mistakes: list[MistakeDetail] = Field(default_factory=list)
+    option_notes: list[NonEmptyText] = Field(default_factory=list, exclude_if=_is_empty)
 
     @model_validator(mode="after")
     def validate_outcome(self) -> QuestionOutcome:

@@ -13,6 +13,7 @@ from app.missions import (
 )
 from app.schemas.enums import SessionMode
 from app.schemas.tasks import (
+    CorrectionRule,
     QuestionReviewDetails,
     SessionTask,
     SessionTaskPublic,
@@ -289,6 +290,42 @@ def test_review_details_add_outcomes_without_changing_results():
         "mistake": "wordOrder", "answer": "Es la taza roja", "correction": "La taza es roja.",
         "explanation": None,
     }]
+
+
+def test_correct_outcomes_explain_other_options_once_but_incorrect_outcomes_do_not():
+    task = mission_task()
+    evaluation = task.answer_key.question_evaluations[0]
+    updated = evaluation.model_copy(update={"corrections": [
+        CorrectionRule(
+            mistake="wrongGender", answers=["rojo"], correction="La taza es roja.",
+            explanation="Taza is feminine.",
+        ),
+        CorrectionRule(
+            mistake="wrongGender", answers=["verde"], correction="La taza es roja.",
+            explanation="Taza is feminine.",
+        ),
+        CorrectionRule(
+            mistake="wrongGender", answers=["amarillo"], correction="La taza es roja.",
+            explanation="The colour does not match.",
+        ),
+        CorrectionRule(
+            mistake="wrongGender", answers=["roja"], correction="La taza es roja.",
+            explanation="The learner's answer is correct.",
+        ),
+    ]})
+    task.answer_key = task.answer_key.model_copy(
+        update={"question_evaluations": [updated, *task.answer_key.question_evaluations[1:]]}
+    )
+    request = SubmitVocabularyReviewAttemptRequest(answers={"colour": "roja"})
+    correct = review_details(task, request, {"colour": True}, {})
+    assert correct["questionOutcomes"][0]["optionNotes"] == [
+        "Taza is feminine.", "The colour does not match.",
+    ]
+
+    incorrect = review_details(
+        task, request.model_copy(update={"answers": {"colour": "rojo"}}), {"colour": False}, {},
+    )
+    assert "optionNotes" not in incorrect["questionOutcomes"][0]
 
 
 @pytest.mark.parametrize(

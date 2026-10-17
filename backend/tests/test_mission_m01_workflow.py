@@ -4,7 +4,7 @@ import json
 from uuid import UUID, uuid4
 
 import pytest
-from sqlalchemy import func, select, update
+from sqlalchemy import delete, func, insert, select, update
 from test_postgres_sessions import database as database
 from test_preloaded_templates import SceneModel, TextModelResponse, services
 from test_preloaded_templates_workflow import curated as curated
@@ -14,12 +14,19 @@ from app.ai.features.learning_tasks.mission_m01 import (
 )
 from app.repositories.postgres.language_profiles import language_profiles
 from app.repositories.postgres.tasks import session_tasks, task_attempts
-from app.repositories.postgres.vocabulary import user_vocabulary_progress, vocabulary_encounters
+from app.repositories.postgres.vocabulary import (
+    record_vocabulary_evidence,
+    user_vocabulary_progress,
+    vocabulary_encounters,
+    vocabulary_items,
+    vocabulary_translations,
+)
 from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.repositories.postgres.xp import xp_events
 from app.repositories.practice import PracticeConflictError
 from app.schemas.sessions import ReviewPracticeRequest
 from app.schemas.tasks import SkipTaskRequest
+from app.schemas.vocabulary import VocabularyItem, VocabularyTranslation
 from app.services import mission_eligibility, mission_lessons_m01
 
 M01 = ("M01", "A1", 1)
@@ -145,6 +152,51 @@ def test_suitable_photo_builds_one_mission_lesson_after_the_vocabulary(curated):
     assert evaluations[1]["targetIds"] == ["name-object", "describe-colour"]
     public = json.dumps(client.get(f"/api/v1/sessions/{sid}").json())
     assert "questionEvaluations" not in public and "correctOptionIds" not in public
+
+
+def test_mission_progress_includes_taught_noun_source_meaning(curated):
+    engine, owner, profile, *_ = curated
+    repository = _repository(curated, SceneModel())
+    word = VocabularyItem(
+        language_code=profile.target_language_code,
+        lemma="edificio",
+        display_text="el edificio",
+        part_of_speech="noun",
+        gender="masculine",
+    )
+    translation = VocabularyTranslation(
+        vocabulary_item_id=word.id,
+        source_language_code=profile.source_language_code,
+        translated_text="building",
+    )
+    try:
+        with engine.begin() as connection:
+            connection.execute(insert(vocabulary_items).values(**word.model_dump(by_alias=False)))
+            connection.execute(
+                insert(vocabulary_translations).values(**translation.model_dump(by_alias=False))
+            )
+            record_vocabulary_evidence(
+                connection, user_id=owner.id, vocabulary_item_id=word.id,
+            )
+            progress = repository._mission_progress(
+                connection, profile.model_dump(by_alias=False), None,
+            )
+        assert {
+            "text": "el edificio", "gender": "masculine", "meaning": "building",
+        } in progress["taught_nouns"]
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                delete(user_vocabulary_progress).where(
+                    user_vocabulary_progress.c.vocabulary_item_id == word.id,
+                )
+            )
+            connection.execute(
+                delete(vocabulary_translations).where(
+                    vocabulary_translations.c.vocabulary_item_id == word.id,
+                )
+            )
+            connection.execute(delete(vocabulary_items).where(vocabulary_items.c.id == word.id))
 
 
 def test_less_familiar_pairs_come_first_and_resume_keeps_them(curated):

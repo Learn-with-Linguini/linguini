@@ -1,9 +1,11 @@
 """M01 A1 eligibility, reviewed colour forms and the deterministic lesson."""
 
 from types import SimpleNamespace
+from uuid import uuid4
 
 import pytest
 
+from app.ai.features.learning_tasks.mission import fold
 from app.ai.features.learning_tasks.mission_m01 import (
     M01LessonResult,
     fallback_m01_lesson,
@@ -12,7 +14,7 @@ from app.ai.features.learning_tasks.mission_m01 import (
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.missions import get_mission
 from app.services.mission_eligibility import agreed_colour, lesson_missions, photo_eligibility
-from app.services.mission_lessons_m01 import m01_payload
+from app.services.mission_lessons_m01 import m01_lesson_task, m01_payload
 
 MISSION = get_mission("M01", "A1", 1)
 CUP = "11111111-1111-1111-1111-111111111111"
@@ -125,6 +127,47 @@ def test_pairs_prefer_unfamiliar_words_and_spanish_uses_indefinite_articles():
     assert chosen["identifyPrompt"] == "¿Qué es esto?"
     lesson = fallback_m01_lesson(chosen)
     assert lesson.questions[1].correct_text == "Es una mesa blanca."
+
+
+def test_payload_maps_scene_and_taught_noun_meanings_with_scene_labels_first():
+    objects = [scene_object(CUP, "Cup", "red"), scene_object(BOOK, "Book", "green")]
+    words = [word(CUP, "la taza", "feminine"), word(BOOK, "el libro", "masculine")]
+    result = m01_payload(MISSION, "es", objects, words, None, {
+        "taught_nouns": [
+            {"text": "la taza", "gender": "feminine", "meaning": "a mug"},
+            {"text": "el gato", "gender": "masculine", "meaning": "cat"},
+            {"text": "la mesa", "gender": "feminine", "meaning": None},
+        ],
+    })
+    assert result["meanings"] == {
+        fold("taza"): "Cup",
+        fold("libro"): "Book",
+        fold("gato"): "cat",
+    }
+
+
+def test_identify_corrections_explain_wrong_words_with_and_without_meanings():
+    data = payload()
+    data["meanings"] = {fold("livre"): "book"}
+    result = fallback_m01_lesson(data)
+    task = m01_lesson_task(
+        uuid4(), MISSION, data, result, {CUP: CUP, BOOK: BOOK},
+    )
+    identify = result.questions[0]
+    corrections = task.answer_key.question_evaluations[0].corrections
+    by_option = {
+        option.option_id: next(
+            rule.explanation for rule in corrections if option.option_id in rule.answers
+        )
+        for option in identify.options if option.option_id != identify.correct_option_id
+    }
+    labels = {option.option_id: option.label for option in identify.options}
+    assert by_option[next(key for key, label in labels.items() if label == "Un livre")] == (
+        "“Un livre” means a book, but the circled object is a cup."
+    )
+    assert by_option[next(key for key, label in labels.items() if label == "Une table")] == (
+        "“Une table” names a different object; the circled object is a cup."
+    )
 
 
 def test_a_single_usable_pair_builds_no_lesson():

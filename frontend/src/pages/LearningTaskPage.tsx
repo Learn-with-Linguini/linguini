@@ -469,6 +469,10 @@ function QuestionOutcomeNotes({ outcome }: { outcome?: QuestionOutcome }) {
   if (!outcome) return null;
   return <>
     {outcome.mistakes.map((mistake, position) => mistake.explanation ? <p key={position} className="small">{mistake.explanation}</p> : null)}
+    {outcome.optionNotes?.length ? <div className="stack-2 small">
+      <p className="muted">Why the other options don't fit:</p>
+      <ul>{outcome.optionNotes.map((note, i) => <li key={i}>{note}</li>)}</ul>
+    </div> : null}
     {outcome.assistance.includes("wordBank") ? <p className="small muted">Supported practice: built with the word bank.</p> : null}
   </>;
 }

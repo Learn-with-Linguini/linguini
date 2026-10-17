@@ -1356,11 +1356,21 @@ class PostgresWorkflowRepository:
         Colours and position phrases have no word-progress rows, so their familiarity
         comes only from the learner-history snapshot; without one they count as unseen.
         """
+        meaning = (
+            select(vocabulary_translations.c.translated_text)
+            .where(
+                vocabulary_translations.c.vocabulary_item_id == vocabulary_items.c.id,
+                func.lower(vocabulary_translations.c.source_language_code)
+                == profile["source_language_code"].lower(),
+            )
+            .order_by(vocabulary_translations.c.updated_at, vocabulary_translations.c.id)
+            .limit(1).scalar_subquery()
+        )
         rows = c.execute(
             select(
                 vocabulary_items.c.id, vocabulary_items.c.display_text,
                 vocabulary_items.c.gender, vocabulary_items.c.part_of_speech,
-                user_vocabulary_progress.c.mastery_score,
+                user_vocabulary_progress.c.mastery_score, meaning.label("meaning"),
             )
             .join(
                 user_vocabulary_progress,
@@ -1381,7 +1391,7 @@ class PostgresWorkflowRepository:
         return dict(
             objects={str(row["id"]): float(row["mastery_score"]) for row in rows},
             taught_nouns=[
-                dict(text=row["display_text"], gender=row["gender"])
+                dict(text=row["display_text"], gender=row["gender"], meaning=row["meaning"])
                 for row in rows if row["part_of_speech"] == "noun" and row["gender"]
             ],
             terms=terms,

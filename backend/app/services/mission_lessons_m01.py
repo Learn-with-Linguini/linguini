@@ -81,6 +81,15 @@ def m01_payload(mission, language, objects, words, translated_scene, progress=No
         indefinite(noun["text"], noun["gender"], language)
         for noun in (progress or {}).get("taught_nouns", [])
     ]
+    meanings = {}
+    for obj, word in zip(objects, words, strict=True):
+        label = obj.label.strip()
+        if label:
+            meanings[fold(_LEADING_ARTICLE.sub("", word.display_text))] = label
+    for noun in (progress or {}).get("taught_nouns", []):
+        if meaning := noun.get("meaning"):
+            key = fold(_LEADING_ARTICLE.sub("", noun["text"]))
+            meanings.setdefault(key, meaning)
     nouns = {fold(_LEADING_ARTICLE.sub("", pair["nounPhrase"])) for pair in pairs}
     distractors = {}
     for pair in pairs if len(pairs) == 2 else []:
@@ -105,6 +114,7 @@ def m01_payload(mission, language, objects, words, translated_scene, progress=No
         "contentVersion": mission.content_version,
         "pairs": pairs,
         "distractors": distractors,
+        "meanings": meanings,
         "identifyPrompt": IDENTIFY_PROMPTS[language],
         "describePrompt": DESCRIBE_PROMPTS[language],
         "sentenceStart": SENTENCE_STARTS[language],
@@ -112,7 +122,15 @@ def m01_payload(mission, language, objects, words, translated_scene, progress=No
     }
 
 
-def _corrections(question, correct_label):
+def _english(word):
+    if re.match(r"^(?:a|an|the)\s", word, re.IGNORECASE):
+        return word
+    lower = f"{word[:1].lower()}{word[1:]}"
+    article = "an" if lower[:1] in "aeiou" else "a"
+    return f"{article} {lower}"
+
+
+def _corrections(question, correct_label, payload, source):
     if question.purpose == "describeObject":
         return [dict(
             mistake="wordOrder",
@@ -122,7 +140,15 @@ def _corrections(question, correct_label):
     return [
         dict(
             mistake="wrongWord", answers=[option.option_id], correction=correct_label,
-            explanation="That word names a different object.",
+            explanation=(
+                f"“{option.label}” means {_english(meaning)}, but the circled object is "
+                f"{_english(source)}."
+                if (meaning := payload.get("meanings", {}).get(
+                    fold(_LEADING_ARTICLE.sub("", option.label))
+                ))
+                else f"“{option.label}” names a different object; the circled object is "
+                     f"{_english(source)}."
+            ),
         )
         for option in question.options if option.option_id != question.correct_option_id
     ]
@@ -140,7 +166,7 @@ def m01_lesson_task(session_id, mission, payload, result, vocabulary_ids):
             evidence_type=evidence_type,
             rubric_criterion_ids=criteria,
             vocabulary_item_ids=[vocabulary_id] if vocabulary_id else [],
-            corrections=_corrections(question, label),
+            corrections=_corrections(question, label, payload, labels[question.object_key]),
         )
 
     def shown(question):

@@ -363,6 +363,20 @@ def test_corrections_separate_quantity_from_plural_mistakes():
         for option in choose.options if option.option_id != choose.correct_option_id
     }
     assert all(mistakes == ["wrongQuantity"] for mistakes in by_answer.values())
+    inverse_numbers = {
+        fold(word): number for number, word in NUMBER_WORDS["es"].items()
+    }
+    for option in choose.options:
+        if option.option_id == choose.correct_option_id:
+            continue
+        rule = next(
+            rule for rule in evaluations[choose.question_id].corrections
+            if option.option_id in rule.answers
+        )
+        assert rule.explanation == (
+            f"“{option.label}” means {inverse_numbers[fold(option.label)]}; "
+            "you counted 3: tres."
+        )
     rules = {rule.mistake: rule.answers for rule in evaluations[build.question_id].corrections}
     assert "Hay tres libro." in rules["pluralForm"]
     assert "Hay tres libros." not in rules["pluralForm"]

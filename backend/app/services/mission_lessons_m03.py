@@ -158,10 +158,18 @@ def _corrections(payload, question, label):
             )
             for option in question.options if option.option_id != question.correct_option_id
         ]
+    reverse_numbers = {
+        fold(number_word): number for number, number_word in NUMBER_WORDS[language].items()
+    }
     return [
         dict(
             mistake="wrongQuantity", answers=[option.option_id], correction=label,
-            explanation=f"You counted {group['quantity']}: {group['numberWord']}.",
+            explanation=(
+                f"“{option.label}” means {number}; you counted {group['quantity']}: "
+                f"{group['numberWord']}."
+                if (number := reverse_numbers.get(fold(option.label))) is not None
+                else f"You counted {group['quantity']}: {group['numberWord']}."
+            ),
         )
         for option in question.options if option.option_id != question.correct_option_id
     ]
