@@ -389,6 +389,23 @@ def test_corrections_separate_quantity_from_plural_mistakes():
         for option in choose.options if option.option_id != choose.correct_option_id
     }
     assert all(mistakes == ["wrongQuantity"] for mistakes in by_answer.values())
+    choose_evaluation = evaluations[choose.question_id]
+    assert choose_evaluation.correct_note == "You counted 3: tres."
+    inverse_numbers = {
+        fold(word): number for number, word in NUMBER_WORDS["es"].items()
+    }
+    for option in choose.options:
+        if option.option_id == choose.correct_option_id:
+            continue
+        rule = next(
+            rule for rule in choose_evaluation.corrections
+            if option.option_id in rule.answers
+        )
+        assert rule.note == f"“{option.label}” means {inverse_numbers[fold(option.label)]}."
+        assert rule.explanation == (
+            f"“{option.label}” means {inverse_numbers[fold(option.label)]}; "
+            "you counted 3: tres."
+        )
     rules = {rule.mistake: rule.answers for rule in evaluations[build.question_id].corrections}
     assert "Hay tres libro." in rules["pluralForm"]
     assert "Hay tres libros." not in rules["pluralForm"]
@@ -400,6 +417,11 @@ def test_corrections_separate_quantity_from_plural_mistakes():
         rule.mistake == "wrongQuantity" and f"means {target}." in rule.explanation
         for rule in match_rules
     )
+    assert evaluations[build.question_id].correct_note is None
+    assert evaluations[match.question_id].correct_note == (
+        f"“{match.quantity_word}” means {target}."
+    )
+    assert all(rule.note is None for rule in match_rules)
     assert [item.evidence_type for item in task.answer_key.question_evaluations] == [
         "recognition", "construction", "recognition",
     ]

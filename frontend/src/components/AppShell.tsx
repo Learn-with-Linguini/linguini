@@ -1,4 +1,5 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { useLayoutEffect } from "react";
 import { BookIcon, CameraIcon, EyeIcon, HomeIcon, JournalIcon, PersonIcon } from "./icons";
 import { BrandBar } from "./ui";
 import { BackActionProvider, useRegisteredBackAction } from "./BackAction";
@@ -60,6 +61,9 @@ export function FocusShell() {
 
 function FocusShellView() {
   const { pathname } = useLocation();
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
   const { session } = useAuth();
   const backAction = useRegisteredBackAction();
   const usesWideCanvas = pathname.endsWith("/analysis");

@@ -5,6 +5,7 @@ from uuid import UUID
 
 import pytest
 
+from app.ai.features.learning_tasks.mission import fold
 from app.ai.features.learning_tasks.mission_m01 import (
     M01LessonResult,
     fallback_m01_lesson,
@@ -12,8 +13,10 @@ from app.ai.features.learning_tasks.mission_m01 import (
 )
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.missions import get_mission
+from app.schemas.tasks import SubmitVocabularyReviewAttemptRequest
 from app.services.mission_eligibility import agreed_colour, lesson_missions, photo_eligibility
 from app.services.mission_lessons_m01 import m01_lesson_task, m01_payload
+from app.services.question_outcomes import review_details
 
 DETAIL_REASON = (
     "Confirm a colour, size, shape, material, pattern or state of at least 2 different objects."
@@ -238,6 +241,124 @@ def test_task_persists_statement_truth_privately_and_keeps_order():
     rules = {e.question_id: e for e in task.answer_key.question_evaluations}
     gender = rules["describe-object"].corrections[0]
     assert (gender.mistake, gender.answers) == ("wrongGender", ["C'est un livre verte."])
+
+
+def test_confirm_and_attribute_questions_have_specific_correct_feedback():
+    data = build("es")
+    result = fallback_m01_lesson(data)
+    task = m01_lesson_task(SESSION, MISSION, data, result, {})
+    evaluations = {item.question_id: item for item in task.answer_key.question_evaluations}
+
+    confirm = result.questions[0]
+    pair = next(row for row in data["pairs"] if row["key"] == confirm.object_key)
+    confirm_note = f"This is {pair['nounPhrase']} ({pair['source']})."
+    confirm_evaluation = evaluations[confirm.question_id]
+    assert confirm_evaluation.correct_note == confirm_note
+    assert confirm_evaluation.corrections[0].note == confirm_note
+    assert confirm_evaluation.corrections[0].explanation == (
+        f"{'Yes' if confirm.statement_correct else 'No'} — this is "
+        f"{pair['nounPhrase']} ({pair['source']})."
+    )
+
+    choose = result.questions[2]
+    pair = next(row for row in data["pairs"] if row["key"] == choose.object_key)
+    choose_evaluation = evaluations[choose.question_id]
+    correct_note = f"The {pair['source']} is {pair['attributeSource']}: {pair['agreedForm']}."
+    assert choose_evaluation.correct_note == correct_note
+    assert data["attributeMeanings"][fold("Roja")] == "red"
+    assert data["attributeMeanings"][fold("Verde")] == "green"
+    assert data["attributeMeanings"][fold("Blanca")] == "white"
+    for option in choose.options:
+        if option.option_id == choose.correct_option_id:
+            continue
+        meaning = data["attributeMeanings"][fold(option.label)]
+        rule = next(
+            rule for rule in choose_evaluation.corrections if option.option_id in rule.answers
+        )
+        assert rule.note == f"“{option.label}” means {meaning}."
+        assert rule.explanation == (
+            f"“{option.label}” means {meaning}; the {pair['source']} is "
+            f"{pair['attributeSource']}: {pair['agreedForm']}."
+        )
+
+    legacy_payload = {key: value for key, value in data.items() if key != "attributeMeanings"}
+    legacy_task = m01_lesson_task(
+        SESSION, MISSION, legacy_payload, result, {},
+    )
+    legacy_evaluation = next(
+        item for item in legacy_task.answer_key.question_evaluations
+        if item.question_id == choose.question_id
+    )
+    assert legacy_evaluation.corrections[0].note is None
+    assert legacy_evaluation.corrections[0].explanation == correct_note
+    assert evaluations[result.questions[3].question_id].correct_note is None
+
+
+def test_attribute_feedback_does_not_duplicate_an_existing_english_article():
+    objects = [
+        scene_object(CUP, "the taxi", "yellow"),
+        scene_object(BOOK, "book", "green"),
+        scene_object(TABLE, "table", "white"),
+    ]
+    words = [
+        word(CUP, "taxi", "masculine"),
+        word(BOOK, "libro", "masculine"),
+        word(TABLE, "mesa", "feminine"),
+    ]
+    data = build("es", objects=objects, words=words)
+    result = fallback_m01_lesson(data)
+    task = m01_lesson_task(SESSION, MISSION, data, result, {})
+    question = result.questions[2]
+    pair = next(row for row in data["pairs"] if row["key"] == question.object_key)
+    evaluation = next(
+        item for item in task.answer_key.question_evaluations
+        if item.question_id == question.question_id
+    )
+
+    assert pair["source"] == "the taxi"
+    assert evaluation.correct_note == "The taxi is yellow: amarillo."
+    feedback = [
+        evaluation.correct_note,
+        *(rule.note or "" for rule in evaluation.corrections),
+        *(rule.explanation or "" for rule in evaluation.corrections),
+    ]
+    assert all(
+        "the the" not in text.casefold() and "this the" not in text.casefold()
+        for text in feedback
+    )
+
+
+def test_m01_correct_outcomes_show_notes_only_for_other_attribute_options():
+    data = build("es")
+    result = fallback_m01_lesson(data)
+    task = m01_lesson_task(SESSION, MISSION, data, result, {})
+    confirm, choose = result.questions[0], result.questions[2]
+    answers = {
+        confirm.question_id: confirm.correct_option_id,
+        choose.question_id: choose.correct_option_id,
+    }
+    details = review_details(
+        task,
+        SubmitVocabularyReviewAttemptRequest(answers=answers),
+        {question_id: True for question_id in answers},
+        {},
+    )
+    outcomes = {item["questionId"]: item for item in details["questionOutcomes"]}
+    confirm_evaluation = next(
+        item for item in task.answer_key.question_evaluations
+        if item.question_id == confirm.question_id
+    )
+    assert outcomes[confirm.question_id]["correctNote"] == confirm_evaluation.correct_note
+    assert "optionNotes" not in outcomes[confirm.question_id]
+    choose_evaluation = next(
+        item for item in task.answer_key.question_evaluations
+        if item.question_id == choose.question_id
+    )
+    expected_notes = [
+        rule.note for rule in choose_evaluation.corrections
+        if rule.note and rule.note != choose_evaluation.correct_note
+    ]
+    assert outcomes[choose.question_id]["optionNotes"] == expected_notes
 
 
 def test_unconfirmed_or_removed_objects_are_never_used():

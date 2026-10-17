@@ -1,8 +1,13 @@
 """Shared mission fields and the mission-tagged grammar lesson task."""
 
+import re
 from uuid import UUID, uuid5
 
 from app.schemas.tasks import SessionTask
+
+
+def definite(source):
+    return f"the {re.sub(r'^(?:a|an|the)\s+', '', source, flags=re.IGNORECASE)}"
 
 
 def mission_fields(mission):

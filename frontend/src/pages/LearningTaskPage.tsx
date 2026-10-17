@@ -392,7 +392,8 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
       </>}
       {results[question.questionId] !== undefined ? <>
         <Feedback tone={results[question.questionId] ? "good" : "warn"}><p role="status">{results[question.questionId]
-          ? "Correct!"
+          ? <>Correct!{outcomeFor[question.questionId]?.correctNote
+            ? ` ${outcomeFor[question.questionId]?.correctNote}` : ""}</>
           : <>Not quite.{solutions[question.questionId] ? (() => {
             const label = question.options.find(option => option.optionId === solutions[question.questionId])?.label;
             const solution = label ? optionText(question, label) : solutions[question.questionId];
@@ -493,6 +494,10 @@ function QuestionOutcomeNotes({ outcome }: { outcome?: QuestionOutcome }) {
   if (!outcome) return null;
   return <>
     {outcome.mistakes.map((mistake, position) => mistake.explanation ? <p key={position} className="small">{mistake.explanation}</p> : null)}
+    {outcome.optionNotes?.length ? <div className="stack-2 small">
+      <p className="muted">Why the other options don't fit:</p>
+      <ul>{outcome.optionNotes.map((note, i) => <li key={i}>{note}</li>)}</ul>
+    </div> : null}
     {outcome.assistance.includes("wordBank") ? <p className="small muted">Supported practice: built with the word bank.</p> : null}
   </>;
 }

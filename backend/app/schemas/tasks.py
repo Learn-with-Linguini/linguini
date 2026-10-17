@@ -318,12 +318,16 @@ type TaskPublicContent = Annotated[
 
 
 class CorrectionRule(ApiModel):
-    """Feedback for a recognisable mistake; empty ``answers`` matches any incorrect answer."""
+    """Feedback for a recognisable mistake; empty ``answers`` matches any incorrect answer.
+
+    ``note`` is a short reason this option is wrong, shown after a correct answer.
+    """
 
     mistake: MistakeType
     answers: list[NonEmptyText] = Field(default_factory=list, max_length=20)
     correction: NonEmptyText
     explanation: str | None = None
+    note: str | None = None
 
 
 class QuestionEvaluation(ApiModel):
@@ -344,6 +348,7 @@ class QuestionEvaluation(ApiModel):
     vocabulary_item_ids: list[UUID] = Field(default_factory=list)
     scene_object_id: UUID | None = None
     corrections: list[CorrectionRule] = Field(default_factory=list, max_length=20)
+    correct_note: str | None = None
 
     @model_validator(mode="after")
     def validate_ids(self) -> QuestionEvaluation:
@@ -538,6 +543,8 @@ class QuestionOutcome(ApiModel):
 
     ``assistance`` lists every support the learner opened; ``assistanceUsed`` is true
     only when one of them counts as assistance under the mission's support rules.
+    ``optionNotes`` explains why the unselected options do not fit a correct answer.
+    ``correctNote`` briefly confirms why the correct answer fits.
     """
 
     question_id: NonEmptyText
@@ -548,6 +555,8 @@ class QuestionOutcome(ApiModel):
     assistance: list[SupportKind] = Field(default_factory=list)
     assistance_used: bool = False
     mistakes: list[MistakeDetail] = Field(default_factory=list)
+    correct_note: str | None = Field(default=None, exclude_if=_is_none)
+    option_notes: list[NonEmptyText] = Field(default_factory=list, exclude_if=_is_empty)
 
     @model_validator(mode="after")
     def validate_outcome(self) -> QuestionOutcome:

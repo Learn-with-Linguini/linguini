@@ -531,6 +531,7 @@ export interface QuestionOutcome {
   questionId: string; outcome: "correct" | "incorrect" | "unassessed";
   objectiveId: string | null; targetIds: string[]; evidenceType: EvidenceType;
   assistance: SupportKind[]; assistanceUsed: boolean; mistakes: MistakeDetail[];
+  correctNote?: string; optionNotes?: string[];
 }
 /** `questionOutcomes` is present only for tasks with mission evaluation metadata. */
 export interface VocabularyReviewDetails { questionResults: Record<string, boolean>; correctAnswers: Record<string, string>; questionOutcomes?: QuestionOutcome[] }
