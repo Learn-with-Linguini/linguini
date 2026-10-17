@@ -72,7 +72,7 @@ from app.services.image_storage import ImageStorage
 logger = logging.getLogger("precompute_preloaded_scenes")
 
 MAX_OBJECTS = 6
-SUPPORTED_LANGUAGES = ("fr", "es")
+SUPPORTED_LANGUAGES = ("fr", "es", "de", "ko")
 ENGLISH_ARTICLES = ("the ", "a ", "an ")
 
 SCENE_SLUGS = ("street", "cafe", "market", "bedroom", "kitchen", "park")
@@ -609,7 +609,7 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         action="append",
         choices=SUPPORTED_LANGUAGES,
         dest="languages",
-        help="template target language (repeatable; default: fr and es)",
+        help="template target language (repeatable; default: fr, es, de and ko)",
     )
     parser.add_argument(
         "--dry-run",

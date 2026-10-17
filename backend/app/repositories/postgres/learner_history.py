@@ -50,6 +50,8 @@ def _without_article(value: str, language: str) -> str:
         value = re.sub(r"^(?:el|la|los|las|un|una|unos|unas) ", "", value)
     elif language.startswith("fr"):
         value = re.sub(r"^(?:(?:le|la|les|un|une|des) |l')", "", value)
+    elif language.startswith("de"):
+        value = re.sub(r"^(?:der|die|das|den|dem|ein|eine|einen|einem) ", "", value)
     return value
 
 

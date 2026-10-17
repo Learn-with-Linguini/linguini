@@ -29,10 +29,11 @@ class ISpyClueGenerationError(SceneAnalysisError):
 # Leading determiners dropped from the answer term before matching, so
 # "la tasse" still leaks when the clue says "tasse".
 _LEADING_ARTICLES = frozenset(
-    "the a an le la les l un une des du de el los las un una unos unas".split()
+    "the a an le la les l un une des du de el los las un una unos unas "
+    "der die das den dem ein eine einen einem".split()
 )
 _NON_ALPHANUMERIC = re.compile(r"[^\w]|_", re.UNICODE)
-_CLUE_OPENINGS = ("i spy", "je vois", "veo ")
+_CLUE_OPENINGS = ("i spy", "je vois", "veo ", "ich sehe")
 
 
 def _tokens(text: str) -> list[str]:

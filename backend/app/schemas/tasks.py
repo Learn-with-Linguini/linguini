@@ -33,7 +33,8 @@ type SupportKind = Literal[
     "answerReveal",
 ]
 type MistakeType = Literal[
-    "wrongObject", "wrongWord", "wrongArticle", "wrongGender", "wrongColour", "wrongPosition",
+    "wrongObject", "wrongWord", "wrongArticle", "wrongGender", "wrongColour", "wrongAttribute",
+    "wrongPosition",
     "wordOrder", "missingWord", "spelling", "targetNamed", "wrongQuantity", "pluralForm",
 ]
 type QuestionOutcomeStatus = Literal["correct", "incorrect", "unassessed"]
@@ -160,6 +161,10 @@ class GrammarLessonQuestion(ApiModel):
     board_object_id: UUID | None = Field(default=None, exclude_if=_is_none)
     # The number word already visible in the prompt, revealed with its digit after grading.
     quantity_word: str | None = Field(default=None, exclude_if=_is_none)
+    # Options are shown in their saved, already shuffled order.
+    keep_option_order: bool | None = Field(default=None, exclude_if=_is_none)
+    # A marker choice: option id -> the scene object whose photo marker answers it.
+    marker_object_ids: dict[str, UUID] | None = Field(default=None, exclude_if=_is_none)
 
     @model_validator(mode="after")
     def validate_interaction(self) -> GrammarLessonQuestion:
@@ -169,6 +174,10 @@ class GrammarLessonQuestion(ApiModel):
             raise ValueError("sentence-building questions require a token bank")
         if self.interaction_type == "sentenceBuilding" and self.options:
             raise ValueError("sentence-building questions cannot have answer options")
+        if self.marker_object_ids is not None and set(self.marker_object_ids) != {
+            option.option_id for option in self.options
+        }:
+            raise ValueError("marker choices must cover exactly the answer options")
         if self.board_counts is not None:
             if set(self.board_counts) != {option.option_id for option in self.options}:
                 raise ValueError("board counts must cover exactly the answer options")
@@ -355,6 +364,8 @@ class TaskAnswerKey(ApiModel):
     question_evaluations: list[QuestionEvaluation] = Field(
         default_factory=list, exclude_if=_is_empty
     )
+    # Yes/no statement questions: question id -> whether the statement is true.
+    statement_correct: dict[str, bool] = Field(default_factory=dict, exclude_if=_is_empty)
 
     @model_validator(mode="after")
     def validate_question_evaluations(self) -> TaskAnswerKey:

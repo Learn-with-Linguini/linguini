@@ -17,7 +17,11 @@ from app.ai.features.learning_tasks.mission_m03 import (
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.missions import get_mission
 from app.schemas.sessions import ReviewPracticeRequest
-from app.services.mission_eligibility import photo_eligibility, plan_missions
+from app.services.mission_eligibility import (
+    photo_eligibility,
+    plan_missions,
+    provisional_mission_focus,
+)
 from app.services.mission_lessons_m03 import m03_lesson_task, m03_payload
 from app.services.quantities import (
     NUMBER_WORDS,
@@ -74,6 +78,17 @@ def test_a_count_alone_never_satisfies_m01_or_m02():
 def test_every_mission_the_photo_fits_is_planned_up_to_three(objects, relations, groups, planned):
     plan = plan_missions([M01, M02, M03], objects, relations, groups)
     assert [mission.mission_id for mission in plan] == planned
+
+
+def test_provisional_focus_uses_suggested_facts_but_returns_a_small_review_set():
+    repeated = [
+        obj(uuid4(), "book", quantity="3"),
+        obj(uuid4(), "book", quantity="3"),
+        obj(uuid4(), "book", quantity="3"),
+    ]
+    plan, selected = provisional_mission_focus([M01, M02, M03], repeated, [])
+    assert [mission.mission_id for mission in plan] == ["M03"]
+    assert selected == [item.id for item in repeated]
 
 
 @pytest.mark.parametrize(("value", "expected"), [
@@ -219,6 +234,17 @@ def test_build_uses_the_plural_and_a_bank_with_one_wrong_number(
     (wrong,) = [token for token in extras if token != fold(display)]
     words = {fold(word) for word in NUMBER_WORDS[language].values()}
     assert wrong in words and wrong != "tres"
+
+
+def test_german_counting_uses_recorded_plural_and_number_words():
+    payload = _payload(
+        "de", display="Buch", gender="neuter", plural_form="Bücher", label="book",
+    )
+    result = fallback_m03_lesson(payload)
+    assert payload["group"]["question"] == "Wie viele Bücher gibt es?"
+    assert _build(result).correct_text == "Es gibt drei Bücher."
+    assert _choose(result).options
+    assert validate_m03_lesson(payload, result) is None
 
 
 @pytest.mark.parametrize(("display", "gender", "question"), [

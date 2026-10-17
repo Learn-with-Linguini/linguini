@@ -1,7 +1,9 @@
 """Scene-analysis feature package: one prompt, one schema, one validator."""
 
 from app.ai.features.scene_analysis.mapping import (
+    MIN_ACTION_CONFIDENCE,
     MIN_OBJECT_CONFIDENCE,
+    MIN_PRICE_CONFIDENCE,
     MIN_RELATION_CONFIDENCE,
     model_result_to_domain,
 )
@@ -14,8 +16,10 @@ from app.ai.features.scene_analysis.prompt import (
 from app.ai.features.scene_analysis.schemas import (
     ModelAnchorPoint,
     ModelBoundingBox,
+    ModelSceneAction,
     ModelSceneAttribute,
     ModelSceneObject,
+    ModelScenePriceSuggestion,
     ModelSceneRelation,
     SceneAnalysisIssue,
     SceneAnalysisIssueCode,
@@ -36,12 +40,16 @@ from app.ai.features.scene_analysis.validation import (
 )
 
 __all__ = [
+    "MIN_ACTION_CONFIDENCE",
     "MIN_OBJECT_CONFIDENCE",
+    "MIN_PRICE_CONFIDENCE",
     "MIN_RELATION_CONFIDENCE",
     "ModelAnchorPoint",
     "ModelBoundingBox",
+    "ModelSceneAction",
     "ModelSceneAttribute",
     "ModelSceneObject",
+    "ModelScenePriceSuggestion",
     "ModelSceneRelation",
     "RoutedSceneAnalyzer",
     "SCENE_ANALYSIS_PROMPT_VERSION",

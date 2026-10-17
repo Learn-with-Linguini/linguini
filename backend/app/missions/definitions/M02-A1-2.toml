@@ -1,0 +1,127 @@
+mission_id = "M02"
+practice_level = "A1"
+content_version = 2
+title = "Find and locate"
+
+[photo_requirements]
+media_sources = ["preloaded", "camera", "userUpload"]
+# Two objects so one can locate the other through a confirmed relation.
+min_confirmed_objects = 2
+min_relations = 1
+relations = ["on", "under", "next_to", "in_front_of", "behind"]
+
+[objective]
+objective_id = "find-and-locate"
+can_do = "I can find an object in my photo from a sentence about where it is, ask where it is and answer."
+
+[[objective.targets]]
+target_id = "recognise-position"
+summary = "Recognise the position phrase for a confirmed relation between two photo objects."
+evidence_types = ["recognition"]
+
+[[objective.targets]]
+target_id = "describe-location"
+summary = "Assemble a statement saying where one photo object is relative to another."
+evidence_types = ["construction"]
+
+[[objective.targets]]
+target_id = "build-question"
+summary = "Assemble the memorised where-question with an object's noun phrase."
+evidence_types = ["construction"]
+
+[[objective.targets]]
+target_id = "name-object"
+summary = "Name a photo object with its article and noun."
+evidence_types = ["construction"]
+
+[[objective.targets]]
+target_id = "understand-location"
+summary = "Find the photo object a confirmed location statement describes."
+evidence_types = ["recognition"]
+
+[[language_patterns]]
+pattern_id = "location-statement"
+target_id = "describe-location"
+structure = "[article] [noun] [is] [position] [article] [reference noun]."
+clue_frame_id = "location"
+examples = { es = ["La taza está sobre la mesa.", "El libro está al lado de la puerta."], fr = ["La tasse est sur la table.", "Le livre est à côté de la porte."], de = ["Die Tasse ist auf dem Tisch.", "Das Buch ist neben der Tür."] }
+
+[[language_patterns]]
+pattern_id = "where-question"
+target_id = "build-question"
+structure = "[where] [is] [article] [noun]?"
+examples = { es = ["¿Dónde está la taza?", "¿Dónde está el libro?"], fr = ["Où est la tasse ?", "Où est le livre ?"], de = ["Wo ist die Tasse?", "Wo ist der Tisch?"] }
+
+[teaching]
+task_sequence = ["vocabularyIntroduction", "grammarLesson", "ispyRound", "reflection"]
+teach_before_assessment = ["name-object", "recognise-position", "build-question"]
+max_new_words = 6
+
+[[teaching.supports]]
+support = "translation"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "audio"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "example"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "wordBank"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "hint"
+availability = "onRequest"
+counts_as_assistance = true
+
+[[teaching.supports]]
+support = "answerReveal"
+availability = "onRequest"
+counts_as_assistance = true
+
+[[evaluation_criteria]]
+criterion_id = "position-matches-photo"
+target_id = "recognise-position"
+description = "Picks the position phrase that matches the confirmed relation."
+evidence_types = ["recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "statement-in-order"
+target_id = "describe-location"
+description = "Assembles object, verb, the confirmed position and reference object in order."
+evidence_types = ["construction"]
+
+[[evaluation_criteria]]
+criterion_id = "question-names-object"
+target_id = "build-question"
+description = "Assembles the where-question in order with the asked object."
+evidence_types = ["construction"]
+
+[[evaluation_criteria]]
+criterion_id = "article-matches-noun"
+target_id = "name-object"
+description = "Uses the object's noun with the article that matches its gender and number."
+evidence_types = ["construction"]
+
+[[evaluation_criteria]]
+criterion_id = "answer-matches-photo"
+target_id = "understand-location"
+description = "Picks the numbered photo marker of the object the confirmed statement describes."
+evidence_types = ["recognition"]
+
+[expected_performance]
+min_assessed_questions = 4
+min_correct_ratio = 0.75
+min_independent_correct = 1
+required_target_groups = [
+  ["describe-location"],
+  ["build-question"],
+]

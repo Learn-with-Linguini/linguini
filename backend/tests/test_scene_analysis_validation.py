@@ -23,6 +23,7 @@ from app.schemas.enums import SceneRelationType
 def object_payload(key: str = "chair", **box: float) -> dict:
     return {
         "objectKey": key,
+        "groupKey": f"{key}s",
         "label": key,
         "boundingBox": {
             "x": box.get("x", 0.1),
@@ -32,6 +33,7 @@ def object_payload(key: str = "chair", **box: float) -> dict:
         },
         "anchorPoint": {"x": box.get("anchor_x", 0.2), "y": box.get("anchor_y", 0.2)},
         "attributes": [],
+        "suggestedGroupCount": 1,
         "confidenceScore": 0.9,
     }
 
@@ -116,18 +118,22 @@ def valid_result(
         else [
             ModelSceneObject(
                 object_key="chair",
+                group_key="chairs",
                 label="chair",
                 bounding_box=ModelBoundingBox(x=0.1, y=0.1, width=0.2, height=0.2),
                 anchor_point={"x": 0.2, "y": 0.2},
                 attributes=[],
+                suggested_group_count=1,
                 confidence_score=0.9,
             ),
             ModelSceneObject(
                 object_key="table",
+                group_key="tables",
                 label="table",
                 bounding_box=ModelBoundingBox(x=0.4, y=0.1, width=0.2, height=0.2),
                 anchor_point={"x": 0.5, "y": 0.2},
                 attributes=[],
+                suggested_group_count=1,
                 confidence_score=0.9,
             ),
         ],
@@ -244,6 +250,49 @@ def test_duplicate_relation_key() -> None:
         validate_scene_analysis(valid_result(relations=relations))
 
     assert SceneAnalysisIssueCode.DUPLICATE_RELATION_KEY in issue_codes(raised.value)
+
+
+def test_repeated_objects_require_consistent_group_label_and_count() -> None:
+    payload = valid_payload()
+    payload["relations"] = []
+    payload["objects"] = [
+        object_payload("cup-1"),
+        object_payload("cup-2", x=0.4),
+    ]
+    for item in payload["objects"]:
+        item.update(label="cup", groupKey="cups", suggestedGroupCount=2)
+    parse_scene_analysis(payload)
+
+    payload["objects"][1]["suggestedGroupCount"] = 3
+    with pytest.raises(SceneAnalysisValidationError) as raised:
+        parse_scene_analysis(payload)
+    assert SceneAnalysisIssueCode.INCONSISTENT_OBJECT_GROUP in issue_codes(raised.value)
+
+
+def test_action_must_reference_a_detected_object() -> None:
+    payload = valid_payload()
+    payload["actions"] = [{
+        "actionKey": "action-1",
+        "action": "hold",
+        "relatedObjectKeys": ["missing"],
+        "confidenceScore": 0.9,
+    }]
+    with pytest.raises(SceneAnalysisValidationError) as raised:
+        parse_scene_analysis(payload)
+    assert SceneAnalysisIssueCode.UNKNOWN_ACTION_OBJECT in issue_codes(raised.value)
+
+
+def test_displayed_price_must_reference_a_detected_object() -> None:
+    payload = valid_payload()
+    payload["priceSuggestions"] = [{
+        "priceKey": "price-1",
+        "objectKey": "missing",
+        "displayedPrice": "$3.50",
+        "confidenceScore": 0.9,
+    }]
+    with pytest.raises(SceneAnalysisValidationError) as raised:
+        parse_scene_analysis(payload)
+    assert SceneAnalysisIssueCode.UNKNOWN_PRICE_OBJECT in issue_codes(raised.value)
 
 
 def test_non_finite_bounding_box() -> None:

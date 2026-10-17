@@ -474,6 +474,31 @@ Tables use UUID identities and timezone-aware timestamps. Migrations define fore
 keys, checks, update triggers, RLS, and revoked browser-role grants. All access is
 through backend repositories; the frontend must not query these tables directly.
 
+### Uploaded-photo scene facts
+
+`scene-analysis.v5` returns up to 20 clearly visible object instances, ordered with
+the most useful and diverse learning candidates first. Repeated objects keep separate
+boxes and markers but share a model `groupKey` and `suggestedGroupCount`; the mapped
+quantity remains only a suggestion until the learner confirms it in the Counts review.
+The full inventory is stored once in `media_scene_analyses`, keyed by the media asset
+and prompt/schema versions, so another session can reuse the image without another
+vision call. Each session receives its own stable object IDs and snapshots only the
+facts it confirms.
+
+Before review, the backend compares the unconfirmed inventory with the implemented
+missions for the learner's level. `provisionalMissionPlan` is presentation guidance,
+never grading evidence: `suggestedSceneObjectIds` limits the default review to the
+smallest useful mission-focused set. The learner may reveal other inventory objects.
+After review, mission eligibility is run again using only confirmed facts and that
+second result becomes the immutable `missionPlan` consumed by task generation.
+
+The analysis may also return visible action suggestions linked to detected objects and
+clearly displayed price suggestions linked to an item. These remain unconfirmed scene
+metadata: the vision model may describe visible evidence such as holding or a price tag,
+but may not infer ownership, preference, need, routine, intention, availability or a
+real price that is not shown. Mission planning must use action or price information only
+after the learner confirms it or explicitly selects a labelled role-play value.
+
 ### Mission contracts
 
 A mission is the definition of one lesson goal at one practice level. Each mission has

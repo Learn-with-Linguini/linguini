@@ -17,7 +17,9 @@ class MissionConfigurationError(ValueError):
 
 
 def definition_file_name(mission: MissionDefinition) -> str:
-    return f"{mission.mission_id}-{mission.practice_level}.toml"
+    """``M02-A1.toml`` for content version 1, ``M02-A1-2.toml`` for later versions."""
+    suffix = "" if mission.content_version == 1 else f"-{mission.content_version}"
+    return f"{mission.mission_id}-{mission.practice_level}{suffix}.toml"
 
 
 def load_mission_file(path: Path) -> MissionDefinition:

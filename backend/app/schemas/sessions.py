@@ -9,7 +9,14 @@ from pydantic import AwareDatetime, Field, model_validator
 
 from app.schemas.base import ApiModel, JsonObject
 from app.schemas.enums import SessionFailureCode, SessionMode, SessionStatus
-from app.schemas.media import AnchorPoint, MediaAsset, SceneObject, SceneObjectRelation
+from app.schemas.media import (
+    AnchorPoint,
+    MediaAsset,
+    SceneActionSuggestion,
+    SceneObject,
+    SceneObjectRelation,
+    ScenePriceSuggestion,
+)
 from app.schemas.tasks import SessionProgress, SessionTaskPublic
 from app.schemas.translation import SceneTranslationResult
 from app.schemas.vocabulary import VocabularyItem, VocabularyTranslation
@@ -160,8 +167,14 @@ class SessionDetailResponse(ApiModel):
     personalization: SessionPersonalization | None = None
     counted_groups: list[CountedGroup] = Field(default_factory=list)
     mission_guidance: list[str] = Field(default_factory=list)
+    # Reviewed sessions: scene object id -> its marker number on the review screen.
+    review_markers: dict[str, int] = Field(default_factory=dict)
+    provisional_mission_plan: list[JsonObject] = Field(default_factory=list)
+    suggested_scene_object_ids: list[UUID] = Field(default_factory=list)
     session: Session
     scene_object_relations: list[SceneObjectRelation] = Field(default_factory=list)
+    scene_action_suggestions: list[SceneActionSuggestion] = Field(default_factory=list)
+    scene_price_suggestions: list[ScenePriceSuggestion] = Field(default_factory=list)
     scene_objects: list[SceneObject] = Field(default_factory=list)
     tasks: list[SessionTaskPublic] = Field(default_factory=list)
     next_task_id: UUID | None = None

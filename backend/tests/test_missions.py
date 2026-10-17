@@ -144,7 +144,7 @@ def test_definition_files_are_named_by_their_mission(tmp_path):
     with pytest.raises(MissionConfigurationError, match="describe-size"):
         load_missions(tmp_path)
     assert sorted(path.name for path in Path(DEFINITIONS_DIR).glob("*.toml")) == [
-        "M01-A1.toml", "M02-A1.toml", "M03-A1.toml",
+        "M01-A1.toml", "M02-A1-2.toml", "M02-A1.toml", "M03-A1.toml",
     ]
 
 

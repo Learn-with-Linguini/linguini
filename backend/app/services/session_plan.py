@@ -425,6 +425,8 @@ def build_tasks(session_id, objects, words, translations, uploaded, translated_s
         fallback_choices = {
             "es": ["No sé", "No estoy seguro"],
             "fr": ["Je ne sais pas", "Je ne suis pas sûr"],
+            "de": ["Ich weiß nicht", "Ich bin nicht sicher"],
+            "ko": ["모르겠어요", "잘 모르겠어요"],
         }.get(words[0].language_code.lower(), ["I'm not sure", "Something else"])
         for choice in fallback_choices:
             if len(choices) >= 4:

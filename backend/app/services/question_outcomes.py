@@ -5,7 +5,8 @@ from app.schemas.tasks import QuestionOutcome, QuestionReviewDetails, SessionTas
 
 
 def normalize_answer(value):
-    return " ".join(value.casefold().strip().split()).rstrip(".!?\u3002")
+    # French spaces its final "?"/"!", which built answers may omit.
+    return " ".join(value.casefold().strip().split()).rstrip(".!?\u3002").rstrip()
 
 
 # Supports each interaction can offer; a word bank is part of every sentence builder.
