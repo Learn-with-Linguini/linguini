@@ -1,13 +1,11 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui";
-import { validatePasswordReset } from "../lib/authMessages.ts";
+import { parseRecoveryUrlError, validatePasswordReset } from "../lib/authMessages.ts";
 import { isSupabaseConfigured, supabase } from "../lib/supabase.ts";
-import { useAuth } from "../state/Auth";
 
 export function ResetPassword() {
   const navigate = useNavigate();
-  const { session, loading: authLoading } = useAuth();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -16,19 +14,36 @@ export function ResetPassword() {
   const [checking, setChecking] = useState(true);
   const [canReset, setCanReset] = useState(false);
 
+  // Check URL hash/search for Supabase error parameters (e.g. otp_expired, access_denied)
+  const [urlError] = useState<string | null>(() =>
+    parseRecoveryUrlError(window.location.hash, window.location.search)
+  );
+
   useEffect(() => {
     if (!supabase) {
       setChecking(false);
       return;
     }
 
+    // If Supabase already passed an error in the redirect URL, reject immediately
+    if (urlError) {
+      setChecking(false);
+      return;
+    }
+
+    const hash = window.location.hash.replace(/^#/, "");
+    const hashParams = new URLSearchParams(hash);
+    const searchParams = new URLSearchParams(window.location.search);
+    const isRecoveryUrl =
+      hashParams.get("type") === "recovery" || Boolean(searchParams.get("code"));
+
     let mounted = true;
     const { data: listener } = supabase.auth.onAuthStateChange((event, newSession) => {
       if (!mounted) return;
       if (
         event === "PASSWORD_RECOVERY" ||
-        event === "SIGNED_IN" ||
-        Boolean(newSession)
+        (event === "SIGNED_IN" && isRecoveryUrl) ||
+        (Boolean(newSession) && isRecoveryUrl)
       ) {
         setCanReset(true);
       }
@@ -37,7 +52,7 @@ export function ResetPassword() {
 
     void supabase.auth.getSession().then(({ data }) => {
       if (!mounted) return;
-      if (data.session) {
+      if (data.session && isRecoveryUrl) {
         setCanReset(true);
       }
       setChecking(false);
@@ -47,9 +62,7 @@ export function ResetPassword() {
       mounted = false;
       listener.subscription.unsubscribe();
     };
-  }, []);
-
-  const hasSession = canReset || Boolean(session);
+  }, [urlError]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -77,8 +90,12 @@ export function ResetPassword() {
         return;
       }
       setSuccess(true);
+
+      // Sign out of the single-use recovery session so subsequent link clicks are rejected
+      await supabase.auth.signOut({ scope: "local" }).catch(() => {});
+
       setTimeout(() => {
-        navigate("/home", { replace: true });
+        navigate("/login?mode=signin&reset=success", { replace: true });
       }, 1500);
     } catch {
       setError("We couldn't connect right now. Please check your connection and try again.");
@@ -87,13 +104,17 @@ export function ResetPassword() {
     }
   }
 
-  if (checking || authLoading) {
+  if (checking) {
     return (
       <div className="stack center-text">
         <p className="muted">Checking your reset link…</p>
       </div>
     );
   }
+
+  const isLinkInvalid = Boolean(urlError) || (!canReset && !success);
+  const errorMessage =
+    urlError || "This password reset link is invalid, expired, or has already been used.";
 
   return (
     <div className="stack">
@@ -107,18 +128,16 @@ export function ResetPassword() {
         <p role="alert">Sign-in is being set up right now. Please try again shortly.</p>
       ) : null}
 
-      {isSupabaseConfigured && !hasSession && !success ? (
+      {isSupabaseConfigured && isLinkInvalid ? (
         <div className="stack center-text">
-          <p role="alert">
-            This password reset link is invalid, expired, or has already been used.
-          </p>
+          <p role="alert">{errorMessage}</p>
           <Button type="button" block onClick={() => navigate("/login?mode=forgot", { replace: true })}>
             Request a new link
           </Button>
         </div>
       ) : null}
 
-      {isSupabaseConfigured && (hasSession || success) ? (
+      {isSupabaseConfigured && !isLinkInvalid ? (
         <form className="stack" onSubmit={event => void submit(event)}>
           <label className="field">
             <span className="field__label">New password</span>

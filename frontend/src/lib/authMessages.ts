@@ -32,3 +32,23 @@ export function validatePasswordReset(password: string, confirmPassword: string)
   }
   return null;
 }
+
+export function parseRecoveryUrlError(urlHash: string, urlSearch: string): string | null {
+  const hashParams = new URLSearchParams(urlHash.replace(/^#/, ""));
+  const searchParams = new URLSearchParams(urlSearch.replace(/^\?/, ""));
+  const errorCode = hashParams.get("error_code") || searchParams.get("error_code");
+  const errorDesc = hashParams.get("error_description") || searchParams.get("error_description");
+  const error = hashParams.get("error") || searchParams.get("error");
+
+  if (!errorCode && !error) return null;
+
+  if (
+    errorCode === "otp_expired" ||
+    errorDesc?.toLowerCase().includes("expired") ||
+    errorDesc?.toLowerCase().includes("invalid") ||
+    error === "access_denied"
+  ) {
+    return "This password reset link has expired or has already been used. Please request a new one.";
+  }
+  return errorDesc?.replace(/\+/g, " ") || "This password reset link is invalid. Please request a new one.";
+}

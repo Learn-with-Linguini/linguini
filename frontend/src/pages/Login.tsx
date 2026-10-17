@@ -19,7 +19,11 @@ export function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(() =>
+    searchParams.get("reset") === "success"
+      ? "Password updated successfully. Please sign in with your new password."
+      : null
+  );
   const [submitting, setSubmitting] = useState(false);
   const requestedPath = (location.state as { from?: string } | null)?.from;
 
