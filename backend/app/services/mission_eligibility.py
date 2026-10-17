@@ -142,7 +142,9 @@ def lesson_missions(session_mode, profile):
         return []
     if profile["target_language_code"].lower() not in MISSION_LANGUAGES:
         return []
-    keys = IMPLEMENTED_MISSIONS.get(profile["proficiency_level"], ())
+    keys = IMPLEMENTED_MISSIONS.get(
+        str(profile["proficiency_level"] or "").strip().upper(), ()
+    )
     return [mission for key in keys if (mission := get_mission(*key)) is not None]
 
 

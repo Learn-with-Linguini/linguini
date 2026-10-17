@@ -222,7 +222,7 @@ export const submitLessonReport = (payload: LessonReportInput) =>
 export const getLanguageProfiles = (signal?: AbortSignal) => request<LanguageProfile[]>("/api/v1/me/language-profiles", signal);
 export const updateUser = (patch: UserPatch) => write<User>("/api/v1/me", "PATCH", patch);
 export const updateLanguageProfile = (id: string, patch: LanguageProfilePatch) => write<LanguageProfile>(`/api/v1/me/language-profiles/${id}`, "PATCH", patch);
-export const createLanguageProfile = (code: string, minutes = 10, proficiencyLevel: ProficiencyLevel = "A1") => write<LanguageProfile>("/api/v1/me/language-profiles", "POST", {
+export const createLanguageProfile = (code: string, minutes: number, proficiencyLevel: ProficiencyLevel) => write<LanguageProfile>("/api/v1/me/language-profiles", "POST", {
   sourceLanguageCode: "en", targetLanguageCode: code, proficiencyLevel, dailyGoalMinutes: minutes,
 });
 
