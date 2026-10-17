@@ -4689,5 +4689,4 @@ p[role="alert"]::before { content: "!"; }
 .lesson-audio { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .vocabulary-flow .choice { min-height: 56px; }
 .vocabulary-flow .chip, .vocabulary-flow .sentence-builder__token { min-height: 48px; min-width: 48px; }
-.count-board { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.count-board__tile { border-radius: 12px; overflow: hidden; }
+.count-board { cursor: default; }

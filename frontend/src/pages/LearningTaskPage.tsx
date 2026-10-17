@@ -359,10 +359,9 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
           ? <Button variant="quiet" onClick={() => setRevealed(value => ({ ...value, [question.questionId]: true }))}>Show the written word</Button> : null}
       </div> : null}
       {question.listenFirst && !audio ? <p className="small muted" role="note">Audio isn't available here, so read the word instead.</p> : null}
-      {question.displayCount ? <div className="count-board" aria-label="Practice board">
-        {Array.from({ length: question.displayCount }, (_, tile) => <div key={tile} className="count-board__tile">
-          <ObjectPreview scene={scene} label="" hideNumbers object={session?.sceneObjects.find(object => object.id === question.boardObjectId)} /></div>)}
-      </div> : null}
+      {question.displayCount ? <CountBoard count={question.displayCount} sceneImageUrl={sceneImageUrl}
+        imageSize={boardImageSize} onImageSize={setBoardImageSize}
+        boardObject={session?.sceneObjects.find(object => object.id === question.boardObjectId)} /> : null}
       {question.sceneObjectId ? <ObjectPreview scene={scene} label={question.objectLabel ?? ""}
         object={session?.sceneObjects.find(object => object.id === question.sceneObjectId)}
         group={groupObjects?.length ? groupObjects : undefined}
@@ -513,6 +512,32 @@ function PracticeBoards({ question, sceneImageUrl, imageSize, onImageSize, board
         </button>;
       })}
     </div>
+  </div>;
+}
+
+/** A practice board of `count` cropped copies of one object, shown without numbers. */
+function CountBoard({ count, sceneImageUrl, imageSize, onImageSize, boardObject }: {
+  count: number;
+  sceneImageUrl: string | null;
+  imageSize: { width: number; height: number } | null;
+  onImageSize: (size: { width: number; height: number }) => void;
+  boardObject?: SceneObject;
+}) {
+  const crop = imageSize ? squareCrop(boardObject?.boundingBox, imageSize.width, imageSize.height) : null;
+  const tile = crop && sceneImageUrl && imageSize ? {
+    backgroundImage: `url(${sceneImageUrl})`,
+    backgroundSize: `${imageSize.width * BOARD_TILE / crop.size}px ${imageSize.height * BOARD_TILE / crop.size}px`,
+    backgroundPosition: `-${crop.x * BOARD_TILE / crop.size}px -${crop.y * BOARD_TILE / crop.size}px`,
+  } : undefined;
+  return <div className="practice-boards" aria-label="Practice board">
+    {sceneImageUrl && !imageSize ? <img className="practice-boards__preload" src={sceneImageUrl} alt="" aria-hidden="true"
+      onLoad={event => onImageSize({ width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight })} /> : null}
+    <div className="practice-board count-board" aria-hidden="true"><span className="practice-board__tiles">
+      {boardRows(count).map((row, rowIndex) => <span key={rowIndex} className="practice-board__tile-row">
+        {Array.from({ length: row }, (_, tileIndex) => <span key={tileIndex}
+          className={`practice-board__tile${tile ? "" : " practice-board__tile--fallback"}`} style={tile} />)}
+      </span>)}
+    </span></div>
   </div>;
 }
 
