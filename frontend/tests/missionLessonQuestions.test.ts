@@ -66,6 +66,8 @@ test("yes/no statements keep the saved order and their full target-language answ
 
 test("word tiles build the sentence the backend grades", () => {
   assert.equal(builtSentence(["Es", "una", "taza", "roja", "."]), "Es una taza roja.");
+  assert.equal(builtSentence(["Hay una taza roja", "y", "una lámpara", "."]),
+    "Hay una taza roja y una lámpara.");
   assert.equal(builtSentence(["C'", "est", "une", "tasse", "rouge", "."]), "C'est une tasse rouge.");
   assert.equal(builtSentence(["¿Dónde", "está", "la", "taza", "?"]), "¿Dónde está la taza?");
   assert.equal(builtSentence(["La", "tasse", "est", "à côté du", "livre", "."]), "La tasse est à côté du livre.");

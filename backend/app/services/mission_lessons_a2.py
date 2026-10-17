@@ -189,6 +189,34 @@ def _joined(chunks):
     return text
 
 
+_PHRASE_CONNECTORS = {
+    "es": {"y", "que", "pero", "también"},
+    "fr": {"et", "que", "mais", "aussi"},
+}
+
+
+def _phrase_chunks(text, language):
+    chunks = []
+    current = []
+
+    def flush():
+        if current:
+            chunks.append(_joined(current))
+            current.clear()
+
+    for token in tokens(text):
+        if token in {".", ",", "?", "!", ";", ":"}:
+            flush()
+            chunks.append(token)
+        elif _fold(token) in _PHRASE_CONNECTORS[language]:
+            flush()
+            chunks.append(token)
+        else:
+            current.append(token)
+    flush()
+    return chunks
+
+
 def _object_map(facts):
     return {row["key"]: row for row in facts["approvedObjects"]}
 
@@ -205,9 +233,16 @@ def _group_map(facts):
     return {row["key"]: row for row in facts["approvedCountedGroups"]}
 
 
-def _sentence_chunks(text, *, distractors=(), rng):
-    answer = tokens(text)
-    distractors = list(distractors)
+def _sentence_chunks(text, *, distractors=(), rng, language=None, phrase_chunks=False):
+    answer = _phrase_chunks(text, language) if phrase_chunks else tokens(text)
+    if phrase_chunks:
+        distractors = [
+            chunk
+            for distractor in distractors
+            for chunk in _phrase_chunks(distractor, language)
+        ]
+    else:
+        distractors = [token for distractor in distractors for token in tokens(distractor)]
     bank = [*answer, *distractors]
     rng.shuffle(bank)
     return dict(
@@ -277,9 +312,16 @@ def _build(
     roleplay_premise=None,
     planning_facts=None,
     target_language_text=(),
+    phrase_chunks=False,
 ):
     rng = random.Random(f"{payload['seed']}:{qid}")
-    chunks = _sentence_chunks(text, distractors=distractors, rng=rng)
+    chunks = _sentence_chunks(
+        text,
+        distractors=distractors,
+        rng=rng,
+        language=payload["targetLanguage"],
+        phrase_chunks=phrase_chunks,
+    )
     return MissionA2Question(
         question_id=qid,
         purpose=purpose,
@@ -487,6 +529,7 @@ def _m01_payload(
             "second": f2_sentence,
             "third": f3_sentence,
             "description": full,
+            "falseFirst": false_first,
             "q3": q3,
             "wrongOne": wrong_one,
             "wrongTwo": wrong_two,
@@ -581,26 +624,40 @@ def _m02_payload(
         q4_prompt = f"Ton ami montre le repère {distractor['marker']}. Que dis-tu ?"
         location_prompt = "Construis le deuxième indice."
         target_prompt = "Nomme l'objet et indique où il se trouve."
+    correct_label = f"It is {_ATTRIBUTE_ENGLISH.get(attr['value'], attr['value'])}."
+    correct_folded = _fold(correct_label)
     choices = []
     for index, row in enumerate(facts["approvedAttributes"]):
-        if row["kind"] != attr["kind"] or row["key"] == attr["key"]:
+        if (
+            row["kind"] != attr["kind"]
+            or row["key"] == attr["key"]
+            or row["value"] == attr["value"]
+        ):
             continue
         meaning = _ATTRIBUTE_ENGLISH.get(row["value"], row["value"])
-        choices.append((f"meaning-{index}", f"It is {meaning}."))
+        label = f"It is {meaning}."
+        if _fold(label) != correct_folded:
+            choices.append((f"meaning-{index}", label))
     for value in attribute_contrasts(attr["kind"], attr["value"]):
         meaning = _ATTRIBUTE_ENGLISH.get(value, value)
-        choices.append((f"meaning-{value}", f"It is {meaning}."))
+        label = f"It is {meaning}."
+        if value != attr["value"] and _fold(label) != correct_folded:
+            choices.append((f"meaning-{value}", label))
     # A fixed reviewed colour contrast keeps the English meanings understandable.
     if len(choices) < 2:
         for value in ("blue", "red", "black", "white"):
             if value != attr["value"] and value in _ATTRIBUTE_ENGLISH:
-                choices.append((f"meaning-{value}", f"It is {value}."))
-    choices = list({label.casefold(): (key, label) for key, label in choices}.values())
-    choices = [
-        ("meaning-correct", f"It is {_ATTRIBUTE_ENGLISH.get(attr['value'], attr['value'])}."),
-        *choices[:2],
-    ]
-    choices = choices[:3]
+                label = f"It is {value}."
+                if _fold(label) != correct_folded:
+                    choices.append((f"meaning-{value}", label))
+    choices = [("meaning-correct", correct_label), *choices]
+    unique_choices = []
+    seen_labels = set()
+    for key, label in choices:
+        if _fold(label) not in seen_labels:
+            seen_labels.add(_fold(label))
+            unique_choices.append((key, label))
+    choices = unique_choices[:3]
     position_distractor = next(
         (
             REVIEWED_POSITIONS[pos][language]
@@ -648,6 +705,7 @@ def _m02_payload(
             "attributePrompt": q1_prompt,
             "locationPrompt": location_prompt,
             "targetPrompt": target_prompt,
+            "roleplayPremise": "Role-play: a friend is looking for an object in the photo.",
             "distractorPrompt": q4_prompt,
             "markerPrompt": q3_prompt,
             "englishChoices": choices,
@@ -957,6 +1015,11 @@ def _m04_payload(
             "wrongNoAnswer": wrong_no_answer,
             "answerSentence": answer_sentence,
             "finalSentence": final_sentence,
+            "wrongOwnershipSentence": (
+                f"{assigned['nounPhrase']} es de Marta."
+                if language == "es"
+                else f"{assigned['nounPhrase']} est à {owner}."
+            ),
             "possessiveOptions": possessive_options,
             "markerOptions": options,
         },
@@ -1108,9 +1171,10 @@ def _m01_questions(payload):
         f["description"],
         first["key"],
         section2,
-        distractors=["pero" if payload["targetLanguage"] == "es" else "mais"],
+        distractors=[f["falseFirst"]],
         planning_facts=payload["planningFacts"],
         target_language_text=[q4_prompt],
+        phrase_chunks=True,
     )
     attribute = f["attribute"]
     if attribute:
@@ -1184,7 +1248,7 @@ def _m02_questions(payload):
         target["key"],
         s1,
         translation="Choose the English meaning of the clue.",
-        roleplay_premise=("Role-play: a friend is looking for an object in the photo."),
+        roleplay_premise=f["roleplayPremise"],
         target_language_text=[f["attributePrompt"]],
         option_language="en",
     )
@@ -1227,6 +1291,8 @@ def _m02_questions(payload):
         target["key"],
         s2,
         target_language_text=[f["distractorPrompt"]],
+        roleplay_premise=f["roleplayPremise"],
+        group_object_ids=[f["distractor"]["key"]],
     )
     q5 = _build(
         payload,
@@ -1342,7 +1408,7 @@ def _m03_questions(payload):
         "count-correct",
         first["objectKey"],
         s3,
-        roleplay_premise="Role-play: a friend gives a count to correct.",
+        roleplay_premise=f"Role-play: a friend says «{f['friendStatement']}».",
         group_object_ids=first["objectIds"],
         target_language_text=[q4_prompt, f["friendStatement"]],
     )
@@ -1356,13 +1422,14 @@ def _m03_questions(payload):
         f["combined"],
         first["objectKey"],
         s3,
-        distractors=["menos" if language == "es" else "plus"],
+        distractors=[f["reverseComparison"]],
         group_object_ids=list(dict.fromkeys(first["objectIds"] + second["objectIds"])),
         target_language_text=[
             "Describe y compara los dos grupos."
             if language == "es"
             else "Décris et compare les deux groupes."
         ],
+        phrase_chunks=True,
     )
     return [q1, q2, q3, q4, q5]
 
@@ -1428,6 +1495,8 @@ def _m04_questions(payload):
         alternative["key"],
         s2,
         target_language_text=[f["clarifyPrompt"]],
+        roleplay_premise=f["premise"],
+        group_object_ids=[alternative["key"]],
     )
     q5 = _build(
         payload,
@@ -1439,12 +1508,13 @@ def _m04_questions(payload):
         f["finalSentence"],
         assigned["key"],
         s3,
-        distractors=["su" if language == "es" else "sa"],
+        distractors=[f["wrongOwnershipSentence"]],
         target_language_text=[
             "Aclara cuál es tu objeto y descríbelo."
             if language == "es"
             else "Précise quel objet est à toi et décris-le."
         ],
+        phrase_chunks=True,
     )
     return [q1, q2, q3, q4, q5]
 

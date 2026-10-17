@@ -140,6 +140,9 @@ class MissionA2Question(ApiModel):
             ids = [option.option_id for option in self.options]
             if len(ids) < 2 or len(ids) != len(set(ids)):
                 raise ValueError("Multiple-choice questions need unique options.")
+            labels = [fold(option.label) for option in self.options]
+            if len(labels) != len(set(labels)):
+                raise ValueError("Multiple-choice questions need unique labels.")
             if self.correct_option_id not in ids or self.correct_text or self.token_bank:
                 raise ValueError("Multiple-choice questions need one offered answer.")
             if self.answer_chunks or self.distractor_chunks:
@@ -175,6 +178,18 @@ def _question_text(question):
         values.append(question.correct_text)
     values.extend(question.token_bank)
     return values
+
+
+def _join_chunks(chunks):
+    text = ""
+    for chunk in chunks:
+        if chunk in {".", ",", "?", "!", ";", ":"}:
+            text = text.rstrip() + chunk
+        elif text.endswith(("'", "’")):
+            text += chunk
+        else:
+            text = f"{text} {chunk}".strip()
+    return text
 
 
 def _check_roleplay_provenance(facts, language):
@@ -243,9 +258,7 @@ def check_closed_facts(payload, result):
                 )
             check_text(text)
         if question.interaction_type == "sentenceBuilding":
-            if Counter(map(fold, question.answer_chunks)) != Counter(
-                map(fold, tokens(question.correct_text or ""))
-            ):
+            if fold(_join_chunks(question.answer_chunks)) != fold(question.correct_text or ""):
                 raise LearningTaskGenerationError("Answer chunks must form the correct sentence.")
             extras = Counter(map(fold, question.token_bank)) - Counter(
                 map(fold, question.answer_chunks)
@@ -282,9 +295,7 @@ def check_closed_facts(payload, result):
 def _check_sentence_chunks(question):
     if not question.correct_text:
         raise LearningTaskGenerationError("Sentence-building needs a correct answer.")
-    if Counter(map(fold, question.answer_chunks)) != Counter(
-        map(fold, tokens(question.correct_text))
-    ):
+    if fold(_join_chunks(question.answer_chunks)) != fold(question.correct_text):
         raise LearningTaskGenerationError("The correct sentence must match its answer chunks.")
     extras = Counter(map(fold, question.token_bank)) - Counter(map(fold, question.answer_chunks))
     if extras != Counter(map(fold, question.distractor_chunks)):
@@ -361,6 +372,11 @@ def _check_m02(payload, questions):
     ):
         raise LearningTaskGenerationError("M02 Q3 must offer the target and its distractor.")
     q4_options = {option.option_id: option.label for option in questions[3].options}
+    if (
+        not questions[3].roleplay_premise
+        or distractor["key"] not in questions[3].group_object_ids
+    ):
+        raise LearningTaskGenerationError("M02 Q4 must show its role-play distractor.")
     if q4_options.get(questions[3].correct_option_id) != payload["facts"]["correctClarification"]:
         raise LearningTaskGenerationError("M02 Q4 must name the detail the distractor lacks.")
     shares_detail = payload["facts"]["distractorSharesAttribute"] or payload["facts"][
@@ -420,6 +436,11 @@ def _check_m03(payload, questions):
     )
     if comparison != payload["facts"]["compareSentence"]:
         raise LearningTaskGenerationError("M03 Q3 comparison direction must match the counts.")
+    if (
+        not questions[3].roleplay_premise
+        or fold(payload["facts"]["friendStatement"]) not in fold(questions[3].roleplay_premise)
+    ):
+        raise LearningTaskGenerationError("M03 Q4 must show the friend's role-play statement.")
     correct_roleplay = next(
         option.label for option in questions[3].options
         if option.option_id == questions[3].correct_option_id
@@ -476,10 +497,12 @@ def _check_m04(payload, questions):
             raise LearningTaskGenerationError("Ownership must remain fictional role-play.")
     if len(owner_facts) != 2 or len({fact["objectKey"] for fact in owner_facts}) != 2:
         raise LearningTaskGenerationError("M04 needs two distinct assigned role-play objects.")
-    if questions[0].roleplay_premise is None:
+    if questions[0].roleplay_premise is None or questions[3].roleplay_premise is None:
         raise LearningTaskGenerationError("M04 must show its role-play premise.")
     if not any(fact["owner"] in questions[0].roleplay_premise for fact in owner_facts):
         raise LearningTaskGenerationError("The role-play premise must name the assigned owner.")
+    if questions[3].roleplay_premise != questions[0].roleplay_premise:
+        raise LearningTaskGenerationError("M04 ownership questions must share their premise.")
     assigned = next(
         row for row in facts["approvedObjects"]
         if row["key"] == payload["selection"]["assignedObjectKey"]
@@ -488,6 +511,8 @@ def _check_m04(payload, questions):
         row for row in facts["approvedObjects"]
         if row["key"] == payload["selection"]["alternativeObjectKey"]
     )
+    if alternative["key"] not in questions[3].group_object_ids:
+        raise LearningTaskGenerationError("M04 Q4 must highlight the alternative object.")
     correct_marker = questions[0].marker_object_ids.get(questions[0].correct_option_id)
     if correct_marker != assigned["key"]:
         raise LearningTaskGenerationError("M04 Q1 must select the learner-assigned object.")

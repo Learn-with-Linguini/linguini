@@ -4,15 +4,21 @@ from types import SimpleNamespace
 from uuid import UUID
 
 import pytest
+from pydantic import ValidationError
 
 from app.ai.features.learning_tasks.mission import tokens
-from app.ai.features.learning_tasks.mission_a2 import A2_GENERATIONS, validate_a2_lesson
+from app.ai.features.learning_tasks.mission_a2 import (
+    A2_GENERATIONS,
+    MissionA2Question,
+    validate_a2_lesson,
+)
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.missions import get_mission
 from app.services.mission_eligibility import lesson_missions
 from app.services.mission_eligibility_a2 import eligibility_reasons
 from app.services.mission_facts_a2 import approved_facts
 from app.services.mission_language_a2 import A2_ENABLED_LANGUAGES
+from app.services.mission_lessons_a2 import _joined
 from app.services.mission_registry import MISSION_LESSONS
 
 FACT_KEYS = {
@@ -429,6 +435,78 @@ def _replace_sentence(result, index, text):
         result, index, correct_text=text, answer_chunks=chunks, token_bank=chunks,
         distractor_chunks=[],
     )
+
+
+def test_m02_meaning_options_are_unique_when_objects_share_a_colour():
+    payload, result = _built("M02")
+    question = result.questions[0]
+
+    assert len(question.options) == len({
+        option.label.casefold() for option in question.options
+    })
+    assert len(question.options) == 3
+    assert payload["facts"]["attribute"]["value"] == "red"
+
+
+def test_a2_question_rejects_duplicate_option_labels():
+    _payload, result = _built("M02")
+    data = result.questions[0].model_dump()
+    data["options"][1]["label"] = data["options"][0]["label"]
+
+    with pytest.raises(ValidationError, match="unique labels"):
+        MissionA2Question.model_validate(data)
+
+
+@pytest.mark.parametrize("language", ["es", "fr"])
+def test_long_builds_use_phrase_chunks_and_short_builds_use_word_tiles(language):
+    for mission_id, long_index in (("M01", 3), ("M03", 4), ("M04", 4)):
+        _payload, result = _built(mission_id, language)
+        question = result.questions[long_index]
+
+        assert _joined(question.answer_chunks) == question.correct_text
+        assert any(" " in chunk for chunk in question.answer_chunks)
+        assert any(" " in chunk for chunk in question.distractor_chunks)
+        assert "." in question.answer_chunks
+        assert "." in question.distractor_chunks
+        punctuation = {".", ",", "?", "!", ";", ":"}
+        assert all(
+            chunk in punctuation or not chunk.endswith(tuple(punctuation))
+            for chunk in question.distractor_chunks
+        )
+
+    for mission_id, short_index in (
+        ("M01", 1),
+        ("M02", 1),
+        ("M02", 4),
+        ("M03", 1),
+        ("M04", 2),
+    ):
+        _payload, result = _built(mission_id, language)
+        question = result.questions[short_index]
+        assert question.answer_chunks == tokens(question.correct_text)
+
+
+def test_roleplay_highlights_are_present_on_clarification_questions():
+    _m02_payload_result, m02 = _built("M02")
+    m02_q4 = m02.questions[3]
+    assert m02_q4.roleplay_premise
+    assert _m02_payload_result["selection"]["distractorObjectKey"] in m02_q4.group_object_ids
+
+    m04_payload, m04 = _built("M04")
+    assert m04.questions[0].roleplay_premise == m04.questions[3].roleplay_premise
+    assert m04_payload["selection"]["alternativeObjectKey"] in m04.questions[3].group_object_ids
+    _m03_payload, m03 = _built("M03")
+    assert m03.questions[3].roleplay_premise
+    assert _m03_payload["facts"]["friendStatement"] in m03.questions[3].roleplay_premise
+
+
+@pytest.mark.parametrize(("mission_id", "index"), [("M03", 3), ("M04", 0), ("M04", 3)])
+def test_required_roleplay_premises_are_validated(mission_id, index):
+    payload, result = _built(mission_id)
+    result = _replace_question(result, index, roleplay_premise=None)
+
+    with pytest.raises(LearningTaskGenerationError):
+        validate_a2_lesson(payload, result)
 
 
 @pytest.mark.parametrize("change", ["option", "prompt_text", "token"])
