@@ -277,6 +277,34 @@
   color: var(--ink);
 }
 
+.roleplay-premise {
+  border-left: 4px solid var(--teal);
+  border-radius: var(--radius-sm);
+  background: var(--cream);
+  padding: var(--space-3) var(--space-4);
+}
+
+.roleplay-premise__label {
+  display: block;
+  margin-bottom: var(--space-1);
+  color: var(--teal-dark);
+  font-size: var(--text-label);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.roleplay-premise__text,
+.roleplay-premise__disclaimer {
+  margin: 0;
+}
+
+.roleplay-premise__disclaimer {
+  margin-top: var(--space-1);
+  color: var(--ink-muted);
+  font-size: var(--text-label);
+}
+
 /* Chips */
 .chip {
   display: inline-flex;

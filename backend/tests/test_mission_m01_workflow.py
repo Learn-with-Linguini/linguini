@@ -14,6 +14,7 @@ from app.ai.features.learning_tasks.mission_m01 import (
 )
 from app.repositories.postgres.language_profiles import language_profiles
 from app.repositories.postgres.tasks import session_tasks, task_attempts
+from app.repositories.postgres.users import users
 from app.repositories.postgres.vocabulary import user_vocabulary_progress, vocabulary_encounters
 from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.repositories.postgres.xp import xp_events
@@ -207,11 +208,14 @@ def test_a_colour_without_a_reviewed_form_skips_m01_for_the_regular_lesson(
 
 @pytest.mark.parametrize("level", ["A0", "A2"])
 def test_other_levels_keep_the_existing_lesson(curated, level):
-    engine, _owner, profile, *_ = curated
+    engine, owner, profile, *_ = curated
     with engine.begin() as connection:
         connection.execute(update(language_profiles).where(
             language_profiles.c.id == profile.id
         ).values(proficiency_level=level))
+        connection.execute(update(users).where(
+            users.c.id == owner.id
+        ).values(onboarding_completed=True))
     _repository_, _sid, detail = _lesson(curated)
     assert "ispyRound" in {task.kind for task in detail.tasks}
     assert all(task.public_content.mission_key is None for task in detail.tasks)

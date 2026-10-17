@@ -390,9 +390,14 @@ export type ProficiencyLevel = "A0" | "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 export const proficiencyLabel = (level: ProficiencyLevel) => (level === "A0" ? "Pre-A1" : level);
 /** Links task content to a versioned backend mission definition; absent on tasks without a mission. */
 export interface MissionTaskFields { missionId?: string; practiceLevel?: ProficiencyLevel; contentVersion?: number }
+export interface RoleplayFact {
+  sceneObjectId: string;
+  source: "assignedRoleplay";
+  isFictional: true;
+}
 export type TaskContent = MissionTaskFields & (
   | { kind: "vocabularyIntroduction"; title: string; words: VocabularyLearningWord[]; questions: VocabularyQuestion[]; allowTypingPractice: boolean; targetText?: string | null; translation?: string | null; partOfSpeech?: WordClass | null; exampleSentence?: string | null }
-  | { kind: "grammarLesson"; focus: string; title: string; explanation?: string | null; questions: GrammarLessonQuestion[] }
+  | { kind: "grammarLesson"; focus: string; title: string; explanation?: string | null; questions: GrammarLessonQuestion[]; roleplayFacts?: RoleplayFact[] | null }
   | { kind: "grammarExplanation"; title: string; explanation: string; examples: string[] }
   | { kind: "grammarPractice"; prompt: string; options: string[] }
   | { kind: "syntaxExplanation"; title: string; sentencePattern: string; explanation: string; examples: string[] }
@@ -507,6 +512,7 @@ export interface GrammarLessonQuestion {
   boardCounts?: Record<string, number>;
   boardObjectId?: string | null;
   quantityWord?: string | null;
+  roleplayPremise?: string | null;
   /** Mission options already shuffled and saved by the backend; show them as stored. */
   keepOptionOrder?: boolean | null;
   /** Marker questions: each option's scene object, numbered as on the reviewed photo. */

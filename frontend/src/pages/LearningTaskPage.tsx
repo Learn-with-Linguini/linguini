@@ -15,6 +15,7 @@ import { ObjectPreview } from "../components/ObjectPreview";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useResolvedImageUrl } from "../components/SceneImage";
 import { boardRows, squareCrop } from "../lib/practiceBoard";
+import { questionMarkerObjects } from "../lib/missionMarkers";
 
 export function LearningTaskPage() {
   const { taskId } = useParams();
@@ -317,19 +318,32 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
     <div className="learning-title-row"><div><h1>{content.title}</h1>{reward ? <XpPill {...reward} /> : null}</div><ExitToHome onExit={onExit} /></div>
     {content.explanation ? <div className="panel-note">{content.explanation}</div> : null}
     {content.questions.map((question, position) => {
+      const questionMarkers = question.roleplayPremise
+        ? questionMarkerObjects(
+          question.sceneObjectId,
+          session?.sceneObjects ?? [],
+          scene.items,
+        )
+        : undefined;
       const groupObjects = question.groupObjectIds
         ?.map(id => session?.sceneObjects.find(object => object.id === id))
         .filter((object): object is SceneObject => Boolean(object));
-      const markers = markerChoices(question, scene);
+      const markers = question.roleplayPremise ? [] : markerChoices(question, scene);
       const section = question.section && question.section !== content.questions[position - 1]?.section
         ? question.section : null;
       return <div key={question.questionId} className="learning-section">
         {section ? <h2 className="learning-section__title">{section}</h2> : null}
         <Card plain><div className="stack">
+      {question.roleplayPremise ? <div className="roleplay-premise" role="note">
+        <span className="roleplay-premise__label">For this practice</span>
+        <p className="roleplay-premise__text">{question.roleplayPremise}</p>
+        <p className="roleplay-premise__disclaimer">Pretend only — not about your real things.</p>
+      </div> : null}
       {content.questions.length > 1 ? <span className="label muted">Question {position + 1} of {content.questions.length}</span> : null}
       {question.sceneObjectId ? <ObjectPreview scene={scene} label={question.objectLabel ?? ""}
         object={session?.sceneObjects.find(object => object.id === question.sceneObjectId)}
         group={groupObjects?.length ? groupObjects : undefined}
+        markers={questionMarkers}
         reference={session?.sceneObjects.find(object => object.id === question.referenceObjectId)}
         referenceLabel={question.referenceLabel} /> : null}
       {question.interactionType === "sentenceBuilding" ? <>
