@@ -1,3 +1,4 @@
+import { InlineLoader, LoadingScreen } from "../components/LoadingScreen";
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -94,7 +95,7 @@ function RoomSession({ roomId }: { roomId: string }) {
     } finally { busyRef.current = false; setBusy(false); }
   };
 
-  if (room.isPending) return <p role="status">Opening your room…</p>;
+  if (room.isPending) return <LoadingScreen label="Opening your room…" />;
   if (!room.data) return <div className="stack rooms-page"><h1>Room unavailable</h1>
     <p role="alert">{room.error instanceof ApiError ? room.error.message : "We couldn’t open this room. Check your connection and try again."}</p>
     <Button onClick={() => void room.refetch()}>Try again</Button><Button variant="quiet" onClick={() => navigate("/ispy/friends")}>Find your room</Button></div>;
@@ -117,7 +118,7 @@ function RoomSession({ roomId }: { roomId: string }) {
           const { commandId: _key, expectedRevision: _revision, ...payload } = rejectedCommand.body;
           void act(rejectedCommand.intent, payload);
         }}>Retry with updated room</Button> : null}</div> : null}
-    {busy ? <p role="status">Saving your action…</p> : null}
+    {busy ? <InlineLoader compact label="Saving your action…" /> : null}
 
     {data.status === "lobby" ? <>
       {!partner ? <Card className="stack"><h2>Invite one friend</h2>
@@ -143,7 +144,7 @@ function RoomSession({ roomId }: { roomId: string }) {
         {canStartRoom(data) ? <Button disabled={blocked} onClick={() => void act("start")}>Start together</Button> :
           <Button variant={me?.ready ? "secondary" : "primary"} disabled={blocked || data.photos.length < 2 || data.photos.some(photo => photo.status !== "ready") || !partner}
             onClick={() => void act("ready", { ready: !me?.ready })}>{me?.ready ? "Keep preparing" : "I’m ready"}</Button>}
-        {data.photos.some(photo => photo.status === "analyzing" || photo.status === "preparing") ? <p role="status">Preparing your photos…</p> : null}
+        {data.photos.some(photo => photo.status === "analyzing" || photo.status === "preparing") ? <InlineLoader compact label="Preparing your photos…" /> : null}
         {!partner ? <p className="small muted">Your friend needs to join before you can get ready.</p> : null}
       </Card>
     </> : data.status === "playing" && data.currentTurn ?
@@ -181,7 +182,7 @@ function RoomImage({ roomId, photoId, title, markers, selectable = false, select
 
   if (failed) return <div className="rooms-photo__placeholder"><p role="alert">We couldn’t load this photo.</p>
     <Button variant="secondary" onClick={() => setAttempt(current => current + 1)}>Reload photo</Button></div>;
-  if (!image) return <div className="rooms-photo__placeholder" role="status">Preparing photo…</div>;
+  if (!image) return <div className="rooms-photo__placeholder"><InlineLoader compact label="Preparing photo…" /></div>;
   return <div className="rooms-photo"><img src={image} alt={title} onError={() => setImageState({ url: null, failed: true, source })} />
     {markers?.map((object, index) => <button type="button" key={object.key} className={`rooms-marker${selected === object.key ? " rooms-marker--selected" : ""}`}
       style={{ left: `${Math.max(3, Math.min(97, object.x))}%`, top: `${Math.max(3, Math.min(97, object.y))}%` }}
@@ -200,7 +201,7 @@ function RoomPhotoCard({ roomId, photo, number, own, ownerName, disabled, onRemo
   const reviewable = own && Boolean(photo.review) && (photo.status === "awaitingReview" || photo.status === "failed" || (editing && photo.status === "ready"));
   return <Card className="stack rooms-photo-card"><div className="rooms-photo-card__heading"><h3>{photo.title ?? `Photo ${number}`}</h3><span className="small muted">{own ? "Added by you" : `Added by ${ownerName}`}</span></div>
     {photo.imageUrl && !reviewable ? <RoomImage roomId={roomId} photoId={photo.id} title={photo.title ?? `Shared photo ${number}`} /> : !photo.imageUrl ?
-      <div className="rooms-photo__placeholder" role="status">{photo.status === "failed" ? "This photo isn’t available to share." : own ? "Checking the photo before sharing it…" : "Your friend’s photo is being checked before sharing."}</div> : null}
+      <div className="rooms-photo__placeholder">{photo.status === "failed" ? <p role="status">This photo isn’t available to share.</p> : <InlineLoader compact label={own ? "Checking the photo before sharing it…" : "Your friend’s photo is being checked before sharing."} />}</div> : null}
     <p className="small" role={photo.status === "failed" ? "alert" : "status"}>{own ? status : photo.status === "awaitingReview" ? "Your friend is reviewing this photo" : status}</p>
     {reviewable ? <PhotoReview key={`${photo.id}:${photo.status}`} roomId={roomId} photoId={photo.id} initial={photo.review!} disabled={disabled}
       onSave={review => { void onReview(review).then(saved => { if (saved) setEditing(false); }); }} /> : null}
@@ -297,7 +298,7 @@ function RoomPlay({ roomId, room, turn, disabled, acknowledged, onClue, onGuess,
         <button type="button" key={option.id} className={`rooms-choice${clue === option.id ? " rooms-choice--selected" : ""}`}
           aria-pressed={clue === option.id} disabled={disabled} onClick={() => setClue(option.id)}>{option.text}</button>)}</div>
       <Button disabled={disabled || !clue} onClick={() => onClue(clue!)}>Send clue</Button>
-    </Card> : turn.phase === "compose" ? <p role="status">Your friend is choosing a clue for this photo…</p> : null}
+    </Card> : turn.phase === "compose" ? <InlineLoader label="Your friend is choosing a clue for this photo…" /> : null}
     {turn.clue ? <Card className="stack-2"><strong>Your {turn.role === "sender" ? "saved" : "friend’s"} clue</strong><p lang={room.targetLanguageCode}>{turn.clue}</p></Card> : null}
     {guessing ? <>
       {turn.guessCount > 0 ? <Feedback tone="warn"><p>Not quite. Try one more object.</p></Feedback> : null}
@@ -308,7 +309,7 @@ function RoomPlay({ roomId, room, turn, disabled, acknowledged, onClue, onGuess,
           <span>Object {object.marker ?? index + 1}</span>{used.includes(object.key) ? <span className="small">Already tried</span> : null}</button>)}
       </div>
       <Button disabled={disabled || !canGuess} onClick={() => onGuess(choice!)}>Check my guess</Button>
-    </> : turn.phase === "guess" ? <p role="status">{turn.guessCount > 0 ? "Your friend is trying another object…" : "Your friend is looking for the object…"}</p> : null}
+    </> : turn.phase === "guess" ? <InlineLoader label={turn.guessCount > 0 ? "Your friend is trying another object…" : "Your friend is looking for the object…"} /> : null}
     {turn.phase === "reveal" ? <>
       <Feedback tone={turn.result?.isCorrect ? "good" : "warn"}><div className="stack-2" role="status">
         <strong>{turn.result?.isCorrect ? "You found it together!" : "Here’s the object"}</strong>

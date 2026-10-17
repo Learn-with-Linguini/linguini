@@ -161,13 +161,16 @@ class RoomPhotoPreparer:
             result = SceneAnalysisResult.model_validate(
                 analyzer.analyze(identity, asset, profile, None)
             )
-            if not result.objects or len(result.objects) > 6:
-                raise ValueError("Analysis must return up to six observed objects.")
+            if not result.objects:
+                raise ValueError("Analysis must return observed objects.")
             if len({obj.id for obj in result.objects}) != len(result.objects):
                 raise ValueError("Analysis repeated an object.")
-            selected = {obj.id for obj in result.objects}
+            # Friend rooms intentionally stay small even though solo mission
+            # analysis can now retain a richer scene.
+            room_objects = result.objects[:6]
+            selected = {obj.id for obj in room_objects}
             rows = []
-            for obj in result.objects:
+            for obj in room_objects:
                 if obj.session_id != photo_id:
                     raise ValueError("Analysis returned an object for another photo.")
                 anchor = obj.anchor_point
@@ -190,11 +193,11 @@ class RoomPhotoPreparer:
                 )
             relation_rows = []
             for relation in result.relations:
-                if (
-                    not {relation.subject_scene_object_id, relation.reference_scene_object_id}
-                    <= selected
-                ):
-                    raise ValueError("Analysis returned a relationship outside the photo.")
+                if not {
+                    relation.subject_scene_object_id,
+                    relation.reference_scene_object_id,
+                } <= selected:
+                    continue
                 relation_rows.append(
                     RoomPhotoRelation(
                         key=relation.id,

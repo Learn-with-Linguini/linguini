@@ -118,6 +118,80 @@ def plan_missions(candidates, objects, relations, counted_groups=()):
     ][:MAX_LESSON_MISSIONS]
 
 
+def suggested_counted_groups(objects):
+    """Model-suggested groups used only to focus review, never as lesson evidence."""
+    groups = {}
+    for obj in objects:
+        label = obj.label.strip().casefold()
+        raw = (obj.attributes or {}).get("quantity")
+        try:
+            quantity = int(raw)
+        except (TypeError, ValueError):
+            continue
+        if not 1 <= quantity <= 20:
+            continue
+        group = groups.setdefault(
+            label,
+            {"label": obj.label, "quantity": quantity, "sceneObjectIds": []},
+        )
+        if group["quantity"] == quantity:
+            group["sceneObjectIds"].append(str(obj.id))
+    return list(groups.values())
+
+
+def provisional_mission_focus(candidates, objects, relations):
+    """Mission candidates and the smallest suggested fact set worth confirming.
+
+    The return value is presentation guidance over unconfirmed model output. It
+    must never be used as the final mission plan or grading evidence.
+    """
+    counts = suggested_counted_groups(objects)
+    plan = plan_missions(candidates, objects, relations, counts)
+    selected = []
+
+    def add(object_id):
+        if object_id not in selected:
+            selected.append(object_id)
+
+    for mission in plan:
+        requirements = mission.photo_requirements
+        if requirements.min_coloured_objects:
+            seen = set()
+            for obj in objects:
+                label = obj.label.strip().casefold()
+                if label not in seen and confirmed_colour(obj):
+                    add(obj.id)
+                    seen.add(label)
+                    if len(seen) >= requirements.min_coloured_objects:
+                        break
+        if requirements.min_relations:
+            for relation in confirmed_relations(mission, objects, relations)[
+                : requirements.min_relations
+            ]:
+                add(relation.subject_scene_object_id)
+                add(relation.reference_scene_object_id)
+        if requirements.min_counted_groups:
+            usable = countable_groups(mission, counts)[: requirements.min_counted_groups]
+            for group in usable:
+                group_ids = set(group["sceneObjectIds"])
+                for obj in objects:
+                    if str(obj.id) in group_ids:
+                        add(obj.id)
+        distinct = {obj.label.strip().casefold() for obj in objects if obj.id in selected}
+        for obj in objects:
+            if len(distinct) >= requirements.min_confirmed_objects:
+                break
+            label = obj.label.strip().casefold()
+            if label not in distinct:
+                add(obj.id)
+                distinct.add(label)
+
+    if not selected:
+        for obj in objects[:6]:
+            add(obj.id)
+    return plan, selected
+
+
 def mission_snapshot(mission):
     return {
         "missionId": mission.mission_id,

@@ -96,6 +96,24 @@ class SceneObjectRelation(ApiModel):
         return self
 
 
+class SceneActionSuggestion(ApiModel):
+    """A visible action proposed by analysis and awaiting learner confirmation."""
+
+    action_key: NonEmptyText
+    action: Annotated[str, Field(min_length=1, max_length=60)]
+    scene_object_ids: Annotated[list[UUID], Field(min_length=1, max_length=6)]
+    confidence_score: UnitScore
+
+
+class ScenePriceSuggestion(ApiModel):
+    """A displayed price proposed by analysis and awaiting learner confirmation."""
+
+    price_key: NonEmptyText
+    scene_object_id: UUID
+    displayed_price: Annotated[str, Field(min_length=1, max_length=40)]
+    confidence_score: UnitScore
+
+
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
 ImageMime = Literal["image/jpeg", "image/png", "image/webp"]
 UploadSource = Literal[MediaSource.CAMERA, MediaSource.USER_UPLOAD]

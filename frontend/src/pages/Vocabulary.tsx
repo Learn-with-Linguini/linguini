@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Button, Card, IconButton, Tabs } from "../components/ui";
 import { BookIcon, CloseIcon, FilterIcon, SpeakerIcon } from "../components/icons";
 import { SceneVisual } from "../components/SceneVisual";
-import { LoadingScreen } from "../components/LoadingScreen";
+import { InlineLoader, LoadingScreen } from "../components/LoadingScreen";
 import { ErrorState } from "../components/ErrorState";
 import type { VocabStatus, WordClass } from "../data/types";
 import { mediaImageUrl } from "../lib/api";
@@ -242,7 +242,7 @@ export function Vocabulary() {
         </>
       ) : (
         <div className="vocabulary-scenes">
-          {scenesLoading ? <p role="status">Loading scenes...</p> : null}
+          {scenesLoading ? <InlineLoader label="Loading scenes…" /> : null}
           {scenesError ? <p role="alert">{scenesError} Your words are still available below.</p> : null}
           {!vocabulary.length ? <Card><p>No saved words yet. Practise a scene to collect words.</p></Card> : null}
           {sceneGroups.map(({ scene, words }) => (

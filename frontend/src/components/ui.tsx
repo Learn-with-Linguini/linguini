@@ -205,7 +205,7 @@ export function Tabs<T extends string>({
   );
 }
 
-export type ComboBoxOption = { value: string; label: string };
+export type ComboBoxOption = { value: string; label: string; marker?: string | number };
 
 export function ComboBox({
   id,
@@ -283,6 +283,7 @@ export function ComboBox({
           setOpen(current => !current);
         }}
       >
+        {options[selectedIndex]?.marker != null ? <span className="combobox__marker">{options[selectedIndex].marker}</span> : null}
         <span className={selectedIndex < 0 ? "combobox__placeholder" : ""}>
           {options[selectedIndex]?.label ?? placeholder}
         </span>
@@ -301,7 +302,10 @@ export function ComboBox({
               onMouseEnter={() => setActiveIndex(index)}
               onClick={() => choose(index)}
             >
-              <span>{option.label}</span>
+              <span className="combobox__option-label">
+                {option.marker != null ? <span className="combobox__marker">{option.marker}</span> : null}
+                <span>{option.label}</span>
+              </span>
               {option.value === value ? <CheckIcon size={18} /> : null}
             </button>
           ))}

@@ -1,3 +1,4 @@
+import { InlineLoader } from "./LoadingScreen";
 import { useRef, useState } from "react";
 import { uploadImage } from "../lib/api";
 import type { UploadedImage } from "../lib/api";
@@ -48,7 +49,7 @@ export function ImageUpload({ onUploaded, cameraEnabled = true, disabled = false
       </div>
       {!compact ? <p className="small muted">JPEG, PNG or WebP, up to 10 MB</p> : null}
     </>}
-    {busy ? <p role="status">{phase}</p> : null}
+    {busy ? <InlineLoader label={phase || "Preparing upload…"} /> : null}
     {error ? <p role="alert">{error}</p> : null}
   </div>;
 }

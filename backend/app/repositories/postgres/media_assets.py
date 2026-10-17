@@ -17,6 +17,7 @@ from sqlalchemy import (
     insert,
     select,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from app.database import read_connection
@@ -40,6 +41,18 @@ media_assets = Table(
     Column("height", Integer),
     Column("duration_ms", Integer),
     Column("captured_at", DateTime(timezone=True)),
+    Column("created_at", DateTime(timezone=True), nullable=False),
+    Column("updated_at", DateTime(timezone=True), nullable=False),
+    schema="public",
+)
+
+media_scene_analyses = Table(
+    "media_scene_analyses",
+    MetaData(),
+    Column("media_asset_id", Uuid, primary_key=True),
+    Column("prompt_version", String(80), nullable=False),
+    Column("schema_version", String(80), nullable=False),
+    Column("inventory", JSONB, nullable=False),
     Column("created_at", DateTime(timezone=True), nullable=False),
     Column("updated_at", DateTime(timezone=True), nullable=False),
     schema="public",
