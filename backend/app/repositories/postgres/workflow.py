@@ -1453,6 +1453,19 @@ class PostgresWorkflowRepository:
                 history = snapshot_learner_history(
                     c, self.user_id, dict(profile), session_id, labels,
                 )
+            if (
+                "missionPlan" not in (session.analysis_draft or {})
+                and lesson_missions(session.mode, dict(profile))
+            ):
+                self._plan_missions(
+                    c,
+                    session,
+                    dict(profile),
+                    objects,
+                    saved_counted_groups(session.analysis_draft),
+                    relations,
+                )
+                session = self._session(c, session_id, profile_id)
             missions = tuple(self._planned_missions(session, dict(profile)))
             draft = session.analysis_draft or {}
             return GenerationClaim(
@@ -1628,7 +1641,7 @@ class PostgresWorkflowRepository:
     def _planned_missions(self, session, profile):
         if not lesson_missions(session.mode, profile):
             return []
-        # Sessions reviewed before mission plans were saved keep the regular lesson.
+        # Missing plans are rebuilt at claim time; a saved empty plan stays empty.
         return snapshot_missions((session.analysis_draft or {}).get("missionPlan"))
 
     def _reuse(self, c, session, asset, objects, relations):
@@ -1770,13 +1783,22 @@ class PostgresWorkflowRepository:
                 ))
             else:
                 mission_lessons = lesson()
-        elif self.translator:
-            lessons, ispy_clues = self._lessons_and_clues(
-                session_id, payload, translated_scene, objects, words, relations,
-                claim.generation_options,
-                history=lesson_history(claim.learner_history, introduction),
-                history_scope=CacheScope.user(f"{self.user_id}:{claim.profile_id}"),
-            )
+        if not mission_lessons and self.translator:
+            # With no mission task left, use the regular lesson.
+            if claim.missions:
+                lessons = self._lessons(
+                    session_id, payload, translated_scene, relations,
+                    claim.generation_options,
+                    history=lesson_history(claim.learner_history, introduction),
+                    history_scope=CacheScope.user(f"{self.user_id}:{claim.profile_id}"),
+                )
+            else:
+                lessons, ispy_clues = self._lessons_and_clues(
+                    session_id, payload, translated_scene, objects, words, relations,
+                    claim.generation_options,
+                    history=lesson_history(claim.learner_history, introduction),
+                    history_scope=CacheScope.user(f"{self.user_id}:{claim.profile_id}"),
+                )
         if self.translator and self.ispy_guess_generator:
             ispy_descriptions = build_ispy_description_tasks(
                 session_id, objects, words,
