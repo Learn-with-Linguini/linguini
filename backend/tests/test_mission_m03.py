@@ -17,7 +17,11 @@ from app.ai.features.learning_tasks.mission_m03 import (
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.missions import get_mission
 from app.schemas.sessions import ReviewPracticeRequest
-from app.services.mission_eligibility import photo_eligibility, plan_missions
+from app.services.mission_eligibility import (
+    photo_eligibility,
+    plan_missions,
+    provisional_mission_focus,
+)
 from app.services.mission_lessons_m03 import m03_lesson_task, m03_payload
 from app.services.quantities import (
     NUMBER_WORDS,
@@ -74,6 +78,17 @@ def test_a_count_alone_never_satisfies_m01_or_m02():
 def test_every_mission_the_photo_fits_is_planned_up_to_three(objects, relations, groups, planned):
     plan = plan_missions([M01, M02, M03], objects, relations, groups)
     assert [mission.mission_id for mission in plan] == planned
+
+
+def test_provisional_focus_uses_suggested_facts_but_returns_a_small_review_set():
+    repeated = [
+        obj(uuid4(), "book", quantity="3"),
+        obj(uuid4(), "book", quantity="3"),
+        obj(uuid4(), "book", quantity="3"),
+    ]
+    plan, selected = provisional_mission_focus([M01, M02, M03], repeated, [])
+    assert [mission.mission_id for mission in plan] == ["M03"]
+    assert selected == [item.id for item in repeated]
 
 
 @pytest.mark.parametrize(("value", "expected"), [

@@ -1,38 +1,25 @@
 import type { Scene } from "../data/types";
 import type { SceneObject } from "../lib/api";
-import { SceneVisual } from "./SceneVisual";
+import { ScenePhoto } from "./ScenePhoto";
 
-const marker = (object?: SceneObject) => {
-  if (object?.anchorPoint) return { x: Number(object.anchorPoint.x), y: Number(object.anchorPoint.y) };
-  const box = object?.boundingBox;
-  if (!box) return null;
-  return { x: Number(box.x) + Number(box.width) / 2, y: Number(box.y) + Number(box.height) / 2 };
-};
-
-function Ring({ object, tone }: { object?: SceneObject; tone: "target" | "reference" }) {
-  const point = marker(object);
-  if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) return null;
-  return <span className={`object-preview__ring object-preview__ring--${tone}`} aria-hidden="true"
-    style={{ left: `${point.x * 100}%`, top: `${point.y * 100}%` }} />;
-}
-
-/** The whole photo with a marker on one object, a counted group, or two, and English labels. */
+/** The whole photo with scene-analysis markers on one object, a counted group, or an
+ * object (selected marker) and its reference, with English labels. */
 export function ObjectPreview({ scene, object, label, reference, referenceLabel, group }: {
   scene: Scene; object?: SceneObject; label: string; reference?: SceneObject;
   referenceLabel?: string | null; group?: SceneObject[];
 }) {
+  const shown = group ? group.map(item => item.id) : [object?.id, referenceLabel ? reference?.id : undefined];
+  const items = scene.items.filter(item => shown.includes(item.id));
+  const number = (target?: SceneObject) => scene.items.find(item => item.id === target?.id)?.marker;
   return <figure className="object-preview">
-    <div className="object-preview__scene">
-      <SceneVisual scene={scene} />
-      {group ? group.map(item => <Ring key={item.id} object={item} tone="target" />)
-        : <Ring object={object} tone="target" />}
-      {referenceLabel ? <Ring object={reference} tone="reference" /> : null}
+    <div className="object-preview__scene mission-markers">
+      <ScenePhoto scene={scene} items={items} activeItemId={group ? null : object?.id ?? null} />
     </div>
-    <figcaption className="object-preview__legend">
+    {label || referenceLabel ? <figcaption className="object-preview__legend">
       {referenceLabel ? <>
-        <span><span className="object-preview__key object-preview__key--target" aria-hidden="true" /><strong>{label}</strong></span>
-        <span><span className="object-preview__key object-preview__key--reference" aria-hidden="true" /><strong>{referenceLabel}</strong></span>
+        <span><span className="object-preview__key object-preview__key--target" aria-hidden="true">{number(object)}</span><strong>{label}</strong></span>
+        <span><span className="object-preview__key object-preview__key--reference" aria-hidden="true">{number(reference)}</span><strong>{referenceLabel}</strong></span>
       </> : <strong>{label}</strong>}
-    </figcaption>
+    </figcaption> : null}
   </figure>;
 }
