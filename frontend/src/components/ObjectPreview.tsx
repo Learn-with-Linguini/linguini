@@ -5,9 +5,10 @@ import { ScenePhoto } from "./ScenePhoto";
 
 /** The whole photo with scene-analysis markers on one object, a counted group, or an
  * object (selected marker) and its reference, with English labels. */
-export function ObjectPreview({ scene, object, label, reference, referenceLabel, group, markers }: {
+export function ObjectPreview({ scene, object, label, reference, referenceLabel, group, markers, hideNumbers }: {
   scene: Scene; object?: SceneObject; label: string; reference?: SceneObject;
   referenceLabel?: string | null; group?: SceneObject[]; markers?: MissionMarker[];
+  hideNumbers?: boolean;
 }) {
   const shown = group ? group.map(item => item.id) : [object?.id, referenceLabel ? reference?.id : undefined];
   const markerMode = markers !== undefined;
@@ -25,6 +26,7 @@ export function ObjectPreview({ scene, object, label, reference, referenceLabel,
         scene={scene}
         items={items}
         activeItemId={markerMode || group ? null : object?.id ?? null}
+        hideNumbers={hideNumbers}
       />
     </div>
     {markerMode ? selectedMarkers.length || label.trim() ? <figcaption className="object-preview__legend">

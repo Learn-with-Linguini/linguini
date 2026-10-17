@@ -13,10 +13,20 @@ M02_A1 = ("M02", "A1", 2)
 M03_A1 = ("M03", "A1", 1)
 M04_A1 = ("M04", "A1", 1)
 M05_A1 = ("M05", "A1", 1)
-# Implemented A1 variants in catalogue order; a lesson assesses at most three.
-IMPLEMENTED_MISSIONS = {"A1": (M01_A1, M02_A1, M03_A1, M04_A1, M05_A1)}
+M01_A0 = ("M01", "A0", 1)
+M02_A0 = ("M02", "A0", 1)
+M03_A0 = ("M03", "A0", 1)
+M13_A0 = ("M13", "A0", 1)
+# Implemented variants per stored proficiency level, in catalogue order; a lesson
+# assesses at most three. Only the active profile's ``proficiency_level`` selects them.
+IMPLEMENTED_MISSIONS = {
+    "A0": (M01_A0, M02_A0, M03_A0, M13_A0),
+    "A1": (M01_A1, M02_A1, M03_A1, M04_A1, M05_A1),
+}
 MAX_LESSON_MISSIONS = 3
 MISSION_LANGUAGES = {"es", "fr", "de"}
+# A0 missions use reviewed closed content, which includes Korean.
+LEVEL_LANGUAGES = {"A0": {"es", "fr", "de", "ko"}}
 
 # Reviewed singular attributive colour forms for each supported lesson language.
 REVIEWED_COLOURS = {
@@ -140,11 +150,11 @@ def lesson_missions(session_mode, profile):
     """Implemented missions a new lesson may plan from; empty keeps the existing lesson path."""
     if session_mode != SessionMode.LESSON:
         return []
-    if profile["target_language_code"].lower() not in MISSION_LANGUAGES:
+    level = str(profile["proficiency_level"] or "").strip().upper()
+    languages = LEVEL_LANGUAGES.get(level, MISSION_LANGUAGES)
+    if profile["target_language_code"].lower() not in languages:
         return []
-    keys = IMPLEMENTED_MISSIONS.get(
-        str(profile["proficiency_level"] or "").strip().upper(), ()
-    )
+    keys = IMPLEMENTED_MISSIONS.get(level, ())
     return [mission for key in keys if (mission := get_mission(*key)) is not None]
 
 
@@ -381,7 +391,33 @@ def photo_eligibility(mission, objects, relations=(), counted_groups=()):
             f"Count a group of {requirements.min_quantity} to {requirements.max_quantity} "
             "matching objects."
         )
+    if str(mission.practice_level) == "A0":
+        reasons += a0_photo_reasons(mission, objects, counted_groups)
     return Eligibility(not reasons, tuple(reasons))
+
+
+def a0_photo_reasons(mission, objects, counted_groups=()):
+    """A0 missions need reviewed nouns: 2-3 distinct objects, or one group of 2 or 3."""
+    from app.services.a0_lexicon import REVIEWED_NOUNS
+
+    def reviewed(label):
+        return re.sub(r"^(?:a|an|the)\s+", "", label.strip().casefold()) in REVIEWED_NOUNS
+
+    labels = {obj.label.strip().casefold() for obj in objects if reviewed(obj.label)}
+    if mission.mission_id == "M03":
+        groups = [
+            group for group in countable_groups(mission, counted_groups)
+            if reviewed(group.get("label", "")) or any(
+                reviewed(obj.label) for obj in objects
+                if str(obj.id) in {str(item) for item in group["sceneObjectIds"]}
+            )
+        ]
+        if len(groups) != 1:
+            return ["Count exactly one group of 2 or 3 matching objects."]
+        return []
+    if len(labels) < 2:
+        return ["Confirm at least 2 different objects with taught names."]
+    return []
 
 
 def agreed_colour(colour, language, gender):
