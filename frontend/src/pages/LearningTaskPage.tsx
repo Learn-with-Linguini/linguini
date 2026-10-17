@@ -339,6 +339,8 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         ?.map(id => session?.sceneObjects.find(object => object.id === id))
         .filter((object): object is SceneObject => Boolean(object));
       const markers = question.roleplayPremise ? [] : markerChoices(question, scene);
+      // A0 counting questions highlight the group without marker numbers that would give the count away.
+      const countQuestion = content.practiceLevel === "A0" && Boolean(groupObjects?.length || question.displayCount);
       const section = question.section && question.section !== content.questions[position - 1]?.section
         ? question.section : null;
       return <div key={question.questionId} className="learning-section">
@@ -359,12 +361,13 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
       {question.listenFirst && !audio ? <p className="small muted" role="note">Audio isn't available here, so read the word instead.</p> : null}
       {question.displayCount ? <div className="count-board" aria-label="Practice board">
         {Array.from({ length: question.displayCount }, (_, tile) => <div key={tile} className="count-board__tile">
-          <ObjectPreview scene={scene} label="" object={session?.sceneObjects.find(object => object.id === question.boardObjectId)} /></div>)}
+          <ObjectPreview scene={scene} label="" hideNumbers object={session?.sceneObjects.find(object => object.id === question.boardObjectId)} /></div>)}
       </div> : null}
       {question.sceneObjectId ? <ObjectPreview scene={scene} label={question.objectLabel ?? ""}
         object={session?.sceneObjects.find(object => object.id === question.sceneObjectId)}
         group={groupObjects?.length ? groupObjects : undefined}
         markers={questionMarkers}
+        hideNumbers={countQuestion}
         reference={session?.sceneObjects.find(object => object.id === question.referenceObjectId)}
         referenceLabel={question.referenceLabel} /> : null}
       {question.interactionType === "sentenceBuilding" ? <>

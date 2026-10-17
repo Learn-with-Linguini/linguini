@@ -13,6 +13,8 @@ type Props = {
   lazy?: boolean;
   /** Name markers by number only, when the word is what the learner is asked to find. */
   hideWords?: boolean;
+  /** Plain highlight dots, e.g. so counting questions never show numbers. */
+  hideNumbers?: boolean;
 };
 
 export function ScenePhoto({
@@ -25,6 +27,7 @@ export function ScenePhoto({
   locationLabel,
   lazy,
   hideWords,
+  hideNumbers,
 }: Props) {
   const markers = items ?? scene.items;
 
@@ -92,11 +95,11 @@ export function ScenePhoto({
             aria-label={hideWords ? `Marker ${item.marker}` : `Marker ${item.marker}: ${item.word}`}
             aria-pressed={active}
           >
-            <span className="scene__marker-label">{item.marker}</span>
+            <span className="scene__marker-label">{hideNumbers ? "" : item.marker}</span>
           </button>
         ) : (
           <span key={item.id} className={className} style={style} aria-hidden="true">
-            <span className="scene__marker-label">{item.marker}</span>
+            <span className="scene__marker-label">{hideNumbers ? "" : item.marker}</span>
           </span>
         );
       })}
