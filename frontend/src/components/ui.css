@@ -4123,6 +4123,18 @@ p[role="alert"]::before { content: "!"; }
   color: var(--teal-dark);
 }
 
+.profile-password-form {
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--line);
+}
+
+.profile-password-form__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-1);
+}
+
 .profile-ai-note {
   padding: var(--space-4);
   border-radius: var(--radius-md);
