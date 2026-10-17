@@ -2,13 +2,8 @@
 
 import re
 
-_GENDERS = {"masculine", "feminine", "neuter"}
-_ARTICLES = {
-    "es": {"el": "masculine", "la": "feminine"},
-    "fr": {"le": "masculine", "la": "feminine"},
-    "de": {"der": "masculine", "den": "masculine", "dem": "masculine",
-           "des": "masculine", "die": "feminine", "das": "neuter"},
-}
+from app.services.mission_lessons import normalized_gender
+
 _LEADING_ARTICLE = re.compile(
     r"^(?:(?:el|la|los|las|un|una|unos|unas|le|la|les|un|une|des|"
     r"der|die|das|den|dem|des|ein|eine|einen|einem|einer|eines)\s+|"
@@ -20,12 +15,8 @@ _FRENCH_VOWELS = set("aeiouyàâäéèêëîïôöùûüœ")
 _CAST_NAMES = {"Ana": "아나", "Leo": "레오"}
 
 
-def _gender(language, value):
-    value = getattr(value, "value", value)
-    if not isinstance(value, str):
-        return None
-    folded = value.strip().casefold()
-    return folded if folded in _GENDERS else _ARTICLES.get(language, {}).get(folded)
+def _gender(_language, value):
+    return normalized_gender(value)
 
 
 def _noun(language, value, gender):

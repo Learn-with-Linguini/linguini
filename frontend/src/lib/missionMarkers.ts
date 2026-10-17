@@ -1,3 +1,4 @@
+import type { LanguageItem } from "../data/types";
 import type { SceneObject } from "./api";
 
 export interface MissionMarker {
@@ -6,25 +7,35 @@ export interface MissionMarker {
 }
 
 export function questionMarkerObjects(
-  markers: Record<string, number> | null | undefined,
+  markerObjectIds: Record<string, string> | null | undefined,
+  sceneObjectId: string | null | undefined,
   sceneObjects: readonly SceneObject[],
+  sceneItems: readonly LanguageItem[],
 ): MissionMarker[] {
-  if (!markers) return [];
+  const ids = markerObjectIds
+    ? Object.values(markerObjectIds)
+    : sceneObjectId ? [sceneObjectId] : [];
   const objectsById = new Map(sceneObjects.map(object => [object.id, object]));
-  return Object.entries(markers)
-    .flatMap(([objectId, number]) => {
-      const object = objectsById.get(objectId);
-      return object && Number.isInteger(number) && number > 0 ? [{ object, number }] : [];
+  const itemsById = new Map(sceneItems.map(item => [item.id, item]));
+  return [...new Set(ids)]
+    .flatMap(id => {
+      const object = objectsById.get(id);
+      const number = itemsById.get(id)?.marker;
+      return object && typeof number === "number" && Number.isInteger(number) && number > 0
+        ? [{ object, number }]
+        : [];
     })
     .sort((left, right) => left.number - right.number || left.object.id.localeCompare(right.object.id));
 }
 
 export function optionMarkerNumber(
   optionId: string,
-  optionObjectIds: Record<string, string> | null | undefined,
-  markers: Record<string, number> | null | undefined,
+  markerObjectIds: Record<string, string> | null | undefined,
+  sceneItems: readonly LanguageItem[],
 ): number | null {
-  const objectId = optionObjectIds?.[optionId];
-  const number = objectId ? markers?.[objectId] : undefined;
+  const objectId = markerObjectIds?.[optionId];
+  const number = objectId
+    ? sceneItems.find(item => item.id === objectId)?.marker
+    : undefined;
   return typeof number === "number" && Number.isInteger(number) && number > 0 ? number : null;
 }

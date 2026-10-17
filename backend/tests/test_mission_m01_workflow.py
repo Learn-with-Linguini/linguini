@@ -120,30 +120,35 @@ def test_suitable_photo_builds_one_mission_lesson_after_the_vocabulary(curated):
     lesson = detail.tasks[1]
     questions = lesson.public_content.questions
     assert [q.interaction_type for q in questions] == [
-        "multipleChoice", "sentenceBuilding", "multipleChoice", "sentenceBuilding",
+        "multipleChoice", "multipleChoice", "multipleChoice", "sentenceBuilding",
     ]
-    assert [q.prompt for q in questions] == [
-        "¿Qué es esto?", "Describe este objeto.", "¿Qué es esto?", "Describe este objeto.",
-    ]
-    assert [q.prompt_translation for q in questions[:2]] == [
-        "What is this?", "Describe this object.",
+    assert {questions[0].prompt, questions[1].prompt} <= {"¿Es una taza?", "¿Es una mesa?"}
+    assert all(o.label.startswith(("Sí, es ", "No, es ")) for q in questions[:2] for o in q.options)
+    assert [q.prompt for q in questions[2:]] == ["¿De qué color es?", "Describe este objeto."]
+    assert [q.section for q in questions] == [
+        "Task 1 · Identify objects in your photo", "Task 1 · Identify objects in your photo",
+        "Task 2 · Describe them", "Task 2 · Describe them",
     ]
     objects = [q.scene_object_id for q in questions]
-    assert objects[0] == objects[1] != objects[2] == objects[3]
+    assert objects[0] == objects[2] != objects[1] == objects[3]
+    # Identification never shows the English name before the answer.
     labels = [q.object_label for q in questions]
-    assert labels[0] == labels[1] != labels[2] == labels[3]
+    assert labels[:2] == [None, None] and labels[2] != labels[3]
+    assert [q.keep_option_order for q in questions] == [True, True, True, None]
     # M01 is built from the confirmed facts without a model call.
     assert not any(name.startswith("mission_lesson_m01") for name in model.requests)
-    assert lesson.public_content.title == "Name it and say its colour"
+    assert lesson.public_content.title == "Name it and describe it"
     key = _answer_key(engine, lesson.id)
-    described = {key["correctOptionIds"][q.question_id] for q in questions[1::2]}
-    assert described == {"Es una taza roja.", "Es una mesa blanca."}
+    described = key["correctOptionIds"]["describe-object"]
+    assert described in {"Es una taza roja.", "Es una mesa blanca."}
+    assert key["statementCorrect"].keys() == {"confirm-first", "confirm-second"}
+    assert "." not in questions[3].token_bank
     public = lesson.public_content.model_dump_json()
-    assert not any(sentence in public for sentence in described)
+    assert described not in public and "statementCorrect" not in public
     evaluations = key["questionEvaluations"]
     assert [item["questionId"] for item in evaluations] == [q.question_id for q in questions]
     assert evaluations[0]["targetIds"] == ["identify-object", "name-object"]
-    assert evaluations[1]["targetIds"] == ["name-object", "describe-colour"]
+    assert evaluations[3]["targetIds"] == ["name-object", "describe-colour"]
     public = json.dumps(client.get(f"/api/v1/sessions/{sid}").json())
     assert "questionEvaluations" not in public and "correctOptionIds" not in public
 
@@ -152,10 +157,10 @@ def test_less_familiar_pairs_come_first_and_resume_keeps_them(curated):
     engine, owner, profile, *_ = curated
     earlier, first_sid, first = _lesson(curated)
     earlier.finish(first_sid, profile.id, abandon=True)
-    order = [q.object_label for q in first.tasks[1].public_content.questions[::2]]
-    familiar = next(
-        obj.vocabulary_item_id for obj in first.scene_objects if obj.label.title() == order[0]
-    )
+    named = {obj.id: obj for obj in first.scene_objects}
+    shown = [named[q.scene_object_id] for q in first.tasks[1].public_content.questions[:2]]
+    order = [obj.label for obj in shown]
+    familiar = shown[0].vocabulary_item_id
     with engine.begin() as connection:
         connection.execute(update(user_vocabulary_progress).where(
             user_vocabulary_progress.c.user_id == owner.id,
@@ -163,7 +168,8 @@ def test_less_familiar_pairs_come_first_and_resume_keeps_them(curated):
         ).values(mastery_score=1))
     repository, sid, detail = _lesson(curated)
     questions = detail.tasks[1].public_content.questions
-    assert [q.object_label for q in questions[::2]] == list(reversed(order))
+    named = {obj.id: obj.label for obj in detail.scene_objects}
+    assert [named[q.scene_object_id] for q in questions[:2]] == list(reversed(order))
     resumed = repository.get(sid, profile.id).tasks[1]
     assert resumed.public_content == detail.tasks[1].public_content
 
@@ -191,7 +197,7 @@ def test_a_photo_no_mission_fits_gets_the_regular_lesson_with_tips(curated):
 def test_a_colour_without_a_reviewed_form_skips_m01_for_the_regular_lesson(
     curated, monkeypatch,
 ):
-    monkeypatch.setattr(mission_lessons_m01, "agreed_colour", lambda *_: None)
+    monkeypatch.setattr(mission_lessons_m01, "agreed_attribute", lambda *_: None)
     _repository_, _sid, detail = _lesson(curated)
     assert detail.session.status == "inProgress"
     assert detail.session.analysis_draft["skippedMissions"] == [
@@ -308,3 +314,20 @@ def test_offered_support_is_recorded_and_the_lesson_finishes_after_bonus_ispy(cu
     assert _scalar(engine, select(func.count()).select_from(xp_events).where(
         xp_events.c.session_id == sid, xp_events.c.event_type == "sessionCompleted",
     )) == 1
+
+
+def test_latest_attempt_restores_answers_and_keeps_the_saved_option_order(curated):
+    engine, _owner, profile, client, *_ = curated
+    repository, sid, detail = _lesson(curated)
+    lesson = detail.tasks[1]
+    correct = _answer_key(engine, lesson.id)["correctOptionIds"]
+    assert _attempt(client, lesson, correct).status_code == 200
+    restored = client.get(f"/api/v1/tasks/{lesson.id}/latest-attempt")
+    assert restored.status_code == 200, restored.text
+    saved = restored.json()["attempt"]
+    assert saved["answers"] == correct
+    assert saved["reviewDetails"]["questionResults"] == {qid: True for qid in correct}
+    resumed = repository.get(sid, profile.id).tasks[1].public_content.questions
+    assert [[o.option_id for o in q.options] for q in resumed] == [
+        [o.option_id for o in q.options] for q in lesson.public_content.questions
+    ]

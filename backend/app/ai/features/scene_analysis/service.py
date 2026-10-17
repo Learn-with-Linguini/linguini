@@ -146,7 +146,7 @@ class UploadedSceneAnalyzer:
                 image=image,
                 system_prompt=SCENE_ANALYSIS_SYSTEM_PROMPT,
                 user_instruction=SCENE_ANALYSIS_USER_INSTRUCTION,
-                json_schema_name="scene_analysis_v2",
+                json_schema_name="scene_analysis_v3",
                 json_schema=self._json_schema,
                 prompt_version=SCENE_ANALYSIS_PROMPT_VERSION,
             )

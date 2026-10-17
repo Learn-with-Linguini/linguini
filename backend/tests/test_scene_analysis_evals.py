@@ -85,9 +85,11 @@ def _object(key: str, label: str, box: tuple[float, float, float, float],
     x, y, width, height = box
     return {
         "objectKey": key,
+        "groupKey": f"{label}s",
         "label": label,
         "boundingBox": {"x": x, "y": y, "width": width, "height": height},
         "attributes": [],
+        "suggestedGroupCount": 1,
         "confidenceScore": confidence,
     }
 

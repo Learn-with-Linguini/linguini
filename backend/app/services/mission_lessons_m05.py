@@ -308,10 +308,12 @@ def m05_lesson_task(session_id, mission, payload, result, vocabulary_ids):
             section=question.section,
             roleplay_premise=question.roleplay_premise,
             prompt_translation=question.prompt_translation,
-            markers={UUID(key): number for key, number in question.markers.items()},
-            option_object_ids=(
+            marker_object_ids=(
                 {key: UUID(value) for key, value in question.option_object_ids.items()}
                 if question.option_object_ids is not None else None
+            ),
+            keep_option_order=(
+                True if question.interaction_type == "multipleChoice" else None
             ),
         )
 

@@ -3,7 +3,7 @@ from uuid import uuid4
 
 import pytest
 
-from app.repositories.postgres.workflow import PostgresWorkflowRepository
+from app.repositories.postgres.workflow import PostgresWorkflowRepository, _unique_by_id
 
 
 @pytest.mark.parametrize("explicit", [False, True])
@@ -50,3 +50,12 @@ def test_grouped_vocabulary_introduction_uses_one_encounter_id_per_word(
 
     assert [event.vocabulary_item_id for event in captured] == [first_word, second_word]
     assert captured[0].id != captured[1].id
+
+
+def test_task_generation_records_repeated_objects_as_one_word_introduction(
+) -> None:
+    """Two scene instances of one noun must not create the same encounter twice."""
+    word_id = uuid4()
+    words = [SimpleNamespace(id=word_id), SimpleNamespace(id=word_id)]
+
+    assert [word.id for word in _unique_by_id(words)] == [word_id]

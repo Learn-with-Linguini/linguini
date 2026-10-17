@@ -9,7 +9,7 @@ from app.schemas.enums import SessionMode
 from app.services.ispy_clue_frames import COLOUR_ATTRIBUTE_TYPES, POSITIONS, SUPPORTED_LANGUAGES
 
 M01_A1 = ("M01", "A1", 1)
-M02_A1 = ("M02", "A1", 1)
+M02_A1 = ("M02", "A1", 2)
 M03_A1 = ("M03", "A1", 1)
 M04_A1 = ("M04", "A1", 1)
 M05_A1 = ("M05", "A1", 1)
@@ -36,6 +36,57 @@ REVIEWED_COLOURS = {
     "beige": {"es": ("beige", "beige"), "fr": ("beige", "beige")},
 }
 SUPPORTED_COLOURS = set(REVIEWED_COLOURS)
+
+# Reviewed singular (masculine, feminine) forms of the other confirmed attribute types.
+# ``before`` marks French adjectives placed before the noun; ``contrasts`` are values
+# clearly different in a photo, the only ones offered as distractors.
+REVIEWED_ATTRIBUTES = {
+    "size": {
+        "big": dict(aliases=("large", "huge"), es=("grande", "grande"), fr=("grand", "grande"),
+                    before=True, contrasts=("small",)),
+        "small": dict(aliases=("little", "tiny"), es=("pequeño", "pequeña"),
+                      fr=("petit", "petite"), before=True, contrasts=("big",)),
+        "long": dict(es=("largo", "larga"), fr=("long", "longue"), before=True,
+                     contrasts=("short",)),
+        "short": dict(es=("corto", "corta"), fr=("court", "courte"), contrasts=("long",)),
+    },
+    "shape": {
+        "round": dict(aliases=("circular",), es=("redondo", "redonda"), fr=("rond", "ronde"),
+                      contrasts=("square", "rectangular")),
+        "square": dict(es=("cuadrado", "cuadrada"), fr=("carré", "carrée"),
+                       contrasts=("round",)),
+        "rectangular": dict(es=("rectangular", "rectangular"),
+                            fr=("rectangulaire", "rectangulaire"), contrasts=("round",)),
+    },
+    "material": {
+        "wooden": dict(aliases=("wood",), es=("de madera",) * 2, fr=("en bois",) * 2,
+                       contrasts=("metal", "plastic", "glass")),
+        "metal": dict(aliases=("metallic", "steel", "iron"), es=("de metal",) * 2,
+                      fr=("en métal",) * 2, contrasts=("wooden", "glass", "fabric")),
+        "plastic": dict(es=("de plástico",) * 2, fr=("en plastique",) * 2,
+                        contrasts=("wooden", "metal", "fabric")),
+        "glass": dict(es=("de vidrio",) * 2, fr=("en verre",) * 2,
+                      contrasts=("wooden", "metal", "fabric")),
+        "fabric": dict(aliases=("cloth",), es=("de tela",) * 2, fr=("en tissu",) * 2,
+                       contrasts=("wooden", "metal", "glass")),
+        "stone": dict(es=("de piedra",) * 2, fr=("en pierre",) * 2,
+                      contrasts=("wooden", "plastic", "fabric")),
+    },
+    "pattern": {
+        "striped": dict(es=("de rayas",) * 2, fr=("rayé", "rayée"), contrasts=("spotted",)),
+        "spotted": dict(aliases=("polka-dot", "dotted"), es=("de lunares",) * 2,
+                        fr=("à pois",) * 2, contrasts=("striped",)),
+    },
+    "state": {
+        "open": dict(es=("abierto", "abierta"), fr=("ouvert", "ouverte"), contrasts=("closed",)),
+        "closed": dict(es=("cerrado", "cerrada"), fr=("fermé", "fermée"), contrasts=("open",)),
+        "empty": dict(es=("vacío", "vacía"), fr=("vide", "vide"), contrasts=("full",)),
+        "full": dict(es=("lleno", "llena"), fr=("plein", "pleine"), contrasts=("empty",)),
+        "clean": dict(es=("limpio", "limpia"), fr=("propre", "propre"), contrasts=("dirty",)),
+        "dirty": dict(es=("sucio", "sucia"), fr=("sale", "sale"), contrasts=("clean",)),
+    },
+}
+ATTRIBUTE_ORDER = ("size", "shape", "material", "pattern", "state")
 
 
 # Relation types with reviewed location expressions, keyed by the I-Spy position meanings.
@@ -77,6 +128,80 @@ def plan_missions(candidates, objects, relations, counted_groups=(), history=())
         )[:MAX_LESSON_MISSIONS]
     }
     return [mission for mission in eligible if mission.mission_id in selected]
+
+
+def suggested_counted_groups(objects):
+    """Model-suggested groups used only to focus review, never as lesson evidence."""
+    groups = {}
+    for obj in objects:
+        label = obj.label.strip().casefold()
+        raw = (obj.attributes or {}).get("quantity")
+        try:
+            quantity = int(raw)
+        except (TypeError, ValueError):
+            continue
+        if not 1 <= quantity <= 20:
+            continue
+        group = groups.setdefault(
+            label,
+            {"label": obj.label, "quantity": quantity, "sceneObjectIds": []},
+        )
+        if group["quantity"] == quantity:
+            group["sceneObjectIds"].append(str(obj.id))
+    return list(groups.values())
+
+
+def provisional_mission_focus(candidates, objects, relations):
+    """Mission candidates and the smallest suggested fact set worth confirming.
+
+    The return value is presentation guidance over unconfirmed model output. It
+    must never be used as the final mission plan or grading evidence.
+    """
+    counts = suggested_counted_groups(objects)
+    plan = plan_missions(candidates, objects, relations, counts)
+    selected = []
+
+    def add(object_id):
+        if object_id not in selected:
+            selected.append(object_id)
+
+    for mission in plan:
+        requirements = mission.photo_requirements
+        if requirements.min_coloured_objects:
+            seen = set()
+            for obj in objects:
+                label = obj.label.strip().casefold()
+                if label not in seen and confirmed_colour(obj):
+                    add(obj.id)
+                    seen.add(label)
+                    if len(seen) >= requirements.min_coloured_objects:
+                        break
+        if requirements.min_relations:
+            for relation in confirmed_relations(mission, objects, relations)[
+                : requirements.min_relations
+            ]:
+                add(relation.subject_scene_object_id)
+                add(relation.reference_scene_object_id)
+        if requirements.min_counted_groups:
+            usable = countable_groups(mission, counts)[: requirements.min_counted_groups]
+            for group in usable:
+                group_ids = set(group["sceneObjectIds"])
+                for obj in objects:
+                    if str(obj.id) in group_ids:
+                        add(obj.id)
+        distinct = {obj.label.strip().casefold() for obj in objects if obj.id in selected}
+        for obj in objects:
+            if len(distinct) >= requirements.min_confirmed_objects:
+                break
+            label = obj.label.strip().casefold()
+            if label not in distinct:
+                add(obj.id)
+                distinct.add(label)
+
+    if not selected:
+        for obj in objects[:6]:
+            add(obj.id)
+    return plan, selected
 
 
 def mission_snapshot(mission):
@@ -144,6 +269,49 @@ def countable_groups(mission, counted_groups):
     ]
 
 
+def _reviewed_value(kind, value):
+    text = value.strip().casefold()
+    return next((
+        name for name, entry in REVIEWED_ATTRIBUTES.get(kind, {}).items()
+        if text == name or text in entry.get("aliases", ())
+    ), None)
+
+
+def confirmed_attributes(obj):
+    """Confirmed attributes with reviewed forms as ``(key, type, value)``, colour first."""
+    found = []
+    attributes = obj.attributes or {}
+    if colour := confirmed_colour(obj):
+        key = next(key for key in attributes if key.casefold() in COLOUR_ATTRIBUTE_TYPES)
+        found.append((key, "colour", colour))
+    for kind in ATTRIBUTE_ORDER:
+        for key, value in attributes.items():
+            if key.casefold() == kind and isinstance(value, str):
+                if name := _reviewed_value(kind, value):
+                    found.append((key, kind, name))
+    return found
+
+
+def agreed_attribute(kind, value, language, gender):
+    """``(form agreeing with a singular noun, placed before it)``, or ``None`` when unknown."""
+    if kind == "colour":
+        form = agreed_colour(value, language, gender)
+        return (form, False) if form else None
+    entry = REVIEWED_ATTRIBUTES.get(kind, {}).get(value) or {}
+    forms = entry.get(language)
+    if not forms:
+        return None
+    masculine, feminine = forms
+    form = masculine if masculine == feminine else {
+        "masculine": masculine, "feminine": feminine,
+    }.get(gender)
+    return (form, language == "fr" and bool(entry.get("before"))) if form else None
+
+
+def attribute_contrasts(kind, value):
+    return REVIEWED_ATTRIBUTES.get(kind, {}).get(value, {}).get("contrasts", ())
+
+
 def photo_eligibility(mission, objects, relations=(), counted_groups=()):
     """Check only the confirmed facts this mission's photo requirements name."""
     requirements = mission.photo_requirements
@@ -153,13 +321,14 @@ def photo_eligibility(mission, objects, relations=(), counted_groups=()):
         reasons.append(
             f"Confirm at least {requirements.min_confirmed_objects} different objects."
         )
-    coloured = {obj.label.strip().casefold() for obj in objects if confirmed_colour(obj)}
-    if len(coloured) < requirements.min_coloured_objects:
+    # ``min_coloured_objects`` counts objects with any reviewed attribute, colour or other.
+    described = {obj.label.strip().casefold() for obj in objects if confirmed_attributes(obj)}
+    if len(described) < requirements.min_coloured_objects:
         reasons.append(
-            "Confirm the colour of at least one object."
+            "Confirm a colour, size, shape, material, pattern or state of at least one object."
             if requirements.min_coloured_objects == 1
-            else f"Confirm the colours of at least {requirements.min_coloured_objects} "
-            "different objects."
+            else "Confirm a colour, size, shape, material, pattern or state of at least "
+            f"{requirements.min_coloured_objects} different objects."
         )
     if requirements.min_relations and (
         len(confirmed_relations(mission, objects, relations)) < requirements.min_relations

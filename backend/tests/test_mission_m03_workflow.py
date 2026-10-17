@@ -36,7 +36,7 @@ def existing_a1_missions(monkeypatch):
     monkeypatch.setitem(
         mission_eligibility.IMPLEMENTED_MISSIONS,
         "A1",
-        (("M01", "A1", 1), ("M02", "A1", 1), ("M03", "A1", 1)),
+        (("M01", "A1", 1), ("M02", "A1", 2), ("M03", "A1", 1)),
     )
 
 

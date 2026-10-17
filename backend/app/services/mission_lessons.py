@@ -30,6 +30,38 @@ def noun_gender(term, word):
     return getattr(word.gender, "value", word.gender)
 
 
+# Catalog content may record a noun's gender as its definite article.
+_ARTICLE_GENDERS = {
+    "el": "masculine",
+    "le": "masculine",
+    "la": "feminine",
+    "der": "masculine",
+    "den": "masculine",
+    "dem": "masculine",
+    "des": "masculine",
+    "die": "feminine",
+    "das": "neuter",
+}
+
+
+def normalized_gender(value):
+    value = getattr(value, "value", value)
+    if not isinstance(value, str):
+        return None
+    gender = _ARTICLE_GENDERS.get(value.strip().casefold(), value.strip().casefold())
+    return gender if gender in {"masculine", "feminine", "neuter"} else None
+
+
+def mission_gender(term, word):
+    """``noun_gender`` with article-style genders mapped; elided ``l'`` falls back to the word."""
+    for gender in (term.gender if term is not None else None,
+                   getattr(word.gender, "value", word.gender)):
+        gender = normalized_gender(gender)
+        if gender in {"masculine", "feminine"}:
+            return gender
+    return noun_gender(term, word)
+
+
 def correct_label(question):
     if question.interaction_type == "multipleChoice":
         return next(
@@ -82,7 +114,8 @@ def build_mission_task(
                         dict(option_id=option.option_id, label=option.label)
                         for option in question.options
                     ],
-                    token_bank=question.token_bank,
+                    # A full-stop tile adds nothing; grading ignores the final stop.
+                    token_bank=[token for token in question.token_bank if token != "."],
                     translation=question.translation,
                     **shown(question),
                 )

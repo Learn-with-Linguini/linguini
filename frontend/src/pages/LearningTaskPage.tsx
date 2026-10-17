@@ -7,11 +7,12 @@ import { Button, Card, Feedback, IconButton, ProgressTrail, XpPill } from "../co
 import { CloseIcon, SpeakerIcon } from "../components/icons";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
-import { choiceOrder, finishesWithoutISpy, isMissionSession, practiceStages, taskDone, taskTitle, taskXp, xpEarnedText } from "../lib/practiceTasks";
+import { builtSentence, choiceOrder, finishesWithoutISpy, isMissionSession, markerChoices, optionText, practiceStages, questionOptions, taskDone, taskTitle, taskXp, xpEarnedText } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
 import { checkVocabularyAnswer, getLatestAttempt, reviewDetails, type GrammarLessonQuestion, type SceneObject, type SessionTask, type QuestionOutcome, type TaskActionResult, type TaskAnswer, type VocabularyLearningWord } from "../lib/api";
 import { ReportIssueLink } from "../components/ReportIssueLink";
 import { ObjectPreview } from "../components/ObjectPreview";
+import { ScenePhoto } from "../components/ScenePhoto";
 import { useResolvedImageUrl } from "../components/SceneImage";
 import { boardRows, squareCrop } from "../lib/practiceBoard";
 import { optionMarkerNumber, questionMarkerObjects } from "../lib/missionMarkers";
@@ -292,12 +293,8 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
     ? Object.fromEntries((restored.reviewDetails?.questionOutcomes ?? []).map(item => [item.questionId, item]))
     : outcomes;
   const chosen = restored?.answers ?? answers;
-  const sentence = (tokens: string[]) => tokens.reduce((value, token) => {
-    const joinsPrevious = /^[,.;:!?…]$/.test(token) || value.endsWith("'");
-    return value ? `${value}${joinsPrevious ? "" : " "}${token}` : token;
-  }, "");
   const answerFor = (question: typeof content.questions[number]) => question.interactionType === "sentenceBuilding"
-    ? sentence((builtTokenIndexes[question.questionId] ?? []).map(index => question.tokenBank[index]))
+    ? builtSentence((builtTokenIndexes[question.questionId] ?? []).map(index => question.tokenBank[index]))
     : answers[question.questionId] ?? "";
   const answered = content.questions.every(question => Boolean(answerFor(question)));
   const submit = async () => {
@@ -321,12 +318,18 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
     <div className="learning-title-row"><div><h1>{content.title}</h1>{reward ? <XpPill {...reward} /> : null}</div><ExitToHome onExit={onExit} /></div>
     {content.explanation ? <div className="panel-note">{content.explanation}</div> : null}
     {content.questions.map((question, position) => {
-      const questionMarkers = question.markers
-        ? questionMarkerObjects(question.markers, session?.sceneObjects ?? [])
+      const questionMarkers = question.roleplayPremise
+        ? questionMarkerObjects(
+          question.markerObjectIds,
+          question.sceneObjectId,
+          session?.sceneObjects ?? [],
+          scene.items,
+        )
         : undefined;
       const groupObjects = question.groupObjectIds
         ?.map(id => session?.sceneObjects.find(object => object.id === id))
         .filter((object): object is SceneObject => Boolean(object));
+      const markers = question.roleplayPremise ? [] : markerChoices(question, scene);
       const section = question.section && question.section !== content.questions[position - 1]?.section
         ? question.section : null;
       return <div key={question.questionId} className="learning-section">
@@ -366,27 +369,39 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
           solution={solutions[question.questionId]}
           disabled={terminal || practiceSaving || checking || results[question.questionId] !== undefined}
           onChoose={optionId => setAnswers(value => ({ ...value, [question.questionId]: optionId }))} />
-        : <div className="choice-grid">{choiceOrder(question.options, `${task.id}:${question.questionId}`, option => option.optionId).map(option => {
+        : <>{markers.length ? <div className="mission-markers"><ScenePhoto scene={scene} hideWords
+          items={markers.map(marker => marker.item)}
+          activeItemId={markers.find(marker => marker.option.optionId === (results[question.questionId] !== undefined
+            ? solutions[question.questionId] : chosen[question.questionId]))?.item.id ?? null}
+          guessItemId={results[question.questionId] === false
+            ? markers.find(marker => marker.option.optionId === chosen[question.questionId])?.item.id ?? null : null}
+          onMarkerClick={terminal || practiceSaving || checking || results[question.questionId] !== undefined ? undefined
+            : item => {
+              const marker = markers.find(candidate => candidate.item.id === item.id);
+              if (marker) setAnswers(value => ({ ...value, [question.questionId]: marker.option.optionId }));
+            }} /></div> : null}
+        <div className="choice-grid">{questionOptions(question, `${task.id}:${question.questionId}`).map(option => {
           const selected = chosen[question.questionId] === option.optionId;
           const graded = results[question.questionId];
-          const markerNumber = optionMarkerNumber(
-            option.optionId, question.optionObjectIds, question.markers,
-          );
+          const markerNumber = question.roleplayPremise
+            ? optionMarkerNumber(option.optionId, question.markerObjectIds, scene.items)
+            : null;
           const state = graded !== undefined && solutions[question.questionId] === option.optionId ? " choice--correct"
             : !selected ? ""
               : graded === undefined ? " choice--selected" : graded ? " choice--correct" : " choice--incorrect";
           return <button key={option.optionId} className={`choice${state}`} aria-pressed={selected} disabled={terminal || practiceSaving || checking || graded !== undefined}
             aria-label={markerNumber === null ? undefined : `Marker ${markerNumber}`}
             onClick={() => setAnswers(value => ({ ...value, [question.questionId]: option.optionId }))}>
-            {markerNumber === null ? option.label
-              : <span className="analysis-word-row__marker">{markerNumber}</span>}</button>;
-        })}</div>}
+            {markerNumber === null ? optionText(question, option.label)
+              : <span className="object-preview__key object-preview__key--target">{markerNumber}</span>}</button>;
+        })}</div></>}
       </>}
       {results[question.questionId] !== undefined ? <>
         <Feedback tone={results[question.questionId] ? "good" : "warn"}><p role="status">{results[question.questionId]
           ? "Correct!"
           : <>Not quite.{solutions[question.questionId] ? (() => {
-            const solution = question.options.find(option => option.optionId === solutions[question.questionId])?.label ?? solutions[question.questionId];
+            const label = question.options.find(option => option.optionId === solutions[question.questionId])?.label;
+            const solution = label ? optionText(question, label) : solutions[question.questionId];
             return <> The correct answer is <strong>{solution}</strong>{/[.!?]$/.test(solution) ? "" : "."}</>;
           })() : null}</>}</p></Feedback>
         {question.quantityWord && question.boardCounts ? <p className="small">

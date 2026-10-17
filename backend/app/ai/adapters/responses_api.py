@@ -9,6 +9,7 @@ behaves like another.
 from __future__ import annotations
 
 import base64
+import logging
 import time
 from collections.abc import Mapping
 from dataclasses import dataclass, field
@@ -29,6 +30,8 @@ from app.ai.contracts.metadata import FinishStatus, ResponseMetadata, TokenUsage
 from app.ai.contracts.text import TextModelRequest, TextModelResponse
 from app.ai.contracts.vision import VisionModelRequest, VisionModelResponse
 from app.ai.routing.invocation import InvocationContext
+
+logger = logging.getLogger("app.ai.adapters")
 
 
 @dataclass(frozen=True)
@@ -269,6 +272,22 @@ class ResponsesApiClient:
             output_text = self._extract_text(body)
             incomplete_reason = self._incomplete_reason(body)
             if not output_text.strip() or incomplete_reason == "max_output_tokens":
+                logger.warning(
+                    "%s response payload unusable: status=%s incomplete_reason=%s "
+                    "has_output_text=%s output_count=%s",
+                    self._label,
+                    body.get("status"),
+                    incomplete_reason,
+                    bool(output_text.strip()),
+                    len(outputs) if isinstance(outputs, list) else None,
+                    extra={
+                        "provider": self.ENDPOINT.provider,
+                        "endpoint": self.ENDPOINT.name,
+                        "model": self._config.model_name,
+                        "response_status": body.get("status"),
+                        "incomplete_reason": incomplete_reason,
+                    },
+                )
                 raise ValueError("incomplete output")
             return output_text, self._metadata(response, body, incomplete_reason)
         except (AttributeError, TypeError, ValueError, KeyError):

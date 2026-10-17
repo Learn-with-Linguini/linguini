@@ -34,7 +34,8 @@ type SupportKind = Literal[
     "answerReveal",
 ]
 type MistakeType = Literal[
-    "wrongObject", "wrongWord", "wrongArticle", "wrongGender", "wrongColour", "wrongPosition",
+    "wrongObject", "wrongWord", "wrongArticle", "wrongGender", "wrongColour", "wrongAttribute",
+    "wrongPosition",
     "wordOrder", "missingWord", "spelling", "targetNamed", "wrongQuantity", "pluralForm",
 ]
 type QuestionOutcomeStatus = Literal["correct", "incorrect", "unassessed"]
@@ -162,10 +163,10 @@ class GrammarLessonQuestion(ApiModel):
     # The number word already visible in the prompt, revealed with its digit after grading.
     quantity_word: str | None = Field(default=None, exclude_if=_is_none)
     roleplay_premise: str | None = Field(default=None, exclude_if=_is_none)
-    # Scene object ID -> its review marker number for this question.
-    markers: dict[UUID, int] | None = Field(default=None, exclude_if=_is_none)
-    # Option ID -> scene object ID represented by that marker option.
-    option_object_ids: dict[str, UUID] | None = Field(default=None, exclude_if=_is_none)
+    # Options are shown in their saved, already shuffled order.
+    keep_option_order: bool | None = Field(default=None, exclude_if=_is_none)
+    # A marker choice: option id -> the scene object whose photo marker answers it.
+    marker_object_ids: dict[str, UUID] | None = Field(default=None, exclude_if=_is_none)
 
     @model_validator(mode="after")
     def validate_interaction(self) -> GrammarLessonQuestion:
@@ -175,20 +176,16 @@ class GrammarLessonQuestion(ApiModel):
             raise ValueError("sentence-building questions require a token bank")
         if self.interaction_type == "sentenceBuilding" and self.options:
             raise ValueError("sentence-building questions cannot have answer options")
+        if self.marker_object_ids is not None and set(self.marker_object_ids) != {
+            option.option_id for option in self.options
+        }:
+            raise ValueError("marker choices must cover exactly the answer options")
         if self.board_counts is not None:
             if set(self.board_counts) != {option.option_id for option in self.options}:
                 raise ValueError("board counts must cover exactly the answer options")
             if not all(1 <= count <= 20 for count in self.board_counts.values()):
                 raise ValueError("board counts must be between 1 and 20")
             _unique(list(self.board_counts.values()), "board counts must be distinct")
-        if self.markers is not None:
-            if not all(number >= 1 for number in self.markers.values()):
-                raise ValueError("marker numbers must be positive")
-            _unique(list(self.markers.values()), "marker numbers must be distinct")
-        if self.option_object_ids is not None and set(self.option_object_ids) != {
-            option.option_id for option in self.options
-        }:
-            raise ValueError("option object IDs must cover exactly the answer options")
         return self
 
 
@@ -370,6 +367,8 @@ class TaskAnswerKey(ApiModel):
     question_evaluations: list[QuestionEvaluation] = Field(
         default_factory=list, exclude_if=_is_empty
     )
+    # Yes/no statement questions: question id -> whether the statement is true.
+    statement_correct: dict[str, bool] = Field(default_factory=dict, exclude_if=_is_empty)
 
     @model_validator(mode="after")
     def validate_question_evaluations(self) -> TaskAnswerKey:

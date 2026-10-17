@@ -117,14 +117,16 @@ def review_lesson(
     fact_ids = {fact["sceneObjectId"] for fact in facts}
     assert fact_ids <= set(markers)
     for question in task.public_content.questions:
-        question_markers = {str(key): value for key, value in question.markers.items()}
-        assert set(question_markers) <= fact_ids
-        assert all(markers[object_id] == number
-                   for object_id, number in question_markers.items())
+        question_objects = (
+            {str(object_id) for object_id in question.marker_object_ids.values()}
+            if question.marker_object_ids is not None
+            else ({str(question.scene_object_id)} if question.scene_object_id else set())
+        )
+        assert question_objects <= fact_ids
     match = task.public_content.questions[0]
-    assert {str(object_id) for object_id in match.option_object_ids.values()} == fact_ids
+    assert {str(object_id) for object_id in match.marker_object_ids.values()} == fact_ids
     answer_key = _answer_key(engine, task.id)["correctOptionIds"]
-    assert str(match.option_object_ids[answer_key[match.question_id]]) == next(
+    assert str(match.marker_object_ids[answer_key[match.question_id]]) == next(
         fact["sceneObjectId"] for fact in facts
         if fact.get("ownerNames", fact.get("subjectNames")) == ["Ana"]
     )

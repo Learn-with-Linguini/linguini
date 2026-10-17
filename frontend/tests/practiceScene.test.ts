@@ -77,3 +77,10 @@ test("objects without a bounding box use a safe marker fallback", () => {
   const scene = practiceScene({ ...detail, sceneObjects: [{ ...detail.sceneObjects[0], boundingBox: null }] }, imageUrl, "Spanish");
   assert.deepEqual([scene.items[0].x, scene.items[0].y], [50, 50]);
 });
+
+test("reviewed sessions keep the marker numbers shown on the review screen", () => {
+  const two = { ...detail, sceneObjects: [detail.sceneObjects[0], { ...detail.sceneObjects[0], id: "lamp" }] };
+  assert.deepEqual(practiceScene(two, imageUrl, "Spanish").items.map(item => item.marker), [1, 2]);
+  const reviewed = { ...two, reviewMarkers: { object: 3, lamp: 1 } };
+  assert.deepEqual(practiceScene(reviewed, imageUrl, "Spanish").items.map(item => [item.id, item.marker]), [["object", 3], ["lamp", 1]]);
+});
