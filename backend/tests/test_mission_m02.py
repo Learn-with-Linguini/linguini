@@ -11,13 +11,23 @@ from app.ai.features.learning_tasks.mission_m02 import (
     validate_m02_lesson,
 )
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
-from app.missions import get_mission
+from app.missions import definition_file_name, get_mission
 from app.services.mission_eligibility import photo_eligibility, plan_missions
-from app.services.mission_lessons_m02 import m02_payload
+from app.services.mission_lessons_m02 import m02_lesson_task, m02_payload
+from app.services.question_outcomes import normalize_answer
 
+DETAIL_REASON = (
+    "Confirm a colour, size, shape, material, pattern or state of at least 2 different objects."
+)
+ONE_DETAIL_REASON = (
+    "Confirm a colour, size, shape, material, pattern or state of at least one object."
+)
 M01 = get_mission("M01", "A1", 1)
-M02 = get_mission("M02", "A1", 1)
-CUP, BOOK, TABLE = uuid4(), uuid4(), uuid4()
+M02 = get_mission("M02", "A1", 2)
+CUP = UUID("33333333-0000-0000-0000-000000000000")
+BOOK = UUID("11111111-0000-0000-0000-000000000000")
+TABLE = UUID("22222222-0000-0000-0000-000000000000")
+SESSION = UUID("44444444-4444-4444-4444-444444444444")
 
 
 def obj(id, label, **attributes):
@@ -56,7 +66,7 @@ def test_missing_relations_are_named_for_m02_only():
         "Confirm where one object is on, under, next to, in front of or behind another.",
     )
     assert photo_eligibility(M01, PLAIN, []).reasons == (
-        "Confirm the colours of at least 2 different objects.",
+        DETAIL_REASON,
     )
 
 
@@ -71,8 +81,8 @@ def test_every_mission_the_photo_fits_is_planned(objects, relations, planned):
     assert [mission.mission_id for mission in plan] == planned
 
 
-def _payload(language="fr", relations=None, progress=None):
-    objects = [obj(CUP, "cup"), obj(BOOK, "book"), obj(TABLE, "table")]
+def _payload(language="fr", relations=None, progress=None, review=None, objects=None):
+    objects = objects or [obj(CUP, "cup"), obj(BOOK, "book"), obj(TABLE, "table")]
     words = [
         SimpleNamespace(display_text="tasse", gender="feminine"),
         SimpleNamespace(display_text="livre", gender="masculine"),
@@ -90,129 +100,227 @@ def _payload(language="fr", relations=None, progress=None):
         )
     ])
     relations = relations if relations is not None else [rel(CUP, "next_to", BOOK)]
-    return m02_payload(M02, language, objects, relations, words, scene, progress)
+    return m02_payload(
+        M02, language, objects, relations, words, scene, progress, SESSION, review,
+    )
 
 
-def _relation(payload, index):
+def _relation(payload):
     keys = {row["key"]: row for row in payload["relations"]}
-    return keys[payload["selected"][index]]
+    return keys[payload["selected"][0]]
 
 
-def test_review_relation_keys_get_their_reviewed_answer():
-    (relation,) = _payload(relations=[rel(CUP, "inFrontOf", BOOK)])["relations"]
-    assert relation["statement"] == "La tasse est devant le livre."
-    assert relation["answer"] == "Elle est devant le livre."
+def _labels(question):
+    return {option.option_id: option.label for option in question.options}
+
+
+def test_saved_version_one_lessons_still_resolve_their_definition():
+    old = get_mission("M02", "A1", 1)
+    assert old is not None and old.expected_performance.min_assessed_questions == 3
+    assert M02.expected_performance.min_assessed_questions == 4
+    assert definition_file_name(old) == "M02-A1.toml"
+    assert definition_file_name(M02) == "M02-A1-2.toml"
 
 
 def test_statement_groups_the_contracted_position_into_one_tile():
-    (relation,) = _payload()["relations"]
+    relation = _relation(_payload())
     assert relation["statementTiles"] == ["La", "tasse", "est", "à côté du", "livre", "."]
     assert relation["statement"] == "La tasse est à côté du livre."
-    (spanish,) = _payload("es")["relations"]
+    spanish = _relation(_payload("es"))
     assert spanish["statement"] == "La taza está al lado del libro."
-    assert spanish["answer"] == "Está al lado del libro."
     assert spanish["whereQuestion"] == "¿Dónde está la taza?"
 
 
-def test_one_relation_gives_only_the_three_core_questions():
-    payload = _payload()
-    assert len(payload["selected"]) == 1
-    result = fallback_m02_lesson(payload)
-    assert [q.purpose for q in result.questions] == [
-        "choosePosition", "describeLocation", "askWhere",
-    ]
-
-
-def test_more_objects_without_another_relation_add_no_check():
-    same = [rel(CUP, "on", TABLE), rel(CUP, "on", TABLE)]
-    assert len(_payload("es", same)["selected"]) == 1
-
-
-def test_task_two_prefers_another_pair_and_unfamiliar_phrases_come_first():
+def test_one_relation_is_selected_even_when_more_are_confirmed():
     relations = [rel(CUP, "on", TABLE), rel(BOOK, "under", TABLE)]
-    unseen = _payload("es", relations)
-    assert [_relation(unseen, i)["position"] for i in (0, 1)] == ["on", "under"]
-    familiar = _payload("es", relations, {"terms": {"sobre": 0.9}})
-    assert [_relation(familiar, i)["position"] for i in (0, 1)] == ["under", "on"]
+    payload = _payload("es", relations)
+    assert len(payload["relations"]) == 2 and len(payload["selected"]) == 1
+    familiar = _payload("es", relations, {"terms": {"sobre": 1.0}})
+    assert _relation(familiar)["position"] == "under"
 
 
-def _numbered(subject, relation, reference, number):
-    made = rel(subject, relation, reference)
-    made.id = UUID(int=number)
-    return made
-
-
-def test_fallback_builds_core_questions_and_a_true_check_from_confirmed_facts():
-    relations = [_numbered(CUP, "on", TABLE, 2), _numbered(BOOK, "under", TABLE, 4)]
-    result = fallback_m02_lesson(_payload("es", relations))
+@pytest.mark.parametrize("language", ["es", "fr"])
+def test_all_four_questions_reuse_the_one_confirmed_relation(language):
+    payload = _payload(language, [rel(CUP, "on", TABLE)])
+    result = fallback_m02_lesson(payload)
+    relation = _relation(payload)
     assert [q.purpose for q in result.questions] == [
-        "choosePosition", "describeLocation", "askWhere", "checkAnswer",
+        "findObject", "chooseLocation", "askWhere", "answerWhere",
     ]
-    choose, describe, ask, check = result.questions
-    assert choose.prompt == "Elige la posición: la taza ___ la mesa."
-    assert describe.prompt == "Describe la posición de la taza."
-    assert ask.prompt == "Pregunta por la ubicación de la taza."
-    labels = {o.option_id: o.label for o in choose.options}
-    assert labels[choose.correct_option_id] == "sobre"
-    assert set(labels.values()) == {"sobre", "debajo de", "al lado de"}
-    assert describe.correct_text == "La taza está sobre la mesa."
-    assert sorted(describe.token_bank) == sorted(
-        ["La", "taza", "está", "sobre", "la", "mesa", ".", "debajo de"]
-    )
-    assert ask.correct_text == "¿Dónde está la taza?"
-    assert check.prompt == "\u201cEl libro está debajo de la mesa.\u201d ¿Coincide con la foto?"
-    assert {o.option_id: o.label for o in check.options} == {"yes": "Sí", "no": "No"}
-    assert check.correct_option_id == "yes" and check.object_key == str(BOOK)
+    assert {(q.relation_key, q.object_key) for q in result.questions} == {
+        (relation["key"], str(CUP)),
+    }
+    find, choose, ask, answer = result.questions
+    expected = {
+        "es": ("La taza está sobre la mesa.", "¿Dónde está la taza?"),
+        "fr": ("La tasse est sur la table.", "Où est la tasse ?"),
+    }[language]
+    assert (find.prompt, choose.prompt) == expected
+    assert (answer.correct_text, ask.correct_text) == expected
+    assert all(q.translation is None for q in (find, choose))
 
 
-def test_a_wrong_proposal_uses_the_position_the_photo_contradicts():
-    relations = [_numbered(CUP, "on", TABLE, 2), _numbered(BOOK, "under", TABLE, 3)]
-    check = fallback_m02_lesson(_payload("es", relations)).questions[3]
-    assert check.prompt == "\u201cEl libro está sobre la mesa.\u201d ¿Coincide con la foto?"
-    assert check.correct_option_id == "no"
+def test_marker_question_picks_the_subject_with_scene_review_numbers():
+    payload = _payload("es", [rel(CUP, "on", TABLE)])
+    find = fallback_m02_lesson(payload).questions[0]
+    # Markers follow the confirmed objects in ID order: book 1, table 2, cup 3.
+    assert payload["markers"] == [
+        dict(key=str(BOOK), marker=1, source="book"),
+        dict(key=str(TABLE), marker=2, source="table"),
+        dict(key=str(CUP), marker=3, source="cup"),
+    ]
+    assert _labels(find) == {"marker-1": "1", "marker-2": "2", "marker-3": "3"}
+    assert find.marker_keys == {
+        "marker-1": str(BOOK), "marker-2": str(TABLE), "marker-3": str(CUP),
+    }
+    assert find.correct_option_id == "marker-3"
 
 
-def test_next_to_has_no_contradicting_position_so_its_proposal_is_true():
-    relations = [_numbered(CUP, "on", TABLE, 2), _numbered(BOOK, "next_to", TABLE, 3)]
-    check = fallback_m02_lesson(_payload("es", relations)).questions[3]
-    assert "El libro está al lado de la mesa." in check.prompt
-    assert check.correct_option_id == "yes"
+def test_objects_named_like_the_subject_are_never_marker_distractors():
+    objects = [obj(CUP, "cup"), obj(BOOK, "cup"), obj(TABLE, "table")]
+    words = [SimpleNamespace(display_text=text, gender="feminine")
+             for text in ("taza", "taza", "mesa")]
+    scene = SimpleNamespace(objects=[
+        SimpleNamespace(key=str(key), article="la", gender="feminine")
+        for key in (CUP, BOOK, TABLE)
+    ])
+    payload = m02_payload(M02, "es", objects, [rel(CUP, "on", TABLE)], words, scene, None, SESSION)
+    assert _relation(payload)["markerOptions"] == [str(CUP), str(TABLE)]
 
 
-def test_french_prompts_are_in_french_and_never_contain_the_built_sentence():
-    relations = [_numbered(CUP, "on", TABLE, 2), _numbered(BOOK, "under", TABLE, 4)]
-    choose, describe, ask, check = fallback_m02_lesson(_payload("fr", relations)).questions
-    assert choose.prompt == "Choisis la position : la tasse ___ la table."
-    assert describe.prompt == "Décris la position de la tasse."
-    assert ask.prompt == "Pose une question sur l'emplacement de la tasse."
-    assert check.prompt == (
-        "\u00ab Le livre est sous la table. \u00bb Est-ce que ça correspond à la photo ?"
-    )
-    assert {o.label for o in check.options} == {"Oui", "Non"}
-    for question in (describe, ask):
-        assert question.correct_text.casefold() not in question.prompt.casefold()
+def test_location_options_are_taught_with_only_the_confirmed_one_true():
+    payload = _payload("es", [rel(CUP, "on", TABLE), rel(TABLE, "next_to", CUP)])
+    choose = fallback_m02_lesson(payload).questions[1]
+    labels = _labels(choose)
+    assert labels[choose.correct_option_id] == "sobre la mesa"
+    assert "al lado de la mesa" not in labels.values()
+    assert set(labels.values()) <= {
+        "sobre la mesa", "debajo de la mesa", "delante de la mesa", "detrás de la mesa",
+    }
+    assert "debajo de la mesa" in labels.values()
 
 
-def test_inverse_relations_are_not_offered_as_wrong_phrases():
-    payload = _payload("es", [rel(CUP, "next_to", BOOK), rel(BOOK, "under", CUP)])
-    choose = fallback_m02_lesson(payload).questions[0]
-    assert {o.label for o in choose.options} == {"al lado de", "debajo de", "delante de"}
+def test_answer_tiles_offer_a_contradicting_position_that_is_rejected():
+    payload = _payload("fr", [rel(CUP, "on", TABLE)])
+    result = fallback_m02_lesson(payload)
+    answer = result.questions[3]
+    relation = _relation(payload)
+    assert relation["answerExtra"] == "sous"
+    assert relation["contradiction"] == "La tasse est sous la table."
+    assert sorted(answer.token_bank) == sorted(["La", "tasse", "est", "sur", "la", "table", ".",
+                                                "sous"])
+    task = m02_lesson_task(SESSION, M02, payload, result, {})
+    rules = {e.question_id: e for e in task.answer_key.question_evaluations}
+    wrong = rules["answer-where"].corrections[0]
+    assert (wrong.mistake, wrong.answers) == ("wrongPosition", ["La tasse est sous la table."])
+
+
+def test_task_shows_markers_without_highlight_then_highlights_both_objects():
+    payload = _payload("es", [rel(CUP, "on", TABLE)])
+    result = fallback_m02_lesson(payload)
+    questions = m02_lesson_task(SESSION, M02, payload, result, {}).public_content.questions
+    find, choose, ask, answer = questions
+    assert find.scene_object_id is None and find.reference_object_id is None
+    assert {k: str(v) for k, v in find.marker_object_ids.items()} == result.questions[0].marker_keys
+    assert (choose.scene_object_id, choose.reference_object_id) == (CUP, TABLE)
+    assert (answer.scene_object_id, answer.reference_object_id) == (CUP, TABLE)
+    assert [q.keep_option_order for q in questions] == [True, True, None, None]
+    assert [q.section for q in questions] == [
+        "Task 1 · Find it in your photo", "Task 1 · Find it in your photo",
+        "Task 2 · Ask and answer where", "Task 2 · Ask and answer where",
+    ]
+
+
+def test_option_order_is_stable_for_a_session():
+    relations = [rel(CUP, "on", TABLE)]
+    one = fallback_m02_lesson(_payload("es", relations)).questions[1]
+    two = fallback_m02_lesson(_payload("es", relations)).questions[1]
+    assert [o.label for o in one.options] == [o.label for o in two.options]
+
+
+def test_removed_objects_drop_their_relations():
+    payload = _payload("es", [rel(CUP, "on", uuid4())])
+    assert payload["relations"] == [] and payload["selected"] == []
+
+
+def _mutate(result, index, **changes):
+    questions = list(result.questions)
+    questions[index] = questions[index].model_copy(update=changes)
+    return result.model_copy(update={"questions": questions})
 
 
 @pytest.mark.parametrize("change", [
-    lambda data: data["questions"][0].update(correct_option_id="phrase-9"),
-    lambda data: data["questions"][3].update(correct_option_id="no"),
-    lambda data: data["questions"][3].update(prompt="¿Coincide con la foto?"),
-    lambda data: data["questions"].pop(3),
-    lambda data: data["questions"].reverse(),
-    lambda data: data["questions"][1].update(token_bank=["La", "tasse"]),
-    lambda data: data["questions"][2].update(correct_text="Où est le livre ?"),
-    lambda data: data["questions"][1].update(relation_key="other"),
-    lambda data: data["questions"].pop(2),
+    lambda r: _mutate(r, 0, correct_option_id="marker-2"),
+    lambda r: _mutate(r, 0, marker_keys={**r.questions[0].marker_keys, "marker-1": str(uuid4())}),
+    lambda r: _mutate(r, 0, options=[o.model_copy(update={"label": "9"})
+                                     if o.option_id == "marker-1" else o
+                                     for o in r.questions[0].options]),
+    lambda r: _mutate(r, 0, prompt="La taza está debajo de la mesa."),
+    lambda r: _mutate(r, 1, options=[o.model_copy(update={"label": "al lado de la mesa"})
+                                     if o.option_id != r.questions[1].correct_option_id else o
+                                     for o in r.questions[1].options][:2]),
+    lambda r: _mutate(r, 3, correct_text="La taza está debajo de la mesa."),
+    lambda r: _mutate(r, 2, token_bank=[*r.questions[2].token_bank, "libro"]),
+    lambda r: _mutate(r, 1, relation_key=str(uuid4())),
 ])
 def test_validator_rejects_unconfirmed_or_unanswerable_lessons(change):
-    payload = _payload("fr", [_numbered(CUP, "on", TABLE, 2), _numbered(BOOK, "under", TABLE, 4)])
-    data = fallback_m02_lesson(payload).model_dump()
-    change(data)
-    with pytest.raises((ValueError, LearningTaskGenerationError)):
-        validate_m02_lesson(payload, M02LessonResult.model_validate(data))
+    payload = _payload("es", [rel(CUP, "on", TABLE), rel(TABLE, "next_to", CUP)])
+    result = fallback_m02_lesson(payload)
+    with pytest.raises((LearningTaskGenerationError, ValueError)):
+        validate_m02_lesson(payload, M02LessonResult.model_validate(
+            change(result).model_dump(by_alias=True)
+        ))
+
+
+def test_built_french_questions_match_their_spaced_question_mark():
+    ask = fallback_m02_lesson(_payload("fr", [rel(CUP, "on", TABLE)])).questions[2]
+    assert ask.correct_text == "Où est la tasse ?"
+    assert normalize_answer("Où est la tasse?") == normalize_answer(ask.correct_text)
+
+
+def test_elided_article_genders_fall_back_to_the_word():
+    from app.services.mission_lessons import mission_gender
+    term = SimpleNamespace(gender="l'")
+    assert mission_gender(term, SimpleNamespace(gender="feminine")) == "feminine"
+    assert mission_gender(SimpleNamespace(gender="le"), SimpleNamespace(gender=None)) == "masculine"
+    assert mission_gender(None, SimpleNamespace(gender="la")) == "feminine"
+
+
+def test_catalog_words_with_inline_articles_build_without_a_translated_scene():
+    objects = [obj(CUP, "chair"), obj(TABLE, "table"), obj(BOOK, "counter")]
+    words = [SimpleNamespace(display_text=text, gender=gender) for text, gender in (
+        ("la silla", "la"), ("la mesa", "la"), ("el mostrador", "el"),
+    )]
+    for relation, statement in (
+        (rel(CUP, "next_to", TABLE), "La silla está al lado de la mesa."),
+        (rel(CUP, "behind", BOOK), "La silla está detrás del mostrador."),
+    ):
+        payload = m02_payload(M02, "es", objects, [relation], words, None, None, SESSION)
+        result = fallback_m02_lesson(payload)
+        validate_m02_lesson(payload, result)
+        assert result.questions[0].prompt == statement
+        assert result.questions[2].correct_text == "¿Dónde está la silla?"
+
+
+def test_markers_keep_review_numbers_with_gaps_for_removed_objects():
+    review = {str(CUP): 4, str(BOOK): 1, str(TABLE): 2}
+    payload = _payload("es", [rel(CUP, "on", TABLE)], review=review, objects=[
+        obj(CUP, "the cup"), obj(BOOK, "book"), obj(TABLE, "table"),
+    ])
+    find = fallback_m02_lesson(payload).questions[0]
+    assert [(row["source"], row["marker"]) for row in payload["markers"]] == [
+        ("book", 1), ("table", 2), ("cup", 4),
+    ]
+    assert find.correct_option_id == "marker-4"
+    assert _labels(find) == {"marker-1": "1", "marker-2": "2", "marker-4": "4"}
+    partial = _payload("es", [rel(CUP, "on", TABLE)], review={str(CUP): 4})
+    assert [row["marker"] for row in partial["markers"]] == [1, 2, 3]
+
+
+def test_review_numbers_follow_detection_then_added_order():
+    from app.repositories.postgres.workflow import review_marker_numbers
+    detected = [{"id": str(TABLE)}, {"id": str(BOOK)}, {"id": str(CUP)}]
+    added = [uuid4(), uuid4()]
+    assert review_marker_numbers(detected, [TABLE, CUP], added) == {
+        str(TABLE): 1, str(CUP): 3, str(added[0]): 4, str(added[1]): 5,
+    }

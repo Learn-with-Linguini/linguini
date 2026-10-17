@@ -4576,12 +4576,16 @@ p[role="alert"]::before { content: "!"; }
 
 .object-preview { margin: 0; display: grid; gap: var(--space-2); justify-items: center; }
 .object-preview__scene { position: relative; width: min(100%, 320px); }
-.object-preview__ring { position: absolute; width: 56px; height: 56px; transform: translate(-50%, -50%); border: 3px solid var(--tomato); border-radius: 50%; pointer-events: none; }
-.object-preview__ring--reference { border-color: var(--teal); border-style: dashed; }
 .object-preview__legend { display: flex; flex-wrap: wrap; gap: var(--space-3); justify-content: center; }
 .object-preview__legend > span { display: inline-flex; align-items: center; gap: var(--space-1); }
-.object-preview__key { width: 14px; height: 14px; border-radius: 50%; border: 3px solid var(--tomato); }
-.object-preview__key--reference { border-color: var(--teal); border-style: dashed; }
+/* Legend discs repeat the photo's marker numbers: tomato for the asked object. */
+.object-preview__key { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font-size: var(--text-small, 0.8125rem); font-weight: 800; color: var(--ink); background: var(--cream, #fffaf0); border: 2px solid var(--ink); }
+.object-preview__key--target { color: #fff; background: var(--tomato); border-color: var(--tomato); }
+
+/* Marker badges near the top edge stay readable over a small photo. */
+.mission-markers { padding-top: var(--space-5); }
+.mission-markers .scene { overflow: visible; }
+.mission-markers .scene__art { border-radius: calc(var(--radius-md) - var(--stroke)); overflow: hidden; }
 
 .learning-section { display: grid; gap: var(--space-3); }
 .learning-section__title { margin: 0; font-size: var(--text-h3); }

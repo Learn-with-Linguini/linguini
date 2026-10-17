@@ -5,7 +5,8 @@ title = "Identify and describe an object"
 
 [photo_requirements]
 media_sources = ["preloaded", "camera", "userUpload"]
-# Two different objects, each described by its own confirmed colour.
+# Two different objects, each with its own confirmed, reviewed detail (colour, size,
+# shape, material, pattern or state); min_coloured_objects counts those objects.
 min_confirmed_objects = 2
 min_coloured_objects = 2
 
@@ -25,7 +26,7 @@ evidence_types = ["recognition", "construction", "production"]
 
 [[objective.targets]]
 target_id = "describe-colour"
-summary = "Say an object's colour with a colour adjective that agrees with its noun."
+summary = "Say an object's colour or another confirmed detail with a word that agrees with its noun."
 evidence_types = ["recognition", "construction", "production"]
 
 [[objective.targets]]
@@ -42,7 +43,7 @@ examples = { es = ["una mesa", "un libro"], fr = ["une table", "un livre"] }
 [[language_patterns]]
 pattern_id = "copula-colour"
 target_id = "describe-colour"
-structure = "[it is] [indefinite article] [noun] [colour agreeing with the noun]"
+structure = "[it is] [indefinite article] [noun] [colour or detail agreeing with the noun]"
 clue_frame_id = "colour"
 examples = { es = ["Es una mesa blanca.", "Es un libro rojo."], fr = ["C'est une table blanche.", "C'est un livre rouge."] }
 

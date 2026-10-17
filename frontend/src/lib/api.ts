@@ -443,6 +443,8 @@ export interface PracticeDetail {
   analysisMode: "placeholder" | null;
   analysisRetryable: boolean;
   sceneObjects: SceneObject[];
+  /** Reviewed sessions: scene object id -> its marker number on the review screen. */
+  reviewMarkers?: Record<string, number>;
   sceneObjectRelations: SceneObjectRelation[];
   sceneActionSuggestions: SceneActionSuggestion[];
   scenePriceSuggestions: ScenePriceSuggestion[];
@@ -505,12 +507,16 @@ export interface GrammarLessonQuestion {
   boardCounts?: Record<string, number>;
   boardObjectId?: string | null;
   quantityWord?: string | null;
+  /** Mission options already shuffled and saved by the backend; show them as stored. */
+  keepOptionOrder?: boolean | null;
+  /** Marker questions: each option's scene object, numbered as on the reviewed photo. */
+  markerObjectIds?: Record<string, string> | null;
 }
 export type TaskAnswer = { inputMode: "text"; text: string; assistance?: ClueAssistance } | { inputMode: "multipleChoice"; optionId: string } | { inputMode: "objectSelection"; sceneObjectId: string } | { inputMode: "vocabularyReview"; answers: Record<string, string>; typedAnswers: Record<string, string>; questionAssistance?: QuestionAssistance[] };
 export type ConfirmGuessBody = { attemptId: string };
 export type SupportKind = "translation" | "audio" | "example" | "wordBank" | "clueFrame" | "helpPhrase" | "hint" | "answerReveal";
 export type EvidenceType = "recognition" | "objectSelection" | "construction" | "production" | "participation";
-export type MistakeType = "wrongObject" | "wrongWord" | "wrongArticle" | "wrongGender" | "wrongColour" | "wrongPosition" | "wordOrder" | "missingWord" | "spelling" | "targetNamed" | "wrongQuantity" | "pluralForm";
+export type MistakeType = "wrongObject" | "wrongWord" | "wrongArticle" | "wrongGender" | "wrongColour" | "wrongAttribute" | "wrongPosition" | "wordOrder" | "missingWord" | "spelling" | "targetNamed" | "wrongQuantity" | "pluralForm";
 /** Supports the learner opened for one grouped-lesson question. */
 export interface QuestionAssistance { questionId: string; supports: SupportKind[] }
 export interface MistakeDetail { mistake: MistakeType; answer: string | null; correction: string; explanation: string | null }

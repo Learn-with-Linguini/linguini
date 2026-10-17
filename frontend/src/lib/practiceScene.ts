@@ -19,7 +19,8 @@ export function practiceScene(detail: PracticeDetail, imageUrl: string, language
         return { id: object.id, word: word?.displayText ?? object.label,
           translation: translation?.translatedText ?? object.label, wordClass: word?.partOfSpeech ?? "noun",
           gender: word?.gender != null && GENDER_ARTICLES.has(word.gender) ? word.gender as Gender : null,
-          marker: i + 1,
+          // Keep the numbers the learner saw while reviewing the photo.
+          marker: detail.reviewMarkers?.[object.id] ?? i + 1,
           x: anchorX * 100,
           y: anchorY * 100,
           attributes: Object.fromEntries(Object.entries(object.attributes ?? {}).filter((entry): entry is [string, string] => typeof entry[1] === "string")),
