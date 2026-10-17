@@ -7,9 +7,13 @@ from app.ai.features.learning_tasks.mission import MissionGeneration
 from app.ai.features.learning_tasks.mission_m01 import M01_GENERATION
 from app.ai.features.learning_tasks.mission_m02 import M02_GENERATION
 from app.ai.features.learning_tasks.mission_m03 import M03_GENERATION
+from app.ai.features.learning_tasks.mission_m04 import M04_GENERATION
+from app.ai.features.learning_tasks.mission_m05 import M05_GENERATION
 from app.services.mission_lessons_m01 import m01_lesson_task, m01_payload
 from app.services.mission_lessons_m02 import m02_lesson_task, m02_payload
 from app.services.mission_lessons_m03 import m03_lesson_task, m03_payload
+from app.services.mission_lessons_m04 import m04_lesson_task, m04_payload, m04_ready
+from app.services.mission_lessons_m05 import m05_lesson_task, m05_payload, m05_ready
 
 
 @dataclass(frozen=True)
@@ -26,25 +30,43 @@ class MissionLessonSpec:
 
 def _m01_payload(
     mission, language, objects, _relations, words, translated_scene, _counts, progress,
-    _session_id,
+    _session_id, context=None,
 ):
     return m01_payload(mission, language, objects, words, translated_scene, progress)
 
 
 def _m02_payload(
     mission, language, objects, relations, words, translated_scene, _counts, progress,
-    _session_id,
+    _session_id, context=None,
 ):
     return m02_payload(mission, language, objects, relations, words, translated_scene, progress)
 
 
 def _m03_payload(
     mission, language, objects, relations, words, translated_scene, counts, progress,
-    session_id,
+    session_id, context=None,
 ):
     return m03_payload(
         mission, language, objects, relations, words, translated_scene, counts,
         progress, session_id,
+    )
+
+
+def _m04_payload(
+    mission, language, objects, relations, words, translated_scene, _counts, _progress,
+    session_id, context=None,
+):
+    return m04_payload(
+        mission, language, objects, words, translated_scene, session_id, context
+    )
+
+
+def _m05_payload(
+    mission, language, objects, relations, words, translated_scene, _counts, _progress,
+    session_id, context=None,
+):
+    return m05_payload(
+        mission, language, objects, words, translated_scene, session_id, context
     )
 
 
@@ -60,5 +82,11 @@ MISSION_LESSONS = {
     "M03": MissionLessonSpec(
         _m03_payload, M03_GENERATION, m03_lesson_task,
         lambda payload: payload["group"] is not None,
+    ),
+    "M04": MissionLessonSpec(
+        _m04_payload, M04_GENERATION, m04_lesson_task, m04_ready,
+    ),
+    "M05": MissionLessonSpec(
+        _m05_payload, M05_GENERATION, m05_lesson_task, m05_ready,
     ),
 }

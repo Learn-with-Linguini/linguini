@@ -26,8 +26,19 @@ from app.repositories.practice import PracticeConflictError
 from app.schemas.enums import SessionMode
 from app.schemas.sessions import ReviewPracticeRequest
 from app.schemas.tasks import SkipTaskRequest
+from app.services import mission_eligibility
 
 A1_ES = {"proficiency_level": "A1", "target_language_code": "es"}
+
+
+@pytest.fixture(autouse=True)
+def existing_a1_missions(monkeypatch):
+    """Keep legacy mission workflows independent of the newly added M04/M05 variants."""
+    monkeypatch.setitem(
+        mission_eligibility.IMPLEMENTED_MISSIONS,
+        "A1",
+        (("M01", "A1", 1), ("M02", "A1", 1), ("M03", "A1", 1)),
+    )
 
 
 def _relations_only(detail):

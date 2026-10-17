@@ -1,0 +1,118 @@
+mission_id = "M04"
+practice_level = "A1"
+content_version = 1
+title = "Say what is yours"
+
+[photo_requirements]
+media_sources = ["preloaded", "camera", "userUpload"]
+min_confirmed_objects = 3
+
+[objective]
+objective_id = "say-what-is-yours"
+can_do = "I can say whose thing it is in a pretend situation: mine or a named person's."
+
+[[objective.targets]]
+target_id = "understand-ownership"
+summary = "Understand a short ownership statement about a pretend object."
+evidence_types = ["recognition"]
+
+[[objective.targets]]
+target_id = "choose-possessive"
+summary = "Choose the possessive that matches a pretend owner."
+evidence_types = ["recognition"]
+
+[[objective.targets]]
+target_id = "say-mine"
+summary = "Say that a pretend object is yours."
+evidence_types = ["construction"]
+
+[[objective.targets]]
+target_id = "say-theirs"
+summary = "Say that a pretend object belongs to a named character."
+evidence_types = ["construction"]
+
+[[language_patterns]]
+pattern_id = "first-person-possessive"
+target_id = "say-mine"
+structure = "[copula] [first-person singular possessive] [singular noun]."
+examples = { es = ["Es mi libro."], fr = ["C'est mon livre."] }
+
+[[language_patterns]]
+pattern_id = "third-person-possessive"
+target_id = "say-theirs"
+structure = "[copula] [third-person singular possessive] [singular noun]."
+examples = { es = ["Es su taza."], fr = ["C'est sa tasse."] }
+
+[[language_patterns]]
+pattern_id = "ownership-statement"
+target_id = "understand-ownership"
+structure = "[copula] [definite noun phrase] de [named owner]."
+examples = { es = ["Es la taza de Ana."], fr = ["C'est la tasse d'Ana."] }
+
+[teaching]
+task_sequence = ["vocabularyIntroduction", "grammarLesson", "ispyRound", "reflection"]
+teach_before_assessment = ["understand-ownership", "choose-possessive", "say-mine", "say-theirs"]
+max_new_words = 6
+
+[[teaching.supports]]
+support = "translation"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "audio"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "example"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "wordBank"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "hint"
+availability = "onRequest"
+counts_as_assistance = true
+
+[[teaching.supports]]
+support = "answerReveal"
+availability = "onRequest"
+counts_as_assistance = true
+
+[[evaluation_criteria]]
+criterion_id = "matches-assigned-owner"
+target_id = "understand-ownership"
+description = "Matches a pretend ownership statement to its assigned owner."
+evidence_types = ["recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "chooses-possessive"
+target_id = "choose-possessive"
+description = "Chooses the taught possessive for the assigned perspective."
+evidence_types = ["recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "says-mine"
+target_id = "say-mine"
+description = "Builds the first-person singular possessive statement."
+evidence_types = ["construction"]
+
+[[evaluation_criteria]]
+criterion_id = "says-theirs"
+target_id = "say-theirs"
+description = "Builds the named character's third-person singular possessive statement."
+evidence_types = ["construction"]
+
+[expected_performance]
+min_assessed_questions = 3
+min_correct_ratio = 0.75
+min_independent_correct = 1
+required_target_groups = [
+  ["say-mine"],
+  ["say-theirs"],
+]

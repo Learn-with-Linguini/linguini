@@ -19,7 +19,9 @@ INDEFINITE_ARTICLES = {
 MAX_DISTRACTORS = 3
 _PATTERN_ID = "copula-colour"
 # Legacy vocabulary rows may keep their article inside the display text.
-_LEADING_ARTICLE = re.compile(r"^(?:el|la|los|las|le|les|un|una|une)\s+|^l['’]", re.IGNORECASE)
+_LEADING_ARTICLE = re.compile(
+    r"^(?:el|la|los|las|le|les|un|una|une|der|die|das)\s+|^l['’]", re.IGNORECASE
+)
 _EVALUATIONS = {
     "identifyObject": (
         ["identify-object", "name-object"],

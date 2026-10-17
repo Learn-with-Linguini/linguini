@@ -19,6 +19,7 @@ from app.schemas.enums import (
     TaskPhase,
     TaskStatus,
 )
+from app.schemas.roleplay import RoleplayFact
 
 type MissionId = Annotated[str, StringConstraints(pattern=r"^M\d{2}$")]
 type ContentVersion = Annotated[int, Field(ge=1)]
@@ -160,6 +161,11 @@ class GrammarLessonQuestion(ApiModel):
     board_object_id: UUID | None = Field(default=None, exclude_if=_is_none)
     # The number word already visible in the prompt, revealed with its digit after grading.
     quantity_word: str | None = Field(default=None, exclude_if=_is_none)
+    roleplay_premise: str | None = Field(default=None, exclude_if=_is_none)
+    # Scene object ID -> its review marker number for this question.
+    markers: dict[UUID, int] | None = Field(default=None, exclude_if=_is_none)
+    # Option ID -> scene object ID represented by that marker option.
+    option_object_ids: dict[str, UUID] | None = Field(default=None, exclude_if=_is_none)
 
     @model_validator(mode="after")
     def validate_interaction(self) -> GrammarLessonQuestion:
@@ -175,6 +181,14 @@ class GrammarLessonQuestion(ApiModel):
             if not all(1 <= count <= 20 for count in self.board_counts.values()):
                 raise ValueError("board counts must be between 1 and 20")
             _unique(list(self.board_counts.values()), "board counts must be distinct")
+        if self.markers is not None:
+            if not all(number >= 1 for number in self.markers.values()):
+                raise ValueError("marker numbers must be positive")
+            _unique(list(self.markers.values()), "marker numbers must be distinct")
+        if self.option_object_ids is not None and set(self.option_object_ids) != {
+            option.option_id for option in self.options
+        }:
+            raise ValueError("option object IDs must cover exactly the answer options")
         return self
 
 
@@ -184,6 +198,7 @@ class GrammarLessonContent(MissionTaskFields):
     title: NonEmptyText
     explanation: NonEmptyText | None = Field(default=None, exclude_if=_is_none)
     questions: Annotated[list[GrammarLessonQuestion], Field(min_length=1)]
+    roleplay_facts: list[RoleplayFact] | None = Field(default=None, exclude_if=_is_none)
 
 
 class GrammarExplanationContent(MissionTaskFields):

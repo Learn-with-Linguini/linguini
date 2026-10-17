@@ -103,6 +103,7 @@ from app.services.mission_eligibility import (
 )
 from app.services.mission_lessons import mission_version
 from app.services.mission_registry import MISSION_LESSONS
+from app.services.mission_roleplay import assign_roleplay
 from app.services.quantities import suggested_quantity
 from app.services.question_outcomes import (
     normalize_answer,
@@ -315,6 +316,8 @@ class GenerationClaim:
     missions: tuple[MissionDefinition, ...] = ()
     counted_groups: tuple[dict, ...] = ()
     mission_progress: dict | None = None
+    roleplay_facts: dict[str, list[dict]] | None = None
+    review_markers: dict[str, int] | None = None
 
     @property
     def generation_options(self) -> dict:
@@ -1244,6 +1247,22 @@ class PostgresWorkflowRepository:
                 item.id: uuid5(session_id, "manual:" + str(item.id))
                 for item in request.added_objects
             }
+            review_markers = {
+                str(obj.id): index + 1
+                for index, obj in enumerate(detail.scene_objects)
+                if obj.id in request.accepted_object_ids
+            }
+            review_markers.update({
+                str(manual_ids[item.id]): len(detail.scene_objects) + index + 1
+                for index, item in enumerate(request.added_objects)
+            })
+            draft = dict(c.execute(select(sessions.c.analysis_draft).where(
+                sessions.c.id == session_id,
+            )).scalar_one() or {})
+            draft["reviewMarkers"] = review_markers
+            c.execute(update(sessions).where(sessions.c.id == session_id).values(
+                analysis_draft=draft,
+            ))
             original_relations = {row.id: row for row in detail.scene_object_relations}
             for relation in request.relations:
                 original = original_relations.get(relation.id)
@@ -1332,6 +1351,7 @@ class PostgresWorkflowRepository:
                     c, self.user_id, dict(profile), session_id, labels,
                 )
             missions = tuple(self._planned_missions(session, dict(profile)))
+            draft = session.analysis_draft or {}
             return GenerationClaim(
                 session_id,
                 profile_id,
@@ -1348,6 +1368,12 @@ class PostgresWorkflowRepository:
                 mission_progress=(
                     self._mission_progress(c, dict(profile), history) if missions else None
                 ),
+                roleplay_facts={
+                    item["missionId"]: item["roleplayFacts"]
+                    for item in draft.get("missionPlan", [])
+                    if "roleplayFacts" in item
+                },
+                review_markers=draft.get("reviewMarkers") or {},
             )
 
     def _mission_progress(self, c, profile, history):
@@ -1426,11 +1452,49 @@ class PostgresWorkflowRepository:
         candidates = lesson_missions(session.mode, profile)
         if not candidates:
             return
-        plan = plan_missions(candidates, objects, relations, counted_groups)
+        history_drafts = c.execute(
+            select(sessions.c.analysis_draft).where(
+                sessions.c.language_profile_id == profile["id"],
+                sessions.c.id != session.id,
+                sessions.c.mode == SessionMode.LESSON,
+            )
+        ).scalars().all()
+        history = [
+            item["missionId"]
+            for saved in history_drafts
+            for item in (saved or {}).get("missionPlan", [])
+            if isinstance(item, dict) and isinstance(item.get("missionId"), str)
+        ]
+        plan = plan_missions(candidates, objects, relations, counted_groups, history)
         draft = dict(c.execute(select(sessions.c.analysis_draft).where(
             sessions.c.id == session.id,
         )).scalar_one() or {})
-        draft["missionPlan"] = [mission_snapshot(mission) for mission in plan]
+        previous_entries = {
+            (
+                item.get("missionId"),
+                item.get("practiceLevel"),
+                item.get("contentVersion"),
+            ): item
+            for item in draft.get("missionPlan", [])
+            if isinstance(item, dict)
+        }
+        markers = draft.get("reviewMarkers") or {}
+        mission_plan = []
+        for mission in plan:
+            entry = mission_snapshot(mission)
+            previous = previous_entries.get((
+                entry["missionId"], entry["practiceLevel"], entry["contentVersion"],
+            ), {})
+            entry.update({
+                key: value for key, value in previous.items()
+                if key not in entry and key != "roleplayFacts"
+            })
+            if mission.mission_id in {"M04", "M05"}:
+                entry["roleplayFacts"] = assign_roleplay(
+                    mission, session.id, objects, markers
+                )
+            mission_plan.append(entry)
+        draft["missionPlan"] = mission_plan
         draft.pop("missionGuidance", None)
         if not plan:
             # No mission fits, so the regular lesson runs with tips for a future photo.
@@ -1672,7 +1736,14 @@ class PostgresWorkflowRepository:
             payload = spec.payload(
                 mission, language, objects, relations, words, translated_scene,
                 claim.counted_groups, claim.mission_progress or {}, claim.session_id,
+                context={
+                    "roleplay_facts": (claim.roleplay_facts or {}).get(mission.mission_id),
+                    "review_markers": claim.review_markers or {},
+                },
             )
+            if payload.get("invalidRoleplay"):
+                skipped.append(dict(missionId=mission.mission_id, reason="invalidRoleplay"))
+                continue
             if not spec.ready(payload):
                 logger.warning(
                     "%s has no reviewed content for session %s; skipping it.",

@@ -1,6 +1,7 @@
 """Mission planning and per-mission photo eligibility from learner-confirmed scene facts."""
 
 import re
+from collections import Counter
 from dataclasses import dataclass
 
 from app.missions import get_mission
@@ -10,8 +11,10 @@ from app.services.ispy_clue_frames import COLOUR_ATTRIBUTE_TYPES, POSITIONS, SUP
 M01_A1 = ("M01", "A1", 1)
 M02_A1 = ("M02", "A1", 1)
 M03_A1 = ("M03", "A1", 1)
+M04_A1 = ("M04", "A1", 1)
+M05_A1 = ("M05", "A1", 1)
 # Implemented A1 variants in catalogue order; a lesson assesses at most three.
-IMPLEMENTED_MISSIONS = {"A1": (M01_A1, M02_A1, M03_A1)}
+IMPLEMENTED_MISSIONS = {"A1": (M01_A1, M02_A1, M03_A1, M04_A1, M05_A1)}
 MAX_LESSON_MISSIONS = 3
 
 # Reviewed singular (masculine, feminine) colour forms for each supported lesson language.
@@ -59,12 +62,21 @@ def lesson_missions(session_mode, profile):
     return [mission for key in keys if (mission := get_mission(*key)) is not None]
 
 
-def plan_missions(candidates, objects, relations, counted_groups=()):
-    """Every mission this photo supports, in catalogue order."""
-    return [
+def plan_missions(candidates, objects, relations, counted_groups=(), history=()):
+    """Select least-planned eligible missions, returning them in catalogue order."""
+    eligible = [
         mission for mission in candidates
         if photo_eligibility(mission, objects, relations, counted_groups).eligible
-    ][:MAX_LESSON_MISSIONS]
+    ]
+    counts = Counter(history)
+    selected = {
+        mission.mission_id
+        for _index, mission in sorted(
+            enumerate(eligible),
+            key=lambda item: (counts[item[1].mission_id], item[0]),
+        )[:MAX_LESSON_MISSIONS]
+    }
+    return [mission for mission in eligible if mission.mission_id in selected]
 
 
 def mission_snapshot(mission):

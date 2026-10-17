@@ -277,6 +277,34 @@
   color: var(--ink);
 }
 
+.roleplay-premise {
+  border-left: 4px solid var(--teal);
+  border-radius: var(--radius-sm);
+  background: var(--cream);
+  padding: var(--space-3) var(--space-4);
+}
+
+.roleplay-premise__label {
+  display: block;
+  margin-bottom: var(--space-1);
+  color: var(--teal-dark);
+  font-size: var(--text-label);
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.roleplay-premise__text,
+.roleplay-premise__disclaimer {
+  margin: 0;
+}
+
+.roleplay-premise__disclaimer {
+  margin-top: var(--space-1);
+  color: var(--ink-muted);
+  font-size: var(--text-label);
+}
+
 /* Chips */
 .chip {
   display: inline-flex;
@@ -4330,8 +4358,10 @@ p[role="alert"]::before { content: "!"; }
 .object-preview__scene { position: relative; width: min(100%, 320px); }
 .object-preview__ring { position: absolute; width: 56px; height: 56px; transform: translate(-50%, -50%); border: 3px solid var(--tomato); border-radius: 50%; pointer-events: none; }
 .object-preview__ring--reference { border-color: var(--teal); border-style: dashed; }
+.object-preview__marker { position: absolute; transform: translate(-50%, -50%); pointer-events: none; }
 .object-preview__legend { display: flex; flex-wrap: wrap; gap: var(--space-3); justify-content: center; }
 .object-preview__legend > span { display: inline-flex; align-items: center; gap: var(--space-1); }
+.object-preview__marker-note { color: var(--ink-muted); font-size: var(--text-small); }
 .object-preview__key { width: 14px; height: 14px; border-radius: 50%; border: 3px solid var(--tomato); }
 .object-preview__key--reference { border-color: var(--teal); border-style: dashed; }
 
