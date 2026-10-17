@@ -120,6 +120,13 @@ export const CloseIcon = ({ size = 20, className }: IconProps) => (
   </svg>
 );
 
+export const MarkerIcon = ({ size = 20, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <circle cx="12" cy="12" r="3" />
+    <path d="M12 3v3M12 18v3M3 12h3M18 12h3" />
+  </svg>
+);
+
 export const HelpIcon = ({ size = 22, className }: IconProps) => (
   <svg {...base(size)} className={className}>
     <circle cx="12" cy="12" r="8.5" />

@@ -19,7 +19,6 @@ class SceneAttributeType(StrEnum):
     MATERIAL = "material"
     PATTERN = "pattern"
     STATE = "state"
-    QUANTITY = "quantity"
 
 
 class ModelSceneAttribute(ApiModel):
@@ -48,9 +47,11 @@ class ModelSceneObject(ApiModel):
         serialization_alias="objectKey",
     )
     label: NonEmptyText = Field(max_length=60)
+    group_key: NonEmptyText = Field(max_length=64)
     bounding_box: ModelBoundingBox
     anchor_point: ModelAnchorPoint | None = None
     attributes: list[ModelSceneAttribute] = Field(default_factory=list, max_length=6)
+    suggested_group_count: Annotated[int, Field(ge=1, le=20)]
     confidence_score: Annotated[
         float,
         Field(
@@ -68,6 +69,20 @@ class ModelSceneObject(ApiModel):
     @property
     def confidence(self) -> float:
         return self.confidence_score
+
+
+class ModelSceneAction(ApiModel):
+    action_key: NonEmptyText = Field(max_length=64)
+    action: NonEmptyText = Field(max_length=60)
+    related_object_keys: Annotated[list[NonEmptyText], Field(min_length=1, max_length=6)]
+    confidence_score: Annotated[float, Field(ge=0, le=1)]
+
+
+class ModelScenePriceSuggestion(ApiModel):
+    price_key: NonEmptyText = Field(max_length=64)
+    object_key: NonEmptyText = Field(max_length=64)
+    displayed_price: NonEmptyText = Field(max_length=40)
+    confidence_score: Annotated[float, Field(ge=0, le=1)]
 
 
 class ModelSceneRelation(ApiModel):
@@ -145,8 +160,12 @@ class SceneAnalysisModelResult(ApiModel):
     summary: NonEmptyText = Field(
         default="A scene containing useful vocabulary.", max_length=300
     )
-    objects: Annotated[list[ModelSceneObject], Field(max_length=6)]
+    objects: Annotated[list[ModelSceneObject], Field(max_length=20)]
     relations: Annotated[list[ModelSceneRelation], Field(max_length=12)] = []
+    actions: Annotated[list[ModelSceneAction], Field(max_length=12)] = []
+    price_suggestions: Annotated[
+        list[ModelScenePriceSuggestion], Field(max_length=12)
+    ] = []
 
     @property
     def title(self) -> str:
@@ -157,6 +176,9 @@ class SceneAnalysisIssueCode(StrEnum):
     INVALID_SCHEMA = "invalidSchema"
     DUPLICATE_OBJECT_KEY = "duplicateObjectKey"
     DUPLICATE_RELATION_KEY = "duplicateRelationKey"
+    DUPLICATE_ACTION_KEY = "duplicateActionKey"
+    DUPLICATE_PRICE_KEY = "duplicatePriceKey"
+    INCONSISTENT_OBJECT_GROUP = "inconsistentObjectGroup"
     NON_FINITE_BOUNDING_BOX = "nonFiniteBoundingBox"
     BOUNDING_BOX_OUT_OF_RANGE = "boundingBoxOutOfRange"
     NON_POSITIVE_BOUNDING_BOX_SIZE = "nonPositiveBoundingBoxSize"
@@ -166,6 +188,8 @@ class SceneAnalysisIssueCode(StrEnum):
     NON_FINITE_CONFIDENCE = "nonFiniteConfidence"
     CONFIDENCE_OUT_OF_RANGE = "confidenceOutOfRange"
     UNKNOWN_RELATION_OBJECT = "unknownRelationObject"
+    UNKNOWN_ACTION_OBJECT = "unknownActionObject"
+    UNKNOWN_PRICE_OBJECT = "unknownPriceObject"
     SELF_RELATION = "selfRelation"
     DUPLICATE_RELATION = "duplicateRelation"
     SYMMETRIC_DUPLICATE_RELATION = "symmetricDuplicateRelation"

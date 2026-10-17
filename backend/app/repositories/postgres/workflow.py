@@ -22,11 +22,15 @@ from app.ai.features.ispy_guess import ISpyGuessError, ISpyGuessResult
 from app.ai.features.learning_tasks import required_task_focuses
 from app.ai.features.learning_tasks.mission import fold
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
-from app.ai.features.scene_analysis import RoutedSceneAnalyzer
+from app.ai.features.scene_analysis import (
+    SCENE_ANALYSIS_PROMPT_VERSION,
+    SCENE_ANALYSIS_SCHEMA_VERSION,
+    RoutedSceneAnalyzer,
+)
 from app.repositories.postgres.game_resources import refund_sauce, reward_basil, spend_sauce
 from app.repositories.postgres.language_profiles import language_profiles
 from app.repositories.postgres.learner_history import snapshot_learner_history
-from app.repositories.postgres.media_assets import media_assets
+from app.repositories.postgres.media_assets import media_assets, media_scene_analyses
 from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.scene_objects import (
     object_values,
@@ -98,6 +102,7 @@ from app.services.mission_eligibility import (
     mission_snapshot,
     photo_eligibility,
     plan_missions,
+    provisional_mission_focus,
     saved_counted_groups,
     snapshot_missions,
 )
@@ -110,7 +115,12 @@ from app.services.question_outcomes import (
     review_details,
     word_results,
 )
-from app.services.scene_analysis import DeterministicSceneAnalyzer, UnavailableSceneAnalyzer
+from app.services.scene_analysis import (
+    DeterministicSceneAnalyzer,
+    UnavailableSceneAnalyzer,
+    scene_inventory,
+    scene_result_from_inventory,
+)
 from app.services.session_personalization import (
     lesson_history,
     personalization_summary,
@@ -125,6 +135,18 @@ from app.services.session_plan import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _unique_by_id(items):
+    """Keep the first occurrence of entities that share an ID."""
+    seen = set()
+    unique = []
+    for item in items:
+        if item.id in seen:
+            continue
+        seen.add(item.id)
+        unique.append(item)
+    return unique
 
 TERMINAL = {"completed", "abandoned", "failed"}
 MAX_ACTIVE_SESSIONS = 3
@@ -694,6 +716,17 @@ class PostgresWorkflowRepository:
         objects, relations = self._scene_objects(c, session)
         words, translations = self._vocabulary(c, session, objects)
         draft = session.analysis_draft
+        object_ids = {str(item.id) for item in objects}
+        action_suggestions = [
+            suggestion
+            for suggestion in (draft or {}).get("actionSuggestions", [])
+            if set(suggestion.get("sceneObjectIds", [])) <= object_ids
+        ]
+        price_suggestions = [
+            suggestion
+            for suggestion in (draft or {}).get("priceSuggestions", [])
+            if suggestion.get("sceneObjectId") in object_ids
+        ]
         tasks = self._tasks(c, session.id)
         return SessionDetailResponse(
             session=session,
@@ -703,6 +736,8 @@ class PostgresWorkflowRepository:
             analysis_mode=None if asset.source == "preloaded" else "placeholder",
             scene_objects=objects,
             scene_object_relations=relations,
+            scene_action_suggestions=action_suggestions,
+            scene_price_suggestions=price_suggestions,
             vocabulary=words,
             translations=translations,
             translation_preview=(draft or {}).get("translationPreview"),
@@ -710,6 +745,8 @@ class PostgresWorkflowRepository:
             personalization=(draft or {}).get("personalization"),
             counted_groups=saved_counted_groups(draft),
             mission_guidance=(draft or {}).get("missionGuidance", []),
+            provisional_mission_plan=(draft or {}).get("provisionalMissionPlan", []),
+            suggested_scene_object_ids=(draft or {}).get("suggestedSceneObjectIds", []),
             tasks=[SessionTaskPublic.from_internal(t, mode=session.mode) for t in tasks],
             progress=task_progress(tasks),
             next_task_id=next(
@@ -922,11 +959,43 @@ class PostgresWorkflowRepository:
                 # analyzingScene/awaitingObjectReview/generatingTasks: never re-run the model.
                 return self._detail(c, session)
             inputs = self._analysis_inputs(c, session)
+            asset, profile, scene = inputs
+            cached = (
+                c.execute(
+                    select(media_scene_analyses).where(
+                        media_scene_analyses.c.media_asset_id == asset.id,
+                        media_scene_analyses.c.prompt_version
+                        == SCENE_ANALYSIS_PROMPT_VERSION,
+                        media_scene_analyses.c.schema_version
+                        == SCENE_ANALYSIS_SCHEMA_VERSION,
+                    )
+                )
+                .mappings()
+                .one_or_none()
+                if asset.source in {"camera", "userUpload"}
+                else None
+            )
             claimed = self._transition(
                 c, session, "analyzingScene", analysis_draft={"analysisAttempts": 1}
             )
+            if cached is not None:
+                result = scene_result_from_inventory(claimed, cached["inventory"])
+                focused = self._analysis_draft(claimed, profile, result)
+                return self._detail(
+                    c,
+                    self._transition(
+                        c,
+                        claimed,
+                        "awaitingObjectReview",
+                        session_title=result.title,
+                        session_summary=result.summary,
+                        analysis_draft=focused,
+                    ),
+                )
             detail = self._detail(c, claimed)
-        return self._start_analysis(session_id, profile_id, claimed, detail, *inputs)
+        return self._start_analysis(
+            session_id, profile_id, claimed, detail, asset, profile, scene
+        )
 
     def retry_analysis(self, session_id, profile_id):
         """Rerun a temporarily failed analysis on the session's saved image."""
@@ -1023,23 +1092,36 @@ class PostgresWorkflowRepository:
                 current = self._session(c, session_id, profile_id)
                 if current.status != "analyzingScene":
                     return
+                if asset.source in {"camera", "userUpload"}:
+                    inventory = scene_inventory(result)
+                    now = utc_now()
+                    c.execute(
+                        upsert(media_scene_analyses)
+                        .values(
+                            media_asset_id=asset.id,
+                            prompt_version=SCENE_ANALYSIS_PROMPT_VERSION,
+                            schema_version=SCENE_ANALYSIS_SCHEMA_VERSION,
+                            inventory=inventory,
+                            created_at=now,
+                            updated_at=now,
+                        )
+                        .on_conflict_do_update(
+                            index_elements=["media_asset_id"],
+                            set_={
+                                "prompt_version": SCENE_ANALYSIS_PROMPT_VERSION,
+                                "schema_version": SCENE_ANALYSIS_SCHEMA_VERSION,
+                                "inventory": inventory,
+                                "updated_at": now,
+                            },
+                        )
+                    )
                 self._transition(
                     c,
                     current,
                     "awaitingObjectReview",
                     session_title=result.title,
                     session_summary=result.summary,
-                    analysis_draft={
-                        "analysisAttempts": analysis_attempts(current),
-                        "objects": [
-                            obj.model_dump(mode="json", by_alias=False)
-                            for obj in result.objects
-                        ],
-                        "relations": [
-                            row.model_dump(mode="json", by_alias=False)
-                            for row in result.relations
-                        ],
-                    },
+                    analysis_draft=self._analysis_draft(current, profile, result),
                 )
         except Exception as error:
             error_code = getattr(error, "code", None)
@@ -1056,6 +1138,7 @@ class PostgresWorkflowRepository:
                     if error_code == "imageModerationFailed"
                     else "sceneAnalysisFailed"
                 )
+
                 with self.transaction() as c:
                     current = self._session(c, session_id)
                     if current.status == "analyzingScene":
@@ -1066,6 +1149,32 @@ class PostgresWorkflowRepository:
                 logger.exception(
                     "Could not record the analysis failure for session %s.", session_id
                 )
+
+    @staticmethod
+    def _analysis_draft(session, profile, result):
+        candidates = lesson_missions(session.mode, profile)
+        provisional, selected_ids = provisional_mission_focus(
+            candidates, result.objects, result.relations
+        )
+        return {
+            "analysisAttempts": analysis_attempts(session),
+            "objects": [
+                obj.model_dump(mode="json", by_alias=False) for obj in result.objects
+            ],
+            "relations": [
+                row.model_dump(mode="json", by_alias=False) for row in result.relations
+            ],
+            "actionSuggestions": [
+                row.model_dump(mode="json", by_alias=True)
+                for row in result.action_suggestions
+            ],
+            "priceSuggestions": [
+                row.model_dump(mode="json", by_alias=True)
+                for row in result.price_suggestions
+            ],
+            "provisionalMissionPlan": [mission_snapshot(item) for item in provisional],
+            "suggestedSceneObjectIds": [str(item) for item in selected_ids],
+        }
 
     def _catalog_word(self, c, profile, label):
         match = (
@@ -1559,7 +1668,7 @@ class PostgresWorkflowRepository:
                 # words. Persist a "new" vocabulary record now, rather than
                 # waiting for task completion, so leaving the lesson does not
                 # discard their image vocabulary.
-                for word in words:
+                for word in _unique_by_id(words):
                     record_vocabulary_evidence(
                         c,
                         user_id=self.user_id,

@@ -324,10 +324,12 @@ def test_actual_uploaded_analyzer_reuses_bytes_and_grounding_without_moderation_
         "objects": [
             {
                 "objectKey": key,
+                    "groupKey": f"{label}s",
                 "label": label,
                 "confidenceScore": 0.9,
                 "boundingBox": {"x": x, "y": 0.1, "width": 0.1, "height": 0.1},
                 "attributes": [{"type": "color", "value": colour}],
+                    "suggestedGroupCount": 1,
             }
             for key, label, x, colour in [("cup", "cup", 0.1, "red"), ("book", "book", 0.3, "blue")]
         ],
