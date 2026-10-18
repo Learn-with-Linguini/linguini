@@ -13,6 +13,7 @@ import { Button, Card, Feedback } from "../components/ui";
 import { trackAction } from "../lib/analytics.ts";
 import { ImageUpload } from "../components/ImageUpload";
 import { GameResources } from "../components/GameResources";
+import { BasilIcon } from "../components/icons";
 import "../components/rooms.css";
 
 export function Room() {
@@ -331,5 +332,5 @@ function RoomContributions({ room }: { room: RoomSnapshot }) {
   return <section className="stack-2" aria-label="Each person’s practice"><h3>Your own practice</h3>{room.contributions.map(item =>
     <div key={item.userId} className="rooms-contribution"><strong>{item.userId === room.meId ? "You" : room.members.find(member => member.userId === item.userId)?.displayName ?? "Your friend"}</strong>
       <span>{item.cluesSent} {item.cluesSent === 1 ? "clue" : "clues"} sent · {item.guessesMade} {item.guessesMade === 1 ? "guess" : "guesses"} · {item.correctGuesses} found</span>
-      <span className="small muted">+{item.basilEarned} Basil leaves · +{item.xpEarned} XP</span></div>)}</section>;
+      <span className="small muted rooms-contribution__rewards">+{item.basilEarned} Basil leaves · <span className="basil-reward"><BasilIcon size={15} />+{item.xpEarned} Basil</span></span></div>)}</section>;
 }

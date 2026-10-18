@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { sessionDestination, sessionPaths } from "../lib/sessionRoute";
 import { Button, Card, Feedback, ProgressTrail, TopBar, XpPill } from "../components/ui";
-import { ArrowRightIcon } from "../components/icons";
+import { ArrowRightIcon, BasilIcon } from "../components/icons";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
@@ -222,11 +222,11 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
     {namesTarget && !locked ? <p className="clue-warning" data-testid="clue-warning" role="alert">Your clue uses the word for this object. Change your clue to describe it without naming it.</p> : null}
     {answered || feedback || guess ? <Feedback><div className="stack-2" role="status">
       {outcome && outcome !== "evaluationFailed" ? <strong>{guessed ? `Linguini guessed: ${guessed.word}` : "Linguini couldn't match your clue to an object."}</strong> : null}
-      {task.status === "skipped" ? <span>Skipped — no XP earned.</span> : <>
+      {task.status === "skipped" ? <span>Skipped — no Basil earned.</span> : <>
         {guess?.feedback ? <span>{guess.feedback}</span> : null}
         {outcome && !answered ? <span>{OUTCOME_PROMPTS[outcome]}</span> : null}
         {feedback || (answered && !guess) ? <span>{feedback ?? "Reflection saved."}</span> : null}
-        {xpEarnedText(xpEarned) ? <strong>{xpEarnedText(xpEarned)}</strong> : null}
+        {xpEarnedText(xpEarned) ? <strong className="basil-reward"><BasilIcon size={17} />{xpEarnedText(xpEarned)}</strong> : null}
       </>}
     </div></Feedback> : null}
     {(answered || guess) && task.status !== "skipped" ? <ReportIssueLink label="Report a wrong guess" reportType="I-Spy guess" fields={[

@@ -75,6 +75,16 @@ export function PracticeAnalysis() {
     setAttributeObjectId(session.sceneObjects[0]?.id ?? "");
     setSceneTitle(session.session.sessionTitle ?? scene.title);
   }, [scene.title, session]);
+  useEffect(() => {
+    if (!pending && !movingObjectId) return;
+    const cancelOutside = (event: PointerEvent) => {
+      if (photoRef.current?.contains(event.target as Node)) return;
+      setPending(null);
+      setMovingObjectId(null);
+    };
+    document.addEventListener("pointerdown", cancelOutside);
+    return () => document.removeEventListener("pointerdown", cancelOutside);
+  }, [movingObjectId, pending]);
   if (!session) return null;
   if (session.session.status === "failed" && session.analysisRetryable) return <div className="stack analysis-page">
     <h1>Scene analysis</h1>

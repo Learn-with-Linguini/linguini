@@ -112,6 +112,12 @@
 }
 
 .xp {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--sage);
   color: var(--teal-dark);
   font-variant-numeric: tabular-nums;
 }
@@ -726,11 +732,14 @@
 }
 
 .xpBig {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   flex-shrink: 0;
   padding: 6px 14px;
   border-radius: var(--radius-pill);
-  background: var(--teal);
-  color: #fff;
+  background: var(--sage);
+  color: var(--teal-dark);
   font-weight: 800;
   font-size: 18px;
   font-variant-numeric: tabular-nums;

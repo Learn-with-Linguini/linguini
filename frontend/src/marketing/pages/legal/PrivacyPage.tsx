@@ -60,7 +60,7 @@ export default function PrivacyPage() {
             <p>
               When you upload or capture a photo, we store the image and related technical information so we can identify
               scene objects and build a lesson. We also store the objects you confirm, translations, tasks, answers,
-              vocabulary progress, XP, session history and journal entries that you create.
+              vocabulary progress, Basil rewards, session history and journal entries that you create.
             </p>
             <h3>Audio and device permissions</h3>
             <p>

@@ -11,7 +11,7 @@ import { JournalCard } from "../product/JournalCard";
 import { PhotoMarkers } from "../product/PhotoMarkers";
 import { WordCard } from "../product/WordCard";
 import { trackAction } from "../../../lib/analytics";
-import { ArrowLeft, ArrowRight, Check, Close, Eye, Refresh, Speaker } from "../icons";
+import { ArrowLeft, ArrowRight, Basil, Check, Close, Eye, Refresh, Speaker } from "../icons";
 import { LanguageToggle } from "./LanguageToggle";
 import styles from "./session.module.css";
 
@@ -145,7 +145,7 @@ export function Session({ scene, lang, onLangChange, onExit }: SessionProps) {
               </div>
               <div className={styles.progressMeta}>
                 <span>Task {taskIndex + 1} of {taskStages.length}</span>
-                <span className={styles.xp}>{xp} XP</span>
+                <span className={styles.xp}><Basil size={16} />{xp} Basil</span>
               </div>
             </div>
           ) : null}
@@ -358,7 +358,7 @@ function ISpyStage({
 
   const verdict: Verdict = picked
     ? solved
-      ? { correct: true, text: <>Nice catch — <b lang={lang}>{round.answer}</b> means the {answerWord?.en}. +{XP.ispy} XP</> }
+      ? { correct: true, text: <>Nice catch — <b lang={lang}>{round.answer}</b> means the {answerWord?.en}. <Basil size={16} /> +{XP.ispy} Basil</> }
       : { correct: false, text: <>Not quite. Look at the photo again and have another go.</> }
     : null;
 
@@ -410,7 +410,7 @@ function BlankStage({ scene, lang, headingRef, onDone }: { scene: Scene; lang: L
 
   const verdict: Verdict = picked
     ? solved
-      ? { correct: true, text: <>That’s it. +{XP.task} XP</> }
+      ? { correct: true, text: <>That’s it. <Basil size={16} /> +{XP.task} Basil</> }
       : { correct: false, text: <>Close — check whether the noun should be singular or plural.</> }
     : null;
 
@@ -478,7 +478,7 @@ function BuildStage({ scene, lang, headingRef, onDone }: { scene: Scene; lang: L
   }
 
   const verdict: Verdict =
-    checked === null ? null : checked ? { correct: true, text: <>Perfect sentence. +{XP.task} XP</> } : { correct: false, text: <>Almost — tap a tile to take it back and try another order.</> };
+    checked === null ? null : checked ? { correct: true, text: <>Perfect sentence. <Basil size={16} /> +{XP.task} Basil</> } : { correct: false, text: <>Almost — tap a tile to take it back and try another order.</> };
 
   return (
     <>
@@ -623,7 +623,7 @@ function DoneStage({
     <>
       <div className={styles.doneHead}>
         <h2 ref={headingRef} tabIndex={-1} className={styles.title}>Saved. That’s a day well spent.</h2>
-        <p className={styles.xpBig}>+{xp} XP</p>
+        <p className={styles.xpBig}><Basil size={24} />+{xp} Basil</p>
       </div>
       <div className={styles.streak} aria-label={`Streak: today checked in`}>
         {days.map((day, index) => (

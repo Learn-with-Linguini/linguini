@@ -2,7 +2,7 @@
 import Image from "./Image";
 import { useState } from "react";
 import { speak } from "../lib/speech";
-import { Check, Close, Mic, Plus, Speaker } from "./icons";
+import { Basil, Check, Close, Mic, Plus, Speaker } from "./icons";
 import { Reveal } from "./Reveal";
 import styles from "./Features.module.css";
 
@@ -152,7 +152,7 @@ export function Features() {
           <Reveal className={`${styles.tile} ${styles.sage} ${styles.lone}`} delay={80}>
             <div className={styles.text}>
               <h3>A streak worth keeping</h3>
-              <p>Earn XP for every task, I-Spy win and journal entry. Each day you practise, a farfalle lands on your week.</p>
+              <p>Earn Basil for every task, I-Spy win and journal entry. Each day you practise, a farfalle lands on your week.</p>
             </div>
             <div className={styles.streak}>
               <div className={styles.week}>
@@ -164,7 +164,7 @@ export function Features() {
                 ))}
               </div>
               <p className={styles.stats}>
-                <b>420</b> XP this week · <b>86</b> words · <b>19</b> pages
+                <span className={styles.basilTotal}><Basil size={16} /> <b>420</b> Basil this week</span> · <b>86</b> words · <b>19</b> pages
               </p>
             </div>
           </Reveal>

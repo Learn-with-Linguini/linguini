@@ -44,14 +44,14 @@ test("task list copy comes from public content and all kinds have a label", () =
   assert.equal(taskTitle(tasks[2]), "Grammar");
 });
 
-test("task reward metadata is presented without frontend XP constants", () => {
+test("task reward metadata is presented without frontend reward constants", () => {
   assert.deepEqual(taskXp(tasks[0]), { xp: 10, bonus: 0 });
   assert.deepEqual(taskXp(tasks[6]), { xp: 10, bonus: 15 });
   assert.equal(taskXp({ ...tasks[0], xpReward: 0, xpBonus: 0 }), null);
 });
 
-test("earned XP copy is shown only for positive action results", () => {
-  assert.equal(xpEarnedText(25), "+25 XP earned");
+test("earned Basil copy is shown only for positive action results", () => {
+  assert.equal(xpEarnedText(25), "+25 Basil earned");
   assert.equal(xpEarnedText(0), null);
   assert.equal(xpEarnedText(undefined), null);
 });

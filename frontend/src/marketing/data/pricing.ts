@@ -7,7 +7,7 @@ export const pricing = {
     "Learn from your own photos or ready-made scenes",
     "Spanish, French and German, plus beginner Korean, from English",
     "Word cards, I-Spy and sentence games",
-    "Vocabulary progress, journals, streaks and XP",
+    "Vocabulary progress, journals, streaks and Basil",
     "No payment card required",
   ],
   plusMonthly: 7.99,
@@ -21,7 +21,7 @@ export const pricing = {
     "Unlimited replays of our curated scenes",
     "Spanish, French and German, plus beginner Korean, from English",
     "Word cards, I-Spy and sentence games",
-    "Streaks, XP and your pasta avatar",
+    "Streaks, Basil and your pasta avatar",
   ],
   plus: [
     "Up to 10 photo lessons a day",

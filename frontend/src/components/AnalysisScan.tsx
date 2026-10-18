@@ -6,7 +6,20 @@ export function AnalysisScan({ scene }: { scene: Scene }) {
   return (
     <div className="analysis-scan" aria-hidden="true">
       <ScenePhoto scene={scene} items={[]} />
-      <span className="analysis-scan__noodle" />
+      <svg className="analysis-scan__trail" viewBox="0 0 1000 600" preserveAspectRatio="none">
+        <rect className="analysis-scan__trail-track" x="13" y="13" width="974" height="574" rx="30" pathLength="100" />
+        <rect className="analysis-scan__trail-outline" x="13" y="13" width="974" height="574" rx="30" pathLength="100" />
+        <rect className="analysis-scan__trail-pasta" x="13" y="13" width="974" height="574" rx="30" pathLength="100" />
+        <rect className="analysis-scan__trail-shine" x="13" y="13" width="974" height="574" rx="30" pathLength="100" />
+      </svg>
+      <span className="analysis-scan__spotlight analysis-scan__spotlight--one"><i /><i /><i /></span>
+      <span className="analysis-scan__spotlight analysis-scan__spotlight--two"><i /><i /><i /></span>
+      <span className="analysis-scan__spotlight analysis-scan__spotlight--three"><i /><i /><i /></span>
+      <span className="analysis-scan__caption">
+        <span>Taking a look around…</span>
+        <span>Spotting useful words…</span>
+        <span>Getting your scene ready…</span>
+      </span>
     </div>
   );
 }
