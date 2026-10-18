@@ -1,6 +1,6 @@
 import { Navigate, useNavigate } from "react-router-dom";
 import { Button, XpPill } from "../components/ui";
-import { ArrowRightIcon, BookIcon, ChatIcon, CheckIcon, CloseIcon, CountIcon, EyeIcon, HandIcon, HeartIcon, JournalIcon, MarkerIcon } from "../components/icons";
+import { ArrowRightIcon, BookIcon, ChatIcon, CheckIcon, CloseIcon, CountIcon, EyeIcon, HandIcon, HeartIcon, JournalIcon, MarkerIcon, PlayIcon } from "../components/icons";
 import { SessionPersonalization } from "../components/SessionPersonalization";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
@@ -60,7 +60,7 @@ export function Learn() {
       {!vocabularyDone && vocabularyTask ? <div className="learn-words-intro">
         <div className="learn-words-intro__photo"><ScenePhoto scene={scene} items={[]} />{taskXp(vocabularyTask) ? <XpPill {...taskXp(vocabularyTask)!} /> : null}</div>
         <Button block disabled={practiceSaving || !session.translationPreview} onClick={() => navigate(`${base}/learn/vocabulary-preview`)}>
-          Learn the words <ArrowRightIcon />
+          <PlayIcon /> Learn the words
         </Button>
       </div> : null}
       <SessionPersonalization personalization={session.personalization} languageCode={scene.languageCode} />
