@@ -7,6 +7,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { JSDOM } from "jsdom";
 import { rolldown } from "rolldown";
 import type { PracticeDetail, SessionTask } from "../src/lib/api.ts";
+import { learningFeedback } from "../src/lib/learningFeedback.ts";
 
 const dom = new JSDOM("<!doctype html><html><body></body></html>", {
   url: "http://localhost/",
@@ -275,12 +276,16 @@ test("round two keeps the task active until the learner confirms the latest clea
   assert.ok(button("Retry guessing"));
   assert.equal(button("That's it"), undefined);
   assert.equal(clue().value, "Es roja.");
+  assert.ok(!dom.window.document.body.textContent?.includes(learningFeedback("correct", guessTask.id)));
+  assert.ok(!dom.window.document.body.textContent?.includes(learningFeedback("incorrect", guessTask.id)));
 
   taskReplies.push(described("a2", "noMatch", "obj-other"));
   await click("Retry guessing");
   const [retry] = taskRequests.splice(0);
   assert.notEqual(retry.body.idempotencyKey, lost.body.idempotencyKey, "Retry guessing uses a new key");
   assert.match(dom.window.document.body.textContent ?? "", /Linguini guessed: silla/);
+  assert.ok(dom.window.document.body.textContent?.includes(learningFeedback("incorrect", guessTask.id)));
+  assert.match(dom.window.document.body.textContent ?? "", /feedback a2/);
   assert.ok(dom.window.document.querySelector(".scene__marker--active"), "the assigned target stays marked");
   assert.ok(dom.window.document.querySelector(".scene__marker--guess"), "the guessed object is marked separately");
   assert.match(dom.window.document.querySelector("[data-testid=guess-legend]")?.textContent ?? "", /marker 1 .* marker 2/);
@@ -295,6 +300,7 @@ test("round two keeps the task active until the learner confirms the latest clea
   assert.notEqual(revision.body.idempotencyKey, retry.body.idempotencyKey, "a revised clue uses a new key");
   assert.equal(dom.window.document.querySelector(".scene__marker--guess"), null);
   assert.equal(button("Finish session"), undefined, "a clear match is not complete until confirmed");
+  assert.ok(!dom.window.document.body.textContent?.includes(learningFeedback("correct", guessTask.id)));
 
   taskReplies.push(described("a3", "clearMatch", "obj-target", "completed"));
   await click("That's it");
@@ -302,6 +308,8 @@ test("round two keeps the task active until the learner confirms the latest clea
   assert.equal(confirmation.path, `/api/v1/tasks/${guessTask.id}/confirm-guess`);
   assert.deepEqual(confirmation.body, { attemptId: "a3" });
   assert.ok(button("Finish session"));
+  assert.ok(dom.window.document.body.textContent?.includes(learningFeedback("correct", guessTask.id)));
+  assert.match(dom.window.document.body.textContent ?? "", /Linguini found your object!/);
   root.unmount();
 });
 
@@ -475,6 +483,8 @@ test("a reload restores completed, skipped and legacy tasks without a fresh form
   latestReplies.push(() => Response.json(savedClue("r6", "noMatch", "obj-other")));
   const skipped = await mountTask("skipped");
   assert.match(skipped.body(), /Skipped — no Basil earned\./);
+  assert.ok(!skipped.body().includes(learningFeedback("correct", guessTask.id)));
+  assert.ok(!skipped.body().includes(learningFeedback("incorrect", guessTask.id)));
   assert.equal(button("Send my response"), undefined);
   skipped.root.unmount();
 

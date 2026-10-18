@@ -6,6 +6,7 @@ import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
 import { finishesAfterLearning, practiceStages, taskDone, taskTitle, taskXp } from "../lib/practiceTasks";
 import { useAppState } from "../state/useAppState";
+import { learningFeedback } from "../lib/learningFeedback";
 
 function TaskAimIcon({ task }: { task: ReturnType<typeof practiceStages>["learning"][number] }) {
   const missionIcons = {
@@ -52,6 +53,7 @@ export function Learn() {
             <CloseIcon size={18} /> Exit
           </Button>
         </div>
+        {completed.length === 0 ? <p><strong>{learningFeedback("start", session.session.id)}</strong></p> : null}
         <p className="muted">Build confidence with each short task.</p>
       </div>
 
@@ -100,7 +102,8 @@ export function Learn() {
       </section> : null}
 
       {generating ? <section className="panel-note" role="status">
-        <h2>Preparing the remaining tasks...</h2>
+        <h2>{learningFeedback("preparing", session.session.id)}</h2>
+        <p>Preparing the remaining tasks...</p>
         <p>You can learn and practise your words now.</p>
         {practiceStalled ? <Button variant="secondary" onClick={() => retryProcessing(session.session.id)}>Check again</Button> : null}
       </section> : null}

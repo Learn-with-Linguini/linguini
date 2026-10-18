@@ -15,6 +15,7 @@ import type { ClueAssistance, ClueFrame, ClueFrameId, ClueSlotId, ISpyDescriptio
 import { applyFrame, choicesFromSlots, fillSlot, mentionsTarget, nearTarget, restoreSentences, savedAssistance, slotSentence, slotsFromChoices, visibleFrames, writeSentence, type FrameSentences, type SlotChoices } from "../lib/clueFrames";
 import type { LanguageItem } from "../data/types";
 import { ReportIssueLink } from "../components/ReportIssueLink";
+import { learningFeedback } from "../lib/learningFeedback";
 
 export function ISpyPhase2() {
   const navigate = useNavigate();
@@ -220,6 +221,8 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
     {answered || feedback || guess ? <Feedback><div className="stack-2" role="status">
       {outcome && outcome !== "evaluationFailed" ? <strong>{guessed ? `Linguini guessed: ${guessed.word}` : "Linguini couldn't match your clue to an object."}</strong> : null}
       {task.status === "skipped" ? <span>Skipped — no Basil earned.</span> : <>
+        {outcome === "clearMatch" && task.status === "completed" ? <strong>{learningFeedback("correct", task.id)}</strong>
+          : outcome === "needsRevision" || outcome === "noMatch" ? <strong>{learningFeedback("incorrect", task.id)}</strong> : null}
         {guess?.feedback ? <span>{guess.feedback}</span> : null}
         {outcome && !answered ? <span>{OUTCOME_PROMPTS[outcome]}</span> : null}
         {feedback || (answered && !guess) ? <span>{feedback ?? "Reflection saved."}</span> : null}
