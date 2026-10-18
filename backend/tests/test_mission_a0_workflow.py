@@ -2,8 +2,17 @@
 
 import pytest
 from sqlalchemy import func, select, update
-from test_mission_m01_workflow import _answer_key, _attempt, _lesson, _scalar
+from test_mission_m01_workflow import (
+    _analyzed,
+    _answer_key,
+    _attempt,
+    _lesson,
+    _repository,
+    _review,
+    _scalar,
+)
 from test_postgres_sessions import database as database
+from test_preloaded_templates import SceneModel
 from test_preloaded_templates_workflow import curated as curated
 
 from app.repositories.postgres.language_profiles import language_profiles
@@ -11,6 +20,7 @@ from app.repositories.postgres.tasks import session_tasks, task_attempts
 from app.repositories.postgres.users import users
 from app.repositories.postgres.vocabulary import vocabulary_encounters
 from app.repositories.postgres.xp import xp_events
+from app.schemas.missions import MissionChoices, OwnershipChoice, PreferenceChoice
 
 
 @pytest.fixture
@@ -37,7 +47,9 @@ def test_a0_profiles_get_persisted_a0_lessons(beginner):
     repository, sid, detail = _lesson(beginner)
     lessons = _a0_lessons(detail)
     assert lessons, detail.session.analysis_draft
-    assert {task.public_content.mission_id for task in lessons} <= {"M01", "M02", "M13"}
+    assert {task.public_content.mission_id for task in lessons} <= {
+        "M01", "M02", "M03", "M04", "M05", "M13",
+    }
     for task in lessons:
         content = task.public_content
         assert len(content.questions) == 6
@@ -53,6 +65,36 @@ def test_a0_profiles_get_persisted_a0_lessons(beginner):
     assert [t.public_content for t in _a0_lessons(refreshed)] == [
         t.public_content for t in lessons
     ]
+
+
+def test_review_choices_are_persisted_restored_and_cleared_when_omitted(beginner):
+    _engine, _owner, profile, *_ = beginner
+    repository = _repository(beginner, SceneModel())
+    sid, analyzed = _analyzed(beginner, repository)
+    first, second = analyzed.scene_objects[:2]
+    choices = MissionChoices(
+        ownership=OwnershipChoice(scene_object_id=first.id),
+        preference=PreferenceChoice(
+            scene_object_ids=[second.id], reaction="like",
+        ),
+    )
+    request = _review(analyzed).model_copy(update={"mission_choices": choices})
+    repository.review(sid, profile.id, request)
+    reviewed = repository.get(sid, profile.id)
+    assert reviewed.mission_choices == choices
+    saved = reviewed.session.analysis_draft["missionChoices"]
+    assert saved["ownership"]["sceneObjectId"] == str(first.id)
+    assert saved["preference"]["sceneObjectIds"] == [str(second.id)]
+    lessons = {task.public_content.mission_id: task for task in _a0_lessons(reviewed)}
+    assert {"M04", "M05"} <= lessons.keys(), reviewed.session.analysis_draft.get("missionPlan")
+    assert lessons["M04"].public_content.mission_snapshot.owned_object_id == first.id
+    assert lessons["M05"].public_content.mission_snapshot.preference_object_ids == [second.id]
+    restored = repository.get(sid, profile.id)
+    assert restored.mission_choices == choices
+    cleared = repository.review(sid, profile.id, _review(restored))
+    assert cleared.mission_choices is None
+    assert "missionChoices" not in cleared.session.analysis_draft
+    assert not {"M04", "M05"} & {task.public_content.mission_id for task in _a0_lessons(cleared)}
 
 
 def test_a0_grading_is_idempotent_and_awards_once(beginner):

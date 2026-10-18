@@ -5818,6 +5818,22 @@ p[role="alert"]::before { content: "!"; }
 
 .learning-section { display: grid; gap: var(--space-3); }
 .learning-section__title { margin: 0; font-size: var(--text-h3); }
+.mission-scenario { display: grid; gap: var(--space-2); }
+.mission-scenario p { margin: 0; color: var(--ink-muted); }
+.mission-scenario > div { display: grid; gap: var(--space-1); }
+.mission-dialogue { display: grid; gap: var(--space-2); }
+.mission-dialogue__turn {
+  display: grid; gap: var(--space-1); width: fit-content; max-width: min(100%, 34rem);
+  margin: 0; padding: var(--space-2) var(--space-3); border-radius: var(--radius-md);
+  background: var(--cream); border: 1px solid var(--line);
+}
+.mission-dialogue__turn--learner { justify-self: end; background: var(--cream); }
+.mission-dialogue__turn strong { font-size: var(--text-small); }
+.mission-slot-template {
+  margin: 0; padding: var(--space-2) var(--space-3); border-inline-start: 3px solid var(--tomato);
+  background: var(--cream); border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-weight: 700;
+}
 
 .practice-boards { display: grid; gap: var(--space-3); }
 .practice-boards > p { margin: 0; }
@@ -5878,4 +5894,18 @@ p[role="alert"]::before { content: "!"; }
 .lesson-audio { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .vocabulary-flow .choice { min-height: 56px; }
 .vocabulary-flow .chip, .vocabulary-flow .sentence-builder__token { min-height: 48px; min-width: 48px; }
+.mission-gap { display: grid; gap: var(--space-3); min-width: 0; }
+.mission-gap__sentence { margin: 0; padding: var(--space-3); border: 1px dashed var(--teal); border-radius: var(--radius-sm); font-size: var(--text-h3); }
+.mission-gap__filled { display: inline-block; min-width: 3ch; padding: 0 var(--space-1); border-bottom: 2px solid var(--tomato); text-align: center; }
+.mission-gap__pictures .choice { min-width: 0; min-height: 0; padding: var(--space-2); }
+.mission-gap__pictures .object-preview { width: 100%; }
+.mission-gap__pictures .object-preview__scene { width: 100%; }
+.mission-gap__icon { display: inline-grid; place-items: center; min-width: 26px; min-height: 26px; margin-right: var(--space-2); border-radius: var(--radius-pill); background: #f3ead7; font-size: 1.05rem; }
+.mission-dialogue { display: grid; gap: var(--space-2); }
+.mission-dialogue__turn { max-width: 92%; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); background: #f3ead7; }
+.mission-dialogue__turn--learner { justify-self: end; background: var(--sage); }
+.mission-dialogue__turn p { margin: var(--space-1) 0 0; }
+.mission-gap__completion, .mission-outcome { display: grid; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius-card); background: #f3ead7; }
+.mission-gap__completion p { margin: 0; }
+.mission-outcome { border: 1px solid var(--teal); }
 .count-board { cursor: default; }
