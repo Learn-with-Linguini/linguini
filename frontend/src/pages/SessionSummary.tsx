@@ -10,6 +10,7 @@ import { useVocabularyQuery } from "../state/queries";
 import { getPracticeSummary, startISpyGame } from "../lib/api";
 import { isMissionSession } from "../lib/practiceTasks";
 import { sessionDestination } from "../lib/sessionRoute";
+import { BasilIcon } from "../components/icons";
 import { gameStartError, queryError, queryKeys } from "../lib/queryKeys";
 
 export function SessionSummary() {
@@ -22,7 +23,7 @@ export function SessionSummary() {
   const [surveyOpen, setSurveyOpen] = useState(false);
   const startKey = useRef<string | null>(null);
   // Stats render from the in-flight numbers straight away; the completion
-  // mutation invalidates this key so final XP replaces them once it lands.
+  // mutation invalidates this key so the final Basil total replaces it once it lands.
   const { data, error: queryErrorValue, isPending: loading } = useQuery({
     queryKey: queryKeys.sessionSummary(scene.sessionId!),
     queryFn: () => getPracticeSummary(scene.sessionId!),
@@ -77,7 +78,7 @@ export function SessionSummary() {
     {completionError ? <><p role="alert">{completionError}</p><Button onClick={retryCompletion}>Retry saving your session</Button></> : null}
     {data ? <>
       <div className="stat-grid">
-        <div className="stat"><div className="stat__value">{data.xpEarned}</div><span className="stat__label">XP earned</span></div>
+        <div className="stat"><div className="stat__value"><BasilIcon size={24} />{data.xpEarned}</div><span className="stat__label">Basil earned</span></div>
         {data.ispyAttemptCount ? <div className="stat"><div className="stat__value">{data.ispyCorrectCount}/{data.ispyAttemptCount}</div><span className="stat__label">I-Spy correct</span></div> : null}
         <div className="stat"><div className="stat__value">{data.learnedVocabularyIds.length}</div><span className="stat__label">Words learned</span></div>
       </div>

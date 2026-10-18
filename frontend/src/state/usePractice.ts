@@ -170,7 +170,7 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
         : current);
       flushLearningChanges();
       void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
-      // Refetch the final XP, and warm the cache when the summary screen has
+      // Refetch the final reward total, and warm the cache when the summary screen has
       // not mounted yet so it renders without a visible fetch.
       void queryClient.invalidateQueries({ queryKey: queryKeys.sessionSummary(sessionId) });
       void queryClient.prefetchQuery({

@@ -700,7 +700,7 @@ test("a reload restores completed, skipped and legacy tasks without a fresh form
 
   latestReplies.push(() => Response.json(savedClue("r6", "noMatch", "obj-other")));
   const skipped = await mountTask("skipped");
-  assert.match(skipped.body(), /Skipped — no XP earned\./);
+  assert.match(skipped.body(), /Skipped — no Basil earned\./);
   assert.equal(button("Send my response"), undefined);
   skipped.root.unmount();
 

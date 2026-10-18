@@ -42,6 +42,13 @@ export const Check = (p: IconProps) => (
   </Icon>
 );
 
+export const Basil = (p: IconProps) => (
+  <Icon {...p} strokeWidth={2}>
+    <path d="M20 3C9 2 3 7 5 14c2 7 13 5 15-11Z" fill="currentColor" stroke="none" />
+    <path d="m3 21 12-12" />
+  </Icon>
+);
+
 export const Close = (p: IconProps) => (
   <Icon {...p}>
     <path d="M6 6l12 12M18 6 6 18" />

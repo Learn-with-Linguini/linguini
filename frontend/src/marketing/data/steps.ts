@@ -14,6 +14,6 @@ export const steps = [
   },
   {
     title: "Keep the day in your journal",
-    body: "Write a few lines with your new words. Linguini highlights the ones you used, adds XP, and your streak grows another farfalle.",
+    body: "Write a few lines with your new words. Linguini highlights the ones you used, adds Basil, and your streak grows another farfalle.",
   },
 ];

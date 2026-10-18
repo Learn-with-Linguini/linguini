@@ -10,7 +10,7 @@ export function taskXp(task: SessionTask): { xp: number; bonus: number } | null 
 }
 
 export function xpEarnedText(xp: number | undefined): string | null {
-  return xp && xp > 0 ? `+${xp} XP earned` : null;
+  return xp && xp > 0 ? `+${xp} Basil earned` : null;
 }
 
 /** Keep answer choices stable for a task while varying their position between questions. */

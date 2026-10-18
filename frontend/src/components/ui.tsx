@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { CheckIcon, ChevronDownIcon, ChevronLeftIcon, CloseIcon, HelpIcon } from "./icons";
+import { BasilIcon, CheckIcon, ChevronDownIcon, ChevronLeftIcon, CloseIcon, HelpIcon } from "./icons";
 import "./ui.css";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -190,7 +190,7 @@ export function StatusPill({ status }: { status: "new" | "learning" | "mastered"
 }
 
 export function XpPill({ xp, bonus }: { xp: number; bonus?: number }) {
-  return <span className="pill pill--xp">+{xp} XP{bonus && bonus > 0 ? ` · +${bonus} if correct` : ""}</span>;
+  return <span className="pill pill--xp"><BasilIcon size={16} />+{xp} Basil{bonus && bonus > 0 ? ` · +${bonus} if correct` : ""}</span>;
 }
 
 export function Tabs<T extends string>({

@@ -1,20 +1,17 @@
-import { InlineLoader } from "../components/LoadingScreen";
-import { useRef, useState } from "react";
-import type { CSSProperties } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Card } from "../components/ui";
-import { BookIcon, CameraIcon, ChevronRightIcon, JournalIcon, PersonIcon } from "../components/icons";
+import { InlineLoader } from "../components/LoadingScreen";
 import { MediaImage } from "../components/MediaImage";
+import { ArrowRightIcon, BasilIcon, BookIcon, ChevronRightIcon, EyeIcon, PlayIcon } from "../components/icons";
+import { Button } from "../components/ui";
 import { getActivePractice } from "../lib/api";
 import { sessionDestination } from "../lib/sessionRoute";
 import { friendlyError, queryError, queryKeys } from "../lib/queryKeys";
 import { useAppState } from "../state/useAppState";
 import { useVocabularyQuery } from "../state/queries";
-import type { VocabRecord } from "../data/types";
 import { WalkthroughCoachmark } from "../components/WalkthroughCoachmark";
 import { FIRST_LESSON_WALKTHROUGH_VERSION, needsFirstLessonWalkthrough } from "../lib/walkthrough";
-import { GameResources } from "../components/GameResources";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -24,7 +21,7 @@ function greeting() {
 }
 
 function dayLabel(date: string) {
-  return new Intl.DateTimeFormat(undefined, { weekday: "short" }).format(new Date(`${date}T12:00:00`));
+  return new Intl.DateTimeFormat(undefined, { weekday: "narrow" }).format(new Date(`${date}T12:00:00`));
 }
 
 function localDateKey(value: Date | string) {
@@ -32,65 +29,19 @@ function localDateKey(value: Date | string) {
   return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}-${String(parsed.getDate()).padStart(2, "0")}`;
 }
 
-function lastSevenDates() {
-  const today = new Date();
-  return Array.from({ length: 7 }, (_, index) => {
-    const day = new Date(today.getFullYear(), today.getMonth(), today.getDate() - (6 - index));
-    return localDateKey(day);
-  });
-}
-
-function TaskProgressRing({ completed, total }: { completed: number; total: number }) {
-  const percentage = total === 0 ? 0 : Math.min(100, Math.round((completed / total) * 100));
-  return (
-    <div className="home-task-progress">
-      <div
-        className="home-task-progress__ring"
-        style={{ "--home-progress": `${percentage * 3.6}deg` } as CSSProperties}
-        role="img"
-        aria-label={`${completed} of ${total} tasks complete`}
-      >
-        <strong aria-hidden="true">{percentage}%</strong>
-      </div>
-      <span className="home-task-progress__caption">{completed} of {total} tasks</span>
-    </div>
-  );
-}
-
-function WordsLearntChart({ dates, vocabulary, loading, error }: { dates: string[]; vocabulary: VocabRecord[]; loading: boolean; error: string | null }) {
-  const counts = dates.map(date => vocabulary.filter(word => word.firstLearnedAt && localDateKey(word.firstLearnedAt) === date).length);
-  const peak = Math.max(...counts);
-  const total = counts.reduce((sum, count) => sum + count, 0);
-  return (
-    <section className="home-words" aria-labelledby="home-words-title">
-      <div className="home-words__heading">
-        <div><h2 id="home-words-title">Words learnt each day</h2><p>The last seven days of new words.</p></div>
-        <strong>{total} this week</strong>
-      </div>
-      {loading ? <InlineLoader label="Loading your words…" /> : error ? null : (
-        <>
-          <ol className="home-words__chart" aria-label="New words learnt on each of the last seven days">
-            {dates.map((date, index) => (
-              <li
-                key={date}
-                role="img"
-                aria-label={`${counts[index]} ${counts[index] === 1 ? "word" : "words"} on ${dayLabel(date)}`}
-                className={`home-words__bar${counts[index] === 0 ? " home-words__bar--empty" : ""}${index === dates.length - 1 ? " home-words__bar--today" : ""}`}
-              >
-                <span className="home-words__track">
-                  <span className="home-words__fill" style={{ "--home-bar": `${peak === 0 ? 0 : Math.round((counts[index] / peak) * 100)}%` } as CSSProperties}>
-                    <span className="home-words__value" aria-hidden="true">{counts[index]}</span>
-                  </span>
-                </span>
-                <span className="home-words__day" aria-hidden="true">{dayLabel(date)}</span>
-              </li>
-            ))}
-          </ol>
-          {total === 0 ? <p className="home-words__empty">Learn a word today to start your chart.</p> : null}
-        </>
-      )}
-    </section>
-  );
+function PastaStreak({ days, current }: { days: { date: string; active: boolean }[]; current: number }) {
+  return <section className="home-streak" aria-labelledby="home-streak-title">
+    <div className="home-streak__copy"><h2 id="home-streak-title">Your pasta streak</h2><strong>{current} {current === 1 ? "day" : "days"} in a row</strong></div>
+    <ol className="home-streak__week" aria-label="Your activity over the last seven days">
+      {days.map((day, index) => <li key={day.date} className={`${day.active ? "is-active" : ""}${index === days.length - 1 ? " is-today" : ""}`}>
+        <span className="home-streak__day-label">{dayLabel(day.date)}</span>
+        <span className="home-streak__loop" aria-label={`${day.active ? "Practised" : "No practice"} on ${day.date}`}>
+          <img src="/pasta-assets/streak-loop.png" alt="" />
+          {index === days.length - 1 ? <BasilIcon className="home-streak__leaf" /> : null}
+        </span>
+      </li>)}
+    </ol>
+  </section>;
 }
 
 export function Home() {
@@ -99,41 +50,37 @@ export function Home() {
   const { vocabulary, vocabularyLoading, vocabularyError } = useVocabularyQuery();
   const queryClient = useQueryClient();
   const profileId = activeProfile?.id ?? "";
-  const { data: resume, error: resumeQueryError, isPending: resumeLoading } = useQuery({
-    queryKey: queryKeys.activeSession(profileId),
-    queryFn: () => getActivePractice(),
-  });
+  const { data: resume, error: resumeQueryError, isPending: resumeLoading } = useQuery({ queryKey: queryKeys.activeSession(profileId), queryFn: () => getActivePractice() });
   const resumeError = queryError(resumeQueryError);
   const [continueError, setContinueError] = useState<string | null>(null);
   const [walkthroughDismissed, setWalkthroughDismissed] = useState(false);
   const [walkthroughError, setWalkthroughError] = useState<string | null>(null);
   const beginPracticeRef = useRef<HTMLDivElement>(null);
-  const streak = progress?.streak;
-  const activeDays = streak?.days.filter(day => day.active).length ?? 0;
-  const streakCaption = streak
-    ? activeDays === streak.days.length
-      ? "Perfect week!"
-      : streak.days[streak.days.length - 1]?.active
-        ? "Keep it going!"
-        : "Check in today"
-    : "";
+
+  const weekDates = new Set(progress?.streak.days.map(day => day.date) ?? []);
+  const wordsThisWeek = vocabulary.filter(word => word.firstLearnedAt && weekDates.has(localDateKey(word.firstLearnedAt))).length;
+  const exploredScenes = progress?.scenarios.filter(scene => scene.status !== "in-progress").length ?? 0;
+  const leaderboardPosition = progress?.leaderboard.find(row => row.isYou)?.rank;
+  const revisitScene = useMemo(() => {
+    const groups = new Map<string, { mediaAssetId: string; title: string; count: number }>();
+    vocabulary.forEach(word => word.scenes?.forEach(scene => {
+      const existing = groups.get(scene.mediaAssetId);
+      if (existing) existing.count += 1;
+      else groups.set(scene.mediaAssetId, { mediaAssetId: scene.mediaAssetId, title: scene.title, count: 1 });
+    }));
+    return [...groups.values()].sort((a, b) => b.count - a.count)[0] ?? null;
+  }, [vocabulary]);
+  const completed = resume?.progress.completedTaskCount ?? 0;
+  const total = resume?.progress.totalTaskCount ?? 0;
+  const percent = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
 
   const continuePractice = async () => {
     setContinueError(null);
     try {
-      const fresh = await queryClient.fetchQuery({
-        queryKey: queryKeys.activeSession(profileId),
-        queryFn: () => getActivePractice(),
-        staleTime: 0,
-      });
-      if (!fresh) {
-        queryClient.setQueryData(queryKeys.activeSession(profileId), null);
-        return;
-      }
+      const fresh = await queryClient.fetchQuery({ queryKey: queryKeys.activeSession(profileId), queryFn: () => getActivePractice(), staleTime: 0 });
+      if (!fresh) { queryClient.setQueryData(queryKeys.activeSession(profileId), null); navigate("/practice"); return; }
       navigate(sessionDestination(fresh).path);
-    } catch (reason) {
-      setContinueError(friendlyError(reason));
-    }
+    } catch (reason) { setContinueError(friendlyError(reason)); }
   };
 
   const finishWalkthrough = async () => {
@@ -143,123 +90,55 @@ export function Home() {
     else setWalkthroughError("We couldn't save this choice. Please try again.");
   };
 
-  const walkthroughOpen = !walkthroughDismissed
-    && !progressLoading
-    && !progressError
-    && !resumeLoading
-    && !resumeError
-    && !resume
-    && Boolean(user?.onboardingCompleted)
-    && needsFirstLessonWalkthrough(user?.walkthroughVersionSeen);
+  const walkthroughOpen = !walkthroughDismissed && !progressLoading && !progressError && !resumeLoading && !resumeError && !resume
+    && Boolean(user?.onboardingCompleted) && needsFirstLessonWalkthrough(user?.walkthroughVersionSeen);
 
-  return (
-    <div className="home stack">
-      <header className="home-greeting">
-        <img src="/linguini-logo.png" width={64} height={64} alt="" />
-        <div>
-          <h1>{greeting()}, {learner.name || "friend"}!</h1>
-        </div>
-      </header>
+  return <div className="home-dashboard">
+    <header className="home-welcome">
+      <div><h2>{greeting()}, {learner.name || "friend"}</h2><p>Ready to cook, chef?</p></div>
+      <span className="home-points" aria-label={`${progress?.xp ?? 0} Basil`}><BasilIcon />{progressLoading || progressError ? "—" : progress?.xp ?? 0} Basil</span>
+    </header>
 
-      <GameResources />
-
-      <section className="home-streak" aria-label="Your seven day learning streak">
-        <div className="home-streak__heading">
-          <h2>Your {streak?.days.length ?? 7}-day streak</h2>
-          <strong className="home-streak__xp">{progressLoading || progressError ? "--" : progress?.xp ?? 0} XP</strong>
-        </div>
-        {progressLoading ? <InlineLoader label="Loading your streak…" /> : progressError ? null : (
-          <div className="home-streak__body">
-            <ol className="home-streak__week">
-              {streak?.days.map((day, index) => (
-                <li key={day.date} className={`home-streak__day${day.active ? " home-streak__day--checked" : ""}${index === streak.days.length - 1 ? " home-streak__day--today" : ""}`}>
-                  <img className="home-streak__farfalle" src="/pasta-assets/farfalle.png" alt="" />
-                  <span>{dayLabel(day.date)}</span>
-                </li>
-              ))}
-            </ol>
-            <div className="home-streak__count">
-              <strong>{activeDays}<span> / {streak?.days.length ?? 7}</span></strong>
-              <span className="home-streak__caption">{streakCaption}</span>
-            </div>
+    <div className="home-dashboard__grid">
+      <main className="home-dashboard__main">
+        <section className={`home-next-step${resume ? " home-next-step--resume" : " home-next-step--new"}`} aria-labelledby="home-next-title">
+          <div className="home-next-step__image" aria-hidden="true">{resume ? <MediaImage assetId={resume.session.sceneMediaAssetId} title={resume.title} width={1280} /> : <img src="/photos/cafe-interior.jpg" alt="" />}</div>
+          <div className="home-next-step__overlay" />
+          <div className="home-next-step__content">
+            <span className="home-eyebrow">Your next step</span>
+            <h2 id="home-next-title">{resume ? `Continue ${resume.title}` : "Turn a place into a lesson"}</h2>
+            <p>{resume ? `${completed} of ${total} activities complete` : "Choose a photo or one of our ready-made scenes."}</p>
+            {resume && total > 0 ? <div className="home-next-step__progress-row"><div className="home-next-step__progress" role="progressbar" aria-label="Practice progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}><span style={{ width: `${percent}%` }} /></div><strong>{percent}%</strong></div> : null}
+            {continueError ? <p className="home-next-step__error" role="alert">{continueError}</p> : null}
+            <div ref={beginPracticeRef}><Button onClick={() => resume ? void continuePractice() : navigate("/practice")}><PlayIcon size={21} /> {resume ? "Continue practice" : "Begin a new practice"}</Button></div>
           </div>
-        )}
-      </section>
+        </section>
 
-      <section className="home-plan" aria-label="Today's plan">
-        {progressLoading || resumeLoading ? <InlineLoader label="Loading your practice…" /> : progressError || resumeError ? (
-          <p role="alert">{progressError ?? resumeError} Reload to retry.</p>
-        ) : resume ? (
-          <Card className="home-featured home-featured--resume">
-            <div className="home-featured__image">
-              <MediaImage assetId={resume.session.sceneMediaAssetId} title={resume.title} />
-            </div>
-            <div className="home-featured__body">
-              <h3>{resume.title}</h3>
-              {resume.progress.totalTaskCount > 0 ? <TaskProgressRing completed={resume.progress.completedTaskCount} total={resume.progress.totalTaskCount} /> : null}
-              {continueError ? <p role="alert">{continueError}</p> : null}
-              <Button block onClick={() => void continuePractice()}>
-                Continue learning <ChevronRightIcon size={20} />
-              </Button>
-            </div>
-          </Card>
-        ) : (
-          <Card className="home-featured home-featured--new">
-            <div className="home-featured__body">
-              <h3>Turn a place into a lesson</h3>
-              <p className="home-featured__description">Choose a photo or one of our ready-made scenes.</p>
-              <div ref={beginPracticeRef}>
-                <Button block onClick={() => navigate("/practice")}>
-                  Begin a new practice <ChevronRightIcon size={20} />
-                </Button>
-              </div>
-            </div>
-          </Card>
-        )}
-      </section>
+        <section className="home-explore" aria-labelledby="home-explore-title">
+          <div className="home-section-heading"><h2 id="home-explore-title">Continue exploring</h2></div>
+          <div className="home-explore__rail">
+            <button className="home-explore-card" type="button" onClick={() => navigate("/vocabulary")}>
+              <div className="home-explore-card__image">{revisitScene ? <MediaImage assetId={revisitScene.mediaAssetId} title={revisitScene.title} width={640} lazy /> : <img src="/photos/cafe-interior.jpg" alt="" />}</div>
+              <div className="home-explore-card__body"><span className="home-tag home-tag--revisit"><BookIcon size={14} /> Revisit</span><strong>{revisitScene?.title ?? "Your vocabulary"}</strong><span>{revisitScene ? `${revisitScene.count} ${revisitScene.count === 1 ? "word" : "words"} to practise` : "Review the words you've found"}</span><ChevronRightIcon size={22} /></div>
+            </button>
+            <button className="home-explore-card" type="button" onClick={() => navigate("/ispy")}>
+              <div className="home-explore-card__image"><img src="/scenes/grocery-store.jpg" alt="A colourful grocery store scene" /></div>
+              <div className="home-explore-card__body"><span className="home-tag home-tag--play"><EyeIcon size={14} /> Quick play</span><strong>I-Spy challenge</strong><span>Test what you can spot</span><ChevronRightIcon size={22} /></div>
+            </button>
+          </div>
+        </section>
+      </main>
 
-      <Button variant="quiet" block className="home-play-together" onClick={() => navigate("/ispy/friends")}>
-        <PersonIcon size={22} /><span>I Spy with a friend</span>
-      </Button>
-
-      <section className="home-tiles" aria-labelledby="home-tiles-title">
-        <h2 id="home-tiles-title">More ways to learn</h2>
-        <div className="home-tiles__grid">
-          <Button variant="quiet" className="home-tile" onClick={() => navigate("/practice")}>
-            <CameraIcon size={28} />
-            <span>Capture a scene</span>
-          </Button>
-          <Button variant="quiet" className="home-tile" onClick={() => navigate("/journal")}>
-            <JournalIcon size={28} />
-            <span>My journal</span>
-          </Button>
-          <Button variant="quiet" className="home-tile" onClick={() => navigate("/vocabulary")}>
-            <BookIcon size={28} />
-            <span>Review words</span>
-          </Button>
-        </div>
-      </section>
-
-      <WordsLearntChart
-        dates={streak?.days.map(day => day.date) ?? lastSevenDates()}
-        vocabulary={vocabulary}
-        loading={vocabularyLoading}
-        error={vocabularyError}
-      />
-      {walkthroughOpen ? (
-        <WalkthroughCoachmark
-          targetRef={beginPracticeRef}
-          step={1}
-          totalSteps={3}
-          title="Start with the world around you"
-          description="Linguini turns a photo or one of our ready-made scenes into a speaking lesson."
-          nextLabel="Show me"
-          saving={profileSaving}
-          error={walkthroughError}
-          onNext={() => navigate("/practice")}
-          onSkip={() => void finishWalkthrough()}
-        />
-      ) : null}
+      <aside className="home-dashboard__aside">
+        {progressLoading ? <div className="home-dashboard__loading"><InlineLoader label="Loading your progress…" /></div> : progressError ? <p className="home-dashboard__error" role="alert">{progressError}</p> : <PastaStreak days={progress?.streak.days ?? []} current={progress?.streak.current ?? 0} />}
+        <section className="home-progress-card" aria-labelledby="home-progress-title">
+          <div className="home-section-heading home-section-heading--compact"><h2 id="home-progress-title">Your progress</h2><button type="button" onClick={() => navigate("/profile")}><ArrowRightIcon size={17} /></button></div>
+          {vocabularyLoading ? <InlineLoader compact label="Loading your words…" /> : vocabularyError ? <p role="alert">{vocabularyError}</p> : <div className="home-progress-card__stats"><div><span className="home-stat-icon home-stat-icon--words"><BookIcon /></span><strong>{wordsThisWeek}</strong><span>words this week</span></div><div><span className="home-stat-icon home-stat-icon--scenes"><EyeIcon /></span><strong>{exploredScenes}</strong><span>scenes explored</span></div></div>}
+        </section>
+        {leaderboardPosition ? <button className="home-league" type="button" onClick={() => navigate("/ispy")}><span className="home-league__badge" aria-hidden="true">#</span><span><strong>Basil League</strong><small>You're #{leaderboardPosition} this week</small></span><ChevronRightIcon /></button> : null}
+      </aside>
     </div>
-  );
+
+    {walkthroughOpen ? <WalkthroughCoachmark targetRef={beginPracticeRef} step={1} totalSteps={3} title="Start with the world around you" description="Linguini turns a photo or one of our ready-made scenes into a speaking lesson." nextLabel="Show me" saving={profileSaving} error={walkthroughError} onNext={() => navigate("/practice")} onSkip={() => void finishWalkthrough()} /> : null}
+  </div>;
 }

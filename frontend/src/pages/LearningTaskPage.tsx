@@ -19,6 +19,7 @@ import { useResolvedImageUrl } from "../components/SceneImage";
 import { boardRows, squareCrop } from "../lib/practiceBoard";
 import { questionMarkerObjects } from "../lib/missionMarkers";
 import { completeSlot, speechAvailable, writtenPromptShown } from "../lib/missionA0";
+import { playAnswerSound } from "../lib/answerSound";
 
 export function LearningTaskPage() {
   const { taskId } = useParams();
@@ -85,6 +86,7 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit }: { 
         else {
           setFeedback(result.attempt?.feedback?.message ?? "Saved.");
           setAnswerCorrect(result.attempt?.isCorrect ?? null);
+          if (result.attempt?.isCorrect != null) playAnswerSound(result.attempt.isCorrect);
         }
       }
     } finally {
@@ -236,9 +238,11 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
   const chooseAnswer = async (optionId: string) => {
     if (!question || answers[question.questionId] || checkingQuestion) return;
     if (question.correctOptionId) {
+      const correct = question.correctOptionId === optionId;
       setAnswers(value => ({ ...value, [question.questionId]: optionId }));
-      setQuestionResults(value => ({ ...value, [question.questionId]: question.correctOptionId === optionId }));
+      setQuestionResults(value => ({ ...value, [question.questionId]: correct }));
       setCorrectOptionIds(value => ({ ...value, [question.questionId]: question.correctOptionId! }));
+      playAnswerSound(correct);
       return;
     }
     setCheckingQuestion(true);
@@ -248,6 +252,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
       setAnswers(value => ({ ...value, [question.questionId]: optionId }));
       setQuestionResults(value => ({ ...value, [question.questionId]: result.isCorrect }));
       setCorrectOptionIds(value => ({ ...value, [question.questionId]: result.correctOptionId }));
+      playAnswerSound(result.isCorrect);
     } finally {
       setCheckingQuestion(false);
       setPendingOptionId(null);
@@ -379,6 +384,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
     try {
       const result = await checkLessonAnswer(task.id, question.questionId, answer);
       setLocalChecks(value => ({ ...value, [result.questionId]: result }));
+      playAnswerSound(result.isCorrect);
     } catch (error) {
       setCheckError(friendlyError(error));
     } finally {
@@ -568,18 +574,24 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
   const [actionResult, setActionResult] = useState<TaskActionResult | null>(null);
   const [checking, setChecking] = useState(false);
   const [revealed, setRevealed] = useState<Record<string, boolean>>({});
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [checkError, setCheckError] = useState<string | null>(null);
   const requestKey = useRef(crypto.randomUUID());
   const content = task.publicContent;
   const audio = speechAvailable();
   const { resolvedUrl: sceneImageUrl } = useResolvedImageUrl(scene.imageUrl);
   const [boardImageSize, setBoardImageSize] = useState<{ width: number; height: number } | null>(null);
+  const savedChecks = useQuery({
+    queryKey: queryKeys.lessonChecks(task.id),
+    queryFn: ({ signal }) => getLessonChecks(task.id, signal),
+    enabled: content.kind === "grammarLesson" && task.status !== "completed",
+  });
   const restorable = content.kind === "grammarLesson" && Boolean(content.missionId) && task.status === "completed";
   const saved = useQuery({
     queryKey: queryKeys.latestAttempt(task.id),
     queryFn: ({ signal }) => getLatestAttempt(task.id, signal),
     enabled: restorable && !Object.keys(questionResults).length,
   }).data?.attempt;
-  if (content.kind !== "grammarLesson") return null;
   const terminal = taskDone(task);
   const reward = !terminal ? taskXp(task) : null;
   const earnedText = xpEarnedText(actionResult?.xpEarned);
@@ -590,12 +602,42 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
     ? Object.fromEntries((restored.reviewDetails?.questionOutcomes ?? []).map(item => [item.questionId, item]))
     : outcomes;
   const chosen = restored?.answers ?? answers;
+  useEffect(() => {
+    if (!savedChecks.data?.checks.length || content.kind !== "grammarLesson") return;
+    const stored = savedChecks.data.checks;
+    setAnswers(value => ({ ...value, ...Object.fromEntries(stored.map(item => [item.questionId, item.answer])) }));
+    setQuestionResults(value => ({ ...value, ...Object.fromEntries(stored.map(item => [item.questionId, item.isCorrect])) }));
+    setCorrectAnswers(value => ({ ...value, ...Object.fromEntries(stored.map(item => [item.questionId, item.correctAnswer])) }));
+    setOutcomes(value => ({ ...value, ...Object.fromEntries(stored.map(item => [item.questionId, item.outcome])) }));
+    setActiveIndex(visibleLessonQuestionIndex(content.questions.map(item => item.questionId), Object.fromEntries(stored.map(item => [item.questionId, item]))));
+  }, [savedChecks.data, content]);
+  if (content.kind !== "grammarLesson") return null;
   const answerFor = (question: typeof content.questions[number]) => question.interactionType === "sentenceBuilding"
     ? question.chunks?.length
       ? (builtChunkIds[question.questionId] ?? []).join(",")
       : builtSentence((builtTokenIndexes[question.questionId] ?? []).map(index => question.tokenBank[index]))
     : answers[question.questionId] ?? "";
   const answered = content.questions.every(question => Boolean(answerFor(question)));
+  const activeQuestion = content.questions[activeIndex];
+  const activeAnswer = activeQuestion ? answerFor(activeQuestion) : "";
+  const activeResult = activeQuestion ? results[activeQuestion.questionId] : undefined;
+  const allChecked = content.questions.every(question => results[question.questionId] !== undefined);
+  const check = async () => {
+    if (!activeQuestion || !activeAnswer || checking) return;
+    setChecking(true);
+    setCheckError(null);
+    try {
+      const result = await checkLessonAnswer(task.id, activeQuestion.questionId, activeAnswer);
+      setQuestionResults(value => ({ ...value, [result.questionId]: result.isCorrect }));
+      setCorrectAnswers(value => ({ ...value, [result.questionId]: result.correctAnswer }));
+      setOutcomes(value => ({ ...value, [result.questionId]: result.outcome }));
+      playAnswerSound(result.isCorrect);
+    } catch (error) {
+      setCheckError(friendlyError(error));
+    } finally {
+      setChecking(false);
+    }
+  };
   const submit = async () => {
     const taskAnswers = Object.fromEntries(content.questions.map(question => [question.questionId, answerFor(question)]));
     setChecking(true);
@@ -615,9 +657,12 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
   return <div className="stack vocabulary-flow">
     <ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />
     <div className="learning-title-row"><div><h1>{content.title}</h1>{reward ? <XpPill {...reward} /> : null}</div><ExitToHome onExit={onExit} /></div>
-    {content.explanation ? <div className="panel-note">{content.explanation}</div> : null}
-    <LessonScaffolding content={content} />
+    {activeIndex === 0 && content.explanation ? <p className="small muted lesson-intro">{content.explanation}</p> : null}
+    {activeIndex === 0 ? <LessonScaffolding content={content} /> : null}
+    {savedChecks.isLoading ? <InlineLoader compact label="Restoring your place…" /> : null}
+    {savedChecks.isError ? <p role="alert">We couldn't restore your saved answers. Try refreshing this page.</p> : null}
     {content.questions.map((question, position) => {
+      if (position !== activeIndex) return null;
       const questionMarkers = question.roleplayPremise
         ? questionMarkerObjects(
           question.sceneObjectId,
@@ -700,7 +745,8 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         </div>
         <div className="chip-row" aria-label="Sentence building words">{question.tokenBank.map((token, tokenIndex) => {
           const used = (builtTokenIndexes[question.questionId] ?? []).includes(tokenIndex);
-          return <button key={`${token}-${tokenIndex}`} className="chip" disabled={used || terminal || practiceSaving}
+          if (used) return null;
+          return <button key={`${token}-${tokenIndex}`} className="chip" disabled={terminal || practiceSaving}
             onClick={() => setBuiltTokenIndexes(value => ({ ...value, [question.questionId]: [...(value[question.questionId] ?? []), tokenIndex] }))}>{token}</button>;
         })}</div>
         </>}
@@ -768,11 +814,16 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
       </> : null}
     </div></Card></div>;
     })}
-    {checking ? <InlineLoader compact label="Checking your answers…" /> : null}
+    {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
+    {checkError ? <p role="alert">{checkError}</p> : null}
     {feedback ?? restored?.feedback ?? earnedText ? <Feedback><div className="stack-2" role="status">{feedback ?? restored?.feedback ? <p>{feedback ?? restored?.feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {terminal ? <Button block onClick={onNext}>{index < total - 1 ? "Next task" : lastStep}</Button> : <>
-      <Button block disabled={!answered || practiceSaving || checking} onClick={() => void submit()}>Submit answers</Button>
+      {activeResult === undefined
+        ? <Button block disabled={!activeAnswer || practiceSaving || checking} onClick={() => void check()}>Check answer</Button>
+        : activeIndex < content.questions.length - 1
+          ? <Button block disabled={checking} onClick={() => setActiveIndex(value => value + 1)}>Next question</Button>
+          : <Button block disabled={!answered || !allChecked || practiceSaving || checking} onClick={() => void submit()}>Finish task</Button>}
       <Button variant="quiet" block disabled={practiceSaving} onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip task</Button>
     </>}
     <BackToTasks onClose={onClose} />
