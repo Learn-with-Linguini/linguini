@@ -95,7 +95,7 @@ export function Home() {
 
   return <div className="home-dashboard">
     <header className="home-welcome">
-      <div><h1>{greeting()}, {learner.name || "friend"}</h1><p>Ready for a little {activeProfile?.targetLanguageCode === "es" ? "Spanish" : "language practice"}?</p></div>
+      <div><h2>{greeting()}, {learner.name || "friend"}</h2><p>Ready to cook, chef?</p></div>
       <span className="home-points" aria-label={`${progress?.xp ?? 0} Basil`}><BasilIcon />{progressLoading || progressError ? "—" : progress?.xp ?? 0} Basil</span>
     </header>
 
