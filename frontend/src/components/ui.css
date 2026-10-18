@@ -2308,6 +2308,12 @@ p[role="alert"]::before { content: "!"; }
   border: 2px solid var(--danger);
 }
 
+.feedback--neutral {
+  border: 2px solid var(--pasta);
+  background: var(--cream);
+  color: var(--ink);
+}
+
 /* Answer choices */
 .choice-grid {
   display: grid;
@@ -4874,13 +4880,27 @@ p[role="alert"]::before { content: "!"; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: var(--ink-muted);
+  color: var(--ink);
   font-size: var(--text-small);
-  font-weight: 800;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
 
 .vocabulary-flow__skip { align-self: center; margin-top: calc(var(--space-2) * -1); color: var(--ink-muted); }
+
+.vocabulary-flow__skip,
+.learning-task-page__all-tasks,
+.typing-forgot-action {
+  border-color: var(--line);
+  background: var(--paper);
+}
+
+.vocabulary-flow__skip:hover:not(:disabled),
+.learning-task-page__all-tasks:hover:not(:disabled),
+.typing-forgot-action:hover:not(:disabled) {
+  border-color: var(--pasta);
+  background: var(--cream);
+}
 
 @media (max-width: 720px) {
   .vocabulary-learning-grid {

@@ -9,7 +9,7 @@ import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { builtSentence, choiceOrder, finishesAfterLearning, markerChoices, optionText, practiceStages, questionOptions, sentenceEnding, taskDone, taskTitle, taskXp, xpEarnedText } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
-import { checkLessonAnswer, checkVocabularyAnswer, getLatestAttempt, getLessonChecks, requestLessonAssistance, reviewDetails, updateMissionScenario, type GrammarLessonQuestion, type LessonAnswerCheck, type SceneObject, type SessionTask, type QuestionOutcome, type TaskActionResult, type TaskAnswer, type TaskContent, type VocabularyLearningWord } from "../lib/api";
+import { checkLessonAnswer, checkVocabularyAnswer, checkVocabularyTyping, getLatestAttempt, getLessonChecks, requestLessonAssistance, reviewDetails, updateMissionScenario, type GrammarLessonQuestion, type LessonAnswerCheck, type SceneObject, type SessionTask, type QuestionOutcome, type TaskActionResult, type TaskAnswer, type TaskContent, type VocabularyLearningWord } from "../lib/api";
 import { mergeLessonChecks, visibleLessonQuestionIndex } from "../lib/missionLessonFlow";
 import { isM06ScenarioVisible, lessonCheckFinished, nextAssistanceStep, retryTokens, unlockedRetryResumeIndex } from "../lib/missionM06";
 import { ReportIssueLink } from "../components/ReportIssueLink";
@@ -188,6 +188,8 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
   const [correctOptionIds, setCorrectOptionIds] = useState<Record<string, string>>({});
   const [checkingQuestion, setCheckingQuestion] = useState(false);
   const [pendingOptionId, setPendingOptionId] = useState<string | null>(null);
+  const [checkingTyping, setCheckingTyping] = useState(false);
+  const [typingCheck, setTypingCheck] = useState<{ isCorrect: boolean; correctAnswer: string; revealed: boolean } | null>(null);
   const requestKey = useRef(crypto.randomUUID());
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const content = task.publicContent;
@@ -248,6 +250,24 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
       setPendingOptionId(null);
     }
   };
+  const checkTyping = async (reveal = false) => {
+    if (!typingWord || checkingTyping) return;
+    setCheckingTyping(true);
+    try {
+      const result = await checkVocabularyTyping(task.id, typingKey, typedAnswers[typingKey] ?? "", reveal);
+      setTypingCheck(result);
+      if (result.isCorrect) playAnswerSound(true);
+    } catch (error) {
+      setFeedback(friendlyError(error));
+    } finally {
+      setCheckingTyping(false);
+    }
+  };
+  const advanceTyping = () => {
+    setTypingCheck(null);
+    if (typingIndex < content.words.length - 1) setTypingIndex(value => value + 1);
+    else void submit();
+  };
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__header">
       <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />{reward ? <XpPill {...reward} /> : null}</div>
@@ -256,9 +276,9 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
     {!terminal && stage === "review" ? <>
       <div className="vocabulary-learning-grid vocabulary-learning-grid--swipe" onTouchStart={handleCardTouchStart} onTouchEnd={handleCardTouchEnd}>{visibleWords.map(word => <VocabularyLearningCard key={word.learningKey ?? word.vocabularyItemId ?? word.targetText} word={word} languageCode={scene.languageCode} />)}</div>
       <div className="vocabulary-flow__actions">
-        <Button variant="quiet" disabled={page === 0} onClick={() => setPage(value => value - 1)}><ArrowLeftIcon size={18} /> Previous</Button>
+        <Button disabled={page === 0} onClick={() => setPage(value => value - 1)}><ArrowLeftIcon size={18} /> Previous</Button>
         <span className="vocabulary-flow__position" aria-live="polite">{page + 1} of {pageCount}</span>
-        <Button onClick={finishReview}>{page < pageCount - 1 ? <>Next <ArrowRightIcon /></> : "Start quick quiz"}</Button>
+        <Button variant="secondary" onClick={finishReview}>{page < pageCount - 1 ? <>Next <ArrowRightIcon /></> : "Start quick quiz"}</Button>
       </div>
       <Button variant="quiet" className="vocabulary-flow__skip" onClick={() => setStage("quiz")}>Skip word review</Button>
     </> : null}
@@ -292,9 +312,13 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
     </div></Card> : null}
     {!terminal && stage === "typing" && typingWord ? <Card plain><div className="stack">
       <div><h2>Type “{typingWord.translation}”</h2><p className="muted">Word {typingIndex + 1} of {content.words.length}</p></div>
-      <input className="input" aria-label={`Type ${typingWord.translation}`} value={typedAnswers[typingKey] ?? ""} onChange={event => setTypedAnswers(value => ({ ...value, [typingKey]: event.target.value }))} />
-      <Button block disabled={!typedAnswers[typingKey]?.trim() || practiceSaving} onClick={() => typingIndex < content.words.length - 1 ? setTypingIndex(value => value + 1) : void submit()}>{typingIndex < content.words.length - 1 ? "Next word" : "Finish task"}</Button>
-      <Button variant="quiet" block disabled={practiceSaving} onClick={() => void submit()}>Skip typing practice</Button>
+      <input className="input" aria-label={`Type ${typingWord.translation}`} value={typedAnswers[typingKey] ?? ""} disabled={typingCheck?.isCorrect || typingCheck?.revealed} onChange={event => { setTypedAnswers(value => ({ ...value, [typingKey]: event.target.value })); setTypingCheck(null); }} />
+      {checkingTyping ? <InlineLoader compact label="Checking your word…" /> : null}
+      {typingCheck ? <Feedback tone={typingCheck.isCorrect ? "good" : typingCheck.revealed ? "neutral" : "warn"}><p role="status">{typingCheck.isCorrect ? "That’s right!" : typingCheck.revealed ? <>No worries—the answer is <strong>{typingCheck.correctAnswer}</strong>.</> : "Not quite. Give it another try."}</p></Feedback> : null}
+      {typingCheck?.isCorrect || typingCheck?.revealed
+        ? <Button block disabled={practiceSaving} onClick={advanceTyping}>{typingIndex < content.words.length - 1 ? "Next word" : "Finish task"}</Button>
+        : <Button block disabled={!typedAnswers[typingKey]?.trim() || practiceSaving || checkingTyping} onClick={() => void checkTyping()}>Check answer</Button>}
+      {!typingCheck?.isCorrect && !typingCheck?.revealed ? <Button variant="quiet" block className="typing-forgot-action" disabled={practiceSaving || checkingTyping} onClick={() => void checkTyping(true)}>I forgot — lift the lid</Button> : null}
     </div></Card> : null}
     {feedback || earnedText ? <Feedback><div className="stack-2" role="status">{feedback ? <p>{feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}

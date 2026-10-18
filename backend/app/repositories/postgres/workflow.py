@@ -78,6 +78,7 @@ from app.schemas.sessions import (
 from app.schemas.tasks import (
     ISPY_DESCRIPTION_EVALUATION_VERSION,
     CheckVocabularyAnswerResponse,
+    CheckVocabularyTypingResponse,
     ISpyDescriptionEvaluation,
     LessonAnswerCheck,
     LessonAssistanceResponse,
@@ -703,6 +704,44 @@ class PostgresWorkflowRepository:
                 question_id=question_id,
                 is_correct=correct_option_id == option_id,
                 correct_option_id=correct_option_id,
+            )
+
+    def check_vocabulary_typing(
+        self, task_id, learning_key, answer, reveal
+    ) -> CheckVocabularyTypingResponse:
+        with self.read_connection() as c:
+            row = (
+                c.execute(
+                    select(session_tasks)
+                    .join(sessions, sessions.c.id == session_tasks.c.session_id)
+                    .join(
+                        language_profiles,
+                        language_profiles.c.id == sessions.c.language_profile_id,
+                    )
+                    .where(
+                        session_tasks.c.id == task_id,
+                        sessions.c.user_id == self.user_id,
+                        language_profiles.c.is_active.is_(True),
+                    )
+                )
+                .mappings()
+                .one_or_none()
+            )
+            if row is None:
+                raise PracticeNotFoundError("Task not found.")
+            task = SessionTask.model_validate(dict(row))
+            if task.kind != "vocabularyIntroduction" or not task.answer_key:
+                raise PracticeConflictError("This task does not support typing checks.")
+            accepted = task.answer_key.accepted_text_answers_by_vocabulary_id.get(learning_key)
+            if not accepted:
+                raise PracticeConflictError("This word has no typing answer key.")
+            return CheckVocabularyTypingResponse(
+                learning_key=learning_key,
+                is_correct=not reveal
+                and normalize_answer(answer)
+                in {normalize_answer(candidate) for candidate in accepted},
+                correct_answer=accepted[0],
+                revealed=reveal,
             )
 
     @staticmethod

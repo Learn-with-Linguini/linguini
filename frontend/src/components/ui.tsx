@@ -367,7 +367,7 @@ export function Feedback({
   tone = "good",
   children,
 }: {
-  tone?: "good" | "warn";
+  tone?: "good" | "warn" | "neutral";
   children: ReactNode;
 }) {
   return <div className={`feedback feedback--${tone}`}>{children}</div>;

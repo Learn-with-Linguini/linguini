@@ -629,6 +629,8 @@ export const createPractice = (profileId: string, assetId: string, key: string) 
 export const taskAction = (id: string, action: "start" | "complete" | "skip" | "attempts" | "confirm-guess", body: unknown = {}) => write<TaskActionResult>(`/api/v1/tasks/${id}/${action}`, "POST", body);
 export const checkVocabularyAnswer = (id: string, questionId: string, optionId: string) =>
   write<{ questionId: string; isCorrect: boolean; correctOptionId: string }>(`/api/v1/tasks/${id}/check-vocabulary-answer`, "POST", { questionId, optionId });
+export const checkVocabularyTyping = (id: string, learningKey: string, answer: string, reveal = false) =>
+  write<{ learningKey: string; isCorrect: boolean; correctAnswer: string; revealed: boolean }>(`/api/v1/tasks/${id}/check-vocabulary-typing`, "POST", { learningKey, answer, reveal });
 export const completePractice = (id: string) => write<{ id: string; status: string }>(`/api/v1/sessions/${id}/complete`, "POST", {});
 export const abandonPractice = (id: string) => write<{ id: string; status: string }>(`/api/v1/sessions/${id}/abandon`, "POST", {});
 export const getPracticeSummary = (id: string) => request<{

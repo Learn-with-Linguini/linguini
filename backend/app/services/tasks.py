@@ -4,6 +4,7 @@ from app.repositories.tasks import TaskNotFoundError, TaskRepository
 from app.schemas.tasks import (
     CheckLessonAnswerResponse,
     CheckVocabularyAnswerResponse,
+    CheckVocabularyTypingResponse,
     LatestAttemptResponse,
     LatestClueAttempt,
     LessonAssistanceRequest,
@@ -79,6 +80,16 @@ class TaskService:
         user = self.users.get_current_user()
         return PostgresWorkflowRepository(self.engine, user.id).check_vocabulary_answer(
             task_id, question_id, option_id
+        )
+
+    def check_vocabulary_typing(
+        self, task_id, learning_key, answer, reveal
+    ) -> CheckVocabularyTypingResponse:
+        from app.repositories.postgres.workflow import PostgresWorkflowRepository
+
+        user = self.users.get_current_user()
+        return PostgresWorkflowRepository(self.engine, user.id).check_vocabulary_typing(
+            task_id, learning_key, answer, reveal
         )
 
     def check_lesson_answer(self, task_id, question_id, answer) -> CheckLessonAnswerResponse:

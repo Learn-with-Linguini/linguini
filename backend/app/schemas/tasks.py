@@ -833,6 +833,25 @@ class CheckVocabularyAnswerResponse(ApiModel):
     correct_option_id: NonEmptyText
 
 
+class CheckVocabularyTypingRequest(ApiModel):
+    learning_key: NonEmptyText
+    answer: Annotated[str, Field(max_length=2_000)] = ""
+    reveal: bool = False
+
+    @model_validator(mode="after")
+    def validate_answer(self) -> CheckVocabularyTypingRequest:
+        if not self.reveal and not self.answer.strip():
+            raise ValueError("answer cannot be empty")
+        return self
+
+
+class CheckVocabularyTypingResponse(ApiModel):
+    learning_key: NonEmptyText
+    is_correct: bool
+    correct_answer: NonEmptyText
+    revealed: bool
+
+
 class CheckLessonAnswerRequest(ApiModel):
     question_id: NonEmptyText
     answer: Annotated[str, Field(min_length=1, max_length=2_000)]
