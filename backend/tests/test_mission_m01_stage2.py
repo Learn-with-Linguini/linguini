@@ -210,8 +210,28 @@ def test_m01_input_includes_spanish_reviewed_examples(curated, monkeypatch):
         "Está al lado de la puerta.",
     ]
     assert "title" not in model.payloads[0]["levelPlan"]
+    slots = model.payloads[0]["levelPlan"]["questions"]
+    assert all("section" not in slot for slot in slots)
+    assert all("focusObjectFactId" in slot for slot in slots)
+    assert all("focusColourFactId" in slot for slot in slots)
+    assert slots[0]["focusObjectFactId"] == slots[2]["focusObjectFactId"]
+    assert slots[1]["focusObjectFactId"] == slots[3]["focusObjectFactId"]
+    assert slots[0]["focusColourFactId"] is None
+    assert slots[1]["focusColourFactId"] is None
+    assert slots[2]["focusColourFactId"] is not None
+    assert slots[3]["focusColourFactId"] is not None
+    scene_facts = model.payloads[0]["contract"]["sceneFacts"]
+    object_fact_ids = {item["factId"] for item in scene_facts["objects"]}
+    assert all(slot["focusObjectFactId"] in object_fact_ids for slot in slots)
+    colour_attributes = {
+        item["factId"]: item["objectFactId"]
+        for item in scene_facts["attributes"]
+        if item["kind"] == "colour"
+    }
     assert all(
-        "section" not in slot for slot in model.payloads[0]["levelPlan"]["questions"]
+        colour_attributes[slot["focusColourFactId"]] == slot["focusObjectFactId"]
+        for slot in slots
+        if slot["focusColourFactId"] is not None
     )
 
 

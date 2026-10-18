@@ -8,7 +8,7 @@
 #   focusObject = the focus object; focusColour = the focus object's colour;
 #   details = every attribute/relation fact the question lists; oneDetail = at least
 #   one of them. Other objects the question lists are context only.
-plan_version = 4
+plan_version = 5
 
 [levels.A0]
 content_version = 1

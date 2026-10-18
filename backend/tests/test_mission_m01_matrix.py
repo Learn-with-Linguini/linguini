@@ -15,6 +15,7 @@ from app.languages import learnable_languages
 from app.missions.m01_multilingual import (
     CONTRACT_VERSION,
     MissionContractError,
+    bind_m01_focus,
     convert_generated_lesson,
     default_join,
     fact_id,
@@ -394,9 +395,12 @@ def test_a1_requires_approved_colour_terms_for_each_focus_object(
     contract = contract.model_copy(update={
         "vocabulary": [term for term in contract.vocabulary if term.fact_id != colour_fact],
     })
-    result = m01_multilingual_eligibility(load_m01_level_plan("A1"), contract)
+    plan = load_m01_level_plan("A1")
+    with pytest.raises(MissionContractError, match="focus 2 cannot be bound"):
+        bind_m01_focus(plan, contract)
+    result = m01_multilingual_eligibility(plan, contract)
     assert not result.eligible
-    assert any("approved colour terms" in reason for reason in result.reasons)
+    assert any("focus 2 cannot be bound" in reason for reason in result.reasons)
     assert {item.label for item in contract.scene_facts.objects} == {"cup", "book"}
     assert len(contract.scene_facts.attributes) == 2
 
@@ -445,9 +449,13 @@ def test_a1_eligibility_accepts_two_later_coloured_objects(synthetic_registry):
         object_facts["table"],
         object_facts["book"],
     }
-    assert m01_multilingual_eligibility(
-        load_m01_level_plan("A1"), updated_contract
-    ).eligible
+    plan = load_m01_level_plan("A1")
+    assert m01_multilingual_eligibility(plan, updated_contract).eligible
+    bindings = bind_m01_focus(plan, updated_contract)
+    assert bindings[1].object_fact_id == object_facts["table"]
+    assert bindings[1].colour_fact_id == later_attributes[0].fact_id
+    assert bindings[2].object_fact_id == object_facts["book"]
+    assert bindings[2].colour_fact_id == later_attributes[1].fact_id
 
 
 @pytest.mark.parametrize("removed_fact_id", [

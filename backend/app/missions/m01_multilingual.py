@@ -20,6 +20,7 @@ from app.schemas.base import ApiModel, NonEmptyText
 from app.schemas.enums import ProficiencyLevel
 from app.schemas.languages import Language
 from app.schemas.mission_m01_contract import (
+    ConfirmedObject,
     M01ContractInput,
     M01ContractOutput,
     M01GeneratedLesson,
@@ -136,6 +137,108 @@ class M01LevelPlan(ApiModel):
     preparation: M01PreparationPlan
     max_answer_chunks: Annotated[int, Field(ge=1)]
     min_connected_facts: Annotated[int, Field(ge=1)] | None = None
+
+
+class M01FocusBinding(ApiModel):
+    focus: Annotated[int, Field(ge=1)]
+    object_fact_id: NonEmptyText
+    colour_fact_id: NonEmptyText | None = None
+
+
+def bind_m01_focus(
+    plan: M01LevelPlan, contract: M01ContractInput
+) -> dict[int, M01FocusBinding]:
+    focus_indices = sorted({slot.focus for slot in plan.questions})
+    term_facts = {term.fact_id for term in contract.vocabulary}
+    approved_objects = [
+        item for item in contract.scene_facts.objects if item.fact_id in term_facts
+    ]
+    approved_colours: dict[str, str] = {}
+    for attribute in contract.scene_facts.attributes:
+        if attribute.kind == "colour" and attribute.fact_id in term_facts:
+            approved_colours.setdefault(attribute.object_fact_id, attribute.fact_id)
+
+    marker_focuses = {
+        slot.focus for slot in plan.questions if slot.interaction == "markerChoice"
+    }
+    colour_focuses = {
+        slot.focus
+        for slot in plan.questions
+        if "describe-colour" in slot.target_ids or "focusColour" in slot.realises
+    }
+    detail_focuses = {
+        slot.focus for slot in plan.questions if "details" in slot.realises
+    }
+    detail_objects = {
+        attribute.object_fact_id
+        for attribute in contract.scene_facts.attributes
+        if attribute.fact_id in term_facts
+    }
+    detail_objects.update(
+        object_fact_id
+        for relation in contract.scene_facts.relations
+        if relation.fact_id in term_facts
+        for object_fact_id in (relation.subject_fact_id, relation.reference_fact_id)
+    )
+
+    bindings: dict[int, M01FocusBinding] = {}
+    used_objects: set[str] = set()
+
+    def candidates_for(focus: int) -> list[ConfirmedObject]:
+        return [
+            item for item in approved_objects
+            if item.fact_id not in used_objects
+            and (focus not in marker_focuses or item.marker is not None)
+        ]
+
+    for focus in focus_indices:
+        if focus not in colour_focuses:
+            continue
+        candidates = [
+            item for item in candidates_for(focus) if item.fact_id in approved_colours
+        ]
+        if not candidates:
+            raise MissionContractError(
+                f"M01 focus {focus} cannot be bound: no unused object has an approved "
+                "object term and approved colour attribute term, with any required "
+                "review marker"
+            )
+        selected = candidates[0]
+        bindings[focus] = M01FocusBinding(
+            focus=focus,
+            object_fact_id=selected.fact_id,
+            colour_fact_id=approved_colours[selected.fact_id],
+        )
+        used_objects.add(selected.fact_id)
+
+    for focus in focus_indices:
+        if focus in bindings:
+            continue
+        candidates = candidates_for(focus)
+        if focus in detail_focuses:
+            preferred = [item for item in candidates if item.fact_id in detail_objects]
+            preferred_ids = {item.fact_id for item in preferred}
+            candidates = [
+                *preferred,
+                *(item for item in candidates if item.fact_id not in preferred_ids),
+            ]
+        if not candidates:
+            requirement = (
+                "an approved object term and review marker"
+                if focus in marker_focuses
+                else "an approved object term"
+            )
+            raise MissionContractError(
+                f"M01 focus {focus} cannot be bound: no unused object has {requirement}"
+            )
+        selected = candidates[0]
+        bindings[focus] = M01FocusBinding(
+            focus=focus,
+            object_fact_id=selected.fact_id,
+        )
+        used_objects.add(selected.fact_id)
+
+    return dict(sorted(bindings.items()))
 
 
 @cache
@@ -845,6 +948,7 @@ def _validate_answer_rule(
 def _validate_planned_output(contract, definition, output, plan) -> None:
     if output.mission.content_version != plan.content_version:
         raise MissionContractError("plan content version does not match the mission")
+    focus_bindings = bind_m01_focus(plan, contract)
     expected_questions = len(plan.questions)
     if len(output.questions) != expected_questions:
         raise MissionContractError(
@@ -897,8 +1001,6 @@ def _validate_planned_output(contract, definition, output, plan) -> None:
             )
 
     covered_targets: set[str] = set()
-    focus_candidates: dict[int, set[str]] = {}
-    colour_focus_indices: set[int] = set()
     planned: list[_PlannedQuestion] = []
     for index, (question, slot) in enumerate(
         zip(output.questions, plan.questions, strict=True), start=1,
@@ -961,7 +1063,12 @@ def _validate_planned_output(contract, definition, output, plan) -> None:
             fact_ref for fact_ref in question.fact_ids if fact_ref in object_fact_ids
         ]
         if not question_objects:
-            raise item.error("must reference its focus object fact")
+            binding = focus_bindings[slot.focus]
+            raise item.error(
+                f"focus {slot.focus} expects object fact {binding.object_fact_id}, "
+                "got no object fact"
+            )
+        binding = focus_bindings[slot.focus]
         if question.interaction == "markerChoice":
             marker_facts = list(question.marker_fact_ids.values())
             if len(marker_facts) != len(set(marker_facts)):
@@ -971,65 +1078,43 @@ def _validate_planned_output(contract, definition, output, plan) -> None:
                 raise item.error(
                     f"correct marker object {correct_fact} must be in the question facts"
                 )
-            candidates = {correct_fact}
+            actual_focus = correct_fact
         elif slot.yes_no:
             # The first listed object is the one the lesson highlights.
-            candidates = {question_objects[0]}
+            actual_focus = question_objects[0]
         else:
-            candidates = set(question_objects)
-        if "describe-colour" in slot.target_ids:
-            colour_focus_indices.add(slot.focus)
-            colour_objects = {
-                approved_colour_fact_objects[fact_ref]
-                for fact_ref in question.fact_ids
-                if fact_ref in approved_colour_fact_objects
-            }
-            candidates &= colour_objects
-            if not candidates:
-                raise item.error(
-                    "targeting describe-colour must reference an approved colour attribute "
-                    "fact for its focus object"
+            if binding.object_fact_id not in question_objects:
+                actual_focus = (
+                    question_objects[0]
+                    if len(question_objects) == 1
+                    else sorted(question_objects)
                 )
-        if slot.focus in focus_candidates:
-            shared = focus_candidates[slot.focus] & candidates
-            if not shared:
-                if slot.focus in colour_focus_indices:
-                    raise item.error(
-                        "targeting describe-colour must reference an approved colour "
-                        "attribute fact for its focus object"
-                    )
                 raise item.error(
-                    f"questions with the same focus must share one object fact: focus "
-                    f"{slot.focus} candidates {sorted(candidates)} do not overlap "
-                    f"{sorted(focus_candidates[slot.focus])}"
+                    f"focus {slot.focus} expects object fact {binding.object_fact_id}, "
+                    f"got {actual_focus}"
                 )
-            focus_candidates[slot.focus] = shared
-        else:
-            focus_candidates[slot.focus] = candidates
+            actual_focus = binding.object_fact_id
+        if actual_focus != binding.object_fact_id:
+            raise item.error(
+                f"focus {slot.focus} expects object fact {binding.object_fact_id}, "
+                f"got {actual_focus}"
+            )
 
-    focus_indices = sorted(focus_candidates)
-    object_order = {
-        item.fact_id: index for index, item in enumerate(contract.scene_facts.objects)
-    }
-
-    def assign_focus_objects(position: int, used: set[str]) -> dict[int, str] | None:
-        if position == len(focus_indices):
-            return {}
-        focus_index = focus_indices[position]
-        for candidate in sorted(focus_candidates[focus_index], key=object_order.__getitem__):
-            if candidate in used:
-                continue
-            rest = assign_focus_objects(position + 1, {*used, candidate})
-            if rest is not None:
-                return {focus_index: candidate, **rest}
-        return None
-
-    focus_objects = assign_focus_objects(0, set())
-    if focus_objects is None:
-        raise MissionContractError(
-            "different focus indices must use different objects: candidates "
-            f"{ {index: sorted(focus_candidates[index]) for index in focus_indices} }"
-        )
+        if "describe-colour" in slot.target_ids or "focusColour" in slot.realises:
+            expected_colour = binding.colour_fact_id
+            attribute_fact_ids = [
+                fact_ref for fact_ref in question.fact_ids if facts[fact_ref] == "attribute"
+            ]
+            if expected_colour not in question.fact_ids:
+                actual_colour = (
+                    attribute_fact_ids[0]
+                    if len(attribute_fact_ids) == 1
+                    else attribute_fact_ids
+                )
+                raise item.error(
+                    f"focus {slot.focus} expects colour fact {expected_colour}, "
+                    f"got {actual_colour}"
+                )
 
     for required in definition.expected_performance.required_target_groups:
         if not set(required) & covered_targets:
@@ -1062,7 +1147,7 @@ def _validate_planned_output(contract, definition, output, plan) -> None:
     for item in planned:
         _validate_answer_rule(
             item,
-            focus_objects[item.slot.focus],
+            focus_bindings[item.slot.focus].object_fact_id,
             output.private.answers[item.question.question_id],
             facts,
             objects_by_fact,
@@ -1075,11 +1160,13 @@ def _validate_planned_output(contract, definition, output, plan) -> None:
 __all__ = [
     "CONTRACT_VERSION",
     "M01_VARIANTS",
+    "M01FocusBinding",
     "M01LevelPlan",
     "M01Variant",
     "MissionContractError",
     "convert_generated_lesson",
     "expected_preparation_cards",
+    "bind_m01_focus",
     "UnroutedMissionVariant",
     "default_join",
     "fact_id",

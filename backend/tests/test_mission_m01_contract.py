@@ -18,6 +18,7 @@ from app.missions.m01_multilingual import (
     M01_VARIANTS,
     MissionContractError,
     UnroutedMissionVariant,
+    bind_m01_focus,
     convert_generated_lesson,
     default_join,
     fact_id,
@@ -1043,42 +1044,73 @@ def test_a0_preparation_count_is_objects_plus_two():
             }), plan)
 
 
-def test_question_focus_objects_must_be_consistent_and_distinct():
+def test_question_must_use_its_bound_focus_object():
     contract, output, plan = planned_a1_output()
     first, second = contract.scene_facts.objects[:2]
-    first_attribute = contract.scene_facts.attributes[0]
     second_attribute = contract.scene_facts.attributes[1]
     questions = list(output.questions)
     questions[2] = questions[2].model_copy(update={
         "fact_ids": [second.fact_id, second_attribute.fact_id],
     })
 
-    with pytest.raises(
-        MissionContractError,
-        match=r"question 3 \(choose-attribute, slot chooseAttribute\): targeting "
-        "describe-colour must reference an approved colour attribute fact for its focus object",
-    ):
+    with pytest.raises(MissionContractError) as exc_info:
         validate_contract_output(contract, output.model_copy(update={"questions": questions}), plan)
+    assert (
+        f"question 3 (choose-attribute, slot chooseAttribute): focus 1 expects object "
+        f"fact {bind_m01_focus(plan, contract)[1].object_fact_id}, got {second.fact_id}"
+    ) in str(exc_info.value)
 
+    assert first.fact_id != second.fact_id
+
+
+def test_questions_two_and_four_must_use_the_same_bound_focus_object():
+    contract, output, plan = planned_a1_output()
+    expected = bind_m01_focus(plan, contract)[2].object_fact_id
+    assert output.questions[1].fact_ids[0] == expected
+    other = next(
+        item.fact_id for item in contract.scene_facts.objects if item.fact_id != expected
+    )
+    other_colour = next(
+        item.fact_id
+        for item in contract.scene_facts.attributes
+        if item.object_fact_id == other and item.kind == "colour"
+    )
     questions = list(output.questions)
-    second_question = questions[1]
-    questions[1] = second_question.model_copy(update={
-        "fact_ids": [first.fact_id],
-        "options": [
-            option.model_copy(update={"label": option.label.replace("mesa", "taza")})
-            for option in second_question.options
-        ],
-    })
     questions[3] = questions[3].model_copy(update={
-        "fact_ids": [first.fact_id, first_attribute.fact_id],
-        "chunks": [
-            chunk.model_copy(update={"text": "taza"})
-            if chunk.chunk_id == "describe-mesa" else chunk
-            for chunk in questions[3].chunks
-        ],
+        "fact_ids": [other, other_colour],
     })
-    with pytest.raises(MissionContractError, match="different focus indices must use different"):
+    assert other in questions[3].fact_ids
+    assert expected not in questions[3].fact_ids
+    with pytest.raises(MissionContractError) as exc_info:
         validate_contract_output(contract, output.model_copy(update={"questions": questions}), plan)
+    assert (
+        f"question 4 (describe-second, slot describeObject): focus 2 expects object fact "
+        f"{expected}, got {other}"
+    ) in str(exc_info.value)
+
+
+def test_a2_focus_prefers_an_object_with_an_approved_detail_fact():
+    contract, _, plan = planned_a2_output()
+    first, second, third = contract.scene_facts.objects[:3]
+    contract = contract.model_copy(update={
+        "scene_facts": contract.scene_facts.model_copy(update={
+            "attributes": [
+                contract.scene_facts.attributes[0].model_copy(
+                    update={"object_fact_id": third.fact_id}
+                )
+            ],
+            "relations": [
+                contract.scene_facts.relations[0].model_copy(update={
+                    "subject_fact_id": second.fact_id,
+                    "reference_fact_id": third.fact_id,
+                })
+            ],
+        })
+    })
+
+    binding = bind_m01_focus(plan, contract)[1]
+    assert binding.object_fact_id == second.fact_id
+    assert binding.object_fact_id != first.fact_id
 
 
 def test_colour_question_requires_a_colour_fact_for_its_focus_object():
@@ -1092,8 +1124,8 @@ def test_colour_question_requires_a_colour_fact_for_its_focus_object():
 
     with pytest.raises(
         MissionContractError,
-        match=r"question 3 \(choose-attribute, slot chooseAttribute\): targeting "
-        "describe-colour must reference an approved colour attribute fact for its focus object",
+        match=r"question 3 \(choose-attribute, slot chooseAttribute\): focus 1 expects "
+        r"colour fact attribute:\S+, got attribute:\S+",
     ):
         validate_contract_output(contract, output.model_copy(update={"questions": questions}), plan)
 
@@ -1406,7 +1438,7 @@ def test_m01_cache_identity_covers_payload_and_version_dimensions():
     contract = contract_input().model_dump(mode="json", by_alias=True)
     payload = {
         "contract": contract,
-        "planVersion": 4,
+        "planVersion": 5,
         "levelPlan": {"contentVersion": 1},
     }
     version = FeatureVersion("learning-task", "prompt-v1", "schema-v1", "validator-v1")
@@ -1455,7 +1487,7 @@ def test_m01_cache_identity_covers_payload_and_version_dimensions():
     ):
         variations.append(key(changed_version=replace(version, **{version_field: value})))
     changed = json.loads(json.dumps(payload))
-    changed["planVersion"] = 5
+    changed["planVersion"] = 6
     variations.append(key(changed))
 
     assert all(candidate != original for candidate in variations)

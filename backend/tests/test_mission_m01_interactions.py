@@ -80,8 +80,8 @@ def test_marker_choice_rejects_a_marker_for_another_object():
     )
     _rejects(
         contract, moved, plan,
-        r"question 2 \(confirm-0, slot confirmName\): questions with the same focus "
-        r"must share one object fact",
+        r"question 1 \(match-0, slot matchName\): focus 1 expects object fact object:\S+, "
+        r"got object:\S+",
     )
 
 
@@ -165,7 +165,8 @@ def test_yes_no_highlights_the_first_listed_object():
     cup, table = (item.fact_id for item in _objects(contract)[:2])
     _rejects(
         contract, _replace(output, "confirm-0", fact_ids=[table, cup]), plan,
-        r"question 2 \(confirm-0, slot confirmName\): questions with the same focus",
+        r"question 2 \(confirm-0, slot confirmName\): focus 1 expects object fact "
+        r"object:\S+, got object:\S+",
     )
 
 

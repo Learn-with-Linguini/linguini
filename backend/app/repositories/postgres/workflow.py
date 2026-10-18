@@ -35,6 +35,7 @@ from app.languages import get_language
 from app.missions import get_mission
 from app.missions.m01_multilingual import (
     CONTRACT_VERSION,
+    bind_m01_focus,
     expected_preparation_cards,
     join_chunks,
     load_m01_level_plan,
@@ -2793,10 +2794,22 @@ class PostgresWorkflowRepository:
                     try:
                         if target_language is None:
                             raise ValueError("M01 target language is not registered")
+                        focus_bindings = bind_m01_focus(plan, contract)
                         level_plan = plan.model_dump(mode="json", by_alias=True)
                         level_plan.pop("title")
-                        for question_slot in level_plan["questions"]:
+                        for question_slot, slot_plan in zip(
+                            level_plan["questions"], plan.questions, strict=True
+                        ):
                             question_slot.pop("section")
+                            binding = focus_bindings[question_slot["focus"]]
+                            question_slot["focusObjectFactId"] = binding.object_fact_id
+                            requires_colour = (
+                                "describe-colour" in slot_plan.target_ids
+                                or "focusColour" in slot_plan.realises
+                            )
+                            question_slot["focusColourFactId"] = (
+                                binding.colour_fact_id if requires_colour else None
+                            )
                         payload = {
                             "contract": contract.model_dump(
                                 mode="json", by_alias=True, exclude_none=True
