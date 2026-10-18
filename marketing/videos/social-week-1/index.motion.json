@@ -4,7 +4,8 @@
   "assertions": [
     { "kind": "appearsBy", "selector": "#v1-hook .headline", "bySec": 1.2 },
     { "kind": "before", "a": "#v1-demo #w1", "b": "#v1-demo #w4" },
-    { "kind": "staysInFrame", "selector": ".cta-card" },
+    { "kind": "staysInFrame", "selector": "#v1-cta .cta-card" },
+    { "kind": "staysInFrame", "selector": "#v2-cta .cta-card" },
     { "kind": "before", "a": "#v2-steps #s1", "b": "#v2-steps #s3" }
   ]
 }

@@ -19,7 +19,7 @@ The four weeks should move people through four questions:
 1. **What is Linguini?** A language lesson made from a photo of your day.
 2. **Can I trust it?** AI suggests vocabulary, but the learner reviews and controls it.
 3. **Will I enjoy returning?** I-Spy, journal pages, XP and pasta streaks turn practice into a habit.
-4. **Why should I try it now?** Public-beta users receive unlimited photo lessons and can influence what is built next.
+4. **What happens after beta?** Thank early learners, publish what the team learnt and keep telling the durable product story without promising beta access.
 
 The primary CTA is **Try the public beta**. The secondary CTA is **Tell us what you would photograph or improve**.
 
@@ -29,8 +29,17 @@ The primary CTA is **Try the public beta**. The secondary CTA is **Tell us what 
 | --- | --- | --- | --- |
 | 1 | Your day is the lesson | Photo → vocabulary → practice | What would you photograph first? |
 | 2 | AI suggests, you decide | Review, remove and add objects | What should learners always control? |
-| 3 | Practise and remember | I-Spy, journal and streaks | Which part would bring you back? |
-| 4 | Join and shape the beta | Unlimited beta access and feedback | What should we improve next? |
+| 3 | Last beta week: practise and remember | I-Spy, journal, streaks and final feedback | Which part would bring you back? |
+| 4 | After beta: what we learnt | Results, product direction and evergreen education | What should we build or improve next? |
+
+## Beta timeline
+
+- **Week 1:** Introduce the product and invite people into beta.
+- **Week 2:** Treat this as the main acquisition and feedback week.
+- **Week 3:** Planned final beta week. Announce the exact closing date at least seven days ahead, then close access at the end of the week if the team is operationally ready.
+- **Week 4:** Do not keep advertising an open beta. Thank testers, share specific lessons and direct new visitors to whichever access path actually exists then: general availability, Free/Plus, or a waitlist.
+
+Before scheduling week 3, replace `[BETA CLOSING DATE]` with a real date. If the product is not ready to leave beta, publish a transparent extension instead of silently moving the deadline.
 
 ## Publishing rhythm
 
@@ -52,7 +61,7 @@ Use one campaign name and a different source for each platform:
 - LinkedIn: `https://www.learnwithlinguini.com/?utm_source=linkedin&utm_medium=social&utm_campaign=public_beta_4week`
 - Instagram: `https://www.learnwithlinguini.com/?utm_source=instagram&utm_medium=social&utm_campaign=public_beta_4week`
 
-Add `utm_content=week_1_photo`, `week_2_control`, `week_3_habit` or `week_4_beta` when the platform permits a direct link. Instagram and TikTok should place their tracked link in the profile.
+Add `utm_content=week_1_photo`, `week_2_control`, `week_3_beta_close` or `week_4_post_beta` when the platform permits a direct link. Instagram and TikTok should place their tracked link in the profile.
 
 ---
 
@@ -120,7 +129,9 @@ Do not force a hashtag into every post. Use at most one or two when they help di
 > - Choosing what gets used
 > - All three
 
-## Week 3: Practise and remember
+## Week 3: Final beta week — practise and remember
+
+Add `Public beta closes [BETA CLOSING DATE]` to the end of each beta CTA this week.
 
 ### Monday — I-Spy
 
@@ -146,7 +157,7 @@ Do not force a hashtag into every post. Use at most one or two when they help di
 >
 > How many days a week can you realistically practise a language?
 
-## Week 4: Join and shape the beta
+## Week 4: After beta
 
 ### Monday — Language availability
 
@@ -159,17 +170,17 @@ Do not force a hashtag into every post. Use at most one or two when they help di
 >
 > The no-signup website demo currently showcases Spanish and French.
 
-### Wednesday — Beta access
+### Wednesday — Thank-you and next step
 
-> Public beta is open.
+> Our planned public-beta window has closed. Thank you to everyone who turned a piece of their day into a lesson and told us where the experience worked—or did not.
 >
-> Beta accounts get unlimited photo lessons every day, ready-made scenes, vocabulary practice, I-Spy, progress and journals—with no payment card required.
+> Next access: [GENERAL AVAILABILITY / FREE-PLUS / WAITLIST LINK]
 >
-> Try it: [TRACKED LINK]
+> We will share the next release here.
 
 ### Friday — Feedback request
 
-> If you try one Linguini lesson this weekend, tell us one thing:
+> If you tried Linguini during beta, tell us one thing:
 >
 > Where did you hesitate, get confused or want more help?
 >
@@ -186,6 +197,7 @@ Do not force a hashtag into every post. Use at most one or two when they help di
 - Use large on-screen text; the video must remain understandable without sound.
 - End with one action: comment, choose a scene or try the beta.
 - Reuse the strongest TikTok as the week's Instagram Reel.
+- Keep the editing native to TikTok: relatable POV or "me / also me" hooks, cute mascot reactions, quick visual payoffs and self-aware captions. Avoid a formal product-demo voice.
 
 ## Week 1: Turn a desk into a lesson
 
@@ -243,7 +255,7 @@ Do not force a hashtag into every post. Use at most one or two when they help di
 >
 > #languagelearningtips #vocabulary #linguini
 
-## Week 3: I-Spy and journal
+## Week 3: Final beta week — I-Spy and journal
 
 ### Video 5 — I-Spy goes both ways
 
@@ -269,7 +281,7 @@ Do not force a hashtag into every post. Use at most one or two when they help di
 >
 > #languagejournal #journaling #languagelearning #linguini
 
-## Week 4: Public-beta invitation
+## Week 4: After beta
 
 ### Video 7 — Four languages
 
@@ -283,19 +295,19 @@ Do not force a hashtag into every post. Use at most one or two when they help di
 >
 > #learnspanish #learnfrench #learngerman #learnkorean #linguini
 
-### Video 8 — Try the beta
+### Video 8 — What beta taught us
 
-**Opening text:** `Unlimited photo lessons during public beta.`
+**Opening text:** `we gave the internet unlimited photo lessons. here's what happened.`
 
-**Shots:** Choose photo → lesson → I-Spy → journal → beta summary card.
+**Shots:** Choose photo → lesson → I-Spy → journal → three real, verified beta learnings.
 
-**Closing text:** `No payment card required · Link in bio`
+**Closing text:** `thanks for helping us cook 🍝`
 
 **Caption:**
 
-> Linguini is open for public beta. Turn an everyday photo into your next lesson, then tell us what we should improve.
+> The first Linguini beta chapter is done. Thank you for every photo, report and "wait, why did it call that a lamp?" moment. Next chapter soon. 🍝
 >
-> #publicbeta #languagelearning #edtech #buildinpublic #linguini
+> #languagelearning #edtech #buildinpublic #linguini
 
 ---
 
@@ -384,19 +396,19 @@ Do not force a hashtag into every post. Use at most one or two when they help di
 >
 > #LearningExperience #LanguagePractice #ProductDesign
 
-## Week 4: Public beta
+## Week 4: After beta
 
-### Tuesday — Availability announcement
+### Tuesday — Beta retrospective
 
-> We have opened Linguini for public beta.
+> We have completed Linguini's planned public-beta window.
 >
-> Beta accounts receive unlimited photo lessons every day, access to personal photos and ready-made scenes, vocabulary activities, I-Spy, progress tracking and journals. No payment card is required.
+> Thank you to the learners who tested photo analysis, vocabulary activities, I-Spy, progress tracking and journals—and especially to those who reported confusing moments.
 >
-> The learner app supports Spanish, French and German, plus beginner Korean, from English. The no-signup website demo currently showcases Spanish and French.
+> We will publish verified findings and the next access path once the team has reviewed the beta data.
 >
-> Try it here: [TRACKED LINK]
+> Follow the next release: [GENERAL AVAILABILITY / FREE-PLUS / WAITLIST LINK]
 >
-> #PublicBeta #LanguageLearning #EdTech #BuildInPublic
+> #LanguageLearning #EdTech #BuildInPublic #ProductDevelopment
 
 ### Thursday — Specific feedback request
 
@@ -514,7 +526,7 @@ Do not force a hashtag into every post. Use at most one or two when they help di
 2. `What did it miss?` Question box.
 3. `AI suggests. You decide.` Link sticker to the beta.
 
-## Week 3: Play and remember
+## Week 3: Final beta week — play and remember
 
 ### Monday I-Spy post
 
@@ -553,7 +565,7 @@ Do not force a hashtag into every post. Use at most one or two when they help di
 3. `How many days can you realistically practise?` Slider or poll.
 4. Farfalle streak reveal.
 
-## Week 4: Public beta
+## Week 4: After beta
 
 ### Monday language carousel
 
@@ -574,19 +586,19 @@ Do not force a hashtag into every post. Use at most one or two when they help di
 >
 > #learnspanish #learnfrench #learngerman #learnkorean #languagelearning #linguini
 
-### Thursday public-beta post
+### Thursday thank-you post
 
 **Caption:**
 
-> Linguini is open for public beta. 🍝
+> Our planned public-beta window has closed. Thank you for helping us turn ordinary photos into better language lessons. 🍝
 >
-> Beta accounts get unlimited photo lessons every day for $0 during beta, with no payment card required.
+> We are reviewing what learners photographed, where lessons caused confusion and which practice moments brought people back.
 >
-> Turn your desk, lunch, commute or weekend view into your next Spanish, French, German or beginner Korean lesson.
+> We will share the next way to access Linguini as soon as it is ready.
 >
-> Learn the language of your day through the link in our bio.
+> Follow the next chapter through the link in our bio.
 >
-> #publicbeta #languagelearning #learnspanish #learnfrench #learngerman #learnkorean #linguini
+> #languagelearning #learnspanish #learnfrench #learngerman #learnkorean #buildinpublic #linguini
 
 ### Stories
 
