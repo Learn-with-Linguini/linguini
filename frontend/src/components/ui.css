@@ -4681,11 +4681,12 @@ p[role="alert"]::before { content: "!"; }
   width: 100%;
 }
 
-.learn-words-intro__photo > .xp-pill {
+.learn-words-intro__photo > .pill--xp {
   position: absolute;
   z-index: 2;
   top: var(--space-3);
   right: var(--space-3);
+  box-shadow: var(--shadow-card);
 }
 
 .vocabulary-preview-page {
