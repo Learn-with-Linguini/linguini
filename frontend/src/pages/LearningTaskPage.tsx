@@ -7,7 +7,8 @@ import { Button, Card, Feedback, IconButton, ProgressTrail, XpPill } from "../co
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, CloseIcon, EyeIcon, EyeOffIcon, SpeakerIcon } from "../components/icons";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
-import { builtSentence, choiceOrder, finishesAfterLearning, markerChoices, optionText, practiceStages, questionOptions, sentenceEnding, taskDone, taskTitle, taskXp, xpEarnedText } from "../lib/practiceTasks";
+import { builtSentence, choiceOrder, finishesAfterLearning, markerChoices, nextLearningStep, optionText, practiceStages, questionOptions, sentenceEnding, taskDone, taskTitle, taskXp, xpEarnedText } from "../lib/practiceTasks";
+import type { LearningStep } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
 import { checkLessonAnswer, checkVocabularyAnswer, checkVocabularyTyping, getLatestAttempt, getLessonChecks, requestLessonAssistance, reviewDetails, updateMissionScenario, type GrammarLessonQuestion, type LessonAnswerCheck, type SceneObject, type SessionTask, type QuestionOutcome, type TaskActionResult, type TaskAnswer, type TaskContent, type VocabularyLearningWord } from "../lib/api";
 import { mergeLessonChecks, visibleLessonQuestionIndex } from "../lib/missionLessonFlow";
@@ -34,21 +35,19 @@ export function LearningTaskPage() {
   const index = tasks.findIndex(item => item.id === taskId);
   const task = tasks[index];
   if (!task || ["abandoned", "failed"].includes(session.session.status)) return <Navigate to={`${base}/learn`} replace />;
-  const next = tasks[index + 1];
   const isVocabularyTask = task.kind === "vocabularyIntroduction";
+  const generating = session.session.status === "generatingTasks";
+  const goTo = (step: LearningStep) => {
+    if (step.to === "task") navigate(`${base}/learn/${step.taskId}`);
+    else if (step.to === "tasks") navigate(`${base}/learn`);
+    else if (step.to === "ispy") navigate(`${base}/ispy-1`);
+    else if (completeSession()) navigate(`${base}/summary`);
+  };
   const skipM06RolePlay = () => {
-    const lastM06Index = tasks.reduce(
-      (last, item, taskIndex) => item.publicContent.missionId === "M06" ? taskIndex : last,
-      -1,
-    );
-    const afterM06 = tasks[lastM06Index + 1];
-    if (afterM06) {
-      navigate(`${base}/learn/${afterM06.id}`);
-    } else if (session.session.status !== "generatingTasks" && finishesAfterLearning(session.tasks)) {
-      if (completeSession()) navigate(`${base}/summary`);
-    } else {
-      navigate(`${base}/ispy-1`);
-    }
+    const lastM06 = tasks.filter(item => item.publicContent.missionId === "M06").at(-1) ?? task;
+    // The role-play tasks were just skipped; this render's session predates those replies.
+    goTo(nextLearningStep(session.tasks, lastM06.id, generating,
+      item => taskDone(item) || item.publicContent.missionId === "M06"));
   };
   return <div className="stack learning-task-page"><LearningTaskContent key={task.id} task={task} index={index} total={tasks.length}
     onScenarioChange={() => loadSession(session.session.id)}
@@ -58,11 +57,7 @@ export function LearningTaskPage() {
         navigate(`${base}/learn`);
         return;
       }
-      if (!next && session.session.status !== "generatingTasks" && finishesAfterLearning(session.tasks)) {
-        if (completeSession()) navigate(`${base}/summary`);
-        return;
-      }
-      navigate(next ? `${base}/learn/${next.id}` : session.session.status === "generatingTasks" ? `${base}/learn` : `${base}/ispy-1`);
+      goTo(nextLearningStep(session.tasks, task.id, generating));
     }} onClose={() => navigate(isVocabularyTask ? `${base}/learn/vocabulary-preview` : `${base}/learn`)} onExit={() => navigate("/home")} /></div>;
 }
 
@@ -651,7 +646,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
   const skipRolePlay = async () => {
     const m06Tasks = session?.tasks.filter(item => item.publicContent.missionId === "M06") ?? [task];
     for (const item of m06Tasks) {
-      if (!taskDone(item)) await actOnTask(item.id, "skip");
+      if (!taskDone(item) && !await actOnTask(item.id, "skip")) return;
     }
     onSkipRolePlay();
   };
@@ -1191,6 +1186,7 @@ function CountBoard({ count, sceneImageUrl, imageSize, onImageSize, boardObject 
 
 function useLastStepLabel() {
   const { session } = useAppState();
+  if (session && !practiceStages(session.tasks).learning.every(taskDone)) return "Back to tasks";
   if (session && finishesAfterLearning(session.tasks)) return "Finish lesson";
   return "Go to I-Spy";
 }
