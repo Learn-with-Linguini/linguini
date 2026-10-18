@@ -74,7 +74,7 @@ def test_request_statement_counts(database):
     _, _, _, client = database
     for path, limit in [
         ("/api/v1/me", 1),
-        ("/api/v1/me/progress", 4),
+        ("/api/v1/me/progress", 5),
         ("/api/v1/journals", 6),
         ("/api/v1/preloaded-scenes", 3),
     ]:

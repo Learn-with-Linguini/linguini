@@ -1,42 +1,39 @@
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { Button, Card } from "../components/ui";
-import { ArrowRightIcon } from "../components/icons";
-import { getActiveISpyGame } from "../lib/api";
-import { queryError, queryKeys } from "../lib/queryKeys";
-import { sessionDestination } from "../lib/sessionRoute";
+import { BasilIcon } from "../components/icons";
+import { InlineLoader } from "../components/LoadingScreen";
 import { useAppState } from "../state/useAppState";
 
 export function ISpyModes() {
   const navigate = useNavigate();
-  const { activeProfile } = useAppState();
-  const active = useQuery({
-    queryKey: queryKeys.activeGame(activeProfile?.id ?? ""),
-    queryFn: ({ signal }) => getActiveISpyGame(signal),
-    enabled: !!activeProfile,
-    staleTime: 0,
-  });
-  const game = active.data ?? null;
-  const error = queryError(active.error);
-  return <div className="stack">
-    <h1>I-Spy</h1>
-    <p className="muted">Spy objects in your photos and describe them in your learning language.</p>
-    {error ? <p role="alert">{error}</p> : null}
-    {game ? <Card lifted><div className="stack-2">
-      <h2>Game in progress</h2>
-      <p className="muted">Pick up your game where you left off.</p>
-      <Button block onClick={() => navigate(sessionDestination(game).path)}>Continue game <ArrowRightIcon /></Button>
-    </div></Card> : null}
-    <Card lifted><div className="stack-2">
-      <h2>Play with AI</h2>
-      <p className="muted">Guess Linguini's clues, then describe objects for Linguini to guess.</p>
-      <p className="small muted">Revisit a confirmed photo without using Sauce.</p>
-      <Button block onClick={() => navigate("/ispy/play")}>Play with AI <ArrowRightIcon /></Button>
-    </div></Card>
-    <Card><div className="stack-2">
-      <h2>Play with a friend</h2>
-      <p className="muted">Add 2–4 photos in a private room, then take turns giving clues and spotting objects.</p>
-      <Button variant="secondary" block onClick={() => navigate("/ispy/friends")}>Play with a friend <ArrowRightIcon /></Button>
-    </div></Card>
-  </div>;
+  const { progress, progressLoading, progressError } = useAppState();
+  const leaderboard = progress?.leaderboard ?? [];
+  const chefs = leaderboard.slice(0, 5);
+  const player = leaderboard.find(chef => chef.isYou) ?? null;
+  const leader = leaderboard[0] ?? null;
+  const basilToLeader = player && leader ? Math.max(0, leader.xp - player.xp) : 0;
+  return <main className="ispy-modes">
+    <Card lifted className="ispy-modes__card ispy-modes__play-card">
+      <img className="ispy-modes__logo" src="/linguini-logo.png" alt="Linguini" />
+      <h1>Let’s play I-Spy!</h1>
+      <div className="ispy-modes__actions">
+        <Button block onClick={() => navigate("/ispy/play")}>Play with Linguini</Button>
+        <Button variant="secondary" block onClick={() => navigate("/ispy/friends")}>Play with friends</Button>
+      </div>
+    </Card>
+    <Card className="ispy-modes__card ispy-chefs">
+      <div className="ispy-chefs__heading"><div><span>Weekly Basil leaderboard</span><h2>Chefs of the week</h2></div><BasilIcon size={30} /></div>
+      {progressLoading ? <InlineLoader label="Loading this week’s chefs…" /> : progressError ? <p role="alert">{progressError}</p> : chefs.length ?
+        <><section className="ispy-chefs__comparison" aria-label="Your leaderboard position">
+          <div><span>Your place</span><strong>#{player?.rank ?? "—"}</strong></div>
+          <div><span>Your Basil</span><strong>{player?.xp ?? progress?.xp ?? 0}</strong></div>
+          <p>{!player ? "Earn Basil from learning activities to enter the rankings." : player.rank === 1 ? "You’re leading this week!" :
+            `${basilToLeader} Basil behind ${leader?.name ?? "the leader"}.`}</p>
+        </section>
+        <ol className="ispy-chefs__list">{chefs.map(chef => <li key={`${chef.rank}-${chef.name}`} className={chef.isYou ? "is-you" : ""}>
+          <span className="ispy-chefs__rank">{chef.rank}</span><strong>{chef.isYou ? `${chef.name} (you)` : chef.name}</strong>
+          <span className="ispy-chefs__basil"><BasilIcon size={17} />{chef.xp} Basil</span>
+        </li>)}</ol></> : <p className="muted">Earn Basil this week to join the leaderboard.</p>}
+    </Card>
+  </main>;
 }
