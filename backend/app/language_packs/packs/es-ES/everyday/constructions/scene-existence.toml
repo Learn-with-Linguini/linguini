@@ -5,6 +5,7 @@ guidance = """Use hay to say that something is in the scene: Hay una manzana ama
 features = ["existential-hay", "indefinite-article", "adjective-agreement", "negation"]
 constraints = ["Introduce objects with hay, never with a definite article.", "Adjectives agree with the noun.", "Use estar only for the location of a known object."]
 required_labels = ["touch-object"]
+roles = { object = "noun", attribute = "adjective" }
 
 [provenance]
 source = "Lead-authored; needs fluent Spanish review."

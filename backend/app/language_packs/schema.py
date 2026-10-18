@@ -32,6 +32,10 @@ type TextDirection = Literal["ltr", "rtl"]
 type WordSeparator = Literal["space", "none"]
 type ChunkJoin = Literal["space", "none"]
 type ReviewStatus = Literal["humanReviewed", "unreviewed", "generated"]
+type LabelUsage = Literal["prompt", "sentence"]
+type PartOfSpeech = Literal[
+    "noun", "adjective", "phrase", "preposition", "verb", "other"
+]
 
 SUPPORTED_FORMAT_VERSIONS = frozenset({1})
 RTL_SCRIPTS = frozenset({"Arab", "Hebr", "Syrc", "Thaa", "Nkoo", "Adlm", "Mand", "Samr"})
@@ -135,6 +139,7 @@ class PackLabel(ApiModel):
     semantic: ContractId
     text: NonEmptyText
     meaning: NonEmptyText
+    usage: LabelUsage
     provenance: Provenance
 
 
@@ -248,6 +253,7 @@ class SentenceChunk(ApiModel):
 class ConstructionExample(ApiModel):
     example_id: ContractId
     levels: list[ProficiencyLevel] = Field(min_length=1)
+    purposes: list[NonEmptyText] = Field(min_length=1)
     meaning: NonEmptyText
     scene: ExampleScene
     bindings: dict[ContractId, NonEmptyText] = Field(default_factory=dict)
@@ -273,6 +279,7 @@ class ConstructionExample(ApiModel):
 class IncorrectExample(ApiModel):
     example_id: ContractId
     levels: list[ProficiencyLevel] = Field(min_length=1)
+    purposes: list[NonEmptyText] = Field(min_length=1)
     sentence: NonEmptyText
     correction: NonEmptyText
     note: NonEmptyText
@@ -293,6 +300,7 @@ class Construction(ApiModel):
     features: list[ContractId] = Field(default_factory=list)
     constraints: list[NonEmptyText] = Field(default_factory=list)
     required_labels: list[ContractId] = Field(default_factory=list)
+    roles: dict[NonEmptyText, PartOfSpeech] = Field(default_factory=dict)
     provenance: Provenance
     examples: list[ConstructionExample] = Field(default_factory=list)
     mistakes: list[IncorrectExample] = Field(default_factory=list)
@@ -347,6 +355,7 @@ class LanguagePack(ApiModel):
             raise ValueError("example ids must be unique")
 
         known_labels = set(label_ids)
+        labels_by_id = {label.semantic: label for label in self.labels}
         for construction in self.constructions:
             if unknown := set(construction.required_labels) - known_labels:
                 raise ValueError(
@@ -357,6 +366,13 @@ class LanguagePack(ApiModel):
                 if unknown := set(example.labels) - known_labels:
                     raise ValueError(
                         f"{example.example_id} has unknown labels: {sorted(unknown)}"
+                    )
+                if any(
+                    labels_by_id[semantic].usage != "sentence"
+                    for semantic in example.labels
+                ):
+                    raise ValueError(
+                        f"{example.example_id} labels must be sentence labels"
                     )
                 if join_pack_chunks(example.chunks, self.language.word_separator) != (
                     example.sentence
@@ -373,6 +389,11 @@ class GuidanceBundle(ApiModel):
     language_register: Register = Field(alias="register")
     labels: list[PackLabel]
     constructions: list[Construction]
+    mission_id: MissionId | None = None
+    practice_level: ProficiencyLevel | None = None
+    purpose: NonEmptyText | None = None
+    prompt_labels: list[ContractId] = Field(default_factory=list)
+    sentence_labels: list[ContractId] = Field(default_factory=list)
 
 
 def join_pack_chunks(chunks: list[SentenceChunk], word_separator: WordSeparator) -> str:
@@ -461,9 +482,19 @@ class ConstructionRequirement(ApiModel):
 class MissionSlotTemplate(ApiModel):
     purpose: NonEmptyText
     construction_id: ContractId
+    additional_constructions: list[ContractId] = Field(default_factory=list)
     target_ids: list[ContractId] = Field(min_length=1)
     repeat: Annotated[int, Field(ge=1)] = 1
-    required_labels: list[ContractId] = Field(default_factory=list)
+    prompt_labels: list[ContractId] = Field(default_factory=list)
+    sentence_labels: list[ContractId] = Field(default_factory=list)
+
+    @property
+    def required_labels(self) -> list[str]:
+        return list(dict.fromkeys([*self.prompt_labels, *self.sentence_labels]))
+
+    @property
+    def construction_ids(self) -> list[str]:
+        return list(dict.fromkeys([self.construction_id, *self.additional_constructions]))
 
 
 class MissionTemplate(ApiModel):
@@ -472,8 +503,15 @@ class MissionTemplate(ApiModel):
     content_version: ContentVersion
     sequence_repeat: Annotated[int, Field(ge=1)] = 1
     required_constructions: list[ConstructionRequirement]
-    required_labels: list[ContractId] = Field(default_factory=list)
     slots: list[MissionSlotTemplate] = Field(min_length=1)
+
+    @property
+    def required_labels(self) -> list[str]:
+        return list(dict.fromkeys(
+            label
+            for slot in self.slots
+            for label in (*slot.prompt_labels, *slot.sentence_labels)
+        ))
 
     @property
     def key(self) -> tuple[str, str, int]:

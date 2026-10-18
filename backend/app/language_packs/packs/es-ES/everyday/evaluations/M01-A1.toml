@@ -50,7 +50,7 @@ category = "verbChoice"
 construction_id = "describe-attribute"
 construction_version = 1
 scene = { objects = [{ fact_id = "object:plate", concept = "plate" }], attributes = [{ fact_id = "attribute:plate-blue", object = "object:plate", kind = "color", value = "blue" }] }
-bindings = { object = "object:plate", attribute = "attribute:plate-blue" }
+bindings = { object = "object:plate" }
 truth = true
 input = "Ask what colour the plate is."
 expected_meaning = "What colour is the plate?"

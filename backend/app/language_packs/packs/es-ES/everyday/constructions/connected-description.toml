@@ -5,6 +5,7 @@ guidance = """Join two complete facts with y and keep each clause's own verb: Ha
 features = ["coordination", "existential-hay", "copula-estar", "capitalisation"]
 constraints = ["Each clause keeps its own verb.", "Clauses joined by y share one sentence.", "Every clause states a bound fact."]
 required_labels = ["choose-description", "describe-scene", "connector-distractor"]
+roles = { first = "noun", second = "noun", object = "noun", subject = "noun", reference = "noun", attribute = "adjective", relation = "preposition" }
 
 [provenance]
 source = "Lead-authored; needs fluent Spanish review."

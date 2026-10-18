@@ -3,6 +3,7 @@ construction_id = "identify-object"
 [[examples]]
 example_id = "fixture-cup"
 levels = ["A0"]
+purposes = ["buildIdentify"]
 meaning = "It is a cup."
 scene = { objects = [{ fact_id = "object:cup", concept = "cup" }] }
 bindings = { object = "object:cup" }

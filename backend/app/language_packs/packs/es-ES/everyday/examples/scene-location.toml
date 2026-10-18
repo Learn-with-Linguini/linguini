@@ -3,6 +3,7 @@ construction_id = "scene-location"
 [[examples]]
 example_id = "cup-on-table"
 levels = ["A2"]
+purposes = ["buildSceneFact", "buildSceneDescription"]
 meaning = "The cup is on the table."
 scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:on", subject = "object:cup", reference = "object:table", relation = "on" }] }
 bindings = { subject = "object:cup", relation = "relation:on", reference = "object:table" }
@@ -15,6 +16,7 @@ provenance = { source = "Lead-authored; nouns from REVIEWED_NOUNS, position from
 [[examples]]
 example_id = "shoe-under-chair"
 levels = ["A2"]
+purposes = ["buildSceneFact", "buildSceneDescription"]
 meaning = "The shoe is under the chair."
 scene = { objects = [{ fact_id = "object:shoe", concept = "shoe" }, { fact_id = "object:chair", concept = "chair" }], relations = [{ fact_id = "relation:under", subject = "object:shoe", reference = "object:chair", relation = "under" }] }
 bindings = { subject = "object:shoe", relation = "relation:under", reference = "object:chair" }
@@ -27,6 +29,7 @@ provenance = { source = "Lead-authored; nouns from REVIEWED_NOUNS, position from
 [[examples]]
 example_id = "lamp-next-book"
 levels = ["A2"]
+purposes = ["buildSceneFact", "buildSceneDescription"]
 meaning = "The lamp is next to the book."
 scene = { objects = [{ fact_id = "object:lamp", concept = "lamp" }, { fact_id = "object:book", concept = "book" }], relations = [{ fact_id = "relation:next_to", subject = "object:lamp", reference = "object:book", relation = "next_to" }] }
 bindings = { subject = "object:lamp", relation = "relation:next_to", reference = "object:book" }
@@ -39,6 +42,7 @@ provenance = { source = "Lead-authored; nouns from REVIEWED_NOUNS, position from
 [[examples]]
 example_id = "ask-shoe-location"
 levels = ["A2"]
+purposes = ["followUpSceneFact"]
 meaning = "Where is the shoe?"
 scene = { objects = [{ fact_id = "object:shoe", concept = "shoe" }, { fact_id = "object:chair", concept = "chair" }], relations = [{ fact_id = "relation:under", subject = "object:shoe", reference = "object:chair", relation = "under" }] }
 bindings = { subject = "object:shoe", relation = "relation:under", reference = "object:chair" }
@@ -51,6 +55,7 @@ provenance = { source = "Lead-authored; prompt mirrored from app/services/missio
 [[mistakes]]
 example_id = "wrong-location-copula"
 levels = ["A2"]
+purposes = ["buildSceneFact"]
 sentence = "La taza es sobre la mesa."
 correction = "La taza está sobre la mesa."
 note = "Location uses estar."
@@ -59,6 +64,7 @@ provenance = { source = "Lead-authored for the M01 pilot; needs fluent Spanish r
 [[mistakes]]
 example_id = "missing-contraction"
 levels = ["A2"]
+purposes = ["buildSceneFact"]
 sentence = "La lámpara está al lado de el libro."
 correction = "La lámpara está al lado del libro."
 note = "de + el contracts to del."

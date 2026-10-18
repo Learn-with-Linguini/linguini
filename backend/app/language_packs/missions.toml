@@ -7,8 +7,6 @@ required_constructions = [
   { construction_id = "identify-object", min_version = 1 },
   { construction_id = "yes-no-identification", min_version = 1 },
 ]
-required_labels = ["yes-answer", "no-answer", "what-is-this"]
-
 [[missions.slots]]
 purpose = "matchName"
 construction_id = "identify-object"
@@ -18,13 +16,13 @@ target_ids = ["recognise-name"]
 purpose = "confirmName"
 construction_id = "yes-no-identification"
 target_ids = ["identify-object"]
-required_labels = ["yes-answer", "no-answer"]
+prompt_labels = ["yes-answer", "no-answer"]
 
 [[missions.slots]]
 purpose = "buildIdentify"
 construction_id = "identify-object"
 target_ids = ["identify-object"]
-required_labels = ["what-is-this"]
+prompt_labels = ["what-is-this"]
 
 [[missions]]
 mission_id = "M01"
@@ -34,24 +32,24 @@ required_constructions = [
   { construction_id = "yes-no-identification", min_version = 1 },
   { construction_id = "describe-attribute", min_version = 1 },
 ]
-required_labels = ["yes", "no"]
-
 [[missions.slots]]
 purpose = "confirmObject"
 construction_id = "yes-no-identification"
 target_ids = ["identify-object", "name-object"]
 repeat = 2
-required_labels = ["yes", "no"]
+sentence_labels = ["yes", "no"]
 
 [[missions.slots]]
 purpose = "chooseAttribute"
 construction_id = "describe-attribute"
 target_ids = ["describe-colour"]
+prompt_labels = ["attribute-prompt-colour"]
 
 [[missions.slots]]
 purpose = "describeObject"
 construction_id = "describe-attribute"
 target_ids = ["name-object", "describe-colour"]
+prompt_labels = ["describe-object"]
 
 [[missions]]
 mission_id = "M01"
@@ -63,30 +61,34 @@ required_constructions = [
   { construction_id = "connected-description", min_version = 1 },
   { construction_id = "describe-attribute", min_version = 1 },
 ]
-required_labels = ["touch-object", "build-second-fact", "choose-description", "describe-scene", "connector-distractor", "attribute-prompt-colour"]
-
 [[missions.slots]]
 purpose = "chooseSceneMarker"
 construction_id = "scene-existence"
 target_ids = ["identify-scene-object"]
+prompt_labels = ["touch-object"]
 
 [[missions.slots]]
 purpose = "buildSceneFact"
 construction_id = "scene-location"
 target_ids = ["describe-scene-facts"]
+prompt_labels = ["build-second-fact"]
 
 [[missions.slots]]
 purpose = "chooseSceneDescription"
 construction_id = "connected-description"
+additional_constructions = ["scene-existence", "describe-attribute"]
 target_ids = ["describe-scene-facts"]
+prompt_labels = ["choose-description"]
 
 [[missions.slots]]
 purpose = "buildSceneDescription"
 construction_id = "connected-description"
+additional_constructions = ["scene-existence", "scene-location"]
 target_ids = ["connect-scene-facts"]
+prompt_labels = ["describe-scene"]
 
 [[missions.slots]]
 purpose = "followUpSceneFact"
 construction_id = "describe-attribute"
+additional_constructions = ["scene-location"]
 target_ids = ["follow-up-scene-fact"]
-required_labels = ["attribute-prompt-colour"]

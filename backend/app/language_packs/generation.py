@@ -9,6 +9,7 @@ from uuid import UUID
 
 from pydantic import Field, model_validator
 
+from app.ai.features.learning_tasks.mission import fold, tokens
 from app.schemas.base import ApiModel, NonEmptyText
 from app.schemas.enums import PartOfSpeech, SceneRelationType
 from app.schemas.tasks import ContractId
@@ -28,6 +29,7 @@ type LinguisticMetadata = dict[ContractId, LinguisticValue]
 type SceneAttributeKind = Literal["colour", "size", "shape", "material", "pattern", "state"]
 type VocabularyProvenance = Literal["reviewedLexicon", "catalog", "sessionTranslation"]
 type CandidateOrigin = Literal["model", "reviewedForm", "manual"]
+type AdjectivePosition = Literal["before", "after"]
 type AssessmentStatus = Literal[
     "notAssessed", "unreviewedExample", "reviewedForm",
     "languageValidator", "humanApproved",
@@ -139,7 +141,10 @@ class ApprovedTerm(ApiModel):
     source_text: NonEmptyText
     target_text: NonEmptyText
     forms: list[NonEmptyText] = Field(min_length=1)
+    forms_by_key: dict[NonEmptyText, NonEmptyText] = Field(default_factory=dict)
     part_of_speech: PartOfSpeech
+    agreement: NonEmptyText | None = None
+    position: AdjectivePosition | None = None
     vocabulary_item_id: UUID | None = None
     provenance: VocabularyProvenance
     romanization: str | None = None
@@ -151,6 +156,8 @@ class ApprovedTerm(ApiModel):
             raise ValueError("approved term forms must be unique")
         if any(normalize("NFC", form) != form for form in self.forms):
             raise ValueError("approved term forms must be NFC")
+        if unknown := set(self.forms_by_key.values()) - set(self.forms):
+            raise ValueError(f"forms_by_key values must appear in forms: {sorted(unknown)}")
         return self
 
 
@@ -169,13 +176,17 @@ class TermUse(ApiModel):
     term_id: ContractId
     surface: NonEmptyText
     fact_id: NonEmptyText
+    role: str | None = None
 
 
 class CandidateSentence(ApiModel):
     slot_id: NonEmptyText
+    spec_id: NonEmptyText | None = None
+    spec_use: NonEmptyText | None = None
     construction_id: ContractId
     text: NonEmptyText
-    chunks: list[SentenceChunk]
+    translation: NonEmptyText | None = None
+    chunks: list[SentenceChunk] = Field(default_factory=list)
     term_uses: list[TermUse] = Field(default_factory=list)
     label_uses: list[ContractId] = Field(default_factory=list)
     origin: CandidateOrigin
@@ -211,6 +222,8 @@ class LinguisticAssessment(ApiModel):
     validator_id: str | None = None
     passed: bool | None = None
     messages: list[str] = Field(default_factory=list)
+    matched_example_id: str | None = None
+    matched_review_status: str | None = None
 
 
 class ValidatorResult(ApiModel):
@@ -282,62 +295,170 @@ def check_deterministic(
     unknown_slot = slot is None
     if unknown_slot:
         failures.append("unknown slot")
-    construction_matches = slot is not None and candidate.construction_id == slot.construction_id
+    spec = None
+    if slot is not None:
+        spec = next(
+            (
+                item for item in slot.specs
+                if item.spec_id == (candidate.spec_id or slot.slot_id)
+            ),
+            None,
+        )
+        if spec is None and len(slot.specs) == 1:
+            spec = slot.specs[0]
+    construction_matches = (
+        slot is not None
+        and candidate.construction_id in slot.construction_ids
+        and (spec is None or candidate.construction_id == spec.construction_id)
+    )
     if not construction_matches:
         failures.append("construction does not match plan slot")
 
-    plan_bindings = slot.bindings.values() if slot is not None else ()
+    construction = next(
+        (
+            item for item in pack.constructions
+            if item.construction_id == candidate.construction_id
+        ),
+        None,
+    )
+    expected_bindings = dict(spec.bindings) if spec is not None else {}
+    counterfactual_ids = set()
+    if spec is not None:
+        for role, term_id in spec.counterfactual.items():
+            term = by_term.get(term_id)
+            if term is not None:
+                expected_bindings[role] = term.fact_id
+                counterfactual_ids.add(term.fact_id)
     fact_references_valid = not (
-        (set(plan_bindings) | {item.fact_id for item in candidate.term_uses})
-        - facts.all_fact_ids
+        set(expected_bindings.values())
+        - (facts.all_fact_ids | counterfactual_ids)
     )
     if not fact_references_valid:
         failures.append("fact reference is not present in bound scene facts")
 
-    term_references_valid = all(item.term_id in by_term for item in candidate.term_uses)
+    derived_uses = infer_term_uses(
+        candidate.text, vocabulary, preferred_fact_ids=set(expected_bindings.values())
+    )
+    term_references_valid = all(
+        item.term_id in by_term and by_term[item.term_id].fact_id == item.fact_id
+        for item in candidate.term_uses
+    )
     if not term_references_valid:
-        failures.append("term reference is not in approved vocabulary")
-    terms_with_matching_fact = all(
-        item.term_id not in by_term or by_term[item.term_id].fact_id == item.fact_id
-        for item in candidate.term_uses
+        failures.append("candidate term claims do not match approved vocabulary")
+    term_surfaces_are_reviewed = True
+    term_surfaces_present = all(
+        any(
+            fold(use.surface) == fold(surface)
+            for term in vocabulary.terms
+            if term.term_id == use.term_id
+            for surface in [*term.forms, *term.forms_by_key.values()]
+        )
+        for use in candidate.term_uses
     )
-    if not terms_with_matching_fact:
-        failures.append("term use fact does not match approved term")
-        term_references_valid = False
-
-    term_surfaces_are_reviewed = all(
-        item.term_id not in by_term or item.surface in by_term[item.term_id].forms
-        for item in candidate.term_uses
-    )
-    if not term_surfaces_are_reviewed:
-        failures.append("term surface is not a reviewed form")
-    term_surfaces_present = all(item.surface in candidate.text for item in candidate.term_uses)
     if not term_surfaces_present:
-        failures.append("term surface is missing from candidate text")
+        failures.append("candidate term claim is not a reviewed form")
 
-    slot_labels = set(slot.required_labels) if slot is not None else set()
+    if spec is not None and construction is not None:
+        expected_roles = construction.roles
+        if candidate.construction_id == "yes-no-identification":
+            expected_roles = {"object": "noun"}
+        allowed_fact_ids = set(expected_bindings.values())
+        for role, fact_id_value in expected_bindings.items():
+            expected_pos = expected_roles.get(role)
+            if expected_pos is None:
+                continue
+            realized = [
+                use for use in derived_uses
+                if use.fact_id == fact_id_value
+                and str(getattr(by_term[use.term_id].part_of_speech, "value",
+                                by_term[use.term_id].part_of_speech))
+                == expected_pos
+            ]
+            if not realized:
+                found = [
+                    use for use in derived_uses
+                    if str(getattr(by_term[use.term_id].part_of_speech, "value",
+                                   by_term[use.term_id].part_of_speech))
+                    == expected_pos
+                ]
+                found_facts = sorted({use.fact_id for use in found})
+                failures.append(
+                    f"role {role!r} expects {fact_id_value!r}; "
+                    f"found facts {found_facts or 'none'}"
+                )
+        expected_pos = set(expected_roles.values())
+        unbound = [
+            use for use in derived_uses
+            if use.fact_id not in allowed_fact_ids
+            and str(getattr(by_term[use.term_id].part_of_speech, "value",
+                            by_term[use.term_id].part_of_speech)) in expected_pos
+        ]
+        if unbound:
+            failures.append(
+                "sentence contains unbound approved facts: "
+                + ", ".join(sorted({use.fact_id for use in unbound}))
+            )
+
+    if spec is not None and candidate.construction_id == "yes-no-identification":
+        if spec.use in {"question", "prompt"}:
+            object_fact = spec.bindings.get("object")
+            shown_fact = spec.bindings.get("shown")
+            if shown_fact is not None and spec.truth != (object_fact == shown_fact):
+                failures.append("yes/no question truth does not match asked and shown objects")
+        elif spec.use in {"answer", "option"}:
+            expected_label = "yes" if spec.truth else "no"
+            if expected_label not in spec.labels:
+                failures.append(f"answer must use the {expected_label!r} label")
+            shown_fact = spec.bindings.get("shown")
+            if (
+                spec.use == "answer"
+                and shown_fact is not None
+                and spec.bindings.get("object") != shown_fact
+            ):
+                failures.append("yes/no answer must name the shown object")
+
+    if (
+        spec is not None
+        and candidate.construction_id == "scene-existence"
+        and not spec.truth
+        and not fold(candidate.text).startswith("no hay ")
+    ):
+        failures.append("false scene-existence sentence must be negated")
+
+    slot_sentence_labels = set(slot.sentence_labels) if slot is not None else set()
+    expected_labels = set(spec.labels) if spec is not None else set()
+    found_labels = {
+        semantic for semantic, label in by_label.items()
+        if semantic in slot_sentence_labels
+        and label.usage == "sentence"
+        and _fixed_label_occurs(candidate.text, label.text, semantic)
+    }
     labels_match = (
-        set(candidate.label_uses) <= slot_labels
-        and set(candidate.label_uses) <= set(by_label)
+        expected_labels <= found_labels
+        and found_labels <= slot_sentence_labels
+        and found_labels <= set(by_label)
+        and set(candidate.label_uses) <= slot_sentence_labels
     )
     if not labels_match:
-        failures.append("label use is not allowed by the plan slot and pack")
+        failures.append("sentence labels do not match the spec and slot")
     label_texts_present = all(
-        label_id not in by_label or by_label[label_id].text in candidate.text
-        for label_id in candidate.label_uses
+        semantic in by_label
+        and _fixed_label_occurs(candidate.text, by_label[semantic].text, semantic)
+        for semantic in expected_labels
     )
     if not label_texts_present:
-        failures.append("pack label text is missing from candidate text")
+        failures.append("required fixed label text is missing from candidate text")
 
-    chunks_reconstruct = join_chunks(candidate.chunks, pack.language.word_separator) == (
-        candidate.text
+    chunks_reconstruct = (
+        not candidate.chunks
+        or join_chunks(candidate.chunks, pack.language.word_separator) == candidate.text
     )
     if not chunks_reconstruct:
         failures.append("chunks do not reconstruct candidate text")
     text_is_nfc = (
         normalize("NFC", candidate.text) == candidate.text
         and all(normalize("NFC", chunk.text) == chunk.text for chunk in candidate.chunks)
-        and all(normalize("NFC", item.surface) == item.surface for item in candidate.term_uses)
+        and all(normalize("NFC", item.surface) == item.surface for item in derived_uses)
     )
     if not text_is_nfc:
         failures.append("candidate text, chunk, or term surface is not NFC")
@@ -357,7 +478,91 @@ def check_deterministic(
     )
 
 
+_ARTICLES = {"el", "la", "los", "las", "un", "una", "unos", "unas"}
+
+
+def infer_term_uses(
+    text: str,
+    vocabulary: ApprovedVocabulary,
+    *,
+    preferred_fact_ids: set[str] | None = None,
+) -> list[TermUse]:
+    sentence_tokens = [fold(token).strip("¿¡«»") for token in tokens(text)]
+    matches: dict[int, list[tuple[int, ApprovedTerm, str]]] = {}
+    for term in vocabulary.terms:
+        surfaces = dict.fromkeys([*term.forms, *term.forms_by_key.values()])
+        for surface in surfaces:
+            surface_tokens = [fold(token).strip("¿¡«»") for token in tokens(surface)]
+            surface_tokens = [token for token in surface_tokens if token]
+            if not surface_tokens or (
+                len(surface_tokens) == 1 and surface_tokens[0] in _ARTICLES
+            ):
+                continue
+            width = len(surface_tokens)
+            for start in range(len(sentence_tokens) - width + 1):
+                if sentence_tokens[start:start + width] == surface_tokens:
+                    matches.setdefault(start, []).append((width, term, surface))
+    selected: dict[tuple[str, int], tuple[int, ApprovedTerm, str]] = {}
+    for start, options in matches.items():
+        longest = max(item[0] for item in options)
+        best = [item for item in options if item[0] == longest]
+        preferred = [
+            item for item in best
+            if preferred_fact_ids and item[1].fact_id in preferred_fact_ids
+        ]
+        width, term, surface = sorted(
+            preferred or best,
+            key=lambda item: (item[1].term_id, item[2]),
+        )[0]
+        selected[(term.term_id, start)] = (width, term, surface)
+    by_fact: dict[str, tuple[int, ApprovedTerm, str]] = {}
+    for (_term_id, _start), option in selected.items():
+        width, term, surface = option
+        current = by_fact.get(term.fact_id)
+        if current is None or width > current[0]:
+            by_fact[term.fact_id] = (width, term, surface)
+    return [
+        TermUse(term_id=term.term_id, surface=surface, fact_id=term.fact_id)
+        for _width, term, surface in by_fact.values()
+    ]
+
+
+def _fixed_label_occurs(text: str, label: str, semantic: str) -> bool:
+    normalized_text = fold(text)
+    normalized_label = fold(label).strip(".,!?;:")
+    if semantic in {"yes", "no"}:
+        first_word = normalized_text.split(maxsplit=1)[0].strip(".,!?;:") if normalized_text else ""
+        return first_word == normalized_label
+    return normalized_label in normalized_text
+
+
+def derive_chunks(
+    candidate: CandidateSentence,
+    word_separator: WordSeparator,
+    *,
+    phrase_chunks: bool = False,
+) -> CandidateSentence:
+    if phrase_chunks:
+        from app.services.mission_lessons_a2 import _phrase_chunks
+
+        chunks = _phrase_chunks(candidate.text, "es")
+    else:
+        chunks = tokens(candidate.text)
+    punctuation = {".", ",", "?", "!", ";", ":"}
+    sentence_chunks = [
+        SentenceChunk(
+            text=chunk,
+            join="none" if index == 0 or chunk in punctuation else "space",
+        )
+        for index, chunk in enumerate(chunks)
+    ]
+    if join_chunks(sentence_chunks, word_separator) != candidate.text:
+        raise ValueError("derived chunks do not reconstruct candidate text")
+    return candidate.model_copy(update={"chunks": sentence_chunks})
+
+
 def assess(candidate: CandidateSentence, pack: LanguagePack) -> LinguisticAssessment:
+    matched_example = None
     construction = next(
         (item for item in pack.constructions
          if item.construction_id == candidate.construction_id),
@@ -369,20 +574,42 @@ def assess(candidate: CandidateSentence, pack: LanguagePack) -> LinguisticAssess
             for example in construction.examples
             if candidate.text in {example.sentence, *example.accepted_alternatives}
         ]
-        if any(example.provenance.review_status == "humanReviewed" for example in matched):
-            return LinguisticAssessment(status="reviewedForm", passed=True)
-        if matched:
-            return LinguisticAssessment(status="unreviewedExample", passed=None)
+        reviewed = next(
+            (
+                example for example in matched
+                if example.provenance.review_status == "humanReviewed"
+            ),
+            None,
+        )
+        if reviewed is not None:
+            return LinguisticAssessment(
+                status="reviewedForm",
+                passed=True,
+                matched_example_id=reviewed.example_id,
+                matched_review_status=reviewed.provenance.review_status,
+            )
+        matched_example = matched[0] if matched else None
 
     validator = _VALIDATORS.get((pack.language.code, candidate.construction_id))
     if validator is None:
-        return LinguisticAssessment(status="notAssessed", passed=None)
+        return LinguisticAssessment(
+            status="notAssessed",
+            passed=None,
+            matched_example_id=matched_example.example_id if matched_example else None,
+            matched_review_status=(
+                matched_example.provenance.review_status if matched_example else None
+            ),
+        )
     result = validator.validate(candidate, pack)
     return LinguisticAssessment(
         status="languageValidator",
         validator_id=validator.validator_id,
         passed=result.passed,
         messages=result.messages,
+        matched_example_id=matched_example.example_id if matched_example else None,
+        matched_review_status=(
+            matched_example.provenance.review_status if matched_example else None
+        ),
     )
 
 
@@ -408,9 +635,14 @@ def approve(
         if not allowed_status:
             reasons.extend(assessment.messages or [f"assessment status is {assessment.status}"])
         if deterministic.passed and allowed_status:
+            accepted_candidate = derive_chunks(
+                candidate,
+                pack.language.word_separator,
+                phrase_chunks=str(plan.practice_level) == "A2",
+            )
             approved.append(
                 ApprovedSentence(
-                    candidate=candidate,
+                    candidate=accepted_candidate,
                     assessment=assessment,
                     deterministic_report=deterministic,
                     provenance=Provenance(

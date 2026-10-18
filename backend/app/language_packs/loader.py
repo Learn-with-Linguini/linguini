@@ -315,7 +315,64 @@ def load_pack(path: Path) -> LanguagePack:
         raise LanguagePackError(pack_file, _validation_pointer(exc), str(exc)) from None
     pack._pack_dir = pack_dir
     pack._evaluation_files = resolved["evaluations"]
+    _validate_pack_mission_contracts(pack, pack_file, examples_paths_by_stem)
     return pack
+
+
+def _validate_pack_mission_contracts(
+    pack: LanguagePack,
+    pack_file: Path,
+    examples_paths_by_stem: dict[str, Path],
+) -> None:
+    catalog = load_mission_catalog()
+    level_slots = [
+        (template.practice_level, slot)
+        for template in catalog.missions
+        for slot in template.slots
+    ]
+    labels_by_id = {label.semantic: label for label in pack.labels}
+    for template_index, template in enumerate(catalog.missions):
+        for slot_index, slot in enumerate(template.slots):
+            slot_pointer = f"/missions/{template_index}/slots/{slot_index}"
+            for label_id in slot.prompt_labels:
+                label = labels_by_id.get(label_id)
+                if label is None:
+                    continue
+                if label.usage != "prompt":
+                    raise LanguagePackError(
+                        pack_file, f"{slot_pointer}/prompt_labels",
+                        f"label {label_id!r} must have prompt usage",
+                    )
+            for label_id in slot.sentence_labels:
+                label = labels_by_id.get(label_id)
+                if label is None:
+                    continue
+                if label.usage != "sentence":
+                    raise LanguagePackError(
+                        pack_file, f"{slot_pointer}/sentence_labels",
+                        f"label {label_id!r} must have sentence usage",
+                    )
+
+    for construction in pack.constructions:
+        source = examples_paths_by_stem[construction.construction_id]
+        for example in (*construction.examples, *construction.mistakes):
+            for level in example.levels:
+                for purpose in example.purposes:
+                    if not any(
+                        slot_purpose.purpose == purpose
+                        and slot_purpose.construction_ids.count(
+                            construction.construction_id
+                        )
+                        and str(getattr(slot_level, "value", slot_level))
+                        == str(getattr(level, "value", level))
+                        for slot_level, slot_purpose in level_slots
+                    ):
+                        raise LanguagePackError(
+                            source,
+                            f"/{ 'examples' if example in construction.examples else 'mistakes' }",
+                            f"{example.example_id} ({level}, {purpose}) does not match a "
+                            f"mission slot using {construction.construction_id}",
+                        )
 
 
 def load_evaluation_cases(pack: LanguagePack) -> list[EvaluationCase]:
@@ -353,7 +410,11 @@ def load_evaluation_cases(pack: LanguagePack) -> list[EvaluationCase]:
                 f"unknown mission/level/content version {key}",
             )
         mission = next(item for item in load_mission_catalog().missions if item.key == key)
-        mission_constructions = {slot.construction_id for slot in mission.slots}
+        mission_constructions = {
+            construction_id
+            for slot in mission.slots
+            for construction_id in slot.construction_ids
+        }
         for index, case in enumerate(evaluation.cases):
             if case.case_id in seen_case_ids:
                 raise LanguagePackError(
@@ -381,6 +442,14 @@ def load_evaluation_cases(pack: LanguagePack) -> list[EvaluationCase]:
             if unknown := set(case.labels) - known_labels:
                 raise LanguagePackError(
                     path, f"/cases/{index}/labels", f"unknown labels: {sorted(unknown)}"
+                )
+            if any(
+                next(label for label in pack.labels if label.semantic == semantic).usage
+                != "sentence"
+                for semantic in case.labels
+            ):
+                raise LanguagePackError(
+                    path, f"/cases/{index}/labels", "evaluation labels must be sentence labels"
                 )
             if leaked := example_sentences & set(case.acceptable):
                 raise LanguagePackError(
@@ -416,6 +485,15 @@ def _load_mission_catalog_cached(path: str) -> MissionCatalog:
                     catalog_path, f"/missions/{mission_index}/slots/{slot_index}/target_ids",
                     f"unknown mission targets: {sorted(unknown)}",
                 )
+            for construction_id in slot.construction_ids:
+                if construction_id not in {
+                    item.construction_id for item in template.required_constructions
+                }:
+                    raise LanguagePackError(
+                        catalog_path,
+                        f"/missions/{mission_index}/slots/{slot_index}/construction_id",
+                        f"{construction_id!r} is not a required construction",
+                    )
         required = [item.construction_id for item in template.required_constructions]
         if len(required) != len(set(required)):
             raise LanguagePackError(
@@ -445,6 +523,69 @@ def guidance_for(pack: LanguagePack, construction_ids: Sequence[str]) -> Guidanc
         language_register=pack.language_register,
         labels=pack.labels,
         constructions=[by_id[item] for item in requested],
+    )
+
+
+def guidance_for_slot(
+    pack: LanguagePack,
+    mission_key,
+    purpose: str,
+    construction_id: str | None = None,
+) -> GuidanceBundle:
+    key = mission_key.key if hasattr(mission_key, "key") else tuple(mission_key)
+    templates = {template.key: template for template in load_mission_catalog().missions}
+    template = templates.get(key)
+    if template is None:
+        raise LanguagePackError(
+            pack._pack_dir or "<pack>", "/missions",
+            f"unknown mission key {key!r}",
+        )
+    matches = [slot for slot in template.slots if slot.purpose == purpose]
+    if construction_id is not None:
+        matches = [slot for slot in matches if construction_id in slot.construction_ids]
+    if len(matches) != 1:
+        raise LanguagePackError(
+            pack._pack_dir or "<pack>", "/missions",
+            f"expected one slot for {purpose!r}, found {len(matches)}",
+        )
+    slot = matches[0]
+    selected_id = construction_id or slot.construction_id
+    by_id = {item.construction_id: item for item in pack.constructions}
+    construction = by_id.get(selected_id)
+    if construction is None:
+        raise LanguagePackError(
+            pack._pack_dir or "<pack>", "/constructions",
+            f"missing construction {selected_id!r}",
+        )
+    level = getattr(template.practice_level, "value", template.practice_level)
+    selected_examples = [
+        item for item in construction.examples
+        if level in item.levels and purpose in item.purposes
+    ]
+    selected_mistakes = [
+        item for item in construction.mistakes
+        if level in item.levels and purpose in item.purposes
+    ]
+    slot_labels = set(slot.required_labels)
+    filtered_construction = construction.model_copy(update={
+        "required_labels": [
+            label for label in construction.required_labels if label in slot_labels
+        ],
+        "examples": selected_examples,
+        "mistakes": selected_mistakes,
+    })
+    labels = [label for label in pack.labels if label.semantic in slot_labels]
+    return GuidanceBundle(
+        language=pack.language,
+        variety=pack.variety,
+        language_register=pack.language_register,
+        labels=labels,
+        constructions=[filtered_construction],
+        mission_id=template.mission_id,
+        practice_level=template.practice_level,
+        purpose=purpose,
+        prompt_labels=slot.prompt_labels,
+        sentence_labels=slot.sentence_labels,
     )
 
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import Counter
 from typing import TYPE_CHECKING
 
 from app.schemas.base import ApiModel, NonEmptyText
@@ -31,7 +32,13 @@ def assemble(
 ) -> AssembledItem:
     chunks = approved.candidate.chunks
     tiles = [
-        Tile(tile_id=f"{approved.candidate.slot_id}-tile-{index}", text=chunk.text)
+        Tile(
+            tile_id=(
+                f"{approved.candidate.slot_id}-{approved.candidate.spec_id or 'sentence'}"
+                f"-tile-{index}"
+            ),
+            text=chunk.text,
+        )
         for index, chunk in enumerate(chunks, 1)
     ]
     return AssembledItem(
@@ -45,7 +52,9 @@ def assemble(
 
 def is_correct(item: AssembledItem, submitted_tile_ids: list[str]) -> bool:
     tile_texts = {tile.tile_id: tile.text for tile in item.tiles}
-    if any(tile_id not in tile_texts for tile_id in submitted_tile_ids):
+    available = Counter(tile.tile_id for tile in item.tiles)
+    submitted = Counter(submitted_tile_ids)
+    if submitted - available:
         return False
     chunks = [
         SentenceChunk(
@@ -58,3 +67,26 @@ def is_correct(item: AssembledItem, submitted_tile_ids: list[str]) -> bool:
     ]
     answer = join_chunks(chunks, item.word_separator)
     return answer in item.accepted_texts
+
+
+def assemble_lesson(plan, approved: list[ApprovedSentence]) -> list[ApprovedSentence]:
+    expected = [
+        (slot.slot_id, spec.spec_id)
+        for slot in plan.slots
+        for spec in slot.specs
+    ]
+    returned = [
+        (item.candidate.slot_id, item.candidate.spec_id or item.candidate.slot_id)
+        for item in approved
+    ]
+    if len(returned) != len(set(returned)):
+        raise ValueError("duplicate approved sentence specs")
+    if returned != expected:
+        missing = set(expected) - set(returned)
+        unknown = set(returned) - set(expected)
+        if unknown:
+            raise ValueError(f"unknown approved sentence specs: {sorted(unknown)}")
+        if missing:
+            raise ValueError(f"missing approved sentence specs: {sorted(missing)}")
+        raise ValueError("approved sentence specs are not in planned order")
+    return approved

@@ -5,6 +5,7 @@ guidance = """Spanish nouns are masculine or feminine, and the article must matc
 features = ["definite-article", "indefinite-article", "grammatical-gender", "copula-ser"]
 constraints = ["Article gender comes from the approved noun.", "Identification sentences use es, not está.", "Name chunks use the definite article and no final punctuation."]
 required_labels = ["what-is-this"]
+roles = { object = "noun" }
 
 [provenance]
 source = "Lead-authored; needs fluent Spanish review."

@@ -1,7 +1,9 @@
+import shutil
 from pathlib import Path
 
 from app.ai.features.learning_tasks import mission_a0, mission_a2, mission_m01
 from app.language_packs.capabilities import lesson_plan, mission_capability
+from app.language_packs.evaluation import EvaluationRecord, evaluation_identity
 from app.language_packs.loader import load_mission_catalog, load_pack
 from app.language_packs.schema import Provenance
 
@@ -69,20 +71,53 @@ def test_capability_reports_support_but_blocks_unreviewed_fixture_from_release()
     assert capability.missing_constructions == []
 
 
-def test_release_requires_support_reviewed_material_and_allowlist(monkeypatch):
+def test_release_requires_support_reviewed_material_evidence_and_allowlist(
+    monkeypatch, tmp_path
+):
     monkeypatch.delenv("LINGUINI_LANGUAGE_PACK_RELEASES", raising=False)
-    pack = _human_reviewed_pack(load_pack(FIXTURE))
-    allowed = mission_capability(
+    pack_dir = tmp_path / "es-ES" / "everyday"
+    pack_dir.parent.mkdir()
+    shutil.copytree(FIXTURE, pack_dir)
+    pack = _human_reviewed_pack(load_pack(pack_dir))
+    without_evidence = mission_capability(
         pack,
         ("M01", "A1", 1),
         release_allowlist=[("es", "M01", "A1")],
     )
-    not_allowed = mission_capability(pack, ("M01", "A1", 1))
+    identity = evaluation_identity(pack, "A1").model_copy(update={"thresholds_met": True})
+    evidence = EvaluationRecord(
+        identity=identity,
+        cases_total=1,
+        candidates_total=1,
+        structural_passed=1,
+        linguistic_passed=1,
+        linguistic_assessed=1,
+        valid_alternatives=1,
+        valid_alternatives_accepted=1,
+        rejects=0,
+        rejects_structurally=0,
+        rejects_linguistically=0,
+        missed_rejects=0,
+        thresholds_met=True,
+    )
+    allowed = mission_capability(
+        pack,
+        ("M01", "A1", 1),
+        release_allowlist=[("es", "M01", "A1")],
+        evaluation_record=evidence.model_dump(mode="json", by_alias=False),
+    )
+    not_allowed = mission_capability(
+        pack,
+        ("M01", "A1", 1),
+        evaluation_record=evidence.model_dump(mode="json", by_alias=False),
+    )
 
     assert allowed.supported
     assert allowed.unreviewed_items == []
     assert allowed.release_enabled
     assert not not_allowed.release_enabled
+    assert not without_evidence.release_enabled
+    assert "no evaluation evidence" in without_evidence.blockers
 
 
 def test_capability_reports_missing_and_outdated_constructions():

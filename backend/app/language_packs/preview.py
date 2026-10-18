@@ -9,10 +9,15 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
+from app.ai.contracts.text import TextModelConfig, TextModelResponse
+from app.ai.observability import NoOpAITracer
+from app.ai.registry import build_routed_client
+from app.ai.settings import AiFeature, load_ai_settings
 from app.schemas.enums import ProficiencyLevel
 
 from .assembly import assemble, is_correct
 from .capabilities import lesson_plan, mission_capability
+from .evaluation import evaluate_pack
 from .fingerprint import language_pack_feature_version, pack_fingerprint
 from .generation import (
     ApprovedVocabulary,
@@ -28,6 +33,24 @@ from .loader import (
     load_evaluation_cases,
     load_pack,
 )
+from .model_source import ModelSource
+from .pipeline import generate_pilot
+
+
+class _ScriptedTextClient:
+    generation_settings = {"source": "scripted-responses"}
+    approved_deployments = frozenset({"scripted"})
+    max_duration_seconds = 0
+
+    def __init__(self, response: dict[str, Any]) -> None:
+        self.response = response
+
+    def generate(self, request):
+        return TextModelResponse(
+            output_text=json.dumps(self.response, ensure_ascii=False),
+            model_name="scripted-non-live",
+            prompt_version=request.prompt_version,
+        )
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -42,9 +65,31 @@ def _parser() -> argparse.ArgumentParser:
         preview.add_argument("--pack-dir", type=Path, required=True)
         preview.add_argument("--language", required=True)
         preview.add_argument("--register", required=True)
+        if command == "capability":
+            preview.add_argument("--evidence", type=Path)
         if command == "plan":
             preview.add_argument("--level", choices=["A0", "A1", "A2"], required=True)
             preview.add_argument("--scene", type=Path, required=True)
+
+    evaluate_parser = subparsers.add_parser("evaluate")
+    evaluate_parser.add_argument("--pack-dir", type=Path, required=True)
+    evaluate_parser.add_argument("--language", required=True)
+    evaluate_parser.add_argument("--register", required=True)
+    evaluate_parser.add_argument("--level", choices=["A0", "A1", "A2"], required=True)
+    evaluate_parser.add_argument("--vocabulary", type=Path)
+    evaluate_parser.add_argument("--out", type=Path)
+
+    generate_parser = subparsers.add_parser("generate")
+    generate_parser.add_argument("--pack-dir", type=Path, required=True)
+    generate_parser.add_argument("--language", required=True)
+    generate_parser.add_argument("--register", required=True)
+    generate_parser.add_argument("--level", choices=["A0", "A1", "A2"], required=True)
+    generate_parser.add_argument("--scene", type=Path, required=True)
+    generate_parser.add_argument("--vocabulary", type=Path, required=True)
+    generate_parser.add_argument("--source", choices=["responses", "model"], default="responses")
+    generate_parser.add_argument("--responses", type=Path)
+    generate_parser.add_argument("--preview", action="store_true")
+    generate_parser.add_argument("--evidence", type=Path)
 
     assemble_parser = subparsers.add_parser("assemble")
     assemble_parser.add_argument("--pack-dir", type=Path, required=True)
@@ -79,6 +124,54 @@ def _checked_pack(args: argparse.Namespace):
     return pack
 
 
+def _evidence(path: Path | None) -> dict[str, Any] | None:
+    if path is None:
+        return None
+    raw = _read_json(path)
+    return raw.get("evaluation_record", raw)
+
+
+def _text_model_source() -> ModelSource:
+    settings = load_ai_settings()
+    config = settings.feature(AiFeature.LEARNING_TASK)
+    if not settings.is_configured(config):
+        raise ValueError(
+            "model source requires configured AI learning-task credentials "
+            "(for example AI_OPENAI_API_KEY); no model request was sent"
+        )
+    client, model_config = build_routed_client(
+        "text",
+        settings,
+        AiFeature.LEARNING_TASK,
+        default_max_output_tokens=4000,
+        tracer=NoOpAITracer(),
+    )
+    return ModelSource(client, model_config, mode="model")
+
+
+def _evaluation_table(report: dict[str, Any]) -> str:
+    structural = report["structural"]
+    linguistic = report["linguistic"]
+    return "\n".join(
+        (
+            f"M01 {report['practice_level']} evaluation",
+            (
+                "Structural: "
+                f"{structural['valid_alternatives_accepted']}/"
+                f"{structural['valid_alternatives']} valid alternatives accepted; "
+                f"{structural['rejects_rejected']} rejects structurally rejected; "
+                f"{structural['rejects_missed']} missed"
+            ),
+            (
+                "Linguistic: "
+                f"{linguistic['rejects_rejected']} rejects rejected by "
+                f"{linguistic['validator']}"
+            ),
+            f"Thresholds met: {report['thresholds_met']}",
+        )
+    )
+
+
 def _run(args: argparse.Namespace) -> dict[str, Any]:
     pack = _checked_pack(args)
     if args.command == "validate":
@@ -89,16 +182,79 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
             "evaluation_cases": len(load_evaluation_cases(pack)),
         }
     if args.command == "capability":
+        evidence = _evidence(args.evidence)
         return {
             "language": pack.language.code,
             "register_id": pack.language_register.register_id,
             "levels": {
                 level: mission_capability(
-                    pack, ("M01", ProficiencyLevel(level), 1)
+                    pack,
+                    ("M01", ProficiencyLevel(level), 1),
+                    evaluation_record=evidence,
                 ).model_dump(mode="json", by_alias=False)
                 for level in ("A0", "A1", "A2")
             },
         }
+
+    if args.command == "evaluate":
+        vocabulary_path = args.vocabulary or (
+            Path(__file__).parent / "samples/es-ES/vocabulary.json"
+        )
+        vocabulary = ApprovedVocabulary.model_validate(_read_json(vocabulary_path))
+        report, record = evaluate_pack(pack, args.level, vocabulary)
+        return {
+            "table": _evaluation_table(report),
+            "report": report,
+            "evaluation_record": record.model_dump(mode="json", by_alias=False),
+        }
+
+    if args.command == "generate":
+        scene = _read_json(args.scene)
+        vocabulary = ApprovedVocabulary.model_validate(_read_json(args.vocabulary))
+        facts = BoundSceneFacts.model_validate(scene["facts"])
+        if args.source == "model":
+            source = _text_model_source()
+        else:
+            if args.responses is None:
+                raise ValueError("--responses is required when --source=responses")
+            source = ModelSource(
+                _ScriptedTextClient(_read_json(args.responses)),
+                TextModelConfig(model_name="scripted-non-live"),
+                mode="scripted responses (not a live model)",
+            )
+        generated = generate_pilot(
+            pack,
+            args.level,
+            facts,
+            vocabulary,
+            source,
+            plan_specs=scene.get("plan_specs", {}).get(args.level),
+            builder_selection=scene.get("builder_selection"),
+            preview=args.preview,
+        )
+        evidence = _evidence(args.evidence)
+        output = {
+            "source": getattr(
+                source, "mode", "scripted responses (not a live model)"
+            ),
+            "result": generated.result.model_dump(mode="json", by_alias=True),
+            "task": generated.task.model_dump(mode="json", by_alias=True),
+            "payload": generated.payload,
+            "sentences": [
+                item.model_dump(mode="json", by_alias=False)
+                for item in generated.sentences
+            ],
+            "assurance": generated.assurance,
+            "mode": generated.mode,
+            "fingerprint": generated.fingerprint,
+        }
+        if evidence is not None:
+            output["capability"] = mission_capability(
+                pack,
+                ("M01", args.level, 1),
+                evaluation_record=evidence,
+            ).model_dump(mode="json", by_alias=False)
+        return output
 
     scene = _read_json(args.scene)
     key = ("M01", ProficiencyLevel(args.level), 1) if args.command in {
@@ -197,6 +353,16 @@ def main(argv: list[str] | None = None) -> int:
     except (LanguagePackError, ValueError) as exc:
         print(json.dumps({"error": str(exc)}, ensure_ascii=False, indent=2), file=sys.stderr)
         return 2
+    if args.command == "evaluate":
+        print(output["table"])
+        print(json.dumps(output["evaluation_record"], ensure_ascii=False, indent=2))
+    if args.command == "evaluate" and args.out is not None:
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_text(
+            json.dumps(output["evaluation_record"], ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        return 0
     print(json.dumps(output, ensure_ascii=False, indent=2))
     return int(args.command == "assemble" and bool(output.get("failures")))
 

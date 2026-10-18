@@ -5,6 +5,7 @@ guidance = """To say where a known object is, use definite article + noun + est�
 features = ["copula-estar", "definite-article", "location-phrase", "contraction"]
 constraints = ["Location uses está.", "de + el → del, a + el → al.", "Both nouns take definite articles."]
 required_labels = ["build-second-fact"]
+roles = { subject = "noun", relation = "preposition", reference = "noun", object = "noun" }
 
 [provenance]
 source = "Lead-authored; needs fluent Spanish review."

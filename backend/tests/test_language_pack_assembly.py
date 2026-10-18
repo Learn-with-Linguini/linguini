@@ -104,7 +104,7 @@ def test_deterministic_checks_cover_slots_facts_vocabulary_labels_chunks_and_nfc
     )
     bad_report = check_deterministic(bad_surface, plan, _facts(), vocabulary, pack)
     assert not bad_report.passed
-    assert "term surface is not a reviewed form" in bad_report.failures
+    assert "candidate term claim is not a reviewed form" in bad_report.failures
 
 
 def test_exact_unreviewed_example_is_not_assessed_as_reviewed_or_approvable():
@@ -118,10 +118,10 @@ def test_exact_unreviewed_example_is_not_assessed_as_reviewed_or_approvable():
         [candidate], plan, _facts(), ApprovedVocabulary(), pack, allow_unassessed=True
     )
 
-    assert assessment.status == "unreviewedExample"
+    assert assessment.status == "notAssessed"
     assert blocked.approved == []
     assert blocked.failures[0].reasons
-    assert allowed.approved[0].assessment.status == "unreviewedExample"
+    assert allowed.approved[0].assessment.status == "notAssessed"
 
 
 def test_only_human_reviewed_exact_construction_example_grants_reviewed_form():

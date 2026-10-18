@@ -80,6 +80,9 @@ def _grading_scenarios(task):
 
 
 def _structure(level, mission, result, task):
+    public_content = task.public_content.model_dump(
+        mode="json", by_alias=True, exclude_none=True
+    )
     evaluations = {
         item.question_id: item for item in task.answer_key.question_evaluations
     }
@@ -118,6 +121,13 @@ def _structure(level, mission, result, task):
         "practice_level": str(mission.practice_level),
         "content_version": mission.content_version,
         "question_count": len(questions),
+        "option_counts": [len(question.options) for question in result.questions],
+        "public_content_keys": list(public_content),
+        "support_shape": {
+            key: len(value) if key == "prep" else value
+            for key, value in public_content.items()
+            if key in {"prep", "checkEachQuestion"}
+        },
         "sections": list(section_counts),
         "section_counts": dict(section_counts),
         "interaction_counts": dict(interaction_counts),

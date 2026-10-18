@@ -4,6 +4,9 @@
     "practice_level": "A0",
     "content_version": 1,
     "question_count": 6,
+    "option_counts": [3, 2, 0, 3, 2, 0],
+    "public_content_keys": ["missionId", "practiceLevel", "contentVersion", "kind", "focus", "title", "explanation", "prep", "questions"],
+    "support_shape": {"prep": 5},
     "sections": [
       "Task 1 · Apple",
       "Task 2 · Cup"
@@ -309,6 +312,9 @@
     "practice_level": "A1",
     "content_version": 1,
     "question_count": 4,
+    "option_counts": [2, 2, 3, 0],
+    "public_content_keys": ["missionId", "practiceLevel", "contentVersion", "kind", "focus", "title", "questions"],
+    "support_shape": {},
     "sections": [
       "Task 1 · Identify objects in your photo",
       "Task 2 · Describe them"
@@ -543,6 +549,9 @@
     "practice_level": "A2",
     "content_version": 1,
     "question_count": 5,
+    "option_counts": [2, 0, 3, 0, 3],
+    "public_content_keys": ["missionId", "practiceLevel", "contentVersion", "kind", "focus", "title", "questions", "checkEachQuestion"],
+    "support_shape": {"checkEachQuestion": true},
     "sections": [
       "Task 1 · Notice the facts",
       "Task 2 · Describe the scene",

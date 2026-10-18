@@ -5,6 +5,7 @@ guidance = """Describe an object with Es + indefinite article + noun + adjective
 features = ["adjective-agreement", "adjective-position", "indefinite-article", "copula-ser", "question-punctuation"]
 constraints = ["Colour forms agree in gender with the noun.", "Basic colours follow the noun.", "Colour questions use es."]
 required_labels = ["attribute-prompt-colour", "describe-object"]
+roles = { object = "noun", attribute = "adjective" }
 
 [provenance]
 source = "Lead-authored; needs fluent Spanish review."

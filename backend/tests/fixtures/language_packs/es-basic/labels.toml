@@ -2,4 +2,5 @@
 semantic = "yes"
 text = "Sí"
 meaning = "yes"
+usage = "sentence"
 provenance = { source = "Synthetic structural test fixture.", review_status = "unreviewed" }

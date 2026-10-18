@@ -5,6 +5,7 @@ guidance = """A yes/no question keeps statement word order and is marked only by
 features = ["question-punctuation", "yes-no-answer", "indefinite-article", "copula-ser"]
 constraints = ["Questions open with ¿ and close with ?.", "Answers after No name the object actually shown.", "Yes/no words come from labels."]
 required_labels = ["yes", "no", "yes-answer", "no-answer"]
+roles = { object = "noun", shown = "noun" }
 
 [provenance]
 source = "Lead-authored; needs fluent Spanish review."
