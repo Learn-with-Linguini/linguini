@@ -1,10 +1,19 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button, Card, Feedback } from "../components/ui";
+import { InstagramIcon, LinkedInIcon, TikTokIcon, XIcon } from "../components/icons";
 import { HelpImproveModal } from "../components/HelpImproveModal";
+import { SOCIAL_LINKS_LIST } from "../config/social";
 import { submitPublicSupportRequest, submitSupportRequest, type SupportAttachmentInput, type SupportIssueType } from "../lib/api";
 import { useAuth } from "../state/Auth";
 import { LoadingScreen } from "../components/LoadingScreen";
+
+const socialIcons = {
+  instagram: InstagramIcon,
+  tiktok: TikTokIcon,
+  x: XIcon,
+  linkedin: LinkedInIcon,
+};
 
 const topics = {
   technical: "Technical issue or bug report",
@@ -186,6 +195,29 @@ export function Contact() {
       </aside>
 
       <p className="contact-page__direct small muted">Your request is sent directly to the Linguini support team.</p>
+
+      <div className="contact-socials">
+        <span className="small muted">Follow Linguini:</span>
+        <div className="contact-social-icons">
+          {SOCIAL_LINKS_LIST.map(({ platform, label, url }) => {
+            const Icon = socialIcons[platform];
+            return (
+              <a
+                key={platform}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Follow Linguini on ${label}`}
+                title={label}
+                className="contact-social-badge"
+              >
+                <Icon size={18} />
+                <span>{label}</span>
+              </a>
+            );
+          })}
+        </div>
+      </div>
 
       <HelpImproveModal
         open={surveyOpen}

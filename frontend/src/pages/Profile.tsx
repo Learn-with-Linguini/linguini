@@ -2,15 +2,23 @@ import { InlineLoader } from "../components/LoadingScreen";
 import { useEffect, useId, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card, IconButton } from "../components/ui";
-import { ChevronRightIcon, CloseIcon } from "../components/icons";
+import { ChevronRightIcon, CloseIcon, InstagramIcon, LinkedInIcon, TikTokIcon, XIcon } from "../components/icons";
 import { HelpImproveModal } from "../components/HelpImproveModal";
 import { deleteCurrentAccount } from "../lib/api";
 import { accountTiers } from "../lib/accountTiers";
 import { validatePasswordReset } from "../lib/authMessages.ts";
+import { SOCIAL_LINKS_LIST } from "../config/social";
 import { supabase } from "../lib/supabase.ts";
 import { useAppState } from "../state/useAppState";
 import { useAuth } from "../state/Auth";
 import { GameResources } from "../components/GameResources";
+
+const socialIcons = {
+  instagram: InstagramIcon,
+  tiktok: TikTokIcon,
+  x: XIcon,
+  linkedin: LinkedInIcon,
+};
 
 export function Profile() {
   const navigate = useNavigate();
@@ -324,6 +332,36 @@ export function Profile() {
             </span>
             <ChevronRightIcon size={20} />
           </button>
+        </Card>
+      </section>
+
+      <section className="profile-section" aria-labelledby="social-heading">
+        <h2 id="social-heading">Follow Linguini</h2>
+        <Card plain className="profile-settings-card">
+          <div className="profile-social-grid">
+            {SOCIAL_LINKS_LIST.map(({ platform, label, url, handle }) => {
+              const Icon = socialIcons[platform];
+              return (
+                <a
+                  key={platform}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="profile-social-item"
+                  aria-label={`Follow Linguini on ${label}`}
+                >
+                  <span className="profile-social-icon">
+                    <Icon size={20} />
+                  </span>
+                  <div className="profile-social-info">
+                    <strong>{label}</strong>
+                    <small>{handle}</small>
+                  </div>
+                  <ChevronRightIcon size={18} />
+                </a>
+              );
+            })}
+          </div>
         </Card>
       </section>
 
