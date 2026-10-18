@@ -4469,12 +4469,11 @@ p[role="alert"]::before { content: "!"; }
 /* I-Spy mode picker */
 .ispy-modes {
   display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(300px, .9fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   min-height: min(620px, calc(100vh - 180px));
   align-items: stretch;
-  gap: var(--space-5);
-  width: min(100%, 960px);
-  margin-inline: auto;
+  gap: clamp(var(--space-5), 3vw, var(--space-8));
+  width: 100%;
   padding-block: var(--space-6);
 }
 
@@ -4497,7 +4496,7 @@ p[role="alert"]::before { content: "!"; }
 .ispy-modes__logo { display: block; width: min(240px, 64vw); height: auto; }
 .ispy-modes__actions { display: grid; width: min(100%, 440px); gap: var(--space-3); }
 
-.ispy-chefs { align-self: center; padding: var(--space-5); background: #e8f4ef; }
+.ispy-chefs { padding: var(--space-5); background: #e8f4ef; }
 .ispy-chefs__heading { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
 .ispy-chefs__heading span { color: var(--tomato-pressed); font-size: var(--text-label); font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
 .ispy-chefs__heading h2 { color: var(--teal-dark); font-size: 28px; }
