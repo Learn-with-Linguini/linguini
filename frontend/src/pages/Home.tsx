@@ -36,6 +36,7 @@ function PastaStreak({ days, current }: { days: { date: string; active: boolean 
       {days.map((day, index) => <li key={day.date} className={`${day.active ? "is-active" : ""}${index === days.length - 1 ? " is-today" : ""}`}>
         <span className="home-streak__day-label">{dayLabel(day.date)}</span>
         <span className="home-streak__loop" aria-label={`${day.active ? "Practised" : "No practice"} on ${day.date}`}>
+          <img src="/pasta-assets/streak-loop.png" alt="" />
           {index === days.length - 1 ? <svg className="home-streak__leaf" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 3C9 2 3 7 5 14c2 7 13 5 15-11Z" fill="currentColor" /><path d="m3 21 12-12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg> : null}
         </span>
       </li>)}
