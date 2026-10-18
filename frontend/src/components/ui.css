@@ -4763,6 +4763,22 @@ p[role="alert"]::before { content: "!"; }
   width: fit-content;
 }
 
+.prompt-translation--with-source {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.prompt-translation__source {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.prompt-translation__source h2 {
+  margin: 0;
+}
+
 .prompt-translation__toggle.icon-btn {
   flex: none;
   width: 36px;

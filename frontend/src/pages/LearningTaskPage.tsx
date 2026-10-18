@@ -1,5 +1,5 @@
 import { InlineLoader } from "../components/LoadingScreen";
-import { useEffect, useRef, useState, type TouchEvent } from "react";
+import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { friendlyError, queryKeys } from "../lib/queryKeys";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
@@ -406,8 +406,9 @@ function A0MissionGapQuestion({ question, scene, sceneObjects, selectedOptionId,
       label={question.objectLabel ?? ""} /> : null}
     <LessonAudioPrompt question={question} languageCode={scene.languageCode} revealed={revealed}
       graded={Boolean(checked)} onReveal={() => setRevealed(true)} showAudioText />
-    <h2>{question.prompt}</h2>
-    {question.translation ? <PromptTranslation text={question.translation} /> : null}
+    {question.translation
+      ? <PromptTranslation source={question.prompt} text={question.translation} lang={scene.languageCode} />
+      : <h2>{question.prompt}</h2>}
     {dialogue.length ? <div className="mission-dialogue" aria-label="Dialogue">
       {dialogue.map((turn, index) => <div className={`mission-dialogue__turn mission-dialogue__turn--${turn.speaker}`} key={`${turn.speaker}-${index}`}>
         <strong>{turn.speaker === "linguini" ? "Linguini" : "You"}</strong>
@@ -750,8 +751,9 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
         {question.listenFirst && !showWritten ? <Button variant="quiet" onClick={() => setRevealedPrompts(value => ({
           ...value, [question.questionId]: true,
         }))}>Show written prompt</Button> : null}
-        {showWritten ? <h2>{question.prompt}</h2> : null}
-        {question.translation && showWritten ? <PromptTranslation text={question.translation} /> : null}
+        {showWritten ? question.translation
+          ? <PromptTranslation source={question.prompt} text={question.translation} lang={scene.languageCode} />
+          : <h2>{question.prompt}</h2> : null}
         {slotText && showWritten ? <p className="mission-slot-template">
           {slotText}
         </p> : null}
@@ -1008,7 +1010,9 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         reference={session?.sceneObjects.find(object => object.id === question.referenceObjectId)}
         referenceLabel={question.referenceLabel} /> : null}
       {question.interactionType === "sentenceBuilding" ? <>
-        {question.promptTranslation ? <><h2>{question.prompt}</h2><PromptTranslation text={question.promptTranslation} /></> : question.translation ? <h2>{question.translation}</h2> : null}
+        {question.promptTranslation
+          ? <PromptTranslation source={question.prompt} text={question.promptTranslation} lang={scene.languageCode} />
+          : question.translation ? <h2>{question.translation}</h2> : null}
         <div className="sentence-builder__answer" aria-label="Your sentence">
           {restored?.answers?.[question.questionId] ? <span>{restored.answers[question.questionId]}</span> : (builtTokenIndexes[question.questionId] ?? []).length ? (builtTokenIndexes[question.questionId] ?? []).map((tokenIndex, tokenPosition) => <button key={`${tokenIndex}-${tokenPosition}`} className="sentence-builder__token" disabled={terminal || practiceSaving}
             onClick={() => setBuiltTokenIndexes(value => ({ ...value, [question.questionId]: (value[question.questionId] ?? []).filter((_, index) => index !== tokenPosition) }))}>{question.tokenBank[tokenIndex]}</button>) : <span className="muted">Choose the words to build your sentence.</span>}
@@ -1021,8 +1025,10 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         })}</div>
       </> : <>
         {writtenPromptShown(question, { revealed: Boolean(revealed[question.questionId]), graded: results[question.questionId] !== undefined, audio })
-          ? <><h2 lang={question.audioText ? scene.languageCode : undefined}>{content.focus === "sceneDescription" ? question.translation || "Choose the sentence that describes the scene." : question.prompt}</h2>
-            <PromptTranslation text={question.promptTranslation} /></>
+          ? question.promptTranslation
+            ? <PromptTranslation source={content.focus === "sceneDescription" ? question.translation || "Choose the sentence that describes the scene." : question.prompt}
+              text={question.promptTranslation} lang={question.audioText ? scene.languageCode : undefined} />
+            : <h2 lang={question.audioText ? scene.languageCode : undefined}>{content.focus === "sceneDescription" ? question.translation || "Choose the sentence that describes the scene." : question.prompt}</h2>
           : <h2 className="muted">Listen to the word.</h2>}
         {question.boardCounts ? <PracticeBoards question={question} sceneImageUrl={sceneImageUrl}
           imageSize={boardImageSize} onImageSize={setBoardImageSize}
@@ -1204,14 +1210,18 @@ function QuestionOutcomeNotes({ outcome }: { outcome?: QuestionOutcome }) {
   </>;
 }
 
-function PromptTranslation({ text }: { text?: string | null }) {
+function PromptTranslation({ text, source, lang }: { text?: string | null; source?: ReactNode; lang?: string }) {
   const [shown, setShown] = useState(false);
   if (!text) return null;
-  return <span className="prompt-translation">
-    {shown ? <span className="small muted">{text}</span> : null}
-    <IconButton className="prompt-translation__toggle" label={shown ? "Hide translation" : "Show translation"}
+  const toggle = <IconButton className="prompt-translation__toggle" label={shown ? "Hide translation" : "Show translation"}
       aria-expanded={shown} onClick={() => setShown(value => !value)}>
       {shown ? <EyeIcon size={20} /> : <EyeOffIcon size={20} />}
-    </IconButton>
+    </IconButton>;
+  if (source) return <span className="prompt-translation prompt-translation--with-source">
+    <span className="prompt-translation__source"><h2 lang={lang}>{source}</h2>{toggle}</span>
+    {shown ? <span className="small muted">{text}</span> : null}
+  </span>;
+  return <span className="prompt-translation">
+    {shown ? <span className="small muted">{text}</span> : null}{toggle}
   </span>;
 }
