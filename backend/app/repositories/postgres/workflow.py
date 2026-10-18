@@ -655,7 +655,7 @@ class PostgresWorkflowRepository:
         """Lock the first submitted answer without recording lesson evidence."""
         with self.transaction() as c:
             task = self._task_row(c, task_id)
-            if task.kind != "grammarLesson" or not task.public_content.check_each_question:
+            if task.kind != "grammarLesson":
                 raise PracticeConflictError("This lesson does not support per-question checking.")
             session_row = c.execute(
                 select(sessions)
@@ -696,10 +696,10 @@ class PostgresWorkflowRepository:
             return self._lesson_check(task, question_id, answer, is_correct)
 
     def lesson_checks(self, task_id):
-        """Restore checks already saved for one sequential A2 lesson."""
+        """Restore checks already saved for a sequential grammar lesson."""
         with self.read_connection() as c:
             task = self._task_row(c, task_id)
-            if task.kind != "grammarLesson" or not task.public_content.check_each_question:
+            if task.kind != "grammarLesson":
                 raise PracticeConflictError("This lesson does not support per-question checking.")
             session = self._session(c, task.session_id)
             task_checks = (
