@@ -14,6 +14,7 @@ class SauceBalance(ApiModel):
 
 
 class GameResourcesResponse(ApiModel):
+    energy_gate_enabled: Literal[False] = False
     sauce: SauceBalance
     basil_leaves: int
     appearance: Appearance

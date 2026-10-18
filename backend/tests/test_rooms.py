@@ -20,7 +20,6 @@ from app.api.dependencies import get_room_service
 from app.api.routes.rooms import router
 from app.database import create_database_engine
 from app.repositories.postgres.game_resources import (
-    SauceExhaustedError,
     game_accounts,
     game_resource_events,
     resource_snapshot,
@@ -318,7 +317,7 @@ def test_complete_unique_photo_game_records_only_own_contributions(db, count):
                 )
             ).mappings()
         )
-        assert len(spends) == 2
+        assert spends == []
     assert db.services[0].active() is None and db.services[1].active() is None
 
 
@@ -564,7 +563,7 @@ def test_concurrent_correct_guess_awards_once(db):
         )
 
 
-def test_start_is_atomic_if_either_account_has_no_sauce(db):
+def test_start_succeeds_when_legacy_energy_is_empty(db):
     room_id, _photos = prepared_game(db)
     with db.engine.begin() as c:
         for person in db.people[:2]:
@@ -574,9 +573,8 @@ def test_start_is_atomic_if_either_account_has_no_sauce(db):
             .where(game_accounts.c.user_id == db.people[1].id)
             .values(sauce_remaining=0)
         )
-    with pytest.raises(SauceExhaustedError):
-        start(db, room_id)
-    assert db.services[0].get(room_id).status == "lobby"
+    start(db, room_id)
+    assert db.services[0].get(room_id).status != "lobby"
     with db.engine.connect() as c:
         assert (
             c.execute(
@@ -594,7 +592,7 @@ def test_start_is_atomic_if_either_account_has_no_sauce(db):
                     room_turns.c.room_id == room_id,
                 )
             ).scalar_one()
-            == 0
+            > 0
         )
 
 

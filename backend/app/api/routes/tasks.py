@@ -24,6 +24,7 @@ from app.schemas.tasks import (
     SubmitTaskAttemptRequest,
     TaskActionResponse,
     TaskHint,
+    VocabularyChecksResponse,
 )
 from app.services.tasks import TaskService
 
@@ -76,6 +77,11 @@ def check_vocabulary_typing(
     return service.check_vocabulary_typing(
         task_id, request.learning_key, request.answer, request.reveal
     )
+
+
+@router.get("/{task_id}/vocabulary-checks", response_model=VocabularyChecksResponse)
+def get_vocabulary_checks(task_id: UUID, service: TaskServiceDep):
+    return service.vocabulary_checks(task_id)
 
 
 @router.post("/{task_id}/check-lesson-answer", response_model=CheckLessonAnswerResponse)
