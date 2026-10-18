@@ -22,6 +22,7 @@ import { questionMarkerObjects } from "../lib/missionMarkers";
 import { completeSlot, speechAvailable, writtenPromptShown } from "../lib/missionA0";
 import { fillMissionGap } from "../lib/missionGaps";
 import { playAnswerSound } from "../lib/answerSound";
+import { learningFeedback } from "../lib/learningFeedback";
 
 export function LearningTaskPage() {
   const { taskId } = useParams();
@@ -102,7 +103,7 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onSc
       if (result) {
         request.current = null;
         setActionResult(result);
-        if (reading) setFeedback("Task complete.");
+        if (reading) setFeedback(result.attempt?.feedback?.message ?? "Task complete.");
         else {
           setFeedback(result.attempt?.feedback?.message ?? "Saved.");
           setAnswerCorrect(result.attempt?.isCorrect ?? null);
@@ -140,7 +141,11 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onSc
     {content.kind === "sentenceBuilding" ? <><p>{content.sourceText}</p><div className="chip-row">{content.tokenBank.map((token, i) => <button key={i} className="chip" disabled={terminal || practiceSaving} onClick={() => setText(value => (value + " " + token).trim())}>{token}</button>)}</div></> : null}
     {!reading && content.kind !== "grammarPractice" ? <div className="field"><label className="field__label" htmlFor="task-answer">Your answer</label><input id="task-answer" className="input" value={text} maxLength={2000} disabled={terminal || practiceSaving} onChange={event => setText(event.target.value)} /></div> : null}
     {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
-    {feedback || earnedText ? <Feedback><div className="stack-2" role="status">{feedback ? <p>{feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback> : null}
+    {actionResult || feedback || earnedText ? <>
+      <Feedback tone={answerCorrect === false ? "warn" : "good"}><div className="stack-2" role="status" aria-atomic="true">
+        {actionResult && task.status !== "skipped" ? <strong>{learningFeedback(answerCorrect === null ? "saved" : answerCorrect ? "correct" : "incorrect", task.id)}</strong> : null}
+        {feedback ? <p>{feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback>
+    </> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {terminal ? <Button block disabled={practiceSaving} onClick={onNext}>{index < total - 1 ? "Next task" : lastStep}</Button> : <>
       <Button block disabled={practiceSaving || checking || (!reading && !(content.kind === "grammarPractice" ? choice : text.trim()))} onClick={() => void submit()}>{reading ? "Mark complete" : "Submit answer"}</Button>
@@ -194,7 +199,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
     const result = await actOnTask(task.id, "attempts", { inputMode: "vocabularyReview", answers, typedAnswers }, requestKey.current);
     if (result) {
       setActionResult(result);
-      setFeedback("Vocabulary practice saved.");
+      setFeedback(result.attempt?.feedback?.message ?? "Vocabulary practice saved.");
       setQuestionResults(reviewDetails(result.attempt)?.questionResults ?? {});
     }
   };
@@ -282,10 +287,12 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
       })}</div>
       {checkingQuestion ? <InlineLoader compact label="Checking your answer…" /> : null}
       {answers[question.questionId] ? <>
-        <Feedback tone={questionResults[question.questionId] ? "good" : "warn"}><p role="status">{questionResults[question.questionId] ? "Correct!" : (() => {
+        <Feedback tone={questionResults[question.questionId] ? "good" : "warn"}><div className="stack-2" role="status" aria-atomic="true">
+          <strong>{learningFeedback(questionResults[question.questionId] ? "correct" : "incorrect", `${task.id}:${question.questionId}`)}</strong>
+          <p>{questionResults[question.questionId] ? "Correct!" : (() => {
           const answer = question.options.find(option => option.optionId === correctOptionIds[question.questionId])?.label ?? "";
           return <>Incorrect. The correct answer is <strong>{answer}</strong>{answer ? sentenceEnding(answer) : ""}</>;
-        })()}</p></Feedback>
+        })()}</p></div></Feedback>
       </> : null}
       <Button block disabled={!answers[question.questionId]} onClick={finishQuestion}>{questionIndex < content.questions.length - 1 ? "Next question" : "Continue"}</Button>
     </div></Card></> : null}
@@ -299,7 +306,9 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
         : <Button block disabled={!typedAnswers[typingKey]?.trim() || practiceSaving || checkingTyping} onClick={() => void checkTyping()}>Check answer</Button>}
       {!typingCheck?.isCorrect && !typingCheck?.revealed ? <Button variant="quiet" block className="typing-forgot-action" disabled={practiceSaving || checkingTyping} onClick={() => void checkTyping(true)}>I forgot, lift the lid</Button> : null}
     </div></Card> : null}
-    {feedback || earnedText ? <Feedback><div className="stack-2" role="status">{feedback ? <p>{feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback> : null}
+    {actionResult || feedback || earnedText ? <Feedback><div className="stack-2" role="status" aria-atomic="true">
+      {actionResult && task.status !== "skipped" ? <strong>{learningFeedback("saved", task.id)}</strong> : null}
+      {feedback ? <p>{feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {terminal ? <Button block onClick={onNext}>{session?.session.status === "generatingTasks" ? "Back to tasks" : index < total - 1 ? "Next task" : lastStep}</Button> : null}
     {!terminal ? <Button variant="quiet" block disabled={practiceSaving} onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip vocabulary review</Button> : null}
@@ -801,8 +810,10 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
         })}</div>}
         {storedCheck && !retrying ? <>
           <Feedback tone={storedCheck.isCorrect || (isSituation && Boolean(retryPassed[question.questionId])) ? "good" : "warn"}>
-            <p role="status">{storedCheck.isCorrect
-              ? question.correctNote ?? "Correct!"
+            <div className="stack-2" role="status" aria-atomic="true">
+            {task.status !== "skipped" ? <strong>{learningFeedback(storedCheck.outcome.outcome === "unassessed" ? "saved" : storedCheck.isCorrect ? "correct" : "incorrect", `${task.id}:${question.questionId}`)}</strong> : null}
+            <p>{storedCheck.outcome.outcome === "unassessed" ? storedCheck.feedback ?? "Answer saved." : storedCheck.isCorrect
+              ? question.correctNote ?? <>Correct!{storedCheck.outcome.correctNote ? ` ${storedCheck.outcome.correctNote}` : ""}</>
               : isSituation && retryPassed[question.questionId]
                 ? "That's right. Try the phrase again."
                 : isSituation
@@ -810,6 +821,8 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
                   : storedCheck.attemptsLeft
                     ? storedCheck.feedback ?? "Not quite. Try another answer."
                     : <>Not quite. The correct answer is <strong>{storedCheck.correctAnswer}</strong>{sentenceEnding(storedCheck.correctAnswer ?? "")}</>}</p>
+            {storedCheck.feedback && storedCheck.outcome.outcome !== "unassessed" && (storedCheck.isCorrect || !storedCheck.attemptsLeft) ? <p>{storedCheck.feedback}</p> : null}
+            </div>
           </Feedback>
           {storedCheck.isCorrect || !storedCheck.attemptsLeft
             ? <QuestionOutcomeNotes outcome={storedCheck.outcome} /> : null}
@@ -834,7 +847,11 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
     {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
     {checkError ? <p role="alert">{checkError}</p> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
-    {earnedText ? <Feedback><p role="status">{earnedText}</p></Feedback> : null}
+    {actionResult && task.status !== "skipped" ? <Feedback><div className="stack-2" role="status" aria-atomic="true">
+      <strong>{learningFeedback("saved", task.id)}</strong>
+      {actionResult.attempt?.feedback?.message ? <p>{actionResult.attempt.feedback.message}</p> : null}
+      {earnedText ? <strong>{earnedText}</strong> : null}
+    </div></Feedback> : null}
     {terminal ? <Button block onClick={onNext}>{index < total - 1 ? "Next task" : lastStep}</Button>
       : question && !isChecked
         ? <Button block disabled={!answer || checking || saved.isLoading || saved.isError || practiceSaving}
@@ -1052,14 +1069,16 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         })}</div></>}
       </>}
       {results[question.questionId] !== undefined ? <>
-        <Feedback tone={results[question.questionId] ? "good" : "warn"}><p role="status">{results[question.questionId]
+        <Feedback tone={results[question.questionId] ? "good" : "warn"}><div className="stack-2" role={terminal ? undefined : "status"} aria-atomic={terminal ? undefined : true}>
+          {!terminal ? <strong>{learningFeedback(outcomeFor[question.questionId]?.outcome === "unassessed" ? "saved" : results[question.questionId] ? "correct" : "incorrect", `${task.id}:${question.questionId}`)}</strong> : null}
+          <p>{results[question.questionId]
           ? <>Correct!{outcomeFor[question.questionId]?.correctNote
             ? ` ${outcomeFor[question.questionId]?.correctNote}` : ""}</>
           : <>Not quite.{solutions[question.questionId] ? (() => {
             const label = question.options.find(option => option.optionId === solutions[question.questionId])?.label;
             const solution = label ? optionText(question, label) : solutions[question.questionId];
             return <> The correct answer is <strong>{solution}</strong>{sentenceEnding(solution)}</>;
-          })() : null}</>}</p></Feedback>
+          })() : null}</>}</p></div></Feedback>
         {question.slotTemplate && solutions[question.questionId] ? (() => {
           const form = question.options.find(option => option.optionId === solutions[question.questionId])?.label ?? "";
           const chunk = question.completeChunk ?? completeSlot(question.slotTemplate, form);
@@ -1075,7 +1094,9 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
     })}
     {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
     {checkError ? <p role="alert">{checkError}</p> : null}
-    {feedback ?? restored?.feedback ?? earnedText ? <Feedback><div className="stack-2" role="status">{feedback ?? restored?.feedback ? <p>{feedback ?? restored?.feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback> : null}
+    {actionResult || restored || feedback || earnedText ? <Feedback><div className="stack-2" role="status" aria-atomic="true">
+      {task.status !== "skipped" ? <strong>{learningFeedback("saved", task.id)}</strong> : null}
+      {feedback ?? restored?.feedback ? <p>{feedback ?? restored?.feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {terminal ? <Button block onClick={onNext}>{index < total - 1 ? "Next task" : lastStep}</Button> : <>
       {activeResult === undefined
