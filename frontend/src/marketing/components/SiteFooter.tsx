@@ -11,7 +11,7 @@ export function SiteFooter() {
       <div className={`container ${styles.grid}`}>
         <div className={styles.brand}>
           <Image src="/brand/linguini-wordmark.png" alt="Linguini" width={450} height={150} className={styles.wordmark} />
-          <p>Language lessons from the photos you take. Served fresh daily in Spanish and French.</p>
+          <p>Language lessons from the photos you take, in Spanish, French, German and beginner Korean.</p>
         </div>
         <nav aria-label="Product" className={styles.col}>
           <h2 className={styles.heading}>Product</h2>

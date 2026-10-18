@@ -1,0 +1,10 @@
+{
+  "duration": 30,
+  "maxStaticSec": 3.2,
+  "assertions": [
+    { "kind": "appearsBy", "selector": "#v1-hook .headline", "bySec": 1.2 },
+    { "kind": "before", "a": "#v1-demo #w1", "b": "#v1-demo #w4" },
+    { "kind": "staysInFrame", "selector": ".cta-card" },
+    { "kind": "before", "a": "#v2-steps #s1", "b": "#v2-steps #s3" }
+  ]
+}

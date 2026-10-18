@@ -72,7 +72,7 @@ export function CompareAppsPost() {
       <h2 id="not-for">When Linguini is the wrong pick</h2>
       <ul>
         <li><strong>You want a full grammar course or exam preparation.</strong> Linguini is for everyday words and short sentences, roughly CEFR A1 to A2.</li>
-        <li><strong>You want a language other than Spanish or French.</strong> We teach those two, from English. Italian is next.</li>
+        <li><strong>You want a language outside Spanish, French, German or Korean.</strong> We teach those languages from English, with Korean currently focused on beginner content.</li>
         <li><strong>You want many new lessons a day for free.</strong> Free is one new photo lesson a day, with unlimited replays of our curated scenes. Plus raises it to ten.</li>
       </ul>
 

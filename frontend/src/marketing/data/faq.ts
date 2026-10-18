@@ -5,11 +5,11 @@ export const faq = [
   },
   {
     q: "Which languages can I learn?",
-    a: "Spanish and French, taught from English. Every word comes with its article, meaning, pronunciation and audio. Italian is next on the list.",
+    a: "Spanish, French and German, plus beginner Korean, taught from English. Every word comes with its meaning, pronunciation and audio, with articles and grammatical gender where the language uses them. Korean currently focuses on beginner content.",
   },
   {
     q: "What level is Linguini for?",
-    a: "Beginners and returning learners, roughly CEFR A1 to A2. Sessions stay short and focus on the everyday nouns, adjectives and sentences you can use straight away.",
+    a: "Beginners and returning learners. Spanish and French cover roughly CEFR A1 to A2, German covers beginner and early learning paths, and Korean currently focuses on beginner A0 content. Sessions stay short and focus on everyday words and sentences you can use straight away.",
   },
   {
     q: "What if the AI spots the wrong thing?",

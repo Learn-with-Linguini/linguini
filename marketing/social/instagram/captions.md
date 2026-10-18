@@ -6,13 +6,13 @@ These captions match the three 4:5 feed images in this folder. The public call t
 
 Your camera roll is full of words you could actually use. 📸
 
-Linguini turns an everyday photo into a short Spanish or French lesson. Review the words it finds, keep the useful ones, and learn them in the place where you first noticed them.
+Linguini turns an everyday photo into a short lesson in Spanish, French, German or beginner Korean. Review the words it finds, keep the useful ones, and learn them in the place where you first noticed them.
 
 What would be in your first photo lesson?
 
 Try the public beta through the link in our bio.
 
-`#languagelearning #learnspanish #learnfrench #spanishvocabulary #frenchvocabulary #edtech #linguini`
+`#languagelearning #learnspanish #learnfrench #learngerman #learnkorean #edtech #linguini`
 
 **Alt text:** A warm cream Linguini poster showing a desk with a laptop, notebook, pencil and glasses. Spanish labels identify each object: el portátil, el cuaderno, el lápiz and las gafas. The headline reads “Your desk is already a lesson.”
 
@@ -24,9 +24,9 @@ In Linguini, I-Spy goes both ways: first Linguini gives the clue, then it is you
 
 Would you rather give the clues or guess the answer?
 
-Try it in Spanish or French through the link in our bio.
+Try it in Spanish, French, German or beginner Korean through the link in our bio.
 
-`#languagelearning #ispy #learnspanish #learnfrench #languagegames #studygram #linguini`
+`#languagelearning #ispy #learnspanish #learnfrench #learngerman #learnkorean #linguini`
 
 **Alt text:** A warm illustrated Linguini poster with a phone showing an I-Spy lesson based on a colourful craft-table photo. Two connected cards read “Linguini gives clues” and “Then it’s your turn.”
 
@@ -34,11 +34,11 @@ Try it in Spanish or French through the link in our bio.
 
 Linguini is open for public beta. 🍝
 
-Beta accounts get unlimited photo lessons every day for $0 during beta, with no payment card required. Turn your desk, lunch, commute or weekend view into your next Spanish or French lesson.
+Beta accounts get unlimited photo lessons every day for $0 during beta, with no payment card required. Turn your desk, lunch, commute or weekend view into your next Spanish, French, German or beginner Korean lesson.
 
 Learn the language of your day through the link in our bio.
 
-`#publicbeta #languagelearning #learnspanish #learnfrench #edtech #buildinpublic #linguini`
+`#publicbeta #languagelearning #learnspanish #learnfrench #learngerman #learnkorean #linguini`
 
 **Alt text:** A celebratory Linguini beta poster with the smiling pasta mascot, snapshots of a desk, street and café, and the text “Unlimited photo lessons. Every day. $0 during beta. No payment card required.”
 
