@@ -1,5 +1,4 @@
 import type { Scene } from "../data/types";
-import { BasilIcon } from "./icons";
 import { ScenePhoto } from "./ScenePhoto";
 
 /** A playful, non-interactive treatment while a scene is being prepared. */
@@ -13,9 +12,9 @@ export function AnalysisScan({ scene }: { scene: Scene }) {
         <rect className="analysis-scan__trail-pasta" x="13" y="13" width="974" height="574" rx="30" pathLength="100" />
         <rect className="analysis-scan__trail-shine" x="13" y="13" width="974" height="574" rx="30" pathLength="100" />
       </svg>
-      <span className="analysis-scan__discovery analysis-scan__discovery--one"><BasilIcon size={15} /><b>1</b></span>
-      <span className="analysis-scan__discovery analysis-scan__discovery--two"><BasilIcon size={15} /><b>2</b></span>
-      <span className="analysis-scan__discovery analysis-scan__discovery--three"><BasilIcon size={15} /><b>3</b></span>
+      <span className="analysis-scan__spotlight analysis-scan__spotlight--one"><i /><i /><i /></span>
+      <span className="analysis-scan__spotlight analysis-scan__spotlight--two"><i /><i /><i /></span>
+      <span className="analysis-scan__spotlight analysis-scan__spotlight--three"><i /><i /><i /></span>
       <span className="analysis-scan__caption">
         <span>Taking a look around…</span>
         <span>Spotting useful words…</span>
