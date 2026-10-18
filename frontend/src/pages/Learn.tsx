@@ -16,11 +16,13 @@ export function Learn() {
   if (session.session.status === "completed") return <Navigate to={`${base}/summary`} replace />;
   if (["abandoned", "failed"].includes(session.session.status)) return <div className="stack"><h1>Session closed</h1><Button onClick={() => navigate("/practice")}>Choose an image</Button></div>;
   const tasks = practiceStages(session.tasks).learning;
-  const completed = tasks.filter(taskDone);
   const generating = session.session.status === "generatingTasks";
   const allDone = tasks.length > 0 && tasks.every(taskDone) && !generating;
   const nextTask = tasks.find(task => !taskDone(task));
-  const nextTaskIndex = nextTask ? tasks.findIndex(task => task.id === nextTask.id) : -1;
+  const foundationTask = tasks[0];
+  const foundationDone = foundationTask ? taskDone(foundationTask) : false;
+  const practiceTasks = tasks.slice(1);
+  const completedPractice = practiceTasks.filter(taskDone);
 
   const openTask = (taskId: string) => {
     navigate(`${base}/learn/${taskId}`);
@@ -51,18 +53,21 @@ export function Learn() {
         </div>
 
         <section className="learn-overview__journey" aria-labelledby="lesson-journey-title">
-          {nextTask ? <Card lifted className="learn-next-task">
-            <span className="learn-next-task__eyebrow">Up next · {nextTaskIndex + 1} of {tasks.length}</span>
-            <div className="learn-next-task__heading"><div><h2>{taskTitle(nextTask)}</h2><p>One short activity at a time.</p></div>{taskXp(nextTask) ? <XpPill {...taskXp(nextTask)!} /> : null}</div>
-            <Button block disabled={practiceSaving} onClick={() => openTask(nextTask.id)}>
-              {completed.length === 0 ? "Begin tasks" : "Continue lesson"} <ArrowRightIcon />
-            </Button>
+          {foundationTask ? <Card lifted className={`learn-next-task${foundationDone ? " is-complete" : ""}`}>
+            <span className="learn-next-task__eyebrow">{foundationDone ? "Words ready" : "Start with the words"}</span>
+            <div className="learn-next-task__heading"><div><h2>{taskTitle(foundationTask)}</h2><p>{foundationDone ? "You’re ready to use these words in context." : "Meet the vocabulary before you practise it."}</p></div>{foundationDone ? <span className="learn-foundation-check"><CheckIcon size={20} /></span> : taskXp(foundationTask) ? <XpPill {...taskXp(foundationTask)!} /> : null}</div>
+            {!foundationDone ? <Button block disabled={practiceSaving} onClick={() => openTask(foundationTask.id)}>
+              Learn the words <ArrowRightIcon />
+            </Button> : null}
           </Card> : null}
 
-          <div className="lesson-path">
-            <div className="lesson-path__heading"><div><span className="small muted">Your route</span><h2 id="lesson-journey-title">Lesson journey</h2></div><strong>{completed.length}/{tasks.length}</strong></div>
-            <div className="lesson-path__steps" aria-label="Learning tasks">
-              {tasks.map((task, index) => {
+          {practiceTasks.length ? <div className="lesson-path">
+            <div className="lesson-path__heading"><div><span className="small muted">After the words</span><h2 id="lesson-journey-title">Then practise them</h2></div><strong>{completedPractice.length}/{practiceTasks.length}</strong></div>
+            {foundationDone && nextTask ? <Button block className="lesson-path__action" disabled={practiceSaving} onClick={() => openTask(nextTask.id)}>
+              Continue practice <ArrowRightIcon />
+            </Button> : null}
+            <div className="lesson-path__steps" aria-label="Practice activities">
+              {practiceTasks.map((task, index) => {
                 const isDone = taskDone(task);
                 const isNext = task.id === nextTask?.id;
                 return <button key={task.id} type="button" className={`lesson-path__step${isDone ? " is-done" : ""}${isNext ? " is-next" : ""}`} onClick={() => openTask(task.id)}>
@@ -72,7 +77,7 @@ export function Learn() {
                 </button>;
               })}
             </div>
-          </div>
+          </div> : null}
 
           {generating ? <section className="panel-note" role="status">
             <h2>Preparing the remaining tasks...</h2>

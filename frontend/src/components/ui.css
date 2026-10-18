@@ -4641,6 +4641,9 @@ p[role="alert"]::before { content: "!"; }
 
 .learn-next-task__heading h2 { color: var(--teal-dark); font-size: clamp(26px, 4vw, 34px); }
 .learn-next-task__heading p { margin: var(--space-1) 0 0; color: var(--ink-muted); }
+.learn-next-task.is-complete { border-color: rgba(46, 156, 153, .35); background: var(--sage); box-shadow: none; }
+.learn-next-task.is-complete .learn-next-task__eyebrow { color: var(--teal-dark); }
+.learn-foundation-check { display: grid; width: 42px; height: 42px; flex: none; place-items: center; border-radius: 50%; background: var(--teal); color: #fff; }
 
 .lesson-path {
   display: grid;
@@ -4662,6 +4665,7 @@ p[role="alert"]::before { content: "!"; }
 .lesson-path__heading span { font-weight: 800; }
 .lesson-path__heading h2 { font-size: var(--text-h3); }
 .lesson-path__heading > strong { color: var(--teal-dark); font-size: var(--text-small); }
+.lesson-path__action { margin-bottom: var(--space-1); }
 .lesson-path__steps { display: grid; }
 
 .lesson-path__step {
