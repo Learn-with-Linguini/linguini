@@ -375,7 +375,29 @@ def parse_scene_analysis(
         raise SceneAnalysisValidationError(issues) from exc
     if normalize_gemini_coordinates:
         result = _normalize_gemini_coordinates(result)
+    result = _normalize_object_group_counts(result)
     return validate_scene_analysis(result)
+
+
+def _normalize_object_group_counts(
+    result: SceneAnalysisModelResult,
+) -> SceneAnalysisModelResult:
+    """Derive group counts from the visible instances returned by the model.
+
+    Each object already carries its own bounding box and marker. Using that list as
+    the source of truth keeps quantity metadata consistent and prevents a harmless
+    per-instance count disagreement from invalidating the whole scene.
+    """
+    counts: dict[str, int] = {}
+    for scene_object in result.objects:
+        counts[scene_object.group_key] = counts.get(scene_object.group_key, 0) + 1
+    objects = [
+        scene_object.model_copy(
+            update={"suggested_group_count": counts[scene_object.group_key]}
+        )
+        for scene_object in result.objects
+    ]
+    return result.model_copy(update={"objects": objects})
 
 
 def _normalize_gemini_coordinates(result: SceneAnalysisModelResult) -> SceneAnalysisModelResult:
