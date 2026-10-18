@@ -123,7 +123,7 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onSc
   const earnedText = xpEarnedText(actionResult?.xpEarned);
   return <div className="stack">
     <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />{reward ? <XpPill {...reward} /> : null}</div>
-    <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{taskTitle(task)}</h1></div><ExitToHome onExit={onExit} /></div>
+    <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton></div><ExitToHome onExit={onExit} /></div>
     {card && content.kind === "vocabularyIntroduction" ? <div className="flashcard learning-card">
       <div className="spread"><span className="label muted">{card.wordClass}{card.gender ? " · " + card.gender : ""}</span>
         <IconButton label={"Hear " + card.word} onClick={() => speak(card.word, scene.languageCode)}><SpeakerIcon /></IconButton></div>
@@ -683,7 +683,6 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
     {saved.isError ? <div role="alert"><p>Unable to restore checked answers.</p>
       <Button variant="quiet" onClick={() => void refetchChecks()}>Retry</Button></div> : null}
     {question ? <div className="learning-section">
-      {question.section ? <h2 className="learning-section__title">{question.section}</h2> : null}
       {isM06 && activeIndex === 0 && isM06ScenarioVisible(content.missionId, content.scenario) ? <Card plain>
         <section className="mission-scenario" aria-label="Choose your role-play">
           <div><strong>{content.scenario?.itemLabel}</strong><p>{content.scenario?.prompt}</p></div>
@@ -986,10 +985,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
       const markers = question.roleplayPremise ? [] : markerChoices(question, scene);
       // A0 counting questions highlight the group without marker numbers that would give the count away.
       const countQuestion = content.practiceLevel === "A0" && Boolean(groupObjects?.length || question.displayCount);
-      const section = question.section && question.section !== content.questions[position - 1]?.section
-        ? question.section : null;
       return <div key={question.questionId} className="learning-section">
-        {section ? <h2 className="learning-section__title">{section}</h2> : null}
         <Card plain><div className="stack">
       {content.questions.length > 1 ? <span className="label muted">Question {position + 1} of {content.questions.length}</span> : null}
       {question.instruction ? <p className="small lesson-instruction">{question.instruction}</p> : null}

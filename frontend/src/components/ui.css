@@ -543,7 +543,7 @@
 .roleplay-premise {
   border: 1px solid rgba(201, 78, 44, 0.24);
   border-radius: var(--radius-md);
-  background: #fff0bf;
+  background: var(--cream);
   padding: var(--space-4);
 }
 
@@ -6097,7 +6097,6 @@ p[role="alert"]::before { content: "!"; }
 .mission-markers .scene__art { border-radius: calc(var(--radius-md) - var(--stroke)); overflow: hidden; }
 
 .learning-section { display: grid; gap: var(--space-3); }
-.learning-section__title { margin: 0; font-size: var(--text-h3); }
 .mission-scenario { display: grid; gap: var(--space-2); }
 .mission-scenario p { margin: 0; color: var(--ink-muted); }
 .mission-scenario > div { display: grid; gap: var(--space-1); }
