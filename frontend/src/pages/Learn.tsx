@@ -62,7 +62,7 @@ export function Learn() {
           </Card> : null}
 
           {practiceTasks.length ? <div className="lesson-path">
-            <div className="lesson-path__heading"><div><span className="small muted">After the words</span><h2 id="lesson-journey-title">Then practise them</h2></div><strong>{completedPractice.length}/{practiceTasks.length}</strong></div>
+            <div className="lesson-path__heading"><div><span className="small muted">Practice activities</span><h2 id="lesson-journey-title">Try them in the scene</h2><p>You can start any activity.</p></div><strong>{completedPractice.length}/{practiceTasks.length}</strong></div>
             {foundationDone && nextTask ? <Button block className="lesson-path__action" disabled={practiceSaving} onClick={() => openTask(nextTask.id)}>
               Continue practice <ArrowRightIcon />
             </Button> : null}
@@ -72,7 +72,7 @@ export function Learn() {
                 const isNext = task.id === nextTask?.id;
                 return <button key={task.id} type="button" className={`lesson-path__step${isDone ? " is-done" : ""}${isNext ? " is-next" : ""}`} onClick={() => openTask(task.id)}>
                   <span className="lesson-path__marker">{isDone ? <CheckIcon size={16} /> : index + 1}</span>
-                  <span><strong>{taskTitle(task)}</strong><small>{isDone ? task.status === "skipped" ? "Skipped" : "Complete" : isNext ? "Ready now" : "Coming up"}</small></span>
+                  <span><strong>{taskTitle(task)}</strong><small>{isDone ? task.status === "skipped" ? "Skipped" : "Complete" : "Ready to try"}</small></span>
                   <ArrowRightIcon />
                 </button>;
               })}

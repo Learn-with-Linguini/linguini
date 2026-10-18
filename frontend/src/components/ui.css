@@ -1710,7 +1710,7 @@ p[role="alert"]::before { content: "!"; }
   width: 100%;
   border: 0;
   border-radius: 0;
-  aspect-ratio: 4 / 3;
+  background: var(--paper);
 }
 
 .translation-preview__drawer summary {
@@ -4664,6 +4664,7 @@ p[role="alert"]::before { content: "!"; }
 
 .lesson-path__heading span { font-weight: 800; }
 .lesson-path__heading h2 { font-size: var(--text-h3); }
+.lesson-path__heading p { margin: 2px 0 0; color: var(--ink-muted); font-size: var(--text-small); font-weight: 700; }
 .lesson-path__heading > strong { color: var(--teal-dark); font-size: var(--text-small); }
 .lesson-path__action { margin-bottom: var(--space-1); }
 .lesson-path__steps { display: grid; }
@@ -4676,9 +4677,9 @@ p[role="alert"]::before { content: "!"; }
   gap: var(--space-3);
   min-height: 66px;
   padding: var(--space-2);
-  border: 0;
+  border: 1px solid rgba(249, 178, 51, .28);
   border-radius: var(--radius-md);
-  background: transparent;
+  background: #fff9e9;
   color: var(--ink);
   font: inherit;
   text-align: left;
@@ -4696,11 +4697,12 @@ p[role="alert"]::before { content: "!"; }
   content: "";
 }
 
-.lesson-path__step:hover,
-.lesson-path__step.is-next { background: var(--cream); }
+.lesson-path__step + .lesson-path__step { margin-top: var(--space-2); }
+.lesson-path__step:hover { border-color: var(--pasta); background: var(--cream); }
+.lesson-path__step.is-next { border-color: rgba(232, 93, 50, .42); background: #fff1df; }
 .lesson-path__step > span:nth-child(2) { display: grid; gap: 2px; }
-.lesson-path__step small { color: var(--ink-muted); font-size: var(--text-label); font-weight: 800; }
-.lesson-path__step > svg { color: var(--ink-muted); }
+.lesson-path__step small { color: var(--teal-dark); font-size: var(--text-label); font-weight: 900; }
+.lesson-path__step > svg { color: var(--teal-dark); }
 
 .lesson-path__marker {
   z-index: 1;
@@ -4708,10 +4710,10 @@ p[role="alert"]::before { content: "!"; }
   width: 38px;
   height: 38px;
   place-items: center;
-  border: 2px solid var(--line);
+  border: 2px solid var(--pasta);
   border-radius: 50%;
-  background: var(--paper);
-  color: var(--ink-muted);
+  background: #fff0bf;
+  color: #8b5a00;
   font-weight: 900;
 }
 
