@@ -600,13 +600,18 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
+  width: auto;
+  min-width: 22px;
   height: 22px;
+  padding: 0 4px;
   border-radius: var(--radius-pill);
   background: var(--teal);
   color: #fffaf2;
   font-size: var(--text-label);
   font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  box-sizing: border-box;
 }
 
 .chip--selected .chip__marker {
@@ -1198,14 +1203,18 @@ p[role="alert"]::before { content: "!"; }
   padding: 0 var(--space-2);
   border: none;
   background: transparent;
-  color: var(--teal-dark);
+  color: var(--danger);
   font: inherit;
   font-weight: 800;
   cursor: pointer;
 }
 
 .analysis-placement-prompt button:hover {
-  color: var(--ink);
+  color: var(--tomato-pressed);
+}
+
+.analysis-placement-prompt strong {
+  color: var(--teal-dark);
 }
 
 .analysis-placement-prompt span {
@@ -1345,10 +1354,10 @@ p[role="alert"]::before { content: "!"; }
 }
 
 .analysis-object-instance .analysis-word-row__marker {
-  width: 26px;
+  width: auto;
   min-width: 26px;
   height: 26px;
-  padding: 0;
+  padding: 0 5px;
   font-size: 0.7rem;
   line-height: 1;
   white-space: nowrap;
