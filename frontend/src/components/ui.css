@@ -4704,6 +4704,36 @@ p[role="alert"]::before { content: "!"; }
   gap: var(--space-2);
 }
 
+.learn-missions .task-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.learn-missions .task-row {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  min-height: 104px;
+  padding: var(--space-4);
+  border-color: rgba(33, 113, 111, .2);
+  background: var(--paper);
+  box-shadow: 0 3px 0 rgba(33, 113, 111, .1);
+}
+
+.learn-missions .task-row:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 0 rgba(33, 113, 111, .12);
+}
+
+.learn-missions .task-row--done {
+  background: var(--sage);
+}
+
+@media (max-width: 560px) {
+  .learn-missions .task-list { grid-template-columns: 1fr; }
+  .learn-missions .task-row { min-height: 88px; }
+}
+
 .learning-task-page > .trail {
   margin-bottom: var(--space-2);
 }
