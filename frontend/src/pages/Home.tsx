@@ -12,6 +12,7 @@ import { useAppState } from "../state/useAppState";
 import { useVocabularyQuery } from "../state/queries";
 import { WalkthroughCoachmark } from "../components/WalkthroughCoachmark";
 import { FIRST_LESSON_WALKTHROUGH_VERSION, needsFirstLessonWalkthrough } from "../lib/walkthrough";
+import { learningProgress } from "../lib/practiceTasks";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -71,8 +72,7 @@ export function Home() {
     }));
     return [...groups.values()].sort((a, b) => b.count - a.count)[0] ?? null;
   }, [vocabulary]);
-  const completed = resume?.progress.completedTaskCount ?? 0;
-  const total = resume?.progress.totalTaskCount ?? 0;
+  const { completed, total } = resume ? learningProgress(resume.tasks) : { completed: 0, total: 0 };
   const percent = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
 
   const continuePractice = async () => {
@@ -145,7 +145,7 @@ export function Home() {
           <div className="home-section-heading home-section-heading--compact"><div><span className="home-progress-card__eyebrow">This week</span><h2 id="home-progress-title">Your progress</h2></div></div>
           {vocabularyLoading ? <InlineLoader compact label="Loading your words…" /> : vocabularyError ? <p role="alert">{vocabularyError}</p> : <div className="home-progress-card__stats"><div><span className="home-stat-icon home-stat-icon--words"><BookIcon /></span><strong>{wordsThisWeek}</strong><span>words</span></div><div><span className="home-stat-icon home-stat-icon--scenes"><EyeIcon /></span><strong>{exploredScenes}</strong><span>scenes</span></div></div>}
         </section>
-        {leaderboardPosition ? <button className="home-league" type="button" onClick={() => navigate("/ispy")}><span className="home-league__badge" aria-hidden="true">#</span><span><strong>Basil League</strong><small>You're #{leaderboardPosition} this week</small></span><ChevronRightIcon /></button> : null}
+        {leaderboardPosition ? <button className="home-league" type="button" onClick={() => navigate("/ispy")}><span className="home-league__badge" aria-hidden="true">#</span><span><strong>Chefs of the Day</strong><small>You're #{leaderboardPosition} this week</small></span><ChevronRightIcon /></button> : null}
       </aside>
     </div>
 

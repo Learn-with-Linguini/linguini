@@ -2,7 +2,7 @@ import { LoadingScreen } from "../components/LoadingScreen";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Button, Card, Noodle, StatusPill, XpPill } from "../components/ui";
+import { Button, Card, Mascot, StatusPill } from "../components/ui";
 import { HelpImproveModal } from "../components/HelpImproveModal";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
@@ -67,22 +67,31 @@ export function SessionSummary() {
     }
   };
   
-  return <div className="stack">
-    <div className="center-text stack-2" style={{ alignItems: "center" }}>
-      <img className="mascot" src="/linguini-logo-cool.png" width={120} height={120} alt="Linguini smiling in sunglasses" /><h1>{completed ? "Good job!" : "Your session"}</h1><Noodle className="noodle-divider summary__noodle" />
-      <p className="muted">You practised {scene.title.toLowerCase()}.</p>
-    </div>
+  const wordsLearned = data?.learnedVocabularyIds.length ?? 0;
+  const resultMessage = data
+    ? wordsLearned > 0
+      ? `That’s a lesson well cooked.`
+      : `You kept your language skills simmering and collected basil. Nicely done, Chef.`
+    : `You practised ${scene.title.toLowerCase()}.`;
+
+  return <div className="stack session-summary">
+    {session?.session.status === "inProgress" ? <Button onClick={() => navigate(sessionDestination(session).path)}>Continue unfinished practice</Button> : null}
+    <header className="summary-hero">
+      <div className="summary-hero__mascot"><Mascot size={132} expression="happy" /></div>
+      <span className="summary-hero__eyebrow">{completed ? "Session complete" : "Session results"}</span>
+      <h1>{completed ? "Beautiful work, Chef!" : "Your session"}</h1>
+      <p>{resultMessage}</p>
+    </header>
     {loading ? <LoadingScreen label="Loading your results…" /> : null}
     {error || startError ? <p role="alert">{error || startError}</p> : null}
     {completionError ? <><p role="alert">{completionError}</p><Button onClick={retryCompletion}>Retry saving your session</Button></> : null}
     {data ? <>
-      <div className="stat-grid">
-        <div className="stat"><div className="stat__value"><BasilIcon size={24} />{data.xpEarned}</div><span className="stat__label">Basil earned</span></div>
-        {data.ispyAttemptCount ? <div className="stat"><div className="stat__value">{data.ispyCorrectCount}/{data.ispyAttemptCount}</div><span className="stat__label">I-Spy correct</span></div> : null}
-        <div className="stat"><div className="stat__value">{data.learnedVocabularyIds.length}</div><span className="stat__label">Words learned</span></div>
+      <div className="summary-results" aria-label="Session results">
+        <div className="summary-result summary-result--basil"><div className="summary-result__value"><BasilIcon size={28} />{data.xpEarned}</div><span>Basil collected</span></div>
+        <div className="summary-result summary-result--words"><div className="summary-result__value">{wordsLearned}</div><span>New {wordsLearned === 1 ? "word" : "words"} learned</span></div>
       </div>
       <Card><div className="stack-2">
-        <div className="spread"><h2>Words to revisit</h2><XpPill xp={data.xpEarned} /></div>
+        <h2>Fresh from this lesson</h2>
         {revisit.map(item => {
           const vocabularyId = session?.sceneObjects.find(object => object.id === item.id)?.vocabularyItemId;
           return <div key={item.id} className="spread"><div><strong>{item.word}</strong><p className="small muted">{item.translation}</p></div><StatusPill status={vocabulary.find(word => word.id === vocabularyId)?.status ?? "learning"} /></div>;

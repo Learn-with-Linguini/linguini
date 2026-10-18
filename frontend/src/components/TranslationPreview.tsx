@@ -19,7 +19,7 @@ function uniquePreviewTerms(terms: PreviewTerm[]) {
 export function TranslationPreview({ preview, scene }: { preview: NonNullable<PracticeDetail["translationPreview"]>; scene?: Scene }) {
   return <Card plain className="translation-preview">
     {scene ? <ScenePhoto scene={scene} items={[]} /> : null}
-    <h2>Your translations</h2>
+    <h2>Vocabulary preview</h2>
     {([
       ["Objects", preview.objects],
       ["Attributes", preview.attributes],

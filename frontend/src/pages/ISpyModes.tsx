@@ -14,7 +14,6 @@ export function ISpyModes() {
   const basilToLeader = player && leader ? Math.max(0, leader.xp - player.xp) : 0;
   return <main className="ispy-modes">
     <Card lifted className="ispy-modes__card ispy-modes__play-card">
-      <img className="ispy-modes__logo" src="/linguini-logo.png" alt="Linguini" />
       <h1>Let’s play I-Spy!</h1>
       <div className="ispy-modes__actions">
         <Button block onClick={() => navigate("/ispy/play")}>Play with Linguini</Button>

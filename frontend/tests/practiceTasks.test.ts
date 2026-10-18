@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { practiceStages, taskDone, taskTitle, taskDescription, taskXp, xpEarnedText } from "../src/lib/practiceTasks.ts";
+import { learningProgress, practiceStages, taskDone, taskTitle, taskDescription, taskXp, xpEarnedText } from "../src/lib/practiceTasks.ts";
 import type { SessionTask, TaskContent } from "../src/lib/api.ts";
 
 const contents: TaskContent[] = [
@@ -33,6 +33,16 @@ test("skipped tasks unlock the next screen without being treated as completed ta
   assert.equal(learning.every(taskDone), true);
   assert.equal(learning.filter(task => task.status === "completed").length, 0);
   assert.equal([...learning, tasks[0]].every(taskDone), false);
+});
+
+test("home progress includes vocabulary and missions but excludes optional I-Spy and reflection", () => {
+  const sessionTasks = tasks.map(task => ({ ...task }));
+  sessionTasks[0].status = "skipped";
+  sessionTasks[1].status = "completed";
+  sessionTasks[6].status = "completed";
+  sessionTasks[7].status = "completed";
+
+  assert.deepEqual(learningProgress(sessionTasks), { completed: 2, total: 6 });
 });
 
 test("task list copy comes from public content and all kinds have a label", () => {
