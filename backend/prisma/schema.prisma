@@ -32,6 +32,7 @@ model User {
   roomCommands        RoomCommand[]
   roomContributions   RoomContribution[]
   placementAttempts   OnboardingPlacementAttempt[]
+  surveys             UserSurvey[]
 
   @@map("users")
 }
@@ -715,4 +716,22 @@ model RoomContribution {
   @@unique([turnId, userId])
   @@index([userId], map: "room_contributions_user_idx")
   @@map("room_contributions")
+}
+
+model UserSurvey {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId          String?  @map("user_id") @db.Uuid
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  email           String?  @db.VarChar(320)
+  rating          Int
+  usageFrequency  String   @default("") @map("usage_frequency") @db.Text
+  motivation      String   @default("") @map("motivation") @db.Text
+  improvements    String   @default("") @map("improvements") @db.Text
+  receiveFollowUp Boolean  @default(false) @map("receive_follow_up")
+  triggerSource   String   @default("profile") @map("trigger_source") @db.VarChar(32)
+  lessonCount     Int?     @map("lesson_count")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([userId])
+  @@map("user_surveys")
 }

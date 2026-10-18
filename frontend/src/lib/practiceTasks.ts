@@ -63,9 +63,8 @@ export function taskDescription(task: SessionTask) {
 export const isMissionSession = (tasks: SessionTask[]) =>
   tasks.some(task => task.publicContent.missionId);
 
-/** A mission session with no I-Spy rounds finishes after its last learning task. */
-export const finishesWithoutISpy = (tasks: SessionTask[]) =>
-  tasks.some(task => task.publicContent.missionId) && !tasks.some(task => task.kind === "ispyRound" || task.kind === "reflection");
+/** Missions finish after learning; I-Spy is a separate, optional game. */
+export const finishesAfterLearning = (tasks: SessionTask[]) => isMissionSession(tasks);
 
 /** Saved mission order when the backend persisted it; otherwise a stable per-question shuffle. */
 export function questionOptions(question: Pick<GrammarLessonQuestion, "options" | "keepOptionOrder">, seed: string) {
@@ -91,3 +90,5 @@ export const builtSentence = (tokens: readonly string[]) => tokens.reduce((value
   const joinsPrevious = /^[,.;:!?…]$/.test(token) || value.endsWith("'");
   return value ? `${value}${joinsPrevious ? "" : " "}${token}` : token;
 }, "");
+
+export const sentenceEnding = (answer: string) => /[.!?]$/.test(answer) ? "" : ".";

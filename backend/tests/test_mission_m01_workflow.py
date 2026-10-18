@@ -19,7 +19,6 @@ from app.repositories.postgres.users import users
 from app.repositories.postgres.vocabulary import user_vocabulary_progress, vocabulary_encounters
 from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.repositories.postgres.xp import xp_events
-from app.repositories.practice import PracticeConflictError
 from app.schemas.sessions import ReviewPracticeRequest
 from app.schemas.tasks import SkipTaskRequest
 from app.services import mission_eligibility, mission_lessons_m01
@@ -113,11 +112,9 @@ def test_suitable_photo_builds_one_mission_lesson_after_the_vocabulary(curated):
     _repository_, sid, detail = _lesson(curated, model)
     assert detail.session.status == "inProgress" and detail.mission_guidance == []
     kinds = [task.kind for task in detail.tasks]
-    assert kinds[:2] == ["vocabularyIntroduction", "grammarLesson"]
-    assert "ispyRound" in kinds[2:] and set(kinds[2:]) <= {"ispyRound", "reflection"}
+    assert kinds == ["vocabularyIntroduction", "grammarLesson"]
     assert detail.tasks[0].public_content.mission_key is None
     assert detail.tasks[1].public_content.mission_key == M01
-    assert all(task.public_content.mission_key is None for task in detail.tasks[2:])
     lesson = detail.tasks[1]
     questions = lesson.public_content.questions
     assert [q.interaction_type for q in questions] == [
@@ -258,7 +255,7 @@ def test_a_colour_without_a_reviewed_form_skips_m01_for_the_regular_lesson(
     assert "ispyRound" in {task.kind for task in detail.tasks}
     assert all(task.public_content.mission_key is None for task in detail.tasks)
 
-@pytest.mark.parametrize("level", ["A2", "B1"])
+@pytest.mark.parametrize("level", ["B1"])
 def test_other_levels_keep_the_existing_lesson(curated, level):
     engine, owner, profile, *_ = curated
     with engine.begin() as connection:
@@ -336,10 +333,10 @@ def test_submissions_grade_each_question_and_word_once(curated, scenario):
     }
 
 
-def test_offered_support_is_recorded_and_the_lesson_finishes_after_bonus_ispy(curated):
+def test_offered_support_is_recorded_and_the_lesson_finishes_before_optional_ispy(curated):
     engine, _owner, profile, client, *_ = curated
     repository, sid, detail = _lesson(curated)
-    introduction, lesson, *bonus = detail.tasks
+    introduction, lesson = detail.tasks
     correct = _answer_key(engine, lesson.id)["correctOptionIds"]
     first = lesson.public_content.questions[0].question_id
     refused = _attempt(client, lesson, correct, questionAssistance=[
@@ -357,10 +354,6 @@ def test_offered_support_is_recorded_and_the_lesson_finishes_after_bonus_ispy(cu
     ))
     assert payload["question_assistance"] == [{"question_id": first, "supports": ["audio"]}]
     repository.task_action(introduction.id, "skip", SkipTaskRequest())
-    with pytest.raises(PracticeConflictError):
-        repository.finish(sid, profile.id)
-    for task in bonus:
-        repository.task_action(task.id, "skip", SkipTaskRequest())
     repository.finish(sid, profile.id)
     assert repository.get(sid, profile.id).session.status == "completed"
     assert _scalar(engine, select(func.count()).select_from(xp_events).where(

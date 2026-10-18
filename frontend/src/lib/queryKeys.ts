@@ -11,6 +11,7 @@ export const queryKeys = {
   sceneSession: (sceneId: string) => ["scene", sceneId, "session"] as const,
   sessionSummary: (sessionId: string) => ["session", sessionId, "summary"] as const,
   latestAttempt: (taskId: string) => ["task", taskId, "latest-attempt"] as const,
+  lessonChecks: (taskId: string) => ["task", taskId, "lesson-checks"] as const,
   ispyPhotos: (profileId: string) => ["ispy", "photos", profileId] as const,
   activeGame: (profileId: string) => ["ispy", "active", profileId] as const,
 };

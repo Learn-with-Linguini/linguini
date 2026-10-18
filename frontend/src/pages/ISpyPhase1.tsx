@@ -14,6 +14,7 @@ import { getLatestAttempt } from "../lib/api";
 import type { SessionTask, TaskActionResult } from "../lib/api";
 import { queryKeys } from "../lib/queryKeys";
 import { ReportIssueLink } from "../components/ReportIssueLink";
+import { playAnswerSound } from "../lib/answerSound";
 
 export function ISpyPhase1() {
   const { session, practiceStalled, practiceError, retryProcessing } = useAppState();
@@ -81,6 +82,7 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
     try {
       const saved = await actOnTask(task.id, "attempts", { inputMode: "multipleChoice", optionId }, request.current.key);
       setResult(saved);
+      if (saved?.attempt?.isCorrect != null) playAnswerSound(saved.attempt.isCorrect);
       if (saved) request.current = null;
     } finally {
       submitting.current = false;

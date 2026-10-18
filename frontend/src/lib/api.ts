@@ -393,7 +393,7 @@ export interface RoleplayFact {
 }
 export type TaskContent = MissionTaskFields & (
   | { kind: "vocabularyIntroduction"; title: string; words: VocabularyLearningWord[]; questions: VocabularyQuestion[]; allowTypingPractice: boolean; targetText?: string | null; translation?: string | null; partOfSpeech?: WordClass | null; exampleSentence?: string | null }
-  | { kind: "grammarLesson"; focus: string; title: string; explanation?: string | null; prep?: LessonPrepCard[] | null; questions: GrammarLessonQuestion[]; roleplayFacts?: RoleplayFact[] | null }
+  | { kind: "grammarLesson"; focus: string; title: string; explanation?: string | null; checkEachQuestion?: boolean; prep?: LessonPrepCard[] | null; questions: GrammarLessonQuestion[]; roleplayFacts?: RoleplayFact[] | null }
   | { kind: "grammarExplanation"; title: string; explanation: string; examples: string[] }
   | { kind: "grammarPractice"; prompt: string; options: string[] }
   | { kind: "syntaxExplanation"; title: string; sentencePattern: string; explanation: string; examples: string[] }
@@ -513,6 +513,7 @@ export interface GrammarLessonQuestion {
   keepOptionOrder?: boolean | null;
   /** Marker questions: each option's scene object, numbered as on the reviewed photo. */
   markerObjectIds?: Record<string, string> | null;
+  planningFacts?: string[];
   /** A short English instruction shown above the prompt. */
   instruction?: string | null;
   /** Target-language text the learner can play aloud. */
@@ -542,6 +543,9 @@ export interface QuestionOutcome {
   assistance: SupportKind[]; assistanceUsed: boolean; mistakes: MistakeDetail[];
   correctNote?: string; optionNotes?: string[];
 }
+export interface LessonAnswerCheck {
+  questionId: string; answer: string; isCorrect: boolean; correctAnswer: string; outcome: QuestionOutcome;
+}
 /** `questionOutcomes` is present only for tasks with mission evaluation metadata. */
 export interface VocabularyReviewDetails { questionResults: Record<string, boolean>; correctAnswers: Record<string, string>; questionOutcomes?: QuestionOutcome[] }
 export type ISpyDescriptionOutcome = "clearMatch" | "needsClarification" | "needsRevision" | "noMatch" | "evaluationFailed";
@@ -563,6 +567,10 @@ export interface LatestClueAttempt {
 }
 export const getLatestAttempt = (taskId: string, signal?: AbortSignal) =>
   request<{ attempt: LatestClueAttempt | null }>(`/api/v1/tasks/${taskId}/latest-attempt`, signal);
+export const checkLessonAnswer = (taskId: string, questionId: string, answer: string) =>
+  write<LessonAnswerCheck>(`/api/v1/tasks/${taskId}/check-lesson-answer`, "POST", { questionId, answer });
+export const getLessonChecks = (taskId: string, signal?: AbortSignal) =>
+  request<{ checks: LessonAnswerCheck[] }>(`/api/v1/tasks/${taskId}/lesson-checks`, signal);
 export interface TaskActionResult {
   task: SessionTask; nextTaskId: string | null; sessionProgress: SessionProgress; attempt: TaskAttemptResult | null;
   xpEarned: number;
@@ -597,7 +605,44 @@ export const checkVocabularyAnswer = (id: string, questionId: string, optionId: 
   write<{ questionId: string; isCorrect: boolean; correctOptionId: string }>(`/api/v1/tasks/${id}/check-vocabulary-answer`, "POST", { questionId, optionId });
 export const completePractice = (id: string) => write<{ id: string; status: string }>(`/api/v1/sessions/${id}/complete`, "POST", {});
 export const abandonPractice = (id: string) => write<{ id: string; status: string }>(`/api/v1/sessions/${id}/abandon`, "POST", {});
-export const getPracticeSummary = (id: string) => request<{ progress: SessionProgress; learnedVocabularyIds: string[]; xpEarned: number; ispyCorrectCount: number; ispyAttemptCount: number }>(`/api/v1/sessions/${id}/summary`);
+export const getPracticeSummary = (id: string) => request<{
+  progress: SessionProgress;
+  learnedVocabularyIds: string[];
+  xpEarned: number;
+  ispyCorrectCount: number;
+  ispyAttemptCount: number;
+  completedLessonsCount: number;
+}>(`/api/v1/sessions/${id}/summary`);
+
+export interface SurveySubmission {
+  rating: number;
+  usageFrequency?: string;
+  motivation?: string;
+  improvements?: string;
+  receiveFollowUp?: boolean;
+  email?: string | null;
+  triggerSource?: string;
+  lessonCount?: number | null;
+}
+
+export interface SurveyResponse {
+  id: string;
+  rating: number;
+  createdAt: string;
+}
+
+export function submitSurvey(data: SurveySubmission): Promise<SurveyResponse> {
+  return write<SurveyResponse>("/api/v1/surveys", "POST", {
+    rating: data.rating,
+    usage_frequency: data.usageFrequency ?? "",
+    motivation: data.motivation ?? "",
+    improvements: data.improvements ?? "",
+    receive_follow_up: Boolean(data.receiveFollowUp),
+    email: data.email ? data.email.trim() : null,
+    trigger_source: data.triggerSource ?? "profile",
+    lesson_count: data.lessonCount ?? null,
+  });
+}
 
 export interface ISpyPhoto { mediaAsset: { id: string; source: "camera" | "userUpload"; createdAt: string }; playable: boolean; confirmedAt: string | null }
 export interface ISpyPhotoPage { photos: ISpyPhoto[]; nextCursor: string | null }

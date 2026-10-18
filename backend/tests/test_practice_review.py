@@ -180,6 +180,7 @@ def test_review_rebuilds_tasks_only_for_selected_objects():
     connection = MagicMock()
     connection.execute.return_value.first.return_value = None
     connection.execute.return_value.mappings.return_value.one.return_value = {
+        "id": profile_id,
         "source_language_code": "en",
         "target_language_code": "es",
         "proficiency_level": "A2",

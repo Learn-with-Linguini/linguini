@@ -122,14 +122,21 @@ def test_m01_a1_definition_covers_the_mission_contract():
     }
     assert all({"es", "fr"} <= set(item.examples) for item in mission.language_patterns)
     assert mission.teaching.task_sequence == [
-        "vocabularyIntroduction", "grammarLesson", "ispyRound", "reflection",
+        "vocabularyIntroduction", "grammarLesson",
     ]
     assert not mission.counts_as_assistance("translation")
     assert mission.counts_as_assistance("hint")
     assert {item.target_id for item in mission.evaluation_criteria} == set(mission.targets)
     assert mission.expected_performance.min_assessed_questions == 4
     assert get_mission("M01", "A1", 2) is None
-    assert get_mission("M01", "A2", 1) is None
+    assert get_mission("M01", "A2", 1) is not None
+
+
+def test_every_mission_ends_before_optional_ispy():
+    for mission in load_missions(DEFINITIONS_DIR).values():
+        assert mission.teaching.task_sequence == [
+            "vocabularyIntroduction", "grammarLesson",
+        ]
 
 
 def test_definition_files_are_named_by_their_mission(tmp_path):
@@ -145,8 +152,10 @@ def test_definition_files_are_named_by_their_mission(tmp_path):
     with pytest.raises(MissionConfigurationError, match="describe-size"):
         load_missions(tmp_path)
     assert sorted(path.name for path in Path(DEFINITIONS_DIR).glob("*.toml")) == [
-        "M01-A0.toml", "M01-A1.toml", "M02-A0.toml", "M02-A1-2.toml", "M02-A1.toml",
-        "M03-A0.toml", "M03-A1.toml", "M04-A1.toml", "M05-A1.toml", "M13-A0.toml",
+        "M01-A0.toml", "M01-A1.toml", "M01-A2.toml",
+        "M02-A0.toml", "M02-A1-2.toml", "M02-A1.toml", "M02-A2.toml",
+        "M03-A0.toml", "M03-A1.toml", "M03-A2.toml",
+        "M04-A1.toml", "M04-A2.toml", "M05-A1.toml", "M13-A0.toml",
     ]
 
 

@@ -359,7 +359,10 @@ def _ispy_description_task(
     )
 
 
-def build_tasks(session_id, objects, words, translations, uploaded, translated_scene=None):
+def build_tasks(
+    session_id, objects, words, translations, uploaded, translated_scene=None,
+    supplemental_vocabulary=None,
+):
     # Two sets choose different focus objects and context, with the same public contract.
     index = min(1, len(words) - 1) if uploaded else 0
     word, translation, obj = words[index], translations[index], objects[index]
@@ -398,6 +401,7 @@ def build_tasks(session_id, objects, words, translations, uploaded, translated_s
             (entry["target_text"].casefold(), entry["translation"].casefold())
             for entry in learning_words
         }
+        supplemental_vocabulary = supplemental_vocabulary or {}
         for term, term_type, part_of_speech in supplemental_terms:
             identity = (term.translation.casefold(), term.source.casefold())
             if identity in seen_terms:
@@ -407,6 +411,11 @@ def build_tasks(session_id, objects, words, translations, uploaded, translated_s
                 dict(
                     learning_key=f"{term_type}:{term.key}",
                     term_type=term_type,
+                    vocabulary_item_id=(
+                        supplemental_vocabulary.get((term_type, str(term.key))).id
+                        if supplemental_vocabulary.get((term_type, str(term.key)))
+                        else None
+                    ),
                     target_text=term.translation,
                     translation=_display_source(term.source),
                     part_of_speech=part_of_speech,

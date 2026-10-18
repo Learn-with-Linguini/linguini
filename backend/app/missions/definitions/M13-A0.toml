@@ -23,7 +23,7 @@ structure = "[word] [noun]"
 examples = { es = ["la taza"], fr = ["la tasse"], de = ["die Tasse"], ko = ["책이에요"] }
 
 [teaching]
-task_sequence = ["vocabularyIntroduction", "grammarLesson", "ispyRound", "reflection"]
+task_sequence = ["vocabularyIntroduction", "grammarLesson"]
 teach_before_assessment = ["noun-word-pair"]
 max_new_words = 3
 

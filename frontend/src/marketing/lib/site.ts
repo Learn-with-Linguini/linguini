@@ -1,3 +1,5 @@
+import { SOCIAL_LINKS } from "../../config/social";
+
 const defaultSupportEmail = "linguini-support@googlegroups.com";
 
 /** Set after launch day; the badge and `sameAs` link stay hidden until then. */
@@ -11,8 +13,14 @@ export const site = {
   url: (import.meta.env.VITE_SITE_URL || "https://www.learnwithlinguini.com").replace(/\/$/, ""),
   productHunt,
   supportEmail: import.meta.env.VITE_SUPPORT_EMAIL?.trim() || defaultSupportEmail,
-  /** Official profiles, for Organization `sameAs`. Add social accounts here once they exist. */
-  sameAs: [productHunt.url].filter(Boolean),
+  /** Official profiles, for Organization `sameAs`. */
+  sameAs: [
+    productHunt.url,
+    SOCIAL_LINKS.instagram.url,
+    SOCIAL_LINKS.tiktok.url,
+    SOCIAL_LINKS.x.url,
+    SOCIAL_LINKS.linkedin.url,
+  ].filter(Boolean),
   title: "Linguini — Learn a language from the photos you take",
   shortTitle: "Linguini",
   description:

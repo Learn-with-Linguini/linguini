@@ -74,14 +74,17 @@ def test_colour_forms_agree_only_when_the_gender_is_known():
     # A0 is the stored level for "I'm a complete beginner" (pre-A1); it gets the A0 missions.
     ("lesson", "A0", "es", True),
     ("lesson", "A0", "fr", True),
-    ("lesson", "A2", "es", False),
+    ("lesson", "A2", "es", True),
+    ("lesson", "A2", "fr", True),
+    ("lesson", "A2", "de", False),
+    ("lesson", "A2", "ko", False),
     ("lesson", "B1", "fr", False),
     ("lesson", None, "es", False),
     ("lesson", "A1", "de", True),
     ("lesson", "A1", "ko", False),
     ("ispyGame", "A1", "es", False),
 ])
-def test_mission_path_needs_an_a1_lesson_in_a_supported_language(
+def test_mission_path_only_plans_enabled_levels_and_languages(
     mode, level, language, selected,
 ):
     profile = {"proficiency_level": level, "target_language_code": language}

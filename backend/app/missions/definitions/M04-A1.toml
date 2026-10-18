@@ -39,7 +39,7 @@ structure = "[copula] [third-person singular possessive] [singular noun]."
 examples = { es = ["Es su taza."], fr = ["C'est sa tasse."] }
 
 [teaching]
-task_sequence = ["vocabularyIntroduction", "grammarLesson", "ispyRound", "reflection"]
+task_sequence = ["vocabularyIntroduction", "grammarLesson"]
 teach_before_assessment = ["choose-possessive", "say-mine", "say-theirs"]
 max_new_words = 6
 

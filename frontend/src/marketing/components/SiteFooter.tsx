@@ -1,6 +1,7 @@
 import Image from "./Image";
 import Link from "./Link";
 import { appLinks } from "../lib/site";
+import { SOCIAL_LINKS } from "../../config/social";
 import styles from "./SiteFooter.module.css";
 
 export function SiteFooter() {
@@ -34,6 +35,13 @@ export function SiteFooter() {
           <Link href="/privacy">Privacy policy</Link>
           <Link href="/terms">Terms of service</Link>
           <a href={appLinks.contact}>Contact us</a>
+        </nav>
+        <nav aria-label="Follow us" className={styles.col}>
+          <h2 className={styles.heading}>Follow us</h2>
+          <a href={SOCIAL_LINKS.instagram.url} target="_blank" rel="noopener noreferrer">Instagram</a>
+          <a href={SOCIAL_LINKS.tiktok.url} target="_blank" rel="noopener noreferrer">TikTok</a>
+          <a href={SOCIAL_LINKS.x.url} target="_blank" rel="noopener noreferrer">X (Twitter)</a>
+          <a href={SOCIAL_LINKS.linkedin.url} target="_blank" rel="noopener noreferrer">LinkedIn</a>
         </nav>
       </div>
       <div className={`container ${styles.base}`}>

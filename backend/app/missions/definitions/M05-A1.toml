@@ -51,7 +51,7 @@ structure = "[named subject] [negative like verb] [singular noun phrase]."
 examples = { es = ["A Leo no le gusta el libro."], fr = ["Leo n'aime pas le livre."] }
 
 [teaching]
-task_sequence = ["vocabularyIntroduction", "grammarLesson", "ispyRound", "reflection"]
+task_sequence = ["vocabularyIntroduction", "grammarLesson"]
 teach_before_assessment = ["choose-preference", "say-my-preference", "say-their-preference"]
 max_new_words = 6
 
