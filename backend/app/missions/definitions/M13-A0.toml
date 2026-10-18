@@ -1,0 +1,63 @@
+mission_id = "M13"
+practice_level = "A0"
+content_version = 1
+title = "Choose the word that goes with the noun"
+
+[photo_requirements]
+media_sources = ["preloaded", "camera", "userUpload"]
+min_confirmed_objects = 2
+
+[objective]
+objective_id = "noun-word-pair"
+can_do = "I can choose the word that goes with a familiar noun."
+
+[[objective.targets]]
+target_id = "noun-word-pair"
+summary = "Choose the reviewed word that goes with a familiar noun."
+evidence_types = ["recognition"]
+
+[[language_patterns]]
+pattern_id = "noun-word-pair"
+target_id = "noun-word-pair"
+structure = "[word] [noun]"
+examples = { es = ["la taza"], fr = ["la tasse"], de = ["die Tasse"], ko = ["책이에요"] }
+
+[teaching]
+task_sequence = ["vocabularyIntroduction", "grammarLesson", "ispyRound", "reflection"]
+teach_before_assessment = ["noun-word-pair"]
+max_new_words = 3
+
+[[teaching.supports]]
+support = "translation"
+availability = "onRequest"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "audio"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "wordBank"
+availability = "always"
+counts_as_assistance = false
+
+[[evaluation_criteria]]
+criterion_id = "chooses-paired-word"
+target_id = "noun-word-pair"
+description = "Chooses the word that goes with the noun."
+evidence_types = ["recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "matches-spoken-chunk"
+target_id = "noun-word-pair"
+description = "Matches a spoken chunk to its object."
+evidence_types = ["recognition"]
+
+[expected_performance]
+min_assessed_questions = 4
+min_correct_ratio = 0.67
+min_independent_correct = 2
+required_target_groups = [
+  ["noun-word-pair"],
+]

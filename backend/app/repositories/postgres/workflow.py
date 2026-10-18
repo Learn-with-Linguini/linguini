@@ -107,7 +107,7 @@ from app.services.mission_eligibility import (
     snapshot_missions,
 )
 from app.services.mission_lessons import mission_version
-from app.services.mission_registry import MISSION_LESSONS, lesson_mission
+from app.services.mission_registry import lesson_mission, lesson_spec
 from app.services.mission_roleplay import assign_roleplay
 from app.services.quantities import suggested_quantity
 from app.services.question_outcomes import (
@@ -1520,7 +1520,20 @@ class PostgresWorkflowRepository:
             total = word.get("correctCount", 0) + word.get("incorrectCount", 0)
             if word.get("term") and total:
                 terms[fold(word["term"])] = word["correctCount"] / total
+        # Plural forms count as taught once the learner completed a counting lesson.
+        plurals_taught = c.execute(
+            select(session_tasks.c.id)
+            .join(sessions, sessions.c.id == session_tasks.c.session_id)
+            .where(
+                sessions.c.user_id == self.user_id,
+                sessions.c.language_profile_id == profile["id"],
+                session_tasks.c.status == "completed",
+                session_tasks.c.public_content["missionId"].astext == "M03",
+            )
+            .limit(1)
+        ).first() is not None
         return dict(
+            plurals_taught=plurals_taught,
             objects={str(row["id"]): float(row["mastery_score"]) for row in rows},
             taught_nouns=[
                 dict(text=row["display_text"], gender=row["gender"])
@@ -1871,7 +1884,7 @@ class PostgresWorkflowRepository:
         lessons = []
         for planned in claim.missions:
             mission = lesson_mission(planned)
-            spec = MISSION_LESSONS[mission.mission_id]
+            spec = lesson_spec(mission)
             payload = spec.payload(
                 mission, language, objects, relations, words, translated_scene,
                 claim.counted_groups, claim.mission_progress or {}, claim.session_id,

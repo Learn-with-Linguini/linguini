@@ -4735,3 +4735,11 @@ p[role="alert"]::before { content: "!"; }
 .onboarding-success { width: min(100%, 520px); margin: 10vh auto 0; text-align: center; align-items: center; }
 .onboarding-success__mascot { width: min(180px, 45vw); height: auto; }
 .onboarding-success .button { width: 100%; }
+
+/* A0 scene missions: taught chunks first, large targets, listening and count boards. */
+.lesson-prep__card { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; }
+.lesson-instruction { margin: 0; color: var(--color-text-muted, inherit); }
+.lesson-audio { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.vocabulary-flow .choice { min-height: 56px; }
+.vocabulary-flow .chip, .vocabulary-flow .sentence-builder__token { min-height: 48px; min-width: 48px; }
+.count-board { cursor: default; }

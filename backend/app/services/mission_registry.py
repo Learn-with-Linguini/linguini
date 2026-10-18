@@ -4,12 +4,14 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from app.ai.features.learning_tasks.mission import MissionGeneration
+from app.ai.features.learning_tasks.mission_a0 import A0_GENERATIONS
 from app.ai.features.learning_tasks.mission_m01 import M01_GENERATION
 from app.ai.features.learning_tasks.mission_m02 import M02_GENERATION
 from app.ai.features.learning_tasks.mission_m03 import M03_GENERATION
 from app.ai.features.learning_tasks.mission_m04 import M04_GENERATION
 from app.ai.features.learning_tasks.mission_m05 import M05_GENERATION
 from app.missions import get_mission
+from app.services.mission_lessons_a0 import a0_lesson_task, a0_payload, a0_ready
 from app.services.mission_lessons_m01 import m01_lesson_task, m01_payload
 from app.services.mission_lessons_m02 import m02_lesson_task, m02_payload
 from app.services.mission_lessons_m03 import m03_lesson_task, m03_payload
@@ -103,9 +105,28 @@ MISSION_LESSONS = {
 }
 
 
+# A0 (pre-A1) scene missions, keyed ``A0:Mxx``; A1 lessons stay keyed by mission ID.
+A0_MISSION_LESSONS = {
+    f"A0:{mission_id}": MissionLessonSpec(
+        a0_payload, A0_GENERATIONS[mission_id], a0_lesson_task, a0_ready,
+    )
+    for mission_id in ("M01", "M02", "M03", "M13")
+}
+
+
+def registry_key(mission):
+    """The level-qualified mission key, e.g. ``A0:M01``."""
+    return f"{mission.practice_level}:{mission.mission_id}"
+
+
+def lesson_spec(mission):
+    """The lesson builder for ``mission``'s level: ``A0:Mxx`` first, else the A1 spec."""
+    return A0_MISSION_LESSONS.get(registry_key(mission)) or MISSION_LESSONS[mission.mission_id]
+
+
 def lesson_mission(mission):
     """``mission`` at the version its lessons are now built for, keeping saved plans valid."""
-    spec = MISSION_LESSONS[mission.mission_id]
+    spec = lesson_spec(mission)
     if mission.content_version == spec.content_version:
         return mission
     return get_mission(mission.mission_id, mission.practice_level, spec.content_version)

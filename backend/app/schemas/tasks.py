@@ -167,6 +167,19 @@ class GrammarLessonQuestion(ApiModel):
     keep_option_order: bool | None = Field(default=None, exclude_if=_is_none)
     # A marker choice: option id -> the scene object whose photo marker answers it.
     marker_object_ids: dict[str, UUID] | None = Field(default=None, exclude_if=_is_none)
+    # A short English instruction shown above the prompt.
+    instruction: str | None = Field(default=None, exclude_if=_is_none)
+    # Target-language text the learner can play aloud.
+    audio_text: str | None = Field(default=None, exclude_if=_is_none)
+    # Listening questions hide the written prompt until the learner reveals it.
+    listen_first: bool | None = Field(default=None, exclude_if=_is_none)
+    # A practice board showing this many of ``board_object_id`` without a choice.
+    display_count: Annotated[int, Field(ge=1, le=20)] | None = Field(
+        default=None, exclude_if=_is_none
+    )
+    # A chunk with its missing word as ``___``, completed and played after grading.
+    slot_template: str | None = Field(default=None, exclude_if=_is_none)
+    complete_chunk: str | None = Field(default=None, exclude_if=_is_none)
 
     @model_validator(mode="after")
     def validate_interaction(self) -> GrammarLessonQuestion:
@@ -189,11 +202,20 @@ class GrammarLessonQuestion(ApiModel):
         return self
 
 
+class LessonPrepCard(ApiModel):
+    """A taught chunk shown, with audio, before a lesson's questions."""
+
+    text: NonEmptyText
+    translation: str | None = None
+    scene_object_id: UUID | None = Field(default=None, exclude_if=_is_none)
+
+
 class GrammarLessonContent(MissionTaskFields):
     kind: Literal["grammarLesson"] = "grammarLesson"
     focus: NonEmptyText
     title: NonEmptyText
     explanation: NonEmptyText | None = Field(default=None, exclude_if=_is_none)
+    prep: list[LessonPrepCard] | None = Field(default=None, exclude_if=_is_none)
     questions: Annotated[list[GrammarLessonQuestion], Field(min_length=1)]
     roleplay_facts: list[RoleplayFact] | None = Field(default=None, exclude_if=_is_none)
 
