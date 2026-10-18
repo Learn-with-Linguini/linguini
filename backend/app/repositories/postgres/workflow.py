@@ -8,9 +8,10 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import datetime, timedelta
 from functools import partial
 from uuid import UUID, uuid5
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import DateTime, and_, delete, func, insert, select, update
 from sqlalchemy.dialects.postgresql import insert as upsert
@@ -55,12 +56,14 @@ from app.repositories.postgres.vocabulary import (
 from app.repositories.postgres.xp import award, xp_events
 from app.repositories.practice import (
     ActiveSessionLimitReachedError,
+    DailyLessonLimitReachedError,
     PracticeConflictError,
     PracticeNotFoundError,
     PracticeStorageError,
 )
 from app.schemas.base import utc_now
 from app.schemas.enums import (
+    AccountTier,
     SessionMode,
     SessionStatus,
     VocabularyEncounterOutcome,
@@ -1019,6 +1022,7 @@ class PostgresWorkflowRepository:
             )
             if existing is not None:
                 return self._detail(c, parse_session(existing))
+            self._check_daily_tier_limit(c)
             self._check_active_limit(c, request.language_profile_id)
             session = Session(
                 user_id=self.user_id,
@@ -1029,6 +1033,47 @@ class PostgresWorkflowRepository:
             spend_sauce(c, self.user_id, self._sauce_key(session))
             c.execute(insert(sessions).values(**session.model_dump(by_alias=False)))
             return self._detail(c, session)
+
+    def _check_daily_tier_limit(self, c):
+        user_row = (
+            c.execute(
+                select(users.c.tier, users.c.timezone).where(users.c.id == self.user_id)
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not user_row:
+            return
+        tier_val = user_row.get("tier", "beta")
+        if tier_val == "beta" or tier_val == AccountTier.BETA.value:
+            return
+        limit = 1 if (tier_val == "free" or tier_val == AccountTier.FREE.value) else (10 if (tier_val == "plus" or tier_val == AccountTier.PLUS.value) else None)
+        if limit is None:
+            return
+
+        tz_str = user_row.get("timezone") or "UTC"
+        try:
+            user_tz = ZoneInfo(tz_str)
+        except Exception:
+            user_tz = ZoneInfo("UTC")
+
+        now_user = datetime.now(user_tz)
+        today_start = datetime(now_user.year, now_user.month, now_user.day, tzinfo=user_tz)
+
+        count = c.execute(
+            select(func.count()).select_from(sessions).where(
+                sessions.c.user_id == self.user_id,
+                sessions.c.mode == SessionMode.LESSON,
+                sessions.c.created_at >= today_start,
+            )
+        ).scalar_one()
+
+        if count >= limit:
+            tier_label = "Free" if limit == 1 else "Plus"
+            raise DailyLessonLimitReachedError(
+                f"{tier_label} tier is limited to {limit} photo lesson{'s' if limit > 1 else ''} per day. "
+                f"{'Upgrade to Plus for 10 lessons per day.' if limit == 1 else ''}"
+            )
 
     def _check_active_limit(self, c, profile_id, mode=SessionMode.LESSON):
         active_count = c.execute(

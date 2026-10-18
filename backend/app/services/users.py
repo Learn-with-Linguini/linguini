@@ -30,3 +30,10 @@ class UserService:
             raise UserNotFoundError("The authenticated user was not found.")
         self._current_user = user
         return user
+
+    def set_user_tier(self, tier: str) -> User:
+        user = self.repository.set_tier(self.user_id, tier)
+        if user is None:
+            raise UserNotFoundError("The authenticated user was not found.")
+        self._current_user = user
+        return user

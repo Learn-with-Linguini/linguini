@@ -24,6 +24,7 @@ import { SessionRoute } from "./components/SessionRoute";
 import { ProfileEdit } from "./pages/ProfileEdit";
 import { Progress } from "./pages/Progress";
 import { Contact } from "./pages/Contact";
+import { Payment } from "./pages/Payment";
 import { ResetPassword } from "./pages/ResetPassword";
 import { AppStateProvider } from "./state/AppState";
 import { useAuth } from "./state/Auth";
@@ -77,7 +78,8 @@ export default function App() {
       <Route element={<RequireAuth />}>
         <Route element={<AuthenticatedApp />}>
           <Route element={<FocusShell />}>
-        <Route path="/rooms/:roomId" element={<Room />} />
+            <Route path="/payment" element={<Payment />} />
+            <Route path="/rooms/:roomId" element={<Room />} />
         <Route path="/practice/sessions/:sessionId" element={<SessionRoute />}>
           <Route path="analysis" element={<PracticeAnalysis />} />
           <Route path="mic-test" element={<MicTest />} />

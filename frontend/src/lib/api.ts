@@ -219,6 +219,28 @@ export const submitPublicSupportRequest = (payload: PublicSupportRequestInput) =
 export const submitLessonReport = (payload: LessonReportInput) =>
   write<{ status: "sent" }>("/api/v1/support/lesson-reports", "POST", payload);
 
+export interface SubscriptionStatus {
+  tier: AccountTier;
+  dailyLessonLimit: number | null;
+  hasActiveSubscription: boolean;
+  canUpgrade: boolean;
+}
+
+export const getPaymentConfig = (signal?: AbortSignal) =>
+  request<{ publishableKey: string | null; plusPriceId: string }>("/api/v1/payments/config", signal);
+
+export const getSubscriptionStatus = (signal?: AbortSignal) =>
+  request<SubscriptionStatus>("/api/v1/payments/subscription-status", signal);
+
+export const createCheckoutSession = (returnUrl?: string) =>
+  write<{ checkoutUrl: string }>("/api/v1/payments/create-checkout-session", "POST", { returnUrl });
+
+export const createPortalSession = (returnUrl?: string) =>
+  write<{ portalUrl: string }>("/api/v1/payments/create-portal-session", "POST", { returnUrl });
+
+export const testSetTier = (tier: AccountTier) =>
+  write<{ tier: AccountTier }>("/api/v1/payments/test-set-tier", "POST", { tier });
+
 export const getLanguageProfiles = (signal?: AbortSignal) => request<LanguageProfile[]>("/api/v1/me/language-profiles", signal);
 export const updateUser = (patch: UserPatch) => write<User>("/api/v1/me", "PATCH", patch);
 export const updateLanguageProfile = (id: string, patch: LanguageProfilePatch) => write<LanguageProfile>(`/api/v1/me/language-profiles/${id}`, "PATCH", patch);
