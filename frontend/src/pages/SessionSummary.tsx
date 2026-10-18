@@ -9,12 +9,13 @@ import { useAppState } from "../state/useAppState";
 import { useVocabularyQuery } from "../state/queries";
 import { getPracticeSummary } from "../lib/api";
 import { BasilIcon } from "../components/icons";
+import { learningFeedback } from "../lib/learningFeedback";
 import { queryError, queryKeys } from "../lib/queryKeys";
 
 export function SessionSummary() {
   const navigate = useNavigate();
   const scene = useScene();
-  const { session, completionError, retryCompletion } = useAppState();
+  const { session, completionPending, completionError, retryCompletion } = useAppState();
   const { vocabulary } = useVocabularyQuery(); 
   const [surveyOpen, setSurveyOpen] = useState(false);
   // Stats render from the in-flight numbers straight away; the completion
@@ -24,7 +25,7 @@ export function SessionSummary() {
     queryFn: () => getPracticeSummary(scene.sessionId!),
   });
   const error = queryError(queryErrorValue);
-  const completed = session?.session.status === "completed";
+  const completed = session?.session.status === "completed" && !completionPending && !completionError && Boolean(data) && !error;
   const completedLessons = data?.completedLessonsCount ?? 0;
   // Prompt after account's first lesson (1) and every 5 lessons afterwards (6, 11, 16...)
   const isMilestone =
@@ -46,17 +47,17 @@ export function SessionSummary() {
     session?.sceneObjects.find(object => object.id === item.id)?.vocabularyItemId ?? ""
   )).slice(0, 3);
   const wordsLearned = data?.learnedVocabularyIds.length ?? 0;
-  const resultMessage = data
+  const resultMessage = completed && data
     ? wordsLearned > 0
       ? `That’s a lesson well cooked.`
-      : `You kept your language skills simmering and collected basil. Nicely done, Chef.`
+      : `Thanks for practising with Linguini.`
     : `You practised ${scene.title.toLowerCase()}.`;
 
   return <div className="stack session-summary">
     <header className="summary-hero">
       <div className="summary-hero__mascot"><img src="/linguini-logo-cool.png" width={132} height={132} alt="Linguini smiling in sunglasses" /></div>
       <span className="summary-hero__eyebrow">{completed ? "Session complete" : "Session results"}</span>
-      <h1>{completed ? "Beautiful work, Chef!" : "Your session"}</h1>
+      <h1>{completed ? learningFeedback("completed", scene.sessionId!) : "Your session"}</h1>
       <p>{resultMessage}</p>
     </header>
     {loading ? <LoadingScreen label="Loading your results…" /> : null}

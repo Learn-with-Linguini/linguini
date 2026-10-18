@@ -247,7 +247,7 @@ test("vocabulary feedback keeps the correct word and a locked answer", async () 
       options: [{ optionId: "cup", label: "cup" }, { optionId: "table", label: "table" }] }],
   } };
   await mount(task);
-  await click("Skip to word practice");
+  await click("Start quick quiz");
   await click("table");
   assert.ok(text().includes(learningFeedback("incorrect", "t1:word1")));
   assert.match(text(), /Incorrect\. The correct answer is cup/);

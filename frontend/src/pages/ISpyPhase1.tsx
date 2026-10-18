@@ -15,6 +15,7 @@ import type { SessionTask, TaskActionResult } from "../lib/api";
 import { queryKeys } from "../lib/queryKeys";
 import { ReportIssueLink } from "../components/ReportIssueLink";
 import { playAnswerSound } from "../lib/answerSound";
+import { learningFeedback } from "../lib/learningFeedback";
 
 export function ISpyPhase1() {
   const { session, practiceStalled, practiceError, retryProcessing } = useAppState();
@@ -117,7 +118,13 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
     })}</div>
     {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
     {answered || result ? <>
-      <Feedback tone={isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status"><strong>{task.status === "skipped" ? "Skipped — no Basil earned." : feedback ?? "Answer saved."}</strong>{content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}{earnedText ? <strong className="basil-reward"><BasilIcon size={17} />{earnedText}</strong> : null}</div></Feedback>
+      <Feedback tone={isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status">
+        {task.status === "skipped" ? <strong>Skipped — no Basil earned.</strong> : <>
+          {isCorrect !== null ? <strong>{learningFeedback(isCorrect ? "correct" : "incorrect", task.id)}</strong> : null}
+          <span>{feedback ?? "Answer saved."}</span>
+        </>}
+        {content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}{earnedText ? <strong className="basil-reward"><BasilIcon size={17} />{earnedText}</strong> : null}
+      </div></Feedback>
       {task.status !== "skipped" ? <ReportIssueLink reportType="I-Spy answer" fields={[
         ["Task ID", task.id],
         ["Clue", `${opening} ${content.clue}`],
