@@ -270,7 +270,9 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
   };
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__header">
-      <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />{reward ? <XpPill {...reward} /> : null}</div>
+      <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} labelAction={
+        <IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={18} /></IconButton>
+      } />{reward ? <XpPill {...reward} /> : null}</div>
       <div className="learning-title-row"><h1>{content.title}</h1><ExitToHome onExit={onExit} /></div>
     </div>
     {!terminal && stage === "review" ? <>
@@ -323,7 +325,6 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
     {feedback || earnedText ? <Feedback><div className="stack-2" role="status">{feedback ? <p>{feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {terminal ? <Button block onClick={onNext}>{session?.session.status === "generatingTasks" ? "Back to tasks" : index < total - 1 ? "Next task" : lastStep}</Button> : null}
-    <BackToTasks onClose={onClose} />
   </div>;
 }
 

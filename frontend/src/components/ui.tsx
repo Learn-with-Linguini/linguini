@@ -168,10 +168,12 @@ export function ProgressTrail({
   value,
   total,
   label,
+  labelAction,
 }: {
   value: number;
   total: number;
   label?: string;
+  labelAction?: ReactNode;
 }) {
   const pct = total === 0 ? 0 : Math.min(100, Math.round((value / total) * 100));
   return (
@@ -179,7 +181,10 @@ export function ProgressTrail({
       <div className="trail__track">
         <div className="trail__fill" style={{ width: `${pct}%` }} />
       </div>
-      <span className="trail__label">{label ?? `${value} of ${total}`}</span>
+      <div className="trail__meta">
+        <span className="trail__label">{label ?? `${value} of ${total}`}</span>
+        {labelAction}
+      </div>
     </div>
   );
 }

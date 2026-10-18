@@ -698,6 +698,13 @@
   font-variant-numeric: tabular-nums;
 }
 
+.trail__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 28px;
+}
+
 /* Status pills */
 .pill {
   display: inline-flex;
@@ -4787,9 +4794,19 @@ p[role="alert"]::before { content: "!"; }
   gap: var(--space-4);
 }
 
+.vocabulary-flow__progress .trail__track {
+  margin-top: 9px;
+}
+
 .vocabulary-flow__progress .pill--xp {
-  align-self: end;
-  margin-bottom: 1px;
+  align-self: start;
+}
+
+.vocabulary-flow__back.icon-btn {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  color: var(--teal-dark);
 }
 
 .learning-card {
@@ -4876,6 +4893,10 @@ p[role="alert"]::before { content: "!"; }
 
 .vocabulary-flow__actions .btn:last-child { justify-self: end; }
 
+.vocabulary-flow__actions .btn {
+  width: 100%;
+}
+
 .vocabulary-flow__position {
   display: inline-flex;
   align-items: center;
@@ -4886,7 +4907,12 @@ p[role="alert"]::before { content: "!"; }
   font-variant-numeric: tabular-nums;
 }
 
-.vocabulary-flow__skip { align-self: center; margin-top: calc(var(--space-2) * -1); color: var(--ink-muted); }
+.vocabulary-flow__skip {
+  align-self: center;
+  width: fit-content;
+  margin: var(--space-2) auto 0;
+  color: var(--ink-muted);
+}
 
 .vocabulary-flow__skip,
 .learning-task-page__all-tasks,
