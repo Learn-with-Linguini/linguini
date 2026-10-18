@@ -35,6 +35,7 @@ export function LearningTaskPage() {
   const task = tasks[index];
   if (!task || ["abandoned", "failed"].includes(session.session.status)) return <Navigate to={`${base}/learn`} replace />;
   const next = tasks[index + 1];
+  const isVocabularyTask = task.kind === "vocabularyIntroduction";
   const skipM06RolePlay = () => {
     const lastM06Index = tasks.reduce(
       (last, item, taskIndex) => item.publicContent.missionId === "M06" ? taskIndex : last,
@@ -53,12 +54,16 @@ export function LearningTaskPage() {
     onScenarioChange={() => loadSession(session.session.id)}
     onSkipRolePlay={skipM06RolePlay}
     onNext={() => {
+      if (isVocabularyTask) {
+        navigate(`${base}/learn`);
+        return;
+      }
       if (!next && session.session.status !== "generatingTasks" && finishesAfterLearning(session.tasks)) {
         if (completeSession()) navigate(`${base}/summary`);
         return;
       }
       navigate(next ? `${base}/learn/${next.id}` : session.session.status === "generatingTasks" ? `${base}/learn` : `${base}/ispy-1`);
-    }} onClose={() => navigate(`${base}/learn`)} onExit={() => navigate("/home")} /></div>;
+    }} onClose={() => navigate(isVocabularyTask ? `${base}/learn/vocabulary-preview` : `${base}/learn`)} onExit={() => navigate("/home")} /></div>;
 }
 
 function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onScenarioChange, onSkipRolePlay }: {

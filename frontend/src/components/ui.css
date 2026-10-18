@@ -4639,7 +4639,8 @@ p[role="alert"]::before { content: "!"; }
   background: #d2e7d4;
 }
 
-.task-row__index {
+.task-row__index,
+.task-row__icon {
   width: 35px;
   height: 35px;
   border-radius: var(--radius-pill);
@@ -4650,6 +4651,46 @@ p[role="alert"]::before { content: "!"; }
   font-weight: 800;
   font-size: var(--text-small);
   flex: none;
+}
+
+.task-row__icon {
+  background: #fff0bf;
+  color: var(--teal-dark);
+}
+
+.task-row--done .task-row__icon {
+  background: var(--teal);
+  color: #fff;
+}
+
+.learn-words-intro {
+  display: grid;
+  gap: var(--space-4);
+  overflow: hidden;
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+}
+
+.learn-words-intro__photo {
+  position: relative;
+}
+
+.learn-words-intro__photo > .scene {
+  width: 100%;
+}
+
+.learn-words-intro__photo > .xp-pill {
+  position: absolute;
+  z-index: 2;
+  top: var(--space-3);
+  right: var(--space-3);
+}
+
+.vocabulary-preview-page {
+  width: min(100%, 760px);
+  margin-inline: auto;
 }
 
 .learn-page > .stack-2:first-child {
