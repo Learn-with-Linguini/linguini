@@ -37,6 +37,7 @@ from app.schemas.mission_m01_contract import (
     ConfirmedObject,
     ConfirmedRelation,
     ConfirmedSceneFacts,
+    ContractOption,
     ContractQuestion,
     Feedback,
     GeneratedMarkerOption,
@@ -284,54 +285,105 @@ def _chunk(chunk_id, text):
     )
 
 
-def planned_a1_output(contract=None):
-    contract = contract or contract_input()
+def _with_detail_terms(contract, kinds=("attribute",)):
+    """Add placeholder approved terms for colour and relation facts that lack one."""
     existing_term_facts = {term.fact_id for term in contract.vocabulary}
-    colour_terms = [
-        ApprovedTerm(
-            term_id=f"colour-term-{index}",
-            fact_id=attribute.fact_id,
-            source_text=attribute.value,
-            target_text=attribute.value,
-            part_of_speech="adjective",
-            provenance="reviewedLexicon",
+    added = []
+    if "attribute" in kinds:
+        added.extend(
+            ApprovedTerm(
+                term_id=f"colour-term-{index}",
+                fact_id=attribute.fact_id,
+                source_text=attribute.value,
+                target_text=attribute.value,
+                part_of_speech="adjective",
+                provenance="reviewedLexicon",
+            )
+            for index, attribute in enumerate(contract.scene_facts.attributes)
+            if attribute.kind == "colour" and attribute.fact_id not in existing_term_facts
         )
-        for index, attribute in enumerate(contract.scene_facts.attributes)
-        if attribute.kind == "colour" and attribute.fact_id not in existing_term_facts
-    ]
-    if colour_terms:
-        contract = contract.model_copy(update={
-            "vocabulary": [*contract.vocabulary, *colour_terms],
-        })
+    if "relation" in kinds:
+        added.extend(
+            ApprovedTerm(
+                term_id=f"relation-term-{index}",
+                fact_id=relation.fact_id,
+                source_text=relation.relation,
+                target_text=relation.relation,
+                part_of_speech="preposition",
+                provenance="reviewedLexicon",
+            )
+            for index, relation in enumerate(contract.scene_facts.relations)
+            if relation.fact_id not in existing_term_facts
+        )
+    if added:
+        contract = contract.model_copy(update={"vocabulary": [*contract.vocabulary, *added]})
+    return contract
+
+
+def _term_texts(contract):
+    terms = {}
+    for term in contract.vocabulary:
+        terms.setdefault(term.fact_id, term.target_text)
+    return terms
+
+
+def planned_a1_output(contract=None):
+    contract = _with_detail_terms(contract or contract_input())
     plan = load_m01_level_plan("A1")
-    first, second = contract.scene_facts.objects[:2]
-    first_attribute, second_attribute = contract.scene_facts.attributes[:2]
-    first_name, second_name = (term.target_text for term in contract.vocabulary[:2])
+    objects_by_fact = {item.fact_id: item for item in contract.scene_facts.objects}
+    colours = [
+        attribute for attribute in contract.scene_facts.attributes
+        if attribute.kind == "colour"
+    ]
+    first_attribute, second_attribute = colours[:2]
+    first = objects_by_fact[first_attribute.object_fact_id]
+    second = objects_by_fact[second_attribute.object_fact_id]
+    term_text = _term_texts(contract)
+    first_name, second_name = term_text[first.fact_id], term_text[second.fact_id]
+    first_colour, second_colour = (
+        term_text[first_attribute.fact_id], term_text[second_attribute.fact_id]
+    )
     questions = [
         ContractQuestion(
             question_id="confirm-first",
             target_ids=plan.questions[0].target_ids,
-            prompt="Is this the cup?",
+            prompt=f"¿Es {first_name}?",
+            instruction="Is this the cup?",
             interaction="multipleChoice",
             options=[
-                VocabularyChoice(option_id="yes-first", label=f"Yes, this is {first_name}."),
-                VocabularyChoice(option_id="no-first", label=f"No, this is {first_name}."),
+                ContractOption(
+                    option_id="yes-first", label=f"Yes, this is {first_name}.",
+                    meaning="yes",
+                ),
+                ContractOption(
+                    option_id="no-first", label=f"No, this is {second_name}.",
+                    meaning="no",
+                ),
             ],
             chunks=[],
             fact_ids=[first.fact_id],
+            statement_fact_id=first.fact_id,
             feedback=Feedback(correct="Correct.", corrections=[]),
         ),
         ContractQuestion(
             question_id="confirm-second",
             target_ids=plan.questions[1].target_ids,
-            prompt="Is this the table?",
+            prompt=f"¿Es {first_name}?",
+            instruction="Is this the table?",
             interaction="multipleChoice",
             options=[
-                VocabularyChoice(option_id="yes-second", label=f"Yes, this is {second_name}."),
-                VocabularyChoice(option_id="no-second", label=f"No, this is {second_name}."),
+                ContractOption(
+                    option_id="yes-second", label=f"Yes, this is {first_name}.",
+                    meaning="yes",
+                ),
+                ContractOption(
+                    option_id="no-second", label=f"No, this is {second_name}.",
+                    meaning="no",
+                ),
             ],
             chunks=[],
-            fact_ids=[second.fact_id],
+            fact_ids=[second.fact_id, first.fact_id],
+            statement_fact_id=first.fact_id,
             feedback=Feedback(correct="Correct.", corrections=[]),
         ),
         ContractQuestion(
@@ -340,8 +392,8 @@ def planned_a1_output(contract=None):
             prompt="What colour is the cup?",
             interaction="multipleChoice",
             options=[
-                VocabularyChoice(option_id="blue", label="blue"),
-                VocabularyChoice(option_id="red", label="red"),
+                ContractOption(option_id="blue", label=first_colour),
+                ContractOption(option_id="red", label=second_colour),
             ],
             chunks=[],
             fact_ids=[first.fact_id, first_attribute.fact_id],
@@ -357,7 +409,7 @@ def planned_a1_output(contract=None):
                 _chunk("describe-la", "La"),
                 _chunk("describe-mesa", second_name),
                 _chunk("describe-es", "is"),
-                _chunk("describe-grande", "roja"),
+                _chunk("describe-grande", second_colour),
                 _chunk("describe-period", "."),
                 _chunk("describe-distractor", "small"),
             ],
@@ -367,7 +419,7 @@ def planned_a1_output(contract=None):
     ]
     answers = {
         "confirm-first": Answer(correct_option_id="yes-first"),
-        "confirm-second": Answer(correct_option_id="yes-second"),
+        "confirm-second": Answer(correct_option_id="no-second"),
         "choose-attribute": Answer(correct_option_id="blue"),
         "describe-second": Answer(chunk_ids=[
             "describe-la", "describe-mesa", "describe-es", "describe-grande",
@@ -385,7 +437,7 @@ def planned_a0_output(contract=None):
     contract = contract or contract_input(level="A0")
     plan = load_m01_level_plan("A0")
     objects = contract.scene_facts.objects
-    term_by_fact = {term.fact_id: term.target_text for term in contract.vocabulary}
+    term_by_fact = _term_texts(contract)
     names = [term_by_fact[obj.fact_id] for obj in objects]
     questions = []
     answers = {}
@@ -393,7 +445,7 @@ def planned_a0_output(contract=None):
         obj, name = objects[focus], names[focus]
         other_index = (focus + 1) % len(objects)
         marker_options = [
-            VocabularyChoice(option_id=f"marker-{focus}-{i}", label=names[i])
+            ContractOption(option_id=f"marker-{focus}-{i}", label=names[i])
             for i in range(min(3, len(objects)))
         ]
         marker_facts = {
@@ -421,11 +473,12 @@ def planned_a0_output(contract=None):
             prompt=f"Is this {name}?",
             interaction="multipleChoice",
             options=[
-                VocabularyChoice(option_id=f"yes-{focus}", label="Yes."),
-                VocabularyChoice(option_id=f"no-{focus}", label="No."),
+                ContractOption(option_id=f"yes-{focus}", label="Yes.", meaning="yes"),
+                ContractOption(option_id=f"no-{focus}", label="No.", meaning="no"),
             ],
             chunks=[],
             fact_ids=[obj.fact_id],
+            statement_fact_id=obj.fact_id,
             feedback=Feedback(correct="Correct.", corrections=[]),
         ))
         answers[confirm_id] = Answer(correct_option_id=f"yes-{focus}")
@@ -472,12 +525,17 @@ def planned_a0_output(contract=None):
 
 
 def planned_a2_output(contract=None):
-    contract = contract or contract_input(level="A2")
+    contract = _with_detail_terms(
+        contract or contract_input(level="A2"), ("attribute", "relation")
+    )
     plan = load_m01_level_plan("A2")
     first, second, third = contract.scene_facts.objects[:3]
     attribute = contract.scene_facts.attributes[0]
     relation = contract.scene_facts.relations[0]
-    names = [term.target_text for term in contract.vocabulary[:3]]
+    term_text = _term_texts(contract)
+    names = [term_text[item.fact_id] for item in (first, second, third)]
+    colour, other_colour = term_text[attribute.fact_id], "other-colour"
+    position = term_text[relation.fact_id]
     questions = [
         ContractQuestion(
             question_id="scene-marker",
@@ -485,8 +543,8 @@ def planned_a2_output(contract=None):
             prompt="Select the object named by the fact.",
             interaction="markerChoice",
             options=[
-                VocabularyChoice(option_id="first", label=names[0]),
-                VocabularyChoice(option_id="third", label=names[2]),
+                ContractOption(option_id="first", label=names[0]),
+                ContractOption(option_id="third", label=names[2]),
             ],
             marker_fact_ids={"first": first.fact_id, "third": third.fact_id},
             chunks=[],
@@ -503,7 +561,7 @@ def planned_a2_output(contract=None):
                 _chunk("fact-hay", "There"),
                 _chunk("fact-is", "is"),
                 _chunk("fact-name", names[0]),
-                _chunk("fact-blue", "blue"),
+                _chunk("fact-blue", colour),
                 _chunk("fact-period", "."),
                 _chunk("fact-extra", "but"),
             ],
@@ -516,12 +574,12 @@ def planned_a2_output(contract=None):
             prompt="Which description matches the photo?",
             interaction="multipleChoice",
             options=[
-                VocabularyChoice(
+                ContractOption(
                     option_id="description-correct",
-                    label=f"There is {names[0]} blue and {names[2]}.",
+                    label=f"There is {names[0]} {colour} and {names[2]}.",
                 ),
-                VocabularyChoice(option_id="description-wrong-one", label=f"There is {names[1]}."),
-                VocabularyChoice(option_id="description-wrong-two", label="There are no objects."),
+                ContractOption(option_id="description-wrong-one", label=f"There is {names[1]}."),
+                ContractOption(option_id="description-wrong-two", label="There are no objects."),
             ],
             chunks=[],
             fact_ids=[first.fact_id, attribute.fact_id, third.fact_id],
@@ -537,8 +595,8 @@ def planned_a2_output(contract=None):
                 _chunk("connect-there", "There"),
                 _chunk("connect-is", "is"),
                 _chunk("connect-first", names[0]),
-                _chunk("connect-blue", "blue"),
-                _chunk("connect-and", "and"),
+                _chunk("connect-blue", colour),
+                _chunk("connect-on", position),
                 _chunk("connect-table", names[1]),
                 _chunk("connect-here", "is here"),
                 _chunk("connect-period", "."),
@@ -555,8 +613,8 @@ def planned_a2_output(contract=None):
             prompt="Which detail was used in the description?",
             interaction="multipleChoice",
             options=[
-                VocabularyChoice(option_id="detail-blue", label="blue"),
-                VocabularyChoice(option_id="detail-red", label="red"),
+                ContractOption(option_id="detail-blue", label=colour),
+                ContractOption(option_id="detail-red", label=other_colour),
             ],
             chunks=[],
             fact_ids=[first.fact_id, attribute.fact_id],
@@ -571,7 +629,7 @@ def planned_a2_output(contract=None):
         "scene-description-choice": Answer(correct_option_id="description-correct"),
         "scene-description-build": Answer(chunk_ids=[
             "connect-there", "connect-is", "connect-first", "connect-blue",
-            "connect-and", "connect-table", "connect-here", "connect-period",
+            "connect-on", "connect-table", "connect-here", "connect-period",
         ]),
         "scene-follow-up": Answer(correct_option_id="detail-blue"),
     }
@@ -885,7 +943,10 @@ def test_plan_aware_validation_rejects_wrong_slot_order():
     questions = list(output.questions)
     questions[2], questions[3] = questions[3], questions[2]
 
-    with pytest.raises(MissionContractError, match="question 3 targets do not match plan slot"):
+    with pytest.raises(
+        MissionContractError,
+        match=r"question 3 \(describe-second, slot chooseAttribute\): targets",
+    ):
         validate_contract_output(contract, output.model_copy(update={"questions": questions}), plan)
 
 
@@ -996,8 +1057,8 @@ def test_question_focus_objects_must_be_consistent_and_distinct():
 
     with pytest.raises(
         MissionContractError,
-        match="question 3 targeting describe-colour must reference an approved colour "
-        "attribute fact for its focus object",
+        match=r"question 3 \(choose-attribute, slot chooseAttribute\): targeting "
+        "describe-colour must reference an approved colour attribute fact for its focus object",
     ):
         validate_contract_output(contract, output.model_copy(update={"questions": questions}), plan)
 
@@ -1033,8 +1094,8 @@ def test_colour_question_requires_a_colour_fact_for_its_focus_object():
 
     with pytest.raises(
         MissionContractError,
-        match="question 3 targeting describe-colour must reference an approved colour "
-        "attribute fact for its focus object",
+        match=r"question 3 \(choose-attribute, slot chooseAttribute\): targeting "
+        "describe-colour must reference an approved colour attribute fact for its focus object",
     ):
         validate_contract_output(contract, output.model_copy(update={"questions": questions}), plan)
 
@@ -1219,6 +1280,8 @@ def _generated_from_planned_output(contract, planned):
                 ],
                 chunks=question.chunks,
                 fact_ids=question.fact_ids,
+                statement_fact_id=question.statement_fact_id,
+                prompt_term_uses=question.prompt_term_uses,
                 answer=planned.private.answers[question.question_id],
                 feedback=question.feedback,
             )
@@ -1485,7 +1548,10 @@ def test_a2_connected_fact_threshold_and_followup_order_and_subset():
             contract, output.model_copy(update={"questions": questions}), plan
         )
 
-    with pytest.raises(MissionContractError, match="question 4 targets do not match"):
+    with pytest.raises(
+        MissionContractError,
+        match=r"question 4 \(scene-follow-up, slot buildSceneDescription\): targets",
+    ):
         questions = [
             *output.questions[:3],
             followup,

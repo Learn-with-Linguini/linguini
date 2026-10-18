@@ -287,6 +287,8 @@ def _generated_lesson(contract):
                     for chunk in question.chunks
                 ],
                 fact_ids=question.fact_ids,
+                statement_fact_id=question.statement_fact_id,
+                prompt_term_uses=question.prompt_term_uses,
                 answer=planned.private.answers[question.question_id],
                 feedback=question.feedback,
             )

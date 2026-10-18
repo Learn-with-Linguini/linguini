@@ -74,13 +74,19 @@ let resolveComplete: ((response: Response) => void) | null = null;
 const taskRequests: { path: string; body: Record<string, unknown> }[] = [];
 const taskReplies: (() => Response)[] = [];
 const latestReplies: (() => Response | Promise<Response>)[] = [];
+let lessonChecksFixture: unknown[] = [];
+const lessonCheckReplies: (() => Response)[] = [];
 
 globals.fetch = async (input: unknown, init?: RequestInit) => {
   const url = typeof input === "string" ? input : (input as Request).url;
   const path = url.replace(/^https?:\/\/[^/]+/, "");
   if (path === "/api/v1/languages" && provideLanguageFixture) return Response.json(languageFixture);
   if (path.endsWith("/latest-attempt")) return latestReplies.shift()?.() ?? Response.json({ attempt: null });
-  if (path.endsWith("/lesson-checks")) return Response.json({ checks: [] });
+  if (path.endsWith("/lesson-checks")) return Response.json({ checks: lessonChecksFixture });
+  if (path.endsWith("/check-lesson-answer")) {
+    taskRequests.push({ path, body: JSON.parse(String(init?.body ?? "{}")) });
+    return lessonCheckReplies.shift()?.() ?? new Response("no reply", { status: 500 });
+  }
   if (path.startsWith("/api/v1/tasks/")) {
     taskRequests.push({ path, body: JSON.parse(String(init?.body ?? "{}")) });
     return taskReplies.shift()?.() ?? new Response("no reply", { status: 500 });
@@ -188,6 +194,9 @@ test.after(async () => {
 });
 test.afterEach(() => {
   provideLanguageFixture = false;
+  lessonChecksFixture = [];
+  lessonCheckReplies.length = 0;
+  taskRequests.length = 0;
   Reflect.deleteProperty(dom.window, "speechSynthesis");
 });
 
@@ -521,6 +530,81 @@ test("legacy grammar lessons render without multilingual preparation", async () 
   await flush();
   assert.match(dom.window.document.body.textContent ?? "", /Choose the correct answer\./);
   await act(async () => root.unmount());
+});
+
+test("lesson checks without outcomes still render correctness feedback", async () => {
+  const lessonTask: SessionTask = {
+    ...m01RenderingTask,
+    id: "outcome-less-lesson",
+    publicContent: {
+      kind: "grammarLesson",
+      focus: "Legacy focus",
+      title: "Legacy lesson",
+      checkEachQuestion: true,
+      questions: [{
+        questionId: "legacy-question",
+        prompt: "Choose the correct answer.",
+        interactionType: "multipleChoice",
+        options: [{ optionId: "yes", label: "Yes" }, { optionId: "no", label: "No" }],
+        tokenBank: [],
+      }],
+    },
+  };
+  const mountLesson = async () => {
+    fixture = detail("inProgress", [lessonTask]);
+    const container = dom.window.document.createElement("div");
+    dom.window.document.body.replaceChildren(container);
+    const root = createRoot(container);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+    mountedClients.push(client);
+    await act(async () => root.render(h(QueryClientProvider, { client }, h(AppStateProvider, null,
+      h(MemoryRouter, { initialEntries: [`${BASE}/learn/${lessonTask.id}`] },
+        h(Routes, null,
+          h(Route, { path: "/practice/sessions/:sessionId", element: h(SessionRoute) },
+            h(Route, { path: "learn/:taskId", element: h(LearningTaskPage) }),
+          ),
+        ),
+      ),
+    ))));
+    await flush();
+    return root;
+  };
+
+  lessonChecksFixture = [{
+    questionId: "legacy-question",
+    answer: "yes",
+    isCorrect: true,
+    correctAnswer: "Yes",
+    attemptsLeft: 0,
+  }];
+  let root = await mountLesson();
+  assert.match(dom.window.document.body.textContent ?? "", /Correct!/);
+  await act(async () => root.unmount());
+
+  lessonChecksFixture = [];
+  root = await mountLesson();
+  const option = [...dom.window.document.querySelectorAll("button")]
+    .find(button => button.textContent?.trim() === "Yes");
+  assert.ok(option);
+  await act(async () => option.dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true })));
+  lessonCheckReplies.push(() => Response.json({
+    questionId: "legacy-question",
+    answer: "yes",
+    isCorrect: true,
+    correctAnswer: "Yes",
+    attemptsLeft: 0,
+  }));
+  const check = [...dom.window.document.querySelectorAll("button")]
+    .find(button => button.textContent?.trim() === "Check answer");
+  assert.ok(check);
+  await act(async () => {
+    check.dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true }));
+    await sleep(30);
+  });
+  assert.match(dom.window.document.body.textContent ?? "", /Correct!/);
+  assert.equal(taskRequests.at(-1)?.path, `/api/v1/tasks/${lessonTask.id}/check-lesson-answer`);
+  await act(async () => root.unmount());
+  lessonChecksFixture = [];
 });
 
 const frame = (frameId: string, prefix: string, example: string, chips: string[]) =>

@@ -453,6 +453,8 @@ export interface PracticeDetail {
   sceneId: string | null; title: string;
   analysisMode: "placeholder" | null;
   analysisRetryable: boolean;
+  /** Failed task generation can be retried while the saved review remains available. */
+  generationRetryable?: boolean;
   sceneObjects: SceneObject[];
   /** Reviewed sessions: scene object id -> its marker number on the review screen. */
   reviewMarkers?: Record<string, number>;
@@ -562,7 +564,8 @@ export interface QuestionOutcome {
 }
 export interface LessonAnswerCheck {
   questionId: string; answer: string; isCorrect: boolean; correctAnswer: string | null;
-  outcome: QuestionOutcome; attemptsLeft?: number | null; feedback?: string | null;
+  /** Regular non-mission lesson questions may not have an outcome. */
+  outcome?: QuestionOutcome | null; attemptsLeft?: number | null; feedback?: string | null;
   wrongField?: string | null; assistanceStepsUsed?: string[];
 }
 export interface LessonChecksResponse {

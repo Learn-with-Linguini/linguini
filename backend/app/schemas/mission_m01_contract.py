@@ -24,6 +24,7 @@ type SceneAttributeKind = Literal["colour", "size", "shape", "material", "patter
 type VocabularyProvenance = Literal["reviewedLexicon", "catalog", "sessionTranslation"]
 type ChunkJoin = Literal["space", "none"]
 type M01Interaction = Literal["multipleChoice", "markerChoice", "sentenceBuilding"]
+type YesNoMeaning = Literal["yes", "no"]
 
 
 def fact_id(kind: Literal["object", "attribute", "relation", "count"], *parts: object) -> str:
@@ -154,10 +155,29 @@ class PreparationCard(ApiModel):
     audio: bool = True
 
 
+class TermUse(ApiModel):
+    """Declares that ``surface`` in the enclosing text realises approved term ``term_id``.
+
+    ``surface`` is the exact form written, which may be an inflected form of the
+    term's ``target_text`` (for example a stem change before a case suffix).
+    """
+
+    term_id: ContractId
+    surface: NonEmptyText
+
+
 class SentenceChunk(ApiModel):
     chunk_id: ContractId
     text: NonEmptyText
     join: ChunkJoin
+    term_uses: list[TermUse] = Field(default_factory=list)
+
+
+class ContractOption(VocabularyChoice):
+    """A choice option; ``meaning`` marks the yes and no options of a yes/no question."""
+
+    meaning: YesNoMeaning | None = None
+    term_uses: list[TermUse] = Field(default_factory=list)
 
 
 class Feedback(ApiModel):
@@ -173,10 +193,13 @@ class ContractQuestion(ApiModel):
     prompt_translation: str | None = None
     instruction: str | None = None
     interaction: M01Interaction
-    options: list[VocabularyChoice]
+    options: list[ContractOption]
     marker_fact_ids: dict[NonEmptyText, NonEmptyText] | None = None
     chunks: list[SentenceChunk]
     fact_ids: list[NonEmptyText]
+    # Yes/no questions only: the object fact the prompt's statement names.
+    statement_fact_id: NonEmptyText | None = None
+    prompt_term_uses: list[TermUse] = Field(default_factory=list)
     feedback: Feedback
 
 
@@ -219,10 +242,12 @@ class GeneratedQuestion(ApiModel):
     prompt_translation: str | None = None
     instruction: str | None = None
     interaction: M01Interaction
-    options: list[VocabularyChoice]
+    options: list[ContractOption]
     marker_options: list[GeneratedMarkerOption]
     chunks: list[SentenceChunk]
     fact_ids: list[NonEmptyText]
+    statement_fact_id: NonEmptyText | None = None
+    prompt_term_uses: list[TermUse] = Field(default_factory=list)
     answer: Answer
     feedback: Feedback
 

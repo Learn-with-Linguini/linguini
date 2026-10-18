@@ -176,6 +176,7 @@ class SessionDetailResponse(ApiModel):
     translations: list[VocabularyTranslation] = Field(default_factory=list)
     translation_preview: SceneTranslationResult | None = None
     analysis_retryable: bool = False
+    generation_retryable: bool = False
     personalization: SessionPersonalization | None = None
     counted_groups: list[CountedGroup] = Field(default_factory=list)
     mission_guidance: list[str] = Field(default_factory=list)

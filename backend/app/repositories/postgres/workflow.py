@@ -35,6 +35,7 @@ from app.languages import get_language
 from app.missions import get_mission
 from app.missions.m01_multilingual import (
     CONTRACT_VERSION,
+    expected_preparation_cards,
     join_chunks,
     load_m01_level_plan,
     m01_generation_enabled_for,
@@ -190,7 +191,9 @@ ALLOWED_TRANSITIONS = {
     "inProgress": {"completed", "abandoned", "failed"},
     "completed": set(),
     "abandoned": set(),
-    "failed": {"analyzingScene"},
+    # Only retryable failures leave "failed": analysis/generation retry, or leaving a
+    # generation-retryable session (guarded by the callers).
+    "failed": {"analyzingScene", "generatingTasks", "abandoned"},
 }
 READ_TASKS = {"vocabularyIntroduction", "grammarExplanation", "syntaxExplanation"}
 ANALYSIS_TIMEOUT = timedelta(minutes=15)
@@ -419,6 +422,21 @@ def analysis_retryable(session):
     )
 
 
+def generation_attempts(session):
+    return (session.analysis_draft or {}).get("generationAttempts", 1)
+
+
+def generation_retryable(session):
+    """Failed task generation can rerun from the saved confirmed review."""
+    return (
+        session.mode == SessionMode.LESSON
+        and session.status == "failed"
+        and session.failure_code == "taskGenerationFailed"
+        and session.scene_confirmed_at is not None
+        and generation_attempts(session) < MAX_ANALYSIS_ATTEMPTS
+    )
+
+
 def parse_session(row):
     return Session.model_validate({k: row[k] for k in Session.model_fields})
 
@@ -460,6 +478,8 @@ class GenerationClaim:
     roleplay_facts: dict[str, list[dict]] | None = None
     learner_facts: dict[str, dict] | None = None
     review_markers: dict[str, int] | None = None
+    # A generation retry reuses the translation saved by the failed run.
+    stored_translation: SceneTranslationResult | None = None
 
     @property
     def generation_options(self) -> dict:
@@ -673,6 +693,8 @@ class PostgresWorkflowRepository:
 
     @staticmethod
     def _sauce_key(session, attempt=None):
+        if attempt is None and generation_attempts(session) > 1:
+            return f"session:{session.id}:generation:{generation_attempts(session)}"
         return f"session:{session.id}:analysis:{attempt or max(1, analysis_attempts(session))}"
 
     def _tasks(self, c, session_id):
@@ -782,9 +804,16 @@ class PostgresWorkflowRepository:
             elif wrong_field:
                 feedback = "Check that detail and try again."
         evaluation = next(
-            item for item in task.answer_key.question_evaluations
-            if item.question_id == question_id
+            (
+                item for item in task.answer_key.question_evaluations or []
+                if item.question_id == question_id
+            ),
+            None,
         )
+        if evaluation is None and task.public_content.mission_id:
+            raise PracticeConflictError(
+                "This mission question is missing its evaluation details."
+            )
         return LessonAnswerCheck(
             question_id=question_id,
             answer=answer,
@@ -794,7 +823,7 @@ class PostgresWorkflowRepository:
             feedback=feedback,
             wrong_field=wrong_field,
             assistance_steps_used=list((stored or {}).get("assistance", [])),
-            outcome=QuestionOutcome(
+            outcome=None if evaluation is None else QuestionOutcome(
                 question_id=question_id,
                 outcome="correct" if is_correct else "incorrect",
                 objective_id=evaluation.objective_id,
@@ -1351,6 +1380,7 @@ class PostgresWorkflowRepository:
             translations=translations,
             translation_preview=(draft or {}).get("translationPreview"),
             analysis_retryable=analysis_retryable(session),
+            generation_retryable=generation_retryable(session),
             personalization=(draft or {}).get("personalization"),
             counted_groups=saved_counted_groups(draft),
             mission_guidance=(draft or {}).get("missionGuidance", []),
@@ -1610,13 +1640,15 @@ class PostgresWorkflowRepository:
         )
 
     def retry_analysis(self, session_id, profile_id):
-        """Rerun a temporarily failed analysis on the session's saved image."""
+        """Rerun a failed analysis on the saved image, or failed task generation
+        from the saved confirmed review."""
         with self.transaction() as c:
             session = self._session(c, session_id, profile_id)
-            if session.status in {"analyzingScene", "awaitingObjectReview"}:
+            if session.status in {"analyzingScene", "awaitingObjectReview", "generatingTasks"}:
                 # A concurrent retry already claimed the session.
                 return self._detail(c, session)
-            if not analysis_retryable(session):
+            retry_generation = generation_retryable(session)
+            if not retry_generation and not analysis_retryable(session):
                 raise PracticeConflictError("This practice cannot retry its scene analysis.")
             self._check_active_limit(c, profile_id)
             if c.execute(
@@ -1629,16 +1661,37 @@ class PostgresWorkflowRepository:
                 )
             ).first():
                 raise PracticeConflictError("This photo already has an open practice.")
-            inputs = self._analysis_inputs(c, session)
-            spend_sauce(c, self.user_id, self._sauce_key(session, analysis_attempts(session) + 1))
-            claimed = self._transition(
-                c,
-                session,
-                "analyzingScene",
-                failure_code=None,
-                analysis_draft={"analysisAttempts": analysis_attempts(session) + 1},
-            )
-            detail = self._detail(c, claimed)
+            if retry_generation:
+                claimed = self._transition(
+                    c,
+                    session,
+                    "generatingTasks",
+                    failure_code=None,
+                    analysis_draft={
+                        **(session.analysis_draft or {}),
+                        "generationAttempts": generation_attempts(session) + 1,
+                        "generationRetry": True,
+                    },
+                )
+                spend_sauce(c, self.user_id, self._sauce_key(claimed))
+                detail = self._detail(c, claimed)
+            else:
+                inputs = self._analysis_inputs(c, session)
+                spend_sauce(
+                    c, self.user_id,
+                    self._sauce_key(session, analysis_attempts(session) + 1),
+                )
+                claimed = self._transition(
+                    c,
+                    session,
+                    "analyzingScene",
+                    failure_code=None,
+                    analysis_draft={"analysisAttempts": analysis_attempts(session) + 1},
+                )
+                detail = self._detail(c, claimed)
+        if retry_generation:
+            self.background.submit(self._run_task_generation, session_id, profile_id)
+            return detail
         return self._start_analysis(session_id, profile_id, claimed, detail, *inputs)
 
     def _analysis_inputs(self, c, session):
@@ -2136,6 +2189,9 @@ class PostgresWorkflowRepository:
                     if item.get("practiceLevel") == "A0" and "learnerFacts" in item
                 },
                 review_markers=draft.get("reviewMarkers") or {},
+                stored_translation=(
+                    _translation_preview(session) if draft.get("generationRetry") else None
+                ),
             )
 
     def _mission_progress(self, c, profile, history):
@@ -2459,8 +2515,16 @@ class PostgresWorkflowRepository:
                 objects,
                 relations,
             )
-            with _timed("translation", session_id):
-                translated_scene = self.translator.translate(payload, **claim.generation_options)
+            stored = claim.stored_translation
+            if stored is not None and {str(obj.id) for obj in objects} <= {
+                item.key for item in stored.objects
+            }:
+                translated_scene = stored
+            else:
+                with _timed("translation", session_id):
+                    translated_scene = self.translator.translate(
+                        payload, **claim.generation_options
+                    )
 
         # Checkpoint: commit translations and task 1 before the slower lesson
         # and clue calls, so the learner can start while tasks are built.
@@ -2473,6 +2537,8 @@ class PostgresWorkflowRepository:
             supplemental_vocabulary = {}
             draft = dict(session.analysis_draft or {})
             draft.pop("missionChecks", None)
+            draft.pop("skippedMissions", None)
+            draft.pop("generationRetry", None)
             c.execute(
                 update(sessions).where(sessions.c.id == session_id).values(analysis_draft=draft)
             )
@@ -2558,6 +2624,14 @@ class PostgresWorkflowRepository:
                 supplemental_vocabulary=supplemental_vocabulary,
             )
             mission_lessons = lesson()
+            if not mission_lessons and any(
+                item.get("reason") == "generationFailed" for item in skipped_missions
+            ):
+                # Keep the saved review and translation; the session fails retryably
+                # instead of silently replacing the planned mission with a regular lesson.
+                raise LearningTaskGenerationError(
+                    "A planned mission lesson could not be generated."
+                )
         if not mission_lessons and self.translator:
             # With no mission task left, use the regular lesson.
             lessons, ispy_clues = self._lessons_and_clues(
@@ -2745,6 +2819,9 @@ class PostgresWorkflowRepository:
                             },
                             "levelPlan": plan.model_dump(mode="json", by_alias=True),
                             "planVersion": plan.plan_version,
+                            "preparationCardCount": expected_preparation_cards(
+                                plan, contract
+                            ),
                         }
                         cache_scope = (
                             CacheScope.user(f"{self.user_id}:{claim.profile_id}")
@@ -3055,7 +3132,7 @@ class PostgresWorkflowRepository:
             target = "abandoned" if abandon else "completed"
             if session.status == target:
                 return session
-            if session.status in TERMINAL:
+            if session.status in TERMINAL and not (abandon and generation_retryable(session)):
                 raise PracticeConflictError("Session is already terminal.")
             tasks = self._tasks(c, session.id)
             mission_session = any(

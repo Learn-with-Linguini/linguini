@@ -78,6 +78,7 @@ class MissionContractError(ValueError):
 
 type M01FactKind = Literal["object", "attribute", "relation", "count"]
 type M01Interaction = Literal["multipleChoice", "markerChoice", "sentenceBuilding"]
+type M01Realised = Literal["focusObject", "focusColour", "details", "oneDetail"]
 
 
 class M01QuestionSlot(ApiModel):
@@ -91,9 +92,17 @@ class M01QuestionSlot(ApiModel):
     distractor_chunks: tuple[
         Annotated[int, Field(ge=0)], Annotated[int, Field(ge=0)]
     ] | None = None
+    # Yes/no slots: the statement names the focus object or another confirmed object.
+    yes_no: bool = False
+    # Facts whose approved terms the correct answer must realise.
+    realises: list[M01Realised] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_counts(self) -> M01QuestionSlot:
+        if self.yes_no and (self.interaction != "multipleChoice" or self.options != (2, 2)):
+            raise ValueError("yes/no slots are two-option multipleChoice questions")
+        if self.interaction == "markerChoice" and (self.yes_no or self.realises):
+            raise ValueError("markerChoice slots are checked by their marker mapping only")
         if self.interaction == "sentenceBuilding":
             if self.options is not None or self.distractor_chunks is None:
                 raise ValueError("sentence-building slots require distractor_chunks only")
@@ -325,7 +334,9 @@ def convert_generated_lesson(
         slot = plan.questions[index]
         for target_id in question.target_ids:
             if target_id not in definition.targets:
-                raise MissionContractError(f"unknown target: {target_id}")
+                raise MissionContractError(
+                    f"{_question_label(index + 1, question, plan)}: unknown target: {target_id}"
+                )
 
         questions.append({
             "question_id": question.question_id,
@@ -342,6 +353,8 @@ def convert_generated_lesson(
             ),
             "chunks": question.chunks,
             "fact_ids": question.fact_ids,
+            "statement_fact_id": question.statement_fact_id,
+            "prompt_term_uses": question.prompt_term_uses,
             "feedback": question.feedback,
         })
         answers[question.question_id] = question.answer
@@ -401,6 +414,20 @@ def _check_evaluation(
         raise MissionContractError(str(exc)) from exc
 
 
+def _question_label(index: int, question, plan: M01LevelPlan | None) -> str:
+    purpose = (
+        plan.questions[index - 1].purpose
+        if plan is not None and index <= len(plan.questions) else "unplanned"
+    )
+    return f"question {index} ({question.question_id}, slot {purpose})"
+
+
+def expected_preparation_cards(plan: M01LevelPlan, contract: M01ContractInput) -> int:
+    """The exact card count: one per confirmed object when per-object, plus the extras."""
+    per_object = len(contract.scene_facts.objects) if plan.preparation.per_object else 0
+    return per_object + plan.preparation.extra_cards
+
+
 def validate_contract_output(
     contract: M01ContractInput,
     output: M01ContractOutput,
@@ -422,6 +449,7 @@ def validate_contract_output(
     for card in output.preparation:
         _check_fact_references(card.fact_ids, valid_fact_ids, "preparation card")
 
+    label_plan = plan or load_m01_level_plan(contract.mission.practice_level)
     target_ids = set(definition.targets)
     question_ids = [question.question_id for question in output.questions]
     if len(question_ids) != len(set(question_ids)):
@@ -433,40 +461,53 @@ def validate_contract_output(
         raise MissionContractError("output has fewer than the required assessed questions")
 
     covered_targets: set[str] = set()
-    for question in output.questions:
+    for index, question in enumerate(output.questions, start=1):
+        label = _question_label(index, question, label_plan)
         unknown_targets = set(question.target_ids) - target_ids
         if unknown_targets:
             raise MissionContractError(
-                f"question targets do not belong to this mission: {sorted(unknown_targets)}"
+                f"{label}: question targets do not belong to this mission: "
+                f"{sorted(unknown_targets)}"
             )
         covered_targets.update(question.target_ids)
-        _check_fact_references(question.fact_ids, valid_fact_ids, "question")
+        _check_fact_references(question.fact_ids, valid_fact_ids, f"{label}: question")
 
         option_ids = [option.option_id for option in question.options]
         if len(option_ids) != len(set(option_ids)):
-            raise MissionContractError("question option IDs must be unique")
+            raise MissionContractError(f"{label}: question option IDs must be unique")
         chunk_ids = [chunk.chunk_id for chunk in question.chunks]
         if len(chunk_ids) != len(set(chunk_ids)):
-            raise MissionContractError("chunk IDs must be unique per question")
+            raise MissionContractError(f"{label}: chunk IDs must be unique per question")
 
         if question.interaction == "markerChoice":
             if question.marker_fact_ids is None:
-                raise MissionContractError("markerChoice questions require marker facts")
+                raise MissionContractError(
+                    f"{label}: markerChoice questions require marker facts"
+                )
             if set(question.marker_fact_ids) != set(option_ids):
-                raise MissionContractError("marker facts must cover exactly the offered options")
+                raise MissionContractError(
+                    f"{label}: marker facts must cover exactly the offered options "
+                    f"{sorted(option_ids)}, got {sorted(question.marker_fact_ids)}"
+                )
             _check_fact_references(
-                list(question.marker_fact_ids.values()), valid_fact_ids, "marker choice"
+                list(question.marker_fact_ids.values()), valid_fact_ids,
+                f"{label}: marker choice",
             )
-            for fact_id in question.marker_fact_ids.values():
-                object_fact = object_facts.get(fact_id)
+            for fact_ref in question.marker_fact_ids.values():
+                object_fact = object_facts.get(fact_ref)
                 if object_fact is None:
-                    raise MissionContractError("marker choices must map to object facts")
+                    raise MissionContractError(
+                        f"{label}: marker choices must map to object facts, got {fact_ref}"
+                    )
                 if object_fact.marker is None:
                     raise MissionContractError(
-                        "marker choice objects must have review markers"
+                        f"{label}: marker choice objects must have review markers "
+                        f"({fact_ref} has none)"
                     )
         elif question.marker_fact_ids is not None:
-            raise MissionContractError("marker facts are only valid for markerChoice questions")
+            raise MissionContractError(
+                f"{label}: marker facts are only valid for markerChoice questions"
+            )
 
     for group in definition.expected_performance.required_target_groups:
         if not set(group) & covered_targets:
@@ -475,21 +516,28 @@ def validate_contract_output(
     answers = output.private.answers
     if set(answers) != set(question_ids):
         raise MissionContractError("every question must have exactly one private answer")
-    question_by_id = {question.question_id: question for question in output.questions}
-    for question_id, question in question_by_id.items():
-        answer = answers[question_id]
-        option_ids = {option.option_id for option in question.options}
+    for index, question in enumerate(output.questions, start=1):
+        label = _question_label(index, question, label_plan)
+        answer = answers[question.question_id]
+        option_ids = [option.option_id for option in question.options]
         if question.interaction in {"multipleChoice", "markerChoice"}:
             if answer.correct_option_id not in option_ids:
-                raise MissionContractError("private answer must be one of the offered options")
+                raise MissionContractError(
+                    f"{label}: private answer must be one of the offered options "
+                    f"{option_ids}, got {answer.correct_option_id!r}"
+                )
         if question.interaction == "sentenceBuilding":
             if not answer.chunk_ids:
-                raise MissionContractError("sentence-building answers need ordered chunk IDs")
+                raise MissionContractError(
+                    f"{label}: sentence-building answers need ordered chunk IDs"
+                )
             if len(answer.chunk_ids) != len(set(answer.chunk_ids)):
-                raise MissionContractError("sentence-building answer chunk IDs cannot repeat")
+                raise MissionContractError(
+                    f"{label}: sentence-building answer chunk IDs cannot repeat"
+                )
             if not set(answer.chunk_ids) <= {chunk.chunk_id for chunk in question.chunks}:
                 raise MissionContractError(
-                    "sentence-building answers must use offered question chunks"
+                    f"{label}: sentence-building answers must use offered question chunks"
                 )
 
     evaluations = output.private.evaluations
@@ -502,7 +550,7 @@ def validate_contract_output(
     if plan is not None:
         _validate_planned_output(contract, definition, output, plan)
 
-    preparation_plan = plan or load_m01_level_plan(contract.mission.practice_level)
+    preparation_plan = label_plan
     if preparation_plan.preparation.per_object:
         object_fact_ids = set(object_facts)
         assessed_objects = {
@@ -520,9 +568,10 @@ def validate_contract_output(
             for fact_ref in card.fact_ids
             if fact_ref in object_fact_ids
         }
-        if assessed_objects - taught_objects:
+        if missing := assessed_objects - taught_objects:
             raise MissionContractError(
-                "preparation cards must teach every assessed object before assessment"
+                "preparation cards must teach every assessed object before assessment; "
+                f"untaught: {sorted(missing)}"
             )
 
 
@@ -567,6 +616,205 @@ def _validate_explanation_does_not_reveal_answers(output: M01ContractOutput) -> 
         )
 
 
+def _inflects(term: str, surface: str) -> bool:
+    """Conservative, language-agnostic test that folded ``surface`` is a form of ``term``.
+
+    Word by word, the surface either extends the term (a suffix) or keeps at least
+    half of a term word longer than three characters, and at least two characters,
+    replacing at most its final two characters before a non-empty ending.
+    """
+    term_words, surface_words = term.split(), surface.split()
+    if not term_words or len(term_words) != len(surface_words):
+        return False
+    for term_word, surface_word in zip(term_words, surface_words, strict=True):
+        if surface_word.startswith(term_word):
+            continue
+        stem = len(os.path.commonprefix([term_word, surface_word]))
+        if (
+            len(term_word) <= 3
+            or stem < max(2, (len(term_word) + 1) // 2)
+            or len(term_word) - stem > 2
+            or len(surface_word) <= stem
+        ):
+            return False
+    return True
+
+
+@dataclass(frozen=True)
+class _PlannedQuestion:
+    index: int
+    question: object
+    slot: M01QuestionSlot
+
+    def error(self, message: str) -> MissionContractError:
+        return MissionContractError(
+            f"question {self.index} ({self.question.question_id}, "
+            f"slot {self.slot.purpose}): {message}"
+        )
+
+
+def _realised_terms(item: _PlannedQuestion, where, text, term_uses, terms_by_id) -> set[str]:
+    """Term IDs ``text`` realises: verbatim approved text, or a checked declared form."""
+    folded = _fold_contract_text(text)
+    realised = {
+        term_id
+        for term_id, term in terms_by_id.items()
+        if _fold_contract_text(term.target_text) in folded
+    }
+    for use in term_uses:
+        term = terms_by_id.get(use.term_id)
+        if term is None:
+            raise item.error(f"{where} declares unknown term {use.term_id!r}")
+        surface = _fold_contract_text(use.surface)
+        approved = _fold_contract_text(term.target_text)
+        if surface not in folded:
+            raise item.error(
+                f"{where} declares surface {use.surface!r} for {use.term_id!r}, "
+                f"but its text is {text!r}"
+            )
+        if approved not in surface and not _inflects(approved, surface):
+            raise item.error(
+                f"{where} surface {use.surface!r} is not a recognised form of approved "
+                f"term {term.target_text!r} ({use.term_id})"
+            )
+        realised.add(use.term_id)
+    return realised
+
+
+def _require_fact(item, realised, fact_ref, role, terms_by_fact, text, where="correct answer"):
+    terms = terms_by_fact.get(fact_ref, [])
+    if not terms:
+        raise item.error(f"{role} {fact_ref} has no approved term")
+    if not realised & {term.term_id for term in terms}:
+        expected = " or ".join(repr(term.target_text) for term in terms)
+        raise item.error(
+            f"{where} {text!r} does not realise the {role} {fact_ref}: expected approved "
+            f"term {expected} or a declared form of it"
+        )
+
+
+def _validate_answer_rule(
+    item, focus, answer, facts, objects_by_fact, terms_by_fact, terms_by_id,
+    colour_fact_objects,
+) -> None:
+    """Check the correct answer against the slot's interaction-specific rule."""
+    question, slot = item.question, item.slot
+    option_terms = {
+        option.option_id: _realised_terms(
+            item, f"option {option.option_id}", option.label, option.term_uses, terms_by_id
+        )
+        for option in question.options
+    }
+    chunk_terms = {
+        chunk.chunk_id: _realised_terms(
+            item, f"chunk {chunk.chunk_id}", chunk.text, chunk.term_uses, terms_by_id
+        )
+        for chunk in question.chunks
+    }
+    if question.interaction == "markerChoice":
+        correct_fact = question.marker_fact_ids[answer.correct_option_id]
+        if correct_fact != focus:
+            raise item.error(
+                f"correct marker option {answer.correct_option_id} maps to {correct_fact}, "
+                f"expected the focus object {focus}"
+            )
+        return
+
+    if slot.yes_no:
+        meanings = [option.meaning for option in question.options]
+        if sorted(str(meaning) for meaning in meanings) != ["no", "yes"]:
+            raise item.error(
+                f"yes/no options must be one 'yes' and one 'no', got meanings {meanings}"
+            )
+        statement = question.statement_fact_id
+        if statement is None:
+            raise item.error("yes/no questions must name the stated object in statementFactId")
+        if statement not in objects_by_fact:
+            raise item.error(f"statementFactId {statement} is not a confirmed object fact")
+        if statement not in question.fact_ids:
+            raise item.error(f"statementFactId {statement} must be listed in factIds")
+        prompt_terms = _realised_terms(
+            item, "prompt", question.prompt, question.prompt_term_uses, terms_by_id
+        )
+        _require_fact(
+            item, prompt_terms, statement, "stated object", terms_by_fact, question.prompt,
+            where="prompt",
+        )
+        truth = statement == focus
+        expected = "yes" if truth else "no"
+        correct = next(
+            option for option in question.options
+            if option.option_id == answer.correct_option_id
+        )
+        if correct.meaning != expected:
+            reason = (
+                "the statement names the focus object" if truth
+                else f"the statement names {statement}, not the focus object {focus}"
+            )
+            raise item.error(
+                f"correct option {correct.option_id} means {correct.meaning!r}, "
+                f"expected {expected!r} because {reason}"
+            )
+        return
+
+    if question.interaction == "sentenceBuilding":
+        chunks = {chunk.chunk_id: chunk for chunk in question.chunks}
+        answer_text = join_chunks([chunks[chunk_id] for chunk_id in answer.chunk_ids])
+        realised = _realised_terms(item, "correct answer", answer_text, [], terms_by_id)
+        for chunk_id in answer.chunk_ids:
+            realised |= chunk_terms[chunk_id]
+    else:
+        answer_text = next(
+            option.label for option in question.options
+            if option.option_id == answer.correct_option_id
+        )
+        realised = option_terms[answer.correct_option_id]
+
+    details = [
+        fact_ref for fact_ref in question.fact_ids
+        if facts[fact_ref] in {"attribute", "relation"}
+    ]
+    for rule in slot.realises:
+        if rule == "focusObject":
+            _require_fact(item, realised, focus, "focus object", terms_by_fact, answer_text)
+        elif rule == "focusColour":
+            colour = next(
+                (
+                    fact_ref for fact_ref in question.fact_ids
+                    if colour_fact_objects.get(fact_ref) == focus
+                ),
+                None,
+            )
+            if colour is None:
+                raise item.error(
+                    f"must list an approved colour fact for the focus object {focus}"
+                )
+            _require_fact(
+                item, realised, colour, "focus object's colour", terms_by_fact, answer_text
+            )
+        elif not details:
+            raise item.error("must list the attribute or relation facts it asks about")
+        elif rule == "details":
+            for fact_ref in details:
+                _require_fact(item, realised, fact_ref, "detail fact", terms_by_fact, answer_text)
+        else:
+            for fact_ref in details:
+                if not terms_by_fact.get(fact_ref):
+                    raise item.error(f"detail fact {fact_ref} has no approved term")
+            if not any(
+                realised & {term.term_id for term in terms_by_fact[fact_ref]}
+                for fact_ref in details
+            ):
+                expected = " or ".join(
+                    repr(term.target_text)
+                    for fact_ref in details for term in terms_by_fact[fact_ref]
+                )
+                raise item.error(
+                    f"correct answer {answer_text!r} realises none of the listed detail "
+                    f"facts {details}: expected one of {expected} or a declared form"
+                )
+
+
 def _validate_planned_output(contract, definition, output, plan) -> None:
     if output.mission.content_version != plan.content_version:
         raise MissionContractError("plan content version does not match the mission")
@@ -575,14 +823,17 @@ def _validate_planned_output(contract, definition, output, plan) -> None:
         raise MissionContractError(
             f"question count {len(output.questions)} does not match plan {expected_questions}"
         )
-    expected_preparation = (
-        len(contract.scene_facts.objects) + plan.preparation.extra_cards
-        if plan.preparation.per_object else plan.preparation.extra_cards
-    )
+    expected_preparation = expected_preparation_cards(plan, contract)
     if len(output.preparation) != expected_preparation:
+        basis = (
+            f"one per confirmed object ({len(contract.scene_facts.objects)}) plus "
+            f"{plan.preparation.extra_cards} extra"
+            if plan.preparation.per_object
+            else f"{plan.preparation.extra_cards} extra, none per object"
+        )
         raise MissionContractError(
             f"preparation-card count {len(output.preparation)} is outside "
-            f"{expected_preparation}–{expected_preparation}"
+            f"{expected_preparation}–{expected_preparation} ({basis})"
         )
     facts = {
         **{item.fact_id: "object" for item in contract.scene_facts.objects},
@@ -595,6 +846,7 @@ def _validate_planned_output(contract, definition, output, plan) -> None:
     terms_by_fact: dict[str, list] = {}
     for term in contract.vocabulary:
         terms_by_fact.setdefault(term.fact_id, []).append(term)
+    terms_by_id = {term.term_id: term for term in contract.vocabulary}
     approved_colour_fact_objects = {
         item.fact_id: item.object_fact_id
         for item in contract.scene_facts.attributes
@@ -603,94 +855,101 @@ def _validate_planned_output(contract, definition, output, plan) -> None:
     allowed_kinds = set(plan.fact_kinds)
 
     references = [
-        *(("preparation card", card.fact_ids) for card in output.preparation),
-        *(("question", question.fact_ids) for question in output.questions),
+        *((f"preparation card {card.card_id}", card.fact_ids) for card in output.preparation),
+        *(
+            (_question_label(index, question, plan), question.fact_ids)
+            for index, question in enumerate(output.questions, start=1)
+        ),
     ]
     for source, fact_ids in references:
-        if any(facts[fact_id] not in allowed_kinds for fact_id in fact_ids):
-            raise MissionContractError(f"{source} references a fact kind outside the plan")
+        outside = [fact_ref for fact_ref in fact_ids if facts[fact_ref] not in allowed_kinds]
+        if outside:
+            raise MissionContractError(
+                f"{source} references a fact kind outside the plan: {outside} "
+                f"(allowed kinds {sorted(allowed_kinds)})"
+            )
 
     covered_targets: set[str] = set()
     focus_candidates: dict[int, set[str]] = {}
     colour_focus_indices: set[int] = set()
+    planned: list[_PlannedQuestion] = []
     for index, (question, slot) in enumerate(
         zip(output.questions, plan.questions, strict=True), start=1,
     ):
+        item = _PlannedQuestion(index, question, slot)
+        planned.append(item)
         if question.target_ids != slot.target_ids:
-            raise MissionContractError(
-                f"question {index} targets do not match plan slot {slot.purpose}"
+            raise item.error(
+                f"targets {question.target_ids} do not match plan slot targets "
+                f"{slot.target_ids}"
             )
         if question.interaction != slot.interaction:
-            raise MissionContractError(
-                f"question {index} interaction does not match plan slot {slot.purpose}"
+            raise item.error(
+                f"interaction {question.interaction} does not match plan slot "
+                f"interaction {slot.interaction}"
             )
         covered_targets.update(question.target_ids)
         choice = question.interaction in {"multipleChoice", "markerChoice"}
         if choice:
             if question.chunks:
-                raise MissionContractError("choice questions cannot have chunks")
+                raise item.error("choice questions cannot have chunks")
             minimum, maximum = slot.options
             if not minimum <= len(question.options) <= maximum:
-                raise MissionContractError(
+                raise item.error(
                     f"option count {len(question.options)} is outside "
                     f"{minimum}–{maximum} for {slot.purpose}"
                 )
             labels = [_fold_contract_text(option.label) for option in question.options]
             if len(labels) != len(set(labels)):
-                raise MissionContractError("choice labels must be distinct")
+                raise item.error("choice labels must be distinct")
         elif question.options:
-            raise MissionContractError("sentenceBuilding questions cannot have options")
+            raise item.error("sentenceBuilding questions cannot have options")
+        if not slot.yes_no:
+            if question.statement_fact_id is not None:
+                raise item.error("only yes/no slots name a statementFactId")
+            if any(option.meaning is not None for option in question.options):
+                raise item.error("only yes/no options carry a yes/no meaning")
 
         answer = output.private.answers[question.question_id]
-        if choice:
-            correct_text = next(
-                option.label for option in question.options
-                if option.option_id == answer.correct_option_id
-            )
-        else:
-            chunks = {chunk.chunk_id: chunk for chunk in question.chunks}
+        if not choice:
             if len(answer.chunk_ids) > plan.max_answer_chunks:
-                raise MissionContractError("answer uses too many chunks")
+                raise item.error(
+                    f"answer uses {len(answer.chunk_ids)} chunks, more than the plan's "
+                    f"{plan.max_answer_chunks}"
+                )
             distractors = len(question.chunks) - len(answer.chunk_ids)
             minimum, maximum = slot.distractor_chunks
             if not minimum <= distractors <= maximum:
-                raise MissionContractError(
+                raise item.error(
                     f"distractor-chunk count {distractors} is outside "
                     f"{minimum}–{maximum} for {slot.purpose}"
                 )
             if any(not chunk.text.strip() for chunk in question.chunks):
-                raise MissionContractError("sentence chunks must contain text")
-            correct_text = join_chunks([chunks[item] for item in answer.chunk_ids])
-            if not correct_text.strip():
-                raise MissionContractError("sentence-building answer cannot be empty")
+                raise item.error("sentence chunks must contain text")
+            chunks = {chunk.chunk_id: chunk for chunk in question.chunks}
+            if not join_chunks([chunks[chunk_id] for chunk_id in answer.chunk_ids]).strip():
+                raise item.error("sentence-building answer cannot be empty")
+
+        question_objects = [
+            fact_ref for fact_ref in question.fact_ids if fact_ref in object_fact_ids
+        ]
+        if not question_objects:
+            raise item.error("must reference its focus object fact")
         if question.interaction == "markerChoice":
             marker_facts = list(question.marker_fact_ids.values())
-            if any(fact_id not in objects_by_fact for fact_id in marker_facts):
-                raise MissionContractError("marker choices must map to object facts")
             if len(marker_facts) != len(set(marker_facts)):
-                raise MissionContractError("marker choices must map to distinct objects")
+                raise item.error("marker choices must map to distinct objects")
             correct_fact = question.marker_fact_ids[answer.correct_option_id]
             if correct_fact not in question.fact_ids:
-                raise MissionContractError("correct marker object must be in the question facts")
-
-        for fact_ref in question.fact_ids:
-            if facts[fact_ref] != "object":
-                continue
-            terms = terms_by_fact.get(fact_ref, [])
-            if slot.purpose in {"confirmName", "chooseAttribute", "followUpSceneFact"}:
-                continue
-            if not terms or any(
-                _fold_contract_text(term.target_text) not in _fold_contract_text(correct_text)
-                for term in terms
-            ):
-                raise MissionContractError(
-                    "correct answer must contain every approved object term"
+                raise item.error(
+                    f"correct marker object {correct_fact} must be in the question facts"
                 )
-        question_objects = set(question.fact_ids) & object_fact_ids
-        if not question_objects:
-            raise MissionContractError(
-                f"question {index} must reference its focus object fact"
-            )
+            candidates = {correct_fact}
+        elif slot.yes_no:
+            # The first listed object is the one the lesson highlights.
+            candidates = {question_objects[0]}
+        else:
+            candidates = set(question_objects)
         if "describe-colour" in slot.target_ids:
             colour_focus_indices.add(slot.focus)
             colour_objects = {
@@ -698,71 +957,92 @@ def _validate_planned_output(contract, definition, output, plan) -> None:
                 for fact_ref in question.fact_ids
                 if fact_ref in approved_colour_fact_objects
             }
-            question_objects.intersection_update(colour_objects)
-            if not question_objects:
-                raise MissionContractError(
-                    f"question {index} targeting describe-colour must reference an "
-                    "approved colour attribute fact for its focus object"
+            candidates &= colour_objects
+            if not candidates:
+                raise item.error(
+                    "targeting describe-colour must reference an approved colour attribute "
+                    "fact for its focus object"
                 )
         if slot.focus in focus_candidates:
-            focus_candidates[slot.focus].intersection_update(question_objects)
-            if not focus_candidates[slot.focus]:
+            shared = focus_candidates[slot.focus] & candidates
+            if not shared:
                 if slot.focus in colour_focus_indices:
-                    raise MissionContractError(
-                        f"question {index} targeting describe-colour must reference an "
-                        "approved colour attribute fact for its focus object"
+                    raise item.error(
+                        "targeting describe-colour must reference an approved colour "
+                        "attribute fact for its focus object"
                     )
-                raise MissionContractError(
-                    "questions with the same focus must share one object fact"
+                raise item.error(
+                    f"questions with the same focus must share one object fact: focus "
+                    f"{slot.focus} candidates {sorted(candidates)} do not overlap "
+                    f"{sorted(focus_candidates[slot.focus])}"
                 )
+            focus_candidates[slot.focus] = shared
         else:
-            focus_candidates[slot.focus] = question_objects
+            focus_candidates[slot.focus] = candidates
 
-    if any(not candidates for candidates in focus_candidates.values()):
-        raise MissionContractError("questions with the same focus must share one object fact")
     focus_indices = sorted(focus_candidates)
     object_order = {
         item.fact_id: index for index, item in enumerate(contract.scene_facts.objects)
     }
 
-    def has_distinct_focus_objects(position: int, used: set[str]) -> bool:
+    def assign_focus_objects(position: int, used: set[str]) -> dict[int, str] | None:
         if position == len(focus_indices):
-            return True
-        candidates = sorted(
-            focus_candidates[focus_indices[position]],
-            key=object_order.__getitem__,
-        )
-        return any(
-            candidate not in used
-            and has_distinct_focus_objects(position + 1, {*used, candidate})
-            for candidate in candidates
-        )
+            return {}
+        focus_index = focus_indices[position]
+        for candidate in sorted(focus_candidates[focus_index], key=object_order.__getitem__):
+            if candidate in used:
+                continue
+            rest = assign_focus_objects(position + 1, {*used, candidate})
+            if rest is not None:
+                return {focus_index: candidate, **rest}
+        return None
 
-    if not has_distinct_focus_objects(0, set()):
-        raise MissionContractError("different focus indices must use different objects")
+    focus_objects = assign_focus_objects(0, set())
+    if focus_objects is None:
+        raise MissionContractError(
+            "different focus indices must use different objects: candidates "
+            f"{ {index: sorted(focus_candidates[index]) for index in focus_indices} }"
+        )
 
     for required in definition.expected_performance.required_target_groups:
         if not set(required) & covered_targets:
             raise MissionContractError("output does not cover every required target group")
+
     if plan.min_connected_facts is not None:
         connected_questions = []
         prior_connect_facts: set[str] = set()
-        for question in output.questions:
+        for item in planned:
+            question = item.question
             if "connect-scene-facts" in question.target_ids:
-                if len(set(question.fact_ids)) < plan.min_connected_facts:
-                    raise MissionContractError(
-                        "A2 connect questions need more distinct scene facts"
+                distinct = len(set(question.fact_ids))
+                if distinct < plan.min_connected_facts:
+                    raise item.error(
+                        f"A2 connect questions need more distinct scene facts: {distinct} "
+                        f"listed, expected at least {plan.min_connected_facts}"
                     )
                 connected_questions.append(question)
                 prior_connect_facts.update(question.fact_ids)
             if "follow-up-scene-fact" in question.target_ids and (
                 not connected_questions or not set(question.fact_ids) <= prior_connect_facts
             ):
-                raise MissionContractError(
-                    "follow-up questions must use facts from a preceding connect question"
+                raise item.error(
+                    "follow-up questions must use facts from a preceding connect question; "
+                    f"unused: {sorted(set(question.fact_ids) - prior_connect_facts)}"
                 )
         if not connected_questions:
             raise MissionContractError("A2 requires a connect-scene-facts question")
+
+    for item in planned:
+        _validate_answer_rule(
+            item,
+            focus_objects[item.slot.focus],
+            output.private.answers[item.question.question_id],
+            facts,
+            objects_by_fact,
+            terms_by_fact,
+            terms_by_id,
+            approved_colour_fact_objects,
+        )
 
 
 __all__ = [
@@ -772,6 +1052,7 @@ __all__ = [
     "M01Variant",
     "MissionContractError",
     "convert_generated_lesson",
+    "expected_preparation_cards",
     "UnroutedMissionVariant",
     "default_join",
     "fact_id",

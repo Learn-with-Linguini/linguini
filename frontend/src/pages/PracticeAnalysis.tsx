@@ -100,23 +100,35 @@ export function PracticeAnalysis() {
     return () => document.removeEventListener("pointerdown", cancelOutside);
   }, [movingObjectId, pending]);
   if (!session) return null;
-  if (session.session.status === "failed" && session.analysisRetryable) return <div className="stack analysis-page">
-    <h1>Scene analysis</h1>
-    <section className="analysis-loading" aria-live="polite">
-      <div className="analysis-loading__copy">
-        <h2>We couldn't analyse that photo</h2>
-        <p className="muted">Something went wrong while finding objects in your photo. Your photo is saved, so you can try again without uploading it.</p>
-        {practiceError ? <p role="alert">{practiceError}</p> : null}
-        <div className="stack-2">
-          <Button disabled={practiceSaving} onClick={() => void retryAnalysis(session.session.id)}>Try again</Button>
-          <Button variant="secondary" disabled={practiceSaving} onClick={() => navigate("/practice", { state: {
-            practiceNotice: "Your last photo is still saved. You can try it again or choose another one.",
-            retrySessionId: session.session.id,
-          } })}>Choose another photo</Button>
+  if (session.session.status === "failed" && (session.analysisRetryable || session.generationRetryable)) {
+    const lessonFailure = !session.analysisRetryable;
+    return <div className="stack analysis-page">
+      <h1>Scene analysis</h1>
+      <section className="analysis-loading" aria-live="polite">
+        <div className="analysis-loading__copy">
+          <h2>{lessonFailure ? "We couldn't build your lesson" : "We couldn't analyse that photo"}</h2>
+          <p className="muted">{lessonFailure
+            ? "Something went wrong while building your lesson. Your photo and the words you reviewed are saved, so you can try again without starting over."
+            : "Something went wrong while finding objects in your photo. Your photo is saved, so you can try again without uploading it."}</p>
+          {practiceError ? <p role="alert">{practiceError}</p> : null}
+          <div className="stack-2">
+            <Button disabled={practiceSaving} onClick={() => void retryAnalysis(session.session.id)}>Try again</Button>
+            {lessonFailure
+              ? <Button variant="secondary" disabled={practiceSaving} onClick={() => navigate("/practice", { state: {
+                practiceNotice: "Your photo and your review are still saved. You can try building the lesson again or choose another photo.",
+                retrySessionId: session.session.id,
+              } })}>Back to Practice</Button>
+              : <Button variant="secondary" disabled={practiceSaving} onClick={() => navigate("/practice", { state: {
+                practiceNotice: "Your last photo is still saved. You can try it again or choose another one.",
+                retrySessionId: session.session.id,
+              } })}>Choose another photo</Button>}
+          </div>
+          {lessonFailure ? <LeaveSession sessionId={session.session.id}
+            warning="Your photo and the words you reviewed for this scene will not be saved." /> : null}
         </div>
-      </div>
-    </section>
-  </div>;
+      </section>
+    </div>;
+  }
   if (["completed", "failed", "abandoned"].includes(session.session.status)) {
     const dest = sessionDestination(session);
     return <Navigate to={dest.path} replace state={dest.notice ? { practiceNotice: dest.notice } : undefined} />;

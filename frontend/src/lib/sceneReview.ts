@@ -1,4 +1,16 @@
 export type SceneReviewPanel = "objects" | "attributes" | "relations" | "counts" | "choices";
+type DetailPanel = "attributes" | "relations";
+
+// Mirrors the fact requirements in the mission definitions.
+const MISSION_DETAIL_PANELS: Record<string, Record<string, DetailPanel[]>> = {
+  M01: { A0: [], A1: ["attributes", "relations"], A2: ["attributes", "relations"] },
+  M02: { A0: [], A1: ["relations"], A2: ["attributes", "relations"] },
+  M03: { A0: [], A1: [], A2: [] },
+  M04: { A0: [], A1: [], A2: ["attributes", "relations"] },
+  M05: { A0: [], A1: [] },
+  M06: { A2: [] },
+  M13: { A0: [] },
+};
 
 export function initiallyHiddenObjectIds(
   objectIds: string[],
@@ -12,15 +24,18 @@ export function sceneReviewPanels(
   missionPlan: Array<{ missionId?: unknown; practiceLevel?: unknown }> | undefined,
   hasRepeatedObjects = false,
 ): SceneReviewPanel[] {
-  const missions = new Set((missionPlan ?? []).map(item => String(item.missionId)));
-  if (!missions.size) return ["objects", "attributes", "relations", "counts"];
-  return [
-    "objects",
-    ...(missions.has("M01") ? ["attributes" as const] : []),
-    ...(missions.has("M02") ? ["relations" as const] : []),
-    ...(missions.has("M03") || hasRepeatedObjects ? ["counts" as const] : []),
-    ...((missionPlan ?? []).some(item =>
-      item.practiceLevel === "A0" && ["M04", "M05"].includes(String(item.missionId)),
-    ) ? ["choices" as const] : []),
-  ];
+  if (!missionPlan?.length) return ["objects", "attributes", "relations", "counts"];
+  const panels = new Set<SceneReviewPanel>(["objects"]);
+  for (const item of missionPlan) {
+    const missionId = String(item.missionId);
+    const levels = MISSION_DETAIL_PANELS[missionId];
+    if (!levels) continue;
+    const level = String(item.practiceLevel);
+    const detailPanels = levels[level] ?? Object.values(levels).flat();
+    detailPanels.forEach(panel => panels.add(panel));
+    if (level === "A0" && ["M04", "M05"].includes(missionId)) panels.add("choices");
+  }
+  if (missionPlan.some(item => String(item.missionId) === "M03") || hasRepeatedObjects) panels.add("counts");
+  return (["objects", "attributes", "relations", "counts", "choices"] as const)
+    .filter(panel => panels.has(panel));
 }

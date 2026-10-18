@@ -287,6 +287,7 @@ class LearningTaskService:
                     system_prompt=generation.system_prompt,
                     parse=lambda text: decode(json.loads(text)),
                     json_schema_name=generation.json_schema_name,
+                    repair_instruction=generation.repair_instruction or _REPAIR_INSTRUCTION,
                 ),
                 decode=decode,
             )
@@ -303,6 +304,7 @@ class LearningTaskService:
         system_prompt: str = LEARNING_TASK_SYSTEM_PROMPT,
         parse: Callable[[str], Any] | None = None,
         json_schema_name: str = "learning_tasks_v2",
+        repair_instruction: str = _REPAIR_INSTRUCTION,
     ) -> Generated[Any]:
         content = json.dumps(payload, ensure_ascii=False)
         request = TextModelRequest(
@@ -329,7 +331,7 @@ class LearningTaskService:
                     if attempt == 1
                     else replace(
                         request,
-                        user_content=content + _REPAIR_INSTRUCTION + repair_context,
+                        user_content=content + repair_instruction + repair_context,
                     )
                 )
                 call_start = time.perf_counter()

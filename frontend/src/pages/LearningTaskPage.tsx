@@ -36,7 +36,8 @@ export function LearningTaskPage() {
   const tasks = practiceStages(session.tasks).learning;
   const index = tasks.findIndex(item => item.id === taskId);
   const task = tasks[index];
-  if (!task || ["abandoned", "failed"].includes(session.session.status)) return <Navigate to={`${base}/learn`} replace />;
+  if (!task || ["abandoned", "failed"].includes(session.session.status)) return <Navigate
+    to={session.session.status === "failed" && session.generationRetryable ? `${base}/analysis` : `${base}/learn`} replace />;
   const next = tasks[index + 1];
   const skipM06RolePlay = () => {
     const lastM06Index = tasks.reduce(
@@ -991,7 +992,12 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         ? []
         : [[item.questionId, item.correctAnswer]])),
     }));
-    setOutcomes(value => ({ ...value, ...Object.fromEntries(stored.map(item => [item.questionId, item.outcome])) }));
+    const storedOutcomes = Object.fromEntries(stored
+      .filter((item): item is LessonAnswerCheck & { outcome: QuestionOutcome } => Boolean(item.outcome))
+      .map(item => [item.questionId, item.outcome]));
+    if (Object.keys(storedOutcomes).length) {
+      setOutcomes(value => ({ ...value, ...storedOutcomes }));
+    }
     setActiveIndex(visibleLessonQuestionIndex(content.questions.map(item => item.questionId), Object.fromEntries(stored.map(item => [item.questionId, item]))));
   }, [savedChecks.data, content]);
   if (content.kind !== "grammarLesson") return null;
@@ -1016,7 +1022,10 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
       if (correctAnswer !== null) {
         setCorrectAnswers(value => ({ ...value, [result.questionId]: correctAnswer }));
       }
-      setOutcomes(value => ({ ...value, [result.questionId]: result.outcome }));
+      const outcome = result.outcome;
+      if (outcome) {
+        setOutcomes(value => ({ ...value, [result.questionId]: outcome }));
+      }
       playAnswerSound(result.isCorrect);
     } catch (error) {
       setCheckError(friendlyError(error));
@@ -1323,7 +1332,7 @@ function useLastStepLabel() {
   return "Go to I-Spy";
 }
 
-function QuestionOutcomeNotes({ outcome }: { outcome?: QuestionOutcome }) {
+function QuestionOutcomeNotes({ outcome }: { outcome?: QuestionOutcome | null }) {
   if (!outcome) return null;
   return <>
     {outcome.mistakes.map((mistake, position) => mistake.explanation ? <p key={position} className="small">{mistake.explanation}</p> : null)}

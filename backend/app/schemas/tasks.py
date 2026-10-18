@@ -886,7 +886,8 @@ class LessonAnswerCheck(ApiModel):
     answer: NonEmptyText
     is_correct: bool
     correct_answer: str | None
-    outcome: QuestionOutcome
+    # Only questions with evaluation metadata (mission lessons) report an outcome.
+    outcome: QuestionOutcome | None = Field(default=None, exclude_if=_is_none)
     attempts_left: int | None = Field(default=None, exclude_if=_is_none)
     feedback: str | None = Field(default=None, exclude_if=_is_none)
     wrong_field: str | None = Field(default=None, exclude_if=_is_none)

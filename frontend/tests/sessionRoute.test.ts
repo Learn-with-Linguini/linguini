@@ -16,10 +16,16 @@ function task(kind: keyof typeof contents, status: SessionTask["status"], orderI
     xpReward: 0, xpBonus: 0 };
 }
 
-function detail(status: SessionStatus, tasks: SessionTask[] = [], failureCode: PracticeDetail["session"]["failureCode"] = null, analysisRetryable = false): PracticeDetail {
+function detail(
+  status: SessionStatus,
+  tasks: SessionTask[] = [],
+  failureCode: PracticeDetail["session"]["failureCode"] = null,
+  analysisRetryable = false,
+  generationRetryable = false,
+): PracticeDetail {
   return {
     session: { id: "s1", status, sceneMediaAssetId: "asset", sessionTitle: null, sessionSummary: null, failureCode },
-    mediaAsset: { id: "asset", source: "preloaded" }, sceneId: null, title: "Scene", analysisMode: null, analysisRetryable,
+    mediaAsset: { id: "asset", source: "preloaded" }, sceneId: null, title: "Scene", analysisMode: null, analysisRetryable, generationRetryable,
     sceneObjects: [], sceneObjectRelations: [], vocabulary: [], translations: [],
     tasks, nextTaskId: null, progress: { completedTaskCount: 0, skippedTaskCount: 0, terminalTaskCount: 0, totalTaskCount: tasks.length },
   };
@@ -47,6 +53,17 @@ test("a retryable analysis failure reopens on the analysis page", () => {
   assert.equal(sessionDestination(exhausted).path, "/practice");
   assert.match(sessionDestination(exhausted).notice ?? "", /still couldn't analyse that photo/);
   assert.equal(sessionDestination(detail("failed", [], "imageModerationFailed")).path, "/practice");
+});
+
+test("a retryable lesson-generation failure reopens analysis, exhausted failures return to practice", () => {
+  const retryable = detail("failed", [], "taskGenerationFailed", false, true);
+  assert.deepEqual(sessionDestination(retryable), { path: "/practice/sessions/s1/analysis", notice: null });
+  assert.equal(isSessionRouteAllowed(retryable, "/practice/sessions/s1/analysis"), true);
+  assert.equal(isSessionRouteAllowed(retryable, "/practice/sessions/s1/learn"), false);
+
+  const exhausted = detail("failed", [], "taskGenerationFailed");
+  assert.equal(sessionDestination(exhausted).path, "/practice");
+  assert.match(sessionDestination(exhausted).notice ?? "", /couldn't build your lesson/);
 });
 
 test("isPreTaskStep marks only the pre-task steps as auto-forwardable", () => {

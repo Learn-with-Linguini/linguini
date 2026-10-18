@@ -84,6 +84,12 @@ lists of strings. No language requires any such value.
 | `questions` | Target IDs, prompts, interaction type, choices/markers or sentence chunks, and feedback |
 | `private` | Correct choice/chunk answers and `QuestionEvaluation` records; excluded by `public_dump()` |
 
+Options, chunks and yes/no prompts may declare `termUses` (`promptTermUses` on the
+question): `{termId, surface}` pairs saying which approved term the text realises and
+the exact form written. Yes/no options carry `meaning` (`yes` or `no`) and their
+question names the stated object in `statementFactId`. These fields are server-side
+only: the saved task shows plain option labels and chunks.
+
 `SentenceChunk.join` describes how a chunk attaches to the previous chunk. The first
 chunk's join value is ignored. `join_chunks()` inserts a space for `space` and nothing
 for `none`. `default_join()` suppresses spaces before punctuation and for languages whose
@@ -95,10 +101,44 @@ interactions, focus objects and option/distractor counts, preparation-card count
 required target coverage, confirmed fact kinds and references, option labels, marker
 mappings, answer grounding, chunk bounds, explanation-answer leakage, and A2
 connection/follow-up ordering. Per-object preparation cards must teach every assessed
-object; levels without per-object preparation have no cards. Attribute and relation
-strings are not text-grounded because natural inflection can change their surface
-form. Structural validation does not establish that a translation is linguistically
-correct: there is no linguistic evaluator in this stage.
+object; levels without per-object preparation have no cards. The generation payload
+states the exact count as `preparationCardCount` (one per confirmed object plus
+`extra_cards`, or `extra_cards` alone). Structural validation does not establish that a
+translation is linguistically correct: there is no linguistic evaluator in this stage.
+
+### Interaction-aware answer rules
+
+Each slot's focus object comes from its questions: a marker question's correct marker
+object, a yes/no question's first listed object (the highlighted object), and otherwise
+the objects the question lists. Slots sharing a focus number must agree. Then each
+correct answer is checked against its slot's rule:
+
+| Rule | Slots | Check |
+| --- | --- | --- |
+| marker | `matchName`, `chooseSceneMarker` | The correct marker maps to the focus object. Marker labels are shown as review-marker numbers, so they need not name anything. |
+| `yes_no` | `confirmName`, `confirmObject` | Exactly one `yes` and one `no` option. `statementFactId` is a confirmed object listed in `factIds`, and the prompt realises its term. The correct option means `yes` exactly when the stated object is the focus object. |
+| `focusObject` | `buildIdentify`, `describeObject`, A2 builds and description choice | The answer realises the focus object's approved term. |
+| `focusColour` | `chooseAttribute`, `describeObject` | The answer realises the focus object's approved colour term. |
+| `details` | `buildSceneFact`, `chooseSceneDescription`, `buildSceneDescription` | The answer realises every attribute/relation fact the question lists. |
+| `oneDetail` | `followUpSceneFact` | The answer realises at least one listed attribute/relation fact. |
+
+Other objects a question lists are context only and are not required in the answer.
+A fact that must be realised needs an approved term.
+
+A text realises a term when it contains the approved `targetText` verbatim, or when it
+declares a `termUse` for that term. A declared `surface` must appear in the option,
+chunk or prompt text, and must contain the approved text or be a conservative
+inflection of it. Word by word, the surface either extends the term word, or keeps at
+least half of a term word longer than three characters (and at least two characters)
+while replacing at most its last two characters before a non-empty ending. A stem
+change before a case suffix passes (`kalam` → `kalattil` in the synthetic test language);
+an unrelated word fails, as does any surface for a term of a different fact. The check
+is language-agnostic and makes no linguistic claim.
+
+Each error names the question number, `questionId`, slot purpose and the mismatch, for
+example `question 2 (confirm-0, slot confirmName): correct option yes-0 means 'yes',
+expected 'no' because the statement names object:…, not the focus object object:…`.
+A validation retry sends these errors to the model with an M01-specific repair note.
 
 ## Level-plan slots
 
@@ -156,11 +196,41 @@ level plan, before translation. After translation, the workflow requires the min
 number of approved session-translation terms; if that check fails it skips M01 with
 `insufficientApprovedVocabulary` without generating or falling back to legacy content.
 
-If generation fails, a ready legacy lesson is used only when the requested language is
-in that level's legacy allowlist. Otherwise M01 is skipped with reason
-`generationFailed`; the skip is non-retryable and does not complete the mission. The
-workflow never generates using a different target language. The flag-off path and
-other mission allowlists are unchanged. No database migration is needed.
+If generation still fails after the repair retry, a ready legacy lesson is used only
+when the requested language is in that level's legacy allowlist. Otherwise M01 is
+recorded as skipped with reason `generationFailed`. If other planned mission lessons
+were built, the session continues with them. If no mission lesson remains, the session
+does not fall back to the regular grammar lesson. It moves to `failed` with
+`failureCode = taskGenerationFailed`. The photo, confirmed review, stored translation
+and vocabulary are kept, and the session is not deleted. Sessions with no planned
+missions keep the regular lesson path. The workflow never generates using a
+different target language. The flag-off path and other mission allowlists are
+unchanged. No database migration is needed.
+
+### Failure and retry
+
+`SessionDetailResponse.generationRetryable` is true for a lesson session that is
+`failed` with `taskGenerationFailed`, has a confirmed review (`sceneConfirmedAt`) and
+has `analysisDraft.generationAttempts` (default 1) below `MAX_ANALYSIS_ATTEMPTS` (3).
+`POST /api/v1/sessions/{id}/retry-analysis` then moves the session to
+`generatingTasks` and reruns task generation in the background from the saved review.
+The photo is not re-analysed, and the stored translation (`translationPreview`) is
+reused rather than requested again. The response is the usual
+`SessionDetailResponse`. The retry applies the same open-practice checks as an
+analysis retry (three open practices, one open practice per photo) and spends one
+sauce, which is refunded if the retry fails. Tasks are rebuilt with deterministic IDs,
+and vocabulary evidence, encounters and XP are idempotent, so retries create no
+duplicates. Scene-analysis retries are unchanged.
+
+Like analysis-retryable sessions, a failed session is terminal for listing:
+`GET /sessions/active` does not return it and it does not count towards the open
+practice limit. `GET /sessions/{id}` returns it with `generationRetryable`.
+`POST /sessions/{id}/abandon` can leave a generation-retryable failed session, which
+moves it to `abandoned`. Other failed sessions still reject abandon.
+
+`check-lesson-answer` and `lesson-checks` return `outcome` only for questions with
+`questionEvaluations`. Regular lesson questions omit it. A mission question without
+its evaluation returns `409 practice_conflict`.
 
 ## Manual test procedure
 
@@ -174,9 +244,11 @@ other mission allowlists are unchanged. No database migration is needed.
    language direction, and target-language rendering.
 4. To exercise a generation failure, use a controlled test client rather than
    deliberately corrupting stored session data. Confirm an allowlisted, ready legacy
-   lesson can be used, and that other languages receive a non-retryable
-   `generationFailed` skip. A failed approved-vocabulary check must not call generation
-   or use the legacy fallback.
+   lesson can be used. For other languages with no remaining mission lesson, confirm
+   the session becomes `failed`/`taskGenerationFailed` with `generationRetryable`, that
+   retry returns `generatingTasks` without a new translation call, and that leaving it
+   abandons it. A failed approved-vocabulary check must not call generation or use the
+   legacy fallback.
 5. Turn the flag off and confirm the existing M01 lessons and other mission behavior
    remain on their legacy paths.
 

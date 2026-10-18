@@ -14,6 +14,7 @@ export function Learn() {
   if (!session) return null;
   const base = `/practice/sessions/${scene.sessionId}`;
   if (session.session.status === "completed") return <Navigate to={`${base}/summary`} replace />;
+  if (session.session.status === "failed" && session.generationRetryable) return <Navigate to={`${base}/analysis`} replace />;
   if (["abandoned", "failed"].includes(session.session.status)) return <div className="stack"><h1>Session closed</h1><Button onClick={() => navigate("/practice")}>Choose an image</Button></div>;
   const tasks = practiceStages(session.tasks).learning;
   const completed = tasks.filter(taskDone);

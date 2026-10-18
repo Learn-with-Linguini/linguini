@@ -64,3 +64,5 @@ class MissionGeneration:
     fallback: Callable[[dict[str, Any]], Any]
     json_schema_name: str
     uses_model: bool = True
+    # Replaces the grammar-task repair note on a validation retry when set.
+    repair_instruction: str | None = None

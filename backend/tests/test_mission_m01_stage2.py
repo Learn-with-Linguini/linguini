@@ -2,7 +2,6 @@
 
 import json
 
-import pytest
 from sqlalchemy import select, update
 from test_mission_m01_contract import planned_a1_output
 from test_mission_m01_workflow import _answer_key, _lesson
@@ -76,6 +75,8 @@ def generated_lesson(payload):
             ],
             chunks=chunks,
             fact_ids=question.fact_ids,
+            statement_fact_id=question.statement_fact_id,
+            prompt_term_uses=question.prompt_term_uses,
             answer=answer,
             feedback=question.feedback,
         ))
@@ -313,34 +314,27 @@ def test_translation_vocabulary_write_merges_the_current_draft(curated):
     assert current_draft["m01SupplementalVocabulary"]
 
 
-@pytest.mark.parametrize(
-    ("language", "expected_task", "expected_skip"),
-    [
-        ("es", True, None),
-        ("ko", False, "generationFailed"),
-    ],
-)
-def test_repair_exhaustion_uses_only_allowed_fallback(
-    curated, monkeypatch, language, expected_task, expected_skip
-):
+def test_repair_exhaustion_uses_the_allowed_legacy_fallback(curated, monkeypatch):
     enable_m01(monkeypatch)
-    if language == "ko":
-        make_ko(curated)
     model = MultilingualModel("invalid")
     _, _, detail = _lesson(curated, model)
     m01_tasks = [task for task in detail.tasks if task.public_content.mission_id == "M01"]
-    skipped = next(
-        (item for item in detail.session.analysis_draft.get("skippedMissions", [])
-         if item["missionId"] == "M01"),
-        None,
-    )
     assert model.m01_calls == 2
-    assert bool(m01_tasks) is expected_task
-    if expected_skip:
-        assert skipped == {
-            "missionId": "M01",
-            "reason": expected_skip,
-        }
-    else:
-        assert skipped is None
-        assert m01_tasks[0].public_content.mission_id == "M01"
+    assert detail.session.status == "inProgress"
+    assert m01_tasks and m01_tasks[0].public_content.mission_id == "M01"
+    assert not any(
+        item["missionId"] == "M01"
+        for item in detail.session.analysis_draft.get("skippedMissions", [])
+    )
+
+
+def test_repair_exhaustion_without_a_legacy_fallback_fails_retryably(curated, monkeypatch):
+    enable_m01(monkeypatch)
+    make_ko(curated)
+    model = MultilingualModel("invalid")
+    _, _, detail = _lesson(curated, model)
+    assert model.m01_calls == 2
+    assert detail.session.status == "failed"
+    assert detail.session.failure_code == "taskGenerationFailed"
+    assert detail.generation_retryable is True
+    assert not any(task.kind == "grammarLesson" for task in detail.tasks)

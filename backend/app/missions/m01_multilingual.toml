@@ -1,6 +1,14 @@
 # Explicit level plans for the multilingual M01 path. The model fills these plans;
 # it never chooses targets, workload or assessment criteria itself.
-plan_version = 2
+# Each slot's answer rule is interaction-aware:
+# - markerChoice: the correct marker maps to the slot's focus object.
+# - yes_no: the prompt's statement names the focus object (answer "yes") or another
+#   confirmed object (answer "no").
+# - realises: the facts whose approved terms the correct answer must realise.
+#   focusObject = the focus object; focusColour = the focus object's colour;
+#   details = every attribute/relation fact the question lists; oneDetail = at least
+#   one of them. Other objects the question lists are context only.
+plan_version = 3
 
 [levels.A0]
 content_version = 1
@@ -30,6 +38,7 @@ evidence = "recognition"
 criteria = ["identifies-object"]
 focus = 1
 options = [2, 2]
+yes_no = true
 
 [[levels.A0.questions]]
 purpose = "buildIdentify"
@@ -39,6 +48,7 @@ evidence = "construction"
 criteria = ["identifies-object"]
 focus = 1
 distractor_chunks = [1, 1]
+realises = ["focusObject"]
 
 [[levels.A0.questions]]
 purpose = "matchName"
@@ -57,6 +67,7 @@ evidence = "recognition"
 criteria = ["identifies-object"]
 focus = 2
 options = [2, 2]
+yes_no = true
 
 [[levels.A0.questions]]
 purpose = "buildIdentify"
@@ -66,6 +77,7 @@ evidence = "construction"
 criteria = ["identifies-object"]
 focus = 2
 distractor_chunks = [1, 1]
+realises = ["focusObject"]
 
 [levels.A1]
 content_version = 1
@@ -86,6 +98,7 @@ evidence = "recognition"
 criteria = ["selects-described-object", "article-matches-noun"]
 focus = 1
 options = [2, 2]
+yes_no = true
 
 [[levels.A1.questions]]
 purpose = "confirmObject"
@@ -95,6 +108,7 @@ evidence = "recognition"
 criteria = ["selects-described-object", "article-matches-noun"]
 focus = 2
 options = [2, 2]
+yes_no = true
 
 [[levels.A1.questions]]
 purpose = "chooseAttribute"
@@ -104,6 +118,7 @@ evidence = "recognition"
 criteria = ["colour-matches-photo"]
 focus = 1
 options = [2, 3]
+realises = ["focusColour"]
 
 [[levels.A1.questions]]
 purpose = "describeObject"
@@ -113,6 +128,7 @@ evidence = "construction"
 criteria = ["article-matches-noun", "colour-matches-photo"]
 focus = 2
 distractor_chunks = [0, 1]
+realises = ["focusObject", "focusColour"]
 
 [levels.A2]
 content_version = 1
@@ -144,6 +160,7 @@ evidence = "construction"
 criteria = ["scene-sentence-matches-facts"]
 focus = 1
 distractor_chunks = [1, 1]
+realises = ["focusObject", "details"]
 
 [[levels.A2.questions]]
 purpose = "chooseSceneDescription"
@@ -153,6 +170,7 @@ evidence = "recognition"
 criteria = ["scene-sentence-matches-facts"]
 focus = 1
 options = [3, 3]
+realises = ["focusObject", "details"]
 
 [[levels.A2.questions]]
 purpose = "buildSceneDescription"
@@ -162,6 +180,7 @@ evidence = "construction"
 criteria = ["scene-facts-connected"]
 focus = 1
 distractor_chunks = [1, 1]
+realises = ["focusObject", "details"]
 
 [[levels.A2.questions]]
 purpose = "followUpSceneFact"
@@ -171,3 +190,4 @@ evidence = "recognition"
 criteria = ["scene-follow-up-matches"]
 focus = 1
 options = [2, 3]
+realises = ["oneDetail"]

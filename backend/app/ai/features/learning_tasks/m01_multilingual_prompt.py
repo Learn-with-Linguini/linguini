@@ -1,7 +1,7 @@
 """System prompt for the shared multilingual M01 lesson generator."""
 
-M01_MULTILINGUAL_PROMPT_VERSION = "m01-multilingual-prompt.v2"
-M01_MULTILINGUAL_SCHEMA_VERSION = "m01-multilingual-schema.v3"
+M01_MULTILINGUAL_PROMPT_VERSION = "m01-multilingual-prompt.v3"
+M01_MULTILINGUAL_SCHEMA_VERSION = "m01-multilingual-schema.v4"
 
 M01_MULTILINGUAL_SYSTEM_PROMPT = """\
 You write one short language lesson for a learner looking at their own photo.
@@ -22,8 +22,10 @@ question for each slot, in order. Use that slot's target IDs and interaction
 exactly, and stay within its option or distractor-chunk count. A slot's
 one-based "focus" selects its focus object: use the same object for slots with
 the same focus number and a different object for each different focus number.
-Include the focus object's factId in every question that assesses it.
-Do not add targets, change the workload or invent assessment criteria.
+Include the focus object's factId in every question that assesses it, listed
+before any other object's factId: the first listed object is the one the lesson
+highlights. Do not add targets, change the workload or invent assessment
+criteria.
 
 Facts and vocabulary:
 - Use only the confirmed facts. Never add objects, attributes, relations,
@@ -32,6 +34,14 @@ Facts and vocabulary:
   the grammatical words, particles, inflections and word order the target
   language needs, but no new content words.
 - List in factIds every fact a card or question uses.
+- Every approved term has a termId. When an option, chunk or yes/no prompt
+  uses a term, add {"termId", "surface"} to its termUses (or promptTermUses),
+  where surface is the exact text written there. Write the approved term
+  unchanged where the language allows. If the grammar changes its form (for
+  example a stem change before a case suffix, or adjective agreement), use
+  that form as the surface; it must keep the term's stem. Never declare a term
+  for a word that is not a form of it. Leave termUses empty when no approved
+  term is used.
 - Correct answers must be true of the confirmed facts. Incorrect options and
   distractor chunks may be deliberately wrong, but must be clearly different
   from the correct answer.
@@ -46,13 +56,26 @@ Grammar:
   and preparation cards in the target language.
 
 Lesson shape:
-- Follow "levelPlan.preparation" exactly. When "per_object" is true, make one
-  preparation card for each confirmed object plus "extra_cards" cards, and
-  teach every assessed object in those cards. Otherwise make exactly
-  "extra_cards" cards; do not add one card per object.
+- Make exactly "preparationCardCount" preparation cards. When
+  "levelPlan.preparation.per_object" is true, that is one card for each
+  confirmed object plus "extra_cards" cards, and every assessed object is
+  taught in those cards. Otherwise it is "extra_cards" cards, none per object.
+- Each slot's "realises" lists what the correct answer must contain:
+  "focusObject" is the focus object's approved term, "focusColour" the focus
+  object's approved colour term, "details" every attribute or relation term
+  the question lists, and "oneDetail" at least one of them. Other objects
+  listed in factIds are context only.
 - "matchName" matches the highlighted object's name to its photo marker.
-- "confirmName" and "confirmObject" ask yes/no whether a statement names the
-  highlighted object.
+  markerChoice options are shown to the learner as marker numbers; the correct
+  option's object is the focus object.
+- "confirmName" and "confirmObject" (slots with "yes_no") ask, in the target
+  language in the prompt, whether the highlighted object is the object the
+  statement names. Set statementFactId to the named object: the focus object
+  (the statement is true) or another confirmed object (false); list both in
+  factIds, focus object first. Give exactly two options, one with meaning
+  "yes" and one with meaning "no"; the correct option means "yes" exactly when
+  the statement is true. Every other question's options have meaning null and
+  statementFactId null.
 - "buildIdentify" builds a "This is a/the X" identification with one extra
   chunk.
 - "chooseAttribute" chooses the highlighted object's colour from the offered
@@ -66,7 +89,8 @@ Lesson shape:
   scene facts.
 - "buildSceneDescription" builds a connected description from confirmed facts
   with one extra chunk.
-- "followUpSceneFact" asks about a fact used in the built description.
+- "followUpSceneFact" asks about a detail fact used in the built description;
+  the correct option names that detail.
 - Keep the slots' listed question order, which reproduces the level's lesson
   sequence.
 - multipleChoice and markerChoice questions offer distinct options and name the
@@ -79,4 +103,11 @@ Lesson shape:
   mistakes, naming the mistake type.
 
 Return only JSON that matches the schema.
+"""
+
+M01_MULTILINGUAL_REPAIR_INSTRUCTION = """
+
+Your previous lesson failed validation. Return a complete replacement JSON
+object for the same contract and level plan, fixing every listed error. Each
+error names the question number, questionId and slot purpose.
 """

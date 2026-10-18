@@ -21,7 +21,7 @@ from app.schemas.mission_m01_contract import (
     M01ContractOutput,
     MissionRef,
 )
-from app.schemas.tasks import SessionTask
+from app.schemas.tasks import LessonChunk, SessionTask, VocabularyChoice
 from app.services.mission_eligibility import confirmed_attributes, relation_type
 from app.services.mission_lessons import mission_fields, mission_version
 
@@ -277,22 +277,28 @@ def build_m01_multilingual_task(
         else:
             correct_answers[question.question_id] = answer.correct_option_id
         marker_objects = None
-        options = question.options
+        options = [
+            VocabularyChoice(option_id=option.option_id, label=option.label)
+            for option in question.options
+        ]
         if question.interaction == "markerChoice":
             marker_facts = question.marker_fact_ids or {}
             marker_objects = {
                 option_id: objects[fact]
                 for option_id, fact in marker_facts.items()
             }
-            options = []
-            for option in question.options:
+            public_options, options = options, []
+            for option in public_options:
                 object_fact = object_facts[marker_facts[option.option_id]]
                 if object_fact.marker is None:
                     raise MissionContractError(
                         "marker choice objects must have review markers"
                     )
                 options.append(option.model_copy(update={"label": str(object_fact.marker)}))
-        shown_chunks = list(question.chunks)
+        shown_chunks = [
+            LessonChunk(chunk_id=chunk.chunk_id, text=chunk.text, join=chunk.join)
+            for chunk in question.chunks
+        ]
         if shown_chunks:
             random.Random(f"{task_id}:{question.question_id}").shuffle(shown_chunks)
         questions.append({

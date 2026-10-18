@@ -4,6 +4,7 @@ from typing import Any
 
 from app.ai.features.learning_tasks.m01_multilingual_prompt import (
     M01_MULTILINGUAL_PROMPT_VERSION,
+    M01_MULTILINGUAL_REPAIR_INSTRUCTION,
     M01_MULTILINGUAL_SCHEMA_VERSION,
     M01_MULTILINGUAL_SYSTEM_PROMPT,
 )
@@ -36,10 +37,11 @@ def _fallback(_payload):
 M01_MULTILINGUAL_GENERATION = MissionGeneration(
     prompt_version=M01_MULTILINGUAL_PROMPT_VERSION,
     schema_version=M01_MULTILINGUAL_SCHEMA_VERSION,
-    validator_version=f"{CONTRACT_VERSION}:plan-aware-v2",
+    validator_version=f"{CONTRACT_VERSION}:plan-aware-v3",
     system_prompt=M01_MULTILINGUAL_SYSTEM_PROMPT,
     result_model=M01GeneratedLesson,
     validate=_validate,
     fallback=_fallback,
     json_schema_name="m01_multilingual_v1",
+    repair_instruction=M01_MULTILINGUAL_REPAIR_INSTRUCTION,
 )
