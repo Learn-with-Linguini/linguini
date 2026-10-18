@@ -28,7 +28,7 @@ export function TranslationPreview({ preview, scene }: { preview: NonNullable<Pr
   return <Card plain className="translation-preview">
     {scene ? <ScenePhoto scene={scene} items={[]} /> : null}
     <details className="translation-preview__drawer">
-      <summary><span><strong>Review translations</strong><small>{termCount} useful phrases from this scene</small></span><span aria-hidden="true">⌄</span></summary>
+      <summary><span><strong>Vocabulary</strong><small>{termCount} words and phrases from this scene</small></span><span aria-hidden="true">⌄</span></summary>
       <div className="translation-preview__groups">{groups.map(([label, terms]) => <section key={label} className="translation-preview__group">
         <h3>{label}</h3>
         <div className="translation-preview__terms">{terms.map(term => <span className="translation-preview__term" key={term.key}>

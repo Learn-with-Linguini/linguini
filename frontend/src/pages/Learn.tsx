@@ -54,8 +54,8 @@ export function Learn() {
 
         <section className="learn-overview__journey" aria-labelledby="lesson-journey-title">
           {foundationTask ? <Card lifted className={`learn-next-task${foundationDone ? " is-complete" : ""}`}>
-            <span className="learn-next-task__eyebrow">{foundationDone ? "Words ready" : "Start with the words"}</span>
-            <div className="learn-next-task__heading"><div><h2>{taskTitle(foundationTask)}</h2><p>{foundationDone ? "You’re ready to use these words in context." : "Meet the vocabulary before you practise it."}</p></div>{foundationDone ? <span className="learn-foundation-check"><CheckIcon size={20} /></span> : taskXp(foundationTask) ? <XpPill {...taskXp(foundationTask)!} /> : null}</div>
+            <span className="learn-next-task__eyebrow">{foundationDone ? "Words ready" : "Recommended first"}</span>
+            <div className="learn-next-task__heading"><div><h2>{taskTitle(foundationTask)}</h2><p>{foundationDone ? "You’re ready to use these words in context." : "The easiest place to begin—but every activity is open."}</p></div>{foundationDone ? <span className="learn-foundation-check"><CheckIcon size={20} /></span> : taskXp(foundationTask) ? <XpPill {...taskXp(foundationTask)!} /> : null}</div>
             {!foundationDone ? <Button block disabled={practiceSaving} onClick={() => openTask(foundationTask.id)}>
               Learn the words <ArrowRightIcon />
             </Button> : null}
