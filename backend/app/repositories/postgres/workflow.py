@@ -2037,6 +2037,14 @@ class PostgresWorkflowRepository:
                         xp_events.c.user_id == self.user_id,
                     )
                 ).scalar_one(),
+                completed_lessons_count=c.execute(
+                    select(func.count())
+                    .select_from(sessions)
+                    .where(
+                        sessions.c.user_id == self.user_id,
+                        sessions.c.status == "completed",
+                    )
+                ).scalar_one(),
                 **self._ispy_summary(c, session.id),
             )
 

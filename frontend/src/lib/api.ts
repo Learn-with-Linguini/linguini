@@ -581,7 +581,42 @@ export const checkVocabularyAnswer = (id: string, questionId: string, optionId: 
   write<{ questionId: string; isCorrect: boolean; correctOptionId: string }>(`/api/v1/tasks/${id}/check-vocabulary-answer`, "POST", { questionId, optionId });
 export const completePractice = (id: string) => write<{ id: string; status: string }>(`/api/v1/sessions/${id}/complete`, "POST", {});
 export const abandonPractice = (id: string) => write<{ id: string; status: string }>(`/api/v1/sessions/${id}/abandon`, "POST", {});
-export const getPracticeSummary = (id: string) => request<{ progress: SessionProgress; learnedVocabularyIds: string[]; xpEarned: number; ispyCorrectCount: number; ispyAttemptCount: number }>(`/api/v1/sessions/${id}/summary`);
+export const getPracticeSummary = (id: string) => request<{
+  progress: SessionProgress;
+  learnedVocabularyIds: string[];
+  xpEarned: number;
+  ispyCorrectCount: number;
+  ispyAttemptCount: number;
+  completedLessonsCount: number;
+}>(`/api/v1/sessions/${id}/summary`);
+
+export interface SurveySubmission {
+  rating: number;
+  usageFrequency?: string;
+  motivation?: string;
+  improvements?: string;
+  receiveFollowUp?: boolean;
+  triggerSource?: string;
+  lessonCount?: number | null;
+}
+
+export interface SurveyResponse {
+  id: string;
+  rating: number;
+  createdAt: string;
+}
+
+export function submitSurvey(data: SurveySubmission): Promise<SurveyResponse> {
+  return write<SurveyResponse>("/api/v1/surveys", "POST", {
+    rating: data.rating,
+    usage_frequency: data.usageFrequency ?? "",
+    motivation: data.motivation ?? "",
+    improvements: data.improvements ?? "",
+    receive_follow_up: Boolean(data.receiveFollowUp),
+    trigger_source: data.triggerSource ?? "profile",
+    lesson_count: data.lessonCount ?? null,
+  });
+}
 
 export interface ISpyPhoto { mediaAsset: { id: string; source: "camera" | "userUpload"; createdAt: string }; playable: boolean; confirmedAt: string | null }
 export interface ISpyPhotoPage { photos: ISpyPhoto[]; nextCursor: string | null }

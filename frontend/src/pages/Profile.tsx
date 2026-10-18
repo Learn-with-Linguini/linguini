@@ -3,6 +3,7 @@ import { useEffect, useId, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card, IconButton } from "../components/ui";
 import { ChevronRightIcon, CloseIcon } from "../components/icons";
+import { HelpImproveModal } from "../components/HelpImproveModal";
 import { deleteCurrentAccount } from "../lib/api";
 import { accountTiers } from "../lib/accountTiers";
 import { validatePasswordReset } from "../lib/authMessages.ts";
@@ -24,6 +25,7 @@ export function Profile() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [passwordUpdating, setPasswordUpdating] = useState(false);
+  const [surveyOpen, setSurveyOpen] = useState(false);
   const { learner, user, activeProfile, progressLoading, progressError, profileError, profileSaving, setLanguage, saveLanguageProfile, saveUser } = useAppState();
   const tier = accountTiers[user?.tier ?? "beta"];
 
@@ -311,7 +313,14 @@ export function Profile() {
           <button type="button" className="profile-setting profile-support-link" onClick={() => navigate("/contact")}>
             <span>
               <strong>Contact us</strong>
-              <small>Report a problem or tell us what would make Linguini better</small>
+              <small>Report a problem or get support with your account</small>
+            </span>
+            <ChevronRightIcon size={20} />
+          </button>
+          <button type="button" className="profile-setting profile-support-link" onClick={() => setSurveyOpen(true)}>
+            <span>
+              <strong>Help us improve</strong>
+              <small>Share feedback on your learning experience</small>
             </span>
             <ChevronRightIcon size={20} />
           </button>
@@ -366,6 +375,12 @@ export function Profile() {
           </section>
         </div>
       ) : null}
+
+      <HelpImproveModal
+        open={surveyOpen}
+        onClose={() => setSurveyOpen(false)}
+        triggerSource="profile"
+      />
     </div>
   );
 }

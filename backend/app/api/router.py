@@ -14,6 +14,7 @@ from app.api.routes import (
     rooms,
     sessions,
     support,
+    surveys,
     tasks,
     users,
     vocabulary,
@@ -30,6 +31,7 @@ api_router.include_router(onboarding.router)
 api_router.include_router(sessions.router)
 api_router.include_router(ispy.router)
 api_router.include_router(support.router)
+api_router.include_router(surveys.router)
 api_router.include_router(tasks.router)
 api_router.include_router(vocabulary.router)
 api_router.include_router(progress.router)
