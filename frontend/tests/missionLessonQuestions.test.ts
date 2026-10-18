@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { builtSentence, choiceOrder, markerChoices, optionText, questionOptions, sentenceEnding } from "../src/lib/practiceTasks.ts";
+import { builtSentence, choiceOrder, markerChoices, optionText, questionOptions, questionPhotoObjects, sentenceEnding } from "../src/lib/practiceTasks.ts";
 import { practiceScene } from "../src/lib/practiceScene.ts";
 import type { GrammarLessonQuestion, PracticeDetail } from "../src/lib/api.ts";
 
@@ -17,6 +17,18 @@ const detail = {
   progress: { completedTaskCount: 0, skippedTaskCount: 0, totalTaskCount: 4, terminalTaskCount: 0 },
 } as unknown as PracticeDetail;
 const scene = practiceScene(detail, "https://example.test/desk.jpg", "Spanish");
+
+test("object-focused questions show their photo marker without marker choices or a group", () => {
+  const items = questionPhotoObjects({ sceneObjectId: "cup" }, scene);
+  assert.deepEqual(items.map(item => [item.id, item.marker]), [["cup", 3]]);
+});
+
+test("photo objects retain grouped objects and deduplicate the focused object", () => {
+  assert.deepEqual(questionPhotoObjects({ groupObjectIds: ["table", "cup"], sceneObjectId: "cup" }, scene)
+    .map(item => item.id), ["table", "cup"]);
+  assert.deepEqual(questionPhotoObjects({ sceneObjectId: "missing" }, scene), []);
+  assert.deepEqual(questionPhotoObjects(undefined, scene), []);
+});
 
 const findObject: GrammarLessonQuestion = {
   questionId: "find-object", prompt: "La taza está sobre la mesa.", interactionType: "multipleChoice", tokenBank: [],

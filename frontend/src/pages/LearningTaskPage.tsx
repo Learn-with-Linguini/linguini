@@ -7,7 +7,7 @@ import { Button, Card, Feedback, IconButton, ProgressTrail, XpPill } from "../co
 import { CheckIcon, CloseIcon, SpeakerIcon } from "../components/icons";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
-import { builtSentence, choiceOrder, finishesAfterLearning, markerChoices, optionText, practiceStages, questionOptions, sentenceEnding, taskDone, taskTitle, taskXp, xpEarnedText } from "../lib/practiceTasks";
+import { builtSentence, choiceOrder, finishesAfterLearning, markerChoices, optionText, practiceStages, questionOptions, questionPhotoObjects, sentenceEnding, taskDone, taskTitle, taskXp, xpEarnedText } from "../lib/practiceTasks";
 import { speak, useSpeechVoice } from "../lib/speech";
 import { checkLessonAnswer, checkVocabularyAnswer, getLatestAttempt, getLessonChecks, requestLessonAssistance, reviewDetails, updateMissionScenario, type GrammarLessonQuestion, type LessonAnswerCheck, type SceneObject, type SessionTask, type QuestionOutcome, type TaskActionResult, type TaskAnswer, type TaskContent, type VocabularyLearningWord } from "../lib/api";
 import { mergeLessonChecks, visibleLessonQuestionIndex } from "../lib/missionLessonFlow";
@@ -556,9 +556,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
   const terminal = taskDone(actionResult?.task ?? task);
   const reward = !terminal ? taskXp(task) : null;
   const earnedText = xpEarnedText(actionResult?.xpEarned);
-  const questionObjects = question?.groupObjectIds
-    ?.map(id => scene.items.find(item => item.id === id))
-    .filter((item): item is NonNullable<typeof item> => Boolean(item)) ?? [];
+  const questionObjects = questionPhotoObjects(question, scene);
   const markers = question ? markerChoices(question, scene) : [];
   const showWritten = question ? writtenPromptShown(question, {
     revealed: Boolean(revealedPrompts[question.questionId]),
@@ -766,7 +764,8 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
           scene={scene} hideWords items={markers.length ? markers.map(marker => marker.item) : questionObjects}
           activeItemId={markers.find(marker => marker.option.optionId === (checks[question.questionId]?.isCorrect
             ? checks[question.questionId]?.answer
-            : question.options.find(option => option.label === checks[question.questionId]?.correctAnswer)?.optionId))?.item.id ?? null}
+            : question.options.find(option => option.label === checks[question.questionId]?.correctAnswer)?.optionId))?.item.id
+            ?? (markers.length ? null : question.sceneObjectId ?? null)}
           onMarkerClick={!isChecked && !checking && markers.length
             ? item => {
               const marker = markers.find(candidate => candidate.item.id === item.id);

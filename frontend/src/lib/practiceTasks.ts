@@ -71,6 +71,18 @@ export function questionOptions(question: Pick<GrammarLessonQuestion, "options" 
   return question.keepOptionOrder ? [...question.options] : choiceOrder(question.options, seed, option => option.optionId);
 }
 
+/** Objects a question references on the scene photo, including a single focus object. */
+export function questionPhotoObjects(
+  question: Pick<GrammarLessonQuestion, "groupObjectIds" | "sceneObjectId"> | undefined,
+  scene: Pick<Scene, "items">,
+) {
+  const ids = new Set([
+    ...(question?.groupObjectIds ?? []),
+    ...(question?.sceneObjectId ? [question.sceneObjectId] : []),
+  ]);
+  return scene.items.filter(item => ids.has(item.id));
+}
+
 /** The photo markers a marker question offers, numbered as on the review screen. */
 export function markerChoices(question: Pick<GrammarLessonQuestion, "options" | "markerObjectIds">, scene: Pick<Scene, "items">) {
   const objects = question.markerObjectIds ?? {};
