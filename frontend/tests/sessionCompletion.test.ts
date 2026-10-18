@@ -179,9 +179,12 @@ const flush = () => act(async () => { await sleep(30); });
 const shown = () => dom.window.document.querySelector("[data-testid]")?.getAttribute("data-testid");
 const mountedClients: InstanceType<typeof QueryClient>[] = [];
 
-test.after(() => {
+test.after(async () => {
   for (const client of mountedClients) client.clear();
   dom.window.close();
+  for (const handle of (process as unknown as { _getActiveHandles(): { unref?: () => void }[] })._getActiveHandles()) {
+    handle.unref?.();
+  }
 });
 test.afterEach(() => {
   provideLanguageFixture = false;
