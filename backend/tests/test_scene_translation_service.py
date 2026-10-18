@@ -81,6 +81,84 @@ VALID_RESULT = {
 }
 VALID_OUTPUT = json.dumps(VALID_RESULT)
 
+REPEATED_PAYLOAD = {
+    "targetLanguage": "es",
+    "sceneTitle": "Street",
+    "sceneSummary": "Three chairs and a table.",
+    "objects": [
+        {"key": "c1", "source": "Chair"},
+        {"key": "c2", "source": "chair"},
+        {"key": "c3", "source": "chair"},
+        {"key": "t1", "source": "table"},
+    ],
+    "attributes": [
+        {"key": "c1:color", "source": "white"},
+        {"key": "c2:color", "source": "white"},
+        {"key": "c3:color", "source": "white"},
+        {"key": "c1:quantity", "source": "3"},
+        {"key": "c2:quantity", "source": "3"},
+        {"key": "c3:quantity", "source": "3"},
+        {"key": "c3:material", "source": "wood"},
+        {"key": "t1:color", "source": "white"},
+    ],
+    "relationships": [
+        {"key": "r1", "source": "next_to"},
+        {"key": "r2", "source": "next_to"},
+        {"key": "r3", "source": "on"},
+    ],
+}
+
+COMPACT_REPEATED_PAYLOAD = {
+    "targetLanguage": "es",
+    "sceneTitle": "Street",
+    "sceneSummary": "Three chairs and a table.",
+    "objects": [
+        {"key": "c1", "source": "Chair"},
+        {"key": "t1", "source": "table"},
+    ],
+    "attributes": [
+        {"key": "c1:color", "source": "white"},
+        {"key": "c1:quantity", "source": "3"},
+        {"key": "c3:material", "source": "wood"},
+        {"key": "t1:color", "source": "white"},
+    ],
+    "relationships": [
+        {"key": "r1", "source": "next_to"},
+        {"key": "r3", "source": "on"},
+    ],
+}
+
+COMPACT_REPEATED_RESULT = {
+    "objects": [
+        {
+            "key": "c1",
+            "source": "Chair",
+            "translation": "silla",
+            "article": "la",
+            "gender": "feminine",
+            "phoneticText": "SEE-yah",
+        },
+        {
+            "key": "t1",
+            "source": "table",
+            "translation": "mesa",
+            "article": "la",
+            "gender": "feminine",
+            "phoneticText": "MEH-sah",
+        },
+    ],
+    "attributes": [
+        {"key": "c1:color", "source": "white", "translation": "blanco"},
+        {"key": "c1:quantity", "source": "3", "translation": "3"},
+        {"key": "c3:material", "source": "wood", "translation": "madera"},
+        {"key": "t1:color", "source": "white", "translation": "blanco"},
+    ],
+    "relationships": [
+        {"key": "r1", "source": "next_to", "translation": "junto a"},
+        {"key": "r3", "source": "on", "translation": "sobre"},
+    ],
+}
+
 
 def config(**overrides) -> TextModelConfig:
     values = {"model_name": "test-text-model", "max_retries": 1}
@@ -189,6 +267,66 @@ def test_request_uses_versioned_contract() -> None:
     assert sent.json_schema_name == "scene_translation_v1"
     assert sent.json_schema == build_scene_translation_schema()
     assert json.loads(sent.user_content) == PAYLOAD
+
+
+def test_repeated_terms_are_compacted_for_model_and_expanded_in_order() -> None:
+    client = FakeTextClient([json.dumps(COMPACT_REPEATED_RESULT)])
+
+    result = service(client).translate(REPEATED_PAYLOAD)
+
+    sent_payload = json.loads(client.requests[0].user_content)
+    assert [term["key"] for term in sent_payload["objects"]] == ["c1", "t1"]
+    assert [term["key"] for term in sent_payload["attributes"]] == [
+        "c1:color", "c1:quantity", "c3:material", "t1:color",
+    ]
+    assert [term["key"] for term in sent_payload["relationships"]] == ["r1", "r3"]
+    assert sent_payload == COMPACT_REPEATED_PAYLOAD
+    for field in ("objects", "attributes", "relationships"):
+        assert [(term.key, term.source) for term in getattr(result, field)] == [
+            (term["key"], term["source"]) for term in REPEATED_PAYLOAD[field]
+        ]
+
+    chairs = result.objects[:3]
+    assert all(
+        (
+            term.translation,
+            term.article,
+            term.gender,
+            term.phonetic_text,
+        )
+        == (
+            chairs[0].translation,
+            chairs[0].article,
+            chairs[0].gender,
+            chairs[0].phonetic_text,
+        )
+        for term in chairs[1:]
+    )
+    assert result.relationships[1].translation == result.relationships[0].translation
+
+
+def test_unrepeated_request_keeps_original_json_content() -> None:
+    client = FakeTextClient([VALID_OUTPUT])
+
+    service(client).translate(PAYLOAD)
+
+    assert client.requests[0].user_content == json.dumps(PAYLOAD, ensure_ascii=False)
+
+
+def test_compact_repair_retry_expands_the_valid_representatives() -> None:
+    invalid = json.loads(json.dumps(COMPACT_REPEATED_RESULT))
+    invalid["objects"] = invalid["objects"][:1]
+    client = FakeTextClient([json.dumps(invalid), json.dumps(COMPACT_REPEATED_RESULT)])
+
+    result = service(client).translate(REPEATED_PAYLOAD)
+
+    compact_content = json.dumps(COMPACT_REPEATED_PAYLOAD, ensure_ascii=False)
+    assert client.requests[0].user_content == compact_content
+    assert client.requests[1].user_content.startswith(
+        compact_content + "\nCorrect the invalid translation response below."
+    )
+    assert len(client.requests) == 2
+    assert [term.key for term in result.objects] == ["c1", "c2", "c3", "t1"]
 
 
 def test_request_is_identical_across_provider_labels() -> None:
