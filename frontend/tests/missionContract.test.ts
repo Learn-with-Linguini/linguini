@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { descriptionEvaluation, reviewDetails, ISPY_DESCRIPTION_EVALUATION_VERSION } from "../src/lib/api.ts";
 import type { ISpyDescriptionEvaluation, SessionTask, TaskAttemptResult, TaskContent } from "../src/lib/api.ts";
-import { finishesWithoutISpy, isMissionSession, taskTitle } from "../src/lib/practiceTasks.ts";
+import { finishesAfterLearning, isMissionSession, taskTitle } from "../src/lib/practiceTasks.ts";
 
 const lesson: TaskContent = {
   kind: "grammarLesson", focus: "genderNumberAgreement", title: "Describe the cup", explanation: "Colours agree.",
@@ -27,15 +27,18 @@ test("structured outcomes extend grouped review details", () => {
   const legacy = { questionResults: { colour: false }, correctAnswers: { colour: "roja" } };
   assert.deepEqual(reviewDetails(attempt(legacy)), legacy);
   const details = reviewDetails(attempt({
-    ...legacy,
+    questionResults: { colour: true },
+    correctAnswers: { colour: "roja" },
     questionOutcomes: [{
-      questionId: "colour", outcome: "incorrect", objectiveId: "identify-describe-object", targetIds: ["describe-colour"],
+      questionId: "colour", outcome: "correct", objectiveId: "identify-describe-object", targetIds: ["describe-colour"],
       evidenceType: "recognition", assistance: ["hint"], assistanceUsed: true,
-      mistakes: [{ mistake: "wrongGender", answer: "rojo", correction: "La taza es roja.", explanation: null }],
+      mistakes: [], correctNote: "The circled object is a crosswalk.",
+      optionNotes: ["Taza is feminine."],
     }],
   }));
-  assert.equal(details?.questionResults.colour, false);
-  assert.equal(details?.questionOutcomes?.[0].mistakes[0].correction, "La taza es roja.");
+  assert.equal(details?.questionResults.colour, true);
+  assert.equal(details?.questionOutcomes?.[0].correctNote, "The circled object is a crosswalk.");
+  assert.deepEqual(details?.questionOutcomes?.[0].optionNotes, ["Taza is feminine."]);
   assert.equal(descriptionEvaluation(attempt(details)), null);
 });
 
@@ -48,15 +51,15 @@ test("standalone I-Spy evaluations are not read as grouped review details", () =
   assert.deepEqual(descriptionEvaluation(attempt(evaluation)), evaluation);
 });
 
-test("only mission sessions without I-Spy finish from the last learning task", () => {
+test("mission sessions finish learning before optional I-Spy, including saved legacy sessions", () => {
   const mission = task({ ...lesson, missionId: "M01", practiceLevel: "A1", contentVersion: 1 });
   const clue = task({ kind: "ispyRound", clue: "Veo algo rojo.", options: [] });
-  assert.equal(finishesWithoutISpy([mission]), true);
-  assert.equal(finishesWithoutISpy([mission, clue]), false);
-  assert.equal(finishesWithoutISpy([task(lesson)]), false);
+  assert.equal(finishesAfterLearning([mission]), true);
+  assert.equal(finishesAfterLearning([mission, clue]), true);
+  assert.equal(finishesAfterLearning([task(lesson)]), false);
   assert.equal(isMissionSession([mission, clue]), true);
   assert.equal(isMissionSession([task(lesson), clue]), false);
   const where = task({ ...lesson, title: "Ask where it is", missionId: "M02", practiceLevel: "A1", contentVersion: 1 });
-  assert.equal(finishesWithoutISpy([mission, where]), true);
-  assert.equal(finishesWithoutISpy([mission, where, clue]), false);
+  assert.equal(finishesAfterLearning([mission, where]), true);
+  assert.equal(finishesAfterLearning([mission, where, clue]), true);
 });

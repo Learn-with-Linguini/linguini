@@ -51,18 +51,25 @@ def make_plan(uploaded=True, language="es"):
                 "items": [
                     dict(
                         id="one",
-                        word="puerta",
                         translation="door",
                         wordClass="noun",
                         x=99,
                         y=99,
-                        example="La puerta es azul.",
                     )
                 ]
             }
         }
     )
-    with patch("app.services.session_plan.bootstrap_word", side_effect=bootstrap):
+    def catalog(connection, profile, label):
+        return bootstrap(
+            connection, profile["target_language_code"], "en", "puerta", label,
+            "noun", None, "La puerta es azul.",
+        )
+
+    with (
+        patch("app.services.session_plan.bootstrap_word", side_effect=bootstrap),
+        patch("app.services.session_plan.curated_word", side_effect=catalog),
+    ):
         objects, words, translations = build_objects(
             MagicMock(),
             session,
@@ -123,6 +130,13 @@ def test_vocabulary_lesson_includes_translated_attributes_and_relationships():
         attributes=[{"key": "object-1:color", "source": "blue", "translation": "azul"}],
         relationships=[{"key": "relation-1", "source": "nextTo", "translation": "al lado de"}],
     )
+    adjective = VocabularyItem(
+        language_code="es", lemma="azul", display_text="azul", part_of_speech="adjective"
+    )
+    preposition = VocabularyItem(
+        language_code="es", lemma="al lado de", display_text="al lado de",
+        part_of_speech="preposition",
+    )
     # The helper data can be read from the already-created object task.
     words = []
     translations = []
@@ -150,6 +164,10 @@ def test_vocabulary_lesson_includes_translated_attributes_and_relationships():
         translations,
         True,
         translated_scene,
+        {
+            ("attribute", "object-1:color"): adjective,
+            ("relationship", "relation-1"): preposition,
+        },
     )[0].public_content
     assert enriched.words[0].target_text == "la silla"
     descriptors = [
@@ -159,6 +177,9 @@ def test_vocabulary_lesson_includes_translated_attributes_and_relationships():
     assert descriptors == [
         ("azul", "blue", "attribute"),
         ("al lado de", "next to", "relationship"),
+    ]
+    assert [word.vocabulary_item_id for word in enriched.words[-2:]] == [
+        adjective.id, preposition.id,
     ]
 
 

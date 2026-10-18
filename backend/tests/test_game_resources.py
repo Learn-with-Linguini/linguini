@@ -263,8 +263,7 @@ def test_crashed_analysis_refunds_before_retry_charges_once(resources):
 
 def test_basil_only_rewards_submitted_practice_not_skip_or_reading(resources):
     engine, owner, _, profile, _, client = resources
-    scene = next(s for s in client.get("/api/v1/preloaded-scenes").json()
-                 if s["languageCode"] == "es")
+    scene = client.get("/api/v1/preloaded-scenes").json()[0]
     response = create_solo(client, profile, SimpleNamespace(id=scene["mediaAsset"]["id"]))
     sid = response.json()["session"]["id"]
     assert client.post(f"/api/v1/sessions/{sid}/analyze").status_code == 200

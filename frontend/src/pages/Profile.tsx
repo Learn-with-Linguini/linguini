@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button, Card, IconButton } from "../components/ui";
 import { ChevronRightIcon, CloseIcon, InstagramIcon, LinkedInIcon, TikTokIcon, XIcon } from "../components/icons";
 import { HelpImproveModal } from "../components/HelpImproveModal";
+import { languages } from "../config/languages";
 import { deleteCurrentAccount } from "../lib/api";
 import { accountTiers } from "../lib/accountTiers";
 import { validatePasswordReset } from "../lib/authMessages.ts";
@@ -159,7 +160,11 @@ export function Profile() {
               <small>The language you are learning</small>
             </span>
             <select disabled={profileSaving} value={learner.languageCode} onChange={event => void setLanguage(event.target.value, learner.dailyMinutes ?? 10)}>
-              <option value="es">🇪🇸 Spanish</option><option value="fr">🇫🇷 French</option>
+              {languages.map(language => (
+                <option key={language.code} value={language.code}>
+                  {language.flag} {language.name}
+                </option>
+              ))}
             </select>
           </label>
 

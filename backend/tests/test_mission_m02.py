@@ -88,15 +88,27 @@ def _payload(language="fr", relations=None, progress=None, review=None, objects=
         SimpleNamespace(display_text="livre", gender="masculine"),
         SimpleNamespace(display_text="table", gender="feminine"),
     ] if language == "fr" else [
+        SimpleNamespace(display_text="Tasse", gender="feminine"),
+        SimpleNamespace(display_text="Stuhl", gender="masculine"),
+        SimpleNamespace(display_text="Tisch", gender="masculine"),
+    ] if language == "de" else [
         SimpleNamespace(display_text="taza", gender="feminine"),
         SimpleNamespace(display_text="libro", gender="masculine"),
         SimpleNamespace(display_text="mesa", gender="feminine"),
     ]
-    articles = {"fr": ("la", "le", "la"), "es": ("la", "el", "la")}[language]
+    articles = {
+        "fr": ("la", "le", "la"), "es": ("la", "el", "la"),
+        "de": ("die", "der", "der"),
+    }[language]
     scene = SimpleNamespace(objects=[
         SimpleNamespace(key=str(key), article=article, gender=gender)
         for key, article, gender in zip(
-            (CUP, BOOK, TABLE), articles, ("feminine", "masculine", "feminine"), strict=True,
+            (CUP, BOOK, TABLE),
+            articles,
+            {"de": ("feminine", "masculine", "masculine")}.get(
+                language, ("feminine", "masculine", "feminine"),
+            ),
+            strict=True,
         )
     ])
     relations = relations if relations is not None else [rel(CUP, "next_to", BOOK)]
@@ -129,6 +141,17 @@ def test_statement_groups_the_contracted_position_into_one_tile():
     spanish = _relation(_payload("es"))
     assert spanish["statement"] == "La taza está al lado del libro."
     assert spanish["whereQuestion"] == "¿Dónde está la taza?"
+
+
+def test_german_location_mission_uses_nominative_questions_and_dative_tiles():
+    payload = _payload("de", [rel(CUP, "on", TABLE)])
+    relation = _relation(payload)
+    assert relation["statement"] == "Die Tasse ist auf dem Tisch."
+    assert relation["whereQuestion"] == "Wo ist die Tasse?"
+    result = fallback_m02_lesson(payload)
+    assert result.questions[2].prompt == "Frag, wo die Tasse ist."
+    assert result.questions[3].prompt == "Antworte mit der Position, die das Foto zeigt."
+    validate_m02_lesson(payload, result)
 
 
 def test_one_relation_is_selected_even_when_more_are_confirmed():
@@ -174,6 +197,73 @@ def test_marker_question_picks_the_subject_with_scene_review_numbers():
         "marker-1": str(BOOK), "marker-2": str(TABLE), "marker-3": str(CUP),
     }
     assert find.correct_option_id == "marker-3"
+
+
+def test_marker_and_location_feedback_use_short_article_safe_notes():
+    payload = _payload("es", [rel(CUP, "on", TABLE)])
+    relation = _relation(payload)
+    relation["subjectSource"] = "the cup"
+    relation["referenceSource"] = "the table"
+    for marker in payload["markers"]:
+        if marker["key"] == str(CUP):
+            marker["source"] = "the cup"
+        elif marker["key"] == str(TABLE):
+            marker["source"] = "the table"
+    result = fallback_m02_lesson(payload)
+    task = m02_lesson_task(SESSION, M02, payload, result, {})
+    evaluations = {item.question_id: item for item in task.answer_key.question_evaluations}
+
+    find = result.questions[0]
+    find_evaluation = evaluations[find.question_id]
+    correct_marker = next(
+        option.label for option in find.options if option.option_id == find.correct_option_id
+    )
+    assert correct_marker == "3"
+    assert find_evaluation.correct_note == "Marker 3 is the cup."
+    sources = {row["key"]: row["source"] for row in payload["markers"]}
+    for option in find.options:
+        if option.option_id == find.correct_option_id:
+            continue
+        source = sources[find.marker_keys[option.option_id]]
+        rule = next(
+            rule for rule in find_evaluation.corrections if option.option_id in rule.answers
+        )
+        assert rule.note == f"Marker {option.label} is the {source.removeprefix('the ')}."
+        assert rule.explanation == (
+            f"Marker {option.label} is the {source.removeprefix('the ')}; "
+            "the sentence describes the cup (marker 3)."
+        )
+
+    choose = result.questions[1]
+    choose_evaluation = evaluations[choose.question_id]
+    correct_note = f"The cup is {relation['meaning']} the table."
+    assert choose_evaluation.correct_note == correct_note
+    for option in choose.options:
+        if option.option_id == choose.correct_option_id:
+            continue
+        place = next(row for row in relation["placeOptions"] if row["label"] == option.label)
+        meaning = next(
+            row["meaning"] for row in payload["positions"] if row["position"] == place["position"]
+        )
+        rule = next(
+            rule for rule in choose_evaluation.corrections if option.option_id in rule.answers
+        )
+        note = f"“{option.label}” means {meaning} the table."
+        assert rule.note == note
+        assert rule.explanation == (
+            f"{note[:-1]}; {correct_note[0].lower()}{correct_note[1:]}"
+        )
+    assert evaluations[result.questions[2].question_id].correct_note is None
+    assert evaluations[result.questions[3].question_id].correct_note is None
+    assert all(
+        "the the" not in text.casefold()
+        for item in (find_evaluation, choose_evaluation)
+        for text in [
+            item.correct_note,
+            *(rule.note or "" for rule in item.corrections),
+            *(rule.explanation or "" for rule in item.corrections),
+        ]
+    )
 
 
 def test_objects_named_like_the_subject_are_never_marker_distractors():

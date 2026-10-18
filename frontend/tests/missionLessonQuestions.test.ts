@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { builtSentence, choiceOrder, markerChoices, optionText, questionOptions } from "../src/lib/practiceTasks.ts";
+import { builtSentence, choiceOrder, markerChoices, optionText, questionOptions, sentenceEnding } from "../src/lib/practiceTasks.ts";
 import { practiceScene } from "../src/lib/practiceScene.ts";
 import type { GrammarLessonQuestion, PracticeDetail } from "../src/lib/api.ts";
 
@@ -66,8 +66,16 @@ test("yes/no statements keep the saved order and their full target-language answ
 
 test("word tiles build the sentence the backend grades", () => {
   assert.equal(builtSentence(["Es", "una", "taza", "roja", "."]), "Es una taza roja.");
+  assert.equal(builtSentence(["Hay una taza roja", "y", "una lámpara", "."]),
+    "Hay una taza roja y una lámpara.");
   assert.equal(builtSentence(["C'", "est", "une", "tasse", "rouge", "."]), "C'est une tasse rouge.");
   assert.equal(builtSentence(["¿Dónde", "está", "la", "taza", "?"]), "¿Dónde está la taza?");
   assert.equal(builtSentence(["La", "tasse", "est", "à côté du", "livre", "."]), "La tasse est à côté du livre.");
   assert.equal(builtSentence([]), "");
+});
+
+test("answer feedback only adds a period when the answer lacks ending punctuation", () => {
+  assert.equal(sentenceEnding("No, es la silla de Marta."), "");
+  assert.equal(sentenceEnding("Est-ce vrai ?"), "");
+  assert.equal(sentenceEnding("No, es la silla de Marta"), ".");
 });

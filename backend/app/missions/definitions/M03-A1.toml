@@ -34,10 +34,10 @@ evidence_types = ["recognition", "construction"]
 pattern_id = "quantity-statement"
 target_id = "say-quantity"
 structure = "[there is/are] [number] [plural noun]."
-examples = { es = ["Hay dos libros.", "Hay tres tazas."], fr = ["Il y a deux livres.", "Il y a trois tasses."] }
+examples = { es = ["Hay dos libros.", "Hay tres tazas."], fr = ["Il y a deux livres.", "Il y a trois tasses."], de = ["Es gibt zwei Tische.", "Es gibt drei Tassen."] }
 
 [teaching]
-task_sequence = ["vocabularyIntroduction", "grammarLesson", "ispyRound", "reflection"]
+task_sequence = ["vocabularyIntroduction", "grammarLesson"]
 teach_before_assessment = ["understand-quantity", "say-quantity", "plural-noun"]
 max_new_words = 6
 

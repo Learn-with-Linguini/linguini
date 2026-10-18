@@ -136,9 +136,7 @@ model LanguageProfile {
 model PreloadedScene {
   id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   slug         String @unique @db.Text
-  languageCode String @map("language_code") @db.VarChar(35)
-  language     String @db.Text
-  mediaAssetId String @map("media_asset_id") @db.Uuid
+  mediaAssetId String @unique @map("media_asset_id") @db.Uuid
   mediaAsset   MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   title        String @db.Text
   description  String? @db.Text
@@ -149,8 +147,7 @@ model PreloadedScene {
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
 
-  @@index([languageCode, isActive, sortOrder])
-  @@index([mediaAssetId])
+  @@index([isActive, sortOrder])
   @@map("preloaded_scenes")
 }
 
@@ -173,7 +170,7 @@ model MediaAsset {
   taskAttempts       TaskAttempt[]
   journalAudio       Journal[]
   journalMedia       JournalMedia[]
-  preloadedScenes    PreloadedScene[]
+  preloadedScene     PreloadedScene?
   sessions           Session[]
   roomPhotos         RoomPhoto[]
   sceneAnalysis      MediaSceneAnalysis?

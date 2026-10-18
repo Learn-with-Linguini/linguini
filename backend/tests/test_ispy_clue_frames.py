@@ -15,7 +15,13 @@ from app.schemas.tasks import (
     SubmitTextAttemptRequest,
 )
 from app.schemas.vocabulary import VocabularyItem
-from app.services.ispy_clue_frames import build_clue_support, check_clue, mentions_target
+from app.services.ispy_clue_frames import (
+    CONTRACTIONS,
+    _place,
+    build_clue_support,
+    check_clue,
+    mentions_target,
+)
 from app.services.session_plan import build_ispy_description_tasks
 
 
@@ -185,6 +191,56 @@ def test_french_masculine_target_uses_il():
     assert "bleu" in slot_texts(frames["colour"], "colour")
 
 
+@pytest.mark.parametrize(
+    ("gender", "prefix"),
+    [("masculine", "Er ist"), ("feminine", "Sie ist"), ("neuter", "Es ist")],
+)
+def test_german_frames_use_gendered_prefixes_and_uninflected_colours(gender, prefix):
+    context, target, word = scene(
+        "de", {"thing": ("Tisch", "der", gender)}, colours=[("thing", "color", "rot")],
+    )
+    frames, _avoid = frames_of(context, target, word)
+    assert frames["colour"].prefix == prefix
+    assert frames["colour"].template == f"{prefix} [colour]"
+    assert frames["colour"].help == ["rot"]
+
+
+def test_german_locations_use_dative_articles_and_contractions():
+    context, target, word = scene(
+        "de",
+        {
+            "book": ("Buch", "das", "neuter"),
+            "table": ("Tisch", "der", "masculine"),
+            "door": ("Tür", "die", "feminine"),
+        },
+        colours=[("book", "color", "rot")],
+        relations=[("book", "on", "auf", "table"), ("book", "next_to", "neben", "door")],
+    )
+    frames, _avoid = frames_of(context, target, word)
+    location = frames["location"]
+    assert location.prefix == "Es ist"
+    assert "auf dem Tisch" in location.help
+    assert "neben der Tür" in location.help
+    assert _place("de", "an", {"translation": "Tisch", "gender": "masculine"}) == "am Tisch"
+    assert CONTRACTIONS["de"][("an", "dem")] == "am"
+
+
+def test_korean_clue_frames_match_aliases_and_keep_references_articleless():
+    context, target, word = scene(
+        "ko",
+        {"apple": ("사과", None, None), "desk": ("책상", None, None)},
+        colours=[("apple", "color", "빨간")],
+        relations=[("apple", "on", "위에", "desk")],
+    )
+    frames, _avoid = frames_of(context, target, word)
+    assert frames["colour"].help == ["빨간색이에요"]
+    location = frames["location"]
+    assert location.template == "이것은 [reference object] [position]"
+    assert slot_texts(location, "reference") == ["책상"]
+    assert location.phrases["위에|책상"] == "책상 위에 있어요"
+    assert location.help == ["책상 위에 있어요"]
+
+
 def test_absent_attributes_and_relations_offer_no_frames_and_never_a_name_frame():
     context, target, word = scene(
         "es",
@@ -239,7 +295,7 @@ def test_generated_support_never_suggests_a_forbidden_target_name():
 
 
 def test_unsupported_languages_keep_free_typing_without_frames():
-    context, target, word = scene("de", {"cup": ("Tasse", "die", "feminine")})
+    context, target, word = scene("it", {"cup": ("tazza", None, None)})
 
     assert build_clue_support(context, target, word) == ([], [])
 

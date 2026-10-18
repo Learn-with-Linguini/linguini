@@ -128,6 +128,46 @@ def curated_scene_object(session_id, entry, vocabulary_item_id=None):
     )
 
 
+def curated_word(connection, profile, label):
+    """The oldest catalog word translated as ``label``; curated scenes carry no words."""
+    row = (
+        connection.execute(
+            select(
+                vocabulary_items,
+                *[
+                    column.label(f"translation_{column.name}")
+                    for column in vocabulary_translations.c
+                ],
+            )
+            .join(
+                vocabulary_translations,
+                vocabulary_translations.c.vocabulary_item_id == vocabulary_items.c.id,
+            )
+            .where(
+                func.lower(vocabulary_items.c.language_code)
+                == profile["target_language_code"].lower(),
+                func.lower(vocabulary_translations.c.source_language_code)
+                == profile["source_language_code"].lower(),
+                func.lower(vocabulary_translations.c.translated_text) == label.strip().lower(),
+            )
+            .order_by(vocabulary_items.c.created_at, vocabulary_items.c.id)
+            .limit(1)
+        )
+        .mappings()
+        .first()
+    )
+    if row is None:
+        return None
+    return (
+        VocabularyItem.model_validate(
+            {column.name: row[column.name] for column in vocabulary_items.c}
+        ),
+        VocabularyTranslation.model_validate(
+            {column.name: row[f"translation_{column.name}"] for column in vocabulary_translations.c}
+        ),
+    )
+
+
 def build_objects(connection, session, asset, profile, scene):
     objects, words, translations = [], [], []
     if profile["source_language_code"].lower() != "en":
@@ -135,22 +175,13 @@ def build_objects(connection, session, asset, profile, scene):
             "Placeholder plans currently support English as the source language."
         )
     if scene:
-        entries = scene["content"]["items"]
-        for entry in entries:
-            word, translated = bootstrap_word(
-                connection,
-                profile["target_language_code"],
-                profile["source_language_code"],
-                entry["word"],
-                entry["translation"],
-                entry.get("wordClass", entry.get("word_class", "noun")),
-                entry.get("gender"),
-                entry.get("example"),
-            )
-            obj = curated_scene_object(session.id, entry, word.id)
-            objects.append(obj)
-            words.append(word)
-            translations.append(translated)
+        # Without a catalog word, the session translator supplies one at review.
+        for entry in scene["content"]["items"]:
+            match = curated_word(connection, profile, entry["translation"])
+            objects.append(curated_scene_object(session.id, entry, match[0].id if match else None))
+            if match:
+                words.append(match[0])
+                translations.append(match[1])
     else:
         language = profile["target_language_code"].lower()
         if language not in UPLOAD_WORDS:
@@ -328,7 +359,10 @@ def _ispy_description_task(
     )
 
 
-def build_tasks(session_id, objects, words, translations, uploaded, translated_scene=None):
+def build_tasks(
+    session_id, objects, words, translations, uploaded, translated_scene=None,
+    supplemental_vocabulary=None,
+):
     # Two sets choose different focus objects and context, with the same public contract.
     index = min(1, len(words) - 1) if uploaded else 0
     word, translation, obj = words[index], translations[index], objects[index]
@@ -367,6 +401,7 @@ def build_tasks(session_id, objects, words, translations, uploaded, translated_s
             (entry["target_text"].casefold(), entry["translation"].casefold())
             for entry in learning_words
         }
+        supplemental_vocabulary = supplemental_vocabulary or {}
         for term, term_type, part_of_speech in supplemental_terms:
             identity = (term.translation.casefold(), term.source.casefold())
             if identity in seen_terms:
@@ -376,6 +411,11 @@ def build_tasks(session_id, objects, words, translations, uploaded, translated_s
                 dict(
                     learning_key=f"{term_type}:{term.key}",
                     term_type=term_type,
+                    vocabulary_item_id=(
+                        supplemental_vocabulary.get((term_type, str(term.key))).id
+                        if supplemental_vocabulary.get((term_type, str(term.key)))
+                        else None
+                    ),
                     target_text=term.translation,
                     translation=_display_source(term.source),
                     part_of_speech=part_of_speech,
@@ -394,6 +434,8 @@ def build_tasks(session_id, objects, words, translations, uploaded, translated_s
         fallback_choices = {
             "es": ["No sé", "No estoy seguro"],
             "fr": ["Je ne sais pas", "Je ne suis pas sûr"],
+            "de": ["Ich weiß nicht", "Ich bin nicht sicher"],
+            "ko": ["모르겠어요", "잘 모르겠어요"],
         }.get(words[0].language_code.lower(), ["I'm not sure", "Something else"])
         for choice in fallback_choices:
             if len(choices) >= 4:

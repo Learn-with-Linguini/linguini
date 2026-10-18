@@ -1,5 +1,5 @@
 import { LoadingScreen } from "../components/LoadingScreen";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Card, Noodle, StatusPill, XpPill } from "../components/ui";
@@ -7,17 +7,20 @@ import { HelpImproveModal } from "../components/HelpImproveModal";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { useVocabularyQuery } from "../state/queries";
-import { getPracticeSummary } from "../lib/api";
+import { getPracticeSummary, startISpyGame } from "../lib/api";
+import { isMissionSession } from "../lib/practiceTasks";
 import { sessionDestination } from "../lib/sessionRoute";
-import { queryError, queryKeys } from "../lib/queryKeys";
+import { gameStartError, queryError, queryKeys } from "../lib/queryKeys";
 
 export function SessionSummary() {
   const navigate = useNavigate();
   const scene = useScene();
-  const { session, completionError, retryCompletion } = useAppState();
+  const { session, activeProfile, completionError, retryCompletion } = useAppState();
   const { vocabulary } = useVocabularyQuery(); 
-  const [startError] = useState<string | null>(null);
+  const [startingISpy, setStartingISpy] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
   const [surveyOpen, setSurveyOpen] = useState(false);
+  const startKey = useRef<string | null>(null);
   // Stats render from the in-flight numbers straight away; the completion
   // mutation invalidates this key so final XP replaces them once it lands.
   const { data, error: queryErrorValue, isPending: loading } = useQuery({
@@ -46,6 +49,22 @@ export function SessionSummary() {
   const revisit = scene.items.filter(item => data?.learnedVocabularyIds.includes(
     session?.sceneObjects.find(object => object.id === item.id)?.vocabularyItemId ?? ""
   )).slice(0, 3);
+  const missionSession = Boolean(session && isMissionSession(session.tasks));
+  const playISpy = async () => {
+    if (!session || !activeProfile || startingISpy) return;
+    setStartingISpy(true);
+    setStartError(null);
+    startKey.current ??= crypto.randomUUID();
+    try {
+      const detail = await startISpyGame(activeProfile.id, session.mediaAsset.id, startKey.current);
+      startKey.current = null;
+      navigate(sessionDestination(detail).path);
+    } catch (reason) {
+      setStartError(gameStartError(reason));
+    } finally {
+      setStartingISpy(false);
+    }
+  };
   
   return <div className="stack">
     {session?.session.status === "inProgress" ? <Button onClick={() => navigate(sessionDestination(session).path)}>Continue unfinished practice</Button> : null}
@@ -72,8 +91,12 @@ export function SessionSummary() {
       </div></Card>
     </> : null}
     <div className="stack-2">
-      <Button block onClick={() => navigate("/journal/new")}>Write today&apos;s journal entry</Button>
-      <Button variant="secondary" block onClick={() => navigate("/vocabulary")}>Review difficult words</Button>
+      {missionSession ? <Button block disabled={startingISpy || !completed} onClick={() => void playISpy()}>
+        {startingISpy ? "Setting up I-Spy..." : "Play I-Spy with this scene"}
+      </Button> : <>
+        <Button block onClick={() => navigate("/journal/new")}>Write today&apos;s journal entry</Button>
+        <Button variant="secondary" block onClick={() => navigate("/vocabulary")}>Review difficult words</Button>
+      </>}
       <Button variant="quiet" block onClick={() => navigate("/home")}>Back home</Button>
     </div>
 

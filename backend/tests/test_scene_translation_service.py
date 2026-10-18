@@ -256,6 +256,33 @@ def test_object_without_article_is_rejected() -> None:
         ).translate(PAYLOAD)
 
 
+def test_korean_translation_terms_may_be_articleless():
+    result = json.loads(VALID_OUTPUT)
+    result["objects"] = [
+        {**row, "translation": "의자" if row["key"] == "o1" else "탁자",
+         "article": None, "gender": None}
+        for row in result["objects"]
+    ]
+    translated = service(FakeTextClient([json.dumps(result)])).translate(
+        {**PAYLOAD, "targetLanguage": "ko"}
+    )
+    assert all(term.article is None and term.gender is None for term in translated.objects)
+
+
+def test_german_neuter_translation_gender_is_accepted():
+    result = json.loads(VALID_OUTPUT)
+    result["objects"][0].update(
+        translation="Tisch", article="der", gender="masculine",
+    )
+    result["objects"][1].update(
+        translation="Buch", article="das", gender="neuter",
+    )
+    translated = service(FakeTextClient([json.dumps(result)])).translate(
+        {**PAYLOAD, "targetLanguage": "de"}
+    )
+    assert translated.objects[1].gender == "neuter"
+
+
 @pytest.mark.parametrize("field", ["attributes", "relationships"])
 def test_article_or_gender_on_non_object_is_rejected(field) -> None:
     result = json.loads(VALID_OUTPUT)
@@ -729,3 +756,25 @@ def test_adapter_invalid_output_receives_bounded_repair() -> None:
     ])
     service(client).translate(PAYLOAD)
     assert len(client.requests) == 2
+
+
+def test_normalize_object_articles_strips_german_definite_article_only() -> None:
+    result = SceneTranslationResult.model_validate(VALID_RESULT)
+    first = result.objects[0]
+    result = result.model_copy(update={
+        "objects": [
+            first.model_copy(update={"translation": "der Tisch", "article": None}),
+            *[
+                row.model_copy(update={"translation": noun, "article": "das"})
+                for row, noun in zip(result.objects[1:], ("Denkmal", "Einkaufswagen"), strict=False)
+            ],
+        ]
+    })
+
+    normalized = normalize_object_articles(result, "de")
+
+    assert normalized.objects[0].translation == "Tisch"
+    assert normalized.objects[0].article == "der"
+    assert [row.translation for row in normalized.objects[1:]] == [
+        "Denkmal", "Einkaufswagen",
+    ][: len(normalized.objects) - 1]

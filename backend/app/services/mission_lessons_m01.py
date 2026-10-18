@@ -12,28 +12,36 @@ from app.services.mission_eligibility import (
     confirmed_attributes,
     confirmed_colour,
 )
-from app.services.mission_lessons import build_mission_task, mission_gender
+from app.services.mission_lessons import build_mission_task, definite, mission_gender
 
 M01_FOCUS = "identifyDescribeObject"
-CONFIRM_PROMPTS = {"es": "¿Es {noun}?", "fr": "Est-ce {noun} ?"}
+CONFIRM_PROMPTS = {"es": "¿Es {noun}?", "fr": "Est-ce {noun} ?", "de": "Ist das {noun}?"}
 # Q3 asks about the first object's detail; the prompt names its attribute type.
 ATTRIBUTE_PROMPTS = {
-    "colour": ({"es": "¿De qué color es?", "fr": "De quelle couleur est-ce ?"},
+    "colour": ({"es": "¿De qué color es?", "fr": "De quelle couleur est-ce ?",
+                "de": "Welche Farbe hat es?"},
                "What colour is it?"),
-    "material": ({"es": "¿De qué material es?", "fr": "C'est en quoi ?"},
+    "material": ({"es": "¿De qué material es?", "fr": "C'est en quoi ?",
+                  "de": "Woraus ist es?"},
                  "What is it made of?"),
 }
-OTHER_ATTRIBUTE_PROMPT = ({"es": "¿Cómo es?", "fr": "C'est comment ?"}, "What is it like?")
-DESCRIBE_PROMPTS = {"es": "Describe este objeto.", "fr": "Décris cet objet."}
+OTHER_ATTRIBUTE_PROMPT = (
+    {"es": "¿Cómo es?", "fr": "C'est comment ?", "de": "Wie ist es?"},
+    "What is it like?",
+)
+DESCRIBE_PROMPTS = {
+    "es": "Describe este objeto.", "fr": "Décris cet objet.", "de": "Beschreib dieses Objekt.",
+}
 PROMPT_TRANSLATIONS = {
     "confirmObject": "Is it this? Answer with a full sentence.",
     "describeObject": "Describe this object.",
 }
-SENTENCE_STARTS = {"es": "Es", "fr": "C'est"}
-YES_NO = {"es": ("Sí", "No"), "fr": ("Oui", "Non")}
+SENTENCE_STARTS = {"es": "Es", "fr": "C'est", "de": "Das ist"}
+YES_NO = {"es": ("Sí", "No"), "fr": ("Oui", "Non"), "de": ("Ja", "Nein")}
 INDEFINITE_ARTICLES = {
     "es": {"masculine": "un", "feminine": "una"},
     "fr": {"masculine": "un", "feminine": "une"},
+    "de": {"masculine": "ein", "feminine": "eine", "neuter": "ein"},
 }
 MAX_COLOUR_OPTIONS = 3
 # Colours a photo can make look alike; they are never each other's distractors.
@@ -56,7 +64,10 @@ SIMILAR_COLOURS = {
 }
 _PATTERN_ID = "copula-colour"
 # Legacy vocabulary rows may keep their article inside the display text.
-_LEADING_ARTICLE = re.compile(r"^(?:el|la|los|las|le|les|un|una|une)\s+|^l['’]", re.IGNORECASE)
+_LEADING_ARTICLE = re.compile(
+    r"^(?:el|la|los|las|le|les|un|una|une|der|die|das|ein|eine)\s+|^l['’]",
+    re.IGNORECASE,
+)
 _EVALUATIONS = {
     "confirmObject": (
         ["identify-object", "name-object"],
@@ -149,11 +160,14 @@ def _detail_options(language, gender, detail, taught_colours):
     else:
         others = list(attribute_contrasts(kind, value))
     options = [detail["agreedForm"]]
+    meanings = {fold(detail["agreedForm"]): detail["attributeSource"]}
     for other in others:
         agreed = agreed_attribute(kind, other, language, gender)
         if agreed and fold(agreed[0]) not in map(fold, options):
             options.append(agreed[0])
-    return options[:MAX_COLOUR_OPTIONS]
+            meanings[fold(agreed[0])] = other
+    options = options[:MAX_COLOUR_OPTIONS]
+    return options, {fold(option): meanings[fold(option)] for option in options}
 
 
 def _order(rng, size):
@@ -174,7 +188,7 @@ def _select(language, ranked, taught_colours):
     """
     for first in ranked:
         for asked in first["details"]:
-            options = _detail_options(language, first["gender"], asked, taught_colours)
+            options, meanings = _detail_options(language, first["gender"], asked, taught_colours)
             if len(options) < 2:
                 continue
             for second in ranked:
@@ -183,8 +197,12 @@ def _select(language, ranked, taught_colours):
                 described = next((
                     detail for detail in second["details"] if detail["attributeType"] != "colour"
                 ), second["details"][0])
-                return [_with_detail(first, asked), _with_detail(second, described)], options
-    return [], []
+                return (
+                    [_with_detail(first, asked), _with_detail(second, described)],
+                    options,
+                    meanings,
+                )
+    return [], [], {}
 
 
 def m01_payload(
@@ -201,7 +219,9 @@ def m01_payload(
     progress = progress or {}
     terms = {term.key: term for term in translated_scene.objects} if translated_scene else {}
     ranked = _candidates(language, objects, words, terms, progress)
-    pairs, options = _select(language, ranked, _taught_colours(language, objects, progress))
+    pairs, options, attribute_meanings = _select(
+        language, ranked, _taught_colours(language, objects, progress),
+    )
     taught = list(dict.fromkeys(phrase for phrase in [
         *(pair["nounPhrase"] for pair in pairs),
         *(
@@ -221,7 +241,9 @@ def m01_payload(
     extras = []
     if pairs:
         second = pairs[1]
-        other = {"masculine": "feminine", "feminine": "masculine"}.get(second["gender"])
+        other = {
+            "masculine": "feminine", "feminine": "masculine", "neuter": "masculine",
+        }.get(second["gender"])
         wrong = other and agreed_attribute(
             second["attributeType"], second["attributeSource"], language, other,
         )
@@ -246,6 +268,7 @@ def m01_payload(
         "pairs": pairs,
         "taughtNouns": nouns,
         "attributeOptions": options,
+        "attributeMeanings": attribute_meanings,
         "describeExtras": extras,
         "layout": dict(
             confirmOrders=[_order(rng, 2), _order(rng, 2)],
@@ -286,8 +309,9 @@ def _corrections(payload, question, correct_label):
                 correction=question.correct_text,
                 explanation=f"The word agrees with {pair['nounPhrase']}: {pair['agreedForm']}.",
             ))
-        return rules
+        return rules, None
     if question.purpose == "confirmObject":
+        correct_note = f"This is {pair['nounPhrase']} ({pair['source']})."
         explanation = (
             f"Yes — this is {pair['nounPhrase']} ({pair['source']})."
             if question.statement_correct
@@ -295,13 +319,27 @@ def _corrections(payload, question, correct_label):
         )
         return [dict(
             mistake="wrongObject", answers=[option.option_id], correction=correct_label,
-            explanation=explanation,
-        ) for option in wrong]
-    return [dict(
-        mistake="wrongColour" if pair["attributeType"] == "colour" else "wrongAttribute",
-        answers=[option.option_id], correction=correct_label,
-        explanation=f"This {pair['source']} is {pair['attributeSource']}: {pair['agreedForm']}.",
-    ) for option in wrong]
+            explanation=explanation, note=correct_note,
+        ) for option in wrong], correct_note
+    correct_note = capitalised(
+        f"{definite(pair['source'])} is {pair['attributeSource']}: {pair['agreedForm']}."
+    )
+    meanings = payload.get("attributeMeanings", {})
+    rules = []
+    for option in wrong:
+        meaning = meanings.get(fold(option.label))
+        note = f"“{option.label}” means {meaning}." if meaning else None
+        explanation = (
+            f"“{option.label}” means {meaning}; {definite(pair['source'])} is "
+            f"{pair['attributeSource']}: {pair['agreedForm']}."
+            if meaning else correct_note
+        )
+        rules.append(dict(
+            mistake="wrongColour" if pair["attributeType"] == "colour" else "wrongAttribute",
+            answers=[option.option_id], correction=correct_label,
+            explanation=explanation, note=note,
+        ))
+    return rules, correct_note
 
 
 def m01_lesson_task(session_id, mission, payload, result, vocabulary_ids):
@@ -312,12 +350,14 @@ def m01_lesson_task(session_id, mission, payload, result, vocabulary_ids):
         target_ids, evidence_type, criteria = _EVALUATIONS[question.purpose]
         vocabulary_id = vocabulary_ids.get(question.object_key)
         assessed = vocabulary_id and question.purpose != "chooseAttribute"
+        corrections, correct_note = _corrections(payload, question, label)
         return dict(
             target_ids=target_ids,
             evidence_type=evidence_type,
             rubric_criterion_ids=criteria,
             vocabulary_item_ids=[vocabulary_id] if assessed else [],
-            corrections=_corrections(payload, question, label),
+            corrections=corrections,
+            correct_note=correct_note,
         )
 
     def shown(question):

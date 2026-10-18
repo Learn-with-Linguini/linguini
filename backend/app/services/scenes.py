@@ -46,24 +46,16 @@ class SceneService:
             )
         return result
 
-    def list_scenes(self, language_code: str | None = None) -> list[PreloadedScene]:
+    def list_scenes(self) -> list[PreloadedScene]:
         return [
             PreloadedScene.model_validate(row.model_dump(include=set(PreloadedScene.model_fields)))
-            for row in self._hydrate_media(
-                [
-                    row
-                    for row in self.repository.list_scenes()
-                    if language_code is None or row.language_code.lower() == language_code
-                ]
-            )
+            for row in self._hydrate_media(self.repository.list_scenes())
         ]
 
-    def get_scene(self, scene_id: str, language_code: str | None = None) -> PreloadedSceneDetail:
+    def get_scene(self, scene_id: str) -> PreloadedSceneDetail:
         scene = next(
             (row for row in self.repository.list_scenes() if row.scene_id == scene_id), None
         )
-        if scene is None or (
-            language_code is not None and scene.language_code.lower() != language_code
-        ):
+        if scene is None:
             raise SceneNotFoundError("Scene not found.")
         return self._hydrate_media([scene])[0]

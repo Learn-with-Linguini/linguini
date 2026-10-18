@@ -5,19 +5,26 @@ import re
 
 from app.ai.features.learning_tasks.mission import fold, tokens
 from app.ai.features.learning_tasks.mission_m02 import _joined
-from app.services.ispy_clue_frames import CONTRACTIONS, _definite, _with_article
+from app.services.ispy_clue_frames import (
+    CONTRACTIONS,
+    DATIVE_ARTICLES,
+    _definite,
+    _with_article,
+)
 from app.services.mission_eligibility import (
     POSITION_MEANINGS,
     REVIEWED_POSITIONS,
     confirmed_relations,
     relation_type,
 )
-from app.services.mission_lessons import build_mission_task, mission_gender
+from app.services.mission_lessons import build_mission_task, definite, mission_gender
 
 M02_FOCUS = "findAndLocate"
-QUESTION_CHUNKS = {"es": "¿Dónde está…?", "fr": "Où est… ?"}
-_QUESTION_FRAMES = {"es": "¿Dónde está {}?", "fr": "Où est {} ?"}
-_LOCATION_VERBS = {"es": "está", "fr": "est"}
+QUESTION_CHUNKS = {"es": "¿Dónde está…?", "fr": "Où est… ?", "de": "Wo ist…?"}
+_QUESTION_FRAMES = {
+    "es": "¿Dónde está {}?", "fr": "Où est {} ?", "de": "Wo ist {}?",
+}
+_LOCATION_VERBS = {"es": "está", "fr": "est", "de": "ist"}
 # Positions that a confirmed position rules out for the same pair.
 _OPPOSITE = {"on": "under", "under": "on", "in_front_of": "behind", "behind": "in_front_of"}
 _INVERSE = {
@@ -33,6 +40,10 @@ _PROMPTS = {
     "fr": {
         "askWhere": "Pose une question sur l'emplacement {of_subject}.",
         "answerWhere": "Réponds avec la position que montre la photo.",
+    },
+    "de": {
+        "askWhere": "Frag, wo {subject} ist.",
+        "answerWhere": "Antworte mit der Position, die das Foto zeigt.",
     },
 }
 _TRANSLATIONS = {
@@ -60,7 +71,9 @@ _EVALUATIONS = {
 
 
 # Catalog words may carry their definite article ("la mesa", "l'arbre").
-_LEADING_DEFINITE = re.compile(r"^(el|la|le|los|las|les)\s+|^(l)['’]", re.IGNORECASE)
+_LEADING_DEFINITE = re.compile(
+    r"^(el|la|le|los|las|les|der|die|das)\s+|^(l)['’]", re.IGNORECASE,
+)
 
 
 def _article_and_noun(text, term):
@@ -82,6 +95,10 @@ def _place_tiles(language, expression, place):
     if not article:
         return None
     words = expression.split()
+    if language == "de":
+        article = DATIVE_ARTICLES["de"].get(place.get("gender"))
+        if not article:
+            return None
     contracted = CONTRACTIONS[language].get((words[-1].casefold(), article.casefold()))
     if contracted:
         return " ".join([*words[:-1], contracted]), tokens(place["translation"])
@@ -224,10 +241,14 @@ def m02_payload(
         ]
         if fold(reference["source"]) == same:
             continue
-        prompts = {
-            purpose: template.format(of_subject=_of(language, subject_place))
-            for purpose, template in _PROMPTS[language].items()
-        }
+        prompts = {}
+        for purpose, template in _PROMPTS[language].items():
+            values = {}
+            if "{of_subject}" in template:
+                values["of_subject"] = _of(language, subject_place)
+            if "{subject}" in template:
+                values["subject"] = subject["nounPhrase"]
+            prompts[purpose] = template.format(**values)
         found.append(dict(
             key=str(relation.id),
             subjectKey=subject["key"], subjectSource=subject["source"],
@@ -277,31 +298,43 @@ def _corrections(payload, question, label):
                 mistake="wordOrder", correction=question.correct_text,
                 explanation="Say the object, then the verb, the position and the other object.",
             ),
-        ]
+        ], None
     if question.purpose == "askWhere":
         return [dict(
             mistake="wordOrder", correction=question.correct_text,
             explanation="Start with the question words, then the object.",
-        )]
+        )], None
     if question.purpose == "findObject":
         sources = {row["key"]: row["source"] for row in payload["markers"]}
-        return [dict(
-            mistake="wrongObject", answers=[option.option_id], correction=label,
-            explanation=(
-                f"Marker {option.label} is the {sources[question.marker_keys[option.option_id]]}; "
-                f"the sentence describes the {relation['subjectSource']} (marker {label})."
-            ),
-        ) for option in wrong]
+        correct_note = f"Marker {label} is {definite(relation['subjectSource'])}."
+        rules = []
+        for option in wrong:
+            source = sources[question.marker_keys[option.option_id]]
+            rules.append(dict(
+                mistake="wrongObject", answers=[option.option_id], correction=label,
+                note=f"Marker {option.label} is {definite(source)}.",
+                explanation=(
+                    f"Marker {option.label} is {definite(source)}; the sentence describes "
+                    f"{definite(relation['subjectSource'])} (marker {label})."
+                ),
+            ))
+        return rules, correct_note
     meanings = {row["position"]: row["meaning"] for row in payload["positions"]}
     places = {fold(row["label"]): row["position"] for row in relation["placeOptions"]}
-    return [dict(
-        mistake="wrongPosition", answers=[option.option_id], correction=label,
-        explanation=(
-            f"\u201c{option.label}\u201d means {meanings[places[fold(option.label)]]} the "
-            f"{relation['referenceSource']}; the {relation['subjectSource']} is "
-            f"{relation['meaning']} the {relation['referenceSource']}."
-        ),
-    ) for option in wrong]
+    correct_note = _capitalised(
+        f"{definite(relation['subjectSource'])} is {relation['meaning']} "
+        f"{definite(relation['referenceSource'])}."
+    )
+    rules = []
+    for option in wrong:
+        meaning = meanings[places[fold(option.label)]]
+        note = f"“{option.label}” means {meaning} {definite(relation['referenceSource'])}."
+        rules.append(dict(
+            mistake="wrongPosition", answers=[option.option_id], correction=label,
+            note=note,
+            explanation=f"{note[:-1]}; {correct_note[0].lower()}{correct_note[1:]}",
+        ))
+    return rules, correct_note
 
 
 def m02_lesson_task(session_id, mission, payload, result, vocabulary_ids):
@@ -311,6 +344,7 @@ def m02_lesson_task(session_id, mission, payload, result, vocabulary_ids):
     def evaluate(question, label):
         target_ids, evidence_type, criteria = _EVALUATIONS[question.purpose]
         relation = relations[question.relation_key]
+        corrections, correct_note = _corrections(payload, question, label)
         named = {
             "answerWhere": [relation["subjectKey"], relation["referenceKey"]],
             "askWhere": [relation["subjectKey"]],
@@ -320,7 +354,8 @@ def m02_lesson_task(session_id, mission, payload, result, vocabulary_ids):
             evidence_type=evidence_type,
             rubric_criterion_ids=criteria,
             vocabulary_item_ids=[vocabulary_ids[key] for key in named if key in vocabulary_ids],
-            corrections=_corrections(payload, question, label),
+            corrections=corrections,
+            correct_note=correct_note,
         )
 
     def shown(question):

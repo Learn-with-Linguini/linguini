@@ -1,8 +1,10 @@
 export type WordClass = "noun" | "verb" | "adjective" | "adverb" | "pronoun" | "preposition" | "conjunction" | "interjection" | "determiner" | "phrase" | "other";
 export type VocabStatus = "new" | "learning" | "mastered";
-export type Gender = "la" | "el" | "le" | "l'" | null;
-/** Definite articles accepted as noun gender values (Spanish and French). */
-export const GENDER_ARTICLES: ReadonlySet<string> = new Set(["la", "el", "le", "l'"]);
+export type Gender = "la" | "el" | "le" | "l'" | "der" | "die" | "das" | null;
+/** Definite articles accepted as noun gender values. */
+export const GENDER_ARTICLES: ReadonlySet<string> = new Set([
+  "la", "el", "le", "l'", "der", "die", "das",
+]);
 
 export type LanguageItem = {
   id: string;
@@ -32,7 +34,7 @@ export type Scene = {
   items: LanguageItem[];
 };
 
-export type SceneSummary = Pick<Scene, "id" | "mediaAssetId" | "imageUrl" | "title" | "blurb" | "language" | "languageCode">;
+export type SceneSummary = Pick<Scene, "id" | "mediaAssetId" | "imageUrl" | "title" | "blurb">;
 
 export type ScenarioProgress = {
   sceneId: string;
