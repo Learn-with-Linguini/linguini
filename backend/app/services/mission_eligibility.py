@@ -24,18 +24,19 @@ M01_A2 = ("M01", "A2", 1)
 M02_A2 = ("M02", "A2", 1)
 M03_A2 = ("M03", "A2", 1)
 M04_A2 = ("M04", "A2", 1)
+M06_A2 = ("M06", "A2", 1)
 # Implemented variants per stored proficiency level, in catalogue order; a lesson
 # assesses at most three. Only the active profile's ``proficiency_level`` selects them.
 IMPLEMENTED_MISSIONS = {
     "A0": (M01_A0, M02_A0, M03_A0, M13_A0),
     "A1": (M01_A1, M02_A1, M03_A1, M04_A1, M05_A1),
-    "A2": (M01_A2, M02_A2, M03_A2, M04_A2),
+    "A2": (M01_A2, M02_A2, M03_A2, M04_A2, M06_A2),
 }
 MAX_LESSON_MISSIONS = {"A0": 3, "A1": 3, "A2": 4}
 # A0 missions use reviewed closed content, which includes Korean.
 LEVEL_LANGUAGES = {
     "A0": {"es", "fr", "de", "ko"},
-    "A2": A2_ENABLED_LANGUAGES,
+    "A2": A2_ENABLED_LANGUAGES | {"de", "ko"},
 }
 
 # Reviewed singular attributive colour forms for each supported lesson language.
@@ -162,10 +163,21 @@ def lesson_missions(session_mode, profile):
         return []
     level = str(profile["proficiency_level"] or "").strip().upper()
     languages = LEVEL_LANGUAGES.get(level, MISSION_LANGUAGES)
-    if profile["target_language_code"].lower() not in languages:
+    language = profile["target_language_code"].lower()
+    if language not in languages:
         return []
     keys = IMPLEMENTED_MISSIONS.get(level, ())
-    return [mission for key in keys if (mission := get_mission(*key)) is not None]
+    return [
+        mission for key in keys
+        if (mission := get_mission(*key)) is not None
+        and (
+            language in {"es", "fr"}
+            if mission.mission_id in {"M01", "M02", "M03", "M04"} and level == "A2"
+            else language in {"es", "fr", "de", "ko"}
+            if mission.mission_id == "M06" and level == "A2"
+            else True
+        )
+    ]
 
 
 def plan_missions(candidates, objects, relations, counted_groups=(), history=()):

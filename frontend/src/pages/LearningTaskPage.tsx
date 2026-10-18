@@ -9,8 +9,9 @@ import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { builtSentence, choiceOrder, finishesAfterLearning, markerChoices, optionText, practiceStages, questionOptions, sentenceEnding, taskDone, taskTitle, taskXp, xpEarnedText } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
-import { checkLessonAnswer, checkVocabularyAnswer, getLatestAttempt, getLessonChecks, reviewDetails, type GrammarLessonQuestion, type LessonAnswerCheck, type SceneObject, type SessionTask, type QuestionOutcome, type TaskActionResult, type TaskAnswer, type VocabularyLearningWord } from "../lib/api";
+import { checkLessonAnswer, checkVocabularyAnswer, getLatestAttempt, getLessonChecks, requestLessonAssistance, reviewDetails, updateMissionScenario, type GrammarLessonQuestion, type LessonAnswerCheck, type SceneObject, type SessionTask, type QuestionOutcome, type TaskActionResult, type TaskAnswer, type TaskContent, type VocabularyLearningWord } from "../lib/api";
 import { mergeLessonChecks, visibleLessonQuestionIndex } from "../lib/missionLessonFlow";
+import { isM06ScenarioVisible, lessonCheckFinished, nextAssistanceStep, retryTokens, unlockedRetryResumeIndex } from "../lib/missionM06";
 import { ReportIssueLink } from "../components/ReportIssueLink";
 import { ObjectPreview } from "../components/ObjectPreview";
 import { ScenePhoto } from "../components/ScenePhoto";
@@ -22,7 +23,7 @@ import { playAnswerSound } from "../lib/answerSound";
 
 export function LearningTaskPage() {
   const { taskId } = useParams();
-  const { session, completeSession } = useAppState();
+  const { session, completeSession, loadSession } = useAppState();
   const navigate = useNavigate();
   const scene = useScene();
   const base = `/practice/sessions/${scene.sessionId}`;
@@ -33,7 +34,23 @@ export function LearningTaskPage() {
   const task = tasks[index];
   if (!task || ["abandoned", "failed"].includes(session.session.status)) return <Navigate to={`${base}/learn`} replace />;
   const next = tasks[index + 1];
+  const skipM06RolePlay = () => {
+    const lastM06Index = tasks.reduce(
+      (last, item, taskIndex) => item.publicContent.missionId === "M06" ? taskIndex : last,
+      -1,
+    );
+    const afterM06 = tasks[lastM06Index + 1];
+    if (afterM06) {
+      navigate(`${base}/learn/${afterM06.id}`);
+    } else if (session.session.status !== "generatingTasks" && finishesAfterLearning(session.tasks)) {
+      if (completeSession()) navigate(`${base}/summary`);
+    } else {
+      navigate(`${base}/ispy-1`);
+    }
+  };
   return <div className="stack learning-task-page"><LearningTaskContent key={task.id} task={task} index={index} total={tasks.length}
+    onScenarioChange={() => loadSession(session.session.id)}
+    onSkipRolePlay={skipM06RolePlay}
     onNext={() => {
       if (!next && session.session.status !== "generatingTasks" && finishesAfterLearning(session.tasks)) {
         if (completeSession()) navigate(`${base}/summary`);
@@ -43,7 +60,10 @@ export function LearningTaskPage() {
     }} onClose={() => navigate(`${base}/learn`)} onExit={() => navigate("/home")} /></div>;
 }
 
-function LearningTaskContent({ task, index, total, onNext, onClose, onExit }: { task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void }) {
+function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onScenarioChange, onSkipRolePlay }: {
+  task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void;
+  onScenarioChange: () => Promise<unknown>; onSkipRolePlay: () => void;
+}) {
   const lastStep = useLastStepLabel();
   const scene = useScene();
   const { actOnTask, practiceSaving, practiceError } = useAppState();
@@ -61,7 +81,8 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit }: { 
   }
   if (content.kind === "grammarLesson") {
     return content.checkEachQuestion
-      ? <SequentialGrammarLessonFlow task={task} index={index} total={total} onNext={onNext} onClose={onClose} onExit={onExit} />
+      ? <SequentialGrammarLessonFlow task={task} index={index} total={total} onNext={onNext} onClose={onClose} onExit={onExit}
+        onScenarioChange={onScenarioChange} onSkipRolePlay={onSkipRolePlay} />
       : <GrammarLessonFlow task={task} index={index} total={total} onNext={onNext} onClose={onClose} onExit={onExit} />;
   }
   const card = scene.items.find(item => item.id === task.sceneObjectId);
@@ -272,14 +293,19 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
   </div>;
 }
 
-function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: {
+type GrammarLessonContent = Extract<TaskContent, { kind: "grammarLesson" }>;
+
+function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onExit, onScenarioChange, onSkipRolePlay }: {
   task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void;
+  onScenarioChange: () => Promise<unknown>; onSkipRolePlay: () => void;
 }) {
   const lastStep = useLastStepLabel();
   const scene = useScene();
-  const { actOnTask, practiceSaving, practiceError } = useAppState();
-  const content = task.publicContent;
+  const { actOnTask, practiceSaving, practiceError, session } = useAppState();
+  const [contentOverride, setContentOverride] = useState<GrammarLessonContent | null>(null);
+  const content = contentOverride ?? task.publicContent;
   const questions = content.kind === "grammarLesson" ? content.questions : [];
+  const isM06 = content.kind === "grammarLesson" && content.missionId === "M06";
   const { refetch: refetchChecks, ...saved } = useQuery({
     queryKey: queryKeys.lessonChecks(task.id),
     queryFn: ({ signal }) => getLessonChecks(task.id, signal),
@@ -288,6 +314,10 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
   const [localChecks, setLocalChecks] = useState<Record<string, LessonAnswerCheck>>({});
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [builtTokenIndexes, setBuiltTokenIndexes] = useState<Record<string, number[]>>({});
+  const [retryReady, setRetryReady] = useState<Record<string, boolean>>({});
+  const [revealedPrompts, setRevealedPrompts] = useState<Record<string, boolean>>({});
+  const [assistanceContent, setAssistanceContent] = useState<Record<string, string>>({});
+  const [assistanceSteps, setAssistanceSteps] = useState<Record<string, string[]>>({});
   const [activeIndex, setActiveIndex] = useState(0);
   const [checking, setChecking] = useState(false);
   const [checkError, setCheckError] = useState<string | null>(null);
@@ -295,22 +325,33 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
   const submitKey = useRef(crypto.randomUUID());
   const checks = mergeLessonChecks(saved.data?.checks ?? [], localChecks);
   useEffect(() => {
+    if (saved.data) setAssistanceSteps(saved.data.assistanceSteps ?? {});
+  }, [saved.data]);
+  useEffect(() => {
     if (saved.data) {
-      setActiveIndex(visibleLessonQuestionIndex(
-        questions.map(item => item.questionId),
-        mergeLessonChecks(saved.data.checks, {}),
-      ));
+      const restored = mergeLessonChecks(saved.data.checks, {});
+      setActiveIndex(isM06
+        ? unlockedRetryResumeIndex(questions, restored)
+        : visibleLessonQuestionIndex(questions.map(item => item.questionId), restored));
     }
-  }, [saved.data, questions]);
+  }, [saved.data, questions, isM06]);
+  useEffect(() => {
+    setContentOverride(null);
+  }, [task.id]);
   if (content.kind !== "grammarLesson") return null;
   const question = content.questions[Math.min(activeIndex, content.questions.length - 1)];
-  const isChecked = Boolean(question && checks[question.questionId]);
+  const storedCheck = question ? checks[question.questionId] : undefined;
+  const retrying = question ? Boolean(retryReady[question.questionId]) : false;
+  const isChecked = Boolean(storedCheck && !retrying);
   const tokenIndexes = question ? builtTokenIndexes[question.questionId] ?? [] : [];
   const tokenAnswer = question?.interactionType === "sentenceBuilding"
     ? builtSentence(tokenIndexes.map(position => question.tokenBank[position])) : "";
-  const answer = question?.interactionType === "multipleChoice"
+  const answer = question?.interactionType === "multipleChoice" || question?.interactionType === "textCloze"
     ? answers[question.questionId] ?? "" : tokenAnswer;
-  const allChecked = content.questions.every(item => Boolean(checks[item.questionId]));
+  const allChecked = content.questions.every(item => {
+    const check = checks[item.questionId];
+    return lessonCheckFinished(check, item.allowRetry);
+  });
   const terminal = taskDone(actionResult?.task ?? task);
   const reward = !terminal ? taskXp(task) : null;
   const earnedText = xpEarnedText(actionResult?.xpEarned);
@@ -318,6 +359,25 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
     ?.map(id => scene.items.find(item => item.id === id))
     .filter((item): item is NonNullable<typeof item> => Boolean(item)) ?? [];
   const markers = question ? markerChoices(question, scene) : [];
+  const showWritten = question ? writtenPromptShown(question, {
+    revealed: Boolean(revealedPrompts[question.questionId]),
+    graded: Boolean(storedCheck),
+    audio: speechAvailable(),
+  }) : true;
+  const usedAssistance = question
+    ? assistanceSteps[question.questionId] ?? storedCheck?.assistanceStepsUsed ?? []
+    : [];
+  const assistanceStep = question
+    ? nextAssistanceStep(question.assistanceSteps, usedAssistance)
+    : null;
+  const slotFill = question?.interactionType === "multipleChoice"
+    ? question.options.find(option => option.optionId === answer)?.label ?? ""
+    : answer;
+  const slotText = question?.slotTemplate && ["functionalChunk", "detailGap"].includes(question.gapKind ?? "")
+    ? completeSlot(question.slotTemplate, isChecked
+      ? (storedCheck?.correctAnswer ?? answer)
+      : slotFill || "___")
+    : question?.slotTemplate;
 
   const check = async () => {
     if (!question || !answer || checking || saved.isLoading) return;
@@ -326,12 +386,73 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
     try {
       const result = await checkLessonAnswer(task.id, question.questionId, answer);
       setLocalChecks(value => ({ ...value, [result.questionId]: result }));
+      setRetryReady(value => ({ ...value, [result.questionId]: false }));
       playAnswerSound(result.isCorrect);
     } catch (error) {
       setCheckError(friendlyError(error));
     } finally {
       setChecking(false);
     }
+  };
+
+  const retry = () => {
+    if (!question || !storedCheck) return;
+    if (question.interactionType === "sentenceBuilding" && storedCheck.wrongField) {
+      const fields = question.wrongFieldTokens ?? {};
+      setBuiltTokenIndexes(value => {
+        const selected = value[question.questionId] ?? [];
+        const preserved = new Set(retryTokens(
+          selected.map(position => question.tokenBank[position]),
+          storedCheck.wrongField,
+          fields,
+        ));
+        return {
+          ...value,
+          [question.questionId]: selected.filter(position => preserved.has(question.tokenBank[position])),
+        };
+      });
+    }
+    setRetryReady(value => ({ ...value, [question.questionId]: true }));
+  };
+
+  const requestHelp = async () => {
+    if (!question || !assistanceStep || checking) return;
+    setChecking(true);
+    setCheckError(null);
+    try {
+      const result = await requestLessonAssistance(task.id, question.questionId, assistanceStep as Parameters<typeof requestLessonAssistance>[2]);
+      setAssistanceContent(value => ({ ...value, [question.questionId]: result.content }));
+      setAssistanceSteps(value => ({
+        ...value, [question.questionId]: [...usedAssistance, result.step],
+      }));
+    } catch (error) {
+      setCheckError(friendlyError(error));
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  const scenarioAction = async (action: "accept" | "choose", sceneObjectId?: string) => {
+    setChecking(true);
+    setCheckError(null);
+    try {
+      const result = await updateMissionScenario(task.id, action, sceneObjectId);
+      const updated = result.tasks.find(item => item.id === task.id)?.publicContent;
+      await onScenarioChange();
+      if (updated?.kind === "grammarLesson") setContentOverride(updated);
+    } catch (error) {
+      setCheckError(friendlyError(error));
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  const skipRolePlay = async () => {
+    const m06Tasks = session?.tasks.filter(item => item.publicContent.missionId === "M06") ?? [task];
+    for (const item of m06Tasks) {
+      if (!taskDone(item)) await actOnTask(item.id, "skip");
+    }
+    onSkipRolePlay();
   };
 
   const submit = async () => {
@@ -362,8 +483,29 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
       <Button variant="quiet" onClick={() => void refetchChecks()}>Retry</Button></div> : null}
     {question ? <div className="learning-section">
       {question.section ? <h2 className="learning-section__title">{question.section}</h2> : null}
+      {isM06 && activeIndex === 0 && isM06ScenarioVisible(content.missionId, content.scenario) ? <Card plain>
+        <section className="mission-scenario" aria-label="Choose your role-play">
+          <div><strong>{content.scenario?.itemLabel}</strong><p>{content.scenario?.prompt}</p></div>
+          <Button variant="secondary" disabled={checking} onClick={() => void scenarioAction("accept")}>Accept</Button>
+          {content.scenario?.alternatives.map(alternative => <Button key={alternative.sceneObjectId}
+            variant="quiet" disabled={checking}
+            onClick={() => void scenarioAction("choose", alternative.sceneObjectId)}>
+            Choose {alternative.label}
+          </Button>)}
+          <Button variant="quiet" disabled={checking || practiceSaving} onClick={() => void skipRolePlay()}>
+            Skip role-play
+          </Button>
+        </section>
+      </Card> : null}
       <Card plain><div className="stack">
         <span className="label muted">Question {activeIndex + 1} of {content.questions.length}</span>
+        {question.dialogue?.length ? <div className="mission-dialogue" aria-label="Conversation so far">
+          {question.dialogue.map((turn, turnIndex) => <p key={`${turn.speaker}-${turnIndex}`}
+            className={`mission-dialogue__turn mission-dialogue__turn--${turn.speaker}`}>
+            <strong>{turn.speaker === "server" ? "Server" : "You"}</strong>
+            <span>{turn.text}</span>
+          </p>)}
+        </div> : null}
         {question.roleplayPremise ? <div className="roleplay-premise" role="note" aria-label={`Role-play: ${question.roleplayPremise}`}>
           <strong>Role-play</strong><p>{question.roleplayPremise}</p>
         </div> : null}
@@ -379,8 +521,18 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
               if (marker) setAnswers(value => ({ ...value, [question.questionId]: marker.option.optionId }));
             } : undefined}
         /></div> : null}
-        <h2>{question.prompt}</h2>
-        {question.translation ? <PromptTranslation text={question.translation} /> : null}
+        {question.audioText && speechAvailable() ? <div className="spread">
+          <p className="muted">{question.listenFirst && !showWritten ? "Listen before reading the prompt." : "Listen to the phrase."}</p>
+          <IconButton label="Play audio" onClick={() => speak(question.audioText ?? "", scene.languageCode)}><SpeakerIcon /></IconButton>
+        </div> : null}
+        {question.listenFirst && !showWritten ? <Button variant="quiet" onClick={() => setRevealedPrompts(value => ({
+          ...value, [question.questionId]: true,
+        }))}>Show written prompt</Button> : null}
+        {showWritten ? <h2>{question.prompt}</h2> : null}
+        {question.translation && showWritten ? <PromptTranslation text={question.translation} /> : null}
+        {slotText && showWritten ? <p className="mission-slot-template">
+          {slotText}
+        </p> : null}
         {question.interactionType === "sentenceBuilding" ? <>
           <div className="sentence-builder__answer" aria-label="Your sentence">
             {tokenIndexes.length ? tokenIndexes.map((tokenIndex, position) => <button key={`${tokenIndex}-${position}`}
@@ -396,41 +548,64 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
                 ...value, [question.questionId]: [...(value[question.questionId] ?? []), tokenIndex],
               }))}>{token}</button>;
           })}</div>
-        </> : <div className="choice-grid">{questionOptions(question, `${task.id}:${question.questionId}`).map(option => {
+        </> : question.interactionType === "textCloze" ? <div className="field">
+          <label className="field__label" htmlFor={`mission-answer-${question.questionId}`}>Your reply</label>
+          <input id={`mission-answer-${question.questionId}`} className="input"
+            placeholder={question.slotTemplate ?? ""}
+            value={answers[question.questionId] ?? ""}
+            disabled={isChecked || checking || saved.isLoading || saved.isError}
+            onChange={event => setAnswers(value => ({ ...value, [question.questionId]: event.target.value }))} />
+        </div> : <div className="choice-grid">{questionOptions(question, `${task.id}:${question.questionId}`).map(option => {
           const result = checks[question.questionId];
           const selected = answers[question.questionId] === option.optionId || result?.answer === option.optionId;
           const correct = result?.isCorrect && selected;
           const incorrect = result && !result.isCorrect && selected;
           const state = correct ? " choice--correct" : incorrect ? " choice--incorrect" : selected ? " choice--selected" : "";
           return <button key={option.optionId} className={`choice${state}`} aria-pressed={selected}
-            disabled={Boolean(result) || checking || saved.isLoading || saved.isError}
+            disabled={(Boolean(result) && !retrying) || checking || saved.isLoading || saved.isError}
             onClick={() => setAnswers(value => ({ ...value, [question.questionId]: option.optionId }))}>
             {optionText(question, option.label)}</button>;
         })}</div>}
-        {checks[question.questionId] ? <>
-          <Feedback tone={checks[question.questionId].isCorrect ? "good" : "warn"}>
-          <p role="status">{checks[question.questionId].isCorrect
-              ? "Correct!"
-              : <>Not quite. The correct answer is <strong>{checks[question.questionId].correctAnswer}</strong>{sentenceEnding(checks[question.questionId].correctAnswer)}</>}</p>
+        {storedCheck && !retrying ? <>
+          <Feedback tone={storedCheck.isCorrect ? "good" : "warn"}>
+            <p role="status">{storedCheck.isCorrect ? "Correct!" : storedCheck.attemptsLeft
+              ? storedCheck.feedback ?? "Not quite. Try another answer."
+              : <>Not quite. The correct answer is <strong>{storedCheck.correctAnswer}</strong>{sentenceEnding(storedCheck.correctAnswer ?? "")}</>}</p>
           </Feedback>
-          <QuestionOutcomeNotes outcome={checks[question.questionId].outcome} />
-          <ReportIssueLink reportType="Grammar answer" fields={[
-            ["Task ID", task.id], ["Question ID", question.questionId], ["Prompt", question.prompt],
-            ["Your answer", checks[question.questionId].answer],
-            ["Displayed solution", checks[question.questionId].correctAnswer],
-          ]} />
+          {storedCheck.isCorrect || !storedCheck.attemptsLeft
+            ? <QuestionOutcomeNotes outcome={storedCheck.outcome} /> : null}
+          {isM06 && !storedCheck.isCorrect && (storedCheck.attemptsLeft ?? 0) > 0
+            ? <Button variant="secondary" onClick={retry}>Try again</Button> : null}
         </> : null}
+        {assistanceContent[question.questionId] ? <Feedback>
+          <p role="status">{assistanceContent[question.questionId]}</p>
+        </Feedback> : null}
+        {isM06 && assistanceStep && !terminal
+          && !(storedCheck && (storedCheck.isCorrect || storedCheck.attemptsLeft === 0))
+          ? <Button variant="quiet" disabled={checking || practiceSaving}
+          onClick={() => void requestHelp()}>
+          Need help? {assistanceStep === "replayAudio" ? "Replay audio"
+            : assistanceStep === "visualDetail" ? "See a visual detail"
+              : assistanceStep === "phraseOnset" ? "Get the phrase opening"
+                : assistanceStep === "chunkBank" ? "Show a chunk bank" : "Show the full model"}
+        </Button> : null}
+        {storedCheck && (!storedCheck.isCorrect || storedCheck.correctAnswer) ? <ReportIssueLink reportType="Grammar answer" fields={[
+          ["Task ID", task.id], ["Question ID", question.questionId], ["Prompt", question.prompt],
+          ["Your answer", storedCheck.answer], ["Displayed solution", storedCheck.correctAnswer],
+        ]} /> : null}
       </div></Card>
     </div> : null}
     {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
     {checkError ? <p role="alert">{checkError}</p> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {earnedText ? <Feedback><p role="status">{earnedText}</p></Feedback> : null}
-    {terminal ? <Button block onClick={onNext}>{index < total - 1 ? "Next task" : lastStep}</Button> : question && !isChecked
-      ? <Button block disabled={!answer || checking || saved.isLoading || saved.isError || practiceSaving} onClick={() => void check()}>Check answer</Button>
-      : question && activeIndex < content.questions.length - 1
-        ? <Button block disabled={checking || practiceSaving} onClick={() => setActiveIndex(activeIndex + 1)}>Next question</Button>
-        : <Button block disabled={!allChecked || checking || practiceSaving} onClick={() => void submit()}>Finish task</Button>}
+    {terminal ? <Button block onClick={onNext}>{index < total - 1 ? "Next task" : lastStep}</Button>
+      : question && !isChecked
+        ? <Button block disabled={!answer || checking || saved.isLoading || saved.isError || practiceSaving}
+          onClick={() => void check()}>{retrying ? "Check again" : "Check answer"}</Button>
+        : question && activeIndex < content.questions.length - 1
+          ? <Button block disabled={checking || practiceSaving} onClick={() => setActiveIndex(activeIndex + 1)}>Next question</Button>
+          : <Button block disabled={!allChecked || checking || practiceSaving} onClick={() => void submit()}>Finish task</Button>}
     {!terminal ? <Button variant="quiet" block disabled={practiceSaving || checking}
       onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip task</Button> : null}
     <BackToTasks onClose={onClose} />
@@ -483,7 +658,12 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
     const stored = savedChecks.data.checks;
     setAnswers(value => ({ ...value, ...Object.fromEntries(stored.map(item => [item.questionId, item.answer])) }));
     setQuestionResults(value => ({ ...value, ...Object.fromEntries(stored.map(item => [item.questionId, item.isCorrect])) }));
-    setCorrectAnswers(value => ({ ...value, ...Object.fromEntries(stored.map(item => [item.questionId, item.correctAnswer])) }));
+    setCorrectAnswers(value => ({
+      ...value,
+      ...Object.fromEntries(stored.flatMap(item => item.correctAnswer === null
+        ? []
+        : [[item.questionId, item.correctAnswer]])),
+    }));
     setOutcomes(value => ({ ...value, ...Object.fromEntries(stored.map(item => [item.questionId, item.outcome])) }));
     setActiveIndex(visibleLessonQuestionIndex(content.questions.map(item => item.questionId), Object.fromEntries(stored.map(item => [item.questionId, item]))));
   }, [savedChecks.data, content]);
@@ -503,7 +683,10 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
     try {
       const result = await checkLessonAnswer(task.id, activeQuestion.questionId, activeAnswer);
       setQuestionResults(value => ({ ...value, [result.questionId]: result.isCorrect }));
-      setCorrectAnswers(value => ({ ...value, [result.questionId]: result.correctAnswer }));
+      const correctAnswer = result.correctAnswer;
+      if (correctAnswer !== null) {
+        setCorrectAnswers(value => ({ ...value, [result.questionId]: correctAnswer }));
+      }
       setOutcomes(value => ({ ...value, [result.questionId]: result.outcome }));
       playAnswerSound(result.isCorrect);
     } catch (error) {

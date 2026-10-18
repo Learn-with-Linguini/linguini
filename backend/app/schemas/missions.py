@@ -30,7 +30,8 @@ class PhotoRequirements(ApiModel):
     media_sources: Annotated[list[MediaSource], Field(min_length=1)]
     min_confirmed_objects: Annotated[int, Field(ge=1)]
     eligibility_rule: Literal[
-        "describeScene", "findTarget", "compareQuantities", "fictionalOwnership"
+        "describeScene", "findTarget", "compareQuantities", "fictionalOwnership",
+        "requestableItem",
     ] | None = None
     min_coloured_objects: Annotated[int, Field(ge=0)] = 0
     min_relations: Annotated[int, Field(ge=0)] = 0
