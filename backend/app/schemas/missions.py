@@ -3,11 +3,18 @@
 from __future__ import annotations
 
 from typing import Annotated, Literal
+from uuid import UUID
 
 from pydantic import Field, model_validator
 
 from app.schemas.base import ApiModel, LanguageCode, NonEmptyText
 from app.schemas.enums import MediaSource, ProficiencyLevel, SceneRelationType, TaskKind
+from app.schemas.mission_content import (
+    A0MissionSnapshot as A0MissionSnapshot,
+)
+from app.schemas.mission_content import (
+    TaughtChunk as TaughtChunk,
+)
 from app.schemas.tasks import (
     ClueFrameId,
     ContentVersion,
@@ -17,6 +24,36 @@ from app.schemas.tasks import (
     QuestionEvaluation,
     SupportKind,
 )
+
+
+class OwnershipChoice(ApiModel):
+    scene_object_id: UUID
+    pretend: bool = False
+
+
+class PreferenceChoice(ApiModel):
+    scene_object_ids: Annotated[list[UUID], Field(min_length=1, max_length=2)]
+    chosen_object_id: UUID | None = None
+    reaction: Literal["like", "dislike", "skip"] | None = None
+
+    @model_validator(mode="after")
+    def validate_choice(self) -> PreferenceChoice:
+        _unique(self.scene_object_ids, "sceneObjectIds cannot repeat")
+        if len(self.scene_object_ids) == 2:
+            if self.chosen_object_id not in self.scene_object_ids:
+                raise ValueError("Choose one of the compared objects.")
+        elif self.chosen_object_id is not None:
+            raise ValueError("A single object cannot have a chosenObjectId.")
+        if len(self.scene_object_ids) == 1 and self.reaction is None:
+            raise ValueError("Choose how you feel about the object.")
+        if len(self.scene_object_ids) == 2 and self.reaction in {"dislike", "skip"}:
+            raise ValueError("Choosing between objects is a like reaction.")
+        return self
+
+
+class MissionChoices(ApiModel):
+    ownership: OwnershipChoice | None = None
+    preference: PreferenceChoice | None = None
 
 
 def _unique(values, message):
@@ -30,7 +67,8 @@ class PhotoRequirements(ApiModel):
     media_sources: Annotated[list[MediaSource], Field(min_length=1)]
     min_confirmed_objects: Annotated[int, Field(ge=1)]
     eligibility_rule: Literal[
-        "describeScene", "findTarget", "compareQuantities", "fictionalOwnership"
+        "describeScene", "findTarget", "compareQuantities", "fictionalOwnership",
+        "requestableItem",
     ] | None = None
     min_coloured_objects: Annotated[int, Field(ge=0)] = 0
     min_relations: Annotated[int, Field(ge=0)] = 0

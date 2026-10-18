@@ -14,6 +14,8 @@ MISSION_LANGUAGES = {"es", "fr", "de"}
 M01_A0 = ("M01", "A0", 1)
 M02_A0 = ("M02", "A0", 1)
 M03_A0 = ("M03", "A0", 1)
+M04_A0 = ("M04", "A0", 1)
+M05_A0 = ("M05", "A0", 1)
 M13_A0 = ("M13", "A0", 1)
 M01_A1 = ("M01", "A1", 1)
 M02_A1 = ("M02", "A1", 2)
@@ -24,18 +26,19 @@ M01_A2 = ("M01", "A2", 1)
 M02_A2 = ("M02", "A2", 1)
 M03_A2 = ("M03", "A2", 1)
 M04_A2 = ("M04", "A2", 1)
+M06_A2 = ("M06", "A2", 1)
 # Implemented variants per stored proficiency level, in catalogue order; a lesson
 # assesses at most three. Only the active profile's ``proficiency_level`` selects them.
 IMPLEMENTED_MISSIONS = {
-    "A0": (M01_A0, M02_A0, M03_A0, M13_A0),
+    "A0": (M01_A0, M02_A0, M03_A0, M04_A0, M05_A0, M13_A0),
     "A1": (M01_A1, M02_A1, M03_A1, M04_A1, M05_A1),
-    "A2": (M01_A2, M02_A2, M03_A2, M04_A2),
+    "A2": (M01_A2, M02_A2, M03_A2, M04_A2, M06_A2),
 }
 MAX_LESSON_MISSIONS = {"A0": 3, "A1": 3, "A2": 4}
 # A0 missions use reviewed closed content, which includes Korean.
 LEVEL_LANGUAGES = {
     "A0": {"es", "fr", "de", "ko"},
-    "A2": A2_ENABLED_LANGUAGES,
+    "A2": A2_ENABLED_LANGUAGES | {"de", "ko"},
 }
 
 # Reviewed singular attributive colour forms for each supported lesson language.
@@ -162,19 +165,34 @@ def lesson_missions(session_mode, profile):
         return []
     level = str(profile["proficiency_level"] or "").strip().upper()
     languages = LEVEL_LANGUAGES.get(level, MISSION_LANGUAGES)
-    if profile["target_language_code"].lower() not in languages:
+    language = profile["target_language_code"].lower()
+    if language not in languages:
         return []
     keys = IMPLEMENTED_MISSIONS.get(level, ())
-    return [mission for key in keys if (mission := get_mission(*key)) is not None]
+    return [
+        mission for key in keys
+        if (mission := get_mission(*key)) is not None
+        and (
+            language in {"es", "fr"}
+            if mission.mission_id in {"M01", "M02", "M03", "M04"} and level == "A2"
+            else language in {"es", "fr", "de", "ko"}
+            if mission.mission_id == "M06" and level == "A2"
+            else True
+        )
+    ]
 
 
-def plan_missions(candidates, objects, relations, counted_groups=(), history=()):
+def plan_missions(
+    candidates, objects, relations, counted_groups=(), history=(), mission_choices=None,
+):
     """Select least-planned eligible missions, returning them in catalogue order."""
     if not candidates:
         return []
     eligible = [
         mission for mission in candidates
-        if photo_eligibility(mission, objects, relations, counted_groups).eligible
+        if photo_eligibility(
+            mission, objects, relations, counted_groups, mission_choices
+        ).eligible
     ]
     counts = Counter(history)
     cap = MAX_LESSON_MISSIONS.get(str(candidates[0].practice_level), 3)
@@ -182,7 +200,11 @@ def plan_missions(candidates, objects, relations, counted_groups=(), history=())
         mission.mission_id
         for _index, mission in sorted(
             enumerate(eligible),
-            key=lambda item: (counts[item[1].mission_id], item[0]),
+            key=lambda item: (
+                not _mission_choice_supplied(item[1], mission_choices),
+                counts[item[1].mission_id],
+                item[0],
+            ),
         )[:cap]
     }
     return [mission for mission in eligible if mission.mission_id in selected]
@@ -217,6 +239,30 @@ def provisional_mission_focus(candidates, objects, relations):
     """
     counts = suggested_counted_groups(objects)
     plan = plan_missions(candidates, objects, relations, counts)
+    if candidates and str(candidates[0].practice_level) == "A0":
+        planned_keys = {
+            (mission.mission_id, str(mission.practice_level), mission.content_version)
+            for mission in plan
+        }
+        for mission in candidates:
+            key = (
+                mission.mission_id, str(mission.practice_level), mission.content_version,
+            )
+            if (
+                str(mission.practice_level) == "A0"
+                and mission.mission_id in {"M04", "M05"}
+                and key not in planned_keys
+                and photo_eligibility(
+                    mission, objects, relations, counts, mission_choices=None,
+                ).eligible
+            ):
+                planned_keys.add(key)
+        plan = [
+            mission for mission in candidates
+            if (
+                mission.mission_id, str(mission.practice_level), mission.content_version,
+            ) in planned_keys
+        ]
     selected = []
 
     def add(object_id):
@@ -375,7 +421,9 @@ def attribute_contrasts(kind, value):
     return REVIEWED_ATTRIBUTES.get(kind, {}).get(value, {}).get("contrasts", ())
 
 
-def photo_eligibility(mission, objects, relations=(), counted_groups=()):
+def photo_eligibility(
+    mission, objects, relations=(), counted_groups=(), mission_choices=None,
+):
     """Check only the confirmed facts this mission's photo requirements name."""
     requirements = mission.photo_requirements
     labels = {obj.label.strip().casefold() for obj in objects}
@@ -411,11 +459,32 @@ def photo_eligibility(mission, objects, relations=(), counted_groups=()):
             requirements.eligibility_rule, mission, objects, relations, counted_groups,
         ))
     if str(mission.practice_level) == "A0":
-        reasons += a0_photo_reasons(mission, objects, counted_groups)
+        reasons += a0_photo_reasons(mission, objects, counted_groups, mission_choices)
     return Eligibility(not reasons, tuple(reasons))
 
 
-def a0_photo_reasons(mission, objects, counted_groups=()):
+def _choice_value(choice, name):
+    if not isinstance(choice, dict):
+        return None
+    return choice.get(name, choice.get({
+        "scene_object_id": "sceneObjectId",
+        "scene_object_ids": "sceneObjectIds",
+        "chosen_object_id": "chosenObjectId",
+    }.get(name, name)))
+
+
+def _mission_choice_supplied(mission, mission_choices):
+    if not isinstance(mission_choices, dict):
+        return False
+    choices = mission_choices.get("missionChoices", mission_choices)
+    if mission.mission_id == "M04":
+        return bool(choices.get("ownership"))
+    if mission.mission_id == "M05":
+        return bool(choices.get("preference"))
+    return False
+
+
+def a0_photo_reasons(mission, objects, counted_groups=(), mission_choices=None):
     """A0 missions need reviewed nouns: 2-3 distinct objects, or one group of 2 or 3."""
     from app.services.a0_lexicon import REVIEWED_NOUNS
 
@@ -436,6 +505,26 @@ def a0_photo_reasons(mission, objects, counted_groups=()):
         return []
     if len(labels) < 2:
         return ["Confirm at least 2 different objects with taught names."]
+    if mission.mission_id in {"M04", "M05"} and mission_choices is not None:
+        choices = mission_choices.get("missionChoices", mission_choices)
+        by_id = {str(obj.id): obj for obj in objects}
+        if mission.mission_id == "M04":
+            ownership = choices.get("ownership") or {}
+            object_id = str(_choice_value(ownership, "scene_object_id") or "")
+            if object_id not in by_id or not reviewed(by_id[object_id].label):
+                return ["Tell Linguini which object is yours."]
+        else:
+            preference = choices.get("preference") or {}
+            compared = _choice_value(preference, "scene_object_ids") or []
+            chosen = _choice_value(preference, "chosen_object_id")
+            focus_id = str(chosen if len(compared) == 2 else compared[0] if compared else "")
+            reaction = preference.get("reaction")
+            if (
+                focus_id not in by_id
+                or not reviewed(by_id[focus_id].label)
+                or reaction == "skip"
+            ):
+                return ["Tell Linguini what you would choose."]
     return []
 
 

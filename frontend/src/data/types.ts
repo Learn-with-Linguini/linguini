@@ -96,3 +96,59 @@ export type Streak = {
   current: number;
   days: StreakDay[];
 };
+
+export interface OwnershipChoice {
+  sceneObjectId: string;
+  pretend: boolean;
+}
+
+export interface PreferenceChoice {
+  sceneObjectIds: string[];
+  chosenObjectId: string | null;
+  reaction: "like" | "dislike" | "skip" | null;
+}
+
+export interface MissionChoices {
+  ownership?: OwnershipChoice | null;
+  preference?: PreferenceChoice | null;
+}
+
+export interface TaughtChunk {
+  text: string;
+  translation: string;
+}
+
+export interface A0MissionSnapshot {
+  missionId: "M04" | "M05";
+  level: "A0";
+  situation: "lostAndFound" | "everydayChoice";
+  taughtChunks: TaughtChunk[];
+  ownedObjectId?: string | null;
+  pretend?: boolean | null;
+  preferenceObjectIds?: string[] | null;
+  chosenObjectId?: string | null;
+  reaction?: "like" | "dislike" | null;
+}
+
+export interface MissionDialogueTurn {
+  speaker: "server" | "linguini" | "learner";
+  text: string;
+  translation?: string | null;
+}
+
+export interface MissionQuestionOutcome {
+  text: string;
+  kind: "returned" | "basket" | "leftBehind";
+  sceneObjectId: string;
+}
+
+export interface MissionQuestionFields {
+  gapType?: "chunkChoice" | "pictureToBlank" | "audioGap" | "dialogueGap" | "typedGap" | null;
+  dialogue?: MissionDialogueTurn[] | null;
+  optionObjectIds?: Record<string, string> | null;
+  optionIcons?: Record<string, "belongs" | "likes" | "like" | "dislike"> | null;
+  completeTranslation?: string | null;
+  outcome?: MissionQuestionOutcome | null;
+  correctNote?: string | null;
+  typedAllowed?: boolean | null;
+}

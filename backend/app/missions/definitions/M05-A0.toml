@@ -1,0 +1,70 @@
+mission_id = "M05"
+practice_level = "A0"
+content_version = 1
+title = "Pick what you like"
+
+[photo_requirements]
+media_sources = ["preloaded", "camera", "userUpload"]
+min_confirmed_objects = 2
+
+[objective]
+objective_id = "preference"
+can_do = "I can tell Linguini what familiar object I like or choose."
+
+[[objective.targets]]
+target_id = "recognise-preference"
+summary = "Recognize whether someone likes a familiar object."
+evidence_types = ["recognition"]
+
+[[objective.targets]]
+target_id = "say-preference"
+summary = "Choose a phrase that says what familiar object I like or choose."
+evidence_types = ["recognition"]
+
+[[language_patterns]]
+pattern_id = "recognise-preference"
+target_id = "recognise-preference"
+structure = "Do you like [object]?"
+examples = { es = ["¿Te gusta la manzana?"], fr = ["Tu aimes la pomme ?"], de = ["Magst du den Apfel?"], ko = ["사과를 좋아해요?"] }
+
+[[language_patterns]]
+pattern_id = "say-preference"
+target_id = "say-preference"
+structure = "I like [object] / I choose [object]"
+examples = { es = ["Me gusta la manzana.", "Elijo el libro."], fr = ["J'aime la pomme.", "Je choisis le livre."], de = ["Ich mag den Apfel.", "Ich nehme das Buch."], ko = ["사과를 좋아해요.", "책을 골라요."] }
+
+[teaching]
+task_sequence = ["vocabularyIntroduction", "grammarLesson"]
+teach_before_assessment = ["recognise-preference", "say-preference"]
+max_new_words = 3
+
+[[teaching.supports]]
+support = "translation"
+availability = "onRequest"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "audio"
+availability = "always"
+counts_as_assistance = false
+
+[[evaluation_criteria]]
+criterion_id = "recognise-preference"
+target_id = "recognise-preference"
+description = "Recognizes whether someone likes a familiar object."
+evidence_types = ["recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "say-preference"
+target_id = "say-preference"
+description = "Chooses a phrase that says what familiar object I like or choose."
+evidence_types = ["recognition"]
+
+[expected_performance]
+min_assessed_questions = 4
+min_correct_ratio = 0.67
+min_independent_correct = 2
+required_target_groups = [
+  ["recognise-preference"],
+  ["say-preference"],
+]

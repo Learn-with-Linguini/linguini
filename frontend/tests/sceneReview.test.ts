@@ -12,5 +12,7 @@ test("the review exposes only fact types required by candidate missions", () => 
   assert.deepEqual(sceneReviewPanels([{ missionId: "M03" }]), ["objects"]);
   assert.deepEqual(sceneReviewPanels([{ missionId: "M01" }, { missionId: "M02" }]), ["objects", "attributes", "relations"]);
   assert.deepEqual(sceneReviewPanels([{ missionId: "M01" }]), ["objects", "attributes"]);
+  assert.deepEqual(sceneReviewPanels([{ missionId: "M04", practiceLevel: "A0" }]), ["objects", "choices"]);
+  assert.deepEqual(sceneReviewPanels([{ missionId: "M04", practiceLevel: "A1" }]), ["objects"]);
   assert.deepEqual(sceneReviewPanels(undefined), ["objects", "attributes", "relations"]);
 });
