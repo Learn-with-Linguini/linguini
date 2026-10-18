@@ -70,7 +70,7 @@ export function SessionSummary() {
   return <div className="stack">
     {session?.session.status === "inProgress" ? <Button onClick={() => navigate(sessionDestination(session).path)}>Continue unfinished practice</Button> : null}
     <div className="center-text stack-2" style={{ alignItems: "center" }}>
-      <img className="mascot" src="/linguini-logo.png" width={120} height={120} alt="Linguini mascot" /><h1>{completed ? "Good job!" : "Your session"}</h1><Noodle className="noodle-divider summary__noodle" />
+      <img className="mascot" src="/linguini-logo-cool.png" width={120} height={120} alt="Linguini smiling in sunglasses" /><h1>{completed ? "Good job!" : "Your session"}</h1><Noodle className="noodle-divider summary__noodle" />
       <p className="muted">You practised {scene.title.toLowerCase()}.</p>
     </div>
     {loading ? <LoadingScreen label="Loading your results…" /> : null}
