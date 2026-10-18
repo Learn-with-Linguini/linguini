@@ -7,26 +7,36 @@ from dataclasses import dataclass
 from app.missions import get_mission
 from app.schemas.enums import SessionMode
 from app.services.ispy_clue_frames import COLOUR_ATTRIBUTE_TYPES, GENDERS, POSITIONS
+from app.services.mission_language_a2 import A2_ENABLED_LANGUAGES
 
+MISSION_LANGUAGES = {"es", "fr", "de"}
+
+M01_A0 = ("M01", "A0", 1)
+M02_A0 = ("M02", "A0", 1)
+M03_A0 = ("M03", "A0", 1)
+M13_A0 = ("M13", "A0", 1)
 M01_A1 = ("M01", "A1", 1)
 M02_A1 = ("M02", "A1", 2)
 M03_A1 = ("M03", "A1", 1)
 M04_A1 = ("M04", "A1", 1)
 M05_A1 = ("M05", "A1", 1)
-M01_A0 = ("M01", "A0", 1)
-M02_A0 = ("M02", "A0", 1)
-M03_A0 = ("M03", "A0", 1)
-M13_A0 = ("M13", "A0", 1)
+M01_A2 = ("M01", "A2", 1)
+M02_A2 = ("M02", "A2", 1)
+M03_A2 = ("M03", "A2", 1)
+M04_A2 = ("M04", "A2", 1)
 # Implemented variants per stored proficiency level, in catalogue order; a lesson
 # assesses at most three. Only the active profile's ``proficiency_level`` selects them.
 IMPLEMENTED_MISSIONS = {
     "A0": (M01_A0, M02_A0, M03_A0, M13_A0),
     "A1": (M01_A1, M02_A1, M03_A1, M04_A1, M05_A1),
+    "A2": (M01_A2, M02_A2, M03_A2, M04_A2),
 }
-MAX_LESSON_MISSIONS = 3
-MISSION_LANGUAGES = {"es", "fr", "de"}
+MAX_LESSON_MISSIONS = {"A0": 3, "A1": 3, "A2": 4}
 # A0 missions use reviewed closed content, which includes Korean.
-LEVEL_LANGUAGES = {"A0": {"es", "fr", "de", "ko"}}
+LEVEL_LANGUAGES = {
+    "A0": {"es", "fr", "de", "ko"},
+    "A2": A2_ENABLED_LANGUAGES,
+}
 
 # Reviewed singular attributive colour forms for each supported lesson language.
 REVIEWED_COLOURS = {
@@ -160,17 +170,20 @@ def lesson_missions(session_mode, profile):
 
 def plan_missions(candidates, objects, relations, counted_groups=(), history=()):
     """Select least-planned eligible missions, returning them in catalogue order."""
+    if not candidates:
+        return []
     eligible = [
         mission for mission in candidates
         if photo_eligibility(mission, objects, relations, counted_groups).eligible
     ]
     counts = Counter(history)
+    cap = MAX_LESSON_MISSIONS.get(str(candidates[0].practice_level), 3)
     selected = {
         mission.mission_id
         for _index, mission in sorted(
             enumerate(eligible),
             key=lambda item: (counts[item[1].mission_id], item[0]),
-        )[:MAX_LESSON_MISSIONS]
+        )[:cap]
     }
     return [mission for mission in eligible if mission.mission_id in selected]
 
@@ -391,6 +404,12 @@ def photo_eligibility(mission, objects, relations=(), counted_groups=()):
             f"Count a group of {requirements.min_quantity} to {requirements.max_quantity} "
             "matching objects."
         )
+    if requirements.eligibility_rule:
+        from app.services.mission_eligibility_a2 import eligibility_reasons
+
+        reasons.extend(eligibility_reasons(
+            requirements.eligibility_rule, mission, objects, relations, counted_groups,
+        ))
     if str(mission.practice_level) == "A0":
         reasons += a0_photo_reasons(mission, objects, counted_groups)
     return Eligibility(not reasons, tuple(reasons))

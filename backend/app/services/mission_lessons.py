@@ -119,8 +119,12 @@ def build_mission_task(
                         dict(option_id=option.option_id, label=option.label)
                         for option in question.options
                     ],
-                    # A full-stop tile adds nothing; grading ignores the final stop.
-                    token_bank=[token for token in question.token_bank if token != "."],
+                    token_bank=(
+                        question.token_bank
+                        if mission.practice_level == "A2"
+                        and any(" " in chunk for chunk in question.answer_chunks)
+                        else [token for token in question.token_bank if token != "."]
+                    ),
                     translation=question.translation,
                     **shown(question),
                 )

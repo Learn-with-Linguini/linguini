@@ -90,3 +90,5 @@ export const builtSentence = (tokens: readonly string[]) => tokens.reduce((value
   const joinsPrevious = /^[,.;:!?…]$/.test(token) || value.endsWith("'");
   return value ? `${value}${joinsPrevious ? "" : " "}${token}` : token;
 }, "");
+
+export const sentenceEnding = (answer: string) => /[.!?]$/.test(answer) ? "" : ".";

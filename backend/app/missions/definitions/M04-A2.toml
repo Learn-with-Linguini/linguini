@@ -1,0 +1,100 @@
+mission_id = "M04"
+practice_level = "A2"
+content_version = 1
+title = "Identify your belonging clearly"
+
+[photo_requirements]
+media_sources = ["preloaded", "camera", "userUpload"]
+min_confirmed_objects = 2
+eligibility_rule = "fictionalOwnership"
+
+[objective]
+objective_id = "identify-belonging-a2"
+can_do = "I can identify a fictional belonging using a possessive and a confirmed detail."
+
+[[objective.targets]]
+target_id = "identify-owned-object"
+summary = "Find the assigned object from a confirmed detail."
+evidence_types = ["objectSelection", "recognition"]
+
+[[objective.targets]]
+target_id = "use-possessive"
+summary = "Choose a possessive form that agrees with the object."
+evidence_types = ["recognition"]
+
+[[objective.targets]]
+target_id = "clarify-ownership"
+summary = "Clarify whether an alternative object belongs to the learner."
+evidence_types = ["recognition"]
+
+[[objective.targets]]
+target_id = "describe-belonging"
+summary = "Build a clear description of the assigned object."
+evidence_types = ["construction"]
+
+[[language_patterns]]
+pattern_id = "possessive-belonging"
+target_id = "use-possessive"
+structure = "[possessive] [noun] [reviewed detail]."
+examples = { es = ["Mi taza es roja."], fr = ["Ma tasse est rouge."] }
+
+[[language_patterns]]
+pattern_id = "clarify-belonging"
+target_id = "clarify-ownership"
+structure = "[no] [article] [noun] [belongs to] [role-play owner]."
+examples = { es = ["No, es la taza de Marta."], fr = ["Non, c'est la tasse de Léa."] }
+
+[teaching]
+task_sequence = ["vocabularyIntroduction", "grammarLesson"]
+teach_before_assessment = ["identify-owned-object", "use-possessive", "describe-belonging"]
+max_new_words = 6
+
+[[teaching.supports]]
+support = "translation"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "wordBank"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "hint"
+availability = "onRequest"
+counts_as_assistance = true
+
+[[evaluation_criteria]]
+criterion_id = "assigned-object-matches"
+target_id = "identify-owned-object"
+description = "Selects the object assigned to the learner in the role-play."
+evidence_types = ["objectSelection", "recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "possessive-agrees"
+target_id = "use-possessive"
+description = "Chooses the possessive that agrees with the assigned object's noun."
+evidence_types = ["recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "ownership-clarified"
+target_id = "clarify-ownership"
+description = "Correctly clarifies a fictional ownership assignment."
+evidence_types = ["recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "belonging-described"
+target_id = "describe-belonging"
+description = "Builds a clear sentence using the assigned object and confirmed detail."
+evidence_types = ["construction"]
+
+[expected_performance]
+min_assessed_questions = 5
+min_correct_ratio = 0.75
+min_independent_correct = 2
+required_target_groups = [
+  ["identify-owned-object"],
+  ["use-possessive"],
+  ["clarify-ownership"],
+  ["describe-belonging"],
+]

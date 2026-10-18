@@ -1,0 +1,103 @@
+mission_id = "M03"
+practice_level = "A2"
+content_version = 1
+title = "Describe and compare quantities"
+
+[photo_requirements]
+media_sources = ["preloaded", "camera", "userUpload"]
+min_confirmed_objects = 2
+min_counted_groups = 2
+min_quantity = 2
+max_quantity = 10
+eligibility_rule = "compareQuantities"
+
+[objective]
+objective_id = "compare-quantities-a2"
+can_do = "I can describe two counted groups and compare their quantities."
+
+[[objective.targets]]
+target_id = "understand-counts"
+summary = "Understand the confirmed number of objects in a group."
+evidence_types = ["recognition"]
+
+[[objective.targets]]
+target_id = "describe-counts"
+summary = "State a confirmed quantity with the reviewed plural noun."
+evidence_types = ["construction", "recognition"]
+
+[[objective.targets]]
+target_id = "compare-counts"
+summary = "Compare two different confirmed quantities."
+evidence_types = ["recognition", "construction"]
+
+[[objective.targets]]
+target_id = "correct-count-mistake"
+summary = "Correct a fictional mistaken count using confirmed quantities."
+evidence_types = ["recognition"]
+
+[[language_patterns]]
+pattern_id = "quantity-statement-a2"
+target_id = "describe-counts"
+structure = "[there are] [number] [plural noun]."
+examples = { es = ["Hay dos libros."], fr = ["Il y a deux livres."] }
+
+[[language_patterns]]
+pattern_id = "quantity-comparison"
+target_id = "compare-counts"
+structure = "[quantity sentence] [more/fewer] [noun] [than] [noun]."
+examples = { es = ["Hay más libros que tazas."], fr = ["Il y a plus de livres que de tasses."] }
+
+[teaching]
+task_sequence = ["vocabularyIntroduction", "grammarLesson"]
+teach_before_assessment = ["understand-counts", "describe-counts", "compare-counts"]
+max_new_words = 6
+
+[[teaching.supports]]
+support = "translation"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "wordBank"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "hint"
+availability = "onRequest"
+counts_as_assistance = true
+
+[[evaluation_criteria]]
+criterion_id = "count-matches-photo"
+target_id = "understand-counts"
+description = "Identifies the confirmed number in a counted group."
+evidence_types = ["recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "quantity-sentence-matches"
+target_id = "describe-counts"
+description = "Uses the confirmed number and reviewed plural."
+evidence_types = ["construction", "recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "comparison-direction-correct"
+target_id = "compare-counts"
+description = "Compares different quantities in the direction supported by the counts."
+evidence_types = ["recognition", "construction"]
+
+[[evaluation_criteria]]
+criterion_id = "count-correction-correct"
+target_id = "correct-count-mistake"
+description = "Corrects a fictional count without changing scene facts."
+evidence_types = ["recognition"]
+
+[expected_performance]
+min_assessed_questions = 5
+min_correct_ratio = 0.75
+min_independent_correct = 2
+required_target_groups = [
+  ["understand-counts"],
+  ["describe-counts"],
+  ["compare-counts"],
+  ["correct-count-mistake"],
+]

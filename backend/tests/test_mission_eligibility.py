@@ -27,7 +27,7 @@ def test_proficiency_level_is_trimmed_and_case_normalized():
     ]
 
 
-@pytest.mark.parametrize("level", ["A2", "B1"])
+@pytest.mark.parametrize("level", ["B1"])
 def test_other_levels_are_not_eligible_even_after_onboarding(level):
     missions = lesson_missions(
         SessionMode.LESSON,
