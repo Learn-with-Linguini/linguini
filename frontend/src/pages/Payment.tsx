@@ -12,6 +12,7 @@ import {
   type SubscriptionStatus,
 } from "../lib/api";
 import { queryKeys } from "../lib/queryKeys";
+import { trackAction } from "../lib/analytics.ts";
 import { useAppState } from "../state/useAppState";
 
 export function Payment() {
@@ -24,6 +25,14 @@ export function Payment() {
   const [error, setError] = useState<string | null>(null);
 
   const paymentStatus = searchParams.get("status");
+
+  useEffect(() => {
+    if (paymentStatus === "success") {
+      trackAction("payment_checkout_completed", { status: "success" });
+    } else if (paymentStatus === "cancelled") {
+      trackAction("payment_checkout_cancelled", { status: "cancelled" });
+    }
+  }, [paymentStatus]);
 
   useEffect(() => {
     let cancelled = false;
@@ -44,6 +53,7 @@ export function Payment() {
   const handleUpgrade = async () => {
     setLoading(true);
     setError(null);
+    trackAction("payment_checkout_started", { tier: "plus", price: "7.99 SGD", currency: "SGD" });
     try {
       const returnUrl = `${window.location.origin}/payment`;
       const res = await createCheckoutSession(returnUrl);
@@ -61,6 +71,7 @@ export function Payment() {
   const handleManage = async () => {
     setLoading(true);
     setError(null);
+    trackAction("payment_portal_opened", { currentTier });
     try {
       const returnUrl = `${window.location.origin}/payment`;
       const res = await createPortalSession(returnUrl);
@@ -78,6 +89,7 @@ export function Payment() {
   const handleDevSwitchTier = async (targetTier: AccountTier) => {
     setSwitchingTier(true);
     setError(null);
+    trackAction("payment_test_tier_switched", { targetTier });
     try {
       await testSetTier(targetTier);
       await queryClient.invalidateQueries({ queryKey: queryKeys.account });
