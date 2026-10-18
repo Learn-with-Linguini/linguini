@@ -1,5 +1,5 @@
 import { GENDER_ARTICLES } from "../data/types.ts";
-import type { Gender, LeaderboardRow, ScenarioProgress, Streak, VocabRecord, VocabularyScene, VocabStatus, WordClass } from "../data/types";
+import type { Gender, LanguageOption, LeaderboardRow, ScenarioProgress, Streak, VocabRecord, VocabularyScene, VocabStatus, WordClass } from "../data/types";
 import type { SceneSummary } from "../data/types";
 import type { JournalEntry } from "../data/types";
 import { getAccessToken, waitForAccessToken } from "./supabase.ts";
@@ -163,6 +163,11 @@ export async function requestBlob(path: string, signal?: AbortSignal): Promise<B
 
 export function getCurrentUser(signal?: AbortSignal): Promise<User> {
   return request<User>("/api/v1/me", signal);
+}
+
+export async function getLanguages(signal?: AbortSignal): Promise<LanguageOption[]> {
+  const response = await request<{ items: LanguageOption[] }>("/api/v1/languages", signal);
+  return response.items;
 }
 
 export function deleteCurrentAccount(): Promise<void> {

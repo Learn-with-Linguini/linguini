@@ -11,6 +11,7 @@ test("profile-scoped keys carry the profile id and differ across profiles", () =
 
 test("keys are stable and serialisable", () => {
   assert.deepEqual(queryKeys.account, ["account"]);
+  assert.deepEqual(queryKeys.languages, ["languages"]);
   assert.deepEqual(queryKeys.scenes, ["scenes"]);
   assert.deepEqual(queryKeys.journal("j1"), ["journal", "j1"]);
   assert.deepEqual(queryKeys.journalDayContext("2026-01-02"), ["journal", "day", "2026-01-02"]);

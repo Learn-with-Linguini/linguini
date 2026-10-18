@@ -571,6 +571,18 @@ lesson.
   feedback. `app/services/mission_registry.py` maps each mission to its payload builder,
   generation spec and task builder.
 
+#### Multilingual M01 contracts
+
+Stage 1's shared M01 contract schemas, fact identifiers, explicit routing, and disabled
+generation boundary are documented in [`docs/multilingual-m01.md`](../docs/multilingual-m01.md).
+Legacy lesson builders and saved lesson data remain unchanged.
+
+#### Languages
+
+The central language registry lives in `app/languages/registry.toml`; see the multilingual
+M01 guide for registration fields and how picker availability is kept separate from
+registered contract languages.
+
 #### M01 A1 lesson path
 
 1. **Lesson** (`M01-A1.toml`; `app/ai/features/learning_tasks/mission_m01.py`,

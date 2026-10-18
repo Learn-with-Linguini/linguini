@@ -12,6 +12,7 @@ from app.ai.features.learning_tasks.mission_m03 import M03_GENERATION
 from app.ai.features.learning_tasks.mission_m04 import M04_GENERATION
 from app.ai.features.learning_tasks.mission_m05 import M05_GENERATION
 from app.missions import get_mission
+from app.missions.m01_multilingual import UnroutedMissionVariant
 from app.services.mission_lessons_a0 import a0_lesson_task, a0_payload, a0_ready
 from app.services.mission_lessons_a2 import a2_mission_spec
 from app.services.mission_lessons_m01 import m01_lesson_task, m01_payload
@@ -131,13 +132,20 @@ def registry_key(mission):
 
 
 def lesson_spec(mission):
-    """Return the level-qualified lesson builder, falling back to the A1 spec."""
+    """Return the explicitly routed lesson builder for this mission level."""
     key = registry_key(mission)
-    return (
-        A0_MISSION_LESSONS.get(key)
-        or A2_MISSION_LESSONS.get(key)
-        or MISSION_LESSONS[mission.mission_id]
-    )
+    level = str(mission.practice_level)
+    if level == "A0":
+        spec = A0_MISSION_LESSONS.get(key)
+    elif level == "A1":
+        spec = MISSION_LESSONS.get(mission.mission_id)
+    elif level == "A2":
+        spec = A2_MISSION_LESSONS.get(key)
+    else:
+        spec = None
+    if spec is None:
+        raise UnroutedMissionVariant(f"no legacy lesson builder for {key}")
+    return spec
 
 
 def lesson_mission(mission):

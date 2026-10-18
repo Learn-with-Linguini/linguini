@@ -1,6 +1,23 @@
 export type WordClass = "noun" | "verb" | "adjective" | "adverb" | "pronoun" | "preposition" | "conjunction" | "interjection" | "determiner" | "phrase" | "other";
 export type VocabStatus = "new" | "learning" | "mastered";
 export type Gender = "la" | "el" | "le" | "l'" | "der" | "die" | "das" | null;
+export type LanguageOption = {
+  code: string;
+  englishName: string;
+  nativeName: string;
+  script: string;
+  direction: "ltr" | "rtl";
+  flag?: string | null;
+  wordSeparator: "space" | "none";
+  learnable: boolean;
+  instruction: boolean;
+  speech: {
+    synthesisLocale: string;
+    synthesis: "browserVoice";
+    recognition: boolean;
+  };
+  features: { missionLevels: string[] };
+};
 /** Definite articles accepted as noun gender values. */
 export const GENDER_ARTICLES: ReadonlySet<string> = new Set([
   "la", "el", "le", "l'", "der", "die", "das",

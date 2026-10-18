@@ -1,27 +1,52 @@
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { OnboardingSteps } from "../components/OnboardingSteps";
+import { ErrorNotice } from "../components/ErrorState";
+import { InlineLoader } from "../components/LoadingScreen";
 import type { OnboardingDraft } from "../lib/onboardingDraft";
-import { languages } from "../config/languages";
+import { learnableLanguages } from "../lib/languages";
+import { queryError } from "../lib/queryKeys";
 import { useAppState } from "../state/useAppState";
-
-const defaultDraft: OnboardingDraft = {
-  name: "", languageCode: languages[0].code, goal: "", minutes: 10,
-  microphoneEnabled: false, cameraEnabled: false, avatar: "farfalle", proficiencyLevel: "A0",
-};
+import { useLanguages } from "../state/useLanguages";
 
 /** Collect preferences once, after a learner has created their account. */
 export function Onboarding() {
   const navigate = useNavigate();
   const location = useLocation();
   const { learner, user, completeOnboarding, profileSaving, profileError } = useAppState();
+  const languagesQuery = useLanguages();
+  const languages = learnableLanguages(languagesQuery.data ?? []);
   const [completionStarted, setCompletionStarted] = useState(false);
   const destination = (location.state as { from?: string } | null)?.from ?? "/home";
   if (user?.onboardingCompleted && !completionStarted) return <Navigate to={destination} replace />;
+  if (languagesQuery.isPending) return <InlineLoader compact label="Loading languages…" />;
+  if (languagesQuery.isError) {
+    return (
+      <ErrorNotice
+        compact
+        message={queryError(languagesQuery.error) ?? "We couldn't load languages. Please try again."}
+        retry={() => void languagesQuery.refetch()}
+        retryLabel="Retry"
+      />
+    );
+  }
+  if (languages.length === 0) {
+    return (
+      <ErrorNotice
+        compact
+        message="No learning languages are available right now."
+        retry={() => void languagesQuery.refetch()}
+        retryLabel="Retry"
+      />
+    );
+  }
+  const selectedLanguage = languages.find(option =>
+    option.code.toLowerCase() === learner.languageCode.toLowerCase()
+  ) ?? languages[0];
   const initial: OnboardingDraft = {
     name: learner.name,
-    languageCode: learner.languageCode || languages[0].code,
-    goal: learner.goal || defaultDraft.goal,
+    languageCode: selectedLanguage.code,
+    goal: learner.goal || "",
     minutes: learner.dailyMinutes ?? 10,
     microphoneEnabled: learner.micOn,
     cameraEnabled: learner.cameraOn,

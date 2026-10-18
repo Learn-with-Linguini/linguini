@@ -1,10 +1,10 @@
 import { InlineLoader } from "../components/LoadingScreen";
+import { ErrorNotice } from "../components/ErrorState";
 import { useEffect, useId, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card, IconButton } from "../components/ui";
 import { ChevronRightIcon, CloseIcon, InstagramIcon, LinkedInIcon, TikTokIcon, XIcon } from "../components/icons";
 import { HelpImproveModal } from "../components/HelpImproveModal";
-import { languages } from "../config/languages";
 import { deleteCurrentAccount } from "../lib/api";
 import { accountTiers } from "../lib/accountTiers";
 import { validatePasswordReset } from "../lib/authMessages.ts";
@@ -13,6 +13,9 @@ import { supabase } from "../lib/supabase.ts";
 import { useAppState } from "../state/useAppState";
 import { useAuth } from "../state/Auth";
 import { GameResources } from "../components/GameResources";
+import { learnableLanguages } from "../lib/languages";
+import { queryError } from "../lib/queryKeys";
+import { useLanguages } from "../state/useLanguages";
 
 const socialIcons = {
   instagram: InstagramIcon,
@@ -36,6 +39,8 @@ export function Profile() {
   const [passwordUpdating, setPasswordUpdating] = useState(false);
   const [surveyOpen, setSurveyOpen] = useState(false);
   const { learner, user, activeProfile, progressLoading, progressError, profileError, profileSaving, setLanguage, saveLanguageProfile, saveUser } = useAppState();
+  const languagesQuery = useLanguages();
+  const languages = learnableLanguages(languagesQuery.data ?? []);
   const tier = accountTiers[user?.tier ?? "beta"];
 
   useEffect(() => {
@@ -154,19 +159,38 @@ export function Profile() {
       <section className="profile-section">
         <h2>Learning setup</h2>
         <Card plain className="profile-settings-card">
-          <label className="profile-setting">
-            <span>
-              <strong>Target language</strong>
-              <small>The language you are learning</small>
-            </span>
-            <select disabled={profileSaving} value={learner.languageCode} onChange={event => void setLanguage(event.target.value, learner.dailyMinutes ?? 10)}>
-              {languages.map(language => (
-                <option key={language.code} value={language.code}>
-                  {language.flag} {language.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          {languagesQuery.isPending || languagesQuery.isError || languages.length === 0 ? (
+            <div className="profile-setting">
+              <span>
+                <strong>Target language</strong>
+                <small>The language you are learning</small>
+              </span>
+              {languagesQuery.isPending ? (
+                <InlineLoader compact label="Loading languages…" />
+              ) : (
+                <ErrorNotice
+                  compact
+                  message={queryError(languagesQuery.error) ?? "We couldn't load languages. Please try again."}
+                  retry={() => void languagesQuery.refetch()}
+                  retryLabel="Retry"
+                />
+              )}
+            </div>
+            ) : (
+            <label className="profile-setting">
+              <span>
+                <strong>Target language</strong>
+                <small>The language you are learning</small>
+              </span>
+              <select disabled={profileSaving} value={learner.languageCode} onChange={event => void setLanguage(event.target.value, learner.dailyMinutes ?? 10)}>
+                {languages.map(language => (
+                  <option key={language.code} value={language.code}>
+                    {language.flag} {language.englishName}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
 
           <label className="profile-setting">
             <span>
