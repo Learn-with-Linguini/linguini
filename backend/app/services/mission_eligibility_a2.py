@@ -143,4 +143,10 @@ def eligibility_reasons(rule, mission, objects, relations, counted_groups):
         return _compare_quantities(mission, counted_groups)
     if rule == "fictionalOwnership":
         return _fictional_ownership(objects, rows)
+    if rule == "requestableItem":
+        from app.services.mission_m06_lexicon import requestable_objects
+
+        if requestable_objects(objects):
+            return []
+        return ["Confirm a food, drink or everyday object you could ask for."]
     return []

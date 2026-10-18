@@ -12,6 +12,7 @@ from app.ai.features.learning_tasks.mission_m02 import M02_GENERATION
 from app.ai.features.learning_tasks.mission_m03 import M03_GENERATION
 from app.ai.features.learning_tasks.mission_m04 import M04_GENERATION
 from app.ai.features.learning_tasks.mission_m05 import M05_GENERATION
+from app.ai.features.learning_tasks.mission_m06 import M06_GENERATION
 from app.missions import get_mission
 from app.services.mission_lessons_a0 import a0_lesson_task, a0_payload, a0_ready
 from app.services.mission_lessons_a0_situations import (
@@ -24,6 +25,10 @@ from app.services.mission_lessons_m02 import m02_lesson_task, m02_payload
 from app.services.mission_lessons_m03 import m03_lesson_task, m03_payload
 from app.services.mission_lessons_m04 import m04_lesson_task, m04_payload, m04_ready
 from app.services.mission_lessons_m05 import m05_lesson_task, m05_payload, m05_ready
+from app.services.mission_m06_request_details import (
+    build_m06_lesson,
+    build_m06_tasks,
+)
 
 
 @dataclass(frozen=True)
@@ -151,6 +156,9 @@ A2_MISSION_LESSONS = {
     )
     for mission_id in ("M01", "M02", "M03", "M04")
 }
+A2_MISSION_LESSONS["A2:M06"] = MissionLessonSpec(
+    build_m06_lesson, M06_GENERATION, build_m06_tasks,
+)
 
 
 def registry_key(mission):

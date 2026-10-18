@@ -131,9 +131,9 @@ export interface A0MissionSnapshot {
 }
 
 export interface MissionDialogueTurn {
-  speaker: "linguini" | "learner";
+  speaker: "server" | "linguini" | "learner";
   text: string;
-  translation: string;
+  translation?: string | null;
 }
 
 export interface MissionQuestionOutcome {

@@ -94,7 +94,10 @@ def test_a1_and_a2_profiles_never_get_a0_missions(level):
         SessionMode.LESSON, _profile(level, onboarding_completed=False),
     )
     assert all(str(mission.practice_level) != "A0" for mission in missions)
-    assert lesson_missions(SessionMode.LESSON, _profile(level, "ko")) == []
+    korean_missions = lesson_missions(SessionMode.LESSON, _profile(level, "ko"))
+    assert [mission.mission_id for mission in korean_missions] == (
+        ["M06"] if level == "A2" else []
+    )
 
 
 def test_a0_needs_a_lesson_and_a_stored_a0_level():
