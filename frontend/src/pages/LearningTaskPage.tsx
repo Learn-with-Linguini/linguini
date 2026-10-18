@@ -296,14 +296,14 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
         })()}</p></Feedback>
       </> : null}
       <Button block disabled={!answers[question.questionId]} onClick={finishQuestion}>{questionIndex < content.questions.length - 1 ? "Next question" : "Continue"}</Button>
-    </div></Card>{answers[question.questionId] ? <ReportIssueLink reportType="Vocabulary answer" fields={[
+    </div></Card>{answers[question.questionId] ? <div className="learning-question-report"><ReportIssueLink reportType="Vocabulary answer" fields={[
       ["Task ID", task.id],
       ["Question ID", question.questionId],
       ["Prompt", question.prompt],
       ["Your answer", question.options.find(option => option.optionId === answers[question.questionId])?.label],
       ["Displayed solution", question.options.find(option => option.optionId === correctOptionIds[question.questionId])?.label],
       ["Language", scene.languageCode],
-    ]} /> : null}</> : null}
+    ]} /></div> : null}</> : null}
     {!terminal && stage === "typing" && typingWord ? <Card plain><div className="stack">
       <div><h2>Type “{typingWord.translation}”</h2><p className="muted">Word {typingIndex + 1} of {content.words.length}</p></div>
       <input className="input" aria-label={`Type ${typingWord.translation}`} value={typedAnswers[typingKey] ?? ""} disabled={typingCheck?.isCorrect || typingCheck?.revealed} onChange={event => { setTypedAnswers(value => ({ ...value, [typingKey]: event.target.value })); setTypingCheck(null); }} />
@@ -836,10 +836,10 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
         </Button> : null}
         </>}
       </div></Card>
-      {storedCheck && (!storedCheck.isCorrect || storedCheck.correctAnswer) ? <ReportIssueLink reportType="Grammar answer" fields={[
+      {storedCheck && (!storedCheck.isCorrect || storedCheck.correctAnswer) ? <div className="learning-question-report"><ReportIssueLink reportType="Grammar answer" fields={[
         ["Task ID", task.id], ["Question ID", question.questionId], ["Prompt", question.prompt],
         ["Your answer", storedCheck.answer], ["Displayed solution", storedCheck.correctAnswer],
-      ]} /> : null}
+      ]} /></div> : null}
     </div> : null}
     {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
     {checkError ? <p role="alert">{checkError}</p> : null}
@@ -1077,13 +1077,13 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         </p> : null}
         <QuestionOutcomeNotes outcome={outcomeFor[question.questionId]} />
       </> : null}
-    </div></Card>{results[question.questionId] !== undefined ? <ReportIssueLink reportType="Grammar answer" fields={[
+    </div></Card>{results[question.questionId] !== undefined ? <div className="learning-question-report"><ReportIssueLink reportType="Grammar answer" fields={[
       ["Task ID", task.id],
       ["Question ID", question.questionId],
       ["Prompt", question.translation || question.prompt],
       ["Your answer", answerFor(question)],
       ["Displayed solution", question.options.find(option => option.optionId === solutions[question.questionId])?.label ?? solutions[question.questionId]],
-    ]} /> : null}</div>;
+    ]} /></div> : null}</div>;
     })}
     {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
     {checkError ? <p role="alert">{checkError}</p> : null}

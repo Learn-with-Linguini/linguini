@@ -4781,6 +4781,11 @@ p[role="alert"]::before { content: "!"; }
   color: var(--tomato);
 }
 
+.learning-question-report {
+  display: flex;
+  justify-content: center;
+}
+
 .learning-task-page > .trail {
   margin-bottom: var(--space-2);
 }
