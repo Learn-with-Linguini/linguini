@@ -1,27 +1,22 @@
 import { LoadingScreen } from "../components/LoadingScreen";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Button, Card, Mascot, StatusPill } from "../components/ui";
+import { Button, Card, StatusPill } from "../components/ui";
 import { HelpImproveModal } from "../components/HelpImproveModal";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { useVocabularyQuery } from "../state/queries";
-import { getPracticeSummary, startISpyGame } from "../lib/api";
-import { isMissionSession } from "../lib/practiceTasks";
-import { sessionDestination } from "../lib/sessionRoute";
+import { getPracticeSummary } from "../lib/api";
 import { BasilIcon } from "../components/icons";
-import { gameStartError, queryError, queryKeys } from "../lib/queryKeys";
+import { queryError, queryKeys } from "../lib/queryKeys";
 
 export function SessionSummary() {
   const navigate = useNavigate();
   const scene = useScene();
-  const { session, activeProfile, completionError, retryCompletion } = useAppState();
+  const { session, completionError, retryCompletion } = useAppState();
   const { vocabulary } = useVocabularyQuery(); 
-  const [startingISpy, setStartingISpy] = useState(false);
-  const [startError, setStartError] = useState<string | null>(null);
   const [surveyOpen, setSurveyOpen] = useState(false);
-  const startKey = useRef<string | null>(null);
   // Stats render from the in-flight numbers straight away; the completion
   // mutation invalidates this key so the final Basil total replaces it once it lands.
   const { data, error: queryErrorValue, isPending: loading } = useQuery({
@@ -50,23 +45,6 @@ export function SessionSummary() {
   const revisit = scene.items.filter(item => data?.learnedVocabularyIds.includes(
     session?.sceneObjects.find(object => object.id === item.id)?.vocabularyItemId ?? ""
   )).slice(0, 3);
-  const missionSession = Boolean(session && isMissionSession(session.tasks));
-  const playISpy = async () => {
-    if (!session || !activeProfile || startingISpy) return;
-    setStartingISpy(true);
-    setStartError(null);
-    startKey.current ??= crypto.randomUUID();
-    try {
-      const detail = await startISpyGame(activeProfile.id, session.mediaAsset.id, startKey.current);
-      startKey.current = null;
-      navigate(sessionDestination(detail).path);
-    } catch (reason) {
-      setStartError(gameStartError(reason));
-    } finally {
-      setStartingISpy(false);
-    }
-  };
-  
   const wordsLearned = data?.learnedVocabularyIds.length ?? 0;
   const resultMessage = data
     ? wordsLearned > 0
@@ -75,15 +53,14 @@ export function SessionSummary() {
     : `You practised ${scene.title.toLowerCase()}.`;
 
   return <div className="stack session-summary">
-    {session?.session.status === "inProgress" ? <Button onClick={() => navigate(sessionDestination(session).path)}>Continue unfinished practice</Button> : null}
     <header className="summary-hero">
-      <div className="summary-hero__mascot"><Mascot size={132} expression="happy" /></div>
+      <div className="summary-hero__mascot"><img src="/linguini-logo-cool.png" width={132} height={132} alt="Linguini smiling in sunglasses" /></div>
       <span className="summary-hero__eyebrow">{completed ? "Session complete" : "Session results"}</span>
       <h1>{completed ? "Beautiful work, Chef!" : "Your session"}</h1>
       <p>{resultMessage}</p>
     </header>
     {loading ? <LoadingScreen label="Loading your results…" /> : null}
-    {error || startError ? <p role="alert">{error || startError}</p> : null}
+    {error ? <p role="alert">{error}</p> : null}
     {completionError ? <><p role="alert">{completionError}</p><Button onClick={retryCompletion}>Retry saving your session</Button></> : null}
     {data ? <>
       <div className="summary-results" aria-label="Session results">
