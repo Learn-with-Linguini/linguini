@@ -65,7 +65,7 @@ function FocusShellView() {
   }, [pathname]);
   const { session } = useAuth();
   const backAction = useRegisteredBackAction();
-  const usesWideCanvas = pathname.endsWith("/analysis");
+  const usesWideCanvas = pathname.endsWith("/analysis") || pathname.endsWith("/learn");
 
   return (
     <div className="shell shell--focus">
