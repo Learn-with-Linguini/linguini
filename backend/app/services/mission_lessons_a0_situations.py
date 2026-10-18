@@ -381,9 +381,14 @@ def _build_preference_payload(payload, focus, nouns):
     }
     questions.append(q4)
     q5_like = f["like"] if reaction == "like" else f["dislike"]
+    q5_response = "Yes" if reaction == "like" else "No"
     q5_dialogue = [
         {"speaker": "linguini", "text": f["doYouLike"], "translation": f["englishDoYouLike"]},
-        {"speaker": "learner", "text": f"{yes.rstrip('.')}, ___", "translation": q5_complete},
+        {
+            "speaker": "learner",
+            "text": f"{yes.rstrip('.')}, ___",
+            "translation": f"{q5_response}, ___",
+        },
     ]
     questions.append(_choice_question(
         "M05-Q5", "Finish the conversation.", "Choose the answer that finishes the conversation.",
@@ -391,7 +396,7 @@ def _build_preference_payload(payload, focus, nouns):
         _lower_first(q5_like), "say-preference", payload, salt="q5",
         gap_type="dialogueGap", slot_template=f"{yes.rstrip('.')}, ___",
         complete_chunk=q5_complete,
-        complete_translation=f"{'Yes' if reaction == 'like' else 'No'}, "
+        complete_translation=f"{q5_response}, "
         f"{f['englishLike' if reaction == 'like' else 'englishDislike']}",
         dialogue=q5_dialogue,
     ))

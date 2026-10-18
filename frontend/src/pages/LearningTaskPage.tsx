@@ -298,6 +298,30 @@ function MissionGapIcon({ kind }: { kind: NonNullable<GrammarLessonQuestion["opt
   return <span className="mission-gap__icon" aria-label={label}>{icon}</span>;
 }
 
+function LessonAudioPrompt({ question, languageCode, revealed, graded, onReveal, showAudioText = false }: {
+  question: GrammarLessonQuestion;
+  languageCode: string;
+  revealed: boolean;
+  graded: boolean;
+  onReveal: () => void;
+  showAudioText?: boolean;
+}) {
+  const audio = speechAvailable();
+  const written = writtenPromptShown(question, { revealed, graded, audio });
+  if (!question.audioText) return null;
+  return <>
+    {audio ? <div className="lesson-audio">
+      <IconButton label={question.listenFirst ? "Play the word" : `Hear ${question.audioText}`}
+        onClick={() => speak(question.audioText ?? "", languageCode)}><SpeakerIcon /></IconButton>
+      {question.listenFirst && !written
+        ? <Button variant="quiet" onClick={onReveal}>Show the written word</Button> : null}
+    </div> : null}
+    {question.listenFirst && !audio
+      ? <p className="small muted" role="note">Audio isn't available here, so read the word instead.</p> : null}
+    {showAudioText && written ? <p lang={languageCode}>{question.audioText}</p> : null}
+  </>;
+}
+
 function A0MissionGapQuestion({ question, scene, sceneObjects, selectedOptionId, typedMode,
   typedAnswer, checked, retryPassed, checking, onSelect, onTypedMode, onTypedAnswer, onRetry }: {
   question: GrammarLessonQuestion;
@@ -314,9 +338,11 @@ function A0MissionGapQuestion({ question, scene, sceneObjects, selectedOptionId,
   onTypedAnswer: (value: string) => void;
   onRetry: (optionId: string, correct: boolean) => void;
 }) {
+  const [revealed, setRevealed] = useState(false);
   const solution = checked
     ? question.options.find(option => option.label === checked.correctAnswer)
     : undefined;
+  const correctAnswer = solution?.label ?? checked?.correctAnswer ?? "";
   const selected = question.options.find(option => option.optionId === selectedOptionId);
   const displayedChunk = checked && !checked.isCorrect ? solution?.label ?? checked.correctAnswer
     : checked ? selected?.label ?? solution?.label ?? checked.correctAnswer
@@ -331,9 +357,8 @@ function A0MissionGapQuestion({ question, scene, sceneObjects, selectedOptionId,
     {question.sceneObjectId ? <ObjectPreview scene={scene}
       object={sceneObjects.find(item => item.id === question.sceneObjectId)}
       label={question.objectLabel ?? ""} /> : null}
-    {question.audioText ? <div className="lesson-audio">
-      <IconButton label={`Hear ${question.audioText}`} onClick={() => speak(question.audioText ?? "", scene.languageCode)}><SpeakerIcon /></IconButton>
-    </div> : null}
+    <LessonAudioPrompt question={question} languageCode={scene.languageCode} revealed={revealed}
+      graded={Boolean(checked)} onReveal={() => setRevealed(true)} showAudioText />
     <h2>{question.prompt}</h2>
     {question.translation ? <PromptTranslation text={question.translation} /> : null}
     {dialogue.length ? <div className="mission-dialogue" aria-label="Dialogue">
@@ -373,7 +398,7 @@ function A0MissionGapQuestion({ question, scene, sceneObjects, selectedOptionId,
     {checked ? <Feedback tone={checked.isCorrect || retryPassed ? "good" : "warn"}>
       <p role="status">{checked.isCorrect ? question.correctNote ?? "Correct!" : retryPassed
         ? "That's right. Try the phrase again."
-        : <>Not quite. The correct answer is <strong>{solution?.label ?? checked.correctAnswer}</strong>.</>}</p>
+        : <>Not quite. The correct answer is <strong>{correctAnswer}</strong>{sentenceEnding(correctAnswer)}</>}</p>
     </Feedback> : null}
     {checked ? <div className="mission-gap__completion">
       <p>Complete: <strong lang={scene.languageCode}>{completed}</strong></p>
@@ -415,6 +440,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
   const [retryPassed, setRetryPassed] = useState<Record<string, boolean>>({});
   const [builtTokenIndexes, setBuiltTokenIndexes] = useState<Record<string, number[]>>({});
   const [activeIndex, setActiveIndex] = useState(0);
+  const [revealed, setRevealed] = useState<Record<string, boolean>>({});
   const [checking, setChecking] = useState(false);
   const [checkError, setCheckError] = useState<string | null>(null);
   const [actionResult, setActionResult] = useState<TaskActionResult | null>(null);
@@ -517,7 +543,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
           <strong>Your facts</strong><ul>{question.planningFacts.map((fact, position) => <li key={`${position}-${fact}`}>{fact}</li>)}</ul>
         </section> : null}
         <MissionSnapshotFacts task={task} scene={scene} />
-        {isSituation && question.gapType ? <A0MissionGapQuestion
+        {isSituation && question.gapType ? <A0MissionGapQuestion key={question.questionId}
           question={question} scene={scene} sceneObjects={session?.sceneObjects ?? []}
           selectedOptionId={answers[question.questionId] ?? ""}
           typedMode={Boolean(typedMode[question.questionId])}
@@ -546,6 +572,11 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
               if (marker) setAnswers(value => ({ ...value, [question.questionId]: marker.option.optionId }));
             } : undefined}
         /></div> : null}
+        <LessonAudioPrompt question={question} languageCode={scene.languageCode}
+          revealed={Boolean(revealed[question.questionId])}
+          graded={Boolean(checks[question.questionId])}
+          onReveal={() => setRevealed(value => ({ ...value, [question.questionId]: true }))}
+          showAudioText />
         <h2>{question.prompt}</h2>
         {question.translation ? <PromptTranslation text={question.translation} /> : null}
         {question.interactionType === "sentenceBuilding" ? <>
@@ -753,12 +784,10 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
       </div> : null}
       {content.questions.length > 1 ? <span className="label muted">Question {position + 1} of {content.questions.length}</span> : null}
       {question.instruction ? <p className="small lesson-instruction">{question.instruction}</p> : null}
-      {question.audioText && audio ? <div className="lesson-audio">
-        <IconButton label={question.listenFirst ? "Play the word" : `Hear ${question.audioText}`} onClick={() => speak(question.audioText ?? "", scene.languageCode)}><SpeakerIcon /></IconButton>
-        {question.listenFirst && !writtenPromptShown(question, { revealed: Boolean(revealed[question.questionId]), graded: results[question.questionId] !== undefined, audio })
-          ? <Button variant="quiet" onClick={() => setRevealed(value => ({ ...value, [question.questionId]: true }))}>Show the written word</Button> : null}
-      </div> : null}
-      {question.listenFirst && !audio ? <p className="small muted" role="note">Audio isn't available here, so read the word instead.</p> : null}
+      <LessonAudioPrompt question={question} languageCode={scene.languageCode}
+        revealed={Boolean(revealed[question.questionId])}
+        graded={results[question.questionId] !== undefined}
+        onReveal={() => setRevealed(value => ({ ...value, [question.questionId]: true }))} />
       {question.displayCount ? <CountBoard count={question.displayCount} sceneImageUrl={sceneImageUrl}
         imageSize={boardImageSize} onImageSize={setBoardImageSize}
         boardObject={session?.sceneObjects.find(object => object.id === question.boardObjectId)} /> : null}

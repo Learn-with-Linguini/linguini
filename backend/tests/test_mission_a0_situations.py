@@ -51,6 +51,34 @@ def test_situation_lessons_follow_specified_question_order_and_option_access(
 
 
 @pytest.mark.parametrize("language", ["es", "fr", "de", "ko"])
+@pytest.mark.parametrize("reaction", ["like", "dislike"])
+def test_situation_translations_are_english_and_keep_blanks_aligned(language, reaction):
+    for mission_id in ("M04", "M05"):
+        _mission, _spec, _payload, result, _objects = _result(
+            mission_id, language, reaction=reaction,
+        )
+        for question in result.questions:
+            translations = [
+                (turn["text"], turn["translation"])
+                for turn in question.dialogue or []
+            ]
+            if question.complete_translation:
+                translations.append((
+                    question.complete_chunk or "", question.complete_translation,
+                ))
+            prompt_translation = getattr(question, "prompt_translation", None)
+            if prompt_translation:
+                translations.append((question.prompt, prompt_translation))
+
+            for target_text, translation in translations:
+                assert translation
+                if target_text not in {"No, ___"}:
+                    assert translation != target_text
+                assert all(char.isascii() for char in translation if char.isalpha())
+                assert "___" not in translation or "___" in target_text
+
+
+@pytest.mark.parametrize("language", ["es", "fr", "de", "ko"])
 def test_m04_prep_contains_the_closed_ownership_chunks(language):
     _mission, _spec, payload, _lesson_result, _objects = _result(
         "M04", language, labels=["cup", "book"], words=WORDS[language][:2],
