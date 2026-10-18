@@ -89,5 +89,5 @@ there is no migration.
 - **Stage 2:** produce contract output from contract input, adapt it to
   `GrammarLessonContent` and `TaskAnswerKey`, then enable the path per level.
 - **Stage 3:** integrate UI rendering for chunk joins, hints, worked examples, RTL and
-  non-Latin scripts, and registry TTS locales; only then consider offering Hindi, Tamil,
-  and Simplified Chinese in target pickers.
+  non-Latin scripts, and registry TTS locales; only then set `learnable = true` for a
+  new language so it appears in target pickers.

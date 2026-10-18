@@ -19,6 +19,7 @@ from app.missions.m01_multilingual import (
     validate_contract_input,
     validate_contract_output,
 )
+from app.schemas.languages import Language
 from app.schemas.mission_m01_contract import (
     ApprovedTerm,
     ConfirmedAttribute,
@@ -47,11 +48,11 @@ from app.services.mission_registry import (
     lesson_spec,
 )
 
-LANGUAGES = ("hi", "ta", "zh-Hans", "es")
+LANGUAGES = ("es", "fr", "de", "ko")
 LEVELS = ("A0", "A1", "A2")
 
 
-def contract_input(level="A1", language="es"):
+def contract_input(level="A1", language="es", linguistic=None):
     first_id, second_id, third_id = uuid4(), uuid4(), uuid4()
     first_fact = fact_id("object", first_id)
     second_fact = fact_id("object", second_id)
@@ -60,9 +61,9 @@ def contract_input(level="A1", language="es"):
     second_attribute_fact = fact_id("attribute", second_id, "size")
     relation_fact = fact_id("relation", first_fact, "on", second_fact)
     count_fact = fact_id("count", "cup")
-    linguistic = {"gender": "feminine"} if language == "es" else {}
-    if language == "zh-Hans":
-        linguistic = {"classifier": "个"}
+    linguistic_metadata = {"gender": "feminine"} if language == "es" else {}
+    if linguistic is not None:
+        linguistic_metadata = linguistic
     facts = ConfirmedSceneFacts(
         objects=[
             ConfirmedObject(fact_id=first_fact, scene_object_id=first_id, label="cup", marker=1),
@@ -105,12 +106,12 @@ def contract_input(level="A1", language="es"):
                 term_id="cup",
                 fact_id=first_fact,
                 source_text="cup",
-                target_text={"hi": "कप", "ta": "கோப்பை", "zh-Hans": "杯子", "es": "taza"}[
+                target_text={"es": "taza", "fr": "tasse", "de": "Tasse", "ko": "컵"}[
                     language
                 ],
                 part_of_speech="noun",
                 provenance="reviewedLexicon",
-                linguistic=linguistic,
+                linguistic=linguistic_metadata,
             )
         ],
         learner=LearnerContext(proficiency_level=level),
@@ -119,10 +120,10 @@ def contract_input(level="A1", language="es"):
 
 def example_chunks(language, prefix):
     words = {
-        "zh-Hans": ["桌子", "上", "有", "一个", "杯子", "。"],
-        "hi": ["यह", "एक", "कप", "है", "।"],
-        "ta": ["இது", "ஒரு", "கோப்பை", "."],
-        "es": ["La", "taza", "está", "sobre", "la", "mesa", "."],
+        "es": ["Es", "una", "taza", "."],
+        "fr": ["C'est", "une", "tasse", "."],
+        "de": ["Das", "ist", "eine", "Tasse", "."],
+        "ko": ["이것은", "컵", "입니다", "."],
     }[language]
     entry = get_language(language)
     return [
@@ -245,23 +246,48 @@ def test_valid_contracts_cover_all_levels_and_registered_languages(level, langua
 @pytest.mark.parametrize(
     ("language", "expected"),
     [
-        ("zh-Hans", "桌子上有一个杯子。"),
-        ("hi", "यह एक कप है।"),
-        ("ta", "இது ஒரு கோப்பை."),
+        ("es", "Es una taza."),
+        ("ko", "이것은 컵 입니다."),
     ],
 )
 def test_language_specific_chunk_joining(language, expected):
     assert join_chunks(example_chunks(language, "joined")) == expected
 
 
-def test_spanish_vocabulary_accepts_gender_metadata_without_requiring_it_elsewhere():
+def test_word_separator_none_joins_synthetic_language_without_spaces():
+    language = Language.model_validate(
+        {
+            "code": "qaa",
+            "englishName": "Test language",
+            "nativeName": "Test language",
+            "script": "Latn",
+            "wordSeparator": "none",
+            "learnable": False,
+            "instruction": False,
+            "speech": {"synthesisLocale": "qaa"},
+        }
+    )
+    chunks = [
+        SentenceChunk(
+            chunk_id=f"chunk-{index}",
+            text=text,
+            join=default_join(language, text),
+        )
+        for index, text in enumerate(["ab", "cd", "."])
+    ]
+
+    assert join_chunks(chunks) == "abcd."
+
+
+def test_linguistic_metadata_is_optional_and_accepts_extensions():
     spanish = contract_input(language="es")
-    hindi = contract_input(language="hi")
-    chinese = contract_input(language="zh-Hans")
+    korean = contract_input(language="ko")
+    korean_with_counter = contract_input(language="ko", linguistic={"counter": "개"})
 
     assert spanish.vocabulary[0].linguistic == {"gender": "feminine"}
-    assert hindi.vocabulary[0].linguistic == {}
-    assert chinese.vocabulary[0].linguistic == {"classifier": "个"}
+    assert korean.vocabulary[0].linguistic == {}
+    assert validate_contract_input(korean_with_counter).practice_level == "A1"
+    assert korean_with_counter.vocabulary[0].linguistic == {"counter": "개"}
 
 
 def test_contract_input_rejects_vocabulary_for_an_unconfirmed_fact():

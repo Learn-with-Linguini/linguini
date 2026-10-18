@@ -4,7 +4,7 @@ import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
-from app.languages import get_language, is_registered, languages, learnable_languages
+from app.languages import get_language, languages, learnable_languages
 from app.main import app
 from app.schemas.languages import Language, derive_direction
 
@@ -26,7 +26,7 @@ def test_direction_is_derived_for_right_to_left_scripts():
 
 
 def test_registry_helpers_and_picker_availability():
-    assert [language.code for language in learnable_languages()] == ["es", "fr", "de", "ko"]
+    assert {language.code for language in learnable_languages()} == {"es", "fr", "de", "ko"}
     assert {
         language.code: language.flag
         for language in learnable_languages()
@@ -36,12 +36,11 @@ def test_registry_helpers_and_picker_availability():
         "de": "🇩🇪",
         "ko": "🇰🇷",
     }
-    for code in ("hi", "ta", "zh-Hans"):
-        assert is_registered(code)
-        assert not get_language(code).learnable
-    assert get_language("ZH-hans").code == "zh-Hans"
-    assert get_language("EN").instruction
-    assert not get_language("EN").learnable
+    english = get_language("en")
+    assert not english.learnable
+    assert english.instruction
+    assert get_language("ES").code == "es"
+    assert get_language("KO").code == "ko"
 
 
 def test_mission_levels_are_derived_from_implemented_legacy_eligibility():
@@ -49,9 +48,6 @@ def test_mission_levels_are_derived_from_implemented_legacy_eligibility():
         "es": ["A0", "A1", "A2"],
         "de": ["A0", "A1"],
         "ko": ["A0"],
-        "hi": [],
-        "ta": [],
-        "zh-Hans": [],
     }
     for code, levels in expected.items():
         assert get_language(code).features.mission_levels == levels
@@ -73,25 +69,25 @@ def test_optional_grammar_metadata_is_not_required():
 
 def test_language_codes_require_canonical_bcp47_casing():
     language = Language.model_validate({
-        "code": "zh-Hans",
-        "englishName": "Chinese (Simplified)",
-        "nativeName": "简体中文",
-        "script": "Hans",
+        "code": "qaa",
+        "englishName": "Test language",
+        "nativeName": "Test language",
+        "script": "Latn",
         "learnable": False,
         "instruction": False,
-        "speech": {"synthesisLocale": "zh-CN"},
+        "speech": {"synthesisLocale": "qaa"},
     })
-    assert language.code == "zh-Hans"
+    assert language.code == "qaa"
 
     with pytest.raises(ValidationError, match="canonical BCP 47 casing"):
         Language.model_validate({
-            "code": "zh-hans",
-            "englishName": "Chinese (Simplified)",
-            "nativeName": "简体中文",
-            "script": "Hans",
+            "code": "qaa-latn",
+            "englishName": "Test language",
+            "nativeName": "Test language",
+            "script": "Latn",
             "learnable": False,
             "instruction": False,
-            "speech": {"synthesisLocale": "zh-CN"},
+            "speech": {"synthesisLocale": "qaa"},
         })
 
 
@@ -101,13 +97,14 @@ def test_public_language_endpoint_is_unauthenticated_camel_case_and_tagged():
 
     assert response.status_code == 200
     body = response.json()
-    hindi = next(item for item in body["items"] if item["code"] == "hi")
-    assert hindi["nativeName"] == "हिन्दी"
-    assert hindi["speech"] == {
-        "synthesisLocale": "hi-IN",
+    assert [item["code"] for item in body["items"]] == ["es", "fr", "de", "ko", "en"]
+    korean = next(item for item in body["items"] if item["code"] == "ko")
+    assert korean["nativeName"] == "한국어"
+    assert korean["speech"] == {
+        "synthesisLocale": "ko-KR",
         "synthesis": "browserVoice",
         "recognition": False,
     }
-    assert hindi["features"] == {"missionLevels": []}
+    assert korean["features"] == {"missionLevels": ["A0"]}
     openapi = client.get("/openapi.json").json()
     assert openapi["paths"]["/api/v1/languages"]["get"]["tags"] == ["languages"]

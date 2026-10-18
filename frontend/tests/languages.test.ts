@@ -18,15 +18,15 @@ const languages: LanguageOption[] = [
     features: { missionLevels: ["A0", "A1", "A2"] },
   },
   {
-    code: "hi",
-    englishName: "Hindi",
-    nativeName: "हिन्दी",
-    script: "Deva",
+    code: "en",
+    englishName: "English",
+    nativeName: "English",
+    script: "Latn",
     direction: "ltr",
     wordSeparator: "space",
     learnable: false,
-    instruction: false,
-    speech: { synthesisLocale: "hi-IN", synthesis: "browserVoice", recognition: false },
+    instruction: true,
+    speech: { synthesisLocale: "en-US", synthesis: "browserVoice", recognition: false },
     features: { missionLevels: [] },
   },
 ];
@@ -37,6 +37,6 @@ test("learnableLanguages keeps registered-but-unavailable languages out of picke
 
 test("languageName looks up canonical codes case-insensitively", () => {
   assert.equal(languageName(languages, "ES"), "Spanish");
-  assert.equal(languageName(languages, "hi"), "Hindi");
+  assert.equal(languageName(languages, "EN"), "English");
   assert.equal(languageName(languages, "fr"), undefined);
 });
