@@ -136,7 +136,8 @@ def test_gating_preserves_a1_and_a0_plans_and_excludes_other_a2_languages():
         "lesson", {"proficiency_level": "A0", "target_language_code": "es"}
     )
     assert [(mission.mission_id, mission.practice_level) for mission in a0] == [
-        ("M01", "A0"), ("M02", "A0"), ("M03", "A0"), ("M13", "A0"),
+        ("M01", "A0"), ("M02", "A0"), ("M03", "A0"),
+        ("M04", "A0"), ("M05", "A0"), ("M13", "A0"),
     ]
     for language in ("de", "ko"):
         assert [mission.mission_id for mission in lesson_missions(

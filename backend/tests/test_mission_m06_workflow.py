@@ -298,7 +298,7 @@ def test_m06_feedback_names_each_transaction_detail_in_english():
 @pytest.mark.parametrize("language,level,expected", [
     ("de", "A1", ["M01", "M02", "M03", "M04", "M05"]),
     ("es", "A1", ["M01", "M02", "M03", "M04", "M05"]),
-    ("es", "A0", ["M01", "M02", "M03", "M13"]),
+    ("es", "A0", ["M01", "M02", "M03", "M04", "M05", "M13"]),
 ])
 def test_existing_a1_and_a0_profiles_keep_their_mission_plans(
     curated, language, level, expected

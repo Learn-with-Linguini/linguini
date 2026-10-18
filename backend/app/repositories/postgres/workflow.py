@@ -184,6 +184,14 @@ def _lesson_answer_is_correct(task, question_id, answer):
     )
     expected = task.answer_key.correct_option_ids.get(question_id)
     interaction_type = getattr(question, "interaction_type", None)
+    if (
+        getattr(question, "typed_allowed", False)
+        and normalize_answer(answer) in {
+            normalize_answer(item)
+            for item in task.answer_key.accepted_text_answers_by_question.get(question_id, [])
+        }
+    ):
+        return True
     if interaction_type == "textCloze":
         import unicodedata
 
@@ -430,6 +438,7 @@ class GenerationClaim:
     counted_groups: tuple[dict, ...] = ()
     mission_progress: dict | None = None
     roleplay_facts: dict[str, list[dict]] | None = None
+    learner_facts: dict[str, dict] | None = None
     review_markers: dict[str, int] | None = None
 
     @property
@@ -801,9 +810,11 @@ class PostgresWorkflowRepository:
                 for question in question_ids[:position]
             ):
                 raise PracticeConflictError("Check each lesson question in order.")
-            if question.interaction_type == "multipleChoice" and answer not in {
-                option.option_id for option in question.options
-            }:
+            if (
+                question.interaction_type == "multipleChoice"
+                and answer not in {option.option_id for option in question.options}
+                and not question.typed_allowed
+            ):
                 raise PracticeConflictError("Choose one of the offered answers.")
             if session.status != "inProgress" or task.status in {"completed", "skipped"}:
                 raise PracticeConflictError("This lesson is not active.")
@@ -1307,6 +1318,7 @@ class PostgresWorkflowRepository:
             personalization=(draft or {}).get("personalization"),
             counted_groups=saved_counted_groups(draft),
             mission_guidance=(draft or {}).get("missionGuidance", []),
+            mission_choices=(draft or {}).get("missionChoices"),
             review_markers=(
                 {} if session.status in _REVIEW_STATUSES
                 else (draft or {}).get("reviewMarkers") or {}
@@ -1910,6 +1922,38 @@ class PostgresWorkflowRepository:
                 item.id: uuid5(session_id, "manual:" + str(item.id))
                 for item in request.added_objects
             }
+            mission_choices = None
+            if request.mission_choices is not None:
+                mission_choices = request.mission_choices.model_dump(
+                    mode="json", by_alias=True, exclude_none=True
+                )
+                ownership = mission_choices.get("ownership")
+                if ownership:
+                    object_id = UUID(ownership["sceneObjectId"])
+                    ownership["sceneObjectId"] = str(manual_ids.get(object_id, object_id))
+                preference = mission_choices.get("preference")
+                if preference:
+                    preference["sceneObjectIds"] = [
+                        str(manual_ids.get(UUID(value), UUID(value)))
+                        for value in preference["sceneObjectIds"]
+                    ]
+                    if preference.get("chosenObjectId"):
+                        object_id = UUID(preference["chosenObjectId"])
+                        preference["chosenObjectId"] = str(
+                            manual_ids.get(object_id, object_id)
+                        )
+                    elif len(preference["sceneObjectIds"]) == 2:
+                        preference["reaction"] = preference.get("reaction") or "like"
+            draft = dict(c.execute(select(sessions.c.analysis_draft).where(
+                sessions.c.id == session_id,
+            )).scalar_one() or {})
+            if mission_choices is None:
+                draft.pop("missionChoices", None)
+            else:
+                draft["missionChoices"] = mission_choices
+            c.execute(update(sessions).where(sessions.c.id == session_id).values(
+                analysis_draft=draft,
+            ))
             original_relations = {row.id: row for row in detail.scene_object_relations}
             for relation in request.relations:
                 original = original_relations.get(relation.id)
@@ -1953,7 +1997,7 @@ class PostgresWorkflowRepository:
                     ),
                 ))
                     for relation in request.relations
-            ])
+                ], mission_choices=mission_choices or {})
             c.execute(
                 update(sessions)
                 .where(sessions.c.id == session_id)
@@ -2009,6 +2053,7 @@ class PostgresWorkflowRepository:
                     objects,
                     saved_counted_groups(session.analysis_draft),
                     relations,
+                    mission_choices=(session.analysis_draft or {}).get("missionChoices") or {},
                 )
                 session = self._session(c, session_id, profile_id)
             missions = tuple(self._planned_missions(session, dict(profile)))
@@ -2044,7 +2089,12 @@ class PostgresWorkflowRepository:
                 roleplay_facts={
                     item["missionId"]: item["roleplayFacts"]
                     for item in draft.get("missionPlan", [])
-                    if "roleplayFacts" in item
+                    if item.get("practiceLevel") == "A1" and "roleplayFacts" in item
+                },
+                learner_facts={
+                    item["missionId"]: item["learnerFacts"]
+                    for item in draft.get("missionPlan", [])
+                    if item.get("practiceLevel") == "A0" and "learnerFacts" in item
                 },
                 review_markers=draft.get("reviewMarkers") or {},
             )
@@ -2208,7 +2258,9 @@ class PostgresWorkflowRepository:
             )
         )
 
-    def _plan_missions(self, c, session, profile, objects, counted_groups, relations):
+    def _plan_missions(
+        self, c, session, profile, objects, counted_groups, relations, mission_choices=None,
+    ):
         """Snapshot the lesson's mission plan from the confirmed facts before generation."""
         candidates = lesson_missions(session.mode, profile)
         if not candidates:
@@ -2226,7 +2278,9 @@ class PostgresWorkflowRepository:
             for item in (saved or {}).get("missionPlan", [])
             if isinstance(item, dict) and isinstance(item.get("missionId"), str)
         ]
-        plan = plan_missions(candidates, objects, relations, counted_groups, history)
+        plan = plan_missions(
+            candidates, objects, relations, counted_groups, history, mission_choices
+        )
         draft = dict(c.execute(select(sessions.c.analysis_draft).where(
             sessions.c.id == session.id,
         )).scalar_one() or {})
@@ -2248,9 +2302,30 @@ class PostgresWorkflowRepository:
             ), {})
             entry.update({
                 key: value for key, value in previous.items()
-                if key not in entry and key != "roleplayFacts"
+                if key not in entry and key not in {"roleplayFacts", "learnerFacts"}
             })
-            if mission.mission_id in {"M04", "M05"}:
+            if str(mission.practice_level) == "A0" and mission.mission_id == "M04":
+                ownership = (mission_choices or {}).get("ownership") or {}
+                entry["learnerFacts"] = {
+                    "ownedObjectId": ownership.get("sceneObjectId"),
+                    "pretend": bool(ownership.get("pretend", False)),
+                }
+            elif str(mission.practice_level) == "A0" and mission.mission_id == "M05":
+                preference = (mission_choices or {}).get("preference") or {}
+                compared = preference.get("sceneObjectIds", [])
+                entry["learnerFacts"] = {
+                    "preference": {
+                        "sceneObjectIds": compared,
+                        "chosenObjectId": preference.get("chosenObjectId"),
+                        "reaction": preference.get("reaction") or (
+                            "like" if len(compared) == 2 else None
+                        ),
+                    }
+                }
+            if (
+                str(mission.practice_level) == "A1"
+                and mission.mission_id in {"M04", "M05"}
+            ):
                 entry["roleplayFacts"] = assign_roleplay(
                     mission, session.id, objects, markers
                 )
@@ -2562,9 +2637,10 @@ class PostgresWorkflowRepository:
                 review_markers=claim.review_markers or {},
                 context={
                     "roleplay_facts": (claim.roleplay_facts or {}).get(mission.mission_id),
+                    "learner_facts": (claim.learner_facts or {}).get(mission.mission_id),
                 },
             )
-            if payload.get("invalidRoleplay"):
+            if str(mission.practice_level) == "A1" and payload.get("invalidRoleplay"):
                 skipped.append(dict(missionId=mission.mission_id, reason="invalidRoleplay"))
                 continue
             if not spec.ready(payload):
@@ -3530,6 +3606,7 @@ def evaluate(task, request):
         if any(
             getattr(question, "interaction_type", "multipleChoice") == "multipleChoice"
             and answer not in {option.option_id for option in question.options}
+            and not getattr(question, "typed_allowed", False)
             for question_id, answer in request.answers.items()
             for question in [questions_by_id[question_id]]
         ):

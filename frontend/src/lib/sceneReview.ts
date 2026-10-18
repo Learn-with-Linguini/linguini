@@ -1,4 +1,4 @@
-export type SceneReviewPanel = "objects" | "attributes" | "relations" | "counts";
+export type SceneReviewPanel = "objects" | "attributes" | "relations" | "counts" | "choices";
 
 export function initiallyHiddenObjectIds(
   objectIds: string[],
@@ -9,7 +9,7 @@ export function initiallyHiddenObjectIds(
 }
 
 export function sceneReviewPanels(
-  missionPlan: Array<{ missionId?: unknown }> | undefined,
+  missionPlan: Array<{ missionId?: unknown; practiceLevel?: unknown }> | undefined,
   hasRepeatedObjects = false,
 ): SceneReviewPanel[] {
   const missions = new Set((missionPlan ?? []).map(item => String(item.missionId)));
@@ -19,5 +19,8 @@ export function sceneReviewPanels(
     ...(missions.has("M01") ? ["attributes" as const] : []),
     ...(missions.has("M02") ? ["relations" as const] : []),
     ...(missions.has("M03") || hasRepeatedObjects ? ["counts" as const] : []),
+    ...((missionPlan ?? []).some(item =>
+      item.practiceLevel === "A0" && ["M04", "M05"].includes(String(item.missionId)),
+    ) ? ["choices" as const] : []),
   ];
 }

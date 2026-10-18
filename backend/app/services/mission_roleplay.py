@@ -7,7 +7,10 @@ from app.schemas.roleplay import OwnershipFact, PreferenceFact
 
 def assign_roleplay(mission, session_id, objects, markers):
     """Assign three distinct confirmed objects without making learner claims."""
-    if mission.mission_id not in {"M04", "M05"}:
+    if (
+        str(mission.practice_level) != "A1"
+        or mission.mission_id not in {"M04", "M05"}
+    ):
         return []
     candidates = []
     labels = set()

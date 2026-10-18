@@ -6,6 +6,9 @@ from uuid import uuid4
 import pytest
 
 from app.ai.features.learning_tasks.mission_a0 import validate_a0_lesson
+from app.ai.features.learning_tasks.mission_a0_situations import (
+    validate_a0_situation_lesson,
+)
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.missions import get_mission
 from app.schemas.enums import SessionMode
@@ -24,7 +27,7 @@ WORDS = {
     "ko": ["컵", "책", "사과", "나무"],
 }
 LABELS = ["cup", "book", "apple", "tree"]
-MISSIONS = ("M01", "M02", "M03", "M13")
+MISSIONS = ("M01", "M02", "M03", "M04", "M05", "M13")
 
 
 def _objects(labels=LABELS):
@@ -33,7 +36,8 @@ def _objects(labels=LABELS):
 
 
 def _lesson(mission_id, language, *, labels=LABELS, words=None, quantity=2,
-            plurals_taught=False, count_label="apple"):
+            plurals_taught=False, count_label="apple", ownership_index=0,
+            compared_indices=(0,), reaction="like"):
     objects = _objects(labels)
     words = [SimpleNamespace(display_text=word, id=uuid4())
              for word in (words or WORDS[language][:len(labels)])]
@@ -41,9 +45,22 @@ def _lesson(mission_id, language, *, labels=LABELS, words=None, quantity=2,
     spec = lesson_spec(mission)
     group = next((obj for obj in objects if obj.label == count_label), objects[0])
     counts = [{"label": count_label, "quantity": quantity, "sceneObjectIds": [str(group.id)]}]
+    context = {}
+    if mission_id == "M04":
+        context["learner_facts"] = {
+            "ownedObjectId": str(objects[ownership_index].id), "pretend": False,
+        }
+    elif mission_id == "M05":
+        context["learner_facts"] = {"preference": {
+            "sceneObjectIds": [str(objects[index].id) for index in compared_indices],
+            "chosenObjectId": (
+                str(objects[compared_indices[0]].id) if len(compared_indices) == 2 else None
+            ),
+            "reaction": reaction,
+        }}
     payload = spec.payload(
         mission, language, objects, [], words, None, counts,
-        {"plurals_taught": plurals_taught}, uuid4(),
+        {"plurals_taught": plurals_taught}, uuid4(), context=context,
     )
     return mission, spec, payload, objects
 
@@ -66,7 +83,7 @@ def test_a0_profiles_get_the_a0_missions_whatever_their_onboarding(language, onb
         SessionMode.LESSON, _profile("A0", language, onboarding_completed=onboarded),
     )
     assert [registry_key(mission) for mission in missions] == [
-        "A0:M01", "A0:M02", "A0:M03", "A0:M13",
+        "A0:M01", "A0:M02", "A0:M03", "A0:M04", "A0:M05", "A0:M13",
     ]
     assert all(str(mission.practice_level) == "A0" for mission in missions)
 
@@ -112,9 +129,16 @@ def test_a0_definitions_store_the_canonical_level():
 @pytest.mark.parametrize("mission_id", MISSIONS)
 def test_each_lesson_is_two_tasks_of_three_questions(mission_id, language):
     _mission, _spec, payload, result, _objects = _result(mission_id, language)
-    validate_a0_lesson(payload, result)
+    if mission_id in {"M04", "M05"}:
+        validate_a0_situation_lesson(payload, result)
+    else:
+        validate_a0_lesson(payload, result)
     sections = [question.section for question in result.questions]
-    assert len(result.questions) == 6 and len(set(sections)) == 2
+    assert len(result.questions) == 6
+    if mission_id in {"M04", "M05"}:
+        assert len(set(sections)) == 1
+        return
+    assert len(set(sections)) == 2
     assert sections[:3] == [sections[0]] * 3 and sections[3:] == [sections[3]] * 3
 
 
@@ -289,7 +313,7 @@ def test_photo_eligibility_needs_reviewed_nouns():
 
 @pytest.mark.parametrize("mission_id", MISSIONS)
 def test_tasks_persist_questions_answers_and_option_order(mission_id):
-    mission, spec, payload, result, objects = _result(mission_id, "de")
+    mission, spec, payload, result, _objects = _result(mission_id, "de")
     session_id = uuid4()
     task = spec.task(session_id, mission, payload, result, {})
     again = spec.task(session_id, mission, payload, spec.generation.fallback(payload), {})
@@ -300,4 +324,6 @@ def test_tasks_persist_questions_answers_and_option_order(mission_id):
     assert set(task.answer_key.correct_option_ids) == {q.question_id for q in content.questions}
     for question in content.questions:
         if question.interaction_type == "multipleChoice":
-            assert question.keep_option_order and len(question.options) <= 3
+            assert len(question.options) <= 3
+            if mission_id not in {"M04", "M05"}:
+                assert question.keep_option_order
