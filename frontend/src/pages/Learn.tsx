@@ -97,7 +97,7 @@ export function Learn() {
         </Button> : <Button block disabled={practiceSaving} onClick={() => navigate(`${base}/ispy-1`)}>
           Play I-Spy <ArrowRightIcon />
         </Button>
-      ) : (
+      ) : retryableM01 && !nextTask ? null : (
         <Button block disabled={practiceSaving || !nextTask} onClick={() => nextTask && openTask(nextTask.id)}>
           {!nextTask ? "Preparing remaining tasks..." : completed.length === 0 ? "Begin tasks" : "Continue tasks"} <ArrowRightIcon />
         </Button>

@@ -449,6 +449,44 @@ test("the retry notice appears once on Learn and not on task pages", async () =>
   assert.equal(bodyText.split(notice).length - 1, 1);
   assert.ok(button("Try again"));
   await act(async () => learnRoot.unmount());
+
+  fixture = detail("inProgress");
+  fixture.session.analysisDraft = {
+    skippedMissions: [{ missionId: "M01", reason: "generationFailed", retryable: true }],
+  };
+  const emptyRetryRoot = createRoot(container);
+  const emptyRetryClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  mountedClients.push(emptyRetryClient);
+  await act(async () => emptyRetryRoot.render(h(QueryClientProvider, { client: emptyRetryClient }, h(AppStateProvider, null,
+    h(MemoryRouter, { initialEntries: [`${BASE}/learn`] },
+      h(Routes, null,
+        h(Route, { path: "/practice/sessions/:sessionId", element: h(SessionRoute) },
+          h(Route, { path: "learn", element: h(Learn) }),
+        ),
+      ),
+    ),
+  ))));
+  await flush();
+  assert.equal(button("Preparing remaining tasks..."), undefined);
+  assert.ok(button("Try again"));
+  await act(async () => emptyRetryRoot.unmount());
+
+  fixture = detail("inProgress");
+  const legacyEmptyRoot = createRoot(container);
+  const legacyEmptyClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  mountedClients.push(legacyEmptyClient);
+  await act(async () => legacyEmptyRoot.render(h(QueryClientProvider, { client: legacyEmptyClient }, h(AppStateProvider, null,
+    h(MemoryRouter, { initialEntries: [`${BASE}/learn`] },
+      h(Routes, null,
+        h(Route, { path: "/practice/sessions/:sessionId", element: h(SessionRoute) },
+          h(Route, { path: "learn", element: h(Learn) }),
+        ),
+      ),
+    ),
+  ))));
+  await flush();
+  assert.ok(button("Preparing remaining tasks..."));
+  await act(async () => legacyEmptyRoot.unmount());
 });
 
 test("legacy grammar lessons render without multilingual examples or hint controls", async () => {

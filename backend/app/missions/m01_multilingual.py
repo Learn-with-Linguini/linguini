@@ -300,6 +300,7 @@ def validate_contract_output(
         raise MissionContractError("output objective does not match the mission definition")
 
     valid_fact_ids = _fact_ids(contract)
+    object_facts = {item.fact_id: item for item in contract.scene_facts.objects}
     for card in output.preparation:
         _check_fact_references(card.fact_ids, valid_fact_ids, "preparation card")
     for example in output.worked_examples:
@@ -337,6 +338,14 @@ def validate_contract_output(
             _check_fact_references(
                 list(question.marker_fact_ids.values()), valid_fact_ids, "marker choice"
             )
+            for fact_id in question.marker_fact_ids.values():
+                object_fact = object_facts.get(fact_id)
+                if object_fact is None:
+                    raise MissionContractError("marker choices must map to object facts")
+                if object_fact.marker is None:
+                    raise MissionContractError(
+                        "marker choice objects must have review markers"
+                    )
         elif question.marker_fact_ids is not None:
             raise MissionContractError("marker facts are only valid for markerChoice questions")
 

@@ -8,7 +8,7 @@ from uuid import uuid5
 
 from app.languages import get_language
 from app.missions import get_mission
-from app.missions.m01_multilingual import CONTRACT_VERSION, fact_id
+from app.missions.m01_multilingual import CONTRACT_VERSION, MissionContractError, fact_id
 from app.schemas.mission_m01_contract import (
     ApprovedTerm,
     ConfirmedAttribute,
@@ -266,6 +266,7 @@ def build_m01_multilingual_task(
     objects = {
         item.fact_id: item.scene_object_id for item in contract.scene_facts.objects
     }
+    object_facts = {item.fact_id: item for item in contract.scene_facts.objects}
     first_object = next(iter(contract.scene_facts.objects), None)
     correct_answers = {}
     questions = []
@@ -276,11 +277,21 @@ def build_m01_multilingual_task(
         else:
             correct_answers[question.question_id] = answer.correct_option_id
         marker_objects = None
+        options = question.options
         if question.interaction == "markerChoice":
+            marker_facts = question.marker_fact_ids or {}
             marker_objects = {
                 option_id: objects[fact]
-                for option_id, fact in question.marker_fact_ids.items()
+                for option_id, fact in marker_facts.items()
             }
+            options = []
+            for option in question.options:
+                object_fact = object_facts[marker_facts[option.option_id]]
+                if object_fact.marker is None:
+                    raise MissionContractError(
+                        "marker choice objects must have review markers"
+                    )
+                options.append(option.model_copy(update={"label": str(object_fact.marker)}))
         shown_chunks = list(question.chunks)
         if shown_chunks:
             random.Random(f"{task_id}:{question.question_id}").shuffle(shown_chunks)
@@ -291,7 +302,7 @@ def build_m01_multilingual_task(
                 "sentenceBuilding"
                 if question.interaction == "sentenceBuilding" else "multipleChoice"
             ),
-            "options": question.options,
+            "options": options,
             "token_bank": [],
             "chunks": shown_chunks or None,
             "hint_count": len(question.hints),

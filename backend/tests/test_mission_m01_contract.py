@@ -1164,6 +1164,63 @@ def test_multilingual_task_keeps_answer_and_hint_text_private():
     )
 
 
+def test_marker_choice_public_labels_are_review_marker_numbers():
+    contract = contract_input()
+    objects = [
+        item.model_copy(update={"marker": marker})
+        for item, marker in zip(contract.scene_facts.objects, (1, 3, 2), strict=True)
+    ]
+    contract = contract.model_copy(update={
+        "scene_facts": contract.scene_facts.model_copy(update={"objects": objects}),
+    })
+    output = contract_output(contract)
+    output = output.model_copy(update={
+        "questions": [
+            question.model_copy(update={"hints": [Hint(level=1, text="Look carefully.")]})
+            for question in output.questions
+        ],
+    })
+    mission = get_mission("M01", "A1", 1)
+    task = build_m01_multilingual_task(uuid4(), mission, contract, output)
+
+    source_question = next(
+        question for question in output.questions if question.interaction == "markerChoice"
+    )
+    public_question = next(
+        question for question in task.public_content.questions if question.marker_object_ids
+    )
+    object_facts = {item.fact_id: item for item in contract.scene_facts.objects}
+    expected_labels = {
+        option_id: str(object_facts[fact_id].marker)
+        for option_id, fact_id in source_question.marker_fact_ids.items()
+    }
+
+    assert {option.option_id: option.label for option in public_question.options} == (
+        expected_labels
+    )
+    assert set(expected_labels.values()) == {"1", "3"}
+
+
+def test_marker_choice_rejects_object_facts_without_review_markers():
+    contract = contract_input()
+    output = contract_output(contract)
+    marker_question = next(
+        question for question in output.questions if question.interaction == "markerChoice"
+    )
+    missing_marker_fact = next(iter(marker_question.marker_fact_ids.values()))
+    objects = [
+        item.model_copy(update={"marker": None})
+        if item.fact_id == missing_marker_fact else item
+        for item in contract.scene_facts.objects
+    ]
+    contract = contract.model_copy(update={
+        "scene_facts": contract.scene_facts.model_copy(update={"objects": objects}),
+    })
+
+    with pytest.raises(MissionContractError, match="review markers"):
+        validate_contract_output(contract, output)
+
+
 def test_m01_eligibility_uses_facts_before_translation_and_terms_after():
     plan = load_m01_level_plan("A1")
     objects = [
