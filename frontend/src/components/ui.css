@@ -4750,9 +4750,6 @@ p[role="alert"]::before { content: "!"; }
   align-self: center;
   min-height: 44px;
   margin-top: calc(var(--space-2) * -1);
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 4px;
 }
 
 .learning-title-row {
@@ -4785,7 +4782,8 @@ p[role="alert"]::before { content: "!"; }
 }
 
 .vocabulary-flow__progress .pill--xp {
-  margin-top: 1px;
+  align-self: end;
+  margin-bottom: 1px;
 }
 
 .learning-card {
@@ -4882,7 +4880,7 @@ p[role="alert"]::before { content: "!"; }
   font-variant-numeric: tabular-nums;
 }
 
-.vocabulary-flow__skip { justify-self: center; margin-top: calc(var(--space-2) * -1); }
+.vocabulary-flow__skip { align-self: center; margin-top: calc(var(--space-2) * -1); color: var(--ink-muted); }
 
 @media (max-width: 720px) {
   .vocabulary-learning-grid {

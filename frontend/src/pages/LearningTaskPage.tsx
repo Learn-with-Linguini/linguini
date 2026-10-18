@@ -169,7 +169,7 @@ function ExitToHome({ onExit }: { onExit: () => void }) {
 }
 
 function BackToTasks({ onClose }: { onClose: () => void }) {
-  return <button type="button" className="text-link" onClick={onClose}>Back to tasks</button>;
+  return <Button variant="quiet" className="learning-task-page__all-tasks" onClick={onClose}>Back to tasks</Button>;
 }
 
 function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }: { task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void }) {
@@ -260,7 +260,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
         <span className="vocabulary-flow__position" aria-live="polite">{page + 1} of {pageCount}</span>
         <Button onClick={finishReview}>{page < pageCount - 1 ? <>Next <ArrowRightIcon /></> : "Start quick quiz"}</Button>
       </div>
-      <button type="button" className="text-link text-link--muted vocabulary-flow__skip" onClick={() => setStage("quiz")}>Skip word review</button>
+      <Button variant="quiet" className="vocabulary-flow__skip" onClick={() => setStage("quiz")}>Skip word review</Button>
     </> : null}
     {!terminal && stage === "quiz" && question ? <Card plain><div className="stack">
       <span className="label muted">Question {questionIndex + 1} of {content.questions.length}</span><h2>{question.prompt}</h2>
