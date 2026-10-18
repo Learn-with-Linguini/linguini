@@ -12,7 +12,7 @@ import { useAppState } from "../state/useAppState";
 import { sessionDestination } from "../lib/sessionRoute";
 import { humanizeTerm } from "../lib/termLabel";
 import { type PracticeReview } from "../lib/api";
-import { MAX_COUNT, countGroups, objectCounts, type CountGroup } from "../lib/countGroups";
+import { countGroups, objectCounts } from "../lib/countGroups";
 import { initiallyHiddenObjectIds, sceneReviewPanels, type SceneReviewPanel } from "../lib/sceneReview";
 import type { LanguageItem, MissionChoices } from "../data/types";
 import { serializeMissionChoices, type MissionChoiceDraft } from "../lib/missionGaps";
@@ -179,9 +179,8 @@ export function PracticeAnalysis() {
     }),
     ...added.map(item => ({ id: item.id, label: item.label })),
   ]);
-  const repeatedGroups = groups.filter(group => group.objectIds.length >= 2);
   const verifiedCounts = Object.fromEntries(groups.map(group => [group.key, String(group.objectIds.length)]));
-  const panels = sceneReviewPanels(session.provisionalMissionPlan, repeatedGroups.length > 0);
+  const panels = sceneReviewPanels(session.provisionalMissionPlan);
   const a0Choices = new Set((session.provisionalMissionPlan ?? [])
     .filter(item => item.practiceLevel === "A0" && ["M04", "M05"].includes(item.missionId ?? ""))
     .map(item => item.missionId));
@@ -192,28 +191,6 @@ export function PracticeAnalysis() {
     setRemoved(current => [...new Set([...current, ...analysed])]);
     setExplicitlyRemoved(current => [...new Set([...current, ...analysed])]);
     setAdded(current => current.filter(item => !ids.has(item.id)));
-  };
-  const removeGroup = (objectIds: string[]) => {
-    removeObjects(objectIds);
-  };
-  const decrementGroup = (group: CountGroup) => {
-    removeGroup([group.objectIds.at(-1)!]);
-  };
-  const addGroupInstance = (group: CountGroup) => {
-    if (placementLabel || practiceSaving || group.objectIds.length >= MAX_COUNT) return;
-    setPending({ label: group.label });
-    setError(null);
-    photoRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
-  };
-  const countStepper = (group: CountGroup, label: string, disabled: boolean) => {
-    const number = group.objectIds.length;
-    return <div className="analysis-count-stepper analysis-count-stepper--inline">
-      <button type="button" aria-label={number <= 1 ? `Remove ${label}` : `Fewer ${label}`}
-        disabled={disabled} onClick={() => decrementGroup(group)}>−</button>
-      <output className="input is-filled" aria-label={`Count for ${label}`}>{number}</output>
-      <button type="button" aria-label={`Add another ${label}`} disabled={disabled || number >= MAX_COUNT}
-        onClick={() => addGroupInstance(group)}>+</button>
-    </div>;
   };
   const visibleRelations = relations.filter(row => selectedIds.has(row.subjectSceneObjectId) && selectedIds.has(row.referenceSceneObjectId));
   const addRelation = () => {
@@ -296,7 +273,7 @@ export function PracticeAnalysis() {
           {panels.map(value => <button key={value} type="button" role="tab"
             aria-selected={panel === value} className={panel === value ? "is-active" : ""} onClick={() => setPanel(value)}>
             {value[0].toUpperCase() + value.slice(1)}
-            <span>{value === "objects" ? relationObjects.length : value === "attributes" ? attributeCount : value === "relations" ? visibleRelations.length : value === "counts" ? repeatedGroups.length : Number(Boolean(missionChoices.ownedObjectId || missionChoices.preferenceObjectIds.length))}</span>
+            <span>{value === "objects" ? relationObjects.length : value === "attributes" ? attributeCount : value === "relations" ? visibleRelations.length : Number(Boolean(missionChoices.ownedObjectId || missionChoices.preferenceObjectIds.length))}</span>
           </button>)}
         </div>
       </div>
@@ -347,6 +324,18 @@ export function PracticeAnalysis() {
               <Button variant="secondary" type="submit" disabled={!label.trim() || !!placementLabel || practiceSaving || added.length >= 20}>Select location</Button>
             </div>
           </form> : null}
+          <section className="analysis-object-counts" aria-labelledby="analysis-object-counts-title">
+            <div>
+              <h3 id="analysis-object-counts-title">Object counts</h3>
+              <p className="small muted">Counts update when you add or remove objects.</p>
+            </div>
+            <dl>
+              {groups.map(group => <div key={group.key}>
+                <dt>{humanizeTerm(group.label)}</dt>
+                <dd aria-label={`${group.objectIds.length} ${group.objectIds.length === 1 ? "object" : "objects"}`}>{group.objectIds.length}</dd>
+              </div>)}
+            </dl>
+          </section>
         </section> : null}
         {panel === "attributes" ? <section className="analysis-results" aria-labelledby="analysis-attributes-title">
           <div><h2 id="analysis-attributes-title">Visible attributes</h2><p className="muted">Correct only what you can clearly see in the photo.</p></div>
@@ -400,19 +389,6 @@ export function PracticeAnalysis() {
                 onChange={setReference} />
               <Button type="submit" variant="secondary" disabled={practiceSaving || !relationText.trim() || subject === reference || !selectedIds.has(subject) || !selectedIds.has(reference) || visibleRelations.length >= 100}>Add connection</Button>
             </form> : null}
-          </Card>
-        </section> : null}
-        {panel === "counts" ? <section className="analysis-results" aria-labelledby="analysis-counts-title">
-          <div><h2 id="analysis-counts-title">How many are there?</h2>
-            <p className="muted">The number always matches the pointers on the photo. Use + to place another pointer, or − to remove one.</p></div>
-          <Card plain className="analysis-word-card">
-            <div className="analysis-word-list">
-              {repeatedGroups.map(group => <div className="analysis-count-row" key={group.key}>
-                <strong>{humanizeTerm(group.label)}</strong>
-                {countStepper(group, humanizeTerm(group.label), locked || practiceSaving)}
-              </div>)}
-              {!repeatedGroups.length ? <p className="small muted">No repeated objects are selected. Add another object and place its marker to practise counting it.</p> : null}
-            </div>
           </Card>
         </section> : null}
         {panel === "choices" ? <section className="analysis-results" aria-label="Your choices">
