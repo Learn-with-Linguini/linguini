@@ -2,24 +2,33 @@
 
 from __future__ import annotations
 
+import os
+import tomllib
 import unicodedata
 from dataclasses import dataclass
+from functools import cache
+from pathlib import Path
+from typing import Annotated, Literal
+
+from pydantic import Field
 
 from app.languages import get_language
 from app.missions import get_mission
+from app.schemas.base import ApiModel
 from app.schemas.enums import ProficiencyLevel
 from app.schemas.languages import Language
 from app.schemas.mission_m01_contract import (
     M01ContractInput,
     M01ContractOutput,
+    M01GeneratedLesson,
     SentenceChunk,
     fact_id,
 )
 from app.schemas.missions import MissionDefinition
-from app.schemas.tasks import QuestionEvaluation
+from app.schemas.tasks import EvidenceType, QuestionEvaluation
 
 CONTRACT_VERSION = "m01-multilingual.v1"
-MULTILINGUAL_M01_ENABLED = False
+M01_PLAN_PATH = Path(__file__).with_name("m01_multilingual.toml")
 
 type M01VariantKey = tuple[str, str, int]
 
@@ -62,6 +71,51 @@ class MissionContractError(ValueError):
     """A multilingual M01 input or output violates the contract."""
 
 
+type M01FactKind = Literal["object", "attribute", "relation", "count"]
+type M01Interaction = Literal["multipleChoice", "markerChoice", "sentenceBuilding"]
+
+
+class M01LevelPlan(ApiModel):
+    level: ProficiencyLevel
+    plan_version: int
+    content_version: int
+    fact_kinds: list[M01FactKind]
+    min_objects: Annotated[int, Field(ge=1)]
+    min_detail_facts: Annotated[int, Field(ge=0)]
+    min_questions: Annotated[int, Field(ge=1)]
+    max_questions: Annotated[int, Field(ge=1)]
+    min_preparation_cards: Annotated[int, Field(ge=0)]
+    max_preparation_cards: Annotated[int, Field(ge=0)]
+    min_worked_examples: Annotated[int, Field(ge=0)]
+    min_options: Annotated[int, Field(ge=2)]
+    max_options: Annotated[int, Field(ge=2)]
+    max_hints: Annotated[int, Field(ge=1)]
+    max_answer_chunks: Annotated[int, Field(ge=1)]
+    max_distractor_chunks: Annotated[int, Field(ge=0)]
+    interactions: dict[str, list[M01Interaction]]
+    evidence: dict[M01Interaction, list[EvidenceType]]
+    min_connected_facts: Annotated[int, Field(ge=1)] | None = None
+
+
+@cache
+def load_m01_level_plan(level: ProficiencyLevel | str) -> M01LevelPlan:
+    normalized = str(level).upper()
+    data = tomllib.loads(M01_PLAN_PATH.read_text(encoding="utf-8"))
+    try:
+        raw = data["levels"][normalized]
+    except KeyError:
+        raise MissionContractError(f"no M01 generation plan for {normalized}") from None
+    variant = m01_variant("M01", normalized, raw["content_version"])
+    if variant.content_version != raw["content_version"]:
+        raise MissionContractError(f"M01 plan content version mismatch for {normalized}")
+    return M01LevelPlan.model_validate({
+        **raw,
+        "level": normalized,
+        "plan_version": data["plan_version"],
+        "evidence": data["evidence"],
+    })
+
+
 def m01_variant(
     mission_id: str, level: ProficiencyLevel | str, version: int
 ) -> M01Variant:
@@ -73,7 +127,7 @@ def m01_variant(
 
 
 def generation_enabled() -> bool:
-    return MULTILINGUAL_M01_ENABLED
+    return os.getenv("MULTILINGUAL_M01_ENABLED", "false").strip().lower() == "true"
 
 
 def validate_contract_input(contract: M01ContractInput) -> MissionDefinition:
@@ -125,6 +179,90 @@ def default_join(language: Language | str, text: str) -> str:
     return "space"
 
 
+def convert_generated_lesson(
+    contract: M01ContractInput, generated: M01GeneratedLesson
+) -> M01ContractOutput:
+    definition = validate_contract_input(contract)
+    plan = load_m01_level_plan(contract.mission.practice_level)
+    objects = {item.fact_id: item for item in contract.scene_facts.objects}
+    terms_by_fact: dict[str, list] = {}
+    for term in contract.vocabulary:
+        terms_by_fact.setdefault(term.fact_id, []).append(term)
+
+    questions = []
+    answers = {}
+    evaluations = []
+    for question in generated.questions:
+        permitted = set(plan.evidence[question.interaction])
+        for target_id in question.target_ids:
+            target = definition.targets.get(target_id)
+            if target is None:
+                raise MissionContractError(f"unknown target: {target_id}")
+            permitted &= set(target.evidence_types)
+        evidence_type = next(
+            (item for item in plan.evidence[question.interaction] if item in permitted),
+            None,
+        )
+        if evidence_type is None:
+            raise MissionContractError(
+                f"no permitted evidence for {question.interaction} targets"
+            )
+
+        questions.append({
+            "question_id": question.question_id,
+            "target_ids": question.target_ids,
+            "section": question.section,
+            "prompt": question.prompt,
+            "prompt_translation": question.prompt_translation,
+            "instruction": question.instruction,
+            "interaction": question.interaction,
+            "options": question.options,
+            "marker_fact_ids": (
+                {item.option_id: item.fact_id for item in question.marker_options}
+                if question.interaction == "markerChoice" else None
+            ),
+            "chunks": question.chunks,
+            "fact_ids": question.fact_ids,
+            "hints": question.hints,
+            "feedback": question.feedback,
+        })
+        answers[question.question_id] = question.answer
+        first_object = next(
+            (objects[fact] for fact in question.fact_ids if fact in objects),
+            None,
+        )
+        vocabulary_ids = list(dict.fromkeys(
+            term.vocabulary_item_id
+            for fact in question.fact_ids
+            for term in terms_by_fact.get(fact, [])
+            if term.vocabulary_item_id is not None
+        ))
+        evaluations.append(QuestionEvaluation(
+            question_id=question.question_id,
+            objective_id=definition.objective.objective_id,
+            target_ids=question.target_ids,
+            evidence_type=evidence_type,
+            vocabulary_item_ids=vocabulary_ids,
+            scene_object_id=first_object.scene_object_id if first_object else None,
+            corrections=question.feedback.corrections,
+            correct_note=question.feedback.correct,
+        ))
+
+    return M01ContractOutput(
+        contract_version=CONTRACT_VERSION,
+        mission=contract.mission,
+        target_language=contract.target_language,
+        instruction_language=contract.instruction_language,
+        objective_id=definition.objective.objective_id,
+        title=generated.title,
+        explanation=generated.explanation,
+        preparation=generated.preparation,
+        worked_examples=generated.worked_examples,
+        questions=questions,
+        private={"answers": answers, "evaluations": evaluations},
+    )
+
+
 def _fact_ids(contract: M01ContractInput) -> set[str]:
     return contract.scene_facts.all_fact_ids
 
@@ -146,7 +284,9 @@ def _check_evaluation(
 
 
 def validate_contract_output(
-    contract: M01ContractInput, output: M01ContractOutput
+    contract: M01ContractInput,
+    output: M01ContractOutput,
+    plan: M01LevelPlan | None = None,
 ) -> None:
     """Validate generated output against the confirmed input and M01 definition."""
     definition = validate_contract_input(contract)
@@ -236,19 +376,163 @@ def validate_contract_output(
         raise MissionContractError("there must be one evaluation per question")
     for evaluation in evaluations:
         _check_evaluation(definition, evaluation)
+    if plan is not None:
+        _validate_planned_output(contract, definition, output, plan)
+
+
+def _fold_contract_text(value: str) -> str:
+    return " ".join(unicodedata.normalize("NFC", value).split()).casefold()
+
+
+def _validate_planned_output(contract, definition, output, plan) -> None:
+    if output.mission.content_version != plan.content_version:
+        raise MissionContractError("plan content version does not match the mission")
+    if not plan.min_questions <= len(output.questions) <= plan.max_questions:
+        raise MissionContractError("question count is outside the level plan")
+    if not plan.min_preparation_cards <= len(output.preparation) <= plan.max_preparation_cards:
+        raise MissionContractError("preparation-card count is outside the level plan")
+    if len(output.worked_examples) < plan.min_worked_examples:
+        raise MissionContractError("worked-example count is below the level plan")
+
+    facts = {
+        **{item.fact_id: "object" for item in contract.scene_facts.objects},
+        **{item.fact_id: "attribute" for item in contract.scene_facts.attributes},
+        **{item.fact_id: "relation" for item in contract.scene_facts.relations},
+        **{item.fact_id: "count" for item in contract.scene_facts.counted_groups},
+    }
+    objects_by_fact = {item.fact_id: item for item in contract.scene_facts.objects}
+    terms_by_fact: dict[str, list] = {}
+    for term in contract.vocabulary:
+        terms_by_fact.setdefault(term.fact_id, []).append(term)
+    allowed_kinds = set(plan.fact_kinds)
+
+    references = [
+        *(("preparation card", card.fact_ids) for card in output.preparation),
+        *(("worked example", example.fact_ids) for example in output.worked_examples),
+        *(("question", question.fact_ids) for question in output.questions),
+    ]
+    for source, fact_ids in references:
+        if any(facts[fact_id] not in allowed_kinds for fact_id in fact_ids):
+            raise MissionContractError(f"{source} references a fact kind outside the plan")
+
+    covered_targets: set[str] = set()
+    correct_texts: list[str] = []
+    for question in output.questions:
+        for target_id in question.target_ids:
+            if question.interaction not in plan.interactions.get(target_id, []):
+                raise MissionContractError(
+                    f"{question.interaction} is not permitted for target {target_id}"
+                )
+        covered_targets.update(question.target_ids)
+        choice = question.interaction in {"multipleChoice", "markerChoice"}
+        if choice:
+            if question.chunks:
+                raise MissionContractError("choice questions cannot have chunks")
+            if not plan.min_options <= len(question.options) <= plan.max_options:
+                raise MissionContractError("choice option count is outside the level plan")
+            labels = [_fold_contract_text(option.label) for option in question.options]
+            if len(labels) != len(set(labels)):
+                raise MissionContractError("choice labels must be distinct")
+        elif question.options:
+            raise MissionContractError("sentenceBuilding questions cannot have options")
+
+        answer = output.private.answers[question.question_id]
+        if choice:
+            correct_text = next(
+                option.label for option in question.options
+                if option.option_id == answer.correct_option_id
+            )
+        else:
+            chunks = {chunk.chunk_id: chunk for chunk in question.chunks}
+            if len(answer.chunk_ids) > plan.max_answer_chunks:
+                raise MissionContractError("answer uses too many chunks")
+            if len(question.chunks) - len(answer.chunk_ids) > plan.max_distractor_chunks:
+                raise MissionContractError("question offers too many distractor chunks")
+            if any(not chunk.text.strip() for chunk in question.chunks):
+                raise MissionContractError("sentence chunks must contain text")
+            correct_text = join_chunks([chunks[item] for item in answer.chunk_ids])
+            if not correct_text.strip():
+                raise MissionContractError("sentence-building answer cannot be empty")
+        correct_texts.append(correct_text)
+
+        if not 1 <= len(question.hints) <= plan.max_hints:
+            raise MissionContractError("hint count is outside the level plan")
+        hint_levels = [hint.level for hint in question.hints]
+        if hint_levels != sorted(set(hint_levels)):
+            raise MissionContractError("hint levels must be strictly ascending")
+        if any(hint.reveals_answer for hint in question.hints[:-1]):
+            raise MissionContractError("only the final hint may reveal the answer")
+
+        if question.interaction == "markerChoice":
+            marker_facts = list(question.marker_fact_ids.values())
+            if any(fact_id not in objects_by_fact for fact_id in marker_facts):
+                raise MissionContractError("marker choices must map to object facts")
+            if len(marker_facts) != len(set(marker_facts)):
+                raise MissionContractError("marker choices must map to distinct objects")
+            correct_fact = question.marker_fact_ids[answer.correct_option_id]
+            if correct_fact not in question.fact_ids:
+                raise MissionContractError("correct marker object must be in the question facts")
+
+        for fact_ref in question.fact_ids:
+            if facts[fact_ref] != "object":
+                continue
+            terms = terms_by_fact.get(fact_ref, [])
+            if not terms or any(
+                _fold_contract_text(term.target_text) not in _fold_contract_text(correct_text)
+                for term in terms
+            ):
+                raise MissionContractError(
+                    "correct answer must contain every approved object term"
+                )
+
+    for required in definition.expected_performance.required_target_groups:
+        if not set(required) & covered_targets:
+            raise MissionContractError("output does not cover every required target group")
+    for target_id in definition.teaching.teach_before_assessment:
+        if not any(target_id in example.target_ids for example in output.worked_examples):
+            raise MissionContractError("worked examples must teach targets before assessment")
+
+    example_texts = {
+        _fold_contract_text(join_chunks(example.chunks))
+        for example in output.worked_examples
+    }
+    if example_texts & {_fold_contract_text(text) for text in correct_texts}:
+        raise MissionContractError("worked examples cannot reuse a question answer")
+
+    if plan.min_connected_facts is not None:
+        connected_questions = []
+        prior_connect_facts: set[str] = set()
+        for question in output.questions:
+            if "connect-scene-facts" in question.target_ids:
+                if len(set(question.fact_ids)) < plan.min_connected_facts:
+                    raise MissionContractError(
+                        "A2 connect questions need more distinct scene facts"
+                    )
+                connected_questions.append(question)
+                prior_connect_facts.update(question.fact_ids)
+            if "follow-up-scene-fact" in question.target_ids and (
+                not connected_questions or not set(question.fact_ids) <= prior_connect_facts
+            ):
+                raise MissionContractError(
+                    "follow-up questions must use facts from a preceding connect question"
+                )
+        if not connected_questions:
+            raise MissionContractError("A2 requires a connect-scene-facts question")
 
 
 __all__ = [
     "CONTRACT_VERSION",
     "M01_VARIANTS",
-    "MULTILINGUAL_M01_ENABLED",
+    "M01LevelPlan",
     "M01Variant",
     "MissionContractError",
+    "convert_generated_lesson",
     "UnroutedMissionVariant",
     "default_join",
     "fact_id",
     "generation_enabled",
     "join_chunks",
+    "load_m01_level_plan",
     "m01_variant",
     "validate_contract_input",
     "validate_contract_output",

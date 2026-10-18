@@ -8,7 +8,15 @@ from uuid import UUID
 from pydantic import AwareDatetime, Field, StringConstraints, ValidationError, model_validator
 
 from app.repositories.postgres.xp import task_xp
-from app.schemas.base import ApiModel, EntityModel, JsonObject, NonEmptyText, UnitScore, utc_now
+from app.schemas.base import (
+    ApiModel,
+    EntityModel,
+    JsonObject,
+    LanguageCode,
+    NonEmptyText,
+    UnitScore,
+    utc_now,
+)
 from app.schemas.enums import (
     AttemptInputMode,
     ISpyInteractionMode,
@@ -139,12 +147,29 @@ class VocabularyIntroductionContent(MissionTaskFields):
         raise ValueError("vocabulary introduction requires grouped words or legacy word fields")
 
 
+class LessonChunk(ApiModel):
+    chunk_id: NonEmptyText
+    text: NonEmptyText
+    join: Literal["space", "none"]
+
+
+class LessonWorkedExample(ApiModel):
+    example_id: NonEmptyText
+    chunks: list[LessonChunk]
+    translation: NonEmptyText
+    note: str | None = Field(default=None, exclude_if=_is_none)
+
+
 class GrammarLessonQuestion(ApiModel):
     question_id: NonEmptyText
     prompt: NonEmptyText
     interaction_type: Literal["multipleChoice", "sentenceBuilding"] = "multipleChoice"
     options: list[VocabularyChoice] = Field(default_factory=list)
     token_bank: list[NonEmptyText] = Field(default_factory=list)
+    chunks: list[LessonChunk] | None = Field(default=None, exclude_if=_is_none)
+    hint_count: Annotated[int, Field(ge=1)] | None = Field(
+        default=None, exclude_if=_is_none
+    )
     translation: str | None = None
     # The photo object a question is about, shown with its English label.
     scene_object_id: UUID | None = Field(default=None, exclude_if=_is_none)
@@ -186,8 +211,12 @@ class GrammarLessonQuestion(ApiModel):
     def validate_interaction(self) -> GrammarLessonQuestion:
         if self.interaction_type == "multipleChoice" and len(self.options) < 2:
             raise ValueError("multiple-choice questions require answer options")
-        if self.interaction_type == "sentenceBuilding" and not self.token_bank:
-            raise ValueError("sentence-building questions require a token bank")
+        if (
+            self.interaction_type == "sentenceBuilding"
+            and not self.token_bank
+            and not self.chunks
+        ):
+            raise ValueError("sentence-building questions require a token bank or chunks")
         if self.interaction_type == "sentenceBuilding" and self.options:
             raise ValueError("sentence-building questions cannot have answer options")
         if self.marker_object_ids is not None and set(self.marker_object_ids) != {
@@ -217,6 +246,12 @@ class GrammarLessonContent(MissionTaskFields):
     title: NonEmptyText
     explanation: NonEmptyText | None = Field(default=None, exclude_if=_is_none)
     prep: list[LessonPrepCard] | None = Field(default=None, exclude_if=_is_none)
+    target_language: LanguageCode | None = Field(default=None, exclude_if=_is_none)
+    text_direction: Literal["ltr", "rtl"] | None = Field(default=None, exclude_if=_is_none)
+    contract_version: NonEmptyText | None = Field(default=None, exclude_if=_is_none)
+    worked_examples: list[LessonWorkedExample] | None = Field(
+        default=None, exclude_if=_is_none
+    )
     questions: Annotated[list[GrammarLessonQuestion], Field(min_length=1)]
     check_each_question: bool | None = Field(default=None, exclude_if=_is_none)
     roleplay_facts: list[RoleplayFact] | None = Field(default=None, exclude_if=_is_none)
@@ -626,6 +661,18 @@ class TaskHint(EntityModel):
     requested_at: AwareDatetime = Field(default_factory=utc_now)
 
 
+class TaskHintRequest(ApiModel):
+    question_id: NonEmptyText
+
+
+class TaskHintResponse(ApiModel):
+    question_id: NonEmptyText
+    level: Annotated[int, Field(ge=1)]
+    text: NonEmptyText
+    reveals_answer: bool
+    remaining: Annotated[int, Field(ge=0)]
+
+
 CLUE_ASSISTANCE_VERSION = "ispy-clue-assistance.v1"
 
 
@@ -777,6 +824,10 @@ class LessonAnswerCheck(ApiModel):
     is_correct: bool
     correct_answer: NonEmptyText
     outcome: QuestionOutcome
+    hint_level: Annotated[int, Field(ge=1)] | None = Field(
+        default=None, exclude_if=_is_none
+    )
+    revealed: bool | None = Field(default=None, exclude_if=_is_none)
 
 
 class CheckLessonAnswerResponse(LessonAnswerCheck):
@@ -785,6 +836,9 @@ class CheckLessonAnswerResponse(LessonAnswerCheck):
 
 class LessonChecksResponse(ApiModel):
     checks: list[LessonAnswerCheck] = Field(default_factory=list)
+    hints: dict[str, list[TaskHintResponse]] = Field(
+        default_factory=dict, exclude_if=_is_empty
+    )
 
 
 type SubmitTaskAttemptRequest = Annotated[

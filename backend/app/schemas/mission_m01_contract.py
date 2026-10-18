@@ -165,6 +165,7 @@ class WorkedExample(ApiModel):
     chunks: list[SentenceChunk]
     translation: NonEmptyText
     fact_ids: list[NonEmptyText]
+    target_ids: Annotated[list[ContractId], Field(min_length=1)]
     note: str | None = None
 
 
@@ -220,3 +221,35 @@ class M01ContractOutput(ApiModel):
 
     def public_dump(self) -> dict[str, object]:
         return self.model_dump(mode="json", by_alias=True, exclude={"private"})
+
+
+class GeneratedMarkerOption(ApiModel):
+    option_id: ContractId
+    fact_id: NonEmptyText
+
+
+class GeneratedQuestion(ApiModel):
+    question_id: ContractId
+    target_ids: Annotated[list[ContractId], Field(min_length=1)]
+    section: NonEmptyText | None = None
+    prompt: NonEmptyText
+    prompt_translation: str | None = None
+    instruction: str | None = None
+    interaction: M01Interaction
+    options: list[VocabularyChoice]
+    marker_options: list[GeneratedMarkerOption]
+    chunks: list[SentenceChunk]
+    fact_ids: list[NonEmptyText]
+    answer: Answer
+    hints: list[Hint]
+    feedback: Feedback
+
+
+class M01GeneratedLesson(ApiModel):
+    """List-shaped model response, excluding server-derived private evaluations."""
+
+    title: NonEmptyText
+    explanation: str | None = None
+    preparation: list[PreparationCard]
+    worked_examples: list[WorkedExample]
+    questions: list[GeneratedQuestion]

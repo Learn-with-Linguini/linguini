@@ -8,6 +8,7 @@ from app.schemas.tasks import (
     LatestClueAttempt,
     LessonChecksResponse,
     SessionTaskPublic,
+    TaskHintResponse,
 )
 from app.services.users import UserService
 
@@ -90,3 +91,11 @@ class TaskService:
 
         user = self.users.get_current_user()
         return PostgresWorkflowRepository(self.engine, user.id).lesson_checks(task_id)
+
+    def request_lesson_hint(self, task_id, question_id) -> TaskHintResponse:
+        from app.repositories.postgres.workflow import PostgresWorkflowRepository
+
+        user = self.users.get_current_user()
+        return PostgresWorkflowRepository(self.engine, user.id).request_lesson_hint(
+            task_id, question_id
+        )

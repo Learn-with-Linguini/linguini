@@ -9,8 +9,9 @@ import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { builtSentence, choiceOrder, finishesAfterLearning, markerChoices, optionText, practiceStages, questionOptions, sentenceEnding, taskDone, taskTitle, taskXp, xpEarnedText } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
-import { checkLessonAnswer, checkVocabularyAnswer, getLatestAttempt, getLessonChecks, reviewDetails, type GrammarLessonQuestion, type LessonAnswerCheck, type SceneObject, type SessionTask, type QuestionOutcome, type TaskActionResult, type TaskAnswer, type VocabularyLearningWord } from "../lib/api";
+import { checkLessonAnswer, checkVocabularyAnswer, getLatestAttempt, getLessonChecks, requestLessonHint, reviewDetails, type GrammarLessonQuestion, type LessonAnswerCheck, type SceneObject, type SessionTask, type QuestionOutcome, type TaskActionResult, type TaskAnswer, type TaskContent, type TaskHintResponse, type VocabularyLearningWord } from "../lib/api";
 import { mergeLessonChecks, visibleLessonQuestionIndex } from "../lib/missionLessonFlow";
+import { joinChunks } from "../lib/joinChunks";
 import { ReportIssueLink } from "../components/ReportIssueLink";
 import { ObjectPreview } from "../components/ObjectPreview";
 import { ScenePhoto } from "../components/ScenePhoto";
@@ -32,7 +33,8 @@ export function LearningTaskPage() {
   const task = tasks[index];
   if (!task || ["abandoned", "failed"].includes(session.session.status)) return <Navigate to={`${base}/learn`} replace />;
   const next = tasks[index + 1];
-  return <div className="stack learning-task-page"><LearningTaskContent key={task.id} task={task} index={index} total={tasks.length}
+  return <div className="stack learning-task-page">
+    <LearningTaskContent key={task.id} task={task} index={index} total={tasks.length}
     onNext={() => {
       if (!next && session.session.status !== "generatingTasks" && finishesAfterLearning(session.tasks)) {
         if (completeSession()) navigate(`${base}/summary`);
@@ -141,6 +143,41 @@ function ExitToHome({ onExit }: { onExit: () => void }) {
 
 function BackToTasks({ onClose }: { onClose: () => void }) {
   return <button type="button" className="text-link" onClick={onClose}>Back to tasks</button>;
+}
+
+function LessonScaffolding({ content }: {
+  content: Extract<TaskContent, { kind: "grammarLesson" }>;
+}) {
+  const scene = useScene();
+  const language = content.targetLanguage ?? scene.languageCode;
+  const direction = content.textDirection ?? "ltr";
+  const audio = speechAvailable();
+  return <>
+    {content.prep?.length ? <Card plain><div className="stack-2 lesson-prep" aria-label="Learn first">
+      <span className="label muted">Learn first</span>
+      {content.prep.map(card => <div key={card.text} className="lesson-prep__card">
+        <div><strong lang={language} dir={direction}>{card.text}</strong>
+          {card.translation ? <span className="muted small"> — {card.translation}</span> : null}</div>
+        {audio ? <IconButton label={`Hear ${card.text}`} onClick={() => speak(card.text, language)}><SpeakerIcon /></IconButton> : null}
+      </div>)}
+    </div></Card> : null}
+    {content.workedExamples?.map(example => <Card key={example.exampleId} plain>
+      <section className="stack-2" aria-label="Worked example">
+        <span className="label muted">Example</span>
+        <p lang={language} dir={direction}>{joinChunks(example.chunks)}</p>
+        <p className="small muted">{example.translation}</p>
+        {example.note ? <p className="small">{example.note}</p> : null}
+      </section>
+    </Card>)}
+  </>;
+}
+
+function answerFromChunks(question: GrammarLessonQuestion, answer: string): string {
+  if (!question.chunks?.length) return answer;
+  const chunks = new Map(question.chunks.map(chunk => [chunk.chunkId, chunk]));
+  return joinChunks(answer.split(",").map(id => chunks.get(id)).filter(
+    (chunk): chunk is NonNullable<typeof chunk> => Boolean(chunk),
+  ));
 }
 
 function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }: { task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void }) {
@@ -272,9 +309,10 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
 }) {
   const lastStep = useLastStepLabel();
   const scene = useScene();
-  const { actOnTask, practiceSaving, practiceError } = useAppState();
+  const { actOnTask, practiceSaving, practiceError, activeProfile } = useAppState();
   const content = task.publicContent;
   const questions = content.kind === "grammarLesson" ? content.questions : [];
+  const instructionLanguage = activeProfile?.sourceLanguageCode;
   const { refetch: refetchChecks, ...saved } = useQuery({
     queryKey: queryKeys.lessonChecks(task.id),
     queryFn: ({ signal }) => getLessonChecks(task.id, signal),
@@ -283,8 +321,11 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
   const [localChecks, setLocalChecks] = useState<Record<string, LessonAnswerCheck>>({});
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [builtTokenIndexes, setBuiltTokenIndexes] = useState<Record<string, number[]>>({});
+  const [builtChunkIds, setBuiltChunkIds] = useState<Record<string, string[]>>({});
+  const [localHints, setLocalHints] = useState<Record<string, TaskHintResponse[]>>({});
   const [activeIndex, setActiveIndex] = useState(0);
   const [checking, setChecking] = useState(false);
+  const [requestingHint, setRequestingHint] = useState(false);
   const [checkError, setCheckError] = useState<string | null>(null);
   const [actionResult, setActionResult] = useState<TaskActionResult | null>(null);
   const submitKey = useRef(crypto.randomUUID());
@@ -301,10 +342,27 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
   const question = content.questions[Math.min(activeIndex, content.questions.length - 1)];
   const isChecked = Boolean(question && checks[question.questionId]);
   const tokenIndexes = question ? builtTokenIndexes[question.questionId] ?? [] : [];
+  const selectedChunkIds = question ? builtChunkIds[question.questionId] ?? [] : [];
+  const chunksById = new Map((question?.chunks ?? []).map(chunk => [chunk.chunkId, chunk]));
+  const selectedChunks = selectedChunkIds
+    .map(id => chunksById.get(id))
+    .filter((chunk): chunk is NonNullable<typeof chunk> => Boolean(chunk));
   const tokenAnswer = question?.interactionType === "sentenceBuilding"
     ? builtSentence(tokenIndexes.map(position => question.tokenBank[position])) : "";
   const answer = question?.interactionType === "multipleChoice"
-    ? answers[question.questionId] ?? "" : tokenAnswer;
+    ? answers[question.questionId] ?? ""
+    : question?.chunks?.length ? selectedChunkIds.join(",") : tokenAnswer;
+  const hints = question ? [
+    ...(saved.data?.hints?.[question.questionId] ?? []),
+    ...(localHints[question.questionId] ?? []),
+  ].reduce<TaskHintResponse[]>((items, hint) => {
+    const existing = items.findIndex(item => item.level === hint.level);
+    if (existing >= 0) items[existing] = hint;
+    else items.push(hint);
+    return items.sort((left, right) => left.level - right.level);
+  }, []) : [];
+  const hintCount = question?.hintCount ?? 0;
+  const hintsRemaining = hints.at(-1)?.remaining ?? hintCount;
   const allChecked = content.questions.every(item => Boolean(checks[item.questionId]));
   const terminal = taskDone(actionResult?.task ?? task);
   const reward = !terminal ? taskXp(task) : null;
@@ -325,6 +383,26 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
       setCheckError(friendlyError(error));
     } finally {
       setChecking(false);
+    }
+  };
+
+  const requestHint = async () => {
+    if (!question || requestingHint || isChecked || !hintCount) return;
+    setRequestingHint(true);
+    setCheckError(null);
+    try {
+      const hint = await requestLessonHint(task.id, question.questionId);
+      setLocalHints(value => ({
+        ...value,
+        [question.questionId]: [
+          ...(value[question.questionId] ?? []).filter(item => item.level !== hint.level),
+          hint,
+        ],
+      }));
+    } catch (error) {
+      setCheckError(friendlyError(error));
+    } finally {
+      setRequestingHint(false);
     }
   };
 
@@ -351,6 +429,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
     <ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />
     <div className="learning-title-row"><div><h1>{content.title}</h1>{reward ? <XpPill {...reward} /> : null}</div><ExitToHome onExit={onExit} /></div>
     {content.explanation ? <div className="panel-note">{content.explanation}</div> : null}
+    <LessonScaffolding content={content} />
     {saved.isLoading ? <InlineLoader compact label="Restoring checked answers…" /> : null}
     {saved.isError ? <div role="alert"><p>Unable to restore checked answers.</p>
       <Button variant="quiet" onClick={() => void refetchChecks()}>Retry</Button></div> : null}
@@ -373,9 +452,41 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
               if (marker) setAnswers(value => ({ ...value, [question.questionId]: marker.option.optionId }));
             } : undefined}
         /></div> : null}
-        <h2>{question.prompt}</h2>
-        {question.translation ? <PromptTranslation text={question.translation} /> : null}
-        {question.interactionType === "sentenceBuilding" ? <>
+        <h2 lang={instructionLanguage || undefined}>
+          {question.prompt}
+        </h2>
+        {question.promptTranslation ? <PromptTranslation text={question.promptTranslation} /> : null}
+        {question.interactionType === "sentenceBuilding" && question.chunks?.length ? <>
+          <div className="sentence-builder__answer" aria-label="Your sentence">
+            {selectedChunks.map(chunk => <button key={chunk.chunkId} type="button"
+              className="sentence-builder__token" disabled={isChecked || checking}
+              lang={content.targetLanguage ?? scene.languageCode}
+              dir={content.textDirection ?? "ltr"}
+              aria-label={`Remove ${chunk.text}`}
+              onClick={() => setBuiltChunkIds(value => ({
+                ...value,
+                [question.questionId]: (value[question.questionId] ?? [])
+                  .filter(item => item !== chunk.chunkId),
+              }))}>{chunk.text}</button>)}
+            <span lang={content.targetLanguage ?? scene.languageCode}
+              dir={content.textDirection ?? "ltr"}>{joinChunks(selectedChunks)}</span>
+          </div>
+          <div className="chip-row" aria-label="Sentence building chunks">
+            {question.chunks.map(chunk => {
+              const selected = selectedChunkIds.includes(chunk.chunkId);
+              return <button key={chunk.chunkId} type="button" className="chip"
+                lang={content.targetLanguage ?? scene.languageCode}
+                dir={content.textDirection ?? "ltr"}
+                disabled={selected || isChecked || checking}
+                onClick={() => setBuiltChunkIds(value => ({
+                  ...value,
+                  [question.questionId]: [
+                    ...(value[question.questionId] ?? []), chunk.chunkId,
+                  ],
+                }))}>{chunk.text}</button>;
+            })}
+          </div>
+        </> : question.interactionType === "sentenceBuilding" ? <>
           <div className="sentence-builder__answer" aria-label="Your sentence">
             {tokenIndexes.length ? tokenIndexes.map((tokenIndex, position) => <button key={`${tokenIndex}-${position}`}
               className="sentence-builder__token" disabled={isChecked || checking}
@@ -399,8 +510,20 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
           return <button key={option.optionId} className={`choice${state}`} aria-pressed={selected}
             disabled={Boolean(result) || checking || saved.isLoading || saved.isError}
             onClick={() => setAnswers(value => ({ ...value, [question.questionId]: option.optionId }))}>
-            {optionText(question, option.label)}</button>;
+            <span lang={content.targetLanguage ?? scene.languageCode}
+              dir={content.textDirection ?? "ltr"}>{optionText(question, option.label)}</span></button>;
         })}</div>}
+        {hints.length ? <ol className="stack-2" aria-label="Disclosed hints">
+          {hints.map(hint => <li key={hint.level}>
+            <p lang={instructionLanguage || undefined}>{hint.text}</p>
+            {hint.revealsAnswer ? <span className="small muted">This hint reveals the answer.</span> : null}
+          </li>)}
+        </ol> : null}
+        {hintCount > 0 && !isChecked ? <Button variant="quiet"
+          disabled={requestingHint || checking || saved.isLoading || saved.isError}
+          onClick={() => void requestHint()}>
+          {requestingHint ? "Getting a hint…" : hintsRemaining > 0 ? `Hint (${hintsRemaining} left)` : "Repeat last hint"}
+        </Button> : null}
         {checks[question.questionId] ? <>
           <Feedback tone={checks[question.questionId].isCorrect ? "good" : "warn"}>
           <p role="status">{checks[question.questionId].isCorrect
@@ -410,7 +533,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
           <QuestionOutcomeNotes outcome={checks[question.questionId].outcome} />
           <ReportIssueLink reportType="Grammar answer" fields={[
             ["Task ID", task.id], ["Question ID", question.questionId], ["Prompt", question.prompt],
-            ["Your answer", checks[question.questionId].answer],
+            ["Your answer", answerFromChunks(question, checks[question.questionId].answer)],
             ["Displayed solution", checks[question.questionId].correctAnswer],
           ]} />
         </> : null}
@@ -437,6 +560,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
   const { actOnTask, practiceSaving, practiceError, session } = useAppState();
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [builtTokenIndexes, setBuiltTokenIndexes] = useState<Record<string, number[]>>({});
+  const [builtChunkIds, setBuiltChunkIds] = useState<Record<string, string[]>>({});
   const [questionResults, setQuestionResults] = useState<Record<string, boolean>>({});
   const [correctAnswers, setCorrectAnswers] = useState<Record<string, string>>({});
   const [outcomes, setOutcomes] = useState<Record<string, QuestionOutcome>>({});
@@ -467,7 +591,9 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
     : outcomes;
   const chosen = restored?.answers ?? answers;
   const answerFor = (question: typeof content.questions[number]) => question.interactionType === "sentenceBuilding"
-    ? builtSentence((builtTokenIndexes[question.questionId] ?? []).map(index => question.tokenBank[index]))
+    ? question.chunks?.length
+      ? (builtChunkIds[question.questionId] ?? []).join(",")
+      : builtSentence((builtTokenIndexes[question.questionId] ?? []).map(index => question.tokenBank[index]))
     : answers[question.questionId] ?? "";
   const answered = content.questions.every(question => Boolean(answerFor(question)));
   const submit = async () => {
@@ -490,13 +616,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
     <ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />
     <div className="learning-title-row"><div><h1>{content.title}</h1>{reward ? <XpPill {...reward} /> : null}</div><ExitToHome onExit={onExit} /></div>
     {content.explanation ? <div className="panel-note">{content.explanation}</div> : null}
-    {content.prep?.length ? <Card plain><div className="stack-2 lesson-prep" aria-label="Learn first">
-      <span className="label muted">Learn first</span>
-      {content.prep.map(card => <div key={card.text} className="lesson-prep__card">
-        <div><strong lang={scene.languageCode}>{card.text}</strong>{card.translation ? <span className="muted small"> — {card.translation}</span> : null}</div>
-        {audio ? <IconButton label={`Hear ${card.text}`} onClick={() => speak(card.text, scene.languageCode)}><SpeakerIcon /></IconButton> : null}
-      </div>)}
-    </div></Card> : null}
+    <LessonScaffolding content={content} />
     {content.questions.map((question, position) => {
       const questionMarkers = question.roleplayPremise
         ? questionMarkerObjects(
@@ -540,7 +660,40 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         reference={session?.sceneObjects.find(object => object.id === question.referenceObjectId)}
         referenceLabel={question.referenceLabel} /> : null}
       {question.interactionType === "sentenceBuilding" ? <>
-        {question.promptTranslation ? <><h2>{question.prompt}</h2><PromptTranslation text={question.promptTranslation} /></> : question.translation ? <h2>{question.translation}</h2> : null}
+        {question.promptTranslation ? <><h2 lang={content.targetLanguage ?? scene.languageCode} dir={content.textDirection ?? "ltr"}>{question.prompt}</h2><PromptTranslation text={question.promptTranslation} /></> : question.translation ? <h2>{question.translation}</h2> : null}
+        {question.chunks?.length ? (() => {
+          const selectedIds = builtChunkIds[question.questionId]
+            ?? restored?.answers?.[question.questionId]?.split(",")
+            ?? [];
+          const byId = new Map(question.chunks.map(chunk => [chunk.chunkId, chunk]));
+          const selected = selectedIds.map(id => byId.get(id))
+            .filter((chunk): chunk is NonNullable<typeof chunk> => Boolean(chunk));
+          return <>
+            <div className="sentence-builder__answer" aria-label="Your sentence">
+              {selected.map(chunk => <button key={chunk.chunkId} type="button"
+                className="sentence-builder__token" disabled={terminal || practiceSaving}
+                aria-label={`Remove ${chunk.text}`}
+                onClick={() => setBuiltChunkIds(value => ({
+                  ...value,
+                  [question.questionId]: (value[question.questionId] ?? [])
+                    .filter(id => id !== chunk.chunkId),
+                }))}>×</button>)}
+              <span lang={content.targetLanguage ?? scene.languageCode}
+                dir={content.textDirection ?? "ltr"}>{joinChunks(selected)}</span>
+            </div>
+            <div className="chip-row" aria-label="Sentence building chunks">
+              {question.chunks.map(chunk => {
+                const used = selectedIds.includes(chunk.chunkId);
+                return <button key={chunk.chunkId} type="button" className="chip"
+                  disabled={used || terminal || practiceSaving}
+                  onClick={() => setBuiltChunkIds(value => ({
+                    ...value,
+                    [question.questionId]: [...(value[question.questionId] ?? []), chunk.chunkId],
+                  }))}>{chunk.text}</button>;
+              })}
+            </div>
+          </>;
+        })() : <>
         <div className="sentence-builder__answer" aria-label="Your sentence">
           {restored?.answers?.[question.questionId] ? <span>{restored.answers[question.questionId]}</span> : (builtTokenIndexes[question.questionId] ?? []).length ? (builtTokenIndexes[question.questionId] ?? []).map((tokenIndex, tokenPosition) => <button key={`${tokenIndex}-${tokenPosition}`} className="sentence-builder__token" disabled={terminal || practiceSaving}
             onClick={() => setBuiltTokenIndexes(value => ({ ...value, [question.questionId]: (value[question.questionId] ?? []).filter((_, index) => index !== tokenPosition) }))}>{question.tokenBank[tokenIndex]}</button>) : <span className="muted">Choose the words to build your sentence.</span>}
@@ -550,6 +703,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
           return <button key={`${token}-${tokenIndex}`} className="chip" disabled={used || terminal || practiceSaving}
             onClick={() => setBuiltTokenIndexes(value => ({ ...value, [question.questionId]: [...(value[question.questionId] ?? []), tokenIndex] }))}>{token}</button>;
         })}</div>
+        </>}
       </> : <>
         {writtenPromptShown(question, { revealed: Boolean(revealed[question.questionId]), graded: results[question.questionId] !== undefined, audio })
           ? <><h2 lang={question.audioText ? scene.languageCode : undefined}>{content.focus === "sceneDescription" ? question.translation || "Choose the sentence that describes the scene." : question.prompt}</h2>

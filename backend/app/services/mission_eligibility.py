@@ -4,7 +4,9 @@ import re
 from collections import Counter
 from dataclasses import dataclass
 
+from app.languages import get_language
 from app.missions import get_mission
+from app.missions.m01_multilingual import generation_enabled, load_m01_level_plan
 from app.schemas.enums import SessionMode
 from app.services.ispy_clue_frames import COLOUR_ATTRIBUTE_TYPES, GENDERS, POSITIONS
 from app.services.mission_language_a2 import A2_ENABLED_LANGUAGES
@@ -161,11 +163,29 @@ def lesson_missions(session_mode, profile):
     if session_mode != SessionMode.LESSON:
         return []
     level = str(profile["proficiency_level"] or "").strip().upper()
+    if generation_enabled():
+        if get_language(str(profile["target_language_code"])) is None:
+            return []
+        legacy_languages = LEVEL_LANGUAGES.get(level, MISSION_LANGUAGES)
+        keys = IMPLEMENTED_MISSIONS.get(level, ())
+        return [
+            mission for key in keys
+            if (mission := get_mission(*key)) is not None
+            and (
+                mission.mission_id == "M01"
+                or str(profile["target_language_code"]).lower() in legacy_languages
+            )
+        ]
     languages = LEVEL_LANGUAGES.get(level, MISSION_LANGUAGES)
     if profile["target_language_code"].lower() not in languages:
         return []
     keys = IMPLEMENTED_MISSIONS.get(level, ())
     return [mission for key in keys if (mission := get_mission(*key)) is not None]
+
+
+def legacy_mission_language_allowed(level, language_code):
+    languages = LEVEL_LANGUAGES.get(str(level).upper(), MISSION_LANGUAGES)
+    return str(language_code).lower() in languages
 
 
 def plan_missions(candidates, objects, relations, counted_groups=(), history=()):
@@ -377,6 +397,10 @@ def attribute_contrasts(kind, value):
 
 def photo_eligibility(mission, objects, relations=(), counted_groups=()):
     """Check only the confirmed facts this mission's photo requirements name."""
+    if generation_enabled() and mission.mission_id == "M01":
+        return m01_scene_fact_eligibility(
+            load_m01_level_plan(mission.practice_level), objects, relations
+        )
     requirements = mission.photo_requirements
     labels = {obj.label.strip().casefold() for obj in objects}
     reasons = []
@@ -412,6 +436,59 @@ def photo_eligibility(mission, objects, relations=(), counted_groups=()):
         ))
     if str(mission.practice_level) == "A0":
         reasons += a0_photo_reasons(mission, objects, counted_groups)
+    return Eligibility(not reasons, tuple(reasons))
+
+
+def m01_scene_fact_eligibility(plan, objects, relations=()):
+    """Pre-translation M01 eligibility from distinct confirmed scene facts only."""
+    reasons = []
+    object_ids = {obj.id for obj in objects}
+    if "object" in plan.fact_kinds and len(object_ids) < plan.min_objects:
+        reasons.append(f"Confirm at least {plan.min_objects} different objects.")
+
+    detail_count = 0
+    if "attribute" in plan.fact_kinds:
+        detail_count += sum(
+            1 for obj in objects
+            for key, value in (obj.attributes or {}).items()
+            if key.casefold() != "quantity" and isinstance(value, str) and value.strip()
+        )
+    if "relation" in plan.fact_kinds:
+        detail_count += sum(
+            relation.subject_scene_object_id in object_ids
+            and relation.reference_scene_object_id in object_ids
+            and relation.subject_scene_object_id != relation.reference_scene_object_id
+            for relation in relations
+        )
+    if detail_count < plan.min_detail_facts:
+        reasons.append(f"Confirm at least {plan.min_detail_facts} scene details.")
+    return Eligibility(not reasons, tuple(reasons))
+
+
+def m01_multilingual_eligibility(plan, contract_input):
+    """Post-translation eligibility requires an approved term for each counted fact."""
+    reasons = []
+    if get_language(contract_input.target_language) is None:
+        reasons.append("The target language is not registered.")
+    term_facts = {term.fact_id for term in contract_input.vocabulary}
+    fact_kinds = set(plan.fact_kinds)
+    object_count = (
+        sum(item.fact_id in term_facts for item in contract_input.scene_facts.objects)
+        if "object" in fact_kinds else 0
+    )
+    if object_count < plan.min_objects:
+        reasons.append(f"At least {plan.min_objects} approved object terms are required.")
+    detail_count = sum(
+        item.fact_id in term_facts
+        for kind, facts in (
+            ("attribute", contract_input.scene_facts.attributes),
+            ("relation", contract_input.scene_facts.relations),
+        )
+        if kind in fact_kinds
+        for item in facts
+    )
+    if detail_count < plan.min_detail_facts:
+        reasons.append(f"At least {plan.min_detail_facts} approved detail terms are required.")
     return Eligibility(not reasons, tuple(reasons))
 
 

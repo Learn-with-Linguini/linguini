@@ -1,8 +1,8 @@
 # Shared multilingual M01 contracts
 
-This is the stage 1 foundation for shared M01 contracts across A0, A1, and A2. It adds
-language metadata, typed input/output contracts, and explicit routing only. Contract
-generation remains disabled.
+This document describes the shared A0/A1/A2 multilingual M01 path. Its generation path
+is gated by `MULTILINGUAL_M01_ENABLED` and defaults off; the legacy builders remain
+available for existing language/level combinations.
 
 ## Language registry
 
@@ -16,10 +16,11 @@ unimplemented support.
 
 To register a language, add one `[[languages]]` entry with a canonical BCP 47 code,
 ISO 15924 script, and speech synthesis locale. `grammar` is optional free-form metadata;
-no contract requires grammatical features. Set `learnable = true` only when it should
-appear in target-language pickers. Optional reviewed examples can be added to the
-mission definition's `language_patterns.examples` table. New multilingual contract
-languages do not require edits to the legacy builder or language allowlists.
+no contract requires grammatical features. Optional reviewed examples can be added to
+the mission definition's `language_patterns.examples` table. A registered target can
+use the feature-flagged M01 path without adding a legacy builder or language allowlist
+entry. Registry registration alone does not expose it in pickers: only then set
+`learnable = true` for a new language so it appears in target pickers.
 
 ## M01 contract input
 
@@ -68,26 +69,46 @@ for `none`. `default_join()` suppresses spaces before punctuation and for langua
 registry uses `word_separator = "none"`. Builders must handle elision explicitly; it is
 not inferred from text.
 
-The output validator checks facts, mission targets, required target groups, assessed
-question count, unique chunks, answers, ordered hints, and definition-compatible
-evaluations. It does not enforce article, gender, or plural rules.
+The output validator checks plan question/preparation/example bounds, allowed
+interactions, required target coverage, confirmed fact kinds and references, option
+labels, marker mappings, answer grounding, chunk bounds, progressive hints,
+teach-before-assess examples, example/answer distinctness, and A2 connection/follow-up
+ordering. Attribute and relation strings are not text-grounded because natural
+inflection can change their surface form. Structural validation does not establish
+that a translation is linguistically correct: there is no linguistic evaluator in
+this stage.
 
 ## Routing and compatibility
 
 `M01_VARIANTS` explicitly routes M01 A0/A1/A2 version 1. Missing mission, level, or
-version combinations raise `UnroutedMissionVariant`; there is no A1 fallback.
-`MULTILINGUAL_M01_ENABLED` remains `False`, and no workflow calls this path in stage 1.
+version combinations raise `UnroutedMissionVariant`; there is no level fallback. With
+the flag enabled, initial mission planning uses confirmed object/detail facts and the
+level plan, before translation. After translation, the workflow requires the minimum
+number of approved session-translation terms; if that check fails it skips M01 with
+`insufficientApprovedVocabulary` without generating or falling back to legacy content.
 
-The existing A0, A1, and A2 M01 lesson builders, their generated lesson behavior, and
-saved v1 plans are unchanged. The legacy lesson registry now dispatches only explicit
-A0/A1/A2 levels and rejects unknown variants instead of falling back. Existing JSON
-storage in `answer_key.missionState` / `analysisDraft` is sufficient for later stages, so
-there is no migration.
+If generation fails, a ready legacy lesson is used only when the requested language is
+in that level's legacy allowlist. Otherwise M01 is skipped as a retryable
+`generationFailed` mission; a learner can use **Try again** from the learning page.
+The flag-off path and other mission allowlists are unchanged. Grammar lessons store
+their saved checks, disclosed hint levels, and retry claim in existing JSON columns;
+no database migration is needed.
 
-## Remaining stages
+## Manual test procedure
 
-- **Stage 2:** produce contract output from contract input, adapt it to
-  `GrammarLessonContent` and `TaskAnswerKey`, then enable the path per level.
-- **Stage 3:** integrate UI rendering for chunk joins, hints, worked examples, RTL and
-  non-Latin scripts, and registry TTS locales; only then set `learnable = true` for a
-  new language so it appears in target pickers.
+1. Start the app against a disposable local PostgreSQL database and use the normal
+   authenticated demo account and a language profile whose target is registered.
+2. Set `MULTILINGUAL_M01_ENABLED=true` in the backend environment, restart the backend,
+   and open the normal photo-led learning flow from a scene with reviewed objects,
+   details, and translated vocabulary.
+3. Confirm M01 appears only when the level's confirmed-fact counts and post-translation
+   approved-vocabulary counts meet the plan. Check prepared cards, labeled worked
+   examples, sentence chunks, language direction, sequential hints, and refresh
+   restoration. Verify a checked answer cannot receive more hints.
+4. To exercise a generation failure, use a controlled test client rather than
+   deliberately corrupting stored session data. Confirm an allowlisted, ready legacy
+   lesson can be used, and that other languages receive the retryable skip and
+   **Try again** action. A failed approved-vocabulary check must not call generation or
+   use the legacy fallback.
+5. Turn the flag off and confirm the existing M01 lessons and other mission behavior
+   remain on their legacy paths.

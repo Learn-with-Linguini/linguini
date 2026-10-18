@@ -141,7 +141,13 @@ def _option_notes(evaluation, answer):
     return notes
 
 
-def review_details(task: SessionTask, request, question_results, correct_answers):
+def review_details(
+    task: SessionTask,
+    request,
+    question_results,
+    correct_answers,
+    server_assistance=None,
+):
     """Grouped-lesson ``evaluationDetails`` with ``questionOutcomes`` added.
 
     Correctness comes from ``question_results``; the outcomes only describe it.
@@ -150,11 +156,22 @@ def review_details(task: SessionTask, request, question_results, correct_answers
     mission = get_mission(*task.public_content.mission_key)
     evaluations = {item.question_id: item for item in task.answer_key.question_evaluations}
     assistance = {item.question_id: item.supports for item in request.question_assistance or []}
+    server_assistance = server_assistance or {}
     outcomes = []
     for question in task.public_content.questions:
         question_id = question.question_id
+        server_supports = []
+        hint = server_assistance.get(question_id) or {}
+        if hint.get("hintLevel"):
+            server_supports.append("hint")
+        if hint.get("revealed"):
+            server_supports.append("answerReveal")
         supports = list(dict.fromkeys(
-            [*assistance.get(question_id, []), *_BUILT_IN_SUPPORTS.get(_interaction(question), [])]
+            [
+                *assistance.get(question_id, []),
+                *server_supports,
+                *_BUILT_IN_SUPPORTS.get(_interaction(question), []),
+            ]
         ))
         evaluation = evaluations.get(question_id)
         common = dict(
@@ -176,7 +193,7 @@ def review_details(task: SessionTask, request, question_results, correct_answers
                 outcome="correct" if correct else "incorrect",
                 objective_id=evaluation.objective_id,
                 target_ids=evaluation.target_ids,
-                evidence_type=_default_evidence(question),
+                evidence_type=evaluation.evidence_type,
                 correct_note=(
                     evaluation.correct_note
                     if correct and _interaction(question) == "multipleChoice" else None

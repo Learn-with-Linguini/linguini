@@ -20,12 +20,23 @@ from app.ai.cache import CacheScope, TemplateSet
 from app.ai.features.ispy_clues import ISpyClueGenerationError
 from app.ai.features.ispy_guess import ISpyGuessError, ISpyGuessResult
 from app.ai.features.learning_tasks import required_task_focuses
+from app.ai.features.learning_tasks.m01_multilingual import M01_MULTILINGUAL_GENERATION
+from app.ai.features.learning_tasks.m01_multilingual_prompt import (
+    M01_MULTILINGUAL_SCHEMA_VERSION,
+)
 from app.ai.features.learning_tasks.mission import fold
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.ai.features.scene_analysis import (
     SCENE_ANALYSIS_PROMPT_VERSION,
     SCENE_ANALYSIS_SCHEMA_VERSION,
     RoutedSceneAnalyzer,
+)
+from app.languages import get_language
+from app.missions.m01_multilingual import (
+    CONTRACT_VERSION,
+    generation_enabled,
+    join_chunks,
+    load_m01_level_plan,
 )
 from app.repositories.postgres.game_resources import refund_sauce, reward_basil, spend_sauce
 from app.repositories.postgres.language_profiles import language_profiles
@@ -86,6 +97,7 @@ from app.schemas.tasks import (
     SessionTaskPublic,
     TaskActionResponse,
     TaskAttempt,
+    TaskHintResponse,
 )
 from app.schemas.translation import SceneTranslationResult
 from app.schemas.vocabulary import (
@@ -101,7 +113,9 @@ from app.services.ispy_descriptions import (
     interpret_guess,
 )
 from app.services.mission_eligibility import (
+    legacy_mission_language_allowed,
     lesson_missions,
+    m01_multilingual_eligibility,
     mission_snapshot,
     photo_eligibility,
     plan_missions,
@@ -110,6 +124,11 @@ from app.services.mission_eligibility import (
     snapshot_missions,
 )
 from app.services.mission_lessons import mission_version
+from app.services.mission_lessons_m01_multilingual import (
+    build_m01_contract_input,
+    build_m01_multilingual_task,
+    m01_contract_has_learner_context,
+)
 from app.services.mission_registry import lesson_mission, lesson_spec
 from app.services.mission_roleplay import assign_roleplay
 from app.services.quantities import suggested_quantity
@@ -175,9 +194,14 @@ def _lesson_answer_is_correct(task, question_id, answer):
         item for item in task.public_content.questions if item.question_id == question_id
     )
     expected = task.answer_key.correct_option_ids.get(question_id)
+    if (
+        getattr(question, "interaction_type", None) == "sentenceBuilding"
+        and getattr(question, "chunks", None) is not None
+    ):
+        return answer.split(",") == expected.split(",")
     return (
         normalize_answer(answer) == normalize_answer(expected)
-        if getattr(question, "interaction_type", "multipleChoice") == "sentenceBuilding"
+        if getattr(question, "interaction_type", None) == "sentenceBuilding"
         else answer == expected
     )
 
@@ -623,7 +647,7 @@ class PostgresWorkflowRepository:
             )
 
     @staticmethod
-    def _lesson_check(task, question_id, answer, is_correct):
+    def _lesson_check(task, question_id, answer, is_correct, hint_level=None, revealed=None):
         question = next(
             item for item in task.public_content.questions if item.question_id == question_id
         )
@@ -632,6 +656,11 @@ class PostgresWorkflowRepository:
         if question.interaction_type == "multipleChoice":
             correct_answer = next(
                 option.label for option in question.options if option.option_id == expected
+            )
+        elif question.chunks is not None:
+            chunks = {item.chunk_id: item for item in question.chunks}
+            correct_answer = join_chunks(
+                [chunks[item] for item in expected.split(",")]
             )
         evaluation = next(
             item for item in task.answer_key.question_evaluations
@@ -642,6 +671,8 @@ class PostgresWorkflowRepository:
             answer=answer,
             is_correct=is_correct,
             correct_answer=correct_answer,
+            hint_level=hint_level,
+            revealed=revealed if hint_level is not None else None,
             outcome=QuestionOutcome(
                 question_id=question_id,
                 outcome="correct" if is_correct else "incorrect",
@@ -671,7 +702,8 @@ class PostgresWorkflowRepository:
             stored = task_checks.get(question_id)
             if stored is not None:
                 return self._lesson_check(
-                    task, question_id, stored["answer"], stored["isCorrect"]
+                    task, question_id, stored["answer"], stored["isCorrect"],
+                    stored.get("hintLevel"), stored.get("revealed"),
                 )
             question_ids = [item.question_id for item in task.public_content.questions]
             if question_id not in question_ids:
@@ -684,16 +716,110 @@ class PostgresWorkflowRepository:
                 option.option_id for option in question.options
             }:
                 raise PracticeConflictError("Choose one of the offered answers.")
+            if question.interaction_type == "sentenceBuilding" and question.chunks is not None:
+                selected_chunks = answer.split(",")
+                offered_chunks = {item.chunk_id for item in question.chunks}
+                if (
+                    not selected_chunks
+                    or any(not item for item in selected_chunks)
+                    or len(selected_chunks) != len(set(selected_chunks))
+                    or not set(selected_chunks) <= offered_chunks
+                ):
+                    raise PracticeConflictError("Choose only offered sentence chunks.")
             if session.status != "inProgress" or task.status in {"completed", "skipped"}:
                 raise PracticeConflictError("This lesson is not active.")
             is_correct = _lesson_answer_is_correct(task, question_id, answer)
-            task_checks[question_id] = {"answer": answer, "isCorrect": is_correct}
+            hint_level = (
+                (draft.get("missionHints") or {}).get(str(task.id), {}).get(question_id)
+            )
+            disclosed = None
+            if hint_level is not None:
+                disclosed_hints = (
+                    (task.answer_key.mission_state or {}).get("hints", {}).get(question_id, [])
+                )
+                disclosed = any(
+                    item.get("level") == hint_level and item.get("revealsAnswer")
+                    for item in disclosed_hints
+                )
+            task_checks[question_id] = {
+                "answer": answer,
+                "isCorrect": is_correct,
+                "hintLevel": hint_level,
+                "revealed": disclosed,
+            }
             mission_checks[str(task.id)] = task_checks
             draft["missionChecks"] = mission_checks
             c.execute(
                 update(sessions).where(sessions.c.id == session.id).values(analysis_draft=draft)
             )
-            return self._lesson_check(task, question_id, answer, is_correct)
+            return self._lesson_check(task, question_id, answer, is_correct, hint_level, disclosed)
+
+    def request_lesson_hint(self, task_id, question_id):
+        with self.transaction() as c:
+            task = self._task_row(c, task_id)
+            if (
+                task.kind != "grammarLesson"
+                or not task.public_content.check_each_question
+                or not task.answer_key
+            ):
+                raise PracticeConflictError("This task does not support hints.")
+            hint_map = (task.answer_key.mission_state or {}).get("hints")
+            if not isinstance(hint_map, dict) or question_id not in hint_map:
+                raise PracticeConflictError("This question has no hints.")
+            session_row = c.execute(
+                select(sessions)
+                .where(sessions.c.id == task.session_id, sessions.c.user_id == self.user_id)
+                .with_for_update()
+            ).mappings().one_or_none()
+            if session_row is None:
+                raise PracticeNotFoundError("Task not found.")
+            session = parse_session(session_row)
+            if session.status != "inProgress" or task.status in {"completed", "skipped"}:
+                raise PracticeConflictError("This lesson is not active.")
+            task_checks = (
+                (session.analysis_draft or {}).get("missionChecks", {}).get(str(task.id), {})
+            )
+            question_ids = [item.question_id for item in task.public_content.questions]
+            if question_id not in question_ids or question_id in task_checks:
+                raise PracticeConflictError("Hints are unavailable after checking an answer.")
+            position = question_ids.index(question_id)
+            if any(item not in task_checks for item in question_ids[:position]):
+                raise PracticeConflictError("Hints are available only for the current question.")
+            if question_ids[position] != next(
+                (item for item in question_ids if item not in task_checks), None
+            ):
+                raise PracticeConflictError("Hints are available only for the current question.")
+
+            hints = hint_map[question_id]
+            current_level = (
+                (session.analysis_draft or {}).get("missionHints", {})
+                .get(str(task.id), {}).get(question_id, 0)
+            )
+            current_index = next(
+                (index for index, hint in enumerate(hints) if hint.get("level") == current_level),
+                -1,
+            )
+            next_index = min(current_index + 1, len(hints) - 1)
+            hint = hints[next_index]
+            if current_level != hint.get("level"):
+                draft = dict(session.analysis_draft or {})
+                mission_hints = dict(draft.get("missionHints") or {})
+                task_hints = dict(mission_hints.get(str(task.id)) or {})
+                task_hints[question_id] = hint["level"]
+                mission_hints[str(task.id)] = task_hints
+                draft["missionHints"] = mission_hints
+                c.execute(
+                    update(sessions).where(sessions.c.id == session.id).values(
+                        analysis_draft=draft
+                    )
+                )
+            return TaskHintResponse(
+                question_id=question_id,
+                level=hint["level"],
+                text=hint["text"],
+                reveals_answer=hint["revealsAnswer"],
+                remaining=len(hints) - next_index - 1,
+            )
 
     def lesson_checks(self, task_id):
         """Restore checks already saved for one sequential A2 lesson."""
@@ -702,17 +828,37 @@ class PostgresWorkflowRepository:
             if task.kind != "grammarLesson" or not task.public_content.check_each_question:
                 raise PracticeConflictError("This lesson does not support per-question checking.")
             session = self._session(c, task.session_id)
+            draft = session.analysis_draft or {}
             task_checks = (
-                (session.analysis_draft or {}).get("missionChecks", {}).get(str(task.id), {})
+                draft.get("missionChecks", {}).get(str(task.id), {})
             )
+            disclosed = draft.get("missionHints", {}).get(str(task.id), {})
             checks = []
+            restored_hints = {}
             for question in task.public_content.questions:
                 stored = task_checks.get(question.question_id)
                 if stored is not None:
                     checks.append(self._lesson_check(
-                        task, question.question_id, stored["answer"], stored["isCorrect"]
+                        task, question.question_id, stored["answer"], stored["isCorrect"],
+                        stored.get("hintLevel"), stored.get("revealed"),
                     ))
-            return LessonChecksResponse(checks=checks)
+                disclosed_level = disclosed.get(question.question_id)
+                if disclosed_level is not None:
+                    hints = (task.answer_key.mission_state or {}).get("hints", {}).get(
+                        question.question_id, []
+                    )
+                    restored_hints[question.question_id] = [
+                        TaskHintResponse(
+                            question_id=question.question_id,
+                            level=hint["level"],
+                            text=hint["text"],
+                            reveals_answer=hint["revealsAnswer"],
+                            remaining=len(hints) - index - 1,
+                        )
+                        for index, hint in enumerate(hints)
+                        if hint["level"] <= disclosed_level
+                    ]
+            return LessonChecksResponse(checks=checks, hints=restored_hints)
 
     def _scene_media(self, c, session):
         asset = MediaAsset.model_validate(
@@ -1142,6 +1288,195 @@ class PostgresWorkflowRepository:
             )
             detail = self._detail(c, claimed)
         return self._start_analysis(session_id, profile_id, claimed, detail, *inputs)
+
+    def retry_m01(self, session_id, profile_id):
+        if not generation_enabled():
+            raise PracticeConflictError("Multilingual M01 generation is disabled.")
+        with self.transaction() as c:
+            session_row = c.execute(
+                select(sessions)
+                .where(
+                    sessions.c.id == session_id,
+                    sessions.c.user_id == self.user_id,
+                    sessions.c.language_profile_id == profile_id,
+                )
+                .with_for_update()
+            ).mappings().one_or_none()
+            if session_row is None:
+                raise PracticeNotFoundError("Session not found.")
+            session = parse_session(session_row)
+            if session.status != "inProgress":
+                raise PracticeConflictError("This lesson is not active.")
+            draft = dict(session.analysis_draft or {})
+            skipped = draft.get("skippedMissions") or []
+            retryable = any(
+                item.get("missionId") == "M01"
+                and item.get("reason") == "generationFailed"
+                and item.get("retryable") is True
+                for item in skipped
+                if isinstance(item, dict)
+            )
+            if not retryable:
+                raise PracticeConflictError("M01 is not available to retry.")
+            if (draft.get("m01Retry") or {}).get("status") == "generating":
+                raise PracticeConflictError("M01 is already preparing.")
+            draft["m01Retry"] = {"status": "generating"}
+            c.execute(
+                update(sessions).where(sessions.c.id == session.id).values(
+                    analysis_draft=draft
+                )
+            )
+
+        task = None
+        try:
+            with self.read_connection() as c:
+                session = self._session(c, session_id, profile_id)
+                profile = dict(
+                    c.execute(
+                        select(language_profiles).where(
+                            language_profiles.c.id == profile_id
+                        )
+                    ).mappings().one()
+                )
+                objects, relations = self._scene_objects(c, session)
+                words, _ = self._words(c, session, objects)
+                translated_scene = _translation_preview(session)
+                if translated_scene is None:
+                    raise PracticeConflictError("The saved scene translation is unavailable.")
+                draft = session.analysis_draft or {}
+                supplemental_rows = draft.get("m01SupplementalVocabulary") or []
+                supplemental_ids = {
+                    UUID(item["id"]) for item in supplemental_rows
+                    if isinstance(item, dict) and item.get("id")
+                }
+                supplemental_by_id = {}
+                if supplemental_ids:
+                    for row in c.execute(
+                        select(vocabulary_items).where(vocabulary_items.c.id.in_(supplemental_ids))
+                    ).mappings():
+                        supplemental_by_id[row["id"]] = VocabularyItem.model_validate(
+                            {key: row[key] for key in VocabularyItem.model_fields}
+                        )
+                supplemental_vocabulary = {}
+                for item in supplemental_rows:
+                    if not isinstance(item, dict):
+                        continue
+                    vocabulary_item = supplemental_by_id.get(UUID(item["id"]))
+                    if vocabulary_item is not None:
+                        supplemental_vocabulary[
+                            (item.get("type"), item.get("key"))
+                        ] = vocabulary_item
+                history = None
+                if os.getenv("LEARNER_MEMORY_ENABLED", "false").strip().lower() == "true":
+                    labels = [obj.label for obj in objects]
+                    labels.extend(
+                        value for obj in objects
+                        for value in (obj.attributes or {}).values()
+                        if isinstance(value, str)
+                    )
+                    labels.extend(row.relation for row in relations)
+                    history = snapshot_learner_history(
+                        c, self.user_id, profile, session_id, labels
+                    )
+                planned = [
+                    item for item in self._planned_missions(session, profile)
+                    if item.mission_id == "M01"
+                ]
+                if not planned:
+                    raise PracticeConflictError("M01 is not in this lesson plan.")
+                asset, scene = self._scene_media(c, session)
+                cache_scope, templates = self._reuse(
+                    c, session, asset, objects, relations
+                )
+                claim = GenerationClaim(
+                    session_id=session_id,
+                    profile_id=profile_id,
+                    revision=0,
+                    session=session,
+                    profile=profile,
+                    title=_scene_title(session, scene),
+                    objects=objects,
+                    relations=relations,
+                    cache_scope=cache_scope,
+                    templates=templates,
+                    learner_history=history,
+                    missions=tuple(planned),
+                    counted_groups=tuple(saved_counted_groups(draft)),
+                    mission_progress=self._mission_progress(c, profile, history),
+                    review_markers=draft.get("reviewMarkers") or {},
+                )
+            skipped = []
+            lessons = self._mission_lessons(
+                claim,
+                objects,
+                relations,
+                words,
+                translated_scene,
+                skipped,
+                supplemental_vocabulary,
+            )
+            task = next(
+                (
+                    item for item in lessons
+                    if item.public_content.mission_id == "M01"
+                ),
+                None,
+            )
+            if task is None:
+                raise PracticeConflictError("M01 generation did not produce a lesson.")
+            with self.transaction() as c:
+                session = self._session(c, session_id, profile_id)
+                draft = dict(session.analysis_draft or {})
+                if (draft.get("m01Retry") or {}).get("status") != "generating":
+                    raise PracticeConflictError("M01 retry claim is no longer active.")
+                if session.status != "inProgress":
+                    raise PracticeConflictError("This lesson is no longer active.")
+                existing_tasks = self._tasks(c, session_id)
+                introduction = next(
+                    (
+                        item for item in existing_tasks
+                        if item.kind == "vocabularyIntroduction"
+                    ),
+                    None,
+                )
+                insertion_index = 1 if introduction is not None else 0
+                for existing in sorted(
+                    existing_tasks, key=lambda item: item.order_index, reverse=True
+                ):
+                    if existing.id != task.id and existing.order_index >= insertion_index:
+                        c.execute(
+                            update(session_tasks)
+                            .where(session_tasks.c.id == existing.id)
+                            .values(order_index=existing.order_index + 1)
+                        )
+                task.order_index = insertion_index
+                c.execute(
+                    upsert(session_tasks)
+                    .values(**entity_values(task))
+                    .on_conflict_do_nothing(index_elements=[session_tasks.c.id])
+                )
+                draft["skippedMissions"] = [
+                    item for item in draft.get("skippedMissions", [])
+                    if not (isinstance(item, dict) and item.get("missionId") == "M01")
+                ]
+                draft.pop("m01Retry", None)
+                c.execute(
+                    update(sessions).where(sessions.c.id == session_id).values(
+                        analysis_draft=draft
+                    )
+                )
+        except Exception:
+            with self.transaction() as c:
+                session = self._session(c, session_id, profile_id)
+                draft = dict(session.analysis_draft or {})
+                draft.pop("m01Retry", None)
+                c.execute(
+                    update(sessions).where(sessions.c.id == session_id).values(
+                        analysis_draft=draft
+                    )
+                )
+            raise
+        return self.get(session_id, profile_id)
 
     def _analysis_inputs(self, c, session):
         asset = MediaAsset.model_validate(
@@ -1893,6 +2228,7 @@ class PostgresWorkflowRepository:
                 self._mission_lessons,
                 claim, objects, relations, words, translated_scene if self.translator else None,
                 skipped_missions,
+                supplemental_vocabulary=supplemental_vocabulary,
             )
             mission_lessons = lesson()
         if not mission_lessons and self.translator:
@@ -1965,7 +2301,10 @@ class PostgresWorkflowRepository:
                 )
             self._transition(c, session, "inProgress")
 
-    def _mission_lessons(self, claim, objects, relations, words, translated_scene, skipped):
+    def _mission_lessons(
+        self, claim, objects, relations, words, translated_scene, skipped,
+        supplemental_vocabulary=None,
+    ):
         """One validated lesson per planned mission; a generation failure uses its fallback.
 
         A mission whose confirmed facts give no reviewed content is skipped and recorded.
@@ -1975,6 +2314,135 @@ class PostgresWorkflowRepository:
         lessons = []
         for planned in claim.missions:
             mission = lesson_mission(planned)
+            if generation_enabled() and mission.mission_id == "M01":
+                plan = load_m01_level_plan(mission.practice_level)
+                progress = dict(claim.mission_progress or {})
+                if claim.learner_history:
+                    progress["history_words"] = claim.learner_history.get("words", [])
+                contract = None
+                try:
+                    contract = build_m01_contract_input(
+                        mission,
+                        claim.profile,
+                        objects,
+                        relations,
+                        words,
+                        translated_scene,
+                        claim.counted_groups,
+                        progress,
+                        supplemental_vocabulary=supplemental_vocabulary,
+                        review_markers=claim.review_markers,
+                    )
+                except Exception:
+                    logger.exception(
+                        "Could not build multilingual M01 input for session %s.",
+                        claim.session_id,
+                    )
+                if contract is not None:
+                    eligibility = m01_multilingual_eligibility(plan, contract)
+                    if not eligibility.eligible:
+                        skipped.append({
+                            "missionId": "M01",
+                            "reason": "insufficientApprovedVocabulary",
+                        })
+                        continue
+                result = None
+                if contract is not None and self.learning_task_generator:
+                    target_language = get_language(contract.target_language)
+                    try:
+                        if target_language is None:
+                            raise ValueError("M01 target language is not registered")
+                        payload = {
+                            "contract": contract.model_dump(
+                                mode="json", by_alias=True, exclude_none=True
+                            ),
+                            "language": {
+                                "code": target_language.code,
+                                "script": target_language.script,
+                                "direction": target_language.direction,
+                                "wordSeparator": target_language.word_separator,
+                            },
+                            "definition": {
+                                "objectiveId": mission.objective.objective_id,
+                                "targets": [
+                                    target.model_dump(mode="json", by_alias=True)
+                                    for target in mission.objective.targets
+                                ],
+                                "teachBeforeAssessment": (
+                                    mission.teaching.teach_before_assessment
+                                ),
+                                "criteria": [
+                                    criterion.model_dump(mode="json", by_alias=True)
+                                    for criterion in mission.evaluation_criteria
+                                ],
+                            },
+                            "levelPlan": plan.model_dump(mode="json", by_alias=True),
+                            "planVersion": plan.plan_version,
+                        }
+                        cache_scope = (
+                            CacheScope.user(f"{self.user_id}:{claim.profile_id}")
+                            if m01_contract_has_learner_context(contract)
+                            else claim.cache_scope
+                        )
+                        with _timed("multilingual M01 generation", claim.session_id):
+                            result = self.learning_task_generator.generate_mission(
+                                payload,
+                                M01_MULTILINGUAL_GENERATION,
+                                mission_version=(
+                                    f"{mission_version(mission)}:{CONTRACT_VERSION}:"
+                                    f"plan-{plan.plan_version}:{M01_MULTILINGUAL_SCHEMA_VERSION}"
+                                ),
+                                cache_scope=cache_scope,
+                            )
+                        lessons.append(build_m01_multilingual_task(
+                            claim.session_id, mission, contract, result,
+                        ))
+                        continue
+                    except Exception:
+                        logger.exception(
+                            "Multilingual M01 generation failed for session %s.",
+                            claim.session_id,
+                        )
+
+                if legacy_mission_language_allowed(mission.practice_level, language):
+                    try:
+                        spec = lesson_spec(mission)
+                        legacy_payload = spec.payload(
+                            mission,
+                            language,
+                            objects,
+                            relations,
+                            words,
+                            translated_scene,
+                            claim.counted_groups,
+                            claim.mission_progress or {},
+                            claim.session_id,
+                            review_markers=claim.review_markers or {},
+                            context={
+                                "roleplay_facts": (
+                                    claim.roleplay_facts or {}
+                                ).get(mission.mission_id),
+                            },
+                        )
+                        if spec.ready(legacy_payload):
+                            legacy_result = spec.generation.fallback(legacy_payload)
+                            lessons.append(spec.task(
+                                claim.session_id, mission, legacy_payload,
+                                legacy_result, vocabulary_ids,
+                            ))
+                            continue
+                    except Exception:
+                        logger.exception(
+                            "Legacy M01 fallback failed for session %s.",
+                            claim.session_id,
+                        )
+                skipped.append({
+                    "missionId": "M01",
+                    "reason": "generationFailed",
+                    "retryable": True,
+                })
+                continue
+
             spec = lesson_spec(mission)
             payload = spec.payload(
                 mission, language, objects, relations, words, translated_scene,
@@ -2025,10 +2493,12 @@ class PostgresWorkflowRepository:
 
     def _store_translation(self, c, session, profile, objects, translated_scene):
         """Persist every translated scene term and link objects to their words."""
-        draft = {
-            **(session.analysis_draft or {}),
-            "translationPreview": translated_scene.model_dump(mode="json", by_alias=True),
-        }
+        draft = dict(c.execute(
+            select(sessions.c.analysis_draft).where(sessions.c.id == session.id)
+        ).scalar_one() or {})
+        draft["translationPreview"] = translated_scene.model_dump(
+            mode="json", by_alias=True
+        )
         c.execute(update(sessions).where(sessions.c.id == session.id).values(analysis_draft=draft))
         translated_objects = {row.key: row for row in translated_scene.objects}
         for obj in objects:
@@ -2063,6 +2533,15 @@ class PostgresWorkflowRepository:
                     phonetic_text=term.phonetic_text,
                 )
                 supplemental[(term_type, str(term.key))] = word
+        draft["m01SupplementalVocabulary"] = [
+            {"type": term_type, "key": key, "id": str(word.id)}
+            for (term_type, key), word in supplemental.items()
+        ]
+        c.execute(
+            update(sessions).where(sessions.c.id == session.id).values(
+                analysis_draft=draft
+            )
+        )
         return supplemental
 
     def _words(self, c, session, objects):
@@ -2607,8 +3086,27 @@ class PostgresWorkflowRepository:
                                 )
                             )
                         }
+                        server_assistance = {}
+                        if task.kind == "grammarLesson" and task.public_content.check_each_question:
+                            server_assistance = {
+                                question_id: {
+                                    "hintLevel": check.get("hintLevel"),
+                                    "revealed": check.get("revealed"),
+                                }
+                                for question_id, check in (
+                                    (session.analysis_draft or {})
+                                    .get("missionChecks", {})
+                                    .get(str(task.id), {})
+                                ).items()
+                            }
                         evaluation_details = (
-                            review_details(task, request, question_results, correct_answers)
+                            review_details(
+                                task,
+                                request,
+                                question_results,
+                                correct_answers,
+                                server_assistance=server_assistance,
+                            )
                             if task.answer_key.question_evaluations
                             else {
                                 "questionResults": question_results,

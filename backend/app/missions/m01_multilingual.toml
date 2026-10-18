@@ -1,0 +1,73 @@
+# Explicit level plans for the multilingual M01 path. The model fills these plans;
+# it never chooses targets, workload or assessment criteria itself.
+plan_version = 1
+
+# Evidence recorded for each interaction, in preference order; the first type the
+# question's target permits is used. Nothing here records production evidence.
+[evidence]
+markerChoice = ["objectSelection", "recognition"]
+multipleChoice = ["recognition"]
+sentenceBuilding = ["construction"]
+
+[levels.A0]
+content_version = 1
+fact_kinds = ["object"]
+min_objects = 2
+min_detail_facts = 0
+min_questions = 4
+max_questions = 5
+min_preparation_cards = 2
+max_preparation_cards = 3
+min_worked_examples = 1
+min_options = 2
+max_options = 3
+max_hints = 2
+max_answer_chunks = 6
+max_distractor_chunks = 1
+[levels.A0.interactions]
+recognise-name = ["multipleChoice", "markerChoice"]
+identify-object = ["multipleChoice", "sentenceBuilding"]
+
+[levels.A1]
+content_version = 1
+fact_kinds = ["object", "attribute", "relation"]
+min_objects = 2
+min_detail_facts = 1
+min_questions = 4
+max_questions = 6
+min_preparation_cards = 2
+max_preparation_cards = 4
+min_worked_examples = 2
+min_options = 2
+max_options = 4
+max_hints = 3
+max_answer_chunks = 8
+max_distractor_chunks = 2
+[levels.A1.interactions]
+identify-object = ["markerChoice"]
+name-object = ["multipleChoice", "sentenceBuilding"]
+describe-colour = ["multipleChoice", "sentenceBuilding"]
+describe-location = ["multipleChoice", "sentenceBuilding"]
+
+[levels.A2]
+content_version = 1
+fact_kinds = ["object", "attribute", "relation"]
+min_objects = 3
+min_detail_facts = 2
+min_questions = 5
+max_questions = 7
+min_preparation_cards = 2
+max_preparation_cards = 4
+min_worked_examples = 2
+min_options = 2
+max_options = 4
+max_hints = 3
+max_answer_chunks = 12
+max_distractor_chunks = 2
+# A connect-scene-facts answer must use at least this many distinct confirmed facts.
+min_connected_facts = 2
+[levels.A2.interactions]
+identify-scene-object = ["markerChoice"]
+describe-scene-facts = ["sentenceBuilding", "multipleChoice"]
+connect-scene-facts = ["sentenceBuilding"]
+follow-up-scene-fact = ["multipleChoice"]

@@ -54,6 +54,14 @@ def retry_session_analysis(
 
 
 @router.post(
+    "/{session_id}/missions/M01/retry",
+    response_model=SessionDetailResponse,
+)
+def retry_m01(session_id: UUID, service: PracticeServiceDep) -> SessionDetailResponse:
+    return service.retry_m01(session_id)
+
+
+@router.post(
     "/{session_id}/generate-plan",
     response_model=SessionDetailResponse,
     status_code=status.HTTP_202_ACCEPTED,

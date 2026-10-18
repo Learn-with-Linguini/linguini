@@ -31,6 +31,9 @@ class PracticeService:
     def retry_analysis(self, session_id):
         return self.repository.retry_analysis(session_id, self._profile().id)
 
+    def retry_m01(self, session_id):
+        return self.repository.retry_m01(session_id, self._profile().id)
+
     def complete(self, session_id):
         return self.repository.finish(session_id, self._profile().id)
 

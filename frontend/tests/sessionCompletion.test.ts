@@ -64,6 +64,7 @@ globals.fetch = async (input: unknown, init?: RequestInit) => {
   const url = typeof input === "string" ? input : (input as Request).url;
   const path = url.replace(/^https?:\/\/[^/]+/, "");
   if (path.endsWith("/latest-attempt")) return latestReplies.shift()?.() ?? Response.json({ attempt: null });
+  if (path.endsWith("/lesson-checks")) return Response.json({ checks: [], hints: {} });
   if (path.startsWith("/api/v1/tasks/")) {
     taskRequests.push({ path, body: JSON.parse(String(init?.body ?? "{}")) });
     return taskReplies.shift()?.() ?? new Response("no reply", { status: 500 });
@@ -89,6 +90,8 @@ writeFileSync(entryPath, [
   'export { MemoryRouter, Route, Routes } from "react-router-dom";',
   'export { QueryClient, QueryClientProvider } from "@tanstack/react-query";',
   `export { SessionRoute } from "${pathToFileURL(join(here, "../src/components/SessionRoute")).href}";`,
+  `export { LearningTaskPage } from "${pathToFileURL(join(here, "../src/pages/LearningTaskPage")).href}";`,
+  `export { Learn } from "${pathToFileURL(join(here, "../src/pages/Learn")).href}";`,
   `export { ISpyPhase2 } from "${pathToFileURL(join(here, "../src/pages/ISpyPhase2")).href}";`,
   `export { AppStateProvider } from "${pathToFileURL(join(here, "../src/state/AppState")).href}";`,
   `export { useAppState } from "${pathToFileURL(join(here, "../src/state/useAppState")).href}";`,
@@ -124,7 +127,7 @@ try {
 }
 const {
   h, act, createRoot, MemoryRouter, Route, Routes,
-  QueryClient, QueryClientProvider, SessionRoute, ISpyPhase2, AppStateProvider, useAppState,
+  QueryClient, QueryClientProvider, SessionRoute, ISpyPhase2, LearningTaskPage, Learn, AppStateProvider, useAppState,
 } = bundled as Record<string, never> as {
   h: typeof import("react").createElement;
   act: typeof import("react").act;
@@ -136,6 +139,8 @@ const {
   QueryClientProvider: typeof import("@tanstack/react-query").QueryClientProvider;
   SessionRoute: typeof import("../src/components/SessionRoute.tsx").SessionRoute;
   ISpyPhase2: typeof import("../src/pages/ISpyPhase2.tsx").ISpyPhase2;
+  LearningTaskPage: typeof import("../src/pages/LearningTaskPage.tsx").LearningTaskPage;
+  Learn: typeof import("../src/pages/Learn.tsx").Learn;
   AppStateProvider: typeof import("../src/state/AppState.tsx").AppStateProvider;
   useAppState: typeof import("../src/state/useAppState").useAppState;
 };
@@ -303,6 +308,189 @@ test("round two keeps the task active until the learner confirms the latest clea
   assert.deepEqual(confirmation.body, { attemptId: "a3" });
   assert.ok(button("Finish session"));
   root.unmount();
+});
+
+const m01RenderingTask: SessionTask = {
+  ...task("m01-rendering", "pending", 0),
+  kind: "grammarLesson",
+  phase: "learning",
+  publicContent: {
+    kind: "grammarLesson",
+    missionId: "M01",
+    practiceLevel: "A1",
+    contentVersion: 1,
+    focus: "Describe the scene",
+    title: "A multilingual lesson",
+    checkEachQuestion: true,
+    targetLanguage: "ko",
+    textDirection: "rtl",
+    workedExamples: [{
+      exampleId: "example-1",
+      chunks: [
+        { chunkId: "example-a", text: "ab", join: "space" },
+        { chunkId: "example-b", text: "cd", join: "none" },
+        { chunkId: "example-period", text: ".", join: "none" },
+      ],
+      translation: "An example.",
+    }],
+    questions: [{
+      questionId: "question-1",
+      prompt: "Build the sentence.",
+      promptTranslation: "Build the sentence in English.",
+      interactionType: "sentenceBuilding",
+      options: [],
+      tokenBank: [],
+      chunks: [
+        { chunkId: "a", text: "ab", join: "space" },
+        { chunkId: "b", text: "cd", join: "none" },
+        { chunkId: "period", text: ".", join: "none" },
+      ],
+      hintCount: 2,
+    }],
+  },
+};
+
+test("multilingual lesson renders static examples, joined chunks, hints and target direction", async () => {
+  fixture = detail("inProgress", [m01RenderingTask]);
+  const container = dom.window.document.createElement("div");
+  dom.window.document.body.replaceChildren(container);
+  const root = createRoot(container);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  mountedClients.push(client);
+  await act(async () => root.render(h(QueryClientProvider, { client }, h(AppStateProvider, null,
+    h(MemoryRouter, { initialEntries: [`${BASE}/learn/${m01RenderingTask.id}`] },
+      h(Routes, null,
+        h(Route, { path: "/practice/sessions/:sessionId", element: h(SessionRoute) },
+          h(Route, { path: "learn/:taskId", element: h(LearningTaskPage) }),
+        ),
+      ),
+    ),
+  ))));
+  await flush();
+
+  const example = dom.window.document.querySelector('[aria-label="Worked example"]');
+  assert.ok(example);
+  assert.match(example.textContent ?? "", /Example/);
+  assert.match(example.textContent ?? "", /abcd\./);
+  assert.equal(example.querySelector("button, input"), null);
+  const exampleText = example.querySelector("p[lang='ko']");
+  assert.equal(exampleText?.getAttribute("dir"), "rtl");
+  const prompt = [...dom.window.document.querySelectorAll("h2")]
+    .find(item => item.textContent?.includes("Build the sentence."));
+  assert.equal(prompt?.getAttribute("lang"), "en");
+  assert.equal(prompt?.getAttribute("dir"), null);
+
+  const chunks = [...dom.window.document.querySelectorAll('[aria-label="Sentence building chunks"] button')];
+  assert.equal(chunks.length, 3);
+  assert.equal(chunks[0].getAttribute("lang"), "ko");
+  assert.equal(chunks[0].getAttribute("dir"), "rtl");
+  await act(async () => {
+    for (const chunk of chunks) chunk.dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true }));
+  });
+  const builtSentence = dom.window.document.querySelector('[aria-label="Your sentence"] span');
+  assert.equal(builtSentence?.textContent?.trim(), "abcd.");
+  assert.equal(builtSentence?.getAttribute("lang"), "ko");
+  assert.equal(builtSentence?.getAttribute("dir"), "rtl");
+  assert.ok(button("Hint (2 left)"));
+  taskReplies.push(() => Response.json({
+    questionId: "question-1", level: 1, text: "Look at the first chunk.",
+    revealsAnswer: false, remaining: 1,
+  }));
+  await click("Hint (2 left)");
+  assert.match(dom.window.document.body.textContent ?? "", /Look at the first chunk\./);
+  const hintText = dom.window.document.querySelector('[aria-label="Disclosed hints"] li p');
+  assert.equal(hintText?.getAttribute("lang"), "en");
+  assert.equal(hintText?.getAttribute("dir"), null);
+  assert.ok(button("Hint (1 left)"));
+  const [hintRequest] = taskRequests.splice(0);
+  assert.equal(hintRequest.path, `/api/v1/tasks/${m01RenderingTask.id}/hints`);
+  await act(async () => root.unmount());
+});
+
+test("the retry notice appears once on Learn and not on task pages", async () => {
+  fixture = detail("inProgress", [m01RenderingTask]);
+  fixture.session.analysisDraft = {
+    skippedMissions: [{ missionId: "M01", reason: "generationFailed", retryable: true }],
+  };
+  const container = dom.window.document.createElement("div");
+  dom.window.document.body.replaceChildren(container);
+  const taskRoot = createRoot(container);
+  const taskClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  mountedClients.push(taskClient);
+  await act(async () => taskRoot.render(h(QueryClientProvider, { client: taskClient }, h(AppStateProvider, null,
+    h(MemoryRouter, { initialEntries: [`${BASE}/learn/${m01RenderingTask.id}`] },
+      h(Routes, null,
+        h(Route, { path: "/practice/sessions/:sessionId", element: h(SessionRoute) },
+          h(Route, { path: "learn/:taskId", element: h(LearningTaskPage) }),
+        ),
+      ),
+    ),
+  ))));
+  await flush();
+  assert.doesNotMatch(dom.window.document.body.textContent ?? "", /object lesson couldn't be prepared/i);
+  assert.equal(button("Try again"), undefined);
+  await act(async () => taskRoot.unmount());
+
+  const learnRoot = createRoot(container);
+  const learnClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  mountedClients.push(learnClient);
+  await act(async () => learnRoot.render(h(QueryClientProvider, { client: learnClient }, h(AppStateProvider, null,
+    h(MemoryRouter, { initialEntries: [`${BASE}/learn`] },
+      h(Routes, null,
+        h(Route, { path: "/practice/sessions/:sessionId", element: h(SessionRoute) },
+          h(Route, { path: "learn", element: h(Learn) }),
+        ),
+      ),
+    ),
+  ))));
+  await flush();
+  const notice = "Your object lesson couldn't be prepared. You can try again.";
+  const bodyText = dom.window.document.body.textContent ?? "";
+  assert.equal(bodyText.split(notice).length - 1, 1);
+  assert.ok(button("Try again"));
+  await act(async () => learnRoot.unmount());
+});
+
+test("legacy grammar lessons render without multilingual examples or hint controls", async () => {
+  const legacyTask: SessionTask = {
+    ...m01RenderingTask,
+    id: "legacy-lesson",
+    publicContent: {
+      kind: "grammarLesson",
+      focus: "Legacy focus",
+      title: "Legacy lesson",
+      questions: [{
+        questionId: "legacy-question",
+        prompt: "Choose the correct answer.",
+        interactionType: "multipleChoice",
+        options: [
+          { optionId: "yes", label: "Yes" },
+          { optionId: "no", label: "No" },
+        ],
+        tokenBank: [],
+      }],
+    },
+  };
+  fixture = detail("inProgress", [legacyTask]);
+  const container = dom.window.document.createElement("div");
+  dom.window.document.body.replaceChildren(container);
+  const root = createRoot(container);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  mountedClients.push(client);
+  await act(async () => root.render(h(QueryClientProvider, { client }, h(AppStateProvider, null,
+    h(MemoryRouter, { initialEntries: [`${BASE}/learn/${legacyTask.id}`] },
+      h(Routes, null,
+        h(Route, { path: "/practice/sessions/:sessionId", element: h(SessionRoute) },
+          h(Route, { path: "learn/:taskId", element: h(LearningTaskPage) }),
+        ),
+      ),
+    ),
+  ))));
+  await flush();
+  assert.match(dom.window.document.body.textContent ?? "", /Choose the correct answer\./);
+  assert.equal(dom.window.document.querySelector('[aria-label="Worked example"]'), null);
+  assert.equal(button("Hint (2 left)"), undefined);
+  await act(async () => root.unmount());
 });
 
 const frame = (frameId: string, prefix: string, example: string, chips: string[]) =>

@@ -269,8 +269,8 @@ class LearningTaskService:
 
         def decode(data: Any) -> Any:
             result = generation.result_model.model_validate(data)
-            generation.validate(payload, result)
-            return result
+            converted = generation.validate(payload, result)
+            return converted if converted is not None else result
 
         try:
             return run_cached(

@@ -60,7 +60,7 @@ class MissionGeneration:
     validator_version: str
     system_prompt: str
     result_model: type[ApiModel]
-    validate: Callable[[dict[str, Any], Any], None]
+    validate: Callable[[dict[str, Any], Any], Any]
     fallback: Callable[[dict[str, Any]], Any]
     json_schema_name: str
     uses_model: bool = True

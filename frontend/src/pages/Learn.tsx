@@ -10,7 +10,7 @@ import { useAppState } from "../state/useAppState";
 export function Learn() {
   const navigate = useNavigate();
   const scene = useScene();
-  const { session, practiceSaving, practiceError, practiceStalled, retryProcessing, completeSession } = useAppState();
+  const { session, practiceSaving, practiceError, practiceStalled, retryProcessing, retryM01, completeSession } = useAppState();
   if (!session) return null;
   const base = `/practice/sessions/${scene.sessionId}`;
   if (session.session.status === "completed") return <Navigate to={`${base}/summary`} replace />;
@@ -20,6 +20,9 @@ export function Learn() {
   const generating = session.session.status === "generatingTasks";
   const allDone = tasks.length > 0 && tasks.every(taskDone) && !generating;
   const nextTask = tasks.find(task => !taskDone(task));
+  const retryableM01 = session.session.analysisDraft?.skippedMissions?.some(item =>
+    item.missionId === "M01" && item.reason === "generationFailed" && item.retryable,
+  );
 
   const openTask = (taskId: string) => {
     navigate(`${base}/learn/${taskId}`);
@@ -41,6 +44,16 @@ export function Learn() {
 
       {session.translationPreview ? <TranslationPreview preview={session.translationPreview} scene={scene} /> : null}
       <SessionPersonalization personalization={session.personalization} languageCode={scene.languageCode} />
+      {retryableM01 ? <section className="panel-note" role="status">
+        <p>Your object lesson couldn't be prepared. You can try again.</p>
+        <Button variant="secondary" disabled={practiceSaving} onClick={async () => {
+          const refreshed = await retryM01(session.session.id);
+          const retried = refreshed?.tasks.find(task =>
+            task.publicContent.missionId === "M01" && task.status === "pending",
+          );
+          if (retried) openTask(retried.id);
+        }}>Try again</Button>
+      </section> : null}
       {session.missionGuidance?.length ? <section className="panel-note" role="note">
         <p><strong>This photo didn't fit a mission</strong>, so this is the regular lesson.</p>
         <p className="small muted">For a mission next time: {session.missionGuidance.join(" ")}</p>
