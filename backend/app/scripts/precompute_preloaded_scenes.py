@@ -1,10 +1,11 @@
 """Precompute language-independent objects for the bundled preloaded scenes.
 
-Runs the configured scene analyzer once per bundled image and stores the
-English object labels, markers, attributes and relations in the image's one
-``preloaded_scenes`` row, so the Scene Analysis review screen opens with
-suggested objects already on the photo. Learners' sessions translate them into
-their target language. Public tasks, rounds and prompts are placeholders only.
+Runs the configured scene analyzer once per bundled image and stores up to six
+distinct English object labels, with bounded repeated instances, markers,
+attributes and relations in the image's one ``preloaded_scenes`` row, so the
+Scene Analysis review screen opens with suggested objects already on the photo.
+Learners' sessions translate them into their target language. Public tasks,
+rounds and prompts are placeholders only.
 
 It then generates validated translation, lesson and I-Spy clue templates per
 target language through the normal routed services and stores them
@@ -72,6 +73,8 @@ from app.services.image_storage import ImageStorage
 logger = logging.getLogger("precompute_preloaded_scenes")
 
 MAX_OBJECTS = 6
+MAX_INSTANCES_PER_LABEL = 10
+MAX_PINS = 12
 SUPPORTED_LANGUAGES = ("fr", "es", "de", "ko")
 ENGLISH_ARTICLES = ("the ", "a ", "an ")
 
@@ -117,20 +120,62 @@ def marker_percent(obj: SceneObject) -> tuple[float, float]:
     )
 
 
-def dedupe_objects(
-    objects: list[SceneObject], limit: int = MAX_OBJECTS
+def select_objects(
+    objects: list[SceneObject],
+    *,
+    max_labels: int = MAX_OBJECTS,
+    max_per_label: int = MAX_INSTANCES_PER_LABEL,
+    max_total: int = MAX_PINS,
 ) -> list[SceneObject]:
-    """Keep analyzer order; drop case-insensitive label duplicates."""
-    kept: list[SceneObject] = []
-    seen: set[str] = set()
-    for obj in objects:
+    """Keep a breadth-first set of labels, then bounded instances in analyzer order."""
+    chosen_labels: set[str] = set()
+    selected: dict[int, tuple[SceneObject, str]] = {}
+    counts: dict[str, int] = {}
+    for index, obj in enumerate(objects):
         key = obj.label.casefold().strip()
-        if not key or key in seen:
+        if not key or key in chosen_labels:
             continue
-        seen.add(key)
-        kept.append(obj)
-        if len(kept) >= limit:
+        if len(chosen_labels) >= max_labels or len(selected) >= max_total:
             break
+        chosen_labels.add(key)
+        selected[index] = (obj, key)
+        counts[key] = 1
+
+    for index, obj in enumerate(objects):
+        key = obj.label.casefold().strip()
+        if (
+            index in selected
+            or not key
+            or key not in chosen_labels
+            or len(selected) >= max_total
+        ):
+            continue
+        count = counts.get(key, 0)
+        if count >= max_per_label:
+            continue
+        counts[key] = count + 1
+        selected[index] = (obj, key)
+
+    kept = []
+    for index in sorted(selected):
+        obj, key = selected[index]
+        attributes = dict(obj.attributes or {})
+        count = counts[key]
+        if count > 1:
+            attributes["quantity"] = str(count)
+        else:
+            attributes.pop("quantity", None)
+        kept.append(
+            obj.model_copy(
+                update={
+                    "attributes": (
+                        attributes
+                        if obj.attributes is not None or count > 1
+                        else None
+                    )
+                }
+            )
+        )
     return kept
 
 
@@ -490,7 +535,7 @@ def _compute_rows(
         finally:
             if grounder:
                 budget.add_unrouted(1)
-        objects = dedupe_objects(analysis.objects)
+        objects = select_objects(analysis.objects)
         if not objects:
             failures += 1
             logger.error("%s: analysis returned no objects", base["slug"])
