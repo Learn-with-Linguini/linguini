@@ -15,7 +15,7 @@ export const accountTiers: Record<AccountTier, AccountTierDetails> = {
   free: {
     label: "Free",
     description: "Free plan",
-    allowance: "One new photo lesson every day",
+    allowance: "Photo lessons and friend challenges",
   },
   plus: {
     label: "Plus",

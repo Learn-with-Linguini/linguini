@@ -554,6 +554,7 @@ export interface QuestionOutcome {
   correctNote?: string; optionNotes?: string[];
 }
 export interface LessonAnswerCheck {
+  basilEarned?: number;
   questionId: string; answer: string; isCorrect: boolean; correctAnswer: string | null;
   outcome: QuestionOutcome; attemptsLeft?: number | null; feedback?: string | null;
   wrongField?: string | null; assistanceStepsUsed?: string[];
@@ -597,6 +598,7 @@ export const updateMissionScenario = (
   `/api/v1/tasks/${taskId}/mission-scenario`, "POST", { action, ...(sceneObjectId ? { sceneObjectId } : {}) },
 );
 export interface TaskActionResult {
+  basilEarned?: number;
   task: SessionTask; nextTaskId: string | null; sessionProgress: SessionProgress; attempt: TaskAttemptResult | null;
   xpEarned: number;
 }
@@ -627,8 +629,11 @@ export const createPractice = (profileId: string, assetId: string, key: string) 
   languageProfileId: profileId, mediaAssetId: assetId, idempotencyKey: key,
 });
 export const taskAction = (id: string, action: "start" | "complete" | "skip" | "attempts" | "confirm-guess", body: unknown = {}) => write<TaskActionResult>(`/api/v1/tasks/${id}/${action}`, "POST", body);
+export interface VocabularyAnswerCheck { questionId: string; acceptedOptionId: string; isCorrect: boolean; correctOptionId: string; basilEarned: number }
+export const getVocabularyChecks = (id: string, signal?: AbortSignal) =>
+  request<{ checks: VocabularyAnswerCheck[] }>(`/api/v1/tasks/${id}/vocabulary-checks`, signal);
 export const checkVocabularyAnswer = (id: string, questionId: string, optionId: string) =>
-  write<{ questionId: string; isCorrect: boolean; correctOptionId: string }>(`/api/v1/tasks/${id}/check-vocabulary-answer`, "POST", { questionId, optionId });
+  write<VocabularyAnswerCheck>(`/api/v1/tasks/${id}/check-vocabulary-answer`, "POST", { questionId, optionId });
 export const checkVocabularyTyping = (id: string, learningKey: string, answer: string, reveal = false) =>
   write<{ learningKey: string; isCorrect: boolean; correctAnswer: string; revealed: boolean }>(`/api/v1/tasks/${id}/check-vocabulary-typing`, "POST", { learningKey, answer, reveal });
 export const completePractice = (id: string) => write<{ id: string; status: string }>(`/api/v1/sessions/${id}/complete`, "POST", {});
@@ -637,6 +642,7 @@ export const getPracticeSummary = (id: string) => request<{
   progress: SessionProgress;
   learnedVocabularyIds: string[];
   xpEarned: number;
+  basilEarned: number;
   ispyCorrectCount: number;
   ispyAttemptCount: number;
   completedLessonsCount: number;

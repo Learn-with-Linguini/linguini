@@ -160,7 +160,7 @@ function commit(isCorrect: boolean) {
   fixture = { ...fixture, tasks: [{ ...fixture.tasks[0], status: "completed" }, fixture.tasks[1]],
     progress: { ...fixture.progress, completedTaskCount: 1, terminalTaskCount: 1 }, nextTaskId: "clue2" };
   return { task: fixture.tasks[0], sessionProgress: fixture.progress, nextTaskId: "clue2",
-    xpEarned: isCorrect ? 25 : 10,
+    xpEarned: isCorrect ? 25 : 10, basilEarned: 1,
     attempt: { id: "answer1", attemptNumber: 1, isCorrect, responsePayload: { optionId: "a" }, feedback: { message: "Saved answer feedback." } } };
 }
 
@@ -203,7 +203,7 @@ test("retrying an unanswered response reuses its command key and displays the ac
   assert.ok(!dom.window.document.body.textContent?.includes(learningFeedback("correct", clue.id)));
   await click(choice("taza"));
   await until(() => Boolean(choice("taza")?.classList.contains("choice--correct")), "the accepted answer should show its saved grade");
-  assert.match(dom.window.document.body.textContent ?? "", /\+25 Basil earned/);
+  assert.match(dom.window.document.body.textContent ?? "", /\+1 Basil earned/);
   assert.ok(dom.window.document.body.textContent?.includes(learningFeedback("correct", clue.id)));
   assert.match(dom.window.document.body.textContent ?? "", /Saved answer feedback\./);
   assert.equal(requests.length, 2);

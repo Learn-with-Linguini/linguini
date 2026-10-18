@@ -11,6 +11,7 @@ import type { AppState } from "../src/state/context.ts";
 import type { Scene } from "../src/data/types.ts";
 import { learningFeedback } from "../src/lib/learningFeedback.ts";
 import { queryKeys } from "../src/lib/queryKeys.ts";
+import { gamificationKeys } from "../src/lib/gamification.ts";
 
 const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://localhost/" });
 for (const key of ["window", "document", "localStorage", "HTMLElement"] as const) {
@@ -35,6 +36,7 @@ writeFileSync(entry, [
   'export { Learn } from "../src/pages/Learn";',
   'export { SessionSummary } from "../src/pages/SessionSummary";',
   'export { ISpyResults } from "../src/pages/ISpyResults";',
+  'export { Home } from "../src/pages/Home";',
 ].join("\n"));
 let bundled: unknown;
 try {
@@ -62,12 +64,13 @@ const source = bundled as {
   Learn: typeof import("../src/pages/Learn.tsx").Learn;
   SessionSummary: typeof import("../src/pages/SessionSummary.tsx").SessionSummary;
   ISpyResults: typeof import("../src/pages/ISpyResults.tsx").ISpyResults;
+  Home: typeof import("../src/pages/Home.tsx").Home;
 };
 const { h, act, createRoot, MemoryRouter, Route, Routes, Outlet, QueryClient, QueryClientProvider, AuthProvider, AppStateContext } = source;
 const scene: Scene = { id: "scene", sessionId: "session", mediaAssetId: "asset", imageUrl: "/photo.jpg",
   languageCode: "es", language: "Spanish", title: "Kitchen", blurb: "", items: [] };
 const summary = { progress: { completedTaskCount: 2, skippedTaskCount: 1, terminalTaskCount: 3, totalTaskCount: 3 },
-  learnedVocabularyIds: ["word"], xpEarned: 12, ispyCorrectCount: 1, ispyAttemptCount: 2, completedLessonsCount: 2 };
+  learnedVocabularyIds: ["word"], xpEarned: 120, basilEarned: 12, ispyCorrectCount: 1, ispyAttemptCount: 2, completedLessonsCount: 2 };
 function state(patch: Partial<AppState> = {}): AppState {
   return { session: { session: { id: "session", mode: "lesson", status: "completed" }, sceneObjects: [], tasks: [] } as unknown as PracticeDetail,
     activeProfile: { id: "profile" }, completionPending: false, completionError: null,
@@ -131,4 +134,23 @@ test("lesson preparation keeps its factual task status beside the branded copy",
   assert.ok(status?.textContent?.includes(learningFeedback("preparing", "session")));
   assert.match(status?.textContent ?? "", /Preparing the remaining tasks\.\.\./);
   assert.match(status?.textContent ?? "", /You can learn and practise your words now\./);
+});
+
+test("Home announces Basil loading and unavailable states without inventing a zero total", async () => {
+  const current = state({ user: null, learner: { name: "Learner" } as AppState["learner"],
+    progress: null, progressLoading: true, progressError: null });
+  const view = await mount(source.Home, current);
+  const total = () => view.container.querySelector(".home-points")!;
+  assert.equal(total().getAttribute("aria-label"), "Loading your Basil total");
+  assert.match(total().textContent ?? "", /— Basil/);
+  const key = gamificationKeys.summary("owner", "profile");
+  view.client.setQueryData(key, { basil: { lifetime: 67 }, missions: [] });
+  await view.render({ ...current, user: { id: "owner" } as AppState["user"] });
+  assert.equal(total().getAttribute("aria-label"), "67 total Basil");
+  await act(async () => {
+    await view.client.invalidateQueries({ queryKey: key });
+    await new Promise(resolve => setTimeout(resolve, 10));
+  });
+  assert.equal(total().getAttribute("aria-label"), "Basil total unavailable");
+  assert.match(total().textContent ?? "", /— Basil/);
 });

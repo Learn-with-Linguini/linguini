@@ -9,6 +9,7 @@ import { useAppState } from "../state/useAppState";
 import { useVocabularyQuery } from "../state/queries";
 import { getPracticeSummary } from "../lib/api";
 import { BasilIcon } from "../components/icons";
+import { MissionProgress } from "../components/MissionProgress";
 import { learningFeedback } from "../lib/learningFeedback";
 import { queryError, queryKeys } from "../lib/queryKeys";
 
@@ -60,12 +61,13 @@ export function SessionSummary() {
       <h1>{completed ? learningFeedback("completed", scene.sessionId!) : "Your session"}</h1>
       <p>{resultMessage}</p>
     </header>
+    <MissionProgress sessionId={scene.sessionId!} />
     {loading ? <LoadingScreen label="Loading your results…" /> : null}
     {error ? <p role="alert">{error}</p> : null}
     {completionError ? <><p role="alert">{completionError}</p><Button onClick={retryCompletion}>Retry saving your session</Button></> : null}
     {data ? <>
       <div className="summary-results" aria-label="Session results">
-        <div className="summary-result summary-result--basil"><div className="summary-result__value"><BasilIcon size={28} />{data.xpEarned}</div><span>Basil collected</span></div>
+        <div className="summary-result summary-result--basil"><div className="summary-result__value"><BasilIcon size={28} />{data.basilEarned}</div><span>Basil collected</span></div>
         <div className="summary-result summary-result--words"><div className="summary-result__value">{wordsLearned}</div><span>New {wordsLearned === 1 ? "word" : "words"} learned</span></div>
       </div>
       <Card><div className="stack-2">

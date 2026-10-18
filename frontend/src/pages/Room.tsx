@@ -13,6 +13,7 @@ import { Button, Card, Feedback } from "../components/ui";
 import { ImageUpload } from "../components/ImageUpload";
 import { GameResources } from "../components/GameResources";
 import { BasilIcon } from "../components/icons";
+import { gamificationKeys } from "../lib/gamification";
 import "../components/rooms.css";
 
 export function Room() {
@@ -62,6 +63,7 @@ function RoomSession({ roomId }: { roomId: string }) {
     // Repeated snapshots of the same status/credit do not trigger extra reads.
     if (previous === resourceState || (previous === null && resourceState.startsWith("lobby:"))) return;
     void client.invalidateQueries({ queryKey: gameResourceKeys(owner) });
+    void client.invalidateQueries({ queryKey: gamificationKeys.account(owner) });
     void client.invalidateQueries({ queryKey: queryKeys.progress(profile) });
   }, [resourceState, client, owner, profile]);
 
@@ -141,7 +143,7 @@ function RoomSession({ roomId }: { roomId: string }) {
       </section>
       <Card className="stack"><h2>Ready to play?</h2><ul className="rooms-members">{data.members.map(member =>
         <li key={member.userId}><strong>{member.userId === owner ? "You" : member.displayName}</strong><span>{member.ready ? "Ready" : "Preparing"}</span></li>)}</ul>
-        <p className="small muted">Starting uses 1 Sauce each. You’ll take turns across 2–4 different photos.</p>
+        <p className="small muted">You’ll take turns across 2–4 different photos.</p>
         {canStartRoom(data) ? <Button disabled={blocked} onClick={() => void act("start")}>Start together</Button> :
           <Button variant={me?.ready ? "secondary" : "primary"} disabled={blocked || data.photos.length < 2 || data.photos.some(photo => photo.status !== "ready") || !partner}
             onClick={() => void act("ready", { ready: !me?.ready })}>{me?.ready ? "Keep preparing" : "I’m ready"}</Button>}
@@ -330,5 +332,5 @@ function RoomContributions({ room }: { room: RoomSnapshot }) {
   return <section className="stack-2" aria-label="Each person’s practice"><h3>Your own practice</h3>{room.contributions.map(item =>
     <div key={item.userId} className="rooms-contribution"><strong>{item.userId === room.meId ? "You" : room.members.find(member => member.userId === item.userId)?.displayName ?? "Your friend"}</strong>
       <span>{item.cluesSent} {item.cluesSent === 1 ? "clue" : "clues"} sent · {item.guessesMade} {item.guessesMade === 1 ? "guess" : "guesses"} · {item.correctGuesses} found</span>
-      <span className="small muted rooms-contribution__rewards">+{item.basilEarned} Basil leaves · <span className="basil-reward"><BasilIcon size={15} />+{item.xpEarned} Basil</span></span></div>)}</section>;
+      <span className="small muted rooms-contribution__rewards"><span className="basil-reward"><BasilIcon size={15} />+{item.basilEarned} Basil</span></span></div>)}</section>;
 }

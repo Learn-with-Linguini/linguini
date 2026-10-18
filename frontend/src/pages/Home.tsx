@@ -8,6 +8,8 @@ import { Button } from "../components/ui";
 import { getActivePractice } from "../lib/api";
 import { sessionDestination } from "../lib/sessionRoute";
 import { friendlyError, queryError, queryKeys } from "../lib/queryKeys";
+import { useGamification } from "../state/gamification";
+import { MissionProgress } from "../components/MissionProgress";
 import { useAppState } from "../state/useAppState";
 import { useVocabularyQuery } from "../state/queries";
 import { WalkthroughCoachmark } from "../components/WalkthroughCoachmark";
@@ -46,6 +48,7 @@ function PastaStreak({ days }: { days: { date: string; active: boolean }[] }) {
 }
 
 export function Home() {
+  const basil = useGamification();
   const navigate = useNavigate();
   const { learner, user, activeProfile, progress, progressLoading, progressError, profileSaving, saveUser } = useAppState();
   const { vocabulary, vocabularyLoading, vocabularyError } = useVocabularyQuery();
@@ -62,7 +65,6 @@ export function Home() {
   const weekDates = new Set(progress?.streak.days.map(day => day.date) ?? []);
   const wordsThisWeek = vocabulary.filter(word => word.firstLearnedAt && weekDates.has(localDateKey(word.firstLearnedAt))).length;
   const exploredScenes = progress?.scenarios.filter(scene => scene.status !== "in-progress").length ?? 0;
-  const leaderboardPosition = progress?.leaderboard?.find(row => row.isYou)?.rank;
   const revisitScene = useMemo(() => {
     const groups = new Map<string, { mediaAssetId: string; title: string; count: number }>();
     vocabulary.forEach(word => word.scenes?.forEach(scene => {
@@ -97,7 +99,7 @@ export function Home() {
   return <div className="home-dashboard">
     <header className="home-welcome">
       <div><h2>{greeting()}, {learner.name || "friend"}</h2><p>Ready to cook?</p></div>
-      <span className="home-points" aria-label={`${progress?.xp ?? 0} Basil`}><BasilIcon />{progressLoading || progressError ? "—" : progress?.xp ?? 0} Basil</span>
+      <span className="home-points" aria-label={basil.isPending ? "Loading your Basil total" : basil.isError ? "Basil total unavailable" : `${basil.data?.basil.lifetime ?? 0} total Basil`}><BasilIcon />{basil.isPending || basil.isError ? "—" : basil.data?.basil.lifetime ?? 0} Basil</span>
     </header>
 
     <div className="home-dashboard__grid">
@@ -110,6 +112,7 @@ export function Home() {
             <h2 id="home-next-title">{resume ? `Continue ${resume.title}` : "Turn a place into a lesson"}</h2>
             <p>{resume ? `${completed} of ${total} activities complete` : "Choose a photo or one of our ready-made scenes."}</p>
             {resume && total > 0 ? <div className="home-next-step__progress-row"><div className="home-next-step__progress" role="progressbar" aria-label="Practice progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}><span style={{ width: `${percent}%` }} /></div><strong>{percent}%</strong></div> : null}
+            {resume ? <MissionProgress sessionId={resume.session.id} /> : null}
             {continueError ? <p className="home-next-step__error" role="alert">{continueError}</p> : null}
             <div ref={beginPracticeRef}><Button onClick={() => resume ? void continuePractice() : navigate("/practice")}><PlayIcon size={21} /> {resume ? "Continue practice" : "Begin a new practice"}</Button></div>
           </div>
@@ -145,7 +148,6 @@ export function Home() {
           <div className="home-section-heading home-section-heading--compact"><div><span className="home-progress-card__eyebrow">This week</span><h2 id="home-progress-title">Your progress</h2></div></div>
           {vocabularyLoading ? <InlineLoader compact label="Loading your words…" /> : vocabularyError ? <p role="alert">{vocabularyError}</p> : <div className="home-progress-card__stats"><div><span className="home-stat-icon home-stat-icon--words"><BookIcon /></span><strong>{wordsThisWeek}</strong><span>words</span></div><div><span className="home-stat-icon home-stat-icon--scenes"><EyeIcon /></span><strong>{exploredScenes}</strong><span>scenes</span></div></div>}
         </section>
-        {leaderboardPosition ? <button className="home-league" type="button" onClick={() => navigate("/ispy")}><span className="home-league__badge" aria-hidden="true">#</span><span><strong>Chefs of the Day</strong><small>You're #{leaderboardPosition} this week</small></span><ChevronRightIcon /></button> : null}
       </aside>
     </div>
 
