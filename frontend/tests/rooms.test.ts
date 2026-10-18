@@ -376,12 +376,12 @@ test("room entry retries creation with the same command identity", async () => {
   await view.close();
 });
 
-test("I-Spy offers a working friend lobby and normal resources without feature configuration", async () => {
+test("Play offers a working friend lobby and normal resources without feature configuration", async () => {
   activeSnapshot = null;
   readPaths.length = 0;
   const view = await mountApp("/ispy");
   await waitFor(() => assert.ok(button("Play with a friend")));
-  assert.equal(dom.window.document.querySelectorAll('nav[aria-label="Main"] a').length, 6);
+  assert.equal(dom.window.document.querySelectorAll('nav[aria-label="Main"] a').length, 5);
   assert.doesNotMatch(text(), /Coming soon/);
   await click("Play with a friend");
   await waitFor(() => assert.ok(button("Create a room")));

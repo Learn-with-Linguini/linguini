@@ -31,7 +31,7 @@ structure = "[number] [noun]."
 examples = { es = ["dos manzanas"], fr = ["deux pommes"], de = ["zwei Äpfel"], ko = ["사과 두 개"] }
 
 [teaching]
-task_sequence = ["vocabularyIntroduction", "grammarLesson", "ispyRound", "reflection"]
+task_sequence = ["vocabularyIntroduction", "grammarLesson"]
 teach_before_assessment = ["count-small-group", "number-noun-chunk"]
 max_new_words = 3
 

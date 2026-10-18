@@ -48,7 +48,7 @@ structure = "[quantity sentence] [more/fewer] [noun] [than] [noun]."
 examples = { es = ["Hay más libros que tazas."], fr = ["Il y a plus de livres que de tasses."] }
 
 [teaching]
-task_sequence = ["vocabularyIntroduction", "grammarLesson", "ispyRound", "reflection"]
+task_sequence = ["vocabularyIntroduction", "grammarLesson"]
 teach_before_assessment = ["understand-counts", "describe-counts", "compare-counts"]
 max_new_words = 6
 

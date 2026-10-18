@@ -45,7 +45,7 @@ structure = "[no] [article] [noun] [belongs to] [role-play owner]."
 examples = { es = ["No, es la taza de Marta."], fr = ["Non, c'est la tasse de Léa."] }
 
 [teaching]
-task_sequence = ["vocabularyIntroduction", "grammarLesson", "ispyRound", "reflection"]
+task_sequence = ["vocabularyIntroduction", "grammarLesson"]
 teach_before_assessment = ["identify-owned-object", "use-possessive", "describe-belonging"]
 max_new_words = 6
 

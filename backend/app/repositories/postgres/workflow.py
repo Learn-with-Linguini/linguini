@@ -1821,13 +1821,16 @@ class PostgresWorkflowRepository:
                 return
             # Rebuild tasks from scratch for the accepted objects.
             c.execute(delete(session_tasks).where(session_tasks.c.session_id == session_id))
+            supplemental_vocabulary = {}
             draft = dict(session.analysis_draft or {})
             draft.pop("missionChecks", None)
             c.execute(
                 update(sessions).where(sessions.c.id == session_id).values(analysis_draft=draft)
             )
             if self.translator:
-                self._store_translation(c, session, profile, objects, translated_scene)
+                supplemental_vocabulary = self._store_translation(
+                    c, session, profile, objects, translated_scene
+                )
             objects, relations = self._scene_objects(c, session)
             words, translations = self._words(c, session, objects)
             rebuilt = build_tasks(
@@ -1837,6 +1840,7 @@ class PostgresWorkflowRepository:
                 translations,
                 False,
                 translated_scene if self.translator else _translation_preview(session),
+                supplemental_vocabulary,
             )
             introduction = next(
                 task for task in rebuilt if task.kind == "vocabularyIntroduction"
@@ -1865,7 +1869,7 @@ class PostgresWorkflowRepository:
                 # words. Persist a "new" vocabulary record now, rather than
                 # waiting for task completion, so leaving the lesson does not
                 # discard their image vocabulary.
-                for word in _unique_by_id(words):
+                for word in _unique_by_id([*words, *supplemental_vocabulary.values()]):
                     record_vocabulary_evidence(
                         c,
                         user_id=self.user_id,
@@ -1883,36 +1887,23 @@ class PostgresWorkflowRepository:
 
         mission_lessons, skipped_missions = [], []
         if claim.missions:
-            # Mission lessons replace the fixed grammar sequence; I-Spy stays as the bonus.
+            # Mission lessons end at their summary. I-Spy is an optional,
+            # separately created game that can reuse this scene afterwards.
             lesson = partial(
                 self._mission_lessons,
                 claim, objects, relations, words, translated_scene if self.translator else None,
                 skipped_missions,
             )
-            if self.translator:
-                mission_lessons, ispy_clues = self._alongside_clues(lesson, partial(
-                    self._clues, session_id, payload, translated_scene, objects, words,
-                    relations, options=claim.generation_options,
-                ))
-            else:
-                mission_lessons = lesson()
+            mission_lessons = lesson()
         if not mission_lessons and self.translator:
             # With no mission task left, use the regular lesson.
-            if claim.missions:
-                lessons = self._lessons(
-                    session_id, payload, translated_scene, relations,
-                    claim.generation_options,
-                    history=lesson_history(claim.learner_history, introduction),
-                    history_scope=CacheScope.user(f"{self.user_id}:{claim.profile_id}"),
-                )
-            else:
-                lessons, ispy_clues = self._lessons_and_clues(
-                    session_id, payload, translated_scene, objects, words, relations,
-                    claim.generation_options,
-                    history=lesson_history(claim.learner_history, introduction),
-                    history_scope=CacheScope.user(f"{self.user_id}:{claim.profile_id}"),
-                )
-        if self.translator and self.ispy_guess_generator:
+            lessons, ispy_clues = self._lessons_and_clues(
+                session_id, payload, translated_scene, objects, words, relations,
+                claim.generation_options,
+                history=lesson_history(claim.learner_history, introduction),
+                history_scope=CacheScope.user(f"{self.user_id}:{claim.profile_id}"),
+            )
+        if not mission_lessons and self.translator and self.ispy_guess_generator:
             ispy_descriptions = build_ispy_description_tasks(
                 session_id, objects, words,
                 _ispy_guess_context(payload, translated_scene, objects, relations),
@@ -1948,7 +1939,7 @@ class PostgresWorkflowRepository:
             if mission_lessons:
                 rebuilt = [
                     *(task for task in rebuilt if task.id == introduction_id),
-                    *mission_lessons, *clues, *descriptions,
+                    *mission_lessons,
                 ]
             if summary and summary.practice_focuses:
                 available = {task.public_content.focus for task in lessons}
@@ -2033,7 +2024,7 @@ class PostgresWorkflowRepository:
         return lessons
 
     def _store_translation(self, c, session, profile, objects, translated_scene):
-        """Keep the scene translation and link each object to its vocabulary item."""
+        """Persist every translated scene term and link objects to their words."""
         draft = {
             **(session.analysis_draft or {}),
             "translationPreview": translated_scene.model_dump(mode="json", by_alias=True),
@@ -2056,6 +2047,23 @@ class PostgresWorkflowRepository:
                 .where(scene_objects.c.id == obj.id)
                 .values(vocabulary_item_id=word.id)
             )
+        supplemental = {}
+        for term_type, part_of_speech, terms in (
+            ("attribute", "adjective", translated_scene.attributes),
+            ("relationship", "preposition", translated_scene.relationships),
+        ):
+            for term in terms:
+                word, _ = bootstrap_word(
+                    c,
+                    profile["target_language_code"],
+                    profile["source_language_code"],
+                    term.translation,
+                    term.source,
+                    part=part_of_speech,
+                    phonetic_text=term.phonetic_text,
+                )
+                supplemental[(term_type, str(term.key))] = word
+        return supplemental
 
     def _words(self, c, session, objects):
         """Each object's vocabulary item and translation, in object order."""
@@ -2159,9 +2167,17 @@ class PostgresWorkflowRepository:
             if session.status in TERMINAL:
                 raise PracticeConflictError("Session is already terminal.")
             tasks = self._tasks(c, session.id)
+            mission_session = any(
+                getattr(task.public_content, "mission_id", None) for task in tasks
+            )
+            required_tasks = (
+                [task for task in tasks if task.kind not in {"ispyRound", "reflection"}]
+                if mission_session else tasks
+            )
             if not abandon and (
                 session.status == "generatingTasks"
-                or not tasks or any(t.status not in {"completed", "skipped"} for t in tasks)
+                or not required_tasks
+                or any(t.status not in {"completed", "skipped"} for t in required_tasks)
             ):
                 raise PracticeConflictError("Complete or skip every task first.")
             session = self._transition(c, session, target)

@@ -565,9 +565,11 @@ lesson.
   as before. The introduction carries no mission fields because it teaches the nouns for
   every planned mission; its per-word evidence still follows each word's own result.
 - **Tasks.** Each planned mission adds one `grammarLesson` carrying its own mission fields,
-  in plan order, before the bonus I-Spy rounds. Mission lessons publish no `explanation`,
-  so the task page shows only the questions and, after submitting, the feedback. `app/services/mission_registry.py` maps each
-  mission to its payload builder, generation spec and task builder.
+  in plan order. Mission sessions end on their summary; choosing I-Spy there creates a
+  separate game that reuses the confirmed scene inventory. Mission lessons publish no
+  `explanation`, so the task page shows only the questions and, after submitting, the
+  feedback. `app/services/mission_registry.py` maps each mission to its payload builder,
+  generation spec and task builder.
 
 #### M01 A1 lesson path
 

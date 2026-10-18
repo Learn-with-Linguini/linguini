@@ -1,6 +1,6 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { useLayoutEffect } from "react";
-import { BookIcon, CameraIcon, EyeIcon, HomeIcon, JournalIcon, PersonIcon } from "./icons";
+import { BookIcon, CameraIcon, EyeIcon, HomeIcon, PersonIcon } from "./icons";
 import { BrandBar } from "./ui";
 import { BackActionProvider, useRegisteredBackAction } from "./BackAction";
 import { useAuth } from "../state/Auth";
@@ -8,9 +8,8 @@ import { useAuth } from "../state/Auth";
 const items = [
   { to: "/home", label: "Home", Icon: HomeIcon },
   { to: "/practice", label: "Practice", Icon: CameraIcon },
-  { to: "/ispy", label: "I-Spy", Icon: EyeIcon },
-  { to: "/vocabulary", label: "Vocabulary", Icon: BookIcon },
-  { to: "/journal", label: "Journal", Icon: JournalIcon },
+  { to: "/ispy", label: "Play", Icon: EyeIcon },
+  { to: "/vocabulary", label: "Revisit", Icon: BookIcon },
   { to: "/profile", label: "Profile", Icon: PersonIcon },
 ];
 

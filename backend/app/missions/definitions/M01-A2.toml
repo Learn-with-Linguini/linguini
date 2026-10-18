@@ -45,7 +45,7 @@ structure = "[confirmed sentence] [and/but/also] [confirmed sentence]."
 examples = { es = ["Hay una mesa blanca y también hay una lámpara."], fr = ["Il y a une table blanche et il y a aussi une lampe."] }
 
 [teaching]
-task_sequence = ["vocabularyIntroduction", "grammarLesson", "ispyRound", "reflection"]
+task_sequence = ["vocabularyIntroduction", "grammarLesson"]
 teach_before_assessment = ["identify-scene-object", "describe-scene-facts", "connect-scene-facts"]
 max_new_words = 6
 

@@ -7,7 +7,7 @@ import { Button, Card, Feedback, IconButton, ProgressTrail, XpPill } from "../co
 import { CloseIcon, SpeakerIcon } from "../components/icons";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
-import { builtSentence, choiceOrder, finishesWithoutISpy, isMissionSession, markerChoices, optionText, practiceStages, questionOptions, sentenceEnding, taskDone, taskTitle, taskXp, xpEarnedText } from "../lib/practiceTasks";
+import { builtSentence, choiceOrder, finishesAfterLearning, markerChoices, optionText, practiceStages, questionOptions, sentenceEnding, taskDone, taskTitle, taskXp, xpEarnedText } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
 import { checkLessonAnswer, checkVocabularyAnswer, getLatestAttempt, getLessonChecks, reviewDetails, type GrammarLessonQuestion, type LessonAnswerCheck, type SceneObject, type SessionTask, type QuestionOutcome, type TaskActionResult, type TaskAnswer, type VocabularyLearningWord } from "../lib/api";
 import { mergeLessonChecks, visibleLessonQuestionIndex } from "../lib/missionLessonFlow";
@@ -34,7 +34,7 @@ export function LearningTaskPage() {
   const next = tasks[index + 1];
   return <div className="stack learning-task-page"><LearningTaskContent key={task.id} task={task} index={index} total={tasks.length}
     onNext={() => {
-      if (!next && session.session.status !== "generatingTasks" && finishesWithoutISpy(session.tasks)) {
+      if (!next && session.session.status !== "generatingTasks" && finishesAfterLearning(session.tasks)) {
         if (completeSession()) navigate(`${base}/summary`);
         return;
       }
@@ -716,8 +716,8 @@ function CountBoard({ count, sceneImageUrl, imageSize, onImageSize, boardObject 
 
 function useLastStepLabel() {
   const { session } = useAppState();
-  if (session && finishesWithoutISpy(session.tasks)) return "Finish lesson";
-  return session && isMissionSession(session.tasks) ? "Go to bonus I-Spy" : "Go to I-Spy";
+  if (session && finishesAfterLearning(session.tasks)) return "Finish lesson";
+  return "Go to I-Spy";
 }
 
 function QuestionOutcomeNotes({ outcome }: { outcome?: QuestionOutcome }) {

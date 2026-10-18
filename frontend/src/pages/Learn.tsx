@@ -4,7 +4,7 @@ import { ArrowRightIcon, CheckIcon, CloseIcon } from "../components/icons";
 import { TranslationPreview } from "../components/TranslationPreview";
 import { SessionPersonalization } from "../components/SessionPersonalization";
 import { useScene } from "../state/useScene";
-import { finishesWithoutISpy, isMissionSession, practiceStages, taskDone, taskTitle, taskXp } from "../lib/practiceTasks";
+import { finishesAfterLearning, practiceStages, taskDone, taskTitle, taskXp } from "../lib/practiceTasks";
 import { useAppState } from "../state/useAppState";
 
 export function Learn() {
@@ -79,10 +79,10 @@ export function Learn() {
       </section> : null}
 
       {allDone ? (
-        finishesWithoutISpy(session.tasks) ? <Button block disabled={practiceSaving} onClick={() => { if (completeSession()) navigate(`${base}/summary`); }}>
+        finishesAfterLearning(session.tasks) ? <Button block disabled={practiceSaving} onClick={() => { if (completeSession()) navigate(`${base}/summary`); }}>
           Finish lesson <ArrowRightIcon />
         </Button> : <Button block disabled={practiceSaving} onClick={() => navigate(`${base}/ispy-1`)}>
-          {isMissionSession(session.tasks) ? "Play bonus I-Spy" : "Play I-Spy"} <ArrowRightIcon />
+          Play I-Spy <ArrowRightIcon />
         </Button>
       ) : (
         <Button block disabled={practiceSaving || !nextTask} onClick={() => nextTask && openTask(nextTask.id)}>

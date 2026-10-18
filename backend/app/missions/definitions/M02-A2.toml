@@ -53,7 +53,7 @@ structure = "[article] [noun] [reviewed attribute] [is] [reviewed position] [art
 examples = { es = ["La taza roja está al lado de la ventana."], fr = ["La tasse rouge est à côté de la fenêtre."] }
 
 [teaching]
-task_sequence = ["vocabularyIntroduction", "grammarLesson", "ispyRound", "reflection"]
+task_sequence = ["vocabularyIntroduction", "grammarLesson"]
 teach_before_assessment = ["understand-target-clues", "find-target-object", "name-located-target"]
 max_new_words = 6
 
