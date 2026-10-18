@@ -4757,17 +4757,26 @@ p[role="alert"]::before { content: "!"; }
 }
 
 .prompt-translation {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  width: fit-content;
 }
 
 .prompt-translation__toggle.icon-btn {
   flex: none;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
-  background: var(--paper);
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: var(--teal-dark);
+}
+
+.prompt-translation__toggle.icon-btn:hover:not(:disabled) {
+  background: transparent;
+  color: var(--tomato);
 }
 
 .learning-task-page > .trail {

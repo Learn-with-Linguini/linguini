@@ -28,6 +28,15 @@ export const EyeIcon = ({ size = 22, className }: IconProps) => (
   </svg>
 );
 
+export const EyeOffIcon = ({ size = 22, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <path d="M3 3l18 18" />
+    <path d="M10.6 5.7A9.6 9.6 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a15.2 15.2 0 0 1-2.1 3" />
+    <path d="M6.2 6.2A15.7 15.7 0 0 0 2.5 12S6 18.5 12 18.5a9.2 9.2 0 0 0 3.2-.6" />
+    <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+  </svg>
+);
+
 export const CameraIcon = ({ size = 22, className }: IconProps) => (
   <svg {...base(size)} className={className}>
     <path d="M3 8.5h3.5L8 6h8l1.5 2.5H21V19H3z" />

@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { friendlyError, queryKeys } from "../lib/queryKeys";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { Button, Card, Feedback, IconButton, ProgressTrail, XpPill } from "../components/ui";
-import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, CloseIcon, EyeIcon, SpeakerIcon } from "../components/icons";
+import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, CloseIcon, EyeIcon, EyeOffIcon, SpeakerIcon } from "../components/icons";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { builtSentence, choiceOrder, finishesAfterLearning, markerChoices, optionText, practiceStages, questionOptions, sentenceEnding, taskDone, taskTitle, taskXp, xpEarnedText } from "../lib/practiceTasks";
@@ -1207,9 +1207,11 @@ function QuestionOutcomeNotes({ outcome }: { outcome?: QuestionOutcome }) {
 function PromptTranslation({ text }: { text?: string | null }) {
   const [shown, setShown] = useState(false);
   if (!text) return null;
-  return <div className="prompt-translation">
+  return <span className="prompt-translation">
+    {shown ? <span className="small muted">{text}</span> : null}
     <IconButton className="prompt-translation__toggle" label={shown ? "Hide translation" : "Show translation"}
-      aria-expanded={shown} onClick={() => setShown(value => !value)}><EyeIcon size={20} /></IconButton>
-    {shown ? <p className="small muted">{text}</p> : null}
-  </div>;
+      aria-expanded={shown} onClick={() => setShown(value => !value)}>
+      {shown ? <EyeIcon size={20} /> : <EyeOffIcon size={20} />}
+    </IconButton>
+  </span>;
 }
