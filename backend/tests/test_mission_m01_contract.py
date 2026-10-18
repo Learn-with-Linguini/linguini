@@ -39,7 +39,6 @@ from app.schemas.mission_m01_contract import (
     Feedback,
     GeneratedMarkerOption,
     GeneratedQuestion,
-    Hint,
     LearnerContext,
     M01ContractInput,
     M01ContractOutput,
@@ -48,7 +47,6 @@ from app.schemas.mission_m01_contract import (
     PreparationCard,
     PrivateEvaluation,
     SentenceChunk,
-    WorkedExample,
 )
 from app.schemas.tasks import QuestionEvaluation, VocabularyChoice
 from app.services.mission_eligibility import (
@@ -196,7 +194,6 @@ def contract_output(contract):
             ),
             chunks=chunks if interaction == "sentenceBuilding" else [],
             fact_ids=[object_fact],
-            hints=[],
             feedback=Feedback(correct="Nice work.", corrections=[]),
         )
         question_list.append(question)
@@ -220,7 +217,6 @@ def contract_output(contract):
             )
         )
 
-    chunks = example_chunks(contract.target_language, "example")
     return M01ContractOutput(
         contract_version=CONTRACT_VERSION,
         mission=contract.mission,
@@ -234,16 +230,13 @@ def contract_output(contract):
                 text=contract.vocabulary[0].target_text,
                 translation="cup",
                 fact_ids=[object_fact],
-            )
-        ],
-        worked_examples=[
-            WorkedExample(
-                example_id="example-one",
-                chunks=chunks,
-                translation="A cup is on the table.",
-                fact_ids=[object_fact, contract.scene_facts.objects[1].fact_id],
-                target_ids=definition.teaching.teach_before_assessment or required_targets[:1],
-            )
+            ),
+            PreparationCard(
+                card_id="introduce-table",
+                text="table",
+                translation="table",
+                fact_ids=[contract.scene_facts.objects[1].fact_id],
+            ),
         ],
         questions=question_list,
         private=PrivateEvaluation(answers=answers, evaluations=evaluations),
@@ -257,7 +250,6 @@ def planned_a1_output(contract=None):
     first, second = contract.scene_facts.objects[:2]
     attribute = contract.scene_facts.attributes[0]
     relation = contract.scene_facts.relations[0]
-    teach_targets = list(definition.teaching.teach_before_assessment)
 
     def chunk(chunk_id, text):
         return SentenceChunk(
@@ -279,7 +271,6 @@ def planned_a1_output(contract=None):
             marker_fact_ids={"cup": first.fact_id, "table": second.fact_id},
             chunks=[],
             fact_ids=[first.fact_id],
-            hints=[Hint(level=1, text="Look at the cup.")],
             feedback=Feedback(correct="Correct.", corrections=[]),
         ),
         ContractQuestion(
@@ -293,7 +284,6 @@ def planned_a1_output(contract=None):
             ],
             chunks=[],
             fact_ids=[first.fact_id],
-            hints=[Hint(level=1, text="It is used for a drink.")],
             feedback=Feedback(correct="Correct.", corrections=[]),
         ),
         ContractQuestion(
@@ -307,7 +297,6 @@ def planned_a1_output(contract=None):
             ],
             chunks=[],
             fact_ids=[first.fact_id, attribute.fact_id],
-            hints=[Hint(level=1, text="Use the colour word.")],
             feedback=Feedback(correct="Correct.", corrections=[]),
         ),
         ContractQuestion(
@@ -324,7 +313,6 @@ def planned_a1_output(contract=None):
                 chunk("location-period", "."),
             ],
             fact_ids=[first.fact_id, relation.fact_id],
-            hints=[Hint(level=1, text="Start with the object.")],
             feedback=Feedback(correct="Correct.", corrections=[]),
         ),
     ]
@@ -350,16 +338,6 @@ def planned_a1_output(contract=None):
                 item for item in plan.evidence[question.interaction] if item in permitted
             ),
         ))
-    examples = [
-        WorkedExample(
-            example_id=f"example-{index}",
-            chunks=[chunk(f"example-{index}-a", text)],
-            translation=f"Example translation {index}.",
-            fact_ids=[first.fact_id, attribute.fact_id],
-            target_ids=teach_targets,
-        )
-        for index, text in enumerate(("La taza está sobre la mesa.", "La mesa es azul."), 1)
-    ]
     output = M01ContractOutput(
         contract_version=CONTRACT_VERSION,
         mission=contract.mission,
@@ -369,11 +347,11 @@ def planned_a1_output(contract=None):
         title="Describe the scene.",
         preparation=[
             PreparationCard(card_id="prep-cup", text="taza", fact_ids=[first.fact_id]),
+            PreparationCard(card_id="prep-table", text="mesa", fact_ids=[second.fact_id]),
             PreparationCard(
                 card_id="prep-colour", text="azul", fact_ids=[attribute.fact_id]
             ),
         ],
-        worked_examples=examples,
         questions=questions,
         private=PrivateEvaluation(answers=answers, evaluations=evaluations),
     )
@@ -643,36 +621,6 @@ def test_output_requires_each_required_target_group():
         validate_contract_output(contract, bad_output)
 
 
-def test_output_requires_ordered_hints_and_only_last_hint_may_reveal():
-    contract = contract_input()
-    output = contract_output(contract)
-    first_question = output.questions[0].model_copy(
-        update={
-            "hints": [
-                Hint(level=2, text="Second hint."),
-                Hint(level=1, text="First hint."),
-            ]
-        }
-    )
-    bad_order = output.model_copy(update={"questions": [first_question, *output.questions[1:]]})
-    with pytest.raises(MissionContractError, match="strictly ascending"):
-        validate_contract_output(contract, bad_order)
-
-    revealing_question = output.questions[0].model_copy(
-        update={
-            "hints": [
-                Hint(level=1, text="Answer hint.", reveals_answer=True),
-                Hint(level=2, text="Final hint."),
-            ]
-        }
-    )
-    early_reveal = output.model_copy(
-        update={"questions": [revealing_question, *output.questions[1:]]}
-    )
-    with pytest.raises(MissionContractError, match="final hint"):
-        validate_contract_output(contract, early_reveal)
-
-
 def test_output_requires_one_offered_answer_for_each_question():
     contract = contract_input()
     output = contract_output(contract)
@@ -776,9 +724,6 @@ def test_plan_aware_validation_rejects_each_a1_structure_failure():
     ]
     rejected(output.model_copy(update={"preparation": excessive_prep}),
              "preparation-card count")
-    rejected(output.model_copy(update={"worked_examples": output.worked_examples[:1]}),
-             "worked-example count")
-
     name = output.questions[1]
     rejected(
         output.model_copy(update={"questions": [
@@ -922,44 +867,30 @@ def test_plan_aware_validation_rejects_each_a1_structure_failure():
         })]
     }), "contain text")
 
-    rejected(output.model_copy(update={
-        "questions": [output.questions[0].model_copy(update={"hints": []}),
-                      *output.questions[1:]]
-    }), "hint count")
-    too_many_hints = output.questions[0].model_copy(update={"hints": [
-        Hint(level=1, text="One."),
-        Hint(level=2, text="Two."),
-        Hint(level=3, text="Three."),
-        Hint(level=3, text="Four.").model_copy(update={"level": 4}),
-    ]})
-    rejected(output.model_copy(update={
-        "questions": [too_many_hints, *output.questions[1:]]
-    }), "hint count")
-    unordered = output.questions[0].model_copy(update={
-        "hints": [Hint(level=2, text="Later."), Hint(level=1, text="Earlier.")]
-    })
-    rejected(output.model_copy(update={
-        "questions": [unordered, *output.questions[1:]]
-    }), "strictly ascending")
-    early_reveal = output.questions[0].model_copy(update={
-        "hints": [Hint(level=1, text="Answer.", reveals_answer=True),
-                  Hint(level=2, text="Later.")]
-    })
-    rejected(output.model_copy(update={
-        "questions": [early_reveal, *output.questions[1:]]
-    }), "only the final hint")
 
-    unteaching = [
-        example.model_copy(update={"target_ids": ["name-object"]})
-        for example in output.worked_examples
-    ]
-    rejected(output.model_copy(update={"worked_examples": unteaching}), "teach targets")
-    duplicate_example = output.worked_examples[0].model_copy(update={
-        "chunks": output.questions[3].chunks
+
+def test_preparation_cards_must_cover_every_assessed_object():
+    contract = contract_input()
+    output = contract_output(contract)
+    marker_question = next(
+        question for question in output.questions if question.interaction == "markerChoice"
+    )
+    chair = contract.scene_facts.objects[2]
+    marker_fact_ids = dict(marker_question.marker_fact_ids)
+    marker_fact_ids[marker_question.options[1].option_id] = chair.fact_id
+    changed = marker_question.model_copy(update={"marker_fact_ids": marker_fact_ids})
+    invalid = output.model_copy(update={
+        "questions": [
+            changed if question.question_id == marker_question.question_id else question
+            for question in output.questions
+        ],
     })
-    rejected(output.model_copy(update={
-        "worked_examples": [duplicate_example, *output.worked_examples[1:]]
-    }), "cannot reuse a question answer")
+
+    with pytest.raises(
+        MissionContractError,
+        match="preparation cards must teach every assessed object before assessment",
+    ):
+        validate_contract_output(contract, invalid)
 
 
 def test_sentence_answer_chunks_must_be_unique_and_offered():
@@ -1046,7 +977,6 @@ def test_generated_lesson_conversion_derives_private_evaluations():
     generated = M01GeneratedLesson(
         title="Identify a cup",
         preparation=[],
-        worked_examples=[],
         questions=[
             GeneratedQuestion(
                 question_id="identify-cup",
@@ -1064,7 +994,6 @@ def test_generated_lesson_conversion_derives_private_evaluations():
                 chunks=[],
                 fact_ids=[first.fact_id],
                 answer=Answer(correct_option_id="cup-option"),
-                hints=[Hint(level=1, text="Look at the blue object.")],
                 feedback=Feedback(correct="Correct.", corrections=[]),
             )
         ],
@@ -1130,14 +1059,15 @@ def test_multilingual_m01_evidence_preferences_never_emit_production():
                     if interaction == "sentenceBuilding"
                     else Answer(correct_option_id=f"evidence-{index}-a")
                 ),
-                hints=[Hint(level=1, text="Look at the object.")],
                 feedback=Feedback(correct="Correct.", corrections=[]),
             )
         )
     generated = M01GeneratedLesson(
         title="Recognise the scene.",
-        preparation=[],
-        worked_examples=[],
+        preparation=[
+            PreparationCard(card_id="prep-cup", text="taza", fact_ids=[first.fact_id]),
+            PreparationCard(card_id="prep-table", text="mesa", fact_ids=[second.fact_id]),
+        ],
         questions=questions,
     )
 
@@ -1218,31 +1148,16 @@ def test_m01_cache_identity_covers_payload_and_version_dimensions():
     assert len(variations) == len(set(variations))
 
 
-def test_multilingual_task_keeps_answer_and_hint_text_private():
+def test_multilingual_task_keeps_answer_key_private():
     contract = contract_input()
     output = contract_output(contract)
-    questions = [
-        question.model_copy(update={
-            "hints": [Hint(level=1, text=f"private hint {question.question_id}")],
-        })
-        for question in output.questions
-    ]
-    output = output.model_copy(update={"questions": questions})
-    first = questions[0]
-    hint_text = f"private hint {first.question_id}"
     mission = get_mission("M01", "A1", 1)
     task = build_m01_multilingual_task(uuid4(), mission, contract, output)
     public_content = task.public_content.model_dump_json(by_alias=True)
 
     assert task.kind == "grammarLesson"
-    assert hint_text not in public_content
     assert "correctOptionIds" not in public_content
-    first_question = task.public_content.questions[0]
-    assert first_question.prompt_translation == first.prompt_translation
-    assert first_question.translation is None
-    assert task.answer_key.mission_state["hints"][first.question_id][0]["text"] == (
-        hint_text
-    )
+    assert "missionState" not in public_content
 
 
 def test_marker_choice_public_labels_are_review_marker_numbers():
@@ -1255,12 +1170,6 @@ def test_marker_choice_public_labels_are_review_marker_numbers():
         "scene_facts": contract.scene_facts.model_copy(update={"objects": objects}),
     })
     output = contract_output(contract)
-    output = output.model_copy(update={
-        "questions": [
-            question.model_copy(update={"hints": [Hint(level=1, text="Look carefully.")]})
-            for question in output.questions
-        ],
-    })
     mission = get_mission("M01", "A1", 1)
     task = build_m01_multilingual_task(uuid4(), mission, contract, output)
 
@@ -1442,16 +1351,6 @@ def test_a2_connected_fact_threshold_and_followup_order_and_subset():
     a2_output = output.model_copy(update={
         "mission": a2_contract.mission,
         "objective_id": definition.objective.objective_id,
-        "worked_examples": [
-            example.model_copy(update={
-                "target_ids": [
-                    "identify-scene-object",
-                    "describe-scene-facts",
-                    "connect-scene-facts",
-                ]
-            })
-            for example in output.worked_examples
-        ],
         "questions": questions,
         "private": output.private.model_copy(update={
             "answers": a2_answers,

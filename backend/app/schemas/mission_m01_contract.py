@@ -160,21 +160,6 @@ class SentenceChunk(ApiModel):
     join: ChunkJoin
 
 
-class WorkedExample(ApiModel):
-    example_id: ContractId
-    chunks: list[SentenceChunk]
-    translation: NonEmptyText
-    fact_ids: list[NonEmptyText]
-    target_ids: Annotated[list[ContractId], Field(min_length=1)]
-    note: str | None = None
-
-
-class Hint(ApiModel):
-    level: Annotated[int, Field(ge=1, le=3)]
-    text: NonEmptyText
-    reveals_answer: bool = False
-
-
 class Feedback(ApiModel):
     correct: str | None = None
     corrections: list[CorrectionRule]
@@ -192,7 +177,6 @@ class ContractQuestion(ApiModel):
     marker_fact_ids: dict[NonEmptyText, NonEmptyText] | None = None
     chunks: list[SentenceChunk]
     fact_ids: list[NonEmptyText]
-    hints: list[Hint]
     feedback: Feedback
 
 
@@ -215,7 +199,6 @@ class M01ContractOutput(ApiModel):
     title: NonEmptyText
     explanation: str | None = None
     preparation: list[PreparationCard]
-    worked_examples: list[WorkedExample]
     questions: list[ContractQuestion]
     private: PrivateEvaluation
 
@@ -241,7 +224,6 @@ class GeneratedQuestion(ApiModel):
     chunks: list[SentenceChunk]
     fact_ids: list[NonEmptyText]
     answer: Answer
-    hints: list[Hint]
     feedback: Feedback
 
 
@@ -251,5 +233,4 @@ class M01GeneratedLesson(ApiModel):
     title: NonEmptyText
     explanation: str | None = None
     preparation: list[PreparationCard]
-    worked_examples: list[WorkedExample]
     questions: list[GeneratedQuestion]

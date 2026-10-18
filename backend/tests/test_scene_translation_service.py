@@ -12,6 +12,7 @@ import httpx
 import pytest
 from pydantic import ValidationError
 
+from app import languages as language_registry
 from app.ai.adapters.gemini import GeminiTextClient, _gemini_json_schema
 from app.ai.adapters.openai import OpenAITextClient
 from app.ai.contracts.errors import ProviderError, ProviderErrorCode
@@ -28,6 +29,7 @@ from app.ai.features.translation import (
     normalize_object_articles,
 )
 from app.ai.observability import NoOpAITracer
+from app.schemas.languages import Language
 
 FAKE_API_KEY = "test-key-123"
 
@@ -269,6 +271,35 @@ def test_korean_translation_terms_may_be_articleless():
     assert all(term.article is None and term.gender is None for term in translated.objects)
 
 
+def test_registered_language_without_article_rules_normalizes_article_to_none(monkeypatch):
+    existing = language_registry._load_languages()
+    synthetic = Language.model_validate({
+        "code": "qaa",
+        "englishName": "Test language",
+        "nativeName": "Test language",
+        "script": "Latn",
+        "learnable": False,
+        "instruction": False,
+        "speech": {"synthesisLocale": "qaa"},
+        "grammar": {"articles": False},
+    })
+    monkeypatch.setattr(
+        language_registry, "_load_languages", lambda: (*existing, synthetic)
+    )
+    result = json.loads(VALID_OUTPUT)
+    result["objects"] = [
+        {**row, "translation": f"test {row['key']}", "article": None}
+        for row in result["objects"]
+    ]
+
+    translated = service(FakeTextClient([json.dumps(result)])).translate(
+        {**PAYLOAD, "targetLanguage": "qaa"}
+    )
+
+    assert all(term.article is None for term in translated.objects)
+    assert translated.objects[0].gender == "feminine"
+
+
 def test_german_neuter_translation_gender_is_accepted():
     result = json.loads(VALID_OUTPUT)
     result["objects"][0].update(
@@ -321,7 +352,7 @@ def test_normalize_object_articles_strips_matching_article() -> None:
         ]
     })
 
-    normalized = normalize_object_articles(result)
+    normalized = normalize_object_articles(result, "es")
 
     assert normalized.objects[0].translation == "silla"
     assert normalized.objects[0].article == "la"
@@ -338,7 +369,7 @@ def test_normalize_object_articles_sets_missing_article() -> None:
         ]
     })
 
-    normalized = normalize_object_articles(result)
+    normalized = normalize_object_articles(result, "es")
 
     assert normalized.objects[0].translation == "arbre"
     assert normalized.objects[0].article == "l'"
@@ -355,7 +386,7 @@ def test_normalize_object_articles_handles_curly_apostrophe() -> None:
         ]
     })
 
-    normalized = normalize_object_articles(result)
+    normalized = normalize_object_articles(result, "es")
 
     assert normalized.objects[0].translation == "arbre"
     assert normalized.objects[0].article == "l’"
@@ -374,7 +405,7 @@ def test_normalize_object_articles_leaves_article_like_nouns_untouched() -> None
         ]
     })
 
-    normalized = normalize_object_articles(result)
+    normalized = normalize_object_articles(result, "es")
 
     assert [row.translation for row in normalized.objects] == ["lavabo", "lesson"]
 
@@ -390,7 +421,7 @@ def test_normalize_object_articles_leaves_non_object_terms_untouched() -> None:
         ],
     })
 
-    normalized = normalize_object_articles(result)
+    normalized = normalize_object_articles(result, "es")
 
     assert normalized.attributes[0].translation == "el rojo"
     assert normalized.relationships[0].translation == "la junto a"

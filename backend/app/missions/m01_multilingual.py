@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import tomllib
 import unicodedata
@@ -12,7 +13,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field
 
-from app.languages import get_language
+from app.languages import get_language, languages
 from app.missions import get_mission
 from app.schemas.base import ApiModel
 from app.schemas.enums import ProficiencyLevel
@@ -61,6 +62,10 @@ M01_VARIANTS: dict[M01VariantKey, M01Variant] = {
         "connect confirmed facts into a short scene description and answer a follow-up",
     ),
 }
+M01_LEVELS = frozenset(
+    level for mission, level, _version in M01_VARIANTS if mission == "M01"
+)
+logger = logging.getLogger(__name__)
 
 
 class UnroutedMissionVariant(LookupError):
@@ -86,10 +91,8 @@ class M01LevelPlan(ApiModel):
     max_questions: Annotated[int, Field(ge=1)]
     min_preparation_cards: Annotated[int, Field(ge=0)]
     max_preparation_cards: Annotated[int, Field(ge=0)]
-    min_worked_examples: Annotated[int, Field(ge=0)]
     min_options: Annotated[int, Field(ge=2)]
     max_options: Annotated[int, Field(ge=2)]
-    max_hints: Annotated[int, Field(ge=1)]
     max_answer_chunks: Annotated[int, Field(ge=1)]
     max_distractor_chunks: Annotated[int, Field(ge=0)]
     interactions: dict[str, list[M01Interaction]]
@@ -129,6 +132,56 @@ def m01_variant(
 def generation_enabled() -> bool:
     return os.getenv("MULTILINGUAL_M01_ENABLED", "false").strip().lower() == "true"
 
+
+@cache
+def _parse_m01_combinations(raw_combinations: str) -> frozenset[tuple[str, str]]:
+    parsed: set[tuple[str, str]] = set()
+    if not raw_combinations.strip():
+        return frozenset()
+    known_languages = {item.code.casefold() for item in languages()}
+    for raw_entry in raw_combinations.split(","):
+        entry = raw_entry.strip()
+        if entry == "*":
+            parsed.add(("*", "*"))
+            continue
+        parts = entry.split(":")
+        if (
+            len(parts) != 2
+            or not parts[0].strip()
+            or parts[0].strip() == "*"
+            or parts[1].strip().upper() not in {*M01_LEVELS, "*"}
+        ):
+            logger.warning(
+                "Ignoring malformed MULTILINGUAL_M01_COMBINATIONS entry %r.",
+                entry,
+            )
+            continue
+        code, configured_level = parts[0].strip(), parts[1].strip().upper()
+        if code.casefold() not in known_languages:
+            logger.warning(
+                "Ignoring malformed MULTILINGUAL_M01_COMBINATIONS entry %r.",
+                entry,
+            )
+            continue
+        parsed.add((code.casefold(), configured_level))
+    return frozenset(parsed)
+
+
+def m01_generation_enabled_for(language: str, level: str) -> bool:
+    if not generation_enabled():
+        return False
+    target = get_language(language)
+    normalized_level = str(level).strip().upper()
+    if target is None or normalized_level not in M01_LEVELS:
+        return False
+
+    combinations = _parse_m01_combinations(
+        os.getenv("MULTILINGUAL_M01_COMBINATIONS", "")
+    )
+    return ("*", "*") in combinations or (
+        (target.code.casefold(), "*") in combinations
+        or (target.code.casefold(), normalized_level) in combinations
+    )
 
 def validate_contract_input(contract: M01ContractInput) -> MissionDefinition:
     """Validate registry and mission routing after model-level structural checks."""
@@ -223,7 +276,6 @@ def convert_generated_lesson(
             ),
             "chunks": question.chunks,
             "fact_ids": question.fact_ids,
-            "hints": question.hints,
             "feedback": question.feedback,
         })
         answers[question.question_id] = question.answer
@@ -257,7 +309,6 @@ def convert_generated_lesson(
         title=generated.title,
         explanation=generated.explanation,
         preparation=generated.preparation,
-        worked_examples=generated.worked_examples,
         questions=questions,
         private={"answers": answers, "evaluations": evaluations},
     )
@@ -303,8 +354,6 @@ def validate_contract_output(
     object_facts = {item.fact_id: item for item in contract.scene_facts.objects}
     for card in output.preparation:
         _check_fact_references(card.fact_ids, valid_fact_ids, "preparation card")
-    for example in output.worked_examples:
-        _check_fact_references(example.fact_ids, valid_fact_ids, "worked example")
 
     target_ids = set(definition.targets)
     question_ids = [question.question_id for question in output.questions]
@@ -349,12 +398,6 @@ def validate_contract_output(
         elif question.marker_fact_ids is not None:
             raise MissionContractError("marker facts are only valid for markerChoice questions")
 
-        hint_levels = [hint.level for hint in question.hints]
-        if hint_levels != sorted(set(hint_levels)):
-            raise MissionContractError("hint levels must be strictly ascending")
-        if any(hint.reveals_answer for hint in question.hints[:-1]):
-            raise MissionContractError("only the final hint may reveal the answer")
-
     for group in definition.expected_performance.required_target_groups:
         if not set(group) & covered_targets:
             raise MissionContractError("output does not cover every required target group")
@@ -388,6 +431,27 @@ def validate_contract_output(
     _validate_explanation_does_not_reveal_answers(output)
     if plan is not None:
         _validate_planned_output(contract, definition, output, plan)
+
+    object_fact_ids = set(object_facts)
+    assessed_objects = {
+        fact_ref
+        for question in output.questions
+        for fact_ref in (
+            *question.fact_ids,
+            *(question.marker_fact_ids or {}).values(),
+        )
+        if fact_ref in object_fact_ids
+    }
+    taught_objects = {
+        fact_ref
+        for card in output.preparation
+        for fact_ref in card.fact_ids
+        if fact_ref in object_fact_ids
+    }
+    if assessed_objects - taught_objects:
+        raise MissionContractError(
+            "preparation cards must teach every assessed object before assessment"
+        )
 
 
 def _fold_contract_text(value: str) -> str:
@@ -438,9 +502,6 @@ def _validate_planned_output(contract, definition, output, plan) -> None:
         raise MissionContractError("question count is outside the level plan")
     if not plan.min_preparation_cards <= len(output.preparation) <= plan.max_preparation_cards:
         raise MissionContractError("preparation-card count is outside the level plan")
-    if len(output.worked_examples) < plan.min_worked_examples:
-        raise MissionContractError("worked-example count is below the level plan")
-
     facts = {
         **{item.fact_id: "object" for item in contract.scene_facts.objects},
         **{item.fact_id: "attribute" for item in contract.scene_facts.attributes},
@@ -455,7 +516,6 @@ def _validate_planned_output(contract, definition, output, plan) -> None:
 
     references = [
         *(("preparation card", card.fact_ids) for card in output.preparation),
-        *(("worked example", example.fact_ids) for example in output.worked_examples),
         *(("question", question.fact_ids) for question in output.questions),
     ]
     for source, fact_ids in references:
@@ -463,7 +523,6 @@ def _validate_planned_output(contract, definition, output, plan) -> None:
             raise MissionContractError(f"{source} references a fact kind outside the plan")
 
     covered_targets: set[str] = set()
-    correct_texts: list[str] = []
     for question in output.questions:
         for target_id in question.target_ids:
             if question.interaction not in plan.interactions.get(target_id, []):
@@ -500,16 +559,6 @@ def _validate_planned_output(contract, definition, output, plan) -> None:
             correct_text = join_chunks([chunks[item] for item in answer.chunk_ids])
             if not correct_text.strip():
                 raise MissionContractError("sentence-building answer cannot be empty")
-        correct_texts.append(correct_text)
-
-        if not 1 <= len(question.hints) <= plan.max_hints:
-            raise MissionContractError("hint count is outside the level plan")
-        hint_levels = [hint.level for hint in question.hints]
-        if hint_levels != sorted(set(hint_levels)):
-            raise MissionContractError("hint levels must be strictly ascending")
-        if any(hint.reveals_answer for hint in question.hints[:-1]):
-            raise MissionContractError("only the final hint may reveal the answer")
-
         if question.interaction == "markerChoice":
             marker_facts = list(question.marker_fact_ids.values())
             if any(fact_id not in objects_by_fact for fact_id in marker_facts):
@@ -535,17 +584,6 @@ def _validate_planned_output(contract, definition, output, plan) -> None:
     for required in definition.expected_performance.required_target_groups:
         if not set(required) & covered_targets:
             raise MissionContractError("output does not cover every required target group")
-    for target_id in definition.teaching.teach_before_assessment:
-        if not any(target_id in example.target_ids for example in output.worked_examples):
-            raise MissionContractError("worked examples must teach targets before assessment")
-
-    example_texts = {
-        _fold_contract_text(join_chunks(example.chunks))
-        for example in output.worked_examples
-    }
-    if example_texts & {_fold_contract_text(text) for text in correct_texts}:
-        raise MissionContractError("worked examples cannot reuse a question answer")
-
     if plan.min_connected_facts is not None:
         connected_questions = []
         prior_connect_facts: set[str] = set()

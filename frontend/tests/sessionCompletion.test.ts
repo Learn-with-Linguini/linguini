@@ -25,8 +25,16 @@ Object.defineProperty(globalThis, "window", { value: dom.window, configurable: t
 Object.defineProperty(globalThis, "document", { value: dom.window.document, configurable: true });
 globals.IS_REACT_ACT_ENVIRONMENT = true;
 
+let availableSpeechVoices: { lang: string }[] = [];
+const speechSynthesis = Object.assign(new dom.window.EventTarget(), {
+  getVoices: () => availableSpeechVoices,
+  cancel: () => {},
+  speak: () => {},
+}) as unknown as SpeechSynthesis;
+
 const SESSION_ID = "s1";
 const BASE = `/practice/sessions/${SESSION_ID}`;
+let provideLanguageFixture = false;
 
 function task(kind: string, status: SessionTask["status"], orderIndex: number): SessionTask {
   const publicContent = { kind: "reflection" as const, prompt: "Reflect on your words" };
@@ -55,6 +63,13 @@ const apiFixtures: Record<string, unknown> = {
   "/api/v1/journals": [],
 };
 
+const languageFixture = { items: [{
+    code: "ko", englishName: "Korean", nativeName: "한국어", script: "Hang",
+    direction: "ltr", wordSeparator: "space", learnable: true, instruction: false,
+    speech: { synthesisLocale: "ko-KR", synthesis: "browserVoice", recognition: false },
+    features: { missionLevels: ["A0"] },
+  }] };
+
 let resolveComplete: ((response: Response) => void) | null = null;
 const taskRequests: { path: string; body: Record<string, unknown> }[] = [];
 const taskReplies: (() => Response)[] = [];
@@ -63,8 +78,9 @@ const latestReplies: (() => Response | Promise<Response>)[] = [];
 globals.fetch = async (input: unknown, init?: RequestInit) => {
   const url = typeof input === "string" ? input : (input as Request).url;
   const path = url.replace(/^https?:\/\/[^/]+/, "");
+  if (path === "/api/v1/languages" && provideLanguageFixture) return Response.json(languageFixture);
   if (path.endsWith("/latest-attempt")) return latestReplies.shift()?.() ?? Response.json({ attempt: null });
-  if (path.endsWith("/lesson-checks")) return Response.json({ checks: [], hints: {} });
+  if (path.endsWith("/lesson-checks")) return Response.json({ checks: [] });
   if (path.startsWith("/api/v1/tasks/")) {
     taskRequests.push({ path, body: JSON.parse(String(init?.body ?? "{}")) });
     return taskReplies.shift()?.() ?? new Response("no reply", { status: 500 });
@@ -91,7 +107,6 @@ writeFileSync(entryPath, [
   'export { QueryClient, QueryClientProvider } from "@tanstack/react-query";',
   `export { SessionRoute } from "${pathToFileURL(join(here, "../src/components/SessionRoute")).href}";`,
   `export { LearningTaskPage } from "${pathToFileURL(join(here, "../src/pages/LearningTaskPage")).href}";`,
-  `export { Learn } from "${pathToFileURL(join(here, "../src/pages/Learn")).href}";`,
   `export { ISpyPhase2 } from "${pathToFileURL(join(here, "../src/pages/ISpyPhase2")).href}";`,
   `export { AppStateProvider } from "${pathToFileURL(join(here, "../src/state/AppState")).href}";`,
   `export { useAppState } from "${pathToFileURL(join(here, "../src/state/useAppState")).href}";`,
@@ -127,7 +142,7 @@ try {
 }
 const {
   h, act, createRoot, MemoryRouter, Route, Routes,
-  QueryClient, QueryClientProvider, SessionRoute, ISpyPhase2, LearningTaskPage, Learn, AppStateProvider, useAppState,
+  QueryClient, QueryClientProvider, SessionRoute, ISpyPhase2, LearningTaskPage, AppStateProvider, useAppState,
 } = bundled as Record<string, never> as {
   h: typeof import("react").createElement;
   act: typeof import("react").act;
@@ -140,7 +155,6 @@ const {
   SessionRoute: typeof import("../src/components/SessionRoute.tsx").SessionRoute;
   ISpyPhase2: typeof import("../src/pages/ISpyPhase2.tsx").ISpyPhase2;
   LearningTaskPage: typeof import("../src/pages/LearningTaskPage.tsx").LearningTaskPage;
-  Learn: typeof import("../src/pages/Learn.tsx").Learn;
   AppStateProvider: typeof import("../src/state/AppState.tsx").AppStateProvider;
   useAppState: typeof import("../src/state/useAppState").useAppState;
 };
@@ -163,23 +177,22 @@ function stub(name: string) {
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const flush = () => act(async () => { await sleep(30); });
 const shown = () => dom.window.document.querySelector("[data-testid]")?.getAttribute("data-testid");
-let mountedRoot: ReturnType<typeof createRoot> | null = null;
 const mountedClients: InstanceType<typeof QueryClient>[] = [];
 
-test.after(async () => {
+test.after(() => {
   for (const client of mountedClients) client.clear();
   dom.window.close();
-  for (const handle of (process as unknown as { _getActiveHandles(): { unref?: () => void }[] })._getActiveHandles()) {
-    handle.unref?.();
-  }
+});
+test.afterEach(() => {
+  provideLanguageFixture = false;
+  Reflect.deleteProperty(dom.window, "speechSynthesis");
 });
 
 test("finishing a session lands on /summary while the completion write is still in flight", async () => {
   const container = dom.window.document.createElement("div");
   dom.window.document.body.appendChild(container);
   const root = createRoot(container);
-  mountedRoot = root;
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { gcTime: 0 } } });
   mountedClients.push(client);
   await act(async () => {
     root.render(
@@ -215,6 +228,7 @@ test("finishing a session lands on /summary while the completion write is still 
   await act(async () => { resolveComplete?.(Response.json({ id: SESSION_ID, status: "completed" })); await sleep(50); });
   await flush();
   assert.equal(shown(), "page-summary");
+  await act(async () => root.unmount());
 });
 
 function described(attemptId: string, outcome: string, guessedObjectKey: string | null, status: SessionTask["status"] = "inProgress") {
@@ -324,20 +338,13 @@ const m01RenderingTask: SessionTask = {
     checkEachQuestion: true,
     targetLanguage: "ko",
     textDirection: "rtl",
-    workedExamples: [{
-      exampleId: "example-1",
-      chunks: [
-        { chunkId: "example-a", text: "ab", join: "space" },
-        { chunkId: "example-b", text: "cd", join: "none" },
-        { chunkId: "example-period", text: ".", join: "none" },
-      ],
-      translation: "An example.",
-    }],
+    prep: [{ text: "컵", translation: "cup" }],
     questions: [{
       questionId: "question-1",
       prompt: "Build the sentence.",
       promptTranslation: "Build the sentence in English.",
       interactionType: "sentenceBuilding",
+      audioText: "컵",
       options: [],
       tokenBank: [],
       chunks: [
@@ -345,12 +352,13 @@ const m01RenderingTask: SessionTask = {
         { chunkId: "b", text: "cd", join: "none" },
         { chunkId: "period", text: ".", join: "none" },
       ],
-      hintCount: 2,
     }],
   },
 };
 
-test("multilingual lesson renders static examples, joined chunks, hints and target direction", async () => {
+test("multilingual lesson renders preparation, joined chunks and target direction", async () => {
+  availableSpeechVoices = [];
+  provideLanguageFixture = true;
   fixture = detail("inProgress", [m01RenderingTask]);
   const container = dom.window.document.createElement("div");
   dom.window.document.body.replaceChildren(container);
@@ -368,13 +376,13 @@ test("multilingual lesson renders static examples, joined chunks, hints and targ
   ))));
   await flush();
 
-  const example = dom.window.document.querySelector('[aria-label="Worked example"]');
-  assert.ok(example);
-  assert.match(example.textContent ?? "", /Example/);
-  assert.match(example.textContent ?? "", /abcd\./);
-  assert.equal(example.querySelector("button, input"), null);
-  const exampleText = example.querySelector("p[lang='ko']");
-  assert.equal(exampleText?.getAttribute("dir"), "rtl");
+  const preparation = dom.window.document.querySelector('[aria-label="Learn first"]');
+  assert.ok(preparation);
+  assert.match(preparation.textContent ?? "", /컵/);
+  assert.equal(preparation.querySelector("strong")?.getAttribute("lang"), "ko");
+  assert.equal(preparation.querySelector("strong")?.getAttribute("dir"), "rtl");
+  assert.match(dom.window.document.body.textContent ?? "", /Audio isn't available for Korean on this device/);
+  assert.equal(dom.window.document.querySelector('button[aria-label="Hear 컵"]'), null);
   const prompt = [...dom.window.document.querySelectorAll("h2")]
     .find(item => item.textContent?.includes("Build the sentence."));
   assert.equal(prompt?.getAttribute("lang"), "en");
@@ -382,6 +390,12 @@ test("multilingual lesson renders static examples, joined chunks, hints and targ
 
   const chunks = [...dom.window.document.querySelectorAll('[aria-label="Sentence building chunks"] button')];
   assert.equal(chunks.length, 3);
+  const answerRow = dom.window.document.querySelector('[aria-label="Your sentence"]');
+  const chunkBank = dom.window.document.querySelector('[aria-label="Sentence building chunks"]');
+  assert.equal(answerRow?.getAttribute("lang"), "ko");
+  assert.equal(answerRow?.getAttribute("dir"), "rtl");
+  assert.equal(chunkBank?.getAttribute("lang"), "ko");
+  assert.equal(chunkBank?.getAttribute("dir"), "rtl");
   assert.equal(chunks[0].getAttribute("lang"), "ko");
   assert.equal(chunks[0].getAttribute("dir"), "rtl");
   await act(async () => {
@@ -391,34 +405,48 @@ test("multilingual lesson renders static examples, joined chunks, hints and targ
   assert.equal(builtSentence?.textContent?.trim(), "abcd.");
   assert.equal(builtSentence?.getAttribute("lang"), "ko");
   assert.equal(builtSentence?.getAttribute("dir"), "rtl");
-  assert.ok(button("Hint (2 left)"));
-  taskReplies.push(() => Response.json({
-    questionId: "question-1", level: 1, text: "Look at the first chunk.",
-    revealsAnswer: false, remaining: 1,
-  }));
-  await click("Hint (2 left)");
-  assert.match(dom.window.document.body.textContent ?? "", /Look at the first chunk\./);
-  const hintText = dom.window.document.querySelector('[aria-label="Disclosed hints"] li p');
-  assert.equal(hintText?.getAttribute("lang"), "en");
-  assert.equal(hintText?.getAttribute("dir"), null);
-  assert.ok(button("Hint (1 left)"));
-  const [hintRequest] = taskRequests.splice(0);
-  assert.equal(hintRequest.path, `/api/v1/tasks/${m01RenderingTask.id}/hints`);
+  assert.ok([...answerRow!.querySelectorAll("button")].every(button =>
+    button.getAttribute("lang") === "ko" && button.getAttribute("dir") === "rtl",
+  ));
   await act(async () => root.unmount());
 });
 
-test("the retry notice appears once on Learn and not on task pages", async () => {
-  fixture = detail("inProgress", [m01RenderingTask]);
-  fixture.session.analysisDraft = {
-    skippedMissions: [{ missionId: "M01", reason: "generationFailed", retryable: true }],
+test("lesson audio controls and listen-first prompt respond to voiceschanged", async () => {
+  availableSpeechVoices = [];
+  provideLanguageFixture = true;
+  Object.defineProperty(dom.window, "speechSynthesis", {
+    value: speechSynthesis,
+    configurable: true,
+  });
+  const listenTask: SessionTask = {
+    ...m01RenderingTask,
+    id: "listen-first-lesson",
+    publicContent: {
+      kind: "grammarLesson",
+      focus: "Identify the word",
+      title: "Listen to the word",
+      targetLanguage: "ko",
+      prep: [{ text: "컵", translation: "cup" }],
+      questions: [{
+        questionId: "listen",
+        prompt: "컵",
+        promptTranslation: "the cup",
+        audioText: "컵",
+        listenFirst: true,
+        interactionType: "multipleChoice",
+        options: [{ optionId: "cup", label: "컵" }, { optionId: "table", label: "테이블" }],
+        tokenBank: [],
+      }],
+    },
   };
+  fixture = detail("inProgress", [listenTask]);
   const container = dom.window.document.createElement("div");
   dom.window.document.body.replaceChildren(container);
-  const taskRoot = createRoot(container);
-  const taskClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-  mountedClients.push(taskClient);
-  await act(async () => taskRoot.render(h(QueryClientProvider, { client: taskClient }, h(AppStateProvider, null,
-    h(MemoryRouter, { initialEntries: [`${BASE}/learn/${m01RenderingTask.id}`] },
+  const root = createRoot(container);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  mountedClients.push(client);
+  await act(async () => root.render(h(QueryClientProvider, { client }, h(AppStateProvider, null,
+    h(MemoryRouter, { initialEntries: [`${BASE}/learn/${listenTask.id}`] },
       h(Routes, null,
         h(Route, { path: "/practice/sessions/:sessionId", element: h(SessionRoute) },
           h(Route, { path: "learn/:taskId", element: h(LearningTaskPage) }),
@@ -427,69 +455,32 @@ test("the retry notice appears once on Learn and not on task pages", async () =>
     ),
   ))));
   await flush();
-  assert.doesNotMatch(dom.window.document.body.textContent ?? "", /object lesson couldn't be prepared/i);
-  assert.equal(button("Try again"), undefined);
-  await act(async () => taskRoot.unmount());
 
-  const learnRoot = createRoot(container);
-  const learnClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-  mountedClients.push(learnClient);
-  await act(async () => learnRoot.render(h(QueryClientProvider, { client: learnClient }, h(AppStateProvider, null,
-    h(MemoryRouter, { initialEntries: [`${BASE}/learn`] },
-      h(Routes, null,
-        h(Route, { path: "/practice/sessions/:sessionId", element: h(SessionRoute) },
-          h(Route, { path: "learn", element: h(Learn) }),
-        ),
-      ),
-    ),
-  ))));
-  await flush();
-  const notice = "Your object lesson couldn't be prepared. You can try again.";
-  const bodyText = dom.window.document.body.textContent ?? "";
-  assert.equal(bodyText.split(notice).length - 1, 1);
-  assert.ok(button("Try again"));
-  await act(async () => learnRoot.unmount());
+  try {
+    assert.equal(dom.window.document.querySelector('[aria-label="Learn first"]'), null);
+    const optionLabels = [...dom.window.document.querySelectorAll(".choice span")];
+    assert.deepEqual(
+      optionLabels.map(label => [label.getAttribute("lang"), label.getAttribute("dir")]),
+      [["ko", "ltr"], ["ko", "ltr"]],
+    );
+    assert.ok([...dom.window.document.querySelectorAll("h2")].some(item => item.textContent === "컵"));
+    assert.equal(dom.window.document.querySelector('button[aria-label="Play the word"]'), null);
 
-  fixture = detail("inProgress");
-  fixture.session.analysisDraft = {
-    skippedMissions: [{ missionId: "M01", reason: "generationFailed", retryable: true }],
-  };
-  const emptyRetryRoot = createRoot(container);
-  const emptyRetryClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-  mountedClients.push(emptyRetryClient);
-  await act(async () => emptyRetryRoot.render(h(QueryClientProvider, { client: emptyRetryClient }, h(AppStateProvider, null,
-    h(MemoryRouter, { initialEntries: [`${BASE}/learn`] },
-      h(Routes, null,
-        h(Route, { path: "/practice/sessions/:sessionId", element: h(SessionRoute) },
-          h(Route, { path: "learn", element: h(Learn) }),
-        ),
-      ),
-    ),
-  ))));
-  await flush();
-  assert.equal(button("Preparing remaining tasks..."), undefined);
-  assert.ok(button("Try again"));
-  await act(async () => emptyRetryRoot.unmount());
+    availableSpeechVoices = [{ lang: "ko_KR" }];
+    await act(async () => {
+      speechSynthesis.dispatchEvent(new dom.window.Event("voiceschanged"));
+    });
 
-  fixture = detail("inProgress");
-  const legacyEmptyRoot = createRoot(container);
-  const legacyEmptyClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-  mountedClients.push(legacyEmptyClient);
-  await act(async () => legacyEmptyRoot.render(h(QueryClientProvider, { client: legacyEmptyClient }, h(AppStateProvider, null,
-    h(MemoryRouter, { initialEntries: [`${BASE}/learn`] },
-      h(Routes, null,
-        h(Route, { path: "/practice/sessions/:sessionId", element: h(SessionRoute) },
-          h(Route, { path: "learn", element: h(Learn) }),
-        ),
-      ),
-    ),
-  ))));
-  await flush();
-  assert.ok(button("Preparing remaining tasks..."));
-  await act(async () => legacyEmptyRoot.unmount());
+    assert.doesNotMatch(dom.window.document.body.textContent ?? "", /Audio isn't available for Korean/);
+    assert.ok(dom.window.document.querySelector('button[aria-label="Play the word"]'));
+    assert.match(dom.window.document.body.textContent ?? "", /Listen to the word\./);
+    assert.equal([...dom.window.document.querySelectorAll("h2")].some(item => item.textContent === "컵"), false);
+  } finally {
+    await act(async () => root.unmount());
+  }
 });
 
-test("legacy grammar lessons render without multilingual examples or hint controls", async () => {
+test("legacy grammar lessons render without multilingual preparation", async () => {
   const legacyTask: SessionTask = {
     ...m01RenderingTask,
     id: "legacy-lesson",
@@ -526,8 +517,6 @@ test("legacy grammar lessons render without multilingual examples or hint contro
   ))));
   await flush();
   assert.match(dom.window.document.body.textContent ?? "", /Choose the correct answer\./);
-  assert.equal(dom.window.document.querySelector('[aria-label="Worked example"]'), null);
-  assert.equal(button("Hint (2 left)"), undefined);
   await act(async () => root.unmount());
 });
 

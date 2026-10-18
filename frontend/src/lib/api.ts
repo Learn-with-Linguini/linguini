@@ -398,7 +398,7 @@ export interface RoleplayFact {
 }
 export type TaskContent = MissionTaskFields & (
   | { kind: "vocabularyIntroduction"; title: string; words: VocabularyLearningWord[]; questions: VocabularyQuestion[]; allowTypingPractice: boolean; targetText?: string | null; translation?: string | null; partOfSpeech?: WordClass | null; exampleSentence?: string | null }
-  | { kind: "grammarLesson"; focus: string; title: string; explanation?: string | null; checkEachQuestion?: boolean; prep?: LessonPrepCard[] | null; targetLanguage?: string | null; textDirection?: "ltr" | "rtl" | null; contractVersion?: string | null; workedExamples?: LessonWorkedExample[] | null; questions: GrammarLessonQuestion[]; roleplayFacts?: RoleplayFact[] | null }
+  | { kind: "grammarLesson"; focus: string; title: string; explanation?: string | null; checkEachQuestion?: boolean; prep?: LessonPrepCard[] | null; targetLanguage?: string | null; textDirection?: "ltr" | "rtl" | null; contractVersion?: string | null; questions: GrammarLessonQuestion[]; roleplayFacts?: RoleplayFact[] | null }
   | { kind: "grammarExplanation"; title: string; explanation: string; examples: string[] }
   | { kind: "grammarPractice"; prompt: string; options: string[] }
   | { kind: "syntaxExplanation"; title: string; sentencePattern: string; explanation: string; examples: string[] }
@@ -443,7 +443,7 @@ export interface SessionPersonalization {
   practiceFocuses: PracticeFocus[];
 }
 export interface PracticeDetail {
-  session: { id: string; mode: SessionMode; sourceSessionId: string | null; status: SessionStatus; sceneMediaAssetId: string; sessionTitle: string | null; sessionSummary: string | null; analysisDraft?: { skippedMissions?: { missionId: string; reason: string; retryable?: boolean }[] } | null; failureCode: "imageUploadFailed" | "sceneAnalysisFailed" | "imageModerationFailed" | "noValidObjects" | "vocabularyMappingFailed" | "taskGenerationFailed" | null };
+  session: { id: string; mode: SessionMode; sourceSessionId: string | null; status: SessionStatus; sceneMediaAssetId: string; sessionTitle: string | null; sessionSummary: string | null; analysisDraft?: { skippedMissions?: { missionId: string; reason: string }[] } | null; failureCode: "imageUploadFailed" | "sceneAnalysisFailed" | "imageModerationFailed" | "noValidObjects" | "vocabularyMappingFailed" | "taskGenerationFailed" | null };
   mediaAsset: { id: string; source: "preloaded" | "camera" | "userUpload" };
   sceneId: string | null; title: string;
   analysisMode: "placeholder" | null;
@@ -531,14 +531,10 @@ export interface GrammarLessonQuestion {
   slotTemplate?: string | null;
   completeChunk?: string | null;
   chunks?: SentenceChunk[] | null;
-  hintCount?: number | null;
 }
 /** A taught chunk shown with audio before a lesson's questions. */
 export interface LessonPrepCard { text: string; translation?: string | null; sceneObjectId?: string | null }
 export interface SentenceChunk { chunkId: string; text: string; join: "space" | "none" }
-export interface LessonWorkedExample {
-  exampleId: string; chunks: SentenceChunk[]; translation: string; note?: string | null;
-}
 export type TaskAnswer = { inputMode: "text"; text: string; assistance?: ClueAssistance } | { inputMode: "multipleChoice"; optionId: string } | { inputMode: "objectSelection"; sceneObjectId: string } | { inputMode: "vocabularyReview"; answers: Record<string, string>; typedAnswers: Record<string, string>; questionAssistance?: QuestionAssistance[] };
 export type ConfirmGuessBody = { attemptId: string };
 export type SupportKind = "translation" | "audio" | "example" | "wordBank" | "clueFrame" | "helpPhrase" | "hint" | "answerReveal";
@@ -556,14 +552,9 @@ export interface QuestionOutcome {
 }
 export interface LessonAnswerCheck {
   questionId: string; answer: string; isCorrect: boolean; correctAnswer: string; outcome: QuestionOutcome;
-  hintLevel?: number | null; revealed?: boolean;
-}
-export interface TaskHintResponse {
-  questionId: string; level: number; text: string; revealsAnswer: boolean; remaining: number;
 }
 export interface LessonChecksResponse {
   checks: LessonAnswerCheck[];
-  hints: Record<string, TaskHintResponse[]>;
 }
 /** `questionOutcomes` is present only for tasks with mission evaluation metadata. */
 export interface VocabularyReviewDetails { questionResults: Record<string, boolean>; correctAnswers: Record<string, string>; questionOutcomes?: QuestionOutcome[] }
@@ -590,8 +581,6 @@ export const checkLessonAnswer = (taskId: string, questionId: string, answer: st
   write<LessonAnswerCheck>(`/api/v1/tasks/${taskId}/check-lesson-answer`, "POST", { questionId, answer });
 export const getLessonChecks = (taskId: string, signal?: AbortSignal) =>
   request<LessonChecksResponse>(`/api/v1/tasks/${taskId}/lesson-checks`, signal);
-export const requestLessonHint = (taskId: string, questionId: string) =>
-  write<TaskHintResponse>(`/api/v1/tasks/${taskId}/hints`, "POST", { questionId });
 export interface TaskActionResult {
   task: SessionTask; nextTaskId: string | null; sessionProgress: SessionProgress; attempt: TaskAttemptResult | null;
   xpEarned: number;
@@ -606,7 +595,6 @@ export const reviewDetails = (attempt: TaskAttemptResult | null): VocabularyRevi
 };
 export const analyzePractice = (id: string) => write<PracticeDetail>(`/api/v1/sessions/${id}/analyze`, "POST", {});
 export const retryPracticeAnalysis = (id: string) => write<PracticeDetail>(`/api/v1/sessions/${id}/retry-analysis`, "POST", {});
-export const retryM01 = (id: string) => write<PracticeDetail>(`/api/v1/sessions/${id}/missions/M01/retry`, "POST", {});
 export interface PracticeReview {
   sceneTitle?: string;
   acceptedObjectIds: string[];

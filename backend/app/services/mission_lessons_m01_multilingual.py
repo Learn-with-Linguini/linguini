@@ -305,7 +305,6 @@ def build_m01_multilingual_task(
             "options": options,
             "token_bank": [],
             "chunks": shown_chunks or None,
-            "hint_count": len(question.hints),
             "prompt_translation": question.prompt_translation,
             "instruction": question.instruction,
             "section": question.section,
@@ -320,12 +319,6 @@ def build_m01_multilingual_task(
     language = get_language(contract.target_language)
     if language is None:
         raise ValueError("M01 contract target language is not registered")
-    hints = {
-        question.question_id: [
-            hint.model_dump(mode="json", by_alias=True) for hint in question.hints
-        ]
-        for question in output.questions
-    }
     preparation = []
     for card in output.preparation:
         preparation.append({
@@ -336,15 +329,6 @@ def build_m01_multilingual_task(
                 None,
             ),
         })
-    examples = [
-        {
-            "example_id": example.example_id,
-            "chunks": example.chunks,
-            "translation": example.translation,
-            "note": example.note,
-        }
-        for example in output.worked_examples
-    ]
     return SessionTask(
         id=task_id,
         session_id=session_id,
@@ -362,7 +346,6 @@ def build_m01_multilingual_task(
             "target_language": language.code,
             "text_direction": language.direction,
             "contract_version": CONTRACT_VERSION,
-            "worked_examples": examples,
             **mission_fields(mission),
         },
         answer_key={
@@ -370,7 +353,6 @@ def build_m01_multilingual_task(
             "question_evaluations": output.private.evaluations,
             "mission_state": {
                 "contractVersion": CONTRACT_VERSION,
-                "hints": hints,
             },
         },
         scene_object_id=first_object.scene_object_id if first_object else None,

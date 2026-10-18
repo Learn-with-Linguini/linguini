@@ -18,10 +18,8 @@ min_questions = 4
 max_questions = 5
 min_preparation_cards = 2
 max_preparation_cards = 3
-min_worked_examples = 1
 min_options = 2
 max_options = 3
-max_hints = 2
 max_answer_chunks = 6
 max_distractor_chunks = 1
 [levels.A0.interactions]
@@ -37,10 +35,8 @@ min_questions = 4
 max_questions = 6
 min_preparation_cards = 2
 max_preparation_cards = 4
-min_worked_examples = 2
 min_options = 2
 max_options = 4
-max_hints = 3
 max_answer_chunks = 8
 max_distractor_chunks = 2
 [levels.A1.interactions]
@@ -58,10 +54,8 @@ min_questions = 5
 max_questions = 7
 min_preparation_cards = 2
 max_preparation_cards = 4
-min_worked_examples = 2
 min_options = 2
 max_options = 4
-max_hints = 3
 max_answer_chunks = 12
 max_distractor_chunks = 2
 # A connect-scene-facts answer must use at least this many distinct confirmed facts.

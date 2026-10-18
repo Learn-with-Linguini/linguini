@@ -14,6 +14,7 @@ from app.ai.features.translation.schemas import (
     SceneTranslationRequest,
     SceneTranslationResult,
 )
+from app.languages import get_language
 from app.services.scene_analysis import SceneAnalysisError
 
 SCENE_TRANSLATION_VALIDATOR_VERSION = "scene-translation-validator.v2"
@@ -30,6 +31,11 @@ _LEADING_ARTICLE = re.compile(
 _GERMAN_ARTICLES = {"der", "die", "das"}
 
 
+def _requires_articles(language: str | None) -> bool:
+    entry = get_language(language or "")
+    return bool(entry and entry.grammar and entry.grammar.get("articles") is True)
+
+
 def normalize_object_articles(
     result: SceneTranslationResult,
     language: str | None = None,
@@ -40,6 +46,13 @@ def normalize_object_articles(
     prepends the article again, producing "el el camino". Stripping here keeps
     the stored term article-free so downstream rendering stays idempotent.
     """
+    if not _requires_articles(language):
+        return result.model_copy(update={
+            "objects": [
+                term.model_copy(update={"article": None}) for term in result.objects
+            ]
+        })
+
     objects = []
     language = (language or "").lower()
     for term in result.objects:
@@ -82,7 +95,7 @@ def validate_translation_terms(
         payload.target_language if isinstance(payload, SceneTranslationRequest)
         else payload.get("targetLanguage", payload.get("target_language", ""))
     ).lower()
-    if language != "ko" and any(not row.article for row in result.objects):
+    if _requires_articles(language) and any(not row.article for row in result.objects):
         raise SceneTranslationError(
             "Every translated object requires a definite article."
         )

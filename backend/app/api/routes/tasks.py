@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 
 from app.api.dependencies import get_task_service
+from app.api.errors import service_not_implemented
 from app.schemas.tasks import (
     CheckLessonAnswerRequest,
     CheckLessonAnswerResponse,
@@ -16,8 +17,7 @@ from app.schemas.tasks import (
     SkipTaskRequest,
     SubmitTaskAttemptRequest,
     TaskActionResponse,
-    TaskHintRequest,
-    TaskHintResponse,
+    TaskHint,
 )
 from app.services.tasks import TaskService
 
@@ -75,11 +75,9 @@ def get_lesson_checks(task_id: UUID, service: TaskServiceDep) -> LessonChecksRes
     return service.lesson_checks(task_id)
 
 
-@router.post("/{task_id}/hints", response_model=TaskHintResponse)
-def request_task_hint(
-    task_id: UUID, request: TaskHintRequest, service: TaskServiceDep
-) -> TaskHintResponse:
-    return service.request_lesson_hint(task_id, request.question_id)
+@router.post("/{task_id}/hints", response_model=TaskHint)
+async def request_task_hint(task_id: UUID) -> TaskHint:
+    service_not_implemented("Request task hint")
 
 
 @router.post("/{task_id}/complete", response_model=TaskActionResponse)

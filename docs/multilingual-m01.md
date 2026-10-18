@@ -1,8 +1,21 @@
 # Shared multilingual M01 contracts
 
-This document describes the shared A0/A1/A2 multilingual M01 path. Its generation path
-is gated by `MULTILINGUAL_M01_ENABLED` and defaults off; the legacy builders remain
+This document describes the shared A0/A1/A2 multilingual M01 path. Generation requires
+`MULTILINGUAL_M01_ENABLED=true` and an enabled language/level pair in
+`MULTILINGUAL_M01_COMBINATIONS`; both default to off. The legacy builders remain
 available for existing language/level combinations.
+
+Set combinations explicitly in the backend environment. For example:
+
+```sh
+MULTILINGUAL_M01_ENABLED=true
+MULTILINGUAL_M01_COMBINATIONS="es:A1,fr:A0,de:A2"
+```
+
+`es:*` enables all M01 levels for Spanish, while a bare `*` enables every registered
+language and M01 level. A combination is written `code:LEVEL`; code matching ignores
+case. An unset or empty combinations value enables none, even when the global flag is
+on. Malformed entries are ignored with a warning.
 
 ## Language registry
 
@@ -14,13 +27,22 @@ response also derives legacy mission levels and reports browser-voice synthesis 
 recognition disabled. These fields describe current implementation and do not advertise
 unimplemented support.
 
-To register a language, add one `[[languages]]` entry with a canonical BCP 47 code,
-ISO 15924 script, and speech synthesis locale. `grammar` is optional free-form metadata;
-no contract requires grammatical features. Optional reviewed examples can be added to
-the mission definition's `language_patterns.examples` table. A registered target can
-use the feature-flagged M01 path without adding a legacy builder or language allowlist
-entry. Registry registration alone does not expose it in pickers: only then set
-`learnable = true` for a new language so it appears in target pickers.
+To register a language, add one `[[languages]]` entry with a canonical BCP 47 code, ISO
+15924 script, and speech synthesis locale. `grammar` is optional metadata. Article
+validation requires an article only when `grammar.articles = true`; otherwise normalized
+objects have no article while their gender metadata is preserved. Optional reviewed
+examples can be added to the mission definition's `language_patterns.examples` table.
+A registered target can use the feature-flagged M01 path without adding a legacy
+builder or language allowlist entry.
+
+Speech synthesis uses browser voices only. The app selects a voice from the registry's
+`speech.synthesisLocale` (falling back to the language code) and does not provide speech
+recognition. If the device has no matching voice, audio controls are omitted and the
+lesson displays: “Audio isn't available for <language> on this device. You can complete
+this lesson without it.”
+
+Registry registration alone does not expose a language in pickers: only after review
+should `learnable = true` be set so it appears in target pickers.
 
 ## M01 contract input
 
@@ -59,8 +81,7 @@ lists of strings. No language requires any such value.
 | `contractVersion`, `mission`, language codes | Version and routing context matching the input |
 | `objectiveId`, `title`, `explanation` | Definition objective and learner-facing lesson framing |
 | `preparation` | Target-language cards, optional instruction translations, evidence facts, and audio availability |
-| `workedExamples` | Joined sentence chunks, instruction translation, evidence facts, and optional note |
-| `questions` | Target IDs, prompts, interaction type, choices/markers or sentence chunks, hints, and feedback |
+| `questions` | Target IDs, prompts, interaction type, choices/markers or sentence chunks, and feedback |
 | `private` | Correct choice/chunk answers and `QuestionEvaluation` records; excluded by `public_dump()` |
 
 `SentenceChunk.join` describes how a chunk attaches to the previous chunk. The first
@@ -69,14 +90,13 @@ for `none`. `default_join()` suppresses spaces before punctuation and for langua
 registry uses `word_separator = "none"`. Builders must handle elision explicitly; it is
 not inferred from text.
 
-The output validator checks plan question/preparation/example bounds, allowed
-interactions, required target coverage, confirmed fact kinds and references, option
-labels, marker mappings, answer grounding, chunk bounds, progressive hints,
-teach-before-assess examples, example/answer distinctness, and A2 connection/follow-up
-ordering. Attribute and relation strings are not text-grounded because natural
-inflection can change their surface form. Structural validation does not establish
-that a translation is linguistically correct: there is no linguistic evaluator in
-this stage.
+The output validator checks plan question/preparation bounds, allowed interactions,
+required target coverage, confirmed fact kinds and references, that preparation cards
+teach every assessed object, option labels, marker mappings, answer grounding, chunk
+bounds, explanation-answer leakage, and A2 connection/follow-up ordering. Attribute
+and relation strings are not text-grounded because natural inflection can change their
+surface form. Structural validation does not establish that a translation is
+linguistically correct: there is no linguistic evaluator in this stage.
 
 ## Routing and compatibility
 
@@ -88,11 +108,10 @@ number of approved session-translation terms; if that check fails it skips M01 w
 `insufficientApprovedVocabulary` without generating or falling back to legacy content.
 
 If generation fails, a ready legacy lesson is used only when the requested language is
-in that level's legacy allowlist. Otherwise M01 is skipped as a retryable
-`generationFailed` mission; a learner can use **Try again** from the learning page.
-The flag-off path and other mission allowlists are unchanged. Grammar lessons store
-their saved checks, disclosed hint levels, and retry claim in existing JSON columns;
-no database migration is needed.
+in that level's legacy allowlist. Otherwise M01 is skipped with reason
+`generationFailed`; the skip is non-retryable and does not complete the mission. The
+workflow never generates using a different target language. The flag-off path and
+other mission allowlists are unchanged. No database migration is needed.
 
 ## Manual test procedure
 
@@ -102,13 +121,30 @@ no database migration is needed.
    and open the normal photo-led learning flow from a scene with reviewed objects,
    details, and translated vocabulary.
 3. Confirm M01 appears only when the level's confirmed-fact counts and post-translation
-   approved-vocabulary counts meet the plan. Check prepared cards, labeled worked
-   examples, sentence chunks, language direction, sequential hints, and refresh
-   restoration. Verify a checked answer cannot receive more hints.
+   approved-vocabulary counts meet the plan. Check preparation cards, sentence chunks,
+   language direction, and target-language rendering.
 4. To exercise a generation failure, use a controlled test client rather than
    deliberately corrupting stored session data. Confirm an allowlisted, ready legacy
-   lesson can be used, and that other languages receive the retryable skip and
-   **Try again** action. A failed approved-vocabulary check must not call generation or
-   use the legacy fallback.
+   lesson can be used, and that other languages receive a non-retryable
+   `generationFailed` skip. A failed approved-vocabulary check must not call generation
+   or use the legacy fallback.
 5. Turn the flag off and confirm the existing M01 lessons and other mission behavior
    remain on their legacy paths.
+
+## Adding and evaluating another language
+
+1. Add a registry entry only. The shared builder, validator, and frontend should not
+   need language-specific edits. Add optional reviewed examples to the mission
+   definition when useful.
+2. Run the mocked fixed-scene matrix and structural validation tests. These check
+   contract shape, grounding, and rendering behavior; they are not linguistic
+   verification.
+3. Run a bounded live smoke with `AI_MODE=real` for each M01 level using the manual
+   procedure above. Record the environment, language/level, session, task, and outcome.
+4. Have a native speaker review generated lessons and corrections.
+5. Add only reviewed language/level pairs to `MULTILINGUAL_M01_COMBINATIONS`.
+6. Set `learnable = true` only after those reviews are complete.
+
+Structural validation and mocked tests alone do not establish linguistic quality.
+
+## Evaluation matrix

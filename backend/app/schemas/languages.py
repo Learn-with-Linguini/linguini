@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from functools import cache
 from typing import Annotated, Literal
 
 from pydantic import computed_field, field_validator
@@ -80,9 +79,9 @@ class Language(ApiModel):
         return LanguageFeatures(mission_levels=_mission_levels_for_language(self.code))
 
 
-@cache
 def _mission_levels_for_language(code: str) -> list[str]:
     from app.missions import get_mission
+    from app.missions.m01_multilingual import m01_generation_enabled_for
     from app.services.mission_eligibility import (
         IMPLEMENTED_MISSIONS,
         LEVEL_LANGUAGES,
@@ -92,7 +91,15 @@ def _mission_levels_for_language(code: str) -> list[str]:
     levels = []
     for level, variants in IMPLEMENTED_MISSIONS.items():
         accepted_languages = LEVEL_LANGUAGES.get(level, MISSION_LANGUAGES)
-        if code in accepted_languages and any(get_mission(*variant) for variant in variants):
+        legacy_level = (
+            code in accepted_languages
+            and any(get_mission(*variant) for variant in variants)
+        )
+        multilingual_level = (
+            m01_generation_enabled_for(code, level)
+            and get_mission("M01", level, 1) is not None
+        )
+        if legacy_level or multilingual_level:
             levels.append(level)
     return levels
 

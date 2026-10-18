@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { analyzePractice, ApiError, completePractice, createPractice, getPractice, getPracticeSummary, getSceneDetail, retryM01 as retryM01Request, retryPracticeAnalysis, reviewPractice, taskAction } from "../lib/api";
+import { analyzePractice, ApiError, completePractice, createPractice, getPractice, getPracticeSummary, getSceneDetail, retryPracticeAnalysis, reviewPractice, taskAction } from "../lib/api";
 import type { PracticeReview } from "../lib/api";
 import type { ConfirmGuessBody, PracticeDetail, SessionStatus, TaskAnswer, TaskActionResult } from "../lib/api";
 import { applyTaskResult, keepClientProgress } from "../lib/practiceUpdates";
@@ -101,23 +101,6 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
     try { await loadSession(id, data); }
     catch (error) { setError(friendlyError(error)); }
   }, [loadSession, queryClient, userId]);
-  const retryM01 = useCallback(async (id: string) => {
-    if (busy.current) return null;
-    busy.current = true; setSaving(true); setError(null);
-    try {
-      const detail = await retryM01Request(id);
-      sessionLoads.current.delete(id);
-      await loadSession(id, detail);
-      void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
-      onLearningChanged("session");
-      return detail;
-    } catch (error) {
-      setError(friendlyError(error));
-      return null;
-    } finally {
-      busy.current = false; setSaving(false);
-    }
-  }, [loadSession, onLearningChanged, queryClient, userId]);
   const startSession = useCallback(async (sceneId: string) => {
     const scene = await getSceneDetail(sceneId);
     if (creation.current?.asset !== scene.mediaAssetId) creation.current = { asset: scene.mediaAssetId, key: crypto.randomUUID() };
@@ -218,5 +201,5 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
       return false;
     } finally { busy.current = false; setSaving(false); }
   }, [session, loadSession, applySession, withClientProgress]);
-  return { session, practiceSaving, practiceError, practiceStalled, startSession, loadSession, retryProcessing, retryAnalysis, retryM01, actOnTask, completeSession, completionPending: completion.isPending, completionError, retryCompletion, flushLearningChanges, saveReview, micReady, setMicReady };
+  return { session, practiceSaving, practiceError, practiceStalled, startSession, loadSession, retryProcessing, retryAnalysis, actOnTask, completeSession, completionPending: completion.isPending, completionError, retryCompletion, flushLearningChanges, saveReview, micReady, setMicReady };
 }

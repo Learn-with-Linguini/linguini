@@ -1,8 +1,6 @@
-"""Stage-two integration coverage for multilingual M01 generation and retries."""
+"""Stage-two integration coverage for multilingual M01 generation."""
 
 import json
-from concurrent.futures import ThreadPoolExecutor
-from threading import Barrier, Event
 
 import pytest
 from sqlalchemy import select, update
@@ -20,14 +18,12 @@ from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.schemas.mission_m01_contract import (
     GeneratedMarkerOption,
     GeneratedQuestion,
-    Hint,
     M01ContractInput,
     M01GeneratedLesson,
 )
-from app.schemas.tasks import SessionTask, TaskAnswerKey
+from app.schemas.tasks import TaskAnswerKey
 from app.schemas.translation import SceneTranslationResult
 from app.services import mission_eligibility
-from app.services.question_outcomes import review_details
 
 
 def generated_lesson(payload):
@@ -81,26 +77,21 @@ def generated_lesson(payload):
             chunks=chunks,
             fact_ids=question.fact_ids,
             answer=answer,
-            hints=[
-                Hint(level=1, text="Consider the first fact."),
-                Hint(level=2, text="Use the translated word."),
-                Hint(level=3, text="The answer is revealed.", reveals_answer=True),
-            ],
             feedback=question.feedback,
         ))
     return M01GeneratedLesson(
         title=output.title,
         explanation=output.explanation,
         preparation=output.preparation,
-        worked_examples=output.worked_examples,
         questions=questions,
     )
 
 
 class MultilingualModel(SceneModel):
-    def __init__(self, mode="valid"):
+    def __init__(self, mode="valid", builder=generated_lesson):
         super().__init__()
         self.mode = mode
+        self.builder = builder
         self.m01_calls = 0
         self.entered = None
         self.release = None
@@ -118,7 +109,7 @@ class MultilingualModel(SceneModel):
         if self.mode == "invalid" or (self.mode == "repair" and self.m01_calls == 1):
             output = "{}"
         else:
-            body = generated_lesson(payload)
+            body = self.builder(payload)
             output = json.dumps(body.model_dump(mode="json", by_alias=True), ensure_ascii=False)
         return TextModelResponse(
             output_text=output,
@@ -131,19 +122,12 @@ class MultilingualModel(SceneModel):
 
 def enable_m01(monkeypatch):
     monkeypatch.setenv("MULTILINGUAL_M01_ENABLED", "true")
+    monkeypatch.setenv("MULTILINGUAL_M01_COMBINATIONS", "*")
     monkeypatch.setitem(mission_eligibility.IMPLEMENTED_MISSIONS, "A1", (("M01", "A1", 1),))
 
 
 def use_repository(client, repository):
     client.app.dependency_overrides[get_practice_repository] = lambda: repository
-
-
-def saved_task(repository, task_id):
-    with repository.engine.connect() as connection:
-        row = connection.execute(
-            select(session_tasks).where(session_tasks.c.id == task_id)
-        ).mappings().one()
-    return SessionTask.model_validate(dict(row))
 
 
 def make_ko(curated):
@@ -154,6 +138,41 @@ def make_ko(curated):
             .where(language_profiles.c.id == profile.id)
             .values(target_language_code="ko")
         )
+
+
+def test_saved_legacy_m01_task_loads_and_grades_after_enabling_generation(
+    curated, monkeypatch
+):
+    monkeypatch.setitem(
+        mission_eligibility.IMPLEMENTED_MISSIONS, "A1", (("M01", "A1", 1),)
+    )
+    monkeypatch.setenv("MULTILINGUAL_M01_ENABLED", "false")
+    monkeypatch.delenv("MULTILINGUAL_M01_COMBINATIONS", raising=False)
+    engine, _, profile, client, *_ = curated
+    repository, session_id, detail = _lesson(curated, SceneModel())
+    legacy = next(
+        task for task in detail.tasks if task.public_content.mission_id == "M01"
+    )
+    saved_content = legacy.public_content
+
+    monkeypatch.setenv("MULTILINGUAL_M01_ENABLED", "true")
+    monkeypatch.setenv("MULTILINGUAL_M01_COMBINATIONS", "*")
+    refreshed = repository.get(session_id, profile.id)
+    loaded = next(
+        task for task in refreshed.tasks if task.public_content.mission_id == "M01"
+    )
+    assert loaded.id == legacy.id
+    assert loaded.public_content == saved_content
+
+    use_repository(client, repository)
+    answers = _answer_key(engine, legacy.id)["correctOptionIds"]
+    response = client.post(f"/api/v1/tasks/{legacy.id}/attempts", json={
+        "inputMode": "vocabularyReview",
+        "answers": answers,
+        "idempotencyKey": f"legacy-{legacy.id}",
+    })
+    assert response.status_code == 200, response.text
+    assert response.json()["attempt"]["isCorrect"] is True
 
 
 def test_multilingual_repair_succeeds_and_saves_task(curated, monkeypatch):
@@ -267,7 +286,6 @@ def test_translation_vocabulary_write_merges_the_current_draft(curated):
     latest_draft = {
         **(stale_session.analysis_draft or {}),
         "missionChecks": {"task": {"question": {"isCorrect": True}}},
-        "missionHints": {"task": {"question": 1}},
         "skippedMissions": [{"missionId": "M02", "reason": "noReviewedContent"}],
     }
     with repository.engine.begin() as connection:
@@ -291,7 +309,6 @@ def test_translation_vocabulary_write_merges_the_current_draft(curated):
 
     current_draft = repository.get(session_id).session.analysis_draft
     assert current_draft["missionChecks"] == latest_draft["missionChecks"]
-    assert current_draft["missionHints"] == latest_draft["missionHints"]
     assert current_draft["skippedMissions"] == latest_draft["skippedMissions"]
     assert current_draft["m01SupplementalVocabulary"]
 
@@ -310,7 +327,7 @@ def test_repair_exhaustion_uses_only_allowed_fallback(
     if language == "ko":
         make_ko(curated)
     model = MultilingualModel("invalid")
-    _repository, _, detail = _lesson(curated, model)
+    _, _, detail = _lesson(curated, model)
     m01_tasks = [task for task in detail.tasks if task.public_content.mission_id == "M01"]
     skipped = next(
         (item for item in detail.session.analysis_draft.get("skippedMissions", [])
@@ -323,188 +340,7 @@ def test_repair_exhaustion_uses_only_allowed_fallback(
         assert skipped == {
             "missionId": "M01",
             "reason": expected_skip,
-            "retryable": True,
         }
     else:
         assert skipped is None
         assert m01_tasks[0].public_content.mission_id == "M01"
-
-
-def test_retry_endpoint_success_and_failed_retry_preserves_skip(curated, monkeypatch):
-    enable_m01(monkeypatch)
-    make_ko(curated)
-    model = MultilingualModel("invalid")
-    repository, session_id, detail = _lesson(curated, model)
-    assert any(
-        item["missionId"] == "M01"
-        for item in detail.session.analysis_draft["skippedMissions"]
-    )
-    client = curated[3]
-    use_repository(client, repository)
-
-    model.mode = "valid"
-    response = client.post(f"/api/v1/sessions/{session_id}/missions/M01/retry")
-    assert response.status_code == 200, response.text
-    body = response.json()
-    assert not any(
-        item["missionId"] == "M01"
-        for item in body["session"]["analysisDraft"]["skippedMissions"]
-    )
-    assert len([
-        task for task in body["tasks"]
-        if task["publicContent"].get("missionId") == "M01"
-    ]) == 1
-
-
-def test_failed_retry_keeps_retryable_skip(curated, monkeypatch):
-    enable_m01(monkeypatch)
-    make_ko(curated)
-    model = MultilingualModel("invalid")
-    repository, session_id, detail = _lesson(curated, model)
-    client = curated[3]
-    use_repository(client, repository)
-
-    response = client.post(f"/api/v1/sessions/{session_id}/missions/M01/retry")
-    assert response.status_code == 409, response.text
-    current = repository.get(session_id).session.analysis_draft["skippedMissions"]
-    assert current == [{
-        "missionId": "M01",
-        "reason": "generationFailed",
-        "retryable": True,
-    }]
-    assert not any(
-        task.public_content.mission_id == "M01"
-        for task in repository.get(session_id).tasks
-    )
-
-
-def test_concurrent_retry_claim_creates_one_task_and_one_conflict(curated, monkeypatch):
-    enable_m01(monkeypatch)
-    make_ko(curated)
-    model = MultilingualModel("invalid")
-    repository, session_id, _ = _lesson(curated, model)
-    client = curated[3]
-    use_repository(client, repository)
-    entered, release = Event(), Event()
-    model.mode = "valid"
-    model.entered, model.release = entered, release
-
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        first = pool.submit(client.post, f"/api/v1/sessions/{session_id}/missions/M01/retry")
-        assert entered.wait(10)
-        second = pool.submit(client.post, f"/api/v1/sessions/{session_id}/missions/M01/retry")
-        second_response = second.result(timeout=10)
-        release.set()
-        first_response = first.result(timeout=20)
-
-    assert sorted([first_response.status_code, second_response.status_code]) == [200, 409]
-    with repository.engine.connect() as connection:
-        content = connection.execute(
-            select(session_tasks.c.public_content).where(
-                session_tasks.c.session_id == session_id
-            )
-        ).scalars()
-        m01_tasks = [item for item in content if item.get("missionId") == "M01"]
-    assert len(m01_tasks) == 1
-
-
-def test_m01_hint_disclosure_privacy_and_check_assistance(curated, monkeypatch):
-    enable_m01(monkeypatch)
-    model = MultilingualModel("valid")
-    repository, session_id, detail = _lesson(curated, model)
-    public_task = next(
-        task for task in detail.tasks if task.public_content.mission_id == "M01"
-    )
-    task = saved_task(repository, public_task.id)
-    public_json = task.model_dump(mode="json", by_alias=True, exclude={"answer_key"})
-    serialized = json.dumps(public_json)
-    for question in task.public_content.questions:
-        for hint in task.answer_key.mission_state["hints"][question.question_id]:
-            assert hint["text"] not in serialized
-    assert "correctOptionIds" not in public_json
-    assert "missionState" not in public_json
-
-    client = curated[3]
-    use_repository(client, repository)
-    # Only the first question is active; disclosure increments monotonically.
-    question_id = task.public_content.questions[0].question_id
-    unopened = client.get(f"/api/v1/tasks/{task.id}/lesson-checks")
-    unopened_body = unopened.json()
-    assert unopened_body["checks"] == []
-    assert unopened_body.get("hints", {}) == {}
-    unopened_json = json.dumps(unopened_body)
-    assert all(
-        hint["text"] not in unopened_json
-        for question_hints in task.answer_key.mission_state["hints"].values()
-        for hint in question_hints
-    )
-    public_task = client.get(f"/api/v1/tasks/{task.id}")
-    assert "Look at" not in json.dumps(public_task.json())
-    first = client.post(f"/api/v1/tasks/{task.id}/hints", json={"questionId": question_id})
-    second = client.post(f"/api/v1/tasks/{task.id}/hints", json={"questionId": question_id})
-    third = client.post(f"/api/v1/tasks/{task.id}/hints", json={"questionId": question_id})
-    assert [first.json()["level"], second.json()["level"], third.json()["level"]] == [1, 2, 3]
-    capped = client.post(f"/api/v1/tasks/{task.id}/hints", json={"questionId": question_id})
-    assert capped.json()["level"] == 3
-    checks = client.get(f"/api/v1/tasks/{task.id}/lesson-checks")
-    assert checks.status_code == 200
-    assert checks.json()["hints"][question_id][-1]["level"] == 3
-    assert all("text" not in item for item in checks.json()["checks"])
-    checked = client.post(
-        f"/api/v1/tasks/{task.id}/check-lesson-answer",
-        json={"questionId": question_id, "answer": task.answer_key.correct_option_ids[question_id]},
-    )
-    assert checked.status_code == 200, checked.text
-    assert checked.json()["hintLevel"] == 3
-    assert checked.json()["revealed"] is True
-    after_check = client.post(f"/api/v1/tasks/{task.id}/hints", json={"questionId": question_id})
-    assert after_check.status_code == 409
-    refreshed = client.get(f"/api/v1/tasks/{task.id}/lesson-checks")
-    assert refreshed.json()["checks"][0]["hintLevel"] == 3
-
-
-def test_concurrent_hint_requests_disclose_levels_without_gaps(curated, monkeypatch):
-    enable_m01(monkeypatch)
-    repository, _, detail = _lesson(curated, MultilingualModel("valid"))
-    task = next(task for task in detail.tasks if task.public_content.mission_id == "M01")
-    client = curated[3]
-    use_repository(client, repository)
-    question_id = task.public_content.questions[0].question_id
-    barrier = Barrier(3)
-
-    def request_hint():
-        barrier.wait(timeout=10)
-        return client.post(
-            f"/api/v1/tasks/{task.id}/hints",
-            json={"questionId": question_id},
-        )
-
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        first = pool.submit(request_hint)
-        second = pool.submit(request_hint)
-        barrier.wait(timeout=10)
-        responses = [first.result(timeout=20), second.result(timeout=20)]
-    assert all(response.status_code == 200 for response in responses)
-    assert sorted(response.json()["level"] for response in responses) == [1, 2]
-    saved = client.get(f"/api/v1/tasks/{task.id}/lesson-checks").json()["hints"][question_id]
-    assert [item["level"] for item in saved] == [1, 2]
-
-
-def test_server_hint_assistance_is_in_final_review_without_client_claim(curated, monkeypatch):
-    enable_m01(monkeypatch)
-    repository, _, detail = _lesson(curated, MultilingualModel("valid"))
-    public_task = next(
-        task for task in detail.tasks if task.public_content.mission_id == "M01"
-    )
-    task = saved_task(repository, public_task.id)
-    question = task.public_content.questions[0]
-    review = review_details(
-        task,
-        type("ReviewRequest", (), {"question_assistance": None, "answers": {}})(),
-        {question.question_id: True},
-        {},
-        server_assistance={question.question_id: {"hintLevel": 1, "revealed": True}},
-    )
-    outcome = review["questionOutcomes"][0]
-    assert "hint" in outcome["assistance"]
-    assert "answerReveal" in outcome["assistance"]

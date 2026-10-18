@@ -6,7 +6,10 @@ from dataclasses import dataclass
 
 from app.languages import get_language
 from app.missions import get_mission
-from app.missions.m01_multilingual import generation_enabled, load_m01_level_plan
+from app.missions.m01_multilingual import (
+    load_m01_level_plan,
+    m01_generation_enabled_for,
+)
 from app.schemas.enums import SessionMode
 from app.services.ispy_clue_frames import COLOUR_ATTRIBUTE_TYPES, GENDERS, POSITIONS
 from app.services.mission_language_a2 import A2_ENABLED_LANGUAGES
@@ -163,9 +166,8 @@ def lesson_missions(session_mode, profile):
     if session_mode != SessionMode.LESSON:
         return []
     level = str(profile["proficiency_level"] or "").strip().upper()
-    if generation_enabled():
-        if get_language(str(profile["target_language_code"])) is None:
-            return []
+    language = str(profile["target_language_code"])
+    if m01_generation_enabled_for(language, level):
         legacy_languages = LEVEL_LANGUAGES.get(level, MISSION_LANGUAGES)
         keys = IMPLEMENTED_MISSIONS.get(level, ())
         return [
@@ -188,13 +190,17 @@ def legacy_mission_language_allowed(level, language_code):
     return str(language_code).lower() in languages
 
 
-def plan_missions(candidates, objects, relations, counted_groups=(), history=()):
+def plan_missions(
+    candidates, objects, relations, counted_groups=(), history=(), *, language=None
+):
     """Select least-planned eligible missions, returning them in catalogue order."""
     if not candidates:
         return []
     eligible = [
         mission for mission in candidates
-        if photo_eligibility(mission, objects, relations, counted_groups).eligible
+        if photo_eligibility(
+            mission, objects, relations, counted_groups, language=language
+        ).eligible
     ]
     counts = Counter(history)
     cap = MAX_LESSON_MISSIONS.get(str(candidates[0].practice_level), 3)
@@ -229,14 +235,14 @@ def suggested_counted_groups(objects):
     return list(groups.values())
 
 
-def provisional_mission_focus(candidates, objects, relations):
+def provisional_mission_focus(candidates, objects, relations, *, language=None):
     """Mission candidates and the smallest suggested fact set worth confirming.
 
     The return value is presentation guidance over unconfirmed model output. It
     must never be used as the final mission plan or grading evidence.
     """
     counts = suggested_counted_groups(objects)
-    plan = plan_missions(candidates, objects, relations, counts)
+    plan = plan_missions(candidates, objects, relations, counts, language=language)
     selected = []
 
     def add(object_id):
@@ -395,9 +401,13 @@ def attribute_contrasts(kind, value):
     return REVIEWED_ATTRIBUTES.get(kind, {}).get(value, {}).get("contrasts", ())
 
 
-def photo_eligibility(mission, objects, relations=(), counted_groups=()):
+def photo_eligibility(
+    mission, objects, relations=(), counted_groups=(), *, language=None
+):
     """Check only the confirmed facts this mission's photo requirements name."""
-    if generation_enabled() and mission.mission_id == "M01":
+    if language is not None and m01_generation_enabled_for(
+        language, mission.practice_level
+    ) and mission.mission_id == "M01":
         return m01_scene_fact_eligibility(
             load_m01_level_plan(mission.practice_level), objects, relations
         )

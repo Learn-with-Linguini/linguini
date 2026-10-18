@@ -34,9 +34,9 @@ from app.ai.features.scene_analysis import (
 from app.languages import get_language
 from app.missions.m01_multilingual import (
     CONTRACT_VERSION,
-    generation_enabled,
     join_chunks,
     load_m01_level_plan,
+    m01_generation_enabled_for,
 )
 from app.repositories.postgres.game_resources import refund_sauce, reward_basil, spend_sauce
 from app.repositories.postgres.language_profiles import language_profiles
@@ -97,7 +97,6 @@ from app.schemas.tasks import (
     SessionTaskPublic,
     TaskActionResponse,
     TaskAttempt,
-    TaskHintResponse,
 )
 from app.schemas.translation import SceneTranslationResult
 from app.schemas.vocabulary import (
@@ -647,7 +646,7 @@ class PostgresWorkflowRepository:
             )
 
     @staticmethod
-    def _lesson_check(task, question_id, answer, is_correct, hint_level=None, revealed=None):
+    def _lesson_check(task, question_id, answer, is_correct):
         question = next(
             item for item in task.public_content.questions if item.question_id == question_id
         )
@@ -671,8 +670,6 @@ class PostgresWorkflowRepository:
             answer=answer,
             is_correct=is_correct,
             correct_answer=correct_answer,
-            hint_level=hint_level,
-            revealed=revealed if hint_level is not None else None,
             outcome=QuestionOutcome(
                 question_id=question_id,
                 outcome="correct" if is_correct else "incorrect",
@@ -701,10 +698,7 @@ class PostgresWorkflowRepository:
             task_checks = dict(mission_checks.get(str(task.id)) or {})
             stored = task_checks.get(question_id)
             if stored is not None:
-                return self._lesson_check(
-                    task, question_id, stored["answer"], stored["isCorrect"],
-                    stored.get("hintLevel"), stored.get("revealed"),
-                )
+                return self._lesson_check(task, question_id, stored["answer"], stored["isCorrect"])
             question_ids = [item.question_id for item in task.public_content.questions]
             if question_id not in question_ids:
                 raise PracticeConflictError("Choose a question from this lesson.")
@@ -729,97 +723,16 @@ class PostgresWorkflowRepository:
             if session.status != "inProgress" or task.status in {"completed", "skipped"}:
                 raise PracticeConflictError("This lesson is not active.")
             is_correct = _lesson_answer_is_correct(task, question_id, answer)
-            hint_level = (
-                (draft.get("missionHints") or {}).get(str(task.id), {}).get(question_id)
-            )
-            disclosed = None
-            if hint_level is not None:
-                disclosed_hints = (
-                    (task.answer_key.mission_state or {}).get("hints", {}).get(question_id, [])
-                )
-                disclosed = any(
-                    item.get("level") == hint_level and item.get("revealsAnswer")
-                    for item in disclosed_hints
-                )
             task_checks[question_id] = {
                 "answer": answer,
                 "isCorrect": is_correct,
-                "hintLevel": hint_level,
-                "revealed": disclosed,
             }
             mission_checks[str(task.id)] = task_checks
             draft["missionChecks"] = mission_checks
             c.execute(
                 update(sessions).where(sessions.c.id == session.id).values(analysis_draft=draft)
             )
-            return self._lesson_check(task, question_id, answer, is_correct, hint_level, disclosed)
-
-    def request_lesson_hint(self, task_id, question_id):
-        with self.transaction() as c:
-            task = self._task_row(c, task_id)
-            if (
-                task.kind != "grammarLesson"
-                or not task.public_content.check_each_question
-                or not task.answer_key
-            ):
-                raise PracticeConflictError("This task does not support hints.")
-            hint_map = (task.answer_key.mission_state or {}).get("hints")
-            if not isinstance(hint_map, dict) or question_id not in hint_map:
-                raise PracticeConflictError("This question has no hints.")
-            session_row = c.execute(
-                select(sessions)
-                .where(sessions.c.id == task.session_id, sessions.c.user_id == self.user_id)
-                .with_for_update()
-            ).mappings().one_or_none()
-            if session_row is None:
-                raise PracticeNotFoundError("Task not found.")
-            session = parse_session(session_row)
-            if session.status != "inProgress" or task.status in {"completed", "skipped"}:
-                raise PracticeConflictError("This lesson is not active.")
-            task_checks = (
-                (session.analysis_draft or {}).get("missionChecks", {}).get(str(task.id), {})
-            )
-            question_ids = [item.question_id for item in task.public_content.questions]
-            if question_id not in question_ids or question_id in task_checks:
-                raise PracticeConflictError("Hints are unavailable after checking an answer.")
-            position = question_ids.index(question_id)
-            if any(item not in task_checks for item in question_ids[:position]):
-                raise PracticeConflictError("Hints are available only for the current question.")
-            if question_ids[position] != next(
-                (item for item in question_ids if item not in task_checks), None
-            ):
-                raise PracticeConflictError("Hints are available only for the current question.")
-
-            hints = hint_map[question_id]
-            current_level = (
-                (session.analysis_draft or {}).get("missionHints", {})
-                .get(str(task.id), {}).get(question_id, 0)
-            )
-            current_index = next(
-                (index for index, hint in enumerate(hints) if hint.get("level") == current_level),
-                -1,
-            )
-            next_index = min(current_index + 1, len(hints) - 1)
-            hint = hints[next_index]
-            if current_level != hint.get("level"):
-                draft = dict(session.analysis_draft or {})
-                mission_hints = dict(draft.get("missionHints") or {})
-                task_hints = dict(mission_hints.get(str(task.id)) or {})
-                task_hints[question_id] = hint["level"]
-                mission_hints[str(task.id)] = task_hints
-                draft["missionHints"] = mission_hints
-                c.execute(
-                    update(sessions).where(sessions.c.id == session.id).values(
-                        analysis_draft=draft
-                    )
-                )
-            return TaskHintResponse(
-                question_id=question_id,
-                level=hint["level"],
-                text=hint["text"],
-                reveals_answer=hint["revealsAnswer"],
-                remaining=len(hints) - next_index - 1,
-            )
+            return self._lesson_check(task, question_id, answer, is_correct)
 
     def lesson_checks(self, task_id):
         """Restore checks already saved for a sequential grammar lesson."""
@@ -832,33 +745,14 @@ class PostgresWorkflowRepository:
             task_checks = (
                 draft.get("missionChecks", {}).get(str(task.id), {})
             )
-            disclosed = draft.get("missionHints", {}).get(str(task.id), {})
             checks = []
-            restored_hints = {}
             for question in task.public_content.questions:
                 stored = task_checks.get(question.question_id)
                 if stored is not None:
                     checks.append(self._lesson_check(
                         task, question.question_id, stored["answer"], stored["isCorrect"],
-                        stored.get("hintLevel"), stored.get("revealed"),
                     ))
-                disclosed_level = disclosed.get(question.question_id)
-                if disclosed_level is not None:
-                    hints = (task.answer_key.mission_state or {}).get("hints", {}).get(
-                        question.question_id, []
-                    )
-                    restored_hints[question.question_id] = [
-                        TaskHintResponse(
-                            question_id=question.question_id,
-                            level=hint["level"],
-                            text=hint["text"],
-                            reveals_answer=hint["revealsAnswer"],
-                            remaining=len(hints) - index - 1,
-                        )
-                        for index, hint in enumerate(hints)
-                        if hint["level"] <= disclosed_level
-                    ]
-            return LessonChecksResponse(checks=checks, hints=restored_hints)
+            return LessonChecksResponse(checks=checks)
 
     def _scene_media(self, c, session):
         asset = MediaAsset.model_validate(
@@ -1289,195 +1183,6 @@ class PostgresWorkflowRepository:
             detail = self._detail(c, claimed)
         return self._start_analysis(session_id, profile_id, claimed, detail, *inputs)
 
-    def retry_m01(self, session_id, profile_id):
-        if not generation_enabled():
-            raise PracticeConflictError("Multilingual M01 generation is disabled.")
-        with self.transaction() as c:
-            session_row = c.execute(
-                select(sessions)
-                .where(
-                    sessions.c.id == session_id,
-                    sessions.c.user_id == self.user_id,
-                    sessions.c.language_profile_id == profile_id,
-                )
-                .with_for_update()
-            ).mappings().one_or_none()
-            if session_row is None:
-                raise PracticeNotFoundError("Session not found.")
-            session = parse_session(session_row)
-            if session.status != "inProgress":
-                raise PracticeConflictError("This lesson is not active.")
-            draft = dict(session.analysis_draft or {})
-            skipped = draft.get("skippedMissions") or []
-            retryable = any(
-                item.get("missionId") == "M01"
-                and item.get("reason") == "generationFailed"
-                and item.get("retryable") is True
-                for item in skipped
-                if isinstance(item, dict)
-            )
-            if not retryable:
-                raise PracticeConflictError("M01 is not available to retry.")
-            if (draft.get("m01Retry") or {}).get("status") == "generating":
-                raise PracticeConflictError("M01 is already preparing.")
-            draft["m01Retry"] = {"status": "generating"}
-            c.execute(
-                update(sessions).where(sessions.c.id == session.id).values(
-                    analysis_draft=draft
-                )
-            )
-
-        task = None
-        try:
-            with self.read_connection() as c:
-                session = self._session(c, session_id, profile_id)
-                profile = dict(
-                    c.execute(
-                        select(language_profiles).where(
-                            language_profiles.c.id == profile_id
-                        )
-                    ).mappings().one()
-                )
-                objects, relations = self._scene_objects(c, session)
-                words, _ = self._words(c, session, objects)
-                translated_scene = _translation_preview(session)
-                if translated_scene is None:
-                    raise PracticeConflictError("The saved scene translation is unavailable.")
-                draft = session.analysis_draft or {}
-                supplemental_rows = draft.get("m01SupplementalVocabulary") or []
-                supplemental_ids = {
-                    UUID(item["id"]) for item in supplemental_rows
-                    if isinstance(item, dict) and item.get("id")
-                }
-                supplemental_by_id = {}
-                if supplemental_ids:
-                    for row in c.execute(
-                        select(vocabulary_items).where(vocabulary_items.c.id.in_(supplemental_ids))
-                    ).mappings():
-                        supplemental_by_id[row["id"]] = VocabularyItem.model_validate(
-                            {key: row[key] for key in VocabularyItem.model_fields}
-                        )
-                supplemental_vocabulary = {}
-                for item in supplemental_rows:
-                    if not isinstance(item, dict):
-                        continue
-                    vocabulary_item = supplemental_by_id.get(UUID(item["id"]))
-                    if vocabulary_item is not None:
-                        supplemental_vocabulary[
-                            (item.get("type"), item.get("key"))
-                        ] = vocabulary_item
-                history = None
-                if os.getenv("LEARNER_MEMORY_ENABLED", "false").strip().lower() == "true":
-                    labels = [obj.label for obj in objects]
-                    labels.extend(
-                        value for obj in objects
-                        for value in (obj.attributes or {}).values()
-                        if isinstance(value, str)
-                    )
-                    labels.extend(row.relation for row in relations)
-                    history = snapshot_learner_history(
-                        c, self.user_id, profile, session_id, labels
-                    )
-                planned = [
-                    item for item in self._planned_missions(session, profile)
-                    if item.mission_id == "M01"
-                ]
-                if not planned:
-                    raise PracticeConflictError("M01 is not in this lesson plan.")
-                asset, scene = self._scene_media(c, session)
-                cache_scope, templates = self._reuse(
-                    c, session, asset, objects, relations
-                )
-                claim = GenerationClaim(
-                    session_id=session_id,
-                    profile_id=profile_id,
-                    revision=0,
-                    session=session,
-                    profile=profile,
-                    title=_scene_title(session, scene),
-                    objects=objects,
-                    relations=relations,
-                    cache_scope=cache_scope,
-                    templates=templates,
-                    learner_history=history,
-                    missions=tuple(planned),
-                    counted_groups=tuple(saved_counted_groups(draft)),
-                    mission_progress=self._mission_progress(c, profile, history),
-                    review_markers=draft.get("reviewMarkers") or {},
-                )
-            skipped = []
-            lessons = self._mission_lessons(
-                claim,
-                objects,
-                relations,
-                words,
-                translated_scene,
-                skipped,
-                supplemental_vocabulary,
-            )
-            task = next(
-                (
-                    item for item in lessons
-                    if item.public_content.mission_id == "M01"
-                ),
-                None,
-            )
-            if task is None:
-                raise PracticeConflictError("M01 generation did not produce a lesson.")
-            with self.transaction() as c:
-                session = self._session(c, session_id, profile_id)
-                draft = dict(session.analysis_draft or {})
-                if (draft.get("m01Retry") or {}).get("status") != "generating":
-                    raise PracticeConflictError("M01 retry claim is no longer active.")
-                if session.status != "inProgress":
-                    raise PracticeConflictError("This lesson is no longer active.")
-                existing_tasks = self._tasks(c, session_id)
-                introduction = next(
-                    (
-                        item for item in existing_tasks
-                        if item.kind == "vocabularyIntroduction"
-                    ),
-                    None,
-                )
-                insertion_index = 1 if introduction is not None else 0
-                for existing in sorted(
-                    existing_tasks, key=lambda item: item.order_index, reverse=True
-                ):
-                    if existing.id != task.id and existing.order_index >= insertion_index:
-                        c.execute(
-                            update(session_tasks)
-                            .where(session_tasks.c.id == existing.id)
-                            .values(order_index=existing.order_index + 1)
-                        )
-                task.order_index = insertion_index
-                c.execute(
-                    upsert(session_tasks)
-                    .values(**entity_values(task))
-                    .on_conflict_do_nothing(index_elements=[session_tasks.c.id])
-                )
-                draft["skippedMissions"] = [
-                    item for item in draft.get("skippedMissions", [])
-                    if not (isinstance(item, dict) and item.get("missionId") == "M01")
-                ]
-                draft.pop("m01Retry", None)
-                c.execute(
-                    update(sessions).where(sessions.c.id == session_id).values(
-                        analysis_draft=draft
-                    )
-                )
-        except Exception:
-            with self.transaction() as c:
-                session = self._session(c, session_id, profile_id)
-                draft = dict(session.analysis_draft or {})
-                draft.pop("m01Retry", None)
-                c.execute(
-                    update(sessions).where(sessions.c.id == session_id).values(
-                        analysis_draft=draft
-                    )
-                )
-            raise
-        return self.get(session_id, profile_id)
-
     def _analysis_inputs(self, c, session):
         asset = MediaAsset.model_validate(
             dict(
@@ -1596,7 +1301,10 @@ class PostgresWorkflowRepository:
     def _analysis_draft(session, profile, result):
         candidates = lesson_missions(session.mode, profile)
         provisional, selected_ids = provisional_mission_focus(
-            candidates, result.objects, result.relations
+            candidates,
+            result.objects,
+            result.relations,
+            language=profile["target_language_code"],
         )
         return {
             "analysisAttempts": analysis_attempts(session),
@@ -2037,7 +1745,14 @@ class PostgresWorkflowRepository:
             for item in (saved or {}).get("missionPlan", [])
             if isinstance(item, dict) and isinstance(item.get("missionId"), str)
         ]
-        plan = plan_missions(candidates, objects, relations, counted_groups, history)
+        plan = plan_missions(
+            candidates,
+            objects,
+            relations,
+            counted_groups,
+            history,
+            language=profile["target_language_code"],
+        )
         draft = dict(c.execute(select(sessions.c.analysis_draft).where(
             sessions.c.id == session.id,
         )).scalar_one() or {})
@@ -2073,7 +1788,13 @@ class PostgresWorkflowRepository:
             draft["missionGuidance"] = [
                 f"{mission.title}: "
                 + " ".join(
-                    photo_eligibility(mission, objects, relations, counted_groups).reasons
+                    photo_eligibility(
+                        mission,
+                        objects,
+                        relations,
+                        counted_groups,
+                        language=profile["target_language_code"],
+                    ).reasons
                 )
                 for mission in candidates
             ]
@@ -2314,7 +2035,9 @@ class PostgresWorkflowRepository:
         lessons = []
         for planned in claim.missions:
             mission = lesson_mission(planned)
-            if generation_enabled() and mission.mission_id == "M01":
+            if m01_generation_enabled_for(
+                language, mission.practice_level
+            ) and mission.mission_id == "M01":
                 plan = load_m01_level_plan(mission.practice_level)
                 progress = dict(claim.mission_progress or {})
                 if claim.learner_history:
@@ -2439,7 +2162,6 @@ class PostgresWorkflowRepository:
                 skipped.append({
                     "missionId": "M01",
                     "reason": "generationFailed",
-                    "retryable": True,
                 })
                 continue
 
@@ -3086,26 +2808,12 @@ class PostgresWorkflowRepository:
                                 )
                             )
                         }
-                        server_assistance = {}
-                        if task.kind == "grammarLesson" and task.public_content.check_each_question:
-                            server_assistance = {
-                                question_id: {
-                                    "hintLevel": check.get("hintLevel"),
-                                    "revealed": check.get("revealed"),
-                                }
-                                for question_id, check in (
-                                    (session.analysis_draft or {})
-                                    .get("missionChecks", {})
-                                    .get(str(task.id), {})
-                                ).items()
-                            }
                         evaluation_details = (
                             review_details(
                                 task,
                                 request,
                                 question_results,
                                 correct_answers,
-                                server_assistance=server_assistance,
                             )
                             if task.answer_key.question_evaluations
                             else {

@@ -44,7 +44,7 @@ def test_fresh_profiles_keep_catalogue_order(monkeypatch):
     monkeypatch.setattr(
         mission_eligibility,
         "photo_eligibility",
-        lambda *_args: Eligibility(True),
+        lambda *_args, **_kwargs: Eligibility(True),
     )
     candidates = lesson_missions(
         SessionMode.LESSON,
@@ -58,7 +58,7 @@ def test_plan_rotation_prioritizes_least_planned_then_returns_catalogue_order(mo
     monkeypatch.setattr(
         mission_eligibility,
         "photo_eligibility",
-        lambda *_args: Eligibility(True),
+        lambda *_args, **_kwargs: Eligibility(True),
     )
     candidates = lesson_missions(
         SessionMode.LESSON,
