@@ -1,0 +1,9 @@
+[[cases]]
+case_id = "cup-description-case"
+construction_id = "describe-attribute"
+construction_version = 1
+expected = ["La taza parece azul."]
+
+[cases.provenance]
+source = "Original local Spanish test fixture; not linguistically reviewed."
+review_status = "unreviewed"

@@ -1,6 +1,7 @@
 """Environment configuration for the temporary demo integration."""
 
 import os
+from pathlib import Path
 from uuid import UUID
 
 from app.services.media_urls import PrivateMediaUrls, SignedUrlCache
@@ -36,3 +37,20 @@ def get_allowed_origins() -> list[str]:
         for origin in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(",")
         if origin.strip()
     ]
+
+
+def get_language_pack_dirs() -> tuple[Path, ...]:
+    return tuple(
+        Path(value.strip())
+        for value in os.getenv("LINGUINI_LANGUAGE_PACK_DIRS", "").split(os.pathsep)
+        if value.strip()
+    )
+
+
+def get_language_pack_releases() -> frozenset[tuple[str, str, str]]:
+    releases = set()
+    for value in os.getenv("LINGUINI_LANGUAGE_PACK_RELEASES", "").split(","):
+        parts = tuple(part.strip() for part in value.split(":"))
+        if len(parts) == 3 and all(parts):
+            releases.add(parts)
+    return frozenset(releases)

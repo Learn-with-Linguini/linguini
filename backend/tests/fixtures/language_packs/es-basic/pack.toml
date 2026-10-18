@@ -1,0 +1,378 @@
+format_version = 1
+pack_id = "es-basic"
+pack_version = 1
+instruction_language = "en"
+
+[language]
+code = "es"
+locale = "es-ES"
+script = "Latn"
+direction = "ltr"
+word_separator = "space"
+
+[language.speech]
+synthesis_locale = "es-ES"
+synthesis = "browserVoice"
+recognition = true
+
+[variety]
+variety_id = "es-es"
+description = "Generic Spanish variety for structural tests."
+
+[register]
+register_id = "everyday"
+description = "Generic everyday register for structural tests."
+
+[provenance]
+source = "Original local Spanish test fixture; not linguistically reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "yes"
+text = "sí"
+
+[labels.provenance]
+source = "Original local Spanish test fixture; not linguistically reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "no"
+text = "no"
+
+[labels.provenance]
+source = "Original local Spanish test fixture; not linguistically reviewed."
+review_status = "unreviewed"
+
+[[constructions]]
+construction_id = "name-object"
+version = 1
+summary = "Name an object."
+guidance = "Use an object name in a short identification sentence."
+required_labels = []
+
+[constructions.provenance]
+source = "Original local Spanish test fixture; not linguistically reviewed."
+review_status = "unreviewed"
+
+[[constructions.examples]]
+example_id = "name-object-example"
+meaning = "Identify a cup."
+sentence = "Esto es una taza."
+translation = "This is a cup."
+accepted_alternatives = ["Es una taza."]
+
+[constructions.examples.provenance]
+source = "Original local Spanish test fixture; not linguistically reviewed."
+review_status = "unreviewed"
+
+[[constructions.examples.chunks]]
+text = "Esto"
+join = "none"
+
+[[constructions.examples.chunks]]
+text = "es"
+join = "space"
+
+[[constructions.examples.chunks]]
+text = "una"
+join = "space"
+
+[[constructions.examples.chunks]]
+text = "taza."
+join = "space"
+
+[[constructions]]
+construction_id = "yes-no-identity-question"
+version = 1
+summary = "Ask whether something is an object."
+guidance = "Use a short identity question."
+required_labels = ["yes", "no"]
+
+[constructions.provenance]
+source = "Original local Spanish test fixture; not linguistically reviewed."
+review_status = "unreviewed"
+
+[[constructions.examples]]
+example_id = "identity-question-example"
+meaning = "Ask whether something is a cup."
+sentence = "¿Es una taza?"
+translation = "Is it a cup?"
+
+[constructions.examples.provenance]
+source = "Original local Spanish test fixture; not linguistically reviewed."
+review_status = "unreviewed"
+
+[[constructions.examples.chunks]]
+text = "¿Es"
+join = "none"
+
+[[constructions.examples.chunks]]
+text = "una"
+join = "space"
+
+[[constructions.examples.chunks]]
+text = "taza?"
+join = "space"
+
+[[constructions]]
+construction_id = "identify-object"
+version = 1
+summary = "Identify an object."
+guidance = "Use a concise object identification."
+required_labels = []
+
+[constructions.provenance]
+source = "Original local Spanish test fixture; not linguistically reviewed."
+review_status = "unreviewed"
+
+[[constructions.examples]]
+example_id = "identify-object-example"
+meaning = "Identify a cup."
+sentence = "Es una taza."
+translation = "It is a cup."
+
+[constructions.examples.provenance]
+source = "Original local Spanish test fixture; not linguistically reviewed."
+review_status = "unreviewed"
+
+[[constructions.examples.chunks]]
+text = "Es"
+join = "none"
+
+[[constructions.examples.chunks]]
+text = "una"
+join = "space"
+
+[[constructions.examples.chunks]]
+text = "taza."
+join = "space"
+
+[[constructions]]
+construction_id = "yes-no-identity-answer"
+version = 1
+summary = "Answer an object identity question."
+guidance = "Answer yes or no and provide an identification."
+required_labels = ["yes", "no"]
+
+[constructions.provenance]
+source = "Original local Spanish test fixture; not linguistically reviewed."
+review_status = "unreviewed"
+
+[[constructions.examples]]
+example_id = "identity-answer-example"
+meaning = "Confirm that it is a cup."
+sentence = "sí, es una taza."
+translation = "Yes, it is a cup."
+
+[constructions.examples.provenance]
+source = "Original local Spanish test fixture; not linguistically reviewed."
+review_status = "unreviewed"
+
+[[constructions.examples.chunks]]
+text = "sí,"
+join = "none"
+
+[[constructions.examples.chunks]]
+text = "es"
+join = "space"
+
+[[constructions.examples.chunks]]
+text = "una"
+join = "space"
+
+[[constructions.examples.chunks]]
+text = "taza."
+join = "space"
+
+[[constructions]]
+construction_id = "describe-attribute"
+version = 1
+summary = "Describe an object's attribute."
+guidance = "Name an object and one descriptive attribute."
+required_labels = []
+
+[constructions.provenance]
+source = "Original local Spanish test fixture; not linguistically reviewed."
+review_status = "unreviewed"
+
+[[constructions.examples]]
+example_id = "attribute-description-example"
+meaning = "Describe a cup as blue."
+sentence = "La taza es azul."
+translation = "The cup is blue."
+
+[constructions.examples.provenance]
+source = "Original local Spanish test fixture; not linguistically reviewed."
+review_status = "unreviewed"
+
+[[constructions.examples.chunks]]
+text = "La"
+join = "none"
+
+[[constructions.examples.chunks]]
+text = "taza"
+join = "space"
+
+[[constructions.examples.chunks]]
+text = "es"
+join = "space"
+
+[[constructions.examples.chunks]]
+text = "azul."
+join = "space"
+
+[[constructions]]
+construction_id = "scene-existence"
+version = 1
+summary = "State that an object is present."
+guidance = "Use an existence statement for a scene object."
+required_labels = []
+
+[constructions.provenance]
+source = "Original local Spanish test fixture; not linguistically reviewed."
+review_status = "unreviewed"
+
+[[constructions.examples]]
+example_id = "scene-existence-example"
+meaning = "State that a cup is present."
+sentence = "Hay una taza."
+translation = "There is a cup."
+
+[constructions.examples.provenance]
+source = "Original local Spanish test fixture; not linguistically reviewed."
+review_status = "unreviewed"
+
+[[constructions.examples.chunks]]
+text = "Hay"
+join = "none"
+
+[[constructions.examples.chunks]]
+text = "una"
+join = "space"
+
+[[constructions.examples.chunks]]
+text = "taza."
+join = "space"
+
+[[constructions]]
+construction_id = "scene-location"
+version = 1
+summary = "Locate an object in a scene."
+guidance = "Use a short statement with a scene location."
+required_labels = []
+
+[constructions.provenance]
+source = "Original local Spanish test fixture; not linguistically reviewed."
+review_status = "unreviewed"
+
+[[constructions.examples]]
+example_id = "scene-location-example"
+meaning = "Locate a cup here."
+sentence = "La taza está aquí."
+translation = "The cup is here."
+
+[constructions.examples.provenance]
+source = "Original local Spanish test fixture; not linguistically reviewed."
+review_status = "unreviewed"
+
+[[constructions.examples.chunks]]
+text = "La"
+join = "none"
+
+[[constructions.examples.chunks]]
+text = "taza"
+join = "space"
+
+[[constructions.examples.chunks]]
+text = "está"
+join = "space"
+
+[[constructions.examples.chunks]]
+text = "aquí."
+join = "space"
+
+[[constructions]]
+construction_id = "connected-description"
+version = 1
+summary = "Connect two scene descriptions."
+guidance = "Join two short descriptions with a connector."
+required_labels = []
+
+[constructions.provenance]
+source = "Original local Spanish test fixture; not linguistically reviewed."
+review_status = "unreviewed"
+
+[[constructions.examples]]
+example_id = "connected-description-example"
+meaning = "Connect a colour and location description."
+sentence = "La taza es azul y está aquí."
+translation = "The cup is blue and is here."
+
+[constructions.examples.provenance]
+source = "Original local Spanish test fixture; not linguistically reviewed."
+review_status = "unreviewed"
+
+[[constructions.examples.chunks]]
+text = "La"
+join = "none"
+
+[[constructions.examples.chunks]]
+text = "taza"
+join = "space"
+
+[[constructions.examples.chunks]]
+text = "es"
+join = "space"
+
+[[constructions.examples.chunks]]
+text = "azul"
+join = "space"
+
+[[constructions.examples.chunks]]
+text = "y"
+join = "space"
+
+[[constructions.examples.chunks]]
+text = "está"
+join = "space"
+
+[[constructions.examples.chunks]]
+text = "aquí."
+join = "space"
+
+[[constructions]]
+construction_id = "follow-up-question"
+version = 1
+summary = "Ask a follow-up question about a scene fact."
+guidance = "Ask a concise question about an object's location."
+required_labels = []
+
+[constructions.provenance]
+source = "Original local Spanish test fixture; not linguistically reviewed."
+review_status = "unreviewed"
+
+[[constructions.examples]]
+example_id = "follow-up-example"
+meaning = "Ask where a cup is."
+sentence = "¿Dónde está la taza?"
+translation = "Where is the cup?"
+
+[constructions.examples.provenance]
+source = "Original local Spanish test fixture; not linguistically reviewed."
+review_status = "unreviewed"
+
+[[constructions.examples.chunks]]
+text = "¿Dónde"
+join = "none"
+
+[[constructions.examples.chunks]]
+text = "está"
+join = "space"
+
+[[constructions.examples.chunks]]
+text = "la"
+join = "space"
+
+[[constructions.examples.chunks]]
+text = "taza?"
+join = "space"
