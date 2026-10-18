@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { friendlyError, queryKeys } from "../lib/queryKeys";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { Button, Card, Feedback, IconButton, ProgressTrail, XpPill } from "../components/ui";
-import { CheckIcon, CloseIcon, SpeakerIcon } from "../components/icons";
+import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, CloseIcon, SpeakerIcon } from "../components/icons";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { builtSentence, choiceOrder, finishesAfterLearning, markerChoices, optionText, practiceStages, questionOptions, sentenceEnding, taskDone, taskTitle, taskXp, xpEarnedText } from "../lib/practiceTasks";
@@ -249,14 +249,18 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
     }
   };
   return <div className="stack vocabulary-flow">
-    <ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />
-    <div className="learning-title-row"><div><h1>{content.title}</h1>{reward ? <XpPill {...reward} /> : null}{!terminal && stage === "review" ? <p className="small muted" aria-live="polite">{page + 1} of {pageCount}</p> : null}</div><ExitToHome onExit={onExit} /></div>
+    <div className="vocabulary-flow__header">
+      <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />{reward ? <XpPill {...reward} /> : null}</div>
+      <div className="learning-title-row"><h1>{content.title}</h1><ExitToHome onExit={onExit} /></div>
+    </div>
     {!terminal && stage === "review" ? <>
       <div className="vocabulary-learning-grid vocabulary-learning-grid--swipe" onTouchStart={handleCardTouchStart} onTouchEnd={handleCardTouchEnd}>{visibleWords.map(word => <VocabularyLearningCard key={word.learningKey ?? word.vocabularyItemId ?? word.targetText} word={word} languageCode={scene.languageCode} />)}</div>
       <div className="vocabulary-flow__actions">
-        <Button variant="secondary" disabled={page === 0} onClick={() => setPage(value => value - 1)}>Previous word</Button>
-        <Button variant="secondary" onClick={finishReview}>{page < pageCount - 1 ? "Next word" : "Start quick quiz"}</Button></div>
-      <Button variant="primary" block onClick={() => setStage("quiz")}>Skip to word practice</Button>
+        <Button variant="quiet" disabled={page === 0} onClick={() => setPage(value => value - 1)}><ArrowLeftIcon size={18} /> Previous</Button>
+        <span className="vocabulary-flow__position" aria-live="polite">{page + 1} of {pageCount}</span>
+        <Button onClick={finishReview}>{page < pageCount - 1 ? <>Next <ArrowRightIcon /></> : "Start quick quiz"}</Button>
+      </div>
+      <button type="button" className="text-link text-link--muted vocabulary-flow__skip" onClick={() => setStage("quiz")}>Skip word review</button>
     </> : null}
     {!terminal && stage === "quiz" && question ? <Card plain><div className="stack">
       <span className="label muted">Question {questionIndex + 1} of {content.questions.length}</span><h2>{question.prompt}</h2>

@@ -4717,17 +4717,21 @@ p[role="alert"]::before { content: "!"; }
 
 .learn-missions {
   padding: var(--space-4);
-  border: 1px solid rgba(249, 178, 51, .34);
+  border: 1px solid rgba(154, 115, 50, 0.34);
   border-radius: var(--radius-lg);
-  background: #fff9e9;
+  background: var(--paper);
+}
+
+.learn-missions h2 {
+  padding: var(--space-1);
 }
 
 .learn-missions .task-list { gap: var(--space-3); }
 
 .learn-missions .task-row {
   min-height: 76px;
-  border: 2px solid rgba(33, 113, 111, .2);
-  background: var(--paper);
+  /* border: 2px solid rgba(33, 113, 111, .2); */
+  background: var(--butter);
   box-shadow: none;
 }
 
@@ -4753,7 +4757,7 @@ p[role="alert"]::before { content: "!"; }
 
 .learning-title-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-3);
 }
@@ -4766,6 +4770,22 @@ p[role="alert"]::before { content: "!"; }
   flex: none;
   gap: var(--space-1);
   color: var(--ink-muted);
+}
+
+.vocabulary-flow__header {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.vocabulary-flow__progress {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-4);
+}
+
+.vocabulary-flow__progress .pill--xp {
+  margin-top: 1px;
 }
 
 .learning-card {
@@ -4845,15 +4865,34 @@ p[role="alert"]::before { content: "!"; }
 
 .vocabulary-flow__actions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr auto 1fr;
   align-items: stretch;
   gap: var(--space-3);
 }
+
+.vocabulary-flow__actions .btn:last-child { justify-self: end; }
+
+.vocabulary-flow__position {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-muted);
+  font-size: var(--text-small);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.vocabulary-flow__skip { justify-self: center; margin-top: calc(var(--space-2) * -1); }
 
 @media (max-width: 720px) {
   .vocabulary-learning-grid {
     grid-template-columns: 1fr;
   }
+
+  .vocabulary-flow__progress { gap: var(--space-2); }
+  .vocabulary-flow__progress .pill--xp { padding-inline: var(--space-2); }
+  .vocabulary-flow__actions { gap: var(--space-1); }
+  .vocabulary-flow__actions .btn { padding-inline: var(--space-2); }
 }
 
 .flashcard {
