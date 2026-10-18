@@ -390,6 +390,87 @@ def test_valid_contracts_cover_all_levels_and_registered_languages(level, langua
     validate_contract_output(contract, output)
 
 
+def test_output_rejects_explanation_that_reveals_a_correct_answer():
+    contract, output, _ = planned_a1_output()
+    leaking_output = output.model_copy(
+        update={"explanation": "\u00a0LA\u00a0TAZA\tQUEDA AQUÍ!!!"}
+    )
+
+    with pytest.raises(
+        MissionContractError,
+        match="explanation reveals the answer to location",
+    ):
+        validate_contract_output(contract, leaking_output)
+
+
+def test_output_allows_explanation_that_only_mentions_a_preparation_term():
+    contract, output, _ = planned_a1_output()
+    prepared_term_output = output.model_copy(update={"explanation": "\tTAZA\u00a0"})
+
+    validate_contract_output(contract, prepared_term_output)
+
+
+def test_output_allows_missing_explanation():
+    contract, output, _ = planned_a1_output()
+
+    assert output.explanation is None
+    validate_contract_output(contract, output)
+
+
+def test_output_rejects_no_space_synthetic_language_answer_leak(monkeypatch):
+    contract, output, _ = planned_a1_output()
+    language = Language.model_validate(
+        {
+            "code": "qaa",
+            "englishName": "Test language",
+            "nativeName": "Test language",
+            "script": "Latn",
+            "wordSeparator": "none",
+            "learnable": False,
+            "instruction": False,
+            "speech": {"synthesisLocale": "qaa"},
+        }
+    )
+
+    def synthetic_language_lookup(code):
+        return language if code.casefold() == "qaa" else get_language(code)
+
+    monkeypatch.setattr(
+        "app.missions.m01_multilingual.get_language",
+        synthetic_language_lookup,
+    )
+    contract = contract.model_copy(update={"target_language": "qaa"})
+    no_space_chunks = [
+        SentenceChunk(chunk_id="no-space-taza", text="taza", join="none"),
+        SentenceChunk(chunk_id="no-space-azul", text="azul", join="none"),
+    ]
+    changed_questions = [
+        question.model_copy(update={"chunks": no_space_chunks})
+        if question.question_id == "location"
+        else question
+        for question in output.questions
+    ]
+    answers = dict(output.private.answers)
+    answers["location"] = Answer(
+        chunk_ids=["no-space-taza", "no-space-azul"]
+    )
+    no_space_output = output.model_copy(
+        update={
+            "target_language": "qaa",
+            "explanation": "XTAZAAZULY",
+            "questions": changed_questions,
+            "private": output.private.model_copy(update={"answers": answers}),
+        }
+    )
+
+    assert join_chunks(no_space_chunks) == "tazaazul"
+    with pytest.raises(
+        MissionContractError,
+        match="explanation reveals the answer to location",
+    ):
+        validate_contract_output(contract, no_space_output)
+
+
 @pytest.mark.parametrize(
     ("language", "expected"),
     [

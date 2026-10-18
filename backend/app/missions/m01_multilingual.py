@@ -385,12 +385,50 @@ def validate_contract_output(
         raise MissionContractError("there must be one evaluation per question")
     for evaluation in evaluations:
         _check_evaluation(definition, evaluation)
+    _validate_explanation_does_not_reveal_answers(output)
     if plan is not None:
         _validate_planned_output(contract, definition, output, plan)
 
 
 def _fold_contract_text(value: str) -> str:
     return " ".join(unicodedata.normalize("NFC", value).split()).casefold()
+
+
+def _answer_text_without_trailing_punctuation(value: str) -> str:
+    normalized = _fold_contract_text(value)
+    while normalized and unicodedata.category(normalized[-1]).startswith("P"):
+        normalized = normalized[:-1].rstrip()
+    return normalized
+
+
+def _validate_explanation_does_not_reveal_answers(output: M01ContractOutput) -> None:
+    if output.explanation is None:
+        return
+
+    explanation = _fold_contract_text(output.explanation)
+    preparation_texts = {_fold_contract_text(card.text) for card in output.preparation}
+    for question in output.questions:
+        answer = output.private.answers[question.question_id]
+        if question.interaction == "sentenceBuilding":
+            chunks_by_id = {chunk.chunk_id: chunk for chunk in question.chunks}
+            answer_text = join_chunks([chunks_by_id[chunk_id] for chunk_id in answer.chunk_ids])
+        else:
+            answer_text = next(
+                option.label
+                for option in question.options
+                if option.option_id == answer.correct_option_id
+            )
+
+        normalized_answer = _answer_text_without_trailing_punctuation(answer_text)
+        if (
+            not normalized_answer
+            or normalized_answer in preparation_texts
+            or normalized_answer not in explanation
+        ):
+            continue
+        raise MissionContractError(
+            f"explanation reveals the answer to {question.question_id}"
+        )
 
 
 def _validate_planned_output(contract, definition, output, plan) -> None:

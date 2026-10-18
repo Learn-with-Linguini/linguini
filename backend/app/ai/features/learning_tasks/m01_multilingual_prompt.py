@@ -35,9 +35,10 @@ Grammar:
 - Write natural sentences for the target language. Use articles, gender,
   agreement, plurals, classifiers or particles only where that language uses
   them. Do not copy English word order.
-- Write prompts, instructions, translations, hints and feedback in the
-  instruction language. Write options, chunks, preparation cards and worked
-  examples in the target language.
+- Write the explanation, prompts, instructions, translations, hints and
+  feedback in the instruction language. The explanation introduces the lesson
+  and must not state any question's answer. Write options, chunks,
+  preparation cards and worked examples in the target language.
 
 Lesson shape:
 - Preparation cards teach the target-language names and chunks used later.
