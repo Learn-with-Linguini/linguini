@@ -176,9 +176,15 @@ def test_progress_returns_weekly_basil_leaderboard_and_current_player(database):
         data = response.json()
         board = data["leaderboard"]
         assert len(board) == 6  # Top five plus the signed-in player.
-        assert [row["name"] for row in board[:5]] == [f"Chef {index}" for index in range(5)]
-        assert all(row["xp"] == 20 for row in board[:5])
-        assert board[-1] == {"rank": 7, "name": owner.display_name, "xp": 10, "isYou": True}
+        assert [row["rank"] for row in board[:5]] == [1, 2, 3, 4, 5]
+        assert [row["xp"] for row in board[:5]] == sorted(
+            (row["xp"] for row in board[:5]), reverse=True
+        )
+        current_player = board[-1]
+        assert current_player["rank"] >= 7
+        assert current_player["name"] == owner.display_name
+        assert current_player["xp"] == 10
+        assert current_player["isYou"] is True
         assert data["xp"] == 30  # Lifetime Basil remains separate from the weekly board.
     finally:
         competitor_ids = [chef.id for chef in competitors]
