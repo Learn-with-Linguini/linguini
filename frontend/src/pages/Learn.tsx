@@ -65,11 +65,12 @@ export function Learn() {
       </div> : null}
 
       {tasks.length ? <section className="stack-3 learn-missions" aria-label="Learning missions">
-        {!vocabularyDone ? <div><h2>Other missions</h2><p className="muted">Or jump straight into any activity.</p></div> : null}
+        {!vocabularyDone ? <div><h2>Next missions</h2><p className="muted">Choose any mission to continue.</p></div> : null}
         <div className="task-list" aria-label="Learning tasks">
         {tasks.map(task => {
           const isDone = taskDone(task);
           const reward = !isDone ? taskXp(task) : null;
+          const missionIconClass = task.publicContent.missionId ? ` task-row__icon--${task.publicContent.missionId.toLowerCase()}` : "";
           return (
             <button
               key={task.id}
@@ -77,7 +78,7 @@ export function Learn() {
               className={`task-row${isDone ? " task-row--done" : ""}`}
               onClick={() => openTask(task.id)}
             >
-              <span className="task-row__icon">
+              <span className={`task-row__icon${missionIconClass}`}>
                 {isDone ? <CheckIcon size={18} /> : <TaskAimIcon task={task} />}
               </span>
               <span className="grow stack-2">

@@ -4662,6 +4662,13 @@ p[role="alert"]::before { content: "!"; }
   color: var(--teal-dark);
 }
 
+.task-row__icon--m01 { background: #ffe7dc; color: var(--tomato-pressed); }
+.task-row__icon--m02 { background: #dff2f0; color: var(--teal-dark); }
+.task-row__icon--m03 { background: #fff0bf; color: #8b5a00; }
+.task-row__icon--m04 { background: #eee7f8; color: #684b91; }
+.task-row__icon--m05 { background: #f9e5ed; color: #9b3158; }
+.task-row__icon--m06 { background: #e5f0f8; color: #315f87; }
+
 .task-row--done .task-row__icon {
   background: var(--teal);
   color: #fff;
@@ -4721,13 +4728,12 @@ p[role="alert"]::before { content: "!"; }
   min-height: 76px;
   border: 2px solid rgba(33, 113, 111, .2);
   background: var(--paper);
-  box-shadow: 0 3px 0 rgba(33, 113, 111, .12);
+  box-shadow: none;
 }
 
 .learn-missions .task-row:hover {
   border-color: var(--teal);
-  transform: translateY(-1px);
-  box-shadow: 0 5px 0 rgba(33, 113, 111, .14);
+  box-shadow: none;
 }
 
 .learn-missions .task-row--done { background: var(--sage); }
