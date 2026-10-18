@@ -1,16 +1,19 @@
+import { useRefreshBasil } from "../state/gamification";
+import { MissionProgress, QuestionBasil } from "../components/MissionProgress";
+import { basilEarnedText } from "../lib/gamification";
 import { InlineLoader } from "../components/LoadingScreen";
 import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { friendlyError, queryKeys } from "../lib/queryKeys";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { Button, Card, Feedback, IconButton, ProgressTrail, XpPill } from "../components/ui";
+import { Button, Card, Feedback, IconButton, ProgressTrail } from "../components/ui";
 import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, CloseIcon, EyeIcon, EyeOffIcon, SpeakerIcon } from "../components/icons";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
-import { builtSentence, choiceOrder, finishesAfterLearning, markerChoices, nextLearningStep, optionText, practiceStages, questionOptions, sentenceEnding, taskDone, taskTitle, taskXp, xpEarnedText } from "../lib/practiceTasks";
+import { builtSentence, choiceOrder, finishesAfterLearning, markerChoices, nextLearningStep, optionText, practiceStages, questionOptions, sentenceEnding, taskDone, taskTitle } from "../lib/practiceTasks";
 import type { LearningStep } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
-import { checkLessonAnswer, checkVocabularyAnswer, checkVocabularyTyping, getLatestAttempt, getLessonChecks, requestLessonAssistance, reviewDetails, updateMissionScenario, type GrammarLessonQuestion, type LessonAnswerCheck, type SceneObject, type SessionTask, type QuestionOutcome, type TaskActionResult, type TaskAnswer, type TaskContent, type VocabularyLearningWord } from "../lib/api";
+import { checkLessonAnswer, checkVocabularyAnswer, checkVocabularyTyping, getVocabularyChecks, getLatestAttempt, getLessonChecks, requestLessonAssistance, reviewDetails, updateMissionScenario, type GrammarLessonQuestion, type LessonAnswerCheck, type SceneObject, type SessionTask, type QuestionOutcome, type TaskActionResult, type TaskAnswer, type TaskContent, type VocabularyLearningWord } from "../lib/api";
 import { mergeLessonChecks, visibleLessonQuestionIndex } from "../lib/missionLessonFlow";
 import { isM06ScenarioVisible, lessonCheckFinished, nextAssistanceStep, retryTokens, unlockedRetryResumeIndex } from "../lib/missionM06";
 import { ReportIssueLink } from "../components/ReportIssueLink";
@@ -50,7 +53,7 @@ export function LearningTaskPage() {
     goTo(nextLearningStep(session.tasks, lastM06.id, generating,
       item => taskDone(item) || item.publicContent.missionId === "M06"));
   };
-  return <div className="stack learning-task-page"><LearningTaskContent key={task.id} task={task} index={index} total={tasks.length}
+  return <div className="stack learning-task-page">{task.publicContent.missionId ? <MissionProgress sessionId={scene.sessionId!} missionId={task.publicContent.missionId} /> : null}<LearningTaskContent key={task.id} task={task} index={index} total={tasks.length}
     onScenarioChange={() => loadSession(session.session.id)}
     onSkipRolePlay={skipM06RolePlay}
     onNext={() => {
@@ -115,10 +118,9 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onSc
       setChecking(false);
     }
   };
-  const reward = !terminal ? taskXp(task) : null;
-  const earnedText = xpEarnedText(actionResult?.xpEarned);
+  const earnedText = basilEarnedText(actionResult?.basilEarned);
   return <div className="stack">
-    <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />{reward ? <XpPill {...reward} /> : null}</div>
+    <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} /></div>
     <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton></div><ExitToHome onExit={onExit} /></div>
     {card && content.kind === "vocabularyIntroduction" ? <div className="flashcard learning-card">
       <div className="spread"><span className="label muted">{card.wordClass}{card.gender ? " · " + card.gender : ""}</span>
@@ -166,6 +168,7 @@ function ExitToHome({ onExit }: { onExit: () => void }) {
 }
 
 function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }: { task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void }) {
+  const refreshBasil = useRefreshBasil();
   const lastStep = useLastStepLabel();
   const scene = useScene();
   const { actOnTask, practiceSaving, practiceError, session } = useAppState();
@@ -185,6 +188,27 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
   const [typingCheck, setTypingCheck] = useState<{ isCorrect: boolean; correctAnswer: string; revealed: boolean } | null>(null);
   const requestKey = useRef(crypto.randomUUID());
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const [basilByQuestion, setBasilByQuestion] = useState<Record<string, number>>({});
+  const [questionError, setQuestionError] = useState<string | null>(null);
+  const restoredNavigation = useRef(false);
+  const restored = useQuery({ queryKey: queryKeys.vocabularyChecks(task.id),
+    queryFn: ({ signal }) => getVocabularyChecks(task.id, signal) });
+  useEffect(() => {
+    if (!restored.data?.checks) return;
+    const checks = restored.data.checks;
+    setAnswers(value => ({ ...value, ...Object.fromEntries(checks.map(item => [item.questionId, item.acceptedOptionId])) }));
+    setQuestionResults(value => ({ ...value, ...Object.fromEntries(checks.map(item => [item.questionId, item.isCorrect])) }));
+    setCorrectOptionIds(value => ({ ...value, ...Object.fromEntries(checks.map(item => [item.questionId, item.correctOptionId])) }));
+    setBasilByQuestion(value => ({ ...value, ...Object.fromEntries(checks.map(item => [item.questionId, item.basilEarned])) }));
+    if (!restoredNavigation.current) {
+      restoredNavigation.current = true;
+      if (!checks.length) return;
+      const questions = task.publicContent.kind === "vocabularyIntroduction" ? task.publicContent.questions : [];
+      const first = questions.findIndex(item => !checks.some(check => check.questionId === item.questionId));
+      setQuestionIndex(first < 0 ? Math.max(0, questions.length - 1) : first);
+      setStage("quiz");
+    }
+  }, [restored.data, task.publicContent]);
   const content = task.publicContent;
   if (content.kind !== "vocabularyIntroduction") return null;
   const terminal = taskDone(task);
@@ -193,8 +217,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
   const question = content.questions[questionIndex];
   const typingWord = content.words[typingIndex];
   const typingKey = typingWord ? typingWord.learningKey ?? typingWord.vocabularyItemId ?? typingWord.targetText : "";
-  const reward = !terminal ? taskXp(task) : null;
-  const earnedText = xpEarnedText(actionResult?.xpEarned);
+  const earnedText = basilEarnedText(actionResult?.basilEarned);
   const submit = async () => {
     const result = await actOnTask(task.id, "attempts", { inputMode: "vocabularyReview", answers, typedAnswers }, requestKey.current);
     if (result) {
@@ -221,26 +244,23 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
   };
   const finishQuestion = () => questionIndex < content.questions.length - 1 ? setQuestionIndex(value => value + 1) : setStage("typing");
   const chooseAnswer = async (optionId: string) => {
-    if (!question || answers[question.questionId] || checkingQuestion) return;
-    if (question.correctOptionId) {
-      const correct = question.correctOptionId === optionId;
-      setAnswers(value => ({ ...value, [question.questionId]: optionId }));
-      setQuestionResults(value => ({ ...value, [question.questionId]: correct }));
-      setCorrectOptionIds(value => ({ ...value, [question.questionId]: question.correctOptionId! }));
-      playAnswerSound(correct);
-      return;
-    }
+    if (!question || answers[question.questionId] || checkingQuestion || restored.isLoading || restored.isError) return;
     setCheckingQuestion(true);
+    setQuestionError(null);
     setPendingOptionId(optionId);
     try {
       const result = await checkVocabularyAnswer(task.id, question.questionId, optionId);
-      setAnswers(value => ({ ...value, [question.questionId]: optionId }));
+      setAnswers(value => ({ ...value, [question.questionId]: result.acceptedOptionId }));
       setQuestionResults(value => ({ ...value, [question.questionId]: result.isCorrect }));
       setCorrectOptionIds(value => ({ ...value, [question.questionId]: result.correctOptionId }));
+      setBasilByQuestion(value => ({ ...value, [question.questionId]: result.basilEarned }));
+      setPendingOptionId(null);
+      refreshBasil();
       playAnswerSound(result.isCorrect);
+    } catch {
+      setQuestionError("We couldn’t save this answer. Try again when you’re connected.");
     } finally {
       setCheckingQuestion(false);
-      setPendingOptionId(null);
     }
   };
   const checkTyping = async (reveal = false) => {
@@ -263,9 +283,12 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
   };
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__header">
-      <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />{reward ? <XpPill {...reward} /> : null}</div>
+      <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} /><QuestionBasil amount={stage === "quiz" && question ? basilByQuestion[question.questionId] : undefined} /></div>
       <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><ExitToHome onExit={onExit} /></div>
     </div>
+    {restored.isLoading ? <InlineLoader compact label="Restoring word answers…" /> : null}
+    {restored.isError ? <div role="alert"><p>We couldn’t restore your word answers.</p><Button variant="quiet" onClick={() => void restored.refetch()}>Retry saved answers</Button></div> : null}
+    {questionError ? <div role="alert"><p>{questionError}</p><Button variant="secondary" disabled={checkingQuestion || !pendingOptionId} onClick={() => pendingOptionId && void chooseAnswer(pendingOptionId)}>Retry answer</Button></div> : null}
     {!terminal && stage === "review" ? <>
       <div className="vocabulary-learning-grid vocabulary-learning-grid--swipe" onTouchStart={handleCardTouchStart} onTouchEnd={handleCardTouchEnd}>{visibleWords.map(word => <VocabularyLearningCard key={word.learningKey ?? word.vocabularyItemId ?? word.targetText} word={word} languageCode={scene.languageCode} />)}</div>
       <div className="vocabulary-flow__actions">
@@ -283,7 +306,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
         const state = result !== undefined && isCorrectOption ? " choice--correct"
           : !selected ? ""
             : result === undefined ? " choice--selected" : result ? " choice--correct" : " choice--incorrect";
-        return <button key={option.optionId} className={`choice${state}`} aria-pressed={selected} disabled={!!answers[question.questionId] || checkingQuestion || !!feedback} onClick={() => void chooseAnswer(option.optionId)}>{option.label}</button>;
+        return <button key={option.optionId} className={`choice${state}`} aria-pressed={selected} disabled={!!answers[question.questionId] || checkingQuestion || !!feedback || restored.isLoading || restored.isError} onClick={() => void chooseAnswer(option.optionId)}>{option.label}</button>;
       })}</div>
       {checkingQuestion ? <InlineLoader compact label="Checking your answer…" /> : null}
       {answers[question.questionId] ? <>
@@ -481,6 +504,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
   task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void;
   onScenarioChange: () => Promise<unknown>; onSkipRolePlay: () => void;
 }) {
+  const refreshBasil = useRefreshBasil();
   const lastStep = useLastStepLabel();
   const scene = useScene();
   const { actOnTask, practiceSaving, practiceError, session } = useAppState();
@@ -541,8 +565,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
   });
   const isChecked = Boolean(storedCheck && !retrying);
   const terminal = taskDone(actionResult?.task ?? task);
-  const reward = !terminal ? taskXp(task) : null;
-  const earnedText = xpEarnedText(actionResult?.xpEarned);
+  const earnedText = basilEarnedText(actionResult?.basilEarned);
   const questionObjects = question?.groupObjectIds
     ?.map(id => scene.items.find(item => item.id === id))
     .filter((item): item is NonNullable<typeof item> => Boolean(item)) ?? [];
@@ -590,6 +613,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
     setCheckError(null);
     try {
       const result = await checkLessonAnswer(task.id, question.questionId, answer);
+      refreshBasil();
       setLocalChecks(value => ({ ...value, [result.questionId]: result }));
       setRetryReady(value => ({ ...value, [result.questionId]: false }));
       playAnswerSound(result.isCorrect);
@@ -680,7 +704,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
   };
 
   return <div className="stack vocabulary-flow">
-    <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />{reward ? <XpPill {...reward} /> : null}</div>
+    <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} /></div>
     <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><ExitToHome onExit={onExit} /></div>
     {saved.isLoading ? <InlineLoader compact label="Restoring checked answers…" /> : null}
     {saved.isError ? <div role="alert"><p>Unable to restore checked answers.</p>
@@ -701,7 +725,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
         </section>
       </Card> : null}
       <Card plain><div className="stack">
-        <span className="label muted">Question {activeIndex + 1} of {content.questions.length}</span>
+        <div className="question-progress"><span className="label muted">Question {activeIndex + 1} of {content.questions.length}</span><QuestionBasil amount={storedCheck?.basilEarned} /></div>
         {question.dialogue?.length ? <div className="mission-dialogue" aria-label="Conversation so far">
           {question.dialogue.map((turn, turnIndex) => <p key={`${turn.speaker}-${turnIndex}`}
             className={`mission-dialogue__turn mission-dialogue__turn--${turn.speaker}`}>
@@ -871,6 +895,8 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
 }
 
 function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void }) {
+  const refreshBasil = useRefreshBasil();
+  const [questionBasil, setQuestionBasil] = useState<Record<string, number>>({});
   const lastStep = useLastStepLabel();
   const scene = useScene();
   const { actOnTask, practiceSaving, practiceError, session } = useAppState();
@@ -893,7 +919,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
   const savedChecks = useQuery({
     queryKey: queryKeys.lessonChecks(task.id),
     queryFn: ({ signal }) => getLessonChecks(task.id, signal),
-    enabled: content.kind === "grammarLesson" && task.status !== "completed",
+    enabled: content.kind === "grammarLesson",
   });
   const restorable = content.kind === "grammarLesson" && Boolean(content.missionId) && task.status === "completed";
   const saved = useQuery({
@@ -902,8 +928,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
     enabled: restorable && !Object.keys(questionResults).length,
   }).data?.attempt;
   const terminal = taskDone(task);
-  const reward = !terminal ? taskXp(task) : null;
-  const earnedText = xpEarnedText(actionResult?.xpEarned);
+  const earnedText = basilEarnedText(actionResult?.basilEarned);
   const restored = !Object.keys(questionResults).length && saved?.reviewDetails ? saved : null;
   const results = restored?.reviewDetails?.questionResults ?? questionResults;
   const solutions = restored?.reviewDetails?.correctAnswers ?? correctAnswers;
@@ -914,6 +939,8 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
   useEffect(() => {
     if (!savedChecks.data?.checks.length || content.kind !== "grammarLesson") return;
     const stored = savedChecks.data.checks;
+    setQuestionBasil(value => ({ ...value, ...Object.fromEntries(stored.map(item => [item.questionId, item.basilEarned ?? 0])) }));
+    if (task.status === "completed") return;
     setAnswers(value => ({ ...value, ...Object.fromEntries(stored.map(item => [item.questionId, item.answer])) }));
     setQuestionResults(value => ({ ...value, ...Object.fromEntries(stored.map(item => [item.questionId, item.isCorrect])) }));
     setCorrectAnswers(value => ({
@@ -924,7 +951,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
     }));
     setOutcomes(value => ({ ...value, ...Object.fromEntries(stored.map(item => [item.questionId, item.outcome])) }));
     setActiveIndex(visibleLessonQuestionIndex(content.questions.map(item => item.questionId), Object.fromEntries(stored.map(item => [item.questionId, item]))));
-  }, [savedChecks.data, content]);
+  }, [savedChecks.data, content, task.status]);
   if (content.kind !== "grammarLesson") return null;
   const answerFor = (question: typeof content.questions[number]) => question.interactionType === "sentenceBuilding"
     ? builtSentence((builtTokenIndexes[question.questionId] ?? []).map(index => question.tokenBank[index]))
@@ -940,6 +967,8 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
     setCheckError(null);
     try {
       const result = await checkLessonAnswer(task.id, activeQuestion.questionId, activeAnswer);
+      setQuestionBasil(value => ({ ...value, [result.questionId]: result.basilEarned ?? 0 }));
+      refreshBasil();
       setQuestionResults(value => ({ ...value, [result.questionId]: result.isCorrect }));
       const correctAnswer = result.correctAnswer;
       if (correctAnswer !== null) {
@@ -970,7 +999,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
     }
   };
   return <div className="stack vocabulary-flow">
-    <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />{reward ? <XpPill {...reward} /> : null}</div>
+    <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} /><QuestionBasil amount={activeQuestion ? questionBasil[activeQuestion.questionId] : undefined} /></div>
     <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><ExitToHome onExit={onExit} /></div>
     {activeIndex === 0 && content.prep?.length ? <Card plain><div className="stack-2 lesson-prep" aria-label="Learn first">
       <span className="label muted">Learn first</span>

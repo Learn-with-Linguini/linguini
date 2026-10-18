@@ -73,7 +73,7 @@ function RoomLobby() {
         <Button disabled={busy} onClick={() => navigate(`/rooms/${encodeURIComponent(active.data!.id)}`)}>Return to room</Button></Card> :
       <Card className="stack"><h2>Start a private room</h2><p>Invite one friend, then add 2–4 photos. Each photo becomes one round.</p>
         <Button disabled={!activeProfile || busy || Boolean(pendingKind)} onClick={() => void enter("create")}>Create a room</Button>
-        <p className="small muted">Starting the game uses 1 Sauce for each person.</p></Card>}
+        <p className="small muted">Take turns with a friend across photos you choose together.</p></Card>}
     {!active.data ? <Card className="stack"><h2>Have an invitation?</h2>
       <label className="field">Room code<input className="input" value={code} autoComplete="off" autoCapitalize="none" spellCheck={false}
         maxLength={100} disabled={busy || Boolean(pendingKind)} onChange={event => setCode(event.target.value)} placeholder="Paste your friend’s code" /></label>

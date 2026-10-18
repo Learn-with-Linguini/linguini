@@ -92,6 +92,13 @@ class TaskService:
             task_id, learning_key, answer, reveal
         )
 
+
+    def vocabulary_checks(self, task_id):
+        from app.repositories.postgres.workflow import PostgresWorkflowRepository
+
+        user = self.users.get_current_user()
+        return PostgresWorkflowRepository(self.engine, user.id).vocabulary_checks(task_id)
+
     def check_lesson_answer(self, task_id, question_id, answer) -> CheckLessonAnswerResponse:
         from app.repositories.postgres.workflow import PostgresWorkflowRepository
 

@@ -7,6 +7,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { JSDOM } from "jsdom";
 import { rolldown } from "rolldown";
 import { learningFeedback } from "../src/lib/learningFeedback.ts";
+import { queryKeys } from "../src/lib/queryKeys.ts";
 import type { LessonAnswerCheck, LatestClueAttempt, SessionTask, TaskActionResult } from "../src/lib/api.ts";
 
 const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://app.test/", pretendToBeVisual: true });
@@ -44,6 +45,8 @@ async function bundle() {
 }
 const surface = await bundle();
 let savedChecks: LessonAnswerCheck[] = [];
+let vocabularySaved: Record<string, unknown>[] = [];
+let vocabularyRestoreFails = false;
 let latestAttempt: LatestClueAttempt | null = null;
 const replies: (() => Response | Promise<Response>)[] = [];
 const actions: (() => TaskActionResult | null)[] = [];
@@ -51,13 +54,14 @@ const requests: Record<string, unknown>[] = [];
 const originalFetch = globals.fetch;
 globals.fetch = async (input: unknown, init?: RequestInit) => {
   const path = new URL(String(input)).pathname;
+  if (path.endsWith("/vocabulary-checks")) return vocabularyRestoreFails ? Response.json({ detail: { message: "Unavailable" } }, { status: 503 }) : Response.json({ checks: vocabularySaved });
   if (path.endsWith("/lesson-checks")) return Response.json({ checks: savedChecks, assistanceSteps: {} });
   if (path.endsWith("/latest-attempt")) return Response.json({ attempt: latestAttempt });
   requests.push(JSON.parse(String(init?.body ?? "{}")));
   return replies.shift()?.() ?? new Response("Unexpected fixture request", { status: 500 });
 };
 const cleanups = new Set<() => Promise<void>>();
-test.beforeEach(() => { savedChecks = []; latestAttempt = null; replies.length = 0; actions.length = 0; requests.length = 0; });
+test.beforeEach(() => { savedChecks = []; vocabularySaved = []; vocabularyRestoreFails = false; latestAttempt = null; replies.length = 0; actions.length = 0; requests.length = 0; });
 test.afterEach(async () => { for (const cleanup of [...cleanups]) await cleanup(); });
 test.after(() => {
   globals.fetch = originalFetch;
@@ -94,7 +98,7 @@ function lesson(missionId = "M01"): SessionTask {
         tokenBank: [], options: [{ optionId: "a", label: "la" }, { optionId: "b", label: "el" }], allowRetry: missionId === "M06" }] } };
 }
 function checked(correct: boolean, attemptsLeft = 0): LessonAnswerCheck {
-  return { questionId: "q1", answer: correct ? "a" : "b", isCorrect: correct, correctAnswer: "la", attemptsLeft,
+  return { basilEarned: correct ? 10 : 5, questionId: "q1", answer: correct ? "a" : "b", isCorrect: correct, correctAnswer: "la", attemptsLeft,
     feedback: correct ? "The article matches taza." : "Keep the noun and check its article.",
     outcome: { questionId: "q1", outcome: correct ? "correct" : "incorrect", objectiveId: "article", targetIds: [],
       evidenceType: "recognition", assistance: ["wordBank"], assistanceUsed: true,
@@ -132,7 +136,7 @@ async function mount(initialTask: SessionTask) {
   cleanups.add(close);
   await render();
   await waitFor(() => assert.doesNotMatch(text(), /Restoring checked answers…|Restoring your place…/));
-  return { close, render };
+  return { close, render, client };
 }
 
 test("A0 checked answers retain correctness, server feedback and notes across rerenders and restoration", async () => {
@@ -144,6 +148,7 @@ test("A0 checked answers retain correctness, server feedback and notes across re
   await waitFor(() => assert.match(text(), /Correct!/));
   assert.ok(text().includes(phrase));
   assert.match(text(), /The article matches taza/);
+  assert.match(text(), /\+10 Basil earned/);
   assert.match(text(), /El is used with masculine nouns/);
   assert.match(text(), /Supported practice: built with the word bank/);
   await view.render();
@@ -198,7 +203,7 @@ test("a failed question check shows the error without an answer celebration", as
   assert.equal(button("la")?.getAttribute("aria-pressed"), "true");
 });
 
-test("reading completion keeps neutral participation copy and the server's reward amount", async () => {
+test("reading completion stays neutral and does not turn XP into Basil", async () => {
   const task: SessionTask = { ...lesson(), kind: "grammarExplanation", publicContent: { kind: "grammarExplanation", title: "Read the pattern", explanation: "Taza uses la.", examples: [] } };
   await mount(task);
   actions.push(() => action(task, null, "Reading participation saved.", 3));
@@ -206,7 +211,7 @@ test("reading completion keeps neutral participation copy and the server's rewar
   await waitFor(() => assert.match(text(), /Reading participation saved/));
   assert.ok(text().includes(learningFeedback("saved", task.id)));
   assert.ok(!text().includes(learningFeedback("correct", task.id)));
-  assert.match(text(), /\+3 Basil earned/);
+  assert.doesNotMatch(text(), /\+3 Basil earned/);
   assert.doesNotMatch(text(), /mastered|accent|Full marks/i);
 });
 
@@ -227,6 +232,7 @@ test("a restored mixed task shows one neutral batch heading and retains the corr
   assert.match(text(), /Taza is feminine/);
   assert.match(text(), /Supported practice: built with the word bank/);
   assert.equal(dom.window.document.querySelectorAll('.feedback [role="status"]').length, 1);
+  assert.equal(dom.window.document.querySelector('.question-basil'), null, "historical grades do not imply an earned reward");
 });
 
 test("restored checks on a skipped task never add branded praise", async () => {
@@ -239,19 +245,99 @@ test("restored checks on a skipped task never add branded praise", async () => {
 });
 
 test("vocabulary feedback keeps the correct word and a locked answer", async () => {
-  const task: SessionTask = { ...lesson(), kind: "vocabularyIntroduction", publicContent: {
+  const task = vocabularyTask();
+  await mount(task);
+  await click("Start quick quiz");
+  replies.push(() => Response.json({ questionId: "word1", acceptedOptionId: "table", isCorrect: false, correctOptionId: "cup", basilEarned: 5 }));
+  await click("table");
+  await waitFor(() => assert.match(text(), /\+5 Basil earned/));
+  assert.ok(text().includes(learningFeedback("incorrect", "t1:word1")));
+  assert.match(text(), /Incorrect\. The correct answer is cup/);
+  assert.equal(button("cup")?.disabled, true);
+  assert.equal(button("Try again"), undefined);
+  assert.equal(button("Continue")?.disabled, false);
+});
+
+function vocabularyTask(): SessionTask {
+  return { ...lesson(), kind: "vocabularyIntroduction", publicContent: {
     kind: "vocabularyIntroduction", title: "Photo words", allowTypingPractice: true,
     words: [{ learningKey: "cup", termType: "object", vocabularyItemId: "v1", sceneObjectId: null, targetText: "taza", translation: "cup",
       partOfSpeech: "noun", gender: null, pluralForm: null, phoneticText: null, pronunciationAudioAssetId: null, exampleSentence: null }],
     questions: [{ questionId: "word1", prompt: "What is taza?", correctOptionId: "cup",
       options: [{ optionId: "cup", label: "cup" }, { optionId: "table", label: "table" }] }],
   } };
-  await mount(task);
+}
+
+test("saved vocabulary answers restore their accepted choice and Basil without another check", async () => {
+  vocabularySaved = [{ questionId: "word1", acceptedOptionId: "table", isCorrect: false, correctOptionId: "cup", basilEarned: 5 }];
+  await mount(vocabularyTask());
+  await waitFor(() => assert.match(text(), /\+5 Basil earned/));
+  assert.match(text(), /Incorrect. The correct answer is cup/);
+  assert.equal(button("table")?.disabled, true);
+  assert.equal(requests.length, 0);
+});
+
+test("a failed vocabulary restore blocks checking rather than starting with empty answers", async () => {
+  vocabularyRestoreFails = true;
+  await mount(vocabularyTask());
+  await waitFor(() => assert.match(text(), /We couldn’t restore your word answers/));
   await click("Start quick quiz");
+  assert.equal(button("table")?.disabled, true);
+  assert.doesNotMatch(text(), /\+\d+ Basil earned/);
+  assert.equal(requests.length, 0);
+});
+
+test("a lost vocabulary reply shows no reward until the canonical saved answer returns", async () => {
+  await mount(vocabularyTask());
+  await waitFor(() => assert.doesNotMatch(text(), /Restoring word answers/));
+  await click("Start quick quiz");
+  replies.push(() => { throw new Error("Reply lost"); });
   await click("table");
-  assert.ok(text().includes(learningFeedback("incorrect", "t1:word1")));
-  assert.match(text(), /Incorrect\. The correct answer is cup/);
-  assert.equal(button("cup")?.disabled, true);
-  assert.equal(button("Try again"), undefined);
-  assert.equal(button("Continue")?.disabled, false);
+  await waitFor(() => assert.match(text(), /We couldn’t save this answer/));
+  assert.doesNotMatch(text(), /\+\d+ Basil earned/);
+  replies.push(() => Response.json({ questionId: "word1", acceptedOptionId: "table", isCorrect: false, correctOptionId: "cup", basilEarned: 5 }));
+  await click("Retry answer");
+  await waitFor(() => assert.match(text(), /\+5 Basil earned/));
+  assert.deepEqual(requests[0], requests[1]);
+});
+
+test("refreshing vocabulary checks keeps the learner's typing stage and unfinished text", async () => {
+  const view = await mount(vocabularyTask());
+  await waitFor(() => assert.doesNotMatch(text(), /Restoring word answers/));
+  await click("Start quick quiz");
+  const accepted = { questionId: "word1", acceptedOptionId: "cup", isCorrect: true, correctOptionId: "cup", basilEarned: 10 };
+  replies.push(() => Response.json(accepted));
+  await click("cup");
+  await waitFor(() => assert.ok(button("Continue")));
+  await click("Continue");
+  const input = dom.window.document.querySelector<HTMLInputElement>('input[aria-label="Type cup"]');
+  assert.ok(input);
+  await surface.act(async () => {
+    Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, "value")!.set!.call(input, "taz");
+    input.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
+  });
+  assert.equal(button("Check answer")?.disabled, false);
+  vocabularySaved = [accepted];
+  await surface.act(async () => { await view.client.invalidateQueries({ queryKey: queryKeys.vocabularyChecks("t1") }); });
+  assert.equal(dom.window.document.querySelector('input[aria-label="Type cup"]'), input);
+  assert.equal(input.value, "taz");
+  assert.equal(button("Check answer")?.disabled, false);
+  assert.equal(requests.length, 1);
+});
+
+test("a completed grouped lesson restores only server-awarded Basil alongside its saved review", async () => {
+  const task = lesson();
+  task.status = "completed";
+  if (task.publicContent.kind !== "grammarLesson") throw new Error("Expected grammar fixture");
+  task.publicContent.checkEachQuestion = false;
+  savedChecks = [checked(false)];
+  latestAttempt = { id: "completed1", attemptNumber: 1, text: "", optionId: null, isCorrect: false, feedback: "Saved review details.",
+    evaluationDetails: null, assistance: null, answers: { q1: "b" },
+    reviewDetails: { questionResults: { q1: false }, correctAnswers: { q1: "a" }, questionOutcomes: [checked(false).outcome] } };
+  await mount(task);
+  await waitFor(() => assert.match(text(), /\+5 Basil earned/));
+  assert.match(text(), /Saved review details/);
+  assert.match(text(), /The correct answer is la/);
+  assert.match(text(), /Taza is feminine/);
+  assert.equal(requests.length, 0, "opening a review only reads the saved reward");
 });

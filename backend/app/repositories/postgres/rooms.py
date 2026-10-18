@@ -915,9 +915,6 @@ class PostgresRoomRepository:
                     raise RoomError(
                         "room_photos_not_ready", "Review two to four photos before starting."
                     )
-                for member in sorted(members, key=lambda m: str(m["user_id"])):
-                    if self.spend_sauce:
-                        self.spend_sauce(c, member["user_id"], f"room:{room_id}:start")
                 for index, photo in enumerate(photos):
                     targets = photo["pack"].get("targets", [])
                     if not targets:

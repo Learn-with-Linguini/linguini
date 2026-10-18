@@ -195,6 +195,7 @@ class SessionDetailResponse(ApiModel):
 
 
 class SessionSummaryResponse(ApiModel):
+    basil_earned: int = 0
     session: Session
     progress: SessionProgress
     learned_vocabulary_ids: list[UUID] = Field(default_factory=list)

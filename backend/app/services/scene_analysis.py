@@ -22,6 +22,7 @@ from app.services.session_plan import build_objects
 
 
 class SceneAnalysisResult(BaseModel):
+    content_hash: str | None = None
     title: str
     summary: str | None = None
     objects: list[SceneObject]
