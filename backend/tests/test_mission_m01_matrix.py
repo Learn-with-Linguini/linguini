@@ -4,6 +4,11 @@ from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 import pytest
+from test_mission_m01_contract import (
+    planned_a0_output,
+    planned_a1_output,
+    planned_a2_output,
+)
 
 import app.languages as language_registry
 from app.languages import learnable_languages
@@ -33,7 +38,6 @@ from app.schemas.mission_m01_contract import (
     M01ContractInput,
     M01GeneratedLesson,
     MissionRef,
-    PreparationCard,
     SentenceChunk,
 )
 from app.schemas.tasks import VocabularyChoice
@@ -251,87 +255,43 @@ def _question(contract, question_id, target_id, interaction, fact_ids, answer_te
 
 def _generated_lesson(contract):
     level = contract.mission.practice_level
-    object_facts = {item.label: item.fact_id for item in contract.scene_facts.objects}
-    term_text = {term.fact_id: term.target_text for term in contract.vocabulary}
-    cup = term_text[object_facts["cup"]]
-    table = term_text[object_facts["table"]] if "table" in object_facts else None
-    detail = next(
-        (
-            item for item in contract.scene_facts.attributes
-            if item.object_fact_id == object_facts["cup"]
-        ),
-        None,
-    )
-    relation = contract.scene_facts.relations[0] if contract.scene_facts.relations else None
-    questions = []
-    if level == "A0":
-        questions.extend([
-            _question(contract, "marker", "recognise-name", "markerChoice",
-                      [object_facts["cup"]], [cup]),
-            _question(contract, "recognise", "recognise-name", "multipleChoice",
-                      [object_facts["cup"]], [cup]),
-            _question(contract, "identify-build", "identify-object", "sentenceBuilding",
-                      [object_facts["cup"]], [cup]),
-            _question(contract, "identify-choice", "identify-object", "multipleChoice",
-                      [object_facts["cup"]], [cup]),
-        ])
-    elif level == "A1":
-        detail_target = "describe-colour" if detail else "describe-location"
-        detail_facts = (
-            [object_facts["cup"], detail.fact_id] if detail else
-            [object_facts["cup"], object_facts["table"], relation.fact_id]
-        )
-        detail_terms = (
-            [cup, term_text[detail.fact_id]] if detail else
-            [cup, term_text[relation.fact_id], table]
-        )
-        questions.extend([
-            _question(contract, "marker", "identify-object", "markerChoice",
-                      [object_facts["cup"]], [cup]),
-            _question(contract, "name", "name-object", "multipleChoice",
-                      [object_facts["cup"]], [cup]),
-            _question(contract, "detail-build", detail_target, "sentenceBuilding",
-                      detail_facts, detail_terms),
-            _question(contract, "detail-choice", detail_target, "multipleChoice",
-                      detail_facts, detail_terms),
-        ])
-    else:
-        if detail is None or relation is None or table is None:
-            raise AssertionError("A2 matrix generation requires the connected scene.")
-        connected_facts = [
-            object_facts["cup"], detail.fact_id, relation.reference_fact_id,
-            relation.fact_id,
-        ]
-        blue = term_text[detail.fact_id]
-        relation_text = term_text[relation.fact_id]
-        questions.extend([
-            _question(contract, "marker", "identify-scene-object", "markerChoice",
-                      [object_facts["cup"]], [cup]),
-            _question(contract, "describe", "describe-scene-facts", "sentenceBuilding",
-                      [object_facts["cup"], detail.fact_id], [cup, blue]),
-            _question(contract, "connect", "connect-scene-facts", "sentenceBuilding",
-                      connected_facts, [cup, blue, relation_text, table]),
-            _question(contract, "follow-up", "follow-up-scene-fact", "multipleChoice",
-                      [detail.fact_id], [blue]),
-            _question(contract, "describe-choice", "describe-scene-facts", "multipleChoice",
-                      [object_facts["cup"], detail.fact_id], [cup, blue]),
-        ])
-
-    object_names = list(object_facts)
-    preparation = [
-        PreparationCard(
-            card_id=f"prep-{name}",
-            text=term_text[object_facts[name]],
-            translation=f"the {name}",
-            fact_ids=[object_facts[name]],
-        )
-        for name in object_names[:2]
-    ]
+    builder = {
+        "A0": planned_a0_output,
+        "A1": planned_a1_output,
+        "A2": planned_a2_output,
+    }[level]
+    _, planned, _ = builder(contract)
+    language = language_registry.get_language(contract.target_language)
     return M01GeneratedLesson(
-        title="Fixed-scene practice",
-        explanation=None,
-        preparation=preparation,
-        questions=questions,
+        title=planned.title,
+        explanation=planned.explanation,
+        preparation=planned.preparation,
+        questions=[
+            GeneratedQuestion(
+                question_id=question.question_id,
+                target_ids=question.target_ids,
+                section=question.section,
+                prompt=question.prompt,
+                prompt_translation=question.prompt_translation,
+                instruction=question.instruction,
+                interaction=question.interaction,
+                options=question.options,
+                marker_options=[
+                    GeneratedMarkerOption(option_id=option_id, fact_id=fact_id)
+                    for option_id, fact_id in (question.marker_fact_ids or {}).items()
+                ],
+                chunks=[
+                    chunk.model_copy(update={
+                        "join": default_join(language, chunk.text),
+                    })
+                    for chunk in question.chunks
+                ],
+                fact_ids=question.fact_ids,
+                answer=planned.private.answers[question.question_id],
+                feedback=question.feedback,
+            )
+            for question in planned.questions
+        ],
     )
 
 
@@ -340,9 +300,9 @@ def test_fixed_scene_matrix(language, synthetic_registry):
     expected = {
         "S1": {"A0"},
         "S2": {"A0", "A1"},
-        "S3": {"A0", "A1", "A2"},
+        "S3": {"A0", "A2"},
         "S4": set(),
-        "S5": {"A0", "A1"},
+        "S5": {"A0"},
     }
     for scene, levels in expected.items():
         for level in ("A0", "A1", "A2"):
@@ -357,34 +317,38 @@ def test_fixed_scene_matrix(language, synthetic_registry):
             generated = _generated_lesson(contract)
             output = convert_generated_lesson(contract, generated)
             validate_contract_output(contract, output, plan)
-            assert len(output.questions) == plan.min_questions
+            assert len(output.questions) == len(plan.questions)
             task = build_m01_multilingual_task(uuid4(), definition, contract, output)
 
-            assert any(question.interaction == "markerChoice" for question in output.questions)
             assert any(question.interaction == "sentenceBuilding" for question in output.questions)
+            if level in {"A0", "A2"}:
+                assert any(
+                    question.interaction == "markerChoice" for question in output.questions
+                )
             assert all(
                 evaluation.evidence_type != "production"
                 for evaluation in task.answer_key.question_evaluations
             )
-            marker_question = next(
-                question for question in task.public_content.questions
-                if question.question_id == "marker"
-            )
-            generated_marker_question = next(
-                question for question in generated.questions
-                if question.question_id == "marker"
-            )
-            markers_by_fact = {
-                item.fact_id: item.marker for item in contract.scene_facts.objects
-            }
-            expected_marker_labels = {
-                str(markers_by_fact[item.fact_id])
-                for item in generated_marker_question.marker_options
-            }
-            assert (
-                {option.label for option in marker_question.options}
-                == expected_marker_labels
-            )
+            if level in {"A0", "A2"}:
+                generated_marker_question = next(
+                    question for question in generated.questions
+                    if question.interaction == "markerChoice"
+                )
+                marker_question = next(
+                    question for question in task.public_content.questions
+                    if question.question_id == generated_marker_question.question_id
+                )
+                markers_by_fact = {
+                    item.fact_id: item.marker for item in contract.scene_facts.objects
+                }
+                expected_marker_labels = {
+                    str(markers_by_fact[item.fact_id])
+                    for item in generated_marker_question.marker_options
+                }
+                assert (
+                    {option.label for option in marker_question.options}
+                    == expected_marker_labels
+                )
 
             sentence = next(
                 question for question in task.public_content.questions
@@ -422,28 +386,76 @@ def test_fixed_scene_matrix(language, synthetic_registry):
                     assert not _lesson_answer_is_correct(task, question.question_id, wrong_option)
 
 
-def test_missing_approved_translation_for_the_only_detail_makes_a1_ineligible(
+def test_a1_requires_approved_colour_terms_for_each_focus_object(
     synthetic_registry,
 ):
-    contract = _contract("es", "A1", "S5")
-    relation_fact = contract.scene_facts.relations[0].fact_id
+    contract = _contract("es", "A1", "S2")
+    colour_fact = contract.scene_facts.attributes[0].fact_id
     contract = contract.model_copy(update={
-        "vocabulary": [term for term in contract.vocabulary if term.fact_id != relation_fact],
+        "vocabulary": [term for term in contract.vocabulary if term.fact_id != colour_fact],
     })
     result = m01_multilingual_eligibility(load_m01_level_plan("A1"), contract)
     assert not result.eligible
-    assert "At least 1 approved detail terms are required." in result.reasons
-    assert {item.label for item in contract.scene_facts.objects} == {"cup", "table"}
-    assert contract.scene_facts.attributes == []
-    assert len(contract.scene_facts.relations) == 1
+    assert any("approved colour terms" in reason for reason in result.reasons)
+    assert {item.label for item in contract.scene_facts.objects} == {"cup", "book"}
+    assert len(contract.scene_facts.attributes) == 2
+
+
+def test_a1_eligibility_accepts_two_later_coloured_objects(synthetic_registry):
+    contract = _contract("es", "A1", "S3")
+    object_facts = {item.label: item.fact_id for item in contract.scene_facts.objects}
+    attribute_facts = {item.fact_id for item in contract.scene_facts.attributes}
+    later_attributes = [
+        ConfirmedAttribute(
+            fact_id=fact_id("attribute", OBJECT_IDS[name], "colour"),
+            object_fact_id=object_facts[name],
+            kind="colour",
+            value=value,
+        )
+        for name, value in (("table", "blue"), ("book", "red"))
+    ]
+    later_terms = [
+        ApprovedTerm(
+            term_id=f"term-{name}-{value}",
+            fact_id=attribute.fact_id,
+            source_text=value,
+            target_text={"blue": "azul", "red": "roja"}[value],
+            part_of_speech="adjective",
+            provenance="sessionTranslation",
+        )
+        for (name, value), attribute in zip(
+            (("table", "blue"), ("book", "red")), later_attributes, strict=True
+        )
+    ]
+    updated_contract = contract.model_copy(update={
+        "scene_facts": contract.scene_facts.model_copy(update={
+            "attributes": later_attributes,
+        }),
+        "vocabulary": [
+            *(
+                term for term in contract.vocabulary
+                if term.fact_id not in attribute_facts
+            ),
+            *later_terms,
+        ],
+    })
+
+    assert updated_contract.scene_facts.objects[0].label == "cup"
+    assert {item.object_fact_id for item in later_attributes} == {
+        object_facts["table"],
+        object_facts["book"],
+    }
+    assert m01_multilingual_eligibility(
+        load_m01_level_plan("A1"), updated_contract
+    ).eligible
 
 
 @pytest.mark.parametrize("removed_fact_id", [
-    fact_id("object", OBJECT_IDS["book"]),
-    fact_id("attribute", OBJECT_IDS["cup"], "colour"),
+    fact_id("object", OBJECT_IDS["table"]),
+    fact_id("attribute", OBJECT_IDS["cup"], "size"),
 ])
-def test_s5_output_cannot_reference_removed_facts(synthetic_registry, removed_fact_id):
-    contract = _contract("es", "A1", "S5")
+def test_output_cannot_reference_removed_facts(synthetic_registry, removed_fact_id):
+    contract = _contract("es", "A1", "S2")
     plan = load_m01_level_plan("A1")
     output = convert_generated_lesson(contract, _generated_lesson(contract))
     question = output.questions[0].model_copy(update={

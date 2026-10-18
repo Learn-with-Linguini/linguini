@@ -1,67 +1,173 @@
 # Explicit level plans for the multilingual M01 path. The model fills these plans;
 # it never chooses targets, workload or assessment criteria itself.
-plan_version = 1
-
-# Evidence recorded for each interaction, in preference order; the first type the
-# question's target permits is used. Nothing here records production evidence.
-[evidence]
-markerChoice = ["objectSelection", "recognition"]
-multipleChoice = ["recognition"]
-sentenceBuilding = ["construction"]
+plan_version = 2
 
 [levels.A0]
 content_version = 1
 fact_kinds = ["object"]
 min_objects = 2
 min_detail_facts = 0
-min_questions = 4
-max_questions = 5
-min_preparation_cards = 2
-max_preparation_cards = 3
-min_options = 2
-max_options = 3
+focus_objects = 2
 max_answer_chunks = 6
-max_distractor_chunks = 1
-[levels.A0.interactions]
-recognise-name = ["multipleChoice", "markerChoice"]
-identify-object = ["multipleChoice", "sentenceBuilding"]
+[levels.A0.preparation]
+per_object = true
+extra_cards = 2
+
+[[levels.A0.questions]]
+purpose = "matchName"
+target_ids = ["recognise-name"]
+interaction = "markerChoice"
+evidence = "recognition"
+criteria = ["name-matches-object"]
+focus = 1
+options = [2, 3]
+
+[[levels.A0.questions]]
+purpose = "confirmName"
+target_ids = ["identify-object"]
+interaction = "multipleChoice"
+evidence = "recognition"
+criteria = ["identifies-object"]
+focus = 1
+options = [2, 2]
+
+[[levels.A0.questions]]
+purpose = "buildIdentify"
+target_ids = ["identify-object"]
+interaction = "sentenceBuilding"
+evidence = "construction"
+criteria = ["identifies-object"]
+focus = 1
+distractor_chunks = [1, 1]
+
+[[levels.A0.questions]]
+purpose = "matchName"
+target_ids = ["recognise-name"]
+interaction = "markerChoice"
+evidence = "recognition"
+criteria = ["name-matches-object"]
+focus = 2
+options = [2, 3]
+
+[[levels.A0.questions]]
+purpose = "confirmName"
+target_ids = ["identify-object"]
+interaction = "multipleChoice"
+evidence = "recognition"
+criteria = ["identifies-object"]
+focus = 2
+options = [2, 2]
+
+[[levels.A0.questions]]
+purpose = "buildIdentify"
+target_ids = ["identify-object"]
+interaction = "sentenceBuilding"
+evidence = "construction"
+criteria = ["identifies-object"]
+focus = 2
+distractor_chunks = [1, 1]
 
 [levels.A1]
 content_version = 1
 fact_kinds = ["object", "attribute", "relation"]
 min_objects = 2
 min_detail_facts = 1
-min_questions = 4
-max_questions = 6
-min_preparation_cards = 2
-max_preparation_cards = 4
-min_options = 2
-max_options = 4
+focus_objects = 2
 max_answer_chunks = 8
-max_distractor_chunks = 2
-[levels.A1.interactions]
-identify-object = ["markerChoice"]
-name-object = ["multipleChoice", "sentenceBuilding"]
-describe-colour = ["multipleChoice", "sentenceBuilding"]
-describe-location = ["multipleChoice", "sentenceBuilding"]
+[levels.A1.preparation]
+per_object = false
+extra_cards = 0
+
+[[levels.A1.questions]]
+purpose = "confirmObject"
+target_ids = ["identify-object", "name-object"]
+interaction = "multipleChoice"
+evidence = "recognition"
+criteria = ["selects-described-object", "article-matches-noun"]
+focus = 1
+options = [2, 2]
+
+[[levels.A1.questions]]
+purpose = "confirmObject"
+target_ids = ["identify-object", "name-object"]
+interaction = "multipleChoice"
+evidence = "recognition"
+criteria = ["selects-described-object", "article-matches-noun"]
+focus = 2
+options = [2, 2]
+
+[[levels.A1.questions]]
+purpose = "chooseAttribute"
+target_ids = ["describe-colour"]
+interaction = "multipleChoice"
+evidence = "recognition"
+criteria = ["colour-matches-photo"]
+focus = 1
+options = [2, 3]
+
+[[levels.A1.questions]]
+purpose = "describeObject"
+target_ids = ["name-object", "describe-colour"]
+interaction = "sentenceBuilding"
+evidence = "construction"
+criteria = ["article-matches-noun", "colour-matches-photo"]
+focus = 2
+distractor_chunks = [0, 1]
 
 [levels.A2]
 content_version = 1
 fact_kinds = ["object", "attribute", "relation"]
 min_objects = 3
 min_detail_facts = 2
-min_questions = 5
-max_questions = 7
-min_preparation_cards = 2
-max_preparation_cards = 4
-min_options = 2
-max_options = 4
+focus_objects = 1
 max_answer_chunks = 12
-max_distractor_chunks = 2
 # A connect-scene-facts answer must use at least this many distinct confirmed facts.
 min_connected_facts = 2
-[levels.A2.interactions]
-identify-scene-object = ["markerChoice"]
-describe-scene-facts = ["sentenceBuilding", "multipleChoice"]
-connect-scene-facts = ["sentenceBuilding"]
-follow-up-scene-fact = ["multipleChoice"]
+[levels.A2.preparation]
+per_object = false
+extra_cards = 0
+
+[[levels.A2.questions]]
+purpose = "chooseSceneMarker"
+target_ids = ["identify-scene-object"]
+interaction = "markerChoice"
+evidence = "objectSelection"
+criteria = ["scene-object-matches-fact"]
+focus = 1
+options = [2, 2]
+
+[[levels.A2.questions]]
+purpose = "buildSceneFact"
+target_ids = ["describe-scene-facts"]
+interaction = "sentenceBuilding"
+evidence = "construction"
+criteria = ["scene-sentence-matches-facts"]
+focus = 1
+distractor_chunks = [1, 1]
+
+[[levels.A2.questions]]
+purpose = "chooseSceneDescription"
+target_ids = ["describe-scene-facts"]
+interaction = "multipleChoice"
+evidence = "recognition"
+criteria = ["scene-sentence-matches-facts"]
+focus = 1
+options = [3, 3]
+
+[[levels.A2.questions]]
+purpose = "buildSceneDescription"
+target_ids = ["connect-scene-facts"]
+interaction = "sentenceBuilding"
+evidence = "construction"
+criteria = ["scene-facts-connected"]
+focus = 1
+distractor_chunks = [1, 1]
+
+[[levels.A2.questions]]
+purpose = "followUpSceneFact"
+target_ids = ["follow-up-scene-fact"]
+interaction = "multipleChoice"
+evidence = "recognition"
+criteria = ["scene-follow-up-matches"]
+focus = 1
+options = [2, 3]

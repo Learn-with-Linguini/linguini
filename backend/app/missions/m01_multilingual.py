@@ -11,7 +11,7 @@ from functools import cache
 from pathlib import Path
 from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from app.languages import get_language, languages
 from app.missions import get_mission
@@ -80,6 +80,38 @@ type M01FactKind = Literal["object", "attribute", "relation", "count"]
 type M01Interaction = Literal["multipleChoice", "markerChoice", "sentenceBuilding"]
 
 
+class M01QuestionSlot(ApiModel):
+    purpose: str
+    target_ids: list[str] = Field(min_length=1)
+    interaction: M01Interaction
+    evidence: EvidenceType
+    criteria: list[str] = Field(min_length=1)
+    focus: Annotated[int, Field(ge=1)]
+    options: tuple[Annotated[int, Field(ge=2)], Annotated[int, Field(ge=2)]] | None = None
+    distractor_chunks: tuple[
+        Annotated[int, Field(ge=0)], Annotated[int, Field(ge=0)]
+    ] | None = None
+
+    @model_validator(mode="after")
+    def validate_counts(self) -> M01QuestionSlot:
+        if self.interaction == "sentenceBuilding":
+            if self.options is not None or self.distractor_chunks is None:
+                raise ValueError("sentence-building slots require distractor_chunks only")
+            lower, upper = self.distractor_chunks
+        else:
+            if self.distractor_chunks is not None or self.options is None:
+                raise ValueError("choice slots require options only")
+            lower, upper = self.options
+        if lower > upper:
+            raise ValueError("slot count range minimum cannot exceed its maximum")
+        return self
+
+
+class M01PreparationPlan(ApiModel):
+    per_object: bool
+    extra_cards: Annotated[int, Field(ge=0)]
+
+
 class M01LevelPlan(ApiModel):
     level: ProficiencyLevel
     plan_version: int
@@ -87,16 +119,10 @@ class M01LevelPlan(ApiModel):
     fact_kinds: list[M01FactKind]
     min_objects: Annotated[int, Field(ge=1)]
     min_detail_facts: Annotated[int, Field(ge=0)]
-    min_questions: Annotated[int, Field(ge=1)]
-    max_questions: Annotated[int, Field(ge=1)]
-    min_preparation_cards: Annotated[int, Field(ge=0)]
-    max_preparation_cards: Annotated[int, Field(ge=0)]
-    min_options: Annotated[int, Field(ge=2)]
-    max_options: Annotated[int, Field(ge=2)]
+    focus_objects: Annotated[int, Field(ge=1)]
+    questions: list[M01QuestionSlot] = Field(min_length=1)
+    preparation: M01PreparationPlan
     max_answer_chunks: Annotated[int, Field(ge=1)]
-    max_distractor_chunks: Annotated[int, Field(ge=0)]
-    interactions: dict[str, list[M01Interaction]]
-    evidence: dict[M01Interaction, list[EvidenceType]]
     min_connected_facts: Annotated[int, Field(ge=1)] | None = None
 
 
@@ -111,12 +137,57 @@ def load_m01_level_plan(level: ProficiencyLevel | str) -> M01LevelPlan:
     variant = m01_variant("M01", normalized, raw["content_version"])
     if variant.content_version != raw["content_version"]:
         raise MissionContractError(f"M01 plan content version mismatch for {normalized}")
-    return M01LevelPlan.model_validate({
+    plan = M01LevelPlan.model_validate({
         **raw,
         "level": normalized,
         "plan_version": data["plan_version"],
-        "evidence": data["evidence"],
     })
+    definition = get_mission("M01", normalized, plan.content_version)
+    if definition is None:
+        raise MissionContractError(f"no M01 definition for {normalized}")
+    defined_targets = set(definition.targets)
+    slot_targets = {
+        target_id for slot in plan.questions for target_id in slot.target_ids
+    }
+    unknown_targets = slot_targets - defined_targets
+    if unknown_targets:
+        raise MissionContractError(
+            f"M01 {normalized} plan references undefined targets: {sorted(unknown_targets)}"
+        )
+    for group in definition.expected_performance.required_target_groups:
+        if not set(group) & slot_targets:
+            raise MissionContractError(
+                f"M01 {normalized} plan does not cover required target group {group}"
+            )
+    if len(plan.questions) < definition.expected_performance.min_assessed_questions:
+        raise MissionContractError(
+            f"M01 {normalized} plan has fewer slots than required assessed questions"
+        )
+    if plan.min_objects != definition.photo_requirements.min_confirmed_objects:
+        raise MissionContractError(
+            f"M01 {normalized} plan min_objects must match photo requirements"
+        )
+    if plan.focus_objects > plan.min_objects:
+        raise MissionContractError(
+            f"M01 {normalized} plan focus_objects cannot exceed min_objects"
+        )
+    defined_criteria = {item.criterion_id for item in definition.evaluation_criteria}
+    unknown_criteria = {
+        criterion
+        for slot in plan.questions
+        for criterion in slot.criteria
+        if criterion not in defined_criteria
+    }
+    if unknown_criteria:
+        raise MissionContractError(
+            f"M01 {normalized} plan references undefined evaluation criteria: "
+            f"{sorted(unknown_criteria)}"
+        )
+    if any(slot.focus > plan.focus_objects for slot in plan.questions):
+        raise MissionContractError(
+            f"M01 {normalized} plan question focus exceeds focus_objects"
+        )
+    return plan
 
 
 def m01_variant(
@@ -245,21 +316,16 @@ def convert_generated_lesson(
     questions = []
     answers = {}
     evaluations = []
-    for question in generated.questions:
-        permitted = set(plan.evidence[question.interaction])
-        for target_id in question.target_ids:
-            target = definition.targets.get(target_id)
-            if target is None:
-                raise MissionContractError(f"unknown target: {target_id}")
-            permitted &= set(target.evidence_types)
-        evidence_type = next(
-            (item for item in plan.evidence[question.interaction] if item in permitted),
-            None,
+    if len(generated.questions) != len(plan.questions):
+        raise MissionContractError(
+            f"question count {len(generated.questions)} does not match plan "
+            f"{len(plan.questions)}"
         )
-        if evidence_type is None:
-            raise MissionContractError(
-                f"no permitted evidence for {question.interaction} targets"
-            )
+    for index, question in enumerate(generated.questions):
+        slot = plan.questions[index]
+        for target_id in question.target_ids:
+            if target_id not in definition.targets:
+                raise MissionContractError(f"unknown target: {target_id}")
 
         questions.append({
             "question_id": question.question_id,
@@ -293,7 +359,8 @@ def convert_generated_lesson(
             question_id=question.question_id,
             objective_id=definition.objective.objective_id,
             target_ids=question.target_ids,
-            evidence_type=evidence_type,
+            evidence_type=slot.evidence,
+            rubric_criterion_ids=slot.criteria,
             vocabulary_item_ids=vocabulary_ids,
             scene_object_id=first_object.scene_object_id if first_object else None,
             corrections=question.feedback.corrections,
@@ -359,7 +426,10 @@ def validate_contract_output(
     question_ids = [question.question_id for question in output.questions]
     if len(question_ids) != len(set(question_ids)):
         raise MissionContractError("question IDs must be unique")
-    if len(output.questions) < definition.expected_performance.min_assessed_questions:
+    if (
+        plan is None
+        and len(output.questions) < definition.expected_performance.min_assessed_questions
+    ):
         raise MissionContractError("output has fewer than the required assessed questions")
 
     covered_targets: set[str] = set()
@@ -432,26 +502,28 @@ def validate_contract_output(
     if plan is not None:
         _validate_planned_output(contract, definition, output, plan)
 
-    object_fact_ids = set(object_facts)
-    assessed_objects = {
-        fact_ref
-        for question in output.questions
-        for fact_ref in (
-            *question.fact_ids,
-            *(question.marker_fact_ids or {}).values(),
-        )
-        if fact_ref in object_fact_ids
-    }
-    taught_objects = {
-        fact_ref
-        for card in output.preparation
-        for fact_ref in card.fact_ids
-        if fact_ref in object_fact_ids
-    }
-    if assessed_objects - taught_objects:
-        raise MissionContractError(
-            "preparation cards must teach every assessed object before assessment"
-        )
+    preparation_plan = plan or load_m01_level_plan(contract.mission.practice_level)
+    if preparation_plan.preparation.per_object:
+        object_fact_ids = set(object_facts)
+        assessed_objects = {
+            fact_ref
+            for question in output.questions
+            for fact_ref in (
+                *question.fact_ids,
+                *(question.marker_fact_ids or {}).values(),
+            )
+            if fact_ref in object_fact_ids
+        }
+        taught_objects = {
+            fact_ref
+            for card in output.preparation
+            for fact_ref in card.fact_ids
+            if fact_ref in object_fact_ids
+        }
+        if assessed_objects - taught_objects:
+            raise MissionContractError(
+                "preparation cards must teach every assessed object before assessment"
+            )
 
 
 def _fold_contract_text(value: str) -> str:
@@ -498,10 +570,20 @@ def _validate_explanation_does_not_reveal_answers(output: M01ContractOutput) -> 
 def _validate_planned_output(contract, definition, output, plan) -> None:
     if output.mission.content_version != plan.content_version:
         raise MissionContractError("plan content version does not match the mission")
-    if not plan.min_questions <= len(output.questions) <= plan.max_questions:
-        raise MissionContractError("question count is outside the level plan")
-    if not plan.min_preparation_cards <= len(output.preparation) <= plan.max_preparation_cards:
-        raise MissionContractError("preparation-card count is outside the level plan")
+    expected_questions = len(plan.questions)
+    if len(output.questions) != expected_questions:
+        raise MissionContractError(
+            f"question count {len(output.questions)} does not match plan {expected_questions}"
+        )
+    expected_preparation = (
+        len(contract.scene_facts.objects) + plan.preparation.extra_cards
+        if plan.preparation.per_object else plan.preparation.extra_cards
+    )
+    if len(output.preparation) != expected_preparation:
+        raise MissionContractError(
+            f"preparation-card count {len(output.preparation)} is outside "
+            f"{expected_preparation}–{expected_preparation}"
+        )
     facts = {
         **{item.fact_id: "object" for item in contract.scene_facts.objects},
         **{item.fact_id: "attribute" for item in contract.scene_facts.attributes},
@@ -509,9 +591,15 @@ def _validate_planned_output(contract, definition, output, plan) -> None:
         **{item.fact_id: "count" for item in contract.scene_facts.counted_groups},
     }
     objects_by_fact = {item.fact_id: item for item in contract.scene_facts.objects}
+    object_fact_ids = set(objects_by_fact)
     terms_by_fact: dict[str, list] = {}
     for term in contract.vocabulary:
         terms_by_fact.setdefault(term.fact_id, []).append(term)
+    approved_colour_fact_objects = {
+        item.fact_id: item.object_fact_id
+        for item in contract.scene_facts.attributes
+        if item.kind == "colour" and item.fact_id in terms_by_fact
+    }
     allowed_kinds = set(plan.fact_kinds)
 
     references = [
@@ -523,19 +611,30 @@ def _validate_planned_output(contract, definition, output, plan) -> None:
             raise MissionContractError(f"{source} references a fact kind outside the plan")
 
     covered_targets: set[str] = set()
-    for question in output.questions:
-        for target_id in question.target_ids:
-            if question.interaction not in plan.interactions.get(target_id, []):
-                raise MissionContractError(
-                    f"{question.interaction} is not permitted for target {target_id}"
-                )
+    focus_candidates: dict[int, set[str]] = {}
+    colour_focus_indices: set[int] = set()
+    for index, (question, slot) in enumerate(
+        zip(output.questions, plan.questions, strict=True), start=1,
+    ):
+        if question.target_ids != slot.target_ids:
+            raise MissionContractError(
+                f"question {index} targets do not match plan slot {slot.purpose}"
+            )
+        if question.interaction != slot.interaction:
+            raise MissionContractError(
+                f"question {index} interaction does not match plan slot {slot.purpose}"
+            )
         covered_targets.update(question.target_ids)
         choice = question.interaction in {"multipleChoice", "markerChoice"}
         if choice:
             if question.chunks:
                 raise MissionContractError("choice questions cannot have chunks")
-            if not plan.min_options <= len(question.options) <= plan.max_options:
-                raise MissionContractError("choice option count is outside the level plan")
+            minimum, maximum = slot.options
+            if not minimum <= len(question.options) <= maximum:
+                raise MissionContractError(
+                    f"option count {len(question.options)} is outside "
+                    f"{minimum}–{maximum} for {slot.purpose}"
+                )
             labels = [_fold_contract_text(option.label) for option in question.options]
             if len(labels) != len(set(labels)):
                 raise MissionContractError("choice labels must be distinct")
@@ -552,8 +651,13 @@ def _validate_planned_output(contract, definition, output, plan) -> None:
             chunks = {chunk.chunk_id: chunk for chunk in question.chunks}
             if len(answer.chunk_ids) > plan.max_answer_chunks:
                 raise MissionContractError("answer uses too many chunks")
-            if len(question.chunks) - len(answer.chunk_ids) > plan.max_distractor_chunks:
-                raise MissionContractError("question offers too many distractor chunks")
+            distractors = len(question.chunks) - len(answer.chunk_ids)
+            minimum, maximum = slot.distractor_chunks
+            if not minimum <= distractors <= maximum:
+                raise MissionContractError(
+                    f"distractor-chunk count {distractors} is outside "
+                    f"{minimum}–{maximum} for {slot.purpose}"
+                )
             if any(not chunk.text.strip() for chunk in question.chunks):
                 raise MissionContractError("sentence chunks must contain text")
             correct_text = join_chunks([chunks[item] for item in answer.chunk_ids])
@@ -573,6 +677,8 @@ def _validate_planned_output(contract, definition, output, plan) -> None:
             if facts[fact_ref] != "object":
                 continue
             terms = terms_by_fact.get(fact_ref, [])
+            if slot.purpose in {"confirmName", "chooseAttribute", "followUpSceneFact"}:
+                continue
             if not terms or any(
                 _fold_contract_text(term.target_text) not in _fold_contract_text(correct_text)
                 for term in terms
@@ -580,6 +686,60 @@ def _validate_planned_output(contract, definition, output, plan) -> None:
                 raise MissionContractError(
                     "correct answer must contain every approved object term"
                 )
+        question_objects = set(question.fact_ids) & object_fact_ids
+        if not question_objects:
+            raise MissionContractError(
+                f"question {index} must reference its focus object fact"
+            )
+        if "describe-colour" in slot.target_ids:
+            colour_focus_indices.add(slot.focus)
+            colour_objects = {
+                approved_colour_fact_objects[fact_ref]
+                for fact_ref in question.fact_ids
+                if fact_ref in approved_colour_fact_objects
+            }
+            question_objects.intersection_update(colour_objects)
+            if not question_objects:
+                raise MissionContractError(
+                    f"question {index} targeting describe-colour must reference an "
+                    "approved colour attribute fact for its focus object"
+                )
+        if slot.focus in focus_candidates:
+            focus_candidates[slot.focus].intersection_update(question_objects)
+            if not focus_candidates[slot.focus]:
+                if slot.focus in colour_focus_indices:
+                    raise MissionContractError(
+                        f"question {index} targeting describe-colour must reference an "
+                        "approved colour attribute fact for its focus object"
+                    )
+                raise MissionContractError(
+                    "questions with the same focus must share one object fact"
+                )
+        else:
+            focus_candidates[slot.focus] = question_objects
+
+    if any(not candidates for candidates in focus_candidates.values()):
+        raise MissionContractError("questions with the same focus must share one object fact")
+    focus_indices = sorted(focus_candidates)
+    object_order = {
+        item.fact_id: index for index, item in enumerate(contract.scene_facts.objects)
+    }
+
+    def has_distinct_focus_objects(position: int, used: set[str]) -> bool:
+        if position == len(focus_indices):
+            return True
+        candidates = sorted(
+            focus_candidates[focus_indices[position]],
+            key=object_order.__getitem__,
+        )
+        return any(
+            candidate not in used
+            and has_distinct_focus_objects(position + 1, {*used, candidate})
+            for candidate in candidates
+        )
+
+    if not has_distinct_focus_objects(0, set()):
+        raise MissionContractError("different focus indices must use different objects")
 
     for required in definition.expected_performance.required_target_groups:
         if not set(required) & covered_targets:

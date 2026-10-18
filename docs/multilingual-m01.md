@@ -90,13 +90,62 @@ for `none`. `default_join()` suppresses spaces before punctuation and for langua
 registry uses `word_separator = "none"`. Builders must handle elision explicitly; it is
 not inferred from text.
 
-The output validator checks plan question/preparation bounds, allowed interactions,
-required target coverage, confirmed fact kinds and references, that preparation cards
-teach every assessed object, option labels, marker mappings, answer grounding, chunk
-bounds, explanation-answer leakage, and A2 connection/follow-up ordering. Attribute
-and relation strings are not text-grounded because natural inflection can change their
-surface form. Structural validation does not establish that a translation is
-linguistically correct: there is no linguistic evaluator in this stage.
+The output validator checks the exact ordered question slots, their targets,
+interactions, focus objects and option/distractor counts, preparation-card counts,
+required target coverage, confirmed fact kinds and references, option labels, marker
+mappings, answer grounding, chunk bounds, explanation-answer leakage, and A2
+connection/follow-up ordering. Per-object preparation cards must teach every assessed
+object; levels without per-object preparation have no cards. Attribute and relation
+strings are not text-grounded because natural inflection can change their surface
+form. Structural validation does not establish that a translation is linguistically
+correct: there is no linguistic evaluator in this stage.
+
+## Level-plan slots
+
+Each level's `questions` list is exact and ordered. `focus` is a one-based object
+index: slots sharing an index assess the same object, and different indices use
+different objects. Choice counts are shown as `options min–max`; sentence-building
+counts are `distractor_chunks min–max`. Every slot also fixes its target IDs,
+interaction, evidence and rubric criteria.
+
+| Level | Focus objects | Preparation | Required objects | Detail facts | Questions | Max answer chunks |
+| --- | ---: | --- | ---: | ---: | ---: | ---: |
+| A0 | 2 | One per object + 2 extra cards | 2 | 0 | 6 | 6 |
+| A1 | 2 | 0 cards | 2 | 1 | 4 | 8 |
+| A2 | 1 | 0 cards | 3 | 2 | 5 | 12 |
+
+A1 eligibility requires an approved colour fact for each of its two focus objects;
+a relation-only detail cannot supply the colour questions.
+
+### A0
+
+| # | Purpose | Focus | Target IDs | Interaction | Count | Evidence | Criteria |
+| ---: | --- | ---: | --- | --- | --- | --- | --- |
+| 1 | `matchName` | 1 | `recognise-name` | `markerChoice` | options 2–3 | `recognition` | `name-matches-object` |
+| 2 | `confirmName` | 1 | `identify-object` | `multipleChoice` | options 2 | `recognition` | `identifies-object` |
+| 3 | `buildIdentify` | 1 | `identify-object` | `sentenceBuilding` | distractors 1 | `construction` | `identifies-object` |
+| 4 | `matchName` | 2 | `recognise-name` | `markerChoice` | options 2–3 | `recognition` | `name-matches-object` |
+| 5 | `confirmName` | 2 | `identify-object` | `multipleChoice` | options 2 | `recognition` | `identifies-object` |
+| 6 | `buildIdentify` | 2 | `identify-object` | `sentenceBuilding` | distractors 1 | `construction` | `identifies-object` |
+
+### A1
+
+| # | Purpose | Focus | Target IDs | Interaction | Count | Evidence | Criteria |
+| ---: | --- | ---: | --- | --- | --- | --- | --- |
+| 1 | `confirmObject` | 1 | `identify-object`, `name-object` | `multipleChoice` | options 2 | `recognition` | `selects-described-object`, `article-matches-noun` |
+| 2 | `confirmObject` | 2 | `identify-object`, `name-object` | `multipleChoice` | options 2 | `recognition` | `selects-described-object`, `article-matches-noun` |
+| 3 | `chooseAttribute` | 1 | `describe-colour` | `multipleChoice` | options 2–3 | `recognition` | `colour-matches-photo` |
+| 4 | `describeObject` | 2 | `name-object`, `describe-colour` | `sentenceBuilding` | distractors 0–1 | `construction` | `article-matches-noun`, `colour-matches-photo` |
+
+### A2
+
+| # | Purpose | Focus | Target IDs | Interaction | Count | Evidence | Criteria |
+| ---: | --- | ---: | --- | --- | --- | --- | --- |
+| 1 | `chooseSceneMarker` | 1 | `identify-scene-object` | `markerChoice` | options 2 | `objectSelection` | `scene-object-matches-fact` |
+| 2 | `buildSceneFact` | 1 | `describe-scene-facts` | `sentenceBuilding` | distractors 1 | `construction` | `scene-sentence-matches-facts` |
+| 3 | `chooseSceneDescription` | 1 | `describe-scene-facts` | `multipleChoice` | options 3 | `recognition` | `scene-sentence-matches-facts` |
+| 4 | `buildSceneDescription` | 1 | `connect-scene-facts` | `sentenceBuilding` | distractors 1 | `construction` | `scene-facts-connected` |
+| 5 | `followUpSceneFact` | 1 | `follow-up-scene-fact` | `multipleChoice` | options 2–3 | `recognition` | `scene-follow-up-matches` |
 
 ## Routing and compatibility
 

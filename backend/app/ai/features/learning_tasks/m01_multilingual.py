@@ -36,7 +36,7 @@ def _fallback(_payload):
 M01_MULTILINGUAL_GENERATION = MissionGeneration(
     prompt_version=M01_MULTILINGUAL_PROMPT_VERSION,
     schema_version=M01_MULTILINGUAL_SCHEMA_VERSION,
-    validator_version=f"{CONTRACT_VERSION}:plan-aware-v1",
+    validator_version=f"{CONTRACT_VERSION}:plan-aware-v2",
     system_prompt=M01_MULTILINGUAL_SYSTEM_PROMPT,
     result_model=M01GeneratedLesson,
     validate=_validate,

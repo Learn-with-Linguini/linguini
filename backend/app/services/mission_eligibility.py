@@ -554,6 +554,19 @@ def m01_multilingual_eligibility(plan, contract_input):
     )
     if detail_count < plan.min_detail_facts:
         reasons.append(f"At least {plan.min_detail_facts} approved detail terms are required.")
+    colour_focus_count = len({
+        slot.focus for slot in plan.questions if "describe-colour" in slot.target_ids
+    })
+    approved_colour_objects = {
+        item.object_fact_id
+        for item in contract_input.scene_facts.attributes
+        if item.kind == "colour" and item.fact_id in term_facts
+    }
+    if len(approved_colour_objects) < colour_focus_count:
+        reasons.append(
+            f"At least {colour_focus_count} distinct objects with approved colour terms "
+            "are required."
+        )
     return Eligibility(not reasons, tuple(reasons))
 
 

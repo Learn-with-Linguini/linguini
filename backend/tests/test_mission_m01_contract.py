@@ -1,11 +1,13 @@
 import json
 from dataclasses import replace
+from pathlib import Path
 from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
 from pydantic import ValidationError
 
+import app.missions.m01_multilingual as m01_multilingual
 from app.ai.cache.cache import CacheRequest, FeatureVersion, ResultCache
 from app.ai.cache.references import ReferenceMap
 from app.ai.cache.store import CacheScope
@@ -72,7 +74,7 @@ def contract_input(level="A1", language="es", linguistic=None):
     second_fact = fact_id("object", second_id)
     third_fact = fact_id("object", third_id)
     attribute_fact = fact_id("attribute", first_id, "colour")
-    second_attribute_fact = fact_id("attribute", second_id, "size")
+    second_attribute_fact = fact_id("attribute", second_id, "colour")
     relation_fact = fact_id("relation", first_fact, "on", second_fact)
     count_fact = fact_id("count", "cup")
     linguistic_metadata = {"gender": "feminine"} if language == "es" else {}
@@ -94,7 +96,7 @@ def contract_input(level="A1", language="es", linguistic=None):
             ),
             ConfirmedAttribute(
                 fact_id=second_attribute_fact, object_fact_id=second_fact,
-                kind="size", value="large",
+                kind="colour", value="red",
             ),
         ],
         relations=[
@@ -117,15 +119,21 @@ def contract_input(level="A1", language="es", linguistic=None):
         scene_facts=facts,
         vocabulary=[
             ApprovedTerm(
-                term_id="cup",
-                fact_id=first_fact,
-                source_text="cup",
-                target_text={"es": "taza", "fr": "tasse", "de": "Tasse", "ko": "컵"}[
-                    language
-                ],
+                term_id=name,
+                fact_id=object_fact,
+                source_text=name,
+                target_text={
+                    "es": {"cup": "taza", "table": "mesa", "chair": "silla"},
+                    "fr": {"cup": "tasse", "table": "table", "chair": "chaise"},
+                    "de": {"cup": "Tasse", "table": "Tisch", "chair": "Stuhl"},
+                    "ko": {"cup": "컵", "table": "탁자", "chair": "의자"},
+                }[language][name],
                 part_of_speech="noun",
                 provenance="reviewedLexicon",
-                linguistic=linguistic_metadata,
+                linguistic=linguistic_metadata if name == "cup" else {},
+            )
+            for name, object_fact in zip(
+                ("cup", "table", "chair"), (first_fact, second_fact, third_fact), strict=True
             )
         ],
         learner=LearnerContext(proficiency_level=level),
@@ -243,119 +251,333 @@ def contract_output(contract):
     )
 
 
-def planned_a1_output(contract=None):
-    contract = contract or contract_input()
-    definition = get_mission("M01", "A1", 1)
-    plan = load_m01_level_plan("A1")
-    first, second = contract.scene_facts.objects[:2]
-    attribute = contract.scene_facts.attributes[0]
-    relation = contract.scene_facts.relations[0]
-
-    def chunk(chunk_id, text):
-        return SentenceChunk(
-            chunk_id=chunk_id,
-            text=text,
-            join="none" if text in {".", ",", "!", "?"} else "space",
-        )
-
-    questions = [
-        ContractQuestion(
-            question_id="identify",
-            target_ids=["identify-object"],
-            prompt="Which object is the cup?",
-            interaction="markerChoice",
-            options=[
-                VocabularyChoice(option_id="cup", label="taza"),
-                VocabularyChoice(option_id="table", label="mesa"),
-            ],
-            marker_fact_ids={"cup": first.fact_id, "table": second.fact_id},
-            chunks=[],
-            fact_ids=[first.fact_id],
-            feedback=Feedback(correct="Correct.", corrections=[]),
-        ),
-        ContractQuestion(
-            question_id="name",
-            target_ids=["name-object"],
-            prompt="Name the object.",
-            interaction="multipleChoice",
-            options=[
-                VocabularyChoice(option_id="name-cup", label="taza"),
-                VocabularyChoice(option_id="name-table", label="mesa"),
-            ],
-            chunks=[],
-            fact_ids=[first.fact_id],
-            feedback=Feedback(correct="Correct.", corrections=[]),
-        ),
-        ContractQuestion(
-            question_id="colour",
-            target_ids=["describe-colour"],
-            prompt="Describe the cup.",
-            interaction="multipleChoice",
-            options=[
-                VocabularyChoice(option_id="colour-correct", label="taza azul"),
-                VocabularyChoice(option_id="colour-wrong", label="taza roja"),
-            ],
-            chunks=[],
-            fact_ids=[first.fact_id, attribute.fact_id],
-            feedback=Feedback(correct="Correct.", corrections=[]),
-        ),
-        ContractQuestion(
-            question_id="location",
-            target_ids=["describe-location"],
-            prompt="Say where the cup is.",
-            interaction="sentenceBuilding",
-            options=[],
-            chunks=[
-                chunk("location-la", "La"),
-                chunk("location-taza", "taza"),
-                chunk("location-queda", "queda"),
-                chunk("location-aqui", "aquí"),
-                chunk("location-period", "."),
-            ],
-            fact_ids=[first.fact_id, relation.fact_id],
-            feedback=Feedback(correct="Correct.", corrections=[]),
-        ),
-    ]
-    answers = {
-        "identify": Answer(correct_option_id="cup"),
-        "name": Answer(correct_option_id="name-cup"),
-        "colour": Answer(correct_option_id="colour-correct"),
-        "location": Answer(chunk_ids=[
-            "location-la", "location-taza", "location-queda", "location-aqui",
-            "location-period",
-        ]),
-    }
-    evaluations = []
-    for question in questions:
-        permitted = set(plan.evidence[question.interaction])
-        for target_id in question.target_ids:
-            permitted &= set(definition.targets[target_id].evidence_types)
-        evaluations.append(QuestionEvaluation(
+def _planned_output(contract, title, questions, answers, preparation, plan):
+    definition = get_mission("M01", contract.mission.practice_level, 1)
+    evaluations = [
+        QuestionEvaluation(
             question_id=question.question_id,
             objective_id=definition.objective.objective_id,
-            target_ids=question.target_ids,
-            evidence_type=next(
-                item for item in plan.evidence[question.interaction] if item in permitted
-            ),
-        ))
-    output = M01ContractOutput(
+            target_ids=slot.target_ids,
+            evidence_type=slot.evidence,
+            rubric_criterion_ids=slot.criteria,
+        )
+        for question, slot in zip(questions, plan.questions, strict=True)
+    ]
+    return M01ContractOutput(
         contract_version=CONTRACT_VERSION,
         mission=contract.mission,
         target_language=contract.target_language,
         instruction_language=contract.instruction_language,
         objective_id=definition.objective.objective_id,
-        title="Describe the scene.",
-        preparation=[
-            PreparationCard(card_id="prep-cup", text="taza", fact_ids=[first.fact_id]),
-            PreparationCard(card_id="prep-table", text="mesa", fact_ids=[second.fact_id]),
-            PreparationCard(
-                card_id="prep-colour", text="azul", fact_ids=[attribute.fact_id]
-            ),
-        ],
+        title=title,
+        preparation=preparation,
         questions=questions,
         private=PrivateEvaluation(answers=answers, evaluations=evaluations),
     )
-    return contract, output, plan
+
+
+def _chunk(chunk_id, text):
+    return SentenceChunk(
+        chunk_id=chunk_id,
+        text=text,
+        join="none" if text in {".", ",", "!", "?"} else "space",
+    )
+
+
+def planned_a1_output(contract=None):
+    contract = contract or contract_input()
+    existing_term_facts = {term.fact_id for term in contract.vocabulary}
+    colour_terms = [
+        ApprovedTerm(
+            term_id=f"colour-term-{index}",
+            fact_id=attribute.fact_id,
+            source_text=attribute.value,
+            target_text=attribute.value,
+            part_of_speech="adjective",
+            provenance="reviewedLexicon",
+        )
+        for index, attribute in enumerate(contract.scene_facts.attributes)
+        if attribute.kind == "colour" and attribute.fact_id not in existing_term_facts
+    ]
+    if colour_terms:
+        contract = contract.model_copy(update={
+            "vocabulary": [*contract.vocabulary, *colour_terms],
+        })
+    plan = load_m01_level_plan("A1")
+    first, second = contract.scene_facts.objects[:2]
+    first_attribute, second_attribute = contract.scene_facts.attributes[:2]
+    first_name, second_name = (term.target_text for term in contract.vocabulary[:2])
+    questions = [
+        ContractQuestion(
+            question_id="confirm-first",
+            target_ids=plan.questions[0].target_ids,
+            prompt="Is this the cup?",
+            interaction="multipleChoice",
+            options=[
+                VocabularyChoice(option_id="yes-first", label=f"Yes, this is {first_name}."),
+                VocabularyChoice(option_id="no-first", label=f"No, this is {first_name}."),
+            ],
+            chunks=[],
+            fact_ids=[first.fact_id],
+            feedback=Feedback(correct="Correct.", corrections=[]),
+        ),
+        ContractQuestion(
+            question_id="confirm-second",
+            target_ids=plan.questions[1].target_ids,
+            prompt="Is this the table?",
+            interaction="multipleChoice",
+            options=[
+                VocabularyChoice(option_id="yes-second", label=f"Yes, this is {second_name}."),
+                VocabularyChoice(option_id="no-second", label=f"No, this is {second_name}."),
+            ],
+            chunks=[],
+            fact_ids=[second.fact_id],
+            feedback=Feedback(correct="Correct.", corrections=[]),
+        ),
+        ContractQuestion(
+            question_id="choose-attribute",
+            target_ids=plan.questions[2].target_ids,
+            prompt="What colour is the cup?",
+            interaction="multipleChoice",
+            options=[
+                VocabularyChoice(option_id="blue", label="blue"),
+                VocabularyChoice(option_id="red", label="red"),
+            ],
+            chunks=[],
+            fact_ids=[first.fact_id, first_attribute.fact_id],
+            feedback=Feedback(correct="Correct.", corrections=[]),
+        ),
+        ContractQuestion(
+            question_id="describe-second",
+            target_ids=plan.questions[3].target_ids,
+            prompt="Describe the table.",
+            interaction="sentenceBuilding",
+            options=[],
+            chunks=[
+                _chunk("describe-la", "La"),
+                _chunk("describe-mesa", second_name),
+                _chunk("describe-es", "is"),
+                _chunk("describe-grande", "roja"),
+                _chunk("describe-period", "."),
+                _chunk("describe-distractor", "small"),
+            ],
+            fact_ids=[second.fact_id, second_attribute.fact_id],
+            feedback=Feedback(correct="Correct.", corrections=[]),
+        ),
+    ]
+    answers = {
+        "confirm-first": Answer(correct_option_id="yes-first"),
+        "confirm-second": Answer(correct_option_id="yes-second"),
+        "choose-attribute": Answer(correct_option_id="blue"),
+        "describe-second": Answer(chunk_ids=[
+            "describe-la", "describe-mesa", "describe-es", "describe-grande",
+            "describe-period",
+        ]),
+    }
+    return (
+        contract,
+        _planned_output(contract, "Identify and describe.", questions, answers, [], plan),
+        plan,
+    )
+
+
+def planned_a0_output(contract=None):
+    contract = contract or contract_input(level="A0")
+    plan = load_m01_level_plan("A0")
+    objects = contract.scene_facts.objects
+    term_by_fact = {term.fact_id: term.target_text for term in contract.vocabulary}
+    names = [term_by_fact[obj.fact_id] for obj in objects]
+    questions = []
+    answers = {}
+    for focus in range(2):
+        obj, name = objects[focus], names[focus]
+        other_index = (focus + 1) % len(objects)
+        marker_options = [
+            VocabularyChoice(option_id=f"marker-{focus}-{i}", label=names[i])
+            for i in range(min(3, len(objects)))
+        ]
+        marker_facts = {
+            option.option_id: objects[index].fact_id
+            for index, option in enumerate(marker_options)
+        }
+        match_id = f"match-{focus}"
+        questions.append(ContractQuestion(
+            question_id=match_id,
+            target_ids=plan.questions[focus * 3].target_ids,
+            prompt="Match the name to its marker.",
+            interaction="markerChoice",
+            options=marker_options,
+            marker_fact_ids=marker_facts,
+            chunks=[],
+            fact_ids=[obj.fact_id],
+            feedback=Feedback(correct="Correct.", corrections=[]),
+        ))
+        answers[match_id] = Answer(correct_option_id=f"marker-{focus}-{focus}")
+
+        confirm_id = f"confirm-{focus}"
+        questions.append(ContractQuestion(
+            question_id=confirm_id,
+            target_ids=plan.questions[focus * 3 + 1].target_ids,
+            prompt=f"Is this {name}?",
+            interaction="multipleChoice",
+            options=[
+                VocabularyChoice(option_id=f"yes-{focus}", label="Yes."),
+                VocabularyChoice(option_id=f"no-{focus}", label="No."),
+            ],
+            chunks=[],
+            fact_ids=[obj.fact_id],
+            feedback=Feedback(correct="Correct.", corrections=[]),
+        ))
+        answers[confirm_id] = Answer(correct_option_id=f"yes-{focus}")
+
+        build_id = f"build-{focus}"
+        chunks = [
+            _chunk(f"build-{focus}-this", "This"),
+            _chunk(f"build-{focus}-is", "is"),
+            _chunk(f"build-{focus}-name", name),
+            _chunk(f"build-{focus}-period", "."),
+            _chunk(f"build-{focus}-extra", names[other_index]),
+        ]
+        questions.append(ContractQuestion(
+            question_id=build_id,
+            target_ids=plan.questions[focus * 3 + 2].target_ids,
+            prompt="Build an identification.",
+            interaction="sentenceBuilding",
+            options=[],
+            chunks=chunks,
+            fact_ids=[obj.fact_id],
+            feedback=Feedback(correct="Correct.", corrections=[]),
+        ))
+        answers[build_id] = Answer(chunk_ids=[chunk.chunk_id for chunk in chunks[:4]])
+
+    preparation = [
+        PreparationCard(
+            card_id=f"object-{index}",
+            text=name,
+            translation=name,
+            fact_ids=[obj.fact_id],
+        )
+        for index, (obj, name) in enumerate(zip(objects, names, strict=True))
+    ] + [
+        PreparationCard(card_id="frame", text="What is this?", fact_ids=[]),
+        PreparationCard(
+            card_id="first-identify",
+            text=f"This is {names[0]}.",
+            fact_ids=[objects[0].fact_id],
+        ),
+    ]
+    return contract, _planned_output(
+        contract, "Name and identify.", questions, answers, preparation, plan
+    ), plan
+
+
+def planned_a2_output(contract=None):
+    contract = contract or contract_input(level="A2")
+    plan = load_m01_level_plan("A2")
+    first, second, third = contract.scene_facts.objects[:3]
+    attribute = contract.scene_facts.attributes[0]
+    relation = contract.scene_facts.relations[0]
+    names = [term.target_text for term in contract.vocabulary[:3]]
+    questions = [
+        ContractQuestion(
+            question_id="scene-marker",
+            target_ids=plan.questions[0].target_ids,
+            prompt="Select the object named by the fact.",
+            interaction="markerChoice",
+            options=[
+                VocabularyChoice(option_id="first", label=names[0]),
+                VocabularyChoice(option_id="third", label=names[2]),
+            ],
+            marker_fact_ids={"first": first.fact_id, "third": third.fact_id},
+            chunks=[],
+            fact_ids=[first.fact_id],
+            feedback=Feedback(correct="Correct.", corrections=[]),
+        ),
+        ContractQuestion(
+            question_id="scene-fact",
+            target_ids=plan.questions[1].target_ids,
+            prompt="Build the confirmed fact.",
+            interaction="sentenceBuilding",
+            options=[],
+            chunks=[
+                _chunk("fact-hay", "There"),
+                _chunk("fact-is", "is"),
+                _chunk("fact-name", names[0]),
+                _chunk("fact-blue", "blue"),
+                _chunk("fact-period", "."),
+                _chunk("fact-extra", "but"),
+            ],
+            fact_ids=[first.fact_id, attribute.fact_id],
+            feedback=Feedback(correct="Correct.", corrections=[]),
+        ),
+        ContractQuestion(
+            question_id="scene-description-choice",
+            target_ids=plan.questions[2].target_ids,
+            prompt="Which description matches the photo?",
+            interaction="multipleChoice",
+            options=[
+                VocabularyChoice(
+                    option_id="description-correct",
+                    label=f"There is {names[0]} blue and {names[2]}.",
+                ),
+                VocabularyChoice(option_id="description-wrong-one", label=f"There is {names[1]}."),
+                VocabularyChoice(option_id="description-wrong-two", label="There are no objects."),
+            ],
+            chunks=[],
+            fact_ids=[first.fact_id, attribute.fact_id, third.fact_id],
+            feedback=Feedback(correct="Correct.", corrections=[]),
+        ),
+        ContractQuestion(
+            question_id="scene-description-build",
+            target_ids=plan.questions[3].target_ids,
+            prompt="Build the connected description.",
+            interaction="sentenceBuilding",
+            options=[],
+            chunks=[
+                _chunk("connect-there", "There"),
+                _chunk("connect-is", "is"),
+                _chunk("connect-first", names[0]),
+                _chunk("connect-blue", "blue"),
+                _chunk("connect-and", "and"),
+                _chunk("connect-table", names[1]),
+                _chunk("connect-here", "is here"),
+                _chunk("connect-period", "."),
+                _chunk("connect-extra", "but"),
+            ],
+            fact_ids=[
+                first.fact_id, attribute.fact_id, second.fact_id, relation.fact_id,
+            ],
+            feedback=Feedback(correct="Correct.", corrections=[]),
+        ),
+        ContractQuestion(
+            question_id="scene-follow-up",
+            target_ids=plan.questions[4].target_ids,
+            prompt="Which detail was used in the description?",
+            interaction="multipleChoice",
+            options=[
+                VocabularyChoice(option_id="detail-blue", label="blue"),
+                VocabularyChoice(option_id="detail-red", label="red"),
+            ],
+            chunks=[],
+            fact_ids=[first.fact_id, attribute.fact_id],
+            feedback=Feedback(correct="Correct.", corrections=[]),
+        ),
+    ]
+    answers = {
+        "scene-marker": Answer(correct_option_id="first"),
+        "scene-fact": Answer(chunk_ids=[
+            "fact-hay", "fact-is", "fact-name", "fact-blue", "fact-period",
+        ]),
+        "scene-description-choice": Answer(correct_option_id="description-correct"),
+        "scene-description-build": Answer(chunk_ids=[
+            "connect-there", "connect-is", "connect-first", "connect-blue",
+            "connect-and", "connect-table", "connect-here", "connect-period",
+        ]),
+        "scene-follow-up": Answer(correct_option_id="detail-blue"),
+    }
+    return contract, _planned_output(
+        contract, "Describe the scene.", questions, answers, [], plan
+    ), plan
 
 
 @pytest.mark.parametrize("level", LEVELS)
@@ -371,12 +593,12 @@ def test_valid_contracts_cover_all_levels_and_registered_languages(level, langua
 def test_output_rejects_explanation_that_reveals_a_correct_answer():
     contract, output, _ = planned_a1_output()
     leaking_output = output.model_copy(
-        update={"explanation": "\u00a0LA\u00a0TAZA\tQUEDA AQUÍ!!!"}
+        update={"explanation": "\u00a0YES,\u00a0THIS\tIS TAZA!!!"}
     )
 
     with pytest.raises(
         MissionContractError,
-        match="explanation reveals the answer to location",
+        match="explanation reveals the answer to confirm-first",
     ):
         validate_contract_output(contract, leaking_output)
 
@@ -419,32 +641,32 @@ def test_output_rejects_no_space_synthetic_language_answer_leak(monkeypatch):
     )
     contract = contract.model_copy(update={"target_language": "qaa"})
     no_space_chunks = [
-        SentenceChunk(chunk_id="no-space-taza", text="taza", join="none"),
-        SentenceChunk(chunk_id="no-space-azul", text="azul", join="none"),
+        SentenceChunk(chunk_id="no-space-mesa", text="mesa", join="none"),
+        SentenceChunk(chunk_id="no-space-roja", text="roja", join="none"),
     ]
     changed_questions = [
         question.model_copy(update={"chunks": no_space_chunks})
-        if question.question_id == "location"
+        if question.question_id == "describe-second"
         else question
         for question in output.questions
     ]
     answers = dict(output.private.answers)
-    answers["location"] = Answer(
-        chunk_ids=["no-space-taza", "no-space-azul"]
+    answers["describe-second"] = Answer(
+        chunk_ids=["no-space-mesa", "no-space-roja"]
     )
     no_space_output = output.model_copy(
         update={
             "target_language": "qaa",
-            "explanation": "XTAZAAZULY",
+            "explanation": "XMESAROJAY",
             "questions": changed_questions,
             "private": output.private.model_copy(update={"answers": answers}),
         }
     )
 
-    assert join_chunks(no_space_chunks) == "tazaazul"
+    assert join_chunks(no_space_chunks) == "mesaroja"
     with pytest.raises(
         MissionContractError,
-        match="explanation reveals the answer to location",
+        match="explanation reveals the answer to describe-second",
     ):
         validate_contract_output(contract, no_space_output)
 
@@ -658,219 +880,224 @@ def test_output_checks_evaluation_evidence_against_target_definition():
         validate_contract_output(contract, bad_output)
 
 
-def test_plan_aware_validation_rejects_each_a1_structure_failure():
+def test_plan_aware_validation_rejects_wrong_slot_order():
     contract, output, plan = planned_a1_output()
+    questions = list(output.questions)
+    questions[2], questions[3] = questions[3], questions[2]
 
-    def rejected(changed, message):
-        with pytest.raises(MissionContractError, match=message):
-            validate_contract_output(contract, changed, plan)
+    with pytest.raises(MissionContractError, match="question 3 targets do not match plan slot"):
+        validate_contract_output(contract, output.model_copy(update={"questions": questions}), plan)
 
-    rejected(output.model_copy(update={"questions": output.questions[:-1]}), "fewer than")
-    extra_questions = []
-    extra_answers = dict(output.private.answers)
-    extra_evaluations = list(output.private.evaluations)
-    for index in range(plan.max_questions - len(output.questions) + 1):
-        question_id = f"extra-{index}"
-        extra_questions.append(output.questions[1].model_copy(update={
-            "question_id": question_id,
-        }))
-        extra_answers[question_id] = output.private.answers["name"]
-        extra_evaluations.append(output.private.evaluations[1].model_copy(update={
-            "question_id": question_id,
-        }))
-    rejected(output.model_copy(update={
-        "questions": [*output.questions, *extra_questions],
-        "private": output.private.model_copy(update={
-            "answers": extra_answers,
-            "evaluations": extra_evaluations,
-        }),
-    }), "question count")
-    rejected(
-        output.model_copy(update={
-            "questions": [
-                output.questions[0],
-                output.questions[1].model_copy(update={
-                    "interaction": "markerChoice",
-                    "marker_fact_ids": {
-                        "name-cup": contract.scene_facts.objects[0].fact_id,
-                        "name-table": contract.scene_facts.objects[1].fact_id,
-                    },
-                }),
-                *output.questions[2:],
-            ]
-        }),
-        "not permitted",
-    )
-    missing_group_questions = [
-        question.model_copy(update={"target_ids": ["name-object"]})
-        if question.question_id in {"colour", "location"} else question
-        for question in output.questions
-    ]
-    rejected(output.model_copy(update={"questions": missing_group_questions}), "required target")
 
-    bad_prep = output.preparation[0].model_copy(
-        update={"fact_ids": [contract.scene_facts.counted_groups[0].fact_id]}
-    )
-    rejected(output.model_copy(update={"preparation": [bad_prep, *output.preparation[1:]]}),
-             "fact kind")
-    rejected(output.model_copy(update={"preparation": output.preparation[:1]}),
-             "preparation-card count")
-    excessive_prep = [
-        *output.preparation,
-        *[
-            output.preparation[0].model_copy(update={"card_id": f"extra-prep-{index}"})
-            for index in range(plan.max_preparation_cards)
-        ],
-    ]
-    rejected(output.model_copy(update={"preparation": excessive_prep}),
-             "preparation-card count")
-    name = output.questions[1]
-    rejected(
-        output.model_copy(update={"questions": [
-            output.questions[0],
-            name.model_copy(update={"options": name.options[:1]}),
-            *output.questions[2:],
-        ]}),
-        "option count",
-    )
-    duplicate_labels = name.model_copy(update={
+def test_plan_aware_validation_rejects_wrong_option_count():
+    contract, output, plan = planned_a1_output()
+    first = output.questions[0]
+    changed = first.model_copy(update={
         "options": [
-            name.options[0],
-            name.options[1].model_copy(update={"label": " TAZA  "}),
+            *first.options,
+            VocabularyChoice(option_id="maybe-first", label="Perhaps this is taza."),
         ]
     })
-    rejected(output.model_copy(update={
-        "questions": [output.questions[0], duplicate_labels, *output.questions[2:]]
-    }), "labels must be distinct")
-    normalized_labels = name.model_copy(update={"options": [
-        name.options[0].model_copy(update={"label": "café"}),
-        name.options[1].model_copy(update={"label": "cafe\u0301"}),
-    ]})
-    rejected(output.model_copy(update={
-        "questions": [output.questions[0], normalized_labels, *output.questions[2:]]
-    }), "labels must be distinct")
-    rejected(output.model_copy(update={
-        "questions": [
-            output.questions[0],
-            name.model_copy(update={"chunks": [SentenceChunk(
-                chunk_id="unexpected", text="taza", join="space"
-            )]}),
-            *output.questions[2:],
-        ]
-    }), "choice questions cannot have chunks")
-    bad_question_fact = output.questions[1].model_copy(update={
-        "fact_ids": [*output.questions[1].fact_ids,
-                     contract.scene_facts.counted_groups[0].fact_id]
-    })
-    rejected(output.model_copy(update={
-        "questions": [output.questions[0], bad_question_fact, *output.questions[2:]]
-    }), "fact kind outside the plan")
-    too_many_options = name.model_copy(update={"options": [
-        VocabularyChoice(option_id=f"extra-option-{index}", label=f"choice {index}")
-        for index in range(plan.max_options + 1)
-    ]})
-    too_many_answers = dict(output.private.answers)
-    too_many_answers["name"] = Answer(correct_option_id="extra-option-0")
-    rejected(output.model_copy(update={
-        "questions": [output.questions[0], too_many_options, *output.questions[2:]],
-        "private": output.private.model_copy(update={"answers": too_many_answers}),
-    }), "option count")
-    location = output.questions[3]
-    rejected(output.model_copy(update={
-        "questions": [*output.questions[:3], location.model_copy(update={
-            "options": [VocabularyChoice(option_id="extra", label="taza")]
-        })]
-    }), "cannot have options")
 
-    marker = output.questions[0]
-    repeated_markers = dict(marker.marker_fact_ids)
-    repeated_markers["table"] = repeated_markers["cup"]
-    rejected(output.model_copy(update={
-        "questions": [marker.model_copy(update={"marker_fact_ids": repeated_markers}),
-                      *output.questions[1:]]
-    }), "distinct objects")
-    wrong_correct_marker = dict(marker.marker_fact_ids)
-    wrong_correct_marker["cup"] = contract.scene_facts.objects[1].fact_id
-    wrong_correct_marker["table"] = contract.scene_facts.objects[0].fact_id
-    rejected(output.model_copy(update={
-        "questions": [marker.model_copy(update={"marker_fact_ids": wrong_correct_marker}),
-                      *output.questions[1:]]
-    }), "correct marker object")
-    non_object_markers = dict(marker.marker_fact_ids)
-    non_object_markers["table"] = contract.scene_facts.attributes[0].fact_id
-    rejected(output.model_copy(update={
-        "questions": [marker.model_copy(update={"marker_fact_ids": non_object_markers}),
-                      *output.questions[1:]]
-    }), "map to object facts")
-
-    answers = dict(output.private.answers)
-    answers["name"] = answers["name"].model_copy(update={"correct_option_id": "name-table"})
-    rejected(output.model_copy(update={
-        "private": output.private.model_copy(update={"answers": answers})
-    }), "approved object term")
-    ungrounded_sentence = location.model_copy(update={"chunks": [
-        chunk.model_copy(update={"text": "objeto"})
-        if chunk.chunk_id == "location-taza" else chunk
-        for chunk in location.chunks
-    ]})
-    rejected(output.model_copy(update={
-        "questions": [*output.questions[:3], ungrounded_sentence]
-    }), "approved object term")
-
-    def chunk(chunk_id, text):
-        return SentenceChunk(
-            chunk_id=chunk_id,
-            text=text,
-            join="none" if text in {".", ",", "!", "?"} else "space",
+    with pytest.raises(
+        MissionContractError,
+        match=r"option count 3 is outside 2–2 for confirmObject",
+    ):
+        validate_contract_output(
+            contract, output.model_copy(update={"questions": [changed, *output.questions[1:]]}),
+            plan,
         )
 
-    answers = dict(output.private.answers)
-    answers["location"] = Answer(chunk_ids=[
-        "location-la", "location-taza", "location-queda", "location-aqui",
-        "location-period", "location-taza",
-    ])
-    rejected(output.model_copy(update={
-        "private": output.private.model_copy(update={"answers": answers})
-    }), "cannot repeat")
-    answers["location"] = Answer(chunk_ids=[
-        "location-la", "location-taza", "location-queda", "location-aqui",
-        "location-period", "not-offered",
-    ])
-    rejected(output.model_copy(update={
-        "private": output.private.model_copy(update={"answers": answers})
-    }), "must use offered")
 
-    overlong_chunks = [
-        chunk.model_copy(update={"chunk_id": f"location-extra-{index}"})
-        for index, chunk in enumerate(location.chunks[:4])
-    ]
-    long_answer_chunks = [*location.chunks, *overlong_chunks]
-    long_location = location.model_copy(update={"chunks": long_answer_chunks})
-    answers["location"] = Answer(chunk_ids=[chunk.chunk_id for chunk in long_answer_chunks])
-    rejected(output.model_copy(update={
-        "questions": [*output.questions[:3], long_location],
-        "private": output.private.model_copy(update={"answers": answers}),
-    }), "too many chunks")
-    distracted = location.model_copy(update={"chunks": [
-        *location.chunks,
-        chunk("distractor-1", "extra"),
-        chunk("distractor-2", "words"),
-        chunk("distractor-3", "here"),
-    ]})
-    rejected(output.model_copy(update={
-        "questions": [*output.questions[:3], distracted]
-    }), "distractor chunks")
-    empty_chunk = location.chunks[0].model_copy(update={"text": "  "})
-    rejected(output.model_copy(update={
-        "questions": [*output.questions[:3], location.model_copy(update={
-            "chunks": [empty_chunk, *location.chunks[1:]]
-        })]
-    }), "contain text")
+def test_plan_aware_validation_rejects_wrong_distractor_count():
+    contract, output, plan = planned_a1_output()
+    last = output.questions[3]
+    changed = last.model_copy(update={
+        "chunks": [*last.chunks, _chunk("second-distractor", "small")],
+    })
+
+    with pytest.raises(
+        MissionContractError,
+        match=r"distractor-chunk count 2 is outside 0–1 for describeObject",
+    ):
+        validate_contract_output(
+            contract, output.model_copy(update={"questions": [*output.questions[:3], changed]}),
+            plan,
+        )
+
+
+def test_question_count_error_contains_actual_and_expected():
+    contract, output, plan = planned_a1_output()
+    questions = output.questions[:-1]
+    ids = {question.question_id for question in questions}
+    changed = output.model_copy(update={
+        "questions": questions,
+        "private": output.private.model_copy(update={
+            "answers": {key: value for key, value in output.private.answers.items() if key in ids},
+            "evaluations": [
+                item for item in output.private.evaluations if item.question_id in ids
+            ],
+        }),
+    })
+
+    with pytest.raises(
+        MissionContractError,
+        match=r"question count 3 does not match plan 4",
+    ):
+        validate_contract_output(contract, changed, plan)
+
+
+@pytest.mark.parametrize("builder", [planned_a1_output, planned_a2_output])
+def test_a1_and_a2_reject_any_preparation_card(builder):
+    contract, output, plan = builder()
+    extra = PreparationCard(
+        card_id="unexpected-preparation",
+        text="taza",
+        fact_ids=[contract.scene_facts.objects[0].fact_id],
+    )
+
+    with pytest.raises(
+        MissionContractError,
+        match=r"preparation-card count 1 is outside 0–0",
+    ):
+        validate_contract_output(contract, output.model_copy(update={
+            "preparation": [extra],
+        }), plan)
+
+
+def test_a0_preparation_count_is_objects_plus_two():
+    contract, output, plan = planned_a0_output()
+    validate_contract_output(contract, output, plan)
+    expected = len(contract.scene_facts.objects) + 2
+    extra = output.preparation[0].model_copy(update={"card_id": "extra-preparation"})
+
+    for cards, actual in (
+        (output.preparation[:-1], expected - 1),
+        ([*output.preparation, extra], expected + 1),
+    ):
+        with pytest.raises(
+            MissionContractError,
+            match=rf"preparation-card count {actual} is outside {expected}–{expected}",
+        ):
+            validate_contract_output(contract, output.model_copy(update={
+                "preparation": cards,
+            }), plan)
+
+
+def test_question_focus_objects_must_be_consistent_and_distinct():
+    contract, output, plan = planned_a1_output()
+    first, second = contract.scene_facts.objects[:2]
+    first_attribute = contract.scene_facts.attributes[0]
+    second_attribute = contract.scene_facts.attributes[1]
+    questions = list(output.questions)
+    questions[2] = questions[2].model_copy(update={
+        "fact_ids": [second.fact_id, second_attribute.fact_id],
+    })
+
+    with pytest.raises(
+        MissionContractError,
+        match="question 3 targeting describe-colour must reference an approved colour "
+        "attribute fact for its focus object",
+    ):
+        validate_contract_output(contract, output.model_copy(update={"questions": questions}), plan)
+
+    questions = list(output.questions)
+    second_question = questions[1]
+    questions[1] = second_question.model_copy(update={
+        "fact_ids": [first.fact_id],
+        "options": [
+            option.model_copy(update={"label": option.label.replace("mesa", "taza")})
+            for option in second_question.options
+        ],
+    })
+    questions[3] = questions[3].model_copy(update={
+        "fact_ids": [first.fact_id, first_attribute.fact_id],
+        "chunks": [
+            chunk.model_copy(update={"text": "taza"})
+            if chunk.chunk_id == "describe-mesa" else chunk
+            for chunk in questions[3].chunks
+        ],
+    })
+    with pytest.raises(MissionContractError, match="different focus indices must use different"):
+        validate_contract_output(contract, output.model_copy(update={"questions": questions}), plan)
+
+
+def test_colour_question_requires_a_colour_fact_for_its_focus_object():
+    contract, output, plan = planned_a1_output()
+    first, _ = contract.scene_facts.objects[:2]
+    second_attribute = contract.scene_facts.attributes[1]
+    questions = list(output.questions)
+    questions[2] = questions[2].model_copy(update={
+        "fact_ids": [first.fact_id, second_attribute.fact_id],
+    })
+
+    with pytest.raises(
+        MissionContractError,
+        match="question 3 targeting describe-colour must reference an approved colour "
+        "attribute fact for its focus object",
+    ):
+        validate_contract_output(contract, output.model_copy(update={"questions": questions}), plan)
+
+
+@pytest.mark.parametrize(
+    ("failure", "message"),
+    [
+        ("unknown-target", "undefined targets"),
+        ("uncovered-group", "does not cover required target group"),
+        ("too-few-slots", "fewer slots than required"),
+        ("object-count", "min_objects must match photo requirements"),
+        ("too-many-focus-objects", "focus_objects cannot exceed min_objects"),
+        ("unknown-criterion", "undefined evaluation criteria"),
+    ],
+)
+def test_load_plan_checks_mission_definition_consistency(
+    tmp_path, monkeypatch, failure, message,
+):
+    source = Path(m01_multilingual.M01_PLAN_PATH).read_text(encoding="utf-8")
+    if failure == "unknown-target":
+        source = source.replace(
+            'target_ids = ["recognise-name"]',
+            'target_ids = ["not-a-target"]',
+            1,
+        )
+    elif failure == "uncovered-group":
+        source = source.replace(
+            'target_ids = ["identify-object"]',
+            'target_ids = ["recognise-name"]',
+        )
+    elif failure == "too-few-slots":
+        start = source.index("[levels.A0]")
+        end = source.index("[levels.A1]")
+        section = source[start:end].split("[[levels.A0.questions]]")
+        source = (
+            source[:start]
+            + "[[levels.A0.questions]]".join(section[:4])
+            + source[end:]
+        )
+    elif failure == "object-count":
+        source = source.replace("min_objects = 2", "min_objects = 3", 1)
+    elif failure == "too-many-focus-objects":
+        source = source.replace("focus_objects = 2", "focus_objects = 3", 1)
+    elif failure == "unknown-criterion":
+        source = source.replace(
+            'criteria = ["name-matches-object"]',
+            'criteria = ["not-a-criterion"]',
+            1,
+        )
+    plan_path = tmp_path / "m01-plan.toml"
+    plan_path.write_text(source, encoding="utf-8")
+    monkeypatch.setattr(m01_multilingual, "M01_PLAN_PATH", plan_path)
+    load_m01_level_plan.cache_clear()
+    try:
+        with pytest.raises(MissionContractError, match=message):
+            load_m01_level_plan("A0")
+    finally:
+        load_m01_level_plan.cache_clear()
 
 
 
 def test_preparation_cards_must_cover_every_assessed_object():
-    contract = contract_input()
+    contract = contract_input(level="A0")
     output = contract_output(contract)
     marker_question = next(
         question for question in output.questions if question.interaction == "markerChoice"
@@ -971,119 +1198,66 @@ def test_public_dump_excludes_private_evaluation():
     assert output.public_dump()["contractVersion"] == CONTRACT_VERSION
 
 
-def test_generated_lesson_conversion_derives_private_evaluations():
-    contract = contract_input()
-    first, second = contract.scene_facts.objects[:2]
-    generated = M01GeneratedLesson(
-        title="Identify a cup",
-        preparation=[],
+def _generated_from_planned_output(contract, planned):
+    return M01GeneratedLesson(
+        title=planned.title,
+        explanation=planned.explanation,
+        preparation=planned.preparation,
         questions=[
             GeneratedQuestion(
-                question_id="identify-cup",
-                target_ids=["identify-object"],
-                prompt="Which object is the cup?",
-                interaction="markerChoice",
-                options=[
-                    VocabularyChoice(option_id="cup-option", label="taza"),
-                    VocabularyChoice(option_id="table-option", label="mesa"),
-                ],
+                question_id=question.question_id,
+                target_ids=question.target_ids,
+                section=question.section,
+                prompt=question.prompt,
+                prompt_translation=question.prompt_translation,
+                instruction=question.instruction,
+                interaction=question.interaction,
+                options=question.options,
                 marker_options=[
-                    GeneratedMarkerOption(option_id="cup-option", fact_id=first.fact_id),
-                    GeneratedMarkerOption(option_id="table-option", fact_id=second.fact_id),
+                    GeneratedMarkerOption(option_id=option_id, fact_id=object_fact)
+                    for option_id, object_fact in (question.marker_fact_ids or {}).items()
                 ],
-                chunks=[],
-                fact_ids=[first.fact_id],
-                answer=Answer(correct_option_id="cup-option"),
-                feedback=Feedback(correct="Correct.", corrections=[]),
+                chunks=question.chunks,
+                fact_ids=question.fact_ids,
+                answer=planned.private.answers[question.question_id],
+                feedback=question.feedback,
             )
+            for question in planned.questions
         ],
     )
 
+
+def test_generated_lesson_conversion_derives_private_evaluations():
+    contract, planned, _ = planned_a0_output()
+    first, second = contract.scene_facts.objects[:2]
+    generated = _generated_from_planned_output(contract, planned)
     output = convert_generated_lesson(contract, generated)
+    marker = output.questions[0]
     evaluation = output.private.evaluations[0]
 
-    assert output.questions[0].marker_fact_ids == {
-        "cup-option": first.fact_id,
-        "table-option": second.fact_id,
+    assert marker.marker_fact_ids == {
+        f"marker-0-{index}": obj.fact_id
+        for index, obj in enumerate(contract.scene_facts.objects[:3])
     }
-    assert output.private.answers["identify-cup"].correct_option_id == "cup-option"
-    assert evaluation.evidence_type == "objectSelection"
+    assert output.private.answers["match-0"].correct_option_id == "marker-0-0"
+    assert evaluation.evidence_type == "recognition"
     assert evaluation.scene_object_id == first.scene_object_id
     assert "evaluations" not in M01GeneratedLesson.model_json_schema()["properties"]
 
 
-def test_multilingual_m01_evidence_preferences_never_emit_production():
-    contract = contract_input()
-    first, second = contract.scene_facts.objects[:2]
-    interactions = [
-        ("identify-object", "markerChoice", "objectSelection"),
-        ("name-object", "multipleChoice", "recognition"),
-        ("describe-colour", "sentenceBuilding", "construction"),
+def test_generated_evidence_and_criteria_come_from_ordered_slots():
+    contract, output, plan = planned_a1_output()
+    generated = _generated_from_planned_output(contract, output)
+    converted = convert_generated_lesson(contract, generated)
+    evaluations = converted.private.evaluations
+
+    assert [item.evidence_type for item in evaluations] == [
+        slot.evidence for slot in plan.questions
     ]
-    questions = []
-    for index, (target_id, interaction, _expected_evidence) in enumerate(interactions):
-        questions.append(
-            GeneratedQuestion(
-                question_id=f"evidence-{index}",
-                target_ids=[target_id],
-                prompt="Identify the confirmed object.",
-                interaction=interaction,
-                options=(
-                    [
-                        VocabularyChoice(option_id=f"evidence-{index}-a", label="taza"),
-                        VocabularyChoice(option_id=f"evidence-{index}-b", label="mesa"),
-                    ]
-                    if interaction != "sentenceBuilding" else []
-                ),
-                marker_options=(
-                    [
-                        GeneratedMarkerOption(
-                            option_id=f"evidence-{index}-a", fact_id=first.fact_id
-                        ),
-                        GeneratedMarkerOption(
-                            option_id=f"evidence-{index}-b", fact_id=second.fact_id
-                        ),
-                    ]
-                    if interaction == "markerChoice" else []
-                ),
-                chunks=(
-                    example_chunks("es", f"evidence-{index}")
-                    if interaction == "sentenceBuilding" else []
-                ),
-                fact_ids=[first.fact_id],
-                answer=(
-                    Answer(chunk_ids=[
-                        chunk.chunk_id
-                        for chunk in example_chunks("es", f"evidence-{index}")
-                    ])
-                    if interaction == "sentenceBuilding"
-                    else Answer(correct_option_id=f"evidence-{index}-a")
-                ),
-                feedback=Feedback(correct="Correct.", corrections=[]),
-            )
-        )
-    generated = M01GeneratedLesson(
-        title="Recognise the scene.",
-        preparation=[
-            PreparationCard(card_id="prep-cup", text="taza", fact_ids=[first.fact_id]),
-            PreparationCard(card_id="prep-table", text="mesa", fact_ids=[second.fact_id]),
-        ],
-        questions=questions,
-    )
-
-    output = convert_generated_lesson(contract, generated)
-    evidence = [item.evidence_type for item in output.private.evaluations]
-
-    assert evidence == ["objectSelection", "recognition", "construction"]
-    assert "production" not in evidence
-    assert all(
-        item in {
-            evidence_type
-            for permitted in load_m01_level_plan("A1").evidence.values()
-            for evidence_type in permitted
-        }
-        for item in evidence
-    )
+    assert [item.rubric_criterion_ids for item in evaluations] == [
+        slot.criteria for slot in plan.questions
+    ]
+    assert "production" not in {item.evidence_type for item in evaluations}
 
 
 def test_m01_cache_identity_covers_payload_and_version_dimensions():
@@ -1092,7 +1266,7 @@ def test_m01_cache_identity_covers_payload_and_version_dimensions():
     contract = contract_input().model_dump(mode="json", by_alias=True)
     payload = {
         "contract": contract,
-        "planVersion": 1,
+        "planVersion": 2,
         "levelPlan": {"contentVersion": 1},
     }
     version = FeatureVersion("learning-task", "prompt-v1", "schema-v1", "validator-v1")
@@ -1141,7 +1315,7 @@ def test_m01_cache_identity_covers_payload_and_version_dimensions():
     ):
         variations.append(key(changed_version=replace(version, **{version_field: value})))
     changed = json.loads(json.dumps(payload))
-    changed["planVersion"] = 2
+    changed["planVersion"] = 3
     variations.append(key(changed))
 
     assert all(candidate != original for candidate in variations)
@@ -1215,7 +1389,7 @@ def test_m01_eligibility_uses_facts_before_translation_and_terms_after():
     plan = load_m01_level_plan("A1")
     objects = [
         SimpleNamespace(id=uuid4(), label="cup", attributes={"color": "red"}),
-        SimpleNamespace(id=uuid4(), label="table", attributes={"size": "large"}),
+        SimpleNamespace(id=uuid4(), label="table", attributes={"color": "red"}),
     ]
     assert m01_scene_fact_eligibility(plan, objects).eligible
 
@@ -1223,6 +1397,7 @@ def test_m01_eligibility_uses_facts_before_translation_and_terms_after():
     assert not m01_multilingual_eligibility(plan, contract).eligible
     second_object = contract.scene_facts.objects[1]
     attribute = contract.scene_facts.attributes[0]
+    second_attribute = contract.scene_facts.attributes[1]
     terms = [
         term.model_copy(update={"provenance": "sessionTranslation"})
         for term in contract.vocabulary
@@ -1242,6 +1417,15 @@ def test_m01_eligibility_uses_facts_before_translation_and_terms_after():
             fact_id=attribute.fact_id,
             source_text="blue",
             target_text="azul",
+            part_of_speech="adjective",
+            provenance="sessionTranslation",
+            vocabulary_item_id=uuid4(),
+        ),
+        ApprovedTerm(
+            term_id="second-colour-term",
+            fact_id=second_attribute.fact_id,
+            source_text="red",
+            target_text="roja",
             part_of_speech="adjective",
             provenance="sessionTranslation",
             vocabulary_item_id=uuid4(),
@@ -1289,96 +1473,37 @@ def test_fact_id_helpers_are_stable():
 
 
 def test_a2_connected_fact_threshold_and_followup_order_and_subset():
-    contract, output, _ = planned_a1_output()
-    a2_contract = contract.model_copy(update={
-        "mission": contract.mission.model_copy(update={"practice_level": "A2"}),
-    })
-    plan = load_m01_level_plan("A2")
-    definition = get_mission("M01", "A2", 1)
+    contract, output, plan = planned_a2_output()
+    validate_contract_output(contract, output, plan)
     first = contract.scene_facts.objects[0]
-    identify, *rest = output.questions
-    describe_name, describe_colour, connect = rest
-    identify = identify.model_copy(update={"target_ids": ["identify-scene-object"]})
-    describe_name = describe_name.model_copy(update={"target_ids": ["describe-scene-facts"]})
-    describe_colour = describe_colour.model_copy(
-        update={"target_ids": ["describe-scene-facts"]}
-    )
-    connect = connect.model_copy(update={
-        "target_ids": ["connect-scene-facts"],
-        "section": "connect-scene-facts",
-        "fact_ids": [first.fact_id, contract.scene_facts.attributes[0].fact_id],
-    })
-    followup = describe_name.model_copy(update={
-        "question_id": "follow-up",
-        "target_ids": ["follow-up-scene-fact"],
-        "section": "follow-up-scene-fact",
-        "fact_ids": [first.fact_id],
-        "options": [
-            option.model_copy(update={"label": "taza mesa"})
-            if option.option_id == "name-cup" else option
-            for option in describe_name.options
-        ],
-    })
-    questions = [identify, describe_name, describe_colour, connect, followup]
-    a2_answers = dict(output.private.answers)
-    a2_answers["follow-up"] = output.private.answers["name"]
-    target_ids = [
-        "identify-scene-object",
-        "describe-scene-facts",
-        "describe-scene-facts",
-        "connect-scene-facts",
-        "follow-up-scene-fact",
-    ]
-    evidence_types = [
-        "objectSelection", "recognition", "recognition", "construction", "recognition",
-    ]
-    a2_evaluations = [
-        evaluation.model_copy(update={
-            "objective_id": definition.objective.objective_id,
-            "target_ids": [target_id],
-            "evidence_type": evidence_type,
-        })
-        for evaluation, target_id, evidence_type in zip(
-            output.private.evaluations, target_ids[:4], evidence_types[:4], strict=True
-        )
-    ]
-    a2_evaluations.append(output.private.evaluations[1].model_copy(update={
-        "question_id": "follow-up",
-        "objective_id": definition.objective.objective_id,
-        "target_ids": ["follow-up-scene-fact"],
-        "evidence_type": "recognition",
-    }))
-    a2_output = output.model_copy(update={
-        "mission": a2_contract.mission,
-        "objective_id": definition.objective.objective_id,
-        "questions": questions,
-        "private": output.private.model_copy(update={
-            "answers": a2_answers,
-            "evaluations": a2_evaluations,
-        }),
-    })
-    validate_contract_output(a2_contract, a2_output, plan)
+    connect, followup = output.questions[3:5]
 
     with pytest.raises(MissionContractError, match="more distinct scene facts"):
-        validate_contract_output(a2_contract, a2_output.model_copy(update={
-            "questions": [
-                *a2_output.questions[:3],
-                connect.model_copy(update={"fact_ids": [first.fact_id]}),
-                followup,
-            ],
-        }), plan)
+        questions = list(output.questions)
+        questions[3] = connect.model_copy(update={"fact_ids": [first.fact_id]})
+        validate_contract_output(
+            contract, output.model_copy(update={"questions": questions}), plan
+        )
+
+    with pytest.raises(MissionContractError, match="question 4 targets do not match"):
+        questions = [
+            *output.questions[:3],
+            followup,
+            connect,
+        ]
+        validate_contract_output(
+            contract, output.model_copy(update={"questions": questions}), plan
+        )
 
     with pytest.raises(MissionContractError, match="preceding connect question"):
-        validate_contract_output(a2_contract, a2_output.model_copy(update={
-            "questions": [*a2_output.questions[:3], followup, connect],
-        }), plan)
-
-    with pytest.raises(MissionContractError, match="preceding connect question"):
-        validate_contract_output(a2_contract, a2_output.model_copy(update={
-            "questions": [
-                *a2_output.questions[:4],
-                followup.model_copy(update={
-                    "fact_ids": [contract.scene_facts.relations[0].fact_id]
-                }),
+        questions = list(output.questions)
+        questions[3] = connect.model_copy(update={
+            "fact_ids": [
+                first.fact_id,
+                contract.scene_facts.objects[1].fact_id,
+                contract.scene_facts.relations[0].fact_id,
             ],
-        }), plan)
+        })
+        validate_contract_output(
+            contract, output.model_copy(update={"questions": questions}), plan
+        )
