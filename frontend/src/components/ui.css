@@ -5127,9 +5127,94 @@ p[role="alert"]::before { content: "!"; }
   font-weight: 800;
 }
 
-.summary__noodle {
-  width: min(240px, 70%);
-  margin-inline: auto;
+.session-summary {
+  gap: var(--space-6);
+}
+
+.summary-hero {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, #fff0bf 0%, var(--cream) 100%);
+  text-align: center;
+}
+
+.summary-hero__mascot {
+  display: grid;
+  width: 148px;
+  height: 148px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 253, 247, 0.72);
+}
+
+.summary-hero__eyebrow {
+  color: var(--tomato-pressed);
+  font-size: var(--text-label);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.summary-hero h1,
+.summary-hero p {
+  margin: 0;
+}
+
+.summary-hero p {
+  max-width: 600px;
+  color: var(--ink-muted);
+  font-size: var(--text-body);
+}
+
+.summary-results {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.summary-result {
+  display: grid;
+  min-height: 128px;
+  place-items: center;
+  align-content: center;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid rgba(33, 113, 111, 0.22);
+  border-radius: var(--radius-md);
+  background: var(--sage);
+  text-align: center;
+}
+
+.summary-result--basil {
+  border-color: rgba(201, 78, 44, 0.2);
+  background: #fff0bf;
+}
+
+.summary-result__value {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--teal-dark);
+  font-family: var(--font-display);
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.summary-result span {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+@media (max-width: 520px) {
+  .summary-hero { padding-inline: var(--space-4); }
+  .summary-hero__mascot { width: 124px; height: 124px; }
+  .summary-hero__mascot .mascot { width: 112px; height: 112px; }
+  .summary-result { min-height: 112px; padding: var(--space-3); }
+  .summary-result__value { font-size: 36px; }
 }
 
 /* Profile */

@@ -146,11 +146,6 @@ export function Profile() {
         </Card>
       </section>
 
-      <section className="profile-section" aria-labelledby="profile-sauce-heading">
-        <h2 id="profile-sauce-heading">Your Sauce and Basil leaves</h2>
-        <GameResources shop />
-      </section>
-
       <section className="profile-section">
         <h2>Learning setup</h2>
         <Card plain className="profile-settings-card">

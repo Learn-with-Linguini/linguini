@@ -275,7 +275,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
         <span className="vocabulary-flow__position" aria-live="polite">{page + 1} of {pageCount}</span>
         <Button variant="secondary" onClick={finishReview}>{page < pageCount - 1 ? <>Next <ArrowRightIcon /></> : "Start quick quiz"}</Button>
       </div>
-      <Button variant="quiet" className="vocabulary-flow__skip" onClick={() => setStage("quiz")}>Skip word review</Button>
+      <Button variant="quiet" className="vocabulary-flow__skip" onClick={() => setStage("quiz")}>Skip to Word Review</Button>
     </> : null}
     {!terminal && stage === "quiz" && question ? <><Card plain><div className="stack">
       <span className="label muted">Question {questionIndex + 1} of {content.questions.length}</span><h2>{question.prompt}</h2>
