@@ -1,8 +1,9 @@
 import { LoadingScreen } from "../components/LoadingScreen";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Card, Noodle, StatusPill, XpPill } from "../components/ui";
+import { HelpImproveModal } from "../components/HelpImproveModal";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { useVocabularyQuery } from "../state/queries";
@@ -18,6 +19,7 @@ export function SessionSummary() {
   const { vocabulary } = useVocabularyQuery(); 
   const [startingISpy, setStartingISpy] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
+  const [surveyOpen, setSurveyOpen] = useState(false);
   const startKey = useRef<string | null>(null);
   // Stats render from the in-flight numbers straight away; the completion
   // mutation invalidates this key so final XP replaces them once it lands.
@@ -27,6 +29,23 @@ export function SessionSummary() {
   });
   const error = queryError(queryErrorValue);
   const completed = session?.session.status === "completed";
+  const completedLessons = data?.completedLessonsCount ?? 0;
+  // Prompt after account's first lesson (1) and every 5 lessons afterwards (6, 11, 16...)
+  const isMilestone =
+    completedLessons === 1 ||
+    (completedLessons > 1 && (completedLessons - 1) % 5 === 0);
+
+  useEffect(() => {
+    if (!completed || !data || !isMilestone) return;
+    const promptedKey = `linguini_survey_prompted_lesson_${completedLessons}`;
+    if (localStorage.getItem(promptedKey)) return;
+    const timer = setTimeout(() => {
+      setSurveyOpen(true);
+      localStorage.setItem(promptedKey, "true");
+    }, 900);
+    return () => clearTimeout(timer);
+  }, [completed, data, isMilestone, completedLessons]);
+
   const revisit = scene.items.filter(item => data?.learnedVocabularyIds.includes(
     session?.sceneObjects.find(object => object.id === item.id)?.vocabularyItemId ?? ""
   )).slice(0, 3);
@@ -80,5 +99,12 @@ export function SessionSummary() {
       </>}
       <Button variant="quiet" block onClick={() => navigate("/home")}>Back home</Button>
     </div>
+
+    <HelpImproveModal
+      open={surveyOpen}
+      onClose={() => setSurveyOpen(false)}
+      triggerSource="lesson_completed"
+      lessonCount={completedLessons}
+    />
   </div>;
 }

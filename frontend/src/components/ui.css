@@ -221,6 +221,216 @@
   }
 }
 
+/* Help us improve bottom sheet / overlay */
+.survey-backdrop {
+  position: fixed;
+  z-index: 120;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  background: rgba(38, 50, 56, 0.52);
+  animation: help-modal-fade 160ms ease-out;
+}
+
+.survey-sheet {
+  width: 100%;
+  max-width: 520px;
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: var(--space-4) var(--space-5) var(--space-6);
+  border-radius: 24px 24px 0 0;
+  background: var(--paper);
+  box-shadow: 0 -8px 36px rgba(38, 50, 56, 0.25);
+  animation: survey-slide-up 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+@keyframes survey-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@media (min-width: 640px) {
+  .survey-backdrop {
+    align-items: center;
+    padding: var(--space-4);
+  }
+  .survey-sheet {
+    border-radius: 24px;
+    max-height: 85vh;
+  }
+}
+
+.survey-sheet__drag-bar {
+  width: 44px;
+  height: 5px;
+  background: var(--line);
+  border-radius: 3px;
+  margin: 0 auto;
+}
+
+.survey-sheet__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.survey-sheet__title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.survey-sheet__title h2 {
+  font-size: var(--text-h2);
+  color: var(--ink);
+  margin: 0;
+}
+
+.survey-sheet__title p {
+  color: var(--ink-muted);
+  font-size: var(--text-small);
+  margin: 0;
+}
+
+.survey-rating-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  text-align: center;
+  background: var(--butter);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--line);
+}
+
+.survey-rating-section strong {
+  font-size: var(--text-body);
+  color: var(--ink);
+}
+
+.survey-rating-options {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.survey-rating-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: 16px;
+  padding: var(--space-2);
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+  min-width: 58px;
+}
+
+.survey-rating-btn:hover {
+  transform: translateY(-2px);
+  background: rgba(249, 174, 34, 0.12);
+}
+
+.survey-rating-btn img {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: block;
+}
+
+.survey-rating-btn span {
+  font-size: var(--text-label);
+  font-weight: 700;
+  color: var(--ink-muted);
+}
+
+.survey-rating-btn.is-selected {
+  border-color: var(--tomato);
+  background: var(--cream);
+  transform: scale(1.08);
+}
+
+.survey-rating-btn.is-selected span {
+  color: var(--tomato);
+}
+
+.survey-questions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.survey-question {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.survey-question label {
+  font-size: var(--text-small);
+  font-weight: 700;
+  color: var(--teal-dark);
+}
+
+.survey-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  cursor: pointer;
+  font-size: var(--text-small);
+  font-weight: 600;
+  color: var(--ink);
+  user-select: none;
+  margin-top: var(--space-1);
+}
+
+.survey-checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--teal);
+  cursor: pointer;
+}
+
+.survey-success-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-2);
+}
+
+.survey-success-state img {
+  width: 88px;
+  height: 88px;
+}
+
+.contact-survey-notice {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--butter);
+  border: 1px dashed var(--line);
+  font-size: var(--text-small);
+  color: var(--ink);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
 /* First-lesson walkthrough */
 .walkthrough-overlay {
   position: fixed;
@@ -4284,6 +4494,100 @@ p[role="alert"]::before { content: "!"; }
 
 .profile-support-link > svg {
   flex: none;
+  color: var(--teal-dark);
+}
+
+.profile-social-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-social-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 56px;
+  padding: var(--space-2) 0;
+  text-decoration: none;
+  color: var(--ink);
+  transition: opacity 0.15s ease;
+}
+
+.profile-social-item + .profile-social-item {
+  border-top: 1px solid var(--line);
+}
+
+.profile-social-item:hover {
+  opacity: 0.8;
+}
+
+.profile-social-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--butter);
+  color: var(--teal-dark);
+  flex-shrink: 0;
+}
+
+.profile-social-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-social-info strong {
+  font-size: var(--text-body);
+  color: var(--ink);
+}
+
+.profile-social-info small {
+  font-size: var(--text-small);
+  color: var(--ink-muted);
+}
+
+.profile-social-item > svg {
+  color: var(--ink-muted);
+  flex-shrink: 0;
+}
+
+.contact-socials {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.contact-social-icons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.contact-social-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  font-size: var(--text-small);
+  font-weight: 700;
+  text-decoration: none;
+  transition: transform 0.1s ease, border-color 0.1s ease;
+}
+
+.contact-social-badge:hover {
+  transform: translateY(-1px);
+  border-color: var(--teal);
   color: var(--teal-dark);
 }
 

@@ -188,3 +188,4 @@ class SessionSummaryResponse(ApiModel):
     xp_earned: Annotated[int, Field(ge=0)] = 0
     ispy_correct_count: Annotated[int, Field(ge=0)] = 0
     ispy_attempt_count: Annotated[int, Field(ge=0)] = 0
+    completed_lessons_count: Annotated[int, Field(ge=0)] = 0
