@@ -53,7 +53,7 @@ structure = "[where] [is] [article] [noun]?"
 examples = { es = ["¿Dónde está la taza?", "¿Dónde está el libro?"], fr = ["Où est la tasse ?", "Où est le livre ?"], de = ["Wo ist die Tasse?", "Wo ist der Tisch?"] }
 
 [teaching]
-task_sequence = ["vocabularyIntroduction", "grammarLesson", "ispyRound", "reflection"]
+task_sequence = ["vocabularyIntroduction", "grammarLesson"]
 teach_before_assessment = ["name-object", "recognise-position", "build-question"]
 max_new_words = 6
 

@@ -100,10 +100,9 @@ def test_one_relation_plans_one_m02_task_with_four_questions_on_it(curated):
     model = SceneModel()
     repository, sid, detail = _lesson(curated, _relations_only, model)
     assert _planned(detail) == ["M02"]
-    introduction, lesson, *bonus = detail.tasks
+    introduction, lesson = detail.tasks
     assert introduction.kind == "vocabularyIntroduction"
     assert [lesson] == _parts(detail)
-    assert bonus and {task.kind for task in bonus} <= {"ispyRound", "reflection"}
     assert not any("m02" in name for name in model.requests)
     content = lesson.public_content
     assert content.title == "Find and locate" and content.explanation is None
@@ -198,8 +197,7 @@ def test_a_photo_fitting_both_plans_both_and_the_lesson_finishes_after_both(cura
     repository, sid, detail = _lesson(curated)
     assert _planned(detail) == ["M01", "M02"]
     kinds = [task.kind for task in detail.tasks]
-    assert kinds[:3] == ["vocabularyIntroduction", "grammarLesson", "grammarLesson"]
-    assert "ispyRound" in kinds[3:]
+    assert kinds == ["vocabularyIntroduction", "grammarLesson", "grammarLesson"]
     m01, m02 = detail.tasks[1], _parts(detail)[0]
     assert m01.id != m02.id and m01.order_index < m02.order_index
     answered = _attempt(client, m01, _correct_answers(engine, m01), key="both-missions")
@@ -207,8 +205,7 @@ def test_a_photo_fitting_both_plans_both_and_the_lesson_finishes_after_both(cura
     repository.task_action(detail.tasks[0].id, "skip", SkipTaskRequest())
     with pytest.raises(PracticeConflictError):
         repository.finish(sid, profile.id)
-    for task in detail.tasks[2:]:
-        repository.task_action(task.id, "skip", SkipTaskRequest())
+    repository.task_action(m02.id, "skip", SkipTaskRequest())
     repository.finish(sid, profile.id)
     assert repository.get(sid, profile.id).session.status == "completed"
     assert _scalar(engine, select(func.count()).select_from(xp_events).where(

@@ -1783,36 +1783,23 @@ class PostgresWorkflowRepository:
 
         mission_lessons, skipped_missions = [], []
         if claim.missions:
-            # Mission lessons replace the fixed grammar sequence; I-Spy stays as the bonus.
+            # Mission lessons end at their summary. I-Spy is an optional,
+            # separately created game that can reuse this scene afterwards.
             lesson = partial(
                 self._mission_lessons,
                 claim, objects, relations, words, translated_scene if self.translator else None,
                 skipped_missions,
             )
-            if self.translator:
-                mission_lessons, ispy_clues = self._alongside_clues(lesson, partial(
-                    self._clues, session_id, payload, translated_scene, objects, words,
-                    relations, options=claim.generation_options,
-                ))
-            else:
-                mission_lessons = lesson()
+            mission_lessons = lesson()
         if not mission_lessons and self.translator:
             # With no mission task left, use the regular lesson.
-            if claim.missions:
-                lessons = self._lessons(
-                    session_id, payload, translated_scene, relations,
-                    claim.generation_options,
-                    history=lesson_history(claim.learner_history, introduction),
-                    history_scope=CacheScope.user(f"{self.user_id}:{claim.profile_id}"),
-                )
-            else:
-                lessons, ispy_clues = self._lessons_and_clues(
-                    session_id, payload, translated_scene, objects, words, relations,
-                    claim.generation_options,
-                    history=lesson_history(claim.learner_history, introduction),
-                    history_scope=CacheScope.user(f"{self.user_id}:{claim.profile_id}"),
-                )
-        if self.translator and self.ispy_guess_generator:
+            lessons, ispy_clues = self._lessons_and_clues(
+                session_id, payload, translated_scene, objects, words, relations,
+                claim.generation_options,
+                history=lesson_history(claim.learner_history, introduction),
+                history_scope=CacheScope.user(f"{self.user_id}:{claim.profile_id}"),
+            )
+        if not mission_lessons and self.translator and self.ispy_guess_generator:
             ispy_descriptions = build_ispy_description_tasks(
                 session_id, objects, words,
                 _ispy_guess_context(payload, translated_scene, objects, relations),
@@ -1848,7 +1835,7 @@ class PostgresWorkflowRepository:
             if mission_lessons:
                 rebuilt = [
                     *(task for task in rebuilt if task.id == introduction_id),
-                    *mission_lessons, *clues, *descriptions,
+                    *mission_lessons,
                 ]
             if summary and summary.practice_focuses:
                 available = {task.public_content.focus for task in lessons}
@@ -2059,9 +2046,17 @@ class PostgresWorkflowRepository:
             if session.status in TERMINAL:
                 raise PracticeConflictError("Session is already terminal.")
             tasks = self._tasks(c, session.id)
+            mission_session = any(
+                getattr(task.public_content, "mission_id", None) for task in tasks
+            )
+            required_tasks = (
+                [task for task in tasks if task.kind not in {"ispyRound", "reflection"}]
+                if mission_session else tasks
+            )
             if not abandon and (
                 session.status == "generatingTasks"
-                or not tasks or any(t.status not in {"completed", "skipped"} for t in tasks)
+                or not required_tasks
+                or any(t.status not in {"completed", "skipped"} for t in required_tasks)
             ):
                 raise PracticeConflictError("Complete or skip every task first.")
             session = self._transition(c, session, target)

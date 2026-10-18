@@ -28,7 +28,7 @@ structure = "[This is] [a] [noun]."
 examples = { es = ["Es una taza."], fr = ["C'est une tasse."], de = ["Das ist eine Tasse."], ko = ["이것은 컵이에요."] }
 
 [teaching]
-task_sequence = ["vocabularyIntroduction", "grammarLesson", "ispyRound", "reflection"]
+task_sequence = ["vocabularyIntroduction", "grammarLesson"]
 teach_before_assessment = ["recognise-name", "identify-object"]
 max_new_words = 3
 
