@@ -1,5 +1,5 @@
 import { GENDER_ARTICLES } from "../data/types.ts";
-import type { Gender, LanguageOption, LeaderboardRow, ScenarioProgress, Streak, VocabRecord, VocabularyScene, VocabStatus, WordClass } from "../data/types";
+import type { A0MissionSnapshot, Gender, LanguageOption, LeaderboardRow, MissionChoices, MissionQuestionFields, ScenarioProgress, Streak, TaughtChunk, VocabRecord, VocabularyScene, VocabStatus, WordClass } from "../data/types";
 import type { SceneSummary } from "../data/types";
 import type { JournalEntry } from "../data/types";
 import { getAccessToken, waitForAccessToken } from "./supabase.ts";
@@ -403,7 +403,7 @@ export interface MissionScenario {
 }
 export type TaskContent = MissionTaskFields & (
   | { kind: "vocabularyIntroduction"; title: string; words: VocabularyLearningWord[]; questions: VocabularyQuestion[]; allowTypingPractice: boolean; targetText?: string | null; translation?: string | null; partOfSpeech?: WordClass | null; exampleSentence?: string | null }
-  | { kind: "grammarLesson"; focus: string; title: string; explanation?: string | null; checkEachQuestion?: boolean; prep?: LessonPrepCard[] | null; targetLanguage?: string | null; textDirection?: "ltr" | "rtl" | null; contractVersion?: string | null; questions: GrammarLessonQuestion[]; roleplayFacts?: RoleplayFact[] | null; scenario?: MissionScenario | null }
+  | { kind: "grammarLesson"; focus: string; title: string; explanation?: string | null; checkEachQuestion?: boolean; prep?: LessonPrepCard[] | null; targetLanguage?: string | null; textDirection?: "ltr" | "rtl" | null; contractVersion?: string | null; questions: GrammarLessonQuestion[]; roleplayFacts?: RoleplayFact[] | null; situation?: "lostAndFound" | "everydayChoice" | null; taughtChunks?: TaughtChunk[] | null; missionSnapshot?: A0MissionSnapshot | null; scenario?: MissionScenario | null }
   | { kind: "grammarExplanation"; title: string; explanation: string; examples: string[] }
   | { kind: "grammarPractice"; prompt: string; options: string[] }
   | { kind: "syntaxExplanation"; title: string; sentencePattern: string; explanation: string; examples: string[] }
@@ -472,6 +472,7 @@ export interface PracticeDetail {
   missionGuidance?: string[];
   provisionalMissionPlan?: MissionTaskFields[];
   suggestedSceneObjectIds?: string[];
+  missionChoices?: MissionChoices | null;
 }
 export interface SceneActionSuggestion {
   actionKey: string; action: string; sceneObjectIds: string[]; confidenceScore: number | string;
@@ -501,7 +502,7 @@ export interface VocabularyLearningWord {
   pronunciationAudioAssetId: string | null; exampleSentence: string | null;
 }
 export interface VocabularyQuestion { questionId: string; prompt: string; options: { optionId: string; label: string }[]; correctOptionId?: string | null }
-export interface GrammarLessonQuestion {
+export interface GrammarLessonQuestion extends MissionQuestionFields {
   questionId: string;
   prompt: string;
   interactionType: "multipleChoice" | "sentenceBuilding" | "textCloze";
@@ -509,7 +510,6 @@ export interface GrammarLessonQuestion {
   tokenBank: string[];
   gapKind?: string | null;
   assistanceSteps?: ("replayAudio" | "visualDetail" | "phraseOnset" | "chunkBank" | "fullModel")[] | null;
-  dialogue?: { speaker: "server" | "learner"; text: string }[] | null;
   allowRetry?: boolean | null;
   wrongFieldTokens?: Record<string, string> | null;
   translation?: string | null;
@@ -627,6 +627,7 @@ export interface PracticeReview {
   objectAttributes: Record<string, Record<string, string>>;
   repositionedObjects: { id: string; anchorPoint: { x: number; y: number } }[];
   objectCounts: Record<string, number>;
+  missionChoices?: MissionChoices;
 }
 export const reviewPractice = (id: string, review: PracticeReview) => write<PracticeDetail>(`/api/v1/sessions/${id}/review`, "PUT", review);
 export const getPractice = (id: string) => request<PracticeDetail>(`/api/v1/sessions/${id}`);

@@ -130,13 +130,31 @@ def a0_payload(
         whatIsThis=lex.WHAT_IS_THIS[language], group=None, focus=[],
         approvedNumberWords={}, quantityChunks={}, howMany=None,
     )
+    context = context or {}
     translations = {lex.WHAT_IS_THIS[language]: "What is this?"}
     if mission.mission_id == "M03":
         rows = _m03_group(payload, mission, language, rows, counts, translations)
     else:
+        learner_facts = context.get("learner_facts") or {}
+        if mission.mission_id == "M04":
+            preferred = [str(learner_facts.get("ownedObjectId") or "")]
+        elif mission.mission_id == "M05":
+            preference = learner_facts.get("preference") or learner_facts
+            preferred = [
+                str(item) for item in preference.get("sceneObjectIds", [])
+            ] + [str(preference.get("chosenObjectId") or "")]
+        else:
+            preferred = []
+        rank = {key: index for index, key in enumerate(dict.fromkeys(preferred))}
+        rows.sort(key=lambda row: (
+            rank.get(row["key"], len(rank)),
+            row["marker"],
+        ))
         rows = rows[:3]
         if len(rows) >= 2:
             payload["focus"] = _focus(payload, rows)
+    if mission.mission_id in {"M04", "M05"}:
+        payload["learnerFacts"] = context.get("learner_facts") or {}
     for row in rows:
         translations.update(_translations(language, row))
     chunks = [*translations, *(row["chunk"] for row in rows)]

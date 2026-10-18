@@ -83,7 +83,7 @@ def test_assignments_are_deterministic_confirmed_distinct_and_bounded():
         SimpleNamespace(id=uuid4(), label="Bowl"),
     ]
     markers = {str(obj.id): index + 1 for index, obj in enumerate(objects)}
-    mission = SimpleNamespace(mission_id="M04")
+    mission = SimpleNamespace(mission_id="M04", practice_level="A1")
     assigned = assign_roleplay(mission, "session-a", objects, markers)
     assert assigned == assign_roleplay(mission, "session-a", objects, markers)
     assert len(assigned) == 3
@@ -104,22 +104,34 @@ def test_assignments_require_three_distinct_confirmed_objects():
     ]
     markers = {str(obj.id): index + 1 for index, obj in enumerate(objects)}
     assert assign_roleplay(
-        SimpleNamespace(mission_id="M04"), "session-a", objects, markers
+        SimpleNamespace(mission_id="M04", practice_level="A1"),
+        "session-a",
+        objects,
+        markers,
     ) == []
 
 
 def test_m05_assignments_include_like_and_dislike_facts():
     objects = [SimpleNamespace(id=uuid4(), label=name) for name in ("book", "cup", "spoon")]
     markers = {str(obj.id): index + 1 for index, obj in enumerate(objects)}
-    facts = assign_roleplay(SimpleNamespace(mission_id="M05"), "session-b", objects, markers)
+    facts = assign_roleplay(
+        SimpleNamespace(mission_id="M05", practice_level="A1"),
+        "session-b",
+        objects,
+        markers,
+    )
     assert [fact["preference"] for fact in facts] == ["like", "dislike", "like"]
     assert [fact["subjectNames"] for fact in facts] == [[], ["Ana"], ["Leo"]]
 
 
 def test_non_missions_and_objects_without_review_markers_are_not_assigned():
     objects = [SimpleNamespace(id=uuid4(), label="book")]
-    assert assign_roleplay(SimpleNamespace(mission_id="M03"), "s", objects, {}) == []
-    assert assign_roleplay(SimpleNamespace(mission_id="M04"), "s", objects, {}) == []
+    assert assign_roleplay(
+        SimpleNamespace(mission_id="M03", practice_level="A1"), "s", objects, {}
+    ) == []
+    assert assign_roleplay(
+        SimpleNamespace(mission_id="M04", practice_level="A1"), "s", objects, {}
+    ) == []
 
 
 @pytest.mark.parametrize(("language", "person", "name", "noun", "gender", "expected"), [

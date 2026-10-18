@@ -1,0 +1,70 @@
+mission_id = "M04"
+practice_level = "A0"
+content_version = 1
+title = "Identify what is yours"
+
+[photo_requirements]
+media_sources = ["preloaded", "camera", "userUpload"]
+min_confirmed_objects = 2
+
+[objective]
+objective_id = "ownership"
+can_do = "I can tell Linguini which familiar object is mine."
+
+[[objective.targets]]
+target_id = "recognise-ownership"
+summary = "Recognize a question about who owns a familiar object."
+evidence_types = ["recognition"]
+
+[[objective.targets]]
+target_id = "say-mine"
+summary = "Choose the phrase that says a familiar object is mine."
+evidence_types = ["recognition"]
+
+[[language_patterns]]
+pattern_id = "recognise-ownership"
+target_id = "recognise-ownership"
+structure = "Is this yours?"
+examples = { es = ["¿Es tuya?"], fr = ["C'est à toi ?"], de = ["Gehört das dir?"], ko = ["이거 본인 거예요?"] }
+
+[[language_patterns]]
+pattern_id = "say-mine"
+target_id = "say-mine"
+structure = "[object] is mine"
+examples = { es = ["La taza es mía."], fr = ["La tasse est à moi."], de = ["Die Tasse gehört mir."], ko = ["컵은 제 거예요."] }
+
+[teaching]
+task_sequence = ["vocabularyIntroduction", "grammarLesson"]
+teach_before_assessment = ["recognise-ownership", "say-mine"]
+max_new_words = 3
+
+[[teaching.supports]]
+support = "translation"
+availability = "onRequest"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "audio"
+availability = "always"
+counts_as_assistance = false
+
+[[evaluation_criteria]]
+criterion_id = "recognise-ownership"
+target_id = "recognise-ownership"
+description = "Recognizes a question about who owns a familiar object."
+evidence_types = ["recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "say-mine"
+target_id = "say-mine"
+description = "Chooses the phrase that says a familiar object is mine."
+evidence_types = ["recognition"]
+
+[expected_performance]
+min_assessed_questions = 4
+min_correct_ratio = 0.67
+min_independent_correct = 2
+required_target_groups = [
+  ["recognise-ownership"],
+  ["say-mine"],
+]

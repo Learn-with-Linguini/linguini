@@ -1275,7 +1275,7 @@ def test_explicit_routes_are_disabled_and_legacy_registry_never_falls_back():
             assert spec is expected
 
     with pytest.raises(UnroutedMissionVariant):
-        lesson_spec(SimpleNamespace(mission_id="M04", practice_level="A0"))
+        lesson_spec(SimpleNamespace(mission_id="M04", practice_level="B1"))
 
 
 def test_fact_id_helpers_are_stable():
