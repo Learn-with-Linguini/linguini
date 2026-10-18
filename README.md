@@ -158,7 +158,7 @@ Full tables, including optional AI and SEO settings, are in each app's README.
 | --- | --- | --- |
 | Marketing site and learner app | Vercel project rooted at `frontend/` | https://www.learnwithlinguini.com |
 | API | uvicorn/ASGI host | Needs the backend environment variables above; `AUTH_MODE=supabase`. |
-| Database, storage, auth | Supabase | Migrations applied with `npm run db:deploy` from `backend/`. |
+| Database, storage, auth | Supabase | CI's `migrate-production` job runs `npm run db:deploy` after every push to `main` passes the checks. It needs the `MIGRATION_DATABASE_URL` secret (Supabase session-pooler URL, port 5432) in the `production-database` GitHub environment, restricted to `main`. |
 
 ## Significant resources
 
