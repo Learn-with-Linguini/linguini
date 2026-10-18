@@ -227,6 +227,30 @@ def provisional_mission_focus(candidates, objects, relations):
     """
     counts = suggested_counted_groups(objects)
     plan = plan_missions(candidates, objects, relations, counts)
+    if candidates and str(candidates[0].practice_level) == "A0":
+        planned_keys = {
+            (mission.mission_id, str(mission.practice_level), mission.content_version)
+            for mission in plan
+        }
+        for mission in candidates:
+            key = (
+                mission.mission_id, str(mission.practice_level), mission.content_version,
+            )
+            if (
+                str(mission.practice_level) == "A0"
+                and mission.mission_id in {"M04", "M05"}
+                and key not in planned_keys
+                and photo_eligibility(
+                    mission, objects, relations, counts, mission_choices=None,
+                ).eligible
+            ):
+                planned_keys.add(key)
+        plan = [
+            mission for mission in candidates
+            if (
+                mission.mission_id, str(mission.practice_level), mission.content_version,
+            ) in planned_keys
+        ]
     selected = []
 
     def add(object_id):
