@@ -63,13 +63,10 @@ export function Learn() {
           <PlayIcon /> Learn the words
         </Button>
       </div> : null}
-      <SessionPersonalization personalization={session.personalization} languageCode={scene.languageCode} />
-      {session.missionGuidance?.length ? <section className="panel-note" role="note">
-        <p><strong>This photo didn't fit a mission</strong>, so this is the regular lesson.</p>
-        <p className="small muted">For a mission next time: {session.missionGuidance.join(" ")}</p>
-      </section> : null}
 
-      {vocabularyDone ? <div className="task-list" aria-label="Learning tasks">
+      {tasks.length ? <section className="stack-3 learn-missions" aria-label="Learning missions">
+        {!vocabularyDone ? <div><h2>Other missions</h2><p className="muted">Or jump straight into any activity.</p></div> : null}
+        <div className="task-list" aria-label="Learning tasks">
         {tasks.map(task => {
           const isDone = taskDone(task);
           const reward = !isDone ? taskXp(task) : null;
@@ -93,7 +90,14 @@ export function Learn() {
             </button>
           );
         })}
-      </div> : null}
+        </div>
+      </section> : null}
+
+      <SessionPersonalization personalization={session.personalization} languageCode={scene.languageCode} />
+      {session.missionGuidance?.length ? <section className="panel-note" role="note">
+        <p><strong>This photo didn't fit a mission</strong>, so this is the regular lesson.</p>
+        <p className="small muted">For a mission next time: {session.missionGuidance.join(" ")}</p>
+      </section> : null}
 
       {generating ? <section className="panel-note" role="status">
         <h2>Preparing the remaining tasks...</h2>
