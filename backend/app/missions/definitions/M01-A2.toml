@@ -1,0 +1,100 @@
+mission_id = "M01"
+practice_level = "A2"
+content_version = 1
+title = "Describe the scene"
+
+[photo_requirements]
+media_sources = ["preloaded", "camera", "userUpload"]
+min_confirmed_objects = 3
+eligibility_rule = "describeScene"
+
+[objective]
+objective_id = "describe-scene-a2"
+can_do = "I can connect confirmed details to describe what is in a photo."
+
+[[objective.targets]]
+target_id = "identify-scene-object"
+summary = "Find an object named in a confirmed scene fact."
+evidence_types = ["objectSelection", "recognition"]
+
+[[objective.targets]]
+target_id = "describe-scene-facts"
+summary = "Build sentences with reviewed object details and relations."
+evidence_types = ["construction", "recognition"]
+
+[[objective.targets]]
+target_id = "connect-scene-facts"
+summary = "Connect confirmed scene facts into a short description."
+evidence_types = ["construction"]
+
+[[objective.targets]]
+target_id = "follow-up-scene-fact"
+summary = "Answer a question about a fact included in the description."
+evidence_types = ["recognition"]
+
+[[language_patterns]]
+pattern_id = "scene-existence"
+target_id = "describe-scene-facts"
+structure = "[there is/are] [article] [noun] [reviewed detail]."
+examples = { es = ["Hay una mesa blanca.", "La silla está al lado de la mesa."], fr = ["Il y a une table blanche.", "La chaise est à côté de la table."] }
+
+[[language_patterns]]
+pattern_id = "connected-description"
+target_id = "connect-scene-facts"
+structure = "[confirmed sentence] [and/but/also] [confirmed sentence]."
+examples = { es = ["Hay una mesa blanca y también hay una lámpara."], fr = ["Il y a une table blanche et il y a aussi une lampe."] }
+
+[teaching]
+task_sequence = ["vocabularyIntroduction", "grammarLesson", "ispyRound", "reflection"]
+teach_before_assessment = ["identify-scene-object", "describe-scene-facts", "connect-scene-facts"]
+max_new_words = 6
+
+[[teaching.supports]]
+support = "translation"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "wordBank"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "hint"
+availability = "onRequest"
+counts_as_assistance = true
+
+[[evaluation_criteria]]
+criterion_id = "scene-object-matches-fact"
+target_id = "identify-scene-object"
+description = "Selects the photo object named by the confirmed sentence."
+evidence_types = ["objectSelection", "recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "scene-sentence-matches-facts"
+target_id = "describe-scene-facts"
+description = "Uses only reviewed scene facts in the target-language sentence."
+evidence_types = ["construction", "recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "scene-facts-connected"
+target_id = "connect-scene-facts"
+description = "Connects two or more confirmed facts into a description."
+evidence_types = ["construction"]
+
+[[evaluation_criteria]]
+criterion_id = "scene-follow-up-matches"
+target_id = "follow-up-scene-fact"
+description = "Answers a question using a fact present in the description."
+evidence_types = ["recognition"]
+
+[expected_performance]
+min_assessed_questions = 5
+min_correct_ratio = 0.75
+min_independent_correct = 2
+required_target_groups = [
+  ["identify-scene-object"],
+  ["describe-scene-facts"],
+  ["connect-scene-facts"],
+  ["follow-up-scene-fact"],
+]

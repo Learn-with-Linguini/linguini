@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from app.ai.features.learning_tasks.mission import MissionGeneration
 from app.ai.features.learning_tasks.mission_a0 import A0_GENERATIONS
+from app.ai.features.learning_tasks.mission_a2 import A2_GENERATIONS
 from app.ai.features.learning_tasks.mission_m01 import M01_GENERATION
 from app.ai.features.learning_tasks.mission_m02 import M02_GENERATION
 from app.ai.features.learning_tasks.mission_m03 import M03_GENERATION
@@ -12,6 +13,7 @@ from app.ai.features.learning_tasks.mission_m04 import M04_GENERATION
 from app.ai.features.learning_tasks.mission_m05 import M05_GENERATION
 from app.missions import get_mission
 from app.services.mission_lessons_a0 import a0_lesson_task, a0_payload, a0_ready
+from app.services.mission_lessons_a2 import a2_mission_spec
 from app.services.mission_lessons_m01 import m01_lesson_task, m01_payload
 from app.services.mission_lessons_m02 import m02_lesson_task, m02_payload
 from app.services.mission_lessons_m03 import m03_lesson_task, m03_payload
@@ -105,12 +107,21 @@ MISSION_LESSONS = {
 }
 
 
-# A0 (pre-A1) scene missions, keyed ``A0:Mxx``; A1 lessons stay keyed by mission ID.
+# A0 (pre-A1) scene missions, keyed ``A0:Mxx``.
 A0_MISSION_LESSONS = {
     f"A0:{mission_id}": MissionLessonSpec(
         a0_payload, A0_GENERATIONS[mission_id], a0_lesson_task, a0_ready,
     )
     for mission_id in ("M01", "M02", "M03", "M13")
+}
+
+
+A2_MISSION_LESSONS = {
+    f"A2:{mission_id}": MissionLessonSpec(
+        a2_mission_spec(mission_id)[0], A2_GENERATIONS[mission_id],
+        a2_mission_spec(mission_id)[1], a2_mission_spec(mission_id)[2],
+    )
+    for mission_id in ("M01", "M02", "M03", "M04")
 }
 
 
@@ -120,8 +131,13 @@ def registry_key(mission):
 
 
 def lesson_spec(mission):
-    """The lesson builder for ``mission``'s level: ``A0:Mxx`` first, else the A1 spec."""
-    return A0_MISSION_LESSONS.get(registry_key(mission)) or MISSION_LESSONS[mission.mission_id]
+    """Return the level-qualified lesson builder, falling back to the A1 spec."""
+    key = registry_key(mission)
+    return (
+        A0_MISSION_LESSONS.get(key)
+        or A2_MISSION_LESSONS.get(key)
+        or MISSION_LESSONS[mission.mission_id]
+    )
 
 
 def lesson_mission(mission):

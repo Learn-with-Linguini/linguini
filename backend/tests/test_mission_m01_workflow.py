@@ -258,7 +258,7 @@ def test_a_colour_without_a_reviewed_form_skips_m01_for_the_regular_lesson(
     assert "ispyRound" in {task.kind for task in detail.tasks}
     assert all(task.public_content.mission_key is None for task in detail.tasks)
 
-@pytest.mark.parametrize("level", ["A2", "B1"])
+@pytest.mark.parametrize("level", ["B1"])
 def test_other_levels_keep_the_existing_lesson(curated, level):
     engine, owner, profile, *_ = curated
     with engine.begin() as connection:

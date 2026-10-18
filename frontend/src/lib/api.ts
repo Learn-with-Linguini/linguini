@@ -393,7 +393,7 @@ export interface RoleplayFact {
 }
 export type TaskContent = MissionTaskFields & (
   | { kind: "vocabularyIntroduction"; title: string; words: VocabularyLearningWord[]; questions: VocabularyQuestion[]; allowTypingPractice: boolean; targetText?: string | null; translation?: string | null; partOfSpeech?: WordClass | null; exampleSentence?: string | null }
-  | { kind: "grammarLesson"; focus: string; title: string; explanation?: string | null; prep?: LessonPrepCard[] | null; questions: GrammarLessonQuestion[]; roleplayFacts?: RoleplayFact[] | null }
+  | { kind: "grammarLesson"; focus: string; title: string; explanation?: string | null; checkEachQuestion?: boolean; prep?: LessonPrepCard[] | null; questions: GrammarLessonQuestion[]; roleplayFacts?: RoleplayFact[] | null }
   | { kind: "grammarExplanation"; title: string; explanation: string; examples: string[] }
   | { kind: "grammarPractice"; prompt: string; options: string[] }
   | { kind: "syntaxExplanation"; title: string; sentencePattern: string; explanation: string; examples: string[] }
@@ -513,6 +513,7 @@ export interface GrammarLessonQuestion {
   keepOptionOrder?: boolean | null;
   /** Marker questions: each option's scene object, numbered as on the reviewed photo. */
   markerObjectIds?: Record<string, string> | null;
+  planningFacts?: string[];
   /** A short English instruction shown above the prompt. */
   instruction?: string | null;
   /** Target-language text the learner can play aloud. */
@@ -542,6 +543,9 @@ export interface QuestionOutcome {
   assistance: SupportKind[]; assistanceUsed: boolean; mistakes: MistakeDetail[];
   correctNote?: string; optionNotes?: string[];
 }
+export interface LessonAnswerCheck {
+  questionId: string; answer: string; isCorrect: boolean; correctAnswer: string; outcome: QuestionOutcome;
+}
 /** `questionOutcomes` is present only for tasks with mission evaluation metadata. */
 export interface VocabularyReviewDetails { questionResults: Record<string, boolean>; correctAnswers: Record<string, string>; questionOutcomes?: QuestionOutcome[] }
 export type ISpyDescriptionOutcome = "clearMatch" | "needsClarification" | "needsRevision" | "noMatch" | "evaluationFailed";
@@ -563,6 +567,10 @@ export interface LatestClueAttempt {
 }
 export const getLatestAttempt = (taskId: string, signal?: AbortSignal) =>
   request<{ attempt: LatestClueAttempt | null }>(`/api/v1/tasks/${taskId}/latest-attempt`, signal);
+export const checkLessonAnswer = (taskId: string, questionId: string, answer: string) =>
+  write<LessonAnswerCheck>(`/api/v1/tasks/${taskId}/check-lesson-answer`, "POST", { questionId, answer });
+export const getLessonChecks = (taskId: string, signal?: AbortSignal) =>
+  request<{ checks: LessonAnswerCheck[] }>(`/api/v1/tasks/${taskId}/lesson-checks`, signal);
 export interface TaskActionResult {
   task: SessionTask; nextTaskId: string | null; sessionProgress: SessionProgress; attempt: TaskAttemptResult | null;
   xpEarned: number;
