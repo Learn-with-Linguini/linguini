@@ -1,15 +1,15 @@
 # Shared multilingual M01 contracts
 
 This document describes the shared A0/A1/A2 multilingual M01 path. Generation requires
-`MULTILINGUAL_M01_ENABLED=true` and an enabled language/level pair in
-`MULTILINGUAL_M01_COMBINATIONS`; both default to off. The legacy builders remain
+`MULTILINGUAL_ENABLED=true` and an enabled language/level pair in
+`MULTILINGUAL_COMBINATIONS`; both default to off. The legacy builders remain
 available for existing language/level combinations.
 
 Set combinations explicitly in the backend environment. For example:
 
 ```sh
-MULTILINGUAL_M01_ENABLED=true
-MULTILINGUAL_M01_COMBINATIONS="es:A1,fr:A0,de:A2"
+MULTILINGUAL_ENABLED=true
+MULTILINGUAL_COMBINATIONS="es:A1,fr:A0,de:A2"
 ```
 
 `es:*` enables all M01 levels for Spanish, while a bare `*` enables every registered
@@ -117,7 +117,7 @@ other mission allowlists are unchanged. No database migration is needed.
 
 1. Start the app against a disposable local PostgreSQL database and use the normal
    authenticated demo account and a language profile whose target is registered.
-2. Set `MULTILINGUAL_M01_ENABLED=true` in the backend environment, restart the backend,
+2. Set `MULTILINGUAL_ENABLED=true` in the backend environment, restart the backend,
    and open the normal photo-led learning flow from a scene with reviewed objects,
    details, and translated vocabulary.
 3. Confirm M01 appears only when the level's confirmed-fact counts and post-translation
@@ -142,7 +142,7 @@ other mission allowlists are unchanged. No database migration is needed.
 3. Run a bounded live smoke with `AI_MODE=real` for each M01 level using the manual
    procedure above. Record the environment, language/level, session, task, and outcome.
 4. Have a native speaker review generated lessons and corrections.
-5. Add only reviewed language/level pairs to `MULTILINGUAL_M01_COMBINATIONS`.
+5. Add only reviewed language/level pairs to `MULTILINGUAL_COMBINATIONS`.
 6. Set `learnable = true` only after those reviews are complete.
 
 Structural validation and mocked tests alone do not establish linguistic quality.

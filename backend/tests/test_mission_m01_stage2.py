@@ -121,8 +121,8 @@ class MultilingualModel(SceneModel):
 
 
 def enable_m01(monkeypatch):
-    monkeypatch.setenv("MULTILINGUAL_M01_ENABLED", "true")
-    monkeypatch.setenv("MULTILINGUAL_M01_COMBINATIONS", "*")
+    monkeypatch.setenv("MULTILINGUAL_ENABLED", "true")
+    monkeypatch.setenv("MULTILINGUAL_COMBINATIONS", "*")
     monkeypatch.setitem(mission_eligibility.IMPLEMENTED_MISSIONS, "A1", (("M01", "A1", 1),))
 
 
@@ -146,8 +146,8 @@ def test_saved_legacy_m01_task_loads_and_grades_after_enabling_generation(
     monkeypatch.setitem(
         mission_eligibility.IMPLEMENTED_MISSIONS, "A1", (("M01", "A1", 1),)
     )
-    monkeypatch.setenv("MULTILINGUAL_M01_ENABLED", "false")
-    monkeypatch.delenv("MULTILINGUAL_M01_COMBINATIONS", raising=False)
+    monkeypatch.setenv("MULTILINGUAL_ENABLED", "false")
+    monkeypatch.delenv("MULTILINGUAL_COMBINATIONS", raising=False)
     engine, _, profile, client, *_ = curated
     repository, session_id, detail = _lesson(curated, SceneModel())
     legacy = next(
@@ -155,8 +155,8 @@ def test_saved_legacy_m01_task_loads_and_grades_after_enabling_generation(
     )
     saved_content = legacy.public_content
 
-    monkeypatch.setenv("MULTILINGUAL_M01_ENABLED", "true")
-    monkeypatch.setenv("MULTILINGUAL_M01_COMBINATIONS", "*")
+    monkeypatch.setenv("MULTILINGUAL_ENABLED", "true")
+    monkeypatch.setenv("MULTILINGUAL_COMBINATIONS", "*")
     refreshed = repository.get(session_id, profile.id)
     loaded = next(
         task for task in refreshed.tasks if task.public_content.mission_id == "M01"

@@ -32,7 +32,7 @@ from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelReq
 from app.ai.features.translation.prompt import (
     SCENE_TRANSLATION_PROMPT_VERSION,
     SCENE_TRANSLATION_SCHEMA_VERSION,
-    SCENE_TRANSLATION_SYSTEM_PROMPT,
+    scene_translation_system_prompt,
 )
 from app.ai.features.translation.schemas import (
     SceneTranslationRequest,
@@ -41,12 +41,14 @@ from app.ai.features.translation.schemas import (
 from app.ai.features.translation.validation import (
     SCENE_TRANSLATION_VALIDATOR_VERSION,
     SceneTranslationError,
+    normalize_grammar_fields,
     normalize_object_articles,
     validate_translation_terms,
 )
 from app.ai.observability import AITracer
 from app.ai.routing import as_routed, route_metadata, total_tokens
 from app.ai.settings import AiFeature
+from app.languages import get_language
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +101,7 @@ class SceneTranslationService:
             result = normalize_object_articles(
                 SceneTranslationResult.model_validate(data), parsed_payload.target_language
             )
+            result = normalize_grammar_fields(result, parsed_payload.target_language)
             validate_translation_terms(parsed_payload, result)
             return result
 
@@ -119,9 +122,14 @@ class SceneTranslationService:
     def _generate(
         self, payload: dict[str, Any], parsed_payload: SceneTranslationRequest
     ) -> Generated[SceneTranslationResult]:
+        language = get_language(parsed_payload.target_language)
+        if language is None:
+            raise SceneTranslationError(
+                f"Unregistered target language: {parsed_payload.target_language}"
+            )
         content = json.dumps(payload, ensure_ascii=False)
         request = TextModelRequest(
-            system_prompt=SCENE_TRANSLATION_SYSTEM_PROMPT,
+            system_prompt=scene_translation_system_prompt(language),
             user_content=content,
             json_schema_name="scene_translation_v1",
             json_schema=self._json_schema,
@@ -167,6 +175,9 @@ class SceneTranslationService:
                     result = normalize_object_articles(
                         SceneTranslationResult.model_validate_json(response.output_text),
                         parsed_payload.target_language,
+                    )
+                    result = normalize_grammar_fields(
+                        result, parsed_payload.target_language
                     )
                     validate_translation_terms(parsed_payload, result)
                 except (ValueError, SceneTranslationError) as error:

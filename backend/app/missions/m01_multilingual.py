@@ -130,7 +130,7 @@ def m01_variant(
 
 
 def generation_enabled() -> bool:
-    return os.getenv("MULTILINGUAL_M01_ENABLED", "false").strip().lower() == "true"
+    return os.getenv("MULTILINGUAL_ENABLED", "false").strip().lower() == "true"
 
 
 @cache
@@ -152,14 +152,14 @@ def _parse_m01_combinations(raw_combinations: str) -> frozenset[tuple[str, str]]
             or parts[1].strip().upper() not in {*M01_LEVELS, "*"}
         ):
             logger.warning(
-                "Ignoring malformed MULTILINGUAL_M01_COMBINATIONS entry %r.",
+                "Ignoring malformed MULTILINGUAL_COMBINATIONS entry %r.",
                 entry,
             )
             continue
         code, configured_level = parts[0].strip(), parts[1].strip().upper()
         if code.casefold() not in known_languages:
             logger.warning(
-                "Ignoring malformed MULTILINGUAL_M01_COMBINATIONS entry %r.",
+                "Ignoring malformed MULTILINGUAL_COMBINATIONS entry %r.",
                 entry,
             )
             continue
@@ -176,7 +176,7 @@ def m01_generation_enabled_for(language: str, level: str) -> bool:
         return False
 
     combinations = _parse_m01_combinations(
-        os.getenv("MULTILINGUAL_M01_COMBINATIONS", "")
+        os.getenv("MULTILINGUAL_COMBINATIONS", "")
     )
     return ("*", "*") in combinations or (
         (target.code.casefold(), "*") in combinations

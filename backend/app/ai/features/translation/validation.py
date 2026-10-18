@@ -54,10 +54,13 @@ def normalize_object_articles(
         })
 
     objects = []
-    language = (language or "").lower()
+    entry = get_language(language or "")
+    grammar = entry.grammar or {} if entry else {}
+    gender_values = grammar.get("grammatical_gender")
+    supports_neuter = isinstance(gender_values, list) and "neuter" in gender_values
     for term in result.objects:
         match = _LEADING_ARTICLE.match(term.translation)
-        if match and match.group(1).strip().casefold() in _GERMAN_ARTICLES and language != "de":
+        if match and match.group(1).strip().casefold() in _GERMAN_ARTICLES and not supports_neuter:
             match = None
         remainder = term.translation[match.end():] if match else ""
         if not match or not remainder:
@@ -68,6 +71,26 @@ def normalize_object_articles(
         if not term.article:
             update["article"] = stripped.lower()
         objects.append(term.model_copy(update=update))
+    return result.model_copy(update={"objects": objects})
+
+
+def normalize_grammar_fields(
+    result: SceneTranslationResult,
+    language_code: str | None = None,
+) -> SceneTranslationResult:
+    """Keep object grammar metadata within the registered language's features."""
+    entry = get_language(language_code or "")
+    grammar = entry.grammar or {} if entry else {}
+    gender_values = grammar.get("grammatical_gender")
+    allowed_genders = gender_values if isinstance(gender_values, list) else []
+    articles = bool(grammar.get("articles"))
+    objects = [
+        term.model_copy(update={
+            "article": term.article if articles else None,
+            "gender": term.gender if term.gender in allowed_genders else None,
+        })
+        for term in result.objects
+    ]
     return result.model_copy(update={"objects": objects})
 
 

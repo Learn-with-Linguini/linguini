@@ -16,6 +16,7 @@ export type LanguageOption = {
     synthesis: "browserVoice";
     recognition: boolean;
   };
+  grammar?: { grammatical_gender?: string[] | null } | null;
   features: { missionLevels: string[] };
 };
 /** Definite articles accepted as noun gender values. */

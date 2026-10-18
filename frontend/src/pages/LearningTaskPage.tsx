@@ -21,6 +21,7 @@ import { questionMarkerObjects } from "../lib/missionMarkers";
 import { completeSlot, writtenPromptShown } from "../lib/missionA0";
 import { playAnswerSound } from "../lib/answerSound";
 import { useLanguages } from "../state/useLanguages";
+import { registryGender } from "../lib/languageGrammar";
 
 export function LearningTaskPage() {
   const { taskId } = useParams();
@@ -49,6 +50,7 @@ export function LearningTaskPage() {
 function LearningTaskContent({ task, index, total, onNext, onClose, onExit }: { task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void }) {
   const lastStep = useLastStepLabel();
   const scene = useScene();
+  const { data: languages } = useLanguages();
   const { actOnTask, practiceSaving, practiceError } = useAppState();
   const [text, setText] = useState("");
   const [choice, setChoice] = useState("");
@@ -68,6 +70,7 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit }: { 
       : <GrammarLessonFlow task={task} index={index} total={total} onNext={onNext} onClose={onClose} onExit={onExit} />;
   }
   const card = scene.items.find(item => item.id === task.sceneObjectId);
+  const cardGender = registryGender(languages, scene.languageCode, card?.gender);
   const terminal = taskDone(task);
   const reading = ["vocabularyIntroduction", "grammarExplanation", "syntaxExplanation"].includes(task.kind);
   const submit = async () => {
@@ -101,7 +104,7 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit }: { 
     <ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />
     <div className="learning-title-row"><div><h1>{taskTitle(task)}</h1>{reward ? <XpPill {...reward} /> : null}</div><ExitToHome onExit={onExit} /></div>
     {card && content.kind === "vocabularyIntroduction" ? <div className="flashcard learning-card">
-      <div className="spread"><span className="label muted">{card.wordClass}{card.gender ? " · " + card.gender : ""}</span>
+      <div className="spread"><span className="label muted">{card.wordClass}{cardGender ? " · " + cardGender : ""}</span>
         <IconButton label={"Hear " + card.word} onClick={() => speak(card.word, scene.languageCode)}><SpeakerIcon /></IconButton></div>
       <div className="learning-card__word"><h2>{card.word}</h2><p className="muted">{card.translation}</p></div>
     </div> : null}
@@ -178,6 +181,7 @@ function answerFromChunks(question: GrammarLessonQuestion, answer: string): stri
 function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }: { task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void }) {
   const lastStep = useLastStepLabel();
   const scene = useScene();
+  const { data: languages } = useLanguages();
   const { actOnTask, practiceSaving, practiceError, session } = useAppState();
   const [stage, setStage] = useState<"review" | "quiz" | "typing">("review");
   const [page, setPage] = useState(0);
@@ -255,7 +259,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
     <ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />
     <div className="learning-title-row"><div><h1>{content.title}</h1>{reward ? <XpPill {...reward} /> : null}{!terminal && stage === "review" ? <p className="small muted" aria-live="polite">{page + 1} of {pageCount}</p> : null}</div><ExitToHome onExit={onExit} /></div>
     {!terminal && stage === "review" ? <>
-      <div className="vocabulary-learning-grid vocabulary-learning-grid--swipe" onTouchStart={handleCardTouchStart} onTouchEnd={handleCardTouchEnd}>{visibleWords.map(word => <VocabularyLearningCard key={word.learningKey ?? word.vocabularyItemId ?? word.targetText} word={word} languageCode={scene.languageCode} />)}</div>
+      <div className="vocabulary-learning-grid vocabulary-learning-grid--swipe" onTouchStart={handleCardTouchStart} onTouchEnd={handleCardTouchEnd}>{visibleWords.map(word => <VocabularyLearningCard key={word.learningKey ?? word.vocabularyItemId ?? word.targetText} word={word} languageCode={scene.languageCode} gender={registryGender(languages, scene.languageCode, word.gender)} />)}</div>
       <div className="vocabulary-flow__actions">
         <Button variant="secondary" disabled={page === 0} onClick={() => setPage(value => value - 1)}>Previous word</Button>
         <Button variant="secondary" onClick={finishReview}>{page < pageCount - 1 ? "Next word" : "Start quick quiz"}</Button></div>
@@ -825,9 +829,9 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
   </div>;
 }
 
-function VocabularyLearningCard({ word, languageCode }: { word: VocabularyLearningWord; languageCode: string }) {
+function VocabularyLearningCard({ word, languageCode, gender }: { word: VocabularyLearningWord; languageCode: string; gender: string | null }) {
   return <article className="flashcard learning-card vocabulary-learning-card">
-    <div className="spread"><span className="label muted learning-card__meta">{word.termType === "relationship" ? "relationship" : word.partOfSpeech}{word.gender ? ` · ${word.gender}` : ""}</span>
+    <div className="spread"><span className="label muted learning-card__meta">{word.termType === "relationship" ? "relationship" : word.partOfSpeech}{gender ? ` · ${gender}` : ""}</span>
       <IconButton className="learning-card__audio" label={`Hear ${word.targetText}`} onClick={() => speak(word.targetText, languageCode)}><SpeakerIcon /></IconButton></div>
     <div className="learning-card__word"><h2>{word.targetText}</h2><p className="muted">{word.translation}</p></div>
     {word.pluralForm ? <p className="small"><strong>Plural:</strong> {word.pluralForm}</p> : null}
