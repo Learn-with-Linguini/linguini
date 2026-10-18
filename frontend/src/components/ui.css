@@ -4736,26 +4736,42 @@ p[role="alert"]::before { content: "!"; }
 
 .learn-missions .task-row {
   min-height: 76px;
-  /* border: 2px solid rgba(33, 113, 111, .2); */
-  background: var(--butter);
-  box-shadow: none;
+  border: 2px solid var(--teal);
+  background: var(--teal);
+  color: #fffaf2;
+  box-shadow: 0 4px 0 var(--teal-dark);
 }
 
 .learn-missions .task-row:hover {
-  border-color: var(--teal);
-  box-shadow: none;
+  border-color: #35aaa7;
+  background: #35aaa7;
+  box-shadow: 0 4px 0 var(--teal-dark);
 }
 
 .learn-missions .task-row--done { background: var(--sage); }
 
-.learning-task-page > .trail {
-  margin-bottom: var(--space-2);
+.learn-missions .task-row--done {
+  border-color: var(--teal);
+  color: var(--ink);
+  box-shadow: none;
 }
 
-.learning-task-page__all-tasks {
-  align-self: center;
-  min-height: 44px;
-  margin-top: calc(var(--space-2) * -1);
+.prompt-translation {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.prompt-translation__toggle.icon-btn {
+  flex: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--paper);
+  color: var(--teal-dark);
+}
+
+.learning-task-page > .trail {
+  margin-bottom: var(--space-2);
 }
 
 .learning-title-row {
@@ -4924,13 +4940,11 @@ p[role="alert"]::before { content: "!"; }
   text-underline-offset: 3px;
 }
 
-.learning-task-page__all-tasks,
 .typing-forgot-action {
   border-color: var(--line);
   background: var(--paper);
 }
 
-.learning-task-page__all-tasks:hover:not(:disabled),
 .typing-forgot-action:hover:not(:disabled) {
   border-color: var(--pasta);
   background: var(--cream);

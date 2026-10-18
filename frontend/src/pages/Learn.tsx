@@ -85,7 +85,7 @@ export function Learn() {
               </span>
               {isDone ? <span className="pill pill--mastered">{task.status === "skipped" ? "Skipped" : ""}</span> : <>
                 {reward ? <XpPill {...reward} /> : null}
-                <ArrowRightIcon />
+                <PlayIcon />
               </>}
             </button>
           );
