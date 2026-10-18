@@ -1,5 +1,5 @@
 import { Navigate, useNavigate } from "react-router-dom";
-import { Button, Card, XpPill } from "../components/ui";
+import { Button, XpPill } from "../components/ui";
 import { ArrowRightIcon, CheckIcon, CloseIcon } from "../components/icons";
 import { TranslationPreview } from "../components/TranslationPreview";
 import { SessionPersonalization } from "../components/SessionPersonalization";
@@ -44,7 +44,13 @@ export function Learn() {
 
       <div className="learn-overview">
         <div className="learn-overview__scene">
-          {session.translationPreview ? <TranslationPreview preview={session.translationPreview} scene={scene} /> : null}
+          {session.translationPreview ? <TranslationPreview preview={session.translationPreview} scene={scene} learningAction={foundationTask ? <div className={`learn-photo-action${foundationDone ? " is-complete" : ""}`}>
+            <div className="learn-photo-action__copy">
+              <span className="learn-photo-action__eyebrow">{foundationDone ? "Words ready" : "Recommended first"}</span>
+              <div><strong>{taskTitle(foundationTask)}</strong><p>{foundationDone ? "You’re ready to use these words in context." : "The easiest place to begin—but every activity is open."}</p></div>
+            </div>
+            {foundationDone ? <span className="learn-foundation-check"><CheckIcon size={20} /></span> : <div className="learn-photo-action__controls">{taskXp(foundationTask) ? <XpPill {...taskXp(foundationTask)!} /> : null}<Button disabled={practiceSaving} onClick={() => openTask(foundationTask.id)}>Learn the words <ArrowRightIcon /></Button></div>}
+          </div> : null} /> : null}
           <SessionPersonalization personalization={session.personalization} languageCode={scene.languageCode} />
           {session.missionGuidance?.length ? <section className="panel-note" role="note">
             <p><strong>This photo didn't fit a mission</strong>, so this is the regular lesson.</p>
@@ -53,14 +59,6 @@ export function Learn() {
         </div>
 
         <section className="learn-overview__journey" aria-labelledby="lesson-journey-title">
-          {foundationTask ? <Card lifted className={`learn-next-task${foundationDone ? " is-complete" : ""}`}>
-            <span className="learn-next-task__eyebrow">{foundationDone ? "Words ready" : "Recommended first"}</span>
-            <div className="learn-next-task__heading"><div><h2>{taskTitle(foundationTask)}</h2><p>{foundationDone ? "You’re ready to use these words in context." : "The easiest place to begin—but every activity is open."}</p></div>{foundationDone ? <span className="learn-foundation-check"><CheckIcon size={20} /></span> : taskXp(foundationTask) ? <XpPill {...taskXp(foundationTask)!} /> : null}</div>
-            {!foundationDone ? <Button block disabled={practiceSaving} onClick={() => openTask(foundationTask.id)}>
-              Learn the words <ArrowRightIcon />
-            </Button> : null}
-          </Card> : null}
-
           {practiceTasks.length ? <div className="lesson-path">
             <div className="lesson-path__heading"><div><span className="small muted">Practice activities</span><h2 id="lesson-journey-title">Try them in the scene</h2><p>You can start any activity.</p></div><strong>{completedPractice.length}/{practiceTasks.length}</strong></div>
             {foundationDone && nextTask ? <Button block className="lesson-path__action" disabled={practiceSaving} onClick={() => openTask(nextTask.id)}>

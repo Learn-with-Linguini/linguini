@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import type { PracticeDetail } from "../lib/api";
 import { humanizeTerm } from "../lib/termLabel";
 import type { Scene } from "../data/types";
@@ -16,7 +17,7 @@ function uniquePreviewTerms(terms: PreviewTerm[]) {
   });
 }
 
-export function TranslationPreview({ preview, scene }: { preview: NonNullable<PracticeDetail["translationPreview"]>; scene?: Scene }) {
+export function TranslationPreview({ preview, scene, learningAction }: { preview: NonNullable<PracticeDetail["translationPreview"]>; scene?: Scene; learningAction?: ReactNode }) {
   const groups = ([
     ["Objects", preview.objects],
     ["Attributes", preview.attributes],
@@ -27,6 +28,7 @@ export function TranslationPreview({ preview, scene }: { preview: NonNullable<Pr
 
   return <Card plain className="translation-preview">
     {scene ? <ScenePhoto scene={scene} items={[]} /> : null}
+    {learningAction ? <div className="translation-preview__action">{learningAction}</div> : null}
     <details className="translation-preview__drawer">
       <summary><span><strong>Vocabulary</strong><small>{termCount} words and phrases from this scene</small></span><span aria-hidden="true">⌄</span></summary>
       <div className="translation-preview__groups">{groups.map(([label, terms]) => <section key={label} className="translation-preview__group">
