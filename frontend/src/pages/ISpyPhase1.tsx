@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { sessionDestination, sessionPaths } from "../lib/sessionRoute";
 import { Button, Feedback, IconButton, ProgressTrail, XpPill } from "../components/ui";
-import { ArrowRightIcon, CheckIcon, SpeakerIcon } from "../components/icons";
+import { ArrowRightIcon, BasilIcon, CheckIcon, SpeakerIcon } from "../components/icons";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
@@ -117,7 +117,7 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
     })}</div>
     {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
     {answered || result ? <>
-      <Feedback tone={isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status"><strong>{task.status === "skipped" ? "Skipped — no XP earned." : feedback ?? "Answer saved."}</strong>{content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback>
+      <Feedback tone={isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status"><strong>{task.status === "skipped" ? "Skipped — no Basil earned." : feedback ?? "Answer saved."}</strong>{content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}{earnedText ? <strong className="basil-reward"><BasilIcon size={17} />{earnedText}</strong> : null}</div></Feedback>
       {task.status !== "skipped" ? <ReportIssueLink reportType="I-Spy answer" fields={[
         ["Task ID", task.id],
         ["Clue", `${opening} ${content.clue}`],

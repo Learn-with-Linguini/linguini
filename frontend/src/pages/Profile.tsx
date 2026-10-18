@@ -402,7 +402,7 @@ export function Profile() {
               <p>This will permanently delete:</p>
               <ul>
                 <li>Your profile and sign-in account</li>
-                <li>Your lessons, vocabulary progress, and XP history</li>
+                <li>Your lessons, vocabulary progress, and Basil history</li>
                 <li>Your journal entries and revisions</li>
                 <li>Your uploaded photos and generated image copies</li>
               </ul>

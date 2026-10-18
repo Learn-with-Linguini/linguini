@@ -51,7 +51,7 @@ export function ISpyResults() {
       <div className="stat"><div className="stat__value">{found}/{described.length}</div><span className="stat__label">Objects Linguini found</span></div>
       <div className="stat"><div className="stat__value">{data.progress.skippedTaskCount}</div><span className="stat__label">Rounds skipped</span></div>
     </div> : null}
-    <p className="small muted">Games are just for fun: they don't earn XP or change your word progress.</p>
+    <p className="small muted">Games are just for fun: they don't earn Basil or change your word progress.</p>
     {startError ? <p role="alert">{startError}</p> : null}
     <div className="stack-2">
       <Button block disabled={starting || !session} onClick={() => void playAgain()}>{starting ? "Setting up..." : "Play again"}</Button>
