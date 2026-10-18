@@ -380,10 +380,10 @@ test("Play offers a working friend lobby and normal resources without feature co
   activeSnapshot = null;
   readPaths.length = 0;
   const view = await mountApp("/ispy");
-  await waitFor(() => assert.ok(button("Play with a friend")));
+  await waitFor(() => assert.ok(button("Play with friends")));
   assert.equal(dom.window.document.querySelectorAll('nav[aria-label="Main"] a').length, 5);
   assert.doesNotMatch(text(), /Coming soon/);
-  await click("Play with a friend");
+  await click("Play with friends");
   await waitFor(() => assert.ok(button("Create a room")));
   assert.match(text(), /Starting the game uses 1 Sauce for each person/);
   await waitFor(() => assert.ok(dom.window.document.querySelector('[aria-label="Sauce remaining"]')));

@@ -1,6 +1,6 @@
 """Session table definitions and progress derived from normalized encounters."""
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, time, timedelta
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import (
@@ -11,7 +11,9 @@ from sqlalchemy import (
     String,
     Table,
     Uuid,
+    and_,
     func,
+    or_,
     select,
 )
 from sqlalchemy.dialects.postgresql import ENUM, JSONB
@@ -85,8 +87,9 @@ class SessionBackedLearningRepository:
         from app.repositories.postgres.language_profiles import language_profiles
         from app.repositories.postgres.scenes import preloaded_scenes
         from app.repositories.postgres.tasks import session_tasks
+        from app.repositories.postgres.users import users
         from app.repositories.postgres.xp import xp_events
-        from app.schemas.progress import ScenarioProgress, Streak, StreakDay
+        from app.schemas.progress import LeaderboardRow, ScenarioProgress, Streak, StreakDay
 
         if user_id != self.user_id:
             return None
@@ -120,6 +123,65 @@ class SessionBackedLearningRepository:
                 current=current_streak,
                 days=[StreakDay(date=day, active=day in active_dates) for day in streak_dates],
             )
+            week_start_date = today - timedelta(days=today.weekday())
+            week_start = datetime.combine(
+                week_start_date, time.min, tzinfo=learner_timezone
+            ).astimezone(UTC)
+            week_end = week_start + timedelta(days=7)
+            weekly_scores = (
+                select(
+                    users.c.id.label("user_id"),
+                    users.c.display_name.label("name"),
+                    func.coalesce(func.sum(xp_events.c.amount), 0).label("xp"),
+                )
+                .select_from(
+                    users.outerjoin(
+                        xp_events,
+                        and_(
+                            xp_events.c.user_id == users.c.id,
+                            xp_events.c.occurred_at >= week_start,
+                            xp_events.c.occurred_at < week_end,
+                        ),
+                    )
+                )
+                .group_by(users.c.id, users.c.display_name)
+                .having(
+                    or_(
+                        func.coalesce(func.sum(xp_events.c.amount), 0) > 0,
+                        users.c.id == user_id,
+                    )
+                )
+                .subquery()
+            )
+            ranked_scores = select(
+                weekly_scores,
+                func.row_number().over(
+                    order_by=(
+                        weekly_scores.c.xp.desc(),
+                        weekly_scores.c.name,
+                        weekly_scores.c.user_id,
+                    )
+                ).label("rank"),
+            ).subquery()
+            leaderboard_rows = connection.execute(
+                select(ranked_scores)
+                .where(
+                    or_(
+                        ranked_scores.c.rank <= 5,
+                        ranked_scores.c.user_id == user_id,
+                    )
+                )
+                .order_by(ranked_scores.c.rank)
+            ).mappings()
+            leaderboard = [
+                LeaderboardRow(
+                    rank=row["rank"],
+                    name=row["name"],
+                    xp=row["xp"],
+                    is_you=row["user_id"] == user_id,
+                )
+                for row in leaderboard_rows
+            ]
             query = (
                 select(sessions, preloaded_scenes.c.slug, preloaded_scenes.c.title)
                 .join(language_profiles, language_profiles.c.id == sessions.c.language_profile_id)
@@ -167,7 +229,7 @@ class SessionBackedLearningRepository:
                 language_code=language_code or "es",
                 xp=xp,
                 scenarios=list(scenarios.values()),
-                leaderboard=[],
+                leaderboard=leaderboard,
                 streak=streak,
             )
 
