@@ -89,6 +89,11 @@ export function Vocabulary() {
               <span className="revisit-stop__word-count">
                 {words.length} {words.length === 1 ? "word" : "words"}
               </span>
+              <Button className="revisit-stop__action" disabled={!scenario?.sessionId}
+                aria-label={scenario?.sessionId ? `Revisit ${scene.title}` : `Revisit unavailable for ${scene.title}`}
+                onClick={() => scenario?.sessionId && navigate(`/practice/sessions/${scenario.sessionId}/learn`)}>
+                <PlayIcon size={18} /> {scenario?.sessionId ? "Revisit" : "Unavailable"}
+              </Button>
             </div>
             <div className="vocabulary-scene__content stack-2">
               <div className="vocabulary-scene__heading"><h2>{scene.title}</h2></div>
@@ -98,9 +103,6 @@ export function Vocabulary() {
                   <span><strong>{spokenWord}</strong><small>{item.translation}</small></span><IconButton label={`Hear ${spokenWord}`} onClick={() => speak(spokenWord, learner.languageCode)}><SpeakerIcon size={18} /></IconButton>
                 </div>;
               })}</div>
-              <Button block className="revisit-stop__action" disabled={!scenario?.sessionId} onClick={() => scenario?.sessionId && navigate(`/practice/sessions/${scenario.sessionId}/learn`)}>
-                <PlayIcon size={18} /> {scenario?.sessionId ? "Revisit" : "Revisit unavailable"}
-              </Button>
             </div>
           </div>
         </section>;
