@@ -675,7 +675,6 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />{reward ? <XpPill {...reward} /> : null}</div>
     <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><ExitToHome onExit={onExit} /></div>
-    {content.explanation ? <div className="panel-note">{content.explanation}</div> : null}
     {saved.isLoading ? <InlineLoader compact label="Restoring checked answers…" /> : null}
     {saved.isError ? <div role="alert"><p>Unable to restore checked answers.</p>
       <Button variant="quiet" onClick={() => void refetchChecks()}>Retry</Button></div> : null}
@@ -704,8 +703,8 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
             <span>{turn.text}</span>
           </p>)}
         </div> : null}
-        {question.roleplayPremise ? <div className="roleplay-premise" role="note" aria-label={`Role-play: ${question.roleplayPremise}`}>
-          <strong>Role-play</strong><p>{question.roleplayPremise}</p>
+        {question.roleplayPremise ? <div className="roleplay-premise" role="note" aria-label={`Scenario: ${roleplayScenario(question.roleplayPremise)}`}>
+          <p className="roleplay-premise__text"><strong>Scenario:</strong> {roleplayScenario(question.roleplayPremise)}</p>
         </div> : null}
         {question.planningFacts?.length ? <section className="mission-planning-facts" aria-label="Your facts">
           <strong>Your facts</strong><ul>{question.planningFacts.map((fact, position) => <li key={`${position}-${fact}`}>{fact}</li>)}</ul>
@@ -958,7 +957,6 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />{reward ? <XpPill {...reward} /> : null}</div>
     <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><ExitToHome onExit={onExit} /></div>
-    {activeIndex === 0 && content.explanation ? <p className="small muted lesson-intro">{content.explanation}</p> : null}
     {activeIndex === 0 && content.prep?.length ? <Card plain><div className="stack-2 lesson-prep" aria-label="Learn first">
       <span className="label muted">Learn first</span>
       {content.prep.map(card => <div key={card.text} className="lesson-prep__card">
@@ -989,9 +987,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         {section ? <h2 className="learning-section__title">{section}</h2> : null}
         <Card plain><div className="stack">
       {question.roleplayPremise ? <div className="roleplay-premise" role="note">
-        <span className="roleplay-premise__label">For this practice</span>
-        <p className="roleplay-premise__text">{question.roleplayPremise}</p>
-        <p className="roleplay-premise__disclaimer">Pretend only — not about your real things.</p>
+        <p className="roleplay-premise__text"><strong>Scenario:</strong> {roleplayScenario(question.roleplayPremise)}</p>
       </div> : null}
       {content.questions.length > 1 ? <span className="label muted">Question {position + 1} of {content.questions.length}</span> : null}
       {question.instruction ? <p className="small lesson-instruction">{question.instruction}</p> : null}
@@ -1208,6 +1204,14 @@ function QuestionOutcomeNotes({ outcome }: { outcome?: QuestionOutcome }) {
     </div> : null}
     {outcome.assistance.includes("wordBank") ? <p className="small muted">Supported practice: built with the word bank.</p> : null}
   </>;
+}
+
+function roleplayScenario(text: string) {
+  const direct = text
+    .replace(/^let(?:'|’)s pretend(?: that)?\s+/i, "")
+    .replace(/^pretend(?: that)?\s+/i, "")
+    .trim();
+  return direct ? direct.charAt(0).toUpperCase() + direct.slice(1) : text;
 }
 
 function PromptTranslation({ text, source, lang }: { text?: string | null; source?: ReactNode; lang?: string }) {

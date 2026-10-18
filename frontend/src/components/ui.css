@@ -541,31 +541,20 @@
 }
 
 .roleplay-premise {
-  border-left: 4px solid var(--teal);
-  border-radius: var(--radius-sm);
-  background: var(--cream);
-  padding: var(--space-3) var(--space-4);
+  border: 1px solid rgba(33, 113, 111, 0.24);
+  border-radius: var(--radius-md);
+  background: var(--sage);
+  padding: var(--space-4);
 }
 
-.roleplay-premise__label {
-  display: block;
-  margin-bottom: var(--space-1);
-  color: var(--teal-dark);
-  font-size: var(--text-label);
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.roleplay-premise__text,
-.roleplay-premise__disclaimer {
+.roleplay-premise__text {
   margin: 0;
+  color: var(--ink);
+  line-height: 1.5;
 }
 
-.roleplay-premise__disclaimer {
-  margin-top: var(--space-1);
-  color: var(--ink-muted);
-  font-size: var(--text-label);
+.roleplay-premise__text strong {
+  color: var(--teal-dark);
 }
 
 /* Chips */
@@ -627,12 +616,10 @@
 .roleplay-premise,
 .mission-planning-facts {
   border: 1px solid var(--line);
-  border-radius: var(--radius-card);
-  padding: var(--space-3);
-  background: #f3ead7;
+  border-radius: var(--radius-md);
+  padding: var(--space-4);
 }
 
-.roleplay-premise p,
 .mission-planning-facts ul {
   margin: var(--space-1) 0 0;
 }
