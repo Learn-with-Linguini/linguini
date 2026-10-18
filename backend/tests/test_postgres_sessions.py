@@ -17,7 +17,12 @@ from app.repositories.postgres.media_assets import media_assets
 from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.tasks import session_tasks, task_attempts
 from app.repositories.postgres.users import users
-from app.repositories.postgres.vocabulary import user_vocabulary_progress, vocabulary_encounters
+from app.repositories.postgres.vocabulary import (
+    user_vocabulary_progress,
+    vocabulary_encounters,
+    vocabulary_items,
+    vocabulary_translations,
+)
 from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.repositories.postgres.xp import award, xp_events
 from app.repositories.practice import PracticeConflictError
@@ -702,17 +707,40 @@ def test_other_user_cannot_access_sessions_or_tasks(database, monkeypatch):
 
 
 def test_review_rejects_adds_and_rebuilds_without_duplicate_objects(database):
-    _, _, profile, client = database
+    engine, _, profile, client = database
     run = create_run(client, profile, "review-session-key")
     sid = run["session"]["id"]
     detail = analyze(client, sid, confirm=False)
-    kept = detail["sceneObjects"][0]["id"]
+    kept_object = detail["sceneObjects"][0]
+    kept = kept_object["id"]
+    with engine.connect() as c:
+        catalog_labels = set(
+            c.execute(
+                select(func.lower(vocabulary_translations.c.translated_text))
+                .join(
+                    vocabulary_items,
+                    vocabulary_translations.c.vocabulary_item_id == vocabulary_items.c.id,
+                )
+                .where(
+                    func.lower(vocabulary_items.c.language_code)
+                    == profile.target_language_code.lower(),
+                    func.lower(vocabulary_translations.c.source_language_code)
+                    == profile.source_language_code.lower(),
+                )
+            ).scalars()
+        )
+    # Added objects need a distinct catalog word to avoid sharing the kept object's vocabulary item.
+    other_label = next(
+        obj["label"]
+        for obj in detail["sceneObjects"]
+        if obj["label"] != kept_object["label"] and obj["label"].strip().lower() in catalog_labels
+    )
     payload = {
         "acceptedObjectIds": [kept],
         "addedObjects": [
             {
                 "id": str(uuid4()),
-                "label": detail["sceneObjects"][1]["label"],
+                "label": other_label,
                 "x": 0.3,
                 "y": 0.4,
             }
@@ -737,7 +765,7 @@ def test_review_rejects_adds_and_rebuilds_without_duplicate_objects(database):
     assert relation["subjectSceneObjectId"] == kept
     assert relation["referenceSceneObjectId"] in {obj["id"] for obj in selected}
     assert relation["referenceSceneObjectId"] != payload["addedObjects"][0]["id"]
-    assert any(obj["label"] == detail["sceneObjects"][1]["label"] for obj in selected)
+    assert any(obj["label"] == other_label for obj in selected)
     assert all(
         task["sceneObjectId"] in {obj["id"] for obj in selected}
         for task in saved["tasks"]
