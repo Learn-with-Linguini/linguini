@@ -1711,7 +1711,11 @@ p[role="alert"]::before { content: "!"; }
 
 .translation-preview__group {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid rgba(33, 113, 111, .18);
+  border-radius: var(--radius-md);
+  background: var(--paper);
 }
 
 .translation-preview__group h3 {
@@ -1720,20 +1724,20 @@ p[role="alert"]::before { content: "!"; }
 }
 
 .translation-preview__terms {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: var(--space-2);
 }
 
 .translation-preview__term {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 11px;
-  border-radius: var(--radius-pill);
-  background: var(--paper);
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(249, 178, 51, .34);
+  border-radius: var(--radius-sm);
+  background: #fff9e9;
   color: var(--muted);
-  box-shadow: 0 2px 0 rgba(20, 65, 62, 0.08);
 }
 
 .translation-preview__term strong {
@@ -4704,35 +4708,29 @@ p[role="alert"]::before { content: "!"; }
   gap: var(--space-2);
 }
 
-.learn-missions .task-list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-3);
+.learn-missions {
+  padding: var(--space-4);
+  border: 1px solid rgba(249, 178, 51, .34);
+  border-radius: var(--radius-lg);
+  background: #fff9e9;
 }
 
+.learn-missions .task-list { gap: var(--space-3); }
+
 .learn-missions .task-row {
-  display: grid;
-  grid-template-columns: 42px minmax(0, 1fr) auto;
-  min-height: 104px;
-  padding: var(--space-4);
-  border-color: rgba(33, 113, 111, .2);
+  min-height: 76px;
+  border: 2px solid rgba(33, 113, 111, .2);
   background: var(--paper);
-  box-shadow: 0 3px 0 rgba(33, 113, 111, .1);
+  box-shadow: 0 3px 0 rgba(33, 113, 111, .12);
 }
 
 .learn-missions .task-row:hover {
+  border-color: var(--teal);
   transform: translateY(-1px);
-  box-shadow: 0 5px 0 rgba(33, 113, 111, .12);
+  box-shadow: 0 5px 0 rgba(33, 113, 111, .14);
 }
 
-.learn-missions .task-row--done {
-  background: var(--sage);
-}
-
-@media (max-width: 560px) {
-  .learn-missions .task-list { grid-template-columns: 1fr; }
-  .learn-missions .task-row { min-height: 88px; }
-}
+.learn-missions .task-row--done { background: var(--sage); }
 
 .learning-task-page > .trail {
   margin-bottom: var(--space-2);
