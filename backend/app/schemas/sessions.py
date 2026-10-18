@@ -17,6 +17,7 @@ from app.schemas.media import (
     SceneObjectRelation,
     ScenePriceSuggestion,
 )
+from app.schemas.missions import MissionChoices
 from app.schemas.tasks import SessionProgress, SessionTaskPublic
 from app.schemas.translation import SceneTranslationResult
 from app.schemas.vocabulary import VocabularyItem, VocabularyTranslation
@@ -104,6 +105,7 @@ class ReviewPracticeRequest(ApiModel):
         default_factory=list
     )
     object_counts: dict[UUID, Quantity] = Field(default_factory=dict)
+    mission_choices: MissionChoices | None = None
 
     @model_validator(mode="after")
     def unique_selection(self):
@@ -115,6 +117,16 @@ class ReviewPracticeRequest(ApiModel):
             raise ValueError("Attributes must reference selected objects.")
         if not set(self.object_counts) <= selected:
             raise ValueError("Counts must reference selected objects.")
+        if self.mission_choices:
+            choice_ids = []
+            if self.mission_choices.ownership:
+                choice_ids.append(self.mission_choices.ownership.scene_object_id)
+            if self.mission_choices.preference:
+                choice_ids.extend(self.mission_choices.preference.scene_object_ids)
+                if self.mission_choices.preference.chosen_object_id:
+                    choice_ids.append(self.mission_choices.preference.chosen_object_id)
+            if not set(choice_ids) <= selected:
+                raise ValueError("Mission choices must reference selected objects.")
         moved_ids = [item.id for item in self.repositioned_objects]
         if len(moved_ids) != len(set(moved_ids)):
             raise ValueError("Each object can have only one marker position.")
@@ -171,6 +183,7 @@ class SessionDetailResponse(ApiModel):
     review_markers: dict[str, int] = Field(default_factory=dict)
     provisional_mission_plan: list[JsonObject] = Field(default_factory=list)
     suggested_scene_object_ids: list[UUID] = Field(default_factory=list)
+    mission_choices: MissionChoices | None = None
     session: Session
     scene_object_relations: list[SceneObjectRelation] = Field(default_factory=list)
     scene_action_suggestions: list[SceneActionSuggestion] = Field(default_factory=list)

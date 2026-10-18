@@ -19,6 +19,7 @@ from app.schemas.enums import (
     TaskPhase,
     TaskStatus,
 )
+from app.schemas.mission_content import A0MissionSnapshot, TaughtChunk
 from app.schemas.roleplay import RoleplayFact
 
 type MissionId = Annotated[str, StringConstraints(pattern=r"^M\d{2}$")]
@@ -101,6 +102,18 @@ class VocabularyChoice(ApiModel):
     label: NonEmptyText
 
 
+class MissionDialogueTurn(ApiModel):
+    speaker: Literal["linguini", "learner"]
+    text: NonEmptyText
+    translation: str
+
+
+class MissionQuestionOutcome(ApiModel):
+    text: NonEmptyText
+    kind: Literal["returned", "basket", "leftBehind"]
+    scene_object_id: UUID
+
+
 class VocabularyQuestion(ApiModel):
     question_id: NonEmptyText
     prompt: NonEmptyText
@@ -181,6 +194,18 @@ class GrammarLessonQuestion(ApiModel):
     # A chunk with its missing word as ``___``, completed and played after grading.
     slot_template: str | None = Field(default=None, exclude_if=_is_none)
     complete_chunk: str | None = Field(default=None, exclude_if=_is_none)
+    gap_type: Literal[
+        "chunkChoice", "pictureToBlank", "audioGap", "dialogueGap", "typedGap",
+    ] | None = Field(default=None, exclude_if=_is_none)
+    dialogue: list[MissionDialogueTurn] | None = Field(default=None, exclude_if=_is_none)
+    option_object_ids: dict[str, UUID] | None = Field(default=None, exclude_if=_is_none)
+    option_icons: dict[str, Literal["belongs", "likes", "like", "dislike"]] | None = Field(
+        default=None, exclude_if=_is_none
+    )
+    complete_translation: str | None = Field(default=None, exclude_if=_is_none)
+    outcome: MissionQuestionOutcome | None = Field(default=None, exclude_if=_is_none)
+    correct_note: str | None = Field(default=None, exclude_if=_is_none)
+    typed_allowed: bool | None = Field(default=None, exclude_if=_is_none)
 
     @model_validator(mode="after")
     def validate_interaction(self) -> GrammarLessonQuestion:
@@ -194,6 +219,14 @@ class GrammarLessonQuestion(ApiModel):
             option.option_id for option in self.options
         }:
             raise ValueError("marker choices must cover exactly the answer options")
+        if self.option_object_ids is not None and set(self.option_object_ids) != {
+            option.option_id for option in self.options
+        }:
+            raise ValueError("object choices must cover exactly the answer options")
+        if self.option_icons is not None and set(self.option_icons) != {
+            option.option_id for option in self.options
+        }:
+            raise ValueError("icon choices must cover exactly the answer options")
         if self.board_counts is not None:
             if set(self.board_counts) != {option.option_id for option in self.options}:
                 raise ValueError("board counts must cover exactly the answer options")
@@ -220,6 +253,11 @@ class GrammarLessonContent(MissionTaskFields):
     questions: Annotated[list[GrammarLessonQuestion], Field(min_length=1)]
     check_each_question: bool | None = Field(default=None, exclude_if=_is_none)
     roleplay_facts: list[RoleplayFact] | None = Field(default=None, exclude_if=_is_none)
+    situation: Literal["lostAndFound", "everydayChoice"] | None = Field(
+        default=None, exclude_if=_is_none
+    )
+    taught_chunks: list[TaughtChunk] | None = Field(default=None, exclude_if=_is_none)
+    mission_snapshot: A0MissionSnapshot | None = Field(default=None, exclude_if=_is_none)
 
 
 class GrammarExplanationContent(MissionTaskFields):
@@ -392,6 +430,9 @@ class TaskAnswerKey(ApiModel):
     evaluation_notes: str | None = None
     correct_option_ids: dict[str, str] = Field(default_factory=dict)
     accepted_text_answers_by_vocabulary_id: dict[str, list[str]] = Field(default_factory=dict)
+    accepted_text_answers_by_question: dict[str, list[str]] = Field(
+        default_factory=dict, exclude_if=_is_empty
+    )
     scene_description_context: JsonObject | None = None
     question_evaluations: list[QuestionEvaluation] = Field(
         default_factory=list, exclude_if=_is_empty
