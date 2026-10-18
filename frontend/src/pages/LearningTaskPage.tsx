@@ -370,7 +370,7 @@ function LessonAudioPrompt({ question, languageCode, revealed, graded, onReveal,
 }
 
 function A0MissionGapQuestion({ question, scene, sceneObjects, selectedOptionId, typedMode,
-  typedAnswer, checked, retryPassed, checking, onSelect, onTypedMode, onTypedAnswer, onRetry }: {
+  typedAnswer, checked, retryPassed, checking, scenario, onSelect, onTypedMode, onTypedAnswer, onRetry }: {
   question: GrammarLessonQuestion;
   scene: ReturnType<typeof useScene>;
   sceneObjects: SceneObject[];
@@ -380,6 +380,7 @@ function A0MissionGapQuestion({ question, scene, sceneObjects, selectedOptionId,
   checked?: LessonAnswerCheck;
   retryPassed: boolean;
   checking: boolean;
+  scenario?: string;
   onSelect: (optionId: string) => void;
   onTypedMode: () => void;
   onTypedAnswer: (value: string) => void;
@@ -404,6 +405,9 @@ function A0MissionGapQuestion({ question, scene, sceneObjects, selectedOptionId,
     {question.sceneObjectId ? <ObjectPreview scene={scene}
       object={sceneObjects.find(item => item.id === question.sceneObjectId)}
       label={question.objectLabel ?? ""} /> : null}
+    {scenario ? <div className="roleplay-premise" role="note">
+      <p className="roleplay-premise__text"><strong>Scenario:</strong> {roleplayScenario(scenario)}</p>
+    </div> : null}
     <LessonAudioPrompt question={question} languageCode={scene.languageCode} revealed={revealed}
       graded={Boolean(checked)} onReveal={() => setRevealed(true)} showAudioText />
     {question.translation
@@ -703,9 +707,6 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
             <span>{turn.text}</span>
           </p>)}
         </div> : null}
-        {question.roleplayPremise ? <div className="roleplay-premise" role="note" aria-label={`Scenario: ${roleplayScenario(question.roleplayPremise)}`}>
-          <p className="roleplay-premise__text"><strong>Scenario:</strong> {roleplayScenario(question.roleplayPremise)}</p>
-        </div> : null}
         {question.planningFacts?.length ? <section className="mission-planning-facts" aria-label="Your facts">
           <strong>Your facts</strong><ul>{question.planningFacts.map((fact, position) => <li key={`${position}-${fact}`}>{fact}</li>)}</ul>
         </section> : null}
@@ -717,6 +718,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
           typedAnswer={typedAnswers[question.questionId] ?? ""}
           checked={checks[question.questionId]} retryPassed={Boolean(retryPassed[question.questionId])}
           checking={checking || saved.isLoading || saved.isError}
+          scenario={question.roleplayPremise}
           onSelect={optionId => {
             setTypedMode(value => ({ ...value, [question.questionId]: false }));
             setAnswers(value => ({ ...value, [question.questionId]: optionId }));
@@ -739,6 +741,9 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
               if (marker) setAnswers(value => ({ ...value, [question.questionId]: marker.option.optionId }));
             } : undefined}
         /></div> : null}
+        {question.roleplayPremise ? <div className="roleplay-premise" role="note" aria-label={`Scenario: ${roleplayScenario(question.roleplayPremise)}`}>
+          <p className="roleplay-premise__text"><strong>Scenario:</strong> {roleplayScenario(question.roleplayPremise)}</p>
+        </div> : null}
         {question.audioText && speechAvailable() ? <div className="spread">
           <p className="muted">{question.listenFirst && !showWritten ? "Listen before reading the prompt." : "Listen to the phrase."}</p>
           <IconButton label="Play audio" onClick={() => speak(question.audioText ?? "", scene.languageCode)}><SpeakerIcon /></IconButton>
@@ -986,9 +991,6 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
       return <div key={question.questionId} className="learning-section">
         {section ? <h2 className="learning-section__title">{section}</h2> : null}
         <Card plain><div className="stack">
-      {question.roleplayPremise ? <div className="roleplay-premise" role="note">
-        <p className="roleplay-premise__text"><strong>Scenario:</strong> {roleplayScenario(question.roleplayPremise)}</p>
-      </div> : null}
       {content.questions.length > 1 ? <span className="label muted">Question {position + 1} of {content.questions.length}</span> : null}
       {question.instruction ? <p className="small lesson-instruction">{question.instruction}</p> : null}
       <LessonAudioPrompt question={question} languageCode={scene.languageCode}
@@ -1005,6 +1007,9 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         hideNumbers={countQuestion}
         reference={session?.sceneObjects.find(object => object.id === question.referenceObjectId)}
         referenceLabel={question.referenceLabel} /> : null}
+      {question.roleplayPremise ? <div className="roleplay-premise" role="note">
+        <p className="roleplay-premise__text"><strong>Scenario:</strong> {roleplayScenario(question.roleplayPremise)}</p>
+      </div> : null}
       {question.interactionType === "sentenceBuilding" ? <>
         {question.promptTranslation
           ? <PromptTranslation source={question.prompt} text={question.promptTranslation} lang={scene.languageCode} />
