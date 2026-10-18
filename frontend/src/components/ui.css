@@ -1249,7 +1249,7 @@ p[role="alert"]::before { content: "!"; }
 
 .analysis-panel-tabs {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 4px;
   padding: 4px;
   border-radius: var(--radius-pill);
@@ -1851,6 +1851,89 @@ p[role="alert"]::before { content: "!"; }
 
 .analysis-add-word__error {
   color: var(--danger);
+}
+
+.analysis-object-counts {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-sm);
+  background: var(--cream);
+}
+
+.analysis-object-counts h3,
+.analysis-object-counts p,
+.analysis-object-counts dl,
+.analysis-object-counts dt,
+.analysis-object-counts dd {
+  margin: 0;
+}
+
+.analysis-object-counts dl {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.analysis-object-counts dl > div {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  border-top: 1px solid var(--line);
+}
+
+.analysis-object-counts dt {
+  min-width: 0;
+  font-weight: 800;
+  text-transform: capitalize;
+  overflow-wrap: anywhere;
+}
+
+.analysis-object-counts dd {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  background: var(--sage);
+  color: var(--teal-dark);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 520px) {
+  .analysis-titlebar {
+    align-items: flex-start;
+  }
+
+  .analysis-panel-tabs button {
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+    padding-inline: 4px;
+    font-size: var(--text-label);
+    line-height: 1.15;
+  }
+
+  .analysis-add-word__controls {
+    grid-template-columns: 1fr;
+  }
+
+  .analysis-add-word__controls .btn {
+    width: 100%;
+  }
+
+  .analysis-attribute-fields label {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+
+  .analysis-word-card,
+  .analysis-object-counts {
+    padding: var(--space-3);
+  }
 }
 
 @keyframes analyse-scene {
