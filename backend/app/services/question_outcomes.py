@@ -141,7 +141,9 @@ def _option_notes(evaluation, answer):
     return notes
 
 
-def review_details(task: SessionTask, request, question_results, correct_answers):
+def review_details(
+    task: SessionTask, request, question_results, correct_answers, assistance_by_question=None,
+):
     """Grouped-lesson ``evaluationDetails`` with ``questionOutcomes`` added.
 
     Correctness comes from ``question_results``; the outcomes only describe it.
@@ -149,7 +151,11 @@ def review_details(task: SessionTask, request, question_results, correct_answers
     """
     mission = get_mission(*task.public_content.mission_key)
     evaluations = {item.question_id: item for item in task.answer_key.question_evaluations}
-    assistance = {item.question_id: item.supports for item in request.question_assistance or []}
+    assistance = (
+        assistance_by_question
+        if assistance_by_question is not None
+        else {item.question_id: item.supports for item in request.question_assistance or []}
+    )
     outcomes = []
     for question in task.public_content.questions:
         question_id = question.question_id

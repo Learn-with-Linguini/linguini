@@ -12,7 +12,11 @@ from app.schemas.tasks import (
     CheckVocabularyAnswerResponse,
     ConfirmGuessRequest,
     LatestAttemptResponse,
+    LessonAssistanceRequest,
+    LessonAssistanceResponse,
     LessonChecksResponse,
+    MissionScenarioRequest,
+    MissionScenarioResponse,
     SessionTaskPublic,
     SkipTaskRequest,
     SubmitTaskAttemptRequest,
@@ -73,6 +77,20 @@ def check_lesson_answer(
 @router.get("/{task_id}/lesson-checks", response_model=LessonChecksResponse)
 def get_lesson_checks(task_id: UUID, service: TaskServiceDep) -> LessonChecksResponse:
     return service.lesson_checks(task_id)
+
+
+@router.post("/{task_id}/lesson-assistance", response_model=LessonAssistanceResponse)
+def request_lesson_assistance(
+    task_id: UUID, request: LessonAssistanceRequest, service: TaskServiceDep
+) -> LessonAssistanceResponse:
+    return service.lesson_assistance(task_id, request)
+
+
+@router.post("/{task_id}/mission-scenario", response_model=MissionScenarioResponse)
+def update_mission_scenario(
+    task_id: UUID, request: MissionScenarioRequest, service: TaskServiceDep
+) -> MissionScenarioResponse:
+    return service.mission_scenario(task_id, request)
 
 
 @router.post("/{task_id}/hints", response_model=TaskHint)

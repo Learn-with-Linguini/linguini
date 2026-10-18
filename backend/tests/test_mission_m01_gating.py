@@ -71,11 +71,11 @@ def test_language_mission_levels_follow_environment_changes(monkeypatch):
     monkeypatch.setenv("MULTILINGUAL_ENABLED", "true")
     monkeypatch.delenv("MULTILINGUAL_COMBINATIONS", raising=False)
 
-    assert language.features.mission_levels == ["A0"]
+    assert language.features.mission_levels == ["A0", "A2"]
     assert language.speech.recognition is False
 
     monkeypatch.setenv("MULTILINGUAL_COMBINATIONS", "ko:A1")
-    assert language.features.mission_levels == ["A0", "A1"]
+    assert language.features.mission_levels == ["A0", "A1", "A2"]
     monkeypatch.setenv("MULTILINGUAL_COMBINATIONS", "ko:A2")
     assert language.features.mission_levels == ["A0", "A2"]
 

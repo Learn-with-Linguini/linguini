@@ -46,8 +46,8 @@ def test_registry_helpers_and_picker_availability():
 def test_mission_levels_are_derived_from_implemented_legacy_eligibility():
     expected = {
         "es": ["A0", "A1", "A2"],
-        "de": ["A0", "A1"],
-        "ko": ["A0"],
+        "de": ["A0", "A1", "A2"],
+        "ko": ["A0", "A2"],
     }
     for code, levels in expected.items():
         assert get_language(code).features.mission_levels == levels
@@ -105,6 +105,6 @@ def test_public_language_endpoint_is_unauthenticated_camel_case_and_tagged():
         "synthesis": "browserVoice",
         "recognition": False,
     }
-    assert korean["features"] == {"missionLevels": ["A0"]}
+    assert korean["features"] == {"missionLevels": ["A0", "A2"]}
     openapi = client.get("/openapi.json").json()
     assert openapi["paths"]["/api/v1/languages"]["get"]["tags"] == ["languages"]

@@ -396,9 +396,14 @@ export interface RoleplayFact {
   source: "assignedRoleplay";
   isFictional: true;
 }
+export interface MissionScenarioAlternative { sceneObjectId: string; label: string }
+export interface MissionScenario {
+  scenarioId: string; prompt: string; sceneObjectId: string; itemLabel: string;
+  accepted: boolean; alternatives: MissionScenarioAlternative[];
+}
 export type TaskContent = MissionTaskFields & (
   | { kind: "vocabularyIntroduction"; title: string; words: VocabularyLearningWord[]; questions: VocabularyQuestion[]; allowTypingPractice: boolean; targetText?: string | null; translation?: string | null; partOfSpeech?: WordClass | null; exampleSentence?: string | null }
-  | { kind: "grammarLesson"; focus: string; title: string; explanation?: string | null; checkEachQuestion?: boolean; prep?: LessonPrepCard[] | null; targetLanguage?: string | null; textDirection?: "ltr" | "rtl" | null; contractVersion?: string | null; questions: GrammarLessonQuestion[]; roleplayFacts?: RoleplayFact[] | null }
+  | { kind: "grammarLesson"; focus: string; title: string; explanation?: string | null; checkEachQuestion?: boolean; prep?: LessonPrepCard[] | null; targetLanguage?: string | null; textDirection?: "ltr" | "rtl" | null; contractVersion?: string | null; questions: GrammarLessonQuestion[]; roleplayFacts?: RoleplayFact[] | null; scenario?: MissionScenario | null }
   | { kind: "grammarExplanation"; title: string; explanation: string; examples: string[] }
   | { kind: "grammarPractice"; prompt: string; options: string[] }
   | { kind: "syntaxExplanation"; title: string; sentencePattern: string; explanation: string; examples: string[] }
@@ -499,9 +504,14 @@ export interface VocabularyQuestion { questionId: string; prompt: string; option
 export interface GrammarLessonQuestion {
   questionId: string;
   prompt: string;
-  interactionType: "multipleChoice" | "sentenceBuilding";
+  interactionType: "multipleChoice" | "sentenceBuilding" | "textCloze";
   options: { optionId: string; label: string }[];
   tokenBank: string[];
+  gapKind?: string | null;
+  assistanceSteps?: ("replayAudio" | "visualDetail" | "phraseOnset" | "chunkBank" | "fullModel")[] | null;
+  dialogue?: { speaker: "server" | "learner"; text: string }[] | null;
+  allowRetry?: boolean | null;
+  wrongFieldTokens?: Record<string, string> | null;
   translation?: string | null;
   sceneObjectId?: string | null;
   objectLabel?: string | null;
@@ -551,10 +561,13 @@ export interface QuestionOutcome {
   correctNote?: string; optionNotes?: string[];
 }
 export interface LessonAnswerCheck {
-  questionId: string; answer: string; isCorrect: boolean; correctAnswer: string; outcome: QuestionOutcome;
+  questionId: string; answer: string; isCorrect: boolean; correctAnswer: string | null;
+  outcome: QuestionOutcome; attemptsLeft?: number | null; feedback?: string | null;
+  wrongField?: string | null; assistanceStepsUsed?: string[];
 }
 export interface LessonChecksResponse {
   checks: LessonAnswerCheck[];
+  assistanceSteps?: Record<string, string[]>;
 }
 /** `questionOutcomes` is present only for tasks with mission evaluation metadata. */
 export interface VocabularyReviewDetails { questionResults: Record<string, boolean>; correctAnswers: Record<string, string>; questionOutcomes?: QuestionOutcome[] }
@@ -581,6 +594,17 @@ export const checkLessonAnswer = (taskId: string, questionId: string, answer: st
   write<LessonAnswerCheck>(`/api/v1/tasks/${taskId}/check-lesson-answer`, "POST", { questionId, answer });
 export const getLessonChecks = (taskId: string, signal?: AbortSignal) =>
   request<LessonChecksResponse>(`/api/v1/tasks/${taskId}/lesson-checks`, signal);
+export type LessonAssistanceStep = "replayAudio" | "visualDetail" | "phraseOnset" | "chunkBank" | "fullModel";
+export const requestLessonAssistance = (
+  taskId: string, questionId: string, step: LessonAssistanceStep,
+) => write<{ questionId: string; step: LessonAssistanceStep; content: string }>(
+  `/api/v1/tasks/${taskId}/lesson-assistance`, "POST", { questionId, step },
+);
+export const updateMissionScenario = (
+  taskId: string, action: "accept" | "choose", sceneObjectId?: string,
+) => write<{ accepted: boolean; tasks: SessionTask[] }>(
+  `/api/v1/tasks/${taskId}/mission-scenario`, "POST", { action, ...(sceneObjectId ? { sceneObjectId } : {}) },
+);
 export interface TaskActionResult {
   task: SessionTask; nextTaskId: string | null; sessionProgress: SessionProgress; attempt: TaskAttemptResult | null;
   xpEarned: number;
