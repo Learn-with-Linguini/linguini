@@ -592,7 +592,8 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         </div>
         <div className="chip-row" aria-label="Sentence building words">{question.tokenBank.map((token, tokenIndex) => {
           const used = (builtTokenIndexes[question.questionId] ?? []).includes(tokenIndex);
-          return <button key={`${token}-${tokenIndex}`} className="chip" disabled={used || terminal || practiceSaving}
+          if (used) return null;
+          return <button key={`${token}-${tokenIndex}`} className="chip" disabled={terminal || practiceSaving}
             onClick={() => setBuiltTokenIndexes(value => ({ ...value, [question.questionId]: [...(value[question.questionId] ?? []), tokenIndex] }))}>{token}</button>;
         })}</div>
       </> : <>
