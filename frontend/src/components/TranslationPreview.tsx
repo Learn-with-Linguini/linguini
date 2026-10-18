@@ -17,7 +17,7 @@ function uniquePreviewTerms(terms: PreviewTerm[]) {
   });
 }
 
-export function TranslationPreview({ preview, scene, learningAction }: { preview: NonNullable<PracticeDetail["translationPreview"]>; scene?: Scene; learningAction?: ReactNode }) {
+export function TranslationPreview({ preview, scene, photoOverlay, learningAction }: { preview: NonNullable<PracticeDetail["translationPreview"]>; scene?: Scene; photoOverlay?: ReactNode; learningAction?: ReactNode }) {
   const groups = ([
     ["Objects", preview.objects],
     ["Attributes", preview.attributes],
@@ -27,10 +27,13 @@ export function TranslationPreview({ preview, scene, learningAction }: { preview
   const termCount = groups.reduce((total, [, terms]) => total + terms.length, 0);
 
   return <Card plain className="translation-preview">
-    {scene ? <ScenePhoto scene={scene} items={[]} /> : null}
+    {scene ? <div className="translation-preview__photo">
+      <ScenePhoto scene={scene} items={[]} />
+      {photoOverlay ? <div className="translation-preview__photo-overlay">{photoOverlay}</div> : null}
+    </div> : null}
     {learningAction ? <div className="translation-preview__action">{learningAction}</div> : null}
     <details className="translation-preview__drawer">
-      <summary><span><strong>Vocabulary</strong><small>{termCount} words and phrases from this scene</small></span><span aria-hidden="true">⌄</span></summary>
+      <summary><span><strong>Vocabulary preview</strong><small>{termCount} words and phrases from this scene</small></span><span aria-hidden="true">⌄</span></summary>
       <div className="translation-preview__groups">{groups.map(([label, terms]) => <section key={label} className="translation-preview__group">
         <h3>{label}</h3>
         <div className="translation-preview__terms">{terms.map(term => <span className="translation-preview__term" key={term.key}>

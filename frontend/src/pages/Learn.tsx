@@ -44,13 +44,12 @@ export function Learn() {
 
       <div className="learn-overview">
         <div className="learn-overview__scene">
-          {session.translationPreview ? <TranslationPreview preview={session.translationPreview} scene={scene} learningAction={foundationTask ? <div className={`learn-photo-action${foundationDone ? " is-complete" : ""}`}>
-            <div className="learn-photo-action__copy">
-              <span className="learn-photo-action__eyebrow">{foundationDone ? "Words ready" : "Recommended first"}</span>
-              <div><strong>{taskTitle(foundationTask)}</strong><p>{foundationDone ? "You’re ready to use these words in context." : "The easiest place to begin—but every activity is open."}</p></div>
-            </div>
-            {foundationDone ? <span className="learn-foundation-check"><CheckIcon size={20} /></span> : <div className="learn-photo-action__controls">{taskXp(foundationTask) ? <XpPill {...taskXp(foundationTask)!} /> : null}<Button disabled={practiceSaving} onClick={() => openTask(foundationTask.id)}>Learn the words <ArrowRightIcon /></Button></div>}
-          </div> : null} /> : null}
+          {session.translationPreview ? <TranslationPreview
+            preview={session.translationPreview}
+            scene={scene}
+            photoOverlay={foundationTask ? foundationDone ? <span className="learn-foundation-check"><CheckIcon size={20} /></span> : taskXp(foundationTask) ? <XpPill {...taskXp(foundationTask)!} /> : null : null}
+            learningAction={foundationTask && !foundationDone ? <Button block disabled={practiceSaving} onClick={() => openTask(foundationTask.id)}>Learn the words <ArrowRightIcon /></Button> : null}
+          /> : null}
           <SessionPersonalization personalization={session.personalization} languageCode={scene.languageCode} />
           {session.missionGuidance?.length ? <section className="panel-note" role="note">
             <p><strong>This photo didn't fit a mission</strong>, so this is the regular lesson.</p>
