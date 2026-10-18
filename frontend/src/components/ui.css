@@ -2556,6 +2556,19 @@ p[role="alert"]::before { content: "!"; }
   margin-top: var(--space-1);
 }
 
+.revisit-page .vocabulary-page__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.revisit-page .vocabulary-page__view-toggle {
+  width: auto;
+  flex: none;
+  white-space: nowrap;
+}
+
 .vocabulary-page__view-toggle {
   justify-content: flex-start;
   gap: var(--space-3);
@@ -2589,6 +2602,84 @@ p[role="alert"]::before { content: "!"; }
   gap: var(--space-5);
 }
 
+/* Revisit: a photo-led collection of previously learned places. */
+.revisit-scenes {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.revisit-stop__card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  box-shadow: var(--shadow-paper);
+}
+
+.revisit-stop__image {
+  position: relative;
+}
+
+.revisit-stop__word-count {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  padding: 6px 11px;
+  border: 1px solid rgba(33, 113, 111, 0.2);
+  border-radius: var(--radius-pill);
+  background: var(--paper);
+  box-shadow: 0 2px 8px rgba(38, 50, 56, 0.14);
+  color: var(--teal-dark);
+  font-size: var(--text-small);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.revisit-stop__level {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  padding: 6px 10px;
+  border: 1px solid rgba(33, 113, 111, 0.2);
+  border-radius: var(--radius-pill);
+  background: var(--paper);
+  box-shadow: 0 2px 8px rgba(38, 50, 56, 0.14);
+  color: var(--teal-dark);
+  font-size: var(--text-label) !important;
+  font-weight: 800;
+}
+
+.revisit-stop__summary {
+  color: var(--ink-muted);
+  font-size: var(--text-small);
+}
+
+.revisit-stop__action { margin-top: var(--space-1); }
+
+@media (min-width: 760px) {
+  .revisit-scenes {
+    display: block;
+    columns: 2;
+    column-gap: var(--space-5);
+  }
+
+  .revisit-stop {
+    break-inside: avoid;
+    margin-bottom: var(--space-5);
+  }
+
+  .revisit-stop--column-start {
+    break-before: column;
+  }
+}
+
+@media (max-width: 560px) {
+  .revisit-page .vocabulary-page__header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
 .vocabulary-scene {
   overflow: hidden;
   border-radius: var(--radius-md);
@@ -2612,7 +2703,7 @@ p[role="alert"]::before { content: "!"; }
   align-items: baseline;
   justify-content: space-between;
   gap: var(--space-3);
-  padding-bottom: var(--space-3);
+
 }
 
 .vocabulary-scene__heading span {

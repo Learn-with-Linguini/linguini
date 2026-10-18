@@ -1726,8 +1726,11 @@ class PostgresWorkflowRepository:
                 return
             # Rebuild tasks from scratch for the accepted objects.
             c.execute(delete(session_tasks).where(session_tasks.c.session_id == session_id))
+            supplemental_vocabulary = {}
             if self.translator:
-                self._store_translation(c, session, profile, objects, translated_scene)
+                supplemental_vocabulary = self._store_translation(
+                    c, session, profile, objects, translated_scene
+                )
             objects, relations = self._scene_objects(c, session)
             words, translations = self._words(c, session, objects)
             rebuilt = build_tasks(
@@ -1737,6 +1740,7 @@ class PostgresWorkflowRepository:
                 translations,
                 False,
                 translated_scene if self.translator else _translation_preview(session),
+                supplemental_vocabulary,
             )
             introduction = next(
                 task for task in rebuilt if task.kind == "vocabularyIntroduction"
@@ -1765,7 +1769,7 @@ class PostgresWorkflowRepository:
                 # words. Persist a "new" vocabulary record now, rather than
                 # waiting for task completion, so leaving the lesson does not
                 # discard their image vocabulary.
-                for word in _unique_by_id(words):
+                for word in _unique_by_id([*words, *supplemental_vocabulary.values()]):
                     record_vocabulary_evidence(
                         c,
                         user_id=self.user_id,
@@ -1920,7 +1924,7 @@ class PostgresWorkflowRepository:
         return lessons
 
     def _store_translation(self, c, session, profile, objects, translated_scene):
-        """Keep the scene translation and link each object to its vocabulary item."""
+        """Persist every translated scene term and link objects to their words."""
         draft = {
             **(session.analysis_draft or {}),
             "translationPreview": translated_scene.model_dump(mode="json", by_alias=True),
@@ -1943,6 +1947,23 @@ class PostgresWorkflowRepository:
                 .where(scene_objects.c.id == obj.id)
                 .values(vocabulary_item_id=word.id)
             )
+        supplemental = {}
+        for term_type, part_of_speech, terms in (
+            ("attribute", "adjective", translated_scene.attributes),
+            ("relationship", "preposition", translated_scene.relationships),
+        ):
+            for term in terms:
+                word, _ = bootstrap_word(
+                    c,
+                    profile["target_language_code"],
+                    profile["source_language_code"],
+                    term.translation,
+                    term.source,
+                    part=part_of_speech,
+                    phonetic_text=term.phonetic_text,
+                )
+                supplemental[(term_type, str(term.key))] = word
+        return supplemental
 
     def _words(self, c, session, objects):
         """Each object's vocabulary item and translation, in object order."""

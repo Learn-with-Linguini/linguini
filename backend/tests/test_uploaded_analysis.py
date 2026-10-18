@@ -130,6 +130,13 @@ def test_vocabulary_lesson_includes_translated_attributes_and_relationships():
         attributes=[{"key": "object-1:color", "source": "blue", "translation": "azul"}],
         relationships=[{"key": "relation-1", "source": "nextTo", "translation": "al lado de"}],
     )
+    adjective = VocabularyItem(
+        language_code="es", lemma="azul", display_text="azul", part_of_speech="adjective"
+    )
+    preposition = VocabularyItem(
+        language_code="es", lemma="al lado de", display_text="al lado de",
+        part_of_speech="preposition",
+    )
     # The helper data can be read from the already-created object task.
     words = []
     translations = []
@@ -157,6 +164,10 @@ def test_vocabulary_lesson_includes_translated_attributes_and_relationships():
         translations,
         True,
         translated_scene,
+        {
+            ("attribute", "object-1:color"): adjective,
+            ("relationship", "relation-1"): preposition,
+        },
     )[0].public_content
     assert enriched.words[0].target_text == "la silla"
     descriptors = [
@@ -166,6 +177,9 @@ def test_vocabulary_lesson_includes_translated_attributes_and_relationships():
     assert descriptors == [
         ("azul", "blue", "attribute"),
         ("al lado de", "next to", "relationship"),
+    ]
+    assert [word.vocabulary_item_id for word in enriched.words[-2:]] == [
+        adjective.id, preposition.id,
     ]
 
 
