@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../lib/api";
 import { appearanceCommand, gameResourceKeys, getGameResources, selectAppearance, saucePercent } from "../lib/gameResources";
 import type { Appearance, GameResourceSnapshot } from "../lib/gameResources";
+import { trackAction } from "../lib/analytics.ts";
 import { friendlyError } from "../lib/queryKeys";
 import { useAppState } from "../state/useAppState";
 import { Button, Card } from "./ui";
@@ -46,6 +47,7 @@ function ResourceJar({ shop = false, onChanged }: GameResourcesProps) {
     pending.current = command;
     setPendingAppearance(command.appearance);
     try {
+      trackAction("game_accent_selected", { appearance: command.appearance });
       const updated = await selectAppearance(command.appearance, command.commandId);
       client.setQueryData(key, updated);
       pending.current = null;

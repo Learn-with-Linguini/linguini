@@ -10,6 +10,7 @@ import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { choiceOrder, practiceStages, taskDone, taskXp, xpEarnedText } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
+import { trackAction } from "../lib/analytics.ts";
 import { getLatestAttempt } from "../lib/api";
 import type { SessionTask, TaskActionResult } from "../lib/api";
 import { queryKeys } from "../lib/queryKeys";
@@ -81,7 +82,10 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
     try {
       const saved = await actOnTask(task.id, "attempts", { inputMode: "multipleChoice", optionId }, request.current.key);
       setResult(saved);
-      if (saved) request.current = null;
+      if (saved) {
+        request.current = null;
+        trackAction("ispy_clue_submitted", { optionId, isCorrect: saved.attempt?.isCorrect });
+      }
     } finally {
       submitting.current = false;
       setChecking(false);

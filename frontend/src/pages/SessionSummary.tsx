@@ -8,6 +8,7 @@ import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { useVocabularyQuery } from "../state/queries";
 import { getPracticeSummary, startISpyGame } from "../lib/api";
+import { trackAction } from "../lib/analytics.ts";
 import { isMissionSession } from "../lib/practiceTasks";
 import { sessionDestination } from "../lib/sessionRoute";
 import { gameStartError, queryError, queryKeys } from "../lib/queryKeys";
@@ -46,6 +47,17 @@ export function SessionSummary() {
     return () => clearTimeout(timer);
   }, [completed, data, isMilestone, completedLessons]);
 
+  useEffect(() => {
+    if (data) {
+      trackAction("session_summary_viewed", {
+        xpEarned: data.xpEarned,
+        wordsLearnedCount: data.learnedVocabularyIds.length,
+        ispyCorrectCount: data.ispyCorrectCount,
+        completedLessonsCount: data.completedLessonsCount,
+      });
+    }
+  }, [data]);
+
   const revisit = scene.items.filter(item => data?.learnedVocabularyIds.includes(
     session?.sceneObjects.find(object => object.id === item.id)?.vocabularyItemId ?? ""
   )).slice(0, 3);
@@ -54,6 +66,7 @@ export function SessionSummary() {
     if (!session || !activeProfile || startingISpy) return;
     setStartingISpy(true);
     setStartError(null);
+    trackAction("summary_play_ispy_clicked");
     startKey.current ??= crypto.randomUUID();
     try {
       const detail = await startISpyGame(activeProfile.id, session.mediaAsset.id, startKey.current);
@@ -94,8 +107,8 @@ export function SessionSummary() {
       {missionSession ? <Button block disabled={startingISpy || !completed} onClick={() => void playISpy()}>
         {startingISpy ? "Setting up I-Spy..." : "Play I-Spy with this scene"}
       </Button> : <>
-        <Button block onClick={() => navigate("/journal/new")}>Write today&apos;s journal entry</Button>
-        <Button variant="secondary" block onClick={() => navigate("/vocabulary")}>Review difficult words</Button>
+        <Button block onClick={() => { trackAction("summary_journal_cta_clicked"); navigate("/journal/new"); }}>Write today&apos;s journal entry</Button>
+        <Button variant="secondary" block onClick={() => { trackAction("summary_review_words_cta_clicked"); navigate("/vocabulary"); }}>Review difficult words</Button>
       </>}
       <Button variant="quiet" block onClick={() => navigate("/home")}>Back home</Button>
     </div>

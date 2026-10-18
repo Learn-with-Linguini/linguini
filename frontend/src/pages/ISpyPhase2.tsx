@@ -9,6 +9,7 @@ import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { practiceStages, taskDone, taskXp, xpEarnedText } from "../lib/practiceTasks";
+import { trackAction } from "../lib/analytics.ts";
 import { CLUE_ASSISTANCE_VERSION, descriptionEvaluation, getLatestAttempt } from "../lib/api";
 import { queryKeys } from "../lib/queryKeys";
 import type { ClueAssistance, ClueFrame, ClueFrameId, ClueSlotId, ISpyDescriptionEvaluation, ISpyDescriptionOutcome, SessionTask, TaskAnswer } from "../lib/api";
@@ -168,6 +169,7 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
           setRevealedHelp(saved.revealedHelpFrameIds);
         }
         const evaluation = descriptionEvaluation(result.attempt);
+        trackAction("ispy_description_submitted", { outcome: evaluation?.outcome });
         if (result.attempt && evaluation) setGuess({ attemptId: result.attempt.id, evaluation, feedback: result.attempt.feedback?.message ?? null });
         else setFeedback(result.attempt?.feedback?.message ?? "Reflection saved.");
       }
@@ -177,6 +179,7 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
     if (!guess) return;
     const result = await actOnTask(task.id, "confirm-guess", { attemptId: guess.attemptId });
     if (result) {
+      trackAction("ispy_match_confirmed");
       setFeedback("Linguini found your object!");
       setXpEarned(result.xpEarned);
     }

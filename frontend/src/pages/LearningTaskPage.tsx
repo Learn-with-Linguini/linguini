@@ -18,6 +18,7 @@ import { useResolvedImageUrl } from "../components/SceneImage";
 import { boardRows, squareCrop } from "../lib/practiceBoard";
 import { questionMarkerObjects } from "../lib/missionMarkers";
 import { completeSlot, speechAvailable, writtenPromptShown } from "../lib/missionA0";
+import { trackAction } from "../lib/analytics.ts";
 
 export function LearningTaskPage() {
   const { taskId } = useParams();
@@ -79,8 +80,11 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit }: { 
       if (result) {
         request.current = null;
         setActionResult(result);
-        if (reading) setFeedback("Task complete.");
-        else {
+        if (reading) {
+          trackAction("task_completed", { taskId: task.id, kind: content.kind });
+          setFeedback("Task complete.");
+        } else {
+          trackAction("task_answer_checked", { taskId: task.id, isCorrect: result.attempt?.isCorrect, kind: content.kind });
           setFeedback(result.attempt?.feedback?.message ?? "Saved.");
           setAnswerCorrect(result.attempt?.isCorrect ?? null);
         }

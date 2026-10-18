@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, proficiencyLabel } from "../lib/api";
+import { trackAction } from "../lib/analytics.ts";
 import { createRoom, getActiveRoom, joinRoom, roomMatchesProfile, roomQueryKeys } from "../lib/rooms";
 import { friendlyError } from "../lib/queryKeys";
 import { useAppState } from "../state/useAppState";
@@ -46,6 +47,7 @@ function RoomLobby() {
     try {
       const entry = command.kind === "create" ? await createRoom(command.profileId, command.commandId)
         : await joinRoom(command.profileId, command.code, command.commandId);
+      trackAction(command.kind === "create" ? "room_created" : "room_joined");
       if (entry.room.meId !== owner) throw new Error("This room changed accounts. Return home and open it again.");
       client.setQueryData(roomQueryKeys.snapshot(owner, profile, entry.room.id), entry.room);
       client.setQueryData(roomQueryKeys.active(owner, profile), entry.room);

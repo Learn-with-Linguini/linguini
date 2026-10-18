@@ -7,6 +7,7 @@ import { ImageUpload } from "../components/ImageUpload";
 import { createPractice, getActivePractice, retryPracticeAnalysis } from "../lib/api";
 import { SceneVisual } from "../components/SceneVisual";
 import { SceneCatalogStatus } from "../components/SceneCatalogStatus";
+import { trackAction } from "../lib/analytics.ts";
 import { sessionDestination } from "../lib/sessionRoute";
 import { friendlyError, queryError, queryKeys } from "../lib/queryKeys";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -67,6 +68,7 @@ export function PracticeSelect() {
     if (busy.current || !activeProfile || activeCheckError) return;
     busy.current = true; setSelected(true); setStarting(true); setError(null);
     if (request.current?.asset !== asset) request.current = { asset, key: crypto.randomUUID() };
+    trackAction("practice_session_started", { assetId: asset });
     try {
       const detail = await createPractice(activeProfile.id, asset, request.current.key);
       navigate(sessionDestination(detail).path);
@@ -79,6 +81,7 @@ export function PracticeSelect() {
     }
   };
   const continueActive = async () => {
+    trackAction("practice_session_resumed");
     try {
       const fresh = await activeFetch();
       if (!fresh) return;
@@ -88,6 +91,7 @@ export function PracticeSelect() {
   const retrySaved = async (sessionId: string) => {
     if (busy.current) return;
     busy.current = true; setStarting(true); setError(null);
+    trackAction("practice_analysis_retried", { sessionId });
     try {
       const detail = await retryPracticeAnalysis(sessionId);
       navigate(sessionDestination(detail).path);
@@ -121,7 +125,7 @@ export function PracticeSelect() {
     <div ref={captureRef} className="dashed-capture">
       <span style={{ color: "var(--teal-dark)" }}><CameraIcon size={44} /></span>
       <ImageUpload compact disabled={interactionDisabled} cameraEnabled={learner.cameraOn}
-        onBusyChange={setUploading} onUploaded={image => chooseAsset(image.id)} />
+        onBusyChange={setUploading} onUploaded={image => { trackAction("practice_photo_uploaded", { assetId: image.id }); chooseAsset(image.id); }} />
     </div>
     {starting ? <LoadingScreen label="Starting analysis…" /> : null}
     {error ? <div className="stack-2"><p role="alert">{error}</p><Button disabled={starting || uploading} onClick={() => request.current && void start(request.current.asset)}>Retry</Button></div> : null}
@@ -130,7 +134,7 @@ export function PracticeSelect() {
     <SceneCatalogStatus />
     <div ref={readyScenesRef} className="grid-2">
       {scenes.map(scene => <button key={scene.id} type="button" className="scene-pick"
-        disabled={interactionDisabled || uploading} aria-label={`Choose ${scene.title}`} onClick={() => chooseAsset(scene.mediaAssetId)}>
+        disabled={interactionDisabled || uploading} aria-label={`Choose ${scene.title}`} onClick={() => { trackAction("practice_scene_selected", { sceneId: scene.id, title: scene.title }); chooseAsset(scene.mediaAssetId); }}>
         <SceneVisual scene={scene} />
         <span className="small items-center justify-center" style={{ fontWeight: 700 }}>{scene.title}</span>
       </button>)}

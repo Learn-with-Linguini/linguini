@@ -2,6 +2,7 @@ import Image from "./Image";
 import Link from "./Link";
 import { appLinks } from "../lib/site";
 import { SOCIAL_LINKS } from "../../config/social";
+import { trackAction } from "../../lib/analytics";
 import styles from "./SiteFooter.module.css";
 
 export function SiteFooter() {
@@ -38,10 +39,10 @@ export function SiteFooter() {
         </nav>
         <nav aria-label="Follow us" className={styles.col}>
           <h2 className={styles.heading}>Follow us</h2>
-          <a href={SOCIAL_LINKS.instagram.url} target="_blank" rel="noopener noreferrer">Instagram</a>
-          <a href={SOCIAL_LINKS.tiktok.url} target="_blank" rel="noopener noreferrer">TikTok</a>
-          <a href={SOCIAL_LINKS.x.url} target="_blank" rel="noopener noreferrer">X (Twitter)</a>
-          <a href={SOCIAL_LINKS.linkedin.url} target="_blank" rel="noopener noreferrer">LinkedIn</a>
+          <a href={SOCIAL_LINKS.instagram.url} target="_blank" rel="noopener noreferrer" onClick={() => trackAction("social_link_clicked", { platform: "instagram" })}>Instagram</a>
+          <a href={SOCIAL_LINKS.tiktok.url} target="_blank" rel="noopener noreferrer" onClick={() => trackAction("social_link_clicked", { platform: "tiktok" })}>TikTok</a>
+          <a href={SOCIAL_LINKS.x.url} target="_blank" rel="noopener noreferrer" onClick={() => trackAction("social_link_clicked", { platform: "x" })}>X (Twitter)</a>
+          <a href={SOCIAL_LINKS.linkedin.url} target="_blank" rel="noopener noreferrer" onClick={() => trackAction("social_link_clicked", { platform: "linkedin" })}>LinkedIn</a>
         </nav>
       </div>
       <div className={`container ${styles.base}`}>
