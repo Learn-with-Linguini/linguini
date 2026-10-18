@@ -190,7 +190,7 @@ export function StatusPill({ status }: { status: "new" | "learning" | "mastered"
 }
 
 export function XpPill({ xp, bonus }: { xp: number; bonus?: number }) {
-  return <span className="pill pill--xp"><BasilIcon size={16} />+{xp} Basil{bonus && bonus > 0 ? ` · +${bonus} if correct` : ""}</span>;
+  return <span className="pill pill--xp"><BasilIcon size={16} />+{xp}{bonus && bonus > 0 ? ` · +${bonus} if correct` : ""}</span>;
 }
 
 export function Tabs<T extends string>({
