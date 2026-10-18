@@ -12,7 +12,6 @@ import { SOCIAL_LINKS_LIST } from "../config/social";
 import { supabase } from "../lib/supabase.ts";
 import { useAppState } from "../state/useAppState";
 import { useAuth } from "../state/Auth";
-import { GameResources } from "../components/GameResources";
 
 const socialIcons = {
   instagram: InstagramIcon,
@@ -144,11 +143,6 @@ export function Profile() {
             ? "Public beta includes a daily Sauce refill. New photo lessons and two-player rooms each use 1 Sauce; resuming does not spend more."
             : tier.allowance}</p>
         </Card>
-      </section>
-
-      <section className="profile-section" aria-labelledby="profile-sauce-heading">
-        <h2 id="profile-sauce-heading">Your Sauce and Basil leaves</h2>
-        <GameResources shop />
       </section>
 
       <section className="profile-section">

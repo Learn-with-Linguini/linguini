@@ -38,6 +38,15 @@ export function practiceStages(tasks: SessionTask[]) {
   };
 }
 
+/** Progress for the required learning path. I-Spy and reflection are optional extras. */
+export function learningProgress(tasks: SessionTask[]) {
+  const learning = practiceStages(tasks).learning;
+  return {
+    completed: learning.filter(taskDone).length,
+    total: learning.length,
+  };
+}
+
 export function taskTitle(task: SessionTask) {
   const content = task.publicContent;
   if ("title" in content) return content.title;

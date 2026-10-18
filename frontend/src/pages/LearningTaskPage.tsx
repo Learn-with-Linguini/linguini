@@ -1,15 +1,15 @@
 import { InlineLoader } from "../components/LoadingScreen";
-import { useEffect, useRef, useState, type TouchEvent } from "react";
+import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { friendlyError, queryKeys } from "../lib/queryKeys";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { Button, Card, Feedback, IconButton, ProgressTrail, XpPill } from "../components/ui";
-import { CheckIcon, CloseIcon, SpeakerIcon } from "../components/icons";
+import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, CloseIcon, EyeIcon, EyeOffIcon, SpeakerIcon } from "../components/icons";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { builtSentence, choiceOrder, finishesAfterLearning, markerChoices, optionText, practiceStages, questionOptions, sentenceEnding, taskDone, taskTitle, taskXp, xpEarnedText } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
-import { checkLessonAnswer, checkVocabularyAnswer, getLatestAttempt, getLessonChecks, requestLessonAssistance, reviewDetails, updateMissionScenario, type GrammarLessonQuestion, type LessonAnswerCheck, type SceneObject, type SessionTask, type QuestionOutcome, type TaskActionResult, type TaskAnswer, type TaskContent, type VocabularyLearningWord } from "../lib/api";
+import { checkLessonAnswer, checkVocabularyAnswer, checkVocabularyTyping, getLatestAttempt, getLessonChecks, requestLessonAssistance, reviewDetails, updateMissionScenario, type GrammarLessonQuestion, type LessonAnswerCheck, type SceneObject, type SessionTask, type QuestionOutcome, type TaskActionResult, type TaskAnswer, type TaskContent, type VocabularyLearningWord } from "../lib/api";
 import { mergeLessonChecks, visibleLessonQuestionIndex } from "../lib/missionLessonFlow";
 import { isM06ScenarioVisible, lessonCheckFinished, nextAssistanceStep, retryTokens, unlockedRetryResumeIndex } from "../lib/missionM06";
 import { ReportIssueLink } from "../components/ReportIssueLink";
@@ -35,6 +35,7 @@ export function LearningTaskPage() {
   const task = tasks[index];
   if (!task || ["abandoned", "failed"].includes(session.session.status)) return <Navigate to={`${base}/learn`} replace />;
   const next = tasks[index + 1];
+  const isVocabularyTask = task.kind === "vocabularyIntroduction";
   const skipM06RolePlay = () => {
     const lastM06Index = tasks.reduce(
       (last, item, taskIndex) => item.publicContent.missionId === "M06" ? taskIndex : last,
@@ -53,12 +54,16 @@ export function LearningTaskPage() {
     onScenarioChange={() => loadSession(session.session.id)}
     onSkipRolePlay={skipM06RolePlay}
     onNext={() => {
+      if (isVocabularyTask) {
+        navigate(`${base}/learn`);
+        return;
+      }
       if (!next && session.session.status !== "generatingTasks" && finishesAfterLearning(session.tasks)) {
         if (completeSession()) navigate(`${base}/summary`);
         return;
       }
       navigate(next ? `${base}/learn/${next.id}` : session.session.status === "generatingTasks" ? `${base}/learn` : `${base}/ispy-1`);
-    }} onClose={() => navigate(`${base}/learn`)} onExit={() => navigate("/home")} /></div>;
+    }} onClose={() => navigate(isVocabularyTask ? `${base}/learn/vocabulary-preview` : `${base}/learn`)} onExit={() => navigate("/home")} /></div>;
 }
 
 function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onScenarioChange, onSkipRolePlay }: {
@@ -117,8 +122,8 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onSc
   const reward = !terminal ? taskXp(task) : null;
   const earnedText = xpEarnedText(actionResult?.xpEarned);
   return <div className="stack">
-    <ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />
-    <div className="learning-title-row"><div><h1>{taskTitle(task)}</h1>{reward ? <XpPill {...reward} /> : null}</div><ExitToHome onExit={onExit} /></div>
+    <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />{reward ? <XpPill {...reward} /> : null}</div>
+    <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton></div><ExitToHome onExit={onExit} /></div>
     {card && content.kind === "vocabularyIntroduction" ? <div className="flashcard learning-card">
       <div className="spread"><span className="label muted">{card.wordClass}{card.gender ? " · " + card.gender : ""}</span>
         <IconButton label={"Hear " + card.word} onClick={() => speak(card.word, scene.languageCode)}><SpeakerIcon /></IconButton></div>
@@ -140,31 +145,24 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onSc
     {content.kind === "sentenceBuilding" ? <><p>{content.sourceText}</p><div className="chip-row">{content.tokenBank.map((token, i) => <button key={i} className="chip" disabled={terminal || practiceSaving} onClick={() => setText(value => (value + " " + token).trim())}>{token}</button>)}</div></> : null}
     {!reading && content.kind !== "grammarPractice" ? <div className="field"><label className="field__label" htmlFor="task-answer">Your answer</label><input id="task-answer" className="input" value={text} maxLength={2000} disabled={terminal || practiceSaving} onChange={event => setText(event.target.value)} /></div> : null}
     {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
-    {feedback || earnedText ? <>
-      <Feedback><div className="stack-2" role="status">{feedback ? <p>{feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback>
-      <ReportIssueLink reportType={taskTitle(task)} fields={[
-        ["Task ID", task.id],
-        ["Prompt", "prompt" in content ? content.prompt : taskTitle(task)],
-        ["Your answer", content.kind === "grammarPractice" ? choice : text],
-        ["Displayed feedback", feedback],
-        ["Language", scene.languageCode],
-      ]} />
-    </> : null}
+    {feedback || earnedText ? <Feedback><div className="stack-2" role="status">{feedback ? <p>{feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {terminal ? <Button block disabled={practiceSaving} onClick={onNext}>{index < total - 1 ? "Next task" : lastStep}</Button> : <>
       <Button block disabled={practiceSaving || checking || (!reading && !(content.kind === "grammarPractice" ? choice : text.trim()))} onClick={() => void submit()}>{reading ? "Mark complete" : "Submit answer"}</Button>
       <Button variant="quiet" block disabled={practiceSaving} onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip task</Button>
     </>}
-    <BackToTasks onClose={onClose} />
+    {feedback || earnedText ? <div className="learning-question-report"><ReportIssueLink reportType={taskTitle(task)} fields={[
+      ["Task ID", task.id],
+      ["Prompt", "prompt" in content ? content.prompt : taskTitle(task)],
+      ["Your answer", content.kind === "grammarPractice" ? choice : text],
+      ["Displayed feedback", feedback],
+      ["Language", scene.languageCode],
+    ]} /></div> : null}
   </div>;
 }
 
 function ExitToHome({ onExit }: { onExit: () => void }) {
   return <Button variant="quiet" className="learning-exit" onClick={onExit}><CloseIcon size={18} /> Exit</Button>;
-}
-
-function BackToTasks({ onClose }: { onClose: () => void }) {
-  return <button type="button" className="text-link" onClick={onClose}>Back to tasks</button>;
 }
 
 function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }: { task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void }) {
@@ -183,6 +181,8 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
   const [correctOptionIds, setCorrectOptionIds] = useState<Record<string, string>>({});
   const [checkingQuestion, setCheckingQuestion] = useState(false);
   const [pendingOptionId, setPendingOptionId] = useState<string | null>(null);
+  const [checkingTyping, setCheckingTyping] = useState(false);
+  const [typingCheck, setTypingCheck] = useState<{ isCorrect: boolean; correctAnswer: string; revealed: boolean } | null>(null);
   const requestKey = useRef(crypto.randomUUID());
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const content = task.publicContent;
@@ -243,17 +243,38 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
       setPendingOptionId(null);
     }
   };
+  const checkTyping = async (reveal = false) => {
+    if (!typingWord || checkingTyping) return;
+    setCheckingTyping(true);
+    try {
+      const result = await checkVocabularyTyping(task.id, typingKey, typedAnswers[typingKey] ?? "", reveal);
+      setTypingCheck(result);
+      if (result.isCorrect) playAnswerSound(true);
+    } catch (error) {
+      setFeedback(friendlyError(error));
+    } finally {
+      setCheckingTyping(false);
+    }
+  };
+  const advanceTyping = () => {
+    setTypingCheck(null);
+    if (typingIndex < content.words.length - 1) setTypingIndex(value => value + 1);
+    else void submit();
+  };
   return <div className="stack vocabulary-flow">
-    <ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />
-    <div className="learning-title-row"><div><h1>{content.title}</h1>{reward ? <XpPill {...reward} /> : null}{!terminal && stage === "review" ? <p className="small muted" aria-live="polite">{page + 1} of {pageCount}</p> : null}</div><ExitToHome onExit={onExit} /></div>
+    <div className="vocabulary-flow__header">
+      <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />{reward ? <XpPill {...reward} /> : null}</div>
+      <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><ExitToHome onExit={onExit} /></div>
+    </div>
     {!terminal && stage === "review" ? <>
       <div className="vocabulary-learning-grid vocabulary-learning-grid--swipe" onTouchStart={handleCardTouchStart} onTouchEnd={handleCardTouchEnd}>{visibleWords.map(word => <VocabularyLearningCard key={word.learningKey ?? word.vocabularyItemId ?? word.targetText} word={word} languageCode={scene.languageCode} />)}</div>
       <div className="vocabulary-flow__actions">
-        <Button variant="secondary" disabled={page === 0} onClick={() => setPage(value => value - 1)}>Previous word</Button>
-        <Button variant="secondary" onClick={finishReview}>{page < pageCount - 1 ? "Next word" : "Start quick quiz"}</Button></div>
-      <Button variant="primary" block onClick={() => setStage("quiz")}>Skip to word practice</Button>
+        <Button disabled={page === 0} onClick={() => setPage(value => value - 1)}><ArrowLeftIcon size={18} /> Previous</Button>
+        <span className="vocabulary-flow__position" aria-live="polite">{page + 1} of {pageCount}</span>
+        <Button variant="secondary" onClick={finishReview}>{page < pageCount - 1 ? <>Next <ArrowRightIcon /></> : "Start quick quiz"}</Button>
+      </div>
     </> : null}
-    {!terminal && stage === "quiz" && question ? <Card plain><div className="stack">
+    {!terminal && stage === "quiz" && question ? <><Card plain><div className="stack">
       <span className="label muted">Question {questionIndex + 1} of {content.questions.length}</span><h2>{question.prompt}</h2>
       <div className="choice-grid">{choiceOrder(question.options, `${task.id}:${question.questionId}`, option => option.optionId).map(option => {
         const selected = answers[question.questionId] === option.optionId || pendingOptionId === option.optionId;
@@ -270,27 +291,31 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
           const answer = question.options.find(option => option.optionId === correctOptionIds[question.questionId])?.label ?? "";
           return <>Incorrect. The correct answer is <strong>{answer}</strong>{answer ? sentenceEnding(answer) : ""}</>;
         })()}</p></Feedback>
-        <ReportIssueLink reportType="Vocabulary answer" fields={[
-          ["Task ID", task.id],
-          ["Question ID", question.questionId],
-          ["Prompt", question.prompt],
-          ["Your answer", question.options.find(option => option.optionId === answers[question.questionId])?.label],
-          ["Displayed solution", question.options.find(option => option.optionId === correctOptionIds[question.questionId])?.label],
-          ["Language", scene.languageCode],
-        ]} />
       </> : null}
       <Button block disabled={!answers[question.questionId]} onClick={finishQuestion}>{questionIndex < content.questions.length - 1 ? "Next question" : "Continue"}</Button>
-    </div></Card> : null}
+    </div></Card></> : null}
     {!terminal && stage === "typing" && typingWord ? <Card plain><div className="stack">
       <div><h2>Type “{typingWord.translation}”</h2><p className="muted">Word {typingIndex + 1} of {content.words.length}</p></div>
-      <input className="input" aria-label={`Type ${typingWord.translation}`} value={typedAnswers[typingKey] ?? ""} onChange={event => setTypedAnswers(value => ({ ...value, [typingKey]: event.target.value }))} />
-      <Button block disabled={!typedAnswers[typingKey]?.trim() || practiceSaving} onClick={() => typingIndex < content.words.length - 1 ? setTypingIndex(value => value + 1) : void submit()}>{typingIndex < content.words.length - 1 ? "Next word" : "Finish task"}</Button>
-      <Button variant="quiet" block disabled={practiceSaving} onClick={() => void submit()}>Skip typing practice</Button>
+      <input className="input" aria-label={`Type ${typingWord.translation}`} value={typedAnswers[typingKey] ?? ""} disabled={typingCheck?.isCorrect || typingCheck?.revealed} onChange={event => { setTypedAnswers(value => ({ ...value, [typingKey]: event.target.value })); setTypingCheck(null); }} />
+      {checkingTyping ? <InlineLoader compact label="Checking your word…" /> : null}
+      {typingCheck ? <Feedback tone={typingCheck.isCorrect ? "good" : typingCheck.revealed ? "neutral" : "warn"}><p role="status">{typingCheck.isCorrect ? "That’s right!" : typingCheck.revealed ? <>No worries, the answer is <strong>{typingCheck.correctAnswer}</strong>.</> : "Not quite. Give it another try."}</p></Feedback> : null}
+      {typingCheck?.isCorrect || typingCheck?.revealed
+        ? <Button block disabled={practiceSaving} onClick={advanceTyping}>{typingIndex < content.words.length - 1 ? "Next word" : "Finish task"}</Button>
+        : <Button block disabled={!typedAnswers[typingKey]?.trim() || practiceSaving || checkingTyping} onClick={() => void checkTyping()}>Check answer</Button>}
+      {!typingCheck?.isCorrect && !typingCheck?.revealed ? <Button variant="quiet" block className="typing-forgot-action" disabled={practiceSaving || checkingTyping} onClick={() => void checkTyping(true)}>I forgot, lift the lid</Button> : null}
     </div></Card> : null}
     {feedback || earnedText ? <Feedback><div className="stack-2" role="status">{feedback ? <p>{feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {terminal ? <Button block onClick={onNext}>{session?.session.status === "generatingTasks" ? "Back to tasks" : index < total - 1 ? "Next task" : lastStep}</Button> : null}
-    <BackToTasks onClose={onClose} />
+    {!terminal ? <Button variant="quiet" block disabled={practiceSaving} onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip vocabulary review</Button> : null}
+    {!terminal && stage === "quiz" && question && answers[question.questionId] ? <div className="learning-question-report"><ReportIssueLink reportType="Vocabulary answer" fields={[
+      ["Task ID", task.id],
+      ["Question ID", question.questionId],
+      ["Prompt", question.prompt],
+      ["Your answer", question.options.find(option => option.optionId === answers[question.questionId])?.label],
+      ["Displayed solution", question.options.find(option => option.optionId === correctOptionIds[question.questionId])?.label],
+      ["Language", scene.languageCode],
+    ]} /></div> : null}
   </div>;
 }
 
@@ -344,7 +369,7 @@ function LessonAudioPrompt({ question, languageCode, revealed, graded, onReveal,
 }
 
 function A0MissionGapQuestion({ question, scene, sceneObjects, selectedOptionId, typedMode,
-  typedAnswer, checked, retryPassed, checking, onSelect, onTypedMode, onTypedAnswer, onRetry }: {
+  typedAnswer, checked, retryPassed, checking, scenario, onSelect, onTypedMode, onTypedAnswer, onRetry }: {
   question: GrammarLessonQuestion;
   scene: ReturnType<typeof useScene>;
   sceneObjects: SceneObject[];
@@ -354,6 +379,7 @@ function A0MissionGapQuestion({ question, scene, sceneObjects, selectedOptionId,
   checked?: LessonAnswerCheck;
   retryPassed: boolean;
   checking: boolean;
+  scenario?: string;
   onSelect: (optionId: string) => void;
   onTypedMode: () => void;
   onTypedAnswer: (value: string) => void;
@@ -378,10 +404,14 @@ function A0MissionGapQuestion({ question, scene, sceneObjects, selectedOptionId,
     {question.sceneObjectId ? <ObjectPreview scene={scene}
       object={sceneObjects.find(item => item.id === question.sceneObjectId)}
       label={question.objectLabel ?? ""} /> : null}
+    {scenario ? <div className="roleplay-premise" role="note">
+      <p className="roleplay-premise__text"><strong>Scenario:</strong> {roleplayScenario(scenario)}</p>
+    </div> : null}
     <LessonAudioPrompt question={question} languageCode={scene.languageCode} revealed={revealed}
       graded={Boolean(checked)} onReveal={() => setRevealed(true)} showAudioText />
-    <h2>{question.prompt}</h2>
-    {question.translation ? <PromptTranslation text={question.translation} /> : null}
+    {question.translation
+      ? <PromptTranslation source={question.prompt} text={question.translation} lang={scene.languageCode} />
+      : <h2>{question.prompt}</h2>}
     {dialogue.length ? <div className="mission-dialogue" aria-label="Dialogue">
       {dialogue.map((turn, index) => <div className={`mission-dialogue__turn mission-dialogue__turn--${turn.speaker}`} key={`${turn.speaker}-${index}`}>
         <strong>{turn.speaker === "linguini" ? "Linguini" : "You"}</strong>
@@ -646,14 +676,12 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
   };
 
   return <div className="stack vocabulary-flow">
-    <ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />
-    <div className="learning-title-row"><div><h1>{content.title}</h1>{reward ? <XpPill {...reward} /> : null}</div><ExitToHome onExit={onExit} /></div>
-    {content.explanation ? <div className="panel-note">{content.explanation}</div> : null}
+    <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />{reward ? <XpPill {...reward} /> : null}</div>
+    <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><ExitToHome onExit={onExit} /></div>
     {saved.isLoading ? <InlineLoader compact label="Restoring checked answers…" /> : null}
     {saved.isError ? <div role="alert"><p>Unable to restore checked answers.</p>
       <Button variant="quiet" onClick={() => void refetchChecks()}>Retry</Button></div> : null}
     {question ? <div className="learning-section">
-      {question.section ? <h2 className="learning-section__title">{question.section}</h2> : null}
       {isM06 && activeIndex === 0 && isM06ScenarioVisible(content.missionId, content.scenario) ? <Card plain>
         <section className="mission-scenario" aria-label="Choose your role-play">
           <div><strong>{content.scenario?.itemLabel}</strong><p>{content.scenario?.prompt}</p></div>
@@ -677,9 +705,6 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
             <span>{turn.text}</span>
           </p>)}
         </div> : null}
-        {question.roleplayPremise ? <div className="roleplay-premise" role="note" aria-label={`Role-play: ${question.roleplayPremise}`}>
-          <strong>Role-play</strong><p>{question.roleplayPremise}</p>
-        </div> : null}
         {question.planningFacts?.length ? <section className="mission-planning-facts" aria-label="Your facts">
           <strong>Your facts</strong><ul>{question.planningFacts.map((fact, position) => <li key={`${position}-${fact}`}>{fact}</li>)}</ul>
         </section> : null}
@@ -691,6 +716,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
           typedAnswer={typedAnswers[question.questionId] ?? ""}
           checked={checks[question.questionId]} retryPassed={Boolean(retryPassed[question.questionId])}
           checking={checking || saved.isLoading || saved.isError}
+          scenario={question.roleplayPremise ?? undefined}
           onSelect={optionId => {
             setTypedMode(value => ({ ...value, [question.questionId]: false }));
             setAnswers(value => ({ ...value, [question.questionId]: optionId }));
@@ -713,6 +739,9 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
               if (marker) setAnswers(value => ({ ...value, [question.questionId]: marker.option.optionId }));
             } : undefined}
         /></div> : null}
+        {question.roleplayPremise ? <div className="roleplay-premise" role="note" aria-label={`Scenario: ${roleplayScenario(question.roleplayPremise)}`}>
+          <p className="roleplay-premise__text"><strong>Scenario:</strong> {roleplayScenario(question.roleplayPremise)}</p>
+        </div> : null}
         {question.audioText && speechAvailable() ? <div className="spread">
           <p className="muted">{question.listenFirst && !showWritten ? "Listen before reading the prompt." : "Listen to the phrase."}</p>
           <IconButton label="Play audio" onClick={() => speak(question.audioText ?? "", scene.languageCode)}><SpeakerIcon /></IconButton>
@@ -724,8 +753,9 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
         {question.listenFirst && !showWritten ? <Button variant="quiet" onClick={() => setRevealedPrompts(value => ({
           ...value, [question.questionId]: true,
         }))}>Show written prompt</Button> : null}
-        {showWritten ? <h2>{question.prompt}</h2> : null}
-        {question.translation && showWritten ? <PromptTranslation text={question.translation} /> : null}
+        {showWritten ? question.translation
+          ? <PromptTranslation source={question.prompt} text={question.translation} lang={scene.languageCode} />
+          : <h2>{question.prompt}</h2> : null}
         {slotText && showWritten ? <p className="mission-slot-template">
           {slotText}
         </p> : null}
@@ -803,10 +833,6 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
               : assistanceStep === "phraseOnset" ? "Get the phrase opening"
                 : assistanceStep === "chunkBank" ? "Show a chunk bank" : "Show the full model"}
         </Button> : null}
-        {storedCheck && (!storedCheck.isCorrect || storedCheck.correctAnswer) ? <ReportIssueLink reportType="Grammar answer" fields={[
-          ["Task ID", task.id], ["Question ID", question.questionId], ["Prompt", question.prompt],
-          ["Your answer", storedCheck.answer], ["Displayed solution", storedCheck.correctAnswer],
-        ]} /> : null}
         </>}
       </div></Card>
     </div> : null}
@@ -825,7 +851,10 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
           onClick={() => void submit()}>Finish task</Button>}
     {!terminal ? <Button variant="quiet" block disabled={practiceSaving || checking}
       onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip task</Button> : null}
-    <BackToTasks onClose={onClose} />
+    {question && storedCheck && (!storedCheck.isCorrect || storedCheck.correctAnswer) ? <div className="learning-question-report"><ReportIssueLink reportType="Grammar answer" fields={[
+      ["Task ID", task.id], ["Question ID", question.questionId], ["Prompt", question.prompt],
+      ["Your answer", storedCheck.answer], ["Displayed solution", storedCheck.correctAnswer],
+    ]} /></div> : null}
   </div>;
 }
 
@@ -929,9 +958,8 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
     }
   };
   return <div className="stack vocabulary-flow">
-    <ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />
-    <div className="learning-title-row"><div><h1>{content.title}</h1>{reward ? <XpPill {...reward} /> : null}</div><ExitToHome onExit={onExit} /></div>
-    {activeIndex === 0 && content.explanation ? <p className="small muted lesson-intro">{content.explanation}</p> : null}
+    <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} />{reward ? <XpPill {...reward} /> : null}</div>
+    <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><ExitToHome onExit={onExit} /></div>
     {activeIndex === 0 && content.prep?.length ? <Card plain><div className="stack-2 lesson-prep" aria-label="Learn first">
       <span className="label muted">Learn first</span>
       {content.prep.map(card => <div key={card.text} className="lesson-prep__card">
@@ -956,16 +984,8 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
       const markers = question.roleplayPremise ? [] : markerChoices(question, scene);
       // A0 counting questions highlight the group without marker numbers that would give the count away.
       const countQuestion = content.practiceLevel === "A0" && Boolean(groupObjects?.length || question.displayCount);
-      const section = question.section && question.section !== content.questions[position - 1]?.section
-        ? question.section : null;
       return <div key={question.questionId} className="learning-section">
-        {section ? <h2 className="learning-section__title">{section}</h2> : null}
         <Card plain><div className="stack">
-      {question.roleplayPremise ? <div className="roleplay-premise" role="note">
-        <span className="roleplay-premise__label">For this practice</span>
-        <p className="roleplay-premise__text">{question.roleplayPremise}</p>
-        <p className="roleplay-premise__disclaimer">Pretend only — not about your real things.</p>
-      </div> : null}
       {content.questions.length > 1 ? <span className="label muted">Question {position + 1} of {content.questions.length}</span> : null}
       {question.instruction ? <p className="small lesson-instruction">{question.instruction}</p> : null}
       <LessonAudioPrompt question={question} languageCode={scene.languageCode}
@@ -982,8 +1002,13 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         hideNumbers={countQuestion}
         reference={session?.sceneObjects.find(object => object.id === question.referenceObjectId)}
         referenceLabel={question.referenceLabel} /> : null}
+      {question.roleplayPremise ? <div className="roleplay-premise" role="note">
+        <p className="roleplay-premise__text"><strong>Scenario:</strong> {roleplayScenario(question.roleplayPremise)}</p>
+      </div> : null}
       {question.interactionType === "sentenceBuilding" ? <>
-        {question.promptTranslation ? <><h2>{question.prompt}</h2><PromptTranslation text={question.promptTranslation} /></> : question.translation ? <h2>{question.translation}</h2> : null}
+        {question.promptTranslation
+          ? <PromptTranslation source={question.prompt} text={question.promptTranslation} lang={scene.languageCode} />
+          : question.translation ? <h2>{question.translation}</h2> : null}
         <div className="sentence-builder__answer" aria-label="Your sentence">
           {restored?.answers?.[question.questionId] ? <span>{restored.answers[question.questionId]}</span> : (builtTokenIndexes[question.questionId] ?? []).length ? (builtTokenIndexes[question.questionId] ?? []).map((tokenIndex, tokenPosition) => <button key={`${tokenIndex}-${tokenPosition}`} className="sentence-builder__token" disabled={terminal || practiceSaving}
             onClick={() => setBuiltTokenIndexes(value => ({ ...value, [question.questionId]: (value[question.questionId] ?? []).filter((_, index) => index !== tokenPosition) }))}>{question.tokenBank[tokenIndex]}</button>) : <span className="muted">Choose the words to build your sentence.</span>}
@@ -996,8 +1021,10 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         })}</div>
       </> : <>
         {writtenPromptShown(question, { revealed: Boolean(revealed[question.questionId]), graded: results[question.questionId] !== undefined, audio })
-          ? <><h2 lang={question.audioText ? scene.languageCode : undefined}>{content.focus === "sceneDescription" ? question.translation || "Choose the sentence that describes the scene." : question.prompt}</h2>
-            <PromptTranslation text={question.promptTranslation} /></>
+          ? question.promptTranslation
+            ? <PromptTranslation source={content.focus === "sceneDescription" ? question.translation || "Choose the sentence that describes the scene." : question.prompt}
+              text={question.promptTranslation} lang={question.audioText ? scene.languageCode : undefined} />
+            : <h2 lang={question.audioText ? scene.languageCode : undefined}>{content.focus === "sceneDescription" ? question.translation || "Choose the sentence that describes the scene." : question.prompt}</h2>
           : <h2 className="muted">Listen to the word.</h2>}
         {question.boardCounts ? <PracticeBoards question={question} sceneImageUrl={sceneImageUrl}
           imageSize={boardImageSize} onImageSize={setBoardImageSize}
@@ -1048,13 +1075,6 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
           {question.quantityWord} = {question.boardCounts[solutions[question.questionId] ?? ""] ?? "?"}
         </p> : null}
         <QuestionOutcomeNotes outcome={outcomeFor[question.questionId]} />
-        <ReportIssueLink reportType="Grammar answer" fields={[
-          ["Task ID", task.id],
-          ["Question ID", question.questionId],
-          ["Prompt", question.translation || question.prompt],
-          ["Your answer", answerFor(question)],
-          ["Displayed solution", question.options.find(option => option.optionId === solutions[question.questionId])?.label ?? solutions[question.questionId]],
-        ]} />
       </> : null}
     </div></Card></div>;
     })}
@@ -1070,7 +1090,13 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
           : <Button block disabled={!answered || !allChecked || practiceSaving || checking} onClick={() => void submit()}>Finish task</Button>}
       <Button variant="quiet" block disabled={practiceSaving} onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip task</Button>
     </>}
-    <BackToTasks onClose={onClose} />
+    {activeQuestion && activeResult !== undefined ? <div className="learning-question-report"><ReportIssueLink reportType="Grammar answer" fields={[
+      ["Task ID", task.id],
+      ["Question ID", activeQuestion.questionId],
+      ["Prompt", activeQuestion.translation || activeQuestion.prompt],
+      ["Your answer", answerFor(activeQuestion)],
+      ["Displayed solution", activeQuestion.options.find(option => option.optionId === solutions[activeQuestion.questionId])?.label ?? solutions[activeQuestion.questionId]],
+    ]} /></div> : null}
   </div>;
 }
 
@@ -1181,9 +1207,26 @@ function QuestionOutcomeNotes({ outcome }: { outcome?: QuestionOutcome }) {
   </>;
 }
 
-function PromptTranslation({ text }: { text?: string | null }) {
+function roleplayScenario(text: string) {
+  const direct = text
+    .replace(/^let(?:'|’)s pretend(?: that)?\s+/i, "")
+    .replace(/^pretend(?: that)?\s+/i, "")
+    .trim();
+  return direct ? direct.charAt(0).toUpperCase() + direct.slice(1) : text;
+}
+
+function PromptTranslation({ text, source, lang }: { text?: string | null; source?: ReactNode; lang?: string }) {
   const [shown, setShown] = useState(false);
   if (!text) return null;
-  return shown ? <p className="small muted">{text}</p>
-    : <button type="button" className="analysis-location-action" onClick={() => setShown(true)}>Show translation</button>;
+  const toggle = <IconButton className="prompt-translation__toggle" label={shown ? "Hide translation" : "Show translation"}
+      aria-expanded={shown} onClick={() => setShown(value => !value)}>
+      {shown ? <EyeIcon size={20} /> : <EyeOffIcon size={20} />}
+    </IconButton>;
+  if (source) return <span className="prompt-translation prompt-translation--with-source">
+    <span className="prompt-translation__source"><h2 lang={lang}>{source}</h2>{toggle}</span>
+    {shown ? <span className="small muted">{text}</span> : null}
+  </span>;
+  return <span className="prompt-translation">
+    {shown ? <span className="small muted">{text}</span> : null}{toggle}
+  </span>;
 }
