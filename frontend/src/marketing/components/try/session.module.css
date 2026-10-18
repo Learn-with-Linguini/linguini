@@ -112,6 +112,9 @@
 }
 
 .xp {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   color: var(--teal-dark);
   font-variant-numeric: tabular-nums;
 }
@@ -726,6 +729,9 @@
 }
 
 .xpBig {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   flex-shrink: 0;
   padding: 6px 14px;
   border-radius: var(--radius-pill);

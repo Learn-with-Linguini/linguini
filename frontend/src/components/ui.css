@@ -496,6 +496,17 @@
   color: #5b3a00;
 }
 
+.basil-reward {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.basil-reward svg {
+  flex: 0 0 auto;
+  color: #70a339;
+}
+
 /* Errors always give the learner one clear explanation and a calm recovery path. */
 .error-notice,
 p[role="alert"] {
@@ -3823,6 +3834,7 @@ p[role="alert"]::before { content: "!"; }
   top: -7px;
   right: -10px;
   width: 23px;
+  height: 23px;
   color: #70a339;
   filter: drop-shadow(0 1px 1px rgba(38, 50, 56, .16));
 }
@@ -4234,6 +4246,10 @@ p[role="alert"]::before { content: "!"; }
 }
 
 .stat__value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
   font-family: var(--font-display);
   font-size: 38px;
   font-weight: 800;

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { InlineLoader } from "../components/LoadingScreen";
 import { MediaImage } from "../components/MediaImage";
-import { ArrowRightIcon, BookIcon, ChevronRightIcon, EyeIcon, PlayIcon } from "../components/icons";
+import { ArrowRightIcon, BasilIcon, BookIcon, ChevronRightIcon, EyeIcon, PlayIcon } from "../components/icons";
 import { Button } from "../components/ui";
 import { getActivePractice } from "../lib/api";
 import { sessionDestination } from "../lib/sessionRoute";
@@ -37,7 +37,7 @@ function PastaStreak({ days, current }: { days: { date: string; active: boolean 
         <span className="home-streak__day-label">{dayLabel(day.date)}</span>
         <span className="home-streak__loop" aria-label={`${day.active ? "Practised" : "No practice"} on ${day.date}`}>
           <img src="/pasta-assets/streak-loop.png" alt="" />
-          {index === days.length - 1 ? <svg className="home-streak__leaf" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 3C9 2 3 7 5 14c2 7 13 5 15-11Z" fill="currentColor" /><path d="m3 21 12-12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg> : null}
+          {index === days.length - 1 ? <BasilIcon className="home-streak__leaf" /> : null}
         </span>
       </li>)}
     </ol>
@@ -96,7 +96,7 @@ export function Home() {
   return <div className="home-dashboard">
     <header className="home-welcome">
       <div><h1>{greeting()}, {learner.name || "friend"}</h1><p>Ready for a little {activeProfile?.targetLanguageCode === "es" ? "Spanish" : "language practice"}?</p></div>
-      <span className="home-points" aria-label={`${progress?.xp ?? 0} experience points`}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 3C9 2 3 7 5 14c2 7 13 5 15-11Z" /><path d="m3 21 12-12" /></svg>{progressLoading || progressError ? "—" : progress?.xp ?? 0} XP</span>
+      <span className="home-points" aria-label={`${progress?.xp ?? 0} Basil`}><BasilIcon />{progressLoading || progressError ? "—" : progress?.xp ?? 0} Basil</span>
     </header>
 
     <div className="home-dashboard__grid">
@@ -132,7 +132,7 @@ export function Home() {
       <aside className="home-dashboard__aside">
         {progressLoading ? <div className="home-dashboard__loading"><InlineLoader label="Loading your progress…" /></div> : progressError ? <p className="home-dashboard__error" role="alert">{progressError}</p> : <PastaStreak days={progress?.streak.days ?? []} current={progress?.streak.current ?? 0} />}
         <section className="home-progress-card" aria-labelledby="home-progress-title">
-          <div className="home-section-heading home-section-heading--compact"><h2 id="home-progress-title">Your progress</h2><button type="button" onClick={() => navigate("/profile")}>See progress <ArrowRightIcon size={17} /></button></div>
+          <div className="home-section-heading home-section-heading--compact"><h2 id="home-progress-title">Your progress</h2><button type="button" onClick={() => navigate("/profile")}><ArrowRightIcon size={17} /></button></div>
           {vocabularyLoading ? <InlineLoader compact label="Loading your words…" /> : vocabularyError ? <p role="alert">{vocabularyError}</p> : <div className="home-progress-card__stats"><div><span className="home-stat-icon home-stat-icon--words"><BookIcon /></span><strong>{wordsThisWeek}</strong><span>words this week</span></div><div><span className="home-stat-icon home-stat-icon--scenes"><EyeIcon /></span><strong>{exploredScenes}</strong><span>scenes explored</span></div></div>}
         </section>
         {leaderboardPosition ? <button className="home-league" type="button" onClick={() => navigate("/ispy")}><span className="home-league__badge" aria-hidden="true">#</span><span><strong>Basil League</strong><small>You're #{leaderboardPosition} this week</small></span><ChevronRightIcon /></button> : null}
