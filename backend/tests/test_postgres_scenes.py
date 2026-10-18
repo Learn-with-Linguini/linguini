@@ -174,13 +174,94 @@ def test_database_errors_are_controlled():
         PostgresSceneRepository(engine).list_scenes()
 
 
+def _scene_objects(labels, attributes=None):
+    from app.schemas.media import SceneObject
+
+    session_id = uuid4()
+    attributes = attributes or {}
+    return [
+        SceneObject(
+            session_id=session_id,
+            label=label,
+            attributes=attributes.get(index),
+        )
+        for index, label in enumerate(labels)
+    ]
+
+
+def test_select_objects_keeps_repeated_labels_and_normalizes_quantities():
+    from app.scripts.precompute_preloaded_scenes import select_objects
+
+    objects = _scene_objects(
+        ["chair", "chair", "chair", "table"],
+        {1: {"color": "brown"}, 3: {"quantity": "4"}},
+    )
+
+    kept = select_objects(objects)
+
+    assert [obj.label for obj in kept] == ["chair", "chair", "chair", "table"]
+    assert [obj.attributes["quantity"] for obj in kept[:3]] == ["3", "3", "3"]
+    assert "quantity" not in (kept[3].attributes or {})
+
+
+def test_select_objects_caps_distinct_labels():
+    from app.scripts.precompute_preloaded_scenes import select_objects
+
+    objects = _scene_objects([f"label-{index}" for index in range(8)])
+
+    kept = select_objects(objects)
+
+    assert [obj.label for obj in kept] == [f"label-{index}" for index in range(6)]
+
+
+def test_select_objects_caps_instances_per_label():
+    from app.scripts.precompute_preloaded_scenes import select_objects
+
+    kept = select_objects(_scene_objects(["chair"] * 15))
+
+    assert len(kept) == 10
+    assert all(obj.attributes == {"quantity": "10"} for obj in kept)
+
+
+def test_select_objects_caps_total_after_selecting_labels_breadth_first():
+    from app.scripts.precompute_preloaded_scenes import select_objects
+
+    labels = ["chair"] * 10 + ["table", "cup", "plate", "book", "lamp"]
+
+    kept = select_objects(_scene_objects(labels))
+
+    assert len(kept) == 12
+    assert {obj.label for obj in kept} == {
+        "chair", "table", "cup", "plate", "book", "lamp",
+    }
+    assert sum(obj.label == "chair" for obj in kept) == 7
+
+
+def test_select_objects_does_not_mutate_input_objects():
+    from app.scripts.precompute_preloaded_scenes import select_objects
+
+    objects = _scene_objects(
+        ["chair", "chair", "table"],
+        {0: {"color": "brown"}, 1: {"quantity": "11"}, 2: {"quantity": "4"}},
+    )
+    original_attributes = [obj.attributes.copy() for obj in objects]
+
+    kept = select_objects(objects)
+
+    assert [obj.attributes for obj in objects] == original_attributes
+    assert all(original is not selected for original, selected in zip(objects, kept, strict=True))
+    assert kept[0].attributes == {"color": "brown", "quantity": "2"}
+    assert kept[1].attributes == {"quantity": "2"}
+    assert kept[2].attributes == {}
+
+
 def test_precompute_helpers_build_valid_content():
     from app.schemas.media import AnchorPoint, BoundingBox, MediaAsset, SceneObject
     from app.scripts.precompute_preloaded_scenes import (
         build_items,
         build_scene_content,
-        dedupe_objects,
         marker_percent,
+        select_objects,
     )
 
     session_id = uuid4()
@@ -197,14 +278,18 @@ def test_precompute_helpers_build_valid_content():
         ),
         SceneObject(session_id=session_id, label="STREET"),
     ]
-    kept = dedupe_objects(objects)
-    assert [obj.label for obj in kept] == ["Street", "school"]
+    kept = select_objects(objects)
+    assert [obj.label for obj in kept] == ["Street", "school", "STREET"]
+    assert [obj.attributes["quantity"] for obj in (kept[0], kept[2])] == ["2", "2"]
     assert marker_percent(kept[0]) == (30.0, 30.0)
     assert marker_percent(kept[1]) == (50.0, 50.0)
 
     items = build_items(kept)
-    assert [item["id"] for item in items] == ["street", "school"]
-    assert [item["translation"] for item in items] == ["the Street", "the school"]
+    assert [item["id"] for item in items] == ["street", "school", "street-2"]
+    assert [item["translation"] for item in items] == [
+        "the Street", "the school", "the STREET",
+    ]
+    assert [item["attributes"].get("quantity") for item in items] == ["2", None, "2"]
     assert all({"word", "gender", "example"}.isdisjoint(item) for item in items)
 
     asset = MediaAsset(
@@ -227,7 +312,7 @@ def test_precompute_helpers_build_valid_content():
             "mediaAsset": asset,
         }
     )
-    assert len(detail.items) == 2
+    assert len(detail.items) == 3
     assert detail.tasks[0].item_ids == [item["id"] for item in items]
 
 

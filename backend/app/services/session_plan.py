@@ -373,23 +373,28 @@ def build_tasks(
     translated_objects = (
         {term.key: term for term in translated_scene.objects} if translated_scene else {}
     )
-    learning_words = [
-        dict(
-            learning_key=str(item.id),
-            term_type="object",
-            vocabulary_item_id=item.id,
-            scene_object_id=scene_object.id,
-            target_text=_with_article(
-                item.display_text, translated_objects.get(str(scene_object.id))
-            ),
-            translation=translated.translated_text,
-            part_of_speech=item.part_of_speech,
-            gender=item.gender,
-            phonetic_text=item.phonetic_text,
-            example_sentence=item.example_sentence,
+    learning_words = []
+    seen_vocabulary_items = set()
+    for scene_object, item, translated in zip(objects, words, translations, strict=True):
+        if item.id in seen_vocabulary_items:
+            continue
+        seen_vocabulary_items.add(item.id)
+        learning_words.append(
+            dict(
+                learning_key=str(item.id),
+                term_type="object",
+                vocabulary_item_id=item.id,
+                scene_object_id=scene_object.id,
+                target_text=_with_article(
+                    item.display_text, translated_objects.get(str(scene_object.id))
+                ),
+                translation=translated.translated_text,
+                part_of_speech=item.part_of_speech,
+                gender=item.gender,
+                phonetic_text=item.phonetic_text,
+                example_sentence=item.example_sentence,
+            )
         )
-        for scene_object, item, translated in zip(objects, words, translations, strict=True)
-    ]
     if translated_scene:
         supplemental_terms = [
             (term, "attribute", "adjective") for term in translated_scene.attributes
