@@ -50,10 +50,11 @@ class PostgresSurveyRepository:
     ) -> SurveyResponse:
         survey_id = uuid4()
         created_at = datetime.now(UTC)
+        clean_email = email.strip() if email and email.strip() else None
         values = {
             "id": survey_id,
             "user_id": user_id,
-            "email": email,
+            "email": clean_email,
             "rating": request.rating,
             "usage_frequency": request.usage_frequency.strip(),
             "motivation": request.motivation.strip(),

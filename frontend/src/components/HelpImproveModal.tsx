@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Button, IconButton } from "./ui";
 import { CloseIcon } from "./icons";
 import { submitSurvey } from "../lib/api";
+import { useAuth } from "../state/Auth";
 
 const ratings = [
   { value: 1, label: "Angry", src: "/ratings/rating-1.png", desc: "1 star — very unhappy" },
@@ -24,11 +25,13 @@ export function HelpImproveModal({
   triggerSource = "profile",
   lessonCount = null,
 }: HelpImproveModalProps) {
+  const { session } = useAuth();
   const [rating, setRating] = useState<number | null>(null);
   const [usageFrequency, setUsageFrequency] = useState("");
   const [motivation, setMotivation] = useState("");
   const [improvements, setImprovements] = useState("");
   const [receiveFollowUp, setReceiveFollowUp] = useState(false);
+  const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +43,7 @@ export function HelpImproveModal({
       setMotivation("");
       setImprovements("");
       setReceiveFollowUp(false);
+      setEmail("");
       setSubmitting(false);
       setSubmitted(false);
       setError(null);
@@ -64,6 +68,11 @@ export function HelpImproveModal({
       return;
     }
 
+    if (!session && receiveFollowUp && !email.trim()) {
+      setError("Please enter your email address to receive follow-up.");
+      return;
+    }
+
     setSubmitting(true);
     setError(null);
     try {
@@ -73,6 +82,7 @@ export function HelpImproveModal({
         motivation: motivation.trim(),
         improvements: improvements.trim(),
         receiveFollowUp,
+        email: !session && receiveFollowUp ? email.trim() : null,
         triggerSource,
         lessonCount,
       });
@@ -188,6 +198,22 @@ export function HelpImproveModal({
               />
               <span>Receive follow-up to your feedback</span>
             </label>
+
+            {!session && receiveFollowUp ? (
+              <div className="survey-question">
+                <label htmlFor="survey-email">Your email address</label>
+                <input
+                  id="survey-email"
+                  className="input"
+                  type="email"
+                  autoComplete="email"
+                  required
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="name@example.com"
+                />
+              </div>
+            ) : null}
 
             {error ? <p role="alert">{error}</p> : null}
 

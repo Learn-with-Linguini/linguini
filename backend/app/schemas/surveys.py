@@ -15,6 +15,7 @@ class CreateSurveyRequest(ApiModel):
     motivation: Annotated[str, Field(default="", max_length=2000)] = ""
     improvements: Annotated[str, Field(default="", max_length=2000)] = ""
     receive_follow_up: bool = False
+    email: Annotated[str | None, Field(default=None, max_length=320)] = None
     trigger_source: Annotated[str, Field(default="profile", max_length=32)] = "profile"
     lesson_count: int | None = None
 

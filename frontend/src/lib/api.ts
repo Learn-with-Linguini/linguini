@@ -596,6 +596,7 @@ export interface SurveySubmission {
   motivation?: string;
   improvements?: string;
   receiveFollowUp?: boolean;
+  email?: string | null;
   triggerSource?: string;
   lessonCount?: number | null;
 }
@@ -613,6 +614,7 @@ export function submitSurvey(data: SurveySubmission): Promise<SurveyResponse> {
     motivation: data.motivation ?? "",
     improvements: data.improvements ?? "",
     receive_follow_up: Boolean(data.receiveFollowUp),
+    email: data.email ? data.email.trim() : null,
     trigger_source: data.triggerSource ?? "profile",
     lesson_count: data.lessonCount ?? null,
   });
