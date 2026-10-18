@@ -476,6 +476,16 @@
   font-variant-numeric: tabular-nums;
 }
 
+.basilTotal {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
+  border-radius: var(--radius-pill);
+  background: var(--sage);
+  color: var(--teal-dark);
+}
+
 @media (max-width: 1080px) {
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

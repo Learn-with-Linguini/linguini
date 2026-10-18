@@ -492,14 +492,20 @@
 }
 
 .pill--xp {
-  background: var(--pasta);
-  color: #5b3a00;
+  border: 1px solid rgba(46, 156, 153, .2);
+  background: var(--sage);
+  color: var(--teal-dark);
 }
 
 .basil-reward {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
+  justify-self: start;
+  padding: 4px var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--sage);
+  color: var(--teal-dark);
 }
 
 .basil-reward svg {

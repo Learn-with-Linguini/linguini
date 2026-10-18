@@ -164,7 +164,7 @@ export function Features() {
                 ))}
               </div>
               <p className={styles.stats}>
-                <Basil size={16} /> <b>420</b> Basil this week · <b>86</b> words · <b>19</b> pages
+                <span className={styles.basilTotal}><Basil size={16} /> <b>420</b> Basil this week</span> · <b>86</b> words · <b>19</b> pages
               </p>
             </div>
           </Reveal>
