@@ -145,21 +145,19 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onSc
     {content.kind === "sentenceBuilding" ? <><p>{content.sourceText}</p><div className="chip-row">{content.tokenBank.map((token, i) => <button key={i} className="chip" disabled={terminal || practiceSaving} onClick={() => setText(value => (value + " " + token).trim())}>{token}</button>)}</div></> : null}
     {!reading && content.kind !== "grammarPractice" ? <div className="field"><label className="field__label" htmlFor="task-answer">Your answer</label><input id="task-answer" className="input" value={text} maxLength={2000} disabled={terminal || practiceSaving} onChange={event => setText(event.target.value)} /></div> : null}
     {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
-    {feedback || earnedText ? <>
-      <Feedback><div className="stack-2" role="status">{feedback ? <p>{feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback>
-      <ReportIssueLink reportType={taskTitle(task)} fields={[
-        ["Task ID", task.id],
-        ["Prompt", "prompt" in content ? content.prompt : taskTitle(task)],
-        ["Your answer", content.kind === "grammarPractice" ? choice : text],
-        ["Displayed feedback", feedback],
-        ["Language", scene.languageCode],
-      ]} />
-    </> : null}
+    {feedback || earnedText ? <Feedback><div className="stack-2" role="status">{feedback ? <p>{feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {terminal ? <Button block disabled={practiceSaving} onClick={onNext}>{index < total - 1 ? "Next task" : lastStep}</Button> : <>
       <Button block disabled={practiceSaving || checking || (!reading && !(content.kind === "grammarPractice" ? choice : text.trim()))} onClick={() => void submit()}>{reading ? "Mark complete" : "Submit answer"}</Button>
       <Button variant="quiet" block disabled={practiceSaving} onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip task</Button>
     </>}
+    {feedback || earnedText ? <div className="learning-question-report"><ReportIssueLink reportType={taskTitle(task)} fields={[
+      ["Task ID", task.id],
+      ["Prompt", "prompt" in content ? content.prompt : taskTitle(task)],
+      ["Your answer", content.kind === "grammarPractice" ? choice : text],
+      ["Displayed feedback", feedback],
+      ["Language", scene.languageCode],
+    ]} /></div> : null}
   </div>;
 }
 
@@ -275,7 +273,6 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
         <span className="vocabulary-flow__position" aria-live="polite">{page + 1} of {pageCount}</span>
         <Button variant="secondary" onClick={finishReview}>{page < pageCount - 1 ? <>Next <ArrowRightIcon /></> : "Start quick quiz"}</Button>
       </div>
-      <Button variant="quiet" className="vocabulary-flow__skip" onClick={() => setStage("quiz")}>Skip to Word Review</Button>
     </> : null}
     {!terminal && stage === "quiz" && question ? <><Card plain><div className="stack">
       <span className="label muted">Question {questionIndex + 1} of {content.questions.length}</span><h2>{question.prompt}</h2>
@@ -296,14 +293,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
         })()}</p></Feedback>
       </> : null}
       <Button block disabled={!answers[question.questionId]} onClick={finishQuestion}>{questionIndex < content.questions.length - 1 ? "Next question" : "Continue"}</Button>
-    </div></Card>{answers[question.questionId] ? <div className="learning-question-report"><ReportIssueLink reportType="Vocabulary answer" fields={[
-      ["Task ID", task.id],
-      ["Question ID", question.questionId],
-      ["Prompt", question.prompt],
-      ["Your answer", question.options.find(option => option.optionId === answers[question.questionId])?.label],
-      ["Displayed solution", question.options.find(option => option.optionId === correctOptionIds[question.questionId])?.label],
-      ["Language", scene.languageCode],
-    ]} /></div> : null}</> : null}
+    </div></Card></> : null}
     {!terminal && stage === "typing" && typingWord ? <Card plain><div className="stack">
       <div><h2>Type “{typingWord.translation}”</h2><p className="muted">Word {typingIndex + 1} of {content.words.length}</p></div>
       <input className="input" aria-label={`Type ${typingWord.translation}`} value={typedAnswers[typingKey] ?? ""} disabled={typingCheck?.isCorrect || typingCheck?.revealed} onChange={event => { setTypedAnswers(value => ({ ...value, [typingKey]: event.target.value })); setTypingCheck(null); }} />
@@ -317,6 +307,15 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
     {feedback || earnedText ? <Feedback><div className="stack-2" role="status">{feedback ? <p>{feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {terminal ? <Button block onClick={onNext}>{session?.session.status === "generatingTasks" ? "Back to tasks" : index < total - 1 ? "Next task" : lastStep}</Button> : null}
+    {!terminal ? <Button variant="quiet" block disabled={practiceSaving} onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip vocabulary review</Button> : null}
+    {!terminal && stage === "quiz" && question && answers[question.questionId] ? <div className="learning-question-report"><ReportIssueLink reportType="Vocabulary answer" fields={[
+      ["Task ID", task.id],
+      ["Question ID", question.questionId],
+      ["Prompt", question.prompt],
+      ["Your answer", question.options.find(option => option.optionId === answers[question.questionId])?.label],
+      ["Displayed solution", question.options.find(option => option.optionId === correctOptionIds[question.questionId])?.label],
+      ["Language", scene.languageCode],
+    ]} /></div> : null}
   </div>;
 }
 
@@ -717,7 +716,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
           typedAnswer={typedAnswers[question.questionId] ?? ""}
           checked={checks[question.questionId]} retryPassed={Boolean(retryPassed[question.questionId])}
           checking={checking || saved.isLoading || saved.isError}
-          scenario={question.roleplayPremise}
+          scenario={question.roleplayPremise ?? undefined}
           onSelect={optionId => {
             setTypedMode(value => ({ ...value, [question.questionId]: false }));
             setAnswers(value => ({ ...value, [question.questionId]: optionId }));
@@ -836,10 +835,6 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
         </Button> : null}
         </>}
       </div></Card>
-      {storedCheck && (!storedCheck.isCorrect || storedCheck.correctAnswer) ? <div className="learning-question-report"><ReportIssueLink reportType="Grammar answer" fields={[
-        ["Task ID", task.id], ["Question ID", question.questionId], ["Prompt", question.prompt],
-        ["Your answer", storedCheck.answer], ["Displayed solution", storedCheck.correctAnswer],
-      ]} /></div> : null}
     </div> : null}
     {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
     {checkError ? <p role="alert">{checkError}</p> : null}
@@ -856,6 +851,10 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
           onClick={() => void submit()}>Finish task</Button>}
     {!terminal ? <Button variant="quiet" block disabled={practiceSaving || checking}
       onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip task</Button> : null}
+    {question && storedCheck && (!storedCheck.isCorrect || storedCheck.correctAnswer) ? <div className="learning-question-report"><ReportIssueLink reportType="Grammar answer" fields={[
+      ["Task ID", task.id], ["Question ID", question.questionId], ["Prompt", question.prompt],
+      ["Your answer", storedCheck.answer], ["Displayed solution", storedCheck.correctAnswer],
+    ]} /></div> : null}
   </div>;
 }
 
@@ -1077,13 +1076,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         </p> : null}
         <QuestionOutcomeNotes outcome={outcomeFor[question.questionId]} />
       </> : null}
-    </div></Card>{results[question.questionId] !== undefined ? <div className="learning-question-report"><ReportIssueLink reportType="Grammar answer" fields={[
-      ["Task ID", task.id],
-      ["Question ID", question.questionId],
-      ["Prompt", question.translation || question.prompt],
-      ["Your answer", answerFor(question)],
-      ["Displayed solution", question.options.find(option => option.optionId === solutions[question.questionId])?.label ?? solutions[question.questionId]],
-    ]} /></div> : null}</div>;
+    </div></Card></div>;
     })}
     {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
     {checkError ? <p role="alert">{checkError}</p> : null}
@@ -1097,6 +1090,13 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
           : <Button block disabled={!answered || !allChecked || practiceSaving || checking} onClick={() => void submit()}>Finish task</Button>}
       <Button variant="quiet" block disabled={practiceSaving} onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip task</Button>
     </>}
+    {activeQuestion && activeResult !== undefined ? <div className="learning-question-report"><ReportIssueLink reportType="Grammar answer" fields={[
+      ["Task ID", task.id],
+      ["Question ID", activeQuestion.questionId],
+      ["Prompt", activeQuestion.translation || activeQuestion.prompt],
+      ["Your answer", answerFor(activeQuestion)],
+      ["Displayed solution", activeQuestion.options.find(option => option.optionId === solutions[activeQuestion.questionId])?.label ?? solutions[activeQuestion.questionId]],
+    ]} /></div> : null}
   </div>;
 }
 

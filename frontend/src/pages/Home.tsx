@@ -12,6 +12,7 @@ import { useAppState } from "../state/useAppState";
 import { useVocabularyQuery } from "../state/queries";
 import { WalkthroughCoachmark } from "../components/WalkthroughCoachmark";
 import { FIRST_LESSON_WALKTHROUGH_VERSION, needsFirstLessonWalkthrough } from "../lib/walkthrough";
+import { learningProgress } from "../lib/practiceTasks";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -71,8 +72,7 @@ export function Home() {
     }));
     return [...groups.values()].sort((a, b) => b.count - a.count)[0] ?? null;
   }, [vocabulary]);
-  const completed = resume?.progress.completedTaskCount ?? 0;
-  const total = resume?.progress.totalTaskCount ?? 0;
+  const { completed, total } = resume ? learningProgress(resume.tasks) : { completed: 0, total: 0 };
   const percent = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
 
   const continuePractice = async () => {

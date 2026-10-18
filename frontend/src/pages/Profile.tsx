@@ -12,7 +12,6 @@ import { SOCIAL_LINKS_LIST } from "../config/social";
 import { supabase } from "../lib/supabase.ts";
 import { useAppState } from "../state/useAppState";
 import { useAuth } from "../state/Auth";
-import { GameResources } from "../components/GameResources";
 
 const socialIcons = {
   instagram: InstagramIcon,
