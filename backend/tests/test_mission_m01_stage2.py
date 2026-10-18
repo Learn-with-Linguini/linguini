@@ -63,7 +63,6 @@ def generated_lesson(payload):
         questions.append(GeneratedQuestion(
             question_id=question.question_id,
             target_ids=question.target_ids,
-            section=question.section,
             prompt=question.prompt,
             prompt_translation=question.prompt_translation,
             instruction=question.instruction,
@@ -81,7 +80,6 @@ def generated_lesson(payload):
             feedback=question.feedback,
         ))
     return M01GeneratedLesson(
-        title=output.title,
         explanation=output.explanation,
         preparation=output.preparation,
         questions=questions,
@@ -211,6 +209,10 @@ def test_m01_input_includes_spanish_reviewed_examples(curated, monkeypatch):
         "Es un libro rojo.",
         "Está al lado de la puerta.",
     ]
+    assert "title" not in model.payloads[0]["levelPlan"]
+    assert all(
+        "section" not in slot for slot in model.payloads[0]["levelPlan"]["questions"]
+    )
 
 
 def test_m01_learner_context_uses_progress_and_history_snapshot_shapes(

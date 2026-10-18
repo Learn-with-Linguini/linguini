@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import tomllib
 import unicodedata
 from dataclasses import dataclass
@@ -15,7 +16,7 @@ from pydantic import Field, model_validator
 
 from app.languages import get_language, languages
 from app.missions import get_mission
-from app.schemas.base import ApiModel
+from app.schemas.base import ApiModel, NonEmptyText
 from app.schemas.enums import ProficiencyLevel
 from app.schemas.languages import Language
 from app.schemas.mission_m01_contract import (
@@ -83,6 +84,7 @@ type M01Realised = Literal["focusObject", "focusColour", "details", "oneDetail"]
 
 class M01QuestionSlot(ApiModel):
     purpose: str
+    section: NonEmptyText
     target_ids: list[str] = Field(min_length=1)
     interaction: M01Interaction
     evidence: EvidenceType
@@ -125,6 +127,7 @@ class M01LevelPlan(ApiModel):
     level: ProficiencyLevel
     plan_version: int
     content_version: int
+    title: NonEmptyText
     fact_kinds: list[M01FactKind]
     min_objects: Annotated[int, Field(ge=1)]
     min_detail_facts: Annotated[int, Field(ge=0)]
@@ -312,6 +315,11 @@ def default_join(language: Language | str, text: str) -> str:
     return "space"
 
 
+def _english_section_label(source_text: str) -> str:
+    label = re.sub(r"^(?:a|an|the)\s+", "", source_text.strip(), flags=re.IGNORECASE)
+    return label.casefold().capitalize()
+
+
 def convert_generated_lesson(
     contract: M01ContractInput, generated: M01GeneratedLesson
 ) -> M01ContractOutput:
@@ -338,10 +346,29 @@ def convert_generated_lesson(
                     f"{_question_label(index + 1, question, plan)}: unknown target: {target_id}"
                 )
 
+        section = slot.section
+        if "{label}" in section:
+            focus_fact = next(
+                (fact_ref for fact_ref in question.fact_ids if fact_ref in objects),
+                None,
+            )
+            if focus_fact is None:
+                raise MissionContractError(
+                    f"{_question_label(index + 1, question, plan)}: no focus object "
+                    "for its section label"
+                )
+            source_term = next(iter(terms_by_fact.get(focus_fact, [])), None)
+            if source_term is None:
+                raise MissionContractError(
+                    f"{_question_label(index + 1, question, plan)}: focus object "
+                    "has no approved English source term for its section label"
+                )
+            section = section.format(label=_english_section_label(source_term.source_text))
+
         questions.append({
             "question_id": question.question_id,
             "target_ids": question.target_ids,
-            "section": question.section,
+            "section": section,
             "prompt": question.prompt,
             "prompt_translation": question.prompt_translation,
             "instruction": question.instruction,
@@ -386,7 +413,7 @@ def convert_generated_lesson(
         target_language=contract.target_language,
         instruction_language=contract.instruction_language,
         objective_id=definition.objective.objective_id,
-        title=generated.title,
+        title=plan.title,
         explanation=generated.explanation,
         preparation=generated.preparation,
         questions=questions,

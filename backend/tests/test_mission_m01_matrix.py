@@ -263,14 +263,12 @@ def _generated_lesson(contract):
     _, planned, _ = builder(contract)
     language = language_registry.get_language(contract.target_language)
     return M01GeneratedLesson(
-        title=planned.title,
         explanation=planned.explanation,
         preparation=planned.preparation,
         questions=[
             GeneratedQuestion(
                 question_id=question.question_id,
                 target_ids=question.target_ids,
-                section=question.section,
                 prompt=question.prompt,
                 prompt_translation=question.prompt_translation,
                 instruction=question.instruction,

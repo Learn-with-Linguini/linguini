@@ -237,7 +237,6 @@ class GeneratedMarkerOption(ApiModel):
 class GeneratedQuestion(ApiModel):
     question_id: ContractId
     target_ids: Annotated[list[ContractId], Field(min_length=1)]
-    section: NonEmptyText | None = None
     prompt: NonEmptyText
     prompt_translation: str | None = None
     instruction: str | None = None
@@ -255,7 +254,6 @@ class GeneratedQuestion(ApiModel):
 class M01GeneratedLesson(ApiModel):
     """List-shaped model response, excluding server-derived private evaluations."""
 
-    title: NonEmptyText
     explanation: str | None = None
     preparation: list[PreparationCard]
     questions: list[GeneratedQuestion]

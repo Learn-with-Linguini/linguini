@@ -1,7 +1,7 @@
 """System prompt for the shared multilingual M01 lesson generator."""
 
-M01_MULTILINGUAL_PROMPT_VERSION = "m01-multilingual-prompt.v3"
-M01_MULTILINGUAL_SCHEMA_VERSION = "m01-multilingual-schema.v4"
+M01_MULTILINGUAL_PROMPT_VERSION = "m01-multilingual-prompt.v4"
+M01_MULTILINGUAL_SCHEMA_VERSION = "m01-multilingual-schema.v5"
 
 M01_MULTILINGUAL_SYSTEM_PROMPT = """\
 You write one short language lesson for a learner looking at their own photo.

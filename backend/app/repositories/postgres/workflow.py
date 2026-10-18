@@ -2793,6 +2793,10 @@ class PostgresWorkflowRepository:
                     try:
                         if target_language is None:
                             raise ValueError("M01 target language is not registered")
+                        level_plan = plan.model_dump(mode="json", by_alias=True)
+                        level_plan.pop("title")
+                        for question_slot in level_plan["questions"]:
+                            question_slot.pop("section")
                         payload = {
                             "contract": contract.model_dump(
                                 mode="json", by_alias=True, exclude_none=True
@@ -2817,7 +2821,7 @@ class PostgresWorkflowRepository:
                                     for criterion in mission.evaluation_criteria
                                 ],
                             },
-                            "levelPlan": plan.model_dump(mode="json", by_alias=True),
+                            "levelPlan": level_plan,
                             "planVersion": plan.plan_version,
                             "preparationCardCount": expected_preparation_cards(
                                 plan, contract

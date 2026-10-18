@@ -252,7 +252,7 @@ def contract_output(contract):
     )
 
 
-def _planned_output(contract, title, questions, answers, preparation, plan):
+def _planned_output(contract, questions, answers, preparation, plan):
     definition = get_mission("M01", contract.mission.practice_level, 1)
     evaluations = [
         QuestionEvaluation(
@@ -270,7 +270,7 @@ def _planned_output(contract, title, questions, answers, preparation, plan):
         target_language=contract.target_language,
         instruction_language=contract.instruction_language,
         objective_id=definition.objective.objective_id,
-        title=title,
+        title=plan.title,
         preparation=preparation,
         questions=questions,
         private=PrivateEvaluation(answers=answers, evaluations=evaluations),
@@ -428,7 +428,7 @@ def planned_a1_output(contract=None):
     }
     return (
         contract,
-        _planned_output(contract, "Identify and describe.", questions, answers, [], plan),
+        _planned_output(contract, questions, answers, [], plan),
         plan,
     )
 
@@ -520,7 +520,7 @@ def planned_a0_output(contract=None):
         ),
     ]
     return contract, _planned_output(
-        contract, "Name and identify.", questions, answers, preparation, plan
+        contract, questions, answers, preparation, plan
     ), plan
 
 
@@ -633,9 +633,7 @@ def planned_a2_output(contract=None):
         ]),
         "scene-follow-up": Answer(correct_option_id="detail-blue"),
     }
-    return contract, _planned_output(
-        contract, "Describe the scene.", questions, answers, [], plan
-    ), plan
+    return contract, _planned_output(contract, questions, answers, [], plan), plan
 
 
 @pytest.mark.parametrize("level", LEVELS)
@@ -1261,14 +1259,12 @@ def test_public_dump_excludes_private_evaluation():
 
 def _generated_from_planned_output(contract, planned):
     return M01GeneratedLesson(
-        title=planned.title,
         explanation=planned.explanation,
         preparation=planned.preparation,
         questions=[
             GeneratedQuestion(
                 question_id=question.question_id,
                 target_ids=question.target_ids,
-                section=question.section,
                 prompt=question.prompt,
                 prompt_translation=question.prompt_translation,
                 instruction=question.instruction,
@@ -1308,6 +1304,87 @@ def test_generated_lesson_conversion_derives_private_evaluations():
     assert "evaluations" not in M01GeneratedLesson.model_json_schema()["properties"]
 
 
+@pytest.mark.parametrize(
+    ("level", "builder", "title", "plan_sections", "task_sections"),
+    [
+        (
+            "A0",
+            planned_a0_output,
+            "Name and identify",
+            ["Task 1 · {label}"] * 3 + ["Task 2 · {label}"] * 3,
+            ["Task 1 · Cup"] * 3 + ["Task 2 · Table"] * 3,
+        ),
+        (
+            "A1",
+            planned_a1_output,
+            "Name it and describe it",
+            [
+                "Task 1 · Identify objects in your photo",
+                "Task 1 · Identify objects in your photo",
+                "Task 2 · Describe them",
+                "Task 2 · Describe them",
+            ],
+            [
+                "Task 1 · Identify objects in your photo",
+                "Task 1 · Identify objects in your photo",
+                "Task 2 · Describe them",
+                "Task 2 · Describe them",
+            ],
+        ),
+        (
+            "A2",
+            planned_a2_output,
+            "Describe the scene",
+            [
+                "Task 1 · Notice the facts",
+                "Task 1 · Notice the facts",
+                "Task 2 · Describe the scene",
+                "Task 2 · Describe the scene",
+                "Task 3 · Check a detail",
+            ],
+            [
+                "Task 1 · Notice the facts",
+                "Task 1 · Notice the facts",
+                "Task 2 · Describe the scene",
+                "Task 2 · Describe the scene",
+                "Task 3 · Check a detail",
+            ],
+        ),
+    ],
+)
+def test_task_title_and_sections_come_from_level_plan(
+    level, builder, title, plan_sections, task_sections
+):
+    contract, planned, plan = builder()
+    assert plan.level == level
+    assert plan.title == title
+    assert [slot.section for slot in plan.questions] == plan_sections
+
+    generated = _generated_from_planned_output(contract, planned)
+    output = convert_generated_lesson(contract, generated)
+    validate_contract_output(contract, output, plan)
+    mission = get_mission("M01", level, plan.content_version)
+    task = build_m01_multilingual_task(uuid4(), mission, contract, output)
+
+    assert output.title == task.public_content.title == plan.title
+    assert [question.section for question in task.public_content.questions] == task_sections
+
+
+def test_generated_schema_rejects_server_planned_title_and_sections():
+    contract, planned, _ = planned_a1_output()
+    generated = _generated_from_planned_output(contract, planned)
+    payload = generated.model_dump(mode="json", by_alias=True)
+
+    assert "title" not in M01GeneratedLesson.model_json_schema()["properties"]
+    assert "section" not in GeneratedQuestion.model_json_schema()["properties"]
+    with pytest.raises(ValidationError):
+        M01GeneratedLesson.model_validate({**payload, "title": "Model title"})
+
+    payload["questions"][0]["section"] = "Model section"
+    with pytest.raises(ValidationError):
+        M01GeneratedLesson.model_validate(payload)
+
+
 def test_generated_evidence_and_criteria_come_from_ordered_slots():
     contract, output, plan = planned_a1_output()
     generated = _generated_from_planned_output(contract, output)
@@ -1329,7 +1406,7 @@ def test_m01_cache_identity_covers_payload_and_version_dimensions():
     contract = contract_input().model_dump(mode="json", by_alias=True)
     payload = {
         "contract": contract,
-        "planVersion": 2,
+        "planVersion": 4,
         "levelPlan": {"contentVersion": 1},
     }
     version = FeatureVersion("learning-task", "prompt-v1", "schema-v1", "validator-v1")
@@ -1378,7 +1455,7 @@ def test_m01_cache_identity_covers_payload_and_version_dimensions():
     ):
         variations.append(key(changed_version=replace(version, **{version_field: value})))
     changed = json.loads(json.dumps(payload))
-    changed["planVersion"] = 3
+    changed["planVersion"] = 5
     variations.append(key(changed))
 
     assert all(candidate != original for candidate in variations)
