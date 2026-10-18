@@ -5,9 +5,7 @@ from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
-from fastapi.testclient import TestClient
 
-from app.main import create_app
 from app.repositories.users import UserRepository
 from app.schemas.enums import AccountTier
 from app.schemas.users import User

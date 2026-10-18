@@ -141,7 +141,10 @@ def register_learning_errors(app: FastAPI) -> None:
         DailyLessonLimitReachedError: (
             403,
             "daily_lesson_limit_reached",
-            "You have reached your daily photo lesson limit. Upgrade to Plus for 10 lessons per day.",
+            (
+                "You have reached your daily photo lesson limit. "
+                "Upgrade to Plus for 10 lessons per day."
+            ),
         ),
         JournalStorageError: (500, "journal_storage_error", "Unable to load or save journal data."),
         JournalNotFoundError: (404, "journal_not_found", "Journal not found."),

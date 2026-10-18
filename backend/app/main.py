@@ -4,10 +4,6 @@ import logging
 from contextlib import asynccontextmanager
 
 from dotenv import load_dotenv
-
-load_dotenv(".env.local")
-load_dotenv(".env")
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -90,6 +86,8 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
+    load_dotenv(".env.local")
+    load_dotenv(".env")
     app = FastAPI(
         lifespan=lifespan,
         title="Linguini API",

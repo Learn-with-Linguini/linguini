@@ -1047,8 +1047,11 @@ class PostgresWorkflowRepository:
         tier_val = user_row.get("tier", "beta")
         if tier_val == "beta" or tier_val == AccountTier.BETA.value:
             return
-        limit = 1 if (tier_val == "free" or tier_val == AccountTier.FREE.value) else (10 if (tier_val == "plus" or tier_val == AccountTier.PLUS.value) else None)
-        if limit is None:
+        if tier_val in ("free", AccountTier.FREE.value):
+            limit = 1
+        elif tier_val in ("plus", AccountTier.PLUS.value):
+            limit = 10
+        else:
             return
 
         tz_str = user_row.get("timezone") or "UTC"
@@ -1070,9 +1073,11 @@ class PostgresWorkflowRepository:
 
         if count >= limit:
             tier_label = "Free" if limit == 1 else "Plus"
+            plural = "s" if limit > 1 else ""
+            upgrade_msg = " Upgrade to Plus for 10 lessons per day." if limit == 1 else ""
             raise DailyLessonLimitReachedError(
-                f"{tier_label} tier is limited to {limit} photo lesson{'s' if limit > 1 else ''} per day. "
-                f"{'Upgrade to Plus for 10 lessons per day.' if limit == 1 else ''}"
+                f"{tier_label} tier is limited to {limit} photo lesson{plural} per day."
+                f"{upgrade_msg}"
             )
 
     def _check_active_limit(self, c, profile_id, mode=SessionMode.LESSON):

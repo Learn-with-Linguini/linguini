@@ -157,7 +157,10 @@ class StripeService:
             event_data = json.loads(payload.decode("utf-8"))
             event = type("Event", (), event_data)()
 
-        event_type = getattr(event, "type", None) or event.get("type") if isinstance(event, dict) else getattr(event, "type", "")
+        if isinstance(event, dict):
+            event_type = event.get("type", "")
+        else:
+            event_type = getattr(event, "type", "")
         data_object = getattr(event, "data", None)
         if hasattr(data_object, "object"):
             obj = data_object.object
@@ -177,15 +180,22 @@ class StripeService:
 
         return {"status": "processed", "type": event_type}
 
+    def _extract_metadata(self, obj: Any) -> dict:
+        if isinstance(obj, dict):
+            return obj.get("metadata") or {}
+        return getattr(obj, "metadata", None) or {}
+
     def _on_checkout_completed(self, session: Any) -> None:
-        metadata = getattr(session, "metadata", None) or (session.get("metadata") if isinstance(session, dict) else {}) or {}
+        metadata = self._extract_metadata(session)
         user_id_str = (
             metadata.get("user_id")
             or getattr(session, "client_reference_id", None)
             or (session.get("client_reference_id") if isinstance(session, dict) else None)
         )
         if not user_id_str:
-            logger.warning("Checkout session completed without user_id in metadata or client_reference_id.")
+            logger.warning(
+                "Checkout session completed without user_id in metadata or client_reference_id."
+            )
             return
 
         try:
@@ -196,9 +206,12 @@ class StripeService:
             logger.exception("Failed to upgrade user %s after checkout.", user_id_str)
 
     def _on_subscription_updated(self, subscription: Any) -> None:
-        metadata = getattr(subscription, "metadata", None) or (subscription.get("metadata") if isinstance(subscription, dict) else {}) or {}
+        metadata = self._extract_metadata(subscription)
         user_id_str = metadata.get("user_id")
-        status = getattr(subscription, "status", None) or (subscription.get("status") if isinstance(subscription, dict) else None)
+        if isinstance(subscription, dict):
+            status = subscription.get("status")
+        else:
+            status = getattr(subscription, "status", None)
 
         if not user_id_str:
             return
@@ -213,14 +226,20 @@ class StripeService:
             logger.exception("Failed to update user %s subscription status.", user_id_str)
 
     def _on_subscription_deleted(self, subscription: Any) -> None:
-        metadata = getattr(subscription, "metadata", None) or (subscription.get("metadata") if isinstance(subscription, dict) else {}) or {}
+        metadata = self._extract_metadata(subscription)
         user_id_str = metadata.get("user_id")
         if not user_id_str:
             return
 
         try:
             user_id = UUID(str(user_id_str))
-            logger.info("Downgrading user %s to Free tier after subscription cancellation.", user_id)
+            logger.info(
+                "Downgrading user %s to Free tier after subscription cancellation.",
+                user_id,
+            )
             self.user_repository.set_tier(user_id, AccountTier.FREE.value)
         except Exception:
-            logger.exception("Failed to downgrade user %s after subscription cancellation.", user_id_str)
+            logger.exception(
+                "Failed to downgrade user %s after subscription cancellation.",
+                user_id_str,
+            )

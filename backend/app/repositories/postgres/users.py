@@ -133,7 +133,10 @@ class PostgresUserRepository:
             with self.engine.begin() as connection:
                 row = (
                     connection.execute(
-                        update(users).where(users.c.id == user_id).values(tier=tier).returning(users)
+                        update(users)
+                        .where(users.c.id == user_id)
+                        .values(tier=tier)
+                        .returning(users)
                     )
                     .mappings()
                     .one_or_none()
