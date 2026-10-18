@@ -1,0 +1,107 @@
+construction_id = "identify-object"
+
+[[examples]]
+example_id = "name-book"
+levels = ["A0"]
+meaning = "the book"
+scene = { objects = [{ fact_id = "object:book", concept = "book" }] }
+bindings = { object = "object:book" }
+truth = true
+labels = ["what-is-this"]
+sentence = "el libro"
+translation = "the book"
+chunks = [{ text = "el", join = "none" }, { text = "libro", join = "space" }]
+contrasts = [{ sentence = "la libro", note = "libro is masculine." }]
+provenance = { source = "Lead-authored; noun from app/services/a0_lexicon.py REVIEWED_NOUNS.", review_status = "unreviewed" }
+
+[[examples]]
+example_id = "name-apple"
+levels = ["A0"]
+meaning = "the apple"
+scene = { objects = [{ fact_id = "object:apple", concept = "apple" }] }
+bindings = { object = "object:apple" }
+truth = true
+labels = ["what-is-this"]
+sentence = "la manzana"
+translation = "the apple"
+chunks = [{ text = "la", join = "none" }, { text = "manzana", join = "space" }]
+provenance = { source = "Lead-authored; noun from app/services/a0_lexicon.py REVIEWED_NOUNS.", review_status = "unreviewed" }
+
+[[examples]]
+example_id = "name-clock"
+levels = ["A0"]
+meaning = "the clock"
+scene = { objects = [{ fact_id = "object:clock", concept = "clock" }] }
+bindings = { object = "object:clock" }
+truth = true
+labels = ["what-is-this"]
+sentence = "el reloj"
+translation = "the clock"
+chunks = [{ text = "el", join = "none" }, { text = "reloj", join = "space" }]
+provenance = { source = "Lead-authored; noun from app/services/a0_lexicon.py REVIEWED_NOUNS.", review_status = "unreviewed" }
+
+[[examples]]
+example_id = "identify-cup"
+levels = ["A0"]
+meaning = "it is a cup"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }] }
+bindings = { object = "object:cup" }
+truth = true
+labels = ["what-is-this"]
+sentence = "Es una taza."
+translation = "It is a cup."
+chunks = [{ text = "Es", join = "none" }, { text = "una", join = "space" }, { text = "taza", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = ["Esto es una taza."]
+contrasts = [{ sentence = "Es un taza.", note = "taza is feminine." }]
+provenance = { source = "Lead-authored; noun from app/services/a0_lexicon.py REVIEWED_NOUNS.", review_status = "unreviewed" }
+
+[[examples]]
+example_id = "identify-book"
+levels = ["A0"]
+meaning = "it is a book"
+scene = { objects = [{ fact_id = "object:book", concept = "book" }] }
+bindings = { object = "object:book" }
+truth = true
+labels = ["what-is-this"]
+sentence = "Es un libro."
+translation = "It is a book."
+chunks = [{ text = "Es", join = "none" }, { text = "un", join = "space" }, { text = "libro", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = ["Esto es un libro."]
+provenance = { source = "Lead-authored; noun from app/services/a0_lexicon.py REVIEWED_NOUNS.", review_status = "unreviewed" }
+
+[[examples]]
+example_id = "identify-key"
+levels = ["A0"]
+meaning = "it is a key"
+scene = { objects = [{ fact_id = "object:key", concept = "key" }] }
+bindings = { object = "object:key" }
+truth = true
+labels = ["what-is-this"]
+sentence = "Es una llave."
+translation = "It is a key."
+chunks = [{ text = "Es", join = "none" }, { text = "una", join = "space" }, { text = "llave", join = "space" }, { text = ".", join = "none" }]
+provenance = { source = "Lead-authored; noun from app/services/a0_lexicon.py REVIEWED_NOUNS.", review_status = "unreviewed" }
+
+[[mistakes]]
+example_id = "wrong-book-article"
+levels = ["A0"]
+sentence = "Es una libro."
+correction = "Es un libro."
+note = "libro is masculine, so the article is un."
+provenance = { source = "Lead-authored for the M01 pilot; needs fluent Spanish review.", review_status = "unreviewed" }
+
+[[mistakes]]
+example_id = "subject-pronoun"
+levels = ["A0"]
+sentence = "Él es una taza."
+correction = "Es una taza."
+note = "No subject pronoun; él refers to a person or masculine noun, not this cup."
+provenance = { source = "Lead-authored for the M01 pilot; needs fluent Spanish review.", review_status = "unreviewed" }
+
+[[mistakes]]
+example_id = "name-clock-gender"
+levels = ["A0"]
+sentence = "la reloj"
+correction = "el reloj"
+note = "reloj is masculine."
+provenance = { source = "Lead-authored for the M01 pilot; needs fluent Spanish review.", review_status = "unreviewed" }

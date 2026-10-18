@@ -1,0 +1,14 @@
+construction_id = "identify-object"
+
+[[examples]]
+example_id = "fixture-cup"
+levels = ["A0"]
+meaning = "It is a cup."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }] }
+bindings = { object = "object:cup" }
+truth = true
+labels = ["yes"]
+sentence = "Es una taza."
+translation = "It is a cup."
+chunks = [{ text = "Es", join = "none" }, { text = "una", join = "space" }, { text = "taza", join = "space" }, { text = ".", join = "none" }]
+provenance = { source = "Synthetic structural test fixture.", review_status = "unreviewed" }

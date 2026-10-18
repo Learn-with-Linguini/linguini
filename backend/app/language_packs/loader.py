@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import re
 import tomllib
 from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import cache
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from unicodedata import normalize
 
 from pydantic import ValidationError
@@ -16,10 +17,15 @@ from app.missions import get_mission
 
 from .schema import (
     SUPPORTED_FORMAT_VERSIONS,
+    Construction,
+    ConstructionExamplesFile,
     EvaluationCase,
+    EvaluationFile,
     GuidanceBundle,
+    LabelsFile,
     LanguagePack,
     MissionCatalog,
+    PackFiles,
 )
 
 
@@ -29,6 +35,11 @@ class LanguagePackError(ValueError):
         self.pointer = pointer
         self.message = message
         super().__init__(f"{self.file} {pointer}: {message}")
+
+
+_LOCALE_DIRECTORY = re.compile(
+    r"^[a-z]{2,3}(?:-[A-Z][a-z]{3})?(?:-(?:[A-Z]{2}|[0-9]{3}))?$"
+)
 
 
 @dataclass(frozen=True)
@@ -62,24 +73,35 @@ def _pointer(parts: Sequence[object]) -> str:
     return "/" + "/".join(escaped)
 
 
-def _check_nfc(value: object, file: Path, path: tuple[object, ...] = ()) -> None:
+def _check_nfc(
+    value: object,
+    file: Path,
+    path: tuple[object, ...] = (),
+    allowed_paths: tuple[tuple[object, ...], ...] = (),
+) -> None:
+    if path in allowed_paths:
+        return
     if isinstance(value, str):
         if normalize("NFC", value) != value:
             raise LanguagePackError(file, _pointer(path), "text must be NFC")
     elif isinstance(value, dict):
         for key, item in value.items():
-            _check_nfc(item, file, (*path, key))
+            _check_nfc(item, file, (*path, key), allowed_paths)
     elif isinstance(value, list):
         for index, item in enumerate(value):
-            _check_nfc(item, file, (*path, index))
+            _check_nfc(item, file, (*path, index), allowed_paths)
 
 
-def _load_toml(path: Path) -> dict:
+def _load_toml(
+    path: Path,
+    *,
+    allowed_non_nfc_paths: tuple[tuple[object, ...], ...] = (),
+) -> dict:
     try:
         data = tomllib.loads(path.read_text("utf-8"))
     except (OSError, tomllib.TOMLDecodeError) as exc:
-        raise LanguagePackError(path, "/", str(exc)) from None
-    _check_nfc(data, path)
+        raise LanguagePackError(path, "/", f"malformed TOML: {exc}") from None
+    _check_nfc(data, path, allowed_paths=allowed_non_nfc_paths)
     return data
 
 
@@ -88,84 +110,284 @@ def _validation_pointer(exc: ValidationError) -> str:
     return _pointer(first["loc"])
 
 
-def _validate_pack(path: Path) -> LanguagePack:
-    data = _load_toml(path)
+def _relative_file(
+    pack_dir: Path,
+    reference: str,
+    source: Path,
+    pointer: str,
+    category: str | None = None,
+) -> Path:
+    relative = PurePosixPath(reference)
+    windows = PureWindowsPath(reference)
+    if (
+        relative.is_absolute()
+        or windows.is_absolute()
+        or windows.drive
+        or ".." in relative.parts
+        or "\\" in reference
+    ):
+        raise LanguagePackError(source, pointer, "file reference must stay inside the pack")
+    if not relative.parts or relative.suffix != ".toml":
+        raise LanguagePackError(source, pointer, "file reference must name a TOML file")
+    if category is not None and relative.parts[0] != category:
+        raise LanguagePackError(
+            source, pointer, f"file reference must be under {category}/"
+        )
+    resolved = (pack_dir / Path(*relative.parts)).resolve()
+    if not resolved.is_relative_to(pack_dir):
+        raise LanguagePackError(source, pointer, "file reference escapes the pack directory")
+    if not resolved.is_file():
+        raise LanguagePackError(source, pointer, f"referenced file does not exist: {reference}")
+    return resolved
+
+
+def _referenced_files(pack_dir: Path, source: Path, files: PackFiles) -> dict[str, list[Path]]:
+    resolved = {
+        "labels": [
+            _relative_file(pack_dir, files.labels, source, "/files/labels")
+        ],
+        "constructions": [
+            _relative_file(
+                pack_dir, value, source, f"/files/constructions/{index}", "constructions"
+            )
+            for index, value in enumerate(files.constructions)
+        ],
+        "examples": [
+            _relative_file(
+                pack_dir, value, source, f"/files/examples/{index}", "examples"
+            )
+            for index, value in enumerate(files.examples)
+        ],
+        "evaluations": [
+            _relative_file(
+                pack_dir, value, source, f"/files/evaluations/{index}", "evaluations"
+            )
+            for index, value in enumerate(files.evaluations)
+        ],
+    }
+    all_paths = [path for group in resolved.values() for path in group]
+    if len(all_paths) != len(set(all_paths)):
+        raise LanguagePackError(source, "/files", "duplicate file references")
+
+    referenced = set(all_paths)
+    for category in ("constructions", "examples", "evaluations"):
+        folder = pack_dir / category
+        for path in folder.rglob("*.toml") if folder.exists() else ():
+            resolved_path = path.resolve()
+            if not resolved_path.is_relative_to(pack_dir):
+                raise LanguagePackError(
+                    path, "/", "TOML file resolves outside the pack directory"
+                )
+            if resolved_path not in referenced:
+                raise LanguagePackError(
+                    path, "/", f"unreferenced TOML file under {category}/"
+                )
+    return resolved
+
+
+def _model_from_file(model, data: dict, path: Path):
+    try:
+        return model.model_validate(data)
+    except ValidationError as exc:
+        raise LanguagePackError(path, _validation_pointer(exc), str(exc)) from None
+
+
+def _validate_pack_directory(
+    pack: LanguagePack,
+    pack_file: Path,
+    root: Path,
+) -> None:
+    relative = pack_file.parent.resolve().relative_to(root)
+    if len(relative.parts) < 2:
+        return
+    locale_directory, register_directory = relative.parts[-2:]
+    if not _LOCALE_DIRECTORY.fullmatch(locale_directory):
+        return
+    if pack.language.locale != locale_directory:
+        raise LanguagePackError(
+            pack_file,
+            "/language/locale",
+            f"locale {pack.language.locale!r} does not match directory "
+            f"{locale_directory!r}",
+        )
+    if pack.language_register.register_id != register_directory:
+        raise LanguagePackError(
+            pack_file,
+            "/register/register_id",
+            f"register_id {pack.language_register.register_id!r} does not match "
+            f"directory {register_directory!r}",
+        )
+
+
+def load_pack(path: Path) -> LanguagePack:
+    path = Path(path)
+    pack_file = path / "pack.toml" if path.is_dir() else path
+    pack_dir = pack_file.parent.resolve()
+    data = _load_toml(pack_file)
     format_version = data.get("format_version")
     if format_version not in SUPPORTED_FORMAT_VERSIONS:
         raise LanguagePackError(
-            path, "/format_version", f"unsupported format_version {format_version!r}"
+            pack_file, "/format_version", f"unsupported format_version {format_version!r}"
         )
+    files = _model_from_file(PackFiles, data.get("files", {}), pack_file)
+    resolved = _referenced_files(pack_dir, pack_file, files)
+
+    labels_data = _load_toml(resolved["labels"][0])
+    labels_file = _model_from_file(LabelsFile, labels_data, resolved["labels"][0])
+
+    definitions = {}
+    for construction_path in resolved["constructions"]:
+        if construction_path.stem in definitions:
+            raise LanguagePackError(
+                construction_path, "/construction_id", "duplicate construction file stem"
+            )
+        definition_data = _load_toml(construction_path)
+        construction_id = definition_data.get("construction_id")
+        if construction_id != construction_path.stem:
+            raise LanguagePackError(
+                construction_path,
+                "/construction_id",
+                "construction_id must equal the file stem",
+            )
+        definitions[construction_path.stem] = definition_data
+
+    examples_by_construction = {}
+    examples_paths_by_stem = {}
+    for examples_path in resolved["examples"]:
+        if examples_path.stem in examples_by_construction:
+            raise LanguagePackError(
+                examples_path, "/construction_id", "duplicate examples file stem"
+            )
+        examples_data = _load_toml(examples_path)
+        examples_file = _model_from_file(
+            ConstructionExamplesFile, examples_data, examples_path
+        )
+        if examples_file.construction_id != examples_path.stem:
+            raise LanguagePackError(
+                examples_path,
+                "/construction_id",
+                "construction_id must equal the file stem",
+            )
+        examples_by_construction[examples_path.stem] = examples_file
+        examples_paths_by_stem[examples_path.stem] = examples_path
+
+    if set(definitions) != set(examples_by_construction):
+        raise LanguagePackError(
+            pack_file,
+            "/files",
+            "construction and examples files must have matching stems",
+        )
+    constructions = []
+    for construction_id, definition in definitions.items():
+        examples_file = examples_by_construction[construction_id]
+        combined = {
+            **definition,
+            "examples": [item.model_dump(mode="python", by_alias=False)
+                         for item in examples_file.examples],
+            "mistakes": [item.model_dump(mode="python", by_alias=False)
+                         for item in examples_file.mistakes],
+        }
+        try:
+            constructions.append(Construction.model_validate(combined))
+        except ValidationError as exc:
+            path_for_error = (
+                examples_paths_by_stem[construction_id]
+                if exc.errors(include_url=False)[0]["loc"][0] in {"examples", "mistakes"}
+                else next(
+                    item for item in resolved["constructions"]
+                    if item.stem == construction_id
+                )
+            )
+            raise LanguagePackError(
+                path_for_error, _validation_pointer(exc), str(exc)
+            ) from None
+
+    pack_data = {key: value for key, value in data.items() if key != "files"}
+    pack_data["labels"] = [
+        item.model_dump(mode="python", by_alias=False) for item in labels_file.labels
+    ]
+    pack_data["constructions"] = [
+        item.model_dump(mode="python", by_alias=False) for item in constructions
+    ]
     try:
-        pack = LanguagePack.model_validate(data)
+        pack = LanguagePack.model_validate(pack_data)
     except ValidationError as exc:
-        raise LanguagePackError(path, _validation_pointer(exc), str(exc)) from None
-    pack._pack_dir = path.parent.resolve()
+        raise LanguagePackError(pack_file, _validation_pointer(exc), str(exc)) from None
+    pack._pack_dir = pack_dir
+    pack._evaluation_files = resolved["evaluations"]
     return pack
 
 
-def _check_evaluation(pack: LanguagePack, cases: list[EvaluationCase], path: Path) -> None:
-    by_id = {construction.construction_id: construction for construction in pack.constructions}
+def load_evaluation_cases(pack: LanguagePack) -> list[EvaluationCase]:
+    if pack._pack_dir is None:
+        raise LanguagePackError("<pack>", "/files/evaluations", "pack has no source directory")
+    constructions = {item.construction_id: item for item in pack.constructions}
+    known_labels = {item.semantic for item in pack.labels}
     example_sentences = {
         sentence
         for construction in pack.constructions
         for example in construction.examples
         for sentence in (example.sentence, *example.accepted_alternatives)
     }
-    known_labels = {label.semantic for label in pack.labels}
-    case_ids = [case.case_id for case in cases]
-    if len(case_ids) != len(set(case_ids)):
-        raise LanguagePackError(path, "/cases", "case_id values must be unique")
-    for index, case in enumerate(cases):
-        construction = by_id.get(case.construction_id)
-        if construction is None:
+    mission_keys = {item.key for item in load_mission_catalog().missions}
+    cases = []
+    seen_case_ids = set()
+    for path in pack._evaluation_files:
+        try:
+            raw_data = tomllib.loads(path.read_text("utf-8"))
+        except (OSError, tomllib.TOMLDecodeError) as exc:
+            raise LanguagePackError(path, "/", f"malformed TOML: {exc}") from None
+        allowed_non_nfc_paths = tuple(
+            ("cases", index, "reject", reject_index, "sentence")
+            for index, case in enumerate(raw_data.get("cases", []))
+            for reject_index, _ in enumerate(case.get("reject", []))
+        )
+        _check_nfc(raw_data, path, allowed_paths=allowed_non_nfc_paths)
+        data = raw_data
+        evaluation = _model_from_file(EvaluationFile, data, path)
+        level = getattr(evaluation.practice_level, "value", evaluation.practice_level)
+        key = (evaluation.mission_id, str(level), evaluation.content_version)
+        if key not in mission_keys:
             raise LanguagePackError(
-                path, f"/cases/{index}/construction_id",
-                f"unknown construction {case.construction_id!r}",
+                path, "/mission_id",
+                f"unknown mission/level/content version {key}",
             )
-        if case.construction_version != construction.version:
-            raise LanguagePackError(
-                path, f"/cases/{index}/construction_version",
-                f"expected construction version {construction.version}",
-            )
-        if unknown := {fact.label for fact in case.facts} - known_labels:
-            raise LanguagePackError(
-                path, f"/cases/{index}/facts",
-                f"unknown fact labels: {sorted(unknown)}",
-            )
-        if leaked := example_sentences & set(case.expected):
-            raise LanguagePackError(
-                path, f"/cases/{index}/expected",
-                f"evaluation expected sentence duplicates a generation example: "
-                f"{sorted(leaked)}",
-            )
-
-
-def load_pack(path: Path) -> LanguagePack:
-    path = Path(path)
-    pack_file = path / "pack.toml" if path.is_dir() else path
-    pack = _validate_pack(pack_file)
-    evaluation_file = pack._pack_dir / "evaluation.toml"
-    if evaluation_file.exists():
-        load_evaluation_cases(pack)
-    return pack
-
-
-def load_evaluation_cases(pack: LanguagePack) -> list[EvaluationCase]:
-    pack_dir = pack._pack_dir
-    if pack_dir is None:
-        raise LanguagePackError("<pack>", "/evaluation.toml", "pack has no source directory")
-    path = pack_dir / "evaluation.toml"
-    if not path.exists():
-        return []
-    data = _load_toml(path)
-    try:
-        cases = [EvaluationCase.model_validate(item) for item in data.get("cases", [])]
-    except ValidationError as exc:
-        raise LanguagePackError(path, _validation_pointer(exc), str(exc)) from None
-    if set(data) - {"cases"}:
-        extra = sorted(set(data) - {"cases"})[0]
-        raise LanguagePackError(path, f"/{extra}", "unknown evaluation key")
-    _check_evaluation(pack, cases, path)
+        mission = next(item for item in load_mission_catalog().missions if item.key == key)
+        mission_constructions = {slot.construction_id for slot in mission.slots}
+        for index, case in enumerate(evaluation.cases):
+            if case.case_id in seen_case_ids:
+                raise LanguagePackError(
+                    path, f"/cases/{index}/case_id", "case_id values must be unique"
+                )
+            seen_case_ids.add(case.case_id)
+            construction = constructions.get(case.construction_id)
+            if construction is None:
+                raise LanguagePackError(
+                    path, f"/cases/{index}/construction_id",
+                    f"unknown construction {case.construction_id!r}",
+                )
+            if case.construction_version != construction.version:
+                raise LanguagePackError(
+                    path, f"/cases/{index}/construction_version",
+                    f"expected construction version {construction.version}",
+                )
+            if case.construction_id not in mission_constructions:
+                raise LanguagePackError(
+                    path,
+                    f"/cases/{index}/construction_id",
+                    f"construction {case.construction_id!r} is not used by "
+                    f"{evaluation.mission_id} {level}",
+                )
+            if unknown := set(case.labels) - known_labels:
+                raise LanguagePackError(
+                    path, f"/cases/{index}/labels", f"unknown labels: {sorted(unknown)}"
+                )
+            if leaked := example_sentences & set(case.acceptable):
+                raise LanguagePackError(
+                    path, f"/cases/{index}/acceptable",
+                    f"evaluation sentence duplicates a generation example: {sorted(leaked)}",
+                )
+            cases.append(case)
     return cases
 
 
@@ -237,11 +459,18 @@ def _load_packs_for_roots(root_paths: tuple[str, ...]) -> PackSet:
         root = Path(root_text)
         if not root.is_dir():
             raise LanguagePackError(root, "/", "pack root is not a directory")
-        for pack_dir in sorted(path for path in root.iterdir() if path.is_dir()):
-            pack_file = pack_dir / "pack.toml"
+        root = root.resolve()
+        pack_files = sorted(root.rglob("pack.toml"))
+        if (root / "pack.toml").is_file():
+            nested = [item for item in pack_files if item != root / "pack.toml"]
+            pack_files = [root / "pack.toml", *nested]
+        for pack_file in pack_files:
             if not pack_file.is_file():
                 continue
+            if not pack_file.resolve().is_relative_to(root):
+                raise LanguagePackError(pack_file, "/", "pack file escapes the configured root")
             pack = load_pack(pack_file)
+            _validate_pack_directory(pack, pack_file, root)
             if pack.pack_id in seen_pack_ids:
                 raise LanguagePackError(
                     pack_file, "/pack_id", f"duplicate pack_id {pack.pack_id!r}"

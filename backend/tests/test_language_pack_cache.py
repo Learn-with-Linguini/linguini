@@ -9,7 +9,7 @@ from app.language_packs.fingerprint import (
 )
 from app.language_packs.loader import load_pack
 
-FIXTURE = Path(__file__).parent / "fixtures/language_packs/es-basic"
+FIXTURE = Path(__file__).parents[1] / "app/language_packs/packs/es-ES/everyday"
 
 
 def _request(version, counter):

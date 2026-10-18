@@ -1,0 +1,11 @@
+construction_id = "describe-attribute"
+version = 1
+summary = "Describe an object with an agreeing attribute or ask about its colour."
+guidance = """Describe an object with Es + indefinite article + noun + adjective: Es un libro rojo. / Es una taza roja. Basic colour adjectives go after the noun and agree with its gender: rojo/roja, blanco/blanca, negro/negra, amarillo/amarilla. Colours ending in -e or a consonant have one form for both genders: verde, azul, gris, marrón (un libro verde, una lámpara azul). Never put a basic colour before the noun (not *un rojo libro). When the colour is given as a one-word answer, use the form that agrees with the object it describes. To ask about a colour, use ser with the definite article: ¿De qué color es la taza?; do not use estar for colour (not *¿De qué color está la taza?)."""
+features = ["adjective-agreement", "adjective-position", "indefinite-article", "copula-ser", "question-punctuation"]
+constraints = ["Colour forms agree in gender with the noun.", "Basic colours follow the noun.", "Colour questions use es."]
+required_labels = ["attribute-prompt-colour", "describe-object"]
+
+[provenance]
+source = "Lead-authored; needs fluent Spanish review."
+review_status = "unreviewed"

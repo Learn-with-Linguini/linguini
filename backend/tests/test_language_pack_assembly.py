@@ -25,7 +25,7 @@ from app.language_packs.loader import load_pack
 from app.language_packs.schema import Provenance, SentenceChunk, join_pack_chunks
 from app.schemas.enums import PartOfSpeech
 
-FIXTURE = Path(__file__).parent / "fixtures/language_packs/es-basic"
+FIXTURE = Path(__file__).parents[1] / "app/language_packs/packs/es-ES/everyday"
 
 
 def _candidate(
@@ -135,7 +135,11 @@ def test_only_human_reviewed_exact_construction_example_grants_reviewed_form():
         review_status="humanReviewed",
         reviewers=["reviewer"],
     )
-    example = construction.examples[0].model_copy(
+    candidate = _candidate()
+    matching_example = next(
+        item for item in construction.examples if item.sentence == candidate.text
+    )
+    example = matching_example.model_copy(
         update={"provenance": human_reviewed}
     )
     reviewed_construction = construction.model_copy(update={"examples": [example]})
@@ -147,8 +151,6 @@ def test_only_human_reviewed_exact_construction_example_grants_reviewed_form():
             ]
         }
     )
-    candidate = _candidate()
-
     assert assess(candidate, reviewed_pack).status == "reviewedForm"
     assert assess(
         _candidate(construction_id="describe-attribute", slot_id="describeObject"),

@@ -1,0 +1,11 @@
+construction_id = "scene-existence"
+version = 1
+summary = "State that an object is present or absent."
+guidance = """Use hay to say that something is in the scene: Hay una manzana amarilla. / Hay un plato blanco. Hay does not change and is followed by an indefinite article or no article; never use a definite article after hay (not *Hay la manzana) and do not use está to introduce a new object. Colour adjectives after the noun still agree with gender. To add another object, use También hay…: También hay una silla. The app's deliberately false options use No hay + indefinite article + noun (No hay un reloj.); natural speech often prefers No hay ningún reloj. or No hay reloj., so this form needs fluent review before release."""
+features = ["existential-hay", "indefinite-article", "adjective-agreement", "negation"]
+constraints = ["Introduce objects with hay, never with a definite article.", "Adjectives agree with the noun.", "Use estar only for the location of a known object."]
+required_labels = ["touch-object"]
+
+[provenance]
+source = "Lead-authored; needs fluent Spanish review."
+review_status = "unreviewed"

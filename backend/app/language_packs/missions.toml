@@ -4,41 +4,41 @@ practice_level = "A0"
 content_version = 1
 sequence_repeat = 2
 required_constructions = [
-  { construction_id = "name-object", min_version = 1 },
-  { construction_id = "yes-no-identity-question", min_version = 1 },
   { construction_id = "identify-object", min_version = 1 },
+  { construction_id = "yes-no-identification", min_version = 1 },
 ]
-required_labels = ["yes", "no"]
+required_labels = ["yes-answer", "no-answer", "what-is-this"]
 
 [[missions.slots]]
 purpose = "matchName"
-construction_id = "name-object"
+construction_id = "identify-object"
 target_ids = ["recognise-name"]
 
 [[missions.slots]]
 purpose = "confirmName"
-construction_id = "yes-no-identity-question"
+construction_id = "yes-no-identification"
 target_ids = ["identify-object"]
-required_labels = ["yes", "no"]
+required_labels = ["yes-answer", "no-answer"]
 
 [[missions.slots]]
 purpose = "buildIdentify"
 construction_id = "identify-object"
 target_ids = ["identify-object"]
+required_labels = ["what-is-this"]
 
 [[missions]]
 mission_id = "M01"
 practice_level = "A1"
 content_version = 1
 required_constructions = [
-  { construction_id = "yes-no-identity-answer", min_version = 1 },
+  { construction_id = "yes-no-identification", min_version = 1 },
   { construction_id = "describe-attribute", min_version = 1 },
 ]
 required_labels = ["yes", "no"]
 
 [[missions.slots]]
 purpose = "confirmObject"
-construction_id = "yes-no-identity-answer"
+construction_id = "yes-no-identification"
 target_ids = ["identify-object", "name-object"]
 repeat = 2
 required_labels = ["yes", "no"]
@@ -61,8 +61,9 @@ required_constructions = [
   { construction_id = "scene-existence", min_version = 1 },
   { construction_id = "scene-location", min_version = 1 },
   { construction_id = "connected-description", min_version = 1 },
-  { construction_id = "follow-up-question", min_version = 1 },
+  { construction_id = "describe-attribute", min_version = 1 },
 ]
+required_labels = ["touch-object", "build-second-fact", "choose-description", "describe-scene", "connector-distractor", "attribute-prompt-colour"]
 
 [[missions.slots]]
 purpose = "chooseSceneMarker"
@@ -86,5 +87,6 @@ target_ids = ["connect-scene-facts"]
 
 [[missions.slots]]
 purpose = "followUpSceneFact"
-construction_id = "follow-up-question"
+construction_id = "describe-attribute"
 target_ids = ["follow-up-scene-fact"]
+required_labels = ["attribute-prompt-colour"]

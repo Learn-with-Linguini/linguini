@@ -1,0 +1,16 @@
+mission_id = "M01"
+practice_level = "A0"
+content_version = 1
+
+[[cases]]
+case_id = "fixture-case"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }] }
+bindings = { object = "object:cup" }
+truth = true
+input = "Identify the cup."
+expected_meaning = "It is a cup."
+acceptable = ["Esto es una taza."]
+provenance = { source = "Synthetic structural test fixture.", review_status = "unreviewed" }

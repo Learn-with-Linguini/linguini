@@ -1,0 +1,11 @@
+construction_id = "yes-no-identification"
+version = 1
+summary = "Ask and answer a yes/no object-identification question."
+guidance = """A yes/no question keeps statement word order and is marked only by punctuation and intonation: ¿Es una taza? Spanish questions open with ¿ and close with ?; there is no auxiliary like do and no inversion. Answer with the fixed label Sí or No, a comma, and a lower-case restatement naming the object that is really shown: Sí, es una taza. / No, es un libro. After No, name the actual object, not the one asked about; No es una taza. only negates and does not identify the object. In A0, the short answers Sí. and No. are the full answer. The article in both question and answer agrees with its own noun."""
+features = ["question-punctuation", "yes-no-answer", "indefinite-article", "copula-ser"]
+constraints = ["Questions open with ¿ and close with ?.", "Answers after No name the object actually shown.", "Yes/no words come from labels."]
+required_labels = ["yes", "no", "yes-answer", "no-answer"]
+
+[provenance]
+source = "Lead-authored; needs fluent Spanish review."
+review_status = "unreviewed"

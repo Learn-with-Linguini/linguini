@@ -1,0 +1,86 @@
+mission_id = "M01"
+practice_level = "A2"
+content_version = 1
+
+[[cases]]
+case_id = "a2-wrong-relation"
+category = "wrongRelation"
+construction_id = "scene-location"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:phone", concept = "phone" }, { fact_id = "object:door", concept = "door" }], relations = [{ fact_id = "relation:phone-door", subject = "object:phone", reference = "object:door", relation = "next_to" }] }
+bindings = { subject = "object:phone", relation = "relation:phone-door", reference = "object:door" }
+truth = true
+input = "Say where the phone is in relation to the door (next to it)."
+expected_meaning = "The phone is next to the door."
+acceptable = ["El teléfono está al lado de la puerta."]
+reject = [{ sentence = "El teléfono está debajo de la puerta.", category = "wrongRelation", reason = "The bound relation is next_to." }]
+provenance = { source = "Held-out M01 evaluation content; nouns from REVIEWED_NOUNS.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "a2-contraction"
+category = "contraction"
+construction_id = "scene-location"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:window", concept = "window" }, { fact_id = "object:phone", concept = "phone" }], relations = [{ fact_id = "relation:window-phone", subject = "object:window", reference = "object:phone", relation = "next_to" }] }
+bindings = { subject = "object:window", relation = "relation:window-phone", reference = "object:phone" }
+truth = true
+input = "Say where the window is in relation to the phone (next to it)."
+expected_meaning = "The window is next to the phone."
+acceptable = ["La ventana está al lado del teléfono."]
+reject = [{ sentence = "La ventana está al lado de el teléfono.", category = "contraction", reason = "De + el contracts to del." }]
+provenance = { source = "Held-out M01 evaluation content; nouns from REVIEWED_NOUNS.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "a2-verb-choice"
+category = "verbChoice"
+construction_id = "scene-location"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:spoon", concept = "spoon" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:spoon-table", subject = "object:spoon", reference = "object:table", relation = "under" }] }
+bindings = { subject = "object:spoon", relation = "relation:spoon-table", reference = "object:table" }
+truth = true
+input = "Say where the spoon is in relation to the table (under it)."
+expected_meaning = "The spoon is under the table."
+acceptable = ["La cuchara está debajo de la mesa."]
+reject = [{ sentence = "La cuchara es debajo de la mesa.", category = "verbChoice", reason = "A location uses está in this construction." }]
+provenance = { source = "Held-out M01 evaluation content; nouns from REVIEWED_NOUNS.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "a2-wrong-object"
+category = "wrongObject"
+construction_id = "connected-description"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:fork", concept = "fork" }, { fact_id = "object:spoon", concept = "spoon" }], attributes = [{ fact_id = "attribute:fork-green", object = "object:fork", kind = "color", value = "green" }] }
+bindings = { first = "object:fork", second = "object:spoon", attribute = "attribute:fork-green" }
+truth = true
+input = "Describe the green fork and the spoon."
+expected_meaning = "There is a green fork and there is also a spoon."
+acceptable = ["Hay un tenedor verde y también hay una cuchara."]
+reject = [{ sentence = "Hay un tenedor verde y también hay un plato.", category = "wrongObject", reason = "The second bound object is a spoon, not a plate." }]
+provenance = { source = "Held-out M01 evaluation content; nouns and colour from reviewed sources.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "a2-absent-phone"
+category = "valid"
+construction_id = "scene-existence"
+construction_version = 1
+scene = { absent = [{ fact_id = "object:phone", concept = "phone" }] }
+bindings = { object = "object:phone" }
+truth = false
+input = "Say whether a phone is present in the scene; it is absent."
+expected_meaning = "There is no phone in the scene."
+acceptable = ["No hay un teléfono.", "No hay ningún teléfono."]
+reject = [{ sentence = "Hay un teléfono.", category = "meaning", reason = "The phone is explicitly absent from the scene." }]
+provenance = { source = "Held-out M01 evaluation content; noun from REVIEWED_NOUNS.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "a2-valid-existence"
+category = "valid"
+construction_id = "scene-existence"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }], attributes = [{ fact_id = "attribute:bag-blue", object = "object:bag", kind = "color", value = "blue" }] }
+bindings = { object = "object:bag", attribute = "attribute:bag-blue" }
+truth = true
+input = "Say that a blue bag is present in the scene."
+expected_meaning = "There is a blue bag in the scene."
+acceptable = ["Hay un bolso azul."]
+provenance = { source = "Held-out M01 evaluation content; noun and colour from reviewed sources.", review_status = "unreviewed" }

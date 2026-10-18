@@ -1,0 +1,5 @@
+[[labels]]
+semantic = "yes"
+text = "Sí"
+meaning = "yes"
+provenance = { source = "Synthetic structural test fixture.", review_status = "unreviewed" }

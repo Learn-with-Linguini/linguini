@@ -1,0 +1,103 @@
+mission_id = "M01"
+practice_level = "A0"
+content_version = 1
+
+[[cases]]
+case_id = "a0-fork-alternative"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:fork", concept = "fork" }] }
+bindings = { object = "object:fork" }
+truth = true
+input = "Say what the highlighted object is (a fork)."
+expected_meaning = "It is a fork."
+acceptable = ["Esto es un tenedor."]
+provenance = { source = "Held-out M01 evaluation content; noun from REVIEWED_NOUNS.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "a0-wrong-object"
+category = "wrongObject"
+construction_id = "identify-object"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:spoon", concept = "spoon" }] }
+bindings = { object = "object:spoon" }
+truth = true
+input = "Say what the highlighted object is (a spoon)."
+expected_meaning = "It is a spoon."
+acceptable = ["Es una cuchara."]
+reject = [{ sentence = "Es un tenedor.", category = "wrongObject", reason = "The highlighted object is a spoon, not a fork." }]
+provenance = { source = "Held-out M01 evaluation content; noun from REVIEWED_NOUNS.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "a0-agreement"
+category = "agreement"
+construction_id = "identify-object"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }] }
+bindings = { object = "object:plate" }
+truth = true
+input = "Say what the highlighted object is (a plate)."
+expected_meaning = "It is a plate."
+acceptable = ["Es un plato."]
+reject = [{ sentence = "Es una plato.", category = "agreement", reason = "The masculine noun plato requires un." }]
+provenance = { source = "Held-out M01 evaluation content; noun from REVIEWED_NOUNS.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "a0-article"
+category = "article"
+construction_id = "identify-object"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:egg", concept = "egg" }] }
+bindings = { object = "object:egg" }
+truth = true
+input = "Say what the highlighted object is (an egg)."
+expected_meaning = "It is an egg."
+acceptable = ["Es un huevo."]
+reject = [{ sentence = "Es el huevo.", category = "article", reason = "Use the indefinite article to identify the object." }]
+provenance = { source = "Held-out M01 evaluation content; noun from REVIEWED_NOUNS.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "a0-language-leakage"
+category = "languageLeakage"
+construction_id = "identify-object"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:door", concept = "door" }] }
+bindings = { object = "object:door" }
+truth = true
+input = "Say what the highlighted object is (a door)."
+expected_meaning = "It is a door."
+acceptable = ["Es una puerta."]
+reject = [
+  { sentence = "It is a door.", category = "languageLeakage", reason = "The response must be in Spanish." },
+  { sentence = "Es una door.", category = "languageLeakage", reason = "Do not mix an English noun into the Spanish sentence." },
+]
+provenance = { source = "Held-out M01 evaluation content; noun from REVIEWED_NOUNS.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "a0-punctuation"
+category = "punctuation"
+construction_id = "yes-no-identification"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:window", concept = "window" }] }
+bindings = { object = "object:window" }
+truth = true
+input = "Ask whether the highlighted object is a window."
+expected_meaning = "Is it a window?"
+acceptable = ["¿Es una ventana?"]
+reject = [{ sentence = "Es una ventana?", category = "punctuation", reason = "Spanish questions open with ¿." }]
+provenance = { source = "Held-out M01 evaluation content; noun from REVIEWED_NOUNS.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "a0-word-order"
+category = "wordOrder"
+construction_id = "identify-object"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:phone", concept = "phone" }] }
+bindings = { object = "object:phone" }
+truth = true
+input = "Say what the highlighted object is (a phone)."
+expected_meaning = "It is a phone."
+acceptable = ["Es un teléfono."]
+reject = [{ sentence = "Un teléfono es.", category = "wordOrder", reason = "Put es before the object phrase." }]
+provenance = { source = "Held-out M01 evaluation content; noun from REVIEWED_NOUNS.", review_status = "unreviewed" }

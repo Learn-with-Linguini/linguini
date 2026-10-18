@@ -1,0 +1,65 @@
+construction_id = "scene-location"
+
+[[examples]]
+example_id = "cup-on-table"
+levels = ["A2"]
+meaning = "The cup is on the table."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:on", subject = "object:cup", reference = "object:table", relation = "on" }] }
+bindings = { subject = "object:cup", relation = "relation:on", reference = "object:table" }
+truth = true
+sentence = "La taza está sobre la mesa."
+translation = "The cup is on the table."
+chunks = [{ text = "La", join = "none" }, { text = "taza", join = "space" }, { text = "está", join = "space" }, { text = "sobre", join = "space" }, { text = "la", join = "space" }, { text = "mesa", join = "space" }, { text = ".", join = "none" }]
+provenance = { source = "Lead-authored; nouns from REVIEWED_NOUNS, position from app/services/ispy_clue_frames.py POSITIONS.", review_status = "unreviewed" }
+
+[[examples]]
+example_id = "shoe-under-chair"
+levels = ["A2"]
+meaning = "The shoe is under the chair."
+scene = { objects = [{ fact_id = "object:shoe", concept = "shoe" }, { fact_id = "object:chair", concept = "chair" }], relations = [{ fact_id = "relation:under", subject = "object:shoe", reference = "object:chair", relation = "under" }] }
+bindings = { subject = "object:shoe", relation = "relation:under", reference = "object:chair" }
+truth = true
+sentence = "El zapato está debajo de la silla."
+translation = "The shoe is under the chair."
+chunks = [{ text = "El", join = "none" }, { text = "zapato", join = "space" }, { text = "está", join = "space" }, { text = "debajo", join = "space" }, { text = "de", join = "space" }, { text = "la", join = "space" }, { text = "silla", join = "space" }, { text = ".", join = "none" }]
+provenance = { source = "Lead-authored; nouns from REVIEWED_NOUNS, position from app/services/ispy_clue_frames.py POSITIONS.", review_status = "unreviewed" }
+
+[[examples]]
+example_id = "lamp-next-book"
+levels = ["A2"]
+meaning = "The lamp is next to the book."
+scene = { objects = [{ fact_id = "object:lamp", concept = "lamp" }, { fact_id = "object:book", concept = "book" }], relations = [{ fact_id = "relation:next_to", subject = "object:lamp", reference = "object:book", relation = "next_to" }] }
+bindings = { subject = "object:lamp", relation = "relation:next_to", reference = "object:book" }
+truth = true
+sentence = "La lámpara está al lado del libro."
+translation = "The lamp is next to the book."
+chunks = [{ text = "La", join = "none" }, { text = "lámpara", join = "space" }, { text = "está", join = "space" }, { text = "al lado", join = "space" }, { text = "del libro", join = "space" }, { text = ".", join = "none" }]
+provenance = { source = "Lead-authored; nouns from REVIEWED_NOUNS, position from app/services/ispy_clue_frames.py POSITIONS.", review_status = "unreviewed" }
+
+[[examples]]
+example_id = "ask-shoe-location"
+levels = ["A2"]
+meaning = "Where is the shoe?"
+scene = { objects = [{ fact_id = "object:shoe", concept = "shoe" }, { fact_id = "object:chair", concept = "chair" }], relations = [{ fact_id = "relation:under", subject = "object:shoe", reference = "object:chair", relation = "under" }] }
+bindings = { subject = "object:shoe", relation = "relation:under", reference = "object:chair" }
+truth = true
+sentence = "¿Dónde está el zapato?"
+translation = "Where is the shoe?"
+chunks = [{ text = "¿Dónde", join = "none" }, { text = "está", join = "space" }, { text = "el", join = "space" }, { text = "zapato", join = "space" }, { text = "?", join = "none" }]
+provenance = { source = "Lead-authored; prompt mirrored from app/services/mission_lessons_a2.py.", review_status = "unreviewed" }
+
+[[mistakes]]
+example_id = "wrong-location-copula"
+levels = ["A2"]
+sentence = "La taza es sobre la mesa."
+correction = "La taza está sobre la mesa."
+note = "Location uses estar."
+provenance = { source = "Lead-authored for the M01 pilot; needs fluent Spanish review.", review_status = "unreviewed" }
+
+[[mistakes]]
+example_id = "missing-contraction"
+levels = ["A2"]
+sentence = "La lámpara está al lado de el libro."
+correction = "La lámpara está al lado del libro."
+note = "de + el contracts to del."
+provenance = { source = "Lead-authored for the M01 pilot; needs fluent Spanish review.", review_status = "unreviewed" }

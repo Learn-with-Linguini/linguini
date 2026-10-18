@@ -1,0 +1,11 @@
+construction_id = "connected-description"
+version = 1
+summary = "Connect two complete scene facts or describe them in sequence."
+guidance = """Join two complete facts with y and keep each clause's own verb: Hay una taza roja y también hay un libro. / El plato está sobre la mesa y también hay una manzana. The second clause continues the same sentence, so it starts in lower case and the sentence ends with one full stop. Do not move or drop the second verb (not *Hay una taza roja y un libro también hay). A longer description can be several complete sentences, each starting with a capital letter and ending with a full stop: Hay una taza roja. La taza está sobre la mesa. También hay un libro. Each clause must state a confirmed fact about the bound objects."""
+features = ["coordination", "existential-hay", "copula-estar", "capitalisation"]
+constraints = ["Each clause keeps its own verb.", "Clauses joined by y share one sentence.", "Every clause states a bound fact."]
+required_labels = ["choose-description", "describe-scene", "connector-distractor"]
+
+[provenance]
+source = "Lead-authored; needs fluent Spanish review."
+review_status = "unreviewed"

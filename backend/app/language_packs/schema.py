@@ -9,8 +9,9 @@ from unicodedata import normalize
 
 from pydantic import Field, PrivateAttr, StringConstraints, field_validator, model_validator
 
+from app.ai.features.scene_analysis.schemas import SceneAttributeType
 from app.schemas.base import ApiModel, NonEmptyText
-from app.schemas.enums import ProficiencyLevel
+from app.schemas.enums import ProficiencyLevel, SceneRelationType
 from app.schemas.tasks import ContentVersion, ContractId, MissionId
 
 type ScriptCode = Annotated[str, StringConstraints(pattern=r"^[A-Z][a-z]{3}$")]
@@ -133,12 +134,96 @@ class Provenance(ApiModel):
 class PackLabel(ApiModel):
     semantic: ContractId
     text: NonEmptyText
+    meaning: NonEmptyText
     provenance: Provenance
 
 
-class ExampleFact(ApiModel):
+class PackFiles(ApiModel):
+    labels: NonEmptyText
+    constructions: list[NonEmptyText] = Field(min_length=1)
+    examples: list[NonEmptyText] = Field(min_length=1)
+    evaluations: list[NonEmptyText] = Field(min_length=1)
+
+
+class LabelsFile(ApiModel):
+    labels: list[PackLabel] = Field(min_length=1)
+
+
+class SceneObject(ApiModel):
     fact_id: NonEmptyText
-    label: ContractId
+    concept: NonEmptyText
+
+    @model_validator(mode="after")
+    def validate_fact_id(self) -> SceneObject:
+        if self.fact_id != f"object:{self.concept}":
+            raise ValueError("object fact_id must be object:<concept>")
+        return self
+
+
+class SceneAttribute(ApiModel):
+    fact_id: NonEmptyText
+    object: NonEmptyText
+    kind: SceneAttributeType
+    value: NonEmptyText
+
+
+class SceneRelation(ApiModel):
+    fact_id: NonEmptyText
+    subject: NonEmptyText
+    reference: NonEmptyText
+    relation: SceneRelationType
+
+
+class ExampleScene(ApiModel):
+    objects: list[SceneObject] = Field(default_factory=list)
+    absent: list[SceneObject] = Field(default_factory=list)
+    attributes: list[SceneAttribute] = Field(default_factory=list)
+    relations: list[SceneRelation] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_references(self) -> ExampleScene:
+        facts = [
+            *(item.fact_id for item in self.objects),
+            *(item.fact_id for item in self.absent),
+            *(item.fact_id for item in self.attributes),
+            *(item.fact_id for item in self.relations),
+        ]
+        if len(facts) != len(set(facts)):
+            raise ValueError("scene fact IDs must be unique")
+        object_ids = {item.fact_id for item in self.objects}
+        if unknown := {
+            *(item.object for item in self.attributes),
+            *(item.subject for item in self.relations),
+            *(item.reference for item in self.relations),
+        } - object_ids:
+            raise ValueError(f"scene references undeclared objects: {sorted(unknown)}")
+        if any(item.subject == item.reference for item in self.relations):
+            raise ValueError("relation subjects and references must differ")
+        return self
+
+    @property
+    def fact_ids(self) -> set[str]:
+        return {
+            *(item.fact_id for item in self.objects),
+            *(item.fact_id for item in self.absent),
+            *(item.fact_id for item in self.attributes),
+            *(item.fact_id for item in self.relations),
+        }
+
+    @property
+    def absent_fact_ids(self) -> set[str]:
+        return {item.fact_id for item in self.absent}
+
+    def validate_bindings(self, bindings: dict[str, str], truth: bool) -> None:
+        if unknown := set(bindings.values()) - self.fact_ids:
+            raise ValueError(f"bindings reference undeclared facts: {sorted(unknown)}")
+        if truth and (absent := set(bindings.values()) & self.absent_fact_ids):
+            raise ValueError(f"true examples cannot bind absent facts: {sorted(absent)}")
+
+
+class ExampleContrast(ApiModel):
+    sentence: NonEmptyText
+    note: NonEmptyText
 
 
 class SentenceChunk(ApiModel):
@@ -162,23 +247,22 @@ class SentenceChunk(ApiModel):
 
 class ConstructionExample(ApiModel):
     example_id: ContractId
+    levels: list[ProficiencyLevel] = Field(min_length=1)
     meaning: NonEmptyText
-    facts: list[ExampleFact] = Field(default_factory=list)
+    scene: ExampleScene
     bindings: dict[ContractId, NonEmptyText] = Field(default_factory=dict)
+    truth: bool = True
+    labels: list[ContractId] = Field(default_factory=list)
     sentence: NonEmptyText
     translation: NonEmptyText
     chunks: list[SentenceChunk] = Field(min_length=1)
     accepted_alternatives: list[NonEmptyText] = Field(default_factory=list)
+    contrasts: list[ExampleContrast] = Field(default_factory=list)
     provenance: Provenance
 
     @model_validator(mode="after")
     def validate_bindings(self) -> ConstructionExample:
-        fact_ids_list = [fact.fact_id for fact in self.facts]
-        if len(fact_ids_list) != len(set(fact_ids_list)):
-            raise ValueError("example fact IDs must be unique")
-        fact_ids = set(fact_ids_list)
-        if unknown := set(self.bindings.values()) - fact_ids:
-            raise ValueError(f"bindings reference undeclared facts: {sorted(unknown)}")
+        self.scene.validate_bindings(self.bindings, self.truth)
         if normalize("NFC", self.sentence) != self.sentence:
             raise ValueError("sentence must be NFC")
         if any(normalize("NFC", value) != value for value in self.accepted_alternatives):
@@ -188,21 +272,34 @@ class ConstructionExample(ApiModel):
 
 class IncorrectExample(ApiModel):
     example_id: ContractId
+    levels: list[ProficiencyLevel] = Field(min_length=1)
     sentence: NonEmptyText
     correction: NonEmptyText
     note: NonEmptyText
     provenance: Provenance
 
 
+class ConstructionExamplesFile(ApiModel):
+    construction_id: ContractId
+    examples: list[ConstructionExample] = Field(default_factory=list)
+    mistakes: list[IncorrectExample] = Field(default_factory=list)
+
+
 class Construction(ApiModel):
     construction_id: ContractId
     version: ContentVersion
     summary: NonEmptyText
-    guidance: Annotated[str, Field(max_length=600)]
+    guidance: Annotated[str, Field(max_length=2000)]
+    features: list[ContractId] = Field(default_factory=list)
+    constraints: list[NonEmptyText] = Field(default_factory=list)
     required_labels: list[ContractId] = Field(default_factory=list)
     provenance: Provenance
     examples: list[ConstructionExample] = Field(default_factory=list)
-    incorrect: list[IncorrectExample] = Field(default_factory=list)
+    mistakes: list[IncorrectExample] = Field(default_factory=list)
+
+    @property
+    def incorrect(self) -> list[IncorrectExample]:
+        return self.mistakes
 
     @field_validator("guidance")
     @classmethod
@@ -224,6 +321,7 @@ class LanguagePack(ApiModel):
     labels: list[PackLabel] = Field(min_length=1)
     constructions: list[Construction] = Field(min_length=1)
     _pack_dir: Path | None = PrivateAttr(default=None)
+    _evaluation_files: list[Path] = PrivateAttr(default_factory=list)
 
     @field_validator("instruction_language")
     @classmethod
@@ -239,7 +337,7 @@ class LanguagePack(ApiModel):
         example_ids = [
             item.example_id
             for construction in self.constructions
-            for item in (*construction.examples, *construction.incorrect)
+            for item in (*construction.examples, *construction.mistakes)
         ]
         if len(label_ids) != len(set(label_ids)):
             raise ValueError("label semantic ids must be unique")
@@ -256,9 +354,9 @@ class LanguagePack(ApiModel):
                     f"{sorted(unknown)}"
                 )
             for example in construction.examples:
-                if unknown := {fact.label for fact in example.facts} - known_labels:
+                if unknown := set(example.labels) - known_labels:
                     raise ValueError(
-                        f"{example.example_id} has unknown fact labels: {sorted(unknown)}"
+                        f"{example.example_id} has unknown labels: {sorted(unknown)}"
                     )
                 if join_pack_chunks(example.chunks, self.language.word_separator) != (
                     example.sentence
@@ -286,26 +384,67 @@ def join_pack_chunks(chunks: list[SentenceChunk], word_separator: WordSeparator)
     )
 
 
+class EvaluationReject(ApiModel):
+    sentence: NonEmptyText
+    reason: NonEmptyText
+    category: Literal[
+        "wrongObject",
+        "wrongAttribute",
+        "wrongRelation",
+        "agreement",
+        "wordOrder",
+        "verbChoice",
+        "punctuation",
+        "article",
+        "languageLeakage",
+        "contraction",
+        "meaning",
+        "unicode",
+    ]
+
+
 class EvaluationCase(ApiModel):
     case_id: ContractId
+    category: Literal[
+        "valid",
+        "wrongObject",
+        "wrongAttribute",
+        "wrongRelation",
+        "agreement",
+        "wordOrder",
+        "verbChoice",
+        "punctuation",
+        "article",
+        "languageLeakage",
+        "contraction",
+        "meaning",
+        "unicode",
+    ]
     construction_id: ContractId
     construction_version: ContentVersion
-    facts: list[ExampleFact] = Field(default_factory=list)
+    scene: ExampleScene
     bindings: dict[ContractId, NonEmptyText] = Field(default_factory=dict)
-    expected: list[NonEmptyText] = Field(min_length=1)
+    truth: bool
+    labels: list[ContractId] = Field(default_factory=list)
+    input: NonEmptyText
+    expected_meaning: NonEmptyText
+    acceptable: list[NonEmptyText] = Field(min_length=1)
+    reject: list[EvaluationReject] = Field(default_factory=list)
     provenance: Provenance
 
     @model_validator(mode="after")
     def validate_bindings(self) -> EvaluationCase:
-        fact_ids = [fact.fact_id for fact in self.facts]
-        if len(fact_ids) != len(set(fact_ids)):
-            raise ValueError("evaluation fact IDs must be unique")
-        declared = set(fact_ids)
-        if unknown := set(self.bindings.values()) - declared:
-            raise ValueError(f"bindings reference undeclared facts: {sorted(unknown)}")
-        if any(normalize("NFC", value) != value for value in self.expected):
-            raise ValueError("expected sentences must be NFC")
+        self.scene.validate_bindings(self.bindings, self.truth)
+        if any(normalize("NFC", value) != value for value in self.acceptable):
+            raise ValueError("acceptable sentences must be NFC")
         return self
+
+
+class EvaluationFile(ApiModel):
+    mission_id: MissionId
+    practice_level: ProficiencyLevel
+    content_version: ContentVersion
+    cases: list[EvaluationCase] = Field(min_length=1)
 
 
 class MissionKey(ApiModel):

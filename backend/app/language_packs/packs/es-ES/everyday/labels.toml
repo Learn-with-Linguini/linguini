@@ -1,0 +1,95 @@
+[[labels]]
+semantic = "yes"
+text = "Sí"
+meaning = "yes"
+[labels.provenance]
+source = "app/ai/features/learning_tasks/mission_m01.py; mirrored label, not human-reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "no"
+text = "No"
+meaning = "no"
+[labels.provenance]
+source = "app/ai/features/learning_tasks/mission_m01.py; mirrored label, not human-reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "yes-answer"
+text = "Sí."
+meaning = "Yes."
+[labels.provenance]
+source = "app/services/a0_lexicon.py; mirrored A0 answer, not human-reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "no-answer"
+text = "No."
+meaning = "No."
+[labels.provenance]
+source = "app/services/a0_lexicon.py; mirrored A0 answer, not human-reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "what-is-this"
+text = "¿Qué es esto?"
+meaning = "What is this?"
+[labels.provenance]
+source = "app/services/a0_lexicon.py; mirrored prompt, not human-reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "attribute-prompt-colour"
+text = "¿De qué color es?"
+meaning = "What colour is it?"
+[labels.provenance]
+source = "app/services/mission_lessons_m01.py; mirrored prompt, not human-reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "describe-object"
+text = "Describe este objeto."
+meaning = "Describe this object."
+[labels.provenance]
+source = "app/services/mission_lessons_m01.py; mirrored prompt, not human-reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "touch-object"
+text = "Toca el objeto que corresponde a la frase: «{f['first']}»."
+meaning = "Tap the object that matches the sentence."
+[labels.provenance]
+source = "app/services/mission_lessons_a2.py; mirrored prompt, not human-reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "build-second-fact"
+text = "Construye la segunda frase."
+meaning = "Build the second sentence."
+[labels.provenance]
+source = "app/services/mission_lessons_a2.py; mirrored prompt, not human-reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "choose-description"
+text = "¿Qué descripción coincide con la foto?"
+meaning = "Which description matches the photo?"
+[labels.provenance]
+source = "app/services/mission_lessons_a2.py; mirrored prompt, not human-reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "describe-scene"
+text = "Describe la escena con estas frases."
+meaning = "Describe the scene with these sentences."
+[labels.provenance]
+source = "app/services/mission_lessons_a2.py; mirrored prompt, not human-reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "connector-distractor"
+text = "pero"
+meaning = "but"
+[labels.provenance]
+source = "app/services/mission_lessons_a2.py; mirrored distractor, not human-reviewed."
+review_status = "unreviewed"

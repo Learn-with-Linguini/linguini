@@ -1,0 +1,52 @@
+format_version = 1
+pack_id = "es-es-everyday"
+pack_version = 1
+instruction_language = "en"
+
+[language]
+code = "es"
+locale = "es-ES"
+script = "Latn"
+direction = "ltr"
+word_separator = "space"
+
+[language.speech]
+synthesis_locale = "es-ES"
+synthesis = "browserVoice"
+recognition = true
+
+[variety]
+variety_id = "es-es"
+description = "Peninsular Spanish forms as used by the existing app content; needs fluent Spanish review."
+
+[register]
+register_id = "everyday"
+description = "Neutral standard Spanish used in the existing lessons (tú imperatives in prompts); needs fluent review."
+
+[provenance]
+source = "Lead-authored for M01; needs fluent Spanish review."
+review_status = "unreviewed"
+
+[files]
+labels = "labels.toml"
+constructions = [
+  "constructions/identify-object.toml",
+  "constructions/yes-no-identification.toml",
+  "constructions/describe-attribute.toml",
+  "constructions/scene-existence.toml",
+  "constructions/scene-location.toml",
+  "constructions/connected-description.toml",
+]
+examples = [
+  "examples/identify-object.toml",
+  "examples/yes-no-identification.toml",
+  "examples/describe-attribute.toml",
+  "examples/scene-existence.toml",
+  "examples/scene-location.toml",
+  "examples/connected-description.toml",
+]
+evaluations = [
+  "evaluations/M01-A0.toml",
+  "evaluations/M01-A1.toml",
+  "evaluations/M01-A2.toml",
+]

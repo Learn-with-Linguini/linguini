@@ -5,7 +5,7 @@ from app.language_packs.capabilities import lesson_plan, mission_capability
 from app.language_packs.loader import load_mission_catalog, load_pack
 from app.language_packs.schema import Provenance
 
-FIXTURE = Path(__file__).parent / "fixtures/language_packs/es-basic"
+FIXTURE = Path(__file__).parents[1] / "app/language_packs/packs/es-ES/everyday"
 
 
 def _human_reviewed_pack(pack):
@@ -24,9 +24,9 @@ def _human_reviewed_pack(pack):
                         item.model_copy(update={"provenance": reviewed})
                         for item in construction.examples
                     ],
-                    "incorrect": [
+                    "mistakes": [
                         item.model_copy(update={"provenance": reviewed})
-                        for item in construction.incorrect
+                        for item in construction.mistakes
                     ],
                 }
             )
@@ -124,7 +124,7 @@ def test_plan_slots_keep_targets_labels_bindings_and_stable_ids():
 
     assert confirm.slot_id == "confirmName-1"
     assert confirm.target_ids == ["identify-object"]
-    assert confirm.required_labels == ["yes", "no"]
+    assert confirm.required_labels == ["yes-answer", "no-answer"]
     assert confirm.bindings == {"identity": "object:cup"}
 
     a1_plan = lesson_plan(load_pack(FIXTURE), ("M01", "A1", 1))

@@ -1,0 +1,100 @@
+construction_id = "describe-attribute"
+
+[[examples]]
+example_id = "describe-green-book"
+levels = ["A1"]
+meaning = "The book is green."
+scene = { objects = [{ fact_id = "object:book", concept = "book" }], attributes = [{ fact_id = "attribute:green", object = "object:book", kind = "color", value = "green" }] }
+bindings = { object = "object:book", attribute = "attribute:green" }
+truth = true
+sentence = "Es un libro verde."
+translation = "It is a green book."
+chunks = [{ text = "Es", join = "none" }, { text = "un", join = "space" }, { text = "libro", join = "space" }, { text = "verde", join = "space" }, { text = ".", join = "none" }]
+provenance = { source = "Lead-authored; noun from REVIEWED_NOUNS and colour from app/services/mission_eligibility.py REVIEWED_COLOURS.", review_status = "unreviewed" }
+
+[[examples]]
+example_id = "describe-red-cup"
+levels = ["A1"]
+meaning = "The cup is red."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }], attributes = [{ fact_id = "attribute:red", object = "object:cup", kind = "color", value = "red" }] }
+bindings = { object = "object:cup", attribute = "attribute:red" }
+truth = true
+sentence = "Es una taza roja."
+translation = "It is a red cup."
+chunks = [{ text = "Es", join = "none" }, { text = "una", join = "space" }, { text = "taza", join = "space" }, { text = "roja", join = "space" }, { text = ".", join = "none" }]
+contrasts = [{ sentence = "Es una taza rojo.", note = "The colour agrees with the feminine noun." }, { sentence = "Es un rojo taza.", note = "The basic colour follows the noun." }]
+provenance = { source = "Lead-authored; noun from REVIEWED_NOUNS and colour from app/services/mission_eligibility.py REVIEWED_COLOURS.", review_status = "unreviewed" }
+
+[[examples]]
+example_id = "describe-black-shoe"
+levels = ["A1"]
+meaning = "The shoe is black."
+scene = { objects = [{ fact_id = "object:shoe", concept = "shoe" }], attributes = [{ fact_id = "attribute:black", object = "object:shoe", kind = "color", value = "black" }] }
+bindings = { object = "object:shoe", attribute = "attribute:black" }
+truth = true
+sentence = "Es un zapato negro."
+translation = "It is a black shoe."
+chunks = [{ text = "Es", join = "none" }, { text = "un", join = "space" }, { text = "zapato", join = "space" }, { text = "negro", join = "space" }, { text = ".", join = "none" }]
+provenance = { source = "Lead-authored; noun from REVIEWED_NOUNS and colour from app/services/mission_eligibility.py REVIEWED_COLOURS.", review_status = "unreviewed" }
+
+[[examples]]
+example_id = "describe-blue-lamp"
+levels = ["A1"]
+meaning = "The lamp is blue."
+scene = { objects = [{ fact_id = "object:lamp", concept = "lamp" }], attributes = [{ fact_id = "attribute:blue", object = "object:lamp", kind = "color", value = "blue" }] }
+bindings = { object = "object:lamp", attribute = "attribute:blue" }
+truth = true
+sentence = "Es una lámpara azul."
+translation = "It is a blue lamp."
+chunks = [{ text = "Es", join = "none" }, { text = "una", join = "space" }, { text = "lámpara", join = "space" }, { text = "azul", join = "space" }, { text = ".", join = "none" }]
+provenance = { source = "Lead-authored; noun from REVIEWED_NOUNS and colour from app/services/mission_eligibility.py REVIEWED_COLOURS.", review_status = "unreviewed" }
+
+[[examples]]
+example_id = "ask-cup-colour"
+levels = ["A2"]
+meaning = "What colour is the cup?"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }], attributes = [{ fact_id = "attribute:red", object = "object:cup", kind = "color", value = "red" }] }
+bindings = { object = "object:cup", attribute = "attribute:red" }
+truth = true
+labels = ["attribute-prompt-colour"]
+sentence = "¿De qué color es la taza?"
+translation = "What colour is the cup?"
+chunks = [{ text = "¿De", join = "none" }, { text = "qué", join = "space" }, { text = "color", join = "space" }, { text = "es", join = "space" }, { text = "la", join = "space" }, { text = "taza", join = "space" }, { text = "?", join = "none" }]
+provenance = { source = "Lead-authored; prompt mirrored from app/services/mission_lessons_m01.py.", review_status = "unreviewed" }
+
+[[examples]]
+example_id = "ask-book-colour"
+levels = ["A2"]
+meaning = "What colour is the book?"
+scene = { objects = [{ fact_id = "object:book", concept = "book" }], attributes = [{ fact_id = "attribute:green", object = "object:book", kind = "color", value = "green" }] }
+bindings = { object = "object:book", attribute = "attribute:green" }
+truth = true
+labels = ["attribute-prompt-colour"]
+sentence = "¿De qué color es el libro?"
+translation = "What colour is the book?"
+chunks = [{ text = "¿De", join = "none" }, { text = "qué", join = "space" }, { text = "color", join = "space" }, { text = "es", join = "space" }, { text = "el", join = "space" }, { text = "libro", join = "space" }, { text = "?", join = "none" }]
+provenance = { source = "Lead-authored; prompt mirrored from app/services/mission_lessons_m01.py.", review_status = "unreviewed" }
+
+[[mistakes]]
+example_id = "wrong-cup-agreement"
+levels = ["A1"]
+sentence = "Es una taza rojo."
+correction = "Es una taza roja."
+note = "The colour agrees with the feminine noun."
+provenance = { source = "Lead-authored for the M01 pilot; needs fluent Spanish review.", review_status = "unreviewed" }
+
+[[mistakes]]
+example_id = "wrong-colour-position"
+levels = ["A1"]
+sentence = "Es un rojo libro."
+correction = "Es un libro rojo."
+note = "Basic colours follow the noun."
+provenance = { source = "Lead-authored for the M01 pilot; needs fluent Spanish review.", review_status = "unreviewed" }
+
+[[mistakes]]
+example_id = "wrong-colour-copula"
+levels = ["A2"]
+sentence = "¿De qué color está la taza?"
+correction = "¿De qué color es la taza?"
+note = "Colour uses ser."
+provenance = { source = "Lead-authored for the M01 pilot; needs fluent Spanish review.", review_status = "unreviewed" }

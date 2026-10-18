@@ -25,7 +25,7 @@ from app.services.mission_lessons_m01 import m01_lesson_task
 from app.services.mission_registry import A2_MISSION_LESSONS
 
 FIXTURE = Path(__file__).parent / "fixtures/m01_spanish_structure.json"
-PACK = Path(__file__).parent / "fixtures/language_packs/es-basic"
+PACK = Path(__file__).parents[1] / "app/language_packs/packs/es-ES/everyday"
 
 
 @pytest.fixture
