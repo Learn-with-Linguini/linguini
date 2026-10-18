@@ -74,6 +74,59 @@
   box-shadow: none;
 }
 
+.btn--google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 48px;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  font-weight: 700;
+  box-shadow: 0 3px 0 rgba(86, 67, 34, 0.08);
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.1s ease;
+}
+
+.btn--google:hover:not(:disabled) {
+  background: #ffffff;
+  border-color: #cbd5e1;
+}
+
+.btn--google:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 rgba(86, 67, 34, 0.08);
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-2) 0;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+.login-divider span {
+  color: var(--ink-muted);
+  font-size: var(--text-small);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
 /* Inline text links: quiet controls that read as text, not as action buttons. */
 .text-link {
   align-self: center;
@@ -4143,6 +4196,18 @@ p[role="alert"]::before { content: "!"; }
   color: var(--teal-dark);
 }
 
+.profile-password-form {
+  padding: var(--space-4) 0;
+  border-top: 1px solid var(--line);
+}
+
+.profile-password-form__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-1);
+}
+
 .profile-ai-note {
   padding: var(--space-4);
   border-radius: var(--radius-md);
@@ -4690,3 +4755,11 @@ p[role="alert"]::before { content: "!"; }
 .onboarding-success { width: min(100%, 520px); margin: 10vh auto 0; text-align: center; align-items: center; }
 .onboarding-success__mascot { width: min(180px, 45vw); height: auto; }
 .onboarding-success .button { width: 100%; }
+
+/* A0 scene missions: taught chunks first, large targets, listening and count boards. */
+.lesson-prep__card { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; }
+.lesson-instruction { margin: 0; color: var(--color-text-muted, inherit); }
+.lesson-audio { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.vocabulary-flow .choice { min-height: 56px; }
+.vocabulary-flow .chip, .vocabulary-flow .sentence-builder__token { min-height: 48px; min-width: 48px; }
+.count-board { cursor: default; }

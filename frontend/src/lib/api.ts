@@ -393,7 +393,7 @@ export interface RoleplayFact {
 }
 export type TaskContent = MissionTaskFields & (
   | { kind: "vocabularyIntroduction"; title: string; words: VocabularyLearningWord[]; questions: VocabularyQuestion[]; allowTypingPractice: boolean; targetText?: string | null; translation?: string | null; partOfSpeech?: WordClass | null; exampleSentence?: string | null }
-  | { kind: "grammarLesson"; focus: string; title: string; explanation?: string | null; checkEachQuestion?: boolean; questions: GrammarLessonQuestion[]; roleplayFacts?: RoleplayFact[] | null }
+  | { kind: "grammarLesson"; focus: string; title: string; explanation?: string | null; checkEachQuestion?: boolean; prep?: LessonPrepCard[] | null; questions: GrammarLessonQuestion[]; roleplayFacts?: RoleplayFact[] | null }
   | { kind: "grammarExplanation"; title: string; explanation: string; examples: string[] }
   | { kind: "grammarPractice"; prompt: string; options: string[] }
   | { kind: "syntaxExplanation"; title: string; sentencePattern: string; explanation: string; examples: string[] }
@@ -514,7 +514,20 @@ export interface GrammarLessonQuestion {
   /** Marker questions: each option's scene object, numbered as on the reviewed photo. */
   markerObjectIds?: Record<string, string> | null;
   planningFacts?: string[];
+  /** A short English instruction shown above the prompt. */
+  instruction?: string | null;
+  /** Target-language text the learner can play aloud. */
+  audioText?: string | null;
+  /** Listening questions hide the written prompt until the learner reveals it. */
+  listenFirst?: boolean | null;
+  /** A practice board showing this many of `boardObjectId`, without a choice. */
+  displayCount?: number | null;
+  /** A chunk with its missing word as `___`, completed and played after grading. */
+  slotTemplate?: string | null;
+  completeChunk?: string | null;
 }
+/** A taught chunk shown with audio before a lesson's questions. */
+export interface LessonPrepCard { text: string; translation?: string | null; sceneObjectId?: string | null }
 export type TaskAnswer = { inputMode: "text"; text: string; assistance?: ClueAssistance } | { inputMode: "multipleChoice"; optionId: string } | { inputMode: "objectSelection"; sceneObjectId: string } | { inputMode: "vocabularyReview"; answers: Record<string, string>; typedAnswers: Record<string, string>; questionAssistance?: QuestionAssistance[] };
 export type ConfirmGuessBody = { attemptId: string };
 export type SupportKind = "translation" | "audio" | "example" | "wordBank" | "clueFrame" | "helpPhrase" | "hint" | "answerReveal";

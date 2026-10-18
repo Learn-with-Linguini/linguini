@@ -1,22 +1,30 @@
 import { InlineLoader } from "../components/LoadingScreen";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card, IconButton } from "../components/ui";
 import { ChevronRightIcon, CloseIcon } from "../components/icons";
 import { languages } from "../config/languages";
 import { deleteCurrentAccount } from "../lib/api";
 import { accountTiers } from "../lib/accountTiers";
+import { validatePasswordReset } from "../lib/authMessages.ts";
+import { supabase } from "../lib/supabase.ts";
 import { useAppState } from "../state/useAppState";
 import { useAuth } from "../state/Auth";
 import { GameResources } from "../components/GameResources";
 
 export function Profile() {
   const navigate = useNavigate();
-  const { clearDeletedAccountSession, signOut } = useAuth();
+  const { clearDeletedAccountSession, signOut, session } = useAuth();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [deleting, setDeleting] = useState(false);
   const deleteTitleId = useId();
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+  const [passwordUpdating, setPasswordUpdating] = useState(false);
   const { learner, user, activeProfile, progressLoading, progressError, profileError, profileSaving, setLanguage, saveLanguageProfile, saveUser } = useAppState();
   const tier = accountTiers[user?.tier ?? "beta"];
 
@@ -52,6 +60,46 @@ export function Profile() {
     } catch (error) {
       setDeleteError(error instanceof Error ? error.message : "We couldn't delete your account. Please try again.");
       setDeleting(false);
+    }
+  };
+
+  const handlePasswordUpdate = async (event: FormEvent) => {
+    event.preventDefault();
+    setPasswordError(null);
+    setPasswordSuccess(null);
+
+    const validationError = validatePasswordReset(newPassword, confirmPassword);
+    if (validationError) {
+      setPasswordError(validationError);
+      return;
+    }
+
+    if (!supabase) {
+      setPasswordError("Authentication is not configured.");
+      return;
+    }
+
+    setPasswordUpdating(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        const msg = error.message.toLowerCase();
+        if (msg.includes("same password") || msg.includes("different from old")) {
+          setPasswordError("Please choose a new password that is different from your current one.");
+        } else if (msg.includes("rate limit") || msg.includes("too many")) {
+          setPasswordError("Please wait a moment before trying again.");
+        } else {
+          setPasswordError(error.message || "We couldn't update your password. Please try again.");
+        }
+        return;
+      }
+      setPasswordSuccess("Password updated successfully!");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch {
+      setPasswordError("We couldn't connect right now. Please check your connection and try again.");
+    } finally {
+      setPasswordUpdating(false);
     }
   };
 
@@ -129,6 +177,105 @@ export function Profile() {
               <option value="both">Both</option><option value="speech">Speaking</option><option value="text">Typing</option>
             </select>
           </label>
+        </Card>
+      </section>
+
+      <section className="profile-section" aria-labelledby="account-heading">
+        <h2 id="account-heading">Account</h2>
+        <Card plain className="profile-settings-card">
+          <div className="profile-setting">
+            <span>
+              <strong>Email</strong>
+              <small>Your sign-in email address</small>
+            </span>
+            <b style={{ userSelect: "all", overflowWrap: "anywhere", wordBreak: "break-all" }}>
+              {user?.email ?? session?.user?.email ?? "No email linked"}
+            </b>
+          </div>
+
+          {!passwordOpen ? (
+            <button
+              type="button"
+              className="profile-setting profile-support-link"
+              onClick={() => {
+                setPasswordOpen(true);
+                setPasswordError(null);
+                setPasswordSuccess(null);
+              }}
+            >
+              <span>
+                <strong>Reset password</strong>
+                <small>Choose a new password for your account</small>
+              </span>
+              <ChevronRightIcon size={20} />
+            </button>
+          ) : (
+            <form
+              className="profile-password-form stack"
+              onSubmit={event => void handlePasswordUpdate(event)}
+            >
+              <div className="profile-password-form__header">
+                <strong>Change password</strong>
+                <button
+                  type="button"
+                  className="btn btn--quiet"
+                  style={{ padding: 0, height: "auto", minHeight: "unset", fontSize: "0.85rem" }}
+                  onClick={() => {
+                    setPasswordOpen(false);
+                    setPasswordError(null);
+                    setPasswordSuccess(null);
+                    setNewPassword("");
+                    setConfirmPassword("");
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+              <label className="field">
+                <span className="field__label" style={{ fontSize: "0.85rem" }}>New password</span>
+                <input
+                  className="input"
+                  type="password"
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={event => setNewPassword(event.target.value)}
+                  placeholder="At least 6 characters"
+                  minLength={6}
+                  disabled={passwordUpdating}
+                  required
+                />
+              </label>
+              <label className="field">
+                <span className="field__label" style={{ fontSize: "0.85rem" }}>Confirm new password</span>
+                <input
+                  className="input"
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={event => setConfirmPassword(event.target.value)}
+                  placeholder="Re-enter new password"
+                  minLength={6}
+                  disabled={passwordUpdating}
+                  required
+                />
+              </label>
+              {passwordError ? (
+                <p role="alert" style={{ color: "var(--danger)", margin: 0, fontSize: "0.85rem" }}>
+                  {passwordError}
+                </p>
+              ) : null}
+              {passwordSuccess ? (
+                <p role="status" style={{ color: "var(--teal-dark)", margin: 0, fontSize: "0.85rem", fontWeight: 700 }}>
+                  {passwordSuccess}
+                </p>
+              ) : null}
+              <div style={{ display: "flex", gap: "var(--space-2)", marginTop: "var(--space-1)" }}>
+                <Button type="submit" disabled={passwordUpdating}>
+                  {passwordUpdating ? "Updating…" : "Save new password"}
+                </Button>
+              </div>
+            </form>
+          )}
         </Card>
       </section>
 

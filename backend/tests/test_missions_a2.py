@@ -20,7 +20,7 @@ from app.services.mission_eligibility_a2 import eligibility_reasons
 from app.services.mission_facts_a2 import approved_facts
 from app.services.mission_language_a2 import A2_ENABLED_LANGUAGES
 from app.services.mission_lessons_a2 import _joined
-from app.services.mission_registry import MISSION_LESSONS
+from app.services.mission_registry import A2_MISSION_LESSONS
 
 FACT_KEYS = {
     "approvedObjects",
@@ -97,7 +97,7 @@ def test_a2_generations_are_deterministic_version_one(mission_id):
     assert generation.validator_version == f"learning-tasks-{code}-a2-validator.v1"
     assert generation.json_schema_name == f"mission_lesson_{code}_a2_v1"
     assert generation.uses_model is False
-    assert (mission_id, "A2") in MISSION_LESSONS
+    assert f"A2:{mission_id}" in A2_MISSION_LESSONS
 
 
 def test_only_spanish_and_french_are_enabled_for_a2():
@@ -116,7 +116,7 @@ def test_only_spanish_and_french_are_enabled_for_a2():
         )
 
 
-def test_gating_preserves_the_a1_plan_and_excludes_a0_and_other_a2_languages():
+def test_gating_preserves_a1_and_a0_plans_and_excludes_other_a2_languages():
     a1 = lesson_missions(
         "lesson",
         {
@@ -130,9 +130,12 @@ def test_gating_preserves_the_a1_plan_and_excludes_a0_and_other_a2_languages():
         ("M01", "A1"), ("M02", "A1"), ("M03", "A1"),
         ("M04", "A1"), ("M05", "A1"),
     ]
-    assert lesson_missions(
+    a0 = lesson_missions(
         "lesson", {"proficiency_level": "A0", "target_language_code": "es"}
-    ) == []
+    )
+    assert [(mission.mission_id, mission.practice_level) for mission in a0] == [
+        ("M01", "A0"), ("M02", "A0"), ("M03", "A0"), ("M13", "A0"),
+    ]
     for language in ("de", "ko"):
         assert lesson_missions(
             "lesson", {"proficiency_level": "A2", "target_language_code": language}
@@ -191,7 +194,7 @@ def test_m01_relation_only_scene_remains_eligible_and_buildable():
     ]
     mission = get_mission("M01", "A2", 1)
     assert eligibility_reasons("describeScene", mission, plain, relations, []) == []
-    spec = MISSION_LESSONS[("M01", "A2")]
+    spec = A2_MISSION_LESSONS["A2:M01"]
     payload = spec.payload(
         mission, "es", plain, relations, words, translated, groups, {},
         "relation-only", review_markers=markers,
@@ -208,11 +211,11 @@ def test_removed_review_object_is_absent_from_m02_facts_and_questions():
     retained = objects[:2]
     retained_words = words[:2]
     retained_markers = {str(obj.id): markers[str(obj.id)] for obj in retained}
-    payload = MISSION_LESSONS[("M02", "A2")].payload(
+    payload = A2_MISSION_LESSONS["A2:M02"].payload(
         mission, "es", retained, relations, retained_words, translated, groups,
         {}, "review-removed-object", review_markers=retained_markers,
     )
-    result = MISSION_LESSONS[("M02", "A2")].generation.fallback(payload)
+    result = A2_MISSION_LESSONS["A2:M02"].generation.fallback(payload)
     public = repr([question.model_dump() for question in result.questions])
     assert removed.label not in public
     assert all(row["key"] != str(removed.id) for row in payload["approvedFacts"]["approvedObjects"])
@@ -263,7 +266,7 @@ def test_approved_facts_use_only_reviewed_scene_data(language):
 def test_deterministic_builders_validate_all_a2_lessons(language, mission_id):
     mission = get_mission(mission_id, "A2", 1)
     objects, words, relations, groups, translated, markers = _scene(language)
-    spec = MISSION_LESSONS[(mission_id, "A2")]
+    spec = A2_MISSION_LESSONS[f"A2:{mission_id}"]
     payload = spec.payload(
         mission,
         language,
@@ -289,7 +292,7 @@ def test_deterministic_builders_validate_all_a2_lessons(language, mission_id):
 def test_m04_owner_clues_and_corrections_match_assigned_facts(language):
     mission = get_mission("M04", "A2", 1)
     objects, words, relations, groups, translated, markers = _scene(language)
-    spec = MISSION_LESSONS[("M04", "A2")]
+    spec = A2_MISSION_LESSONS["A2:M04"]
     payload = spec.payload(
         mission,
         language,
@@ -341,7 +344,7 @@ def test_m04_owner_clues_and_corrections_match_assigned_facts(language):
 def test_m02_validator_rejects_a_leaked_target_noun():
     mission = get_mission("M02", "A2", 1)
     objects, words, relations, groups, translated, markers = _scene()
-    spec = MISSION_LESSONS[("M02", "A2")]
+    spec = A2_MISSION_LESSONS["A2:M02"]
     payload = spec.payload(
         mission,
         "es",
@@ -374,7 +377,7 @@ def test_m02_validator_rejects_a_leaked_target_noun():
 def test_roleplay_validator_rejects_unapproved_provenance(mission_id):
     mission = get_mission(mission_id, "A2", 1)
     objects, words, relations, groups, translated, markers = _scene()
-    spec = MISSION_LESSONS[(mission_id, "A2")]
+    spec = A2_MISSION_LESSONS[f"A2:{mission_id}"]
     payload = spec.payload(
         mission,
         "es",
@@ -417,7 +420,7 @@ def test_disabled_language_returns_the_closed_empty_contract():
 def _built(mission_id, language="es", session_id="mutation"):
     mission = get_mission(mission_id, "A2", 1)
     objects, words, relations, groups, translated, markers = _scene(language)
-    spec = MISSION_LESSONS[(mission_id, "A2")]
+    spec = A2_MISSION_LESSONS[f"A2:{mission_id}"]
     payload = spec.payload(
         mission, language, objects, relations, words, translated, groups, {},
         session_id, review_markers=markers,
@@ -723,11 +726,11 @@ def test_m03_generates_both_comparison_directions_across_seeds():
                 }
                 for group in groups
             ]
-            payload = MISSION_LESSONS[("M03", "A2")].payload(
+            payload = A2_MISSION_LESSONS["A2:M03"].payload(
                 mission, "es", objects, relations, words, translated, groups, {},
                 f"direction-{seed}", review_markers=markers,
             )
-            MISSION_LESSONS[("M03", "A2")].generation.fallback(payload)
+            A2_MISSION_LESSONS["A2:M03"].generation.fallback(payload)
             first = next(row for row in payload["approvedFacts"]["approvedCountedGroups"]
                          if row["key"] == payload["selection"]["firstGroupKey"])
             second = next(row for row in payload["approvedFacts"]["approvedCountedGroups"]
@@ -777,7 +780,7 @@ def test_m03_fictional_count_cannot_leak_outside_roleplay_statement():
 def test_french_m04_uses_mon_before_a_vowel_initial_feminine_noun():
     mission = get_mission("M04", "A2", 1)
     objects, words, relations, groups, translated, markers = _scene("fr")
-    spec = MISSION_LESSONS[("M04", "A2")]
+    spec = A2_MISSION_LESSONS["A2:M04"]
     initial = spec.payload(
         mission, "fr", objects, relations, words, translated, groups, {},
         "french-vowel", review_markers=markers,
@@ -787,11 +790,11 @@ def test_french_m04_uses_mon_before_a_vowel_initial_feminine_noun():
     orange_term.translation = "orange"
     orange_term.article = "l'"
     orange_term.gender = "feminine"
-    payload = MISSION_LESSONS[("M04", "A2")].payload(
+    payload = A2_MISSION_LESSONS["A2:M04"].payload(
         mission, "fr", objects, relations, words, translated, groups, {},
         "french-vowel", review_markers=markers,
     )
-    result = MISSION_LESSONS[("M04", "A2")].generation.fallback(payload)
+    result = A2_MISSION_LESSONS["A2:M04"].generation.fallback(payload)
     assigned = next(
         obj for obj in payload["approvedFacts"]["approvedObjects"]
         if obj["key"] == payload["selection"]["assignedObjectKey"]

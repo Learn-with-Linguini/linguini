@@ -71,9 +71,9 @@ def test_colour_forms_agree_only_when_the_gender_is_known():
 @pytest.mark.parametrize(("mode", "level", "language", "selected"), [
     ("lesson", "A1", "es", True),
     ("lesson", "A1", "fr", True),
-    # A0 is the stored level for "I'm a complete beginner" (pre-A1).
-    ("lesson", "A0", "es", False),
-    ("lesson", "A0", "fr", False),
+    # A0 is the stored level for "I'm a complete beginner" (pre-A1); it gets the A0 missions.
+    ("lesson", "A0", "es", True),
+    ("lesson", "A0", "fr", True),
     ("lesson", "A2", "es", True),
     ("lesson", "A2", "fr", True),
     ("lesson", "A2", "de", False),

@@ -1,0 +1,71 @@
+mission_id = "M03"
+practice_level = "A0"
+content_version = 1
+title = "Count a small group"
+
+[photo_requirements]
+media_sources = ["preloaded", "camera", "userUpload"]
+min_confirmed_objects = 1
+min_counted_groups = 1
+min_quantity = 2
+max_quantity = 3
+
+[objective]
+objective_id = "count-small-group"
+can_do = "I can say how many of a small group of objects there are."
+
+[[objective.targets]]
+target_id = "count-small-group"
+summary = "Recognise the number word for a group of two or three."
+evidence_types = ["recognition"]
+
+[[objective.targets]]
+target_id = "number-noun-chunk"
+summary = "Use a number word with the singular or plural noun."
+evidence_types = ["recognition", "construction"]
+
+[[language_patterns]]
+pattern_id = "number-noun-chunk"
+target_id = "number-noun-chunk"
+structure = "[number] [noun]."
+examples = { es = ["dos manzanas"], fr = ["deux pommes"], de = ["zwei Äpfel"], ko = ["사과 두 개"] }
+
+[teaching]
+task_sequence = ["vocabularyIntroduction", "grammarLesson", "ispyRound", "reflection"]
+teach_before_assessment = ["count-small-group", "number-noun-chunk"]
+max_new_words = 3
+
+[[teaching.supports]]
+support = "translation"
+availability = "onRequest"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "audio"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "wordBank"
+availability = "always"
+counts_as_assistance = false
+
+[[evaluation_criteria]]
+criterion_id = "count-matches-photo"
+target_id = "count-small-group"
+description = "Gives the count the learner confirmed."
+evidence_types = ["recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "chunk-matches-count"
+target_id = "number-noun-chunk"
+description = "Matches or builds the number and noun chunk."
+evidence_types = ["recognition", "construction"]
+
+[expected_performance]
+min_assessed_questions = 4
+min_correct_ratio = 0.67
+min_independent_correct = 2
+required_target_groups = [
+  ["count-small-group"],
+]
