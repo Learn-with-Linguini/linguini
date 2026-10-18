@@ -4797,7 +4797,15 @@ p[role="alert"]::before { content: "!"; }
 
 .vocabulary-flow__back.icon-btn {
   flex: none;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--paper);
   color: var(--teal-dark);
+}
+
+.vocabulary-flow__back.icon-btn:hover:not(:disabled) {
+  border-color: var(--teal);
+  background: var(--cream);
 }
 
 .vocabulary-flow__title {
@@ -4909,21 +4917,28 @@ p[role="alert"]::before { content: "!"; }
   align-self: center;
   width: fit-content;
   margin: var(--space-2) auto 0;
+  border-color: transparent;
+  background: transparent;
   color: var(--ink-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
-.vocabulary-flow__skip,
 .learning-task-page__all-tasks,
 .typing-forgot-action {
   border-color: var(--line);
   background: var(--paper);
 }
 
-.vocabulary-flow__skip:hover:not(:disabled),
 .learning-task-page__all-tasks:hover:not(:disabled),
 .typing-forgot-action:hover:not(:disabled) {
   border-color: var(--pasta);
   background: var(--cream);
+}
+
+.vocabulary-flow__skip:hover:not(:disabled) {
+  background: transparent;
+  color: var(--teal-dark);
 }
 
 @media (max-width: 720px) {
