@@ -20,14 +20,16 @@ function OnboardingSuccess({ onFinish }: { onFinish: () => void }) {
   return <div className="stack onboarding-success"><img src="/linguini-logo.svg" alt="" className="onboarding-success__mascot" /><h1>You’re all set!</h1><p className="muted">Great work—your first learning path is ready for you.</p><Button block onClick={onFinish}>Go to home</Button></div>;
 }
 
-export function OnboardingSteps({ initial, saving = false, error, onComplete, onFinish }: {
+export function OnboardingSteps({ initial, saving = false, error, onComplete, onFinish, restartingForLanguage = false }: {
   initial: OnboardingDraft;
   saving?: boolean;
   error?: string | null;
   onComplete: (draft: OnboardingDraft) => Promise<boolean>;
   onFinish: () => void;
+  /** A language selected from Profile keeps the learner's identity, then retakes setup for that language. */
+  restartingForLanguage?: boolean;
 }) {
-  const [stage, setStage] = useState<Stage>("profile");
+  const [stage, setStage] = useState<Stage>(restartingForLanguage ? "experience" : "profile");
   const [name, setName] = useState(initial.name);
   const [language, setLanguage] = useState(languages.find(option => option.code === initial.languageCode) ?? languages[0]);
   const [selectedGoals, setSelectedGoals] = useState(() => parseGoals(initial.goal).filter(value => goals.includes(value)));
@@ -99,13 +101,16 @@ export function OnboardingSteps({ initial, saving = false, error, onComplete, on
   };
   const finish = async () => { if (await onComplete(draft())) setStage("success"); };
   const toggleGoal = (option: string) => setSelectedGoals(current => current.includes(option) ? current.filter(value => value !== option) : [...current, option]);
-  const progress = ({ profile: 1, language: 2, experience: 3, placement: 3, goals: 4, permissions: 5, success: 5 } as const)[stage];
+  const progress = (restartingForLanguage
+    ? ({ experience: 1, placement: 1, goals: 2, permissions: 3, success: 3 } as const)[stage as "experience" | "placement" | "goals" | "permissions" | "success"]
+    : ({ profile: 1, language: 2, experience: 3, placement: 3, goals: 4, permissions: 5, success: 5 } as const)[stage]);
+  const totalSteps = restartingForLanguage ? 3 : 5;
 
   if (stage === "success") return <OnboardingSuccess onFinish={onFinish} />;
   const currentQuestion = test?.questions.find(question => question.id === questionPath[questionIndex]);
   return <div className="stack onboarding-flow">
-    <TopBar title={stage === "placement" ? "A quick warm-up" : "Let’s get you ready"} help="A few short steps and you are ready to practise." />
-    {stage !== "placement" ? <ProgressTrail value={progress} total={5} label={`Step ${progress} of 5`} /> : null}
+    <TopBar title={stage === "placement" ? "A quick warm-up" : restartingForLanguage ? `Let’s set up your ${language.name}` : "Let’s get you ready"} help="A few short steps and you are ready to practise." />
+    {stage !== "placement" ? <ProgressTrail value={progress} total={totalSteps} label={`Step ${progress} of ${totalSteps}`} /> : null}
     {stage === "profile" ? <div className="stack"><h1>Nice to meet you</h1><p className="muted">Choose a pasta pal and a name to cheer you on.</p><fieldset className="profile-avatar-picker"><legend>Your pasta pal</legend><div className="profile-avatar-options">{avatars.map(option => <button key={option} type="button" className={avatar === option ? "is-selected" : ""} aria-pressed={avatar === option} onClick={() => setAvatar(option)}><img src={`/pasta-assets/${option}.png`} alt={`${option} pasta`} /></button>)}</div></fieldset><div className="field"><label className="field__label" htmlFor="ob-name">Your name</label><input id="ob-name" className="input" value={name} placeholder="Alex" onChange={event => setName(event.target.value)} /></div><Button block onClick={() => setStage("language")}>Continue</Button></div> : null}
     {stage === "language" ? <div className="stack"><h1>Which language today?</h1><p className="muted">You can add another language later.</p><div className="grid-2">{languages.map(option => <button key={option.code} type="button" className={`scene-pick${option.code === language.code ? " scene-pick--selected" : ""}`} onClick={() => setLanguage(option)}><span className="language-choice__flag">{option.flag}</span><strong>{option.name}</strong></button>)}</div><Button block onClick={() => setStage("experience")}>Continue</Button></div> : null}
     {stage === "experience" ? <div className="stack"><h1>How much {language.name} do you know?</h1><p className="muted">We’ll use this to choose a comfortable place to begin.</p><button className="onboarding-path" disabled={working} onClick={() => void chooseBeginner()}><strong>I’m a complete beginner</strong><span>Start with the essentials</span></button><button className="onboarding-path" disabled={working} onClick={() => void beginPlacement()}><strong>I know some {language.name}</strong><span>Take a short picture activity</span></button></div> : null}
