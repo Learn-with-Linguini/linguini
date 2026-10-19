@@ -161,13 +161,7 @@ export function Profile() {
         </Card>
       </section>
 
-      <section className="profile-section" aria-labelledby="profile-basil-heading">
-        <h2 id="profile-basil-heading">Your Basil Points</h2>
-        <GameResources shop />
-      </section>
-
       <MissionBadges />
-      <ChefOfTheDay />
 
       <section className="profile-section">
         <h2>Learning setup</h2>
