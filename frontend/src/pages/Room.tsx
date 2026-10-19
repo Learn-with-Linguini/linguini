@@ -1,19 +1,19 @@
 import { InlineLoader, LoadingScreen } from "../components/LoadingScreen";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../lib/api";
-import { canStartRoom, getRoom, getRoomPhoto, prepareRoomCommand, roomQueryKeys, roomReviewPayload, sendRoomCommand } from "../lib/rooms";
+import { getRoom, getRoomPhoto, prepareRoomCommand, roomDeadline, roomQueryKeys, roomReviewPayload, sendRoomCommand } from "../lib/rooms";
 import type { PendingRoomCommand, RoomObject, RoomPhoto, RoomPhotoReview, RoomRelationType, RoomSnapshot, RoomTurn } from "../lib/rooms";
-import { gameResourceKeys } from "../lib/gameResources";
 import { friendlyError, queryKeys } from "../lib/queryKeys";
 import { useAppState } from "../state/useAppState";
 import { Button, Card, Feedback } from "../components/ui";
 import { ImageUpload } from "../components/ImageUpload";
 import { GameResources } from "../components/GameResources";
+import { useBackAction } from "../components/BackAction";
 import { BasilIcon } from "../components/icons";
-import { gamificationKeys } from "../lib/gamification";
+import { useRefreshBasil } from "../state/gamification";
 import "../components/rooms.css";
 
 export function Room() {
@@ -28,10 +28,13 @@ function RoomSession({ roomId }: { roomId: string }) {
   const location = useLocation();
   const navigate = useNavigate();
   const client = useQueryClient();
+  const refreshBasil = useRefreshBasil();
   const owner = user?.id ?? "";
   const profile = activeProfile?.id ?? "";
   const key = roomQueryKeys.snapshot(owner, profile, roomId);
   const busyRef = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const pending = useRef<PendingRoomCommand | null>(null);
   const lastResourceState = useRef<string | null>(null);
   const [pendingIntent, setPendingIntent] = useState<string | null>(null);
@@ -39,6 +42,30 @@ function RoomSession({ roomId }: { roomId: string }) {
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmEnd, setConfirmEnd] = useState(false);
+  const endTitleId = useId();
+  const endDialog = useRef<HTMLElement>(null);
+  const returnToChallenges = () => {
+    if (confirmEnd) { if (!busyRef.current) setConfirmEnd(false); return; }
+    if (busyRef.current || uploading || pending.current) return;
+    navigate("/ispy/friends");
+  };
+  useBackAction(returnToChallenges, "Return to challenges");
+  useEffect(() => {
+    if (!confirmEnd) return;
+    const previousFocus = document.activeElement as HTMLElement | null;
+    endDialog.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !busyRef.current) setConfirmEnd(false);
+      if (event.key !== "Tab") return;
+      const buttons = endDialog.current?.querySelectorAll<HTMLButtonElement>("button:not(:disabled)");
+      if (!buttons?.length) return;
+      if (event.shiftKey && document.activeElement === buttons[0]) { event.preventDefault(); buttons[buttons.length - 1].focus(); }
+      if (!event.shiftKey && document.activeElement === buttons[buttons.length - 1]) { event.preventDefault(); buttons[0].focus(); }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("keydown", onKey); previousFocus?.focus(); };
+  }, [confirmEnd]);
   const entryInviteCode = (location.state as { inviteCode?: string | null } | null)?.inviteCode;
   const room = useQuery({ queryKey: key, enabled: Boolean(owner && profile), retry: 1,
     queryFn: async ({ signal }) => {
@@ -50,7 +77,7 @@ function RoomSession({ roomId }: { roomId: string }) {
     refetchInterval: query => {
       if (busyRef.current || document.hidden) return false;
       const status = query.state.data?.status;
-      return status === "playing" ? 1_500 + Math.random() * 300 : status === "lobby" ? 3_000 + Math.random() * 500 : false;
+      return status === "playing" || status === "lobby" ? 20_000 : false;
     }, refetchIntervalInBackground: false, refetchOnWindowFocus: true });
 
   const ownContribution = room.data?.contributions.find(item => item.userId === owner);
@@ -62,10 +89,9 @@ function RoomSession({ roomId }: { roomId: string }) {
     // The partner can start the room or finish a turn while this page only polls.
     // Repeated snapshots of the same status/credit do not trigger extra reads.
     if (previous === resourceState || (previous === null && resourceState.startsWith("lobby:"))) return;
-    void client.invalidateQueries({ queryKey: gameResourceKeys(owner) });
-    void client.invalidateQueries({ queryKey: gamificationKeys.account(owner) });
+    refreshBasil();
     void client.invalidateQueries({ queryKey: queryKeys.progress(profile) });
-  }, [resourceState, client, owner, profile]);
+  }, [resourceState, client, owner, profile, refreshBasil]);
 
   const act = async (intent: string, payload: Record<string, unknown> = {}): Promise<boolean> => {
     if (!room.data || busyRef.current) return false;
@@ -78,24 +104,29 @@ function RoomSession({ roomId }: { roomId: string }) {
     setPendingIntent(command.intent);
     await client.cancelQueries({ queryKey: key });
     try {
+      if (!mounted.current) return false;
       const next = await sendRoomCommand(roomId, command);
+      if (!mounted.current) return false;
       if (next.meId !== owner) throw new Error("This room changed accounts. Return home and open it again.");
       client.setQueryData<RoomSnapshot>(key, previous => previous && previous.revision > next.revision ? previous : next);
       pending.current = null;
       setPendingIntent(null);
-      void client.invalidateQueries({ queryKey: gameResourceKeys(owner) });
+      refreshBasil();
       void client.invalidateQueries({ queryKey: roomQueryKeys.active(owner, profile) });
+      void client.invalidateQueries({ queryKey: roomQueryKeys.list(owner, profile) });
       return true;
     } catch (reason) {
+      if (!mounted.current) return false;
       if (reason instanceof ApiError && reason.status >= 400 && reason.status < 500) {
         pending.current = null;
         setPendingIntent(null);
         if (reason.code === "room_stale_revision") setRejectedCommand(command);
         await room.refetch();
+        if (!mounted.current) return false;
       }
       setError(reason instanceof ApiError ? reason.message : friendlyError(reason));
       return false;
-    } finally { busyRef.current = false; setBusy(false); }
+    } finally { busyRef.current = false; if (mounted.current) setBusy(false); }
   };
 
   if (room.isPending) return <LoadingScreen label="Opening your room…" />;
@@ -108,11 +139,13 @@ function RoomSession({ roomId }: { roomId: string }) {
   const me = data.members.find(member => member.userId === owner);
   const partner = data.members.find(member => member.userId !== owner);
   const terminal = ["completed", "ended", "expired"].includes(data.status);
+  const decline = data.status === "lobby" && data.hostUserId !== owner && !me?.ready;
 
   return <div className="stack rooms-page">
     <div className="rooms-page__title"><h1>I Spy together</h1>{!terminal ?
-      <Button variant="quiet" disabled={blocked} onClick={() => void act("leave")}>Leave room</Button> : null}</div>
+      <Button variant="quiet" disabled={blocked} onClick={() => setConfirmEnd(true)}>{decline ? "Decline challenge" : "End challenge"}</Button> : null}</div>
     <p className="small muted">{data.targetLanguageCode.toUpperCase()} · {data.proficiencyLevel} · {partner ? `With ${partner.displayName}` : "Waiting for your friend"}</p>
+    {!terminal ? <p className="small muted">{data.status === "lobby" ? "Prepare by" : "Play by"} {roomDeadline(data.status === "lobby" ? data.inviteExpiresAt : data.expiresAt)}. Come back whenever it’s your turn.</p> : null}
     <GameResources />
     {room.error ? <p role="alert">Connection interrupted. Your last saved round is shown; reconnecting…</p> : null}
     {error ? <div className="stack-2"><p role="alert">{error}</p>{pendingIntent ?
@@ -129,9 +162,9 @@ function RoomSession({ roomId }: { roomId: string }) {
           <label className="field">Invitation link<input className="input" readOnly value={`${window.location.origin}/rooms?code=${encodeURIComponent(inviteCode)}`}
             onFocus={event => event.target.select()} /></label></> :
           <p className="small muted">Use the private invitation you received when creating this room. Return to that page if you saved it in another tab.</p>}
-        <p className="small muted">Your friend signs in with the same learning language, explanation language, and level.</p></Card> : null}
+        <p className="small muted">Share privately with one friend. This link gives them access to your shared photos. Your friend needs the same learning language, explanation language, and level.</p></Card> : null}
       <section className="stack" aria-labelledby="room-photos-heading"><h2 id="room-photos-heading">Your shared photos · {data.photos.length} / 4</h2>
-        <p>Each photo is one round. Add at least two different photos, then both get ready.</p>
+        <p>Each photo is one round. Add at least two different photos. You can prepare and get ready before your friend comes back.</p>
         <p className="small muted">Photos you add are shared with the person in this room.</p>
         {data.photos.length < 4 ? <ImageUpload disabled={blocked} cameraEnabled={user?.cameraEnabled ?? false}
           onBusyChange={setUploading} dropzoneLabel="Add a photo to the room" onUploaded={image => void act("photos", { mediaAssetId: image.id })} /> : null}
@@ -143,16 +176,15 @@ function RoomSession({ roomId }: { roomId: string }) {
       </section>
       <Card className="stack"><h2>Ready to play?</h2><ul className="rooms-members">{data.members.map(member =>
         <li key={member.userId}><strong>{member.userId === owner ? "You" : member.displayName}</strong><span>{member.ready ? "Ready" : "Preparing"}</span></li>)}</ul>
-        <p className="small muted">You’ll take turns across 2–4 different photos.</p>
-        {canStartRoom(data) ? <Button disabled={blocked} onClick={() => void act("start")}>Start together</Button> :
-          <Button variant={me?.ready ? "secondary" : "primary"} disabled={blocked || data.photos.length < 2 || data.photos.some(photo => photo.status !== "ready") || !partner}
-            onClick={() => void act("ready", { ready: !me?.ready })}>{me?.ready ? "Keep preparing" : "I’m ready"}</Button>}
+        <p className="small muted">The challenge starts when you’re both ready; you don’t need to be here at the same time.</p>
+        <Button variant={me?.ready ? "secondary" : "primary"} disabled={blocked || data.photos.length < 2 || data.photos.some(photo => photo.status !== "ready")}
+          onClick={() => void act("ready", { ready: !me?.ready })}>{me?.ready ? "Keep preparing" : "I’m ready"}</Button>
         {data.photos.some(photo => photo.status === "analyzing" || photo.status === "preparing") ? <InlineLoader compact label="Preparing your photos…" /> : null}
-        {!partner ? <p className="small muted">Your friend needs to join before you can get ready.</p> : null}
+        {me?.ready ? <p className="small muted">You’re ready. We’ll keep your place until your friend is ready too.</p> : null}
       </Card>
-    </> : data.status === "playing" && data.currentTurn ?
+    </> : (data.status === "playing" || data.status === "completed") && data.currentTurn ?
       <RoomPlay key={data.currentTurn.id} roomId={roomId} room={data} turn={data.currentTurn} disabled={blocked}
-        acknowledged={me?.acknowledged ?? false} onClue={id => void act(`turns/${encodeURIComponent(data.currentTurn!.id)}/clue`, { clueOptionId: id })}
+        onClue={id => void act(`turns/${encodeURIComponent(data.currentTurn!.id)}/clue`, { clueOptionId: id })}
         onGuess={key => void act(`turns/${encodeURIComponent(data.currentTurn!.id)}/guess`, { objectKey: key })}
         onAcknowledge={() => void act(`turns/${encodeURIComponent(data.currentTurn!.id)}/ack`)} /> :
       <Card className="stack"><h2>{data.status === "completed" ? "You played every photo!" : data.status === "expired" ? "This room has expired" : "This game has ended"}</h2>
@@ -160,6 +192,17 @@ function RoomSession({ roomId }: { roomId: string }) {
         <RoomContributions room={data} />
         <Button onClick={() => navigate("/ispy/friends", { replace: true })}>Play again</Button>
         <Button variant="quiet" onClick={() => navigate("/home")}>Back home</Button></Card>}
+    <Button variant="quiet" disabled={blocked} onClick={returnToChallenges}>Save and return to challenges</Button>
+    {pendingIntent && !busy ? <p className="small muted">Retry your pending action before returning so we can confirm it was saved.</p> : null}
+    {confirmEnd ? <div className="help-modal__backdrop" onMouseDown={() => { if (!busyRef.current) setConfirmEnd(false); }}>
+      <section ref={endDialog} className="help-modal leave-session__dialog" role="dialog" aria-modal="true" aria-labelledby={endTitleId}
+        aria-describedby={`${endTitleId}-description`} onMouseDown={event => event.stopPropagation()}>
+        <h2 id={endTitleId}>{decline ? "Decline this challenge?" : "End this challenge?"}</h2>
+        <p id={`${endTitleId}-description`}>This ends the challenge for both of you. Your accepted practice and rewards stay saved. To continue later, keep the challenge and return to your challenges instead.</p>
+        {error ? <p role="alert">{error}</p> : null}
+        <div className="leave-session__actions"><Button variant="quiet" disabled={busy} onClick={() => setConfirmEnd(false)}>Keep challenge</Button>
+          <Button variant="secondary" disabled={busy || uploading || Boolean(pendingIntent && pendingIntent !== "leave")} onClick={() => void act("leave").then(saved => { if (saved) setConfirmEnd(false); })}>{pendingIntent === "leave" && !busy ? "Retry ending challenge" : decline ? "Decline for both" : "End for both"}</Button></div>
+      </section></div> : null}
   </div>;
 }
 
@@ -275,8 +318,8 @@ function PhotoReview({ roomId, photoId, initial, disabled, onSave }: { roomId: s
   </div>;
 }
 
-function RoomPlay({ roomId, room, turn, disabled, acknowledged, onClue, onGuess, onAcknowledge }: {
-  roomId: string; room: RoomSnapshot; turn: RoomTurn; disabled: boolean; acknowledged: boolean;
+function RoomPlay({ roomId, room, turn, disabled, onClue, onGuess, onAcknowledge }: {
+  roomId: string; room: RoomSnapshot; turn: RoomTurn; disabled: boolean;
   onClue: (id: string) => void; onGuess: (key: string) => void; onAcknowledge: () => void;
 }) {
   const [choice, setChoice] = useState<string | null>(null);
@@ -301,7 +344,7 @@ function RoomPlay({ roomId, room, turn, disabled, acknowledged, onClue, onGuess,
         <button type="button" key={option.id} className={`rooms-choice${clue === option.id ? " rooms-choice--selected" : ""}`}
           aria-pressed={clue === option.id} disabled={disabled} onClick={() => setClue(option.id)}>{option.text}</button>)}</div>
       <Button disabled={disabled || !clue} onClick={() => onClue(clue!)}>Send clue</Button>
-    </Card> : turn.phase === "compose" ? <InlineLoader label="Your friend is choosing a clue for this photo…" /> : null}
+    </Card> : turn.phase === "compose" ? <p role="status">Your friend will send a clue when they’re back. Your place is saved.</p> : null}
     {turn.clue ? <Card className="stack-2"><strong>Your {turn.role === "sender" ? "saved" : "friend’s"} clue</strong><p lang={room.targetLanguageCode}>{turn.clue}</p></Card> : null}
     {guessing ? <>
       {turn.guessCount > 0 ? <Feedback tone="warn"><p>Not quite. Try one more object.</p></Feedback> : null}
@@ -312,14 +355,14 @@ function RoomPlay({ roomId, room, turn, disabled, acknowledged, onClue, onGuess,
           <span>Object {object.marker ?? index + 1}</span>{used.includes(object.key) ? <span className="small">Already tried</span> : null}</button>)}
       </div>
       <Button disabled={disabled || !canGuess} onClick={() => onGuess(choice!)}>Check my guess</Button>
-    </> : turn.phase === "guess" ? <InlineLoader label={turn.guessCount > 0 ? "Your friend is trying another object…" : "Your friend is looking for the object…"} /> : null}
+    </> : turn.phase === "guess" ? <p role="status">{turn.guessCount > 0 ? "Your friend has another guess to make." : "Your clue is saved. Your friend can guess when they’re back."}</p> : null}
     {turn.phase === "reveal" ? <>
       <Feedback tone={turn.result?.isCorrect ? "good" : "warn"}><div className="stack-2" role="status">
         <strong>{turn.result?.isCorrect ? "You found it together!" : "Here’s the object"}</strong>
         <span>{turn.result?.explanation ?? "Compare the clue with the highlighted marker in the photo."}</span>
         {revealed ? <span>Marker {revealed.marker ?? turn.objects.indexOf(revealed) + 1}: <strong>{revealed.word}</strong> · {revealed.translation}</span> : null}
       </div></Feedback>
-      <Button disabled={disabled || acknowledged} onClick={onAcknowledge}>{acknowledged ? "Waiting for your friend…" : turn.index + 1 === room.roundCount ? "See our recap" : "Next photo"}</Button>
+      <Button disabled={disabled} onClick={onAcknowledge}>{turn.index + 1 === room.roundCount ? "See our recap" : "Next photo"}</Button>
     </> : null}
     <details open={showWords} onToggle={event => setShowWords(event.currentTarget.open)} className="rooms-word-bank">
       <summary>Photo words and translations</summary><ul>{turn.objects.map((object, index) => <li key={object.key}>

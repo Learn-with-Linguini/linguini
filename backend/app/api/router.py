@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 
 from app.api.routes import (
+    friends,
     game_resources,
     gamification,
     health,
@@ -29,6 +30,7 @@ api_router.include_router(game_resources.router)
 api_router.include_router(gamification.router)
 api_router.include_router(leaderboard.router)
 api_router.include_router(rooms.router)
+api_router.include_router(friends.router)
 api_router.include_router(home.router)
 api_router.include_router(media.router)
 api_router.include_router(onboarding.router)

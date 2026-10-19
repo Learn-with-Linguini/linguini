@@ -1,6 +1,7 @@
 """Real PostgreSQL room state/authorization/race tests; no external AI calls."""
 
 import hashlib
+import json
 import os
 from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
@@ -26,6 +27,7 @@ from app.repositories.postgres.game_resources import (
     reward_basil,
     spend_sauce,
 )
+from app.repositories.postgres.gamification import basil_totals
 from app.repositories.postgres.language_profiles import PostgresLanguageProfileRepository
 from app.repositories.postgres.media_assets import media_assets
 from app.repositories.postgres.practice import sessions
@@ -34,6 +36,7 @@ from app.repositories.postgres.rooms import (
     RoomError,
     cleanup_room_account,
     learning_rooms,
+    room_commands,
     room_contributions,
     room_members,
     room_photos,
@@ -240,12 +243,13 @@ def add_prepared(db, room_id, actor, asset_index=0):
     return photo.id
 
 
-def prepared_game(db, count=2):
+def prepared_game(db, count=2, *, ready=True):
     room_id = paired(db)
     photo_ids = [add_prepared(db, room_id, index % 2, index // 2) for index in range(count)]
-    for actor in (0, 1):
-        snapshot = db.services[actor].get(room_id)
-        db.services[actor].ready(room_id, command(snapshot, RoomReadyRequest))
+    if ready:
+        for actor in (0, 1):
+            snapshot = db.services[actor].get(room_id)
+            db.services[actor].ready(room_id, command(snapshot, RoomReadyRequest))
     return room_id, photo_ids
 
 
@@ -318,6 +322,10 @@ def test_complete_unique_photo_game_records_only_own_contributions(db, count):
             ).mappings()
         )
         assert spends == []
+        for person in db.people[:2]:
+            contribution = next(item for item in final.contributions if item.user_id == person.id)
+            totals = basil_totals(c, person.id)
+            assert totals.today == totals.lifetime == contribution.basil_earned
     assert db.services[0].active() is None and db.services[1].active() is None
 
 
@@ -332,20 +340,20 @@ def test_create_join_retries_do_not_duplicate_members_or_expose_invite(db):
     joined = db.services[1].join(join)
     assert joined.invite_code is None
     assert len(db.services[1].join(join).room.members) == 2
-    assert "invite" not in db.services[1].get(first.room.id).model_dump_json().lower()
+    assert "inviteCode" not in db.services[1].get(first.room.id).model_dump(mode="json")
     assert db.services[0].create(request).room.revision == joined.room.revision
 
 
-def test_profile_ownership_language_and_one_active_room(db):
+def test_profile_ownership_language_and_multiple_active_rooms(db):
     with pytest.raises(RoomError, match="active learning language") as error:
         db.services[0].create(
             CreateRoomRequest(command_id=uuid4(), language_profile_id=db.profiles[1].id)
         )
     assert error.value.code == "room_profile_invalid"
     access = create(db)
-    with pytest.raises(RoomError) as error:
-        create(db)
-    assert error.value.code == "room_already_active"
+    second = create(db)
+    assert second.room.id != access.room.id
+    assert len(db.repos[0].list()) == 2
     with db.engine.begin() as c:
         from app.repositories.postgres.language_profiles import language_profiles
 
@@ -563,37 +571,35 @@ def test_concurrent_correct_guess_awards_once(db):
         )
 
 
-def test_start_succeeds_when_legacy_energy_is_empty(db):
-    room_id, _photos = prepared_game(db)
+def test_final_ready_starts_once_when_legacy_energy_is_empty(db):
+    room_id, photos = prepared_game(db, ready=False)
+    host = db.services[0].get(room_id)
+    db.services[0].ready(room_id, command(host, RoomReadyRequest))
     with db.engine.begin() as c:
         for person in db.people[:2]:
             resource_snapshot(c, person.id)
         c.execute(
             update(game_accounts)
-            .where(game_accounts.c.user_id == db.people[1].id)
+            .where(game_accounts.c.user_id.in_([p.id for p in db.people[:2]]))
             .values(sauce_remaining=0)
         )
-    start(db, room_id)
-    assert db.services[0].get(room_id).status != "lobby"
+    guest = db.services[1].get(room_id)
+    consent = command(guest, RoomReadyRequest)
+    started = db.services[1].ready(room_id, consent)
+    assert started.status == "playing"
+    assert db.services[1].ready(room_id, consent).revision == started.revision
+    assert start(db, room_id).status == "playing"
     with db.engine.connect() as c:
-        assert (
-            c.execute(
-                select(game_accounts.c.sauce_remaining).where(
-                    game_accounts.c.user_id == db.people[0].id,
-                )
-            ).scalar_one()
-            == 10
-        )
-        assert (
-            c.execute(
-                select(func.count())
-                .select_from(room_turns)
-                .where(
-                    room_turns.c.room_id == room_id,
-                )
-            ).scalar_one()
-            > 0
-        )
+        assert c.execute(select(game_accounts.c.sauce_remaining).where(
+            game_accounts.c.user_id.in_([p.id for p in db.people[:2]]),
+        )).scalars().all() == [0, 0]
+        assert c.execute(select(func.count()).select_from(room_turns).where(
+            room_turns.c.room_id == room_id,
+        )).scalar_one() == len(photos)
+        assert c.execute(select(func.count()).select_from(game_resource_events).where(
+            game_resource_events.c.user_id.in_([p.id for p in db.people[:2]]),
+            game_resource_events.c.kind == "sauceSpend",
+        )).scalar_one() == 0
 
 
 def test_photo_leases_restart_retry_and_stale_completion(db):
@@ -873,9 +879,12 @@ def test_revoked_invitation_is_erased_and_cannot_be_recovered_by_create_replay(d
 
 
 def test_start_revokes_durable_invite_for_both_players(db):
-    room_id, _ = prepared_game(db)
+    room_id, _ = prepared_game(db, ready=False)
     code = db.repos[0].get(room_id).invite_code
-    snapshot = start(db, room_id)
+    host = db.services[0].get(room_id)
+    db.services[0].ready(room_id, command(host, RoomReadyRequest))
+    guest = db.services[1].get(room_id)
+    snapshot = db.services[1].ready(room_id, command(guest, RoomReadyRequest))
     assert snapshot.invite_code is None
     assert db.repos[0].get(room_id).invite_code is None
     assert db.repos[1].get(room_id).invite_code is None
@@ -955,8 +964,9 @@ def test_invite_migration_rotates_only_live_hosted_lobby_codes_using_core_functi
 
 
 def test_photo_count_ready_reset_and_owner_removal(db):
-    room_id, photo_ids = prepared_game(db, 4)
+    room_id, photo_ids = prepared_game(db, 4, ready=False)
     snapshot = db.services[0].get(room_id)
+    snapshot = db.services[0].ready(room_id, command(snapshot, RoomReadyRequest))
     with pytest.raises(RoomError) as error:
         db.services[0].add_photo(
             room_id, command(snapshot, AddRoomPhotoRequest, media_asset_id=db.assets[0][2].id)
@@ -1160,3 +1170,319 @@ def test_active_profile_switch_keeps_room_language_and_reward_profile(db):
             )
         ).scalar_one()
     assert profile_id == db.profiles[1].id and profile_id != new_profile.id
+
+
+def test_host_prepares_alone_and_guest_starts_days_later(db, monkeypatch):
+    import app.repositories.postgres.rooms as room_module
+
+    access = create(db)
+    room_id = access.room.id
+    add_prepared(db, room_id, 0, 0)
+    add_prepared(db, room_id, 0, 1)
+    host = db.services[0].get(room_id)
+    host = db.services[0].ready(room_id, command(host, RoomReadyRequest))
+    assert host.members[0].ready and host.action_required == "inviteFriend"
+    assert host.invite_expires_at - utc_now() > timedelta(days=6)
+    six_days_later = utc_now() + timedelta(days=6)
+    monkeypatch.setattr(room_module, "utc_now", lambda: six_days_later)
+    restarted = PostgresRoomRepository(
+        db.engine, db.people[1].id, spend_sauce=spend_sauce, reward_basil=reward_basil,
+    )
+    guest = restarted.join(JoinRoomRequest(
+        command_id=uuid4(), language_profile_id=db.profiles[1].id,
+        invite_code=access.invite_code,
+    )).room
+    assert guest.members[0].ready and not guest.members[1].ready
+    assert guest.action_required == "ready"
+    consent = command(guest, RoomReadyRequest)
+    started = restarted.ready(room_id, consent)
+    assert started.status == "playing"
+    assert started.expires_at == six_days_later + timedelta(days=14)
+    assert restarted.ready(room_id, consent).revision == started.revision
+    # Old clients may still explicitly start after the final ready response.
+    legacy_start = command(started)
+    assert restarted.start(room_id, legacy_start).revision == started.revision
+    with db.engine.connect() as c:
+        assert c.execute(select(func.count()).select_from(game_resource_events).where(
+            game_resource_events.c.user_id.in_([p.id for p in db.people[:2]]),
+            game_resource_events.c.kind == "sauceSpend",
+        )).scalar_one() == 0
+
+
+def test_offline_partner_catches_up_without_blocking_results_or_completion(db):
+    room_id, photo_ids = prepared_game(db)
+    host = db.services[0].get(room_id)
+    first = host.current_turn
+    host = db.services[0].clue(
+        room_id, first.id, command(host, RoomClueRequest, clue_option_id=first.clue_options[0].id),
+    )
+    guest = db.services[1].guess(
+        room_id, first.id, command(host, RoomGuessRequest, object_key=first.target_object_key),
+    )
+    host = db.services[0].get(room_id)
+    first_ack = command(host)
+    host = db.services[0].acknowledge(room_id, first.id, first_ack)
+    assert host.current_turn.index == 1 and host.action_required == "waiting"
+    with pytest.raises(RoomError):
+        db.services[0].authorized_photo_asset(db.people[0].id, room_id, photo_ids[0])
+    guest = db.services[1].get(room_id)
+    assert guest.current_turn.id == first.id and guest.action_required == "viewResult"
+    assert guest.current_turn.phase == "reveal"
+    assert db.services[1].read_image(room_id, photo_ids[0], 640) == b"webp-image"
+    stale = command(guest)
+    # The next round cannot be played while this user's prior result is pending.
+    with db.engine.connect() as c:
+        next_id = c.execute(select(room_turns.c.id).where(
+            room_turns.c.room_id == room_id, room_turns.c.turn_index == 1,
+        )).scalar_one()
+    with pytest.raises(RoomError) as error:
+        db.services[1].clue(
+            room_id, next_id, command(guest, RoomClueRequest, clue_option_id="clue-0"),
+        )
+    assert error.value.code == "room_turn_changed"
+    guest = db.services[1].acknowledge(room_id, first.id, stale)
+    assert guest.current_turn.index == 1 and guest.action_required == "sendClue"
+    second = guest.current_turn
+    guest = db.services[1].clue(
+        room_id, second.id,
+        command(guest, RoomClueRequest, clue_option_id=second.clue_options[0].id),
+    )
+    # Retrying an old result acknowledgement returns the current state safely.
+    assert db.services[0].acknowledge(room_id, first.id, first_ack).current_turn.id == second.id
+    host = db.services[0].guess(
+        room_id, second.id, command(guest, RoomGuessRequest, object_key=second.target_object_key),
+    )
+    finished = db.services[0].acknowledge(room_id, second.id, command(host))
+    assert finished.status == "completed" and finished.current_turn is None
+    returning = PostgresRoomRepository(db.engine, db.people[1].id)
+    guest = returning.get(room_id)
+    assert guest.status == "completed" and guest.action_required == "viewResult"
+    assert guest.current_turn.id == second.id and guest.current_turn.result.is_correct
+    assert returning.authorized_photo_asset(db.people[1].id, room_id, photo_ids[1])
+    with pytest.raises(RoomError):
+        returning.authorized_photo_asset(db.people[1].id, room_id, photo_ids[0])
+    ack = command(guest)
+    final = returning.acknowledge(room_id, second.id, ack)
+    assert final.action_required == "finished" and final.current_turn is None
+    assert returning.acknowledge(room_id, second.id, ack).revision == final.revision
+    with pytest.raises(RoomError):
+        returning.authorized_photo_asset(db.people[1].id, room_id, photo_ids[1])
+    with db.engine.connect() as c:
+        assert c.execute(select(func.count()).select_from(game_resource_events).where(
+            game_resource_events.c.user_id.in_([p.id for p in db.people[:2]]),
+            game_resource_events.c.kind == "basilEarned",
+        )).scalar_one() == 4
+        assert c.execute(select(func.count()).select_from(xp_events).where(
+            xp_events.c.user_id.in_([p.id for p in db.people[:2]]),
+        )).scalar_one() == 2
+
+
+def test_ended_challenge_never_exposes_an_unacknowledged_result_photo(db):
+    room_id, photos = prepared_game(db)
+    host = db.services[0].get(room_id)
+    turn = host.current_turn
+    host = db.services[0].clue(
+        room_id, turn.id, command(host, RoomClueRequest, clue_option_id=turn.clue_options[0].id),
+    )
+    guest = db.services[1].guess(
+        room_id, turn.id, command(host, RoomGuessRequest, object_key=turn.target_object_key),
+    )
+    ended = db.services[1].leave(room_id, command(guest))
+    assert ended.status == "ended" and ended.current_turn is None
+    for actor in (0, 1):
+        with pytest.raises(RoomError):
+            db.services[actor].read_image(room_id, photos[0], 640)
+        with pytest.raises(RoomError):
+            db.services[actor].acknowledge(room_id, turn.id, command(ended))
+
+
+def test_concurrent_final_ready_and_explicit_start_create_turns_once(db):
+    room_id, _ = prepared_game(db, ready=False)
+    host = db.services[0].get(room_id)
+    host = db.services[0].ready(room_id, command(host, RoomReadyRequest))
+    final_ready = command(host, RoomReadyRequest)
+    legacy_start = command(host)
+
+    def run(action):
+        try:
+            return action()
+        except RoomError as error:
+            assert error.code in {"room_stale_revision", "room_players_not_ready"}
+            return None
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        list(pool.map(run, [
+            lambda: db.services[1].ready(room_id, final_ready),
+            lambda: db.services[0].start(room_id, legacy_start),
+        ]))
+    snapshot = db.services[0].get(room_id)
+    assert snapshot.status == "playing"
+    assert db.services[1].ready(room_id, final_ready).revision == snapshot.revision
+    with db.engine.connect() as c:
+        assert c.execute(select(func.count()).select_from(game_resource_events).where(
+            game_resource_events.c.user_id.in_([p.id for p in db.people[:2]]),
+            game_resource_events.c.kind == "sauceSpend",
+        )).scalar_one() == 0
+        assert c.execute(select(func.count()).select_from(room_turns).where(
+            room_turns.c.room_id == room_id,
+        )).scalar_one() == 2
+
+
+def test_multiple_active_challenges_remain_in_inbox_and_active_returns_latest(db):
+    first, second = create(db), create(db)
+    assert db.repos[0].active().id == second.room.id
+    assert {room.id for room in db.services[0].list()} == {first.room.id, second.room.id}
+    first_room = db.services[0].get(first.room.id)
+    db.repos[0].add_photo(
+        first_room.id, command(first_room, AddRoomPhotoRequest, media_asset_id=db.assets[0][0].id),
+    )
+    assert db.repos[0].active().id == first.room.id
+    # A different account cannot see either inbox item.
+    assert db.repos[2].list() == []
+    with db.engine.begin() as c:
+        for _ in range(25):
+            now = utc_now()
+            room_id = uuid4()
+            code = hashlib.sha256(str(room_id).encode()).hexdigest()
+            c.execute(insert(learning_rooms).values(
+                id=room_id, host_user_id=db.people[0].id, source_language_code="en",
+                target_language_code="es", proficiency_level="A1", status="ended",
+                revision=0, invite_hash=hashlib.sha256(code.encode()).hexdigest(),
+                invite_code=None, invite_expires_at=now, expires_at=now + timedelta(days=7),
+                ended_at=now, created_at=now, updated_at=now,
+            ))
+            c.execute(insert(room_members).values(
+                id=uuid4(), room_id=room_id, user_id=db.people[0].id,
+                language_profile_id=db.profiles[0].id, seat=0, ready=False,
+                active=False, joined_at=now - timedelta(days=1),
+            ))
+    inbox = db.services[0].list()
+    assert len(inbox) == 22
+    assert {room.id for room in inbox if room.status == "lobby"} == {first.room.id, second.room.id}
+    assert [room.updated_at for room in inbox] == sorted(
+        [room.updated_at for room in inbox], reverse=True,
+    )
+
+
+def test_active_challenge_limit_survives_restart_and_expired_slots_are_free(db):
+    room_ids = []
+    for _ in range(10):
+        access = create(db)
+        room_ids.append(access.room.id)
+        with db.engine.begin() as c:
+            c.execute(update(room_members).where(
+                room_members.c.room_id == access.room.id,
+            ).values(joined_at=utc_now() - timedelta(hours=2)))
+    restarted = PostgresRoomRepository(db.engine, db.people[0].id)
+    with pytest.raises(RoomError) as error:
+        restarted.create(CreateRoomRequest(
+            command_id=uuid4(), language_profile_id=db.profiles[0].id,
+        ))
+    assert error.value.code == "room_active_limit"
+    assert len(restarted.list()) == 10
+    with db.engine.begin() as c:
+        c.execute(update(learning_rooms).where(learning_rooms.c.id == room_ids[0]).values(
+            created_at=utc_now() - timedelta(days=8), expires_at=utc_now() - timedelta(seconds=1),
+        ))
+    assert create(db).room.status == "lobby"
+    assert len([room for room in restarted.list() if room.status == "lobby"]) == 10
+
+
+def complete_with_unread_final_result(db, unread_actor):
+    room_id, photos = prepared_game(db)
+    answer_round(db, room_id, 0)
+    sender = db.services[1].get(room_id)
+    turn = sender.current_turn
+    sender = db.services[1].clue(
+        room_id, turn.id, command(sender, RoomClueRequest, clue_option_id=turn.clue_options[0].id),
+    )
+    db.services[0].guess(
+        room_id, turn.id, command(sender, RoomGuessRequest, object_key=turn.target_object_key),
+    )
+    reader = 1 - unread_actor
+    snapshot = db.services[reader].get(room_id)
+    completed = db.services[reader].acknowledge(room_id, turn.id, command(snapshot))
+    assert completed.status == "completed" and completed.current_turn is None
+    return room_id, photos
+
+
+@pytest.mark.parametrize("deleted_actor", [0, 1])
+def test_account_deletion_revokes_partners_unread_completed_result(db, deleted_actor):
+    partner = 1 - deleted_actor
+    room_id, photo_ids = complete_with_unread_final_result(db, partner)
+    before = db.services[partner].get(room_id)
+    assert before.action_required == "viewResult" and before.current_turn.index == 1
+    earned = next(item for item in before.contributions if item.user_id == db.people[partner].id)
+    with db.engine.begin() as c:
+        c.execute(
+            select(users.c.id).where(users.c.id == db.people[deleted_actor].id).with_for_update()
+        )
+        cleanup_room_account(c, db.people[deleted_actor].id)
+        c.execute(delete(media_assets).where(
+            media_assets.c.owner_user_id == db.people[deleted_actor].id,
+        ))
+        c.execute(delete(users).where(users.c.id == db.people[deleted_actor].id))
+    after = db.services[partner].get(room_id)
+    assert after.status == "completed" and after.action_required == "finished"
+    assert after.current_turn is None and after.photos == []
+    retained = next(item for item in after.contributions if item.user_id == db.people[partner].id)
+    assert retained.basil_earned == earned.basil_earned and retained.xp_earned == earned.xp_earned
+    for photo_id in photo_ids:
+        with pytest.raises(RoomError):
+            db.services[partner].read_image(room_id, photo_id, 640)
+    assert db.services[partner].list()[0].action_required == "finished"
+
+
+def test_unread_completed_result_stays_in_inbox_beyond_recent_history_limit(db):
+    room_id, _ = complete_with_unread_final_result(db, 1)
+    with db.engine.begin() as c:
+        for _ in range(25):
+            now, finished_id = utc_now(), uuid4()
+            code = hashlib.sha256(str(finished_id).encode()).hexdigest()
+            c.execute(insert(learning_rooms).values(
+                id=finished_id, host_user_id=db.people[1].id, source_language_code="en",
+                target_language_code="es", proficiency_level="A1", status="ended", revision=0,
+                invite_hash=hashlib.sha256(code.encode()).hexdigest(), invite_code=None,
+                invite_expires_at=now, expires_at=now + timedelta(days=7), ended_at=now,
+                created_at=now, updated_at=now,
+            ))
+            c.execute(insert(room_members).values(
+                id=uuid4(), room_id=finished_id, user_id=db.people[1].id,
+                language_profile_id=db.profiles[1].id, seat=0, ready=False,
+                active=False, joined_at=now - timedelta(days=1),
+            ))
+    inbox = db.repos[1].list()
+    assert len(inbox) == 21
+    pending = next(room for room in inbox if room.id == room_id)
+    assert pending.status == "completed" and pending.action_required == "viewResult"
+    for _ in range(9):
+        room = create(db, actor=1).room
+        with db.engine.begin() as c:
+            c.execute(update(room_members).where(room_members.c.room_id == room.id).values(
+                joined_at=utc_now() - timedelta(hours=2),
+            ))
+    with pytest.raises(RoomError) as error:
+        create(db, actor=1)
+    assert error.value.code == "room_active_limit"
+    pending = db.services[1].get(room_id)
+    db.services[1].acknowledge(room_id, pending.current_turn.id, command(pending))
+    assert create(db, actor=1).room.status == "lobby"
+
+
+
+def test_room_create_replay_preserves_pre_friendship_command_fingerprints(db):
+    request = CreateRoomRequest(command_id=uuid4(), language_profile_id=db.profiles[0].id)
+    access = db.repos[0].create(request)
+    legacy_body = {
+        "commandId": str(request.command_id), "languageProfileId": str(request.language_profile_id),
+    }
+    legacy_hash = hashlib.sha256(json.dumps(
+        {"kind": "create", "body": legacy_body}, sort_keys=True, separators=(",", ":"),
+    ).encode()).hexdigest()
+    with db.engine.begin() as c:
+        c.execute(update(room_commands).where(
+            room_commands.c.room_id == access.room.id,
+            room_commands.c.command_id == request.command_id,
+        ).values(fingerprint=legacy_hash))
+    replay = PostgresRoomRepository(db.engine, db.people[0].id).create(request)
+    assert replay.room.id == access.room.id and replay.invite_code == access.invite_code
