@@ -15,7 +15,6 @@ import { useAppState } from "../state/useAppState";
 import { savedPastaAvatar } from "../lib/onboardingDraft";
 import { useAuth } from "../state/Auth";
 import { MissionBadges } from "../components/MissionBadges";
-import { ChefOfTheDay } from "../components/ChefOfTheDay";
 
 const socialIcons = {
   instagram: InstagramIcon,
@@ -172,7 +171,6 @@ export function Profile() {
       </section>
 
       <MissionBadges />
-      <ChefOfTheDay />
 
       <section className="profile-section">
         <h2>Learning setup</h2>
