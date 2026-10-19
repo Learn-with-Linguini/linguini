@@ -1,10 +1,9 @@
 import Link from "../../Link";
 import { SoundVideo } from "../../SoundVideo";
-import { Checklist } from "../launch/Checklist";
-import { BannerWall, LaunchClock, ProductHuntListing } from "../launch/Figures";
+import { LaunchClock, ProductHuntListing } from "../launch/Figures";
 import { Img } from "../launch/Img";
 import {
-  Circles, Communities, CreatorMap, DayShifts, DraftRail, GrowthCurve, Phases, PlanStrip, ProductHuntAsks, ReturnDots,
+  Circles, Communities, CreatorMap, DayShifts, GrowthCurve, Phases, PlanStrip, ProductHuntAsks, ReturnDots,
   Roles,
 } from "../launch/Plan";
 import l from "../launch/launch.module.css";
@@ -14,15 +13,6 @@ import story from "../story/story.module.css";
 import s from "../article.module.css";
 
 const IMG = "/blog/launch";
-
-const kit = [
-  { href: `${IMG}/01-your-world.jpg`, name: "Product Hunt gallery, 1 to 4", note: "1270 × 760, in order", img: `${IMG}/01-your-world.jpg` },
-  { href: `${IMG}/product-hunt-icon-240.png`, name: "Product Hunt thumbnail", note: "240 × 240 PNG", img: `${IMG}/product-hunt-icon-240.png` },
-  { href: `${IMG}/explainer-720p.mp4`, name: "Explainer video", note: "50 s, 720p, with voiceover", img: `${IMG}/explainer-poster.jpg` },
-  { href: `${IMG}/explainer.vtt`, name: "Explainer captions", note: "WebVTT, upload to YouTube", img: `${IMG}/explainer-poster.jpg` },
-  { href: `${IMG}/social-square.jpg`, name: "Social square", note: "1080 × 1080", img: `${IMG}/social-square.jpg` },
-  { href: `${IMG}/launch-card-1200x630.jpg`, name: "Launch-day link card", note: "1200 × 630", img: `${IMG}/launch-card-1200x630.jpg` },
-];
 
 export function LaunchCampaign() {
   return (
@@ -39,19 +29,15 @@ export function LaunchCampaign() {
         Product Hunt ranks launches on a daily leaderboard, and its day starts at midnight in San Francisco. Launch at
         12:01am Pacific and you get all 24 hours. Launch later and you’re behind products that started at midnight.
       </p>
-      <p>
-        For a team in Singapore, 12:01am Pacific is <strong>3:01pm on a Saturday afternoon</strong>. Most teams outside
-        the US launch at 3am. We get to launch awake.
-      </p>
       <LaunchClock />
       <p>
-        The cost is that most of Product Hunt’s audience, in the US and Europe, is awake during our night. That’s why
-        launch day runs in shifts.
+        Most of Product Hunt’s audience is in the US and Europe, so the busiest hours fall inside their daytime.
+        That’s why launch day runs in shifts.
       </p>
       <p>
-        We chose a Saturday because a Tuesday has about three times as many launches, and Product Hunt’s own guide says
-        weekend launches get 15% more clicks through to the product. A small team gets more attention on a quiet day.
-        And 17 October is before the US leaves daylight saving on 1 November, which would move us to 4:01pm.
+        We chose <strong>Tuesday 20 October</strong>: the start of Product Hunt’s week, so the listing gets the longest
+        runway on the weekly leaderboard, and the middle of the week has about three times as many launches. A small
+        team gets more attention at the quieter edges.
       </p>
 
       <h2 id="soft-launch">Soft launch first, then open doors</h2>
@@ -97,28 +83,8 @@ export function LaunchCampaign() {
       </figure>
       <p>
         A listing only works if people see it. Product Hunt doesn’t send you traffic so much as reward the traffic you
-        bring, so the next question is what we post.
+        bring, so the next question is who we tell.
       </p>
-
-      <h2 id="posts">What we’ll post</h2>
-      <p>
-        One draft per channel. Each went back and forth between the four of us until we all agreed, and they all go out
-        together at 3:10pm.
-      </p>
-      <DraftRail />
-      <p>
-        None of them ask for upvotes. Product Hunt can pull a launch for that, and a comment tells us more than a vote
-        anyway.
-      </p>
-
-      <h2 id="banners">Banners</h2>
-      <p>
-        Seven files, one look: a real demo photo with the words pinned on, the same way the app shows them. One script
-        draws them all, so moving the date is a one-line change.
-      </p>
-      <div className={`${s.fig} ${s.breakout}`}>
-        <BannerWall />
-      </div>
 
       <h2 id="who">Who we’re telling, closest first</h2>
       <p>
@@ -144,8 +110,8 @@ export function LaunchCampaign() {
 
       <h2 id="day">Launch day, hour by hour</h2>
       <p>
-        Back to the catch from the clock: the US is awake during our night. So the four of us split the 24 hours into
-        three shifts, Singapore time.
+        The leaderboard keeps moving for the full 24 hours, and its busiest stretch is the US and European daytime. So
+        the four of us split the day into three shifts, Pacific time.
       </p>
       <DayShifts />
       <p>Whoever is on shift covers three jobs:</p>
@@ -205,27 +171,6 @@ export function LaunchCampaign() {
         <Link href="/blog/linguini-business-model">our business model</Link>.
       </p>
 
-      <h2 id="checklist">Our checklist</h2>
-      <p>
-        We copied the shape of Yangshun Tay’s launch dashboard for Docusaurus 2.0, which won Product of the Day:
-        links, a timed run, checkboxes, then channel lists. Here’s the first task of each week. Open it up for all of
-        them; it ticks, and remembers your progress in this browser.
-      </p>
-      <Checklist />
-
-      <h2 id="kit">The launch kit</h2>
-      <p>Everything above, in one place. Banners are further up, each with a save button.</p>
-      <ul className={l.kit}>
-        {kit.map(item => (
-          <li key={item.name}>
-            <a href={item.href} download>
-              <Img src={item.img} alt="" loading="lazy" />
-              <span>{item.name}<small>{item.note}</small></span>
-            </a>
-          </li>
-        ))}
-      </ul>
-
       <h2 id="sources">Sources</h2>
       <p className={s.muted} style={{ fontSize: 14 }}>
         <a href="https://www.ycombinator.com/">Y Combinator</a> ·{" "}
@@ -236,16 +181,13 @@ export function LaunchCampaign() {
         <a href="https://www.producthunt.com/launch/sharing-your-launch">Sharing your launch</a> ·{" "}
         <a href="https://help.producthunt.com/en/articles/9883485-product-hunt-featuring-guidelines">Featuring guidelines</a> ·{" "}
         <a href="https://www.producthunt.com/p/databox/i-ve-analyzed-all-2026-ph-launches-to-find-the-best-day-to-launch">Databox: best day to launch in 2026</a> ·{" "}
-        <a href="https://www.timeanddate.com/time/change/usa?year=2026">US daylight saving 2026</a> ·{" "}
         <a href="https://news.ycombinator.com/showhn.html">Show HN guidelines</a> ·{" "}
         <a href="https://youtu.be/xJdx0BlP0iY?t=198">Arc’s CEO on the waitlist</a> ·{" "}
         <a href="https://techcrunch.com/2023/07/25/arc-browser-is-now-available-to-download-for-everyone">Arc opens to everyone</a> ·{" "}
         <a href="https://en.wikipedia.org/wiki/Clubhouse_(app)">Clubhouse</a> ·{" "}
         <a href="https://www.hellotalk.com/community-guidelines">HelloTalk guidelines</a> ·{" "}
-        <a href="https://www.nushackers.org/">NUS Hackers</a> ·{" "}
         <a href="https://lindiebotes.com/about/">Lindie Botes</a> ·{" "}
-        <a href="https://amplitude.com/blog/7-percent-retention-rule">Amplitude 7% rule</a> ·{" "}
-        Docusaurus 2.0 launch dashboard.
+        <a href="https://amplitude.com/blog/7-percent-retention-rule">Amplitude 7% rule</a>.
         Subreddit rules and community sizes change often; we recheck each one the week before.
       </p>
     </div>

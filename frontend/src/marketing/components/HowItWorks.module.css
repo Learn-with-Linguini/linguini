@@ -9,8 +9,10 @@
   color: #fff8ea;
 }
 
-.lede {
-  color: #b9d4d0;
+.head .lede,
+.section .lede {
+  color: #fff8ea;
+  opacity: 1;
 }
 
 .layout {

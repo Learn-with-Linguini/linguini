@@ -249,6 +249,7 @@
 
   .ring {
     position: relative;
+    inset: auto;
     display: flex;
     gap: 18px;
     margin-inline: calc(var(--gutter) * -1);
@@ -295,27 +296,54 @@
   }
 
   .copy {
-    justify-items: start;
-    padding-top: 20px;
-    text-align: left;
-  }
-
-  .ctas,
-  .prompt {
-    justify-content: flex-start;
-  }
-
-  .ctas {
-    display: grid;
-    width: 100%;
-  }
-
-  .tryButton {
-    display: none;
+    justify-items: center;
+    gap: 16px;
+    padding-block: 16px 20px;
+    text-align: center;
   }
 
   .title {
-    font-size: clamp(44px, 12.5vw, 56px);
+    font-size: clamp(40px, 11.2vw, 52px);
+    text-align: center;
+  }
+
+  .lede {
+    font-size: 16px;
+    line-height: 1.5;
+    text-align: center;
+    margin-inline: auto;
+  }
+
+  .betaNote {
+    padding: 6px 12px;
+    font-size: 13px;
+    text-align: center;
+    margin-inline: auto;
+  }
+
+  .prompt {
+    justify-content: center;
+    text-align: center;
+    gap: 10px;
+    margin-top: 4px;
+    font-size: 15px;
+    width: 100%;
+  }
+
+  .prompt p {
+    text-align: center;
+    width: 100%;
+    margin: 0;
+  }
+
+  .ctas {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .ctas > :global(.btn) {
+    width: auto;
   }
 }
 

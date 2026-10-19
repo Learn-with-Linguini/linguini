@@ -132,9 +132,6 @@ export function Hero() {
               <a href={appLinks.signUp} className="btn">
                 Join the public beta
               </a>
-              <button type="button" className={`btn btn--teal ${styles.tryButton}`} onClick={() => pick(scenes[0].id, document.querySelector<HTMLElement>(`[data-print="${scenes[0].id}"]`))}>
-                Try it on a photo <ArrowRight size={20} />
-              </button>
             </div>
             <div className={styles.prompt}>
               <svg className={styles.noodle} viewBox="0 0 120 60" aria-hidden="true">

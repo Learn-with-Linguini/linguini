@@ -61,12 +61,22 @@
   color: var(--ink-muted);
 }
 
-@media (max-width: 760px) {
+@media (max-width: 960px) {
   .grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .brand {
     grid-column: 1 / -1;
+  }
+
+  .col {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .col a {
+    max-width: 100%;
+    min-width: 44px;
+    min-height: 44px;
   }
 }
