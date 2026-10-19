@@ -108,12 +108,14 @@ def test_only_spanish_and_french_are_enabled_for_a2():
             for mission in lesson_missions(
                 "lesson", {"proficiency_level": "A2", "target_language_code": language}
             )
-        ] == ["A2"] * 4
+        ] == ["A2"] * 5
+        assert [mission.mission_id for mission in lesson_missions(
+            "lesson", {"proficiency_level": "A2", "target_language_code": language}
+        )] == ["M01", "M02", "M03", "M04", "M06"]
     for language in ("de", "ko"):
-        assert (
-            lesson_missions("lesson", {"proficiency_level": "A2", "target_language_code": language})
-            == []
-        )
+        assert [mission.mission_id for mission in lesson_missions(
+            "lesson", {"proficiency_level": "A2", "target_language_code": language}
+        )] == ["M06"]
 
 
 def test_gating_preserves_a1_and_a0_plans_and_excludes_other_a2_languages():
@@ -134,12 +136,13 @@ def test_gating_preserves_a1_and_a0_plans_and_excludes_other_a2_languages():
         "lesson", {"proficiency_level": "A0", "target_language_code": "es"}
     )
     assert [(mission.mission_id, mission.practice_level) for mission in a0] == [
-        ("M01", "A0"), ("M02", "A0"), ("M03", "A0"), ("M13", "A0"),
+        ("M01", "A0"), ("M02", "A0"), ("M03", "A0"),
+        ("M04", "A0"), ("M05", "A0"), ("M13", "A0"),
     ]
     for language in ("de", "ko"):
-        assert lesson_missions(
+        assert [mission.mission_id for mission in lesson_missions(
             "lesson", {"proficiency_level": "A2", "target_language_code": language}
-        ) == []
+        )] == ["M06"]
 
 
 def test_a2_eligibility_uses_confirmed_relations_and_unequal_named_groups():

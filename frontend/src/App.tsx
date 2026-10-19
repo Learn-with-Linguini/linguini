@@ -7,6 +7,7 @@ import { PracticeSelect } from "./pages/PracticeSelect";
 import { PracticeAnalysis } from "./pages/PracticeAnalysis";
 import { MicTest } from "./pages/MicTest";
 import { Learn } from "./pages/Learn";
+import { VocabularyPreview } from "./pages/VocabularyPreview";
 import { LearningTaskPage } from "./pages/LearningTaskPage";
 import { ISpyPhase1 } from "./pages/ISpyPhase1";
 import { ISpyPhase2 } from "./pages/ISpyPhase2";
@@ -84,6 +85,7 @@ export default function App() {
           <Route path="analysis" element={<PracticeAnalysis />} />
           <Route path="mic-test" element={<MicTest />} />
           <Route path="learn" element={<Learn />} />
+          <Route path="learn/vocabulary-preview" element={<VocabularyPreview />} />
           <Route path="learn/:taskId" element={<LearningTaskPage />} />
           <Route path="ispy-1" element={<ISpyPhase1 />} />
           <Route path="ispy-2" element={<ISpyPhase2 />} />

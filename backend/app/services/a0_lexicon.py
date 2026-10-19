@@ -131,6 +131,101 @@ def chunk(language: str, noun: Noun) -> str:
     return join(language, form(language, noun), noun.noun)
 
 
+def situational_noun(language: str, noun: Noun, *, accusative=False, topic=False) -> str:
+    """A reviewed noun chunk for the A0 ownership and preference missions."""
+    if language == "ko":
+        particle = ("은" if noun.batchim else "는") if topic else (
+            "을" if noun.batchim else "를"
+        )
+        return noun.noun + particle
+    article = (
+        _ACCUSATIVE_DE[noun.gender] if language == "de" and accusative
+        else form(language, noun)
+    )
+    if language == "fr" and noun.elides:
+        return f"{article}{noun.noun}"
+    return f"{article} {noun.noun}"
+
+
+def ownership_chunks(language: str, noun: Noun, source: str) -> dict[str, str]:
+    """Closed M04 phrases for one reviewed noun."""
+    if language == "ko":
+        mine, not_mine, is_yours, mine_predicate, yours_predicate = (
+            "제 거예요.", "제 거 아니에요.", "이거 본인 거예요?", "제 거예요", "본인 거예요"
+        )
+        x_mine = f"{situational_noun(language, noun, topic=True)} {mine_predicate}."
+        x_yours = f"{situational_noun(language, noun, topic=True)} {yours_predicate}."
+    elif language == "es":
+        gender = "o" if noun.gender == M else "a"
+        mine, not_mine, is_yours = (
+            f"Es mí{gender}.",
+            f"No es mí{gender}.",
+            f"¿Es tuy{gender}?",
+        )
+        mine_predicate, yours_predicate = f"es mí{gender}", f"es tuy{gender}"
+        name = situational_noun(language, noun)
+        name = name[:1].upper() + name[1:]
+        x_mine, x_yours = f"{name} es mí{gender}.", f"{name} es tuy{gender}."
+    elif language == "fr":
+        mine, not_mine, is_yours = "C'est à moi.", "Ce n'est pas à moi.", "C'est à toi ?"
+        mine_predicate, yours_predicate = "est à moi", "est à toi"
+        name = situational_noun(language, noun)
+        name = name[:1].upper() + name[1:]
+        x_mine, x_yours = f"{name} est à moi.", f"{name} est à toi."
+    else:
+        mine, not_mine, is_yours = "Das gehört mir.", "Das gehört mir nicht.", "Gehört das dir?"
+        mine_predicate, yours_predicate = "gehört mir", "gehört dir"
+        name = situational_noun(language, noun)
+        name = name[:1].upper() + name[1:]
+        x_mine, x_yours = f"{name} gehört mir.", f"{name} gehört dir."
+    return {
+        "mine": mine,
+        "notMine": not_mine,
+        "isYours": is_yours,
+        "minePredicate": mine_predicate,
+        "yoursPredicate": yours_predicate,
+        "xMine": x_mine,
+        "xYours": x_yours,
+        "englishMine": f"The {source} is mine.",
+        "englishYours": f"The {source} is yours.",
+    }
+
+
+def preference_chunks(language: str, noun: Noun, source: str) -> dict[str, str]:
+    """Closed M05 phrases for one reviewed noun."""
+    n = situational_noun(language, noun)
+    a = situational_noun(language, noun, accusative=True)
+    o = situational_noun(language, noun)
+    if language == "es":
+        like, dislike, question = f"Me gusta {n}.", f"No me gusta {n}.", f"¿Te gusta {n}?"
+        choose, choose_noun = "¿Qué eliges?", f"Elijo {n}."
+        like_frame, dislike_frame = "Me gusta ___", "No me gusta ___"
+    elif language == "fr":
+        like, dislike, question = f"J'aime {n}.", f"Je n'aime pas {n}.", f"Tu aimes {n} ?"
+        choose, choose_noun = "Tu choisis quoi ?", f"Je choisis {n}."
+        like_frame, dislike_frame = "J'aime ___", "Je n'aime pas ___"
+    elif language == "de":
+        like, dislike, question = f"Ich mag {a}.", f"Ich mag {a} nicht.", f"Magst du {a}?"
+        choose, choose_noun = "Was nimmst du?", f"Ich nehme {a}."
+        like_frame, dislike_frame = "Ich mag ___", "Ich mag ___ nicht"
+    else:
+        like, dislike, question = f"{o} 좋아해요.", f"{o} 안 좋아해요.", f"{o} 좋아해요?"
+        choose, choose_noun = "뭐 골라요?", f"{o} 골라요."
+        like_frame, dislike_frame = "___ 좋아해요", "___ 안 좋아해요"
+    return {
+        "like": like,
+        "dislike": dislike,
+        "doYouLike": question,
+        "whatChoose": choose,
+        "iChoose": choose_noun,
+        "likeFrame": like_frame,
+        "dislikeFrame": dislike_frame,
+        "englishLike": f"I like the {source}.",
+        "englishDislike": f"I don't like the {source}.",
+        "englishDoYouLike": f"Do you like the {source}?",
+    }
+
+
 def form_options(language: str, noun: Noun, plurals_taught: bool) -> list[str]:
     """Reviewed forms for the noun's slot, the correct one first, at most three.
 

@@ -396,8 +396,11 @@ def profiles_table():
 
 
 SPANISH_COLOURS = {
-    "black": "negro", "blue": "azul", "brown": "marrón", "green": "verde", "grey": "gris",
-    "orange": "naranja", "red": "rojo", "white": "blanco", "yellow": "amarillo",
+    "beige": "beige", "black": "negro", "blue": "azul", "brown": "marrón",
+    "dark": "oscuro", "dark brown": "marrón oscuro", "dark gray": "gris oscuro",
+    "gray": "gris", "green": "verde", "grey": "gris", "light": "claro",
+    "light brown": "marrón claro", "light gray": "gris claro", "orange": "naranja",
+    "red": "rojo", "silver": "plateado", "white": "blanco", "yellow": "amarillo",
 }
 
 
@@ -411,7 +414,11 @@ class SpanishTranslator(Translator):
                 for term in payload["objects"]
             ],
             "attributes": [
-                {**term, "translation": SPANISH_COLOURS[term["source"]], "phoneticText": "AH"}
+                {
+                    **term,
+                    "translation": SPANISH_COLOURS.get(term["source"], term["source"]),
+                    "phoneticText": "AH",
+                }
                 for term in payload["attributes"]
             ],
             "relationships": [
@@ -429,7 +436,9 @@ def test_preloaded_catalog_facts_reference_their_own_items(database):
     for slug, content in rows:
         ids = {item["id"] for item in content["items"]}
         colours = [
-            item["attributes"]["color"] for item in content["items"] if item.get("attributes")
+            item["attributes"]["color"]
+            for item in content["items"]
+            if "color" in item.get("attributes", {})
         ]
         assert colours and set(colours) <= set(SPANISH_COLOURS), slug
         assert content["relations"], slug

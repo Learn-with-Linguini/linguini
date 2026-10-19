@@ -17,6 +17,9 @@ from app.database import create_database_engine
 from app.services.auth import SupabaseTokenVerifier, load_auth_settings
 from app.services.background import ThreadPoolBackgroundRunner
 
+load_dotenv(".env.local")
+load_dotenv(".env")
+
 logger = logging.getLogger(__name__)
 server_logger = logging.getLogger("uvicorn.error")
 
@@ -86,8 +89,6 @@ async def lifespan(app: FastAPI):
 
 
 def create_app() -> FastAPI:
-    load_dotenv(".env.local")
-    load_dotenv(".env")
     app = FastAPI(
         lifespan=lifespan,
         title="Linguini API",

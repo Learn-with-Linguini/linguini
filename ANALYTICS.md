@@ -56,6 +56,7 @@ Because Linguini is a single-page application (SPA), route changes do not reload
 * `/onboarding` — Language pairing and level selection
 * `/practice` — Photo capture / scene selector
 * `/practice/sessions/:sessionId/*` — Active lesson tasks (word cards, grammar, description)
+* `/practice/sessions/:sessionId/learn/vocabulary-preview` — Photo-level vocabulary introductory preview
 * `/practice/ispy` — Standalone I-Spy mode selector (Solo vs Friends)
 * `/practice/ispy/join` — Enter invite code to join a room
 * `/practice/ispy/room/:roomCode` — Multiplayer I-Spy gameplay room
@@ -106,7 +107,19 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `scene_analysis_retried` | `{ sessionId }` | User requests AI re-analysis of a photo |
 | `task_answer_checked` | `{ taskId, isCorrect, kind }` | Learner checks answer on an interactive exercise |
 | `task_completed` | `{ taskId, kind }` | Learner completes reading or informational task |
-| `session_summary_viewed` | `{ xpEarned, wordsLearnedCount, ispyCorrectCount, completedLessonsCount }` | Session summary screen displays upon finishing a lesson |
+| `task_opened` | `{ taskId }` | User opens a specific learning task from the task list |
+| `learning_exit_clicked` | — | User exits the learning task overview back to Home |
+| `finish_lesson_clicked` | — | User completes all learning tasks and clicks "Finish lesson" |
+| `play_ispy_clicked` | — | User proceeds from learning tasks to play I-Spy |
+| `vocabulary_preview_started` | — | User starts "Learn the words" vocabulary preview |
+| `vocabulary_preview_continue_clicked` | `{ taskId }` | User continues from preview to individual word learning |
+| `vocabulary_preview_exit_clicked` | — | User exits from vocabulary preview |
+| `home_continue_practice_clicked` | — | User resumes incomplete practice from dashboard |
+| `home_begin_practice_clicked` | — | User starts new practice from dashboard |
+| `home_explore_vocabulary_clicked` | — | User clicks vocabulary revisit card on home dashboard |
+| `home_explore_ispy_clicked` | — | User clicks I-Spy quick play card on home dashboard |
+| `session_summary_viewed` | `{ basilEarned, wordsLearnedCount, completedLessonsCount }` | Session summary screen displays upon finishing a lesson |
+| `summary_back_home_clicked` | — | User clicks "Back home" on session summary |
 | `summary_journal_cta_clicked` | — | User clicks "Write today's journal entry" from summary |
 | `summary_review_words_cta_clicked` | — | User clicks "Review difficult words" from summary |
 | `summary_play_ispy_clicked` | — | User clicks "Play I-Spy with this scene" from summary |
@@ -121,8 +134,17 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `ispy_match_confirmed` | — | Learner confirms Linguini guessed their object correctly |
 | `room_created` | — | User creates a new multiplayer room |
 | `room_joined` | — | User joins a friend's room using a room code |
+| `room_friend_invited` | — | User creates a friend invitation code/link |
+| `room_friend_accepted` | — | User accepts a friend invitation code |
+| `room_friend_removed` | — | User removes a friend from challenges |
 | `room_action_executed` | `{ intent }` | Multiplayer game action dispatched (ready, turn, etc.) |
 | `game_accent_selected` | `{ appearance }` | Learner equips or buys an accent using Sauce/Basil |
+
+### Gamification & Leaderboards
+| Event Name | Parameters | Trigger Description |
+| :--- | :--- | :--- |
+| `chef_of_the_day_participation_toggled` | `{ participating }` | User opts in or out of the daily Chef of the Day leaderboard |
+| `chef_of_the_day_retry_clicked` | — | User retries loading the daily leaderboard |
 
 ### Vocabulary & Journal
 | Event Name | Parameters | Trigger Description |
