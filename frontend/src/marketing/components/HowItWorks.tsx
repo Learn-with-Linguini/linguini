@@ -93,7 +93,7 @@ export function HowItWorks() {
         <div className={`section-head ${styles.head}`}>
           <h2 id="how-title" className="section-title">From snapshot to sentence</h2>
           <p className={`section-lede ${styles.lede}`}>
-            Every Linguini session follows the same small loop. It fits in a coffee break and leaves you with a page to keep.
+            Every Linguini session follows the same small loop, from your own photo or a ready-made scene. It fits in a coffee break, fills your vocabulary bank and leaves you with a page to keep.
           </p>
         </div>
 

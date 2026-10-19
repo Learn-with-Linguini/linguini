@@ -1,7 +1,7 @@
 export const faq = [
   {
     q: "Do I have to use my own photos?",
-    a: "No. Your own photos make the best lessons, but Linguini also has ready-made scenes — a café, a market, a street, a park and more — for days when your camera roll is quiet.",
+    a: "No. Your own photos make the best lessons, but Linguini also has ready-made scenes — a café, a market, a street, a park and more — for days when your camera roll is quiet. Pick one from Practice and its words are ready straight away.",
   },
   {
     q: "Which languages can I learn?",
@@ -17,7 +17,15 @@ export const faq = [
   },
   {
     q: "What happens to my photos?",
-    a: "They stay in your account and are only used to build your sessions and your journal. They are never shown to other learners.",
+    a: "They stay in your account and are only used to build your sessions and your journal. They are never shown to other learners, unless you choose to add them to a private I Spy room you share with a friend.",
+  },
+  {
+    q: "Can I play with a friend?",
+    a: "Yes. Start a private I Spy room and share its invite code or link with one friend learning the same language. You each add 2–4 photos, then take turns giving a clue and spotting the object. Rounds you solve together earn XP and Basil leaves for you both. Prefer to play alone? Solo I-Spy with Linguini is always available.",
+  },
+  {
+    q: "Where can I see my progress and vocabulary?",
+    a: "Every word you keep goes into your vocabulary bank, grouped by the scene you learned it in and marked new, learning or mastered. Your progress page shows the words you’ve learned and mastered, the scenes you’ve played, your streak and your Basil, and the I-Spy page shows this week’s Basil leaderboard.",
   },
   {
     q: "Is there an app to download?",
