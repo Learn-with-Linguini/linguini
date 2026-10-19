@@ -15,7 +15,6 @@ import { useAppState } from "../state/useAppState";
 import { useAuth } from "../state/Auth";
 import { MissionBadges } from "../components/MissionBadges";
 import { ChefOfTheDay } from "../components/ChefOfTheDay";
-import { GameResources } from "../components/GameResources";
 
 const socialIcons = {
   instagram: InstagramIcon,
@@ -31,6 +30,7 @@ export function Profile() {
   const [deleteError, setDeleteError] = useState("");
   const [deleting, setDeleting] = useState(false);
   const deleteTitleId = useId();
+  const languageDialogTitleId = useId();
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -38,7 +38,8 @@ export function Profile() {
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [passwordUpdating, setPasswordUpdating] = useState(false);
   const [surveyOpen, setSurveyOpen] = useState(false);
-  const { learner, user, activeProfile, progress, progressLoading, progressError, profileError, profileSaving, setLanguage, saveLanguageProfile, saveUser } = useAppState();
+  const [pendingLanguageCode, setPendingLanguageCode] = useState<string | null>(null);
+  const { learner, user, activeProfile, progress, progressLoading, progressError, profileError, profileSaving, saveLanguageProfile, saveUser } = useAppState();
   const tier = accountTiers[user?.tier ?? "beta"];
   const weeklyBasil = progress?.leaderboard.find(row => row.isYou)?.xp ?? 0;
 
@@ -55,6 +56,14 @@ export function Profile() {
     if (deleting) return;
     setDeleteOpen(false);
     setDeleteError("");
+  };
+
+  const pendingLanguage = languages.find(language => language.code === pendingLanguageCode);
+  const closeLanguageDialog = () => setPendingLanguageCode(null);
+  const confirmLanguageChange = () => {
+    if (!pendingLanguage) return;
+    trackAction("language_change_onboarding_started", { language: pendingLanguage.code });
+    navigate("/onboarding", { state: { from: "/profile", languageChangeCode: pendingLanguage.code } });
   };
 
   const logOut = async () => {
@@ -161,11 +170,6 @@ export function Profile() {
         </Card>
       </section>
 
-      <section className="profile-section" aria-labelledby="profile-basil-heading">
-        <h2 id="profile-basil-heading">Your Basil Points</h2>
-        <GameResources shop />
-      </section>
-
       <MissionBadges />
       <ChefOfTheDay />
 
@@ -177,7 +181,9 @@ export function Profile() {
               <strong>Target language</strong>
               <small>The language you are learning</small>
             </span>
-            <select disabled={profileSaving} value={learner.languageCode} onChange={event => void setLanguage(event.target.value, learner.dailyMinutes ?? 10)}>
+            <select disabled={profileSaving} value={learner.languageCode} onChange={event => {
+              if (event.target.value !== learner.languageCode) setPendingLanguageCode(event.target.value);
+            }}>
               {languages.map(language => (
                 <option key={language.code} value={language.code}>
                   {language.flag} {language.name}
@@ -433,6 +439,33 @@ export function Profile() {
               <Button block disabled={deleting} onClick={() => void deleteAccount()}>
                 {deleting ? "Deleting account…" : "Permanently delete account"}
               </Button>
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {pendingLanguage ? (
+        <div className="help-modal__backdrop" onMouseDown={closeLanguageDialog}>
+          <section
+            className="help-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={languageDialogTitleId}
+            aria-describedby={`${languageDialogTitleId}-description`}
+            onMouseDown={event => event.stopPropagation()}
+          >
+            <div className="help-modal__header">
+              <h2 id={languageDialogTitleId}>Switch to {pendingLanguage.name}?</h2>
+              <IconButton label="Keep current language" onClick={closeLanguageDialog}>
+                <CloseIcon />
+              </IconButton>
+            </div>
+            <p id={`${languageDialogTitleId}-description`}>
+              We’ll ask a few setup questions for {pendingLanguage.name} before making it your active language. Your progress in {learner.language} will stay saved.
+            </p>
+            <div className="account-delete-actions">
+              <Button variant="quiet" block onClick={closeLanguageDialog}>Keep {learner.language}</Button>
+              <Button block onClick={confirmLanguageChange}>Set up {pendingLanguage.name}</Button>
             </div>
           </section>
         </div>

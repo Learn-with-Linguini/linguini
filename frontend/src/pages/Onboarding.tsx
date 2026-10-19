@@ -17,11 +17,14 @@ export function Onboarding() {
   const location = useLocation();
   const { learner, user, completeOnboarding, profileSaving, profileError } = useAppState();
   const [completionStarted, setCompletionStarted] = useState(false);
-  const destination = (location.state as { from?: string } | null)?.from ?? "/home";
-  if (user?.onboardingCompleted && !completionStarted) return <Navigate to={destination} replace />;
+  const navigationState = location.state as { from?: string; languageChangeCode?: string } | null;
+  const destination = navigationState?.from ?? "/home";
+  const languageChangeCode = navigationState?.languageChangeCode;
+  const restartingForLanguage = Boolean(languageChangeCode && languages.some(language => language.code === languageChangeCode));
+  if (user?.onboardingCompleted && !completionStarted && !restartingForLanguage) return <Navigate to={destination} replace />;
   const initial: OnboardingDraft = {
     name: learner.name,
-    languageCode: learner.languageCode || languages[0].code,
+    languageCode: restartingForLanguage ? languageChangeCode! : learner.languageCode || languages[0].code,
     goal: learner.goal || defaultDraft.goal,
     minutes: learner.dailyMinutes ?? 10,
     microphoneEnabled: learner.micOn,
@@ -29,7 +32,7 @@ export function Onboarding() {
     avatar: localStorage.getItem("linguini-avatar") ?? "farfalle",
     proficiencyLevel: "A0",
   };
-  return <OnboardingSteps initial={initial} saving={profileSaving} error={profileError} onFinish={() => navigate(destination)} onComplete={async values => {
+  return <OnboardingSteps initial={initial} restartingForLanguage={restartingForLanguage} saving={profileSaving} error={profileError} onFinish={() => navigate(destination)} onComplete={async values => {
     setCompletionStarted(true);
     const saved = await completeOnboarding(values.languageCode, values.minutes, values.proficiencyLevel ?? "A0", {
       displayName: values.name || learner.name,
@@ -39,7 +42,7 @@ export function Onboarding() {
       onboardingCompleted: true,
     });
     if (saved) {
-      trackAction("onboarding_completed", {
+      trackAction(restartingForLanguage ? "language_onboarding_completed" : "onboarding_completed", {
         language: values.languageCode,
         minutes: values.minutes,
         level: values.proficiencyLevel ?? "A0",

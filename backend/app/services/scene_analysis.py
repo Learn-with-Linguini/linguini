@@ -35,6 +35,23 @@ class SceneAnalysisError(Exception):
     """Raised when a scene-analysis provider fails."""
 
 
+def uploaded_scene_title(result: SceneAnalysisResult) -> str:
+    """Replace provider placeholder titles with a useful, observed photo title."""
+    generic = {"user uploaded photo", "uploaded photo", "your uploaded photo", "untitled"}
+    if result.title.strip().lower() not in generic:
+        return result.title
+    labels = list(
+        dict.fromkeys(item.label.strip() for item in result.objects if item.label.strip())
+    )[:3]
+    if not labels:
+        return "Your photo"
+    if len(labels) == 1:
+        return f"A photo of a {labels[0]}"
+    if len(labels) == 2:
+        return f"A photo of {labels[0]} and {labels[1]}"
+    return f"A photo of {labels[0]}, {labels[1]} and {labels[2]}"
+
+
 def scene_inventory(result: SceneAnalysisResult) -> dict[str, Any]:
     """Asset-scoped, provider-neutral facts without session-specific identifiers."""
     source_keys = {item.id: item.source_object_key for item in result.objects}

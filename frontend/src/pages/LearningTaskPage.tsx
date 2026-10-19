@@ -1,5 +1,5 @@
 import { useRefreshBasil } from "../state/gamification";
-import { MissionProgress, QuestionBasil } from "../components/MissionProgress";
+import { QuestionBasil } from "../components/MissionProgress";
 import { basilEarnedText } from "../lib/gamification";
 import { InlineLoader } from "../components/LoadingScreen";
 import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from "react";
@@ -54,7 +54,7 @@ export function LearningTaskPage() {
     goTo(nextLearningStep(session.tasks, lastM06.id, generating,
       item => taskDone(item) || item.publicContent.missionId === "M06"));
   };
-  return <div className="stack learning-task-page">{task.publicContent.missionId ? <MissionProgress sessionId={scene.sessionId!} missionId={task.publicContent.missionId} /> : null}<LearningTaskContent key={task.id} task={task} index={index} total={tasks.length}
+  return <div className="stack learning-task-page"><LearningTaskContent key={task.id} task={task} index={index} total={tasks.length}
     onScenarioChange={() => loadSession(session.session.id)}
     onSkipRolePlay={skipM06RolePlay}
     onNext={() => {

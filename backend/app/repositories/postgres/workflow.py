@@ -149,6 +149,7 @@ from app.services.scene_analysis import (
     UnavailableSceneAnalyzer,
     scene_inventory,
     scene_result_from_inventory,
+    uploaded_scene_title,
 )
 from app.services.session_personalization import (
     lesson_history,
@@ -193,7 +194,7 @@ ALLOWED_TRANSITIONS = {
     "failed": {"analyzingScene"},
 }
 READ_TASKS = {"vocabularyIntroduction", "grammarExplanation", "syntaxExplanation"}
-ANALYSIS_TIMEOUT = timedelta(minutes=15)
+ANALYSIS_TIMEOUT = timedelta(minutes=2)
 
 
 def _lesson_answer_is_correct(task, question_id, answer):
@@ -1840,6 +1841,8 @@ class PostgresWorkflowRepository:
         """Model round-trip, off the request path. Must never raise to its runner."""
         try:
             result = self.analyzer.analyze(claimed, asset, profile, scene)
+            if asset.source in {"camera", "userUpload"}:
+                result = result.model_copy(update={"title": uploaded_scene_title(result)})
             with self.transaction() as c:
                 current = self._session(c, session_id, profile_id)
                 if current.status != "analyzingScene":
