@@ -56,10 +56,10 @@ Batch the following week's material in one session. Record one clean vertical pr
 
 Use one campaign name and a different source for each platform:
 
-- X: `https://www.learnwithlinguini.com/?utm_source=x&utm_medium=social&utm_campaign=public_beta_4week`
-- TikTok: `https://www.learnwithlinguini.com/?utm_source=tiktok&utm_medium=social&utm_campaign=public_beta_4week`
-- LinkedIn: `https://www.learnwithlinguini.com/?utm_source=linkedin&utm_medium=social&utm_campaign=public_beta_4week`
-- Instagram: `https://www.learnwithlinguini.com/?utm_source=instagram&utm_medium=social&utm_campaign=public_beta_4week`
+- X: `https://www.learnwithlinguini.com/?utm_source=x&utm_medium=social&utm_campaign=public_beta`
+- TikTok: `https://www.learnwithlinguini.com/?utm_source=tiktok&utm_medium=social&utm_campaign=public_beta`
+- LinkedIn: `https://www.learnwithlinguini.com/?utm_source=linkedin&utm_medium=social&utm_campaign=public_beta`
+- Instagram: `https://www.learnwithlinguini.com/?utm_source=instagram&utm_medium=social&utm_campaign=public_beta`
 
 Add `utm_content=week_1_photo`, `week_2_control`, `week_3_beta_close` or `week_4_post_beta` when the platform permits a direct link. Instagram and TikTok should place their tracked link in the profile.
 

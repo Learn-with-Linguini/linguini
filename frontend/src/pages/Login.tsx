@@ -4,6 +4,7 @@ import { Button } from "../components/ui";
 import { trackAction } from "../lib/analytics.ts";
 import { authenticationMessage } from "../lib/authMessages.ts";
 import { isSupabaseConfigured, supabase } from "../lib/supabase.ts";
+import { getStoredAttribution } from "../lib/attribution.ts";
 import { useAuth } from "../state/Auth";
 
 export function Login() {
@@ -93,12 +94,16 @@ export function Login() {
       } else {
         trackAction("signup_submitted", { method: "email" });
       }
+      const attribution = getStoredAttribution();
       const response = mode === "signin"
         ? await supabase.auth.signInWithPassword({ email, password })
         : await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/login` },
+          options: {
+            emailRedirectTo: `${window.location.origin}/login`,
+            data: attribution ? { ...attribution } : undefined,
+          },
         });
       if (response.error) {
         setError(authenticationMessage(response.error.message));

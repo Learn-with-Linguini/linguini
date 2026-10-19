@@ -105,6 +105,11 @@ export interface User {
   onboardingCompleted: boolean;
   walkthroughVersionSeen: number;
   tier: AccountTier;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  utmContent?: string | null;
+  utmTerm?: string | null;
 }
 
 export class ApiError extends Error {
@@ -180,7 +185,7 @@ export interface LanguageProfile {
   preferredInputMode: "speech" | "text" | "both";
 }
 
-export type UserPatch = Partial<Pick<User, "displayName" | "timezone" | "onboardingCompleted" | "walkthroughVersionSeen" | "learningGoal" | "microphoneEnabled" | "cameraEnabled">>;
+export type UserPatch = Partial<Pick<User, "displayName" | "timezone" | "onboardingCompleted" | "walkthroughVersionSeen" | "learningGoal" | "microphoneEnabled" | "cameraEnabled" | "utmSource" | "utmMedium" | "utmCampaign" | "utmContent" | "utmTerm">>;
 export type LanguageProfilePatch = Partial<Pick<LanguageProfile, "proficiencyLevel" | "isActive" | "dailyGoalMinutes" | "preferredInputMode">>;
 
 export type SupportIssueType = "general" | "technical" | "content" | "account";
