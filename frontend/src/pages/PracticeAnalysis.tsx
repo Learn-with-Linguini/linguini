@@ -27,8 +27,16 @@ const RELATION_OPTIONS = [
 const RELATION_CHOICES = RELATION_OPTIONS.map(([value, label]) => ({ value, label }));
 type AnalysisPanel = SceneReviewPanel;
 
+function canonicalRelationValue(relation: string) {
+  const normalized = relation.trim().replace(/[\s_-]+/g, "").toLowerCase();
+  return RELATION_OPTIONS.find(([value, label]) =>
+    value.toLowerCase() === normalized || label.replace(/[\s_-]+/g, "").toLowerCase() === normalized,
+  )?.[0] ?? relation;
+}
+
 function relationLabel(relation: string) {
-  return RELATION_OPTIONS.find(([value]) => value === relation)?.[1]
+  const canonical = canonicalRelationValue(relation);
+  return RELATION_OPTIONS.find(([value]) => value === canonical)?.[1]
     ?? humanizeTerm(relation);
 }
 
@@ -252,7 +260,7 @@ export function PracticeAnalysis() {
       sceneTitle: sceneTitle.trim() || undefined,
       acceptedObjectIds: kept.map(item => item.id),
       addedObjects: added,
-      relations: visibleRelations,
+      relations: visibleRelations.map(row => ({ ...row, relation: canonicalRelationValue(row.relation) })),
       objectAttributes: selectedAttributes,
       objectCounts: objectCounts(groups, verifiedCounts),
       repositionedObjects: Object.entries(positions).map(([id, anchorPoint]) => ({ id, anchorPoint })),
@@ -331,7 +339,7 @@ export function PracticeAnalysis() {
           </form> : null}
           <section className="analysis-object-counts" aria-labelledby="analysis-object-counts-title">
             <div>
-              <h3 id="analysis-object-counts-title">Object counts</h3>
+              <h3 id="analysis-object-counts-title">Count</h3>
               <p className="small muted">Counts update when you add or remove objects.</p>
             </div>
             <dl>
@@ -364,16 +372,17 @@ export function PracticeAnalysis() {
               {visibleRelations.map(row => {
                 const subjectObject = relationObjects.find(item => item.id === row.subjectSceneObjectId);
                 const referenceObject = relationObjects.find(item => item.id === row.referenceSceneObjectId);
+                const relation = canonicalRelationValue(row.relation);
                 return <div className="analysis-relation-row" key={row.id}>
                   <div className="analysis-relation-row__object">
                     <span className="analysis-word-row__marker">{subjectObject?.marker}</span>
                     <strong>{subjectObject?.label}</strong>
                   </div>
                   <div className="analysis-relation-row__connection">
-                    {locked ? <span className="analysis-relation-row__relation">{relationLabel(row.relation)}</span> :
-                      <ComboBox compact ariaLabel="Connection" value={row.relation}
-                        options={!RELATION_OPTIONS.some(option => option[0] === row.relation)
-                          ? [{ value: row.relation, label: relationLabel(row.relation) }, ...RELATION_CHOICES]
+                    {locked ? <span className="analysis-relation-row__relation">{relationLabel(relation)}</span> :
+                      <ComboBox compact ariaLabel="Connection" value={relation}
+                        options={!RELATION_OPTIONS.some(option => option[0] === relation)
+                          ? [{ value: relation, label: relationLabel(relation) }, ...RELATION_CHOICES]
                           : RELATION_CHOICES}
                         onChange={value => setRelations(current => current.map(item => item.id === row.id ? { ...item, relation: value } : item))} />}
                   </div>
