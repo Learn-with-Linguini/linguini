@@ -5,6 +5,7 @@ from enum import StrEnum
 
 
 class ProficiencyLevel(StrEnum):
+    A0 = "A0"
     A1 = "A1"
     A2 = "A2"
     B1 = "B1"
@@ -110,6 +111,11 @@ class SessionStatus(StrEnum):
     COMPLETED = "completed"
     ABANDONED = "abandoned"
     FAILED = "failed"
+
+
+class SessionMode(StrEnum):
+    LESSON = "lesson"
+    ISPY = "ispy"
 
 
 class SessionFailureCode(StrEnum):

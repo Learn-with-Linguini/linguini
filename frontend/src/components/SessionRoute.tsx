@@ -47,7 +47,7 @@ function SessionLoader({ id }: { id: string }) {
   const copy = sessionLoadingCopy(location.pathname, session?.session.id === id ? session.session.status : undefined);
   const earlyReady = session?.session.id === id && ["generatingTasks", "ready", "inProgress"].includes(session.session.status)
     && session.tasks.some(task => task.kind === "vocabularyIntroduction");
-  if (loading && !earlyReady && session?.session.id === id && session.session.status === "generatingTasks" && session.translationPreview) return <div className="stack analysis-page">
+  if (loading && !earlyReady && session?.session.id === id && session.session.mode !== "ispy" && session.session.status === "generatingTasks" && session.translationPreview) return <div className="stack analysis-page">
     <h1>Scene analysis</h1>
     <TranslationPreview preview={session.translationPreview} scene={preview ?? undefined} />
     <section role="status" className="panel-note"><h2>Generating tasks...</h2><p className="muted">Explore your translations while we prepare your practice.</p></section>
@@ -59,7 +59,7 @@ function SessionLoader({ id }: { id: string }) {
       <div className="analysis-loading__copy"><h2>{copy.heading}</h2><p className="muted">{copy.support ?? "This will only take a moment."}</p></div>
     </section>
   </div> : <LoadingScreen label={copy.heading} />;
-  if ((!data && !earlyReady) || error) return <ErrorState title="We couldn't open this practice" message={error ?? "This practice isn't available right now."} retry={() => window.location.reload()} backTo="/practice" backLabel="Choose another image" />;
+  if ((!data && !earlyReady) || error) return <ErrorState title="We couldn't open this practice" message={error ?? "This practice isn't available right now."} retry={() => window.location.reload()} backTo={location.pathname.startsWith("/ispy/") ? "/ispy/play" : "/practice"} backLabel={location.pathname.startsWith("/ispy/") ? "Choose another photo" : "Choose another image"} />;
   const current = session?.session.id === id
     ? practiceScene(session, mediaImageUrl(session.mediaAsset.id, 1280), learner.language)
     : data;

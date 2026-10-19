@@ -70,6 +70,7 @@ def test_default_file_loads_when_ai_config_file_is_unset():
     deployment = settings.ai_config.deployments["scene-claude-haiku"]
     assert deployment.api is ApiType.RESPONSES
     assert Capability.VISION in deployment.capabilities
+    assert deployment.defaults.max_output_tokens == 5000
     assert settings.ai_config.credentials["openrouter"].env == ("AI_OPENROUTER_API_KEY",)
 
 

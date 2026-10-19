@@ -1,0 +1,108 @@
+mission_id = "M02"
+practice_level = "A2"
+content_version = 1
+title = "Help someone find it"
+
+[photo_requirements]
+media_sources = ["preloaded", "camera", "userUpload"]
+min_confirmed_objects = 3
+min_relations = 1
+relations = ["on", "under", "next_to", "in_front_of", "behind"]
+eligibility_rule = "findTarget"
+
+[objective]
+objective_id = "find-target-a2"
+can_do = "I can combine a detail and a location clue to find an object."
+
+[[objective.targets]]
+target_id = "understand-target-clues"
+summary = "Understand reviewed attribute and location clues."
+evidence_types = ["recognition", "construction"]
+
+[[objective.targets]]
+target_id = "find-target-object"
+summary = "Select the one object matching both confirmed clues."
+evidence_types = ["objectSelection", "recognition"]
+
+[[objective.targets]]
+target_id = "clarify-target"
+summary = "Clarify a mistaken choice using a true detail."
+evidence_types = ["recognition"]
+
+[[objective.targets]]
+target_id = "name-located-target"
+summary = "Name the target object and state its confirmed location."
+evidence_types = ["construction"]
+
+[[language_patterns]]
+pattern_id = "attribute-clue"
+target_id = "understand-target-clues"
+structure = "[pronoun] [reviewed attribute]."
+examples = { es = ["Es roja."], fr = ["Elle est rouge."] }
+
+[[language_patterns]]
+pattern_id = "location-clue"
+target_id = "understand-target-clues"
+structure = "[pronoun] [reviewed position] [article] [reference noun]."
+examples = { es = ["Está al lado de la ventana."], fr = ["Il est à côté de la fenêtre."] }
+
+[[language_patterns]]
+pattern_id = "name-and-locate"
+target_id = "name-located-target"
+structure = "[article] [noun] [reviewed attribute] [is] [reviewed position] [article] [reference noun]."
+examples = { es = ["La taza roja está al lado de la ventana."], fr = ["La tasse rouge est à côté de la fenêtre."] }
+
+[teaching]
+task_sequence = ["vocabularyIntroduction", "grammarLesson"]
+teach_before_assessment = ["understand-target-clues", "find-target-object", "name-located-target"]
+max_new_words = 6
+
+[[teaching.supports]]
+support = "translation"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "wordBank"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "hint"
+availability = "onRequest"
+counts_as_assistance = true
+
+[[evaluation_criteria]]
+criterion_id = "target-clue-matches"
+target_id = "understand-target-clues"
+description = "Interprets an attribute or location clue from confirmed facts."
+evidence_types = ["recognition", "construction"]
+
+[[evaluation_criteria]]
+criterion_id = "both-clues-find-target"
+target_id = "find-target-object"
+description = "Selects the only object matching both confirmed clues."
+evidence_types = ["objectSelection", "recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "clarification-corrects-target"
+target_id = "clarify-target"
+description = "Corrects a mistaken object choice with a detail it does not share."
+evidence_types = ["recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "target-is-named-and-located"
+target_id = "name-located-target"
+description = "Names the target and states its confirmed relation to another object."
+evidence_types = ["construction"]
+
+[expected_performance]
+min_assessed_questions = 5
+min_correct_ratio = 0.75
+min_independent_correct = 2
+required_target_groups = [
+  ["understand-target-clues"],
+  ["find-target-object"],
+  ["clarify-target"],
+  ["name-located-target"],
+]

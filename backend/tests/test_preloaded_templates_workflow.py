@@ -1,9 +1,11 @@
 """Learner sessions reuse precomputed templates only for unchanged curated scenes."""
 
+from types import SimpleNamespace
 from uuid import UUID, uuid4
 
 import pytest
-from sqlalchemy import delete, insert, select
+from sqlalchemy import delete, insert, select, update
+from test_background_jobs import DeferringRunner
 from test_postgres_sessions import database as database
 from test_preloaded_templates import (
     RESERVE,
@@ -13,13 +15,23 @@ from test_preloaded_templates import (
     unlimited,
 )
 
+from app.repositories.postgres.language_profiles import language_profiles
 from app.repositories.postgres.media_assets import media_assets
 from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.scenes import PostgresSceneRepository, preloaded_scenes
 from app.repositories.postgres.tasks import session_tasks
 from app.repositories.postgres.workflow import PostgresWorkflowRepository
+from app.schemas.enums import SessionMode
 from app.schemas.sessions import ReviewPracticeRequest
+from app.scripts.precompute_preloaded_scenes import build_scene_content
 from app.scripts.preloaded_templates import generate_row_templates
+from app.services import mission_eligibility
+
+
+@pytest.fixture(autouse=True)
+def regular_lesson(monkeypatch):
+    """These tests cover the regular lesson, which A1 uses when no mission is planned."""
+    monkeypatch.setitem(mission_eligibility.IMPLEMENTED_MISSIONS, "A1", ())
 
 
 @pytest.fixture
@@ -29,7 +41,7 @@ def curated(database):
         update={"id": uuid4(), "storage_key": f"test/{uuid4()}"}
     )
     row = scene_row(asset)
-    generate_row_templates(row, services(SceneModel()), unlimited(), RESERVE)
+    generate_row_templates(row, "es", services(SceneModel()), unlimited(), RESERVE)
     with engine.begin() as connection:
         connection.execute(insert(media_assets).values(**asset.model_dump(by_alias=False)))
         connection.execute(
@@ -106,6 +118,154 @@ def test_unchanged_scene_builds_fresh_tasks_from_templates_without_calls(curated
     assert {task["session_id"] for task in first_tasks} == {first}
 
 
+def test_a2_lesson_reuses_unchanged_preloaded_templates(curated):
+    engine, owner, profile, client, asset, _ = curated
+    with engine.begin() as connection:
+        connection.execute(
+            update(language_profiles)
+            .where(language_profiles.c.id == profile.id)
+            .values(proficiency_level="A2")
+        )
+    model = SceneModel(error=AssertionError("provider must not be called"))
+    response = client.post(
+        "/api/v1/sessions",
+        json={
+            "languageProfileId": str(profile.id),
+            "mediaAssetId": str(asset.id),
+            "idempotencyKey": "a2-template-compatibility",
+        },
+    )
+    assert response.status_code == 202, response.text
+    session_id = UUID(response.json()["session"]["id"])
+    feature = services(model)
+    repo = PostgresWorkflowRepository(
+        engine,
+        owner.id,
+        translator=feature["translation"],
+        learning_task_generator=feature["lessons"],
+        ispy_clue_generator=feature["clues"],
+    )
+    repo.analyze(session_id, profile.id)
+    detail = repo.get(session_id, profile.id)
+    objects = {obj.label: obj for obj in detail.scene_objects}
+    request = ReviewPracticeRequest(
+        accepted_object_ids=[obj.id for obj in detail.scene_objects],
+        object_attributes={
+            obj.id: obj.attributes for obj in detail.scene_objects if obj.attributes
+        },
+        relations=detail.scene_object_relations,
+        object_counts={objects["cup"].id: 2, objects["table"].id: 3},
+    )
+    repo.review(session_id, profile.id, request)
+    tasks = repo.get(session_id, profile.id).tasks
+    missions = {task.public_content.mission_id for task in tasks}
+    assert "M04" in missions
+    assert model.requests == []
+
+
+def test_repeated_preloaded_objects_save_counted_group_and_plan_m03(curated, monkeypatch):
+    engine, owner, profile, client, asset, row = curated
+    monkeypatch.setitem(
+        mission_eligibility.IMPLEMENTED_MISSIONS,
+        "A1",
+        (mission_eligibility.M03_A1,),
+    )
+    items = [
+        {
+            "id": item_id,
+            "translation": label,
+            "wordClass": "noun",
+            "marker": index,
+            "x": 20 + index * 10,
+            "y": 30,
+            "attributes": {"quantity": "3"} if label == "chair" else {},
+        }
+        for index, (item_id, label) in enumerate(
+            [
+                ("chair", "chair"),
+                ("chair-2", "chair"),
+                ("chair-3", "chair"),
+                ("table", "table"),
+            ],
+            start=1,
+        )
+    ]
+    content = build_scene_content(
+        slug=row["slug"],
+        title=row["title"],
+        description=row["description"],
+        difficulty=row["difficulty"],
+        media_asset=asset,
+        items=items,
+    )
+    with engine.begin() as connection:
+        connection.execute(
+            update(preloaded_scenes)
+            .where(preloaded_scenes.c.slug == row["slug"])
+            .values(content=content)
+        )
+
+    response = client.post(
+        "/api/v1/sessions",
+        json={
+            "languageProfileId": str(profile.id),
+            "mediaAssetId": str(asset.id),
+            "idempotencyKey": "repeated-chairs-count",
+        },
+    )
+    assert response.status_code == 202, response.text
+    session_id = UUID(response.json()["session"]["id"])
+    runner = DeferringRunner()
+    repo = PostgresWorkflowRepository(engine, owner.id, background=runner)
+    detail = repo.analyze(session_id, profile.id)
+
+    chairs = [obj for obj in detail.scene_objects if obj.label == "chair"]
+    assert len(chairs) == 3
+    suggested = mission_eligibility.suggested_counted_groups(detail.scene_objects)
+    chair_suggestion = next(group for group in suggested if group["label"] == "chair")
+    assert chair_suggestion["quantity"] == 3
+    assert len(chair_suggestion["sceneObjectIds"]) == 3
+
+    reviewed = repo.review(
+        session_id,
+        profile.id,
+        ReviewPracticeRequest(
+            accepted_object_ids=[obj.id for obj in detail.scene_objects],
+            object_attributes={
+                obj.id: obj.attributes for obj in detail.scene_objects if obj.attributes
+            },
+            object_counts={chairs[0].id: 3},
+        ),
+    )
+    counted_groups = mission_eligibility.saved_counted_groups(
+        reviewed.session.analysis_draft
+    )
+    saved_chair_group = next(group for group in counted_groups if group["label"] == "chair")
+    assert saved_chair_group["quantity"] == 3
+    assert saved_chair_group["sceneObjectIds"] == [str(obj.id) for obj in chairs]
+
+    candidates = mission_eligibility.lesson_missions(
+        SessionMode.LESSON,
+        {"proficiency_level": "A1", "target_language_code": "es"},
+    )
+    m03 = candidates[0]
+    eligibility = mission_eligibility.photo_eligibility(
+        m03, reviewed.scene_objects, reviewed.scene_object_relations, counted_groups
+    )
+    assert eligibility.reasons == ()
+    planned = mission_eligibility.plan_missions(
+        candidates,
+        reviewed.scene_objects,
+        reviewed.scene_object_relations,
+        counted_groups,
+    )
+    assert [mission.mission_id for mission in planned] == ["M03"]
+    assert [item["missionId"] for item in reviewed.session.analysis_draft["missionPlan"]] == [
+        "M03",
+    ]
+    assert len(runner.jobs) == 1
+
+
 def test_template_answers_stay_out_of_public_scene_responses(curated):
     *_, client, _, row = curated
     for path in ("/api/v1/preloaded-scenes", f"/api/v1/preloaded-scenes/{row['slug']}"):
@@ -128,3 +288,23 @@ def test_partial_selection_uses_routed_generation(curated):
     model = SceneModel()
     run(curated, model, "template-partial", accept=1)
     assert "scene_translation_v1" in model.requests
+
+
+def test_same_preloaded_image_serves_another_target_language(curated):
+    engine, owner, _, client, asset, row = curated
+    response = client.post(
+        "/api/v1/me/language-profiles",
+        json={"sourceLanguageCode": "en", "targetLanguageCode": "fr", "proficiencyLevel": "A1"},
+    )
+    assert response.status_code == 201, response.text
+    french = SimpleNamespace(id=UUID(response.json()["id"]))
+    model = SceneModel()
+    session_id, tasks = run((engine, owner, french, client, asset, row), model, "template-fr")
+    # Only Spanish templates are cached, so French is translated at session time.
+    assert "scene_translation_v1" in model.requests
+    assert {task["session_id"] for task in tasks} == {session_id}
+    with engine.connect() as connection:
+        scenes = connection.execute(
+            select(preloaded_scenes.c.slug).where(preloaded_scenes.c.media_asset_id == asset.id)
+        ).all()
+    assert scenes == [(row["slug"],)]

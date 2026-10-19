@@ -17,12 +17,17 @@ from app.repositories.postgres.media_assets import media_assets
 from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.tasks import session_tasks, task_attempts
 from app.repositories.postgres.users import users
-from app.repositories.postgres.vocabulary import user_vocabulary_progress, vocabulary_encounters
+from app.repositories.postgres.vocabulary import (
+    user_vocabulary_progress,
+    vocabulary_encounters,
+    vocabulary_items,
+    vocabulary_translations,
+)
 from app.repositories.postgres.workflow import PostgresWorkflowRepository
-from app.repositories.postgres.xp import award
+from app.repositories.postgres.xp import award, xp_events
 from app.repositories.practice import PracticeConflictError
 from app.schemas.base import utc_now
-from app.schemas.enums import TaskKind
+from app.schemas.enums import SessionMode, TaskKind
 from app.schemas.media import MediaAsset
 from app.schemas.users import LanguageProfile, User
 
@@ -134,6 +139,63 @@ def test_progress_returns_a_current_local_streak(database):
     assert len(streak["days"]) == 7
     assert streak["current"] == 2
     assert [day["active"] for day in streak["days"][-2:]] == [True, True]
+
+
+def test_progress_returns_weekly_basil_leaderboard_and_current_player(database):
+    engine, owner, profile, client = database
+    competitors = [
+        User(display_name=f"Chef {index}", auth_provider_id=f"chef-{uuid4()}")
+        for index in range(6)
+    ]
+    try:
+        with engine.begin() as connection:
+            connection.execute(
+                insert(users),
+                [chef.model_dump(by_alias=False) for chef in competitors],
+            )
+            award(
+                connection,
+                user_id=owner.id,
+                language_profile_id=profile.id,
+                event_type="taskCompleted",
+                idempotency_key="leaderboard-current-week",
+            )
+            award(
+                connection,
+                user_id=owner.id,
+                language_profile_id=profile.id,
+                event_type="journalEntry",
+                idempotency_key="leaderboard-old",
+                occurred_at=utc_now() - timedelta(days=8),
+            )
+            for index, chef in enumerate(competitors):
+                award(
+                    connection,
+                    user_id=chef.id,
+                    event_type="journalEntry",
+                    idempotency_key=f"leaderboard-chef-{index}",
+                )
+
+        response = client.get("/api/v1/me/progress")
+        assert response.status_code == 200, response.text
+        data = response.json()
+        board = data["leaderboard"]
+        assert len(board) == 6  # Top five plus the signed-in player.
+        assert [row["rank"] for row in board[:5]] == [1, 2, 3, 4, 5]
+        assert [row["xp"] for row in board[:5]] == sorted(
+            (row["xp"] for row in board[:5]), reverse=True
+        )
+        current_player = board[-1]
+        assert current_player["rank"] >= 7
+        assert current_player["name"] == owner.display_name
+        assert current_player["xp"] == 10
+        assert current_player["isYou"] is True
+        assert data["xp"] == 30  # Lifetime Basil remains separate from the weekly board.
+    finally:
+        competitor_ids = [chef.id for chef in competitors]
+        with engine.begin() as connection:
+            connection.execute(delete(xp_events).where(xp_events.c.user_id.in_(competitor_ids)))
+            connection.execute(delete(users).where(users.c.id.in_(competitor_ids)))
 
 
 @pytest.mark.parametrize("source", ["preloaded", "userUpload", "camera"])
@@ -248,6 +310,101 @@ def test_normalized_workflow_and_idempotent_progress(database, source):
     with TestClient(create_app()) as restarted:
         assert restarted.get(endpoint).json()["progress"] == summary["progress"]
     assert PostgresWorkflowRepository(engine, uuid4()).active(profile.id) is None
+
+
+def test_task_xp_metadata_follows_session_mode(database):
+    engine, _, profile, client = database
+    sid = create_run(client, profile)["session"]["id"]
+    detail = analyze(client, sid)
+    for task in detail["tasks"]:
+        assert task["xpReward"] == 10
+        assert task["xpBonus"] == (15 if task["phase"] == "ispy" else 0)
+
+    with engine.begin() as connection:
+        connection.execute(
+            update(sessions)
+            .where(sessions.c.id == UUID(sid))
+            .values(mode=SessionMode.ISPY)
+        )
+    game_detail = client.get(f"/api/v1/sessions/{sid}").json()
+    assert all(task["xpReward"] == task["xpBonus"] == 0 for task in game_detail["tasks"])
+    for task in game_detail["tasks"]:
+        response = client.get(f"/api/v1/tasks/{task['id']}")
+        assert response.status_code == 200
+        assert response.json()["xpReward"] == response.json()["xpBonus"] == 0
+
+
+def test_task_action_xp_is_stable_on_replay_and_skips_earn_nothing(database):
+    _, _, profile, client = database
+    sid = create_run(client, profile)["session"]["id"]
+    detail = analyze(client, sid)
+    task = next(task for task in detail["tasks"] if task["kind"] == "vocabularyIntroduction")
+    endpoint = f"/api/v1/tasks/{task['id']}/attempts"
+    request = vocabulary_answer(task["publicContent"]) | {"idempotencyKey": "xp-award-replay"}
+    first = client.post(endpoint, json=request)
+    replay = client.post(endpoint, json=request)
+    assert first.status_code == replay.status_code == 200
+    assert first.json()["xpEarned"] == replay.json()["xpEarned"] == 10
+
+    skip_task = next(item for item in detail["tasks"] if item["id"] != task["id"])
+    skipped = client.post(f"/api/v1/tasks/{skip_task['id']}/skip", json={})
+    assert skipped.status_code == 200
+    assert skipped.json()["xpEarned"] == 0
+
+
+@pytest.mark.parametrize(("correct", "expected_xp"), [(True, 25), (False, 10)])
+def test_ispy_attempt_action_reports_xp(database, correct, expected_xp):
+    engine, _, profile, client = database
+    sid = create_run(client, profile)["session"]["id"]
+    detail = analyze(client, sid)
+    task = next(task for task in detail["tasks"] if task["kind"] == "ispyRound")
+    with engine.connect() as connection:
+        correct_id = connection.execute(
+            select(session_tasks.c.answer_key["correctSceneObjectId"].astext).where(
+                session_tasks.c.id == UUID(task["id"])
+            )
+        ).scalar_one()
+    selected_id = correct_id
+    if not correct:
+        wrong_option = next(
+            (
+                option
+                for option in task["publicContent"]["options"]
+                if option["sceneObjectId"] != correct_id
+            ),
+            None,
+        )
+        if wrong_option is None:
+            selected_id = str(uuid4())
+            content = task["publicContent"] | {
+                "options": [
+                    *task["publicContent"]["options"],
+                    {
+                        "optionId": selected_id,
+                        "label": "Not this object",
+                        "sceneObjectId": selected_id,
+                    },
+                ]
+            }
+            with engine.begin() as connection:
+                connection.execute(
+                    update(session_tasks)
+                    .where(session_tasks.c.id == UUID(task["id"]))
+                    .values(public_content=content)
+                )
+        else:
+            selected_id = wrong_option["sceneObjectId"]
+    response = client.post(
+        f"/api/v1/tasks/{task['id']}/attempts",
+        json={
+            "inputMode": "objectSelection",
+            "sceneObjectId": selected_id,
+            "idempotencyKey": f"ispy-xp-{correct}",
+        },
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["attempt"]["isCorrect"] is correct
+    assert response.json()["xpEarned"] == expected_xp
 
 
 def test_skip_all_adds_no_learning_credit(database):
@@ -550,17 +707,40 @@ def test_other_user_cannot_access_sessions_or_tasks(database, monkeypatch):
 
 
 def test_review_rejects_adds_and_rebuilds_without_duplicate_objects(database):
-    _, _, profile, client = database
+    engine, _, profile, client = database
     run = create_run(client, profile, "review-session-key")
     sid = run["session"]["id"]
     detail = analyze(client, sid, confirm=False)
-    kept = detail["sceneObjects"][0]["id"]
+    kept_object = detail["sceneObjects"][0]
+    kept = kept_object["id"]
+    with engine.connect() as c:
+        catalog_labels = set(
+            c.execute(
+                select(func.lower(vocabulary_translations.c.translated_text))
+                .join(
+                    vocabulary_items,
+                    vocabulary_translations.c.vocabulary_item_id == vocabulary_items.c.id,
+                )
+                .where(
+                    func.lower(vocabulary_items.c.language_code)
+                    == profile.target_language_code.lower(),
+                    func.lower(vocabulary_translations.c.source_language_code)
+                    == profile.source_language_code.lower(),
+                )
+            ).scalars()
+        )
+    # Added objects need a distinct catalog word to avoid sharing the kept object's vocabulary item.
+    other_label = next(
+        obj["label"]
+        for obj in detail["sceneObjects"]
+        if obj["label"] != kept_object["label"] and obj["label"].strip().lower() in catalog_labels
+    )
     payload = {
         "acceptedObjectIds": [kept],
         "addedObjects": [
             {
                 "id": str(uuid4()),
-                "label": detail["sceneObjects"][1]["label"],
+                "label": other_label,
                 "x": 0.3,
                 "y": 0.4,
             }
@@ -585,7 +765,7 @@ def test_review_rejects_adds_and_rebuilds_without_duplicate_objects(database):
     assert relation["subjectSceneObjectId"] == kept
     assert relation["referenceSceneObjectId"] in {obj["id"] for obj in selected}
     assert relation["referenceSceneObjectId"] != payload["addedObjects"][0]["id"]
-    assert any(obj["label"] == detail["sceneObjects"][1]["label"] for obj in selected)
+    assert any(obj["label"] == other_label for obj in selected)
     assert all(
         task["sceneObjectId"] in {obj["id"] for obj in selected}
         for task in saved["tasks"]

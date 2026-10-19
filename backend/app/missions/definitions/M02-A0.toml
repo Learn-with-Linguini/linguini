@@ -1,0 +1,68 @@
+mission_id = "M02"
+practice_level = "A0"
+content_version = 1
+title = "Find a named object"
+
+[photo_requirements]
+media_sources = ["preloaded", "camera", "userUpload"]
+min_confirmed_objects = 2
+
+[objective]
+objective_id = "find-named-object"
+can_do = "I can find an object in my photo when I hear or read its name."
+
+[[objective.targets]]
+target_id = "recognise-name"
+summary = "Tell two familiar object names apart."
+evidence_types = ["recognition"]
+
+[[objective.targets]]
+target_id = "find-object"
+summary = "Find the object a heard or written name refers to."
+evidence_types = ["recognition"]
+
+[[language_patterns]]
+pattern_id = "find-object"
+target_id = "find-object"
+structure = "[Find] [the] [noun]."
+examples = { es = ["Busca la taza."], fr = ["Trouve la tasse."], de = ["Finde die Tasse."], ko = ["컵을 찾으세요."] }
+
+[teaching]
+task_sequence = ["vocabularyIntroduction", "grammarLesson"]
+teach_before_assessment = ["recognise-name", "find-object"]
+max_new_words = 3
+
+[[teaching.supports]]
+support = "translation"
+availability = "onRequest"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "audio"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "wordBank"
+availability = "always"
+counts_as_assistance = false
+
+[[evaluation_criteria]]
+criterion_id = "finds-named-object"
+target_id = "find-object"
+description = "Finds the named object in the photo."
+evidence_types = ["recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "distinguishes-names"
+target_id = "recognise-name"
+description = "Tells two familiar names apart."
+evidence_types = ["recognition"]
+
+[expected_performance]
+min_assessed_questions = 4
+min_correct_ratio = 0.67
+min_independent_correct = 2
+required_target_groups = [
+  ["find-object"],
+]

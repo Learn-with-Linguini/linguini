@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { CheckIcon, ChevronDownIcon, ChevronLeftIcon, CloseIcon, HelpIcon } from "./icons";
+import { BasilIcon, CheckIcon, ChevronDownIcon, ChevronLeftIcon, CloseIcon, HelpIcon } from "./icons";
 import "./ui.css";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -135,10 +135,25 @@ export function Wordmark({ size = 26 }: { size?: number }) {
 /** Centered Linguini wordmark in the shared brand strip at the top of every screen. */
 export function BrandBar({ back = false, onBack, backLabel, homeTo = "/" }: { back?: boolean; onBack?: () => void; backLabel?: string; homeTo?: string }) {
   const navigate = useNavigate();
+
+  const handleBack = () => {
+    if (onBack) {
+      onBack();
+      return;
+    }
+    const historyIdx = (window.history.state as { idx?: number } | null)?.idx;
+    const canGoBack = typeof historyIdx === "number" ? historyIdx > 0 : window.history.length > 1;
+    if (canGoBack) {
+      navigate(-1);
+    } else {
+      navigate(homeTo);
+    }
+  };
+
   return (
     <header className="brandbar" aria-label="Linguini">
       {back ? (
-        <IconButton className="brandbar__back" label={backLabel ?? "Go back"} onClick={onBack ?? (() => navigate(-1))}>
+        <IconButton className="brandbar__back" label={backLabel ?? "Go back"} onClick={handleBack}>
           <ChevronLeftIcon />
         </IconButton>
       ) : null}
@@ -174,8 +189,8 @@ export function StatusPill({ status }: { status: "new" | "learning" | "mastered"
   return <span className={`pill pill--${status}`}>{copy}</span>;
 }
 
-export function XpPill({ xp }: { xp: number }) {
-  return <span className="pill pill--xp">+{xp} XP</span>;
+export function XpPill({ xp, bonus }: { xp: number; bonus?: number }) {
+  return <span className="pill pill--xp"><BasilIcon size={16} />+{xp}{bonus && bonus > 0 ? ` · +${bonus} if correct` : ""}</span>;
 }
 
 export function Tabs<T extends string>({
@@ -205,7 +220,7 @@ export function Tabs<T extends string>({
   );
 }
 
-export type ComboBoxOption = { value: string; label: string };
+export type ComboBoxOption = { value: string; label: string; marker?: string | number };
 
 export function ComboBox({
   id,
@@ -283,6 +298,7 @@ export function ComboBox({
           setOpen(current => !current);
         }}
       >
+        {options[selectedIndex]?.marker != null ? <span className="combobox__marker">{options[selectedIndex].marker}</span> : null}
         <span className={selectedIndex < 0 ? "combobox__placeholder" : ""}>
           {options[selectedIndex]?.label ?? placeholder}
         </span>
@@ -301,7 +317,10 @@ export function ComboBox({
               onMouseEnter={() => setActiveIndex(index)}
               onClick={() => choose(index)}
             >
-              <span>{option.label}</span>
+              <span className="combobox__option-label">
+                {option.marker != null ? <span className="combobox__marker">{option.marker}</span> : null}
+                <span>{option.label}</span>
+              </span>
               {option.value === value ? <CheckIcon size={18} /> : null}
             </button>
           ))}
@@ -348,7 +367,7 @@ export function Feedback({
   tone = "good",
   children,
 }: {
-  tone?: "good" | "warn";
+  tone?: "good" | "warn" | "neutral";
   children: ReactNode;
 }) {
   return <div className={`feedback feedback--${tone}`}>{children}</div>;

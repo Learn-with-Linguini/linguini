@@ -23,7 +23,8 @@ dependencies = [
   "google-genai>=1,<2",
   "openai>=2,<3",
   "langfuse>=4.15,<5",
-  "pyjwt[crypto]>=2.10,<3"
+  "pyjwt[crypto]>=2.10,<3",
+  "stripe>=16.0,<17"
 ]
 
 [project.optional-dependencies]
@@ -39,6 +40,9 @@ grounding = [
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+markers = [
+  "real_upload_analysis: exercises uploaded-photo analyzer failure without a provider",
+]
 
 [tool.ruff]
 line-length = 100

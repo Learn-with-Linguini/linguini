@@ -16,7 +16,7 @@ def test_curated_reviews_share_and_learner_edits_stay_private(database):
     engine, owner, profile, client = database
     scopes = []
 
-    def translate(_payload, cache_scope=None):
+    def translate(_payload, cache_scope=None, **_options):
         scopes.append(cache_scope)
         raise SceneTranslationError("off")
 
@@ -32,7 +32,11 @@ def test_curated_reviews_share_and_learner_edits_stay_private(database):
             sid,
             profile.id,
             ReviewPracticeRequest.model_validate(
-                {"acceptedObjectIds": [str(objects[0].id)], **changes}
+                {
+                    "acceptedObjectIds": [str(objects[0].id)],
+                    "objectAttributes": {str(objects[0].id): objects[0].attributes or {}},
+                    **changes,
+                }
             ),
         )
 

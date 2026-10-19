@@ -36,3 +36,23 @@ def get_allowed_origins() -> list[str]:
         for origin in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(",")
         if origin.strip()
     ]
+
+
+def get_stripe_secret_key() -> str | None:
+    return os.getenv("STRIPE_SECRET_KEY", "").strip() or None
+
+
+def get_stripe_publishable_key() -> str | None:
+    return os.getenv("STRIPE_PUBLISHABLE_KEY", "").strip() or None
+
+
+def get_stripe_webhook_secret() -> str | None:
+    return os.getenv("STRIPE_WEBHOOK_SECRET", "").strip() or None
+
+
+def get_stripe_plus_price_id() -> str:
+    return os.getenv("STRIPE_PLUS_PRICE_ID", "price_1URlZbBYwPhACwEB6goOgtNn").strip()
+
+
+def get_frontend_url() -> str:
+    return os.getenv("FRONTEND_URL", "http://localhost:5173").rstrip("/")

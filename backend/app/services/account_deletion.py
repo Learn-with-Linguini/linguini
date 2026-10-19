@@ -9,6 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.repositories.postgres.language_profiles import language_profiles
 from app.repositories.postgres.media_assets import media_assets
+from app.repositories.postgres.rooms import cleanup_room_account
 from app.repositories.postgres.users import users
 from app.services.image_derivatives import ALLOWED_WIDTHS
 from app.services.image_storage import ImageStorage
@@ -107,6 +108,7 @@ class AccountDeletionService:
                         "Media deletion is not configured on this server."
                     )
                 image_prefix = f"users/{user_id}/images"
+                cleanup_room_account(connection, user_id)
                 self.storage.delete_prefixes(
                     [
                         image_prefix,

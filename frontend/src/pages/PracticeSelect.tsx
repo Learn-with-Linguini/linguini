@@ -1,3 +1,4 @@
+import { LoadingScreen } from "../components/LoadingScreen";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui";
@@ -6,6 +7,7 @@ import { ImageUpload } from "../components/ImageUpload";
 import { createPractice, getActivePractice, retryPracticeAnalysis } from "../lib/api";
 import { SceneVisual } from "../components/SceneVisual";
 import { SceneCatalogStatus } from "../components/SceneCatalogStatus";
+import { trackAction } from "../lib/analytics.ts";
 import { sessionDestination } from "../lib/sessionRoute";
 import { friendlyError, queryError, queryKeys } from "../lib/queryKeys";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -13,6 +15,7 @@ import { useAppState } from "../state/useAppState";
 import { useScenesQuery } from "../state/queries";
 import { WalkthroughCoachmark } from "../components/WalkthroughCoachmark";
 import { FIRST_LESSON_WALKTHROUGH_VERSION, needsFirstLessonWalkthrough } from "../lib/walkthrough";
+import { gameResourceKeys } from "../lib/gameResources";
 
 export function PracticeSelect() {
   const navigate = useNavigate();
@@ -65,15 +68,20 @@ export function PracticeSelect() {
     if (busy.current || !activeProfile || activeCheckError) return;
     busy.current = true; setSelected(true); setStarting(true); setError(null);
     if (request.current?.asset !== asset) request.current = { asset, key: crypto.randomUUID() };
+    trackAction("practice_session_started", { assetId: asset });
     try {
       const detail = await createPractice(activeProfile.id, asset, request.current.key);
       navigate(sessionDestination(detail).path);
     } catch (reason) {
       setError(friendlyError(reason));
     }
-    finally { busy.current = false; setStarting(false); }
+    finally {
+      busy.current = false; setStarting(false);
+      void queryClient.invalidateQueries({ queryKey: gameResourceKeys(user?.id ?? "") });
+    }
   };
   const continueActive = async () => {
+    trackAction("practice_session_resumed");
     try {
       const fresh = await activeFetch();
       if (!fresh) return;
@@ -83,13 +91,17 @@ export function PracticeSelect() {
   const retrySaved = async (sessionId: string) => {
     if (busy.current) return;
     busy.current = true; setStarting(true); setError(null);
+    trackAction("practice_analysis_retried", { sessionId });
     try {
       const detail = await retryPracticeAnalysis(sessionId);
       navigate(sessionDestination(detail).path);
     } catch (reason) {
       setError(friendlyError(reason));
     }
-    finally { busy.current = false; setStarting(false); }
+    finally {
+      busy.current = false; setStarting(false);
+      void queryClient.invalidateQueries({ queryKey: gameResourceKeys(user?.id ?? "") });
+    }
   };
   const finishWalkthrough = async () => {
     setWalkthroughError(null);
@@ -112,16 +124,16 @@ export function PracticeSelect() {
     <div ref={captureRef} className="dashed-capture">
       <span style={{ color: "var(--teal-dark)" }}><CameraIcon size={44} /></span>
       <ImageUpload compact disabled={interactionDisabled} cameraEnabled={learner.cameraOn}
-        onBusyChange={setUploading} onUploaded={image => chooseAsset(image.id)} />
+        onBusyChange={setUploading} onUploaded={image => { trackAction("practice_photo_uploaded", { assetId: image.id }); chooseAsset(image.id); }} />
     </div>
-    {starting ? <p role="status">Starting analysis...</p> : null}
+    {starting ? <LoadingScreen label="Starting analysis…" /> : null}
     {error ? <div className="stack-2"><p role="alert">{error}</p><Button disabled={starting || uploading} onClick={() => request.current && void start(request.current.asset)}>Retry</Button></div> : null}
     {!activeProfile ? <p role="alert">Choose a learning language in Profile to start.</p> : null}
     <h2>Or practise with the below</h2>
     <SceneCatalogStatus />
     <div ref={readyScenesRef} className="grid-2">
       {scenes.map(scene => <button key={scene.id} type="button" className="scene-pick"
-        disabled={interactionDisabled || uploading} aria-label={`Choose ${scene.title}`} onClick={() => chooseAsset(scene.mediaAssetId)}>
+        disabled={interactionDisabled || uploading} aria-label={`Choose ${scene.title}`} onClick={() => { trackAction("practice_scene_selected", { sceneId: scene.id, title: scene.title }); chooseAsset(scene.mediaAssetId); }}>
         <SceneVisual scene={scene} />
         <span className="small items-center justify-center" style={{ fontWeight: 700 }}>{scene.title}</span>
       </button>)}

@@ -6,6 +6,7 @@ from pydantic import TypeAdapter, ValidationError
 from app.schemas.enums import (
     ISpyInteractionMode,
     PartOfSpeech,
+    SessionMode,
     TaskKind,
     TaskPhase,
 )
@@ -35,6 +36,23 @@ def test_walkthrough_version_is_bounded_and_emitted_in_camel_case() -> None:
     assert request.model_dump(mode="json")["walkthroughVersionSeen"] == 1
     with pytest.raises(ValidationError):
         UpdateUserRequest(walkthrough_version_seen=-1)
+
+
+def test_user_attribution_is_validated_and_emitted_in_camel_case() -> None:
+    payload = {
+        "utmSource": "tiktok",
+        "utmMedium": "social",
+        "utmCampaign": "public_beta",
+        "utmContent": "week_1_photo",
+        "utmTerm": "learn_spanish",
+    }
+    request = UpdateUserRequest.model_validate(payload)
+    dumped = request.model_dump(mode="json")
+    assert dumped["utmSource"] == "tiktok"
+    assert dumped["utmMedium"] == "social"
+    assert dumped["utmCampaign"] == "public_beta"
+    assert dumped["utmContent"] == "week_1_photo"
+    assert dumped["utmTerm"] == "learn_spanish"
 
 
 def test_bounding_box_must_remain_inside_image() -> None:
@@ -74,7 +92,7 @@ def test_public_task_does_not_serialize_answer_key() -> None:
         answer_key={"correctSceneObjectId": str(uuid4())},
     )
 
-    public = SessionTaskPublic.from_internal(internal)
+    public = SessionTaskPublic.from_internal(internal, mode=SessionMode.LESSON)
 
     assert "answerKey" not in public.model_dump(mode="json")
 

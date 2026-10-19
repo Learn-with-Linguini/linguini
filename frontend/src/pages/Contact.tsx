@@ -1,15 +1,26 @@
 import { useState, type ChangeEvent, type FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button, Card, Feedback } from "../components/ui";
+import { InstagramIcon, LinkedInIcon, TikTokIcon, XIcon } from "../components/icons";
+import { HelpImproveModal } from "../components/HelpImproveModal";
+import { SOCIAL_LINKS_LIST } from "../config/social";
+import { trackAction } from "../lib/analytics.ts";
 import { submitPublicSupportRequest, submitSupportRequest, type SupportAttachmentInput, type SupportIssueType } from "../lib/api";
 import { useAuth } from "../state/Auth";
 import { LoadingScreen } from "../components/LoadingScreen";
 
+const socialIcons = {
+  instagram: InstagramIcon,
+  tiktok: TikTokIcon,
+  x: XIcon,
+  linkedin: LinkedInIcon,
+};
+
 const topics = {
-  general: "General feedback",
-  technical: "Something is not working",
-  content: "Incorrect lesson content",
-  account: "Account or privacy question",
+  technical: "Technical issue or bug report",
+  content: "Incorrect lesson content or translation",
+  account: "Account, sign-in, or privacy question",
+  general: "General question or support",
 } as const;
 
 const allowedAttachmentTypes = new Set<SupportAttachmentInput["mimeType"]>([
@@ -30,7 +41,8 @@ export function Contact() {
   const { session, loading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
   const initialType = searchParams.get("type");
-  const [topic, setTopic] = useState<SupportIssueType>(initialType && initialType in topics ? initialType as SupportIssueType : "general");
+  const [topic, setTopic] = useState<SupportIssueType>(initialType && initialType in topics ? initialType as SupportIssueType : "technical");
+  const [surveyOpen, setSurveyOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [subject, setSubject] = useState(searchParams.get("subject") ?? "");
   const [details, setDetails] = useState(searchParams.get("description") ?? "");
@@ -87,6 +99,7 @@ export function Contact() {
       };
       if (session) await submitSupportRequest(request);
       else await submitPublicSupportRequest({ ...request, email: email.trim() });
+      trackAction("support_message_sent", { issueType: topic, authenticated: Boolean(session) });
       setSent(true);
       setSubject("");
       setDetails("");
@@ -105,7 +118,14 @@ export function Contact() {
     <div className="stack contact-page">
       <div>
         <h1>Contact us</h1>
-        <p className="muted">Linguini is in beta. Tell us what is confusing, broken, or worth improving.</p>
+        <p className="muted">Found a bug or need help with your account? Tell our team what is happening.</p>
+      </div>
+
+      <div className="contact-survey-notice">
+        <span>Want to rate your experience or share product suggestions?</span>
+        <button type="button" className="text-link" onClick={() => setSurveyOpen(true)}>
+          Help us improve
+        </button>
       </div>
 
       <Card plain className="contact-card">
@@ -134,7 +154,7 @@ export function Contact() {
           </div>
 
           <div className="field">
-            <label className="field__label" htmlFor="feedback-details">Your feedback</label>
+            <label className="field__label" htmlFor="feedback-details">Details</label>
             <textarea
               id="feedback-details"
               className="textarea"
@@ -142,7 +162,7 @@ export function Contact() {
               required
               minLength={10}
               maxLength={4000}
-              placeholder="Include what you were trying to do and what you expected to happen."
+              placeholder="Describe what happened, what you were trying to do, or what went wrong…"
               onChange={event => setDetails(event.target.value)}
             />
             <span className="small muted">Please do not include passwords, API keys, or other sensitive information.</span>
@@ -164,7 +184,7 @@ export function Contact() {
           </div>
 
           <Button block type="submit" disabled={submitting || !!attachmentError || (!session && !email.trim()) || subject.trim().length < 3 || details.trim().length < 10}>
-            {submitting ? "Sending…" : "Submit request"}
+            {submitting ? "Sending message…" : "Send message"}
           </Button>
           {sent ? <Feedback tone="good"><p role="status">Thank you. Your request has been sent to Linguini Support. We’ll reply to {session ? "the email address on your account" : email.trim()}.</p></Feedback> : null}
           {submitError ? <Feedback tone="warn"><p role="alert">{submitError}</p></Feedback> : null}
@@ -177,6 +197,36 @@ export function Contact() {
       </aside>
 
       <p className="contact-page__direct small muted">Your request is sent directly to the Linguini support team.</p>
+
+      <div className="contact-socials">
+        <span className="small muted">Follow Linguini:</span>
+        <div className="contact-social-icons">
+          {SOCIAL_LINKS_LIST.map(({ platform, label, url }) => {
+            const Icon = socialIcons[platform];
+            return (
+              <a
+                key={platform}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Follow Linguini on ${label}`}
+                title={label}
+                className="contact-social-badge"
+                onClick={() => trackAction("social_link_clicked", { platform })}
+              >
+                <Icon size={18} />
+                <span>{label}</span>
+              </a>
+            );
+          })}
+        </div>
+      </div>
+
+      <HelpImproveModal
+        open={surveyOpen}
+        onClose={() => setSurveyOpen(false)}
+        triggerSource="contact_page"
+      />
     </div>
   );
 }

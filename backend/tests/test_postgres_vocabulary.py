@@ -258,6 +258,18 @@ def test_progress_constraints(database, patch):
         )
 
 
+def test_difficulty_level_accepts_pre_a1_and_rejects_unknown_levels(database):
+    engine, _, ids, _, _ = database
+    item = vocabulary_items.c.id == ids[0]
+    with engine.begin() as connection:
+        connection.execute(update(vocabulary_items).where(item).values(difficulty_level="A0"))
+        assert connection.execute(
+            select(vocabulary_items.c.difficulty_level).where(item)
+        ).scalar_one() == "A0"
+    with pytest.raises(IntegrityError), engine.begin() as connection:
+        connection.execute(update(vocabulary_items).where(item).values(difficulty_level="A3"))
+
+
 def test_relations_uniqueness_and_rls(database):
     engine, owner, ids, _, _ = database
     duplicate = VocabularyTranslation(
@@ -679,7 +691,6 @@ def test_scene_and_topic_derived_from_latest_encounter(database, encounter_task)
                 sessions.c.scene_media_asset_id == preloaded_scenes.c.media_asset_id,
             )
             .where(sessions.c.id == encounter_task.session_id)
-            .where(preloaded_scenes.c.language_code == "es")
         ).one()
     items = {row.vocabulary.id: row for row in repository.list_vocabulary(owner.id)}
     assert items[ids[0]].scene_id == slug and items[ids[0]].topic == title

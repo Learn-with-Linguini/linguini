@@ -56,6 +56,73 @@ local environment files. Missing database configuration fails at startup; connec
 or query failures never fall back to JSON. The application creates one SQLAlchemy
 engine per process and disposes it at shutdown.
 
+### Basil and photo challenges
+
+Apply the game resource, uploaded photo room, room invite, asynchronous challenge
+and mission gamification migrations before deploying. Basil and two-player rooms
+are available automatically; they require no feature switches in the API or
+frontend. The I-Spy tab offers standalone play with AI, saved friends and a
+challenge inbox.
+
+Starting or resuming a lesson or photo challenge does not spend Sauce. Legacy
+Sauce balances, transactions, daily refill settings and refunds remain for
+historical requests; they no longer gate new practice. Sauce Jars now show
+mission progress. Basil Points reward accepted lesson questions and room
+contributions; 20 Basil unlocks an accent. Today and lifetime totals count earned
+credits separately from the spendable balance. Existing XP history is preserved.
+See [the reward and badge policy](../docs/gamification.md). Standalone AI I-Spy
+games remain free and do not award Basil, XP or vocabulary progress.
+
+Rooms store random invitations privately in the database, so a host can recover
+an invitation after reload or an API restart without a separate room secret.
+The invite migration rotates existing live invitations; hosts should copy the
+new code after deployment. Rooms support two players learning English to Spanish,
+French or German at the same A1/A2 level, with 2–4 photos uploaded by either player.
+Room photos use the configured scene analyzer and translator, then require the
+owner's fact review.
+Rooms do not require or call OpenAI image moderation. Photos remain private to the
+owner until analysis succeeds, then become accessible only to the invited partner.
+Room invitations and preparation expire after seven days; started challenges last
+14 days. A host can prepare and consent before their partner joins. The final
+player to get ready starts the game automatically, so the host can be offline.
+Both players explicitly consent by getting ready. Auto-start and the legacy
+start endpoint work even when historical Sauce balances are empty, and retries
+do not create duplicate rounds.
+
+`GET /api/v1/rooms` returns every active challenge and completed challenge with
+an unread result (up to ten together per learner), plus up to 20 other recent
+finished challenges, ordered by `updatedAt`. The older
+`GET /api/v1/rooms/active` returns the most recently updated active challenge.
+Snapshots include `inviteExpiresAt`, `updatedAt` and `actionRequired` for the
+inbox: `inviteFriend`, `preparePhotos`, `ready`, `sendClue`, `guess`, `viewResult`,
+`waiting` or `finished`. Setup remains limited to five newly created or joined
+rooms per hour. Returning to the inbox does not end a challenge; the explicit
+leave command ends it for both players.
+
+Results are acknowledged separately. The first acknowledgement advances the
+shared round; a returning partner sees their own oldest unread result before
+the current round, including the final result after completion. Only that
+partner's pending result photo remains accessible after completion. Ending,
+expiry and account deletion revoke room photo access. Clues and guesses retain
+server-owned, idempotent Basil contribution rewards, which feed account earned
+totals and opted-in daily standings. Existing XP awards are preserved for history.
+
+Friends use explicit, single-use private invitations without email or account
+search. `POST /api/v1/friends/invite` accepts a `commandId` and returns a durable
+`inviteCode` and `expiresAt` (seven days); `POST /api/v1/friends/accept` accepts
+`commandId` and `inviteCode` to create a mutual friendship. `GET /api/v1/friends`
+returns display names and active learning setups with `canChallenge`.
+`DELETE /api/v1/friends/{userId}` unlinks both sides. Consumed invitations cannot
+re-add an unlinked friend; a fresh invitation is required. Invitation creation
+is limited to ten per hour and acceptance to 20 per hour. Room partners are
+never saved automatically. Creating a room with `friendUserId` adds only an
+accepted friend with a matching active learning language and level; it appears
+in their inbox without spending Sauce. Removing a friend prevents future direct
+challenges; an existing challenge can still be resumed or explicitly ended.
+Room images use an authenticated, uncached endpoint; ordinary media access stays
+restricted to the photo owner. Rooms require `MEDIA_STORAGE_PRIVATE=true`; the
+Supabase bucket must also be configured as private.
+
 ## Persistence and remaining static content
 
 ### Image uploads
@@ -82,8 +149,8 @@ private `media-assets` bucket. Install backend dependencies to include Pillow.
 
 The frontend supports file selection and device camera capture, validation, upload
 status, error feedback, and a signed-image preview. Journal uploads can be selected
-and saved as attachments. Uploaded images can start a session and run the placeholder
-analysis workflow below. Desktop browsers may open a file picker for the camera control.
+and saved as attachments. Uploaded images can start a session and run the analysis
+workflow below. Desktop browsers may open a file picker for the camera control.
 
 ### Unified image sessions
 
@@ -149,6 +216,24 @@ PostgreSQL database with all Prisma migrations applied, then run
 `python -m pytest tests/test_postgres_sessions.py tests/test_api_workflows.py`
 from `backend`. These tests write records; use a separate test database.
 
+### Personalizing new photo lessons
+
+Set `LEARNER_MEMORY_ENABLED=true` to use the learner's existing history for their
+language profile. Previously missed words in the current photo appear first;
+grammar exercises can give more practice on earlier mistakes. A short session
+summary shows returning words and the skills being revisited. Empty history and
+the default `false` setting retain the existing lesson generation path.
+
+History is read from lesson practice and completed journal records; standalone
+I-Spy games do not enter this lesson history. No additional schema
+change or separate model call is required. Exposure, graded answers, journal
+selections and assisted writing remain separate observations. Only a bounded
+summary (up to 16 terms and 6 KiB) reaches grammar generation, without journal
+prose or submitted answers. Only current-photo vocabulary is eligible for the
+exercises. Personalized grammar uses a user-and-profile cache and bypasses
+shared curated grammar templates, which can add a grammar model call for a
+curated scene. Translation and I-Spy keep their existing template and cache paths.
+
 ### Preloaded scene images
 
 For a private bucket, set these backend-only variables in `backend/.env.local`:
@@ -193,27 +278,34 @@ See [Supabase public URLs](https://supabase.com/docs/reference/javascript/file-b
 
 `python -m app.scripts.precompute_preloaded_scenes` (run from `backend/`)
 analyses the six bundled scene images once per image with the configured
-scene-analysis provider, translates the detected objects into French and
-Spanish, and stores the assembled suggested words in
-`preloaded_scenes.content.items` so the Scene Analysis review screen opens
-with words already on the photo. `content.tasks/rounds/prompts` stay minimal
+scene-analysis provider and stores the detected objects (English labels,
+markers, attributes) in `preloaded_scenes.content.items`, so the Scene Analysis
+review screen opens with objects already on the photo. Scenes have no language:
+each image has one row, and a learner's session translates the objects into
+their target language (or reuses the catalog word for that label). `content.tasks/rounds/prompts` stay minimal
 placeholders; real lessons and clues come from the templates below.
+
+Each item's `attributes.color` and the scene's `content.relations` are curated from
+the images (migration `20261013010000_preloaded_scene_facts`), so preloaded lessons and
+I-Spy games get describing rounds. Re-running the script with `--emit-migration`
+replaces them with detected facts; review those before applying.
 
 ```sh
 python -m app.scripts.precompute_preloaded_scenes --dry-run --json out.json
-python -m app.scripts.precompute_preloaded_scenes --slug calle-mayor --language fr
+python -m app.scripts.precompute_preloaded_scenes --slug street --language fr
 python -m app.scripts.precompute_preloaded_scenes --emit-migration migration.sql
 python -m app.scripts.precompute_preloaded_scenes --from-json out.json --emit-migration migration.sql
 ```
 
-`--slug` and `--language` are repeatable and default to all six base scenes
-and both languages (`fr`, `es`). `--dry-run` computes and validates rows
+`--slug` and `--language` are repeatable and default to all six scenes
+(`street`, `cafe`, `market`, `bedroom`, `kitchen`, `park`) and both template
+languages (`fr`, `es`); `--language` only selects which languages get templates. `--dry-run` computes and validates rows
 without writing to the database. `--json` dumps the computed rows and media
 assets for reuse; `--from-json` reloads that file (re-validating every row)
 instead of calling any AI provider, so SQL regeneration or the database write
 never re-bills the model. `--emit-migration` writes an idempotent
-`INSERT ... ON CONFLICT (slug) DO UPDATE` migration; the generated French rows
-reuse the existing `media_assets` rows, so no asset inserts are emitted.
+`INSERT ... ON CONFLICT (slug) DO UPDATE` migration; rows reuse the existing
+`media_assets` rows, so no asset inserts are emitted.
 Environment values are read from `backend/.env.local` (or `--env-file PATH`).
 
 ##### Lesson and clue templates
@@ -312,6 +404,10 @@ can be active. Switching profiles filters vocabulary and the scene catalog. Name
 learning goal, preferences, level, and daily minutes persist in PostgreSQL. Browser
 camera/microphone permissions remain separate from saved preferences.
 
+Proficiency levels are `A0`–`C2`; `A0` stores Pre-A1 in the existing two-character level
+columns, and the frontend shows it as "Pre-A1". Pre-A1 has no missions yet, so its lessons
+use the regular lesson plan. Photo rooms accept only A1/A2 profiles.
+
 Vocabulary reads use the active target language and its source-language translation
 in one database snapshot. Missing translations remain null. Trusted backend events
 use `PostgresVocabularyRepository.record_encounter` to atomically record an event
@@ -401,7 +497,9 @@ and changing one slot rewrites only that frame's sentence. The submitted `assist
 the task's frames and stored in `responsePayload`; it records guided practice and never
 changes correctness or vocabulary credit. Frames stay in `publicContent`, so the guess
 model never sees them, and `GET /tasks/{id}/latest-attempt` returns the saved assistance
-so slot picks and revealed help survive a reload.
+so slot picks and revealed help survive a reload. For round-one clues it returns the
+chosen `optionId`, `isCorrect` and feedback, so an answered clue still shows its grade
+when the original response was lost.
 
 Journals are unique per user/local date across all target languages. Saves append
 immutable revisions, with identical retries avoiding duplicate revisions. Media
@@ -414,6 +512,198 @@ cascade when their journal is deleted; referenced media/vocabulary remain protec
 Tables use UUID identities and timezone-aware timestamps. Migrations define foreign
 keys, checks, update triggers, RLS, and revoked browser-role grants. All access is
 through backend repositories; the frontend must not query these tables directly.
+
+### Uploaded-photo scene facts
+
+`scene-analysis.v5` returns up to 20 clearly visible object instances, ordered with
+the most useful and diverse learning candidates first. Repeated objects keep separate
+boxes and markers but share a model `groupKey` and `suggestedGroupCount`; the mapped
+quantity remains only a suggestion until the learner confirms it in the Counts review.
+The full inventory is stored once in `media_scene_analyses`, keyed by the media asset
+and prompt/schema versions, so another session can reuse the image without another
+vision call. Each session receives its own stable object IDs and snapshots only the
+facts it confirms.
+
+Before review, the backend compares the unconfirmed inventory with the implemented
+missions for the learner's level. `provisionalMissionPlan` is presentation guidance,
+never grading evidence: `suggestedSceneObjectIds` limits the default review to the
+smallest useful mission-focused set. The learner may reveal other inventory objects.
+After review, mission eligibility is run again using only confirmed facts and that
+second result becomes the immutable `missionPlan` consumed by task generation.
+
+The analysis may also return visible action suggestions linked to detected objects and
+clearly displayed price suggestions linked to an item. These remain unconfirmed scene
+metadata: the vision model may describe visible evidence such as holding or a price tag,
+but may not infer ownership, preference, need, routine, intention, availability or a
+real price that is not shown. Mission planning must use action or price information only
+after the learner confirms it or explicitly selects a labelled role-play value.
+
+### Mission contracts
+
+A mission is the definition of one lesson goal at one practice level. Each mission has
+one definition file, `app/missions/definitions/{missionId}-{practiceLevel}.toml`,
+validated by `MissionDefinition` (`app/schemas/missions.py`) and read through
+`app.missions.get_mission`; its `content_version` is stored on the tasks it creates. The
+first is `M01-A1.toml`, "Identify and describe an object": photo eligibility, one objective with its targets, permitted
+language patterns (linked to the existing I-Spy clue frames), teaching sequence and
+support rules, evaluation criteria and expected performance.
+
+Missions reuse the existing task storage; no table or migration is involved:
+
+| Data | Column | Visibility |
+| --- | --- | --- |
+| `missionId`, `practiceLevel`, `contentVersion` | `session_tasks.public_content` | public |
+| `questionEvaluations` (objective, targets, evidence type, accepted answers or rubric criteria, corrections, hidden vocabulary/object targets) | `session_tasks.answer_key` | private |
+| `question_assistance` (supports opened per question) | `task_attempts.response_payload` | owner |
+| `questionOutcomes` | `task_attempts.evaluation_details` | released with the graded attempt |
+
+The three mission fields are set together or not at all, must name a known definition,
+and are omitted from JSON when absent, so tasks and saved sessions without a mission
+keep their stored shape. `questionEvaluations` requires mission metadata, may only name
+the task's own questions (`task` for tasks without grouped questions), and must agree
+with the definition's objective, targets, evidence types and rubric criteria. A question's
+accepted answer is its existing answer-key entry; `acceptedAnswers` is only for questions
+without one.
+
+Grouped-lesson attempts on tasks with `questionEvaluations` add `questionOutcomes`
+beside the unchanged `questionResults` and `correctAnswers`. Each outcome is `correct`,
+`incorrect` (with the matching correction rules as `mistakes`) or `unassessed` (no
+evaluation metadata), and records the supports used; `assistanceUsed` is true only for
+supports the mission counts as assistance. Outcomes describe the existing grading:
+correctness, score, XP, vocabulary progress and learner history still come from
+`questionResults`.
+
+#### Mission lesson planning
+
+Mission lessons apply to lesson sessions whose active language profile is A1 and whose
+target language has reviewed forms (`es`, `fr`); every other session keeps the existing
+lesson.
+
+- **Photo requirements.** Each definition names only the confirmed facts it needs:
+  `minConfirmedObjects` (different names), `minColouredObjects` (reviewed colours) and
+  `minRelations` with the accepted `relations` types, and `minCountedGroups` with the
+  `minQuantity`–`maxQuantity` range. M01 needs two objects with a colour each; M02 needs two
+  objects and an on/under/next-to/in-front-of/behind relation; M03 needs one counted
+  group of 2–10.
+- **Counts.** The review's Counts tab sends `objectCounts` (object ID → 1–10). Each count
+  is saved for the group of every confirmed object with the same name, so a group is
+  counted once and a second count of it is a 409. Groups are stored in
+  `analysisDraft.countedGroups` with `sceneObjectIds`, `label`, `quantity`,
+  `suggestedQuantity` and `source` (`confirmed`, `corrected` or `entered`), and returned
+  as `countedGroups`. A scene-analysis quantity is only offered as a suggestion, and a
+  detected label never implies a count. No migration is needed.
+- **Planner** (`app/services/mission_eligibility.py`). Confirming the scene checks every
+  implemented A1 mission (M01, M02, then M03) against only the facts the learner
+  confirmed, and plans every mission the photo supports, up to three. The plan is saved as
+  `analysisDraft.missionPlan` before generation and generation reads only that snapshot.
+  Sessions reviewed before plans were saved keep the regular lesson.
+- **No mission fits.** The regular lesson runs and `analysisDraft.missionGuidance`
+  (returned as `missionGuidance`) lists what each mission is missing; the lesson page
+  shows it as a short note. Nothing is inferred and no scene is substituted.
+- **Shared teaching.** Translation and one vocabulary introduction are checkpointed first,
+  as before. The introduction carries no mission fields because it teaches the nouns for
+  every planned mission; its per-word evidence still follows each word's own result.
+- **Tasks.** Each planned mission adds one `grammarLesson` carrying its own mission fields,
+  in plan order. Mission sessions end on their summary; choosing I-Spy there creates a
+  separate game that reuses the confirmed scene inventory. Mission lessons publish no
+  `explanation`, so the task page shows only the questions and, after submitting, the
+  feedback. `app/services/mission_registry.py` maps each mission to its payload builder,
+  generation spec and task builder.
+
+#### M01 A1 lesson path
+
+1. **Lesson** (`M01-A1.toml`; `app/ai/features/learning_tasks/mission_m01.py`,
+   `app/services/mission_lessons_m01.py`). M01 needs two differently named confirmed
+   objects that each have a confirmed colour with a reviewed form. Two object-colour
+   pairs are chosen when the lesson is generated and saved in the task, so resuming
+   keeps them. Pairs are ranked least familiar first: the object's
+   `user_vocabulary_progress.mastery_score` in the target language plus the colour's
+   past correct ratio from the learner-history snapshot (only when
+   `LEARNER_MEMORY_ENABLED=true`; colours have no word-progress rows). Words without
+   progress or history count as unseen; ties keep scene order. The `grammarLesson` has
+   exactly four questions: identify object 1 (`¿Qué es esto?` / `Qu'est-ce que c'est ?`,
+   choose `una taza` etc.), describe it with word tiles (`Es una taza roja.` /
+   `C'est une tasse rouge.`), then the same for object 2. Identification distractors
+   are nouns taught in this lesson or earlier for the same language, with a known
+   gender, without duplicates. Every question carries `sceneObjectId` and the English
+   `objectLabel`; the app crops the object from its bounding box or rings it on the
+   photo. The lesson is built and validated deterministically with no model call.
+2. **Bonus I-Spy.** The existing AI I-Spy clue and describing rounds are generated
+   alongside the lesson, as in the legacy path, and placed last without mission
+   fields. They unlock once the learning tasks are done and are labelled as the
+   bonus round.
+3. **Grading.** Answers are graded from the private answer key. Each
+   `questionOutcomes` entry names its targets; evidence type is derived from the
+   interaction (`recognition` for multiple choice, `construction` for sentence
+   building) and the word bank is always recorded as support, so a sentence counts as
+   supported practice, not independent writing. Supports a question does not offer are
+   rejected with a 409. Each word's vocabulary evidence uses only the questions that
+   assess it. Replays with the same idempotency key return the saved attempt without
+   new results or XP.
+4. **Completion.** The session completes through the existing lifecycle and completion
+   XP once every task, including every mission task and the bonus rounds, is completed or
+   skipped. If no I-Spy task was generated, the final learning step shows "Finish lesson"
+   instead.
+
+#### M02 A1 lesson path
+
+`M02-A1.toml`, "Find and locate": say where a photo object is, ask where it is and
+check a short answer against the photo. This is supported A1 practice, not independent
+A2 location production.
+
+1. **Payload** (`app/services/mission_lessons_m02.py`). Each confirmed relation whose
+   position has a reviewed phrase and whose objects have reviewed articles, with its
+   statement tiles (`La` / `taza` / `está` / `al lado del` / `libro` / `.`; a contracted
+   or multiword phrase is one tile), `whereQuestion` (`¿Dónde está la taza?`), the
+   positions true for that pair (including inverse relations), the positions they
+   contradict (on/under, in front of/behind) and a proposed answer for the optional check.
+   Positions reuse the I-Spy reviewed bank.
+2. **Selection.** Relations are ranked by the learner-history correct ratio of their
+   position phrase (snapshot only with `LEARNER_MEMORY_ENABLED=true`; otherwise every
+   phrase is unseen), ties in photo order. The core questions use the least familiar. A
+   second relation is selected only if it has another object pair or position; otherwise
+   M02 has three questions. The selection is stored in the generated task.
+3. **Lesson** (`app/ai/features/learning_tasks/mission_m02.py`). Built without a model
+   call and validated: one `grammarLesson`, "Find and locate", with three core questions
+   about the first relation — pick the phrase from three, none of the wrong ones true for
+   the pair (`Elige la posición: la taza ___ la mesa.`); build the statement with one
+   extra phrase tile (`Describe la posición de la taza.`); build the where-question
+   (`Pregunta por la ubicación de la taza.`) — and, only with a second relation, a Yes/No
+   check on the photo (`“El libro está debajo de la mesa.” ¿Coincide con la foto?`). The
+   proposal is the true statement or, for about half the relations, an opposite position
+   the confirmed relation contradicts; the feedback gives the correct statement. Every
+   question uses the learner's photo with `sceneObjectId`/`objectLabel` (and
+   `referenceObjectId`/`referenceLabel` except the where-question). Prompts are in the
+   target language with an English `promptTranslation`, and never contain the sentence
+   the learner builds.
+4. **Grading.** The questions are one task attempt. Phrase and Yes/No choices are
+   recognition with `wrongPosition` corrections; the statement and question are supported
+   construction (`wordBank`), and only those name object words for evidence.
+   `GET /tasks/{id}/latest-attempt` also returns the saved `answers` and `reviewDetails`
+   for mission lessons, so a reloaded graded lesson still shows its answers, grades and
+   corrections.
+
+#### M03 A1 lesson path
+
+`M03-A1.toml`, "Say how many": say a confirmed quantity with the taught pattern
+(`Hay tres libros.`, `Il y a trois livres.`) and the noun's regular plural.
+
+1. **Payload** (`app/services/mission_lessons_m03.py`, `app/services/quantities.py`). The
+   first counted group of 2–10 whose translated noun has a reviewed regular plural, with
+   its reviewed number word, singular, plural, statement, English meaning and nearby
+   wrong quantities. Plurals come only from regular rules (es vowel + `s`, `-d/-l/-r/-j`
+   + `es` without accent changes; fr + `s`, excluding `-s/-x/-z/-au/-eu/-al/-ail` and the
+   `-ou` exceptions) and must match any recorded plural. Otherwise the session records
+   `analysisDraft.skippedMissions` and keeps its other tasks; with no mission task left
+   the regular lesson is used.
+2. **Lesson** (`app/ai/features/learning_tasks/mission_m03.py`). Exactly one
+   `grammarLesson` with 2–4 questions: quantity comprehension, choosing the statement
+   (distractors use a wrong number or the singular), then a word-bank statement whose
+   bank adds the singular and a wrong number. Its validator and fallback check the group, quantity
+   and plural, and its cache identity is `learning-tasks.m03-a1.v1:M03-A1.v1`.
+3. **Grading** follows M01. Corrections name `wrongQuantity` or `pluralForm` when the
+   answer shows which (both for a wrong number with a singular noun), and `wordOrder`
+   otherwise. A rule without listed answers applies only when no specific rule matches.
 
 ### Backend performance
 
@@ -493,6 +783,13 @@ Validation runs at startup and makes no network calls. It checks:
 
 With `AI_MODE=real`, every enabled route must also resolve a secret; with
 `demo`, a route without one falls back to deterministic behaviour.
+
+Uploaded-image analysis runs on the `sceneAnalysis` route, which uses OpenRouter
+in the default `ai.toml`; `AI_OPENROUTER_API_KEY` is required. In `demo` mode,
+missing this secret does not prevent startup, but uploaded photos fail analysis
+with a retryable “We couldn't analyse that photo” error instead of receiving
+placeholder objects. The backend warning names the missing variable, and this
+failure is logged with `code=analysisUnavailable`. Curated scenes are unaffected.
 
 Error messages name keys and variables but never echo values, and secrets
 are excluded from `AiSettings` repr.
@@ -671,9 +968,12 @@ dimensions and caller-supplied metadata.
 
 ## Remaining integration work
 
-Real image analysis, AI generation and speech evaluation
-are not implemented. Uploaded images use validated storage uploads and deterministic
-placeholder objects. Vocabulary "Move" is still local frontend state. Session learning credit comes from persisted
+Speech evaluation is not implemented. Without the `sceneAnalysis` secret
+(`AI_OPENROUTER_API_KEY` by default), demo mode still starts, but uploaded photos
+fail analysis with a retryable “We couldn't analyse that photo” error instead
+of getting placeholder objects. The backend logs the missing variable and
+`code=analysisUnavailable`; curated scenes are unaffected (see
+[AI configuration](#ai-configuration)). Vocabulary "Move" is still local frontend state. Session learning credit comes from persisted
 vocabulary encounters; analysis and skipped tasks award none. Daily vocabulary, home aggregation, and other unfinished
 routes return an explicit 501. Journal eligible-photo/learned-word recommendations
 and automatic annotations remain unpopulated. Creating tables does not implement

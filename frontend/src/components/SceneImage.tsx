@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import type { SceneSummary } from "../data/types";
+import { protectedMediaPath, requestBlob } from "../lib/api";
 import { imageLoadingAttrs } from "../lib/imageLoading";
-import { getAccessToken } from "../lib/supabase.ts";
+import { InlineLoader } from "./LoadingScreen";
 
 type Props = {
   scene: Pick<SceneSummary, "imageUrl" | "title">;
@@ -9,51 +10,51 @@ type Props = {
   lazy?: boolean;
 };
 
-export function SceneImage({ scene, className, lazy }: Props) {
+/** Resolve a possibly protected media URL to a renderable URL (blob for /api/v1/media/). */
+export function useResolvedImageUrl(imageUrl: string | null | undefined) {
+  const [resolved, setResolved] = useState<{ source: string; objectUrl: string } | null>(null);
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
-  const [resolvedUrl, setResolvedUrl] = useState<string | null>(scene.imageUrl);
-  const [loading, setLoading] = useState(false);
-  const isProtectedMediaUrl = Boolean(scene.imageUrl?.includes("/api/v1/media/"));
 
   useEffect(() => {
-    const imageUrl = scene.imageUrl;
     setFailedUrl(null);
-    if (!imageUrl || !imageUrl.includes("/api/v1/media/")) {
-      setResolvedUrl(imageUrl);
-      setLoading(false);
-      return;
-    }
+    const source = imageUrl;
+    const path = protectedMediaPath(source);
+    if (!source || !path) return;
 
-    let cancelled = false;
+    const controller = new AbortController();
     let objectUrl: string | null = null;
-    setResolvedUrl(null);
-    setLoading(true);
-    void (async () => {
-      try {
-        const token = await getAccessToken();
-        const response = await fetch(imageUrl, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        });
-        if (!response.ok) throw new Error("Unable to load image.");
-        objectUrl = URL.createObjectURL(await response.blob());
-        if (cancelled) {
+    void requestBlob(path, controller.signal).then(blob => {
+      objectUrl = URL.createObjectURL(blob);
+      if (controller.signal.aborted) {
+        if (objectUrl) {
           URL.revokeObjectURL(objectUrl);
-          return;
         }
-        setResolvedUrl(objectUrl);
-      } catch {
-        if (!cancelled) setFailedUrl(imageUrl);
-      } finally {
-        if (!cancelled) setLoading(false);
+        return;
       }
-    })();
+      setResolved({ source, objectUrl });
+    }).catch(() => {
+      if (!controller.signal.aborted) setFailedUrl(source);
+    });
     return () => {
-      cancelled = true;
+      controller.abort();
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [scene.imageUrl]);
+  }, [imageUrl]);
 
-  if (!scene.imageUrl || failedUrl === scene.imageUrl) {
+  const isProtected = protectedMediaPath(imageUrl) !== null;
+  const failed = imageUrl != null && failedUrl === imageUrl;
+  const resolvedUrl = isProtected
+    ? resolved && resolved.source === imageUrl ? resolved.objectUrl : null
+    : imageUrl ?? null;
+  return { resolvedUrl, loading: isProtected && resolvedUrl === null && !failed, failed };
+}
+
+export function SceneImage({ scene, className, lazy }: Props) {
+  const { resolvedUrl, failed } = useResolvedImageUrl(scene.imageUrl);
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const isProtectedMediaUrl = protectedMediaPath(scene.imageUrl) !== null;
+
+  if (!scene.imageUrl || failed || failedUrl === scene.imageUrl) {
     return (
       <span
         className={`scene-image scene-image--error${className ? ` ${className}` : ""}`}
@@ -64,16 +65,16 @@ export function SceneImage({ scene, className, lazy }: Props) {
       </span>
     );
   }
-  if (isProtectedMediaUrl && (loading || !resolvedUrl)) {
+  if (isProtectedMediaUrl && !resolvedUrl) {
     return (
-      <span className={`scene-image scene-image--loading${className ? ` ${className}` : ""}`} role="status">
-        <span className="scene-image__loading-label">Preparing photo…</span>
+      <span className={`scene-image scene-image--loading${className ? ` ${className}` : ""}`}>
+        <InlineLoader compact className="scene-image__loading-label" label="Preparing photo…" />
       </span>
     );
   }
   return (
     <img
-      src={resolvedUrl ?? scene.imageUrl}
+      src={resolvedUrl ?? undefined}
       alt={scene.title}
       className={`scene-image${className ? ` ${className}` : ""}`}
       decoding="async"

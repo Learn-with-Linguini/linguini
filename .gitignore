@@ -8,6 +8,7 @@ dist-ssr/
 __pycache__/
 .ruff_cache/
 .venv/
+backend/.cache/
 marketing/media/.cache/
 .Rhistory
 
@@ -48,6 +49,8 @@ coverage/
 *.njsproj
 *.sln
 *.sw?
+.agents/
+.devin/
 
 # Regenerated media intermediates
 marketing/media/export/teaser-frames/

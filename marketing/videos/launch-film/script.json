@@ -6,8 +6,8 @@
   "seconds_per_beat": 0.5,
   "narrator": "small cheerful Linguini bowl mascot avatar, lower right, mouth synced to English voiceover",
   "source_scene": "hillside-street",
-  "source_url": "https://linguini-landing.vercel.app/",
-  "destination_url": "https://linguini-landing.vercel.app/",
+  "source_url": "https://www.learnwithlinguini.com/",
+  "destination_url": "https://www.learnwithlinguini.com/",
   "voiceover_words": 70,
   "voiceover": "That red car has another name. El coche in Spanish. La voiture in French. The street hasn't changed. The words have. Pick the words you want. Hear them in context. Now Linguini plays I-Spy. Can you find that car? Next, turn those words into a sentence. Build it word by word. Get it right. Then watch this street become a journal page. Try Linguini. Learn the language of your day.",
   "music": {
@@ -105,7 +105,7 @@
       "end_beat": 60,
       "voiceover": "Try Linguini. Learn the language of your day.",
       "headline": "Try the mini session",
-      "secondary_text": "linguini-landing.vercel.app",
+      "secondary_text": "www.learnwithlinguini.com",
       "visual": "Clean end card; mascot avatar grows into brand logo; wordmark, URL, and one CTA.",
       "sound": "three-second musical lift, final hit and hard clean stop at 30.0"
     }

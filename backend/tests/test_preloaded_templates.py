@@ -29,14 +29,12 @@ from app.scripts.preloaded_templates import (
 
 ITEMS = [
     {
-        "id": "cup", "word": "la taza", "translation": "cup", "wordClass": "noun",
-        "gender": "la", "marker": 1, "x": 20, "y": 30, "attributes": {"color": "red"},
-        "example": "La taza es roja.", "exampleTranslation": "The cup is red.",
+        "id": "cup", "translation": "cup", "wordClass": "noun",
+        "marker": 1, "x": 20, "y": 30, "attributes": {"color": "red"},
     },
     {
-        "id": "table", "word": "la mesa", "translation": "table", "wordClass": "noun",
-        "gender": "la", "marker": 2, "x": 50, "y": 70, "attributes": {},
-        "example": "La mesa es grande.", "exampleTranslation": "The table is big.",
+        "id": "table", "translation": "table", "wordClass": "noun",
+        "marker": 2, "x": 50, "y": 70, "attributes": {},
     },
 ]
 RELATIONS = [{"subjectItemId": "cup", "relation": "on", "referenceItemId": "table"}]
@@ -56,13 +54,13 @@ def scene_row(asset=None, slug=None) -> dict:
     asset = asset or media_asset()
     slug = slug or f"test-{uuid4()}"
     content = script.build_scene_content(
-        slug=slug, language_code="es", language="Spanish", title="Desk",
+        slug=slug, title="Desk",
         description="A red cup is on a table.", difficulty="beginner",
         media_asset=asset, items=[dict(item) for item in ITEMS], relations=RELATIONS,
     )
     return {
-        "id": script.scene_row_id(slug), "slug": slug, "language_code": "es",
-        "language": "Spanish", "title": "Desk", "description": "A red cup is on a table.",
+        "id": script.scene_row_id(slug), "slug": slug, "title": "Desk",
+        "description": "A red cup is on a table.",
         "difficulty": "beginner", "sort_order": 99, "media_asset_id": asset.id,
         "is_active": True, "content": content,
     }
@@ -135,14 +133,14 @@ def unlimited() -> CallBudget:
 
 def precomputed_row() -> dict:
     row = scene_row()
-    outcomes = generate_row_templates(row, services(SceneModel()), unlimited(), RESERVE)
+    outcomes = generate_row_templates(row, "es", services(SceneModel()), unlimited(), RESERVE)
     assert [outcome.status for outcome in outcomes] == ["generated"] * 3
     return row
 
 
 def run_session(row, model, session_id=None, edit=None):
     """Translate, lesson and clue calls as one learner session makes them."""
-    payload, objects, relations = curated_generation_inputs(row, session_id or uuid4())
+    payload, objects, relations = curated_generation_inputs(row, "es", session_id or uuid4())
     if edit:
         payload = edit(payload)
     templates = TemplateSet.from_content([row["content"]])
@@ -196,7 +194,7 @@ def test_stale_variant_is_regenerated_and_old_variant_kept():
     for entry in row["content"][GENERATED_CONTENT_KEY]["templates"]:
         entry["variant"] = "old-prompt|old-schema|old-validator"
     model = SceneModel()
-    outcomes = generate_row_templates(row, services(model), unlimited(), RESERVE)
+    outcomes = generate_row_templates(row, "es", services(model), unlimited(), RESERVE)
     assert [outcome.status for outcome in outcomes] == ["generated"] * 3
     assert len(model.requests) == 3
     assert len(row["content"][GENERATED_CONTENT_KEY]["templates"]) == 6
@@ -205,7 +203,7 @@ def test_stale_variant_is_regenerated_and_old_variant_kept():
 def test_rerun_resumes_from_stored_templates_without_calls():
     row = precomputed_row()
     model = SceneModel()
-    outcomes = generate_row_templates(row, services(model), unlimited(), RESERVE)
+    outcomes = generate_row_templates(row, "es", services(model), unlimited(), RESERVE)
     assert [outcome.status for outcome in outcomes] == ["reused"] * 3
     assert model.requests == []
 
@@ -214,7 +212,8 @@ def test_force_regenerates_only_selected_stage():
     row = precomputed_row()
     model = SceneModel()
     outcomes = generate_row_templates(
-        row, services(model), unlimited(), RESERVE, stages=frozenset({"lessons"}), force=True
+        row, "es", services(model), unlimited(), RESERVE,
+        stages=frozenset({"lessons"}), force=True,
     )
     assert [outcome.status for outcome in outcomes] == ["reused", "generated", "reused"]
     assert model.requests == ["learning_tasks_v2"]
@@ -224,7 +223,7 @@ def test_call_cap_reports_missing_templates_without_calls():
     row = scene_row()
     model = SceneModel()
     outcomes = generate_row_templates(
-        row, services(model), CallBudget(0, CallCountingTracer()), RESERVE
+        row, "es", services(model), CallBudget(0, CallCountingTracer()), RESERVE
     )
     assert [(outcome.status, outcome.reason) for outcome in outcomes] == [
         ("missing", "callBudget"),
@@ -237,7 +236,7 @@ def test_call_cap_reports_missing_templates_without_calls():
 
 def test_template_set_without_generation_raises_instead_of_calling():
     row = scene_row()
-    payload, _, _ = curated_generation_inputs(row)
+    payload, _, _ = curated_generation_inputs(row, "es")
     model = SceneModel()
     with pytest.raises(TemplateMissing):
         services(model)["translation"].translate(
@@ -251,7 +250,7 @@ def test_failure_report_has_codes_only(tmp_path):
     error = ProviderError(
         ProviderErrorCode.PROVIDER_UNAVAILABLE, "upstream body sk-secret-123 about cup"
     )
-    outcomes = generate_row_templates(row, services(SceneModel(error)), unlimited(), RESERVE)
+    outcomes = generate_row_templates(row, "es", services(SceneModel(error)), unlimited(), RESERVE)
     assert outcomes[0].status == "failed"
     path = tmp_path / "report.json"
     script.write_report(path, outcomes, unlimited(), dry_run=True)
@@ -300,3 +299,21 @@ def test_from_json_dry_run_checks_templates_without_calls(tmp_path, monkeypatch)
     assert model.requests == []
     statuses = {o["status"] for o in json.loads(report.read_text())["outcomes"]}
     assert statuses == {"reused"}
+
+
+def test_one_scene_row_keeps_templates_for_every_target_language():
+    row = scene_row()
+    for language in ("es", "fr"):
+        outcomes = generate_row_templates(
+            row, language, services(SceneModel()), unlimited(), RESERVE
+        )
+        assert [outcome.status for outcome in outcomes] == ["generated"] * 3
+        assert {outcome.language for outcome in outcomes} == {language}
+    stored = row["content"][GENERATED_CONTENT_KEY]["templates"]
+    assert {(entry["feature"], entry["language"]) for entry in stored} == {
+        (feature, language)
+        for feature in ("sceneTranslation", "learningTask", "ispyClue")
+        for language in ("es", "fr")
+    }
+    rerun = generate_row_templates(row, "fr", services(SceneModel()), unlimited(), RESERVE)
+    assert [outcome.status for outcome in rerun] == ["reused"] * 3

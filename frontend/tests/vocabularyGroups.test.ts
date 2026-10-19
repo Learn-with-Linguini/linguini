@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { groupVocabularyByPhoto, vocabularyCategories } from "../src/lib/vocabularyGroups.ts";
+import { groupVocabularyByPhoto, vocabularyCategories, vocabularyLabel } from "../src/lib/vocabularyGroups.ts";
 import type { VocabRecord } from "../src/data/types.ts";
 
 const photo = (id: string) => ({ mediaAssetId: id, title: "Your photo", sceneId: null });
@@ -40,4 +40,12 @@ test("image categories use every photo a word came from", () => {
   ];
   assert.deepEqual(vocabularyCategories(lamp, scenes), ["Living room", "Office"]);
   assert.deepEqual(vocabularyCategories({ ...word("tree", []), sceneId: "street" }, scenes), ["Street"]);
+});
+
+test("vocabulary nouns include their article exactly once", () => {
+  assert.equal(vocabularyLabel({ ...word("taza", []), gender: "la" }), "la taza");
+  assert.equal(vocabularyLabel({ ...word("la taza", []), gender: "la" }), "la taza");
+  assert.equal(vocabularyLabel({ ...word("école", []), gender: "l'" }), "l'école");
+  assert.equal(vocabularyLabel({ ...word("l’école", []), gender: "l'" }), "l’école");
+  assert.equal(vocabularyLabel({ ...word("azul", []), wordClass: "adjective", gender: "la" }), "azul");
 });

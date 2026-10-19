@@ -1,0 +1,138 @@
+"""Shared mission fields and the mission-tagged grammar lesson task."""
+
+import re
+from uuid import UUID, uuid5
+
+from app.schemas.tasks import SessionTask
+
+
+def definite(source):
+    return f"the {re.sub(r'^(?:a|an|the)\s+', '', source, flags=re.IGNORECASE)}"
+
+
+def mission_fields(mission):
+    return dict(
+        mission_id=mission.mission_id,
+        practice_level=mission.practice_level,
+        content_version=mission.content_version,
+    )
+
+
+def mission_version(mission):
+    return f"{mission.mission_id}-{mission.practice_level}.v{mission.content_version}"
+
+
+def with_mission(task, mission):
+    """``task`` snapshotted to ``mission``'s ID, level and content version."""
+    data = task.model_dump(by_alias=False)
+    data["public_content"] = {**data["public_content"], **mission_fields(mission)}
+    return SessionTask.model_validate(data)
+
+
+def noun_gender(term, word):
+    if term is not None and term.gender:
+        return term.gender
+    return getattr(word.gender, "value", word.gender)
+
+
+# Catalog content may record a noun's gender as its definite article.
+_ARTICLE_GENDERS = {
+    "el": "masculine",
+    "le": "masculine",
+    "la": "feminine",
+    "der": "masculine",
+    "den": "masculine",
+    "dem": "masculine",
+    "des": "masculine",
+    "die": "feminine",
+    "das": "neuter",
+}
+
+
+def normalized_gender(value):
+    value = getattr(value, "value", value)
+    if not isinstance(value, str):
+        return None
+    gender = _ARTICLE_GENDERS.get(value.strip().casefold(), value.strip().casefold())
+    return gender if gender in {"masculine", "feminine", "neuter"} else None
+
+
+def mission_gender(term, word):
+    """``noun_gender`` with article-style genders mapped; elided ``l'`` falls back to the word."""
+    for gender in (term.gender if term is not None else None,
+                   getattr(word.gender, "value", word.gender)):
+        gender = normalized_gender(gender)
+        if gender in {"masculine", "feminine", "neuter"}:
+            return gender
+    return noun_gender(term, word)
+
+
+def correct_label(question):
+    if question.interaction_type == "multipleChoice":
+        return next(
+            option.label for option in question.options
+            if option.option_id == question.correct_option_id
+        )
+    return question.correct_text
+
+
+def build_mission_task(
+    session_id, mission, focus, result, evaluate, shown=lambda question: {}, content_fields=None,
+):
+    """One mission-tagged grammar lesson whose private key grades every question.
+
+    ``evaluate(question, label)`` returns the question's evaluation fields and
+    ``shown(question)`` any extra public question fields.
+    """
+    questions = result.questions
+    correct = {}
+    evaluations = []
+    for question in questions:
+        label = correct_label(question)
+        correct[question.question_id] = (
+            question.correct_option_id
+            if question.interaction_type == "multipleChoice"
+            else question.correct_text
+        )
+        evaluations.append(dict(
+            question_id=question.question_id,
+            objective_id=mission.objective.objective_id,
+            scene_object_id=UUID(question.object_key),
+            **evaluate(question, label),
+        ))
+    return SessionTask(
+        id=uuid5(session_id, f"mission:{mission_version(mission)}:lesson"),
+        session_id=session_id,
+        phase="learning",
+        kind="grammarLesson",
+        order_index=0,
+        public_content=dict(
+            kind="grammarLesson",
+            focus=focus,
+            title=result.title,
+            questions=[
+                dict(
+                    question_id=question.question_id,
+                    prompt=question.prompt,
+                    interaction_type=question.interaction_type,
+                    options=[
+                        dict(option_id=option.option_id, label=option.label)
+                        for option in question.options
+                    ],
+                    token_bank=(
+                        question.token_bank
+                        if mission.practice_level == "A2"
+                        and any(" " in chunk for chunk in question.answer_chunks)
+                        else [token for token in question.token_bank if token != "."]
+                    ),
+                    translation=question.translation,
+                    **shown(question),
+                )
+                for question in questions
+            ],
+            **mission_fields(mission),
+            **(content_fields or {}),
+        ),
+        answer_key=dict(correct_option_ids=correct, question_evaluations=evaluations),
+        scene_object_id=UUID(questions[-1].object_key),
+    )

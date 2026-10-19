@@ -37,7 +37,8 @@ const contents: Record<string, SessionTask["publicContent"]> = {
 function task(kind: keyof typeof contents, status: SessionTask["status"], orderIndex: number): SessionTask {
   const publicContent = contents[kind];
   return { id: `${kind}-${orderIndex}`, kind: publicContent.kind, phase: kind === "clues" ? "ispy" : "learning",
-    status, isSkippable: true, orderIndex, publicContent, vocabularyItemId: null, sceneObjectId: null };
+    status, isSkippable: true, orderIndex, publicContent, vocabularyItemId: null, sceneObjectId: null,
+    xpReward: 0, xpBonus: 0 };
 }
 
 let fixture = detail("inProgress");
@@ -287,13 +288,20 @@ test("translations appear during generation before tasks are ready", async () =>
   fixture = detail("generatingTasks");
   await mount(`${BASE}/analysis`);
   fixture = { ...detail("generatingTasks"), translationPreview: {
-    objects: [{ key: "object-1", source: "table", translation: "mesa", article: null, gender: null }],
-    attributes: [], relationships: [],
+    objects: [
+      { key: "object-1", source: "table", translation: "mesa", article: null, gender: null },
+      { key: "object-2", source: "Table", translation: "MESA", article: null, gender: null },
+    ],
+    attributes: [
+      { key: "attribute-1", source: "blue", translation: "azul", article: null, gender: null },
+      { key: "attribute-2", source: "blue", translation: "azul", article: null, gender: null },
+    ], relationships: [],
   } };
   for (let i = 0; i < 5 && !document.body.textContent?.includes("mesa"); i += 1) {
     await act(async () => { await new Promise(resolve => setTimeout(resolve, 1000)); });
   }
   assert.match(document.body.textContent ?? "", /mesa/);
+  assert.equal(document.querySelectorAll(".translation-preview__term").length, 2);
   assert.match(document.body.textContent ?? "", /Generating tasks/);
   assert.notEqual(shown(), "page-mic-test");
   fixture = detail("ready");

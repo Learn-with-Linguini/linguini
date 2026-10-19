@@ -27,7 +27,7 @@ Keep voice and music as separate tracks. Duck music under the two foreign-langua
 | Phone with Linguini landing demo | Over-shoulder and close phone capture of choosing the **hillside-street** ready-made scene. | All three | Set phone brightness, lock notifications, and clear personal data. Use a screen capture as a clean replacement if moiré appears. |
 | Demo capture | Spanish/French car card, selectable words, Spanish I-Spy answer, gap task, sentence builder, sample journal. | All three | Capture the real live landing flow at `?photo=hillside-street#try`; allow UI states to settle, then cut for pace. Keep **SAMPLE JOURNAL** on stylised journal shots. |
 | Human reaction | One small breath, a nod or a glance up after the completed sentence. | A, B, C ending | Direct a genuine moment, not a broad celebratory grin. |
-| End card | Wordmark, mascot, `linguini-landing.vercel.app`, and **Try the mini session**. | All cuts | Hold URL and CTA at least two seconds; keep inside mobile safe area. |
+| End card | Wordmark, mascot, `www.learnwithlinguini.com`, and **Try the mini session**. | All cuts | Hold URL and CTA at least two seconds; keep inside mobile safe area. |
 
 Shoot live action in 4K at a consistent frame rate, then finish the horizontal master at 1920 × 1080. Compose the learner slightly off centre so the same take can crop to 9:16. Lock exposure and white balance for each setup. Record a few seconds longer than the edit window for every action. Capture 10–15 seconds each of street ambience, room tone, a paper flick, a finger tap and a page turn; these give the edit physical texture without borrowed audio.
 

@@ -7,7 +7,7 @@
 
 <p align="center"><strong>Learn the language of your day</strong></p>
 
-**Live application:** [Open Linguini](https://linguini-navy.vercel.app/) &nbsp;·&nbsp; **Landing page:** [linguini-landing](https://linguini-landing.vercel.app)
+**Live site and application:** [Open Linguini](https://www.learnwithlinguini.com/)
 
 ## What Linguini is
 
@@ -44,6 +44,7 @@ history doubles as a diary of what you actually did.
 - Journal with daily entries, edits and image attachments.
 - Progress dashboard: XP, streaks, words learned per language.
 - Multiple language profiles per user; switching a profile re-scopes the whole app.
+- Lessons from English into Spanish, French and German, plus beginner Korean.
 - Supabase authentication with a local `demo` auth mode for development.
 - Server-side content moderation and image validation on every upload.
 
@@ -65,19 +66,19 @@ Captured from the running app (phone width) against the live database.
 
 ## Launch film
 
-<a href="landing/public/film/linguini-film-1080p.mp4"><img src="docs/media/launch-film-preview.webp" alt="Looping silent preview of the Linguini launch film" width="640" /></a>
+<a href="frontend/public/film/linguini-film-1080p.mp4"><img src="docs/media/launch-film-preview.webp" alt="Looping silent preview of the Linguini launch film" width="640" /></a>
 
 The looping clip above is a silent animated WebP that plays on its own; click it for the
 full 30-second film with sound
-([1080p](landing/public/film/linguini-film-1080p.mp4),
-[720p](landing/public/film/linguini-film-720p.mp4)). It is also embedded on the
-[landing page](https://linguini-landing.vercel.app), and the narrated cut and 50-second
-explainer live in [`landing/public/blog/`](landing/public/blog).
+([1080p](frontend/public/film/linguini-film-1080p.mp4),
+[720p](frontend/public/film/linguini-film-720p.mp4)). It is also embedded on the
+[home page](https://www.learnwithlinguini.com), and the narrated cut and 50-second
+explainer live in [`frontend/public/blog/`](frontend/public/blog).
 
 Regenerate the preview after re-cutting the film:
 
 ```sh
-ffmpeg -i landing/public/film/linguini-film-720p.mp4 \
+ffmpeg -i frontend/public/film/linguini-film-720p.mp4 \
   -vf "fps=10,scale=640:-2" -loop 0 -c:v libwebp_anim -quality 60 -an \
   docs/media/launch-film-preview.webp
 ```
@@ -96,7 +97,7 @@ flowchart TD
   api --> ai
 ```
 
-`landing/` is a separate Next.js site and does not call the API.
+`frontend/src/marketing/` is built with the learner app and serves both the Next.js marketing site and the frontend SPA from the same origin. Only the learner app calls the API.
 
 - API JSON is camelCase; Python attributes are snake_case. The API prefix is `/api/v1`.
 - PostgreSQL is required: there is no in-memory or JSON fallback, and missing database
@@ -110,17 +111,17 @@ flowchart TD
 
 | Directory | What it is | Stack | Docs |
 | --- | --- | --- | --- |
-| [`frontend/`](frontend) | The learner web app | React 19, TypeScript, Vite | [frontend/README.md](frontend/README.md), [design.md](frontend/design.md) |
+| [`frontend/`](frontend) | Marketing site and learner web app | React 19, TypeScript, Vite | [frontend/README.md](frontend/README.md), [design.md](frontend/design.md) |
 | [`backend/`](backend) | API, persistence and AI features | FastAPI, SQLAlchemy, PostgreSQL/Supabase, Prisma migrations | [backend/README.md](backend/README.md) |
-| [`landing/`](landing) | Marketing site with an interactive demo session | Next.js 16 (App Router) | [landing/README.md](landing/README.md) |
 | [`marketing/`](marketing) | Product Hunt launch kit, launch videos, media kit and business model | Markdown, Python/Pillow, FFmpeg, Hyperframes | [marketing/README.md](marketing/README.md) |
 
-Each app manages its own dependencies and deploys on its own. `marketing/` is not deployed; it holds source files and finished exports.
+The Vite deployment serves both marketing pages and learner routes from one origin.
+`marketing/` is not deployed; it holds source files and finished exports.
 
 ## Quick start
 
 ```sh
-# Learner app (http://localhost:5173)
+# Site and learner app (http://localhost:5173)
 cd frontend && npm ci && cp .env.example .env.local && npm run dev
 
 # API (http://127.0.0.1:8000/docs); fill DATABASE_URL and DIRECT_URL in .env.local first
@@ -128,8 +129,6 @@ cd backend && python -m venv .venv && .venv/bin/pip install -e ".[dev]" && npm c
   && cp .env.example .env.local && npm run db:deploy \
   && .venv/bin/uvicorn app.main:app --reload --env-file .env.local
 
-# Landing page (http://localhost:3000)
-cd landing && npm ci && npm run dev
 ```
 
 Windows/PowerShell setup, environment variables and API details are in the app READMEs.
@@ -149,7 +148,8 @@ that matter most:
 | `backend` | `AUTH_MODE`, `DEMO_USER_ID` | `supabase` verifies bearer tokens; `demo` falls back to `DEMO_USER_ID` locally only. |
 | `backend` | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | Media uploads to the private `media-assets` bucket. |
 | `backend` | `CORS_ALLOWED_ORIGINS` | Comma-separated frontend origins. |
-| `landing` | `NEXT_PUBLIC_SITE_URL`, `NEXT_PUBLIC_APP_URL` | Canonical site URL and where the call-to-action links point. |
+| `frontend` | `VITE_SITE_URL`, `VITE_SUPPORT_EMAIL` | Canonical site URL and public support contact. |
+| `frontend` | `VITE_PRODUCT_HUNT_URL`, `VITE_PRODUCT_HUNT_POST_ID` | Optional Product Hunt badge and Organization link. |
 
 Full tables, including optional AI and SEO settings, are in each app's README.
 
@@ -157,8 +157,7 @@ Full tables, including optional AI and SEO settings, are in each app's README.
 
 | Piece | Where | Notes |
 | --- | --- | --- |
-| Learner app | Vercel project, root directory `frontend` | https://linguini-navy.vercel.app |
-| Landing page | Vercel project `linguini-landing`, root directory `landing` | https://linguini-landing.vercel.app |
+| Marketing site and learner app | Vercel project rooted at `frontend/` | https://www.learnwithlinguini.com |
 | API | uvicorn/ASGI host | Needs the backend environment variables above; `AUTH_MODE=supabase`. |
 | Database, storage, auth | Supabase | Migrations applied with `npm run db:deploy` from `backend/`. |
 
@@ -177,7 +176,7 @@ Full tables, including optional AI and SEO settings, are in each app's README.
 
 ## Contributing
 
-- Branch from `main` with a plain descriptive slug, e.g. `session-lifecycle`, and open one pull request per slice of work.
+- Branch from `dev` with a plain descriptive slug, e.g. `session-lifecycle`, and open one pull request per slice of work against `dev`.
 - Commits and pull requests are attributed to the team member who requested the work. AI agents must not add themselves as authors or co-authors, or add "Generated with" lines; the CI `attribution` job rejects pull requests that do.
 - Run the checks before opening a pull request:
 

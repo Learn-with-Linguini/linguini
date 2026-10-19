@@ -1,7 +1,7 @@
 ﻿# Linguini
 
-A photo-led, speak-first language-learning app: explore a scene, learn its words,
-then play I-Spy with Linguini in both directions.
+A photo-led language-learning app: explore a scene, learn its words, then practise
+two-way scene description with Linguini.
 
 ## Current status
 
@@ -20,6 +20,22 @@ The backend defines API routes and validated request/response schemas. Its healt
 endpoint, user/profile edits, progress, vocabulary, scenes, demo sessions, and journal reads/writes work; remaining business route handlers return
 `501 Not Implemented` when reached. The demo user is read from PostgreSQL through a service and repository.
 Database configuration is required; authentication and AI integrations are not implemented.
+
+## Landing site
+
+The marketing home, blog, language pages, legal pages, credits, and share page live
+in `src/marketing/` and are served by this Vite deployment alongside learner routes.
+The two app roots lazy-load separate global stylesheets. Optional public settings are
+`VITE_SITE_URL`, `VITE_SUPPORT_EMAIL`, `VITE_PRODUCT_HUNT_URL`,
+`VITE_PRODUCT_HUNT_POST_ID`, `GOOGLE_SITE_VERIFICATION`,
+`BING_SITE_VERIFICATION`, and `INDEXNOW_KEY`; learner API and Supabase variables are
+unchanged.
+
+Static Open Graph cards are in `public/og/`. They were pre-rendered from the former
+Next image routes before that project was removed. Keep replacements at 1200×630 PNG;
+the dynamic image renderer is no longer part of the app. Site utilities for SEO
+checks, IndexNow submissions, PDF exports, and the business-model video live in
+`scripts/`.
 
 ## Repository layout
 
@@ -113,7 +129,7 @@ and seed missing catalog entries. No JSON imports are required.
 The SVG artwork remains in frontend components.
 
 The catalog retains the existing scene slugs, so practice links still work. Open
-`/practice` to select a scene or `/practice/calle-mayor/analysis` to test a direct
+`/practice` to select a scene or `/practice/street/analysis` to test a direct
 link. Loading, empty catalog, missing scene, and API failures have visible states.
 Unknown scene IDs no longer fall back to the first scene. Reload the browser after
 editing database scene content. Scene content remains static; camera uploads and AI generation
@@ -186,10 +202,10 @@ Run these inside `frontend/`:
 | `npm run dev` | Start the development server |
 | `npm run build` | Typecheck and build production assets into `dist/` |
 | `npm run lint` | Run Oxlint |
+| `npm test` | Run frontend tests |
 | `npm run preview` | Preview an existing production build locally |
 
-There is currently no frontend test script. Backend test and lint commands are
-documented in the [backend README](backend/README.md#checks).
+Backend test and lint commands are documented in the [backend README](backend/README.md#checks).
 
 ## Screens
 
@@ -197,7 +213,6 @@ These are frontend routes, separate from the backend's `/api/v1` endpoints.
 
 | Route | Screen |
 | --- | --- |
-| `/` | Welcome |
 | `/onboarding` | Account, language, goal, and permission setup UI |
 | `/login` | Login UI |
 | `/home` | Home and practice entry point |
@@ -228,4 +243,3 @@ and use the centralized request helper in `frontend/src/lib/api.ts`.
 
 The ready scenes use real photos where available, while `src/components/SceneArt.tsx` remains the
 fallback illustration system for journal entries and incomplete image states.
-

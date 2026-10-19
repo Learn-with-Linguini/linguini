@@ -8,6 +8,7 @@ import { ImageUpload } from "../components/ImageUpload";
 import { MediaImage } from "../components/MediaImage";
 import { useAppState } from "../state/useAppState";
 import { getJournalContext } from "../lib/api";
+import { trackAction } from "../lib/analytics.ts";
 import type { JournalPhotoOption } from "../lib/api";
 import { queryError, queryKeys } from "../lib/queryKeys";
 import { useQuery } from "@tanstack/react-query";
@@ -52,6 +53,11 @@ export function JournalForm({ entry, date, photoOptions, wordSuggestions, onSave
       wordsUsed: selectedWords,
     }, entry?.id, date);
     if (saved) {
+      trackAction("journal_entry_saved", {
+        hasPhotos: photos.length > 0,
+        wordCount: body.trim().split(/\s+/).length,
+        isNew: !entry,
+      });
       if (onSaved) onSaved(saved);
       else navigate(`/journal/${saved.id}`);
     }
@@ -173,7 +179,7 @@ export function JournalForm({ entry, date, photoOptions, wordSuggestions, onSave
 
       <div className="journal-editor__actions">
         {journalSaveError ? <p role="alert">{journalSaveError}</p> : null}
-        {journalSaving ? <p role="status">Saving journal…</p> : null}
+        {journalSaving ? <LoadingScreen label="Saving journal…" /> : null}
         {!entry && !activeProfile ? <p role="alert">Choose a language in Profile before saving.</p> : null}
         <Button block className="journal-editor__save" disabled={journalSaving || uploading || !body.trim() || (!entry && !activeProfile)} onClick={save}>
           Save entry

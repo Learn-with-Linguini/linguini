@@ -91,9 +91,9 @@ def test_api_and_visibility(scene_record):
         connection.execute(
             update(preloaded_scenes)
             .where(preloaded_scenes.c.slug == slug)
-            .values(is_active=True, language_code="fr")
+            .values(is_active=True)
         )
-    assert client.get(f"/api/v1/preloaded-scenes/{slug}").status_code == 404
+    assert client.get(f"/api/v1/preloaded-scenes/{slug}").status_code == 200
     assert (
         next(r for r in PostgresSceneRepository(engine).list_scenes() if r.scene_id == slug).title
         == "Live edit"
@@ -126,7 +126,7 @@ def test_media_integrity_and_rls(scene_record):
 def test_transaction_rolls_back_media_on_invalid_scene(database, source):
     engine, *_ = database
     row = source
-    row["languageCode"] = "not a language"
+    row["sceneId"] = PostgresSceneRepository(engine).list_scenes()[0].scene_id
     with pytest.raises(IntegrityError), engine.begin() as connection:
         store_scene(connection, PreloadedSceneDetail.model_validate(row))
     with engine.connect() as connection:
@@ -138,22 +138,21 @@ def test_transaction_rolls_back_media_on_invalid_scene(database, source):
         )
 
 
-def test_french_scene_round_trip(database, source):
+def test_scenes_are_language_independent(database, source):
     engine, *_ = database
-    source["languageCode"] = "fr"
-    source["language"] = "French"
-    source["items"][0]["gender"] = "le"
-    source["items"][1]["gender"] = "l'"
     scene = PreloadedSceneDetail.model_validate(source)
     with engine.begin() as connection:
         store_scene(connection, scene)
     try:
         service = SceneService(PostgresSceneRepository(engine))
-        french = service.list_scenes("fr")
-        assert source["sceneId"] in {row.scene_id for row in french}
-        assert service.list_scenes("es")
-        fetched = service.get_scene(source["sceneId"], "fr")
-        assert [item.gender for item in fetched.items][:2] == ["le", "l'"]
+        listed = service.list_scenes()
+        assert source["sceneId"] in {row.scene_id for row in listed}
+        assert all("language" not in row.model_dump() for row in listed)
+        fetched = service.get_scene(source["sceneId"])
+        assert [item.translation for item in fetched.items] == [
+            item["translation"] for item in source["items"]
+        ]
+        assert all({"word", "gender", "example"}.isdisjoint(item) for item in source["items"])
     finally:
         with engine.begin() as connection:
             connection.execute(
@@ -175,15 +174,94 @@ def test_database_errors_are_controlled():
         PostgresSceneRepository(engine).list_scenes()
 
 
+def _scene_objects(labels, attributes=None):
+    from app.schemas.media import SceneObject
+
+    session_id = uuid4()
+    attributes = attributes or {}
+    return [
+        SceneObject(
+            session_id=session_id,
+            label=label,
+            attributes=attributes.get(index),
+        )
+        for index, label in enumerate(labels)
+    ]
+
+
+def test_select_objects_keeps_repeated_labels_and_normalizes_quantities():
+    from app.scripts.precompute_preloaded_scenes import select_objects
+
+    objects = _scene_objects(
+        ["chair", "chair", "chair", "table"],
+        {1: {"color": "brown"}, 3: {"quantity": "4"}},
+    )
+
+    kept = select_objects(objects)
+
+    assert [obj.label for obj in kept] == ["chair", "chair", "chair", "table"]
+    assert [obj.attributes["quantity"] for obj in kept[:3]] == ["3", "3", "3"]
+    assert "quantity" not in (kept[3].attributes or {})
+
+
+def test_select_objects_caps_distinct_labels():
+    from app.scripts.precompute_preloaded_scenes import select_objects
+
+    objects = _scene_objects([f"label-{index}" for index in range(8)])
+
+    kept = select_objects(objects)
+
+    assert [obj.label for obj in kept] == [f"label-{index}" for index in range(6)]
+
+
+def test_select_objects_caps_instances_per_label():
+    from app.scripts.precompute_preloaded_scenes import select_objects
+
+    kept = select_objects(_scene_objects(["chair"] * 15))
+
+    assert len(kept) == 10
+    assert all(obj.attributes == {"quantity": "10"} for obj in kept)
+
+
+def test_select_objects_caps_total_after_selecting_labels_breadth_first():
+    from app.scripts.precompute_preloaded_scenes import select_objects
+
+    labels = ["chair"] * 10 + ["table", "cup", "plate", "book", "lamp"]
+
+    kept = select_objects(_scene_objects(labels))
+
+    assert len(kept) == 12
+    assert {obj.label for obj in kept} == {
+        "chair", "table", "cup", "plate", "book", "lamp",
+    }
+    assert sum(obj.label == "chair" for obj in kept) == 7
+
+
+def test_select_objects_does_not_mutate_input_objects():
+    from app.scripts.precompute_preloaded_scenes import select_objects
+
+    objects = _scene_objects(
+        ["chair", "chair", "table"],
+        {0: {"color": "brown"}, 1: {"quantity": "11"}, 2: {"quantity": "4"}},
+    )
+    original_attributes = [obj.attributes.copy() for obj in objects]
+
+    kept = select_objects(objects)
+
+    assert [obj.attributes for obj in objects] == original_attributes
+    assert all(original is not selected for original, selected in zip(objects, kept, strict=True))
+    assert kept[0].attributes == {"color": "brown", "quantity": "2"}
+    assert kept[1].attributes == {"quantity": "2"}
+    assert kept[2].attributes == {}
+
+
 def test_precompute_helpers_build_valid_content():
-    from app.ai.features.translation.schemas import TranslatedTerm
     from app.schemas.media import AnchorPoint, BoundingBox, MediaAsset, SceneObject
     from app.scripts.precompute_preloaded_scenes import (
         build_items,
         build_scene_content,
-        dedupe_objects,
         marker_percent,
-        normalized_gender,
+        select_objects,
     )
 
     session_id = uuid4()
@@ -200,35 +278,19 @@ def test_precompute_helpers_build_valid_content():
         ),
         SceneObject(session_id=session_id, label="STREET"),
     ]
-    kept = dedupe_objects(objects)
-    assert [obj.label for obj in kept] == ["Street", "school"]
+    kept = select_objects(objects)
+    assert [obj.label for obj in kept] == ["Street", "school", "STREET"]
+    assert [obj.attributes["quantity"] for obj in (kept[0], kept[2])] == ["2", "2"]
     assert marker_percent(kept[0]) == (30.0, 30.0)
     assert marker_percent(kept[1]) == (50.0, 50.0)
 
-    terms = [
-        TranslatedTerm(
-            key=str(kept[0].id), source="Street", translation="rue",
-            article="la", gender="feminine",
-        ),
-        TranslatedTerm(
-            key=str(kept[1].id), source="school", translation="école",
-            article="l'", gender="feminine",
-        ),
+    items = build_items(kept)
+    assert [item["id"] for item in items] == ["street", "school", "street-2"]
+    assert [item["translation"] for item in items] == [
+        "the Street", "the school", "the STREET",
     ]
-    examples = {str(kept[0].id): ("La rue est calme.", "The street is quiet.")}
-    items = build_items(kept, terms, examples, "fr")
-    assert items[0]["id"] == "street"
-    assert items[0]["word"] == "la rue"
-    assert items[0]["translation"] == "the Street"
-    assert items[0]["gender"] == "la"
-    assert items[1]["id"] == "school"
-    assert items[1]["word"] == "l'école"
-    assert items[1]["gender"] == "l'"
-    assert items[1]["example"] == ""
-
-    assert normalized_gender("du", "masculine", "fr") == "le"
-    assert normalized_gender("du", "feminine", "es") == "la"
-    assert normalized_gender(None, None, "es") is None
+    assert [item["attributes"].get("quantity") for item in items] == ["2", None, "2"]
+    assert all({"word", "gender", "example"}.isdisjoint(item) for item in items)
 
     asset = MediaAsset(
         media_type="image", source="preloaded",
@@ -236,23 +298,21 @@ def test_precompute_helpers_build_valid_content():
         width=320, height=200,
     )
     content = build_scene_content(
-        slug="rue-principale", language_code="fr", language="French",
-        title="A walk downtown", description="A busy street.",
+        slug="street", title="A walk downtown", description="A busy street.",
         difficulty="beginner", media_asset=asset, items=items,
     )
+    assert content["rounds"][0]["clue"] == "the Street"
     detail = PreloadedSceneDetail.model_validate(
         {
             **content,
-            "sceneId": "rue-principale",
-            "languageCode": "fr",
-            "language": "French",
+            "sceneId": "street",
             "title": "A walk downtown",
             "description": "A busy street.",
             "difficulty": "beginner",
             "mediaAsset": asset,
         }
     )
-    assert len(detail.items) == 2
+    assert len(detail.items) == 3
     assert detail.tasks[0].item_ids == [item["id"] for item in items]
 
 

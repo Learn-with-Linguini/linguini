@@ -320,8 +320,10 @@ def test_gemini_scene_schema_omits_nested_array_bounds_without_mutating_contract
     assert "maxItems" not in objects["items"]["properties"]["attributes"]
     assert "maxItems" not in outbound["properties"]["relations"]
     assert objects["items"]["required"] == schema["properties"]["objects"]["items"]["required"]
-    assert schema["properties"]["objects"]["maxItems"] == 6
+    assert schema["properties"]["objects"]["maxItems"] == 20
     assert schema["properties"]["relations"]["maxItems"] == 12
+    assert schema["properties"]["actions"]["maxItems"] == 12
+    assert schema["properties"]["priceSuggestions"]["maxItems"] == 12
 
 
 def test_gemini_metadata_reports_model_version_response_id_and_usage():

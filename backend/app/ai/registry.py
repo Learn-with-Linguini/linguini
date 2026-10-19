@@ -7,6 +7,7 @@ deterministic fallbacks.
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from app.ai.adapters.gemini import GeminiTextClient, GeminiVisionClient
@@ -35,6 +36,8 @@ from app.ai.settings import (
     ObjectGroundingProvider,
 )
 from app.services.image_storage import ImageStorage
+
+logger = logging.getLogger(__name__)
 
 
 def build_text_client(
@@ -71,6 +74,19 @@ def build_vision_client(
     if provider is AiProvider.OPENROUTER:
         return OpenRouterVisionClient(key, config, **_openrouter_options(upstream_fallback))
     raise ValueError(f"unsupported vision provider {provider!r}")
+
+
+def _credential_env_vars(settings: AiSettings, feature: AiFeature) -> list[str]:
+    config = settings.ai_config
+    primary = config.primary_deployment(feature) if config else None
+    if primary is None:
+        return []
+    _, deployment = primary
+    return [
+        name
+        for credential_id in deployment.credentials
+        for name in config.credentials[credential_id].env
+    ]
 
 
 def _openrouter_options(upstream_fallback: UpstreamFallback | None) -> dict[str, Any]:
@@ -181,7 +197,8 @@ def build_uploaded_scene_analyzer(
 ) -> UploadedSceneAnalyzer | None:
     """Build the configured uploaded-photo analyzer, or ``None`` when off.
 
-    ``None`` preserves the workflow's deterministic scene fallback. The
+    ``None`` makes the workflow fail uploaded-photo analysis with a retryable
+    ``analysisUnavailable`` error. The
     caller routes only non-preloaded media through the returned analyzer.
     """
     scene_config = settings.feature(AiFeature.SCENE_ANALYSIS)
@@ -189,6 +206,20 @@ def build_uploaded_scene_analyzer(
         AiProvider.OPENAI, AiProvider.GEMINI, AiProvider.OPENROUTER
     ):
         if not settings.is_configured(scene_config):
+            if not settings.secret_for(scene_config):
+                env_vars = _credential_env_vars(settings, AiFeature.SCENE_ANALYSIS)
+                reason = (
+                    "no secret is set (set " + " or ".join(env_vars) + ")"
+                    if env_vars else "no secret is set"
+                )
+            else:
+                reason = "no model is configured"
+            logger.warning(
+                "Uploaded-image scene analysis is disabled: the sceneAnalysis route "
+                "uses provider %s but %s; uploaded-photo analysis will fail until it is set.",
+                scene_config.provider.value,
+                reason,
+            )
             return None
         client, vision_config = build_routed_client(
             "vision",

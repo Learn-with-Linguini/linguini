@@ -8,8 +8,16 @@ from uuid import UUID, uuid4
 from pydantic import AwareDatetime, Field, model_validator
 
 from app.schemas.base import ApiModel, JsonObject
-from app.schemas.enums import SessionFailureCode, SessionStatus
-from app.schemas.media import AnchorPoint, MediaAsset, SceneObject, SceneObjectRelation
+from app.schemas.enums import SessionFailureCode, SessionMode, SessionStatus
+from app.schemas.media import (
+    AnchorPoint,
+    MediaAsset,
+    SceneActionSuggestion,
+    SceneObject,
+    SceneObjectRelation,
+    ScenePriceSuggestion,
+)
+from app.schemas.missions import MissionChoices
 from app.schemas.tasks import SessionProgress, SessionTaskPublic
 from app.schemas.translation import SceneTranslationResult
 from app.schemas.vocabulary import VocabularyItem, VocabularyTranslation
@@ -21,6 +29,9 @@ class Session(ApiModel):
     language_profile_id: UUID
     scene_media_asset_id: UUID
     status: SessionStatus = SessionStatus.CREATED
+    mode: SessionMode = SessionMode.LESSON
+    source_session_id: UUID | None = None
+    scene_confirmed_at: AwareDatetime | None = None
     started_at: AwareDatetime | None = None
     completed_at: AwareDatetime | None = None
     abandoned_at: AwareDatetime | None = None
@@ -67,6 +78,19 @@ class RepositionedPracticeObject(ApiModel):
     anchor_point: AnchorPoint
 
 
+Quantity = Annotated[int, Field(ge=1, le=10)]
+
+
+class CountedGroup(ApiModel):
+    """A learner-confirmed count of the confirmed objects sharing one name."""
+
+    scene_object_ids: Annotated[list[UUID], Field(min_length=1)]
+    label: Annotated[str, Field(min_length=1, max_length=200)]
+    quantity: Quantity
+    suggested_quantity: Quantity | None = None
+    source: Literal["confirmed", "corrected", "entered"]
+
+
 class ReviewPracticeRequest(ApiModel):
     scene_title: Annotated[str, Field(min_length=1, max_length=200)] | None = None
     relations: Annotated[list[SceneObjectRelation], Field(max_length=100)] = Field(
@@ -80,6 +104,8 @@ class ReviewPracticeRequest(ApiModel):
     repositioned_objects: Annotated[list[RepositionedPracticeObject], Field(max_length=50)] = Field(
         default_factory=list
     )
+    object_counts: dict[UUID, Quantity] = Field(default_factory=dict)
+    mission_choices: MissionChoices | None = None
 
     @model_validator(mode="after")
     def unique_selection(self):
@@ -89,6 +115,18 @@ class ReviewPracticeRequest(ApiModel):
         selected = set(ids)
         if not set(self.object_attributes) <= selected:
             raise ValueError("Attributes must reference selected objects.")
+        if not set(self.object_counts) <= selected:
+            raise ValueError("Counts must reference selected objects.")
+        if self.mission_choices:
+            choice_ids = []
+            if self.mission_choices.ownership:
+                choice_ids.append(self.mission_choices.ownership.scene_object_id)
+            if self.mission_choices.preference:
+                choice_ids.extend(self.mission_choices.preference.scene_object_ids)
+                if self.mission_choices.preference.chosen_object_id:
+                    choice_ids.append(self.mission_choices.preference.chosen_object_id)
+            if not set(choice_ids) <= selected:
+                raise ValueError("Mission choices must reference selected objects.")
         moved_ids = [item.id for item in self.repositioned_objects]
         if len(moved_ids) != len(set(moved_ids)):
             raise ValueError("Each object can have only one marker position.")
@@ -114,6 +152,21 @@ class ReviewPracticeRequest(ApiModel):
         return self
 
 
+class ReturningPracticeWord(ApiModel):
+    word: Annotated[str, Field(min_length=1, max_length=200)]
+    needs_review: bool = False
+
+
+class SessionPersonalization(ApiModel):
+    previous_sessions: Annotated[int, Field(ge=0)]
+    returning_words: Annotated[list[ReturningPracticeWord], Field(max_length=6)] = Field(
+        default_factory=list
+    )
+    practice_focuses: list[Literal[
+        "genderNumberAgreement", "pluralNounForm", "sceneDescription", "chainedDescription",
+    ]] = Field(default_factory=list)
+
+
 class SessionDetailResponse(ApiModel):
     analysis_mode: Literal["placeholder"] | None = None
     media_asset: MediaAsset
@@ -123,8 +176,18 @@ class SessionDetailResponse(ApiModel):
     translations: list[VocabularyTranslation] = Field(default_factory=list)
     translation_preview: SceneTranslationResult | None = None
     analysis_retryable: bool = False
+    personalization: SessionPersonalization | None = None
+    counted_groups: list[CountedGroup] = Field(default_factory=list)
+    mission_guidance: list[str] = Field(default_factory=list)
+    # Reviewed sessions: scene object id -> its marker number on the review screen.
+    review_markers: dict[str, int] = Field(default_factory=dict)
+    provisional_mission_plan: list[JsonObject] = Field(default_factory=list)
+    suggested_scene_object_ids: list[UUID] = Field(default_factory=list)
+    mission_choices: MissionChoices | None = None
     session: Session
     scene_object_relations: list[SceneObjectRelation] = Field(default_factory=list)
+    scene_action_suggestions: list[SceneActionSuggestion] = Field(default_factory=list)
+    scene_price_suggestions: list[ScenePriceSuggestion] = Field(default_factory=list)
     scene_objects: list[SceneObject] = Field(default_factory=list)
     tasks: list[SessionTaskPublic] = Field(default_factory=list)
     next_task_id: UUID | None = None
@@ -132,9 +195,11 @@ class SessionDetailResponse(ApiModel):
 
 
 class SessionSummaryResponse(ApiModel):
+    basil_earned: int = 0
     session: Session
     progress: SessionProgress
     learned_vocabulary_ids: list[UUID] = Field(default_factory=list)
     xp_earned: Annotated[int, Field(ge=0)] = 0
     ispy_correct_count: Annotated[int, Field(ge=0)] = 0
     ispy_attempt_count: Annotated[int, Field(ge=0)] = 0
+    completed_lessons_count: Annotated[int, Field(ge=0)] = 0

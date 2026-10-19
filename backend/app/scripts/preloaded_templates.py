@@ -106,8 +106,10 @@ def error_code(error: BaseException) -> str:
     return type(error).__name__
 
 
-def curated_generation_inputs(row: Mapping[str, Any], session_id: UUID | None = None):
-    """The translation payload, objects and relations a session of ``row`` builds."""
+def curated_generation_inputs(
+    row: Mapping[str, Any], language: str, session_id: UUID | None = None
+):
+    """The translation payload, objects and relations a ``language`` session of ``row`` builds."""
     session_id = session_id or uuid5(NAMESPACE_URL, f"linguini:preloaded-template:{row['slug']}")
     scene = {
         "title": row["title"],
@@ -117,7 +119,7 @@ def curated_generation_inputs(row: Mapping[str, Any], session_id: UUID | None = 
     objects = [curated_scene_object(session_id, entry) for entry in row["content"]["items"]]
     relations = curated_relations(scene, objects)
     payload = translation_payload(
-        row["language_code"],
+        language,
         row["title"],
         scene_summary(scene, objects) or "Confirmed scene vocabulary.",
         objects,
@@ -128,6 +130,7 @@ def curated_generation_inputs(row: Mapping[str, Any], session_id: UUID | None = 
 
 def generate_row_templates(
     row: dict[str, Any],
+    language: str,
     services: Mapping[str, Any],
     budget: CallBudget,
     reserve: Mapping[str, int],
@@ -135,18 +138,20 @@ def generate_row_templates(
     stages: frozenset[str] = frozenset(STAGES),
     force: bool = False,
 ) -> list[StageOutcome]:
-    """Fill ``row["content"]["generated"]``; reuse templates that still match.
+    """Fill ``row["content"]["generated"]`` for ``language``; reuse templates that still match.
+
+    Templates for other languages are kept: each is keyed by its target language.
 
     Lessons and clues depend on the translation, so they run only when a
     translation is generated or reused for the same scene facts.
     """
-    payload, objects, relations = curated_generation_inputs(row)
+    payload, objects, relations = curated_generation_inputs(row, language)
     current = TemplateSet.from_content([row["content"]]).templates
     outcomes = []
     translated = None
 
     def outcome(stage, status, reason=None):
-        outcomes.append(StageOutcome(row["slug"], row["language_code"], stage, status, reason))
+        outcomes.append(StageOutcome(row["slug"], language, stage, status, reason))
 
     for stage in STAGES:
         service = services.get(stage)

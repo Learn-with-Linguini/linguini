@@ -1,5 +1,6 @@
 """Application-scoped AI feature services shared by every request."""
 
+import logging
 import threading
 from collections.abc import Callable
 from typing import Any
@@ -16,6 +17,8 @@ from app.ai.registry import (
 )
 from app.ai.settings import AiSettings
 from app.services.image_storage import ImageStorage
+
+logger = logging.getLogger(__name__)
 
 
 class AiRuntime:
@@ -58,15 +61,30 @@ class AiRuntime:
     def uploaded_scene_analyzer(self):
         return self._service(
             "uploaded_scene_analyzer",
-            lambda: build_uploaded_scene_analyzer(
-                self.settings,
-                self._storage,
-                self.tracer,
-                object_grounder=self._object_grounder,
-                image_moderator=self._image_moderator,
-                pool=self.provider_pool,
-            ),
+            self._build_uploaded_scene_analyzer,
         )
+
+    def _build_uploaded_scene_analyzer(self):
+        analyzer = build_uploaded_scene_analyzer(
+            self.settings,
+            self._storage,
+            self.tracer,
+            object_grounder=self._object_grounder,
+            image_moderator=self._image_moderator,
+            pool=self.provider_pool,
+        )
+        if analyzer is not None:
+            logger.info(
+                "Uploaded-image scene analyzer constructed (provider=%s, model=%s).",
+                self.settings.scene_analysis.provider.value,
+                self.settings.scene_analysis.model_name,
+            )
+        else:
+            logger.warning(
+                "Uploaded-image scene analyzer not built; uploaded photos will fail "
+                "scene analysis with a retryable error."
+            )
+        return analyzer
 
     def translator(self):
         return self._service(

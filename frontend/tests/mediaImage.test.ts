@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 process.env.VITE_API_BASE_URL = "http://api.test";
-const { mediaImageUrl, shouldDownscale } = await import("../src/lib/api.ts");
+const { mediaImageUrl, protectedMediaPath, shouldDownscale } = await import("../src/lib/api.ts");
 
 test("mediaImageUrl builds the derivative endpoint on the configured API origin", () => {
   assert.equal(
@@ -17,6 +17,16 @@ test("mediaImageUrl builds the derivative endpoint on the configured API origin"
     mediaImageUrl("asset-1", 1280),
     "http://api.test/api/v1/media/asset-1/image?width=1280",
   );
+});
+
+test("protectedMediaPath returns only paths on the configured API origin", () => {
+  assert.equal(
+    protectedMediaPath(mediaImageUrl("a", 640)),
+    "/api/v1/media/a/image?width=640",
+  );
+  assert.equal(protectedMediaPath(null), null);
+  assert.equal(protectedMediaPath("/scenes/x.jpg"), null);
+  assert.equal(protectedMediaPath("https://evil.test/api/v1/media/a/image"), null);
 });
 
 test("shouldDownscale triggers on byte size or the long edge, never both needed", () => {

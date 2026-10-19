@@ -12,10 +12,11 @@ from __future__ import annotations
 import json
 import logging
 import time
+from collections.abc import Callable
 from dataclasses import replace
-from typing import Any
+from typing import Annotated, Any, Literal
 
-from pydantic import ValidationError
+from pydantic import ConfigDict, Field, ValidationError
 
 from app.ai.cache import (
     CacheScope,
@@ -30,7 +31,10 @@ from app.ai.cache import (
 from app.ai.contracts.errors import ProviderError, ProviderErrorCode
 from app.ai.contracts.schema import build_strict_json_schema
 from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelRequest
+from app.ai.features.learning_tasks.mission import MissionGeneration
 from app.ai.features.learning_tasks.prompt import (
+    LEARNING_TASK_MEMORY_PROMPT_VERSION,
+    LEARNING_TASK_MEMORY_SYSTEM_PROMPT,
     LEARNING_TASK_PROMPT_VERSION,
     LEARNING_TASK_SCHEMA_VERSION,
     LEARNING_TASK_SYSTEM_PROMPT,
@@ -52,8 +56,17 @@ from app.ai.features.learning_tasks.validation import (
 from app.ai.observability import AITracer
 from app.ai.routing import as_routed, route_metadata, total_tokens
 from app.ai.settings import AiFeature
+from app.schemas.base import ApiModel
 
 logger = logging.getLogger(__name__)
+
+
+def _result_counts(result: Any) -> dict[str, int]:
+    tasks = getattr(result, "tasks", [result])
+    return {
+        "taskCount": len(tasks),
+        "questionCount": sum(len(task.questions) for task in tasks),
+    }
 
 _LEARNING_TASKS_INVALID = "learningTasksInvalid"
 _VERSION = FeatureVersion(
@@ -62,6 +75,7 @@ _VERSION = FeatureVersion(
     LEARNING_TASK_SCHEMA_VERSION,
     LEARNING_TASK_VALIDATOR_VERSION,
 )
+_MEMORY_VERSION = replace(_VERSION, prompt_version=LEARNING_TASK_MEMORY_PROMPT_VERSION)
 _REPAIR_INSTRUCTION = """
 
 Your previous response was incomplete. Return a complete replacement JSON object.
@@ -69,6 +83,113 @@ Every task must include a non-empty title and 2 to 4 questions. Every question
 must include at least one object key. Sentence-building questions must include a
 non-empty English translation of their completed correct sentence.
 """
+
+_Count = Annotated[int, Field(ge=0)]
+_Term = Annotated[str, Field(min_length=1, max_length=64)]
+_MAX_HISTORY_BYTES = 6 * 1024
+
+
+class _HistoryModel(ApiModel):
+    model_config = ConfigDict(strict=True, extra="forbid")
+
+
+class _HistoryProfile(_HistoryModel):
+    source_language: Annotated[str, Field(min_length=2, max_length=35)]
+    target_language: Annotated[str, Field(min_length=2, max_length=35)]
+    proficiency_level: Literal["A0", "A1", "A2", "B1", "B2", "C1", "C2"]
+
+
+class _HistoryTotals(_HistoryModel):
+    sessions_completed: _Count
+    graded_attempts: _Count
+    reading_tasks_completed: _Count
+    journals_completed: _Count
+
+
+class _HistoryGraded(_HistoryModel):
+    correct_count: _Count
+    incorrect_count: _Count
+    last_outcome: Literal["correct", "incorrect"] | None
+
+
+class _HistoryWord(_HistoryGraded):
+    term: _Term
+    source: _Term
+    seen_count: _Count
+    journal_mentions: _Count
+    assisted_journal_mentions: _Count
+    journal_selections: _Count
+    relevant: bool
+
+
+class _HistoryGrammar(_HistoryModel):
+    gender_number_agreement: _HistoryGraded
+    plural_noun_form: _HistoryGraded
+    scene_description: _HistoryGraded
+    chained_description: _HistoryGraded
+
+
+class _HistoryCorrections(_HistoryModel):
+    grammar: _Count
+    spelling: _Count
+    syntax: _Count
+    vocabulary: _Count
+    clarity: _Count
+
+
+class _HistoryJournal(_HistoryModel):
+    accepted_corrections: _HistoryCorrections
+
+
+class _LearnerHistory(_HistoryModel):
+    version: Literal[1]
+    profile: _HistoryProfile
+    totals: _HistoryTotals
+    words: Annotated[list[_HistoryWord], Field(max_length=16)]
+    grammar: _HistoryGrammar
+    journal: _HistoryJournal
+
+
+def _history_payload(payload):
+    """Keep prose/identifiers and unbounded history out of the model boundary."""
+    history = payload.get("learnerHistory")
+    if history is None:
+        return {key: value for key, value in payload.items() if key != "learnerHistory"}, False
+    if not isinstance(history, dict) or type(history.get("version")) is not int:
+        raise LearningTaskGenerationError("Learner history must be a bounded versioned summary.")
+    try:
+        encoded = json.dumps(history, ensure_ascii=False).encode("utf-8")
+    except (TypeError, ValueError, UnicodeError):
+        raise LearningTaskGenerationError(
+            "Learner history must be a bounded versioned summary."
+        ) from None
+    if len(encoded) > _MAX_HISTORY_BYTES:
+        raise LearningTaskGenerationError("Learner history exceeds the summary size limit.")
+    try:
+        validated = _LearnerHistory.model_validate(history)
+    except ValidationError:
+        raise LearningTaskGenerationError(
+            "Learner history must be a bounded versioned summary."
+        ) from None
+    if (
+        validated.profile.target_language.casefold()
+        != str(payload.get("targetLanguage", "")).casefold()
+    ):
+        raise LearningTaskGenerationError(
+            "Learner history must match the current learning language."
+        )
+    expected_profile = {
+        "sourceLanguage": validated.profile.source_language,
+        "proficiencyLevel": validated.profile.proficiency_level,
+    }
+    if any(
+        key in payload and str(payload[key]).casefold() != value.casefold()
+        for key, value in expected_profile.items()
+    ):
+        raise LearningTaskGenerationError(
+            "Learner history must match the current learning profile."
+        )
+    return {**payload, "learnerHistory": validated.model_dump(mode="json", by_alias=True)}, True
 
 
 class LearningTaskService:
@@ -94,6 +215,16 @@ class LearningTaskService:
         templates: TemplateSet | None = None,
     ) -> LearningTaskResult:
         """Generate tasks for ``payload``; ``cache_scope=None`` bypasses the cache."""
+        payload, personal = _history_payload(payload)
+        version = _MEMORY_VERSION if personal else _VERSION
+        system_prompt = (
+            LEARNING_TASK_MEMORY_SYSTEM_PROMPT if personal else LEARNING_TASK_SYSTEM_PROMPT
+        )
+        if personal:
+            # A curated scene's templates must never store or replace a personal lesson.
+            templates = None
+            if cache_scope == CacheScope.public():
+                cache_scope = None
         focuses = required_task_focuses(payload)
         payload = {**payload, "requiredTaskFocuses": list(focuses)}
         # Empty-scene guard raises LearningTaskGenerationError before any call.
@@ -108,27 +239,79 @@ class LearningTaskService:
             return run_cached(
                 self._cache,
                 self._client,
-                version=_VERSION,
+                version=version,
                 scope=cache_scope,
                 payload=payload,
-                compute=lambda: self._generate(payload, focuses, response_model),
+                compute=lambda: self._generate(
+                    payload,
+                    focuses,
+                    response_model,
+                    prompt_version=version.prompt_version,
+                    system_prompt=system_prompt,
+                ),
                 decode=decode,
                 templates=templates,
             )
         except CacheWaitTimeout as error:
             raise LearningTaskGenerationError("Learning task generation failed.") from error
 
+    def generate_mission(
+        self, payload: dict[str, Any], generation: MissionGeneration, *,
+        mission_version: str, cache_scope: CacheScope | None = None,
+    ) -> Any:
+        """Generate one mission's lesson; its cache identity includes the mission version."""
+        version = FeatureVersion(
+            AiFeature.LEARNING_TASK.value,
+            f"{generation.prompt_version}:{mission_version}",
+            generation.schema_version,
+            generation.validator_version,
+        )
+
+        def decode(data: Any) -> Any:
+            result = generation.result_model.model_validate(data)
+            generation.validate(payload, result)
+            return result
+
+        try:
+            return run_cached(
+                self._cache,
+                self._client,
+                version=version,
+                scope=cache_scope,
+                payload=payload,
+                compute=lambda: self._generate(
+                    payload,
+                    (mission_version,),
+                    generation.result_model,
+                    prompt_version=version.prompt_version,
+                    system_prompt=generation.system_prompt,
+                    parse=lambda text: decode(json.loads(text)),
+                    json_schema_name=generation.json_schema_name,
+                ),
+                decode=decode,
+            )
+        except CacheWaitTimeout as error:
+            raise LearningTaskGenerationError("Mission lesson generation failed.") from error
+
     def _generate(
-        self, payload: dict[str, Any], focuses: tuple[str, ...], response_model: Any
-    ) -> Generated[LearningTaskResult]:
+        self,
+        payload: dict[str, Any],
+        focuses: tuple[str, ...],
+        response_model: Any,
+        *,
+        prompt_version: str = LEARNING_TASK_PROMPT_VERSION,
+        system_prompt: str = LEARNING_TASK_SYSTEM_PROMPT,
+        parse: Callable[[str], Any] | None = None,
+        json_schema_name: str = "learning_tasks_v2",
+    ) -> Generated[Any]:
         content = json.dumps(payload, ensure_ascii=False)
         request = TextModelRequest(
-            system_prompt=LEARNING_TASK_SYSTEM_PROMPT,
+            system_prompt=system_prompt,
             user_content=content,
-            json_schema_name="learning_tasks_v2",
+            json_schema_name=json_schema_name,
             # Per-payload: key enums are built from this scene's keys.
             json_schema=build_strict_json_schema(response_model),
-            prompt_version=LEARNING_TASK_PROMPT_VERSION,
+            prompt_version=prompt_version,
         )
 
         attempts = 1 + self._config.max_retries
@@ -156,7 +339,7 @@ class LearningTaskService:
                         feature=AiFeature.LEARNING_TASK.value,
                         provider=self._provider,
                         model=self._config.model_name,
-                        prompt_version=LEARNING_TASK_PROMPT_VERSION,
+                        prompt_version=prompt_version,
                         schema_version=LEARNING_TASK_SCHEMA_VERSION,
                         model_parameters={
                             "maxOutputTokens": self._config.max_output_tokens,
@@ -194,19 +377,22 @@ class LearningTaskService:
                         metadata={"attempt": attempt},
                     ) as validation:
                         try:
-                            result = unpack_generated_tasks(
-                                payload,
-                                response_model.model_validate(
-                                    restore_missing_object_keys(
-                                        payload, json.loads(response.output_text)
-                                    )
-                                ),
-                            )
-                            result = normalize_learning_task_references(
-                                payload, result
-                            )
-                            result = normalize_learning_task_option_ids(result)
-                            validate_learning_tasks(payload, result)
+                            if parse is not None:
+                                result = parse(response.output_text)
+                            else:
+                                result = unpack_generated_tasks(
+                                    payload,
+                                    response_model.model_validate(
+                                        restore_missing_object_keys(
+                                            payload, json.loads(response.output_text)
+                                        )
+                                    ),
+                                )
+                                result = normalize_learning_task_references(
+                                    payload, result
+                                )
+                                result = normalize_learning_task_option_ids(result)
+                                validate_learning_tasks(payload, result)
                         except (
                             ValueError,
                             LearningTaskGenerationError,
@@ -218,12 +404,7 @@ class LearningTaskService:
                             raise error
                         validation.update(
                             validation_result="valid",
-                            metadata={
-                                "taskCount": len(result.tasks),
-                                "questionCount": sum(
-                                    len(task.questions) for task in result.tasks
-                                ),
-                            },
+                            metadata=_result_counts(result),
                         )
                     root.update(
                         retry_count=invocation.retries, validation_result="valid"

@@ -185,11 +185,11 @@ The team wants early payers to become beta testers and help steer the product. F
 
 ## Changes this implies for the landing page (not made in this branch)
 
-`landing/components/Pricing.tsx` lists Plus at $6.99 / $59.88 with "Unlimited photo sessions" and pronunciation feedback. When the team agrees on the pricing: update the prices and the "Save" badge (48%); replace "Unlimited" with "Up to 10 photo lessons a day"; show the free limits (one photo lesson and one journal page a day); and hide Plus features and the trial button until they work in production.
+`frontend/src/marketing/components/Pricing.tsx` lists Plus at $6.99 / $59.88 with "Unlimited photo sessions" and pronunciation feedback. When the team agrees on the pricing: update the prices and the "Save" badge (48%); replace "Unlimited" with "Up to 10 photo lessons a day"; show the free limits (one photo lesson and one journal page a day); and hide Plus features and the trial button until they work in production.
 
 ## Media kit
 
-Regenerate with `python3 marketing/business-model/model/cost_model.py && python3 marketing/business-model/media/render.py` (requires Pillow). The renderer reuses the helpers in `marketing/media/render.py` and the landing site's brand assets. Photographs are credited in `landing/public/photos/credits.json`; confirm their rights before posting, as the launch media kit notes.
+Regenerate with `python3 marketing/business-model/model/cost_model.py && python3 marketing/business-model/media/render.py` (requires Pillow). The renderer reuses the helpers in `marketing/media/render.py` and the landing site's brand assets. Photographs are credited in `frontend/public/photos/credits.json`; confirm their rights before posting, as the launch media kit notes.
 
 | Asset | Use | Size |
 | --- | --- | --- |

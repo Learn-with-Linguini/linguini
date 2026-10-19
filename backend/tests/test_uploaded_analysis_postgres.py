@@ -1,6 +1,8 @@
+import logging
 from concurrent.futures import ThreadPoolExecutor
 from uuid import UUID, uuid4
 
+import pytest
 from sqlalchemy import delete, select
 from test_postgres_sessions import database as database
 
@@ -72,6 +74,48 @@ def test_analysis_persistence_concurrency_and_review(database):
         assert client.post(f"/api/v1/sessions/{sid}/abandon").status_code == 200
         assert client.post(f"/api/v1/sessions/{sid}/analyze").status_code == 409
         assert UUID(sid)
+    finally:
+        with engine.begin() as connection:
+            connection.execute(delete(sessions).where(sessions.c.scene_media_asset_id == asset.id))
+            connection.execute(delete(media_assets).where(media_assets.c.id == asset.id))
+
+
+@pytest.mark.real_upload_analysis
+def test_unavailable_uploaded_analysis_is_retryable(database, caplog):
+    engine, owner, profile, client = database
+    asset = MediaAsset(
+        owner_user_id=owner.id,
+        source="camera",
+        media_type="image",
+        storage_key=f"test/{uuid4()}.jpg",
+        mime_type="image/jpeg",
+    )
+    PostgresMediaAssetRepository(engine).create(asset)
+    caplog.set_level(logging.ERROR, logger="app.repositories.postgres.workflow")
+    try:
+        created = client.post(
+            "/api/v1/sessions",
+            json={"languageProfileId": str(profile.id), "mediaAssetId": str(asset.id)},
+        )
+        assert created.status_code == 202, created.text
+        sid = created.json()["session"]["id"]
+
+        analyzed = client.post(f"/api/v1/sessions/{sid}/analyze")
+        assert analyzed.status_code == 200, analyzed.text
+        detail = client.get(f"/api/v1/sessions/{sid}").json()
+        assert detail["session"]["status"] == "failed"
+        assert detail["session"]["failureCode"] == "sceneAnalysisFailed"
+        assert detail["analysisRetryable"] is True
+        assert detail["sceneObjects"] == []
+
+        retried = client.post(f"/api/v1/sessions/{sid}/retry-analysis")
+        assert retried.status_code == 200, retried.text
+        detail = client.get(f"/api/v1/sessions/{sid}").json()
+        assert detail["session"]["status"] == "failed"
+        assert detail["session"]["failureCode"] == "sceneAnalysisFailed"
+        assert detail["analysisRetryable"] is True
+        assert detail["sceneObjects"] == []
+        assert any("code=analysisUnavailable" in record.getMessage() for record in caplog.records)
     finally:
         with engine.begin() as connection:
             connection.execute(delete(sessions).where(sessions.c.scene_media_asset_id == asset.id))
