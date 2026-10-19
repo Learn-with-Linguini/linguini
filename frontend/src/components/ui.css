@@ -1516,7 +1516,7 @@ p[role="alert"]::before { content: "!"; }
 
 .analysis-relation-row {
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr) 128px minmax(0, 1fr) 44px;
+  grid-template-columns: minmax(0, 1fr) 128px minmax(0, 1fr) 44px;
   align-items: center;
   gap: var(--space-2);
   width: 100%;
@@ -1524,11 +1524,6 @@ p[role="alert"]::before { content: "!"; }
   min-height: 56px;
   padding: var(--space-2) 0;
   border-bottom: 1px solid var(--line);
-}
-
-/* Balance the remove control so the connection control sits in the true row centre. */
-.analysis-relation-row::before {
-  content: "";
 }
 
 .analysis-relation-row__object,
@@ -1576,7 +1571,7 @@ p[role="alert"]::before { content: "!"; }
 }
 
 @media (max-width: 520px) {
-  .analysis-relation-row { grid-template-columns: 44px minmax(0, 1fr) 112px minmax(0, 1fr) 44px; gap: var(--space-1); }
+  .analysis-relation-row { grid-template-columns: minmax(0, 1fr) 112px minmax(0, 1fr) 44px; gap: var(--space-1); }
   .analysis-relation-row__object { gap: 4px; }
   .analysis-relation-row__object .analysis-word-row__marker,
   .analysis-relation-row__object .combobox__marker { min-width: 24px; padding-inline: 4px; }
