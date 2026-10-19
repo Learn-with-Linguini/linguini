@@ -1515,44 +1515,41 @@ p[role="alert"]::before { content: "!"; }
 }
 
 .analysis-relation-row {
-  display: grid;
-  grid-template-columns: 30px minmax(0, 1fr) 44px;
-  align-items: center;
-  gap: var(--space-3);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
   width: 100%;
   min-width: 0;
-  min-height: 56px;
+  padding: var(--space-3) 0;
   border-bottom: 1px solid var(--line);
 }
 
-.analysis-relation-row__marker {
-  font-weight: 800;
+.analysis-relation-row__sequence {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+  flex: 1;
 }
 
-.analysis-relation-row__reference {
+.analysis-relation-row__object,
+.analysis-relation-row__connection {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  min-width: 0;
 }
 
-.analysis-relation-row__flow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
+.analysis-relation-row__object strong {
   min-width: 0;
   overflow-wrap: anywhere;
 }
 
-.analysis-relation-row__flow > strong {
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow-wrap: anywhere;
+.analysis-relation-row__connection {
+  padding-left: calc(27px + var(--space-2));
 }
 
 .analysis-relation-row__relation {
-  flex: 0 1 auto;
-  min-width: 0;
   padding: 4px 10px;
   border-radius: var(--radius-pill);
   background: var(--sage);
@@ -1568,34 +1565,9 @@ p[role="alert"]::before { content: "!"; }
 }
 
 @media (max-width: 520px) {
-  .analysis-relation-row {
-    grid-template-columns: 28px minmax(0, 1fr) 44px;
-    align-items: start;
-    gap: var(--space-2);
-    padding: var(--space-3) 0;
-  }
-
-  .analysis-relation-row__marker,
-  .analysis-relation-row .analysis-word-row__remove {
-    margin-top: 2px;
-  }
-
-  .analysis-relation-row__flow {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--space-2);
-  }
-
-  .analysis-relation-row__flow > strong,
-  .analysis-relation-row__relation {
-    flex: none;
-    text-align: left;
-  }
-
-  .analysis-relation-row__flow .combobox--compact {
-    flex: none;
-    max-width: none;
-  }
+  .analysis-relation-row { gap: var(--space-2); }
+  .analysis-relation-row__connection { align-items: flex-start; flex-direction: column; padding-left: 0; }
+  .analysis-relation-row__connection .combobox--compact { max-width: none; width: 100%; }
 }
 
 .analysis-count-row {

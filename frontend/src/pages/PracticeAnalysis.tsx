@@ -365,16 +365,24 @@ export function PracticeAnalysis() {
                 const subjectObject = relationObjects.find(item => item.id === row.subjectSceneObjectId);
                 const referenceObject = relationObjects.find(item => item.id === row.referenceSceneObjectId);
                 return <div className="analysis-relation-row" key={row.id}>
-                <span className="analysis-word-row__marker analysis-relation-row__marker">{subjectObject?.marker}</span>
-                <div className="analysis-relation-row__flow">
-                  <strong>{subjectObject?.label}</strong>
-                  {locked ? <span className="analysis-relation-row__relation">{relationLabel(row.relation)}</span> :
+                <div className="analysis-relation-row__sequence">
+                  <div className="analysis-relation-row__object">
+                    <span className="analysis-word-row__marker">{subjectObject?.marker}</span>
+                    <strong>{subjectObject?.label}</strong>
+                  </div>
+                  <div className="analysis-relation-row__connection">
+
+                    {locked ? <span className="analysis-relation-row__relation">{relationLabel(row.relation)}</span> :
                     <ComboBox compact ariaLabel="Connection" value={row.relation}
                       options={!RELATION_OPTIONS.some(option => option[0] === row.relation)
                         ? [{ value: row.relation, label: relationLabel(row.relation) }, ...RELATION_CHOICES]
                         : RELATION_CHOICES}
                       onChange={value => setRelations(current => current.map(item => item.id === row.id ? { ...item, relation: value } : item))} />}
-                  <strong className="analysis-relation-row__reference"><span className="combobox__marker">{referenceObject?.marker}</span>{referenceObject?.label}</strong>
+                  </div>
+                  <div className="analysis-relation-row__object">
+                    <span className="combobox__marker">{referenceObject?.marker}</span>
+                    <strong>{referenceObject?.label}</strong>
+                  </div>
                 </div>
                 {!locked ? <button type="button" className="analysis-word-row__remove" disabled={practiceSaving} aria-label={`Remove relation ${row.relation}`} onClick={() => setRelations(current => current.filter(item => item.id !== row.id))}><CloseIcon size={18} /></button> : null}
               </div>;
