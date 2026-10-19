@@ -192,6 +192,9 @@ def test_lessons_and_clues_overlap_after_translation(database):
     elapsed = time.perf_counter() - started
 
     assert models.overlapped()
+    # The explicit span check above proves the two model calls overlap. Leave
+    # room for database setup and CI scheduling around those calls so this
+    # guard does not fail on a slower runner.
     assert elapsed < 3 * MODEL_SECONDS
     detail = repo.get(sid, database[2].id)
     assert detail.session.status == "inProgress"
