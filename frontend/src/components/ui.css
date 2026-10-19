@@ -1334,6 +1334,18 @@ p[role="alert"]::before { content: "!"; }
   padding-right: 4px;
 }
 
+/* A relationship menu must be able to extend over the edit form below it. */
+.analysis-word-list:has(.combobox--open) {
+  position: relative;
+  z-index: 2;
+  overflow: visible;
+}
+
+.analysis-relation-row:has(.combobox--open) {
+  position: relative;
+  z-index: 1;
+}
+
 .analysis-word-row {
   display: grid;
   grid-template-columns: 30px minmax(0, 1fr) auto;
@@ -1836,7 +1848,7 @@ p[role="alert"]::before { content: "!"; }
   gap: var(--space-3);
   padding: var(--space-4);
   border-radius: var(--radius-sm);
-  background: var(--cream);
+  background: var(--sage);
 }
 
 .analysis-object-counts h3,
@@ -6185,6 +6197,10 @@ p[role="alert"]::before { content: "!"; }
     overscroll-behavior: contain;
     scrollbar-width: thin;
     scrollbar-color: var(--line) transparent;
+  }
+
+  .analysis-word-list:has(.combobox--open) {
+    overflow: visible;
   }
 
   .analysis-word-list::-webkit-scrollbar {
