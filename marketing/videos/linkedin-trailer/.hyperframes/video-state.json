@@ -1,7 +1,7 @@
 {
   "version": 1,
   "historyId": "ffb04eb1-84f7-46eb-bda8-60d6669b40d9",
-  "currentRevision": "2225deef-dee8-4306-8ec2-7ae3303bc816",
+  "currentRevision": "1b6e3758-8540-43ff-a785-d5c4df922a7e",
   "pendingChanges": false,
   "files": {
     "assets/Baloo2-ExtraBold.ttf": {
@@ -40,22 +40,6 @@
       "hash": "2e754cd3a5b3476830c6594b2ab72355e5e728619c3fce100cdbfa2211e31a71",
       "content": "C:\\Users\\home\\.cache\\hyperframes\\history\\ffb04eb1-84f7-46eb-bda8-60d6669b40d9\\blobs\\2e\\2e754cd3a5b3476830c6594b2ab72355e5e728619c3fce100cdbfa2211e31a71"
     },
-    "index.html": {
-      "hash": "7c8fe4afd52c174c021d262eba76af2fb1edd69152b68035ea372159d076b71e",
-      "content": "C:\\Users\\home\\.cache\\hyperframes\\history\\ffb04eb1-84f7-46eb-bda8-60d6669b40d9\\blobs\\7c\\7c8fe4afd52c174c021d262eba76af2fb1edd69152b68035ea372159d076b71e"
-    },
-    "package-lock.json": {
-      "hash": "0ee717f19b940396c772c549e912773b73091f1275eb91fa64c34660d7f5f268",
-      "content": "C:\\Users\\home\\.cache\\hyperframes\\history\\ffb04eb1-84f7-46eb-bda8-60d6669b40d9\\blobs\\0e\\0ee717f19b940396c772c549e912773b73091f1275eb91fa64c34660d7f5f268"
-    },
-    "package.json": {
-      "hash": "c51fbc44e373c806788f4c50d3b9186e64d637816eec7d786feeeaeeb283d463",
-      "content": "C:\\Users\\home\\.cache\\hyperframes\\history\\ffb04eb1-84f7-46eb-bda8-60d6669b40d9\\blobs\\c5\\c51fbc44e373c806788f4c50d3b9186e64d637816eec7d786feeeaeeb283d463"
-    },
-    "audio/music.wav": {
-      "hash": "74300a52b227d1549d9ec7ed1b941900ab9489457b56c069e6f7d68ec95c2cf5",
-      "content": "C:\\Users\\home\\.cache\\hyperframes\\history\\ffb04eb1-84f7-46eb-bda8-60d6669b40d9\\blobs\\74\\74300a52b227d1549d9ec7ed1b941900ab9489457b56c069e6f7d68ec95c2cf5"
-    },
     "assets/food-dessert.jpg": {
       "hash": "7e11f18c22cbc057c6f6d1031c8a471184cdeb02258cabb89517ded2c58558e3",
       "content": "C:\\Users\\home\\.cache\\hyperframes\\history\\ffb04eb1-84f7-46eb-bda8-60d6669b40d9\\blobs\\7e\\7e11f18c22cbc057c6f6d1031c8a471184cdeb02258cabb89517ded2c58558e3"
@@ -63,6 +47,22 @@
     "assets/ice-cream-photo.png": {
       "hash": "9e5508619c37de0109fe89a6202fc46ddf1c80422ab29a5307739141d72e154d",
       "content": "C:\\Users\\home\\.cache\\hyperframes\\history\\ffb04eb1-84f7-46eb-bda8-60d6669b40d9\\blobs\\9e\\9e5508619c37de0109fe89a6202fc46ddf1c80422ab29a5307739141d72e154d"
+    },
+    "audio/music.wav": {
+      "hash": "74300a52b227d1549d9ec7ed1b941900ab9489457b56c069e6f7d68ec95c2cf5",
+      "content": "C:\\Users\\home\\.cache\\hyperframes\\history\\ffb04eb1-84f7-46eb-bda8-60d6669b40d9\\blobs\\74\\74300a52b227d1549d9ec7ed1b941900ab9489457b56c069e6f7d68ec95c2cf5"
+    },
+    "index.html": {
+      "hash": "b757c859a93b618f605bef54862ea5c789946355f77141431a2e7b7dea563f6b",
+      "content": "C:\\Users\\home\\.cache\\hyperframes\\history\\ffb04eb1-84f7-46eb-bda8-60d6669b40d9\\blobs\\b7\\b757c859a93b618f605bef54862ea5c789946355f77141431a2e7b7dea563f6b"
+    },
+    "package-lock.json": {
+      "hash": "30d5a1f154aede8ce1c449cb23740fc758b405e9fd09d7046312b17d3ea5f16b",
+      "content": "C:\\Users\\home\\.cache\\hyperframes\\history\\ffb04eb1-84f7-46eb-bda8-60d6669b40d9\\blobs\\30\\30d5a1f154aede8ce1c449cb23740fc758b405e9fd09d7046312b17d3ea5f16b"
+    },
+    "package.json": {
+      "hash": "a2ebaca4a8faf453df66ed5e6454523f6f088b0f141619e66a390bb3da87cd41",
+      "content": "C:\\Users\\home\\.cache\\hyperframes\\history\\ffb04eb1-84f7-46eb-bda8-60d6669b40d9\\blobs\\a2\\a2ebaca4a8faf453df66ed5e6454523f6f088b0f141619e66a390bb3da87cd41"
     }
   },
   "revisions": {
@@ -2732,6 +2732,29 @@
         "index.html": {
           "before": "C:\\Users\\home\\.cache\\hyperframes\\history\\ffb04eb1-84f7-46eb-bda8-60d6669b40d9\\blobs\\bb\\bb0c8b72c5861ba5351b053ad9501c91a6ff03bae17ba2acef9d1d89f11aef3a",
           "after": "C:\\Users\\home\\.cache\\hyperframes\\history\\ffb04eb1-84f7-46eb-bda8-60d6669b40d9\\blobs\\7c\\7c8fe4afd52c174c021d262eba76af2fb1edd69152b68035ea372159d076b71e"
+        }
+      }
+    },
+    "1b6e3758-8540-43ff-a785-d5c4df922a7e": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1792391977227,
+      "endedAt": 1792391979922,
+      "files": {
+        "index.html": {
+          "before": "C:\\Users\\home\\.cache\\hyperframes\\history\\ffb04eb1-84f7-46eb-bda8-60d6669b40d9\\blobs\\7c\\7c8fe4afd52c174c021d262eba76af2fb1edd69152b68035ea372159d076b71e",
+          "after": "C:\\Users\\home\\.cache\\hyperframes\\history\\ffb04eb1-84f7-46eb-bda8-60d6669b40d9\\blobs\\b7\\b757c859a93b618f605bef54862ea5c789946355f77141431a2e7b7dea563f6b"
+        },
+        "package-lock.json": {
+          "before": "C:\\Users\\home\\.cache\\hyperframes\\history\\ffb04eb1-84f7-46eb-bda8-60d6669b40d9\\blobs\\0e\\0ee717f19b940396c772c549e912773b73091f1275eb91fa64c34660d7f5f268",
+          "after": "C:\\Users\\home\\.cache\\hyperframes\\history\\ffb04eb1-84f7-46eb-bda8-60d6669b40d9\\blobs\\30\\30d5a1f154aede8ce1c449cb23740fc758b405e9fd09d7046312b17d3ea5f16b"
+        },
+        "package.json": {
+          "before": "C:\\Users\\home\\.cache\\hyperframes\\history\\ffb04eb1-84f7-46eb-bda8-60d6669b40d9\\blobs\\c5\\c51fbc44e373c806788f4c50d3b9186e64d637816eec7d786feeeaeeb283d463",
+          "after": "C:\\Users\\home\\.cache\\hyperframes\\history\\ffb04eb1-84f7-46eb-bda8-60d6669b40d9\\blobs\\a2\\a2ebaca4a8faf453df66ed5e6454523f6f088b0f141619e66a390bb3da87cd41"
         }
       }
     }
