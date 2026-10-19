@@ -14,6 +14,7 @@ import { humanizeTerm } from "../lib/termLabel";
 import { type PracticeReview } from "../lib/api";
 import { countGroups, objectCounts } from "../lib/countGroups";
 import { initiallyHiddenObjectIds, sceneReviewPanels, type SceneReviewPanel } from "../lib/sceneReview";
+import { trackAction } from "../lib/analytics.ts";
 import type { LanguageItem, MissionChoices } from "../data/types";
 import { serializeMissionChoices, type MissionChoiceDraft } from "../lib/missionGaps";
 
@@ -243,6 +244,10 @@ export function PracticeAnalysis() {
     }
     // Stay on the translating screen while background generation runs.
     // SessionRoute forwards to the mic check when the session becomes ready.
+    trackAction("scene_review_confirmed", {
+      acceptedCount: kept.length,
+      addedCount: added.length,
+    });
     await saveReview({
       sceneTitle: sceneTitle.trim() || undefined,
       acceptedObjectIds: kept.map(item => item.id),

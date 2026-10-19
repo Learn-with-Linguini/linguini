@@ -1,8 +1,10 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../components/ui";
+import { trackAction } from "../lib/analytics.ts";
 import { authenticationMessage } from "../lib/authMessages.ts";
 import { isSupabaseConfigured, supabase } from "../lib/supabase.ts";
+import { getStoredAttribution } from "../lib/attribution.ts";
 import { useAuth } from "../state/Auth";
 
 export function Login() {
@@ -50,6 +52,7 @@ export function Login() {
     setError(null);
     setMessage(null);
     setSubmitting(true);
+    trackAction("google_signin_clicked");
     try {
       const { error: oauthError } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -75,6 +78,7 @@ export function Login() {
     setMessage(null);
     try {
       if (mode === "forgot") {
+        trackAction("forgot_password_requested");
         const response = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: `${window.location.origin}/reset-password`,
         });
@@ -85,12 +89,21 @@ export function Login() {
         setMessage("Check your email for a link to reset your password. It may take a minute to arrive.");
         return;
       }
+      if (mode === "signin") {
+        trackAction("login_submitted", { method: "email" });
+      } else {
+        trackAction("signup_submitted", { method: "email" });
+      }
+      const attribution = getStoredAttribution();
       const response = mode === "signin"
         ? await supabase.auth.signInWithPassword({ email, password })
         : await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: `${window.location.origin}/login` },
+          options: {
+            emailRedirectTo: `${window.location.origin}/login`,
+            data: attribution ? { ...attribution } : undefined,
+          },
         });
       if (response.error) {
         setError(authenticationMessage(response.error.message));

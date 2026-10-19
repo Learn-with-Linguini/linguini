@@ -13,7 +13,7 @@ type FinalCtaProps = {
 
 export function FinalCta({
   title = "Your next photo is a lesson.",
-  lede = "Sign up in under a minute, pick Spanish or French, and turn today into your first page.",
+  lede = "Sign up in under a minute, pick Spanish, French, German or beginner Korean, and turn today into your first page.",
   shareUrl = site.url,
 }: FinalCtaProps) {
   return (
@@ -29,7 +29,7 @@ export function FinalCta({
         </a>
         <div className={styles.share}>
           <p className={styles.shareLabel}>Know someone learning a language? Pass Linguini on.</p>
-          <ShareBar url={shareUrl} text="Linguini turns the photos you take into bite-size Spanish and French lessons." />
+          <ShareBar url={shareUrl} text="Linguini turns the photos you take into bite-size language lessons in Spanish, French, German and beginner Korean." />
         </div>
       </div>
     </section>

@@ -23,6 +23,7 @@ import { useResolvedImageUrl } from "../components/SceneImage";
 import { boardRows, squareCrop } from "../lib/practiceBoard";
 import { questionMarkerObjects } from "../lib/missionMarkers";
 import { completeSlot, speechAvailable, writtenPromptShown } from "../lib/missionA0";
+import { trackAction } from "../lib/analytics.ts";
 import { fillMissionGap } from "../lib/missionGaps";
 import { playAnswerSound } from "../lib/answerSound";
 import { learningFeedback } from "../lib/learningFeedback";
@@ -106,8 +107,11 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onSc
       if (result) {
         request.current = null;
         setActionResult(result);
-        if (reading) setFeedback(result.attempt?.feedback?.message ?? "Task complete.");
-        else {
+        if (reading) {
+          trackAction("task_completed", { taskId: task.id, kind: content.kind });
+          setFeedback(result.attempt?.feedback?.message ?? "Task complete.");
+        } else {
+          trackAction("task_answer_checked", { taskId: task.id, isCorrect: result.attempt?.isCorrect, kind: content.kind });
           setFeedback(result.attempt?.feedback?.message ?? "Saved.");
           setAnswerCorrect(result.attempt?.isCorrect ?? null);
           if (result.attempt?.isCorrect != null) playAnswerSound(result.attempt.isCorrect);

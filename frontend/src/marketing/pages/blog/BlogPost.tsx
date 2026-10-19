@@ -98,7 +98,7 @@ export default function PostPage() {
             </div>
             <div className={styles.cta}>
               <h2 className={styles.ctaTitle}>Turn today into your first page</h2>
-              <p>One photo lesson and one journal page a day are free. Pick Spanish or French and start in under a minute.</p>
+              <p>Pick Spanish, French, German or beginner Korean and start your first photo lesson in under a minute.</p>
               <a href={appLinks.signUp} className="btn btn-gloss">
                 Start learning free <ArrowRight size={18} />
               </a>

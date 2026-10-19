@@ -9,6 +9,7 @@ import type { VocabStatus, WordClass } from "../data/types";
 import { mediaImageUrl } from "../lib/api";
 import { groupVocabularyByPhoto, vocabularyCategories, vocabularyLabel } from "../lib/vocabularyGroups";
 import { speak } from "../lib/speech";
+import { trackAction } from "../lib/analytics.ts";
 import { useAppState } from "../state/useAppState";
 import { useScenesQuery, useVocabularyQuery } from "../state/queries";
 
@@ -41,7 +42,12 @@ export function Vocabulary() {
 
   const openFilters = () => { setDraftWordClass(wordClass); setDraftCategory(category); setShowFilters(true); };
   const closeFilters = () => setShowFilters(false);
-  const applyFilters = () => { setWordClass(draftWordClass); setCategory(draftCategory); closeFilters(); };
+  const applyFilters = () => {
+    trackAction("vocabulary_filters_applied", { wordClass: draftWordClass, category: draftCategory });
+    setWordClass(draftWordClass);
+    setCategory(draftCategory);
+    closeFilters();
+  };
 
   useEffect(() => {
     if (!showFilters) return;
@@ -67,7 +73,11 @@ export function Vocabulary() {
   return <div className="stack vocabulary-page revisit-page">
     <header className="vocabulary-page__header">
       <div><h1>Revisit</h1><p className="muted">Come back to the places and words you’ve learned.</p></div>
-      <Button variant="secondary" className="vocabulary-page__view-toggle" aria-pressed={view === "list"} onClick={() => setView((current) => current === "journey" ? "list" : "journey")}>
+      <Button variant="secondary" className="vocabulary-page__view-toggle" aria-pressed={view === "list"} onClick={() => {
+        const nextView = view === "journey" ? "list" : "journey";
+        trackAction("vocabulary_view_toggled", { view: nextView });
+        setView(nextView);
+      }}>
         <span className="vocabulary-page__view-icon" aria-hidden="true">
           {view === "journey" ? <BookIcon size={22} /> : <CameraIcon size={22} />}
         </span>
@@ -100,7 +110,7 @@ export function Vocabulary() {
               <div className="vocabulary-scene__words">{words.map((item) => {
                 const spokenWord = vocabularyLabel(item);
                 return <div key={item.id} className="vocabulary-scene__word">
-                  <span><strong>{spokenWord}</strong><small>{item.translation}</small></span><IconButton label={`Hear ${spokenWord}`} onClick={() => speak(spokenWord, learner.languageCode)}><SpeakerIcon size={18} /></IconButton>
+                  <span><strong>{spokenWord}</strong><small>{item.translation}</small></span><IconButton label={`Hear ${spokenWord}`} onClick={() => { trackAction("vocabulary_audio_played", { word: spokenWord }); speak(spokenWord, learner.languageCode); }}><SpeakerIcon size={18} /></IconButton>
                 </div>;
               })}</div>
             </div>
@@ -117,7 +127,7 @@ export function Vocabulary() {
         const spokenWord = vocabularyLabel(item);
         return <article key={item.id} className="list__row vocabulary-card"><div className="grow vocabulary-card__content">
           <div className="vocabulary-card__heading"><strong className="vocabulary-card__title">{spokenWord}</strong><p className="vocabulary-card__translation">{item.translation}</p></div>{item.phoneticText ? <p className="small muted" aria-label="Pronunciation">{item.phoneticText}</p> : null}
-          <div className="vocabulary-card__footer"><div className="vocabulary-card__tags"><span className="pill pill--new">{item.wordClass}</span>{vocabularyCategories(item, scenes).map((title) => <span key={title} className="pill pill--new">{title}</span>)}</div><IconButton className="vocabulary-card__audio" label={`Hear ${spokenWord}`} onClick={() => speak(spokenWord, learner.languageCode)}><SpeakerIcon size={18} /></IconButton></div>
+          <div className="vocabulary-card__footer"><div className="vocabulary-card__tags"><span className="pill pill--new">{item.wordClass}</span>{vocabularyCategories(item, scenes).map((title) => <span key={title} className="pill pill--new">{title}</span>)}</div><IconButton className="vocabulary-card__audio" label={`Hear ${spokenWord}`} onClick={() => { trackAction("vocabulary_audio_played", { word: spokenWord }); speak(spokenWord, learner.languageCode); }}><SpeakerIcon size={18} /></IconButton></div>
         </div></article>;
       })}</div>{!rows.length ? <Card><p className="small">No words match these filters yet.</p></Card> : null}
     </>}

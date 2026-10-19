@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Linguini — LinkedIn Concept Trailer</title>
+  <style>
+    @font-face {
+      font-family: 'Baloo';
+      src: url('assets/Baloo2-ExtraBold.ttf');
+      font-weight: 800;
+    }
+    @font-face {
+      font-family: 'Nunito';
+      src: url('assets/NunitoSans-Bold.ttf');
+      font-weight: 700;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #faf7ee;
+      font-family: 'Nunito', sans-serif;
+      color: #1e293b;
+    }
+    #root {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: #faf7ee;
+    }
+    .absolute { position: absolute; }
+    .scene {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      opacity: 0;
+      visibility: hidden;
+    }
+    .scene.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Common Card Styles */
+    .card {
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 28px;
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+      overflow: hidden;
+    }
+    .card--lifted {
+      box-shadow: 0 30px 60px rgba(15, 23, 42, 0.12);
+    }
+
+    /* Header */
+    .header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 110px;
+      padding: 36px 70px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+    }
+    .brand-pill {
+      background: #ffffff;
+      padding: 10px 24px;
+      border-radius: 999px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid #e2e8f0;
+    }
+    .brand-pill img {
+      height: 38px;
+      display: block;
+    }
+    .beta-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #0f172a;
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      padding: 12px 24px;
+      border-radius: 999px;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.15);
+    }
+    .beta-badge .dot {
+      width: 12px;
+      height: 12px;
+      background: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #22c55e;
+    }
+
+    /* Step Badge */
+    .number-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .number-badge .num {
+      font-family: 'Baloo', sans-serif;
+      font-size: 48px;
+      line-height: 1;
+      color: #ea580c;
+    }
+    .number-badge .label {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      color: #0d9488;
+      text-transform: uppercase;
+    }
+
+    /* Typography */
+    .headline-main {
+      font-family: 'Baloo', sans-serif;
+      font-size: 72px;
+      line-height: 1.15;
+      letter-spacing: -1.5px;
+      color: #0f172a;
+      margin: 0 0 16px 0;
+    }
+    .headline-accent {
+      color: #ea580c;
+    }
+    .headline-teal {
+      color: #0d9488;
+    }
+    .subtext {
+      font-size: 30px;
+      line-height: 1.45;
+      color: #475569;
+      margin: 0;
+      max-width: 780px;
+    }
+
+    /* Subtitle Bar */
+    .subtitle-bar-wrap {
+      position: absolute;
+      bottom: 40px;
+      left: 70px;
+      right: 70px;
+      display: flex;
+      justify-content: center;
+      z-index: 100;
+    }
+    .subtitle-bar {
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(8px);
+      color: #ffffff;
+      font-size: 26px;
+      font-weight: 700;
+      padding: 16px 36px;
+      border-radius: 999px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      letter-spacing: 0.5px;
+      text-align: center;
+    }
+
+    /* Progress bar */
+    .progress-bar-track {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 8px;
+      background: rgba(0, 0, 0, 0.08);
+      z-index: 100;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: #ea580c;
+    }
+
+    /* Mascot */
+    .mascot-host {
+      position: absolute;
+      bottom: 50px;
+      right: 70px;
+      width: 140px;
+      height: 140px;
+      z-index: 90;
+    }
+    .mascot-host img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    /* Detection Rings & Tags */
+    .detection-ring {
+      position: absolute;
+      border: 3px solid #ea580c;
+      border-radius: 20px;
+      background: rgba(234, 88, 12, 0.15);
+      box-shadow: 0 0 20px rgba(234, 88, 12, 0.4);
+    }
+    .detection-tag {
+      position: absolute;
+      z-index: 5;
+      background: #ea580c;
+      color: #ffffff;
+      padding: 8px 16px;
+      border-radius: 12px;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      box-shadow: 0 6px 14px rgba(234, 88, 12, 0.4);
+      white-space: nowrap;
+    }
+
+    /* Word Card */
+    .word-card {
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 28px;
+      padding: 32px 40px;
+      box-shadow: 0 24px 50px rgba(15, 23, 42, 0.1);
+      width: 780px;
+    }
+    .word-card .article {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0d9488;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .word-card .word {
+      font-family: 'Baloo', sans-serif;
+      font-size: 60px;
+      margin: 8px 0;
+      color: #0f172a;
+      line-height: 1.05;
+    }
+    .word-card .trans {
+      font-size: 28px;
+      color: #64748b;
+    }
+
+    /* Word Tile */
+    .word-tile {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      border: 2px solid #cbd5e1;
+      padding: 14px 24px;
+      border-radius: 18px;
+      font-family: 'Baloo', sans-serif;
+      font-size: 34px;
+      color: #0f172a;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+    }
+    .word-tile.placed {
+      background: #f0fdf4;
+      border-color: #22c55e;
+      color: #15803d;
+    }
+  </style>
+  <script src="node_modules/gsap/dist/gsap.min.js"></script>
+</head>
+<body>
+  <div data-hf-id="hf-shbi" id="root" data-composition-id="linguini-linkedin" data-width="1920" data-height="1080" data-duration="30" data-fps="30">
+
+    <!-- Persistent Header -->
+    <header data-hf-id="hf-hr6f" class="header">
+      <div data-hf-id="hf-9c95" class="brand-pill">
+        <img data-hf-id="hf-rd1t" src="assets/linguini-wordmark.png" alt="Linguini">
+      </div>
+      <div data-hf-id="hf-dm7k" class="beta-badge">
+        <span data-hf-id="hf-9gry" class="dot"></span>
+        <span data-hf-id="hf-b286">PUBLIC BETA</span>
+      </div>
+    </header>
+
+    <!-- Subtitle Bar (dynamic across timeline) -->
+    <div data-hf-id="hf-4pop" class="subtitle-bar-wrap">
+      <div data-hf-id="hf-zvq3" class="subtitle-bar" id="sub-bar">What if your dessert could teach you Spanish?</div>
+    </div>
+
+    <!-- Bottom Progress Track -->
+    <div data-hf-id="hf-okbn" class="progress-bar-track">
+      <div data-hf-id="hf-g1d8" class="progress-bar-fill" id="progress-fill"></div>
+    </div>
+
+    <!-- Floating Mascot -->
+    <div data-hf-id="hf-qcgn" class="mascot-host" id="mascot">
+      <img data-hf-id="hf-ixik" src="assets/linguini-logo.png" alt="Linguini Mascot">
+    </div>
+
+    <!-- SCENE 0: Hook (0s - 4s) -->
+    <section data-hf-id="hf-a50b" class="scene clip" id="scene-0" data-start="0" data-duration="4">
+      <div data-hf-id="hf-8js6" class="absolute" style="left: 120px; top: 220px; width: 850px;">
+        <div data-hf-id="hf-c01h" class="number-badge">
+          <span data-hf-id="hf-ce6f" class="num">🍨</span>
+          <span data-hf-id="hf-edb3" class="label">THE IDEA</span>
+        </div>
+        <h1 data-hf-id="hf-cq4h" class="headline-main">
+          What if your dessert<br><span data-hf-id="hf-183a" class="headline-accent">taught you Spanish?</span>
+        </h1>
+        <p data-hf-id="hf-i5ur" class="subtext">
+          Linguini turns a photo from your day into a bite-size language lesson.
+        </p>
+      </div>
+
+      <!-- Hero Photo Card -->
+      <div data-hf-id="hf-0z3x" class="card card--lifted absolute" id="hero-photo-card" style="right: 120px; top: 180px; width: 780px; height: 580px;">
+        <img data-hf-id="hf-0mh1" src="assets/ice-cream-photo.png" style="width: 100%; height: 100%; object-fit: cover;" alt="Dessert scene">
+      </div>
+    </section>
+
+    <!-- SCENE 1: Capture & Detect (4s - 10s) -->
+    <section data-hf-id="hf-zzoq" class="scene clip" id="scene-1" data-start="4" data-duration="6">
+      <div data-hf-id="hf-2aay" class="absolute" style="left: 120px; top: 220px; width: 850px;">
+        <div data-hf-id="hf-p3zd" class="number-badge">
+          <span data-hf-id="hf-cshg" class="num">01</span>
+          <span data-hf-id="hf-tcv6" class="label">SNAP · REVIEW · LEARN</span>
+        </div>
+        <h1 data-hf-id="hf-hnyu" class="headline-main">
+          AI spots the objects.<br><span data-hf-id="hf-8kk1" class="headline-teal">You keep the words.</span>
+        </h1>
+        <p data-hf-id="hf-hi6v" class="subtext">
+          Computer vision suggests vocabulary. You approve what matters — remove clutter, add your own.
+        </p>
+      </div>
+
+      <!-- Detected Photo Card -->
+      <div data-hf-id="hf-v355" class="card card--lifted absolute" id="detect-card" style="right: 120px; top: 180px; width: 780px; height: 580px;">
+        <img data-hf-id="hf-og9i" src="assets/ice-cream-photo.png" style="width: 100%; height: 100%; object-fit: cover;" alt="Detected dessert photo">
+        <!-- Detection Rings positioned over the image's actual objects -->
+        <div data-hf-id="hf-gn7l" class="detection-ring" id="ring-waffle" style="left: 300px; top: 280px; width: 420px; height: 260px;">
+          <div data-hf-id="hf-3mx7" class="detection-tag" data-layout-allow-overflow style="top: -46px; left: 10px;">el gofre · waffle</div>
+        </div>
+        <div data-hf-id="hf-ice1" class="detection-ring" id="ring-icecream" style="left: 90px; top: 60px; width: 290px; height: 210px;">
+          <div data-hf-id="hf-icet" class="detection-tag" data-layout-allow-overflow style="top: -46px; left: 10px;">el helado · ice cream</div>
+        </div>
+        <div data-hf-id="hf-ice2" class="detection-ring" id="ring-syrup" style="left: 330px; top: 510px; width: 160px; height: 60px; border-radius: 12px;">
+          <div data-hf-id="hf-syrt" class="detection-tag" data-layout-allow-overflow style="top: -42px; left: 0;">el jarabe · syrup</div>
+        </div>
+        <div data-hf-id="hf-ice3" class="detection-ring" id="ring-cup" style="left: 560px; top: 60px; width: 180px; height: 160px;">
+          <div data-hf-id="hf-cupt" class="detection-tag" data-layout-allow-overflow style="top: -46px; left: 10px;">el café · coffee</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENE 2: Word Card (10s - 15s) -->
+    <section data-hf-id="hf-jpim" class="scene clip" id="scene-2" data-start="10" data-duration="5">
+      <div data-hf-id="hf-2olz" class="absolute" style="left: 120px; top: 220px; width: 850px;">
+        <div data-hf-id="hf-qawg" class="number-badge">
+          <span data-hf-id="hf-blkd" class="num">02</span>
+          <span data-hf-id="hf-czjs" class="label">WORD CARDS</span>
+        </div>
+        <h1 data-hf-id="hf-4182" class="headline-main">
+          Learn it properly —<br><span data-hf-id="hf-8spt" class="headline-accent">article, gender, usage.</span>
+        </h1>
+        <p data-hf-id="hf-47ok" class="subtext">
+          Every word comes with its article, gender and a real sentence so it actually sticks.
+        </p>
+      </div>
+
+      <!-- Word Card Showcase -->
+      <div data-hf-id="hf-i8qy" class="word-card absolute" id="word-card" style="right: 120px; top: 200px;">
+        <div data-hf-id="hf-c2rh" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <span data-hf-id="hf-5j6l" style="background: #e0f2fe; color: #0369a1; font-weight: 800; padding: 6px 16px; border-radius: 999px; font-size: 18px;">NOUN · FEMININE</span>
+          <span data-hf-id="hf-47h1" style="font-size: 28px;">🔊</span>
+        </div>
+        <div data-hf-id="hf-6f5n">
+          <div data-hf-id="hf-736r" class="article">el gofre</div>
+          <div data-hf-id="hf-38x2" class="word">waffle</div>
+          <div data-hf-id="hf-rhcg" class="trans" style="margin-bottom: 20px;">From your dessert photo · Tom's Palette</div>
+          <div data-hf-id="hf-yeow" style="background: #f8fafc; border-radius: 16px; padding: 18px 22px; font-size: 22px; color: #334155;">
+            "El gofre con helado es mi postre favorito."<br>
+            <span style="color: #94a3b8; font-size: 20px;">The waffle with ice cream is my favourite dessert.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENE 3: I-Spy Game (15s - 21s) -->
+    <section data-hf-id="hf-p459" class="scene clip" id="scene-3" data-start="15" data-duration="6">
+      <div data-hf-id="hf-vkgr" class="absolute" style="left: 120px; top: 220px; width: 750px;">
+        <div data-hf-id="hf-pwlf" class="number-badge">
+          <span data-hf-id="hf-bzve" class="num">03</span>
+          <span data-hf-id="hf-2xmy" class="label">PLAY I-SPY</span>
+        </div>
+        <h1 data-hf-id="hf-g022" class="headline-main">
+          Guess the clue.<br><span data-hf-id="hf-cnev" class="headline-teal">Then give your own.</span>
+        </h1>
+        <p data-hf-id="hf-dwbt" class="subtext">
+          Two-way I-Spy: Linguini describes an object, then it's your turn to describe one back.
+        </p>
+      </div>
+
+      <!-- I-Spy Game Card -->
+      <div data-hf-id="hf-r060" class="card card--lifted absolute" id="ispy-card" style="right: 100px; top: 180px; width: 820px; padding: 32px 40px;">
+        <div data-hf-id="hf-cw2w" style="display: flex; gap: 12px; align-items: center; margin-bottom: 18px;">
+          <span data-hf-id="hf-8iqu" style="background: #ea580c; color: white; padding: 6px 14px; border-radius: 999px; font-weight: 800; font-size: 18px;">I-SPY CLUE</span>
+          <span data-hf-id="hf-kip5" style="color: #64748b; font-size: 20px;">Tap what you think it is:</span>
+        </div>
+        <div data-hf-id="hf-gdnh" style="font-family: 'Baloo', sans-serif; font-size: 38px; color: #0f172a; margin-bottom: 20px; line-height: 1.2;">
+          "Veo, veo… algo frío y cremoso."
+        </div>
+        <div data-hf-id="hf-ad25" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px;">
+          <div data-hf-id="hf-yh71" style="padding: 16px 22px; border-radius: 16px; border: 2px solid #e2e8f0; font-size: 24px; font-weight: 800; background: #ffffff;">el café</div>
+          <div data-hf-id="hf-j08v" id="choice-b" style="padding: 16px 22px; border-radius: 16px; border: 2px solid #22c55e; font-size: 24px; font-weight: 800; background: #f0fdf4; color: #15803d; display: flex; justify-content: space-between;">
+            <span>el helado</span><span>✓</span>
+          </div>
+          <div data-hf-id="hf-opt3" style="padding: 16px 22px; border-radius: 16px; border: 2px solid #e2e8f0; font-size: 24px; font-weight: 800; background: #ffffff;">el jarabe</div>
+          <div data-hf-id="hf-opt4" style="padding: 16px 22px; border-radius: 16px; border: 2px solid #e2e8f0; font-size: 24px; font-weight: 800; background: #ffffff;">el gofre</div>
+        </div>
+        <div data-hf-id="hf-37bv" style="border-top: 2px solid #f1f5f9; padding-top: 18px;">
+          <div data-hf-id="hf-97xt" style="font-size: 18px; font-weight: 800; color: #0d9488; margin-bottom: 10px; text-transform: uppercase;">Your turn — describe something</div>
+          <div data-hf-id="hf-e5mb" style="display: flex; gap: 10px;">
+            <span data-hf-id="hf-6q8s" class="word-tile placed">Veo, veo</span>
+            <span data-hf-id="hf-d5uu" class="word-tile placed">algo</span>
+            <span data-hf-id="hf-awuh" class="word-tile">dulce</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENE 4: Journal Save (21s - 26s) -->
+    <section data-hf-id="hf-oilq" class="scene clip" id="scene-4" data-start="21" data-duration="5">
+      <div data-hf-id="hf-08n7" class="absolute" style="left: 120px; top: 220px; width: 800px;">
+        <div data-hf-id="hf-nir9" class="number-badge">
+          <span data-hf-id="hf-edpk" class="num">04</span>
+          <span data-hf-id="hf-y57z" class="label">KEEP THE DAY</span>
+        </div>
+        <h1 data-hf-id="hf-l7un" class="headline-main">
+          Your day becomes<br><span data-hf-id="hf-n80w" class="headline-teal">a page you keep.</span>
+        </h1>
+        <p data-hf-id="hf-nex5" class="subtext">
+          Every lesson writes into a photo journal. Revisit words tied to the exact day and place you learned them.
+        </p>
+      </div>
+
+      <!-- Journal Card -->
+      <div data-hf-id="hf-8t57" class="card card--lifted absolute" id="journal-card" style="right: 120px; top: 200px; width: 780px; padding: 32px 40px;">
+        <div data-hf-id="hf-jfpm" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+          <h2 data-hf-id="hf-xqvg" style="font-family: 'Baloo', sans-serif; font-size: 30px; margin: 0;">Today's Entry</h2>
+          <span data-hf-id="hf-q86w" style="font-weight: 800; color: #0d9488; font-size: 20px;">+12 words</span>
+        </div>
+        <div data-hf-id="hf-1rkj" style="display: flex; gap: 16px;">
+          <div data-hf-id="hf-2bom" style="border-radius: 16px; overflow: hidden; height: 200px; width: 300px; flex-shrink: 0;">
+            <img data-hf-id="hf-kvbm" src="assets/ice-cream-photo.png" style="width: 100%; height: 100%; object-fit: cover;" alt="Journal photo">
+          </div>
+          <div data-hf-id="hf-l8h6" style="flex: 1;">
+            <div data-hf-id="hf-iw97" style="font-size: 22px; color: #334155; line-height: 1.5; margin-bottom: 14px;">
+              "Went to Tom's Palette — learned <strong>el gofre</strong>, <strong>el helado</strong> and <strong>el jarabe</strong>."
+            </div>
+            <div data-hf-id="hf-ihy6" style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <span style="background: #f0fdf4; color: #15803d; font-weight: 800; padding: 6px 14px; border-radius: 999px; font-size: 16px;">el gofre</span>
+              <span style="background: #f0fdf4; color: #15803d; font-weight: 800; padding: 6px 14px; border-radius: 999px; font-size: 16px;">el helado</span>
+              <span style="background: #f0fdf4; color: #15803d; font-weight: 800; padding: 6px 14px; border-radius: 999px; font-size: 16px;">el jarabe</span>
+              <span style="background: #fff7ed; color: #c2410c; font-weight: 800; padding: 6px 14px; border-radius: 999px; font-size: 16px;">🔥 7-day streak</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENE 5: CTA (26s - 30s) -->
+    <section data-hf-id="hf-nv28" class="scene clip" id="scene-5" data-start="26" data-duration="4">
+      <div data-hf-id="hf-zx1p" class="absolute" style="inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 100px;">
+        <img data-hf-id="hf-8s0t" src="assets/linguini-wordmark.png" style="height: 100px; margin-bottom: 20px;" alt="Linguini">
+        <h1 data-hf-id="hf-aok2" style="font-family: 'Baloo', sans-serif; font-size: 84px; line-height: 1.1; margin: 0 0 16px 0; color: #0f172a;">
+          Cook your first lesson today.
+        </h1>
+        <p data-hf-id="hf-eqca" style="font-size: 32px; color: #475569; margin: 0 0 36px 0;">
+          Unlimited photo lessons during Public Beta. No credit card required.
+        </p>
+        <div data-hf-id="hf-f8rs" style="display: inline-flex; align-items: center; gap: 20px; background: #ea580c; color: white; font-family: 'Baloo', sans-serif; font-size: 42px; padding: 18px 50px; border-radius: 999px; box-shadow: 0 12px 30px rgba(234, 88, 12, 0.35);">
+          <span data-hf-id="hf-e268">learnwithlinguini.com</span>
+          <span data-hf-id="hf-o03m">↗</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Audio Element -->
+    <audio data-hf-id="hf-kcr2" id="bgm" src="audio/music.wav" data-start="0" data-duration="30" preload="auto"></audio>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    // Track progress fill
+    tl.fromTo('#progress-fill', { width: '0%' }, { width: '100%', duration: 30, ease: 'none' }, 0);
+
+    // Mascot subtle breathing float
+    tl.fromTo('#mascot', { y: 0, rotation: -2 }, { y: -12, rotation: 2, duration: 1.2, repeat: 24, yoyo: true, ease: 'sine.inOut' }, 0);
+
+    // Scenes definitions
+    const scenes = [
+      { id: '#scene-0', start: 0, end: 4, sub: 'What if your dessert could teach you Spanish?' },
+      { id: '#scene-1', start: 4, end: 10, sub: 'AI spots the objects. You keep the words that matter.' },
+      { id: '#scene-2', start: 10, end: 15, sub: 'Learn it properly — article, gender, and a real sentence.' },
+      { id: '#scene-3', start: 15, end: 21, sub: 'Play two-way I-Spy. Guess the clue, then give your own.' },
+      { id: '#scene-4', start: 21, end: 26, sub: 'Every lesson saves into your visual journal.' },
+      { id: '#scene-5', start: 26, end: 30, sub: 'Public Beta is live. Cook your first lesson at learnwithlinguini.com.' }
+    ];
+
+    scenes.forEach(s => {
+      tl.to(s.id, { autoAlpha: 1, duration: 0.3, ease: 'power2.out' }, s.start);
+      tl.call(() => {
+        document.getElementById('sub-bar').textContent = s.sub;
+      }, null, s.start);
+      if (s.end < 30) {
+        tl.to(s.id, { autoAlpha: 0, duration: 0.3, ease: 'power2.in' }, s.end - 0.3);
+      }
+    });
+
+    // Scene 0 Animations
+    tl.fromTo('#hero-photo-card', { x: 80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.6, ease: 'power3.out' }, 0.4);
+
+    // Scene 1 Animations
+    tl.fromTo('#detect-card', { scale: 0.92, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: 'power3.out' }, 4.4);
+    tl.fromTo('#ring-icecream', { scale: 1.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: 'back.out(1.5)' }, 5.2);
+    tl.fromTo('#ring-waffle', { scale: 1.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: 'back.out(1.5)' }, 5.8);
+    tl.fromTo('#ring-syrup', { scale: 1.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: 'back.out(1.5)' }, 6.4);
+    tl.fromTo('#ring-cup', { scale: 1.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: 'back.out(1.5)' }, 7.0);
+
+    // Scene 2 Animations
+    tl.fromTo('#word-card', { x: 100, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: 'power3.out' }, 10.4);
+
+    // Scene 3 Animations
+    tl.fromTo('#ispy-card', { scale: 0.92, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: 'power3.out' }, 15.4);
+    tl.fromTo('#choice-b', { scale: 0.95 }, { scale: 1.05, duration: 0.3, yoyo: true, repeat: 1, ease: 'power2.inOut' }, 18.0);
+
+    // Scene 4 Animations
+    tl.fromTo('#journal-card', { rotationY: -15, opacity: 0 }, { rotationY: 0, opacity: 1, duration: 0.6, ease: 'power3.out' }, 21.4);
+
+    // Expose timeline to HyperFrames
+    window.__timelines = window.__timelines || {};
+    window.__timelines['linguini-linkedin'] = tl;
+  </script>
+</body>
+</html>

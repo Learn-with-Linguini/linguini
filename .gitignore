@@ -49,6 +49,8 @@ coverage/
 *.njsproj
 *.sln
 *.sw?
+.agents/
+.devin/
 
 # Regenerated media intermediates
 marketing/media/export/teaser-frames/

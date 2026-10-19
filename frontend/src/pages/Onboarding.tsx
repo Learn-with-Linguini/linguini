@@ -1,6 +1,7 @@
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { OnboardingSteps } from "../components/OnboardingSteps";
+import { trackAction } from "../lib/analytics.ts";
 import type { OnboardingDraft } from "../lib/onboardingDraft";
 import { languages } from "../config/languages";
 import { useAppState } from "../state/useAppState";
@@ -38,6 +39,11 @@ export function Onboarding() {
       onboardingCompleted: true,
     });
     if (saved) {
+      trackAction("onboarding_completed", {
+        language: values.languageCode,
+        minutes: values.minutes,
+        level: values.proficiencyLevel ?? "A0",
+      });
       localStorage.setItem("linguini-avatar", values.avatar);
     } else {
       setCompletionStarted(false);

@@ -1,0 +1,2070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><script data-hf-gsap-fallback>
+(function(){
+  var cdnBase="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/";
+  var loaded={};
+  function loadFallback(file){
+    if(loaded[file])return loaded[file];
+    return loaded[file]=new Promise(function(ok,fail){
+      var s=document.createElement("script");
+      s.src=cdnBase+file;s.hfGsapFallback=true;s.onload=ok;s.onerror=fail;
+      document.head.appendChild(s);
+    });
+  }
+  document.addEventListener("error",function(e){
+    var t=e.target;
+    if(!t||t.tagName!=="SCRIPT"||!t.src||t.hfGsapFallback)return;
+    var m=t.src.match(/gsap[^/]*\/dist\/(.+\.js)/);
+    if(m)loadFallback(m[1]).catch(function(){
+      reportError(new Error("GSAP could not load from "+t.src+" or "+cdnBase+m[1]+", so this preview's animations will not play."));
+    });
+  },true);
+})();
+</script>
+<meta name="hyperframes-studio-preview"><script>(function(){var seen=window.__hfPreviewErrors=[];
+addEventListener("error",function(e){seen.push(e.message||String(e))});})();</script>
+<base href="/api/projects/linkedin-trailer/preview/"><style data-hf-scene-fonts="">@font-face {
+      font-family: 'Baloo';
+      src: url('assets/Baloo2-ExtraBold.ttf');
+      font-weight: 800;
+    }
+@font-face {
+      font-family: 'Nunito';
+      src: url('assets/NunitoSans-Bold.ttf');
+      font-weight: 700;
+    }</style><style data-hyperframes-text-rendering="true">html,body,*{text-rendering:geometricPrecision}</style><script data-hf-after-fonts-fallback="">document.addEventListener("DOMContentLoaded", function () {
+  if (window.__hfAfterFontsClaimed) return;
+  var T = "text/hf-after-fonts";
+  var all = [].slice.call(document.querySelectorAll('script[type="text/hf-after-fonts"], script[type="text/hf-after-fonts+module"]'));
+  if (!all.length) return;
+  console.warn("[hyperframes] the runtime has no web-font gate; composition scripts run without waiting for fonts");
+  var late = function (el) { return el.type !== T || el.matches('[defer][src], [defer][data-hf-inlined-src]'); };
+  var queue = all.filter(function (el) { return !late(el); }).concat(all.filter(late));
+  (function next() {
+    var el = queue.shift();
+    if (!el) return;
+    var s = document.createElement("script");
+    for (var i = 0; i < el.attributes.length; i++) s.setAttribute(el.attributes[i].name, el.attributes[i].value);
+    if (el.type === T) s.removeAttribute("type"); else s.type = "module";
+    s.async = el.hasAttribute("async");
+    s.text = el.text;
+    var waits = s.type !== "module" && s.hasAttribute("src") && !s.async && !s.noModule;
+    if (waits) { s.addEventListener("load", next); s.addEventListener("error", next); }
+    el.replaceWith(s);
+    if (!waits) next();
+  })();
+});
+//# sourceURL=hyperframes://after-fonts-fallback</script>
+  <meta charset="utf-8">
+  <title>Linguini — LinkedIn Concept Trailer</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #faf7ee;
+      font-family: 'Nunito', sans-serif;
+      color: #1e293b;
+    }
+    #root {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: #faf7ee;
+    }
+    .absolute { position: absolute; }
+    .scene {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      opacity: 0;
+      visibility: hidden;
+    }
+    .scene.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Common Card Styles */
+    .card {
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 28px;
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+      overflow: hidden;
+    }
+    .card--lifted {
+      box-shadow: 0 30px 60px rgba(15, 23, 42, 0.12);
+    }
+
+    /* Header */
+    .header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 110px;
+      padding: 36px 70px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+    }
+    .brand-pill {
+      background: #ffffff;
+      padding: 10px 24px;
+      border-radius: 999px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid #e2e8f0;
+    }
+    .brand-pill img {
+      height: 38px;
+      display: block;
+    }
+    .beta-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #0f172a;
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      padding: 12px 24px;
+      border-radius: 999px;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.15);
+    }
+    .beta-badge .dot {
+      width: 12px;
+      height: 12px;
+      background: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #22c55e;
+    }
+
+    /* Step Badge */
+    .number-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .number-badge .num {
+      font-family: 'Baloo', sans-serif;
+      font-size: 48px;
+      line-height: 1;
+      color: #ea580c;
+    }
+    .number-badge .label {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      color: #0d9488;
+      text-transform: uppercase;
+    }
+
+    /* Typography */
+    .headline-main {
+      font-family: 'Baloo', sans-serif;
+      font-size: 72px;
+      line-height: 1.15;
+      letter-spacing: -1.5px;
+      color: #0f172a;
+      margin: 0 0 16px 0;
+    }
+    .headline-accent {
+      color: #ea580c;
+    }
+    .headline-teal {
+      color: #0d9488;
+    }
+    .subtext {
+      font-size: 30px;
+      line-height: 1.45;
+      color: #475569;
+      margin: 0;
+      max-width: 780px;
+    }
+
+    /* Subtitle Bar */
+    .subtitle-bar-wrap {
+      position: absolute;
+      bottom: 40px;
+      left: 70px;
+      right: 70px;
+      display: flex;
+      justify-content: center;
+      z-index: 100;
+    }
+    .subtitle-bar {
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(8px);
+      color: #ffffff;
+      font-size: 26px;
+      font-weight: 700;
+      padding: 16px 36px;
+      border-radius: 999px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      letter-spacing: 0.5px;
+      text-align: center;
+    }
+
+    /* Progress bar */
+    .progress-bar-track {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 8px;
+      background: rgba(0, 0, 0, 0.08);
+      z-index: 100;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: #ea580c;
+    }
+
+    /* Mascot */
+    .mascot-host {
+      position: absolute;
+      bottom: 50px;
+      right: 70px;
+      width: 140px;
+      height: 140px;
+      z-index: 90;
+    }
+    .mascot-host img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    /* Detection Rings & Tags */
+    .detection-ring {
+      position: absolute;
+      border: 3px solid #ea580c;
+      border-radius: 20px;
+      background: rgba(234, 88, 12, 0.15);
+      box-shadow: 0 0 20px rgba(234, 88, 12, 0.4);
+    }
+    .detection-tag {
+      position: absolute;
+      z-index: 5;
+      background: #ea580c;
+      color: #ffffff;
+      padding: 8px 16px;
+      border-radius: 12px;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      box-shadow: 0 6px 14px rgba(234, 88, 12, 0.4);
+      white-space: nowrap;
+    }
+
+    /* Word Card */
+    .word-card {
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 28px;
+      padding: 32px 40px;
+      box-shadow: 0 24px 50px rgba(15, 23, 42, 0.1);
+      width: 780px;
+    }
+    .word-card .article {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0d9488;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    .word-card .word {
+      font-family: 'Baloo', sans-serif;
+      font-size: 60px;
+      margin: 8px 0;
+      color: #0f172a;
+      line-height: 1.05;
+    }
+    .word-card .trans {
+      font-size: 28px;
+      color: #64748b;
+    }
+
+    /* Word Tile */
+    .word-tile {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      border: 2px solid #cbd5e1;
+      padding: 14px 24px;
+      border-radius: 18px;
+      font-family: 'Baloo', sans-serif;
+      font-size: 34px;
+      color: #0f172a;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+    }
+    .word-tile.placed {
+      background: #f0fdf4;
+      border-color: #22c55e;
+      color: #15803d;
+    }
+  </style>
+  <script data-hf-inlined-src="node_modules/gsap/dist/gsap.min.js">!(function(t, e) {
+  "object" == typeof exports && "undefined" != typeof module ? e(exports) : "function" == typeof define && define.amd ? define(["exports"], e) : e((t = t || self).window = t.window || {});
+})(this, function(e) {
+  "use strict";
+  function _inheritsLoose(t2, e2) {
+    t2.prototype = Object.create(e2.prototype), (t2.prototype.constructor = t2).__proto__ = e2;
+  }
+  function _assertThisInitialized(t2) {
+    if (void 0 === t2) throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+    return t2;
+  }
+  function r(t2) {
+    return "string" == typeof t2;
+  }
+  function s(t2) {
+    return "function" == typeof t2;
+  }
+  function t(t2) {
+    return "number" == typeof t2;
+  }
+  function u(t2) {
+    return void 0 === t2;
+  }
+  function v(t2) {
+    return "object" == typeof t2;
+  }
+  function w(t2) {
+    return false !== t2;
+  }
+  function x() {
+    return "undefined" != typeof window;
+  }
+  function y(t2) {
+    return s(t2) || r(t2);
+  }
+  function P(t2) {
+    return (i = yt(t2, ot)) && ze;
+  }
+  function Q(t2, e2) {
+    return console.warn("Invalid property", t2, "set to", e2, "Missing plugin? gsap.registerPlugin()");
+  }
+  function R(t2, e2) {
+    return !e2 && console.warn(t2);
+  }
+  function S(t2, e2) {
+    return t2 && (ot[t2] = e2) && i && (i[t2] = e2) || ot;
+  }
+  function T() {
+    return 0;
+  }
+  function ea(t2) {
+    var e2, r2, i2 = t2[0];
+    if (v(i2) || s(i2) || (t2 = [t2]), !(e2 = (i2._gsap || {}).harness)) {
+      for (r2 = gt.length; r2-- && !gt[r2].targetTest(i2); ) ;
+      e2 = gt[r2];
+    }
+    for (r2 = t2.length; r2--; ) t2[r2] && (t2[r2]._gsap || (t2[r2]._gsap = new Vt(t2[r2], e2))) || t2.splice(r2, 1);
+    return t2;
+  }
+  function fa(t2) {
+    return t2._gsap || ea(Mt(t2))[0]._gsap;
+  }
+  function ga(t2, e2, r2) {
+    return (r2 = t2[e2]) && s(r2) ? t2[e2]() : u(r2) && t2.getAttribute && t2.getAttribute(e2) || r2;
+  }
+  function ha(t2, e2) {
+    return (t2 = t2.split(",")).forEach(e2) || t2;
+  }
+  function ia(t2) {
+    return Math.round(1e5 * t2) / 1e5 || 0;
+  }
+  function ja(t2) {
+    return Math.round(1e7 * t2) / 1e7 || 0;
+  }
+  function ka(t2, e2) {
+    var r2 = e2.charAt(0), i2 = parseFloat(e2.substr(2));
+    return t2 = parseFloat(t2), "+" === r2 ? t2 + i2 : "-" === r2 ? t2 - i2 : "*" === r2 ? t2 * i2 : t2 / i2;
+  }
+  function la(t2, e2) {
+    for (var r2 = e2.length, i2 = 0; t2.indexOf(e2[i2]) < 0 && ++i2 < r2; ) ;
+    return i2 < r2;
+  }
+  function ma() {
+    var t2, e2, r2 = dt.length, i2 = dt.slice(0);
+    for (ct = {}, t2 = dt.length = 0; t2 < r2; t2++) (e2 = i2[t2]) && e2._lazy && (e2.render(e2._lazy[0], e2._lazy[1], true)._lazy = 0);
+  }
+  function na(t2, e2, r2, i2) {
+    dt.length && !L && ma(), t2.render(e2, r2, i2 || L && e2 < 0 && (t2._initted || t2._startAt)), dt.length && !L && ma();
+  }
+  function oa(t2) {
+    var e2 = parseFloat(t2);
+    return (e2 || 0 === e2) && (t2 + "").match(at).length < 2 ? e2 : r(t2) ? t2.trim() : t2;
+  }
+  function pa(t2) {
+    return t2;
+  }
+  function qa(t2, e2) {
+    for (var r2 in e2) r2 in t2 || (t2[r2] = e2[r2]);
+    return t2;
+  }
+  function ta(t2, e2) {
+    for (var r2 in e2) "__proto__" !== r2 && "constructor" !== r2 && "prototype" !== r2 && (t2[r2] = v(e2[r2]) ? ta(t2[r2] || (t2[r2] = {}), e2[r2]) : e2[r2]);
+    return t2;
+  }
+  function ua(t2, e2) {
+    var r2, i2 = {};
+    for (r2 in t2) r2 in e2 || (i2[r2] = t2[r2]);
+    return i2;
+  }
+  function va(t2) {
+    var e2 = t2.parent || I, r2 = t2.keyframes ? /* @__PURE__ */ (function _setKeyframeDefaults(i2) {
+      return function(t3, e3) {
+        for (var r3 in e3) r3 in t3 || "duration" === r3 && i2 || "ease" === r3 || (t3[r3] = e3[r3]);
+      };
+    })(Z(t2.keyframes)) : qa;
+    if (w(t2.inherit)) for (; e2; ) r2(t2, e2.vars.defaults), e2 = e2.parent || e2._dp;
+    return t2;
+  }
+  function xa(t2, e2, r2, i2, n2) {
+    void 0 === r2 && (r2 = "_first"), void 0 === i2 && (i2 = "_last");
+    var a2, s2 = t2[i2];
+    if (n2) for (a2 = e2[n2]; s2 && s2[n2] > a2; ) s2 = s2._prev;
+    return s2 ? (e2._next = s2._next, s2._next = e2) : (e2._next = t2[r2], t2[r2] = e2), e2._next ? e2._next._prev = e2 : t2[i2] = e2, e2._prev = s2, e2.parent = e2._dp = t2, e2;
+  }
+  function ya(t2, e2, r2, i2) {
+    void 0 === r2 && (r2 = "_first"), void 0 === i2 && (i2 = "_last");
+    var n2 = e2._prev, a2 = e2._next;
+    n2 ? n2._next = a2 : t2[r2] === e2 && (t2[r2] = a2), a2 ? a2._prev = n2 : t2[i2] === e2 && (t2[i2] = n2), e2._next = e2._prev = e2.parent = null;
+  }
+  function za(t2, e2) {
+    t2.parent && (!e2 || t2.parent.autoRemoveChildren) && t2.parent.remove && t2.parent.remove(t2), t2._act = 0;
+  }
+  function Aa(t2, e2) {
+    if (t2 && (!e2 || e2._end > t2._dur || e2._start < 0)) for (var r2 = t2; r2; ) r2._dirty = 1, r2 = r2.parent;
+    return t2;
+  }
+  function Ca(t2, e2, r2, i2) {
+    return t2._startAt && (L ? t2._startAt.revert(ht) : t2.vars.immediateRender && !t2.vars.autoRevert || t2._startAt.render(e2, true, i2));
+  }
+  function Ea(t2) {
+    return t2._repeat ? Tt(t2._tTime, t2 = t2.duration() + t2._rDelay) * t2 : 0;
+  }
+  function Ga(t2, e2) {
+    return (t2 - e2._start) * e2._ts + (0 <= e2._ts ? 0 : e2._dirty ? e2.totalDuration() : e2._tDur);
+  }
+  function Ha(t2) {
+    return t2._end = ja(t2._start + (t2._tDur / Math.abs(t2._ts || t2._rts || X) || 0));
+  }
+  function Ia(t2, e2) {
+    var r2 = t2._dp;
+    return r2 && r2.smoothChildTiming && t2._ts && (t2._start = ja(r2._time - (0 < t2._ts ? e2 / t2._ts : ((t2._dirty ? t2.totalDuration() : t2._tDur) - e2) / -t2._ts)), Ha(t2), r2._dirty || Aa(r2, t2)), t2;
+  }
+  function Ja(t2, e2) {
+    var r2;
+    if ((e2._time || !e2._dur && e2._initted || e2._start < t2._time && (e2._dur || !e2.add)) && (r2 = Ga(t2.rawTime(), e2), (!e2._dur || Ot(0, e2.totalDuration(), r2) - e2._tTime > X) && e2.render(r2, true)), Aa(t2, e2)._dp && t2._initted && t2._time >= t2._dur && t2._ts) {
+      if (t2._dur < t2.duration()) for (r2 = t2; r2._dp; ) 0 <= r2.rawTime() && r2.totalTime(r2._tTime), r2 = r2._dp;
+      t2._zTime = -X;
+    }
+  }
+  function Ka(e2, r2, i2, n2) {
+    return r2.parent && za(r2), r2._start = ja((t(i2) ? i2 : i2 || e2 !== I ? xt(e2, i2, r2) : e2._time) + r2._delay), r2._end = ja(r2._start + (r2.totalDuration() / Math.abs(r2.timeScale()) || 0)), xa(e2, r2, "_first", "_last", e2._sort ? "_start" : 0), bt(r2) || (e2._recent = r2), n2 || Ja(e2, r2), e2._ts < 0 && Ia(e2, e2._tTime), e2;
+  }
+  function La(t2, e2) {
+    return (ot.ScrollTrigger || Q("scrollTrigger", e2)) && ot.ScrollTrigger.create(e2, t2);
+  }
+  function Ma(t2, e2, r2, i2, n2) {
+    return Qt(t2, e2, n2), t2._initted ? !r2 && t2._pt && !L && (t2._dur && false !== t2.vars.lazy || !t2._dur && t2.vars.lazy) && f !== Rt.frame ? (dt.push(t2), t2._lazy = [n2, i2], 1) : void 0 : 1;
+  }
+  function Ra(t2, e2, r2, i2) {
+    var n2 = t2._repeat, a2 = ja(e2) || 0, s2 = t2._tTime / t2._tDur;
+    return s2 && !i2 && (t2._time *= a2 / t2._dur), t2._dur = a2, t2._tDur = n2 ? n2 < 0 ? 1e10 : ja(a2 * (n2 + 1) + t2._rDelay * n2) : a2, 0 < s2 && !i2 && Ia(t2, t2._tTime = t2._tDur * s2), t2.parent && Ha(t2), r2 || Aa(t2.parent, t2), t2;
+  }
+  function Sa(t2) {
+    return t2 instanceof Xt ? Aa(t2) : Ra(t2, t2._dur);
+  }
+  function Va(e2, r2, i2) {
+    var n2, a2, s2 = t(r2[1]), o2 = (s2 ? 2 : 1) + (e2 < 2 ? 0 : 1), u2 = r2[o2];
+    if (s2 && (u2.duration = r2[1]), u2.parent = i2, e2) {
+      for (n2 = u2, a2 = i2; a2 && !("immediateRender" in n2); ) n2 = a2.vars.defaults || {}, a2 = w(a2.vars.inherit) && a2.parent;
+      u2.immediateRender = w(n2.immediateRender), e2 < 2 ? u2.runBackwards = 1 : u2.startAt = r2[o2 - 1];
+    }
+    return new $t(r2[0], u2, r2[1 + o2]);
+  }
+  function Wa(t2, e2) {
+    return t2 || 0 === t2 ? e2(t2) : e2;
+  }
+  function Ya(t2, e2) {
+    return r(t2) && (e2 = st.exec(t2)) ? e2[1] : "";
+  }
+  function _a(t2, e2) {
+    return t2 && v(t2) && "length" in t2 && (!e2 && !t2.length || t2.length - 1 in t2 && v(t2[0])) && !t2.nodeType && t2 !== h;
+  }
+  function cb(r2) {
+    return r2 = Mt(r2)[0] || R("Invalid scope") || {}, function(t2) {
+      var e2 = r2.current || r2.nativeElement || r2;
+      return Mt(t2, e2.querySelectorAll ? e2 : e2 === r2 ? R("Invalid scope") || a.createElement("div") : r2);
+    };
+  }
+  function db(t2) {
+    return t2.sort(function() {
+      return 0.5 - Math.random();
+    });
+  }
+  function eb(t2) {
+    if (s(t2)) return t2;
+    var p2 = v(t2) ? t2 : { each: t2 }, _2 = jt(p2.ease), m2 = p2.from || 0, g2 = parseFloat(p2.base) || 0, y2 = {}, e2 = 0 < m2 && m2 < 1, T2 = isNaN(m2) || e2, b2 = p2.axis, w2 = m2, x2 = m2;
+    return r(m2) ? w2 = x2 = { center: 0.5, edges: 0.5, end: 1 }[m2] || 0 : !e2 && T2 && (w2 = m2[0], x2 = m2[1]), function(t3, e3, r2) {
+      var i2, n2, a2, s2, o2, u2, h2, l2, f2, d2 = (r2 || p2).length, c2 = y2[d2];
+      if (!c2) {
+        if (!(f2 = "auto" === p2.grid ? 0 : (p2.grid || [1, U])[1])) {
+          for (h2 = -U; h2 < (h2 = r2[f2++].getBoundingClientRect().left) && f2 < d2; ) ;
+          f2 < d2 && f2--;
+        }
+        for (c2 = y2[d2] = [], i2 = T2 ? Math.min(f2, d2) * w2 - 0.5 : m2 % f2, n2 = f2 === U ? 0 : T2 ? d2 * x2 / f2 - 0.5 : m2 / f2 | 0, l2 = U, u2 = h2 = 0; u2 < d2; u2++) a2 = u2 % f2 - i2, s2 = n2 - (u2 / f2 | 0), c2[u2] = o2 = b2 ? Math.abs("y" === b2 ? s2 : a2) : K(a2 * a2 + s2 * s2), h2 < o2 && (h2 = o2), o2 < l2 && (l2 = o2);
+        "random" === m2 && db(c2), c2.max = h2 - l2, c2.min = l2, c2.v = d2 = (parseFloat(p2.amount) || parseFloat(p2.each) * (d2 < f2 ? d2 - 1 : b2 ? "y" === b2 ? d2 / f2 : f2 : Math.max(f2, d2 / f2)) || 0) * ("edges" === m2 ? -1 : 1), c2.b = d2 < 0 ? g2 - d2 : g2, c2.u = Ya(p2.amount || p2.each) || 0, _2 = _2 && d2 < 0 ? Yt(_2) : _2;
+      }
+      return d2 = (c2[t3] - c2.min) / c2.max || 0, ja(c2.b + (_2 ? _2(d2) : d2) * c2.v) + c2.u;
+    };
+  }
+  function fb(i2) {
+    var n2 = Math.pow(10, ((i2 + "").split(".")[1] || "").length);
+    return function(e2) {
+      var r2 = ja(Math.round(parseFloat(e2) / i2) * i2 * n2);
+      return (r2 - r2 % 1) / n2 + (t(e2) ? 0 : Ya(e2));
+    };
+  }
+  function gb(h2, e2) {
+    var l2, f2, r2 = Z(h2);
+    return !r2 && v(h2) && (l2 = r2 = h2.radius || U, h2.values ? (h2 = Mt(h2.values), (f2 = !t(h2[0])) && (l2 *= l2)) : h2 = fb(h2.increment)), Wa(e2, r2 ? s(h2) ? function(t2) {
+      return f2 = h2(t2), Math.abs(f2 - t2) <= l2 ? f2 : t2;
+    } : function(e3) {
+      for (var r3, i2, n2 = parseFloat(f2 ? e3.x : e3), a2 = parseFloat(f2 ? e3.y : 0), s2 = U, o2 = 0, u2 = h2.length; u2--; ) (r3 = f2 ? (r3 = h2[u2].x - n2) * r3 + (i2 = h2[u2].y - a2) * i2 : Math.abs(h2[u2] - n2)) < s2 && (s2 = r3, o2 = u2);
+      return o2 = !l2 || s2 <= l2 ? h2[o2] : e3, f2 || o2 === e3 || t(e3) ? o2 : o2 + Ya(e3);
+    } : fb(h2));
+  }
+  function hb(t2, e2, r2, i2) {
+    return Wa(Z(t2) ? !e2 : true === r2 ? !!(r2 = 0) : !i2, function() {
+      return Z(t2) ? t2[~~(Math.random() * t2.length)] : (r2 = r2 || 1e-5) && (i2 = r2 < 1 ? Math.pow(10, (r2 + "").length - 2) : 1) && Math.floor(Math.round((t2 - r2 / 2 + Math.random() * (e2 - t2 + 0.99 * r2)) / r2) * r2 * i2) / i2;
+    });
+  }
+  function lb(e2, r2, t2) {
+    return Wa(t2, function(t3) {
+      return e2[~~r2(t3)];
+    });
+  }
+  function ob(t2) {
+    for (var e2, r2, i2, n2, a2 = 0, s2 = ""; ~(e2 = t2.indexOf("random(", a2)); ) i2 = t2.indexOf(")", e2), n2 = "[" === t2.charAt(e2 + 7), r2 = t2.substr(e2 + 7, i2 - e2 - 7).match(n2 ? at : tt), s2 += t2.substr(a2, e2 - a2) + hb(n2 ? r2 : +r2[0], n2 ? 0 : +r2[1], +r2[2] || 1e-5), a2 = i2 + 1;
+    return s2 + t2.substr(a2, t2.length - a2);
+  }
+  function rb(t2, e2, r2) {
+    var i2, n2, a2, s2 = t2.labels, o2 = U;
+    for (i2 in s2) (n2 = s2[i2] - e2) < 0 == !!r2 && n2 && o2 > (n2 = Math.abs(n2)) && (a2 = i2, o2 = n2);
+    return a2;
+  }
+  function tb(t2) {
+    return za(t2), t2.scrollTrigger && t2.scrollTrigger.kill(!!L), t2.progress() < 1 && Ct(t2, "onInterrupt"), t2;
+  }
+  function wb(t2) {
+    if (t2) if (t2 = !t2.name && t2.default || t2, x() || t2.headless) {
+      var e2 = t2.name, r2 = s(t2), i2 = e2 && !r2 && t2.init ? function() {
+        this._props = [];
+      } : t2, n2 = { init: T, render: he, add: Wt, kill: ce, modifier: fe, rawVars: 0 }, a2 = { targetTest: 0, get: 0, getSetter: ne, aliases: {}, register: 0 };
+      if (Ft(), t2 !== i2) {
+        if (pt[e2]) return;
+        qa(i2, qa(ua(t2, n2), a2)), yt(i2.prototype, yt(n2, ua(t2, a2))), pt[i2.prop = e2] = i2, t2.targetTest && (gt.push(i2), ft[e2] = 1), e2 = ("css" === e2 ? "CSS" : e2.charAt(0).toUpperCase() + e2.substr(1)) + "Plugin";
+      }
+      S(e2, i2), t2.register && t2.register(ze, i2, _e);
+    } else At.push(t2);
+  }
+  function zb(t2, e2, r2) {
+    return (6 * (t2 += t2 < 0 ? 1 : 1 < t2 ? -1 : 0) < 1 ? e2 + (r2 - e2) * t2 * 6 : t2 < 0.5 ? r2 : 3 * t2 < 2 ? e2 + (r2 - e2) * (2 / 3 - t2) * 6 : e2) * St + 0.5 | 0;
+  }
+  function Ab(e2, r2, i2) {
+    var n2, a2, s2, o2, u2, h2, l2, f2, d2, c2, p2 = e2 ? t(e2) ? [e2 >> 16, e2 >> 8 & St, e2 & St] : 0 : zt.black;
+    if (!p2) {
+      if ("," === e2.substr(-1) && (e2 = e2.substr(0, e2.length - 1)), zt[e2]) p2 = zt[e2];
+      else if ("#" === e2.charAt(0)) {
+        if (e2.length < 6 && (e2 = "#" + (n2 = e2.charAt(1)) + n2 + (a2 = e2.charAt(2)) + a2 + (s2 = e2.charAt(3)) + s2 + (5 === e2.length ? e2.charAt(4) + e2.charAt(4) : "")), 9 === e2.length) return [(p2 = parseInt(e2.substr(1, 6), 16)) >> 16, p2 >> 8 & St, p2 & St, parseInt(e2.substr(7), 16) / 255];
+        p2 = [(e2 = parseInt(e2.substr(1), 16)) >> 16, e2 >> 8 & St, e2 & St];
+      } else if ("hsl" === e2.substr(0, 3)) if (p2 = c2 = e2.match(tt), r2) {
+        if (~e2.indexOf("=")) return p2 = e2.match(et), i2 && p2.length < 4 && (p2[3] = 1), p2;
+      } else o2 = +p2[0] % 360 / 360, u2 = p2[1] / 100, n2 = 2 * (h2 = p2[2] / 100) - (a2 = h2 <= 0.5 ? h2 * (u2 + 1) : h2 + u2 - h2 * u2), 3 < p2.length && (p2[3] *= 1), p2[0] = zb(o2 + 1 / 3, n2, a2), p2[1] = zb(o2, n2, a2), p2[2] = zb(o2 - 1 / 3, n2, a2);
+      else p2 = e2.match(tt) || zt.transparent;
+      p2 = p2.map(Number);
+    }
+    return r2 && !c2 && (n2 = p2[0] / St, a2 = p2[1] / St, s2 = p2[2] / St, h2 = ((l2 = Math.max(n2, a2, s2)) + (f2 = Math.min(n2, a2, s2))) / 2, l2 === f2 ? o2 = u2 = 0 : (d2 = l2 - f2, u2 = 0.5 < h2 ? d2 / (2 - l2 - f2) : d2 / (l2 + f2), o2 = l2 === n2 ? (a2 - s2) / d2 + (a2 < s2 ? 6 : 0) : l2 === a2 ? (s2 - n2) / d2 + 2 : (n2 - a2) / d2 + 4, o2 *= 60), p2[0] = ~~(o2 + 0.5), p2[1] = ~~(100 * u2 + 0.5), p2[2] = ~~(100 * h2 + 0.5)), i2 && p2.length < 4 && (p2[3] = 1), p2;
+  }
+  function Bb(t2) {
+    var r2 = [], i2 = [], n2 = -1;
+    return t2.split(Et).forEach(function(t3) {
+      var e2 = t3.match(rt) || [];
+      r2.push.apply(r2, e2), i2.push(n2 += e2.length + 1);
+    }), r2.c = i2, r2;
+  }
+  function Cb(t2, e2, r2) {
+    var i2, n2, a2, s2, o2 = "", u2 = (t2 + o2).match(Et), h2 = e2 ? "hsla(" : "rgba(", l2 = 0;
+    if (!u2) return t2;
+    if (u2 = u2.map(function(t3) {
+      return (t3 = Ab(t3, e2, 1)) && h2 + (e2 ? t3[0] + "," + t3[1] + "%," + t3[2] + "%," + t3[3] : t3.join(",")) + ")";
+    }), r2 && (a2 = Bb(t2), (i2 = r2.c).join(o2) !== a2.c.join(o2))) for (s2 = (n2 = t2.replace(Et, "1").split(rt)).length - 1; l2 < s2; l2++) o2 += n2[l2] + (~i2.indexOf(l2) ? u2.shift() || h2 + "0,0,0,0)" : (a2.length ? a2 : u2.length ? u2 : r2).shift());
+    if (!n2) for (s2 = (n2 = t2.split(Et)).length - 1; l2 < s2; l2++) o2 += n2[l2] + u2[l2];
+    return o2 + n2[s2];
+  }
+  function Fb(t2) {
+    var e2, r2 = t2.join(" ");
+    if (Et.lastIndex = 0, Et.test(r2)) return e2 = Dt.test(r2), t2[1] = Cb(t2[1], e2), t2[0] = Cb(t2[0], e2, Bb(t2[1])), true;
+  }
+  function Ob(t2) {
+    var e2 = (t2 + "").split("("), r2 = Lt[e2[0]];
+    return r2 && 1 < e2.length && r2.config ? r2.config.apply(null, ~t2.indexOf("{") ? [(function _parseObjectInString(t3) {
+      for (var e3, r3, i2, n2 = {}, a2 = t3.substr(1, t3.length - 3).split(":"), s2 = a2[0], o2 = 1, u2 = a2.length; o2 < u2; o2++) r3 = a2[o2], e3 = o2 !== u2 - 1 ? r3.lastIndexOf(",") : r3.length, i2 = r3.substr(0, e3), n2[s2] = isNaN(i2) ? i2.replace(Bt, "").trim() : +i2, s2 = r3.substr(e3 + 1).trim();
+      return n2;
+    })(e2[1])] : (function _valueInParentheses(t3) {
+      var e3 = t3.indexOf("(") + 1, r3 = t3.indexOf(")"), i2 = t3.indexOf("(", e3);
+      return t3.substring(e3, ~i2 && i2 < r3 ? t3.indexOf(")", r3 + 1) : r3);
+    })(t2).split(",").map(oa)) : Lt._CE && It.test(t2) ? Lt._CE("", t2) : r2;
+  }
+  function Qb(t2, e2) {
+    for (var r2, i2 = t2._first; i2; ) i2 instanceof Xt ? Qb(i2, e2) : !i2.vars.yoyoEase || i2._yoyo && i2._repeat || i2._yoyo === e2 || (i2.timeline ? Qb(i2.timeline, e2) : (r2 = i2._ease, i2._ease = i2._yEase, i2._yEase = r2, i2._yoyo = e2)), i2 = i2._next;
+  }
+  function Sb(t2, e2, r2, i2) {
+    void 0 === r2 && (r2 = function easeOut(t3) {
+      return 1 - e2(1 - t3);
+    }), void 0 === i2 && (i2 = function easeInOut(t3) {
+      return t3 < 0.5 ? e2(2 * t3) / 2 : 1 - e2(2 * (1 - t3)) / 2;
+    });
+    var n2, a2 = { easeIn: e2, easeOut: r2, easeInOut: i2 };
+    return ha(t2, function(t3) {
+      for (var e3 in Lt[t3] = ot[t3] = a2, Lt[n2 = t3.toLowerCase()] = r2, a2) Lt[n2 + ("easeIn" === e3 ? ".in" : "easeOut" === e3 ? ".out" : ".inOut")] = Lt[t3 + "." + e3] = a2[e3];
+    }), a2;
+  }
+  function Tb(e2) {
+    return function(t2) {
+      return t2 < 0.5 ? (1 - e2(1 - 2 * t2)) / 2 : 0.5 + e2(2 * (t2 - 0.5)) / 2;
+    };
+  }
+  function Ub(r2, t2, e2) {
+    function Jm(t3) {
+      return 1 === t3 ? 1 : i2 * Math.pow(2, -10 * t3) * H((t3 - a2) * n2) + 1;
+    }
+    var i2 = 1 <= t2 ? t2 : 1, n2 = (e2 || (r2 ? 0.3 : 0.45)) / (t2 < 1 ? t2 : 1), a2 = n2 / N * (Math.asin(1 / i2) || 0), s2 = "out" === r2 ? Jm : "in" === r2 ? function(t3) {
+      return 1 - Jm(1 - t3);
+    } : Tb(Jm);
+    return n2 = N / n2, s2.config = function(t3, e3) {
+      return Ub(r2, t3, e3);
+    }, s2;
+  }
+  function Vb(e2, r2) {
+    function Rm(t3) {
+      return t3 ? --t3 * t3 * ((r2 + 1) * t3 + r2) + 1 : 0;
+    }
+    void 0 === r2 && (r2 = 1.70158);
+    var t2 = "out" === e2 ? Rm : "in" === e2 ? function(t3) {
+      return 1 - Rm(1 - t3);
+    } : Tb(Rm);
+    return t2.config = function(t3) {
+      return Vb(e2, t3);
+    }, t2;
+  }
+  var F, L, l, I, h, n, a, i, o, f, d, c, p, _, m, g, b, O, k, M, C, A, z, E, D, B, Y, j, q = { autoSleep: 120, force3D: "auto", nullTargetWarn: 1, units: { lineHeight: "" } }, V = { duration: 0.5, overwrite: false, delay: 0 }, U = 1e8, X = 1 / U, N = 2 * Math.PI, G = N / 4, W = 0, K = Math.sqrt, J = Math.cos, H = Math.sin, $ = "function" == typeof ArrayBuffer && ArrayBuffer.isView || function() {
+  }, Z = Array.isArray, tt = /(?:-?\.?\d|\.)+/gi, et = /[-+=.]*\d+[.e\-+]*\d*[e\-+]*\d*/g, rt = /[-+=.]*\d+[.e-]*\d*[a-z%]*/g, it = /[-+=.]*\d+\.?\d*(?:e-|e\+)?\d*/gi, nt = /[+-]=-?[.\d]+/, at = /[^,'"\[\]\s]+/gi, st = /^[+\-=e\s\d]*\d+[.\d]*([a-z]*|%)\s*$/i, ot = {}, ut = { suppressEvents: true, isStart: true, kill: false }, ht = { suppressEvents: true, kill: false }, lt = { suppressEvents: true }, ft = {}, dt = [], ct = {}, pt = {}, _t = {}, mt = 30, gt = [], vt = "", yt = function _merge(t2, e2) {
+    for (var r2 in e2) t2[r2] = e2[r2];
+    return t2;
+  }, Tt = function _animationCycle(t2, e2) {
+    var r2 = Math.floor(t2 /= e2);
+    return t2 && r2 === t2 ? r2 - 1 : r2;
+  }, bt = function _isFromOrFromStart(t2) {
+    var e2 = t2.data;
+    return "isFromStart" === e2 || "isStart" === e2;
+  }, wt = { _start: 0, endTime: T, totalDuration: T }, xt = function _parsePosition(t2, e2, i2) {
+    var n2, a2, s2, o2 = t2.labels, u2 = t2._recent || wt, h2 = t2.duration() >= U ? u2.endTime(false) : t2._dur;
+    return r(e2) && (isNaN(e2) || e2 in o2) ? (a2 = e2.charAt(0), s2 = "%" === e2.substr(-1), n2 = e2.indexOf("="), "<" === a2 || ">" === a2 ? (0 <= n2 && (e2 = e2.replace(/=/, "")), ("<" === a2 ? u2._start : u2.endTime(0 <= u2._repeat)) + (parseFloat(e2.substr(1)) || 0) * (s2 ? (n2 < 0 ? u2 : i2).totalDuration() / 100 : 1)) : n2 < 0 ? (e2 in o2 || (o2[e2] = h2), o2[e2]) : (a2 = parseFloat(e2.charAt(n2 - 1) + e2.substr(n2 + 1)), s2 && i2 && (a2 = a2 / 100 * (Z(i2) ? i2[0] : i2).totalDuration()), 1 < n2 ? _parsePosition(t2, e2.substr(0, n2 - 1), i2) + a2 : h2 + a2)) : null == e2 ? h2 : +e2;
+  }, Ot = function _clamp(t2, e2, r2) {
+    return r2 < t2 ? t2 : e2 < r2 ? e2 : r2;
+  }, kt = [].slice, Mt = function toArray(t2, e2, i2) {
+    return l && !e2 && l.selector ? l.selector(t2) : !r(t2) || i2 || !n && Ft() ? Z(t2) ? (function _flatten(t3, e3, i3) {
+      return void 0 === i3 && (i3 = []), t3.forEach(function(t4) {
+        return r(t4) && !e3 || _a(t4, 1) ? i3.push.apply(i3, Mt(t4)) : i3.push(t4);
+      }) || i3;
+    })(t2, i2) : _a(t2) ? kt.call(t2, 0) : t2 ? [t2] : [] : kt.call((e2 || a).querySelectorAll(t2), 0);
+  }, Pt = function mapRange(e2, t2, r2, i2, n2) {
+    var a2 = t2 - e2, s2 = i2 - r2;
+    return Wa(n2, function(t3) {
+      return r2 + ((t3 - e2) / a2 * s2 || 0);
+    });
+  }, Ct = function _callback(t2, e2, r2) {
+    var i2, n2, a2, s2 = t2.vars, o2 = s2[e2], u2 = l, h2 = t2._ctx;
+    if (o2) return i2 = s2[e2 + "Params"], n2 = s2.callbackScope || t2, r2 && dt.length && ma(), h2 && (l = h2), a2 = i2 ? o2.apply(n2, i2) : o2.call(n2), l = u2, a2;
+  }, At = [], St = 255, zt = { aqua: [0, St, St], lime: [0, St, 0], silver: [192, 192, 192], black: [0, 0, 0], maroon: [128, 0, 0], teal: [0, 128, 128], blue: [0, 0, St], navy: [0, 0, 128], white: [St, St, St], olive: [128, 128, 0], yellow: [St, St, 0], orange: [St, 165, 0], gray: [128, 128, 128], purple: [128, 0, 128], green: [0, 128, 0], red: [St, 0, 0], pink: [St, 192, 203], cyan: [0, St, St], transparent: [St, St, St, 0] }, Et = (function() {
+    var t2, e2 = "(?:\\b(?:(?:rgb|rgba|hsl|hsla)\\(.+?\\))|\\B#(?:[0-9a-f]{3,4}){1,2}\\b";
+    for (t2 in zt) e2 += "|" + t2 + "\\b";
+    return new RegExp(e2 + ")", "gi");
+  })(), Dt = /hsl[a]?\(/, Rt = (k = Date.now, M = 500, C = 33, A = k(), z = A, D = E = 1e3 / 240, g = { time: 0, frame: 0, tick: function tick() {
+    yl(true);
+  }, deltaRatio: function deltaRatio(t2) {
+    return b / (1e3 / (t2 || 60));
+  }, wake: function wake() {
+    o && (!n && x() && (h = n = window, a = h.document || {}, ot.gsap = ze, (h.gsapVersions || (h.gsapVersions = [])).push(ze.version), P(i || h.GreenSockGlobals || !h.gsap && h || {}), At.forEach(wb)), m = "undefined" != typeof requestAnimationFrame && requestAnimationFrame, p && g.sleep(), _ = m || function(t2) {
+      return setTimeout(t2, D - 1e3 * g.time + 1 | 0);
+    }, c = 1, yl(2));
+  }, sleep: function sleep() {
+    (m ? cancelAnimationFrame : clearTimeout)(p), c = 0, _ = T;
+  }, lagSmoothing: function lagSmoothing(t2, e2) {
+    M = t2 || 1 / 0, C = Math.min(e2 || 33, M);
+  }, fps: function fps(t2) {
+    E = 1e3 / (t2 || 240), D = 1e3 * g.time + E;
+  }, add: function add(n2, t2, e2) {
+    var a2 = t2 ? function(t3, e3, r2, i2) {
+      n2(t3, e3, r2, i2), g.remove(a2);
+    } : n2;
+    return g.remove(n2), B[e2 ? "unshift" : "push"](a2), Ft(), a2;
+  }, remove: function remove(t2, e2) {
+    ~(e2 = B.indexOf(t2)) && B.splice(e2, 1) && e2 <= O && O--;
+  }, _listeners: B = [] }), Ft = function _wake() {
+    return !c && Rt.wake();
+  }, Lt = {}, It = /^[\d.\-M][\d.\-,\s]/, Bt = /["']/g, Yt = function _invertEase(e2) {
+    return function(t2) {
+      return 1 - e2(1 - t2);
+    };
+  }, jt = function _parseEase(t2, e2) {
+    return t2 && (s(t2) ? t2 : Lt[t2] || Ob(t2)) || e2;
+  };
+  function yl(t2) {
+    var e2, r2, i2, n2, a2 = k() - z, s2 = true === t2;
+    if ((M < a2 || a2 < 0) && (A += a2 - C), (0 < (e2 = (i2 = (z += a2) - A) - D) || s2) && (n2 = ++g.frame, b = i2 - 1e3 * g.time, g.time = i2 /= 1e3, D += e2 + (E <= e2 ? 4 : E - e2), r2 = 1), s2 || (p = _(yl)), r2) for (O = 0; O < B.length; O++) B[O](i2, b, n2, t2);
+  }
+  function gn(t2) {
+    return t2 < j ? Y * t2 * t2 : t2 < 0.7272727272727273 ? Y * Math.pow(t2 - 1.5 / 2.75, 2) + 0.75 : t2 < 0.9090909090909092 ? Y * (t2 -= 2.25 / 2.75) * t2 + 0.9375 : Y * Math.pow(t2 - 2.625 / 2.75, 2) + 0.984375;
+  }
+  ha("Linear,Quad,Cubic,Quart,Quint,Strong", function(t2, e2) {
+    var r2 = e2 < 5 ? e2 + 1 : e2;
+    Sb(t2 + ",Power" + (r2 - 1), e2 ? function(t3) {
+      return Math.pow(t3, r2);
+    } : function(t3) {
+      return t3;
+    }, function(t3) {
+      return 1 - Math.pow(1 - t3, r2);
+    }, function(t3) {
+      return t3 < 0.5 ? Math.pow(2 * t3, r2) / 2 : 1 - Math.pow(2 * (1 - t3), r2) / 2;
+    });
+  }), Lt.Linear.easeNone = Lt.none = Lt.Linear.easeIn, Sb("Elastic", Ub("in"), Ub("out"), Ub()), Y = 7.5625, j = 1 / 2.75, Sb("Bounce", function(t2) {
+    return 1 - gn(1 - t2);
+  }, gn), Sb("Expo", function(t2) {
+    return t2 ? Math.pow(2, 10 * (t2 - 1)) : 0;
+  }), Sb("Circ", function(t2) {
+    return -(K(1 - t2 * t2) - 1);
+  }), Sb("Sine", function(t2) {
+    return 1 === t2 ? 1 : 1 - J(t2 * G);
+  }), Sb("Back", Vb("in"), Vb("out"), Vb()), Lt.SteppedEase = Lt.steps = ot.SteppedEase = { config: function config(t2, e2) {
+    void 0 === t2 && (t2 = 1);
+    var r2 = 1 / t2, i2 = t2 + (e2 ? 0 : 1), n2 = e2 ? 1 : 0;
+    return function(t3) {
+      return ((i2 * Ot(0, 0.99999999, t3) | 0) + n2) * r2;
+    };
+  } }, V.ease = Lt["quad.out"], ha("onComplete,onUpdate,onStart,onRepeat,onReverseComplete,onInterrupt", function(t2) {
+    return vt += t2 + "," + t2 + "Params,";
+  });
+  var qt, Vt = function GSCache(t2, e2) {
+    this.id = W++, (t2._gsap = this).target = t2, this.harness = e2, this.get = e2 ? e2.get : ga, this.set = e2 ? e2.getSetter : ne;
+  }, Ut = ((qt = Animation.prototype).delay = function delay(t2) {
+    return t2 || 0 === t2 ? (this.parent && this.parent.smoothChildTiming && this.startTime(this._start + t2 - this._delay), this._delay = t2, this) : this._delay;
+  }, qt.duration = function duration(t2) {
+    return arguments.length ? this.totalDuration(0 < this._repeat ? t2 + (t2 + this._rDelay) * this._repeat : t2) : this.totalDuration() && this._dur;
+  }, qt.totalDuration = function totalDuration(t2) {
+    return arguments.length ? (this._dirty = 0, Ra(this, this._repeat < 0 ? t2 : (t2 - this._repeat * this._rDelay) / (this._repeat + 1))) : this._tDur;
+  }, qt.totalTime = function totalTime(t2, e2) {
+    if (Ft(), !arguments.length) return this._tTime;
+    var r2 = this._dp;
+    if (r2 && r2.smoothChildTiming && this._ts) {
+      for (Ia(this, t2), !r2._dp || r2.parent || Ja(r2, this); r2 && r2.parent; ) r2.parent._time !== r2._start + (0 <= r2._ts ? r2._tTime / r2._ts : (r2.totalDuration() - r2._tTime) / -r2._ts) && r2.totalTime(r2._tTime, true), r2 = r2.parent;
+      !this.parent && this._dp.autoRemoveChildren && (0 < this._ts && t2 < this._tDur || this._ts < 0 && 0 < t2 || !this._tDur && !t2) && Ka(this._dp, this, this._start - this._delay);
+    }
+    return (this._tTime !== t2 || !this._dur && !e2 || this._initted && Math.abs(this._zTime) === X || !t2 && !this._initted && (this.add || this._ptLookup)) && (this._ts || (this._pTime = t2), na(this, t2, e2)), this;
+  }, qt.time = function time(t2, e2) {
+    return arguments.length ? this.totalTime(Math.min(this.totalDuration(), t2 + Ea(this)) % (this._dur + this._rDelay) || (t2 ? this._dur : 0), e2) : this._time;
+  }, qt.totalProgress = function totalProgress(t2, e2) {
+    return arguments.length ? this.totalTime(this.totalDuration() * t2, e2) : this.totalDuration() ? Math.min(1, this._tTime / this._tDur) : 0 < this.rawTime() ? 1 : 0;
+  }, qt.progress = function progress(t2, e2) {
+    return arguments.length ? this.totalTime(this.duration() * (!this._yoyo || 1 & this.iteration() ? t2 : 1 - t2) + Ea(this), e2) : this.duration() ? Math.min(1, this._time / this._dur) : 0 < this.rawTime() ? 1 : 0;
+  }, qt.iteration = function iteration(t2, e2) {
+    var r2 = this.duration() + this._rDelay;
+    return arguments.length ? this.totalTime(this._time + (t2 - 1) * r2, e2) : this._repeat ? Tt(this._tTime, r2) + 1 : 1;
+  }, qt.timeScale = function timeScale(t2, e2) {
+    if (!arguments.length) return this._rts === -X ? 0 : this._rts;
+    if (this._rts === t2) return this;
+    var r2 = this.parent && this._ts ? Ga(this.parent._time, this) : this._tTime;
+    return this._rts = +t2 || 0, this._ts = this._ps || t2 === -X ? 0 : this._rts, this.totalTime(Ot(-Math.abs(this._delay), this._tDur, r2), false !== e2), Ha(this), (function _recacheAncestors(t3) {
+      for (var e3 = t3.parent; e3 && e3.parent; ) e3._dirty = 1, e3.totalDuration(), e3 = e3.parent;
+      return t3;
+    })(this);
+  }, qt.paused = function paused(t2) {
+    return arguments.length ? (this._ps !== t2 && ((this._ps = t2) ? (this._pTime = this._tTime || Math.max(-this._delay, this.rawTime()), this._ts = this._act = 0) : (Ft(), this._ts = this._rts, this.totalTime(this.parent && !this.parent.smoothChildTiming ? this.rawTime() : this._tTime || this._pTime, 1 === this.progress() && Math.abs(this._zTime) !== X && (this._tTime -= X)))), this) : this._ps;
+  }, qt.startTime = function startTime(t2) {
+    if (arguments.length) {
+      this._start = t2;
+      var e2 = this.parent || this._dp;
+      return !e2 || !e2._sort && this.parent || Ka(e2, this, t2 - this._delay), this;
+    }
+    return this._start;
+  }, qt.endTime = function endTime(t2) {
+    return this._start + (w(t2) ? this.totalDuration() : this.duration()) / Math.abs(this._ts || 1);
+  }, qt.rawTime = function rawTime(t2) {
+    var e2 = this.parent || this._dp;
+    return e2 ? t2 && (!this._ts || this._repeat && this._time && this.totalProgress() < 1) ? this._tTime % (this._dur + this._rDelay) : this._ts ? Ga(e2.rawTime(t2), this) : this._tTime : this._tTime;
+  }, qt.revert = function revert(t2) {
+    void 0 === t2 && (t2 = lt);
+    var e2 = L;
+    return L = t2, (this._initted || this._startAt) && (this.timeline && this.timeline.revert(t2), this.totalTime(-0.01, t2.suppressEvents)), "nested" !== this.data && false !== t2.kill && this.kill(), L = e2, this;
+  }, qt.globalTime = function globalTime(t2) {
+    for (var e2 = this, r2 = arguments.length ? t2 : e2.rawTime(); e2; ) r2 = e2._start + r2 / (Math.abs(e2._ts) || 1), e2 = e2._dp;
+    return !this.parent && this._sat ? this._sat.globalTime(t2) : r2;
+  }, qt.repeat = function repeat(t2) {
+    return arguments.length ? (this._repeat = t2 === 1 / 0 ? -2 : t2, Sa(this)) : -2 === this._repeat ? 1 / 0 : this._repeat;
+  }, qt.repeatDelay = function repeatDelay(t2) {
+    if (arguments.length) {
+      var e2 = this._time;
+      return this._rDelay = t2, Sa(this), e2 ? this.time(e2) : this;
+    }
+    return this._rDelay;
+  }, qt.yoyo = function yoyo(t2) {
+    return arguments.length ? (this._yoyo = t2, this) : this._yoyo;
+  }, qt.seek = function seek(t2, e2) {
+    return this.totalTime(xt(this, t2), w(e2));
+  }, qt.restart = function restart(t2, e2) {
+    return this.play().totalTime(t2 ? -this._delay : 0, w(e2));
+  }, qt.play = function play(t2, e2) {
+    return null != t2 && this.seek(t2, e2), this.reversed(false).paused(false);
+  }, qt.reverse = function reverse(t2, e2) {
+    return null != t2 && this.seek(t2 || this.totalDuration(), e2), this.reversed(true).paused(false);
+  }, qt.pause = function pause(t2, e2) {
+    return null != t2 && this.seek(t2, e2), this.paused(true);
+  }, qt.resume = function resume() {
+    return this.paused(false);
+  }, qt.reversed = function reversed(t2) {
+    return arguments.length ? (!!t2 !== this.reversed() && this.timeScale(-this._rts || (t2 ? -X : 0)), this) : this._rts < 0;
+  }, qt.invalidate = function invalidate() {
+    return this._initted = this._act = 0, this._zTime = -X, this;
+  }, qt.isActive = function isActive() {
+    var t2, e2 = this.parent || this._dp, r2 = this._start;
+    return !(e2 && !(this._ts && this._initted && e2.isActive() && (t2 = e2.rawTime(true)) >= r2 && t2 < this.endTime(true) - X));
+  }, qt.eventCallback = function eventCallback(t2, e2, r2) {
+    var i2 = this.vars;
+    return 1 < arguments.length ? (e2 ? (i2[t2] = e2, r2 && (i2[t2 + "Params"] = r2), "onUpdate" === t2 && (this._onUpdate = e2)) : delete i2[t2], this) : i2[t2];
+  }, qt.then = function then(t2) {
+    var i2 = this;
+    return new Promise(function(e2) {
+      function Co() {
+        var t3 = i2.then;
+        i2.then = null, s(r2) && (r2 = r2(i2)) && (r2.then || r2 === i2) && (i2.then = t3), e2(r2), i2.then = t3;
+      }
+      var r2 = s(t2) ? t2 : pa;
+      i2._initted && 1 === i2.totalProgress() && 0 <= i2._ts || !i2._tTime && i2._ts < 0 ? Co() : i2._prom = Co;
+    });
+  }, qt.kill = function kill() {
+    tb(this);
+  }, Animation);
+  function Animation(t2) {
+    this.vars = t2, this._delay = +t2.delay || 0, (this._repeat = t2.repeat === 1 / 0 ? -2 : t2.repeat || 0) && (this._rDelay = t2.repeatDelay || 0, this._yoyo = !!t2.yoyo || !!t2.yoyoEase), this._ts = 1, Ra(this, +t2.duration, 1, 1), this.data = t2.data, l && (this._ctx = l).data.push(this), c || Rt.wake();
+  }
+  qa(Ut.prototype, { _time: 0, _start: 0, _end: 0, _tTime: 0, _tDur: 0, _dirty: 0, _repeat: 0, _yoyo: false, parent: null, _initted: false, _rDelay: 0, _ts: 1, _dp: 0, ratio: 0, _zTime: -X, _prom: 0, _ps: false, _rts: 1 });
+  var Xt = (function(i2) {
+    function Timeline(t2, e3) {
+      var r2;
+      return void 0 === t2 && (t2 = {}), (r2 = i2.call(this, t2) || this).labels = {}, r2.smoothChildTiming = !!t2.smoothChildTiming, r2.autoRemoveChildren = !!t2.autoRemoveChildren, r2._sort = w(t2.sortChildren), I && Ka(t2.parent || I, _assertThisInitialized(r2), e3), t2.reversed && r2.reverse(), t2.paused && r2.paused(true), t2.scrollTrigger && La(_assertThisInitialized(r2), t2.scrollTrigger), r2;
+    }
+    _inheritsLoose(Timeline, i2);
+    var e2 = Timeline.prototype;
+    return e2.to = function to(t2, e3, r2) {
+      return Va(0, arguments, this), this;
+    }, e2.from = function from(t2, e3, r2) {
+      return Va(1, arguments, this), this;
+    }, e2.fromTo = function fromTo(t2, e3, r2, i3) {
+      return Va(2, arguments, this), this;
+    }, e2.set = function set(t2, e3, r2) {
+      return e3.duration = 0, e3.parent = this, va(e3).repeatDelay || (e3.repeat = 0), e3.immediateRender = !!e3.immediateRender, new $t(t2, e3, xt(this, r2), 1), this;
+    }, e2.call = function call(t2, e3, r2) {
+      return Ka(this, $t.delayedCall(0, t2, e3), r2);
+    }, e2.staggerTo = function staggerTo(t2, e3, r2, i3, n2, a2, s2) {
+      return r2.duration = e3, r2.stagger = r2.stagger || i3, r2.onComplete = a2, r2.onCompleteParams = s2, r2.parent = this, new $t(t2, r2, xt(this, n2)), this;
+    }, e2.staggerFrom = function staggerFrom(t2, e3, r2, i3, n2, a2, s2) {
+      return r2.runBackwards = 1, va(r2).immediateRender = w(r2.immediateRender), this.staggerTo(t2, e3, r2, i3, n2, a2, s2);
+    }, e2.staggerFromTo = function staggerFromTo(t2, e3, r2, i3, n2, a2, s2, o2) {
+      return i3.startAt = r2, va(i3).immediateRender = w(i3.immediateRender), this.staggerTo(t2, e3, i3, n2, a2, s2, o2);
+    }, e2.render = function render(t2, e3, r2) {
+      var i3, n2, a2, s2, o2, u2, h2, l2, f2, d2, c2, p2, _2 = this._time, m2 = this._dirty ? this.totalDuration() : this._tDur, g2 = this._dur, v2 = t2 <= 0 ? 0 : ja(t2), y2 = this._zTime < 0 != t2 < 0 && (this._initted || !g2);
+      if (this !== I && m2 < v2 && 0 <= t2 && (v2 = m2), v2 !== this._tTime || r2 || y2) {
+        if (_2 !== this._time && g2 && (v2 += this._time - _2, t2 += this._time - _2), i3 = v2, f2 = this._start, u2 = !(l2 = this._ts), y2 && (g2 || (_2 = this._zTime), !t2 && e3 || (this._zTime = t2)), this._repeat) {
+          if (c2 = this._yoyo, o2 = g2 + this._rDelay, this._repeat < -1 && t2 < 0) return this.totalTime(100 * o2 + t2, e3, r2);
+          if (i3 = ja(v2 % o2), v2 === m2 ? (s2 = this._repeat, i3 = g2) : ((s2 = ~~(v2 / o2)) && s2 === v2 / o2 && (i3 = g2, s2--), g2 < i3 && (i3 = g2)), d2 = Tt(this._tTime, o2), !_2 && this._tTime && d2 !== s2 && this._tTime - d2 * o2 - this._dur <= 0 && (d2 = s2), c2 && 1 & s2 && (i3 = g2 - i3, p2 = 1), s2 !== d2 && !this._lock) {
+            var T2 = c2 && 1 & d2, b2 = T2 === (c2 && 1 & s2);
+            if (s2 < d2 && (T2 = !T2), _2 = T2 ? 0 : v2 % g2 ? g2 : v2, this._lock = 1, this.render(_2 || (p2 ? 0 : ja(s2 * o2)), e3, !g2)._lock = 0, this._tTime = v2, !e3 && this.parent && Ct(this, "onRepeat"), this.vars.repeatRefresh && !p2 && (this.invalidate()._lock = 1), _2 && _2 !== this._time || u2 != !this._ts || this.vars.onRepeat && !this.parent && !this._act) return this;
+            if (g2 = this._dur, m2 = this._tDur, b2 && (this._lock = 2, _2 = T2 ? g2 : -1e-4, this.render(_2, true), this.vars.repeatRefresh && !p2 && this.invalidate()), this._lock = 0, !this._ts && !u2) return this;
+            Qb(this, p2);
+          }
+        }
+        if (this._hasPause && !this._forcing && this._lock < 2 && (h2 = (function _findNextPauseTween(t3, e4, r3) {
+          var i4;
+          if (e4 < r3) for (i4 = t3._first; i4 && i4._start <= r3; ) {
+            if ("isPause" === i4.data && i4._start > e4) return i4;
+            i4 = i4._next;
+          }
+          else for (i4 = t3._last; i4 && i4._start >= r3; ) {
+            if ("isPause" === i4.data && i4._start < e4) return i4;
+            i4 = i4._prev;
+          }
+        })(this, ja(_2), ja(i3))) && (v2 -= i3 - (i3 = h2._start)), this._tTime = v2, this._time = i3, this._act = !l2, this._initted || (this._onUpdate = this.vars.onUpdate, this._initted = 1, this._zTime = t2, _2 = 0), !_2 && i3 && !e3 && !s2 && (Ct(this, "onStart"), this._tTime !== v2)) return this;
+        if (_2 <= i3 && 0 <= t2) for (n2 = this._first; n2; ) {
+          if (a2 = n2._next, (n2._act || i3 >= n2._start) && n2._ts && h2 !== n2) {
+            if (n2.parent !== this) return this.render(t2, e3, r2);
+            if (n2.render(0 < n2._ts ? (i3 - n2._start) * n2._ts : (n2._dirty ? n2.totalDuration() : n2._tDur) + (i3 - n2._start) * n2._ts, e3, r2), i3 !== this._time || !this._ts && !u2) {
+              h2 = 0, a2 && (v2 += this._zTime = -X);
+              break;
+            }
+          }
+          n2 = a2;
+        }
+        else {
+          n2 = this._last;
+          for (var w2 = t2 < 0 ? t2 : i3; n2; ) {
+            if (a2 = n2._prev, (n2._act || w2 <= n2._end) && n2._ts && h2 !== n2) {
+              if (n2.parent !== this) return this.render(t2, e3, r2);
+              if (n2.render(0 < n2._ts ? (w2 - n2._start) * n2._ts : (n2._dirty ? n2.totalDuration() : n2._tDur) + (w2 - n2._start) * n2._ts, e3, r2 || L && (n2._initted || n2._startAt)), i3 !== this._time || !this._ts && !u2) {
+                h2 = 0, a2 && (v2 += this._zTime = w2 ? -X : X);
+                break;
+              }
+            }
+            n2 = a2;
+          }
+        }
+        if (h2 && !e3 && (this.pause(), h2.render(_2 <= i3 ? 0 : -X)._zTime = _2 <= i3 ? 1 : -1, this._ts)) return this._start = f2, Ha(this), this.render(t2, e3, r2);
+        this._onUpdate && !e3 && Ct(this, "onUpdate", true), (v2 === m2 && this._tTime >= this.totalDuration() || !v2 && _2) && (f2 !== this._start && Math.abs(l2) === Math.abs(this._ts) || this._lock || (!t2 && g2 || !(v2 === m2 && 0 < this._ts || !v2 && this._ts < 0) || za(this, 1), e3 || t2 < 0 && !_2 || !v2 && !_2 && m2 || (Ct(this, v2 === m2 && 0 <= t2 ? "onComplete" : "onReverseComplete", true), !this._prom || v2 < m2 && 0 < this.timeScale() || this._prom())));
+      }
+      return this;
+    }, e2.add = function add(e3, i3) {
+      var n2 = this;
+      if (t(i3) || (i3 = xt(this, i3, e3)), !(e3 instanceof Ut)) {
+        if (Z(e3)) return e3.forEach(function(t2) {
+          return n2.add(t2, i3);
+        }), this;
+        if (r(e3)) return this.addLabel(e3, i3);
+        if (!s(e3)) return this;
+        e3 = $t.delayedCall(0, e3);
+      }
+      return this !== e3 ? Ka(this, e3, i3) : this;
+    }, e2.getChildren = function getChildren(t2, e3, r2, i3) {
+      void 0 === t2 && (t2 = true), void 0 === e3 && (e3 = true), void 0 === r2 && (r2 = true), void 0 === i3 && (i3 = -U);
+      for (var n2 = [], a2 = this._first; a2; ) a2._start >= i3 && (a2 instanceof $t ? e3 && n2.push(a2) : (r2 && n2.push(a2), t2 && n2.push.apply(n2, a2.getChildren(true, e3, r2)))), a2 = a2._next;
+      return n2;
+    }, e2.getById = function getById(t2) {
+      for (var e3 = this.getChildren(1, 1, 1), r2 = e3.length; r2--; ) if (e3[r2].vars.id === t2) return e3[r2];
+    }, e2.remove = function remove(t2) {
+      return r(t2) ? this.removeLabel(t2) : s(t2) ? this.killTweensOf(t2) : (ya(this, t2), t2 === this._recent && (this._recent = this._last), Aa(this));
+    }, e2.totalTime = function totalTime(t2, e3) {
+      return arguments.length ? (this._forcing = 1, !this._dp && this._ts && (this._start = ja(Rt.time - (0 < this._ts ? t2 / this._ts : (this.totalDuration() - t2) / -this._ts))), i2.prototype.totalTime.call(this, t2, e3), this._forcing = 0, this) : this._tTime;
+    }, e2.addLabel = function addLabel(t2, e3) {
+      return this.labels[t2] = xt(this, e3), this;
+    }, e2.removeLabel = function removeLabel(t2) {
+      return delete this.labels[t2], this;
+    }, e2.addPause = function addPause(t2, e3, r2) {
+      var i3 = $t.delayedCall(0, e3 || T, r2);
+      return i3.data = "isPause", this._hasPause = 1, Ka(this, i3, xt(this, t2));
+    }, e2.removePause = function removePause(t2) {
+      var e3 = this._first;
+      for (t2 = xt(this, t2); e3; ) e3._start === t2 && "isPause" === e3.data && za(e3), e3 = e3._next;
+    }, e2.killTweensOf = function killTweensOf(t2, e3, r2) {
+      for (var i3 = this.getTweensOf(t2, r2), n2 = i3.length; n2--; ) Nt !== i3[n2] && i3[n2].kill(t2, e3);
+      return this;
+    }, e2.getTweensOf = function getTweensOf(e3, r2) {
+      for (var i3, n2 = [], a2 = Mt(e3), s2 = this._first, o2 = t(r2); s2; ) s2 instanceof $t ? la(s2._targets, a2) && (o2 ? (!Nt || s2._initted && s2._ts) && s2.globalTime(0) <= r2 && s2.globalTime(s2.totalDuration()) > r2 : !r2 || s2.isActive()) && n2.push(s2) : (i3 = s2.getTweensOf(a2, r2)).length && n2.push.apply(n2, i3), s2 = s2._next;
+      return n2;
+    }, e2.tweenTo = function tweenTo(t2, e3) {
+      e3 = e3 || {};
+      var r2, i3 = this, n2 = xt(i3, t2), a2 = e3.startAt, s2 = e3.onStart, o2 = e3.onStartParams, u2 = e3.immediateRender, h2 = $t.to(i3, qa({ ease: e3.ease || "none", lazy: false, immediateRender: false, time: n2, overwrite: "auto", duration: e3.duration || Math.abs((n2 - (a2 && "time" in a2 ? a2.time : i3._time)) / i3.timeScale()) || X, onStart: function onStart() {
+        if (i3.pause(), !r2) {
+          var t3 = e3.duration || Math.abs((n2 - (a2 && "time" in a2 ? a2.time : i3._time)) / i3.timeScale());
+          h2._dur !== t3 && Ra(h2, t3, 0, 1).render(h2._time, true, true), r2 = 1;
+        }
+        s2 && s2.apply(h2, o2 || []);
+      } }, e3));
+      return u2 ? h2.render(0) : h2;
+    }, e2.tweenFromTo = function tweenFromTo(t2, e3, r2) {
+      return this.tweenTo(e3, qa({ startAt: { time: xt(this, t2) } }, r2));
+    }, e2.recent = function recent() {
+      return this._recent;
+    }, e2.nextLabel = function nextLabel(t2) {
+      return void 0 === t2 && (t2 = this._time), rb(this, xt(this, t2));
+    }, e2.previousLabel = function previousLabel(t2) {
+      return void 0 === t2 && (t2 = this._time), rb(this, xt(this, t2), 1);
+    }, e2.currentLabel = function currentLabel(t2) {
+      return arguments.length ? this.seek(t2, true) : this.previousLabel(this._time + X);
+    }, e2.shiftChildren = function shiftChildren(t2, e3, r2) {
+      void 0 === r2 && (r2 = 0);
+      for (var i3, n2 = this._first, a2 = this.labels; n2; ) n2._start >= r2 && (n2._start += t2, n2._end += t2), n2 = n2._next;
+      if (e3) for (i3 in a2) a2[i3] >= r2 && (a2[i3] += t2);
+      return Aa(this);
+    }, e2.invalidate = function invalidate(t2) {
+      var e3 = this._first;
+      for (this._lock = 0; e3; ) e3.invalidate(t2), e3 = e3._next;
+      return i2.prototype.invalidate.call(this, t2);
+    }, e2.clear = function clear(t2) {
+      void 0 === t2 && (t2 = true);
+      for (var e3, r2 = this._first; r2; ) e3 = r2._next, this.remove(r2), r2 = e3;
+      return this._dp && (this._time = this._tTime = this._pTime = 0), t2 && (this.labels = {}), Aa(this);
+    }, e2.totalDuration = function totalDuration(t2) {
+      var e3, r2, i3, n2 = 0, a2 = this, s2 = a2._last, o2 = U;
+      if (arguments.length) return a2.timeScale((a2._repeat < 0 ? a2.duration() : a2.totalDuration()) / (a2.reversed() ? -t2 : t2));
+      if (a2._dirty) {
+        for (i3 = a2.parent; s2; ) e3 = s2._prev, s2._dirty && s2.totalDuration(), o2 < (r2 = s2._start) && a2._sort && s2._ts && !a2._lock ? (a2._lock = 1, Ka(a2, s2, r2 - s2._delay, 1)._lock = 0) : o2 = r2, r2 < 0 && s2._ts && (n2 -= r2, (!i3 && !a2._dp || i3 && i3.smoothChildTiming) && (a2._start += r2 / a2._ts, a2._time -= r2, a2._tTime -= r2), a2.shiftChildren(-r2, false, -Infinity), o2 = 0), s2._end > n2 && s2._ts && (n2 = s2._end), s2 = e3;
+        Ra(a2, a2 === I && a2._time > n2 ? a2._time : n2, 1, 1), a2._dirty = 0;
+      }
+      return a2._tDur;
+    }, Timeline.updateRoot = function updateRoot(t2) {
+      if (I._ts && (na(I, Ga(t2, I)), f = Rt.frame), Rt.frame >= mt) {
+        mt += q.autoSleep || 120;
+        var e3 = I._first;
+        if ((!e3 || !e3._ts) && q.autoSleep && Rt._listeners.length < 2) {
+          for (; e3 && !e3._ts; ) e3 = e3._next;
+          e3 || Rt.sleep();
+        }
+      }
+    }, Timeline;
+  })(Ut);
+  qa(Xt.prototype, { _lock: 0, _hasPause: 0, _forcing: 0 });
+  function ac(t2, e2, i2, n2, a2, o2) {
+    var u2, h2, l2, f2;
+    if (pt[t2] && false !== (u2 = new pt[t2]()).init(a2, u2.rawVars ? e2[t2] : (function _processVars(t3, e3, i3, n3, a3) {
+      if (s(t3) && (t3 = Kt(t3, a3, e3, i3, n3)), !v(t3) || t3.style && t3.nodeType || Z(t3) || $(t3)) return r(t3) ? Kt(t3, a3, e3, i3, n3) : t3;
+      var o3, u3 = {};
+      for (o3 in t3) u3[o3] = Kt(t3[o3], a3, e3, i3, n3);
+      return u3;
+    })(e2[t2], n2, a2, o2, i2), i2, n2, o2) && (i2._pt = h2 = new _e(i2._pt, a2, t2, 0, 1, u2.render, u2, 0, u2.priority), i2 !== d)) for (l2 = i2._ptLookup[i2._targets.indexOf(a2)], f2 = u2._props.length; f2--; ) l2[u2._props[f2]] = h2;
+    return u2;
+  }
+  function gc(t2, r2, e2, i2) {
+    var n2, a2, s2 = r2.ease || i2 || "power1.inOut";
+    if (Z(r2)) a2 = e2[t2] || (e2[t2] = []), r2.forEach(function(t3, e3) {
+      return a2.push({ t: e3 / (r2.length - 1) * 100, v: t3, e: s2 });
+    });
+    else for (n2 in r2) a2 = e2[n2] || (e2[n2] = []), "ease" === n2 || a2.push({ t: parseFloat(t2), v: r2[n2], e: s2 });
+  }
+  var Nt, Gt, Wt = function _addPropTween(t2, e2, i2, n2, a2, o2, u2, h2, l2, f2) {
+    s(n2) && (n2 = n2(a2 || 0, t2, o2));
+    var d2, c2 = t2[e2], p2 = "get" !== i2 ? i2 : s(c2) ? l2 ? t2[e2.indexOf("set") || !s(t2["get" + e2.substr(3)]) ? e2 : "get" + e2.substr(3)](l2) : t2[e2]() : c2, _2 = s(c2) ? l2 ? re : te : Zt;
+    if (r(n2) && (~n2.indexOf("random(") && (n2 = ob(n2)), "=" === n2.charAt(1) && (!(d2 = ka(p2, n2) + (Ya(p2) || 0)) && 0 !== d2 || (n2 = d2))), !f2 || p2 !== n2 || Gt) return isNaN(p2 * n2) || "" === n2 ? (c2 || e2 in t2 || Q(e2, n2), function _addComplexStringPropTween(t3, e3, r2, i3, n3, a3, s2) {
+      var o3, u3, h3, l3, f3, d3, c3, p3, _3 = new _e(this._pt, t3, e3, 0, 1, ue, null, n3), m2 = 0, g2 = 0;
+      for (_3.b = r2, _3.e = i3, r2 += "", (c3 = ~(i3 += "").indexOf("random(")) && (i3 = ob(i3)), a3 && (a3(p3 = [r2, i3], t3, e3), r2 = p3[0], i3 = p3[1]), u3 = r2.match(it) || []; o3 = it.exec(i3); ) l3 = o3[0], f3 = i3.substring(m2, o3.index), h3 ? h3 = (h3 + 1) % 5 : "rgba(" === f3.substr(-5) && (h3 = 1), l3 !== u3[g2++] && (d3 = parseFloat(u3[g2 - 1]) || 0, _3._pt = { _next: _3._pt, p: f3 || 1 === g2 ? f3 : ",", s: d3, c: "=" === l3.charAt(1) ? ka(d3, l3) - d3 : parseFloat(l3) - d3, m: h3 && h3 < 4 ? Math.round : 0 }, m2 = it.lastIndex);
+      return _3.c = m2 < i3.length ? i3.substring(m2, i3.length) : "", _3.fp = s2, (nt.test(i3) || c3) && (_3.e = 0), this._pt = _3;
+    }.call(this, t2, e2, p2, n2, _2, h2 || q.stringFilter, l2)) : (d2 = new _e(this._pt, t2, e2, +p2 || 0, n2 - (p2 || 0), "boolean" == typeof c2 ? se : ae, 0, _2), l2 && (d2.fp = l2), u2 && d2.modifier(u2, this, t2), this._pt = d2);
+  }, Qt = function _initTween(t2, e2, r2) {
+    var i2, n2, a2, s2, o2, u2, h2, l2, f2, d2, c2, p2, _2, m2 = t2.vars, g2 = m2.ease, v2 = m2.startAt, y2 = m2.immediateRender, T2 = m2.lazy, b2 = m2.onUpdate, x2 = m2.runBackwards, O2 = m2.yoyoEase, k2 = m2.keyframes, M2 = m2.autoRevert, P2 = t2._dur, C2 = t2._startAt, A2 = t2._targets, S2 = t2.parent, z2 = S2 && "nested" === S2.data ? S2.vars.targets : A2, E2 = "auto" === t2._overwrite && !F, D2 = t2.timeline;
+    if (!D2 || k2 && g2 || (g2 = "none"), t2._ease = jt(g2, V.ease), t2._yEase = O2 ? Yt(jt(true === O2 ? g2 : O2, V.ease)) : 0, O2 && t2._yoyo && !t2._repeat && (O2 = t2._yEase, t2._yEase = t2._ease, t2._ease = O2), t2._from = !D2 && !!m2.runBackwards, !D2 || k2 && !m2.stagger) {
+      if (p2 = (l2 = A2[0] ? fa(A2[0]).harness : 0) && m2[l2.prop], i2 = ua(m2, ft), C2 && (C2._zTime < 0 && C2.progress(1), e2 < 0 && x2 && y2 && !M2 ? C2.render(-1, true) : C2.revert(x2 && P2 ? ht : ut), C2._lazy = 0), v2) {
+        if (za(t2._startAt = $t.set(A2, qa({ data: "isStart", overwrite: false, parent: S2, immediateRender: true, lazy: !C2 && w(T2), startAt: null, delay: 0, onUpdate: b2 && function() {
+          return Ct(t2, "onUpdate");
+        }, stagger: 0 }, v2))), t2._startAt._dp = 0, t2._startAt._sat = t2, e2 < 0 && (L || !y2 && !M2) && t2._startAt.revert(ht), y2 && P2 && e2 <= 0 && r2 <= 0) return void (e2 && (t2._zTime = e2));
+      } else if (x2 && P2 && !C2) if (e2 && (y2 = false), a2 = qa({ overwrite: false, data: "isFromStart", lazy: y2 && !C2 && w(T2), immediateRender: y2, stagger: 0, parent: S2 }, i2), p2 && (a2[l2.prop] = p2), za(t2._startAt = $t.set(A2, a2)), t2._startAt._dp = 0, t2._startAt._sat = t2, e2 < 0 && (L ? t2._startAt.revert(ht) : t2._startAt.render(-1, true)), t2._zTime = e2, y2) {
+        if (!e2) return;
+      } else _initTween(t2._startAt, X, X);
+      for (t2._pt = t2._ptCache = 0, T2 = P2 && w(T2) || T2 && !P2, n2 = 0; n2 < A2.length; n2++) {
+        if (h2 = (o2 = A2[n2])._gsap || ea(A2)[n2]._gsap, t2._ptLookup[n2] = d2 = {}, ct[h2.id] && dt.length && ma(), c2 = z2 === A2 ? n2 : z2.indexOf(o2), l2 && false !== (f2 = new l2()).init(o2, p2 || i2, t2, c2, z2) && (t2._pt = s2 = new _e(t2._pt, o2, f2.name, 0, 1, f2.render, f2, 0, f2.priority), f2._props.forEach(function(t3) {
+          d2[t3] = s2;
+        }), f2.priority && (u2 = 1)), !l2 || p2) for (a2 in i2) pt[a2] && (f2 = ac(a2, i2, t2, c2, o2, z2)) ? f2.priority && (u2 = 1) : d2[a2] = s2 = Wt.call(t2, o2, a2, "get", i2[a2], c2, z2, 0, m2.stringFilter);
+        t2._op && t2._op[n2] && t2.kill(o2, t2._op[n2]), E2 && t2._pt && (Nt = t2, I.killTweensOf(o2, d2, t2.globalTime(e2)), _2 = !t2.parent, Nt = 0), t2._pt && T2 && (ct[h2.id] = 1);
+      }
+      u2 && pe(t2), t2._onInit && t2._onInit(t2);
+    }
+    t2._onUpdate = b2, t2._initted = (!t2._op || t2._pt) && !_2, k2 && e2 <= 0 && D2.render(U, true, true);
+  }, Kt = function _parseFuncOrString(t2, e2, i2, n2, a2) {
+    return s(t2) ? t2.call(e2, i2, n2, a2) : r(t2) && ~t2.indexOf("random(") ? ob(t2) : t2;
+  }, Jt = vt + "repeat,repeatDelay,yoyo,repeatRefresh,yoyoEase,autoRevert", Ht = {};
+  ha(Jt + ",id,stagger,delay,duration,paused,scrollTrigger", function(t2) {
+    return Ht[t2] = 1;
+  });
+  var $t = (function(D2) {
+    function Tween(e3, r2, i2, n2) {
+      var a2;
+      "number" == typeof r2 && (i2.duration = r2, r2 = i2, i2 = null);
+      var s2, o2, u2, h2, l2, f2, d2, c2, p2 = (a2 = D2.call(this, n2 ? r2 : va(r2)) || this).vars, _2 = p2.duration, m2 = p2.delay, g2 = p2.immediateRender, T2 = p2.stagger, b2 = p2.overwrite, x2 = p2.keyframes, O2 = p2.defaults, k2 = p2.scrollTrigger, M2 = p2.yoyoEase, P2 = r2.parent || I, C2 = (Z(e3) || $(e3) ? t(e3[0]) : "length" in r2) ? [e3] : Mt(e3);
+      if (a2._targets = C2.length ? ea(C2) : R("GSAP target " + e3 + " not found. https://gsap.com", !q.nullTargetWarn) || [], a2._ptLookup = [], a2._overwrite = b2, x2 || T2 || y(_2) || y(m2)) {
+        if (r2 = a2.vars, (s2 = a2.timeline = new Xt({ data: "nested", defaults: O2 || {}, targets: P2 && "nested" === P2.data ? P2.vars.targets : C2 })).kill(), s2.parent = s2._dp = _assertThisInitialized(a2), s2._start = 0, T2 || y(_2) || y(m2)) {
+          if (h2 = C2.length, d2 = T2 && eb(T2), v(T2)) for (l2 in T2) ~Jt.indexOf(l2) && ((c2 = c2 || {})[l2] = T2[l2]);
+          for (o2 = 0; o2 < h2; o2++) (u2 = ua(r2, Ht)).stagger = 0, M2 && (u2.yoyoEase = M2), c2 && yt(u2, c2), f2 = C2[o2], u2.duration = +Kt(_2, _assertThisInitialized(a2), o2, f2, C2), u2.delay = (+Kt(m2, _assertThisInitialized(a2), o2, f2, C2) || 0) - a2._delay, !T2 && 1 === h2 && u2.delay && (a2._delay = m2 = u2.delay, a2._start += m2, u2.delay = 0), s2.to(f2, u2, d2 ? d2(o2, f2, C2) : 0), s2._ease = Lt.none;
+          s2.duration() ? _2 = m2 = 0 : a2.timeline = 0;
+        } else if (x2) {
+          va(qa(s2.vars.defaults, { ease: "none" })), s2._ease = jt(x2.ease || r2.ease || "none");
+          var A2, S2, z2, E2 = 0;
+          if (Z(x2)) x2.forEach(function(t2) {
+            return s2.to(C2, t2, ">");
+          }), s2.duration();
+          else {
+            for (l2 in u2 = {}, x2) "ease" === l2 || "easeEach" === l2 || gc(l2, x2[l2], u2, x2.easeEach);
+            for (l2 in u2) for (A2 = u2[l2].sort(function(t2, e4) {
+              return t2.t - e4.t;
+            }), o2 = E2 = 0; o2 < A2.length; o2++) (z2 = { ease: (S2 = A2[o2]).e, duration: (S2.t - (o2 ? A2[o2 - 1].t : 0)) / 100 * _2 })[l2] = S2.v, s2.to(C2, z2, E2), E2 += z2.duration;
+            s2.duration() < _2 && s2.to({}, { duration: _2 - s2.duration() });
+          }
+        }
+        _2 || a2.duration(_2 = s2.duration());
+      } else a2.timeline = 0;
+      return true !== b2 || F || (Nt = _assertThisInitialized(a2), I.killTweensOf(C2), Nt = 0), Ka(P2, _assertThisInitialized(a2), i2), r2.reversed && a2.reverse(), r2.paused && a2.paused(true), (g2 || !_2 && !x2 && a2._start === ja(P2._time) && w(g2) && (function _hasNoPausedAncestors(t2) {
+        return !t2 || t2._ts && _hasNoPausedAncestors(t2.parent);
+      })(_assertThisInitialized(a2)) && "nested" !== P2.data) && (a2._tTime = -X, a2.render(Math.max(0, -m2) || 0)), k2 && La(_assertThisInitialized(a2), k2), a2;
+    }
+    _inheritsLoose(Tween, D2);
+    var e2 = Tween.prototype;
+    return e2.render = function render(t2, e3, r2) {
+      var i2, n2, a2, s2, o2, u2, h2, l2, f2, d2 = this._time, c2 = this._tDur, p2 = this._dur, _2 = t2 < 0, m2 = c2 - X < t2 && !_2 ? c2 : t2 < X ? 0 : t2;
+      if (p2) {
+        if (m2 !== this._tTime || !t2 || r2 || !this._initted && this._tTime || this._startAt && this._zTime < 0 != _2) {
+          if (i2 = m2, l2 = this.timeline, this._repeat) {
+            if (s2 = p2 + this._rDelay, this._repeat < -1 && _2) return this.totalTime(100 * s2 + t2, e3, r2);
+            if (i2 = ja(m2 % s2), m2 === c2 ? (a2 = this._repeat, i2 = p2) : ((a2 = ~~(m2 / s2)) && a2 === ja(m2 / s2) && (i2 = p2, a2--), p2 < i2 && (i2 = p2)), (u2 = this._yoyo && 1 & a2) && (f2 = this._yEase, i2 = p2 - i2), o2 = Tt(this._tTime, s2), i2 === d2 && !r2 && this._initted && a2 === o2) return this._tTime = m2, this;
+            a2 !== o2 && (l2 && this._yEase && Qb(l2, u2), this.vars.repeatRefresh && !u2 && !this._lock && this._time !== s2 && this._initted && (this._lock = r2 = 1, this.render(ja(s2 * a2), true).invalidate()._lock = 0));
+          }
+          if (!this._initted) {
+            if (Ma(this, _2 ? t2 : i2, r2, e3, m2)) return this._tTime = 0, this;
+            if (!(d2 === this._time || r2 && this.vars.repeatRefresh && a2 !== o2)) return this;
+            if (p2 !== this._dur) return this.render(t2, e3, r2);
+          }
+          if (this._tTime = m2, this._time = i2, !this._act && this._ts && (this._act = 1, this._lazy = 0), this.ratio = h2 = (f2 || this._ease)(i2 / p2), this._from && (this.ratio = h2 = 1 - h2), i2 && !d2 && !e3 && !a2 && (Ct(this, "onStart"), this._tTime !== m2)) return this;
+          for (n2 = this._pt; n2; ) n2.r(h2, n2.d), n2 = n2._next;
+          l2 && l2.render(t2 < 0 ? t2 : l2._dur * l2._ease(i2 / this._dur), e3, r2) || this._startAt && (this._zTime = t2), this._onUpdate && !e3 && (_2 && Ca(this, t2, 0, r2), Ct(this, "onUpdate")), this._repeat && a2 !== o2 && this.vars.onRepeat && !e3 && this.parent && Ct(this, "onRepeat"), m2 !== this._tDur && m2 || this._tTime !== m2 || (_2 && !this._onUpdate && Ca(this, t2, 0, true), !t2 && p2 || !(m2 === this._tDur && 0 < this._ts || !m2 && this._ts < 0) || za(this, 1), e3 || _2 && !d2 || !(m2 || d2 || u2) || (Ct(this, m2 === c2 ? "onComplete" : "onReverseComplete", true), !this._prom || m2 < c2 && 0 < this.timeScale() || this._prom()));
+        }
+      } else !(function _renderZeroDurationTween(t3, e4, r3, i3) {
+        var n3, a3, s3, o3 = t3.ratio, u3 = e4 < 0 || !e4 && (!t3._start && (function _parentPlayheadIsBeforeStart(t4) {
+          var e5 = t4.parent;
+          return e5 && e5._ts && e5._initted && !e5._lock && (e5.rawTime() < 0 || _parentPlayheadIsBeforeStart(e5));
+        })(t3) && (t3._initted || !bt(t3)) || (t3._ts < 0 || t3._dp._ts < 0) && !bt(t3)) ? 0 : 1, h3 = t3._rDelay, l3 = 0;
+        if (h3 && t3._repeat && (l3 = Ot(0, t3._tDur, e4), a3 = Tt(l3, h3), t3._yoyo && 1 & a3 && (u3 = 1 - u3), a3 !== Tt(t3._tTime, h3) && (o3 = 1 - u3, t3.vars.repeatRefresh && t3._initted && t3.invalidate())), u3 !== o3 || L || i3 || t3._zTime === X || !e4 && t3._zTime) {
+          if (!t3._initted && Ma(t3, e4, i3, r3, l3)) return;
+          for (s3 = t3._zTime, t3._zTime = e4 || (r3 ? X : 0), r3 = r3 || e4 && !s3, t3.ratio = u3, t3._from && (u3 = 1 - u3), t3._time = 0, t3._tTime = l3, n3 = t3._pt; n3; ) n3.r(u3, n3.d), n3 = n3._next;
+          e4 < 0 && Ca(t3, e4, 0, true), t3._onUpdate && !r3 && Ct(t3, "onUpdate"), l3 && t3._repeat && !r3 && t3.parent && Ct(t3, "onRepeat"), (e4 >= t3._tDur || e4 < 0) && t3.ratio === u3 && (u3 && za(t3, 1), r3 || L || (Ct(t3, u3 ? "onComplete" : "onReverseComplete", true), t3._prom && t3._prom()));
+        } else t3._zTime || (t3._zTime = e4);
+      })(this, t2, e3, r2);
+      return this;
+    }, e2.targets = function targets() {
+      return this._targets;
+    }, e2.invalidate = function invalidate(t2) {
+      return t2 && this.vars.runBackwards || (this._startAt = 0), this._pt = this._op = this._onUpdate = this._lazy = this.ratio = 0, this._ptLookup = [], this.timeline && this.timeline.invalidate(t2), D2.prototype.invalidate.call(this, t2);
+    }, e2.resetTo = function resetTo(t2, e3, r2, i2, n2) {
+      c || Rt.wake(), this._ts || this.play();
+      var a2, s2 = Math.min(this._dur, (this._dp._time - this._start) * this._ts);
+      return this._initted || Qt(this, s2), a2 = this._ease(s2 / this._dur), (function _updatePropTweens(t3, e4, r3, i3, n3, a3, s3, o2) {
+        var u2, h2, l2, f2, d2 = (t3._pt && t3._ptCache || (t3._ptCache = {}))[e4];
+        if (!d2) for (d2 = t3._ptCache[e4] = [], l2 = t3._ptLookup, f2 = t3._targets.length; f2--; ) {
+          if ((u2 = l2[f2][e4]) && u2.d && u2.d._pt) for (u2 = u2.d._pt; u2 && u2.p !== e4 && u2.fp !== e4; ) u2 = u2._next;
+          if (!u2) return Gt = 1, t3.vars[e4] = "+=0", Qt(t3, s3), Gt = 0, o2 ? R(e4 + " not eligible for reset") : 1;
+          d2.push(u2);
+        }
+        for (f2 = d2.length; f2--; ) (u2 = (h2 = d2[f2])._pt || h2).s = !i3 && 0 !== i3 || n3 ? u2.s + (i3 || 0) + a3 * u2.c : i3, u2.c = r3 - u2.s, h2.e && (h2.e = ia(r3) + Ya(h2.e)), h2.b && (h2.b = u2.s + Ya(h2.b));
+      })(this, t2, e3, r2, i2, a2, s2, n2) ? this.resetTo(t2, e3, r2, i2, 1) : (Ia(this, 0), this.parent || xa(this._dp, this, "_first", "_last", this._dp._sort ? "_start" : 0), this.render(0));
+    }, e2.kill = function kill(t2, e3) {
+      if (void 0 === e3 && (e3 = "all"), !(t2 || e3 && "all" !== e3)) return this._lazy = this._pt = 0, this.parent ? tb(this) : this;
+      if (this.timeline) {
+        var i2 = this.timeline.totalDuration();
+        return this.timeline.killTweensOf(t2, e3, Nt && true !== Nt.vars.overwrite)._first || tb(this), this.parent && i2 !== this.timeline.totalDuration() && Ra(this, this._dur * this.timeline._tDur / i2, 0, 1), this;
+      }
+      var n2, a2, s2, o2, u2, h2, l2, f2 = this._targets, d2 = t2 ? Mt(t2) : f2, c2 = this._ptLookup, p2 = this._pt;
+      if ((!e3 || "all" === e3) && (function _arraysMatch(t3, e4) {
+        for (var r2 = t3.length, i3 = r2 === e4.length; i3 && r2-- && t3[r2] === e4[r2]; ) ;
+        return r2 < 0;
+      })(f2, d2)) return "all" === e3 && (this._pt = 0), tb(this);
+      for (n2 = this._op = this._op || [], "all" !== e3 && (r(e3) && (u2 = {}, ha(e3, function(t3) {
+        return u2[t3] = 1;
+      }), e3 = u2), e3 = (function _addAliasesToVars(t3, e4) {
+        var r2, i3, n3, a3, s3 = t3[0] ? fa(t3[0]).harness : 0, o3 = s3 && s3.aliases;
+        if (!o3) return e4;
+        for (i3 in r2 = yt({}, e4), o3) if (i3 in r2) for (n3 = (a3 = o3[i3].split(",")).length; n3--; ) r2[a3[n3]] = r2[i3];
+        return r2;
+      })(f2, e3)), l2 = f2.length; l2--; ) if (~d2.indexOf(f2[l2])) for (u2 in a2 = c2[l2], "all" === e3 ? (n2[l2] = e3, o2 = a2, s2 = {}) : (s2 = n2[l2] = n2[l2] || {}, o2 = e3), o2) (h2 = a2 && a2[u2]) && ("kill" in h2.d && true !== h2.d.kill(u2) || ya(this, h2, "_pt"), delete a2[u2]), "all" !== s2 && (s2[u2] = 1);
+      return this._initted && !this._pt && p2 && tb(this), this;
+    }, Tween.to = function to(t2, e3, r2) {
+      return new Tween(t2, e3, r2);
+    }, Tween.from = function from(t2, e3) {
+      return Va(1, arguments);
+    }, Tween.delayedCall = function delayedCall(t2, e3, r2, i2) {
+      return new Tween(e3, 0, { immediateRender: false, lazy: false, overwrite: false, delay: t2, onComplete: e3, onReverseComplete: e3, onCompleteParams: r2, onReverseCompleteParams: r2, callbackScope: i2 });
+    }, Tween.fromTo = function fromTo(t2, e3, r2) {
+      return Va(2, arguments);
+    }, Tween.set = function set(t2, e3) {
+      return e3.duration = 0, e3.repeatDelay || (e3.repeat = 0), new Tween(t2, e3);
+    }, Tween.killTweensOf = function killTweensOf(t2, e3, r2) {
+      return I.killTweensOf(t2, e3, r2);
+    }, Tween;
+  })(Ut);
+  qa($t.prototype, { _targets: [], _lazy: 0, _startAt: 0, _op: 0, _onInit: 0 }), ha("staggerTo,staggerFrom,staggerFromTo", function(r2) {
+    $t[r2] = function() {
+      var t2 = new Xt(), e2 = kt.call(arguments, 0);
+      return e2.splice("staggerFromTo" === r2 ? 5 : 4, 0, 0), t2[r2].apply(t2, e2);
+    };
+  });
+  function oc(t2, e2, r2) {
+    return t2.setAttribute(e2, r2);
+  }
+  function wc(t2, e2, r2, i2) {
+    i2.mSet(t2, e2, i2.m.call(i2.tween, r2, i2.mt), i2);
+  }
+  var Zt = function _setterPlain(t2, e2, r2) {
+    return t2[e2] = r2;
+  }, te = function _setterFunc(t2, e2, r2) {
+    return t2[e2](r2);
+  }, re = function _setterFuncWithParam(t2, e2, r2, i2) {
+    return t2[e2](i2.fp, r2);
+  }, ne = function _getSetter(t2, e2) {
+    return s(t2[e2]) ? te : u(t2[e2]) && t2.setAttribute ? oc : Zt;
+  }, ae = function _renderPlain(t2, e2) {
+    return e2.set(e2.t, e2.p, Math.round(1e6 * (e2.s + e2.c * t2)) / 1e6, e2);
+  }, se = function _renderBoolean(t2, e2) {
+    return e2.set(e2.t, e2.p, !!(e2.s + e2.c * t2), e2);
+  }, ue = function _renderComplexString(t2, e2) {
+    var r2 = e2._pt, i2 = "";
+    if (!t2 && e2.b) i2 = e2.b;
+    else if (1 === t2 && e2.e) i2 = e2.e;
+    else {
+      for (; r2; ) i2 = r2.p + (r2.m ? r2.m(r2.s + r2.c * t2) : Math.round(1e4 * (r2.s + r2.c * t2)) / 1e4) + i2, r2 = r2._next;
+      i2 += e2.c;
+    }
+    e2.set(e2.t, e2.p, i2, e2);
+  }, he = function _renderPropTweens(t2, e2) {
+    for (var r2 = e2._pt; r2; ) r2.r(t2, r2.d), r2 = r2._next;
+  }, fe = function _addPluginModifier(t2, e2, r2, i2) {
+    for (var n2, a2 = this._pt; a2; ) n2 = a2._next, a2.p === i2 && a2.modifier(t2, e2, r2), a2 = n2;
+  }, ce = function _killPropTweensOf(t2) {
+    for (var e2, r2, i2 = this._pt; i2; ) r2 = i2._next, i2.p === t2 && !i2.op || i2.op === t2 ? ya(this, i2, "_pt") : i2.dep || (e2 = 1), i2 = r2;
+    return !e2;
+  }, pe = function _sortPropTweensByPriority(t2) {
+    for (var e2, r2, i2, n2, a2 = t2._pt; a2; ) {
+      for (e2 = a2._next, r2 = i2; r2 && r2.pr > a2.pr; ) r2 = r2._next;
+      (a2._prev = r2 ? r2._prev : n2) ? a2._prev._next = a2 : i2 = a2, (a2._next = r2) ? r2._prev = a2 : n2 = a2, a2 = e2;
+    }
+    t2._pt = i2;
+  }, _e = (PropTween.prototype.modifier = function modifier(t2, e2, r2) {
+    this.mSet = this.mSet || this.set, this.set = wc, this.m = t2, this.mt = r2, this.tween = e2;
+  }, PropTween);
+  function PropTween(t2, e2, r2, i2, n2, a2, s2, o2, u2) {
+    this.t = e2, this.s = i2, this.c = n2, this.p = r2, this.r = a2 || ae, this.d = s2 || this, this.set = o2 || Zt, this.pr = u2 || 0, (this._next = t2) && (t2._prev = this);
+  }
+  ha(vt + "parent,duration,ease,delay,overwrite,runBackwards,startAt,yoyo,immediateRender,repeat,repeatDelay,data,paused,reversed,lazy,callbackScope,stringFilter,id,yoyoEase,stagger,inherit,repeatRefresh,keyframes,autoRevert,scrollTrigger", function(t2) {
+    return ft[t2] = 1;
+  }), ot.TweenMax = ot.TweenLite = $t, ot.TimelineLite = ot.TimelineMax = Xt, I = new Xt({ sortChildren: false, defaults: V, autoRemoveChildren: true, id: "root", smoothChildTiming: true }), q.stringFilter = Fb;
+  function Ec(t2) {
+    return (ye[t2] || Te).map(function(t3) {
+      return t3();
+    });
+  }
+  function Fc() {
+    var t2 = Date.now(), o2 = [];
+    2 < t2 - Oe && (Ec("matchMediaInit"), ge.forEach(function(t3) {
+      var e2, r2, i2, n2, a2 = t3.queries, s2 = t3.conditions;
+      for (r2 in a2) (e2 = h.matchMedia(a2[r2]).matches) && (i2 = 1), e2 !== s2[r2] && (s2[r2] = e2, n2 = 1);
+      n2 && (t3.revert(), i2 && o2.push(t3));
+    }), Ec("matchMediaRevert"), o2.forEach(function(e2) {
+      return e2.onMatch(e2, function(t3) {
+        return e2.add(null, t3);
+      });
+    }), Oe = t2, Ec("matchMedia"));
+  }
+  var me, ge = [], ye = {}, Te = [], Oe = 0, Me = 0, Pe = ((me = Context.prototype).add = function add(t2, i2, n2) {
+    function Gw() {
+      var t3, e2 = l, r2 = a2.selector;
+      return e2 && e2 !== a2 && e2.data.push(a2), n2 && (a2.selector = cb(n2)), l = a2, t3 = i2.apply(a2, arguments), s(t3) && a2._r.push(t3), l = e2, a2.selector = r2, a2.isReverted = false, t3;
+    }
+    s(t2) && (n2 = i2, i2 = t2, t2 = s);
+    var a2 = this;
+    return a2.last = Gw, t2 === s ? Gw(a2, function(t3) {
+      return a2.add(null, t3);
+    }) : t2 ? a2[t2] = Gw : Gw;
+  }, me.ignore = function ignore(t2) {
+    var e2 = l;
+    l = null, t2(this), l = e2;
+  }, me.getTweens = function getTweens() {
+    var e2 = [];
+    return this.data.forEach(function(t2) {
+      return t2 instanceof Context ? e2.push.apply(e2, t2.getTweens()) : t2 instanceof $t && !(t2.parent && "nested" === t2.parent.data) && e2.push(t2);
+    }), e2;
+  }, me.clear = function clear() {
+    this._r.length = this.data.length = 0;
+  }, me.kill = function kill(i2, t2) {
+    var n2 = this;
+    if (i2 ? (function() {
+      for (var t3, e3 = n2.getTweens(), r2 = n2.data.length; r2--; ) "isFlip" === (t3 = n2.data[r2]).data && (t3.revert(), t3.getChildren(true, true, false).forEach(function(t4) {
+        return e3.splice(e3.indexOf(t4), 1);
+      }));
+      for (e3.map(function(t4) {
+        return { g: t4._dur || t4._delay || t4._sat && !t4._sat.vars.immediateRender ? t4.globalTime(0) : -1 / 0, t: t4 };
+      }).sort(function(t4, e4) {
+        return e4.g - t4.g || -1 / 0;
+      }).forEach(function(t4) {
+        return t4.t.revert(i2);
+      }), r2 = n2.data.length; r2--; ) (t3 = n2.data[r2]) instanceof Xt ? "nested" !== t3.data && (t3.scrollTrigger && t3.scrollTrigger.revert(), t3.kill()) : t3 instanceof $t || !t3.revert || t3.revert(i2);
+      n2._r.forEach(function(t4) {
+        return t4(i2, n2);
+      }), n2.isReverted = true;
+    })() : this.data.forEach(function(t3) {
+      return t3.kill && t3.kill();
+    }), this.clear(), t2) for (var e2 = ge.length; e2--; ) ge[e2].id === this.id && ge.splice(e2, 1);
+  }, me.revert = function revert(t2) {
+    this.kill(t2 || {});
+  }, Context);
+  function Context(t2, e2) {
+    this.selector = e2 && cb(e2), this.data = [], this._r = [], this.isReverted = false, this.id = Me++, t2 && this.add(t2);
+  }
+  var Ce, Ae = ((Ce = MatchMedia.prototype).add = function add(t2, e2, r2) {
+    v(t2) || (t2 = { matches: t2 });
+    var i2, n2, a2, s2 = new Pe(0, r2 || this.scope), o2 = s2.conditions = {};
+    for (n2 in l && !s2.selector && (s2.selector = l.selector), this.contexts.push(s2), e2 = s2.add("onMatch", e2), s2.queries = t2) "all" === n2 ? a2 = 1 : (i2 = h.matchMedia(t2[n2])) && (ge.indexOf(s2) < 0 && ge.push(s2), (o2[n2] = i2.matches) && (a2 = 1), i2.addListener ? i2.addListener(Fc) : i2.addEventListener("change", Fc));
+    return a2 && e2(s2, function(t3) {
+      return s2.add(null, t3);
+    }), this;
+  }, Ce.revert = function revert(t2) {
+    this.kill(t2 || {});
+  }, Ce.kill = function kill(e2) {
+    this.contexts.forEach(function(t2) {
+      return t2.kill(e2, true);
+    });
+  }, MatchMedia);
+  function MatchMedia(t2) {
+    this.contexts = [], this.scope = t2, l && l.data.push(this);
+  }
+  var Se = { registerPlugin: function registerPlugin() {
+    for (var t2 = arguments.length, e2 = new Array(t2), r2 = 0; r2 < t2; r2++) e2[r2] = arguments[r2];
+    e2.forEach(function(t3) {
+      return wb(t3);
+    });
+  }, timeline: function timeline(t2) {
+    return new Xt(t2);
+  }, getTweensOf: function getTweensOf(t2, e2) {
+    return I.getTweensOf(t2, e2);
+  }, getProperty: function getProperty(i2, t2, e2, n2) {
+    r(i2) && (i2 = Mt(i2)[0]);
+    var a2 = fa(i2 || {}).get, s2 = e2 ? pa : oa;
+    return "native" === e2 && (e2 = ""), i2 ? t2 ? s2((pt[t2] && pt[t2].get || a2)(i2, t2, e2, n2)) : function(t3, e3, r2) {
+      return s2((pt[t3] && pt[t3].get || a2)(i2, t3, e3, r2));
+    } : i2;
+  }, quickSetter: function quickSetter(r2, e2, i2) {
+    if (1 < (r2 = Mt(r2)).length) {
+      var n2 = r2.map(function(t2) {
+        return ze.quickSetter(t2, e2, i2);
+      }), a2 = n2.length;
+      return function(t2) {
+        for (var e3 = a2; e3--; ) n2[e3](t2);
+      };
+    }
+    r2 = r2[0] || {};
+    var s2 = pt[e2], o2 = fa(r2), u2 = o2.harness && (o2.harness.aliases || {})[e2] || e2, h2 = s2 ? function(t2) {
+      var e3 = new s2();
+      d._pt = 0, e3.init(r2, i2 ? t2 + i2 : t2, d, 0, [r2]), e3.render(1, e3), d._pt && he(1, d);
+    } : o2.set(r2, u2);
+    return s2 ? h2 : function(t2) {
+      return h2(r2, u2, i2 ? t2 + i2 : t2, o2, 1);
+    };
+  }, quickTo: function quickTo(t2, i2, e2) {
+    function $x(t3, e3, r3) {
+      return n2.resetTo(i2, t3, e3, r3);
+    }
+    var r2, n2 = ze.to(t2, yt(((r2 = {})[i2] = "+=0.1", r2.paused = true, r2), e2 || {}));
+    return $x.tween = n2, $x;
+  }, isTweening: function isTweening(t2) {
+    return 0 < I.getTweensOf(t2, true).length;
+  }, defaults: function defaults(t2) {
+    return t2 && t2.ease && (t2.ease = jt(t2.ease, V.ease)), ta(V, t2 || {});
+  }, config: function config(t2) {
+    return ta(q, t2 || {});
+  }, registerEffect: function registerEffect(t2) {
+    var i2 = t2.name, n2 = t2.effect, e2 = t2.plugins, a2 = t2.defaults, r2 = t2.extendTimeline;
+    (e2 || "").split(",").forEach(function(t3) {
+      return t3 && !pt[t3] && !ot[t3] && R(i2 + " effect requires " + t3 + " plugin.");
+    }), _t[i2] = function(t3, e3, r3) {
+      return n2(Mt(t3), qa(e3 || {}, a2), r3);
+    }, r2 && (Xt.prototype[i2] = function(t3, e3, r3) {
+      return this.add(_t[i2](t3, v(e3) ? e3 : (r3 = e3) && {}, this), r3);
+    });
+  }, registerEase: function registerEase(t2, e2) {
+    Lt[t2] = jt(e2);
+  }, parseEase: function parseEase(t2, e2) {
+    return arguments.length ? jt(t2, e2) : Lt;
+  }, getById: function getById(t2) {
+    return I.getById(t2);
+  }, exportRoot: function exportRoot(t2, e2) {
+    void 0 === t2 && (t2 = {});
+    var r2, i2, n2 = new Xt(t2);
+    for (n2.smoothChildTiming = w(t2.smoothChildTiming), I.remove(n2), n2._dp = 0, n2._time = n2._tTime = I._time, r2 = I._first; r2; ) i2 = r2._next, !e2 && !r2._dur && r2 instanceof $t && r2.vars.onComplete === r2._targets[0] || Ka(n2, r2, r2._start - r2._delay), r2 = i2;
+    return Ka(I, n2, 0), n2;
+  }, context: function context(t2, e2) {
+    return t2 ? new Pe(t2, e2) : l;
+  }, matchMedia: function matchMedia(t2) {
+    return new Ae(t2);
+  }, matchMediaRefresh: function matchMediaRefresh() {
+    return ge.forEach(function(t2) {
+      var e2, r2, i2 = t2.conditions;
+      for (r2 in i2) i2[r2] && (i2[r2] = false, e2 = 1);
+      e2 && t2.revert();
+    }) || Fc();
+  }, addEventListener: function addEventListener(t2, e2) {
+    var r2 = ye[t2] || (ye[t2] = []);
+    ~r2.indexOf(e2) || r2.push(e2);
+  }, removeEventListener: function removeEventListener(t2, e2) {
+    var r2 = ye[t2], i2 = r2 && r2.indexOf(e2);
+    0 <= i2 && r2.splice(i2, 1);
+  }, utils: { wrap: function wrap(e2, t2, r2) {
+    var i2 = t2 - e2;
+    return Z(e2) ? lb(e2, wrap(0, e2.length), t2) : Wa(r2, function(t3) {
+      return (i2 + (t3 - e2) % i2) % i2 + e2;
+    });
+  }, wrapYoyo: function wrapYoyo(e2, t2, r2) {
+    var i2 = t2 - e2, n2 = 2 * i2;
+    return Z(e2) ? lb(e2, wrapYoyo(0, e2.length - 1), t2) : Wa(r2, function(t3) {
+      return e2 + (i2 < (t3 = (n2 + (t3 - e2) % n2) % n2 || 0) ? n2 - t3 : t3);
+    });
+  }, distribute: eb, random: hb, snap: gb, normalize: function normalize(t2, e2, r2) {
+    return Pt(t2, e2, 0, 1, r2);
+  }, getUnit: Ya, clamp: function clamp(e2, r2, t2) {
+    return Wa(t2, function(t3) {
+      return Ot(e2, r2, t3);
+    });
+  }, splitColor: Ab, toArray: Mt, selector: cb, mapRange: Pt, pipe: function pipe() {
+    for (var t2 = arguments.length, e2 = new Array(t2), r2 = 0; r2 < t2; r2++) e2[r2] = arguments[r2];
+    return function(t3) {
+      return e2.reduce(function(t4, e3) {
+        return e3(t4);
+      }, t3);
+    };
+  }, unitize: function unitize(e2, r2) {
+    return function(t2) {
+      return e2(parseFloat(t2)) + (r2 || Ya(t2));
+    };
+  }, interpolate: function interpolate(e2, i2, t2, n2) {
+    var a2 = isNaN(e2 + i2) ? 0 : function(t3) {
+      return (1 - t3) * e2 + t3 * i2;
+    };
+    if (!a2) {
+      var s2, o2, u2, h2, l2, f2 = r(e2), d2 = {};
+      if (true === t2 && (n2 = 1) && (t2 = null), f2) e2 = { p: e2 }, i2 = { p: i2 };
+      else if (Z(e2) && !Z(i2)) {
+        for (u2 = [], h2 = e2.length, l2 = h2 - 2, o2 = 1; o2 < h2; o2++) u2.push(interpolate(e2[o2 - 1], e2[o2]));
+        h2--, a2 = function func(t3) {
+          t3 *= h2;
+          var e3 = Math.min(l2, ~~t3);
+          return u2[e3](t3 - e3);
+        }, t2 = i2;
+      } else n2 || (e2 = yt(Z(e2) ? [] : {}, e2));
+      if (!u2) {
+        for (s2 in i2) Wt.call(d2, e2, s2, "get", i2[s2]);
+        a2 = function func(t3) {
+          return he(t3, d2) || (f2 ? e2.p : e2);
+        };
+      }
+    }
+    return Wa(t2, a2);
+  }, shuffle: db }, install: P, effects: _t, ticker: Rt, updateRoot: Xt.updateRoot, plugins: pt, globalTimeline: I, core: { PropTween: _e, globals: S, Tween: $t, Timeline: Xt, Animation: Ut, getCache: fa, _removeLinkedListItem: ya, reverting: function reverting() {
+    return L;
+  }, context: function context(t2) {
+    return t2 && l && (l.data.push(t2), t2._ctx = l), l;
+  }, suppressOverwrites: function suppressOverwrites(t2) {
+    return F = t2;
+  } } };
+  ha("to,from,fromTo,delayedCall,set,killTweensOf", function(t2) {
+    return Se[t2] = $t[t2];
+  }), Rt.add(Xt.updateRoot), d = Se.to({}, { duration: 0 });
+  function Jc(t2, e2) {
+    for (var r2 = t2._pt; r2 && r2.p !== e2 && r2.op !== e2 && r2.fp !== e2; ) r2 = r2._next;
+    return r2;
+  }
+  function Lc(t2, a2) {
+    return { name: t2, rawVars: 1, init: function init(t3, n2, e2) {
+      e2._onInit = function(t4) {
+        var e3, i2;
+        if (r(n2) && (e3 = {}, ha(n2, function(t5) {
+          return e3[t5] = 1;
+        }), n2 = e3), a2) {
+          for (i2 in e3 = {}, n2) e3[i2] = a2(n2[i2]);
+          n2 = e3;
+        }
+        !(function _addModifiers(t5, e4) {
+          var r2, i3, n3, a3 = t5._targets;
+          for (r2 in e4) for (i3 = a3.length; i3--; ) (n3 = (n3 = t5._ptLookup[i3][r2]) && n3.d) && (n3._pt && (n3 = Jc(n3, r2)), n3 && n3.modifier && n3.modifier(e4[r2], t5, a3[i3], r2));
+        })(t4, n2);
+      };
+    } };
+  }
+  var ze = Se.registerPlugin({ name: "attr", init: function init(t2, e2, r2, i2, n2) {
+    var a2, s2, o2;
+    for (a2 in this.tween = r2, e2) o2 = t2.getAttribute(a2) || "", (s2 = this.add(t2, "setAttribute", (o2 || 0) + "", e2[a2], i2, n2, 0, 0, a2)).op = a2, s2.b = o2, this._props.push(a2);
+  }, render: function render(t2, e2) {
+    for (var r2 = e2._pt; r2; ) L ? r2.set(r2.t, r2.p, r2.b, r2) : r2.r(t2, r2.d), r2 = r2._next;
+  } }, { name: "endArray", init: function init(t2, e2) {
+    for (var r2 = e2.length; r2--; ) this.add(t2, r2, t2[r2] || 0, e2[r2], 0, 0, 0, 0, 0, 1);
+  } }, Lc("roundProps", fb), Lc("modifiers"), Lc("snap", gb)) || Se;
+  $t.version = Xt.version = ze.version = "3.12.5", o = 1, x() && Ft();
+  function vd(t2, e2) {
+    return e2.set(e2.t, e2.p, Math.round(1e4 * (e2.s + e2.c * t2)) / 1e4 + e2.u, e2);
+  }
+  function wd(t2, e2) {
+    return e2.set(e2.t, e2.p, 1 === t2 ? e2.e : Math.round(1e4 * (e2.s + e2.c * t2)) / 1e4 + e2.u, e2);
+  }
+  function xd(t2, e2) {
+    return e2.set(e2.t, e2.p, t2 ? Math.round(1e4 * (e2.s + e2.c * t2)) / 1e4 + e2.u : e2.b, e2);
+  }
+  function yd(t2, e2) {
+    var r2 = e2.s + e2.c * t2;
+    e2.set(e2.t, e2.p, ~~(r2 + (r2 < 0 ? -0.5 : 0.5)) + e2.u, e2);
+  }
+  function zd(t2, e2) {
+    return e2.set(e2.t, e2.p, t2 ? e2.e : e2.b, e2);
+  }
+  function Ad(t2, e2) {
+    return e2.set(e2.t, e2.p, 1 !== t2 ? e2.b : e2.e, e2);
+  }
+  function Bd(t2, e2, r2) {
+    return t2.style[e2] = r2;
+  }
+  function Cd(t2, e2, r2) {
+    return t2.style.setProperty(e2, r2);
+  }
+  function Dd(t2, e2, r2) {
+    return t2._gsap[e2] = r2;
+  }
+  function Ed(t2, e2, r2) {
+    return t2._gsap.scaleX = t2._gsap.scaleY = r2;
+  }
+  function Fd(t2, e2, r2, i2, n2) {
+    var a2 = t2._gsap;
+    a2.scaleX = a2.scaleY = r2, a2.renderTransform(n2, a2);
+  }
+  function Gd(t2, e2, r2, i2, n2) {
+    var a2 = t2._gsap;
+    a2[e2] = r2, a2.renderTransform(n2, a2);
+  }
+  function Jd(t2, e2) {
+    var r2 = this, i2 = this.target, n2 = i2.style, a2 = i2._gsap;
+    if (t2 in ar && n2) {
+      if (this.tfm = this.tfm || {}, "transform" === t2) return dr.transform.split(",").forEach(function(t3) {
+        return Jd.call(r2, t3, e2);
+      });
+      if (~(t2 = dr[t2] || t2).indexOf(",") ? t2.split(",").forEach(function(t3) {
+        return r2.tfm[t3] = yr(i2, t3);
+      }) : this.tfm[t2] = a2.x ? a2[t2] : yr(i2, t2), t2 === pr && (this.tfm.zOrigin = a2.zOrigin), 0 <= this.props.indexOf(cr)) return;
+      a2.svg && (this.svgo = i2.getAttribute("data-svg-origin"), this.props.push(pr, e2, "")), t2 = cr;
+    }
+    (n2 || e2) && this.props.push(t2, e2, n2[t2]);
+  }
+  function Kd(t2) {
+    t2.translate && (t2.removeProperty("translate"), t2.removeProperty("scale"), t2.removeProperty("rotate"));
+  }
+  function Ld() {
+    var t2, e2, r2 = this.props, i2 = this.target, n2 = i2.style, a2 = i2._gsap;
+    for (t2 = 0; t2 < r2.length; t2 += 3) r2[t2 + 1] ? i2[r2[t2]] = r2[t2 + 2] : r2[t2 + 2] ? n2[r2[t2]] = r2[t2 + 2] : n2.removeProperty("--" === r2[t2].substr(0, 2) ? r2[t2] : r2[t2].replace(hr, "-$1").toLowerCase());
+    if (this.tfm) {
+      for (e2 in this.tfm) a2[e2] = this.tfm[e2];
+      a2.svg && (a2.renderTransform(), i2.setAttribute("data-svg-origin", this.svgo || "")), (t2 = Be()) && t2.isStart || n2[cr] || (Kd(n2), a2.zOrigin && n2[pr] && (n2[pr] += " " + a2.zOrigin + "px", a2.zOrigin = 0, a2.renderTransform()), a2.uncache = 1);
+    }
+  }
+  function Md(t2, e2) {
+    var r2 = { target: t2, props: [], revert: Ld, save: Jd };
+    return t2._gsap || ze.core.getCache(t2), e2 && e2.split(",").forEach(function(t3) {
+      return r2.save(t3);
+    }), r2;
+  }
+  function Od(t2, e2) {
+    var r2 = De.createElementNS ? De.createElementNS((e2 || "http://www.w3.org/1999/xhtml").replace(/^https/, "http"), t2) : De.createElement(t2);
+    return r2 && r2.style ? r2 : De.createElement(t2);
+  }
+  function Pd(t2, e2, r2) {
+    var i2 = getComputedStyle(t2);
+    return i2[e2] || i2.getPropertyValue(e2.replace(hr, "-$1").toLowerCase()) || i2.getPropertyValue(e2) || !r2 && Pd(t2, mr(e2) || e2, 1) || "";
+  }
+  function Sd() {
+    /* @__PURE__ */ (function _windowExists() {
+      return "undefined" != typeof window;
+    })() && window.document && (Ee = window, De = Ee.document, Re = De.documentElement, Le = Od("div") || { style: {} }, Od("div"), cr = mr(cr), pr = cr + "Origin", Le.style.cssText = "border-width:0;line-height:0;position:absolute;padding:0", Ye = !!mr("perspective"), Be = ze.core.reverting, Fe = 1);
+  }
+  function Td(t2) {
+    var e2, r2 = Od("svg", this.ownerSVGElement && this.ownerSVGElement.getAttribute("xmlns") || "http://www.w3.org/2000/svg"), i2 = this.parentNode, n2 = this.nextSibling, a2 = this.style.cssText;
+    if (Re.appendChild(r2), r2.appendChild(this), this.style.display = "block", t2) try {
+      e2 = this.getBBox(), this._gsapBBox = this.getBBox, this.getBBox = Td;
+    } catch (t3) {
+    }
+    else this._gsapBBox && (e2 = this._gsapBBox());
+    return i2 && (n2 ? i2.insertBefore(this, n2) : i2.appendChild(this)), Re.removeChild(r2), this.style.cssText = a2, e2;
+  }
+  function Ud(t2, e2) {
+    for (var r2 = e2.length; r2--; ) if (t2.hasAttribute(e2[r2])) return t2.getAttribute(e2[r2]);
+  }
+  function Vd(e2) {
+    var r2;
+    try {
+      r2 = e2.getBBox();
+    } catch (t2) {
+      r2 = Td.call(e2, true);
+    }
+    return r2 && (r2.width || r2.height) || e2.getBBox === Td || (r2 = Td.call(e2, true)), !r2 || r2.width || r2.x || r2.y ? r2 : { x: +Ud(e2, ["x", "cx", "x1"]) || 0, y: +Ud(e2, ["y", "cy", "y1"]) || 0, width: 0, height: 0 };
+  }
+  function Wd(t2) {
+    return !(!t2.getCTM || t2.parentNode && !t2.ownerSVGElement || !Vd(t2));
+  }
+  function Xd(t2, e2) {
+    if (e2) {
+      var r2, i2 = t2.style;
+      e2 in ar && e2 !== pr && (e2 = cr), i2.removeProperty ? ("ms" !== (r2 = e2.substr(0, 2)) && "webkit" !== e2.substr(0, 6) || (e2 = "-" + e2), i2.removeProperty("--" === r2 ? e2 : e2.replace(hr, "-$1").toLowerCase())) : i2.removeAttribute(e2);
+    }
+  }
+  function Yd(t2, e2, r2, i2, n2, a2) {
+    var s2 = new _e(t2._pt, e2, r2, 0, 1, a2 ? Ad : zd);
+    return (t2._pt = s2).b = i2, s2.e = n2, t2._props.push(r2), s2;
+  }
+  function _d(t2, e2, r2, i2) {
+    var n2, a2, s2, o2, u2 = parseFloat(r2) || 0, h2 = (r2 + "").trim().substr((u2 + "").length) || "px", l2 = Le.style, f2 = lr.test(e2), d2 = "svg" === t2.tagName.toLowerCase(), c2 = (d2 ? "client" : "offset") + (f2 ? "Width" : "Height"), p2 = "px" === i2, _2 = "%" === i2;
+    if (i2 === h2 || !u2 || gr[i2] || gr[h2]) return u2;
+    if ("px" === h2 || p2 || (u2 = _d(t2, e2, r2, "px")), o2 = t2.getCTM && Wd(t2), (_2 || "%" === h2) && (ar[e2] || ~e2.indexOf("adius"))) return n2 = o2 ? t2.getBBox()[f2 ? "width" : "height"] : t2[c2], ia(_2 ? u2 / n2 * 100 : u2 / 100 * n2);
+    if (l2[f2 ? "width" : "height"] = 100 + (p2 ? h2 : i2), a2 = ~e2.indexOf("adius") || "em" === i2 && t2.appendChild && !d2 ? t2 : t2.parentNode, o2 && (a2 = (t2.ownerSVGElement || {}).parentNode), a2 && a2 !== De && a2.appendChild || (a2 = De.body), (s2 = a2._gsap) && _2 && s2.width && f2 && s2.time === Rt.time && !s2.uncache) return ia(u2 / s2.width * 100);
+    if (!_2 || "height" !== e2 && "width" !== e2) !_2 && "%" !== h2 || vr[Pd(a2, "display")] || (l2.position = Pd(t2, "position")), a2 === t2 && (l2.position = "static"), a2.appendChild(Le), n2 = Le[c2], a2.removeChild(Le), l2.position = "absolute";
+    else {
+      var m2 = t2.style[e2];
+      t2.style[e2] = 100 + i2, n2 = t2[c2], m2 ? t2.style[e2] = m2 : Xd(t2, e2);
+    }
+    return f2 && _2 && ((s2 = fa(a2)).time = Rt.time, s2.width = a2[c2]), ia(p2 ? n2 * u2 / 100 : n2 && u2 ? 100 / n2 * u2 : 0);
+  }
+  function be(t2, e2, r2, i2) {
+    if (!r2 || "none" === r2) {
+      var n2 = mr(e2, t2, 1), a2 = n2 && Pd(t2, n2, 1);
+      a2 && a2 !== r2 ? (e2 = n2, r2 = a2) : "borderColor" === e2 && (r2 = Pd(t2, "borderTopColor"));
+    }
+    var s2, o2, u2, h2, l2, f2, d2, c2, p2, _2, m2, g2 = new _e(this._pt, t2.style, e2, 0, 1, ue), v2 = 0, y2 = 0;
+    if (g2.b = r2, g2.e = i2, r2 += "", "auto" === (i2 += "") && (f2 = t2.style[e2], t2.style[e2] = i2, i2 = Pd(t2, e2) || i2, f2 ? t2.style[e2] = f2 : Xd(t2, e2)), Fb(s2 = [r2, i2]), i2 = s2[1], u2 = (r2 = s2[0]).match(rt) || [], (i2.match(rt) || []).length) {
+      for (; o2 = rt.exec(i2); ) d2 = o2[0], p2 = i2.substring(v2, o2.index), l2 ? l2 = (l2 + 1) % 5 : "rgba(" !== p2.substr(-5) && "hsla(" !== p2.substr(-5) || (l2 = 1), d2 !== (f2 = u2[y2++] || "") && (h2 = parseFloat(f2) || 0, m2 = f2.substr((h2 + "").length), "=" === d2.charAt(1) && (d2 = ka(h2, d2) + m2), c2 = parseFloat(d2), _2 = d2.substr((c2 + "").length), v2 = rt.lastIndex - _2.length, _2 || (_2 = _2 || q.units[e2] || m2, v2 === i2.length && (i2 += _2, g2.e += _2)), m2 !== _2 && (h2 = _d(t2, e2, f2, _2) || 0), g2._pt = { _next: g2._pt, p: p2 || 1 === y2 ? p2 : ",", s: h2, c: c2 - h2, m: l2 && l2 < 4 || "zIndex" === e2 ? Math.round : 0 });
+      g2.c = v2 < i2.length ? i2.substring(v2, i2.length) : "";
+    } else g2.r = "display" === e2 && "none" === i2 ? Ad : zd;
+    return nt.test(i2) && (g2.e = 0), this._pt = g2;
+  }
+  function de(t2) {
+    var e2 = t2.split(" "), r2 = e2[0], i2 = e2[1] || "50%";
+    return "top" !== r2 && "bottom" !== r2 && "left" !== i2 && "right" !== i2 || (t2 = r2, r2 = i2, i2 = t2), e2[0] = Tr[r2] || r2, e2[1] = Tr[i2] || i2, e2.join(" ");
+  }
+  function ee(t2, e2) {
+    if (e2.tween && e2.tween._time === e2.tween._dur) {
+      var r2, i2, n2, a2 = e2.t, s2 = a2.style, o2 = e2.u, u2 = a2._gsap;
+      if ("all" === o2 || true === o2) s2.cssText = "", i2 = 1;
+      else for (n2 = (o2 = o2.split(",")).length; -1 < --n2; ) r2 = o2[n2], ar[r2] && (i2 = 1, r2 = "transformOrigin" === r2 ? pr : cr), Xd(a2, r2);
+      i2 && (Xd(a2, cr), u2 && (u2.svg && a2.removeAttribute("transform"), Or(a2, 1), u2.uncache = 1, Kd(s2)));
+    }
+  }
+  function ie(t2) {
+    return "matrix(1, 0, 0, 1, 0, 0)" === t2 || "none" === t2 || !t2;
+  }
+  function je(t2) {
+    var e2 = Pd(t2, cr);
+    return ie(e2) ? wr : e2.substr(7).match(et).map(ia);
+  }
+  function ke(t2, e2) {
+    var r2, i2, n2, a2, s2 = t2._gsap || fa(t2), o2 = t2.style, u2 = je(t2);
+    return s2.svg && t2.getAttribute("transform") ? "1,0,0,1,0,0" === (u2 = [(n2 = t2.transform.baseVal.consolidate().matrix).a, n2.b, n2.c, n2.d, n2.e, n2.f]).join(",") ? wr : u2 : (u2 !== wr || t2.offsetParent || t2 === Re || s2.svg || (n2 = o2.display, o2.display = "block", (r2 = t2.parentNode) && t2.offsetParent || (a2 = 1, i2 = t2.nextElementSibling, Re.appendChild(t2)), u2 = je(t2), n2 ? o2.display = n2 : Xd(t2, "display"), a2 && (i2 ? r2.insertBefore(t2, i2) : r2 ? r2.appendChild(t2) : Re.removeChild(t2))), e2 && 6 < u2.length ? [u2[0], u2[1], u2[4], u2[5], u2[12], u2[13]] : u2);
+  }
+  function le(t2, e2, r2, i2, n2, a2) {
+    var s2, o2, u2, h2 = t2._gsap, l2 = n2 || ke(t2, true), f2 = h2.xOrigin || 0, d2 = h2.yOrigin || 0, c2 = h2.xOffset || 0, p2 = h2.yOffset || 0, _2 = l2[0], m2 = l2[1], g2 = l2[2], v2 = l2[3], y2 = l2[4], T2 = l2[5], b2 = e2.split(" "), w2 = parseFloat(b2[0]) || 0, x2 = parseFloat(b2[1]) || 0;
+    r2 ? l2 !== wr && (o2 = _2 * v2 - m2 * g2) && (u2 = w2 * (-m2 / o2) + x2 * (_2 / o2) - (_2 * T2 - m2 * y2) / o2, w2 = w2 * (v2 / o2) + x2 * (-g2 / o2) + (g2 * T2 - v2 * y2) / o2, x2 = u2) : (w2 = (s2 = Vd(t2)).x + (~b2[0].indexOf("%") ? w2 / 100 * s2.width : w2), x2 = s2.y + (~(b2[1] || b2[0]).indexOf("%") ? x2 / 100 * s2.height : x2)), i2 || false !== i2 && h2.smooth ? (y2 = w2 - f2, T2 = x2 - d2, h2.xOffset = c2 + (y2 * _2 + T2 * g2) - y2, h2.yOffset = p2 + (y2 * m2 + T2 * v2) - T2) : h2.xOffset = h2.yOffset = 0, h2.xOrigin = w2, h2.yOrigin = x2, h2.smooth = !!i2, h2.origin = e2, h2.originIsAbsolute = !!r2, t2.style[pr] = "0px 0px", a2 && (Yd(a2, h2, "xOrigin", f2, w2), Yd(a2, h2, "yOrigin", d2, x2), Yd(a2, h2, "xOffset", c2, h2.xOffset), Yd(a2, h2, "yOffset", p2, h2.yOffset)), t2.setAttribute("data-svg-origin", w2 + " " + x2);
+  }
+  function oe(t2, e2, r2) {
+    var i2 = Ya(e2);
+    return ia(parseFloat(e2) + parseFloat(_d(t2, "x", r2 + "px", i2))) + i2;
+  }
+  function ve(t2, e2, i2, n2, a2) {
+    var s2, o2, u2 = 360, h2 = r(a2), l2 = parseFloat(a2) * (h2 && ~a2.indexOf("rad") ? sr : 1) - n2, f2 = n2 + l2 + "deg";
+    return h2 && ("short" === (s2 = a2.split("_")[1]) && (l2 %= u2) !== l2 % 180 && (l2 += l2 < 0 ? u2 : -u2), "cw" === s2 && l2 < 0 ? l2 = (l2 + 36e9) % u2 - ~~(l2 / u2) * u2 : "ccw" === s2 && 0 < l2 && (l2 = (l2 - 36e9) % u2 - ~~(l2 / u2) * u2)), t2._pt = o2 = new _e(t2._pt, e2, i2, n2, l2, wd), o2.e = f2, o2.u = "deg", t2._props.push(i2), o2;
+  }
+  function we(t2, e2) {
+    for (var r2 in e2) t2[r2] = e2[r2];
+    return t2;
+  }
+  function xe(t2, e2, r2) {
+    var i2, n2, a2, s2, o2, u2, h2, l2 = we({}, r2._gsap), f2 = r2.style;
+    for (n2 in l2.svg ? (a2 = r2.getAttribute("transform"), r2.setAttribute("transform", ""), f2[cr] = e2, i2 = Or(r2, 1), Xd(r2, cr), r2.setAttribute("transform", a2)) : (a2 = getComputedStyle(r2)[cr], f2[cr] = e2, i2 = Or(r2, 1), f2[cr] = a2), ar) (a2 = l2[n2]) !== (s2 = i2[n2]) && "perspective,force3D,transformOrigin,svgOrigin".indexOf(n2) < 0 && (o2 = Ya(a2) !== (h2 = Ya(s2)) ? _d(r2, n2, a2, h2) : parseFloat(a2), u2 = parseFloat(s2), t2._pt = new _e(t2._pt, i2, n2, o2, u2 - o2, vd), t2._pt.u = h2 || 0, t2._props.push(n2));
+    we(i2, l2);
+  }
+  var Ee, De, Re, Fe, Le, Ie, Be, Ye, qe = Lt.Power0, Ve = Lt.Power1, Ue = Lt.Power2, Xe = Lt.Power3, Ne = Lt.Power4, Ge = Lt.Linear, We = Lt.Quad, Qe = Lt.Cubic, Ke = Lt.Quart, Je = Lt.Quint, He = Lt.Strong, $e = Lt.Elastic, Ze = Lt.Back, tr = Lt.SteppedEase, er = Lt.Bounce, rr = Lt.Sine, ir = Lt.Expo, nr = Lt.Circ, ar = {}, sr = 180 / Math.PI, or = Math.PI / 180, ur = Math.atan2, hr = /([A-Z])/g, lr = /(left|right|width|margin|padding|x)/i, fr = /[\s,\(]\S/, dr = { autoAlpha: "opacity,visibility", scale: "scaleX,scaleY", alpha: "opacity" }, cr = "transform", pr = cr + "Origin", _r = "O,Moz,ms,Ms,Webkit".split(","), mr = function _checkPropPrefix(t2, e2, r2) {
+    var i2 = (e2 || Le).style, n2 = 5;
+    if (t2 in i2 && !r2) return t2;
+    for (t2 = t2.charAt(0).toUpperCase() + t2.substr(1); n2-- && !(_r[n2] + t2 in i2); ) ;
+    return n2 < 0 ? null : (3 === n2 ? "ms" : 0 <= n2 ? _r[n2] : "") + t2;
+  }, gr = { deg: 1, rad: 1, turn: 1 }, vr = { grid: 1, flex: 1 }, yr = function _get(t2, e2, r2, i2) {
+    var n2;
+    return Fe || Sd(), e2 in dr && "transform" !== e2 && ~(e2 = dr[e2]).indexOf(",") && (e2 = e2.split(",")[0]), ar[e2] && "transform" !== e2 ? (n2 = Or(t2, i2), n2 = "transformOrigin" !== e2 ? n2[e2] : n2.svg ? n2.origin : kr(Pd(t2, pr)) + " " + n2.zOrigin + "px") : (n2 = t2.style[e2]) && "auto" !== n2 && !i2 && !~(n2 + "").indexOf("calc(") || (n2 = br[e2] && br[e2](t2, e2, r2) || Pd(t2, e2) || ga(t2, e2) || ("opacity" === e2 ? 1 : 0)), r2 && !~(n2 + "").trim().indexOf(" ") ? _d(t2, e2, n2, r2) + r2 : n2;
+  }, Tr = { top: "0%", bottom: "100%", left: "0%", right: "100%", center: "50%" }, br = { clearProps: function clearProps(t2, e2, r2, i2, n2) {
+    if ("isFromStart" !== n2.data) {
+      var a2 = t2._pt = new _e(t2._pt, e2, r2, 0, 0, ee);
+      return a2.u = i2, a2.pr = -10, a2.tween = n2, t2._props.push(r2), 1;
+    }
+  } }, wr = [1, 0, 0, 1, 0, 0], xr = {}, Or = function _parseTransform(t2, e2) {
+    var r2 = t2._gsap || new Vt(t2);
+    if ("x" in r2 && !e2 && !r2.uncache) return r2;
+    var i2, n2, a2, s2, o2, u2, h2, l2, f2, d2, c2, p2, _2, m2, g2, v2, y2, T2, b2, w2, x2, O2, k2, M2, P2, C2, A2, S2, z2, E2, D2, R2, F2 = t2.style, L2 = r2.scaleX < 0, I2 = "deg", B2 = getComputedStyle(t2), Y2 = Pd(t2, pr) || "0";
+    return i2 = n2 = a2 = u2 = h2 = l2 = f2 = d2 = c2 = 0, s2 = o2 = 1, r2.svg = !(!t2.getCTM || !Wd(t2)), B2.translate && ("none" === B2.translate && "none" === B2.scale && "none" === B2.rotate || (F2[cr] = ("none" !== B2.translate ? "translate3d(" + (B2.translate + " 0 0").split(" ").slice(0, 3).join(", ") + ") " : "") + ("none" !== B2.rotate ? "rotate(" + B2.rotate + ") " : "") + ("none" !== B2.scale ? "scale(" + B2.scale.split(" ").join(",") + ") " : "") + ("none" !== B2[cr] ? B2[cr] : "")), F2.scale = F2.rotate = F2.translate = "none"), m2 = ke(t2, r2.svg), r2.svg && (M2 = r2.uncache ? (P2 = t2.getBBox(), Y2 = r2.xOrigin - P2.x + "px " + (r2.yOrigin - P2.y) + "px", "") : !e2 && t2.getAttribute("data-svg-origin"), le(t2, M2 || Y2, !!M2 || r2.originIsAbsolute, false !== r2.smooth, m2)), p2 = r2.xOrigin || 0, _2 = r2.yOrigin || 0, m2 !== wr && (T2 = m2[0], b2 = m2[1], w2 = m2[2], x2 = m2[3], i2 = O2 = m2[4], n2 = k2 = m2[5], 6 === m2.length ? (s2 = Math.sqrt(T2 * T2 + b2 * b2), o2 = Math.sqrt(x2 * x2 + w2 * w2), u2 = T2 || b2 ? ur(b2, T2) * sr : 0, (f2 = w2 || x2 ? ur(w2, x2) * sr + u2 : 0) && (o2 *= Math.abs(Math.cos(f2 * or))), r2.svg && (i2 -= p2 - (p2 * T2 + _2 * w2), n2 -= _2 - (p2 * b2 + _2 * x2))) : (R2 = m2[6], E2 = m2[7], A2 = m2[8], S2 = m2[9], z2 = m2[10], D2 = m2[11], i2 = m2[12], n2 = m2[13], a2 = m2[14], h2 = (g2 = ur(R2, z2)) * sr, g2 && (M2 = O2 * (v2 = Math.cos(-g2)) + A2 * (y2 = Math.sin(-g2)), P2 = k2 * v2 + S2 * y2, C2 = R2 * v2 + z2 * y2, A2 = O2 * -y2 + A2 * v2, S2 = k2 * -y2 + S2 * v2, z2 = R2 * -y2 + z2 * v2, D2 = E2 * -y2 + D2 * v2, O2 = M2, k2 = P2, R2 = C2), l2 = (g2 = ur(-w2, z2)) * sr, g2 && (v2 = Math.cos(-g2), D2 = x2 * (y2 = Math.sin(-g2)) + D2 * v2, T2 = M2 = T2 * v2 - A2 * y2, b2 = P2 = b2 * v2 - S2 * y2, w2 = C2 = w2 * v2 - z2 * y2), u2 = (g2 = ur(b2, T2)) * sr, g2 && (M2 = T2 * (v2 = Math.cos(g2)) + b2 * (y2 = Math.sin(g2)), P2 = O2 * v2 + k2 * y2, b2 = b2 * v2 - T2 * y2, k2 = k2 * v2 - O2 * y2, T2 = M2, O2 = P2), h2 && 359.9 < Math.abs(h2) + Math.abs(u2) && (h2 = u2 = 0, l2 = 180 - l2), s2 = ia(Math.sqrt(T2 * T2 + b2 * b2 + w2 * w2)), o2 = ia(Math.sqrt(k2 * k2 + R2 * R2)), g2 = ur(O2, k2), f2 = 2e-4 < Math.abs(g2) ? g2 * sr : 0, c2 = D2 ? 1 / (D2 < 0 ? -D2 : D2) : 0), r2.svg && (M2 = t2.getAttribute("transform"), r2.forceCSS = t2.setAttribute("transform", "") || !ie(Pd(t2, cr)), M2 && t2.setAttribute("transform", M2))), 90 < Math.abs(f2) && Math.abs(f2) < 270 && (L2 ? (s2 *= -1, f2 += u2 <= 0 ? 180 : -180, u2 += u2 <= 0 ? 180 : -180) : (o2 *= -1, f2 += f2 <= 0 ? 180 : -180)), e2 = e2 || r2.uncache, r2.x = i2 - ((r2.xPercent = i2 && (!e2 && r2.xPercent || (Math.round(t2.offsetWidth / 2) === Math.round(-i2) ? -50 : 0))) ? t2.offsetWidth * r2.xPercent / 100 : 0) + "px", r2.y = n2 - ((r2.yPercent = n2 && (!e2 && r2.yPercent || (Math.round(t2.offsetHeight / 2) === Math.round(-n2) ? -50 : 0))) ? t2.offsetHeight * r2.yPercent / 100 : 0) + "px", r2.z = a2 + "px", r2.scaleX = ia(s2), r2.scaleY = ia(o2), r2.rotation = ia(u2) + I2, r2.rotationX = ia(h2) + I2, r2.rotationY = ia(l2) + I2, r2.skewX = f2 + I2, r2.skewY = d2 + I2, r2.transformPerspective = c2 + "px", (r2.zOrigin = parseFloat(Y2.split(" ")[2]) || !e2 && r2.zOrigin || 0) && (F2[pr] = kr(Y2)), r2.xOffset = r2.yOffset = 0, r2.force3D = q.force3D, r2.renderTransform = r2.svg ? zr : Ye ? Sr : Mr, r2.uncache = 0, r2;
+  }, kr = function _firstTwoOnly(t2) {
+    return (t2 = t2.split(" "))[0] + " " + t2[1];
+  }, Mr = function _renderNon3DTransforms(t2, e2) {
+    e2.z = "0px", e2.rotationY = e2.rotationX = "0deg", e2.force3D = 0, Sr(t2, e2);
+  }, Pr = "0deg", Cr = "0px", Ar = ") ", Sr = function _renderCSSTransforms(t2, e2) {
+    var r2 = e2 || this, i2 = r2.xPercent, n2 = r2.yPercent, a2 = r2.x, s2 = r2.y, o2 = r2.z, u2 = r2.rotation, h2 = r2.rotationY, l2 = r2.rotationX, f2 = r2.skewX, d2 = r2.skewY, c2 = r2.scaleX, p2 = r2.scaleY, _2 = r2.transformPerspective, m2 = r2.force3D, g2 = r2.target, v2 = r2.zOrigin, y2 = "", T2 = "auto" === m2 && t2 && 1 !== t2 || true === m2;
+    if (v2 && (l2 !== Pr || h2 !== Pr)) {
+      var b2, w2 = parseFloat(h2) * or, x2 = Math.sin(w2), O2 = Math.cos(w2);
+      w2 = parseFloat(l2) * or, b2 = Math.cos(w2), a2 = oe(g2, a2, x2 * b2 * -v2), s2 = oe(g2, s2, -Math.sin(w2) * -v2), o2 = oe(g2, o2, O2 * b2 * -v2 + v2);
+    }
+    _2 !== Cr && (y2 += "perspective(" + _2 + Ar), (i2 || n2) && (y2 += "translate(" + i2 + "%, " + n2 + "%) "), !T2 && a2 === Cr && s2 === Cr && o2 === Cr || (y2 += o2 !== Cr || T2 ? "translate3d(" + a2 + ", " + s2 + ", " + o2 + ") " : "translate(" + a2 + ", " + s2 + Ar), u2 !== Pr && (y2 += "rotate(" + u2 + Ar), h2 !== Pr && (y2 += "rotateY(" + h2 + Ar), l2 !== Pr && (y2 += "rotateX(" + l2 + Ar), f2 === Pr && d2 === Pr || (y2 += "skew(" + f2 + ", " + d2 + Ar), 1 === c2 && 1 === p2 || (y2 += "scale(" + c2 + ", " + p2 + Ar), g2.style[cr] = y2 || "translate(0, 0)";
+  }, zr = function _renderSVGTransforms(t2, e2) {
+    var r2, i2, n2, a2, s2, o2 = e2 || this, u2 = o2.xPercent, h2 = o2.yPercent, l2 = o2.x, f2 = o2.y, d2 = o2.rotation, c2 = o2.skewX, p2 = o2.skewY, _2 = o2.scaleX, m2 = o2.scaleY, g2 = o2.target, v2 = o2.xOrigin, y2 = o2.yOrigin, T2 = o2.xOffset, b2 = o2.yOffset, w2 = o2.forceCSS, x2 = parseFloat(l2), O2 = parseFloat(f2);
+    d2 = parseFloat(d2), c2 = parseFloat(c2), (p2 = parseFloat(p2)) && (c2 += p2 = parseFloat(p2), d2 += p2), d2 || c2 ? (d2 *= or, c2 *= or, r2 = Math.cos(d2) * _2, i2 = Math.sin(d2) * _2, n2 = Math.sin(d2 - c2) * -m2, a2 = Math.cos(d2 - c2) * m2, c2 && (p2 *= or, s2 = Math.tan(c2 - p2), n2 *= s2 = Math.sqrt(1 + s2 * s2), a2 *= s2, p2 && (s2 = Math.tan(p2), r2 *= s2 = Math.sqrt(1 + s2 * s2), i2 *= s2)), r2 = ia(r2), i2 = ia(i2), n2 = ia(n2), a2 = ia(a2)) : (r2 = _2, a2 = m2, i2 = n2 = 0), (x2 && !~(l2 + "").indexOf("px") || O2 && !~(f2 + "").indexOf("px")) && (x2 = _d(g2, "x", l2, "px"), O2 = _d(g2, "y", f2, "px")), (v2 || y2 || T2 || b2) && (x2 = ia(x2 + v2 - (v2 * r2 + y2 * n2) + T2), O2 = ia(O2 + y2 - (v2 * i2 + y2 * a2) + b2)), (u2 || h2) && (s2 = g2.getBBox(), x2 = ia(x2 + u2 / 100 * s2.width), O2 = ia(O2 + h2 / 100 * s2.height)), s2 = "matrix(" + r2 + "," + i2 + "," + n2 + "," + a2 + "," + x2 + "," + O2 + ")", g2.setAttribute("transform", s2), w2 && (g2.style[cr] = s2);
+  };
+  ha("padding,margin,Width,Radius", function(e2, r2) {
+    var t2 = "Right", i2 = "Bottom", n2 = "Left", o2 = (r2 < 3 ? ["Top", t2, i2, n2] : ["Top" + n2, "Top" + t2, i2 + t2, i2 + n2]).map(function(t3) {
+      return r2 < 2 ? e2 + t3 : "border" + t3 + e2;
+    });
+    br[1 < r2 ? "border" + e2 : e2] = function(e3, t3, r3, i3, n3) {
+      var a2, s2;
+      if (arguments.length < 4) return a2 = o2.map(function(t4) {
+        return yr(e3, t4, r3);
+      }), 5 === (s2 = a2.join(" ")).split(a2[0]).length ? a2[0] : s2;
+      a2 = (i3 + "").split(" "), s2 = {}, o2.forEach(function(t4, e4) {
+        return s2[t4] = a2[e4] = a2[e4] || a2[(e4 - 1) / 2 | 0];
+      }), e3.init(t3, s2, n3);
+    };
+  });
+  var Er, Dr, Rr, Fr = { name: "css", register: Sd, targetTest: function targetTest(t2) {
+    return t2.style && t2.nodeType;
+  }, init: function init(t2, e2, i2, n2, a2) {
+    var s2, o2, u2, h2, l2, f2, d2, c2, p2, _2, m2, g2, v2, y2, T2, b2, w2 = this._props, x2 = t2.style, O2 = i2.vars.startAt;
+    for (d2 in Fe || Sd(), this.styles = this.styles || Md(t2), b2 = this.styles.props, this.tween = i2, e2) if ("autoRound" !== d2 && (o2 = e2[d2], !pt[d2] || !ac(d2, e2, i2, n2, t2, a2))) {
+      if (l2 = typeof o2, f2 = br[d2], "function" === l2 && (l2 = typeof (o2 = o2.call(i2, n2, t2, a2))), "string" === l2 && ~o2.indexOf("random(") && (o2 = ob(o2)), f2) f2(this, t2, d2, o2, i2) && (T2 = 1);
+      else if ("--" === d2.substr(0, 2)) s2 = (getComputedStyle(t2).getPropertyValue(d2) + "").trim(), o2 += "", Et.lastIndex = 0, Et.test(s2) || (c2 = Ya(s2), p2 = Ya(o2)), p2 ? c2 !== p2 && (s2 = _d(t2, d2, s2, p2) + p2) : c2 && (o2 += c2), this.add(x2, "setProperty", s2, o2, n2, a2, 0, 0, d2), w2.push(d2), b2.push(d2, 0, x2[d2]);
+      else if ("undefined" !== l2) {
+        if (O2 && d2 in O2 ? (s2 = "function" == typeof O2[d2] ? O2[d2].call(i2, n2, t2, a2) : O2[d2], r(s2) && ~s2.indexOf("random(") && (s2 = ob(s2)), Ya(s2 + "") || "auto" === s2 || (s2 += q.units[d2] || Ya(yr(t2, d2)) || ""), "=" === (s2 + "").charAt(1) && (s2 = yr(t2, d2))) : s2 = yr(t2, d2), h2 = parseFloat(s2), (_2 = "string" === l2 && "=" === o2.charAt(1) && o2.substr(0, 2)) && (o2 = o2.substr(2)), u2 = parseFloat(o2), d2 in dr && ("autoAlpha" === d2 && (1 === h2 && "hidden" === yr(t2, "visibility") && u2 && (h2 = 0), b2.push("visibility", 0, x2.visibility), Yd(this, x2, "visibility", h2 ? "inherit" : "hidden", u2 ? "inherit" : "hidden", !u2)), "scale" !== d2 && "transform" !== d2 && ~(d2 = dr[d2]).indexOf(",") && (d2 = d2.split(",")[0])), m2 = d2 in ar) if (this.styles.save(d2), g2 || ((v2 = t2._gsap).renderTransform && !e2.parseTransform || Or(t2, e2.parseTransform), y2 = false !== e2.smoothOrigin && v2.smooth, (g2 = this._pt = new _e(this._pt, x2, cr, 0, 1, v2.renderTransform, v2, 0, -1)).dep = 1), "scale" === d2) this._pt = new _e(this._pt, v2, "scaleY", v2.scaleY, (_2 ? ka(v2.scaleY, _2 + u2) : u2) - v2.scaleY || 0, vd), this._pt.u = 0, w2.push("scaleY", d2), d2 += "X";
+        else {
+          if ("transformOrigin" === d2) {
+            b2.push(pr, 0, x2[pr]), o2 = de(o2), v2.svg ? le(t2, o2, 0, y2, 0, this) : ((p2 = parseFloat(o2.split(" ")[2]) || 0) !== v2.zOrigin && Yd(this, v2, "zOrigin", v2.zOrigin, p2), Yd(this, x2, d2, kr(s2), kr(o2)));
+            continue;
+          }
+          if ("svgOrigin" === d2) {
+            le(t2, o2, 1, y2, 0, this);
+            continue;
+          }
+          if (d2 in xr) {
+            ve(this, v2, d2, h2, _2 ? ka(h2, _2 + o2) : o2);
+            continue;
+          }
+          if ("smoothOrigin" === d2) {
+            Yd(this, v2, "smooth", v2.smooth, o2);
+            continue;
+          }
+          if ("force3D" === d2) {
+            v2[d2] = o2;
+            continue;
+          }
+          if ("transform" === d2) {
+            xe(this, o2, t2);
+            continue;
+          }
+        }
+        else d2 in x2 || (d2 = mr(d2) || d2);
+        if (m2 || (u2 || 0 === u2) && (h2 || 0 === h2) && !fr.test(o2) && d2 in x2) u2 = u2 || 0, (c2 = (s2 + "").substr((h2 + "").length)) !== (p2 = Ya(o2) || (d2 in q.units ? q.units[d2] : c2)) && (h2 = _d(t2, d2, s2, p2)), this._pt = new _e(this._pt, m2 ? v2 : x2, d2, h2, (_2 ? ka(h2, _2 + u2) : u2) - h2, m2 || "px" !== p2 && "zIndex" !== d2 || false === e2.autoRound ? vd : yd), this._pt.u = p2 || 0, c2 !== p2 && "%" !== p2 && (this._pt.b = s2, this._pt.r = xd);
+        else if (d2 in x2) be.call(this, t2, d2, s2, _2 ? _2 + o2 : o2);
+        else if (d2 in t2) this.add(t2, d2, s2 || t2[d2], _2 ? _2 + o2 : o2, n2, a2);
+        else if ("parseTransform" !== d2) {
+          Q(d2, o2);
+          continue;
+        }
+        m2 || (d2 in x2 ? b2.push(d2, 0, x2[d2]) : b2.push(d2, 1, s2 || t2[d2])), w2.push(d2);
+      }
+    }
+    T2 && pe(this);
+  }, render: function render(t2, e2) {
+    if (e2.tween._time || !Be()) for (var r2 = e2._pt; r2; ) r2.r(t2, r2.d), r2 = r2._next;
+    else e2.styles.revert();
+  }, get: yr, aliases: dr, getSetter: function getSetter(t2, e2, r2) {
+    var i2 = dr[e2];
+    return i2 && i2.indexOf(",") < 0 && (e2 = i2), e2 in ar && e2 !== pr && (t2._gsap.x || yr(t2, "x")) ? r2 && Ie === r2 ? "scale" === e2 ? Ed : Dd : (Ie = r2 || {}) && ("scale" === e2 ? Fd : Gd) : t2.style && !u(t2.style[e2]) ? Bd : ~e2.indexOf("-") ? Cd : ne(t2, e2);
+  }, core: { _removeProperty: Xd, _getMatrix: ke } };
+  ze.utils.checkPrefix = mr, ze.core.getStyleSaver = Md, Rr = ha((Er = "x,y,z,scale,scaleX,scaleY,xPercent,yPercent") + "," + (Dr = "rotation,rotationX,rotationY,skewX,skewY") + ",transform,transformOrigin,svgOrigin,force3D,smoothOrigin,transformPerspective", function(t2) {
+    ar[t2] = 1;
+  }), ha(Dr, function(t2) {
+    q.units[t2] = "deg", xr[t2] = 1;
+  }), dr[Rr[13]] = Er + "," + Dr, ha("0:translateX,1:translateY,2:translateZ,8:rotate,8:rotationZ,8:rotateZ,9:rotateX,10:rotateY", function(t2) {
+    var e2 = t2.split(":");
+    dr[e2[1]] = Rr[e2[0]];
+  }), ha("x,y,z,top,right,bottom,left,width,height,fontSize,padding,margin,perspective", function(t2) {
+    q.units[t2] = "px";
+  }), ze.registerPlugin(Fr);
+  var Lr = ze.registerPlugin(Fr) || ze, Ir = Lr.core.Tween;
+  e.Back = Ze, e.Bounce = er, e.CSSPlugin = Fr, e.Circ = nr, e.Cubic = Qe, e.Elastic = $e, e.Expo = ir, e.Linear = Ge, e.Power0 = qe, e.Power1 = Ve, e.Power2 = Ue, e.Power3 = Xe, e.Power4 = Ne, e.Quad = We, e.Quart = Ke, e.Quint = Je, e.Sine = rr, e.SteppedEase = tr, e.Strong = He, e.TimelineLite = Xt, e.TimelineMax = Xt, e.TweenLite = $t, e.TweenMax = Ir, e.default = Lr, e.gsap = Lr;
+  if (typeof window === "undefined" || window !== e) {
+    Object.defineProperty(e, "__esModule", { value: true });
+  } else {
+    delete e.default;
+  }
+});</script>
+
+<script data-hyperframes-preview-runtime="1" src="/api/runtime.js"></script>
+<meta name="hyperframes-project-signature" content="6a0792d73277775c1984ff0e">
+</head>
+<body>
+  <div data-hf-id="hf-shbi" id="root" data-composition-id="linguini-linkedin" data-width="1920" data-height="1080" data-duration="30" data-fps="30">
+
+    <!-- Persistent Header -->
+    <header data-hf-id="hf-hr6f" class="header">
+      <div data-hf-id="hf-9c95" class="brand-pill">
+        <img data-hf-id="hf-rd1t" src="assets/linguini-wordmark.png" alt="Linguini">
+      </div>
+      <div data-hf-id="hf-dm7k" class="beta-badge">
+        <span data-hf-id="hf-9gry" class="dot"></span>
+        <span data-hf-id="hf-b286">PUBLIC BETA</span>
+      </div>
+    </header>
+
+    <!-- Subtitle Bar (dynamic across timeline) -->
+    <div data-hf-id="hf-4pop" class="subtitle-bar-wrap">
+      <div data-hf-id="hf-zvq3" class="subtitle-bar" id="sub-bar">What if your dessert could teach you Spanish?</div>
+    </div>
+
+    <!-- Bottom Progress Track -->
+    <div data-hf-id="hf-okbn" class="progress-bar-track">
+      <div data-hf-id="hf-g1d8" class="progress-bar-fill" id="progress-fill"></div>
+    </div>
+
+    <!-- Floating Mascot -->
+    <div data-hf-id="hf-qcgn" class="mascot-host" id="mascot">
+      <img data-hf-id="hf-ixik" src="assets/linguini-logo.png" alt="Linguini Mascot">
+    </div>
+
+    <!-- SCENE 0: Hook (0s - 4s) -->
+    <section data-hf-id="hf-a50b" class="scene clip" id="scene-0" data-start="0" data-duration="4">
+      <div data-hf-id="hf-8js6" class="absolute" style="left: 120px; top: 220px; width: 850px;">
+        <div data-hf-id="hf-c01h" class="number-badge">
+          <span data-hf-id="hf-ce6f" class="num">🍨</span>
+          <span data-hf-id="hf-edb3" class="label">THE IDEA</span>
+        </div>
+        <h1 data-hf-id="hf-cq4h" class="headline-main">
+          What if your dessert<br data-hf-id="hf-x5px"><span data-hf-id="hf-183a" class="headline-accent">taught you Spanish?</span>
+        </h1>
+        <p data-hf-id="hf-i5ur" class="subtext">
+          Linguini turns a photo from your day into a bite-size language lesson.
+        </p>
+      </div>
+
+      <!-- Hero Photo Card -->
+      <div data-hf-id="hf-0z3x" class="card card--lifted absolute" id="hero-photo-card" style="right: 120px; top: 180px; width: 780px; height: 580px;">
+        <img data-hf-id="hf-0mh1" src="assets/ice-cream-photo.png" style="width: 100%; height: 100%; object-fit: cover;" alt="Dessert scene">
+      </div>
+    </section>
+
+    <!-- SCENE 1: Capture & Detect (4s - 10s) -->
+    <section data-hf-id="hf-zzoq" class="scene clip" id="scene-1" data-start="4" data-duration="6">
+      <div data-hf-id="hf-2aay" class="absolute" style="left: 120px; top: 220px; width: 850px;">
+        <div data-hf-id="hf-p3zd" class="number-badge">
+          <span data-hf-id="hf-cshg" class="num">01</span>
+          <span data-hf-id="hf-tcv6" class="label">SNAP · REVIEW · LEARN</span>
+        </div>
+        <h1 data-hf-id="hf-hnyu" class="headline-main">
+          AI spots the objects.<br data-hf-id="hf-rsrt"><span data-hf-id="hf-8kk1" class="headline-teal">You keep the words.</span>
+        </h1>
+        <p data-hf-id="hf-hi6v" class="subtext">
+          Computer vision suggests vocabulary. You approve what matters — remove clutter, add your own.
+        </p>
+      </div>
+
+      <!-- Detected Photo Card -->
+      <div data-hf-id="hf-v355" class="card card--lifted absolute" id="detect-card" style="right: 120px; top: 180px; width: 780px; height: 580px;">
+        <img loading="lazy" data-hf-preview-lazy data-hf-id="hf-og9i" src="assets/ice-cream-photo.png" style="width: 100%; height: 100%; object-fit: cover;" alt="Detected dessert photo">
+        <!-- Detection Rings positioned over the image's actual objects -->
+        <div data-hf-id="hf-gn7l" class="detection-ring" id="ring-waffle" style="left: 300px; top: 280px; width: 420px; height: 260px;">
+          <div data-hf-id="hf-3mx7" class="detection-tag" data-layout-allow-overflow="" style="top: -46px; left: 10px;">el gofre · waffle</div>
+        </div>
+        <div data-hf-id="hf-ice1" class="detection-ring" id="ring-icecream" style="left: 90px; top: 60px; width: 290px; height: 210px;">
+          <div data-hf-id="hf-icet" class="detection-tag" data-layout-allow-overflow="" style="top: -46px; left: 10px;">el helado · ice cream</div>
+        </div>
+        <div data-hf-id="hf-ice2" class="detection-ring" id="ring-syrup" style="left: 330px; top: 510px; width: 160px; height: 60px; border-radius: 12px;">
+          <div data-hf-id="hf-syrt" class="detection-tag" data-layout-allow-overflow="" style="top: -42px; left: 0;">el jarabe · syrup</div>
+        </div>
+        <div data-hf-id="hf-ice3" class="detection-ring" id="ring-cup" style="left: 560px; top: 60px; width: 180px; height: 160px;">
+          <div data-hf-id="hf-cupt" class="detection-tag" data-layout-allow-overflow="" style="top: -46px; left: 10px;">el café · coffee</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENE 2: Word Card (10s - 15s) -->
+    <section data-hf-id="hf-jpim" class="scene clip" id="scene-2" data-start="10" data-duration="5">
+      <div data-hf-id="hf-2olz" class="absolute" style="left: 120px; top: 220px; width: 850px;">
+        <div data-hf-id="hf-qawg" class="number-badge">
+          <span data-hf-id="hf-blkd" class="num">02</span>
+          <span data-hf-id="hf-czjs" class="label">WORD CARDS</span>
+        </div>
+        <h1 data-hf-id="hf-4182" class="headline-main">
+          Learn it properly —<br data-hf-id="hf-szow"><span data-hf-id="hf-8spt" class="headline-accent">article, gender, usage.</span>
+        </h1>
+        <p data-hf-id="hf-47ok" class="subtext">
+          Every word comes with its article, gender and a real sentence so it actually sticks.
+        </p>
+      </div>
+
+      <!-- Word Card Showcase -->
+      <div data-hf-id="hf-i8qy" class="word-card absolute" id="word-card" style="right: 120px; top: 200px;">
+        <div data-hf-id="hf-c2rh" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <span data-hf-id="hf-5j6l" style="background: #e0f2fe; color: #0369a1; font-weight: 800; padding: 6px 16px; border-radius: 999px; font-size: 18px;">NOUN · FEMININE</span>
+          <span data-hf-id="hf-47h1" style="font-size: 28px;">🔊</span>
+        </div>
+        <div data-hf-id="hf-6f5n">
+          <div data-hf-id="hf-736r" class="article">el gofre</div>
+          <div data-hf-id="hf-38x2" class="word">waffle</div>
+          <div data-hf-id="hf-rhcg" class="trans" style="margin-bottom: 20px;">From your dessert photo · Tom's Palette</div>
+          <div data-hf-id="hf-yeow" style="background: #f8fafc; border-radius: 16px; padding: 18px 22px; font-size: 22px; color: #334155;">
+            "El gofre con helado es mi postre favorito."<br data-hf-id="hf-sldv">
+            <span data-hf-id="hf-6qk6" style="color: #94a3b8; font-size: 20px;">The waffle with ice cream is my favourite dessert.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENE 3: I-Spy Game (15s - 21s) -->
+    <section data-hf-id="hf-p459" class="scene clip" id="scene-3" data-start="15" data-duration="6">
+      <div data-hf-id="hf-vkgr" class="absolute" style="left: 120px; top: 220px; width: 750px;">
+        <div data-hf-id="hf-pwlf" class="number-badge">
+          <span data-hf-id="hf-bzve" class="num">03</span>
+          <span data-hf-id="hf-2xmy" class="label">PLAY I-SPY</span>
+        </div>
+        <h1 data-hf-id="hf-g022" class="headline-main">
+          Guess the clue.<br data-hf-id="hf-qluq"><span data-hf-id="hf-cnev" class="headline-teal">Then give your own.</span>
+        </h1>
+        <p data-hf-id="hf-dwbt" class="subtext">
+          Two-way I-Spy: Linguini describes an object, then it's your turn to describe one back.
+        </p>
+      </div>
+
+      <!-- I-Spy Game Card -->
+      <div data-hf-id="hf-r060" class="card card--lifted absolute" id="ispy-card" style="right: 100px; top: 180px; width: 820px; padding: 32px 40px;">
+        <div data-hf-id="hf-cw2w" style="display: flex; gap: 12px; align-items: center; margin-bottom: 18px;">
+          <span data-hf-id="hf-8iqu" style="background: #ea580c; color: white; padding: 6px 14px; border-radius: 999px; font-weight: 800; font-size: 18px;">I-SPY CLUE</span>
+          <span data-hf-id="hf-kip5" style="color: #64748b; font-size: 20px;">Tap what you think it is:</span>
+        </div>
+        <div data-hf-id="hf-gdnh" style="font-family: 'Baloo', sans-serif; font-size: 38px; color: #0f172a; margin-bottom: 20px; line-height: 1.2;">
+          "Veo, veo… algo frío y cremoso."
+        </div>
+        <div data-hf-id="hf-ad25" style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px;">
+          <div data-hf-id="hf-yh71" style="padding: 16px 22px; border-radius: 16px; border: 2px solid #e2e8f0; font-size: 24px; font-weight: 800; background: #ffffff;">el café</div>
+          <div data-hf-id="hf-j08v" id="choice-b" style="padding: 16px 22px; border-radius: 16px; border: 2px solid #22c55e; font-size: 24px; font-weight: 800; background: #f0fdf4; color: #15803d; display: flex; justify-content: space-between;">
+            <span data-hf-id="hf-6s95">el helado</span><span data-hf-id="hf-ls52">✓</span>
+          </div>
+          <div data-hf-id="hf-opt3" style="padding: 16px 22px; border-radius: 16px; border: 2px solid #e2e8f0; font-size: 24px; font-weight: 800; background: #ffffff;">el jarabe</div>
+          <div data-hf-id="hf-opt4" style="padding: 16px 22px; border-radius: 16px; border: 2px solid #e2e8f0; font-size: 24px; font-weight: 800; background: #ffffff;">el gofre</div>
+        </div>
+        <div data-hf-id="hf-37bv" style="border-top: 2px solid #f1f5f9; padding-top: 18px;">
+          <div data-hf-id="hf-97xt" style="font-size: 18px; font-weight: 800; color: #0d9488; margin-bottom: 10px; text-transform: uppercase;">Your turn — describe something</div>
+          <div data-hf-id="hf-e5mb" style="display: flex; gap: 10px;">
+            <span data-hf-id="hf-6q8s" class="word-tile placed">Veo, veo</span>
+            <span data-hf-id="hf-d5uu" class="word-tile placed">algo</span>
+            <span data-hf-id="hf-awuh" class="word-tile">dulce</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENE 4: Journal Save (21s - 26s) -->
+    <section data-hf-id="hf-oilq" class="scene clip" id="scene-4" data-start="21" data-duration="5">
+      <div data-hf-id="hf-08n7" class="absolute" style="left: 120px; top: 220px; width: 800px;">
+        <div data-hf-id="hf-nir9" class="number-badge">
+          <span data-hf-id="hf-edpk" class="num">04</span>
+          <span data-hf-id="hf-y57z" class="label">KEEP THE DAY</span>
+        </div>
+        <h1 data-hf-id="hf-l7un" class="headline-main">
+          Your day becomes<br data-hf-id="hf-q7jp"><span data-hf-id="hf-n80w" class="headline-teal">a page you keep.</span>
+        </h1>
+        <p data-hf-id="hf-nex5" class="subtext">
+          Every lesson writes into a photo journal. Revisit words tied to the exact day and place you learned them.
+        </p>
+      </div>
+
+      <!-- Journal Card -->
+      <div data-hf-id="hf-8t57" class="card card--lifted absolute" id="journal-card" style="right: 120px; top: 200px; width: 780px; padding: 32px 40px;">
+        <div data-hf-id="hf-jfpm" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+          <h2 data-hf-id="hf-xqvg" style="font-family: 'Baloo', sans-serif; font-size: 30px; margin: 0;">Today's Entry</h2>
+          <span data-hf-id="hf-q86w" style="font-weight: 800; color: #0d9488; font-size: 20px;">+12 words</span>
+        </div>
+        <div data-hf-id="hf-1rkj" style="display: flex; gap: 16px;">
+          <div data-hf-id="hf-2bom" style="border-radius: 16px; overflow: hidden; height: 200px; width: 300px; flex-shrink: 0;">
+            <img loading="lazy" data-hf-preview-lazy data-hf-id="hf-kvbm" src="assets/ice-cream-photo.png" style="width: 100%; height: 100%; object-fit: cover;" alt="Journal photo">
+          </div>
+          <div data-hf-id="hf-l8h6" style="flex: 1;">
+            <div data-hf-id="hf-iw97" style="font-size: 22px; color: #334155; line-height: 1.5; margin-bottom: 14px;">
+              "Went to Tom's Palette — learned <strong data-hf-id="hf-08d6">el gofre</strong>, <strong data-hf-id="hf-aohc">el helado</strong> and <strong data-hf-id="hf-81u0">el jarabe</strong>."
+            </div>
+            <div data-hf-id="hf-ihy6" style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <span data-hf-id="hf-29s6" style="background: #f0fdf4; color: #15803d; font-weight: 800; padding: 6px 14px; border-radius: 999px; font-size: 16px;">el gofre</span>
+              <span data-hf-id="hf-0yw4" style="background: #f0fdf4; color: #15803d; font-weight: 800; padding: 6px 14px; border-radius: 999px; font-size: 16px;">el helado</span>
+              <span data-hf-id="hf-84g4" style="background: #f0fdf4; color: #15803d; font-weight: 800; padding: 6px 14px; border-radius: 999px; font-size: 16px;">el jarabe</span>
+              <span data-hf-id="hf-dyvq" style="background: #fff7ed; color: #c2410c; font-weight: 800; padding: 6px 14px; border-radius: 999px; font-size: 16px;">🔥 7-day streak</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENE 5: CTA (26s - 30s) -->
+    <section data-hf-id="hf-nv28" class="scene clip" id="scene-5" data-start="26" data-duration="4">
+      <div data-hf-id="hf-zx1p" class="absolute" style="inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 100px;">
+        <img loading="lazy" data-hf-preview-lazy data-hf-id="hf-8s0t" src="assets/linguini-wordmark.png" style="height: 100px; margin-bottom: 20px;" alt="Linguini">
+        <h1 data-hf-id="hf-aok2" style="font-family: 'Baloo', sans-serif; font-size: 84px; line-height: 1.1; margin: 0 0 16px 0; color: #0f172a;">
+          Cook your first lesson today.
+        </h1>
+        <p data-hf-id="hf-eqca" style="font-size: 32px; color: #475569; margin: 0 0 36px 0;">
+          Unlimited photo lessons during Public Beta. No credit card required.
+        </p>
+        <div data-hf-id="hf-f8rs" style="display: inline-flex; align-items: center; gap: 20px; background: #ea580c; color: white; font-family: 'Baloo', sans-serif; font-size: 42px; padding: 18px 50px; border-radius: 999px; box-shadow: 0 12px 30px rgba(234, 88, 12, 0.35);">
+          <span data-hf-id="hf-e268">learnwithlinguini.com</span>
+          <span data-hf-id="hf-o03m">↗</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Audio Element -->
+    <audio data-hf-id="hf-kcr2" id="bgm" src="audio/music.wav" data-start="0" data-duration="30" preload="auto" data-end="30"></audio>
+  </div>
+
+  
+<script type="text/hf-after-fonts">const tl = gsap.timeline({ paused: true });
+tl.fromTo("#progress-fill", { width: "0%" }, { width: "100%", duration: 30, ease: "none" }, 0);
+tl.fromTo("#mascot", { y: 0, rotation: -2 }, { y: -12, rotation: 2, duration: 1.2, repeat: 24, yoyo: true, ease: "sine.inOut" }, 0);
+const scenes = [
+  { id: "#scene-0", start: 0, end: 4, sub: "What if your dessert could teach you Spanish?" },
+  { id: "#scene-1", start: 4, end: 10, sub: "AI spots the objects. You keep the words that matter." },
+  { id: "#scene-2", start: 10, end: 15, sub: "Learn it properly \u2014 article, gender, and a real sentence." },
+  { id: "#scene-3", start: 15, end: 21, sub: "Play two-way I-Spy. Guess the clue, then give your own." },
+  { id: "#scene-4", start: 21, end: 26, sub: "Every lesson saves into your visual journal." },
+  { id: "#scene-5", start: 26, end: 30, sub: "Public Beta is live. Cook your first lesson at learnwithlinguini.com." }
+];
+scenes.forEach((s) => {
+  tl.to(s.id, { autoAlpha: 1, duration: 0.3, ease: "power2.out" }, s.start);
+  tl.call(() => {
+    document.getElementById("sub-bar").textContent = s.sub;
+  }, null, s.start);
+  if (s.end < 30) {
+    tl.to(s.id, { autoAlpha: 0, duration: 0.3, ease: "power2.in" }, s.end - 0.3);
+  }
+});
+tl.fromTo("#hero-photo-card", { x: 80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.6, ease: "power3.out" }, 0.4);
+tl.fromTo("#detect-card", { scale: 0.92, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" }, 4.4);
+tl.fromTo("#ring-icecream", { scale: 1.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.5)" }, 5.2);
+tl.fromTo("#ring-waffle", { scale: 1.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.5)" }, 5.8);
+tl.fromTo("#ring-syrup", { scale: 1.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.5)" }, 6.4);
+tl.fromTo("#ring-cup", { scale: 1.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(1.5)" }, 7);
+tl.fromTo("#word-card", { x: 100, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: "power3.out" }, 10.4);
+tl.fromTo("#ispy-card", { scale: 0.92, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: "power3.out" }, 15.4);
+tl.fromTo("#choice-b", { scale: 0.95 }, { scale: 1.05, duration: 0.3, yoyo: true, repeat: 1, ease: "power2.inOut" }, 18);
+tl.fromTo("#journal-card", { rotationY: -15, opacity: 0 }, { rotationY: 0, opacity: 1, duration: 0.6, ease: "power3.out" }, 21.4);
+window.__timelines = window.__timelines || {};
+window.__timelines["linguini-linkedin"] = tl;</script></body>
+</html>

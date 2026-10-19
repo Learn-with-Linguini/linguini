@@ -16,6 +16,11 @@ model User {
   onboardingCompleted Boolean  @default(false) @map("onboarding_completed")
   walkthroughVersionSeen Int   @default(0) @map("walkthrough_version_seen")
   tier                String   @default("beta") @db.VarChar(16)
+  utmSource           String?  @map("utm_source") @db.VarChar(100)
+  utmMedium           String?  @map("utm_medium") @db.VarChar(100)
+  utmCampaign         String?  @map("utm_campaign") @db.VarChar(100)
+  utmContent          String?  @map("utm_content") @db.VarChar(100)
+  utmTerm             String?  @map("utm_term") @db.VarChar(100)
   createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
   languageProfiles    LanguageProfile[]

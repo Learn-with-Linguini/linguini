@@ -5,6 +5,7 @@ import { Button } from "../components/ui";
 import { practiceStages, taskDone } from "../lib/practiceTasks";
 import { useAppState } from "../state/useAppState";
 import { useScene } from "../state/useScene";
+import { trackAction } from "../lib/analytics.ts";
 
 export function VocabularyPreview() {
   const navigate = useNavigate();
@@ -19,10 +20,10 @@ export function VocabularyPreview() {
   return <div className="stack vocabulary-preview-page">
     <div className="learning-title-row">
       <div><h1>Vocabulary preview</h1><p className="muted">Take a quick look, then learn each word one by one.</p></div>
-      <Button variant="quiet" className="learning-exit" onClick={() => navigate("/home")}><CloseIcon size={18} /> Exit</Button>
+      <Button variant="quiet" className="learning-exit" onClick={() => { trackAction("vocabulary_preview_exit_clicked"); navigate("/home"); }}><CloseIcon size={18} /> Exit</Button>
     </div>
     <TranslationPreview preview={session.translationPreview} scene={scene} />
-    <Button block disabled={practiceSaving} onClick={() => navigate(`${base}/learn/${vocabularyTask.id}`)}>
+    <Button block disabled={practiceSaving} onClick={() => { trackAction("vocabulary_preview_continue_clicked", { taskId: vocabularyTask.id }); navigate(`${base}/learn/${vocabularyTask.id}`); }}>
       Learn one by one <ArrowRightIcon />
     </Button>
   </div>;

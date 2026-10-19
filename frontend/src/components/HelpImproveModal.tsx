@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Button, IconButton } from "./ui";
 import { CloseIcon } from "./icons";
+import { trackAction } from "../lib/analytics.ts";
 import { submitSurvey } from "../lib/api";
 import { useAuth } from "../state/Auth";
 
@@ -76,6 +77,12 @@ export function HelpImproveModal({
     setSubmitting(true);
     setError(null);
     try {
+      trackAction("survey_submitted", {
+        rating,
+        triggerSource,
+        receiveFollowUp,
+        lessonCount,
+      });
       await submitSurvey({
         rating,
         usageFrequency: usageFrequency.trim(),
@@ -145,6 +152,7 @@ export function HelpImproveModal({
                     onClick={() => {
                       setRating(option.value);
                       setError(null);
+                      trackAction("survey_rating_selected", { rating: option.value });
                     }}
                   >
                     <img src={option.src} alt={option.label} />
