@@ -2,7 +2,13 @@ from uuid import uuid4
 
 from app.schemas.media import SceneObject
 from app.schemas.vocabulary import VocabularyItem, VocabularyTranslation
-from app.services.session_plan import build_tasks
+from app.services.session_plan import build_tasks, strip_english_article
+
+
+def test_strip_english_article_collapses_whitespace_and_removes_one_prefix():
+    assert strip_english_article("  THE   pillow  ") == "pillow"
+    assert strip_english_article("an Apple") == "Apple"
+    assert strip_english_article("a") == "a"
 
 
 def test_build_tasks_introduces_one_entry_per_vocabulary_item():
