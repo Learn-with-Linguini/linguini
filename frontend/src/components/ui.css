@@ -1517,6 +1517,8 @@ p[role="alert"]::before { content: "!"; }
 .analysis-relation-row {
   display: flex;
   align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
   width: 100%;
   min-width: 0;
   padding: var(--space-3) 0;
@@ -1544,8 +1546,7 @@ p[role="alert"]::before { content: "!"; }
 }
 
 .analysis-relation-row__connection {
-  width: 100%;
-  justify-content: space-between;
+  padding-left: calc(27px + var(--space-2));
 }
 
 .analysis-relation-row__relation {
@@ -1564,7 +1565,8 @@ p[role="alert"]::before { content: "!"; }
 }
 
 @media (max-width: 520px) {
-  .analysis-relation-row__connection { align-items: center; flex-direction: row; }
+  .analysis-relation-row { gap: var(--space-2); }
+  .analysis-relation-row__connection { align-items: flex-start; flex-direction: column; padding-left: 0; }
   .analysis-relation-row__connection .combobox--compact { max-width: none; width: 100%; }
 }
 
