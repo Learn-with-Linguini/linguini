@@ -111,6 +111,40 @@ def test_highest_score_per_label_and_returned_box_assignment() -> None:
     assert "lamp" not in boxes
 
 
+def test_ground_instances_sorts_scores_and_suppresses_overlapping_boxes() -> None:
+    overlapping, highest, separate = MagicMock(), MagicMock(), MagicMock()
+    overlapping.tolist.return_value = [0, 0, 40, 40]
+    highest.tolist.return_value = [2, 2, 42, 42]
+    separate.tolist.return_value = [60, 60, 90, 90]
+    detector = _detector(
+        [
+            {
+                "boxes": [overlapping, highest, separate],
+                "scores": [0.6, 0.9, 0.8],
+                "text_labels": ["plant", "plant", "plant"],
+            }
+        ]
+    )
+
+    boxes = detector.ground_instances(_png(), ["plant"])
+
+    assert [box.score for box in boxes["plant"]] == [0.9, 0.8]
+    assert boxes["plant"][0].x == 0.02
+    assert boxes["plant"][1].x == 0.6
+    assert detector._model.call_count == 1
+
+
+def test_ground_instances_uses_per_call_threshold_override() -> None:
+    detector = _detector([{"boxes": [], "scores": [], "text_labels": []}])
+
+    detector.ground_instances(_png(), ["plant"], threshold=0.25)
+
+    call = detector._processor.post_process_grounded_object_detection.call_args
+    assert call.kwargs["threshold"] == 0.25
+    assert call.kwargs["text_threshold"] == 0.25
+    assert detector._threshold == 0.35
+
+
 def test_label_cap_limits_the_joined_prompt() -> None:
     detector = _detector(
         [{"boxes": [], "scores": [], "text_labels": []}], max_labels=2

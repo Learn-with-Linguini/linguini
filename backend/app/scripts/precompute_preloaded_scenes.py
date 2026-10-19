@@ -21,6 +21,9 @@ Import-safe: all side effects live under ``main()``.
         --dry-run --json out.json --state state.json --report report.json
     python -m app.scripts.precompute_preloaded_scenes \
         --from-json out.json --emit-migration migration.sql
+    python -m app.scripts.precompute_preloaded_scenes \
+        --reground --reground-fallback-threshold 0.25 \
+        --dry-run --json out.json --report report.json
 """
 
 from __future__ import annotations
@@ -28,12 +31,13 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import math
 import os
 import re
 import sys
 import unicodedata
+from collections.abc import Mapping
 from datetime import UTC, datetime
-from decimal import Decimal
 from pathlib import Path
 from typing import Any
 from uuid import NAMESPACE_URL, UUID, uuid5
@@ -43,6 +47,8 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert
 
 from app.ai.cache import GENERATED_CONTENT_KEY
+from app.ai.contracts import VisionImage
+from app.ai.features.object_grounding import GroundedBox
 from app.ai.pool import ProviderPool
 from app.ai.registry import (
     build_ispy_clue_generator,
@@ -69,14 +75,15 @@ from app.scripts.preloaded_templates import (
     route_calls,
 )
 from app.services.image_storage import ImageStorage
+from app.services.session_plan import ENGLISH_ARTICLES, strip_english_article
 
 logger = logging.getLogger("precompute_preloaded_scenes")
 
 MAX_OBJECTS = 6
 MAX_INSTANCES_PER_LABEL = 10
 MAX_PINS = 12
+REGROUND_FALLBACK_THRESHOLD = 0.25
 SUPPORTED_LANGUAGES = ("fr", "es", "de", "ko")
-ENGLISH_ARTICLES = ("the ", "a ", "an ")
 
 SCENE_SLUGS = ("street", "cafe", "market", "bedroom", "kitchen", "park")
 
@@ -98,26 +105,205 @@ def slugify_label(label: str, index: int, taken: set[str]) -> str:
     return candidate
 
 
-def english_translation(label: str) -> str:
-    stripped = label.strip()
-    if stripped.lower().startswith(ENGLISH_ARTICLES):
-        return stripped
-    return f"the {stripped}"
+def box_centre_percent(
+    x: float, y: float, width: float, height: float
+) -> tuple[float, float]:
+    """Return a normalized box centre as clamped 0..100 percentages."""
+    return (
+        round(min(100.0, max(0.0, (float(x) + float(width) / 2) * 100)), 1),
+        round(min(100.0, max(0.0, (float(y) + float(height) / 2) * 100)), 1),
+    )
 
 
 def marker_percent(obj: SceneObject) -> tuple[float, float]:
     """Anchor point or bounding-box centre, as 0..100 percentages."""
     if obj.anchor_point is not None:
-        x, y = obj.anchor_point.x, obj.anchor_point.y
+        return box_centre_percent(
+            obj.anchor_point.x, obj.anchor_point.y, 0, 0
+        )
     elif obj.bounding_box is not None:
         box = obj.bounding_box
-        x, y = box.x + box.width / 2, box.y + box.height / 2
+        return box_centre_percent(box.x, box.y, box.width, box.height)
     else:
-        x = y = Decimal("0.5")
-    return (
-        round(min(100.0, max(0.0, float(x) * 100)), 1),
-        round(min(100.0, max(0.0, float(y) * 100)), 1),
+        return box_centre_percent(0.5, 0.5, 0, 0)
+
+
+def _bare_label_key(label: str) -> str:
+    normalized = " ".join(label.split())
+    if normalized.casefold().startswith(ENGLISH_ARTICLES):
+        normalized = strip_english_article(normalized)
+    return normalized.casefold()
+
+
+def assign_instances(
+    items: list[dict[str, Any]],
+    detections: Mapping[str, list[GroundedBox]],
+) -> tuple[list[dict[str, Any]], list[str]]:
+    """Assign each label's closest detections to its stored markers."""
+    updated = [dict(item) for item in items]
+    indexed_detections = {
+        _bare_label_key(label): boxes
+        for label, boxes in detections.items()
+    }
+    grouped: dict[str, list[int]] = {}
+    for index, item in enumerate(items):
+        label = _bare_label_key(str(item["translation"]))
+        grouped.setdefault(label, []).append(index)
+
+    matched_items: set[int] = set()
+    for label, item_indexes in grouped.items():
+        boxes = indexed_detections.get(label, [])
+        candidates = [
+            (
+                math.hypot(
+                    float(items[item_index]["x"]) - centre_x,
+                    float(items[item_index]["y"]) - centre_y,
+                ),
+                item_index,
+                detection_index,
+                centre_x,
+                centre_y,
+            )
+            for item_index in item_indexes
+            for detection_index, box in enumerate(boxes)
+            for centre_x, centre_y in [
+                box_centre_percent(box.x, box.y, box.width, box.height)
+            ]
+        ]
+        unused_items = set(item_indexes)
+        unused_detections = set(range(len(boxes)))
+        while unused_items and unused_detections:
+            available = [
+                candidate
+                for candidate in candidates
+                if candidate[1] in unused_items and candidate[2] in unused_detections
+            ]
+            if not available:
+                break
+            _, item_index, detection_index, centre_x, centre_y = min(
+                available, key=lambda candidate: candidate[:3]
+            )
+            updated[item_index]["x"] = centre_x
+            updated[item_index]["y"] = centre_y
+            matched_items.add(item_index)
+            unused_items.remove(item_index)
+            unused_detections.remove(detection_index)
+
+    ungrounded = [
+        str(item["id"])
+        for index, item in enumerate(items)
+        if index not in matched_items
+    ]
+    return updated, ungrounded
+
+
+def reground_row(
+    row: dict[str, Any],
+    image: VisionImage,
+    grounder,
+    *,
+    fallback_threshold: float = REGROUND_FALLBACK_THRESHOLD,
+) -> tuple[dict[str, Any], list[str]]:
+    """Recompute stored item markers while retaining the row's scene facts."""
+    media_asset = (
+        row.get("media_asset")
+        or row.get("asset")
+        or row.get("mediaAsset")
     )
+    if media_asset is None:
+        raise ValueError("regrounding requires the row's media asset")
+    content = row["content"]
+    items = [
+        {**item, "translation": strip_english_article(item["translation"])}
+        for item in content["items"]
+    ]
+    labels = []
+    seen_labels = set()
+    for item in items:
+        key = item["translation"].casefold()
+        if key not in seen_labels:
+            labels.append(item["translation"])
+            seen_labels.add(key)
+    detections: dict[str, list[GroundedBox]] = {}
+    for label in labels:
+        for detected_label, boxes in grounder.ground_instances(
+            image, [label]
+        ).items():
+            detections.setdefault(detected_label, []).extend(boxes)
+    assigned, ungrounded = assign_instances(items, detections)
+    ungrounded_set = set(ungrounded)
+    still_ungrounded = set(ungrounded)
+    for label in labels:
+        label_key = _bare_label_key(label)
+        unmatched_items = [
+            item
+            for item in assigned
+            if item["id"] in ungrounded_set
+            and _bare_label_key(item["translation"]) == label_key
+        ]
+        if not unmatched_items:
+            continue
+        fallback = grounder.ground_instances(
+            image, [label], threshold=fallback_threshold
+        )
+        fallback_boxes = [
+            box
+            for detected_label, boxes in fallback.items()
+            if _bare_label_key(detected_label) == label_key
+            for box in boxes
+        ]
+        assigned_markers = [
+            (float(item["x"]), float(item["y"]))
+            for item in assigned
+            if item["id"] not in ungrounded_set
+            and _bare_label_key(item["translation"]) == label_key
+        ]
+        fallback_boxes = [
+            box
+            for box in fallback_boxes
+            if all(
+                math.hypot(centre_x - marker_x, centre_y - marker_y) > 3.0
+                for centre_x, centre_y in [
+                    box_centre_percent(box.x, box.y, box.width, box.height)
+                ]
+                for marker_x, marker_y in assigned_markers
+            )
+        ]
+        fallback_assigned, fallback_ungrounded = assign_instances(
+            unmatched_items, {label: fallback_boxes}
+        )
+        fallback_ungrounded_set = set(fallback_ungrounded)
+        for item in fallback_assigned:
+            if item["id"] not in fallback_ungrounded_set:
+                still_ungrounded.discard(item["id"])
+                target = next(
+                    stored for stored in assigned if stored["id"] == item["id"]
+                )
+                target["x"] = item["x"]
+                target["y"] = item["y"]
+    ungrounded = [
+        str(item["id"])
+        for item in items
+        if str(item["id"]) in still_ungrounded
+    ]
+    updated_content = build_scene_content(
+        slug=row["slug"],
+        title=row["title"],
+        description=row["description"],
+        difficulty=row["difficulty"],
+        media_asset=media_asset,
+        items=assigned,
+        relations=content.get("relations", []),
+    )
+    if GENERATED_CONTENT_KEY in content:
+        updated_content[GENERATED_CONTENT_KEY] = content[GENERATED_CONTENT_KEY]
+    updated_row = {
+        key: value
+        for key, value in row.items()
+        if key not in {"media_asset", "asset", "mediaAsset"}
+    }
+    updated_row["content"] = updated_content
+    return updated_row, ungrounded
 
 
 def select_objects(
@@ -225,10 +411,11 @@ def build_items(objects: list[SceneObject]) -> list[dict[str, Any]]:
     taken: set[str] = set()
     for index, obj in enumerate(objects, start=1):
         x, y = marker_percent(obj)
+        translation = strip_english_article(obj.label)
         items.append(
             {
-                "id": slugify_label(obj.label, index, taken),
-                "translation": english_translation(obj.label),
+                "id": slugify_label(translation, index, taken),
+                "translation": translation,
                 "wordClass": "noun",
                 "marker": index,
                 "x": x,
@@ -317,10 +504,36 @@ def _load_base_scenes(engine, slugs: list[str]) -> list[dict[str, Any]]:
                 "difficulty": row["difficulty"],
                 "sort_order": row["sort_order"],
                 "media_asset_id": row["media_asset_id"],
+                "content": row["content"],
+                "is_active": row["is_active"],
                 "asset": asset,
             }
         )
     return bases
+
+
+def _load_stored_rows(
+    engine, slugs: list[str]
+) -> tuple[list[dict[str, Any]], list[MediaAsset]]:
+    bases = _load_base_scenes(engine, slugs)
+    missing = [slug for slug in slugs if slug not in {base["slug"] for base in bases}]
+    if missing:
+        raise RuntimeError(f"stored scenes not found in the database: {missing}")
+    rows = [
+        {
+            "id": base["id"],
+            "slug": base["slug"],
+            "media_asset_id": base["media_asset_id"],
+            "title": base["title"],
+            "description": base["description"],
+            "difficulty": base["difficulty"],
+            "content": base["content"],
+            "sort_order": base["sort_order"],
+            "is_active": base["is_active"],
+        }
+        for base in bases
+    ]
+    return rows, [base["asset"] for base in bases]
 
 
 def _sql_literal(value: Any) -> str:
@@ -711,6 +924,23 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         help="do not check or generate lesson and clue templates",
     )
     parser.add_argument(
+        "--reground",
+        action="store_true",
+        help=(
+            "recompute stored item marker positions with the object grounder, "
+            "without scene analysis"
+        ),
+    )
+    parser.add_argument(
+        "--reground-fallback-threshold",
+        type=float,
+        default=REGROUND_FALLBACK_THRESHOLD,
+        help=(
+            "Grounding DINO threshold for a second pass on items missed by "
+            f"the primary pass (default: {REGROUND_FALLBACK_THRESHOLD})"
+        ),
+    )
+    parser.add_argument(
         "--emit-migration",
         type=Path,
         metavar="PATH",
@@ -753,7 +983,7 @@ def main(argv: list[str] | None = None) -> int:
     outcomes: list[StageOutcome] = []
     saved: dict[str, dict[str, Any]] = {}
     assets_by_id: dict[UUID, MediaAsset] = {}
-    if args.state and args.state.exists():
+    if args.state and args.state.exists() and not args.reground:
         state_rows, state_assets, _ = load_json_artifact(args.state)
         saved = {row["slug"]: row for row in state_rows if wanted(row)}
         assets_by_id.update(state_assets)
@@ -763,30 +993,105 @@ def main(argv: list[str] | None = None) -> int:
         if args.state:
             write_json_artifact(args.state, rows, list(assets_by_id.values()))
 
+    engine = None
     if args.from_json:
         rows, loaded_assets, failures = load_json_artifact(args.from_json)
-        rows = [saved.get(row["slug"], row) for row in rows if wanted(row)]
+        rows = [
+            row if args.reground else saved.get(row["slug"], row)
+            for row in rows
+            if wanted(row)
+        ]
         assets_by_id.update(loaded_assets)
     else:
         engine = create_database_engine()
-        kept = list(saved.values())
+        if args.reground:
+            rows, loaded_assets = _load_stored_rows(engine, slugs)
+            failures = 0
+            assets_by_id.update({asset.id: asset for asset in loaded_assets})
+        else:
+            kept = list(saved.values())
 
-        def save_computed(computed, computed_assets):
+            def save_computed(computed, computed_assets):
+                assets_by_id.update({asset.id: asset for asset in computed_assets})
+                checkpoint(kept + computed)
+
+            computed, computed_assets, failures = _compute_rows(
+                engine,
+                settings,
+                slugs,
+                tracer=tracer,
+                budget=budget,
+                outcomes=outcomes,
+                done=frozenset(saved),
+                checkpoint=save_computed,
+            )
             assets_by_id.update({asset.id: asset for asset in computed_assets})
-            checkpoint(kept + computed)
+            rows = kept + computed
 
-        computed, computed_assets, failures = _compute_rows(
-            engine,
-            settings,
-            slugs,
-            tracer=tracer,
-            budget=budget,
-            outcomes=outcomes,
-            done=frozenset(saved),
-            checkpoint=save_computed,
+    if args.reground:
+        try:
+            grounder = build_object_grounder(settings)
+        except Exception as error:
+            logger.error("--reground requires an available object grounder: %s", error_code(error))
+            return 2
+        if grounder is None or not callable(getattr(grounder, "ground_instances", None)):
+            logger.error(
+                "--reground requires a configured object grounder with ground_instances"
+            )
+            return 2
+        storage = ImageStorage(
+            os.getenv("SUPABASE_URL", "").strip(),
+            os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip(),
         )
-        assets_by_id.update({asset.id: asset for asset in computed_assets})
-        rows = kept + computed
+        regrounded_rows = []
+        for row in rows:
+            try:
+                asset = assets_by_id[row["media_asset_id"]]
+                image = VisionImage(
+                    data=storage.download(asset.storage_key),
+                    mime_type=asset.mime_type,
+                )
+                regrounded, ungrounded = reground_row(
+                    {**row, "media_asset": asset},
+                    image,
+                    grounder,
+                    fallback_threshold=args.reground_fallback_threshold,
+                )
+            except Exception as error:
+                failures += 1
+                reason = error_code(error)
+                logger.error("%s: grounding failed: %s", row["slug"], reason)
+                outcomes.append(
+                    StageOutcome(row["slug"], "", "grounding", "failed", reason)
+                )
+                continue
+            for old, new in zip(
+                row["content"]["items"],
+                regrounded["content"]["items"],
+                strict=True,
+            ):
+                logger.info(
+                    "%s item %s: (%s, %s) -> (%s, %s)",
+                    row["slug"],
+                    old["id"],
+                    old["x"],
+                    old["y"],
+                    new["x"],
+                    new["y"],
+                )
+            reason = f"ungrounded:{len(ungrounded)}" if ungrounded else None
+            if ungrounded:
+                logger.warning(
+                    "%s: ungrounded items kept at prior markers: %s",
+                    row["slug"],
+                    ", ".join(ungrounded),
+                )
+            outcomes.append(
+                StageOutcome(row["slug"], "", "grounding", "generated", reason)
+            )
+            regrounded_rows.append(regrounded)
+            checkpoint(regrounded_rows)
+        rows = regrounded_rows
     assets = list(assets_by_id.values())
 
     if not args.skip_templates:
@@ -822,6 +1127,8 @@ def main(argv: list[str] | None = None) -> int:
         logger.info("wrote migration SQL to %s", args.emit_migration)
     if not args.dry_run:
         if args.from_json:
+            engine = create_database_engine()
+        if engine is None:
             engine = create_database_engine()
         _write_rows(engine, rows)
         logger.info("upserted %d rows", len(rows))
