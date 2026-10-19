@@ -51,7 +51,11 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
     // Once task 1 is usable, keep checking in the background through slower
     // lesson/clue calls and their retries (up to five minutes).
     if (version === loadVersion.current) applySession(data);
-    for (let attempt = 0; attempt < (patient(data) ? 200 : 40) && PROCESSING.includes(data.session.status); attempt += 1) {
+    // Scene analysis can legitimately take a little while for a phone photo.
+    // Keep its scan visible for two minutes; only a returned failure or that
+    // timeout should offer a retry.
+    const maxAttempts = data.session.status === "analyzingScene" ? 400 : patient(data) ? 200 : 40;
+    for (let attempt = 0; attempt < maxAttempts && PROCESSING.includes(data.session.status); attempt += 1) {
       // Poll quickly until the first vocabulary task is committed, then use a
       // slower cadence while the remaining AI calls finish in the background.
       await new Promise(resolve => setTimeout(resolve, patient(data) ? 1500 : 300));

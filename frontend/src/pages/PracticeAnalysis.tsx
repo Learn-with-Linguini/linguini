@@ -15,8 +15,7 @@ import { type PracticeReview } from "../lib/api";
 import { countGroups, objectCounts } from "../lib/countGroups";
 import { initiallyHiddenObjectIds, sceneReviewPanels, type SceneReviewPanel } from "../lib/sceneReview";
 import { trackAction } from "../lib/analytics.ts";
-import type { LanguageItem, MissionChoices } from "../data/types";
-import { serializeMissionChoices, type MissionChoiceDraft } from "../lib/missionGaps";
+import type { LanguageItem } from "../data/types";
 
 const ATTRIBUTE_TYPES = ["color", "size", "shape", "material", "pattern", "state"] as const;
 const RELATION_OPTIONS = [
@@ -57,13 +56,6 @@ export function PracticeAnalysis() {
   const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>({});
   const [movingObjectId, setMovingObjectId] = useState<string | null>(null);
   const [panel, setPanel] = useState<AnalysisPanel>("objects");
-  const [missionChoices, setMissionChoices] = useState<MissionChoiceDraft>(() => ({
-    ownedObjectId: session?.missionChoices?.ownership?.sceneObjectId ?? null,
-    ownershipPretend: session?.missionChoices?.ownership?.pretend ?? false,
-    preferenceObjectIds: session?.missionChoices?.preference?.sceneObjectIds ?? [],
-    chosenObjectId: session?.missionChoices?.preference?.chosenObjectId ?? null,
-    reaction: session?.missionChoices?.preference?.reaction ?? null,
-  }));
   const [attributes, setAttributes] = useState<Record<string, Record<string, string>>>(() =>
     Object.fromEntries((session?.sceneObjects ?? []).map(item => [item.id,
       Object.fromEntries(Object.entries(item.attributes ?? {}).filter((entry): entry is [string, string] => entry[0] !== "quantity" && typeof entry[1] === "string"))])));
@@ -90,13 +82,6 @@ export function PracticeAnalysis() {
       Object.fromEntries(Object.entries(item.attributes ?? {}).filter((entry): entry is [string, string] => entry[0] !== "quantity" && typeof entry[1] === "string"))])));
     setAttributeObjectId(session.sceneObjects[0]?.id ?? "");
     setSceneTitle(session.session.sessionTitle ?? scene.title);
-    setMissionChoices({
-      ownedObjectId: session.missionChoices?.ownership?.sceneObjectId ?? null,
-      ownershipPretend: session.missionChoices?.ownership?.pretend ?? false,
-      preferenceObjectIds: session.missionChoices?.preference?.sceneObjectIds ?? [],
-      chosenObjectId: session.missionChoices?.preference?.chosenObjectId ?? null,
-      reaction: session.missionChoices?.preference?.reaction ?? null,
-    });
   }, [scene.title, session]);
   useEffect(() => {
     if (!pending && !movingObjectId) return;
@@ -189,10 +174,7 @@ export function PracticeAnalysis() {
     ...added.map(item => ({ id: item.id, label: item.label })),
   ]);
   const verifiedCounts = Object.fromEntries(groups.map(group => [group.key, String(group.objectIds.length)]));
-  const panels = sceneReviewPanels(session.provisionalMissionPlan);
-  const a0Choices = new Set((session.provisionalMissionPlan ?? [])
-    .filter(item => item.practiceLevel === "A0" && ["M04", "M05"].includes(item.missionId ?? ""))
-    .map(item => item.missionId));
+  const panels = sceneReviewPanels();
   const removeObjects = (objectIds: string[]) => {
     const ids = new Set(objectIds);
     const analysedIds = new Set(session.sceneObjects.map(item => item.id));
@@ -264,7 +246,6 @@ export function PracticeAnalysis() {
       objectAttributes: selectedAttributes,
       objectCounts: objectCounts(groups, verifiedCounts),
       repositionedObjects: Object.entries(positions).map(([id, anchorPoint]) => ({ id, anchorPoint })),
-      missionChoices: serializeMissionChoices(missionChoices, selectedIds) as MissionChoices | undefined,
     });
   };
   return <div className={`stack analysis-page${placementLabel ? " analysis-page--placing" : ""}`}>
@@ -285,8 +266,8 @@ export function PracticeAnalysis() {
         <div className="analysis-panel-tabs" role="tablist" aria-label="Scene analysis details">
           {panels.map(value => <button key={value} type="button" role="tab"
             aria-selected={panel === value} className={panel === value ? "is-active" : ""} onClick={() => setPanel(value)}>
-            {value[0].toUpperCase() + value.slice(1)}
-            <span>{value === "objects" ? relationObjects.length : value === "attributes" ? attributeCount : value === "relations" ? visibleRelations.length : Number(Boolean(missionChoices.ownedObjectId || missionChoices.preferenceObjectIds.length))}</span>
+            {value === "attributes" ? "Adjectives" : value[0].toUpperCase() + value.slice(1)}
+            <span>{value === "objects" ? relationObjects.length : value === "attributes" ? attributeCount : visibleRelations.length}</span>
           </button>)}
         </div>
       </div>
@@ -351,7 +332,7 @@ export function PracticeAnalysis() {
           </section>
         </section> : null}
         {panel === "attributes" ? <section className="analysis-results" aria-labelledby="analysis-attributes-title">
-          <div><h2 id="analysis-attributes-title">Visible attributes</h2><p className="muted">Correct only what you can clearly see in the photo.</p></div>
+          <div><h2 id="analysis-attributes-title">Visible adjectives</h2><p className="muted">Correct only what you can clearly see in the photo.</p></div>
           <Card plain className="analysis-word-card analysis-attribute-card">
             <label className="field__label" htmlFor="attribute-object">Object</label>
             <ComboBox id="attribute-object" value={activeAttributeObjectId}
@@ -409,60 +390,6 @@ export function PracticeAnalysis() {
               <Button type="submit" variant="secondary" disabled={practiceSaving || !relationText.trim() || subject === reference || !selectedIds.has(subject) || !selectedIds.has(reference) || visibleRelations.length >= 100}>Add connection</Button>
             </form> : null}
           </Card>
-        </section> : null}
-        {panel === "choices" ? <section className="analysis-results" aria-label="Your choices">
-          <h2>Your choices</h2>
-          {a0Choices.has("M04") ? <Card plain className="analysis-word-card">
-            <div className="stack-2"><h3>Which one is yours?</h3>
-              <div className="analysis-word-list">{relationObjects.map(item => <button key={item.id}
-                type="button" className={`choice${missionChoices.ownedObjectId === item.id ? " choice--selected" : ""}`}
-                aria-pressed={missionChoices.ownedObjectId === item.id} disabled={locked || practiceSaving}
-                onClick={() => setMissionChoices(value => ({ ...value, ownedObjectId: item.id }))}>
-                <span className="analysis-word-row__marker">{item.marker}</span> {humanizeTerm(item.label)}
-              </button>)}</div>
-              <label className="checkbox-row"><input type="checkbox" checked={missionChoices.ownershipPretend}
-                disabled={locked || practiceSaving || !missionChoices.ownedObjectId}
-                onChange={event => setMissionChoices(value => ({ ...value, ownershipPretend: event.target.checked }))} />
-                <span>It's pretend</span>
-              </label>
-              <Button variant="quiet" disabled={locked || practiceSaving}
-                onClick={() => setMissionChoices(value => ({ ...value, ownedObjectId: null, ownershipPretend: false }))}>Skip</Button>
-            </div>
-          </Card> : null}
-          {a0Choices.has("M05") ? <Card plain className="analysis-word-card">
-            <div className="stack-2"><h3>What would you pick?</h3>
-              <p className="muted">Choose one or two objects.</p>
-              <div className="analysis-word-list">{relationObjects.map(item => {
-                const chosen = missionChoices.preferenceObjectIds.includes(item.id);
-                const compareChoice = missionChoices.preferenceObjectIds.length === 2;
-                return <div className="spread" key={item.id}>
-                  <button type="button" className={`choice${chosen ? " choice--selected" : ""}`}
-                    aria-pressed={chosen} disabled={locked || practiceSaving}
-                    onClick={() => setMissionChoices(value => {
-                      const current = value.preferenceObjectIds;
-                      const ids = current.includes(item.id) ? current.filter(id => id !== item.id)
-                        : current.length < 2 ? [...current, item.id] : [current[1], item.id];
-                      return { ...value, preferenceObjectIds: ids,
-                        chosenObjectId: ids.length === 2 && ids.includes(value.chosenObjectId ?? "")
-                          ? value.chosenObjectId : null,
-                        reaction: ids.length === 1 ? value.reaction : null };
-                    })}>
-                    <span className="analysis-word-row__marker">{item.marker}</span> {humanizeTerm(item.label)}
-                  </button>
-                  {compareChoice && chosen ? <Button variant="quiet" disabled={locked || practiceSaving}
-                    onClick={() => setMissionChoices(value => ({ ...value, chosenObjectId: item.id, reaction: "like" }))}>
-                    {missionChoices.chosenObjectId === item.id ? "Chosen" : "Choose this"}
-                  </Button> : null}
-                </div>;
-              })}</div>
-              {missionChoices.preferenceObjectIds.length === 1 ? <div className="choice-grid">
-                <Button variant="secondary" disabled={locked || practiceSaving} onClick={() => setMissionChoices(value => ({ ...value, reaction: "like" }))}><span aria-hidden="true">♥ </span>Like</Button>
-                <Button variant="secondary" disabled={locked || practiceSaving} onClick={() => setMissionChoices(value => ({ ...value, reaction: "dislike" }))}><span aria-hidden="true">♡ </span>Don't like</Button>
-                <Button variant="quiet" disabled={locked || practiceSaving} onClick={() => setMissionChoices(value => ({ ...value, reaction: "skip" }))}>Skip</Button>
-              </div> : missionChoices.preferenceObjectIds.length === 2
-                ? <p className="small muted">Which one do you choose?</p> : null}
-            </div>
-          </Card> : null}
         </section> : null}
         {error || practiceError ? <p role="alert">{error ?? practiceError}</p> : null}
         <Button block className="analysis-continue" disabled={practiceSaving || !!placementLabel || (!kept.length && !added.length)} onClick={() => void proceed()}>

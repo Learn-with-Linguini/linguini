@@ -186,7 +186,7 @@ test("removing and restoring objects keeps photo numbers sequential without chan
 test("counts live in Objects and follow visible instances after switching details, removing and adding an object", async () => {
   await mount();
   const tabs = [...dom.window.document.querySelectorAll('[role="tab"]')];
-  assert.deepEqual(tabs.map(tab => tab.textContent?.replace(/\d/g, "")), ["Objects", "Attributes", "Relations"]);
+  assert.deepEqual(tabs.map(tab => tab.textContent?.replace(/\d/g, "")), ["Objects", "Adjectives", "Relations"]);
   const objects = dom.window.document.querySelector('[aria-labelledby="analysis-found-title"]');
   assert.ok(objects?.querySelector('[aria-labelledby="analysis-object-counts-title"]'));
   assert.deepEqual(counts(), { table: 1, cup: 2 });
@@ -209,7 +209,7 @@ test("counts live in Objects and follow visible instances after switching detail
 test("restoring removed objects keeps mission-hidden suggestions excluded from markers and counts", async () => {
   await mount({ ...detail(), suggestedSceneObjectIds: ["object-1", "object-2"],
     provisionalMissionPlan: [{ missionId: "M03", practiceLevel: "A1" }] });
-  assert.deepEqual([...dom.window.document.querySelectorAll('[role="tab"]')].map(tab => tab.textContent), ["Objects2"]);
+  assert.deepEqual([...dom.window.document.querySelectorAll('[role="tab"]')].map(tab => tab.textContent), ["Objects2", "Adjectives2", "Relations1"]);
   assertMarkers([1, 2]);
   assert.deepEqual(counts(), { cup: 2 });
   await click(dom.window.document.querySelector('[aria-label="Remove marker 1, cup"]'));

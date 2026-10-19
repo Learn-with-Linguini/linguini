@@ -3,7 +3,7 @@ import warnings
 from io import BytesIO
 from uuid import UUID, uuid4
 
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, ImageOps, UnidentifiedImageError
 
 from app.repositories.media_assets import MediaAssetConflictError, MediaAssetRepository
 from app.schemas.enums import MediaSource
@@ -98,7 +98,7 @@ class MediaAssetService:
                         )
                         if mime is None:
                             raise InvalidImageUpload("Use a JPEG, PNG or WebP image.")
-                        width, height = image.size
+                        width, height = ImageOps.exif_transpose(image).size
                         image.verify()
                     with Image.open(BytesIO(data)) as image:
                         image.load()

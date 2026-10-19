@@ -6,7 +6,7 @@ from collections import OrderedDict
 from io import BytesIO
 from urllib.parse import urlsplit
 
-from PIL import Image
+from PIL import Image, ImageOps
 
 from app.services.image_storage import ImageStorage, UploadObjectMissing
 
@@ -71,6 +71,9 @@ class ImageDerivatives:
     @staticmethod
     def _resize(data: bytes, width: int) -> bytes:
         with Image.open(BytesIO(data)) as image:
+            # Phone cameras commonly store portrait orientation in EXIF. Bake it
+            # into the derivative so the display coordinates match grounding.
+            image = ImageOps.exif_transpose(image)
             if image.mode not in ("RGB", "L"):
                 background = Image.new("RGB", image.size, (255, 255, 255))
                 if image.mode in ("RGBA", "LA") or (
