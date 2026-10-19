@@ -21,6 +21,8 @@ export function SiteFooter() {
           <Link href="/#pricing">Pricing</Link>
           <Link href="/learn/spanish">Learn Spanish</Link>
           <Link href="/learn/french">Learn French</Link>
+          <Link href="/learn/german">Learn German</Link>
+          <Link href="/learn/korean">Learn Korean</Link>
         </nav>
         <nav aria-label="Account" className={styles.col}>
           <h2 className={styles.heading}>Account</h2>

@@ -26,9 +26,9 @@ export const posts: Post[] = [
     slug: "launch-week",
     title: "How we’re launching Linguini",
     summary:
-      "Monday 19 October. Our Product Hunt listing, who we’re telling, the launch-day shifts and how we plan to keep the people who show up.",
+      "Tuesday 20 October, 12:01am PT. Our Product Hunt listing, who we’re telling, the launch-day shifts and how we plan to keep the people who show up.",
     category: "Company",
-    date: "2026-10-19",
+    date: "2026-10-20",
     readMinutes: 8,
     cover: { kind: "video", src: "/blog/launch/cover-loop.mp4", poster: "/blog/launch/cover-loop-poster.jpg" },
   },
@@ -38,7 +38,7 @@ export const posts: Post[] = [
     summary:
       "Free for a daily photo, Plus when one a day isn’t enough. How we priced Linguini around learners, competitors and the AI cost of every lesson.",
     category: "Company",
-    date: "2026-09-24",
+    date: "2026-10-18",
     readMinutes: 7,
     cover: { kind: "video", src: "/blog/business-model.mp4", poster: "/blog/business-model-poster.jpg" },
   },
@@ -48,7 +48,7 @@ export const posts: Post[] = [
     summary:
       "A word sticks when it belongs to a moment you lived. The idea behind Linguini’s photo lessons, and what happens inside one, step by step and cent by cent.",
     category: "Insights",
-    date: "2026-09-24",
+    date: "2026-10-17",
     readMinutes: 6,
     cover: { kind: "photo", scene: "golden-gate-bridge", words: ["bridge", "sea", "tower"] },
   },
@@ -58,7 +58,7 @@ export const posts: Post[] = [
     summary:
       "What each app teaches, what its free plan gives you and what a year costs, side by side. Plus the cases where Linguini is the wrong pick.",
     category: "Insights",
-    date: "2026-09-20",
+    date: "2026-10-17",
     readMinutes: 4,
     cover: { kind: "photo", scene: "desk-flatlay", words: ["laptop", "phone", "notebook"] },
   },

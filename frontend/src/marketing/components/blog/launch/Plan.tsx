@@ -47,13 +47,13 @@ export function Phases() {
     <figure className={p.fig}>
       <div className={p.phases}>
         <section className={p.phase} data-tone="soft">
-          <small>Now to 18 October</small>
+          <small>Now to 19 October</small>
           <h4>Soft launch</h4>
           <p><b>10 to 20 beta testers</b>, by invitation. People learning Spanish or French who will tell us what breaks.</p>
         </section>
         <span className={p.phaseArrow} aria-hidden="true"><ArrowRight size={22} /></span>
         <section className={p.phase} data-tone="open">
-          <small>From 19 October</small>
+          <small>From 20 October</small>
           <h4>Open to everyone</h4>
           <p><b>No waitlist.</b> The browser demo needs no account, and anyone can sign up for the app’s free daily lesson.</p>
         </section>

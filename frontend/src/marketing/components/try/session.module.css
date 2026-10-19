@@ -965,6 +965,25 @@
     flex-direction: column;
     gap: 12px;
   }
+
+  .langToggle {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    width: 100%;
+    max-width: 320px;
+    margin-inline: auto;
+    border-radius: 20px;
+    padding: 6px;
+  }
+
+  .langOption {
+    justify-content: center;
+    width: 100%;
+    min-height: 40px;
+    padding: 0 10px 0 6px;
+    font-size: 14px;
+  }
 }
 
 @media (max-width: 420px) {

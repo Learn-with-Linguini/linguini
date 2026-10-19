@@ -125,7 +125,9 @@ export default function LearnLanguagePage() {
                             <td className={styles.num}>{index + 1}</td>
                             <th scope="row" lang={lang}>
                               {word[lang].word}
-                              <small className={styles.gender}>{word[lang].gender}</small>
+                              {word[lang].gender && word[lang].gender !== "none" ? (
+                                <small className={styles.gender}>{word[lang].gender}</small>
+                              ) : null}
                             </th>
                             <td>{word.en}</td>
                             <td className={styles.ipa}>/{word[lang].ipa}/</td>
@@ -142,7 +144,7 @@ export default function LearnLanguagePage() {
             </ul>
             <p className={styles.footnote}>
               Pronunciation is a broad IPA transcription of the noun without its article
-              ({lang === "es" ? "Castilian Spanish" : "standard Parisian French"}). In the app every word also has audio.
+              ({lang === "es" ? "Castilian Spanish" : lang === "fr" ? "standard Parisian French" : lang === "de" ? "Standard German" : "Standard Korean"}). In the app every word also has audio.
             </p>
           </div>
         </section>

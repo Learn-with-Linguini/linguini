@@ -131,7 +131,7 @@ def date_parts():
     txt(ImageDraw.Draw(first), (74, 32), "Product Hunt", 42, INK, anchor="lm")
     parts = [(first, 72, 560)]
     x = 72
-    for label in ("Sat 17 Oct", "·", "3:01pm SGT"):
+    for label in ("Tue 20 Oct", "·", "12:01am PT"):
         f = font(34)
         w = int(f.getlength(label)) + 4
         im = Image.new("RGBA", (w, 50))

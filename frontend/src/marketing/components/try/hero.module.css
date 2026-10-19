@@ -337,14 +337,13 @@
   }
 
   .ctas {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    justify-content: stretch;
+    display: flex;
+    justify-content: center;
     width: 100%;
   }
 
   .ctas > :global(.btn) {
-    width: 100%;
+    width: auto;
   }
 }
 

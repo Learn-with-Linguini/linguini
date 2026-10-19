@@ -35,7 +35,7 @@ export function LaunchCampaign() {
         That’s why launch day runs in shifts.
       </p>
       <p>
-        We chose <strong>Monday 19 October</strong>: the start of Product Hunt’s week, so the listing gets the longest
+        We chose <strong>Tuesday 20 October</strong>: the start of Product Hunt’s week, so the listing gets the longest
         runway on the weekly leaderboard, and the middle of the week has about three times as many launches. A small
         team gets more attention at the quieter edges.
       </p>

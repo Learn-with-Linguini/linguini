@@ -4,8 +4,8 @@
  */
 
 export const LAUNCH = {
-  date: "2026-10-19",
-  pacific: "Mon 19 Oct, 00:01 PDT",
+  date: "2026-10-20",
+  pacific: "Tue 20 Oct, 00:01 PDT",
   landing: "www.learnwithlinguini.com",
 };
 
