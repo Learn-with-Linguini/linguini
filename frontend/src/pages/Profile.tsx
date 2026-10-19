@@ -15,7 +15,6 @@ import { useAppState } from "../state/useAppState";
 import { useAuth } from "../state/Auth";
 import { MissionBadges } from "../components/MissionBadges";
 import { ChefOfTheDay } from "../components/ChefOfTheDay";
-import { GameResources } from "../components/GameResources";
 
 const socialIcons = {
   instagram: InstagramIcon,
@@ -159,11 +158,6 @@ export function Profile() {
             ? "Photo lessons and friend challenges are free to start during the beta."
             : tier.allowance}</p>
         </Card>
-      </section>
-
-      <section className="profile-section" aria-labelledby="profile-basil-heading">
-        <h2 id="profile-basil-heading">Your Basil Points</h2>
-        <GameResources shop />
       </section>
 
       <MissionBadges />

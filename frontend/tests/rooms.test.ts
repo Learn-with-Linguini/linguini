@@ -63,7 +63,6 @@ test("guesser snapshots discard sender-only answers, premature results and priva
   assert.equal(safe.inviteCode, null);
   assert.equal(raw.currentTurn!.targetObjectKey, "k1", "sanitizing must not mutate the response fixture");
 });
-
 test("starting requires two ready participants and two to four ready photos", () => {
   const room = { ...fixture(), status: "lobby" as const, currentTurn: null };
   assert.equal(canStartRoom(room), true);
@@ -95,7 +94,6 @@ async function bundle() {
     'export { QueryClient, QueryClientProvider } from "@tanstack/react-query";',
     'export { AppStateContext } from "../src/state/context";',
     'export { Room } from "../src/pages/Room";', 'export { Rooms } from "../src/pages/Rooms";',
-    'export { GameResources } from "../src/components/GameResources";',
     'export { default as App } from "../src/App";',
     'export { AuthProvider } from "../src/state/Auth";',
   ].join("\n"));
@@ -175,7 +173,7 @@ async function click(label: string) {
     assert.equal(element.disabled, false, `${label} should be usable`);
     element.dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true }));
   });
-  await waitFor(() => assert.doesNotMatch(text(), /Saving your action…|Saving your jar…|Creating your room…|Joining your friend…/));
+  await waitFor(() => assert.doesNotMatch(text(), /Saving your action…|Creating your room…|Joining your friend…/));
 }
 async function mount(which: "Room" | "Rooms" = "Room", source = surface) {
   const container = dom.window.document.createElement("div");
@@ -238,7 +236,6 @@ test("a returning host recovers the invitation from an owner-authorized lobby sn
   assert.ok([...dom.window.document.querySelectorAll<HTMLInputElement>("input[readonly]")].some(input => input.value === "x".repeat(32)));
   await view.close();
 });
-
 test("a peer sees room progress after the host starts, without needing a local mutation", async context => {
   writes.length = 0;
   readPaths.length = 0;
@@ -279,7 +276,6 @@ test("a peer sees room progress after the host starts, without needing a local m
   });
   await view.close();
 });
-
 test("a lost guess response retries the same key and revision without optimistic credit", async () => {
   writes.length = 0;
   snapshot = fixture();
@@ -406,27 +402,3 @@ test("existing invitation links preserve their code and enter the friend room", 
   await view.close();
 });
 
-test("the accent shop keeps the old balance until accepted and safely retries a lost purchase reply", async () => {
-  writes.length = 0;
-  resourceSnapshot = { ...resourceSnapshot, basilLeaves: 42 };
-  const container = dom.window.document.createElement("div");
-  dom.window.document.body.replaceChildren(container);
-  const root = surface.createRoot(container);
-  const client = new surface.QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
-  const close = registerCleanup(async () => {
-    try { await surface.act(async () => root.unmount()); } finally { client.clear(); }
-  });
-  await surface.act(async () => root.render(surface.h(surface.QueryClientProvider, { client },
-    surface.h(surface.AppStateContext.Provider, { value: state }, surface.h(surface.GameResources, { shop: true })))));
-  await waitFor(() => assert.ok(button("Get accent")));
-  replies.push(() => Response.json({ detail: { message: "Purchase reply interrupted" } }, { status: 500 }));
-  await click("Get accent");
-  assert.match(text(), /42 Basil available/);
-  replies.push(() => Response.json({ ...resourceSnapshot, basilLeaves: 22, appearance: "herb", ownedAppearances: ["default", "herb"] }));
-  await click("Retry purchase");
-  assert.deepEqual(writes[0].body, writes[1].body);
-  assert.deepEqual(Object.keys(writes[1].body).sort(), ["appearance", "commandId"]);
-  assert.match(text(), /22 Basil available/);
-  assert.equal(dom.window.document.querySelectorAll(".game-resources--herb button:disabled").length, 1);
-  await close();
-});

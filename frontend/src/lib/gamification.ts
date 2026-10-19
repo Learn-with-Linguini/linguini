@@ -34,13 +34,3 @@ export const getChefStandings = (signal?: AbortSignal) => request<ChefStandings>
 export const setChefParticipation = (participating: boolean) =>
   write<ChefStandings>("/api/v1/me/chef-of-the-day/preferences", "PUT", { participating });
 export const basilEarnedText = (amount: number | undefined) => amount && amount > 0 ? `+${amount} Basil earned` : null;
-
-export function jarMessage(batch: Pick<MissionBatch, "percent" | "status">): string {
-  if (batch.status === "review") return "A little more practice for this recipe.";
-  if (batch.percent >= 100) return "This mission is ready!";
-  if (batch.percent >= 90) return "Almost ready to serve!";
-  if (batch.percent >= 75) return "Simmering nicely!";
-  if (batch.percent >= 50) return "You’re cooking!";
-  if (batch.percent >= 25) return "A tasty start!";
-  return "Add your first ingredient.";
-}
