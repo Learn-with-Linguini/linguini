@@ -15,6 +15,7 @@ import { useVocabularyQuery } from "../state/queries";
 import { WalkthroughCoachmark } from "../components/WalkthroughCoachmark";
 import { FIRST_LESSON_WALKTHROUGH_VERSION, needsFirstLessonWalkthrough } from "../lib/walkthrough";
 import { learningProgress } from "../lib/practiceTasks";
+import { trackAction } from "../lib/analytics.ts";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -78,6 +79,7 @@ export function Home() {
   const percent = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
 
   const continuePractice = async () => {
+    trackAction("home_continue_practice_clicked");
     setContinueError(null);
     try {
       const fresh = await queryClient.fetchQuery({ queryKey: queryKeys.activeSession(profileId), queryFn: () => getActivePractice(), staleTime: 0 });
@@ -114,7 +116,7 @@ export function Home() {
             {resume && total > 0 ? <div className="home-next-step__progress-row"><div className="home-next-step__progress" role="progressbar" aria-label="Practice progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={percent}><span style={{ width: `${percent}%` }} /></div><strong>{percent}%</strong></div> : null}
             {resume ? <MissionProgress sessionId={resume.session.id} /> : null}
             {continueError ? <p className="home-next-step__error" role="alert">{continueError}</p> : null}
-            <div ref={beginPracticeRef}><Button onClick={() => resume ? void continuePractice() : navigate("/practice")}><PlayIcon size={21} /> {resume ? "Continue practice" : "Begin a new practice"}</Button></div>
+            <div ref={beginPracticeRef}><Button onClick={() => { if (resume) void continuePractice(); else { trackAction("home_begin_practice_clicked"); navigate("/practice"); } }}><PlayIcon size={21} /> {resume ? "Continue practice" : "Begin a new practice"}</Button></div>
           </div>
         </section>
 
@@ -122,11 +124,11 @@ export function Home() {
           <div className="home-section-heading"><h2 id="home-explore-title">Continue exploring</h2></div>
           <div className="home-explore__rail-wrap">
             <div ref={exploreRailRef} className="home-explore__rail">
-              <button className="home-explore-card" type="button" onClick={() => navigate("/vocabulary")}>
+              <button className="home-explore-card" type="button" onClick={() => { trackAction("home_explore_vocabulary_clicked"); navigate("/vocabulary"); }}>
                 <div className="home-explore-card__image">{revisitScene ? <MediaImage assetId={revisitScene.mediaAssetId} title={revisitScene.title} width={640} lazy /> : <img src="/photos/cafe-interior.jpg" alt="" />}</div>
                 <div className="home-explore-card__body"><span className="home-tag home-tag--revisit"><BookIcon size={14} /> Revisit</span><strong>{revisitScene?.title ?? "Your vocabulary"}</strong><span>{revisitScene ? `${revisitScene.count} ${revisitScene.count === 1 ? "word" : "words"} to practise` : "Review the words you've found"}</span></div>
               </button>
-              <button className="home-explore-card" type="button" onClick={() => navigate("/ispy")}>
+              <button className="home-explore-card" type="button" onClick={() => { trackAction("home_explore_ispy_clicked"); navigate("/ispy"); }}>
                 <div className="home-explore-card__image"><img src="/scenes/grocery-store.jpg" alt="A colourful grocery store scene" /></div>
                 <div className="home-explore-card__body"><span className="home-tag home-tag--play"><EyeIcon size={14} /> Quick play</span><strong>I-Spy challenge</strong><span>Test what you can spot</span></div>
               </button>

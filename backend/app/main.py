@@ -3,6 +3,7 @@
 import logging
 from contextlib import asynccontextmanager
 
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -15,6 +16,9 @@ from app.config import get_allowed_origins
 from app.database import create_database_engine
 from app.services.auth import SupabaseTokenVerifier, load_auth_settings
 from app.services.background import ThreadPoolBackgroundRunner
+
+load_dotenv(".env.local")
+load_dotenv(".env")
 
 logger = logging.getLogger(__name__)
 server_logger = logging.getLogger("uvicorn.error")

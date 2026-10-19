@@ -8,6 +8,7 @@ import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { useVocabularyQuery } from "../state/queries";
 import { getPracticeSummary } from "../lib/api";
+import { trackAction } from "../lib/analytics.ts";
 import { BasilIcon } from "../components/icons";
 import { MissionProgress } from "../components/MissionProgress";
 import { learningFeedback } from "../lib/learningFeedback";
@@ -43,6 +44,16 @@ export function SessionSummary() {
     }, 900);
     return () => clearTimeout(timer);
   }, [completed, data, isMilestone, completedLessons]);
+
+  useEffect(() => {
+    if (data) {
+      trackAction("session_summary_viewed", {
+        basilEarned: data.basilEarned,
+        wordsLearnedCount: data.learnedVocabularyIds.length,
+        completedLessonsCount: data.completedLessonsCount,
+      });
+    }
+  }, [data]);
 
   const revisit = scene.items.filter(item => data?.learnedVocabularyIds.includes(
     session?.sceneObjects.find(object => object.id === item.id)?.vocabularyItemId ?? ""
@@ -80,7 +91,7 @@ export function SessionSummary() {
       </div></Card>
     </> : null}
     <div className="stack-2">
-      <Button variant="quiet" block onClick={() => navigate("/home")}>Back home</Button>
+      <Button variant="quiet" block onClick={() => { trackAction("summary_back_home_clicked"); navigate("/home"); }}>Back home</Button>
     </div>
 
     <HelpImproveModal

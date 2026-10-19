@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui";
+import { trackAction } from "../lib/analytics.ts";
 import { parseRecoveryUrlError, validatePasswordReset } from "../lib/authMessages.ts";
 import { isSupabaseConfigured, supabase } from "../lib/supabase.ts";
 
@@ -90,6 +91,7 @@ export function ResetPassword() {
         return;
       }
       setSuccess(true);
+      trackAction("password_reset_completed");
 
       // Sign out of the single-use recovery session so subsequent link clicks are rejected
       await supabase.auth.signOut({ scope: "local" }).catch(() => {});

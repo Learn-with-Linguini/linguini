@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { submitLessonReport, type LessonReportIssue } from "../lib/api";
+import { trackAction } from "../lib/analytics.ts";
 import { Button, Feedback, IconButton } from "./ui";
 import { CloseIcon } from "./icons";
 
@@ -62,6 +63,7 @@ export function ReportIssueLink({
           .filter((field): field is [string, string] => Boolean(field[1]))
           .map(([fieldLabel, value]) => ({ label: fieldLabel, value })),
       });
+      trackAction("lesson_issue_reported", { reportType, issue });
       setSent(true);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "We could not send your report. Please try again.");

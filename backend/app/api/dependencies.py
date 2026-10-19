@@ -55,12 +55,19 @@ from app.services.practice import PracticeService
 from app.services.room_photos import RoomPhotoPreparer
 from app.services.rooms import RoomService
 from app.services.scenes import SceneService
+from app.services.stripe_service import StripeService
 from app.services.tasks import TaskService
 from app.services.users import UserService
 
 
 def get_user_repository(request: Request) -> UserRepository:
     return PostgresUserRepository(request.app.state.database_engine)
+
+
+def get_stripe_service(
+    repository: Annotated[UserRepository, Depends(get_user_repository)],
+) -> StripeService:
+    return StripeService(repository)
 
 
 def get_journal_repository(

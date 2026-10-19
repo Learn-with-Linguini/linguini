@@ -10,6 +10,7 @@ import { ShareBar } from "../ShareBar";
 import { JournalCard } from "../product/JournalCard";
 import { PhotoMarkers } from "../product/PhotoMarkers";
 import { WordCard } from "../product/WordCard";
+import { trackAction } from "../../../lib/analytics";
 import { ArrowLeft, ArrowRight, Basil, Check, Close, Eye, Refresh, Speaker } from "../icons";
 import { LanguageToggle } from "./LanguageToggle";
 import styles from "./session.module.css";
@@ -74,6 +75,10 @@ export function Session({ scene, lang, onLangChange, onExit }: SessionProps) {
 
   function go(next: Stage, gained = 0) {
     if (gained) setXp(value => value + gained);
+    trackAction("demo_stage_viewed", { stage: next, xpGained: gained });
+    if (next === "done") {
+      trackAction("demo_completed", { xp: xp + gained, lang });
+    }
     setStage(next);
     setFocusId(null);
     requestAnimationFrame(() => {

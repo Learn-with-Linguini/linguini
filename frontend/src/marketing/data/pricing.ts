@@ -5,7 +5,7 @@ export const pricing = {
   beta: [
     "Unlimited photo lessons every day during the public beta",
     "Learn from your own photos or ready-made scenes",
-    "Spanish and French, from English",
+    "Spanish, French and German, plus beginner Korean, from English",
     "Word cards, I-Spy and sentence games",
     "Vocabulary progress, journals, streaks and Basil",
     "No payment card required",
@@ -19,7 +19,7 @@ export const pricing = {
     "One new photo lesson every day",
     "One journal page a day",
     "Unlimited replays of our curated scenes",
-    "Spanish and French, from English",
+    "Spanish, French and German, plus beginner Korean, from English",
     "Word cards, I-Spy and sentence games",
     "Streaks, Basil and your pasta avatar",
   ],

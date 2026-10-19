@@ -9,6 +9,7 @@ import type { PendingRoomCommand, RoomObject, RoomPhoto, RoomPhotoReview, RoomRe
 import { friendlyError, queryKeys } from "../lib/queryKeys";
 import { useAppState } from "../state/useAppState";
 import { Button, Card, Feedback } from "../components/ui";
+import { trackAction } from "../lib/analytics.ts";
 import { ImageUpload } from "../components/ImageUpload";
 import { GameResources } from "../components/GameResources";
 import { useBackAction } from "../components/BackAction";
@@ -107,6 +108,7 @@ function RoomSession({ roomId }: { roomId: string }) {
       if (!mounted.current) return false;
       const next = await sendRoomCommand(roomId, command);
       if (!mounted.current) return false;
+      trackAction("room_action_executed", { intent });
       if (next.meId !== owner) throw new Error("This room changed accounts. Return home and open it again.");
       client.setQueryData<RoomSnapshot>(key, previous => previous && previous.revision > next.revision ? previous : next);
       pending.current = null;

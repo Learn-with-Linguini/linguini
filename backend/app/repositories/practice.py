@@ -23,5 +23,9 @@ class ActiveSessionLimitReachedError(PracticeConflictError):
     pass
 
 
+class DailyLessonLimitReachedError(PracticeConflictError):
+    """The user has reached their tier's daily photo lesson limit."""
+
+
 class ClueNamesTargetError(Exception):
     """A described I-Spy clue uses the word for the object it describes."""

@@ -35,14 +35,14 @@ export type XPostData = { text: string; image?: { src: string; alt: string } };
 
 export const xThread: XPostData[] = [
   {
-    text: "Linguini is live on Product Hunt today 🍝\n\nPick a photo of a street, a café or a desk. Linguini pins the Spanish or French words onto it, you play a round of I-Spy with them, and the lesson ends as a page in your journal.\n\nIt’s early. Tell us where you got stuck 👇",
+    text: "Linguini is live on Product Hunt today 🍝\n\nPick a photo of a street, a café or a desk. Linguini pins the words onto it in Spanish, French, German or beginner Korean, you play a round of I-Spy with them, and the lesson ends as a page in your journal.\n\nIt’s early. Tell us where you got stuck 👇",
     image: { src: `${IMG}/launch-card-1200x630.jpg`, alt: "Link card: Live on Product Hunt today. Point at your day. Learn the words." },
   },
   {
     text: "Why photos? A word sticks when it belongs to a place you remember. A flashcard has no place. Your camera roll is full of them.",
   },
   {
-    text: "Built by a small student team at NUS. Spanish and French for now, free to try in your browser, nothing to install.\n\nThe listing, with the 50-second explainer: [PH_POST_URL]",
+    text: "Built by a small student team at NUS. The app supports Spanish, French, German and beginner Korean, runs in your browser and needs nothing installed.\n\nThe listing, with the 50-second explainer: [PH_POST_URL]",
   },
 ];
 
@@ -53,7 +53,7 @@ export const instagram = {
     { src: `${IMG}/countdown-1080x1080.jpg`, alt: "3 days to launch, over a hillside street labelled la casa, el coche and la flor." },
   ],
   caption:
-    "Today’s lesson is on your camera roll 📷\n\nLinguini is live on Product Hunt. Pick a photo, learn the words inside it in Spanish or French, play a round of I-Spy and keep the day as a journal page.\n\nLink in bio. What’s the first thing you’d photograph?",
+    "Today’s lesson is on your camera roll 📷\n\nLinguini is live on Product Hunt. Pick a photo, learn the words inside it in Spanish, French, German or beginner Korean, play a round of I-Spy and keep the day as a journal page.\n\nLink in bio. What’s the first thing you’d photograph?",
   tags: "#learnspanish #learnfrench #languagelearning #studygram #producthunt",
   story: [
     { src: `${IMG}/ig-story-countdown-1080x1920.jpg`, alt: "Story 1: 3 days to launch." },
@@ -64,7 +64,7 @@ export const instagram = {
 export const linkedin = {
   author: "Madrid Lim",
   role: "Co-maker of Linguini · NUS Computing",
-  text: "We put Linguini on Product Hunt today.\n\nIt started as a CS3216 project with a simple bet: vocabulary lists are easy to forget, but the places you walk through every day are not. So Linguini starts with a photo, pins Spanish or French words onto it, and ends each lesson as a journal page.\n\nThe browser demo needs no account, and the app turns a photo you take into a lesson, with AI finding the words in it.\n\nIf you teach, learn or build things, I’d value one honest comment on the listing: which step would make you come back tomorrow?",
+  text: "We put Linguini on Product Hunt today.\n\nIt started as a CS3216 project with a simple bet: vocabulary lists are easy to forget, but the places you walk through every day are not. So Linguini starts with a photo, pins words onto it in Spanish, French, German or beginner Korean, and ends each lesson as a journal page.\n\nThe browser demo needs no account and currently showcases Spanish and French. The app turns a photo you take into a lesson, with AI finding the words in it.\n\nIf you teach, learn or build things, I’d value one honest comment on the listing: which step would make you come back tomorrow?",
   image: { src: `${IMG}/linkedin-1584x396.jpg`, alt: "Your photo is the lesson. Launching on Product Hunt, Sat 17 Oct." },
 };
 
@@ -77,7 +77,7 @@ export const reddit = {
 
 export const telegram = {
   group: "NUS CS3216 / Computing friends",
-  text: "hey all! our CS3216 app Linguini just went up on Product Hunt 🍝 you pick a photo and learn the Spanish or French words in it. takes a few minutes in the browser. if you try it, drop a comment on what confused you 🙏",
+  text: "hey all! our CS3216 app Linguini just went up on Product Hunt 🍝 you pick a photo and learn the words in Spanish, French, German or beginner Korean. takes a few minutes in the browser. if you try it, drop a comment on what confused you 🙏",
   image: { src: `${IMG}/launch-card-1200x630.jpg`, alt: "Launch-day card: Live on Product Hunt today." },
 };
 

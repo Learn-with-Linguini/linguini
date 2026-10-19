@@ -39,6 +39,11 @@ users = Table(
     Column("onboarding_completed", Boolean, nullable=False),
     Column("walkthrough_version_seen", Integer, nullable=False),
     Column("tier", String(16), nullable=False),
+    Column("utm_source", String(100)),
+    Column("utm_medium", String(100)),
+    Column("utm_campaign", String(100)),
+    Column("utm_content", String(100)),
+    Column("utm_term", String(100)),
     Column("created_at", DateTime(timezone=True), nullable=False),
     Column("updated_at", DateTime(timezone=True), nullable=False),
     schema="public",
@@ -127,3 +132,20 @@ class PostgresUserRepository:
                 return User.model_validate(dict(row)) if row is not None else None
         except (SQLAlchemyError, ValidationError) as exc:
             raise UserRepositoryError("Unable to save user.") from exc
+
+    def set_tier(self, user_id: UUID, tier: str) -> User | None:
+        try:
+            with self.engine.begin() as connection:
+                row = (
+                    connection.execute(
+                        update(users)
+                        .where(users.c.id == user_id)
+                        .values(tier=tier)
+                        .returning(users)
+                    )
+                    .mappings()
+                    .one_or_none()
+                )
+                return User.model_validate(dict(row)) if row is not None else None
+        except (SQLAlchemyError, ValidationError) as exc:
+            raise UserRepositoryError("Unable to update user tier.") from exc

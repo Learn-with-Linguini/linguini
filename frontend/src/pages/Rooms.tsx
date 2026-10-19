@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError, proficiencyLabel } from "../lib/api";
+import { trackAction } from "../lib/analytics.ts";
 import { acceptFriend, createRoom, getFriends, getRooms, inviteFriend, joinRoom, removeFriend, roomActionLabel, roomDeadline, roomMatchesProfile, roomQueryKeys } from "../lib/rooms";
 import type { FriendInvitation, RoomSnapshot } from "../lib/rooms";
 import { friendlyError } from "../lib/queryKeys";
@@ -61,6 +62,7 @@ function RoomLobby() {
       if (command.kind === "create" || command.kind === "join") {
         const entry = command.kind === "create" ? await createRoom(command.profileId, command.commandId, command.friendUserId)
           : await joinRoom(command.profileId, command.code, command.commandId);
+        trackAction(command.kind === "create" ? "room_created" : "room_joined");
         if (!mounted.current) return;
         if (entry.room.meId !== owner) throw new Error("This challenge changed accounts. Open it again from your challenges.");
         client.setQueryData(roomQueryKeys.snapshot(owner, profile, entry.room.id), entry.room);
@@ -68,10 +70,12 @@ function RoomLobby() {
         navigate(`/rooms/${encodeURIComponent(entry.room.id)}`, { state: { inviteCode: entry.inviteCode ?? null } });
       } else if (command.kind === "inviteFriend") {
         const invitation = await inviteFriend(command.commandId);
+        trackAction("room_friend_invited");
         if (!mounted.current) return;
         setInvitation(invitation);
       } else if (command.kind === "acceptFriend") {
         const friend = await acceptFriend(command.code, command.commandId);
+        trackAction("room_friend_accepted");
         if (!mounted.current) return;
         setFriendCode("");
         setParams(current => { current.delete("friendCode"); return current; }, { replace: true });
@@ -79,6 +83,7 @@ function RoomLobby() {
         void client.invalidateQueries({ queryKey: roomQueryKeys.friends(owner, profile) });
       } else {
         await removeFriend(command.friendUserId!);
+        trackAction("room_friend_removed");
         if (!mounted.current) return;
         setNotice("Friend removed. Your existing challenges are still saved.");
         void client.invalidateQueries({ queryKey: roomQueryKeys.friends(owner, profile) });

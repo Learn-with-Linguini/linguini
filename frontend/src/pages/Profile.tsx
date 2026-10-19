@@ -7,6 +7,7 @@ import { HelpImproveModal } from "../components/HelpImproveModal";
 import { languages } from "../config/languages";
 import { deleteCurrentAccount } from "../lib/api";
 import { accountTiers } from "../lib/accountTiers";
+import { trackAction } from "../lib/analytics.ts";
 import { validatePasswordReset } from "../lib/authMessages.ts";
 import { SOCIAL_LINKS_LIST } from "../config/social";
 import { supabase } from "../lib/supabase.ts";
@@ -56,6 +57,7 @@ export function Profile() {
   };
 
   const logOut = async () => {
+    trackAction("logout_clicked");
     await signOut();
     navigate("/", { replace: true });
   };
@@ -65,6 +67,7 @@ export function Profile() {
     setDeleting(true);
     setDeleteError("");
     try {
+      trackAction("account_deleted");
       await deleteCurrentAccount();
       localStorage.removeItem("linguini-avatar");
       await clearDeletedAccountSession();
@@ -105,6 +108,7 @@ export function Profile() {
         }
         return;
       }
+      trackAction("profile_password_changed");
       setPasswordSuccess("Password updated successfully!");
       setNewPassword("");
       setConfirmPassword("");
@@ -359,6 +363,7 @@ export function Profile() {
                   rel="noopener noreferrer"
                   className="profile-social-item"
                   aria-label={`Follow Linguini on ${label}`}
+                  onClick={() => trackAction("social_link_clicked", { platform })}
                 >
                   <span className="profile-social-icon">
                     <Icon size={20} />
