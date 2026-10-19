@@ -14,8 +14,6 @@ import { supabase } from "../lib/supabase.ts";
 import { useAppState } from "../state/useAppState";
 import { useAuth } from "../state/Auth";
 import { MissionBadges } from "../components/MissionBadges";
-import { ChefOfTheDay } from "../components/ChefOfTheDay";
-import { GameResources } from "../components/GameResources";
 
 const socialIcons = {
   instagram: InstagramIcon,
