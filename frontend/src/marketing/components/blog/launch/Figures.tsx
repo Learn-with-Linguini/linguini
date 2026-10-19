@@ -1,10 +1,9 @@
 
 import { useEffect, useRef, useState } from "react";
-import { Download } from "../../icons";
 import { useInView } from "../story/hooks";
-import { banners, productHunt } from "./content";
+import { productHunt } from "./content";
 import l from "./launch.module.css";
-import { Img, ratio } from "./Img";
+import { Img } from "./Img";
 
 function useInViewRef<T extends HTMLElement>() {
   const ref = useRef<T>(null);
@@ -76,7 +75,7 @@ export function ProductHuntListing() {
   );
 }
 
-/* ---------- The Product Hunt day on two clocks ---------- */
+/* ---------- The Product Hunt day on one clock ---------- */
 
 const ticks = [0, 3, 6, 9, 12, 15, 18, 21, 24];
 const pad = (n: number) => String(n % 24).padStart(2, "0");
@@ -98,41 +97,14 @@ export function LaunchClock() {
             <b>One Product Hunt day</b>
           </div>
           <div className={l.usBand} style={{ left: `${(5 / 24) * 100}%`, width: `${(12 / 24) * 100}%` }}>
-            <span>US daytime, our night</span>
+            <span>US daytime</span>
           </div>
           <span className={l.sweep} aria-hidden="true" />
         </div>
-
-        <div className={l.clockRow}>
-          <span className={l.clockLabel}>Singapore</span>
-          <div className={l.ticks}>
-            {ticks.map(h => <span key={h} style={{ left: `${(h / 24) * 100}%` }}>{pad(h + 15)}:00</span>)}
-          </div>
-        </div>
       </div>
       <figcaption>
-        Midnight to midnight in San Francisco is 3:01pm Saturday to 2:59pm Sunday in Singapore.
+        Product Hunt’s leaderboard day runs midnight to midnight, Pacific time.
       </figcaption>
     </figure>
-  );
-}
-
-/* ---------- Banners ---------- */
-
-export function BannerWall() {
-  const [ref, inView] = useInViewRef<HTMLUListElement>();
-  return (
-    <ul ref={ref} className={l.wall} data-inview={inView || undefined}>
-      {banners.map((b, i) => (
-        <li key={b.src} style={{ ["--i" as string]: i, ["--r" as string]: ratio(b.src) }}>
-          <a href={b.src} download className={l.wallLink}>
-            <Img src={b.src} alt={`${b.name} banner`} loading="lazy" />
-            <span className={l.wallSave}><Download size={16} /> Save</span>
-          </a>
-          <p><b>{b.name}</b> <span>{b.size}</span></p>
-          <p className={l.muted}>{b.use}</p>
-        </li>
-      ))}
-    </ul>
   );
 }

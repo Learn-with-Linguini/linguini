@@ -26,12 +26,11 @@ export const posts: Post[] = [
     slug: "launch-week",
     title: "How we’re launching Linguini",
     summary:
-      "Saturday 17 October, 3:01pm in Singapore. Our Product Hunt listing, every post we’ll publish, who we’re telling, the launch-day shifts and how we plan to keep the people who show up.",
+      "Monday 19 October. Our Product Hunt listing, who we’re telling, the launch-day shifts and how we plan to keep the people who show up.",
     category: "Company",
-    date: "2026-09-24",
-    readMinutes: 10,
+    date: "2026-10-19",
+    readMinutes: 8,
     cover: { kind: "video", src: "/blog/launch/cover-loop.mp4", poster: "/blog/launch/cover-loop-poster.jpg" },
-    pdf: "/blog/launch-week.pdf",
   },
   {
     slug: "linguini-business-model",
@@ -42,7 +41,6 @@ export const posts: Post[] = [
     date: "2026-09-24",
     readMinutes: 7,
     cover: { kind: "video", src: "/blog/business-model.mp4", poster: "/blog/business-model-poster.jpg" },
-    pdf: "/blog/linguini-business-model.pdf",
   },
   {
     slug: "why-we-teach-with-your-photos",

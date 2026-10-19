@@ -3,7 +3,7 @@ import { useId } from "react";
 import { languageNames, type Lang } from "../../data/types";
 import styles from "./session.module.css";
 
-const codes: Record<Lang, string> = { es: "ES", fr: "FR" };
+const codes: Record<Lang, string> = { es: "ES", fr: "FR", de: "DE", ko: "KO" };
 
 export function LanguageToggle({ value, onChange, compact = false }: { value: Lang; onChange: (lang: Lang) => void; compact?: boolean }) {
   const name = useId();

@@ -18,7 +18,7 @@ type Props = {
 
 type Rect = { top: number; left: number; width: number; height: number };
 
-const SPOTLIGHT_PAD = 8;
+const SPOTLIGHT_PAD = 7;
 const SPOTLIGHT_RADIUS = 18;
 const OVERLAY_FILL = "rgba(25, 37, 42, 0.72)";
 
@@ -88,7 +88,7 @@ export function WalkthroughCoachmark({
           className="walkthrough-ring"
           aria-hidden="true"
           style={{
-            top: rect.top - SPOTLIGHT_PAD,
+            top: rect.top - SPOTLIGHT_PAD + 5,
             left: rect.left - SPOTLIGHT_PAD,
             width: rect.width + SPOTLIGHT_PAD * 2,
             height: rect.height + SPOTLIGHT_PAD * 2,

@@ -124,7 +124,7 @@ export function Hero() {
             </h1>
             <p className={styles.lede}>
               Photograph the café you’re sitting in, the street you walked, the view from the bridge. Linguini finds the
-              words inside the picture, turns them into a five-minute game in Spanish or French, and keeps the day in your
+              words inside the picture, turns them into a five-minute game in Spanish, French, German or Korean, and keeps the day in your
               journal.
             </p>
             <p className={styles.betaNote}>Public beta · Free access · Unlimited photo lessons</p>

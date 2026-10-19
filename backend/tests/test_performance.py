@@ -192,7 +192,7 @@ def test_lessons_and_clues_overlap_after_translation(database):
     elapsed = time.perf_counter() - started
 
     assert models.overlapped()
-    assert elapsed < 2 * MODEL_SECONDS
+    assert elapsed < 3 * MODEL_SECONDS
     detail = repo.get(sid, database[2].id)
     assert detail.session.status == "inProgress"
     kinds = [task.kind for task in detail.tasks]

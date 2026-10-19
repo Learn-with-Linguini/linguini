@@ -15,7 +15,7 @@ export function WordCard({ word, lang, className = "" }: WordCardProps) {
   return (
     <div className={`${styles.wordCard} ${className}`}>
       <div className={styles.wordTop}>
-        <span className={styles.wordLabel}>noun · {entry.gender}</span>
+        <span className={styles.wordLabel}>noun{entry.gender && entry.gender !== "none" ? ` · ${entry.gender}` : ""}</span>
         <button
           type="button"
           className={styles.speak}

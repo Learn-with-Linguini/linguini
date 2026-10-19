@@ -831,6 +831,9 @@
 /* Language toggle */
 .langToggle {
   display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
   min-inline-size: 0;
   margin: 0;
   border: 0;
