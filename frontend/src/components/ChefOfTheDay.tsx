@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { gamificationKeys, getChefStandings, setChefParticipation } from "../lib/gamification";
+import { trackAction } from "../lib/analytics.ts";
 import { useAppState } from "../state/useAppState";
 import { Button, Card } from "./ui";
 import "./gamification.css";
@@ -19,6 +20,7 @@ export function ChefOfTheDay() {
   const participate = async (value: boolean) => {
     if (pending.current) return;
     pending.current = true; setSaving(true); setError(null); setRetryChoice(value);
+    trackAction("chef_of_the_day_participation_toggled", { participating: value });
     try {
       await client.cancelQueries({ queryKey: key, exact: true });
       client.setQueryData(key, await setChefParticipation(value));
@@ -32,7 +34,7 @@ export function ChefOfTheDay() {
   return <section className="stack" aria-labelledby="chef-day-title"><h2 id="chef-day-title">Chef of the Day</h2>
     <p>Earn Basil and climb today’s kitchen leaderboard.</p>
     {query.isPending ? <p role="status">Loading today’s kitchen…</p> : !data ? <div><p role="alert">We couldn’t load today’s leaderboard.</p>
-      <Button variant="quiet" onClick={() => void query.refetch()}>Retry leaderboard</Button></div> : <>
+      <Button variant="quiet" onClick={() => { trackAction("chef_of_the_day_retry_clicked"); void query.refetch(); }}>Retry leaderboard</Button></div> : <>
       <Card plain><div className="basil-totals"><div><strong>{data.todayBasil}</strong><span>Today’s Basil</span></div>
         <div><strong>{data.personalBest}</strong><span>Personal best</span></div></div>
         {data.participating ? <p>{data.currentRank ? `You’re #${data.currentRank} today.` : "Your first Basil today will put you on the board."}

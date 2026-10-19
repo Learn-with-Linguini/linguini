@@ -1,6 +1,7 @@
 import Link from "./Link";
 import { pricing } from "../data/pricing";
 import { appLinks } from "../lib/site";
+import { trackAction } from "../../lib/analytics";
 import { Check } from "./icons";
 import styles from "./Pricing.module.css";
 
@@ -28,7 +29,13 @@ export function Pricing() {
               <span className={styles.amount}>$0</span>
               <span className={styles.per}>during beta</span>
             </p>
-            <a href={appLinks.signUp} className="btn btn--block">Join the public beta</a>
+            <a
+              href={appLinks.signUp}
+              className="btn btn--block"
+              onClick={() => trackAction("pricing_cta_clicked", { tier: "beta" })}
+            >
+              Join the public beta
+            </a>
             <ul className={styles.features}>
               {beta.map(item => (
                 <li key={item}><Check size={18} className={styles.tick} />{item}</li>

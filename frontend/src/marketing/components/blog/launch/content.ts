@@ -34,14 +34,14 @@ export type XPostData = { text: string; image?: { src: string; alt: string } };
 
 export const xThread: XPostData[] = [
   {
-    text: "Linguini is live on Product Hunt today 🍝\n\nPick a photo of a street, a café or a desk. Linguini pins the Spanish or French words onto it, you play a round of I-Spy with them, and the lesson ends as a page in your journal.\n\nIt’s early. Tell us where you got stuck 👇",
+    text: "Linguini is live on Product Hunt today 🍝\n\nPick a photo of a street, a café or a desk. Linguini pins the words onto it in Spanish, French, German or beginner Korean, you play a round of I-Spy with them, and the lesson ends as a page in your journal.\n\nIt’s early. Tell us where you got stuck 👇",
     image: { src: `${IMG}/launch-card-1200x630.jpg`, alt: "Link card: Live on Product Hunt today. Point at your day. Learn the words." },
   },
   {
     text: "Why photos? A word sticks when it belongs to a place you remember. A flashcard has no place. Your camera roll is full of them.",
   },
   {
-    text: "Built by a small student team. Spanish and French for now, free to try in your browser, nothing to install.\n\nThe listing, with the 50-second explainer: [PH_POST_URL]",
+    text: "Built by a small student team at NUS. The app supports Spanish, French, German and beginner Korean, runs in your browser and needs nothing installed.\n\nThe listing, with the 50-second explainer: [PH_POST_URL]",
   },
 ];
 
@@ -51,7 +51,7 @@ export const instagram = {
     { src: `${IMG}/social-square.jpg`, alt: "A photo scene. A fresh lesson. Hillside drive, el coche." },
   ],
   caption:
-    "Today’s lesson is on your camera roll 📷\n\nLinguini is live on Product Hunt. Pick a photo, learn the words inside it in Spanish or French, play a round of I-Spy and keep the day as a journal page.\n\nLink in bio. What’s the first thing you’d photograph?",
+    "Today’s lesson is on your camera roll 📷\n\nLinguini is live on Product Hunt. Pick a photo, learn the words inside it in Spanish, French, German or beginner Korean, play a round of I-Spy and keep the day as a journal page.\n\nLink in bio. What’s the first thing you’d photograph?",
   tags: "#learnspanish #learnfrench #languagelearning #studygram #producthunt",
   story: [
     { src: `${IMG}/ig-story-1080x1920.jpg`, alt: "Story: We’re live on Product Hunt today." },
@@ -73,8 +73,8 @@ export const reddit = {
 };
 
 export const telegram = {
-  group: "Dev friends",
-  text: "hey all! our app Linguini just went up on Product Hunt 🍝 you pick a photo and learn the Spanish or French words in it. takes a few minutes in the browser. if you try it, drop a comment on what confused you 🙏",
+  group: "NUS CS3216 / Computing friends",
+  text: "hey all! our CS3216 app Linguini just went up on Product Hunt 🍝 you pick a photo and learn the words in Spanish, French, German or beginner Korean. takes a few minutes in the browser. if you try it, drop a comment on what confused you 🙏",
   image: { src: `${IMG}/launch-card-1200x630.jpg`, alt: "Launch-day card: Live on Product Hunt today." },
 };
 

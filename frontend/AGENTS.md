@@ -59,6 +59,13 @@ design.md         Product and visual guidelines
 - Preserve visible focus, 44px icon targets, 48px action height, written feedback alongside color, and reduced-motion support.
 - The journal shows one month/year with previous/next controls, including empty months. Reuse the existing photo mosaic and entry renderers.
 
+## Analytics convention
+
+- Every new user-facing functionality and interactive feature MUST include analytics instrumentation.
+- Use `trackAction(eventName, params)` from `src/lib/analytics.ts` to log both GA4 (`gtag("event", ...)`) and Contentsquare (`_uxa.push(["trackCustomEvent", ...])`) events for key user actions (CTA clicks, form submissions, state transitions, checkout/payment actions, feature triggers).
+- For new pages/routes, pageview tracking is handled automatically across SPA route changes by `AnalyticsTracker` (Contentsquare `trackPageview` and GA4 `page_view`).
+- Document all tracked events and pages in `ANALYTICS.md`.
+
 ## Review
 
 Run lint, build, and the existing tests after behavior changes. Add tests for material

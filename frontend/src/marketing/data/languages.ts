@@ -36,7 +36,7 @@ function languageFaq(name: string, other: string, examples: string): LanguagePag
     },
     {
       q: `Does Linguini teach ${other} too?`,
-      a: `Yes. Linguini teaches both Spanish and French, from English. Italian is next on the list.`,
+      a: `Yes. The Linguini app teaches Spanish, French and German, plus beginner Korean, from English. The interactive website demo currently showcases Spanish and French.`,
     },
   ];
 }

@@ -4,6 +4,7 @@ import { Button, Card, Feedback } from "../components/ui";
 import { InstagramIcon, LinkedInIcon, TikTokIcon, XIcon } from "../components/icons";
 import { HelpImproveModal } from "../components/HelpImproveModal";
 import { SOCIAL_LINKS_LIST } from "../config/social";
+import { trackAction } from "../lib/analytics.ts";
 import { submitPublicSupportRequest, submitSupportRequest, type SupportAttachmentInput, type SupportIssueType } from "../lib/api";
 import { useAuth } from "../state/Auth";
 import { LoadingScreen } from "../components/LoadingScreen";
@@ -98,6 +99,7 @@ export function Contact() {
       };
       if (session) await submitSupportRequest(request);
       else await submitPublicSupportRequest({ ...request, email: email.trim() });
+      trackAction("support_message_sent", { issueType: topic, authenticated: Boolean(session) });
       setSent(true);
       setSubject("");
       setDetails("");
@@ -210,6 +212,7 @@ export function Contact() {
                 aria-label={`Follow Linguini on ${label}`}
                 title={label}
                 className="contact-social-badge"
+                onClick={() => trackAction("social_link_clicked", { platform })}
               >
                 <Icon size={18} />
                 <span>{label}</span>

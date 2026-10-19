@@ -105,6 +105,11 @@ export interface User {
   onboardingCompleted: boolean;
   walkthroughVersionSeen: number;
   tier: AccountTier;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  utmContent?: string | null;
+  utmTerm?: string | null;
 }
 
 export class ApiError extends Error {
@@ -180,7 +185,7 @@ export interface LanguageProfile {
   preferredInputMode: "speech" | "text" | "both";
 }
 
-export type UserPatch = Partial<Pick<User, "displayName" | "timezone" | "onboardingCompleted" | "walkthroughVersionSeen" | "learningGoal" | "microphoneEnabled" | "cameraEnabled">>;
+export type UserPatch = Partial<Pick<User, "displayName" | "timezone" | "onboardingCompleted" | "walkthroughVersionSeen" | "learningGoal" | "microphoneEnabled" | "cameraEnabled" | "utmSource" | "utmMedium" | "utmCampaign" | "utmContent" | "utmTerm">>;
 export type LanguageProfilePatch = Partial<Pick<LanguageProfile, "proficiencyLevel" | "isActive" | "dailyGoalMinutes" | "preferredInputMode">>;
 
 export type SupportIssueType = "general" | "technical" | "content" | "account";
@@ -218,6 +223,28 @@ export const submitPublicSupportRequest = (payload: PublicSupportRequestInput) =
 
 export const submitLessonReport = (payload: LessonReportInput) =>
   write<{ status: "sent" }>("/api/v1/support/lesson-reports", "POST", payload);
+
+export interface SubscriptionStatus {
+  tier: AccountTier;
+  dailyLessonLimit: number | null;
+  hasActiveSubscription: boolean;
+  canUpgrade: boolean;
+}
+
+export const getPaymentConfig = (signal?: AbortSignal) =>
+  request<{ publishableKey: string | null; plusPriceId: string }>("/api/v1/payments/config", signal);
+
+export const getSubscriptionStatus = (signal?: AbortSignal) =>
+  request<SubscriptionStatus>("/api/v1/payments/subscription-status", signal);
+
+export const createCheckoutSession = (returnUrl?: string) =>
+  write<{ checkoutUrl: string }>("/api/v1/payments/create-checkout-session", "POST", { returnUrl });
+
+export const createPortalSession = (returnUrl?: string) =>
+  write<{ portalUrl: string }>("/api/v1/payments/create-portal-session", "POST", { returnUrl });
+
+export const testSetTier = (tier: AccountTier) =>
+  write<{ tier: AccountTier }>("/api/v1/payments/test-set-tier", "POST", { tier });
 
 export const getLanguageProfiles = (signal?: AbortSignal) => request<LanguageProfile[]>("/api/v1/me/language-profiles", signal);
 export const updateUser = (patch: UserPatch) => write<User>("/api/v1/me", "PATCH", patch);
@@ -678,7 +705,7 @@ export function submitSurvey(data: SurveySubmission): Promise<SurveyResponse> {
   });
 }
 
-export interface ISpyPhoto { mediaAsset: { id: string; source: "camera" | "userUpload"; createdAt: string }; playable: boolean; confirmedAt: string | null }
+export interface ISpyPhoto { mediaAsset: { id: string; source: "camera" | "userUpload"; createdAt: string }; title: string; playable: boolean; confirmedAt: string | null }
 export interface ISpyPhotoPage { photos: ISpyPhoto[]; nextCursor: string | null }
 export const getISpyPhotos = (cursor: string | null, signal?: AbortSignal) =>
   request<ISpyPhotoPage>(`/api/v1/ispy/photos${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`, signal);

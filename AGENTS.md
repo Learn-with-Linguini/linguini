@@ -26,6 +26,13 @@ cd backend  && ruff check . && pytest
 
 Backend tests need `TEST_DATABASE_URL` pointing at a disposable PostgreSQL database; without it the PostgreSQL integration tests skip silently. Prisma migrations are validated with `npm run db:validate` and applied with `npm run db:deploy` from `backend/`.
 
+## Analytics convention
+
+- Every new user-facing functionality and interactive feature MUST include analytics instrumentation.
+- Use `trackAction(eventName, params)` from `frontend/src/lib/analytics.ts` to log both GA4 (`gtag("event", ...)`) and Contentsquare (`_uxa.push(["trackCustomEvent", ...])`) events for key user actions (CTA clicks, form submissions, state transitions, checkout/payment actions, feature triggers).
+- For new pages/routes, pageview tracking is handled automatically across SPA route changes by `AnalyticsTracker` (Contentsquare `trackPageview` and GA4 `page_view`).
+- Document all tracked events and pages in `ANALYTICS.md`.
+
 ## Safety
 
 - Keep credentials in ignored local environment files (`.env.local`). Never commit database URLs, Supabase keys, or API keys.

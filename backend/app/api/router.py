@@ -13,6 +13,7 @@ from app.api.routes import (
     leaderboard,
     media,
     onboarding,
+    payments,
     progress,
     rooms,
     sessions,
@@ -25,6 +26,7 @@ from app.api.routes import (
 
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(health.router)
+api_router.include_router(payments.router)
 api_router.include_router(users.router)
 api_router.include_router(game_resources.router)
 api_router.include_router(gamification.router)

@@ -2,7 +2,8 @@ import { InlineLoader, LoadingScreen } from "../components/LoadingScreen";
 import { useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { Button, Tabs } from "../components/ui";
+import { Button, Card, Tabs } from "../components/ui";
+import { EyeIcon } from "../components/icons";
 import { MediaImage } from "../components/MediaImage";
 import { SceneVisual } from "../components/SceneVisual";
 import { SceneCatalogStatus } from "../components/SceneCatalogStatus";
@@ -53,26 +54,26 @@ export function ISpyPlay() {
       setError(gameStartError(reason));
     } finally { setStarting(false); }
   };
-  return <div className="stack practice-select">
-    <h1>Choose a photo</h1>
+  return <div className="stack practice-select ispy-photo-picker">
+    <header className="ispy-photo-picker__header"><span className="ispy-photo-picker__icon"><EyeIcon size={28} /></span><div><span>I-Spy with Linguini</span><h1>Choose a photo</h1><p>Linguini will use the scenes you have already explored</p></div></header>
     {notice ? <p role="alert">{notice}</p> : null}
-    <p className="muted">Linguini plays with the objects you confirmed for a photo, so nothing is analysed again.</p>
-    <Tabs options={SOURCES} value={source} onChange={setSource} />
+    <div className="ispy-photo-picker__tabs"><Tabs options={SOURCES} value={source} onChange={setSource} /></div>
     {!activeProfile ? <p role="alert">Choose a learning language in Profile to start.</p> : null}
     {starting ? <LoadingScreen label="Setting up your game…" /> : null}
     {error ? <p role="alert">{error}</p> : null}
     {source === "mine" ? <>
       {photos.isPending && activeProfile ? <InlineLoader label="Loading your photos…" /> : null}
       {photosError ? <div className="stack-2"><p role="alert">{photosError}</p><Button variant="secondary" onClick={() => void photos.refetch()}>Try again</Button></div> : null}
-      {photos.isSuccess && !mine.length ? <p className="muted">Photos you use in a lesson appear here. <Link to="/practice">Start a lesson</Link> with a photo, or play a preloaded scene.</p> : null}
-      <div className="grid-2">
-        {mine.map(photo => <button key={photo.mediaAsset.id} type="button" className="scene-pick"
-          disabled={disabled || !photo.playable} aria-label={photo.playable ? "Play with this photo" : "Finish this photo's scene review in a lesson before playing"}
+      {photos.isSuccess && !mine.length ? <Card className="ispy-photo-picker__empty"><h2>Your photos will appear here</h2><p>Use a photo in a lesson first, or choose a ready-made scene.</p><Link to="/practice">Start a photo lesson</Link></Card> : null}
+      <div className="grid-2 ispy-photo-grid">
+        {mine.map(photo => <button key={photo.mediaAsset.id} type="button" className={`scene-pick${photo.playable ? "" : " scene-pick--unavailable"}`}
+          disabled={disabled || !photo.playable} aria-label={photo.playable ? `Play with ${photo.title}` : `${photo.title} is unavailable. Finish its scene review in a lesson before playing.`}
           onClick={() => void start(photo.mediaAsset.id)}>
-          <MediaImage assetId={photo.mediaAsset.id} title="Your photo" width={320} lazy />
-          <span className="small">{photo.playable && photo.confirmedAt
-            ? `Confirmed ${new Date(photo.confirmedAt).toLocaleDateString()}`
-            : "Finish the scene review in a lesson first"}</span>
+          <span className="ispy-photo-grid__visual">
+            <MediaImage assetId={photo.mediaAsset.id} title={photo.title} width={320} lazy />
+            {!photo.playable ? <small className="ispy-photo-grid__unavailable">Finish this photo’s scene review before playing.</small> : null}
+          </span>
+          <span className="ispy-photo-grid__caption"><strong>{photo.title}</strong></span>
         </button>)}
       </div>
       {photos.hasNextPage ? <Button variant="secondary" disabled={photos.isFetchingNextPage} onClick={() => void photos.fetchNextPage()}>
@@ -80,11 +81,11 @@ export function ISpyPlay() {
       </Button> : null}
     </> : <>
       <SceneCatalogStatus />
-      <div className="grid-2">
+      <div className="grid-2 ispy-photo-grid">
         {scenes.map(scene => <button key={scene.id} type="button" className="scene-pick"
           disabled={disabled} aria-label={`Play with ${scene.title}`} onClick={() => void start(scene.mediaAssetId)}>
           <SceneVisual scene={scene} />
-          <span className="small items-center justify-center" style={{ fontWeight: 700 }}>{scene.title}</span>
+          <span className="ispy-photo-grid__caption"><strong>{scene.title}</strong></span>
         </button>)}
       </div>
     </>}

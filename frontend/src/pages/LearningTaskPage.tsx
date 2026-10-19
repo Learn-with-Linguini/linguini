@@ -23,6 +23,7 @@ import { useResolvedImageUrl } from "../components/SceneImage";
 import { boardRows, squareCrop } from "../lib/practiceBoard";
 import { questionMarkerObjects } from "../lib/missionMarkers";
 import { completeSlot, speechAvailable, writtenPromptShown } from "../lib/missionA0";
+import { trackAction } from "../lib/analytics.ts";
 import { fillMissionGap } from "../lib/missionGaps";
 import { playAnswerSound } from "../lib/answerSound";
 import { learningFeedback } from "../lib/learningFeedback";
@@ -106,8 +107,11 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onSc
       if (result) {
         request.current = null;
         setActionResult(result);
-        if (reading) setFeedback(result.attempt?.feedback?.message ?? "Task complete.");
-        else {
+        if (reading) {
+          trackAction("task_completed", { taskId: task.id, kind: content.kind });
+          setFeedback(result.attempt?.feedback?.message ?? "Task complete.");
+        } else {
+          trackAction("task_answer_checked", { taskId: task.id, isCorrect: result.attempt?.isCorrect, kind: content.kind });
           setFeedback(result.attempt?.feedback?.message ?? "Saved.");
           setAnswerCorrect(result.attempt?.isCorrect ?? null);
           if (result.attempt?.isCorrect != null) playAnswerSound(result.attempt.isCorrect);
@@ -212,6 +216,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
   const content = task.publicContent;
   if (content.kind !== "vocabularyIntroduction") return null;
   const terminal = taskDone(task);
+  const revision = task.status === "skipped";
   const pageCount = content.words.length;
   const visibleWords = content.words.slice(page, page + 1);
   const question = content.questions[questionIndex];
@@ -289,12 +294,15 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
     {restored.isLoading ? <InlineLoader compact label="Restoring word answers…" /> : null}
     {restored.isError ? <div role="alert"><p>We couldn’t restore your word answers.</p><Button variant="quiet" onClick={() => void restored.refetch()}>Retry saved answers</Button></div> : null}
     {questionError ? <div role="alert"><p>{questionError}</p><Button variant="secondary" disabled={checkingQuestion || !pendingOptionId} onClick={() => pendingOptionId && void chooseAnswer(pendingOptionId)}>Retry answer</Button></div> : null}
-    {!terminal && stage === "review" ? <>
+    {(!terminal || revision) && stage === "review" ? <>
+      {revision ? <div className="panel-note" role="status"><strong>Saved for revision</strong><p className="small muted">You skipped this practice earlier, but these words will stay here whenever you want to review them.</p></div> : null}
       <div className="vocabulary-learning-grid vocabulary-learning-grid--swipe" onTouchStart={handleCardTouchStart} onTouchEnd={handleCardTouchEnd}>{visibleWords.map(word => <VocabularyLearningCard key={word.learningKey ?? word.vocabularyItemId ?? word.targetText} word={word} languageCode={scene.languageCode} />)}</div>
       <div className="vocabulary-flow__actions">
         <Button disabled={page === 0} onClick={() => setPage(value => value - 1)}><ArrowLeftIcon size={18} /> Previous</Button>
         <span className="vocabulary-flow__position" aria-live="polite">{page + 1} of {pageCount}</span>
-        <Button variant="secondary" onClick={finishReview}>{page < pageCount - 1 ? <>Next <ArrowRightIcon /></> : "Start quick quiz"}</Button>
+        {revision && page === pageCount - 1
+          ? <Button variant="secondary" onClick={onClose}>Back to tasks</Button>
+          : <Button variant="secondary" onClick={finishReview}>{page < pageCount - 1 ? <>Next <ArrowRightIcon /></> : "Start quick quiz"}</Button>}
       </div>
     </> : null}
     {!terminal && stage === "quiz" && question ? <><Card plain><div className="stack">
@@ -333,7 +341,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit }:
       {actionResult && task.status !== "skipped" ? <strong>{learningFeedback("saved", task.id)}</strong> : null}
       {feedback ? <p>{feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
-    {terminal ? <Button block onClick={onNext}>{session?.session.status === "generatingTasks" ? "Back to tasks" : index < total - 1 ? "Next task" : lastStep}</Button> : null}
+    {terminal && !revision ? <Button block onClick={onNext}>{session?.session.status === "generatingTasks" ? "Back to tasks" : index < total - 1 ? "Next task" : lastStep}</Button> : null}
     {!terminal ? <Button variant="quiet" block disabled={practiceSaving} onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip vocabulary review</Button> : null}
     {!terminal && stage === "quiz" && question && answers[question.questionId] ? <div className="learning-question-report"><ReportIssueLink reportType="Vocabulary answer" fields={[
       ["Task ID", task.id],

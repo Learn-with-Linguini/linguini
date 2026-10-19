@@ -1,10 +1,10 @@
 import { Navigate, useNavigate } from "react-router-dom";
-import { Button } from "../components/ui";
+import { Button, XpPill } from "../components/ui";
 import { ArrowRightIcon, BookIcon, ChatIcon, CheckIcon, CloseIcon, CountIcon, EyeIcon, HandIcon, HeartIcon, JournalIcon, MarkerIcon, PlayIcon } from "../components/icons";
 import { SessionPersonalization } from "../components/SessionPersonalization";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
-import { finishesAfterLearning, practiceStages, taskDone, taskTitle } from "../lib/practiceTasks";
+import { finishesAfterLearning, practiceStages, taskDone, taskTitle, taskXp } from "../lib/practiceTasks";
 import { useAppState } from "../state/useAppState";
 import { learningFeedback } from "../lib/learningFeedback";
 
@@ -34,6 +34,7 @@ export function Learn() {
   const learningTasks = practiceStages(session.tasks).learning;
   const vocabularyTask = learningTasks.find(task => task.kind === "vocabularyIntroduction");
   const vocabularyDone = vocabularyTask ? taskDone(vocabularyTask) : true;
+  const vocabularySkipped = vocabularyTask?.status === "skipped";
   const tasks = learningTasks.filter(task => task.kind !== "vocabularyIntroduction");
   const completed = tasks.filter(taskDone);
   const generating = session.session.status === "generatingTasks";
@@ -59,11 +60,14 @@ export function Learn() {
 
       {practiceError ? <p role="alert">{practiceError}</p> : null}
 
-      {!vocabularyDone && vocabularyTask ? <div className="learn-words-intro">
-        <div className="learn-words-intro__photo"><ScenePhoto scene={scene} items={[]} /></div>
-        <Button block disabled={practiceSaving || !session.translationPreview} onClick={() => navigate(`${base}/learn/vocabulary-preview`)}>
-          <PlayIcon /> Learn the words
+      {vocabularyTask && (!vocabularyDone || vocabularySkipped) ? <div className="learn-words-intro">
+        <div className="learn-words-intro__photo"><ScenePhoto scene={scene} items={[]} />{!vocabularySkipped && taskXp(vocabularyTask) ? <XpPill {...taskXp(vocabularyTask)!} /> : null}</div>
+        <Button block variant={vocabularySkipped ? "secondary" : undefined}
+          disabled={practiceSaving || (!vocabularySkipped && !session.translationPreview)}
+          onClick={() => navigate(vocabularySkipped ? `${base}/learn/${vocabularyTask.id}` : `${base}/learn/vocabulary-preview`)}>
+          <PlayIcon /> {vocabularySkipped ? "Review words" : "Learn the words"}
         </Button>
+        {vocabularySkipped ? <p className="small muted">Skipped</p> : null}
       </div> : null}
 
       {tasks.length ? <section className="stack-3 learn-missions" aria-label="Learning missions">
@@ -71,6 +75,7 @@ export function Learn() {
         <div className="task-list" aria-label="Learning tasks">
         {tasks.map(task => {
           const isDone = taskDone(task);
+          const reward = !isDone ? taskXp(task) : null;
           return (
             <button
               key={task.id}
@@ -85,7 +90,7 @@ export function Learn() {
                 <strong>{taskTitle(task)}</strong>
               </span>
               {isDone ? <span className="pill pill--mastered">{task.status === "skipped" ? "Skipped" : ""}</span> : <>
-
+                {reward ? <XpPill {...reward} /> : null}
                 <PlayIcon />
               </>}
             </button>

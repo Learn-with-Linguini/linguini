@@ -44,6 +44,7 @@ history doubles as a diary of what you actually did.
 - Journal with daily entries, edits and image attachments.
 - Progress dashboard: XP, streaks, words learned per language.
 - Multiple language profiles per user; switching a profile re-scopes the whole app.
+- Lessons from English into Spanish, French and German, plus beginner Korean.
 - Supabase authentication with a local `demo` auth mode for development.
 - Server-side content moderation and image validation on every upload.
 
