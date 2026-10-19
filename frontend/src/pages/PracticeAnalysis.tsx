@@ -365,31 +365,28 @@ export function PracticeAnalysis() {
                 const subjectObject = relationObjects.find(item => item.id === row.subjectSceneObjectId);
                 const referenceObject = relationObjects.find(item => item.id === row.referenceSceneObjectId);
                 return <div className="analysis-relation-row" key={row.id}>
-                <div className="analysis-relation-row__sequence">
                   <div className="analysis-relation-row__object">
                     <span className="analysis-word-row__marker">{subjectObject?.marker}</span>
                     <strong>{subjectObject?.label}</strong>
                   </div>
                   <div className="analysis-relation-row__connection">
-
                     {locked ? <span className="analysis-relation-row__relation">{relationLabel(row.relation)}</span> :
-                    <ComboBox compact ariaLabel="Connection" value={row.relation}
-                      options={!RELATION_OPTIONS.some(option => option[0] === row.relation)
-                        ? [{ value: row.relation, label: relationLabel(row.relation) }, ...RELATION_CHOICES]
-                        : RELATION_CHOICES}
-                      onChange={value => setRelations(current => current.map(item => item.id === row.id ? { ...item, relation: value } : item))} />}
+                      <ComboBox compact ariaLabel="Connection" value={row.relation}
+                        options={!RELATION_OPTIONS.some(option => option[0] === row.relation)
+                          ? [{ value: row.relation, label: relationLabel(row.relation) }, ...RELATION_CHOICES]
+                          : RELATION_CHOICES}
+                        onChange={value => setRelations(current => current.map(item => item.id === row.id ? { ...item, relation: value } : item))} />}
                   </div>
                   <div className="analysis-relation-row__object">
                     <span className="combobox__marker">{referenceObject?.marker}</span>
                     <strong>{referenceObject?.label}</strong>
                   </div>
-                </div>
-                {!locked ? <button type="button" className="analysis-word-row__remove" disabled={practiceSaving} aria-label={`Remove relation ${row.relation}`} onClick={() => setRelations(current => current.filter(item => item.id !== row.id))}><CloseIcon size={18} /></button> : null}
+                  {!locked ? <button type="button" className="analysis-word-row__remove" disabled={practiceSaving} aria-label={`Remove relation ${row.relation}`} onClick={() => setRelations(current => current.filter(item => item.id !== row.id))}><CloseIcon size={18} /></button> : null}
               </div>;
               })}
               {!visibleRelations.length ? <p className="small muted">No connections selected. You can continue without adding any.</p> : null}
             </div>
-            {!locked ? <form className="stack" onSubmit={event => { event.preventDefault(); addRelation(); }}>
+            {!locked ? <form className="stack analysis-relation-form" onSubmit={event => { event.preventDefault(); addRelation(); }}>
               <label className="field__label" htmlFor="relation-subject">Object</label>
               <ComboBox id="relation-subject" value={subject} disabled={practiceSaving} placeholder="Choose an object"
                 options={relationObjects.map(item => ({ value: item.id, label: item.label, marker: item.marker }))} onChange={setSubject} />
