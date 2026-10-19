@@ -159,7 +159,7 @@ export function Profile() {
         </Card>
       </section>
 
-      <MissionBadges />
+     
 
       <section className="profile-section">
         <h2>Learning setup</h2>
@@ -298,6 +298,8 @@ export function Profile() {
           )}
         </Card>
       </section>
+
+      <MissionBadges />
 
       <section className="profile-section">
         <h2>Permissions</h2>
