@@ -11,7 +11,7 @@ from app.repositories.postgres.language_profiles import language_profiles
 from app.repositories.postgres.media_assets import media_assets
 from app.repositories.postgres.rooms import cleanup_room_account
 from app.repositories.postgres.users import users
-from app.services.image_derivatives import ALLOWED_WIDTHS
+from app.services.image_derivatives import ALLOWED_WIDTHS, DERIVATIVE_ROOT
 from app.services.image_storage import ImageStorage
 from app.services.media_urls import MediaUrlError
 
@@ -112,7 +112,10 @@ class AccountDeletionService:
                 self.storage.delete_prefixes(
                     [
                         image_prefix,
+                        # Keep deleting the pre-orientation cache as well as the
+                        # current cache, so account deletion removes every copy.
                         *(f"derived/w{width}/{image_prefix}" for width in ALLOWED_WIDTHS),
+                        *(f"{DERIVATIVE_ROOT}/w{width}/{image_prefix}" for width in ALLOWED_WIDTHS),
                     ]
                 )
 
