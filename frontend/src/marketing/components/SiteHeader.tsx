@@ -1,7 +1,7 @@
 
 import Image from "./Image";
 import Link from "./Link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { appLinks } from "../lib/site";
 import { Close, Menu } from "./icons";
 import styles from "./SiteHeader.module.css";
@@ -18,6 +18,7 @@ const links = [
 export function SiteHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -28,7 +29,11 @@ export function SiteHeader() {
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (event: KeyboardEvent) => event.key === "Escape" && setOpen(false);
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setOpen(false);
+      menuButtonRef.current?.focus();
+    };
     const onResize = () => window.innerWidth > 880 && setOpen(false);
     window.addEventListener("keydown", onKey);
     window.addEventListener("resize", onResize);
@@ -41,7 +46,7 @@ export function SiteHeader() {
   return (
     <header className={`${styles.header} ${scrolled || open ? styles.scrolled : ""}`}>
       <div className={`container ${styles.bar}`}>
-        <Link href="/" className={styles.brand} aria-label="Linguini home">
+        <Link href="/" className={styles.brand} aria-label="Linguini home" onClick={() => setOpen(false)}>
           <Image src="/brand/linguini-wordmark.png" alt="Linguini" width={450} height={150} priority className={styles.wordmark} />
         </Link>
 
@@ -57,8 +62,9 @@ export function SiteHeader() {
 
         <div className={styles.actions}>
           <a href={appLinks.signIn} className={`btn-quiet ${styles.login}`}>Log in</a>
-          <a href={appLinks.signUp} className="btn btn--small">Get started</a>
+          <a href={appLinks.signUp} className={`btn btn--small ${styles.signup}`} onClick={() => setOpen(false)}>Get started</a>
           <button
+            ref={menuButtonRef}
             type="button"
             className={styles.menuButton}
             aria-expanded={open}
@@ -71,7 +77,7 @@ export function SiteHeader() {
         </div>
       </div>
 
-      <div id="mobile-menu" className={styles.sheet} data-open={open} hidden={!open}>
+      <nav id="mobile-menu" aria-label="Mobile" className={styles.sheet} hidden={!open}>
         <ul className="container">
           {links.map(link => (
             <li key={link.href}>
@@ -82,7 +88,7 @@ export function SiteHeader() {
             <a href={appLinks.signIn} onClick={() => setOpen(false)}>Log in</a>
           </li>
         </ul>
-      </div>
+      </nav>
     </header>
   );
 }

@@ -15,9 +15,9 @@ function useInViewRef<T extends HTMLElement>() {
 /* ---------- The whole plan on one line ---------- */
 
 const steps = [
-  { href: "#soft-launch", when: "Now to 16 Oct", title: "Beta testers" },
+  { href: "#soft-launch", when: "Now to 18 Oct", title: "Beta testers" },
   { href: "#who", when: "The week before", title: "Tell people" },
-  { href: "#day", when: "Sat 17 Oct, 3:01pm", title: "Launch", live: true },
+  { href: "#day", when: "Mon 19 Oct", title: "Launch", live: true },
   { href: "#after", when: "The 2 weeks after", title: "Bring people back" },
   { href: "#next", when: "Already planned", title: "Launch again" },
 ];
@@ -47,13 +47,13 @@ export function Phases() {
     <figure className={p.fig}>
       <div className={p.phases}>
         <section className={p.phase} data-tone="soft">
-          <small>Now to 16 October</small>
+          <small>Now to 19 October</small>
           <h4>Soft launch</h4>
           <p><b>10 to 20 beta testers</b>, by invitation. People learning Spanish or French who will tell us what breaks.</p>
         </section>
         <span className={p.phaseArrow} aria-hidden="true"><ArrowRight size={22} /></span>
         <section className={p.phase} data-tone="open">
-          <small>From 17 October, 3:01pm</small>
+          <small>From 20 October</small>
           <h4>Open to everyone</h4>
           <p><b>No waitlist.</b> The browser demo needs no account, and anyone can sign up for the app’s free daily lesson.</p>
         </section>
@@ -93,7 +93,7 @@ type Draft = { brand: Brand; label: string; note: string; body: ReactNode };
 const slides: { wide?: boolean; drafts: Draft[] }[] = [
   { wide: true, drafts: [{ brand: "x", label: "X thread", note: "The first post carries the link card. The replies carry the why.", body: <XThread /> }] },
   { drafts: [{ brand: "instagram", label: "Instagram carousel", note: "4:5 takes the most room in the feed. Double-click the photo.", body: <InstagramPost /> }] },
-  { drafts: [{ brand: "instagram", label: "Instagram story", note: "A countdown at T−3, then “we’re live” with a link sticker.", body: <div className={p.storyWrap}><StoryPhone /></div> }] },
+  { drafts: [{ brand: "instagram", label: "Instagram story", note: "“We’re live” with a link sticker.", body: <div className={p.storyWrap}><StoryPhone /></div> }] },
   {
     wide: true,
     drafts: [
@@ -199,7 +199,7 @@ export function DraftRail() {
 
 const circles: { name: string; when: string; how: string; brands: Brand[]; extra?: string[] }[] = [
   { name: "People we know", when: "Beta from now, a message on the day", how: "Friends, classmates and our beta testers. They’ll use it properly and tell us the truth.", brands: ["telegram", "instagram", "linkedin"] },
-  { name: "Communities", when: "Launch afternoon", how: "Language learners, makers and AI readers, in the threads each place allows.", brands: ["reddit", "discord", "ycombinator", "indiehackers", "producthunt"], extra: ["HelloTalk", "NUS Hackers"] },
+  { name: "Communities", when: "Launch morning", how: "Language learners, makers and AI readers, in the threads each place allows.", brands: ["reddit", "discord", "ycombinator", "indiehackers", "producthunt"], extra: ["HelloTalk"] },
   { name: "Creators", when: "A note the week before", how: "Language YouTubers, with no ask to post.", brands: ["youtube"] },
 ];
 
@@ -244,7 +244,6 @@ const communities: { brand: Brand | null; mark?: string; name: string; size?: st
   { brand: "ycombinator", name: "Show HN", rule: "Live demo, no sign-up needed, which is what HN asks for." },
   { brand: null, mark: "AI", name: "The Rundown, TLDR AI, Ben’s Bites", rule: "One short pitch each: AI that turns your photo into a lesson." },
   { brand: "indiehackers", name: "Indie Hackers", rule: "One Show IH post, asking for notes on the listing." },
-  { brand: null, mark: "NUS", name: "NUS Hackers Friday Hacks", rule: "Ten minutes of live demo. Speakers wanted until 13 Nov." },
 ];
 
 export function Communities() {
@@ -302,28 +301,27 @@ export function CreatorMap() {
 
 const shifts = [
   {
-    name: "Afternoon", hours: "14:00 to 01:00", crew: "All four of us", tone: "tomato",
+    name: "Overnight", hours: "00:00 to 08:00", crew: "All four of us", tone: "tomato",
     beats: [
-      ["14:00", "Sign up fresh on a phone. Dashboards open."],
-      ["15:01", "Live. First comment up within a minute.", true],
-      ["15:10", "Every post goes out at once. Friends get a message each."],
-      ["16:00", "Every comment answered within the hour."],
-      ["21:00", "US east coast wakes up. Second story."],
+      ["00:00", "Sign up fresh on a phone. Dashboards open."],
+      ["00:01", "Live. First comment up within a minute.", true],
+      ["00:15", "Every post goes out at once. Friends get a message each."],
+      ["All morning", "Europe wakes up. Every comment answered within the hour."],
     ],
   },
   {
-    name: "Night", hours: "01:00 to 08:00", crew: "Two on call", tone: "teal",
+    name: "Daytime", hours: "08:00 to 17:00", crew: "All four of us", tone: "teal",
     beats: [
-      ["01:00", "Handover to one replier and one engineer."],
-      ["All night", "Watch errors and sign-ups. Answer the US."],
+      ["08:00", "The US is fully awake. Busiest hours start."],
+      ["Hourly", "Watch errors, sign-ups and demo completions."],
+      ["14:00", "Second nudge in our class chats."],
     ],
   },
   {
-    name: "Morning", hours: "08:00 to 14:59", crew: "All four of us", tone: "pasta",
+    name: "Evening", hours: "17:00 to 00:00", crew: "Two on call", tone: "pasta",
     beats: [
-      ["08:00", "Read the overnight numbers."],
-      ["10:00", "Second nudge in our NUS class chats."],
-      ["14:59", "Day ends. Write down what broke."],
+      ["17:00", "Handover to one replier and one engineer."],
+      ["23:59", "Day ends. Write down what broke."],
     ],
   },
 ] as const;

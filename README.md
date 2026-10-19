@@ -11,7 +11,7 @@
 
 ## What Linguini is
 
-Most language apps teach a fixed syllabus of words you may never use. Linguini starts
+Most language apps now teach a fixed syllabus of words you may never use. Linguini starts
 from a photo of your own day: take or upload a picture, and the app finds the objects in
 it, teaches the words for them in your target language, and then quizzes you on the
 scene by having you describe it. The day ends as a journal entry, so your vocabulary

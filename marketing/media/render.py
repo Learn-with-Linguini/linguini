@@ -17,7 +17,7 @@ OUT = Path(__file__).resolve().parent / "export"
 OUT.mkdir(exist_ok=True)
 PHOTO = ROOT / "frontend/public/photos"
 BRAND = ROOT / "frontend/public/brand"
-FONTS = ROOT / "frontend/src/marketing/assets/fonts"
+FONTS = ROOT / "marketing/product-hunt/gallery-src/fonts"
 
 W, H = 1270, 760
 CREAM = "#FBF8EF"

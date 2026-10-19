@@ -1,11 +1,16 @@
-export type Lang = "es" | "fr";
+export type Lang = "es" | "fr" | "de" | "ko";
 
-export const languageNames: Record<Lang, string> = { es: "Spanish", fr: "French" };
+export const languageNames: Record<Lang, string> = {
+  es: "Spanish",
+  fr: "French",
+  de: "German",
+  ko: "Korean",
+};
 
-export type Gender = "masculine" | "feminine";
+export type Gender = "masculine" | "feminine" | "neuter" | "none";
 
 export type WordEntry = {
-  /** Target word including its article, e.g. "la mesa". */
+  /** Target word including its article, e.g. "la mesa", "das Auto", "꽃". */
   word: string;
   gender: Gender;
   ipa: string;
@@ -19,6 +24,8 @@ export type SceneWord = {
   y: number;
   es: WordEntry;
   fr: WordEntry;
+  de: WordEntry;
+  ko: WordEntry;
 };
 
 export type ISpyRound = {
