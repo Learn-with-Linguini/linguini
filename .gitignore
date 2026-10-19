@@ -8,6 +8,7 @@ dist-ssr/
 __pycache__/
 .ruff_cache/
 .venv/
+backend/.cache/
 marketing/media/.cache/
 .Rhistory
 

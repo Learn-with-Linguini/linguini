@@ -1,19 +1,22 @@
+import { basilEarnedText } from "../lib/gamification";
+import { InlineLoader } from "../components/LoadingScreen";
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { sessionDestination, sessionPaths } from "../lib/sessionRoute";
-import { Button, Card, Feedback, ProgressTrail, TopBar, XpPill } from "../components/ui";
-import { ArrowRightIcon } from "../components/icons";
+import { Button, Card, Feedback, ProgressTrail, TopBar } from "../components/ui";
+import { ArrowRightIcon, BasilIcon } from "../components/icons";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
-import { practiceStages, taskDone, taskXp, xpEarnedText } from "../lib/practiceTasks";
+import { practiceStages, taskDone } from "../lib/practiceTasks";
 import { CLUE_ASSISTANCE_VERSION, descriptionEvaluation, getLatestAttempt } from "../lib/api";
 import { queryKeys } from "../lib/queryKeys";
 import type { ClueAssistance, ClueFrame, ClueFrameId, ClueSlotId, ISpyDescriptionEvaluation, ISpyDescriptionOutcome, SessionTask, TaskAnswer } from "../lib/api";
 import { applyFrame, choicesFromSlots, fillSlot, mentionsTarget, nearTarget, restoreSentences, savedAssistance, slotSentence, slotsFromChoices, visibleFrames, writeSentence, type FrameSentences, type SlotChoices } from "../lib/clueFrames";
 import type { LanguageItem } from "../data/types";
 import { ReportIssueLink } from "../components/ReportIssueLink";
+import { learningFeedback } from "../lib/learningFeedback";
 
 export function ISpyPhase2() {
   const navigate = useNavigate();
@@ -59,7 +62,7 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
   const { actOnTask, practiceSaving, practiceError } = useAppState();
   const [text, setText] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
-  const [xpEarned, setXpEarned] = useState<number>();
+  const [basilEarned, setBasilEarned] = useState<number>();
   const [guess, setGuess] = useState<LatestGuess | null>(null);
   const [revising, setRevising] = useState(false);
   const [activeFrameId, setActiveFrameId] = useState<ClueFrameId | null>(null);
@@ -136,7 +139,6 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
     setChoices(all => ({ ...all, [frame.frameId]: undefined }));
   };
   const answered = taskDone(task);
-  const reward = !answered ? taskXp(task) : null;
   const restoreFailed = !hydrated && latest.isError;
   const locked = answered || practiceSaving || guess !== null || !hydrated;
   const markers = [target, guessed && guessed.id !== target?.id ? guessed : null].filter((item): item is LanguageItem => Boolean(item));
@@ -177,7 +179,7 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
     const result = await actOnTask(task.id, "confirm-guess", { attemptId: guess.attemptId });
     if (result) {
       setFeedback("Linguini found your object!");
-      setXpEarned(result.xpEarned);
+      setBasilEarned(result.basilEarned);
     }
   };
   const improve = () => { setGuess(null); setRevising(true); };
@@ -189,7 +191,7 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
     {guessed && target ? <p className="small muted" data-testid="guess-legend">{guessed.id === target.id
       ? `Linguini's guess is your object (marker ${target.marker}).`
       : `Your object: marker ${target.marker} · Linguini's guess: marker ${guessed.marker} (dashed)`}</p> : null}
-    <Card><div className="stack-2"><div className="spread"><span className="label muted">Describe this object</span>{reward ? <XpPill {...reward} /> : null}</div><h2>{target?.word}</h2><span className="small muted">{target?.translation}</span><p>{content.prompt}</p></div></Card>
+    <Card><div className="stack-2"><div className="spread"><span className="label muted">Describe this object</span></div><h2>{target?.word}</h2><span className="small muted">{target?.translation}</span><p>{content.prompt}</p></div></Card>
     {frames.length ? <div className="stack-2" data-testid="clue-frames">
       <span className="label muted">Clue frames (optional)</span>
       <div className="chip-row">{frames.map(frame => <button key={frame.frameId} type="button" className={`chip${frame.frameId === activeFrameId ? " chip--selected" : ""}`} aria-pressed={frame.frameId === activeFrameId} disabled={locked} onClick={() => chooseFrame(frame)}>{FRAME_LABELS[frame.frameId]}</button>)}</div>
@@ -212,17 +214,19 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
       </div> : null}
     </div> : null}
     <div className="field"><label className="field__label" htmlFor="reflection">Your clue</label><input id="reflection" ref={input} className="input" value={text} maxLength={2000} disabled={locked} onChange={event => setText(event.target.value)} /></div>
-    {!hydrated && !restoreFailed ? <p className="small muted" role="status" data-testid="restoring">Loading your last clue…</p> : null}
+    {!hydrated && !restoreFailed ? <InlineLoader compact testId="restoring" label="Loading your last clue…" /> : null}
     {restoreFailed ? <div className="stack-2" role="alert" data-testid="restore-error"><span>We couldn't load your saved clue, so this task can't continue yet.</span><Button variant="secondary" onClick={() => void latest.refetch()}>Try again</Button></div> : null}
     {nearName && !locked ? <p className="small muted" data-testid="clue-near-warning">One word looks close to this object's name. If it's a different word, you can still send it.</p> : null}
     {namesTarget && !locked ? <p className="clue-warning" data-testid="clue-warning" role="alert">Your clue uses the word for this object. Change your clue to describe it without naming it.</p> : null}
     {answered || feedback || guess ? <Feedback><div className="stack-2" role="status">
       {outcome && outcome !== "evaluationFailed" ? <strong>{guessed ? `Linguini guessed: ${guessed.word}` : "Linguini couldn't match your clue to an object."}</strong> : null}
-      {task.status === "skipped" ? <span>Skipped — no XP earned.</span> : <>
+      {task.status === "skipped" ? <span>Skipped — no Basil earned.</span> : <>
+        {outcome === "clearMatch" && task.status === "completed" ? <strong>{learningFeedback("correct", task.id)}</strong>
+          : outcome === "needsRevision" || outcome === "noMatch" ? <strong>{learningFeedback("incorrect", task.id)}</strong> : null}
         {guess?.feedback ? <span>{guess.feedback}</span> : null}
         {outcome && !answered ? <span>{OUTCOME_PROMPTS[outcome]}</span> : null}
         {feedback || (answered && !guess) ? <span>{feedback ?? "Reflection saved."}</span> : null}
-        {xpEarnedText(xpEarned) ? <strong>{xpEarnedText(xpEarned)}</strong> : null}
+        {basilEarnedText(basilEarned) ? <strong className="basil-reward"><BasilIcon size={17} />{basilEarnedText(basilEarned)}</strong> : null}
       </>}
     </div></Feedback> : null}
     {(answered || guess) && task.status !== "skipped" ? <ReportIssueLink label="Report a wrong guess" reportType="I-Spy guess" fields={[

@@ -1,0 +1,150 @@
+mission_id = "M06"
+practice_level = "A2"
+content_version = 1
+title = "Ask for the details"
+
+[photo_requirements]
+media_sources = ["preloaded", "camera", "userUpload"]
+min_confirmed_objects = 1
+eligibility_rule = "requestableItem"
+
+[objective]
+objective_id = "ask-for-details-a2"
+can_do = "I can make a polite request, answer a follow-up question and confirm or repair the details."
+
+[[objective.targets]]
+target_id = "understand-order"
+summary = "Understand the item, quantity and any requested detail in an order."
+evidence_types = ["recognition"]
+
+[[objective.targets]]
+target_id = "use-request-chunk"
+summary = "Choose a polite request opener that fits the situation."
+evidence_types = ["recognition"]
+
+[[objective.targets]]
+target_id = "build-request"
+summary = "Build a polite request with the confirmed item and quantity."
+evidence_types = ["construction"]
+
+[[objective.targets]]
+target_id = "identify-missing-detail"
+summary = "Understand which detail the server asks for."
+evidence_types = ["recognition"]
+
+[[objective.targets]]
+target_id = "reply-with-detail"
+summary = "Answer a follow-up question with the saved detail."
+evidence_types = ["recognition", "construction"]
+
+[[objective.targets]]
+target_id = "confirm-or-repair"
+summary = "Confirm an accurate repeat or repair one incorrect detail."
+evidence_types = ["construction"]
+
+[[language_patterns]]
+pattern_id = "polite-request"
+target_id = "use-request-chunk"
+structure = "[polite request frame] [quantity] [item] [politeness tail]."
+examples = { es = ["Quisiera dos cafés pequeños, por favor."], fr = ["Je voudrais deux petits cafés, s'il vous plaît."], de = ["Ich hätte gern zwei kleine Kaffees, bitte."], ko = ["작은 커피 두 잔 주세요."] }
+
+[[language_patterns]]
+pattern_id = "follow-up-detail"
+target_id = "reply-with-detail"
+structure = "[saved detail] [politeness tail]."
+examples = { es = ["Para llevar, por favor."], fr = ["À emporter, s'il vous plaît."], de = ["Zum Mitnehmen, bitte."], ko = ["가져갈게요."] }
+
+[[language_patterns]]
+pattern_id = "confirm-or-repair"
+target_id = "confirm-or-repair"
+structure = "[confirmation] or [repair frame] [corrected field] [politeness tail]."
+examples = { es = ["Sí, eso es."], fr = ["Oui, c'est ça."], de = ["Ja, genau."], ko = ["네, 맞아요."] }
+
+[teaching]
+task_sequence = ["vocabularyIntroduction", "grammarLesson"]
+teach_before_assessment = ["understand-order", "use-request-chunk", "build-request", "identify-missing-detail", "reply-with-detail", "confirm-or-repair"]
+max_new_words = 4
+
+[[teaching.supports]]
+support = "audio"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "wordBank"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "translation"
+availability = "onRequest"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "example"
+availability = "onRequest"
+counts_as_assistance = true
+
+[[teaching.supports]]
+support = "hint"
+availability = "onRequest"
+counts_as_assistance = true
+
+[[teaching.supports]]
+support = "helpPhrase"
+availability = "onRequest"
+counts_as_assistance = true
+
+[[teaching.supports]]
+support = "answerReveal"
+availability = "onRequest"
+counts_as_assistance = true
+
+[[evaluation_criteria]]
+criterion_id = "order-matches"
+target_id = "understand-order"
+description = "Identifies the correct order details."
+evidence_types = ["recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "request-chunk-fits"
+target_id = "use-request-chunk"
+description = "Chooses a polite request chunk appropriate to the context."
+evidence_types = ["recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "request-matches"
+target_id = "build-request"
+description = "Builds the request with the selected item and quantity."
+evidence_types = ["construction"]
+
+[[evaluation_criteria]]
+criterion_id = "missing-detail-matches"
+target_id = "identify-missing-detail"
+description = "Identifies the detail requested by the server."
+evidence_types = ["recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "reply-matches"
+target_id = "reply-with-detail"
+description = "Replies with the saved detail."
+evidence_types = ["recognition", "construction"]
+
+[[evaluation_criteria]]
+criterion_id = "confirm-or-repair-matches"
+target_id = "confirm-or-repair"
+description = "Confirms the accurate repeat or repairs its single incorrect detail."
+evidence_types = ["construction"]
+
+[expected_performance]
+min_assessed_questions = 6
+min_correct_ratio = 0.67
+min_independent_correct = 2
+required_target_groups = [
+  ["understand-order"],
+  ["use-request-chunk"],
+  ["build-request"],
+  ["identify-missing-detail"],
+  ["reply-with-detail"],
+  ["confirm-or-repair"],
+]

@@ -1,4 +1,4 @@
-import type { KeyboardEvent, MouseEvent } from "react";
+import type { CSSProperties, KeyboardEvent, MouseEvent } from "react";
 import { SceneVisual } from "./SceneVisual";
 import type { LanguageItem, Scene } from "../data/types";
 
@@ -11,6 +11,10 @@ type Props = {
   onLocationSelect?: (position: { x: number; y: number }) => void;
   locationLabel?: string;
   lazy?: boolean;
+  /** Name markers by number only, when the word is what the learner is asked to find. */
+  hideWords?: boolean;
+  /** Plain highlight dots, e.g. so counting questions never show numbers. */
+  hideNumbers?: boolean;
 };
 
 export function ScenePhoto({
@@ -22,6 +26,8 @@ export function ScenePhoto({
   onLocationSelect,
   locationLabel,
   lazy,
+  hideWords,
+  hideNumbers,
 }: Props) {
   const markers = items ?? scene.items;
 
@@ -53,7 +59,7 @@ export function ScenePhoto({
       aria-label={onLocationSelect ? locationLabel ?? "Choose a location in the scene" : undefined}
     >
       <SceneVisual scene={scene} className="scene__art" lazy={lazy} />
-      {markers.map((item) => {
+      {markers.map((item, index) => {
         const active = item.id === activeItemId;
         const custom = item.id.startsWith("custom-");
         const className = [
@@ -66,7 +72,18 @@ export function ScenePhoto({
         ]
           .filter(Boolean)
           .join(" ");
-        const style = { left: `${item.x}%`, top: `${item.y}%` };
+        const collisionIndex = markers.slice(0, index).filter(other =>
+          Math.abs(other.x - item.x) < 4 && Math.abs(other.y - item.y) < 4
+        ).length;
+        const collisionOffsets = [[0, 0], [0, -34], [34, 0], [0, 34], [-34, 0], [34, -34], [-34, -34]];
+        const [offsetX, offsetY] = collisionOffsets[collisionIndex % collisionOffsets.length];
+        const style = {
+          left: `${item.x}%`,
+          top: `${item.y}%`,
+          zIndex: 2 + index,
+          "--marker-offset-x": `${offsetX}px`,
+          "--marker-offset-y": `${offsetY}px`,
+        } as CSSProperties;
         // Placement mode has one keyboard target, without nested marker buttons.
         return onMarkerClick && !onLocationSelect ? (
           <button
@@ -75,14 +92,14 @@ export function ScenePhoto({
             className={className}
             style={style}
             onClick={() => onMarkerClick(item)}
-            aria-label={`Marker ${item.marker}: ${item.word}`}
+            aria-label={hideWords ? `Marker ${item.marker}` : `Marker ${item.marker}: ${item.word}`}
             aria-pressed={active}
           >
-            <span className="scene__marker-label">{item.marker}</span>
+            <span className="scene__marker-label">{hideNumbers ? "" : item.marker}</span>
           </button>
         ) : (
           <span key={item.id} className={className} style={style} aria-hidden="true">
-            <span className="scene__marker-label">{item.marker}</span>
+            <span className="scene__marker-label">{hideNumbers ? "" : item.marker}</span>
           </span>
         );
       })}

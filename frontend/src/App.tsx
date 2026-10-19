@@ -7,6 +7,7 @@ import { PracticeSelect } from "./pages/PracticeSelect";
 import { PracticeAnalysis } from "./pages/PracticeAnalysis";
 import { MicTest } from "./pages/MicTest";
 import { Learn } from "./pages/Learn";
+import { VocabularyPreview } from "./pages/VocabularyPreview";
 import { LearningTaskPage } from "./pages/LearningTaskPage";
 import { ISpyPhase1 } from "./pages/ISpyPhase1";
 import { ISpyPhase2 } from "./pages/ISpyPhase2";
@@ -24,6 +25,7 @@ import { SessionRoute } from "./components/SessionRoute";
 import { ProfileEdit } from "./pages/ProfileEdit";
 import { Progress } from "./pages/Progress";
 import { Contact } from "./pages/Contact";
+import { ResetPassword } from "./pages/ResetPassword";
 import { AppStateProvider } from "./state/AppState";
 import { useAuth } from "./state/Auth";
 import { LoadingScreen } from "./components/LoadingScreen";
@@ -69,6 +71,7 @@ export default function App() {
       <Route element={<FocusShell />}>
         <Route path="/" element={<FullReload />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/onboarding" element={<OnboardingRoute />} />
         <Route path="/contact" element={<Contact />} />
       </Route>
@@ -80,6 +83,7 @@ export default function App() {
           <Route path="analysis" element={<PracticeAnalysis />} />
           <Route path="mic-test" element={<MicTest />} />
           <Route path="learn" element={<Learn />} />
+          <Route path="learn/vocabulary-preview" element={<VocabularyPreview />} />
           <Route path="learn/:taskId" element={<LearningTaskPage />} />
           <Route path="ispy-1" element={<ISpyPhase1 />} />
           <Route path="ispy-2" element={<ISpyPhase2 />} />

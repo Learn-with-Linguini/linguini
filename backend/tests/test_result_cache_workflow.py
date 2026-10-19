@@ -16,7 +16,7 @@ def test_curated_reviews_share_and_learner_edits_stay_private(database):
     engine, owner, profile, client = database
     scopes = []
 
-    def translate(_payload, cache_scope=None):
+    def translate(_payload, cache_scope=None, **_options):
         scopes.append(cache_scope)
         raise SceneTranslationError("off")
 

@@ -66,7 +66,7 @@ def compatible_profile(profile):
     return bool(
         profile
         and profile["source_language_code"].lower() == "en"
-        and profile["target_language_code"].lower() in {"es", "fr"}
+        and profile["target_language_code"].lower() in {"es", "fr", "de"}
         and profile["proficiency_level"] in {"A1", "A2"}
     )
 

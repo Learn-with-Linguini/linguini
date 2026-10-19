@@ -68,3 +68,48 @@
   font-size: var(--text-body);
   font-weight: 700;
 }
+
+.loading-inline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--cream);
+  color: var(--ink);
+  font-weight: 700;
+  text-align: center;
+}
+
+.loading-inline--compact {
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  background: transparent;
+  color: var(--teal-dark);
+  font-size: var(--text-small);
+  font-weight: 800;
+}
+
+.loading-fork.loading-fork--inline {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  margin: 0;
+}
+
+.loading-fork.loading-fork--inline img {
+  width: 36px;
+  height: 36px;
+}
+
+.loading-inline--compact .loading-fork--inline {
+  width: 26px;
+  height: 26px;
+}
+
+.loading-inline--compact .loading-fork--inline img {
+  width: 24px;
+  height: 24px;
+}

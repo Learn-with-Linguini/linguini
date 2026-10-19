@@ -28,6 +28,15 @@ export const EyeIcon = ({ size = 22, className }: IconProps) => (
   </svg>
 );
 
+export const EyeOffIcon = ({ size = 22, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <path d="M3 3l18 18" />
+    <path d="M10.6 5.7A9.6 9.6 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a15.2 15.2 0 0 1-2.1 3" />
+    <path d="M6.2 6.2A15.7 15.7 0 0 0 2.5 12S6 18.5 12 18.5a9.2 9.2 0 0 0 3.2-.6" />
+    <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+  </svg>
+);
+
 export const CameraIcon = ({ size = 22, className }: IconProps) => (
   <svg {...base(size)} className={className}>
     <path d="M3 8.5h3.5L8 6h8l1.5 2.5H21V19H3z" />
@@ -120,10 +129,42 @@ export const CloseIcon = ({ size = 20, className }: IconProps) => (
   </svg>
 );
 
+export const MarkerIcon = ({ size = 20, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <circle cx="12" cy="12" r="3" />
+    <path d="M12 3v3M12 18v3M3 12h3M18 12h3" />
+  </svg>
+);
+
 export const HelpIcon = ({ size = 22, className }: IconProps) => (
   <svg {...base(size)} className={className}>
     <circle cx="12" cy="12" r="8.5" />
     <path d="M9.6 9.6a2.5 2.5 0 1 1 3.2 2.4c-.6.2-.9.7-.9 1.3v.4M12 16.6v.2" />
+  </svg>
+);
+
+export const CountIcon = ({ size = 22, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <circle cx="6" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="18" cy="12" r="2" />
+  </svg>
+);
+
+export const HandIcon = ({ size = 22, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <path d="M7 11V7.5a1.5 1.5 0 0 1 3 0V10M10 9V5.5a1.5 1.5 0 0 1 3 0V10M13 9V6.5a1.5 1.5 0 0 1 3 0V11M16 10a1.5 1.5 0 0 1 3 0v4c0 4-2.5 6-6 6h-1c-2.2 0-3.6-1-4.8-2.6L4.5 14a1.5 1.5 0 0 1 2.3-1.9L9 14" />
+  </svg>
+);
+
+export const HeartIcon = ({ size = 22, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <path d="M20.5 8.8c0 4.5-8.5 10-8.5 10s-8.5-5.5-8.5-10A4.3 4.3 0 0 1 12 7.5a4.3 4.3 0 0 1 8.5 1.3z" />
+  </svg>
+);
+
+export const ChatIcon = ({ size = 22, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <path d="M4 5h12a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3H9l-4 3v-3H4a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3z" />
+    <path d="M6 9h8M6 12h5" />
   </svg>
 );
 
@@ -161,5 +202,54 @@ export const FilterIcon = ({ size = 20, className }: IconProps) => (
 export const PlayIcon = ({ size = 20, className }: IconProps) => (
   <svg {...base(size)} className={className}>
     <path d="M8 5.5 18 12 8 18.5z" />
+  </svg>
+);
+
+export const BasilIcon = ({ size = 20, className }: IconProps) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" className={className} aria-hidden="true">
+    <path d="M20 3C9 2 3 7 5 14c2 7 13 5 15-11Z" fill="currentColor" stroke="none" />
+    <path d="m3 21 12-12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+
+export const LinkedInIcon = ({ size = 20, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+    <rect x="2" y="9" width="4" height="12" />
+    <circle cx="4" cy="4" r="2" />
+  </svg>
+);
+
+export const InstagramIcon = ({ size = 20, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+    <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+  </svg>
+);
+
+export const XIcon = ({ size = 20, className }: IconProps) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+    aria-hidden="true"
+  >
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  </svg>
+);
+
+export const TikTokIcon = ({ size = 20, className }: IconProps) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+    aria-hidden="true"
+  >
+    <path d="M19.589 6.686a4.793 4.793 0 0 1-3.77-4.245V2h-3.445v13.672a2.896 2.896 0 0 1-5.201 1.743l-.068-.102a2.895 2.895 0 0 1 3.18-4.321V9.45a6.34 6.34 0 0 0-5.165 1.554 6.34 6.34 0 0 0-1.87 4.542 6.34 6.34 0 0 0 8.04 6.069 6.34 6.34 0 0 0 4.529-6.069V9.404a8.232 8.232 0 0 0 5.21 1.83v-3.48a4.8 4.8 0 0 1-1.44-.068z" />
   </svg>
 );

@@ -45,21 +45,16 @@ def test_list_and_detail_use_current_media_key(private):
     )
     scene = PreloadedSceneDetail(
         scene_id="cafe",
-        language="Spanish",
         title="Cafe",
         media_asset=asset,
         items=[
             {
                 "id": "cup",
-                "word": "taza",
                 "translation": "cup",
                 "word_class": "noun",
-                "gender": "la",
                 "marker": 1,
                 "x": 30,
                 "y": 40,
-                "example": "",
-                "example_translation": "",
             }
         ],
         tasks=[
@@ -96,8 +91,8 @@ def test_list_and_detail_use_current_media_key(private):
         )
         signer.resolve.return_value = {"old.jpg": expected_url}
     service = SceneService(repository, BASE, signer)
-    summary = service.list_scenes("es")[0]
-    detail = service.get_scene("cafe", "es")
+    summary = service.list_scenes()[0]
+    detail = service.get_scene("cafe")
     assert summary.model_dump(by_alias=True)["imageUrl"] == expected_url
     assert detail.image_url == summary.image_url
     assert detail.items == scene.items

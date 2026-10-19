@@ -1,3 +1,4 @@
+import { InlineLoader, LoadingScreen } from "../components/LoadingScreen";
 import { useEffect, useId, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -5,13 +6,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../lib/api";
 import { getRoom, getRoomPhoto, prepareRoomCommand, roomDeadline, roomQueryKeys, roomReviewPayload, sendRoomCommand } from "../lib/rooms";
 import type { PendingRoomCommand, RoomObject, RoomPhoto, RoomPhotoReview, RoomRelationType, RoomSnapshot, RoomTurn } from "../lib/rooms";
-import { gameResourceKeys } from "../lib/gameResources";
 import { friendlyError, queryKeys } from "../lib/queryKeys";
 import { useAppState } from "../state/useAppState";
 import { Button, Card, Feedback } from "../components/ui";
 import { ImageUpload } from "../components/ImageUpload";
 import { GameResources } from "../components/GameResources";
 import { useBackAction } from "../components/BackAction";
+import { BasilIcon } from "../components/icons";
+import { useRefreshBasil } from "../state/gamification";
 import "../components/rooms.css";
 
 export function Room() {
@@ -26,10 +28,13 @@ function RoomSession({ roomId }: { roomId: string }) {
   const location = useLocation();
   const navigate = useNavigate();
   const client = useQueryClient();
+  const refreshBasil = useRefreshBasil();
   const owner = user?.id ?? "";
   const profile = activeProfile?.id ?? "";
   const key = roomQueryKeys.snapshot(owner, profile, roomId);
   const busyRef = useRef(false);
+  const mounted = useRef(true);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; }; }, []);
   const pending = useRef<PendingRoomCommand | null>(null);
   const lastResourceState = useRef<string | null>(null);
   const [pendingIntent, setPendingIntent] = useState<string | null>(null);
@@ -84,9 +89,9 @@ function RoomSession({ roomId }: { roomId: string }) {
     // The partner can start the room or finish a turn while this page only polls.
     // Repeated snapshots of the same status/credit do not trigger extra reads.
     if (previous === resourceState || (previous === null && resourceState.startsWith("lobby:"))) return;
-    void client.invalidateQueries({ queryKey: gameResourceKeys(owner) });
+    refreshBasil();
     void client.invalidateQueries({ queryKey: queryKeys.progress(profile) });
-  }, [resourceState, client, owner, profile]);
+  }, [resourceState, client, owner, profile, refreshBasil]);
 
   const act = async (intent: string, payload: Record<string, unknown> = {}): Promise<boolean> => {
     if (!room.data || busyRef.current) return false;
@@ -99,28 +104,32 @@ function RoomSession({ roomId }: { roomId: string }) {
     setPendingIntent(command.intent);
     await client.cancelQueries({ queryKey: key });
     try {
+      if (!mounted.current) return false;
       const next = await sendRoomCommand(roomId, command);
+      if (!mounted.current) return false;
       if (next.meId !== owner) throw new Error("This room changed accounts. Return home and open it again.");
       client.setQueryData<RoomSnapshot>(key, previous => previous && previous.revision > next.revision ? previous : next);
       pending.current = null;
       setPendingIntent(null);
-      void client.invalidateQueries({ queryKey: gameResourceKeys(owner) });
+      refreshBasil();
       void client.invalidateQueries({ queryKey: roomQueryKeys.active(owner, profile) });
       void client.invalidateQueries({ queryKey: roomQueryKeys.list(owner, profile) });
       return true;
     } catch (reason) {
+      if (!mounted.current) return false;
       if (reason instanceof ApiError && reason.status >= 400 && reason.status < 500) {
         pending.current = null;
         setPendingIntent(null);
         if (reason.code === "room_stale_revision") setRejectedCommand(command);
         await room.refetch();
+        if (!mounted.current) return false;
       }
       setError(reason instanceof ApiError ? reason.message : friendlyError(reason));
       return false;
-    } finally { busyRef.current = false; setBusy(false); }
+    } finally { busyRef.current = false; if (mounted.current) setBusy(false); }
   };
 
-  if (room.isPending) return <p role="status">Opening your room…</p>;
+  if (room.isPending) return <LoadingScreen label="Opening your room…" />;
   if (!room.data) return <div className="stack rooms-page"><h1>Room unavailable</h1>
     <p role="alert">{room.error instanceof ApiError ? room.error.message : "We couldn’t open this room. Check your connection and try again."}</p>
     <Button onClick={() => void room.refetch()}>Try again</Button><Button variant="quiet" onClick={() => navigate("/ispy/friends")}>Find your room</Button></div>;
@@ -145,7 +154,7 @@ function RoomSession({ roomId }: { roomId: string }) {
           const { commandId: _key, expectedRevision: _revision, ...payload } = rejectedCommand.body;
           void act(rejectedCommand.intent, payload);
         }}>Retry with updated room</Button> : null}</div> : null}
-    {busy ? <p role="status">Saving your action…</p> : null}
+    {busy ? <InlineLoader compact label="Saving your action…" /> : null}
 
     {data.status === "lobby" ? <>
       {!partner ? <Card className="stack"><h2>Invite one friend</h2>
@@ -167,10 +176,10 @@ function RoomSession({ roomId }: { roomId: string }) {
       </section>
       <Card className="stack"><h2>Ready to play?</h2><ul className="rooms-members">{data.members.map(member =>
         <li key={member.userId}><strong>{member.userId === owner ? "You" : member.displayName}</strong><span>{member.ready ? "Ready" : "Preparing"}</span></li>)}</ul>
-        <p className="small muted">Starting uses 1 Sauce each. The challenge starts when you’re both ready; you don’t need to be here at the same time.</p>
+        <p className="small muted">The challenge starts when you’re both ready; you don’t need to be here at the same time.</p>
         <Button variant={me?.ready ? "secondary" : "primary"} disabled={blocked || data.photos.length < 2 || data.photos.some(photo => photo.status !== "ready")}
           onClick={() => void act("ready", { ready: !me?.ready })}>{me?.ready ? "Keep preparing" : "I’m ready"}</Button>
-        {data.photos.some(photo => photo.status === "analyzing" || photo.status === "preparing") ? <p role="status">Preparing your photos…</p> : null}
+        {data.photos.some(photo => photo.status === "analyzing" || photo.status === "preparing") ? <InlineLoader compact label="Preparing your photos…" /> : null}
         {me?.ready ? <p className="small muted">You’re ready. We’ll keep your place until your friend is ready too.</p> : null}
       </Card>
     </> : (data.status === "playing" || data.status === "completed") && data.currentTurn ?
@@ -219,7 +228,7 @@ function RoomImage({ roomId, photoId, title, markers, selectable = false, select
 
   if (failed) return <div className="rooms-photo__placeholder"><p role="alert">We couldn’t load this photo.</p>
     <Button variant="secondary" onClick={() => setAttempt(current => current + 1)}>Reload photo</Button></div>;
-  if (!image) return <div className="rooms-photo__placeholder" role="status">Preparing photo…</div>;
+  if (!image) return <div className="rooms-photo__placeholder"><InlineLoader compact label="Preparing photo…" /></div>;
   return <div className="rooms-photo"><img src={image} alt={title} onError={() => setImageState({ url: null, failed: true, source })} />
     {markers?.map((object, index) => <button type="button" key={object.key} className={`rooms-marker${selected === object.key ? " rooms-marker--selected" : ""}`}
       style={{ left: `${Math.max(3, Math.min(97, object.x))}%`, top: `${Math.max(3, Math.min(97, object.y))}%` }}
@@ -238,7 +247,7 @@ function RoomPhotoCard({ roomId, photo, number, own, ownerName, disabled, onRemo
   const reviewable = own && Boolean(photo.review) && (photo.status === "awaitingReview" || photo.status === "failed" || (editing && photo.status === "ready"));
   return <Card className="stack rooms-photo-card"><div className="rooms-photo-card__heading"><h3>{photo.title ?? `Photo ${number}`}</h3><span className="small muted">{own ? "Added by you" : `Added by ${ownerName}`}</span></div>
     {photo.imageUrl && !reviewable ? <RoomImage roomId={roomId} photoId={photo.id} title={photo.title ?? `Shared photo ${number}`} /> : !photo.imageUrl ?
-      <div className="rooms-photo__placeholder" role="status">{photo.status === "failed" ? "This photo isn’t available to share." : own ? "Checking the photo before sharing it…" : "Your friend’s photo is being checked before sharing."}</div> : null}
+      <div className="rooms-photo__placeholder">{photo.status === "failed" ? <p role="status">This photo isn’t available to share.</p> : <InlineLoader compact label={own ? "Checking the photo before sharing it…" : "Your friend’s photo is being checked before sharing."} />}</div> : null}
     <p className="small" role={photo.status === "failed" ? "alert" : "status"}>{own ? status : photo.status === "awaitingReview" ? "Your friend is reviewing this photo" : status}</p>
     {reviewable ? <PhotoReview key={`${photo.id}:${photo.status}`} roomId={roomId} photoId={photo.id} initial={photo.review!} disabled={disabled}
       onSave={review => { void onReview(review).then(saved => { if (saved) setEditing(false); }); }} /> : null}
@@ -366,5 +375,5 @@ function RoomContributions({ room }: { room: RoomSnapshot }) {
   return <section className="stack-2" aria-label="Each person’s practice"><h3>Your own practice</h3>{room.contributions.map(item =>
     <div key={item.userId} className="rooms-contribution"><strong>{item.userId === room.meId ? "You" : room.members.find(member => member.userId === item.userId)?.displayName ?? "Your friend"}</strong>
       <span>{item.cluesSent} {item.cluesSent === 1 ? "clue" : "clues"} sent · {item.guessesMade} {item.guessesMade === 1 ? "guess" : "guesses"} · {item.correctGuesses} found</span>
-      <span className="small muted">+{item.basilEarned} Basil leaves · +{item.xpEarned} XP</span></div>)}</section>;
+      <span className="small muted rooms-contribution__rewards"><span className="basil-reward"><BasilIcon size={15} />+{item.basilEarned} Basil</span></span></div>)}</section>;
 }

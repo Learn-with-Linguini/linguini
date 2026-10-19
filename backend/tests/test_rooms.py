@@ -21,13 +21,13 @@ from app.api.dependencies import get_room_service
 from app.api.routes.rooms import router
 from app.database import create_database_engine
 from app.repositories.postgres.game_resources import (
-    SauceExhaustedError,
     game_accounts,
     game_resource_events,
     resource_snapshot,
     reward_basil,
     spend_sauce,
 )
+from app.repositories.postgres.gamification import basil_totals
 from app.repositories.postgres.language_profiles import PostgresLanguageProfileRepository
 from app.repositories.postgres.media_assets import media_assets
 from app.repositories.postgres.practice import sessions
@@ -321,7 +321,11 @@ def test_complete_unique_photo_game_records_only_own_contributions(db, count):
                 )
             ).mappings()
         )
-        assert len(spends) == 2
+        assert spends == []
+        for person in db.people[:2]:
+            contribution = next(item for item in final.contributions if item.user_id == person.id)
+            totals = basil_totals(c, person.id)
+            assert totals.today == totals.lifetime == contribution.basil_earned
     assert db.services[0].active() is None and db.services[1].active() is None
 
 
@@ -567,8 +571,8 @@ def test_concurrent_correct_guess_awards_once(db):
         )
 
 
-def test_final_ready_is_atomic_if_either_account_has_no_sauce(db):
-    room_id, _photos = prepared_game(db, ready=False)
+def test_final_ready_starts_once_when_legacy_energy_is_empty(db):
+    room_id, photos = prepared_game(db, ready=False)
     host = db.services[0].get(room_id)
     db.services[0].ready(room_id, command(host, RoomReadyRequest))
     with db.engine.begin() as c:
@@ -576,48 +580,26 @@ def test_final_ready_is_atomic_if_either_account_has_no_sauce(db):
             resource_snapshot(c, person.id)
         c.execute(
             update(game_accounts)
-            .where(game_accounts.c.user_id == db.people[1].id)
+            .where(game_accounts.c.user_id.in_([p.id for p in db.people[:2]]))
             .values(sauce_remaining=0)
         )
     guest = db.services[1].get(room_id)
     consent = command(guest, RoomReadyRequest)
-    with pytest.raises(SauceExhaustedError):
-        db.services[1].ready(room_id, consent)
-    waiting = db.services[0].get(room_id)
-    assert waiting.status == "lobby"
-    assert waiting.members[0].ready and not waiting.members[1].ready
+    started = db.services[1].ready(room_id, consent)
+    assert started.status == "playing"
+    assert db.services[1].ready(room_id, consent).revision == started.revision
+    assert start(db, room_id).status == "playing"
     with db.engine.connect() as c:
-        assert (
-            c.execute(
-                select(game_accounts.c.sauce_remaining).where(
-                    game_accounts.c.user_id == db.people[0].id,
-                )
-            ).scalar_one()
-            == 10
-        )
-        assert (
-            c.execute(
-                select(func.count())
-                .select_from(room_turns)
-                .where(
-                    room_turns.c.room_id == room_id,
-                )
-            ).scalar_one()
-            == 0
-        )
-
-    with db.engine.begin() as c:
-        c.execute(update(game_accounts).where(
-            game_accounts.c.user_id == db.people[1].id,
-        ).values(sauce_remaining=10))
-    resumed = db.services[1].ready(room_id, consent)
-    assert resumed.status == "playing"
-    assert db.services[1].ready(room_id, consent).revision == resumed.revision
-    with db.engine.connect() as c:
+        assert c.execute(select(game_accounts.c.sauce_remaining).where(
+            game_accounts.c.user_id.in_([p.id for p in db.people[:2]]),
+        )).scalars().all() == [0, 0]
+        assert c.execute(select(func.count()).select_from(room_turns).where(
+            room_turns.c.room_id == room_id,
+        )).scalar_one() == len(photos)
         assert c.execute(select(func.count()).select_from(game_resource_events).where(
             game_resource_events.c.user_id.in_([p.id for p in db.people[:2]]),
             game_resource_events.c.kind == "sauceSpend",
-        )).scalar_one() == 2
+        )).scalar_one() == 0
 
 
 def test_photo_leases_restart_retry_and_stale_completion(db):
@@ -1224,7 +1206,7 @@ def test_host_prepares_alone_and_guest_starts_days_later(db, monkeypatch):
         assert c.execute(select(func.count()).select_from(game_resource_events).where(
             game_resource_events.c.user_id.in_([p.id for p in db.people[:2]]),
             game_resource_events.c.kind == "sauceSpend",
-        )).scalar_one() == 2
+        )).scalar_one() == 0
 
 
 def test_offline_partner_catches_up_without_blocking_results_or_completion(db):
@@ -1314,7 +1296,7 @@ def test_ended_challenge_never_exposes_an_unacknowledged_result_photo(db):
             db.services[actor].acknowledge(room_id, turn.id, command(ended))
 
 
-def test_concurrent_final_ready_and_explicit_start_never_charge_twice(db):
+def test_concurrent_final_ready_and_explicit_start_create_turns_once(db):
     room_id, _ = prepared_game(db, ready=False)
     host = db.services[0].get(room_id)
     host = db.services[0].ready(room_id, command(host, RoomReadyRequest))
@@ -1340,7 +1322,7 @@ def test_concurrent_final_ready_and_explicit_start_never_charge_twice(db):
         assert c.execute(select(func.count()).select_from(game_resource_events).where(
             game_resource_events.c.user_id.in_([p.id for p in db.people[:2]]),
             game_resource_events.c.kind == "sauceSpend",
-        )).scalar_one() == 2
+        )).scalar_one() == 0
         assert c.execute(select(func.count()).select_from(room_turns).where(
             room_turns.c.room_id == room_id,
         )).scalar_one() == 2

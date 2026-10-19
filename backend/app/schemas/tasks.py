@@ -19,6 +19,8 @@ from app.schemas.enums import (
     TaskPhase,
     TaskStatus,
 )
+from app.schemas.mission_content import A0MissionSnapshot, TaughtChunk
+from app.schemas.roleplay import RoleplayFact
 
 type MissionId = Annotated[str, StringConstraints(pattern=r"^M\d{2}$")]
 type ContentVersion = Annotated[int, Field(ge=1)]
@@ -33,7 +35,8 @@ type SupportKind = Literal[
     "answerReveal",
 ]
 type MistakeType = Literal[
-    "wrongObject", "wrongWord", "wrongArticle", "wrongGender", "wrongColour", "wrongPosition",
+    "wrongObject", "wrongWord", "wrongArticle", "wrongGender", "wrongColour", "wrongAttribute",
+    "wrongPosition",
     "wordOrder", "missingWord", "spelling", "targetNamed", "wrongQuantity", "pluralForm",
 ]
 type QuestionOutcomeStatus = Literal["correct", "incorrect", "unassessed"]
@@ -99,6 +102,21 @@ class VocabularyChoice(ApiModel):
     label: NonEmptyText
 
 
+class LessonDialogueTurn(ApiModel):
+    speaker: Literal["server", "linguini", "learner"]
+    text: NonEmptyText
+    translation: str | None = Field(default=None, exclude_if=_is_none)
+
+
+MissionDialogueTurn = LessonDialogueTurn
+
+
+class MissionQuestionOutcome(ApiModel):
+    text: NonEmptyText
+    kind: Literal["returned", "basket", "leftBehind"]
+    scene_object_id: UUID
+
+
 class VocabularyQuestion(ApiModel):
     question_id: NonEmptyText
     prompt: NonEmptyText
@@ -140,7 +158,7 @@ class VocabularyIntroductionContent(MissionTaskFields):
 class GrammarLessonQuestion(ApiModel):
     question_id: NonEmptyText
     prompt: NonEmptyText
-    interaction_type: Literal["multipleChoice", "sentenceBuilding"] = "multipleChoice"
+    interaction_type: Literal["multipleChoice", "sentenceBuilding", "textCloze"] = "multipleChoice"
     options: list[VocabularyChoice] = Field(default_factory=list)
     token_bank: list[NonEmptyText] = Field(default_factory=list)
     translation: str | None = None
@@ -160,6 +178,43 @@ class GrammarLessonQuestion(ApiModel):
     board_object_id: UUID | None = Field(default=None, exclude_if=_is_none)
     # The number word already visible in the prompt, revealed with its digit after grading.
     quantity_word: str | None = Field(default=None, exclude_if=_is_none)
+    roleplay_premise: str | None = Field(default=None, exclude_if=_is_none)
+    # Options are shown in their saved, already shuffled order.
+    keep_option_order: bool | None = Field(default=None, exclude_if=_is_none)
+    planning_facts: list[NonEmptyText] | None = Field(default=None, exclude_if=_is_none)
+    # A marker choice: option id -> the scene object whose photo marker answers it.
+    marker_object_ids: dict[str, UUID] | None = Field(default=None, exclude_if=_is_none)
+    # A short English instruction shown above the prompt.
+    instruction: str | None = Field(default=None, exclude_if=_is_none)
+    # Target-language text the learner can play aloud.
+    audio_text: str | None = Field(default=None, exclude_if=_is_none)
+    # Listening questions hide the written prompt until the learner reveals it.
+    listen_first: bool | None = Field(default=None, exclude_if=_is_none)
+    # A practice board showing this many of ``board_object_id`` without a choice.
+    display_count: Annotated[int, Field(ge=1, le=20)] | None = Field(
+        default=None, exclude_if=_is_none
+    )
+    # A chunk with its missing word as ``___``, completed and played after grading.
+    slot_template: str | None = Field(default=None, exclude_if=_is_none)
+    complete_chunk: str | None = Field(default=None, exclude_if=_is_none)
+    gap_type: Literal[
+        "chunkChoice", "pictureToBlank", "audioGap", "dialogueGap", "typedGap",
+    ] | None = Field(default=None, exclude_if=_is_none)
+    gap_kind: str | None = Field(default=None, exclude_if=_is_none)
+    assistance_steps: list[
+        Literal["replayAudio", "visualDetail", "phraseOnset", "chunkBank", "fullModel"]
+    ] | None = Field(default=None, exclude_if=_is_none)
+    dialogue: list[LessonDialogueTurn] | None = Field(default=None, exclude_if=_is_none)
+    allow_retry: bool | None = Field(default=None, exclude_if=_is_none)
+    wrong_field_tokens: dict[str, str] | None = Field(default=None, exclude_if=_is_none)
+    option_object_ids: dict[str, UUID] | None = Field(default=None, exclude_if=_is_none)
+    option_icons: dict[str, Literal["belongs", "likes", "like", "dislike"]] | None = Field(
+        default=None, exclude_if=_is_none
+    )
+    complete_translation: str | None = Field(default=None, exclude_if=_is_none)
+    outcome: MissionQuestionOutcome | None = Field(default=None, exclude_if=_is_none)
+    correct_note: str | None = Field(default=None, exclude_if=_is_none)
+    typed_allowed: bool | None = Field(default=None, exclude_if=_is_none)
 
     @model_validator(mode="after")
     def validate_interaction(self) -> GrammarLessonQuestion:
@@ -169,6 +224,20 @@ class GrammarLessonQuestion(ApiModel):
             raise ValueError("sentence-building questions require a token bank")
         if self.interaction_type == "sentenceBuilding" and self.options:
             raise ValueError("sentence-building questions cannot have answer options")
+        if self.interaction_type == "textCloze" and (self.options or self.token_bank):
+            raise ValueError("text cloze questions cannot have answer options or a word bank")
+        if self.marker_object_ids is not None and set(self.marker_object_ids) != {
+            option.option_id for option in self.options
+        }:
+            raise ValueError("marker choices must cover exactly the answer options")
+        if self.option_object_ids is not None and set(self.option_object_ids) != {
+            option.option_id for option in self.options
+        }:
+            raise ValueError("object choices must cover exactly the answer options")
+        if self.option_icons is not None and set(self.option_icons) != {
+            option.option_id for option in self.options
+        }:
+            raise ValueError("icon choices must cover exactly the answer options")
         if self.board_counts is not None:
             if set(self.board_counts) != {option.option_id for option in self.options}:
                 raise ValueError("board counts must cover exactly the answer options")
@@ -178,12 +247,43 @@ class GrammarLessonQuestion(ApiModel):
         return self
 
 
+class MissionScenarioAlternative(ApiModel):
+    scene_object_id: UUID
+    label: NonEmptyText
+
+
+class MissionScenario(ApiModel):
+    scenario_id: NonEmptyText
+    prompt: NonEmptyText
+    scene_object_id: UUID
+    item_label: NonEmptyText
+    accepted: bool
+    alternatives: list[MissionScenarioAlternative] = Field(default_factory=list)
+
+
+class LessonPrepCard(ApiModel):
+    """A taught chunk shown, with audio, before a lesson's questions."""
+
+    text: NonEmptyText
+    translation: str | None = None
+    scene_object_id: UUID | None = Field(default=None, exclude_if=_is_none)
+
+
 class GrammarLessonContent(MissionTaskFields):
     kind: Literal["grammarLesson"] = "grammarLesson"
     focus: NonEmptyText
     title: NonEmptyText
     explanation: NonEmptyText | None = Field(default=None, exclude_if=_is_none)
+    prep: list[LessonPrepCard] | None = Field(default=None, exclude_if=_is_none)
     questions: Annotated[list[GrammarLessonQuestion], Field(min_length=1)]
+    check_each_question: bool | None = Field(default=None, exclude_if=_is_none)
+    roleplay_facts: list[RoleplayFact] | None = Field(default=None, exclude_if=_is_none)
+    situation: Literal["lostAndFound", "everydayChoice"] | None = Field(
+        default=None, exclude_if=_is_none
+    )
+    taught_chunks: list[TaughtChunk] | None = Field(default=None, exclude_if=_is_none)
+    mission_snapshot: A0MissionSnapshot | None = Field(default=None, exclude_if=_is_none)
+    scenario: MissionScenario | None = Field(default=None, exclude_if=_is_none)
 
 
 class GrammarExplanationContent(MissionTaskFields):
@@ -306,12 +406,16 @@ type TaskPublicContent = Annotated[
 
 
 class CorrectionRule(ApiModel):
-    """Feedback for a recognisable mistake; empty ``answers`` matches any incorrect answer."""
+    """Feedback for a recognisable mistake; empty ``answers`` matches any incorrect answer.
+
+    ``note`` is a short reason this option is wrong, shown after a correct answer.
+    """
 
     mistake: MistakeType
     answers: list[NonEmptyText] = Field(default_factory=list, max_length=20)
     correction: NonEmptyText
     explanation: str | None = None
+    note: str | None = None
 
 
 class QuestionEvaluation(ApiModel):
@@ -332,6 +436,7 @@ class QuestionEvaluation(ApiModel):
     vocabulary_item_ids: list[UUID] = Field(default_factory=list)
     scene_object_id: UUID | None = None
     corrections: list[CorrectionRule] = Field(default_factory=list, max_length=20)
+    correct_note: str | None = None
 
     @model_validator(mode="after")
     def validate_ids(self) -> QuestionEvaluation:
@@ -351,10 +456,16 @@ class TaskAnswerKey(ApiModel):
     evaluation_notes: str | None = None
     correct_option_ids: dict[str, str] = Field(default_factory=dict)
     accepted_text_answers_by_vocabulary_id: dict[str, list[str]] = Field(default_factory=dict)
+    accepted_text_answers_by_question: dict[str, list[str]] = Field(
+        default_factory=dict, exclude_if=_is_empty
+    )
     scene_description_context: JsonObject | None = None
     question_evaluations: list[QuestionEvaluation] = Field(
         default_factory=list, exclude_if=_is_empty
     )
+    mission_state: JsonObject | None = Field(default=None, exclude_if=_is_none)
+    # Yes/no statement questions: question id -> whether the statement is true.
+    statement_correct: dict[str, bool] = Field(default_factory=dict, exclude_if=_is_empty)
 
     @model_validator(mode="after")
     def validate_question_evaluations(self) -> TaskAnswerKey:
@@ -524,6 +635,8 @@ class QuestionOutcome(ApiModel):
 
     ``assistance`` lists every support the learner opened; ``assistanceUsed`` is true
     only when one of them counts as assistance under the mission's support rules.
+    ``optionNotes`` explains why the unselected options do not fit a correct answer.
+    ``correctNote`` briefly confirms why the correct answer fits.
     """
 
     question_id: NonEmptyText
@@ -534,6 +647,8 @@ class QuestionOutcome(ApiModel):
     assistance: list[SupportKind] = Field(default_factory=list)
     assistance_used: bool = False
     mistakes: list[MistakeDetail] = Field(default_factory=list)
+    correct_note: str | None = Field(default=None, exclude_if=_is_none)
+    option_notes: list[NonEmptyText] = Field(default_factory=list, exclude_if=_is_empty)
 
     @model_validator(mode="after")
     def validate_outcome(self) -> QuestionOutcome:
@@ -713,9 +828,82 @@ class CheckVocabularyAnswerRequest(ApiModel):
 
 
 class CheckVocabularyAnswerResponse(ApiModel):
+    accepted_option_id: NonEmptyText
+    basil_earned: int = 0
     question_id: NonEmptyText
     is_correct: bool
     correct_option_id: NonEmptyText
+
+
+class CheckVocabularyTypingRequest(ApiModel):
+    learning_key: NonEmptyText
+    answer: Annotated[str, Field(max_length=2_000)] = ""
+    reveal: bool = False
+
+    @model_validator(mode="after")
+    def validate_answer(self) -> CheckVocabularyTypingRequest:
+        if not self.reveal and not self.answer.strip():
+            raise ValueError("answer cannot be empty")
+        return self
+
+
+class CheckVocabularyTypingResponse(ApiModel):
+    learning_key: NonEmptyText
+    is_correct: bool
+    correct_answer: NonEmptyText
+    revealed: bool
+
+
+class VocabularyChecksResponse(ApiModel):
+    checks: list[CheckVocabularyAnswerResponse] = Field(default_factory=list)
+
+
+class CheckLessonAnswerRequest(ApiModel):
+    question_id: NonEmptyText
+    answer: Annotated[str, Field(min_length=1, max_length=2_000)]
+
+
+class LessonAssistanceRequest(ApiModel):
+    question_id: NonEmptyText
+    step: Literal["replayAudio", "visualDetail", "phraseOnset", "chunkBank", "fullModel"]
+
+
+class LessonAssistanceResponse(ApiModel):
+    question_id: NonEmptyText
+    step: Literal["replayAudio", "visualDetail", "phraseOnset", "chunkBank", "fullModel"]
+    content: NonEmptyText
+
+
+class MissionScenarioRequest(ApiModel):
+    action: Literal["accept", "choose"]
+    scene_object_id: UUID | None = None
+
+
+class MissionScenarioResponse(ApiModel):
+    accepted: bool
+    tasks: list[SessionTaskPublic] = Field(default_factory=list)
+
+
+class LessonAnswerCheck(ApiModel):
+    basil_earned: int = 0
+    question_id: NonEmptyText
+    answer: NonEmptyText
+    is_correct: bool
+    correct_answer: str | None
+    outcome: QuestionOutcome
+    attempts_left: int | None = Field(default=None, exclude_if=_is_none)
+    feedback: str | None = Field(default=None, exclude_if=_is_none)
+    wrong_field: str | None = Field(default=None, exclude_if=_is_none)
+    assistance_steps_used: list[str] = Field(default_factory=list)
+
+
+class CheckLessonAnswerResponse(LessonAnswerCheck):
+    pass
+
+
+class LessonChecksResponse(ApiModel):
+    checks: list[LessonAnswerCheck] = Field(default_factory=list)
+    assistance_steps: dict[str, list[str]] = Field(default_factory=dict)
 
 
 type SubmitTaskAttemptRequest = Annotated[
@@ -752,6 +940,7 @@ class SessionProgress(ApiModel):
 
 
 class TaskActionResponse(ApiModel):
+    basil_earned: int = 0
     task: SessionTaskPublic
     attempt: TaskAttempt | None = None
     next_task_id: UUID | None = None

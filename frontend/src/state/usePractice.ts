@@ -5,6 +5,7 @@ import type { PracticeReview } from "../lib/api";
 import type { ConfirmGuessBody, PracticeDetail, SessionStatus, TaskAnswer, TaskActionResult } from "../lib/api";
 import { applyTaskResult, keepClientProgress } from "../lib/practiceUpdates";
 import { friendlyError, queryKeys } from "../lib/queryKeys";
+import { gamificationKeys } from "../lib/gamification";
 import { gameResourceKeys } from "../lib/gameResources";
 
 const PROCESSING = ["analyzingScene", "generatingTasks"];
@@ -62,6 +63,7 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
       applySession(data);
       setStalled(PROCESSING.includes(data.session.status));
       void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
+      void queryClient.invalidateQueries({ queryKey: gamificationKeys.account(userId) });
     }
     return data;
     })();
@@ -97,6 +99,7 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
     } finally {
       busy.current = false; setSaving(false);
       void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
+      void queryClient.invalidateQueries({ queryKey: gamificationKeys.account(userId) });
     }
     try { await loadSession(id, data); }
     catch (error) { setError(friendlyError(error)); }
@@ -106,6 +109,7 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
     if (creation.current?.asset !== scene.mediaAssetId) creation.current = { asset: scene.mediaAssetId, key: crypto.randomUUID() };
     const result = await createPractice(profileId, scene.mediaAssetId, creation.current.key);
     void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
+      void queryClient.invalidateQueries({ queryKey: gamificationKeys.account(userId) });
     creation.current = null;
     return result;
   }, [profileId, queryClient, userId]);
@@ -117,6 +121,7 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
       applySession(value => applyTaskResult(value, session.session.id, result));
       learningDirty.current = true;
       void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
+      void queryClient.invalidateQueries({ queryKey: gamificationKeys.account(userId) });
       return result;
     } catch (e) {
       setError(friendlyError(e));
@@ -153,7 +158,8 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
         : current);
       flushLearningChanges();
       void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
-      // Refetch the final XP, and warm the cache when the summary screen has
+      void queryClient.invalidateQueries({ queryKey: gamificationKeys.account(userId) });
+      // Refetch the final reward total, and warm the cache when the summary screen has
       // not mounted yet so it renders without a visible fetch.
       void queryClient.invalidateQueries({ queryKey: queryKeys.sessionSummary(sessionId) });
       void queryClient.prefetchQuery({

@@ -200,6 +200,40 @@ def test_direct_challenge_requires_mutual_friend_and_matching_active_profile(db)
     db.repos[1].leave(access.room.id, command(access.room))
 
 
+@pytest.mark.parametrize("level", ["A1", "A2"])
+def test_german_friends_can_send_direct_challenges(db, level):
+    with db.engine.begin() as c:
+        c.execute(update(language_profiles).where(
+            language_profiles.c.id.in_([profile.id for profile in db.profiles[:2]]),
+        ).values(target_language_code="de", proficiency_level=level))
+    repos, _invite, _request, accepted = befriend(db)
+    assert accepted.target_language_code == "de" and accepted.can_challenge
+    assert repos[0].list()[0].can_challenge
+    access = db.repos[0].create(CreateRoomRequest(
+        command_id=uuid4(), language_profile_id=db.profiles[0].id,
+        friend_user_id=db.people[1].id,
+    ))
+    assert access.room.target_language_code == "de" and access.room.proficiency_level == level
+    assert db.repos[1].list()[0].id == access.room.id
+    assert len(access.room.members) == 2 and not any(member.ready for member in access.room.members)
+
+
+def test_saved_friends_do_not_enable_unsupported_a0_challenges(db):
+    with db.engine.begin() as c:
+        c.execute(update(language_profiles).where(
+            language_profiles.c.id.in_([profile.id for profile in db.profiles[:2]]),
+        ).values(proficiency_level="A0"))
+    repos, _invite, _request, accepted = befriend(db)
+    assert not accepted.can_challenge and not repos[0].list()[0].can_challenge
+    with pytest.raises(RoomError) as error:
+        db.repos[0].create(CreateRoomRequest(
+            command_id=uuid4(), language_profile_id=db.profiles[0].id,
+            friend_user_id=db.people[1].id,
+        ))
+    assert error.value.code == "room_language_unsupported"
+    assert db.repos[0].list() == db.repos[1].list() == []
+
+
 def test_direct_challenge_respects_invited_friends_active_limit(db):
     befriend(db)
     for _ in range(10):

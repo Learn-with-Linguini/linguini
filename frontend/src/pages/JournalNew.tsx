@@ -173,7 +173,7 @@ export function JournalForm({ entry, date, photoOptions, wordSuggestions, onSave
 
       <div className="journal-editor__actions">
         {journalSaveError ? <p role="alert">{journalSaveError}</p> : null}
-        {journalSaving ? <p role="status">Saving journal…</p> : null}
+        {journalSaving ? <LoadingScreen label="Saving journal…" /> : null}
         {!entry && !activeProfile ? <p role="alert">Choose a language in Profile before saving.</p> : null}
         <Button block className="journal-editor__save" disabled={journalSaving || uploading || !body.trim() || (!entry && !activeProfile)} onClick={save}>
           Save entry

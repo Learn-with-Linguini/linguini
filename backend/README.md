@@ -56,35 +56,38 @@ local environment files. Missing database configuration fails at startup; connec
 or query failures never fall back to JSON. The application creates one SQLAlchemy
 engine per process and disposes it at shutdown.
 
-### Sauce and photo rooms
+### Basil and photo challenges
 
-Apply the game resource, uploaded photo room, room invite and asynchronous
-challenge migrations before
-deploying. Sauce, Basil and two-player rooms are available automatically; they
-require no feature switches in the API or frontend. The I-Spy tab offers both
-standalone play with AI, saved friends and a challenge inbox.
+Apply the game resource, uploaded photo room, room invite, asynchronous challenge
+and mission gamification migrations before deploying. Basil and two-player rooms
+are available automatically; they require no feature switches in the API or
+frontend. The I-Spy tab offers standalone play with AI, saved friends and a
+challenge inbox.
 
-`DAILY_SAUCE_CAPACITY` defaults to 10 (allowed range: 1–100). Sauce refills at
-00:00 UTC and applies to every account tier, including beta. Starting a solo
-lesson or a photo room costs one Sauce per player. Resuming does not spend again;
-failed setup and lessons left before any practice return the reserved Sauce.
-Basil leaves reward submitted lesson and room practice; 20 leaves unlock a Sauce
-jar appearance. Standalone AI I-Spy games remain free and do not award Basil, XP
-or vocabulary progress.
+Starting or resuming a lesson or photo challenge does not spend Sauce. Legacy
+Sauce balances, transactions, daily refill settings and refunds remain for
+historical requests; they no longer gate new practice. Sauce Jars now show
+mission progress. Basil Points reward accepted lesson questions and room
+contributions; 20 Basil unlocks an accent. Today and lifetime totals count earned
+credits separately from the spendable balance. Existing XP history is preserved.
+See [the reward and badge policy](../docs/gamification.md). Standalone AI I-Spy
+games remain free and do not award Basil, XP or vocabulary progress.
 
 Rooms store random invitations privately in the database, so a host can recover
 an invitation after reload or an API restart without a separate room secret.
 The invite migration rotates existing live invitations; hosts should copy the
-new code after deployment. Rooms support two players learning English to Spanish
-or French at the same A1/A2 level, with 2–4 photos uploaded by either player. Room photos use
-the configured scene analyzer and translator, then require the owner's fact review.
+new code after deployment. Rooms support two players learning English to Spanish,
+French or German at the same A1/A2 level, with 2–4 photos uploaded by either player.
+Room photos use the configured scene analyzer and translator, then require the
+owner's fact review.
 Rooms do not require or call OpenAI image moderation. Photos remain private to the
 owner until analysis succeeds, then become accessible only to the invited partner.
 Room invitations and preparation expire after seven days; started challenges last
 14 days. A host can prepare and consent before their partner joins. The final
 player to get ready starts the game automatically, so the host can be offline.
-Both players consent before either spends Sauce. If Sauce is unavailable, the
-final ready command and all charges roll back and can be retried after a refill.
+Both players explicitly consent by getting ready. Auto-start and the legacy
+start endpoint work even when historical Sauce balances are empty, and retries
+do not create duplicate rounds.
 
 `GET /api/v1/rooms` returns every active challenge and completed challenge with
 an unread result (up to ten together per learner), plus up to 20 other recent
@@ -101,7 +104,8 @@ shared round; a returning partner sees their own oldest unread result before
 the current round, including the final result after completion. Only that
 partner's pending result photo remains accessible after completion. Ending,
 expiry and account deletion revoke room photo access. Clues and guesses retain
-server-owned, idempotent Basil and XP awards.
+server-owned, idempotent Basil contribution rewards, which feed account earned
+totals and opted-in daily standings. Existing XP awards are preserved for history.
 
 Friends use explicit, single-use private invitations without email or account
 search. `POST /api/v1/friends/invite` accepts a `commandId` and returns a durable
@@ -274,10 +278,11 @@ See [Supabase public URLs](https://supabase.com/docs/reference/javascript/file-b
 
 `python -m app.scripts.precompute_preloaded_scenes` (run from `backend/`)
 analyses the six bundled scene images once per image with the configured
-scene-analysis provider, translates the detected objects into French and
-Spanish, and stores the assembled suggested words in
-`preloaded_scenes.content.items` so the Scene Analysis review screen opens
-with words already on the photo. `content.tasks/rounds/prompts` stay minimal
+scene-analysis provider and stores the detected objects (English labels,
+markers, attributes) in `preloaded_scenes.content.items`, so the Scene Analysis
+review screen opens with objects already on the photo. Scenes have no language:
+each image has one row, and a learner's session translates the objects into
+their target language (or reuses the catalog word for that label). `content.tasks/rounds/prompts` stay minimal
 placeholders; real lessons and clues come from the templates below.
 
 Each item's `attributes.color` and the scene's `content.relations` are curated from
@@ -287,19 +292,20 @@ replaces them with detected facts; review those before applying.
 
 ```sh
 python -m app.scripts.precompute_preloaded_scenes --dry-run --json out.json
-python -m app.scripts.precompute_preloaded_scenes --slug calle-mayor --language fr
+python -m app.scripts.precompute_preloaded_scenes --slug street --language fr
 python -m app.scripts.precompute_preloaded_scenes --emit-migration migration.sql
 python -m app.scripts.precompute_preloaded_scenes --from-json out.json --emit-migration migration.sql
 ```
 
-`--slug` and `--language` are repeatable and default to all six base scenes
-and both languages (`fr`, `es`). `--dry-run` computes and validates rows
+`--slug` and `--language` are repeatable and default to all six scenes
+(`street`, `cafe`, `market`, `bedroom`, `kitchen`, `park`) and both template
+languages (`fr`, `es`); `--language` only selects which languages get templates. `--dry-run` computes and validates rows
 without writing to the database. `--json` dumps the computed rows and media
 assets for reuse; `--from-json` reloads that file (re-validating every row)
 instead of calling any AI provider, so SQL regeneration or the database write
 never re-bills the model. `--emit-migration` writes an idempotent
-`INSERT ... ON CONFLICT (slug) DO UPDATE` migration; the generated French rows
-reuse the existing `media_assets` rows, so no asset inserts are emitted.
+`INSERT ... ON CONFLICT (slug) DO UPDATE` migration; rows reuse the existing
+`media_assets` rows, so no asset inserts are emitted.
 Environment values are read from `backend/.env.local` (or `--env-file PATH`).
 
 ##### Lesson and clue templates
@@ -507,6 +513,31 @@ Tables use UUID identities and timezone-aware timestamps. Migrations define fore
 keys, checks, update triggers, RLS, and revoked browser-role grants. All access is
 through backend repositories; the frontend must not query these tables directly.
 
+### Uploaded-photo scene facts
+
+`scene-analysis.v5` returns up to 20 clearly visible object instances, ordered with
+the most useful and diverse learning candidates first. Repeated objects keep separate
+boxes and markers but share a model `groupKey` and `suggestedGroupCount`; the mapped
+quantity remains only a suggestion until the learner confirms it in the Counts review.
+The full inventory is stored once in `media_scene_analyses`, keyed by the media asset
+and prompt/schema versions, so another session can reuse the image without another
+vision call. Each session receives its own stable object IDs and snapshots only the
+facts it confirms.
+
+Before review, the backend compares the unconfirmed inventory with the implemented
+missions for the learner's level. `provisionalMissionPlan` is presentation guidance,
+never grading evidence: `suggestedSceneObjectIds` limits the default review to the
+smallest useful mission-focused set. The learner may reveal other inventory objects.
+After review, mission eligibility is run again using only confirmed facts and that
+second result becomes the immutable `missionPlan` consumed by task generation.
+
+The analysis may also return visible action suggestions linked to detected objects and
+clearly displayed price suggestions linked to an item. These remain unconfirmed scene
+metadata: the vision model may describe visible evidence such as holding or a price tag,
+but may not infer ownership, preference, need, routine, intention, availability or a
+real price that is not shown. Mission planning must use action or price information only
+after the learner confirms it or explicitly selects a labelled role-play value.
+
 ### Mission contracts
 
 A mission is the definition of one lesson goal at one practice level. Each mission has
@@ -573,9 +604,11 @@ lesson.
   as before. The introduction carries no mission fields because it teaches the nouns for
   every planned mission; its per-word evidence still follows each word's own result.
 - **Tasks.** Each planned mission adds one `grammarLesson` carrying its own mission fields,
-  in plan order, before the bonus I-Spy rounds. Mission lessons publish no `explanation`,
-  so the task page shows only the questions and, after submitting, the feedback. `app/services/mission_registry.py` maps each
-  mission to its payload builder, generation spec and task builder.
+  in plan order. Mission sessions end on their summary; choosing I-Spy there creates a
+  separate game that reuses the confirmed scene inventory. Mission lessons publish no
+  `explanation`, so the task page shows only the questions and, after submitting, the
+  feedback. `app/services/mission_registry.py` maps each mission to its payload builder,
+  generation spec and task builder.
 
 #### M01 A1 lesson path
 

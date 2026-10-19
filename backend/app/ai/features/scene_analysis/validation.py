@@ -76,6 +76,7 @@ def validate_scene_analysis(
     issues: list[SceneAnalysisIssue] = []
 
     object_keys: set[str] = set()
+    object_groups: dict[str, tuple[str, int]] = {}
     for index, scene_object in enumerate(result.objects):
         if scene_object.object_key in object_keys:
             issues.append(
@@ -86,6 +87,16 @@ def validate_scene_analysis(
                 )
             )
         object_keys.add(scene_object.object_key)
+        group = (scene_object.label.casefold(), scene_object.suggested_group_count)
+        previous = object_groups.setdefault(scene_object.group_key, group)
+        if previous != group:
+            issues.append(
+                _issue(
+                    SceneAnalysisIssueCode.INCONSISTENT_OBJECT_GROUP,
+                    f"group {scene_object.group_key!r} has inconsistent labels or counts",
+                    f"objects[{index}].groupKey",
+                )
+            )
 
     relation_keys: set[str] = set()
     for index, relation in enumerate(result.relations):
@@ -98,6 +109,59 @@ def validate_scene_analysis(
                 )
             )
         relation_keys.add(relation.relation_key)
+
+    action_keys: set[str] = set()
+    for index, action in enumerate(result.actions):
+        if action.action_key in action_keys:
+            issues.append(
+                _issue(
+                    SceneAnalysisIssueCode.DUPLICATE_ACTION_KEY,
+                    f"duplicate action key {action.action_key!r}",
+                    f"actions[{index}].actionKey",
+                )
+            )
+        action_keys.add(action.action_key)
+        for object_index, object_key in enumerate(action.related_object_keys):
+            if object_key not in object_keys:
+                issues.append(
+                    _issue(
+                        SceneAnalysisIssueCode.UNKNOWN_ACTION_OBJECT,
+                        f"action {action.action_key!r} has unknown object key {object_key!r}",
+                        f"actions[{index}].relatedObjectKeys[{object_index}]",
+                    )
+                )
+        _check_confidence(
+            issues,
+            action.confidence_score,
+            f"action {action.action_key!r}",
+            f"actions[{index}].confidenceScore",
+        )
+
+    price_keys: set[str] = set()
+    for index, price in enumerate(result.price_suggestions):
+        if price.price_key in price_keys:
+            issues.append(
+                _issue(
+                    SceneAnalysisIssueCode.DUPLICATE_PRICE_KEY,
+                    f"duplicate price key {price.price_key!r}",
+                    f"priceSuggestions[{index}].priceKey",
+                )
+            )
+        price_keys.add(price.price_key)
+        if price.object_key not in object_keys:
+            issues.append(
+                _issue(
+                    SceneAnalysisIssueCode.UNKNOWN_PRICE_OBJECT,
+                    f"price {price.price_key!r} has unknown object key {price.object_key!r}",
+                    f"priceSuggestions[{index}].objectKey",
+                )
+            )
+        _check_confidence(
+            issues,
+            price.confidence_score,
+            f"price {price.price_key!r}",
+            f"priceSuggestions[{index}].confidenceScore",
+        )
 
     box_fields = ("x", "y", "width", "height")
     for index, scene_object in enumerate(result.objects):

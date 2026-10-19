@@ -5,6 +5,22 @@ type VocabularyGroup = {
   words: VocabRecord[];
 };
 
+const normalizeApostrophe = (value: string) => value.toLocaleLowerCase().replaceAll("’", "'");
+
+/** Show nouns as learners use them while leaving verbs, adjectives and phrases untouched. */
+export function vocabularyLabel(word: Pick<VocabRecord, "word" | "wordClass" | "gender">) {
+  const term = word.word.trim();
+  const article = word.gender?.trim();
+  if (word.wordClass !== "noun" || !article || !term) return term;
+  const normalizedTerm = normalizeApostrophe(term);
+  const normalizedArticle = normalizeApostrophe(article);
+  const alreadyIncluded = normalizedArticle.endsWith("'")
+    ? normalizedTerm.startsWith(normalizedArticle)
+    : normalizedTerm === normalizedArticle || normalizedTerm.startsWith(`${normalizedArticle} `);
+  if (alreadyIncluded) return term;
+  return article.endsWith("'") ? `${article}${term}` : `${article} ${term}`;
+}
+
 function vocabularySources(word: VocabRecord, scenes: SceneSummary[]) {
   const readyScene = scenes.find(scene => scene.id === word.sceneId);
   return word.scenes?.length ? word.scenes : readyScene ? [{

@@ -94,7 +94,7 @@ def test_absent_and_null_history_use_identical_v2_requests():
     generator.generate({**INPUT, "learnerHistory": None})
     first, second = client.requests
     assert first == second
-    assert first.prompt_version == LEARNING_TASK_PROMPT_VERSION == "learning-tasks.v2"
+    assert first.prompt_version == LEARNING_TASK_PROMPT_VERSION == "learning-tasks.v3"
     assert first.system_prompt == LEARNING_TASK_SYSTEM_PROMPT
     assert "learnerHistory" not in first.user_content
 

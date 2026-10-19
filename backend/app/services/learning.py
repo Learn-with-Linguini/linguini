@@ -28,19 +28,10 @@ class LearningService:
             ):
                 return ProgressResponse(xp=0, scenarios=[], leaderboard=[])
             raise ProgressNotFoundError("No progress found for this user.")
-        board = [
-            row.model_copy(update={"name": user.display_name, "xp": data.xp})
-            if row.is_you
-            else row.model_copy()
-            for row in data.leaderboard
-        ]
-        board.sort(key=lambda row: row.xp, reverse=True)
-        for rank, row in enumerate(board, 1):
-            row.rank = rank
         return ProgressResponse(
             xp=data.xp,
             scenarios=data.scenarios,
-            leaderboard=board,
+            leaderboard=data.leaderboard,
             streak=data.streak,
         )
 

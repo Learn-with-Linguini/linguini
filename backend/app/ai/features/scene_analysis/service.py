@@ -8,6 +8,7 @@ database writes and contains no provider-specific logic.
 from __future__ import annotations
 
 import concurrent.futures
+import hashlib
 import logging
 from collections.abc import Mapping
 from enum import StrEnum
@@ -146,7 +147,7 @@ class UploadedSceneAnalyzer:
                 image=image,
                 system_prompt=SCENE_ANALYSIS_SYSTEM_PROMPT,
                 user_instruction=SCENE_ANALYSIS_USER_INSTRUCTION,
-                json_schema_name="scene_analysis_v2",
+                json_schema_name="scene_analysis_v3",
                 json_schema=self._json_schema,
                 prompt_version=SCENE_ANALYSIS_PROMPT_VERSION,
             )
@@ -224,6 +225,7 @@ class UploadedSceneAnalyzer:
 
                         with self._tracer.span("result-mapping") as mapping_span:
                             domain = model_result_to_domain(session, parsed)
+                            domain.content_hash = hashlib.sha256(data).hexdigest()
                             mapping_span.update(
                                 metadata={
                                     "objectCount": len(domain.objects),
