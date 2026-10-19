@@ -66,6 +66,13 @@ export const TrendIcon = ({ size = 22, className }: IconProps) => (
   </svg>
 );
 
+export const TrophyIcon = ({ size = 22, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <path d="M8 4h8v3.5c0 3.2-1.8 5.5-4 5.5s-4-2.3-4-5.5z" />
+    <path d="M8 6H4v1.5c0 2.2 1.5 3.8 4.2 4M16 6h4v1.5c0 2.2-1.5 3.8-4.2 4M12 13v4M8.5 20h7M10 17h4" />
+  </svg>
+);
+
 export const PersonIcon = ({ size = 22, className }: IconProps) => (
   <svg {...base(size)} className={className}>
     <circle cx="12" cy="8.5" r="3.6" />

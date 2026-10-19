@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { sessionDestination, sessionPaths } from "../lib/sessionRoute";
 import { Button, Feedback, IconButton, ProgressTrail, XpPill } from "../components/ui";
-import { ArrowRightIcon, BasilIcon, CheckIcon, SpeakerIcon } from "../components/icons";
+import { ArrowRightIcon, BasilIcon, CheckIcon, EyeIcon, EyeOffIcon, SpeakerIcon } from "../components/icons";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
@@ -101,13 +101,14 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
   const earnedText = xpEarnedText(result?.xpEarned);
   return <div className="stack">
     <div className="spread"><h2 className="text-center">I-Spy · Linguini's clues</h2>{reward ? <XpPill {...reward} /> : null}</div>
-    <p>Use the clues to find the word</p>
     <ProgressTrail value={index + (answered ? 1 : 0)} total={total} label={`${index + 1} / ${total}`} />
     <ScenePhoto scene={scene} activeItemId={isCorrect ? selected?.sceneObjectId : null} />
     <div className="card card--lifted stack-2">
       <div className="spread"><span className="label muted">Linguini says</span><IconButton label="Hear the clue" onClick={() => speak(`${opening} ${content.clue}`, scene.languageCode)}><SpeakerIcon /></IconButton></div>
-      <h3>{opening} {content.clue}</h3>
-      {content.clueTranslation ? showTranslation ? <p className="small muted">{content.clueTranslation}</p> : <button type="button" className="text-link text-link--muted" onClick={() => setShowTranslation(true)}>See translation</button> : null}
+      <span className="prompt-translation prompt-translation--with-source">
+        <span className="prompt-translation__source"><h3>{opening} {content.clue}</h3>{content.clueTranslation ? <IconButton className="prompt-translation__toggle" label={showTranslation ? "Hide translation" : "Show translation"} onClick={() => setShowTranslation(value => !value)}>{showTranslation ? <EyeIcon size={20} /> : <EyeOffIcon size={20} />}</IconButton> : null}</span>
+        {content.clueTranslation && showTranslation ? <span className="small muted">{content.clueTranslation}</span> : null}
+      </span>
     </div>
     <div className="choice-grid">{choiceOrder(content.options, task.id, option => option.optionId).map(option => {
       const state = shownPick !== option.optionId ? "" : isCorrect != null ? (isCorrect ? " choice--correct" : " choice--incorrect") : " choice--selected";
@@ -118,17 +119,17 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
     {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
     {answered || result ? <>
       <Feedback tone={isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status"><strong>{task.status === "skipped" ? "Skipped — no Basil earned." : feedback ?? "Answer saved."}</strong>{content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}{earnedText ? <strong className="basil-reward"><BasilIcon size={17} />{earnedText}</strong> : null}</div></Feedback>
-      {task.status !== "skipped" ? <ReportIssueLink reportType="I-Spy answer" fields={[
-        ["Task ID", task.id],
-        ["Clue", `${opening} ${content.clue}`],
-        ["Clue translation", content.clueTranslation],
-        ["Your answer", selected?.label],
-        ["Displayed feedback", feedback],
-        ["Language", scene.languageCode],
-      ]} /> : null}
     </> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     <Button block disabled={!answered || practiceSaving} onClick={() => index === total - 1 ? navigate(describePath) : onNext()}>{index === total - 1 ? "Your turn" : "Next clue"} <ArrowRightIcon /></Button>
+    {(answered || result) && task.status !== "skipped" ? <div className="learning-question-report"><ReportIssueLink reportType="I-Spy answer" fields={[
+      ["Task ID", task.id],
+      ["Clue", `${opening} ${content.clue}`],
+      ["Clue translation", content.clueTranslation],
+      ["Your answer", selected?.label],
+      ["Displayed feedback", feedback],
+      ["Language", scene.languageCode],
+    ]} /></div> : null}
     {!answered ? <Button variant="quiet" block disabled={practiceSaving} onClick={() => void actOnTask(task.id, "skip")}>Skip task</Button> : null}
   </div>;
 }

@@ -2,7 +2,7 @@ import { LoadingScreen } from "../components/LoadingScreen";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Button, Card, Mascot, StatusPill } from "../components/ui";
+import { Button, Card, StatusPill } from "../components/ui";
 import { HelpImproveModal } from "../components/HelpImproveModal";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
@@ -77,9 +77,8 @@ export function SessionSummary() {
   return <div className="stack session-summary">
     {session?.session.status === "inProgress" ? <Button onClick={() => navigate(sessionDestination(session).path)}>Continue unfinished practice</Button> : null}
     <header className="summary-hero">
-      <div className="summary-hero__mascot"><Mascot size={132} expression="happy" /></div>
-      <span className="summary-hero__eyebrow">{completed ? "Session complete" : "Session results"}</span>
-      <h1>{completed ? "Beautiful work, Chef!" : "Your session"}</h1>
+      <div className="summary-hero__mascot"><img className="mascot" src="/linguini-logo-sunglasses.png" width={132} height={132} alt="Linguini celebrating in sunglasses" /></div>
+      <h1>{completed ? "Nice work, Chef!" : "Your session"}</h1>
       <p>{resultMessage}</p>
     </header>
     {loading ? <LoadingScreen label="Loading your results…" /> : null}
@@ -100,13 +99,12 @@ export function SessionSummary() {
       </div></Card>
     </> : null}
     <div className="stack-2">
+      <Button block variant="secondary" onClick={() => navigate("/home")}>Back home</Button>
       {missionSession ? <Button block disabled={startingISpy || !completed} onClick={() => void playISpy()}>
         {startingISpy ? "Setting up I-Spy..." : "Play I-Spy with this scene"}
       </Button> : <>
-        <Button block onClick={() => navigate("/journal/new")}>Write today&apos;s journal entry</Button>
-        <Button variant="secondary" block onClick={() => navigate("/vocabulary")}>Review difficult words</Button>
       </>}
-      <Button variant="quiet" block onClick={() => navigate("/home")}>Back home</Button>
+      
     </div>
 
     <HelpImproveModal

@@ -226,14 +226,6 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
         {xpEarnedText(xpEarned) ? <strong className="basil-reward"><BasilIcon size={17} />{xpEarnedText(xpEarned)}</strong> : null}
       </>}
     </div></Feedback> : null}
-    {(answered || guess) && task.status !== "skipped" ? <ReportIssueLink label="Report a wrong guess" reportType="I-Spy guess" fields={[
-      ["Task ID", task.id],
-      ["Object shown", target?.word],
-      ["Your clue", text.trim()],
-      ["Linguini guessed", guessed?.word],
-      ["Displayed feedback", guess?.feedback ?? feedback],
-      ["Language", scene.languageCode],
-    ]} /> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {!hydrated ? null : answered ? <Button block disabled={practiceSaving} onClick={onNext}>{index === total - 1 ? finishLabel : "Next item"} <ArrowRightIcon /></Button> : <>
       {!guess ? <Button block disabled={!text.trim() || namesTarget || practiceSaving} onClick={() => void submit()}>Send my response</Button> : null}
@@ -242,5 +234,13 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
       {guess ? <Button variant="secondary" block disabled={practiceSaving} onClick={improve}>Improve my clue</Button> : null}
       <Button variant="quiet" block disabled={practiceSaving} onClick={() => void actOnTask(task.id, "skip")}>Skip task</Button>
     </>}
+    {(answered || guess) && task.status !== "skipped" ? <div className="learning-question-report"><ReportIssueLink label="Report a wrong guess" reportType="I-Spy guess" fields={[
+      ["Task ID", task.id],
+      ["Object shown", target?.word],
+      ["Your clue", text.trim()],
+      ["Linguini guessed", guessed?.word],
+      ["Displayed feedback", guess?.feedback ?? feedback],
+      ["Language", scene.languageCode],
+    ]} /></div> : null}
   </div>;
 }

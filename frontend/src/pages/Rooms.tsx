@@ -2,12 +2,13 @@ import { InlineLoader, LoadingScreen } from "../components/LoadingScreen";
 import { useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ApiError, proficiencyLabel } from "../lib/api";
+import { ApiError } from "../lib/api";
 import { createRoom, getActiveRoom, joinRoom, roomMatchesProfile, roomQueryKeys } from "../lib/rooms";
 import { friendlyError } from "../lib/queryKeys";
 import { useAppState } from "../state/useAppState";
 import { Button, Card } from "../components/ui";
-import { GameResources } from "../components/GameResources";
+import { EyeIcon } from "../components/icons";
+import { languages } from "../config/languages";
 import "../components/rooms.css";
 
 export function Rooms() {
@@ -28,6 +29,8 @@ function RoomLobby() {
   const busyRef = useRef(false);
   const owner = user?.id ?? "";
   const profile = activeProfile?.id ?? "";
+  const languageName = languages.find(language => language.code === activeProfile?.targetLanguageCode)?.name
+    ?? activeProfile?.targetLanguageCode.toUpperCase();
   const active = useQuery({ queryKey: roomQueryKeys.active(owner, profile), queryFn: async ({ signal }) => {
     const current = await getActiveRoom(signal);
     if (current && current.meId !== owner) throw new Error("The room belongs to another signed-in account.");
@@ -58,27 +61,27 @@ function RoomLobby() {
     } finally { busyRef.current = false; setBusy(false); }
   };
 
-  return <div className="stack rooms-page">
-    <h1>I Spy with a friend</h1>
-    <p>Add a few photos together. Take turns giving a clue and spotting the object in a fresh photo.</p>
-    <GameResources />
+  return <div className="stack rooms-page rooms-lobby">
+    <header className="rooms-lobby__hero">
+      <span className="rooms-lobby__hero-icon"><EyeIcon className="rooms-lobby__eye" size={48} /></span>
+      <div><span className="rooms-lobby__eyebrow">Play together</span><h1>I Spy with a friend</h1><p>Share photos, take turns giving clues, and spot each other’s objects</p></div>
+
+    </header>
     {!activeProfile ? <p role="alert">Choose your learning language in Profile before joining a room.</p> :
-      <p className="small muted">Your room uses {activeProfile.targetLanguageCode.toUpperCase()} · {proficiencyLabel(activeProfile.proficiencyLevel)}.
-        Your friend needs the same learning language, explanation language, and level.</p>}
+      <p className="rooms-lobby__language small">Playing in <strong>{languageName}</strong>. Your friend needs the same learning and explanation languages.</p>}
     {active.isPending && activeProfile ? <InlineLoader label="Checking for an open room…" /> : active.error ?
       <div className="stack-2"><p role="alert">We couldn’t check your open room.</p>
         <Button variant="secondary" onClick={() => void active.refetch()}>Try again</Button></div> : active.data ?
-      <Card className="stack"><h2>Your open room</h2><p>{active.data.status === "playing" ? "Your game is underway." : "Your photos and friend are waiting here."}</p>
+      <Card className="stack rooms-lobby__open-room"><span className="rooms-lobby__card-label">Continue playing</span><h2>Your open room</h2><p>{active.data.status === "playing" ? "Your game is underway." : "Your photos and friend are waiting here."}</p>
         {!roomMatchesProfile(active.data, activeProfile) ? <p className="small muted">This room uses a different learning setup. You can return to it or leave it.</p> : null}
         <Button disabled={busy} onClick={() => navigate(`/rooms/${encodeURIComponent(active.data!.id)}`)}>Return to room</Button></Card> :
-      <Card className="stack"><h2>Start a private room</h2><p>Invite one friend, then add 2–4 photos. Each photo becomes one round.</p>
-        <Button disabled={!activeProfile || busy || Boolean(pendingKind)} onClick={() => void enter("create")}>Create a room</Button>
-        <p className="small muted">Starting the game uses 1 Sauce for each person.</p></Card>}
-    {!active.data ? <Card className="stack"><h2>Have an invitation?</h2>
+      <div className="rooms-lobby__choices"><Card className="stack rooms-lobby__choice"><span className="rooms-lobby__choice-number">1</span><div><h2>Start a private room</h2><p>Invite one friend, then add 2–4 photos. Each photo becomes one round.</p></div>
+        <Button disabled={!activeProfile || busy || Boolean(pendingKind)} onClick={() => void enter("create")}>Create a room</Button></Card>
+    {!active.data ? <Card className="stack rooms-lobby__choice"><span className="rooms-lobby__choice-number rooms-lobby__choice-number--teal">2</span><div><h2>Have an invitation?</h2><p>Paste the private room code your friend sent you.</p></div>
       <label className="field">Room code<input className="input" value={code} autoComplete="off" autoCapitalize="none" spellCheck={false}
         maxLength={100} disabled={busy || Boolean(pendingKind)} onChange={event => setCode(event.target.value)} placeholder="Paste your friend’s code" /></label>
       <Button variant="secondary" disabled={!activeProfile || !code.trim() || busy || Boolean(pendingKind) || active.isPending || Boolean(active.error)}
-        onClick={() => void enter("join")}>Join room</Button></Card> : null}
+        onClick={() => void enter("join")}>Join room</Button></Card> : null}</div>}
     {busy ? <LoadingScreen label={pendingKind === "join" ? "Joining your friend…" : "Creating your room…"} /> : null}
     {error ? <div className="stack-2"><p role="alert">{error}</p>{pendingKind ?
       <Button variant="secondary" disabled={busy} onClick={() => void enter(pendingKind)}>Retry request</Button> : null}</div> : null}

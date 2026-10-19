@@ -192,7 +192,7 @@ async function mount(which: "Room" | "Rooms" = "Room", source = surface) {
         source.h(source.Route, { path: "/rooms", element: source.h(source.Rooms) }),
         source.h(source.Route, { path: "/home", element: source.h("p", null, "Home destination") }),
       ))))));
-  await waitFor(() => assert.ok(dom.window.document.querySelector('[aria-label="Sauce remaining"]') || text().includes("Home destination")), source);
+  await waitFor(() => assert.match(text(), which === "Room" ? /I Spy together|Home destination/ : /I Spy with a friend|Home destination/), source);
   return { client, close };
 }
 
@@ -239,29 +239,24 @@ test("a returning host recovers the invitation from an owner-authorized lobby sn
   await view.close();
 });
 
-test("a peer sees the Sauce charge when the host starts, without needing a local mutation", async context => {
+test("a peer sees room progress after the host starts, without needing a local mutation", async context => {
   writes.length = 0;
   readPaths.length = 0;
   snapshot = { ...fixture(), status: "lobby", currentTurn: null, hostUserId: "u2" };
-  resourceSnapshot = { ...resourceSnapshot, sauce: { ...resourceSnapshot.sauce, remaining: 10 } };
   const view = await mount();
   context.after(() => view.close());
   view.client.setQueryDefaults(["progress", "profile1"], { gcTime: Infinity });
   view.client.setQueryData(["progress", "profile1"], { xp: 0 });
-  assert.equal(dom.window.document.querySelector('[aria-label="Sauce remaining"]')?.getAttribute("aria-valuenow"), "10");
   snapshot = { ...fixture(), revision: 8, hostUserId: "u2" };
-  resourceSnapshot = { ...resourceSnapshot, sauce: { ...resourceSnapshot.sauce, remaining: 9 } };
   await surface.act(async () => {
     await view.client.invalidateQueries({ queryKey: ["rooms", "u1", "profile1", "r1"] });
   });
   await waitFor(() => {
-    assert.equal(dom.window.document.querySelector('[aria-label="Sauce remaining"]')?.getAttribute("aria-valuenow"), "9");
     assert.equal(view.client.getQueryState(["progress", "profile1"])?.isInvalidated, true);
     assert.equal(view.client.isFetching(), 0);
   });
   assert.equal(writes.length, 0);
   assert.equal(view.client.getQueryState(["progress", "profile1"])?.isInvalidated, true);
-  const resourceReads = readPaths.filter(path => path === "/api/v1/me/game-resources").length;
   snapshot = { ...snapshot, revision: 9 };
   await surface.act(async () => {
     await view.client.invalidateQueries({ queryKey: ["rooms", "u1", "profile1", "r1"] });
@@ -270,18 +265,17 @@ test("a peer sees the Sauce charge when the host starts, without needing a local
     assert.equal((view.client.getQueryData(["rooms", "u1", "profile1", "r1"]) as RoomSnapshot).revision, 9);
     assert.equal(view.client.isFetching(), 0);
   });
-  assert.equal(readPaths.filter(path => path === "/api/v1/me/game-resources").length, resourceReads,
-    "an unchanged status and own credit must not refetch resources on every poll");
+  assert.equal(readPaths.filter(path => path === "/api/v1/me/game-resources").length, 0,
+    "the room no longer fetches removed Sauce resources");
   view.client.setQueryData(["progress", "profile1"], { xp: 0 });
   snapshot = { ...snapshot, contributions: snapshot.contributions.map(item => item.userId === "u1"
     ? { ...item, basilEarned: 1, xpEarned: 10 } : item) };
-  resourceSnapshot = { ...resourceSnapshot, basilLeaves: 3 };
   await surface.act(async () => {
     await view.client.invalidateQueries({ queryKey: ["rooms", "u1", "profile1", "r1"] });
   });
   await waitFor(() => {
-    assert.match(text(), /3 Basil leaves/);
     assert.equal(view.client.getQueryState(["progress", "profile1"])?.isInvalidated, true);
+    assert.equal(view.client.isFetching(), 0);
   });
   await view.close();
 });
@@ -376,7 +370,7 @@ test("room entry retries creation with the same command identity", async () => {
   await view.close();
 });
 
-test("Play offers a working friend lobby and normal resources without feature configuration", async () => {
+test("Play offers a working friend lobby without Sauce resources", async () => {
   activeSnapshot = null;
   readPaths.length = 0;
   const view = await mountApp("/ispy");
@@ -385,10 +379,9 @@ test("Play offers a working friend lobby and normal resources without feature co
   assert.doesNotMatch(text(), /Coming soon/);
   await click("Play with friends");
   await waitFor(() => assert.ok(button("Create a room")));
-  assert.match(text(), /Starting the game uses 1 Sauce for each person/);
-  await waitFor(() => assert.ok(dom.window.document.querySelector('[aria-label="Sauce remaining"]')));
+  assert.doesNotMatch(text(), /Sauce/);
   assert.ok(readPaths.includes("/api/v1/rooms/active"));
-  assert.ok(readPaths.includes("/api/v1/me/game-resources"));
+  assert.ok(!readPaths.includes("/api/v1/me/game-resources"));
   assert.equal(dom.window.document.querySelector('nav[aria-label="Main"] a[aria-current="page"]')?.getAttribute("href"), "/ispy");
   assert.ok(dom.window.document.querySelector('button[aria-label="Go back"]'), "the friend lobby uses the shared back control");
   await view.close();

@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button, Card } from "../components/ui";
-import { BasilIcon } from "../components/icons";
+import { BasilIcon, TrophyIcon } from "../components/icons";
 import { InlineLoader } from "../components/LoadingScreen";
 import { useAppState } from "../state/useAppState";
 
@@ -21,7 +21,7 @@ export function ISpyModes() {
       </div>
     </Card>
     <Card className="ispy-modes__card ispy-chefs">
-      <div className="ispy-chefs__heading"><div><span>Weekly Basil leaderboard</span><h2>Chefs of the week</h2></div><BasilIcon size={30} /></div>
+      <div className="ispy-chefs__heading"><div><span>Weekly Basil leaderboard</span><h2>Chefs of the Day</h2></div><TrophyIcon size={30} /></div>
       {progressLoading ? <InlineLoader label="Loading this week’s chefs…" /> : progressError ? <p role="alert">{progressError}</p> : chefs.length ?
         <><section className="ispy-chefs__comparison" aria-label="Your leaderboard position">
           <div><span>Your place</span><strong>#{player?.rank ?? "—"}</strong></div>

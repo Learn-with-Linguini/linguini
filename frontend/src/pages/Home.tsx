@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { InlineLoader } from "../components/LoadingScreen";
 import { MediaImage } from "../components/MediaImage";
-import { BasilIcon, BookIcon, ChevronRightIcon, EyeIcon, PlayIcon } from "../components/icons";
+import { BasilIcon, BookIcon, ChevronRightIcon, EyeIcon, PlayIcon, TrophyIcon } from "../components/icons";
 import { Button } from "../components/ui";
 import { getActivePractice } from "../lib/api";
 import { sessionDestination } from "../lib/sessionRoute";
@@ -145,7 +145,7 @@ export function Home() {
           <div className="home-section-heading home-section-heading--compact"><div><span className="home-progress-card__eyebrow">This week</span><h2 id="home-progress-title">Your progress</h2></div></div>
           {vocabularyLoading ? <InlineLoader compact label="Loading your words…" /> : vocabularyError ? <p role="alert">{vocabularyError}</p> : <div className="home-progress-card__stats"><div><span className="home-stat-icon home-stat-icon--words"><BookIcon /></span><strong>{wordsThisWeek}</strong><span>words</span></div><div><span className="home-stat-icon home-stat-icon--scenes"><EyeIcon /></span><strong>{exploredScenes}</strong><span>scenes</span></div></div>}
         </section>
-        {leaderboardPosition ? <button className="home-league" type="button" onClick={() => navigate("/ispy")}><span className="home-league__badge" aria-hidden="true">#</span><span><strong>Chefs of the Day</strong><small>You're #{leaderboardPosition} this week</small></span><ChevronRightIcon /></button> : null}
+        {leaderboardPosition ? <button className="home-league" type="button" onClick={() => navigate("/ispy")}><span className="home-league__badge" aria-hidden="true"><TrophyIcon size={26} /></span><span><strong>Chefs of the Day</strong><small>Your current standing: #{leaderboardPosition}</small></span><ChevronRightIcon /></button> : null}
       </aside>
     </div>
 

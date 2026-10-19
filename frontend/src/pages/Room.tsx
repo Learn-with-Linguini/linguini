@@ -6,13 +6,12 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ApiError } from "../lib/api";
 import { canStartRoom, getRoom, getRoomPhoto, prepareRoomCommand, roomQueryKeys, roomReviewPayload, sendRoomCommand } from "../lib/rooms";
 import type { PendingRoomCommand, RoomObject, RoomPhoto, RoomPhotoReview, RoomRelationType, RoomSnapshot, RoomTurn } from "../lib/rooms";
-import { gameResourceKeys } from "../lib/gameResources";
 import { friendlyError, queryKeys } from "../lib/queryKeys";
 import { useAppState } from "../state/useAppState";
 import { Button, Card, Feedback } from "../components/ui";
 import { ImageUpload } from "../components/ImageUpload";
-import { GameResources } from "../components/GameResources";
 import { BasilIcon } from "../components/icons";
+import { languages } from "../config/languages";
 import "../components/rooms.css";
 
 export function Room() {
@@ -61,7 +60,6 @@ function RoomSession({ roomId }: { roomId: string }) {
     // The partner can start the room or finish a turn while this page only polls.
     // Repeated snapshots of the same status/credit do not trigger extra reads.
     if (previous === resourceState || (previous === null && resourceState.startsWith("lobby:"))) return;
-    void client.invalidateQueries({ queryKey: gameResourceKeys(owner) });
     void client.invalidateQueries({ queryKey: queryKeys.progress(profile) });
   }, [resourceState, client, owner, profile]);
 
@@ -81,7 +79,6 @@ function RoomSession({ roomId }: { roomId: string }) {
       client.setQueryData<RoomSnapshot>(key, previous => previous && previous.revision > next.revision ? previous : next);
       pending.current = null;
       setPendingIntent(null);
-      void client.invalidateQueries({ queryKey: gameResourceKeys(owner) });
       void client.invalidateQueries({ queryKey: roomQueryKeys.active(owner, profile) });
       return true;
     } catch (reason) {
@@ -106,12 +103,13 @@ function RoomSession({ roomId }: { roomId: string }) {
   const me = data.members.find(member => member.userId === owner);
   const partner = data.members.find(member => member.userId !== owner);
   const terminal = ["completed", "ended", "expired"].includes(data.status);
+  const languageName = languages.find(language => language.code === data.targetLanguageCode)?.name
+    ?? data.targetLanguageCode.toUpperCase();
 
   return <div className="stack rooms-page">
-    <div className="rooms-page__title"><h1>I Spy together</h1>{!terminal ?
+    <header className="rooms-page__room-header"><div className="rooms-page__title"><div><span className="rooms-lobby__eyebrow">Private room</span><h1>I Spy together</h1></div>{!terminal ?
       <Button variant="quiet" disabled={blocked} onClick={() => void act("leave")}>Leave room</Button> : null}</div>
-    <p className="small muted">{data.targetLanguageCode.toUpperCase()} · {data.proficiencyLevel} · {partner ? `With ${partner.displayName}` : "Waiting for your friend"}</p>
-    <GameResources />
+      <p>{languageName} · {partner ? `Playing with ${partner.displayName}` : "Waiting for your friend"}</p></header>
     {room.error ? <p role="alert">Connection interrupted. Your last saved round is shown; reconnecting…</p> : null}
     {error ? <div className="stack-2"><p role="alert">{error}</p>{pendingIntent ?
       <Button variant="secondary" disabled={busy} onClick={() => void act(pendingIntent)}>Retry action</Button> : rejectedCommand ?
@@ -127,7 +125,7 @@ function RoomSession({ roomId }: { roomId: string }) {
           <label className="field">Invitation link<input className="input" readOnly value={`${window.location.origin}/rooms?code=${encodeURIComponent(inviteCode)}`}
             onFocus={event => event.target.select()} /></label></> :
           <p className="small muted">Use the private invitation you received when creating this room. Return to that page if you saved it in another tab.</p>}
-        <p className="small muted">Your friend signs in with the same learning language, explanation language, and level.</p></Card> : null}
+        <p className="small muted">Your friend signs in with the same learning and explanation languages.</p></Card> : null}
       <section className="stack" aria-labelledby="room-photos-heading"><h2 id="room-photos-heading">Your shared photos · {data.photos.length} / 4</h2>
         <p>Each photo is one round. Add at least two different photos, then both get ready.</p>
         <p className="small muted">Photos you add are shared with the person in this room.</p>
@@ -141,7 +139,7 @@ function RoomSession({ roomId }: { roomId: string }) {
       </section>
       <Card className="stack"><h2>Ready to play?</h2><ul className="rooms-members">{data.members.map(member =>
         <li key={member.userId}><strong>{member.userId === owner ? "You" : member.displayName}</strong><span>{member.ready ? "Ready" : "Preparing"}</span></li>)}</ul>
-        <p className="small muted">Starting uses 1 Sauce each. You’ll take turns across 2–4 different photos.</p>
+        <p className="small muted">You’ll take turns across 2–4 different photos.</p>
         {canStartRoom(data) ? <Button disabled={blocked} onClick={() => void act("start")}>Start together</Button> :
           <Button variant={me?.ready ? "secondary" : "primary"} disabled={blocked || data.photos.length < 2 || data.photos.some(photo => photo.status !== "ready") || !partner}
             onClick={() => void act("ready", { ready: !me?.ready })}>{me?.ready ? "Keep preparing" : "I’m ready"}</Button>}
