@@ -132,7 +132,7 @@ export function Hero() {
               <a href={appLinks.signUp} className="btn">
                 Join the public beta
               </a>
-              <button type="button" className={`btn btn--teal ${styles.tryButton}`} onClick={() => pick(scenes[0].id, document.querySelector<HTMLElement>(`[data-print="${scenes[0].id}"]`))}>
+              <button type="button" className="btn btn--teal" onClick={() => pick(scenes[0].id, document.querySelector<HTMLElement>(`[data-print="${scenes[0].id}"]`))}>
                 Try it on a photo <ArrowRight size={20} />
               </button>
             </div>

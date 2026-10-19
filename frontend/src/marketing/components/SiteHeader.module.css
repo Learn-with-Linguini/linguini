@@ -19,7 +19,9 @@
 
 .brand {
   display: inline-flex;
+  align-items: center;
   flex-shrink: 0;
+  min-height: 44px;
   border-radius: 10px;
 }
 
@@ -53,6 +55,7 @@
   font-weight: 700;
   font-size: 16px;
   text-decoration: none;
+  white-space: nowrap;
   transition: background-color 0.2s, color 0.2s;
 }
 
@@ -63,6 +66,7 @@
 
 .actions {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 8px;
   margin-left: auto;
@@ -74,6 +78,7 @@
   justify-content: center;
   width: 44px;
   height: 44px;
+  flex-shrink: 0;
   border: 0;
   border-radius: 12px;
   background: transparent;
@@ -114,6 +119,16 @@
   background: var(--cream);
 }
 
+@media (min-width: 881px) and (max-width: 1040px) {
+  .bar {
+    gap: 12px;
+  }
+
+  .link {
+    padding-inline: 10px;
+  }
+}
+
 @media (max-width: 880px) {
   .nav {
     display: none;
@@ -128,11 +143,37 @@
   }
 
   .bar {
+    gap: 12px;
     height: 64px;
   }
 
   .wordmark {
     height: 44px;
+  }
+
+  .sheet {
+    max-height: calc(100dvh - 64px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .sheet ul {
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 560px) {
+  .bar {
+    gap: 8px;
+  }
+
+  .wordmark {
+    height: 40px;
+  }
+
+  .actions .signup {
+    padding-inline: 12px;
+    font-size: 14px;
   }
 }
 
