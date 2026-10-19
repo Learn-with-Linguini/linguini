@@ -80,10 +80,14 @@ export function Session({ scene, lang, onLangChange, onExit }: SessionProps) {
       headingRef.current?.focus({ preventScroll: true });
       const panel = panelRef.current;
       if (!panel) return;
-      // On small screens the photo sticks under the header, so keep the panel start just below it.
-      const stacked = window.matchMedia("(max-width: 960px)").matches;
-      const offset = stacked ? 64 + (visualRef.current?.offsetHeight ?? 0) + 8 : 96;
-      const top = panel.getBoundingClientRect().top;
+      const panelBounds = panel.getBoundingClientRect();
+      const visual = visualRef.current;
+      const visualBounds = visual?.getBoundingClientRect();
+      const photoAbove = visual && visualBounds && window.getComputedStyle(visual).position === "sticky"
+        && visualBounds.left < panelBounds.right && visualBounds.right > panelBounds.left;
+      const headerBottom = document.querySelector("header")?.getBoundingClientRect().bottom ?? 0;
+      const offset = headerBottom + (photoAbove ? visual.offsetHeight : 0) + 8;
+      const top = panelBounds.top;
       if (top < offset) {
         window.scrollTo({ top: top + window.scrollY - offset, behavior: prefersReducedMotion() ? "auto" : "smooth" });
       }
@@ -638,8 +642,8 @@ function DoneStage({
         className={styles.savedCard}
         headingLevel="p"
       />
-      <a href={appLinks.signUp} className="btn btn--block">
-        Do this with your own photos <ArrowRight size={20} />
+      <a href={appLinks.signUp} className={`btn btn--block ${styles.savedCta}`}>
+        <span>Do this with your own photos</span> <ArrowRight size={20} />
       </a>
       <div className={styles.shareRow}>
         <p>Share your journal page</p>
