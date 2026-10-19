@@ -98,10 +98,10 @@ class MediaAssetService:
                         )
                         if mime is None:
                             raise InvalidImageUpload("Use a JPEG, PNG or WebP image.")
-                        width, height = ImageOps.exif_transpose(image).size
                         image.verify()
                     with Image.open(BytesIO(data)) as image:
                         image.load()
+                        width, height = ImageOps.exif_transpose(image).size
             except (
                 UnidentifiedImageError,
                 OSError,
