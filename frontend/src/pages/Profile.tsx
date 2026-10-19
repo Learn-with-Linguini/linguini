@@ -12,6 +12,9 @@ import { SOCIAL_LINKS_LIST } from "../config/social";
 import { supabase } from "../lib/supabase.ts";
 import { useAppState } from "../state/useAppState";
 import { useAuth } from "../state/Auth";
+import { MissionBadges } from "../components/MissionBadges";
+import { ChefOfTheDay } from "../components/ChefOfTheDay";
+import { GameResources } from "../components/GameResources";
 
 const socialIcons = {
   instagram: InstagramIcon,
@@ -149,10 +152,18 @@ export function Profile() {
             <strong>{tier.description}</strong>
           </div>
           <p>{(user?.tier ?? "beta") === "beta"
-            ? "Public beta includes a daily Sauce refill. New photo lessons and two-player rooms each use 1 Sauce; resuming does not spend more."
+            ? "Photo lessons and friend challenges are free to start during the beta."
             : tier.allowance}</p>
         </Card>
       </section>
+
+      <section className="profile-section" aria-labelledby="profile-basil-heading">
+        <h2 id="profile-basil-heading">Your Basil Points</h2>
+        <GameResources shop />
+      </section>
+
+      <MissionBadges />
+      <ChefOfTheDay />
 
       <section className="profile-section">
         <h2>Learning setup</h2>

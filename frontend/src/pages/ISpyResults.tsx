@@ -9,11 +9,12 @@ import { gameStartError, queryError, queryKeys } from "../lib/queryKeys";
 import { sessionDestination } from "../lib/sessionRoute";
 import { useAppState } from "../state/useAppState";
 import { useScene } from "../state/useScene";
+import { learningFeedback } from "../lib/learningFeedback";
 
 export function ISpyResults() {
   const navigate = useNavigate();
   const scene = useScene();
-  const { session, activeProfile, completionError, retryCompletion } = useAppState();
+  const { session, activeProfile, completionPending, completionError, retryCompletion } = useAppState();
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
   const replayKey = useRef<string | null>(null);
@@ -22,6 +23,7 @@ export function ISpyResults() {
     queryFn: () => getPracticeSummary(scene.sessionId!),
   });
   const error = queryError(queryErrorValue);
+  const completed = session?.session.status === "completed" && !completionPending && !completionError && Boolean(data) && !error;
   const described = session ? practiceStages(session.tasks).reflection : [];
   const found = described.filter(task => task.status === "completed").length;
   const playAgain = async () => {
@@ -39,7 +41,7 @@ export function ISpyResults() {
   return <div className="stack">
     <div className="center-text stack-2" style={{ alignItems: "center" }}>
       <img className="mascot" src="/linguini-logo.png" width={120} height={120} alt="Linguini mascot" />
-      <h1>Game over!</h1>
+      <h1>{completed ? learningFeedback("completed", scene.sessionId!) : "Your game"}</h1>
       <Noodle className="noodle-divider summary__noodle" />
       <p className="muted">You played I-Spy with {scene.title.toLowerCase()}.</p>
     </div>

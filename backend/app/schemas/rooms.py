@@ -11,9 +11,12 @@ from app.schemas.base import ApiModel
 class CreateRoomRequest(ApiModel):
     command_id: UUID
     language_profile_id: UUID
+    friend_user_id: UUID | None = None
 
 
-class JoinRoomRequest(CreateRoomRequest):
+class JoinRoomRequest(ApiModel):
+    command_id: UUID
+    language_profile_id: UUID
     invite_code: Annotated[str, Field(min_length=32, max_length=100)]
 
 
@@ -147,6 +150,18 @@ class RoomSnapshot(ApiModel):
     status: Literal["lobby", "playing", "completed", "ended", "expired"]
     revision: int
     expires_at: AwareDatetime
+    invite_expires_at: AwareDatetime
+    updated_at: AwareDatetime
+    action_required: Literal[
+        "inviteFriend",
+        "preparePhotos",
+        "ready",
+        "sendClue",
+        "guess",
+        "viewResult",
+        "waiting",
+        "finished",
+    ]
     me_id: UUID
     host_user_id: UUID | None
     source_language_code: str
