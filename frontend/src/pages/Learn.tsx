@@ -1,13 +1,12 @@
 import { Navigate, useNavigate } from "react-router-dom";
-import { Button } from "../components/ui";
+import { Button, XpPill } from "../components/ui";
 import { ArrowRightIcon, BookIcon, ChatIcon, CheckIcon, CloseIcon, CountIcon, EyeIcon, HandIcon, HeartIcon, JournalIcon, MarkerIcon, PlayIcon } from "../components/icons";
 import { SessionPersonalization } from "../components/SessionPersonalization";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
-import { finishesAfterLearning, practiceStages, taskDone, taskTitle } from "../lib/practiceTasks";
+import { finishesAfterLearning, practiceStages, taskDone, taskTitle, taskXp } from "../lib/practiceTasks";
 import { useAppState } from "../state/useAppState";
 import { learningFeedback } from "../lib/learningFeedback";
-import { trackAction } from "../lib/analytics.ts";
 
 function TaskAimIcon({ task }: { task: ReturnType<typeof practiceStages>["learning"][number] }) {
   const missionIcons = {
@@ -35,6 +34,7 @@ export function Learn() {
   const learningTasks = practiceStages(session.tasks).learning;
   const vocabularyTask = learningTasks.find(task => task.kind === "vocabularyIntroduction");
   const vocabularyDone = vocabularyTask ? taskDone(vocabularyTask) : true;
+  const vocabularySkipped = vocabularyTask?.status === "skipped";
   const tasks = learningTasks.filter(task => task.kind !== "vocabularyIntroduction");
   const completed = tasks.filter(taskDone);
   const generating = session.session.status === "generatingTasks";
@@ -42,7 +42,6 @@ export function Learn() {
   const nextTask = tasks.find(task => !taskDone(task));
 
   const openTask = (taskId: string) => {
-    trackAction("task_opened", { taskId });
     navigate(`${base}/learn/${taskId}`);
   };
 
@@ -51,7 +50,7 @@ export function Learn() {
       <div className="stack-2">
         <div className="learning-title-row">
           <h1>Learning tasks</h1>
-          <Button variant="quiet" className="learning-exit" onClick={() => { trackAction("learning_exit_clicked"); navigate("/home"); }}>
+          <Button variant="quiet" className="learning-exit" onClick={() => navigate("/home")}>
             <CloseIcon size={18} /> Exit
           </Button>
         </div>
@@ -61,11 +60,14 @@ export function Learn() {
 
       {practiceError ? <p role="alert">{practiceError}</p> : null}
 
-      {!vocabularyDone && vocabularyTask ? <div className="learn-words-intro">
-        <div className="learn-words-intro__photo"><ScenePhoto scene={scene} items={[]} /></div>
-        <Button block disabled={practiceSaving || !session.translationPreview} onClick={() => { trackAction("vocabulary_preview_started"); navigate(`${base}/learn/vocabulary-preview`); }}>
-          <PlayIcon /> Learn the words
+      {vocabularyTask && (!vocabularyDone || vocabularySkipped) ? <div className="learn-words-intro">
+        <div className="learn-words-intro__photo"><ScenePhoto scene={scene} items={[]} />{!vocabularySkipped && taskXp(vocabularyTask) ? <XpPill {...taskXp(vocabularyTask)!} /> : null}</div>
+        <Button block variant={vocabularySkipped ? "secondary" : undefined}
+          disabled={practiceSaving || (!vocabularySkipped && !session.translationPreview)}
+          onClick={() => navigate(vocabularySkipped ? `${base}/learn/${vocabularyTask.id}` : `${base}/learn/vocabulary-preview`)}>
+          <PlayIcon /> {vocabularySkipped ? "Review words" : "Learn the words"}
         </Button>
+        {vocabularySkipped ? <p className="small muted">Skipped</p> : null}
       </div> : null}
 
       {tasks.length ? <section className="stack-3 learn-missions" aria-label="Learning missions">
@@ -73,6 +75,7 @@ export function Learn() {
         <div className="task-list" aria-label="Learning tasks">
         {tasks.map(task => {
           const isDone = taskDone(task);
+          const reward = !isDone ? taskXp(task) : null;
           return (
             <button
               key={task.id}
@@ -87,7 +90,7 @@ export function Learn() {
                 <strong>{taskTitle(task)}</strong>
               </span>
               {isDone ? <span className="pill pill--mastered">{task.status === "skipped" ? "Skipped" : ""}</span> : <>
-
+                {reward ? <XpPill {...reward} /> : null}
                 <PlayIcon />
               </>}
             </button>
@@ -110,13 +113,13 @@ export function Learn() {
       </section> : null}
 
       {vocabularyDone && allDone ? (
-        finishesAfterLearning(session.tasks) ? <Button block disabled={practiceSaving} onClick={() => { trackAction("finish_lesson_clicked"); if (completeSession()) navigate(`${base}/summary`); }}>
+        finishesAfterLearning(session.tasks) ? <Button block disabled={practiceSaving} onClick={() => { if (completeSession()) navigate(`${base}/summary`); }}>
           Finish lesson <ArrowRightIcon />
-        </Button> : <Button block disabled={practiceSaving} onClick={() => { trackAction("play_ispy_clicked"); navigate(`${base}/ispy-1`); }}>
+        </Button> : <Button block disabled={practiceSaving} onClick={() => navigate(`${base}/ispy-1`)}>
           Play I-Spy <ArrowRightIcon />
         </Button>
       ) : vocabularyDone ? (
-        <Button block disabled={practiceSaving || !nextTask} onClick={() => { if (nextTask) openTask(nextTask.id); }}>
+        <Button block disabled={practiceSaving || !nextTask} onClick={() => nextTask && openTask(nextTask.id)}>
           {!nextTask ? "Preparing remaining tasks..." : completed.length === 0 ? "Begin tasks" : "Continue tasks"} <ArrowRightIcon />
         </Button>
       ) : null}

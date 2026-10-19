@@ -17,6 +17,7 @@ class StartISpyGameRequest(ApiModel):
 
 class ISpyPhoto(ApiModel):
     media_asset: MediaAsset
+    title: str
     playable: bool
     confirmed_at: AwareDatetime | None = None
 
