@@ -95,6 +95,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
 | `onboarding_completed` | `{ language, minutes, level }` | Learner completes initial onboarding questionnaire |
+| `onboarding_resumed` | `{ stage }` | Learner returns to unfinished onboarding after leaving the app |
 
 ### Practice, Photo Lessons & Scene Analysis
 | Event Name | Parameters | Trigger Description |

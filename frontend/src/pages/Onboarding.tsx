@@ -32,7 +32,7 @@ export function Onboarding() {
     avatar: localStorage.getItem("linguini-avatar") ?? "farfalle",
     proficiencyLevel: "A0",
   };
-  return <OnboardingSteps initial={initial} restartingForLanguage={restartingForLanguage} saving={profileSaving} error={profileError} onFinish={() => navigate(destination)} onComplete={async values => {
+  return <OnboardingSteps initial={initial} userId={user?.id ?? "pending"} restartingForLanguage={restartingForLanguage} saving={profileSaving} error={profileError} onFinish={() => navigate(destination)} onComplete={async values => {
     setCompletionStarted(true);
     const saved = await completeOnboarding(values.languageCode, values.minutes, values.proficiencyLevel ?? "A0", {
       displayName: values.name || learner.name,
