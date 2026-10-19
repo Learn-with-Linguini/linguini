@@ -1516,7 +1516,7 @@ p[role="alert"]::before { content: "!"; }
 
 .analysis-relation-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(112px, 150px) minmax(0, 1fr) 44px;
+  grid-template-columns: minmax(0, 1fr) 128px minmax(0, 1fr) 44px;
   align-items: center;
   gap: var(--space-2);
   width: 100%;
@@ -1536,9 +1536,6 @@ p[role="alert"]::before { content: "!"; }
 
 .analysis-relation-row__object strong {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   overflow-wrap: anywhere;
 }
 
@@ -1547,11 +1544,18 @@ p[role="alert"]::before { content: "!"; }
 }
 
 .analysis-relation-row__connection .combobox--compact {
-  max-width: none;
-  width: 100%;
+  flex: 0 0 128px;
+  width: 128px;
+  max-width: 128px;
 }
 
 .analysis-relation-row__relation {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 128px;
+  min-height: 40px;
   padding: 4px 10px;
   border-radius: var(--radius-pill);
   background: var(--sage);
@@ -1571,6 +1575,8 @@ p[role="alert"]::before { content: "!"; }
   .analysis-relation-row__object { gap: 4px; }
   .analysis-relation-row__object .analysis-word-row__marker,
   .analysis-relation-row__object .combobox__marker { min-width: 24px; padding-inline: 4px; }
+  .analysis-relation-row__connection .combobox--compact,
+  .analysis-relation-row__relation { width: 112px; max-width: 112px; flex-basis: 112px; }
 }
 
 .analysis-relation-form {
@@ -6154,7 +6160,7 @@ p[role="alert"]::before { content: "!"; }
 
   .analysis-layout {
     display: grid;
-    grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
+    grid-template-columns: minmax(0, 1.1fr) minmax(480px, 0.9fr);
     align-items: stretch;
     column-gap: var(--space-8);
   }
