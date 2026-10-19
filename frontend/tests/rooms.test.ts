@@ -421,12 +421,12 @@ test("the accent shop keeps the old balance until accepted and safely retries a 
   await waitFor(() => assert.ok(button("Get accent")));
   replies.push(() => Response.json({ detail: { message: "Purchase reply interrupted" } }, { status: 500 }));
   await click("Get accent");
-  assert.match(text(), /42 Basil leaves/);
+  assert.match(text(), /42 Basil available/);
   replies.push(() => Response.json({ ...resourceSnapshot, basilLeaves: 22, appearance: "herb", ownedAppearances: ["default", "herb"] }));
   await click("Retry purchase");
   assert.deepEqual(writes[0].body, writes[1].body);
   assert.deepEqual(Object.keys(writes[1].body).sort(), ["appearance", "commandId"]);
-  assert.match(text(), /22 Basil leaves/);
+  assert.match(text(), /22 Basil available/);
   assert.equal(dom.window.document.querySelectorAll(".game-resources--herb button:disabled").length, 1);
   await close();
 });

@@ -12,11 +12,12 @@ import { isMissionSession } from "../lib/practiceTasks";
 import { sessionDestination } from "../lib/sessionRoute";
 import { BasilIcon } from "../components/icons";
 import { gameStartError, queryError, queryKeys } from "../lib/queryKeys";
+import { learningFeedback } from "../lib/learningFeedback";
 
 export function SessionSummary() {
   const navigate = useNavigate();
   const scene = useScene();
-  const { session, activeProfile, completionError, retryCompletion } = useAppState();
+  const { session, activeProfile, completionPending, completionError, retryCompletion } = useAppState();
   const { vocabulary } = useVocabularyQuery(); 
   const [startingISpy, setStartingISpy] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
@@ -29,7 +30,7 @@ export function SessionSummary() {
     queryFn: () => getPracticeSummary(scene.sessionId!),
   });
   const error = queryError(queryErrorValue);
-  const completed = session?.session.status === "completed";
+  const completed = session?.session.status === "completed" && !completionPending && !completionError && Boolean(data) && !error;
   const completedLessons = data?.completedLessonsCount ?? 0;
   // Prompt after account's first lesson (1) and every 5 lessons afterwards (6, 11, 16...)
   const isMilestone =
@@ -70,15 +71,15 @@ export function SessionSummary() {
   const wordsLearned = data?.learnedVocabularyIds.length ?? 0;
   const resultMessage = data
     ? wordsLearned > 0
-      ? `You served up ${wordsLearned} new ${wordsLearned === 1 ? "word" : "words"} and collected ${data.xpEarned} basil. That’s a lesson well cooked.`
-      : `You kept your language skills simmering and collected ${data.xpEarned} basil. Nicely done, Chef.`
+      ? `You served up ${wordsLearned} new ${wordsLearned === 1 ? "word" : "words"} and collected ${data.basilEarned} basil. That’s a lesson well cooked.`
+      : `You kept your language skills simmering and collected ${data.basilEarned} basil. Nicely done, Chef.`
     : `You practised ${scene.title.toLowerCase()}.`;
 
   return <div className="stack session-summary">
     {session?.session.status === "inProgress" ? <Button onClick={() => navigate(sessionDestination(session).path)}>Continue unfinished practice</Button> : null}
     <header className="summary-hero">
       <div className="summary-hero__mascot"><img className="mascot" src="/linguini-logo-sunglasses.png" width={132} height={132} alt="Linguini celebrating in sunglasses" /></div>
-      <h1>{completed ? "Nice work, Chef!" : "Your session"}</h1>
+      <h1>{completed ? learningFeedback("completed", scene.sessionId!) : "Your session"}</h1>
       <p>{resultMessage}</p>
     </header>
     {loading ? <LoadingScreen label="Loading your results…" /> : null}
@@ -86,7 +87,7 @@ export function SessionSummary() {
     {completionError ? <><p role="alert">{completionError}</p><Button onClick={retryCompletion}>Retry saving your session</Button></> : null}
     {data ? <>
       <div className="summary-results" aria-label="Session results">
-        <div className="summary-result summary-result--basil"><div className="summary-result__value"><BasilIcon size={28} />{data.xpEarned}</div><span>Basil collected</span></div>
+        <div className="summary-result summary-result--basil"><div className="summary-result__value"><BasilIcon size={28} />{data.basilEarned}</div><span>Basil collected</span></div>
         <div className="summary-result summary-result--words"><div className="summary-result__value">{wordsLearned}</div><span>New {wordsLearned === 1 ? "word" : "words"} learned</span></div>
       </div>
       <Card><div className="stack-2">

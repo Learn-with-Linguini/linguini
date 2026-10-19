@@ -8,13 +8,15 @@ import { ArrowRightIcon, BasilIcon, CheckIcon, EyeIcon, EyeOffIcon, SpeakerIcon 
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
-import { choiceOrder, practiceStages, taskDone, taskXp, xpEarnedText } from "../lib/practiceTasks";
+import { choiceOrder, practiceStages, taskDone, taskXp } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
 import { getLatestAttempt } from "../lib/api";
 import type { SessionTask, TaskActionResult } from "../lib/api";
 import { queryKeys } from "../lib/queryKeys";
 import { ReportIssueLink } from "../components/ReportIssueLink";
 import { playAnswerSound } from "../lib/answerSound";
+import { basilEarnedText } from "../lib/gamification";
+import { learningFeedback } from "../lib/learningFeedback";
 
 export function ISpyPhase1() {
   const { session, practiceStalled, practiceError, retryProcessing } = useAppState();
@@ -98,7 +100,7 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
   const feedback = result?.attempt?.feedback?.message ?? restored?.feedback;
   const selected = content.options.find(option => option.optionId === shownPick);
   const reward = !answered ? taskXp(task) : null;
-  const earnedText = xpEarnedText(result?.xpEarned);
+  const earnedText = basilEarnedText(result?.basilEarned);
   return <div className="stack">
     <div className="spread"><h2 className="text-center">I-Spy · Linguini's clues</h2>{reward ? <XpPill {...reward} /> : null}</div>
     <ProgressTrail value={index + (answered ? 1 : 0)} total={total} label={`${index + 1} / ${total}`} />
@@ -118,7 +120,13 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
     })}</div>
     {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
     {answered || result ? <>
-      <Feedback tone={isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status"><strong>{task.status === "skipped" ? "Skipped — no Basil earned." : feedback ?? "Answer saved."}</strong>{content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}{earnedText ? <strong className="basil-reward"><BasilIcon size={17} />{earnedText}</strong> : null}</div></Feedback>
+      <Feedback tone={isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status">
+        {task.status === "skipped" ? <strong>Skipped — no Basil earned.</strong> : <>
+          {isCorrect !== null ? <strong>{learningFeedback(isCorrect ? "correct" : "incorrect", task.id)}</strong> : null}
+          <span>{feedback ?? "Answer saved."}</span>
+        </>}
+        {content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}{earnedText ? <strong className="basil-reward"><BasilIcon size={17} />{earnedText}</strong> : null}
+      </div></Feedback>
     </> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     <Button block disabled={!answered || practiceSaving} onClick={() => index === total - 1 ? navigate(describePath) : onNext()}>{index === total - 1 ? "Your turn" : "Next clue"} <ArrowRightIcon /></Button>

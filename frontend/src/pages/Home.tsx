@@ -13,6 +13,7 @@ import { useVocabularyQuery } from "../state/queries";
 import { WalkthroughCoachmark } from "../components/WalkthroughCoachmark";
 import { FIRST_LESSON_WALKTHROUGH_VERSION, needsFirstLessonWalkthrough } from "../lib/walkthrough";
 import { learningProgress } from "../lib/practiceTasks";
+import { useGamification } from "../state/gamification";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -46,6 +47,7 @@ function PastaStreak({ days }: { days: { date: string; active: boolean }[] }) {
 }
 
 export function Home() {
+  const basil = useGamification();
   const navigate = useNavigate();
   const { learner, user, activeProfile, progress, progressLoading, progressError, profileSaving, saveUser } = useAppState();
   const { vocabulary, vocabularyLoading, vocabularyError } = useVocabularyQuery();
@@ -97,7 +99,7 @@ export function Home() {
   return <div className="home-dashboard">
     <header className="home-welcome">
       <div><h2>{greeting()}, {learner.name || "friend"}</h2><p>Ready to cook?</p></div>
-      <span className="home-points" aria-label={`${progress?.xp ?? 0} Basil`}><BasilIcon />{progressLoading || progressError ? "—" : progress?.xp ?? 0} Basil</span>
+      <span className="home-points" aria-label={basil.isPending ? "Loading your Basil total" : basil.isError ? "Basil total unavailable" : `${basil.data?.basil.lifetime ?? 0} total Basil`}><BasilIcon />{basil.isPending || basil.isError ? "—" : basil.data?.basil.lifetime ?? 0} Basil</span>
     </header>
 
     <div className="home-dashboard__grid">
