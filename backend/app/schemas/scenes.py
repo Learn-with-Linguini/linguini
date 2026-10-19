@@ -11,16 +11,12 @@ from app.schemas.media import PreloadedScene
 
 class DemoSceneItem(ApiModel):
     id: NonEmptyText
-    word: NonEmptyText
     translation: NonEmptyText
     word_class: PartOfSpeech
-    gender: Literal["la", "el", "le", "l'"] | None
     marker: Annotated[int, Field(ge=1)]
     x: Annotated[float, Field(ge=0, le=100)]
     y: Annotated[float, Field(ge=0, le=100)]
     attributes: dict[str, str] = Field(default_factory=dict)
-    example: str
-    example_translation: str
 
 
 class DemoSceneRelation(ApiModel):

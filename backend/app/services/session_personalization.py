@@ -23,6 +23,8 @@ def _lexical_term(value, language):
         return re.sub(r"^(?:el|la|los|las|un|una|unos|unas) ", "", term)
     if language.startswith("fr"):
         return re.sub(r"^(?:(?:le|la|les|un|une|des) |l')", "", term)
+    if language.startswith("de"):
+        return re.sub(r"^(?:der|die|das|den|dem|ein|eine|einen|einem) ", "", term)
     return term
 
 

@@ -49,3 +49,21 @@ export function LoadingScreen({ label = "Loading…" }: { label?: string }) {
     document.body,
   );
 }
+
+/** Non-blocking loader for waits inside a page: the fork twirl beside a short label. */
+export function InlineLoader({ label, compact = false, className, testId }: {
+  label: string;
+  compact?: boolean;
+  className?: string;
+  testId?: string;
+}) {
+  return (
+    <span className={`loading-inline${compact ? " loading-inline--compact" : ""}${className ? ` ${className}` : ""}`}
+      role="status" aria-live="polite" data-testid={testId}>
+      <span className="loading-fork loading-fork--inline" aria-hidden="true">
+        <img src="/loading/fork-spaghetti.png" alt="" />
+      </span>
+      <span className="loading-inline__label">{label}</span>
+    </span>
+  );
+}

@@ -27,7 +27,17 @@ from app.repositories.postgres.xp import xp_events
 from app.repositories.practice import PracticeConflictError
 from app.schemas.sessions import AddedPracticeObject, ReviewPracticeRequest
 from app.schemas.tasks import SessionTask, SkipTaskRequest
-from app.services import mission_lessons_m03
+from app.services import mission_eligibility, mission_lessons_m03
+
+
+@pytest.fixture(autouse=True)
+def existing_a1_missions(monkeypatch):
+    """Keep legacy mission workflows independent of the newly added M04/M05 variants."""
+    monkeypatch.setitem(
+        mission_eligibility.IMPLEMENTED_MISSIONS,
+        "A1",
+        (("M01", "A1", 1), ("M02", "A1", 2), ("M03", "A1", 1)),
+    )
 
 
 def _cup(detail):
@@ -105,9 +115,8 @@ def test_a_photo_with_only_a_count_plans_m03(curated):
     model = SceneModel()
     _repository_, sid, detail = _lesson(curated, _counts_only(), model)
     assert _planned(detail) == ["M03"]
-    introduction, lesson, *bonus = detail.tasks
+    introduction, lesson = detail.tasks
     assert introduction.kind == "vocabularyIntroduction"
-    assert bonus and {task.kind for task in bonus} <= {"ispyRound", "reflection"}
     # M03 is deterministic: the lesson model is never asked.
     assert not any(name.startswith("mission_lesson_m03") for name in model.requests)
     assert lesson.public_content.title == "Say how many"
@@ -236,20 +245,18 @@ def test_a_photo_fitting_all_three_plans_all_three(curated):
     repository, sid, detail = _lesson(curated, _everything)
     assert _planned(detail) == ["M01", "M02", "M03"]
     kinds = [task.kind for task in detail.tasks]
-    assert kinds[:4] == ["vocabularyIntroduction", *["grammarLesson"] * 3]
-    assert "ispyRound" in kinds[4:]
+    assert kinds == ["vocabularyIntroduction", *["grammarLesson"] * 3]
     resumed = repository.get(sid, profile.id)
     assert [task.id for task in resumed.tasks] == [task.id for task in detail.tasks]
     assert [m.mission_id for m in repository._planned_missions(
         resumed.session.model_copy(update={"analysis_draft": _draft(engine, sid)}),
         {"proficiency_level": "A1", "target_language_code": "es"},
     )] == ["M01", "M02", "M03"]
-    for task in detail.tasks[:4]:
+    for task in detail.tasks[:-1]:
         repository.task_action(task.id, "skip", SkipTaskRequest())
     with pytest.raises(PracticeConflictError):
         repository.finish(sid, profile.id)
-    for task in detail.tasks[4:]:
-        repository.task_action(task.id, "skip", SkipTaskRequest())
+    repository.task_action(detail.tasks[-1].id, "skip", SkipTaskRequest())
     repository.finish(sid, profile.id)
     assert repository.get(sid, profile.id).session.status == "completed"
 

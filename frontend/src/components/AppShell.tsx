@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
-import { BookIcon, CameraIcon, EyeIcon, HomeIcon, JournalIcon, PersonIcon } from "./icons";
+import { useLayoutEffect } from "react";
+import { BookIcon, CameraIcon, EyeIcon, HomeIcon, PersonIcon } from "./icons";
 import { BrandBar } from "./ui";
 import { BackActionProvider, useRegisteredBackAction } from "./BackAction";
 import { useAuth } from "../state/Auth";
@@ -7,9 +8,8 @@ import { useAuth } from "../state/Auth";
 const items = [
   { to: "/home", label: "Home", Icon: HomeIcon },
   { to: "/practice", label: "Practice", Icon: CameraIcon },
-  { to: "/ispy", label: "I-Spy", Icon: EyeIcon },
-  { to: "/vocabulary", label: "Vocabulary", Icon: BookIcon },
-  { to: "/journal", label: "Journal", Icon: JournalIcon },
+  { to: "/ispy", label: "Play", Icon: EyeIcon },
+  { to: "/vocabulary", label: "Revisit", Icon: BookIcon },
   { to: "/profile", label: "Profile", Icon: PersonIcon },
 ];
 
@@ -23,7 +23,7 @@ export function AppShell() {
     pathname === "/ispy/friends" ||
     pathname === "/contact";
   const usesWideCanvas =
-    ["/home", "/practice", "/ispy/play", "/vocabulary", "/journal"].includes(pathname) ||
+    ["/home", "/practice", "/ispy", "/ispy/play", "/vocabulary", "/journal"].includes(pathname) ||
     pathname === "/journal/new" ||
     /^\/journal\/[^/]+$/.test(pathname);
 
@@ -60,6 +60,9 @@ export function FocusShell() {
 
 function FocusShellView() {
   const { pathname } = useLocation();
+  useLayoutEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
   const { session } = useAuth();
   const backAction = useRegisteredBackAction();
   const usesWideCanvas = pathname.endsWith("/analysis");

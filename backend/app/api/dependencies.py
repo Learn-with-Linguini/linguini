@@ -35,6 +35,7 @@ from app.repositories.postgres.practice import (
 )
 from app.repositories.postgres.rooms import PostgresRoomRepository, RoomUnavailableError
 from app.repositories.postgres.scenes import PostgresSceneRepository
+from app.repositories.postgres.surveys import PostgresSurveyRepository
 from app.repositories.postgres.tasks import PostgresTaskRepository
 from app.repositories.postgres.users import PostgresUserRepository
 from app.repositories.postgres.vocabulary import PostgresVocabularyRepository
@@ -69,6 +70,10 @@ def get_journal_repository(
 
 def get_language_profile_repository(request: Request) -> LanguageProfileRepository:
     return PostgresLanguageProfileRepository(request.app.state.database_engine)
+
+
+def get_survey_repository(request: Request) -> PostgresSurveyRepository:
+    return PostgresSurveyRepository(request.app.state.database_engine)
 
 
 def get_user_service(

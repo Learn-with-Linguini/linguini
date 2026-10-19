@@ -25,6 +25,7 @@ def test_openapi_contains_core_workflow_routes() -> None:
         "/api/v1/support/requests",
         "/api/v1/support/public-requests",
         "/api/v1/support/lesson-reports",
+        "/api/v1/surveys",
     }
 
     assert expected <= paths.keys()

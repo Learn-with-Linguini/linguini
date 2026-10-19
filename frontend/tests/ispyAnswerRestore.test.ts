@@ -7,6 +7,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { JSDOM } from "jsdom";
 import { rolldown } from "rolldown";
 import type { PracticeDetail, SessionMode, SessionTask } from "../src/lib/api.ts";
+import { learningFeedback } from "../src/lib/learningFeedback.ts";
 
 const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://localhost/", pretendToBeVisual: true });
 const globals = globalThis as Record<string, unknown>;
@@ -159,7 +160,7 @@ function commit(isCorrect: boolean) {
   fixture = { ...fixture, tasks: [{ ...fixture.tasks[0], status: "completed" }, fixture.tasks[1]],
     progress: { ...fixture.progress, completedTaskCount: 1, terminalTaskCount: 1 }, nextTaskId: "clue2" };
   return { task: fixture.tasks[0], sessionProgress: fixture.progress, nextTaskId: "clue2",
-    xpEarned: isCorrect ? 25 : 10,
+    xpEarned: isCorrect ? 25 : 10, basilEarned: 1,
     attempt: { id: "answer1", attemptNumber: 1, isCorrect, responsePayload: { optionId: "a" }, feedback: { message: "Saved answer feedback." } } };
 }
 
@@ -185,7 +186,9 @@ for (const mode of ["ispy", "lesson"] as const) {
     assert.equal(choice("taza")?.getAttribute("aria-pressed"), "true");
     assert.equal(choice("mesa")?.classList.contains("choice--incorrect"), false);
     assert.match(dom.window.document.body.textContent ?? "", /Saved answer feedback\./);
-    assert.doesNotMatch(dom.window.document.body.textContent ?? "", /\+\d+ XP earned/);
+    assert.ok(dom.window.document.body.textContent?.includes(learningFeedback("incorrect", clue.id)));
+    assert.ok(!dom.window.document.body.textContent?.includes(learningFeedback("correct", clue.id)));
+    assert.doesNotMatch(dom.window.document.body.textContent ?? "", /\+\d+ Basil earned/);
     assert.equal(next()?.disabled, false, "the recovered round can advance");
     assert.equal(requests.length, 2, "recovery must not submit another answer");
   });
@@ -197,9 +200,12 @@ test("retrying an unanswered response reuses its command key and displays the ac
   taskReplies.push(() => Response.json(commit(true)));
   await click(choice("taza"));
   await until(() => Boolean(choice("taza") && !choice("taza")!.disabled), "the interrupted answer should be retryable");
+  assert.ok(!dom.window.document.body.textContent?.includes(learningFeedback("correct", clue.id)));
   await click(choice("taza"));
   await until(() => Boolean(choice("taza")?.classList.contains("choice--correct")), "the accepted answer should show its saved grade");
-  assert.match(dom.window.document.body.textContent ?? "", /\+25 XP earned/);
+  assert.match(dom.window.document.body.textContent ?? "", /\+1 Basil earned/);
+  assert.ok(dom.window.document.body.textContent?.includes(learningFeedback("correct", clue.id)));
+  assert.match(dom.window.document.body.textContent ?? "", /Saved answer feedback\./);
   assert.equal(requests.length, 2);
   assert.equal(requests[0].idempotencyKey, requests[1].idempotencyKey);
   assert.equal(typeof requests[0].idempotencyKey, "string");

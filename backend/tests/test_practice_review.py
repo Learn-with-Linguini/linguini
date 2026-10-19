@@ -180,6 +180,7 @@ def test_review_rebuilds_tasks_only_for_selected_objects():
     connection = MagicMock()
     connection.execute.return_value.first.return_value = None
     connection.execute.return_value.mappings.return_value.one.return_value = {
+        "id": profile_id,
         "source_language_code": "en",
         "target_language_code": "es",
         "proficiency_level": "A2",
@@ -254,9 +255,10 @@ def test_analysis_saves_draft_without_scene_objects_or_tasks():
     obj = SceneObject(
         session_id=session.id,
         label="chair",
+        source_object_key="chair",
         bounding_box={"x": 0.1, "y": 0.1, "width": 0.1, "height": 0.1},
     )
-    other = SceneObject(session_id=session.id, label="table")
+    other = SceneObject(session_id=session.id, label="table", source_object_key="table")
     relation = SceneObjectRelation(
         subject_scene_object_id=obj.id,
         relation="beside",
@@ -272,8 +274,9 @@ def test_analysis_saves_draft_without_scene_objects_or_tasks():
     connection = MagicMock()
     connection.execute.return_value.mappings.return_value.one.side_effect = [
         asset.model_dump(),
-        {},
+        {"target_language_code": "es", "proficiency_level": "A1"},
     ]
+    connection.execute.return_value.mappings.return_value.one_or_none.return_value = None
 
     @contextmanager
     def transaction():
@@ -291,10 +294,11 @@ def test_analysis_saves_draft_without_scene_objects_or_tasks():
     writes = [
         call.args[0] for call in connection.execute.call_args_list if not call.args[0].is_select
     ]
-    assert len(writes) == 2
-    assert all(write.table.name == "sessions" for write in writes)
-    assert writes[0].compile().params["status"] == "analyzingScene"
-    persist = writes[1].compile().params
+    session_writes = [write for write in writes if write.table.name == "sessions"]
+    assert len(session_writes) == 2
+    assert any(write.table.name == "media_scene_analyses" for write in writes)
+    assert session_writes[0].compile().params["status"] == "analyzingScene"
+    persist = session_writes[1].compile().params
     assert persist["status"] == "awaitingObjectReview"
     assert persist["session_title"] == "A title"
     assert persist["session_summary"] == "A summary."

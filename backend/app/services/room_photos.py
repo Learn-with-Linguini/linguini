@@ -111,10 +111,10 @@ class RoomPhotoPreparer:
     def _language(profile: dict) -> str:
         language = str(profile.get("target_language_code", "")).lower()
         source = str(profile.get("source_language_code", "en")).lower()
-        if language not in {"es", "fr"} or source != "en":
+        if language not in {"es", "fr", "de"} or source != "en":
             raise RoomPhotoError(
                 "room_photo_unavailable",
-                "Photo rooms currently support English to Spanish or French.",
+                "Photo rooms currently support English to Spanish, French or German.",
                 retryable=False,
             )
         return language
@@ -161,13 +161,16 @@ class RoomPhotoPreparer:
             result = SceneAnalysisResult.model_validate(
                 analyzer.analyze(identity, asset, profile, None)
             )
-            if not result.objects or len(result.objects) > 6:
-                raise ValueError("Analysis must return up to six observed objects.")
+            if not result.objects:
+                raise ValueError("Analysis must return observed objects.")
             if len({obj.id for obj in result.objects}) != len(result.objects):
                 raise ValueError("Analysis repeated an object.")
-            selected = {obj.id for obj in result.objects}
+            # Friend rooms intentionally stay small even though solo mission
+            # analysis can now retain a richer scene.
+            room_objects = result.objects[:6]
+            selected = {obj.id for obj in room_objects}
             rows = []
-            for obj in result.objects:
+            for obj in room_objects:
                 if obj.session_id != photo_id:
                     raise ValueError("Analysis returned an object for another photo.")
                 anchor = obj.anchor_point
@@ -190,11 +193,11 @@ class RoomPhotoPreparer:
                 )
             relation_rows = []
             for relation in result.relations:
-                if (
-                    not {relation.subject_scene_object_id, relation.reference_scene_object_id}
-                    <= selected
-                ):
-                    raise ValueError("Analysis returned a relationship outside the photo.")
+                if not {
+                    relation.subject_scene_object_id,
+                    relation.reference_scene_object_id,
+                } <= selected:
+                    continue
                 relation_rows.append(
                     RoomPhotoRelation(
                         key=relation.id,
@@ -296,7 +299,7 @@ class RoomPhotoPreparer:
                     cache_scope=CacheScope(f"user:{owner_id}:room:{room_id}"),
                 )
             )
-            translated = normalize_object_articles(translated)
+            translated = normalize_object_articles(translated, payload["targetLanguage"])
             validate_translation_terms(payload, translated)
             if any(
                 len(rows) != len({row.key for row in rows})

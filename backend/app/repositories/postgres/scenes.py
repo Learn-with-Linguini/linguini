@@ -30,8 +30,6 @@ preloaded_scenes = Table(
     MetaData(),
     Column("id", Uuid, primary_key=True, server_default=text("gen_random_uuid()")),
     Column("slug", Text, nullable=False),
-    Column("language_code", String(35), nullable=False),
-    Column("language", Text, nullable=False),
     Column("media_asset_id", Uuid, nullable=False),
     Column("title", Text, nullable=False),
     Column("description", Text),
@@ -82,8 +80,6 @@ class PostgresSceneRepository:
                                 **{
                                     key: row[key]
                                     for key in (
-                                        "language_code",
-                                        "language",
                                         "title",
                                         "description",
                                         "difficulty",

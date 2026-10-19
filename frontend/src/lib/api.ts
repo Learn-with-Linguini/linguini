@@ -1,6 +1,6 @@
 import { GENDER_ARTICLES } from "../data/types.ts";
-import type { Gender, LeaderboardRow, ScenarioProgress, Streak, VocabRecord, VocabularyScene, VocabStatus, WordClass } from "../data/types";
-import type { Scene, SceneSummary } from "../data/types";
+import type { A0MissionSnapshot, Gender, LeaderboardRow, MissionChoices, MissionQuestionFields, ScenarioProgress, Streak, TaughtChunk, VocabRecord, VocabularyScene, VocabStatus, WordClass } from "../data/types";
+import type { SceneSummary } from "../data/types";
 import type { JournalEntry } from "../data/types";
 import { getAccessToken, waitForAccessToken } from "./supabase.ts";
 
@@ -222,7 +222,7 @@ export const submitLessonReport = (payload: LessonReportInput) =>
 export const getLanguageProfiles = (signal?: AbortSignal) => request<LanguageProfile[]>("/api/v1/me/language-profiles", signal);
 export const updateUser = (patch: UserPatch) => write<User>("/api/v1/me", "PATCH", patch);
 export const updateLanguageProfile = (id: string, patch: LanguageProfilePatch) => write<LanguageProfile>(`/api/v1/me/language-profiles/${id}`, "PATCH", patch);
-export const createLanguageProfile = (code: string, minutes = 10, proficiencyLevel: ProficiencyLevel = "A1") => write<LanguageProfile>("/api/v1/me/language-profiles", "POST", {
+export const createLanguageProfile = (code: string, minutes: number, proficiencyLevel: ProficiencyLevel) => write<LanguageProfile>("/api/v1/me/language-profiles", "POST", {
   sourceLanguageCode: "en", targetLanguageCode: code, proficiencyLevel, dailyGoalMinutes: minutes,
 });
 
@@ -269,15 +269,13 @@ export function getProgress(signal?: AbortSignal): Promise<ProgressResponse> {
 interface PreloadedScene {
   imageUrl?: string | null;
   mediaAsset: { id: string };
-  languageCode: string;
   sceneId: string;
   title: string;
   description: string | null;
-  language: string;
 }
 
 function sceneSummary(row: PreloadedScene): SceneSummary {
-  return { id: row.sceneId, mediaAssetId: row.mediaAsset.id, imageUrl: row.imageUrl ?? null, title: row.title, blurb: row.description ?? "", language: row.language, languageCode: row.languageCode };
+  return { id: row.sceneId, mediaAssetId: row.mediaAsset.id, imageUrl: row.imageUrl ?? null, title: row.title, blurb: row.description ?? "" };
 }
 
 export async function getScenes(signal?: AbortSignal): Promise<SceneSummary[]> {
@@ -285,11 +283,9 @@ export async function getScenes(signal?: AbortSignal): Promise<SceneSummary[]> {
   return rows.map(sceneSummary);
 }
 
-export async function getSceneDetail(id: string, signal?: AbortSignal): Promise<Scene> {
-  const row = await request<PreloadedScene & Pick<Scene, "items">>(
-    `/api/v1/preloaded-scenes/${encodeURIComponent(id)}`, signal,
-  );
-  return { ...sceneSummary(row), items: row.items };
+export async function getSceneDetail(id: string, signal?: AbortSignal): Promise<SceneSummary> {
+  const row = await request<PreloadedScene>(`/api/v1/preloaded-scenes/${encodeURIComponent(id)}`, signal);
+  return sceneSummary(row);
 }
 
 export async function getVocabulary(signal?: AbortSignal): Promise<VocabRecord[]> {
@@ -390,9 +386,19 @@ export type ProficiencyLevel = "A0" | "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 export const proficiencyLabel = (level: ProficiencyLevel) => (level === "A0" ? "Pre-A1" : level);
 /** Links task content to a versioned backend mission definition; absent on tasks without a mission. */
 export interface MissionTaskFields { missionId?: string; practiceLevel?: ProficiencyLevel; contentVersion?: number }
+export interface RoleplayFact {
+  sceneObjectId: string;
+  source: "assignedRoleplay";
+  isFictional: true;
+}
+export interface MissionScenarioAlternative { sceneObjectId: string; label: string }
+export interface MissionScenario {
+  scenarioId: string; prompt: string; sceneObjectId: string; itemLabel: string;
+  accepted: boolean; alternatives: MissionScenarioAlternative[];
+}
 export type TaskContent = MissionTaskFields & (
   | { kind: "vocabularyIntroduction"; title: string; words: VocabularyLearningWord[]; questions: VocabularyQuestion[]; allowTypingPractice: boolean; targetText?: string | null; translation?: string | null; partOfSpeech?: WordClass | null; exampleSentence?: string | null }
-  | { kind: "grammarLesson"; focus: string; title: string; explanation?: string | null; questions: GrammarLessonQuestion[] }
+  | { kind: "grammarLesson"; focus: string; title: string; explanation?: string | null; checkEachQuestion?: boolean; prep?: LessonPrepCard[] | null; questions: GrammarLessonQuestion[]; roleplayFacts?: RoleplayFact[] | null; situation?: "lostAndFound" | "everydayChoice" | null; taughtChunks?: TaughtChunk[] | null; missionSnapshot?: A0MissionSnapshot | null; scenario?: MissionScenario | null }
   | { kind: "grammarExplanation"; title: string; explanation: string; examples: string[] }
   | { kind: "grammarPractice"; prompt: string; options: string[] }
   | { kind: "syntaxExplanation"; title: string; sentencePattern: string; explanation: string; examples: string[] }
@@ -443,7 +449,11 @@ export interface PracticeDetail {
   analysisMode: "placeholder" | null;
   analysisRetryable: boolean;
   sceneObjects: SceneObject[];
+  /** Reviewed sessions: scene object id -> its marker number on the review screen. */
+  reviewMarkers?: Record<string, number>;
   sceneObjectRelations: SceneObjectRelation[];
+  sceneActionSuggestions: SceneActionSuggestion[];
+  scenePriceSuggestions: ScenePriceSuggestion[];
   vocabulary: { id: string; displayText: string; partOfSpeech: WordClass; gender: string | null; exampleSentence: string | null; languageCode: string }[];
   translations: { vocabularyItemId: string; translatedText: string }[];
   translationPreview: {
@@ -455,6 +465,15 @@ export interface PracticeDetail {
   personalization?: SessionPersonalization | null;
   countedGroups?: CountedGroup[];
   missionGuidance?: string[];
+  provisionalMissionPlan?: MissionTaskFields[];
+  suggestedSceneObjectIds?: string[];
+  missionChoices?: MissionChoices | null;
+}
+export interface SceneActionSuggestion {
+  actionKey: string; action: string; sceneObjectIds: string[]; confidenceScore: number | string;
+}
+export interface ScenePriceSuggestion {
+  priceKey: string; sceneObjectId: string; displayedPrice: string; confidenceScore: number | string;
 }
 export interface CountedGroup {
   sceneObjectIds: string[]; label: string; quantity: number;
@@ -478,12 +497,16 @@ export interface VocabularyLearningWord {
   pronunciationAudioAssetId: string | null; exampleSentence: string | null;
 }
 export interface VocabularyQuestion { questionId: string; prompt: string; options: { optionId: string; label: string }[]; correctOptionId?: string | null }
-export interface GrammarLessonQuestion {
+export interface GrammarLessonQuestion extends MissionQuestionFields {
   questionId: string;
   prompt: string;
-  interactionType: "multipleChoice" | "sentenceBuilding";
+  interactionType: "multipleChoice" | "sentenceBuilding" | "textCloze";
   options: { optionId: string; label: string }[];
   tokenBank: string[];
+  gapKind?: string | null;
+  assistanceSteps?: ("replayAudio" | "visualDetail" | "phraseOnset" | "chunkBank" | "fullModel")[] | null;
+  allowRetry?: boolean | null;
+  wrongFieldTokens?: Record<string, string> | null;
   translation?: string | null;
   sceneObjectId?: string | null;
   objectLabel?: string | null;
@@ -495,12 +518,31 @@ export interface GrammarLessonQuestion {
   boardCounts?: Record<string, number>;
   boardObjectId?: string | null;
   quantityWord?: string | null;
+  roleplayPremise?: string | null;
+  /** Mission options already shuffled and saved by the backend; show them as stored. */
+  keepOptionOrder?: boolean | null;
+  /** Marker questions: each option's scene object, numbered as on the reviewed photo. */
+  markerObjectIds?: Record<string, string> | null;
+  planningFacts?: string[];
+  /** A short English instruction shown above the prompt. */
+  instruction?: string | null;
+  /** Target-language text the learner can play aloud. */
+  audioText?: string | null;
+  /** Listening questions hide the written prompt until the learner reveals it. */
+  listenFirst?: boolean | null;
+  /** A practice board showing this many of `boardObjectId`, without a choice. */
+  displayCount?: number | null;
+  /** A chunk with its missing word as `___`, completed and played after grading. */
+  slotTemplate?: string | null;
+  completeChunk?: string | null;
 }
+/** A taught chunk shown with audio before a lesson's questions. */
+export interface LessonPrepCard { text: string; translation?: string | null; sceneObjectId?: string | null }
 export type TaskAnswer = { inputMode: "text"; text: string; assistance?: ClueAssistance } | { inputMode: "multipleChoice"; optionId: string } | { inputMode: "objectSelection"; sceneObjectId: string } | { inputMode: "vocabularyReview"; answers: Record<string, string>; typedAnswers: Record<string, string>; questionAssistance?: QuestionAssistance[] };
 export type ConfirmGuessBody = { attemptId: string };
 export type SupportKind = "translation" | "audio" | "example" | "wordBank" | "clueFrame" | "helpPhrase" | "hint" | "answerReveal";
 export type EvidenceType = "recognition" | "objectSelection" | "construction" | "production" | "participation";
-export type MistakeType = "wrongObject" | "wrongWord" | "wrongArticle" | "wrongGender" | "wrongColour" | "wrongPosition" | "wordOrder" | "missingWord" | "spelling" | "targetNamed" | "wrongQuantity" | "pluralForm";
+export type MistakeType = "wrongObject" | "wrongWord" | "wrongArticle" | "wrongGender" | "wrongColour" | "wrongAttribute" | "wrongPosition" | "wordOrder" | "missingWord" | "spelling" | "targetNamed" | "wrongQuantity" | "pluralForm";
 /** Supports the learner opened for one grouped-lesson question. */
 export interface QuestionAssistance { questionId: string; supports: SupportKind[] }
 export interface MistakeDetail { mistake: MistakeType; answer: string | null; correction: string; explanation: string | null }
@@ -509,6 +551,13 @@ export interface QuestionOutcome {
   questionId: string; outcome: "correct" | "incorrect" | "unassessed";
   objectiveId: string | null; targetIds: string[]; evidenceType: EvidenceType;
   assistance: SupportKind[]; assistanceUsed: boolean; mistakes: MistakeDetail[];
+  correctNote?: string; optionNotes?: string[];
+}
+export interface LessonAnswerCheck {
+  basilEarned?: number;
+  questionId: string; answer: string; isCorrect: boolean; correctAnswer: string | null;
+  outcome: QuestionOutcome; attemptsLeft?: number | null; feedback?: string | null;
+  wrongField?: string | null; assistanceStepsUsed?: string[];
 }
 /** `questionOutcomes` is present only for tasks with mission evaluation metadata. */
 export interface VocabularyReviewDetails { questionResults: Record<string, boolean>; correctAnswers: Record<string, string>; questionOutcomes?: QuestionOutcome[] }
@@ -531,7 +580,25 @@ export interface LatestClueAttempt {
 }
 export const getLatestAttempt = (taskId: string, signal?: AbortSignal) =>
   request<{ attempt: LatestClueAttempt | null }>(`/api/v1/tasks/${taskId}/latest-attempt`, signal);
+export const checkLessonAnswer = (taskId: string, questionId: string, answer: string) =>
+  write<LessonAnswerCheck>(`/api/v1/tasks/${taskId}/check-lesson-answer`, "POST", { questionId, answer });
+export const getLessonChecks = (taskId: string, signal?: AbortSignal) =>
+  request<{ checks: LessonAnswerCheck[]; assistanceSteps: Record<string, string[]> }>(
+    `/api/v1/tasks/${taskId}/lesson-checks`, signal,
+  );
+export type LessonAssistanceStep = "replayAudio" | "visualDetail" | "phraseOnset" | "chunkBank" | "fullModel";
+export const requestLessonAssistance = (
+  taskId: string, questionId: string, step: LessonAssistanceStep,
+) => write<{ questionId: string; step: LessonAssistanceStep; content: string }>(
+  `/api/v1/tasks/${taskId}/lesson-assistance`, "POST", { questionId, step },
+);
+export const updateMissionScenario = (
+  taskId: string, action: "accept" | "choose", sceneObjectId?: string,
+) => write<{ accepted: boolean; tasks: SessionTask[] }>(
+  `/api/v1/tasks/${taskId}/mission-scenario`, "POST", { action, ...(sceneObjectId ? { sceneObjectId } : {}) },
+);
 export interface TaskActionResult {
+  basilEarned?: number;
   task: SessionTask; nextTaskId: string | null; sessionProgress: SessionProgress; attempt: TaskAttemptResult | null;
   xpEarned: number;
 }
@@ -553,6 +620,7 @@ export interface PracticeReview {
   objectAttributes: Record<string, Record<string, string>>;
   repositionedObjects: { id: string; anchorPoint: { x: number; y: number } }[];
   objectCounts: Record<string, number>;
+  missionChoices?: MissionChoices;
 }
 export const reviewPractice = (id: string, review: PracticeReview) => write<PracticeDetail>(`/api/v1/sessions/${id}/review`, "PUT", review);
 export const getPractice = (id: string) => request<PracticeDetail>(`/api/v1/sessions/${id}`);
@@ -561,11 +629,54 @@ export const createPractice = (profileId: string, assetId: string, key: string) 
   languageProfileId: profileId, mediaAssetId: assetId, idempotencyKey: key,
 });
 export const taskAction = (id: string, action: "start" | "complete" | "skip" | "attempts" | "confirm-guess", body: unknown = {}) => write<TaskActionResult>(`/api/v1/tasks/${id}/${action}`, "POST", body);
+export interface VocabularyAnswerCheck { questionId: string; acceptedOptionId: string; isCorrect: boolean; correctOptionId: string; basilEarned: number }
+export const getVocabularyChecks = (id: string, signal?: AbortSignal) =>
+  request<{ checks: VocabularyAnswerCheck[] }>(`/api/v1/tasks/${id}/vocabulary-checks`, signal);
 export const checkVocabularyAnswer = (id: string, questionId: string, optionId: string) =>
-  write<{ questionId: string; isCorrect: boolean; correctOptionId: string }>(`/api/v1/tasks/${id}/check-vocabulary-answer`, "POST", { questionId, optionId });
+  write<VocabularyAnswerCheck>(`/api/v1/tasks/${id}/check-vocabulary-answer`, "POST", { questionId, optionId });
+export const checkVocabularyTyping = (id: string, learningKey: string, answer: string, reveal = false) =>
+  write<{ learningKey: string; isCorrect: boolean; correctAnswer: string; revealed: boolean }>(`/api/v1/tasks/${id}/check-vocabulary-typing`, "POST", { learningKey, answer, reveal });
 export const completePractice = (id: string) => write<{ id: string; status: string }>(`/api/v1/sessions/${id}/complete`, "POST", {});
 export const abandonPractice = (id: string) => write<{ id: string; status: string }>(`/api/v1/sessions/${id}/abandon`, "POST", {});
-export const getPracticeSummary = (id: string) => request<{ progress: SessionProgress; learnedVocabularyIds: string[]; xpEarned: number; ispyCorrectCount: number; ispyAttemptCount: number }>(`/api/v1/sessions/${id}/summary`);
+export const getPracticeSummary = (id: string) => request<{
+  progress: SessionProgress;
+  learnedVocabularyIds: string[];
+  xpEarned: number;
+  basilEarned: number;
+  ispyCorrectCount: number;
+  ispyAttemptCount: number;
+  completedLessonsCount: number;
+}>(`/api/v1/sessions/${id}/summary`);
+
+export interface SurveySubmission {
+  rating: number;
+  usageFrequency?: string;
+  motivation?: string;
+  improvements?: string;
+  receiveFollowUp?: boolean;
+  email?: string | null;
+  triggerSource?: string;
+  lessonCount?: number | null;
+}
+
+export interface SurveyResponse {
+  id: string;
+  rating: number;
+  createdAt: string;
+}
+
+export function submitSurvey(data: SurveySubmission): Promise<SurveyResponse> {
+  return write<SurveyResponse>("/api/v1/surveys", "POST", {
+    rating: data.rating,
+    usage_frequency: data.usageFrequency ?? "",
+    motivation: data.motivation ?? "",
+    improvements: data.improvements ?? "",
+    receive_follow_up: Boolean(data.receiveFollowUp),
+    email: data.email ? data.email.trim() : null,
+    trigger_source: data.triggerSource ?? "profile",
+    lesson_count: data.lessonCount ?? null,
+  });
+}
 
 export interface ISpyPhoto { mediaAsset: { id: string; source: "camera" | "userUpload"; createdAt: string }; playable: boolean; confirmedAt: string | null }
 export interface ISpyPhotoPage { photos: ISpyPhoto[]; nextCursor: string | null }

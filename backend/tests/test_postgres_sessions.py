@@ -17,9 +17,14 @@ from app.repositories.postgres.media_assets import media_assets
 from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.tasks import session_tasks, task_attempts
 from app.repositories.postgres.users import users
-from app.repositories.postgres.vocabulary import user_vocabulary_progress, vocabulary_encounters
+from app.repositories.postgres.vocabulary import (
+    user_vocabulary_progress,
+    vocabulary_encounters,
+    vocabulary_items,
+    vocabulary_translations,
+)
 from app.repositories.postgres.workflow import PostgresWorkflowRepository
-from app.repositories.postgres.xp import award
+from app.repositories.postgres.xp import award, xp_events
 from app.repositories.practice import PracticeConflictError
 from app.schemas.base import utc_now
 from app.schemas.enums import SessionMode, TaskKind
@@ -134,6 +139,63 @@ def test_progress_returns_a_current_local_streak(database):
     assert len(streak["days"]) == 7
     assert streak["current"] == 2
     assert [day["active"] for day in streak["days"][-2:]] == [True, True]
+
+
+def test_progress_returns_weekly_basil_leaderboard_and_current_player(database):
+    engine, owner, profile, client = database
+    competitors = [
+        User(display_name=f"Chef {index}", auth_provider_id=f"chef-{uuid4()}")
+        for index in range(6)
+    ]
+    try:
+        with engine.begin() as connection:
+            connection.execute(
+                insert(users),
+                [chef.model_dump(by_alias=False) for chef in competitors],
+            )
+            award(
+                connection,
+                user_id=owner.id,
+                language_profile_id=profile.id,
+                event_type="taskCompleted",
+                idempotency_key="leaderboard-current-week",
+            )
+            award(
+                connection,
+                user_id=owner.id,
+                language_profile_id=profile.id,
+                event_type="journalEntry",
+                idempotency_key="leaderboard-old",
+                occurred_at=utc_now() - timedelta(days=8),
+            )
+            for index, chef in enumerate(competitors):
+                award(
+                    connection,
+                    user_id=chef.id,
+                    event_type="journalEntry",
+                    idempotency_key=f"leaderboard-chef-{index}",
+                )
+
+        response = client.get("/api/v1/me/progress")
+        assert response.status_code == 200, response.text
+        data = response.json()
+        board = data["leaderboard"]
+        assert len(board) == 6  # Top five plus the signed-in player.
+        assert [row["rank"] for row in board[:5]] == [1, 2, 3, 4, 5]
+        assert [row["xp"] for row in board[:5]] == sorted(
+            (row["xp"] for row in board[:5]), reverse=True
+        )
+        current_player = board[-1]
+        assert current_player["rank"] >= 7
+        assert current_player["name"] == owner.display_name
+        assert current_player["xp"] == 10
+        assert current_player["isYou"] is True
+        assert data["xp"] == 30  # Lifetime Basil remains separate from the weekly board.
+    finally:
+        competitor_ids = [chef.id for chef in competitors]
+        with engine.begin() as connection:
+            connection.execute(delete(xp_events).where(xp_events.c.user_id.in_(competitor_ids)))
+            connection.execute(delete(users).where(users.c.id.in_(competitor_ids)))
 
 
 @pytest.mark.parametrize("source", ["preloaded", "userUpload", "camera"])
@@ -645,17 +707,40 @@ def test_other_user_cannot_access_sessions_or_tasks(database, monkeypatch):
 
 
 def test_review_rejects_adds_and_rebuilds_without_duplicate_objects(database):
-    _, _, profile, client = database
+    engine, _, profile, client = database
     run = create_run(client, profile, "review-session-key")
     sid = run["session"]["id"]
     detail = analyze(client, sid, confirm=False)
-    kept = detail["sceneObjects"][0]["id"]
+    kept_object = detail["sceneObjects"][0]
+    kept = kept_object["id"]
+    with engine.connect() as c:
+        catalog_labels = set(
+            c.execute(
+                select(func.lower(vocabulary_translations.c.translated_text))
+                .join(
+                    vocabulary_items,
+                    vocabulary_translations.c.vocabulary_item_id == vocabulary_items.c.id,
+                )
+                .where(
+                    func.lower(vocabulary_items.c.language_code)
+                    == profile.target_language_code.lower(),
+                    func.lower(vocabulary_translations.c.source_language_code)
+                    == profile.source_language_code.lower(),
+                )
+            ).scalars()
+        )
+    # Added objects need a distinct catalog word to avoid sharing the kept object's vocabulary item.
+    other_label = next(
+        obj["label"]
+        for obj in detail["sceneObjects"]
+        if obj["label"] != kept_object["label"] and obj["label"].strip().lower() in catalog_labels
+    )
     payload = {
         "acceptedObjectIds": [kept],
         "addedObjects": [
             {
                 "id": str(uuid4()),
-                "label": detail["sceneObjects"][1]["label"],
+                "label": other_label,
                 "x": 0.3,
                 "y": 0.4,
             }
@@ -680,7 +765,7 @@ def test_review_rejects_adds_and_rebuilds_without_duplicate_objects(database):
     assert relation["subjectSceneObjectId"] == kept
     assert relation["referenceSceneObjectId"] in {obj["id"] for obj in selected}
     assert relation["referenceSceneObjectId"] != payload["addedObjects"][0]["id"]
-    assert any(obj["label"] == detail["sceneObjects"][1]["label"] for obj in selected)
+    assert any(obj["label"] == other_label for obj in selected)
     assert all(
         task["sceneObjectId"] in {obj["id"] for obj in selected}
         for task in saved["tasks"]

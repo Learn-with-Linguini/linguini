@@ -47,7 +47,11 @@ from app.schemas.enums import SceneRelationType
 from app.schemas.media import MediaAsset
 from app.schemas.sessions import Session
 from app.services.image_storage import UploadObjectMissing
-from app.services.scene_analysis import SceneAnalysisError
+from app.services.scene_analysis import (
+    SceneAnalysisError,
+    scene_inventory,
+    scene_result_from_inventory,
+)
 
 PNG_BYTES = b"\x89PNG\r\n\x1a\n" + b"0" * 16
 FAKE_API_KEY = "test-key-123"
@@ -60,19 +64,39 @@ VALID_OUTPUT = json.dumps(
         "objects": [
             {
                 "objectKey": "object_1",
+                "groupKey": "chairs",
                 "label": "chair",
                 "boundingBox": {"x": 0.1, "y": 0.1, "width": 0.2, "height": 0.2},
                 "anchorPoint": {"x": 0.15, "y": 0.15},
                 "attributes": [{"type": "color", "value": "red"}],
+                "suggestedGroupCount": 1,
                 "confidenceScore": 0.9,
             },
             {
                 "objectKey": "object_2",
+                "groupKey": "tables",
                 "label": "table",
                 "boundingBox": {"x": 0.4, "y": 0.1, "width": 0.2, "height": 0.2},
                 "attributes": [],
+                "suggestedGroupCount": 1,
                 "confidenceScore": 0.8,
             },
+        ],
+        "actions": [
+            {
+                "actionKey": "action_1",
+                "action": "sit",
+                "relatedObjectKeys": ["object_1"],
+                "confidenceScore": 0.9,
+            }
+        ],
+        "priceSuggestions": [
+            {
+                "priceKey": "price_1",
+                "objectKey": "object_2",
+                "displayedPrice": "$12",
+                "confidenceScore": 0.9,
+            }
         ],
         "relations": [
             {
@@ -224,7 +248,28 @@ def test_happy_path_maps_to_domain() -> None:
     assert result.objects[0].attributes == {"color": "red"}
     assert result.objects[0].anchor_point is not None
     assert result.relations[0].relation == "next_to"
+    assert result.action_suggestions[0].action == "sit"
+    assert result.action_suggestions[0].scene_object_ids == [result.objects[0].id]
+    assert result.price_suggestions[0].displayed_price == "$12"
+    assert result.price_suggestions[0].scene_object_id == result.objects[1].id
     assert len(client.requests) == 1
+
+
+def test_scene_inventory_rehydrates_with_session_specific_ids() -> None:
+    first = session()
+    result = analyzer(FakeVisionClient([VALID_OUTPUT])).analyze(first, asset(), {}, None)
+    inventory = scene_inventory(result)
+    second = session()
+    reused = scene_result_from_inventory(second, inventory)
+
+    assert [item.label for item in reused.objects] == ["chair", "table"]
+    assert all(item.session_id == second.id for item in reused.objects)
+    assert {item.id for item in reused.objects}.isdisjoint(
+        {item.id for item in result.objects}
+    )
+    assert reused.relations[0].subject_scene_object_id == reused.objects[0].id
+    assert reused.action_suggestions[0].scene_object_ids == [reused.objects[0].id]
+    assert reused.price_suggestions[0].scene_object_id == reused.objects[1].id
 
 
 def test_grounding_failure_keeps_the_valid_scene_analysis_result() -> None:
@@ -296,15 +341,15 @@ def test_moderation_runs_concurrently_with_the_vision_call() -> None:
     assert result.title == "Kitchen"
 
 
-def test_request_uses_shared_v2_contract() -> None:
+def test_request_uses_shared_v3_contract() -> None:
     client = FakeVisionClient([VALID_OUTPUT])
     analyzer(client).analyze(session(), asset(), {}, None)
 
     sent = client.requests[0]
-    assert sent.prompt_version == "scene-analysis.v4"
+    assert sent.prompt_version == "scene-analysis.v5"
     assert sent.system_prompt == SCENE_ANALYSIS_SYSTEM_PROMPT
     assert sent.user_instruction == SCENE_ANALYSIS_USER_INSTRUCTION
-    assert sent.json_schema_name == "scene_analysis_v2"
+    assert sent.json_schema_name == "scene_analysis_v3"
     relation_schema = sent.json_schema["properties"]["relations"]["items"]
     # Relation confidence is now part of the shared contract, not stripped.
     assert "confidenceScore" in relation_schema["properties"]
@@ -325,6 +370,7 @@ def test_semantically_invalid_output_retries_once_then_fails() -> None:
             "objects": [
                 {
                     "objectKey": "object_1",
+                    "groupKey": "chairs",
                     "label": "chair",
                     "boundingBox": {
                         "x": 0.1,
@@ -333,6 +379,7 @@ def test_semantically_invalid_output_retries_once_then_fails() -> None:
                         "height": 0.2,
                     },
                     "attributes": [],
+                    "suggestedGroupCount": 1,
                     "confidenceScore": 0.9,
                 }
             ],
@@ -449,6 +496,7 @@ def _domain(objects, relations=None):
 def _object(key, confidence=0.9, **box):
     return {
         "objectKey": key,
+        "groupKey": f"{key}s",
         "label": key,
         "boundingBox": {
             "x": box.get("x", 0.1),
@@ -457,6 +505,7 @@ def _object(key, confidence=0.9, **box):
             "height": box.get("height", 0.2),
         },
         "attributes": [],
+        "suggestedGroupCount": 1,
         "confidenceScore": confidence,
     }
 
@@ -702,9 +751,16 @@ def test_both_providers_share_prompt_schema_and_result() -> None:
     # Gemini compiles the same contract without nested array bounds; the
     # shared Pydantic output validation still enforces those bounds.
     gemini_schema = copy.deepcopy(gemini_config.response_json_schema)
-    gemini_schema["properties"]["objects"]["maxItems"] = 6
+    gemini_schema["properties"]["objects"]["maxItems"] = 20
     gemini_schema["properties"]["objects"]["items"]["properties"]["attributes"]["maxItems"] = 6
     gemini_schema["properties"]["relations"]["maxItems"] = 12
+    gemini_schema["properties"]["actions"]["maxItems"] = 12
+    gemini_schema["properties"]["priceSuggestions"]["maxItems"] = 12
+    action_objects = gemini_schema["properties"]["actions"]["items"]["properties"][
+        "relatedObjectKeys"
+    ]
+    action_objects["minItems"] = 1
+    action_objects["maxItems"] = 6
     assert gemini_schema == openai_schema
     assert gemini_kwargs["contents"][0] == openai_user
 

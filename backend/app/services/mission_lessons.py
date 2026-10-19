@@ -1,8 +1,13 @@
 """Shared mission fields and the mission-tagged grammar lesson task."""
 
+import re
 from uuid import UUID, uuid5
 
 from app.schemas.tasks import SessionTask
+
+
+def definite(source):
+    return f"the {re.sub(r'^(?:a|an|the)\s+', '', source, flags=re.IGNORECASE)}"
 
 
 def mission_fields(mission):
@@ -30,6 +35,38 @@ def noun_gender(term, word):
     return getattr(word.gender, "value", word.gender)
 
 
+# Catalog content may record a noun's gender as its definite article.
+_ARTICLE_GENDERS = {
+    "el": "masculine",
+    "le": "masculine",
+    "la": "feminine",
+    "der": "masculine",
+    "den": "masculine",
+    "dem": "masculine",
+    "des": "masculine",
+    "die": "feminine",
+    "das": "neuter",
+}
+
+
+def normalized_gender(value):
+    value = getattr(value, "value", value)
+    if not isinstance(value, str):
+        return None
+    gender = _ARTICLE_GENDERS.get(value.strip().casefold(), value.strip().casefold())
+    return gender if gender in {"masculine", "feminine", "neuter"} else None
+
+
+def mission_gender(term, word):
+    """``noun_gender`` with article-style genders mapped; elided ``l'`` falls back to the word."""
+    for gender in (term.gender if term is not None else None,
+                   getattr(word.gender, "value", word.gender)):
+        gender = normalized_gender(gender)
+        if gender in {"masculine", "feminine", "neuter"}:
+            return gender
+    return noun_gender(term, word)
+
+
 def correct_label(question):
     if question.interaction_type == "multipleChoice":
         return next(
@@ -39,7 +76,9 @@ def correct_label(question):
     return question.correct_text
 
 
-def build_mission_task(session_id, mission, focus, result, evaluate, shown=lambda question: {}):
+def build_mission_task(
+    session_id, mission, focus, result, evaluate, shown=lambda question: {}, content_fields=None,
+):
     """One mission-tagged grammar lesson whose private key grades every question.
 
     ``evaluate(question, label)`` returns the question's evaluation fields and
@@ -80,13 +119,19 @@ def build_mission_task(session_id, mission, focus, result, evaluate, shown=lambd
                         dict(option_id=option.option_id, label=option.label)
                         for option in question.options
                     ],
-                    token_bank=question.token_bank,
+                    token_bank=(
+                        question.token_bank
+                        if mission.practice_level == "A2"
+                        and any(" " in chunk for chunk in question.answer_chunks)
+                        else [token for token in question.token_bank if token != "."]
+                    ),
                     translation=question.translation,
                     **shown(question),
                 )
                 for question in questions
             ],
             **mission_fields(mission),
+            **(content_fields or {}),
         ),
         answer_key=dict(correct_option_ids=correct, question_evaluations=evaluations),
         scene_object_id=UUID(questions[-1].object_key),

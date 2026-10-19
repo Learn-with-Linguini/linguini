@@ -64,6 +64,65 @@ def build_scene_translation_schema() -> dict[str, Any]:
     return build_strict_json_schema(SceneTranslationResult)
 
 
+def _compact_request(
+    payload: dict[str, Any],
+) -> tuple[dict[str, Any], dict[tuple[str, str], str]]:
+    compact = dict(payload)
+    representatives: dict[tuple[str, str], str] = {}
+    object_groups: dict[str, str] = {}
+    seen_objects: dict[str, str] = {}
+    objects = []
+
+    for term in payload.get("objects", []):
+        source_key = term["source"].strip().casefold()
+        representative = seen_objects.get(source_key)
+        if representative is None:
+            representative = term["key"]
+            seen_objects[source_key] = representative
+            objects.append(dict(term))
+        object_groups[term["key"]] = representative
+        representatives[("objects", term["key"])] = representative
+    compact["objects"] = objects
+
+    seen_attributes: dict[tuple[str, str, str], str] = {}
+    attributes = []
+    for term in payload.get("attributes", []):
+        key = term["key"]
+        object_key, separator, attribute_type = key.partition(":")
+        if separator and object_key in object_groups:
+            group = (
+                object_groups[object_key],
+                attribute_type,
+                term["source"].strip().casefold(),
+            )
+            representative = seen_attributes.get(group)
+            if representative is None:
+                representative = key
+                seen_attributes[group] = representative
+                attributes.append(dict(term))
+        else:
+            representative = key
+            attributes.append(dict(term))
+        representatives[("attributes", key)] = representative
+    if "attributes" in payload:
+        compact["attributes"] = attributes
+
+    seen_relationships: dict[str, str] = {}
+    relationships = []
+    for term in payload.get("relationships", []):
+        source_key = term["source"].strip().casefold()
+        representative = seen_relationships.get(source_key)
+        if representative is None:
+            representative = term["key"]
+            seen_relationships[source_key] = representative
+            relationships.append(dict(term))
+        representatives[("relationships", term["key"])] = representative
+    if "relationships" in payload:
+        compact["relationships"] = relationships
+
+    return compact, representatives
+
+
 class SceneTranslationService:
     """Translates confirmed scene vocabulary through the text-model seam."""
 
@@ -96,7 +155,9 @@ class SceneTranslationService:
             ) from error
 
         def decode(data: Any) -> SceneTranslationResult:
-            result = normalize_object_articles(SceneTranslationResult.model_validate(data))
+            result = normalize_object_articles(
+                SceneTranslationResult.model_validate(data), parsed_payload.target_language
+            )
             validate_translation_terms(parsed_payload, result)
             return result
 
@@ -117,7 +178,9 @@ class SceneTranslationService:
     def _generate(
         self, payload: dict[str, Any], parsed_payload: SceneTranslationRequest
     ) -> Generated[SceneTranslationResult]:
-        content = json.dumps(payload, ensure_ascii=False)
+        compact_payload, representatives = _compact_request(payload)
+        compact_request = SceneTranslationRequest.model_validate(compact_payload)
+        content = json.dumps(compact_payload, ensure_ascii=False)
         request = TextModelRequest(
             system_prompt=SCENE_TRANSLATION_SYSTEM_PROMPT,
             user_content=content,
@@ -162,10 +225,29 @@ class SceneTranslationService:
                 latency_ms += (time.perf_counter() - call_start) * 1000
 
                 try:
-                    result = normalize_object_articles(
-                        SceneTranslationResult.model_validate_json(
-                            response.output_text
-                        )
+                    compact_result = normalize_object_articles(
+                        SceneTranslationResult.model_validate_json(response.output_text),
+                        compact_request.target_language,
+                    )
+                    validate_translation_terms(compact_request, compact_result)
+                    compact_terms = {
+                        field: {
+                            term.key: term for term in getattr(compact_result, field)
+                        }
+                        for field in ("objects", "attributes", "relationships")
+                    }
+                    result = compact_result.model_copy(
+                        update={
+                            field: [
+                                compact_terms[field][
+                                    representatives[(field, original.key)]
+                                ].model_copy(
+                                    update={"key": original.key, "source": original.source}
+                                )
+                                for original in getattr(parsed_payload, field)
+                            ]
+                            for field in ("objects", "attributes", "relationships")
+                        }
                     )
                     validate_translation_terms(parsed_payload, result)
                 except (ValueError, SceneTranslationError) as error:

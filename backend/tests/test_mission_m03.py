@@ -17,7 +17,11 @@ from app.ai.features.learning_tasks.mission_m03 import (
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.missions import get_mission
 from app.schemas.sessions import ReviewPracticeRequest
-from app.services.mission_eligibility import photo_eligibility, plan_missions
+from app.services.mission_eligibility import (
+    photo_eligibility,
+    plan_missions,
+    provisional_mission_focus,
+)
 from app.services.mission_lessons_m03 import m03_lesson_task, m03_payload
 from app.services.quantities import (
     NUMBER_WORDS,
@@ -74,6 +78,17 @@ def test_a_count_alone_never_satisfies_m01_or_m02():
 def test_every_mission_the_photo_fits_is_planned_up_to_three(objects, relations, groups, planned):
     plan = plan_missions([M01, M02, M03], objects, relations, groups)
     assert [mission.mission_id for mission in plan] == planned
+
+
+def test_provisional_focus_uses_suggested_facts_but_returns_a_small_review_set():
+    repeated = [
+        obj(uuid4(), "book", quantity="3"),
+        obj(uuid4(), "book", quantity="3"),
+        obj(uuid4(), "book", quantity="3"),
+    ]
+    plan, selected = provisional_mission_focus([M01, M02, M03], repeated, [])
+    assert [mission.mission_id for mission in plan] == ["M03"]
+    assert selected == [item.id for item in repeated]
 
 
 @pytest.mark.parametrize(("value", "expected"), [
@@ -221,6 +236,17 @@ def test_build_uses_the_plural_and_a_bank_with_one_wrong_number(
     assert wrong in words and wrong != "tres"
 
 
+def test_german_counting_uses_recorded_plural_and_number_words():
+    payload = _payload(
+        "de", display="Buch", gender="neuter", plural_form="Bücher", label="book",
+    )
+    result = fallback_m03_lesson(payload)
+    assert payload["group"]["question"] == "Wie viele Bücher gibt es?"
+    assert _build(result).correct_text == "Es gibt drei Bücher."
+    assert _choose(result).options
+    assert validate_m03_lesson(payload, result) is None
+
+
 @pytest.mark.parametrize(("display", "gender", "question"), [
     ("libro", "masculine", "¿Cuántos libros hay?"),
     ("taza", "feminine", "¿Cuántas tazas hay?"),
@@ -363,6 +389,23 @@ def test_corrections_separate_quantity_from_plural_mistakes():
         for option in choose.options if option.option_id != choose.correct_option_id
     }
     assert all(mistakes == ["wrongQuantity"] for mistakes in by_answer.values())
+    choose_evaluation = evaluations[choose.question_id]
+    assert choose_evaluation.correct_note == "You counted 3: tres."
+    inverse_numbers = {
+        fold(word): number for number, word in NUMBER_WORDS["es"].items()
+    }
+    for option in choose.options:
+        if option.option_id == choose.correct_option_id:
+            continue
+        rule = next(
+            rule for rule in choose_evaluation.corrections
+            if option.option_id in rule.answers
+        )
+        assert rule.note == f"“{option.label}” means {inverse_numbers[fold(option.label)]}."
+        assert rule.explanation == (
+            f"“{option.label}” means {inverse_numbers[fold(option.label)]}; "
+            "you counted 3: tres."
+        )
     rules = {rule.mistake: rule.answers for rule in evaluations[build.question_id].corrections}
     assert "Hay tres libro." in rules["pluralForm"]
     assert "Hay tres libros." not in rules["pluralForm"]
@@ -374,6 +417,11 @@ def test_corrections_separate_quantity_from_plural_mistakes():
         rule.mistake == "wrongQuantity" and f"means {target}." in rule.explanation
         for rule in match_rules
     )
+    assert evaluations[build.question_id].correct_note is None
+    assert evaluations[match.question_id].correct_note == (
+        f"“{match.quantity_word}” means {target}."
+    )
+    assert all(rule.note is None for rule in match_rules)
     assert [item.evidence_type for item in task.answer_key.question_evaluations] == [
         "recognition", "construction", "recognition",
     ]

@@ -84,6 +84,7 @@ function detail(): PracticeDetail {
       sceneMediaAssetId: "photo", sessionTitle: null, sessionSummary: null, failureCode: null },
     mediaAsset: { id: "photo", source: "userUpload" }, sceneId: null, title: "Kitchen",
     analysisMode: null, analysisRetryable: false, sceneObjectRelations: [relation],
+    sceneActionSuggestions: [], scenePriceSuggestions: [],
     sceneObjects: scene.items.map(item => ({ id: item.id, sessionId: "session", label: item.translation,
       vocabularyItemId: null, boundingBox: null, anchorPoint: { x: item.x / 100, y: item.y / 100 },
       attributes: item.translation === "cup" ? { quantity: "two", color: "white" } : {},
@@ -132,6 +133,10 @@ function assertMarkers(expected: number[]) {
   assert.deepEqual(numbers(".analysis-word-row__marker"), expected);
   assert.deepEqual(numbers(".scene__marker-label"), expected);
 }
+function counts() {
+  return Object.fromEntries([...dom.window.document.querySelectorAll(".analysis-object-counts dl > div")]
+    .map(group => [group.querySelector("dt")!.textContent, Number(group.querySelector("dd")!.textContent)]));
+}
 async function addWord(word: string) {
   await input("analysis-new-word", word);
   await click(button("Select location"));
@@ -153,20 +158,20 @@ test.after(() => {
   globalThis.MessageChannel = NativeMessageChannel;
 });
 
-test("removing and restoring words keeps photo numbers sequential without changing saved object identities", async () => {
+test("removing and restoring objects keeps photo numbers sequential without changing saved object identities", async () => {
   await mount();
   assertMarkers([1, 2, 3]);
-  await click(dom.window.document.querySelector('[aria-label="Remove table"]'));
+  await click(dom.window.document.querySelector('[aria-label="Remove marker 1, table"]'));
   assertMarkers([1, 2]);
   await addWord("window");
   await addWord("door");
   assertMarkers([1, 2, 3, 4]);
-  await click(dom.window.document.querySelector('[aria-label="Remove window"]'));
+  await click(dom.window.document.querySelector('[aria-label="Remove marker 3, window"]'));
   assertMarkers([1, 2, 3]);
-  await click(button("Restore removed words"));
+  await click(button("Restore removed objects"));
   assertMarkers([1, 2, 3, 4]);
-  await click(dom.window.document.querySelector('[aria-label="Remove table"]'));
-  await click(button("Continue"));
+  await click(dom.window.document.querySelector('[aria-label="Remove marker 1, table"]'));
+  await click(button("Confirm lesson facts"));
   assert.equal(reviews.length, 1);
   assert.deepEqual(reviews[0].acceptedObjectIds, ["object-1", "object-2"]);
   assert.deepEqual(reviews[0].relations, [relation]);
@@ -174,38 +179,47 @@ test("removing and restoring words keeps photo numbers sequential without changi
   assert.equal(reviews[0].addedObjects[0].label, "door");
   assert.deepEqual({ x: reviews[0].addedObjects[0].x, y: reviews[0].addedObjects[0].y }, { x: 0.5, y: 0.5 });
   assert.ok(reviews[0].addedObjects[0].id);
+  assert.deepEqual(reviews[0].objectCounts, { "object-1": 2, [reviews[0].addedObjects[0].id]: 1 });
   assert.deepEqual(scene.items.map(item => item.marker), [1, 2, 3]);
 });
 
-test("counts live in Objects, stay grouped and retain values when switching details or removing an object", async () => {
+test("counts live in Objects and follow visible instances after switching details, removing and adding an object", async () => {
   await mount();
   const tabs = [...dom.window.document.querySelectorAll('[role="tab"]')];
   assert.deepEqual(tabs.map(tab => tab.textContent?.replace(/\d/g, "")), ["Objects", "Attributes", "Relations"]);
   const objects = dom.window.document.querySelector('[aria-labelledby="analysis-found-title"]');
-  assert.ok(objects?.querySelector('[aria-labelledby="analysis-counts-title"]'));
-  assert.equal(dom.window.document.querySelectorAll(".analysis-count-row").length, 2);
-  await click(button("Use suggested count: 2"));
-  assert.equal((dom.window.document.getElementById("count-cup") as HTMLInputElement).value, "2");
+  assert.ok(objects?.querySelector('[aria-labelledby="analysis-object-counts-title"]'));
+  assert.deepEqual(counts(), { table: 1, cup: 2 });
   await click(tabs[1]);
-  assert.equal(dom.window.document.getElementById("count-cup"), null);
+  assert.equal(dom.window.document.querySelector(".analysis-object-counts"), null);
   await click(tabs[0]);
-  assert.equal((dom.window.document.getElementById("count-cup") as HTMLInputElement).value, "2");
-  await click(dom.window.document.querySelector('[aria-label="Remove cup"]'));
-  assert.equal(dom.window.document.querySelectorAll(".analysis-count-row").length, 2);
-  await click(button("Continue"));
-  assert.deepEqual(reviews[0].objectCounts, { "object-2": 2 });
+  assert.deepEqual(counts(), { table: 1, cup: 2 });
+  await click(dom.window.document.querySelector('[aria-label="Remove marker 2, cup"]'));
+  assertMarkers([1, 2]);
+  assert.deepEqual(counts(), { table: 1, cup: 1 });
+  await addWord("cup");
+  assertMarkers([1, 2, 3]);
+  assert.deepEqual(counts(), { table: 1, cup: 2 });
+  await click(button("Confirm lesson facts"));
+  assert.deepEqual(reviews[0].acceptedObjectIds, ["object-0", "object-2"]);
+  assert.deepEqual(reviews[0].objectCounts, { "object-0": 1, "object-2": 2 });
   assert.deepEqual(reviews[0].relations, []);
 });
 
-test("invalid counts explain the problem and block Continue until corrected", async () => {
-  await mount();
-  await input("count-cup", "11");
-  const count = dom.window.document.getElementById("count-cup")!;
-  assert.equal(count.getAttribute("aria-invalid"), "true");
-  assert.match(dom.window.document.getElementById(count.getAttribute("aria-describedby")!)!.textContent!, /Counts go from 1 to 10/);
-  assert.equal((button("Continue") as HTMLButtonElement).disabled, true);
-  await input("count-cup", "3");
-  assert.equal((button("Continue") as HTMLButtonElement).disabled, false);
-  await click(button("Continue"));
-  assert.deepEqual(reviews[0].objectCounts, { "object-1": 3 });
+test("restoring removed objects keeps mission-hidden suggestions excluded from markers and counts", async () => {
+  await mount({ ...detail(), suggestedSceneObjectIds: ["object-1", "object-2"],
+    provisionalMissionPlan: [{ missionId: "M03", practiceLevel: "A1" }] });
+  assert.deepEqual([...dom.window.document.querySelectorAll('[role="tab"]')].map(tab => tab.textContent), ["Objects2"]);
+  assertMarkers([1, 2]);
+  assert.deepEqual(counts(), { cup: 2 });
+  await click(dom.window.document.querySelector('[aria-label="Remove marker 1, cup"]'));
+  assertMarkers([1]);
+  assert.deepEqual(counts(), { cup: 1 });
+  await click(button("Restore removed objects"));
+  assertMarkers([1, 2]);
+  assert.deepEqual(counts(), { cup: 2 });
+  await click(button("Confirm lesson facts"));
+  assert.deepEqual(reviews[0].acceptedObjectIds, ["object-1", "object-2"]);
+  assert.deepEqual(reviews[0].objectCounts, { "object-1": 2 });
+  assert.deepEqual(reviews[0].relations, [relation]);
 });

@@ -2,9 +2,16 @@ from uuid import UUID
 
 from app.repositories.tasks import TaskNotFoundError, TaskRepository
 from app.schemas.tasks import (
+    CheckLessonAnswerResponse,
     CheckVocabularyAnswerResponse,
+    CheckVocabularyTypingResponse,
     LatestAttemptResponse,
     LatestClueAttempt,
+    LessonAssistanceRequest,
+    LessonAssistanceResponse,
+    LessonChecksResponse,
+    MissionScenarioRequest,
+    MissionScenarioResponse,
     SessionTaskPublic,
 )
 from app.services.users import UserService
@@ -73,4 +80,53 @@ class TaskService:
         user = self.users.get_current_user()
         return PostgresWorkflowRepository(self.engine, user.id).check_vocabulary_answer(
             task_id, question_id, option_id
+        )
+
+    def check_vocabulary_typing(
+        self, task_id, learning_key, answer, reveal
+    ) -> CheckVocabularyTypingResponse:
+        from app.repositories.postgres.workflow import PostgresWorkflowRepository
+
+        user = self.users.get_current_user()
+        return PostgresWorkflowRepository(self.engine, user.id).check_vocabulary_typing(
+            task_id, learning_key, answer, reveal
+        )
+
+
+    def vocabulary_checks(self, task_id):
+        from app.repositories.postgres.workflow import PostgresWorkflowRepository
+
+        user = self.users.get_current_user()
+        return PostgresWorkflowRepository(self.engine, user.id).vocabulary_checks(task_id)
+
+    def check_lesson_answer(self, task_id, question_id, answer) -> CheckLessonAnswerResponse:
+        from app.repositories.postgres.workflow import PostgresWorkflowRepository
+
+        user = self.users.get_current_user()
+        return PostgresWorkflowRepository(self.engine, user.id).check_lesson_answer(
+            task_id, question_id, answer
+        )
+
+    def lesson_checks(self, task_id) -> LessonChecksResponse:
+        from app.repositories.postgres.workflow import PostgresWorkflowRepository
+
+        user = self.users.get_current_user()
+        return PostgresWorkflowRepository(self.engine, user.id).lesson_checks(task_id)
+
+    def lesson_assistance(
+        self, task_id, request: LessonAssistanceRequest
+    ) -> LessonAssistanceResponse:
+        from app.repositories.postgres.workflow import PostgresWorkflowRepository
+
+        user = self.users.get_current_user()
+        return PostgresWorkflowRepository(self.engine, user.id).lesson_assistance(
+            task_id, request.question_id, request.step
+        )
+
+    def mission_scenario(self, task_id, request: MissionScenarioRequest) -> MissionScenarioResponse:
+        from app.repositories.postgres.workflow import PostgresWorkflowRepository
+
+        user = self.users.get_current_user()
+        return PostgresWorkflowRepository(self.engine, user.id).mission_scenario(
+            task_id, request.action, request.scene_object_id
         )

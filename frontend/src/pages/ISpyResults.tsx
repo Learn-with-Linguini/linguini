@@ -1,3 +1,4 @@
+import { LoadingScreen } from "../components/LoadingScreen";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -8,11 +9,12 @@ import { gameStartError, queryError, queryKeys } from "../lib/queryKeys";
 import { sessionDestination } from "../lib/sessionRoute";
 import { useAppState } from "../state/useAppState";
 import { useScene } from "../state/useScene";
+import { learningFeedback } from "../lib/learningFeedback";
 
 export function ISpyResults() {
   const navigate = useNavigate();
   const scene = useScene();
-  const { session, activeProfile, completionError, retryCompletion } = useAppState();
+  const { session, activeProfile, completionPending, completionError, retryCompletion } = useAppState();
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
   const replayKey = useRef<string | null>(null);
@@ -21,6 +23,7 @@ export function ISpyResults() {
     queryFn: () => getPracticeSummary(scene.sessionId!),
   });
   const error = queryError(queryErrorValue);
+  const completed = session?.session.status === "completed" && !completionPending && !completionError && Boolean(data) && !error;
   const described = session ? practiceStages(session.tasks).reflection : [];
   const found = described.filter(task => task.status === "completed").length;
   const playAgain = async () => {
@@ -38,11 +41,11 @@ export function ISpyResults() {
   return <div className="stack">
     <div className="center-text stack-2" style={{ alignItems: "center" }}>
       <img className="mascot" src="/linguini-logo.png" width={120} height={120} alt="Linguini mascot" />
-      <h1>Game over!</h1>
+      <h1>{completed ? learningFeedback("completed", scene.sessionId!) : "Your game"}</h1>
       <Noodle className="noodle-divider summary__noodle" />
       <p className="muted">You played I-Spy with {scene.title.toLowerCase()}.</p>
     </div>
-    {isPending ? <p role="status">Loading your results...</p> : null}
+    {isPending ? <LoadingScreen label="Loading your results…" /> : null}
     {error ? <p role="alert">{error}</p> : null}
     {completionError ? <><p role="alert">{completionError}</p><Button onClick={retryCompletion}>Retry saving your game</Button></> : null}
     {data ? <div className="stat-grid">
@@ -50,7 +53,7 @@ export function ISpyResults() {
       <div className="stat"><div className="stat__value">{found}/{described.length}</div><span className="stat__label">Objects Linguini found</span></div>
       <div className="stat"><div className="stat__value">{data.progress.skippedTaskCount}</div><span className="stat__label">Rounds skipped</span></div>
     </div> : null}
-    <p className="small muted">Games are just for fun: they don't earn XP or change your word progress.</p>
+    <p className="small muted">Games are just for fun: they don't earn Basil or change your word progress.</p>
     {startError ? <p role="alert">{startError}</p> : null}
     <div className="stack-2">
       <Button block disabled={starting || !session} onClick={() => void playAgain()}>{starting ? "Setting up..." : "Play again"}</Button>

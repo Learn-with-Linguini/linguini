@@ -41,7 +41,10 @@ model = "anthropic/claude-haiku-4.5"
 capabilities = ["vision", "jsonSchema"]
 credentials = ["openrouter"]
 upstream_fallback = { allow_fallbacks = true }
-defaults = { timeout_seconds = 120, max_retries = 0 }
+# A reusable scene inventory can contain up to 20 objects plus attributes,
+# relations, actions and visible prices. The shared 1,500-token default was
+# sized for the former six-object response and can truncate valid inventories.
+defaults = { timeout_seconds = 120, max_output_tokens = 5000, max_retries = 0 }
 
 # Mistral Small scored marginally higher but is served only by Mistral and
 # rate-limited upstream too often to be the default.

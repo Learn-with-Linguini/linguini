@@ -1,18 +1,22 @@
+import { basilEarnedText } from "../lib/gamification";
+import { InlineLoader } from "../components/LoadingScreen";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { sessionDestination, sessionPaths } from "../lib/sessionRoute";
-import { Button, Feedback, IconButton, ProgressTrail, XpPill } from "../components/ui";
-import { ArrowRightIcon, CheckIcon, SpeakerIcon } from "../components/icons";
+import { Button, Feedback, IconButton, ProgressTrail } from "../components/ui";
+import { ArrowRightIcon, BasilIcon, CheckIcon, SpeakerIcon } from "../components/icons";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
-import { choiceOrder, practiceStages, taskDone, taskXp, xpEarnedText } from "../lib/practiceTasks";
+import { choiceOrder, practiceStages, taskDone } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
 import { getLatestAttempt } from "../lib/api";
 import type { SessionTask, TaskActionResult } from "../lib/api";
 import { queryKeys } from "../lib/queryKeys";
 import { ReportIssueLink } from "../components/ReportIssueLink";
+import { playAnswerSound } from "../lib/answerSound";
+import { learningFeedback } from "../lib/learningFeedback";
 
 export function ISpyPhase1() {
   const { session, practiceStalled, practiceError, retryProcessing } = useAppState();
@@ -34,8 +38,8 @@ export function ISpyPhase1() {
   if (game && !clues.length) return <div className="stack">
     <h2 className="text-center">I-Spy · Linguini's clues</h2>
     {practiceStalled
-      ? <><p role="status">Linguini is still choosing objects to spy.</p><Button block onClick={() => void retryProcessing(session.session.id)}>Check again</Button></>
-      : <p role="status">Linguini is choosing objects to spy...</p>}
+      ? <><InlineLoader label="Linguini is still choosing objects to spy…" /><Button block onClick={() => void retryProcessing(session.session.id)}>Check again</Button></>
+      : <InlineLoader label="Linguini is choosing objects to spy…" />}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
   </div>;
   const task = clues[index];
@@ -64,7 +68,11 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
     ? "Veo, veo, algo que"
     : scene.languageCode === "fr"
       ? "Je vois, je vois, quelque chose qui"
-      : "I spy with my little eye, something that";
+      : scene.languageCode === "de"
+        ? "Ich sehe etwas, das"
+        : scene.languageCode === "ko"
+          ? "나는 무언가를 보고 있어요:"
+          : "I spy with my little eye, something that";
   const answered = taskDone(task);
   const choose = async (optionId: string) => {
     if (answered || practiceSaving || submitting.current) return;
@@ -76,6 +84,7 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
     try {
       const saved = await actOnTask(task.id, "attempts", { inputMode: "multipleChoice", optionId }, request.current.key);
       setResult(saved);
+      if (saved?.attempt?.isCorrect != null) playAnswerSound(saved.attempt.isCorrect);
       if (saved) request.current = null;
     } finally {
       submitting.current = false;
@@ -90,10 +99,9 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
   const shownPick = acceptedPick ?? restored?.optionId ?? (answered ? null : picked);
   const feedback = result?.attempt?.feedback?.message ?? restored?.feedback;
   const selected = content.options.find(option => option.optionId === shownPick);
-  const reward = !answered ? taskXp(task) : null;
-  const earnedText = xpEarnedText(result?.xpEarned);
+  const earnedText = basilEarnedText(result?.basilEarned);
   return <div className="stack">
-    <div className="spread"><h2 className="text-center">I-Spy · Linguini's clues</h2>{reward ? <XpPill {...reward} /> : null}</div>
+    <div className="spread"><h2 className="text-center">I-Spy · Linguini's clues</h2></div>
     <p>Use the clues to find the word</p>
     <ProgressTrail value={index + (answered ? 1 : 0)} total={total} label={`${index + 1} / ${total}`} />
     <ScenePhoto scene={scene} activeItemId={isCorrect ? selected?.sceneObjectId : null} />
@@ -108,9 +116,15 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
         {isCorrect && shownPick === option.optionId ? <CheckIcon size={16} /> : null}{option.label}
       </button>;
     })}</div>
-    {checking ? <p className="choice-checking" role="status">Checking your answer…</p> : null}
+    {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
     {answered || result ? <>
-      <Feedback tone={isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status"><strong>{task.status === "skipped" ? "Skipped — no XP earned." : feedback ?? "Answer saved."}</strong>{content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback>
+      <Feedback tone={isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status">
+        {task.status === "skipped" ? <strong>Skipped — no Basil earned.</strong> : <>
+          {isCorrect !== null ? <strong>{learningFeedback(isCorrect ? "correct" : "incorrect", task.id)}</strong> : null}
+          <span>{feedback ?? "Answer saved."}</span>
+        </>}
+        {content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}{earnedText ? <strong className="basil-reward"><BasilIcon size={17} />{earnedText}</strong> : null}
+      </div></Feedback>
       {task.status !== "skipped" ? <ReportIssueLink reportType="I-Spy answer" fields={[
         ["Task ID", task.id],
         ["Clue", `${opening} ${content.clue}`],

@@ -88,7 +88,7 @@ def test_profile_api_switching_and_isolation(database):
         assert response.status_code == 201
         french = response.json()
         scenes = client.get("/api/v1/preloaded-scenes").json()
-        assert len(scenes) == 6 and {row["languageCode"] for row in scenes} == {"fr"}
+        assert len(scenes) == 6 and all("languageCode" not in row for row in scenes)
         assert client.get("/api/v1/me/vocabulary").json()["items"] == []
         rows = client.get("/api/v1/me/language-profiles").json()
         assert len(rows) == 2 and sum(row["isActive"] for row in rows) == 1
@@ -107,7 +107,7 @@ def test_profile_api_switching_and_isolation(database):
         assert len(client.get("/api/v1/preloaded-scenes").json()) == 6
         assert client.patch(url, json={"dailyGoalMinutes": 0}).status_code == 422
         assert client.patch(url, json={"isActive": False}).status_code == 200
-        assert client.get("/api/v1/preloaded-scenes").status_code == 409
+        assert client.get("/api/v1/preloaded-scenes").status_code == 200
         assert (
             client.patch(
                 f"/api/v1/me/language-profiles/{french['id']}", json={"isActive": True}

@@ -1,20 +1,42 @@
-import { useEffect, useId, useState } from "react";
+import { InlineLoader } from "../components/LoadingScreen";
+import { useEffect, useId, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card, IconButton } from "../components/ui";
-import { ChevronRightIcon, CloseIcon } from "../components/icons";
+import { ChevronRightIcon, CloseIcon, InstagramIcon, LinkedInIcon, TikTokIcon, XIcon } from "../components/icons";
+import { HelpImproveModal } from "../components/HelpImproveModal";
+import { languages } from "../config/languages";
 import { deleteCurrentAccount } from "../lib/api";
 import { accountTiers } from "../lib/accountTiers";
+import { validatePasswordReset } from "../lib/authMessages.ts";
+import { SOCIAL_LINKS_LIST } from "../config/social";
+import { supabase } from "../lib/supabase.ts";
 import { useAppState } from "../state/useAppState";
 import { useAuth } from "../state/Auth";
+import { MissionBadges } from "../components/MissionBadges";
+import { ChefOfTheDay } from "../components/ChefOfTheDay";
 import { GameResources } from "../components/GameResources";
+
+const socialIcons = {
+  instagram: InstagramIcon,
+  tiktok: TikTokIcon,
+  x: XIcon,
+  linkedin: LinkedInIcon,
+};
 
 export function Profile() {
   const navigate = useNavigate();
-  const { clearDeletedAccountSession, signOut } = useAuth();
+  const { clearDeletedAccountSession, signOut, session } = useAuth();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [deleting, setDeleting] = useState(false);
   const deleteTitleId = useId();
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
+  const [passwordUpdating, setPasswordUpdating] = useState(false);
+  const [surveyOpen, setSurveyOpen] = useState(false);
   const { learner, user, activeProfile, progressLoading, progressError, profileError, profileSaving, setLanguage, saveLanguageProfile, saveUser } = useAppState();
   const tier = accountTiers[user?.tier ?? "beta"];
 
@@ -53,6 +75,46 @@ export function Profile() {
     }
   };
 
+  const handlePasswordUpdate = async (event: FormEvent) => {
+    event.preventDefault();
+    setPasswordError(null);
+    setPasswordSuccess(null);
+
+    const validationError = validatePasswordReset(newPassword, confirmPassword);
+    if (validationError) {
+      setPasswordError(validationError);
+      return;
+    }
+
+    if (!supabase) {
+      setPasswordError("Authentication is not configured.");
+      return;
+    }
+
+    setPasswordUpdating(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        const msg = error.message.toLowerCase();
+        if (msg.includes("same password") || msg.includes("different from old")) {
+          setPasswordError("Please choose a new password that is different from your current one.");
+        } else if (msg.includes("rate limit") || msg.includes("too many")) {
+          setPasswordError("Please wait a moment before trying again.");
+        } else {
+          setPasswordError(error.message || "We couldn't update your password. Please try again.");
+        }
+        return;
+      }
+      setPasswordSuccess("Password updated successfully!");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch {
+      setPasswordError("We couldn't connect right now. Please check your connection and try again.");
+    } finally {
+      setPasswordUpdating(false);
+    }
+  };
+
   return (
     <div className="stack profile-page">
       <div className="profile-page__heading">
@@ -69,7 +131,7 @@ export function Profile() {
           <ChevronRightIcon size={20} />
         </button>
       </section>
-      {progressLoading ? <p role="status">Loading your profile...</p> : null}
+      {progressLoading ? <InlineLoader label="Loading your profile…" /> : null}
       {progressError ? <p role="alert">{progressError} Reload to retry.</p> : null}
       {profileError ? <p role="alert">{profileError}</p> : null}
 
@@ -81,15 +143,18 @@ export function Profile() {
             <strong>{tier.description}</strong>
           </div>
           <p>{(user?.tier ?? "beta") === "beta"
-            ? "Public beta includes a daily Sauce refill. New photo lessons and two-player rooms each use 1 Sauce; resuming does not spend more."
+            ? "Photo lessons and friend challenges are free to start during the beta."
             : tier.allowance}</p>
         </Card>
       </section>
 
-      <section className="profile-section" aria-labelledby="profile-sauce-heading">
-        <h2 id="profile-sauce-heading">Your Sauce and Basil leaves</h2>
+      <section className="profile-section" aria-labelledby="profile-basil-heading">
+        <h2 id="profile-basil-heading">Your Basil Points</h2>
         <GameResources shop />
       </section>
+
+      <MissionBadges />
+      <ChefOfTheDay />
 
       <section className="profile-section">
         <h2>Learning setup</h2>
@@ -100,7 +165,11 @@ export function Profile() {
               <small>The language you are learning</small>
             </span>
             <select disabled={profileSaving} value={learner.languageCode} onChange={event => void setLanguage(event.target.value, learner.dailyMinutes ?? 10)}>
-              <option value="es">🇪🇸 Spanish</option><option value="fr">🇫🇷 French</option>
+              {languages.map(language => (
+                <option key={language.code} value={language.code}>
+                  {language.flag} {language.name}
+                </option>
+              ))}
             </select>
           </label>
 
@@ -123,6 +192,105 @@ export function Profile() {
               <option value="both">Both</option><option value="speech">Speaking</option><option value="text">Typing</option>
             </select>
           </label>
+        </Card>
+      </section>
+
+      <section className="profile-section" aria-labelledby="account-heading">
+        <h2 id="account-heading">Account</h2>
+        <Card plain className="profile-settings-card">
+          <div className="profile-setting">
+            <span>
+              <strong>Email</strong>
+              <small>Your sign-in email address</small>
+            </span>
+            <b style={{ userSelect: "all", overflowWrap: "anywhere", wordBreak: "break-all" }}>
+              {user?.email ?? session?.user?.email ?? "No email linked"}
+            </b>
+          </div>
+
+          {!passwordOpen ? (
+            <button
+              type="button"
+              className="profile-setting profile-support-link"
+              onClick={() => {
+                setPasswordOpen(true);
+                setPasswordError(null);
+                setPasswordSuccess(null);
+              }}
+            >
+              <span>
+                <strong>Reset password</strong>
+                <small>Choose a new password for your account</small>
+              </span>
+              <ChevronRightIcon size={20} />
+            </button>
+          ) : (
+            <form
+              className="profile-password-form stack"
+              onSubmit={event => void handlePasswordUpdate(event)}
+            >
+              <div className="profile-password-form__header">
+                <strong>Change password</strong>
+                <button
+                  type="button"
+                  className="btn btn--quiet"
+                  style={{ padding: 0, height: "auto", minHeight: "unset", fontSize: "0.85rem" }}
+                  onClick={() => {
+                    setPasswordOpen(false);
+                    setPasswordError(null);
+                    setPasswordSuccess(null);
+                    setNewPassword("");
+                    setConfirmPassword("");
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+              <label className="field">
+                <span className="field__label" style={{ fontSize: "0.85rem" }}>New password</span>
+                <input
+                  className="input"
+                  type="password"
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={event => setNewPassword(event.target.value)}
+                  placeholder="At least 6 characters"
+                  minLength={6}
+                  disabled={passwordUpdating}
+                  required
+                />
+              </label>
+              <label className="field">
+                <span className="field__label" style={{ fontSize: "0.85rem" }}>Confirm new password</span>
+                <input
+                  className="input"
+                  type="password"
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={event => setConfirmPassword(event.target.value)}
+                  placeholder="Re-enter new password"
+                  minLength={6}
+                  disabled={passwordUpdating}
+                  required
+                />
+              </label>
+              {passwordError ? (
+                <p role="alert" style={{ color: "var(--danger)", margin: 0, fontSize: "0.85rem" }}>
+                  {passwordError}
+                </p>
+              ) : null}
+              {passwordSuccess ? (
+                <p role="status" style={{ color: "var(--teal-dark)", margin: 0, fontSize: "0.85rem", fontWeight: 700 }}>
+                  {passwordSuccess}
+                </p>
+              ) : null}
+              <div style={{ display: "flex", gap: "var(--space-2)", marginTop: "var(--space-1)" }}>
+                <Button type="submit" disabled={passwordUpdating}>
+                  {passwordUpdating ? "Updating…" : "Save new password"}
+                </Button>
+              </div>
+            </form>
+          )}
         </Card>
       </section>
 
@@ -163,10 +331,47 @@ export function Profile() {
           <button type="button" className="profile-setting profile-support-link" onClick={() => navigate("/contact")}>
             <span>
               <strong>Contact us</strong>
-              <small>Report a problem or tell us what would make Linguini better</small>
+              <small>Report a problem or get support with your account</small>
             </span>
             <ChevronRightIcon size={20} />
           </button>
+          <button type="button" className="profile-setting profile-support-link" onClick={() => setSurveyOpen(true)}>
+            <span>
+              <strong>Help us improve</strong>
+              <small>Share feedback on your learning experience</small>
+            </span>
+            <ChevronRightIcon size={20} />
+          </button>
+        </Card>
+      </section>
+
+      <section className="profile-section" aria-labelledby="social-heading">
+        <h2 id="social-heading">Follow Linguini</h2>
+        <Card plain className="profile-settings-card">
+          <div className="profile-social-grid">
+            {SOCIAL_LINKS_LIST.map(({ platform, label, url, handle }) => {
+              const Icon = socialIcons[platform];
+              return (
+                <a
+                  key={platform}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="profile-social-item"
+                  aria-label={`Follow Linguini on ${label}`}
+                >
+                  <span className="profile-social-icon">
+                    <Icon size={20} />
+                  </span>
+                  <div className="profile-social-info">
+                    <strong>{label}</strong>
+                    <small>{handle}</small>
+                  </div>
+                  <ChevronRightIcon size={18} />
+                </a>
+              );
+            })}
+          </div>
         </Card>
       </section>
 
@@ -202,7 +407,7 @@ export function Profile() {
               <p>This will permanently delete:</p>
               <ul>
                 <li>Your profile and sign-in account</li>
-                <li>Your lessons, vocabulary progress, and XP history</li>
+                <li>Your lessons, vocabulary progress, and Basil history</li>
                 <li>Your journal entries and revisions</li>
                 <li>Your uploaded photos and generated image copies</li>
               </ul>
@@ -218,6 +423,12 @@ export function Profile() {
           </section>
         </div>
       ) : null}
+
+      <HelpImproveModal
+        open={surveyOpen}
+        onClose={() => setSurveyOpen(false)}
+        triggerSource="profile"
+      />
     </div>
   );
 }

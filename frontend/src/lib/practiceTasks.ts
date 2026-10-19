@@ -1,4 +1,5 @@
-import type { SessionTask } from "./api";
+import type { LanguageItem, Scene } from "../data/types";
+import type { GrammarLessonQuestion, SessionTask } from "./api";
 
 export const taskDone = (task: SessionTask) => task.status === "completed" || task.status === "skipped";
 
@@ -9,7 +10,7 @@ export function taskXp(task: SessionTask): { xp: number; bonus: number } | null 
 }
 
 export function xpEarnedText(xp: number | undefined): string | null {
-  return xp && xp > 0 ? `+${xp} XP earned` : null;
+  return xp && xp > 0 ? `+${xp} Basil earned` : null;
 }
 
 /** Keep answer choices stable for a task while varying their position between questions. */
@@ -34,6 +35,15 @@ export function practiceStages(tasks: SessionTask[]) {
     learning: ordered.filter(task => task.kind !== "ispyRound" && task.kind !== "reflection"),
     clues: ordered.filter(task => task.kind === "ispyRound"),
     reflection: ordered.filter(task => task.kind === "reflection"),
+  };
+}
+
+/** Progress for the required learning path. I-Spy and reflection are optional extras. */
+export function learningProgress(tasks: SessionTask[]) {
+  const learning = practiceStages(tasks).learning;
+  return {
+    completed: learning.filter(taskDone).length,
+    total: learning.length,
   };
 }
 
@@ -62,6 +72,49 @@ export function taskDescription(task: SessionTask) {
 export const isMissionSession = (tasks: SessionTask[]) =>
   tasks.some(task => task.publicContent.missionId);
 
-/** A mission session with no I-Spy rounds finishes after its last learning task. */
-export const finishesWithoutISpy = (tasks: SessionTask[]) =>
-  tasks.some(task => task.publicContent.missionId) && !tasks.some(task => task.kind === "ispyRound" || task.kind === "reflection");
+/** Missions finish after learning; I-Spy is a separate, optional game. */
+export const finishesAfterLearning = (tasks: SessionTask[]) => isMissionSession(tasks);
+
+export type LearningStep = { to: "task"; taskId: string } | { to: "tasks" } | { to: "ispy" } | { to: "finish" };
+
+/**
+ * Where Next leads after a learning task. Tasks can be opened in any order, so the
+ * last one only finishes the lesson (or opens I-Spy) once every learning task is done;
+ * otherwise the learner returns to the task list instead of a completion the server rejects.
+ */
+export function nextLearningStep(tasks: SessionTask[], currentId: string, generating: boolean,
+  done: (task: SessionTask) => boolean = taskDone): LearningStep {
+  const learning = practiceStages(tasks).learning;
+  const index = learning.findIndex(task => task.id === currentId);
+  const next = index < 0 ? undefined : learning[index + 1];
+  if (next) return { to: "task", taskId: next.id };
+  if (index < 0 || generating || !learning.every(task => task.id === currentId || done(task))) return { to: "tasks" };
+  return finishesAfterLearning(tasks) ? { to: "finish" } : { to: "ispy" };
+}
+
+/** Saved mission order when the backend persisted it; otherwise a stable per-question shuffle. */
+export function questionOptions(question: Pick<GrammarLessonQuestion, "options" | "keepOptionOrder">, seed: string) {
+  return question.keepOptionOrder ? [...question.options] : choiceOrder(question.options, seed, option => option.optionId);
+}
+
+/** The photo markers a marker question offers, numbered as on the review screen. */
+export function markerChoices(question: Pick<GrammarLessonQuestion, "options" | "markerObjectIds">, scene: Pick<Scene, "items">) {
+  const objects = question.markerObjectIds ?? {};
+  return question.options.flatMap(option => {
+    const item = scene.items.find(candidate => candidate.id === objects[option.optionId]);
+    // The saved label is the object's number on the review screen.
+    return item ? [{ option, item: { ...item, marker: Number(option.label) || item.marker } }] : [];
+  }) satisfies { option: GrammarLessonQuestion["options"][number]; item: LanguageItem }[];
+}
+
+/** How an option reads on screen: marker options name their photo marker. */
+export const optionText = (question: Pick<GrammarLessonQuestion, "markerObjectIds">, label: string) =>
+  question.markerObjectIds ? `Marker ${label}` : label;
+
+/** The learner's sentence from word tiles: punctuation and elided words join their neighbour. */
+export const builtSentence = (tokens: readonly string[]) => tokens.reduce((value, token) => {
+  const joinsPrevious = /^[,.;:!?…]$/.test(token) || value.endsWith("'");
+  return value ? `${value}${joinsPrevious ? "" : " "}${token}` : token;
+}, "");
+
+export const sentenceEnding = (answer: string) => /[.!?]$/.test(answer) ? "" : ".";

@@ -153,16 +153,18 @@ def refund_sauce(connection, user_id: UUID, activity_key: str) -> int:
     return 1
 
 
-def reward_basil(connection, user_id: UUID, source_key: str) -> int:
+def reward_basil(connection, user_id: UUID, source_key: str, *, amount=1, payload=None) -> int:
     _account(connection, user_id)
     key = f"basil:{source_key}"
     if _event(connection, user_id, key):
         return 0
-    _insert_event(connection, user_id, key, "basilEarned", basil=1)
+    if type(amount) is not int or amount < 1:
+        raise ValueError("Basil rewards must be positive integers.")
+    _insert_event(connection, user_id, key, "basilEarned", basil=amount, payload=payload)
     connection.execute(update(game_accounts).where(game_accounts.c.user_id == user_id).values(
-        basil_balance=game_accounts.c.basil_balance + 1,
+        basil_balance=game_accounts.c.basil_balance + amount,
     ))
-    return 1
+    return amount
 
 
 def resource_snapshot(connection, user_id: UUID) -> GameResourcesResponse:

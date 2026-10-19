@@ -239,10 +239,11 @@ See [Supabase public URLs](https://supabase.com/docs/reference/javascript/file-b
 
 `python -m app.scripts.precompute_preloaded_scenes` (run from `backend/`)
 analyses the six bundled scene images once per image with the configured
-scene-analysis provider, translates the detected objects into French and
-Spanish, and stores the assembled suggested words in
-`preloaded_scenes.content.items` so the Scene Analysis review screen opens
-with words already on the photo. `content.tasks/rounds/prompts` stay minimal
+scene-analysis provider and stores the detected objects (English labels,
+markers, attributes) in `preloaded_scenes.content.items`, so the Scene Analysis
+review screen opens with objects already on the photo. Scenes have no language:
+each image has one row, and a learner's session translates the objects into
+their target language (or reuses the catalog word for that label). `content.tasks/rounds/prompts` stay minimal
 placeholders; real lessons and clues come from the templates below.
 
 Each item's `attributes.color` and the scene's `content.relations` are curated from
@@ -252,19 +253,20 @@ replaces them with detected facts; review those before applying.
 
 ```sh
 python -m app.scripts.precompute_preloaded_scenes --dry-run --json out.json
-python -m app.scripts.precompute_preloaded_scenes --slug calle-mayor --language fr
+python -m app.scripts.precompute_preloaded_scenes --slug street --language fr
 python -m app.scripts.precompute_preloaded_scenes --emit-migration migration.sql
 python -m app.scripts.precompute_preloaded_scenes --from-json out.json --emit-migration migration.sql
 ```
 
-`--slug` and `--language` are repeatable and default to all six base scenes
-and both languages (`fr`, `es`). `--dry-run` computes and validates rows
+`--slug` and `--language` are repeatable and default to all six scenes
+(`street`, `cafe`, `market`, `bedroom`, `kitchen`, `park`) and both template
+languages (`fr`, `es`); `--language` only selects which languages get templates. `--dry-run` computes and validates rows
 without writing to the database. `--json` dumps the computed rows and media
 assets for reuse; `--from-json` reloads that file (re-validating every row)
 instead of calling any AI provider, so SQL regeneration or the database write
 never re-bills the model. `--emit-migration` writes an idempotent
-`INSERT ... ON CONFLICT (slug) DO UPDATE` migration; the generated French rows
-reuse the existing `media_assets` rows, so no asset inserts are emitted.
+`INSERT ... ON CONFLICT (slug) DO UPDATE` migration; rows reuse the existing
+`media_assets` rows, so no asset inserts are emitted.
 Environment values are read from `backend/.env.local` (or `--env-file PATH`).
 
 ##### Lesson and clue templates
@@ -472,6 +474,31 @@ Tables use UUID identities and timezone-aware timestamps. Migrations define fore
 keys, checks, update triggers, RLS, and revoked browser-role grants. All access is
 through backend repositories; the frontend must not query these tables directly.
 
+### Uploaded-photo scene facts
+
+`scene-analysis.v5` returns up to 20 clearly visible object instances, ordered with
+the most useful and diverse learning candidates first. Repeated objects keep separate
+boxes and markers but share a model `groupKey` and `suggestedGroupCount`; the mapped
+quantity remains only a suggestion until the learner confirms it in the Counts review.
+The full inventory is stored once in `media_scene_analyses`, keyed by the media asset
+and prompt/schema versions, so another session can reuse the image without another
+vision call. Each session receives its own stable object IDs and snapshots only the
+facts it confirms.
+
+Before review, the backend compares the unconfirmed inventory with the implemented
+missions for the learner's level. `provisionalMissionPlan` is presentation guidance,
+never grading evidence: `suggestedSceneObjectIds` limits the default review to the
+smallest useful mission-focused set. The learner may reveal other inventory objects.
+After review, mission eligibility is run again using only confirmed facts and that
+second result becomes the immutable `missionPlan` consumed by task generation.
+
+The analysis may also return visible action suggestions linked to detected objects and
+clearly displayed price suggestions linked to an item. These remain unconfirmed scene
+metadata: the vision model may describe visible evidence such as holding or a price tag,
+but may not infer ownership, preference, need, routine, intention, availability or a
+real price that is not shown. Mission planning must use action or price information only
+after the learner confirms it or explicitly selects a labelled role-play value.
+
 ### Mission contracts
 
 A mission is the definition of one lesson goal at one practice level. Each mission has
@@ -538,9 +565,11 @@ lesson.
   as before. The introduction carries no mission fields because it teaches the nouns for
   every planned mission; its per-word evidence still follows each word's own result.
 - **Tasks.** Each planned mission adds one `grammarLesson` carrying its own mission fields,
-  in plan order, before the bonus I-Spy rounds. Mission lessons publish no `explanation`,
-  so the task page shows only the questions and, after submitting, the feedback. `app/services/mission_registry.py` maps each
-  mission to its payload builder, generation spec and task builder.
+  in plan order. Mission sessions end on their summary; choosing I-Spy there creates a
+  separate game that reuses the confirmed scene inventory. Mission lessons publish no
+  `explanation`, so the task page shows only the questions and, after submitting, the
+  feedback. `app/services/mission_registry.py` maps each mission to its payload builder,
+  generation spec and task builder.
 
 #### M01 A1 lesson path
 

@@ -200,7 +200,7 @@ def test_resources_are_automatic_without_feature_switch(resources, monkeypatch, 
     response = create_solo(client, profile, asset)
     assert response.status_code == 202, response.text
     sid = response.json()["session"]["id"]
-    assert balance(engine, owner).sauce.remaining == 9
+    assert balance(engine, owner).sauce.remaining == 10
     assert atomic(engine, owner, reward_basil, "submitted-task") == 1
     assert client.post(f"/api/v1/sessions/{sid}/abandon").status_code == 200
     state = client.get("/api/v1/me/game-resources").json()
@@ -210,20 +210,17 @@ def test_resources_are_automatic_without_feature_switch(resources, monkeypatch, 
         events = c.execute(select(game_resource_events.c.kind).where(
             game_resource_events.c.user_id == owner.id,
         )).scalars().all()
-    assert sorted(events) == ["basilEarned", "sauceRefund", "sauceSpend"]
+    assert sorted(events) == ["basilEarned"]
 
 
-def test_beta_uses_sauce_and_empty_start_is_atomic(resources, monkeypatch):
+def test_beta_can_start_when_legacy_energy_is_empty(resources, monkeypatch):
     engine, owner, _, profile, asset, client = resources
     monkeypatch.setenv("DAILY_SAUCE_CAPACITY", "1")
-    with engine.begin() as c:
-        c.execute(update(users).where(users.c.id == owner.id).values(tier="beta"))
     atomic(engine, owner, spend_sauce, "prior")
     response = create_solo(client, profile, asset)
-    assert response.status_code == 409, response.text
-    assert response.json()["detail"]["code"] == "sauce_empty"
-    with engine.connect() as c:
-        assert not c.execute(select(sessions.c.id).where(sessions.c.user_id == owner.id)).first()
+    assert response.status_code == 202, response.text
+    assert balance(engine, owner).sauce.remaining == 0
+    assert response.json()["session"]["id"]
 
 
 def test_solo_resume_and_replayed_abandon_do_not_repeat_charge_or_refund(resources):
@@ -233,13 +230,13 @@ def test_solo_resume_and_replayed_abandon_do_not_repeat_charge_or_refund(resourc
     sid = first.json()["session"]["id"]
     assert create_solo(client, profile, asset).json()["session"]["id"] == sid
     assert create_solo(client, profile, asset, "different-key").json()["session"]["id"] == sid
-    assert balance(engine, owner).sauce.remaining == 9
+    assert balance(engine, owner).sauce.remaining == 10
     assert client.post(f"/api/v1/sessions/{sid}/abandon").status_code == 200
     assert client.post(f"/api/v1/sessions/{sid}/abandon").status_code == 200
     assert balance(engine, owner).sauce.remaining == 10
 
 
-def test_crashed_analysis_refunds_before_retry_charges_once(resources):
+def test_crashed_analysis_retry_does_not_charge_legacy_energy(resources):
     engine, owner, _, profile, asset, client = resources
     response = create_solo(client, profile, asset)
     sid = UUID(response.json()["session"]["id"])
@@ -256,15 +253,14 @@ def test_crashed_analysis_refunds_before_retry_charges_once(resources):
     for _ in range(2):
         retry = client.post(f"/api/v1/sessions/{sid}/retry-analysis")
         assert retry.status_code == 200, retry.text
-    assert balance(engine, owner).sauce.remaining == 9
+    assert balance(engine, owner).sauce.remaining == 10
     assert client.post(f"/api/v1/sessions/{sid}/abandon").status_code == 200
     assert balance(engine, owner).sauce.remaining == 10
 
 
 def test_basil_only_rewards_submitted_practice_not_skip_or_reading(resources):
     engine, owner, _, profile, _, client = resources
-    scene = next(s for s in client.get("/api/v1/preloaded-scenes").json()
-                 if s["languageCode"] == "es")
+    scene = client.get("/api/v1/preloaded-scenes").json()[0]
     response = create_solo(client, profile, SimpleNamespace(id=scene["mediaAsset"]["id"]))
     sid = response.json()["session"]["id"]
     assert client.post(f"/api/v1/sessions/{sid}/analyze").status_code == 200
@@ -280,14 +276,14 @@ def test_basil_only_rewards_submitted_practice_not_skip_or_reading(resources):
     for _ in range(2):
         answer = client.post(f"/api/v1/tasks/{intro['id']}/attempts", json=payload)
         assert answer.status_code == 200, answer.text
-    assert balance(engine, owner).basil_leaves == 1
+    assert balance(engine, owner).basil_leaves == 10
     for task in detail["tasks"][1:]:
         if task["kind"] in {"grammarExplanation", "syntaxExplanation"}:
             action = client.post(f"/api/v1/tasks/{task['id']}/complete")
         else:
             action = client.post(f"/api/v1/tasks/{task['id']}/skip", json={"reason": "later"})
         assert action.status_code == 200, action.text
-    assert balance(engine, owner).basil_leaves == 1
+    assert balance(engine, owner).basil_leaves == 10
 
 
 def test_resources_api_rejects_invalid_appearance_and_insufficient_funds(resources):
@@ -321,14 +317,14 @@ def test_rooms_require_private_storage_without_feature_switch(
     assert response.status_code == status, response.text
 
 
-def test_new_solo_request_is_charged_in_the_same_transaction(resources):
+def test_new_solo_request_and_resume_leave_legacy_energy_unchanged(resources):
     engine, owner, _, profile, asset, _ = resources
     repository = PostgresWorkflowRepository(engine, owner.id)
     request = CreateSessionRequest(language_profile_id=profile.id, media_asset_id=asset.id)
     detail = repository.create(request)
-    assert balance(engine, owner).sauce.remaining == 9
+    assert balance(engine, owner).sauce.remaining == 10
     assert repository.create(request).session.id == detail.session.id
-    assert balance(engine, owner).sauce.remaining == 9
+    assert balance(engine, owner).sauce.remaining == 10
 
 
 @pytest.mark.parametrize("configured,expected", [(None, 10), ("1", 1), ("100", 100)])
