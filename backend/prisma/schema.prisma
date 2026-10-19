@@ -8,6 +8,7 @@ model User {
   id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   authProviderId      String   @unique @map("auth_provider_id") @db.Text
   displayName         String   @map("display_name") @db.VarChar(100)
+  avatar              String   @default("farfalle") @db.VarChar(20)
   email               String?  @db.VarChar(320)
   timezone            String   @default("UTC") @db.Text
   learningGoal        String   @default("") @map("learning_goal") @db.VarChar(300)

@@ -1,3 +1,7 @@
+import type { PastaAvatar } from "../data/types";
+
+export const PASTA_AVATARS = ["farfalle", "fusilli", "penne", "macaroni"] as const;
+
 export type OnboardingDraft = {
   name: string;
   languageCode: string;
@@ -5,7 +9,7 @@ export type OnboardingDraft = {
   minutes: number;
   microphoneEnabled: boolean;
   cameraEnabled: boolean;
-  avatar: string;
+  avatar: PastaAvatar;
   proficiencyLevel?: "A0" | "A1" | "A2";
 };
 
@@ -36,7 +40,13 @@ function parseDraft(value: string | null): OnboardingDraft | null {
   const parsed = JSON.parse(value) as Partial<OnboardingDraft>;
   if (typeof parsed.name !== "string" || typeof parsed.languageCode !== "string" || typeof parsed.goal !== "string" || typeof parsed.minutes !== "number") return null;
   const proficiencyLevel = ["A0", "A1", "A2"].includes(parsed.proficiencyLevel ?? "") ? parsed.proficiencyLevel as "A0" | "A1" | "A2" : undefined;
-  return { name: parsed.name, languageCode: parsed.languageCode, goal: parsed.goal, minutes: parsed.minutes, microphoneEnabled: Boolean(parsed.microphoneEnabled), cameraEnabled: Boolean(parsed.cameraEnabled), avatar: typeof parsed.avatar === "string" ? parsed.avatar : "farfalle", proficiencyLevel };
+  const avatar = PASTA_AVATARS.includes(parsed.avatar as PastaAvatar) ? parsed.avatar as PastaAvatar : "farfalle";
+  return { name: parsed.name, languageCode: parsed.languageCode, goal: parsed.goal, minutes: parsed.minutes, microphoneEnabled: Boolean(parsed.microphoneEnabled), cameraEnabled: Boolean(parsed.cameraEnabled), avatar, proficiencyLevel };
+}
+
+export function savedPastaAvatar(): PastaAvatar | null {
+  const avatar = localStorage.getItem("linguini-avatar");
+  return PASTA_AVATARS.includes(avatar as PastaAvatar) ? avatar as PastaAvatar : null;
 }
 
 export function readOnboardingProgress(userId: string): OnboardingProgress | null {

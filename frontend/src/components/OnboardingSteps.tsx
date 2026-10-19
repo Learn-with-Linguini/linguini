@@ -3,14 +3,14 @@ import { useEffect, useState } from "react";
 import { Button, Card, IconButton, ProgressTrail, TopBar } from "./ui";
 import { CameraIcon, CheckIcon, EyeIcon, EyeOffIcon } from "./icons";
 import { languages } from "../config/languages";
-import { clearOnboardingProgress, joinGoals, parseGoals, readOnboardingProgress, saveOnboardingProgress, type OnboardingDraft, type OnboardingStage } from "../lib/onboardingDraft";
+import { clearOnboardingProgress, joinGoals, parseGoals, readOnboardingProgress, saveOnboardingProgress, PASTA_AVATARS, type OnboardingDraft, type OnboardingStage } from "../lib/onboardingDraft";
 import { checkPlacementAnswer, getPlacementTest, submitPlacement, type PlacementTest } from "../lib/api";
 import { nextPlacementDifficulty } from "../lib/placementPath";
 import { trackAction } from "../lib/analytics.ts";
 
 const goals = ["Chat with neighbours", "Travel confidently", "Order food and drinks", "Understand my family"];
 const minutesOptions = [5, 10, 20, 30];
-const avatars = ["farfalle", "fusilli", "penne", "macaroni"] as const;
+const avatars = PASTA_AVATARS;
 type Stage = OnboardingStage | "placement" | "success";
 
 function OnboardingSuccess({ onFinish }: { onFinish: () => void }) {

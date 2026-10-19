@@ -80,10 +80,13 @@ export type JournalEntry = {
   wordsUsed: string[];
 };
 
+export type PastaAvatar = "farfalle" | "fusilli" | "penne" | "macaroni";
+
 export type LeaderboardRow = {
   rank: number;
   name: string;
   xp: number;
+  avatar: PastaAvatar;
   isYou?: boolean;
 };
 

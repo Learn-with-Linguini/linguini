@@ -132,6 +132,7 @@ class SessionBackedLearningRepository:
                 select(
                     users.c.id.label("user_id"),
                     users.c.display_name.label("name"),
+                    users.c.avatar,
                     func.coalesce(func.sum(xp_events.c.amount), 0).label("xp"),
                 )
                 .select_from(
@@ -144,7 +145,7 @@ class SessionBackedLearningRepository:
                         ),
                     )
                 )
-                .group_by(users.c.id, users.c.display_name)
+                .group_by(users.c.id, users.c.display_name, users.c.avatar)
                 .having(
                     or_(
                         func.coalesce(func.sum(xp_events.c.amount), 0) > 0,
@@ -178,6 +179,7 @@ class SessionBackedLearningRepository:
                     rank=row["rank"],
                     name=row["name"],
                     xp=row["xp"],
+                    avatar=row["avatar"],
                     is_you=row["user_id"] == user_id,
                 )
                 for row in leaderboard_rows

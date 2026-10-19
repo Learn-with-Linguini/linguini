@@ -8,6 +8,7 @@ from pydantic import AwareDatetime, Field, model_validator
 
 from app.schemas.base import ApiModel, EntityModel
 from app.schemas.enums import XpEventType
+from app.schemas.users import PastaAvatar
 
 
 class ScenarioProgress(ApiModel):
@@ -31,6 +32,7 @@ class LeaderboardRow(ApiModel):
     rank: Annotated[int, Field(ge=1)]
     name: str
     xp: Annotated[int, Field(ge=0)]
+    avatar: PastaAvatar = "farfalle"
     is_you: bool = False
 
 

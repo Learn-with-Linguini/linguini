@@ -6,6 +6,7 @@ from typing import Annotated
 from pydantic import AwareDatetime, Field
 
 from app.schemas.base import ApiModel
+from app.schemas.users import PastaAvatar
 
 
 class ChefLeaderboardPreference(ApiModel):
@@ -16,6 +17,7 @@ class ChefLeaderboardEntry(ApiModel):
     rank: Annotated[int, Field(ge=1)]
     display_name: str
     basil: Annotated[int, Field(ge=1)]
+    avatar: PastaAvatar = "farfalle"
 
 
 class ChefLeaderboardResponse(ApiModel):

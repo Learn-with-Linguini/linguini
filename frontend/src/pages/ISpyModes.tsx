@@ -3,6 +3,7 @@ import { Button, Card } from "../components/ui";
 import { BasilIcon, TrophyIcon } from "../components/icons";
 import { InlineLoader } from "../components/LoadingScreen";
 import { useAppState } from "../state/useAppState";
+import "../components/leaderboard.css";
 
 export function ISpyModes() {
   const navigate = useNavigate();
@@ -29,8 +30,8 @@ export function ISpyModes() {
           <p>{!player ? "Earn Basil from learning activities to enter the rankings." : player.rank === 1 ? "You’re leading this week!" :
             `${basilToLeader} Basil behind ${leader?.name ?? "the leader"}.`}</p>
         </section>
-        <ol className="ispy-chefs__list">{chefs.map(chef => <li key={`${chef.rank}-${chef.name}`} className={chef.isYou ? "is-you" : ""}>
-          <span className="ispy-chefs__rank">{chef.rank}</span><strong>{chef.isYou ? `${chef.name} (you)` : chef.name}</strong>
+        <ol className="ispy-chefs__list">{chefs.map(chef => <li key={`${chef.rank}-${chef.name}`} className={`ispy-chefs__entry${chef.isYou ? " is-you" : ""}`}>
+          <span className="ispy-chefs__rank">{chef.rank}</span><img className="leaderboard-avatar" src={`/pasta-assets/${chef.avatar}.png`} alt="" /><strong>{chef.isYou ? `${chef.name} (you)` : chef.name}</strong>
           <span className="ispy-chefs__basil"><BasilIcon size={17} />{chef.xp} Basil</span>
         </li>)}</ol></> : <p className="muted">Earn Basil this week to join the leaderboard.</p>}
     </Card>

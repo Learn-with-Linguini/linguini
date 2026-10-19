@@ -144,7 +144,11 @@ def test_progress_returns_a_current_local_streak(database):
 def test_progress_returns_weekly_basil_leaderboard_and_current_player(database):
     engine, owner, profile, client = database
     competitors = [
-        User(display_name=f"Chef {index}", auth_provider_id=f"chef-{uuid4()}")
+        User(
+            display_name=f"Chef {index}",
+            auth_provider_id=f"chef-{uuid4()}",
+            avatar="penne" if index == 0 else "farfalle",
+        )
         for index in range(6)
     ]
     try:
@@ -190,6 +194,8 @@ def test_progress_returns_weekly_basil_leaderboard_and_current_player(database):
         assert current_player["name"] == owner.display_name
         assert current_player["xp"] == 10
         assert current_player["isYou"] is True
+        assert board[0]["avatar"] == "penne"
+        assert current_player["avatar"] == "farfalle"
         assert data["xp"] == 30  # Lifetime Basil remains separate from the weekly board.
     finally:
         competitor_ids = [chef.id for chef in competitors]
