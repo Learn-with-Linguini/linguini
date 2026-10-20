@@ -379,19 +379,20 @@ function MissionGapIcon({ kind }: { kind: NonNullable<GrammarLessonQuestion["opt
   return <span className="mission-gap__icon" aria-label={label}>{icon}</span>;
 }
 
-function LessonAudioPrompt({ question, languageCode, revealed, graded, onReveal, showAudioText = false }: {
+function LessonAudioPrompt({ question, languageCode, revealed, graded, onReveal, showAudioText = false, inlineAudio = false }: {
   question: GrammarLessonQuestion;
   languageCode: string;
   revealed: boolean;
   graded: boolean;
   onReveal: () => void;
   showAudioText?: boolean;
+  inlineAudio?: boolean;
 }) {
   const audio = speechAvailable();
   const written = writtenPromptShown(question, { revealed, graded, audio });
   if (!question.audioText) return null;
   return <>
-    {audio ? <div className="lesson-audio">
+    {audio && (!inlineAudio || (question.listenFirst && !written)) ? <div className="lesson-audio">
       <IconButton label={question.listenFirst ? "Play the word" : `Hear ${question.audioText}`}
         onClick={() => speak(question.audioText ?? "", languageCode)}><SpeakerIcon /></IconButton>
       {question.listenFirst && !written
@@ -1009,13 +1010,6 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} /><QuestionBasil amount={activeQuestion ? questionBasil[activeQuestion.questionId] : undefined} /></div>
     <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><ExitToHome onExit={onExit} /></div>
-    {activeIndex === 0 && content.prep?.length ? <Card plain><div className="stack-2 lesson-prep" aria-label="Learn first">
-      <span className="label muted">Learn first</span>
-      {content.prep.map(card => <div key={card.text} className="lesson-prep__card">
-        <div><strong lang={scene.languageCode}>{card.text}</strong>{card.translation ? <span className="muted small"> — {card.translation}</span> : null}</div>
-        {audio ? <IconButton label={`Hear ${card.text}`} onClick={() => speak(card.text, scene.languageCode)}><SpeakerIcon /></IconButton> : null}
-      </div>)}
-    </div></Card> : null}
     {savedChecks.isLoading ? <InlineLoader compact label="Restoring your place…" /> : null}
     {savedChecks.isError ? <p role="alert">We couldn't restore your saved answers. Try refreshing this page.</p> : null}
     {content.questions.map((question, position) => {
@@ -1040,7 +1034,8 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
       <LessonAudioPrompt question={question} languageCode={scene.languageCode}
         revealed={Boolean(revealed[question.questionId])}
         graded={results[question.questionId] !== undefined}
-        onReveal={() => setRevealed(value => ({ ...value, [question.questionId]: true }))} />
+        onReveal={() => setRevealed(value => ({ ...value, [question.questionId]: true }))}
+        inlineAudio={Boolean(question.promptTranslation)} />
       {question.displayCount ? <CountBoard count={question.displayCount} sceneImageUrl={sceneImageUrl}
         imageSize={boardImageSize} onImageSize={setBoardImageSize}
         boardObject={session?.sceneObjects.find(object => object.id === question.boardObjectId)} /> : null}
@@ -1056,7 +1051,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
       </div> : null}
       {question.interactionType === "sentenceBuilding" ? <>
         {question.promptTranslation
-          ? <PromptTranslation source={question.prompt} text={question.promptTranslation} lang={scene.languageCode} />
+          ? <PromptTranslation source={question.prompt} text={question.promptTranslation} lang={scene.languageCode} audioText={question.audioText ?? question.prompt} />
           : question.translation ? <h2>{question.translation}</h2> : null}
         <div className="sentence-builder__answer" aria-label="Your sentence">
           {restored?.answers?.[question.questionId] ? <span>{restored.answers[question.questionId]}</span> : (builtTokenIndexes[question.questionId] ?? []).length ? (builtTokenIndexes[question.questionId] ?? []).map((tokenIndex, tokenPosition) => <button key={`${tokenIndex}-${tokenPosition}`} className="sentence-builder__token" disabled={terminal || practiceSaving}
@@ -1072,7 +1067,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         {writtenPromptShown(question, { revealed: Boolean(revealed[question.questionId]), graded: results[question.questionId] !== undefined, audio })
           ? question.promptTranslation
             ? <PromptTranslation source={content.focus === "sceneDescription" ? question.translation || "Choose the sentence that describes the scene." : question.prompt}
-              text={question.promptTranslation} lang={question.audioText ? scene.languageCode : undefined} />
+              text={question.promptTranslation} lang={question.audioText ? scene.languageCode : undefined} audioText={question.audioText ?? question.prompt} />
             : <h2 lang={question.audioText ? scene.languageCode : undefined}>{content.focus === "sceneDescription" ? question.translation || "Choose the sentence that describes the scene." : question.prompt}</h2>
           : <h2 className="muted">Listen to the word.</h2>}
         {question.boardCounts ? <PracticeBoards question={question} sceneImageUrl={sceneImageUrl}
@@ -1269,15 +1264,17 @@ function roleplayScenario(text: string) {
   return direct ? direct.charAt(0).toUpperCase() + direct.slice(1) : text;
 }
 
-function PromptTranslation({ text, source, lang }: { text?: string | null; source?: ReactNode; lang?: string }) {
+function PromptTranslation({ text, source, lang, audioText }: { text?: string | null; source?: ReactNode; lang?: string; audioText?: string }) {
   const [shown, setShown] = useState(false);
   if (!text) return null;
   const toggle = <IconButton className="prompt-translation__toggle" label={shown ? "Hide translation" : "Show translation"}
       aria-expanded={shown} onClick={() => setShown(value => !value)}>
       {shown ? <EyeIcon size={20} /> : <EyeOffIcon size={20} />}
     </IconButton>;
+  const audio = audioText && lang && speechAvailable() ? <IconButton className="prompt-translation__toggle" label={`Hear ${audioText}`}
+    onClick={() => speak(audioText, lang)}><SpeakerIcon size={20} /></IconButton> : null;
   if (source) return <span className="prompt-translation prompt-translation--with-source">
-    <span className="prompt-translation__source"><h2 lang={lang}>{source}</h2>{toggle}</span>
+    <span className="prompt-translation__source"><h2 lang={lang}>{source}</h2>{audio}{toggle}</span>
     {shown ? <span className="small muted">{text}</span> : null}
   </span>;
   return <span className="prompt-translation">
