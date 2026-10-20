@@ -18,7 +18,7 @@ export function ChefOfTheDay() {
     refetchOnWindowFocus: () => !pending.current, refetchOnReconnect: () => !pending.current });
   const data = query.data;
   return <section className="stack" aria-labelledby="chef-day-title">
-    <div className="ispy-chefs__heading"><div><span>Today’s Basil leaderboard</span><h2 id="chef-day-title">Chefs of the Day</h2></div><TrophyIcon size={30} /></div>
+    <div className="ispy-chefs__heading"><div><h2 id="chef-day-title">Chefs of the Day</h2></div><BasilIcon size={30} /></div>
     {query.isPending ? <InlineLoader label="Loading today’s chefs…" /> : !data ? <div><p role="alert">We couldn’t load today’s leaderboard.</p>
       <Button variant="quiet" onClick={() => { trackAction("chef_of_the_day_retry_clicked"); void query.refetch(); }}>Retry leaderboard</Button></div> : <>
       <section className="ispy-chefs__comparison" aria-label="Your leaderboard position">
@@ -31,5 +31,6 @@ export function ChefOfTheDay() {
         <span className="ispy-chefs__basil"><BasilIcon size={17} />{entry.basil} Basil</span></li>)}</ol> : <p className="muted">A fresh day in the kitchen. There’s room for everyone.</p>}
       <p className="small muted">Today ends {new Date(data.dayEndsAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}. Your total Basil stays with you.</p>
     </>}
+    
   </section>;
 }

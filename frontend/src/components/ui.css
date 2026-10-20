@@ -1848,7 +1848,13 @@ p[role="alert"]::before { content: "!"; }
   gap: var(--space-3);
   padding: var(--space-4);
   border-radius: var(--radius-sm);
-  background: var(--sage);
+  background: var(--cream);
+}
+
+.analysis-object-counts-title {
+  color: var(--teal-dark);
+  font-size: var(--text-small);
+  font-weight: 800;
 }
 
 .analysis-object-counts h3,
