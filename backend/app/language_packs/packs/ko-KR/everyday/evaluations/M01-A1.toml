@@ -1,0 +1,108 @@
+mission_id = "M01"
+practice_level = "A1"
+content_version = 1
+
+[[cases]]
+case_id = "a1-phone-red"
+category = "wrongAttribute"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:phone", concept = "phone" }], attributes = [{ fact_id = "attribute:phone-red", object = "object:phone", kind = "color", value = "red" }] }
+bindings = { object = "object:phone", attribute = "attribute:phone-red" }
+truth = true
+labels = []
+input = "Describe the highlighted phone as red."
+expected_meaning = "This is a red phone."
+acceptable = ["빨간 휴대폰이에요.", "휴대폰은 빨간색이에요."]
+reject = [{ sentence = "파란 휴대폰이에요.", category = "wrongAttribute", reason = "The confirmed colour is red." }]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a1-door-red-form"
+category = "verbChoice"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:door", concept = "door" }], attributes = [{ fact_id = "attribute:door-red", object = "object:door", kind = "color", value = "red" }] }
+bindings = { object = "object:door", attribute = "attribute:door-red" }
+truth = true
+labels = []
+input = "Describe one red door."
+expected_meaning = "This is a red door."
+acceptable = ["빨간 문이에요."]
+reject = [{ sentence = "문은 빨간이에요.", category = "verbChoice", reason = "Use the appropriate noun phrase, number or predicate form." }]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a1-spoon-yellow-order"
+category = "wordOrder"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:spoon", concept = "spoon" }], attributes = [{ fact_id = "attribute:spoon-yellow", object = "object:spoon", kind = "color", value = "yellow" }] }
+bindings = { object = "object:spoon", attribute = "attribute:spoon-yellow" }
+truth = true
+labels = []
+input = "Describe a yellow spoon in the neutral taught frame."
+expected_meaning = "This is a yellow spoon."
+acceptable = ["노란 숟가락이에요."]
+reject = [{ sentence = "이에요 노란 숟가락.", category = "wordOrder", reason = "Use the language-specific neutral modifier and predicate order." }]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a1-door-blue-option"
+category = "wrongAttribute"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:door", concept = "door" }], attributes = [{ fact_id = "attribute:door-blue", object = "object:door", kind = "color", value = "blue" }] }
+bindings = { object = "object:door", attribute = "attribute:door-blue" }
+truth = true
+labels = []
+input = "Answer with the colour of the highlighted blue door."
+expected_meaning = "blue (the colour of the door)"
+acceptable = ["파란색"]
+reject = [{ sentence = "빨간색", category = "wrongAttribute", reason = "This is a blue door, not red." }]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a1-key-positive-question"
+category = "valid"
+construction_id = "yes-no-identification"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:key", concept = "key" }] }
+bindings = { object = "object:key", shown = "object:key" }
+truth = true
+labels = []
+input = "Ask whether the highlighted key is a key."
+expected_meaning = "Is this a key?"
+acceptable = ["열쇠예요?"]
+reject = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a1-phone-yes"
+category = "meaning"
+construction_id = "yes-no-identification"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:phone", concept = "phone" }] }
+bindings = { object = "object:phone", shown = "object:phone" }
+truth = true
+labels = ["yes"]
+input = "The question asks whether the shown phone is a phone. Answer yes and name it."
+expected_meaning = "Yes, it is a phone."
+acceptable = ["네, 휴대폰이에요."]
+reject = [{ sentence = "아니요, 휴대폰이에요.", category = "meaning", reason = "The positive identity proposition is true." }]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a1-spoon-no"
+category = "wrongObject"
+construction_id = "yes-no-identification"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:spoon", concept = "spoon" }, { fact_id = "object:fork", concept = "fork" }] }
+bindings = { object = "object:fork", shown = "object:spoon" }
+truth = false
+labels = ["no"]
+input = "A spoon is shown; the positive question proposes a fork. Answer no and name the spoon."
+expected_meaning = "No, it is a spoon."
+acceptable = ["아니요, 숟가락이에요."]
+reject = [{ sentence = "아니요, 포크예요.", category = "wrongObject", reason = "After the negative label, name the shown spoon, not the proposed fork." }]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }

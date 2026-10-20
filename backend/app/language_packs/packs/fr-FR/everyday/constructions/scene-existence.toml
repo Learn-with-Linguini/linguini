@@ -1,0 +1,9 @@
+construction_id = "scene-existence"
+version = 1
+summary = "Say that a bound object is present or explicitly absent."
+guidance = "Introduce a visible item with Il y a + un/une + noun, optionally with its bound colour. Use Il y a aussi… only to add another already selected fact. For explicit absence use Il n'y a pas de… or d'… before a vowel; do not mechanically retain the positive indefinite article. Do not infer absence merely because detection omitted an item. An explicitly absent fact is permitted only in the designated negative/counterfactual material."
+features = ["existential-il-y-a", "negative-de", "elision"]
+constraints = ["Express only the selected scene facts and preserve semantic role bindings.", "Use the declared variety/register and approved surfaces.", "Treat these rules as generation guidance; they do not constitute a grammar validator."]
+required_labels = ["touch-object"]
+roles = { object = "noun", attribute = "adjective" }
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }

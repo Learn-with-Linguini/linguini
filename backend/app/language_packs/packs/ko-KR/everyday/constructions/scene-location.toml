@@ -1,0 +1,10 @@
+construction_id = "scene-location"
+version = 2
+summary = "Locate a subject with a reference noun and a postpositional phrase."
+guidance = "Use subject 이/가 + reference noun + spatial noun + 에 + 있어요, for example 컵이 탁자 위에 있어요. Use 아래에 for under and 옆에 for next_to in this pack. These are location phrases, not Spanish-style prepositions inserted before the reference. Keep 위에/아래에/옆에 intact and retain the correct subject/reference roles. 위에 can cover different vertical relations; do not merge on and above scene facts just because a form overlaps. Ask a location question with 어디에 있어요?"
+features = ["subject-particle", "locative-e", "postpositional-location"]
+constraints = ["Express only the selected scene facts and preserve semantic role bindings.", "Use the declared variety/register and approved surfaces.", "Treat these rules as generation guidance; they do not constitute a grammar validator."]
+required_labels = ["build-second-fact"]
+# Role categories match the shared semantic-slot contract; native word order is in guidance.
+roles = { subject = "noun", reference = "noun", relation = "preposition" }
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }

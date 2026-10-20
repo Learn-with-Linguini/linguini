@@ -1,0 +1,108 @@
+mission_id = "M01"
+practice_level = "A0"
+content_version = 1
+
+[[cases]]
+case_id = "a0-fork-identification"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:fork", concept = "fork" }] }
+bindings = { object = "object:fork" }
+truth = true
+labels = []
+input = "Identify the highlighted fork."
+expected_meaning = "This is a fork."
+acceptable = ["Das ist eine Gabel."]
+reject = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a0-spoon-not-fork"
+category = "wrongObject"
+construction_id = "identify-object"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:spoon", concept = "spoon" }, { fact_id = "object:fork", concept = "fork" }] }
+bindings = { object = "object:spoon" }
+truth = true
+labels = []
+input = "Identify the highlighted spoon."
+expected_meaning = "This is a spoon."
+acceptable = ["Das ist ein Löffel."]
+reject = [{ sentence = "Das ist eine Gabel.", category = "wrongObject", reason = "The highlighted object is the spoon." }]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a0-door-form"
+category = "agreement"
+construction_id = "identify-object"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:door", concept = "door" }] }
+bindings = { object = "object:door" }
+truth = true
+labels = []
+input = "Identify one highlighted door."
+expected_meaning = "This is a door."
+acceptable = ["Das ist eine Tür."]
+reject = [{ sentence = "Das ist ein Tür.", category = "agreement", reason = "Use the construction-specific determiner, number or copular form." }]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a0-window-question"
+category = "meaning"
+construction_id = "yes-no-identification"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:window", concept = "window" }] }
+bindings = { object = "object:window", shown = "object:window" }
+truth = true
+labels = []
+input = "Ask whether this object is a window."
+expected_meaning = "Is this a window?"
+acceptable = ["Ist das ein Fenster?"]
+reject = [{ sentence = "Das ist ein Fenster.", category = "meaning", reason = "A statement does not fulfil this question prompt." }]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a0-phone-language"
+category = "languageLeakage"
+construction_id = "identify-object"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:phone", concept = "phone" }] }
+bindings = { object = "object:phone" }
+truth = true
+labels = []
+input = "Identify the highlighted phone in the target language."
+expected_meaning = "This is a phone."
+acceptable = ["Das ist ein Handy."]
+reject = [{ sentence = "This is a phone.", category = "languageLeakage", reason = "The answer is English rather than the target language." }]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a0-key-order"
+category = "wordOrder"
+construction_id = "identify-object"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:key", concept = "key" }] }
+bindings = { object = "object:key" }
+truth = true
+labels = []
+input = "Identify the highlighted key in the neutral taught frame."
+expected_meaning = "This is a key."
+acceptable = ["Das ist ein Schlüssel."]
+reject = [{ sentence = "Ein Schlüssel das ist.", category = "wordOrder", reason = "Outside the neutral taught identification order; marked discourse alternatives require separate review." }]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a0-window-name"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:window", concept = "window" }] }
+bindings = { object = "object:window" }
+truth = true
+labels = []
+input = "Give the vocabulary name for the window."
+expected_meaning = "the window (vocabulary label)"
+acceptable = ["das Fenster"]
+reject = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }

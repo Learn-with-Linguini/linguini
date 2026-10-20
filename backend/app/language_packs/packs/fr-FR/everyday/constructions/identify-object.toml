@@ -1,0 +1,10 @@
+construction_id = "identify-object"
+templates = { identify = "C'est {nounPhrase}.", question = "C'est {nounPhrase} ?", find = "Trouve : {name}.", slot = "___ {noun}" }
+version = 2
+summary = "Identify an object or name it with its lexical article."
+guidance = "Use the noun’s approved gender: la tasse/un livre are learned lexical facts, not guesses from spelling. A0 matchName uses a short definite noun chunk; buildIdentify uses C'est + un/une + noun. Elide le/la before a vowel or mute h where appropriate, for example l'assiette and l'horloge. Keep C'est together as a word tile. The everyday question C'est une tasse ? is acceptable; a full Est-ce que c'est… question is another form. Do not add a colour or relation to a naming task."
+features = ["grammatical-gender", "article-agreement", "elision", "nominal-identification"]
+constraints = ["Express only the selected scene facts and preserve semantic role bindings.", "Use the declared variety/register and approved surfaces.", "Treat these rules as generation guidance; they do not constitute a grammar validator."]
+required_labels = ["what-is-this"]
+roles = { object = "noun" }
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }

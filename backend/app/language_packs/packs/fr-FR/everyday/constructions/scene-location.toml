@@ -1,0 +1,9 @@
+construction_id = "scene-location"
+version = 1
+summary = "Locate a known object relative to another."
+guidance = "Use the bound subject + est + a location phrase: La tasse est sur la table; la chaussure est sous la chaise. Use à côté de for the next_to relation and contract de + le to du; retain de la, de l' as appropriate. Each article refers to its own noun. Do not infer left/right or physical posture. On/above and under/below are not automatically interchangeable facts. A location question can use Où est… ? without asserting an extra relation."
+features = ["location-etre", "preposition", "article-contraction"]
+constraints = ["Express only the selected scene facts and preserve semantic role bindings.", "Use the declared variety/register and approved surfaces.", "Treat these rules as generation guidance; they do not constitute a grammar validator."]
+required_labels = ["build-second-fact"]
+roles = { subject = "noun", reference = "noun", relation = "preposition" }
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }

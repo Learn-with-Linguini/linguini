@@ -1,0 +1,111 @@
+[[labels]]
+semantic = "yes"
+text = "Oui"
+meaning = "yes"
+usage = "sentence"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "no"
+text = "Non"
+meaning = "no"
+usage = "sentence"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "yes-answer"
+text = "Oui."
+meaning = "Yes."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "no-answer"
+text = "Non."
+meaning = "No."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "what-is-this"
+text = "Qu'est-ce que c'est ?"
+meaning = "What is this?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "attribute-prompt-colour"
+text = "De quelle couleur est cet objet ?"
+meaning = "What colour is this object?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "describe-object"
+text = "Décris cet objet."
+meaning = "Describe this object."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "touch-object"
+text = "Appuie sur l’objet qui correspond à cette phrase : « {f['first']} »."
+meaning = "Tap the object matching this sentence: {f['first']}."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "build-second-fact"
+text = "Construis la deuxième phrase."
+meaning = "Build the second sentence."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "choose-description"
+text = "Quelle description correspond à la photo ?"
+meaning = "Which description matches the photo?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "describe-scene"
+text = "Décris la scène avec ces phrases."
+meaning = "Describe the scene with these sentences."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "connector-distractor"
+text = "mais"
+meaning = "but"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "attribute-prompt"
+text = "Comment est cet objet ?"
+meaning = "What is this object like?"
+usage = "prompt"
+provenance = { source = "Generated shared-M01 compatibility addition; requires fluent review.", review_status = "generated" }
+
+[[labels]]
+semantic = "attribute-prompt-material"
+text = "En quelle matière est cet objet ?"
+meaning = "What material is this object made of?"
+usage = "prompt"
+provenance = { source = "Generated shared-M01 compatibility addition; requires fluent review.", review_status = "generated" }
+
+[[labels]]
+semantic = "vocabulary-unsure"
+text = "Je ne sais pas"
+meaning = "I don't know"
+usage = "prompt"
+provenance = { source = "Generated shared-M01 compatibility addition; requires fluent review.", review_status = "generated" }
+
+[[labels]]
+semantic = "vocabulary-other"
+text = "Je ne suis pas sûr"
+meaning = "I'm not sure"
+usage = "prompt"
+provenance = { source = "Generated shared-M01 compatibility addition; requires fluent review.", review_status = "generated" }

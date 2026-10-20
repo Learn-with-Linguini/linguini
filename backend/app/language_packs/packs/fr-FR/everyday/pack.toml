@@ -1,0 +1,37 @@
+format_version = 1
+pack_id = "fr-fr-everyday"
+pack_version = 2
+instruction_language = "en"
+
+[language]
+articles = "required"
+grammatical_gender = "required"
+phrase_boundaries = ["et", "mais", "aussi"]
+code = "fr"
+locale = "fr-FR"
+script = "Latn"
+direction = "ltr"
+word_separator = "space"
+
+[language.speech]
+synthesis_locale = "fr-FR"
+synthesis = "browserVoice"
+recognition = false
+
+[variety]
+variety_id = "fr-fr"
+description = "Metropolitan standard French"
+
+[register]
+register_id = "everyday"
+description = "Everyday neutral French; informal singular tu in app instructions."
+
+[provenance]
+source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements."
+review_status = "generated"
+
+[files]
+labels = "labels.toml"
+constructions = ["constructions/identify-object.toml", "constructions/yes-no-identification.toml", "constructions/describe-attribute.toml", "constructions/scene-existence.toml", "constructions/scene-location.toml", "constructions/connected-description.toml"]
+examples = ["examples/identify-object.toml", "examples/yes-no-identification.toml", "examples/describe-attribute.toml", "examples/scene-existence.toml", "examples/scene-location.toml", "examples/connected-description.toml"]
+evaluations = ["evaluations/M01-A0.toml", "evaluations/M01-A1.toml", "evaluations/M01-A2.toml"]

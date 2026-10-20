@@ -1,0 +1,10 @@
+construction_id = "scene-existence"
+version = 2
+summary = "Express presence or explicit absence with 있다/없다."
+guidance = "Use a subject particle 이 after a consonant-final noun and 가 after a vowel-final noun, followed by 있어요: 컵이 있어요, 의자가 있어요. Put an approved colour modifier before that noun. Explicit absence uses 없어요, not the identity-negative 아니에요. Korean does not require an article corresponding to a/the. Do not add a classifier or number unless the selected facts require one. Preserve the noun-particle unit in chunks and show native script and romanization together through display data."
+features = ["subject-particle", "existential-isseoyo", "absence-eopseoyo"]
+constraints = ["Express only the selected scene facts and preserve semantic role bindings.", "Use the declared variety/register and approved surfaces.", "Treat these rules as generation guidance; they do not constitute a grammar validator."]
+required_labels = ["touch-object"]
+# Role categories match the shared semantic-slot contract; native word order is in guidance.
+roles = { object = "noun", attribute = "adjective" }
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }

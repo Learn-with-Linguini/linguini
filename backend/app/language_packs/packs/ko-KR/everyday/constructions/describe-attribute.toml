@@ -1,0 +1,11 @@
+construction_id = "describe-attribute"
+templates = { word_order_feedback = "Keep the modifier before its noun and attached particles/endings intact; use a complete polite predicate." }
+version = 2
+summary = "Use a natural colour noun modifier or colour predicate."
+guidance = "Colour description is not noun-adjective agreement by gender. Use approved modifiers before the noun: 빨간 컵, 파란 램프, 검은 신발. 초록색 can function as a colour-noun modifier. A colour predicate can use noun + 은/는 + colour-name + 이에요: 컵은 빨간색이에요. Do not use an adnominal form such as 빨간 as though it were a predicate noun. Ask 컵은 무슨 색이에요? One-word options should be colour names such as 빨간색, not unfinished adnominal forms. Keep particles attached to their noun."
+features = ["prenominal-modifier", "colour-noun", "topic-particle"]
+constraints = ["Express only the selected scene facts and preserve semantic role bindings.", "Use the declared variety/register and approved surfaces.", "Treat these rules as generation guidance; they do not constitute a grammar validator."]
+required_labels = ["attribute-prompt-colour", "describe-object"]
+# Role categories match the shared semantic-slot contract; native word order is in guidance.
+roles = { object = "noun", attribute = "adjective" }
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }

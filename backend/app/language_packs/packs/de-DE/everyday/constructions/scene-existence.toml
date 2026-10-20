@@ -1,0 +1,9 @@
+construction_id = "scene-existence"
+version = 1
+summary = "Introduce an object using es gibt and accusative."
+guidance = "Use Es gibt + accusative noun phrase. Masculine changes from nominative ein to einen, while feminine eine and neuter ein remain. An attributive adjective follows the appropriate accusative ending: einen gelben Apfel, eine weiße Tasse, ein blaues Buch. Use Es gibt auch… to add a selected fact. Negate with kein in the corresponding case, such as keine Uhr or kein Handy. Absence must be explicit rather than inferred from an incomplete detection list."
+features = ["existential-es-gibt", "accusative", "negative-kein"]
+constraints = ["Express only the selected scene facts and preserve semantic role bindings.", "Use the declared variety/register and approved surfaces.", "Treat these rules as generation guidance; they do not constitute a grammar validator."]
+required_labels = ["touch-object"]
+roles = { object = "noun", attribute = "adjective" }
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
