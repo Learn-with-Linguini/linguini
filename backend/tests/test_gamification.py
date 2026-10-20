@@ -278,7 +278,8 @@ def test_leaderboard_is_optional_and_ties_do_not_use_wallet_balance(database):
     ).json()
     assert joined["currentRank"] == 2 and joined["basilToNextRank"] == 11
     assert [row["rank"] for row in joined["top"]] == [1, 2, 2]
-    assert set(joined["top"][0]) == {"rank", "displayName", "basil"}
+    assert set(joined["top"][0]) == {"rank", "displayName", "basil", "avatar"}
+    assert joined["top"][0]["avatar"] == "farfalle"
     left = client.put(
         "/api/v1/me/chef-of-the-day/preferences", json={"participating": False}
     ).json()
