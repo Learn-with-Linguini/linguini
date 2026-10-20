@@ -110,13 +110,13 @@ def test_spanish_targeted_validator_and_pack_checks_both_run():
     pack = load_pack(PACKS / "es-ES" / "everyday")
     vocabulary = ApprovedVocabulary()
     assert validator_versions("es", pack) == {
-        "es": "es-targeted@6", "noun-phrase": NounPhraseValidator.validator_id,
+        "es": "es-targeted@7", "noun-phrase": NounPhraseValidator.validator_id,
         "pack-checks": PackChecksValidator.validator_id,
     }
-    assert validator_versions("es") == {"es": "es-targeted@6"}
+    assert validator_versions("es") == {"es": "es-targeted@7"}
     validator = select_validator("es", vocabulary, pack)
     assert validator.validator_id == (
-        f"es-targeted@6+{NounPhraseValidator.validator_id}+{PackChecksValidator.validator_id}"
+        f"es-targeted@7+{NounPhraseValidator.validator_id}+{PackChecksValidator.validator_id}"
     )
     # Proposal mode runs only es.py's light checks; the pack's hay frame still applies.
     candidate = _candidate("scene-existence", "Existe una taza roja.").model_copy(

@@ -21,6 +21,7 @@ class MissionCapability(MissionKey):
     missing_constructions: list[str]
     outdated_constructions: list[str]
     missing_labels: list[str]
+    missing_numbers: list[int] = Field(default_factory=list)
     unreviewed_items: list[str]
     examples_present: bool
     review_complete: bool
@@ -59,6 +60,10 @@ def _required_material_review_status(
     unreviewed = []
     if pack.provenance.review_status != "humanReviewed":
         unreviewed.append("pack")
+    if template.required_numbers and (
+        pack.numbers is None or pack.numbers.provenance.review_status != "humanReviewed"
+    ):
+        unreviewed.append("numbers")
     for label in pack.labels:
         if label.semantic in required_ids and label.provenance.review_status != "humanReviewed":
             unreviewed.append(f"label:{label.semantic}")
@@ -87,6 +92,16 @@ def _required_material_review_status(
             ):
                 unreviewed.append(f"incorrect:{example.example_id}")
     return unreviewed
+
+
+def _number_usable(pack: LanguagePack, value: int) -> bool:
+    """The pack spells the number, with the romanization the pack requires."""
+    number = pack.numbers.get(value) if pack.numbers else None
+    if number is None:
+        return False
+    return not pack.language.romanization_required or all(
+        item.romanization for item in (number, *number.with_noun)
+    )
 
 
 def mission_capability(
@@ -123,7 +138,13 @@ def mission_capability(
             outdated_constructions.append(requirement.construction_id)
     labels = {label.semantic for label in pack.labels}
     missing_labels = sorted(set(template.required_labels) - labels)
-    supported = not (missing_constructions or outdated_constructions or missing_labels)
+    missing_numbers = sorted(
+        value for value in template.required_numbers
+        if not _number_usable(pack, value)
+    )
+    supported = not (
+        missing_constructions or outdated_constructions or missing_labels or missing_numbers
+    )
     required_ids = {item.construction_id for item in template.required_constructions}
     required_ids.update(template.required_labels)
     unreviewed_items = _required_material_review_status(pack, required_ids, template)
@@ -172,7 +193,7 @@ def mission_capability(
     )
     blockers = []
     if not supported:
-        blockers.append("required constructions or labels are missing or outdated")
+        blockers.append("required constructions, labels or numbers are missing or outdated")
     if not examples_present:
         blockers.append("required constructions lack in-scope examples or mistakes")
     if not review_complete:
@@ -195,6 +216,7 @@ def mission_capability(
         missing_constructions=missing_constructions,
         outdated_constructions=outdated_constructions,
         missing_labels=missing_labels,
+        missing_numbers=missing_numbers,
         unreviewed_items=unreviewed_items,
         examples_present=examples_present,
         review_complete=review_complete,

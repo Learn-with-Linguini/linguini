@@ -39,7 +39,7 @@ def test_nested_pack_loads_and_evaluations_remain_separate():
 
     assert pack.pack_id == "es-es-everyday"
     assert pack.language.locale == "es-ES"
-    assert len(pack.constructions) == 11
+    assert len(pack.constructions) == 16
     assert len(cases) == 24
     assert not any(key in pack.model_dump() for key in ("evaluations", "evaluation_cases"))
     assert all("cases" not in item for item in guidance_for(pack, [
@@ -124,6 +124,14 @@ def test_labels_match_current_builder_text():
         "find-both-clues": "Toca el objeto que coincide con las dos pistas.",
         "friend-points": "Tu amigo señala el marcador {marker}. ¿Qué aclaras?",
         "name-and-locate": "Nombra el objeto y di dónde está.",
+        "answer-in-sentence": "Responde con una frase.",
+        "build-group-sentence": "Escribe una frase sobre el grupo marcado.",
+        "choose-comparison": "Elige la comparación correcta.",
+        "friend-says": "Tu amigo dice: «{statement}» ¿Qué respondes?",
+        "friend-is-right": "Sí, tu amigo tiene razón.",
+        "describe-compare": "Describe y compara los dos grupos.",
+        "more": "más",
+        "fewer": "menos",
     }
 
 

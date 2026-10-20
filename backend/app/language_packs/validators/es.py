@@ -23,13 +23,17 @@ def _contains_phrase(text: str, phrase: str, *, contractions: bool = False) -> b
     return bool(re.search(r"(?<!\w)" + pattern + r"(?!\w)", text.casefold()))
 
 
+# Choices that are phrases, not sentences: no final punctuation.
+_PHRASE_CONSTRUCTIONS = {"location-phrase", "quantity-chunk"}
+
+
 def _is_phrase(candidate):
-    """Name chunks and position phrases are choices, not sentences: no final punctuation."""
-    return candidate.spec_use == "name" or candidate.construction_id == "location-phrase"
+    """Name chunks, position phrases and number-noun chunks are not sentences."""
+    return candidate.spec_use == "name" or candidate.construction_id in _PHRASE_CONSTRUCTIONS
 
 
 class SpanishM01Validator:
-    validator_id = "es-targeted@6"
+    validator_id = "es-targeted@7"
 
     def __init__(self, vocabulary: ApprovedVocabulary) -> None:
         self.terms = {term.term_id: term for term in vocabulary.terms}

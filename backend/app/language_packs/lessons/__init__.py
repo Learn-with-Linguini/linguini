@@ -25,6 +25,7 @@ from .base import PackMission
 _MODULES = {
     "M01": "m01",
     "M02": "m02",
+    "M03": "m03",
 }
 PACK_MISSION_IDS = frozenset(_MODULES)
 

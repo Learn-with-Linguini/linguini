@@ -496,7 +496,7 @@ def photo_eligibility(
         from app.language_packs.lessons import pack_mission
 
         reasons += pack_mission(mission.mission_id).photo_reasons(
-            mission, objects, relations, scene_attributes,
+            mission, objects, relations, scene_attributes, counted_groups=counted_groups,
         )
     if str(mission.practice_level) == "A0" and not pack:
         reasons += a0_photo_reasons(mission, objects, counted_groups, mission_choices)

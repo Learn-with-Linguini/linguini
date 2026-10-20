@@ -144,7 +144,7 @@ def generate_pilot(
     mission_id: str = "M01",
 ) -> PilotGeneration:
     mission = pack_mission(mission_id)
-    vocabulary = with_pack_vocabulary(pack, vocabulary)
+    vocabulary = mission.vocabulary(pack, facts, with_pack_vocabulary(pack, vocabulary))
     proposal_mode = isinstance(source, ModelSource) and source.propose
     if proposal_mode:
         vocabulary = source.prepare(pack, level, facts, vocabulary)

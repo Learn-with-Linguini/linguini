@@ -89,7 +89,7 @@ def test_pack_only_language_plans_only_pack_missions_through_existing_photo_flow
     profile = {"target_language_code": "es", "proficiency_level": level}
     missions = lesson_missions(SessionMode.LESSON, profile)
     assert [(m.mission_id, str(m.practice_level)) for m in missions] == [
-        ("M01", level), ("M02", level),
+        ("M01", level), ("M02", level), ("M03", level),
     ]
     assert lesson_missions(SessionMode.ISPY, profile) == []
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "false")

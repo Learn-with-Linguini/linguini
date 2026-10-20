@@ -1,13 +1,14 @@
 # Language-pack foundation
 
-This package supplies the default-off A0/A1/A2 runtime path for pack missions (M01
-and M02) as well as explicit local previews. Packs are loaded lazily only when the flag
+This package supplies the default-off A0/A1/A2 runtime path for pack missions (M01,
+M02 and M03) as well as explicit local previews. Packs are loaded lazily only when the flag
 is enabled or a command explicitly requests one. Other missions use their existing
 implementations.
 
 Packs live at `<root>/<locale>/<register>/` (for example `packs/es-ES/everyday/`). `pack.toml`
 holds metadata and references every content file: `labels.toml` (fixed learner-facing text keyed by
-semantic IDs), `constructions/*.toml` (grammar guidance, features, constraints, version),
+semantic IDs), the optional `numbers.toml` (number words for counting missions),
+`constructions/*.toml` (grammar guidance, features, constraints, version),
 `examples/*.toml` (scene facts, bindings, sentences, chunks, alternatives, contrasts, mistakes) and
 `evaluations/*.toml` (held-out cases per mission level). Evaluations are loaded only through
 `load_evaluation_cases` and never appear in guidance or cache fingerprints. Release configuration and
@@ -33,7 +34,7 @@ The fixture pack is unreviewed test data and is not a claim of linguistic valida
 deterministic builders. On uses the existing mission eligibility/planning flow,
 then binds the actual session's confirmed object instances, attributes, relations,
 counts, translated vocabulary and register to the mission's slots. With the flag on,
-M01 and M02 never use their legacy builders. No sample input or handwritten
+M01, M02 and M03 never use their legacy builders. No sample input or handwritten
 `plan_specs` is used by the application.
 
 Set these values in the ignored **backend/.env.local** for a local experiment:
@@ -64,8 +65,8 @@ signing in for pack experiments, without assuming placement is pack-backed. Supp
 selecting a pack-only language; existing profiles can also be patched through the
 existing profile API to exercise another supported level.
 
-Pack availability extends mission candidates only with pack missions (M01, M02) at
-ready levels.
+Pack availability extends mission candidates only with pack missions (M01, M02, M03)
+that the app offers at the level and the pack has ready.
 Photo eligibility and release checks still apply. Other missions and I-Spy retain
 their existing language availability. Discovery does not constitute linguistic
 validation or release approval. With the feature flag off no packs are discovered
@@ -151,6 +152,7 @@ lessons/
   common.py     SpecBuilder (planning), LessonContext and with_romanization (assembly)
   m01.py        M01: plan_lesson, build_lesson, checks, MISSION
   m02.py        M02: same layout
+  m03.py        M03: same layout, plus number_vocabulary
 ```
 
 Every mission module has the same sections:
@@ -165,8 +167,12 @@ Every mission module has the same sections:
    task builder output, so grading and corrections stay unchanged. `ctx.finish` adds
    romanization and tile join modes.
 3. **Checks**: `check_inputs` (before any model call), `check_lesson` (the assembled
-   question count, order and interactions) and `photo_reasons` (replacing
-   dictionary-based legacy photo rules).
+   question count, order and interactions; `common.check_questions` covers the shared
+   rules) and `photo_reasons` (replacing dictionary-based legacy photo rules; it also
+   receives the learner's `counted_groups`).
+
+A mission may also set `vocabulary`, which adds closed pack words to the lesson
+vocabulary before proposals and planning (M03 adds the pack's number words).
 
 To add a mission: add its templates to `missions.toml` (matching the content version
 of its `missions/definitions` file), write `lessons/mXX.py` in this layout, add it to
@@ -192,6 +198,21 @@ object) and `target-location` (A2 named, described and located target), plus
 M02 examples for `identify-object` and `scene-location`. M02 evaluation cases are
 not written yet, so `evaluate --mission M02` reports no cases and M02 cannot produce
 release evidence.
+
+M03 (count objects) needs the pack's `numbers.toml`: reviewed number words with the
+form each takes next to a counted noun when it differs (`with_noun`: Spanish
+un/una by agreement, Korean 두 개 with its counter), plus romanization where the pack
+requires it. Its templates list `required_numbers` (1–3 at A0, 2–10 at A1/A2); a
+pack missing them, or their romanization, does not support M03. Number words become
+`number-N` terms (alternatives: practice boards, the friend's wrong count) and each
+learner count a `count-K` term in its noun's form, both with the `determiner` role.
+The model writes the sentences through five constructions: `how-many-question`,
+`quantity-chunk` (A0 "two apples", not a sentence), `quantity-statement` (A1/A2
+counts, the practice board and the role-play correction), `quantity-comparison` (A2,
+with the `more`/`fewer` sentence labels) and `quantity-pair` (A2 both counts in one
+sentence). A0 and A2 reuse dev's builders; A1 builds dev's task here because dev's
+A1 corrections are written per language. Proposals now also supply `plural` noun
+forms. M03 evaluation cases are not written yet.
 
 ## One language context per normal M01 generation
 

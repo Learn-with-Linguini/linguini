@@ -8,15 +8,18 @@ from app.schemas.base import ApiModel, NonEmptyText
 
 from .generation import ApprovedTerm, ApprovedVocabulary
 
-PROPOSAL_VERSION = "language-proposals.v2"
+PROPOSAL_VERSION = "language-proposals.v3"
 REVIEW_VERSION = "language-content-review.v2"
 
-PROPOSAL_PROMPT = """Supply candidate grammatical forms and distractors for planned M01
+PROPOSAL_PROMPT = """Supply candidate grammatical forms and distractors for a planned
 lesson. Packs are guidance and optional reference vocabulary, not exhaustive dictionaries.
 Preserve each session term's meaning and ID. Supply necessary noun phrases/articles and adjective
 agreement forms as a list of key/text entries (bare, definite, indefinite, article_definite,
-article_indefinite, masculine/feminine/neuter for in-sentence agreement, and predicative when a
-detail named on its own differs from those forms, e.g. German rot beside rote/roter/rotes).
+article_indefinite, masculine/feminine/neuter for in-sentence agreement, predicative when a
+detail named on its own differs from those forms, e.g. German rot beside rote/roter/rotes, and
+plural for a noun counted after a number above one when it differs from bare, e.g. Spanish
+libros, German Äpfel; omit plural where the language does not mark it after numbers).
+Number words are pack data: never propose forms for them.
 These are proposals, not reviewed forms. Do not change scene facts.
 For every attribute/relation needing choices, propose two distinct alternatives, each tied to its
 for_fact_id, with meaning in the instruction language, native text and required agreement forms.

@@ -6,6 +6,7 @@ import random
 from unicodedata import name as unicode_name
 from uuid import NAMESPACE_URL, uuid5
 
+from app.ai.features.learning_tasks.mission import fold
 from app.missions import get_mission
 
 from ..generation import derive_chunks
@@ -53,6 +54,24 @@ def usable_objects(facts, vocabulary):
 
 
 # ---------------------------------------------------------------- assembly
+
+
+def check_questions(questions, purposes, mission_id) -> None:
+    """The mission's question sequence and answerable shapes, as dev's lessons expect."""
+    if [question.purpose for question in questions] != purposes:
+        raise ValueError(f"assembled {mission_id} questions do not preserve the mission sequence")
+    if len({question.question_id for question in questions}) != len(questions):
+        raise ValueError(f"assembled {mission_id} question IDs must be unique")
+    for question in questions:
+        if question.interaction_type == "sentenceBuilding":
+            if not question.correct_text or not question.token_bank or question.options:
+                raise ValueError("assembled building question needs a native answer and tiles")
+        else:
+            ids = [option.option_id for option in question.options]
+            if len(ids) < 2 or len(ids) != len(set(ids)) or question.correct_option_id not in ids:
+                raise ValueError("assembled choices need unique IDs and an offered answer")
+            if len({fold(option.label) for option in question.options}) != len(ids):
+                raise ValueError("assembled choices must be distinct")
 
 
 def scene_rows(facts, vocabulary, separator=" "):

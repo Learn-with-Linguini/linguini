@@ -15,16 +15,22 @@ BuildLesson = Callable[..., tuple[Any, Any, dict]]
 CheckInputs = Callable[..., None]
 # (level, result, accepted, pack) -> None; raises ValueError when the product contract changes.
 CheckLesson = Callable[..., None]
-# (mission, objects, relations, attributes_of) -> photo eligibility reasons.
+# (mission, objects, relations, attributes_of, counted_groups=()) -> photo eligibility reasons.
 PhotoReasons = Callable[..., list[str]]
+# (pack, facts, vocabulary) -> vocabulary with the closed pack words the mission teaches.
+MissionVocabulary = Callable[..., Any]
 
 
 def _no_check(*_args) -> None:
     return None
 
 
-def _no_photo_reasons(*_args) -> list[str]:
+def _no_photo_reasons(*_args, **_kwargs) -> list[str]:
     return []
+
+
+def _session_vocabulary(_pack, _facts, vocabulary):
+    return vocabulary
 
 
 @dataclass(frozen=True)
@@ -46,6 +52,8 @@ class PackMission:
     phrase_slots: Mapping[str, frozenset[str]] = field(default_factory=dict)
     # Replaces dictionary-based legacy photo rules, which do not fit open vocabulary.
     photo_reasons: PhotoReasons = _no_photo_reasons
+    # Closed pack words (M03's number words) added before proposals and planning.
+    vocabulary: MissionVocabulary = _session_vocabulary
 
 
 def for_level[Handler](handlers: Mapping[str, Handler], level: str, mission_id: str) -> Handler:

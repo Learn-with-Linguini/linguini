@@ -35,21 +35,23 @@ def _ids(missions):
 
 
 def test_catalog_templates_resolve_through_the_registry():
-    assert PACK_MISSION_IDS == {"M01", "M02"}
+    assert PACK_MISSION_IDS == {"M01", "M02", "M03"}
     assert pack_mission_keys() == [
         ("M01", "A0", 1), ("M01", "A1", 1), ("M01", "A2", 1),
         ("M02", "A0", 1), ("M02", "A1", 2), ("M02", "A2", 1),
+        ("M03", "A0", 1), ("M03", "A1", 1), ("M03", "A2", 1),
     ]
     # Templates match dev's mission definitions (M02 A1 lessons are content version 2).
     assert mission_template_key("M02", "A1") == ("M02", "A1", 2)
     with pytest.raises(ValueError, match="no pack lesson implementation"):
-        pack_mission("M03")
+        pack_mission("M04")
 
 
 def test_context_records_ready_and_declared_missions(packs_on):
     context = resolve_language_context("es")
     assert context.ready_missions == (
         "M01:A0:1", "M01:A1:1", "M01:A2:1", "M02:A0:1", "M02:A1:2", "M02:A2:1",
+        "M03:A0:1", "M03:A1:1", "M03:A2:1",
     )
     assert context.declared_missions == context.ready_missions
     assert context.ready_levels == ("A0", "A1", "A2")
@@ -76,9 +78,9 @@ def test_ready_pack_missions_replace_legacy_versions_first():
     )
     assert _ids(missions)[0] == ("M01", "A1")
     assert [mission_id for mission_id, _ in _ids(missions)].count("M01") == 1
-    # M02 has a pack implementation but is not ready here, so it is not offered.
-    assert "M02" not in {mission_id for mission_id, _ in _ids(missions)}
-    assert {"M03", "M04", "M05"} <= {mission_id for mission_id, _ in _ids(missions)}
+    # M02 and M03 have pack implementations but are not ready here: not offered.
+    assert not {"M02", "M03"} & {mission_id for mission_id, _ in _ids(missions)}
+    assert {"M04", "M05"} <= {mission_id for mission_id, _ in _ids(missions)}
 
 
 def test_declared_but_blocked_missions_never_fall_back_to_legacy():
@@ -91,9 +93,9 @@ def test_pack_missions_never_use_their_legacy_builder_when_packs_are_on():
     profile = {"proficiency_level": "A1", "target_language_code": "es"}
     missions = lesson_missions(SessionMode.LESSON, profile, _context(["M01:A0:1"], ["M01:A0:1"]))
     ids = {mission_id for mission_id, _ in _ids(missions)}
-    assert not ids & {"M01", "M02"}
+    assert not ids & {"M01", "M02", "M03"}
     # Missions without a pack implementation keep their legacy builders.
-    assert {"M03", "M04", "M05"} <= ids
+    assert {"M04", "M05"} <= ids
 
 
 def test_pack_only_languages_get_every_ready_pack_mission():
@@ -154,4 +156,81 @@ def test_bind_plan_rejects_missions_without_a_pack_implementation():
         pack, [], [], [], SimpleNamespace(objects=[], attributes=[], relationships=[]), {},
     )
     with pytest.raises(ValueError, match="no pack lesson implementation"):
-        bind_plan(pack, "A1", facts, vocabulary, mission_id="M03")
+        bind_plan(pack, "A1", facts, vocabulary, mission_id="M04")
+
+
+def _counted_cups(quantity, label="cup"):
+    objects = [SimpleNamespace(id=UUID(int=i), label=label, attributes={}) for i in (1, 2)]
+    return objects, [{"sceneObjectIds": [str(UUID(int=1))], "quantity": quantity}]
+
+
+@pytest.mark.parametrize("level,quantity,eligible", [
+    ("A0", 3, True), ("A0", 5, False), ("A2", 3, False),
+])
+def test_m03_photo_rules(level, quantity, eligible):
+    from app.language_packs.lessons.m03 import photo_reasons
+    from app.missions import get_mission
+    from app.services.mission_eligibility import scene_attributes
+
+    objects, groups = _counted_cups(quantity)
+    reasons = photo_reasons(get_mission("M03", level, 1), objects, [], scene_attributes,
+                            counted_groups=groups)
+    assert (reasons == []) is eligible
+
+
+def test_m03_a2_needs_two_groups_of_different_objects_and_counts():
+    from app.language_packs.lessons.m03 import photo_reasons
+    from app.missions import get_mission
+    from app.services.mission_eligibility import scene_attributes
+
+    cup, book = (SimpleNamespace(id=UUID(int=n), label=label, attributes={})
+                 for n, label in ((1, "cup"), (2, "book")))
+    mission = get_mission("M03", "A2", 1)
+
+    def reasons(*groups):
+        return photo_reasons(mission, [cup, book], [], scene_attributes, counted_groups=[
+            {"sceneObjectIds": [str(obj.id)], "quantity": quantity} for obj, quantity in groups
+        ])
+
+    assert reasons((cup, 3), (book, 5)) == []
+    assert reasons((cup, 3), (book, 3)), "equal counts cannot be compared"
+    assert reasons((cup, 3), (cup, 5)), "the groups must be different objects"
+
+
+def test_m03_count_terms_take_the_counted_noun_form():
+    from app.language_packs.lessons.m03 import number_vocabulary
+
+    pack = load_pack(PACK)
+    objects = [SimpleNamespace(id=UUID(int=1), label="apple", attributes={})]
+    words = [SimpleNamespace(id=UUID(int=11))]
+    translated = SimpleNamespace(
+        objects=[SimpleNamespace(key=str(UUID(int=1)), source="apple", translation="manzana",
+                                 article="la", gender="feminine")],
+        attributes=[], relationships=[],
+    )
+    for quantity, written in ((1, "una"), (3, "tres")):
+        groups = [{"sceneObjectIds": [str(UUID(int=1))], "quantity": quantity}]
+        facts, vocabulary = session_inputs(pack, objects, [], words, translated, {}, groups)
+        terms = {term.fact_id: term for term in number_vocabulary(pack, facts, vocabulary).terms}
+        assert terms["count:1"].target_text == written
+        assert terms["count:1"].part_of_speech == "determiner"
+        # Every pack number is available for fictional counts and practice boards.
+        assert {f"number:{n}" for n in range(1, 11)} <= terms.keys()
+
+
+def test_one_word_can_realize_the_article_and_the_number_one():
+    from app.language_packs.generation import _shared_word_use
+    from app.language_packs.lessons.m03 import number_vocabulary
+
+    pack = load_pack(PACK)
+    objects = [SimpleNamespace(id=UUID(int=1), label="apple", attributes={})]
+    translated = SimpleNamespace(
+        objects=[SimpleNamespace(key=str(UUID(int=1)), source="apple", translation="manzana",
+                                 article="la", gender="feminine")],
+        attributes=[], relationships=[],
+    )
+    facts, vocabulary = session_inputs(pack, objects, [], [SimpleNamespace(id=UUID(int=11))],
+                                       translated, {})
+    vocabulary = number_vocabulary(pack, facts, vocabulary)
+    assert _shared_word_use("una manzana", vocabulary, "number:1", "determiner")
+    assert _shared_word_use("dos manzanas", vocabulary, "number:1", "determiner") is None

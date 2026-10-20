@@ -33,10 +33,15 @@ SAMPLES = Path(__file__).parents[1] / "app/language_packs/samples"
 LOCALES = {"es": "es-ES", "fr": "fr-FR", "de": "de-DE", "ko": "ko-KR"}
 # Mocked languages whose pack requires romanization of translations.
 ROMANIZED = {"ko"}
-COUNTS = {"M01": {"A0": 6, "A1": 4, "A2": 5}, "M02": {"A0": 6, "A1": 4, "A2": 5}}
+COUNTS = {
+    "M01": {"A0": 6, "A1": 4, "A2": 5}, "M02": {"A0": 6, "A1": 4, "A2": 5},
+    "M03": {"A0": 6, "A1": 3, "A2": 5},
+}
 MISSION_VERSIONS = {("M02", "A1"): 2}
 # A1 describes the second object, so its colour has a distinct Korean modifier form.
 SCENE = (("cup", "red"), ("book", "white"), ("table", "green"))
+# Learner counts: three cups (A0's one small group) and five books (A2's second group).
+COUNTED = (("cup", 3), ("book", 5))
 
 
 def latin(text):
@@ -324,6 +329,108 @@ def _sentence(language, construction, use, truth, obj, attr, other, rel, ref):
     return sentence, realized
 
 
+M03_CONSTRUCTIONS = {
+    "how-many-question", "quantity-chunk", "quantity-statement", "quantity-comparison",
+    "quantity-pair",
+}
+PLURALS = {
+    "es": {"cup": "tazas", "book": "libros", "table": "mesas"},
+    "fr": {"cup": "tasses", "book": "livres", "table": "tables"},
+    "de": {"cup": "Tassen", "book": "Bücher", "table": "Tische"},
+}
+COUNTING = {
+    "es": dict(statement="Hay {n} {p}.", no="No, hay {n} {p}.",
+               compare="Hay {c} {p1} que {p2}.", more="más", fewer="menos",
+               pair="Hay {n1} {p1} y {n2} {p2}."),
+    "fr": dict(statement="Il y a {n} {p}.", no="Non, il y a {n} {p}.",
+               compare="Il y a {c} de {p1} que de {p2}.", more="plus", fewer="moins",
+               pair="Il y a {n1} {p1} et {n2} {p2}."),
+    "de": dict(statement="Es gibt {n} {p}.", no="Nein, es gibt {n} {p}.",
+               compare="Es gibt {c} {p1} als {p2}.", more="mehr", fewer="weniger",
+               pair="Es gibt {n1} {p1} und {n2} {p2}."),
+}
+SINGULAR_NUMBERS = {"un", "una", "une", "ein", "eine"}
+
+
+def _number(term, gender):
+    """A number as written with its noun: the count's own form, else the agreeing one."""
+    if term["termId"].startswith("count-"):
+        return term["targetText"]
+    forms = term["formsByKey"]
+    return forms.get(f"with-noun-{gender}") or forms.get("with-noun-any") or term["targetText"]
+
+
+def _m03_sentence(language, construction, spec, terms):
+    """M03's counting sentences in each pack's taught pattern, with realized surfaces."""
+    lex = LEXICON[language]
+    bindings = dict(spec["bindings"])
+    for role, term_id in spec["counterfactual"].items():
+        bindings[role] = terms[term_id]["factId"]
+
+    def noun(role):
+        source = terms[bindings[role]]["sourceText"]
+        return (source, *lex["nouns"][source])
+
+    def count(role):
+        noun_role = "object" if role == "count" else role.split("-")[0]
+        return _number(terms[bindings[role]], noun(noun_role)[3])
+
+    if language == "ko":
+        def subject(role):
+            return _ko(noun(role)[1], "이", "가")
+
+        if construction == "how-many-question":
+            text = f"{subject('object')} 몇 개 있어요?"
+        elif construction == "quantity-chunk":
+            text = f"{noun('object')[1]} {count('count')}"
+        elif construction == "quantity-statement":
+            text = f"{subject('object')} {count('count')} 있어요."
+            text = f"아니요, {text}" if spec["use"] == "correction" else text
+        elif construction == "quantity-comparison":
+            ending = "많아요" if "more" in spec["labels"] else "적어요"
+            text = f"{subject('first')} {noun('second')[1]}보다 {ending}."
+        else:
+            text = (f"{subject('first')} {count('first-count')} 있고 "
+                    f"{subject('second')} {count('second-count')} 있어요.")
+        words = [word.strip(".,!?") for word in text.split()]
+        realized = {}
+        for role in ("object", "first", "second"):
+            if role in bindings:
+                bare = noun(role)[1]
+                match = next((w for w in words if w.startswith(bare) and w != bare), None)
+                if match:
+                    realized[role] = match
+        return text, realized
+
+    frames = COUNTING[language]
+
+    def plural(role, number=None):
+        source, bare, *_rest = noun(role)
+        return bare if number in SINGULAR_NUMBERS else PLURALS[language][source]
+
+    if construction == "how-many-question":
+        gender = noun("object")[3]
+        text = {
+            "es": f"¿{'Cuántas' if gender == 'feminine' else 'Cuántos'} {plural('object')} hay?",
+            "fr": f"Combien de {plural('object')} y a-t-il ?",
+            "de": f"Wie viele {plural('object')} gibt es?",
+        }[language]
+    elif construction == "quantity-chunk":
+        number = count("count")
+        text = f"{number} {plural('object', number)}"
+    elif construction == "quantity-statement":
+        frame = frames["no"] if spec["use"] == "correction" else frames["statement"]
+        text = frame.format(n=count("count"), p=plural("object"))
+    elif construction == "quantity-comparison":
+        text = frames["compare"].format(
+            c=frames["more" if "more" in spec["labels"] else "fewer"],
+            p1=plural("first"), p2=plural("second"))
+    else:
+        text = frames["pair"].format(n1=count("first-count"), p1=plural("first"),
+                                     n2=count("second-count"), p2=plural("second"))
+    return text, {}
+
+
 class MockPackProvider:
     """Deterministic provider double; its grammar is test data, not model evidence."""
 
@@ -345,6 +452,8 @@ class MockPackProvider:
         forms, distractors = [], []
         for term in terms:
             proposed = {}
+            if term["partOfSpeech"] == "noun" and self.language in PLURALS:
+                proposed["plural"] = PLURALS[self.language][term["sourceText"]]
             if term["partOfSpeech"] == "noun" and "indefinite" in lex:
                 article = lex["indefinite"][term["agreement"]]
                 proposed.update(
@@ -429,12 +538,17 @@ class MockPackProvider:
             object_role = next(
                 (role for role in ("object", "subject", "target") if role in bindings), "object"
             )
-            text, realized = _sentence(
-                self.language, spec["construction_id"], spec["use"], spec["truth"],
-                source(object_role),
-                source("attribute") if spec["use"] != "followup" else None,
-                source("other-object"), source("relation"), source("reference"),
-            )
+            if spec["construction_id"] in M03_CONSTRUCTIONS:
+                text, realized = _m03_sentence(
+                    self.language, spec["construction_id"], spec, {**terms, **terms_by_id},
+                )
+            else:
+                text, realized = _sentence(
+                    self.language, spec["construction_id"], spec["use"], spec["truth"],
+                    source(object_role),
+                    source("attribute") if spec["use"] != "followup" else None,
+                    source("other-object"), source("relation"), source("reference"),
+                )
             allowed = {item["role"]: item["term_id"] for item in spec["realization_terms"]}
             if "object" in realized and "object" not in allowed:
                 realized["subject"] = realized.pop("object")
@@ -502,6 +616,12 @@ def scene():
     return build_scene
 
 
+def _counted_groups(objects):
+    by_label = {obj.label: obj.id for obj in objects}
+    return [dict(sceneObjectIds=[str(by_label[label])], quantity=quantity)
+            for label, quantity in COUNTED]
+
+
 def _dispatch(language, level, scene, provider, monkeypatch, mission_id="M01"):
     from app.language_packs.context import resolve_language_context
 
@@ -514,7 +634,7 @@ def _dispatch(language, level, scene, provider, monkeypatch, mission_id="M01"):
         profile={"target_language_code": language},
         session_id=UUID(int=100),
         missions=[get_mission(mission_id, level, MISSION_VERSIONS.get((mission_id, level), 1))],
-        counted_groups=[],
+        counted_groups=_counted_groups(objects),
         mission_progress={},
         review_markers={},
         roleplay_facts={},
@@ -534,7 +654,7 @@ def _dispatch(language, level, scene, provider, monkeypatch, mission_id="M01"):
     )
 
 
-@pytest.mark.parametrize("mission_id", ["M01", "M02"])
+@pytest.mark.parametrize("mission_id", ["M01", "M02", "M03"])
 @pytest.mark.parametrize("level", ["A0", "A1", "A2"])
 @pytest.mark.parametrize("language", list(LOCALES))
 def test_pack_missions_dispatch_for_every_pack_and_level(

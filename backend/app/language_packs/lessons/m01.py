@@ -730,7 +730,7 @@ def check_lesson(level, result, approved, pack):
                 raise ValueError("assembled choices need unique IDs and an offered answer")
 
 
-def photo_reasons(mission, objects, relations, attributes_of):
+def photo_reasons(mission, objects, relations, attributes_of, counted_groups=()):
     from app.services.mission_eligibility import confirmed_relations
 
     if str(mission.practice_level) == "A2" and not (

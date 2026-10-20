@@ -50,6 +50,7 @@ def pack_fingerprint(
         "guidance_sha256": guidance_sha256(pack, construction_ids),
         "generation_version": generation_version,
         "lexical": pack.lexical,
+        "numbers": pack.numbers.model_dump(mode="json") if pack.numbers else None,
         "structure_version": STRUCTURE_VERSION,
         "proposal_version": PROPOSAL_VERSION,
         "content_review_version": REVIEW_VERSION,

@@ -451,8 +451,9 @@ def check_deterministic(
             if not realized:
                 # Suffixing languages attach particles/case endings to the bound word
                 # (컵이에요, வாழைப்பழமா); recognise it before reporting it missing.
-                inflected = _inflected_use(candidate.text, vocabulary, fact_id_value,
-                                           expected_pos, pack.language)
+                inflected = _inflected_use(
+                    candidate.text, vocabulary, fact_id_value, expected_pos, pack.language,
+                ) or _shared_word_use(candidate.text, vocabulary, fact_id_value, expected_pos)
                 if inflected is not None:
                     derived_uses.append(inflected)
                     continue
@@ -634,6 +635,35 @@ def _inflected_use(text, vocabulary, fact_id_value, part_of_speech, language):
         )
         if word is not None:
             return TermUse(term_id=term.term_id, surface=word, fact_id=term.fact_id)
+    return None
+
+
+def _shared_word_use(text, vocabulary, fact_id_value, part_of_speech):
+    """A bound number word that whole-word matching gave to a noun phrase.
+
+    Whole-word matching gives each word to one term, but a number can share its word
+    with an article: Spanish una is both the article of una taza and the number one.
+    Only determiners qualify, and a noun's article forms never count as its noun.
+    """
+    if part_of_speech != "determiner":
+        return None
+    words = [fold(token).strip("¿¡«»") for token in tokens(text)]
+    for term in vocabulary.terms:
+        if term.fact_id != fact_id_value or str(
+            getattr(term.part_of_speech, "value", term.part_of_speech)
+        ) != part_of_speech:
+            continue
+        articles = {v for k, v in term.forms_by_key.items() if k.startswith("article")}
+        for form in dict.fromkeys([*term.forms, *term.forms_by_key.values()]):
+            if form in articles:
+                continue
+            form_words = [fold(token) for token in tokens(form)]
+            width = len(form_words)
+            if width and any(
+                words[start:start + width] == form_words
+                for start in range(len(words) - width + 1)
+            ):
+                return TermUse(term_id=term.term_id, surface=form, fact_id=term.fact_id)
     return None
 
 

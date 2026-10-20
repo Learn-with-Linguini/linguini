@@ -27,7 +27,7 @@ from app.services.mission_lessons_a2 import m02_a2_task
 from app.services.mission_lessons_m02 import m02_lesson_task
 
 from .base import PackMission, for_level
-from .common import LessonContext, SpecBuilder, latin_of, usable_objects
+from .common import LessonContext, SpecBuilder, check_questions, latin_of, usable_objects
 
 MISSION_ID = "M02"
 PURPOSES = {
@@ -535,24 +535,10 @@ def check_inputs(level, pack, facts, vocabulary, plan):
 
 def check_lesson(level, result, approved, pack):
     """Keep dev's M02 question count, order, interactions and answer contract."""
-    questions = result.questions
-    if [question.purpose for question in questions] != PURPOSES[level]:
-        raise ValueError("assembled M02 questions do not preserve the mission sequence")
-    if len({question.question_id for question in questions}) != len(questions):
-        raise ValueError("assembled M02 question IDs must be unique")
-    for question in questions:
-        if question.interaction_type == "sentenceBuilding":
-            if not question.correct_text or not question.token_bank or question.options:
-                raise ValueError("assembled building question needs a native answer and tiles")
-        else:
-            ids = [option.option_id for option in question.options]
-            if len(ids) < 2 or len(ids) != len(set(ids)) or question.correct_option_id not in ids:
-                raise ValueError("assembled choices need unique IDs and an offered answer")
-            if len({fold(option.label) for option in question.options}) != len(ids):
-                raise ValueError("assembled choices must be distinct")
+    check_questions(result.questions, PURPOSES[level], MISSION_ID)
 
 
-def photo_reasons(mission, objects, relations, attributes_of):
+def photo_reasons(mission, objects, relations, attributes_of, counted_groups=()):
     """A2 needs one object a detail clue and a location clue identify together."""
     if str(mission.practice_level) != "A2":
         return []

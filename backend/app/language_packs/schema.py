@@ -34,7 +34,9 @@ type WordSeparator = Literal["space", "none"]
 type ChunkJoin = Literal["space", "none"]
 type ReviewStatus = Literal["humanReviewed", "unreviewed", "generated"]
 type LabelUsage = Literal["prompt", "sentence"]
-type PartOfSpeech = Literal["noun", "adjective", "phrase", "preposition", "verb", "other"]
+type PartOfSpeech = Literal[
+    "noun", "adjective", "determiner", "phrase", "preposition", "verb", "other",
+]
 
 SUPPORTED_FORMAT_VERSIONS = frozenset({1})
 RTL_SCRIPTS = frozenset({"Arab", "Hebr", "Syrc", "Thaa", "Nkoo", "Adlm", "Mand", "Samr"})
@@ -155,6 +157,8 @@ class PackLabel(ApiModel):
 
 class PackFiles(ApiModel):
     labels: NonEmptyText
+    # Number words for counting missions (M03); packs without it do not offer them.
+    numbers: NonEmptyText | None = None
     constructions: list[NonEmptyText] = Field(min_length=1)
     examples: list[NonEmptyText] = Field(min_length=1)
     evaluations: list[NonEmptyText] = Field(min_length=1)
@@ -162,6 +166,63 @@ class PackFiles(ApiModel):
 
 class LabelsFile(ApiModel):
     labels: list[PackLabel] = Field(min_length=1)
+
+
+class NumberForm(ApiModel):
+    """How a number is written next to a counted noun, when that differs from ``text``.
+
+    ``agreement`` limits the form to nouns of one gender (Spanish un/una); a form
+    without one applies to every noun (Korean 두 개 with its counter).
+    """
+
+    text: NonEmptyText
+    agreement: Literal["masculine", "feminine", "neuter"] | None = None
+    romanization: NonEmptyText | None = None
+
+
+class PackNumber(ApiModel):
+    value: Annotated[int, Field(ge=1, le=20)]
+    text: NonEmptyText
+    romanization: NonEmptyText | None = None
+    with_noun: list[NumberForm] = Field(default_factory=list)
+
+    def form_for(self, agreement: str | None) -> NumberForm:
+        """The form used with a noun of this agreement (the number itself by default)."""
+        return next(
+            (form for form in self.with_noun if form.agreement == agreement),
+            next(
+                (form for form in self.with_noun if form.agreement is None),
+                NumberForm(text=self.text, romanization=self.romanization),
+            ),
+        )
+
+    @property
+    def texts(self) -> list[str]:
+        return list(dict.fromkeys([self.text, *(form.text for form in self.with_noun)]))
+
+
+class NumbersFile(ApiModel):
+    provenance: Provenance
+    numbers: list[PackNumber] = Field(min_length=1)
+
+    @field_validator("numbers")
+    @classmethod
+    def require_unique_values(cls, value: list[PackNumber]) -> list[PackNumber]:
+        values = [number.value for number in value]
+        if len(values) != len(set(values)):
+            raise ValueError("number values must be unique")
+        for number in value:
+            agreements = [form.agreement for form in number.with_noun]
+            if len(agreements) != len(set(agreements)):
+                raise ValueError(f"number {number.value} repeats a with_noun agreement")
+        return value
+
+    def get(self, value: int) -> PackNumber | None:
+        return next((number for number in self.numbers if number.value == value), None)
+
+    @property
+    def values(self) -> set[int]:
+        return {number.value for number in self.numbers}
 
 
 class SceneObject(ApiModel):
@@ -189,11 +250,18 @@ class SceneRelation(ApiModel):
     relation: SceneRelationType
 
 
+class SceneCount(ApiModel):
+    fact_id: NonEmptyText
+    object: NonEmptyText
+    quantity: Annotated[int, Field(ge=1, le=20)]
+
+
 class ExampleScene(ApiModel):
     objects: list[SceneObject] = Field(default_factory=list)
     absent: list[SceneObject] = Field(default_factory=list)
     attributes: list[SceneAttribute] = Field(default_factory=list)
     relations: list[SceneRelation] = Field(default_factory=list)
+    counts: list[SceneCount] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_references(self) -> ExampleScene:
@@ -202,6 +270,7 @@ class ExampleScene(ApiModel):
             *(item.fact_id for item in self.absent),
             *(item.fact_id for item in self.attributes),
             *(item.fact_id for item in self.relations),
+            *(item.fact_id for item in self.counts),
         ]
         if len(facts) != len(set(facts)):
             raise ValueError("scene fact IDs must be unique")
@@ -210,6 +279,7 @@ class ExampleScene(ApiModel):
             *(item.object for item in self.attributes),
             *(item.subject for item in self.relations),
             *(item.reference for item in self.relations),
+            *(item.object for item in self.counts),
         } - object_ids:
             raise ValueError(f"scene references undeclared objects: {sorted(unknown)}")
         if any(item.subject == item.reference for item in self.relations):
@@ -223,6 +293,7 @@ class ExampleScene(ApiModel):
             *(item.fact_id for item in self.absent),
             *(item.fact_id for item in self.attributes),
             *(item.fact_id for item in self.relations),
+            *(item.fact_id for item in self.counts),
         }
 
     @property
@@ -409,6 +480,7 @@ class LanguagePack(ApiModel):
     constructions: list[Construction] = Field(min_length=1)
     # Data-driven forms derived from session translations, never a per-language lexicon.
     lexical: dict[str, dict[str, str]] = Field(default_factory=dict)
+    numbers: NumbersFile | None = None
     _pack_dir: Path | None = PrivateAttr(default=None)
     _evaluation_files: list[Path] = PrivateAttr(default_factory=list)
 
@@ -586,6 +658,8 @@ class MissionTemplate(ApiModel):
     content_version: ContentVersion
     sequence_repeat: Annotated[int, Field(ge=1)] = 1
     required_constructions: list[ConstructionRequirement]
+    # Number words the pack must supply (counting missions).
+    required_numbers: list[Annotated[int, Field(ge=1, le=20)]] = Field(default_factory=list)
     slots: list[MissionSlotTemplate] = Field(min_length=1)
 
     @property

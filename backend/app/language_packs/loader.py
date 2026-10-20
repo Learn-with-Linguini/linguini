@@ -26,6 +26,7 @@ from .schema import (
     LabelsFile,
     LanguagePack,
     MissionCatalog,
+    NumbersFile,
     PackFiles,
 )
 
@@ -147,6 +148,9 @@ def _referenced_files(pack_dir: Path, source: Path, files: PackFiles) -> dict[st
         "labels": [
             _relative_file(pack_dir, files.labels, source, "/files/labels")
         ],
+        "numbers": [
+            _relative_file(pack_dir, files.numbers, source, "/files/numbers")
+        ] if files.numbers else [],
         "constructions": [
             _relative_file(
                 pack_dir, value, source, f"/files/constructions/{index}", "constructions"
@@ -235,6 +239,10 @@ def load_pack(path: Path) -> LanguagePack:
 
     labels_data = _load_toml(resolved["labels"][0])
     labels_file = _model_from_file(LabelsFile, labels_data, resolved["labels"][0])
+    numbers_file = None
+    if resolved["numbers"]:
+        numbers_path = resolved["numbers"][0]
+        numbers_file = _model_from_file(NumbersFile, _load_toml(numbers_path), numbers_path)
 
     definitions = {}
     for construction_path in resolved["constructions"]:
@@ -310,6 +318,8 @@ def load_pack(path: Path) -> LanguagePack:
     pack_data["constructions"] = [
         item.model_dump(mode="python", by_alias=False) for item in constructions
     ]
+    if numbers_file is not None:
+        pack_data["numbers"] = numbers_file.model_dump(mode="python", by_alias=False)
     try:
         pack = LanguagePack.model_validate(pack_data)
     except ValidationError as exc:

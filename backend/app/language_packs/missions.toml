@@ -190,3 +190,95 @@ purpose = "buildTargetSentence"
 construction_id = "target-location"
 target_ids = ["name-located-target"]
 prompt_labels = ["name-and-locate", "connector-distractor"]
+
+[[missions]]
+mission_id = "M03"
+practice_level = "A0"
+content_version = 1
+sequence_repeat = 2
+required_constructions = [
+  { construction_id = "how-many-question", min_version = 1 },
+  { construction_id = "quantity-chunk", min_version = 1 },
+]
+required_numbers = [1, 2, 3]
+[[missions.slots]]
+purpose = "countGroup"
+construction_id = "how-many-question"
+target_ids = ["count-small-group"]
+
+[[missions.slots]]
+purpose = "matchChunk"
+construction_id = "quantity-chunk"
+target_ids = ["number-noun-chunk"]
+
+[[missions.slots]]
+purpose = "buildChunk"
+construction_id = "quantity-chunk"
+target_ids = ["number-noun-chunk"]
+
+[[missions]]
+mission_id = "M03"
+practice_level = "A1"
+content_version = 1
+required_constructions = [
+  { construction_id = "how-many-question", min_version = 1 },
+  { construction_id = "quantity-statement", min_version = 1 },
+]
+required_numbers = [2, 3, 4, 5, 6, 7, 8, 9, 10]
+[[missions.slots]]
+purpose = "chooseQuantity"
+construction_id = "how-many-question"
+target_ids = ["say-quantity"]
+
+[[missions.slots]]
+purpose = "buildQuantity"
+construction_id = "quantity-statement"
+target_ids = ["say-quantity", "plural-noun"]
+prompt_labels = ["answer-in-sentence"]
+
+[[missions.slots]]
+purpose = "matchQuantity"
+construction_id = "quantity-statement"
+target_ids = ["understand-quantity"]
+
+[[missions]]
+mission_id = "M03"
+practice_level = "A2"
+content_version = 1
+required_constructions = [
+  { construction_id = "how-many-question", min_version = 1 },
+  { construction_id = "quantity-statement", min_version = 1 },
+  { construction_id = "quantity-comparison", min_version = 1 },
+  { construction_id = "quantity-pair", min_version = 1 },
+]
+required_numbers = [2, 3, 4, 5, 6, 7, 8, 9, 10]
+[[missions.slots]]
+purpose = "countGroup"
+construction_id = "how-many-question"
+target_ids = ["understand-counts"]
+
+[[missions.slots]]
+purpose = "buildQuantity"
+construction_id = "quantity-statement"
+target_ids = ["describe-counts"]
+prompt_labels = ["build-group-sentence"]
+
+[[missions.slots]]
+purpose = "compareGroups"
+construction_id = "quantity-comparison"
+target_ids = ["compare-counts"]
+prompt_labels = ["choose-comparison"]
+sentence_labels = ["more", "fewer"]
+
+[[missions.slots]]
+purpose = "correctRoleplayCount"
+construction_id = "quantity-statement"
+target_ids = ["correct-count-mistake"]
+prompt_labels = ["friend-says", "friend-is-right"]
+sentence_labels = ["no"]
+
+[[missions.slots]]
+purpose = "buildComparison"
+construction_id = "quantity-pair"
+target_ids = ["compare-counts"]
+prompt_labels = ["describe-compare"]
