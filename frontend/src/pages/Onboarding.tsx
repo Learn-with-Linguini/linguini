@@ -2,7 +2,7 @@ import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { OnboardingSteps } from "../components/OnboardingSteps";
 import { trackAction } from "../lib/analytics.ts";
-import { savedPastaAvatar, type OnboardingDraft } from "../lib/onboardingDraft";
+import { readOnboardingProgress, savedPastaAvatar, type OnboardingDraft } from "../lib/onboardingDraft";
 import { languages } from "../config/languages";
 import { useAppState } from "../state/useAppState";
 
@@ -19,7 +19,13 @@ export function Onboarding() {
   const [completionStarted, setCompletionStarted] = useState(false);
   const navigationState = location.state as { from?: string; languageChangeCode?: string } | null;
   const destination = navigationState?.from ?? "/home";
-  const languageChangeCode = navigationState?.languageChangeCode;
+  // Route state is intentionally ephemeral: a browser restore or reload drops it.
+  // The in-progress draft is the durable source of truth for a language reset.
+  const savedProgress = user ? readOnboardingProgress(user.id) : null;
+  const resumedLanguageCode = savedProgress?.restartingForLanguage
+    && languages.some(language => language.code === savedProgress.draft.languageCode)
+    ? savedProgress.draft.languageCode : undefined;
+  const languageChangeCode = navigationState?.languageChangeCode ?? resumedLanguageCode;
   const restartingForLanguage = Boolean(languageChangeCode && languages.some(language => language.code === languageChangeCode));
   if (user?.onboardingCompleted && !completionStarted && !restartingForLanguage) return <Navigate to={destination} replace />;
   const initial: OnboardingDraft = {

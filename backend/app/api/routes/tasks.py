@@ -67,7 +67,9 @@ def confirm_task_guess(
 def check_vocabulary_answer(
     task_id: UUID, request: CheckVocabularyAnswerRequest, service: TaskServiceDep
 ) -> CheckVocabularyAnswerResponse:
-    return service.check_vocabulary_answer(task_id, request.question_id, request.option_id)
+    return service.check_vocabulary_answer(
+        task_id, request.question_id, request.option_id, request.review
+    )
 
 
 @router.post("/{task_id}/check-vocabulary-typing", response_model=CheckVocabularyTypingResponse)

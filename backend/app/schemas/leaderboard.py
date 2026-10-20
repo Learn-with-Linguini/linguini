@@ -9,10 +9,6 @@ from app.schemas.base import ApiModel
 from app.schemas.users import PastaAvatar
 
 
-class ChefLeaderboardPreference(ApiModel):
-    participating: Annotated[bool, Field(strict=True)]
-
-
 class ChefLeaderboardEntry(ApiModel):
     rank: Annotated[int, Field(ge=1)]
     display_name: str
@@ -21,7 +17,6 @@ class ChefLeaderboardEntry(ApiModel):
 
 
 class ChefLeaderboardResponse(ApiModel):
-    participating: bool
     competition_day: date
     day_ends_at: AwareDatetime
     today_basil: Annotated[int, Field(ge=0)]
