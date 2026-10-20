@@ -39,7 +39,7 @@ export function Profile() {
   const [passwordUpdating, setPasswordUpdating] = useState(false);
   const [surveyOpen, setSurveyOpen] = useState(false);
   const [pendingLanguageCode, setPendingLanguageCode] = useState<string | null>(null);
-  const { learner, user, activeProfile, progress, progressLoading, progressError, profileError, profileSaving, saveLanguageProfile, saveUser } = useAppState();
+  const { learner, user, activeProfile, progress, progressLoading, progressError, profileError, profileSaving, saveLanguageProfile, saveUser, languageProfiles, activateLanguageProfile } = useAppState();
   const tier = accountTiers[user?.tier ?? "beta"];
   const weeklyBasil = progress?.leaderboard.find(row => row.isYou)?.xp ?? 0;
 
@@ -59,9 +59,17 @@ export function Profile() {
   };
 
   const pendingLanguage = languages.find(language => language.code === pendingLanguageCode);
-  const closeLanguageDialog = () => setPendingLanguageCode(null);
-  const confirmLanguageChange = () => {
+  // Profiles are only created by onboarding, so an existing one means this language is already set up.
+  const pendingProfile = pendingLanguage ? languageProfiles.find(profile =>
+    profile.targetLanguageCode.toLowerCase() === pendingLanguage.code && profile.sourceLanguageCode === "en") : undefined;
+  const closeLanguageDialog = () => { if (!profileSaving) setPendingLanguageCode(null); };
+  const confirmLanguageChange = async () => {
     if (!pendingLanguage) return;
+    if (pendingProfile) {
+      trackAction("language_switched", { language: pendingLanguage.code });
+      if (await activateLanguageProfile(pendingProfile.id)) setPendingLanguageCode(null);
+      return;
+    }
     trackAction("language_change_onboarding_started", { language: pendingLanguage.code });
     navigate("/onboarding", { state: { from: "/profile", languageChangeCode: pendingLanguage.code } });
   };
@@ -460,11 +468,16 @@ export function Profile() {
               </IconButton>
             </div>
             <p id={`${languageDialogTitleId}-description`}>
-              We’ll ask a few setup questions for {pendingLanguage.name} before making it your active language. Your progress in {learner.language} will stay saved.
+              {pendingProfile
+                ? `You’ve already set up ${pendingLanguage.name}, so you’ll pick up where you left off. Your progress in ${learner.language} will stay saved.`
+                : `We’ll ask a few setup questions for ${pendingLanguage.name} before making it your active language. Your progress in ${learner.language} will stay saved.`}
             </p>
+            {pendingProfile && profileError ? <p role="alert">{profileError}</p> : null}
             <div className="account-delete-actions">
-              <Button variant="quiet" block onClick={closeLanguageDialog}>Keep {learner.language}</Button>
-              <Button block onClick={confirmLanguageChange}>Set up {pendingLanguage.name}</Button>
+              <Button variant="quiet" block disabled={profileSaving} onClick={closeLanguageDialog}>Keep {learner.language}</Button>
+              <Button block disabled={profileSaving} onClick={() => void confirmLanguageChange()}>
+                {pendingProfile ? `Switch to ${pendingLanguage.name}` : `Set up ${pendingLanguage.name}`}
+              </Button>
             </div>
           </section>
         </div>
