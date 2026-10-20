@@ -825,6 +825,7 @@ class SubmitVocabularyReviewAttemptRequest(ApiModel):
 class CheckVocabularyAnswerRequest(ApiModel):
     question_id: NonEmptyText
     option_id: NonEmptyText
+    review: bool = False
 
 
 class CheckVocabularyAnswerResponse(ApiModel):

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -10,6 +10,8 @@ from pydantic import Field, field_validator, model_validator
 
 from app.schemas.base import ApiModel, EntityModel, LanguageCode, NonEmptyText
 from app.schemas.enums import AccountTier, PreferredInputMode, ProficiencyLevel
+
+PastaAvatar = Literal["farfalle", "fusilli", "penne", "macaroni"]
 
 
 def _validate_timezone(value: str | None) -> str | None:
@@ -28,6 +30,7 @@ class User(EntityModel):
     camera_enabled: bool = True
     auth_provider_id: NonEmptyText
     display_name: Annotated[str, Field(min_length=1, max_length=100)]
+    avatar: PastaAvatar = "farfalle"
     email: Annotated[str, Field(max_length=320)] | None = None
     timezone: str = "UTC"
     onboarding_completed: bool = False
@@ -47,6 +50,7 @@ class UpdateUserRequest(ApiModel):
     microphone_enabled: bool | None = None
     camera_enabled: bool | None = None
     display_name: Annotated[str, Field(min_length=1, max_length=100)] | None = None
+    avatar: PastaAvatar | None = None
     timezone: str | None = None
     onboarding_completed: bool | None = None
     walkthrough_version_seen: Annotated[int, Field(ge=0, le=1000)] | None = None

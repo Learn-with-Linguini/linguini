@@ -1,5 +1,5 @@
 import { GENDER_ARTICLES } from "../data/types.ts";
-import type { A0MissionSnapshot, Gender, LeaderboardRow, MissionChoices, MissionQuestionFields, ScenarioProgress, Streak, TaughtChunk, VocabRecord, VocabularyScene, VocabStatus, WordClass } from "../data/types";
+import type { A0MissionSnapshot, Gender, LeaderboardRow, MissionChoices, MissionQuestionFields, PastaAvatar, ScenarioProgress, Streak, TaughtChunk, VocabRecord, VocabularyScene, VocabStatus, WordClass } from "../data/types";
 import type { SceneSummary } from "../data/types";
 import type { JournalEntry } from "../data/types";
 import { getAccessToken, waitForAccessToken } from "./supabase.ts";
@@ -100,6 +100,7 @@ export interface User {
   updatedAt: string;
   authProviderId: string;
   displayName: string;
+  avatar: PastaAvatar;
   email: string | null;
   timezone: string;
   onboardingCompleted: boolean;
@@ -185,7 +186,7 @@ export interface LanguageProfile {
   preferredInputMode: "speech" | "text" | "both";
 }
 
-export type UserPatch = Partial<Pick<User, "displayName" | "timezone" | "onboardingCompleted" | "walkthroughVersionSeen" | "learningGoal" | "microphoneEnabled" | "cameraEnabled" | "utmSource" | "utmMedium" | "utmCampaign" | "utmContent" | "utmTerm">>;
+export type UserPatch = Partial<Pick<User, "displayName" | "avatar" | "timezone" | "onboardingCompleted" | "walkthroughVersionSeen" | "learningGoal" | "microphoneEnabled" | "cameraEnabled" | "utmSource" | "utmMedium" | "utmCampaign" | "utmContent" | "utmTerm">>;
 export type LanguageProfilePatch = Partial<Pick<LanguageProfile, "proficiencyLevel" | "isActive" | "dailyGoalMinutes" | "preferredInputMode">>;
 
 export type SupportIssueType = "general" | "technical" | "content" | "account";
@@ -659,8 +660,8 @@ export const taskAction = (id: string, action: "start" | "complete" | "skip" | "
 export interface VocabularyAnswerCheck { questionId: string; acceptedOptionId: string; isCorrect: boolean; correctOptionId: string; basilEarned: number }
 export const getVocabularyChecks = (id: string, signal?: AbortSignal) =>
   request<{ checks: VocabularyAnswerCheck[] }>(`/api/v1/tasks/${id}/vocabulary-checks`, signal);
-export const checkVocabularyAnswer = (id: string, questionId: string, optionId: string) =>
-  write<VocabularyAnswerCheck>(`/api/v1/tasks/${id}/check-vocabulary-answer`, "POST", { questionId, optionId });
+export const checkVocabularyAnswer = (id: string, questionId: string, optionId: string, review = false) =>
+  write<VocabularyAnswerCheck>(`/api/v1/tasks/${id}/check-vocabulary-answer`, "POST", { questionId, optionId, review });
 export const checkVocabularyTyping = (id: string, learningKey: string, answer: string, reveal = false) =>
   write<{ learningKey: string; isCorrect: boolean; correctAnswer: string; revealed: boolean }>(`/api/v1/tasks/${id}/check-vocabulary-typing`, "POST", { learningKey, answer, reveal });
 export const completePractice = (id: string) => write<{ id: string; status: string }>(`/api/v1/sessions/${id}/complete`, "POST", {});

@@ -15,8 +15,7 @@ import { type PracticeReview } from "../lib/api";
 import { countGroups, objectCounts } from "../lib/countGroups";
 import { initiallyHiddenObjectIds, sceneReviewPanels, type SceneReviewPanel } from "../lib/sceneReview";
 import { trackAction } from "../lib/analytics.ts";
-import type { LanguageItem, MissionChoices } from "../data/types";
-import { serializeMissionChoices, type MissionChoiceDraft } from "../lib/missionGaps";
+import type { LanguageItem } from "../data/types";
 
 const ATTRIBUTE_TYPES = ["color", "size", "shape", "material", "pattern", "state"] as const;
 const RELATION_OPTIONS = [
@@ -26,9 +25,18 @@ const RELATION_OPTIONS = [
 ] as const;
 const RELATION_CHOICES = RELATION_OPTIONS.map(([value, label]) => ({ value, label }));
 type AnalysisPanel = SceneReviewPanel;
+type AddedReviewObject = PracticeReview["addedObjects"][number] & { marker: number };
+
+function canonicalRelationValue(relation: string) {
+  const normalized = relation.trim().replace(/[\s_-]+/g, "").toLowerCase();
+  return RELATION_OPTIONS.find(([value, label]) =>
+    value.toLowerCase() === normalized || label.replace(/[\s_-]+/g, "").toLowerCase() === normalized,
+  )?.[0] ?? relation;
+}
 
 function relationLabel(relation: string) {
-  return RELATION_OPTIONS.find(([value]) => value === relation)?.[1]
+  const canonical = canonicalRelationValue(relation);
+  return RELATION_OPTIONS.find(([value]) => value === canonical)?.[1]
     ?? humanizeTerm(relation);
 }
 
@@ -43,19 +51,13 @@ export function PracticeAnalysis() {
     );
   });
   const [explicitlyRemoved, setExplicitlyRemoved] = useState<string[]>([]);
-  const [added, setAdded] = useState<PracticeReview["addedObjects"]>([]);
+  const [added, setAdded] = useState<AddedReviewObject[]>([]);
+  const nextMarker = useRef(Math.max(0, ...scene.items.map(item => item.marker)) + 1);
   const [relations, setRelations] = useState<PracticeReview["relations"]>(() => session?.sceneObjectRelations ?? []);
   const [sceneTitle, setSceneTitle] = useState(session?.session.sessionTitle ?? scene.title);
   const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>({});
   const [movingObjectId, setMovingObjectId] = useState<string | null>(null);
   const [panel, setPanel] = useState<AnalysisPanel>("objects");
-  const [missionChoices, setMissionChoices] = useState<MissionChoiceDraft>(() => ({
-    ownedObjectId: session?.missionChoices?.ownership?.sceneObjectId ?? null,
-    ownershipPretend: session?.missionChoices?.ownership?.pretend ?? false,
-    preferenceObjectIds: session?.missionChoices?.preference?.sceneObjectIds ?? [],
-    chosenObjectId: session?.missionChoices?.preference?.chosenObjectId ?? null,
-    reaction: session?.missionChoices?.preference?.reaction ?? null,
-  }));
   const [attributes, setAttributes] = useState<Record<string, Record<string, string>>>(() =>
     Object.fromEntries((session?.sceneObjects ?? []).map(item => [item.id,
       Object.fromEntries(Object.entries(item.attributes ?? {}).filter((entry): entry is [string, string] => entry[0] !== "quantity" && typeof entry[1] === "string"))])));
@@ -77,18 +79,13 @@ export function PracticeAnalysis() {
       session.suggestedSceneObjectIds,
     ));
     setExplicitlyRemoved([]);
+    setAdded([]);
+    nextMarker.current = Math.max(0, ...scene.items.map(item => item.marker)) + 1;
     setRelations(session.sceneObjectRelations);
     setAttributes(Object.fromEntries(session.sceneObjects.map(item => [item.id,
       Object.fromEntries(Object.entries(item.attributes ?? {}).filter((entry): entry is [string, string] => entry[0] !== "quantity" && typeof entry[1] === "string"))])));
     setAttributeObjectId(session.sceneObjects[0]?.id ?? "");
     setSceneTitle(session.session.sessionTitle ?? scene.title);
-    setMissionChoices({
-      ownedObjectId: session.missionChoices?.ownership?.sceneObjectId ?? null,
-      ownershipPretend: session.missionChoices?.ownership?.pretend ?? false,
-      preferenceObjectIds: session.missionChoices?.preference?.sceneObjectIds ?? [],
-      chosenObjectId: session.missionChoices?.preference?.chosenObjectId ?? null,
-      reaction: session.missionChoices?.preference?.reaction ?? null,
-    });
   }, [scene.title, session]);
   useEffect(() => {
     if (!pending && !movingObjectId) return;
@@ -150,14 +147,14 @@ export function PracticeAnalysis() {
   </div>;
   const locked = session.tasks.some(task => task.status !== "pending");
   const kept = scene.items.filter(item => !removed.includes(item.id));
-  const custom: LanguageItem[] = added.map((item, index) => ({ id: `custom-${item.id}`, word: item.label,
-    translation: item.label, wordClass: "noun", gender: null, marker: kept.length + index + 1,
+  const custom: LanguageItem[] = added.map(item => ({ id: `custom-${item.id}`, word: item.label,
+    translation: item.label, wordClass: "noun", gender: null, marker: item.marker,
     x: item.x * 100, y: item.y * 100, attributes: attributes[item.id] ?? {}, example: "", exampleTranslation: "" }));
-  const positionedKept = kept.map((item, index) => {
+  const positionedKept = kept.map(item => {
     const position = positions[item.id];
     return position
-      ? { ...item, marker: index + 1, x: position.x * 100, y: position.y * 100 }
-      : { ...item, marker: index + 1 };
+      ? { ...item, x: position.x * 100, y: position.y * 100 }
+      : item;
   });
   const movingItem = movingObjectId ? kept.find(item => item.id === movingObjectId) : null;
   const placementLabel = pending?.label ?? movingItem?.translation ?? null;
@@ -167,7 +164,7 @@ export function PracticeAnalysis() {
       label: session.sceneObjects.find(object => object.id === item.id)?.label ?? item.translation,
       marker: item.marker,
     })),
-    ...added.map((item, index) => ({ ...item, marker: kept.length + index + 1 })),
+    ...added,
   ];
   const relationObjects = rawRelationObjects;
   const selectedIds = new Set(relationObjects.map(item => item.id));
@@ -181,10 +178,7 @@ export function PracticeAnalysis() {
     ...added.map(item => ({ id: item.id, label: item.label })),
   ]);
   const verifiedCounts = Object.fromEntries(groups.map(group => [group.key, String(group.objectIds.length)]));
-  const panels = sceneReviewPanels(session.provisionalMissionPlan);
-  const a0Choices = new Set((session.provisionalMissionPlan ?? [])
-    .filter(item => item.practiceLevel === "A0" && ["M04", "M05"].includes(item.missionId ?? ""))
-    .map(item => item.missionId));
+  const panels = sceneReviewPanels();
   const removeObjects = (objectIds: string[]) => {
     const ids = new Set(objectIds);
     const analysedIds = new Set(session.sceneObjects.map(item => item.id));
@@ -221,10 +215,10 @@ export function PracticeAnalysis() {
     if (!pending) return;
     setAdded(current => pending.id
       ? current.map(item => item.id === pending.id ? { ...item, ...location } : item)
-      : [...current, { id: crypto.randomUUID(), label: pending.label, ...location }]);
+      : [...current, { id: crypto.randomUUID(), label: pending.label, marker: nextMarker.current++, ...location }]);
     setPending(null); setLabel("");
   };
-  const replaceLocation = (item: PracticeReview["addedObjects"][number]) => {
+  const replaceLocation = (item: AddedReviewObject) => {
     setPending({ id: item.id, label: item.label });
     setError(null);
     photoRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
@@ -251,12 +245,11 @@ export function PracticeAnalysis() {
     await saveReview({
       sceneTitle: sceneTitle.trim() || undefined,
       acceptedObjectIds: kept.map(item => item.id),
-      addedObjects: added,
-      relations: visibleRelations,
+      addedObjects: added.map(({ marker: _marker, ...item }) => item),
+      relations: visibleRelations.map(row => ({ ...row, relation: canonicalRelationValue(row.relation) })),
       objectAttributes: selectedAttributes,
       objectCounts: objectCounts(groups, verifiedCounts),
       repositionedObjects: Object.entries(positions).map(([id, anchorPoint]) => ({ id, anchorPoint })),
-      missionChoices: serializeMissionChoices(missionChoices, selectedIds) as MissionChoices | undefined,
     });
   };
   return <div className={`stack analysis-page${placementLabel ? " analysis-page--placing" : ""}`}>
@@ -277,8 +270,8 @@ export function PracticeAnalysis() {
         <div className="analysis-panel-tabs" role="tablist" aria-label="Scene analysis details">
           {panels.map(value => <button key={value} type="button" role="tab"
             aria-selected={panel === value} className={panel === value ? "is-active" : ""} onClick={() => setPanel(value)}>
-            {value[0].toUpperCase() + value.slice(1)}
-            <span>{value === "objects" ? relationObjects.length : value === "attributes" ? attributeCount : value === "relations" ? visibleRelations.length : Number(Boolean(missionChoices.ownedObjectId || missionChoices.preferenceObjectIds.length))}</span>
+            {value === "attributes" ? "Adjectives" : value[0].toUpperCase() + value.slice(1)}
+            <span>{value === "objects" ? relationObjects.length : value === "attributes" ? attributeCount : visibleRelations.length}</span>
           </button>)}
         </div>
       </div>
@@ -331,7 +324,7 @@ export function PracticeAnalysis() {
           </form> : null}
           <section className="analysis-object-counts" aria-labelledby="analysis-object-counts-title">
             <div>
-              <h3 id="analysis-object-counts-title">Object counts</h3>
+              <h3 id="analysis-object-counts-title">Count</h3>
               <p className="small muted">Counts update when you add or remove objects.</p>
             </div>
             <dl>
@@ -343,7 +336,7 @@ export function PracticeAnalysis() {
           </section>
         </section> : null}
         {panel === "attributes" ? <section className="analysis-results" aria-labelledby="analysis-attributes-title">
-          <div><h2 id="analysis-attributes-title">Visible attributes</h2><p className="muted">Correct only what you can clearly see in the photo.</p></div>
+          <div><h2 id="analysis-attributes-title">Visible adjectives</h2><p className="muted">Correct only what you can clearly see in the photo.</p></div>
           <Card plain className="analysis-word-card analysis-attribute-card">
             <label className="field__label" htmlFor="attribute-object">Object</label>
             <ComboBox id="attribute-object" value={activeAttributeObjectId}
@@ -364,24 +357,30 @@ export function PracticeAnalysis() {
               {visibleRelations.map(row => {
                 const subjectObject = relationObjects.find(item => item.id === row.subjectSceneObjectId);
                 const referenceObject = relationObjects.find(item => item.id === row.referenceSceneObjectId);
+                const relation = canonicalRelationValue(row.relation);
                 return <div className="analysis-relation-row" key={row.id}>
-                <span className="analysis-word-row__marker analysis-relation-row__marker">{subjectObject?.marker}</span>
-                <div className="analysis-relation-row__flow">
-                  <strong>{subjectObject?.label}</strong>
-                  {locked ? <span className="analysis-relation-row__relation">{relationLabel(row.relation)}</span> :
-                    <ComboBox compact ariaLabel="Connection" value={row.relation}
-                      options={!RELATION_OPTIONS.some(option => option[0] === row.relation)
-                        ? [{ value: row.relation, label: relationLabel(row.relation) }, ...RELATION_CHOICES]
-                        : RELATION_CHOICES}
-                      onChange={value => setRelations(current => current.map(item => item.id === row.id ? { ...item, relation: value } : item))} />}
-                  <strong className="analysis-relation-row__reference"><span className="combobox__marker">{referenceObject?.marker}</span>{referenceObject?.label}</strong>
-                </div>
-                {!locked ? <button type="button" className="analysis-word-row__remove" disabled={practiceSaving} aria-label={`Remove relation ${row.relation}`} onClick={() => setRelations(current => current.filter(item => item.id !== row.id))}><CloseIcon size={18} /></button> : null}
+                  <div className="analysis-relation-row__object">
+                    <span className="analysis-word-row__marker">{subjectObject?.marker}</span>
+                    <strong>{subjectObject?.label}</strong>
+                  </div>
+                  <div className="analysis-relation-row__connection">
+                    {locked ? <span className="analysis-relation-row__relation">{relationLabel(relation)}</span> :
+                      <ComboBox compact ariaLabel="Connection" value={relation}
+                        options={!RELATION_OPTIONS.some(option => option[0] === relation)
+                          ? [{ value: relation, label: relationLabel(relation) }, ...RELATION_CHOICES]
+                          : RELATION_CHOICES}
+                        onChange={value => setRelations(current => current.map(item => item.id === row.id ? { ...item, relation: value } : item))} />}
+                  </div>
+                  <div className="analysis-relation-row__object">
+                    <span className="combobox__marker">{referenceObject?.marker}</span>
+                    <strong>{referenceObject?.label}</strong>
+                  </div>
+                  {!locked ? <button type="button" className="analysis-word-row__remove" disabled={practiceSaving} aria-label={`Remove relation ${row.relation}`} onClick={() => setRelations(current => current.filter(item => item.id !== row.id))}><CloseIcon size={18} /></button> : null}
               </div>;
               })}
               {!visibleRelations.length ? <p className="small muted">No connections selected. You can continue without adding any.</p> : null}
             </div>
-            {!locked ? <form className="stack" onSubmit={event => { event.preventDefault(); addRelation(); }}>
+            {!locked ? <form className="stack analysis-relation-form" onSubmit={event => { event.preventDefault(); addRelation(); }}>
               <label className="field__label" htmlFor="relation-subject">Object</label>
               <ComboBox id="relation-subject" value={subject} disabled={practiceSaving} placeholder="Choose an object"
                 options={relationObjects.map(item => ({ value: item.id, label: item.label, marker: item.marker }))} onChange={setSubject} />
@@ -395,60 +394,6 @@ export function PracticeAnalysis() {
               <Button type="submit" variant="secondary" disabled={practiceSaving || !relationText.trim() || subject === reference || !selectedIds.has(subject) || !selectedIds.has(reference) || visibleRelations.length >= 100}>Add connection</Button>
             </form> : null}
           </Card>
-        </section> : null}
-        {panel === "choices" ? <section className="analysis-results" aria-label="Your choices">
-          <h2>Your choices</h2>
-          {a0Choices.has("M04") ? <Card plain className="analysis-word-card">
-            <div className="stack-2"><h3>Which one is yours?</h3>
-              <div className="analysis-word-list">{relationObjects.map(item => <button key={item.id}
-                type="button" className={`choice${missionChoices.ownedObjectId === item.id ? " choice--selected" : ""}`}
-                aria-pressed={missionChoices.ownedObjectId === item.id} disabled={locked || practiceSaving}
-                onClick={() => setMissionChoices(value => ({ ...value, ownedObjectId: item.id }))}>
-                <span className="analysis-word-row__marker">{item.marker}</span> {humanizeTerm(item.label)}
-              </button>)}</div>
-              <label className="checkbox-row"><input type="checkbox" checked={missionChoices.ownershipPretend}
-                disabled={locked || practiceSaving || !missionChoices.ownedObjectId}
-                onChange={event => setMissionChoices(value => ({ ...value, ownershipPretend: event.target.checked }))} />
-                <span>It's pretend</span>
-              </label>
-              <Button variant="quiet" disabled={locked || practiceSaving}
-                onClick={() => setMissionChoices(value => ({ ...value, ownedObjectId: null, ownershipPretend: false }))}>Skip</Button>
-            </div>
-          </Card> : null}
-          {a0Choices.has("M05") ? <Card plain className="analysis-word-card">
-            <div className="stack-2"><h3>What would you pick?</h3>
-              <p className="muted">Choose one or two objects.</p>
-              <div className="analysis-word-list">{relationObjects.map(item => {
-                const chosen = missionChoices.preferenceObjectIds.includes(item.id);
-                const compareChoice = missionChoices.preferenceObjectIds.length === 2;
-                return <div className="spread" key={item.id}>
-                  <button type="button" className={`choice${chosen ? " choice--selected" : ""}`}
-                    aria-pressed={chosen} disabled={locked || practiceSaving}
-                    onClick={() => setMissionChoices(value => {
-                      const current = value.preferenceObjectIds;
-                      const ids = current.includes(item.id) ? current.filter(id => id !== item.id)
-                        : current.length < 2 ? [...current, item.id] : [current[1], item.id];
-                      return { ...value, preferenceObjectIds: ids,
-                        chosenObjectId: ids.length === 2 && ids.includes(value.chosenObjectId ?? "")
-                          ? value.chosenObjectId : null,
-                        reaction: ids.length === 1 ? value.reaction : null };
-                    })}>
-                    <span className="analysis-word-row__marker">{item.marker}</span> {humanizeTerm(item.label)}
-                  </button>
-                  {compareChoice && chosen ? <Button variant="quiet" disabled={locked || practiceSaving}
-                    onClick={() => setMissionChoices(value => ({ ...value, chosenObjectId: item.id, reaction: "like" }))}>
-                    {missionChoices.chosenObjectId === item.id ? "Chosen" : "Choose this"}
-                  </Button> : null}
-                </div>;
-              })}</div>
-              {missionChoices.preferenceObjectIds.length === 1 ? <div className="choice-grid">
-                <Button variant="secondary" disabled={locked || practiceSaving} onClick={() => setMissionChoices(value => ({ ...value, reaction: "like" }))}><span aria-hidden="true">♥ </span>Like</Button>
-                <Button variant="secondary" disabled={locked || practiceSaving} onClick={() => setMissionChoices(value => ({ ...value, reaction: "dislike" }))}><span aria-hidden="true">♡ </span>Don't like</Button>
-                <Button variant="quiet" disabled={locked || practiceSaving} onClick={() => setMissionChoices(value => ({ ...value, reaction: "skip" }))}>Skip</Button>
-              </div> : missionChoices.preferenceObjectIds.length === 2
-                ? <p className="small muted">Which one do you choose?</p> : null}
-            </div>
-          </Card> : null}
         </section> : null}
         {error || practiceError ? <p role="alert">{error ?? practiceError}</p> : null}
         <Button block className="analysis-continue" disabled={practiceSaving || !!placementLabel || (!kept.length && !added.length)} onClick={() => void proceed()}>

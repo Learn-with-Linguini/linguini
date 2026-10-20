@@ -52,25 +52,6 @@
 .rooms-review__relations li span { overflow-wrap: anywhere; }
 .rooms-review__relation-form { padding: 12px; background: var(--cream); border-radius: var(--radius-sm); }
 .rooms-contribution { display: grid; gap: 4px; padding: 12px 0; border-bottom: 1px solid var(--line); }
-.game-resources { --jar-accent: var(--tomato); }
-.game-resources--herb { --jar-accent: var(--teal-dark); }
-.game-resources--pasta { --jar-accent: var(--pasta); }
-.game-resources__summary { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding: 12px 0; }
-.game-resources__jar { position: relative; flex: 0 0 34px; height: 46px; overflow: hidden; border: 2px solid var(--teal-dark); border-top-width: 7px; border-radius: 8px 8px 12px 12px; background: var(--cream); }
-.game-resources__jar span { position: absolute; bottom: 0; width: 100%; background: var(--jar-accent); }
-.game-resources__amount { display: grid; flex: 1 1 150px; gap: 4px; min-width: 0; }
-.game-resources__amount strong { display: flex; justify-content: space-between; gap: 12px; color: var(--teal-dark); }
-.game-resources__amount strong span { color: var(--ink); font-variant-numeric: tabular-nums; }
-.game-resources__track { height: 7px; overflow: hidden; border-radius: var(--radius-pill); background: var(--cream); }
-.game-resources__track span { height: 100%; display: block; background: var(--jar-accent); }
-.game-resources__basil { display: flex; align-items: center; gap: 6px; color: var(--teal-dark); font-size: 14px; }
-.game-resources__basil span { display: grid; }
-.game-resources__basil strong { font-size: 18px; font-variant-numeric: tabular-nums; }
-.game-resources__shop { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); }
-.game-resources__accents { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.game-resources__accent { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; }
-.game-resources__accent .btn { width: 100%; margin-top: auto; }
-.game-resources__swatch { display: block; width: 30px; height: 40px; background: var(--jar-accent); border: 2px solid var(--teal-dark); border-top-width: 7px; border-radius: 8px 8px 12px 12px; }
 @media (max-width: 480px) {
   .rooms-lobby__hero { grid-template-columns: auto minmax(0, 1fr); padding: var(--space-5); }
   .rooms-lobby__eye { display: none; }
@@ -80,10 +61,6 @@
   .rooms-page__title .btn { padding-inline: 10px; }
   .rooms-play__progress { font-size: 14px; flex-wrap: wrap; }
   .rooms-choices:not(.rooms-choices--numbers) { grid-template-columns: 1fr; }
-  .game-resources__accents { grid-template-columns: 1fr; }
-  .game-resources__accent { display: grid; grid-template-columns: 32px minmax(0,1fr); text-align: left; align-items: center; }
-  .game-resources__accent .game-resources__swatch { grid-row: span 2; }
-  .game-resources__accent .btn { grid-column: 1 / -1; }
 }
 .rooms-challenges, .rooms-friends { list-style: none; margin: 0; padding: 0; }
 .rooms-challenges > .rooms-challenge, .rooms-friend { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 0; border-bottom: 1px solid var(--line); }

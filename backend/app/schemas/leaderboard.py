@@ -6,20 +6,17 @@ from typing import Annotated
 from pydantic import AwareDatetime, Field
 
 from app.schemas.base import ApiModel
-
-
-class ChefLeaderboardPreference(ApiModel):
-    participating: Annotated[bool, Field(strict=True)]
+from app.schemas.users import PastaAvatar
 
 
 class ChefLeaderboardEntry(ApiModel):
     rank: Annotated[int, Field(ge=1)]
     display_name: str
     basil: Annotated[int, Field(ge=1)]
+    avatar: PastaAvatar = "farfalle"
 
 
 class ChefLeaderboardResponse(ApiModel):
-    participating: bool
     competition_day: date
     day_ends_at: AwareDatetime
     today_basil: Annotated[int, Field(ge=0)]

@@ -188,7 +188,7 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
   const improve = () => { setGuess(null); setRevising(true); };
   const outcome = guess?.evaluation.outcome;
   return <div className="stack">
-    <TopBar title="I-Spy · Your turn" help="Describe the object so Linguini can guess it." />
+    <TopBar title="I-Spy · Your turn" />
     <ProgressTrail value={index + (answered ? 1 : 0)} total={total} label={`${index + 1} / ${total}`} />
     <ScenePhoto scene={scene} items={markers} activeItemId={target?.id ?? null} guessItemId={guessed?.id ?? null} />
     {guessed && target ? <p className="small muted" data-testid="guess-legend">{guessed.id === target.id

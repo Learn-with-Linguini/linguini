@@ -39,6 +39,7 @@ export function Vocabulary() {
     && (category === "all" || vocabularyCategories(item, scenes).includes(category)));
   const sceneGroups = useMemo(() => groupVocabularyByPhoto(vocabulary, scenes, (id) => mediaImageUrl(id, 640)).sceneGroups, [vocabulary, scenes]);
   const scenarioByAsset = useMemo(() => new Map(progress?.scenarios.map((scenario) => [scenario.mediaAssetId, scenario]) ?? []), [progress]);
+  const hasRevisitHistory = vocabulary.length > 0;
 
   const openFilters = () => { setDraftWordClass(wordClass); setDraftCategory(category); setShowFilters(true); };
   const closeFilters = () => setShowFilters(false);
@@ -73,7 +74,7 @@ export function Vocabulary() {
   return <div className="stack vocabulary-page revisit-page">
     <header className="vocabulary-page__header">
       <div><h1>Revisit</h1><p className="muted">Come back to the places and words you’ve learned.</p></div>
-      <Button variant="secondary" className="vocabulary-page__view-toggle" aria-pressed={view === "list"} onClick={() => {
+      {hasRevisitHistory ? <Button variant="secondary" className="vocabulary-page__view-toggle" aria-pressed={view === "list"} onClick={() => {
         const nextView = view === "journey" ? "list" : "journey";
         trackAction("vocabulary_view_toggled", { view: nextView });
         setView(nextView);
@@ -82,15 +83,16 @@ export function Vocabulary() {
           {view === "journey" ? <BookIcon size={22} /> : <CameraIcon size={22} />}
         </span>
         <span>{view === "journey" ? "Vocabulary List" : "Scenes"}</span>
-      </Button>
+      </Button> : null}
     </header>
 
     {view === "journey" ? <div className="revisit-scenes">
       {scenesLoading ? <InlineLoader label="Loading places…" /> : null}
       {scenesError ? <p role="alert">{scenesError} Your saved words are still available.</p> : null}
-      {!vocabulary.length ? <Card><div className="stack-2"><h2>Your journey starts with a scene</h2><p>Practise with a photo and the places you explore will appear here.</p><Button onClick={() => navigate("/practice")}>Start a practice</Button></div></Card> : null}
+      {!hasRevisitHistory ? <Button onClick={() => { trackAction("revisit_empty_practice_started"); navigate("/practice"); }}>Begin practice</Button> : null}
       {sceneGroups.map(({ scene, words }, index) => {
         const scenario = scenarioByAsset.get(scene.id);
+        const unfinished = scenario?.status === "in-progress";
         const startsSecondColumn = index === Math.ceil(sceneGroups.length / 2);
         return <section key={scene.id} className={`revisit-stop${startsSecondColumn ? " revisit-stop--column-start" : ""}`}>
           <div className="revisit-stop__card">
@@ -101,8 +103,12 @@ export function Vocabulary() {
               </span>
               <Button className="revisit-stop__action" disabled={!scenario?.sessionId}
                 aria-label={scenario?.sessionId ? `Revisit ${scene.title}` : `Revisit unavailable for ${scene.title}`}
-                onClick={() => scenario?.sessionId && navigate(`/practice/sessions/${scenario.sessionId}/learn`)}>
-                <PlayIcon size={18} /> {scenario?.sessionId ? "Revisit" : "Unavailable"}
+                onClick={() => {
+                  if (!scenario?.sessionId) return;
+                  trackAction(unfinished ? "scene_practice_continued" : "scene_vocabulary_review_started", { sessionId: scenario.sessionId });
+                  navigate(`/practice/sessions/${scenario.sessionId}/${unfinished ? "learn" : "review"}`);
+                }}>
+                <PlayIcon size={18} /> {scenario?.sessionId ? unfinished ? "Continue" : "Revisit" : "Unavailable"}
               </Button>
             </div>
             <div className="vocabulary-scene__content stack-2">

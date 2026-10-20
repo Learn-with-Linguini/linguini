@@ -1,3 +1,4 @@
+from datetime import UTC, datetime
 from unittest.mock import MagicMock
 from uuid import UUID, uuid4
 
@@ -11,9 +12,12 @@ from app.repositories.postgres.scenes import (
     PostgresSceneRepository,
     preloaded_scenes,
 )
+from app.repositories.postgres.vocabulary import vocabulary_items, vocabulary_translations
 from app.repositories.scenes import SceneStorageError
 from app.schemas.scenes import PreloadedSceneDetail
+from app.schemas.vocabulary import VocabularyItem, VocabularyTranslation
 from app.services.scenes import SceneService
+from app.services.session_plan import curated_word
 
 
 def store_scene(connection, scene):
@@ -258,6 +262,7 @@ def test_select_objects_does_not_mutate_input_objects():
 def test_precompute_helpers_build_valid_content():
     from app.schemas.media import AnchorPoint, BoundingBox, MediaAsset, SceneObject
     from app.scripts.precompute_preloaded_scenes import (
+        box_centre_percent,
         build_items,
         build_scene_content,
         marker_percent,
@@ -277,19 +282,26 @@ def test_precompute_helpers_build_valid_content():
             anchor_point=AnchorPoint(x="0.5", y="0.5"),
         ),
         SceneObject(session_id=session_id, label="STREET"),
+        SceneObject(session_id=session_id, label="the pillow"),
     ]
     kept = select_objects(objects)
-    assert [obj.label for obj in kept] == ["Street", "school", "STREET"]
+    assert [obj.label for obj in kept] == [
+        "Street", "school", "STREET", "the pillow"
+    ]
     assert [obj.attributes["quantity"] for obj in (kept[0], kept[2])] == ["2", "2"]
+    assert box_centre_percent(-0.1, 0.12345, 0.3, 0.2) == (5.0, 22.3)
+    assert box_centre_percent(1.1, 1.1, 0.2, 0.2) == (100.0, 100.0)
     assert marker_percent(kept[0]) == (30.0, 30.0)
     assert marker_percent(kept[1]) == (50.0, 50.0)
 
     items = build_items(kept)
-    assert [item["id"] for item in items] == ["street", "school", "street-2"]
+    assert [item["id"] for item in items] == ["street", "school", "street-2", "pillow"]
     assert [item["translation"] for item in items] == [
-        "the Street", "the school", "the STREET",
+        "Street", "school", "STREET", "pillow",
     ]
-    assert [item["attributes"].get("quantity") for item in items] == ["2", None, "2"]
+    assert [item["attributes"].get("quantity") for item in items] == [
+        "2", None, "2", None
+    ]
     assert all({"word", "gender", "example"}.isdisjoint(item) for item in items)
 
     asset = MediaAsset(
@@ -301,7 +313,7 @@ def test_precompute_helpers_build_valid_content():
         slug="street", title="A walk downtown", description="A busy street.",
         difficulty="beginner", media_asset=asset, items=items,
     )
-    assert content["rounds"][0]["clue"] == "the Street"
+    assert content["rounds"][0]["clue"] == "Street"
     detail = PreloadedSceneDetail.model_validate(
         {
             **content,
@@ -312,8 +324,287 @@ def test_precompute_helpers_build_valid_content():
             "mediaAsset": asset,
         }
     )
-    assert len(detail.items) == 3
+    assert len(detail.items) == 4
     assert detail.tasks[0].item_ids == [item["id"] for item in items]
+
+
+def test_assign_instances_matches_nearest_same_label_and_keeps_unmatched():
+    from app.ai.features.object_grounding import GroundedBox
+    from app.scripts.precompute_preloaded_scenes import assign_instances
+
+    items = [
+        {"id": "pillow-1", "translation": "pillow", "x": 10, "y": 50},
+        {"id": "pillow-2", "translation": "pillow", "x": 50, "y": 50},
+        {"id": "pillow-3", "translation": "pillow", "x": 90, "y": 50},
+    ]
+    detections = {
+        "the pillow": [
+            GroundedBox(x=0.07, y=0.45, width=0.1, height=0.1, score=0.9),
+            GroundedBox(x=0.5, y=0.45, width=0.1, height=0.1, score=0.8),
+        ]
+    }
+
+    updated, ungrounded = assign_instances(items, detections)
+
+    assert [(item["x"], item["y"]) for item in updated] == [
+        (12.0, 50.0), (55.0, 50.0), (90, 50)
+    ]
+    assert ungrounded == ["pillow-3"]
+    assert items[0]["x"] == 10
+
+
+def test_assign_instances_never_crosses_labels_and_breaks_ties_deterministically():
+    from app.ai.features.object_grounding import GroundedBox
+    from app.scripts.precompute_preloaded_scenes import assign_instances
+
+    items = [
+        {"id": "first", "translation": "pillow", "x": 50, "y": 50},
+        {"id": "second", "translation": "pillow", "x": 50, "y": 50},
+        {"id": "bed", "translation": "bed", "x": 10, "y": 10},
+    ]
+    detections = {
+        "pillow": [
+            GroundedBox(x=0.35, y=0.45, width=0.1, height=0.1, score=0.8),
+            GroundedBox(x=0.55, y=0.45, width=0.1, height=0.1, score=0.7),
+        ],
+        "bed": [
+            GroundedBox(x=0.8, y=0.8, width=0.1, height=0.1, score=0.9)
+        ],
+    }
+
+    updated, ungrounded = assign_instances(items, detections)
+
+    assert [(item["x"], item["y"]) for item in updated] == [
+        (40.0, 50.0), (60.0, 50.0), (85.0, 85.0)
+    ]
+    assert ungrounded == []
+
+
+def test_reground_row_strips_legacy_articles_and_preserves_scene_facts():
+    from app.ai.contracts import VisionImage
+    from app.ai.features.object_grounding import GroundedBox
+    from app.schemas.media import MediaAsset
+    from app.scripts.precompute_preloaded_scenes import (
+        build_scene_content,
+        reground_row,
+    )
+
+    asset = MediaAsset(
+        media_type="image",
+        source="preloaded",
+        storage_key="preloaded/bedroom.jpg",
+        mime_type="image/jpeg",
+        width=640,
+        height=480,
+    )
+    items = [
+        {
+            "id": "the-pillow",
+            "translation": "the pillow",
+            "wordClass": "noun",
+            "marker": 1,
+            "x": 10,
+            "y": 20,
+            "attributes": {"color": "blue"},
+        },
+        {
+            "id": "the-bed",
+            "translation": "the bed",
+            "wordClass": "noun",
+            "marker": 2,
+            "x": 70,
+            "y": 80,
+            "attributes": {},
+        },
+    ]
+    content = build_scene_content(
+        slug="bedroom",
+        title="Bedroom",
+        description="A blue pillow is on a bed.",
+        difficulty="beginner",
+        media_asset=asset,
+        items=items,
+        relations=[
+            {
+                "subjectItemId": "the-pillow",
+                "relation": "on",
+                "referenceItemId": "the-bed",
+            }
+        ],
+    )
+    content["generated"] = {"templates": [{"fingerprint": "stored"}]}
+    row = {
+        "slug": "bedroom",
+        "title": "Bedroom",
+        "description": "A blue pillow is on a bed.",
+        "difficulty": "beginner",
+        "content": content,
+        "media_asset": asset,
+    }
+
+    class FakeGrounder:
+        def __init__(self):
+            self.calls = []
+
+        def ground_instances(self, _image, labels, *, threshold=None):
+            self.calls.append((labels, threshold))
+            return {
+                "pillow": [
+                    GroundedBox(x=0.4, y=0.3, width=0.2, height=0.2, score=0.9)
+                ],
+                "bed": [
+                    GroundedBox(x=0.1, y=0.2, width=0.2, height=0.2, score=0.8)
+                ],
+            }
+
+    grounder = FakeGrounder()
+    updated, ungrounded = reground_row(
+        row, VisionImage(data=b"image", mime_type="image/jpeg"), grounder
+    )
+
+    assert grounder.calls == [(["pillow"], None), (["bed"], None)]
+    assert [item["translation"] for item in updated["content"]["items"]] == [
+        "pillow", "bed"
+    ]
+    assert [(item["x"], item["y"]) for item in updated["content"]["items"]] == [
+        (50.0, 40.0), (20.0, 30.0)
+    ]
+    assert updated["content"]["items"][0]["attributes"] == {"color": "blue"}
+    assert updated["content"]["relations"] == content["relations"]
+    assert updated["content"]["generated"] == content["generated"]
+    assert updated["content"]["rounds"][0]["clue"] == "pillow"
+    assert ungrounded == []
+    PreloadedSceneDetail.model_validate(
+        {
+            **{
+                key: value
+                for key, value in updated["content"].items()
+                if key != "generated"
+            },
+            "sceneId": row["slug"],
+            "title": row["title"],
+            "description": row["description"],
+            "difficulty": row["difficulty"],
+            "mediaAsset": asset,
+        }
+    )
+
+
+def test_reground_fallback_fills_only_unmatched_items_and_excludes_primary_box():
+    from app.ai.contracts import VisionImage
+    from app.ai.features.object_grounding import GroundedBox
+    from app.schemas.media import MediaAsset
+    from app.scripts.precompute_preloaded_scenes import (
+        build_scene_content,
+        reground_row,
+    )
+
+    asset = MediaAsset(
+        media_type="image",
+        source="preloaded",
+        storage_key="preloaded/park.jpg",
+        mime_type="image/jpeg",
+        width=640,
+        height=480,
+    )
+    items = [
+        {
+            "id": "pillow-1",
+            "translation": "pillow",
+            "wordClass": "noun",
+            "marker": 1,
+            "x": 50,
+            "y": 50,
+            "attributes": {},
+        },
+        {
+            "id": "pillow-2",
+            "translation": "pillow",
+            "wordClass": "noun",
+            "marker": 2,
+            "x": 52,
+            "y": 50,
+            "attributes": {},
+        },
+        {
+            "id": "bed",
+            "translation": "bed",
+            "wordClass": "noun",
+            "marker": 3,
+            "x": 20,
+            "y": 20,
+            "attributes": {},
+        },
+    ]
+    content = build_scene_content(
+        slug="park",
+        title="Park",
+        description="A pillow and a bed.",
+        difficulty="beginner",
+        media_asset=asset,
+        items=items,
+    )
+    row = {
+        "slug": "park",
+        "title": "Park",
+        "description": "A pillow and a bed.",
+        "difficulty": "beginner",
+        "content": content,
+        "media_asset": asset,
+    }
+
+    class FakeGrounder:
+        def __init__(self):
+            self.calls = []
+
+        def ground_instances(self, _image, labels, *, threshold=None):
+            self.calls.append((labels, threshold))
+            if threshold is not None:
+                return {
+                    "pillow": [
+                        GroundedBox(
+                            x=0.46, y=0.45, width=0.1, height=0.1, score=0.4
+                        ),
+                        GroundedBox(
+                            x=0.85, y=0.45, width=0.1, height=0.1, score=0.3
+                        ),
+                    ]
+                }
+            if labels == ["pillow"]:
+                return {
+                    "pillow": [
+                        GroundedBox(
+                            x=0.46, y=0.45, width=0.1, height=0.1, score=0.9
+                        )
+                    ]
+                }
+            return {
+                "bed": [
+                    GroundedBox(
+                        x=0.15, y=0.15, width=0.1, height=0.1, score=0.9
+                    )
+                ]
+            }
+
+    grounder = FakeGrounder()
+    updated, ungrounded = reground_row(
+        row,
+        VisionImage(data=b"image", mime_type="image/jpeg"),
+        grounder,
+        fallback_threshold=0.25,
+    )
+
+    assert grounder.calls == [
+        (["pillow"], None),
+        (["bed"], None),
+        (["pillow"], 0.25),
+    ]
+    assert [(item["x"], item["y"]) for item in updated["content"]["items"]] == [
+        (51.0, 50.0),
+        (90.0, 50.0),
+        (20.0, 20.0),
+    ]
+    assert ungrounded == []
 
 
 @pytest.mark.parametrize("invalid", ["duplicate", "reference", "coordinates"])
@@ -326,3 +617,58 @@ def test_scene_content_validation(source, invalid):
         source["items"][0]["x"] = 101
     with pytest.raises(ValueError):
         PreloadedSceneDetail.model_validate(source)
+
+
+def test_curated_word_matches_bare_and_article_prefixed_catalog_translations(database):
+    engine, _owner, profile, _client = database
+    old = datetime(2000, 1, 1, tzinfo=UTC)
+    entries = []
+    for translation in ("the bench", "chair"):
+        item = VocabularyItem(
+            language_code=profile.target_language_code,
+            lemma=f"test-{translation.replace(' ', '-')}-{uuid4()}",
+            display_text=f"test-{translation}",
+            part_of_speech="noun",
+        ).model_copy(update={"created_at": old, "updated_at": old})
+        translated = VocabularyTranslation(
+            vocabulary_item_id=item.id,
+            source_language_code=profile.source_language_code,
+            translated_text=translation,
+        ).model_copy(update={"created_at": old, "updated_at": old})
+        entries.append((item, translated))
+    with engine.begin() as connection:
+        for item, translation in entries:
+            connection.execute(
+                insert(vocabulary_items).values(**item.model_dump(by_alias=False))
+            )
+            connection.execute(
+                insert(vocabulary_translations).values(
+                    **translation.model_dump(by_alias=False)
+                )
+            )
+    try:
+        with engine.connect() as connection:
+            bench = curated_word(
+                connection, profile.model_dump(by_alias=False), "bench"
+            )
+            chair = curated_word(
+                connection, profile.model_dump(by_alias=False), "the chair"
+            )
+        assert bench is not None and bench[0].id == entries[0][0].id
+        assert bench[1].translated_text == "the bench"
+        assert chair is not None and chair[0].id == entries[1][0].id
+        assert chair[1].translated_text == "chair"
+    finally:
+        with engine.begin() as connection:
+            connection.execute(
+                delete(vocabulary_translations).where(
+                    vocabulary_translations.c.vocabulary_item_id.in_(
+                        [item.id for item, _translation in entries]
+                    )
+                )
+            )
+            connection.execute(
+                delete(vocabulary_items).where(
+                    vocabulary_items.c.id.in_([item.id for item, _ in entries])
+                )
+            )

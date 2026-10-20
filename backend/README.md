@@ -282,8 +282,11 @@ scene-analysis provider and stores the detected objects (English labels,
 markers, attributes) in `preloaded_scenes.content.items`, so the Scene Analysis
 review screen opens with objects already on the photo. Scenes have no language:
 each image has one row, and a learner's session translates the objects into
-their target language (or reuses the catalog word for that label). `content.tasks/rounds/prompts` stay minimal
-placeholders; real lessons and clues come from the templates below.
+their target language (or reuses the catalog word for that label). English
+`translation` labels are stored as bare nouns (`pillow`, not `the pillow`);
+articles belong only in target-language vocabulary words.
+`content.tasks/rounds/prompts` stay minimal placeholders; real lessons and
+clues come from the templates below.
 
 Each item's `attributes.color` and the scene's `content.relations` are curated from
 the images (migration `20261013010000_preloaded_scene_facts`), so preloaded lessons and
@@ -295,6 +298,32 @@ python -m app.scripts.precompute_preloaded_scenes --dry-run --json out.json
 python -m app.scripts.precompute_preloaded_scenes --slug street --language fr
 python -m app.scripts.precompute_preloaded_scenes --emit-migration migration.sql
 python -m app.scripts.precompute_preloaded_scenes --from-json out.json --emit-migration migration.sql
+```
+
+Grounding DINO is optional. Install it with:
+
+```sh
+pip install -e '.[grounding]'
+# For CPU-only PyTorch wheels:
+pip install -e '.[grounding]' --extra-index-url https://download.pytorch.org/whl/cpu
+```
+
+To use the recommended lightweight model for precompute or re-grounding, set:
+
+```sh
+AI_OBJECT_GROUNDING_PROVIDER=groundingDino
+AI_OBJECT_GROUNDING_MODEL=IDEA-Research/grounding-dino-tiny
+```
+
+`--reground` updates stored item marker positions with Grounding DINO without
+calling the scene-analysis model; item labels, attributes and relations are
+retained. It queries one label at a time, then retries only unmatched items at
+the `--reground-fallback-threshold` (default `0.25`); fallback boxes close to a
+primary-pass marker are ignored. Use `--from-json` to re-ground an exported
+artifact instead of rows from the database. For example:
+
+```sh
+python -m app.scripts.precompute_preloaded_scenes --reground --dry-run --json out.json --report report.json --emit-migration migration.sql
 ```
 
 `--slug` and `--language` are repeatable and default to all six scenes
@@ -317,8 +346,9 @@ its attributes and relations. Each validated result is stored server-only in
 `preloaded_scenes.content.generated` (`version: preloaded-templates.v1`) with:
 
 - `feature`, `language` and `variant` (`prompt|schema|validator` versions);
-- a `fingerprint` of the scene facts (title, summary, labels, attributes,
-  relations, marker positions) and language;
+- a `fingerprint` of the scene facts (title, summary, labels, attributes and
+  relations) and language; changing labels stales templates, but moving marker
+  positions alone does not;
 - stable references (`o1`, `o1:color`, `r1`) instead of session IDs;
 - provenance (deployment, model, creation time).
 
@@ -333,7 +363,9 @@ Ownership, claims, revision guards and idempotency are unchanged. Edited
 scenes, uploaded photos, partial selections, missing or stale templates and
 failed remapping fall back to the result cache and normal routed generation.
 A model or deployment change alone does not stale a template; rerun the
-script to refresh.
+script to refresh. When re-grounding changes labels, stale templates are
+regenerated if provider calls are allowed; otherwise sessions use routed
+generation until templates are refreshed.
 
 ```sh
 python -m app.scripts.precompute_preloaded_scenes --state state.json --report report.json

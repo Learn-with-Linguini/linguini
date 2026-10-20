@@ -86,8 +86,22 @@ class GroundingDinoObjectGrounder:
     def ground(
         self, image: VisionImage, labels: Sequence[str]
     ) -> Mapping[str, GroundedBox]:
+        return {
+            label: boxes[0]
+            for label, boxes in self.ground_instances(image, labels).items()
+            if boxes
+        }
+
+    def ground_instances(
+        self,
+        image: VisionImage,
+        labels: Sequence[str],
+        *,
+        threshold: float | None = None,
+    ) -> Mapping[str, list[GroundedBox]]:
         if not labels:
             return {}
+        detection_threshold = self._threshold if threshold is None else threshold
         try:
             from PIL import Image, ImageOps
 
@@ -133,12 +147,12 @@ class GroundingDinoObjectGrounder:
             results = self._processor.post_process_grounded_object_detection(
                 outputs,
                 inputs.input_ids,
-                threshold=self._threshold,
-                text_threshold=self._threshold,
+                threshold=detection_threshold,
+                text_threshold=detection_threshold,
                 target_sizes=[(height, width)],
             )[0]
 
-            best: dict[str, GroundedBox] = {}
+            instances: dict[str, list[GroundedBox]] = {}
             text_labels = results.get("text_labels") or []
             for index, (box, score) in enumerate(
                 zip(results["boxes"], results["scores"], strict=False)
@@ -157,11 +171,14 @@ class GroundingDinoObjectGrounder:
                 if normalized is None:
                     continue
                 for original in canonical_to_originals[matched]:
-                    if original not in best or normalized.score > best[original].score:
-                        best[original] = normalized
+                    instances.setdefault(original, []).append(normalized)
         except Exception as error:
             raise ObjectGroundingError("Grounding DINO could not process this image") from error
-        return best
+        return {
+            label: filtered
+            for label, boxes in instances.items()
+            if (filtered := _suppress_overlapping(boxes))
+        }
 
 
 def _canonical_label(label: str) -> str:
@@ -212,3 +229,23 @@ def _normalize_box(
         height=(bottom - top) / height,
         score=score,
     )
+
+
+def _suppress_overlapping(boxes: Sequence[GroundedBox]) -> list[GroundedBox]:
+    kept: list[GroundedBox] = []
+    for candidate in sorted(boxes, key=lambda box: box.score, reverse=True):
+        if all(_box_iou(candidate, previous) <= 0.5 for previous in kept):
+            kept.append(candidate)
+    return kept
+
+
+def _box_iou(left: GroundedBox, right: GroundedBox) -> float:
+    intersection_width = max(
+        0.0, min(left.x + left.width, right.x + right.width) - max(left.x, right.x)
+    )
+    intersection_height = max(
+        0.0, min(left.y + left.height, right.y + right.height) - max(left.y, right.y)
+    )
+    intersection = intersection_width * intersection_height
+    union = left.width * left.height + right.width * right.height - intersection
+    return intersection / union if union > 0 else 0.0

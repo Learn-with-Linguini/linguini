@@ -1,4 +1,5 @@
-import { request, write } from "./api.ts";
+import { request } from "./api.ts";
+import type { PastaAvatar } from "../data/types";
 
 export type BadgeLevel = "Taster" | "Cook" | "Chef" | "Head Chef" | "Master";
 export interface MissionBadge {
@@ -16,9 +17,9 @@ export interface GamificationSummary {
   missions: MissionBadge[];
 }
 export interface ChefStandings {
-  participating: boolean; competitionDay: string; dayEndsAt: string; todayBasil: number;
+  competitionDay: string; dayEndsAt: string; todayBasil: number;
   personalBest: number; currentRank: number | null; basilToNextRank: number | null;
-  top: { rank: number; displayName: string; basil: number }[];
+  top: { rank: number; displayName: string; basil: number; avatar: PastaAvatar }[];
 }
 export const gamificationKeys = {
   account: (userId: string) => ["gamification", userId] as const,
@@ -31,16 +32,4 @@ export const getGamification = (profileId: string, signal?: AbortSignal) =>
 export const getMissionProgress = (sessionId: string, signal?: AbortSignal) =>
   request<MissionBatch[]>(`/api/v1/sessions/${encodeURIComponent(sessionId)}/mission-progress`, signal);
 export const getChefStandings = (signal?: AbortSignal) => request<ChefStandings>("/api/v1/me/chef-of-the-day", signal);
-export const setChefParticipation = (participating: boolean) =>
-  write<ChefStandings>("/api/v1/me/chef-of-the-day/preferences", "PUT", { participating });
 export const basilEarnedText = (amount: number | undefined) => amount && amount > 0 ? `+${amount} Basil earned` : null;
-
-export function jarMessage(batch: Pick<MissionBatch, "percent" | "status">): string {
-  if (batch.status === "review") return "A little more practice for this recipe.";
-  if (batch.percent >= 100) return "This mission is ready!";
-  if (batch.percent >= 90) return "Almost ready to serve!";
-  if (batch.percent >= 75) return "Simmering nicely!";
-  if (batch.percent >= 50) return "You’re cooking!";
-  if (batch.percent >= 25) return "A tasty start!";
-  return "Add your first ingredient.";
-}

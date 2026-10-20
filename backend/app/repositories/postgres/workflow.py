@@ -149,6 +149,7 @@ from app.services.scene_analysis import (
     UnavailableSceneAnalyzer,
     scene_inventory,
     scene_result_from_inventory,
+    uploaded_scene_title,
 )
 from app.services.session_personalization import (
     lesson_history,
@@ -193,7 +194,7 @@ ALLOWED_TRANSITIONS = {
     "failed": {"analyzingScene"},
 }
 READ_TASKS = {"vocabularyIntroduction", "grammarExplanation", "syntaxExplanation"}
-ANALYSIS_TIMEOUT = timedelta(minutes=15)
+ANALYSIS_TIMEOUT = timedelta(minutes=2)
 
 
 def _lesson_answer_is_correct(task, question_id, answer):
@@ -683,8 +684,8 @@ class PostgresWorkflowRepository:
             ).mappings()
         ]
 
-    def check_vocabulary_answer(self, task_id, question_id, option_id):
-        """Persist the first accepted choice and reward; a replay returns that choice."""
+    def check_vocabulary_answer(self, task_id, question_id, option_id, review=False):
+        """Check a choice; scene revisits are intentionally read-only practice."""
         with self.transaction() as c:
             task = self._task_row(c, task_id)
             session = self._session(c, task.session_id)
@@ -699,7 +700,7 @@ class PostgresWorkflowRepository:
             expected = task.answer_key.correct_option_ids.get(question_id)
             if expected is None:
                 raise PracticeConflictError("This question has no answer key.")
-            prior = compatible_question(
+            prior = None if review else compatible_question(
                 question_event(c, self.user_id, task.id, question_id), task, question_id
             )
             if (
@@ -1840,6 +1841,8 @@ class PostgresWorkflowRepository:
         """Model round-trip, off the request path. Must never raise to its runner."""
         try:
             result = self.analyzer.analyze(claimed, asset, profile, scene)
+            if asset.source in {"camera", "userUpload"}:
+                result = result.model_copy(update={"title": uploaded_scene_title(result)})
             with self.transaction() as c:
                 current = self._session(c, session_id, profile_id)
                 if current.status != "analyzingScene":
