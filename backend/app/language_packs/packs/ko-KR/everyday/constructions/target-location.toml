@@ -1,0 +1,24 @@
+construction_id = "target-location"
+version = 1
+summary = "Name an object with its detail and location."
+guidance = "Name the object with its detail and say where it is: colour modifier + noun + 이/가 + reference + position + 에 + 있어요.: 빨간 컵이 창문 옆에 있어요."
+features = ["located-description"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { subject = "noun", attribute = "adjective", relation = "preposition", reference = "noun" }
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "location-frame"
+message = "Say where it is with the taught verb."
+must_contain = ["있어요[.]$"]
+
+[[checks]]
+check_id = "polite-ending"
+message = "Use the polite -요 ending at the end of the sentence."
+must_contain = ["요[.?!]$"]

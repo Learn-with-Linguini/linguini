@@ -1,0 +1,14 @@
+construction_id = "location-phrase"
+version = 1
+summary = "Give a position phrase with its reference object."
+guidance = "Give only the reference noun and the position word with 에, no subject, verb or final punctuation: 탁자 위에, 의자 아래에, 창문 옆에."
+features = ["position-phrase"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { reference = "noun", relation = "preposition" }
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "phrase-without-punctuation"
+message = "A position phrase is a choice, not a sentence: no final punctuation."
+must_not_contain = ["[.?!]$"]

@@ -1,0 +1,55 @@
+construction_id = "target-clue"
+
+[[examples]]
+example_id = "clue-red"
+levels = ["A2"]
+purposes = ["readAttributeClue"]
+meaning = "It is red."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }] }
+bindings = { target = "object:cup", attribute = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "빨간색이에요."
+translation = "It is red."
+chunks = [{ text = "빨간색이에요", join = "none" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "clue-next-window"
+levels = ["A2"]
+purposes = ["buildLocationClue"]
+meaning = "It is next to the window."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:window", concept = "window" }], relations = [{ fact_id = "relation:cup-next_to-window", subject = "object:cup", reference = "object:window", relation = "next_to" }] }
+bindings = { target = "object:cup", reference = "object:window", relation = "relation:cup-next_to-window" }
+truth = true
+labels = []
+sentence = "창문 옆에 있어요."
+translation = "It is next to the window."
+chunks = [{ text = "창문", join = "none" }, { text = "옆에", join = "space" }, { text = "있어요", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "clarify-next-window"
+levels = ["A2"]
+purposes = ["clarifyDistractor"]
+meaning = "No, it is next to the window."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:window", concept = "window" }], relations = [{ fact_id = "relation:cup-next_to-window", subject = "object:cup", reference = "object:window", relation = "next_to" }] }
+bindings = { target = "object:cup", reference = "object:window", relation = "relation:cup-next_to-window" }
+truth = true
+labels = ["no"]
+sentence = "아니요, 창문 옆에 있어요."
+translation = "No, it is next to the window."
+chunks = [{ text = "아니요", join = "none" }, { text = ",", join = "none" }, { text = "창문", join = "space" }, { text = "옆에", join = "space" }, { text = "있어요", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "clue-agreement"
+levels = ["A2"]
+purposes = ["readAttributeClue"]
+sentence = "빨간색이다."
+correction = "빨간색이에요."
+note = "Use the polite ending: 빨간색이에요."
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
