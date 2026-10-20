@@ -3072,6 +3072,12 @@ p[role="alert"]::before { content: "!"; }
   gap: var(--space-5);
 }
 
+.revisit-empty {
+  break-inside: avoid;
+  column-span: all;
+  max-width: 680px;
+}
+
 .revisit-stop__card {
   overflow: hidden;
   border: 1px solid var(--line);
