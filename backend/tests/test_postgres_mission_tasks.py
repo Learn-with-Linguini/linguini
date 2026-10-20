@@ -21,6 +21,9 @@ from app.repositories.postgres.vocabulary import vocabulary_items
 from app.schemas.tasks import SessionTask
 from app.schemas.vocabulary import VocabularyItem
 
+# A thin scene is rejected on mission profiles; these tests cover the regular lesson.
+pytestmark = pytest.mark.usefixtures("regular_lesson")
+
 ANSWERS = {"colour": "rojo", "build": "La taza es roja.", "extra": "taza"}
 
 

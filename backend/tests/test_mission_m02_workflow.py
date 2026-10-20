@@ -23,7 +23,7 @@ from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.tasks import session_tasks, task_attempts
 from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.repositories.postgres.xp import xp_events
-from app.repositories.practice import PracticeConflictError
+from app.repositories.practice import InsufficientSceneError, PracticeConflictError
 from app.schemas.enums import SessionMode
 from app.schemas.sessions import ReviewPracticeRequest
 from app.schemas.tasks import SkipTaskRequest
@@ -213,19 +213,22 @@ def test_a_photo_fitting_both_plans_both_and_the_lesson_finishes_after_both(cura
     )) == 1
 
 
-def test_a_photo_no_mission_supports_gets_the_regular_lesson_and_tips_for_each(curated):
+def test_a_photo_no_mission_supports_is_sent_back_with_what_each_mission_needs(curated):
     profile = curated[2]
     repository = _repository(curated, SceneModel())
     sid, analyzed = _analyzed(curated, repository)
-    repository.review(sid, profile.id, ReviewPracticeRequest(
-        accepted_object_ids=[obj.id for obj in analyzed.scene_objects]
-    ))
+    with pytest.raises(InsufficientSceneError) as rejected:
+        repository.review(sid, profile.id, ReviewPracticeRequest(
+            accepted_object_ids=[obj.id for obj in analyzed.scene_objects]
+        ))
+    shortfall = rejected.value.shortfall
+    assert {"attributes", "relations"} <= set(shortfall.missing)
+    tips = {item["missionId"]: " ".join(item["reasons"]) for item in shortfall.missions}
+    assert tips["M01"].startswith("Confirm a colour")
+    assert tips["M02"].startswith("Confirm where one object is")
     detail = repository.get(sid, profile.id)
-    tips = " ".join(detail.mission_guidance)
-    assert "Identify and describe an object: Confirm a colour" in tips
-    assert "Find and locate: Confirm where one object is" in tips
-    assert detail.session.analysis_draft["missionPlan"] == []
-    assert all(task.public_content.mission_key is None for task in detail.tasks)
+    assert detail.session.status == "awaitingObjectReview"
+    assert detail.tasks == []
 
 
 def test_sessions_saved_before_mission_plans_keep_the_regular_lesson(curated):

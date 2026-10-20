@@ -22,6 +22,7 @@ from app.repositories.practice import (
     ActiveSessionLimitReachedError,
     ClueNamesTargetError,
     DailyLessonLimitReachedError,
+    InsufficientSceneError,
     PracticeConflictError,
     PracticeNotFoundError,
     PracticeStorageError,
@@ -138,6 +139,11 @@ def register_learning_errors(app: FastAPI) -> None:
             "active_session_limit_reached",
             "You can keep up to three unfinished practices open at once.",
         ),
+        InsufficientSceneError: (
+            422,
+            "insufficient_scene",
+            "This photo doesn't have enough for Linguini to check a lesson yet.",
+        ),
         DailyLessonLimitReachedError: (
             403,
             "daily_lesson_limit_reached",
@@ -194,6 +200,8 @@ def register_learning_errors(app: FastAPI) -> None:
         detail = {"code": code, "message": message}
         if isinstance(exc, ActiveSessionExistsError):
             detail["activeSessionId"] = str(exc.active_session_id)
+        if isinstance(exc, InsufficientSceneError):
+            detail.update(exc.shortfall.as_json())
         return JSONResponse(status_code=status, content={"detail": detail})
 
     for error_type in errors:

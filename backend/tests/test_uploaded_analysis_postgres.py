@@ -12,6 +12,9 @@ from app.repositories.postgres.scene_objects import scene_objects
 from app.repositories.postgres.tasks import session_tasks
 from app.schemas.media import MediaAsset
 
+# A thin scene is rejected on mission profiles; these tests cover the regular lesson.
+pytestmark = pytest.mark.usefixtures("regular_lesson")
+
 
 def test_analysis_persistence_concurrency_and_review(database):
     engine, owner, profile, client = database

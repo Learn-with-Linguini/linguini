@@ -106,6 +106,9 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `practice_photo_uploaded` | `{ assetId }` | User captures/uploads a personal camera roll photo |
 | `practice_scene_selected` | `{ sceneId, title }` | User selects a curated catalog scene |
 | `scene_review_confirmed` | `{ acceptedCount, addedCount }` | User confirms detected objects before generating lesson |
+| `scene_shortfall_shown` | `{ missing }` | Review shows that the photo lacks checkable objects, counts, adjectives or connections (`missing` is a comma-separated list) |
+| `scene_shortfall_add_clicked` | `{ kind }` | Learner chooses to add the missing kind of fact from the shortfall notice |
+| `scene_shortfall_new_photo` | `{ missing }` | Learner leaves a short scene to take or choose another photo |
 | `scene_analysis_retried` | `{ sessionId }` | User requests AI re-analysis of a photo |
 | `task_answer_checked` | `{ taskId, isCorrect, kind }` | Learner checks answer on an interactive exercise |
 | `task_completed` | `{ taskId, kind }` | Learner completes reading or informational task |

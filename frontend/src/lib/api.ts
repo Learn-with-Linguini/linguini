@@ -117,11 +117,14 @@ export class ApiError extends Error {
   readonly status: number;
   readonly code: string | null;
   readonly activeSessionId: string | null;
-  constructor(message: string, status: number, code: string | null, activeSessionId: string | null) {
+  /** The response's whole `detail` object, for codes that carry structured data. */
+  readonly detail: Record<string, unknown> | null;
+  constructor(message: string, status: number, code: string | null, activeSessionId: string | null, detail: Record<string, unknown> | null = null) {
     super(message);
     this.status = status;
     this.code = code;
     this.activeSessionId = activeSessionId;
+    this.detail = detail;
   }
 }
 
@@ -152,7 +155,8 @@ async function requestResponse(
     const message = typeof body?.detail?.message === "string" ? body.detail.message : "Request failed.";
     const code = typeof body?.detail?.code === "string" ? body.detail.code : null;
     const activeSessionId = typeof body?.detail?.activeSessionId === "string" ? body.detail.activeSessionId : null;
-    throw new ApiError(message, response.status, code, activeSessionId);
+    const detail = body?.detail && typeof body.detail === "object" && !Array.isArray(body.detail) ? body.detail as Record<string, unknown> : null;
+    throw new ApiError(message, response.status, code, activeSessionId, detail);
   }
   return response;
 }
@@ -493,9 +497,19 @@ export interface PracticeDetail {
   personalization?: SessionPersonalization | null;
   countedGroups?: CountedGroup[];
   missionGuidance?: string[];
+  /** Set when generation found nothing checkable and reopened the review. */
+  sceneShortfall?: SceneShortfall | null;
   provisionalMissionPlan?: MissionTaskFields[];
   suggestedSceneObjectIds?: string[];
   missionChoices?: MissionChoices | null;
+}
+export type ShortfallKind = "objects" | "counts" | "attributes" | "relations";
+export interface MissionShortfall {
+  missionId: string; title: string; missing: ShortfallKind[]; reasons: string[];
+}
+/** Confirmed facts a lesson still needs before any mission can be checked. */
+export interface SceneShortfall {
+  missing: ShortfallKind[]; missions: MissionShortfall[];
 }
 export interface SceneActionSuggestion {
   actionKey: string; action: string; sceneObjectIds: string[]; confidenceScore: number | string;

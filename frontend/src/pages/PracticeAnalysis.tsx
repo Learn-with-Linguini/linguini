@@ -7,11 +7,14 @@ import { AnalysisScan } from "../components/AnalysisScan";
 import { TranslationPreview } from "../components/TranslationPreview";
 import { SessionPersonalization } from "../components/SessionPersonalization";
 import { LeaveSession } from "../components/LeaveSession";
+import { SceneShortfallNotice } from "../components/SceneShortfallNotice";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { sessionDestination } from "../lib/sessionRoute";
 import { humanizeTerm } from "../lib/termLabel";
-import { type PracticeReview } from "../lib/api";
+import { abandonPractice, type PracticeReview, type ShortfallKind } from "../lib/api";
+import { friendlyError } from "../lib/queryKeys";
+import { SHORTFALL_ACTIONS } from "../lib/sceneShortfall";
 import { countGroups, objectCounts } from "../lib/countGroups";
 import { initiallyHiddenObjectIds, sceneReviewPanels, type SceneReviewPanel } from "../lib/sceneReview";
 import { trackAction } from "../lib/analytics.ts";
@@ -43,7 +46,7 @@ function relationLabel(relation: string) {
 export function PracticeAnalysis() {
   const navigate = useNavigate();
   const scene = useScene();
-  const { session, saveReview, practiceSaving, practiceError, practiceStalled, retryProcessing, retryAnalysis } = useAppState();
+  const { session, saveReview, reviewShortfall, practiceSaving, practiceError, practiceStalled, retryProcessing, retryAnalysis } = useAppState();
   const [removed, setRemoved] = useState<string[]>(() => {
     return initiallyHiddenObjectIds(
       (session?.sceneObjects ?? []).map(item => item.id),
@@ -68,7 +71,15 @@ export function PracticeAnalysis() {
   const [label, setLabel] = useState("");
   const [pending, setPending] = useState<{ label: string; id?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [leavingPhoto, setLeavingPhoto] = useState(false);
   const photoRef = useRef<HTMLDivElement>(null);
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const shortfallRef = useRef<HTMLDivElement>(null);
+  // A rejected review, or a generation that found nothing checkable, says what is short.
+  const shortfall = session?.session.status === "awaitingObjectReview"
+    ? reviewShortfall ?? session.sceneShortfall ?? null
+    : null;
+  const shortfallKey = shortfall?.missing.join(",") ?? "";
   const hydratedSessionId = useRef<string | null>(null);
   const base = `/practice/sessions/${scene.sessionId}`;
   useEffect(() => {
@@ -87,6 +98,11 @@ export function PracticeAnalysis() {
     setAttributeObjectId(session.sceneObjects[0]?.id ?? "");
     setSceneTitle(session.session.sessionTitle ?? scene.title);
   }, [scene.title, session]);
+  useEffect(() => {
+    if (!shortfallKey) return;
+    trackAction("scene_shortfall_shown", { missing: shortfallKey });
+    shortfallRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest" });
+  }, [shortfallKey]);
   useEffect(() => {
     if (!pending && !movingObjectId) return;
     const cancelOutside = (event: PointerEvent) => {
@@ -228,6 +244,27 @@ export function PracticeAnalysis() {
     setError(null);
     photoRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
   };
+  const addMissing = (kind: ShortfallKind) => {
+    trackAction("scene_shortfall_add_clicked", { kind });
+    setPanel(SHORTFALL_ACTIONS[kind].panel);
+    tabsRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    if (kind === "objects" || kind === "counts") requestAnimationFrame(() => document.getElementById("analysis-new-word")?.focus({ preventScroll: true }));
+  };
+  const tryAnotherPhoto = async () => {
+    if (leavingPhoto) return;
+    trackAction("scene_shortfall_new_photo", { missing: shortfallKey });
+    setLeavingPhoto(true); setError(null);
+    try {
+      // Nothing from this review was saved, so the session is left before choosing again.
+      await abandonPractice(session.session.id);
+      navigate("/practice", { replace: true, state: {
+        practiceNotice: "Take or choose a photo with a few objects you can count, describe or relate to each other.",
+      } });
+    } catch (reason) {
+      setError(friendlyError(reason));
+      setLeavingPhoto(false);
+    }
+  };
   const proceed = async () => {
     if (pending || practiceSaving || (!kept.length && !added.length)) return;
     const selectedAttributes = Object.fromEntries([...kept.map(item => item.id), ...added.map(item => item.id)]
@@ -267,7 +304,7 @@ export function PracticeAnalysis() {
           <ScenePhoto scene={scene} items={[...positionedKept, ...custom]} onLocationSelect={placementLabel ? place : undefined}
             locationLabel={placementLabel ? `Choose the location of ${placementLabel}` : undefined} />
         </div>
-        <div className="analysis-panel-tabs" role="tablist" aria-label="Scene analysis details">
+        <div ref={tabsRef} className="analysis-panel-tabs" role="tablist" aria-label="Scene analysis details">
           {panels.map(value => <button key={value} type="button" role="tab"
             aria-selected={panel === value} className={panel === value ? "is-active" : ""} onClick={() => setPanel(value)}>
             {value === "attributes" ? "Adjectives" : value[0].toUpperCase() + value.slice(1)}
@@ -395,8 +432,12 @@ export function PracticeAnalysis() {
             </form> : null}
           </Card>
         </section> : null}
+        {shortfall && !locked ? <div ref={shortfallRef}>
+          <SceneShortfallNotice shortfall={shortfall} busy={practiceSaving || leavingPhoto}
+            onAdd={addMissing} onTryAnotherPhoto={() => void tryAnotherPhoto()} />
+        </div> : null}
         {error || practiceError ? <p role="alert">{error ?? practiceError}</p> : null}
-        <Button block className="analysis-continue" disabled={practiceSaving || !!placementLabel || (!kept.length && !added.length)} onClick={() => void proceed()}>
+        <Button block className="analysis-continue" disabled={practiceSaving || leavingPhoto || !!placementLabel || (!kept.length && !added.length)} onClick={() => void proceed()}>
           {practiceSaving ? "Saving your review..." : "Confirm lesson facts"} <ArrowRightIcon />
         </Button>
       </div>

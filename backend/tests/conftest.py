@@ -24,3 +24,15 @@ def deterministic_upload_analyzer_for_existing_tests(request, monkeypatch):
         "_uploaded_fallback_analyzer",
         lambda self: DeterministicSceneAnalyzer(self.engine),
     )
+
+
+@pytest.fixture
+def regular_lesson(monkeypatch):
+    """Exercise the regular lesson, which only profiles without implemented missions use.
+
+    A mission profile rejects a scene no mission fits, so suites that confirm a thin
+    scene to test shared task machinery opt out of A1 missions with this fixture.
+    """
+    from app.services import mission_eligibility
+
+    monkeypatch.setitem(mission_eligibility.IMPLEMENTED_MISSIONS, "A1", ())

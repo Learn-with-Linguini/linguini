@@ -33,6 +33,9 @@ from app.schemas.journals import (
 from app.schemas.media import MediaAsset
 from app.schemas.vocabulary import UserVocabularyProgress, VocabularyEncounter, VocabularyItem
 
+# A thin scene is rejected on mission profiles; these tests cover the regular lesson.
+pytestmark = pytest.mark.usefixtures("regular_lesson")
+
 
 @pytest.fixture
 def context(database, monkeypatch):
