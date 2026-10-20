@@ -400,6 +400,8 @@ def scene_shortfall(
 
     A profile without implemented missions has nothing to check, so it is never short.
     """
+    from app.services.shortfall_steps import mission_steps
+
     if not candidates or plan_missions(
         candidates, objects, relations, counted_groups, (), mission_choices
     ):
@@ -429,6 +431,7 @@ def scene_shortfall(
                 "title": mission.title,
                 "missing": kinds,
                 "reasons": list(check.reasons),
+                "steps": mission_steps(mission, objects, relations, counted_groups, kinds),
             }
             for mission, check, kinds in actionable
         ),

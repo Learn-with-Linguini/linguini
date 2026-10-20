@@ -1,4 +1,4 @@
-import type { MissionShortfall, SceneShortfall, ShortfallKind } from "./api";
+import type { MissionShortfall, SceneShortfall, ShortfallKind, ShortfallStep } from "./api";
 import type { SceneReviewPanel } from "./sceneReview";
 
 export const SHORTFALL_KINDS: ShortfallKind[] = ["objects", "counts", "attributes", "relations"];
@@ -55,6 +55,11 @@ export function parseShortfall(value: unknown): SceneShortfall | null {
         title: row.title,
         missing: kinds(row.missing),
         reasons: Array.isArray(row.reasons) ? row.reasons.filter((reason): reason is string => typeof reason === "string") : [],
+        steps: Array.isArray(row.steps) ? row.steps.flatMap((step): ShortfallStep[] => {
+          const value = step as { kind?: unknown; text?: unknown } | null;
+          return value && isKind(value.kind) && typeof value.text === "string" && value.text.trim()
+            ? [{ kind: value.kind, text: value.text }] : [];
+        }) : [],
       }];
     })
     : [];
@@ -66,6 +71,13 @@ export function shortfallFromError(error: unknown): SceneShortfall | null {
   if (!error || typeof error !== "object") return null;
   const apiError = error as { code?: unknown; detail?: unknown };
   return apiError.code === "insufficient_scene" ? parseShortfall(apiError.detail) : null;
+}
+
+/** The specific things to add for one kind, from the closest missions, without repeats. */
+export function stepsFor(shortfall: SceneShortfall, kind: ShortfallKind, limit = 2): string[] {
+  const texts = closestMissions(shortfall).flatMap(mission => mission.steps)
+    .filter(step => step.kind === kind).map(step => step.text);
+  return [...new Set(texts)].slice(0, limit);
 }
 
 /** Missions that need only what the learner is asked to add, nearest first. */
