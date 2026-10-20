@@ -188,14 +188,16 @@ def lesson_missions(session_mode, profile, language_context=_CONTEXT_UNSET):
     if language_context is not None:
         # Missions with a pack implementation are pack-owned: ready versions are
         # planned and others are not offered, never replaced by the legacy builder.
-        # Missions without one keep their legacy implementation.
+        # Missions without one keep their legacy implementation. Packs bypass the
+        # legacy language gates but only offer missions implemented at this level.
         missions = [
             mission for mission in missions
             if not language_context.owns(mission.mission_id)
         ]
+        offered = {key[0] for key in IMPLEMENTED_MISSIONS.get(level, ())}
         ready = [
             mission for key in language_context.ready_missions_at(level)
-            if (mission := get_mission(*key)) is not None
+            if key[0] in offered and (mission := get_mission(*key)) is not None
         ]
         missions = [*ready, *missions]
     return missions
