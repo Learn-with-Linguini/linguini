@@ -168,9 +168,7 @@ export function Profile() {
             ? "Photo lessons and friend challenges are free to start during the beta."
             : tier.allowance}</p>
         </Card>
-      </section>
-
-      <MissionBadges />
+      </section>     
 
       <section className="profile-section">
         <h2>Learning setup</h2>
@@ -311,6 +309,8 @@ export function Profile() {
           )}
         </Card>
       </section>
+
+      <MissionBadges />
 
       <section className="profile-section">
         <h2>Permissions</h2>
