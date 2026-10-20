@@ -33,6 +33,9 @@ def pack_fingerprint(
     construction_ids: list[str],
     generation_version: str,
 ) -> dict[str, Any]:
+    from .proposals import PROPOSAL_VERSION, REVIEW_VERSION
+    from .validators import STRUCTURE_VERSION, validator_versions
+
     return {
         "format_version": pack.format_version,
         "pack_id": pack.pack_id,
@@ -46,6 +49,11 @@ def pack_fingerprint(
         },
         "guidance_sha256": guidance_sha256(pack, construction_ids),
         "generation_version": generation_version,
+        "lexical": pack.lexical,
+        "structure_version": STRUCTURE_VERSION,
+        "proposal_version": PROPOSAL_VERSION,
+        "content_review_version": REVIEW_VERSION,
+        "validator_versions": validator_versions(pack.language.code, pack),
     }
 
 
@@ -54,6 +62,8 @@ def language_pack_feature_version(
     generation_version: str,
     fingerprint: dict[str, Any],
 ) -> FeatureVersion:
+    from .validators import STRUCTURE_VERSION
+
     cache_hash = hashlib.sha256(
         _canonical_json(
             {
@@ -64,6 +74,6 @@ def language_pack_feature_version(
     return FeatureVersion(
         feature=feature,
         prompt_version=f"{generation_version}.{cache_hash}",
-        schema_version="language-pack-contract.v1",
-        validator_version="language-pack-structure.v1",
+        schema_version="language-pack-contract.v3",
+        validator_version=STRUCTURE_VERSION,
     )

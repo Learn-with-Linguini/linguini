@@ -159,17 +159,22 @@ REVIEWED_POSITIONS = {
 }
 
 
-def lesson_missions(session_mode, profile):
+_CONTEXT_UNSET = object()
+
+
+def lesson_missions(session_mode, profile, language_context=_CONTEXT_UNSET):
     """Implemented missions a new lesson may plan from; empty keeps the existing lesson path."""
     if session_mode != SessionMode.LESSON:
         return []
+    if language_context is _CONTEXT_UNSET:
+        from app.language_packs.context import operation_context
+
+        language_context = operation_context(session_mode, profile)
     level = str(profile["proficiency_level"] or "").strip().upper()
     languages = LEVEL_LANGUAGES.get(level, MISSION_LANGUAGES)
     language = profile["target_language_code"].lower()
-    if language not in languages:
-        return []
-    keys = IMPLEMENTED_MISSIONS.get(level, ())
-    return [
+    keys = IMPLEMENTED_MISSIONS.get(level, ()) if language in languages else ()
+    missions = [
         mission for key in keys
         if (mission := get_mission(*key)) is not None
         and (
@@ -180,10 +185,18 @@ def lesson_missions(session_mode, profile):
             else True
         )
     ]
+    if language_context is not None:
+        missions = [mission for mission in missions if mission.mission_id != "M01"]
+        if level in language_context.ready_levels:
+            mission = get_mission("M01", level, 1)
+            if mission is not None:
+                missions.insert(0, mission)
+    return missions
 
 
 def plan_missions(
     candidates, objects, relations, counted_groups=(), history=(), mission_choices=None,
+    language_context=None,
 ):
     """Select least-planned eligible missions, returning them in catalogue order."""
     if not candidates:
@@ -191,7 +204,7 @@ def plan_missions(
     eligible = [
         mission for mission in candidates
         if photo_eligibility(
-            mission, objects, relations, counted_groups, mission_choices
+            mission, objects, relations, counted_groups, mission_choices, language_context
         ).eligible
     ]
     counts = Counter(history)
@@ -231,14 +244,14 @@ def suggested_counted_groups(objects):
     return list(groups.values())
 
 
-def provisional_mission_focus(candidates, objects, relations):
+def provisional_mission_focus(candidates, objects, relations, language_context=None):
     """Mission candidates and the smallest suggested fact set worth confirming.
 
     The return value is presentation guidance over unconfirmed model output. It
     must never be used as the final mission plan or grading evidence.
     """
     counts = suggested_counted_groups(objects)
-    plan = plan_missions(candidates, objects, relations, counts)
+    plan = plan_missions(candidates, objects, relations, counts, language_context=language_context)
     if candidates and str(candidates[0].practice_level) == "A0":
         planned_keys = {
             (mission.mission_id, str(mission.practice_level), mission.content_version)
@@ -275,7 +288,9 @@ def provisional_mission_focus(candidates, objects, relations):
             seen = set()
             for obj in objects:
                 label = obj.label.strip().casefold()
-                if label not in seen and confirmed_colour(obj):
+                has_detail = (scene_attributes(obj) if language_context is not None
+                              and mission.mission_id == "M01" else confirmed_colour(obj))
+                if label not in seen and has_detail:
                     add(obj.id)
                     seen.add(label)
                     if len(seen) >= requirements.min_coloured_objects:
@@ -423,9 +438,11 @@ def attribute_contrasts(kind, value):
 
 def photo_eligibility(
     mission, objects, relations=(), counted_groups=(), mission_choices=None,
+    language_context=None,
 ):
     """Check only the confirmed facts this mission's photo requirements name."""
     requirements = mission.photo_requirements
+    pack_m01 = language_context is not None and mission.mission_id == "M01"
     labels = {obj.label.strip().casefold() for obj in objects}
     reasons = []
     if len(labels) < requirements.min_confirmed_objects:
@@ -433,7 +450,8 @@ def photo_eligibility(
             f"Confirm at least {requirements.min_confirmed_objects} different objects."
         )
     # ``min_coloured_objects`` counts objects with any reviewed attribute, colour or other.
-    described = {obj.label.strip().casefold() for obj in objects if confirmed_attributes(obj)}
+    described = {obj.label.strip().casefold() for obj in objects
+                 if (scene_attributes(obj) if pack_m01 else confirmed_attributes(obj))}
     if len(described) < requirements.min_coloured_objects:
         reasons.append(
             "Confirm a colour, size, shape, material, pattern or state of at least one object."
@@ -452,15 +470,29 @@ def photo_eligibility(
             f"Count a group of {requirements.min_quantity} to {requirements.max_quantity} "
             "matching objects."
         )
-    if requirements.eligibility_rule:
+    if requirements.eligibility_rule and not pack_m01:
         from app.services.mission_eligibility_a2 import eligibility_reasons
 
         reasons.extend(eligibility_reasons(
             requirements.eligibility_rule, mission, objects, relations, counted_groups,
         ))
-    if str(mission.practice_level) == "A0":
+    if pack_m01 and str(mission.practice_level) == "A2" and not (
+        described or confirmed_relations(mission, objects, relations)
+    ):
+        reasons.append("Confirm an object detail or relation for the scene description.")
+    if str(mission.practice_level) == "A0" and not pack_m01:
         reasons += a0_photo_reasons(mission, objects, counted_groups, mission_choices)
     return Eligibility(not reasons, tuple(reasons))
+
+
+def scene_attributes(obj):
+    """Confirmed scene semantics, independent of a finite language dictionary."""
+    return [(key, {"color": "colour"}.get(key.casefold(), key.casefold()), value.strip())
+            for key, value in (obj.attributes or {}).items()
+            if key.casefold() in {
+                "colour", "color", "size", "shape", "material", "pattern", "state",
+            }
+            and isinstance(value, str) and value.strip()]
 
 
 def _choice_value(choice, name):

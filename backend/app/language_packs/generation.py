@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+import re
 from collections.abc import Sequence
 from typing import Annotated, Literal, Protocol
 from unicodedata import normalize
 from uuid import UUID
 
-from pydantic import Field, model_validator
+from pydantic import Field, StringConstraints, model_validator
 
 from app.ai.features.learning_tasks.mission import fold, tokens
 from app.schemas.base import ApiModel, NonEmptyText
@@ -27,12 +28,18 @@ from .schema import (
 type LinguisticValue = str | bool | int | list[str]
 type LinguisticMetadata = dict[ContractId, LinguisticValue]
 type SceneAttributeKind = Literal["colour", "size", "shape", "material", "pattern", "state"]
-type VocabularyProvenance = Literal["reviewedLexicon", "catalog", "sessionTranslation"]
+type VocabularyProvenance = Literal[
+    "reviewedLexicon", "catalog", "sessionTranslation", "packData", "modelProposal",
+]
 type CandidateOrigin = Literal["model", "reviewedForm", "manual"]
 type AdjectivePosition = Literal["before", "after"]
 type AssessmentStatus = Literal[
-    "notAssessed", "unreviewedExample", "reviewedForm",
-    "languageValidator", "humanApproved",
+    "notAssessed",
+    "unreviewedExample",
+    "reviewedForm",
+    "languageValidator",
+    "humanApproved",
+    "modelAssessed",
 ]
 
 
@@ -136,6 +143,11 @@ class BoundSceneFacts(ApiModel):
 
 
 class ApprovedTerm(ApiModel):
+    """Historical contract name for reference terms; provenance records review status.
+
+    modelProposal entries are unreviewed candidates and require contextual assessment.
+    Membership in this container never establishes linguistic correctness.
+    """
     term_id: ContractId
     fact_id: NonEmptyText
     source_text: NonEmptyText
@@ -179,10 +191,18 @@ class TermUse(ApiModel):
     role: str | None = None
 
 
+class RomanizedSpan(ApiModel):
+    """A generated native span and its Latin spelling, including joining whitespace."""
+
+    native: Annotated[str, StringConstraints(strip_whitespace=False, min_length=1)]
+    latin: Annotated[str, StringConstraints(strip_whitespace=False, min_length=1)]
+
+
 class CandidateSentence(ApiModel):
     slot_id: NonEmptyText
     spec_id: NonEmptyText | None = None
     spec_use: NonEmptyText | None = None
+    truth: bool | None = None
     construction_id: ContractId
     text: NonEmptyText
     translation: NonEmptyText | None = None
@@ -190,6 +210,12 @@ class CandidateSentence(ApiModel):
     term_uses: list[TermUse] = Field(default_factory=list)
     label_uses: list[ContractId] = Field(default_factory=list)
     origin: CandidateOrigin
+    romanization: list[RomanizedSpan] = Field(default_factory=list)
+    support_romanizations: list[RomanizedSpan] = Field(default_factory=list)
+    # Unreviewed realization claims, checked semantically before sentence acceptance.
+    proposed_realizations: bool = False
+    # Parser diagnostics remain candidate failures so bounded repair can fix them.
+    validation_issues: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_nfc(self) -> CandidateSentence:
@@ -290,7 +316,7 @@ def check_deterministic(
     slot = next((item for item in plan.slots if item.slot_id == candidate.slot_id), None)
     by_term = {term.term_id: term for term in vocabulary.terms}
     by_label = {label.semantic: label for label in pack.labels}
-    failures = []
+    failures = list(candidate.validation_issues)
 
     unknown_slot = slot is None
     if unknown_slot:
@@ -298,10 +324,7 @@ def check_deterministic(
     spec = None
     if slot is not None:
         spec = next(
-            (
-                item for item in slot.specs
-                if item.spec_id == (candidate.spec_id or slot.slot_id)
-            ),
+            (item for item in slot.specs if item.spec_id == (candidate.spec_id or slot.slot_id)),
             None,
         )
         if spec is None and len(slot.specs) == 1:
@@ -315,10 +338,7 @@ def check_deterministic(
         failures.append("construction does not match plan slot")
 
     construction = next(
-        (
-            item for item in pack.constructions
-            if item.construction_id == candidate.construction_id
-        ),
+        (item for item in pack.constructions if item.construction_id == candidate.construction_id),
         None,
     )
     expected_bindings = dict(spec.bindings) if spec is not None else {}
@@ -330,17 +350,42 @@ def check_deterministic(
                 expected_bindings[role] = term.fact_id
                 counterfactual_ids.add(term.fact_id)
     fact_references_valid = not (
-        set(expected_bindings.values())
-        - (facts.all_fact_ids | counterfactual_ids)
+        set(expected_bindings.values()) - (facts.all_fact_ids | counterfactual_ids)
     )
     if not fact_references_valid:
         failures.append("fact reference is not present in bound scene facts")
+    bound_object = (
+        expected_bindings.get("object")
+        or expected_bindings.get("subject")
+        or expected_bindings.get("first")
+    )
+    bound_attribute = expected_bindings.get("attribute")
+    if bound_attribute and "attribute" not in (spec.counterfactual if spec else {}):
+        attribute = next(
+            (a for a in facts.scene_facts.attributes if a.fact_id == bound_attribute), None
+        )
+        if attribute is None or attribute.object_fact_id != bound_object:
+            failures.append("attribute binding belongs to another object instance")
+    bound_relation = expected_bindings.get("relation")
+    if bound_relation and "relation" not in (spec.counterfactual if spec else {}):
+        relation = next(
+            (r for r in facts.scene_facts.relations if r.fact_id == bound_relation), None
+        )
+        if relation is None or (
+            relation.subject_fact_id != expected_bindings.get("subject", bound_object)
+            or relation.reference_fact_id != expected_bindings.get("reference")
+        ):
+            failures.append("relation binding does not match its subject and reference instances")
 
     derived_uses = infer_term_uses(
-        candidate.text, vocabulary, preferred_fact_ids=set(expected_bindings.values())
+        candidate.text,
+        vocabulary,
+        preferred_fact_ids={fact for role, fact in expected_bindings.items() if role != "shown"},
     )
     term_references_valid = all(
-        item.term_id in by_term and by_term[item.term_id].fact_id == item.fact_id
+        item.term_id in by_term
+        and by_term[item.term_id].fact_id == item.fact_id
+        and (item.role not in expected_bindings or expected_bindings[item.role] == item.fact_id)
         for item in candidate.term_uses
     )
     if not term_references_valid:
@@ -355,11 +400,32 @@ def check_deterministic(
         )
         for use in candidate.term_uses
     )
-    if not term_surfaces_present:
+    term_surfaces_are_reviewed = not candidate.proposed_realizations and all(
+        by_term[use.term_id].provenance in {"reviewedLexicon", "catalog"}
+        for use in candidate.term_uses if use.term_id in by_term
+    )
+    if not term_surfaces_present and not candidate.proposed_realizations:
         failures.append("candidate term claim is not a reviewed form")
+    if candidate.proposed_realizations:
+        claimed = [
+            use for use in candidate.term_uses
+            if use.term_id in by_term and use.fact_id == by_term[use.term_id].fact_id
+            and fold(use.surface) in fold(candidate.text)
+        ]
+        if len(claimed) != len(candidate.term_uses):
+            failures.append("proposed realization must occur in the candidate sentence")
+        # Identity is anchored mechanically; semantic equivalence is model-assessed,
+        # never established by a realization claim or membership in a word list.
+        derived_uses = [*derived_uses, *claimed]
 
     if spec is not None and construction is not None:
         expected_roles = construction.roles
+        if spec.use == "followup":
+            # A detail question names its subject; the answer's bound detail is
+            # context, and must not be leaked in the question.
+            expected_roles = {
+                role: pos for role, pos in expected_roles.items() if role in {"object", "subject"}
+            }
         if candidate.construction_id == "yes-no-identification":
             expected_roles = {"object": "noun"}
         allowed_fact_ids = set(expected_bindings.values())
@@ -368,30 +434,48 @@ def check_deterministic(
             if expected_pos is None:
                 continue
             realized = [
-                use for use in derived_uses
+                use
+                for use in derived_uses
                 if use.fact_id == fact_id_value
-                and str(getattr(by_term[use.term_id].part_of_speech, "value",
-                                by_term[use.term_id].part_of_speech))
+                and str(
+                    getattr(
+                        by_term[use.term_id].part_of_speech,
+                        "value",
+                        by_term[use.term_id].part_of_speech,
+                    )
+                )
                 == expected_pos
             ]
             if not realized:
                 found = [
-                    use for use in derived_uses
-                    if str(getattr(by_term[use.term_id].part_of_speech, "value",
-                                   by_term[use.term_id].part_of_speech))
+                    use
+                    for use in derived_uses
+                    if str(
+                        getattr(
+                            by_term[use.term_id].part_of_speech,
+                            "value",
+                            by_term[use.term_id].part_of_speech,
+                        )
+                    )
                     == expected_pos
                 ]
                 found_facts = sorted({use.fact_id for use in found})
                 failures.append(
-                    f"role {role!r} expects {fact_id_value!r}; "
-                    f"found facts {found_facts or 'none'}"
+                    f"role {role!r} expects {fact_id_value!r}; found facts {found_facts or 'none'}"
                 )
         expected_pos = set(expected_roles.values())
         unbound = [
-            use for use in derived_uses
+            use
+            for use in derived_uses
             if use.fact_id not in allowed_fact_ids
-            and str(getattr(by_term[use.term_id].part_of_speech, "value",
-                            by_term[use.term_id].part_of_speech)) in expected_pos
+            and str(
+                getattr(
+                    by_term[use.term_id].part_of_speech,
+                    "value",
+                    by_term[use.term_id].part_of_speech,
+                )
+            )
+            in expected_pos
         ]
         if unbound:
             failures.append(
@@ -417,18 +501,11 @@ def check_deterministic(
             ):
                 failures.append("yes/no answer must name the shown object")
 
-    if (
-        spec is not None
-        and candidate.construction_id == "scene-existence"
-        and not spec.truth
-        and not fold(candidate.text).startswith("no hay ")
-    ):
-        failures.append("false scene-existence sentence must be negated")
-
     slot_sentence_labels = set(slot.sentence_labels) if slot is not None else set()
     expected_labels = set(spec.labels) if spec is not None else set()
     found_labels = {
-        semantic for semantic, label in by_label.items()
+        semantic
+        for semantic, label in by_label.items()
         if semantic in slot_sentence_labels
         and label.usage == "sentence"
         and _fixed_label_occurs(candidate.text, label.text, semantic)
@@ -455,6 +532,12 @@ def check_deterministic(
     )
     if not chunks_reconstruct:
         failures.append("chunks do not reconstruct candidate text")
+    if not candidate.chunks:
+        try:
+            derive_chunks(candidate, pack.language.word_separator)
+        except ValueError:
+            chunks_reconstruct = False
+            failures.append("sentence cannot be reconstructed by derived chunks")
     text_is_nfc = (
         normalize("NFC", candidate.text) == candidate.text
         and all(normalize("NFC", chunk.text) == chunk.text for chunk in candidate.chunks)
@@ -462,6 +545,19 @@ def check_deterministic(
     )
     if not text_is_nfc:
         failures.append("candidate text, chunk, or term surface is not NFC")
+    if candidate.romanization or pack.language.romanization_required:
+        from unicodedata import name
+
+        if (
+            not candidate.romanization
+            or "".join(span.native for span in candidate.romanization) != candidate.text
+        ):
+            failures.append("romanization must align exactly with the complete native sentence")
+        for span in [*candidate.romanization, *candidate.support_romanizations]:
+            if any(char.isalpha() and "LATIN" not in name(char, "") for char in span.latin):
+                failures.append("romanization spelling must use Latin letters")
+            if normalize("NFC", span.latin) != span.latin:
+                failures.append("romanization must be NFC")
 
     return DeterministicReport(
         unknown_slot=unknown_slot,
@@ -478,9 +574,6 @@ def check_deterministic(
     )
 
 
-_ARTICLES = {"el", "la", "los", "las", "un", "una", "unos", "unas"}
-
-
 def infer_term_uses(
     text: str,
     vocabulary: ApprovedVocabulary,
@@ -490,31 +583,45 @@ def infer_term_uses(
     sentence_tokens = [fold(token).strip("¿¡«»") for token in tokens(text)]
     matches: dict[int, list[tuple[int, ApprovedTerm, str]]] = {}
     for term in vocabulary.terms:
-        surfaces = dict.fromkeys([*term.forms, *term.forms_by_key.values()])
+        surfaces = dict.fromkeys(
+            [
+                *term.forms,
+                *(
+                    value
+                    for key, value in term.forms_by_key.items()
+                    if not key.startswith("article")
+                ),
+            ]
+        )
+        articles = {v for k, v in term.forms_by_key.items() if k.startswith("article")}
         for surface in surfaces:
             surface_tokens = [fold(token).strip("¿¡«»") for token in tokens(surface)]
             surface_tokens = [token for token in surface_tokens if token]
-            if not surface_tokens or (
-                len(surface_tokens) == 1 and surface_tokens[0] in _ARTICLES
-            ):
+            if not surface_tokens or (surface in articles):
                 continue
             width = len(surface_tokens)
             for start in range(len(sentence_tokens) - width + 1):
-                if sentence_tokens[start:start + width] == surface_tokens:
+                if sentence_tokens[start : start + width] == surface_tokens:
                     matches.setdefault(start, []).append((width, term, surface))
     selected: dict[tuple[str, int], tuple[int, ApprovedTerm, str]] = {}
-    for start, options in matches.items():
+    occupied_until = 0
+    used_facts = set()
+    for start, options in sorted(matches.items()):
+        if start < occupied_until:
+            continue
         longest = max(item[0] for item in options)
         best = [item for item in options if item[0] == longest]
         preferred = [
-            item for item in best
-            if preferred_fact_ids and item[1].fact_id in preferred_fact_ids
+            item for item in best if preferred_fact_ids and item[1].fact_id in preferred_fact_ids
         ]
+        unused = [item for item in preferred if item[1].fact_id not in used_facts]
         width, term, surface = sorted(
-            preferred or best,
+            unused or preferred or best,
             key=lambda item: (item[1].term_id, item[2]),
         )[0]
         selected[(term.term_id, start)] = (width, term, surface)
+        occupied_until = start + width
+        used_facts.add(term.fact_id)
     by_fact: dict[str, tuple[int, ApprovedTerm, str]] = {}
     for (_term_id, _start), option in selected.items():
         width, term, surface = option
@@ -541,31 +648,63 @@ def derive_chunks(
     word_separator: WordSeparator,
     *,
     phrase_chunks: bool = False,
+    phrase_boundaries: Sequence[str] = (),
 ) -> CandidateSentence:
+    # Keep punctuation, combining marks and script characters exactly as generated.
+    # Phrase tiles group sentences, independently of a language's conjunctions.
+    pattern = r"[^\s.,!?;:'’]+['’]?|[.,!?;:]"
+    matches = list(re.finditer(pattern, candidate.text))
     if phrase_chunks:
-        from app.services.mission_lessons_a2 import _phrase_chunks
-
-        chunks = _phrase_chunks(candidate.text, "es")
+        grouped, current = [], []
+        boundaries = {value.casefold() for value in phrase_boundaries}
+        for match in matches:
+            if (
+                match.group() in {".", ",", "?", "!", ";", ":"}
+                or match.group().casefold() in boundaries
+            ):
+                if current:
+                    grouped.append((current[0].start(), current[-1].end()))
+                    current = []
+                grouped.append((match.start(), match.end()))
+            else:
+                current.append(match)
+        if current:
+            grouped.append((current[0].start(), current[-1].end()))
+        spans = grouped
     else:
-        chunks = tokens(candidate.text)
-    punctuation = {".", ",", "?", "!", ";", ":"}
-    sentence_chunks = [
-        SentenceChunk(
-            text=chunk,
-            join="none" if index == 0 or chunk in punctuation else "space",
+        spans = [(match.start(), match.end()) for match in matches]
+    if candidate.romanization and not phrase_chunks:
+        spans = []
+        offset = 0
+        for span in candidate.romanization:
+            start = offset + len(span.native) - len(span.native.lstrip())
+            stop = offset + len(span.native.rstrip())
+            if stop > start:
+                spans.append((start, stop))
+            offset += len(span.native)
+    sentence_chunks = []
+    end = 0
+    for start, stop in spans:
+        gap = candidate.text[end:start]
+        if gap not in {"", " "}:
+            raise ValueError("sentence spacing cannot be represented by tiles")
+        sentence_chunks.append(
+            SentenceChunk(text=candidate.text[start:stop], join="space" if gap else "none")
         )
-        for index, chunk in enumerate(chunks)
-    ]
+        end = stop
     if join_chunks(sentence_chunks, word_separator) != candidate.text:
         raise ValueError("derived chunks do not reconstruct candidate text")
     return candidate.model_copy(update={"chunks": sentence_chunks})
 
 
-def assess(candidate: CandidateSentence, pack: LanguagePack) -> LinguisticAssessment:
+def assess(
+    candidate: CandidateSentence,
+    pack: LanguagePack,
+    vocabulary: ApprovedVocabulary | None = None,
+) -> LinguisticAssessment:
     matched_example = None
     construction = next(
-        (item for item in pack.constructions
-         if item.construction_id == candidate.construction_id),
+        (item for item in pack.constructions if item.construction_id == candidate.construction_id),
         None,
     )
     if construction is not None:
@@ -575,10 +714,7 @@ def assess(candidate: CandidateSentence, pack: LanguagePack) -> LinguisticAssess
             if candidate.text in {example.sentence, *example.accepted_alternatives}
         ]
         reviewed = next(
-            (
-                example for example in matched
-                if example.provenance.review_status == "humanReviewed"
-            ),
+            (example for example in matched if example.provenance.review_status == "humanReviewed"),
             None,
         )
         if reviewed is not None:
@@ -590,7 +726,12 @@ def assess(candidate: CandidateSentence, pack: LanguagePack) -> LinguisticAssess
             )
         matched_example = matched[0] if matched else None
 
-    validator = _VALIDATORS.get((pack.language.code, candidate.construction_id))
+    if vocabulary is not None:
+        from .validators import select_validator
+
+        validator = select_validator(pack.language.code, vocabulary, pack)
+    else:
+        validator = _VALIDATORS.get((pack.language.code, candidate.construction_id))
     if validator is None:
         return LinguisticAssessment(
             status="notAssessed",
@@ -601,6 +742,14 @@ def assess(candidate: CandidateSentence, pack: LanguagePack) -> LinguisticAssess
             ),
         )
     result = validator.validate(candidate, pack)
+    if candidate.proposed_realizations:
+        return LinguisticAssessment(
+            status="notAssessed", validator_id=validator.validator_id,
+            passed=False if not result.passed else None,
+            messages=result.messages or [
+                "Proposed language requires contextual content assessment.",
+            ],
+        )
     return LinguisticAssessment(
         status="languageValidator",
         validator_id=validator.validator_id,
@@ -627,6 +776,8 @@ def approve(
         deterministic = check_deterministic(candidate, plan, facts, vocabulary, pack)
         assessment = assess(candidate, pack)
         reasons = list(deterministic.failures)
+        if candidate.proposed_realizations:
+            reasons.append("Proposed language requires the contextual content-assessment pipeline")
         allowed_status = assessment.status in {
             "reviewedForm", "humanApproved",
         } or (assessment.status == "languageValidator" and assessment.passed is True)
@@ -634,7 +785,7 @@ def approve(
             allowed_status = True
         if not allowed_status:
             reasons.extend(assessment.messages or [f"assessment status is {assessment.status}"])
-        if deterministic.passed and allowed_status:
+        if deterministic.passed and allowed_status and not candidate.proposed_realizations:
             accepted_candidate = derive_chunks(
                 candidate,
                 pack.language.word_separator,

@@ -7,6 +7,7 @@ import tomllib
 from collections.abc import Sequence
 from dataclasses import dataclass
 from functools import cache
+from glob import glob, has_magic
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from unicodedata import normalize
 
@@ -590,11 +591,12 @@ def guidance_for_slot(
 
 
 @cache
-def _load_packs_for_roots(root_paths: tuple[str, ...]) -> PackSet:
+def _load_packs_for_roots(root_paths: tuple[str, ...], revision=()) -> PackSet:
     if not root_paths:
         return PackSet()
     packs = []
     seen_pack_ids: set[str] = set()
+    seen_files: set[Path] = set()
     load_mission_catalog()
     for root_text in root_paths:
         root = Path(root_text)
@@ -610,6 +612,9 @@ def _load_packs_for_roots(root_paths: tuple[str, ...]) -> PackSet:
                 continue
             if not pack_file.resolve().is_relative_to(root):
                 raise LanguagePackError(pack_file, "/", "pack file escapes the configured root")
+            if pack_file.resolve() in seen_files:
+                continue
+            seen_files.add(pack_file.resolve())
             pack = load_pack(pack_file)
             _validate_pack_directory(pack, pack_file, root)
             if pack.pack_id in seen_pack_ids:
@@ -623,5 +628,19 @@ def _load_packs_for_roots(root_paths: tuple[str, ...]) -> PackSet:
 
 def load_packs(roots: Sequence[Path] | None = None) -> PackSet:
     selected_roots = get_language_pack_dirs() if roots is None else roots
-    resolved = tuple(str(Path(root).expanduser().resolve()) for root in selected_roots)
-    return _load_packs_for_roots(resolved)
+    expanded = []
+    for root in selected_roots:
+        pattern = str(Path(root).expanduser())
+        matches = sorted(glob(pattern, recursive=True)) if has_magic(pattern) else [pattern]
+        if not matches:
+            raise LanguagePackError(root, "/", "pack root pattern matched no paths")
+        if has_magic(pattern) and not any(Path(match).is_dir() for match in matches):
+            raise LanguagePackError(root, "/", "pack root pattern matched no directories")
+        for match in matches:
+            if has_magic(pattern) and not Path(match).is_dir():
+                continue
+            expanded.append(str(Path(match).resolve()))
+    resolved = tuple(dict.fromkeys(expanded))
+    revision = tuple((str(path), path.stat().st_mtime_ns, path.stat().st_size)
+                     for root in resolved for path in sorted(Path(root).rglob("*.toml")))
+    return _load_packs_for_roots(resolved, revision)

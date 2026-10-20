@@ -1,5 +1,6 @@
 export const queryKeys = {
   account: ["account"] as const,
+  practiceLanguages: ["practice-languages"] as const,
   scenes: ["scenes"] as const,
   vocabulary: (profileId: string) => ["vocabulary", profileId] as const,
   progress: (profileId: string) => ["progress", profileId] as const,

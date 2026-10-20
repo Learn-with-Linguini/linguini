@@ -10,6 +10,16 @@ from pydantic import Field, field_validator, model_validator
 
 from app.schemas.base import ApiModel, EntityModel, LanguageCode, NonEmptyText
 from app.schemas.enums import AccountTier, PreferredInputMode, ProficiencyLevel
+from app.schemas.language_context import LanguageDisplayContext
+
+
+class PackPracticeLanguage(ApiModel):
+    code: LanguageCode
+    levels: list[ProficiencyLevel]
+    experimental: bool
+    language_context: LanguageDisplayContext | None = Field(
+        default=None, exclude_if=lambda v: v is None,
+    )
 
 
 def _validate_timezone(value: str | None) -> str | None:

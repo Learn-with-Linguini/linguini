@@ -30,6 +30,8 @@ from app.ai.contracts.errors import ProviderError, ProviderErrorCode
 from app.ai.contracts.schema import build_strict_json_schema
 from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelRequest
 from app.ai.features.translation.prompt import (
+    PACK_TRANSLATION_PROMPT_VERSION,
+    PACK_TRANSLATION_SYSTEM_PROMPT,
     SCENE_TRANSLATION_PROMPT_VERSION,
     SCENE_TRANSLATION_SCHEMA_VERSION,
     SCENE_TRANSLATION_SYSTEM_PROMPT,
@@ -59,9 +61,17 @@ _VERSION = FeatureVersion(
 )
 
 
-def build_scene_translation_schema() -> dict[str, Any]:
+def build_scene_translation_schema(pack=False) -> dict[str, Any]:
     """Strict JSON schema for the shared translation output contract."""
-    return build_strict_json_schema(SceneTranslationResult)
+    schema = build_strict_json_schema(SceneTranslationResult)
+    if not pack:
+        for field in schema["properties"].values():
+            item = field.get("items", {})
+            for key in ("nativeDisplay", "romanization"):
+                item.get("properties", {}).pop(key, None)
+                if key in item.get("required", []):
+                    item["required"].remove(key)
+    return schema
 
 
 def _compact_request(
@@ -145,6 +155,7 @@ class SceneTranslationService:
     def translate(
         self, payload: dict[str, Any], *, cache_scope: CacheScope | None = None,
         templates: TemplateSet | None = None,
+        language_context=None,
     ) -> SceneTranslationResult:
         """Translate ``payload``; ``cache_scope=None`` bypasses the result cache."""
         try:
@@ -154,39 +165,55 @@ class SceneTranslationService:
                 "Translation request payload is invalid."
             ) from error
 
+        if (language_context is not None
+                and parsed_payload.target_language.casefold()
+                != language_context.display.language_code.casefold()):
+            raise SceneTranslationError("Translation language does not match the resolved pack.")
+
         def decode(data: Any) -> SceneTranslationResult:
-            result = normalize_object_articles(
-                SceneTranslationResult.model_validate(data), parsed_payload.target_language
-            )
-            validate_translation_terms(parsed_payload, result)
+            result = SceneTranslationResult.model_validate(data)
+            if language_context is None:
+                result = normalize_object_articles(result, parsed_payload.target_language)
+            validate_translation_terms(parsed_payload, result, language_context)
             return result
 
         try:
             return run_cached(
                 self._cache,
                 self._client,
-                version=_VERSION,
+                version=_VERSION if language_context is None else FeatureVersion(
+                    AiFeature.SCENE_TRANSLATION.value, PACK_TRANSLATION_PROMPT_VERSION,
+                    "pack-translation-result.v1", "pack-translation-validator.v1",
+                ),
                 scope=cache_scope,
-                payload=payload,
-                compute=lambda: self._generate(payload, parsed_payload),
+                payload=payload if language_context is None else {
+                    **payload, "languageContext": language_context.translation_guidance(),
+                },
+                compute=lambda: self._generate(payload, parsed_payload, language_context),
                 decode=decode,
-                templates=templates,
+                templates=templates if language_context is None else None,
             )
         except CacheWaitTimeout as error:
             raise SceneTranslationError("Scene translation failed.") from error
 
     def _generate(
-        self, payload: dict[str, Any], parsed_payload: SceneTranslationRequest
+        self, payload: dict[str, Any], parsed_payload: SceneTranslationRequest,
+        language_context=None,
     ) -> Generated[SceneTranslationResult]:
         compact_payload, representatives = _compact_request(payload)
         compact_request = SceneTranslationRequest.model_validate(compact_payload)
-        content = json.dumps(compact_payload, ensure_ascii=False)
+        content = json.dumps(compact_payload if language_context is None else {
+            **compact_payload, "language_context": language_context.translation_guidance(),
+        }, ensure_ascii=False)
         request = TextModelRequest(
-            system_prompt=SCENE_TRANSLATION_SYSTEM_PROMPT,
+            system_prompt=SCENE_TRANSLATION_SYSTEM_PROMPT if language_context is None
+            else PACK_TRANSLATION_SYSTEM_PROMPT,
             user_content=content,
             json_schema_name="scene_translation_v1",
-            json_schema=self._json_schema,
-            prompt_version=SCENE_TRANSLATION_PROMPT_VERSION,
+            json_schema=self._json_schema if language_context is None
+            else build_scene_translation_schema(pack=True),
+            prompt_version=SCENE_TRANSLATION_PROMPT_VERSION if language_context is None
+            else PACK_TRANSLATION_PROMPT_VERSION,
         )
 
         attempts = 1 + self._config.max_retries
@@ -197,8 +224,9 @@ class SceneTranslationService:
             feature=AiFeature.SCENE_TRANSLATION.value,
             provider=self._provider,
             model=self._config.model_name,
-            prompt_version=SCENE_TRANSLATION_PROMPT_VERSION,
-            schema_version=SCENE_TRANSLATION_SCHEMA_VERSION,
+            prompt_version=request.prompt_version,
+            schema_version=SCENE_TRANSLATION_SCHEMA_VERSION if language_context is None
+            else "pack-translation-result.v1",
             model_parameters={
                 "maxOutputTokens": self._config.max_output_tokens,
                 "timeoutSeconds": self._config.timeout_seconds,
@@ -225,11 +253,14 @@ class SceneTranslationService:
                 latency_ms += (time.perf_counter() - call_start) * 1000
 
                 try:
-                    compact_result = normalize_object_articles(
-                        SceneTranslationResult.model_validate_json(response.output_text),
-                        compact_request.target_language,
+                    compact_result = SceneTranslationResult.model_validate_json(
+                        response.output_text
                     )
-                    validate_translation_terms(compact_request, compact_result)
+                    if language_context is None:
+                        compact_result = normalize_object_articles(
+                            compact_result, compact_request.target_language,
+                        )
+                    validate_translation_terms(compact_request, compact_result, language_context)
                     compact_terms = {
                         field: {
                             term.key: term for term in getattr(compact_result, field)
@@ -249,7 +280,7 @@ class SceneTranslationService:
                             for field in ("objects", "attributes", "relationships")
                         }
                     )
-                    validate_translation_terms(parsed_payload, result)
+                    validate_translation_terms(parsed_payload, result, language_context)
                 except (ValueError, SceneTranslationError) as error:
                     if attempt < attempts and invocation.can_call():
                         issues = (

@@ -276,3 +276,15 @@ def test_candidate_text_rejects_decomposed_unicode():
             text="cafe\u0301",
             chunks=[SentenceChunk(text="cafe\u0301", join="none")],
         )
+
+
+def test_reused_tile_ids_are_rejected_even_for_identical_spanish_tiles():
+    item = AssembledItem(
+        tiles=[Tile(tile_id="first", text="la"), Tile(tile_id="second", text="la")],
+        answer_tile_ids=["first", "second"], accepted_texts=["la la"],
+        word_separator="space", join_modes=["none", "space"],
+    )
+    assert is_correct(item, ["second", "first"])
+    assert not is_correct(item, ["first", "first"])
+    with pytest.raises(ValidationError, match="tile IDs must be unique"):
+        item.model_validate({**item.model_dump(), "tiles": [item.tiles[0], item.tiles[0]]})

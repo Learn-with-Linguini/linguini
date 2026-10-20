@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { practiceStages, taskDone, taskTitle, taskDescription, taskXp, xpEarnedText } from "../src/lib/practiceTasks.ts";
+import { builtSentence, practiceStages, taskDone, taskTitle, taskDescription, taskXp, xpEarnedText } from "../src/lib/practiceTasks.ts";
 import type { SessionTask, TaskContent } from "../src/lib/api.ts";
 
 const contents: TaskContent[] = [
@@ -54,4 +54,10 @@ test("earned Basil copy is shown only for positive action results", () => {
   assert.equal(xpEarnedText(25), "+25 Basil earned");
   assert.equal(xpEarnedText(0), null);
   assert.equal(xpEarnedText(undefined), null);
+});
+
+
+test("pack sentence joins preserve canonical Spanish punctuation and Unicode", () => {
+  assert.equal(builtSentence(["El", "ni\u00f1o", "est\u00e1", "aqu\u00ed", "."], ["none", "space", "space", "space", "none"]), "El ni\u00f1o est\u00e1 aqu\u00ed.");
+  assert.equal(builtSentence(["la", "la"], ["none", "space"]), "la la");
 });

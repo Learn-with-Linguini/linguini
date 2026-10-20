@@ -9,6 +9,7 @@ from app.ai.cache.features import run_cached
 from app.ai.cache.store import CacheScope
 from app.schemas.base import ApiModel
 
+from .adapters import validate_lesson_inputs
 from .assembly import assemble_lesson
 from .capabilities import LessonPlan
 from .fingerprint import language_pack_feature_version, pack_fingerprint
@@ -26,6 +27,11 @@ from .loader import guidance_for_slot
 from .model_source import ASSESSOR_VERSION, GENERATOR_VERSION, ModelSource
 from .plan import bind_plan
 from .schema import LanguagePack, Provenance
+from .validation import validate_assembled_lesson
+from .validators import STRUCTURE_VERSION, validator_versions
+from .vocabulary import with_pack_vocabulary
+
+_DEMO_CACHE_SCOPE = CacheScope.public()
 
 
 class CandidateBundle(ApiModel):
@@ -62,6 +68,10 @@ class PilotGeneration(ApiModel):
     fingerprint: dict[str, Any]
     assurance: str
     mode: str
+    assurance_scope: str = (
+        "Structural checks and explicitly reported targeted assessments; "
+        "neither structural success nor model assessment proves grammatical correctness."
+    )
 
 
 def _cached_candidates(
@@ -74,13 +84,15 @@ def _cached_candidates(
     guidance,
     source_id,
     fingerprint,
+    cache_scope,
 ) -> list[CandidateSentence]:
     generation_version = getattr(source, "source_id", GENERATOR_VERSION)
     feature_fingerprint = {
         **fingerprint,
         "generator_version": generation_version,
         "assessor_version": ASSESSOR_VERSION,
-        "validator_versions": {"es": "es-targeted@1"},
+        "validator_versions": validator_versions(pack.language.code, pack),
+        "structure_version": STRUCTURE_VERSION,
     }
     version = language_pack_feature_version(
         "language-pack-generation",
@@ -108,7 +120,7 @@ def _cached_candidates(
         cache,
         client,
         version=version,
-        scope=CacheScope.public(),
+        scope=cache_scope,
         payload=payload,
         compute=compute,
         decode=CandidateBundle.model_validate,
@@ -128,19 +140,20 @@ def generate_pilot(
     cache: ResultCache | None = None,
     max_repairs: int = 2,
     assess_model: bool = False,
+    session_id=None,
+    cache_scope: CacheScope | None = _DEMO_CACHE_SCOPE,
 ) -> PilotGeneration:
-    from .validators.es import register_spanish_validators
-
-    if pack.language.code == "es":
-        register_spanish_validators(vocabulary)
-    plan = bind_plan(pack, level, facts, vocabulary, plan_specs)
+    vocabulary = with_pack_vocabulary(pack, vocabulary)
+    proposal_mode = isinstance(source, ModelSource) and source.propose
+    if proposal_mode:
+        vocabulary = source.prepare(pack, level, facts, vocabulary)
+    plan = bind_plan(pack, level, facts, vocabulary, plan_specs, str(session_id or ""))
+    validate_lesson_inputs(level, pack, facts, vocabulary, plan)
     mission_key = (plan.mission_id, plan.practice_level, plan.content_version)
     guidance_by_key = {}
     for slot in plan.slots:
         for spec in slot.specs:
-            bundle = guidance_for_slot(
-                pack, mission_key, slot.purpose, spec.construction_id
-            )
+            bundle = guidance_for_slot(pack, mission_key, slot.purpose, spec.construction_id)
             key = (slot.purpose, spec.construction_id)
             previous = guidance_by_key.get(key)
             if previous is None:
@@ -154,35 +167,33 @@ def generate_pilot(
                     item.example_id: item
                     for item in [*previous.mistakes, *bundle.constructions[0].mistakes]
                 }
-                guidance_by_key[key] = previous.model_copy(update={
-                    "examples": list(examples.values()),
-                    "mistakes": list(mistakes.values()),
-                })
-    constructions = list({
-        item.construction_id: item for item in guidance_by_key.values()
-    }.values())
+                guidance_by_key[key] = previous.model_copy(
+                    update={
+                        "examples": list(examples.values()),
+                        "mistakes": list(mistakes.values()),
+                    }
+                )
+    constructions = list({item.construction_id: item for item in guidance_by_key.values()}.values())
     label_ids = {
-        label_id
-        for slot in plan.slots
-        for label_id in [*slot.prompt_labels, *slot.sentence_labels]
+        label_id for slot in plan.slots for label_id in [*slot.prompt_labels, *slot.sentence_labels]
     }
     guidance = guidance_for_slot(
         pack,
         mission_key,
         plan.slots[0].purpose,
         plan.slots[0].construction_id,
-    ).model_copy(update={
-        "labels": [label for label in pack.labels if label.semantic in label_ids],
-        "constructions": constructions,
-        "mission_id": plan.mission_id,
-        "practice_level": plan.practice_level,
-        "purpose": None,
-        "prompt_labels": [],
-        "sentence_labels": [],
-    })
-    construction_ids = list(dict.fromkeys(
-        item.construction_id for item in constructions
-    ))
+    ).model_copy(
+        update={
+            "labels": [label for label in pack.labels if label.semantic in label_ids],
+            "constructions": constructions,
+            "mission_id": plan.mission_id,
+            "practice_level": plan.practice_level,
+            "purpose": None,
+            "prompt_labels": [],
+            "sentence_labels": [],
+        }
+    )
+    construction_ids = list(dict.fromkeys(item.construction_id for item in constructions))
     fingerprint = pack_fingerprint(pack, construction_ids, getattr(source, "source_id", ""))
     try:
         candidates = _cached_candidates(
@@ -195,26 +206,33 @@ def generate_pilot(
             guidance,
             getattr(source, "source_id", "scripted-responses"),
             fingerprint,
+            cache_scope,
         )
     except ValueError as exc:
-        raise PipelineFailure(
-            level, "coverage", "source-response", 1, [str(exc)]
-        ) from exc
+        raise PipelineFailure(level, "coverage", "source-response", 1, [str(exc)]) from exc
     attempts = 0
     while True:
         assessed = []
         failures = []
-        specs = {
-            (slot.slot_id, spec.spec_id): spec
-            for slot in plan.slots
-            for spec in slot.specs
-        }
+        content_assessment = (
+            source.review_content(pack, facts, plan, vocabulary, candidates)
+            if proposal_mode else None
+        )
+        specs = {(slot.slot_id, spec.spec_id): spec for slot in plan.slots for spec in slot.specs}
         for candidate in candidates:
             spec = specs.get((candidate.slot_id, candidate.spec_id or candidate.slot_id))
             deterministic = check_deterministic(candidate, plan, facts, vocabulary, pack)
             assessment = assess(
-                candidate, pack,
+                candidate,
+                pack,
+                vocabulary,
             )
+            if content_assessment is not None:
+                targeted_failures = assessment.messages if assessment.passed is False else []
+                assessment = content_assessment.model_copy(update={
+                    "passed": content_assessment.passed and not targeted_failures,
+                    "messages": [*content_assessment.messages, *targeted_failures],
+                })
             advisory_assessment = (
                 source.assess(
                     candidate,
@@ -222,18 +240,21 @@ def generate_pilot(
                     guidance,
                     pack,
                 )
-                if assess_model
-                and isinstance(source, ModelSource)
+                if assess_model and isinstance(source, ModelSource)
                 else None
             )
             assessed.append((candidate, deterministic, assessment, advisory_assessment))
             reasons = list(deterministic.failures)
-            accepted_assessment = assessment.status in {
-                "reviewedForm",
-                "languageValidator",
-                "modelAssessed",
-                "humanApproved",
-            } and assessment.passed is True
+            accepted_assessment = (
+                assessment.status
+                in {
+                    "reviewedForm",
+                    "languageValidator",
+                    "humanApproved",
+                    *(["modelAssessed"] if proposal_mode else []),
+                }
+                and assessment.passed is True
+            )
             if preview and assessment.status in {"unreviewedExample", "notAssessed"}:
                 accepted_assessment = True
             if not accepted_assessment:
@@ -241,15 +262,17 @@ def generate_pilot(
             if not deterministic.passed or not accepted_assessment:
                 failures.append((candidate, reasons))
         returned_order = [
-            (candidate.slot_id, candidate.spec_id or candidate.slot_id)
-            for candidate in candidates
+            (candidate.slot_id, candidate.spec_id or candidate.slot_id) for candidate in candidates
         ]
         returned = set(returned_order)
         expected_order = list(specs)
         expected = set(expected_order)
         if len(returned_order) != len(returned):
             raise PipelineFailure(
-                level, "coverage", "duplicate", attempts + 1,
+                level,
+                "coverage",
+                "duplicate",
+                attempts + 1,
                 ["duplicate candidate specs"],
             )
         if returned != expected:
@@ -288,33 +311,36 @@ def generate_pilot(
                 candidate.slot_id,
                 candidate.spec_id or candidate.slot_id,
                 attempts + 1,
-                reasons,
+                [*reasons, f"Rejected sentence: {candidate.text!r}"],
             )
         attempts += 1
         failing_keys = {
-            (candidate.slot_id, candidate.spec_id or candidate.slot_id)
-            for candidate, _ in failures
+            (candidate.slot_id, candidate.spec_id or candidate.slot_id) for candidate, _ in failures
         }
-        repair_plan = plan.model_copy(update={
-            "slots": [
-                slot.model_copy(update={
-                    "specs": [
-                        spec for spec in slot.specs
-                        if (slot.slot_id, spec.spec_id) in failing_keys
-                    ]
-                })
-                for slot in plan.slots
-                if any((slot.slot_id, spec.spec_id) in failing_keys for spec in slot.specs)
-            ]
-        })
+        repair_plan = plan.model_copy(
+            update={
+                "slots": [
+                    slot.model_copy(
+                        update={
+                            "specs": [
+                                spec
+                                for spec in slot.specs
+                                if (slot.slot_id, spec.spec_id) in failing_keys
+                            ]
+                        }
+                    )
+                    for slot in plan.slots
+                    if any((slot.slot_id, spec.spec_id) in failing_keys for spec in slot.specs)
+                ]
+            }
+        )
         repair = {
-            f"{candidate.slot_id}/{candidate.spec_id}": reasons
-            for candidate, reasons in failures
+            f"{candidate.slot_id}/{candidate.spec_id}": [
+                f"Previous rejected sentence: {candidate.text!r}", *reasons,
+            ] for candidate, reasons in failures
         }
         try:
-            fixed = source.generate(
-                repair_plan, facts, vocabulary, guidance, pack, repair=repair
-            )
+            fixed = source.generate(repair_plan, facts, vocabulary, guidance, pack, repair=repair)
         except ValueError as exc:
             candidate = failures[0][0]
             raise PipelineFailure(
@@ -328,10 +354,12 @@ def generate_pilot(
             (candidate.slot_id, candidate.spec_id or candidate.slot_id): candidate
             for candidate in candidates
         }
-        by_key.update({
-            (candidate.slot_id, candidate.spec_id or candidate.slot_id): candidate
-            for candidate in fixed
-        })
+        by_key.update(
+            {
+                (candidate.slot_id, candidate.spec_id or candidate.slot_id): candidate
+                for candidate in fixed
+            }
+        )
         candidates = list(by_key.values())
 
     ordered_approved = []
@@ -342,9 +370,9 @@ def generate_pilot(
             candidate,
             pack.language.word_separator,
             phrase_chunks=(
-                str(plan.practice_level) == "A2"
-                and candidate.slot_id == "buildSceneDescription"
+                str(plan.practice_level) == "A2" and candidate.slot_id == "buildSceneDescription"
             ),
+            phrase_boundaries=pack.language.phrase_boundaries,
         )
         ordered_approved.append(
             ApprovedSentence(
@@ -358,12 +386,14 @@ def generate_pilot(
                 word_separator=pack.language.word_separator,
             )
         )
-        sentence_reports.append(PilotSentence(
-            candidate=candidate,
-            deterministic=deterministic,
-            assessment=assessment,
-            advisory_assessment=advisory_assessment,
-        ))
+        sentence_reports.append(
+            PilotSentence(
+                candidate=candidate,
+                deterministic=deterministic,
+                assessment=assessment,
+                advisory_assessment=advisory_assessment,
+            )
+        )
         statuses.append(assessment.status)
     ordered_approved = assemble_lesson(plan, ordered_approved)
     status_order = {
@@ -390,8 +420,21 @@ def generate_pilot(
         plan,
         ordered_approved,
         builder_selection=builder_selection,
+        session_id=session_id,
     )
     payload["pilotMode"] = mode
+    validate_assembled_lesson(level, result, ordered_approved, pack)
+    if proposal_mode:
+        # Inspect the actual choices, supports, feedback and grading map together;
+        # isolated sentence grammar cannot establish an MCQ is unambiguous.
+        rendered_review = source.review_content(pack, facts, plan, vocabulary, candidates, task)
+        if rendered_review.passed is not True:
+            raise PipelineFailure(level, "assembly", "content-review", attempts + 1,
+                                  rendered_review.messages)
+        payload["linguisticAssurance"] = (
+            "Model-assessed candidate language and contextual distractors; "
+            "uncertainty rejected. Not human-reviewed or proof of linguistic correctness."
+        )
     ordered_reports = []
     report_by_key = {
         (item.candidate.slot_id, item.candidate.spec_id): item for item in sentence_reports
@@ -408,7 +451,5 @@ def generate_pilot(
         payload=payload,
         fingerprint=fingerprint,
         assurance=assurance,
-        mode=(
-            f"{mode} ({getattr(source, 'mode', 'scripted/non-live')})"
-        ),
+        mode=(f"{mode} ({getattr(source, 'mode', 'scripted/non-live')})"),
     )

@@ -1,0 +1,635 @@
+{
+  "terms": [
+    {
+      "term_id": "cup",
+      "fact_id": "object:cup",
+      "source_text": "cup",
+      "target_text": "tasse",
+      "forms": [
+        "tasse",
+        "une",
+        "la",
+        "une tasse",
+        "la tasse",
+        "La tasse",
+        "de la tasse"
+      ],
+      "forms_by_key": {
+        "bare": "tasse",
+        "article_indefinite": "une",
+        "article_definite": "la",
+        "indefinite": "une tasse",
+        "definite": "la tasse",
+        "definite_capitalised": "La tasse",
+        "definite_after_de": "de la tasse"
+      },
+      "agreement": "feminine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "book",
+      "fact_id": "object:book",
+      "source_text": "book",
+      "target_text": "livre",
+      "forms": [
+        "livre",
+        "un",
+        "le",
+        "un livre",
+        "le livre",
+        "Le livre",
+        "du livre"
+      ],
+      "forms_by_key": {
+        "bare": "livre",
+        "article_indefinite": "un",
+        "article_definite": "le",
+        "indefinite": "un livre",
+        "definite": "le livre",
+        "definite_capitalised": "Le livre",
+        "definite_after_de": "du livre"
+      },
+      "agreement": "masculine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "table",
+      "fact_id": "object:table",
+      "source_text": "table",
+      "target_text": "table",
+      "forms": [
+        "table",
+        "une",
+        "la",
+        "une table",
+        "la table",
+        "La table",
+        "de la table"
+      ],
+      "forms_by_key": {
+        "bare": "table",
+        "article_indefinite": "une",
+        "article_definite": "la",
+        "indefinite": "une table",
+        "definite": "la table",
+        "definite_capitalised": "La table",
+        "definite_after_de": "de la table"
+      },
+      "agreement": "feminine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "fork",
+      "fact_id": "object:fork",
+      "source_text": "fork",
+      "target_text": "fourchette",
+      "forms": [
+        "fourchette",
+        "une",
+        "la",
+        "une fourchette",
+        "la fourchette",
+        "La fourchette",
+        "de la fourchette"
+      ],
+      "forms_by_key": {
+        "bare": "fourchette",
+        "article_indefinite": "une",
+        "article_definite": "la",
+        "indefinite": "une fourchette",
+        "definite": "la fourchette",
+        "definite_capitalised": "La fourchette",
+        "definite_after_de": "de la fourchette"
+      },
+      "agreement": "feminine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "spoon",
+      "fact_id": "object:spoon",
+      "source_text": "spoon",
+      "target_text": "cuillère",
+      "forms": [
+        "cuillère",
+        "une",
+        "la",
+        "une cuillère",
+        "la cuillère",
+        "La cuillère",
+        "de la cuillère"
+      ],
+      "forms_by_key": {
+        "bare": "cuillère",
+        "article_indefinite": "une",
+        "article_definite": "la",
+        "indefinite": "une cuillère",
+        "definite": "la cuillère",
+        "definite_capitalised": "La cuillère",
+        "definite_after_de": "de la cuillère"
+      },
+      "agreement": "feminine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "door",
+      "fact_id": "object:door",
+      "source_text": "door",
+      "target_text": "porte",
+      "forms": [
+        "porte",
+        "une",
+        "la",
+        "une porte",
+        "la porte",
+        "La porte",
+        "de la porte"
+      ],
+      "forms_by_key": {
+        "bare": "porte",
+        "article_indefinite": "une",
+        "article_definite": "la",
+        "indefinite": "une porte",
+        "definite": "la porte",
+        "definite_capitalised": "La porte",
+        "definite_after_de": "de la porte"
+      },
+      "agreement": "feminine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "window",
+      "fact_id": "object:window",
+      "source_text": "window",
+      "target_text": "fenêtre",
+      "forms": [
+        "fenêtre",
+        "une",
+        "la",
+        "une fenêtre",
+        "la fenêtre",
+        "La fenêtre",
+        "de la fenêtre"
+      ],
+      "forms_by_key": {
+        "bare": "fenêtre",
+        "article_indefinite": "une",
+        "article_definite": "la",
+        "indefinite": "une fenêtre",
+        "definite": "la fenêtre",
+        "definite_capitalised": "La fenêtre",
+        "definite_after_de": "de la fenêtre"
+      },
+      "agreement": "feminine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "phone",
+      "fact_id": "object:phone",
+      "source_text": "phone",
+      "target_text": "téléphone",
+      "forms": [
+        "téléphone",
+        "un",
+        "le",
+        "un téléphone",
+        "le téléphone",
+        "Le téléphone",
+        "du téléphone"
+      ],
+      "forms_by_key": {
+        "bare": "téléphone",
+        "article_indefinite": "un",
+        "article_definite": "le",
+        "indefinite": "un téléphone",
+        "definite": "le téléphone",
+        "definite_capitalised": "Le téléphone",
+        "definite_after_de": "du téléphone"
+      },
+      "agreement": "masculine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "key",
+      "fact_id": "object:key",
+      "source_text": "key",
+      "target_text": "clé",
+      "forms": [
+        "clé",
+        "une",
+        "la",
+        "une clé",
+        "la clé",
+        "La clé",
+        "de la clé"
+      ],
+      "forms_by_key": {
+        "bare": "clé",
+        "article_indefinite": "une",
+        "article_definite": "la",
+        "indefinite": "une clé",
+        "definite": "la clé",
+        "definite_capitalised": "La clé",
+        "definite_after_de": "de la clé"
+      },
+      "agreement": "feminine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "bag",
+      "fact_id": "object:bag",
+      "source_text": "bag",
+      "target_text": "sac",
+      "forms": [
+        "sac",
+        "un",
+        "le",
+        "un sac",
+        "le sac",
+        "Le sac",
+        "du sac"
+      ],
+      "forms_by_key": {
+        "bare": "sac",
+        "article_indefinite": "un",
+        "article_definite": "le",
+        "indefinite": "un sac",
+        "definite": "le sac",
+        "definite_capitalised": "Le sac",
+        "definite_after_de": "du sac"
+      },
+      "agreement": "masculine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "plate",
+      "fact_id": "object:plate",
+      "source_text": "plate",
+      "target_text": "assiette",
+      "forms": [
+        "assiette",
+        "une",
+        "l'",
+        "une assiette",
+        "l'assiette",
+        "L'assiette",
+        "de l'assiette"
+      ],
+      "forms_by_key": {
+        "bare": "assiette",
+        "article_indefinite": "une",
+        "article_definite": "l'",
+        "indefinite": "une assiette",
+        "definite": "l'assiette",
+        "definite_capitalised": "L'assiette",
+        "definite_after_de": "de l'assiette"
+      },
+      "agreement": "feminine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "red",
+      "fact_id": "attribute:cup:colour:red",
+      "source_text": "red",
+      "target_text": "rouge",
+      "forms": [
+        "rouge"
+      ],
+      "forms_by_key": {
+        "masculine": "rouge",
+        "feminine": "rouge"
+      },
+      "agreement": null,
+      "position": "after",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "green",
+      "fact_id": "attribute:book:colour:green",
+      "source_text": "green",
+      "target_text": "vert",
+      "forms": [
+        "vert",
+        "verte"
+      ],
+      "forms_by_key": {
+        "masculine": "vert",
+        "feminine": "verte"
+      },
+      "agreement": null,
+      "position": "after",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "phone-red",
+      "fact_id": "attribute:phone-red",
+      "source_text": "red",
+      "target_text": "rouge",
+      "forms": [
+        "rouge"
+      ],
+      "forms_by_key": {
+        "masculine": "rouge",
+        "feminine": "rouge"
+      },
+      "agreement": null,
+      "position": "after",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "door-red",
+      "fact_id": "attribute:door-red",
+      "source_text": "red",
+      "target_text": "rouge",
+      "forms": [
+        "rouge"
+      ],
+      "forms_by_key": {
+        "masculine": "rouge",
+        "feminine": "rouge"
+      },
+      "agreement": null,
+      "position": "after",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "door-blue",
+      "fact_id": "attribute:door-blue",
+      "source_text": "blue",
+      "target_text": "bleu",
+      "forms": [
+        "bleu",
+        "bleue"
+      ],
+      "forms_by_key": {
+        "masculine": "bleu",
+        "feminine": "bleue"
+      },
+      "agreement": null,
+      "position": "after",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "door-yellow",
+      "fact_id": "attribute:door-yellow",
+      "source_text": "yellow",
+      "target_text": "jaune",
+      "forms": [
+        "jaune"
+      ],
+      "forms_by_key": {
+        "masculine": "jaune",
+        "feminine": "jaune"
+      },
+      "agreement": null,
+      "position": "after",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "spoon-yellow",
+      "fact_id": "attribute:spoon-yellow",
+      "source_text": "yellow",
+      "target_text": "jaune",
+      "forms": [
+        "jaune"
+      ],
+      "forms_by_key": {
+        "masculine": "jaune",
+        "feminine": "jaune"
+      },
+      "agreement": null,
+      "position": "after",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "fork-green",
+      "fact_id": "attribute:fork-green",
+      "source_text": "green",
+      "target_text": "vert",
+      "forms": [
+        "vert",
+        "verte"
+      ],
+      "forms_by_key": {
+        "masculine": "vert",
+        "feminine": "verte"
+      },
+      "agreement": null,
+      "position": "after",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "bag-blue",
+      "fact_id": "attribute:bag-blue",
+      "source_text": "blue",
+      "target_text": "bleu",
+      "forms": [
+        "bleu",
+        "bleue"
+      ],
+      "forms_by_key": {
+        "masculine": "bleu",
+        "feminine": "bleue"
+      },
+      "agreement": null,
+      "position": "after",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "bag-green",
+      "fact_id": "attribute:bag-green",
+      "source_text": "green",
+      "target_text": "vert",
+      "forms": [
+        "vert",
+        "verte"
+      ],
+      "forms_by_key": {
+        "masculine": "vert",
+        "feminine": "verte"
+      },
+      "agreement": null,
+      "position": "after",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "book-red",
+      "fact_id": "attribute:book-red",
+      "source_text": "red",
+      "target_text": "rouge",
+      "forms": [
+        "rouge"
+      ],
+      "forms_by_key": {
+        "masculine": "rouge",
+        "feminine": "rouge"
+      },
+      "agreement": null,
+      "position": "after",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "plate-yellow",
+      "fact_id": "attribute:plate-yellow",
+      "source_text": "yellow",
+      "target_text": "jaune",
+      "forms": [
+        "jaune"
+      ],
+      "forms_by_key": {
+        "masculine": "jaune",
+        "feminine": "jaune"
+      },
+      "agreement": null,
+      "position": "after",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "on",
+      "fact_id": "relation:cup:table:on",
+      "source_text": "on",
+      "target_text": "sur",
+      "forms": [
+        "sur"
+      ],
+      "forms_by_key": {
+        "phrase": "sur"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "key-on-table",
+      "fact_id": "relation:key-on-table",
+      "source_text": "on",
+      "target_text": "sur",
+      "forms": [
+        "sur"
+      ],
+      "forms_by_key": {
+        "phrase": "sur"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "spoon-under-table",
+      "fact_id": "relation:spoon-under-table",
+      "source_text": "under",
+      "target_text": "sous",
+      "forms": [
+        "sous"
+      ],
+      "forms_by_key": {
+        "phrase": "sous"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "phone-next-to-door",
+      "fact_id": "relation:phone-next_to-door",
+      "source_text": "next to",
+      "target_text": "à côté de",
+      "forms": [
+        "à côté de",
+        "à côté"
+      ],
+      "forms_by_key": {
+        "phrase": "à côté de"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "window-next-to-phone",
+      "fact_id": "relation:window-next_to-phone",
+      "source_text": "next to",
+      "target_text": "à côté de",
+      "forms": [
+        "à côté de",
+        "à côté"
+      ],
+      "forms_by_key": {
+        "phrase": "à côté de"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "bag-under-table",
+      "fact_id": "relation:bag-under-table",
+      "source_text": "under",
+      "target_text": "sous",
+      "forms": [
+        "sous"
+      ],
+      "forms_by_key": {
+        "phrase": "sous"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "plate-on-table",
+      "fact_id": "relation:plate-on-table",
+      "source_text": "on",
+      "target_text": "sur",
+      "forms": [
+        "sur"
+      ],
+      "forms_by_key": {
+        "phrase": "sur"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    }
+  ]
+}

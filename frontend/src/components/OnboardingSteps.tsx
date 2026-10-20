@@ -2,7 +2,8 @@ import { LoadingScreen } from "./LoadingScreen";
 import { useEffect, useState } from "react";
 import { Button, Card, ProgressTrail, TopBar } from "./ui";
 import { CameraIcon, CheckIcon } from "./icons";
-import { languages } from "../config/languages";
+import { profileLanguageChoices } from "../lib/languageChoices";
+import { usePracticeLanguages } from "../state/usePracticeLanguages";
 import { joinGoals, parseGoals, type OnboardingDraft } from "../lib/onboardingDraft";
 import { checkPlacementAnswer, getPlacementTest, submitPlacement, type PlacementTest } from "../lib/api";
 import { nextPlacementDifficulty } from "../lib/placementPath";
@@ -29,7 +30,8 @@ export function OnboardingSteps({ initial, saving = false, error, onComplete, on
 }) {
   const [stage, setStage] = useState<Stage>("profile");
   const [name, setName] = useState(initial.name);
-  const [language, setLanguage] = useState(languages.find(option => option.code === initial.languageCode) ?? languages[0]);
+  const { choices: languages } = usePracticeLanguages(initial.languageCode);
+  const [language, setLanguage] = useState(() => profileLanguageChoices([], initial.languageCode).find(option => option.code === initial.languageCode) ?? profileLanguageChoices([])[0]);
   const [selectedGoals, setSelectedGoals] = useState(() => parseGoals(initial.goal).filter(value => goals.includes(value)));
   const [minutes, setMinutes] = useState(initial.minutes || 10);
   const [microphoneEnabled] = useState(initial.microphoneEnabled);

@@ -64,19 +64,21 @@ required_constructions = [
 [[missions.slots]]
 purpose = "chooseSceneMarker"
 construction_id = "scene-existence"
+additional_constructions = ["scene-location"]
 target_ids = ["identify-scene-object"]
 prompt_labels = ["touch-object"]
 
 [[missions.slots]]
 purpose = "buildSceneFact"
 construction_id = "scene-location"
+additional_constructions = ["scene-existence"]
 target_ids = ["describe-scene-facts"]
 prompt_labels = ["build-second-fact"]
 
 [[missions.slots]]
 purpose = "chooseSceneDescription"
 construction_id = "connected-description"
-additional_constructions = ["scene-existence", "describe-attribute"]
+additional_constructions = ["scene-existence", "scene-location", "describe-attribute"]
 target_ids = ["describe-scene-facts"]
 prompt_labels = ["choose-description"]
 

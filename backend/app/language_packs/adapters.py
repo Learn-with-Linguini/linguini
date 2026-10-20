@@ -1,914 +1,783 @@
-"""Adapt accepted language-pack sentences to existing M01 lesson contracts."""
+"""Adapt validated bound sentences to the existing M01 task and grading contracts."""
 
 from __future__ import annotations
 
 import random
-from types import SimpleNamespace
 from uuid import NAMESPACE_URL, uuid5
 
-from app.ai.features.learning_tasks.mission import fold, tokens
 from app.ai.features.learning_tasks.mission_a0 import (
-    SLOT,
     A0LessonResult,
     _build_question,
     _choice_question,
     _marker_question,
+    _other,
     _sections,
-    validate_a0_lesson,
 )
-from app.ai.features.learning_tasks.mission_a0 import _other as _a0_other
-from app.ai.features.learning_tasks.mission_a2 import (
-    MissionA2Question,
-    MissionA2Result,
-    validate_a2_lesson,
-)
+from app.ai.features.learning_tasks.mission_a2 import MissionA2Question, MissionA2Result
 from app.ai.features.learning_tasks.mission_m01 import (
     CONFIRM_IDS,
     DESCRIBE_SECTION,
     IDENTIFY_SECTION,
     M01LessonResult,
     M01Question,
-    confirm_answers,
-    validate_m01_lesson,
 )
 from app.missions import get_mission
-from app.services import a0_lexicon as _a0_lexicon
-from app.services.mission_eligibility import agreed_attribute, attribute_contrasts
-from app.services.mission_facts_a2 import approved_facts as _approved_facts
 from app.services.mission_lessons_a0 import a0_lesson_task
-from app.services.mission_lessons_a2 import (
-    _english_fact,
-    _sentence_chunks,
-    m01_a2_task,
-)
-from app.services.mission_lessons_m01 import SIMILAR_COLOURS, m01_lesson_task
+from app.services.mission_lessons_a2 import m01_a2_task
+from app.services.mission_lessons_m01 import m01_lesson_task
 
-from .capabilities import LessonPlan
-from .generation import ApprovedSentence, ApprovedVocabulary, BoundSceneFacts
-from .schema import LanguagePack
+from .generation import derive_chunks
 
-_SESSION_ID = uuid5(NAMESPACE_URL, "language-packs/es-m01-preview")
+# Explicit demo callers only; application callers always supply their session ID.
+_SESSION_ID = uuid5(NAMESPACE_URL, "language-packs/demo")
 
 
-def _accepted_by_slot(accepted: list[ApprovedSentence]) -> dict[str, list[ApprovedSentence]]:
-    result: dict[str, list[ApprovedSentence]] = {}
-    for sentence in accepted:
-        result.setdefault(sentence.candidate.slot_id, []).append(sentence)
-    return result
-
-
-def _objects(facts: BoundSceneFacts, vocabulary: ApprovedVocabulary) -> tuple[list[dict], dict]:
+def _objects(facts, vocabulary, separator=" "):
     terms = {term.fact_id: term for term in vocabulary.terms}
-    objects = []
-    by_fact = {}
+    rows, by_fact = [], {}
     for obj in facts.scene_facts.objects:
         term = terms.get(obj.fact_id)
         if term is None:
             continue
-        object_id = str(obj.scene_object_id)
-        gender = term.agreement
-        article = term.forms_by_key.get("article_indefinite")
-        definite = term.forms_by_key.get("definite")
-        bare = term.forms_by_key.get("bare")
-        if not all((gender, article, definite, bare)):
-            continue
-        row = {
-            "key": object_id,
-            "fact_id": obj.fact_id,
-            "source": obj.label,
-            "label": obj.label,
-            "marker": obj.marker,
-            "gender": gender,
-            "noun": bare,
-            "name": definite,
-            "chunk": definite,
-            "nounPhrase": f"{article} {bare}",
-            "identify": "",
-            "isIt": "",
-            "vocabularyItemId": str(
-                term.vocabulary_item_id or uuid5(NAMESPACE_URL, term.term_id)
-            ),
-        }
-        objects.append(row)
+        forms = term.forms_by_key
+        bare = forms.get("bare", term.target_text)
+        indefinite = forms.get("indefinite") or separator.join(
+            filter(
+                None,
+                [
+                    forms.get("article_indefinite"),
+                    bare,
+                ],
+            )
+        )
+        row = dict(
+            key=str(obj.scene_object_id),
+            fact_id=obj.fact_id,
+            source=obj.label,
+            label=obj.label,
+            englishLabel=obj.label,
+            marker=obj.marker,
+            noun=bare,
+            bareNoun=bare,
+            gender=term.agreement,
+            name=forms.get("definite", bare),
+            chunk=forms.get("definite", bare),
+            nounPhrase=indefinite,
+            identify="",
+            isIt="",
+            vocabularyItemId=str(term.vocabulary_item_id) if term.vocabulary_item_id else None,
+        )
+        rows.append(row)
         by_fact[obj.fact_id] = row
-    return objects, by_fact
+    return rows, by_fact
 
 
-def _candidate_text(sentence: ApprovedSentence) -> str:
-    return sentence.candidate.text
+# Keys of in-sentence gender agreement forms; other keys (modifier, predicative,
+# case forms) are not wrong-agreement alternatives.
+AGREEMENT_KEYS = frozenset({"masculine", "feminine", "neuter"})
 
 
-def _label(pack: LanguagePack, semantic: str):
-    return next(label for label in pack.labels if label.semantic == semantic)
+def _form(term, gender):
+    return term.forms_by_key.get(gender) or term.forms_by_key.get("default", term.target_text)
 
 
-def _mission(level: str):
-    mission = get_mission("M01", level, 1)
-    if mission is None:
-        raise ValueError(f"existing mission definition M01-{level}.v1 is unavailable")
-    return mission
+def _standalone_form(term, gender):
+    """A detail named on its own (a choice), e.g. German rot rather than attributive rote."""
+    return term.forms_by_key.get("predicative") or _form(term, gender)
 
 
-def _a0(
-    pack: LanguagePack,
-    facts: BoundSceneFacts,
-    vocabulary: ApprovedVocabulary,
-    plan: LessonPlan,
-    accepted: list[ApprovedSentence],
-    builder_selection: dict | None = None,
-):
-    rows, by_fact = _objects(facts, vocabulary)
-    slots = _accepted_by_slot(accepted)
-    focus_keys = (
-        builder_selection.get("focus")
-        if builder_selection is not None
-        else None
-    )
-    focus = (
-        [next(row for row in rows if row["key"] == key) for key in focus_keys]
-        if focus_keys is not None
-        else [
-            by_fact[fact]
-            for fact in (
-                plan.slots[0].specs[0].bindings.get("object"),
-                plan.slots[3].specs[0].bindings.get("object"),
-            )
-            if fact in by_fact
-        ]
-    )
-    if len(focus) != 2:
-        raise ValueError("A0 needs two distinct bound objects")
-    if builder_selection is not None:
-        markers = builder_selection.get("markers", {})
-        for row in rows:
-            if row["key"] in markers:
-                row["marker"] = markers[row["key"]]
-    yes_label = _label(pack, "yes-answer")
-    no_label = _label(pack, "no-answer")
-    what_is_this = _label(pack, "what-is-this")
-    payload = {
-        "targetLanguage": pack.language.code,
-        "missionId": "M01",
-        "seed": (
-            builder_selection.get("seed", "es-m01")
-            if builder_selection is not None else "es-m01"
-        ),
-        "focus": [row["key"] for row in focus],
-        "yesNo": [yes_label.text, no_label.text],
-        "approvedTranslations": {what_is_this.text: what_is_this.meaning},
-        "approvedSentenceChunks": [],
-        "approvedArticlesOrEndings": [],
-        "approvedNumberWords": {},
-        "approvedObjects": rows,
-        "whatIsThis": what_is_this.text,
-    }
-    payload["approvedSentenceChunks"].append(payload["whatIsThis"])
-    for row in rows:
-        noun = _a0_lexicon.reviewed_noun(row["source"], pack.language.code)
-        if noun is None:
-            continue
-        english = row["source"]
-        english_indefinite = (
-            f"an {english}" if english[:1].casefold() in "aeiou"
-            else f"a {english}"
-        )
-        name = _a0_lexicon.name_chunk(pack.language.code, noun)
-        identify = _a0_lexicon.identify_sentence(pack.language.code, noun)
-        is_it = _a0_lexicon.is_it_question(pack.language.code, noun)
-        find = _a0_lexicon.find_prompt(pack.language.code, noun)
-        chunk = _a0_lexicon.chunk(pack.language.code, noun)
-        slot_template = _a0_lexicon.join(pack.language.code, SLOT, noun.noun)
-        payload["approvedSentenceChunks"].extend((
-            name, identify, is_it, find, chunk, slot_template,
-        ))
-        payload["approvedTranslations"].update({
-            name: f"the {english}",
-            identify: f"This is {english_indefinite}.",
-            is_it: f"Is this {english_indefinite}?",
-            find: f"Find the {english}.",
-            chunk: f"the {english}",
-            slot_template: f"the {english}",
-        })
-    for row, index in zip(focus, (1, 2), strict=True):
-        name_sentence = slots[f"matchName-{index}"][0]
-        question_sentence = slots[f"confirmName-{index}"][0]
-        answer_sentence = slots[f"buildIdentify-{index}"][0]
-        row["name"] = _candidate_text(name_sentence)
-        confirm_slot = next(
-            slot for slot in plan.slots if slot.slot_id == f"confirmName-{index}"
-        )
-        named_fact = confirm_slot.specs[0].bindings.get("object")
-        if named_fact not in by_fact:
-            raise ValueError(f"A0 question {index} names an unknown object")
-        row["isIt"] = _candidate_text(question_sentence)
-        row["identify"] = _candidate_text(answer_sentence)
-        payload["approvedTranslations"].update({
-            row["name"]: name_sentence.candidate.translation or row["source"],
-            row["isIt"]: question_sentence.candidate.translation or "",
-            row["identify"]: answer_sentence.candidate.translation or "",
-        })
-        payload["approvedSentenceChunks"].extend(
-            [row["name"], row["isIt"], row["identify"]]
-        )
-    payload["approvedSentenceChunks"] = list(dict.fromkeys([
-        *payload["approvedSentenceChunks"],
-        *payload["approvedTranslations"],
-        *(row["chunk"] for row in rows),
-    ]))
-    section_targets = _sections(payload)
-    truths = (
-        builder_selection.get("layout", {}).get("statementCorrect")
-        if builder_selection is not None else None
-    ) or [
-        plan.slots[1].specs[0].truth,
-        plan.slots[4].specs[0].truth,
-    ]
-    questions = []
-    yes, no = payload["yesNo"]
-    for index, ((section, target), truth) in enumerate(
-        zip(section_targets, truths, strict=True), 1
-    ):
-        other = focus[1] if target["key"] == focus[0]["key"] else focus[0]
-        named = target if truth else other
-        marker = _marker_question(
-            payload, "matchName", section, target, target["name"], index=index
-        )
-        confirm = _choice_question(
-            payload,
-            "confirmName",
-            section,
-            target,
-            target["isIt"],
-            [yes, no],
-            yes if truth else no,
-            index=index,
-            shuffle=False,
-            statement_true=truth,
-            stated_key=named["key"],
-            audio_text=target["isIt"],
-        )
-        correct = slots[f"buildIdentify-{index}"][0]
-        other_term = _a0_other(payload, target, f"tile-{index}")
-        built = _build_question(
-            payload,
-            "buildIdentify",
-            section,
-            target,
-            payload["whatIsThis"],
-            _candidate_text(correct),
-            other_term["noun"],
-            index=index,
-        )
-        questions.extend((marker, confirm, built))
-    result = A0LessonResult(title="Name the objects", questions=questions)
-    validate_a0_lesson(payload, result)
-    task = a0_lesson_task(
-        _SESSION_ID,
-        _mission("A0"),
-        payload,
-        result,
-        {},
-    )
-    return result, task, payload
-
-
-def _a1(
-    pack: LanguagePack,
-    facts: BoundSceneFacts,
-    vocabulary: ApprovedVocabulary,
-    plan: LessonPlan,
-    accepted: list[ApprovedSentence],
-    builder_selection: dict | None = None,
-):
-    rows, by_fact = _objects(facts, vocabulary)
+def _detail_options(facts, vocabulary, attribute, gender, *, include_pack=False, pack=None):
     terms = {term.fact_id: term for term in vocabulary.terms}
-    attributes = {item.fact_id: item for item in facts.scene_facts.attributes}
-    object_attributes: dict[str, list] = {}
-    for attribute in facts.scene_facts.attributes:
-        object_attributes.setdefault(attribute.object_fact_id, []).append(attribute)
-    pairs = []
-    pair_selection = (
-        builder_selection.get("pairs")
-        if builder_selection is not None else None
-    )
-    selections = (
-        [
-            (entry["object_key"], entry["attribute_key"])
-            for entry in pair_selection
-        ]
-        if pair_selection is not None
-        else [
-            (obj.scene_object_id, item.fact_id)
-            for obj in facts.scene_facts.objects
-            for item in object_attributes.get(obj.fact_id, [])
-            if item.fact_id in terms
-        ]
-    )
-    rows_by_key = {row["key"]: row for row in rows}
-    for object_key, attribute_key in selections:
-        row = rows_by_key.get(str(object_key))
-        detail = attributes.get(attribute_key)
-        if detail is None:
+    selected = terms[attribute.fact_id]
+    options = [_standalone_form(selected, gender)]
+    meanings = {options[0].casefold(): attribute.value}
+    # Distractors are approved translations, never an implicit per-language lexicon.
+    for other in facts.scene_facts.attributes:
+        if (
+            other.kind != attribute.kind
+            or other.value == attribute.value
+            or other.fact_id not in terms
+        ):
             continue
-        term = terms[detail.fact_id]
-        form = term.forms_by_key.get(row["gender"])
-        if not form:
-            continue
-        pairs.append({
-            "key": row["key"],
-            "source": row["source"],
-            "nounPhrase": row["nounPhrase"],
-            "gender": row["gender"],
-            "vocabularyItemId": row["vocabularyItemId"],
-            "attributeKey": detail.fact_id,
-            "attributeType": detail.kind,
-            "attributeSource": detail.value,
-            "agreedForm": form,
-            "before": term.position == "before",
-        })
-    if len(pairs) < 2:
-        raise ValueError("A1 needs two objects with approved details")
-    pairs = pairs[:2]
-    first_detail = attributes[pairs[0]["attributeKey"]]
-    if first_detail.kind == "colour":
-        selected_colour = "grey" if first_detail.value == "gray" else first_detail.value
-        detail_values = [
-            "grey" if item.value == "gray" else item.value
-            for item in facts.scene_facts.attributes
-            if item.kind == "colour"
-        ]
-        detail_values.extend(
-            value for value in SIMILAR_COLOURS
-            if value not in detail_values
-        )
-        contrast_values = [
-            value for value in detail_values
-            if value != selected_colour
-            and value not in SIMILAR_COLOURS.get(selected_colour, set())
-        ]
-    else:
-        contrast_values = list(
-            attribute_contrasts(first_detail.kind, first_detail.value)
-        )
-    attribute_options = [pairs[0]["agreedForm"]]
-    attribute_meanings = {
-        fold(pairs[0]["agreedForm"]): first_detail.value,
-    }
-    for value in contrast_values:
-        if len(attribute_options) == 3:
+        if pack is not None:
+            if attribute.kind == "colour" and other.value in pack.lexical.get(
+                "confusable_colours", {}
+            ).get(attribute.value, "").split("|"):
+                continue
+            if attribute.kind != "colour" and other.value not in pack.lexical.get(
+                "attribute_contrasts", {}
+            ).get(f"{attribute.kind}:{attribute.value}", "").split("|"):
+                continue
+        form = _standalone_form(terms[other.fact_id], gender)
+        if form.casefold() not in {value.casefold() for value in options}:
+            options.append(form)
+            meanings[form.casefold()] = other.value
+        if len(options) == 3:
             break
-        agreement = agreed_attribute(
-            first_detail.kind, value, pack.language.code, pairs[0]["gender"]
-        )
-        form = agreement[0] if agreement else None
-        if form and fold(form) not in {fold(option) for option in attribute_options}:
-            attribute_options.append(form)
-            attribute_meanings[fold(form)] = value
-    attribute_meanings = {
-        fold(option): attribute_meanings[fold(option)]
-        for option in attribute_options
-    }
-    payload = {
-        "pairs": pairs,
-        "attributeOptions": attribute_options,
-        "describeExtras": [],
-        "confirmPrompt": "¿Es {noun}?",
-        "sentenceStart": "Es",
-        "yes": next(label.text for label in pack.labels if label.semantic == "yes"),
-        "no": next(label.text for label in pack.labels if label.semantic == "no"),
-        "attributePrompt": next(
-            label.text for label in pack.labels if label.semantic == "attribute-prompt-colour"
-        ),
-        "attributePromptTranslation": "What colour is it?",
-        "describePrompt": next(
-            label.text for label in pack.labels if label.semantic == "describe-object"
-        ),
-        "layout": {
-            "statementCorrect": [
-                plan.slots[0].specs[0].truth,
-                plan.slots[1].specs[0].truth,
-            ],
-            "confirmOrders": [[0, 1], [0, 1]],
-            "attributeOrder": list(range(3)),
-        },
-        "attributeMeanings": attribute_meanings,
-        "seed": (
-            builder_selection.get("seed", "es-m01")
-            if builder_selection is not None else "es-m01"
-        ),
-    }
-    if builder_selection is not None:
-        payload["layout"] = {
-            **payload["layout"],
-            **builder_selection.get("layout", {}),
-        }
-    sentences = {
-        (sentence.candidate.slot_id, sentence.candidate.spec_id): sentence
-        for sentence in accepted
-    }
-    spec_by_slot = {
-        slot.slot_id: {spec.use: spec for spec in slot.specs}
-        for slot in plan.slots
-    }
-    questions = []
-    for index, (shown, other) in enumerate((pairs, pairs[::-1]), 1):
-        slot = f"confirmObject-{index}"
-        specs = spec_by_slot[slot]
-        prompt = sentences[(slot, specs["prompt"].spec_id)].candidate
-        answer = sentences[(slot, specs["answer"].spec_id)].candidate
-        contrast = sentences[(slot, specs["option"].spec_id)].candidate
-        truth = specs["prompt"].truth
-        correct_text, other_text = confirm_answers(payload, shown, other)[truth]
-        option_text = {0: answer.text, 1: contrast.text}
-        option_order = payload["layout"]["confirmOrders"][index - 1]
-        options = [
-            {"option_id": f"confirm-{option_index + 1}", "label": option_text[value]}
-            for option_index, value in enumerate(option_order)
-        ]
-        if answer.text != correct_text or contrast.text != other_text:
-            raise ValueError(f"A1 generated answer options do not match {slot} bindings")
-        questions.append(M01Question(
-            question_id=CONFIRM_IDS[index - 1],
-            purpose="confirmObject",
-            section=IDENTIFY_SECTION,
-            prompt=prompt.text,
-            interaction_type="multipleChoice",
-            options=options,
-            correct_option_id=next(
-                option["option_id"] for option in options
-                if option["label"] == answer.text
-            ),
-            correct_text=None,
-            token_bank=[],
-            translation=None,
-            object_key=shown["key"],
-            attribute_keys=[],
-            statement_correct=truth,
-        ))
-    first, second = pairs
-    ordered_attributes = [
-        payload["attributeOptions"][index]
-        for index in payload["layout"]["attributeOrder"]
-        if index < len(payload["attributeOptions"])
-    ][:3]
-    attribute_options = [
-        {"option_id": f"attribute-{index}", "label": value.capitalize()}
-        for index, value in enumerate(ordered_attributes, 1)
-    ]
-    correct_form = first["agreedForm"]
-    questions.append(M01Question(
-        question_id="choose-attribute",
-        purpose="chooseAttribute",
-        section=DESCRIBE_SECTION,
-        prompt=payload["attributePrompt"],
-        interaction_type="multipleChoice",
-        options=attribute_options,
-        correct_option_id=next(
-            option["option_id"] for option in attribute_options
-            if option["label"].casefold() == correct_form.casefold()
-        ),
-        correct_text=None,
-        token_bank=[],
-        translation=None,
-        object_key=first["key"],
-        attribute_keys=[first["attributeKey"]],
-    ))
-    description_sentence = sentences[
-        ("describeObject", spec_by_slot["describeObject"]["answer"].spec_id)
-    ]
-    question = M01Question(
-        question_id="describe-object",
-        purpose="describeObject",
-        section=DESCRIBE_SECTION,
-        prompt=payload["describePrompt"],
-        interaction_type="sentenceBuilding",
-        options=[],
-        correct_option_id=None,
-        correct_text=description_sentence.candidate.text,
-        token_bank=tokens(description_sentence.candidate.text),
-        translation=description_sentence.candidate.translation,
-        object_key=second["key"],
-        attribute_keys=[second["attributeKey"]],
-    )
-    questions.append(question)
-    result = M01LessonResult(
-        title="Identify and describe objects",
-        explanation="Use the details shown in the scene.",
-        questions=questions,
-    )
-    validate_m01_lesson(payload, result)
-    task = m01_lesson_task(
-        _SESSION_ID,
-        _mission("A1"),
-        payload,
-        result,
-        {pair["key"]: pair["vocabularyItemId"] for pair in pairs},
-    )
-    return result, task, payload
-
-
-def _a2(
-    pack: LanguagePack,
-    facts: BoundSceneFacts,
-    vocabulary: ApprovedVocabulary,
-    plan: LessonPlan,
-    accepted: list[ApprovedSentence],
-    builder_selection: dict | None = None,
-):
-    rows, by_fact = _objects(facts, vocabulary)
-    terms = {term.fact_id: term for term in vocabulary.terms}
-    attrs = {item.fact_id: item for item in facts.scene_facts.attributes}
-    sentences = {
-        (item.candidate.slot_id, item.candidate.spec_id): item
-        for item in accepted
-    }
-    specs = {slot.slot_id: {spec.use: spec for spec in slot.specs} for slot in plan.slots}
-
-    def accepted_candidate(slot_id: str, use: str):
-        spec = specs[slot_id][use]
-        return sentences[(slot_id, spec.spec_id)].candidate
-
-    def object_row(fact_id: str) -> dict:
-        try:
-            return by_fact[fact_id]
-        except KeyError:
-            raise ValueError(f"A2 references unknown object fact {fact_id!r}") from None
-
-    def sentence_chunks(candidate) -> list[str]:
-        return [chunk.text for chunk in candidate.chunks]
-
-    def add_chunks(candidate, distractors=()):
-        answers = sentence_chunks(candidate)
-        distractor_values = list(distractors)
-        return {
-            "correct_text": candidate.text,
-            "answer_chunks": answers,
-            "token_bank": [*answers, *distractor_values],
-            "distractor_chunks": distractor_values,
-        }
-
-    fact1 = accepted_candidate("chooseSceneMarker", "fact1")
-    fact2 = accepted_candidate("buildSceneFact", "fact2")
-    connected = accepted_candidate("chooseSceneDescription", "connected")
-    false_attribute = accepted_candidate("chooseSceneDescription", "wrongAttribute")
-    false_existence = accepted_candidate("chooseSceneDescription", "wrongExistence")
-    descriptions = [
-        accepted_candidate("buildSceneDescription", use)
-        for use in ("fact1", "fact2", "fact3")
-    ]
-    followup = accepted_candidate("followUpSceneFact", "followup")
-
-    first_spec = specs["chooseSceneMarker"]["fact1"]
-    object_fact = first_spec.bindings["object"]
-    selected_facts = (
-        builder_selection.get("selection", {})
-        if builder_selection is not None else {}
-    )
-    attr_fact = selected_facts.get("attribute", first_spec.bindings.get("attribute"))
-    first_object = object_row(object_fact)
-    third_fact = specs["chooseSceneDescription"]["connected"].bindings["other-object"]
-    third_object = object_row(third_fact)
-    first_attribute = attrs[attr_fact] if attr_fact else None
-    first_attribute_term = terms.get(attr_fact) if attr_fact else None
-    selected_form = (
-        first_attribute_term.forms_by_key.get(first_object["gender"])
-        if first_attribute_term else None
-    )
-    if not selected_form:
-        raise ValueError("A2 first fact needs a bound, agreed attribute")
-    attribute_options = [{"option_id": "detail-correct", "label": selected_form}]
-    attribute_values = (
-        ("black", "white", "blue", "green", "red")
-        if first_attribute.kind == "colour"
-        else attribute_contrasts(first_attribute.kind, first_attribute.value)
-    )
-    for index, value in enumerate(attribute_values):
-        if len(attribute_options) == 3:
-            break
-        agreement = agreed_attribute(
-            first_attribute.kind, value, "es", first_object["gender"]
-        )
-        form = agreement[0] if agreement else None
-        if form and form.casefold() not in {
-            option["label"].casefold() for option in attribute_options
-        }:
-            attribute_options.append(
-                {"option_id": f"detail-{index}", "label": form}
-            )
-
-    selection = builder_selection.get("selection", {}) if builder_selection else {}
-    object_by_fact = {item.fact_id: item for item in facts.scene_facts.objects}
-    scene_objects = []
-    words = []
-    translated_objects = []
-    review_markers = {}
-    for row in rows:
-        obj = object_by_fact[row["fact_id"]]
-        term = terms[row["fact_id"]]
-        attributes = {
-            ("color" if item.kind == "colour" else item.kind): item.value
-            for item in facts.scene_facts.attributes
-            if item.object_fact_id == obj.fact_id
-        }
-        scene_objects.append(
-            SimpleNamespace(id=obj.scene_object_id, label=obj.label, attributes=attributes)
-        )
-        words.append(
-            SimpleNamespace(
-                id=row["vocabularyItemId"],
-                display_text=term.target_text,
-                gender=term.agreement,
-                plural_form=term.forms_by_key.get("plural"),
-            )
-        )
-        translated_objects.append(
-            SimpleNamespace(
-                key=str(obj.scene_object_id),
-                translation=term.forms_by_key["definite"],
-                article=term.forms_by_key["article_definite"],
-                gender=term.agreement,
-            )
-        )
-        review_markers[str(obj.scene_object_id)] = row["marker"]
-    scene_relations = [
-        SimpleNamespace(
-            id=(
-                selection.get("relation_key")
-                if selection.get("relation_key")
-                else item.fact_id
-            ),
-            subject_scene_object_id=object_by_fact[item.subject_fact_id].scene_object_id,
-            reference_scene_object_id=object_by_fact[item.reference_fact_id].scene_object_id,
-            relation=item.relation.value,
-        )
-        for item in facts.scene_facts.relations
-    ]
-    approved_facts = _approved_facts(
-        _mission("A2"),
-        pack.language.code,
-        scene_objects,
-        scene_relations,
-        words,
-        SimpleNamespace(objects=translated_objects),
-        [],
-        None,
-        (
-            builder_selection.get("seed", "es-m01-a2")
-            if builder_selection is not None else "es-m01-a2"
-        ),
-        review_markers,
-    )
-    approved_objects = approved_facts["approvedObjects"]
-    approved_attributes = approved_facts["approvedAttributes"]
-    approved_relationships = approved_facts["approvedRelationships"]
-    selected_attribute_row = next(
-        row for row in approved_attributes
-        if row["objectKey"] == first_object["key"]
-        and row["kind"] == first_attribute.kind
-        and row["value"] == first_attribute.value
-    )
-    attribute_key = selection.get("attribute_key", selected_attribute_row["key"])
-    alternate_value = (
-        ("blue" if first_attribute.value == "red" else "red")
-        if first_attribute.kind == "colour"
-        else next(iter(attribute_contrasts(first_attribute.kind, first_attribute.value)), None)
-    )
-    alternate = (
-        agreed_attribute(
-            first_attribute.kind,
-            alternate_value,
-            pack.language.code,
-            first_object["gender"],
-        )
-        if alternate_value else None
-    )
-    false_first = (
-        f"Hay {first_object['nounPhrase']} {alternate[0]}."
-        if alternate
-        else f"Hay {first_object['nounPhrase']} que no es {selected_form}."
-    )
-    full_description = " ".join(item.text for item in descriptions)
-    payload = {
-        "approvedFacts": approved_facts,
-        "selection": {
-            "attributeKey": attribute_key,
-            "relationKey": None,
-            "firstFactKind": "attribute",
-            "secondObjectKey": None,
-            "thirdObjectKey": third_object["key"],
-        },
-        "targetLanguage": "es",
-        "missionId": "M01",
-        "practiceLevel": "A2",
-        "contentVersion": 1,
-        "seed": (
-            builder_selection.get("seed", "es-m01-a2")
-            if builder_selection is not None else "es-m01-a2"
-        ),
-        "facts": {
-            "first": fact1.text,
-            "second": fact2.text,
-            "third": descriptions[2].text,
-            "description": full_description,
-            "falseFirst": false_first,
-            "q3": connected.text,
-            "wrongOne": false_attribute.text,
-            "wrongTwo": false_existence.text,
-            "detailPrompt": followup.text,
-            "attribute": {
-                "key": attribute_key,
-                "objectKey": first_object["key"],
-                "kind": first_attribute.kind,
-                "value": first_attribute.value,
-                "form": selected_form,
-                "before": first_attribute_term.position == "before",
-            },
-            "relation": None,
-            "firstKind": "attribute",
-            "firstObject": {
-                **first_object,
-                "bareNoun": first_object["noun"],
-                "gender": first_object["gender"],
-                "nounPhrase": approved_objects[
-                    next(index for index, row in enumerate(approved_objects)
-                         if row["key"] == first_object["key"])
-                ]["nounPhrase"],
-            },
-            "thirdObject": third_object,
-        },
-    }
-    first_attribute_row = next(
-        row for row in approved_attributes
-        if row["objectKey"] == first_object["key"]
-        and row["kind"] == first_attribute.kind
-        and row["value"] == first_attribute.value
-    )
-    selected_relation = next(
-        (
-            row for row in approved_relationships
-            if row["subjectKey"] == first_object["key"]
-        ),
-        None,
-    )
-    second_object_key = (
-        selected_relation["key"]
-        if selected_relation is not None
-        else object_row(
-            specs["buildSceneDescription"]["fact2"].bindings["subject"]
-        )["key"]
-    )
-    payload["selection"]["relationKey"] = (
-        selected_relation["key"] if selected_relation is not None else None
-    )
-    payload["selection"]["secondObjectKey"] = second_object_key
-    payload["facts"]["relation"] = selected_relation
-    payload["planningFacts"] = [
-        _english_fact(approved_facts, "attribute", first_attribute_row),
-        _english_fact(
-            approved_facts,
-            "relation" if selected_relation is not None else "existence",
-            selected_relation
-            if selected_relation is not None
-            else {"key": second_object_key},
-        ),
-        _english_fact(approved_facts, "existence", {"key": third_object["key"]}),
-    ]
-    section1, section2, section3 = (
-        "Task 1 · Notice the facts",
-        "Task 2 · Describe the scene",
-        "Task 3 · Check a detail",
-    )
-    marker_id = first_object["key"]
-    third_marker_id = third_object["key"]
-    prompt1 = next(
-        label.text for label in pack.labels if label.semantic == "touch-object"
-    ).replace("{f['first']}", fact1.text)
-    q1_options = [
-        {"option_id": row["key"], "label": str(row["marker"])}
-        for row in (first_object, third_object)
-    ]
-    random.Random(f"{payload['seed']}:m01-q1").shuffle(q1_options)
-    q3_options = [
-        {"option_id": "description-correct", "label": connected.text},
-        {"option_id": "description-attribute", "label": false_attribute.text},
-        {"option_id": "description-existence", "label": false_existence.text},
-    ]
-    random.Random(f"{payload['seed']}:m01-q3").shuffle(q3_options)
-    random.Random(f"{payload['seed']}:m01-q5").shuffle(attribute_options)
-    description_chunks = _sentence_chunks(
-        full_description,
-        distractors=[false_first],
-        rng=random.Random(f"{payload['seed']}:m01-q4"),
-        language=pack.language.code,
-        phrase_chunks=True,
-    )
-    questions = [
-        MissionA2Question(
-            question_id="m01-q1",
-            purpose="chooseSceneMarker",
-            prompt=prompt1,
-            target_language_text=[prompt1],
-            interaction_type="multipleChoice",
-            options=q1_options,
-            correct_option_id=marker_id,
-            object_key=marker_id,
-            section=section1,
-            marker_object_ids={marker_id: marker_id, third_marker_id: third_marker_id},
-        ),
-        MissionA2Question(
-            question_id="m01-q2",
-            purpose="buildSceneFact",
-            prompt=next(
-                label.text
-                for label in pack.labels
-                if label.semantic == "build-second-fact"
-            ),
-            target_language_text=[
-                next(label.text for label in pack.labels if label.semantic == "build-second-fact")
-            ],
-            interaction_type="sentenceBuilding",
-            object_key=first_object["key"],
-            section=section1,
-            **add_chunks(fact2, ["pero"]),
-        ),
-        MissionA2Question(
-            question_id="m01-q3",
-            purpose="chooseSceneDescription",
-            prompt=next(
-                label.text
-                for label in pack.labels
-                if label.semantic == "choose-description"
-            ),
-            target_language_text=[
-                next(
-                    label.text
-                    for label in pack.labels
-                    if label.semantic == "choose-description"
+    # Preserve existing scene-colour choices; use pack colours when no distinct
+    # scene colour is available. Other detail kinds keep their existing fill rule.
+    if include_pack and len(options) < (2 if attribute.kind == "colour" else 3):
+        for term in sorted(vocabulary.terms, key=lambda t: t.provenance != "modelProposal"):
+            if term.linguistic.get("attribute-kind") != attribute.kind:
+                continue
+            proposed = term.provenance == "modelProposal"
+            if proposed and term.linguistic.get("contrast-for") != attribute.fact_id:
+                continue
+            if (
+                attribute.kind == "colour"
+                and pack is not None
+                and term.source_text
+                in (pack.lexical.get("confusable_colours", {}).get(attribute.value, "").split("|"))
+            ):
+                continue
+            if (
+                attribute.kind != "colour"
+                and not proposed
+                and pack is not None
+                and term.source_text
+                not in (
+                    pack.lexical.get("attribute_contrasts", {})
+                    .get(f"{attribute.kind}:{attribute.value}", "")
+                    .split("|")
                 )
-            ],
-            interaction_type="multipleChoice",
-            options=q3_options,
-            correct_option_id="description-correct",
-            object_key=first_object["key"],
-            section=section2,
-        ),
-        MissionA2Question(
-            question_id="m01-q4",
-            purpose="buildSceneDescription",
-            prompt=next(label.text for label in pack.labels if label.semantic == "describe-scene"),
-            target_language_text=[
-                next(label.text for label in pack.labels if label.semantic == "describe-scene")
-            ],
-            interaction_type="sentenceBuilding",
-            object_key=first_object["key"],
-            section=section2,
-            planning_facts=payload["planningFacts"],
-            **{
-                "correct_text": description_chunks["correct_text"],
-                "answer_chunks": description_chunks["answer_chunks"],
-                "token_bank": description_chunks["token_bank"],
-                "distractor_chunks": description_chunks["distractor_chunks"],
-            },
-        ),
-        MissionA2Question(
-            question_id="m01-q5",
-            purpose="followUpSceneFact",
-            prompt=followup.text,
-            target_language_text=[followup.text],
-            interaction_type="multipleChoice",
-            options=attribute_options,
-            correct_option_id="detail-correct",
-            object_key=first_object["key"],
-            section=section3,
-        ),
-    ]
-    result = MissionA2Result(title="Describe the scene", questions=questions)
-    validate_a2_lesson(payload, result)
-    vocabulary_ids = {row["key"]: row["vocabularyItemId"] for row in rows}
-    task = m01_a2_task(
-        _SESSION_ID,
-        _mission("A2"),
-        payload,
-        result,
-        vocabulary_ids,
+            ):
+                continue
+            form = _standalone_form(term, gender)
+            if form.casefold() not in {value.casefold() for value in options}:
+                options.append(form)
+                meanings[form.casefold()] = term.source_text
+            if len(options) == 3:
+                break
+    if len(options) < 2:
+        raise ValueError(
+            f"M01 needs a contrasting approved detail option for {attribute.kind}:"
+            f"{attribute.value} (agreement={gender!r}). Supply a distinct validated "
+            "scene translation or model-proposed alternative. Pack reference "
+            "vocabulary is optional; missing or unsuitable candidates must be retried."
+        )
+    return options, meanings
+
+
+def validate_lesson_inputs(level, pack, facts, vocabulary, plan):
+    """Reject missing A1 choice data before any model generation or repair calls."""
+    if level != "A1":
+        return
+    spec = next(slot for slot in plan.slots if slot.slot_id == "chooseAttribute").specs[0]
+    attribute = next(
+        attr for attr in facts.scene_facts.attributes if attr.fact_id == spec.bindings["attribute"]
     )
-    return result, task, payload
+    subject = next(term for term in vocabulary.terms if term.fact_id == spec.bindings["object"])
+    _detail_options(
+        facts, vocabulary, attribute, subject.agreement, include_pack=True, pack=pack,
+    )
 
 
 def build_lesson(
-    level: str,
-    pack: LanguagePack,
-    facts: BoundSceneFacts,
-    vocabulary: ApprovedVocabulary,
-    plan: LessonPlan,
-    accepted: list[ApprovedSentence],
-    *,
-    builder_selection: dict | None = None,
+    level, pack, facts, vocabulary, plan, accepted, *, builder_selection=None, session_id=None
 ):
+    session_id = session_id or _SESSION_ID
+    selection = builder_selection or {}
+    rows, by_fact = _objects(
+        facts,
+        vocabulary,
+        " " if pack.language.word_separator == "space" else "",
+    )
+    terms = {term.fact_id: term for term in vocabulary.terms}
+    attrs = {attr.fact_id: attr for attr in facts.scene_facts.attributes}
+    specs = {slot.slot_id: {spec.use: spec for spec in slot.specs} for slot in plan.slots}
+    sentences = {
+        (item.candidate.slot_id, item.candidate.spec_id): item.candidate for item in accepted
+    }
+    labels = {label.semantic: label for label in pack.labels}
+    seed = selection.get("seed", str(session_id))
+
+    def candidate(slot, use=None):
+        spec = specs[slot][use] if use is not None else next(iter(specs[slot].values()))
+        return sentences[(slot, spec.spec_id)]
+
+    def label(semantic):
+        return labels[semantic].text
+
+    def shuffle(values, salt):
+        result = list(values)
+        random.Random(f"{seed}:{salt}").shuffle(result)
+        return result
+
+    def chunks(sentence, extras=(), phrase=False):
+        sentence = derive_chunks(
+            sentence,
+            pack.language.word_separator,
+            phrase_chunks=phrase,
+            phrase_boundaries=pack.language.phrase_boundaries,
+        )
+        answers = [chunk.text for chunk in sentence.chunks]
+        if phrase:
+            extras = [
+                chunk.text
+                for text in extras
+                for chunk in derive_chunks(
+                    sentence.model_copy(update={"text": text}),
+                    pack.language.word_separator,
+                    phrase_chunks=True,
+                    phrase_boundaries=pack.language.phrase_boundaries,
+                ).chunks
+            ]
+        return dict(
+            correct_text=sentence.text,
+            answer_chunks=answers,
+            token_bank=shuffle([*answers, *extras], sentence.slot_id),
+            distractor_chunks=list(extras),
+        )
+
+    vocabulary_ids = {
+        row["key"]: row["vocabularyItemId"] for row in rows if row["vocabularyItemId"]
+    }
+    payload = dict(
+        targetLanguage=pack.language.code,
+        missionId="M01",
+        practiceLevel=level,
+        contentVersion=plan.content_version,
+        seed=seed,
+    )
     if level == "A0":
-        return _a0(pack, facts, vocabulary, plan, accepted, builder_selection)
-    if level == "A1":
-        return _a1(pack, facts, vocabulary, plan, accepted, builder_selection)
-    if level == "A2":
-        return _a2(pack, facts, vocabulary, plan, accepted, builder_selection)
-    raise ValueError(f"unsupported M01 level {level!r}")
+        focus = [
+            by_fact[next(iter(specs[f"matchName-{i}"].values())).bindings["object"]] for i in (1, 2)
+        ]
+        translations = {label("what-is-this"): labels["what-is-this"].meaning}
+        templates = next(
+            c.templates for c in pack.constructions if c.construction_id == "identify-object"
+        )
+        taught = []
+        for row in rows:
+            english = row["source"]
+            indefinite = f"{'an' if english[:1].lower() in 'aeiou' else 'a'} {english}"
+            for name, meaning in (
+                (row["name"], f"the {english}"),
+                (templates.get("identify", "").format(**row), f"This is {indefinite}."),
+                (templates.get("question", "").format(**row), f"Is this {indefinite}?"),
+                (templates.get("find", "").format(**row), f"Find the {english}."),
+                (templates.get("slot", "").format(**row), f"the {english}"),
+            ):
+                if name:
+                    taught.append(name)
+                    translations[name] = meaning
+        for row, index in zip(focus, (1, 2), strict=True):
+            for field, slot in (
+                ("name", "matchName"),
+                ("isIt", "confirmName"),
+                ("identify", "buildIdentify"),
+            ):
+                sentence = candidate(f"{slot}-{index}")
+                row[field] = sentence.text
+                translations[sentence.text] = sentence.translation
+        payload.update(
+            focus=[row["key"] for row in focus],
+            approvedObjects=rows,
+            approvedTranslations=translations,
+            whatIsThis=label("what-is-this"),
+            yesNo=[label("yes-answer"), label("no-answer")],
+            approvedSentenceChunks=list(dict.fromkeys([*translations, *taught])),
+            approvedArticlesOrEndings=[],
+            approvedNumberWords={},
+        )
+        questions = []
+        for index, (section, target) in enumerate(_sections(payload), 1):
+            slot = f"confirmName-{index}"
+            spec = next(iter(specs[slot].values()))
+            other = _other(payload, target, f"tile-{index}")
+            extra_noun = next((
+                term.forms_by_key.get("bare", term.target_text)
+                for term in vocabulary.terms
+                if term.provenance == "modelProposal"
+                and term.linguistic.get("alternative-kind") == "noun"
+                and term.linguistic.get("contrast-for") == target["fact_id"]
+            ), other["noun"])
+            marker = _marker_question(
+                payload, "matchName", section, target, target["name"], index=index
+            )
+            confirm = _choice_question(
+                payload,
+                "confirmName",
+                section,
+                target,
+                target["isIt"],
+                payload["yesNo"],
+                payload["yesNo"][0 if spec.truth else 1],
+                index=index,
+                shuffle=False,
+                statement_true=spec.truth,
+                stated_key=by_fact[spec.bindings["object"]]["key"],
+                audio_text=target["isIt"],
+            )
+            built = _build_question(
+                payload,
+                "buildIdentify",
+                section,
+                target,
+                payload["whatIsThis"],
+                target["identify"],
+                extra_noun,
+                index=index,
+            )
+            # Use only chunks derived after complete-sentence validation.
+            built["token_bank"] = chunks(candidate(f"buildIdentify-{index}"), [extra_noun])[
+                "token_bank"
+            ]
+            questions.extend((marker, confirm, built))
+        result = A0LessonResult(title="Name the objects", questions=questions)
+        task = a0_lesson_task(
+            session_id, get_mission("M01", level, 1), payload, result, vocabulary_ids
+        )
+    elif level == "A1":
+        pairs = []
+        for slot in ("chooseAttribute", "describeObject"):
+            spec = next(iter(specs[slot].values()))
+            obj, detail = by_fact[spec.bindings["object"]], attrs[spec.bindings["attribute"]]
+            if detail.object_fact_id != obj["fact_id"]:
+                raise ValueError("attribute is bound to another object instance")
+            term = terms[detail.fact_id]
+            pairs.append(
+                dict(
+                    **obj,
+                    attributeKey=detail.fact_id,
+                    attributeType=detail.kind,
+                    attributeSource=detail.value,
+                    agreedForm=_form(term, obj["gender"]),
+                    before=term.position == "before",
+                )
+            )
+        first, second = pairs
+        # The chosen detail stands alone; the described one agrees inside the sentence.
+        first["agreedForm"] = _standalone_form(terms[first["attributeKey"]], first["gender"])
+        options, meanings = _detail_options(
+            facts,
+            vocabulary,
+            attrs[first["attributeKey"]],
+            first["gender"],
+            include_pack=True,
+            pack=pack,
+        )
+        prompt_label = labels.get(f"attribute-prompt-{first['attributeType']}") or labels.get(
+            "attribute-prompt"
+        )
+        if prompt_label is None:
+            raise ValueError("pack needs a prompt for the selected attribute construction")
+        payload.update(
+            pairs=pairs,
+            attributeOptions=options,
+            attributeMeanings=meanings,
+            describeExtras=[],
+            attributePromptTranslation=prompt_label.meaning,
+        )
+        description_term = terms[second["attributeKey"]]
+        canonical = candidate("describeObject").text
+        # Wrong-agreement tiles exist only for gendered languages, and only when the
+        # alternative form would actually change the canonical sentence.
+        extras = [] if pack.language.grammatical_gender == "none" else list(
+            dict.fromkeys(
+                form
+                for key, form in description_term.forms_by_key.items()
+                if key in AGREEMENT_KEYS
+                and form != second["agreedForm"]
+                and second["agreedForm"] in canonical
+            )
+        )
+        payload["describeExtras"] = extras
+        construction = next(
+            c for c in pack.constructions if c.construction_id == "describe-attribute"
+        )
+        payload["packCorrections"] = [
+            dict(
+                mistake="wrongGender",
+                answers=[canonical.replace(second["agreedForm"], form)],
+                correction=canonical,
+                explanation=f"The word agrees with {second['nounPhrase']}: {second['agreedForm']}.",
+            )
+            for form in extras
+        ] + [
+            dict(
+                mistake="wordOrder",
+                correction=canonical,
+                explanation=construction.templates.get("word_order_feedback", construction.summary),
+            )
+        ]
+        templates = next(
+            c.templates for c in pack.constructions if c.construction_id == "yes-no-identification"
+        )
+        payload.update(
+            yes=label("yes"),
+            no=label("no"),
+            confirmPrompt=templates.get("question", "{noun}"),
+            sentenceStart=templates.get("sentence_start", ""),
+        )
+        questions = []
+        for index, shown in enumerate(pairs, 1):
+            slot = f"confirmObject-{index}"
+            prompt, answer, contrast = (
+                candidate(slot, use) for use in ("prompt", "answer", "option")
+            )
+            choices = [
+                {"option_id": "confirm-1", "label": answer.text},
+                {"option_id": "confirm-2", "label": contrast.text},
+            ]
+            orders = selection.get("layout", {}).get("confirmOrders")
+            order = orders[index - 1] if orders is not None else shuffle(
+                range(2), f"confirm-order-{index}",
+            )
+            choices = [
+                dict(option_id=f"confirm-{i + 1}", label=choices[value]["label"])
+                for i, value in enumerate(order)
+            ]
+            questions.append(
+                M01Question(
+                    question_id=CONFIRM_IDS[index - 1],
+                    purpose="confirmObject",
+                    section=IDENTIFY_SECTION,
+                    prompt=prompt.text,
+                    interaction_type="multipleChoice",
+                    options=choices,
+                    correct_option_id=next(
+                        o["option_id"] for o in choices if o["label"] == answer.text
+                    ),
+                    correct_text=None,
+                    token_bank=[],
+                    translation=None,
+                    object_key=shown["key"],
+                    attribute_keys=[],
+                    statement_correct=specs[slot]["prompt"].truth,
+                )
+            )
+        attribute_order = selection.get("layout", {}).get("attributeOrder")
+        if attribute_order is None:
+            attribute_order = shuffle(range(len(options)), "attribute-order")
+        detail_options = [
+            {"option_id": f"attribute-{i}", "label": value[:1].upper() + value[1:]}
+            for i, value in enumerate([options[j] for j in attribute_order if j < len(options)], 1)
+        ]
+        questions.append(
+            M01Question(
+                question_id="choose-attribute",
+                purpose="chooseAttribute",
+                section=DESCRIBE_SECTION,
+                prompt=prompt_label.text,
+                interaction_type="multipleChoice",
+                options=detail_options,
+                correct_option_id=next(
+                    o["option_id"]
+                    for o in detail_options
+                    if o["label"].casefold() == first["agreedForm"].casefold()
+                ),
+                correct_text=None,
+                token_bank=[],
+                translation=None,
+                object_key=first["key"],
+                attribute_keys=[first["attributeKey"]],
+            )
+        )
+        sentence = candidate("describeObject")
+        questions.append(
+            M01Question(
+                question_id="describe-object",
+                purpose="describeObject",
+                section=DESCRIBE_SECTION,
+                prompt=label("describe-object"),
+                interaction_type="sentenceBuilding",
+                options=[],
+                correct_option_id=None,
+                correct_text=sentence.text,
+                token_bank=chunks(sentence, extras)["token_bank"],
+                translation=sentence.translation,
+                object_key=second["key"],
+                attribute_keys=[second["attributeKey"]],
+            )
+        )
+        result = M01LessonResult(
+            title="Name it and describe it",
+            explanation="Use the details shown in the scene.",
+            questions=questions,
+        )
+        task = m01_lesson_task(
+            session_id, get_mission("M01", level, 1), payload, result, vocabulary_ids
+        )
+    elif level == "A2":
+        first_spec = specs["chooseSceneMarker"]["fact1"]
+        first = by_fact[first_spec.bindings.get("object") or first_spec.bindings["subject"]]
+        detail = attrs.get(first_spec.bindings.get("attribute"))
+        third = by_fact[specs["chooseSceneDescription"]["connected"].bindings["other-object"]]
+        fact1, fact2 = candidate("chooseSceneMarker", "fact1"), candidate("buildSceneFact", "fact2")
+        descriptions = [
+            candidate("buildSceneDescription", use) for use in ("fact1", "fact2", "fact3")
+        ]
+        full = " ".join(sentence.text for sentence in descriptions)
+        relation_id = first_spec.bindings.get("relation") or specs["buildSceneFact"][
+            "fact2"
+        ].bindings.get("relation")
+        relation = next(
+            (rel for rel in facts.scene_facts.relations if rel.fact_id == relation_id), None
+        )
+        if detail:
+            detail_options, _ = _detail_options(
+                facts, vocabulary, detail, first["gender"], include_pack=True, pack=pack
+            )
+            order = pack.lexical.get("choice_order", {}).get(detail.kind) or pack.lexical.get(
+                "attribute_contrasts", {}
+            ).get(f"{detail.kind}:{detail.value}")
+            if order and not any(t.provenance == "modelProposal" for t in vocabulary.terms):
+                detail_options = [_standalone_form(terms[detail.fact_id], first["gender"])]
+                detail_rows = [dict(option_id="detail-correct", label=detail_options[0])]
+                for index, value in enumerate(order.split("|")):
+                    term = next(
+                        (
+                            t
+                            for t in vocabulary.terms
+                            if t.source_text == value
+                            and t.linguistic.get("attribute-kind") == detail.kind
+                        ),
+                        None,
+                    )
+                    if term:
+                        form = _standalone_form(term, first["gender"])
+                        if form.casefold() not in {v.casefold() for v in detail_options}:
+                            detail_options.append(form)
+                            detail_rows.append(dict(option_id=f"detail-{index}", label=form))
+                    if len(detail_options) == 3:
+                        break
+            else:
+                detail_rows = [
+                    dict(option_id="detail-correct" if i == 0 else f"detail-{i}", label=v)
+                    for i, v in enumerate(detail_options)
+                ]
+        else:
+            reference = by_fact[first_spec.bindings["reference"]]
+            separator = " " if pack.language.word_separator == "space" else ""
+            detail_options = [separator.join([terms[relation_id].target_text, reference["name"]])]
+            for term in vocabulary.terms:
+                if "relation-kind" in term.linguistic and term.linguistic["relation-kind"] != str(
+                    relation.relation
+                ):
+                    value = separator.join([term.target_text, reference["name"]])
+                    if value not in detail_options:
+                        detail_options.append(value)
+                if len(detail_options) == 3:
+                    break
+            if len(detail_options) < 2:
+                raise ValueError("A2 needs approved contrasting relation options")
+            detail_rows = [
+                dict(option_id="detail-correct" if i == 0 else f"detail-{i}", label=v)
+                for i, v in enumerate(detail_options)
+            ]
+        payload.update(
+            approvedFacts=dict(
+                approvedObjects=rows,
+                sceneFacts=facts.model_dump(mode="json"),
+                approvedVocabulary=vocabulary.model_dump(mode="json"),
+            ),
+            selection=dict(
+                attributeKey=detail.fact_id if detail else None,
+                relationKey=relation_id,
+                firstFactKind="attribute" if detail else "relation",
+                secondObjectKey=None,
+                thirdObjectKey=third["key"],
+            ),
+        )
+        planning = [
+            f"The {first['source']} is {detail.value}."
+            if detail
+            else fact1.translation or fact1.text,
+            fact2.translation or fact2.text,
+            descriptions[2].translation or descriptions[2].text,
+        ]
+        section1, section2, section3 = (
+            "Task 1 · Notice the facts",
+            "Task 2 · Describe the scene",
+            "Task 3 · Check a detail",
+        )
+        prompt1 = label("touch-object").replace("{f['first']}", fact1.text)
+        marker_options = [
+            {"option_id": row["key"], "label": str(row["marker"])} for row in (first, third)
+        ]
+        connected, wrong_attribute, wrong_existence = (
+            candidate("chooseSceneDescription", use)
+            for use in ("connected", "wrongAttribute", "wrongExistence")
+        )
+        description_options = [
+            dict(option_id=key, label=sentence.text)
+            for key, sentence in (
+                ("description-correct", connected),
+                ("description-attribute", wrong_attribute),
+                ("description-existence", wrong_existence),
+            )
+        ]
+        # A full false clause is a distractor; it has already passed sentence validation.
+        false_clause = (
+            candidate("chooseSceneDescription", "falseFirst").text
+            if "falseFirst" in specs["chooseSceneDescription"]
+            else wrong_attribute.text
+        )
+        full_candidate = descriptions[0].model_copy(update={"text": full, "chunks": []})
+        questions = [
+            MissionA2Question(
+                question_id="m01-q1",
+                purpose="chooseSceneMarker",
+                prompt=prompt1,
+                interaction_type="multipleChoice",
+                options=shuffle(marker_options, "m01-q1"),
+                correct_option_id=first["key"],
+                object_key=first["key"],
+                section=section1,
+                marker_object_ids={row["key"]: row["key"] for row in (first, third)},
+            ),
+            MissionA2Question(
+                question_id="m01-q2",
+                purpose="buildSceneFact",
+                prompt=label("build-second-fact"),
+                interaction_type="sentenceBuilding",
+                object_key=first["key"],
+                section=section1,
+                **chunks(fact2, [label("connector-distractor")]),
+            ),
+            MissionA2Question(
+                question_id="m01-q3",
+                purpose="chooseSceneDescription",
+                prompt=label("choose-description"),
+                interaction_type="multipleChoice",
+                options=shuffle(description_options, "m01-q3"),
+                correct_option_id="description-correct",
+                object_key=first["key"],
+                section=section2,
+            ),
+            MissionA2Question(
+                question_id="m01-q4",
+                purpose="buildSceneDescription",
+                prompt=label("describe-scene"),
+                interaction_type="sentenceBuilding",
+                object_key=first["key"],
+                section=section2,
+                planning_facts=planning,
+                **chunks(full_candidate, [false_clause], phrase=True),
+            ),
+            MissionA2Question(
+                question_id="m01-q5",
+                purpose="followUpSceneFact",
+                prompt=candidate("followUpSceneFact", "followup").text,
+                interaction_type="multipleChoice",
+                options=shuffle(detail_rows, "m01-q5"),
+                correct_option_id="detail-correct",
+                object_key=first["key"],
+                section=section3,
+            ),
+        ]
+        result = MissionA2Result(title="Describe the scene", questions=questions)
+        task = m01_a2_task(
+            session_id, get_mission("M01", level, 1), payload, result, vocabulary_ids
+        )
+    else:
+        raise ValueError(f"unsupported M01 level {level}")
+    return result, _with_romanization(task, result, pack, accepted, vocabulary), payload
+
+
+def _with_romanization(task, result, pack, accepted, vocabulary):
+    """Expose spellings only for text already visible; never reveal a built answer."""
+    spellings = {label.text: label.romanization for label in pack.labels if label.romanization}
+    spellings.update(
+        {term.forms_by_key.get("definite", term.target_text): term.romanization
+         for term in vocabulary.terms if term.romanization}
+    )
+    for sentence in accepted:
+        candidate = sentence.candidate
+        spellings.update({span.native: span.latin for span in candidate.support_romanizations})
+        if candidate.romanization:
+            spellings[candidate.text] = "".join(span.latin for span in candidate.romanization)
+            for span in candidate.romanization:
+                spellings[span.native.strip()] = span.latin.strip()
+            spans = candidate.romanization
+            for start in range(len(spans)):
+                for end in range(start + 1, len(spans) + 1):
+                    native = "".join(span.native for span in spans[start:end]).strip()
+                    latin = "".join(span.latin for span in spans[start:end]).strip()
+                    spellings[native] = latin
+    questions = []
+    for question, original in zip(task.public_content.questions, result.questions, strict=True):
+        modes = None
+        if original.correct_text:
+            # The canonical native sentence is also the private answer; joining modes
+            # describe answer positions, so identical tiles remain interchangeable.
+            base = next(
+                (
+                    item.candidate
+                    for item in accepted
+                    if item.candidate.text == original.correct_text
+                ),
+                None,
+            )
+            if base is None:
+                base = accepted[0].candidate.model_copy(
+                    update={
+                        "text": original.correct_text,
+                        "romanization": [],
+                    }
+                )
+            phrase = getattr(original, "answer_chunks", [])
+            derived = derive_chunks(
+                base,
+                pack.language.word_separator,
+                phrase_chunks=bool(phrase and any(" " in p for p in phrase)),
+                phrase_boundaries=pack.language.phrase_boundaries,
+            )
+            modes = [chunk.join for chunk in derived.chunks]
+            question = question.model_copy(update={"token_bank": original.token_bank})
+        for text in [question.prompt, *question.token_bank]:
+            if text and not any(char.isalpha() for char in text):
+                spellings[text] = text
+            for label in pack.labels:
+                if label.romanization and "{f['first']}" in label.text:
+                    for sentence in accepted:
+                        native = label.text.replace("{f['first']}", sentence.candidate.text)
+                        latin = spellings.get(sentence.candidate.text)
+                        if native == text and latin:
+                            spellings[text] = label.romanization.replace("{f['first']}", latin)
+        visible = [
+            question.prompt,
+            *question.token_bank,
+            *(option.label for option in question.options),
+        ]
+        values = {text: spellings[text] for text in visible if text in spellings}
+        for text in visible:
+            if text not in values:
+                spelling = next(
+                    (
+                        value
+                        for native, value in spellings.items()
+                        if native.casefold() == text.casefold()
+                    ),
+                    None,
+                )
+                if spelling:
+                    values[text] = spelling
+        if pack.language.romanization_required and any(
+            any(char.isalpha() for char in text) and text not in values for text in visible
+        ):
+            raise ValueError("required romanization is missing for displayed text or a tile")
+        questions.append(
+            question.model_copy(
+                update={
+                    "romanizations": values or None
+                    if pack.language.romanization_required
+                    or any(item.candidate.romanization for item in accepted)
+                    else None,
+                    "sentence_join_modes": modes,
+                }
+            )
+        )
+    content = {"questions": questions}
+    if task.public_content.prep:
+        prep = []
+        for card in task.public_content.prep:
+            spelling = spellings.get(card.text)
+            if pack.language.romanization_required and not spelling:
+                raise ValueError("required romanization is missing for a preparation card")
+            prep.append(card.model_copy(update={"romanization": spelling}))
+        content["prep"] = prep
+    return task.model_copy(
+        update={"public_content": task.public_content.model_copy(update=content)}
+    )

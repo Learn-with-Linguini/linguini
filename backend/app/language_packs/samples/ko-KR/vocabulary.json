@@ -1,0 +1,639 @@
+{
+  "terms": [
+    {
+      "term_id": "cup",
+      "fact_id": "object:cup",
+      "source_text": "cup",
+      "target_text": "컵",
+      "forms": [
+        "컵",
+        "컵이",
+        "컵은",
+        "컵도",
+        "컵이에요"
+      ],
+      "forms_by_key": {
+        "bare": "컵",
+        "definite": "컵",
+        "subject": "컵이",
+        "topic": "컵은",
+        "also": "컵도",
+        "copula": "컵이에요"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "keop"
+    },
+    {
+      "term_id": "book",
+      "fact_id": "object:book",
+      "source_text": "book",
+      "target_text": "책",
+      "forms": [
+        "책",
+        "책이",
+        "책은",
+        "책도",
+        "책이에요"
+      ],
+      "forms_by_key": {
+        "bare": "책",
+        "definite": "책",
+        "subject": "책이",
+        "topic": "책은",
+        "also": "책도",
+        "copula": "책이에요"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "chaek"
+    },
+    {
+      "term_id": "table",
+      "fact_id": "object:table",
+      "source_text": "table",
+      "target_text": "탁자",
+      "forms": [
+        "탁자",
+        "탁자가",
+        "탁자는",
+        "탁자도",
+        "탁자예요"
+      ],
+      "forms_by_key": {
+        "bare": "탁자",
+        "definite": "탁자",
+        "subject": "탁자가",
+        "topic": "탁자는",
+        "also": "탁자도",
+        "copula": "탁자예요"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "takja"
+    },
+    {
+      "term_id": "fork",
+      "fact_id": "object:fork",
+      "source_text": "fork",
+      "target_text": "포크",
+      "forms": [
+        "포크",
+        "포크가",
+        "포크는",
+        "포크도",
+        "포크예요"
+      ],
+      "forms_by_key": {
+        "bare": "포크",
+        "definite": "포크",
+        "subject": "포크가",
+        "topic": "포크는",
+        "also": "포크도",
+        "copula": "포크예요"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "pokeu"
+    },
+    {
+      "term_id": "spoon",
+      "fact_id": "object:spoon",
+      "source_text": "spoon",
+      "target_text": "숟가락",
+      "forms": [
+        "숟가락",
+        "숟가락이",
+        "숟가락은",
+        "숟가락도",
+        "숟가락이에요"
+      ],
+      "forms_by_key": {
+        "bare": "숟가락",
+        "definite": "숟가락",
+        "subject": "숟가락이",
+        "topic": "숟가락은",
+        "also": "숟가락도",
+        "copula": "숟가락이에요"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "sutgarak"
+    },
+    {
+      "term_id": "door",
+      "fact_id": "object:door",
+      "source_text": "door",
+      "target_text": "문",
+      "forms": [
+        "문",
+        "문이",
+        "문은",
+        "문도",
+        "문이에요"
+      ],
+      "forms_by_key": {
+        "bare": "문",
+        "definite": "문",
+        "subject": "문이",
+        "topic": "문은",
+        "also": "문도",
+        "copula": "문이에요"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "mun"
+    },
+    {
+      "term_id": "window",
+      "fact_id": "object:window",
+      "source_text": "window",
+      "target_text": "창문",
+      "forms": [
+        "창문",
+        "창문이",
+        "창문은",
+        "창문도",
+        "창문이에요"
+      ],
+      "forms_by_key": {
+        "bare": "창문",
+        "definite": "창문",
+        "subject": "창문이",
+        "topic": "창문은",
+        "also": "창문도",
+        "copula": "창문이에요"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "changmun"
+    },
+    {
+      "term_id": "phone",
+      "fact_id": "object:phone",
+      "source_text": "phone",
+      "target_text": "휴대폰",
+      "forms": [
+        "휴대폰",
+        "휴대폰이",
+        "휴대폰은",
+        "휴대폰도",
+        "휴대폰이에요"
+      ],
+      "forms_by_key": {
+        "bare": "휴대폰",
+        "definite": "휴대폰",
+        "subject": "휴대폰이",
+        "topic": "휴대폰은",
+        "also": "휴대폰도",
+        "copula": "휴대폰이에요"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "hyudaepon"
+    },
+    {
+      "term_id": "key",
+      "fact_id": "object:key",
+      "source_text": "key",
+      "target_text": "열쇠",
+      "forms": [
+        "열쇠",
+        "열쇠가",
+        "열쇠는",
+        "열쇠도",
+        "열쇠예요"
+      ],
+      "forms_by_key": {
+        "bare": "열쇠",
+        "definite": "열쇠",
+        "subject": "열쇠가",
+        "topic": "열쇠는",
+        "also": "열쇠도",
+        "copula": "열쇠예요"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "yeolsoe"
+    },
+    {
+      "term_id": "bag",
+      "fact_id": "object:bag",
+      "source_text": "bag",
+      "target_text": "가방",
+      "forms": [
+        "가방",
+        "가방이",
+        "가방은",
+        "가방도",
+        "가방이에요"
+      ],
+      "forms_by_key": {
+        "bare": "가방",
+        "definite": "가방",
+        "subject": "가방이",
+        "topic": "가방은",
+        "also": "가방도",
+        "copula": "가방이에요"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "gabang"
+    },
+    {
+      "term_id": "plate",
+      "fact_id": "object:plate",
+      "source_text": "plate",
+      "target_text": "접시",
+      "forms": [
+        "접시",
+        "접시가",
+        "접시는",
+        "접시도",
+        "접시예요"
+      ],
+      "forms_by_key": {
+        "bare": "접시",
+        "definite": "접시",
+        "subject": "접시가",
+        "topic": "접시는",
+        "also": "접시도",
+        "copula": "접시예요"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "jeopsi"
+    },
+    {
+      "term_id": "red",
+      "fact_id": "attribute:cup:colour:red",
+      "source_text": "red",
+      "target_text": "빨간색",
+      "forms": [
+        "빨간색",
+        "빨간",
+        "빨간색이에요"
+      ],
+      "forms_by_key": {
+        "default": "빨간색",
+        "modifier": "빨간",
+        "predicative": "빨간색"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "green",
+      "fact_id": "attribute:book:colour:green",
+      "source_text": "green",
+      "target_text": "초록색",
+      "forms": [
+        "초록색",
+        "초록색이에요"
+      ],
+      "forms_by_key": {
+        "default": "초록색",
+        "modifier": "초록색",
+        "predicative": "초록색"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "phone-red",
+      "fact_id": "attribute:phone-red",
+      "source_text": "red",
+      "target_text": "빨간색",
+      "forms": [
+        "빨간색",
+        "빨간",
+        "빨간색이에요"
+      ],
+      "forms_by_key": {
+        "default": "빨간색",
+        "modifier": "빨간",
+        "predicative": "빨간색"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "door-red",
+      "fact_id": "attribute:door-red",
+      "source_text": "red",
+      "target_text": "빨간색",
+      "forms": [
+        "빨간색",
+        "빨간",
+        "빨간색이에요"
+      ],
+      "forms_by_key": {
+        "default": "빨간색",
+        "modifier": "빨간",
+        "predicative": "빨간색"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "door-blue",
+      "fact_id": "attribute:door-blue",
+      "source_text": "blue",
+      "target_text": "파란색",
+      "forms": [
+        "파란색",
+        "파란",
+        "파란색이에요"
+      ],
+      "forms_by_key": {
+        "default": "파란색",
+        "modifier": "파란",
+        "predicative": "파란색"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "door-yellow",
+      "fact_id": "attribute:door-yellow",
+      "source_text": "yellow",
+      "target_text": "노란색",
+      "forms": [
+        "노란색",
+        "노란",
+        "노란색이에요"
+      ],
+      "forms_by_key": {
+        "default": "노란색",
+        "modifier": "노란",
+        "predicative": "노란색"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "spoon-yellow",
+      "fact_id": "attribute:spoon-yellow",
+      "source_text": "yellow",
+      "target_text": "노란색",
+      "forms": [
+        "노란색",
+        "노란",
+        "노란색이에요"
+      ],
+      "forms_by_key": {
+        "default": "노란색",
+        "modifier": "노란",
+        "predicative": "노란색"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "fork-green",
+      "fact_id": "attribute:fork-green",
+      "source_text": "green",
+      "target_text": "초록색",
+      "forms": [
+        "초록색",
+        "초록색이에요"
+      ],
+      "forms_by_key": {
+        "default": "초록색",
+        "modifier": "초록색",
+        "predicative": "초록색"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "bag-blue",
+      "fact_id": "attribute:bag-blue",
+      "source_text": "blue",
+      "target_text": "파란색",
+      "forms": [
+        "파란색",
+        "파란",
+        "파란색이에요"
+      ],
+      "forms_by_key": {
+        "default": "파란색",
+        "modifier": "파란",
+        "predicative": "파란색"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "bag-green",
+      "fact_id": "attribute:bag-green",
+      "source_text": "green",
+      "target_text": "초록색",
+      "forms": [
+        "초록색",
+        "초록색이에요"
+      ],
+      "forms_by_key": {
+        "default": "초록색",
+        "modifier": "초록색",
+        "predicative": "초록색"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "book-red",
+      "fact_id": "attribute:book-red",
+      "source_text": "red",
+      "target_text": "빨간색",
+      "forms": [
+        "빨간색",
+        "빨간",
+        "빨간색이에요"
+      ],
+      "forms_by_key": {
+        "default": "빨간색",
+        "modifier": "빨간",
+        "predicative": "빨간색"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "plate-yellow",
+      "fact_id": "attribute:plate-yellow",
+      "source_text": "yellow",
+      "target_text": "노란색",
+      "forms": [
+        "노란색",
+        "노란",
+        "노란색이에요"
+      ],
+      "forms_by_key": {
+        "default": "노란색",
+        "modifier": "노란",
+        "predicative": "노란색"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "on",
+      "fact_id": "relation:cup:table:on",
+      "source_text": "on",
+      "target_text": "위에",
+      "forms": [
+        "위에"
+      ],
+      "forms_by_key": {
+        "phrase": "위에"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "key-on-table",
+      "fact_id": "relation:key-on-table",
+      "source_text": "on",
+      "target_text": "위에",
+      "forms": [
+        "위에"
+      ],
+      "forms_by_key": {
+        "phrase": "위에"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "spoon-under-table",
+      "fact_id": "relation:spoon-under-table",
+      "source_text": "under",
+      "target_text": "아래에",
+      "forms": [
+        "아래에"
+      ],
+      "forms_by_key": {
+        "phrase": "아래에"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "phone-next-to-door",
+      "fact_id": "relation:phone-next_to-door",
+      "source_text": "next to",
+      "target_text": "옆에",
+      "forms": [
+        "옆에"
+      ],
+      "forms_by_key": {
+        "phrase": "옆에"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "window-next-to-phone",
+      "fact_id": "relation:window-next_to-phone",
+      "source_text": "next to",
+      "target_text": "옆에",
+      "forms": [
+        "옆에"
+      ],
+      "forms_by_key": {
+        "phrase": "옆에"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "bag-under-table",
+      "fact_id": "relation:bag-under-table",
+      "source_text": "under",
+      "target_text": "아래에",
+      "forms": [
+        "아래에"
+      ],
+      "forms_by_key": {
+        "phrase": "아래에"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "plate-on-table",
+      "fact_id": "relation:plate-on-table",
+      "source_text": "on",
+      "target_text": "위에",
+      "forms": [
+        "위에"
+      ],
+      "forms_by_key": {
+        "phrase": "위에"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    }
+  ]
+}

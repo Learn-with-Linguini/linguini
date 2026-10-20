@@ -47,6 +47,23 @@ def get_language_pack_dirs() -> tuple[Path, ...]:
     )
 
 
+def get_m01_language_packs_enabled() -> bool:
+    """Default-off runtime switch, independent of the release allowlist."""
+    return os.getenv("LINGUINI_M01_LANGUAGE_PACKS", "false").strip().lower() == "true"
+
+
+def get_language_pack_register() -> str:
+    return os.getenv("LINGUINI_LANGUAGE_PACK_REGISTER", "everyday").strip()
+
+
+def get_language_pack_experimental() -> bool:
+    """Explicit local experiment; never permits experiments in production."""
+    return (
+        os.getenv("APP_ENV", "production").lower() in {"local", "development", "test"}
+        and os.getenv("LINGUINI_LANGUAGE_PACK_EXPERIMENTAL", "false").lower() == "true"
+    )
+
+
 def get_language_pack_releases() -> frozenset[tuple[str, str, str]]:
     releases = set()
     for value in os.getenv("LINGUINI_LANGUAGE_PACK_RELEASES", "").split(","):

@@ -19,6 +19,7 @@ from app.schemas.enums import (
     TaskPhase,
     TaskStatus,
 )
+from app.schemas.language_context import LanguageDisplayContext
 from app.schemas.mission_content import A0MissionSnapshot, TaughtChunk
 from app.schemas.roleplay import RoleplayFact
 
@@ -67,6 +68,7 @@ class MissionTaskFields(ApiModel):
     mission_id: MissionId | None = Field(default=None, exclude_if=_is_none)
     practice_level: ProficiencyLevel | None = Field(default=None, exclude_if=_is_none)
     content_version: ContentVersion | None = Field(default=None, exclude_if=_is_none)
+    language_context: LanguageDisplayContext | None = Field(default=None, exclude_if=_is_none)
 
     @model_validator(mode="after")
     def validate_mission(self) -> MissionTaskFields:
@@ -93,6 +95,7 @@ class VocabularyLearningWord(ApiModel):
     gender: str | None = None
     plural_form: str | None = None
     phonetic_text: str | None = None
+    romanization: str | None = Field(default=None, exclude_if=_is_none)
     pronunciation_audio_asset_id: UUID | None = None
     example_sentence: str | None = None
 
@@ -118,6 +121,7 @@ class MissionQuestionOutcome(ApiModel):
 
 
 class VocabularyQuestion(ApiModel):
+    romanizations: dict[str, str] | None = Field(default=None, exclude_if=_is_none)
     question_id: NonEmptyText
     prompt: NonEmptyText
     options: Annotated[list[VocabularyChoice], Field(min_length=2)]
@@ -162,6 +166,11 @@ class GrammarLessonQuestion(ApiModel):
     options: list[VocabularyChoice] = Field(default_factory=list)
     token_bank: list[NonEmptyText] = Field(default_factory=list)
     translation: str | None = None
+    # Display only. Native prompts, tiles and answer keys remain canonical.
+    romanizations: dict[str, str] | None = Field(default=None, exclude_if=_is_none)
+    sentence_join_modes: list[Literal["space", "none"]] | None = Field(
+        default=None, exclude_if=_is_none,
+    )
     # The photo object a question is about, shown with its English label.
     scene_object_id: UUID | None = Field(default=None, exclude_if=_is_none)
     object_label: str | None = Field(default=None, exclude_if=_is_none)
@@ -265,6 +274,7 @@ class LessonPrepCard(ApiModel):
     """A taught chunk shown, with audio, before a lesson's questions."""
 
     text: NonEmptyText
+    romanization: str | None = Field(default=None, exclude_if=_is_none)
     translation: str | None = None
     scene_object_id: UUID | None = Field(default=None, exclude_if=_is_none)
 

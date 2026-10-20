@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from datetime import date
 from pathlib import Path
 from typing import Annotated, Literal
@@ -33,9 +34,7 @@ type WordSeparator = Literal["space", "none"]
 type ChunkJoin = Literal["space", "none"]
 type ReviewStatus = Literal["humanReviewed", "unreviewed", "generated"]
 type LabelUsage = Literal["prompt", "sentence"]
-type PartOfSpeech = Literal[
-    "noun", "adjective", "phrase", "preposition", "verb", "other"
-]
+type PartOfSpeech = Literal["noun", "adjective", "phrase", "preposition", "verb", "other"]
 
 SUPPORTED_FORMAT_VERSIONS = frozenset({1})
 RTL_SCRIPTS = frozenset({"Arab", "Hebr", "Syrc", "Thaa", "Nkoo", "Adlm", "Mand", "Samr"})
@@ -95,6 +94,11 @@ class PackLanguage(ApiModel):
     direction: TextDirection
     word_separator: WordSeparator
     speech: LanguageSpeech
+    romanization_required: bool = False
+    romanization_convention: NonEmptyText | None = None
+    articles: Literal["required", "optional", "none"] = "optional"
+    grammatical_gender: Literal["required", "optional", "none"] = "optional"
+    phrase_boundaries: list[NonEmptyText] = Field(default_factory=list)
 
     @field_validator("code", "locale")
     @classmethod
@@ -141,6 +145,7 @@ class PackLabel(ApiModel):
     meaning: NonEmptyText
     usage: LabelUsage
     provenance: Provenance
+    romanization: NonEmptyText | None = None
 
 
 class PackFiles(ApiModel):
@@ -292,6 +297,63 @@ class ConstructionExamplesFile(ApiModel):
     mistakes: list[IncorrectExample] = Field(default_factory=list)
 
 
+def normalize_check_text(text: str) -> str:
+    """Text as pack checks see it: NFC, with typographic apostrophes folded."""
+    return normalize("NFC", text).replace("’", "'")
+
+
+class ConstructionCheck(ApiModel):
+    """A high-precision surface rule for one construction's generated sentences.
+
+    Patterns are Python regular expressions, matched case-insensitively by default.
+    Checks must not depend on exact word spellings: they cannot prove meaning or
+    grammaticality, and a check that rejects a valid sentence fails a lesson.
+    """
+
+    check_id: ContractId
+    message: NonEmptyText
+    must_contain: list[NonEmptyText] = Field(default_factory=list)
+    must_not_contain: list[NonEmptyText] = Field(default_factory=list)
+    # Plan spec uses (name, question, prompt, answer, option, followup, fact1-3,
+    # connected, wrongAttribute, falseFirst, wrongExistence). Empty means every use.
+    uses: list[NonEmptyText] = Field(default_factory=list)
+    except_uses: list[NonEmptyText] = Field(default_factory=list)
+    truth: bool | None = None
+    case_sensitive: bool = False
+
+    @model_validator(mode="after")
+    def validate_patterns(self) -> ConstructionCheck:
+        if not self.must_contain and not self.must_not_contain:
+            raise ValueError(f"check {self.check_id!r} needs must_contain or must_not_contain")
+        if set(self.uses) & set(self.except_uses):
+            raise ValueError(f"check {self.check_id!r} both includes and excludes a use")
+        for pattern in [*self.must_contain, *self.must_not_contain]:
+            if normalize("NFC", pattern) != pattern:
+                raise ValueError(f"check {self.check_id!r} pattern must be NFC: {pattern!r}")
+            try:
+                re.compile(pattern)
+            except re.error as exc:
+                raise ValueError(
+                    f"check {self.check_id!r} has an invalid pattern {pattern!r}: {exc}"
+                ) from None
+        return self
+
+    def applies(self, use: str | None, truth: bool | None) -> bool:
+        use = use or "answer"
+        if self.uses and use not in self.uses:
+            return False
+        if use in self.except_uses:
+            return False
+        return self.truth is None or self.truth == (truth is not False)
+
+    def passes(self, text: str) -> bool:
+        flags = 0 if self.case_sensitive else re.IGNORECASE
+        text = normalize_check_text(text)
+        return all(re.search(p, text, flags) for p in self.must_contain) and not any(
+            re.search(p, text, flags) for p in self.must_not_contain
+        )
+
+
 class Construction(ApiModel):
     construction_id: ContractId
     version: ContentVersion
@@ -301,6 +363,10 @@ class Construction(ApiModel):
     constraints: list[NonEmptyText] = Field(default_factory=list)
     required_labels: list[ContractId] = Field(default_factory=list)
     roles: dict[NonEmptyText, PartOfSpeech] = Field(default_factory=dict)
+    # Optional templates are supports/legacy diagnostics, never the sentence generator.
+    templates: dict[str, str] = Field(default_factory=dict)
+    # Declarative surface checks run by the shared pack-checks validator.
+    checks: list[ConstructionCheck] = Field(default_factory=list)
     provenance: Provenance
     examples: list[ConstructionExample] = Field(default_factory=list)
     mistakes: list[IncorrectExample] = Field(default_factory=list)
@@ -308,6 +374,14 @@ class Construction(ApiModel):
     @property
     def incorrect(self) -> list[IncorrectExample]:
         return self.mistakes
+
+    @field_validator("checks")
+    @classmethod
+    def require_unique_check_ids(cls, value: list[ConstructionCheck]) -> list[ConstructionCheck]:
+        ids = [check.check_id for check in value]
+        if len(ids) != len(set(ids)):
+            raise ValueError("construction check IDs must be unique")
+        return value
 
     @field_validator("guidance")
     @classmethod
@@ -328,6 +402,8 @@ class LanguagePack(ApiModel):
     provenance: Provenance
     labels: list[PackLabel] = Field(min_length=1)
     constructions: list[Construction] = Field(min_length=1)
+    # Data-driven forms derived from session translations, never a per-language lexicon.
+    lexical: dict[str, dict[str, str]] = Field(default_factory=dict)
     _pack_dir: Path | None = PrivateAttr(default=None)
     _evaluation_files: list[Path] = PrivateAttr(default_factory=list)
 
@@ -447,6 +523,8 @@ class EvaluationCase(ApiModel):
     bindings: dict[ContractId, NonEmptyText] = Field(default_factory=dict)
     truth: bool
     labels: list[ContractId] = Field(default_factory=list)
+    # Plan spec use (for example "name"); inferred from input/punctuation when omitted.
+    use: NonEmptyText | None = None
     input: NonEmptyText
     expected_meaning: NonEmptyText
     acceptable: list[NonEmptyText] = Field(min_length=1)

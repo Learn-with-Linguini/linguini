@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from ..generation import (
     ApprovedVocabulary,
     CandidateSentence,
@@ -11,88 +13,71 @@ from ..generation import (
 from ..schema import LanguagePack
 
 
+def _contains_phrase(text: str, phrase: str, *, contractions: bool = False) -> bool:
+    # Translation capitalisation and word spacing do not change agreement.
+    words = phrase.casefold().split()
+    parts = [re.escape(word) for word in words]
+    if contractions and words and words[0] == "el":
+        parts[0] = "(?:el|del|al)"
+    pattern = r"\s+".join(parts)
+    return bool(re.search(r"(?<!\w)" + pattern + r"(?!\w)", text.casefold()))
+
+
 class SpanishM01Validator:
-    validator_id = "es-targeted@1"
+    validator_id = "es-targeted@5"
 
     def __init__(self, vocabulary: ApprovedVocabulary) -> None:
         self.terms = {term.term_id: term for term in vocabulary.terms}
 
     def validate(self, candidate: CandidateSentence, _pack: LanguagePack) -> ValidatorResult:
         messages = []
+        if candidate.proposed_realizations:
+            # Open wording is assessed against meanings/context by the mandatory
+            # model reviewer. Do not force it into reference-example templates.
+            text = candidate.text.casefold()
+            if candidate.spec_use != "name" and not text.endswith((".", "?", "!")):
+                messages.append("Complete sentences need final punctuation.")
+            if candidate.spec_use in {"question", "prompt"} and (
+                not text.startswith("¿") or not text.endswith("?")
+            ):
+                messages.append("Questions need opening and closing Spanish marks.")
+            if " de el " in f" {text} " or " a el " in f" {text} ":
+                messages.append("Spanish contracts de el to del and a el to al.")
+            return ValidatorResult(passed=not messages, messages=messages)
         uses = {item.role: item for item in candidate.term_uses if item.role}
         object_use = uses.get("object") or uses.get("subject") or uses.get("first")
-        attribute_use = uses.get("attribute")
-        folded_text = candidate.text.casefold()
-        if object_use is not None:
+        # Article/gender agreement, adjective agreement and adjective position are
+        # checked by the shared noun-phrase validator (validators/noun_phrase.py).
+        if object_use is not None and candidate.spec_use == "name":
             object_term = self.terms.get(object_use.term_id)
             if object_term is not None:
-                bare = object_term.forms_by_key.get("bare")
-                if candidate.spec_use == "name":
-                    expected_name = object_term.forms_by_key.get("definite")
-                    if (
-                        expected_name is None
-                        or candidate.text != expected_name
-                        or candidate.text[:1].isupper()
-                        or candidate.text.endswith((".", "?", "!"))
-                    ):
-                        messages.append(
-                            "Name chunks use the lower-case definite article and noun "
-                            "without final punctuation."
-                        )
-                if candidate.construction_id in {"scene-location", "connected-description"}:
-                    article_keys = ("article_definite", "article_indefinite")
-                elif candidate.spec_use == "name" or (
-                    candidate.spec_use in {"question", "followup"}
-                    and candidate.construction_id == "describe-attribute"
-                ):
-                    article_keys = ("article_definite",)
-                else:
-                    article_keys = ("article_indefinite",)
-                articles = [
-                    object_term.forms_by_key.get(key)
-                    for key in article_keys
-                    if object_term.forms_by_key.get(key)
-                ]
-                negative_existence = (
-                    candidate.construction_id == "scene-existence"
-                    and folded_text.startswith(f"no hay ningún {bare}")
-                )
-                if articles and bare and not negative_existence and not any(
-                    f"{article} {bare}" in folded_text for article in articles
+                expected_name = object_term.forms_by_key.get("definite")
+                if (
+                    expected_name is None
+                    or candidate.text != expected_name
+                    or candidate.text[:1].isupper()
+                    or candidate.text.endswith((".", "?", "!"))
                 ):
                     messages.append(
-                        "The determiner must match the approved noun gender."
+                        "Name chunks use the lower-case definite article and noun "
+                        "without final punctuation."
                     )
-                if attribute_use is not None:
-                    attribute_term = self.terms.get(attribute_use.term_id)
-                    if attribute_term is not None:
-                        agreement = object_term.agreement
-                        expected = attribute_term.forms_by_key.get(agreement or "")
-                        if expected and attribute_use.surface != expected:
-                            messages.append(
-                                "The adjective form must agree with the approved noun."
-                            )
-                        if (
-                            attribute_term.position == "after"
-                            and bare
-                            and candidate.text.find(attribute_use.surface)
-                            < candidate.text.find(bare)
-                        ):
-                            messages.append(
-                                "The basic colour adjective follows the noun."
-                            )
         reference_use = uses.get("reference")
         if reference_use is not None:
             reference_term = self.terms.get(reference_use.term_id)
             if reference_term is not None:
                 definite = reference_term.forms_by_key.get("article_definite")
                 bare = reference_term.forms_by_key.get("bare")
-                if definite and bare and f"{definite} {bare}" not in candidate.text:
+                if definite and bare and not _contains_phrase(
+                    candidate.text, f"{definite} {bare}", contractions=True,
+                ):
                     messages.append(
                         "Location references use the definite determiner for the approved noun."
                     )
 
         text = candidate.text.casefold()
+        if candidate.spec_use == "wrongExistence" and "no hay " not in text:
+            messages.append("The false existence option must deny the bound object's presence.")
         if candidate.spec_use != "name" and not text.endswith((".", "?", "!")):
             messages.append("Complete sentences need final punctuation.")
         if candidate.spec_use in {"question", "prompt"} or text.lstrip().startswith("¿"):
@@ -101,6 +86,14 @@ class SpanishM01Validator:
         if " de el " in f" {text} " or " a el " in f" {text} ":
             messages.append("Spanish contracts de el to del and a el to al.")
         if candidate.construction_id == "scene-existence":
+            if (
+                candidate.truth is False
+                and candidate.spec_use != "falseFirst"
+                and not text.startswith("no hay ")
+            ):
+                messages.append(
+                    "False existence statements must negate the bound object's presence."
+                )
             if not text.startswith(("hay ", "también hay ", "no hay ")):
                 messages.append("Scene existence uses hay.")
             if text.startswith(("hay el ", "hay la ", "hay los ", "hay las ")):
@@ -114,9 +107,7 @@ class SpanishM01Validator:
             if candidate.spec_use in {"answer", "option"}:
                 expected = "sí," if candidate.label_uses == ["yes"] else "no,"
                 if not text.startswith(expected) or " es " not in f" {text} ":
-                    messages.append(
-                        "Yes/no answers start with Sí/No and name the shown object."
-                    )
+                    messages.append("Yes/no answers start with Sí/No and name the shown object.")
         elif candidate.construction_id == "describe-attribute":
             if text.startswith("¿de qué color") and " es " not in f" {text} ":
                 messages.append("Colour questions use es.")

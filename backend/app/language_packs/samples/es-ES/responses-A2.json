@@ -4,6 +4,7 @@
     {"slot_id": "buildSceneFact", "spec_id": "build-scene-fact-fact2", "text": "La taza está sobre la mesa.", "translation": "The cup is on the table."},
     {"slot_id": "chooseSceneDescription", "spec_id": "choose-scene-description-connected", "text": "Hay una taza roja y también hay un libro.", "translation": "There is a red cup and there is also a book."},
     {"slot_id": "chooseSceneDescription", "spec_id": "choose-scene-description-wrong-attribute", "text": "Hay una taza azul y también hay un libro.", "translation": "There is a blue cup and there is also a book."},
+    {"slot_id": "chooseSceneDescription", "spec_id": "choose-scene-description-false-first", "text": "Hay una taza azul.", "translation": "There is a cup with the wrong detail."},
     {"slot_id": "chooseSceneDescription", "spec_id": "choose-scene-description-wrong-existence", "text": "Hay una taza roja y No hay un libro.", "translation": "There is a red cup and there is no book."},
     {"slot_id": "buildSceneDescription", "spec_id": "build-scene-description-fact1", "text": "Hay una taza roja.", "translation": "There is a red cup."},
     {"slot_id": "buildSceneDescription", "spec_id": "build-scene-description-fact2", "text": "La taza está sobre la mesa.", "translation": "The cup is on the table."},

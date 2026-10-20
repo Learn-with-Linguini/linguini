@@ -362,7 +362,14 @@ def _ispy_description_task(
 def build_tasks(
     session_id, objects, words, translations, uploaded, translated_scene=None,
     supplemental_vocabulary=None,
+    language_context=None,
 ):
+    if language_context is not None:
+        from app.ai.features.translation.validation import validate_pack_translation
+
+        if translated_scene is None:
+            raise ValueError("Pack vocabulary preparation requires accepted translations")
+        validate_pack_translation(translated_scene, language_context)
     # Two sets choose different focus objects and context, with the same public contract.
     index = min(1, len(words) - 1) if uploaded else 0
     word, translation, obj = words[index], translations[index], objects[index]
@@ -385,13 +392,18 @@ def build_tasks(
                 term_type="object",
                 vocabulary_item_id=item.id,
                 scene_object_id=scene_object.id,
-                target_text=_with_article(
-                    item.display_text, translated_objects.get(str(scene_object.id))
-                ),
+                target_text=(translated_objects[str(scene_object.id)].native_display
+                             if language_context else _with_article(
+                                 item.display_text, translated_objects.get(str(scene_object.id))
+                             )),
                 translation=translated.translated_text,
                 part_of_speech=item.part_of_speech,
-                gender=item.gender,
-                phonetic_text=item.phonetic_text,
+                gender=(translated_objects[str(scene_object.id)].gender
+                        if language_context else item.gender),
+                **({"romanization": translated_objects[str(scene_object.id)].romanization}
+                   if language_context else {}),
+                phonetic_text=(translated_objects[str(scene_object.id)].phonetic_text
+                               if language_context else item.phonetic_text),
                 example_sentence=item.example_sentence,
             )
         )
@@ -421,7 +433,8 @@ def build_tasks(
                         if supplemental_vocabulary.get((term_type, str(term.key)))
                         else None
                     ),
-                    target_text=term.translation,
+                    target_text=term.native_display if language_context else term.translation,
+                    **({"romanization": term.romanization} if language_context else {}),
                     translation=_display_source(term.source),
                     part_of_speech=part_of_speech,
                     phonetic_text=term.phonetic_text,
@@ -442,11 +455,29 @@ def build_tasks(
             "de": ["Ich weiß nicht", "Ich bin nicht sicher"],
             "ko": ["모르겠어요", "잘 모르겠어요"],
         }.get(words[0].language_code.lower(), ["I'm not sure", "Something else"])
+        if language_context:
+            labels = {label.semantic: label.text for label in language_context.pack.labels}
+            fallback_choices = []
+            if len(choices) < 4:
+                for semantic in ("vocabulary-unsure", "vocabulary-other"):
+                    if semantic not in labels:
+                        raise ValueError(f"Pack vocabulary preparation requires label {semantic!r}")
+                    fallback_choices.append(labels[semantic])
         for choice in fallback_choices:
             if len(choices) >= 4:
                 break
             if choice not in choices:
                 choices.append(choice)
+        romanizations = {}
+        if language_context:
+            romanizations.update({entry["target_text"]: entry["romanization"]
+                                  for entry in learning_words if entry.get("romanization")})
+            romanizations.update({label.text: label.romanization
+                                  for label in language_context.pack.labels if label.romanization})
+            if language_context.display.romanization_required and any(
+                choice not in romanizations for choice in choices
+            ):
+                raise ValueError("Required vocabulary choice romanization is missing")
         question_id = f"word-{learning_word['learning_key']}"
         questions.append(
             dict(
@@ -454,6 +485,8 @@ def build_tasks(
                 prompt=f'Which word means "{learning_word["translation"]}"?',
                 options=[dict(option_id=choice, label=choice) for choice in choices],
                 correct_option_id=learning_word["target_text"],
+                **({"romanizations": {choice: romanizations[choice] for choice in choices
+                                      if choice in romanizations}} if romanizations else {}),
             )
         )
         correct_option_ids[question_id] = learning_word["target_text"]
@@ -534,7 +567,7 @@ def build_tasks(
         ),
         None,
     ]
-    return [
+    result = [
         SessionTask(
             id=uuid5(session_id, "placeholder-v1:" + content["kind"]),
             session_id=session_id,
@@ -548,3 +581,6 @@ def build_tasks(
         )
         for i, (content, key) in enumerate(zip(contents, keys, strict=True))
     ]
+    if language_context:
+        result[0] = language_context.attach(result[0])
+    return result

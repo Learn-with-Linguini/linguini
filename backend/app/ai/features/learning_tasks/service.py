@@ -68,6 +68,7 @@ def _result_counts(result: Any) -> dict[str, int]:
         "questionCount": sum(len(task.questions) for task in tasks),
     }
 
+
 _LEARNING_TASKS_INVALID = "learningTasksInvalid"
 _VERSION = FeatureVersion(
     AiFeature.LEARNING_TASK.value,
@@ -209,6 +210,60 @@ class LearningTaskService:
         self._config = config
         self._tracer = tracer
         self._provider = provider
+
+    def generate_pack_m01(
+        self,
+        mission,
+        language,
+        objects,
+        relations,
+        words,
+        translated_scene,
+        *,
+        session_id,
+        review_markers,
+        cache_scope=None,
+        register="everyday",
+        language_context=None,
+    ):
+        """Normal M01 workflow seam, sharing the routed provider and scoped cache."""
+        from app.language_packs.model_source import ModelSource
+        from app.language_packs.pipeline import generate_pilot
+        from app.language_packs.runtime import session_inputs
+
+        try:
+            if language_context is None:
+                raise ValueError("M01 requires the operation's resolved language context")
+            if language_context.display.language_code.casefold() != language.casefold():
+                raise ValueError("M01 context does not match the session language")
+            if str(mission.practice_level) not in language_context.ready_levels:
+                raise ValueError("M01 pack is not ready for the selected level")
+            pack, experimental = language_context.pack, language_context.experimental
+            facts, vocabulary = session_inputs(
+                pack,
+                objects,
+                relations,
+                words,
+                translated_scene,
+                review_markers,
+            )
+            generated = generate_pilot(
+                pack,
+                str(mission.practice_level),
+                facts,
+                vocabulary,
+                ModelSource(self._client, self._config, propose=True,
+                            language_context=language_context),
+                session_id=session_id,
+                preview=experimental,
+                cache=self._cache,
+                cache_scope=cache_scope,
+            )
+            return language_context.attach(generated.task)
+        except ValueError as exc:
+            raise LearningTaskGenerationError(
+                "M01 pack generation could not validate a lesson. Retry generation. " + str(exc)
+            ) from exc
 
     def generate(
         self, payload: dict[str, Any], *, cache_scope: CacheScope | None = None,

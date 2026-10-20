@@ -1,0 +1,749 @@
+{
+  "terms": [
+    {
+      "term_id": "cup",
+      "fact_id": "object:cup",
+      "source_text": "cup",
+      "target_text": "Tasse",
+      "forms": [
+        "Tasse",
+        "eine",
+        "die",
+        "eine Tasse",
+        "die Tasse",
+        "Die Tasse",
+        "der Tasse",
+        "keine Tasse"
+      ],
+      "forms_by_key": {
+        "bare": "Tasse",
+        "article_indefinite": "eine",
+        "article_definite": "die",
+        "indefinite": "eine Tasse",
+        "definite": "die Tasse",
+        "definite_capitalised": "Die Tasse",
+        "definite_dative": "der Tasse",
+        "indefinite_accusative": "eine Tasse",
+        "negative": "keine Tasse"
+      },
+      "agreement": "feminine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "book",
+      "fact_id": "object:book",
+      "source_text": "book",
+      "target_text": "Buch",
+      "forms": [
+        "Buch",
+        "ein",
+        "das",
+        "ein Buch",
+        "das Buch",
+        "Das Buch",
+        "dem Buch",
+        "kein Buch"
+      ],
+      "forms_by_key": {
+        "bare": "Buch",
+        "article_indefinite": "ein",
+        "article_definite": "das",
+        "indefinite": "ein Buch",
+        "definite": "das Buch",
+        "definite_capitalised": "Das Buch",
+        "definite_dative": "dem Buch",
+        "indefinite_accusative": "ein Buch",
+        "negative": "kein Buch"
+      },
+      "agreement": "neuter",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "table",
+      "fact_id": "object:table",
+      "source_text": "table",
+      "target_text": "Tisch",
+      "forms": [
+        "Tisch",
+        "ein",
+        "der",
+        "ein Tisch",
+        "der Tisch",
+        "Der Tisch",
+        "dem Tisch",
+        "einen Tisch",
+        "kein Tisch"
+      ],
+      "forms_by_key": {
+        "bare": "Tisch",
+        "article_indefinite": "ein",
+        "article_definite": "der",
+        "indefinite": "ein Tisch",
+        "definite": "der Tisch",
+        "definite_capitalised": "Der Tisch",
+        "definite_dative": "dem Tisch",
+        "indefinite_accusative": "einen Tisch",
+        "negative": "kein Tisch"
+      },
+      "agreement": "masculine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "fork",
+      "fact_id": "object:fork",
+      "source_text": "fork",
+      "target_text": "Gabel",
+      "forms": [
+        "Gabel",
+        "eine",
+        "die",
+        "eine Gabel",
+        "die Gabel",
+        "Die Gabel",
+        "der Gabel",
+        "keine Gabel"
+      ],
+      "forms_by_key": {
+        "bare": "Gabel",
+        "article_indefinite": "eine",
+        "article_definite": "die",
+        "indefinite": "eine Gabel",
+        "definite": "die Gabel",
+        "definite_capitalised": "Die Gabel",
+        "definite_dative": "der Gabel",
+        "indefinite_accusative": "eine Gabel",
+        "negative": "keine Gabel"
+      },
+      "agreement": "feminine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "spoon",
+      "fact_id": "object:spoon",
+      "source_text": "spoon",
+      "target_text": "Löffel",
+      "forms": [
+        "Löffel",
+        "ein",
+        "der",
+        "ein Löffel",
+        "der Löffel",
+        "Der Löffel",
+        "dem Löffel",
+        "einen Löffel",
+        "kein Löffel"
+      ],
+      "forms_by_key": {
+        "bare": "Löffel",
+        "article_indefinite": "ein",
+        "article_definite": "der",
+        "indefinite": "ein Löffel",
+        "definite": "der Löffel",
+        "definite_capitalised": "Der Löffel",
+        "definite_dative": "dem Löffel",
+        "indefinite_accusative": "einen Löffel",
+        "negative": "kein Löffel"
+      },
+      "agreement": "masculine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "door",
+      "fact_id": "object:door",
+      "source_text": "door",
+      "target_text": "Tür",
+      "forms": [
+        "Tür",
+        "eine",
+        "die",
+        "eine Tür",
+        "die Tür",
+        "Die Tür",
+        "der Tür",
+        "keine Tür"
+      ],
+      "forms_by_key": {
+        "bare": "Tür",
+        "article_indefinite": "eine",
+        "article_definite": "die",
+        "indefinite": "eine Tür",
+        "definite": "die Tür",
+        "definite_capitalised": "Die Tür",
+        "definite_dative": "der Tür",
+        "indefinite_accusative": "eine Tür",
+        "negative": "keine Tür"
+      },
+      "agreement": "feminine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "window",
+      "fact_id": "object:window",
+      "source_text": "window",
+      "target_text": "Fenster",
+      "forms": [
+        "Fenster",
+        "ein",
+        "das",
+        "ein Fenster",
+        "das Fenster",
+        "Das Fenster",
+        "dem Fenster",
+        "kein Fenster"
+      ],
+      "forms_by_key": {
+        "bare": "Fenster",
+        "article_indefinite": "ein",
+        "article_definite": "das",
+        "indefinite": "ein Fenster",
+        "definite": "das Fenster",
+        "definite_capitalised": "Das Fenster",
+        "definite_dative": "dem Fenster",
+        "indefinite_accusative": "ein Fenster",
+        "negative": "kein Fenster"
+      },
+      "agreement": "neuter",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "phone",
+      "fact_id": "object:phone",
+      "source_text": "phone",
+      "target_text": "Handy",
+      "forms": [
+        "Handy",
+        "ein",
+        "das",
+        "ein Handy",
+        "das Handy",
+        "Das Handy",
+        "dem Handy",
+        "kein Handy"
+      ],
+      "forms_by_key": {
+        "bare": "Handy",
+        "article_indefinite": "ein",
+        "article_definite": "das",
+        "indefinite": "ein Handy",
+        "definite": "das Handy",
+        "definite_capitalised": "Das Handy",
+        "definite_dative": "dem Handy",
+        "indefinite_accusative": "ein Handy",
+        "negative": "kein Handy"
+      },
+      "agreement": "neuter",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "key",
+      "fact_id": "object:key",
+      "source_text": "key",
+      "target_text": "Schlüssel",
+      "forms": [
+        "Schlüssel",
+        "ein",
+        "der",
+        "ein Schlüssel",
+        "der Schlüssel",
+        "Der Schlüssel",
+        "dem Schlüssel",
+        "einen Schlüssel",
+        "kein Schlüssel"
+      ],
+      "forms_by_key": {
+        "bare": "Schlüssel",
+        "article_indefinite": "ein",
+        "article_definite": "der",
+        "indefinite": "ein Schlüssel",
+        "definite": "der Schlüssel",
+        "definite_capitalised": "Der Schlüssel",
+        "definite_dative": "dem Schlüssel",
+        "indefinite_accusative": "einen Schlüssel",
+        "negative": "kein Schlüssel"
+      },
+      "agreement": "masculine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "bag",
+      "fact_id": "object:bag",
+      "source_text": "bag",
+      "target_text": "Tasche",
+      "forms": [
+        "Tasche",
+        "eine",
+        "die",
+        "eine Tasche",
+        "die Tasche",
+        "Die Tasche",
+        "der Tasche",
+        "keine Tasche"
+      ],
+      "forms_by_key": {
+        "bare": "Tasche",
+        "article_indefinite": "eine",
+        "article_definite": "die",
+        "indefinite": "eine Tasche",
+        "definite": "die Tasche",
+        "definite_capitalised": "Die Tasche",
+        "definite_dative": "der Tasche",
+        "indefinite_accusative": "eine Tasche",
+        "negative": "keine Tasche"
+      },
+      "agreement": "feminine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "plate",
+      "fact_id": "object:plate",
+      "source_text": "plate",
+      "target_text": "Teller",
+      "forms": [
+        "Teller",
+        "ein",
+        "der",
+        "ein Teller",
+        "der Teller",
+        "Der Teller",
+        "dem Teller",
+        "einen Teller",
+        "kein Teller"
+      ],
+      "forms_by_key": {
+        "bare": "Teller",
+        "article_indefinite": "ein",
+        "article_definite": "der",
+        "indefinite": "ein Teller",
+        "definite": "der Teller",
+        "definite_capitalised": "Der Teller",
+        "definite_dative": "dem Teller",
+        "indefinite_accusative": "einen Teller",
+        "negative": "kein Teller"
+      },
+      "agreement": "masculine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "red",
+      "fact_id": "attribute:cup:colour:red",
+      "source_text": "red",
+      "target_text": "rot",
+      "forms": [
+        "rot",
+        "roter",
+        "rote",
+        "rotes",
+        "roten",
+        "Rot"
+      ],
+      "forms_by_key": {
+        "predicative": "rot",
+        "masculine": "roter",
+        "feminine": "rote",
+        "neuter": "rotes"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "green",
+      "fact_id": "attribute:book:colour:green",
+      "source_text": "green",
+      "target_text": "grün",
+      "forms": [
+        "grün",
+        "grüner",
+        "grüne",
+        "grünes",
+        "grünen",
+        "Grün"
+      ],
+      "forms_by_key": {
+        "predicative": "grün",
+        "masculine": "grüner",
+        "feminine": "grüne",
+        "neuter": "grünes"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "phone-red",
+      "fact_id": "attribute:phone-red",
+      "source_text": "red",
+      "target_text": "rot",
+      "forms": [
+        "rot",
+        "roter",
+        "rote",
+        "rotes",
+        "roten",
+        "Rot"
+      ],
+      "forms_by_key": {
+        "predicative": "rot",
+        "masculine": "roter",
+        "feminine": "rote",
+        "neuter": "rotes"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "door-red",
+      "fact_id": "attribute:door-red",
+      "source_text": "red",
+      "target_text": "rot",
+      "forms": [
+        "rot",
+        "roter",
+        "rote",
+        "rotes",
+        "roten",
+        "Rot"
+      ],
+      "forms_by_key": {
+        "predicative": "rot",
+        "masculine": "roter",
+        "feminine": "rote",
+        "neuter": "rotes"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "door-blue",
+      "fact_id": "attribute:door-blue",
+      "source_text": "blue",
+      "target_text": "blau",
+      "forms": [
+        "blau",
+        "blauer",
+        "blaue",
+        "blaues",
+        "blauen",
+        "Blau"
+      ],
+      "forms_by_key": {
+        "predicative": "blau",
+        "masculine": "blauer",
+        "feminine": "blaue",
+        "neuter": "blaues"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "door-yellow",
+      "fact_id": "attribute:door-yellow",
+      "source_text": "yellow",
+      "target_text": "gelb",
+      "forms": [
+        "gelb",
+        "gelber",
+        "gelbe",
+        "gelbes",
+        "gelben",
+        "Gelb"
+      ],
+      "forms_by_key": {
+        "predicative": "gelb",
+        "masculine": "gelber",
+        "feminine": "gelbe",
+        "neuter": "gelbes"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "spoon-yellow",
+      "fact_id": "attribute:spoon-yellow",
+      "source_text": "yellow",
+      "target_text": "gelb",
+      "forms": [
+        "gelb",
+        "gelber",
+        "gelbe",
+        "gelbes",
+        "gelben",
+        "Gelb"
+      ],
+      "forms_by_key": {
+        "predicative": "gelb",
+        "masculine": "gelber",
+        "feminine": "gelbe",
+        "neuter": "gelbes"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "fork-green",
+      "fact_id": "attribute:fork-green",
+      "source_text": "green",
+      "target_text": "grün",
+      "forms": [
+        "grün",
+        "grüner",
+        "grüne",
+        "grünes",
+        "grünen",
+        "Grün"
+      ],
+      "forms_by_key": {
+        "predicative": "grün",
+        "masculine": "grüner",
+        "feminine": "grüne",
+        "neuter": "grünes"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "bag-blue",
+      "fact_id": "attribute:bag-blue",
+      "source_text": "blue",
+      "target_text": "blau",
+      "forms": [
+        "blau",
+        "blauer",
+        "blaue",
+        "blaues",
+        "blauen",
+        "Blau"
+      ],
+      "forms_by_key": {
+        "predicative": "blau",
+        "masculine": "blauer",
+        "feminine": "blaue",
+        "neuter": "blaues"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "bag-green",
+      "fact_id": "attribute:bag-green",
+      "source_text": "green",
+      "target_text": "grün",
+      "forms": [
+        "grün",
+        "grüner",
+        "grüne",
+        "grünes",
+        "grünen",
+        "Grün"
+      ],
+      "forms_by_key": {
+        "predicative": "grün",
+        "masculine": "grüner",
+        "feminine": "grüne",
+        "neuter": "grünes"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "book-red",
+      "fact_id": "attribute:book-red",
+      "source_text": "red",
+      "target_text": "rot",
+      "forms": [
+        "rot",
+        "roter",
+        "rote",
+        "rotes",
+        "roten",
+        "Rot"
+      ],
+      "forms_by_key": {
+        "predicative": "rot",
+        "masculine": "roter",
+        "feminine": "rote",
+        "neuter": "rotes"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "plate-yellow",
+      "fact_id": "attribute:plate-yellow",
+      "source_text": "yellow",
+      "target_text": "gelb",
+      "forms": [
+        "gelb",
+        "gelber",
+        "gelbe",
+        "gelbes",
+        "gelben",
+        "Gelb"
+      ],
+      "forms_by_key": {
+        "predicative": "gelb",
+        "masculine": "gelber",
+        "feminine": "gelbe",
+        "neuter": "gelbes"
+      },
+      "agreement": null,
+      "position": "before",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "on",
+      "fact_id": "relation:cup:table:on",
+      "source_text": "on",
+      "target_text": "auf",
+      "forms": [
+        "auf"
+      ],
+      "forms_by_key": {
+        "phrase": "auf"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "key-on-table",
+      "fact_id": "relation:key-on-table",
+      "source_text": "on",
+      "target_text": "auf",
+      "forms": [
+        "auf"
+      ],
+      "forms_by_key": {
+        "phrase": "auf"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "spoon-under-table",
+      "fact_id": "relation:spoon-under-table",
+      "source_text": "under",
+      "target_text": "unter",
+      "forms": [
+        "unter"
+      ],
+      "forms_by_key": {
+        "phrase": "unter"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "phone-next-to-door",
+      "fact_id": "relation:phone-next_to-door",
+      "source_text": "next to",
+      "target_text": "neben",
+      "forms": [
+        "neben"
+      ],
+      "forms_by_key": {
+        "phrase": "neben"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "window-next-to-phone",
+      "fact_id": "relation:window-next_to-phone",
+      "source_text": "next to",
+      "target_text": "neben",
+      "forms": [
+        "neben"
+      ],
+      "forms_by_key": {
+        "phrase": "neben"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "bag-under-table",
+      "fact_id": "relation:bag-under-table",
+      "source_text": "under",
+      "target_text": "unter",
+      "forms": [
+        "unter"
+      ],
+      "forms_by_key": {
+        "phrase": "unter"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "plate-on-table",
+      "fact_id": "relation:plate-on-table",
+      "source_text": "on",
+      "target_text": "auf",
+      "forms": [
+        "auf"
+      ],
+      "forms_by_key": {
+        "phrase": "auf"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    }
+  ]
+}

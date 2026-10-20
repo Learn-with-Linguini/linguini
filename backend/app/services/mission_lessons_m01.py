@@ -294,6 +294,8 @@ def _corrections(payload, question, correct_label):
         option for option in question.options if option.option_id != question.correct_option_id
     ]
     if question.purpose == "describeObject":
+        if "packCorrections" in payload:
+            return payload["packCorrections"], None
         rules = [dict(
             mistake="wordOrder",
             correction=question.correct_text,

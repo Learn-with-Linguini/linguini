@@ -39,6 +39,8 @@ class TranslatedTerm(ApiModel):
     )
     article: Annotated[str, Field(min_length=1, max_length=20)] | None = None
     gender: Annotated[str, Field(pattern="^(masculine|feminine|neuter)$")] | None = None
+    native_display: NonEmptyText | None = Field(default=None, exclude_if=lambda v: v is None)
+    romanization: NonEmptyText | None = Field(default=None, exclude_if=lambda v: v is None)
     phonetic_text: Annotated[str, Field(min_length=1, max_length=300)] | None = Field(
         default=None,
         description=("Approximate English-sound respelling of the translated word "

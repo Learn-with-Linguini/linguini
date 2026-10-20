@@ -419,6 +419,9 @@ def _stale_processing(status=None):
     )
 
 
+_LANGUAGE_CONTEXT_UNSET = object()
+
+
 @dataclass(frozen=True)
 class GenerationClaim:
     """An immutable snapshot taken when a task-generation revision was claimed."""
@@ -440,6 +443,7 @@ class GenerationClaim:
     roleplay_facts: dict[str, list[dict]] | None = None
     learner_facts: dict[str, dict] | None = None
     review_markers: dict[str, int] | None = None
+    language_context: object | None = None
 
     @property
     def generation_options(self) -> dict:
@@ -1721,12 +1725,16 @@ class PostgresWorkflowRepository:
 
     @staticmethod
     def _analysis_draft(session, profile, result):
-        candidates = lesson_missions(session.mode, profile)
+        from app.language_packs.context import operation_context
+
+        context = operation_context(session.mode, profile)
+        candidates = lesson_missions(session.mode, profile, context)
         provisional, selected_ids = provisional_mission_focus(
-            candidates, result.objects, result.relations
+            candidates, result.objects, result.relations, context
         )
         return {
             "analysisAttempts": analysis_attempts(session),
+            **({"languageContext": context.snapshot()} if context else {}),
             "objects": [
                 obj.model_dump(mode="json", by_alias=False) for obj in result.objects
             ],
@@ -1777,12 +1785,23 @@ class PostgresWorkflowRepository:
 
     def check_word(self, session_id, profile_id, label):
         with self.engine.connect() as c:
-            self._session(c, session_id, profile_id)
+            session = self._session(c, session_id, profile_id)
             profile = (
                 c.execute(select(language_profiles).where(language_profiles.c.id == profile_id))
                 .mappings()
                 .one()
             )
+            if self.translator:
+                from app.language_packs.context import operation_context
+
+                context = operation_context(
+                    session.mode, dict(profile),
+                    (session.analysis_draft or {}).get("languageContext"),
+                )
+                if context is not None:
+                    # Available to confirm as a scene candidate, not translated or
+                    # linguistically ready. The checkpoint validates translation later.
+                    return {"available": True, "translationReady": False}
             self._catalog_word(c, profile, label)
             return {"available": True}
 
@@ -2030,6 +2049,11 @@ class PostgresWorkflowRepository:
                 .mappings()
                 .one()
             )
+            from app.language_packs.context import operation_context
+
+            language_context = operation_context(
+                session.mode, dict(profile), (session.analysis_draft or {}).get("languageContext"),
+            )
             asset, scene = self._scene_media(c, session)
             objects, relations = self._scene_objects(c, session)
             history = None
@@ -2044,7 +2068,7 @@ class PostgresWorkflowRepository:
                 )
             if (
                 "missionPlan" not in (session.analysis_draft or {})
-                and lesson_missions(session.mode, dict(profile))
+                and lesson_missions(session.mode, dict(profile), language_context)
             ):
                 self._plan_missions(
                     c,
@@ -2054,9 +2078,16 @@ class PostgresWorkflowRepository:
                     saved_counted_groups(session.analysis_draft),
                     relations,
                     mission_choices=(session.analysis_draft or {}).get("missionChoices") or {},
+                    language_context=language_context,
                 )
                 session = self._session(c, session_id, profile_id)
-            missions = tuple(self._planned_missions(session, dict(profile)))
+            missions = tuple(self._planned_missions(session, dict(profile), language_context))
+            if language_context is not None and any(
+                lesson_mission(m).mission_id == "M01"
+                and str(lesson_mission(m).practice_level) not in language_context.ready_levels
+                for m in missions
+            ):
+                raise LearningTaskGenerationError("Selected M01 level is not ready in this context")
             draft = session.analysis_draft or {}
             mission_progress = (
                 self._mission_progress(c, dict(profile), history) if missions else None
@@ -2097,6 +2128,7 @@ class PostgresWorkflowRepository:
                     if item.get("practiceLevel") == "A0" and "learnerFacts" in item
                 },
                 review_markers=draft.get("reviewMarkers") or {},
+                language_context=language_context,
             )
 
     def _mission_progress(self, c, profile, history):
@@ -2260,9 +2292,16 @@ class PostgresWorkflowRepository:
 
     def _plan_missions(
         self, c, session, profile, objects, counted_groups, relations, mission_choices=None,
+        language_context=_LANGUAGE_CONTEXT_UNSET,
     ):
         """Snapshot the lesson's mission plan from the confirmed facts before generation."""
-        candidates = lesson_missions(session.mode, profile)
+        if language_context is _LANGUAGE_CONTEXT_UNSET:
+            from app.language_packs.context import operation_context
+
+            language_context = operation_context(
+                session.mode, profile, (session.analysis_draft or {}).get("languageContext"),
+            )
+        candidates = lesson_missions(session.mode, profile, language_context)
         if not candidates:
             return
         history_drafts = c.execute(
@@ -2279,11 +2318,14 @@ class PostgresWorkflowRepository:
             if isinstance(item, dict) and isinstance(item.get("missionId"), str)
         ]
         plan = plan_missions(
-            candidates, objects, relations, counted_groups, history, mission_choices
+            candidates, objects, relations, counted_groups, history, mission_choices,
+            language_context,
         )
         draft = dict(c.execute(select(sessions.c.analysis_draft).where(
             sessions.c.id == session.id,
         )).scalar_one() or {})
+        if language_context is not None:
+            draft["languageContext"] = language_context.snapshot()
         previous_entries = {
             (
                 item.get("missionId"),
@@ -2337,7 +2379,8 @@ class PostgresWorkflowRepository:
             draft["missionGuidance"] = [
                 f"{mission.title}: "
                 + " ".join(
-                    photo_eligibility(mission, objects, relations, counted_groups).reasons
+                    photo_eligibility(mission, objects, relations, counted_groups,
+                                      language_context=language_context).reasons
                 )
                 for mission in candidates
             ]
@@ -2345,8 +2388,8 @@ class PostgresWorkflowRepository:
             analysis_draft=draft,
         ))
 
-    def _planned_missions(self, session, profile):
-        if not lesson_missions(session.mode, profile):
+    def _planned_missions(self, session, profile, language_context=None):
+        if not lesson_missions(session.mode, profile, language_context):
             return []
         # Missing plans are rebuilt at claim time; a saved empty plan stays empty.
         return snapshot_missions((session.analysis_draft or {}).get("missionPlan"))
@@ -2399,6 +2442,9 @@ class PostgresWorkflowRepository:
         ispy_descriptions = None
         introduction_id = None
         objects, relations = list(claim.objects), claim.relations
+        context = getattr(claim, "language_context", None) if any(
+            lesson_mission(m).mission_id == "M01" for m in claim.missions
+        ) else None
         if self.translator:
             payload = translation_payload(
                 profile["target_language_code"],
@@ -2408,7 +2454,12 @@ class PostgresWorkflowRepository:
                 relations,
             )
             with _timed("translation", session_id):
-                translated_scene = self.translator.translate(payload, **claim.generation_options)
+                translated_scene = self.translator.translate(
+                    payload, **claim.generation_options,
+                    **({"language_context": context} if context else {}),
+                )
+        elif context is not None:
+            raise LearningTaskGenerationError("Pack M01 requires accepted scene translations.")
 
         # Checkpoint: commit translations and task 1 before the slower lesson
         # and clue calls, so the learner can start while tasks are built.
@@ -2438,8 +2489,17 @@ class PostgresWorkflowRepository:
                 False,
                 translated_scene if self.translator else _translation_preview(session),
                 supplemental_vocabulary,
+                language_context=context,
             )
             introduction = next(task for task in rebuilt if task.kind == "vocabularyIntroduction")
+            if context is not None:
+                draft = dict(c.execute(select(sessions.c.analysis_draft).where(
+                    sessions.c.id == session_id,
+                )).scalar_one() or {})
+                draft["languageContext"] = context.snapshot()
+                c.execute(update(sessions).where(sessions.c.id == session_id).values(
+                    analysis_draft=draft,
+                ))
             introduction = personalize_introduction(introduction, claim.learner_history)
             rebuilt = [introduction if task.id == introduction.id else task for task in rebuilt]
             summary = personalization_summary(
@@ -2623,6 +2683,21 @@ class PostgresWorkflowRepository:
         lessons = []
         for planned in claim.missions:
             mission = lesson_mission(planned)
+            if mission.mission_id == "M01" and getattr(claim, "language_context", None) is not None:
+                if self.learning_task_generator is None:
+                    raise LearningTaskGenerationError(
+                        "M01 pack generation needs a configured provider."
+                    )
+                # Missions reach this point through the existing eligibility/review flow.
+                # A pack failure propagates to the normal recoverable generation error state.
+                lessons.append(self.learning_task_generator.generate_pack_m01(
+                    mission, language, objects, relations, words, translated_scene,
+                    session_id=claim.session_id, review_markers=claim.review_markers or {},
+                    cache_scope=claim.cache_scope,
+                    register=claim.language_context.display.register_id,
+                    language_context=claim.language_context,
+                ))
+                continue
             spec = lesson_spec(mission)
             payload = spec.payload(
                 mission,

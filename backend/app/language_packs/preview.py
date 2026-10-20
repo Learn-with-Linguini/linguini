@@ -55,6 +55,9 @@ class _ScriptedTextClient:
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="language-pack-preview")
+    parser.add_argument(
+        "--env-file", type=Path, help="Explicit local environment file for model runs"
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     validate = subparsers.add_parser("validate")
@@ -76,7 +79,7 @@ def _parser() -> argparse.ArgumentParser:
     evaluate_parser.add_argument("--language", required=True)
     evaluate_parser.add_argument("--register", required=True)
     evaluate_parser.add_argument("--level", choices=["A0", "A1", "A2"], required=True)
-    evaluate_parser.add_argument("--vocabulary", type=Path)
+    evaluate_parser.add_argument("--vocabulary", type=Path, required=True)
     evaluate_parser.add_argument("--out", type=Path)
 
     generate_parser = subparsers.add_parser("generate")
@@ -146,7 +149,7 @@ def _text_model_source() -> ModelSource:
         default_max_output_tokens=4000,
         tracer=NoOpAITracer(),
     )
-    return ModelSource(client, model_config, mode="model")
+    return ModelSource(client, model_config, mode="model", propose=True)
 
 
 def _evaluation_table(report: dict[str, Any]) -> str:
@@ -197,9 +200,7 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
         }
 
     if args.command == "evaluate":
-        vocabulary_path = args.vocabulary or (
-            Path(__file__).parent / "samples/es-ES/vocabulary.json"
-        )
+        vocabulary_path = args.vocabulary
         vocabulary = ApprovedVocabulary.model_validate(_read_json(vocabulary_path))
         report, record = evaluate_pack(pack, args.level, vocabulary)
         return {
@@ -221,6 +222,7 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
                 _ScriptedTextClient(_read_json(args.responses)),
                 TextModelConfig(model_name="scripted-non-live"),
                 mode="scripted responses (not a live model)",
+                propose=False,
             )
         generated = generate_pilot(
             pack,
@@ -234,17 +236,15 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
         )
         evidence = _evidence(args.evidence)
         output = {
-            "source": getattr(
-                source, "mode", "scripted responses (not a live model)"
-            ),
+            "source": getattr(source, "mode", "scripted responses (not a live model)"),
             "result": generated.result.model_dump(mode="json", by_alias=True),
             "task": generated.task.model_dump(mode="json", by_alias=True),
             "payload": generated.payload,
             "sentences": [
-                item.model_dump(mode="json", by_alias=False)
-                for item in generated.sentences
+                item.model_dump(mode="json", by_alias=False) for item in generated.sentences
             ],
             "assurance": generated.assurance,
+            "assurance_scope": generated.assurance_scope,
             "mode": generated.mode,
             "fingerprint": generated.fingerprint,
         }
@@ -257,9 +257,7 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
         return output
 
     scene = _read_json(args.scene)
-    key = ("M01", ProficiencyLevel(args.level), 1) if args.command in {
-        "plan", "assemble"
-    } else None
+    key = ("M01", ProficiencyLevel(args.level), 1) if args.command in {"plan", "assemble"} else None
     plan = lesson_plan(pack, key, scene.get("slot_bindings", {})) if key else None
     if args.command == "plan":
         assert plan is not None
@@ -282,9 +280,7 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
     raw_candidates = _read_json(args.candidates)
     candidates = [CandidateSentence.model_validate(item) for item in raw_candidates]
     assert plan is not None
-    facts = BoundSceneFacts.model_validate(
-        scene.get("facts", {"scene_facts": {}})
-    )
+    facts = BoundSceneFacts.model_validate(scene.get("facts", {"scene_facts": {}}))
     vocabulary = ApprovedVocabulary.model_validate(scene.get("vocabulary", {}))
     approval = approve(
         candidates,
@@ -310,32 +306,22 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
         report = check_deterministic(candidate, plan, facts, vocabulary, pack)
         assessment = assess(candidate, pack)
         outcome = next(
-            (
-                item for item in approval.approved
-                if item.candidate == candidate
-            ),
+            (item for item in approval.approved if item.candidate == candidate),
             None,
         )
         failure = next(
-            (
-                item for item in approval.failures
-                if item.candidate == candidate
-            ),
+            (item for item in approval.failures if item.candidate == candidate),
             None,
         )
         outcomes.append(
             {
                 "slot_id": candidate.slot_id,
-                "deterministic_report": report.model_dump(
-                    mode="json", by_alias=False
-                ),
+                "deterministic_report": report.model_dump(mode="json", by_alias=False),
                 "assessment": assessment.model_dump(mode="json", by_alias=False),
-                "approved_sentence": outcome.model_dump(
-                    mode="json", by_alias=False
-                ) if outcome else None,
-                "failure": failure.model_dump(
-                    mode="json", by_alias=False
-                ) if failure else None,
+                "approved_sentence": outcome.model_dump(mode="json", by_alias=False)
+                if outcome
+                else None,
+                "failure": failure.model_dump(mode="json", by_alias=False) if failure else None,
             }
         )
     return {
@@ -348,6 +334,14 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
+    # Native-script JSON (for example Hangul) must not fail on a legacy console code page.
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
+    if args.env_file is not None:
+        from dotenv import load_dotenv
+
+        load_dotenv(args.env_file)
     try:
         output = _run(args)
     except (LanguagePackError, ValueError) as exc:

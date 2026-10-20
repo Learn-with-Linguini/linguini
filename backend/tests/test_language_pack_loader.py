@@ -40,7 +40,7 @@ def test_nested_pack_loads_and_evaluations_remain_separate():
     assert pack.pack_id == "es-es-everyday"
     assert pack.language.locale == "es-ES"
     assert len(pack.constructions) == 6
-    assert len(cases) == 19
+    assert len(cases) == 24
     assert not any(key in pack.model_dump() for key in ("evaluations", "evaluation_cases"))
     assert all("cases" not in item for item in guidance_for(pack, [
         "identify-object"
@@ -60,9 +60,9 @@ def test_held_out_evaluations_cover_the_required_categories():
         for path in (PACK / "evaluations").glob("*.toml")
     }
     assert {name: len(data["cases"]) for name, data in evaluation_files.items()} == {
-        "M01-A0": 7,
-        "M01-A1": 6,
-        "M01-A2": 6,
+        "M01-A0": 9,
+        "M01-A1": 7,
+        "M01-A2": 8,
     }
     categories = {
         category
@@ -107,12 +107,16 @@ def test_labels_match_current_builder_text():
         "no-answer": "No.",
         "what-is-this": "¿Qué es esto?",
         "attribute-prompt-colour": "¿De qué color es?",
+        "attribute-prompt": "¿Cómo es?",
+        "attribute-prompt-material": "¿De qué material es?",
         "describe-object": "Describe este objeto.",
         "touch-object": "Toca el objeto que corresponde a la frase: «{f['first']}».",
         "build-second-fact": "Construye la segunda frase.",
         "choose-description": "¿Qué descripción coincide con la foto?",
         "describe-scene": "Describe la escena con estas frases.",
         "connector-distractor": "pero",
+        "vocabulary-unsure": "No sé",
+        "vocabulary-other": "No estoy seguro",
     }
 
 

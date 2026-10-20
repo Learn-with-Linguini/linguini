@@ -1,7 +1,8 @@
 import { useCallback, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { languages } from "../config/languages";
-import { createLanguageProfile, getCurrentUser, getLanguageProfiles, updateLanguageProfile, updateUser } from "../lib/api";
+import { checkSelectableLanguage, languageDisplayName } from "../lib/languageChoices";
+import { createLanguageProfile, getCurrentUser, getLanguageProfiles, getPackPracticeLanguages, updateLanguageProfile, updateUser } from "../lib/api";
 import { saveOnboardingProfile } from "../lib/onboardingProfile";
 import type { LanguageProfilePatch, ProficiencyLevel, UserPatch } from "../lib/api";
 import { friendlyError, queryError, queryKeys } from "../lib/queryKeys";
@@ -14,7 +15,7 @@ async function loadAccount(signal?: AbortSignal) {
 type Account = Awaited<ReturnType<typeof loadAccount>>;
 
 async function saveProfileSettingsWork(code: string, patch: UserPatch, preferences: LanguageProfilePatch) {
-  if (!languages.some(language => language.code === code)) throw new Error("Choose a supported language.");
+  await checkSelectableLanguage(code, preferences.proficiencyLevel, () => getPackPracticeLanguages());
   await updateUser(patch);
   // A previous save may have created the profile before a later request failed.
   const profiles = await getLanguageProfiles();
@@ -47,10 +48,11 @@ export function useAccount() {
     catch { inFlight.current = false; return false; }
   }, [save.mutateAsync]);
 
-  const setLanguage = useCallback((code: string, minutes?: number) => run(async () => {
+  const setLanguage = useCallback((code: string, minutes?: number, level?: ProficiencyLevel) => run(async () => {
+    await checkSelectableLanguage(code, level, () => getPackPracticeLanguages());
     const profile = data?.profiles.find((row) => row.targetLanguageCode.toLowerCase() === code && row.sourceLanguageCode === "en");
-    if (profile) return updateLanguageProfile(profile.id, { isActive: true, ...(minutes === undefined ? {} : { dailyGoalMinutes: minutes }) });
-    return createLanguageProfile(code, minutes ?? 10, "A1");
+    if (profile) return updateLanguageProfile(profile.id, { isActive: true, ...(minutes === undefined ? {} : { dailyGoalMinutes: minutes }), ...(level === undefined ? {} : { proficiencyLevel: level }) });
+    return createLanguageProfile(code, minutes ?? 10, level ?? "A1");
   }), [data, run]);
   const saveUser = useCallback((patch: UserPatch) => run(() => updateUser(patch)), [run]);
   const saveProfileSettings = useCallback((code: string, patch: UserPatch, preferences: LanguageProfilePatch) => run(
@@ -88,6 +90,7 @@ export function useAccount() {
     return updateLanguageProfile(id, { isActive: true });
   }), [data, run]);
   const completeOnboarding = useCallback((code: string, minutes: number, proficiencyLevel: ProficiencyLevel, patch: UserPatch) => run(async () => {
+    await checkSelectableLanguage(code, proficiencyLevel, () => getPackPracticeLanguages());
     await updateUser(patch);
     await saveOnboardingProfile(
       { updateLanguageProfile, createLanguageProfile },
@@ -112,7 +115,7 @@ export function useAccount() {
     learner: {
       name: data?.user.displayName ?? "",
       languageCode: activeProfile?.targetLanguageCode ?? "",
-      language: option?.name ?? activeProfile?.targetLanguageCode ?? "Choose a language",
+      language: option?.name ?? (activeProfile ? languageDisplayName(activeProfile.targetLanguageCode) : "Choose a language"),
       languageFlag: option?.flag ?? "",
       level: activeProfile?.proficiencyLevel ?? "A1",
       dailyMinutes: activeProfile?.dailyGoalMinutes ?? null,

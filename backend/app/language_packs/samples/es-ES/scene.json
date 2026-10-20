@@ -228,6 +228,20 @@
           "labels": []
         },
         {
+          "spec_id": "choose-scene-description-false-first",
+          "construction_id": "scene-existence",
+          "bindings": {
+            "object": "object:cup",
+            "attribute": "attribute:cup:colour:red"
+          },
+          "use": "falseFirst",
+          "labels": [],
+          "truth": false,
+          "counterfactual": {
+            "attribute": "bag-blue"
+          }
+        },
+        {
           "spec_id": "choose-scene-description-wrong-existence",
           "construction_id": "connected-description",
           "bindings": {

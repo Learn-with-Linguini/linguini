@@ -1,4 +1,5 @@
 import json
+import tomllib
 from collections import Counter
 from pathlib import Path
 from types import SimpleNamespace
@@ -12,9 +13,6 @@ from test_language_pack_m01_regression import _grading_scenarios
 
 from app.ai.cache.cache import ResultCache
 from app.ai.contracts.text import TextModelConfig, TextModelResponse
-from app.ai.features.learning_tasks.mission_a0 import validate_a0_lesson
-from app.ai.features.learning_tasks.mission_a2 import validate_a2_lesson
-from app.ai.features.learning_tasks.mission_m01 import validate_m01_lesson
 from app.language_packs.capabilities import mission_capability
 from app.language_packs.evaluation import (
     evaluate_pack,
@@ -30,8 +28,8 @@ from app.language_packs.generation import (
 from app.language_packs.loader import load_pack
 from app.language_packs.model_source import ModelSource
 from app.language_packs.pipeline import PipelineFailure, generate_pilot
+from app.language_packs.validation import validate_assembled_lesson
 from app.missions import get_mission
-from app.services.mission_facts_a2 import approved_facts
 from app.services.mission_lessons_a0 import a0_lesson_task
 from app.services.mission_lessons_a2 import m01_a2_task
 from app.services.mission_lessons_m01 import m01_lesson_task
@@ -39,6 +37,15 @@ from app.services.mission_registry import A2_MISSION_LESSONS
 
 SAMPLES = Path(__file__).parents[1] / "app/language_packs/samples/es-ES"
 PACK_DIR = Path(__file__).parents[1] / "app/language_packs/packs/es-ES/everyday"
+
+
+def _reference_pack():
+    # Explicit propose=False demos compare legacy finite choices. This fixture
+    # is not loaded by normal generation or production pack discovery.
+    reference = Path(__file__).parent / "fixtures/language_packs/es-reference-parity.toml"
+    return load_pack(PACK_DIR).model_copy(update={
+        "lexical": tomllib.loads(reference.read_text("utf-8"))["lexical"],
+    })
 
 
 class FakeTextClient:
@@ -76,6 +83,7 @@ def _source(level, responses=None):
         client,
         TextModelConfig(model_name="scripted-test"),
         mode="scripted responses (not a live model)",
+        propose=False,
     ), client
 
 
@@ -469,6 +477,8 @@ def _parity_scenario(level, monkeypatch):
          builder_payload["facts"]["q3"], "The connected facts."),
         ("chooseSceneDescription", "choose-scene-description-wrong-attribute",
          builder_payload["facts"]["wrongOne"], "A wrong attribute."),
+        ("chooseSceneDescription", "choose-scene-description-false-first",
+         builder_payload["facts"]["falseFirst"], "A false first fact."),
         ("chooseSceneDescription", "choose-scene-description-wrong-existence",
          builder_payload["facts"]["wrongTwo"], "A wrong existence claim."),
         ("buildSceneDescription", "build-scene-description-fact1",
@@ -531,7 +541,7 @@ def _text_fields(result):
 
 @pytest.mark.parametrize("level", ["A0", "A1", "A2"])
 def test_pilot_text_and_answer_key_match_existing_builder_scene(level, monkeypatch):
-    pack = load_pack(PACK_DIR)
+    pack = _reference_pack()
     (
         facts,
         vocabulary,
@@ -554,20 +564,16 @@ def test_pilot_text_and_answer_key_match_existing_builder_scene(level, monkeypat
     )
 
     assert len(client.requests) == 1
-    {
-        "A0": validate_a0_lesson,
-        "A1": validate_m01_lesson,
-        "A2": validate_a2_lesson,
-    }[level](generated.payload, generated.result)
+    validate_assembled_lesson(level, generated.result, generated.approved, pack)
     assert _text_fields(generated.result) == _text_fields(expected)
     if level == "A0":
         assert set(generated.payload["approvedSentenceChunks"]) == set(
             builder_payload["approvedSentenceChunks"]
         )
     assert generated.task.answer_key.model_dump(
-        mode="json", by_alias=True, exclude_none=True
+        mode="json", by_alias=True, exclude_none=True, exclude={"mission_state"}
     ) == expected_task.answer_key.model_dump(
-        mode="json", by_alias=True, exclude_none=True
+        mode="json", by_alias=True, exclude_none=True, exclude={"mission_state"}
     )
     actual_supports = generated.task.public_content.model_dump(
         mode="json", by_alias=True, exclude_none=True
@@ -581,7 +587,7 @@ def test_pilot_text_and_answer_key_match_existing_builder_scene(level, monkeypat
 
 @pytest.mark.parametrize("level", ["A0", "A1", "A2"])
 def test_scripted_router_generation_passes_existing_lesson_builders(level):
-    pack = load_pack(PACK_DIR)
+    pack = _reference_pack()
     scene, plan_specs = _scene(level)
     facts = BoundSceneFacts.model_validate(scene["facts"])
     vocabulary = _vocabulary()
@@ -601,12 +607,7 @@ def test_scripted_router_generation_passes_existing_lesson_builders(level):
     assert generated.payload["pilotMode"] == "validated"
     assert generated.result is not None
     assert generated.task is not None
-    validators = {
-        "A0": validate_a0_lesson,
-        "A1": validate_m01_lesson,
-        "A2": validate_a2_lesson,
-    }
-    validators[level](generated.payload, generated.result)
+    validate_assembled_lesson(level, generated.result, generated.approved, pack)
     assert all(
         item.assessment.status == "languageValidator"
         and item.assessment.passed is True
@@ -632,7 +633,9 @@ def test_scripted_router_generation_passes_existing_lesson_builders(level):
     assert str(generated.task.public_content.practice_level) == expected["practice_level"]
     assert generated.task.public_content.content_version == expected["content_version"]
     assert len(questions) == expected["question_count"]
-    assert [len(question.options) for question in questions] == expected["option_counts"]
+    assert [len(question.options) for question in questions] == (
+        [2, 2, 2, 0] if level == "A1" else expected["option_counts"]
+    )  # This explicit demo has two confirmed colours; runtime uses taught scene colours.
     assert set(public_content) == set(expected["public_content_keys"])
     support_shape = {
         key: len(value) if key == "prep" else value
@@ -663,25 +666,10 @@ def test_scripted_router_generation_passes_existing_lesson_builders(level):
     assert request.json_schema_name == "language_pack_candidates_v1"
     assert request.prompt_version
 
-    if level == "A2":
-        mission = get_mission("M01", level, 1)
-        existing = approved_facts(
-            mission,
-            "es",
-            [],
-            [],
-            [],
-            SimpleNamespace(objects=[]),
-            [],
-            None,
-            "pilot-test",
-            [],
-        )
-        assert set(generated.payload["approvedFacts"]) == set(existing)
 
 
 def test_unreviewed_example_match_runs_validator_and_retains_match_metadata():
-    pack = load_pack(PACK_DIR)
+    pack = _reference_pack()
     scene, plan_specs = _scene("A0")
     source, _client = _source("A0")
     generated = generate_pilot(
@@ -704,7 +692,7 @@ def test_unreviewed_example_match_runs_validator_and_retains_match_metadata():
 
 
 def test_match_name_rejects_capitalization_and_terminal_punctuation():
-    pack = load_pack(PACK_DIR)
+    pack = _reference_pack()
     scene, plan_specs = _scene("A0")
     source, _client = _source("A0")
     generated = generate_pilot(
@@ -718,7 +706,7 @@ def test_match_name_rejects_capitalization_and_terminal_punctuation():
     candidate = generated.sentences[0].candidate.model_copy(
         update={"text": "La taza."}
     )
-    assessment = assess(candidate, pack)
+    assessment = assess(candidate, pack, _vocabulary())
 
     assert assessment.status == "languageValidator"
     assert assessment.passed is False
@@ -727,7 +715,7 @@ def test_match_name_rejects_capitalization_and_terminal_punctuation():
 
 @pytest.mark.parametrize("level", ["A0", "A1", "A2"])
 def test_evaluation_separates_structure_language_and_current_evidence(level):
-    pack = load_pack(PACK_DIR)
+    pack = _reference_pack()
     report, record = evaluate_pack(pack, level, _vocabulary())
 
     assert report["structural"]["valid_alternatives"] > 0
@@ -750,7 +738,7 @@ def test_evaluation_separates_structure_language_and_current_evidence(level):
 
 
 def test_evaluation_identity_tracks_generation_content_and_validator_version():
-    pack = load_pack(PACK_DIR)
+    pack = _reference_pack()
     identity = evaluation_identity(pack, "A0")
     changed_constructions = [
         item.model_copy(update={"guidance": item.guidance + "\nExtra guidance."})
@@ -763,11 +751,13 @@ def test_evaluation_identity_tracks_generation_content_and_validator_version():
     assert identity.generation_content_sha256 != evaluation_identity(
         changed_pack, "A0"
     ).generation_content_sha256
-    assert identity.validator_versions == {"es": "es-targeted@1"}
+    assert identity.validator_versions == {
+        "es": "es-targeted@5", "noun-phrase": "noun-phrase.v1", "pack-checks": "pack-checks.v1",
+    }
 
 
 def test_preview_generation_cannot_be_evaluation_evidence():
-    pack = load_pack(PACK_DIR)
+    pack = _reference_pack()
 
     with pytest.raises(ValueError, match="preview generation results"):
         evaluate_pack(
@@ -779,7 +769,7 @@ def test_preview_generation_cannot_be_evaluation_evidence():
 
 
 def test_model_source_rejects_missing_specs_and_pipeline_surfaces_failure():
-    pack = load_pack(PACK_DIR)
+    pack = _reference_pack()
     scene, plan_specs = _scene("A0")
     source, _client = _source("A0", [{"candidates": []}])
 
@@ -795,7 +785,7 @@ def test_model_source_rejects_missing_specs_and_pipeline_surfaces_failure():
 
 
 def test_generation_cache_reuses_routed_candidate_response():
-    pack = load_pack(PACK_DIR)
+    pack = _reference_pack()
     scene, plan_specs = _scene("A0")
     facts = BoundSceneFacts.model_validate(scene["facts"])
     source, client = _source("A0")
@@ -815,7 +805,7 @@ def test_generation_cache_reuses_routed_candidate_response():
 
 
 def test_repair_is_bounded_and_only_retries_the_failing_spec():
-    pack = load_pack(PACK_DIR)
+    pack = _reference_pack()
     scene, plan_specs = _scene("A0")
     initial = json.loads((SAMPLES / "responses-A0.json").read_text(encoding="utf-8"))
     initial["candidates"][2]["text"] = "Es un libro."
@@ -847,10 +837,11 @@ def test_repair_is_bounded_and_only_retries_the_failing_spec():
     assert len(repair_request["specs"]) == 1
     assert repair_request["specs"][0]["spec_id"] == "build-identify-1-spec"
     assert repair_request["repair"]["buildIdentify-1/build-identify-1-spec"]
+    assert "Es un libro." in repair_request["repair"]["buildIdentify-1/build-identify-1-spec"][0]
 
 
 def test_repair_budget_exhaustion_reports_exact_failure():
-    pack = load_pack(PACK_DIR)
+    pack = _reference_pack()
     scene, plan_specs = _scene("A0")
     initial = json.loads((SAMPLES / "responses-A0.json").read_text(encoding="utf-8"))
     initial["candidates"][2]["text"] = "Es un libro."

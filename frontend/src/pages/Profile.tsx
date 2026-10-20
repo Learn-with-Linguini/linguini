@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button, Card, IconButton } from "../components/ui";
 import { ChevronRightIcon, CloseIcon, InstagramIcon, LinkedInIcon, TikTokIcon, XIcon } from "../components/icons";
 import { HelpImproveModal } from "../components/HelpImproveModal";
-import { languages } from "../config/languages";
+import { usePracticeLanguages } from "../state/usePracticeLanguages";
 import { deleteCurrentAccount } from "../lib/api";
 import { accountTiers } from "../lib/accountTiers";
 import { validatePasswordReset } from "../lib/authMessages.ts";
@@ -37,6 +37,7 @@ export function Profile() {
   const [surveyOpen, setSurveyOpen] = useState(false);
   const { learner, user, activeProfile, progressLoading, progressError, profileError, profileSaving, setLanguage, saveLanguageProfile, saveUser } = useAppState();
   const tier = accountTiers[user?.tier ?? "beta"];
+  const practiceLanguages = usePracticeLanguages(learner.languageCode);
 
   useEffect(() => {
     if (!deleteOpen) return;
@@ -159,14 +160,21 @@ export function Profile() {
               <strong>Target language</strong>
               <small>The language you are learning</small>
             </span>
-            <select disabled={profileSaving} value={learner.languageCode} onChange={event => void setLanguage(event.target.value, learner.dailyMinutes ?? 10)}>
-              {languages.map(language => (
+            <select disabled={profileSaving} aria-busy={practiceLanguages.isPending} value={learner.languageCode} onChange={event => {
+              const choice = practiceLanguages.choices.find(language => language.code === event.target.value);
+              const levels = choice?.levels ?? [];
+              const level = levels.length ? levels.find(level => level === activeProfile?.proficiencyLevel) ?? levels.find(level => level === "A1") ?? levels[0] : undefined;
+              void setLanguage(event.target.value, learner.dailyMinutes ?? 10, level);
+            }}>
+              {practiceLanguages.choices.map(language => (
                 <option key={language.code} value={language.code}>
-                  {language.flag} {language.name}
+                  {language.flag} {language.name}{language.experimental ? " (experimental)" : ""}
                 </option>
               ))}
             </select>
           </label>
+
+          {practiceLanguages.isError ? <p role="alert">Additional practice languages could not be loaded. <button type="button" onClick={() => void practiceLanguages.refetch()}>Retry</button></p> : null}
 
           <label className="profile-setting">
             <span>
