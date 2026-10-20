@@ -215,6 +215,13 @@ with no silent selection of a different language/register.
 Optional `[language]` fields `articles` and `grammatical_gender` accept `required`,
 `optional` (the compatibility default), or `none`. These requirements apply to
 object translation metadata. Spanish explicitly requires articles and gender.
+`inflection = "suffixing"` (default `none`) tells the structural check that
+particles and case endings attach to words, so a bound noun or detail may appear
+inside a longer word (Korean 컵이에요); `stem_endings` lists final letters a stem may
+lose before a suffix. This only finds a bound role that whole-word matching missed;
+`modifier` forms (Korean 빨간) never take suffixes, and meaning stays model-assessed.
+Korean also has a targeted validator (`validators/ko.py`) for particle forms after a
+final consonant (문이에요, not 문예요).
 `nativeDisplay` is required throughout the pack translation path and is displayed
 as returned after validation; the application adds no article prefix. Required
 `romanization` is separate from optional legacy `phoneticText` (English-sound

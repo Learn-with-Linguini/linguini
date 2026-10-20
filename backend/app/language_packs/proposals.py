@@ -9,7 +9,7 @@ from app.schemas.base import ApiModel, NonEmptyText
 from .generation import ApprovedTerm, ApprovedVocabulary
 
 PROPOSAL_VERSION = "language-proposals.v2"
-REVIEW_VERSION = "language-content-review.v1"
+REVIEW_VERSION = "language-content-review.v2"
 
 PROPOSAL_PROMPT = """Supply candidate grammatical forms and distractors for planned M01
 lesson. Packs are guidance and optional reference vocabulary, not exhaustive dictionaries.
@@ -30,9 +30,14 @@ Return JSON matching the schema. Reference examples are guidance, not a required
 
 REVIEW_PROMPT = """Assess candidate lesson content against original session vocabulary,
 confirmed scene facts, planned bindings, level/register and construction guidance. Neither supplied
-candidate forms nor a generator's claims are approved or human-reviewed. Check every sentence,
-form, translation and proposed distractor. New words/forms outside pack lists are allowed if they
-preserve assessed meanings. Verify realizations against original meanings, including object IDs.
+candidate forms nor a generator's claims are approved or human-reviewed. Check every candidate
+sentence and rendered option, and the forms, translations and distractors they use; ignore
+proposals that no planned spec or rendered question uses. New words/forms outside pack lists are
+allowed if they preserve assessed meanings. The English source meanings (sourceText) and object
+IDs are authoritative; native session words are machine translations. Verify realizations against
+those meanings. If a session word does not express its English meaning, say so in issues as the
+cause (a translation error), rather than listing every criterion it affects. Romanization is
+checked mechanically elsewhere; do not assess it.
 Counterfactual options are alternatives to the bound target, never newly asserted scene facts.
 Omission by a detector never proves absence. A false option may deny a confirmed-present object,
 but do not accept unsupported absence as a correct fact. For a rendered lesson, inspect every

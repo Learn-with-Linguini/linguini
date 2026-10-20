@@ -1,10 +1,12 @@
 """Language-scoped validator selection; instances never share session vocabulary."""
 
+from importlib import import_module
+
 from ..generation import ApprovedVocabulary
 from .checks import CombinedValidator, PackChecksValidator, has_pack_checks
 from .noun_phrase import NounPhraseValidator
 
-STRUCTURE_VERSION = "language-pack-structure.v4"
+STRUCTURE_VERSION = "language-pack-structure.v5"
 
 _FACTORIES = {}
 
@@ -14,14 +16,21 @@ def register_validator_factory(language: str, factory) -> None:
     _FACTORIES[language] = factory
 
 
+# Built-in targeted validators: language -> (module in this package, class name).
+_BUILT_IN = {
+    "es": ("es", "SpanishM01Validator"),
+    "ko": ("ko", "KoreanValidator"),
+}
+
+
 def _factory(language):
     if language in _FACTORIES:
         return _FACTORIES[language]
-    if language == "es":
-        from .es import SpanishM01Validator
-
-        return SpanishM01Validator
-    return None
+    entry = _BUILT_IN.get(language)
+    if entry is None:
+        return None
+    module, name = entry
+    return getattr(import_module(f"{__name__}.{module}"), name)
 
 
 def _uses_noun_phrases(pack) -> bool:

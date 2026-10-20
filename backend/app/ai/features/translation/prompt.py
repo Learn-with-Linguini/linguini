@@ -11,11 +11,14 @@ schema.
 SCENE_TRANSLATION_PROMPT_VERSION = "scene-translation.v5"
 SCENE_TRANSLATION_SCHEMA_VERSION = "scene-translation-result.v2"
 
-PACK_TRANSLATION_PROMPT_VERSION = "pack-translation.v1"
+PACK_TRANSLATION_PROMPT_VERSION = "pack-translation.v2"
 PACK_TRANSLATION_SYSTEM_PROMPT = """Translate the confirmed session vocabulary using language_context.
 The context is a resolved pack snapshot: respect its locale, variety, register and language
 requirements. Pack examples and reference vocabulary are guidance, never an exhaustive dictionary.
 Keep every supplied key/source and its meaning. Do not invent scene facts or objects.
+Name each object with the everyday word a native speaker of this variety uses for exactly that
+object. Never describe it with a phrase built from other words (for example a colour plus a
+different food or object); if the language has no everyday word, use the common loanword.
 For every object, attribute and relationship return translation (the native lexical form) and
 nativeDisplay (the complete native form to display on the vocabulary card). Supply grammatical
 forms naturally; the application will not construct article prefixes. Articles and gender apply

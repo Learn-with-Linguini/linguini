@@ -145,9 +145,18 @@ def test_editing_a_check_invalidates_cache_and_evaluation_identity():
     ).generation_content_sha256
 
 
-def test_languages_without_a_targeted_validator_use_pack_checks_alone():
+def test_korean_targeted_validator_runs_with_pack_checks():
     pack = load_pack(PACKS / "ko-KR" / "everyday")
-    assert validator_versions("ko", pack) == {"pack-checks": PackChecksValidator.validator_id}
+    assert validator_versions("ko", pack) == {
+        "ko": "ko-targeted@1", "pack-checks": PackChecksValidator.validator_id,
+    }
     assessment = assess(_candidate("identify-object", "컵이에요."), pack, ApprovedVocabulary())
     assert assessment.status == "languageValidator"
     assert assessment.passed is True
+    # A final consonant takes 이에요 and 을, never 예요 or 를.
+    for wrong in ("문예요.", "책를 찾아보세요."):
+        assessment = assess(_candidate("identify-object", wrong), pack, ApprovedVocabulary())
+        assert assessment.passed is False, wrong
+    for right in ("의자예요.", "가방을 찾아보세요.", "탁자를 찾아보세요."):
+        assessment = assess(_candidate("identify-object", right), pack, ApprovedVocabulary())
+        assert assessment.passed is True, right
