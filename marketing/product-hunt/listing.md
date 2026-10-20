@@ -1,247 +1,138 @@
 # Linguini Product Hunt listing
 
-**Working draft · 24 September 2026.** Everything to paste into the Product Hunt launch form, in form order. Primary destination: https://www.learnwithlinguini.com/ . The learner app is at https://www.learnwithlinguini.com/ . The landing site is live; use the **preview** listing below until the production app can complete and save a real user-photo session. The **full release** copy is reserved for that later milestone. Replace `[PH_POST_URL]` only after Product Hunt creates the post. Nothing below has been submitted.
+**Public-beta launch copy · 20 October 2026.** This is the recommended submission set for the current product. It uses the live Beta offer, the four supported learning languages and the current learner UI. Replace only bracketed placeholders before publishing.
 
-Limits were checked against Product Hunt's own pages on 24 September 2026 (sources are in [plan.md](plan.md#product-hunt-rules-what-we-verified-24-september-2026)). Where Product Hunt's pages disagree with each other, this kit follows the stricter limit.
+## Submission fields
 
-> This file merges two drafts that disagree on tagline, description, tags, pricing, links, thumbnail, gallery, video and first comment. The newer, more cautious preview copy is primary; each **Open decision** note lists the alternatives. The alternatives describe object detection in your own photo, a 5-minute session and a free price; use them only if those claims pass the release checks below.
-
-| Field | Limit (verified) | Status |
-|---|---|---|
-| Name | Name only, "no description or emojis". No character limit published | Ready |
-| Tagline | 60 characters max | Preview and full-release taglines, plus 5 alternates |
-| Description | 260 characters in the Help Center; the Launch Guide says 500. We stay under 260 | Preview and full-release descriptions, plus 3 alternates |
-| Launch tags (formerly "Topics") | "Up to 3" | 3 picked, 1 spare |
-| Pricing | Free / Paid / Paid (with a free trial or plan) | **Free** (open decision) |
-| Thumbnail | Square, 240×240 recommended, under 3 MB, GIF allowed | Two options |
-| Gallery | At least 2 images, 1270×760 recommended | Two sets |
-| Video | YouTube only, full URL (short links won't load) | `[YOUTUBE_URL]` |
-| Maker's first comment | No published limit | Preview, full release and one alternate |
-
-## Positioning
-
-**One sentence:** Linguini makes the things you see every day the starting point for practising Spanish or French.
-
-**Audience:** Beginner and returning learners who want useful words from familiar places and a short daily habit.
-
-**Creative idea:** *The world is your lesson.* Show one recognisable photograph moving through the same four beats in every asset: **photo → words → play/speak → journal**. Use a real scene from the site, clear Spanish/French examples, and the existing Linguini identity. Do not imply a generated lesson was produced by the live app unless it was.
-
-## Product Hunt: preview launch (publishable from the landing experience)
-
-| Field | Proposed content |
+| Field | Use |
 | --- | --- |
-| Product name | Linguini |
-| Primary URL | https://www.learnwithlinguini.com/ (no tracking parameters) |
-| Additional link: the app | https://www.learnwithlinguini.com |
-| Tagline | **Explore language lessons hidden in everyday photos** |
-| Description | **Explore photo scenes in Spanish or French through word cards, I-Spy and sentence games, then finish with a journal page. Try a complete interactive mini session in your browser and tell us what should make the leap into the learner app.** |
-| Availability | Mark as beta/not fully released if that option matches the actual launch state. |
-| Pricing | See [Pricing](#pricing). |
-| Launch tags | See [Launch tags](#launch-tags-up-to-3). |
-| Thumbnail | See [Thumbnail](#thumbnail). |
-| Gallery | See [Gallery](#gallery). |
-| Video | See [Video](#video). |
-| Maker accounts | `[MAKER_PRODUCT_HUNT_HANDLES]` — personal accounts, with co-makers added. |
+| Product name | **Linguini** |
+| Primary URL | **https://www.learnwithlinguini.com/** |
+| Tagline | **Turn everyday photos into language lessons** |
+| Description | **Linguini turns photos of your day into bite-size language lessons. Review the words AI finds, practise with audio, I-Spy and sentence games, then save them to your journal. Public beta: unlimited lessons in Spanish, French, German and beginner Korean.** |
+| Pricing | **Free** |
+| Status | **Beta**, if the form offers a status field |
+| Launch tags | **Education**, **Languages**, **Artificial Intelligence** |
+| Category | **Language Learning**, if the form asks separately for a category |
+| Product X account | `[PRODUCT_X_HANDLE]` |
+| Makers | `[MAKER_PRODUCT_HUNT_HANDLES]` |
 
-### Name
+The tagline is 42 characters and the description is 251 characters. Use the direct primary URL without UTM parameters; Product Hunt does not accept tracking links in the primary URL.
 
-```
-Linguini
-```
+## Gallery
 
-### Tagline (60 characters max)
+Upload the eight 1270 × 760 files from [`gallery/`](gallery/) in this order. The `@2x` versions are source-quality backups, not additional slides.
 
-Primary (preview): **Explore language lessons hidden in everyday photos**
+| Order | File | Caption | Alt text |
+| --- | --- | --- | --- |
+| 1 | [`01-hero.png`](gallery/01-hero.png) | Turn the photos in your day into short, memorable language lessons. | Linguini public beta with current scene-picker and vocabulary screens, four supported languages and unlimited photo lessons. |
+| 2 | [`02-spot.png`](gallery/02-spot.png) | Start with your own photo or a ready-made scene; review every word before learning it. | Current scene picker beside controls for keeping, removing and adding AI-suggested words. |
+| 3 | [`03-learn.png`](gallery/03-learn.png) | Share a private I-Spy room and learn from photos with a friend. | Current shared I-Spy screen showing two markers, a friend’s clue and a successful answer. |
+| 4 | [`04-play.png`](gallery/04-play.png) | Revisit every word with its meaning, audio and the scene where you learned it. | Current vocabulary bank for a market scene with New, Learning and Mastered filters. |
+| 5 | [`05-journal.png`](gallery/05-journal.png) | Track words, scenes and Basil, then join the weekly Chefs of the Day board. | Current progress counters and weekly Basil leaderboard. |
+| 6 | [`06-habit.png`](gallery/06-habit.png) | Public beta is $0 with unlimited photo lessons and no payment card required. | Linguini Beta offer with Spanish, French, German and beginner Korean. |
+| 7 | [`07-missions.png`](gallery/07-missions.png) | Linguini plans focused missions only when the details you confirmed can support them. | Three example A1 photo missions: identify and describe, find and locate, and count and quantify. |
+| 8 | [`08-daily-challenge.png`](gallery/08-daily-challenge.png) | Explore a new scene each day, finish a photo lesson and add your confirmed words to the community board. | Current daily challenge shown in its real empty state, with the café scene, Basil rewards and no fabricated learner activity. |
 
-> **Open decision: tagline.** Alternatives from the other draft, which lead with your own photo and a 5-minute lesson. Counts include spaces and punctuation.
+These replace the 7 October gallery. The old set showed only Spanish and French, used the earlier curated-demo UI, promised a five-minute lesson and described access as “Free to start.” The new set uses screenshots updated on 19 October and the current Beta offer.
+
+### Other photos worth using
+
+Prefer product screenshots over generic stock photography. If another visual is needed:
+
+1. **A team-taken everyday photo** — a desk, lunch, commute or walk. This best demonstrates the promise and avoids stock-photo licensing ambiguity. Get consent from anyone visible.
+2. **A real before/after pair** — the original photo beside the actual object-review screen generated from it. Use a clean beta account and remove personal information.
+3. **A real journal result** — the photo, three learned words and the saved journal page from the same lesson.
+4. **A language comparison** — one scene shown in Spanish, French, German and beginner Korean.
+5. **A feedback moment** — the in-lesson “Report an issue” popup, showing that beta users can flag incorrect content without leaving the lesson.
+
+For the photos already in the repository, [`hillside-street.jpg`](../../frontend/public/photos/hillside-street.jpg) and [`golden-gate-bridge.jpg`](../../frontend/public/photos/golden-gate-bridge.jpg) have the clearest recorded provenance: Viktor Hanáček / picjumbo, with commercial use noted in [`credits.json`](../../frontend/public/photos/credits.json). Verify the original licence before public upload. Avoid using the other bundled theme photos as standalone Product Hunt artwork until their original photographer and licence are confirmed.
+
+## Thumbnail and video
+
+- Thumbnail: [`gallery/thumbnail.png`](gallery/thumbnail.png). Use the still unless the animated GIF has been checked on mobile and its first frame reads clearly.
+- Video: upload the 30-second 1080p [**Linguini-Beta-Promo.mp4**](../videos/day-one/renders/Linguini-Beta-Promo.mp4) to YouTube as public or unlisted, then paste the full YouTube URL. Do not upload a second gallery image that simply repeats the video’s title card.
+- Suggested YouTube title: **Linguini Beta — Turn your photos into language lessons**
+- Suggested YouTube description: **Turn photos from your day into short lessons in Spanish, French, German or beginner Korean. Public beta includes unlimited photo lessons at $0: https://www.learnwithlinguini.com/**
+
+## First maker comment
+
+Post this as the maker comment. It explains the problem, the current product, the beta offer and the feedback the team actually wants.
+
+> Hi Product Hunt 👋 We’re the team behind Linguini.
 >
-> | # | Tagline | Chars |
-> |---|---|---|
-> | 1 | Turn a photo of your day into a 5-minute language lesson (that draft's pick) | 56 |
-> | 2 | Learn Spanish and French from the photos you take | 49 |
-> | 3 | Your camera roll is the textbook: learn Spanish or French | 57 |
-> | 4 | Learn the language of your day, one photo at a time | 51 |
-> | 5 | Snap your day, learn the words for it in Spanish or French | 58 |
+> We built it around a simple frustration: vocabulary lists can teach useful words, but rarely the words for what is right in front of you.
 >
-> Why #1 there: it says what the product does, how long it takes and where the lesson comes from, and it stays under the limit with room to spare. Choose #2 to put the languages in the headline. The full-release tagline below is close to #2. Confirm any five-minute timing claim with real users before publishing it as a promise.
-
-### Description (260 characters max)
-
-Primary (preview): the description in the table above. It fits within 260 characters.
-
-> **Open decision: description.** Alternatives from the other draft. All three say Linguini finds the objects in your photo, so they belong with the full release.
+> With Linguini, you can take a photo of your desk, lunch, walk or anything else. The app suggests objects and translations, you correct what it found, then practise those words through audio, I-Spy and sentence games. The lesson ends in a journal, so the words stay connected to a moment you remember.
 >
-> **Recommended there (250 characters; 251 if the form counts bytes, because of the é):**
+> Linguini is for beginners and returning learners studying Spanish, French, German or beginner Korean from English. During the public beta, every account gets unlimited photo lessons for $0 and no payment card is required.
 >
-> ```
-> Snap a café, a street, a sunset. Linguini finds the words in your photo, you pick which to keep, then play a 5-minute Spanish or French session: word cards with audio, I-Spy and fill-in-the-blank. Your day is saved to a journal. Free, in the browser.
-> ```
+> We’re launching now because we want to learn before polishing in the wrong direction. If you try it, we’d especially love to know:
 >
-> **Alternate A (221 characters), leads with the problem:**
+> 🍝 Were the suggested words relevant?
 >
-> ```
-> Word lists don't know where you live. Linguini does: photograph a moment from your day and it becomes a 5-minute Spanish or French session, with word cards, I-Spy and sentences, saved to a photo journal. Free, no install.
-> ```
+> 🍝 Which activity helped a word stick?
 >
-> **Alternate B (250 characters), leads with control:**
+> 🍝 What would make you return tomorrow?
 >
-> ```
-> Your camera roll is the textbook. Linguini spots the objects in your photo; you tick the words you want, then learn them through word cards with audio, I-Spy both ways and build-a-sentence. Spanish and French for beginners. Free, runs in the browser.
-> ```
+> You can report an incorrect answer inside a lesson or leave your thoughts here. We’ll be answering questions throughout launch day. Thanks for helping us make everyday language practice feel more personal.
 
-### Launch tags (up to 3)
+Do not ask for upvotes. Product Hunt explicitly recommends asking for feedback, comments and opinions instead.
 
-Product Hunt renamed "Topics" to "Launch Tags" in October 2025, and a launch can have up to 3. We checked that each of these exists on producthunt.com on 24 September 2026:
+## Reply bank
 
-1. **Education** (`/topics/education`)
-2. **Languages** (`/topics/languages`). Duolingo is listed here, so this is where language-learning launches are browsed.
-3. **Artificial Intelligence** (`/topics/artificial-intelligence`)
+Personalise each reply and answer the commenter’s actual point before using any of these.
 
-Spare: **Photography** (`/topics/photography`). Use it in place of Artificial Intelligence if we want to stand apart from the many AI launches on the same day, or if the listing shouldn't lean on AI claims before real photo analysis ships.
+**“How accurate is the AI?”**
 
-"Language Learning" is a Product *Category* (`/categories/language-learning`, under Platforms), not a launch tag. Choose it if the form asks for a category. Check the tag picker in the form, because the list can change.
+> It can make mistakes, especially with small, hidden or ambiguous objects. That’s why every photo lesson starts with a review step: you can remove a wrong suggestion or add something it missed before the lesson begins. There’s also an in-lesson report button for anything questionable.
 
-> **Open decision: tags.** The other draft proposed Language Learning; Education; Productivity (replace the third with the closest available category if needed). Language Learning is a category, not a tag, which is why the verified list above is primary.
+**“Which languages do you support?”**
 
-### Pricing
+> The beta teaches Spanish, French and German, plus beginner Korean, from English. Korean currently has the narrowest beginner scope; we’d rather say that clearly than pretend every language is equally deep today.
 
-```
-Free
-```
+**“How much does it cost?”**
 
-Do **not** choose "Paid (with a free trial or plan)" until billing works and a person can actually buy Plus. If the form has a status or notes field, write "Free. Paid plans coming later." The alternate first comment says the same thing. See must-fix 1 in [plan.md](plan.md#must-fix-before-launch-day-ranked).
+> Beta access is $0, includes unlimited photo lessons and does not require a payment card. Free and Plus tiers are planned for later, but they are not what we’re selling on this launch.
 
-> **Open decision: pricing.** The preview draft says: select the truthful state of the *available* product at posting time; the website advertises Free/Plus, but a working Plus checkout and trial have not been verified. The landing page shows Plus at US$6.99/mo or $59.88/yr with a 7-day trial. The [business model](../business-model/README.md) proposes $7.99/mo or $49.99/yr with a 7-day trial, and Founding Plus at $34.99/yr for the first 300 paying members. None of these can be bought today. Do not advertise a trial or Plus features until checkout and entitlements work end to end.
+**“What happens to my photos?”**
 
-### Links
+> Your photos stay in your account and are used to build your lessons and journal. They are not shown to other learners unless you choose to add them to a private I-Spy room shared with a friend. Our privacy policy explains the storage and AI processing in more detail: https://www.learnwithlinguini.com/privacy
 
-| Field | Value |
-|---|---|
-| Website (primary) | `https://www.learnwithlinguini.com/` |
-| Additional link: the app | `https://www.learnwithlinguini.com` |
+**“How is this different from Duolingo?”**
 
-The primary link goes to the landing page because its no-signup demo on real photos is the quickest way for a Product Hunt visitor to try the idea. The app needs an email and password first. Product Hunt may add its own `ref` parameter to outbound links, so check in the preview that the combined URL still works.
+> We’re not trying to replace a full structured course. Linguini starts from the places and objects in your own day, then turns that personal context into a short practice loop. It works best as a way to make everyday vocabulary feel relevant and memorable.
 
-> **Open decision: tracking on the primary URL.** The preview draft uses the plain URL with no tracking parameters (Product Hunt asks for a direct URL). The other draft uses `https://www.learnwithlinguini.com/?utm_source=producthunt&utm_medium=launch`, and the dashboard suggests `?utm_source=producthunt&utm_medium=launch&utm_campaign=linguini_launch` for measurement. Without UTM, attribute Product Hunt visits by referrer.
+**“Is this a mobile app?”**
 
-### Thumbnail
+> It runs in the browser and is designed to work on phones, tablets and laptops, so there’s nothing to install for the beta. We’re using this launch to learn which platforms people actually want us to prioritise next.
 
-- 240×240, square, under 3 MB.
-- **Option A (media kit):** the existing Linguini mark on the brand cream background, [`product-hunt-icon-240.png`](../media/export/product-hunt-icon-240.png). Alt text: “Linguini pasta-inspired logo on a warm cream background.”
-- **Option B (this folder):** the Linguini mascot, a smiling pasta-strand speech bubble, on the brand background, [`gallery/thumbnail.png`](gallery/thumbnail.png) or the animated [`gallery/thumbnail.gif`](gallery/thumbnail.gif). No text, because it becomes unreadable at list size.
-- An animated GIF is allowed. Keep it gentle: for example, the bubble blinks once or three word markers pop onto a tiny photo. Product Hunt warns against thumbnails that are "overly animated". A still PNG is fine.
+**Bug report**
 
-> **Open decision: thumbnail.** Option A or option B.
+> Thank you for catching this. Could you share the page or lesson step, your device and browser, and what you expected to happen? You can also attach a screenshot through Contact Us: https://www.learnwithlinguini.com/contact
 
-### Gallery
+**Critical but fair feedback**
 
-At least two 1270 × 760 px images. Upload in order; each caption is one line. Gallery alt text should name the visible scene, words and UI action rather than repeat marketing slogans.
+> You’re right that [SPECIFIC POINT] needs work. The current beta handles it by [CURRENT BEHAVIOUR], but that does not fully solve the problem you described. We’ve added this to our launch feedback and will follow up here when we know what we’re changing.
 
-**Set A: four illustrations from the [media kit](../media/README.md).** Each carries a visible **Illustrative preview** label: they explain the curated demo and are not captured product screens. Keep that label when uploading; replace mockups with actual screen captures once the full app workflow is verified.
+## End-of-day follow-up comment
 
-1. **[See a scene. Learn its language.](../media/export/01-your-world.png)** Caption: “Explore Spanish or French through everyday photo scenes.”
-2. **[Find words in everyday scenes.](../media/export/02-find-your-words.png)** Caption: “Choose useful words from a familiar place, such as *el coche* on a hillside street.”
-3. **[A small session. A story to tell.](../media/export/03-play-and-build.png)** Caption: “Use the visible sea in an I-Spy clue, then build a sentence from the scene.”
-4. **[Finish with a journal page.](../media/export/04-keep-the-day.png)** Caption: “See how a short lesson becomes a sample journal page in the demo.”
+Post a short follow-up only after replacing the bracketed items with real findings.
 
-**Set B: six compositions in [`gallery/`](gallery/)**, built from captures of the landing page (sources in [`gallery-src/`](gallery-src/)).
+> Thank you for spending time with Linguini today. The clearest things we heard were [INSIGHT 1], [INSIGHT 2] and [INSIGHT 3]. We’re fixing [FIRST CHANGE] first, and we’ll share what changes once it is live. If you try Linguini later, we’re still reading every comment and in-app report.
 
-1. **[Hero](gallery/01-hero.png):** Learn the language of your day. Your photos are the lesson.
-2. **[Photo to words](gallery/02-spot.png):** Linguini finds the objects. You keep, untick or add words.
-3. **[Word card](gallery/03-learn.png):** Article, gender, meaning, IPA and audio on every word.
-4. **[I-Spy](gallery/04-play.png):** Linguini gives you a clue in Spanish or French. Can you spot it?
-5. **[Journal](gallery/05-journal.png):** Every session becomes a journal page, with your words highlighted.
-6. **[Streak and avatars](gallery/06-habit.png):** Keep your farfalle streak going, and pick your pasta.
+## Final publishing checks
 
-> **Open decision: gallery set.** The preview draft uses set A (labelled illustrations that match the curated demo). Set B shows more of the product, but caption 2 says Linguini finds the objects, which needs the release checks first. Either way, every photo shown must be our own or have a confirmed licence (must-fix 4 in [plan.md](plan.md#must-fix-before-launch-day-ranked)); set B is built from the landing-page photos whose licences are unconfirmed.
+- Complete a new-account photo lesson on production in all four languages before publishing.
+- Confirm the profile shows the Beta tier and unlimited photo lessons.
+- Submit one lesson report and one Contact Us form; confirm both reach support.
+- Open Privacy, Terms and Contact Us from the production landing page.
+- Confirm the eight gallery images and the Beta Promo video show no private user data, browser extensions, local URLs or old pricing.
+- Use personal Product Hunt accounts for makers and add every teammate before launch.
+- Reply to comments promptly and honestly; do not coordinate or request upvotes.
 
-### Video
+## Product Hunt references
 
-```
-[YOUTUBE_URL]
-```
-
-This must be a full `https://www.youtube.com/watch?v=…` URL, public or unlisted, because Product Hunt says shortened links won't load and it doesn't accept direct video file uploads. Product Hunt reports that about 53% of Product of the Day winners since 2021 had a video.
-
-Primary: the 50-second animated explainer, [`explainer.mp4`](../media/export/explainer.mp4) with [`explainer.srt`](../media/export/explainer.srt) ([script](../media/explainer-script.md)).
-
-> **Open decision: listing video.** Three candidates exist, and the drafts disagree:
->
-> - **50-second animated explainer** (`marketing/media/export/explainer.mp4`): named as the listing video in the newest checklist and in the X thread ("The listing, with the 50-second explainer").
-> - **30-second narrated launch film** ([review page](../videos/launch-film/review.html), [video guide](../videos/launch-film/README.md)): called the primary video for team review in the launch kit and the media kit. It depicts the curated landing demo through animation and one captured demo screen, not a personal-photo workflow.
-> - **30-second promo film** ([`marketing/videos/promo-film/`](../videos/promo-film/)): real Mixkit footage, proposed by the other draft once uploaded; its YouTube title and description are in [VIDEO.md](../videos/promo-film/VIDEO.md).
->
-> Or record the [demo video storyboard](#demo-video-storyboard-3545-seconds) below. Update the X thread wording if the video isn't the explainer.
-
-### Maker accounts
-
-`[MAKER_PRODUCT_HUNT_HANDLES]`. Self-hunt from the launch lead's personal account and add the other three as makers.
-
-## First maker comment — preview
-
-Post this within the first minute of the launch. No request for upvotes.
-
-> Hi Product Hunt! We’re the team behind Linguini. We kept noticing that the words we wanted to learn were already in front of us: the café table, the view on a walk, the things on our desk. So we built a photo-led language-learning experience around those moments.
->
-> Today you can try a full mini session on our site in Spanish or French. Pick a scene, explore its words, play I-Spy and sentence games, and see the moment become a journal page. Then sign up and the app does the same with a photo you take: AI reads the picture, pins the words and builds the games.
->
-> We’d love specific feedback: Which part helped you remember a word? What would make you come back tomorrow? If you try it, tell us which scene you picked and where you got stuck. We’re here to answer questions and learn from the comments.
-
-> **Open decision: first comment.** The other draft has a longer comment (241 words) with more personality: the NUS team, the hawker-centre kopi, how it works step by step, what's live and what's next. It says Linguini finds the objects in your photo and that everything is free, so check both claims first. It could replace either comment above or below once they're true.
->
-> > Hi Product Hunt! We're the team behind Linguini, a group of students at NUS in Singapore.
-> >
-> > **Why we built it.** Word lists don't know where you live. We kept memorising "the library" and "the train station" while our real days were a kopi at the hawker centre, a rainy bus stop, a friend's bookshelf. So we flipped it round: your camera roll is the textbook.
-> >
-> > **How it works:**
-> > 1. Photograph a moment from your day, or pick a ready-made scene.
-> > 2. Linguini finds the objects in it. You untick what's wrong and add what it missed. The AI suggests, and you decide.
-> > 3. A 5-minute session follows: word cards with article, gender, IPA and audio; I-Spy both ways (Linguini gives you a clue, then you describe something back); describe the scene; build a sentence.
-> > 4. Your day is saved as a journal entry, with the photos and the words you used highlighted.
-> >
-> > **Live today:** Spanish and French from English, for beginners (about A1–A2). It runs in the browser on phone, tablet or laptop, and it's free. You can try the demo on the landing page without signing up.
-> >
-> > **Next:** pronunciation feedback and more languages. Paid plans come later; for now, everything is free.
-> >
-> > We're a student team, so expect rough edges, and please point them out. One question for you: **which moment from your day would you want to learn the words for first, and did Linguini find the right ones?**
-
-## Product Hunt: full release (use only after the release checks)
-
-| Field | Proposed content |
-| --- | --- |
-| Product name | Linguini |
-| Primary URL | https://www.learnwithlinguini.com/ |
-| Tagline | **Learn Spanish or French from the photos you take** |
-| Description | **Take a photo of your day. Linguini finds useful Spanish or French words in it, then helps you hear, say and use them through quick games. Finish with a journal page that connects your new words to a moment you actually lived.** |
-| Pricing | Use actual live pricing. Do not advertise a trial or Plus features until checkout and entitlements work end to end. |
-
-**First maker comment — full release**
-
-> Hi Product Hunt! We’re the team behind Linguini. Language practice can feel detached from daily life, so we built a small loop around the photos people already take. Capture a moment, choose the words that matter, practise them in Spanish or French, and end with a journal page.
->
-> We designed it for beginners and returning learners who want to say something about their real day. The photo gives each word a place to live, and the journal gives you a reason to use it again.
->
-> You can try the mini session on our site, then make one from your own photo in the app. We’d love to know: Did the words feel relevant, and which step would you change? We’ll be in the comments throughout launch day.
-
-**Release checks before using the full copy:** Confirm that an ordinary new account can upload a real photo, receive objects actually detected in that photo, choose/correct words, complete the advertised games by voice where claimed, and save/reopen a journal entry. Verify Spanish and French, free limits, Plus billing/trial, and photo privacy language in the production deployment. `backend/README.md` currently describes fixed chair/table/plant suggestions for uploaded photos, no pixel inspection, typed pronunciation answers, and no speech grading. The full release wording is therefore **draft, not an assertion of current behaviour**. Confirm any five-minute timing claim with real users before publishing it as a promise.
-
-## Demo video storyboard (35–45 seconds)
-
-Record the **live landing demo** for the preview launch. Capture at 1080p with the cursor visible, captions burned in, and no misleading cuts over loading or errors. Use a real site scene. Record the full app flow only after the release checks above.
-
-| Time | Shot | On-screen line / voiceover |
-| --- | --- | --- |
-| 0–4 s | Real everyday photograph fills the frame; wordmark appears. | “What if your day was the lesson?” |
-| 4–10 s | Pick the photo on the landing hero. | “Start with a scene you know.” |
-| 10–19 s | Open two word cards with articles and audio. | “Meet the words in their place.” |
-| 19–30 s | Show I-Spy, fill-the-blank and sentence builder in sequence. | “Hear them. Play with them. Make a sentence.” |
-| 30–38 s | Save/finish the demo journal page. | “Keep the moment in your journal.” |
-| 38–45 s | End card with URL and one CTA. | “Try a mini session at www.learnwithlinguini.com.” |
-
-Video title: **Linguini in 40 seconds — a photo becomes a language lesson**. Description: “Try the interactive Spanish or French mini session: https://www.learnwithlinguini.com/ .” Choose a thumbnail showing the photo and one readable translated word.
-
-## Claim and publishing notes
-
-The live landing page returns HTTP 200 and contains the interactive mini session, Spanish/French demo content, sample journal and calls to create an account. The repo’s current `frontend/README.md#landing-site`, `frontend/src/marketing/components/try/`, `frontend/src/marketing/data/scenes.ts` and `frontend/src/marketing/components/Pricing.tsx` support the site-demo descriptions. `backend/README.md` is the source of the production feature caveats above. These files should be rechecked against the deployed build before a full launch.
-
-Product Hunt’s current [posting help](https://help.producthunt.com/en/articles/479557-how-to-post-a-product) says the name should be just the name, the primary URL should be direct, a first comment should be included, gallery images should be 1270 × 760 px, and YouTube videos need a full non-private URL. Its [preparation guide](https://www.producthunt.com/launch/preparing-for-launch) caps taglines at 60 characters and lists a 500-character description, while the help article says 260 characters; **every description above fits within 260 characters** to satisfy either UI. Product Hunt’s [sharing guide](https://www.producthunt.com/launch/sharing-your-launch) asks makers to seek comments and feedback rather than upvotes. Yangshun’s [Docusaurus 2.0 launch dashboard](https://gist.github.com/yangshun/1e84ae8461975e7fa9a7d153621c3756) informed the channel-specific copy, asset list and first-comment preparation; adapt its outreach model to this product’s actual learner communities.
+- [Launch Guide](https://help.producthunt.com/en/articles/17350772-launch-guide): 60-character tagline, 260-character description, current submission overview.
+- [Preparing for launch](https://www.producthunt.com/launch/preparing-for-launch): direct URL, 240 × 240 thumbnail, two or more 1270 × 760 gallery images, first-comment guidance.
+- [Sharing your launch](https://www.producthunt.com/launch/sharing-your-launch): ask for feedback and comments, not upvotes.

@@ -1,15 +1,16 @@
 // Render gallery compositions: node ph/render.mjs 01-hero [02-spot ...]
 // Env: SCALES=1,2  OUTDIR=...
 import { chromium } from "playwright";
-import { pathToFileURL } from "node:url";
-const SRC = "/home/user/linguini/marketing/product-hunt/gallery-src";
-const OUT = process.env.OUTDIR ?? "/home/user/linguini/marketing/product-hunt/gallery";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { dirname, resolve } from "node:path";
+const SRC = dirname(fileURLToPath(import.meta.url));
+const OUT = process.env.OUTDIR ?? resolve(SRC, "../gallery");
 const scales = (process.env.SCALES ?? "1,2").split(",").map(Number);
 const jobs = {
   og: { file: "og-social.html", w: 1200, h: 630, name: "og-social-1200x630" },
 };
 const names = process.argv.slice(2);
-const browser = await chromium.launch({ executablePath: "/opt/pw-browsers/chromium-1194/chrome-linux/chrome" });
+const browser = await chromium.launch(process.env.BROWSER_PATH ? { executablePath: process.env.BROWSER_PATH } : {});
 for (const n of names) {
   const job = jobs[n] ?? { file: `${n}.html`, w: 1270, h: 760, name: n };
   for (const s of scales) {

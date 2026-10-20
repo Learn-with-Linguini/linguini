@@ -79,3 +79,27 @@ body {
    and pulls the padding back with negative margins, so the layout box is
    the element's own box. */
 img.ui { display: block; max-width: none; }
+
+/* Reusable pieces for the current beta gallery. Product imagery points directly
+   at frontend/public/app-shots so the gallery stays tied to the shipped UI. */
+.brand { display: block; width: 174px; height: auto; }
+.beta-badge, .pill {
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px; background: var(--paper); color: var(--teal-dark);
+  box-shadow: 0 8px 22px rgb(38 50 56 / 0.08);
+}
+.beta-badge {
+  padding: 11px 18px; border: 2px solid rgb(46 156 153 / 0.25);
+  font-size: 17px; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.pill { min-height: 46px; padding: 9px 17px; font-size: 18px; }
+.device {
+  overflow: hidden; border: 8px solid var(--paper); border-radius: 34px;
+  background: var(--paper); box-shadow: 0 28px 60px rgb(38 50 56 / 0.22);
+}
+.device img { display: block; width: 100%; height: auto; }
+.eyebrow {
+  margin: 0 0 18px; color: var(--tomato); font-size: 18px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+}
+.micro { margin: 0; color: var(--ink-muted); font-size: 18px; line-height: 1.35; }
