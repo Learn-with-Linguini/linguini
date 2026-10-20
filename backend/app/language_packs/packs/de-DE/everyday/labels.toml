@@ -109,3 +109,52 @@ text = "Ich bin mir nicht sicher"
 meaning = "I'm not sure"
 usage = "prompt"
 provenance = { source = "Generated shared-M01 compatibility addition; requires fluent review.", review_status = "generated" }
+
+[[labels]]
+semantic = "ask-where"
+text = "Frag, wo es ist."
+meaning = "Ask where it is."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "answer-where"
+text = "Antworte mit der Position, die das Foto zeigt."
+meaning = "Answer with the position the photo shows."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "clue-meaning"
+text = "Was bedeutet das?"
+meaning = "What does it mean?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "build-location-clue"
+text = "Bilde den zweiten Hinweis."
+meaning = "Build the second clue."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "find-both-clues"
+text = "Tippe auf den Gegenstand, der zu beiden Hinweisen passt."
+meaning = "Tap the object that matches both clues."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "friend-points"
+text = "Dein Freund zeigt auf Markierung {marker}. Was sagst du?"
+meaning = "Your friend points to marker {marker}. What do you say?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "name-and-locate"
+text = "Nenne den Gegenstand und sag, wo er ist."
+meaning = "Name the object and say where it is."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }

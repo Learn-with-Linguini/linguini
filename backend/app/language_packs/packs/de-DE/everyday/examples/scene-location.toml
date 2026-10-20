@@ -77,3 +77,27 @@ sentence = "Der Tisch ist auf der Tasse."
 correction = "Die Tasse ist auf dem Tisch."
 note = "The subject and reference are reversed."
 provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "m02-cup-on-table"
+levels = ["A1"]
+purposes = ["findObject", "answerWhere"]
+meaning = "The cup is on the table."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }] }
+bindings = { subject = "object:cup", reference = "object:table", relation = "relation:cup-on-table" }
+truth = true
+labels = []
+sentence = "Die Tasse ist auf dem Tisch."
+translation = "The cup is on the table."
+chunks = [{ text = "Die", join = "none" }, { text = "Tasse", join = "space" }, { text = "ist", join = "space" }, { text = "auf", join = "space" }, { text = "dem", join = "space" }, { text = "Tisch", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "m02-location-form"
+levels = ["A1"]
+purposes = ["findObject", "answerWhere"]
+sentence = "Die Tasse ist auf den Tisch."
+correction = "Die Tasse ist auf dem Tisch."
+note = "A static location takes the dative: dem."
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }

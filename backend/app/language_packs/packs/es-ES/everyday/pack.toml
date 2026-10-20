@@ -32,7 +32,7 @@ review_status = "unreviewed"
 
 [files]
 labels = "labels.toml"
-constructions = [
+constructions = ["constructions/target-location.toml", "constructions/target-clue.toml", "constructions/location-phrase.toml", "constructions/where-question.toml", "constructions/find-object.toml", 
   "constructions/identify-object.toml",
   "constructions/yes-no-identification.toml",
   "constructions/describe-attribute.toml",
@@ -40,7 +40,7 @@ constructions = [
   "constructions/scene-location.toml",
   "constructions/connected-description.toml",
 ]
-examples = [
+examples = ["examples/target-location.toml", "examples/target-clue.toml", "examples/location-phrase.toml", "examples/where-question.toml", "examples/find-object.toml", 
   "examples/identify-object.toml",
   "examples/yes-no-identification.toml",
   "examples/describe-attribute.toml",

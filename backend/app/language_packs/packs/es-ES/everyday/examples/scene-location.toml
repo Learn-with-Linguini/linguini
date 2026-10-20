@@ -69,3 +69,27 @@ sentence = "La lámpara está al lado de el libro."
 correction = "La lámpara está al lado del libro."
 note = "de + el contracts to del."
 provenance = { source = "Lead-authored for the M01 pilot; needs fluent Spanish review.", review_status = "unreviewed" }
+
+[[examples]]
+example_id = "m02-cup-on-table"
+levels = ["A1"]
+purposes = ["findObject", "answerWhere"]
+meaning = "The cup is on the table."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }] }
+bindings = { subject = "object:cup", reference = "object:table", relation = "relation:cup-on-table" }
+truth = true
+labels = []
+sentence = "La taza está sobre la mesa."
+translation = "The cup is on the table."
+chunks = [{ text = "La", join = "none" }, { text = "taza", join = "space" }, { text = "está", join = "space" }, { text = "sobre", join = "space" }, { text = "la", join = "space" }, { text = "mesa", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "m02-location-form"
+levels = ["A1"]
+purposes = ["findObject", "answerWhere"]
+sentence = "La taza es sobre la mesa."
+correction = "La taza está sobre la mesa."
+note = "Location uses está, not es."
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }

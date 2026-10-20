@@ -125,3 +125,59 @@ romanization = "hwaksilhaji anayo"
 meaning = "I'm not sure"
 usage = "prompt"
 provenance = { source = "Generated shared-M01 compatibility addition; requires fluent review.", review_status = "generated" }
+
+[[labels]]
+semantic = "ask-where"
+text = "어디에 있는지 물어보세요."
+romanization = "eodie inneunji mureoboseyo."
+meaning = "Ask where it is."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "answer-where"
+text = "사진에 보이는 위치로 대답해 보세요."
+romanization = "sajine boineun wichiro daedaphae boseyo."
+meaning = "Answer with the position the photo shows."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "clue-meaning"
+text = "무슨 뜻이에요?"
+romanization = "museun tteusieyo?"
+meaning = "What does it mean?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "build-location-clue"
+text = "두 번째 힌트를 만들어 보세요."
+romanization = "du beonjjae hinteureul mandeureo boseyo."
+meaning = "Build the second clue."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "find-both-clues"
+text = "두 힌트에 맞는 물건을 눌러 보세요."
+romanization = "du hinteue manneun mulgeoneul nulleo boseyo."
+meaning = "Tap the object that matches both clues."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "friend-points"
+text = "친구가 {marker}번을 가리켜요. 뭐라고 말해요?"
+romanization = "chinguga {marker}beoneul garikyeoyo. mworago malhaeyo?"
+meaning = "Your friend points to number {marker}. What do you say?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "name-and-locate"
+text = "물건 이름과 위치를 말해 보세요."
+romanization = "mulgeon ireumgwa wichireul malhae boseyo."
+meaning = "Say the object's name and where it is."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
