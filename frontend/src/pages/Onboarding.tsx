@@ -4,6 +4,7 @@ import { OnboardingSteps } from "../components/OnboardingSteps";
 import { trackAction } from "../lib/analytics.ts";
 import { readOnboardingProgress, savedPastaAvatar, type OnboardingDraft } from "../lib/onboardingDraft";
 import { languages } from "../config/languages";
+import { AppStateProvider } from "../state/AppState";
 import { useAppState } from "../state/useAppState";
 
 const defaultDraft: OnboardingDraft = {
@@ -60,4 +61,9 @@ export function Onboarding() {
     }
     return saved;
   }} />;
+}
+
+/** Finishing onboarding activates the chosen language; remounting here would restart the flow. */
+export function OnboardingPage() {
+  return <AppStateProvider resetOnLanguageChange={false}><Onboarding /></AppStateProvider>;
 }

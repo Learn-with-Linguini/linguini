@@ -1,7 +1,7 @@
 import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { AppShell, FocusShell } from "./components/AppShell";
 import { Home } from "./pages/Home";
-import { Onboarding } from "./pages/Onboarding";
+import { OnboardingPage } from "./pages/Onboarding";
 import { Login } from "./pages/Login";
 import { PracticeSelect } from "./pages/PracticeSelect";
 import { PracticeAnalysis } from "./pages/PracticeAnalysis";
@@ -59,7 +59,7 @@ function OnboardingRoute() {
   const { session, loading } = useAuth();
   if (loading) return <LoadingScreen label="Preparing onboarding…" />;
   if (!session) return <Navigate to="/login?mode=signup" replace />;
-  return <AppStateProvider><Onboarding /></AppStateProvider>;
+  return <OnboardingPage />;
 }
 
 function UnknownRoute() {
