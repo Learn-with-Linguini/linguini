@@ -578,7 +578,7 @@ def _mission_choice_supplied(mission, mission_choices):
 
 
 def a0_photo_reasons(mission, objects, counted_groups=(), mission_choices=None):
-    """A0 missions need reviewed nouns: 2-3 distinct objects, or one group of 2 or 3."""
+    """A0 missions need reviewed nouns: 2-3 distinct objects, or a group of 2 or 3."""
     from app.services.a0_lexicon import REVIEWED_NOUNS
 
     def reviewed(label):
@@ -593,8 +593,9 @@ def a0_photo_reasons(mission, objects, counted_groups=(), mission_choices=None):
                 if str(obj.id) in {str(item) for item in group["sceneObjectIds"]}
             )
         ]
-        if len(groups) != 1:
-            return ["Count exactly one group of 2 or 3 matching objects."]
+        # Any group qualifies; the lesson counts the first one, so extra groups never block it.
+        if not groups:
+            return ["Count a group of 2 or 3 matching objects."]
         return []
     if len(labels) < 2:
         return [A0_OBJECTS_REASON]

@@ -37,7 +37,7 @@ def _objects(labels=LABELS):
 
 def _lesson(mission_id, language, *, labels=LABELS, words=None, quantity=2,
             plurals_taught=False, count_label="apple", ownership_index=0,
-            compared_indices=(0,), reaction="like"):
+            compared_indices=(0,), reaction="like", groups=None):
     objects = _objects(labels)
     words = [SimpleNamespace(display_text=word, id=uuid4())
              for word in (words or WORDS[language][:len(labels)])]
@@ -45,6 +45,13 @@ def _lesson(mission_id, language, *, labels=LABELS, words=None, quantity=2,
     spec = lesson_spec(mission)
     group = next((obj for obj in objects if obj.label == count_label), objects[0])
     counts = [{"label": count_label, "quantity": quantity, "sceneObjectIds": [str(group.id)]}]
+    if groups is not None:
+        # ``(label, quantity)`` pairs, each counting the object with that label.
+        by_label = {obj.label: obj for obj in objects}
+        counts = [
+            {"label": label, "quantity": amount, "sceneObjectIds": [str(by_label[label].id)]}
+            for label, amount in groups
+        ]
     context = {}
     if mission_id == "M04":
         context["learner_facts"] = {
@@ -301,6 +308,39 @@ def test_m13_rejects_multiple_correct_answers_and_endings_as_articles():
     articles = dict(payload, approvedArticlesOrEndings=["el", "la"])
     with pytest.raises(LearningTaskGenerationError):
         validate_a0_lesson(articles, result)
+
+
+def _groups(objects, *pairs):
+    by_label = {obj.label: obj for obj in objects}
+    return [
+        {"label": label, "quantity": amount, "sceneObjectIds": [str(by_label[label].id)]}
+        for label, amount in pairs
+    ]
+
+
+def test_m03_counts_the_first_valid_group_when_several_are_counted():
+    mission = get_mission("M03", "A0", 1)
+    objects = _objects(["cup", "book", "apple", "sofa"])
+    several = _groups(objects, ("cup", 2), ("book", 2), ("apple", 3))
+    assert photo_eligibility(mission, objects, [], several).eligible
+    # A group without a taught noun, or out of range, does not block a later valid one.
+    mixed = _groups(objects, ("sofa", 2), ("cup", 1), ("book", 4), ("apple", 2))
+    assert photo_eligibility(mission, objects, [], mixed).eligible
+    unusable = _groups(objects, ("sofa", 2), ("cup", 1))
+    check = photo_eligibility(mission, objects, [], unusable)
+    assert check.reasons == ("Count a group of 2 or 3 matching objects.",)
+    assert check.missing == ("counts",)
+
+
+def test_m03_lesson_uses_the_first_valid_group():
+    _m, _s, payload, result, objects = _result(
+        "M03", "es", labels=["cup", "book", "apple", "sofa"],
+        groups=[("sofa", 2), ("cup", 1), ("book", 3), ("apple", 2)],
+    )
+    book = next(obj for obj in objects if obj.label == "book")
+    assert payload["group"]["key"] == str(book.id)
+    assert payload["group"]["quantity"] == 3
+    validate_a0_lesson(payload, result)
 
 
 def test_photo_eligibility_needs_reviewed_nouns():
