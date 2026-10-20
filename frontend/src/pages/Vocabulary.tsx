@@ -89,7 +89,7 @@ export function Vocabulary() {
     {view === "journey" ? <div className="revisit-scenes">
       {scenesLoading ? <InlineLoader label="Loading places…" /> : null}
       {scenesError ? <p role="alert">{scenesError} Your saved words are still available.</p> : null}
-      {!hasRevisitHistory ? <Card className="revisit-empty"><div className="stack-2"><h2>Your journey begins with a scene</h2><Button onClick={() => { trackAction("revisit_empty_practice_started"); navigate("/practice"); }}>Begin practice</Button></div></Card> : null}
+      {!hasRevisitHistory ? <Button onClick={() => { trackAction("revisit_empty_practice_started"); navigate("/practice"); }}>Begin practice</Button> : null}
       {sceneGroups.map(({ scene, words }, index) => {
         const scenario = scenarioByAsset.get(scene.id);
         const unfinished = scenario?.status === "in-progress";
