@@ -25,7 +25,7 @@ function LoadedAppState({ account, children }: { account: ReturnType<typeof useA
   const profileId = account.activeProfile?.id ?? "";
   // Scenes, vocabulary, and journals are fetched per page via state/queries.ts;
   // only the shared progress record stays global.
-  const progress = useQuery({ queryKey: queryKeys.progress(profileId), queryFn: ({ signal }) => getProgress(signal) });
+  const progress = useQuery({ queryKey: queryKeys.progress(profileId), queryFn: ({ signal }) => getProgress(signal), enabled: Boolean(profileId) });
 
   const onLearningChanged = useCallback((scope: "task" | "session") => {
     void queryClient.invalidateQueries({ queryKey: queryKeys.progress(profileId) });
