@@ -102,7 +102,11 @@ export function Vocabulary() {
               </span>
               <Button className="revisit-stop__action" disabled={!scenario?.sessionId}
                 aria-label={scenario?.sessionId ? `Revisit ${scene.title}` : `Revisit unavailable for ${scene.title}`}
-                onClick={() => scenario?.sessionId && navigate(`/practice/sessions/${scenario.sessionId}/learn`)}>
+                onClick={() => {
+                  if (!scenario?.sessionId) return;
+                  trackAction("scene_vocabulary_review_started", { sessionId: scenario.sessionId });
+                  navigate(`/practice/sessions/${scenario.sessionId}/review`);
+                }}>
                 <PlayIcon size={18} /> {scenario?.sessionId ? "Revisit" : "Unavailable"}
               </Button>
             </div>

@@ -684,8 +684,8 @@ class PostgresWorkflowRepository:
             ).mappings()
         ]
 
-    def check_vocabulary_answer(self, task_id, question_id, option_id):
-        """Persist the first accepted choice and reward; a replay returns that choice."""
+    def check_vocabulary_answer(self, task_id, question_id, option_id, review=False):
+        """Check a choice; scene revisits are intentionally read-only practice."""
         with self.transaction() as c:
             task = self._task_row(c, task_id)
             session = self._session(c, task.session_id)
@@ -700,7 +700,7 @@ class PostgresWorkflowRepository:
             expected = task.answer_key.correct_option_ids.get(question_id)
             if expected is None:
                 raise PracticeConflictError("This question has no answer key.")
-            prior = compatible_question(
+            prior = None if review else compatible_question(
                 question_event(c, self.user_id, task.id, question_id), task, question_id
             )
             if (

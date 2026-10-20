@@ -660,8 +660,8 @@ export const taskAction = (id: string, action: "start" | "complete" | "skip" | "
 export interface VocabularyAnswerCheck { questionId: string; acceptedOptionId: string; isCorrect: boolean; correctOptionId: string; basilEarned: number }
 export const getVocabularyChecks = (id: string, signal?: AbortSignal) =>
   request<{ checks: VocabularyAnswerCheck[] }>(`/api/v1/tasks/${id}/vocabulary-checks`, signal);
-export const checkVocabularyAnswer = (id: string, questionId: string, optionId: string) =>
-  write<VocabularyAnswerCheck>(`/api/v1/tasks/${id}/check-vocabulary-answer`, "POST", { questionId, optionId });
+export const checkVocabularyAnswer = (id: string, questionId: string, optionId: string, review = false) =>
+  write<VocabularyAnswerCheck>(`/api/v1/tasks/${id}/check-vocabulary-answer`, "POST", { questionId, optionId, review });
 export const checkVocabularyTyping = (id: string, learningKey: string, answer: string, reveal = false) =>
   write<{ learningKey: string; isCorrect: boolean; correctAnswer: string; revealed: boolean }>(`/api/v1/tasks/${id}/check-vocabulary-typing`, "POST", { learningKey, answer, reveal });
 export const completePractice = (id: string) => write<{ id: string; status: string }>(`/api/v1/sessions/${id}/complete`, "POST", {});
