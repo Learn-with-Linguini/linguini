@@ -354,10 +354,12 @@ def check_deterministic(
     )
     if not fact_references_valid:
         failures.append("fact reference is not present in bound scene facts")
+    # ``target`` names an object a clue describes without naming it in the sentence.
     bound_object = (
         expected_bindings.get("object")
         or expected_bindings.get("subject")
         or expected_bindings.get("first")
+        or expected_bindings.get("target")
     )
     bound_attribute = expected_bindings.get("attribute")
     if bound_attribute and "attribute" not in (spec.counterfactual if spec else {}):

@@ -22,10 +22,10 @@ from .generation import (
     check_deterministic,
     derive_chunks,
 )
+from .lessons import pack_mission
 from .loader import guidance_for_slot
 from .model_source import ASSESSOR_VERSION, GENERATOR_VERSION, ModelSource
 from .plan import bind_plan
-from .registry import pack_mission
 from .schema import LanguagePack, Provenance
 from .validators import STRUCTURE_VERSION, validator_versions
 from .vocabulary import with_pack_vocabulary

@@ -31,7 +31,10 @@ from app.schemas.tasks import SubmitVocabularyReviewAttemptRequest
 PACKS = Path(__file__).parents[1] / "app/language_packs/packs"
 SAMPLES = Path(__file__).parents[1] / "app/language_packs/samples"
 LOCALES = {"es": "es-ES", "fr": "fr-FR", "de": "de-DE", "ko": "ko-KR"}
-COUNTS = {"A0": 6, "A1": 4, "A2": 5}
+# Mocked languages whose pack requires romanization of translations.
+ROMANIZED = {"ko"}
+COUNTS = {"M01": {"A0": 6, "A1": 4, "A2": 5}, "M02": {"A0": 6, "A1": 4, "A2": 5}}
+MISSION_VERSIONS = {("M02", "A1"): 2}
 # A1 describes the second object, so its colour has a distinct Korean modifier form.
 SCENE = (("cup", "red"), ("book", "white"), ("table", "green"))
 
@@ -78,6 +81,7 @@ LEXICON = {
                  "white": ("blanco", "blanca"), "blue": ("azul", "azul"),
                  "black": ("negro", "negra")},
         on="sobre",
+        relations={"on": "sobre", "under": "debajo de", "next to": "al lado de"},
     ),
     "fr": dict(
         nouns={"cup": ("tasse", "la", "feminine"), "book": ("livre", "le", "masculine"),
@@ -87,6 +91,7 @@ LEXICON = {
                  "white": ("blanc", "blanche"), "blue": ("bleu", "bleue"),
                  "black": ("noir", "noire")},
         on="sur",
+        relations={"on": "sur", "under": "sous", "next to": "à côté de"},
     ),
     "de": dict(
         nouns={"cup": ("Tasse", "die", "feminine"), "book": ("Buch", "das", "neuter"),
@@ -99,6 +104,9 @@ LEXICON = {
         base={"red": "rot", "green": "grün", "white": "weiß", "blue": "blau",
               "black": "schwarz"},
         on="auf",
+        relations={"on": "auf", "under": "unter", "next to": "neben"},
+        accusative={"masculine": "den", "feminine": "die", "neuter": "das"},
+        pronouns={"masculine": "Er", "feminine": "Sie", "neuter": "Es"},
     ),
     "ko": dict(
         nouns={"cup": ("컵", None, None), "book": ("책", None, None),
@@ -107,6 +115,7 @@ LEXICON = {
                  "black": "검은색"},
         modifiers={"red": "빨간", "white": "하얀", "blue": "파란", "black": "검은"},
         on="위에",
+        relations={"on": "위에", "under": "아래에", "next to": "옆에"},
     ),
 }
 GENDER_INDEX = {"masculine": 0, "feminine": 1, "neuter": 2}
@@ -123,9 +132,87 @@ def _capitalised(text):
     return text[:1].upper() + text[1:]
 
 
+M02_CONSTRUCTIONS = {
+    "find-object", "where-question", "location-phrase", "target-clue", "target-location",
+}
+
+
+def _m02_sentence(language, construction, use, obj, attr, rel, ref):
+    """M02's sentence types in each pack's taught pattern, with realized surfaces."""
+    lex = LEXICON[language]
+    bare, article, gender = lex["nouns"][obj]
+    definite = f"{article} {bare}" if article else bare
+    rel_text = lex["relations"][rel or "on"]
+    ref_bare, ref_article, ref_gender = lex["nouns"][ref] if ref else ("", None, None)
+    realized = {}
+    if language in {"es", "fr"}:
+        place = f"{rel_text} {ref_article} {ref_bare}" if ref else ""
+        for wrong, right in (("de el ", "del "), ("de le ", "du "), ("à le ", "au ")):
+            place = place.replace(wrong, right)
+        adj = _colour(language, attr, gender) if attr else ""
+        if language == "es":
+            texts = {"find-object": f"Busca {definite}.",
+                     "where-question": f"¿Dónde está {definite}?",
+                     "target-location": f"{_capitalised(definite)} {adj} está {place}."}
+            clue, no = (f"Es {adj}." if attr else f"Está {place}."), "No"
+        else:
+            pronoun = "Elle" if gender == "feminine" else "Il"
+            texts = {"find-object": f"Trouve {definite}.",
+                     "where-question": f"Où est {definite} ?",
+                     "target-location": f"{_capitalised(definite)} {adj} est {place}."}
+            clue = f"{pronoun} est {adj}." if attr else f"{pronoun} est {place}."
+            no = "Non"
+    elif language == "de":
+        dative = f"{lex['dative'][ref_gender]} {ref_bare}" if ref else ""
+        place = f"{rel_text} {dative}" if ref else ""
+        if ref:
+            realized["reference"] = dative
+        base = lex["base"][attr] if attr else ""
+        pronoun = lex["pronouns"][gender]
+        texts = {"find-object": f"Finde {lex['accusative'][gender]} {bare}.",
+                 "where-question": f"Wo ist {definite}?",
+                 "target-location": f"{_capitalised(article)} {base}e {bare} ist {place}."}
+        clue = f"{pronoun} ist {base}." if attr else f"{pronoun} ist {place}."
+        no = "Nein"
+    else:
+        place = f"{ref_bare} {rel_text}" if ref else ""
+        colour = lex["colours"][attr] if attr else ""
+        modifier = lex.get("modifiers", {}).get(attr, colour) if attr else ""
+        subject = _ko(bare, "이", "가")
+        texts = {"find-object": f"{_ko(bare, '을', '를')} 찾아보세요.",
+                 "where-question": f"{subject} 어디에 있어요?",
+                 "target-location": f"{modifier} {subject} {place} 있어요."}
+        clue = f"{_ko(colour, '이에요', '예요')}." if attr else f"{place} 있어요."
+        no = "아니요"
+    texts["location-phrase"] = place
+    if construction == "target-clue":
+        if use != "clarify":
+            text = clue
+        elif language == "ko":
+            text = f"{no}, {clue}"
+        else:
+            text = f"{no}, {clue[:1].lower()}{clue[1:]}"
+    else:
+        text = texts[construction]
+    if language == "ko":
+        # Agglutinated nouns and colour words carry particles and endings.
+        words = [word.strip(".,!?") for word in text.split()]
+        noun = next((w for w in words if w.startswith(bare) and w != bare), None)
+        if noun:
+            realized["object"] = noun
+        if attr:
+            realized["attribute"] = next(
+                (w for w in words if w.startswith(colour) or w == modifier), modifier,
+            )
+    return text, realized
+
+
 def _sentence(language, construction, use, truth, obj, attr, other, rel, ref):
     """Return (text, realized surfaces by role) in the pack's taught pattern."""
+    if construction in M02_CONSTRUCTIONS:
+        return _m02_sentence(language, construction, use, obj, attr, rel, ref)
     lex = LEXICON[language]
+    rel_text = lex["relations"][rel or "on"]
     bare, article, gender = lex["nouns"][obj]
     definite = f"{article} {bare}" if article else bare
     indefinite = f"{lex['indefinite'][gender]} {bare}" if "indefinite" in lex else bare
@@ -150,7 +237,7 @@ def _sentence(language, construction, use, truth, obj, attr, other, rel, ref):
             ("describe-attribute", None): f"Es {noun_adj}.",
             ("scene-existence", "fact3"): f"También hay {indefinite}.",
             ("scene-existence", None): existence,
-            ("scene-location", None): f"{_capitalised(definite)} está {lex['on']} "
+            ("scene-location", None): f"{_capitalised(definite)} está {rel_text} "
             f"{ref_article} {ref_bare}.",
             ("connected-description", "wrongExistence"): f"{existence[:-1]} y no hay "
             f"{other_indef}.",
@@ -169,7 +256,7 @@ def _sentence(language, construction, use, truth, obj, attr, other, rel, ref):
             ("describe-attribute", None): f"C'est {noun_adj}.",
             ("scene-existence", "fact3"): f"Il y a aussi {indefinite}.",
             ("scene-existence", None): existence,
-            ("scene-location", None): f"{_capitalised(definite)} est {lex['on']} "
+            ("scene-location", None): f"{_capitalised(definite)} est {rel_text} "
             f"{ref_article} {ref_bare}.",
             ("connected-description", "wrongExistence"): f"{existence[:-1]}, mais il n'y a "
             f"pas de {other_bare}.",
@@ -191,7 +278,7 @@ def _sentence(language, construction, use, truth, obj, attr, other, rel, ref):
             ("describe-attribute", None): f"Das ist {noun_adj}.",
             ("scene-existence", "fact3"): f"Es gibt auch {indefinite}.",
             ("scene-existence", None): existence,
-            ("scene-location", None): f"{_capitalised(definite)} ist {lex['on']} {dative}.",
+            ("scene-location", None): f"{_capitalised(definite)} ist {rel_text} {dative}.",
             ("connected-description", "wrongExistence"): f"{existence[:-1]}, aber es gibt "
             f"kein {other_bare}.",
             ("connected-description", None): f"{existence[:-1]} und es gibt auch "
@@ -211,7 +298,7 @@ def _sentence(language, construction, use, truth, obj, attr, other, rel, ref):
             ("describe-attribute", None): f"{prefix}{copula}.",
             ("scene-existence", "fact3"): f"{bare}도 있어요.",
             ("scene-existence", None): f"{prefix}{subject} 있어요.",
-            ("scene-location", None): f"{subject} {ref_bare} {lex['on']} 있어요.",
+            ("scene-location", None): f"{subject} {ref_bare} {rel_text} 있어요.",
             ("connected-description", "wrongExistence"): f"{prefix}{subject} 있고 "
             f"{other_topic} 없어요.",
             ("connected-description", None): f"{prefix}{subject} 있고 {other_bare}도 있어요.",
@@ -267,6 +354,15 @@ class MockPackProvider:
                     proposed["definite_dative"] = (
                         f"{lex['dative'][term['agreement']]} {term['targetText']}"
                     )
+                    proposed["definite_accusative"] = (
+                        f"{lex['accusative'][term['agreement']]} {term['targetText']}"
+                    )
+            elif term["partOfSpeech"] == "preposition":
+                for meaning, native in lex["relations"].items():
+                    if meaning != term["sourceText"]:
+                        distractors.append(dict(
+                            for_fact_id=term["factId"], meaning=meaning, text=native, forms=[],
+                        ))
             elif term["partOfSpeech"] == "adjective":
                 value = term["sourceText"]
                 agreement = lex["colours"][value]
@@ -330,7 +426,9 @@ class MockPackProvider:
                 term = terms.get(bindings.get(role))
                 return term["sourceText"] if term else None
 
-            object_role = "object" if "object" in bindings else "subject"
+            object_role = next(
+                (role for role in ("object", "subject", "target") if role in bindings), "object"
+            )
             text, realized = _sentence(
                 self.language, spec["construction_id"], spec["use"], spec["truth"],
                 source(object_role),
@@ -377,7 +475,7 @@ def build_scene(language):
         translated.append(SimpleNamespace(
             key=str(oid), source=source, translation=bare, article=article,
             gender=gender, native_display=native,
-            romanization=latin(native) if language == "ko" else None,
+            romanization=latin(native) if language in ROMANIZED else None,
         ))
         value = lex.get("base", {}).get(colour) or (
             lex["colours"][colour] if isinstance(lex["colours"][colour], str)
@@ -404,10 +502,10 @@ def scene():
     return build_scene
 
 
-def _dispatch(language, level, scene, provider, monkeypatch):
+def _dispatch(language, level, scene, provider, monkeypatch, mission_id="M01"):
     from app.language_packs.context import resolve_language_context
 
-    monkeypatch.setenv("LINGUINI_M01_LANGUAGE_PACKS", "true")
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "true")
     monkeypatch.setenv("APP_ENV", "test")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_EXPERIMENTAL", "true")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", str(PACKS / LOCALES[language] / "everyday"))
@@ -415,7 +513,7 @@ def _dispatch(language, level, scene, provider, monkeypatch):
     claim = SimpleNamespace(
         profile={"target_language_code": language},
         session_id=UUID(int=100),
-        missions=[get_mission("M01", level, 1)],
+        missions=[get_mission(mission_id, level, MISSION_VERSIONS.get((mission_id, level), 1))],
         counted_groups=[],
         mission_progress={},
         review_markers={},
@@ -436,16 +534,20 @@ def _dispatch(language, level, scene, provider, monkeypatch):
     )
 
 
+@pytest.mark.parametrize("mission_id", ["M01", "M02"])
 @pytest.mark.parametrize("level", ["A0", "A1", "A2"])
 @pytest.mark.parametrize("language", list(LOCALES))
-def test_m01_normal_dispatch_for_every_pack_and_level(language, level, scene, monkeypatch):
+def test_pack_missions_dispatch_for_every_pack_and_level(
+    language, level, mission_id, scene, monkeypatch,
+):
     pack = load_pack(PACKS / LOCALES[language] / "everyday")
     assert pack.lexical == {}
     provider = MockPackProvider(language)
-    (task,) = _dispatch(language, level, scene(language), provider, monkeypatch)
+    (task,) = _dispatch(language, level, scene(language), provider, monkeypatch, mission_id)
 
+    assert task.public_content.mission_id == mission_id
     questions = task.public_content.questions
-    assert len(questions) == COUNTS[level]
+    assert len(questions) == COUNTS[mission_id][level]
     assert len(provider.requests) == 1, "sentences should pass without repair"
     data = json.loads(provider.requests[0].user_content)
     assert data["language"]["code"] == language
@@ -475,7 +577,7 @@ def test_m01_normal_dispatch_for_every_pack_and_level(language, level, scene, mo
         assert all(card.romanization for card in task.public_content.prep)
 
     by_id = {q.question_id: q for q in questions}
-    if level == "A1":
+    if mission_id == "M01" and level == "A1":
         chosen = by_id["choose-attribute"]
         correct = next(
             o.label for o in chosen.options if o.option_id == answers[chosen.question_id]
@@ -490,7 +592,7 @@ def test_m01_normal_dispatch_for_every_pack_and_level(language, level, scene, mo
             assert tiles == 0, "genderless packs have no wrong-agreement tiles"
         else:
             assert tiles > 0
-    if level == "A2" and language == "de":
+    if mission_id == "M01" and level == "A2" and language == "de":
         followup = by_id["m01-q5"]
         assert {o.label for o in followup.options} >= {"rot"}
 

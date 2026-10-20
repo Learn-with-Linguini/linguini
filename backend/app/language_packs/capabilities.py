@@ -222,9 +222,11 @@ def mission_template_key(mission_id: str, level) -> tuple[str, str, int]:
 
 def pack_mission_keys() -> list[tuple[str, str, int]]:
     """Catalog templates that have a pack lesson implementation, in catalog order."""
-    from .registry import PACK_MISSIONS
+    from .lessons import PACK_MISSION_IDS
 
-    return [item.key for item in load_mission_catalog().missions if item.key[0] in PACK_MISSIONS]
+    return [
+        item.key for item in load_mission_catalog().missions if item.key[0] in PACK_MISSION_IDS
+    ]
 
 
 def lesson_plan(

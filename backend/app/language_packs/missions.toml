@@ -96,3 +96,97 @@ purpose = "followUpSceneFact"
 construction_id = "describe-attribute"
 additional_constructions = ["scene-location"]
 target_ids = ["follow-up-scene-fact"]
+
+[[missions]]
+mission_id = "M02"
+practice_level = "A0"
+content_version = 1
+sequence_repeat = 2
+required_constructions = [
+  { construction_id = "find-object", min_version = 1 },
+  { construction_id = "identify-object", min_version = 1 },
+]
+[[missions.slots]]
+purpose = "findNamed"
+construction_id = "find-object"
+target_ids = ["find-object"]
+
+[[missions.slots]]
+purpose = "chooseName"
+construction_id = "identify-object"
+target_ids = ["recognise-name"]
+
+[[missions.slots]]
+purpose = "listenSelect"
+construction_id = "identify-object"
+target_ids = ["find-object"]
+
+[[missions]]
+mission_id = "M02"
+practice_level = "A1"
+content_version = 2
+required_constructions = [
+  { construction_id = "scene-location", min_version = 1 },
+  { construction_id = "location-phrase", min_version = 1 },
+  { construction_id = "where-question", min_version = 1 },
+]
+[[missions.slots]]
+purpose = "findObject"
+construction_id = "scene-location"
+target_ids = ["understand-location"]
+
+[[missions.slots]]
+purpose = "chooseLocation"
+construction_id = "location-phrase"
+target_ids = ["recognise-position"]
+
+[[missions.slots]]
+purpose = "askWhere"
+construction_id = "where-question"
+target_ids = ["build-question", "name-object"]
+prompt_labels = ["ask-where"]
+
+[[missions.slots]]
+purpose = "answerWhere"
+construction_id = "scene-location"
+target_ids = ["describe-location", "name-object"]
+prompt_labels = ["answer-where"]
+
+[[missions]]
+mission_id = "M02"
+practice_level = "A2"
+content_version = 1
+required_constructions = [
+  { construction_id = "target-clue", min_version = 1 },
+  { construction_id = "target-location", min_version = 1 },
+]
+[[missions.slots]]
+purpose = "readAttributeClue"
+construction_id = "target-clue"
+target_ids = ["understand-target-clues"]
+prompt_labels = ["clue-meaning"]
+
+[[missions.slots]]
+purpose = "buildLocationClue"
+construction_id = "target-clue"
+target_ids = ["understand-target-clues"]
+prompt_labels = ["build-location-clue"]
+
+[[missions.slots]]
+purpose = "chooseUniqueTarget"
+construction_id = "target-clue"
+target_ids = ["find-target-object"]
+prompt_labels = ["find-both-clues"]
+
+[[missions.slots]]
+purpose = "clarifyDistractor"
+construction_id = "target-clue"
+target_ids = ["clarify-target"]
+prompt_labels = ["friend-points", "yes-answer"]
+sentence_labels = ["no"]
+
+[[missions.slots]]
+purpose = "buildTargetSentence"
+construction_id = "target-location"
+target_ids = ["name-located-target"]
+prompt_labels = ["name-and-locate", "connector-distractor"]

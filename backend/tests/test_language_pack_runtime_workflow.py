@@ -51,7 +51,7 @@ class MockWorkflowModel(SceneModel):
 def test_pack_generation_persists_grades_and_completes_once(curated, monkeypatch, level):
     engine, owner, profile, client, *_ = curated
     monkeypatch.setenv("APP_ENV", "test")
-    monkeypatch.setenv("LINGUINI_M01_LANGUAGE_PACKS", "true")
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "true")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_EXPERIMENTAL", "true")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", str(PACK))
     monkeypatch.setitem(mission_eligibility.IMPLEMENTED_MISSIONS, level, (("M01", level, 1),))

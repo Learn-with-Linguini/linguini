@@ -9,7 +9,7 @@ from pathlib import Path
 
 from app.config import (
     get_language_pack_experimental,
-    get_m01_language_packs_enabled,
+    get_language_packs_enabled,
 )
 
 from .capabilities import mission_capability
@@ -52,7 +52,7 @@ def check_pack_readiness(pack, level, content_version, mission_id="M01"):
 
 def available_pack_languages():
     """Discover languages with ready pack missions under the runtime/release gates."""
-    if not get_m01_language_packs_enabled():
+    if not get_language_packs_enabled():
         return []
     from .context import resolve_language_context
 

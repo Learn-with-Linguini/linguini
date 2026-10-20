@@ -4,7 +4,7 @@ import hashlib
 import json
 from dataclasses import dataclass
 
-from app.config import get_language_pack_register, get_m01_language_packs_enabled
+from app.config import get_language_pack_register, get_language_packs_enabled
 from app.schemas.language_context import LanguageDisplayContext
 
 from .fingerprint import pack_fingerprint
@@ -29,8 +29,7 @@ class LanguageContext:
     ready_levels: tuple[str, ...]
     experimental: bool
     # "M01:A0:1" keys. Ready missions pass every gate; declared missions are those the
-    # pack has the constructions and labels for, so the pack owns them even when a
-    # review/release gate blocks them (no silent fallback to a legacy builder).
+    # pack has the constructions and labels for (diagnostic: see ``owns``).
     ready_missions: tuple[str, ...] = ()
     declared_missions: tuple[str, ...] = ()
 
@@ -80,7 +79,15 @@ class LanguageContext:
         return self._keys(self.ready_missions, level)
 
     def declares(self, mission_id, level):
+        """Whether the pack has the constructions and labels for this mission template."""
         return any(key[0] == mission_id for key in self._keys(self.declared_missions, level))
+
+    def owns(self, mission_id):
+        """With packs on, a mission that has a pack implementation never uses its legacy
+        builder: it is generated from the pack when ready and otherwise not offered."""
+        from .lessons import PACK_MISSION_IDS
+
+        return mission_id in PACK_MISSION_IDS
 
     def is_ready(self, mission):
         return any(
@@ -128,7 +135,7 @@ class LanguageContext:
 
 
 def resolve_language_context(language, register=None):
-    if not get_m01_language_packs_enabled():
+    if not get_language_packs_enabled():
         return None
     from .capabilities import pack_mission_keys
     from .runtime import check_pack_readiness, mission_capability_for

@@ -8,9 +8,9 @@ import pytest
 
 from app.language_packs.capabilities import mission_template_key, pack_mission_keys
 from app.language_packs.context import LanguageContext, resolve_language_context
+from app.language_packs.lessons import PACK_MISSION_IDS, pack_mission
 from app.language_packs.loader import load_pack
 from app.language_packs.plan import bind_plan
-from app.language_packs.registry import PACK_MISSIONS, pack_mission
 from app.language_packs.runtime import session_inputs
 from app.schemas.enums import SessionMode
 from app.services.mission_eligibility import lesson_missions
@@ -20,7 +20,7 @@ PACK = Path(__file__).parents[1] / "app/language_packs/packs/es-ES/everyday"
 
 @pytest.fixture
 def packs_on(monkeypatch):
-    monkeypatch.setenv("LINGUINI_M01_LANGUAGE_PACKS", "true")
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "true")
     monkeypatch.setenv("APP_ENV", "test")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_EXPERIMENTAL", "true")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", str(PACK))
@@ -35,16 +35,22 @@ def _ids(missions):
 
 
 def test_catalog_templates_resolve_through_the_registry():
-    assert set(PACK_MISSIONS) == {"M01"}
-    assert pack_mission_keys() == [("M01", "A0", 1), ("M01", "A1", 1), ("M01", "A2", 1)]
-    assert mission_template_key("M01", "A1") == ("M01", "A1", 1)
+    assert PACK_MISSION_IDS == {"M01", "M02"}
+    assert pack_mission_keys() == [
+        ("M01", "A0", 1), ("M01", "A1", 1), ("M01", "A2", 1),
+        ("M02", "A0", 1), ("M02", "A1", 2), ("M02", "A2", 1),
+    ]
+    # Templates match dev's mission definitions (M02 A1 lessons are content version 2).
+    assert mission_template_key("M02", "A1") == ("M02", "A1", 2)
     with pytest.raises(ValueError, match="no pack lesson implementation"):
-        pack_mission("M02")
+        pack_mission("M03")
 
 
 def test_context_records_ready_and_declared_missions(packs_on):
     context = resolve_language_context("es")
-    assert context.ready_missions == ("M01:A0:1", "M01:A1:1", "M01:A2:1")
+    assert context.ready_missions == (
+        "M01:A0:1", "M01:A1:1", "M01:A2:1", "M02:A0:1", "M02:A1:2", "M02:A2:1",
+    )
     assert context.declared_missions == context.ready_missions
     assert context.ready_levels == ("A0", "A1", "A2")
     snapshot = context.snapshot()
@@ -70,7 +76,9 @@ def test_ready_pack_missions_replace_legacy_versions_first():
     )
     assert _ids(missions)[0] == ("M01", "A1")
     assert [mission_id for mission_id, _ in _ids(missions)].count("M01") == 1
-    assert {"M02", "M03", "M04", "M05"} <= {mission_id for mission_id, _ in _ids(missions)}
+    # M02 has a pack implementation but is not ready here, so it is not offered.
+    assert "M02" not in {mission_id for mission_id, _ in _ids(missions)}
+    assert {"M03", "M04", "M05"} <= {mission_id for mission_id, _ in _ids(missions)}
 
 
 def test_declared_but_blocked_missions_never_fall_back_to_legacy():
@@ -79,10 +87,41 @@ def test_declared_but_blocked_missions_never_fall_back_to_legacy():
     assert "M01" not in {mission.mission_id for mission in missions}
 
 
-def test_undeclared_missions_keep_their_legacy_builder():
+def test_pack_missions_never_use_their_legacy_builder_when_packs_are_on():
     profile = {"proficiency_level": "A1", "target_language_code": "es"}
     missions = lesson_missions(SessionMode.LESSON, profile, _context(["M01:A0:1"], ["M01:A0:1"]))
-    assert ("M01", "A1") in _ids(missions)
+    ids = {mission_id for mission_id, _ in _ids(missions)}
+    assert not ids & {"M01", "M02"}
+    # Missions without a pack implementation keep their legacy builders.
+    assert {"M03", "M04", "M05"} <= ids
+
+
+def test_pack_only_languages_get_every_ready_pack_mission():
+    profile = {"proficiency_level": "A2", "target_language_code": "ta"}
+    ready = ["M01:A2:1", "M02:A2:1"]
+    missions = lesson_missions(SessionMode.LESSON, profile, _context(ready, ready))
+    assert _ids(missions) == [("M01", "A2"), ("M02", "A2")]
+
+
+def test_m02_a2_photo_rule_needs_one_object_matching_both_clues():
+    from app.language_packs.lessons.m02 import photo_reasons
+    from app.missions import get_mission
+    from app.services.mission_eligibility import scene_attributes
+
+    mission = get_mission("M02", "A2", 1)
+    cup, table, book = (
+        SimpleNamespace(id=UUID(int=n), label=label, attributes=attrs)
+        for n, label, attrs in (
+            (1, "cup", {"color": "red"}), (2, "table", {}), (3, "book", {"color": "red"}),
+        )
+    )
+    on = SimpleNamespace(id=UUID(int=9), subject_scene_object_id=cup.id,
+                         reference_scene_object_id=table.id, relation="on")
+    assert photo_reasons(mission, [cup, table, book], [on], scene_attributes) == []
+    # Both red objects on the table: the clues no longer identify one object.
+    book_on = SimpleNamespace(id=UUID(int=10), subject_scene_object_id=book.id,
+                              reference_scene_object_id=table.id, relation="on")
+    assert photo_reasons(mission, [cup, table, book], [on, book_on], scene_attributes)
 
 
 def test_counted_groups_become_facts_only_for_confirmed_objects():
@@ -115,4 +154,4 @@ def test_bind_plan_rejects_missions_without_a_pack_implementation():
         pack, [], [], [], SimpleNamespace(objects=[], attributes=[], relationships=[]), {},
     )
     with pytest.raises(ValueError, match="no pack lesson implementation"):
-        bind_plan(pack, "A1", facts, vocabulary, mission_id="M02")
+        bind_plan(pack, "A1", facts, vocabulary, mission_id="M03")

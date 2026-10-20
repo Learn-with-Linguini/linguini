@@ -130,7 +130,7 @@ def test_context_reaches_translation_cards_and_m01_without_reresolution(
     translated = translator(provider).translate(payload(runtime), language_context=context)
     intro, words = cards(context, runtime, translated)
     # Configuration changes after capture must not change the chosen language path.
-    monkeypatch.setenv("LINGUINI_M01_LANGUAGE_PACKS", "false")
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "false")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", "missing/*")
     generator = MockSpanishProvider()
     task = service(generator).generate_pack_m01(
@@ -271,7 +271,7 @@ def test_scene_suitability_not_legacy_dictionary_membership(pack_dir, runtime, l
 
 
 def test_flag_off_and_old_saved_tasks_need_no_context(pack_dir, runtime, monkeypatch):
-    monkeypatch.setenv("LINGUINI_M01_LANGUAGE_PACKS", "false")
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "false")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", "missing/*")
     assert resolve_language_context("es") is None
     # Legacy service retains its prompt and schema; optional additions stay absent.
@@ -324,7 +324,7 @@ def test_saved_legacy_vocabulary_task_can_reload_without_new_metadata(
     serialized = intro.model_dump_json()
     assert "languageContext" not in serialized
     assert "romanization" not in serialized
-    monkeypatch.setenv("LINGUINI_M01_LANGUAGE_PACKS", "true")
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "true")
     restored = SessionTask.model_validate_json(serialized)
     assert restored.public_content.language_context is None
     assert restored.public_content.words[0].target_text == intro.public_content.words[0].target_text

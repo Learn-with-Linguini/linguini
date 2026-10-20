@@ -186,12 +186,12 @@ def lesson_missions(session_mode, profile, language_context=_CONTEXT_UNSET):
         )
     ]
     if language_context is not None:
-        # A pack owns the missions it declares at this level: its ready versions are
-        # planned and blocked ones are not offered, never silently replaced by the
-        # legacy builder. Undeclared missions keep their legacy implementation.
+        # Missions with a pack implementation are pack-owned: ready versions are
+        # planned and others are not offered, never replaced by the legacy builder.
+        # Missions without one keep their legacy implementation.
         missions = [
             mission for mission in missions
-            if not language_context.declares(mission.mission_id, level)
+            if not language_context.owns(mission.mission_id)
         ]
         ready = [
             mission for key in language_context.ready_missions_at(level)
@@ -491,7 +491,7 @@ def photo_eligibility(
     if pack:
         # Dictionary-based rules above do not apply to open session vocabulary; the
         # mission's pack implementation states its own photo requirements instead.
-        from app.language_packs.registry import pack_mission
+        from app.language_packs.lessons import pack_mission
 
         reasons += pack_mission(mission.mission_id).photo_reasons(
             mission, objects, relations, scene_attributes,
