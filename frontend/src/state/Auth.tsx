@@ -29,8 +29,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setLoading(false);
       }
     });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      queryClient.clear();
+    const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") queryClient.clear();
       setSession(nextSession);
       setLoading(false);
     });

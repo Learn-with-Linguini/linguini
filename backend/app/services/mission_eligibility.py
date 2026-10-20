@@ -228,7 +228,14 @@ def suggested_counted_groups(objects):
         )
         if group["quantity"] == quantity:
             group["sceneObjectIds"].append(str(obj.id))
-    return list(groups.values())
+    # Scene analysis returns one marker per visible instance. Keep provisional
+    # planning consistent with the review screen: a model suggestion must not
+    # turn one visible marker into a countable group and hide the other objects
+    # that could support non-counting missions.
+    return [
+        {**group, "quantity": min(group["quantity"], len(group["sceneObjectIds"]))}
+        for group in groups.values()
+    ]
 
 
 def provisional_mission_focus(candidates, objects, relations):

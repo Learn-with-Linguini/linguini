@@ -60,6 +60,7 @@ Because Linguini is a single-page application (SPA), route changes do not reload
 * `/practice/ispy` — Standalone I-Spy mode selector (Solo vs Friends)
 * `/practice/ispy/join` — Enter invite code to join a room
 * `/practice/ispy/room/:roomCode` — Multiplayer I-Spy gameplay room
+* `/ispy/challenge` — Daily photo challenge: take a photo of today's scene to start a lesson
 * `/rooms` — Active and previous multiplayer rooms list
 * `/vocabulary` — Learned words, audio pronunciation, and mastery filters
 * `/journal` — Calendar diary of daily practice entries and photo attachments
@@ -146,6 +147,11 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | :--- | :--- | :--- |
 | `chef_of_the_day_participation_toggled` | `{ participating }` | User opts in or out of the daily Chef of the Day leaderboard |
 | `chef_of_the_day_retry_clicked` | — | User retries loading the daily leaderboard |
+| `daily_challenge_start_clicked` | `{ sceneKey }` | User opens today's daily challenge from the Play tab |
+| `daily_challenge_resumed` | `{ sceneKey }` | User continues an unfinished daily challenge session from the Play tab |
+| `daily_challenge_photo_uploaded` | `{ sceneKey, assetId }` | User uploads or captures a photo for today's challenge |
+| `daily_challenge_session_started` | `{ sceneKey, assetId }` | User starts a lesson session tagged as today's challenge entry |
+| `daily_challenge_retry_clicked` | — | User retries loading the daily challenge |
 
 ### Vocabulary & Journal
 | Event Name | Parameters | Trigger Description |

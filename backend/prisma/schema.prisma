@@ -47,6 +47,8 @@ model User {
   friendInvitations   FriendInvitation[] @relation("FriendInviteOwner")
   acceptedFriendInvitations FriendInvitation[] @relation("FriendInviteAcceptor")
   surveys             UserSurvey[]
+  dailyChallengeEntries DailyChallengeEntry[]
+  dailyChallengeFinds DailyChallengeFind[]
 
   @@map("users")
 }
@@ -114,6 +116,46 @@ model ChefLeaderboardPreference {
   updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
 
   @@map("chef_leaderboard_preferences")
+}
+
+// SQL migration also owns the partial unique index allowing one completed
+// entry per learner and day.
+model DailyChallengeEntry {
+  id           String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  challengeDay DateTime @map("challenge_day") @db.Date
+  sceneKey     String @map("scene_key") @db.VarChar(40)
+  userId       String @map("user_id") @db.Uuid
+  user         User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  sessionId    String @unique @map("session_id") @db.Uuid
+  session      Session @relation(fields: [sessionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  completedAt  DateTime? @map("completed_at") @db.Timestamptz(6)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([challengeDay, completedAt], map: "daily_challenge_entries_day_idx")
+  @@index([userId, challengeDay], map: "daily_challenge_entries_user_day_idx")
+  @@map("daily_challenge_entries")
+}
+
+model DailyChallengeFind {
+  challengeDay DateTime @map("challenge_day") @db.Date
+  userId       String @map("user_id") @db.Uuid
+  user         User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  labelKey     String @map("label_key") @db.Text
+  label        String @db.Text
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@id([challengeDay, userId, labelKey])
+  @@index([challengeDay, labelKey], map: "daily_challenge_finds_day_label_idx")
+  @@map("daily_challenge_finds")
+}
+
+model DailyChallengeSettlement {
+  challengeDay     DateTime @id @map("challenge_day") @db.Date
+  participantCount Int @map("participant_count")
+  policyVersion    String @map("policy_version") @db.VarChar(40)
+  settledAt        DateTime @default(now()) @map("settled_at") @db.Timestamptz(6)
+
+  @@map("daily_challenge_settlements")
 }
 
 model GameResourceEvent {
@@ -306,6 +348,7 @@ model Session {
 
   learningQuestionEvents LearningQuestionEvent[]
   missionBatchResults MissionBatchResult[]
+  dailyChallengeEntry DailyChallengeEntry?
 
   @@unique([id, userId])
   @@unique([userId, languageProfileId, idempotencyKey])

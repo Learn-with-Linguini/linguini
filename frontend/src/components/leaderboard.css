@@ -2,7 +2,7 @@
 .ispy-chefs__list li.ispy-chefs__entry { grid-template-columns: 34px 36px minmax(0, 1fr) auto; }
 
 @media (max-width: 440px) {
-  .ispy-chefs__list li.ispy-chefs__entry { grid-template-columns: 30px 32px minmax(0, 1fr); }
+  .ispy-chefs__list li.ispy-chefs__entry { grid-template-columns: 30px 32px minmax(0, 1fr) auto; }
   .ispy-chefs__entry .leaderboard-avatar { width: 32px; height: 32px; }
-  .ispy-chefs__entry .ispy-chefs__basil { grid-column: 3; }
+  .ispy-chefs__entry .ispy-chefs__basil { grid-column: auto; grid-row: auto; }
 }

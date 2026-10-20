@@ -653,8 +653,8 @@ export interface PracticeReview {
 export const reviewPractice = (id: string, review: PracticeReview) => write<PracticeDetail>(`/api/v1/sessions/${id}/review`, "PUT", review);
 export const getPractice = (id: string) => request<PracticeDetail>(`/api/v1/sessions/${id}`);
 export const getActivePractice = () => request<PracticeDetail | null>("/api/v1/sessions/active");
-export const createPractice = (profileId: string, assetId: string, key: string) => write<PracticeDetail>("/api/v1/sessions", "POST", {
-  languageProfileId: profileId, mediaAssetId: assetId, idempotencyKey: key,
+export const createPractice = (profileId: string, assetId: string, key: string, dailyChallengeDay?: string) => write<PracticeDetail>("/api/v1/sessions", "POST", {
+  languageProfileId: profileId, mediaAssetId: assetId, idempotencyKey: key, ...(dailyChallengeDay ? { dailyChallengeDay } : {}),
 });
 export const taskAction = (id: string, action: "start" | "complete" | "skip" | "attempts" | "confirm-guess", body: unknown = {}) => write<TaskActionResult>(`/api/v1/tasks/${id}/${action}`, "POST", body);
 export interface VocabularyAnswerCheck { questionId: string; acceptedOptionId: string; isCorrect: boolean; correctOptionId: string; basilEarned: number }

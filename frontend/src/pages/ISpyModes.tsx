@@ -1,10 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { Button, Card } from "../components/ui";
 import { ChefOfTheDay } from "../components/ChefOfTheDay";
+import { DailyChallenge } from "../components/DailyChallenge";
 
 export function ISpyModes() {
   const navigate = useNavigate();
   return <main className="ispy-modes">
+    <Card lifted className="ispy-modes__card ispy-modes__challenge"><DailyChallenge /></Card>
     <Card lifted className="ispy-modes__card ispy-modes__play-card">
       <h1>Let’s play I-Spy!</h1>
       <div className="ispy-modes__actions">
