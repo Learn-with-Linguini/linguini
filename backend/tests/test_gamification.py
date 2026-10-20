@@ -24,7 +24,6 @@ from app.repositories.postgres.gamification import (
     question_events,
 )
 from app.repositories.postgres.language_profiles import language_profiles
-from app.repositories.postgres.leaderboard import set_participating
 from app.repositories.postgres.media_assets import media_assets
 from app.repositories.postgres.tasks import session_tasks
 from app.repositories.postgres.users import users
@@ -259,7 +258,7 @@ def test_reuploaded_identical_photo_has_one_identity(curated):
         c.execute(delete(media_assets).where(media_assets.c.id.in_(asset_ids)))
 
 
-def test_leaderboard_is_optional_and_ties_do_not_use_wallet_balance(database):
+def test_leaderboard_includes_all_daily_earners_and_ties_do_not_use_wallet_balance(database):
     engine, owner, _profile, client = database
     others = [User(display_name=f"Chef {i}", auth_provider_id=str(uuid4())) for i in range(2)]
     with engine.begin() as c:
@@ -267,29 +266,13 @@ def test_leaderboard_is_optional_and_ties_do_not_use_wallet_balance(database):
         for person, score in [(owner, 30), (others[0], 30), (others[1], 40)]:
             lock_resource_owner(c, person.id)
             reward_basil(c, person.id, "today", amount=score)
-            if person != owner:
-                set_participating(c, person.id, True)
         equip_appearance(c, owner.id, "herb", uuid4())
-    initial = client.get("/api/v1/me/chef-of-the-day").json()
-    assert not initial["participating"] and initial["currentRank"] is None
-    assert initial["todayBasil"] == initial["personalBest"] == 30
-    joined = client.put(
-        "/api/v1/me/chef-of-the-day/preferences", json={"participating": True}
-    ).json()
-    assert joined["currentRank"] == 2 and joined["basilToNextRank"] == 11
-    assert [row["rank"] for row in joined["top"]] == [1, 2, 2]
-    assert set(joined["top"][0]) == {"rank", "displayName", "basil", "avatar"}
-    assert joined["top"][0]["avatar"] == "farfalle"
-    left = client.put(
-        "/api/v1/me/chef-of-the-day/preferences", json={"participating": False}
-    ).json()
-    assert left["currentRank"] is None and len(left["top"]) == 2
-    assert (
-        client.put(
-            "/api/v1/me/chef-of-the-day/preferences", json={"participating": "false"}
-        ).status_code
-        == 422
-    )
+    result = client.get("/api/v1/me/chef-of-the-day").json()
+    assert result["currentRank"] == 2 and result["basilToNextRank"] == 11
+    assert result["todayBasil"] == result["personalBest"] == 30
+    assert [row["rank"] for row in result["top"]] == [1, 2, 2]
+    assert set(result["top"][0]) == {"rank", "displayName", "basil", "avatar"}
+    assert result["top"][0]["avatar"] == "farfalle"
     with engine.begin() as c:
         assert resource_snapshot(c, owner.id).basil_leaves == 10
         c.execute(delete(users).where(users.c.id.in_([u.id for u in others])))
