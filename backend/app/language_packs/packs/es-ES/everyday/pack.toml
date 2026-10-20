@@ -1,14 +1,17 @@
 format_version = 1
 pack_id = "es-es-everyday"
-pack_version = 1
+pack_version = 2
 instruction_language = "en"
 
 [language]
 code = "es"
+articles = "required"
+grammatical_gender = "required"
 locale = "es-ES"
 script = "Latn"
 direction = "ltr"
 word_separator = "space"
+phrase_boundaries = ["y", "que", "pero", "también"]
 
 [language.speech]
 synthesis_locale = "es-ES"

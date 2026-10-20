@@ -8,3 +8,21 @@ constraints = ["Express only the selected scene facts and preserve semantic role
 required_labels = ["yes", "no", "yes-answer", "no-answer"]
 roles = { object = "noun", shown = "noun" }
 provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+except_uses = ["name"]
+
+[[checks]]
+check_id = "question-verb-first"
+message = "Yes/no questions start with the verb: Ist das …?"
+must_contain = ["^(ist|sind) ", "\\?$"]
+uses = ["question", "prompt", "followup"]
+
+[[checks]]
+check_id = "answer-label"
+message = "Yes/no answers start with Ja or Nein."
+must_contain = ["^(ja|nein)[,.]"]
+uses = ["answer", "option"]

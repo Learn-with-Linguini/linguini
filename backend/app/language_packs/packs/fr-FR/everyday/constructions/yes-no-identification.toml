@@ -8,3 +8,26 @@ constraints = ["Express only the selected scene facts and preserve semantic role
 required_labels = ["yes", "no", "yes-answer", "no-answer"]
 roles = { object = "noun", shown = "noun" }
 provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+except_uses = ["name"]
+
+[[checks]]
+check_id = "question-mark"
+message = "French questions end with a space and ?."
+must_contain = [" \\?$"]
+uses = ["question", "prompt", "followup"]
+
+[[checks]]
+check_id = "elision"
+message = "Elide le/la/de/ne/que/ce before a vowel (l', d', n', qu', c')."
+must_not_contain = ["(^|\\s)(le|la|de|ne|que|ce) [aeiouéèêëàâîïôûù]"]
+
+[[checks]]
+check_id = "answer-label"
+message = "Yes/no answers start with Oui or Non."
+must_contain = ["^(oui|non)[,.]"]
+uses = ["answer", "option"]

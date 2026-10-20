@@ -10,3 +10,9 @@ roles = { subject = "noun", relation = "preposition", reference = "noun", object
 [provenance]
 source = "Lead-authored; needs fluent Spanish review."
 review_status = "unreviewed"
+
+[[checks]]
+check_id = "location-estar"
+message = "Location uses está."
+must_contain = ["\\sestá\\s"]
+except_uses = ["followup"]

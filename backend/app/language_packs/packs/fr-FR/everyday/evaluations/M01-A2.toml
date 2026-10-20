@@ -121,3 +121,48 @@ expected_meaning = "The key is on the table."
 acceptable = ["La clé est sur la table."]
 reject = [{ sentence = "The key is on the table.", category = "languageLeakage", reason = "The answer must use the target language." }]
 provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a2-held-plate-on-table"
+category = "article"
+construction_id = "scene-location"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:plate-on-table", subject = "object:plate", reference = "object:table", relation = "on" }] }
+bindings = { subject = "object:plate", reference = "object:table", relation = "relation:plate-on-table" }
+truth = true
+labels = []
+input = "Locate the plate on the table."
+expected_meaning = "The plate is on the table."
+acceptable = ["L'assiette est sur la table."]
+reject = [{ sentence = "La assiette est sur la table.", category = "article", reason = "Elide la before a vowel." }, { sentence = "L'assiette est sous la table.", category = "wrongRelation", reason = "The plate is on it." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }
+
+[[cases]]
+case_id = "a2-held-bag-colour-question"
+category = "meaning"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }], attributes = [{ fact_id = "attribute:bag-green", object = "object:bag", kind = "color", value = "green" }] }
+bindings = { object = "object:bag", attribute = "attribute:bag-green" }
+truth = true
+labels = []
+input = "Ask the colour of the highlighted bag, without answering it."
+expected_meaning = "What colour is the bag?"
+acceptable = ["De quelle couleur est le sac ?"]
+reject = [{ sentence = "Où est le sac ?", category = "meaning", reason = "Ask about its colour, not its place." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }
+
+[[cases]]
+case_id = "a2-held-absent-window"
+category = "meaning"
+construction_id = "scene-existence"
+construction_version = 1
+scene = { objects = [], absent = [{ fact_id = "object:window", concept = "window" }] }
+bindings = { object = "object:window" }
+truth = false
+labels = []
+input = "The window is explicitly absent. State its absence."
+expected_meaning = "There is no window."
+acceptable = ["Il n'y a pas de fenêtre."]
+reject = [{ sentence = "Il y a une fenêtre.", category = "meaning", reason = "The window is absent." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }

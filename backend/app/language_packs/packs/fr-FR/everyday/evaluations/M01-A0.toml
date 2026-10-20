@@ -100,9 +100,56 @@ construction_version = 2
 scene = { objects = [{ fact_id = "object:window", concept = "window" }] }
 bindings = { object = "object:window" }
 truth = true
+use = "name"
 labels = []
 input = "Give the vocabulary name for the window."
 expected_meaning = "the window (vocabulary label)"
 acceptable = ["la fenêtre"]
 reject = []
 provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a0-held-table-gender"
+category = "agreement"
+construction_id = "identify-object"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:table", concept = "table" }] }
+bindings = { object = "object:table" }
+truth = true
+labels = []
+input = "Identify the highlighted table."
+expected_meaning = "This is a table."
+acceptable = ["C'est une table."]
+reject = [{ sentence = "C'est un table.", category = "agreement", reason = "The article or ending must match the noun's gender." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }
+
+[[cases]]
+case_id = "a0-held-plate-name"
+category = "article"
+construction_id = "identify-object"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }] }
+bindings = { object = "object:plate" }
+truth = true
+use = "name"
+labels = []
+input = "Give the vocabulary name for the plate."
+expected_meaning = "the plate (vocabulary label)"
+acceptable = ["l'assiette"]
+reject = [{ sentence = "la assiette", category = "article", reason = "Elide la before a vowel." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }
+
+[[cases]]
+case_id = "a0-held-book-question"
+category = "agreement"
+construction_id = "yes-no-identification"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:book", concept = "book" }] }
+bindings = { object = "object:book", shown = "object:book" }
+truth = true
+labels = []
+input = "Ask whether this object is a book."
+expected_meaning = "Is it a book?"
+acceptable = ["C'est un livre ?"]
+reject = [{ sentence = "C'est une livre ?", category = "agreement", reason = "The article or ending must match the noun's gender." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }

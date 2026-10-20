@@ -1,4 +1,5 @@
 construction_id = "identify-object"
+templates = { identify = "Es {nounPhrase}.", question = "¿Es {nounPhrase}?", find = "Busca {name}.", slot = "___ {noun}" }
 version = 1
 summary = "Name an object or identify what it is."
 guidance = """Spanish nouns are masculine or feminine, and the article must match the noun's stored gender, not a guess from its ending (el mapa, la mano, el reloj, la llave). To name an object as a vocabulary chunk, use the definite article: el libro, la taza; no capital letter or final punctuation. To say what something is, use Es + indefinite article + noun + full stop: Es un libro. / Es una taza. un goes with masculine nouns and una with feminine ones. Spanish normally drops the subject, so do not add él, ella or eso. Esto es una taza. is an accepted alternative; the taught pattern is Es… Use ser (es) to identify, never está."""
@@ -10,3 +11,9 @@ roles = { object = "noun" }
 [provenance]
 source = "Lead-authored; needs fluent Spanish review."
 review_status = "unreviewed"
+
+[[checks]]
+check_id = "identify-frame"
+message = "Say what something is with Es … (or Esto es …)."
+must_contain = ["^(es|esto es) "]
+uses = ["answer"]

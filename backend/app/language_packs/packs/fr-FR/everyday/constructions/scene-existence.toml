@@ -7,3 +7,31 @@ constraints = ["Express only the selected scene facts and preserve semantic role
 required_labels = ["touch-object"]
 roles = { object = "noun", attribute = "adjective" }
 provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+except_uses = ["name"]
+
+[[checks]]
+check_id = "elision"
+message = "Elide le/la/de/ne/que/ce before a vowel (l', d', n', qu', c')."
+must_not_contain = ["(^|\\s)(le|la|de|ne|que|ce) [aeiouéèêëàâîïôûù]"]
+
+[[checks]]
+check_id = "contraction"
+message = "Contract de le/de les/à le/à les to du/des/au/aux."
+must_not_contain = ["(^|\\s)(de|à) (le|les)\\s"]
+
+[[checks]]
+check_id = "existence-il-y-a"
+message = "Scene existence uses il y a."
+must_contain = ["(^|\\s)il (y a|n'y a)\\s"]
+
+[[checks]]
+check_id = "negated-existence"
+message = "A false existence statement uses il n'y a pas de."
+must_contain = ["n'y a pas"]
+except_uses = ["falseFirst"]
+truth = false

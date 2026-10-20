@@ -3,7 +3,7 @@ construction_id = "scene-existence"
 [[examples]]
 example_id = "exist-apple"
 levels = ["A2"]
-purposes = ["chooseSceneMarker", "buildSceneDescription"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
 meaning = "There is a yellow apple in the scene."
 scene = { objects = [{ fact_id = "object:apple", concept = "apple" }], attributes = [{ fact_id = "attribute:yellow", object = "object:apple", kind = "color", value = "yellow" }] }
 bindings = { object = "object:apple", attribute = "attribute:yellow" }
@@ -16,7 +16,7 @@ provenance = { source = "Lead-authored; noun from REVIEWED_NOUNS and colour from
 [[examples]]
 example_id = "exist-plate"
 levels = ["A2"]
-purposes = ["chooseSceneMarker", "buildSceneDescription"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
 meaning = "There is a white plate in the scene."
 scene = { objects = [{ fact_id = "object:plate", concept = "plate" }], attributes = [{ fact_id = "attribute:white", object = "object:plate", kind = "color", value = "white" }] }
 bindings = { object = "object:plate", attribute = "attribute:white" }
@@ -29,7 +29,7 @@ provenance = { source = "Lead-authored; noun from REVIEWED_NOUNS and colour from
 [[examples]]
 example_id = "exist-chair-also"
 levels = ["A2"]
-purposes = ["chooseSceneMarker", "buildSceneDescription"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
 meaning = "There is also a chair in the scene."
 scene = { objects = [{ fact_id = "object:chair", concept = "chair" }] }
 bindings = { object = "object:chair" }

@@ -10,3 +10,15 @@ roles = { object = "noun", attribute = "adjective" }
 [provenance]
 source = "Lead-authored; needs fluent Spanish review."
 review_status = "unreviewed"
+
+[[checks]]
+check_id = "existence-hay"
+message = "Scene existence uses hay."
+must_contain = ["(^|\\s)hay\\s"]
+
+[[checks]]
+check_id = "negated-existence"
+message = "A false existence statement negates it with no hay."
+must_contain = ["(^|\\s)no hay\\s"]
+except_uses = ["falseFirst"]
+truth = false

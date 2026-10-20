@@ -48,7 +48,7 @@ reject = [{ sentence = "이에요 노란 숟가락.", category = "wordOrder", re
 provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
 
 [[cases]]
-case_id = "a1-door-blue-option"
+case_id = "a1-door-blue-describe"
 category = "wrongAttribute"
 construction_id = "describe-attribute"
 construction_version = 2
@@ -56,10 +56,10 @@ scene = { objects = [{ fact_id = "object:door", concept = "door" }], attributes 
 bindings = { object = "object:door", attribute = "attribute:door-blue" }
 truth = true
 labels = []
-input = "Answer with the colour of the highlighted blue door."
-expected_meaning = "blue (the colour of the door)"
-acceptable = ["파란색"]
-reject = [{ sentence = "빨간색", category = "wrongAttribute", reason = "This is a blue door, not red." }]
+input = "Describe the highlighted door as blue."
+expected_meaning = "This is a blue door."
+acceptable = ["파란 문이에요."]
+reject = [{ sentence = "빨간 문이에요.", category = "wrongAttribute", reason = "This is a blue door, not red." }]
 provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
 
 [[cases]]
@@ -98,7 +98,7 @@ category = "wrongObject"
 construction_id = "yes-no-identification"
 construction_version = 1
 scene = { objects = [{ fact_id = "object:spoon", concept = "spoon" }, { fact_id = "object:fork", concept = "fork" }] }
-bindings = { object = "object:fork", shown = "object:spoon" }
+bindings = { object = "object:spoon", shown = "object:spoon" }
 truth = false
 labels = ["no"]
 input = "A spoon is shown; the positive question proposes a fork. Answer no and name the spoon."
@@ -106,3 +106,48 @@ expected_meaning = "No, it is a spoon."
 acceptable = ["아니요, 숟가락이에요."]
 reject = [{ sentence = "아니요, 포크예요.", category = "wrongObject", reason = "After the negative label, name the shown spoon, not the proposed fork." }]
 provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a1-held-window-yes"
+category = "verbChoice"
+construction_id = "yes-no-identification"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:window", concept = "window" }] }
+bindings = { object = "object:window", shown = "object:window" }
+truth = true
+labels = ["yes"]
+input = "The question asks whether the shown window is a window. Answer yes and name it."
+expected_meaning = "Yes, it is a window."
+acceptable = ["네, 창문이에요."]
+reject = [{ sentence = "네, 창문입니다.", category = "verbChoice", reason = "Use the everyday register's sentence ending." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }
+
+[[cases]]
+case_id = "a1-held-book-red"
+category = "verbChoice"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:book", concept = "book" }], attributes = [{ fact_id = "attribute:book-red", object = "object:book", kind = "color", value = "red" }] }
+bindings = { object = "object:book", attribute = "attribute:book-red" }
+truth = true
+labels = []
+input = "Describe the highlighted book as red."
+expected_meaning = "This is a red book."
+acceptable = ["빨간 책이에요."]
+reject = [{ sentence = "빨간 책이다.", category = "verbChoice", reason = "Use the everyday register's sentence ending." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }
+
+[[cases]]
+case_id = "a1-held-plate-yellow"
+category = "wordOrder"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }], attributes = [{ fact_id = "attribute:plate-yellow", object = "object:plate", kind = "color", value = "yellow" }] }
+bindings = { object = "object:plate", attribute = "attribute:plate-yellow" }
+truth = true
+labels = []
+input = "Describe the highlighted plate as yellow."
+expected_meaning = "This is a yellow plate."
+acceptable = ["노란 접시예요."]
+reject = [{ sentence = "예요 노란 접시.", category = "wordOrder", reason = "The words are not in the taught order." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }

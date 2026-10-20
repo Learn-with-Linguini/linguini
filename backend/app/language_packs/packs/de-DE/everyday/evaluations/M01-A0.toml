@@ -100,9 +100,56 @@ construction_version = 2
 scene = { objects = [{ fact_id = "object:window", concept = "window" }] }
 bindings = { object = "object:window" }
 truth = true
+use = "name"
 labels = []
 input = "Give the vocabulary name for the window."
 expected_meaning = "the window (vocabulary label)"
 acceptable = ["das Fenster"]
 reject = []
 provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a0-held-plate-gender"
+category = "agreement"
+construction_id = "identify-object"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }] }
+bindings = { object = "object:plate" }
+truth = true
+labels = []
+input = "Identify the highlighted plate."
+expected_meaning = "This is a plate."
+acceptable = ["Das ist ein Teller."]
+reject = [{ sentence = "Das ist eine Teller.", category = "agreement", reason = "The article or ending must match the noun's gender." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }
+
+[[cases]]
+case_id = "a0-held-table-gender"
+category = "agreement"
+construction_id = "identify-object"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:table", concept = "table" }] }
+bindings = { object = "object:table" }
+truth = true
+labels = []
+input = "Identify the highlighted table."
+expected_meaning = "This is a table."
+acceptable = ["Das ist ein Tisch."]
+reject = [{ sentence = "Das ist eine Tisch.", category = "agreement", reason = "The article or ending must match the noun's gender." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }
+
+[[cases]]
+case_id = "a0-held-plate-name"
+category = "article"
+construction_id = "identify-object"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }] }
+bindings = { object = "object:plate" }
+truth = true
+use = "name"
+labels = []
+input = "Give the vocabulary name for the plate."
+expected_meaning = "the plate (vocabulary label)"
+acceptable = ["der Teller"]
+reject = [{ sentence = "das Teller", category = "article", reason = "The article or ending must match the noun's gender." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }

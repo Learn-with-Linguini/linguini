@@ -7,3 +7,21 @@ constraints = ["Express only the selected scene facts and preserve semantic role
 required_labels = ["build-second-fact"]
 roles = { subject = "noun", reference = "noun", relation = "preposition" }
 provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+except_uses = ["name"]
+
+[[checks]]
+check_id = "location-dative"
+message = "After a location preposition use the dative (dem/der/einem/einer), not das/die/den/ein/eine."
+must_not_contain = ["\\b(auf|unter|neben|vor|hinter|über|in|an) (das|die|den|ein|eine|einen)\\b"]
+except_uses = ["followup"]
+
+[[checks]]
+check_id = "location-verb"
+message = "Location uses a verb such as ist (or steht/liegt)."
+must_contain = ["\\b(ist|sind|steht|stehen|liegt|liegen|hängt)\\b"]
+except_uses = ["followup"]

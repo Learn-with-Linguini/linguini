@@ -84,3 +84,18 @@ input = "Ask whether the highlighted object is a key."
 expected_meaning = "Is it a key?"
 acceptable = ["¿Es una llave?"]
 provenance = { source = "Held-out M01 evaluation content; noun from REVIEWED_NOUNS.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "a1-held-plate-white"
+category = "agreement"
+construction_id = "describe-attribute"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }], attributes = [{ fact_id = "attribute:plate:colour:white", object = "object:plate", kind = "color", value = "white" }] }
+bindings = { object = "object:plate", attribute = "attribute:plate:colour:white" }
+truth = true
+labels = []
+input = "Describe the highlighted plate as white."
+expected_meaning = "This is a white plate."
+acceptable = ["Es un plato blanco."]
+reject = [{ sentence = "Es un plato blanca.", category = "agreement", reason = "The article or ending must match the noun's gender." }, { sentence = "Es un blanco plato.", category = "wordOrder", reason = "The words are not in the taught order." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }

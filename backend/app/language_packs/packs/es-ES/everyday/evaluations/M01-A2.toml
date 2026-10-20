@@ -48,7 +48,7 @@ provenance = { source = "Held-out M01 evaluation content; nouns from REVIEWED_NO
 case_id = "a2-wrong-object"
 category = "wrongObject"
 construction_id = "connected-description"
-construction_version = 1
+construction_version = 2
 scene = { objects = [{ fact_id = "object:fork", concept = "fork" }, { fact_id = "object:spoon", concept = "spoon" }], attributes = [{ fact_id = "attribute:fork-green", object = "object:fork", kind = "color", value = "green" }] }
 bindings = { first = "object:fork", second = "object:spoon", attribute = "attribute:fork-green" }
 truth = true
@@ -84,3 +84,33 @@ input = "Say that a blue bag is present in the scene."
 expected_meaning = "There is a blue bag in the scene."
 acceptable = ["Hay un bolso azul."]
 provenance = { source = "Held-out M01 evaluation content; noun and colour from reviewed sources.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "a2-held-spoon-under-table"
+category = "verbChoice"
+construction_id = "scene-location"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:spoon", concept = "spoon" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:spoon-table", subject = "object:spoon", reference = "object:table", relation = "under" }] }
+bindings = { subject = "object:spoon", reference = "object:table", relation = "relation:spoon-table" }
+truth = true
+labels = []
+input = "Locate the spoon under the table."
+expected_meaning = "The spoon is under the table."
+acceptable = ["La cuchara está debajo de la mesa."]
+reject = [{ sentence = "La cuchara es debajo de la mesa.", category = "verbChoice", reason = "Location uses estar." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }
+
+[[cases]]
+case_id = "a2-held-blue-bag"
+category = "agreement"
+construction_id = "scene-existence"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }], attributes = [{ fact_id = "attribute:bag-blue", object = "object:bag", kind = "color", value = "blue" }] }
+bindings = { object = "object:bag", attribute = "attribute:bag-blue" }
+truth = true
+labels = []
+input = "State that a blue bag is present."
+expected_meaning = "There is a blue bag."
+acceptable = ["Hay un bolso azul."]
+reject = [{ sentence = "Hay una bolso azul.", category = "agreement", reason = "The article or ending must match the noun's gender." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }

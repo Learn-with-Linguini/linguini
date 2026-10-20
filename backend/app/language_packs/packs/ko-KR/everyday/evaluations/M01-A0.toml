@@ -100,9 +100,40 @@ construction_version = 2
 scene = { objects = [{ fact_id = "object:window", concept = "window" }] }
 bindings = { object = "object:window" }
 truth = true
+use = "name"
 labels = []
 input = "Give the vocabulary name for the window."
 expected_meaning = "the window (vocabulary label)"
 acceptable = ["창문"]
 reject = []
 provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a0-held-table"
+category = "verbChoice"
+construction_id = "identify-object"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:table", concept = "table" }] }
+bindings = { object = "object:table" }
+truth = true
+labels = []
+input = "Identify the highlighted table."
+expected_meaning = "This is a table."
+acceptable = ["탁자예요."]
+reject = [{ sentence = "탁자이다.", category = "verbChoice", reason = "Use the everyday register's sentence ending." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }
+
+[[cases]]
+case_id = "a0-held-bag-question"
+category = "meaning"
+construction_id = "yes-no-identification"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }] }
+bindings = { object = "object:bag", shown = "object:bag" }
+truth = true
+labels = []
+input = "Ask whether this object is a bag."
+expected_meaning = "Is it a bag?"
+acceptable = ["가방이에요?"]
+reject = [{ sentence = "가방 이에요", category = "meaning", reason = "A question ends with ?." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }

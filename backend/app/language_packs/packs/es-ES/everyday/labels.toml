@@ -105,3 +105,30 @@ usage = "prompt"
 [labels.provenance]
 source = "app/services/mission_lessons_a2.py; mirrored distractor, not human-reviewed."
 review_status = "unreviewed"
+
+[[labels]]
+semantic = "attribute-prompt"
+text = "¿Cómo es?"
+meaning = "What is it like?"
+usage = "prompt"
+provenance = { source = "Mirrored existing M01 prompt; needs fluent review.", review_status = "unreviewed" }
+
+[[labels]]
+semantic = "attribute-prompt-material"
+text = "¿De qué material es?"
+meaning = "What is it made of?"
+usage = "prompt"
+provenance = { source = "Mirrored existing M01 prompt; needs fluent review.", review_status = "unreviewed" }
+[[labels]]
+semantic = "vocabulary-unsure"
+text = "No sé"
+meaning = "I don't know"
+usage = "prompt"
+provenance = { source = "Existing Spanish vocabulary fallback; needs fluent review.", review_status = "unreviewed" }
+
+[[labels]]
+semantic = "vocabulary-other"
+text = "No estoy seguro"
+meaning = "I'm not sure"
+usage = "prompt"
+provenance = { source = "Existing Spanish vocabulary fallback; needs fluent review.", review_status = "unreviewed" }

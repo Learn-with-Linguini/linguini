@@ -7,3 +7,21 @@ constraints = ["Express only the selected scene facts and preserve semantic role
 required_labels = ["touch-object"]
 roles = { object = "noun", attribute = "adjective" }
 provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+except_uses = ["name"]
+
+[[checks]]
+check_id = "existence-es-gibt"
+message = "Scene existence uses es gibt."
+must_contain = ["\\bes gibt\\b"]
+
+[[checks]]
+check_id = "negated-existence"
+message = "A false existence statement uses kein/keine/keinen."
+must_contain = ["\\b(kein|keine|keinen)\\b"]
+except_uses = ["falseFirst"]
+truth = false

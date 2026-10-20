@@ -8,3 +8,27 @@ constraints = ["Express only the selected scene facts and preserve semantic role
 required_labels = ["what-is-this"]
 roles = { object = "noun" }
 provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+except_uses = ["name"]
+
+[[checks]]
+check_id = "name-without-punctuation"
+message = "A vocabulary name is a bare chunk without final punctuation."
+must_not_contain = ["[.?!]$"]
+uses = ["name"]
+
+[[checks]]
+check_id = "name-article"
+message = "A vocabulary name is the definite article and the noun."
+must_contain = ["^(der|die|das) \\S"]
+uses = ["name"]
+
+[[checks]]
+check_id = "identify-frame"
+message = "Say what something is with Das ist …"
+must_contain = ["^das (ist|sind) "]
+uses = ["answer"]

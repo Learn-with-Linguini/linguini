@@ -121,3 +121,48 @@ expected_meaning = "The key is on the table."
 acceptable = ["열쇠가 탁자 위에 있어요."]
 reject = [{ sentence = "The key is on the table.", category = "languageLeakage", reason = "The answer must use the target language." }]
 provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a2-held-bag-under-table"
+category = "wordOrder"
+construction_id = "scene-location"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:bag-under-table", subject = "object:bag", reference = "object:table", relation = "under" }] }
+bindings = { subject = "object:bag", reference = "object:table", relation = "relation:bag-under-table" }
+truth = true
+labels = []
+input = "Locate the bag under the table."
+expected_meaning = "The bag is under the table."
+acceptable = ["가방이 탁자 아래에 있어요."]
+reject = [{ sentence = "가방이 있어요 탁자 아래에.", category = "wordOrder", reason = "The verb comes last." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }
+
+[[cases]]
+case_id = "a2-held-plate-colour-question"
+category = "meaning"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }], attributes = [{ fact_id = "attribute:plate-yellow", object = "object:plate", kind = "color", value = "yellow" }] }
+bindings = { object = "object:plate", attribute = "attribute:plate-yellow" }
+truth = true
+labels = []
+input = "Ask the colour of the highlighted plate, without answering it."
+expected_meaning = "What colour is the plate?"
+acceptable = ["접시는 무슨 색이에요?"]
+reject = [{ sentence = "접시가 어디에 있어요?", category = "meaning", reason = "Ask about its colour, not its place." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }
+
+[[cases]]
+case_id = "a2-held-absent-window"
+category = "meaning"
+construction_id = "scene-existence"
+construction_version = 2
+scene = { objects = [], absent = [{ fact_id = "object:window", concept = "window" }] }
+bindings = { object = "object:window" }
+truth = false
+labels = []
+input = "The window is explicitly absent. State its absence."
+expected_meaning = "There is no window."
+acceptable = ["창문이 없어요."]
+reject = [{ sentence = "창문이 있어요.", category = "meaning", reason = "The window is absent." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }

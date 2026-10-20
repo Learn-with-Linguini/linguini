@@ -8,3 +8,21 @@ required_labels = ["build-second-fact"]
 # Role categories match the shared semantic-slot contract; native word order is in guidance.
 roles = { subject = "noun", reference = "noun", relation = "preposition" }
 provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+except_uses = ["name"]
+
+[[checks]]
+check_id = "polite-ending"
+message = "Use the polite -요 ending (haeyo-che) at the end of the sentence."
+must_contain = ["(요|^네)[.?!]$"]
+except_uses = ["name"]
+
+[[checks]]
+check_id = "location-verb-final"
+message = "Location sentences end with the verb 있어요."
+must_contain = ["있어요[.?!]$"]
+except_uses = ["followup"]

@@ -48,7 +48,7 @@ reject = [{ sentence = "C'est une jaune cuillère.", category = "wordOrder", rea
 provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
 
 [[cases]]
-case_id = "a1-door-blue-option"
+case_id = "a1-door-blue-describe"
 category = "wrongAttribute"
 construction_id = "describe-attribute"
 construction_version = 2
@@ -56,10 +56,10 @@ scene = { objects = [{ fact_id = "object:door", concept = "door" }], attributes 
 bindings = { object = "object:door", attribute = "attribute:door-blue" }
 truth = true
 labels = []
-input = "Answer with the colour of the highlighted blue door."
-expected_meaning = "blue (the colour of the door)"
-acceptable = ["bleue"]
-reject = [{ sentence = "rouge", category = "wrongAttribute", reason = "This is a blue door, not red." }]
+input = "Describe the highlighted door as blue."
+expected_meaning = "This is a blue door."
+acceptable = ["C'est une porte bleue."]
+reject = [{ sentence = "C'est une porte rouge.", category = "wrongAttribute", reason = "This is a blue door, not red." }]
 provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
 
 [[cases]]
@@ -98,7 +98,7 @@ category = "wrongObject"
 construction_id = "yes-no-identification"
 construction_version = 2
 scene = { objects = [{ fact_id = "object:spoon", concept = "spoon" }, { fact_id = "object:fork", concept = "fork" }] }
-bindings = { object = "object:fork", shown = "object:spoon" }
+bindings = { object = "object:spoon", shown = "object:spoon" }
 truth = false
 labels = ["no"]
 input = "A spoon is shown; the positive question proposes a fork. Answer no and name the spoon."
@@ -106,3 +106,33 @@ expected_meaning = "No, it is a spoon."
 acceptable = ["Non, c'est une cuillère."]
 reject = [{ sentence = "Non, c'est une fourchette.", category = "wrongObject", reason = "After the negative label, name the shown spoon, not the proposed fork." }]
 provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a1-held-bag-green"
+category = "agreement"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }], attributes = [{ fact_id = "attribute:bag-green", object = "object:bag", kind = "color", value = "green" }] }
+bindings = { object = "object:bag", attribute = "attribute:bag-green" }
+truth = true
+labels = []
+input = "Describe the highlighted bag as green."
+expected_meaning = "This is a green bag."
+acceptable = ["C'est un sac vert."]
+reject = [{ sentence = "C'est un sac verte.", category = "agreement", reason = "The article or ending must match the noun's gender." }, { sentence = "C'est un vert sac.", category = "wordOrder", reason = "The words are not in the taught order." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }
+
+[[cases]]
+case_id = "a1-held-book-red"
+category = "agreement"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:book", concept = "book" }], attributes = [{ fact_id = "attribute:book-red", object = "object:book", kind = "color", value = "red" }] }
+bindings = { object = "object:book", attribute = "attribute:book-red" }
+truth = true
+labels = []
+input = "Describe the highlighted book as red."
+expected_meaning = "This is a red book."
+acceptable = ["C'est un livre rouge.", "Le livre est rouge."]
+reject = [{ sentence = "C'est une livre rouge.", category = "agreement", reason = "The article or ending must match the noun's gender." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }

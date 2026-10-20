@@ -3,7 +3,7 @@ construction_id = "scene-location"
 [[examples]]
 example_id = "cup-on-table"
 levels = ["A2"]
-purposes = ["buildSceneFact", "buildSceneDescription"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
 meaning = "The cup is on the table."
 scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:on", subject = "object:cup", reference = "object:table", relation = "on" }] }
 bindings = { subject = "object:cup", relation = "relation:on", reference = "object:table" }
@@ -16,7 +16,7 @@ provenance = { source = "Lead-authored; nouns from REVIEWED_NOUNS, position from
 [[examples]]
 example_id = "shoe-under-chair"
 levels = ["A2"]
-purposes = ["buildSceneFact", "buildSceneDescription"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
 meaning = "The shoe is under the chair."
 scene = { objects = [{ fact_id = "object:shoe", concept = "shoe" }, { fact_id = "object:chair", concept = "chair" }], relations = [{ fact_id = "relation:under", subject = "object:shoe", reference = "object:chair", relation = "under" }] }
 bindings = { subject = "object:shoe", relation = "relation:under", reference = "object:chair" }
@@ -29,7 +29,7 @@ provenance = { source = "Lead-authored; nouns from REVIEWED_NOUNS, position from
 [[examples]]
 example_id = "lamp-next-book"
 levels = ["A2"]
-purposes = ["buildSceneFact", "buildSceneDescription"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
 meaning = "The lamp is next to the book."
 scene = { objects = [{ fact_id = "object:lamp", concept = "lamp" }, { fact_id = "object:book", concept = "book" }], relations = [{ fact_id = "relation:next_to", subject = "object:lamp", reference = "object:book", relation = "next_to" }] }
 bindings = { subject = "object:lamp", relation = "relation:next_to", reference = "object:book" }
