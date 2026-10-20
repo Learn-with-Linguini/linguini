@@ -361,10 +361,78 @@ def confirmed_relations(mission, objects, relations):
     ]
 
 
+# What a learner can add on the review screen, in the order the screen offers it.
+SHORTFALL_KINDS = ("objects", "counts", "attributes", "relations")
+# A2 rules and the confirmed facts that can satisfy them.
+RULE_SHORTFALLS = {
+    "describeScene": ("attributes", "relations"),
+    "findTarget": ("attributes", "relations"),
+    "compareQuantities": ("counts",),
+    "fictionalOwnership": ("attributes", "relations"),
+    "requestableItem": ("objects",),
+}
+A0_OBJECTS_REASON = "Confirm at least 2 different objects with taught names."
+
+
 @dataclass(frozen=True)
 class Eligibility:
     eligible: bool
     reasons: tuple[str, ...] = ()
+    # The kinds of confirmed fact that are short: ``SHORTFALL_KINDS`` or ``choices``.
+    missing: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class SceneShortfall:
+    """Why no mission fits the confirmed scene, and what the learner could add."""
+
+    missing: tuple[str, ...]
+    missions: tuple[dict, ...]
+
+    def as_json(self):
+        return {"missing": list(self.missing), "missions": list(self.missions)}
+
+
+def scene_shortfall(
+    candidates, objects, relations=(), counted_groups=(), mission_choices=None,
+):
+    """``None`` when a mission fits; otherwise what the closest missions still need.
+
+    A profile without implemented missions has nothing to check, so it is never short.
+    """
+    if not candidates or plan_missions(
+        candidates, objects, relations, counted_groups, (), mission_choices
+    ):
+        return None
+    checks = [
+        (mission, photo_eligibility(mission, objects, relations, counted_groups, mission_choices))
+        for mission in candidates
+    ]
+    # Only facts the review screen can add; a missing learner choice is not the photo's gap.
+    actionable = [
+        (mission, check, [kind for kind in SHORTFALL_KINDS if kind in check.missing])
+        for mission, check in checks
+    ]
+    actionable = sorted(
+        (item for item in actionable if item[2]), key=lambda item: len(item[2])
+    )
+    closest = len(actionable[0][2]) if actionable else 0
+    missing = [
+        kind for kind in SHORTFALL_KINDS
+        if any(kind in kinds for *_rest, kinds in actionable if len(kinds) == closest)
+    ]
+    return SceneShortfall(
+        missing=tuple(missing or SHORTFALL_KINDS),
+        missions=tuple(
+            {
+                "missionId": mission.mission_id,
+                "title": mission.title,
+                "missing": kinds,
+                "reasons": list(check.reasons),
+            }
+            for mission, check, kinds in actionable
+        ),
+    )
 
 
 def saved_counted_groups(draft):
@@ -434,11 +502,12 @@ def photo_eligibility(
     """Check only the confirmed facts this mission's photo requirements name."""
     requirements = mission.photo_requirements
     labels = {obj.label.strip().casefold() for obj in objects}
-    reasons = []
+    reasons, missing = [], []
     if len(labels) < requirements.min_confirmed_objects:
         reasons.append(
             f"Confirm at least {requirements.min_confirmed_objects} different objects."
         )
+        missing.append("objects")
     # ``min_coloured_objects`` counts objects with any reviewed attribute, colour or other.
     described = {obj.label.strip().casefold() for obj in objects if confirmed_attributes(obj)}
     if len(described) < requirements.min_coloured_objects:
@@ -448,26 +517,43 @@ def photo_eligibility(
             else "Confirm a colour, size, shape, material, pattern or state of at least "
             f"{requirements.min_coloured_objects} different objects."
         )
+        missing.append("attributes")
     if requirements.min_relations and (
         len(confirmed_relations(mission, objects, relations)) < requirements.min_relations
     ):
         reasons.append(
             "Confirm where one object is on, under, next to, in front of or behind another."
         )
+        missing.append("relations")
     if len(countable_groups(mission, counted_groups)) < requirements.min_counted_groups:
         reasons.append(
             f"Count a group of {requirements.min_quantity} to {requirements.max_quantity} "
             "matching objects."
         )
+        missing.append("counts")
     if requirements.eligibility_rule:
         from app.services.mission_eligibility_a2 import eligibility_reasons
 
-        reasons.extend(eligibility_reasons(
+        rule_reasons = eligibility_reasons(
             requirements.eligibility_rule, mission, objects, relations, counted_groups,
-        ))
+        )
+        reasons.extend(rule_reasons)
+        if rule_reasons:
+            missing.extend(
+                ("objects",)
+                if requirements.eligibility_rule == "describeScene" and len(labels) < 3
+                else RULE_SHORTFALLS.get(requirements.eligibility_rule, ())
+            )
     if str(mission.practice_level) == "A0":
-        reasons += a0_photo_reasons(mission, objects, counted_groups, mission_choices)
-    return Eligibility(not reasons, tuple(reasons))
+        a0_reasons = a0_photo_reasons(mission, objects, counted_groups, mission_choices)
+        reasons += a0_reasons
+        if a0_reasons:
+            missing.append(
+                "counts" if mission.mission_id == "M03"
+                else "objects" if a0_reasons == [A0_OBJECTS_REASON]
+                else "choices"
+            )
+    return Eligibility(not reasons, tuple(reasons), tuple(dict.fromkeys(missing)))
 
 
 def _choice_value(choice, name):
@@ -511,7 +597,7 @@ def a0_photo_reasons(mission, objects, counted_groups=(), mission_choices=None):
             return ["Count exactly one group of 2 or 3 matching objects."]
         return []
     if len(labels) < 2:
-        return ["Confirm at least 2 different objects with taught names."]
+        return [A0_OBJECTS_REASON]
     if mission.mission_id in {"M04", "M05"} and mission_choices is not None:
         choices = mission_choices.get("missionChoices", mission_choices)
         by_id = {str(obj.id): obj for obj in objects}

@@ -20,6 +20,9 @@ from app.schemas.tasks import (
     SubmitTextAttemptRequest,
 )
 
+# A thin scene is rejected on mission profiles; these tests cover the regular lesson.
+pytestmark = pytest.mark.usefixtures("regular_lesson")
+
 
 @pytest.mark.parametrize("correct_clue", [False, True])
 def test_standalone_replays_do_not_charge_sauce_or_earn_basil(database, repos, correct_clue):

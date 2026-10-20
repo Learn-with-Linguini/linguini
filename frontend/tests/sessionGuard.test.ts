@@ -273,6 +273,15 @@ test("analysis stays visible during generation and forwards when ready", async (
   assert.equal(shown(), "page-mic-test");
 });
 
+test("an early task page returns to review when generation finds nothing checkable", async () => {
+  fixture = detail("generatingTasks", [task("learn", "pending", 0)]);
+  await mount(`${BASE}/learn/learn-0`);
+  assert.equal(shown(), "page-learn-task");
+  await advance({ ...detail("awaitingObjectReview"), sceneShortfall: { missing: ["counts"], missions: [] } });
+  await flush();
+  assert.equal(shown(), "page-analysis");
+});
+
 test("resuming generation forwards to mic check after generation finishes", async () => {
   fixture = detail("generatingTasks");
   await mount(`${BASE}/analysis`);

@@ -10,6 +10,9 @@ from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.repositories.practice import PracticeConflictError
 from app.schemas.sessions import ReviewPracticeRequest
 
+# A thin scene is rejected on mission profiles; these tests cover the regular lesson.
+pytestmark = pytest.mark.usefixtures("regular_lesson")
+
 
 def test_processing_transition_preserves_draft_and_records_timeout_clock():
     from datetime import datetime
@@ -183,7 +186,8 @@ def test_review_rebuilds_tasks_only_for_selected_objects():
         "id": profile_id,
         "source_language_code": "en",
         "target_language_code": "es",
-        "proficiency_level": "A2",
+        # B1 has no implemented missions, so it keeps the regular lesson's tasks.
+        "proficiency_level": "B1",
     }
 
     @contextmanager

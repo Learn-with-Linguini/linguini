@@ -1,6 +1,7 @@
 from concurrent.futures import ThreadPoolExecutor
 from uuid import UUID, uuid4
 
+import pytest
 from sqlalchemy import delete, insert, select, update
 from test_postgres_sessions import create_run
 from test_postgres_sessions import database as database
@@ -10,6 +11,9 @@ from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.users import users
 from app.schemas.users import LanguageProfile, User
 from app.services.scene_analysis import DeterministicSceneAnalyzer
+
+# A thin scene is rejected on mission profiles; these tests cover the regular lesson.
+pytestmark = pytest.mark.usefixtures("regular_lesson")
 
 
 def test_analyzer_runs_once_and_review_state_never_reanalyzes(database, monkeypatch):

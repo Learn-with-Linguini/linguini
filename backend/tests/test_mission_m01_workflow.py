@@ -19,6 +19,7 @@ from app.repositories.postgres.users import users
 from app.repositories.postgres.vocabulary import user_vocabulary_progress, vocabulary_encounters
 from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.repositories.postgres.xp import xp_events
+from app.repositories.practice import InsufficientSceneError
 from app.schemas.sessions import ReviewPracticeRequest
 from app.schemas.tasks import SkipTaskRequest
 from app.services import mission_eligibility, mission_lessons_m01
@@ -172,23 +173,38 @@ def test_less_familiar_pairs_come_first_and_resume_keeps_them(curated):
     assert resumed.public_content == detail.tasks[1].public_content
 
 
-def test_a_photo_no_mission_fits_gets_the_regular_lesson_with_tips(curated):
+def test_a_photo_no_mission_fits_is_sent_back_with_what_it_needs(curated):
     _engine, _owner, profile, client, *_ = curated
     repository = _repository(curated, SceneModel())
     sid, analyzed = _analyzed(curated, repository)
     coloured = next(obj for obj in analyzed.scene_objects if obj.attributes)
-    repository.review(sid, profile.id, ReviewPracticeRequest(
+    request = ReviewPracticeRequest(
         accepted_object_ids=[coloured.id],
         object_attributes={coloured.id: coloured.attributes},
-    ))
+    )
+    with pytest.raises(InsufficientSceneError) as rejected:
+        repository.review(sid, profile.id, request)
+    assert rejected.value.shortfall.missing == ("objects", "attributes")
+    assert rejected.value.shortfall.missions[0]["reasons"][0] == (
+        "Confirm at least 2 different objects."
+    )
+    # Nothing from the rejected review is kept, and no default lesson is built.
     detail = repository.get(sid, profile.id)
-    assert detail.session.status == "inProgress"
-    assert detail.session.analysis_draft["missionPlan"] == []
-    assert all(task.public_content.mission_key is None for task in detail.tasks)
-    tips = " ".join(detail.mission_guidance)
-    assert "Identify and describe an object: Confirm at least 2 different objects." in tips
-    response = client.get(f"/api/v1/sessions/{sid}").json()
-    assert response["missionGuidance"] == detail.mission_guidance
+    assert detail.session.status == "awaitingObjectReview"
+    assert detail.tasks == []
+    assert "missionPlan" not in (detail.session.analysis_draft or {})
+    assert len(detail.scene_objects) == len(analyzed.scene_objects)
+
+    response = client.put(
+        f"/api/v1/sessions/{sid}/review",
+        json=request.model_dump(mode="json", by_alias=True),
+    )
+    assert response.status_code == 422, response.text
+    body = response.json()["detail"]
+    assert body["code"] == "insufficient_scene"
+    assert body["missing"] == ["objects", "attributes"]
+    assert body["missions"][0]["missionId"] == "M01"
+    assert repository.get(sid, profile.id).session.status == "awaitingObjectReview"
 
 
 def test_a_session_confirmed_without_a_mission_plan_is_planned_at_generation(curated):
@@ -237,23 +253,24 @@ def test_an_empty_saved_mission_plan_stays_unplanned(curated):
 
 
 
-def test_a_colour_without_a_reviewed_form_skips_m01_for_the_regular_lesson(
+def test_a_colour_without_a_reviewed_form_reopens_review_instead_of_a_default_lesson(
     curated, monkeypatch,
 ):
     monkeypatch.setattr(mission_lessons_m01, "agreed_attribute", lambda *_: None)
     model = SceneModel()
-    _repository_, _sid, detail = _lesson(curated, model)
-    assert detail.session.status == "inProgress"
+    _repository_, sid, detail = _lesson(curated, model)
+    assert detail.session.status == "awaitingObjectReview"
     assert detail.session.analysis_draft["skippedMissions"] == [
         {"missionId": "M01", "reason": "noReviewedContent"}
     ]
-    assert "learning_tasks_v2" in model.requests
-    assert any(
-        task.kind == "grammarLesson" and task.public_content.mission_key is None
-        for task in detail.tasks
-    )
-    assert "ispyRound" in {task.kind for task in detail.tasks}
-    assert all(task.public_content.mission_key is None for task in detail.tasks)
+    # Neither the regular lesson nor the deterministic default tasks are built.
+    assert "learning_tasks_v2" not in model.requests
+    assert detail.tasks == []
+    assert detail.scene_shortfall is not None
+    assert detail.scene_shortfall.missing == ["objects", "counts", "attributes", "relations"]
+    assert [item.mission_id for item in detail.scene_shortfall.missions] == ["M01"]
+    response = curated[3].get(f"/api/v1/sessions/{sid}").json()
+    assert response["sceneShortfall"]["missing"] == detail.scene_shortfall.missing
 
 @pytest.mark.parametrize("level", ["B1"])
 def test_other_levels_keep_the_existing_lesson(curated, level):

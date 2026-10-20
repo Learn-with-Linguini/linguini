@@ -70,6 +70,7 @@ from app.repositories.postgres.xp import award, xp_events
 from app.repositories.practice import (
     ActiveSessionLimitReachedError,
     DailyLessonLimitReachedError,
+    InsufficientSceneError,
     PracticeConflictError,
     PracticeNotFoundError,
     PracticeStorageError,
@@ -121,12 +122,14 @@ from app.services.ispy_descriptions import (
     interpret_guess,
 )
 from app.services.mission_eligibility import (
+    SHORTFALL_KINDS,
+    SceneShortfall,
     lesson_missions,
     mission_snapshot,
-    photo_eligibility,
     plan_missions,
     provisional_mission_focus,
     saved_counted_groups,
+    scene_shortfall,
     snapshot_missions,
 )
 from app.services.mission_lessons import mission_version
@@ -1459,6 +1462,11 @@ class PostgresWorkflowRepository:
             personalization=(draft or {}).get("personalization"),
             counted_groups=saved_counted_groups(draft),
             mission_guidance=(draft or {}).get("missionGuidance", []),
+            scene_shortfall=(
+                (draft or {}).get("sceneShortfall")
+                if session.status in _REVIEW_STATUSES
+                else None
+            ),
             mission_choices=(draft or {}).get("missionChoices"),
             review_markers=(
                 {} if session.status in _REVIEW_STATUSES
@@ -2193,7 +2201,7 @@ class PostgresWorkflowRepository:
                 c, session_id, request, confirmed, existing, manual_ids
             )
             self._save_review_markers(c, session_id, request, manual_ids)
-            self._plan_missions(c, session, profile, confirmed, counted, [
+            shortfall = self._plan_missions(c, session, profile, confirmed, counted, [
                 relation.model_copy(update=dict(
                     subject_scene_object_id=manual_ids.get(
                         relation.subject_scene_object_id, relation.subject_scene_object_id
@@ -2204,6 +2212,10 @@ class PostgresWorkflowRepository:
                 ))
                     for relation in request.relations
                 ], mission_choices=mission_choices or {})
+            if shortfall is not None:
+                # Roll the review back so the learner can add facts; no lesson
+                # without checkable missions is generated.
+                raise InsufficientSceneError(shortfall)
             c.execute(
                 update(sessions)
                 .where(sessions.c.id == session_id)
@@ -2470,7 +2482,7 @@ class PostgresWorkflowRepository:
         """Snapshot the lesson's mission plan from the confirmed facts before generation."""
         candidates = lesson_missions(session.mode, profile)
         if not candidates:
-            return
+            return None
         history_drafts = c.execute(
             select(sessions.c.analysis_draft).where(
                 sessions.c.language_profile_id == profile["id"],
@@ -2538,18 +2550,14 @@ class PostgresWorkflowRepository:
             mission_plan.append(entry)
         draft["missionPlan"] = mission_plan
         draft.pop("missionGuidance", None)
-        if not plan:
-            # No mission fits, so the regular lesson runs with tips for a future photo.
-            draft["missionGuidance"] = [
-                f"{mission.title}: "
-                + " ".join(
-                    photo_eligibility(mission, objects, relations, counted_groups).reasons
-                )
-                for mission in candidates
-            ]
+        draft.pop("sceneShortfall", None)
         c.execute(update(sessions).where(sessions.c.id == session.id).values(
             analysis_draft=draft,
         ))
+        # No mission fits: report what is short instead of a lesson that cannot be checked.
+        return None if plan else scene_shortfall(
+            candidates, objects, relations, counted_groups, mission_choices
+        )
 
     def _planned_missions(self, session, profile):
         if not lesson_missions(session.mode, profile):
@@ -2711,8 +2719,12 @@ class PostgresWorkflowRepository:
                 skipped_missions,
             )
             mission_lessons = lesson()
-        if not mission_lessons and self.translator:
-            # With no mission task left, use the regular lesson.
+        shortfall = None
+        if not mission_lessons and lesson_missions(session.mode, profile):
+            # Mission profiles never fall back to the unchecked regular lesson.
+            shortfall = self._generation_shortfall(claim, session, objects, relations)
+        if not mission_lessons and self.translator and shortfall is None:
+            # Profiles without implemented missions keep the regular lesson.
             lessons, ispy_clues = self._lessons_and_clues(
                 session_id,
                 payload,
@@ -2724,7 +2736,12 @@ class PostgresWorkflowRepository:
                 history=lesson_history(claim.learner_history, introduction),
                 history_scope=CacheScope.user(f"{self.user_id}:{claim.profile_id}"),
             )
-        if not mission_lessons and self.translator and self.ispy_guess_generator:
+        if (
+            not mission_lessons
+            and self.translator
+            and self.ispy_guess_generator
+            and shortfall is None
+        ):
             ispy_descriptions = build_ispy_description_tasks(
                 session_id,
                 objects,
@@ -2735,6 +2752,9 @@ class PostgresWorkflowRepository:
         with self.transaction() as c:
             session = self._current_generation(c, claim)
             if session is None:
+                return
+            if shortfall is not None:
+                self._reopen_review(c, session, shortfall, skipped_missions)
                 return
             learning = [task for task in rebuilt if task.kind not in {"ispyRound", "reflection"}]
             clues = ispy_clues or [task for task in rebuilt if task.kind == "ispyRound"]
@@ -2818,6 +2838,48 @@ class PostgresWorkflowRepository:
                     .on_conflict_do_nothing(index_elements=["id"])
                 )
             self._transition(c, session, "inProgress")
+
+    @staticmethod
+    def _generation_shortfall(claim, session, objects, relations):
+        """What the confirmed scene lacks when no planned mission produced a lesson."""
+        draft = session.analysis_draft or {}
+        shortfall = scene_shortfall(
+            lesson_missions(session.mode, claim.profile),
+            objects,
+            relations,
+            claim.counted_groups,
+            draft.get("missionChoices") or {},
+        )
+        if shortfall is not None:
+            return shortfall
+        # The missions fitted the photo but none had reviewed content to check.
+        return SceneShortfall(
+            missing=SHORTFALL_KINDS,
+            missions=tuple(
+                {
+                    "missionId": mission.mission_id,
+                    "title": mission.title,
+                    "missing": [],
+                    "reasons": [
+                        "Linguini couldn't build checked questions from these facts."
+                    ],
+                }
+                for mission in claim.missions
+            ),
+        )
+
+    def _reopen_review(self, c, session, shortfall, skipped):
+        """Drop the partial lesson and send the learner back to review with what is short."""
+        c.execute(delete(session_tasks).where(session_tasks.c.session_id == session.id))
+        draft = {**(session.analysis_draft or {}), "sceneShortfall": shortfall.as_json()}
+        if skipped:
+            draft["skippedMissions"] = skipped
+        logger.info(
+            "Session %s has no checkable mission; reopening review (missing=%s).",
+            session.id,
+            ",".join(shortfall.missing),
+        )
+        self._transition(c, session, "awaitingObjectReview", analysis_draft=draft)
 
     def _mission_lessons(self, claim, objects, relations, words, translated_scene, skipped):
         """One validated lesson per planned mission; a generation failure uses its fallback.

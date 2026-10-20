@@ -27,6 +27,11 @@ test("statuses at or beyond the client's are written through", () => {
   assert.equal(keepClientProgress(null, detail("awaitingObjectReview")).session.status, "awaitingObjectReview");
 });
 
+test("a review the server reopened with a shortfall replaces generation progress", () => {
+  const reopened = { ...detail("awaitingObjectReview"), sceneShortfall: { missing: ["counts" as const], missions: [] } };
+  assert.equal(keepClientProgress(detail("generatingTasks"), reopened), reopened);
+});
+
 test("another session's detail is used as-is", () => {
   const incoming = detail("awaitingObjectReview", "s2");
   assert.equal(keepClientProgress(detail("generatingTasks"), incoming), incoming);

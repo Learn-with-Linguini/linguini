@@ -32,6 +32,9 @@ from app.schemas.sessions import ReviewPracticeRequest
 from app.schemas.tasks import SubmitTextAttemptRequest
 from app.services.ispy_descriptions import EVALUATION_FAILED_MESSAGE
 
+# A thin scene is rejected on mission profiles; these tests cover the regular lesson.
+pytestmark = pytest.mark.usefixtures("regular_lesson")
+
 
 class NoTransactionProbe:
     """Fails a provider call made while this thread holds a SQLAlchemy transaction."""

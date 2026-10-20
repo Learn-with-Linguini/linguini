@@ -170,6 +170,23 @@ class SessionPersonalization(ApiModel):
     ]] = Field(default_factory=list)
 
 
+type ShortfallKind = Literal["objects", "counts", "attributes", "relations"]
+
+
+class MissionShortfall(ApiModel):
+    mission_id: str
+    title: str
+    missing: list[ShortfallKind] = Field(default_factory=list)
+    reasons: list[str] = Field(default_factory=list)
+
+
+class SceneShortfall(ApiModel):
+    """Confirmed facts a lesson still needs before any mission can be checked."""
+
+    missing: list[ShortfallKind]
+    missions: list[MissionShortfall] = Field(default_factory=list)
+
+
 class SessionDetailResponse(ApiModel):
     analysis_mode: Literal["placeholder"] | None = None
     media_asset: MediaAsset
@@ -182,6 +199,8 @@ class SessionDetailResponse(ApiModel):
     personalization: SessionPersonalization | None = None
     counted_groups: list[CountedGroup] = Field(default_factory=list)
     mission_guidance: list[str] = Field(default_factory=list)
+    # Set when task generation found nothing checkable and reopened the review.
+    scene_shortfall: SceneShortfall | None = None
     # Reviewed sessions: scene object id -> its marker number on the review screen.
     review_markers: dict[str, int] = Field(default_factory=dict)
     provisional_mission_plan: list[JsonObject] = Field(default_factory=list)

@@ -3,6 +3,7 @@
 from types import SimpleNamespace
 from uuid import UUID
 
+import pytest
 from test_postgres_sessions import create_run, vocabulary_answer
 from test_postgres_sessions import database as database
 
@@ -10,6 +11,9 @@ from app.ai.features.translation.schemas import SceneTranslationResult
 from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.schemas.sessions import ReviewPracticeRequest
 from app.services.session_plan import build_tasks
+
+# A thin scene is rejected on mission profiles; these tests cover the regular lesson.
+pytestmark = pytest.mark.usefixtures("regular_lesson")
 
 
 class DeferringRunner:
