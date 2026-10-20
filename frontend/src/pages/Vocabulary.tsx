@@ -92,6 +92,7 @@ export function Vocabulary() {
       {!hasRevisitHistory ? <Card><div className="stack-2"><h2>Your journey begins with a scene</h2><p>Practise with a photo and the places you explore will appear here.</p><Button onClick={() => { trackAction("revisit_empty_practice_started"); navigate("/practice"); }}>Begin practice</Button></div></Card> : null}
       {sceneGroups.map(({ scene, words }, index) => {
         const scenario = scenarioByAsset.get(scene.id);
+        const unfinished = scenario?.status === "in-progress";
         const startsSecondColumn = index === Math.ceil(sceneGroups.length / 2);
         return <section key={scene.id} className={`revisit-stop${startsSecondColumn ? " revisit-stop--column-start" : ""}`}>
           <div className="revisit-stop__card">
@@ -104,10 +105,10 @@ export function Vocabulary() {
                 aria-label={scenario?.sessionId ? `Revisit ${scene.title}` : `Revisit unavailable for ${scene.title}`}
                 onClick={() => {
                   if (!scenario?.sessionId) return;
-                  trackAction("scene_vocabulary_review_started", { sessionId: scenario.sessionId });
-                  navigate(`/practice/sessions/${scenario.sessionId}/review`);
+                  trackAction(unfinished ? "scene_practice_continued" : "scene_vocabulary_review_started", { sessionId: scenario.sessionId });
+                  navigate(`/practice/sessions/${scenario.sessionId}/${unfinished ? "learn" : "review"}`);
                 }}>
-                <PlayIcon size={18} /> {scenario?.sessionId ? "Revisit" : "Unavailable"}
+                <PlayIcon size={18} /> {scenario?.sessionId ? unfinished ? "Continue" : "Revisit" : "Unavailable"}
               </Button>
             </div>
             <div className="vocabulary-scene__content stack-2">
