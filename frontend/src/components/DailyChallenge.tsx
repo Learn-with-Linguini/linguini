@@ -70,6 +70,7 @@ export function DailyChallenge() {
     <div className="daily-challenge__body">
       <div className="daily-challenge__join">
         <ChallengeHeadline challenge={data} id="daily-challenge-title" />
+       
         <div className="daily-challenge__prizes">
           <p><TrophyIcon size={18} />Rare finds earn bonus Basil</p>
           <ol>{DAILY_CHALLENGE_PRIZES.map(prize => <li key={prize.place}><span>{prize.place}</span><strong><BasilIcon size={18} />{prize.basil}<span className="visually-hidden"> Basil</span></strong></li>)}</ol>
