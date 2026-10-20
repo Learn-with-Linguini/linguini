@@ -8,7 +8,7 @@ camelCase, matching the workflow payload keys.
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import Field
 
@@ -53,3 +53,15 @@ class SceneTranslationResult(ApiModel):
     objects: Annotated[list[TranslatedTerm], Field(max_length=70)]
     attributes: Annotated[list[TranslatedTerm], Field(max_length=200)]
     relationships: Annotated[list[TranslatedTerm], Field(max_length=100)]
+
+
+class TranslationReviewIssue(ApiModel):
+    group: Literal["objects", "attributes", "relationships"]
+    key: NonEmptyText
+    problem: NonEmptyText
+
+
+class TranslationReview(ApiModel):
+    """Translations a reviewer is confident do not express their English source."""
+
+    issues: Annotated[list[TranslationReviewIssue], Field(max_length=370)]
