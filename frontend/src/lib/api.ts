@@ -504,8 +504,10 @@ export interface PracticeDetail {
   missionChoices?: MissionChoices | null;
 }
 export type ShortfallKind = "objects" | "counts" | "attributes" | "relations";
+/** One concrete thing to add, worded from the learner's confirmed review. */
+export interface ShortfallStep { kind: ShortfallKind; text: string }
 export interface MissionShortfall {
-  missionId: string; title: string; missing: ShortfallKind[]; reasons: string[];
+  missionId: string; title: string; missing: ShortfallKind[]; reasons: string[]; steps: ShortfallStep[];
 }
 /** Confirmed facts a lesson still needs before any mission can be checked. */
 export interface SceneShortfall {
