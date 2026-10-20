@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { gamificationKeys, getChefStandings } from "../lib/gamification";
 import { trackAction } from "../lib/analytics.ts";
 import { useAppState } from "../state/useAppState";
-import { BasilIcon, TrophyIcon } from "./icons";
+import { BasilIcon } from "./icons";
 import { InlineLoader } from "./LoadingScreen";
 import { Button } from "./ui";
 import "./gamification.css";
