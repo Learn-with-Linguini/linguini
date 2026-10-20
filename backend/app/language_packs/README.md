@@ -129,6 +129,30 @@ For release evidence, `LINGUINI_LANGUAGE_PACK_EVIDENCE_DIR` contains files named
 **unreviewed**, so setting the flag and allowlist alone cannot release it. Do not
 create review metadata to make the gates pass.
 
+## Missions beyond M01
+
+`missions.toml` is the language-independent catalog of pack lessons: for each
+mission, level and content version it lists the question slots in order (purpose,
+construction, targets, repeats) and the fixed labels and minimum construction
+versions they need. Readiness checks it against each pack, planning expands it into
+slots, and generation guidance is selected per slot from it. It contains no
+sentences; those come from packs and the model.
+
+`registry.py` holds the mission-specific code (`PACK_MISSIONS`): a planner that binds
+confirmed facts to the slots, an adapter that turns accepted sentences into the
+existing task contract, input and assembled-lesson checks, phrase-tile slots and pack
+photo rules. Only M01 is registered today. To add a mission: add its templates to
+`missions.toml`, register its code, and give each pack the constructions, labels,
+examples and evaluations it needs. The pipeline, checks, evaluation (`--mission`)
+and release gates are shared.
+
+A session's language context records which mission templates are ready and which
+the pack declares (`readyMissions`, `declaredMissions`; older snapshots load as M01).
+A declared mission is owned by the pack: its ready versions are planned and blocked
+ones are not offered, never silently replaced by the legacy builder. Missions a pack
+does not declare keep their legacy implementation. Learner-confirmed counts are
+bound as `counted_groups` facts for missions that need them.
+
 ## One language context per normal M01 generation
 
 Scene analysis resolves the selected pack before provisional eligibility/planning.

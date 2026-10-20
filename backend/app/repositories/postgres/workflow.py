@@ -2082,12 +2082,18 @@ class PostgresWorkflowRepository:
                 )
                 session = self._session(c, session_id, profile_id)
             missions = tuple(self._planned_missions(session, dict(profile), language_context))
-            if language_context is not None and any(
-                lesson_mission(m).mission_id == "M01"
-                and str(lesson_mission(m).practice_level) not in language_context.ready_levels
-                for m in missions
-            ):
-                raise LearningTaskGenerationError("Selected M01 level is not ready in this context")
+            blocked = next((
+                lesson_mission(m) for m in missions
+                if language_context is not None
+                and language_context.declares(
+                    lesson_mission(m).mission_id, lesson_mission(m).practice_level
+                )
+                and not language_context.is_ready(lesson_mission(m))
+            ), None)
+            if blocked is not None:
+                raise LearningTaskGenerationError(
+                    f"Selected {blocked.mission_id} level is not ready in this context"
+                )
             draft = session.analysis_draft or {}
             mission_progress = (
                 self._mission_progress(c, dict(profile), history) if missions else None
@@ -2683,19 +2689,21 @@ class PostgresWorkflowRepository:
         lessons = []
         for planned in claim.missions:
             mission = lesson_mission(planned)
-            if mission.mission_id == "M01" and getattr(claim, "language_context", None) is not None:
+            context = getattr(claim, "language_context", None)
+            if context is not None and context.declares(mission.mission_id, mission.practice_level):
                 if self.learning_task_generator is None:
                     raise LearningTaskGenerationError(
-                        "M01 pack generation needs a configured provider."
+                        f"{mission.mission_id} pack generation needs a configured provider."
                     )
                 # Missions reach this point through the existing eligibility/review flow.
                 # A pack failure propagates to the normal recoverable generation error state.
-                lessons.append(self.learning_task_generator.generate_pack_m01(
+                lessons.append(self.learning_task_generator.generate_pack_lesson(
                     mission, language, objects, relations, words, translated_scene,
                     session_id=claim.session_id, review_markers=claim.review_markers or {},
                     cache_scope=claim.cache_scope,
-                    register=claim.language_context.display.register_id,
-                    language_context=claim.language_context,
+                    register=context.display.register_id,
+                    language_context=context,
+                    counted_groups=claim.counted_groups or (),
                 ))
                 continue
             spec = lesson_spec(mission)

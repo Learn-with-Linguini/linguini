@@ -13,10 +13,9 @@ from app.ai.contracts.text import TextModelConfig, TextModelResponse
 from app.ai.observability import NoOpAITracer
 from app.ai.registry import build_routed_client
 from app.ai.settings import AiFeature, load_ai_settings
-from app.schemas.enums import ProficiencyLevel
 
 from .assembly import assemble, is_correct
-from .capabilities import lesson_plan, mission_capability
+from .capabilities import lesson_plan, mission_capability, mission_template_key
 from .evaluation import evaluate_pack
 from .fingerprint import language_pack_feature_version, pack_fingerprint
 from .generation import (
@@ -68,6 +67,7 @@ def _parser() -> argparse.ArgumentParser:
         preview.add_argument("--pack-dir", type=Path, required=True)
         preview.add_argument("--language", required=True)
         preview.add_argument("--register", required=True)
+        preview.add_argument("--mission", default="M01")
         if command == "capability":
             preview.add_argument("--evidence", type=Path)
         if command == "plan":
@@ -80,6 +80,7 @@ def _parser() -> argparse.ArgumentParser:
     evaluate_parser.add_argument("--register", required=True)
     evaluate_parser.add_argument("--level", choices=["A0", "A1", "A2"], required=True)
     evaluate_parser.add_argument("--vocabulary", type=Path, required=True)
+    evaluate_parser.add_argument("--mission", default="M01")
     evaluate_parser.add_argument("--out", type=Path)
 
     generate_parser = subparsers.add_parser("generate")
@@ -93,6 +94,7 @@ def _parser() -> argparse.ArgumentParser:
     generate_parser.add_argument("--responses", type=Path)
     generate_parser.add_argument("--preview", action="store_true")
     generate_parser.add_argument("--evidence", type=Path)
+    generate_parser.add_argument("--mission", default="M01")
 
     assemble_parser = subparsers.add_parser("assemble")
     assemble_parser.add_argument("--pack-dir", type=Path, required=True)
@@ -192,7 +194,7 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
             "levels": {
                 level: mission_capability(
                     pack,
-                    ("M01", ProficiencyLevel(level), 1),
+                    mission_template_key(args.mission, level),
                     evaluation_record=evidence,
                 ).model_dump(mode="json", by_alias=False)
                 for level in ("A0", "A1", "A2")
@@ -202,7 +204,7 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
     if args.command == "evaluate":
         vocabulary_path = args.vocabulary
         vocabulary = ApprovedVocabulary.model_validate(_read_json(vocabulary_path))
-        report, record = evaluate_pack(pack, args.level, vocabulary)
+        report, record = evaluate_pack(pack, args.level, vocabulary, mission_id=args.mission)
         return {
             "table": _evaluation_table(report),
             "report": report,
@@ -233,6 +235,7 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
             plan_specs=scene.get("plan_specs", {}).get(args.level),
             builder_selection=scene.get("builder_selection"),
             preview=args.preview,
+            mission_id=args.mission,
         )
         evidence = _evidence(args.evidence)
         output = {
@@ -251,13 +254,16 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
         if evidence is not None:
             output["capability"] = mission_capability(
                 pack,
-                ("M01", args.level, 1),
+                mission_template_key(args.mission, args.level),
                 evaluation_record=evidence,
             ).model_dump(mode="json", by_alias=False)
         return output
 
     scene = _read_json(args.scene)
-    key = ("M01", ProficiencyLevel(args.level), 1) if args.command in {"plan", "assemble"} else None
+    key = (
+        mission_template_key(getattr(args, "mission", "M01"), args.level)
+        if args.command in {"plan", "assemble"} else None
+    )
     plan = lesson_plan(pack, key, scene.get("slot_bindings", {})) if key else None
     if args.command == "plan":
         assert plan is not None

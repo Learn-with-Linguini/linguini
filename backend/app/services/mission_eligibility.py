@@ -186,12 +186,24 @@ def lesson_missions(session_mode, profile, language_context=_CONTEXT_UNSET):
         )
     ]
     if language_context is not None:
-        missions = [mission for mission in missions if mission.mission_id != "M01"]
-        if level in language_context.ready_levels:
-            mission = get_mission("M01", level, 1)
-            if mission is not None:
-                missions.insert(0, mission)
+        # A pack owns the missions it declares at this level: its ready versions are
+        # planned and blocked ones are not offered, never silently replaced by the
+        # legacy builder. Undeclared missions keep their legacy implementation.
+        missions = [
+            mission for mission in missions
+            if not language_context.declares(mission.mission_id, level)
+        ]
+        ready = [
+            mission for key in language_context.ready_missions_at(level)
+            if (mission := get_mission(*key)) is not None
+        ]
+        missions = [*ready, *missions]
     return missions
+
+
+def _pack_mission(mission, language_context):
+    """Whether this mission's lesson is generated from the session's language pack."""
+    return language_context is not None and language_context.is_ready(mission)
 
 
 def plan_missions(
@@ -288,8 +300,8 @@ def provisional_mission_focus(candidates, objects, relations, language_context=N
             seen = set()
             for obj in objects:
                 label = obj.label.strip().casefold()
-                has_detail = (scene_attributes(obj) if language_context is not None
-                              and mission.mission_id == "M01" else confirmed_colour(obj))
+                has_detail = (scene_attributes(obj) if _pack_mission(mission, language_context)
+                              else confirmed_colour(obj))
                 if label not in seen and has_detail:
                     add(obj.id)
                     seen.add(label)
@@ -442,7 +454,7 @@ def photo_eligibility(
 ):
     """Check only the confirmed facts this mission's photo requirements name."""
     requirements = mission.photo_requirements
-    pack_m01 = language_context is not None and mission.mission_id == "M01"
+    pack = _pack_mission(mission, language_context)
     labels = {obj.label.strip().casefold() for obj in objects}
     reasons = []
     if len(labels) < requirements.min_confirmed_objects:
@@ -451,7 +463,7 @@ def photo_eligibility(
         )
     # ``min_coloured_objects`` counts objects with any reviewed attribute, colour or other.
     described = {obj.label.strip().casefold() for obj in objects
-                 if (scene_attributes(obj) if pack_m01 else confirmed_attributes(obj))}
+                 if (scene_attributes(obj) if pack else confirmed_attributes(obj))}
     if len(described) < requirements.min_coloured_objects:
         reasons.append(
             "Confirm a colour, size, shape, material, pattern or state of at least one object."
@@ -470,17 +482,21 @@ def photo_eligibility(
             f"Count a group of {requirements.min_quantity} to {requirements.max_quantity} "
             "matching objects."
         )
-    if requirements.eligibility_rule and not pack_m01:
+    if requirements.eligibility_rule and not pack:
         from app.services.mission_eligibility_a2 import eligibility_reasons
 
         reasons.extend(eligibility_reasons(
             requirements.eligibility_rule, mission, objects, relations, counted_groups,
         ))
-    if pack_m01 and str(mission.practice_level) == "A2" and not (
-        described or confirmed_relations(mission, objects, relations)
-    ):
-        reasons.append("Confirm an object detail or relation for the scene description.")
-    if str(mission.practice_level) == "A0" and not pack_m01:
+    if pack:
+        # Dictionary-based rules above do not apply to open session vocabulary; the
+        # mission's pack implementation states its own photo requirements instead.
+        from app.language_packs.registry import pack_mission
+
+        reasons += pack_mission(mission.mission_id).photo_reasons(
+            mission, objects, relations, scene_attributes,
+        )
+    if str(mission.practice_level) == "A0" and not pack:
         reasons += a0_photo_reasons(mission, objects, counted_groups, mission_choices)
     return Eligibility(not reasons, tuple(reasons))
 

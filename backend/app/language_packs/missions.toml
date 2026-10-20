@@ -32,6 +32,7 @@ required_constructions = [
   { construction_id = "yes-no-identification", min_version = 1 },
   { construction_id = "describe-attribute", min_version = 1 },
 ]
+
 [[missions.slots]]
 purpose = "confirmObject"
 construction_id = "yes-no-identification"
@@ -61,6 +62,7 @@ required_constructions = [
   { construction_id = "connected-description", min_version = 1 },
   { construction_id = "describe-attribute", min_version = 1 },
 ]
+
 [[missions.slots]]
 purpose = "chooseSceneMarker"
 construction_id = "scene-existence"

@@ -1,4 +1,4 @@
-"""An immutable, serializable pack snapshot for one normal M01 operation."""
+"""An immutable, serializable pack snapshot for one normal pack-lesson operation."""
 
 import hashlib
 import json
@@ -12,26 +12,49 @@ from .loader import load_packs
 from .schema import LanguagePack
 
 
+def mission_key_text(key) -> str:
+    mission_id, level, content_version = key
+    return f"{mission_id}:{level}:{content_version}"
+
+
+def _parse_key(text):
+    mission_id, level, content_version = text.split(":")
+    return mission_id, level, int(content_version)
+
+
 @dataclass(frozen=True)
 class LanguageContext:
     pack_json: str
     display_json: str
     ready_levels: tuple[str, ...]
     experimental: bool
+    # "M01:A0:1" keys. Ready missions pass every gate; declared missions are those the
+    # pack has the constructions and labels for, so the pack owns them even when a
+    # review/release gate blocks them (no silent fallback to a legacy builder).
+    ready_missions: tuple[str, ...] = ()
+    declared_missions: tuple[str, ...] = ()
 
     @classmethod
     def from_snapshot(cls, snapshot):
         """Restore session-owned data, checking current gates against that same pack."""
         from .runtime import check_pack_readiness
 
+        levels = tuple(snapshot["readyLevels"])
+        # Snapshots saved before multi-mission packs only recorded M01 levels.
+        ready = tuple(snapshot.get("readyMissions") or (f"M01:{level}:1" for level in levels))
+        declared = tuple(snapshot.get("declaredMissions") or (
+            f"M01:{level}:1" for level in ("A0", "A1", "A2")
+        ))
         context = cls(
             snapshot["pack"],
             snapshot["display"],
-            tuple(snapshot["readyLevels"]),
+            levels,
             snapshot["experimental"],
+            ready,
+            declared,
         )
-        if not context.ready_levels:
-            raise ValueError("Saved language context has no ready M01 levels")
+        if not context.ready_missions:
+            raise ValueError("Saved language context has no ready mission levels")
         pack, display = context.pack, context.display
         if (pack.pack_id, pack.language.code, pack.language_register.register_id) != (
             display.pack_id,
@@ -40,9 +63,30 @@ class LanguageContext:
         ):
             raise ValueError("Saved language context does not match its pack snapshot")
         experimental = False
-        for level in context.ready_levels:
-            _, experimental = check_pack_readiness(pack, level, 1)
-        return cls(context.pack_json, context.display_json, context.ready_levels, experimental)
+        for text in context.ready_missions:
+            mission_id, level, content_version = _parse_key(text)
+            _, experimental = check_pack_readiness(pack, level, content_version, mission_id)
+        return cls(
+            context.pack_json, context.display_json, context.ready_levels, experimental,
+            context.ready_missions, context.declared_missions,
+        )
+
+    def _keys(self, values, level=None):
+        keys = [_parse_key(text) for text in values]
+        return [key for key in keys if level is None or key[1] == str(level)]
+
+    def ready_missions_at(self, level):
+        """Ready (mission_id, level, content_version) keys at a level, in catalog order."""
+        return self._keys(self.ready_missions, level)
+
+    def declares(self, mission_id, level):
+        return any(key[0] == mission_id for key in self._keys(self.declared_missions, level))
+
+    def is_ready(self, mission):
+        return any(
+            key[0] == mission.mission_id
+            for key in self._keys(self.ready_missions, mission.practice_level)
+        )
 
     @property
     def pack(self):
@@ -77,6 +121,8 @@ class LanguageContext:
             pack=self.pack_json,
             display=self.display_json,
             readyLevels=list(self.ready_levels),
+            readyMissions=list(self.ready_missions),
+            declaredMissions=list(self.declared_missions),
             experimental=self.experimental,
         )
 
@@ -84,7 +130,8 @@ class LanguageContext:
 def resolve_language_context(language, register=None):
     if not get_m01_language_packs_enabled():
         return None
-    from .runtime import check_pack_readiness
+    from .capabilities import pack_mission_keys
+    from .runtime import check_pack_readiness, mission_capability_for
 
     packs = load_packs()
     # Profiles historically normalize codes to lowercase; pack tags preserve
@@ -110,16 +157,24 @@ def resolve_language_context(language, register=None):
             ensure_ascii=False,
         ).encode()
     ).hexdigest()
-    ready, experimental, errors = [], False, []
-    for level in ("A0", "A1", "A2"):
+    ready, declared, experimental, errors = [], [], False, []
+    for key in pack_mission_keys():
+        mission_id, level, content_version = key
+        if mission_capability_for(pack, level, content_version, mission_id).structurally_supported:
+            declared.append(mission_key_text(key))
         try:
-            _, experimental = check_pack_readiness(pack, level, 1)
+            _, experimental = check_pack_readiness(pack, level, content_version, mission_id)
         except ValueError as exc:
             errors.append(str(exc))
             continue
-        ready.append(level)
+        ready.append(mission_key_text(key))
     if not ready:
-        raise ValueError(f"Pack {pack.pack_id!r} has no ready M01 levels: " + "; ".join(errors))
+        raise ValueError(
+            f"Pack {pack.pack_id!r} has no ready mission levels: " + "; ".join(errors)
+        )
+    ready_levels = tuple(
+        level for level in ("A0", "A1", "A2") if any(f":{level}:" in key for key in ready)
+    )
     language_settings = pack.language
     display = LanguageDisplayContext(
         pack_id=pack.pack_id,
@@ -147,8 +202,10 @@ def resolve_language_context(language, register=None):
     return LanguageContext(
         snapshot,
         display.model_dump_json(by_alias=False),
-        tuple(ready),
+        ready_levels,
         experimental,
+        tuple(ready),
+        tuple(declared),
     )
 
 

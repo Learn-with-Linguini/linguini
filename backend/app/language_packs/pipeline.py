@@ -9,7 +9,6 @@ from app.ai.cache.features import run_cached
 from app.ai.cache.store import CacheScope
 from app.schemas.base import ApiModel
 
-from .adapters import validate_lesson_inputs
 from .assembly import assemble_lesson
 from .capabilities import LessonPlan
 from .fingerprint import language_pack_feature_version, pack_fingerprint
@@ -26,8 +25,8 @@ from .generation import (
 from .loader import guidance_for_slot
 from .model_source import ASSESSOR_VERSION, GENERATOR_VERSION, ModelSource
 from .plan import bind_plan
+from .registry import pack_mission
 from .schema import LanguagePack, Provenance
-from .validation import validate_assembled_lesson
 from .validators import STRUCTURE_VERSION, validator_versions
 from .vocabulary import with_pack_vocabulary
 
@@ -142,13 +141,17 @@ def generate_pilot(
     assess_model: bool = False,
     session_id=None,
     cache_scope: CacheScope | None = _DEMO_CACHE_SCOPE,
+    mission_id: str = "M01",
 ) -> PilotGeneration:
+    mission = pack_mission(mission_id)
     vocabulary = with_pack_vocabulary(pack, vocabulary)
     proposal_mode = isinstance(source, ModelSource) and source.propose
     if proposal_mode:
         vocabulary = source.prepare(pack, level, facts, vocabulary)
-    plan = bind_plan(pack, level, facts, vocabulary, plan_specs, str(session_id or ""))
-    validate_lesson_inputs(level, pack, facts, vocabulary, plan)
+    plan = bind_plan(
+        pack, level, facts, vocabulary, plan_specs, str(session_id or ""), mission_id=mission_id,
+    )
+    mission.check_inputs(level, pack, facts, vocabulary, plan)
     mission_key = (plan.mission_id, plan.practice_level, plan.content_version)
     guidance_by_key = {}
     for slot in plan.slots:
@@ -369,8 +372,8 @@ def generate_pilot(
         accepted_candidate = derive_chunks(
             candidate,
             pack.language.word_separator,
-            phrase_chunks=(
-                str(plan.practice_level) == "A2" and candidate.slot_id == "buildSceneDescription"
+            phrase_chunks=candidate.slot_id in mission.phrase_slots.get(
+                str(plan.practice_level), frozenset()
             ),
             phrase_boundaries=pack.language.phrase_boundaries,
         )
@@ -410,9 +413,7 @@ def generate_pilot(
         if not preview:
             raise PipelineFailure(level, "assessment", "unassessed", attempts + 1, [assurance])
         mode = "experimentalPreview"
-    from .adapters import build_lesson
-
-    result, task, payload = build_lesson(
+    result, task, payload = mission.build(
         level,
         pack,
         facts,
@@ -423,7 +424,7 @@ def generate_pilot(
         session_id=session_id,
     )
     payload["pilotMode"] = mode
-    validate_assembled_lesson(level, result, ordered_approved, pack)
+    mission.check_lesson(level, result, ordered_approved, pack)
     if proposal_mode:
         # Inspect the actual choices, supports, feedback and grading map together;
         # isolated sentence grammar cannot establish an MCQ is unambiguous.

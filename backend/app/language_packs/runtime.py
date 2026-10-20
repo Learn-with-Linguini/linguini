@@ -17,32 +17,41 @@ from .generation import ApprovedTerm, ApprovedVocabulary, BoundSceneFacts
 from .loader import load_packs
 
 
-def runtime_pack(language: str, level: str, content_version: int, register: str):
+def runtime_pack(
+    language: str, level: str, content_version: int, register: str, mission_id: str = "M01",
+):
     pack = load_packs().get(language, register)
-    return check_pack_readiness(pack, level, content_version)
+    return check_pack_readiness(pack, level, content_version, mission_id)
 
 
-def check_pack_readiness(pack, level, content_version):
-    experimental = get_language_pack_experimental()
+def mission_capability_for(pack, level, content_version, mission_id="M01"):
+    """Capability of one mission template, including any release evidence on disk."""
     evidence = None
     evidence_dir = os.getenv("LINGUINI_LANGUAGE_PACK_EVIDENCE_DIR", "")
     if evidence_dir:
-        path = Path(evidence_dir) / f"{pack.pack_id}-M01-{level}.json"
+        path = Path(evidence_dir) / f"{pack.pack_id}-{mission_id}-{level}.json"
         if path.is_file():
             evidence = json.loads(path.read_text("utf-8"))
             evidence = evidence.get("evaluation_record", evidence)
-    capability = mission_capability(
+    return mission_capability(
         pack,
-        ("M01", level, content_version),
+        (mission_id, level, content_version),
         evaluation_record=evidence,
     )
+
+
+def check_pack_readiness(pack, level, content_version, mission_id="M01"):
+    experimental = get_language_pack_experimental()
+    capability = mission_capability_for(pack, level, content_version, mission_id)
     if not capability.structurally_supported or not (experimental or capability.release_enabled):
-        raise ValueError("M01 language pack unavailable: " + "; ".join(capability.blockers))
+        raise ValueError(
+            f"{mission_id} language pack unavailable: " + "; ".join(capability.blockers)
+        )
     return pack, experimental
 
 
 def available_pack_languages():
-    """Discover selectable M01 languages under the same runtime/release gates."""
+    """Discover languages with ready pack missions under the runtime/release gates."""
     if not get_m01_language_packs_enabled():
         return []
     from .context import resolve_language_context
@@ -54,7 +63,7 @@ def available_pack_languages():
         try:
             context = resolve_language_context(language)
         except ValueError as exc:
-            if "no ready M01 levels" in str(exc):
+            if "no ready mission levels" in str(exc):
                 continue
             raise
         languages.append(dict(code=language, levels=list(context.ready_levels),
@@ -62,8 +71,12 @@ def available_pack_languages():
     return sorted(languages, key=lambda language: language["code"])
 
 
-def session_inputs(pack, objects, relations, words, translated_scene, markers):
-    """Use instance IDs, not labels, including repeated names and attribute values."""
+def session_inputs(pack, objects, relations, words, translated_scene, markers, counted_groups=()):
+    """Use instance IDs, not labels, including repeated names and attribute values.
+
+    ``counted_groups`` are the learner-confirmed counts saved with the review
+    (``sceneObjectIds`` and ``quantity``); their nouns are the objects' own terms.
+    """
     if translated_scene is None:
         raise ValueError("M01 packs require the confirmed scene's translations")
     translated = {row.key: row for row in translated_scene.objects}
@@ -189,10 +202,27 @@ def session_inputs(pack, objects, relations, words, translated_scene, markers):
                 provenance="sessionTranslation",
             )
         )
+    count_facts = []
+    for group in counted_groups:
+        members = [str(item) for item in group.get("sceneObjectIds") or []]
+        quantity = group.get("quantity")
+        # A count is a fact only when every counted object is confirmed in this lesson.
+        if not members or not set(members) <= ids or not isinstance(quantity, int):
+            continue
+        if not 1 <= quantity <= 20:
+            continue
+        count_facts.append(
+            dict(
+                fact_id=f"count:{len(count_facts) + 1}",
+                object_fact_ids=[f"object:{member}" for member in members],
+                quantity=quantity,
+            )
+        )
     return BoundSceneFacts(
         scene_facts=dict(
             objects=object_facts,
             attributes=attribute_facts,
             relations=relation_facts,
+            counted_groups=count_facts,
         )
     ), ApprovedVocabulary(terms=terms)

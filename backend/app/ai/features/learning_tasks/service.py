@@ -211,7 +211,7 @@ class LearningTaskService:
         self._tracer = tracer
         self._provider = provider
 
-    def generate_pack_m01(
+    def generate_pack_lesson(
         self,
         mission,
         language,
@@ -225,19 +225,21 @@ class LearningTaskService:
         cache_scope=None,
         register="everyday",
         language_context=None,
+        counted_groups=(),
     ):
-        """Normal M01 workflow seam, sharing the routed provider and scoped cache."""
+        """Normal pack-lesson workflow seam, sharing the routed provider and scoped cache."""
         from app.language_packs.model_source import ModelSource
         from app.language_packs.pipeline import generate_pilot
         from app.language_packs.runtime import session_inputs
 
         try:
+            mission_id = mission.mission_id
             if language_context is None:
-                raise ValueError("M01 requires the operation's resolved language context")
+                raise ValueError(f"{mission_id} requires the operation's resolved language context")
             if language_context.display.language_code.casefold() != language.casefold():
-                raise ValueError("M01 context does not match the session language")
-            if str(mission.practice_level) not in language_context.ready_levels:
-                raise ValueError("M01 pack is not ready for the selected level")
+                raise ValueError(f"{mission_id} context does not match the session language")
+            if not language_context.is_ready(mission):
+                raise ValueError(f"{mission_id} pack is not ready for the selected level")
             pack, experimental = language_context.pack, language_context.experimental
             facts, vocabulary = session_inputs(
                 pack,
@@ -246,6 +248,7 @@ class LearningTaskService:
                 words,
                 translated_scene,
                 review_markers,
+                counted_groups,
             )
             generated = generate_pilot(
                 pack,
@@ -258,12 +261,17 @@ class LearningTaskService:
                 preview=experimental,
                 cache=self._cache,
                 cache_scope=cache_scope,
+                mission_id=mission_id,
             )
             return language_context.attach(generated.task)
         except ValueError as exc:
             raise LearningTaskGenerationError(
-                "M01 pack generation could not validate a lesson. Retry generation. " + str(exc)
+                f"{mission.mission_id} pack generation could not validate a lesson. "
+                "Retry generation. " + str(exc)
             ) from exc
+
+    # The original M01 seam; every pack mission now uses generate_pack_lesson.
+    generate_pack_m01 = generate_pack_lesson
 
     def generate(
         self, payload: dict[str, Any], *, cache_scope: CacheScope | None = None,

@@ -206,6 +206,27 @@ def mission_capability(
     )
 
 
+def mission_template_key(mission_id: str, level) -> tuple[str, str, int]:
+    """The catalog key of the newest pack template for a mission at a level."""
+    level = str(getattr(level, "value", level))
+    keys = [
+        item.key for item in load_mission_catalog().missions
+        if item.key[0] == mission_id and item.key[1] == level
+    ]
+    if not keys:
+        raise LanguagePackError(
+            "<mission catalog>", "/", f"no pack template for {mission_id} {level}"
+        )
+    return max(keys, key=lambda key: key[2])
+
+
+def pack_mission_keys() -> list[tuple[str, str, int]]:
+    """Catalog templates that have a pack lesson implementation, in catalog order."""
+    from .registry import PACK_MISSIONS
+
+    return [item.key for item in load_mission_catalog().missions if item.key[0] in PACK_MISSIONS]
+
+
 def lesson_plan(
     pack: LanguagePack,
     mission_key: tuple[str, ProficiencyLevel | str, int],

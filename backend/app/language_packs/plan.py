@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import random
 
-from app.schemas.enums import ProficiencyLevel
-
-from .capabilities import LessonPlan, LessonPlanSpec, lesson_plan
+from .capabilities import LessonPlan, LessonPlanSpec, lesson_plan, mission_template_key
 from .generation import ApprovedVocabulary, BoundSceneFacts
 from .schema import LanguagePack
 
@@ -18,19 +16,14 @@ def bind_plan(
     vocabulary: ApprovedVocabulary,
     plan_specs: dict[str, list[dict]] | None = None,
     seed: str = "",
+    mission_id: str = "M01",
 ) -> LessonPlan:
-    raw_specs = (
-        plan_specs
-        if plan_specs is not None
-        else automatic_specs(
-            pack,
-            level,
-            facts,
-            vocabulary,
-            seed,
-        )
-    )
-    base = lesson_plan(pack, ("M01", ProficiencyLevel(level), 1))
+    if plan_specs is None:
+        from .registry import pack_mission
+
+        plan_specs = pack_mission(mission_id).plan(pack, level, facts, vocabulary, seed)
+    raw_specs = plan_specs
+    base = lesson_plan(pack, mission_template_key(mission_id, level))
     known_facts = facts.all_fact_ids
     known_terms = {term.term_id for term in vocabulary.terms}
     slots = []
@@ -111,7 +104,7 @@ def bind_plan(
     return base.model_copy(update={"slots": slots})
 
 
-def automatic_specs(pack, level, facts, vocabulary, seed=""):
+def m01_specs(pack, level, facts, vocabulary, seed=""):
     """Preserve the M01 slot sequence, binding every sentence before generation."""
     objects = facts.scene_facts.objects
     terms = {term.fact_id: term for term in vocabulary.terms}

@@ -11,9 +11,8 @@ from uuid import NAMESPACE_URL, uuid5
 from pydantic import ValidationError
 
 from app.schemas.base import ApiModel, NonEmptyText
-from app.schemas.enums import ProficiencyLevel
 
-from .capabilities import LessonPlan, LessonPlanSpec, lesson_plan
+from .capabilities import LessonPlan, LessonPlanSpec, lesson_plan, mission_template_key
 from .fingerprint import pack_fingerprint
 from .generation import (
     ApprovedVocabulary,
@@ -77,11 +76,13 @@ def _evaluation_files(pack: LanguagePack) -> dict[str, str]:
 
 
 def evaluation_identity(
-    pack: LanguagePack, level: str, thresholds: dict[str, float | int] | None = None
+    pack: LanguagePack,
+    level: str,
+    thresholds: dict[str, float | int] | None = None,
+    mission_id: str = "M01",
 ) -> EvaluationIdentity:
-    template = next(
-        item for item in load_mission_catalog().missions if item.key == ("M01", level, 1)
-    )
+    key = mission_template_key(mission_id, level)
+    template = next(item for item in load_mission_catalog().missions if item.key == key)
     construction_ids = list(
         dict.fromkeys(
             construction_id for slot in template.slots for construction_id in slot.construction_ids
@@ -123,7 +124,7 @@ def evidence_is_current(
             if isinstance(record, EvaluationRecord)
             else EvaluationRecord.model_validate(record)
         )
-        current = evaluation_identity(pack, level, checked.identity.thresholds)
+        current = evaluation_identity(pack, level, checked.identity.thresholds, mission_id)
     except (ValueError, KeyError, StopIteration):
         return False
     return (
@@ -134,14 +135,17 @@ def evidence_is_current(
     )
 
 
-def _cases_for_level(pack: LanguagePack, level: str) -> list[EvaluationCase]:
+def _cases_for_level(
+    pack: LanguagePack, level: str, mission_id: str = "M01",
+) -> list[EvaluationCase]:
+    _, _, content_version = mission_template_key(mission_id, level)
     raw_case_ids: set[str] = set()
     for path in pack._evaluation_files:
         raw = tomllib.loads(path.read_text("utf-8"))
         if (
-            raw.get("mission_id") == "M01"
+            raw.get("mission_id") == mission_id
             and raw.get("practice_level") == level
-            and raw.get("content_version") == 1
+            and raw.get("content_version") == content_version
         ):
             raw_case_ids.update(item["case_id"] for item in raw.get("cases", []))
     return [case for case in load_evaluation_cases(pack) if case.case_id in raw_case_ids]
@@ -186,8 +190,9 @@ def _case_plan(
     case: EvaluationCase,
     vocabulary: ApprovedVocabulary,
     facts: BoundSceneFacts,
+    mission_id: str = "M01",
 ) -> LessonPlan:
-    base = lesson_plan(pack, ("M01", ProficiencyLevel(level), 1))
+    base = lesson_plan(pack, mission_template_key(mission_id, level))
     slot = next(slot for slot in base.slots if case.construction_id in slot.construction_ids)
     term_by_fact = {term.fact_id: term for term in vocabulary.terms}
     present_ids = facts.all_fact_ids
@@ -305,22 +310,23 @@ def evaluate_pack(
     *,
     thresholds: dict[str, float | int] | None = None,
     generation_result: Any | None = None,
+    mission_id: str = "M01",
 ) -> tuple[dict[str, Any], EvaluationRecord]:
     if generation_result is not None and str(getattr(generation_result, "mode", "")).startswith(
         "experimentalPreview"
     ):
         raise ValueError("preview generation results cannot be evaluation evidence")
 
-    cases = _cases_for_level(pack, level)
+    cases = _cases_for_level(pack, level, mission_id)
     if not cases:
-        raise ValueError(f"no evaluation cases for M01 {level}")
+        raise ValueError(f"no evaluation cases for {mission_id} {level}")
     report_cases = []
     valid_total = valid_accepted = reject_total = rejected_structurally = 0
     rejected_linguistically = missed = 0
     by_category: dict[str, dict[str, int]] = {}
     for case in cases:
         facts = _scene_facts(case)
-        plan = _case_plan(pack, level, case, vocabulary, facts)
+        plan = _case_plan(pack, level, case, vocabulary, facts, mission_id)
         slot_id = plan.slots[0].slot_id
         plan = plan.model_copy(
             update={"slots": [plan.slots[0].model_copy(update={"slot_id": slot_id})]}
@@ -399,7 +405,7 @@ def evaluate_pack(
     ) + sum(
         int(item["linguistic_pass"] is True) for case in report_cases for item in case["reject"]
     )
-    identity = evaluation_identity(pack, level, configured_thresholds).model_copy(
+    identity = evaluation_identity(pack, level, configured_thresholds, mission_id).model_copy(
         update={"thresholds_met": thresholds_met}
     )
     record = EvaluationRecord(
@@ -423,7 +429,7 @@ def evaluate_pack(
     )
     return (
         {
-            "mission_id": "M01",
+            "mission_id": mission_id,
             "practice_level": level,
             "structural": {
                 "candidates": valid_total + reject_total,
