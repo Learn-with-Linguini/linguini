@@ -11,7 +11,7 @@ import type { DailyChallenge as Challenge } from "../lib/dailyChallenge";
 import { friendlyError } from "../lib/queryKeys";
 import { sessionDestination } from "../lib/sessionRoute";
 import { useAppState } from "../state/useAppState";
-import { BasilIcon, CameraIcon, CheckIcon, ClockIcon } from "./icons";
+import { BasilIcon, CameraIcon, CheckIcon, ClockIcon, TrophyIcon } from "./icons";
 import { InlineLoader } from "./LoadingScreen";
 import { Button } from "./ui";
 import "./dailyChallenge.css";
