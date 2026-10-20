@@ -633,7 +633,8 @@ lesson.
   regular lesson, whose default tasks cannot all be checked. The review is rolled back and
   rejected with 422 `insufficient_scene`, whose `detail` adds `missing` (any of `objects`,
   `counts`, `attributes`, `relations`, for the missions closest to fitting) and `missions`
-  (each candidate's `missionId`, `title`, `missing` and `reasons`). The review screen asks
+  (each candidate's `missionId`, `title`, `missing`, `reasons` and `steps`: concrete
+  `{kind, text}` actions worded from the review, such as "Mark 1 more cup so there are 2 cups."). The review screen asks
   the learner to add those facts or try another photo. If every planned mission is skipped
   during generation, the partial tasks are dropped, the session returns to
   `awaitingObjectReview` and the same shape is saved as `analysisDraft.sceneShortfall`

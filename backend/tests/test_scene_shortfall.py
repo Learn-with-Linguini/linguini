@@ -17,6 +17,7 @@ from app.services.mission_eligibility import (
     photo_eligibility,
     scene_shortfall,
 )
+from app.services.shortfall_steps import mission_steps
 
 A1 = [get_mission(mission_id, "A1", 1) for mission_id in ("M01", "M03")] + [
     get_mission("M02", "A1", 2)
@@ -117,3 +118,67 @@ def test_the_rejection_is_a_structured_422():
     assert detail["missing"] == ["counts"]
     assert detail["missions"][0]["missionId"] == "M03"
     assert "try another photo" in detail["message"]
+
+
+def _counts(objects, *pairs):
+    return [
+        {"label": label, "quantity": quantity,
+         "sceneObjectIds": [str(item.id) for item in objects if item.label == label]}
+        for label, quantity in pairs
+    ]
+
+
+def test_steps_say_exactly_what_to_mark_from_the_review():
+    m01, m03, m02 = A1
+    cup = [obj(CUP, "cup")]
+    assert mission_steps(m03, cup, [], _counts(cup, ("cup", 1)), ["counts"]) == [
+        {"kind": "counts", "text": "Mark 1 more cup so there are 2 cups."},
+    ]
+    two = [obj(CUP, "cup"), obj(BOOK, "book", color="blue")]
+    assert mission_steps(m01, two, [], [], ["attributes"]) == [{
+        "kind": "attributes",
+        "text": "Give the cup a colour, size, shape, material, pattern or state you can see.",
+    }]
+    assert mission_steps(m02, two, [], [], ["relations"]) == [{
+        "kind": "relations",
+        "text": "Add a connection between two objects, such as “cup on book”.",
+    }]
+    m04 = get_mission("M04", "A1", 1)
+    assert mission_steps(m04, two, [], [], ["objects"]) == [{
+        "kind": "objects",
+        "text": "Mark 1 more different object you can see (so far: cup and book).",
+    }]
+
+
+def test_a0_steps_name_taught_nouns_and_trim_a_group_that_is_too_big():
+    m03 = get_mission("M03", "A0", 1)
+    books = [obj(uuid4(), "book") for _ in range(4)]
+    assert mission_steps(m03, books, [], _counts(books, ("book", 4)), ["counts"]) == [
+        {"kind": "counts", "text": "Remove 1 book marker so there are 3 books."},
+    ]
+    m01 = get_mission("M01", "A0", 1)
+    scene = [obj(CUP, "cup"), obj(BOOK, "sofa")]
+    [step] = mission_steps(m01, scene, [], [], ["objects"])
+    assert step["text"].startswith("Mark 1 more object with a name Linguini teaches")
+    assert "such as a book" in step["text"] and step["text"].endswith("“sofa” is not taught yet.")
+
+
+def test_a2_comparison_asks_for_a_different_number():
+    compare = get_mission("M03", "A2", 1)
+    scene = [obj(uuid4(), "cup"), obj(uuid4(), "cup"), obj(uuid4(), "book"), obj(uuid4(), "book")]
+    [step] = mission_steps(compare, scene, [], _counts(scene, ("cup", 2), ("book", 2)), ["counts"])
+    assert step["text"] == (
+        "Mark 1 more cup so there are 3 cups; the two groups need different numbers."
+    )
+    lone = [obj(uuid4(), "cup"), obj(uuid4(), "cup"), obj(BOOK, "book")]
+    [step] = mission_steps(compare, lone, [], _counts(lone, ("cup", 2), ("book", 1)), ["counts"])
+    assert step["text"] == "Mark 2 more books so there are 3 books next to the 2 cups."
+
+
+def test_the_shortfall_carries_steps_for_the_closest_missions():
+    shortfall = scene_shortfall(A1, [obj(BOOK, "book")], [], [counted(1)])
+    m03 = next(item for item in shortfall.missions if item["missionId"] == "M03")
+    assert m03["steps"] == [
+        {"kind": "counts", "text": "Mark 1 more book so there are 2 books."},
+    ]
+    SceneShortfallSchema.model_validate(shortfall.as_json())

@@ -173,11 +173,19 @@ class SessionPersonalization(ApiModel):
 type ShortfallKind = Literal["objects", "counts", "attributes", "relations"]
 
 
+class ShortfallStep(ApiModel):
+    """One concrete thing to add, worded from the confirmed review."""
+
+    kind: ShortfallKind
+    text: str
+
+
 class MissionShortfall(ApiModel):
     mission_id: str
     title: str
     missing: list[ShortfallKind] = Field(default_factory=list)
     reasons: list[str] = Field(default_factory=list)
+    steps: list[ShortfallStep] = Field(default_factory=list)
 
 
 class SceneShortfall(ApiModel):

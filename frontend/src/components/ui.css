@@ -1260,6 +1260,11 @@ p[role="alert"]::before { content: "!"; }
   font-size: var(--text-small);
 }
 
+/* A step worded from the learner's review is the instruction itself, so it reads at full contrast. */
+.scene-shortfall__list .scene-shortfall__step {
+  color: var(--ink);
+}
+
 .scene-shortfall__missions summary {
   min-height: 44px;
   display: flex;

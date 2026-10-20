@@ -7,7 +7,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { JSDOM } from "jsdom";
 import { rolldown } from "rolldown";
 import type { SceneShortfall, ShortfallKind } from "../src/lib/api.ts";
-import { closestMissions, parseShortfall, shortfallFromError } from "../src/lib/sceneShortfall.ts";
+import { closestMissions, parseShortfall, shortfallFromError, stepsFor } from "../src/lib/sceneShortfall.ts";
 
 const detail = {
   code: "insufficient_scene",
@@ -26,6 +26,28 @@ test("a rejected review's detail becomes a validated shortfall", () => {
   assert.equal(shortfall?.missions.length, 3);
   // Only the missions that need nothing beyond what the learner is asked to add.
   assert.deepEqual(closestMissions(shortfall!).map(mission => mission.missionId), ["M03", "M01"]);
+});
+
+const specific = {
+  missing: ["counts", "objects"],
+  missions: [
+    { missionId: "M03", title: "Count a small group", missing: ["counts"], reasons: ["Count a group of 2 or 3 matching objects."],
+      steps: [{ kind: "counts", text: "Mark 1 more cup so there are 2 cups." }, { kind: "colours", text: "dropped" }] },
+    { missionId: "M01", title: "Name and identify", missing: ["objects"], reasons: ["Confirm at least 2 different objects with taught names."],
+      steps: [{ kind: "objects", text: "Mark 1 more object with a name Linguini teaches at this level, such as a book." }] },
+    { missionId: "M02", title: "Find a named object", missing: ["objects"], reasons: [],
+      steps: [{ kind: "objects", text: "Mark 1 more object with a name Linguini teaches at this level, such as a book." }, { kind: "objects", text: "" }] },
+  ],
+};
+
+test("specific steps are kept per kind, validated and not repeated", () => {
+  const shortfall = parseShortfall(specific)!;
+  assert.deepEqual(shortfall.missions[0].steps, [{ kind: "counts", text: "Mark 1 more cup so there are 2 cups." }]);
+  assert.deepEqual(stepsFor(shortfall, "counts"), ["Mark 1 more cup so there are 2 cups."]);
+  assert.deepEqual(stepsFor(shortfall, "objects"), ["Mark 1 more object with a name Linguini teaches at this level, such as a book."]);
+  assert.deepEqual(stepsFor(shortfall, "relations"), []);
+  // Older payloads without steps still parse.
+  assert.deepEqual(parseShortfall({ missing: ["counts"], missions: [{ missionId: "M03", title: "Count", missing: ["counts"], reasons: [] }] })?.missions[0].steps, []);
 });
 
 test("other errors and malformed details are not shortfalls", () => {
@@ -135,6 +157,17 @@ test("the notice names what is short and offers a way to add each one", async ()
   const tips = dom.window.document.querySelector(".scene-shortfall__missions")?.textContent ?? "";
   assert.match(tips, /Count objects: Count a group of 2 to 3 matching objects\./);
   assert.doesNotMatch(tips, /Say where things are/);
+  await act(async () => { root.unmount(); });
+});
+
+test("the notice shows the specific step for each kind instead of the general hint", async () => {
+  const calls = { added: [] as ShortfallKind[], newPhoto: 0 };
+  const root = await render(parseShortfall(specific)!, calls);
+  const rows = [...dom.window.document.querySelectorAll(".scene-shortfall__list li")].map(row => row.textContent ?? "");
+  assert.match(rows[0], /More objects.*Mark 1 more object with a name Linguini teaches/);
+  assert.match(rows[1], /A count.*Mark 1 more cup so there are 2 cups\./);
+  assert.doesNotMatch(rows[1], /such as two cups/);
+  assert.equal(dom.window.document.querySelectorAll(".scene-shortfall__step").length, 2);
   await act(async () => { root.unmount(); });
 });
 
