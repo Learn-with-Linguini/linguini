@@ -354,10 +354,12 @@ def check_deterministic(
     )
     if not fact_references_valid:
         failures.append("fact reference is not present in bound scene facts")
+    # ``target`` names an object a clue describes without naming it in the sentence.
     bound_object = (
         expected_bindings.get("object")
         or expected_bindings.get("subject")
         or expected_bindings.get("first")
+        or expected_bindings.get("target")
     )
     bound_attribute = expected_bindings.get("attribute")
     if bound_attribute and "attribute" not in (spec.counterfactual if spec else {}):
@@ -447,6 +449,13 @@ def check_deterministic(
                 == expected_pos
             ]
             if not realized:
+                # Suffixing languages attach particles/case endings to the bound word
+                # (컵이에요, வாழைப்பழமா); recognise it before reporting it missing.
+                inflected = _inflected_use(candidate.text, vocabulary, fact_id_value,
+                                           expected_pos, pack.language)
+                if inflected is not None:
+                    derived_uses.append(inflected)
+                    continue
                 found = [
                     use
                     for use in derived_uses
@@ -460,8 +469,19 @@ def check_deterministic(
                     == expected_pos
                 ]
                 found_facts = sorted({use.fact_id for use in found})
+                expected_term = next(
+                    (term for term in vocabulary.terms if term.fact_id == fact_id_value), None
+                )
+                hint = (
+                    f" Use the bound {expected_pos} {expected_term.source_text!r} "
+                    f"(forms: {', '.join(expected_term.forms)}). If the sentence writes it "
+                    "with a suffix, particle or other inflection, add a realization with "
+                    f"term_id {expected_term.term_id!r} and the exact word as written."
+                    if expected_term is not None else ""
+                )
                 failures.append(
-                    f"role {role!r} expects {fact_id_value!r}; found facts {found_facts or 'none'}"
+                    f"role {role!r} expects {fact_id_value!r}; found facts "
+                    f"{found_facts or 'none'}.{hint}"
                 )
         expected_pos = set(expected_roles.values())
         unbound = [
@@ -572,6 +592,49 @@ def check_deterministic(
         text_is_nfc=text_is_nfc,
         failures=failures,
     )
+
+
+def _inflected_use(text, vocabulary, fact_id_value, part_of_speech, language):
+    """The bound term written as one word with suffixes, in a suffixing language.
+
+    Only used to find a bound role that whole-word matching missed: a word counts when
+    it extends one of the term's single-word forms, or a stem left after removing one of
+    the pack's ``stem_endings`` (Tamil புத்தகம் → புத்தக-மா). Meaning is model-assessed.
+    """
+    if language.inflection != "suffixing":
+        return None
+    terms = [
+        term for term in vocabulary.terms
+        if term.fact_id == fact_id_value
+        and str(getattr(term.part_of_speech, "value", term.part_of_speech)) == part_of_speech
+    ]
+    words = [token.strip("¿¡«»") for token in tokens(text)]
+    for term in terms:
+        stems = set()
+        # A modifier form (Korean 빨간) only precedes a noun; it never takes suffixes.
+        modifier = term.forms_by_key.get("modifier")
+        suffixable = {
+            value for key, value in term.forms_by_key.items() if key != "modifier"
+        } | {term.target_text}
+        for form in dict.fromkeys([*term.forms, *term.forms_by_key.values()]):
+            if form == modifier and form not in suffixable:
+                continue
+            folded = fold(form)
+            if not folded or " " in folded:
+                continue
+            stems.add(folded)
+            for ending in language.stem_endings:
+                stem = folded.removesuffix(fold(ending))
+                if stem != folded and len(stem) >= 2:
+                    stems.add(stem)
+        word = next(
+            (word for word in words
+             for stem in stems if len(fold(word)) > len(stem) and fold(word).startswith(stem)),
+            None,
+        )
+        if word is not None:
+            return TermUse(term_id=term.term_id, surface=word, fact_id=term.fact_id)
+    return None
 
 
 def infer_term_uses(

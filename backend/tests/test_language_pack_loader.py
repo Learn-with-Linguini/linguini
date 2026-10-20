@@ -39,7 +39,7 @@ def test_nested_pack_loads_and_evaluations_remain_separate():
 
     assert pack.pack_id == "es-es-everyday"
     assert pack.language.locale == "es-ES"
-    assert len(pack.constructions) == 6
+    assert len(pack.constructions) == 11
     assert len(cases) == 24
     assert not any(key in pack.model_dump() for key in ("evaluations", "evaluation_cases"))
     assert all("cases" not in item for item in guidance_for(pack, [
@@ -117,6 +117,13 @@ def test_labels_match_current_builder_text():
         "connector-distractor": "pero",
         "vocabulary-unsure": "No sé",
         "vocabulary-other": "No estoy seguro",
+        "ask-where": "Pregunta dónde está.",
+        "answer-where": "Responde con la posición que muestra la foto.",
+        "clue-meaning": "¿Qué significa?",
+        "build-location-clue": "Construye la segunda pista.",
+        "find-both-clues": "Toca el objeto que coincide con las dos pistas.",
+        "friend-points": "Tu amigo señala el marcador {marker}. ¿Qué aclaras?",
+        "name-and-locate": "Nombra el objeto y di dónde está.",
     }
 
 

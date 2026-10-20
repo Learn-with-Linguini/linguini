@@ -1,7 +1,9 @@
 """Provider-neutral orchestrator for model-backed scene translation.
 
 Builds the shared versioned request, calls a ``TextModelClient``, validates
-the returned text locally, and returns the domain result. Contains no
+the returned text locally, and returns the domain result. With a language pack,
+a second call reviews the meaning of each translation and sends confident
+mistranslations back for one repair before any vocabulary card is built. Contains no
 provider-specific logic. Learner-supplied content reaches the tracer only
 through ``record_content``, which is gated by the capture-content setting.
 """
@@ -31,6 +33,8 @@ from app.ai.contracts.schema import build_strict_json_schema
 from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelRequest
 from app.ai.features.translation.prompt import (
     PACK_TRANSLATION_PROMPT_VERSION,
+    PACK_TRANSLATION_REVIEW_PROMPT,
+    PACK_TRANSLATION_REVIEW_PROMPT_VERSION,
     PACK_TRANSLATION_SYSTEM_PROMPT,
     SCENE_TRANSLATION_PROMPT_VERSION,
     SCENE_TRANSLATION_SCHEMA_VERSION,
@@ -39,6 +43,7 @@ from app.ai.features.translation.prompt import (
 from app.ai.features.translation.schemas import (
     SceneTranslationRequest,
     SceneTranslationResult,
+    TranslationReview,
 )
 from app.ai.features.translation.validation import (
     SCENE_TRANSLATION_VALIDATOR_VERSION,
@@ -183,7 +188,7 @@ class SceneTranslationService:
                 self._client,
                 version=_VERSION if language_context is None else FeatureVersion(
                     AiFeature.SCENE_TRANSLATION.value, PACK_TRANSLATION_PROMPT_VERSION,
-                    "pack-translation-result.v1", "pack-translation-validator.v1",
+                    "pack-translation-result.v1", "pack-translation-validator.v2",
                 ),
                 scope=cache_scope,
                 payload=payload if language_context is None else {
@@ -281,6 +286,8 @@ class SceneTranslationService:
                         }
                     )
                     validate_translation_terms(parsed_payload, result, language_context)
+                    if language_context is not None:
+                        self._review_meaning(compact_payload, compact_result, language_context)
                 except (ValueError, SceneTranslationError) as error:
                     if attempt < attempts and invocation.can_call():
                         issues = (
@@ -336,3 +343,79 @@ class SceneTranslationService:
 
             # Unreachable: every loop path either returns or raises.
             raise SceneTranslationError("Scene translation failed.")
+
+    def _review_meaning(
+        self, payload: dict[str, Any], result: SceneTranslationResult, language_context,
+    ) -> None:
+        """Raise when a reviewer is confident a translation does not mean its source.
+
+        The review has its own call budget so it never spends the translation's
+        repair. A reviewer that fails or answers off-schema is no evidence against
+        the translation, so it is accepted; the lesson content review still runs.
+        """
+        terms = {
+            (field, term.key): term
+            for field in ("objects", "attributes", "relationships")
+            for term in getattr(result, field)
+        }
+        content = json.dumps({
+            "targetLanguage": payload["targetLanguage"],
+            "sceneTitle": payload["sceneTitle"],
+            "sceneSummary": payload.get("sceneSummary", ""),
+            "language": language_context.display.model_dump(mode="json"),
+            "variety": language_context.pack.variety.model_dump(mode="json"),
+            "terms": [
+                {"group": field, "key": key, "source": term.source,
+                 "translation": term.translation, "nativeDisplay": term.native_display}
+                for (field, key), term in terms.items()
+            ],
+        }, ensure_ascii=False)
+        request = TextModelRequest(
+            system_prompt=PACK_TRANSLATION_REVIEW_PROMPT,
+            user_content=content,
+            json_schema_name="pack_translation_review",
+            json_schema=build_strict_json_schema(TranslationReview),
+            prompt_version=PACK_TRANSLATION_REVIEW_PROMPT_VERSION,
+        )
+        with self._tracer.generation(
+            "scene-translation-review",
+            feature=AiFeature.SCENE_TRANSLATION.value,
+            provider=self._provider,
+            model=self._config.model_name,
+            prompt_version=PACK_TRANSLATION_REVIEW_PROMPT_VERSION,
+            schema_version=PACK_TRANSLATION_REVIEW_PROMPT_VERSION,
+        ) as generation:
+            invocation = self._client.start_invocation()
+            call_start = time.perf_counter()
+            try:
+                response = self._client.generate(request, invocation=invocation)
+                review = TranslationReview.model_validate_json(response.output_text)
+            except (ProviderError, ValueError) as error:
+                generation.update(
+                    latency_ms=(time.perf_counter() - call_start) * 1000,
+                    validation_result="invalid",
+                    error_code=error.code.value if isinstance(error, ProviderError)
+                    else _TRANSLATION_INVALID,
+                )
+                logger.warning("translation meaning review unavailable; keeping translation")
+                return
+            problems = []
+            for issue in review.issues:
+                term = terms.get((issue.group, issue.key))
+                if term is not None:
+                    shown = term.native_display or term.translation
+                    problems.append(f'"{term.source}" as "{shown}": {issue.problem}')
+            generation.update(
+                latency_ms=(time.perf_counter() - call_start) * 1000,
+                input_tokens=response.input_tokens,
+                output_tokens=response.output_tokens,
+                total_tokens=total_tokens(response),
+                metadata=route_metadata(response),
+                validation_result="invalid" if problems else "valid",
+            )
+            generation.record_content(input=content, output=response.output_text)
+        if problems:
+            raise SceneTranslationError(
+                "These translations do not express their English source; use the everyday "
+                "native word for exactly that meaning: " + "; ".join(problems)
+            )

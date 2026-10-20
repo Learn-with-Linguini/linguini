@@ -132,3 +132,52 @@ text = "No estoy seguro"
 meaning = "I'm not sure"
 usage = "prompt"
 provenance = { source = "Existing Spanish vocabulary fallback; needs fluent review.", review_status = "unreviewed" }
+
+[[labels]]
+semantic = "ask-where"
+text = "Pregunta dónde está."
+meaning = "Ask where it is."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "answer-where"
+text = "Responde con la posición que muestra la foto."
+meaning = "Answer with the position the photo shows."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "clue-meaning"
+text = "¿Qué significa?"
+meaning = "What does it mean?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "build-location-clue"
+text = "Construye la segunda pista."
+meaning = "Build the second clue."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "find-both-clues"
+text = "Toca el objeto que coincide con las dos pistas."
+meaning = "Tap the object that matches both clues."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "friend-points"
+text = "Tu amigo señala el marcador {marker}. ¿Qué aclaras?"
+meaning = "Your friend points to marker {marker}. What do you clarify?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "name-and-locate"
+text = "Nombra el objeto y di dónde está."
+meaning = "Name the object and say where it is."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }

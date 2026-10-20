@@ -39,13 +39,24 @@ def pack_dir(runtime, tmp_path, monkeypatch):
 
 
 class MockTranslationProvider:
-    def __init__(self, missing=None):
+    def __init__(self, missing=None, overrides=None, review=None):
         self.requests = []
+        self.reviews = []
         self.missing = missing
+        self.overrides = overrides or {}
+        self.review = review or (lambda terms: {"issues": []})
 
     def generate(self, request):
+        if request.json_schema_name == "pack_translation_review":
+            self.reviews.append(request)
+            output = self.review(json.loads(request.user_content)["terms"])
+            return TextModelResponse(
+                output_text=output if isinstance(output, str) else json.dumps(output),
+                model_name="mocked-reviewer", prompt_version=request.prompt_version,
+            )
         self.requests.append(request)
-        data = json.loads(request.user_content)
+        # A repair request appends instructions after the original JSON.
+        data, _ = json.JSONDecoder().raw_decode(request.user_content)
         context = data.get("language_context", {}).get("context", {})
         words = {
             "cup": "taza",
@@ -61,6 +72,8 @@ class MockTranslationProvider:
             result[field] = []
             for row in data[field]:
                 noun = words.get(row["source"], row["source"])
+                if len(self.requests) == 1:
+                    noun = self.overrides.get(row["source"], noun)
                 article = "el" if noun == "libro" else "la"
                 article = article if field == "objects" else None
                 gender = ("masculine" if article == "el" else "feminine") if article else None
@@ -88,10 +101,10 @@ class MockTranslationProvider:
         )
 
 
-def translator(provider, cache=None):
+def translator(provider, cache=None, retries=0):
     return SceneTranslationService(
         provider,
-        TextModelConfig(model_name="mocked-Spanish", max_retries=0),
+        TextModelConfig(model_name="mocked-Spanish", max_retries=retries),
         tracer=NoOpAITracer(),
         provider="mock",
         cache=cache,
@@ -130,7 +143,7 @@ def test_context_reaches_translation_cards_and_m01_without_reresolution(
     translated = translator(provider).translate(payload(runtime), language_context=context)
     intro, words = cards(context, runtime, translated)
     # Configuration changes after capture must not change the chosen language path.
-    monkeypatch.setenv("LINGUINI_M01_LANGUAGE_PACKS", "false")
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "false")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", "missing/*")
     generator = MockSpanishProvider()
     task = service(generator).generate_pack_m01(
@@ -271,7 +284,7 @@ def test_scene_suitability_not_legacy_dictionary_membership(pack_dir, runtime, l
 
 
 def test_flag_off_and_old_saved_tasks_need_no_context(pack_dir, runtime, monkeypatch):
-    monkeypatch.setenv("LINGUINI_M01_LANGUAGE_PACKS", "false")
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "false")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", "missing/*")
     assert resolve_language_context("es") is None
     # Legacy service retains its prompt and schema; optional additions stay absent.
@@ -279,6 +292,7 @@ def test_flag_off_and_old_saved_tasks_need_no_context(pack_dir, runtime, monkeyp
     translator(provider).translate(payload(runtime))
     request = provider.requests[0]
     assert "language_context" not in json.loads(request.user_content)
+    assert not provider.reviews
     assert (
         "nativeDisplay" not in request.json_schema["properties"]["objects"]["items"]["properties"]
     )
@@ -307,6 +321,45 @@ def test_pack_declared_required_fields_are_enforced(pack_dir, runtime, field):
         )
 
 
+def _flag_cup(terms):
+    return {"issues": [
+        {"group": term["group"], "key": term["key"], "problem": "Use taza."}
+        for term in terms if term["source"] == "cup" and term["translation"] != "taza"
+    ]}
+
+
+def test_meaning_review_sends_a_mistranslation_back_for_repair(pack_dir, runtime):
+    context = resolve_language_context("es")
+    provider = MockTranslationProvider(overrides={"cup": "verdura blanca"}, review=_flag_cup)
+    translated = translator(provider, retries=1).translate(
+        payload(runtime), language_context=context
+    )
+    assert [term.translation for term in translated.objects if term.source == "cup"] == ["taza"]
+    assert len(provider.requests) == 2 and len(provider.reviews) == 2
+    repair = provider.requests[1].user_content
+    assert '\\"cup\\" as \\"la verdura blanca\\": Use taza.' in repair
+
+
+def test_mistranslation_that_survives_repair_fails_before_cards(pack_dir, runtime):
+    context = resolve_language_context("es")
+    provider = MockTranslationProvider(review=lambda terms: {"issues": [
+        {"group": "objects", "key": terms[0]["key"], "problem": "Wrong object."}
+    ]})
+    with pytest.raises(SceneTranslationError, match="unusable output"):
+        translator(provider, retries=1).translate(payload(runtime), language_context=context)
+    assert len(provider.requests) == 2
+
+
+@pytest.mark.parametrize("answer", ["not json", {"issues": [
+    {"group": "objects", "key": "not-a-supplied-key", "problem": "Unknown."}
+]}])
+def test_unusable_or_unanchored_review_keeps_the_translation(pack_dir, runtime, answer):
+    context = resolve_language_context("es")
+    provider = MockTranslationProvider(review=lambda terms: answer)
+    translated = translator(provider).translate(payload(runtime), language_context=context)
+    assert translated.objects and len(provider.requests) == 1
+
+
 def test_translation_rejects_a_different_context_language(pack_dir, runtime):
     context = resolve_language_context("es")
     provider = MockTranslationProvider()
@@ -324,7 +377,7 @@ def test_saved_legacy_vocabulary_task_can_reload_without_new_metadata(
     serialized = intro.model_dump_json()
     assert "languageContext" not in serialized
     assert "romanization" not in serialized
-    monkeypatch.setenv("LINGUINI_M01_LANGUAGE_PACKS", "true")
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "true")
     restored = SessionTask.model_validate_json(serialized)
     assert restored.public_content.language_context is None
     assert restored.public_content.words[0].target_text == intro.public_content.words[0].target_text

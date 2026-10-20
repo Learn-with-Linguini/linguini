@@ -1,0 +1,19 @@
+construction_id = "location-phrase"
+version = 1
+summary = "Give a position phrase with its reference object."
+guidance = "Give only the preposition and the dative reference noun phrase, no subject, verb or final punctuation: auf dem Tisch, unter dem Stuhl, neben der Tür."
+features = ["position-phrase"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { reference = "noun", relation = "preposition" }
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "phrase-without-punctuation"
+message = "A position phrase is a choice, not a sentence: no final punctuation."
+must_not_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "location-dative"
+message = "After a location preposition use the dative (dem/der/einem/einer)."
+must_not_contain = ["\\b(auf|unter|neben|vor|hinter|über|in|an) (das|die|den|ein|eine|einen)\\b"]

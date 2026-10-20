@@ -1,0 +1,25 @@
+construction_id = "target-clue"
+version = 1
+summary = "Describe a hidden object by a detail or its location."
+guidance = "A clue describes the hidden object without naming it, using the pronoun il/elle that agrees with its gender: Elle est rouge. / Elle est à côté de la fenêtre. A clarification starts with Non, and restates one true clue: Non, elle est à côté de la fenêtre. Never name the hidden object."
+features = ["hidden-referent", "pronoun"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { attribute = "adjective", relation = "preposition", reference = "noun" }
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "clarify-label"
+message = "A clarification starts with the no label."
+must_contain = ["^non, "]
+uses = ["clarify"]
+
+[[checks]]
+check_id = "contraction"
+message = "Contract de le/de les/à le/à les to du/des/au/aux."
+must_not_contain = ["(^|\\s)(de|à) (le|les)\\s"]

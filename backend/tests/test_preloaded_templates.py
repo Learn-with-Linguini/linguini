@@ -107,6 +107,8 @@ class SceneModel:
                 ]
                 for field in ("objects", "attributes", "relationships")
             })
+        elif request.json_schema_name == "pack_translation_review":
+            body = json.dumps({"issues": []})
         elif request.json_schema_name == "learning_tasks_v2":
             body = _remap(response_body(LearningTaskResult.model_validate(tasks())), payload)
         else:

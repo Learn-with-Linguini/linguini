@@ -108,3 +108,27 @@ sentence = "la reloj"
 correction = "el reloj"
 note = "reloj is masculine."
 provenance = { source = "Lead-authored for the M01 pilot; needs fluent Spanish review.", review_status = "unreviewed" }
+
+[[examples]]
+example_id = "m02-name-lamp"
+levels = ["A0"]
+purposes = ["chooseName", "listenSelect"]
+meaning = "the lamp (vocabulary label)"
+scene = { objects = [{ fact_id = "object:lamp", concept = "lamp" }] }
+bindings = { object = "object:lamp" }
+truth = true
+labels = []
+sentence = "la lámpara"
+translation = "the lamp (vocabulary label)"
+chunks = [{ text = "la", join = "none" }, { text = "lámpara", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "m02-name-form"
+levels = ["A0"]
+purposes = ["chooseName", "listenSelect"]
+sentence = "La lámpara."
+correction = "la lámpara"
+note = "A name chunk is lower case, no full stop."
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }

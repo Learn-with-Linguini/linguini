@@ -1,0 +1,55 @@
+construction_id = "target-clue"
+
+[[examples]]
+example_id = "clue-red"
+levels = ["A2"]
+purposes = ["readAttributeClue"]
+meaning = "It is red."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }] }
+bindings = { target = "object:cup", attribute = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "Es roja."
+translation = "It is red."
+chunks = [{ text = "Es", join = "none" }, { text = "roja", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "clue-next-window"
+levels = ["A2"]
+purposes = ["buildLocationClue"]
+meaning = "It is next to the window."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:window", concept = "window" }], relations = [{ fact_id = "relation:cup-next_to-window", subject = "object:cup", reference = "object:window", relation = "next_to" }] }
+bindings = { target = "object:cup", reference = "object:window", relation = "relation:cup-next_to-window" }
+truth = true
+labels = []
+sentence = "Está al lado de la ventana."
+translation = "It is next to the window."
+chunks = [{ text = "Está", join = "none" }, { text = "al", join = "space" }, { text = "lado", join = "space" }, { text = "de", join = "space" }, { text = "la", join = "space" }, { text = "ventana", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "clarify-next-window"
+levels = ["A2"]
+purposes = ["clarifyDistractor"]
+meaning = "No, it is next to the window."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:window", concept = "window" }], relations = [{ fact_id = "relation:cup-next_to-window", subject = "object:cup", reference = "object:window", relation = "next_to" }] }
+bindings = { target = "object:cup", reference = "object:window", relation = "relation:cup-next_to-window" }
+truth = true
+labels = ["no"]
+sentence = "No, está al lado de la ventana."
+translation = "No, it is next to the window."
+chunks = [{ text = "No", join = "none" }, { text = ",", join = "none" }, { text = "está", join = "space" }, { text = "al", join = "space" }, { text = "lado", join = "space" }, { text = "de", join = "space" }, { text = "la", join = "space" }, { text = "ventana", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "clue-agreement"
+levels = ["A2"]
+purposes = ["readAttributeClue"]
+sentence = "Es rojo."
+correction = "Es roja."
+note = "The adjective agrees with the hidden noun (la taza): roja."
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }

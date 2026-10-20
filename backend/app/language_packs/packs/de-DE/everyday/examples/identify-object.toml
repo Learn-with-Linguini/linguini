@@ -152,3 +152,27 @@ sentence = "das buch"
 correction = "das Buch"
 note = "German nouns retain their capital letter in a vocabulary chunk."
 provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "m02-name-lamp"
+levels = ["A0"]
+purposes = ["chooseName", "listenSelect"]
+meaning = "the lamp (vocabulary label)"
+scene = { objects = [{ fact_id = "object:lamp", concept = "lamp" }] }
+bindings = { object = "object:lamp" }
+truth = true
+labels = []
+sentence = "die Lampe"
+translation = "the lamp (vocabulary label)"
+chunks = [{ text = "die", join = "none" }, { text = "Lampe", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "m02-name-form"
+levels = ["A0"]
+purposes = ["chooseName", "listenSelect"]
+sentence = "Die Lampe."
+correction = "die Lampe"
+note = "A name chunk has no full stop."
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }

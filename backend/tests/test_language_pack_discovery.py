@@ -20,7 +20,7 @@ def configured_spanish(tmp_path, monkeypatch):
     root = tmp_path / "packs"
     shutil.copytree(SPANISH, root / "es-ES" / "everyday")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", str(root / "*"))
-    monkeypatch.setenv("LINGUINI_M01_LANGUAGE_PACKS", "true")
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "true")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_EXPERIMENTAL", "true")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_REGISTER", "everyday")
     monkeypatch.setenv("APP_ENV", "test")
@@ -61,7 +61,7 @@ def test_available_levels_and_endpoint_are_local_experimental(configured_spanish
 
 
 def test_flag_off_does_not_discover_or_offer_packs(configured_spanish, monkeypatch):
-    monkeypatch.setenv("LINGUINI_M01_LANGUAGE_PACKS", "false")
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "false")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", "nonexistent/*")
     assert available_pack_languages() == []
     assert TestClient(app).get("/api/v1/me/practice-languages").json() == []
@@ -77,7 +77,7 @@ def test_local_switch_never_releases_unreviewed_pack(
 
 
 @pytest.mark.parametrize("level", ["A0", "A1", "A2"])
-def test_pack_only_language_plans_only_m01_through_existing_photo_flow(
+def test_pack_only_language_plans_only_pack_missions_through_existing_photo_flow(
     configured_spanish, monkeypatch, level,
 ):
     # Exercise the generic extension with Spanish treated as absent from the
@@ -88,9 +88,11 @@ def test_pack_only_language_plans_only_m01_through_existing_photo_flow(
     monkeypatch.setattr(module, "LEVEL_LANGUAGES", {})
     profile = {"target_language_code": "es", "proficiency_level": level}
     missions = lesson_missions(SessionMode.LESSON, profile)
-    assert [(m.mission_id, str(m.practice_level)) for m in missions] == [("M01", level)]
+    assert [(m.mission_id, str(m.practice_level)) for m in missions] == [
+        ("M01", level), ("M02", level),
+    ]
     assert lesson_missions(SessionMode.ISPY, profile) == []
-    monkeypatch.setenv("LINGUINI_M01_LANGUAGE_PACKS", "false")
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "false")
     assert lesson_missions(SessionMode.LESSON, profile) == []
 
 

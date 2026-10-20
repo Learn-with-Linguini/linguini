@@ -25,10 +25,10 @@ from app.language_packs.generation import (
     assess,
     fact_id,
 )
+from app.language_packs.lessons.m01 import check_lesson as validate_assembled_lesson
 from app.language_packs.loader import load_pack
 from app.language_packs.model_source import ModelSource
 from app.language_packs.pipeline import PipelineFailure, generate_pilot
-from app.language_packs.validation import validate_assembled_lesson
 from app.missions import get_mission
 from app.services.mission_lessons_a0 import a0_lesson_task
 from app.services.mission_lessons_a2 import m01_a2_task
@@ -208,7 +208,7 @@ def _parity_scenario(level, monkeypatch):
                     ),
                 ),
         ])
-        from app.language_packs.adapters import _SESSION_ID
+        from app.language_packs.lessons.common import DEMO_SESSION_ID as _SESSION_ID
         baseline_task = a0_lesson_task(
             _SESSION_ID, mission, builder_payload, builder_result,
             vocabulary_ids,
@@ -345,7 +345,7 @@ def _parity_scenario(level, monkeypatch):
              builder_result.questions[3].correct_text,
              builder_result.questions[3].translation),
         ])
-        from app.language_packs.adapters import _SESSION_ID
+        from app.language_packs.lessons.common import DEMO_SESSION_ID as _SESSION_ID
         baseline_task = m01_lesson_task(
             _SESSION_ID, test_mission_m01.MISSION, builder_payload, builder_result,
             {pair["key"]: pair["vocabularyItemId"] for pair in pairs},
@@ -490,7 +490,7 @@ def _parity_scenario(level, monkeypatch):
         ("followUpSceneFact", "follow-up-scene-fact-spec",
          builder_payload["facts"]["detailPrompt"], "A follow-up question."),
     ]
-    from app.language_packs.adapters import _SESSION_ID
+    from app.language_packs.lessons.common import DEMO_SESSION_ID as _SESSION_ID
     baseline_task = m01_a2_task(
         _SESSION_ID, mission, builder_payload, builder_result,
         {row["key"]: row["vocabularyItemId"] for row in approved["approvedObjects"]},
@@ -752,7 +752,7 @@ def test_evaluation_identity_tracks_generation_content_and_validator_version():
         changed_pack, "A0"
     ).generation_content_sha256
     assert identity.validator_versions == {
-        "es": "es-targeted@5", "noun-phrase": "noun-phrase.v1", "pack-checks": "pack-checks.v1",
+        "es": "es-targeted@6", "noun-phrase": "noun-phrase.v1", "pack-checks": "pack-checks.v1",
     }
 
 

@@ -1,0 +1,25 @@
+construction_id = "target-clue"
+version = 1
+summary = "Describe a hidden object by a detail or its location."
+guidance = "A clue describes the hidden object without naming it, using er/sie/es for its gender: Sie ist rot. / Sie ist neben dem Fenster. The colour after ist has no ending. A clarification starts with Nein, and restates one true clue: Nein, sie ist neben dem Fenster. Never name the hidden object."
+features = ["hidden-referent", "pronoun"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { attribute = "adjective", relation = "preposition", reference = "noun" }
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "clarify-label"
+message = "A clarification starts with the no label."
+must_contain = ["^nein, "]
+uses = ["clarify"]
+
+[[checks]]
+check_id = "location-dative"
+message = "After a location preposition use the dative (dem/der/einem/einer)."
+must_not_contain = ["\\b(auf|unter|neben|vor|hinter|über|in|an) (das|die|den|ein|eine|einen)\\b"]

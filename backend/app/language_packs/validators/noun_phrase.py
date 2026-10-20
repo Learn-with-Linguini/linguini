@@ -70,8 +70,13 @@ def _phrase_families(text: str, term) -> set[str]:
 
 def _required_family(candidate: CandidateSentence) -> str | None:
     """Definiteness each M01 construction teaches; None accepts either."""
-    if candidate.construction_id in {"scene-location", "connected-description"}:
+    if candidate.construction_id in {
+        "scene-location", "connected-description", "target-location",
+    }:
         return None
+    if candidate.construction_id in {"find-object", "where-question"}:
+        # Finding or locating a named object refers to it with the definite article.
+        return "definite"
     if candidate.construction_id == "describe-attribute" and candidate.spec_use == "answer":
         # Es una taza roja. / La taza es roja. (predicative) are both descriptions.
         return None

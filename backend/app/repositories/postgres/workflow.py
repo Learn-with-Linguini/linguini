@@ -2085,9 +2085,7 @@ class PostgresWorkflowRepository:
             blocked = next((
                 lesson_mission(m) for m in missions
                 if language_context is not None
-                and language_context.declares(
-                    lesson_mission(m).mission_id, lesson_mission(m).practice_level
-                )
+                and language_context.owns(lesson_mission(m).mission_id)
                 and not language_context.is_ready(lesson_mission(m))
             ), None)
             if blocked is not None:
@@ -2690,7 +2688,7 @@ class PostgresWorkflowRepository:
         for planned in claim.missions:
             mission = lesson_mission(planned)
             context = getattr(claim, "language_context", None)
-            if context is not None and context.declares(mission.mission_id, mission.practice_level):
+            if context is not None and context.owns(mission.mission_id):
                 if self.learning_task_generator is None:
                     raise LearningTaskGenerationError(
                         f"{mission.mission_id} pack generation needs a configured provider."

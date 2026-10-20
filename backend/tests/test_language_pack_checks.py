@@ -20,7 +20,7 @@ LOCALES = ["es-ES", "fr-FR", "de-DE", "ko-KR"]
 
 def _use(example, construction_id):
     """Best-effort spec use for a reference example (examples record purposes, not uses)."""
-    if "matchName" in example.purposes:
+    if set(example.purposes) & {"matchName", "chooseName", "listenSelect"}:
         return "name"
     if example.sentence.endswith("?"):
         if construction_id in {"describe-attribute", "scene-location"}:
@@ -110,13 +110,13 @@ def test_spanish_targeted_validator_and_pack_checks_both_run():
     pack = load_pack(PACKS / "es-ES" / "everyday")
     vocabulary = ApprovedVocabulary()
     assert validator_versions("es", pack) == {
-        "es": "es-targeted@5", "noun-phrase": NounPhraseValidator.validator_id,
+        "es": "es-targeted@6", "noun-phrase": NounPhraseValidator.validator_id,
         "pack-checks": PackChecksValidator.validator_id,
     }
-    assert validator_versions("es") == {"es": "es-targeted@5"}
+    assert validator_versions("es") == {"es": "es-targeted@6"}
     validator = select_validator("es", vocabulary, pack)
     assert validator.validator_id == (
-        f"es-targeted@5+{NounPhraseValidator.validator_id}+{PackChecksValidator.validator_id}"
+        f"es-targeted@6+{NounPhraseValidator.validator_id}+{PackChecksValidator.validator_id}"
     )
     # Proposal mode runs only es.py's light checks; the pack's hay frame still applies.
     candidate = _candidate("scene-existence", "Existe una taza roja.").model_copy(
@@ -145,9 +145,18 @@ def test_editing_a_check_invalidates_cache_and_evaluation_identity():
     ).generation_content_sha256
 
 
-def test_languages_without_a_targeted_validator_use_pack_checks_alone():
+def test_korean_targeted_validator_runs_with_pack_checks():
     pack = load_pack(PACKS / "ko-KR" / "everyday")
-    assert validator_versions("ko", pack) == {"pack-checks": PackChecksValidator.validator_id}
+    assert validator_versions("ko", pack) == {
+        "ko": "ko-targeted@1", "pack-checks": PackChecksValidator.validator_id,
+    }
     assessment = assess(_candidate("identify-object", "컵이에요."), pack, ApprovedVocabulary())
     assert assessment.status == "languageValidator"
     assert assessment.passed is True
+    # A final consonant takes 이에요 and 을, never 예요 or 를.
+    for wrong in ("문예요.", "책를 찾아보세요."):
+        assessment = assess(_candidate("identify-object", wrong), pack, ApprovedVocabulary())
+        assert assessment.passed is False, wrong
+    for right in ("의자예요.", "가방을 찾아보세요.", "탁자를 찾아보세요."):
+        assessment = assess(_candidate("identify-object", right), pack, ApprovedVocabulary())
+        assert assessment.passed is True, right

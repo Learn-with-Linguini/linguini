@@ -154,7 +154,7 @@ class MockSpanishProvider:
 
 @pytest.fixture
 def runtime(monkeypatch):
-    monkeypatch.setenv("LINGUINI_M01_LANGUAGE_PACKS", "true")
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "true")
     monkeypatch.setenv("APP_ENV", "test")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_EXPERIMENTAL", "true")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", str(PACK))
@@ -264,7 +264,7 @@ def test_normal_dispatch_flag_on_spanish_mocked(level, count, runtime):
 
 @pytest.mark.parametrize("level", ["A0", "A1", "A2"])
 def test_flag_off_uses_unchanged_legacy_dispatch(level, runtime, monkeypatch):
-    monkeypatch.delenv("LINGUINI_M01_LANGUAGE_PACKS")
+    monkeypatch.delenv("LINGUINI_LANGUAGE_PACKS")
     provider = MockSpanishProvider()
     (task,) = dispatch(level, runtime, provider)
     assert task.public_content.practice_level == level

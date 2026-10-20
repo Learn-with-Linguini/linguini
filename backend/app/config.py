@@ -47,9 +47,9 @@ def get_language_pack_dirs() -> tuple[Path, ...]:
     )
 
 
-def get_m01_language_packs_enabled() -> bool:
+def get_language_packs_enabled() -> bool:
     """Default-off runtime switch, independent of the release allowlist."""
-    return os.getenv("LINGUINI_M01_LANGUAGE_PACKS", "false").strip().lower() == "true"
+    return os.getenv("LINGUINI_LANGUAGE_PACKS", "false").strip().lower() == "true"
 
 
 def get_language_pack_register() -> str:

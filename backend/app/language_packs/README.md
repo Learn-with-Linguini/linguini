@@ -1,8 +1,9 @@
 # Language-pack foundation
 
-This package supplies the default-off M01 A0/A1/A2 runtime path as well as explicit
-local previews. Packs are loaded lazily only when the flag is enabled or a command
-explicitly requests one. Other missions use their existing implementations.
+This package supplies the default-off A0/A1/A2 runtime path for pack missions (M01
+and M02) as well as explicit local previews. Packs are loaded lazily only when the flag
+is enabled or a command explicitly requests one. Other missions use their existing
+implementations.
 
 Packs live at `<root>/<locale>/<register>/` (for example `packs/es-ES/everyday/`). `pack.toml`
 holds metadata and references every content file: `labels.toml` (fixed learner-facing text keyed by
@@ -27,18 +28,19 @@ The fixture pack is unreviewed test data and is not a claim of linguistic valida
 
 ## Normal workflow and local switches
 
-`LINGUINI_M01_LANGUAGE_PACKS` is a boolean switch, default `false`. Only `true`
+`LINGUINI_LANGUAGE_PACKS` is a boolean switch, default `false`. Only `true`
 (case-insensitive) enables it. Off retains the legacy dispatch, including its
 deterministic builders. On uses the existing mission eligibility/planning flow,
 then binds the actual session's confirmed object instances, attributes, relations,
-translated vocabulary and register to M01 slots. No sample input or handwritten
+counts, translated vocabulary and register to the mission's slots. With the flag on,
+M01 and M02 never use their legacy builders. No sample input or handwritten
 `plan_specs` is used by the application.
 
 Set these values in the ignored **backend/.env.local** for a local experiment:
 
 ```dotenv
 APP_ENV=local
-LINGUINI_M01_LANGUAGE_PACKS=true
+LINGUINI_LANGUAGE_PACKS=true
 LINGUINI_LANGUAGE_PACK_DIRS=app/language_packs/packs/es-ES/everyday
 LINGUINI_LANGUAGE_PACK_REGISTER=everyday
 LINGUINI_LANGUAGE_PACK_EXPERIMENTAL=true
@@ -62,7 +64,8 @@ signing in for pack experiments, without assuming placement is pack-backed. Supp
 selecting a pack-only language; existing profiles can also be patched through the
 existing profile API to exercise another supported level.
 
-Pack availability extends mission candidates only with M01 at supported levels.
+Pack availability extends mission candidates only with pack missions (M01, M02) at
+ready levels.
 Photo eligibility and release checks still apply. Other missions and I-Spy retain
 their existing language availability. Discovery does not constitute linguistic
 validation or release approval. With the feature flag off no packs are discovered
@@ -129,7 +132,7 @@ For release evidence, `LINGUINI_LANGUAGE_PACK_EVIDENCE_DIR` contains files named
 **unreviewed**, so setting the flag and allowlist alone cannot release it. Do not
 create review metadata to make the gates pass.
 
-## Missions beyond M01
+## Pack missions
 
 `missions.toml` is the language-independent catalog of pack lessons: for each
 mission, level and content version it lists the question slots in order (purpose,
@@ -138,20 +141,57 @@ versions they need. Readiness checks it against each pack, planning expands it i
 slots, and generation guidance is selected per slot from it. It contains no
 sentences; those come from packs and the model.
 
-`registry.py` holds the mission-specific code (`PACK_MISSIONS`): a planner that binds
-confirmed facts to the slots, an adapter that turns accepted sentences into the
-existing task contract, input and assembled-lesson checks, phrase-tile slots and pack
-photo rules. Only M01 is registered today. To add a mission: add its templates to
-`missions.toml`, register its code, and give each pack the constructions, labels,
-examples and evaluations it needs. The pipeline, checks, evaluation (`--mission`)
-and release gates are shared.
+Mission-specific code lives in the `lessons` package, one module per mission, each
+exposing `MISSION = PackMission(...)` (`lessons/base.py` defines the contract):
+
+```text
+lessons/
+  __init__.py   registry: PACK_MISSION_IDS and pack_mission(id), loading modules lazily
+  base.py       PackMission contract and for_level()
+  common.py     SpecBuilder (planning), LessonContext and with_romanization (assembly)
+  m01.py        M01: plan_lesson, build_lesson, checks, MISSION
+  m02.py        M02: same layout
+```
+
+Every mission module has the same sections:
+
+1. **Planning**: `plan_lesson` dispatches to `_plan_a0`/`_plan_a1`/`_plan_a2`, which
+   add specs (construction, use, bindings, truth, labels, counterfactuals) to a
+   `SpecBuilder`. `specs.skip(slot)` marks a slot that reuses other slots' sentences.
+2. **Assembly**: `build_lesson` creates a `LessonContext` and dispatches to
+   `_build_a0`/`_build_a1`/`_build_a2`. Each looks up accepted sentences
+   (`ctx.sentence`, `ctx.sentence_by_id`), labels (`ctx.label`), seeded shuffles and
+   tiles (`ctx.shuffle`, `ctx.chunks`), and returns dev's existing result model and
+   task builder output, so grading and corrections stay unchanged. `ctx.finish` adds
+   romanization and tile join modes.
+3. **Checks**: `check_inputs` (before any model call), `check_lesson` (the assembled
+   question count, order and interactions) and `photo_reasons` (replacing
+   dictionary-based legacy photo rules).
+
+To add a mission: add its templates to `missions.toml` (matching the content version
+of its `missions/definitions` file), write `lessons/mXX.py` in this layout, add it to
+`_MODULES` in `lessons/__init__.py`, and give each pack the constructions, labels,
+examples and evaluations it needs. The pipeline, checks, evaluation (`--mission`) and
+release gates are shared. The definition files still supply each mission's objective,
+targets, photo requirements and content version; their `language_patterns` example
+sentences are not used by pack lessons.
 
 A session's language context records which mission templates are ready and which
 the pack declares (`readyMissions`, `declaredMissions`; older snapshots load as M01).
-A declared mission is owned by the pack: its ready versions are planned and blocked
-ones are not offered, never silently replaced by the legacy builder. Missions a pack
-does not declare keep their legacy implementation. Learner-confirmed counts are
-bound as `counted_groups` facts for missions that need them.
+With the flag on, every registered mission is pack-owned: its ready versions are
+planned and others are not offered, never replaced by the legacy builder. Missions
+without a pack implementation keep their legacy builders. Learner-confirmed counts
+are bound as `counted_groups` facts for missions that need them.
+
+M02 reuses dev's M02 task builders, grading and corrections at every level; the
+model writes its target-language text through five pack constructions:
+`find-object` (A0 "find the X"), `where-question` and `location-phrase` (A1 question
+and position choices, with false positions from model-proposed alternatives),
+`target-clue` (A2 detail/location clues and clarifications that never name the
+object) and `target-location` (A2 named, described and located target), plus
+M02 examples for `identify-object` and `scene-location`. M02 evaluation cases are
+not written yet, so `evaluate --mission M02` reports no cases and M02 cannot produce
+release evidence.
 
 ## One language context per normal M01 generation
 
@@ -175,6 +215,13 @@ with no silent selection of a different language/register.
 Optional `[language]` fields `articles` and `grammatical_gender` accept `required`,
 `optional` (the compatibility default), or `none`. These requirements apply to
 object translation metadata. Spanish explicitly requires articles and gender.
+`inflection = "suffixing"` (default `none`) tells the structural check that
+particles and case endings attach to words, so a bound noun or detail may appear
+inside a longer word (Korean 컵이에요); `stem_endings` lists final letters a stem may
+lose before a suffix. This only finds a bound role that whole-word matching missed;
+`modifier` forms (Korean 빨간) never take suffixes, and meaning stays model-assessed.
+Korean also has a targeted validator (`validators/ko.py`) for particle forms after a
+final consonant (문이에요, not 문예요).
 `nativeDisplay` is required throughout the pack translation path and is displayed
 as returned after validation; the application adds no article prefix. Required
 `romanization` is separate from optional legacy `phoneticText` (English-sound

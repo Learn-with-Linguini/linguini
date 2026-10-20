@@ -99,6 +99,11 @@ class PackLanguage(ApiModel):
     articles: Literal["required", "optional", "none"] = "optional"
     grammatical_gender: Literal["required", "optional", "none"] = "optional"
     phrase_boundaries: list[NonEmptyText] = Field(default_factory=list)
+    # "suffixing": particles and case endings attach to the word (Korean, Tamil), so a
+    # bound noun may appear inside a longer word. ``stem_endings`` are final letters a
+    # stem may lose before a suffix (Tamil புத்தகம் → புத்தகமா drops ம்).
+    inflection: Literal["none", "suffixing"] = "none"
+    stem_endings: list[NonEmptyText] = Field(default_factory=list)
 
     @field_validator("code", "locale")
     @classmethod

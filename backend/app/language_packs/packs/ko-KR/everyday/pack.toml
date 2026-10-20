@@ -8,6 +8,7 @@ articles = "none"
 grammatical_gender = "none"
 phrase_boundaries = ["그리고", "하지만"]
 romanization_required = true
+inflection = "suffixing"
 romanization_convention = "Consistent learner-readable Latin transliteration of the written Korean forms, preserving word boundaries and punctuation. This is transliteration, not English-sound pronunciation spelling. Transcribe each newly generated sentence and support in aligned spans."
 code = "ko"
 locale = "ko-KR"
@@ -34,6 +35,6 @@ review_status = "generated"
 
 [files]
 labels = "labels.toml"
-constructions = ["constructions/identify-object.toml", "constructions/yes-no-identification.toml", "constructions/describe-attribute.toml", "constructions/scene-existence.toml", "constructions/scene-location.toml", "constructions/connected-description.toml"]
-examples = ["examples/identify-object.toml", "examples/yes-no-identification.toml", "examples/describe-attribute.toml", "examples/scene-existence.toml", "examples/scene-location.toml", "examples/connected-description.toml"]
+constructions = ["constructions/target-location.toml", "constructions/target-clue.toml", "constructions/location-phrase.toml", "constructions/where-question.toml", "constructions/find-object.toml", "constructions/identify-object.toml", "constructions/yes-no-identification.toml", "constructions/describe-attribute.toml", "constructions/scene-existence.toml", "constructions/scene-location.toml", "constructions/connected-description.toml"]
+examples = ["examples/target-location.toml", "examples/target-clue.toml", "examples/location-phrase.toml", "examples/where-question.toml", "examples/find-object.toml", "examples/identify-object.toml", "examples/yes-no-identification.toml", "examples/describe-attribute.toml", "examples/scene-existence.toml", "examples/scene-location.toml", "examples/connected-description.toml"]
 evaluations = ["evaluations/M01-A0.toml", "evaluations/M01-A1.toml", "evaluations/M01-A2.toml"]

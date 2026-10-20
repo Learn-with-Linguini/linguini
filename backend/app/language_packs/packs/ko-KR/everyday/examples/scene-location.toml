@@ -77,3 +77,27 @@ sentence = "탁자가 컵 위에 있어요."
 correction = "컵이 탁자 위에 있어요."
 note = "Do not swap the cup and table roles."
 provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "m02-cup-on-table"
+levels = ["A1"]
+purposes = ["findObject", "answerWhere"]
+meaning = "The cup is on the table."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }] }
+bindings = { subject = "object:cup", reference = "object:table", relation = "relation:cup-on-table" }
+truth = true
+labels = []
+sentence = "컵이 탁자 위에 있어요."
+translation = "The cup is on the table."
+chunks = [{ text = "컵이", join = "none" }, { text = "탁자", join = "space" }, { text = "위에", join = "space" }, { text = "있어요", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "m02-location-form"
+levels = ["A1"]
+purposes = ["findObject", "answerWhere"]
+sentence = "컵이 탁자 위 있어요."
+correction = "컵이 탁자 위에 있어요."
+note = "Mark the location with 에: 위에."
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
