@@ -32,21 +32,42 @@ review_status = "unreviewed"
 
 [files]
 labels = "labels.toml"
-constructions = ["constructions/target-location.toml", "constructions/target-clue.toml", "constructions/location-phrase.toml", "constructions/where-question.toml", "constructions/find-object.toml", 
+numbers = "numbers.toml"
+constructions = [
+  "constructions/target-location.toml",
+  "constructions/target-clue.toml",
+  "constructions/location-phrase.toml",
+  "constructions/where-question.toml",
+  "constructions/find-object.toml",
   "constructions/identify-object.toml",
   "constructions/yes-no-identification.toml",
   "constructions/describe-attribute.toml",
   "constructions/scene-existence.toml",
   "constructions/scene-location.toml",
   "constructions/connected-description.toml",
+  "constructions/how-many-question.toml",
+  "constructions/quantity-chunk.toml",
+  "constructions/quantity-statement.toml",
+  "constructions/quantity-comparison.toml",
+  "constructions/quantity-pair.toml",
 ]
-examples = ["examples/target-location.toml", "examples/target-clue.toml", "examples/location-phrase.toml", "examples/where-question.toml", "examples/find-object.toml", 
+examples = [
+  "examples/target-location.toml",
+  "examples/target-clue.toml",
+  "examples/location-phrase.toml",
+  "examples/where-question.toml",
+  "examples/find-object.toml",
   "examples/identify-object.toml",
   "examples/yes-no-identification.toml",
   "examples/describe-attribute.toml",
   "examples/scene-existence.toml",
   "examples/scene-location.toml",
   "examples/connected-description.toml",
+  "examples/how-many-question.toml",
+  "examples/quantity-chunk.toml",
+  "examples/quantity-statement.toml",
+  "examples/quantity-comparison.toml",
+  "examples/quantity-pair.toml",
 ]
 evaluations = [
   "evaluations/M01-A0.toml",

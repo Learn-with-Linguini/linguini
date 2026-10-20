@@ -181,3 +181,67 @@ romanization = "mulgeon ireumgwa wichireul malhae boseyo."
 meaning = "Say the object's name and where it is."
 usage = "prompt"
 provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "answer-in-sentence"
+text = "문장으로 대답하세요."
+romanization = "munjang-euro daedaphaseyo."
+meaning = "Answer with a sentence."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "build-group-sentence"
+text = "표시된 그룹에 대해 문장을 만드세요."
+romanization = "pyosidoen geurube daehae munjang-eul mandeuseyo."
+meaning = "Build a sentence about the highlighted group."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "choose-comparison"
+text = "맞는 비교를 고르세요."
+romanization = "manneun bigyoreul goreuseyo."
+meaning = "Choose the correct comparison."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "friend-says"
+text = "친구가 말해요: \"{statement}\" 뭐라고 대답해요?"
+romanization = "chinguga malhaeyo: \"{statement}\" mworago daedaphaeyo?"
+meaning = "Your friend says: “{statement}” What do you answer?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "friend-is-right"
+text = "네, 친구 말이 맞아요."
+romanization = "ne, chingu mari majayo."
+meaning = "Yes, your friend is right."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "describe-compare"
+text = "두 그룹을 설명하고 비교하세요."
+romanization = "du geurubeul seolmyeonghago bigyohaseyo."
+meaning = "Describe and compare the two groups."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "more"
+text = "많아요"
+romanization = "manayo"
+meaning = "more"
+usage = "sentence"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "fewer"
+text = "적어요"
+romanization = "jeogeoyo"
+meaning = "fewer"
+usage = "sentence"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }

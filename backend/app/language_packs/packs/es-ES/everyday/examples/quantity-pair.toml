@@ -1,0 +1,25 @@
+construction_id = "quantity-pair"
+
+[[examples]]
+example_id = "five-books-two-cups"
+levels = ["A2"]
+purposes = ["buildComparison"]
+meaning = "There are five books and two cups."
+scene = { objects = [{ fact_id = "object:book", concept = "book" }, { fact_id = "object:cup", concept = "cup" }, { fact_id = "object:apple", concept = "apple" }], counts = [{ fact_id = "count:book", object = "object:book", quantity = 5 }, { fact_id = "count:cup", object = "object:cup", quantity = 2 }, { fact_id = "count:apple", object = "object:apple", quantity = 2 }] }
+bindings = { first = "object:book", first-count = "count:book", second = "object:cup", second-count = "count:cup" }
+truth = true
+labels = []
+sentence = "Hay cinco libros y dos tazas."
+translation = "There are five books and two cups."
+chunks = [{ text = "Hay", join = "none" }, { text = "cinco", join = "space" }, { text = "libros", join = "space" }, { text = "y", join = "space" }, { text = "dos", join = "space" }, { text = "tazas", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "five-books-two-cups-form"
+levels = ["A2"]
+purposes = ["buildComparison"]
+sentence = "Hay cinco libros, dos tazas."
+correction = "Hay cinco libros y dos tazas."
+note = "Join the two groups with y."
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }

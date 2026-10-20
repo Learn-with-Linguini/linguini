@@ -1,0 +1,14 @@
+construction_id = "quantity-pair"
+version = 1
+summary = "Say how many objects two counted groups have, in one sentence."
+guidance = "Give both counts in one sentence, joining the groups with 있고: 책이 다섯 개 있고 컵이 두 개 있어요."
+features = ["quantity-statement", "coordination"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { first = "noun", first-count = "determiner", second = "noun", second-count = "determiner" }
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "pair-frame"
+message = "Join both counts with 있고 … 있어요."
+must_contain = ["개 있고 ", "개 있어요\\.$"]

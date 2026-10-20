@@ -158,3 +158,59 @@ text = "Nomme l'objet et indique où il se trouve."
 meaning = "Name the object and say where it is."
 usage = "prompt"
 provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "answer-in-sentence"
+text = "Réponds avec une phrase."
+meaning = "Answer with a sentence."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "build-group-sentence"
+text = "Construis une phrase sur le groupe marqué."
+meaning = "Build a sentence about the highlighted group."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "choose-comparison"
+text = "Choisis la comparaison correcte."
+meaning = "Choose the correct comparison."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "friend-says"
+text = "Ton ami dit : « {statement} » Que réponds-tu ?"
+meaning = "Your friend says: “{statement}” What do you answer?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "friend-is-right"
+text = "Oui, ton ami a raison."
+meaning = "Yes, your friend is right."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "describe-compare"
+text = "Décris et compare les deux groupes."
+meaning = "Describe and compare the two groups."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "more"
+text = "plus"
+meaning = "more"
+usage = "sentence"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "fewer"
+text = "moins"
+meaning = "fewer"
+usage = "sentence"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
