@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Annotated, Literal
 from uuid import UUID, uuid4
 
@@ -56,6 +57,8 @@ class CreateSessionRequest(ApiModel):
     language_profile_id: UUID
     media_asset_id: UUID
     idempotency_key: Annotated[str, Field(min_length=8, max_length=200)] | None = None
+    # Tags the session as today's daily challenge entry; must be the current UTC day.
+    daily_challenge_day: date | None = None
 
 
 class GenerateSessionPlanRequest(ApiModel):

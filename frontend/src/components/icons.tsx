@@ -73,6 +73,13 @@ export const TrophyIcon = ({ size = 22, className }: IconProps) => (
   </svg>
 );
 
+export const ClockIcon = ({ size = 22, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M12 7.5V12l3 2" />
+  </svg>
+);
+
 export const PersonIcon = ({ size = 22, className }: IconProps) => (
   <svg {...base(size)} className={className}>
     <circle cx="12" cy="8.5" r="3.6" />

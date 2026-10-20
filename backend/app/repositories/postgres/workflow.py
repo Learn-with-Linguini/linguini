@@ -29,6 +29,7 @@ from app.ai.features.scene_analysis import (
     RoutedSceneAnalyzer,
 )
 from app.missions import get_mission
+from app.repositories.postgres.daily_challenges import enter_challenge, record_completion
 from app.repositories.postgres.game_resources import refund_sauce, reward_basil
 from app.repositories.postgres.gamification import (
     compatible_question,
@@ -1580,7 +1581,17 @@ class PostgresWorkflowRepository:
 
     def create(self, request):
         with self.transaction() as c:
-            self._practice_media(c, request.language_profile_id, request.media_asset_id)
+            _profile, asset = self._practice_media(
+                c, request.language_profile_id, request.media_asset_id
+            )
+
+            def tagged(session):
+                if request.daily_challenge_day is not None:
+                    enter_challenge(
+                        c, self.user_id, session.id, request.daily_challenge_day, asset["source"]
+                    )
+                return self._detail(c, session)
+
             if request.idempotency_key:
                 existing = (
                     c.execute(
@@ -1599,7 +1610,7 @@ class PostgresWorkflowRepository:
                         or existing["mode"] != SessionMode.LESSON
                     ):
                         raise PracticeConflictError("This request key was used for another image.")
-                    return self._detail(c, parse_session(existing))
+                    return tagged(parse_session(existing))
             self._reap(c, request.language_profile_id)
             # Re-selecting an image resumes its unfinished session, but an
             # unfinished session for another image must never block a learner
@@ -1621,7 +1632,7 @@ class PostgresWorkflowRepository:
                 .one_or_none()
             )
             if existing is not None:
-                return self._detail(c, parse_session(existing))
+                return tagged(parse_session(existing))
             self._check_daily_tier_limit(c)
             self._check_active_limit(c, request.language_profile_id)
             session = Session(
@@ -1631,7 +1642,7 @@ class PostgresWorkflowRepository:
                 idempotency_key=request.idempotency_key,
             )
             c.execute(insert(sessions).values(**session.model_dump(by_alias=False)))
-            return self._detail(c, session)
+            return tagged(session)
 
     def _check_daily_tier_limit(self, c):
         user_row = (
@@ -3080,6 +3091,7 @@ class PostgresWorkflowRepository:
                     language_profile_id=session.language_profile_id,
                     session_id=session.id,
                 )
+                record_completion(c, self.user_id, session.id)
                 ispy = self._ispy_summary(c, session.id)
                 if (
                     all(task.status == "completed" for task in tasks)
