@@ -25,6 +25,7 @@ const RELATION_OPTIONS = [
 ] as const;
 const RELATION_CHOICES = RELATION_OPTIONS.map(([value, label]) => ({ value, label }));
 type AnalysisPanel = SceneReviewPanel;
+type AddedReviewObject = PracticeReview["addedObjects"][number] & { marker: number };
 
 function canonicalRelationValue(relation: string) {
   const normalized = relation.trim().replace(/[\s_-]+/g, "").toLowerCase();
@@ -50,7 +51,8 @@ export function PracticeAnalysis() {
     );
   });
   const [explicitlyRemoved, setExplicitlyRemoved] = useState<string[]>([]);
-  const [added, setAdded] = useState<PracticeReview["addedObjects"]>([]);
+  const [added, setAdded] = useState<AddedReviewObject[]>([]);
+  const nextMarker = useRef(Math.max(0, ...scene.items.map(item => item.marker)) + 1);
   const [relations, setRelations] = useState<PracticeReview["relations"]>(() => session?.sceneObjectRelations ?? []);
   const [sceneTitle, setSceneTitle] = useState(session?.session.sessionTitle ?? scene.title);
   const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>({});
@@ -77,6 +79,8 @@ export function PracticeAnalysis() {
       session.suggestedSceneObjectIds,
     ));
     setExplicitlyRemoved([]);
+    setAdded([]);
+    nextMarker.current = Math.max(0, ...scene.items.map(item => item.marker)) + 1;
     setRelations(session.sceneObjectRelations);
     setAttributes(Object.fromEntries(session.sceneObjects.map(item => [item.id,
       Object.fromEntries(Object.entries(item.attributes ?? {}).filter((entry): entry is [string, string] => entry[0] !== "quantity" && typeof entry[1] === "string"))])));
@@ -143,14 +147,14 @@ export function PracticeAnalysis() {
   </div>;
   const locked = session.tasks.some(task => task.status !== "pending");
   const kept = scene.items.filter(item => !removed.includes(item.id));
-  const custom: LanguageItem[] = added.map((item, index) => ({ id: `custom-${item.id}`, word: item.label,
-    translation: item.label, wordClass: "noun", gender: null, marker: kept.length + index + 1,
+  const custom: LanguageItem[] = added.map(item => ({ id: `custom-${item.id}`, word: item.label,
+    translation: item.label, wordClass: "noun", gender: null, marker: item.marker,
     x: item.x * 100, y: item.y * 100, attributes: attributes[item.id] ?? {}, example: "", exampleTranslation: "" }));
-  const positionedKept = kept.map((item, index) => {
+  const positionedKept = kept.map(item => {
     const position = positions[item.id];
     return position
-      ? { ...item, marker: index + 1, x: position.x * 100, y: position.y * 100 }
-      : { ...item, marker: index + 1 };
+      ? { ...item, x: position.x * 100, y: position.y * 100 }
+      : item;
   });
   const movingItem = movingObjectId ? kept.find(item => item.id === movingObjectId) : null;
   const placementLabel = pending?.label ?? movingItem?.translation ?? null;
@@ -160,7 +164,7 @@ export function PracticeAnalysis() {
       label: session.sceneObjects.find(object => object.id === item.id)?.label ?? item.translation,
       marker: item.marker,
     })),
-    ...added.map((item, index) => ({ ...item, marker: kept.length + index + 1 })),
+    ...added,
   ];
   const relationObjects = rawRelationObjects;
   const selectedIds = new Set(relationObjects.map(item => item.id));
@@ -211,10 +215,10 @@ export function PracticeAnalysis() {
     if (!pending) return;
     setAdded(current => pending.id
       ? current.map(item => item.id === pending.id ? { ...item, ...location } : item)
-      : [...current, { id: crypto.randomUUID(), label: pending.label, ...location }]);
+      : [...current, { id: crypto.randomUUID(), label: pending.label, marker: nextMarker.current++, ...location }]);
     setPending(null); setLabel("");
   };
-  const replaceLocation = (item: PracticeReview["addedObjects"][number]) => {
+  const replaceLocation = (item: AddedReviewObject) => {
     setPending({ id: item.id, label: item.label });
     setError(null);
     photoRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
@@ -241,7 +245,7 @@ export function PracticeAnalysis() {
     await saveReview({
       sceneTitle: sceneTitle.trim() || undefined,
       acceptedObjectIds: kept.map(item => item.id),
-      addedObjects: added,
+      addedObjects: added.map(({ marker: _marker, ...item }) => item),
       relations: visibleRelations.map(row => ({ ...row, relation: canonicalRelationValue(row.relation) })),
       objectAttributes: selectedAttributes,
       objectCounts: objectCounts(groups, verifiedCounts),

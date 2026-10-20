@@ -12,9 +12,9 @@ import { validatePasswordReset } from "../lib/authMessages.ts";
 import { SOCIAL_LINKS_LIST } from "../config/social";
 import { supabase } from "../lib/supabase.ts";
 import { useAppState } from "../state/useAppState";
+import { savedPastaAvatar } from "../lib/onboardingDraft";
 import { useAuth } from "../state/Auth";
 import { MissionBadges } from "../components/MissionBadges";
-import { ChefOfTheDay } from "../components/ChefOfTheDay";
 
 const socialIcons = {
   instagram: InstagramIcon,
@@ -137,7 +137,7 @@ export function Profile() {
 
       <section className="profile-identity-card" aria-label="Profile">
         <span className="profile-avatar">
-          <img src={`/pasta-assets/${localStorage.getItem("linguini-avatar") ?? "farfalle"}.png`} alt="Profile avatar" />
+          <img src={`/pasta-assets/${savedPastaAvatar() ?? user?.avatar ?? "farfalle"}.png`} alt="Profile avatar" />
         </span>
         <button type="button" className="profile-identity__details profile-name-link" onClick={() => navigate("/profile/edit")} aria-label="Change profile name and avatar">
           <h2>{learner.name}</h2>
@@ -171,7 +171,6 @@ export function Profile() {
       </section>
 
       <MissionBadges />
-      <ChefOfTheDay />
 
       <section className="profile-section">
         <h2>Learning setup</h2>

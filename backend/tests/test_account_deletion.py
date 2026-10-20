@@ -174,6 +174,7 @@ def test_account_deletion_keeps_other_users_data(monkeypatch):
             ).scalar_one() == other_asset_id
         deleted_prefixes = storage.delete_prefixes.call_args.args[0]
         assert f"users/{user.id}/images" in deleted_prefixes
+        assert f"derived/v2/w320/users/{user.id}/images" in deleted_prefixes
         assert all(str(other.id) not in prefix for prefix in deleted_prefixes)
         auth_admin.delete_user.assert_called_once_with(user.auth_provider_id)
     finally:

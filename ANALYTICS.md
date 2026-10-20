@@ -95,6 +95,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
 | `onboarding_completed` | `{ language, minutes, level }` | Learner completes initial onboarding questionnaire |
+| `onboarding_resumed` | `{ stage }` | Learner returns to unfinished onboarding after leaving the app |
 
 ### Practice, Photo Lessons & Scene Analysis
 | Event Name | Parameters | Trigger Description |
@@ -151,6 +152,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | :--- | :--- | :--- |
 | `journal_entry_saved` | `{ hasPhotos, wordCount, isNew }` | Daily journal entry saved or updated |
 | `vocabulary_view_toggled` | `{ view }` | Switched between journey tree and list views |
+| `revisit_empty_practice_started` | — | Learner starts their first practice session from the empty Revisit page |
 | `vocabulary_filters_applied` | `{ wordClass, category }` | Filter applied to vocabulary collection |
 | `vocabulary_audio_played` | `{ word }` | Learner plays audio pronunciation for a target word |
 

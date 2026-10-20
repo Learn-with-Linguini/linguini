@@ -31,6 +31,7 @@ users = Table(
     Column("id", Uuid, primary_key=True),
     Column("auth_provider_id", Text, nullable=False),
     Column("display_name", String(100), nullable=False),
+    Column("avatar", String(20), nullable=False),
     Column("email", String(320)),
     Column("timezone", Text, nullable=False),
     Column("learning_goal", String(300), nullable=False),

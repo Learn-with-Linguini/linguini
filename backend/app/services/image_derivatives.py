@@ -11,6 +11,7 @@ from PIL import Image, ImageOps
 from app.services.image_storage import ImageStorage, UploadObjectMissing
 
 ALLOWED_WIDTHS = (320, 640, 1280)
+DERIVATIVE_ROOT = "derived/v2"
 
 
 def _is_remote(storage_key: str) -> bool:
@@ -30,8 +31,8 @@ class ImageDerivatives:
     def derived_key(self, storage_key: str, width: int) -> str:
         if _is_remote(storage_key):
             digest = hashlib.sha256(storage_key.encode()).hexdigest()
-            return f"derived/w{width}/remote/{digest}.webp"
-        return f"derived/w{width}/{storage_key}.webp"
+            return f"{DERIVATIVE_ROOT}/w{width}/remote/{digest}.webp"
+        return f"{DERIVATIVE_ROOT}/w{width}/{storage_key}.webp"
 
     def get(self, storage_key: str, width: int) -> bytes:
         if storage_key.startswith("demo-art/"):

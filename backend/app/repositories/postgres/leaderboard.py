@@ -33,7 +33,7 @@ def leaderboard_snapshot(connection, user_id):
     earned = game_resource_events.c.kind == "basilEarned"
     scores = (
         select(
-            users.c.id.label("user_id"), users.c.display_name,
+            users.c.id.label("user_id"), users.c.display_name, users.c.avatar,
             func.sum(game_resource_events.c.basil_delta).label("basil"),
         )
         .join(game_resource_events, game_resource_events.c.user_id == users.c.id)
@@ -47,7 +47,7 @@ def leaderboard_snapshot(connection, user_id):
             game_resource_events.c.created_at >= start,
             game_resource_events.c.created_at < totals.day_ends_at,
         )
-        .group_by(users.c.id, users.c.display_name)
+        .group_by(users.c.id, users.c.display_name, users.c.avatar)
         .having(func.sum(game_resource_events.c.basil_delta) > 0)
         .cte("daily_chef_scores")
     )
@@ -80,6 +80,7 @@ def leaderboard_snapshot(connection, user_id):
         top=[ChefLeaderboardEntry(
             rank=row["rank"], display_name=row["display_name"].strip() or "Learner",
             basil=row["basil"],
+            avatar=row["avatar"],
         ) for row in top],
     )
 

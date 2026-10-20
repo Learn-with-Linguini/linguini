@@ -5,6 +5,7 @@ import { trackAction } from "../lib/analytics.ts";
 import { useAppState } from "../state/useAppState";
 import { Button, Card } from "./ui";
 import "./gamification.css";
+import "./leaderboard.css";
 
 export function ChefOfTheDay() {
   const { user } = useAppState();
@@ -44,7 +45,7 @@ export function ChefOfTheDay() {
       </Card>
       {error ? <p role="alert">{error}</p> : null}
       {data.top.length ? <ol className="chef-standings" aria-label="Today’s chefs">{data.top.map((entry, index) => <li key={`${entry.rank}:${index}`}>
-        <strong>#{entry.rank}</strong><span>{entry.displayName}</span><strong>{entry.basil} Basil</strong></li>)}</ol> : <p className="muted">A fresh day in the kitchen. There’s room for everyone.</p>}
+        <strong>#{entry.rank}</strong><img className="leaderboard-avatar" src={`/pasta-assets/${entry.avatar}.png`} alt="" /><span>{entry.displayName}</span><strong>{entry.basil} Basil</strong></li>)}</ol> : <p className="muted">A fresh day in the kitchen. There’s room for everyone.</p>}
       <p className="small muted">Today ends {new Date(data.dayEndsAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}. Your total Basil stays with you.</p>
     </>}
   </section>;

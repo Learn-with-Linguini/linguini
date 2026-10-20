@@ -158,18 +158,18 @@ test.after(() => {
   globalThis.MessageChannel = NativeMessageChannel;
 });
 
-test("removing and restoring objects keeps photo numbers sequential without changing saved object identities", async () => {
+test("removing and restoring objects keeps their review marker numbers stable", async () => {
   await mount();
   assertMarkers([1, 2, 3]);
   await click(dom.window.document.querySelector('[aria-label="Remove marker 1, table"]'));
-  assertMarkers([1, 2]);
+  assertMarkers([2, 3]);
   await addWord("window");
   await addWord("door");
-  assertMarkers([1, 2, 3, 4]);
-  await click(dom.window.document.querySelector('[aria-label="Remove marker 3, window"]'));
-  assertMarkers([1, 2, 3]);
+  assertMarkers([2, 3, 4, 5]);
+  await click(dom.window.document.querySelector('[aria-label="Remove marker 4, window"]'));
+  assertMarkers([2, 3, 5]);
   await click(button("Restore removed objects"));
-  assertMarkers([1, 2, 3, 4]);
+  assertMarkers([1, 2, 3, 5]);
   await click(dom.window.document.querySelector('[aria-label="Remove marker 1, table"]'));
   await click(button("Confirm lesson facts"));
   assert.equal(reviews.length, 1);
@@ -195,10 +195,10 @@ test("counts live in Objects and follow visible instances after switching detail
   await click(tabs[0]);
   assert.deepEqual(counts(), { table: 1, cup: 2 });
   await click(dom.window.document.querySelector('[aria-label="Remove marker 2, cup"]'));
-  assertMarkers([1, 2]);
+  assertMarkers([1, 3]);
   assert.deepEqual(counts(), { table: 1, cup: 1 });
   await addWord("cup");
-  assertMarkers([1, 2, 3]);
+  assertMarkers([1, 3, 4]);
   assert.deepEqual(counts(), { table: 1, cup: 2 });
   await click(button("Confirm lesson facts"));
   assert.deepEqual(reviews[0].acceptedObjectIds, ["object-0", "object-2"]);
@@ -210,13 +210,13 @@ test("restoring removed objects keeps mission-hidden suggestions excluded from m
   await mount({ ...detail(), suggestedSceneObjectIds: ["object-1", "object-2"],
     provisionalMissionPlan: [{ missionId: "M03", practiceLevel: "A1" }] });
   assert.deepEqual([...dom.window.document.querySelectorAll('[role="tab"]')].map(tab => tab.textContent), ["Objects2", "Adjectives2", "Relations1"]);
-  assertMarkers([1, 2]);
+  assertMarkers([2, 3]);
   assert.deepEqual(counts(), { cup: 2 });
-  await click(dom.window.document.querySelector('[aria-label="Remove marker 1, cup"]'));
-  assertMarkers([1]);
+  await click(dom.window.document.querySelector('[aria-label="Remove marker 2, cup"]'));
+  assertMarkers([3]);
   assert.deepEqual(counts(), { cup: 1 });
   await click(button("Restore removed objects"));
-  assertMarkers([1, 2]);
+  assertMarkers([2, 3]);
   assert.deepEqual(counts(), { cup: 2 });
   await click(button("Confirm lesson facts"));
   assert.deepEqual(reviews[0].acceptedObjectIds, ["object-1", "object-2"]);

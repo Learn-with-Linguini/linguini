@@ -1,4 +1,5 @@
 import { request, write } from "./api.ts";
+import type { PastaAvatar } from "../data/types";
 
 export type BadgeLevel = "Taster" | "Cook" | "Chef" | "Head Chef" | "Master";
 export interface MissionBadge {
@@ -18,7 +19,7 @@ export interface GamificationSummary {
 export interface ChefStandings {
   participating: boolean; competitionDay: string; dayEndsAt: string; todayBasil: number;
   personalBest: number; currentRank: number | null; basilToNextRank: number | null;
-  top: { rank: number; displayName: string; basil: number }[];
+  top: { rank: number; displayName: string; basil: number; avatar: PastaAvatar }[];
 }
 export const gamificationKeys = {
   account: (userId: string) => ["gamification", userId] as const,

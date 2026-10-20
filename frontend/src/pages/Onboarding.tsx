@@ -2,7 +2,7 @@ import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { OnboardingSteps } from "../components/OnboardingSteps";
 import { trackAction } from "../lib/analytics.ts";
-import type { OnboardingDraft } from "../lib/onboardingDraft";
+import { savedPastaAvatar, type OnboardingDraft } from "../lib/onboardingDraft";
 import { languages } from "../config/languages";
 import { useAppState } from "../state/useAppState";
 
@@ -29,16 +29,17 @@ export function Onboarding() {
     minutes: learner.dailyMinutes ?? 10,
     microphoneEnabled: learner.micOn,
     cameraEnabled: learner.cameraOn,
-    avatar: localStorage.getItem("linguini-avatar") ?? "farfalle",
+    avatar: savedPastaAvatar() ?? user?.avatar ?? "farfalle",
     proficiencyLevel: "A0",
   };
-  return <OnboardingSteps initial={initial} restartingForLanguage={restartingForLanguage} saving={profileSaving} error={profileError} onFinish={() => navigate(destination)} onComplete={async values => {
+  return <OnboardingSteps initial={initial} userId={user?.id ?? "pending"} restartingForLanguage={restartingForLanguage} saving={profileSaving} error={profileError} onFinish={() => navigate(destination)} onComplete={async values => {
     setCompletionStarted(true);
     const saved = await completeOnboarding(values.languageCode, values.minutes, values.proficiencyLevel ?? "A0", {
       displayName: values.name || learner.name,
       learningGoal: values.goal,
       microphoneEnabled: values.microphoneEnabled,
       cameraEnabled: values.cameraEnabled,
+      avatar: values.avatar,
       onboardingCompleted: true,
     });
     if (saved) {

@@ -3,14 +3,15 @@ import { useEffect, useState } from "react";
 import { Button, Card, IconButton, ProgressTrail, TopBar } from "./ui";
 import { CameraIcon, CheckIcon, EyeIcon, EyeOffIcon } from "./icons";
 import { languages } from "../config/languages";
-import { joinGoals, parseGoals, type OnboardingDraft } from "../lib/onboardingDraft";
+import { clearOnboardingProgress, joinGoals, parseGoals, readOnboardingProgress, saveOnboardingProgress, PASTA_AVATARS, type OnboardingDraft, type OnboardingStage } from "../lib/onboardingDraft";
 import { checkPlacementAnswer, getPlacementTest, submitPlacement, type PlacementTest } from "../lib/api";
 import { nextPlacementDifficulty } from "../lib/placementPath";
+import { trackAction } from "../lib/analytics.ts";
 
 const goals = ["Chat with neighbours", "Travel confidently", "Order food and drinks", "Understand my family"];
 const minutesOptions = [5, 10, 20, 30];
-const avatars = ["farfalle", "fusilli", "penne", "macaroni"] as const;
-type Stage = "profile" | "language" | "experience" | "placement" | "goals" | "permissions" | "success";
+const avatars = PASTA_AVATARS;
+type Stage = OnboardingStage | "placement" | "success";
 
 function OnboardingSuccess({ onFinish }: { onFinish: () => void }) {
   useEffect(() => {
@@ -20,7 +21,7 @@ function OnboardingSuccess({ onFinish }: { onFinish: () => void }) {
   return <div className="stack onboarding-success"><img src="/linguini-logo.svg" alt="" className="onboarding-success__mascot" /><h1>You’re all set!</h1><p className="muted">Great work—your first learning path is ready for you.</p><Button block onClick={onFinish}>Go to home</Button></div>;
 }
 
-export function OnboardingSteps({ initial, saving = false, error, onComplete, onFinish, restartingForLanguage = false }: {
+export function OnboardingSteps({ initial, saving = false, error, onComplete, onFinish, restartingForLanguage = false, userId }: {
   initial: OnboardingDraft;
   saving?: boolean;
   error?: string | null;
@@ -28,15 +29,21 @@ export function OnboardingSteps({ initial, saving = false, error, onComplete, on
   onFinish: () => void;
   /** A language selected from Profile keeps the learner's identity, then retakes setup for that language. */
   restartingForLanguage?: boolean;
+  userId: string;
 }) {
-  const [stage, setStage] = useState<Stage>(restartingForLanguage ? "experience" : "profile");
-  const [name, setName] = useState(initial.name);
-  const [language, setLanguage] = useState(languages.find(option => option.code === initial.languageCode) ?? languages[0]);
-  const [selectedGoals, setSelectedGoals] = useState(() => parseGoals(initial.goal).filter(value => goals.includes(value)));
-  const [minutes, setMinutes] = useState(initial.minutes || 10);
-  const [microphoneEnabled] = useState(initial.microphoneEnabled);
-  const [cameraEnabled, setCameraEnabled] = useState(initial.cameraEnabled);
-  const [avatar, setAvatar] = useState(initial.avatar);
+  const [savedProgress] = useState(() => readOnboardingProgress(userId));
+  const resumed = savedProgress && savedProgress.restartingForLanguage === restartingForLanguage
+    && (!restartingForLanguage || savedProgress.draft.languageCode === initial.languageCode)
+    ? savedProgress : null;
+  const startingDraft = resumed?.draft ?? initial;
+  const [stage, setStage] = useState<Stage>(resumed?.stage ?? (restartingForLanguage ? "experience" : "profile"));
+  const [name, setName] = useState(startingDraft.name);
+  const [language, setLanguage] = useState(languages.find(option => option.code === startingDraft.languageCode) ?? languages[0]);
+  const [selectedGoals, setSelectedGoals] = useState(() => parseGoals(startingDraft.goal).filter(value => goals.includes(value)));
+  const [minutes, setMinutes] = useState(startingDraft.minutes || 10);
+  const [microphoneEnabled] = useState(startingDraft.microphoneEnabled);
+  const [cameraEnabled, setCameraEnabled] = useState(startingDraft.cameraEnabled);
+  const [avatar, setAvatar] = useState(startingDraft.avatar);
   const [level, setLevel] = useState<"A0" | "A1" | "A2">("A0");
   const [test, setTest] = useState<PlacementTest | null>(null);
   const [questionPath, setQuestionPath] = useState<string[]>([]);
@@ -48,6 +55,17 @@ export function OnboardingSteps({ initial, saving = false, error, onComplete, on
   const [localError, setLocalError] = useState<string | null>(null);
 
   const draft = (): OnboardingDraft => ({ name: name.trim(), languageCode: language.code, goal: joinGoals(selectedGoals), minutes, microphoneEnabled, cameraEnabled, avatar, proficiencyLevel: level });
+  useEffect(() => {
+    if (resumed) trackAction("onboarding_resumed", { stage: resumed.stage });
+  }, [resumed]);
+  useEffect(() => {
+    if (stage === "placement" || stage === "success") return;
+    saveOnboardingProgress(userId, {
+      draft: { name: name.trim(), languageCode: language.code, goal: joinGoals(selectedGoals), minutes, microphoneEnabled, cameraEnabled, avatar, proficiencyLevel: level },
+      stage,
+      restartingForLanguage,
+    });
+  }, [avatar, cameraEnabled, language.code, level, microphoneEnabled, minutes, name, restartingForLanguage, selectedGoals, stage, userId]);
   const chooseBeginner = async () => {
     setWorking(true); setLocalError(null);
     try {
@@ -99,7 +117,12 @@ export function OnboardingSteps({ initial, saving = false, error, onComplete, on
     } catch { setLocalError("We couldn't finish the activity. Your answers are still here—please try again."); }
     finally { setWorking(false); }
   };
-  const finish = async () => { if (await onComplete(draft())) setStage("success"); };
+  const finish = async () => {
+    if (await onComplete(draft())) {
+      clearOnboardingProgress(userId);
+      setStage("success");
+    }
+  };
   const toggleGoal = (option: string) => setSelectedGoals(current => current.includes(option) ? current.filter(value => value !== option) : [...current, option]);
   const progress = (restartingForLanguage
     ? ({ experience: 1, placement: 1, goals: 2, permissions: 3, success: 3 } as const)[stage as "experience" | "placement" | "goals" | "permissions" | "success"]

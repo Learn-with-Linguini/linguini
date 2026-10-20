@@ -17,6 +17,6 @@
 .chef-badge--head-chef { border: 6px double var(--teal-dark); color: var(--teal-dark); background: var(--cream); box-shadow: 0 0 0 2px var(--pasta); }
 .chef-badge--master { border: 6px double var(--tomato); color: var(--teal-dark); background: var(--pasta); box-shadow: 0 0 0 3px var(--teal-dark); }
 .chef-standings { list-style: none; padding: 0; margin: 0; }
-.chef-standings li { display: grid; grid-template-columns: 3ch minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.chef-standings li { display: grid; grid-template-columns: 3ch 36px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .chef-standings li > span { overflow-wrap: anywhere; }
 @media (min-width: 680px) { .mission-badges { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
