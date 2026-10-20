@@ -11,7 +11,7 @@ import type { DailyChallenge as Challenge } from "../lib/dailyChallenge";
 import { friendlyError } from "../lib/queryKeys";
 import { sessionDestination } from "../lib/sessionRoute";
 import { useAppState } from "../state/useAppState";
-import { BasilIcon, CameraIcon, CheckIcon, ClockIcon, TrophyIcon } from "./icons";
+import { BasilIcon, CameraIcon, CheckIcon, ClockIcon } from "./icons";
 import { InlineLoader } from "./LoadingScreen";
 import { Button } from "./ui";
 import "./dailyChallenge.css";
@@ -72,7 +72,6 @@ export function DailyChallenge() {
         <ChallengeHeadline challenge={data} id="daily-challenge-title" />
        
         <div className="daily-challenge__prizes">
-          <p><TrophyIcon size={18} />Rare finds earn bonus Basil</p>
           <ol>{DAILY_CHALLENGE_PRIZES.map(prize => <li key={prize.place}><span>{prize.place}</span><strong><BasilIcon size={18} />{prize.basil}<span className="visually-hidden"> Basil</span></strong></li>)}</ol>
         </div>
         {data.status === "completed"
