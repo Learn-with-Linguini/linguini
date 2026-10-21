@@ -13,7 +13,8 @@ import { useVocabularyQuery } from "../state/queries";
 import { WalkthroughCoachmark } from "../components/WalkthroughCoachmark";
 import { FIRST_LESSON_WALKTHROUGH_VERSION, needsFirstLessonWalkthrough } from "../lib/walkthrough";
 import { learningProgress } from "../lib/practiceTasks";
-import { useGamification } from "../state/gamification";
+import { useChefStandings, useGamification } from "../state/gamification";
+import { trackAction } from "../lib/analytics.ts";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -48,6 +49,7 @@ function PastaStreak({ days }: { days: { date: string; active: boolean }[] }) {
 
 export function Home() {
   const basil = useGamification();
+  const standings = useChefStandings();
   const navigate = useNavigate();
   const { learner, user, activeProfile, progress, progressLoading, progressError, profileSaving, saveUser } = useAppState();
   const { vocabulary, vocabularyLoading, vocabularyError } = useVocabularyQuery();
@@ -64,7 +66,7 @@ export function Home() {
   const weekDates = new Set(progress?.streak.days.map(day => day.date) ?? []);
   const wordsThisWeek = vocabulary.filter(word => word.firstLearnedAt && weekDates.has(localDateKey(word.firstLearnedAt))).length;
   const exploredScenes = progress?.scenarios.filter(scene => scene.status !== "in-progress").length ?? 0;
-  const leaderboardPosition = progress?.leaderboard?.find(row => row.isYou)?.rank;
+  const leaderboardPosition = standings.data?.currentRank;
   const revisitScene = useMemo(() => {
     const groups = new Map<string, { mediaAssetId: string; title: string; count: number }>();
     vocabulary.forEach(word => word.scenes?.forEach(scene => {
@@ -147,7 +149,7 @@ export function Home() {
           <div className="home-section-heading home-section-heading--compact"><div><span className="home-progress-card__eyebrow">This week</span><h2 id="home-progress-title">Your progress</h2></div></div>
           {vocabularyLoading ? <InlineLoader compact label="Loading your words…" /> : vocabularyError ? <p role="alert">{vocabularyError}</p> : <div className="home-progress-card__stats"><div><span className="home-stat-icon home-stat-icon--words"><BookIcon /></span><strong>{wordsThisWeek}</strong><span>words</span></div><div><span className="home-stat-icon home-stat-icon--scenes"><EyeIcon /></span><strong>{exploredScenes}</strong><span>scenes</span></div></div>}
         </section>
-        {leaderboardPosition ? <button className="home-league" type="button" onClick={() => navigate("/ispy")}><span className="home-league__badge" aria-hidden="true"><TrophyIcon size={26} /></span><span><strong>Chefs of the Day</strong><small>Your current standing: #{leaderboardPosition}</small></span><ChevronRightIcon /></button> : null}
+        {user?.id ? <button className="home-league" type="button" aria-busy={standings.isPending} onClick={() => { trackAction("home_chef_standings_clicked"); navigate("/ispy"); }}><span className="home-league__badge" aria-hidden="true"><TrophyIcon size={26} /></span><span><strong>Chefs of the Day</strong><small>{standings.isPending ? "Loading your standing…" : standings.isError ? "Your standing is unavailable." : leaderboardPosition ? `Your current standing: #${leaderboardPosition}` : "Earn Basil to join today’s board."}</small></span><ChevronRightIcon /></button> : null}
       </aside>
     </div>
 

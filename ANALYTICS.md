@@ -150,6 +150,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | :--- | :--- | :--- |
 | `chef_of_the_day_participation_toggled` | `{ participating }` | User opts in or out of the daily Chef of the Day leaderboard |
 | `chef_of_the_day_retry_clicked` | — | User retries loading the daily leaderboard |
+| `home_chef_standings_clicked` | — | Learner opens the daily Basil leaderboard from the Home standings card |
 | `daily_challenge_start_clicked` | `{ sceneKey }` | User opens today's daily challenge from the Play tab |
 | `daily_challenge_resumed` | `{ sceneKey }` | User continues an unfinished daily challenge session from the Play tab |
 | `daily_challenge_photo_uploaded` | `{ sceneKey, assetId }` | User uploads or captures a photo for today's challenge |
