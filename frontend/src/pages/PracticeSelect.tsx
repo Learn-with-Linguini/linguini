@@ -37,6 +37,7 @@ export function PracticeSelect() {
   const readyScenesRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
   const dialogTitleId = useId();
+  const aiDisclosureId = useId();
   const request = useRef<{ asset: string; key: string } | null>(null);
   const queryClient = useQueryClient();
   // Mount check consumes the shared cache; only the flows below force a fresh fetch.
@@ -121,8 +122,9 @@ export function PracticeSelect() {
     {notice ? <div className="stack-2"><p role="alert">{notice}</p>{retrySessionId ? <Button variant="secondary" disabled={interactionDisabled || uploading} onClick={() => void retrySaved(retrySessionId)}>Try this photo again</Button> : null}</div> : null}
     <p className="muted">Take a photo of the world around you, or start from a ready scene.</p>
     {activeCheckError ? <p role="alert">{activeCheckError} Reload to resume an open practice.</p> : null}
-    <div ref={captureRef} className="dashed-capture">
+    <div ref={captureRef} className="dashed-capture" role="group" aria-label="Choose a photo" aria-describedby={aiDisclosureId}>
       <span style={{ color: "var(--teal-dark)" }}><CameraIcon size={44} /></span>
+      <p id={aiDisclosureId} className="small muted">AI helps find objects in your photo and generate translations and practice. Suggestions can be wrong. You’ll check the objects before learning, and you can report incorrect answers from lesson feedback.</p>
       <ImageUpload compact disabled={interactionDisabled} cameraEnabled={learner.cameraOn}
         onBusyChange={setUploading} onUploaded={image => { trackAction("practice_photo_uploaded", { assetId: image.id }); chooseAsset(image.id); }} />
     </div>
@@ -156,7 +158,7 @@ export function PracticeSelect() {
         totalSteps={3}
         title={walkthroughStep === 2 ? "Make your surroundings the lesson" : "Or start instantly"}
         description={walkthroughStep === 2
-          ? "Take a photo or choose one from your device. Linguini will find useful words in the scene."
+          ? "Take or choose a photo. AI suggests objects for you to review before learning."
           : "Choose a ready-made scene whenever you want to practise without taking a photo."}
         nextLabel={walkthroughStep === 2 ? "Next" : "Start practising"}
         saving={profileSaving}
