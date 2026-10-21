@@ -2,7 +2,7 @@ construction_id = "identify-object"
 templates = { identify = "Das ist {nounPhrase}.", question = "Ist das {nounPhrase}?", find = "Finde: {name}.", slot = "___ {noun}" }
 version = 2
 summary = "Name an object or identify it in a nominative predicate."
-guidance = "Learn each noun with its lexical gender and capital letter: die Tasse, das Buch, der Stuhl. A0 matchName uses that definite noun chunk. Identification uses Das ist + ein/eine + noun in nominative; masculine/neuter ein and feminine eine. Do not use accusative einen here just because another construction uses it. Das is a demonstrative in this frame, not the noun’s gender article. Preserve umlauts and ß. Do not invent gender from the noun ending."
+guidance = "Learn each noun with its lexical gender and capital letter: die Tasse, das Buch, der Stuhl. Every name chunk (matchName, chooseName, listenSelect) is that definite noun chunk alone, with no verb or final punctuation: die Tasse. Identification uses Das ist + ein/eine + noun in nominative; masculine/neuter ein and feminine eine. Do not use accusative einen here just because another construction uses it. Das is a demonstrative in this frame, not the noun’s gender article. Preserve umlauts and ß. Do not invent gender from the noun ending."
 features = ["noun-gender", "nominative", "noun-capitalisation"]
 constraints = ["Express only the selected scene facts and preserve semantic role bindings.", "Use the declared variety/register and approved surfaces.", "Treat these rules as generation guidance; they do not constitute a grammar validator."]
 required_labels = ["what-is-this"]

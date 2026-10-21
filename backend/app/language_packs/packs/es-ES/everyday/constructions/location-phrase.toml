@@ -2,7 +2,7 @@ construction_id = "location-phrase"
 version = 1
 summary = "Give a position phrase with its reference object."
 guidance = "Give only the position phrase and the reference noun phrase, no subject, verb or final punctuation: sobre la mesa, debajo de la silla, al lado de la ventana. Contract de + el to del and a + el to al."
-features = ["position-phrase"]
+features = ["phrase", "position-phrase"]
 constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
 required_labels = []
 roles = { reference = "noun", relation = "preposition" }

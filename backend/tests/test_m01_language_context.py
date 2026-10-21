@@ -321,9 +321,21 @@ def test_pack_declared_required_fields_are_enforced(pack_dir, runtime, field):
         )
 
 
+def _flag(source, suggestion, meaning="something else"):
+    """A mock meaning review flagging every translation of ``source``."""
+    def review(terms):
+        return {"issues": [
+            {"group": term["group"], "key": term["key"], "currentMeaning": meaning,
+             "suggestion": suggestion, "problem": f"Use {suggestion}."}
+            for term in terms if term["source"] == source
+        ]}
+    return review
+
+
 def _flag_cup(terms):
     return {"issues": [
-        {"group": term["group"], "key": term["key"], "problem": "Use taza."}
+        {"group": term["group"], "key": term["key"], "currentMeaning": "white vegetable",
+         "suggestion": "taza", "problem": "Use taza."}
         for term in terms if term["source"] == "cup" and term["translation"] != "taza"
     ]}
 
@@ -337,21 +349,45 @@ def test_meaning_review_sends_a_mistranslation_back_for_repair(pack_dir, runtime
     assert [term.translation for term in translated.objects if term.source == "cup"] == ["taza"]
     assert len(provider.requests) == 2 and len(provider.reviews) == 2
     repair = provider.requests[1].user_content
-    assert '\\"cup\\" as \\"la verdura blanca\\": Use taza.' in repair
+    assert '\\"cup\\" as \\"la verdura blanca\\" means \\"white vegetable\\": use taza.' in repair
 
 
-def test_mistranslation_that_survives_repair_fails_before_cards(pack_dir, runtime):
+def test_changed_word_still_flagged_after_repair_fails_before_cards(pack_dir, runtime):
     context = resolve_language_context("es")
-    provider = MockTranslationProvider(review=lambda terms: {"issues": [
-        {"group": "objects", "key": terms[0]["key"], "problem": "Wrong object."}
-    ]})
+    provider = MockTranslationProvider(overrides={"cup": "verdura blanca"},
+                                       review=_flag("cup", "copa"))
     with pytest.raises(SceneTranslationError, match="unusable output"):
         translator(provider, retries=1).translate(payload(runtime), language_context=context)
     assert len(provider.requests) == 2
 
 
+def test_word_the_translator_keeps_after_repair_is_left_to_content_review(pack_dir, runtime):
+    context = resolve_language_context("es")
+    provider = MockTranslationProvider(review=_flag("cup", "copa"))
+    translated = translator(provider, retries=1).translate(
+        payload(runtime), language_context=context
+    )
+    # The models disagree: the word is kept rather than failing the session.
+    assert [term.translation for term in translated.objects if term.source == "cup"] == ["taza"]
+    assert len(provider.requests) == 2
+
+
+@pytest.mark.parametrize("review", [
+    _flag("cup", "taza"),  # suggests the word already used
+    _flag("cup", "copa", meaning="cup"),  # says the word already means its source
+])
+def test_self_contradicting_flags_are_ignored(pack_dir, runtime, review):
+    context = resolve_language_context("es")
+    provider = MockTranslationProvider(review=review)
+    translated = translator(provider, retries=1).translate(
+        payload(runtime), language_context=context
+    )
+    assert translated.objects and len(provider.requests) == 1
+
+
 @pytest.mark.parametrize("answer", ["not json", {"issues": [
-    {"group": "objects", "key": "not-a-supplied-key", "problem": "Unknown."}
+    {"group": "objects", "key": "not-a-supplied-key", "currentMeaning": "x",
+     "suggestion": "y", "problem": "Unknown."}
 ]}])
 def test_unusable_or_unanchored_review_keeps_the_translation(pack_dir, runtime, answer):
     context = resolve_language_context("es")

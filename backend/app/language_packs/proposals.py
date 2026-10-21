@@ -1,5 +1,6 @@
 """Unreviewed model proposals anchored to session meanings, never new scene facts."""
 
+import logging
 from typing import Literal
 
 from pydantic import Field
@@ -8,8 +9,10 @@ from app.schemas.base import ApiModel, NonEmptyText
 
 from .generation import ApprovedTerm, ApprovedVocabulary
 
-PROPOSAL_VERSION = "language-proposals.v3"
-REVIEW_VERSION = "language-content-review.v2"
+logger = logging.getLogger(__name__)
+
+PROPOSAL_VERSION = "language-proposals.v4"
+REVIEW_VERSION = "language-content-review.v3"
 
 PROPOSAL_PROMPT = """Supply candidate grammatical forms and distractors for a planned
 lesson. Packs are guidance and optional reference vocabulary, not exhaustive dictionaries.
@@ -19,7 +22,8 @@ article_indefinite, masculine/feminine/neuter for in-sentence agreement, predica
 detail named on its own differs from those forms, e.g. German rot beside rote/roter/rotes, and
 plural for a noun counted after a number above one when it differs from bare, e.g. Spanish
 libros, German Äpfel; omit plural where the language does not mark it after numbers).
-Number words are pack data: never propose forms for them.
+Number words are pack data: never propose forms for them. Give at most one forms entry per
+session term_id, with every form for that term in it, and use only term_ids from the session.
 These are proposals, not reviewed forms. Do not change scene facts.
 For every attribute/relation needing choices, propose two distinct alternatives, each tied to its
 for_fact_id, with meaning in the instruction language, native text and required agreement forms.
@@ -41,6 +45,11 @@ IDs are authoritative; native session words are machine translations. Verify rea
 those meanings. If a session word does not express its English meaning, say so in issues as the
 cause (a translation error), rather than listing every criterion it affects. Romanization is
 checked mechanically elsewhere; do not assess it.
+Judge only the supplied candidates and, when present, the rendered task. Without a rendered
+task, the distractors are the candidates that are options or have truth false; set
+distractors_suitable, distinct and unambiguous true when those candidates meet the criteria.
+Guidance, vocabulary and proposals are context: never fail or doubt a criterion because of
+their size or because something is absent from them.
 Counterfactual options are alternatives to the bound target, never newly asserted scene facts.
 Omission by a detector never proves absence. A false option may deny a confirmed-present object,
 but do not accept unsupported absence as a correct fact. For a rendered lesson, inspect every
@@ -49,9 +58,11 @@ Check grammatical suitability, level/register, distinct meaning, ambiguity and e
 Semantic distractors must be grammatical; grammar errors are allowed only in an explicitly
 designated grammar-error exercise. Treat synonyms, equivalent descriptions, overlapping colours,
 coexisting relations and indistinguishable objects as ambiguous when they yield another correct
-answer. Also assess supports and feedback. Mark uncertainty explicitly: if uncertain, set certain
-false and explain. Model assessment is fallible and is not fluent human review or release proof.
-Return all schema fields, with issues explaining each failed or uncertain criterion."""
+answer. Also assess supports and feedback. Set certain false only when you cannot judge a
+specific sentence or option, and name it in issues. Model assessment is fallible and is not
+fluent human review or release proof. Return all schema fields. issues lists only problems,
+each naming the sentence or option and the failed criterion; leave it empty when everything
+passes, and never use it for observations or praise."""
 
 
 class ProposedForm(ApiModel):
@@ -91,22 +102,34 @@ class ContentReview(ApiModel):
 
     @property
     def failures(self):
-        fields = (
-            "meaning_matches", "grammatical", "level_register_ok", "distractors_suitable",
-            "distinct", "unambiguous", "scene_claims_supported", "certain",
+        failed = [f"model assessment: {key}=false" for key in _CRITERIA if not getattr(self, key)]
+        # The criteria decide; issues only explain a failure (reviewers also write notes).
+        return [*failed, *self.issues] if failed else []
+
+    @property
+    def only_uncertain(self) -> bool:
+        """Every criterion passed, but the reviewer was not certain."""
+        return not self.certain and all(
+            getattr(self, key) for key in _CRITERIA if key != "certain"
         )
-        failed = [f"model assessment: {key}=false" for key in fields if not getattr(self, key)]
-        return [*failed, *self.issues] if failed or self.issues else []
+
+
+_CRITERIA = (
+    "meaning_matches", "grammatical", "level_register_ok", "distractors_suitable",
+    "distinct", "unambiguous", "scene_claims_supported", "certain",
+)
 
 
 def apply_proposals(original, facts, proposals):
-    """Validate identities mechanically; linguistic acceptance requires content review later."""
+    """Validate identities mechanically; linguistic acceptance requires content review later.
+
+    Proposals are optional extra forms, so a sloppy entry is dropped rather than failing
+    the lesson: entries for unknown term IDs are ignored, repeated entries for one term
+    are merged, and invalid distractors are skipped. Later checks still require what a
+    lesson needs (bound forms, enough alternatives).
+    """
     terms = {term.term_id: term for term in original.terms}
-    seen = set()
-    for proposal in proposals.forms:
-        if proposal.term_id not in terms or proposal.term_id in seen:
-            raise ValueError("form proposal has unknown or duplicate session term ID")
-        seen.add(proposal.term_id)
+    for proposal in _merged_forms(proposals.forms, terms):
         term = terms[proposal.term_id]
         forms = {**term.forms_by_key, **_forms(proposal.forms)}
         terms[term.term_id] = ApprovedTerm.model_validate({
@@ -124,13 +147,15 @@ def apply_proposals(original, facts, proposals):
     for index, proposal in enumerate(proposals.distractors):
         anchor = by_fact.get(proposal.for_fact_id)
         if anchor is None or anchor.fact_id not in attributes.keys() | relations.keys() | objects:
-            raise ValueError("distractor must reference a confirmed object, attribute or relation")
+            logger.warning("skipping a distractor for an unconfirmed fact")
+            continue
         keys = {(anchor.fact_id, "text", proposal.text.casefold()),
                 (anchor.fact_id, "meaning", proposal.meaning.casefold())}
-        if keys & distinct or proposal.meaning.casefold() == anchor.source_text.casefold():
-            raise ValueError("distractor duplicates the target meaning or another proposal")
-        if proposal.text.casefold() in {form.casefold() for form in anchor.forms}:
-            raise ValueError("distractor duplicates a target surface form")
+        if keys & distinct or proposal.meaning.casefold() == anchor.source_text.casefold() or (
+            proposal.text.casefold() in {form.casefold() for form in anchor.forms}
+        ):
+            logger.warning("skipping a distractor that repeats the target or another proposal")
+            continue
         distinct.update(keys)
         attribute = attributes.get(anchor.fact_id)
         metadata = {"contrast-for": anchor.fact_id}
@@ -151,7 +176,30 @@ def apply_proposals(original, facts, proposals):
     return ApprovedVocabulary(terms=list(terms.values()))
 
 
+def _merged_forms(proposals, terms):
+    """One form proposal per known session term; the first text proposed for a key wins."""
+    merged: dict[str, FormProposal] = {}
+    for proposal in proposals:
+        if proposal.term_id not in terms:
+            logger.warning("ignoring proposed forms for an unknown session term")
+            continue
+        previous = merged.get(proposal.term_id)
+        if previous is None:
+            merged[proposal.term_id] = proposal
+            continue
+        logger.warning("merging repeated proposed forms for one session term")
+        merged[proposal.term_id] = previous.model_copy(update={
+            "forms": [*previous.forms, *proposal.forms],
+            "agreement": previous.agreement or proposal.agreement,
+            "position": previous.position or proposal.position,
+        })
+    return list(merged.values())
+
+
 def _forms(entries):
-    if len({entry.key for entry in entries}) != len(entries):
-        raise ValueError("proposed grammatical form keys must be unique")
-    return {entry.key: entry.text for entry in entries}
+    """Proposed forms by key; a repeated key keeps its first text."""
+    forms = {}
+    for entry in entries:
+        if forms.setdefault(entry.key, entry.text) != entry.text:
+            logger.warning("ignoring a conflicting proposed form for key %s", entry.key)
+    return forms

@@ -2,7 +2,7 @@ construction_id = "identify-object"
 templates = { find = "찾아보세요: {name}." }
 version = 2
 summary = "Identify an object with the everyday polite nominal copula."
-guidance = "Use the native noun without inventing a definite/indefinite article or grammatical gender. A0 name chunks are bare names such as 컵 and 의자. A complete identity sentence uses -이에요 after a consonant-final noun, and -예요 after a vowel-final noun: 컵이에요, 의자예요. 이건 may introduce the shown object; it is a contraction of 이것은. Keep the attached copular ending with its noun tile. Use native Hangul as the assessed answer; romanization is a simultaneous display aid, not a second answer key."
+guidance = "Use the native noun without inventing a definite/indefinite article or grammatical gender. Every name chunk (matchName, chooseName, listenSelect) is the bare noun alone, with no ending or final punctuation, such as 컵 and 의자. A complete identity sentence uses -이에요 after a consonant-final noun, and -예요 after a vowel-final noun: 컵이에요, 의자예요. 이건 may introduce the shown object; it is a contraction of 이것은. Keep the attached copular ending with its noun tile. Use native Hangul as the assessed answer; romanization is a simultaneous display aid, not a second answer key."
 features = ["polite-haeyo", "consonant-conditioned-copula", "article-free"]
 constraints = ["Express only the selected scene facts and preserve semantic role bindings.", "Use the declared variety/register and approved surfaces.", "Treat these rules as generation guidance; they do not constitute a grammar validator."]
 required_labels = ["what-is-this"]

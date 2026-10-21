@@ -4,7 +4,7 @@ import json
 from dataclasses import replace
 
 import pytest
-from test_language_pack_runtime import MockSpanishProvider, dispatch
+from test_language_pack_runtime import PACK, MockSpanishProvider, dispatch
 from test_language_pack_runtime import runtime as runtime
 
 from app.ai.cache.cache import ResultCache
@@ -21,11 +21,10 @@ from app.schemas.tasks import SubmitVocabularyReviewAttemptRequest
 class MockOpenSpanishProvider(MockSpanishProvider):
     """Scripted language proposals and scripted review verdicts, not grammar evidence."""
 
-    def __init__(self, rejected=None, rendered_only=False, invalid_binding=False):
+    def __init__(self, rejected=None, rendered_only=False):
         super().__init__()
         self.rejected = rejected
         self.rendered_only = rendered_only
-        self.invalid_binding = invalid_binding
 
     def generate(self, request):
         response = super().generate(request)
@@ -49,9 +48,7 @@ class MockOpenSpanishProvider(MockSpanishProvider):
                         proposed.update(masculine="diminuto", feminine="diminuta")
                     for meaning, text in [("enormous", "enorme"), ("medium-sized", "mediano")]:
                         distractors.append(dict(
-                            for_fact_id=(
-                                "object:unknown" if self.invalid_binding else term["factId"]
-                            ),
+                            for_fact_id=term["factId"],
                             meaning=meaning, text=text,
                             forms=[dict(key="masculine", text=text),
                                    dict(key="feminine", text=text)],
@@ -132,7 +129,8 @@ def test_reviewer_rejection_or_uncertainty_exhausts_bounded_repair(criterion, ru
     with pytest.raises(LearningTaskGenerationError, match=criterion):
         dispatch("A1", runtime, provider)
     assert len(provider.requests) == 3
-    assert len(provider.review_requests) == 3
+    # A review unsure with every criterion met is asked once more on each attempt.
+    assert len(provider.review_requests) == (6 if criterion == "certain" else 3)
 
 
 def test_assembled_ambiguous_mcq_rejected_even_after_sentence_review(runtime, monkeypatch):
@@ -202,11 +200,53 @@ def test_new_realization_is_model_assessed_never_reported_as_reviewed(runtime, m
     assert join_pack_chunks(description.candidate.chunks, "space") == description.candidate.text
 
 
-def test_unknown_binding_rejected_before_sentence_generation(runtime):
-    provider = MockOpenSpanishProvider(invalid_binding=True)
-    with pytest.raises(LearningTaskGenerationError, match="confirmed"):
-        dispatch("A1", runtime, provider)
-    assert not provider.requests and not provider.review_requests
+def _cup_proposals(forms, distractors=()):
+    from uuid import UUID
+
+    from app.language_packs.generation import (
+        ApprovedTerm,
+        ApprovedVocabulary,
+        BoundSceneFacts,
+    )
+    from app.language_packs.proposals import VocabularyProposals, apply_proposals
+
+    cup = ApprovedTerm(
+        term_id="object-cup", fact_id="object:cup", source_text="cup", target_text="taza",
+        forms=["taza"], forms_by_key={"bare": "taza"}, part_of_speech="noun",
+        agreement="feminine", provenance="sessionTranslation",
+    )
+    facts = BoundSceneFacts(scene_facts=dict(objects=[dict(
+        fact_id="object:cup", scene_object_id=UUID(int=1), label="cup", marker=1,
+    )]))
+    proposals = VocabularyProposals(forms=forms, distractors=list(distractors))
+    return {term.term_id: term for term in apply_proposals(
+        ApprovedVocabulary(terms=[cup]), facts, proposals,
+    ).terms}
+
+
+def test_repeated_and_unknown_form_proposals_never_fail_the_lesson():
+    terms = _cup_proposals([
+        dict(term_id="object-cup", forms=[dict(key="plural", text="tazas")]),
+        dict(term_id="object-cup", forms=[dict(key="indefinite", text="una taza"),
+                                          dict(key="plural", text="tazitas")]),
+        dict(term_id="invented-term", forms=[dict(key="bare", text="vaso")]),
+    ])
+    assert set(terms) == {"object-cup"}
+    # Repeated entries merge; the first text proposed for a key wins.
+    assert terms["object-cup"].forms_by_key == {
+        "bare": "taza", "plural": "tazas", "indefinite": "una taza",
+    }
+
+
+def test_distractors_for_unconfirmed_facts_are_dropped_not_used():
+    terms = _cup_proposals([], [
+        dict(for_fact_id="object:unknown", meaning="glass", text="vaso"),
+        dict(for_fact_id="object:cup", meaning="cup", text="taza"),
+        dict(for_fact_id="object:cup", meaning="plate", text="plato"),
+    ])
+    alternatives = [term for term in terms.values() if term.provenance == "modelProposal"]
+    # Only the valid alternative survives; nothing anchors to an unconfirmed fact.
+    assert [term.target_text for term in alternatives] == ["plato"]
 
 
 def test_proposal_and_review_versions_invalidate_sentence_cache(runtime, monkeypatch):
@@ -268,3 +308,56 @@ def test_realization_id_errors_use_bounded_repair_without_loosening_bindings(
     assert [spec["slot_id"] for spec in repair["specs"]] == ["describeObject"]
     reasons = repair["repair"]["describeObject/describeObject-answer"]
     assert any("Use only this spec's term IDs" in reason for reason in reasons)
+
+
+def test_review_notes_never_fail_when_every_criterion_passes():
+    from app.language_packs.proposals import ContentReview
+
+    passing = dict(
+        meaning_matches=True, grammatical=True, level_register_ok=True,
+        distractors_suitable=True, distinct=True, unambiguous=True,
+        scene_claims_supported=True, certain=True,
+    )
+    assert ContentReview(**passing, issues=["The names are bare nouns, which fits."]).failures == []
+    failed = ContentReview(**{**passing, "grammatical": False}, issues=["Wrong article."])
+    assert failed.failures == ["model assessment: grammatical=false", "Wrong article."]
+    unsure = ContentReview(**{**passing, "certain": False}, issues=["The payload is large."])
+    assert unsure.only_uncertain and unsure.failures
+    assert not failed.only_uncertain
+
+
+class UncertainOnceProvider(MockOpenSpanishProvider):
+    """A reviewer that is unsure on its first answer only, with every criterion met."""
+
+    def generate(self, request):
+        response = super().generate(request)
+        if request.json_schema_name == "language_content_review" and (
+            len(self.review_requests) == 1
+        ):
+            verdict = json.loads(response.output_text)
+            verdict.update(certain=False, issues=["Not fully certain: the payload is large."])
+            return replace(response, output_text=json.dumps(verdict))
+        return response
+
+
+def test_uncertain_review_is_asked_again_instead_of_repairing_sentences(runtime):
+    provider = UncertainOnceProvider()
+    (task,) = dispatch("A1", runtime, provider)
+    assert task.public_content.mission_id == "M01"
+    # Sentences pass without repair; the unsure review was simply asked once more.
+    assert len(provider.requests) == 1
+    first = json.loads(provider.review_requests[0].user_content)
+    second = json.loads(provider.review_requests[1].user_content)
+    assert first == second
+
+
+def test_review_sees_only_the_lessons_constructions(runtime):
+    provider = MockOpenSpanishProvider()
+    dispatch("A1", runtime, provider)
+    review = json.loads(provider.review_requests[0].user_content)
+    def construction(item):
+        return item.get("constructionId", item.get("construction_id"))
+
+    planned = {construction(spec) for slot in review["plan"]["slots"] for spec in slot["specs"]}
+    assert {construction(item) for item in review["guidance"]} == planned
+    assert len(review["guidance"]) < len(load_pack(PACK).constructions)

@@ -296,6 +296,11 @@ class ApprovalResult(ApiModel):
 _VALIDATORS: dict[tuple[str, str], LinguisticValidator] = {}
 
 
+def written_as_phrase(use: str | None, construction) -> bool:
+    """A name, position or number-noun chunk: answer-choice words, not a sentence."""
+    return use == "name" or (construction is not None and "phrase" in construction.features)
+
+
 def register_validator(
     language: str, construction_id: str, validator: LinguisticValidator
 ) -> None:

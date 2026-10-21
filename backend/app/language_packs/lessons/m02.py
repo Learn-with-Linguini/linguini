@@ -72,14 +72,24 @@ def _true_positions(subject, reference, relations):
 
 
 def _relation_alternatives(relation, facts, vocabulary):
-    """Model-proposed positions that are false for this pair, most contrastive first."""
+    """Positions that are false for this pair, most contrastive first.
+
+    Model-proposed alternatives come first; other relations confirmed in the photo
+    (with their session translations) cover a model that proposed none.
+    """
     true = _true_positions(relation.subject_fact_id, relation.reference_fact_id,
                            facts.scene_facts.relations)
+    scene = {rel.fact_id: rel for rel in facts.scene_facts.relations}
+    candidates = [
+        (relation_kind(term.linguistic.get("relation-kind", term.source_text)), term)
+        for term in vocabulary.terms if term.linguistic.get("contrast-for") == relation.fact_id
+    ] + [
+        (relation_kind(scene[term.fact_id].relation), term)
+        for term in vocabulary.terms
+        if term.fact_id in scene and term.fact_id != relation.fact_id
+    ]
     rows = []
-    for term in vocabulary.terms:
-        if term.linguistic.get("contrast-for") != relation.fact_id:
-            continue
-        kind = relation_kind(term.linguistic.get("relation-kind", term.source_text))
+    for kind, term in candidates:
         if kind in true or any(row[0] == kind for row in rows):
             continue
         rows.append((kind, term))

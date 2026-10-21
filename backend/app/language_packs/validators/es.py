@@ -9,6 +9,7 @@ from ..generation import (
     CandidateSentence,
     ValidatorResult,
     register_validator,
+    written_as_phrase,
 )
 from ..schema import LanguagePack
 
@@ -23,13 +24,14 @@ def _contains_phrase(text: str, phrase: str, *, contractions: bool = False) -> b
     return bool(re.search(r"(?<!\w)" + pattern + r"(?!\w)", text.casefold()))
 
 
-# Choices that are phrases, not sentences: no final punctuation.
-_PHRASE_CONSTRUCTIONS = {"location-phrase", "quantity-chunk"}
-
-
-def _is_phrase(candidate):
-    """Name chunks, position phrases and number-noun chunks are not sentences."""
-    return candidate.spec_use == "name" or candidate.construction_id in _PHRASE_CONSTRUCTIONS
+def _is_phrase(candidate, pack):
+    """Name chunks and phrase constructions are answer choices, not sentences."""
+    construction = next(
+        (item for item in pack.constructions
+         if item.construction_id == candidate.construction_id),
+        None,
+    )
+    return written_as_phrase(candidate.spec_use, construction)
 
 
 class SpanishM01Validator:
@@ -38,13 +40,13 @@ class SpanishM01Validator:
     def __init__(self, vocabulary: ApprovedVocabulary) -> None:
         self.terms = {term.term_id: term for term in vocabulary.terms}
 
-    def validate(self, candidate: CandidateSentence, _pack: LanguagePack) -> ValidatorResult:
+    def validate(self, candidate: CandidateSentence, pack: LanguagePack) -> ValidatorResult:
         messages = []
         if candidate.proposed_realizations:
             # Open wording is assessed against meanings/context by the mandatory
             # model reviewer. Do not force it into reference-example templates.
             text = candidate.text.casefold()
-            if not _is_phrase(candidate) and not text.endswith((".", "?", "!")):
+            if not _is_phrase(candidate, pack) and not text.endswith((".", "?", "!")):
                 messages.append("Complete sentences need final punctuation.")
             if candidate.spec_use in {"question", "prompt"} and (
                 not text.startswith("¿") or not text.endswith("?")
@@ -87,7 +89,7 @@ class SpanishM01Validator:
         text = candidate.text.casefold()
         if candidate.spec_use == "wrongExistence" and "no hay " not in text:
             messages.append("The false existence option must deny the bound object's presence.")
-        if not _is_phrase(candidate) and not text.endswith((".", "?", "!")):
+        if not _is_phrase(candidate, pack) and not text.endswith((".", "?", "!")):
             messages.append("Complete sentences need final punctuation.")
         if candidate.spec_use in {"question", "prompt"} or text.lstrip().startswith("¿"):
             if not text.startswith("¿") or not text.endswith("?"):

@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any
 
 from pydantic import Field
@@ -22,16 +23,19 @@ from .generation import (
     LinguisticAssessment,
     RomanizedSpan,
     infer_term_uses,
+    written_as_phrase,
 )
 from .loader import guidance_for_slot
 from .schema import GuidanceBundle, LanguagePack
 
-GENERATOR_VERSION = "lp-generator.v5"
+logger = logging.getLogger(__name__)
+
+GENERATOR_VERSION = "lp-generator.v6"
 ASSESSOR_VERSION = "lp-assessor.v1"
 
 GENERATOR_SYSTEM_PROMPT = """You write sentences for one language-learning lesson. The user message is JSON with: language (code, locale, script, register,
-variety), instruction_language, specs (each with slot_id, spec_id, construction_id, truth, required roles bound to approved
-vocabulary forms, and required fixed labels), guidance (mandatory construction guidance, correct examples and incorrect examples
+variety), instruction_language, specs (each with slot_id, spec_id, construction_id, use, form, truth, required roles bound to
+approved vocabulary forms, and required fixed labels), guidance (mandatory construction guidance, correct examples and incorrect examples
 with corrections), and optionally repair (previous failures with exact reasons).
 Rules:
 - Write exactly one candidate for every spec, in the target language and register given. Vocabulary is meaning-anchored
@@ -44,8 +48,10 @@ Rules:
 - A wrongExistence option denies the presence of its counterfactual object, while retaining the other bound facts.
   A wrongAttribute option replaces only the counterfactual detail or relation. A fact3 sentence adds another scene fact.
 - Follow the construction guidance and the correct examples' structure. Do not copy an example unless its bindings match.
-- Write each candidate as one complete sentence or question exactly as the learner should see it (capitalisation,
-  spacing and punctuation included). Do not split it into tiles; the app derives tiles itself.
+- Write each spec with form "sentence" as one complete sentence or question exactly as the learner should see it
+  (capitalisation, spacing and punctuation included). Write each spec with form "phrase" (a vocabulary name, a position,
+  a number with a noun) as only those words, exactly as on a vocabulary card or answer choice: no verb, no frame such as
+  "this is" or "there is", and no final punctuation. Do not split either into tiles; the app derives tiles itself.
 - translation is the meaning in the instruction language.
 - If language.romanizationRequired is true, supply aligned romanization spans for every new sentence;
   each span contains native text and its Latin spelling. Concatenating native spans must reproduce text
@@ -142,19 +148,38 @@ class ModelSource:
         return apply_proposals(vocabulary, facts, self.proposals)
 
     def review_content(self, pack, facts, plan, vocabulary, candidates, task=None):
+        """Model content review of what this lesson uses.
+
+        Only the lesson's constructions, words and proposals are sent: a reviewer given a
+        whole pack reports uncertainty about it. Uncertainty with every criterion passed
+        is not something a sentence repair can fix, so it is asked once more.
+        """
         from .proposals import REVIEW_PROMPT, REVIEW_VERSION, ContentReview
 
-        review = self._call(REVIEW_PROMPT, {
+        used = _lesson_scope(plan, vocabulary)
+        payload = {
             "language": pack.language.model_dump(mode="json"),
             "register": pack.language_register.model_dump(mode="json"),
             "facts": facts.model_dump(mode="json"), "plan": plan.model_dump(mode="json"),
-            "original_session_vocabulary": self.original_vocabulary.model_dump(mode="json"),
-            "proposals": self.proposals.model_dump(mode="json"),
-            "candidate_vocabulary": vocabulary.model_dump(mode="json"),
+            "original_session_vocabulary": _terms_json(self.original_vocabulary, used),
+            "proposals": _proposals_json(self.proposals, used),
+            "candidate_vocabulary": _terms_json(vocabulary, used),
             "candidates": [c.model_dump(mode="json") for c in candidates],
-            "guidance": [c.model_dump(mode="json") for c in pack.constructions],
+            "guidance": [
+                c.model_dump(mode="json") for c in pack.constructions
+                if c.construction_id in used["constructions"]
+            ],
             "rendered_task": task.model_dump(mode="json") if task else None,
-        }, ContentReview, "language_content_review", REVIEW_VERSION)
+        }
+        review = self._call(
+            REVIEW_PROMPT, payload, ContentReview, "language_content_review", REVIEW_VERSION,
+        )
+        if review.only_uncertain:
+            logger.warning("content review uncertain with every criterion met; asking again")
+            review = self._call(
+                REVIEW_PROMPT, payload, ContentReview, "language_content_review",
+                REVIEW_VERSION,
+            )
         return LinguisticAssessment(
             status="modelAssessed", validator_id=REVIEW_VERSION,
             passed=not review.failures, messages=review.failures,
@@ -203,9 +228,16 @@ class ModelSource:
                 scoped_guidance = guidance_for_slot(
                     pack, mission_key, slot.purpose, spec.construction_id
                 )
+                construction = next(
+                    (item for item in pack.constructions
+                     if item.construction_id == spec.construction_id),
+                    None,
+                )
                 spec_data = {
                     "slot_id": slot.slot_id,
                     **spec.model_dump(mode="json", by_alias=False),
+                    "form": "phrase" if written_as_phrase(spec.use, construction)
+                    else "sentence",
                 }
                 if self.propose:
                     spec_data["realization_terms"] = [
@@ -325,3 +357,37 @@ class ModelSource:
             passed=passed,
             messages=list(output.issues),
         )
+
+
+def _lesson_scope(plan, vocabulary):
+    """Constructions, facts and terms the planned specs use."""
+    facts = {fact for slot in plan.slots for spec in slot.specs
+             for fact in spec.bindings.values()}
+    term_ids = {term_id for slot in plan.slots for spec in slot.specs
+                for term_id in spec.counterfactual.values()}
+    term_ids |= {term.term_id for term in vocabulary.terms if term.fact_id in facts}
+    term_facts = {term.fact_id for term in vocabulary.terms if term.term_id in term_ids}
+    # Model alternatives anchored to a bound fact are the lesson's possible distractors.
+    term_ids |= {term.term_id for term in vocabulary.terms
+                 if term.linguistic.get("contrast-for") in facts}
+    return {
+        "constructions": {spec.construction_id for slot in plan.slots for spec in slot.specs},
+        "facts": facts | term_facts,
+        "terms": term_ids,
+    }
+
+
+def _terms_json(vocabulary, used):
+    return {"terms": [term.model_dump(mode="json") for term in vocabulary.terms
+                      if term.term_id in used["terms"] or term.fact_id in used["facts"]]}
+
+
+def _proposals_json(proposals, used):
+    if proposals is None:
+        return None
+    return {
+        "forms": [item.model_dump(mode="json") for item in proposals.forms
+                  if item.term_id in used["terms"]],
+        "distractors": [item.model_dump(mode="json") for item in proposals.distractors
+                        if item.for_fact_id in used["facts"]],
+    }

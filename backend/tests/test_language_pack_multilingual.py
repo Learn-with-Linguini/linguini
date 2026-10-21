@@ -137,6 +137,8 @@ def _capitalised(text):
     return text[:1].upper() + text[1:]
 
 
+# Constructions each pack marks with the "phrase" feature.
+PHRASES = {"location-phrase", "quantity-chunk"}
 M02_CONSTRUCTIONS = {
     "find-object", "where-question", "location-phrase", "target-clue", "target-location",
 }
@@ -671,6 +673,10 @@ def test_pack_missions_dispatch_for_every_pack_and_level(
     assert len(provider.requests) == 1, "sentences should pass without repair"
     data = json.loads(provider.requests[0].user_content)
     assert data["language"]["code"] == language
+    # Names, positions and number-noun chunks are phrases; everything else is a sentence.
+    for spec in data["specs"]:
+        phrase = spec["use"] == "name" or spec["construction_id"] in PHRASES
+        assert spec["form"] == ("phrase" if phrase else "sentence"), spec["spec_id"]
     assert "evaluations" not in data and "acceptable" not in data
 
     answers = task.answer_key.correct_option_ids

@@ -223,6 +223,8 @@ class SceneTranslationService:
 
         attempts = 1 + self._config.max_retries
         invocation = self._client.start_invocation()
+        # Flagged words by (group, key); a repair that keeps one means the models disagree.
+        disputed: dict[tuple[str, str], str] = {}
         latency_ms = 0.0
         with self._tracer.generation(
             "scene-translation",
@@ -287,7 +289,9 @@ class SceneTranslationService:
                     )
                     validate_translation_terms(parsed_payload, result, language_context)
                     if language_context is not None:
-                        self._review_meaning(compact_payload, compact_result, language_context)
+                        self._review_meaning(
+                            compact_payload, compact_result, language_context, disputed,
+                        )
                 except (ValueError, SceneTranslationError) as error:
                     if attempt < attempts and invocation.can_call():
                         issues = (
@@ -346,12 +350,17 @@ class SceneTranslationService:
 
     def _review_meaning(
         self, payload: dict[str, Any], result: SceneTranslationResult, language_context,
+        disputed: dict[tuple[str, str], str],
     ) -> None:
         """Raise when a reviewer is confident a translation does not mean its source.
 
         The review has its own call budget so it never spends the translation's
         repair. A reviewer that fails or answers off-schema is no evidence against
         the translation, so it is accepted; the lesson content review still runs.
+        A flag is evidence only when it holds together: one that suggests the current
+        word, or says the word already means its source, is dropped. When the
+        translator keeps a flagged word after a repair, the two models disagree; the
+        word is kept for the lesson's content review instead of failing the session.
         """
         terms = {
             (field, term.key): term
@@ -402,9 +411,20 @@ class SceneTranslationService:
             problems = []
             for issue in review.issues:
                 term = terms.get((issue.group, issue.key))
-                if term is not None:
-                    shown = term.native_display or term.translation
-                    problems.append(f'"{term.source}" as "{shown}": {issue.problem}')
+                if term is None:
+                    continue
+                shown = term.native_display or term.translation
+                if _contradicts_itself(issue, term, shown):
+                    logger.info("ignoring a self-contradicting translation flag")
+                    continue
+                if disputed.get((issue.group, issue.key)) == shown:
+                    logger.warning("translator kept a flagged word; leaving it to content review")
+                    continue
+                disputed[(issue.group, issue.key)] = shown
+                problems.append(
+                    f'"{term.source}" as "{shown}" means "{issue.current_meaning}": '
+                    f"use {issue.suggestion}. {issue.problem}"
+                )
             generation.update(
                 latency_ms=(time.perf_counter() - call_start) * 1000,
                 input_tokens=response.input_tokens,
@@ -419,3 +439,15 @@ class SceneTranslationService:
                 "These translations do not express their English source; use the everyday "
                 "native word for exactly that meaning: " + "; ".join(problems)
             )
+
+
+def _folded(text: str | None) -> str:
+    return " ".join((text or "").casefold().split())
+
+
+def _contradicts_itself(issue, term, shown: str) -> bool:
+    """The flag suggests the word already used, or says it already means its source."""
+    return (
+        _folded(issue.suggestion) in {_folded(term.translation), _folded(shown)}
+        or _folded(issue.current_meaning) == _folded(term.source)
+    )

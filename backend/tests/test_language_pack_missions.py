@@ -234,3 +234,33 @@ def test_one_word_can_realize_the_article_and_the_number_one():
     vocabulary = number_vocabulary(pack, facts, vocabulary)
     assert _shared_word_use("una manzana", vocabulary, "number:1", "determiner")
     assert _shared_word_use("dos manzanas", vocabulary, "number:1", "determiner") is None
+
+
+def test_m02_positions_fall_back_to_other_confirmed_relations():
+    from app.language_packs.lessons.m02 import _relation_alternatives
+
+    pack = load_pack(PACK)
+    labels = {1: ("cup", "taza"), 2: ("table", "mesa"), 3: ("book", "libro")}
+    objects = [SimpleNamespace(id=UUID(int=n), label=label, attributes={})
+               for n, (label, _text) in labels.items()]
+    relations = [
+        SimpleNamespace(id=UUID(int=20), subject_scene_object_id=UUID(int=1),
+                        reference_scene_object_id=UUID(int=2), relation="on"),
+        SimpleNamespace(id=UUID(int=21), subject_scene_object_id=UUID(int=3),
+                        reference_scene_object_id=UUID(int=2), relation="nextTo"),
+    ]
+    translated = SimpleNamespace(
+        objects=[SimpleNamespace(key=str(UUID(int=n)), source=label, translation=text,
+                                 article="la", gender="feminine")
+                 for n, (label, text) in labels.items()],
+        attributes=[],
+        relationships=[SimpleNamespace(key=str(UUID(int=20)), source="on", translation="sobre"),
+                       SimpleNamespace(key=str(UUID(int=21)), source="next to",
+                                       translation="al lado de")],
+    )
+    words = [SimpleNamespace(id=UUID(int=n + 10)) for n in labels]
+    facts, vocabulary = session_inputs(pack, objects, relations, words, translated, {})
+    on = next(rel for rel in facts.scene_facts.relations if rel.relation == "on")
+    # No model proposals: the photo's other relation still gives a false position.
+    assert [(kind, term.target_text) for kind, term in
+            _relation_alternatives(on, facts, vocabulary)] == [("next_to", "al lado de")]

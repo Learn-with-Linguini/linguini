@@ -2,7 +2,7 @@ construction_id = "quantity-chunk"
 version = 1
 summary = "Name a number of objects: number and noun, no sentence."
 guidance = "Write only the noun and the bound count's number with the counter 개, with no particle, verb or final punctuation: 사과 두 개. Korean nouns do not change after a number."
-features = ["number-noun-chunk"]
+features = ["phrase", "number-noun-chunk"]
 constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
 required_labels = []
 roles = { object = "noun", count = "determiner" }
