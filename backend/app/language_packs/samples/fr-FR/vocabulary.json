@@ -12,7 +12,8 @@
         "une tasse",
         "la tasse",
         "La tasse",
-        "de la tasse"
+        "de la tasse",
+        "tasses"
       ],
       "forms_by_key": {
         "bare": "tasse",
@@ -21,7 +22,8 @@
         "indefinite": "une tasse",
         "definite": "la tasse",
         "definite_capitalised": "La tasse",
-        "definite_after_de": "de la tasse"
+        "definite_after_de": "de la tasse",
+        "plural": "tasses"
       },
       "agreement": "feminine",
       "position": null,
@@ -40,7 +42,8 @@
         "un livre",
         "le livre",
         "Le livre",
-        "du livre"
+        "du livre",
+        "livres"
       ],
       "forms_by_key": {
         "bare": "livre",
@@ -49,7 +52,8 @@
         "indefinite": "un livre",
         "definite": "le livre",
         "definite_capitalised": "Le livre",
-        "definite_after_de": "du livre"
+        "definite_after_de": "du livre",
+        "plural": "livres"
       },
       "agreement": "masculine",
       "position": null,
@@ -68,7 +72,8 @@
         "une table",
         "la table",
         "La table",
-        "de la table"
+        "de la table",
+        "tables"
       ],
       "forms_by_key": {
         "bare": "table",
@@ -77,7 +82,8 @@
         "indefinite": "une table",
         "definite": "la table",
         "definite_capitalised": "La table",
-        "definite_after_de": "de la table"
+        "definite_after_de": "de la table",
+        "plural": "tables"
       },
       "agreement": "feminine",
       "position": null,
@@ -96,7 +102,8 @@
         "une fourchette",
         "la fourchette",
         "La fourchette",
-        "de la fourchette"
+        "de la fourchette",
+        "fourchettes"
       ],
       "forms_by_key": {
         "bare": "fourchette",
@@ -105,7 +112,8 @@
         "indefinite": "une fourchette",
         "definite": "la fourchette",
         "definite_capitalised": "La fourchette",
-        "definite_after_de": "de la fourchette"
+        "definite_after_de": "de la fourchette",
+        "plural": "fourchettes"
       },
       "agreement": "feminine",
       "position": null,
@@ -124,7 +132,8 @@
         "une cuillère",
         "la cuillère",
         "La cuillère",
-        "de la cuillère"
+        "de la cuillère",
+        "cuillères"
       ],
       "forms_by_key": {
         "bare": "cuillère",
@@ -133,7 +142,8 @@
         "indefinite": "une cuillère",
         "definite": "la cuillère",
         "definite_capitalised": "La cuillère",
-        "definite_after_de": "de la cuillère"
+        "definite_after_de": "de la cuillère",
+        "plural": "cuillères"
       },
       "agreement": "feminine",
       "position": null,
@@ -152,7 +162,8 @@
         "une porte",
         "la porte",
         "La porte",
-        "de la porte"
+        "de la porte",
+        "portes"
       ],
       "forms_by_key": {
         "bare": "porte",
@@ -161,7 +172,8 @@
         "indefinite": "une porte",
         "definite": "la porte",
         "definite_capitalised": "La porte",
-        "definite_after_de": "de la porte"
+        "definite_after_de": "de la porte",
+        "plural": "portes"
       },
       "agreement": "feminine",
       "position": null,
@@ -180,7 +192,8 @@
         "une fenêtre",
         "la fenêtre",
         "La fenêtre",
-        "de la fenêtre"
+        "de la fenêtre",
+        "fenêtres"
       ],
       "forms_by_key": {
         "bare": "fenêtre",
@@ -189,7 +202,8 @@
         "indefinite": "une fenêtre",
         "definite": "la fenêtre",
         "definite_capitalised": "La fenêtre",
-        "definite_after_de": "de la fenêtre"
+        "definite_after_de": "de la fenêtre",
+        "plural": "fenêtres"
       },
       "agreement": "feminine",
       "position": null,
@@ -208,7 +222,8 @@
         "un téléphone",
         "le téléphone",
         "Le téléphone",
-        "du téléphone"
+        "du téléphone",
+        "téléphones"
       ],
       "forms_by_key": {
         "bare": "téléphone",
@@ -217,7 +232,8 @@
         "indefinite": "un téléphone",
         "definite": "le téléphone",
         "definite_capitalised": "Le téléphone",
-        "definite_after_de": "du téléphone"
+        "definite_after_de": "du téléphone",
+        "plural": "téléphones"
       },
       "agreement": "masculine",
       "position": null,
@@ -236,7 +252,8 @@
         "une clé",
         "la clé",
         "La clé",
-        "de la clé"
+        "de la clé",
+        "clés"
       ],
       "forms_by_key": {
         "bare": "clé",
@@ -245,7 +262,8 @@
         "indefinite": "une clé",
         "definite": "la clé",
         "definite_capitalised": "La clé",
-        "definite_after_de": "de la clé"
+        "definite_after_de": "de la clé",
+        "plural": "clés"
       },
       "agreement": "feminine",
       "position": null,
@@ -264,7 +282,8 @@
         "un sac",
         "le sac",
         "Le sac",
-        "du sac"
+        "du sac",
+        "sacs"
       ],
       "forms_by_key": {
         "bare": "sac",
@@ -273,7 +292,8 @@
         "indefinite": "un sac",
         "definite": "le sac",
         "definite_capitalised": "Le sac",
-        "definite_after_de": "du sac"
+        "definite_after_de": "du sac",
+        "plural": "sacs"
       },
       "agreement": "masculine",
       "position": null,
@@ -292,7 +312,8 @@
         "une assiette",
         "l'assiette",
         "L'assiette",
-        "de l'assiette"
+        "de l'assiette",
+        "assiettes"
       ],
       "forms_by_key": {
         "bare": "assiette",
@@ -301,7 +322,8 @@
         "indefinite": "une assiette",
         "definite": "l'assiette",
         "definite_capitalised": "L'assiette",
-        "definite_after_de": "de l'assiette"
+        "definite_after_de": "de l'assiette",
+        "plural": "assiettes"
       },
       "agreement": "feminine",
       "position": null,

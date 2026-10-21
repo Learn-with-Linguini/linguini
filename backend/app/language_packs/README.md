@@ -213,7 +213,7 @@ with the `more`/`fewer` sentence labels) and `quantity-pair` (A2 both counts in 
 sentence). A0 and A2 reuse dev's builders; A1 builds dev's task here because dev's
 A1 corrections are written per language. Proposals now also supply `plural` noun
 forms. As in dev, A0 counts the first learner-counted group of 2 or 3; further groups
-never block it. M03 evaluation cases are not written yet.
+never block it. M03 evaluation cases are described under the evaluation section below.
 
 Several objects can share a target-language name (two cabinets). A question that only
 names the object accepts every marker on an object with that name: A0 marker questions
@@ -370,16 +370,18 @@ live Supabase database. No schema migration is part of this change.
 
 Each pack has demo inputs in `samples/<locale>/`: `scene.json` (a red cup on a
 table and a green book, planned automatically) and `vocabulary.json` (those facts
-plus every fact used by the pack's evaluation cases). Evaluate any pack locally:
+plus every fact used by the pack's evaluation cases, with the `plural` forms that
+model proposals supply at runtime for counted nouns). Evaluate any pack locally
+(`--mission` defaults to M01):
 
 ```powershell
 $packs = @{ es = 'es-ES'; fr = 'fr-FR'; de = 'de-DE'; ko = 'ko-KR' }
-foreach ($language in $packs.Keys) { 'A0','A1','A2' | ForEach-Object {
+foreach ($language in $packs.Keys) { foreach ($mission in 'M01','M03') { 'A0','A1','A2' | ForEach-Object {
   .\.venv\Scripts\python.exe -m app.language_packs.preview evaluate `
     --pack-dir "app/language_packs/packs/$($packs[$language])/everyday" `
-    --language $language --register everyday --level $_ `
+    --language $language --register everyday --level $_ --mission $mission `
     --vocabulary "app/language_packs/samples/$($packs[$language])/vocabulary.json"
-} }
+} } }
 ```
 
 Every pack meets the evaluation thresholds at A0, A1 and A2: every valid sentence
@@ -391,6 +393,19 @@ small AI-authored case set is not proof of linguistic quality. Held-out
 sentences are judged as native text; required romanization is checked on
 generated candidates instead. A case may set `use` (for example `use = "name"`)
 when its plan use cannot be inferred from its input.
+
+M03 cases (`evaluations/M03-<level>.toml`) declare learner counts as scene `counts`;
+the evaluator binds them as counted groups and adds the mission's number words, as
+lessons do. A false case may bind a pack number (`count = "number:7"`: a practice
+board or a friend's wrong count), which is pack data rather than a scene fact. A
+labelled sentence is planned in the slot that allows its labels (`No, ...` in the
+A2 correction slot). Rejects cover the wrong object, the wrong count (`wrongCount`),
+a missing plural or a number in the wrong form, broken frames and punctuation, the
+wrong comparison word and decomposed text. Counting is checked for every pack by the
+deterministic count-agreement rule: a bound number is written in the form the pack
+gives it next to that noun (`numbers.toml` `with_noun`: una manzana, 두 개), and a
+count above one takes the noun's `plural` form when the session has one that differs
+from the bare noun. Korean has no plural forms, so only its counter forms are judged.
 
 ## Shared noun-phrase validator
 
@@ -410,8 +425,9 @@ generalized from the Spanish validator. It reads only the session's own forms:
 - an attributive adjective sits on the side given by its `position`; predicative
   forms are not judged.
 
-Negated existence (`pas de`, `kein`) and model-proposed wording are skipped; the
-latter is judged by the mandatory model review. `validators/es.py` keeps the
+Negated existence (`pas de`, `kein`), counting constructions (a number or quantity
+word introduces the noun: `cinco libros`, `combien de`, `wie viele`) and
+model-proposed wording are skipped; the last is judged by the mandatory model review. `validators/es.py` keeps the
 Spanish-only rules (name chunks, `del`/`al` references, `¿…?`, ser/estar/hay).
 
 ## Declarative construction checks
@@ -432,7 +448,8 @@ truth = false                     # optional: only true or only false specs
 
 Patterns are Python regular expressions, matched case-insensitively (set
 `case_sensitive = true` to change that) against NFC text with typographic
-apostrophes folded to `'`. Uses are plan spec uses: `name`, `question`, `prompt`,
+apostrophes folded to `'`. Patterns are kept exactly as written, so edge spaces act
+as word boundaries (`" y "` never matches the y of *hay*). Uses are plan spec uses: `name`, `question`, `prompt`,
 `answer`, `option`, `followup`, `fact1`-`fact3`, `connected`, `wrongAttribute`,
 `falseFirst` and `wrongExistence`. Invalid patterns, empty checks and duplicate
 IDs are pack load errors.

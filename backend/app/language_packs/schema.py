@@ -16,6 +16,8 @@ from app.schemas.enums import ProficiencyLevel, SceneRelationType
 from app.schemas.tasks import ContentVersion, ContractId, MissionId
 
 type ScriptCode = Annotated[str, StringConstraints(pattern=r"^[A-Z][a-z]{3}$")]
+# A check's regular expression, kept exactly as written: edge spaces are word boundaries.
+type CheckPattern = Annotated[str, StringConstraints(min_length=1, strip_whitespace=False)]
 type LanguageTag = Annotated[
     str,
     StringConstraints(
@@ -301,8 +303,13 @@ class ExampleScene(ApiModel):
         return {item.fact_id for item in self.absent}
 
     def validate_bindings(self, bindings: dict[str, str], truth: bool) -> None:
-        if unknown := set(bindings.values()) - self.fact_ids:
+        # A pack number (``number:7``: a practice board, a friend's wrong count) is pack
+        # data rather than a scene fact, so only false sentences may name one.
+        numbers = {value for value in bindings.values() if re.fullmatch(r"number:\d+", value)}
+        if unknown := set(bindings.values()) - self.fact_ids - numbers:
             raise ValueError(f"bindings reference undeclared facts: {sorted(unknown)}")
+        if truth and numbers:
+            raise ValueError(f"true examples cannot bind pack numbers: {sorted(numbers)}")
         if truth and (absent := set(bindings.values()) & self.absent_fact_ids):
             raise ValueError(f"true examples cannot bind absent facts: {sorted(absent)}")
 
@@ -388,8 +395,8 @@ class ConstructionCheck(ApiModel):
 
     check_id: ContractId
     message: NonEmptyText
-    must_contain: list[NonEmptyText] = Field(default_factory=list)
-    must_not_contain: list[NonEmptyText] = Field(default_factory=list)
+    must_contain: list[CheckPattern] = Field(default_factory=list)
+    must_not_contain: list[CheckPattern] = Field(default_factory=list)
     # Plan spec uses (name, question, prompt, answer, option, followup, fact1-3,
     # connected, wrongAttribute, falseFirst, wrongExistence). Empty means every use.
     uses: list[NonEmptyText] = Field(default_factory=list)
@@ -404,6 +411,8 @@ class ConstructionCheck(ApiModel):
         if set(self.uses) & set(self.except_uses):
             raise ValueError(f"check {self.check_id!r} both includes and excludes a use")
         for pattern in [*self.must_contain, *self.must_not_contain]:
+            if not pattern.strip():
+                raise ValueError(f"check {self.check_id!r} has a blank pattern")
             if normalize("NFC", pattern) != pattern:
                 raise ValueError(f"check {self.check_id!r} pattern must be NFC: {pattern!r}")
             try:
@@ -565,6 +574,7 @@ class EvaluationReject(ApiModel):
         "wrongObject",
         "wrongAttribute",
         "wrongRelation",
+        "wrongCount",
         "agreement",
         "wordOrder",
         "verbChoice",
@@ -584,6 +594,7 @@ class EvaluationCase(ApiModel):
         "wrongObject",
         "wrongAttribute",
         "wrongRelation",
+        "wrongCount",
         "agreement",
         "wordOrder",
         "verbChoice",

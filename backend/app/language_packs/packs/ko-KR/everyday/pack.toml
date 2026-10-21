@@ -76,4 +76,7 @@ evaluations = [
   "evaluations/M01-A0.toml",
   "evaluations/M01-A1.toml",
   "evaluations/M01-A2.toml",
+  "evaluations/M03-A0.toml",
+  "evaluations/M03-A1.toml",
+  "evaluations/M03-A2.toml",
 ]

@@ -16,6 +16,12 @@ from ..schema import LanguagePack
 AGREEMENT_KEYS = ("masculine", "feminine", "neuter")
 # Words allowed between a determiner and its noun (attributive adjectives).
 _MAX_BETWEEN = 2
+# Counting constructions introduce the noun with a number or quantity word (cinco
+# libros, combien de, wie viele) instead of an article; numbers are checked elsewhere.
+COUNTING = frozenset({
+    "how-many-question", "quantity-chunk", "quantity-statement", "quantity-comparison",
+    "quantity-pair",
+})
 
 
 def _word(text: str) -> str:
@@ -90,13 +96,13 @@ def _required_family(candidate: CandidateSentence) -> str | None:
 
 
 class NounPhraseValidator:
-    validator_id = "noun-phrase.v1"
+    validator_id = "noun-phrase.v2"
 
     def __init__(self, vocabulary: ApprovedVocabulary) -> None:
         self.terms = {term.term_id: term for term in vocabulary.terms}
 
     def validate(self, candidate: CandidateSentence, _pack: LanguagePack) -> ValidatorResult:
-        if candidate.proposed_realizations:
+        if candidate.proposed_realizations or candidate.construction_id in COUNTING:
             return ValidatorResult(passed=True)
         messages = []
         uses = {item.role: item for item in candidate.term_uses if item.role}

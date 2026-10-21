@@ -752,7 +752,7 @@ def test_evaluation_identity_tracks_generation_content_and_validator_version():
         changed_pack, "A0"
     ).generation_content_sha256
     assert identity.validator_versions == {
-        "es": "es-targeted@7", "noun-phrase": "noun-phrase.v1", "pack-checks": "pack-checks.v1",
+        "es": "es-targeted@7", "noun-phrase": "noun-phrase.v2", "pack-checks": "pack-checks.v1",
     }
 
 

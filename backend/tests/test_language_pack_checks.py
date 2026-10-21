@@ -160,3 +160,26 @@ def test_korean_targeted_validator_runs_with_pack_checks():
     for right in ("의자예요.", "가방을 찾아보세요.", "탁자를 찾아보세요."):
         assessment = assess(_candidate("identify-object", right), pack, ApprovedVocabulary())
         assert assessment.passed is True, right
+
+
+def test_check_patterns_keep_their_spaces():
+    check = ConstructionCheck(check_id="pair-frame", message="Join with y.", must_contain=[" y "])
+    assert check.must_contain == [" y "]
+    # Trimmed to "y", the pattern would match the y of "hay".
+    assert not check.passes("Hay cinco bolsos, tres teléfonos.")
+    assert check.passes("Hay cinco bolsos y tres teléfonos.")
+    with pytest.raises(ValueError, match="blank pattern"):
+        ConstructionCheck(check_id="blank", message="Blank.", must_contain=["  "])
+
+
+def test_only_false_cases_bind_pack_numbers():
+    from app.language_packs.schema import ExampleScene
+
+    scene = ExampleScene.model_validate(
+        {"objects": [{"fact_id": "object:fork", "concept": "fork"}]}
+    )
+    scene.validate_bindings({"object": "object:fork", "count": "number:7"}, truth=False)
+    with pytest.raises(ValueError, match="pack numbers"):
+        scene.validate_bindings({"object": "object:fork", "count": "number:7"}, truth=True)
+    with pytest.raises(ValueError, match="undeclared"):
+        scene.validate_bindings({"object": "object:fork", "count": "count:fork"}, truth=False)

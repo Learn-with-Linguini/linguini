@@ -19,6 +19,7 @@ from .generation import (
     BoundSceneFacts,
     CandidateSentence,
     ConfirmedAttribute,
+    ConfirmedCount,
     ConfirmedObject,
     ConfirmedRelation,
     ConfirmedSceneFacts,
@@ -32,7 +33,7 @@ from .model_source import GENERATOR_VERSION
 from .schema import EvaluationCase, LanguagePack
 from .validators import validator_versions
 
-RUNNER_VERSION = "language-pack-evaluator.v3"
+RUNNER_VERSION = "language-pack-evaluator.v4"
 DEFAULT_THRESHOLDS = {"valid_alternative_acceptance": 1.0, "missed_rejects": 0}
 
 
@@ -179,9 +180,26 @@ def _scene_facts(case: EvaluationCase) -> BoundSceneFacts:
         )
         for item in case.scene.relations
     ]
+    counts = [
+        ConfirmedCount(fact_id=item.fact_id, object_fact_ids=[item.object], quantity=item.quantity)
+        for item in case.scene.counts
+    ]
     return BoundSceneFacts(
-        scene_facts=ConfirmedSceneFacts(objects=objects, attributes=attributes, relations=relations)
+        scene_facts=ConfirmedSceneFacts(
+            objects=objects, attributes=attributes, relations=relations, counted_groups=counts,
+        )
     )
+
+
+def _mission_vocabulary(
+    pack: LanguagePack, mission_id: str, facts: BoundSceneFacts, vocabulary: ApprovedVocabulary,
+) -> ApprovedVocabulary:
+    """The case's vocabulary as the mission's lessons see it (M03 adds number words)."""
+    from .lessons import PACK_MISSION_IDS, pack_mission
+
+    if mission_id not in PACK_MISSION_IDS:
+        return vocabulary
+    return pack_mission(mission_id).vocabulary(pack, facts, vocabulary)
 
 
 def _case_plan(
@@ -193,7 +211,11 @@ def _case_plan(
     mission_id: str = "M01",
 ) -> LessonPlan:
     base = lesson_plan(pack, mission_template_key(mission_id, level))
-    slot = next(slot for slot in base.slots if case.construction_id in slot.construction_ids)
+    slots = [slot for slot in base.slots if case.construction_id in slot.construction_ids]
+    # A labelled sentence (a "No, ..." correction) belongs to the slot that allows its labels.
+    slot = next(
+        (slot for slot in slots if set(case.labels) <= set(slot.sentence_labels)), slots[0]
+    )
     term_by_fact = {term.fact_id: term for term in vocabulary.terms}
     present_ids = facts.all_fact_ids
     bindings = {}
@@ -326,7 +348,8 @@ def evaluate_pack(
     by_category: dict[str, dict[str, int]] = {}
     for case in cases:
         facts = _scene_facts(case)
-        plan = _case_plan(pack, level, case, vocabulary, facts, mission_id)
+        case_vocabulary = _mission_vocabulary(pack, mission_id, facts, vocabulary)
+        plan = _case_plan(pack, level, case, case_vocabulary, facts, mission_id)
         slot_id = plan.slots[0].slot_id
         plan = plan.model_copy(
             update={"slots": [plan.slots[0].model_copy(update={"slot_id": slot_id})]}
@@ -334,7 +357,7 @@ def evaluate_pack(
         acceptable_results = []
         for sentence in case.acceptable:
             structural, linguistic, reasons = _assess_candidate(
-                pack, case, sentence, plan, facts, vocabulary
+                pack, case, sentence, plan, facts, case_vocabulary
             )
             valid_total += 1
             accepted = structural and linguistic is True
@@ -351,7 +374,7 @@ def evaluate_pack(
         reject_results = []
         for reject in case.reject:
             structural, linguistic, reasons = _assess_candidate(
-                pack, case, reject.sentence, plan, facts, vocabulary
+                pack, case, reject.sentence, plan, facts, case_vocabulary
             )
             reject_total += 1
             if not structural:

@@ -723,15 +723,16 @@ def test_pack_missions_dispatch_for_every_pack_and_level(
         assert {o.label for o in followup.options} >= {"rot"}
 
 
+@pytest.mark.parametrize("mission_id", ["M01", "M03"])
 @pytest.mark.parametrize("level", ["A0", "A1", "A2"])
 @pytest.mark.parametrize("language", list(LOCALES))
-def test_sample_vocabulary_covers_every_valid_evaluation_sentence(language, level):
+def test_sample_vocabulary_covers_every_valid_evaluation_sentence(language, level, mission_id):
     locale = LOCALES[language]
     pack = load_pack(PACKS / locale / "everyday")
     vocabulary = ApprovedVocabulary.model_validate_json(
         (SAMPLES / locale / "vocabulary.json").read_text("utf-8")
     )
-    report, record = evaluate_pack(pack, level, vocabulary)
+    report, record = evaluate_pack(pack, level, vocabulary, mission_id=mission_id)
     # Structure plus the pack's declared checks (and es.py for Spanish) must accept
     # every valid sentence: a check that rejects one would fail real lessons.
     failures = [

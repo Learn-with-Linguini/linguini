@@ -527,6 +527,9 @@ def check_deterministic(
             ):
                 failures.append("yes/no answer must name the shown object")
 
+    if spec is not None and not candidate.proposed_realizations:
+        failures += _count_agreement(candidate.text, expected_bindings, facts, vocabulary)
+
     slot_sentence_labels = set(slot.sentence_labels) if slot is not None else set()
     expected_labels = set(spec.labels) if spec is not None else set()
     found_labels = {
@@ -598,6 +601,49 @@ def check_deterministic(
         text_is_nfc=text_is_nfc,
         failures=failures,
     )
+
+
+# Count roles and the noun role each one counts.
+_COUNTED_NOUNS = {"count": "object", "first-count": "first", "second-count": "second"}
+
+
+def _has_word(text: str, word: str) -> bool:
+    return re.search(rf"(?<!\w){re.escape(fold(word))}(?!\w)", fold(text)) is not None
+
+
+def _count_agreement(text, bindings, facts, vocabulary) -> list[str]:
+    """A bound number agrees with the noun it counts.
+
+    The number takes the form the pack gives it next to that noun (una manzana, 두 개),
+    and a count above one takes the noun's plural when the session has one that differs
+    from the bare noun. Languages that do not mark plurals after numbers have no plural
+    form, so only the number form is judged.
+    """
+    counts = {group.fact_id: group.quantity for group in facts.scene_facts.counted_groups}
+    failures = []
+    for count_role, noun_role in _COUNTED_NOUNS.items():
+        count_fact, noun_fact = bindings.get(count_role), bindings.get(noun_role)
+        number = next((t for t in vocabulary.terms if t.fact_id == count_fact), None)
+        noun = next((t for t in vocabulary.terms if t.fact_id == noun_fact
+                     and str(getattr(t.part_of_speech, "value", t.part_of_speech)) == "noun"),
+                    None)
+        if number is None or noun is None:
+            continue
+        quantity = counts.get(count_fact) or int(number.linguistic.get("quantity", 0))
+        written = (
+            number.forms_by_key.get("with-noun")
+            or number.forms_by_key.get(f"with-noun-{noun.agreement}")
+            or number.forms_by_key.get("with-noun-any")
+        )
+        if written and not _has_word(text, written):
+            failures.append(
+                f"with {noun.target_text!r} the number {quantity} is written {written!r}"
+            )
+        plural = noun.forms_by_key.get("plural")
+        bare = noun.forms_by_key.get("bare", noun.target_text)
+        if quantity > 1 and plural and fold(plural) != fold(bare) and not _has_word(text, plural):
+            failures.append(f"after the number {quantity}, use the plural {plural!r}")
+    return failures
 
 
 def _inflected_use(text, vocabulary, fact_id_value, part_of_speech, language):

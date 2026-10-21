@@ -13,7 +13,8 @@
         "die Tasse",
         "Die Tasse",
         "der Tasse",
-        "keine Tasse"
+        "keine Tasse",
+        "Tassen"
       ],
       "forms_by_key": {
         "bare": "Tasse",
@@ -24,7 +25,8 @@
         "definite_capitalised": "Die Tasse",
         "definite_dative": "der Tasse",
         "indefinite_accusative": "eine Tasse",
-        "negative": "keine Tasse"
+        "negative": "keine Tasse",
+        "plural": "Tassen"
       },
       "agreement": "feminine",
       "position": null,
@@ -44,7 +46,8 @@
         "das Buch",
         "Das Buch",
         "dem Buch",
-        "kein Buch"
+        "kein Buch",
+        "Bücher"
       ],
       "forms_by_key": {
         "bare": "Buch",
@@ -55,7 +58,8 @@
         "definite_capitalised": "Das Buch",
         "definite_dative": "dem Buch",
         "indefinite_accusative": "ein Buch",
-        "negative": "kein Buch"
+        "negative": "kein Buch",
+        "plural": "Bücher"
       },
       "agreement": "neuter",
       "position": null,
@@ -76,7 +80,8 @@
         "Der Tisch",
         "dem Tisch",
         "einen Tisch",
-        "kein Tisch"
+        "kein Tisch",
+        "Tische"
       ],
       "forms_by_key": {
         "bare": "Tisch",
@@ -87,7 +92,8 @@
         "definite_capitalised": "Der Tisch",
         "definite_dative": "dem Tisch",
         "indefinite_accusative": "einen Tisch",
-        "negative": "kein Tisch"
+        "negative": "kein Tisch",
+        "plural": "Tische"
       },
       "agreement": "masculine",
       "position": null,
@@ -107,7 +113,8 @@
         "die Gabel",
         "Die Gabel",
         "der Gabel",
-        "keine Gabel"
+        "keine Gabel",
+        "Gabeln"
       ],
       "forms_by_key": {
         "bare": "Gabel",
@@ -118,7 +125,8 @@
         "definite_capitalised": "Die Gabel",
         "definite_dative": "der Gabel",
         "indefinite_accusative": "eine Gabel",
-        "negative": "keine Gabel"
+        "negative": "keine Gabel",
+        "plural": "Gabeln"
       },
       "agreement": "feminine",
       "position": null,
@@ -150,7 +158,8 @@
         "definite_capitalised": "Der Löffel",
         "definite_dative": "dem Löffel",
         "indefinite_accusative": "einen Löffel",
-        "negative": "kein Löffel"
+        "negative": "kein Löffel",
+        "plural": "Löffel"
       },
       "agreement": "masculine",
       "position": null,
@@ -170,7 +179,8 @@
         "die Tür",
         "Die Tür",
         "der Tür",
-        "keine Tür"
+        "keine Tür",
+        "Türen"
       ],
       "forms_by_key": {
         "bare": "Tür",
@@ -181,7 +191,8 @@
         "definite_capitalised": "Die Tür",
         "definite_dative": "der Tür",
         "indefinite_accusative": "eine Tür",
-        "negative": "keine Tür"
+        "negative": "keine Tür",
+        "plural": "Türen"
       },
       "agreement": "feminine",
       "position": null,
@@ -212,7 +223,8 @@
         "definite_capitalised": "Das Fenster",
         "definite_dative": "dem Fenster",
         "indefinite_accusative": "ein Fenster",
-        "negative": "kein Fenster"
+        "negative": "kein Fenster",
+        "plural": "Fenster"
       },
       "agreement": "neuter",
       "position": null,
@@ -232,7 +244,8 @@
         "das Handy",
         "Das Handy",
         "dem Handy",
-        "kein Handy"
+        "kein Handy",
+        "Handys"
       ],
       "forms_by_key": {
         "bare": "Handy",
@@ -243,7 +256,8 @@
         "definite_capitalised": "Das Handy",
         "definite_dative": "dem Handy",
         "indefinite_accusative": "ein Handy",
-        "negative": "kein Handy"
+        "negative": "kein Handy",
+        "plural": "Handys"
       },
       "agreement": "neuter",
       "position": null,
@@ -275,7 +289,8 @@
         "definite_capitalised": "Der Schlüssel",
         "definite_dative": "dem Schlüssel",
         "indefinite_accusative": "einen Schlüssel",
-        "negative": "kein Schlüssel"
+        "negative": "kein Schlüssel",
+        "plural": "Schlüssel"
       },
       "agreement": "masculine",
       "position": null,
@@ -295,7 +310,8 @@
         "die Tasche",
         "Die Tasche",
         "der Tasche",
-        "keine Tasche"
+        "keine Tasche",
+        "Taschen"
       ],
       "forms_by_key": {
         "bare": "Tasche",
@@ -306,7 +322,8 @@
         "definite_capitalised": "Die Tasche",
         "definite_dative": "der Tasche",
         "indefinite_accusative": "eine Tasche",
-        "negative": "keine Tasche"
+        "negative": "keine Tasche",
+        "plural": "Taschen"
       },
       "agreement": "feminine",
       "position": null,
@@ -338,7 +355,8 @@
         "definite_capitalised": "Der Teller",
         "definite_dative": "dem Teller",
         "indefinite_accusative": "einen Teller",
-        "negative": "kein Teller"
+        "negative": "kein Teller",
+        "plural": "Teller"
       },
       "agreement": "masculine",
       "position": null,
