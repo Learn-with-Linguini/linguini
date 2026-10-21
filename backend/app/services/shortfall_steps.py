@@ -6,7 +6,6 @@ are 2 cups." Steps describe the confirmed facts only; they never guess what else
 is in the photo.
 """
 
-import re
 
 from app.services.quantities import english_plural
 
@@ -48,12 +47,6 @@ def _quantities(objects, counted_groups):
     return quantities
 
 
-def _reviewed(label):
-    from app.services.a0_lexicon import REVIEWED_NOUNS
-
-    return re.sub(r"^(?:a|an|the)\s+", "", _key(label)) in REVIEWED_NOUNS
-
-
 def _count_step(low, high, quantities, allowed=lambda _name: True, example="cup"):
     """The smallest change that brings one named group into ``low``-``high``."""
     best = None
@@ -84,18 +77,15 @@ def _objects_step(need, labels):
 
 
 def _a0_objects_step(objects):
-    taught = {_key(label) for label in _labels(objects) if _reviewed(label)}
-    need = max(1, 2 - len(taught))
-    untaught = [label for label in _labels(objects) if not _reviewed(label)]
-    examples = [name for name in A0_EXAMPLES if name not in taught][:MAX_NAMED]
-    step = (
-        f"Mark {need} more object{'' if need == 1 else 's'} with a name Linguini teaches "
-        f"at this level, such as {_join([_article(name) for name in examples], 'or')}."
+    labels = _labels(objects)
+    named = {_key(label) for label in labels}
+    examples = [name for name in A0_EXAMPLES if name not in named][:MAX_NAMED]
+    need = max(1, 2 - len(named))
+    have = f" (so far: {_join(labels[:MAX_NAMED])})" if labels else ""
+    return (
+        f"Mark {need} more different object{'' if need == 1 else 's'} you can see{have}, "
+        f"such as {_join([_article(name) for name in examples], 'or')}."
     )
-    if untaught:
-        quoted = _join([f"“{label}”" for label in untaught[:MAX_NAMED]])
-        step += f" {quoted} {'is' if len(untaught) == 1 else 'are'} not taught yet."
-    return step
 
 
 def _attributes_step(need, objects):
@@ -172,7 +162,6 @@ def mission_steps(mission, objects, relations, counted_groups, kinds):
         add("objects", _a0_objects_step(objects))
         add("counts", _count_step(
             requirements.min_quantity, requirements.max_quantity, quantities,
-            allowed=_reviewed,
         ))
     else:
         need = max(requirements.min_confirmed_objects, 3 if rule == "describeScene" else 0)

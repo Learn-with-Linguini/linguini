@@ -371,7 +371,7 @@ RULE_SHORTFALLS = {
     "fictionalOwnership": ("attributes", "relations"),
     "requestableItem": ("objects",),
 }
-A0_OBJECTS_REASON = "Confirm at least 2 different objects with taught names."
+A0_OBJECTS_REASON = "Confirm at least 2 different objects."
 
 
 @dataclass(frozen=True)
@@ -581,18 +581,22 @@ def _mission_choice_supplied(mission, mission_choices):
 
 
 def a0_photo_reasons(mission, objects, counted_groups=(), mission_choices=None):
-    """A0 missions need reviewed nouns: 2-3 distinct objects, or a group of 2 or 3."""
-    from app.services.a0_lexicon import REVIEWED_NOUNS
+    """A0 missions need 2-3 distinct named objects, or a group of 2 or 3.
 
-    def reviewed(label):
-        return re.sub(r"^(?:a|an|the)\s+", "", label.strip().casefold()) in REVIEWED_NOUNS
+    Any confirmed object can take part: its noun comes from the reviewed lexicon or
+    the session's scene translation, and a lesson whose nouns turn out unusable is
+    skipped when it is built.
+    """
 
-    labels = {obj.label.strip().casefold() for obj in objects if reviewed(obj.label)}
+    def named(label):
+        return bool(re.sub(r"^(?:a|an|the)\s+", "", label.strip().casefold()))
+
+    labels = {obj.label.strip().casefold() for obj in objects if named(obj.label)}
     if mission.mission_id == "M03":
         groups = [
             group for group in countable_groups(mission, counted_groups)
-            if reviewed(group.get("label", "")) or any(
-                reviewed(obj.label) for obj in objects
+            if named(group.get("label", "")) or any(
+                named(obj.label) for obj in objects
                 if str(obj.id) in {str(item) for item in group["sceneObjectIds"]}
             )
         ]
@@ -608,7 +612,7 @@ def a0_photo_reasons(mission, objects, counted_groups=(), mission_choices=None):
         if mission.mission_id == "M04":
             ownership = choices.get("ownership") or {}
             object_id = str(_choice_value(ownership, "scene_object_id") or "")
-            if object_id not in by_id or not reviewed(by_id[object_id].label):
+            if object_id not in by_id or not named(by_id[object_id].label):
                 return ["Tell Linguini which object is yours."]
         else:
             preference = choices.get("preference") or {}
@@ -618,7 +622,7 @@ def a0_photo_reasons(mission, objects, counted_groups=(), mission_choices=None):
             reaction = preference.get("reaction")
             if (
                 focus_id not in by_id
-                or not reviewed(by_id[focus_id].label)
+                or not named(by_id[focus_id].label)
                 or reaction == "skip"
             ):
                 return ["Tell Linguini what you would choose."]
