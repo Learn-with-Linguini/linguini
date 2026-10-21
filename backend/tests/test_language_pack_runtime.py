@@ -482,7 +482,7 @@ def test_flag_on_preserves_mission_completion_evidence(level, runtime):
     assert all(outcome["outcome"] == "correct" for outcome in details["questionOutcomes"])
 
 
-def test_duplicate_object_names_keep_instance_bindings(runtime):
+def test_duplicate_object_names_are_not_contrasted_and_keep_instance_bindings(runtime):
     objects, relations, words, translation = runtime
     objects[1].label = objects[0].label
     words[1].display_text = words[0].display_text
@@ -491,14 +491,16 @@ def test_duplicate_object_names_keep_instance_bindings(runtime):
     translation.objects[1].article = translation.objects[0].article
     translation.objects[1].gender = translation.objects[0].gender
     (task,) = dispatch("A1", runtime, MockSpanishProvider())
+    # A false "Is this a ...?" about the second object of the same name would be true,
+    # so the pair skips it for the differently named instance.
     assert [q.scene_object_id for q in task.public_content.questions] == [
         objects[0].id,
-        objects[1].id,
+        objects[2].id,
         objects[0].id,
-        objects[1].id,
+        objects[2].id,
     ]
     assert task.answer_key.question_evaluations[0].vocabulary_item_ids == [words[0].id]
-    assert task.answer_key.question_evaluations[1].vocabulary_item_ids == [words[1].id]
+    assert task.answer_key.question_evaluations[1].vocabulary_item_ids == [words[2].id]
 
 
 def test_incorrect_attribute_instance_and_claim_are_rejected(runtime):

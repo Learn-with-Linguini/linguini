@@ -32,7 +32,13 @@ from app.services.mission_lessons_m01 import m01_lesson_task
 
 from ..schema import join_pack_chunks
 from .base import PackMission, for_level
-from .common import LessonContext, SpecBuilder, usable_objects
+from .common import (
+    LessonContext,
+    SpecBuilder,
+    differently_named,
+    object_name,
+    usable_objects,
+)
 
 MISSION_ID = "M01"
 PURPOSES = {
@@ -69,8 +75,12 @@ def plan_lesson(pack, level, facts, vocabulary, seed=""):
 def _plan_a0(specs, facts, vocabulary, objects, seed):
     truths = [True, False]
     random.Random(f"{seed}:truth").shuffle(truths)
-    for index, obj in enumerate(objects[:2], 1):
-        other = objects[1 if index == 1 else 0]
+    # A false "Is this a ...?" must name something else, so the pair differs in name.
+    named = differently_named(objects, vocabulary)
+    if len(named) < 2:
+        raise ValueError("M01 A0 needs two differently named objects")
+    for index, obj in enumerate(named[:2], 1):
+        other = named[1 if index == 1 else 0]
         truth = truths[index - 1]
         specs.add(f"matchName-{index}", "name", "identify-object", {"object": obj.fact_id})
         specs.add(
@@ -87,7 +97,11 @@ def _plan_a1(specs, facts, vocabulary, objects, seed):
     selected = []
     for obj in objects:
         details = [a for a in attrs if a.object_fact_id == obj.fact_id]
-        if details:
+        # The false identification names the other pair's object, so names differ.
+        if details and not any(
+            object_name(vocabulary, obj) == object_name(vocabulary, chosen)
+            for chosen, _detail in selected
+        ):
             # The second description prefers a non-colour detail as before.
             detail = (
                 next((a for a in details if a.kind != "colour"), details[0])
@@ -98,7 +112,7 @@ def _plan_a1(specs, facts, vocabulary, objects, seed):
         if len(selected) == 2:
             break
     if len(selected) != 2:
-        raise ValueError("A1 needs two translated object-detail pairs")
+        raise ValueError("A1 needs two differently named object-detail pairs")
     for index, (obj, detail) in enumerate(selected, 1):
         other = selected[1 if index == 1 else 0][0]
         truth = rng.random() < 0.5
@@ -136,7 +150,15 @@ def _plan_a2(specs, facts, vocabulary, objects, seed):
         next(o for o in objects if o.fact_id == rel.reference_fact_id)
         if rel else next(o for o in objects if o != first)
     )
-    third = next(o for o in objects if o not in (first, second))
+    # The marker choice and the false existence option contrast the first object with
+    # the third, so the third has another name (and ideally not the second's either).
+    rest = [o for o in objects if o not in (first, second)]
+    names = {object_name(vocabulary, first), object_name(vocabulary, second)}
+    third = next((o for o in rest if object_name(vocabulary, o) not in names), None) or next(
+        (o for o in rest if object_name(vocabulary, o) != object_name(vocabulary, first)), None,
+    )
+    if third is None:
+        raise ValueError("A2 needs a third object named differently from the first")
     b1 = (
         {"object": first.fact_id, "attribute": attr.fact_id}
         if attr

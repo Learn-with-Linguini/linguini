@@ -148,8 +148,9 @@ def plan_lesson(pack, level, facts, vocabulary, seed):
 
 def _plan_a0(specs, pack, facts, vocabulary, _seed):
     groups = _counted(facts, vocabulary, {2, 3})
-    if len(groups) != 1:
-        raise ValueError("M03 A0 needs exactly one counted group of 2 or 3 objects")
+    if not groups:
+        raise ValueError("M03 A0 needs a counted group of 2 or 3 objects")
+    # As in dev, the first group is counted; more groups never block the lesson.
     count, noun = groups[0]
     specs.add("countGroup-1", "question", "how-many-question", {"object": noun.fact_id})
     for number in A0_NUMBERS:
@@ -554,7 +555,7 @@ def check_lesson(level, result, approved, pack):
 
 
 def photo_reasons(mission, objects, relations, attributes_of, counted_groups=()):
-    """A0 counts one small group; A2 compares two groups of different objects."""
+    """A0 counts the first small group; A2 compares two groups of different objects."""
     level = str(mission.practice_level)
     requirements = mission.photo_requirements
     labels = {str(obj.id): fold(obj.label) for obj in objects}
@@ -562,8 +563,8 @@ def photo_reasons(mission, objects, relations, attributes_of, counted_groups=())
         group for group in counted_groups
         if requirements.min_quantity <= group["quantity"] <= requirements.max_quantity
     ]
-    if level == "A0" and len(groups) != 1:
-        return ["Count exactly one group of 2 or 3 matching objects."]
+    if level == "A0" and not groups:
+        return ["Count a group of 2 or 3 matching objects."]
     if level == "A2":
         def label(group):
             return next((labels[str(item)] for item in group["sceneObjectIds"]

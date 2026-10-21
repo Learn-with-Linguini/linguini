@@ -465,6 +465,11 @@ class TaskAnswerKey(ApiModel):
     reference_text: str | None = None
     evaluation_notes: str | None = None
     correct_option_ids: dict[str, str] = Field(default_factory=dict)
+    # Other offered options that are equally right, such as a second object with the
+    # name a marker question asks for.
+    accepted_option_ids: dict[str, list[str]] = Field(
+        default_factory=dict, exclude_if=_is_empty
+    )
     accepted_text_answers_by_vocabulary_id: dict[str, list[str]] = Field(default_factory=dict)
     accepted_text_answers_by_question: dict[str, list[str]] = Field(
         default_factory=dict, exclude_if=_is_empty

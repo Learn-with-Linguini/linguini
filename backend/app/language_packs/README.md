@@ -212,7 +212,16 @@ counts, the practice board and the role-play correction), `quantity-comparison` 
 with the `more`/`fewer` sentence labels) and `quantity-pair` (A2 both counts in one
 sentence). A0 and A2 reuse dev's builders; A1 builds dev's task here because dev's
 A1 corrections are written per language. Proposals now also supply `plural` noun
-forms. M03 evaluation cases are not written yet.
+forms. As in dev, A0 counts the first learner-counted group of 2 or 3; further groups
+never block it. M03 evaluation cases are not written yet.
+
+Several objects can share a target-language name (two cabinets). A question that only
+names the object accepts every marker on an object with that name: A0 marker questions
+list the others in `acceptedOptionIds` on the private answer key, which grading checks
+alongside the correct option. Contrasts need another name, so planners pick
+differently named objects for false statements, name choices, focus objects and
+marker distractors. Descriptive questions ("the cabinet next to the window") still
+accept only the described object.
 
 ## One language context per normal M01 generation
 

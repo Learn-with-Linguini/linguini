@@ -102,8 +102,13 @@ def _a0_focus(objects, seed):
     """Two focus objects with differently named partners for the name choice."""
     ordered = list(objects)
     random.Random(f"{seed}:M02-A0").shuffle(ordered)
+    # Two tasks on one name would repeat a lesson; any same-name marker is accepted.
+    targets = []
+    for obj in ordered:
+        if all(fold(obj.label) != fold(target.label) for target in targets):
+            targets.append(obj)
     pairs = []
-    for target in ordered[:2]:
+    for target in targets[:2]:
         other = next(
             (obj for obj in ordered
              if obj.fact_id != target.fact_id

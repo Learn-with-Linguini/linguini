@@ -232,6 +232,7 @@ def _lesson_answer_is_correct(task, question_id, answer):
         normalize_answer(answer) == normalize_answer(expected)
         if interaction_type == "sentenceBuilding"
         else answer == expected
+        or answer in task.answer_key.accepted_option_ids.get(question_id, ())
     )
 
 

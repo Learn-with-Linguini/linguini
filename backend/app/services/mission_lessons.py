@@ -85,7 +85,7 @@ def build_mission_task(
     ``shown(question)`` any extra public question fields.
     """
     questions = result.questions
-    correct = {}
+    correct, accepted = {}, {}
     evaluations = []
     for question in questions:
         label = correct_label(question)
@@ -94,6 +94,8 @@ def build_mission_task(
             if question.interaction_type == "multipleChoice"
             else question.correct_text
         )
+        if getattr(question, "accepted_option_ids", None):
+            accepted[question.question_id] = list(question.accepted_option_ids)
         evaluations.append(dict(
             question_id=question.question_id,
             objective_id=mission.objective.objective_id,
@@ -133,6 +135,9 @@ def build_mission_task(
             **mission_fields(mission),
             **(content_fields or {}),
         ),
-        answer_key=dict(correct_option_ids=correct, question_evaluations=evaluations),
+        answer_key=dict(
+            correct_option_ids=correct, accepted_option_ids=accepted,
+            question_evaluations=evaluations,
+        ),
         scene_object_id=UUID(questions[-1].object_key),
     )

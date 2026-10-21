@@ -264,3 +264,79 @@ def test_m02_positions_fall_back_to_other_confirmed_relations():
     # No model proposals: the photo's other relation still gives a false position.
     assert [(kind, term.target_text) for kind, term in
             _relation_alternatives(on, facts, vocabulary)] == [("next_to", "al lado de")]
+
+
+def _two_cabinets(*labels):
+    """A scene with two cabinets: a name alone does not pick out one of them."""
+    labels = labels or (("cabinet", "armario"), ("window", "ventana"), ("cabinet", "armario"))
+    pack = load_pack(PACK)
+    objects = [SimpleNamespace(id=UUID(int=n), label=label, attributes={})
+               for n, (label, _text) in enumerate(labels, 1)]
+    translated = SimpleNamespace(
+        objects=[SimpleNamespace(key=str(UUID(int=n)), source=label, translation=text,
+                                 article="el", gender="masculine")
+                 for n, (label, text) in enumerate(labels, 1)],
+        attributes=[], relationships=[],
+    )
+    words = [SimpleNamespace(id=UUID(int=n + 10)) for n in range(1, len(labels) + 1)]
+    return pack, *session_inputs(pack, objects, [], words, translated, {})
+
+
+def test_m01_a0_contrasts_objects_with_different_names():
+    from app.language_packs.lessons.m01 import plan_lesson
+
+    pack, facts, vocabulary = _two_cabinets()
+    labels = {obj.fact_id: obj.label for obj in facts.scene_facts.objects}
+    plan = plan_lesson(pack, "A0", facts, vocabulary, "seed")
+    focus = [labels[plan[f"matchName-{i}"][0]["bindings"]["object"]] for i in (1, 2)]
+    assert sorted(focus) == ["cabinet", "window"]
+    for index in (1, 2):
+        spec = plan[f"confirmName-{index}"][0]
+        named, shown = (labels[spec["bindings"][role]] for role in ("object", "shown"))
+        # A false "Is this a cabinet?" never points at the other cabinet.
+        assert (named == shown) is spec["truth"]
+
+
+def test_m01_a0_needs_two_names_not_two_objects():
+    from app.language_packs.lessons.m01 import plan_lesson
+
+    pack, facts, vocabulary = _two_cabinets(("cabinet", "armario"), ("cabinet", "armario"))
+    with pytest.raises(ValueError, match="differently named"):
+        plan_lesson(pack, "A0", facts, vocabulary, "seed")
+
+
+def test_m02_a0_tasks_name_different_objects():
+    from app.language_packs.lessons.m02 import _a0_focus
+
+    _pack, facts, _vocabulary = _two_cabinets()
+    for seed in ("a", "b", "c", "d"):
+        pairs = _a0_focus(facts.scene_facts.objects, seed)
+        assert sorted(target.label for target, _other in pairs) == ["cabinet", "window"]
+        assert all(target.label != other.label for target, other in pairs)
+
+
+def test_m03_a0_counts_the_first_of_several_small_groups():
+    from app.language_packs.lessons.m03 import number_vocabulary, photo_reasons, plan_lesson
+    from app.missions import get_mission
+    from app.services.mission_eligibility import scene_attributes
+
+    pack = load_pack(PACK)
+    labels = {1: ("chair", "silla", "feminine"), 2: ("table", "mesa", "feminine")}
+    objects = [SimpleNamespace(id=UUID(int=n), label=label, attributes={})
+               for n, (label, _text, _gender) in labels.items()]
+    groups = [{"sceneObjectIds": [str(UUID(int=1))], "quantity": 3},
+              {"sceneObjectIds": [str(UUID(int=2))], "quantity": 2}]
+    assert photo_reasons(get_mission("M03", "A0", 1), objects, [], scene_attributes,
+                         counted_groups=groups) == []
+    translated = SimpleNamespace(
+        objects=[SimpleNamespace(key=str(UUID(int=n)), source=label, translation=text,
+                                 article="la", gender=gender)
+                 for n, (label, text, gender) in labels.items()],
+        attributes=[], relationships=[],
+    )
+    words = [SimpleNamespace(id=UUID(int=n + 10)) for n in labels]
+    facts, vocabulary = session_inputs(pack, objects, [], words, translated, {}, groups)
+    vocabulary = number_vocabulary(pack, facts, vocabulary)
+    plan = plan_lesson(pack, "A0", facts, vocabulary, "seed")
+    counted = {spec["bindings"].get("count") for spec in plan["matchChunk-1"]} - {None}
+    assert counted == {facts.scene_facts.counted_groups[0].fact_id}

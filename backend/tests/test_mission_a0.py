@@ -367,3 +367,70 @@ def test_tasks_persist_questions_answers_and_option_order(mission_id):
             assert len(question.options) <= 3
             if mission_id not in {"M04", "M05"}:
                 assert question.keep_option_order
+
+
+def _named_rows(*nouns):
+    """Approved object rows with markers 1..n; repeated nouns are same-name objects."""
+    return [dict(key=str(uuid4()), marker=number, noun=noun, label=noun)
+            for number, noun in enumerate(nouns, 1)]
+
+
+def _marker(rows, target):
+    from app.ai.features.learning_tasks.mission_a0 import A0Question, _marker_question
+
+    payload = {"approvedObjects": rows, "approvedTranslations": {}}
+    return A0Question.model_validate(
+        _marker_question(payload, "findNamed", "Task 1", target, "Busca el armario.", index=1)
+    )
+
+
+def _check(question, rows):
+    from app.ai.features.learning_tasks.mission_a0 import _check_markers
+
+    _check_markers(question, {option.option_id: option.label for option in question.options},
+                   {row["key"]: row for row in rows})
+
+
+def test_a_name_alone_accepts_every_marker_on_an_object_with_that_name():
+    rows = _named_rows("armario", "ventana", "armario")
+    question = _marker(rows, rows[2])
+    assert question.correct_option_id == "marker-3"
+    assert question.accepted_option_ids == ["marker-1"]
+    _check(question, rows)
+    # Leaving out a same-name marker would mark a right answer wrong.
+    with pytest.raises(LearningTaskGenerationError, match="named word"):
+        _check(question.model_copy(update={"accepted_option_ids": []}), rows)
+
+
+def test_marker_choices_keep_a_differently_named_object():
+    rows = _named_rows("armario", "armario", "armario", "ventana")
+    question = _marker(rows, rows[0])
+    assert [option.label for option in question.options] == ["1", "2", "4"]
+    assert question.accepted_option_ids == ["marker-2"]
+    _check(question, rows)
+
+
+def test_distinct_names_accept_only_the_named_marker():
+    rows = _named_rows("taza", "libro", "manzana")
+    question = _marker(rows, rows[1])
+    assert question.accepted_option_ids == []
+    _check(question, rows)
+
+
+def test_accepted_alternatives_grade_as_correct_and_stay_out_of_other_keys():
+    from app.repositories.postgres.workflow import _lesson_answer_is_correct
+    from app.schemas.tasks import TaskAnswerKey
+
+    assert "acceptedOptionIds" not in TaskAnswerKey(
+        correct_option_ids={"q": "marker-3"}
+    ).model_dump(by_alias=True)
+    task = SimpleNamespace(
+        public_content=SimpleNamespace(questions=[
+            SimpleNamespace(question_id="q", interaction_type="multipleChoice"),
+        ]),
+        answer_key=TaskAnswerKey(correct_option_ids={"q": "marker-3"},
+                                 accepted_option_ids={"q": ["marker-1"]}),
+    )
+    assert _lesson_answer_is_correct(task, "q", "marker-3")
+    assert _lesson_answer_is_correct(task, "q", "marker-1")
+    assert not _lesson_answer_is_correct(task, "q", "marker-2")

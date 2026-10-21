@@ -82,6 +82,8 @@ class A0Question(ApiModel):
     object_key: NonEmptyText = Field(max_length=200)
     # Marker questions: option id -> the approved object behind that marker.
     marker_keys: dict[str, str] | None = None
+    # Marker questions: other markers on an object with the same name, equally right.
+    accepted_option_ids: list[str] = []
     # Yes/no questions: whether the statement is true of the highlighted object.
     statement_true: bool | None = None
     # The stated object of a yes/no question.
@@ -111,11 +113,18 @@ def _objects(payload):
 
 def _marker_question(payload, purpose, section, target, prompt, *, listen_first=False,
                      index):
-    objects = payload["approvedObjects"]
-    shown = sorted(objects, key=lambda row: row["marker"])[:MAX_OPTIONS]
+    objects = sorted(payload["approvedObjects"], key=lambda row: row["marker"])
+    noun = fold(target["noun"])
+    shown = objects[:MAX_OPTIONS]
     if target["key"] not in {row["key"] for row in shown}:
         shown = [*shown[:MAX_OPTIONS - 1], target]
-        shown.sort(key=lambda row: row["marker"])
+    if all(fold(row["noun"]) == noun for row in shown):
+        # Keep a differently named object so the question stays a choice.
+        other = next((row for row in objects if fold(row["noun"]) != noun), None)
+        if other is not None:
+            rest = [row for row in shown if row["key"] != target["key"]]
+            shown = [target, *rest][:MAX_OPTIONS - 1] + [other]
+    shown.sort(key=lambda row: row["marker"])
     options = [dict(option_id=f"marker-{row['marker']}", label=str(row["marker"]))
                for row in shown]
     return dict(
@@ -124,6 +133,11 @@ def _marker_question(payload, purpose, section, target, prompt, *, listen_first=
         interaction_type="multipleChoice", options=options,
         correct_option_id=f"marker-{target['marker']}",
         marker_keys={f"marker-{row['marker']}": row["key"] for row in shown},
+        # The prompt only names the object, so any object with that name is right.
+        accepted_option_ids=[
+            f"marker-{row['marker']}" for row in shown
+            if row["key"] != target["key"] and fold(row["noun"]) == noun
+        ],
         object_key=target["key"], audio_text=prompt, listen_first=listen_first,
         prompt_translation=payload["approvedTranslations"].get(prompt),
     )
@@ -169,8 +183,10 @@ def _sections(payload):
 
 
 def _other(payload, target, salt):
+    """Another approved object, named differently whenever the photo has one."""
     others = [row for row in payload["approvedObjects"] if row["key"] != target["key"]]
-    return _rng(payload, salt).choice(others)
+    named = [row for row in others if fold(row["noun"]) != fold(target["noun"])]
+    return _rng(payload, salt).choice(named or others)
 
 
 def _m01(payload):
@@ -356,7 +372,7 @@ def validate_a0_lesson(payload: dict[str, Any], result: A0LessonResult) -> None:
         if question.purpose in MARKER_PURPOSES:
             _check_markers(question, labels, objects)
             continue
-        if question.marker_keys is not None:
+        if question.marker_keys is not None or question.accepted_option_ids:
             _fail("Only marker questions map options to objects.")
         allowed = chunks | forms | {fold(item) for item in payload["yesNo"]} | {
             fold(item) for item in payload["approvedNumberWords"].values()
@@ -379,16 +395,21 @@ def _check_markers(question, labels, objects):
     keys = question.marker_keys or {}
     if set(keys) != set(labels) or len(set(keys.values())) != len(keys):
         _fail("Every marker option names a different approved object.")
-    nouns = set()
+    nouns = {}
     for option_id, key in keys.items():
         row = objects.get(key)
         if row is None or labels[option_id] != str(row["marker"]):
             _fail("Markers are approved objects with their review numbers.")
-        nouns.add(fold(row["noun"]))
-    if len(nouns) != len(keys):
-        _fail("Only one marker may match the word.")
+        nouns[option_id] = fold(row["noun"])
     if keys[question.correct_option_id] != question.object_key:
         _fail("The correct marker is the named object.")
+    # Objects sharing the named word all answer the prompt; one with another name must not.
+    named = {option_id for option_id, noun in nouns.items()
+             if noun == nouns[question.correct_option_id]}
+    if named != {question.correct_option_id, *question.accepted_option_ids}:
+        _fail("Every marker on the named word, and only those, is accepted.")
+    if len(named) == len(nouns):
+        _fail("A differently named marker keeps the question a choice.")
 
 
 def _validate_yes_no(payload, question, labels, objects, target):

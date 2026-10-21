@@ -53,6 +53,27 @@ def usable_objects(facts, vocabulary):
     return [obj for obj in facts.scene_facts.objects if obj.fact_id in terms]
 
 
+def object_name(vocabulary, obj) -> str:
+    """The folded target-language noun a learner sees for ``obj``."""
+    term = next(term for term in vocabulary.terms if term.fact_id == obj.fact_id)
+    return fold(term.forms_by_key.get("bare", term.target_text))
+
+
+def differently_named(objects, vocabulary):
+    """The first object of each target-language name, in order.
+
+    Two objects with one name are interchangeable to a learner: a name alone never
+    picks out one of them, so contrasts and false statements need another name.
+    """
+    seen, named = set(), []
+    for obj in objects:
+        name = object_name(vocabulary, obj)
+        if name not in seen:
+            seen.add(name)
+            named.append(obj)
+    return named
+
+
 # ---------------------------------------------------------------- assembly
 
 
