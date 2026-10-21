@@ -494,6 +494,90 @@
       "position": null,
       "part_of_speech": "preposition",
       "provenance": "catalog"
+    },
+    {
+      "term_id": "key-on-table",
+      "fact_id": "relation:key-on-table",
+      "source_text": "on",
+      "target_text": "sobre",
+      "forms": ["sobre"],
+      "forms_by_key": {"phrase": "sobre"},
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "spoon-under-table",
+      "fact_id": "relation:spoon-under-table",
+      "source_text": "under",
+      "target_text": "debajo de",
+      "forms": ["debajo de"],
+      "forms_by_key": {"phrase": "debajo de"},
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "bag-under-table",
+      "fact_id": "relation:bag-under-table",
+      "source_text": "under",
+      "target_text": "debajo de",
+      "forms": ["debajo de"],
+      "forms_by_key": {"phrase": "debajo de"},
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "plate-on-table",
+      "fact_id": "relation:plate-on-table",
+      "source_text": "on",
+      "target_text": "sobre",
+      "forms": ["sobre"],
+      "forms_by_key": {"phrase": "sobre"},
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "phone-next-to-door",
+      "fact_id": "relation:phone-next_to-door",
+      "source_text": "next to",
+      "target_text": "al lado de",
+      "forms": ["al lado de"],
+      "forms_by_key": {"phrase": "al lado de"},
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "preposition",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "bag-green",
+      "fact_id": "attribute:bag-green",
+      "source_text": "green",
+      "target_text": "verde",
+      "forms": ["verde"],
+      "forms_by_key": {"masculine": "verde", "feminine": "verde"},
+      "agreement": null,
+      "position": "after",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "plate-yellow",
+      "fact_id": "attribute:plate-yellow",
+      "source_text": "yellow",
+      "target_text": "amarillo",
+      "forms": ["amarillo", "amarilla"],
+      "forms_by_key": {"masculine": "amarillo", "feminine": "amarilla"},
+      "agreement": null,
+      "position": "after",
+      "part_of_speech": "adjective",
+      "provenance": "catalog"
     }
   ]
 }

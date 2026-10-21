@@ -195,9 +195,11 @@ model writes its target-language text through five pack constructions:
 and position choices, with false positions from model-proposed alternatives),
 `target-clue` (A2 detail/location clues and clarifications that never name the
 object) and `target-location` (A2 named, described and located target), plus
-M02 examples for `identify-object` and `scene-location`. M02 evaluation cases are
-not written yet, so `evaluate --mission M02` reports no cases and M02 cannot produce
-release evidence.
+M02 examples for `identify-object` and `scene-location`. M02 evaluation cases
+(`evaluations/M02-<level>.toml`; A1 is content version 2) cover finding and naming
+objects, locations, position phrases, where-questions, clues that hide the target,
+the `No, ...` clarification and the named, described and located target. False
+position options are not cases: a case scene declares no alternative relation.
 
 M03 (count objects) needs the pack's `numbers.toml`: reviewed number words with the
 form each takes next to a counted noun when it differs (`with_noun`: Spanish
@@ -376,7 +378,7 @@ model proposals supply at runtime for counted nouns). Evaluate any pack locally
 
 ```powershell
 $packs = @{ es = 'es-ES'; fr = 'fr-FR'; de = 'de-DE'; ko = 'ko-KR' }
-foreach ($language in $packs.Keys) { foreach ($mission in 'M01','M03') { 'A0','A1','A2' | ForEach-Object {
+foreach ($language in $packs.Keys) { foreach ($mission in 'M01','M02','M03') { 'A0','A1','A2' | ForEach-Object {
   .\.venv\Scripts\python.exe -m app.language_packs.preview evaluate `
     --pack-dir "app/language_packs/packs/$($packs[$language])/everyday" `
     --language $language --register everyday --level $_ --mission $mission `
