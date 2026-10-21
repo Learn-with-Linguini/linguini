@@ -779,7 +779,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
             setAnswers(value => ({ ...value, [question.questionId]: optionId }));
           }}
         /> : <>
-        {markers.length || questionObjects.length ? <div className="mission-markers"><ScenePhoto
+        {markers.length || questionObjects.length || content.focus === "sceneDescription" || content.focus === "chainedDescription" ? <div className="mission-markers"><ScenePhoto
           scene={scene} hideWords items={markers.length ? markers.map(marker => marker.item) : questionObjects}
           activeItemId={markers.find(marker => marker.option.optionId === (checks[question.questionId]?.isCorrect
             ? checks[question.questionId]?.answer
@@ -1050,6 +1050,10 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         graded={results[question.questionId] !== undefined}
         onReveal={() => setRevealed(value => ({ ...value, [question.questionId]: true }))}
         inlineAudio={Boolean(question.promptTranslation)} />
+      {(content.focus === "sceneDescription" || content.focus === "chainedDescription")
+        && !question.sceneObjectId && !question.displayCount && !question.boardCounts
+        && (!markers.length || question.interactionType === "sentenceBuilding")
+        ? <ScenePhoto scene={scene} items={[]} /> : null}
       {question.displayCount ? <CountBoard count={question.displayCount} sceneImageUrl={sceneImageUrl}
         imageSize={boardImageSize} onImageSize={setBoardImageSize}
         boardObject={session?.sceneObjects.find(object => object.id === question.boardObjectId)} /> : null}
