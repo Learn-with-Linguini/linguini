@@ -1,0 +1,57 @@
+{
+  "case_id": "elision-fr",
+  "target_language": "fr",
+  "scene_title": "Kitchen Shelf",
+  "scene_summary": "An orange, an onion, an egg and some garlic sit on a shelf under a clock.",
+  "objects": [
+    {
+      "key": "object_1",
+      "source": "orange"
+    },
+    {
+      "key": "object_2",
+      "source": "onion"
+    },
+    {
+      "key": "object_3",
+      "source": "egg"
+    },
+    {
+      "key": "object_4",
+      "source": "garlic"
+    },
+    {
+      "key": "object_5",
+      "source": "clock"
+    },
+    {
+      "key": "object_6",
+      "source": "bookshelf"
+    },
+    {
+      "key": "object_7",
+      "source": "bean"
+    },
+    {
+      "key": "object_8",
+      "source": "water"
+    }
+  ],
+  "attributes": [],
+  "relationships": [
+    {
+      "key": "relation_1",
+      "source": "on"
+    },
+    {
+      "key": "relation_2",
+      "source": "under"
+    }
+  ],
+  "tags": [
+    "elision",
+    "edge-case",
+    "hard"
+  ],
+  "notes": "French elision, in both directions. Seven of these take l' before a vowel or mute h, but bean is le haricot -- the h is aspirated and the article does not elide. A model that has learned 'vowel means l'' gets that one wrong, and it is the single most common French article error."
+}

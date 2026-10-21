@@ -1,0 +1,534 @@
+/* Prose and figures shared by every blog post body. */
+
+.body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+  min-width: 0;
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+.body h2 {
+  margin-top: 28px;
+  font-size: clamp(26px, 3vw, 34px);
+  scroll-margin-top: 96px;
+}
+
+.body h3 {
+  margin-top: 8px;
+  font-family: var(--font-ui);
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.body p,
+.body :is(ul, ol):not([class]) > li {
+  max-width: 68ch;
+}
+
+/* Prose lists only; styled lists inside figures bring their own layout. */
+.body ul:not([class]),
+.body ol:not([class]) {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 1.2em;
+}
+
+.body :is(ul, ol):not([class]) > li::marker {
+  color: var(--tomato);
+  font-weight: 800;
+}
+
+.body strong {
+  font-weight: 800;
+}
+
+.body a {
+  color: var(--teal-dark);
+}
+
+.muted {
+  color: var(--ink-muted);
+}
+
+/* Wide figures break out of the reading column, like tables on news pages */
+.fig.breakout {
+  width: min(1080px, 100vw - 2 * var(--gutter));
+  margin-left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Figures with captions */
+.fig {
+  display: grid;
+  gap: 10px;
+  margin: 8px 0;
+  min-width: 0;
+}
+
+.fig figcaption {
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+/* Plain data tables: hairline rules, left-aligned text, right-aligned figures */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+  line-height: 1.45;
+  font-variant-numeric: tabular-nums;
+}
+
+.table th,
+.table td {
+  padding: 11px 16px 11px 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table :is(th, td):last-child {
+  padding-right: 0;
+}
+
+.table thead th {
+  padding-top: 0;
+  border-bottom: 2px solid var(--ink);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.table tbody th {
+  font-weight: 800;
+}
+
+.table .num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* Narrow screens: each row becomes a short block, with the column name beside each value */
+@media screen and (max-width: 640px) {
+  .table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .table tr {
+    display: grid;
+    gap: 4px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .table tbody tr:first-child {
+    border-top: 2px solid var(--ink);
+  }
+
+  .table th,
+  .table td {
+    display: grid;
+    grid-template-columns: minmax(0, 9em) minmax(0, 1fr);
+    gap: 12px;
+    padding: 0;
+    border: 0;
+  }
+
+  .table tbody th {
+    display: block;
+    margin-bottom: 2px;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--ink-muted);
+  }
+
+  .table td.num {
+    text-align: left;
+  }
+}
+
+.note {
+  padding: 14px 18px;
+  border-radius: var(--radius-sm);
+  background: var(--pasta-soft);
+  max-width: none !important;
+}
+
+/* Business model canvas */
+.zones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin: 0;
+  padding: 0 !important;
+  list-style: none;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ink-muted);
+}
+
+.zones li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.zones li::marker {
+  content: "";
+}
+
+.zones li::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--tone);
+}
+
+.make { --tone: var(--tomato); --tint: #fdeee8; }
+.value { --tone: var(--teal-deep); --tint: var(--teal-deep); }
+.learner { --tone: var(--teal); --tint: #e6f3f1; }
+.money { --tone: var(--pasta); --tint: #fff4dc; }
+
+.canvas {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-areas:
+    "partners activities value relationships segments"
+    "partners resources  value channels      segments"
+    "costs    costs      costs revenue       revenue";
+  gap: 10px;
+}
+
+.block {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 18px;
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--line), inset 0 4px 0 var(--tone);
+  font-size: 14px;
+  line-height: 1.35;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.5s var(--ease-out), transform 0.6s var(--ease-out), box-shadow 0.25s;
+  transition-delay: calc(var(--i, 0) * 70ms);
+}
+
+.canvas[data-inview] .block {
+  opacity: 1;
+  transform: none;
+}
+
+.canvas .blockTitle {
+  margin: 0;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0 !important;
+  list-style: none;
+}
+
+.chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px 5px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--tint);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.chips li::marker {
+  content: "";
+}
+
+.chips li > span {
+  display: inline-grid;
+  color: var(--tone);
+}
+
+/* The value proposition is the centre of the canvas */
+.block.value {
+  align-content: center;
+  background: var(--teal-deep);
+  color: #fff;
+  box-shadow: 0 18px 36px -18px rgba(24, 79, 78, 0.7);
+}
+
+.block.value .blockTitle {
+  color: #9fd3cd;
+}
+
+.promise {
+  font-family: var(--font-display);
+  font-size: clamp(22px, 2.2vw, 28px);
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.valueList {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0 !important;
+  list-style: none;
+  font-weight: 700;
+}
+
+.valueList li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #d8ebe8;
+}
+
+.valueList li::marker {
+  content: "";
+}
+
+.valueList svg {
+  flex-shrink: 0;
+  color: var(--pasta);
+}
+
+.people {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0 !important;
+  list-style: none;
+  font-weight: 800;
+}
+
+.people li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.people li::marker {
+  content: "";
+}
+
+.people img {
+  width: 44px;
+  height: 44px;
+  padding: 5px;
+  border-radius: 50%;
+  background: var(--tint);
+  object-fit: contain;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.stat {
+  display: grid;
+  gap: 2px;
+  max-width: none !important;
+}
+
+.stat b {
+  font-family: var(--font-display);
+  font-size: clamp(20px, 2.4vw, 28px);
+  line-height: 1;
+}
+
+.stat span {
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+
+.block:hover {
+  box-shadow: inset 0 0 0 1px var(--line), inset 0 4px 0 var(--tone), var(--shadow-card);
+}
+
+.block.value:hover {
+  box-shadow: 0 18px 36px -18px rgba(24, 79, 78, 0.7);
+}
+
+@media (max-width: 860px) {
+  .canvas {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "value         value"
+      "segments      relationships"
+      "segments      channels"
+      "activities    partners"
+      "resources     partners"
+      "costs         costs"
+      "revenue       revenue";
+  }
+}
+
+@media (max-width: 480px) {
+  .canvas {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "value" "segments" "relationships" "channels" "activities" "resources" "partners" "costs" "revenue";
+  }
+
+  .stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media print {
+  .canvas,
+  .fig:has(.canvas),
+  .table {
+    break-inside: avoid;
+  }
+
+  .table {
+    font-size: 11px;
+  }
+
+  /* Posts that print as documents: text spans the same width as the figures */
+  .body.document {
+    font-size: 13px;
+  }
+
+  .body.document p,
+  .body.document :is(ul, ol):not([class]) > li {
+    max-width: none;
+  }
+
+  .body.document figcaption {
+    font-size: 11px;
+  }
+
+  /* The desktop canvas fits under the introduction; the narrow-screen stack would push it to page 2 */
+  .body.document .canvas {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-areas:
+      "partners activities value relationships segments"
+      "partners resources  value channels      segments"
+      "costs    costs      costs revenue       revenue";
+    gap: 6px;
+  }
+
+  .body.document .people img {
+    width: 30px;
+    height: 30px;
+  }
+
+  .body.document .block {
+    min-width: 0;
+    padding: 7px;
+  }
+
+  .body.document .block.value {
+    box-shadow: none;
+  }
+
+  .body.document .chips {
+    gap: 4px;
+  }
+
+  .body.document .chips li {
+    gap: 4px;
+    padding: 2px 6px 2px 4px;
+    font-size: 8px;
+  }
+
+  .body.document .chips svg {
+    width: 11px;
+    height: 11px;
+  }
+
+  .body.document .stat b {
+    font-size: 13px;
+  }
+
+  .body.document .stat span {
+    font-size: 8px;
+  }
+
+  .table th,
+  .table td {
+    padding-block: 6px;
+  }
+
+  .table thead th {
+    font-size: 11px;
+  }
+
+  .fig.breakout {
+    width: auto;
+    margin-left: 0;
+    transform: none;
+  }
+
+  .body {
+    display: block;
+    font-size: 12px;
+  }
+
+  .body > * + * {
+    margin-top: 12px;
+  }
+
+  .body h2 {
+    margin-top: 22px;
+    font-size: 22px;
+  }
+
+  .body h2,
+  .body h3 {
+    break-after: avoid;
+  }
+
+  .canvas .blockTitle {
+    font-size: 8px;
+    letter-spacing: 0.02em;
+  }
+
+  .block {
+    opacity: 1 !important;
+    transform: none !important;
+    padding: 8px;
+    font-size: 10px;
+  }
+
+  .chips li {
+    font-size: 9px;
+    padding: 3px 7px 3px 5px;
+  }
+
+  .promise {
+    font-size: 16px;
+  }
+
+  .stat b {
+    font-size: 16px;
+  }
+}

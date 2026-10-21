@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Linguini gallery 01 hero</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background: var(--butter); }
+  body::before, body::after { content:""; position:absolute; border-radius:50%; filter:blur(1px); opacity:.65; }
+  body::before { width:520px; height:520px; right:-190px; top:-210px; background:var(--pasta-soft); }
+  body::after { width:410px; height:410px; left:-190px; bottom:-250px; background:var(--sage); }
+  .top { position:absolute; left:64px; right:64px; top:48px; display:flex; justify-content:space-between; align-items:center; z-index:2; }
+  .copy { position:absolute; left:64px; top:150px; width:620px; z-index:2; }
+  .headline { font-size:80px; }
+  .support { margin-top:24px; width:550px; }
+  .languages { display:flex; flex-wrap:wrap; gap:12px; margin-top:28px; }
+  .beta-line { display:inline-flex; align-items:center; gap:12px; margin-top:28px; padding:15px 20px; border-radius:18px; background:var(--teal-deep); color:var(--paper); font-size:19px; box-shadow:0 16px 36px rgb(24 79 78 / .18); }
+  .beta-line b { color:var(--pasta-soft); }
+  .visual { position:absolute; right:52px; top:138px; width:470px; height:570px; z-index:2; }
+  .vocab { position:absolute; right:0; top:4px; width:330px; height:520px; transform:rotate(3deg); }
+  .scenes { position:absolute; left:0; bottom:6px; width:330px; transform:rotate(-5deg); border-width:7px; border-radius:28px; }
+  .dot { width:9px; height:9px; border-radius:50%; background:var(--pasta); }
+</style>
+</head>
+<body>
+  <div class="top">
+    <img class="brand" src="brand/linguini-wordmark.png" alt="Linguini">
+    <div class="beta-badge"><span class="dot"></span>&nbsp; Public beta</div>
+  </div>
+  <div class="copy">
+    <p class="eyebrow">Photo-led language learning</p>
+    <h1 class="headline">Learn the language of <span class="hl squiggle">your day.</span></h1>
+    <p class="support">Turn your own photos into short lessons you can hear, play and remember.</p>
+    <div class="languages">
+      <span class="pill">Spanish</span><span class="pill">French</span><span class="pill">German</span><span class="pill">Beginner Korean</span>
+    </div>
+    <div class="beta-line"><b>$0 during beta</b><span>Unlimited photo lessons</span></div>
+  </div>
+  <div class="visual">
+    <div class="device vocab"><img src="../../../frontend/public/app-shots/vocabulary.webp" alt="Current Linguini vocabulary bank"></div>
+    <div class="device scenes"><img src="../../../frontend/public/app-shots/scenes.webp" alt="Current Linguini scene picker"></div>
+  </div>
+</body>
+</html>

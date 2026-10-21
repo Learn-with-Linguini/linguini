@@ -1,0 +1,6 @@
+.analysis-scan__trail-outline,
+.analysis-scan__trail-pasta,
+.analysis-scan__trail-shine {
+  stroke-dasharray: none;
+  animation: none;
+}

@@ -1,0 +1,475 @@
+{
+  "ok": true,
+  "strict": false,
+  "browserSkipped": false,
+  "lint": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 9,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "duplicate_media_discovery_risk",
+        "severity": "warning",
+        "message": "Detected 2 matching img entries with the same source/start/duration.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Avoid duplicated media nodes that can be discovered twice during compilation."
+      },
+      {
+        "code": "composition_file_too_large",
+        "severity": "warning",
+        "message": "This HTML composition file has 384 lines. Smaller sub-compositions are easier to read, iterate on, and diff.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Split coherent scenes or layers into separate .html files under compositions/, then mount them from the parent with data-composition-src so each file stays small enough to inspect, revise, and validate independently."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-0\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-0",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-0\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-1\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-1",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-1\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-2\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-2",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-2\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-3\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-3",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-3\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-4\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-4",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-4\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-5\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-5",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-5\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-6\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-6",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-6\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      }
+    ],
+    "filesScanned": 1
+  },
+  "runtime": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": []
+  },
+  "layout": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 3,
+    "findings": [
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 3.111,
+        "selector": "#ring-mug > div:nth-of-type(1)",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 1415,
+          "top": 309,
+          "right": 1585.41,
+          "bottom": 355,
+          "width": 170.41,
+          "height": 46
+        },
+        "containerSelector": "#ring-mug",
+        "text": "la taza (cup)",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 1402,
+          "top": 352,
+          "right": 1572,
+          "bottom": 522,
+          "width": 170,
+          "height": 170
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 1415,
+          "y": 309,
+          "width": 170.41,
+          "height": 46
+        },
+        "firstSeen": 3.111,
+        "lastSeen": 3.111,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          3.111
+        ]
+      },
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 3.111,
+        "selector": "#ring-book > div:nth-of-type(1)",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 1155,
+          "top": 419,
+          "right": 1345.86,
+          "bottom": 465,
+          "width": 190.86,
+          "height": 46
+        },
+        "containerSelector": "#ring-book",
+        "text": "el libro (book)",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 1142,
+          "top": 462,
+          "right": 1362,
+          "bottom": 652,
+          "width": 220,
+          "height": 190
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 1155,
+          "y": 419,
+          "width": 190.86,
+          "height": 46
+        },
+        "firstSeen": 3.111,
+        "lastSeen": 3.111,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          3.111
+        ]
+      },
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 9.333,
+        "selector": "#ring-cafe > div:nth-of-type(1)",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 1345,
+          "top": 359,
+          "right": 1542.94,
+          "bottom": 405,
+          "width": 197.94,
+          "height": 46
+        },
+        "containerSelector": "#ring-cafe",
+        "text": "el café (coffee)",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 1332,
+          "top": 402,
+          "right": 1542,
+          "bottom": 612,
+          "width": 210,
+          "height": 210
+        },
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 1345,
+          "y": 359,
+          "width": 197.94,
+          "height": 46
+        },
+        "firstSeen": 9.333,
+        "lastSeen": 9.333,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          9.333
+        ]
+      }
+    ],
+    "duration": 56,
+    "samples": [
+      3.111,
+      9.333,
+      15.556,
+      21.778,
+      28,
+      34.222,
+      40.444,
+      46.667,
+      52.889
+    ],
+    "transitionSamples": [],
+    "transitionSamplesDropped": 0,
+    "tolerance": 2,
+    "totalIssueCount": 3,
+    "truncated": false
+  },
+  "motion": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": false,
+    "samples": 0
+  },
+  "contrast": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 5,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "contrast_aa_failure",
+        "severity": "warning",
+        "message": "Contrast is 2.18:1; WCAG AA requires 3:1.",
+        "text": "✓",
+        "fg": "rgb(34,197,94)",
+        "bg": "rgb(248,250,252)",
+        "ratio": 2.18,
+        "requiredRatio": 3,
+        "suggestedColor": "rgb(29,166,79)",
+        "large": true,
+        "selector": "div > section:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(1) > span",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 1715.015625,
+          "y": 339,
+          "width": 20.984375,
+          "height": 40
+        },
+        "time": 15.556,
+        "times": [
+          15.556
+        ]
+      },
+      {
+        "code": "contrast_aa_failure",
+        "severity": "warning",
+        "message": "Contrast is 2.18:1; WCAG AA requires 3:1.",
+        "text": "✓",
+        "fg": "rgb(34,197,94)",
+        "bg": "rgb(248,250,252)",
+        "ratio": 2.18,
+        "requiredRatio": 3,
+        "suggestedColor": "rgb(29,166,79)",
+        "large": true,
+        "selector": "div > section:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(2) > span",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 1715.015625,
+          "y": 441,
+          "width": 20.984375,
+          "height": 40
+        },
+        "time": 15.556,
+        "times": [
+          15.556
+        ]
+      },
+      {
+        "code": "contrast_aa_failure",
+        "severity": "warning",
+        "message": "Contrast is 4.33:1; WCAG AA requires 4.5:1.",
+        "text": "Removed by user",
+        "fg": "rgb(100,116,139)",
+        "bg": "rgb(255,241,242)",
+        "ratio": 4.33,
+        "requiredRatio": 4.5,
+        "suggestedColor": "rgb(98,113,136)",
+        "large": false,
+        "selector": "div > section:nth-of-type(3) > div:nth-of-type(2) > div:nth-of-type(2) > div:nth-of-type(3) > div > div > div:nth-of-type(2)",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 1135.703125,
+          "y": 567,
+          "width": 198.703125,
+          "height": 24
+        },
+        "time": 15.556,
+        "times": [
+          15.556
+        ]
+      },
+      {
+        "code": "contrast_aa_failure",
+        "severity": "warning",
+        "message": "Contrast is 3.56:1; WCAG AA requires 4.5:1.",
+        "text": "I-SPY CLUE",
+        "fg": "rgb(255,255,255)",
+        "bg": "rgb(234,88,12)",
+        "ratio": 3.56,
+        "requiredRatio": 4.5,
+        "suggestedColor": "rgb(33,33,33)",
+        "large": false,
+        "selector": "div > section:nth-of-type(5) > div:nth-of-type(2) > div:nth-of-type(1) > span:nth-of-type(1)",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 1046,
+          "y": 218,
+          "width": 125.40625,
+          "height": 36
+        },
+        "time": 40.444,
+        "times": [
+          40.444
+        ]
+      },
+      {
+        "code": "contrast_aa_failure",
+        "severity": "warning",
+        "message": "Contrast is 3.74:1; WCAG AA requires 4.5:1.",
+        "text": "Sentence Builder · Build the meaning",
+        "fg": "rgb(13,148,136)",
+        "bg": "rgb(255,255,255)",
+        "ratio": 3.74,
+        "requiredRatio": 4.5,
+        "suggestedColor": "rgb(12,133,123)",
+        "large": false,
+        "selector": "div > section:nth-of-type(5) > div:nth-of-type(2) > div:nth-of-type(4) > div:nth-of-type(1)",
+        "dataAttributes": {},
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 1046,
+          "y": 466,
+          "width": 728,
+          "height": 24
+        },
+        "time": 40.444,
+        "times": [
+          40.444
+        ]
+      }
+    ],
+    "enabled": true,
+    "samples": [
+      3.111,
+      15.556,
+      28,
+      40.444,
+      52.889
+    ],
+    "checked": 77,
+    "passed": 72
+  },
+  "hdr": {
+    "autoPromotion": null,
+    "inspection": "available"
+  },
+  "snapshots": {
+    "enabled": false,
+    "files": [],
+    "times": [],
+    "findingFiles": []
+  }
+}

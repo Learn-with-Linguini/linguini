@@ -1,0 +1,1 @@
+"""Linguini backend application package."""

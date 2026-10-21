@@ -1,0 +1,235 @@
+"""Learning-session workflow schemas."""
+
+from __future__ import annotations
+
+from datetime import date
+from typing import Annotated, Literal
+from uuid import UUID, uuid4
+
+from pydantic import AwareDatetime, Field, model_validator
+
+from app.schemas.base import ApiModel, JsonObject
+from app.schemas.enums import SessionFailureCode, SessionMode, SessionStatus
+from app.schemas.media import (
+    AnchorPoint,
+    MediaAsset,
+    SceneActionSuggestion,
+    SceneObject,
+    SceneObjectRelation,
+    ScenePriceSuggestion,
+)
+from app.schemas.missions import MissionChoices
+from app.schemas.tasks import SessionProgress, SessionTaskPublic
+from app.schemas.translation import SceneTranslationResult
+from app.schemas.vocabulary import VocabularyItem, VocabularyTranslation
+
+
+class Session(ApiModel):
+    id: UUID = Field(default_factory=uuid4)
+    user_id: UUID
+    language_profile_id: UUID
+    scene_media_asset_id: UUID
+    status: SessionStatus = SessionStatus.CREATED
+    mode: SessionMode = SessionMode.LESSON
+    source_session_id: UUID | None = None
+    scene_confirmed_at: AwareDatetime | None = None
+    started_at: AwareDatetime | None = None
+    completed_at: AwareDatetime | None = None
+    abandoned_at: AwareDatetime | None = None
+    session_title: str | None = None
+    session_summary: str | None = None
+    analysis_draft: JsonObject | None = None
+    failure_code: SessionFailureCode | None = None
+    idempotency_key: Annotated[str, Field(min_length=8, max_length=200)] | None = None
+
+    @model_validator(mode="after")
+    def validate_terminal_timestamp(self) -> Session:
+        if self.status is SessionStatus.COMPLETED and self.completed_at is None:
+            raise ValueError("completed sessions require completedAt")
+        if self.status is SessionStatus.ABANDONED and self.abandoned_at is None:
+            raise ValueError("abandoned sessions require abandonedAt")
+        if self.completed_at is not None and self.abandoned_at is not None:
+            raise ValueError("a session cannot be both completed and abandoned")
+        return self
+
+
+class CreateSessionRequest(ApiModel):
+    language_profile_id: UUID
+    media_asset_id: UUID
+    idempotency_key: Annotated[str, Field(min_length=8, max_length=200)] | None = None
+    # Tags the session as today's daily challenge entry; must be the current UTC day.
+    daily_challenge_day: date | None = None
+
+
+class GenerateSessionPlanRequest(ApiModel):
+    desired_vocabulary_count: Annotated[int, Field(ge=1, le=20)] = 5
+    include_grammar: bool = True
+    include_syntax: bool = True
+    include_sentence_building: bool = True
+    ispy_round_count: Annotated[int, Field(ge=1, le=20)] = 5
+
+
+class AddedPracticeObject(ApiModel):
+    id: UUID
+    label: Annotated[str, Field(min_length=1, max_length=200)]
+    x: Annotated[float, Field(ge=0, le=0.99)]
+    y: Annotated[float, Field(ge=0, le=0.99)]
+
+
+class RepositionedPracticeObject(ApiModel):
+    id: UUID
+    anchor_point: AnchorPoint
+
+
+Quantity = Annotated[int, Field(ge=1, le=10)]
+
+
+class CountedGroup(ApiModel):
+    """A learner-confirmed count of the confirmed objects sharing one name."""
+
+    scene_object_ids: Annotated[list[UUID], Field(min_length=1)]
+    label: Annotated[str, Field(min_length=1, max_length=200)]
+    quantity: Quantity
+    suggested_quantity: Quantity | None = None
+    source: Literal["confirmed", "corrected", "entered"]
+
+
+class ReviewPracticeRequest(ApiModel):
+    scene_title: Annotated[str, Field(min_length=1, max_length=200)] | None = None
+    relations: Annotated[list[SceneObjectRelation], Field(max_length=100)] = Field(
+        default_factory=list
+    )
+    accepted_object_ids: Annotated[list[UUID], Field(max_length=50)]
+    added_objects: Annotated[list[AddedPracticeObject], Field(max_length=20)] = Field(
+        default_factory=list
+    )
+    object_attributes: dict[UUID, dict[str, str]] = Field(default_factory=dict)
+    repositioned_objects: Annotated[list[RepositionedPracticeObject], Field(max_length=50)] = Field(
+        default_factory=list
+    )
+    object_counts: dict[UUID, Quantity] = Field(default_factory=dict)
+    mission_choices: MissionChoices | None = None
+
+    @model_validator(mode="after")
+    def unique_selection(self):
+        ids = self.accepted_object_ids + [item.id for item in self.added_objects]
+        if not ids or len(ids) != len(set(ids)):
+            raise ValueError("Choose at least one object, with no duplicate IDs.")
+        selected = set(ids)
+        if not set(self.object_attributes) <= selected:
+            raise ValueError("Attributes must reference selected objects.")
+        if not set(self.object_counts) <= selected:
+            raise ValueError("Counts must reference selected objects.")
+        if self.mission_choices:
+            choice_ids = []
+            if self.mission_choices.ownership:
+                choice_ids.append(self.mission_choices.ownership.scene_object_id)
+            if self.mission_choices.preference:
+                choice_ids.extend(self.mission_choices.preference.scene_object_ids)
+                if self.mission_choices.preference.chosen_object_id:
+                    choice_ids.append(self.mission_choices.preference.chosen_object_id)
+            if not set(choice_ids) <= selected:
+                raise ValueError("Mission choices must reference selected objects.")
+        moved_ids = [item.id for item in self.repositioned_objects]
+        if len(moved_ids) != len(set(moved_ids)):
+            raise ValueError("Each object can have only one marker position.")
+        if not set(moved_ids) <= selected:
+            raise ValueError("Marker positions must reference selected objects.")
+        triples = set()
+        relation_ids = set()
+        for relation in self.relations:
+            if (
+                not {relation.subject_scene_object_id, relation.reference_scene_object_id}
+                <= selected
+            ):
+                raise ValueError("Relations must reference selected objects.")
+            triple = (
+                relation.subject_scene_object_id,
+                relation.relation.casefold(),
+                relation.reference_scene_object_id,
+            )
+            if triple in triples or relation.id in relation_ids:
+                raise ValueError("Duplicate relation.")
+            triples.add(triple)
+            relation_ids.add(relation.id)
+        return self
+
+
+class ReturningPracticeWord(ApiModel):
+    word: Annotated[str, Field(min_length=1, max_length=200)]
+    needs_review: bool = False
+
+
+class SessionPersonalization(ApiModel):
+    previous_sessions: Annotated[int, Field(ge=0)]
+    returning_words: Annotated[list[ReturningPracticeWord], Field(max_length=6)] = Field(
+        default_factory=list
+    )
+    practice_focuses: list[Literal[
+        "genderNumberAgreement", "pluralNounForm", "sceneDescription", "chainedDescription",
+    ]] = Field(default_factory=list)
+
+
+type ShortfallKind = Literal["objects", "counts", "attributes", "relations"]
+
+
+class ShortfallStep(ApiModel):
+    """One concrete thing to add, worded from the confirmed review."""
+
+    kind: ShortfallKind
+    text: str
+
+
+class MissionShortfall(ApiModel):
+    mission_id: str
+    title: str
+    missing: list[ShortfallKind] = Field(default_factory=list)
+    reasons: list[str] = Field(default_factory=list)
+    steps: list[ShortfallStep] = Field(default_factory=list)
+
+
+class SceneShortfall(ApiModel):
+    """Confirmed facts a lesson still needs before any mission can be checked."""
+
+    missing: list[ShortfallKind]
+    missions: list[MissionShortfall] = Field(default_factory=list)
+
+
+class SessionDetailResponse(ApiModel):
+    analysis_mode: Literal["placeholder"] | None = None
+    media_asset: MediaAsset
+    scene_id: str | None = None
+    title: str
+    vocabulary: list[VocabularyItem] = Field(default_factory=list)
+    translations: list[VocabularyTranslation] = Field(default_factory=list)
+    translation_preview: SceneTranslationResult | None = None
+    analysis_retryable: bool = False
+    personalization: SessionPersonalization | None = None
+    counted_groups: list[CountedGroup] = Field(default_factory=list)
+    mission_guidance: list[str] = Field(default_factory=list)
+    # Set when task generation found nothing checkable and reopened the review.
+    scene_shortfall: SceneShortfall | None = None
+    # Reviewed sessions: scene object id -> its marker number on the review screen.
+    review_markers: dict[str, int] = Field(default_factory=dict)
+    provisional_mission_plan: list[JsonObject] = Field(default_factory=list)
+    suggested_scene_object_ids: list[UUID] = Field(default_factory=list)
+    mission_choices: MissionChoices | None = None
+    session: Session
+    scene_object_relations: list[SceneObjectRelation] = Field(default_factory=list)
+    scene_action_suggestions: list[SceneActionSuggestion] = Field(default_factory=list)
+    scene_price_suggestions: list[ScenePriceSuggestion] = Field(default_factory=list)
+    scene_objects: list[SceneObject] = Field(default_factory=list)
+    tasks: list[SessionTaskPublic] = Field(default_factory=list)
+    next_task_id: UUID | None = None
+    progress: SessionProgress | None = None
+
+
+class SessionSummaryResponse(ApiModel):
+    basil_earned: int = 0
+    session: Session
+    progress: SessionProgress
+    learned_vocabulary_ids: list[UUID] = Field(default_factory=list)
+    xp_earned: Annotated[int, Field(ge=0)] = 0
+    ispy_correct_count: Annotated[int, Field(ge=0)] = 0
+    ispy_attempt_count: Annotated[int, Field(ge=0)] = 0
+    completed_lessons_count: Annotated[int, Field(ge=0)] = 0

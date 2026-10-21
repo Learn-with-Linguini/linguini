@@ -1,0 +1,77 @@
+{
+  "case_id": "relations-fr",
+  "target_language": "fr",
+  "scene_title": "Study Corner",
+  "scene_summary": "A book is on a table, a bag is under it, a plant is to the left and a window is behind.",
+  "objects": [
+    {
+      "key": "object_1",
+      "source": "book"
+    },
+    {
+      "key": "object_2",
+      "source": "table"
+    },
+    {
+      "key": "object_3",
+      "source": "bag"
+    },
+    {
+      "key": "object_4",
+      "source": "plant"
+    },
+    {
+      "key": "object_5",
+      "source": "window"
+    }
+  ],
+  "attributes": [
+    {
+      "key": "object_1:color",
+      "source": "green"
+    },
+    {
+      "key": "object_2:material",
+      "source": "wooden"
+    },
+    {
+      "key": "object_4:size",
+      "source": "small"
+    }
+  ],
+  "relationships": [
+    {
+      "key": "relation_1",
+      "source": "on"
+    },
+    {
+      "key": "relation_2",
+      "source": "under"
+    },
+    {
+      "key": "relation_3",
+      "source": "left_of"
+    },
+    {
+      "key": "relation_4",
+      "source": "behind"
+    },
+    {
+      "key": "relation_5",
+      "source": "near"
+    },
+    {
+      "key": "relation_6",
+      "source": "above"
+    },
+    {
+      "key": "relation_7",
+      "source": "inside"
+    }
+  ],
+  "tags": [
+    "relations",
+    "attributes"
+  ],
+  "notes": "Relationship coverage: seven of the eleven allowed spatial types, plus attributes. All of these must come back with null article and null gender."
+}

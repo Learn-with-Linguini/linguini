@@ -1,0 +1,19 @@
+{
+  "case_id": "minimal-fr",
+  "target_language": "fr",
+  "scene_title": "Table",
+  "scene_summary": "A single cup sits on the table.",
+  "objects": [
+    {
+      "key": "object_1",
+      "source": "cup"
+    }
+  ],
+  "attributes": [],
+  "relationships": [],
+  "tags": [
+    "minimal",
+    "edge-case"
+  ],
+  "notes": "Empty attribute and relationship lists. They must come back empty rather than being filled in or dropped from the response."
+}

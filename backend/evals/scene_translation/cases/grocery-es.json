@@ -1,0 +1,57 @@
+{
+  "case_id": "grocery-es",
+  "target_language": "es",
+  "scene_title": "Grocery Store",
+  "scene_summary": "Crates of tomatoes and onions sit on a shelf. A shopping basket rests in front of them.",
+  "objects": [
+    {
+      "key": "object_1",
+      "source": "shopping basket"
+    },
+    {
+      "key": "object_2",
+      "source": "crate"
+    },
+    {
+      "key": "object_3",
+      "source": "shelf"
+    },
+    {
+      "key": "object_4",
+      "source": "tomato"
+    },
+    {
+      "key": "object_5",
+      "source": "onion"
+    }
+  ],
+  "attributes": [
+    {
+      "key": "object_4:color",
+      "source": "red"
+    },
+    {
+      "key": "object_2:material",
+      "source": "plastic"
+    }
+  ],
+  "relationships": [
+    {
+      "key": "relation_1",
+      "source": "on"
+    },
+    {
+      "key": "relation_2",
+      "source": "in_front_of"
+    },
+    {
+      "key": "relation_3",
+      "source": "near"
+    }
+  ],
+  "tags": [
+    "scene-vocabulary",
+    "grocery"
+  ],
+  "notes": "Note the cross-language gender split this case creates: tomato is feminine in French (la tomate) and masculine in Spanish (el tomate). A model carrying gender over from the wrong language fails here."
+}

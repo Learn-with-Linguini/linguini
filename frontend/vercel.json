@@ -1,0 +1,10 @@
+{
+  "redirects": [
+    {
+      "source": "/blog/inside-a-linguini-lesson",
+      "destination": "/blog/why-we-teach-with-your-photos",
+      "permanent": true
+    }
+  ],
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}

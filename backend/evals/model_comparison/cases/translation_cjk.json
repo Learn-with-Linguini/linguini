@@ -1,0 +1,46 @@
+[
+  {
+    "case_id": "classroom-ja", "target_language": "ja",
+    "scene_title": "Classroom", "scene_summary": "A red book is on a wooden desk; a chair is under the window and a clock hangs on the wall.",
+    "objects": [
+      {"key": "object_1", "source": "desk"}, {"key": "object_2", "source": "chair"},
+      {"key": "object_3", "source": "book"}, {"key": "object_4", "source": "window"},
+      {"key": "object_5", "source": "clock"}, {"key": "object_6", "source": "notebook"}
+    ],
+    "attributes": [{"key": "object_1:material", "source": "wooden"}, {"key": "object_3:color", "source": "red"}],
+    "relationships": [{"key": "relation_1", "source": "on"}, {"key": "relation_2", "source": "under"}]
+  },
+  {
+    "case_id": "grocery-ja", "target_language": "ja",
+    "scene_title": "Grocery Store", "scene_summary": "Apples are inside a basket next to oranges, eggs, bread and a water bottle.",
+    "objects": [
+      {"key": "object_1", "source": "apple"}, {"key": "object_2", "source": "orange"},
+      {"key": "object_3", "source": "egg"}, {"key": "object_4", "source": "bread"},
+      {"key": "object_5", "source": "water bottle"}
+    ],
+    "attributes": [{"key": "object_1:color", "source": "red"}],
+    "relationships": [{"key": "relation_1", "source": "inside"}, {"key": "relation_2", "source": "next_to"}]
+  },
+  {
+    "case_id": "classroom-ko", "target_language": "ko",
+    "scene_title": "Classroom", "scene_summary": "A red book is on a wooden desk; a chair is under the window and a clock hangs on the wall.",
+    "objects": [
+      {"key": "object_1", "source": "desk"}, {"key": "object_2", "source": "chair"},
+      {"key": "object_3", "source": "book"}, {"key": "object_4", "source": "window"},
+      {"key": "object_5", "source": "clock"}, {"key": "object_6", "source": "notebook"}
+    ],
+    "attributes": [{"key": "object_1:material", "source": "wooden"}, {"key": "object_3:color", "source": "red"}],
+    "relationships": [{"key": "relation_1", "source": "on"}, {"key": "relation_2", "source": "under"}]
+  },
+  {
+    "case_id": "grocery-ko", "target_language": "ko",
+    "scene_title": "Grocery Store", "scene_summary": "Apples are inside a basket next to oranges, eggs, bread and a water bottle.",
+    "objects": [
+      {"key": "object_1", "source": "apple"}, {"key": "object_2", "source": "orange"},
+      {"key": "object_3", "source": "egg"}, {"key": "object_4", "source": "bread"},
+      {"key": "object_5", "source": "water bottle"}
+    ],
+    "attributes": [{"key": "object_1:color", "source": "red"}],
+    "relationships": [{"key": "relation_1", "source": "inside"}, {"key": "relation_2", "source": "next_to"}]
+  }
+]

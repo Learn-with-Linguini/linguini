@@ -1,0 +1,11 @@
+node_modules/
+.hyperframes/
+.cache/
+.venv/
+models/
+*.log
+capture/
+snapshots/
+check.json
+renders/work-*/
+renders/.hf-*/

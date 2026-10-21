@@ -1,0 +1,50 @@
+{
+  "duration_seconds": 30,
+  "video": {
+    "codec": "h264",
+    "width": 1920,
+    "height": 1080,
+    "fps": 30,
+    "frames": 900
+  },
+  "audio": {
+    "codec": "aac",
+    "sample_rate": 48000,
+    "channels": 2,
+    "integrated_lufs": -16.13,
+    "true_peak_dbtp": -1.5
+  },
+  "black_gaps_detected": false,
+  "hyperframes": {
+    "lint": {
+      "ok": true,
+      "errorCount": 0,
+      "warningCount": 25
+    },
+    "runtime": {
+      "ok": true,
+      "errorCount": 0,
+      "warningCount": 0
+    },
+    "layout": {
+      "ok": true,
+      "errorCount": 0,
+      "warningCount": 1
+    },
+    "motion": {
+      "ok": true,
+      "errorCount": 0,
+      "warningCount": 0
+    },
+    "contrast": {
+      "ok": true,
+      "errorCount": 0,
+      "warningCount": 0
+    }
+  },
+  "notes": [
+    "Intentional token-to-blank overlap at17.625\u201317.75seconds.",
+    "Lint warnings concern dense single-file timeline and repeated assets.",
+    "Visual samples inspected; subjective audio review remains with team."
+  ]
+}

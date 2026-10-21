@@ -1,0 +1,15 @@
+{
+  "name": "linguini-database",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "db:validate": "prisma validate",
+    "db:deploy": "prisma migrate deploy",
+    "db:status": "prisma migrate status",
+    "db:dev": "prisma migrate dev"
+  },
+  "devDependencies": {
+    "dotenv": "^16.6.1",
+    "prisma": "7.10.0"
+  }
+}

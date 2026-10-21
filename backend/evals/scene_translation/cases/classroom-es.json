@@ -1,0 +1,57 @@
+{
+  "case_id": "classroom-es",
+  "target_language": "es",
+  "scene_title": "Classroom",
+  "scene_summary": "A globe sits on a desk. A chair is next to the desk and a bookshelf stands behind it.",
+  "objects": [
+    {
+      "key": "object_1",
+      "source": "desk"
+    },
+    {
+      "key": "object_2",
+      "source": "chair"
+    },
+    {
+      "key": "object_3",
+      "source": "globe"
+    },
+    {
+      "key": "object_4",
+      "source": "bookshelf"
+    },
+    {
+      "key": "object_5",
+      "source": "notebook"
+    }
+  ],
+  "attributes": [
+    {
+      "key": "object_2:color",
+      "source": "blue"
+    },
+    {
+      "key": "object_4:material",
+      "source": "wooden"
+    }
+  ],
+  "relationships": [
+    {
+      "key": "relation_1",
+      "source": "on"
+    },
+    {
+      "key": "relation_2",
+      "source": "next_to"
+    },
+    {
+      "key": "relation_3",
+      "source": "behind"
+    }
+  ],
+  "tags": [
+    "scene-vocabulary",
+    "classroom"
+  ],
+  "notes": "The vocabulary a classroom photo actually produces, taken from the matching scene-analysis case so the two prompts are evaluated on the same words."
+}

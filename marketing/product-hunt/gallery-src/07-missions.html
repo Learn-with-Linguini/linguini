@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Linguini gallery 07 photo missions</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background:var(--butter); }
+  body::before { content:""; position:absolute; width:460px; height:460px; left:-235px; bottom:-270px; border-radius:50%; background:var(--sage); }
+  .top { position:absolute; left:64px; right:64px; top:46px; display:flex; align-items:center; justify-content:space-between; }
+  .copy { position:absolute; left:64px; top:150px; width:525px; }
+  .headline { font-size:70px; line-height:.94; }
+  .support { margin-top:26px; width:500px; }
+  .proof { display:flex; align-items:flex-start; gap:12px; margin-top:30px; padding:17px 19px; width:500px; border-radius:20px; background:var(--sage); color:var(--teal-deep); font-size:18px; line-height:1.3; }
+  .proof svg { flex:none; margin-top:2px; }
+  .panel { position:absolute; right:62px; top:105px; width:565px; padding:28px; border-radius:32px; background:var(--paper); box-shadow:0 28px 60px rgb(38 50 56 / .16); }
+  .panel-head { display:flex; align-items:flex-end; justify-content:space-between; gap:18px; margin-bottom:20px; }
+  .panel-head h2 { margin:0; font-family:"Baloo 2"; font-size:32px; line-height:1; color:var(--teal-deep); }
+  .panel-head span { color:var(--ink-muted); font-size:15px; }
+  .missions { display:grid; gap:13px; }
+  .mission { display:grid; grid-template-columns:72px minmax(0,1fr); align-items:center; gap:16px; min-height:118px; padding:15px 18px; border:2px solid #e5ded0; border-radius:22px; background:var(--cream); }
+  .badge { width:66px; height:76px; display:grid; place-items:center; align-content:center; gap:3px; border:4px double var(--tomato); border-radius:40% 40% 45% 45%; background:var(--pasta-soft); color:var(--teal-dark); }
+  .badge svg { width:31px; height:31px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+  .badge b { font-size:11px; letter-spacing:.05em; }
+  .mission h3 { margin:0; font-family:"Baloo 2"; font-size:24px; line-height:1.05; color:var(--ink); }
+  .mission p { margin:4px 0 0; color:var(--teal-dark); font-size:17px; }
+  .mission small { display:block; margin-top:6px; color:var(--ink-muted); font-size:14px; }
+  .note { margin:18px 2px 0; color:var(--ink-muted); font-size:14px; line-height:1.3; }
+</style>
+</head>
+<body>
+  <div class="top"><img class="brand" src="brand/linguini-wordmark.png" alt="Linguini"><div class="beta-badge">Photo-grounded practice</div></div>
+  <div class="copy">
+    <p class="eyebrow">Focused practice, not generic drills</p>
+    <h1 class="headline">Missions that fit <span class="hl squiggle">your photo.</span></h1>
+    <p class="support">Linguini checks the objects, details, positions and counts you confirmed—then plans only the missions that the scene can support.</p>
+    <div class="proof">
+      <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><path d="m5 12 4 4L19 6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>If nothing fits, you still get the regular photo lesson.</span>
+    </div>
+  </div>
+  <section class="panel" aria-label="Example A1 mission set">
+    <div class="panel-head"><h2>Your photo missions</h2><span>Examples at A1</span></div>
+    <div class="missions">
+      <article class="mission">
+        <div class="badge"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M2 16s5-8 14-8 14 8 14 8-5 8-14 8S2 16 2 16Z"/><circle cx="16" cy="16" r="4"/></svg><b>M01</b></div>
+        <div><h3>Spot &amp; Say</h3><p>Identify and describe</p><small>Uses reviewed objects and their confirmed details.</small></div>
+      </article>
+      <article class="mission">
+        <div class="badge"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="13" cy="13" r="8"/><path d="m19 19 9 9"/></svg><b>M02</b></div>
+        <div><h3>Seek &amp; Find</h3><p>Find and locate</p><small>Uses a confirmed position between two objects.</small></div>
+      </article>
+      <article class="mission">
+        <div class="badge"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 8h2v16M13 10c0-5 8-5 8 0 0 4-8 7-8 12h9"/><circle cx="27" cy="24" r="1"/></svg><b>M03</b></div>
+        <div><h3>Count Me In</h3><p>Count and quantify</p><small>Uses a group you confirmed contains 2–10 objects.</small></div>
+      </article>
+    </div>
+    <p class="note">Mission availability depends on the confirmed photo details and the learner’s practice level.</p>
+  </section>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Linguini gallery 06 public beta</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background:var(--pasta-soft); }
+  .top { position:absolute; left:64px; right:64px; top:48px; display:flex; justify-content:space-between; align-items:center; }
+  .copy { position:absolute; left:64px; top:150px; width:650px; }
+  .headline { font-size:80px; }
+  .support { margin-top:23px; width:600px; }
+  .languages { display:flex; gap:12px; flex-wrap:wrap; margin-top:30px; }
+  .offer { display:flex; align-items:baseline; gap:16px; margin-top:32px; }
+  .price { font-family:"Baloo 2"; font-size:64px; line-height:1; color:var(--teal-deep); }
+  .offer span { font-size:22px; color:var(--ink-muted); }
+  .bullets { display:flex; gap:20px; margin-top:25px; color:var(--teal-deep); font-size:18px; }
+  .mascot-wrap { position:absolute; right:72px; top:165px; width:390px; height:390px; display:grid; place-items:center; border-radius:50%; background:var(--paper); box-shadow:0 28px 60px rgb(38 50 56 / .16); }
+  .mascot { width:300px; height:auto; }
+  .cta { position:absolute; right:95px; bottom:88px; padding:18px 34px; border-radius:18px; background:var(--tomato); color:white; font-size:22px; box-shadow:0 8px 0 var(--tomato-pressed); }
+</style>
+</head>
+<body>
+  <div class="top"><img class="brand" src="brand/linguini-wordmark.png" alt="Linguini"><div class="beta-badge">Current access · Beta</div></div>
+  <div class="copy">
+    <p class="eyebrow">Join while we build it with learners</p>
+    <h1 class="headline">Four languages. <span class="hl">Unlimited beta.</span></h1>
+    <p class="support">Learn from your own photos or ready-made scenes, with the full lesson loop available every day.</p>
+    <div class="languages"><span class="pill">Spanish</span><span class="pill">French</span><span class="pill">German</span><span class="pill">Beginner Korean</span></div>
+    <div class="offer"><strong class="price">$0</strong><span>during public beta · no card required</span></div>
+    <div class="bullets"><span>✓ Unlimited photo lessons</span><span>✓ In-app feedback</span></div>
+  </div>
+  <div class="mascot-wrap"><img class="mascot" src="../../../frontend/public/linguini-logo-cool.png" alt="Linguini mascot wearing sunglasses"></div>
+  <div class="cta">Join the public beta</div>
+</body>
+</html>

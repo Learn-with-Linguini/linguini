@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Python packaging and coverage artifacts
+build/
+*.egg-info/
+.coverage
+.coverage.*
+htmlcov/
+
+# Local database exports; Prisma migration SQL must remain tracked
+/backups/

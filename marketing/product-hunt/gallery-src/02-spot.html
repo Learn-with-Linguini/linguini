@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Linguini gallery 02 photo lessons</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background:var(--cream); }
+  .copy { position:absolute; left:64px; top:82px; width:470px; }
+  .headline { font-size:78px; }
+  .support { margin-top:22px; width:430px; }
+  .steps { display:grid; gap:13px; margin-top:34px; }
+  .step { display:flex; align-items:center; gap:14px; font-size:19px; }
+  .n { display:grid; place-items:center; width:36px; height:36px; border-radius:50%; background:var(--tomato); color:white; }
+  .scene-card { position:absolute; right:64px; top:66px; width:590px; }
+  .scene-card .device { border-radius:30px; border-width:7px; }
+  .review { position:absolute; right:92px; bottom:52px; width:520px; padding:25px 28px; border-radius:26px; background:var(--paper); box-shadow:0 24px 50px rgb(38 50 56 / .18); }
+  .review h2 { margin:0 0 15px; font-family:"Baloo 2"; font-size:28px; }
+  .chips { display:flex; gap:10px; flex-wrap:wrap; }
+  .chip { padding:10px 14px; border-radius:14px; border:2px solid var(--teal); background:#edf8f6; color:var(--teal-deep); font-size:17px; }
+  .chip.off { border-color:#d5d7d3; background:#f4f2eb; color:var(--ink-muted); text-decoration:line-through; }
+  .chip.add { border-style:dashed; background:white; color:var(--tomato); }
+</style>
+</head>
+<body>
+  <div class="copy">
+    <p class="eyebrow">Your photo, your lesson</p>
+    <h1 class="headline">Start with <span class="hl">your world.</span></h1>
+    <p class="support">Take a photo, or choose a ready-made scene. AI suggests the words; you decide what belongs in the lesson.</p>
+    <div class="steps">
+      <div class="step"><span class="n">1</span><span>Choose a photo or scene</span></div>
+      <div class="step"><span class="n">2</span><span>Keep, remove or add words</span></div>
+      <div class="step"><span class="n">3</span><span>Learn them in context</span></div>
+    </div>
+  </div>
+  <div class="scene-card"><div class="device"><img src="../../../frontend/public/app-shots/scenes.webp" alt="Current ready-made scene picker"></div></div>
+  <div class="review">
+    <h2>You have the final say</h2>
+    <div class="chips"><span class="chip">la taza ✓</span><span class="chip">el portátil ✓</span><span class="chip off">la planta</span><span class="chip add">+ Add a word</span></div>
+  </div>
+</body>
+</html>

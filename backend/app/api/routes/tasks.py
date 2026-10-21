@@ -1,0 +1,129 @@
+from typing import Annotated
+from uuid import UUID
+
+from fastapi import APIRouter, Depends
+
+from app.api.dependencies import get_task_service
+from app.api.errors import service_not_implemented
+from app.schemas.tasks import (
+    CheckLessonAnswerRequest,
+    CheckLessonAnswerResponse,
+    CheckVocabularyAnswerRequest,
+    CheckVocabularyAnswerResponse,
+    CheckVocabularyTypingRequest,
+    CheckVocabularyTypingResponse,
+    ConfirmGuessRequest,
+    LatestAttemptResponse,
+    LessonAssistanceRequest,
+    LessonAssistanceResponse,
+    LessonChecksResponse,
+    MissionScenarioRequest,
+    MissionScenarioResponse,
+    SessionTaskPublic,
+    SkipTaskRequest,
+    SubmitTaskAttemptRequest,
+    TaskActionResponse,
+    TaskHint,
+    VocabularyChecksResponse,
+)
+from app.services.tasks import TaskService
+
+router = APIRouter(prefix="/tasks", tags=["tasks"])
+TaskServiceDep = Annotated[TaskService, Depends(get_task_service)]
+
+
+@router.get("/{task_id}", response_model=SessionTaskPublic)
+def get_task(
+    task_id: UUID, service: Annotated[TaskService, Depends(get_task_service)]
+) -> SessionTaskPublic:
+    return service.get(task_id)
+
+
+@router.post("/{task_id}/start", response_model=TaskActionResponse)
+def start_task(task_id: UUID, service: TaskServiceDep) -> TaskActionResponse:
+    return service.action(task_id, "start")
+
+
+@router.get("/{task_id}/latest-attempt", response_model=LatestAttemptResponse)
+def get_latest_task_attempt(task_id: UUID, service: TaskServiceDep) -> LatestAttemptResponse:
+    return service.latest_attempt(task_id)
+
+
+@router.post("/{task_id}/attempts", response_model=TaskActionResponse)
+def submit_task_attempt(
+    task_id: UUID, request: SubmitTaskAttemptRequest, service: TaskServiceDep
+) -> TaskActionResponse:
+    return service.action(task_id, "attempt", request)
+
+
+@router.post("/{task_id}/confirm-guess", response_model=TaskActionResponse)
+def confirm_task_guess(
+    task_id: UUID, request: ConfirmGuessRequest, service: TaskServiceDep
+) -> TaskActionResponse:
+    return service.confirm_guess(task_id, request.attempt_id)
+
+
+@router.post("/{task_id}/check-vocabulary-answer", response_model=CheckVocabularyAnswerResponse)
+def check_vocabulary_answer(
+    task_id: UUID, request: CheckVocabularyAnswerRequest, service: TaskServiceDep
+) -> CheckVocabularyAnswerResponse:
+    return service.check_vocabulary_answer(
+        task_id, request.question_id, request.option_id, request.review
+    )
+
+
+@router.post("/{task_id}/check-vocabulary-typing", response_model=CheckVocabularyTypingResponse)
+def check_vocabulary_typing(
+    task_id: UUID, request: CheckVocabularyTypingRequest, service: TaskServiceDep
+) -> CheckVocabularyTypingResponse:
+    return service.check_vocabulary_typing(
+        task_id, request.learning_key, request.answer, request.reveal
+    )
+
+
+@router.get("/{task_id}/vocabulary-checks", response_model=VocabularyChecksResponse)
+def get_vocabulary_checks(task_id: UUID, service: TaskServiceDep):
+    return service.vocabulary_checks(task_id)
+
+
+@router.post("/{task_id}/check-lesson-answer", response_model=CheckLessonAnswerResponse)
+def check_lesson_answer(
+    task_id: UUID, request: CheckLessonAnswerRequest, service: TaskServiceDep
+) -> CheckLessonAnswerResponse:
+    return service.check_lesson_answer(task_id, request.question_id, request.answer)
+
+
+@router.get("/{task_id}/lesson-checks", response_model=LessonChecksResponse)
+def get_lesson_checks(task_id: UUID, service: TaskServiceDep) -> LessonChecksResponse:
+    return service.lesson_checks(task_id)
+
+
+@router.post("/{task_id}/lesson-assistance", response_model=LessonAssistanceResponse)
+def request_lesson_assistance(
+    task_id: UUID, request: LessonAssistanceRequest, service: TaskServiceDep
+) -> LessonAssistanceResponse:
+    return service.lesson_assistance(task_id, request)
+
+
+@router.post("/{task_id}/mission-scenario", response_model=MissionScenarioResponse)
+def update_mission_scenario(
+    task_id: UUID, request: MissionScenarioRequest, service: TaskServiceDep
+) -> MissionScenarioResponse:
+    return service.mission_scenario(task_id, request)
+
+
+@router.post("/{task_id}/hints", response_model=TaskHint)
+async def request_task_hint(task_id: UUID) -> TaskHint:
+    service_not_implemented("Request task hint")
+
+
+@router.post("/{task_id}/complete", response_model=TaskActionResponse)
+def complete_task(task_id: UUID, service: TaskServiceDep) -> TaskActionResponse:
+    return service.action(task_id, "complete")
+
+
+@router.post("/{task_id}/skip", response_model=TaskActionResponse)
+def skip_task(
+    task_id: UUID, request: SkipTaskRequest, service: TaskServiceDep
+) -> TaskActionResponse:
+    return service.action(task_id, "skip", request)

@@ -1,0 +1,430 @@
+{
+ "bpm": 100,
+ "beat": 0.6,
+ "intro_note": 0.3,
+ "shots": [
+  {
+   "section": "act1",
+   "start": 1.2,
+   "dur": 1.8,
+   "clip": 4992,
+   "tin": 1.0,
+   "word": "el café",
+   "gloss": "coffee",
+   "box": [
+    0.379,
+    0.222,
+    0.667,
+    0.73
+   ],
+   "track": true
+  },
+  {
+   "section": "act1",
+   "start": 3.0,
+   "dur": 1.8,
+   "clip": 2846,
+   "tin": 5.5,
+   "word": "la lluvia",
+   "gloss": "rain",
+   "box": [
+    0.25,
+    0.3,
+    0.5,
+    0.8
+   ],
+   "track": false
+  },
+  {
+   "section": "act1",
+   "start": 4.8,
+   "dur": 1.8,
+   "clip": 1552,
+   "tin": 5.1,
+   "word": "el perro",
+   "gloss": "dog",
+   "box": [
+    0.25,
+    0.04,
+    0.74,
+    0.86
+   ],
+   "track": true
+  },
+  {
+   "section": "act1",
+   "start": 6.6,
+   "dur": 1.8,
+   "clip": 4348,
+   "tin": 9.2,
+   "word": "la bicicleta",
+   "gloss": "bicycle",
+   "box": [
+    0.1,
+    0.44,
+    0.5,
+    0.95
+   ],
+   "track": false
+  },
+  {
+   "section": "act1",
+   "start": 8.4,
+   "dur": 1.8,
+   "clip": 995,
+   "tin": 5.3,
+   "word": "el pan",
+   "gloss": "bread",
+   "box": [
+    0.46,
+    0.09,
+    0.75,
+    0.56
+   ],
+   "track": true
+  },
+  {
+   "section": "act2a",
+   "start": 10.2,
+   "dur": 1.2,
+   "clip": 42945,
+   "tin": 6.1,
+   "word": "la lima",
+   "gloss": "lime",
+   "box": [
+    0.39,
+    0.36,
+    0.74,
+    0.97
+   ],
+   "track": true
+  },
+  {
+   "section": "act2a",
+   "start": 11.4,
+   "dur": 1.2,
+   "clip": 22732,
+   "tin": 2.3,
+   "word": "el gato",
+   "gloss": "cat",
+   "box": [
+    0.23,
+    0.17,
+    0.53,
+    0.67
+   ],
+   "track": true
+  },
+  {
+   "section": "act2a",
+   "start": 12.6,
+   "dur": 1.2,
+   "clip": 1724,
+   "tin": 3.2,
+   "word": "el libro",
+   "gloss": "book",
+   "box": [
+    0.125,
+    0.28,
+    0.84,
+    0.85
+   ],
+   "track": true
+  },
+  {
+   "section": "act2a",
+   "start": 13.8,
+   "dur": 1.2,
+   "clip": 4477,
+   "tin": 4.4,
+   "word": "el sol",
+   "gloss": "sun",
+   "box": [
+    0.444,
+    0.14,
+    0.61,
+    0.4
+   ],
+   "track": true
+  },
+  {
+   "section": "act2b",
+   "start": 15.0,
+   "dur": 0.6,
+   "clip": 52407,
+   "tin": 4.3,
+   "word": "el vino",
+   "gloss": "wine",
+   "box": [
+    0.34,
+    0.03,
+    0.67,
+    0.97
+   ],
+   "track": true
+  },
+  {
+   "section": "act2b",
+   "start": 15.6,
+   "dur": 0.6,
+   "clip": 4305,
+   "tin": 15.9,
+   "word": "la luna",
+   "gloss": "moon",
+   "box": [
+    0.277,
+    0.36,
+    0.423,
+    0.64
+   ],
+   "track": true,
+   "zoom": 2.1,
+   "focus": [
+    0.35,
+    0.47
+   ]
+  },
+  {
+   "section": "act2b",
+   "start": 16.2,
+   "dur": 0.6,
+   "clip": 28897,
+   "tin": 2.4,
+   "word": "el reloj",
+   "gloss": "clock",
+   "box": [
+    0.327,
+    0.21,
+    0.66,
+    0.8
+   ],
+   "track": true
+  },
+  {
+   "section": "act2b",
+   "start": 16.8,
+   "dur": 0.6,
+   "clip": 3461,
+   "tin": 3.2,
+   "word": "la vela",
+   "gloss": "candle",
+   "box": [
+    0.5,
+    0.52,
+    0.74,
+    0.82
+   ],
+   "track": true,
+   "zoom": 1.25,
+   "focus": [
+    0.6,
+    0.55
+   ]
+  },
+  {
+   "section": "act2b",
+   "start": 17.4,
+   "dur": 0.6,
+   "clip": 2560,
+   "tin": 4.3,
+   "word": "el pájaro",
+   "gloss": "bird",
+   "box": [
+    0.344,
+    0.23,
+    0.583,
+    0.8
+   ],
+   "track": true
+  },
+  {
+   "section": "act2b",
+   "start": 18.0,
+   "dur": 0.6,
+   "clip": 44161,
+   "tin": 3.3,
+   "word": "la guitarra",
+   "gloss": "guitar",
+   "box": [
+    0.22,
+    0.34,
+    0.46,
+    0.83
+   ],
+   "track": true
+  },
+  {
+   "section": "act2c",
+   "start": 18.6,
+   "dur": 0.3,
+   "clip": 41859,
+   "tin": 3.3,
+   "word": "le café",
+   "gloss": "coffee",
+   "box": [
+    0.22,
+    0.24,
+    0.74,
+    0.83
+   ],
+   "track": true
+  },
+  {
+   "section": "act2c",
+   "start": 18.9,
+   "dur": 0.3,
+   "clip": 10435,
+   "tin": 1.0,
+   "word": "l’orange",
+   "gloss": "orange",
+   "box": [
+    0.375,
+    0.22,
+    0.72,
+    0.83
+   ],
+   "track": true
+  },
+  {
+   "section": "act2c",
+   "start": 19.2,
+   "dur": 0.3,
+   "clip": 4742,
+   "tin": 2.5,
+   "word": "les fleurs",
+   "gloss": "flowers",
+   "box": [
+    0.22,
+    0.35,
+    0.56,
+    0.74
+   ],
+   "track": false
+  },
+  {
+   "section": "act2c",
+   "start": 19.5,
+   "dur": 0.3,
+   "clip": 40672,
+   "tin": 3.5,
+   "word": "le métro",
+   "gloss": "metro",
+   "box": [
+    0.2,
+    0.12,
+    0.8,
+    0.82
+   ],
+   "track": false
+  },
+  {
+   "section": "act2c",
+   "start": 19.8,
+   "dur": 0.3,
+   "clip": 43922,
+   "tin": 18.3,
+   "word": "la tartine",
+   "gloss": "toast",
+   "box": [
+    0.2,
+    0.05,
+    0.58,
+    0.72
+   ],
+   "track": true
+  },
+  {
+   "section": "act2c",
+   "start": 20.1,
+   "dur": 0.3,
+   "clip": 4600,
+   "tin": 2.8,
+   "word": "la rue",
+   "gloss": "street",
+   "box": [
+    0.4,
+    0.35,
+    0.62,
+    0.95
+   ],
+   "track": false
+  },
+  {
+   "section": "act2c",
+   "start": 20.4,
+   "dur": 0.3,
+   "clip": 1711,
+   "tin": 4.2,
+   "word": "le téléphone",
+   "gloss": "phone",
+   "box": [
+    0.5,
+    0.41,
+    0.79,
+    0.6
+   ],
+   "track": true
+  },
+  {
+   "section": "act2c",
+   "start": 20.7,
+   "dur": 0.3,
+   "clip": 18308,
+   "tin": 14.6,
+   "word": "le cœur",
+   "gloss": "heart",
+   "box": [
+    0.3,
+    0.15,
+    0.6,
+    0.5
+   ],
+   "track": false
+  },
+  {
+   "section": "final",
+   "start": 21.0,
+   "dur": 1.8,
+   "clip": 2434,
+   "tin": 4.2,
+   "word": "la pasta",
+   "gloss": "pasta",
+   "box": [
+    0.27,
+    0.2,
+    0.64,
+    0.74
+   ],
+   "track": false,
+   "box_end": [
+    0.2,
+    0.16,
+    0.7,
+    0.76
+   ]
+  }
+ ],
+ "headline": [
+  {
+   "text": "Your day",
+   "start": 10.2,
+   "end": 15.0
+  },
+  {
+   "text": "is the",
+   "start": 15.0,
+   "end": 18.6
+  },
+  {
+   "text": "lesson.",
+   "start": 18.6,
+   "end": 22.800000000000008
+  }
+ ],
+ "cut": 22.8,
+ "logo_chord": 23.4,
+ "tagline": 25.2,
+ "ph_line": 27.0,
+ "fade_out": 29.1,
+ "end": 30.6
+}

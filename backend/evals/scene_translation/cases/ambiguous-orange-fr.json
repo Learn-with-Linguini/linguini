@@ -1,0 +1,24 @@
+{
+  "case_id": "ambiguous-orange-fr",
+  "target_language": "fr",
+  "scene_title": "Fruit Bowl",
+  "scene_summary": "An orange fruit sits in a bowl. Its colour is orange.",
+  "objects": [
+    {
+      "key": "object_1",
+      "source": "orange"
+    }
+  ],
+  "attributes": [
+    {
+      "key": "object_1:color",
+      "source": "orange"
+    }
+  ],
+  "relationships": [],
+  "tags": [
+    "ambiguity",
+    "edge-case"
+  ],
+  "notes": "The same English word appears as both an object and an attribute. The object is the fruit and takes an article; the attribute is the colour and must carry null article and null gender. Rule 7 says the summary is there to resolve exactly this."
+}

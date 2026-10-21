@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Linguini — old vs Day One</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Nunito Sans', system-ui, sans-serif;
+    background: #FFF9ED;
+    color: #263238;
+    padding: 48px 40px;
+  }
+  h1 { font-size: 34px; margin: 0 0 6px; }
+  .sub { color: #5b6670; margin-bottom: 36px; font-size: 17px; }
+  .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  h2 { font-size: 22px; margin: 0 0 6px; }
+  .tag { display: inline-block; font-size: 12px; font-weight: 800; letter-spacing: 1px; padding: 4px 12px; border-radius: 999px; margin-bottom: 18px; }
+  .tag.old { background: #e9e2d0; color: #6b7280; }
+  .tag.new { background: #E85D32; color: #FFF9ED; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 18px; }
+  figure { margin: 0; }
+  figure img { width: 100%; border-radius: 16px; border: 1px solid #e9e2d0; box-shadow: 0 8px 20px rgba(38,50,56,.08); display: block; }
+  figcaption { font-size: 13px; color: #5b6670; margin-top: 8px; }
+  .video { width: 100%; border-radius: 16px; border: 1px solid #e9e2d0; box-shadow: 0 8px 20px rgba(38,50,56,.08); background: #000; }
+  .pending { padding: 60px 20px; border: 2px dashed #d8d0bd; border-radius: 16px; color: #8a949b; text-align: center; font-size: 15px; }
+  section.videos { margin-top: 56px; }
+</style>
+</head>
+<body>
+  <h1>Old campaign vs <em>Day One</em></h1>
+  <p class="sub">Left: existing assets (earlier built-in image tool). Right: this pack (OpenAI <code>gpt-image-1</code>, high). Serve the repo root — e.g. <code>python -m http.server 8018</code> — then open <code>/marketing/social/day-1/compare.html</code>.</p>
+
+  <div class="cols">
+    <div>
+      <h2>Previous campaign</h2>
+      <span class="tag old">EXISTING</span>
+      <div class="grid">
+        <figure><img src="../instagram/01-your-desk-is-a-lesson.png"><figcaption>instagram/01-your-desk-is-a-lesson</figcaption></figure>
+        <figure><img src="../instagram/02-play-i-spy.png"><figcaption>instagram/02-play-i-spy</figcaption></figure>
+        <figure><img src="../instagram/03-public-beta.png"><figcaption>instagram/03-public-beta</figcaption></figure>
+        <figure><img src="../week-1/linkedin/01-photo-led-learning.png"><figcaption>week-1/linkedin/01-photo-led-learning</figcaption></figure>
+        <figure><img src="../week-1/linkedin/02-product-loop.png"><figcaption>week-1/linkedin/02-product-loop</figcaption></figure>
+        <figure><img src="../week-1/assets/camera-roll-key-art.png"><figcaption>week-1/assets/camera-roll-key-art</figcaption></figure>
+      </div>
+    </div>
+    <div>
+      <h2>Day One pack</h2>
+      <span class="tag new">NEW — OPENAI API</span>
+      <div class="grid">
+        <figure><img src="instagram/01-day-one-morning.png"><figcaption>01 — morning hook</figcaption></figure>
+        <figure><img src="instagram/02-one-photo.png"><figcaption>02 — photo → words</figcaption></figure>
+        <figure><img src="instagram/03-you-decide.png"><figcaption>03 — AI suggests, you decide</figcaption></figure>
+        <figure><img src="instagram/04-i-spy.png"><figcaption>04 — I-Spy</figcaption></figure>
+        <figure><img src="instagram/05-words-stay.png"><figcaption>05 — saved vocabulary</figcaption></figure>
+      </div>
+    </div>
+  </div>
+
+  <section class="videos">
+    <div class="cols">
+      <div>
+        <h2>LinkedIn trailer (previous version)</h2>
+        <span class="tag old">PREVIOUS — videos/linkedin-trailer (Oct 19 render)</span>
+        <video class="video" controls muted preload="metadata" src="../../videos/linkedin-trailer/renders/linkedin-trailer_2026-10-19_14-02-57.mp4"></video>
+      </div>
+      <div>
+        <h2>Day One video — now the LinkedIn trailer</h2>
+        <span class="tag new">CURRENT — rendered to videos/linkedin-trailer/renders/linguini-linkedin-trailer.mp4</span>
+        <video class="video" controls muted preload="metadata" src="../../videos/day-one/renders/day-one.mp4"></video>
+        <p style="font-size:14px;color:#5b6670;">Editable source: <code>marketing/videos/day-one/</code>. Re-render with <code>npm run render</code>, then copy the output over the trailer path again.</p>
+      </div>
+    </div>
+  </section>
+</body>
+</html>

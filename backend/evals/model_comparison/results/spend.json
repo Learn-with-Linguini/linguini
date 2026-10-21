@@ -1,0 +1,28 @@
+{
+  "total": 2.363725969833998,
+  "by_call": {
+    "scene_analysis": 0.8726974175000001,
+    "translation": 0.28976096617399993,
+    "learning_tasks": 0.613808444716,
+    "ispy_clues": 0.44766175950400006,
+    "ispy_guess": 0.13979738194000002
+  },
+  "by_model": {
+    "openai:gpt-4o": 0.3340099999999999,
+    "openai:gpt-4.1-mini": 0.30015520000000007,
+    "openai:gpt-5.4-nano": 0.036828449999999985,
+    "gemini:gemini-3.7-flash": 0,
+    "gemini:gemini-3.5-flash-lite": 0.20478970000000005,
+    "gemini:gemini-3.1-flash-lite": 0.09479900000000001,
+    "openrouter:anthropic/claude-haiku-4.5": 0.6947569999999998,
+    "openrouter:qwen/qwen3.8-flash": 0.03119849000000001,
+    "openrouter:meta-llama/llama-4-maverick": 0.004658497500000001,
+    "openai:gpt-4o-mini": 0.15866324999999998,
+    "openai:gpt-4.1-nano": 0.015337700000000001,
+    "openrouter:deepseek/deepseek-v4-flash": 0.047010532334,
+    "openrouter:mistralai/mistral-small-2603": 0.02406285000000001,
+    "openai:gpt-5.4-mini": 0.110869,
+    "openrouter:google/gemini-3.5-flash-lite": 0.0401063,
+    "judge": 0.26648000000000005
+  }
+}

@@ -1,0 +1,482 @@
+[
+  {
+    "file": "cafe-interior.jpg",
+    "width": 1900,
+    "height": 710,
+    "alt": "Sunlit café interior seen from a mezzanine, with a marble counter, bar stools, leather sofas and a tall grandfather clock",
+    "subject": "Busy café interior from above",
+    "sourceRepo": "StartBootstrap/startbootstrap-business-casual",
+    "sourcePath": "src/assets/img/about.jpg",
+    "commitDate": "2017-12-12",
+    "author": "unknown",
+    "origin": "Stock photo bundled with Start Bootstrap \"Business Casual\" theme (first committed 2017-12-12 in b7470b2, moved to src/ 2021-03-30); photographer not credited in repo",
+    "license": "Bundled in MIT-licensed repo; original photo licence not stated (Start Bootstrap themes use free stock such as Unsplash)",
+    "objects": [
+      {
+        "en": "stool",
+        "x": 32,
+        "y": 62
+      },
+      {
+        "en": "sofa",
+        "x": 70,
+        "y": 86
+      },
+      {
+        "en": "clock",
+        "x": 86,
+        "y": 32
+      },
+      {
+        "en": "table",
+        "x": 47,
+        "y": 77
+      },
+      {
+        "en": "window",
+        "x": 60,
+        "y": 18
+      },
+      {
+        "en": "lamp",
+        "x": 76,
+        "y": 58
+      }
+    ]
+  },
+  {
+    "file": "desk-flatlay.jpg",
+    "width": 1900,
+    "height": 1267,
+    "alt": "Bright white desk from above with an open notebook, yellow pencil, glasses, smartphone, laptop and a potted plant",
+    "subject": "Tidy desk flat lay",
+    "sourceRepo": "StartBootstrap/startbootstrap-clean-blog",
+    "sourcePath": "src/assets/img/home-bg.jpg",
+    "commitDate": "2014-10-24",
+    "author": "unknown",
+    "origin": "Stock photo bundled with Start Bootstrap \"Clean Blog\" theme (path first committed 2014-10-24 in bf85ed3, last updated 2021-03-31); photographer not credited in repo",
+    "license": "Bundled in MIT-licensed repo; original photo licence not stated (likely Unsplash)",
+    "objects": [
+      {
+        "en": "notebook",
+        "x": 52,
+        "y": 60
+      },
+      {
+        "en": "pencil",
+        "x": 76,
+        "y": 60
+      },
+      {
+        "en": "glasses",
+        "x": 90,
+        "y": 68
+      },
+      {
+        "en": "phone",
+        "x": 11,
+        "y": 65
+      },
+      {
+        "en": "laptop",
+        "x": 92,
+        "y": 25
+      },
+      {
+        "en": "plant",
+        "x": 16,
+        "y": 10
+      }
+    ]
+  },
+  {
+    "file": "hillside-street.jpg",
+    "width": 1570,
+    "height": 1047,
+    "alt": "Winding brick street lined with flowering hydrangea hedges, pastel houses and a red car in warm evening light",
+    "subject": "Flower-lined residential street (Lombard Street, San Francisco)",
+    "sourceRepo": "wowthemesnet/mediumish-theme-jekyll",
+    "sourcePath": "assets/images/10.jpg",
+    "commitDate": "2018-01-13",
+    "author": "Viktor Hanáček (EXIF Artist: ViktorHanacek.cz)",
+    "origin": "Photo by Viktor Hanáček (picjumbo.com), per embedded EXIF",
+    "license": "Bundled in MIT-licensed repo; picjumbo free licence (commercial use allowed) — verify before launch",
+    "objects": [
+      {
+        "en": "car",
+        "x": 47,
+        "y": 62
+      },
+      {
+        "en": "house",
+        "x": 59,
+        "y": 35
+      },
+      {
+        "en": "tree",
+        "x": 84,
+        "y": 50
+      },
+      {
+        "en": "flowers",
+        "x": 17,
+        "y": 66
+      },
+      {
+        "en": "road",
+        "x": 48,
+        "y": 85
+      },
+      {
+        "en": "sky",
+        "x": 50,
+        "y": 10
+      }
+    ]
+  },
+  {
+    "file": "golden-gate-bridge.jpg",
+    "width": 1570,
+    "height": 1047,
+    "alt": "Red suspension bridge spanning blue water with cars crossing and wooded hills and houses behind",
+    "subject": "Golden Gate Bridge over the bay",
+    "sourceRepo": "wowthemesnet/mediumish-theme-jekyll",
+    "sourcePath": "assets/images/4.jpg",
+    "commitDate": "2018-01-13",
+    "author": "Viktor Hanáček (EXIF Artist: ViktorHanacek.cz)",
+    "origin": "Photo by Viktor Hanáček (picjumbo.com), per embedded EXIF",
+    "license": "Bundled in MIT-licensed repo; picjumbo free licence (commercial use allowed) — verify before launch",
+    "objects": [
+      {
+        "en": "bridge",
+        "x": 50,
+        "y": 58
+      },
+      {
+        "en": "tower",
+        "x": 96,
+        "y": 30
+      },
+      {
+        "en": "car",
+        "x": 29,
+        "y": 73
+      },
+      {
+        "en": "water",
+        "x": 65,
+        "y": 82
+      },
+      {
+        "en": "house",
+        "x": 44,
+        "y": 37
+      },
+      {
+        "en": "streetlight",
+        "x": 19,
+        "y": 65
+      }
+    ]
+  },
+  {
+    "file": "alpine-castle.jpg",
+    "width": 2000,
+    "height": 1335,
+    "alt": "White fairy-tale castle on a forested ridge above green fields and a lake under a cloudy sky",
+    "subject": "Neuschwanstein Castle and Bavarian countryside",
+    "sourceRepo": "creativetimofficial/material-kit",
+    "sourcePath": "assets/img/bg5.jpg",
+    "commitDate": "2018-02-02",
+    "author": "unknown",
+    "origin": "Stock photo bundled with Creative Tim Material Kit (first committed 2018-02-02 in 912d97e, last touched 2021-10-07); the kit sources its imagery from Unsplash",
+    "license": "Bundled in MIT-licensed repo; likely Unsplash License (photographer not credited)",
+    "objects": [
+      {
+        "en": "castle",
+        "x": 38,
+        "y": 45
+      },
+      {
+        "en": "tower",
+        "x": 53,
+        "y": 46
+      },
+      {
+        "en": "lake",
+        "x": 20,
+        "y": 49
+      },
+      {
+        "en": "forest",
+        "x": 50,
+        "y": 80
+      },
+      {
+        "en": "mountain",
+        "x": 90,
+        "y": 45
+      },
+      {
+        "en": "cloud",
+        "x": 70,
+        "y": 15
+      }
+    ]
+  },
+  {
+    "file": "mountain-chalet.jpg",
+    "width": 1200,
+    "height": 800,
+    "alt": "Wooden chalet with a cantilevered pool among pine trees, a village church spire and mountains beyond",
+    "subject": "Alpine chalet and village",
+    "sourceRepo": "creativetimofficial/material-kit",
+    "sourcePath": "assets/img/examples/blog-9-4.jpg",
+    "commitDate": "2021-10-07",
+    "author": "unknown",
+    "origin": "Stock photo bundled with Creative Tim Material Kit 3 (committed 2021-10-07 in 6bad451); the kit sources its imagery from Unsplash",
+    "license": "Bundled in MIT-licensed repo; likely Unsplash License (photographer not credited)",
+    "objects": [
+      {
+        "en": "house",
+        "x": 68,
+        "y": 35
+      },
+      {
+        "en": "church",
+        "x": 16,
+        "y": 42
+      },
+      {
+        "en": "pool",
+        "x": 62,
+        "y": 59
+      },
+      {
+        "en": "tree",
+        "x": 90,
+        "y": 50
+      },
+      {
+        "en": "mountain",
+        "x": 15,
+        "y": 20
+      },
+      {
+        "en": "umbrella",
+        "x": 49,
+        "y": 55
+      }
+    ]
+  },
+  {
+    "file": "sunlit-promenade.jpg",
+    "width": 1950,
+    "height": 1300,
+    "alt": "Golden-hour city square with ornate street lamps, palm trees, fountain mist and walkers in silhouette",
+    "subject": "Park promenade at golden hour",
+    "sourceRepo": "wowthemesnet/mediumish-theme-jekyll",
+    "sourcePath": "assets/images/jumbotron.jpg",
+    "commitDate": "2018-01-13",
+    "author": "unknown",
+    "origin": "Stock photo bundled with Mediumish Jekyll theme (first committed 2018-01-13 in 2f4ec45, updated 2019-05-16); photographer not credited in repo",
+    "license": "Bundled in MIT-licensed repo; original photo licence not stated",
+    "objects": [
+      {
+        "en": "street lamp",
+        "x": 29,
+        "y": 15
+      },
+      {
+        "en": "palm tree",
+        "x": 63,
+        "y": 27
+      },
+      {
+        "en": "fountain",
+        "x": 45,
+        "y": 58
+      },
+      {
+        "en": "tram tracks",
+        "x": 70,
+        "y": 88
+      },
+      {
+        "en": "building",
+        "x": 88,
+        "y": 30
+      },
+      {
+        "en": "people",
+        "x": 62,
+        "y": 62
+      }
+    ]
+  },
+  {
+    "file": "paris-rooftops.jpg",
+    "width": 1440,
+    "height": 642,
+    "alt": "Stone gargoyle overlooking Paris rooftops, the Seine, bridges and a lit Eiffel Tower at dusk",
+    "subject": "Paris at dusk from Notre-Dame",
+    "sourceRepo": "theNewDynamic/gohugo-theme-ananke",
+    "sourcePath": "static/images/gohugo-default-sample-hero-image.jpg",
+    "commitDate": "2017-04-14",
+    "author": "unknown",
+    "origin": "Default hero image of the Ananke Hugo theme (committed 2017-04-14 in afd3029); photographer not credited in repo",
+    "license": "Bundled in MIT-licensed repo; original photo licence not stated",
+    "objects": [
+      {
+        "en": "statue",
+        "x": 17,
+        "y": 55
+      },
+      {
+        "en": "tower",
+        "x": 61,
+        "y": 29
+      },
+      {
+        "en": "river",
+        "x": 68,
+        "y": 68
+      },
+      {
+        "en": "bridge",
+        "x": 73,
+        "y": 60
+      },
+      {
+        "en": "building",
+        "x": 87,
+        "y": 65
+      },
+      {
+        "en": "street",
+        "x": 60,
+        "y": 72
+      }
+    ]
+  },
+  {
+    "file": "mountain-peaks.jpg",
+    "width": 2000,
+    "height": 1357,
+    "alt": "Snow-capped Himalayan peaks rising above a misty valley under a clear teal sky",
+    "subject": "Snowy mountain range",
+    "sourceRepo": "vercel/next.js",
+    "sourcePath": "examples/image-component/public/mountains.jpg",
+    "commitDate": "2021-06-15",
+    "author": "unknown",
+    "origin": "Next.js image-component example asset; byte-identical copy present at tag v11.0.0 (released 2021-06-15), exact first commit not traced",
+    "license": "Bundled in MIT-licensed repo; original photo licence not stated (likely Unsplash)",
+    "objects": [
+      {
+        "en": "mountain",
+        "x": 30,
+        "y": 72
+      },
+      {
+        "en": "snow",
+        "x": 52,
+        "y": 53
+      },
+      {
+        "en": "sky",
+        "x": 50,
+        "y": 20
+      },
+      {
+        "en": "valley",
+        "x": 50,
+        "y": 93
+      }
+    ]
+  },
+  {
+    "file": "summer-meadow.jpg",
+    "width": 1570,
+    "height": 1047,
+    "alt": "Meadow of dandelion clocks and green grass under a bright sky with scattered clouds",
+    "subject": "Dandelion meadow",
+    "sourceRepo": "wowthemesnet/mediumish-theme-jekyll",
+    "sourcePath": "assets/images/8.jpg",
+    "commitDate": "2018-01-13",
+    "author": "unknown",
+    "origin": "Stock photo bundled with Mediumish Jekyll theme (committed 2018-01-13 in 01d971e)",
+    "license": "Bundled in MIT-licensed repo; original photo licence not stated",
+    "objects": [
+      {
+        "en": "dandelion",
+        "x": 60,
+        "y": 58
+      },
+      {
+        "en": "grass",
+        "x": 30,
+        "y": 88
+      },
+      {
+        "en": "cloud",
+        "x": 35,
+        "y": 22
+      },
+      {
+        "en": "sky",
+        "x": 75,
+        "y": 10
+      },
+      {
+        "en": "sun",
+        "x": 49,
+        "y": 66
+      },
+      {
+        "en": "tree",
+        "x": 4,
+        "y": 40
+      }
+    ]
+  },
+  {
+    "file": "lake-shore.jpg",
+    "width": 1440,
+    "height": 810,
+    "alt": "Turquoise lake with small waves breaking on the shore, distant hills and white clouds under a blue sky",
+    "subject": "High-altitude lake shore (Tibet)",
+    "sourceRepo": "fengyuanchen/viewerjs",
+    "sourcePath": "docs/images/tibet-8.jpg",
+    "commitDate": "2017-01-24",
+    "author": "unknown (likely repo author Chen Fengyuan)",
+    "origin": "Demo image from the Viewer.js docs \"tibet\" gallery (committed 2017-01-24 in c8205e5)",
+    "license": "Bundled in MIT-licensed repo; original photo licence not stated",
+    "objects": [
+      {
+        "en": "wave",
+        "x": 60,
+        "y": 93
+      },
+      {
+        "en": "lake",
+        "x": 50,
+        "y": 72
+      },
+      {
+        "en": "hill",
+        "x": 15,
+        "y": 48
+      },
+      {
+        "en": "cloud",
+        "x": 20,
+        "y": 35
+      },
+      {
+        "en": "sky",
+        "x": 60,
+        "y": 12
+      }
+    ]
+  }
+]

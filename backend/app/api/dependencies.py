@@ -1,0 +1,331 @@
+"""FastAPI wiring for PostgreSQL persistence and the read-only scene catalog."""
+
+import logging
+import os
+import threading
+from typing import Annotated
+from uuid import UUID
+
+from fastapi import Depends, Request
+
+from app.ai import (
+    AiSettings,
+    AITracer,
+    NoOpAITracer,
+    load_ai_settings,
+)
+from app.ai.features.object_grounding import ObjectGroundingError
+from app.ai.registry import build_image_moderator, build_object_grounder
+from app.ai.runtime import AiRuntime
+from app.api.auth import get_current_user_id
+from app.config import get_media_public_base_url, get_private_media_urls
+from app.repositories.journals import JournalRepository
+from app.repositories.language_profiles import LanguageProfileRepository
+from app.repositories.learning import LearningRepository
+from app.repositories.media_assets import MediaAssetRepository
+from app.repositories.postgres.friends import PostgresFriendRepository
+from app.repositories.postgres.game_resources import reward_basil, spend_sauce
+from app.repositories.postgres.ispy_games import PostgresISpyGameRepository
+from app.repositories.postgres.journals import PostgresJournalRepository
+from app.repositories.postgres.language_profiles import (
+    PostgresLanguageProfileRepository,
+)
+from app.repositories.postgres.media_assets import PostgresMediaAssetRepository
+from app.repositories.postgres.practice import (
+    SessionBackedLearningRepository,
+)
+from app.repositories.postgres.rooms import PostgresRoomRepository, RoomUnavailableError
+from app.repositories.postgres.scenes import PostgresSceneRepository
+from app.repositories.postgres.surveys import PostgresSurveyRepository
+from app.repositories.postgres.tasks import PostgresTaskRepository
+from app.repositories.postgres.users import PostgresUserRepository
+from app.repositories.postgres.vocabulary import PostgresVocabularyRepository
+from app.repositories.postgres.workflow import PostgresWorkflowRepository
+from app.repositories.scenes import SceneRepository
+from app.repositories.users import UserRepository
+from app.services.account_deletion import AccountDeletionService, SupabaseAuthAdmin
+from app.services.image_derivatives import ImageDerivatives
+from app.services.image_storage import ImageStorage
+from app.services.ispy_games import ISpyGameService
+from app.services.journals import JournalService
+from app.services.language_profiles import LanguageProfileService
+from app.services.learning import LearningService
+from app.services.media_assets import MediaAssetService
+from app.services.practice import PracticeService
+from app.services.room_photos import RoomPhotoPreparer
+from app.services.rooms import RoomService
+from app.services.scenes import SceneService
+from app.services.stripe_service import StripeService
+from app.services.tasks import TaskService
+from app.services.users import UserService
+
+
+def get_user_repository(request: Request) -> UserRepository:
+    return PostgresUserRepository(request.app.state.database_engine)
+
+
+def get_stripe_service(
+    repository: Annotated[UserRepository, Depends(get_user_repository)],
+) -> StripeService:
+    return StripeService(repository)
+
+
+def get_journal_repository(
+    request: Request, user_id: Annotated[UUID, Depends(get_current_user_id)]
+) -> JournalRepository:
+    return PostgresJournalRepository(request.app.state.database_engine, user_id)
+
+
+def get_language_profile_repository(request: Request) -> LanguageProfileRepository:
+    return PostgresLanguageProfileRepository(request.app.state.database_engine)
+
+
+def get_survey_repository(request: Request) -> PostgresSurveyRepository:
+    return PostgresSurveyRepository(request.app.state.database_engine)
+
+
+def get_user_service(
+    repository: Annotated[UserRepository, Depends(get_user_repository)],
+    user_id: Annotated[UUID, Depends(get_current_user_id)],
+) -> UserService:
+    return UserService(repository, user_id)
+
+
+def get_account_deletion_service(request: Request) -> AccountDeletionService:
+    supabase_url = os.getenv("SUPABASE_URL", "").strip()
+    service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    return AccountDeletionService(
+        request.app.state.database_engine,
+        ImageStorage(supabase_url, service_key),
+        SupabaseAuthAdmin(supabase_url, service_key),
+    )
+
+
+def get_language_profile_service(
+    repository: Annotated[LanguageProfileRepository, Depends(get_language_profile_repository)],
+    users: Annotated[UserService, Depends(get_user_service)],
+) -> LanguageProfileService:
+    return LanguageProfileService(repository, users)
+
+
+def get_active_language(
+    service: Annotated[LanguageProfileService, Depends(get_language_profile_service)],
+) -> str:
+    return service.active_language()
+
+
+def get_journal_service(
+    request: Request,
+    repository: Annotated[JournalRepository, Depends(get_journal_repository)],
+    users: Annotated[UserService, Depends(get_user_service)],
+    profiles: Annotated[LanguageProfileService, Depends(get_language_profile_service)],
+) -> JournalService:
+    return JournalService(
+        repository,
+        users,
+        profiles,
+        get_media_asset_repository(request),
+        get_media_public_base_url(),
+        get_private_media_urls(),
+        PostgresVocabularyRepository(request.app.state.database_engine),
+    )
+
+
+def get_learning_repository(
+    request: Request, user_id: Annotated[UUID, Depends(get_current_user_id)]
+) -> LearningRepository:
+    return SessionBackedLearningRepository(
+        request.app.state.database_engine,
+        user_id,
+        PostgresVocabularyRepository(request.app.state.database_engine),
+    )
+
+
+def get_scene_repository(request: Request) -> SceneRepository:
+    return PostgresSceneRepository(request.app.state.database_engine)
+
+
+def get_media_asset_repository(request: Request) -> MediaAssetRepository:
+    return PostgresMediaAssetRepository(request.app.state.database_engine)
+
+
+# One shared derivative cache per process so its LRU survives across requests.
+_IMAGE_DERIVATIVES: ImageDerivatives | None = None
+_OBJECT_GROUNDER_UNINITIALIZED = object()
+_OBJECT_GROUNDER = _OBJECT_GROUNDER_UNINITIALIZED
+_IMAGE_MODERATOR_UNINITIALIZED = object()
+_IMAGE_MODERATOR = _IMAGE_MODERATOR_UNINITIALIZED
+_AI_RUNTIME_LOCK = threading.Lock()
+logger = logging.getLogger(__name__)
+
+
+def get_image_derivatives() -> ImageDerivatives:
+    global _IMAGE_DERIVATIVES
+    if _IMAGE_DERIVATIVES is None:
+        _IMAGE_DERIVATIVES = ImageDerivatives(
+            ImageStorage(
+                os.getenv("SUPABASE_URL", "").strip(),
+                os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip(),
+            )
+        )
+    return _IMAGE_DERIVATIVES
+
+
+def get_object_grounder(request: Request, settings: AiSettings):
+    """Load the optional local detector once; preserve analysis if it is unavailable."""
+    if hasattr(request.app.state, "object_grounder"):
+        return request.app.state.object_grounder
+    global _OBJECT_GROUNDER
+    if _OBJECT_GROUNDER is _OBJECT_GROUNDER_UNINITIALIZED:
+        try:
+            _OBJECT_GROUNDER = build_object_grounder(settings)
+            if _OBJECT_GROUNDER is not None:
+                logger.info("Grounding DINO object detector loaded.")
+        except ObjectGroundingError:
+            logger.warning("object grounding is unavailable; using model locations")
+            _OBJECT_GROUNDER = None
+    return _OBJECT_GROUNDER
+
+
+def get_image_moderator(request: Request, settings: AiSettings):
+    """Load the optional image moderator once; analysis fails open without it."""
+    if hasattr(request.app.state, "image_moderator"):
+        return request.app.state.image_moderator
+    global _IMAGE_MODERATOR
+    if _IMAGE_MODERATOR is _IMAGE_MODERATOR_UNINITIALIZED:
+        try:
+            _IMAGE_MODERATOR = build_image_moderator(settings)
+            if _IMAGE_MODERATOR is not None:
+                logger.info("Image moderation loaded.")
+        except Exception:
+            logger.warning("image moderation is unavailable; uploads skip the check")
+            _IMAGE_MODERATOR = None
+    return _IMAGE_MODERATOR
+
+
+def get_media_asset_service(
+    repository: Annotated[MediaAssetRepository, Depends(get_media_asset_repository)],
+    users: Annotated[UserService, Depends(get_user_service)],
+) -> MediaAssetService:
+    return MediaAssetService(
+        repository,
+        users,
+        ImageStorage(
+            os.getenv("SUPABASE_URL", "").strip(),
+            os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip(),
+        ),
+        get_image_derivatives(),
+    )
+
+
+def get_scene_service(
+    repository: Annotated[SceneRepository, Depends(get_scene_repository)],
+) -> SceneService:
+    return SceneService(repository, get_media_public_base_url(), get_private_media_urls())
+
+
+def get_ai_settings(request: Request) -> AiSettings:
+    """AI settings loaded at app startup; falls back to loading on demand."""
+    settings = getattr(request.app.state, "ai_settings", None)
+    if settings is None:
+        settings = load_ai_settings()
+    return settings
+
+
+def get_ai_tracer(request: Request) -> AITracer:
+    """Tracer built in the app lifespan; falls back to a no-op."""
+    return getattr(request.app.state, "ai_tracer", None) or NoOpAITracer()
+
+
+def get_ai_runtime(request: Request) -> AiRuntime:
+    """The app-scoped AI runtime, rebuilt only if the app's settings or tracer change."""
+    settings = get_ai_settings(request)
+    tracer = get_ai_tracer(request)
+    with _AI_RUNTIME_LOCK:
+        runtime = getattr(request.app.state, "ai_runtime", None)
+        if runtime is None or runtime.settings is not settings or runtime.tracer is not tracer:
+            runtime = AiRuntime(
+                settings,
+                tracer,
+                storage=ImageStorage(
+                    os.getenv("SUPABASE_URL", "").strip(),
+                    os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip(),
+                ),
+                object_grounder=get_object_grounder(request, settings),
+                image_moderator=get_image_moderator(request, settings),
+            )
+            request.app.state.ai_runtime = runtime
+        return runtime
+
+
+def get_practice_repository(
+    request: Request, user_id: Annotated[UUID, Depends(get_current_user_id)]
+) -> PostgresWorkflowRepository:
+    return PostgresWorkflowRepository(
+        request.app.state.database_engine,
+        user_id,
+        ai=get_ai_runtime(request),
+        background=getattr(request.app.state, "background_runner", None),
+    )
+
+
+def get_practice_service(
+    repository: Annotated[PostgresWorkflowRepository, Depends(get_practice_repository)],
+    users: Annotated[UserService, Depends(get_user_service)],
+    profiles: Annotated[LanguageProfileService, Depends(get_language_profile_service)],
+) -> PracticeService:
+    return PracticeService(repository, users, profiles)
+
+
+def get_ispy_game_service(
+    repository: Annotated[PostgresWorkflowRepository, Depends(get_practice_repository)],
+    profiles: Annotated[LanguageProfileService, Depends(get_language_profile_service)],
+) -> ISpyGameService:
+    return ISpyGameService(PostgresISpyGameRepository(repository), profiles)
+
+
+def get_task_service(
+    request: Request, users: Annotated[UserService, Depends(get_user_service)]
+) -> TaskService:
+    return TaskService(
+        PostgresTaskRepository(request.app.state.database_engine),
+        users,
+        request.app.state.database_engine,
+        ai=get_ai_runtime(request),
+    )
+
+
+def get_learning_service(
+    repository: Annotated[LearningRepository, Depends(get_learning_repository)],
+    users: Annotated[UserService, Depends(get_user_service)],
+) -> LearningService:
+    return LearningService(repository, users)
+
+
+def get_room_service(
+    request: Request, user_id: Annotated[UUID, Depends(get_current_user_id)]
+) -> RoomService:
+    if not get_private_media_urls():
+        raise RoomUnavailableError()
+    runtime = get_ai_runtime(request)
+    storage = ImageStorage(
+        os.getenv("SUPABASE_URL", "").strip(),
+        os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip(),
+    )
+    preparer = RoomPhotoPreparer(
+        runtime.uploaded_scene_analyzer(), runtime.translator(), storage=storage,
+    )
+    return RoomService(
+        PostgresRoomRepository(
+            request.app.state.database_engine, user_id,
+            spend_sauce=spend_sauce, reward_basil=reward_basil,
+        ),
+        preparer, getattr(request.app.state, "background_runner", None),
+        image_reader=lambda asset, width: get_image_derivatives().get(asset.storage_key, width),
+    )
+
+
+def get_friend_repository(
+    request: Request, user_id: Annotated[UUID, Depends(get_current_user_id)]
+) -> PostgresFriendRepository:
+    return PostgresFriendRepository(request.app.state.database_engine, user_id)

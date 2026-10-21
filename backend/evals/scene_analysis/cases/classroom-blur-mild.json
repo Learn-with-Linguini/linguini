@@ -1,0 +1,215 @@
+{
+  "case_id": "classroom-blur-mild",
+  "image": "images/classroom-blur-mild.jpg",
+  "difficulty": "medium",
+  "tags": [
+    "indoor",
+    "people-present",
+    "blur"
+  ],
+  "derived_from": "classroom-clean",
+  "notes": "Handheld softness. Everything remains identifiable, so anchors are unchanged; only confidence should ease off.",
+  "expectation": {
+    "mode": "objects",
+    "scene_title_accept": [
+      "classroom",
+      "class room",
+      "school classroom",
+      "primary classroom",
+      "elementary classroom",
+      "lecture room",
+      "school lesson",
+      "classroom lesson",
+      "school",
+      "lesson"
+    ],
+    "anchors": [
+      {
+        "canonical": "desk",
+        "accept": [
+          "table",
+          "school desk",
+          "writing desk"
+        ]
+      },
+      {
+        "canonical": "chair",
+        "accept": [
+          "seat",
+          "school chair"
+        ]
+      },
+      {
+        "canonical": "globe",
+        "accept": [
+          "world globe",
+          "terrestrial globe"
+        ],
+        "box": {
+          "x": 0.291,
+          "y": 0.359,
+          "width": 0.058,
+          "height": 0.091
+        },
+        "note": "Single instance, on the front desk -- the one classroom object worth scoring IoU on."
+      }
+    ],
+    "acceptable": [
+      {
+        "canonical": "bookshelf",
+        "accept": [
+          "book shelf",
+          "shelf",
+          "shelving",
+          "bookcase"
+        ]
+      },
+      {
+        "canonical": "book",
+        "accept": [
+          "books",
+          "textbook"
+        ]
+      },
+      {
+        "canonical": "water bottle",
+        "accept": [
+          "bottle",
+          "drink bottle",
+          "flask"
+        ]
+      },
+      {
+        "canonical": "pencil case",
+        "accept": [
+          "pencil pouch"
+        ]
+      },
+      {
+        "canonical": "backpack",
+        "accept": [
+          "rucksack",
+          "school bag",
+          "bag"
+        ]
+      },
+      {
+        "canonical": "notebook",
+        "accept": [
+          "exercise book",
+          "workbook"
+        ]
+      },
+      {
+        "canonical": "window",
+        "accept": [
+          "windows"
+        ]
+      },
+      {
+        "canonical": "potted plant",
+        "accept": [
+          "plant",
+          "houseplant",
+          "pot plant"
+        ]
+      },
+      {
+        "canonical": "apple",
+        "accept": []
+      },
+      {
+        "canonical": "orange",
+        "accept": [
+          "tangerine"
+        ]
+      },
+      {
+        "canonical": "pen",
+        "accept": []
+      },
+      {
+        "canonical": "pencil",
+        "accept": []
+      },
+      {
+        "canonical": "paper",
+        "accept": [
+          "sheet of paper",
+          "worksheet"
+        ]
+      },
+      {
+        "canonical": "cabinet",
+        "accept": [
+          "cupboard",
+          "drawer unit"
+        ]
+      },
+      {
+        "canonical": "noticeboard",
+        "accept": [
+          "notice board",
+          "pinboard",
+          "poster"
+        ]
+      },
+      {
+        "canonical": "glasses",
+        "accept": [
+          "eyeglasses",
+          "spectacles"
+        ]
+      },
+      {
+        "canonical": "radiator",
+        "accept": []
+      },
+      {
+        "canonical": "floor",
+        "accept": []
+      },
+      {
+        "canonical": "wall",
+        "accept": []
+      },
+      {
+        "canonical": "ceiling",
+        "accept": []
+      }
+    ],
+    "relations": [
+      {
+        "subject": "globe",
+        "relation": "on",
+        "reference": "desk",
+        "note": "The globe rests on the front desk; unambiguous."
+      }
+    ],
+    "forbidden_labels": [
+      "person",
+      "people",
+      "man",
+      "woman",
+      "boy",
+      "girl",
+      "child",
+      "children",
+      "kid",
+      "student",
+      "pupil",
+      "teacher",
+      "shopper",
+      "customer",
+      "worker",
+      "shopkeeper",
+      "face",
+      "hair",
+      "hand",
+      "adult"
+    ],
+    "min_objects": 3,
+    "max_objects": 6,
+    "max_confidence": 0.92
+  }
+}

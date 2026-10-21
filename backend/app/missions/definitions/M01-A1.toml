@@ -1,0 +1,134 @@
+mission_id = "M01"
+practice_level = "A1"
+content_version = 1
+title = "Identify and describe an object"
+
+[photo_requirements]
+media_sources = ["preloaded", "camera", "userUpload"]
+# Two different objects, each with its own confirmed, reviewed detail (colour, size,
+# shape, material, pattern or state); min_coloured_objects counts those objects.
+min_confirmed_objects = 2
+min_coloured_objects = 2
+
+[objective]
+objective_id = "identify-describe-object"
+can_do = "I can find an object in a photo, name it, and say what colour it is or where it is."
+
+[[objective.targets]]
+target_id = "identify-object"
+summary = "Pick out the object that a target-language clue describes."
+evidence_types = ["objectSelection", "recognition"]
+
+[[objective.targets]]
+target_id = "name-object"
+summary = "Name a photo object with its article and noun."
+evidence_types = ["recognition", "construction", "production"]
+
+[[objective.targets]]
+target_id = "describe-colour"
+summary = "Say an object's colour or another confirmed detail with a word that agrees with its noun."
+evidence_types = ["recognition", "construction", "production"]
+
+[[objective.targets]]
+target_id = "describe-location"
+summary = "Say where an object is with a position expression and another photo object."
+evidence_types = ["recognition", "construction", "production"]
+
+[[language_patterns]]
+pattern_id = "article-noun"
+target_id = "name-object"
+structure = "[indefinite article] [noun]"
+examples = { es = ["una mesa", "un libro"], fr = ["une table", "un livre"], de = ["eine Lampe", "ein Tisch"] }
+
+[[language_patterns]]
+pattern_id = "copula-colour"
+target_id = "describe-colour"
+structure = "[it is] [indefinite article] [noun] [colour or detail agreeing with the noun]"
+clue_frame_id = "colour"
+examples = { es = ["Es una mesa blanca.", "Es un libro rojo."], fr = ["C'est une table blanche.", "C'est un livre rouge."], de = ["Das ist ein roter Tisch.", "Das ist eine weiße Lampe."] }
+
+[[language_patterns]]
+pattern_id = "copula-position-reference"
+target_id = "describe-location"
+structure = "[it is] [position] [article] [reference noun]"
+clue_frame_id = "location"
+examples = { es = ["Está al lado de la puerta."], fr = ["Il est à côté de la porte."], de = ["Er ist neben der Tür."] }
+
+[teaching]
+task_sequence = ["vocabularyIntroduction", "grammarLesson"]
+teach_before_assessment = ["name-object", "describe-colour", "describe-location"]
+max_new_words = 6
+
+[[teaching.supports]]
+support = "translation"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "audio"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "example"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "wordBank"
+availability = "always"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "clueFrame"
+availability = "onRequest"
+counts_as_assistance = true
+
+[[teaching.supports]]
+support = "helpPhrase"
+availability = "onRequest"
+counts_as_assistance = true
+
+[[teaching.supports]]
+support = "hint"
+availability = "onRequest"
+counts_as_assistance = true
+
+[[teaching.supports]]
+support = "answerReveal"
+availability = "onRequest"
+counts_as_assistance = true
+
+[[evaluation_criteria]]
+criterion_id = "selects-described-object"
+target_id = "identify-object"
+description = "Selects the photo object that the clue describes."
+evidence_types = ["objectSelection", "recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "article-matches-noun"
+target_id = "name-object"
+description = "Uses the object's noun with the article that matches its gender and number."
+evidence_types = ["recognition", "construction", "production"]
+
+[[evaluation_criteria]]
+criterion_id = "colour-matches-photo"
+target_id = "describe-colour"
+description = "Uses a colour that matches the photo and agrees with the noun."
+evidence_types = ["recognition", "construction", "production"]
+
+[[evaluation_criteria]]
+criterion_id = "position-matches-photo"
+target_id = "describe-location"
+description = "Uses a position expression and reference object that match the photo."
+evidence_types = ["recognition", "construction", "production"]
+
+[expected_performance]
+min_assessed_questions = 4
+min_correct_ratio = 0.75
+min_independent_correct = 2
+required_target_groups = [
+  ["identify-object"],
+  ["name-object"],
+  ["describe-colour", "describe-location"],
+]

@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Linguini — LinkedIn Concept Trailer</title>
+  <style>
+    @font-face {
+      font-family: 'Baloo';
+      src: url('assets/Baloo2-ExtraBold.ttf');
+      font-weight: 800;
+    }
+    @font-face {
+      font-family: 'Nunito';
+      src: url('assets/NunitoSans-Bold.ttf');
+      font-weight: 700;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #faf7ee;
+      font-family: 'Nunito', sans-serif;
+      color: #1e293b;
+    }
+    #root {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: #faf7ee;
+    }
+    .absolute { position: absolute; }
+    .scene {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      opacity: 0;
+      visibility: hidden;
+    }
+    .scene.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Common Card Styles */
+    .card {
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 28px;
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.08);
+      overflow: hidden;
+    }
+    .card--lifted {
+      box-shadow: 0 30px 60px rgba(15, 23, 42, 0.12);
+    }
+
+    /* Header */
+    .header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 110px;
+      padding: 36px 70px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+    }
+    .brand-pill {
+      background: #ffffff;
+      padding: 10px 24px;
+      border-radius: 999px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid #e2e8f0;
+    }
+    .brand-pill img {
+      height: 38px;
+      display: block;
+    }
+    .beta-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #0f172a;
+      color: #ffffff;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      padding: 12px 24px;
+      border-radius: 999px;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.15);
+    }
+    .beta-badge .dot {
+      width: 12px;
+      height: 12px;
+      background: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #22c55e;
+    }
+
+    /* Number Badge */
+    .number-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .number-badge .num {
+      font-family: 'Baloo', sans-serif;
+      font-size: 48px;
+      line-height: 1;
+      color: #ea580c;
+    }
+    .number-badge .label {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      color: #0d9488;
+      text-transform: uppercase;
+    }
+
+    /* Typography */
+    .headline-main {
+      font-family: 'Baloo', sans-serif;
+      font-size: 76px;
+      line-height: 1.15;
+      letter-spacing: -1.5px;
+      color: #0f172a;
+      margin: 0 0 16px 0;
+    }
+    .headline-accent {
+      color: #ea580c;
+    }
+    .headline-teal {
+      color: #0d9488;
+    }
+    .subtext {
+      font-size: 32px;
+      line-height: 1.45;
+      color: #475569;
+      margin: 0;
+      max-width: 780px;
+    }
+
+    /* Subtitle Bar */
+    .subtitle-bar-wrap {
+      position: absolute;
+      bottom: 40px;
+      left: 70px;
+      right: 70px;
+      display: flex;
+      justify-content: center;
+      z-index: 100;
+    }
+    .subtitle-bar {
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(8px);
+      color: #ffffff;
+      font-size: 26px;
+      font-weight: 700;
+      padding: 16px 36px;
+      border-radius: 999px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      letter-spacing: 0.5px;
+      text-align: center;
+    }
+
+    /* Progress bar */
+    .progress-bar-track {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 8px;
+      background: rgba(0, 0, 0, 0.08);
+      z-index: 100;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: #ea580c;
+    }
+
+    /* Mascot */
+    .mascot-host {
+      position: absolute;
+      bottom: 50px;
+      right: 70px;
+      width: 140px;
+      height: 140px;
+      z-index: 90;
+    }
+    .mascot-host img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    /* Detection Rings & Tags */
+    .detection-ring {
+      position: absolute;
+      border: 3px solid #ea580c;
+      border-radius: 20px;
+      background: rgba(234, 88, 12, 0.15);
+      box-shadow: 0 0 20px rgba(234, 88, 12, 0.4);
+    }
+    .detection-tag {
+      position: absolute;
+      background: #ea580c;
+      color: #ffffff;
+      padding: 8px 16px;
+      border-radius: 12px;
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      box-shadow: 0 6px 14px rgba(234, 88, 12, 0.4);
+      white-space: nowrap;
+    }
+
+    /* Language Cards */
+    .lang-card {
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+      border-radius: 24px;
+      padding: 24px 32px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.06);
+      width: 380px;
+    }
+    .lang-card .flag { font-size: 36px; margin-bottom: 8px; }
+    .lang-card .lang-name { font-size: 20px; font-weight: 800; color: #0d9488; letter-spacing: 2px; text-transform: uppercase; }
+    .lang-card .word { font-family: 'Baloo', sans-serif; font-size: 42px; margin: 6px 0; color: #0f172a; line-height: 1.1; }
+    .lang-card .trans { font-size: 22px; color: #64748b; }
+
+    /* Interactive Game Cards */
+    .game-card {
+      background: #ffffff;
+      border: 2px solid #cbd5e1;
+      border-radius: 28px;
+      padding: 36px 44px;
+      box-shadow: 0 24px 50px rgba(15, 23, 42, 0.1);
+      width: 820px;
+    }
+
+    /* Word Tile */
+    .word-tile {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      border: 2px solid #cbd5e1;
+      padding: 16px 28px;
+      border-radius: 18px;
+      font-family: 'Baloo', sans-serif;
+      font-size: 38px;
+      color: #0f172a;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+    }
+    .word-tile.placed {
+      background: #f0fdf4;
+      border-color: #22c55e;
+      color: #15803d;
+    }
+  </style>
+  <script src="node_modules/gsap/dist/gsap.min.js"></script>
+</head>
+<body>
+  <div data-hf-id="hf-shbi" id="root" data-composition-id="linguini-linkedin" data-width="1920" data-height="1080" data-duration="56" data-fps="30">
+    
+    
+
+    <!-- Persistent Header -->
+    <header data-hf-id="hf-hr6f" class="header">
+      <div data-hf-id="hf-9c95" class="brand-pill">
+        <img data-hf-id="hf-rd1t" src="assets/linguini-wordmark.png" alt="Linguini">
+      </div>
+      <div data-hf-id="hf-dm7k" class="beta-badge">
+        <span data-hf-id="hf-9gry" class="dot"></span>
+        <span data-hf-id="hf-b286">PUBLIC BETA</span>
+      </div>
+    </header>
+
+    <!-- Subtitle Bar (dynamic across timeline) -->
+    <div data-hf-id="hf-4pop" class="subtitle-bar-wrap">
+      <div data-hf-id="hf-zvq3" class="subtitle-bar" id="sub-bar">What if your camera roll was your textbook?</div>
+    </div>
+
+    <!-- Bottom Progress Track -->
+    <div data-hf-id="hf-okbn" class="progress-bar-track">
+      <div data-hf-id="hf-g1d8" class="progress-bar-fill" id="progress-fill"></div>
+    </div>
+
+    <!-- Floating Mascot -->
+    <div data-hf-id="hf-qcgn" class="mascot-host" id="mascot">
+      <img data-hf-id="hf-ixik" src="assets/linguini-logo.png" alt="Linguini Mascot">
+    </div>
+
+    <!-- SCENE 0: Hook (0s - 6s) -->
+    <section data-hf-id="hf-a50b" class="scene" id="scene-0" data-start="0" data-duration="6">
+      <div data-hf-id="hf-8js6" class="absolute" style="left: 120px; top: 220px; width: 850px;">
+        <div data-hf-id="hf-c01h" class="number-badge">
+          <span data-hf-id="hf-ce6f" class="num">00</span>
+          <span data-hf-id="hf-edb3" class="label">THE PREMISE</span>
+        </div>
+        <h1 data-hf-id="hf-cq4h" class="headline-main">Learn <span data-hf-id="hf-183a" data-hf-text-key="child:1:span">everyday words.</span></h1>
+        <p data-hf-id="hf-i5ur" class="subtext">
+          What if the photos you take every day became the lessons that help you actually remember?
+        </p>
+      </div>
+
+      <!-- Hero Photo Card with Detection -->
+      <div data-hf-id="hf-0z3x" class="card card--lifted absolute" id="hero-photo-card" style="right: 120px; top: 180px; width: 780px; height: 580px;">
+        <img data-hf-id="hf-0mh1" src="assets/desk-flatlay.jpg" style="width: 100%; height: 100%; object-fit: cover;" alt="Desk scene">
+        <!-- Detection Rings -->
+        <div data-hf-studio-original-display="" data-hf-studio-original-box-sizing="" data-hf-studio-original-flex-shrink="" data-hf-studio-original-flex-grow="" data-hf-studio-original-flex-basis="" data-hf-studio-original-max-height="" data-hf-studio-original-max-width="" data-hf-studio-original-min-height="" data-hf-studio-original-min-width="" data-hf-studio-original-box-height="170" data-hf-studio-original-box-width="170" data-hf-studio-original-height="170px" data-hf-studio-original-width="170px" data-hf-studio-box-size="true" data-hf-id="hf-6gnk" class="detection-ring" id="ring-mug" style="left: 380px; top: 170px; width: 120px; height: 120px; --hf-studio-width: 120px; --hf-studio-height: 120px; min-width: 0px; min-height: 0px; max-width: none; max-height: none; box-sizing: border-box">
+          <div data-hf-id="hf-z5de" class="detection-tag" style="top: -46px; left: 10px;">el lápiz (pencil)</div>
+        </div>
+        <div data-hf-studio-original-display="" data-hf-studio-original-box-sizing="" data-hf-studio-original-flex-shrink="" data-hf-studio-original-flex-grow="" data-hf-studio-original-flex-basis="" data-hf-studio-original-max-height="" data-hf-studio-original-max-width="" data-hf-studio-original-min-height="" data-hf-studio-original-min-width="" data-hf-studio-original-box-height="190" data-hf-studio-original-box-width="220" data-hf-studio-original-height="190px" data-hf-studio-original-width="220px" data-hf-studio-box-size="true" data-hf-id="hf-3l6w" class="detection-ring" id="ring-book" style="left: 120px; top: 280px; width: 328px; height: 283px; --hf-studio-width: 328px; --hf-studio-height: 283px; min-width: 0px; min-height: 0px; max-width: none; max-height: none; box-sizing: border-box">
+          <div data-hf-id="hf-0shd" class="detection-tag" style="top: -46px; left: 10px;">el libro (book)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENE 1: Context First (6s - 14s) -->
+    <section style="background-image: none; opacity: 0.34" data-hf-id="hf-zzoq" class="scene" id="scene-1" data-start="6" data-duration="8">
+      <div data-hf-id="hf-2aay" class="absolute" style="left: 120px; top: 220px; width: 850px;">
+        <div data-hf-id="hf-p3zd" class="number-badge">
+          <span data-hf-id="hf-cshg" class="num">01</span>
+          <span data-hf-id="hf-tcv6" class="label">CONTEXT FIRST</span>
+        </div>
+        <h1 data-hf-id="hf-hnyu" class="headline-main">
+          Snap any photo <br data-hf-id="hf-x5px"><span data-hf-id="hf-8kk1" class="headline-teal">from your day.</span>
+        </h1>
+        <p data-hf-id="hf-hi6v" class="subtext">
+          Your morning coffee, your study desk, or a street on your commute. Real world images ground new vocabulary in personal memories.
+        </p>
+        <div data-hf-id="hf-jpq1" style="display: flex; gap: 16px; margin-top: 36px;">
+          <div data-hf-id="hf-ixvv" class="brand-pill" style="font-size: 22px; font-weight: 800; color: #ea580c; padding: 12px 28px;">
+            📸 Take a Photo
+          </div>
+          <div data-hf-id="hf-d4my" class="brand-pill" style="font-size: 22px; font-weight: 800; color: #0d9488; padding: 12px 28px;">
+            🖼️ Upload Camera Roll
+          </div>
+        </div>
+      </div>
+
+      <div data-hf-id="hf-v355" class="card card--lifted absolute" id="snap-photo-card" style="right: 120px; top: 180px; width: 780px; height: 580px; background-image: url(&quot;food.png&quot;); background-position: center; background-repeat: no-repeat; background-size: contain; filter: none; backdrop-filter: none; opacity: 1">
+        <img data-hf-id="hf-og9i" src="assets/cafe-interior.jpg" style="width: 100%; height: 100%; object-fit: cover;" alt="Cafe scene">
+        <div data-hf-id="hf-gn7l" class="detection-ring" id="ring-cafe" style="left: 310px; top: 220px; width: 210px; height: 210px;">
+          <div data-hf-id="hf-3mx7" class="detection-tag" style="top: -46px; left: 10px;">el café (coffee)</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENE 2: Human in the Loop (14s - 22s) -->
+    <section data-hf-id="hf-jpim" class="scene" id="scene-2" data-start="14" data-duration="8">
+      <div data-hf-id="hf-2olz" class="absolute" style="left: 120px; top: 220px; width: 850px;">
+        <div data-hf-id="hf-qawg" class="number-badge">
+          <span data-hf-id="hf-blkd" class="num">02</span>
+          <span data-hf-id="hf-czjs" class="label">HUMAN IN THE LOOP</span>
+        </div>
+        <h1 data-hf-id="hf-4182" class="headline-main">
+          AI drafts the words. <br data-hf-id="hf-rsrt"><span data-hf-id="hf-8spt" class="headline-accent">You decide.</span>
+        </h1>
+        <p data-hf-id="hf-47ok" class="subtext">
+          Computer vision suggests detected items. You review, remove background distractions, and select the words you actually want to learn.
+        </p>
+      </div>
+
+      <!-- Review Screen Mockup -->
+      <div data-hf-id="hf-i8qy" class="card card--lifted absolute" id="review-card" style="right: 120px; top: 180px; width: 780px; padding: 36px 40px;">
+        <div data-hf-id="hf-c2rh" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 2px solid #f1f5f9; padding-bottom: 16px;">
+          <h2 data-hf-id="hf-5j6l" style="font-family: 'Baloo', sans-serif; font-size: 34px; margin: 0;">Review Detected Objects</h2>
+          <span data-hf-id="hf-47h1" style="background: #e0f2fe; color: #0369a1; font-weight: 800; padding: 6px 16px; border-radius: 999px; font-size: 18px;">
+            3 selected
+          </span>
+        </div>
+        <div data-hf-id="hf-6f5n" style="display: flex; flex-direction: column; gap: 14px;">
+          <div data-hf-id="hf-i0u0" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; background: #f8fafc; border-radius: 16px; border: 2px solid #22c55e;">
+            <div data-hf-id="hf-736r" style="display: flex; align-items: center; gap: 16px;">
+              <span data-hf-id="hf-3fs7" style="font-size: 26px;">☕</span>
+              <div data-hf-id="hf-yeow">
+                <div data-hf-id="hf-38x2" style="font-weight: 800; font-size: 24px; color: #0f172a;">la taza (cup)</div>
+                <div data-hf-id="hf-rhcg" style="color: #64748b; font-size: 18px;">High confidence · ceramic mug</div>
+              </div>
+            </div>
+            <span data-hf-id="hf-kj3g" style="color: #22c55e; font-size: 28px;">✓</span>
+          </div>
+          <div data-hf-id="hf-7mog" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; background: #f8fafc; border-radius: 16px; border: 2px solid #22c55e;">
+            <div data-hf-id="hf-upcz" style="display: flex; align-items: center; gap: 16px;">
+              <span data-hf-id="hf-joe3" style="font-size: 26px;">📖</span>
+              <div data-hf-id="hf-y7yw">
+                <div data-hf-id="hf-r71p" style="font-weight: 800; font-size: 24px; color: #0f172a;">el libro (book)</div>
+                <div data-hf-id="hf-7qsh" style="color: #64748b; font-size: 18px;">Open notebook on desk</div>
+              </div>
+            </div>
+            <span data-hf-id="hf-angk" style="color: #22c55e; font-size: 28px;">✓</span>
+          </div>
+          <div data-hf-id="hf-1k6p" style="display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; background: #fff1f2; border-radius: 16px; border: 2px dashed #fda4af;">
+            <div data-hf-id="hf-ko3d" style="display: flex; align-items: center; gap: 16px; opacity: 0.6;">
+              <span data-hf-id="hf-bbyi" style="font-size: 26px;">💡</span>
+              <div data-hf-id="hf-x11t">
+                <div data-hf-id="hf-f3oe" style="font-weight: 800; font-size: 24px; color: #0f172a;">la lámpara (lamp)</div>
+                <div data-hf-id="hf-05ha" style="color: #64748b; font-size: 18px;">Removed by user</div>
+              </div>
+            </div>
+            <span data-hf-id="hf-kklc" style="color: #ef4444; font-size: 24px; font-weight: 800;">✕</span>
+          </div>
+        </div>
+        <button data-hf-id="hf-qp35" style="margin-top: 24px; width: 100%; background: #ea580c; color: white; border: none; padding: 18px; border-radius: 18px; font-weight: 800; font-size: 22px; cursor: pointer; box-shadow: 0 6px 0 #c2410c;">
+          Start Lesson with 2 Words →
+        </button>
+      </div>
+    </section>
+
+    <!-- SCENE 3: Four Languages (22s - 31s) -->
+    <section data-hf-id="hf-p459" class="scene" id="scene-3" data-start="22" data-duration="9">
+      <div data-hf-id="hf-vkgr" class="absolute" style="left: 120px; top: 220px; width: 750px;">
+        <div data-hf-id="hf-pwlf" class="number-badge">
+          <span data-hf-id="hf-bzve" class="num">03</span>
+          <span data-hf-id="hf-2xmy" class="label">4 LANGUAGES SUPPORTED</span>
+        </div>
+        <h1 data-hf-id="hf-g022" class="headline-main">
+          One scene. <br data-hf-id="hf-szow"><span data-hf-id="hf-cnev" class="headline-teal">Four languages.</span>
+        </h1>
+        <p data-hf-id="hf-dwbt" class="subtext">
+          Learn Spanish, French, German, or beginner Korean from English. Full gender articles, native pronunciations, and grammar.
+        </p>
+      </div>
+
+      <!-- 4 Language Grid -->
+      <div data-hf-id="hf-r060" class="absolute" style="right: 100px; top: 190px; width: 820px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div data-hf-id="hf-wtgz" class="lang-card" id="lc-es">
+          <div data-hf-id="hf-x4mo" class="flag">🇪🇸</div>
+          <div data-hf-id="hf-5xso" class="lang-name">Spanish</div>
+          <div data-hf-id="hf-s8z3" class="word">la taza de café</div>
+          <div data-hf-id="hf-3bf2" class="trans">the cup of coffee</div>
+        </div>
+        <div data-hf-id="hf-ersr" class="lang-card" id="lc-fr">
+          <div data-hf-id="hf-rrhu" class="flag">🇫🇷</div>
+          <div data-hf-id="hf-qb5c" class="lang-name">French</div>
+          <div data-hf-id="hf-zz3v" class="word">la tasse de café</div>
+          <div data-hf-id="hf-ajyq" class="trans">the cup of coffee</div>
+        </div>
+        <div data-hf-id="hf-zax2" class="lang-card" id="lc-de">
+          <div data-hf-id="hf-wdob" class="flag">🇩🇪</div>
+          <div data-hf-id="hf-uczm" class="lang-name">German</div>
+          <div data-hf-id="hf-c5k0" class="word">die Kaffeetasse</div>
+          <div data-hf-id="hf-bth7" class="trans">the coffee cup</div>
+        </div>
+        <div data-hf-id="hf-cipp" class="lang-card" id="lc-ko">
+          <div data-hf-id="hf-hkpj" class="flag">🇰🇷</div>
+          <div data-hf-id="hf-lmrx" class="lang-name">Korean (Beginner)</div>
+          <div data-hf-id="hf-sx0w" class="word">커피 한 잔</div>
+          <div data-hf-id="hf-u37q" class="trans">a cup of coffee</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENE 4: Interactive Games & 2-Way I-Spy (31s - 42s) -->
+    <section data-hf-id="hf-xrob" class="scene" id="scene-4" data-start="31" data-duration="11">
+      <div data-hf-id="hf-hrqu" class="absolute" style="left: 120px; top: 220px; width: 780px;">
+        <div data-hf-id="hf-nx2a" class="number-badge">
+          <span data-hf-id="hf-dzej" class="num">04</span>
+          <span data-hf-id="hf-zfo4" class="label">INTERACTIVE PRACTICE</span>
+        </div>
+        <h1 data-hf-id="hf-210o" class="headline-main">
+          Two-way I-Spy <br data-hf-id="hf-sldv"><span data-hf-id="hf-feag" class="headline-accent">&amp; sentence puzzles.</span>
+        </h1>
+        <p data-hf-id="hf-12ag" class="subtext">
+          First Linguini gives clues and you hunt down the object. Then roles reverse: you write clues describing things back to the app!
+        </p>
+      </div>
+
+      <!-- I-Spy & Puzzle Showcase -->
+      <div data-hf-id="hf-lbru" class="game-card absolute" id="ispy-game-card" style="right: 100px; top: 180px;">
+        <div data-hf-id="hf-cw2w" style="display: flex; gap: 12px; align-items: center; margin-bottom: 20px;">
+          <span data-hf-id="hf-8iqu" style="background: #ea580c; color: white; padding: 6px 14px; border-radius: 999px; font-weight: 800; font-size: 18px;">
+            I-SPY CLUE
+          </span>
+          <span data-hf-id="hf-kip5" style="color: #64748b; font-size: 20px;">Find the object in the photo:</span>
+        </div>
+        <div data-hf-id="hf-gdnh" style="font-family: 'Baloo', sans-serif; font-size: 40px; color: #0f172a; margin-bottom: 24px; line-height: 1.2;">
+          "Veo, veo... algo blanco sobre la mesa."
+        </div>
+        <!-- Multiple choice options -->
+        <div data-hf-id="hf-ad25" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+          <div data-hf-id="hf-yh71" id="choice-a" style="padding: 18px 24px; border-radius: 16px; border: 2px solid #e2e8f0; font-size: 24px; font-weight: 800; background: #ffffff;">
+            el libro
+          </div>
+          <div data-hf-id="hf-j08v" id="choice-b" style="padding: 18px 24px; border-radius: 16px; border: 2px solid #22c55e; font-size: 24px; font-weight: 800; background: #f0fdf4; color: #15803d; display: flex; justify-content: space-between;">
+            <span data-hf-id="hf-act0">la taza</span>
+            <span data-hf-id="hf-9z3n">✓ Correct!</span>
+          </div>
+        </div>
+
+        <!-- Sentence builder underneath -->
+        <div data-hf-id="hf-37bv" style="border-top: 2px solid #f1f5f9; padding-top: 20px;">
+          <div data-hf-id="hf-97xt" style="font-size: 18px; font-weight: 800; color: #0d9488; margin-bottom: 12px; text-transform: uppercase;">
+            Sentence Builder · Build the meaning
+          </div>
+          <div data-hf-id="hf-e5mb" style="display: flex; gap: 10px;">
+            <span data-hf-id="hf-6q8s" class="word-tile placed">La taza</span>
+            <span data-hf-id="hf-d5uu" class="word-tile placed">está</span>
+            <span data-hf-id="hf-awuh" class="word-tile placed">en la mesa</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENE 5: Visual Journal & Retention (42s - 50s) -->
+    <section data-hf-id="hf-oilq" class="scene" id="scene-5" data-start="42" data-duration="8">
+      <div data-hf-id="hf-08n7" class="absolute" style="left: 120px; top: 220px; width: 800px;">
+        <div data-hf-id="hf-nir9" class="number-badge">
+          <span data-hf-id="hf-edpk" class="num">05</span>
+          <span data-hf-id="hf-y57z" class="label">RETENTION THAT STICKS</span>
+        </div>
+        <h1 data-hf-id="hf-l7un" class="headline-main">
+          Your day becomes <br data-hf-id="hf-qluq"><span data-hf-id="hf-n80w" class="headline-teal">a page you keep.</span>
+        </h1>
+        <p data-hf-id="hf-nex5" class="subtext">
+          Every photo lesson saves to your visual calendar. Review vocabulary weeks later and remember the exact day and place you learned it.
+        </p>
+        <div data-hf-id="hf-57qb" style="display: flex; align-items: center; gap: 16px; margin-top: 36px;">
+          <img data-hf-id="hf-hmfc" src="assets/farfalle.png" style="width: 50px; height: 50px;" alt="Farfalle streak">
+          <span data-hf-id="hf-0691" style="font-size: 28px; font-weight: 800; color: #ea580c;">7-Day Farfalle Streak 🔥</span>
+        </div>
+      </div>
+
+      <!-- Journal Calendar Mockup -->
+      <div data-hf-id="hf-8t57" class="card card--lifted absolute" id="journal-card" style="right: 120px; top: 180px; width: 780px; padding: 36px 40px;">
+        <div data-hf-id="hf-jfpm" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+          <h2 data-hf-id="hf-xqvg" style="font-family: 'Baloo', sans-serif; font-size: 34px; margin: 0;">October 2026 · Daily Journal</h2>
+          <span data-hf-id="hf-q86w" style="font-weight: 800; color: #0d9488; font-size: 20px;">14 Entries</span>
+        </div>
+        <div data-hf-id="hf-1rkj" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;">
+          <div data-hf-id="hf-2bom" style="border-radius: 16px; overflow: hidden; height: 160px; position: relative;">
+            <img data-hf-id="hf-kvbm" src="assets/desk-flatlay.jpg" style="width: 100%; height: 100%; object-fit: cover;">
+            <span data-hf-id="hf-iw97" style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); color: white; padding: 2px 8px; border-radius: 6px; font-size: 14px; font-weight: 800;">Oct 15</span>
+          </div>
+          <div data-hf-id="hf-l8h6" style="border-radius: 16px; overflow: hidden; height: 160px; position: relative;">
+            <img data-hf-id="hf-ewfb" src="assets/cafe-interior.jpg" style="width: 100%; height: 100%; object-fit: cover;">
+            <span data-hf-id="hf-ihy6" style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); color: white; padding: 2px 8px; border-radius: 6px; font-size: 14px; font-weight: 800;">Oct 16</span>
+          </div>
+          <div data-hf-id="hf-lms7" style="border-radius: 16px; overflow: hidden; height: 160px; position: relative;">
+            <img data-hf-id="hf-y013" src="assets/hillside-street.jpg" style="width: 100%; height: 100%; object-fit: cover;">
+            <span data-hf-id="hf-i3n5" style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.7); color: white; padding: 2px 8px; border-radius: 6px; font-size: 14px; font-weight: 800;">Oct 17</span>
+          </div>
+          <div data-hf-id="hf-tboe" style="border-radius: 16px; overflow: hidden; height: 160px; background: #f1f5f9; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px dashed #cbd5e1;">
+            <span data-hf-id="hf-x4lw" style="font-size: 32px;">📸</span>
+            <span data-hf-id="hf-yrie" style="font-size: 16px; font-weight: 800; color: #64748b; margin-top: 6px;">Today's Photo</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENE 6: Call to Action (50s - 56s) -->
+    <section data-hf-id="hf-nv28" class="scene" id="scene-6" data-start="50" data-duration="6">
+      <div data-hf-id="hf-zx1p" class="absolute" style="inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 100px;">
+        <img data-hf-id="hf-8s0t" src="assets/linguini-wordmark.png" style="height: 100px; margin-bottom: 24px;" alt="Linguini">
+        <h1 data-hf-id="hf-aok2" style="font-family: 'Baloo', sans-serif; font-size: 88px; line-height: 1.1; margin: 0 0 20px 0; color: #0f172a;">
+          Cook your first lesson today.
+        </h1>
+        <p data-hf-id="hf-eqca" style="font-size: 34px; color: #475569; margin: 0 0 40px 0;">
+          Unlimited photo lessons during Public Beta. No credit card required.
+        </p>
+        <div data-hf-id="hf-f8rs" style="display: inline-flex; align-items: center; gap: 20px; background: #ea580c; color: white; font-family: 'Baloo', sans-serif; font-size: 44px; padding: 20px 54px; border-radius: 999px; box-shadow: 0 12px 30px rgba(234, 88, 12, 0.35);">
+          <span data-hf-id="hf-e268">www.learnwithlinguini.com</span>
+          <span data-hf-id="hf-o03m">↗</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Audio Element -->
+    <audio data-hf-id="hf-kcr2" id="bgm" src="audio/music.wav" preload="auto"></audio>
+  </div>
+
+  <script>
+gsap.set("#ring-mug", { x: 153.25, y: 53 });
+gsap.set("#ring-book", { x: 85.25, y: -86.609 });
+    const tl = gsap.timeline({ paused: true });
+
+    // Track progress fill
+    tl.fromTo('#progress-fill', { width: '0%' }, { width: '100%', duration: 56, ease: 'none' }, 0);
+
+    // Mascot subtle breathing float
+    tl.fromTo('#mascot', { y: 0, rotation: -2 }, { y: -12, rotation: 2, duration: 1.2, repeat: -1, yoyo: true, ease: 'sine.inOut' }, 0);
+
+    // Scenes definitions
+    const scenes = [
+      { id: '#scene-0', start: 0, end: 6, sub: 'Rote word lists have no context. What if your camera roll was your textbook?' },
+      { id: '#scene-1', start: 6, end: 14, sub: '01 · Snap your coffee, desk, or walk home. Real places build real vocabulary.' },
+      { id: '#scene-2', start: 14, end: 22, sub: '02 · AI drafts the words. You choose what to keep before lessons begin.' },
+      { id: '#scene-3', start: 22, end: 31, sub: '03 · Spanish, French, German, and beginner Korean — built right into Linguini.' },
+      { id: '#scene-4', start: 31, end: 42, sub: '04 · Play two-way I-Spy, speech checks, and interactive sentence building.' },
+      { id: '#scene-5', start: 42, end: 50, sub: '05 · Every lesson saves into your visual journal. Words tied to memories stay.' },
+      { id: '#scene-6', start: 50, end: 56, sub: '06 · Public Beta is live! Cook your first photo lesson at learnwithlinguini.com.' }
+    ];
+
+    scenes.forEach(s => {
+      // Scene transition in
+      tl.to(s.id, { autoAlpha: 1, duration: 0.35, ease: 'power2.out' }, s.start);
+      // Update subtitle bar
+      tl.call(() => {
+        document.getElementById('sub-bar').textContent = s.sub;
+      }, null, s.start);
+      // Scene transition out
+      if (s.end < 56) {
+        tl.to(s.id, { autoAlpha: 0, duration: 0.35, ease: 'power2.in' }, s.end - 0.35);
+      }
+    });
+
+    // Scene 0 Animations
+    tl.fromTo('#hero-photo-card', { x: 80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.6, ease: 'power3.out' }, 0.5);
+    tl.fromTo('#ring-mug', { scale: 1.4, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: 'back.out(1.5)' }, 1.8);
+    tl.fromTo('#ring-book', { scale: 1.4, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: 'back.out(1.5)' }, 2.6);
+
+    // Scene 1 Animations
+    tl.fromTo('#snap-photo-card', { scale: 0.9, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.6, ease: 'power3.out' }, 6.5);
+    tl.fromTo('#ring-cafe', { scale: 1.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: 'back.out(1.5)' }, 8.0);
+
+    // Scene 2 Animations
+    tl.fromTo('#review-card', { x: 100, opacity: 0 }, { x: 0, opacity: 1, duration: 0.6, ease: 'power3.out' }, 14.5);
+
+    // Scene 3 Animations
+    ['#lc-es', '#lc-fr', '#lc-de', '#lc-ko'].forEach((id, i) => {
+      tl.fromTo(id, { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: 'back.out(1.3)' }, 22.8 + i * 0.4);
+    });
+
+    // Scene 4 Animations
+    tl.fromTo('#ispy-game-card', { scale: 0.92, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.6, ease: 'power3.out' }, 31.5);
+    tl.fromTo('#choice-b', { scale: 0.95 }, { scale: 1.05, duration: 0.3, yoyo: true, repeat: 1, ease: 'power2.inOut' }, 35.0);
+
+    // Scene 5 Animations
+    tl.fromTo('#journal-card', { rotationY: -15, opacity: 0 }, { rotationY: 0, opacity: 1, duration: 0.7, ease: 'power3.out' }, 42.5);
+
+    // Expose timeline to HyperFrames
+    window.__timelines = window.__timelines || {};
+    window.__timelines['linguini-linkedin'] = tl;
+  </script>
+</body>
+</html>

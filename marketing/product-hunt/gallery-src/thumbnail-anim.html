@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Linguini animated thumbnail</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  /* 2.4s seamless loop; frames are captured by seeking every animation
+     (document.getAnimations) so timing is exact. */
+  body { --w: 240px; --h: 240px; --loop: 2.4s; background: var(--butter); }
+  .mascot {
+    position: absolute; left: 50%; top: 50%; width: 150px; height: 150px;
+    margin: -75px 0 0 -75px;
+    animation: bob var(--loop) ease-in-out infinite;
+  }
+  @keyframes bob {
+    0%, 100% { transform: translateY(3px) rotate(-2deg); }
+    50% { transform: translateY(-4px) rotate(2deg); }
+  }
+  .pasta {
+    position: absolute; width: 58px; height: 58px;
+    display: grid; place-items: center;
+    animation: pop var(--loop) cubic-bezier(.3,1.5,.5,1) infinite;
+    animation-delay: calc(var(--i) * var(--loop) / -4);
+  }
+  .pasta img { max-width: 100%; max-height: 100%; display: block; filter: drop-shadow(0 3px 3px rgba(86, 67, 34, .18)); }
+  @keyframes pop {
+    0% { transform: scale(0) rotate(var(--r0)); opacity: 0; }
+    12% { transform: scale(1.12) rotate(var(--r1)); opacity: 1; }
+    20% { transform: scale(1) rotate(var(--r1)); }
+    62% { transform: scale(1) rotate(var(--r2)); opacity: 1; }
+    74%, 100% { transform: scale(0) rotate(var(--r2)); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+  <div class="pasta" style="left:10px; top:12px; --i:0; --r0:-40deg; --r1:-12deg; --r2:4deg"><img src="pasta/farfalle.png" alt=""></div>
+  <div class="pasta" style="right:10px; top:10px; --i:1; --r0:40deg; --r1:14deg; --r2:-2deg"><img src="pasta/fusilli.png" alt=""></div>
+  <div class="pasta" style="right:12px; bottom:10px; --i:2; --r0:-30deg; --r1:-6deg; --r2:10deg"><img src="pasta/penne.png" alt=""></div>
+  <div class="pasta" style="left:10px; bottom:12px; --i:3; --r0:30deg; --r1:8deg; --r2:-8deg"><img src="pasta/macaroni.png" alt=""></div>
+  <img class="mascot" src="brand/linguini-logo.png" alt="Linguini">
+<script>window.uiReady = Promise.all([...document.images].map(i => i.decode())).then(() => document.fonts.ready);</script>
+</body>
+</html>

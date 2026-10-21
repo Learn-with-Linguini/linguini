@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Linguini launch film overlay</title>
+<style>
+@font-face { font-family: "Instrument Serif"; src: url("assets/fonts/InstrumentSerif-Regular.ttf"); }
+@font-face { font-family: "Baloo 2"; font-weight: 800; src: url("assets/fonts/Baloo2-ExtraBold.ttf"); }
+@font-face { font-family: "Nunito Sans"; font-weight: 800; src: url("assets/fonts/NunitoSans-800.ttf"); }
+:root { --cream: #fff8ea; --gold: #fba804; --night: #0e0c0a; }
+html, body { margin: 0; background: transparent; }
+body.preview { background: #222; }
+#stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; color: var(--cream); }
+.abs { position: absolute; }
+#box { left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; filter: drop-shadow(0 0 5px rgba(0, 0, 0, .45)); }
+#tag { left: 0; top: 0; text-align: center; white-space: nowrap; transform-origin: 50% 0; }
+#tag::before { content: ""; position: absolute; inset: -34px -70px -30px; z-index: -1;
+  background: radial-gradient(closest-side, rgba(8, 7, 6, .55), rgba(8, 7, 6, .3) 55%, rgba(8, 7, 6, 0)); }
+#word { font-family: "Instrument Serif", serif; font-size: 72px; line-height: 1; letter-spacing: -0.005em;
+  text-shadow: 0 2px 22px rgba(0, 0, 0, .55), 0 1px 3px rgba(0, 0, 0, .35); }
+#gloss { font-family: "Nunito Sans", sans-serif; font-weight: 800; font-size: 20px; letter-spacing: .28em; text-transform: uppercase;
+  margin-top: 12px; opacity: .82; text-shadow: 0 1px 10px rgba(0, 0, 0, .6); }
+#topscrim { left: 0; right: 0; top: 0; height: 330px;
+  background: linear-gradient(rgba(8, 7, 6, .62), rgba(8, 7, 6, .3) 50%, rgba(8, 7, 6, 0)); }
+#headline { left: 0; right: 0; top: 52px; text-align: center; font-family: "Instrument Serif", serif; font-size: 88px; line-height: 1;
+  text-shadow: 0 3px 30px rgba(0, 0, 0, .5), 0 1px 4px rgba(0, 0, 0, .3); }
+#end { inset: 0; background: var(--night); }
+#glow { left: -10%; right: -10%; bottom: -62%; height: 100%; border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(251, 168, 4, .5), rgba(239, 91, 50, .18) 55%, rgba(14, 12, 10, 0) 100%); filter: blur(30px); }
+#mark { left: 0; top: 0; width: 1920px; height: 1080px; overflow: visible; }
+#mark text { font-family: "Baloo 2"; font-weight: 800; fill: var(--gold); }
+#strand { fill: none; stroke: var(--gold); stroke-linecap: round; stroke-linejoin: round; }
+#tagline { left: 0; right: 0; top: 648px; text-align: center; font-family: "Instrument Serif", serif; font-size: 60px; }
+#ph { left: 0; right: 0; top: 944px; text-align: center; font-family: "Nunito Sans", sans-serif; font-weight: 800; font-size: 19px;
+  letter-spacing: .34em; text-transform: uppercase; opacity: .6; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <svg id="box" class="abs" viewBox="0 0 1920 1080"><path id="brackets" fill="none" stroke="#fff8ea" stroke-width="3" stroke-linecap="square" /></svg>
+  <div id="tag" class="abs"><div id="word"></div><div id="gloss"></div></div>
+  <div id="topscrim" class="abs"></div>
+  <div id="headline" class="abs"></div>
+  <div id="end" class="abs">
+    <div id="glow" class="abs"></div>
+    <svg id="mark" class="abs" viewBox="0 0 1920 1080">
+      <text id="wm" x="960" y="520" text-anchor="middle" font-size="236">Linguini</text>
+      <path id="strand" />
+    </svg>
+    <div id="tagline" class="abs">Learn the language of your day.</div>
+    <div id="ph" class="abs">Coming soon to Product Hunt</div>
+  </div>
+</div>
+<script src="overlay.js"></script>
+</body>
+</html>
