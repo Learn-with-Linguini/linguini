@@ -186,15 +186,14 @@ def _focus(payload, rows):
 
 
 def _m03_group(payload, mission, language, rows, counts, translations):
-    """The one learner-counted group of 2 or 3 with an approved noun."""
+    """The first learner-counted group of 2 or 3 with an approved noun."""
     by_key = {row["key"]: row for row in rows}
-    usable = [group for group in countable_groups(mission, counts) if group["quantity"] in (2, 3)]
-    if len(usable) != 1:
-        return []
-    counted = usable[0]
-    object_ids = [str(item) for item in counted["sceneObjectIds"]]
-    key = next((item for item in object_ids if item in by_key), None)
-    if key is None:
+    for counted in countable_groups(mission, counts):
+        object_ids = [str(item) for item in counted["sceneObjectIds"]]
+        key = next((item for item in object_ids if item in by_key), None)
+        if counted["quantity"] in (2, 3) and key is not None:
+            break
+    else:
         return []
     row = by_key[key]
     noun = lex.reviewed_noun(row["source"], language)

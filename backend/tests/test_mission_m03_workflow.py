@@ -24,7 +24,7 @@ from test_preloaded_templates_workflow import curated as curated
 from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.tasks import PostgresTaskRepository, task_attempts
 from app.repositories.postgres.xp import xp_events
-from app.repositories.practice import PracticeConflictError
+from app.repositories.practice import InsufficientSceneError, PracticeConflictError
 from app.schemas.sessions import AddedPracticeObject, ReviewPracticeRequest
 from app.schemas.tasks import SessionTask, SkipTaskRequest
 from app.services import mission_eligibility, mission_lessons_m03
@@ -168,11 +168,13 @@ def test_a_missing_or_single_count_does_not_qualify(curated, quantity):
         accepted_object_ids=[obj.id for obj in analyzed.scene_objects],
         object_counts={} if quantity is None else {_cup(analyzed).id: quantity},
     )
-    repository.review(sid, profile.id, request)
-    detail = repository.get(sid, profile.id)
-    tips = " ".join(detail.mission_guidance)
-    assert "Say how many: Count a group of 2 to 10 matching objects." in tips
-    assert all(task.public_content.mission_key is None for task in detail.tasks)
+    with pytest.raises(InsufficientSceneError) as rejected:
+        repository.review(sid, profile.id, request)
+    shortfall = rejected.value.shortfall
+    assert "counts" in shortfall.missing
+    m03 = next(item for item in shortfall.missions if item["missionId"] == "M03")
+    assert m03["reasons"] == ["Count a group of 2 to 10 matching objects."]
+    assert repository.get(sid, profile.id).tasks == []
 
 
 def test_a_group_of_matching_objects_is_counted_once(curated):
@@ -309,7 +311,7 @@ def test_a_saved_old_shape_m03_lesson_still_validates_and_loads(curated):
     assert saved.id in {task.id for task in loaded.tasks}
 
 
-def test_a_noun_without_a_reviewed_plural_skips_m03_for_the_regular_lesson(
+def test_a_noun_without_a_reviewed_plural_reopens_review_instead_of_a_default_lesson(
     curated, monkeypatch,
 ):
     engine = curated[0]
@@ -319,6 +321,9 @@ def test_a_noun_without_a_reviewed_plural_skips_m03_for_the_regular_lesson(
     assert _draft(engine, sid)["skippedMissions"] == [
         {"missionId": "M03", "reason": "noReviewedContent"}
     ]
-    assert detail.session.status == "inProgress"
-    assert detail.tasks[0].kind == "vocabularyIntroduction"
-    assert "grammarExplanation" in {task.kind for task in detail.tasks}
+    assert detail.session.status == "awaitingObjectReview"
+    assert detail.tasks == []
+    assert detail.scene_shortfall is not None
+    # M03 fitted the photo but had nothing to check, so every kind of fact is offered.
+    assert detail.scene_shortfall.missing == ["objects", "counts", "attributes", "relations"]
+    assert [item.mission_id for item in detail.scene_shortfall.missions] == ["M03"]

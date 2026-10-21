@@ -84,6 +84,9 @@ export function sessionDestination(detail: PracticeDetail): SessionDestination {
 }
 
 export function isSessionRouteAllowed(detail: PracticeDetail, pathname: string): boolean {
+  if (pathname === `/practice/sessions/${detail.session.id}/review`) {
+    return detail.session.mode === "lesson" && detail.tasks.some(task => task.kind === "vocabularyIntroduction");
+  }
   const canonical = sessionDestination(detail).path;
   if (pathname === canonical) return true;
   if (detail.session.status === "generatingTasks"

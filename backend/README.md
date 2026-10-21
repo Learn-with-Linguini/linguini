@@ -56,30 +56,69 @@ local environment files. Missing database configuration fails at startup; connec
 or query failures never fall back to JSON. The application creates one SQLAlchemy
 engine per process and disposes it at shutdown.
 
-### Sauce and photo rooms
+### Basil and photo challenges
 
-Apply the game resource, uploaded photo room and room invite migrations before
-deploying. Sauce, Basil and two-player rooms are available automatically; they
-require no feature switches in the API or frontend. The I-Spy tab offers both
-standalone play with AI and a friend-room lobby.
+Apply the game resource, uploaded photo room, room invite, asynchronous challenge
+and mission gamification migrations before deploying. Basil and two-player rooms
+are available automatically; they require no feature switches in the API or
+frontend. The I-Spy tab offers standalone play with AI, saved friends and a
+challenge inbox.
 
-`DAILY_SAUCE_CAPACITY` defaults to 10 (allowed range: 1–100). Sauce refills at
-00:00 UTC and applies to every account tier, including beta. Starting a solo
-lesson or a photo room costs one Sauce per player. Resuming does not spend again;
-failed setup and lessons left before any practice return the reserved Sauce.
-Basil leaves reward submitted lesson and room practice; 20 leaves unlock a Sauce
-jar appearance. Standalone AI I-Spy games remain free and do not award Basil, XP
-or vocabulary progress.
+Starting or resuming a lesson or photo challenge does not spend Sauce. Legacy
+Sauce balances, transactions, daily refill settings and refunds remain for
+historical requests; they no longer gate new practice. Sauce Jars now show
+mission progress. Basil Points reward accepted lesson questions and room
+contributions; 20 Basil unlocks an accent. Today and lifetime totals count earned
+credits separately from the spendable balance. Existing XP history is preserved.
+See [the reward and badge policy](../docs/gamification.md). Standalone AI I-Spy
+games remain free and do not award Basil, XP or vocabulary progress.
 
 Rooms store random invitations privately in the database, so a host can recover
 an invitation after reload or an API restart without a separate room secret.
 The invite migration rotates existing live invitations; hosts should copy the
-new code after deployment. Rooms support two players learning English to Spanish
-or French at the same A1/A2 level, with 2–4 photos uploaded by either player. Room photos use
-the configured scene analyzer and translator, then require the owner's fact review.
+new code after deployment. Rooms support two players learning English to Spanish,
+French or German at the same A1/A2 level, with 2–4 photos uploaded by either player.
+Room photos use the configured scene analyzer and translator, then require the
+owner's fact review.
 Rooms do not require or call OpenAI image moderation. Photos remain private to the
 owner until analysis succeeds, then become accessible only to the invited partner.
-Invitations expire after 10 minutes; setup and play each expire after 30 minutes.
+Room invitations and preparation expire after seven days; started challenges last
+14 days. A host can prepare and consent before their partner joins. The final
+player to get ready starts the game automatically, so the host can be offline.
+Both players explicitly consent by getting ready. Auto-start and the legacy
+start endpoint work even when historical Sauce balances are empty, and retries
+do not create duplicate rounds.
+
+`GET /api/v1/rooms` returns every active challenge and completed challenge with
+an unread result (up to ten together per learner), plus up to 20 other recent
+finished challenges, ordered by `updatedAt`. The older
+`GET /api/v1/rooms/active` returns the most recently updated active challenge.
+Snapshots include `inviteExpiresAt`, `updatedAt` and `actionRequired` for the
+inbox: `inviteFriend`, `preparePhotos`, `ready`, `sendClue`, `guess`, `viewResult`,
+`waiting` or `finished`. Setup remains limited to five newly created or joined
+rooms per hour. Returning to the inbox does not end a challenge; the explicit
+leave command ends it for both players.
+
+Results are acknowledged separately. The first acknowledgement advances the
+shared round; a returning partner sees their own oldest unread result before
+the current round, including the final result after completion. Only that
+partner's pending result photo remains accessible after completion. Ending,
+expiry and account deletion revoke room photo access. Clues and guesses retain
+server-owned, idempotent Basil contribution rewards, which feed account earned
+totals and opted-in daily standings. Existing XP awards are preserved for history.
+
+Friends use explicit, single-use private invitations without email or account
+search. `POST /api/v1/friends/invite` accepts a `commandId` and returns a durable
+`inviteCode` and `expiresAt` (seven days); `POST /api/v1/friends/accept` accepts
+`commandId` and `inviteCode` to create a mutual friendship. `GET /api/v1/friends`
+returns display names and active learning setups with `canChallenge`.
+`DELETE /api/v1/friends/{userId}` unlinks both sides. Consumed invitations cannot
+re-add an unlinked friend; a fresh invitation is required. Invitation creation
+is limited to ten per hour and acceptance to 20 per hour. Room partners are
+never saved automatically. Creating a room with `friendUserId` adds only an
+accepted friend with a matching active learning language and level; it appears
+in their inbox without spending Sauce. Removing a friend prevents future direct
+challenges; an existing challenge can still be resumed or explicitly ended.
 Room images use an authenticated, uncached endpoint; ordinary media access stays
 restricted to the photo owner. Rooms require `MEDIA_STORAGE_PRIVATE=true`; the
 Supabase bucket must also be configured as private.
@@ -243,8 +282,11 @@ scene-analysis provider and stores the detected objects (English labels,
 markers, attributes) in `preloaded_scenes.content.items`, so the Scene Analysis
 review screen opens with objects already on the photo. Scenes have no language:
 each image has one row, and a learner's session translates the objects into
-their target language (or reuses the catalog word for that label). `content.tasks/rounds/prompts` stay minimal
-placeholders; real lessons and clues come from the templates below.
+their target language (or reuses the catalog word for that label). English
+`translation` labels are stored as bare nouns (`pillow`, not `the pillow`);
+articles belong only in target-language vocabulary words.
+`content.tasks/rounds/prompts` stay minimal placeholders; real lessons and
+clues come from the templates below.
 
 Each item's `attributes.color` and the scene's `content.relations` are curated from
 the images (migration `20261013010000_preloaded_scene_facts`), so preloaded lessons and
@@ -256,6 +298,32 @@ python -m app.scripts.precompute_preloaded_scenes --dry-run --json out.json
 python -m app.scripts.precompute_preloaded_scenes --slug street --language fr
 python -m app.scripts.precompute_preloaded_scenes --emit-migration migration.sql
 python -m app.scripts.precompute_preloaded_scenes --from-json out.json --emit-migration migration.sql
+```
+
+Grounding DINO is optional. Install it with:
+
+```sh
+pip install -e '.[grounding]'
+# For CPU-only PyTorch wheels:
+pip install -e '.[grounding]' --extra-index-url https://download.pytorch.org/whl/cpu
+```
+
+To use the recommended lightweight model for precompute or re-grounding, set:
+
+```sh
+AI_OBJECT_GROUNDING_PROVIDER=groundingDino
+AI_OBJECT_GROUNDING_MODEL=IDEA-Research/grounding-dino-tiny
+```
+
+`--reground` updates stored item marker positions with Grounding DINO without
+calling the scene-analysis model; item labels, attributes and relations are
+retained. It queries one label at a time, then retries only unmatched items at
+the `--reground-fallback-threshold` (default `0.25`); fallback boxes close to a
+primary-pass marker are ignored. Use `--from-json` to re-ground an exported
+artifact instead of rows from the database. For example:
+
+```sh
+python -m app.scripts.precompute_preloaded_scenes --reground --dry-run --json out.json --report report.json --emit-migration migration.sql
 ```
 
 `--slug` and `--language` are repeatable and default to all six scenes
@@ -278,8 +346,9 @@ its attributes and relations. Each validated result is stored server-only in
 `preloaded_scenes.content.generated` (`version: preloaded-templates.v1`) with:
 
 - `feature`, `language` and `variant` (`prompt|schema|validator` versions);
-- a `fingerprint` of the scene facts (title, summary, labels, attributes,
-  relations, marker positions) and language;
+- a `fingerprint` of the scene facts (title, summary, labels, attributes and
+  relations) and language; changing labels stales templates, but moving marker
+  positions alone does not;
 - stable references (`o1`, `o1:color`, `r1`) instead of session IDs;
 - provenance (deployment, model, creation time).
 
@@ -294,7 +363,9 @@ Ownership, claims, revision guards and idempotency are unchanged. Edited
 scenes, uploaded photos, partial selections, missing or stale templates and
 failed remapping fall back to the result cache and normal routed generation.
 A model or deployment change alone does not stale a template; rerun the
-script to refresh.
+script to refresh. When re-grounding changes labels, stale templates are
+regenerated if provider calls are allowed; otherwise sessions use routed
+generation until templates are refreshed.
 
 ```sh
 python -m app.scripts.precompute_preloaded_scenes --state state.json --report report.json
@@ -558,9 +629,18 @@ lesson.
   confirmed, and plans every mission the photo supports, up to three. The plan is saved as
   `analysisDraft.missionPlan` before generation and generation reads only that snapshot.
   Sessions reviewed before plans were saved keep the regular lesson.
-- **No mission fits.** The regular lesson runs and `analysisDraft.missionGuidance`
-  (returned as `missionGuidance`) lists what each mission is missing; the lesson page
-  shows it as a short note. Nothing is inferred and no scene is substituted.
+- **No mission fits.** A profile with implemented missions never falls back to the
+  regular lesson, whose default tasks cannot all be checked. The review is rolled back and
+  rejected with 422 `insufficient_scene`, whose `detail` adds `missing` (any of `objects`,
+  `counts`, `attributes`, `relations`, for the missions closest to fitting) and `missions`
+  (each candidate's `missionId`, `title`, `missing`, `reasons` and `steps`: concrete
+  `{kind, text}` actions worded from the review, such as "Mark 1 more cup so there are 2 cups."). The review screen asks
+  the learner to add those facts or try another photo. If every planned mission is skipped
+  during generation, the partial tasks are dropped, the session returns to
+  `awaitingObjectReview` and the same shape is saved as `analysisDraft.sceneShortfall`
+  (returned as `sceneShortfall` while reviewing). Profiles without implemented missions
+  (for example B1–C2) keep the regular lesson. Nothing is inferred and no scene is
+  substituted.
 - **Shared teaching.** Translation and one vocabulary introduction are checkpointed first,
   as before. The introduction carries no mission fields because it teaches the nouns for
   every planned mission; its per-word evidence still follows each word's own result.
@@ -656,7 +736,7 @@ A2 location production.
    + `es` without accent changes; fr + `s`, excluding `-s/-x/-z/-au/-eu/-al/-ail` and the
    `-ou` exceptions) and must match any recorded plural. Otherwise the session records
    `analysisDraft.skippedMissions` and keeps its other tasks; with no mission task left
-   the regular lesson is used.
+   the session returns to review with a `sceneShortfall` instead of a regular lesson.
 2. **Lesson** (`app/ai/features/learning_tasks/mission_m03.py`). Exactly one
    `grammarLesson` with 2–4 questions: quantity comprehension, choosing the statement
    (distractors use a wrong number or the singular), then a word-bank statement whose

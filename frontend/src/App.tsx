@@ -1,17 +1,19 @@
 import { Navigate, Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { AppShell, FocusShell } from "./components/AppShell";
 import { Home } from "./pages/Home";
-import { Onboarding } from "./pages/Onboarding";
+import { OnboardingPage } from "./pages/Onboarding";
 import { Login } from "./pages/Login";
 import { PracticeSelect } from "./pages/PracticeSelect";
 import { PracticeAnalysis } from "./pages/PracticeAnalysis";
 import { MicTest } from "./pages/MicTest";
 import { Learn } from "./pages/Learn";
-import { LearningTaskPage } from "./pages/LearningTaskPage";
+import { VocabularyPreview } from "./pages/VocabularyPreview";
+import { LearningTaskPage, VocabularySceneReview } from "./pages/LearningTaskPage";
 import { ISpyPhase1 } from "./pages/ISpyPhase1";
 import { ISpyPhase2 } from "./pages/ISpyPhase2";
 import { ISpyModes } from "./pages/ISpyModes";
 import { ISpyPlay } from "./pages/ISpyPlay";
+import { DailyChallengePage } from "./pages/DailyChallengePage";
 import { ISpyResults } from "./pages/ISpyResults";
 import { SessionSummary } from "./pages/SessionSummary";
 import { Vocabulary } from "./pages/Vocabulary";
@@ -24,6 +26,7 @@ import { SessionRoute } from "./components/SessionRoute";
 import { ProfileEdit } from "./pages/ProfileEdit";
 import { Progress } from "./pages/Progress";
 import { Contact } from "./pages/Contact";
+import { Payment } from "./pages/Payment";
 import { ResetPassword } from "./pages/ResetPassword";
 import { AppStateProvider } from "./state/AppState";
 import { useAuth } from "./state/Auth";
@@ -56,7 +59,7 @@ function OnboardingRoute() {
   const { session, loading } = useAuth();
   if (loading) return <LoadingScreen label="Preparing onboarding…" />;
   if (!session) return <Navigate to="/login?mode=signup" replace />;
-  return <AppStateProvider><Onboarding /></AppStateProvider>;
+  return <OnboardingPage />;
 }
 
 function UnknownRoute() {
@@ -77,12 +80,15 @@ export default function App() {
       <Route element={<RequireAuth />}>
         <Route element={<AuthenticatedApp />}>
           <Route element={<FocusShell />}>
-        <Route path="/rooms/:roomId" element={<Room />} />
+            <Route path="/payment" element={<Payment />} />
+            <Route path="/rooms/:roomId" element={<Room />} />
         <Route path="/practice/sessions/:sessionId" element={<SessionRoute />}>
           <Route path="analysis" element={<PracticeAnalysis />} />
           <Route path="mic-test" element={<MicTest />} />
           <Route path="learn" element={<Learn />} />
+          <Route path="learn/vocabulary-preview" element={<VocabularyPreview />} />
           <Route path="learn/:taskId" element={<LearningTaskPage />} />
+          <Route path="review" element={<VocabularySceneReview />} />
           <Route path="ispy-1" element={<ISpyPhase1 />} />
           <Route path="ispy-2" element={<ISpyPhase2 />} />
           <Route path="summary" element={<SessionSummary />} />
@@ -100,6 +106,7 @@ export default function App() {
         <Route path="/practice" element={<PracticeSelect />} />
         <Route path="/ispy" element={<ISpyModes />} />
         <Route path="/ispy/play" element={<ISpyPlay />} />
+        <Route path="/ispy/challenge" element={<DailyChallengePage />} />
         <Route path="/ispy/friends" element={<Rooms />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/vocabulary" element={<Vocabulary />} />

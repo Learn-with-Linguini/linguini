@@ -8,9 +8,10 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import datetime, timedelta
 from functools import partial
 from uuid import UUID, uuid5
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import DateTime, and_, delete, func, insert, select, update
 from sqlalchemy.dialects.postgresql import insert as upsert
@@ -28,7 +29,19 @@ from app.ai.features.scene_analysis import (
     RoutedSceneAnalyzer,
 )
 from app.missions import get_mission
-from app.repositories.postgres.game_resources import refund_sauce, reward_basil, spend_sauce
+from app.repositories.postgres.daily_challenges import enter_challenge, record_completion
+from app.repositories.postgres.game_resources import refund_sauce, reward_basil
+from app.repositories.postgres.gamification import (
+    compatible_question,
+    m06_check_supports,
+    photo_identities,
+    question_event,
+    question_events,
+    record_question,
+    session_basil,
+    session_missions,
+    task_basil,
+)
 from app.repositories.postgres.language_profiles import language_profiles
 from app.repositories.postgres.learner_history import snapshot_learner_history
 from app.repositories.postgres.media_assets import media_assets, media_scene_analyses
@@ -56,12 +69,15 @@ from app.repositories.postgres.vocabulary import (
 from app.repositories.postgres.xp import award, xp_events
 from app.repositories.practice import (
     ActiveSessionLimitReachedError,
+    DailyLessonLimitReachedError,
+    InsufficientSceneError,
     PracticeConflictError,
     PracticeNotFoundError,
     PracticeStorageError,
 )
 from app.schemas.base import utc_now
 from app.schemas.enums import (
+    AccountTier,
     SessionMode,
     SessionStatus,
     VocabularyEncounterOutcome,
@@ -78,6 +94,7 @@ from app.schemas.sessions import (
 from app.schemas.tasks import (
     ISPY_DESCRIPTION_EVALUATION_VERSION,
     CheckVocabularyAnswerResponse,
+    CheckVocabularyTypingResponse,
     ISpyDescriptionEvaluation,
     LessonAnswerCheck,
     LessonAssistanceResponse,
@@ -89,6 +106,7 @@ from app.schemas.tasks import (
     SessionTaskPublic,
     TaskActionResponse,
     TaskAttempt,
+    VocabularyChecksResponse,
 )
 from app.schemas.translation import SceneTranslationResult
 from app.schemas.vocabulary import (
@@ -104,12 +122,14 @@ from app.services.ispy_descriptions import (
     interpret_guess,
 )
 from app.services.mission_eligibility import (
+    SHORTFALL_KINDS,
+    SceneShortfall,
     lesson_missions,
     mission_snapshot,
-    photo_eligibility,
     plan_missions,
     provisional_mission_focus,
     saved_counted_groups,
+    scene_shortfall,
     snapshot_missions,
 )
 from app.services.mission_lessons import mission_version
@@ -133,6 +153,7 @@ from app.services.scene_analysis import (
     UnavailableSceneAnalyzer,
     scene_inventory,
     scene_result_from_inventory,
+    uploaded_scene_title,
 )
 from app.services.session_personalization import (
     lesson_history,
@@ -160,6 +181,8 @@ def _unique_by_id(items):
         seen.add(item.id)
         unique.append(item)
     return unique
+
+
 TERMINAL = {"completed", "abandoned", "failed"}
 MAX_ACTIVE_SESSIONS = 3
 MAX_ANALYSIS_ATTEMPTS = 3
@@ -175,7 +198,7 @@ ALLOWED_TRANSITIONS = {
     "failed": {"analyzingScene"},
 }
 READ_TASKS = {"vocabularyIntroduction", "grammarExplanation", "syntaxExplanation"}
-ANALYSIS_TIMEOUT = timedelta(minutes=15)
+ANALYSIS_TIMEOUT = timedelta(minutes=2)
 
 
 def _lesson_answer_is_correct(task, question_id, answer):
@@ -669,8 +692,77 @@ class PostgresWorkflowRepository:
             ).mappings()
         ]
 
-    def check_vocabulary_answer(self, task_id, question_id, option_id):
-        """Evaluate one vocabulary choice without recording or completing the task."""
+    def check_vocabulary_answer(self, task_id, question_id, option_id, review=False):
+        """Check a choice; scene revisits are intentionally read-only practice."""
+        with self.transaction() as c:
+            task = self._task_row(c, task_id)
+            session = self._session(c, task.session_id)
+            if task.kind != "vocabularyIntroduction" or not task.answer_key:
+                raise PracticeConflictError("This task does not support answer checking.")
+            question = next(
+                (item for item in task.public_content.questions if item.question_id == question_id),
+                None,
+            )
+            if question is None or option_id not in {item.option_id for item in question.options}:
+                raise PracticeConflictError("Choose one of the offered answers.")
+            expected = task.answer_key.correct_option_ids.get(question_id)
+            if expected is None:
+                raise PracticeConflictError("This question has no answer key.")
+            prior = None if review else compatible_question(
+                question_event(c, self.user_id, task.id, question_id), task, question_id
+            )
+            if (
+                not prior
+                and session.status in {"inProgress", "generatingTasks"}
+                and task.status not in {"completed", "skipped"}
+            ):
+                prior = record_question(
+                    c,
+                    self.user_id,
+                    session,
+                    task,
+                    question_id,
+                    option_id,
+                    expected == option_id,
+                    {"evidenceType": "recognition"},
+                )
+            return CheckVocabularyAnswerResponse(
+                question_id=question_id,
+                accepted_option_id=prior["answer"] if prior else option_id,
+                is_correct=prior["is_correct"] if prior else expected == option_id,
+                correct_option_id=expected,
+                basil_earned=prior["basil_earned"] if prior else 0,
+            )
+
+    def vocabulary_checks(self, task_id):
+        with self.read_connection() as c:
+            task = self._task_row(c, task_id)
+            if task.kind != "vocabularyIntroduction" or not task.answer_key:
+                raise PracticeConflictError("This task does not support vocabulary checks.")
+            rows = c.execute(
+                select(question_events).where(
+                    question_events.c.user_id == self.user_id,
+                    question_events.c.task_id == task_id,
+                )
+            ).mappings()
+            return VocabularyChecksResponse(
+                checks=[
+                    CheckVocabularyAnswerResponse(
+                        question_id=row["question_id"],
+                        accepted_option_id=row["answer"],
+                        is_correct=row["is_correct"],
+                        basil_earned=row["basil_earned"],
+                        correct_option_id=task.answer_key.correct_option_ids[row["question_id"]],
+                    )
+                    for row in rows
+                    if row["question_id"] in task.answer_key.correct_option_ids
+                    and compatible_question(row, task, row["question_id"])
+                ]
+            )
+
+    def check_vocabulary_typing(
+        self, task_id, learning_key, answer, reveal
+    ) -> CheckVocabularyTypingResponse:
         with self.read_connection() as c:
             row = (
                 c.execute(
@@ -693,20 +785,17 @@ class PostgresWorkflowRepository:
                 raise PracticeNotFoundError("Task not found.")
             task = SessionTask.model_validate(dict(row))
             if task.kind != "vocabularyIntroduction" or not task.answer_key:
-                raise PracticeConflictError("This task does not support answer checking.")
-            question = next(
-                (item for item in task.public_content.questions if item.question_id == question_id),
-                None,
-            )
-            if question is None or option_id not in {item.option_id for item in question.options}:
-                raise PracticeConflictError("Choose one of the offered answers.")
-            correct_option_id = task.answer_key.correct_option_ids.get(question_id)
-            if correct_option_id is None:
-                raise PracticeConflictError("This question has no answer key.")
-            return CheckVocabularyAnswerResponse(
-                question_id=question_id,
-                is_correct=correct_option_id == option_id,
-                correct_option_id=correct_option_id,
+                raise PracticeConflictError("This task does not support typing checks.")
+            accepted = task.answer_key.accepted_text_answers_by_vocabulary_id.get(learning_key)
+            if not accepted:
+                raise PracticeConflictError("This word has no typing answer key.")
+            return CheckVocabularyTypingResponse(
+                learning_key=learning_key,
+                is_correct=not reveal
+                and normalize_answer(answer)
+                in {normalize_answer(candidate) for candidate in accepted},
+                correct_answer=accepted[0],
+                revealed=reveal,
             )
 
     @staticmethod
@@ -761,10 +850,19 @@ class PostgresWorkflowRepository:
             elif wrong_field:
                 feedback = "Check that detail and try again."
         evaluation = next(
-            item for item in task.answer_key.question_evaluations
-            if item.question_id == question_id
+            item for item in task.answer_key.question_evaluations if item.question_id == question_id
+        )
+        supports = []
+        if task.public_content.mission_id == "M06":
+            supports = m06_check_supports(stored or {})
+            if question.interaction_type == "sentenceBuilding" and "wordBank" not in supports:
+                supports.append("wordBank")
+        mission = (
+            get_mission(*task.public_content.mission_key)
+            if task.public_content.mission_key else None
         )
         return LessonAnswerCheck(
+            basil_earned=(stored or {}).get("basilEarned", 0),
             question_id=question_id,
             answer=answer,
             is_correct=is_correct,
@@ -779,6 +877,10 @@ class PostgresWorkflowRepository:
                 objective_id=evaluation.objective_id,
                 target_ids=evaluation.target_ids,
                 evidence_type=evaluation.evidence_type,
+                assistance=supports,
+                assistance_used=any(
+                    mission is None or mission.counts_as_assistance(item) for item in supports
+                ),
             ),
         )
 
@@ -788,11 +890,15 @@ class PostgresWorkflowRepository:
             task = self._task_row(c, task_id)
             if task.kind != "grammarLesson":
                 raise PracticeConflictError("This lesson does not support per-question checking.")
-            session_row = c.execute(
-                select(sessions)
-                .where(sessions.c.id == task.session_id, sessions.c.user_id == self.user_id)
-                .with_for_update()
-            ).mappings().one_or_none()
+            session_row = (
+                c.execute(
+                    select(sessions)
+                    .where(sessions.c.id == task.session_id, sessions.c.user_id == self.user_id)
+                    .with_for_update()
+                )
+                .mappings()
+                .one_or_none()
+            )
             if session_row is None:
                 raise PracticeNotFoundError("Task not found.")
             session = parse_session(session_row)
@@ -800,6 +906,18 @@ class PostgresWorkflowRepository:
             mission_checks = dict(draft.get("missionChecks") or {})
             task_checks = dict(mission_checks.get(str(task.id)) or {})
             stored = task_checks.get(question_id)
+            persisted = compatible_question(
+                question_event(c, self.user_id, task.id, question_id), task, question_id
+            )
+            if stored is None and persisted:
+                stored = {
+                    "answer": persisted["answer"],
+                    "isCorrect": persisted["is_correct"],
+                    "basilEarned": persisted["basil_earned"],
+                    "locked": True,
+                }
+            if stored is not None and persisted:
+                stored = {**stored, "basilEarned": persisted["basil_earned"]}
             question_ids = [item.question_id for item in task.public_content.questions]
             if question_id not in question_ids:
                 raise PracticeConflictError("Choose a question from this lesson.")
@@ -842,6 +960,20 @@ class PostgresWorkflowRepository:
                 "assistance": assistance,
                 "locked": locked,
             }
+            checked = self._lesson_check(
+                task, question_id, answer, is_correct, task_checks[question_id]
+            )
+            event = record_question(
+                c,
+                self.user_id,
+                session,
+                task,
+                question_id,
+                answer,
+                is_correct,
+                checked.outcome.model_dump(mode="json", by_alias=True),
+            )
+            task_checks[question_id]["basilEarned"] = event["basil_earned"]
             mission_checks[str(task.id)] = task_checks
             draft["missionChecks"] = mission_checks
             c.execute(
@@ -864,6 +996,18 @@ class PostgresWorkflowRepository:
             checks = []
             for question in task.public_content.questions:
                 stored = task_checks.get(question.question_id)
+                event = compatible_question(
+                    question_event(c, self.user_id, task.id, question.question_id),
+                    task, question.question_id,
+                )
+                if stored is None and event:
+                    stored = {
+                        "answer": event["answer"],
+                        "isCorrect": event["is_correct"],
+                        "locked": True,
+                    }
+                if stored is not None and event:
+                    stored = {**stored, "basilEarned": event["basil_earned"]}
                 if stored is not None and "answer" in stored:
                     checks.append(
                         self._lesson_check(
@@ -1322,6 +1466,11 @@ class PostgresWorkflowRepository:
             personalization=(draft or {}).get("personalization"),
             counted_groups=saved_counted_groups(draft),
             mission_guidance=(draft or {}).get("missionGuidance", []),
+            scene_shortfall=(
+                (draft or {}).get("sceneShortfall")
+                if session.status in _REVIEW_STATUSES
+                else None
+            ),
             mission_choices=(draft or {}).get("missionChoices"),
             review_markers=(
                 {} if session.status in _REVIEW_STATUSES
@@ -1444,7 +1593,17 @@ class PostgresWorkflowRepository:
 
     def create(self, request):
         with self.transaction() as c:
-            self._practice_media(c, request.language_profile_id, request.media_asset_id)
+            _profile, asset = self._practice_media(
+                c, request.language_profile_id, request.media_asset_id
+            )
+
+            def tagged(session):
+                if request.daily_challenge_day is not None:
+                    enter_challenge(
+                        c, self.user_id, session.id, request.daily_challenge_day, asset["source"]
+                    )
+                return self._detail(c, session)
+
             if request.idempotency_key:
                 existing = (
                     c.execute(
@@ -1463,14 +1622,15 @@ class PostgresWorkflowRepository:
                         or existing["mode"] != SessionMode.LESSON
                     ):
                         raise PracticeConflictError("This request key was used for another image.")
-                    return self._detail(c, parse_session(existing))
+                    return tagged(parse_session(existing))
             self._reap(c, request.language_profile_id)
             # Re-selecting an image resumes its unfinished session, but an
             # unfinished session for another image must never block a learner
             # from starting a new one.
             existing = (
                 c.execute(
-                    select(sessions).where(
+                    select(sessions)
+                    .where(
                         sessions.c.user_id == self.user_id,
                         sessions.c.language_profile_id == request.language_profile_id,
                         sessions.c.scene_media_asset_id == request.media_asset_id,
@@ -1484,7 +1644,8 @@ class PostgresWorkflowRepository:
                 .one_or_none()
             )
             if existing is not None:
-                return self._detail(c, parse_session(existing))
+                return tagged(parse_session(existing))
+            self._check_daily_tier_limit(c)
             self._check_active_limit(c, request.language_profile_id)
             session = Session(
                 user_id=self.user_id,
@@ -1492,9 +1653,54 @@ class PostgresWorkflowRepository:
                 scene_media_asset_id=request.media_asset_id,
                 idempotency_key=request.idempotency_key,
             )
-            spend_sauce(c, self.user_id, self._sauce_key(session))
             c.execute(insert(sessions).values(**session.model_dump(by_alias=False)))
-            return self._detail(c, session)
+            return tagged(session)
+
+    def _check_daily_tier_limit(self, c):
+        user_row = (
+            c.execute(
+                select(users.c.tier, users.c.timezone).where(users.c.id == self.user_id)
+            )
+            .mappings()
+            .one_or_none()
+        )
+        if not user_row:
+            return
+        tier_val = user_row.get("tier", "beta")
+        if tier_val == "beta" or tier_val == AccountTier.BETA.value:
+            return
+        if tier_val in ("free", AccountTier.FREE.value):
+            limit = 1
+        elif tier_val in ("plus", AccountTier.PLUS.value):
+            limit = 10
+        else:
+            return
+
+        tz_str = user_row.get("timezone") or "UTC"
+        try:
+            user_tz = ZoneInfo(tz_str)
+        except Exception:
+            user_tz = ZoneInfo("UTC")
+
+        now_user = datetime.now(user_tz)
+        today_start = datetime(now_user.year, now_user.month, now_user.day, tzinfo=user_tz)
+
+        count = c.execute(
+            select(func.count()).select_from(sessions).where(
+                sessions.c.user_id == self.user_id,
+                sessions.c.mode == SessionMode.LESSON,
+                sessions.c.created_at >= today_start,
+            )
+        ).scalar_one()
+
+        if count >= limit:
+            tier_label = "Free" if limit == 1 else "Plus"
+            plural = "s" if limit > 1 else ""
+            upgrade_msg = " Upgrade to Plus for 10 lessons per day." if limit == 1 else ""
+            raise DailyLessonLimitReachedError(
+                f"{tier_label} tier is limited to {limit} photo lesson{plural} per day."
+                f"{upgrade_msg}"
+            )
 
     def _check_active_limit(self, c, profile_id, mode=SessionMode.LESSON):
         active_count = c.execute(
@@ -1598,7 +1804,6 @@ class PostgresWorkflowRepository:
             ).first():
                 raise PracticeConflictError("This photo already has an open practice.")
             inputs = self._analysis_inputs(c, session)
-            spend_sauce(c, self.user_id, self._sauce_key(session, analysis_attempts(session) + 1))
             claimed = self._transition(
                 c,
                 session,
@@ -1658,14 +1863,25 @@ class PostgresWorkflowRepository:
     def _run_scene_analysis(self, session_id, profile_id, claimed, asset, profile, scene):
         """Model round-trip, off the request path. Must never raise to its runner."""
         try:
-            result = self.analyzer.analyze(
-                claimed, asset, profile, scene
-            )
+            result = self.analyzer.analyze(claimed, asset, profile, scene)
+            if asset.source in {"camera", "userUpload"}:
+                result = result.model_copy(update={"title": uploaded_scene_title(result)})
             with self.transaction() as c:
                 current = self._session(c, session_id, profile_id)
                 if current.status != "analyzingScene":
                     return
                 if asset.source in {"camera", "userUpload"}:
+                    if result.content_hash:
+                        c.execute(
+                            upsert(photo_identities)
+                            .values(
+                                media_asset_id=asset.id,
+                                user_id=self.user_id,
+                                content_hash=result.content_hash,
+                                created_at=utc_now(),
+                            )
+                            .on_conflict_do_nothing()
+                        )
                     inventory = scene_inventory(result)
                     now = utc_now()
                     c.execute(
@@ -1715,9 +1931,7 @@ class PostgresWorkflowRepository:
                 with self.transaction() as c:
                     current = self._session(c, session_id)
                     if current.status == "analyzingScene":
-                        self._transition(
-                            c, current, "failed", failure_code=failure_code
-                        )
+                        self._transition(c, current, "failed", failure_code=failure_code)
             except Exception:
                 logger.exception(
                     "Could not record the analysis failure for session %s.", session_id
@@ -2006,7 +2220,7 @@ class PostgresWorkflowRepository:
                 c, session_id, request, confirmed, existing, manual_ids
             )
             self._save_review_markers(c, session_id, request, manual_ids)
-            self._plan_missions(c, session, profile, confirmed, counted, [
+            shortfall = self._plan_missions(c, session, profile, confirmed, counted, [
                 relation.model_copy(update=dict(
                     subject_scene_object_id=manual_ids.get(
                         relation.subject_scene_object_id, relation.subject_scene_object_id
@@ -2017,6 +2231,10 @@ class PostgresWorkflowRepository:
                 ))
                     for relation in request.relations
                 ], mission_choices=mission_choices or {})
+            if shortfall is not None:
+                # Roll the review back so the learner can add facts; no lesson
+                # without checkable missions is generated.
+                raise InsufficientSceneError(shortfall)
             c.execute(
                 update(sessions)
                 .where(sessions.c.id == session_id)
@@ -2307,7 +2525,7 @@ class PostgresWorkflowRepository:
             )
         candidates = lesson_missions(session.mode, profile, language_context)
         if not candidates:
-            return
+            return None
         history_drafts = c.execute(
             select(sessions.c.analysis_draft).where(
                 sessions.c.language_profile_id == profile["id"],
@@ -2378,19 +2596,14 @@ class PostgresWorkflowRepository:
             mission_plan.append(entry)
         draft["missionPlan"] = mission_plan
         draft.pop("missionGuidance", None)
-        if not plan:
-            # No mission fits, so the regular lesson runs with tips for a future photo.
-            draft["missionGuidance"] = [
-                f"{mission.title}: "
-                + " ".join(
-                    photo_eligibility(mission, objects, relations, counted_groups,
-                                      language_context=language_context).reasons
-                )
-                for mission in candidates
-            ]
+        draft.pop("sceneShortfall", None)
         c.execute(update(sessions).where(sessions.c.id == session.id).values(
             analysis_draft=draft,
         ))
+        # No mission fits: report what is short instead of a lesson that cannot be checked.
+        return None if plan else scene_shortfall(
+            candidates, objects, relations, counted_groups, mission_choices, language_context,
+        )
 
     def _planned_missions(self, session, profile, language_context=None):
         if not lesson_missions(session.mode, profile, language_context):
@@ -2569,8 +2782,12 @@ class PostgresWorkflowRepository:
                 skipped_missions,
             )
             mission_lessons = lesson()
-        if not mission_lessons and self.translator:
-            # With no mission task left, use the regular lesson.
+        shortfall = None
+        if not mission_lessons and lesson_missions(session.mode, profile):
+            # Mission profiles never fall back to the unchecked regular lesson.
+            shortfall = self._generation_shortfall(claim, session, objects, relations)
+        if not mission_lessons and self.translator and shortfall is None:
+            # Profiles without implemented missions keep the regular lesson.
             lessons, ispy_clues = self._lessons_and_clues(
                 session_id,
                 payload,
@@ -2582,7 +2799,12 @@ class PostgresWorkflowRepository:
                 history=lesson_history(claim.learner_history, introduction),
                 history_scope=CacheScope.user(f"{self.user_id}:{claim.profile_id}"),
             )
-        if not mission_lessons and self.translator and self.ispy_guess_generator:
+        if (
+            not mission_lessons
+            and self.translator
+            and self.ispy_guess_generator
+            and shortfall is None
+        ):
             ispy_descriptions = build_ispy_description_tasks(
                 session_id,
                 objects,
@@ -2593,6 +2815,9 @@ class PostgresWorkflowRepository:
         with self.transaction() as c:
             session = self._current_generation(c, claim)
             if session is None:
+                return
+            if shortfall is not None:
+                self._reopen_review(c, session, shortfall, skipped_missions)
                 return
             learning = [task for task in rebuilt if task.kind not in {"ispyRound", "reflection"}]
             clues = ispy_clues or [task for task in rebuilt if task.kind == "ispyRound"]
@@ -2676,6 +2901,50 @@ class PostgresWorkflowRepository:
                     .on_conflict_do_nothing(index_elements=["id"])
                 )
             self._transition(c, session, "inProgress")
+
+    @staticmethod
+    def _generation_shortfall(claim, session, objects, relations):
+        """What the confirmed scene lacks when no planned mission produced a lesson."""
+        draft = session.analysis_draft or {}
+        context = getattr(claim, "language_context", None)
+        shortfall = scene_shortfall(
+            lesson_missions(session.mode, claim.profile, context),
+            objects,
+            relations,
+            claim.counted_groups,
+            draft.get("missionChoices") or {},
+            context,
+        )
+        if shortfall is not None:
+            return shortfall
+        # The missions fitted the photo but none had reviewed content to check.
+        return SceneShortfall(
+            missing=SHORTFALL_KINDS,
+            missions=tuple(
+                {
+                    "missionId": mission.mission_id,
+                    "title": mission.title,
+                    "missing": [],
+                    "reasons": [
+                        "Linguini couldn't build checked questions from these facts."
+                    ],
+                }
+                for mission in claim.missions
+            ),
+        )
+
+    def _reopen_review(self, c, session, shortfall, skipped):
+        """Drop the partial lesson and send the learner back to review with what is short."""
+        c.execute(delete(session_tasks).where(session_tasks.c.session_id == session.id))
+        draft = {**(session.analysis_draft or {}), "sceneShortfall": shortfall.as_json()}
+        if skipped:
+            draft["skippedMissions"] = skipped
+        logger.info(
+            "Session %s has no checkable mission; reopening review (missing=%s).",
+            session.id,
+            ",".join(shortfall.missing),
+        )
+        self._transition(c, session, "awaitingObjectReview", analysis_draft=draft)
 
     def _mission_lessons(self, claim, objects, relations, words, translated_scene, skipped):
         """One validated lesson per planned mission; a generation failure uses its fallback.
@@ -2966,6 +3235,7 @@ class PostgresWorkflowRepository:
                     language_profile_id=session.language_profile_id,
                     session_id=session.id,
                 )
+                record_completion(c, self.user_id, session.id)
                 ispy = self._ispy_summary(c, session.id)
                 if (
                     all(task.status == "completed" for task in tasks)
@@ -3001,6 +3271,7 @@ class PostgresWorkflowRepository:
                 session=session,
                 progress=task_progress(self._tasks(c, session.id)),
                 learned_vocabulary_ids=learned,
+                basil_earned=session_basil(c, self.user_id, session.id),
                 xp_earned=c.execute(
                     select(func.coalesce(func.sum(xp_events.c.amount), 0))
                     .select_from(xp_events)
@@ -3381,19 +3652,8 @@ class PostgresWorkflowRepository:
                         }
                         server_assistance = None
                         if task.public_content.mission_id == "M06":
-                            step_support = {
-                                "replayAudio": "audio",
-                                "visualDetail": "hint",
-                                "phraseOnset": "clueFrame",
-                                "chunkBank": "wordBank",
-                                "fullModel": "answerReveal",
-                            }
                             server_assistance = {
-                                question_id: [
-                                    step_support[step]
-                                    for step in saved.get("assistance", [])
-                                    if step in step_support
-                                ]
+                                question_id: m06_check_supports(saved)
                                 for question_id, saved in (
                                     (session.analysis_draft or {})
                                     .get("missionChecks", {})
@@ -3429,11 +3689,46 @@ class PostgresWorkflowRepository:
                         feedback={"message": feedback_message},
                         evaluation_details=evaluation_details,
                     )
+                    if request.input_mode == "vocabularyReview":
+                        outcomes = {
+                            item["questionId"]: item
+                            for item in (evaluation_details or {}).get("questionOutcomes", [])
+                        }
+                        for question in task.public_content.questions:
+                            prior = question_event(c, self.user_id, task.id, question.question_id)
+                            if (
+                                prior
+                                and not getattr(question, "allow_retry", False)
+                                and prior["answer"] != request.answers[question.question_id]
+                            ):
+                                raise PracticeConflictError(
+                                    "Submitted answers must match the first accepted answers."
+                                )
+                            record_question(
+                                c,
+                                self.user_id,
+                                session,
+                                task,
+                                question.question_id,
+                                request.answers[question.question_id],
+                                question_results[question.question_id],
+                                outcomes.get(question.question_id, {"evidenceType": "recognition"}),
+                            )
                     c.execute(insert(task_attempts).values(**entity_values(attempt)))
-                    if session.mode == SessionMode.LESSON and (
-                        evaluation is None or evaluation.guess is not None
+                    if (
+                        session.mode == SessionMode.LESSON
+                        and request.input_mode != "vocabularyReview"
+                        and (evaluation is None or evaluation.guess is not None)
                     ):
-                        reward_basil(c, self.user_id, f"task:{task.id}")
+                        reward_basil(
+                            c,
+                            self.user_id,
+                            f"task:{task.id}",
+                            payload={
+                                "sessionId": str(session.id),
+                                "policyVersion": "legacy-practice.v1",
+                            },
+                        )
                     if evaluation is not None:
                         c.execute(
                             update(task_evaluation_claims)
@@ -3511,6 +3806,7 @@ class PostgresWorkflowRepository:
                 )
                 if values["status"] == "completed":
                     self._award_completion(c, task, session)
+            session_missions(c, self.user_id, session.id, persist=True)
             return self._action_response(c, task, attempt)
 
     def confirm_guess(self, task_id, attempt_id):
@@ -3615,6 +3911,7 @@ class PostgresWorkflowRepository:
                 (t.id for t in tasks if t.status not in {"completed", "skipped"}), None
             ),
             session_progress=task_progress(tasks),
+            basil_earned=task_basil(c, self.user_id, task.id),
             xp_earned=xp_earned,
         )
 

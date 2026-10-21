@@ -12,12 +12,17 @@ import type { JournalDraft } from "../lib/api";
 import { friendlyError, queryError, queryKeys } from "../lib/queryKeys";
 import { gameResourceKeys } from "../lib/gameResources";
 
-export function AppStateProvider({ children }: { children: ReactNode }) {
+export function AppStateProvider({ children, resetOnLanguageChange = true }: {
+  children: ReactNode;
+  /** Onboarding activates a new language as its last save, so it opts out to keep its success step mounted. */
+  resetOnLanguageChange?: boolean;
+}) {
   const account = useAccount();
   if (account.loading) return <LoadingScreen label="Loading your profile…" />;
   if (account.error) return <ErrorState title="We couldn't load your profile" message={account.error} retry={() => window.location.reload()} />;
   // Clear profile-scoped caches and practice state when the active account/language changes.
-  return <LoadedAppState key={`${account.user?.id ?? "no-user"}:${account.activeProfile?.id ?? "no-language"}`} account={account}>{children}</LoadedAppState>;
+  const languageKey = resetOnLanguageChange ? account.activeProfile?.id ?? "no-language" : "any-language";
+  return <LoadedAppState key={`${account.user?.id ?? "no-user"}:${languageKey}`} account={account}>{children}</LoadedAppState>;
 }
 
 function LoadedAppState({ account, children }: { account: ReturnType<typeof useAccount>; children: ReactNode }) {
@@ -25,7 +30,7 @@ function LoadedAppState({ account, children }: { account: ReturnType<typeof useA
   const profileId = account.activeProfile?.id ?? "";
   // Scenes, vocabulary, and journals are fetched per page via state/queries.ts;
   // only the shared progress record stays global.
-  const progress = useQuery({ queryKey: queryKeys.progress(profileId), queryFn: ({ signal }) => getProgress(signal) });
+  const progress = useQuery({ queryKey: queryKeys.progress(profileId), queryFn: ({ signal }) => getProgress(signal), enabled: Boolean(profileId) });
 
   const onLearningChanged = useCallback((scope: "task" | "session") => {
     void queryClient.invalidateQueries({ queryKey: queryKeys.progress(profileId) });

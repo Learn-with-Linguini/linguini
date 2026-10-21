@@ -9,6 +9,7 @@ from mission_workflow_helpers import (
 from test_postgres_sessions import database as database
 from test_preloaded_templates_workflow import curated as curated
 
+from app.repositories.practice import InsufficientSceneError
 from app.services import mission_eligibility
 
 M05_ONLY = (("M05", "A1", 1),)
@@ -38,16 +39,20 @@ def test_m05_plan_facts_markers_and_resumed_content_are_persisted(curated):
     assert all(question.roleplay_premise for question in task.public_content.questions)
 
 
-def test_m05_is_omitted_with_only_two_confirmed_objects(curated):
-    _repo, _session_id, _detail, task, _markers, facts = review_lesson(
-        curated,
-        "M05",
-        confirmed_object_limit=2,
-        add_missing_roleplay_object=False,
-        expect_omitted=True,
-    )
-    assert task is None
-    assert facts == []
+def test_m05_with_only_two_confirmed_objects_asks_for_another_object(curated):
+    # M05 is the only mission here, so the review is rejected rather than run without it.
+    with pytest.raises(InsufficientSceneError) as rejected:
+        review_lesson(
+            curated,
+            "M05",
+            confirmed_object_limit=2,
+            add_missing_roleplay_object=False,
+            expect_omitted=True,
+        )
+    shortfall = rejected.value.shortfall
+    assert shortfall.missing == ("objects",)
+    assert shortfall.missions[0]["missionId"] == "M05"
+    assert shortfall.missions[0]["reasons"] == ["Confirm at least 3 different objects."]
 
 
 @pytest.mark.parametrize("scenario", ["partial", "incorrect"])

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { InlineLoader } from "../components/LoadingScreen";
 import { MediaImage } from "../components/MediaImage";
-import { BasilIcon, BookIcon, ChevronRightIcon, EyeIcon, PlayIcon } from "../components/icons";
+import { BasilIcon, BookIcon, ChevronRightIcon, EyeIcon, PlayIcon, TrophyIcon } from "../components/icons";
 import { Button } from "../components/ui";
 import { getActivePractice } from "../lib/api";
 import { sessionDestination } from "../lib/sessionRoute";
@@ -12,6 +12,8 @@ import { useAppState } from "../state/useAppState";
 import { useVocabularyQuery } from "../state/queries";
 import { WalkthroughCoachmark } from "../components/WalkthroughCoachmark";
 import { FIRST_LESSON_WALKTHROUGH_VERSION, needsFirstLessonWalkthrough } from "../lib/walkthrough";
+import { learningProgress } from "../lib/practiceTasks";
+import { useGamification } from "../state/gamification";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -45,6 +47,7 @@ function PastaStreak({ days }: { days: { date: string; active: boolean }[] }) {
 }
 
 export function Home() {
+  const basil = useGamification();
   const navigate = useNavigate();
   const { learner, user, activeProfile, progress, progressLoading, progressError, profileSaving, saveUser } = useAppState();
   const { vocabulary, vocabularyLoading, vocabularyError } = useVocabularyQuery();
@@ -71,8 +74,7 @@ export function Home() {
     }));
     return [...groups.values()].sort((a, b) => b.count - a.count)[0] ?? null;
   }, [vocabulary]);
-  const completed = resume?.progress.completedTaskCount ?? 0;
-  const total = resume?.progress.totalTaskCount ?? 0;
+  const { completed, total } = resume ? learningProgress(resume.tasks) : { completed: 0, total: 0 };
   const percent = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
 
   const continuePractice = async () => {
@@ -97,7 +99,7 @@ export function Home() {
   return <div className="home-dashboard">
     <header className="home-welcome">
       <div><h2>{greeting()}, {learner.name || "friend"}</h2><p>Ready to cook?</p></div>
-      <span className="home-points" aria-label={`${progress?.xp ?? 0} Basil`}><BasilIcon />{progressLoading || progressError ? "—" : progress?.xp ?? 0} Basil</span>
+      <span className="home-points" aria-label={basil.isPending ? "Loading your Basil total" : basil.isError ? "Basil total unavailable" : `${basil.data?.basil.lifetime ?? 0} total Basil`}><BasilIcon />{basil.isPending || basil.isError ? "—" : basil.data?.basil.lifetime ?? 0} Basil</span>
     </header>
 
     <div className="home-dashboard__grid">
@@ -145,7 +147,7 @@ export function Home() {
           <div className="home-section-heading home-section-heading--compact"><div><span className="home-progress-card__eyebrow">This week</span><h2 id="home-progress-title">Your progress</h2></div></div>
           {vocabularyLoading ? <InlineLoader compact label="Loading your words…" /> : vocabularyError ? <p role="alert">{vocabularyError}</p> : <div className="home-progress-card__stats"><div><span className="home-stat-icon home-stat-icon--words"><BookIcon /></span><strong>{wordsThisWeek}</strong><span>words</span></div><div><span className="home-stat-icon home-stat-icon--scenes"><EyeIcon /></span><strong>{exploredScenes}</strong><span>scenes</span></div></div>}
         </section>
-        {leaderboardPosition ? <button className="home-league" type="button" onClick={() => navigate("/ispy")}><span className="home-league__badge" aria-hidden="true">#</span><span><strong>Basil League</strong><small>You're #{leaderboardPosition} this week</small></span><ChevronRightIcon /></button> : null}
+        {leaderboardPosition ? <button className="home-league" type="button" onClick={() => navigate("/ispy")}><span className="home-league__badge" aria-hidden="true"><TrophyIcon size={26} /></span><span><strong>Chefs of the Day</strong><small>Your current standing: #{leaderboardPosition}</small></span><ChevronRightIcon /></button> : null}
       </aside>
     </div>
 

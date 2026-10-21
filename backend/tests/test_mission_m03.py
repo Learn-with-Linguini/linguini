@@ -21,6 +21,7 @@ from app.services.mission_eligibility import (
     photo_eligibility,
     plan_missions,
     provisional_mission_focus,
+    suggested_counted_groups,
 )
 from app.services.mission_lessons_m03 import m03_lesson_task, m03_payload
 from app.services.quantities import (
@@ -89,6 +90,21 @@ def test_provisional_focus_uses_suggested_facts_but_returns_a_small_review_set()
     plan, selected = provisional_mission_focus([M01, M02, M03], repeated, [])
     assert [mission.mission_id for mission in plan] == ["M03"]
     assert selected == [item.id for item in repeated]
+
+
+def test_provisional_count_never_exceeds_visible_instances():
+    objects = [
+        obj(uuid4(), "book", quantity="3"),
+        obj(uuid4(), "cup", quantity="2"),
+        obj(uuid4(), "table", quantity="4"),
+    ]
+
+    groups = suggested_counted_groups(objects)
+
+    assert [group["quantity"] for group in groups] == [1, 1, 1]
+    plan, selected = provisional_mission_focus([M01, M02, M03], objects, [])
+    assert "M03" not in {mission.mission_id for mission in plan}
+    assert selected == [item.id for item in objects]
 
 
 @pytest.mark.parametrize(("value", "expected"), [

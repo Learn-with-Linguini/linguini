@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Literal
 from uuid import UUID
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -21,6 +21,8 @@ class PackPracticeLanguage(ApiModel):
         default=None, exclude_if=lambda v: v is None,
     )
 
+PastaAvatar = Literal["farfalle", "fusilli", "penne", "macaroni"]
+
 
 def _validate_timezone(value: str | None) -> str | None:
     if value is None:
@@ -38,11 +40,17 @@ class User(EntityModel):
     camera_enabled: bool = True
     auth_provider_id: NonEmptyText
     display_name: Annotated[str, Field(min_length=1, max_length=100)]
+    avatar: PastaAvatar = "farfalle"
     email: Annotated[str, Field(max_length=320)] | None = None
     timezone: str = "UTC"
     onboarding_completed: bool = False
     walkthrough_version_seen: Annotated[int, Field(ge=0, le=1000)] = 0
     tier: AccountTier = AccountTier.BETA
+    utm_source: Annotated[str, Field(max_length=100)] | None = None
+    utm_medium: Annotated[str, Field(max_length=100)] | None = None
+    utm_campaign: Annotated[str, Field(max_length=100)] | None = None
+    utm_content: Annotated[str, Field(max_length=100)] | None = None
+    utm_term: Annotated[str, Field(max_length=100)] | None = None
 
     _timezone_is_valid = field_validator("timezone")(_validate_timezone)
 
@@ -52,9 +60,15 @@ class UpdateUserRequest(ApiModel):
     microphone_enabled: bool | None = None
     camera_enabled: bool | None = None
     display_name: Annotated[str, Field(min_length=1, max_length=100)] | None = None
+    avatar: PastaAvatar | None = None
     timezone: str | None = None
     onboarding_completed: bool | None = None
     walkthrough_version_seen: Annotated[int, Field(ge=0, le=1000)] | None = None
+    utm_source: Annotated[str, Field(max_length=100)] | None = None
+    utm_medium: Annotated[str, Field(max_length=100)] | None = None
+    utm_campaign: Annotated[str, Field(max_length=100)] | None = None
+    utm_content: Annotated[str, Field(max_length=100)] | None = None
+    utm_term: Annotated[str, Field(max_length=100)] | None = None
 
     _timezone_is_valid = field_validator("timezone")(_validate_timezone)
 

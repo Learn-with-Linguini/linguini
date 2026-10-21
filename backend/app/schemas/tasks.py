@@ -835,12 +835,38 @@ class SubmitVocabularyReviewAttemptRequest(ApiModel):
 class CheckVocabularyAnswerRequest(ApiModel):
     question_id: NonEmptyText
     option_id: NonEmptyText
+    review: bool = False
 
 
 class CheckVocabularyAnswerResponse(ApiModel):
+    accepted_option_id: NonEmptyText
+    basil_earned: int = 0
     question_id: NonEmptyText
     is_correct: bool
     correct_option_id: NonEmptyText
+
+
+class CheckVocabularyTypingRequest(ApiModel):
+    learning_key: NonEmptyText
+    answer: Annotated[str, Field(max_length=2_000)] = ""
+    reveal: bool = False
+
+    @model_validator(mode="after")
+    def validate_answer(self) -> CheckVocabularyTypingRequest:
+        if not self.reveal and not self.answer.strip():
+            raise ValueError("answer cannot be empty")
+        return self
+
+
+class CheckVocabularyTypingResponse(ApiModel):
+    learning_key: NonEmptyText
+    is_correct: bool
+    correct_answer: NonEmptyText
+    revealed: bool
+
+
+class VocabularyChecksResponse(ApiModel):
+    checks: list[CheckVocabularyAnswerResponse] = Field(default_factory=list)
 
 
 class CheckLessonAnswerRequest(ApiModel):
@@ -870,6 +896,7 @@ class MissionScenarioResponse(ApiModel):
 
 
 class LessonAnswerCheck(ApiModel):
+    basil_earned: int = 0
     question_id: NonEmptyText
     answer: NonEmptyText
     is_correct: bool
@@ -924,6 +951,7 @@ class SessionProgress(ApiModel):
 
 
 class TaskActionResponse(ApiModel):
+    basil_earned: int = 0
     task: SessionTaskPublic
     attempt: TaskAttempt | None = None
     next_task_id: UUID | None = None

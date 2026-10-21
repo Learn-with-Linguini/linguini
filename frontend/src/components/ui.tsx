@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { BasilIcon, CheckIcon, ChevronDownIcon, ChevronLeftIcon, CloseIcon, HelpIcon } from "./icons";
+import { BasilIcon, CheckIcon, ChevronDownIcon, ChevronLeftIcon } from "./icons";
 import "./ui.css";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -47,73 +47,12 @@ export function Card({
 
 export function TopBar({
   title,
-  help,
   right,
 }: {
   title: string;
-  help?: string;
   right?: ReactNode;
 }) {
-  const [isHelpOpen, setIsHelpOpen] = useState(false);
-  const titleId = useId();
-  const modalRef = useRef<HTMLElement>(null);
-
-  useEffect(() => {
-    if (!isHelpOpen) return;
-
-    modalRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setIsHelpOpen(false);
-    };
-    document.addEventListener("keydown", closeOnEscape);
-    return () => document.removeEventListener("keydown", closeOnEscape);
-  }, [isHelpOpen]);
-
-  return (
-    <>
-      <div className="topbar">
-        <span className="topbar__title">{title}</span>
-        {right}
-        {help ? (
-          <IconButton
-            label="What happens here?"
-            aria-haspopup="dialog"
-            aria-expanded={isHelpOpen}
-            onClick={() => setIsHelpOpen(true)}
-          >
-            <HelpIcon />
-          </IconButton>
-        ) : null}
-      </div>
-
-      {help && isHelpOpen ? (
-        <div className="help-modal__backdrop" onMouseDown={() => setIsHelpOpen(false)}>
-          <section
-            ref={modalRef}
-            className="help-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={titleId}
-            onMouseDown={(event) => event.stopPropagation()}
-          >
-            <div className="help-modal__header">
-              <h2 id={titleId}>About this step</h2>
-              <IconButton
-                label="Close information"
-                onClick={() => setIsHelpOpen(false)}
-              >
-                <CloseIcon />
-              </IconButton>
-            </div>
-            <p>{help}</p>
-            <Button block onClick={() => setIsHelpOpen(false)}>
-              Got it
-            </Button>
-          </section>
-        </div>
-      ) : null}
-    </>
-  );
+  return <div className="topbar"><span className="topbar__title">{title}</span>{right}</div>;
 }
 
 export function Wordmark({ size = 26 }: { size?: number }) {
@@ -190,7 +129,7 @@ export function StatusPill({ status }: { status: "new" | "learning" | "mastered"
 }
 
 export function XpPill({ xp, bonus }: { xp: number; bonus?: number }) {
-  return <span className="pill pill--xp"><BasilIcon size={16} />+{xp} Basil{bonus && bonus > 0 ? ` · +${bonus} if correct` : ""}</span>;
+  return <span className="pill pill--xp"><BasilIcon size={16} />+{xp}{bonus && bonus > 0 ? ` · +${bonus} if correct` : ""}</span>;
 }
 
 export function Tabs<T extends string>({
@@ -367,7 +306,7 @@ export function Feedback({
   tone = "good",
   children,
 }: {
-  tone?: "good" | "warn";
+  tone?: "good" | "warn" | "neutral";
   children: ReactNode;
 }) {
   return <div className={`feedback feedback--${tone}`}>{children}</div>;

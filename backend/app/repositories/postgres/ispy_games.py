@@ -113,8 +113,27 @@ class PostgresISpyGameRepository:
             )
             .scalar_subquery()
         )
+        title = (
+            select(sessions.c.session_title)
+            .where(
+                sessions.c.user_id == self.user_id,
+                sessions.c.mode == SessionMode.LESSON,
+                sessions.c.scene_media_asset_id == media_assets.c.id,
+            )
+            .order_by(
+                sessions.c.scene_confirmed_at.desc().nulls_last(),
+                sessions.c.started_at.desc().nulls_last(),
+                sessions.c.id.desc(),
+            )
+            .limit(1)
+            .scalar_subquery()
+        )
         query = (
-            select(media_assets, confirmed_at.label("confirmed_at"))
+            select(
+                media_assets,
+                confirmed_at.label("confirmed_at"),
+                title.label("title"),
+            )
             .where(
                 media_assets.c.owner_user_id == self.user_id,
                 media_assets.c.source.in_(["camera", "userUpload"]),
@@ -144,6 +163,7 @@ class PostgresISpyGameRepository:
                 media_asset=MediaAsset.model_validate(
                     {key: row[key] for key in asset_columns}
                 ),
+                title=row["title"] or "Your uploaded photo",
                 playable=row["confirmed_at"] is not None,
                 confirmed_at=row["confirmed_at"],
             )

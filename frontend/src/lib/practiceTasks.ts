@@ -38,6 +38,15 @@ export function practiceStages(tasks: SessionTask[]) {
   };
 }
 
+/** Progress for the required learning path. I-Spy and reflection are optional extras. */
+export function learningProgress(tasks: SessionTask[]) {
+  const learning = practiceStages(tasks).learning;
+  return {
+    completed: learning.filter(taskDone).length,
+    total: learning.length,
+  };
+}
+
 export function taskTitle(task: SessionTask) {
   const content = task.publicContent;
   if ("title" in content) return content.title;
@@ -65,6 +74,23 @@ export const isMissionSession = (tasks: SessionTask[]) =>
 
 /** Missions finish after learning; I-Spy is a separate, optional game. */
 export const finishesAfterLearning = (tasks: SessionTask[]) => isMissionSession(tasks);
+
+export type LearningStep = { to: "task"; taskId: string } | { to: "tasks" } | { to: "ispy" } | { to: "finish" };
+
+/**
+ * Where Next leads after a learning task. Tasks can be opened in any order, so the
+ * last one only finishes the lesson (or opens I-Spy) once every learning task is done;
+ * otherwise the learner returns to the task list instead of a completion the server rejects.
+ */
+export function nextLearningStep(tasks: SessionTask[], currentId: string, generating: boolean,
+  done: (task: SessionTask) => boolean = taskDone): LearningStep {
+  const learning = practiceStages(tasks).learning;
+  const index = learning.findIndex(task => task.id === currentId);
+  const next = index < 0 ? undefined : learning[index + 1];
+  if (next) return { to: "task", taskId: next.id };
+  if (index < 0 || generating || !learning.every(task => task.id === currentId || done(task))) return { to: "tasks" };
+  return finishesAfterLearning(tasks) ? { to: "finish" } : { to: "ispy" };
+}
 
 /** Saved mission order when the backend persisted it; otherwise a stable per-question shuffle. */
 export function questionOptions(question: Pick<GrammarLessonQuestion, "options" | "keepOptionOrder">, seed: string) {

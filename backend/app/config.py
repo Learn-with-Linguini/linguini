@@ -71,3 +71,23 @@ def get_language_pack_releases() -> frozenset[tuple[str, str, str]]:
         if len(parts) == 3 and all(parts):
             releases.add(parts)
     return frozenset(releases)
+
+
+def get_stripe_secret_key() -> str | None:
+    return os.getenv("STRIPE_SECRET_KEY", "").strip() or None
+
+
+def get_stripe_publishable_key() -> str | None:
+    return os.getenv("STRIPE_PUBLISHABLE_KEY", "").strip() or None
+
+
+def get_stripe_webhook_secret() -> str | None:
+    return os.getenv("STRIPE_WEBHOOK_SECRET", "").strip() or None
+
+
+def get_stripe_plus_price_id() -> str:
+    return os.getenv("STRIPE_PLUS_PRICE_ID", "price_1URlZbBYwPhACwEB6goOgtNn").strip()
+
+
+def get_frontend_url() -> str:
+    return os.getenv("FRONTEND_URL", "http://localhost:5173").rstrip("/")

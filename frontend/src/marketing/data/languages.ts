@@ -36,7 +36,7 @@ function languageFaq(name: string, other: string, examples: string): LanguagePag
     },
     {
       q: `Does Linguini teach ${other} too?`,
-      a: `Yes. Linguini teaches both Spanish and French, from English. Italian is next on the list.`,
+      a: `Yes. The Linguini app teaches Spanish, French, German, and beginner Korean, from English.`,
     },
   ];
 }
@@ -63,6 +63,28 @@ export const languagePages: LanguagePage[] = [
     lede: "Photograph the promenade on your evening walk or the view from your window. Linguini finds the things in the picture and teaches you their French names, with the article, pronunciation and audio, then turns them into a five-minute game and a journal page.",
     other: { slug: "spanish", name: "Spanish" },
     faq: languageFaq("French", "Spanish", "la voiture, le pont"),
+  },
+  {
+    slug: "german",
+    lang: "de",
+    name: "German",
+    sceneId: "alpine-castle",
+    description:
+      "Learn German from photos of your day. Linguini names what’s in the picture, with the article, gender and audio, and turns it into a five-minute game. Public beta access includes unlimited photo lessons.",
+    lede: "Photograph your study desk, a morning walk or an alpine view. Linguini finds the things in the picture and teaches you their German names, with the article (der, die, das), pronunciation and audio, then turns them into a five-minute game and a journal page.",
+    other: { slug: "korean", name: "Korean" },
+    faq: languageFaq("German", "Korean", "das Schloss, der Baum, die Straße"),
+  },
+  {
+    slug: "korean",
+    lang: "ko",
+    name: "Korean",
+    sceneId: "cafe-interior",
+    description:
+      "Learn beginner Korean from photos of your day. Linguini names what’s in the picture, with pronunciation and audio, and turns it into a five-minute game. Public beta access includes unlimited photo lessons.",
+    lede: "Photograph your morning coffee, your desk or your favorite meal. Linguini finds the things in the picture and teaches you their Korean names, with pronunciation and audio, then turns them into a five-minute game and a journal page.",
+    other: { slug: "german", name: "German" },
+    faq: languageFaq("Korean", "German", "탁자, 소파, 시계"),
   },
 ];
 

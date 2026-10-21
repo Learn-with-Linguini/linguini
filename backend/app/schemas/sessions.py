@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import date
 from typing import Annotated, Literal
 from uuid import UUID, uuid4
 
@@ -56,6 +57,8 @@ class CreateSessionRequest(ApiModel):
     language_profile_id: UUID
     media_asset_id: UUID
     idempotency_key: Annotated[str, Field(min_length=8, max_length=200)] | None = None
+    # Tags the session as today's daily challenge entry; must be the current UTC day.
+    daily_challenge_day: date | None = None
 
 
 class GenerateSessionPlanRequest(ApiModel):
@@ -167,6 +170,31 @@ class SessionPersonalization(ApiModel):
     ]] = Field(default_factory=list)
 
 
+type ShortfallKind = Literal["objects", "counts", "attributes", "relations"]
+
+
+class ShortfallStep(ApiModel):
+    """One concrete thing to add, worded from the confirmed review."""
+
+    kind: ShortfallKind
+    text: str
+
+
+class MissionShortfall(ApiModel):
+    mission_id: str
+    title: str
+    missing: list[ShortfallKind] = Field(default_factory=list)
+    reasons: list[str] = Field(default_factory=list)
+    steps: list[ShortfallStep] = Field(default_factory=list)
+
+
+class SceneShortfall(ApiModel):
+    """Confirmed facts a lesson still needs before any mission can be checked."""
+
+    missing: list[ShortfallKind]
+    missions: list[MissionShortfall] = Field(default_factory=list)
+
+
 class SessionDetailResponse(ApiModel):
     analysis_mode: Literal["placeholder"] | None = None
     media_asset: MediaAsset
@@ -179,6 +207,8 @@ class SessionDetailResponse(ApiModel):
     personalization: SessionPersonalization | None = None
     counted_groups: list[CountedGroup] = Field(default_factory=list)
     mission_guidance: list[str] = Field(default_factory=list)
+    # Set when task generation found nothing checkable and reopened the review.
+    scene_shortfall: SceneShortfall | None = None
     # Reviewed sessions: scene object id -> its marker number on the review screen.
     review_markers: dict[str, int] = Field(default_factory=dict)
     provisional_mission_plan: list[JsonObject] = Field(default_factory=list)
@@ -195,6 +225,7 @@ class SessionDetailResponse(ApiModel):
 
 
 class SessionSummaryResponse(ApiModel):
+    basil_earned: int = 0
     session: Session
     progress: SessionProgress
     learned_vocabulary_ids: list[UUID] = Field(default_factory=list)

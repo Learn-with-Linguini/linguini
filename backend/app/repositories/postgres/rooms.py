@@ -29,8 +29,15 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.exc import SQLAlchemyError
 
+from app.repositories.postgres.friends import (
+    PostgresFriendRepository,
+    friendship_condition,
+    friendships,
+    matching_profiles,
+)
 from app.repositories.postgres.language_profiles import language_profiles
 from app.repositories.postgres.media_assets import media_assets
+from app.repositories.postgres.room_errors import RoomError
 from app.repositories.postgres.users import users
 from app.repositories.postgres.xp import award
 from app.schemas.base import utc_now
@@ -162,16 +169,11 @@ room_contributions = Table(
 )
 
 LIVE = {"lobby", "playing"}
-LOBBY_DURATION = timedelta(minutes=30)
-INVITE_DURATION = timedelta(minutes=10)
-PLAY_DURATION = timedelta(minutes=30)
+LOBBY_DURATION = timedelta(days=7)
+INVITE_DURATION = timedelta(days=7)
+PLAY_DURATION = timedelta(days=14)
+MAX_ACTIVE_ROOMS = 10
 PHOTO_LEASE = timedelta(minutes=8)
-
-
-class RoomError(Exception):
-    def __init__(self, code, message, status_code=409):
-        super().__init__(message)
-        self.code, self.message, self.status_code = code, message, status_code
 
 
 class RoomUnavailableError(RoomError):
@@ -193,8 +195,11 @@ class RoomPhotoJob:
 
 
 def _fingerprint(kind, request):
+    body = request.model_dump(mode="json", by_alias=True)
+    if kind == "create" and body.get("friendUserId") is None:
+        body.pop("friendUserId", None)
     encoded = json.dumps(
-        {"kind": kind, "body": request.model_dump(mode="json", by_alias=True)},
+        {"kind": kind, "body": body},
         sort_keys=True,
         separators=(",", ":"),
     ).encode()
@@ -225,9 +230,14 @@ def cleanup_room_account(c, user_id):
         .with_for_update()
     ).all()
     now = utc_now()
-    c.execute(update(learning_rooms).where(learning_rooms.c.id.in_(ids)).values(
-        invite_code=None, invite_expires_at=now,
-    ))
+    c.execute(
+        update(learning_rooms)
+        .where(learning_rooms.c.id.in_(ids))
+        .values(
+            invite_code=None,
+            invite_expires_at=now,
+        )
+    )
     c.execute(
         update(learning_rooms)
         .where(
@@ -243,6 +253,13 @@ def cleanup_room_account(c, user_id):
         )
     )
     c.execute(update(room_members).where(room_members.c.room_id.in_(ids)).values(active=False))
+    c.execute(
+        update(room_contributions)
+        .where(
+            room_contributions.c.room_id.in_(ids),
+        )
+        .values(acknowledged=True, updated_at=now)
+    )
     owned = list(
         c.execute(
             select(room_photos.c.id).where(
@@ -289,7 +306,7 @@ class PostgresRoomRepository:
         self.spend_sauce, self.reward_basil = spend_sauce, reward_basil
 
     @contextmanager
-    def _locked(self, room_id=None):
+    def _locked(self, room_id=None, *, extra_user_ids=()):
         """Users sorted first, then rooms sorted; recheck membership after locking."""
         try:
             with self.engine.begin() as c:
@@ -315,6 +332,7 @@ class PostgresRoomRepository:
                     else set()
                 )
                 owner_ids.add(self.user_id)
+                owner_ids.update(extra_user_ids)
                 locked_users = set(
                     c.execute(
                         select(users.c.id)
@@ -369,11 +387,15 @@ class PostgresRoomRepository:
                             .where(room_members.c.room_id.in_(expired))
                             .values(active=False)
                         )
-                    c.execute(update(learning_rooms).where(
-                        learning_rooms.c.id.in_(room_ids),
-                        learning_rooms.c.invite_code.is_not(None),
-                        self._stale_invitation(now),
-                    ).values(invite_code=None))
+                    c.execute(
+                        update(learning_rooms)
+                        .where(
+                            learning_rooms.c.id.in_(room_ids),
+                            learning_rooms.c.invite_code.is_not(None),
+                            self._stale_invitation(now),
+                        )
+                        .values(invite_code=None)
+                    )
                 yield c
         except SQLAlchemyError as exc:
             raise RoomError(
@@ -456,16 +478,40 @@ class PostgresRoomRepository:
                 "room_rate_limited", "You've opened several rooms. Try again later.", 429
             )
 
-    def _no_active_room(self, c, except_room=None):
-        query = select(room_members.c.room_id).where(
-            room_members.c.user_id == self.user_id,
-            room_members.c.active.is_(True),
+    @staticmethod
+    def _actionable_room(user_id):
+        pending_result = (
+            select(room_contributions.c.id)
+            .where(
+                room_contributions.c.room_id == learning_rooms.c.id,
+                room_contributions.c.user_id == user_id,
+                room_contributions.c.acknowledged.is_(False),
+            )
+            .exists()
+        )
+        return or_(
+            (learning_rooms.c.status.in_(LIVE))
+            & (learning_rooms.c.expires_at > utc_now())
+            & (room_members.c.active.is_(True)),
+            (learning_rooms.c.status == "completed") & pending_result,
+        )
+
+    def _active_room_limit(self, c, user_id=None, except_room=None):
+        actor = user_id or self.user_id
+        query = (
+            select(func.count())
+            .select_from(room_members)
+            .join(
+                learning_rooms,
+                learning_rooms.c.id == room_members.c.room_id,
+            )
+            .where(room_members.c.user_id == actor, self._actionable_room(actor))
         )
         if except_room:
             query = query.where(room_members.c.room_id != except_room)
-        if c.execute(query).first():
+        if c.execute(query).scalar_one() >= MAX_ACTIVE_ROOMS:
             raise RoomError(
-                "room_already_active", "Leave your current room before joining another."
+                "room_active_limit", "View your results or end a challenge before opening another."
             )
 
     def _remembered(self, c, room_id, kind, request):
@@ -542,7 +588,8 @@ class PostgresRoomRepository:
 
     def create(self, request):
         room_id = uuid5(self.user_id, f"room:{request.command_id}")
-        with self._locked(room_id) as c:
+        invited = [request.friend_user_id] if request.friend_user_id else []
+        with self._locked(room_id, extra_user_ids=invited) as c:
             existing = c.execute(
                 select(learning_rooms.c.id).where(learning_rooms.c.id == room_id)
             ).first()
@@ -552,8 +599,31 @@ class PostgresRoomRepository:
                     raise RoomError("room_command_conflict", "This room key was already used.")
             else:
                 profile = self._profile(c, request.language_profile_id)
-                self._no_active_room(c)
+                self._active_room_limit(c)
                 self._setup_rate(c)
+                friend_profile = None
+                if request.friend_user_id:
+                    if (
+                        request.friend_user_id == self.user_id
+                        or not c.execute(
+                            select(friendships.c.id).where(
+                                friendship_condition(self.user_id, request.friend_user_id),
+                            )
+                        ).first()
+                    ):
+                        raise RoomError(
+                            "room_friend_required", "Add this person as a friend first.", 403
+                        )
+                    friend_profile = PostgresFriendRepository._active_profile(
+                        c, request.friend_user_id
+                    )
+                    if not matching_profiles(profile, friend_profile):
+                        raise RoomError(
+                            "room_language_mismatch",
+                            "Your friend needs the same learning language and level.",
+                            422,
+                        )
+                    self._active_room_limit(c, request.friend_user_id)
                 now = utc_now()
                 invite_code = secrets.token_hex(32)
                 c.execute(
@@ -575,16 +645,18 @@ class PostgresRoomRepository:
                     )
                 )
                 self._add_member(c, room_id, profile["id"], 0)
+                if friend_profile:
+                    self._add_member(c, room_id, friend_profile["id"], 1, request.friend_user_id)
                 self._remember(c, room_id, "create", request)
             snapshot = self._snapshot(c, room_id)
         return RoomAccessResponse(room=snapshot, invite_code=snapshot.invite_code)
 
-    def _add_member(self, c, room_id, profile_id, seat):
+    def _add_member(self, c, room_id, profile_id, seat, user_id=None):
         c.execute(
             insert(room_members).values(
                 id=uuid4(),
                 room_id=room_id,
-                user_id=self.user_id,
+                user_id=user_id or self.user_id,
                 language_profile_id=profile_id,
                 seat=seat,
                 ready=False,
@@ -623,14 +695,13 @@ class PostgresRoomRepository:
                 raise RoomError(
                     "room_language_mismatch", "Use the room's learning language and level.", 422
                 )
-            self._no_active_room(c, room_id)
+            self._active_room_limit(c, except_room=room_id)
             members = self._members(c, room_id)
             if not any(m["user_id"] == self.user_id for m in members):
                 if len(members) >= 2:
                     raise RoomError("room_full", "This room already has two players.")
                 self._setup_rate(c)
                 self._add_member(c, room_id, profile["id"], 1)
-                self._reset_ready(c, room_id)
                 self._bump(c, room_id)
             self._remember(c, room_id, "join", request)
             return RoomAccessResponse(room=self._snapshot(c, room_id))
@@ -639,11 +710,13 @@ class PostgresRoomRepository:
         try:
             with self.engine.connect().execution_options(isolation_level="REPEATABLE READ") as c:
                 snapshot = self._snapshot(c, room_id)
-                expired_invitation = c.execute(select(learning_rooms.c.id).where(
-                    learning_rooms.c.id == room_id,
-                    learning_rooms.c.invite_code.is_not(None),
-                    self._stale_invitation(utc_now()),
-                )).scalar_one_or_none()
+                expired_invitation = c.execute(
+                    select(learning_rooms.c.id).where(
+                        learning_rooms.c.id == room_id,
+                        learning_rooms.c.invite_code.is_not(None),
+                        self._stale_invitation(utc_now()),
+                    )
+                ).scalar_one_or_none()
             if expired_invitation:
                 # Normal polling remains read-only. Expired credentials are
                 # cleared under the same lock order as room commands.
@@ -669,9 +742,33 @@ class PostgresRoomRepository:
                     learning_rooms.c.status.in_(LIVE),
                     learning_rooms.c.expires_at > utc_now(),
                 )
+                .order_by(learning_rooms.c.updated_at.desc(), learning_rooms.c.id)
+                .limit(1)
             ).scalar_one_or_none()
         snapshot = self.get(room_id) if room_id else None
         return snapshot if snapshot and snapshot.status in LIVE else None
+
+    def list(self):
+        with self.engine.connect().execution_options(isolation_level="REPEATABLE READ") as c:
+            query = (
+                select(learning_rooms.c.id)
+                .join(
+                    room_members,
+                    room_members.c.room_id == learning_rooms.c.id,
+                )
+                .where(room_members.c.user_id == self.user_id)
+            )
+            actionable = self._actionable_room(self.user_id)
+            actionable_ids = list(c.execute(query.where(actionable)).scalars())
+            recent_ids = list(
+                c.execute(
+                    query.where(~actionable)
+                    .order_by(learning_rooms.c.updated_at.desc(), learning_rooms.c.id)
+                    .limit(20)
+                ).scalars()
+            )
+            snapshots = [self._snapshot(c, room_id) for room_id in actionable_ids + recent_ids]
+            return sorted(snapshots, key=lambda room: (room.updated_at, str(room.id)), reverse=True)
 
     def _photos(self, c, room_id):
         return [
@@ -895,81 +992,80 @@ class PostgresRoomRepository:
                     )
                     .values(ready=request.ready)
                 )
+                members = self._members(c, room_id)
+                if len(members) == 2 and all(m["ready"] for m in members):
+                    self._start(c, room_id, members, photos)
+                else:
+                    self._bump(c, room_id)
                 self._remember(c, room_id, "ready", request)
-                self._bump(c, room_id)
             return self._snapshot(c, room_id)
 
     def start(self, room_id, request):
         with self._locked(room_id) as c:
-            _room, retry = self._check_command(c, room_id, "start", request, "lobby")
+            room, retry = self._check_command(c, room_id, "start", request)
             if not retry:
-                members = self._members(c, room_id)
-                photos = self._photos(c, room_id)
-                if len(members) != 2 or not all(m["ready"] for m in members):
-                    raise RoomError(
-                        "room_players_not_ready", "Both players need to get ready first."
-                    )
-                if not 2 <= len(photos) <= 4 or any(
-                    p["status"] != "ready" or not p["pack"] for p in photos
-                ):
-                    raise RoomError(
-                        "room_photos_not_ready", "Review two to four photos before starting."
-                    )
-                for member in sorted(members, key=lambda m: str(m["user_id"])):
-                    if self.spend_sauce:
-                        self.spend_sauce(c, member["user_id"], f"room:{room_id}:start")
-                for index, photo in enumerate(photos):
-                    targets = photo["pack"].get("targets", [])
-                    if not targets:
-                        raise RoomError("room_photo_no_clues", "A photo needs a clear guided clue.")
-                    target = secrets.choice(targets)
-                    turn_id = uuid5(room_id, f"turn:{index}")
-                    sender, guesser = members[index % 2], members[1 - index % 2]
-                    now = utc_now()
-                    c.execute(
-                        insert(room_turns).values(
-                            id=turn_id,
-                            room_id=room_id,
-                            photo_id=photo["id"],
-                            turn_index=index,
-                            sender_user_id=sender["user_id"],
-                            guesser_user_id=guesser["user_id"],
-                            phase="compose",
-                            target_object_key=target["objectKey"],
-                            clue_option_id=None,
-                            clue=None,
-                            guessed_object_keys=[],
-                            is_correct=None,
-                            created_at=now,
-                            resolved_at=None,
-                        )
-                    )
-                    for member in members:
-                        c.execute(
-                            insert(room_contributions).values(
-                                id=uuid5(turn_id, str(member["user_id"])),
-                                room_id=room_id,
-                                turn_id=turn_id,
-                                user_id=member["user_id"],
-                                clue_sent=False,
-                                guess_count=0,
-                                correct_guess=False,
-                                acknowledged=False,
-                                basil_earned=0,
-                                xp_earned=0,
-                                created_at=now,
-                                updated_at=now,
-                            )
-                        )
+                if room["status"] == "lobby":
+                    self._start(c, room_id, self._members(c, room_id), self._photos(c, room_id))
                 self._remember(c, room_id, "start", request)
-                self._bump(
-                    c,
-                    room_id,
-                    status="playing",
-                    expires_at=utc_now() + PLAY_DURATION,
-                    invite_expires_at=utc_now(),
-                )
             return self._snapshot(c, room_id)
+
+    def _start(self, c, room_id, members, photos):
+        if len(members) != 2 or not all(m["ready"] for m in members):
+            raise RoomError("room_players_not_ready", "Both players need to get ready first.")
+        if not 2 <= len(photos) <= 4 or any(
+            p["status"] != "ready" or not p["pack"] for p in photos
+        ):
+            raise RoomError("room_photos_not_ready", "Review two to four photos before starting.")
+        for index, photo in enumerate(photos):
+            targets = photo["pack"].get("targets", [])
+            if not targets:
+                raise RoomError("room_photo_no_clues", "A photo needs a clear guided clue.")
+            target = secrets.choice(targets)
+            turn_id = uuid5(room_id, f"turn:{index}")
+            sender, guesser = members[index % 2], members[1 - index % 2]
+            now = utc_now()
+            c.execute(
+                insert(room_turns).values(
+                    id=turn_id,
+                    room_id=room_id,
+                    photo_id=photo["id"],
+                    turn_index=index,
+                    sender_user_id=sender["user_id"],
+                    guesser_user_id=guesser["user_id"],
+                    phase="compose",
+                    target_object_key=target["objectKey"],
+                    clue_option_id=None,
+                    clue=None,
+                    guessed_object_keys=[],
+                    is_correct=None,
+                    created_at=now,
+                    resolved_at=None,
+                )
+            )
+            for member in members:
+                c.execute(
+                    insert(room_contributions).values(
+                        id=uuid5(turn_id, str(member["user_id"])),
+                        room_id=room_id,
+                        turn_id=turn_id,
+                        user_id=member["user_id"],
+                        clue_sent=False,
+                        guess_count=0,
+                        correct_guess=False,
+                        acknowledged=False,
+                        basil_earned=0,
+                        xp_earned=0,
+                        created_at=now,
+                        updated_at=now,
+                    )
+                )
+        self._bump(
+            c,
+            room_id,
+            status="playing",
+            expires_at=utc_now() + PLAY_DURATION,
+            invite_expires_at=utc_now(),
+        )
 
     def _current_turn(self, c, room_id):
         row = (
@@ -987,8 +1083,34 @@ class PostgresRoomRepository:
         )
         return dict(row) if row else None
 
+    def _visible_turn(self, c, room_id, status):
+        if status not in {"playing", "completed"}:
+            return None
+        pending = (
+            c.execute(
+                select(room_turns)
+                .join(
+                    room_contributions,
+                    room_contributions.c.turn_id == room_turns.c.id,
+                )
+                .where(
+                    room_turns.c.room_id == room_id,
+                    room_turns.c.phase.in_({"reveal", "closed"}),
+                    room_contributions.c.user_id == self.user_id,
+                    room_contributions.c.acknowledged.is_(False),
+                )
+                .order_by(room_turns.c.turn_index)
+                .limit(1)
+            )
+            .mappings()
+            .first()
+        )
+        if pending:
+            return dict(pending)
+        return self._current_turn(c, room_id) if status == "playing" else None
+
     def _turn(self, c, room_id, turn_id, phase, role):
-        turn = self._current_turn(c, room_id)
+        turn = self._visible_turn(c, room_id, "playing")
         if turn is None or turn["id"] != turn_id:
             raise RoomError("room_turn_changed", "The round changed. Refresh and try again.")
         if turn["phase"] != phase or turn[f"{role}_user_id"] != self.user_id:
@@ -1097,36 +1219,35 @@ class PostgresRoomRepository:
     def acknowledge(self, room_id, turn_id, request):
         kind = f"ack:{turn_id}"
         with self._locked(room_id) as c:
-            _room, retry = self._check_command(c, room_id, kind, request, "playing")
-            if not retry:
-                turn = self._current_turn(c, room_id)
-                if turn is None or turn["id"] != turn_id or turn["phase"] != "reveal":
-                    raise RoomError("room_wrong_phase", "Wait for the round's result.")
-                self._contribution(c, turn_id, acknowledged=True)
-                remaining = c.execute(
-                    select(func.count())
-                    .select_from(room_contributions)
-                    .where(
-                        room_contributions.c.turn_id == turn_id,
-                        room_contributions.c.acknowledged.is_(False),
-                    )
-                ).scalar_one()
-                if remaining == 0:
+            self._member(c, room_id)
+            room = self._room(c, room_id)
+            if self._remembered(c, room_id, kind, request):
+                return self._snapshot(c, room_id)
+            status = _effective_status(room)
+            if status not in {"playing", "completed"}:
+                raise RoomError("room_not_active", "This room has ended.")
+            if request.expected_revision != room["revision"]:
+                raise RoomError("room_stale_revision", "The room changed. Refresh and try again.")
+            turn = self._visible_turn(c, room_id, status)
+            if turn is None or turn["id"] != turn_id or turn["phase"] not in {"reveal", "closed"}:
+                raise RoomError("room_wrong_phase", "Wait for the round's result.")
+            self._contribution(c, turn_id, acknowledged=True)
+            if turn["phase"] == "reveal":
+                c.execute(
+                    update(room_turns).where(room_turns.c.id == turn_id).values(phase="closed")
+                )
+                if self._current_turn(c, room_id) is None:
+                    self._bump(c, room_id, status="completed", ended_at=utc_now())
                     c.execute(
-                        update(room_turns).where(room_turns.c.id == turn_id).values(phase="closed")
+                        update(room_members)
+                        .where(room_members.c.room_id == room_id)
+                        .values(active=False)
                     )
-                    if self._current_turn(c, room_id) is None:
-                        self._bump(c, room_id, status="completed", ended_at=utc_now())
-                        c.execute(
-                            update(room_members)
-                            .where(room_members.c.room_id == room_id)
-                            .values(active=False)
-                        )
-                    else:
-                        self._bump(c, room_id)
                 else:
                     self._bump(c, room_id)
-                self._remember(c, room_id, kind, request)
+            else:
+                self._bump(c, room_id)
+            self._remember(c, room_id, kind, request)
             return self._snapshot(c, room_id)
 
     def leave(self, room_id, request):
@@ -1285,19 +1406,42 @@ class PostgresRoomRepository:
     def authorized_photo_asset(self, user_id, room_id, photo_id):
         if user_id != self.user_id:
             raise RoomError("room_not_found", "Room not found.", 404)
-        with self.engine.connect() as c:
-            self._member(c, room_id, active=True)
+        with self.engine.connect().execution_options(isolation_level="REPEATABLE READ") as c:
+            self._member(c, room_id)
             room = self._room(c, room_id)
-            if _effective_status(room) not in LIVE:
+            status = _effective_status(room)
+            if status not in {"lobby", "playing", "completed"}:
                 raise RoomError("room_not_active", "This room has ended.", 404)
             photo = self._photo(c, room_id, photo_id)
-            if room["status"] == "playing":
-                turn = self._current_turn(c, room_id)
+            if status in {"playing", "completed"}:
+                turn = self._visible_turn(c, room_id, status)
                 if turn is None or turn["photo_id"] != photo_id:
                     raise RoomError("room_photo_not_found", "Photo not found.", 404)
             if photo["owner_user_id"] != self.user_id and not photo["analysis"]:
                 raise RoomError("room_photo_not_found", "Photo not found.", 404)
             return self._owned_asset(c, photo["media_asset_id"], photo["owner_user_id"])
+
+    def _action_required(self, status, members, photos, turn):
+        if turn and turn["phase"] in {"reveal", "closed"}:
+            return "viewResult"
+        if status not in LIVE:
+            return "finished"
+        if status == "playing":
+            if turn and turn["phase"] == "compose" and turn["sender_user_id"] == self.user_id:
+                return "sendClue"
+            if turn and turn["phase"] == "guess" and turn["guesser_user_id"] == self.user_id:
+                return "guess"
+            return "waiting"
+        if len(photos) < 2 or any(
+            p["status"] != "ready" and p["owner_user_id"] == self.user_id for p in photos
+        ):
+            return "preparePhotos"
+        if any(p["status"] != "ready" for p in photos):
+            return "waiting"
+        me = next(m for m in members if m["user_id"] == self.user_id)
+        if not me["ready"]:
+            return "ready"
+        return "inviteFriend" if len(members) == 1 else "waiting"
 
     def _snapshot(self, c, room_id):
         self._member(c, room_id)
@@ -1305,7 +1449,7 @@ class PostgresRoomRepository:
         status = _effective_status(room)
         members = self._members(c, room_id)
         photos = self._photos(c, room_id)
-        turn = self._current_turn(c, room_id) if status == "playing" else None
+        turn = self._visible_turn(c, room_id, status)
         contributions = [
             dict(row)
             for row in c.execute(
@@ -1330,7 +1474,7 @@ class PostgresRoomRepository:
         ]
         public_photos = []
         for photo in photos:
-            if status not in LIVE or (turn and photo["id"] != turn["photo_id"]):
+            if (status not in LIVE and not turn) or (turn and photo["id"] != turn["photo_id"]):
                 continue
             owner = photo["owner_user_id"] == self.user_id
             accessible = owner or bool(photo["analysis"])
@@ -1370,13 +1514,13 @@ class PostgresRoomRepository:
                 id=turn["id"],
                 index=turn["turn_index"],
                 role="sender" if sender else "guesser",
-                phase=turn["phase"],
+                phase="reveal" if turn["phase"] == "closed" else turn["phase"],
                 photo_id=photo["id"],
                 image_url=_image_url(room_id, photo["id"]),
                 objects=photo["pack"]["objects"],
                 clue=turn["clue"],
                 target_object_key=turn["target_object_key"]
-                if sender or turn["phase"] == "reveal"
+                if sender or turn["phase"] in {"reveal", "closed"}
                 else None,
                 clue_options=target["clueOptions"]
                 if sender and turn["phase"] == "compose"
@@ -1390,7 +1534,7 @@ class PostgresRoomRepository:
                     if turn["is_correct"]
                     else "Here's the object the clue described.",
                 }
-                if turn["phase"] == "reveal"
+                if turn["phase"] in {"reveal", "closed"}
                 else None,
             )
         public_contributions = [
@@ -1427,6 +1571,9 @@ class PostgresRoomRepository:
             status=status,
             revision=room["revision"],
             expires_at=room["expires_at"],
+            invite_expires_at=room["invite_expires_at"],
+            updated_at=room["updated_at"],
+            action_required=self._action_required(status, members, photos, turn),
             me_id=self.user_id,
             host_user_id=room["host_user_id"],
             source_language_code=room["source_language_code"],

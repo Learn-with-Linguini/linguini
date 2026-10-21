@@ -30,6 +30,20 @@ UPLOAD_WORDS = {
     "en": [("chair", "chair"), ("table", "table"), ("plant", "plant")],
 }
 
+ENGLISH_ARTICLES = ("the ", "a ", "an ")
+
+
+def strip_english_article(label: str) -> str:
+    collapsed = " ".join(label.split())
+    lowered = collapsed.lower()
+    for article in ENGLISH_ARTICLES:
+        if lowered.startswith(article):
+            stripped = collapsed[len(article) :].strip()
+            return stripped or collapsed
+        if lowered == article.strip():
+            return collapsed
+    return collapsed
+
 
 def bootstrap_word(
     connection, language, source_language, word, translation, part="noun", gender=None,
@@ -130,6 +144,7 @@ def curated_scene_object(session_id, entry, vocabulary_item_id=None):
 
 def curated_word(connection, profile, label):
     """The oldest catalog word translated as ``label``; curated scenes carry no words."""
+    bare = strip_english_article(label).lower()
     row = (
         connection.execute(
             select(
@@ -148,7 +163,9 @@ def curated_word(connection, profile, label):
                 == profile["target_language_code"].lower(),
                 func.lower(vocabulary_translations.c.source_language_code)
                 == profile["source_language_code"].lower(),
-                func.lower(vocabulary_translations.c.translated_text) == label.strip().lower(),
+                func.lower(vocabulary_translations.c.translated_text).in_(
+                    [bare, *(f"{article.strip()} {bare}" for article in ENGLISH_ARTICLES)]
+                ),
             )
             .order_by(vocabulary_items.c.created_at, vocabulary_items.c.id)
             .limit(1)

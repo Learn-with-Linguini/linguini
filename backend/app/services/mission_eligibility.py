@@ -255,7 +255,14 @@ def suggested_counted_groups(objects):
         )
         if group["quantity"] == quantity:
             group["sceneObjectIds"].append(str(obj.id))
-    return list(groups.values())
+    # Scene analysis returns one marker per visible instance. Keep provisional
+    # planning consistent with the review screen: a model suggestion must not
+    # turn one visible marker into a countable group and hide the other objects
+    # that could support non-counting missions.
+    return [
+        {**group, "quantity": min(group["quantity"], len(group["sceneObjectIds"]))}
+        for group in groups.values()
+    ]
 
 
 def provisional_mission_focus(candidates, objects, relations, language_context=None):
@@ -383,10 +390,90 @@ def confirmed_relations(mission, objects, relations):
     ]
 
 
+# What a learner can add on the review screen, in the order the screen offers it.
+SHORTFALL_KINDS = ("objects", "counts", "attributes", "relations")
+# A2 rules and the confirmed facts that can satisfy them.
+RULE_SHORTFALLS = {
+    "describeScene": ("attributes", "relations"),
+    "findTarget": ("attributes", "relations"),
+    "compareQuantities": ("counts",),
+    "fictionalOwnership": ("attributes", "relations"),
+    "requestableItem": ("objects",),
+}
+# Pack missions' own photo rules and the confirmed facts that can satisfy them.
+PACK_SHORTFALLS = {
+    "M01": ("attributes", "relations"),
+    "M02": ("attributes", "relations"),
+    "M03": ("counts",),
+}
+A0_OBJECTS_REASON = "Confirm at least 2 different objects with taught names."
+
+
 @dataclass(frozen=True)
 class Eligibility:
     eligible: bool
     reasons: tuple[str, ...] = ()
+    # The kinds of confirmed fact that are short: ``SHORTFALL_KINDS`` or ``choices``.
+    missing: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class SceneShortfall:
+    """Why no mission fits the confirmed scene, and what the learner could add."""
+
+    missing: tuple[str, ...]
+    missions: tuple[dict, ...]
+
+    def as_json(self):
+        return {"missing": list(self.missing), "missions": list(self.missions)}
+
+
+def scene_shortfall(
+    candidates, objects, relations=(), counted_groups=(), mission_choices=None,
+    language_context=None,
+):
+    """``None`` when a mission fits; otherwise what the closest missions still need.
+
+    A profile without implemented missions has nothing to check, so it is never short.
+    """
+    from app.services.shortfall_steps import mission_steps
+
+    if not candidates or plan_missions(
+        candidates, objects, relations, counted_groups, (), mission_choices, language_context,
+    ):
+        return None
+    checks = [
+        (mission, photo_eligibility(
+            mission, objects, relations, counted_groups, mission_choices, language_context,
+        ))
+        for mission in candidates
+    ]
+    # Only facts the review screen can add; a missing learner choice is not the photo's gap.
+    actionable = [
+        (mission, check, [kind for kind in SHORTFALL_KINDS if kind in check.missing])
+        for mission, check in checks
+    ]
+    actionable = sorted(
+        (item for item in actionable if item[2]), key=lambda item: len(item[2])
+    )
+    closest = len(actionable[0][2]) if actionable else 0
+    missing = [
+        kind for kind in SHORTFALL_KINDS
+        if any(kind in kinds for *_rest, kinds in actionable if len(kinds) == closest)
+    ]
+    return SceneShortfall(
+        missing=tuple(missing or SHORTFALL_KINDS),
+        missions=tuple(
+            {
+                "missionId": mission.mission_id,
+                "title": mission.title,
+                "missing": kinds,
+                "reasons": list(check.reasons),
+                "steps": mission_steps(mission, objects, relations, counted_groups, kinds),
+            }
+            for mission, check, kinds in actionable
+        ),
+    )
 
 
 def saved_counted_groups(draft):
@@ -458,11 +545,12 @@ def photo_eligibility(
     requirements = mission.photo_requirements
     pack = _pack_mission(mission, language_context)
     labels = {obj.label.strip().casefold() for obj in objects}
-    reasons = []
+    reasons, missing = [], []
     if len(labels) < requirements.min_confirmed_objects:
         reasons.append(
             f"Confirm at least {requirements.min_confirmed_objects} different objects."
         )
+        missing.append("objects")
     # ``min_coloured_objects`` counts objects with any reviewed attribute, colour or other.
     described = {obj.label.strip().casefold() for obj in objects
                  if (scene_attributes(obj) if pack else confirmed_attributes(obj))}
@@ -473,34 +561,54 @@ def photo_eligibility(
             else "Confirm a colour, size, shape, material, pattern or state of at least "
             f"{requirements.min_coloured_objects} different objects."
         )
+        missing.append("attributes")
     if requirements.min_relations and (
         len(confirmed_relations(mission, objects, relations)) < requirements.min_relations
     ):
         reasons.append(
             "Confirm where one object is on, under, next to, in front of or behind another."
         )
+        missing.append("relations")
     if len(countable_groups(mission, counted_groups)) < requirements.min_counted_groups:
         reasons.append(
             f"Count a group of {requirements.min_quantity} to {requirements.max_quantity} "
             "matching objects."
         )
+        missing.append("counts")
     if requirements.eligibility_rule and not pack:
         from app.services.mission_eligibility_a2 import eligibility_reasons
 
-        reasons.extend(eligibility_reasons(
+        rule_reasons = eligibility_reasons(
             requirements.eligibility_rule, mission, objects, relations, counted_groups,
-        ))
+        )
+        reasons.extend(rule_reasons)
+        if rule_reasons:
+            missing.extend(
+                ("objects",)
+                if requirements.eligibility_rule == "describeScene" and len(labels) < 3
+                else RULE_SHORTFALLS.get(requirements.eligibility_rule, ())
+            )
     if pack:
         # Dictionary-based rules above do not apply to open session vocabulary; the
         # mission's pack implementation states its own photo requirements instead.
         from app.language_packs.lessons import pack_mission
 
-        reasons += pack_mission(mission.mission_id).photo_reasons(
+        pack_reasons = pack_mission(mission.mission_id).photo_reasons(
             mission, objects, relations, scene_attributes, counted_groups=counted_groups,
         )
+        reasons += pack_reasons
+        if pack_reasons:
+            missing.extend(PACK_SHORTFALLS.get(mission.mission_id, ()))
     if str(mission.practice_level) == "A0" and not pack:
-        reasons += a0_photo_reasons(mission, objects, counted_groups, mission_choices)
-    return Eligibility(not reasons, tuple(reasons))
+        a0_reasons = a0_photo_reasons(mission, objects, counted_groups, mission_choices)
+        reasons += a0_reasons
+        if a0_reasons:
+            missing.append(
+                "counts" if mission.mission_id == "M03"
+                else "objects" if a0_reasons == [A0_OBJECTS_REASON]
+                else "choices"
+            )
+    return Eligibility(not reasons, tuple(reasons), tuple(dict.fromkeys(missing)))
 
 
 def scene_attributes(obj):
@@ -535,7 +643,7 @@ def _mission_choice_supplied(mission, mission_choices):
 
 
 def a0_photo_reasons(mission, objects, counted_groups=(), mission_choices=None):
-    """A0 missions need reviewed nouns: 2-3 distinct objects, or one group of 2 or 3."""
+    """A0 missions need reviewed nouns: 2-3 distinct objects, or a group of 2 or 3."""
     from app.services.a0_lexicon import REVIEWED_NOUNS
 
     def reviewed(label):
@@ -550,11 +658,12 @@ def a0_photo_reasons(mission, objects, counted_groups=(), mission_choices=None):
                 if str(obj.id) in {str(item) for item in group["sceneObjectIds"]}
             )
         ]
-        if len(groups) != 1:
-            return ["Count exactly one group of 2 or 3 matching objects."]
+        # Any group qualifies; the lesson counts the first one, so extra groups never block it.
+        if not groups:
+            return ["Count a group of 2 or 3 matching objects."]
         return []
     if len(labels) < 2:
-        return ["Confirm at least 2 different objects with taught names."]
+        return [A0_OBJECTS_REASON]
     if mission.mission_id in {"M04", "M05"} and mission_choices is not None:
         choices = mission_choices.get("missionChoices", mission_choices)
         by_id = {str(obj.id): obj for obj in objects}

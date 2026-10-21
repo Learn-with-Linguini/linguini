@@ -124,17 +124,14 @@ export function Hero() {
             </h1>
             <p className={styles.lede}>
               Photograph the café you’re sitting in, the street you walked, the view from the bridge. Linguini finds the
-              words inside the picture, turns them into a five-minute game in Spanish or French, and keeps the day in your
-              journal.
+              words inside the picture, turns them into a short language game, and keeps the day in your journal. The app
+              supports Spanish, French, German and beginner Korean.
             </p>
             <p className={styles.betaNote}>Public beta · Free access · Unlimited photo lessons</p>
             <div className={styles.ctas}>
               <a href={appLinks.signUp} className="btn">
                 Join the public beta
               </a>
-              <button type="button" className={`btn btn--teal ${styles.tryButton}`} onClick={() => pick(scenes[0].id, document.querySelector<HTMLElement>(`[data-print="${scenes[0].id}"]`))}>
-                Try it on a photo <ArrowRight size={20} />
-              </button>
             </div>
             <div className={styles.prompt}>
               <svg className={styles.noodle} viewBox="0 0 120 60" aria-hidden="true">

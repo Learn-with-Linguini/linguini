@@ -1,0 +1,353 @@
+{
+  "ok": false,
+  "strict": false,
+  "browserSkipped": true,
+  "lint": {
+    "ok": false,
+    "errorCount": 1,
+    "warningCount": 17,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "duplicate_media_discovery_risk",
+        "severity": "warning",
+        "message": "Detected 2 matching img entries with the same source/start/duration.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Avoid duplicated media nodes that can be discovered twice during compilation."
+      },
+      {
+        "code": "media_missing_data_start",
+        "severity": "error",
+        "message": "<audio id=\"bgm\"> has src but no data-start. HyperFrames cannot own playback for untimed media, so preview and render behavior can diverge.",
+        "selector": "#bgm",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Add data-start=\"0\" (or the intended start time) and data-duration if the clip should stop before the source ends."
+      },
+      {
+        "code": "gsap_infinite_repeat",
+        "severity": "warning",
+        "message": "GSAP tween uses `repeat: -1` (infinite), but the composition declares a finite 56s window. HyperFrames clips deterministic seeking and export to that explicit duration.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Keep the explicit finite composition `data-duration`. Use a finite repeat count only when the loop itself must end before the composition does."
+      },
+      {
+        "code": "composition_file_too_large",
+        "severity": "warning",
+        "message": "This HTML composition file has 384 lines. Smaller sub-compositions are easier to read, iterate on, and diff.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Split coherent scenes or layers into separate .html files under compositions/, then mount them from the parent with data-composition-src so each file stays small enough to inspect, revise, and validate independently."
+      },
+      {
+        "code": "timed_element_missing_clip_class",
+        "severity": "warning",
+        "message": "<section id=\"scene-0\"> has timing attributes but no class=\"clip\". The runtime still hides it outside its time range, but Studio and the GSAP clip-ownership rules use .clip to recognise a clip, so leaving it off makes the element harder to edit and to lint.",
+        "selector": "#scene-0",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Add class=\"clip\" to the element so Studio and the linter can recognise it as a clip."
+      },
+      {
+        "code": "timed_element_missing_clip_class",
+        "severity": "warning",
+        "message": "<section id=\"scene-1\"> has timing attributes but no class=\"clip\". The runtime still hides it outside its time range, but Studio and the GSAP clip-ownership rules use .clip to recognise a clip, so leaving it off makes the element harder to edit and to lint.",
+        "selector": "#scene-1",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Add class=\"clip\" to the element so Studio and the linter can recognise it as a clip."
+      },
+      {
+        "code": "timed_element_missing_clip_class",
+        "severity": "warning",
+        "message": "<section id=\"scene-2\"> has timing attributes but no class=\"clip\". The runtime still hides it outside its time range, but Studio and the GSAP clip-ownership rules use .clip to recognise a clip, so leaving it off makes the element harder to edit and to lint.",
+        "selector": "#scene-2",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Add class=\"clip\" to the element so Studio and the linter can recognise it as a clip."
+      },
+      {
+        "code": "timed_element_missing_clip_class",
+        "severity": "warning",
+        "message": "<section id=\"scene-3\"> has timing attributes but no class=\"clip\". The runtime still hides it outside its time range, but Studio and the GSAP clip-ownership rules use .clip to recognise a clip, so leaving it off makes the element harder to edit and to lint.",
+        "selector": "#scene-3",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Add class=\"clip\" to the element so Studio and the linter can recognise it as a clip."
+      },
+      {
+        "code": "timed_element_missing_clip_class",
+        "severity": "warning",
+        "message": "<section id=\"scene-4\"> has timing attributes but no class=\"clip\". The runtime still hides it outside its time range, but Studio and the GSAP clip-ownership rules use .clip to recognise a clip, so leaving it off makes the element harder to edit and to lint.",
+        "selector": "#scene-4",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Add class=\"clip\" to the element so Studio and the linter can recognise it as a clip."
+      },
+      {
+        "code": "timed_element_missing_clip_class",
+        "severity": "warning",
+        "message": "<section id=\"scene-5\"> has timing attributes but no class=\"clip\". The runtime still hides it outside its time range, but Studio and the GSAP clip-ownership rules use .clip to recognise a clip, so leaving it off makes the element harder to edit and to lint.",
+        "selector": "#scene-5",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Add class=\"clip\" to the element so Studio and the linter can recognise it as a clip."
+      },
+      {
+        "code": "timed_element_missing_clip_class",
+        "severity": "warning",
+        "message": "<section id=\"scene-6\"> has timing attributes but no class=\"clip\". The runtime still hides it outside its time range, but Studio and the GSAP clip-ownership rules use .clip to recognise a clip, so leaving it off makes the element harder to edit and to lint.",
+        "selector": "#scene-6",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Add class=\"clip\" to the element so Studio and the linter can recognise it as a clip."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-0\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-0",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-0\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-1\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-1",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-1\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-2\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-2",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-2\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-3\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-3",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-3\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-4\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-4",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-4\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-5\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-5",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-5\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-6\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-6",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-6\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      }
+    ],
+    "filesScanned": 1
+  },
+  "runtime": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": []
+  },
+  "layout": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "duration": 0,
+    "samples": [],
+    "transitionSamples": [],
+    "transitionSamplesDropped": 0,
+    "tolerance": 2,
+    "totalIssueCount": 0,
+    "truncated": false
+  },
+  "motion": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": false,
+    "samples": 0
+  },
+  "contrast": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": true,
+    "samples": [],
+    "checked": 0,
+    "passed": 0
+  },
+  "hdr": {
+    "autoPromotion": null,
+    "inspection": "available"
+  },
+  "snapshots": {
+    "enabled": false,
+    "files": [],
+    "times": [],
+    "findingFiles": []
+  }
+}

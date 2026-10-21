@@ -5,6 +5,9 @@ import type { PracticeReview } from "../lib/api";
 import type { ConfirmGuessBody, PracticeDetail, SessionStatus, TaskAnswer, TaskActionResult } from "../lib/api";
 import { applyTaskResult, keepClientProgress } from "../lib/practiceUpdates";
 import { friendlyError, queryKeys } from "../lib/queryKeys";
+import { shortfallFromError } from "../lib/sceneShortfall";
+import type { SceneShortfall } from "../lib/api";
+import { gamificationKeys } from "../lib/gamification";
 import { gameResourceKeys } from "../lib/gameResources";
 
 const PROCESSING = ["analyzingScene", "generatingTasks"];
@@ -18,6 +21,8 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
   const [practiceSaving, setSaving] = useState(false);
   const [practiceError, setError] = useState<string | null>(null);
   const [practiceStalled, setStalled] = useState(false);
+  // What a rejected review said the scene still needs; cleared by the next review.
+  const [reviewShortfall, setReviewShortfall] = useState<SceneShortfall | null>(null);
   const busy = useRef(false);
   const completing = useRef(false);
   const learningDirty = useRef(false);
@@ -50,7 +55,11 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
     // Once task 1 is usable, keep checking in the background through slower
     // lesson/clue calls and their retries (up to five minutes).
     if (version === loadVersion.current) applySession(data);
-    for (let attempt = 0; attempt < (patient(data) ? 200 : 40) && PROCESSING.includes(data.session.status); attempt += 1) {
+    // Scene analysis can legitimately take a little while for a phone photo.
+    // Keep its scan visible for two minutes; only a returned failure or that
+    // timeout should offer a retry.
+    const maxAttempts = data.session.status === "analyzingScene" ? 400 : patient(data) ? 200 : 40;
+    for (let attempt = 0; attempt < maxAttempts && PROCESSING.includes(data.session.status); attempt += 1) {
       // Poll quickly until the first vocabulary task is committed, then use a
       // slower cadence while the remaining AI calls finish in the background.
       await new Promise(resolve => setTimeout(resolve, patient(data) ? 1500 : 300));
@@ -62,6 +71,7 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
       applySession(data);
       setStalled(PROCESSING.includes(data.session.status));
       void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
+      void queryClient.invalidateQueries({ queryKey: gamificationKeys.account(userId) });
     }
     return data;
     })();
@@ -97,6 +107,7 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
     } finally {
       busy.current = false; setSaving(false);
       void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
+      void queryClient.invalidateQueries({ queryKey: gamificationKeys.account(userId) });
     }
     try { await loadSession(id, data); }
     catch (error) { setError(friendlyError(error)); }
@@ -106,6 +117,7 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
     if (creation.current?.asset !== scene.mediaAssetId) creation.current = { asset: scene.mediaAssetId, key: crypto.randomUUID() };
     const result = await createPractice(profileId, scene.mediaAssetId, creation.current.key);
     void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
+      void queryClient.invalidateQueries({ queryKey: gamificationKeys.account(userId) });
     creation.current = null;
     return result;
   }, [profileId, queryClient, userId]);
@@ -117,6 +129,7 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
       applySession(value => applyTaskResult(value, session.session.id, result));
       learningDirty.current = true;
       void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
+      void queryClient.invalidateQueries({ queryKey: gamificationKeys.account(userId) });
       return result;
     } catch (e) {
       setError(friendlyError(e));
@@ -153,6 +166,7 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
         : current);
       flushLearningChanges();
       void queryClient.invalidateQueries({ queryKey: gameResourceKeys(userId) });
+      void queryClient.invalidateQueries({ queryKey: gamificationKeys.account(userId) });
       // Refetch the final reward total, and warm the cache when the summary screen has
       // not mounted yet so it renders without a visible fetch.
       void queryClient.invalidateQueries({ queryKey: queryKeys.sessionSummary(sessionId) });
@@ -180,7 +194,7 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
   const retryCompletion = useCallback(() => { startCompletion(); }, [startCompletion]);
   const saveReview = useCallback(async (review: PracticeReview) => {
     if (!session || busy.current) return false;
-    busy.current = true; setSaving(true); setError(null);
+    busy.current = true; setSaving(true); setError(null); setReviewShortfall(null);
     const previous = session;
     applySession(current => current?.session.id === session.session.id
       ? { ...current, session: { ...current.session, status: "generatingTasks" } }
@@ -197,9 +211,12 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
       return true;
     } catch (error) {
       applySession(current => current?.session.id === previous.session.id ? previous : current);
-      setError(friendlyError(error));
+      const shortfall = shortfallFromError(error);
+      // The shortfall notice explains this rejection, so it replaces the generic alert.
+      if (shortfall) setReviewShortfall(shortfall);
+      else setError(friendlyError(error));
       return false;
     } finally { busy.current = false; setSaving(false); }
   }, [session, loadSession, applySession, withClientProgress]);
-  return { session, practiceSaving, practiceError, practiceStalled, startSession, loadSession, retryProcessing, retryAnalysis, actOnTask, completeSession, completionPending: completion.isPending, completionError, retryCompletion, flushLearningChanges, saveReview, micReady, setMicReady };
+  return { session, practiceSaving, practiceError, practiceStalled, startSession, loadSession, retryProcessing, retryAnalysis, actOnTask, completeSession, completionPending: completion.isPending, completionError, retryCompletion, flushLearningChanges, saveReview, reviewShortfall, micReady, setMicReady };
 }

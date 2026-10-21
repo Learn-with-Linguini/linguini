@@ -12,8 +12,8 @@
 | [listing.md](listing.md) | Everything pasted into Product Hunt: name, taglines, description, launch tags, pricing, links, thumbnail, gallery order and captions, video, first maker comment, the full-release draft and the demo video storyboard. |
 | [social-posts.md](social-posts.md) | Every channel post (X, LinkedIn, Instagram, TikTok, Telegram/WhatsApp, email, Reddit, Show HN), one-to-one and creator outreach, and the reply bank for Product Hunt comments. |
 | [milestone-launch-campaign.html](milestone-launch-campaign.html) | The launch-campaign milestone write-up. Open it in a browser, copy all and paste into the Google Doc, like `business-model/milestone-business-model.html`. |
-| [gallery/](gallery/) | Six 1270 × 760 gallery images (`01-hero` to `06-habit`, each with an `@2x`), the 240 × 240 thumbnail (PNG and GIF) and the 1200 × 630 social card. |
-| [gallery-src/](gallery-src/) | HTML compositions for the gallery, built from 4× captures of the running landing page. The captures aren't committed; `capture.mjs` regenerates them from `frontend/src/marketing/` on port 3200, then `render.mjs` and `thumb.mjs` export the PNGs and GIF. |
+| [gallery/](gallery/) | Eight 1270 × 760 gallery images (`01-hero` to `08-daily-challenge`, each with an `@2x`), the 240 × 240 thumbnail (PNG and GIF) and the 1200 × 630 social card. |
+| [gallery-src/](gallery-src/) | HTML compositions for the gallery. The current set reads the shipped UI crops in `frontend/public/app-shots/` directly, so a gallery rerender stays in sync with the current learner UI. `render.mjs` exports 1× and 2× PNGs. |
 
 ## Elsewhere in the repo
 
@@ -37,7 +37,7 @@
 - [ ] Publish a privacy policy and terms, add a support email, and name a human owner for support, incidents and launch replies (must-fix items 2 and 3 in [plan.md](plan.md#must-fix-before-launch-day-ranked)).
 - [ ] Confirm photo rights and inspect every media export. Anything in the gallery, thumbnail or video must be our own or have a confirmed licence.
 - [ ] Choose the listing video: the 50-second animated explainer, the 30-second narrated launch film or the 30-second promo film (see [listing.md](listing.md#video)). Review it with sound and captions on desktop and phone. The narrated film depicts the **curated landing demo** through animation and one captured demo screen; it does not show a personal-photo workflow. Record a genuine product walkthrough before any listing that claims that flow is live.
-- [ ] Choose the gallery set: four illustrative images from the media kit, or six compositions in `gallery/` (see [listing.md](listing.md#gallery)).
+- [x] Use the eight current-beta compositions in `gallery/`; their order, captions and alt text are in [listing.md](listing.md#gallery).
 - [ ] Have the team review the Product Hunt listing, tagline, gallery order, first comment and outreach text.
 - [ ] Run the beta and go/no-go checklist in [plan.md](plan.md#go--no-go-at-t1), then schedule the listing. Replace `[PH_POST_URL]` after Product Hunt creates the post.
 

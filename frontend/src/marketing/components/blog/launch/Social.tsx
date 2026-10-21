@@ -74,7 +74,7 @@ export function XThread() {
           </div>
           <div className={l.xMain}>
             <p className={l.xHead}>
-              <b>Linguini</b> <span>Draft · 17 Oct</span> <Dots />
+              <b>Linguini</b> <span>Draft · 19 Oct</span> <Dots />
             </p>
             <p className={l.xText}><Rich text={post.text} /></p>
             {post.image ? <Img src={post.image.src} alt={post.image.alt} className={l.xImage} loading="lazy" /> : null}
@@ -174,13 +174,13 @@ export function StoryPhone() {
           ))}
         </div>
         <p className={l.storyHead}>
-          <Img src={AVATAR} alt="" /> <b>linguini</b> <span>{frame === 0 ? "3d" : "now"}</span>
+          <Img src={AVATAR} alt="" /> <b>linguini</b> <span>now</span>
         </p>
         {instagram.story.map((item, i) => (
           <Img key={item.src} src={item.src} alt={item.alt} className={l.storyImg} data-on={i === frame || undefined}
             loading="lazy" />
         ))}
-        {frame === 1 ? <span className={l.sticker}>🔗 PRODUCT HUNT</span> : null}
+        {frame === instagram.story.length - 1 ? <span className={l.sticker}>🔗 PRODUCT HUNT</span> : null}
       </div>
     </div>
   );
@@ -248,7 +248,7 @@ export function TelegramChat() {
         <div className={l.tgTyping} aria-hidden="true"><i /><i /><i /></div>
         <div className={l.tgBubble}>
           <Img src={telegram.image.src} alt={telegram.image.alt} className={l.tgPhoto} />
-          <b className={l.tgName}>Madrid</b>
+          <b className={l.tgName}>Linguini Dev</b>
           <p>{telegram.text} <span className={l.link}>[PH_POST_URL]</span></p>
           <span className={l.tgTime}>15:12 ✓✓</span>
         </div>

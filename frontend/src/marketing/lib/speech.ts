@@ -1,4 +1,4 @@
-const voiceLang = { es: "es-ES", fr: "fr-FR" } as const;
+const voiceLang = { es: "es-ES", fr: "fr-FR", de: "de-DE", ko: "ko-KR" } as const;
 
 export type Lang = keyof typeof voiceLang;
 

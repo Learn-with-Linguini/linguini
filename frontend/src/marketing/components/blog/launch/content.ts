@@ -4,9 +4,8 @@
  */
 
 export const LAUNCH = {
-  date: "2026-10-17",
-  pacific: "Sat 17 Oct, 00:01 PDT",
-  singapore: "Sat 17 Oct, 3:01pm SGT",
+  date: "2026-10-20",
+  pacific: "Tue 20 Oct, 00:01 PDT",
   landing: "www.learnwithlinguini.com",
 };
 
@@ -35,14 +34,14 @@ export type XPostData = { text: string; image?: { src: string; alt: string } };
 
 export const xThread: XPostData[] = [
   {
-    text: "Linguini is live on Product Hunt today 🍝\n\nPick a photo of a street, a café or a desk. Linguini pins the Spanish or French words onto it, you play a round of I-Spy with them, and the lesson ends as a page in your journal.\n\nIt’s early. Tell us where you got stuck 👇",
+    text: "Linguini is live on Product Hunt today 🍝\n\nPick a photo of a street, a café or a desk. Linguini pins the words onto it in Spanish, French, German or beginner Korean, you play a round of I-Spy with them, and the lesson ends as a page in your journal.\n\nIt’s early. Tell us where you got stuck 👇",
     image: { src: `${IMG}/launch-card-1200x630.jpg`, alt: "Link card: Live on Product Hunt today. Point at your day. Learn the words." },
   },
   {
     text: "Why photos? A word sticks when it belongs to a place you remember. A flashcard has no place. Your camera roll is full of them.",
   },
   {
-    text: "Built by a small student team at NUS. Spanish and French for now, free to try in your browser, nothing to install.\n\nThe listing, with the 50-second explainer: [PH_POST_URL]",
+    text: "Built by a small student team at NUS. The app supports Spanish, French, German and beginner Korean, runs in your browser and needs nothing installed.\n\nThe listing, with the 50-second explainer: [PH_POST_URL]",
   },
 ];
 
@@ -50,22 +49,20 @@ export const instagram = {
   slides: [
     { src: `${IMG}/ig-post-1080x1350.jpg`, alt: "Today’s lesson is on your camera roll, over a café photo labelled la mesa and el taburete." },
     { src: `${IMG}/social-square.jpg`, alt: "A photo scene. A fresh lesson. Hillside drive, el coche." },
-    { src: `${IMG}/countdown-1080x1080.jpg`, alt: "3 days to launch, over a hillside street labelled la casa, el coche and la flor." },
   ],
   caption:
-    "Today’s lesson is on your camera roll 📷\n\nLinguini is live on Product Hunt. Pick a photo, learn the words inside it in Spanish or French, play a round of I-Spy and keep the day as a journal page.\n\nLink in bio. What’s the first thing you’d photograph?",
+    "Today’s lesson is on your camera roll 📷\n\nLinguini is live on Product Hunt. Pick a photo, learn the words inside it in Spanish, French, German or beginner Korean, play a round of I-Spy and keep the day as a journal page.\n\nLink in bio. What’s the first thing you’d photograph?",
   tags: "#learnspanish #learnfrench #languagelearning #studygram #producthunt",
   story: [
-    { src: `${IMG}/ig-story-countdown-1080x1920.jpg`, alt: "Story 1: 3 days to launch." },
-    { src: `${IMG}/ig-story-1080x1920.jpg`, alt: "Story 2: We’re live on Product Hunt today." },
+    { src: `${IMG}/ig-story-1080x1920.jpg`, alt: "Story: We’re live on Product Hunt today." },
   ],
 };
 
 export const linkedin = {
-  author: "Madrid Lim",
-  role: "Co-maker of Linguini · NUS Computing",
-  text: "We put Linguini on Product Hunt today.\n\nIt started as a CS3216 project with a simple bet: vocabulary lists are easy to forget, but the places you walk through every day are not. So Linguini starts with a photo, pins Spanish or French words onto it, and ends each lesson as a journal page.\n\nThe browser demo needs no account, and the app turns a photo you take into a lesson, with AI finding the words in it.\n\nIf you teach, learn or build things, I’d value one honest comment on the listing: which step would make you come back tomorrow?",
-  image: { src: `${IMG}/linkedin-1584x396.jpg`, alt: "Your photo is the lesson. Launching on Product Hunt, Sat 17 Oct." },
+  author: "Linguini Dev",
+  role: "Co-maker of Linguini",
+  text: "We put Linguini on Product Hunt today.\n\nIt started as a student project with a simple bet: vocabulary lists are easy to forget, but the places you walk through every day are not. So Linguini starts with a photo, pins Spanish or French words onto it, and ends each lesson as a journal page.\n\nThe browser demo needs no account, and the app turns a photo you take into a lesson, with AI finding the words in it.\n\nIf you teach, learn or build things, I’d value one honest comment on the listing: which step would make you come back tomorrow?",
+  image: { src: `${IMG}/linkedin-1584x396.jpg`, alt: "Your photo is the lesson. Launching on Product Hunt, Mon 19 Oct." },
 };
 
 export const reddit = {
@@ -77,7 +74,7 @@ export const reddit = {
 
 export const telegram = {
   group: "NUS CS3216 / Computing friends",
-  text: "hey all! our CS3216 app Linguini just went up on Product Hunt 🍝 you pick a photo and learn the Spanish or French words in it. takes a few minutes in the browser. if you try it, drop a comment on what confused you 🙏",
+  text: "hey all! our CS3216 app Linguini just went up on Product Hunt 🍝 you pick a photo and learn the words in Spanish, French, German or beginner Korean. takes a few minutes in the browser. if you try it, drop a comment on what confused you 🙏",
   image: { src: `${IMG}/launch-card-1200x630.jpg`, alt: "Launch-day card: Live on Product Hunt today." },
 };
 
@@ -85,8 +82,6 @@ export const banners = [
   { src: `${IMG}/x-header-1500x500.jpg`, name: "X header", size: "1500 × 500", use: "Profile header from T−7. Text sits top-left because the avatar covers the bottom-left." },
   { src: `${IMG}/linkedin-1584x396.jpg`, name: "LinkedIn cover", size: "1584 × 396", use: "Our personal profiles and the page. Copy starts right of the logo." },
   { src: `${IMG}/launch-card-1200x630.jpg`, name: "Launch-day link card", size: "1200 × 630", use: "Sent as a photo in Telegram, WhatsApp and Discord on the day." },
-  { src: `${IMG}/countdown-1080x1080.jpg`, name: "Countdown square", size: "1080 × 1080", use: "Feed and stories at T−3." },
   { src: `${IMG}/ig-post-1080x1350.jpg`, name: "Instagram launch post", size: "1080 × 1350", use: "4:5 takes the most room in the feed." },
-  { src: `${IMG}/ig-story-countdown-1080x1920.jpg`, name: "Countdown story", size: "1080 × 1920", use: "T−3 story. Same safe areas as the launch story." },
   { src: `${IMG}/ig-story-1080x1920.jpg`, name: "Launch story", size: "1080 × 1920", use: "Top 250 px and bottom 340 px left clear for the UI and the link sticker." },
 ];

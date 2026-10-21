@@ -13,6 +13,7 @@ export const queryKeys = {
   sessionSummary: (sessionId: string) => ["session", sessionId, "summary"] as const,
   latestAttempt: (taskId: string) => ["task", taskId, "latest-attempt"] as const,
   lessonChecks: (taskId: string) => ["task", taskId, "lesson-checks"] as const,
+  vocabularyChecks: (taskId: string) => ["task", taskId, "vocabulary-checks"] as const,
   ispyPhotos: (profileId: string) => ["ispy", "photos", profileId] as const,
   activeGame: (profileId: string) => ["ispy", "active", profileId] as const,
 };
@@ -28,9 +29,9 @@ export function friendlyError(error: unknown): string {
     const codeMessages: Record<string, string> = {
       no_active_language: "Choose a learning language in Profile, then try again.",
       active_session_limit_reached: "You can keep up to three unfinished practices open. Finish or leave one before starting another.",
-      sauce_empty: "Your Sauce is empty. Resume a practice or return after your daily refill.",
-      insufficient_basil: "Collect 20 Basil leaves to unlock this accent.",
+      insufficient_basil: "Collect 20 Basil to unlock this accent.",
       practice_conflict: "This practice has changed. Refresh the page and try again.",
+      insufficient_scene: "This photo doesn't have enough for Linguini to check a lesson yet. Add more to it, or try another photo.",
       clue_names_target: "Your clue uses the word for this object. Describe it without naming it.",
       task_conflict: "That activity has already been updated. Refresh to see where you are now.",
       journal_conflict: "This journal entry changed while you were editing. Refresh and try again.",

@@ -24,15 +24,18 @@ export const site = {
   title: "Linguini — Learn a language from the photos you take",
   shortTitle: "Linguini",
   description:
-    "Snap a café, a street, a sunset. Linguini turns the words in your photo into bite-size Spanish or French games and a journal page. Join the public beta for unlimited photo lessons.",
+    "Snap a café, a street, a sunset. Linguini turns the words in your photo into bite-size language games and a journal page. Learn Spanish, French, German or beginner Korean in the public beta.",
   tagline: "Learn the language of your day.",
   locale: "en_US",
+  ogImage: "/og/linguini-beta.png",
   ogImageAlt:
-    "Linguini — Learn the language of your day. Real photos pinned like prints, one tagged “la mesa · the table”.",
+    "Linguini public beta — turn everyday photos into short lessons in Spanish, French, German or beginner Korean, with unlimited photo lessons at $0 during beta.",
   keywords: [
     "language learning app",
     "learn Spanish with photos",
     "learn French vocabulary",
+    "learn German with photos",
+    "beginner Korean vocabulary",
     "learn a language with pictures",
     "photo vocabulary",
     "language journal",

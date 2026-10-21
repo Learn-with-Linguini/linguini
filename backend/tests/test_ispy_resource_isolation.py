@@ -20,6 +20,9 @@ from app.schemas.tasks import (
     SubmitTextAttemptRequest,
 )
 
+# A thin scene is rejected on mission profiles; these tests cover the regular lesson.
+pytestmark = pytest.mark.usefixtures("regular_lesson")
+
 
 @pytest.mark.parametrize("correct_clue", [False, True])
 def test_standalone_replays_do_not_charge_sauce_or_earn_basil(database, repos, correct_clue):
@@ -29,7 +32,7 @@ def test_standalone_replays_do_not_charge_sauce_or_earn_basil(database, repos, c
     confirmed_lesson(workflow, profile, asset, "resource-lesson")
     with engine.begin() as connection:
         before = resource_snapshot(connection, owner.id)
-    assert before.sauce.remaining == 9
+    assert before.sauce.remaining == 10
     for index in range(3):
         game = workflow.get(start(games, profile, asset, f"resource-game-{index}").session.id)
         task = next(task for task in game.tasks if task.kind == "ispyRound")
@@ -70,4 +73,4 @@ def test_standalone_replays_do_not_charge_sauce_or_earn_basil(database, repos, c
             game_resource_events.c.user_id == owner.id,
         )).scalars().all()
     assert after == before
-    assert events == ["sauceSpend"]
+    assert events == []

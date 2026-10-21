@@ -34,6 +34,9 @@ class RoomService:
             return self.repository.get(snapshot.id)
         return None
 
+    def list(self):
+        return self.repository.list()
+
     def add_photo(self, room_id, request):
         snapshot = self.repository.add_photo(room_id, request)
         self._schedule(snapshot)

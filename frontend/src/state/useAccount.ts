@@ -4,11 +4,24 @@ import { languages } from "../config/languages";
 import { checkSelectableLanguage, languageDisplayName } from "../lib/languageChoices";
 import { createLanguageProfile, getCurrentUser, getLanguageProfiles, getPackPracticeLanguages, updateLanguageProfile, updateUser } from "../lib/api";
 import { saveOnboardingProfile } from "../lib/onboardingProfile";
+import { clearStoredAttribution, getStoredAttribution } from "../lib/attribution";
 import type { LanguageProfilePatch, ProficiencyLevel, UserPatch } from "../lib/api";
 import { friendlyError, queryError, queryKeys } from "../lib/queryKeys";
 
 async function loadAccount(signal?: AbortSignal) {
-  const [user, profiles] = await Promise.all([getCurrentUser(signal), getLanguageProfiles(signal)]);
+  let [user, profiles] = await Promise.all([getCurrentUser(signal), getLanguageProfiles(signal)]);
+  const attribution = getStoredAttribution();
+  if (attribution && !user.utmSource) {
+    try {
+      const updated = await updateUser(attribution);
+      if (updated) {
+        user = updated;
+        clearStoredAttribution();
+      }
+    } catch {
+      // Attribution sync is non-blocking
+    }
+  }
   return { user, profiles };
 }
 
@@ -91,7 +104,13 @@ export function useAccount() {
   }), [data, run]);
   const completeOnboarding = useCallback((code: string, minutes: number, proficiencyLevel: ProficiencyLevel, patch: UserPatch) => run(async () => {
     await checkSelectableLanguage(code, proficiencyLevel, () => getPackPracticeLanguages());
-    await updateUser(patch);
+    const attribution = getStoredAttribution();
+    const mergedPatch: UserPatch = {
+      ...patch,
+      ...(attribution && !data?.user?.utmSource ? attribution : {}),
+    };
+    await updateUser(mergedPatch);
+    clearStoredAttribution();
     await saveOnboardingProfile(
       { updateLanguageProfile, createLanguageProfile },
       data?.profiles ?? [],

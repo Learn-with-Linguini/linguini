@@ -2,17 +2,19 @@ import { InlineLoader } from "../components/LoadingScreen";
 import { useEffect, useId, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card, IconButton } from "../components/ui";
-import { ChevronRightIcon, CloseIcon, InstagramIcon, LinkedInIcon, TikTokIcon, XIcon } from "../components/icons";
+import { BasilIcon, ChevronRightIcon, CloseIcon, InstagramIcon, LinkedInIcon, TikTokIcon, XIcon } from "../components/icons";
 import { HelpImproveModal } from "../components/HelpImproveModal";
 import { usePracticeLanguages } from "../state/usePracticeLanguages";
 import { deleteCurrentAccount } from "../lib/api";
 import { accountTiers } from "../lib/accountTiers";
+import { trackAction } from "../lib/analytics.ts";
 import { validatePasswordReset } from "../lib/authMessages.ts";
 import { SOCIAL_LINKS_LIST } from "../config/social";
 import { supabase } from "../lib/supabase.ts";
 import { useAppState } from "../state/useAppState";
+import { savedPastaAvatar } from "../lib/onboardingDraft";
 import { useAuth } from "../state/Auth";
-import { GameResources } from "../components/GameResources";
+import { MissionBadges } from "../components/MissionBadges";
 
 const socialIcons = {
   instagram: InstagramIcon,
@@ -28,6 +30,7 @@ export function Profile() {
   const [deleteError, setDeleteError] = useState("");
   const [deleting, setDeleting] = useState(false);
   const deleteTitleId = useId();
+  const languageDialogTitleId = useId();
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -35,9 +38,11 @@ export function Profile() {
   const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null);
   const [passwordUpdating, setPasswordUpdating] = useState(false);
   const [surveyOpen, setSurveyOpen] = useState(false);
-  const { learner, user, activeProfile, progressLoading, progressError, profileError, profileSaving, setLanguage, saveLanguageProfile, saveUser } = useAppState();
+  const [pendingLanguageCode, setPendingLanguageCode] = useState<string | null>(null);
+  const { learner, user, activeProfile, progress, progressLoading, progressError, profileError, profileSaving, saveLanguageProfile, saveUser, languageProfiles, activateLanguageProfile } = useAppState();
   const tier = accountTiers[user?.tier ?? "beta"];
   const practiceLanguages = usePracticeLanguages(learner.languageCode);
+  const weeklyBasil = progress?.leaderboard.find(row => row.isYou)?.xp ?? 0;
 
   useEffect(() => {
     if (!deleteOpen) return;
@@ -54,7 +59,24 @@ export function Profile() {
     setDeleteError("");
   };
 
+  const pendingLanguage = practiceLanguages.choices.find(language => language.code === pendingLanguageCode);
+  // Profiles are only created by onboarding, so an existing one means this language is already set up.
+  const pendingProfile = pendingLanguage ? languageProfiles.find(profile =>
+    profile.targetLanguageCode.toLowerCase() === pendingLanguage.code && profile.sourceLanguageCode === "en") : undefined;
+  const closeLanguageDialog = () => { if (!profileSaving) setPendingLanguageCode(null); };
+  const confirmLanguageChange = async () => {
+    if (!pendingLanguage) return;
+    if (pendingProfile) {
+      trackAction("language_switched", { language: pendingLanguage.code });
+      if (await activateLanguageProfile(pendingProfile.id)) setPendingLanguageCode(null);
+      return;
+    }
+    trackAction("language_change_onboarding_started", { language: pendingLanguage.code });
+    navigate("/onboarding", { state: { from: "/profile", languageChangeCode: pendingLanguage.code } });
+  };
+
   const logOut = async () => {
+    trackAction("logout_clicked");
     await signOut();
     navigate("/", { replace: true });
   };
@@ -64,6 +86,7 @@ export function Profile() {
     setDeleting(true);
     setDeleteError("");
     try {
+      trackAction("account_deleted");
       await deleteCurrentAccount();
       localStorage.removeItem("linguini-avatar");
       await clearDeletedAccountSession();
@@ -104,6 +127,7 @@ export function Profile() {
         }
         return;
       }
+      trackAction("profile_password_changed");
       setPasswordSuccess("Password updated successfully!");
       setNewPassword("");
       setConfirmPassword("");
@@ -122,7 +146,7 @@ export function Profile() {
 
       <section className="profile-identity-card" aria-label="Profile">
         <span className="profile-avatar">
-          <img src={`/pasta-assets/${localStorage.getItem("linguini-avatar") ?? "farfalle"}.png`} alt="Profile avatar" />
+          <img src={`/pasta-assets/${savedPastaAvatar() ?? user?.avatar ?? "farfalle"}.png`} alt="Profile avatar" />
         </span>
         <button type="button" className="profile-identity__details profile-name-link" onClick={() => navigate("/profile/edit")} aria-label="Change profile name and avatar">
           <h2>{learner.name}</h2>
@@ -134,6 +158,14 @@ export function Profile() {
       {progressError ? <p role="alert">{progressError} Reload to retry.</p> : null}
       {profileError ? <p role="alert">{profileError}</p> : null}
 
+      {!progressLoading && !progressError ? <section className="profile-basil" aria-labelledby="profile-basil-heading">
+        <h2 id="profile-basil-heading">Your Basil</h2>
+        <div className="profile-basil__grid">
+          <div><span className="profile-basil__icon"><BasilIcon size={24} /></span><span>This week</span><strong>{weeklyBasil}</strong></div>
+          <div><span className="profile-basil__icon"><BasilIcon size={24} /></span><span>All time</span><strong>{progress?.xp ?? 0}</strong></div>
+        </div>
+      </section> : null}
+
       <section className="profile-section" aria-labelledby="account-tier-heading">
         <h2 id="account-tier-heading">Your plan</h2>
         <Card plain className="profile-tier-card">
@@ -142,15 +174,10 @@ export function Profile() {
             <strong>{tier.description}</strong>
           </div>
           <p>{(user?.tier ?? "beta") === "beta"
-            ? "Public beta includes a daily Sauce refill. New photo lessons and two-player rooms each use 1 Sauce; resuming does not spend more."
+            ? "Photo lessons and friend challenges are free to start during the beta."
             : tier.allowance}</p>
         </Card>
-      </section>
-
-      <section className="profile-section" aria-labelledby="profile-sauce-heading">
-        <h2 id="profile-sauce-heading">Your Sauce and Basil leaves</h2>
-        <GameResources shop />
-      </section>
+      </section>     
 
       <section className="profile-section">
         <h2>Learning setup</h2>
@@ -161,10 +188,7 @@ export function Profile() {
               <small>The language you are learning</small>
             </span>
             <select disabled={profileSaving} aria-busy={practiceLanguages.isPending} value={learner.languageCode} onChange={event => {
-              const choice = practiceLanguages.choices.find(language => language.code === event.target.value);
-              const levels = choice?.levels ?? [];
-              const level = levels.length ? levels.find(level => level === activeProfile?.proficiencyLevel) ?? levels.find(level => level === "A1") ?? levels[0] : undefined;
-              void setLanguage(event.target.value, learner.dailyMinutes ?? 10, level);
+              if (event.target.value !== learner.languageCode) setPendingLanguageCode(event.target.value);
             }}>
               {practiceLanguages.choices.map(language => (
                 <option key={language.code} value={language.code}>
@@ -297,6 +321,8 @@ export function Profile() {
         </Card>
       </section>
 
+      <MissionBadges />
+
       <section className="profile-section">
         <h2>Permissions</h2>
         <Card plain className="profile-settings-card">
@@ -362,6 +388,7 @@ export function Profile() {
                   rel="noopener noreferrer"
                   className="profile-social-item"
                   aria-label={`Follow Linguini on ${label}`}
+                  onClick={() => trackAction("social_link_clicked", { platform })}
                 >
                   <span className="profile-social-icon">
                     <Icon size={20} />
@@ -421,6 +448,38 @@ export function Profile() {
               <Button variant="quiet" block disabled={deleting} onClick={closeDeleteDialog}>Keep my account</Button>
               <Button block disabled={deleting} onClick={() => void deleteAccount()}>
                 {deleting ? "Deleting account…" : "Permanently delete account"}
+              </Button>
+            </div>
+          </section>
+        </div>
+      ) : null}
+
+      {pendingLanguage ? (
+        <div className="help-modal__backdrop" onMouseDown={closeLanguageDialog}>
+          <section
+            className="help-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={languageDialogTitleId}
+            aria-describedby={`${languageDialogTitleId}-description`}
+            onMouseDown={event => event.stopPropagation()}
+          >
+            <div className="help-modal__header">
+              <h2 id={languageDialogTitleId}>Switch to {pendingLanguage.name}?</h2>
+              <IconButton label="Keep current language" onClick={closeLanguageDialog}>
+                <CloseIcon />
+              </IconButton>
+            </div>
+            <p id={`${languageDialogTitleId}-description`}>
+              {pendingProfile
+                ? `You’ve already set up ${pendingLanguage.name}, so you’ll pick up where you left off. Your progress in ${learner.language} will stay saved.`
+                : `We’ll ask a few setup questions for ${pendingLanguage.name} before making it your active language. Your progress in ${learner.language} will stay saved.`}
+            </p>
+            {pendingProfile && profileError ? <p role="alert">{profileError}</p> : null}
+            <div className="account-delete-actions">
+              <Button variant="quiet" block disabled={profileSaving} onClick={closeLanguageDialog}>Keep {learner.language}</Button>
+              <Button block disabled={profileSaving} onClick={() => void confirmLanguageChange()}>
+                {pendingProfile ? `Switch to ${pendingLanguage.name}` : `Set up ${pendingLanguage.name}`}
               </Button>
             </div>
           </section>

@@ -23,6 +23,7 @@ from app.repositories.journals import JournalRepository
 from app.repositories.language_profiles import LanguageProfileRepository
 from app.repositories.learning import LearningRepository
 from app.repositories.media_assets import MediaAssetRepository
+from app.repositories.postgres.friends import PostgresFriendRepository
 from app.repositories.postgres.game_resources import reward_basil, spend_sauce
 from app.repositories.postgres.ispy_games import PostgresISpyGameRepository
 from app.repositories.postgres.journals import PostgresJournalRepository
@@ -54,12 +55,19 @@ from app.services.practice import PracticeService
 from app.services.room_photos import RoomPhotoPreparer
 from app.services.rooms import RoomService
 from app.services.scenes import SceneService
+from app.services.stripe_service import StripeService
 from app.services.tasks import TaskService
 from app.services.users import UserService
 
 
 def get_user_repository(request: Request) -> UserRepository:
     return PostgresUserRepository(request.app.state.database_engine)
+
+
+def get_stripe_service(
+    repository: Annotated[UserRepository, Depends(get_user_repository)],
+) -> StripeService:
+    return StripeService(repository)
 
 
 def get_journal_repository(
@@ -315,3 +323,9 @@ def get_room_service(
         preparer, getattr(request.app.state, "background_runner", None),
         image_reader=lambda asset, width: get_image_derivatives().get(asset.storage_key, width),
     )
+
+
+def get_friend_repository(
+    request: Request, user_id: Annotated[UUID, Depends(get_current_user_id)]
+) -> PostgresFriendRepository:
+    return PostgresFriendRepository(request.app.state.database_engine, user_id)

@@ -11,9 +11,9 @@ type Phase = { title: string; when: string; items: Item[] };
 export const phases: Phase[] = [
   {
     title: "Three weeks out",
-    when: "by 26 Sep",
+    when: "by 28 Sep",
     items: [
-      { text: "Agree the promise: beta testers until 16 Oct, open to everyone on launch day", owner: "Product" },
+      { text: "Agree the promise: beta testers until 18 Oct, open to everyone on launch day", owner: "Product" },
       { text: "Point every landing-page button at the production app, then tap each one on a phone", owner: "Eng" },
       { text: "Make every landing claim match the app today: photo analysis, speech, Plus trial", owner: "Product" },
       { text: "Track demo started, demo finished, sign-up, first lesson, second lesson", owner: "Eng" },
@@ -21,7 +21,7 @@ export const phases: Phase[] = [
   },
   {
     title: "Two weeks out",
-    when: "by 3 Oct",
+    when: "by 5 Oct",
     items: [
       { text: "Recruit 10 to 20 beta testers learning Spanish or French", owner: "Beta" },
       { text: "Watch five of them use it cold. Fix whatever confused two or more", owner: "Beta" },
@@ -31,27 +31,25 @@ export const phases: Phase[] = [
   },
   {
     title: "One week out",
-    when: "by 10 Oct",
+    when: "by 12 Oct",
     items: [
       { text: "Swap in the X header and LinkedIn cover", owner: "Marketing" },
       { text: "Reread the rules of every community on our list; message the r/Spanish mods", owner: "Outreach" },
       { text: "Personal note to Lindie Botes and ten smaller language creators, with no ask to post", owner: "Outreach" },
-      { text: "Ask NUS Hackers for a Friday Hacks demo slot", owner: "Outreach" },
-      { text: "Schedule the listing for Sat 17 Oct, 00:01 Pacific", owner: "PH" },
+      { text: "Schedule the listing for Mon 19 Oct, 00:01 Pacific", owner: "PH" },
     ],
   },
   {
     title: "Three days out",
-    when: "Wed 14 Oct",
+    when: "Fri 16 Oct",
     items: [
-      { text: "Countdown post and story", owner: "Marketing" },
       { text: "Tell friends and testers the date, and ask who wants a message on the day", owner: "Outreach" },
-      { text: "Write the duty rota: afternoon, night and morning shifts in Singapore time", owner: "Incident" },
+      { text: "Write the duty rota: overnight, daytime and evening shifts in Pacific time", owner: "Incident" },
     ],
   },
   {
     title: "Day before",
-    when: "Fri 16 Oct",
+    when: "Sun 18 Oct",
     items: [
       { text: "Go or no-go: buttons work, a stranger can sign up, analytics arrive, inbox staffed, someone can roll back", owner: "Product" },
       { text: "Freeze the copy and the assets. No edits after this", owner: "Marketing" },
@@ -59,10 +57,10 @@ export const phases: Phase[] = [
   },
   {
     title: "Launch day",
-    when: "Sat 17 Oct, 3:01pm SGT",
+    when: "Mon 19 Oct",
     items: [
       { text: "First comment up within a minute of going live", owner: "PH" },
-      { text: "X thread, Instagram post and story, LinkedIn out by 3:10pm", owner: "Marketing" },
+      { text: "X thread, Instagram post and story, LinkedIn out in the first hour", owner: "Marketing" },
       { text: "Every Product Hunt comment answered within the hour", owner: "Community" },
       { text: "Hourly check of errors, sign-ups and demo completions", owner: "Eng" },
     ],

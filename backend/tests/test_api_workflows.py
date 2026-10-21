@@ -9,6 +9,9 @@ from test_postgres_sessions import database as database
 
 from app.main import create_app
 
+# A thin scene is rejected on mission profiles; these tests cover the regular lesson.
+pytestmark = pytest.mark.usefixtures("regular_lesson")
+
 
 def test_profile_preferences_and_restart(database):
     _, _, profile, client = database

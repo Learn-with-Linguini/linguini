@@ -216,7 +216,7 @@ def test_remote_url_asset_reuses_its_hashed_derived_object(media_client):
     engine, owner, client = media_client
     asset = insert_asset(engine, owner.id, storage_key="https://cdn.example.com/other.jpg")
     derived = ImageDerivatives(FakeStorage()).derived_key(asset.storage_key, 640)
-    assert derived.startswith("derived/w640/remote/")
+    assert derived.startswith("derived/v2/w640/remote/")
     storage = FakeStorage({derived: jpeg_bytes(640, 480)})
     try:
         install(client, engine, owner, storage)

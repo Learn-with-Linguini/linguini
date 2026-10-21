@@ -6,11 +6,12 @@ from collections import OrderedDict
 from io import BytesIO
 from urllib.parse import urlsplit
 
-from PIL import Image
+from PIL import Image, ImageOps
 
 from app.services.image_storage import ImageStorage, UploadObjectMissing
 
 ALLOWED_WIDTHS = (320, 640, 1280)
+DERIVATIVE_ROOT = "derived/v2"
 
 
 def _is_remote(storage_key: str) -> bool:
@@ -30,8 +31,8 @@ class ImageDerivatives:
     def derived_key(self, storage_key: str, width: int) -> str:
         if _is_remote(storage_key):
             digest = hashlib.sha256(storage_key.encode()).hexdigest()
-            return f"derived/w{width}/remote/{digest}.webp"
-        return f"derived/w{width}/{storage_key}.webp"
+            return f"{DERIVATIVE_ROOT}/w{width}/remote/{digest}.webp"
+        return f"{DERIVATIVE_ROOT}/w{width}/{storage_key}.webp"
 
     def get(self, storage_key: str, width: int) -> bytes:
         if storage_key.startswith("demo-art/"):
@@ -71,6 +72,9 @@ class ImageDerivatives:
     @staticmethod
     def _resize(data: bytes, width: int) -> bytes:
         with Image.open(BytesIO(data)) as image:
+            # Phone cameras commonly store portrait orientation in EXIF. Bake it
+            # into the derivative so the display coordinates match grounding.
+            image = ImageOps.exif_transpose(image)
             if image.mode not in ("RGB", "L"):
                 background = Image.new("RGB", image.size, (255, 255, 255))
                 if image.mode in ("RGBA", "LA") or (

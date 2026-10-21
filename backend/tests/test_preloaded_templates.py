@@ -67,7 +67,10 @@ def scene_row(asset=None, slug=None) -> dict:
 
 
 def _remap(text: str, payload: dict) -> str:
-    keys = {row["source"]: row["key"] for row in payload["objects"]}
+    keys = {
+        row["source"].removeprefix("the "): row["key"]
+        for row in payload["objects"]
+    }
     if not {"cup", "table"} <= keys.keys():
         return "{}"
     for old, new in [
@@ -202,6 +205,34 @@ def test_stale_variant_is_regenerated_and_old_variant_kept():
     assert len(row["content"][GENERATED_CONTENT_KEY]["templates"]) == 6
 
 
+def test_regrounded_labels_regenerate_stale_templates_with_provider_budget():
+    row = scene_row()
+    for item in row["content"]["items"]:
+        item["translation"] = f"the {item['translation']}"
+    generate_row_templates(
+        row, "es", services(SceneModel()), unlimited(), RESERVE
+    )
+    old_fingerprints = {
+        entry["feature"]: entry["fingerprint"]
+        for entry in row["content"][GENERATED_CONTENT_KEY]["templates"]
+    }
+    for item in row["content"]["items"]:
+        item["translation"] = item["translation"].removeprefix("the ")
+
+    model = SceneModel()
+    budget = CallBudget(6, CallCountingTracer())
+    outcomes = generate_row_templates(row, "es", services(model), budget, RESERVE)
+
+    assert [outcome.status for outcome in outcomes] == ["generated"] * 3
+    assert len(model.requests) == 3
+    new_fingerprints = {
+        entry["feature"]: entry["fingerprint"]
+        for entry in row["content"][GENERATED_CONTENT_KEY]["templates"]
+    }
+    assert old_fingerprints.keys() == new_fingerprints.keys()
+    assert all(old_fingerprints[key] != new_fingerprints[key] for key in old_fingerprints)
+
+
 def test_rerun_resumes_from_stored_templates_without_calls():
     row = precomputed_row()
     model = SceneModel()
@@ -301,6 +332,117 @@ def test_from_json_dry_run_checks_templates_without_calls(tmp_path, monkeypatch)
     assert model.requests == []
     statuses = {o["status"] for o in json.loads(report.read_text())["outcomes"]}
     assert statuses == {"reused"}
+
+
+def test_reground_cli_updates_json_rows_without_scene_analysis(tmp_path, monkeypatch):
+    from app.ai.features.object_grounding import GroundedBox
+
+    asset = media_asset()
+    row = scene_row(asset)
+    for item in row["content"]["items"]:
+        item["translation"] = f"the {item['translation']}"
+    generate_row_templates(
+        row, "es", services(SceneModel()), unlimited(), RESERVE
+    )
+    source = tmp_path / "input.json"
+    script.write_json_artifact(source, [row], [asset])
+    output = tmp_path / "output.json"
+    report = tmp_path / "report.json"
+
+    class FakeGrounder:
+        def __init__(self):
+            self.calls = []
+
+        def ground_instances(self, image, labels, *, threshold=None):
+            assert image.data == b"image bytes"
+            self.calls.append((labels, threshold))
+            if threshold is None and labels == ["cup"]:
+                return {
+                    "cup": [
+                        GroundedBox(
+                            x=0.1, y=0.2, width=0.1, height=0.1, score=0.9
+                        )
+                    ]
+                }
+            if threshold == 0.27 and labels == ["table"]:
+                return {
+                    "table": [
+                        GroundedBox(
+                            x=0.5, y=0.2, width=0.1, height=0.1, score=0.3
+                        )
+                    ]
+                }
+            return {}
+
+    grounder = FakeGrounder()
+
+    class FakeStorage:
+        def __init__(self, *_):
+            pass
+
+        def download(self, _storage_key):
+            return b"image bytes"
+
+    monkeypatch.setattr(script, "build_object_grounder", lambda _settings: grounder)
+    monkeypatch.setattr(script, "ImageStorage", FakeStorage)
+    template_model = SceneModel()
+    monkeypatch.setattr(
+        script, "_template_services", lambda *_: services(template_model)
+    )
+    monkeypatch.setattr(
+        script,
+        "build_uploaded_scene_analyzer",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("scene analysis must not run")
+        ),
+    )
+
+    assert script.main(
+        [
+            "--from-json",
+            str(source),
+            "--reground",
+            "--reground-fallback-threshold",
+            "0.27",
+            "--dry-run",
+            "--max-provider-calls",
+            "6",
+            "--language",
+            "es",
+            "--json",
+            str(output),
+            "--report",
+            str(report),
+            "--slug",
+            row["slug"],
+            "--env-file",
+            str(tmp_path / "none"),
+        ]
+    ) == 0
+
+    updated_rows, _assets, failures = script.load_json_artifact(output)
+    assert failures == 0
+    assert grounder.calls == [
+        (["cup"], None),
+        (["table"], None),
+        (["table"], 0.27),
+    ]
+    assert [item["translation"] for item in updated_rows[0]["content"]["items"]] == [
+        "cup",
+        "table",
+    ]
+    assert len(template_model.requests) == 3
+    result = json.loads(report.read_text())
+    assert result["outcomes"][0] == {
+        "slug": row["slug"],
+        "language": "",
+        "stage": "grounding",
+        "status": "generated",
+    }
+    assert [
+        (outcome["stage"], outcome["status"])
+        for outcome in result["outcomes"][1:]
+    ] == [("translation", "generated"), ("lessons", "generated"), ("clues", "generated")]
 
 
 def test_one_scene_row_keeps_templates_for_every_target_language():

@@ -11,7 +11,7 @@
 
 ## What Linguini is
 
-Most language apps teach a fixed syllabus of words you may never use. Linguini starts
+Most language apps now teach a fixed syllabus of words you may never use. Linguini starts
 from a photo of your own day: take or upload a picture, and the app finds the objects in
 it, teaches the words for them in your target language, and then quizzes you on the
 scene by having you describe it. The day ends as a journal entry, so your vocabulary
@@ -44,6 +44,7 @@ history doubles as a diary of what you actually did.
 - Journal with daily entries, edits and image attachments.
 - Progress dashboard: XP, streaks, words learned per language.
 - Multiple language profiles per user; switching a profile re-scopes the whole app.
+- Lessons from English into Spanish, French and German, plus beginner Korean.
 - Supabase authentication with a local `demo` auth mode for development.
 - Server-side content moderation and image validation on every upload.
 

@@ -28,6 +28,15 @@ export const EyeIcon = ({ size = 22, className }: IconProps) => (
   </svg>
 );
 
+export const EyeOffIcon = ({ size = 22, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <path d="M3 3l18 18" />
+    <path d="M10.6 5.7A9.6 9.6 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a15.2 15.2 0 0 1-2.1 3" />
+    <path d="M6.2 6.2A15.7 15.7 0 0 0 2.5 12S6 18.5 12 18.5a9.2 9.2 0 0 0 3.2-.6" />
+    <path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" />
+  </svg>
+);
+
 export const CameraIcon = ({ size = 22, className }: IconProps) => (
   <svg {...base(size)} className={className}>
     <path d="M3 8.5h3.5L8 6h8l1.5 2.5H21V19H3z" />
@@ -54,6 +63,20 @@ export const TrendIcon = ({ size = 22, className }: IconProps) => (
   <svg {...base(size)} className={className}>
     <path d="M4 15.5 9 10l3.5 3.5L20 6" />
     <path d="M20 10V6h-4" />
+  </svg>
+);
+
+export const TrophyIcon = ({ size = 22, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <path d="M8 4h8v3.5c0 3.2-1.8 5.5-4 5.5s-4-2.3-4-5.5z" />
+    <path d="M8 6H4v1.5c0 2.2 1.5 3.8 4.2 4M16 6h4v1.5c0 2.2-1.5 3.8-4.2 4M12 13v4M8.5 20h7M10 17h4" />
+  </svg>
+);
+
+export const ClockIcon = ({ size = 22, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M12 7.5V12l3 2" />
   </svg>
 );
 
@@ -131,6 +154,31 @@ export const HelpIcon = ({ size = 22, className }: IconProps) => (
   <svg {...base(size)} className={className}>
     <circle cx="12" cy="12" r="8.5" />
     <path d="M9.6 9.6a2.5 2.5 0 1 1 3.2 2.4c-.6.2-.9.7-.9 1.3v.4M12 16.6v.2" />
+  </svg>
+);
+
+export const CountIcon = ({ size = 22, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <circle cx="6" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="18" cy="12" r="2" />
+  </svg>
+);
+
+export const HandIcon = ({ size = 22, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <path d="M7 11V7.5a1.5 1.5 0 0 1 3 0V10M10 9V5.5a1.5 1.5 0 0 1 3 0V10M13 9V6.5a1.5 1.5 0 0 1 3 0V11M16 10a1.5 1.5 0 0 1 3 0v4c0 4-2.5 6-6 6h-1c-2.2 0-3.6-1-4.8-2.6L4.5 14a1.5 1.5 0 0 1 2.3-1.9L9 14" />
+  </svg>
+);
+
+export const HeartIcon = ({ size = 22, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <path d="M20.5 8.8c0 4.5-8.5 10-8.5 10s-8.5-5.5-8.5-10A4.3 4.3 0 0 1 12 7.5a4.3 4.3 0 0 1 8.5 1.3z" />
+  </svg>
+);
+
+export const ChatIcon = ({ size = 22, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <path d="M4 5h12a3 3 0 0 1 3 3v5a3 3 0 0 1-3 3H9l-4 3v-3H4a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3z" />
+    <path d="M6 9h8M6 12h5" />
   </svg>
 );
 

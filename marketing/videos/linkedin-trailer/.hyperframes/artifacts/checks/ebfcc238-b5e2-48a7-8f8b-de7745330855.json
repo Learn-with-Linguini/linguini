@@ -1,0 +1,548 @@
+{
+  "ok": true,
+  "strict": false,
+  "browserSkipped": false,
+  "lint": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 8,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "duplicate_media_discovery_risk",
+        "severity": "warning",
+        "message": "Detected 2 matching img entries with the same source/start/duration.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Avoid duplicated media nodes that can be discovered twice during compilation."
+      },
+      {
+        "code": "duplicate_media_discovery_risk",
+        "severity": "warning",
+        "message": "Detected 3 matching img entries with the same source/start/duration.",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Avoid duplicated media nodes that can be discovered twice during compilation."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-0\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-0",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-0\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-1\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-1",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-1\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-2\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-2",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-2\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-3\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-3",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-3\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-4\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-4",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-4\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      },
+      {
+        "code": "nested_structure_needs_subcomposition",
+        "severity": "warning",
+        "message": "<section id=\"scene-5\"> is a timeline element that contains nested <div>. The timeline shows one row per top-level element, and the root composition is built only from sub-compositions.",
+        "selector": "#scene-5",
+        "dataAttributes": {},
+        "sourceFile": "C:\\Users\\home\\Desktop\\linguini\\marketing\\videos\\linkedin-trailer\\index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 0,
+          "height": 0
+        },
+        "time": 0,
+        "fixHint": "Move <section id=\"scene-5\"> and its contents into a sub-composition file and mount it with data-composition-src."
+      }
+    ],
+    "filesScanned": 1
+  },
+  "runtime": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 3,
+    "infoCount": 0,
+    "findings": [
+      {
+        "code": "console_warning",
+        "severity": "warning",
+        "message": "GSAP target #choice-b not found. https://gsap.com",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {
+          "data-hf-id": "hf-shbi",
+          "data-composition-id": "linguini-linkedin",
+          "data-width": "1920",
+          "data-height": "1080",
+          "data-duration": "30",
+          "data-fps": "30",
+          "data-start": "0"
+        },
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "time": 0,
+        "url": "http://127.0.0.1:56175/",
+        "line": 337
+      },
+      {
+        "code": "console_warning",
+        "severity": "warning",
+        "message": "GSAP target  not found. https://gsap.com",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {
+          "data-hf-id": "hf-shbi",
+          "data-composition-id": "linguini-linkedin",
+          "data-width": "1920",
+          "data-height": "1080",
+          "data-duration": "30",
+          "data-fps": "30",
+          "data-start": "0"
+        },
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "time": 0,
+        "url": "http://127.0.0.1:56175/",
+        "line": 337
+      },
+      {
+        "code": "console_warning",
+        "severity": "warning",
+        "message": "GSAP target  not found. https://gsap.com",
+        "selector": "[data-composition-id]",
+        "dataAttributes": {
+          "data-hf-id": "hf-shbi",
+          "data-composition-id": "linguini-linkedin",
+          "data-width": "1920",
+          "data-height": "1080",
+          "data-duration": "30",
+          "data-fps": "30",
+          "data-start": "0"
+        },
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 0,
+          "y": 0,
+          "width": 1920,
+          "height": 1080
+        },
+        "time": 18.333,
+        "url": "http://127.0.0.1:56175/",
+        "line": 337
+      }
+    ]
+  },
+  "layout": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 6,
+    "findings": [
+      {
+        "code": "container_overflow",
+        "severity": "info",
+        "time": 8.333,
+        "selector": "#ring-syrup > div:nth-of-type(1)",
+        "message": "Nowrap text is wider than its container.",
+        "rect": {
+          "left": 1355,
+          "top": 653,
+          "right": 1566.28,
+          "bottom": 699,
+          "width": 211.28,
+          "height": 46
+        },
+        "containerSelector": "#ring-syrup",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 1352,
+          "top": 692,
+          "right": 1512,
+          "bottom": 752,
+          "width": 160,
+          "height": 60
+        },
+        "overflow": {
+          "right": 54.28
+        },
+        "dataAttributes": {
+          "data-hf-id": "hf-syrt"
+        },
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 1355,
+          "y": 653,
+          "width": 211.28,
+          "height": 46
+        },
+        "firstSeen": 8.333,
+        "lastSeen": 8.333,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          8.333
+        ]
+      },
+      {
+        "code": "container_overflow",
+        "severity": "info",
+        "time": 8.333,
+        "selector": "#ring-cup > div:nth-of-type(1)",
+        "message": "Nowrap text is wider than its container.",
+        "rect": {
+          "left": 1595,
+          "top": 199,
+          "right": 1789.02,
+          "bottom": 245,
+          "width": 194.02,
+          "height": 46
+        },
+        "containerSelector": "#ring-cup",
+        "fixHint": "Resize/reposition the child or container, or mark intentional overflow with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 1582,
+          "top": 242,
+          "right": 1762,
+          "bottom": 402,
+          "width": 180,
+          "height": 160
+        },
+        "overflow": {
+          "right": 27.02
+        },
+        "dataAttributes": {
+          "data-hf-id": "hf-cupt"
+        },
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 1595,
+          "y": 199,
+          "width": 194.02,
+          "height": 46
+        },
+        "firstSeen": 8.333,
+        "lastSeen": 8.333,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          8.333
+        ]
+      },
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 8.333,
+        "selector": "#ring-waffle > div:nth-of-type(1)",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 1335,
+          "top": 419,
+          "right": 1545.38,
+          "bottom": 465,
+          "width": 210.38,
+          "height": 46
+        },
+        "containerSelector": "#ring-waffle",
+        "text": "el gofre · waffle",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 1322,
+          "top": 462,
+          "right": 1742,
+          "bottom": 722,
+          "width": 420,
+          "height": 260
+        },
+        "dataAttributes": {
+          "data-hf-id": "hf-3mx7"
+        },
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 1335,
+          "y": 419,
+          "width": 210.38,
+          "height": 46
+        },
+        "firstSeen": 8.333,
+        "lastSeen": 8.333,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          8.333
+        ]
+      },
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 8.333,
+        "selector": "#ring-icecream > div:nth-of-type(1)",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 1125,
+          "top": 199,
+          "right": 1385.67,
+          "bottom": 245,
+          "width": 260.67,
+          "height": 46
+        },
+        "containerSelector": "#ring-icecream",
+        "text": "el helado · ice cream",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 1112,
+          "top": 242,
+          "right": 1402,
+          "bottom": 452,
+          "width": 290,
+          "height": 210
+        },
+        "dataAttributes": {
+          "data-hf-id": "hf-icet"
+        },
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 1125,
+          "y": 199,
+          "width": 260.67,
+          "height": 46
+        },
+        "firstSeen": 8.333,
+        "lastSeen": 8.333,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          8.333
+        ]
+      },
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 8.333,
+        "selector": "#ring-syrup > div:nth-of-type(1)",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 1355,
+          "top": 653,
+          "right": 1566.28,
+          "bottom": 699,
+          "width": 211.28,
+          "height": 46
+        },
+        "containerSelector": "#ring-syrup",
+        "text": "el jarabe · syrup",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 1352,
+          "top": 692,
+          "right": 1512,
+          "bottom": 752,
+          "width": 160,
+          "height": 60
+        },
+        "dataAttributes": {
+          "data-hf-id": "hf-syrt"
+        },
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 1355,
+          "y": 653,
+          "width": 211.28,
+          "height": 46
+        },
+        "firstSeen": 8.333,
+        "lastSeen": 8.333,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          8.333
+        ]
+      },
+      {
+        "code": "escaped_container",
+        "severity": "info",
+        "time": 8.333,
+        "selector": "#ring-cup > div:nth-of-type(1)",
+        "message": "Positioned element renders far outside its offset parent — its coordinates were likely computed in a different frame (canvas/viewport pixels).",
+        "rect": {
+          "left": 1595,
+          "top": 199,
+          "right": 1789.02,
+          "bottom": 245,
+          "width": 194.02,
+          "height": 46
+        },
+        "containerSelector": "#ring-cup",
+        "text": "el café · coffee",
+        "fixHint": "Compute left/top in the offset parent's frame (subtract its rect), or mark intentional placement with data-layout-allow-overflow.",
+        "containerRect": {
+          "left": 1582,
+          "top": 242,
+          "right": 1762,
+          "bottom": 402,
+          "width": 180,
+          "height": 160
+        },
+        "dataAttributes": {
+          "data-hf-id": "hf-cupt"
+        },
+        "sourceFile": "index.html",
+        "bbox": {
+          "x": 1595,
+          "y": 199,
+          "width": 194.02,
+          "height": 46
+        },
+        "firstSeen": 8.333,
+        "lastSeen": 8.333,
+        "occurrences": 1,
+        "heldMs": 0,
+        "times": [
+          8.333
+        ]
+      }
+    ],
+    "duration": 30,
+    "samples": [
+      1.667,
+      5,
+      8.333,
+      11.667,
+      15,
+      18.333,
+      21.667,
+      25,
+      28.333
+    ],
+    "transitionSamples": [],
+    "transitionSamplesDropped": 0,
+    "tolerance": 2,
+    "totalIssueCount": 6,
+    "truncated": false
+  },
+  "motion": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": false,
+    "samples": 0
+  },
+  "contrast": {
+    "ok": true,
+    "errorCount": 0,
+    "warningCount": 0,
+    "infoCount": 0,
+    "findings": [],
+    "enabled": true,
+    "samples": [
+      1.667,
+      8.333,
+      15,
+      21.667,
+      28.333
+    ],
+    "checked": 40,
+    "passed": 40
+  },
+  "hdr": {
+    "autoPromotion": null,
+    "inspection": "available"
+  },
+  "snapshots": {
+    "enabled": false,
+    "files": [],
+    "times": [],
+    "findingFiles": []
+  }
+}

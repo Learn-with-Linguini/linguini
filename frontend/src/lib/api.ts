@@ -1,5 +1,5 @@
 import { GENDER_ARTICLES } from "../data/types.ts";
-import type { A0MissionSnapshot, Gender, LeaderboardRow, MissionChoices, MissionQuestionFields, ScenarioProgress, Streak, TaughtChunk, VocabRecord, VocabularyScene, VocabStatus, WordClass } from "../data/types";
+import type { A0MissionSnapshot, Gender, LeaderboardRow, MissionChoices, MissionQuestionFields, PastaAvatar, ScenarioProgress, Streak, TaughtChunk, VocabRecord, VocabularyScene, VocabStatus, WordClass } from "../data/types";
 import type { SceneSummary } from "../data/types";
 import type { JournalEntry } from "../data/types";
 import { getAccessToken, waitForAccessToken } from "./supabase.ts";
@@ -100,22 +100,31 @@ export interface User {
   updatedAt: string;
   authProviderId: string;
   displayName: string;
+  avatar: PastaAvatar;
   email: string | null;
   timezone: string;
   onboardingCompleted: boolean;
   walkthroughVersionSeen: number;
   tier: AccountTier;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  utmContent?: string | null;
+  utmTerm?: string | null;
 }
 
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string | null;
   readonly activeSessionId: string | null;
-  constructor(message: string, status: number, code: string | null, activeSessionId: string | null) {
+  /** The response's whole `detail` object, for codes that carry structured data. */
+  readonly detail: Record<string, unknown> | null;
+  constructor(message: string, status: number, code: string | null, activeSessionId: string | null, detail: Record<string, unknown> | null = null) {
     super(message);
     this.status = status;
     this.code = code;
     this.activeSessionId = activeSessionId;
+    this.detail = detail;
   }
 }
 
@@ -146,7 +155,8 @@ async function requestResponse(
     const message = typeof body?.detail?.message === "string" ? body.detail.message : "Request failed.";
     const code = typeof body?.detail?.code === "string" ? body.detail.code : null;
     const activeSessionId = typeof body?.detail?.activeSessionId === "string" ? body.detail.activeSessionId : null;
-    throw new ApiError(message, response.status, code, activeSessionId);
+    const detail = body?.detail && typeof body.detail === "object" && !Array.isArray(body.detail) ? body.detail as Record<string, unknown> : null;
+    throw new ApiError(message, response.status, code, activeSessionId, detail);
   }
   return response;
 }
@@ -180,7 +190,7 @@ export interface LanguageProfile {
   preferredInputMode: "speech" | "text" | "both";
 }
 
-export type UserPatch = Partial<Pick<User, "displayName" | "timezone" | "onboardingCompleted" | "walkthroughVersionSeen" | "learningGoal" | "microphoneEnabled" | "cameraEnabled">>;
+export type UserPatch = Partial<Pick<User, "displayName" | "avatar" | "timezone" | "onboardingCompleted" | "walkthroughVersionSeen" | "learningGoal" | "microphoneEnabled" | "cameraEnabled" | "utmSource" | "utmMedium" | "utmCampaign" | "utmContent" | "utmTerm">>;
 export type LanguageProfilePatch = Partial<Pick<LanguageProfile, "proficiencyLevel" | "isActive" | "dailyGoalMinutes" | "preferredInputMode">>;
 
 export type SupportIssueType = "general" | "technical" | "content" | "account";
@@ -218,6 +228,28 @@ export const submitPublicSupportRequest = (payload: PublicSupportRequestInput) =
 
 export const submitLessonReport = (payload: LessonReportInput) =>
   write<{ status: "sent" }>("/api/v1/support/lesson-reports", "POST", payload);
+
+export interface SubscriptionStatus {
+  tier: AccountTier;
+  dailyLessonLimit: number | null;
+  hasActiveSubscription: boolean;
+  canUpgrade: boolean;
+}
+
+export const getPaymentConfig = (signal?: AbortSignal) =>
+  request<{ publishableKey: string | null; plusPriceId: string }>("/api/v1/payments/config", signal);
+
+export const getSubscriptionStatus = (signal?: AbortSignal) =>
+  request<SubscriptionStatus>("/api/v1/payments/subscription-status", signal);
+
+export const createCheckoutSession = (returnUrl?: string) =>
+  write<{ checkoutUrl: string }>("/api/v1/payments/create-checkout-session", "POST", { returnUrl });
+
+export const createPortalSession = (returnUrl?: string) =>
+  write<{ portalUrl: string }>("/api/v1/payments/create-portal-session", "POST", { returnUrl });
+
+export const testSetTier = (tier: AccountTier) =>
+  write<{ tier: AccountTier }>("/api/v1/payments/test-set-tier", "POST", { tier });
 
 export const getLanguageProfiles = (signal?: AbortSignal) => request<LanguageProfile[]>("/api/v1/me/language-profiles", signal);
 export interface PackPracticeLanguage {
@@ -480,9 +512,21 @@ export interface PracticeDetail {
   personalization?: SessionPersonalization | null;
   countedGroups?: CountedGroup[];
   missionGuidance?: string[];
+  /** Set when generation found nothing checkable and reopened the review. */
+  sceneShortfall?: SceneShortfall | null;
   provisionalMissionPlan?: MissionTaskFields[];
   suggestedSceneObjectIds?: string[];
   missionChoices?: MissionChoices | null;
+}
+export type ShortfallKind = "objects" | "counts" | "attributes" | "relations";
+/** One concrete thing to add, worded from the learner's confirmed review. */
+export interface ShortfallStep { kind: ShortfallKind; text: string }
+export interface MissionShortfall {
+  missionId: string; title: string; missing: ShortfallKind[]; reasons: string[]; steps: ShortfallStep[];
+}
+/** Confirmed facts a lesson still needs before any mission can be checked. */
+export interface SceneShortfall {
+  missing: ShortfallKind[]; missions: MissionShortfall[];
 }
 export interface SceneActionSuggestion {
   actionKey: string; action: string; sceneObjectIds: string[]; confidenceScore: number | string;
@@ -572,6 +616,7 @@ export interface QuestionOutcome {
   correctNote?: string; optionNotes?: string[];
 }
 export interface LessonAnswerCheck {
+  basilEarned?: number;
   questionId: string; answer: string; isCorrect: boolean; correctAnswer: string | null;
   outcome: QuestionOutcome; attemptsLeft?: number | null; feedback?: string | null;
   wrongField?: string | null; assistanceStepsUsed?: string[];
@@ -615,6 +660,7 @@ export const updateMissionScenario = (
   `/api/v1/tasks/${taskId}/mission-scenario`, "POST", { action, ...(sceneObjectId ? { sceneObjectId } : {}) },
 );
 export interface TaskActionResult {
+  basilEarned?: number;
   task: SessionTask; nextTaskId: string | null; sessionProgress: SessionProgress; attempt: TaskAttemptResult | null;
   xpEarned: number;
 }
@@ -641,18 +687,24 @@ export interface PracticeReview {
 export const reviewPractice = (id: string, review: PracticeReview) => write<PracticeDetail>(`/api/v1/sessions/${id}/review`, "PUT", review);
 export const getPractice = (id: string) => request<PracticeDetail>(`/api/v1/sessions/${id}`);
 export const getActivePractice = () => request<PracticeDetail | null>("/api/v1/sessions/active");
-export const createPractice = (profileId: string, assetId: string, key: string) => write<PracticeDetail>("/api/v1/sessions", "POST", {
-  languageProfileId: profileId, mediaAssetId: assetId, idempotencyKey: key,
+export const createPractice = (profileId: string, assetId: string, key: string, dailyChallengeDay?: string) => write<PracticeDetail>("/api/v1/sessions", "POST", {
+  languageProfileId: profileId, mediaAssetId: assetId, idempotencyKey: key, ...(dailyChallengeDay ? { dailyChallengeDay } : {}),
 });
 export const taskAction = (id: string, action: "start" | "complete" | "skip" | "attempts" | "confirm-guess", body: unknown = {}) => write<TaskActionResult>(`/api/v1/tasks/${id}/${action}`, "POST", body);
-export const checkVocabularyAnswer = (id: string, questionId: string, optionId: string) =>
-  write<{ questionId: string; isCorrect: boolean; correctOptionId: string }>(`/api/v1/tasks/${id}/check-vocabulary-answer`, "POST", { questionId, optionId });
+export interface VocabularyAnswerCheck { questionId: string; acceptedOptionId: string; isCorrect: boolean; correctOptionId: string; basilEarned: number }
+export const getVocabularyChecks = (id: string, signal?: AbortSignal) =>
+  request<{ checks: VocabularyAnswerCheck[] }>(`/api/v1/tasks/${id}/vocabulary-checks`, signal);
+export const checkVocabularyAnswer = (id: string, questionId: string, optionId: string, review = false) =>
+  write<VocabularyAnswerCheck>(`/api/v1/tasks/${id}/check-vocabulary-answer`, "POST", { questionId, optionId, review });
+export const checkVocabularyTyping = (id: string, learningKey: string, answer: string, reveal = false) =>
+  write<{ learningKey: string; isCorrect: boolean; correctAnswer: string; revealed: boolean }>(`/api/v1/tasks/${id}/check-vocabulary-typing`, "POST", { learningKey, answer, reveal });
 export const completePractice = (id: string) => write<{ id: string; status: string }>(`/api/v1/sessions/${id}/complete`, "POST", {});
 export const abandonPractice = (id: string) => write<{ id: string; status: string }>(`/api/v1/sessions/${id}/abandon`, "POST", {});
 export const getPracticeSummary = (id: string) => request<{
   progress: SessionProgress;
   learnedVocabularyIds: string[];
   xpEarned: number;
+  basilEarned: number;
   ispyCorrectCount: number;
   ispyAttemptCount: number;
   completedLessonsCount: number;
@@ -688,7 +740,7 @@ export function submitSurvey(data: SurveySubmission): Promise<SurveyResponse> {
   });
 }
 
-export interface ISpyPhoto { mediaAsset: { id: string; source: "camera" | "userUpload"; createdAt: string }; playable: boolean; confirmedAt: string | null }
+export interface ISpyPhoto { mediaAsset: { id: string; source: "camera" | "userUpload"; createdAt: string }; title: string; playable: boolean; confirmedAt: string | null }
 export interface ISpyPhotoPage { photos: ISpyPhoto[]; nextCursor: string | null }
 export const getISpyPhotos = (cursor: string | null, signal?: AbortSignal) =>
   request<ISpyPhotoPage>(`/api/v1/ispy/photos${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`, signal);

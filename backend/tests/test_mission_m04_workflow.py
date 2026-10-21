@@ -14,6 +14,7 @@ from test_postgres_sessions import database as database
 from test_preloaded_templates_workflow import curated as curated
 
 from app.repositories.postgres.practice import sessions
+from app.repositories.practice import InsufficientSceneError
 from app.schemas.sessions import AddedPracticeObject
 from app.services import mission_eligibility
 
@@ -43,16 +44,19 @@ def test_m04_plan_facts_markers_and_resumed_content_are_persisted(curated):
     assert all(question.roleplay_premise for question in task.public_content.questions)
 
 
-def test_m04_is_omitted_with_only_two_confirmed_objects(curated):
-    _repo, _session_id, _detail, task, _markers, facts = review_lesson(
-        curated,
-        "M04",
-        confirmed_object_limit=2,
-        add_missing_roleplay_object=False,
-        expect_omitted=True,
-    )
-    assert task is None
-    assert facts == []
+def test_m04_with_only_two_confirmed_objects_asks_for_another_object(curated):
+    # M04 is the only mission here, so the review is rejected rather than run without it.
+    with pytest.raises(InsufficientSceneError) as rejected:
+        review_lesson(
+            curated,
+            "M04",
+            confirmed_object_limit=2,
+            add_missing_roleplay_object=False,
+            expect_omitted=True,
+        )
+    shortfall = rejected.value.shortfall
+    assert shortfall.missing == ("objects",)
+    assert shortfall.missions[0]["missionId"] == "M04"
 
 
 def test_added_object_uses_marker_after_original_scene_objects(curated):

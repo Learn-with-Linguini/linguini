@@ -7,7 +7,7 @@ export const SOCIAL_LINKS = {
   linkedin: {
     platform: "linkedin" as const,
     label: "LinkedIn",
-    url: "https://www.linkedin.com/in/learn-with-linguini",
+    url: "https://www.linkedin.com/company/learn-with-linguini/",
     handle: "learn-with-linguini",
   },
   instagram: {

@@ -21,6 +21,7 @@ export function AppShell() {
     pathname === "/profile/edit" ||
     pathname === "/ispy/play" ||
     pathname === "/ispy/friends" ||
+    pathname === "/ispy/challenge" ||
     pathname === "/contact";
   const usesWideCanvas =
     ["/home", "/practice", "/ispy", "/ispy/play", "/vocabulary", "/journal"].includes(pathname) ||
