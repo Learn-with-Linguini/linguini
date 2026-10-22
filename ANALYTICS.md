@@ -164,6 +164,9 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `revisit_empty_practice_started` | — | Learner starts their first practice session from the empty Revisit page |
 | `vocabulary_filters_applied` | `{ wordClass, category }` | Filter applied to vocabulary collection |
 | `vocabulary_audio_played` | `{ word }` | Learner plays audio pronunciation for a target word |
+| `vocabulary_recap_started` | `{ questionCount, wordCount }` | Learner starts a mixed review of a completed scene |
+| `vocabulary_recap_answer_checked` | `{ kind, isCorrect, revealed? }` | Server returns a recognition or recall check during scene review |
+| `vocabulary_recap_completed` | `{ questionCount, wordCount }` | Learner finishes the mixed scene review |
 
 ### Payments, Tiers & Subscriptions
 | Event Name | Parameters | Trigger Description |
