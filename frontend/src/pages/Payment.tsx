@@ -1,27 +1,21 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
 import { Button, Card, Feedback } from "../components/ui";
 import { CheckIcon } from "../components/icons";
 import {
   createCheckoutSession,
   createPortalSession,
   getSubscriptionStatus,
-  testSetTier,
-  type AccountTier,
   type SubscriptionStatus,
 } from "../lib/api";
-import { queryKeys } from "../lib/queryKeys";
 import { trackAction } from "../lib/analytics.ts";
 import { useAppState } from "../state/useAppState";
 
 export function Payment() {
   const { user } = useAppState();
-  const queryClient = useQueryClient();
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<SubscriptionStatus | null>(null);
   const [loading, setLoading] = useState(false);
-  const [switchingTier, setSwitchingTier] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const paymentStatus = searchParams.get("status");
@@ -83,22 +77,6 @@ export function Payment() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to open Stripe Customer Portal.");
       setLoading(false);
-    }
-  };
-
-  const handleDevSwitchTier = async (targetTier: AccountTier) => {
-    setSwitchingTier(true);
-    setError(null);
-    trackAction("payment_test_tier_switched", { targetTier });
-    try {
-      await testSetTier(targetTier);
-      await queryClient.invalidateQueries({ queryKey: queryKeys.account });
-      const freshStatus = await getSubscriptionStatus();
-      setStatus(freshStatus);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update test tier.");
-    } finally {
-      setSwitchingTier(false);
     }
   };
 
@@ -222,52 +200,6 @@ export function Payment() {
               )}
             </div>
           </Card>
-        </div>
-      </div>
-
-      {/* Beta Notice & Dev Tools */}
-      <div style={{ background: "var(--color-sand, #f8fafc)", border: "1px dashed #cbd5e1", borderRadius: "12px", padding: "16px" }}>
-        <h3 style={{ margin: "0 0 8px 0", fontSize: "1.05rem", fontFamily: "var(--font-display, 'Baloo 2', sans-serif)" }}>
-          Development & Testing Toolbox
-        </h3>
-        <p style={{ margin: "0 0 12px 0", fontSize: "0.875rem", color: "var(--color-ink-muted, #64748b)" }}>
-          This route (<code style={{ background: "#e2e8f0", padding: "1px 4px", borderRadius: "4px" }}>/payment</code>) is hidden from regular users and navigation.
-          Currently in <strong>Beta</strong>, all users enjoy unlimited daily lessons. The tier limits (Free = 1, Plus = 10) are ready in the database for future activation.
-        </p>
-
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px", marginTop: "12px" }}>
-          <span style={{ fontSize: "0.85rem", fontWeight: 700 }}>Switch Test Tier:</span>
-          <button
-            type="button"
-            className="btn btn--quiet"
-            disabled={switchingTier || currentTier === "beta"}
-            onClick={() => handleDevSwitchTier("beta")}
-            style={{ fontSize: "0.85rem", padding: "4px 10px" }}
-          >
-            Beta (Unlimited)
-          </button>
-          <button
-            type="button"
-            className="btn btn--quiet"
-            disabled={switchingTier || currentTier === "free"}
-            onClick={() => handleDevSwitchTier("free")}
-            style={{ fontSize: "0.85rem", padding: "4px 10px" }}
-          >
-            Free (1 lesson/day)
-          </button>
-          <button
-            type="button"
-            className="btn btn--quiet"
-            disabled={switchingTier || currentTier === "plus"}
-            onClick={() => handleDevSwitchTier("plus")}
-            style={{ fontSize: "0.85rem", padding: "4px 10px" }}
-          >
-            Plus (10 lessons/day)
-          </button>
-        </div>
-
-        <div style={{ marginTop: "14px", padding: "10px 12px", background: "#f1f5f9", borderRadius: "8px", fontSize: "0.825rem", color: "#475569" }}>
-          <strong>Stripe Test Mode Card:</strong> Number: <code>4242 4242 4242 4242</code> | MM/YY: Any future date (e.g. <code>12/28</code>) | CVC: Any 3 digits (e.g. <code>123</code>) | ZIP: Any (e.g. <code>90210</code>)
         </div>
       </div>
     </div>

@@ -9,7 +9,6 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from pydantic import BaseModel
 
 from app.api.dependencies import get_stripe_service, get_user_service
-from app.schemas.enums import AccountTier
 from app.services.stripe_service import StripeConfigurationError, StripeService
 from app.services.users import UserService
 
@@ -27,10 +26,6 @@ class CreateCheckoutSessionRequest(BaseModel):
 
 class CreatePortalSessionRequest(BaseModel):
     returnUrl: str | None = None
-
-
-class TestSetTierRequest(BaseModel):
-    tier: AccountTier
 
 
 class CheckoutSessionResponse(BaseModel):
@@ -115,16 +110,6 @@ def create_portal_session(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to open customer portal. Please try again.",
         ) from exc
-
-
-@router.post("/test-set-tier")
-def test_set_tier(
-    request: TestSetTierRequest,
-    user_service: UserServiceDep,
-) -> dict[str, str]:
-    """Development testing endpoint to switch tier for the current user."""
-    user = user_service.set_user_tier(request.tier.value)
-    return {"tier": user.tier.value if hasattr(user.tier, "value") else str(user.tier)}
 
 
 @router.post("/webhook")
