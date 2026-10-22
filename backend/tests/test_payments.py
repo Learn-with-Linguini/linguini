@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
+from stripe import WebhookSignature
 
 from app.repositories.users import UserRepository
 from app.schemas.enums import AccountTier
@@ -66,6 +67,13 @@ def test_user(fake_user_repo):
     return user
 
 
+@pytest.fixture
+def signed_webhook(monkeypatch):
+    secret = "whsec_local_payments"
+    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", secret)
+    return lambda payload: WebhookSignature.generate_signature_header(payload.decode(), secret)
+
+
 def test_tier_limits_mapping():
     assert DAILY_LESSON_LIMITS[AccountTier.BETA] is None
     assert DAILY_LESSON_LIMITS[AccountTier.FREE] == 1
@@ -89,7 +97,7 @@ def test_stripe_service_subscription_status(fake_user_repo, test_user):
     assert status_plus["hasActiveSubscription"] is True
 
 
-def test_stripe_service_webhook_checkout_completed(fake_user_repo, test_user):
+def test_stripe_service_webhook_checkout_completed(fake_user_repo, test_user, signed_webhook):
     service = StripeService(fake_user_repo)
     service._secret_key = "sk_test_fake"
     service.client = MagicMock()
@@ -107,13 +115,14 @@ def test_stripe_service_webhook_checkout_completed(fake_user_repo, test_user):
         },
     }
 
-    result = service.handle_webhook_event(json.dumps(payload).encode("utf-8"), None)
+    encoded = json.dumps(payload).encode("utf-8")
+    result = service.handle_webhook_event(encoded, signed_webhook(encoded))
     assert result["status"] == "processed"
     updated_user = fake_user_repo.get_by_id(test_user.id)
     assert updated_user.tier == AccountTier.PLUS
 
 
-def test_stripe_service_webhook_subscription_deleted(fake_user_repo, test_user):
+def test_stripe_service_webhook_subscription_deleted(fake_user_repo, test_user, signed_webhook):
     service = StripeService(fake_user_repo)
     service._secret_key = "sk_test_fake"
     fake_user_repo.set_tier(test_user.id, AccountTier.PLUS.value)
@@ -130,7 +139,8 @@ def test_stripe_service_webhook_subscription_deleted(fake_user_repo, test_user):
         },
     }
 
-    result = service.handle_webhook_event(json.dumps(payload).encode("utf-8"), None)
+    encoded = json.dumps(payload).encode("utf-8")
+    result = service.handle_webhook_event(encoded, signed_webhook(encoded))
     assert result["status"] == "processed"
     updated_user = fake_user_repo.get_by_id(test_user.id)
     assert updated_user.tier == AccountTier.FREE

@@ -7,7 +7,7 @@ import secrets
 from typing import Any
 from uuid import UUID
 
-from stripe import StripeClient
+from stripe import StripeClient, Webhook
 
 from app.config import (
     get_frontend_url,
@@ -143,31 +143,23 @@ class StripeService:
 
     def handle_webhook_event(self, payload: bytes, sig_header: str | None) -> dict[str, Any]:
         webhook_secret = get_stripe_webhook_secret()
-        client = self._require_client()
+        if not webhook_secret:
+            raise StripeConfigurationError("STRIPE_WEBHOOK_SECRET is required for Stripe webhooks.")
 
-        if webhook_secret and sig_header:
-            event = client.webhooks.construct_event(
-                payload=payload.decode("utf-8"),
-                sig_header=sig_header,
-                secret=webhook_secret,
-            )
-        else:
-            # In local development without webhook secret, parse payload JSON
-            import json
-            event_data = json.loads(payload.decode("utf-8"))
-            event = type("Event", (), event_data)()
+        if not sig_header:
+            raise ValueError("Stripe-Signature is required for Stripe webhooks.")
 
-        if isinstance(event, dict):
-            event_type = event.get("type", "")
-        else:
-            event_type = getattr(event, "type", "")
-        data_object = getattr(event, "data", None)
-        if hasattr(data_object, "object"):
-            obj = data_object.object
-        elif isinstance(data_object, dict):
-            obj = data_object.get("object", {})
-        else:
-            obj = getattr(event, "data", {}).get("object", {}) if isinstance(event, dict) else {}
+        event = Webhook.construct_event(
+            payload=payload, sig_header=sig_header, secret=webhook_secret,
+        ).to_dict()
+        event_type = event.get("type")
+        data = event.get("data")
+        if (
+            not isinstance(event_type, str) or not event_type
+            or not isinstance(data, dict) or not isinstance(data.get("object"), dict)
+        ):
+            raise ValueError("Invalid Stripe event structure.")
+        obj = data["object"]
 
         logger.info("Handling Stripe webhook event: %s", event_type)
 

@@ -1036,3 +1036,15 @@ storage adapters are used. The tests exercise the production dependency graph.
 
 Production sources are under `app/`, migrations under `prisma/migrations/`,
 and database/schema tests under `tests/`.
+
+### Stripe webhook configuration
+
+Set `STRIPE_WEBHOOK_SECRET` to the signing secret of the Stripe endpoint registered
+for `/api/v1/payments/webhook`. Every delivery must include a valid
+`Stripe-Signature` header. Missing configuration returns 503; invalid signatures
+or malformed events return 400 without changing the account tier.
+
+Local development uses the same verification: run `stripe listen --forward-to
+localhost:8000/api/v1/payments/webhook` and use its `whsec_…` signing secret in the
+ignored local environment file. `AUTH_MODE=demo` does not allow unsigned events.
+Webhook verification uses the signing secret and does not require a Stripe API key.

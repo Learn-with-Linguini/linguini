@@ -136,8 +136,13 @@ async def stripe_webhook(
     payload = await request.body()
     try:
         return stripe_service.handle_webhook_event(payload, stripe_signature)
+    except StripeConfigurationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Payment webhook is not configured.",
+        ) from exc
     except Exception as exc:
-        logger.exception("Webhook signature verification or processing failed.")
+        logger.warning("Stripe webhook verification or event processing failed.")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Webhook verification failed.",
