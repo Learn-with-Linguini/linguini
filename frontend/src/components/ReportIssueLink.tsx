@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { submitLessonReport, type LessonReportIssue } from "../lib/api";
 import { trackAction } from "../lib/analytics.ts";
 import { Button, Feedback, IconButton } from "./ui";
@@ -29,25 +29,27 @@ export function ReportIssueLink({
   const [error, setError] = useState<string | null>(null);
   const titleId = useId();
   const modalRef = useRef<HTMLElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    modalRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !sending) setOpen(false);
-    };
-    document.addEventListener("keydown", closeOnEscape);
-    return () => document.removeEventListener("keydown", closeOnEscape);
-  }, [open, sending]);
-
-  const close = () => {
+  const close = useCallback(() => {
     if (sending) return;
     setOpen(false);
     setIssue(null);
     setDetails("");
     setSent(false);
     setError(null);
-  };
+    triggerRef.current?.focus();
+  }, [sending]);
+
+  useEffect(() => {
+    if (!open) return;
+    modalRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") close();
+    };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [open, close]);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -74,7 +76,7 @@ export function ReportIssueLink({
 
   return (
     <>
-      <button type="button" className="report-issue-link" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}>
+      <button ref={triggerRef} type="button" className="report-issue-link" aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(true)}>
         {label}
       </button>
       {open ? <div className="report-modal__backdrop" onMouseDown={close}>
