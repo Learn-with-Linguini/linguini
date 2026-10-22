@@ -188,6 +188,18 @@ export function Login() {
         {submitting ? "Please wait…" : mode === "signin" ? "Sign in" : mode === "signup" ? "Create account" : "Send reset link"}
       </Button>
     </form> : null}
+    {mode !== "forgot" ? (
+      <div className="stack-2 center-text">
+        <a
+          className="btn btn--secondary"
+          href="/?photo=hillside-street#try"
+          onClick={() => trackAction("guest_preview_started", { source: mode })}
+        >
+          Try a photo lesson
+        </a>
+        <p className="small muted">No account needed. Preview progress won’t be saved to an account.</p>
+      </div>
+    ) : null}
     <p className="small muted center-text">
       {mode === "forgot" ? (
         <>
