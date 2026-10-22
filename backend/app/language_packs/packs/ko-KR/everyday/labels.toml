@@ -245,3 +245,43 @@ romanization = "jeogeoyo"
 meaning = "fewer"
 usage = "sentence"
 provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "choose-sentence"
+text = "맞는 문장을 고르세요."
+romanization = "matneun munjang-eul goreuseyo."
+meaning = "Choose the correct sentence."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "which-is-yours"
+text = "어느 물건이 본인 거예요?"
+romanization = "eoneu mulgeon-i bonin geoyeyo?"
+meaning = "Which object is yours?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "choose-possessive"
+text = "맞는 말을 고르세요."
+romanization = "matneun mal-eul goreuseyo."
+meaning = "Choose the correct word."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "describe-your-object"
+text = "본인 물건을 설명해 보세요."
+romanization = "bonin mulgeon-eul seolmyeonghae boseyo."
+meaning = "Describe your object."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "clarify-and-describe"
+text = "어느 물건이 본인 건지 말하고 설명해 보세요."
+romanization = "eoneu mulgeon-i bonin geonji malhago seolmyeonghae boseyo."
+meaning = "Say which object is yours and describe it."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }

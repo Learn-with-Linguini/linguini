@@ -33,6 +33,7 @@ review_status = "generated"
 [files]
 labels = "labels.toml"
 numbers = "numbers.toml"
+possessives = "possessives.toml"
 constructions = [
   "constructions/target-location.toml",
   "constructions/target-clue.toml",
@@ -50,6 +51,12 @@ constructions = [
   "constructions/quantity-statement.toml",
   "constructions/quantity-comparison.toml",
   "constructions/quantity-pair.toml",
+  "constructions/ownership-question.toml",
+  "constructions/ownership-statement.toml",
+  "constructions/owned-object.toml",
+  "constructions/possessive-statement.toml",
+  "constructions/whose-question.toml",
+  "constructions/owned-description.toml",
 ]
 examples = [
   "examples/target-location.toml",
@@ -68,6 +75,12 @@ examples = [
   "examples/quantity-statement.toml",
   "examples/quantity-comparison.toml",
   "examples/quantity-pair.toml",
+  "examples/ownership-question.toml",
+  "examples/ownership-statement.toml",
+  "examples/owned-object.toml",
+  "examples/possessive-statement.toml",
+  "examples/whose-question.toml",
+  "examples/owned-description.toml",
 ]
 evaluations = [
   "evaluations/M01-A0.toml",
@@ -79,4 +92,7 @@ evaluations = [
   "evaluations/M02-A0.toml",
   "evaluations/M02-A1.toml",
   "evaluations/M02-A2.toml",
+  "evaluations/M04-A0.toml",
+  "evaluations/M04-A1.toml",
+  "evaluations/M04-A2.toml",
 ]

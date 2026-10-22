@@ -53,3 +53,27 @@ sentence = "Es rojo."
 correction = "Es roja."
 note = "The adjective agrees with the hidden noun (la taza): roja."
 provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "m04-clue-red"
+levels = ["A2"]
+purposes = ["chooseAssignedObject"]
+meaning = "It is red."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }, { fact_id = "object:table", concept = "table" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }], owners = [{ fact_id = "owner:cup", object = "object:cup", owner = "first" }, { fact_id = "owner:book", object = "object:book", owner = "ana" }, { fact_id = "owner:key", object = "object:key", owner = "leo" }] }
+bindings = { target = "object:cup", attribute = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "Es roja."
+translation = "It is red."
+chunks = [{ text = "Es", join = "none" }, { text = "roja", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "m04-clue-red-form"
+levels = ["A2"]
+purposes = ["chooseAssignedObject"]
+sentence = "Está roja."
+correction = "Es roja."
+note = "A colour detail uses es."
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }

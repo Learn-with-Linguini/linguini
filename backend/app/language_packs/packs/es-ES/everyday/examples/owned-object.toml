@@ -1,0 +1,94 @@
+construction_id = "owned-object"
+
+[[examples]]
+example_id = "cup-is-mine"
+levels = ["A0"]
+purposes = ["sayOwnedObject"]
+meaning = "The cup is mine."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }, { fact_id = "object:table", concept = "table" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }], owners = [{ fact_id = "owner:cup", object = "object:cup", owner = "first" }, { fact_id = "owner:book", object = "object:book", owner = "ana" }, { fact_id = "owner:key", object = "object:key", owner = "leo" }] }
+bindings = { object = "object:cup", owner = "owner:cup" }
+truth = true
+labels = []
+sentence = "La taza es mía."
+translation = "The cup is mine."
+chunks = [{ text = "La", join = "none" }, { text = "taza", join = "space" }, { text = "es", join = "space" }, { text = "mía", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "cup-is-yours"
+levels = ["A0"]
+purposes = ["sayOwnedObject"]
+meaning = "The cup is yours."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }, { fact_id = "object:table", concept = "table" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }], owners = [{ fact_id = "owner:cup", object = "object:cup", owner = "first" }, { fact_id = "owner:book", object = "object:book", owner = "ana" }, { fact_id = "owner:key", object = "object:key", owner = "leo" }] }
+bindings = { object = "object:cup", owner = "possessor:second" }
+truth = true
+labels = []
+sentence = "La taza es tuya."
+translation = "The cup is yours."
+chunks = [{ text = "La", join = "none" }, { text = "taza", join = "space" }, { text = "es", join = "space" }, { text = "tuya", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "cup-is-yours-choice"
+levels = ["A2"]
+purposes = ["choosePossessive"]
+meaning = "The cup is yours."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }, { fact_id = "object:table", concept = "table" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }], owners = [{ fact_id = "owner:cup", object = "object:cup", owner = "first" }, { fact_id = "owner:book", object = "object:book", owner = "ana" }, { fact_id = "owner:key", object = "object:key", owner = "leo" }] }
+bindings = { object = "object:cup", owner = "possessor:second" }
+truth = true
+labels = []
+sentence = "La taza es tuya."
+translation = "The cup is yours."
+chunks = [{ text = "La", join = "none" }, { text = "taza", join = "space" }, { text = "es", join = "space" }, { text = "tuya", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "book-is-anas"
+levels = ["A2"]
+purposes = ["buildOwnershipDescription"]
+meaning = "The book is Ana's."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }, { fact_id = "object:table", concept = "table" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }], owners = [{ fact_id = "owner:cup", object = "object:cup", owner = "first" }, { fact_id = "owner:book", object = "object:book", owner = "ana" }, { fact_id = "owner:key", object = "object:key", owner = "leo" }] }
+bindings = { object = "object:book", owner = "owner:book" }
+truth = true
+labels = []
+sentence = "El libro es de Ana."
+translation = "The book is Ana's."
+chunks = [{ text = "El", join = "none" }, { text = "libro", join = "space" }, { text = "es", join = "space" }, { text = "de", join = "space" }, { text = "Ana", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "no-book-is-anas"
+levels = ["A2"]
+purposes = ["clarifyOwnership"]
+meaning = "No, the book is Ana's."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }, { fact_id = "object:table", concept = "table" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }], owners = [{ fact_id = "owner:cup", object = "object:cup", owner = "first" }, { fact_id = "owner:book", object = "object:book", owner = "ana" }, { fact_id = "owner:key", object = "object:key", owner = "leo" }] }
+bindings = { object = "object:book", owner = "owner:book" }
+truth = true
+labels = ["no"]
+sentence = "No, el libro es de Ana."
+translation = "No, the book is Ana's."
+chunks = [{ text = "No", join = "none" }, { text = ",", join = "none" }, { text = "el", join = "space" }, { text = "libro", join = "space" }, { text = "es", join = "space" }, { text = "de", join = "space" }, { text = "Ana", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "cup-is-mine-form"
+levels = ["A0"]
+purposes = ["sayOwnedObject"]
+sentence = "La taza es mío."
+correction = "La taza es mía."
+note = "Mía agrees with the feminine taza."
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "cup-is-yours-form"
+levels = ["A2"]
+purposes = ["choosePossessive", "clarifyOwnership", "buildOwnershipDescription"]
+sentence = "La taza es mío."
+correction = "La taza es mía."
+note = "Mía agrees with the feminine taza."
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
