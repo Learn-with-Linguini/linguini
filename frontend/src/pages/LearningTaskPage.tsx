@@ -20,7 +20,7 @@ import { ReportIssueLink } from "../components/ReportIssueLink";
 import { ObjectPreview } from "../components/ObjectPreview";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useResolvedImageUrl } from "../components/SceneImage";
-import { boardRows, squareCrop } from "../lib/practiceBoard";
+import { boardRows, practiceBoardCrop } from "../lib/practiceBoard";
 import { questionMarkerObjects } from "../lib/missionMarkers";
 import { completeSlot, speechAvailable, writtenPromptShown } from "../lib/missionA0";
 import { trackAction } from "../lib/analytics.ts";
@@ -1187,7 +1187,7 @@ function PracticeBoards({ question, sceneImageUrl, imageSize, onImageSize, board
   disabled: boolean;
   onChoose: (optionId: string) => void;
 }) {
-  const crop = imageSize ? squareCrop(boardObject?.boundingBox, imageSize.width, imageSize.height) : null;
+  const crop = imageSize ? practiceBoardCrop(boardObject, imageSize.width, imageSize.height) : null;
   return <div className="practice-boards">
     <p className="small muted">Choose the board that matches the sentence.</p>
     {sceneImageUrl && !imageSize ? <img className="practice-boards__preload" src={sceneImageUrl} alt="" aria-hidden="true"
@@ -1232,7 +1232,7 @@ function CountBoard({ count, sceneImageUrl, imageSize, onImageSize, boardObject 
   onImageSize: (size: { width: number; height: number }) => void;
   boardObject?: SceneObject;
 }) {
-  const crop = imageSize ? squareCrop(boardObject?.boundingBox, imageSize.width, imageSize.height) : null;
+  const crop = imageSize ? practiceBoardCrop(boardObject, imageSize.width, imageSize.height) : null;
   const tile = crop && sceneImageUrl && imageSize ? {
     width: COUNT_TILE, height: COUNT_TILE,
     backgroundImage: `url(${sceneImageUrl})`,

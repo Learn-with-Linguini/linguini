@@ -2103,7 +2103,7 @@ class PostgresWorkflowRepository:
                     vocabulary_item_id=(
                         None if self.translator else self._catalog_word(c, profile, added.label).id
                     ),
-                    bounding_box={"x": added.x, "y": added.y, "width": 0.01, "height": 0.01},
+                    anchor_point={"x": added.x, "y": added.y},
                     attributes=request.object_attributes.get(added.id) or None,
                 )
                 confirmed.append(obj)
