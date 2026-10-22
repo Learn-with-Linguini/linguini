@@ -11,9 +11,9 @@ const Root = isMarketingPath(window.location.pathname) ? MarketingApp : LearnerR
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
-      <AnalyticsTracker />
       <Suspense fallback={null}>
         <Root />
+        <AnalyticsTracker />
       </Suspense>
     </BrowserRouter>
   </StrictMode>,

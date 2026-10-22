@@ -38,6 +38,8 @@ Because Linguini is a single-page application (SPA), route changes do not reload
 * **Contentsquare:** `window._uxa.push(["trackPageview", currentPath])`
 * **GA4:** `gtag("event", "page_view", { page_path, page_title, page_location })`
 
+The tracker mounts after the route content inside its loading boundary, so each pageview uses the destination page's committed metadata. Replayed effects for the same path do not emit duplicate views; returning to a previously visited route still records a new view.
+
 ### Tracked Pages & Routes
 
 #### Marketing Pages

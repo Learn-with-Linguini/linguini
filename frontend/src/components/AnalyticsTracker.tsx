@@ -5,7 +5,7 @@ import { captureAttribution } from "../lib/attribution.ts";
 
 export function AnalyticsTracker() {
   const location = useLocation();
-  const isFirstMount = useRef(true);
+  const lastTrackedPath = useRef<string | null>(null);
 
   useEffect(() => {
     initAnalytics();
@@ -14,11 +14,8 @@ export function AnalyticsTracker() {
   useEffect(() => {
     captureAttribution(location.search);
     const currentPath = location.pathname + location.search;
-    if (isFirstMount.current) {
-      isFirstMount.current = false;
-      trackPageView(currentPath);
-      return;
-    }
+    if (lastTrackedPath.current === currentPath) return;
+    lastTrackedPath.current = currentPath;
     trackPageView(currentPath);
   }, [location.pathname, location.search]);
 
