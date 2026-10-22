@@ -19,7 +19,7 @@ provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; no
 example_id = "is-it-yours-form"
 levels = ["A0"]
 purposes = ["askOwnership"]
-sentence = "¿Es tuyo?"
+sentence = "¿Es mía?"
 correction = "¿Es tuya?"
-note = "Tuya agrees with the feminine taza."
+note = "Ask about the listener with tuyo or tuya."
 provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }

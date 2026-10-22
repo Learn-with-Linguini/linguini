@@ -145,7 +145,7 @@ def test_labels_match_current_builder_text():
         "fewer": "menos",
         "choose-sentence": "Elige la frase correcta.",
         "which-is-yours": "¿Cuál es tu objeto?",
-        "choose-possessive": "Elige la palabra correcta.",
+        "choose-possessive": "Tú dices:",
         "describe-your-object": "Describe tu objeto con un detalle.",
         "clarify-and-describe": "Aclara cuál es tu objeto y descríbelo.",
     }

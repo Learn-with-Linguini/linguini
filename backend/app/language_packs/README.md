@@ -224,7 +224,7 @@ never block it. M03 evaluation cases are described under the evaluation section 
 
 M04 (whose is it?) needs the pack's `possessives.toml`: reviewed possessive words for
 `first` (my), `second` (your) and `third-masculine`/`third-feminine`, each form a
-`determiner` (mi, ma, meine, 제, என்னோட) or a `predicate` (mía, moi, mir), limited to one
+`determiner` (mi, ma, meine, 제) or a `predicate` (mía, moi, mir), limited to one
 noun gender where it agrees (French `before_vowel` marks mon before a feminine vowel),
 and a role-play `cast` (Ana and Leo, with the names each script uses). Templates list
 `required_possessors`. Who owns what is a lesson fact (`owners`): the object the learner

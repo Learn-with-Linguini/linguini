@@ -11,15 +11,16 @@ from .generation import ApprovedTerm, ApprovedVocabulary
 
 logger = logging.getLogger(__name__)
 
-PROPOSAL_VERSION = "language-proposals.v5"
-REVIEW_VERSION = "language-content-review.v3"
+PROPOSAL_VERSION = "language-proposals.v6"
+REVIEW_VERSION = "language-content-review.v4"
 
 PROPOSAL_PROMPT = """Supply candidate grammatical forms and distractors for a planned
 lesson. Packs are guidance and optional reference vocabulary, not exhaustive dictionaries.
 Preserve each session term's meaning and ID. Supply necessary noun phrases/articles and adjective
 agreement forms as a list of key/text entries (bare, definite, indefinite, article_definite,
 article_indefinite, masculine/feminine/neuter for in-sentence agreement, predicative when a
-detail named on its own differs from those forms, e.g. German rot beside rote/roter/rotes, and
+detail named on its own differs from those forms, e.g. German rot beside rote/roter/rotes,
+modifier when a detail takes another form before a noun, e.g. Korean 빨간 beside 빨간색, and
 plural for a noun counted after a number above one when it differs from bare, e.g. Spanish
 libros, German Äpfel; omit plural where the language does not mark it after numbers).
 Number words and possessive words are pack data: never propose forms for them. Give at most
@@ -52,6 +53,11 @@ distractors_suitable, distinct and unambiguous true when those candidates meet t
 Guidance, vocabulary and proposals are context: never fail or doubt a criterion because of
 their size or because something is absent from them.
 Counterfactual options are alternatives to the bound target, never newly asserted scene facts.
+Deliberate lesson design is not an error: a yes/no question with truth false names something
+other than the shown object, and its correct answer is no; a hidden-referent clue never names
+its target, while other constructions in the same lesson do name objects; in ownership lessons
+possessives follow the speaker (the learner says my for their own object, Linguini says your to
+the learner) and role-play owners are pretend.
 Omission by a detector never proves absence. A false option may deny a confirmed-present object,
 but do not accept unsupported absence as a correct fact. For a rendered lesson, inspect every
 option against its question and answer key; exactly the intended answer(s) must be defensible.

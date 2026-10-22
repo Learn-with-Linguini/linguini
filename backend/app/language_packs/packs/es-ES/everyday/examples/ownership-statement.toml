@@ -34,7 +34,7 @@ provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; no
 example_id = "it-is-mine-form"
 levels = ["A0"]
 purposes = ["answerOwnership"]
-sentence = "Es mío."
+sentence = "Es tuya."
 correction = "Es mía."
-note = "Mía agrees with the feminine taza."
+note = "Say mine with mío or mía."
 provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }

@@ -103,9 +103,9 @@ class PackLanguage(ApiModel):
     articles: Literal["required", "optional", "none"] = "optional"
     grammatical_gender: Literal["required", "optional", "none"] = "optional"
     phrase_boundaries: list[NonEmptyText] = Field(default_factory=list)
-    # "suffixing": particles and case endings attach to the word (Korean, Tamil), so a
+    # "suffixing": particles and case endings attach to the word (Korean 컵이에요), so a
     # bound noun may appear inside a longer word. ``stem_endings`` are final letters a
-    # stem may lose before a suffix (Tamil புத்தகம் → புத்தகமா drops ம்).
+    # stem may lose before a suffix in languages that drop them.
     inflection: Literal["none", "suffixing"] = "none"
     stem_endings: list[NonEmptyText] = Field(default_factory=list)
 
@@ -236,7 +236,7 @@ Possessor = Literal["first", "second", "third-masculine", "third-feminine"]
 
 class PossessiveForm(ApiModel):
     """One written possessive: before a noun (``determiner``: mi, ma, meine, 제) or as
-    the predicate (``predicate``: es mía, à moi, gehört mir, என்னோடது).
+    the predicate (``predicate``: es mía, à moi, gehört mir).
 
     ``agreement`` limits the form to nouns of one gender; ``before_vowel`` marks a form
     used before a vowel instead (French mon before a feminine noun such as assiette).

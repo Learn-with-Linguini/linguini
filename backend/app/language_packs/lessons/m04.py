@@ -253,6 +253,7 @@ def _plan_a2(specs, pack, facts, vocabulary, _seed):
     if LEARNER not in owners or cast_owner not in owners:
         raise ValueError("M04 A2 needs an object with a detail another object lacks")
     mine, theirs = owners[LEARNER], owners[cast_owner]
+    assigned = {"object": mine.object_fact_id, "owner": mine.fact_id}
     detail = _detail(facts, vocabulary, mine.object_fact_id, theirs.object_fact_id)
     if detail is None:
         raise ValueError("M04 A2 needs a detail that tells the learner's object apart")
@@ -265,11 +266,10 @@ def _plan_a2(specs, pack, facts, vocabulary, _seed):
         use = "location"
     described = {"object": mine.object_fact_id, "owner": mine.fact_id,
                  **{key: value for key, value in clue.items() if key != "target"}}
-    assigned = {"object": mine.object_fact_id, "owner": mine.fact_id}
     other = {"object": theirs.object_fact_id, "owner": theirs.fact_id}
     specs.add("chooseAssignedObject", use, "target-clue", clue)
-    specs.add("choosePossessive", "statement", "owned-object",
-              {"object": mine.object_fact_id}, counterfactual={"owner": "possessor-second"})
+    # The possessive is chosen in a sentence about the learner's own object: only "my" fits.
+    specs.add("choosePossessive", "answer", "possessive-statement", assigned)
     specs.add("buildBelonging", "answer", "owned-description", described)
     specs.add("clarifyOwnership", "answer", "owned-object", other, labels=["no"], suffix="no")
     specs.add("clarifyOwnership", "option", "possessive-statement", assigned, labels=["yes"],
@@ -547,7 +547,7 @@ def _build_a2(ctx):
     s1, s2, s3 = A2_SECTIONS
     clue_spec = ctx.spec("chooseAssignedObject")
     clue = ctx.sentence("chooseAssignedObject")
-    yours = ctx.sentence("choosePossessive")
+    own = ctx.sentence("choosePossessive")
     belonging = ctx.sentence("buildBelonging")
     no, yes_answer, wrong = (ctx.sentence_by_id("clarifyOwnership", suffix)
                              for suffix in ("no", "yes", "wrong"))
@@ -556,8 +556,11 @@ def _build_a2(ctx):
     premise = (f"Role-play: marker {assigned['marker']} is yours. "
                f"Marker {alternative['marker']} belongs to {cast.english_name}.")
     third = (_determiner(ctx, f"third-{cast.gender}", assigned) or cast.name)
+    word = _word(own.text, ctx.terms[mine.fact_id].forms)
+    if word is None:
+        raise ValueError("M04 A2 needs the learner's possessive in its own sentence")
     possessives = [
-        ("possessive-right", _determiner(ctx, "first", assigned)),
+        ("possessive-right", word),
         ("possessive-yours", _determiner(ctx, "second", assigned)),
         (f"possessive-{cast.owner_id}", third),
     ]
@@ -565,13 +568,21 @@ def _build_a2(ctx):
         {fold(text) for _key, text in possessives}
     ) != 3:
         raise ValueError("M04 A2 needs three different possessive words for this noun")
+    gap = re.sub(rf"(?<!\w){re.escape(word)}(?!\w)", "___", own.text, count=1)
     choose_prompt = f"{ctx.label('which-is-yours')} {clue.text}"
-    possessive_prompt = f"{yours.text} {ctx.label('choose-possessive')}"
-    for prompt, parts in ((choose_prompt, (ctx.labels["which-is-yours"], clue)),
-                          (possessive_prompt, (yours, ctx.labels["choose-possessive"]))):
-        spellings = [_spelling(part) for part in parts]
-        if all(spellings):
-            ctx.extra_spellings[prompt] = " ".join(spellings)
+    possessive_prompt = f"{ctx.label('choose-possessive')} {gap}"
+    spellings = [_spelling(ctx.labels["which-is-yours"]), _spelling(clue)]
+    if all(spellings):
+        ctx.extra_spellings[choose_prompt] = " ".join(spellings)
+    if own.romanization and ctx.labels["choose-possessive"].romanization:
+        gap_spelling = "".join(
+            (" ___" if span.native.startswith(" ") else "___")
+            if span.native.strip() == word else span.latin
+            for span in own.romanization
+        )
+        ctx.extra_spellings[possessive_prompt] = (
+            f"{ctx.labels['choose-possessive'].romanization} {gap_spelling}"
+        )
     final = _joined(ctx, belonging, other)
 
     def choice(qid, purpose, prompt, options, correct, section, key, **fields):

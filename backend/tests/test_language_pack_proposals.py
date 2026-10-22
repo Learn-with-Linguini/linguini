@@ -130,7 +130,8 @@ def test_reviewer_rejection_or_uncertainty_exhausts_bounded_repair(criterion, ru
         dispatch("A1", runtime, provider)
     assert len(provider.requests) == 3
     # A review unsure with every criterion met is asked once more on each attempt.
-    assert len(provider.review_requests) == (6 if criterion == "certain" else 3)
+    # A failing review is asked once more before it counts: two per attempt.
+    assert len(provider.review_requests) == 6
 
 
 def test_assembled_ambiguous_mcq_rejected_even_after_sentence_review(runtime, monkeypatch):
@@ -158,7 +159,8 @@ def test_assembled_ambiguous_mcq_rejected_even_after_sentence_review(runtime, mo
     provider = MockAmbiguousProvider()
     with pytest.raises(LearningTaskGenerationError, match="unambiguous"):
         dispatch("A1", runtime, provider)
-    assert len(provider.review_requests) == 2
+    # The sentences pass; the assembled lesson fails its review and the second review.
+    assert len(provider.review_requests) == 3
     assert json.loads(provider.review_requests[-1].user_content)["rendered_task"]
 
 

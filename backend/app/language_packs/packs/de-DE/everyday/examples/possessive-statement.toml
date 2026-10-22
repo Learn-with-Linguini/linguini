@@ -16,6 +16,21 @@ accepted_alternatives = []
 provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
 
 [[examples]]
+example_id = "my-cup-choice"
+levels = ["A2"]
+purposes = ["choosePossessive"]
+meaning = "It's my cup."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }, { fact_id = "object:table", concept = "table" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }], owners = [{ fact_id = "owner:cup", object = "object:cup", owner = "first" }, { fact_id = "owner:book", object = "object:book", owner = "ana" }, { fact_id = "owner:key", object = "object:key", owner = "leo" }] }
+bindings = { object = "object:cup", owner = "owner:cup" }
+truth = true
+labels = []
+sentence = "Das ist meine Tasse."
+translation = "It's my cup."
+chunks = [{ text = "Das", join = "none" }, { text = "ist", join = "space" }, { text = "meine", join = "space" }, { text = "Tasse", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
 example_id = "her-book"
 levels = ["A1"]
 purposes = ["buildTheirs", "chooseOwner"]
@@ -72,7 +87,7 @@ provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; no
 [[mistakes]]
 example_id = "yes-my-cup-form"
 levels = ["A2"]
-purposes = ["clarifyOwnership"]
+purposes = ["clarifyOwnership", "choosePossessive"]
 sentence = "Das ist mein Tasse."
 correction = "Das ist meine Tasse."
 note = "Meine agrees with the feminine Tasse."

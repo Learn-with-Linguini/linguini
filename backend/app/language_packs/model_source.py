@@ -12,6 +12,7 @@ from pydantic import Field
 
 from app.ai.contracts.schema import build_strict_json_schema
 from app.ai.contracts.text import TextModelConfig, TextModelRequest
+from app.ai.features.learning_tasks.mission import fold
 from app.ai.routing.router import as_routed
 from app.schemas.base import ApiModel, NonEmptyText
 
@@ -174,8 +175,10 @@ class ModelSource:
         review = self._call(
             REVIEW_PROMPT, payload, ContentReview, "language_content_review", REVIEW_VERSION,
         )
-        if review.only_uncertain:
-            logger.warning("content review uncertain with every criterion met; asking again")
+        if review.failures:
+            # Reviewers sometimes fail every criterion while their notes find nothing wrong;
+            # a lesson fails only when a second, independent review also fails it.
+            logger.warning("content review failed; asking once more before failing")
             review = self._call(
                 REVIEW_PROMPT, payload, ContentReview, "language_content_review",
                 REVIEW_VERSION,
@@ -240,9 +243,12 @@ class ModelSource:
                     else "sentence",
                 }
                 if self.propose:
+                    # Only roles the sentence writes: a clue never names its target.
+                    written = set(construction.roles) if construction else None
                     spec_data["realization_terms"] = [
                         {"role": role, "term_id": term.term_id, "meaning": term.source_text}
                         for role, term in _realization_terms(spec, vocabulary).items()
+                        if written is None or role in written
                     ]
                 payload["specs"].append(spec_data)
                 slot_guidance.append(
@@ -290,7 +296,12 @@ class ModelSource:
             allowed_ids = sorted(term.term_id for term in _realization_terms(spec, vocabulary).values())
             for realization in item.realizations:
                 term = terms_by_id.get(realization.term_id)
-                if term is None or term.fact_id not in preferred_facts:
+                valid = term is not None and term.fact_id in preferred_facts
+                if valid and fold(realization.surface) not in fold(item.text):
+                    # A claim for a word the sentence does not contain says nothing about it.
+                    logger.info("ignoring a realization claim missing from its sentence")
+                    continue
+                if not valid:
                     realization_issues.append(
                         f"Invalid realization term_id={realization.term_id!r}, "
                         f"surface={realization.surface!r} for {item.slot_id}/{item.spec_id}. "

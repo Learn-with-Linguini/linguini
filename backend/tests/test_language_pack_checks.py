@@ -183,3 +183,19 @@ def test_only_false_cases_bind_pack_numbers():
         scene.validate_bindings({"object": "object:fork", "count": "number:7"}, truth=True)
     with pytest.raises(ValueError, match="undeclared"):
         scene.validate_bindings({"object": "object:fork", "count": "count:fork"}, truth=False)
+
+
+def test_bound_facts_win_over_a_longer_unbound_match():
+    from app.language_packs.generation import ApprovedTerm, infer_term_uses
+
+    def term(term_id, fact_id, text):
+        return ApprovedTerm(term_id=term_id, fact_id=fact_id, source_text="on", target_text=text,
+                            forms=[text], part_of_speech="preposition", provenance="catalog")
+
+    vocabulary = ApprovedVocabulary(terms=[
+        term("relation-on", "relation:on", "위에"),
+        term("alternative-13", "alternative:13", "탁자 위에"),
+    ])
+    uses = infer_term_uses("컵이 탁자 위에 있어요.", vocabulary,
+                           preferred_fact_ids={"relation:on"})
+    assert {use.fact_id for use in uses} == {"relation:on"}

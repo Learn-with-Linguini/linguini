@@ -1,7 +1,7 @@
 construction_id = "ownership-statement"
 version = 1
 summary = "Say that the object is (or is not) mine, without naming it."
-guidance = "Say Es mío/Es mía (agreeing with the object), or No es mío/mía when false; do not name the object."
+guidance = "Say Es mío. for a masculine object (libro) and Es mía. for a feminine one (taza); when false, No es mío. / No es mía.; do not name the object."
 features = ["ownership", "predicate-possessive"]
 constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
 required_labels = []

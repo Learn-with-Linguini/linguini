@@ -264,9 +264,9 @@ provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; no
 
 [[labels]]
 semantic = "choose-possessive"
-text = "맞는 말을 고르세요."
-romanization = "matneun mal-eul goreuseyo."
-meaning = "Choose the correct word."
+text = "본인이 말해요:"
+romanization = "bonin-i malhaeyo:"
+meaning = "You say:"
 usage = "prompt"
 provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
 

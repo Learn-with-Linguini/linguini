@@ -360,7 +360,7 @@ prompt_labels = ["which-is-yours"]
 
 [[missions.slots]]
 purpose = "choosePossessive"
-construction_id = "owned-object"
+construction_id = "possessive-statement"
 target_ids = ["use-possessive"]
 prompt_labels = ["choose-possessive"]
 

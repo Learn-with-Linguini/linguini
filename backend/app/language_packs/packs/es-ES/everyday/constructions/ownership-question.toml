@@ -1,7 +1,7 @@
 construction_id = "ownership-question"
 version = 1
 summary = "Ask whether the object is the listener's, without naming it."
-guidance = "Ask ¿Es tuyo? or ¿Es tuya?, agreeing with the owned object's gender; do not name the object."
+guidance = "Ask ¿Es tuyo? when the owned object is masculine (libro) and ¿Es tuya? when it is feminine (taza); do not name the object."
 features = ["ownership", "question"]
 constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
 required_labels = []

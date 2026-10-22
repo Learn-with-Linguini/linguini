@@ -474,10 +474,15 @@ def check_deterministic(
             ]
             if not realized:
                 # Suffixing languages attach particles/case endings to the bound word
-                # (컵이에요, வாழைப்பழமா); recognise it before reporting it missing.
+                # (컵이에요, 컵은); recognise it before reporting it missing.
                 inflected = _inflected_use(
                     candidate.text, vocabulary, fact_id_value, expected_pos, pack.language,
-                ) or _shared_word_use(candidate.text, vocabulary, fact_id_value, expected_pos)
+                ) or _shared_word_use(
+                    candidate.text, vocabulary, fact_id_value, expected_pos,
+                ) or _counted_plural_use(
+                    candidate.text, candidate.construction_id, vocabulary, fact_id_value,
+                    expected_pos,
+                )
                 if inflected is not None:
                     derived_uses.append(inflected)
                     continue
@@ -508,7 +513,9 @@ def check_deterministic(
                     f"role {role!r} expects {fact_id_value!r}; found facts "
                     f"{found_facts or 'none'}.{hint}"
                 )
-        expected_pos = set(expected_roles.values())
+        # Naming an object the spec does not bind is wrong in every construction, even one
+        # that never names its own object ("Es mía." must not become "La taza es mía.").
+        expected_pos = set(expected_roles.values()) | {"noun"}
         unbound = [
             use
             for use in derived_uses
@@ -546,8 +553,11 @@ def check_deterministic(
             ):
                 failures.append("yes/no answer must name the shown object")
 
-    if spec is not None and not candidate.proposed_realizations:
-        failures += _count_agreement(candidate.text, expected_bindings, facts, vocabulary)
+    if spec is not None:
+        # Number and possessive forms are pack data, so they are judged even when the
+        # model proposes its own spellings; only the proposed plural is left to review.
+        failures += _count_agreement(candidate.text, expected_bindings, facts, vocabulary,
+                                     plurals=not candidate.proposed_realizations)
         failures += _owner_agreement(candidate.text, expected_bindings, vocabulary)
 
     slot_sentence_labels = set(slot.sentence_labels) if slot is not None else set()
@@ -631,7 +641,7 @@ def _has_word(text: str, word: str) -> bool:
     return re.search(rf"(?<!\w){re.escape(fold(word))}(?!\w)", fold(text)) is not None
 
 
-def _count_agreement(text, bindings, facts, vocabulary) -> list[str]:
+def _count_agreement(text, bindings, facts, vocabulary, *, plurals=True) -> list[str]:
     """A bound number agrees with the noun it counts.
 
     The number takes the form the pack gives it next to that noun (una manzana, 두 개),
@@ -661,7 +671,8 @@ def _count_agreement(text, bindings, facts, vocabulary) -> list[str]:
             )
         plural = noun.forms_by_key.get("plural")
         bare = noun.forms_by_key.get("bare", noun.target_text)
-        if quantity > 1 and plural and fold(plural) != fold(bare) and not _has_word(text, plural):
+        if (plurals and quantity > 1 and plural and fold(plural) != fold(bare)
+                and not _has_word(text, plural)):
             failures.append(f"after the number {quantity}, use the plural {plural!r}")
     return failures
 
@@ -702,7 +713,7 @@ def _inflected_use(text, vocabulary, fact_id_value, part_of_speech, language):
 
     Only used to find a bound role that whole-word matching missed: a word counts when
     it extends one of the term's single-word forms, or a stem left after removing one of
-    the pack's ``stem_endings`` (Tamil புத்தகம் → புத்தக-மா). Meaning is model-assessed.
+    the pack's ``stem_endings``. Meaning is model-assessed.
     """
     if language.inflection != "suffixing":
         return None
@@ -737,6 +748,34 @@ def _inflected_use(text, vocabulary, fact_id_value, part_of_speech, language):
         )
         if word is not None:
             return TermUse(term_id=term.term_id, surface=word, fact_id=term.fact_id)
+    return None
+
+
+# Constructions that write a counted noun after a number or quantity word.
+_COUNTED_CONSTRUCTIONS = frozenset({
+    "how-many-question", "quantity-chunk", "quantity-statement", "quantity-comparison",
+    "quantity-pair",
+})
+
+
+def _counted_plural_use(text, construction_id, vocabulary, fact_id_value, part_of_speech):
+    """A counted noun written as a plural the session has no form for (Tasse -> Tassen).
+
+    Only counting constructions, only nouns, and only a regular ending of up to three
+    letters after the bare noun; irregular plurals (Bücher) still need a proposed form.
+    """
+    if construction_id not in _COUNTED_CONSTRUCTIONS or part_of_speech != "noun":
+        return None
+    words = [token.strip("¿¡«».,!?") for token in tokens(text)]
+    for term in vocabulary.terms:
+        if term.fact_id != fact_id_value or str(
+            getattr(term.part_of_speech, "value", term.part_of_speech)
+        ) != "noun":
+            continue
+        bare = fold(term.forms_by_key.get("bare", term.target_text))
+        for word in words:
+            if fold(word).startswith(bare) and 0 < len(fold(word)) - len(bare) <= 3:
+                return TermUse(term_id=term.term_id, surface=word, fact_id=term.fact_id)
     return None
 
 
@@ -801,17 +840,32 @@ def infer_term_uses(
     selected: dict[tuple[str, int], tuple[int, ApprovedTerm, str]] = {}
     occupied_until = 0
     used_facts = set()
+    preferred_starts = {
+        start for start, options in matches.items()
+        if preferred_fact_ids and any(item[1].fact_id in preferred_fact_ids for item in options)
+    }
     for start, options in sorted(matches.items()):
         if start < occupied_until:
             continue
-        longest = max(item[0] for item in options)
-        best = [item for item in options if item[0] == longest]
+        # A bound fact wins over a longer unbound match, here or overlapping it (a proposed
+        # alternative "탁자 위에" must not take the bound "위에"); width decides among equals.
         preferred = [
-            item for item in best if preferred_fact_ids and item[1].fact_id in preferred_fact_ids
+            item for item in options
+            if preferred_fact_ids and item[1].fact_id in preferred_fact_ids
         ]
-        unused = [item for item in preferred if item[1].fact_id not in used_facts]
+        if not preferred:
+            options = [
+                item for item in options
+                if not any(start < other < start + item[0] for other in preferred_starts)
+            ]
+            if not options:
+                continue
+        pool = preferred or options
+        longest = max(item[0] for item in pool)
+        best = [item for item in pool if item[0] == longest]
+        unused = [item for item in best if item[1].fact_id not in used_facts]
         width, term, surface = sorted(
-            unused or preferred or best,
+            unused or best,
             key=lambda item: (item[1].term_id, item[2]),
         )[0]
         selected[(term.term_id, start)] = (width, term, surface)

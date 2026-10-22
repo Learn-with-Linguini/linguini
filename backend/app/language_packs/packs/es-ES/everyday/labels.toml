@@ -254,8 +254,8 @@ provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; no
 
 [[labels]]
 semantic = "choose-possessive"
-text = "Elige la palabra correcta."
-meaning = "Choose the correct word."
+text = "Tú dices:"
+meaning = "You say:"
 usage = "prompt"
 provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
 

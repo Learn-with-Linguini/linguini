@@ -41,7 +41,7 @@ truth = true
 input = "Say that it is yours."
 expected_meaning = "It's mine."
 acceptable = ["C'est bien à moi."]
-reject = [{ sentence = "C'est bien à moi", category = "punctuation", reason = "The statement ends with a full stop." }]
+reject = [{ sentence = "C'est bien à moi", category = "punctuation", reason = "The statement ends with a full stop." }, { sentence = "La tasse est à moi.", category = "wrongObject", reason = "The statement is about the bag and names no other object." }]
 provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
 
 [[cases]]

@@ -80,7 +80,7 @@ def _plan_a0(specs, facts, vocabulary, objects, seed):
     if len(named) < 2:
         raise ValueError("M01 A0 needs two differently named objects")
     for index, obj in enumerate(named[:2], 1):
-        other = named[1 if index == 1 else 0]
+        other = named[2] if len(named) > 2 else named[1 if index == 1 else 0]
         truth = truths[index - 1]
         specs.add(f"matchName-{index}", "name", "identify-object", {"object": obj.fact_id})
         specs.add(

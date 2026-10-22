@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import time
 from dataclasses import replace
 from typing import Any
@@ -188,7 +189,7 @@ class SceneTranslationService:
                 self._client,
                 version=_VERSION if language_context is None else FeatureVersion(
                     AiFeature.SCENE_TRANSLATION.value, PACK_TRANSLATION_PROMPT_VERSION,
-                    "pack-translation-result.v1", "pack-translation-validator.v2",
+                    "pack-translation-result.v1", "pack-translation-validator.v3",
                 ),
                 scope=cache_scope,
                 payload=payload if language_context is None else {
@@ -417,6 +418,14 @@ class SceneTranslationService:
                 if _contradicts_itself(issue, term, shown):
                     logger.info("ignoring a self-contradicting translation flag")
                     continue
+                suggested = disputed.setdefault(("suggested", issue.group, issue.key), set())
+                if {_folded(term.translation), _folded(shown)} & suggested:
+                    # The word the reviewer suggested before is flagged now: it is going in
+                    # circles (one word, then another, then back), which is no evidence of a
+                    # wrong word.
+                    logger.warning("ignoring a flag on a word the reviewer suggested")
+                    continue
+                suggested.add(_folded(issue.suggestion))
                 if disputed.get((issue.group, issue.key)) == shown:
                     logger.warning("translator kept a flagged word; leaving it to content review")
                     continue
@@ -446,8 +455,15 @@ def _folded(text: str | None) -> str:
 
 
 def _contradicts_itself(issue, term, shown: str) -> bool:
-    """The flag suggests the word already used, or says it already means its source."""
+    """The flag suggests the word already used, or says it already means its source.
+
+    A meaning that names the source among its senses ("above; on top" for "on") admits
+    that the word expresses it.
+    """
+    meaning = _folded(issue.current_meaning)
+    source = _folded(term.source)
     return (
         _folded(issue.suggestion) in {_folded(term.translation), _folded(shown)}
-        or _folded(issue.current_meaning) == _folded(term.source)
+        or meaning == source
+        or re.search(rf"(?<!\w){re.escape(source)}(?!\w)", meaning) is not None
     )

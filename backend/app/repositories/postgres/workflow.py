@@ -2660,9 +2660,13 @@ class PostgresWorkflowRepository:
         ispy_descriptions = None
         introduction_id = None
         objects, relations = list(claim.objects), claim.relations
-        context = getattr(claim, "language_context", None) if any(
-            lesson_mission(m).mission_id == "M01" for m in claim.missions
-        ) else None
+        context = getattr(claim, "language_context", None)
+        if context is not None and not any(
+            context.owns(lesson_mission(m).mission_id) for m in claim.missions
+        ):
+            # Only pack lessons need pack translations; any planned pack mission does
+            # (a lesson of M02-M04 without M01 too), legacy-only lessons do not.
+            context = None
         if self.translator:
             payload = translation_payload(
                 profile["target_language_code"],
@@ -2677,7 +2681,7 @@ class PostgresWorkflowRepository:
                     **({"language_context": context} if context else {}),
                 )
         elif context is not None:
-            raise LearningTaskGenerationError("Pack M01 requires accepted scene translations.")
+            raise LearningTaskGenerationError("Pack lessons require accepted scene translations.")
 
         # Checkpoint: commit translations and task 1 before the slower lesson
         # and clue calls, so the learner can start while tasks are built.

@@ -375,6 +375,7 @@ def test_word_the_translator_keeps_after_repair_is_left_to_content_review(pack_d
 @pytest.mark.parametrize("review", [
     _flag("cup", "taza"),  # suggests the word already used
     _flag("cup", "copa", meaning="cup"),  # says the word already means its source
+    _flag("cup", "copa", meaning="cup; mug"),  # names the source among the word's senses
 ])
 def test_self_contradicting_flags_are_ignored(pack_dir, runtime, review):
     context = resolve_language_context("es")
@@ -383,6 +384,26 @@ def test_self_contradicting_flags_are_ignored(pack_dir, runtime, review):
         payload(runtime), language_context=context
     )
     assert translated.objects and len(provider.requests) == 1
+
+
+def test_a_reviewer_going_in_circles_keeps_the_repaired_word(pack_dir, runtime):
+    def review(terms):
+        # First it suggests taza; once taza is used, it suggests copa instead.
+        return {"issues": [
+            {"group": term["group"], "key": term["key"],
+             "currentMeaning": "white vegetable" if term["translation"] != "taza" else "dish",
+             "suggestion": "taza" if term["translation"] != "taza" else "copa",
+             "problem": "Use another word."}
+            for term in terms if term["source"] == "cup"
+        ]}
+
+    context = resolve_language_context("es")
+    provider = MockTranslationProvider(overrides={"cup": "verdura blanca"}, review=review)
+    translated = translator(provider, retries=1).translate(
+        payload(runtime), language_context=context
+    )
+    assert [term.translation for term in translated.objects if term.source == "cup"] == ["taza"]
+    assert len(provider.requests) == 2
 
 
 @pytest.mark.parametrize("answer", ["not json", {"issues": [
