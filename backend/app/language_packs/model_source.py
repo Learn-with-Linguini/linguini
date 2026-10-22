@@ -31,7 +31,7 @@ from .schema import GuidanceBundle, LanguagePack
 
 logger = logging.getLogger(__name__)
 
-GENERATOR_VERSION = "lp-generator.v6"
+GENERATOR_VERSION = "lp-generator.v7"
 ASSESSOR_VERSION = "lp-assessor.v1"
 
 GENERATOR_SYSTEM_PROMPT = """You write sentences for one language-learning lesson. The user message is JSON with: language (code, locale, script, register,
@@ -48,6 +48,9 @@ Rules:
 - State exactly the bound facts. When truth is false, state the counterfactual binding exactly as given; never add facts.
 - A wrongExistence option denies the presence of its counterfactual object, while retaining the other bound facts.
   A wrongAttribute option replaces only the counterfactual detail or relation. A fact3 sentence adds another scene fact.
+- A like spec says its person likes the bound object; a dislike spec says they do not. The use always decides the
+  polarity, even when it contradicts the bound preference: a like spec with truth false whose preference is a dislike is a
+  deliberate wrong option, so write it affirmative (I like the book.), never the true negated sentence.
 - Follow the construction guidance and the correct examples' structure. Do not copy an example unless its bindings match.
 - Write each spec with form "sentence" as one complete sentence or question exactly as the learner should see it
   (capitalisation, spacing and punctuation included). Write each spec with form "phrase" (a vocabulary name, a position,

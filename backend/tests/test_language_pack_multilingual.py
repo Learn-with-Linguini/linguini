@@ -37,7 +37,10 @@ ROMANIZED = {"ko"}
 COUNTS = {
     "M01": {"A0": 6, "A1": 4, "A2": 5}, "M02": {"A0": 6, "A1": 4, "A2": 5},
     "M03": {"A0": 6, "A1": 3, "A2": 5}, "M04": {"A0": 6, "A1": 3, "A2": 5},
+    "M05": {"A0": 6, "A1": 3},
 }
+# Every pack mission at every level it has a template for.
+MISSION_LEVELS = [(mission, level) for mission, levels in COUNTS.items() for level in levels]
 MISSION_VERSIONS = {("M02", "A1"): 2}
 # A1 describes the second object, so its colour has a distinct Korean modifier form.
 SCENE = (("cup", "red"), ("book", "white"), ("table", "green"))
@@ -490,6 +493,66 @@ def _m04_sentence(language, construction, spec, terms):
     return text, realized
 
 
+M05_CONSTRUCTIONS = {"my-preference", "their-preference", "preference-question",
+                     "choice-statement"}
+
+
+def _m05_sentence(language, construction, spec, terms):
+    """M05's like/dislike sentences in each pack's taught pattern, with realized surfaces.
+
+    A bound preference with a term names its cast member; without one the sentence is
+    the learner's own (first person) or a question to them (second person).
+    """
+    lex = LEXICON[language]
+    bare, article, gender = lex["nouns"][terms[spec["bindings"]["object"]]["sourceText"]]
+    person = terms.get(spec["bindings"].get("preference"))
+    name = person["targetText"] if person else None
+    dislike = spec["use"] == "dislike"
+    if language == "ko":
+        obj = _ko(bare, "을", "를")
+        topic = _ko(name, "은", "는") if name else None
+        verb = "안 좋아해요" if dislike else "좋아해요"
+        text = {
+            "my-preference": f"저는 {obj} {verb}.",
+            "their-preference": f"{topic} {obj} {verb}.",
+            "preference-question": f"{topic} {obj} 좋아해요?" if name else f"{obj} 좋아해요?",
+            "choice-statement": f"저는 {obj} 골라요.",
+        }[construction]
+        realized = {"object": obj, **({"preference": topic} if topic else {})}
+        return text, realized
+    definite = f"{article} {bare}"
+    if language == "fr" and bare[0] in "aeiouéè":
+        definite = f"l'{bare}"
+    if language == "es":
+        text = {
+            "my-preference": f"{'No me' if dislike else 'Me'} gusta {definite}.",
+            "their-preference": f"A {name} {'no ' if dislike else ''}le gusta {definite}.",
+            "preference-question": (f"¿A {name} le gusta {definite}?" if name
+                                    else f"¿Te gusta {definite}?"),
+            "choice-statement": f"Elijo {definite}.",
+        }[construction]
+    elif language == "fr":
+        connector = "qu'" if name and name[0] in "AEIOUÉ" else "que "
+        text = {
+            "my-preference": f"Je n'aime pas {definite}." if dislike else f"J'aime {definite}.",
+            "their-preference": (f"{name} n'aime pas {definite}." if dislike
+                                 else f"{name} aime {definite}."),
+            "preference-question": (f"Est-ce {connector}{name} aime {definite} ?" if name
+                                    else f"Tu aimes {definite} ?"),
+            "choice-statement": f"Je choisis {definite}.",
+        }[construction]
+    else:
+        noun = f"{lex['accusative'][gender]} {bare}"
+        negation = " nicht" if dislike else ""
+        text = {
+            "my-preference": f"Ich mag {noun}{negation}.",
+            "their-preference": f"{name} mag {noun}{negation}.",
+            "preference-question": f"Mag {name} {noun}?" if name else f"Magst du {noun}?",
+            "choice-statement": f"Ich nehme {noun}.",
+        }[construction]
+    return text, {}
+
+
 def _m03_sentence(language, construction, spec, terms):
     """M03's counting sentences in each pack's taught pattern, with realized surfaces."""
     lex = LEXICON[language]
@@ -676,6 +739,10 @@ class MockPackProvider:
                 text, realized = _m04_sentence(
                     self.language, spec["construction_id"], spec, {**terms, **terms_by_id},
                 )
+            elif spec["construction_id"] in M05_CONSTRUCTIONS:
+                text, realized = _m05_sentence(
+                    self.language, spec["construction_id"], spec, {**terms, **terms_by_id},
+                )
             else:
                 text, realized = _sentence(
                     self.language, spec["construction_id"], spec["use"], spec["truth"],
@@ -756,7 +823,7 @@ def _counted_groups(objects):
             for label, quantity in COUNTED]
 
 
-def _dispatch(language, level, scene, provider, monkeypatch, mission_id="M01"):
+def _dispatch(language, level, scene, provider, monkeypatch, mission_id="M01", reaction="like"):
     from app.language_packs.context import resolve_language_context
 
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "true")
@@ -766,18 +833,30 @@ def _dispatch(language, level, scene, provider, monkeypatch, mission_id="M01"):
     objects, relations, words, translated = scene
     mission = get_mission(mission_id, level, MISSION_VERSIONS.get((mission_id, level), 1))
     markers = {str(obj.id): index for index, obj in enumerate(objects, 1)}
-    # M04: the learner says the cup is theirs (A0); A1 assigns the saved role-play.
-    learner_facts = {"M04": {"ownedObjectId": str(objects[0].id), "pretend": False}}
-    roleplay_facts = {"M04": assign_roleplay(mission, UUID(int=100), objects, markers)}
+    # M04: the learner says the cup is theirs (A0); M05: they pick the cup over the book
+    # (A0). A1 assigns the saved role-play.
+    learner_facts = {
+        "M04": {"ownedObjectId": str(objects[0].id), "pretend": False},
+        "M05": {"preference": {"sceneObjectIds": [str(objects[0].id), str(objects[1].id)],
+                               "chosenObjectId": str(objects[0].id), "reaction": "like"}},
+    }
+    if reaction == "dislike":
+        # The learner rates one object and does not like it: they take another instead.
+        learner_facts["M05"] = {"preference": {"sceneObjectIds": [str(objects[0].id)],
+                                               "reaction": "dislike"}}
+    roleplay_facts = {
+        mission_id: assign_roleplay(mission, UUID(int=100), objects, markers)
+    } if mission_id in {"M04", "M05"} else {}
+    own_choice = mission_id in {"M04", "M05"}
     claim = SimpleNamespace(
         profile={"target_language_code": language},
         session_id=UUID(int=100),
         missions=[mission],
         counted_groups=_counted_groups(objects),
         mission_progress={},
-        review_markers=markers if mission_id == "M04" else {},
-        roleplay_facts=roleplay_facts if mission_id == "M04" else {},
-        learner_facts=learner_facts if mission_id == "M04" else {},
+        review_markers=markers if own_choice else {},
+        roleplay_facts=roleplay_facts,
+        learner_facts={mission_id: learner_facts[mission_id]} if own_choice else {},
         cache_scope=CacheScope.user("mock-user"),
         language_context=resolve_language_context(language),
     )
@@ -793,8 +872,7 @@ def _dispatch(language, level, scene, provider, monkeypatch, mission_id="M01"):
     )
 
 
-@pytest.mark.parametrize("mission_id", ["M01", "M02", "M03", "M04"])
-@pytest.mark.parametrize("level", ["A0", "A1", "A2"])
+@pytest.mark.parametrize(("mission_id", "level"), MISSION_LEVELS)
 @pytest.mark.parametrize("language", list(LOCALES))
 def test_pack_missions_dispatch_for_every_pack_and_level(
     language, level, mission_id, scene, monkeypatch,
@@ -863,8 +941,7 @@ def test_pack_missions_dispatch_for_every_pack_and_level(
         assert {o.label for o in followup.options} >= {"rot"}
 
 
-@pytest.mark.parametrize("mission_id", ["M01", "M02", "M03", "M04"])
-@pytest.mark.parametrize("level", ["A0", "A1", "A2"])
+@pytest.mark.parametrize(("mission_id", "level"), MISSION_LEVELS)
 @pytest.mark.parametrize("language", list(LOCALES))
 def test_sample_vocabulary_covers_every_valid_evaluation_sentence(language, level, mission_id):
     locale = LOCALES[language]
@@ -886,3 +963,23 @@ def test_sample_vocabulary_covers_every_valid_evaluation_sentence(language, leve
     # Including the held-out cases written after the shared rules, nothing is missed.
     assert record.missed_rejects == 0
     assert record.thresholds_met
+
+
+@pytest.mark.parametrize("language", list(LOCALES))
+def test_m05_a0_dislike_has_the_learner_take_another_object(language, scene, monkeypatch):
+    provider = MockPackProvider(language)
+    (task,) = _dispatch(language, "A0", scene(language), provider, monkeypatch, "M05",
+                        reaction="dislike")
+    questions = {q.question_id: q for q in task.public_content.questions}
+    answers = task.answer_key.correct_option_ids
+    heard = questions["M05-Q2"]
+    assert next(o.label for o in heard.options if o.option_id == answers["M05-Q2"]) == (
+        "Don't like"
+    )
+    last = questions["M05-Q6"]
+    chosen = last.option_object_ids[answers["M05-Q6"]]
+    # The learner keeps the other object; the disliked one stays behind.
+    assert str(chosen) == str(UUID(int=2))
+    assert last.slot_template.count("___") == 1
+    assert evaluate(task, SubmitVocabularyReviewAttemptRequest(answers=answers))
+

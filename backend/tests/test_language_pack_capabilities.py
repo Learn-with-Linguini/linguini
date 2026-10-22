@@ -45,7 +45,7 @@ def _human_reviewed_pack(pack):
 
 
 def test_catalog_loads_and_preserves_current_mission_purpose_order():
-    from app.ai.features.learning_tasks import mission_m02, mission_m03, mission_m04
+    from app.ai.features.learning_tasks import mission_m02, mission_m03, mission_m04, mission_m05
 
     catalog = load_mission_catalog()
     expected = {
@@ -62,6 +62,8 @@ def test_catalog_loads_and_preserves_current_mission_purpose_order():
         ("M04", "A0"): ["askOwnership", "answerOwnership", "sayOwnedObject"],
         ("M04", "A1"): mission_m04._ORDER,
         ("M04", "A2"): mission_a2._EXPECTED["M04"],
+        ("M05", "A0"): ["askPreference", "sayPreference", "sayChoice"],
+        ("M05", "A1"): mission_m05._ORDER,
     }
     for template in catalog.missions:
         key = (template.mission_id, template.practice_level.value)

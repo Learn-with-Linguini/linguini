@@ -384,3 +384,61 @@ construction_id = "owned-description"
 additional_constructions = ["owned-object"]
 target_ids = ["describe-belonging"]
 prompt_labels = ["clarify-and-describe"]
+
+[[missions]]
+mission_id = "M05"
+practice_level = "A0"
+content_version = 1
+required_constructions = [
+  { construction_id = "preference-question", min_version = 1 },
+  { construction_id = "my-preference", min_version = 1 },
+  { construction_id = "choice-statement", min_version = 1 },
+]
+
+[[missions.slots]]
+purpose = "askPreference"
+construction_id = "preference-question"
+target_ids = ["recognise-preference"]
+
+[[missions.slots]]
+purpose = "sayPreference"
+construction_id = "my-preference"
+target_ids = ["say-preference"]
+prompt_labels = ["yes-answer", "no-answer"]
+
+[[missions.slots]]
+purpose = "sayChoice"
+construction_id = "choice-statement"
+target_ids = ["say-preference"]
+prompt_labels = ["what-choose"]
+
+[[missions]]
+mission_id = "M05"
+practice_level = "A1"
+content_version = 1
+required_constructions = [
+  { construction_id = "their-preference", min_version = 1 },
+  { construction_id = "my-preference", min_version = 1 },
+  { construction_id = "preference-question", min_version = 1 },
+]
+required_possessors = ["ana", "leo"]
+
+[[missions.slots]]
+purpose = "choosePreference"
+construction_id = "their-preference"
+target_ids = ["choose-preference"]
+prompt_labels = ["choose-sentence"]
+
+[[missions.slots]]
+purpose = "buildMyPreference"
+construction_id = "my-preference"
+additional_constructions = ["preference-question"]
+target_ids = ["say-my-preference"]
+prompt_labels = ["answer-in-sentence"]
+
+[[missions.slots]]
+purpose = "buildTheirPreference"
+construction_id = "their-preference"
+additional_constructions = ["preference-question"]
+target_ids = ["say-their-preference"]
+prompt_labels = ["answer-in-sentence"]

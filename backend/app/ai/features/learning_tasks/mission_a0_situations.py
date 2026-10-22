@@ -173,7 +173,10 @@ def validate_a0_situation_lesson(payload: dict[str, Any], result: A0SituationLes
             "de": "nicht",
             "ko": "안 좋아해요",
         }
-        is_negative = negative_markers[target_language] in question_three_complete
+        negative = payload.get("negativeMarker") or negative_markers.get(target_language)
+        if not negative:
+            raise LearningTaskGenerationError("Preference lessons need a negative phrase.")
+        is_negative = fold(negative) in question_three_complete
         if (
             question_two_answer != expected_question_two
             or fold(question_three_answer) not in question_three_complete

@@ -35,17 +35,18 @@ def _ids(missions):
 
 
 def test_catalog_templates_resolve_through_the_registry():
-    assert PACK_MISSION_IDS == {"M01", "M02", "M03", "M04"}
+    assert PACK_MISSION_IDS == {"M01", "M02", "M03", "M04", "M05"}
     assert pack_mission_keys() == [
         ("M01", "A0", 1), ("M01", "A1", 1), ("M01", "A2", 1),
         ("M02", "A0", 1), ("M02", "A1", 2), ("M02", "A2", 1),
         ("M03", "A0", 1), ("M03", "A1", 1), ("M03", "A2", 1),
         ("M04", "A0", 1), ("M04", "A1", 1), ("M04", "A2", 1),
+        ("M05", "A0", 1), ("M05", "A1", 1),
     ]
     # Templates match dev's mission definitions (M02 A1 lessons are content version 2).
     assert mission_template_key("M02", "A1") == ("M02", "A1", 2)
     with pytest.raises(ValueError, match="no pack lesson implementation"):
-        pack_mission("M05")
+        pack_mission("M06")
 
 
 def test_context_records_ready_and_declared_missions(packs_on):
@@ -53,6 +54,7 @@ def test_context_records_ready_and_declared_missions(packs_on):
     assert context.ready_missions == (
         "M01:A0:1", "M01:A1:1", "M01:A2:1", "M02:A0:1", "M02:A1:2", "M02:A2:1",
         "M03:A0:1", "M03:A1:1", "M03:A2:1", "M04:A0:1", "M04:A1:1", "M04:A2:1",
+        "M05:A0:1", "M05:A1:1",
     )
     assert context.declared_missions == context.ready_missions
     assert context.ready_levels == ("A0", "A1", "A2")
@@ -73,15 +75,15 @@ def test_snapshots_saved_before_multi_mission_packs_load_as_m01(packs_on):
 
 
 def test_ready_pack_missions_replace_legacy_versions_first():
-    profile = {"proficiency_level": "A1", "target_language_code": "es"}
+    profile = {"proficiency_level": "A2", "target_language_code": "es"}
     missions = lesson_missions(
-        SessionMode.LESSON, profile, _context(["M01:A1:1"], ["M01:A1:1"])
+        SessionMode.LESSON, profile, _context(["M01:A2:1"], ["M01:A2:1"])
     )
-    assert _ids(missions)[0] == ("M01", "A1")
+    assert _ids(missions)[0] == ("M01", "A2")
     assert [mission_id for mission_id, _ in _ids(missions)].count("M01") == 1
     # M02-M04 have pack implementations but are not ready here: not offered.
     assert not {"M02", "M03", "M04"} & {mission_id for mission_id, _ in _ids(missions)}
-    assert "M05" in {mission_id for mission_id, _ in _ids(missions)}
+    assert "M06" in {mission_id for mission_id, _ in _ids(missions)}
 
 
 def test_declared_but_blocked_missions_never_fall_back_to_legacy():
@@ -91,16 +93,16 @@ def test_declared_but_blocked_missions_never_fall_back_to_legacy():
 
 
 def test_pack_missions_never_use_their_legacy_builder_when_packs_are_on():
-    profile = {"proficiency_level": "A1", "target_language_code": "es"}
+    profile = {"proficiency_level": "A2", "target_language_code": "es"}
     missions = lesson_missions(SessionMode.LESSON, profile, _context(["M01:A0:1"], ["M01:A0:1"]))
     ids = {mission_id for mission_id, _ in _ids(missions)}
-    assert not ids & {"M01", "M02", "M03", "M04"}
+    assert not ids & {"M01", "M02", "M03", "M04", "M05"}
     # Missions without a pack implementation keep their legacy builders.
-    assert "M05" in ids
+    assert "M06" in ids
 
 
 def test_pack_only_languages_get_every_ready_pack_mission():
-    profile = {"proficiency_level": "A2", "target_language_code": "ta"}
+    profile = {"proficiency_level": "A2", "target_language_code": "pt"}
     ready = ["M01:A2:1", "M02:A2:1"]
     missions = lesson_missions(SessionMode.LESSON, profile, _context(ready, ready))
     assert _ids(missions) == [("M01", "A2"), ("M02", "A2")]
@@ -157,7 +159,7 @@ def test_bind_plan_rejects_missions_without_a_pack_implementation():
         pack, [], [], [], SimpleNamespace(objects=[], attributes=[], relationships=[]), {},
     )
     with pytest.raises(ValueError, match="no pack lesson implementation"):
-        bind_plan(pack, "A1", facts, vocabulary, mission_id="M05")
+        bind_plan(pack, "A2", facts, vocabulary, mission_id="M06")
 
 
 def _counted_cups(quantity, label="cup"):
@@ -444,3 +446,121 @@ def test_m04_photo_rules_need_the_learner_choice_and_a_telling_detail():
     assert photo_reasons(a2, [cup, book], [], scene_attributes)
     book.attributes = {"color": "blue"}
     assert photo_reasons(a2, [cup, book], [], scene_attributes) == []
+
+
+def test_m05_likes_come_from_the_learner_choice_and_the_saved_roleplay():
+    from app.language_packs.lessons.m05 import plan_lesson, preference_facts
+    from app.language_packs.vocabulary import with_pack_vocabulary
+    from app.missions import get_mission
+    from app.services.mission_roleplay import assign_roleplay
+
+    pack, objects, markers, facts, vocabulary = _owned_scene()
+    vocabulary = with_pack_vocabulary(pack, vocabulary)
+    choice = {"preference": {"sceneObjectIds": [str(objects[1].id), str(objects[0].id)],
+                             "chosenObjectId": str(objects[1].id), "reaction": "like"}}
+    a0 = preference_facts(pack, "A0", facts, vocabulary, {"learner_facts": choice})
+    (mine,) = a0.scene_facts.preferences
+    # The learner's own choice is real, and remembers what it was weighed against.
+    assert (mine.object_fact_id, mine.person, mine.likes, mine.fictional) == (
+        f"object:{objects[1].id}", "first", True, False,
+    )
+    assert mine.compared_fact_id == f"object:{objects[0].id}"
+    plan = plan_lesson(pack, "A0", a0, vocabulary, "seed")
+    assert [spec["use"] for spec in plan["sayPreference"]] == ["like", "dislike", "like"]
+    assert [spec["truth"] for spec in plan["sayPreference"]] == [True, False, False]
+    assert plan["sayPreference"][2]["bindings"]["object"] == f"object:{objects[0].id}"
+    assert plan["sayChoice"] == []
+
+    roleplay = assign_roleplay(get_mission("M05", "A1", 1), UUID(int=100), objects, markers)
+    a1 = preference_facts(pack, "A1", facts, vocabulary, {"roleplay_facts": roleplay})
+    likes = {fact.person: fact.likes for fact in a1.scene_facts.preferences}
+    # dev's role-play: the learner and Leo like their objects, Ana does not.
+    assert likes == {"first": True, "ana": False, "leo": True}
+    plan = plan_lesson(pack, "A1", a1, vocabulary, "seed")
+    choose = {spec["spec_id"]: (spec["use"], spec["truth"]) for spec in plan["choosePreference"]}
+    assert choose == {
+        "choosePreference-correct": ("like", True),
+        "choosePreference-flipped": ("dislike", False),
+        # Leo's like about another object keeps his polarity; only the object is wrong.
+        "choosePreference-other": ("like", False),
+    }
+    their = [(spec["use"], spec["truth"]) for spec in plan["buildTheirPreference"]]
+    assert their == [("question", True), ("dislike", True), ("like", False)]
+    # No choice saved: no preference, and nothing to plan from.
+    assert preference_facts(pack, "A0", facts, vocabulary, {}).scene_facts.preferences == []
+
+
+def test_m05_dislike_choice_plans_what_the_learner_takes_instead():
+    from app.language_packs.lessons.m05 import plan_lesson, preference_facts
+    from app.language_packs.vocabulary import with_pack_vocabulary
+
+    pack, objects, _markers, facts, vocabulary = _owned_scene()
+    vocabulary = with_pack_vocabulary(pack, vocabulary)
+    choice = {"preference": {"sceneObjectIds": [str(objects[0].id)], "reaction": "dislike"}}
+    facts = preference_facts(pack, "A0", facts, vocabulary, {"learner_facts": choice})
+    plan = plan_lesson(pack, "A0", facts, vocabulary, "seed")
+    assert [spec["use"] for spec in plan["sayPreference"]] == ["like", "dislike", "dislike"]
+    assert [spec["truth"] for spec in plan["sayPreference"]] == [False, True, False]
+    taken, wrong = plan["sayChoice"]
+    assert taken["bindings"]["object"] == f"object:{objects[1].id}" and taken["truth"]
+    assert wrong["bindings"]["object"] == f"object:{objects[0].id}" and not wrong["truth"]
+
+
+@pytest.mark.parametrize("like,dislike,phrase,expected", [
+    ("Me gusta la taza.", "No me gusta la taza.", "la taza",
+     ("___ la taza.", "Me gusta", "No me gusta")),
+    ("저는 컵을 좋아해요.", "저는 컵을 안 좋아해요.", "컵을",
+     ("저는 컵을 ___.", "좋아해요", "안 좋아해요")),
+    # One chunk would be empty: the whole sentences are the choices.
+    ("Ich mag die Tasse.", "Ich mag die Tasse nicht.", "die Tasse",
+     ("___", "Ich mag die Tasse.", "Ich mag die Tasse nicht.")),
+])
+def test_m05_gap_is_the_side_of_the_noun_that_says_like(like, dislike, phrase, expected):
+    from app.language_packs.lessons.m05 import preference_gap
+
+    assert preference_gap(like, dislike, phrase) == expected
+
+
+def test_m05_noun_phrases_are_what_two_same_frame_sentences_write_differently():
+    from app.language_packs.lessons.m05 import differing_parts
+
+    assert differing_parts("J'aime la tasse.", "J'aime l'assiette.") == ("la tasse", "l'assiette")
+    assert differing_parts("Ich mag die Tasse.", "Ich mag den Teller.") == (
+        "die Tasse", "den Teller",
+    )
+    assert differing_parts("저는 컵을 좋아해요.", "저는 책을 좋아해요.") == ("컵을", "책을")
+    assert differing_parts("Me gusta la taza.", "Me gusta la taza.") is None
+
+
+@pytest.mark.parametrize("use,text,passes", [
+    ("like", "Me gusta la taza.", True),
+    ("like", "No me gusta la taza.", False),
+    ("dislike", "No me gusta la taza.", True),
+    ("dislike", "Me gusta la taza.", False),
+])
+def test_m05_spec_use_sets_the_polarity_pack_checks_demand(use, text, passes):
+    construction = next(item for item in load_pack(PACK).constructions
+                        if item.construction_id == "my-preference")
+    checks = [check for check in construction.checks if check.applies(use, True)]
+    assert all(check.passes(text) for check in checks) is passes
+
+
+def test_m05_photo_rule_needs_the_learner_choice():
+    from app.language_packs.lessons.m05 import CHOICE_REASON, photo_reasons
+    from app.missions import get_mission
+    from app.services.mission_eligibility import photo_eligibility, scene_attributes
+
+    cup, book = (SimpleNamespace(id=UUID(int=n), label=label, attributes={})
+                 for n, label in ((1, "cup"), (2, "book")))
+    a0 = get_mission("M05", "A0", 1)
+    assert photo_reasons(a0, [cup, book], [], scene_attributes,
+                         mission_choices={"preference": {}}) == [CHOICE_REASON]
+    skipped = {"preference": {"sceneObjectIds": [str(cup.id)], "reaction": "skip"}}
+    assert photo_reasons(a0, [cup, book], [], scene_attributes,
+                         mission_choices=skipped) == [CHOICE_REASON]
+    picked = {"preference": {"sceneObjectIds": [str(cup.id), str(book.id)],
+                             "chosenObjectId": str(book.id)}}
+    assert photo_reasons(a0, [cup, book], [], scene_attributes, mission_choices=picked) == []
+    context = _context(["M05:A0:1"], ["M05:A0:1"])
+    check = photo_eligibility(a0, [cup, book], (), (), {"preference": {}}, context)
+    assert check.missing == ("choices",)

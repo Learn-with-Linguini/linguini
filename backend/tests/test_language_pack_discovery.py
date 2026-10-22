@@ -90,6 +90,8 @@ def test_pack_only_language_plans_only_pack_missions_through_existing_photo_flow
     missions = lesson_missions(SessionMode.LESSON, profile)
     assert [(m.mission_id, str(m.practice_level)) for m in missions] == [
         ("M01", level), ("M02", level), ("M03", level), ("M04", level),
+        # M05 has pack templates at A0 and A1 only.
+        *([("M05", level)] if level != "A2" else []),
     ]
     assert lesson_missions(SessionMode.ISPY, profile) == []
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "false")

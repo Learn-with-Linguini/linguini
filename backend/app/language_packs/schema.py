@@ -338,6 +338,15 @@ class SceneOwner(ApiModel):
     owner: ContractId
 
 
+class ScenePreference(ApiModel):
+    """Whether ``first`` (the learner) or a cast member likes an object."""
+
+    fact_id: NonEmptyText
+    object: NonEmptyText
+    person: ContractId
+    likes: bool
+
+
 class ExampleScene(ApiModel):
     objects: list[SceneObject] = Field(default_factory=list)
     absent: list[SceneObject] = Field(default_factory=list)
@@ -345,6 +354,7 @@ class ExampleScene(ApiModel):
     relations: list[SceneRelation] = Field(default_factory=list)
     counts: list[SceneCount] = Field(default_factory=list)
     owners: list[SceneOwner] = Field(default_factory=list)
+    preferences: list[ScenePreference] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_references(self) -> ExampleScene:
@@ -355,6 +365,7 @@ class ExampleScene(ApiModel):
             *(item.fact_id for item in self.relations),
             *(item.fact_id for item in self.counts),
             *(item.fact_id for item in self.owners),
+            *(item.fact_id for item in self.preferences),
         ]
         if len(facts) != len(set(facts)):
             raise ValueError("scene fact IDs must be unique")
@@ -365,6 +376,7 @@ class ExampleScene(ApiModel):
             *(item.reference for item in self.relations),
             *(item.object for item in self.counts),
             *(item.object for item in self.owners),
+            *(item.object for item in self.preferences),
         } - object_ids:
             raise ValueError(f"scene references undeclared objects: {sorted(unknown)}")
         if any(item.subject == item.reference for item in self.relations):
@@ -380,6 +392,7 @@ class ExampleScene(ApiModel):
             *(item.fact_id for item in self.relations),
             *(item.fact_id for item in self.counts),
             *(item.fact_id for item in self.owners),
+            *(item.fact_id for item in self.preferences),
         }
 
     @property

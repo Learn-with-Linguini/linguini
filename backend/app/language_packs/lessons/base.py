@@ -21,7 +21,8 @@ PhotoReasons = Callable[..., list[str]]
 # (pack, facts, vocabulary) -> vocabulary with the closed pack words the mission teaches.
 MissionVocabulary = Callable[..., Any]
 # (pack, level, facts, vocabulary, context) -> facts with the lesson's own facts added
-# (M04's owners from the learner's choice or a role-play). ``context`` holds the saved
+# (M04's owners and M05's preferences, from the learner's choice or a role-play).
+# ``context`` holds the saved
 # mission plan's ``learner_facts`` and ``roleplay_facts``.
 MissionFacts = Callable[..., Any]
 
@@ -63,7 +64,7 @@ class PackMission:
     photo_reasons: PhotoReasons = _no_photo_reasons
     # Closed pack words (M03's number words) added before proposals and planning.
     vocabulary: MissionVocabulary = _session_vocabulary
-    # Facts the lesson adds before its vocabulary and plan (M04's owners).
+    # Facts the lesson adds before its vocabulary and plan (M04's owners, M05's likes).
     facts: MissionFacts = _scene_facts
 
 

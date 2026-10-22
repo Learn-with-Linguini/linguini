@@ -28,6 +28,11 @@ OWNING = frozenset({
     "ownership-question", "ownership-statement", "owned-object", "possessive-statement",
     "whose-question", "owned-description",
 })
+# Preference constructions name a liked or chosen object in the case its verb takes
+# (Ich mag den Teller), which the session's nominative forms do not cover.
+PREFERRING = frozenset({
+    "my-preference", "their-preference", "preference-question", "choice-statement",
+})
 
 
 def _word(text: str) -> str:
@@ -102,13 +107,15 @@ def _required_family(candidate: CandidateSentence) -> str | None:
 
 
 class NounPhraseValidator:
-    validator_id = "noun-phrase.v3"
+    validator_id = "noun-phrase.v4"
 
     def __init__(self, vocabulary: ApprovedVocabulary) -> None:
         self.terms = {term.term_id: term for term in vocabulary.terms}
 
     def validate(self, candidate: CandidateSentence, _pack: LanguagePack) -> ValidatorResult:
-        if candidate.proposed_realizations or candidate.construction_id in COUNTING | OWNING:
+        if candidate.proposed_realizations or candidate.construction_id in (
+            COUNTING | OWNING | PREFERRING
+        ):
             return ValidatorResult(passed=True)
         messages = []
         uses = {item.role: item for item in candidate.term_uses if item.role}

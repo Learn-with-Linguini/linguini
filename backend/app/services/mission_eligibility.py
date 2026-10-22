@@ -408,7 +408,9 @@ PACK_SHORTFALLS = {
     "M04": ("attributes", "relations"),
 }
 # Pack photo reasons that ask for a learner choice rather than more photo facts.
-PACK_CHOICE_REASONS = frozenset({"Tell Linguini which object is yours."})
+PACK_CHOICE_REASONS = frozenset({
+    "Tell Linguini which object is yours.", "Tell Linguini what you would choose.",
+})
 A0_OBJECTS_REASON = "Confirm at least 2 different objects with taught names."
 
 

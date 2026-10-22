@@ -1,14 +1,15 @@
 # Language-pack foundation
 
 This package supplies the default-off A0/A1/A2 runtime path for pack missions (M01,
-M02, M03 and M04) as well as explicit local previews. Packs are loaded lazily only when the flag
+M02, M03, M04 and M05) as well as explicit local previews. Packs are loaded lazily only when the flag
 is enabled or a command explicitly requests one. Other missions use their existing
 implementations.
 
 Packs live at `<root>/<locale>/<register>/` (for example `packs/es-ES/everyday/`). `pack.toml`
 holds metadata and references every content file: `labels.toml` (fixed learner-facing text keyed by
 semantic IDs), the optional `numbers.toml` (number words for counting missions),
-the optional `possessives.toml` (possessive words and a role-play cast for ownership missions),
+the optional `possessives.toml` (possessive words and a role-play cast for ownership and
+preference missions),
 `constructions/*.toml` (grammar guidance, features, constraints, version),
 `examples/*.toml` (scene facts, bindings, sentences, chunks, alternatives, contrasts, mistakes) and
 `evaluations/*.toml` (held-out cases per mission level). Evaluations are loaded only through
@@ -35,7 +36,7 @@ The fixture pack is unreviewed test data and is not a claim of linguistic valida
 deterministic builders. On uses the existing mission eligibility/planning flow,
 then binds the actual session's confirmed object instances, attributes, relations,
 counts, translated vocabulary and register to the mission's slots. With the flag on,
-M01, M02, M03 and M04 never use their legacy builders. No sample input or handwritten
+M01, M02, M03, M04 and M05 never use their legacy builders. No sample input or handwritten
 `plan_specs` is used by the application.
 
 Set these values in the ignored **backend/.env.local** for a local experiment:
@@ -66,7 +67,7 @@ signing in for pack experiments, without assuming placement is pack-backed. Supp
 selecting a pack-only language; existing profiles can also be patched through the
 existing profile API to exercise another supported level.
 
-Pack availability extends mission candidates only with pack missions (M01-M04)
+Pack availability extends mission candidates only with pack missions (M01-M05)
 that the app offers at the level and the pack has ready.
 Photo eligibility and release checks still apply. Other missions and I-Spy retain
 their existing language availability. Discovery does not constitute linguistic
@@ -155,6 +156,7 @@ lessons/
   m02.py        M02: same layout
   m03.py        M03: same layout, plus number_vocabulary
   m04.py        M04: same layout, plus ownership_facts and possessive_vocabulary
+  m05.py        M05: same layout (A0 and A1), plus preference_facts and preference_vocabulary
 ```
 
 Every mission module has the same sections:
@@ -175,7 +177,8 @@ Every mission module has the same sections:
 
 A mission may also set `vocabulary`, which adds closed pack words to the lesson
 vocabulary before proposals and planning (M03 adds the pack's number words, M04 its
-possessives), and `facts`, which adds the lesson's own facts first (M04's owners). The
+possessives, M05 its cast names), and `facts`, which adds the lesson's own facts first (M04's
+owners, M05's preferences). The
 `facts` hook receives the saved mission plan's `learner_facts` and `roleplay_facts`,
 which the workflow now passes to pack lessons as dev's builders already received them.
 
@@ -244,6 +247,28 @@ uses gendered forms of the bound possessive and none is the noun's own (mein Tas
 taza es mío), it fails; forms for any gender (mi, mir) and genderless languages are not
 judged, and French mon/ma before a vowel is left to the model review. Possessive words
 are pack data, so proposals never change them (proposals v5).
+
+M05 (say what you like) exists at A0 and A1. Who likes what is a lesson fact
+(`preferences`: an object, a `person` and `likes`): the learner's own choice at A0
+(`learnerFacts.preference`: the chosen object, the one it was compared with and the
+reaction) or the saved role-play at A1, where, as in dev, the learner and Leo like their
+objects and Ana does not. The cast comes from `possessives.toml`; each cast member's
+preference becomes a term with their name, so a sentence must name the bound person and
+naming another is an unbound fact. A spec's use is its polarity: `like` says the person
+likes the object and `dislike` that they do not, with `truth` false for a deliberate
+contrast. Constructions check polarity by use (`[[checks]]` with `uses = ["dislike"]`
+demand the negative, `uses = ["like"]` forbid it). Four constructions write the
+sentences: `my-preference` (Me gusta la taza. / No me gusta la taza.),
+`their-preference` (A Ana no le gusta el libro.), `preference-question` (¿Te gusta la
+taza? / ¿A Ana le gusta el libro?) and, at A0, `choice-statement` (Elijo el libro.). A0
+reuses dev's six-question picnic situation: the noun phrases for picture and dialogue
+gaps are what two sentences in one frame write differently (la taza / el libro, 컵을 /
+책을), and the like/dislike chunk is the side of the noun phrase that differs (___ la
+taza.), or the whole sentence when one side would be empty (Ich mag die Tasse [nicht].).
+The situation validator takes the lesson's own negative chunk (`negativeMarker`) for
+languages it has no fixed marker for. A1 reuses dev's three role-play questions and task;
+its explanation shows the lesson's frames with the noun taken out (Me gusta… = I like…),
+so no answer is shown whole. The A0 photo rule needs the learner's choice, as M04's does.
 
 Several objects can share a target-language name (two cabinets). A question that only
 names the object accepts every marker on an object with that name: A0 marker questions
@@ -406,7 +431,8 @@ model proposals supply at runtime for counted nouns). Evaluate any pack locally
 
 ```powershell
 $packs = @{ es = 'es-ES'; fr = 'fr-FR'; de = 'de-DE'; ko = 'ko-KR' }
-foreach ($language in $packs.Keys) { foreach ($mission in 'M01','M02','M03','M04') { 'A0','A1','A2' | ForEach-Object {
+foreach ($language in $packs.Keys) { foreach ($mission in 'M01','M02','M03','M04','M05') { 'A0','A1','A2' | ForEach-Object {
+  if ($mission -eq 'M05' -and $_ -eq 'A2') { return }  # M05 has A0 and A1 only
   .\.venv\Scripts\python.exe -m app.language_packs.preview evaluate `
     --pack-dir "app/language_packs/packs/$($packs[$language])/everyday" `
     --language $language --register everyday --level $_ --mission $mission `
@@ -414,7 +440,7 @@ foreach ($language in $packs.Keys) { foreach ($mission in 'M01','M02','M03','M04
 } } }
 ```
 
-Every pack meets the evaluation thresholds at A0, A1 and A2: every valid sentence
+Every pack meets the evaluation thresholds at every level it has a template for: every valid sentence
 is accepted and no reject is missed. Cases whose IDs contain `-held-` were written
 after the rules below, with other nouns, genders and constructions, to check
 that the rules generalize rather than fit the original cases. Thresholds are
@@ -445,6 +471,11 @@ wrong owner (`wrongOwner`) and possessive agreement where a pack's rule judges i
 (Gehört das dir?) use another valid wording in held-out cases, since evaluation
 sentences never repeat a generation example.
 
+M05 cases declare who likes what as scene `preferences` (`{ fact_id =
+"preference:bag", object = "object:bag", person = "ana", likes = false }`) and set
+`use = "like"`, `"dislike"` or `"question"`. Rejects add the opposite polarity, the wrong
+person (another cast member's name), the wrong object and broken question frames.
+
 ## Shared noun-phrase validator
 
 Packs with `articles = "required"` (es, fr, de) also run `validators/noun_phrase.py`,
@@ -464,7 +495,9 @@ generalized from the Spanish validator. It reads only the session's own forms:
   forms are not judged.
 
 Negated existence (`pas de`, `kein`), counting constructions (a number or quantity
-word introduces the noun: `cinco libros`, `combien de`, `wie viele`) and
+word introduces the noun: `cinco libros`, `combien de`, `wie viele`), ownership and
+preference constructions (a possessive introduces the noun, or the verb sets its case:
+`Ich mag den Teller`; noun-phrase v4) and
 model-proposed wording are skipped; the last is judged by the mandatory model review. `validators/es.py` keeps the
 Spanish-only rules (name chunks, `del`/`al` references, `¿…?`, ser/estar/hay).
 

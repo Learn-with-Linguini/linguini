@@ -12,7 +12,7 @@ from .generation import ApprovedTerm, ApprovedVocabulary
 logger = logging.getLogger(__name__)
 
 PROPOSAL_VERSION = "language-proposals.v6"
-REVIEW_VERSION = "language-content-review.v4"
+REVIEW_VERSION = "language-content-review.v5"
 
 PROPOSAL_PROMPT = """Supply candidate grammatical forms and distractors for a planned
 lesson. Packs are guidance and optional reference vocabulary, not exhaustive dictionaries.
@@ -57,7 +57,8 @@ Deliberate lesson design is not an error: a yes/no question with truth false nam
 other than the shown object, and its correct answer is no; a hidden-referent clue never names
 its target, while other constructions in the same lesson do name objects; in ownership lessons
 possessives follow the speaker (the learner says my for their own object, Linguini says your to
-the learner) and role-play owners are pretend.
+the learner) and role-play owners are pretend; in preference lessons likes and dislikes are
+pretend too, and a false option deliberately says the opposite or names another object.
 Omission by a detector never proves absence. A false option may deny a confirmed-present object,
 but do not accept unsupported absence as a correct fact. For a rendered lesson, inspect every
 option against its question and answer key; exactly the intended answer(s) must be defensible.

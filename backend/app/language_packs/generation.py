@@ -90,12 +90,30 @@ class ConfirmedOwner(ApiModel):
     fictional: bool = True
 
 
+class ConfirmedPreference(ApiModel):
+    """Whether someone in the lesson likes a confirmed object: ``first`` (the learner)
+    or a cast member.
+
+    Like owners, it comes from the learner's own choice (A0) or an assigned role-play
+    (A1), never from the photo.
+    """
+
+    fact_id: NonEmptyText
+    object_fact_id: NonEmptyText
+    person: ContractId
+    likes: bool
+    fictional: bool = True
+    # The other object the learner weighed it against when choosing (A0).
+    compared_fact_id: NonEmptyText | None = None
+
+
 class ConfirmedSceneFacts(ApiModel):
     objects: list[ConfirmedObject] = Field(default_factory=list)
     attributes: list[ConfirmedAttribute] = Field(default_factory=list)
     relations: list[ConfirmedRelation] = Field(default_factory=list)
     counted_groups: list[ConfirmedCount] = Field(default_factory=list)
     owners: list[ConfirmedOwner] = Field(default_factory=list)
+    preferences: list[ConfirmedPreference] = Field(default_factory=list)
 
     @property
     def all_fact_ids(self) -> set[str]:
@@ -103,6 +121,7 @@ class ConfirmedSceneFacts(ApiModel):
             fact.fact_id
             for group in (
                 self.objects, self.attributes, self.relations, self.counted_groups, self.owners,
+                self.preferences,
             )
             for fact in group
         }
@@ -113,6 +132,7 @@ class ConfirmedSceneFacts(ApiModel):
             fact.fact_id
             for group in (
                 self.objects, self.attributes, self.relations, self.counted_groups, self.owners,
+                self.preferences,
             )
             for fact in group
         ]
@@ -125,6 +145,8 @@ class ConfirmedSceneFacts(ApiModel):
             *(fact.reference_fact_id for fact in self.relations),
             *(object_id for fact in self.counted_groups for object_id in fact.object_fact_ids),
             *(fact.object_fact_id for fact in self.owners),
+            *(fact.object_fact_id for fact in self.preferences),
+            *(fact.compared_fact_id for fact in self.preferences if fact.compared_fact_id),
         ]
         if unknown := set(references) - object_ids:
             raise ValueError(f"scene facts reference unknown objects: {sorted(unknown)}")

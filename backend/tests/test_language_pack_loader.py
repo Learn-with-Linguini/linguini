@@ -39,8 +39,8 @@ def test_nested_pack_loads_and_evaluations_remain_separate():
 
     assert pack.pack_id == "es-es-everyday"
     assert pack.language.locale == "es-ES"
-    assert len(pack.constructions) == 22
-    assert len(cases) == 88
+    assert len(pack.constructions) == 26
+    assert len(cases) == 100
     assert not any(key in pack.model_dump() for key in ("evaluations", "evaluation_cases"))
     assert all("cases" not in item for item in guidance_for(pack, [
         "identify-object"
@@ -72,6 +72,8 @@ def test_held_out_evaluations_cover_the_required_categories():
         "M04-A0": 6,
         "M04-A1": 5,
         "M04-A2": 7,
+        "M05-A0": 6,
+        "M05-A1": 6,
     }
     categories = {
         category
@@ -148,6 +150,7 @@ def test_labels_match_current_builder_text():
         "choose-possessive": "Tú dices:",
         "describe-your-object": "Describe tu objeto con un detalle.",
         "clarify-and-describe": "Aclara cuál es tu objeto y descríbelo.",
+        "what-choose": "¿Qué eliges?",
     }
 
 
