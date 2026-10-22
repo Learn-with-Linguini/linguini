@@ -22,6 +22,7 @@ class MissionCapability(MissionKey):
     outdated_constructions: list[str]
     missing_labels: list[str]
     missing_numbers: list[int] = Field(default_factory=list)
+    missing_possessors: list[str] = Field(default_factory=list)
     unreviewed_items: list[str]
     examples_present: bool
     review_complete: bool
@@ -64,6 +65,11 @@ def _required_material_review_status(
         pack.numbers is None or pack.numbers.provenance.review_status != "humanReviewed"
     ):
         unreviewed.append("numbers")
+    if template.required_possessors and (
+        pack.possessives is None
+        or pack.possessives.provenance.review_status != "humanReviewed"
+    ):
+        unreviewed.append("possessives")
     for label in pack.labels:
         if label.semantic in required_ids and label.provenance.review_status != "humanReviewed":
             unreviewed.append(f"label:{label.semantic}")
@@ -101,6 +107,27 @@ def _number_usable(pack: LanguagePack, value: int) -> bool:
         return False
     return not pack.language.romanization_required or all(
         item.romanization for item in (number, *number.with_noun)
+    )
+
+
+def _possessor_usable(pack: LanguagePack, possessor: str) -> bool:
+    """The pack writes the possessor (or names the cast owner), spelled as it requires."""
+    possessives = pack.possessives
+    if possessives is None:
+        return False
+    if possessor in {"first", "second"}:
+        entry = possessives.get(possessor)
+        spelled = [*entry.forms] if entry else []
+        if not spelled:
+            return False
+    else:
+        member = possessives.member(possessor)
+        if member is None:
+            return False
+        third = possessives.get(f"third-{member.gender}")
+        spelled = [member, *(third.forms if third else [])]
+    return not pack.language.romanization_required or all(
+        item.romanization for item in spelled
     )
 
 
@@ -142,8 +169,13 @@ def mission_capability(
         value for value in template.required_numbers
         if not _number_usable(pack, value)
     )
+    missing_possessors = [
+        possessor for possessor in template.required_possessors
+        if not _possessor_usable(pack, possessor)
+    ]
     supported = not (
         missing_constructions or outdated_constructions or missing_labels or missing_numbers
+        or missing_possessors
     )
     required_ids = {item.construction_id for item in template.required_constructions}
     required_ids.update(template.required_labels)
@@ -193,7 +225,9 @@ def mission_capability(
     )
     blockers = []
     if not supported:
-        blockers.append("required constructions, labels or numbers are missing or outdated")
+        blockers.append(
+            "required constructions, labels, numbers or possessives are missing or outdated"
+        )
     if not examples_present:
         blockers.append("required constructions lack in-scope examples or mistakes")
     if not review_complete:
@@ -217,6 +251,7 @@ def mission_capability(
         outdated_constructions=outdated_constructions,
         missing_labels=missing_labels,
         missing_numbers=missing_numbers,
+        missing_possessors=missing_possessors,
         unreviewed_items=unreviewed_items,
         examples_present=examples_present,
         review_complete=review_complete,

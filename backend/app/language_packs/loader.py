@@ -28,6 +28,7 @@ from .schema import (
     MissionCatalog,
     NumbersFile,
     PackFiles,
+    PossessivesFile,
 )
 
 
@@ -151,6 +152,9 @@ def _referenced_files(pack_dir: Path, source: Path, files: PackFiles) -> dict[st
         "numbers": [
             _relative_file(pack_dir, files.numbers, source, "/files/numbers")
         ] if files.numbers else [],
+        "possessives": [
+            _relative_file(pack_dir, files.possessives, source, "/files/possessives")
+        ] if files.possessives else [],
         "constructions": [
             _relative_file(
                 pack_dir, value, source, f"/files/constructions/{index}", "constructions"
@@ -243,6 +247,12 @@ def load_pack(path: Path) -> LanguagePack:
     if resolved["numbers"]:
         numbers_path = resolved["numbers"][0]
         numbers_file = _model_from_file(NumbersFile, _load_toml(numbers_path), numbers_path)
+    possessives_file = None
+    if resolved["possessives"]:
+        possessives_path = resolved["possessives"][0]
+        possessives_file = _model_from_file(
+            PossessivesFile, _load_toml(possessives_path), possessives_path,
+        )
 
     definitions = {}
     for construction_path in resolved["constructions"]:
@@ -320,6 +330,8 @@ def load_pack(path: Path) -> LanguagePack:
     ]
     if numbers_file is not None:
         pack_data["numbers"] = numbers_file.model_dump(mode="python", by_alias=False)
+    if possessives_file is not None:
+        pack_data["possessives"] = possessives_file.model_dump(mode="python", by_alias=False)
     try:
         pack = LanguagePack.model_validate(pack_data)
     except ValidationError as exc:

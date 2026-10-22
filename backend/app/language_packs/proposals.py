@@ -11,7 +11,7 @@ from .generation import ApprovedTerm, ApprovedVocabulary
 
 logger = logging.getLogger(__name__)
 
-PROPOSAL_VERSION = "language-proposals.v4"
+PROPOSAL_VERSION = "language-proposals.v5"
 REVIEW_VERSION = "language-content-review.v3"
 
 PROPOSAL_PROMPT = """Supply candidate grammatical forms and distractors for a planned
@@ -22,8 +22,9 @@ article_indefinite, masculine/feminine/neuter for in-sentence agreement, predica
 detail named on its own differs from those forms, e.g. German rot beside rote/roter/rotes, and
 plural for a noun counted after a number above one when it differs from bare, e.g. Spanish
 libros, German Äpfel; omit plural where the language does not mark it after numbers).
-Number words are pack data: never propose forms for them. Give at most one forms entry per
-session term_id, with every form for that term in it, and use only term_ids from the session.
+Number words and possessive words are pack data: never propose forms for them. Give at most
+one forms entry per session term_id, with every form for that term in it, and use only term_ids
+from the session.
 These are proposals, not reviewed forms. Do not change scene facts.
 For every attribute/relation needing choices, propose two distinct alternatives, each tied to its
 for_fact_id, with meaning in the instruction language, native text and required agreement forms.
@@ -182,6 +183,9 @@ def _merged_forms(proposals, terms):
     for proposal in proposals:
         if proposal.term_id not in terms:
             logger.warning("ignoring proposed forms for an unknown session term")
+            continue
+        if getattr(terms[proposal.term_id], "provenance", None) == "packData":
+            logger.info("ignoring proposed forms for reviewed pack words")
             continue
         previous = merged.get(proposal.term_id)
         if previous is None:

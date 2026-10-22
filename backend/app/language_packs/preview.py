@@ -159,7 +159,7 @@ def _evaluation_table(report: dict[str, Any]) -> str:
     linguistic = report["linguistic"]
     return "\n".join(
         (
-            f"M01 {report['practice_level']} evaluation",
+            f"{report.get('mission_id', 'M01')} {report['practice_level']} evaluation",
             (
                 "Structural: "
                 f"{structural['valid_alternatives_accepted']}/"

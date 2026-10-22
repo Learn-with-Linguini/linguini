@@ -77,17 +77,33 @@ class ConfirmedCount(ApiModel):
     quantity: Annotated[int, Field(ge=1, le=20)]
 
 
+class ConfirmedOwner(ApiModel):
+    """Whose a confirmed object is in the lesson: ``first`` (the learner) or a cast owner.
+
+    It comes from the learner's own choice (A0) or an assigned role-play (A1, A2), never
+    from the photo, and is fictional unless the learner said the object is theirs.
+    """
+
+    fact_id: NonEmptyText
+    object_fact_id: NonEmptyText
+    owner: ContractId
+    fictional: bool = True
+
+
 class ConfirmedSceneFacts(ApiModel):
     objects: list[ConfirmedObject] = Field(default_factory=list)
     attributes: list[ConfirmedAttribute] = Field(default_factory=list)
     relations: list[ConfirmedRelation] = Field(default_factory=list)
     counted_groups: list[ConfirmedCount] = Field(default_factory=list)
+    owners: list[ConfirmedOwner] = Field(default_factory=list)
 
     @property
     def all_fact_ids(self) -> set[str]:
         return {
             fact.fact_id
-            for group in (self.objects, self.attributes, self.relations, self.counted_groups)
+            for group in (
+                self.objects, self.attributes, self.relations, self.counted_groups, self.owners,
+            )
             for fact in group
         }
 
@@ -95,7 +111,9 @@ class ConfirmedSceneFacts(ApiModel):
     def validate_fact_references(self) -> ConfirmedSceneFacts:
         all_ids = [
             fact.fact_id
-            for group in (self.objects, self.attributes, self.relations, self.counted_groups)
+            for group in (
+                self.objects, self.attributes, self.relations, self.counted_groups, self.owners,
+            )
             for fact in group
         ]
         if len(all_ids) != len(set(all_ids)):
@@ -106,6 +124,7 @@ class ConfirmedSceneFacts(ApiModel):
             *(fact.subject_fact_id for fact in self.relations),
             *(fact.reference_fact_id for fact in self.relations),
             *(object_id for fact in self.counted_groups for object_id in fact.object_fact_ids),
+            *(fact.object_fact_id for fact in self.owners),
         ]
         if unknown := set(references) - object_ids:
             raise ValueError(f"scene facts reference unknown objects: {sorted(unknown)}")
@@ -529,6 +548,7 @@ def check_deterministic(
 
     if spec is not None and not candidate.proposed_realizations:
         failures += _count_agreement(candidate.text, expected_bindings, facts, vocabulary)
+        failures += _owner_agreement(candidate.text, expected_bindings, vocabulary)
 
     slot_sentence_labels = set(slot.sentence_labels) if slot is not None else set()
     expected_labels = set(spec.labels) if spec is not None else set()
@@ -644,6 +664,37 @@ def _count_agreement(text, bindings, facts, vocabulary) -> list[str]:
         if quantity > 1 and plural and fold(plural) != fold(bare) and not _has_word(text, plural):
             failures.append(f"after the number {quantity}, use the plural {plural!r}")
     return failures
+
+
+_AGREEMENTS = ("masculine", "feminine", "neuter")
+
+
+def _owner_agreement(text, bindings, vocabulary) -> list[str]:
+    """A possessive the sentence uses agrees with the owned noun (mi taza, meine Tasse).
+
+    Possessive forms are keyed ``<use>-<agreement>`` (``determiner-feminine``). When the
+    sentence uses gendered forms of the bound possessive and none is the noun's own, the
+    possessive agrees with another gender. Forms for any gender (Spanish mi, German mir)
+    and languages without gender are never judged.
+    """
+    owner = next((t for t in vocabulary.terms if t.fact_id == bindings.get("owner")), None)
+    noun = next((t for t in vocabulary.terms if t.fact_id == bindings.get("object")
+                 and str(getattr(t.part_of_speech, "value", t.part_of_speech)) == "noun"), None)
+    if owner is None or noun is None or noun.agreement not in _AGREEMENTS:
+        return []
+    gendered = {
+        key: form for key, form in owner.forms_by_key.items()
+        if len(key.split("-")) > 1 and key.split("-")[1] in _AGREEMENTS
+    }
+    used = [key for key, form in gendered.items() if _has_word(text, form)]
+    if not used or any(key.split("-")[1] == noun.agreement for key in used):
+        return []
+    expected = sorted({form for key, form in gendered.items()
+                       if key.split("-")[1] == noun.agreement})
+    return [
+        f"the possessive agrees with {noun.target_text!r} ({noun.agreement}): "
+        + (", ".join(expected) or "use its own form")
+    ]
 
 
 def _inflected_use(text, vocabulary, fact_id_value, part_of_speech, language):

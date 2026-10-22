@@ -554,7 +554,8 @@ def check_lesson(level, result, approved, pack):
     check_questions(result.questions, PURPOSES[level], MISSION_ID)
 
 
-def photo_reasons(mission, objects, relations, attributes_of, counted_groups=()):
+def photo_reasons(mission, objects, relations, attributes_of, counted_groups=(),
+                  mission_choices=None):
     """A0 counts the first small group; A2 compares two groups of different objects."""
     level = str(mission.practice_level)
     requirements = mission.photo_requirements

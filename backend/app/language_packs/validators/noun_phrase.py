@@ -22,6 +22,12 @@ COUNTING = frozenset({
     "how-many-question", "quantity-chunk", "quantity-statement", "quantity-comparison",
     "quantity-pair",
 })
+# Ownership constructions introduce the noun with a possessive (mi taza, meine Tasse) or
+# name it beside one; possessive agreement is checked by the deterministic count rules.
+OWNING = frozenset({
+    "ownership-question", "ownership-statement", "owned-object", "possessive-statement",
+    "whose-question", "owned-description",
+})
 
 
 def _word(text: str) -> str:
@@ -96,13 +102,13 @@ def _required_family(candidate: CandidateSentence) -> str | None:
 
 
 class NounPhraseValidator:
-    validator_id = "noun-phrase.v2"
+    validator_id = "noun-phrase.v3"
 
     def __init__(self, vocabulary: ApprovedVocabulary) -> None:
         self.terms = {term.term_id: term for term in vocabulary.terms}
 
     def validate(self, candidate: CandidateSentence, _pack: LanguagePack) -> ValidatorResult:
-        if candidate.proposed_realizations or candidate.construction_id in COUNTING:
+        if candidate.proposed_realizations or candidate.construction_id in COUNTING | OWNING:
             return ValidatorResult(passed=True)
         messages = []
         uses = {item.role: item for item in candidate.term_uses if item.role}

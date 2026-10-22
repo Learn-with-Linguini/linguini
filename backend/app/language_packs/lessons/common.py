@@ -284,7 +284,8 @@ def with_romanization(task, result, pack, accepted, vocabulary, extra_spellings=
     questions = []
     for question, original in zip(task.public_content.questions, result.questions, strict=True):
         modes = None
-        if original.correct_text:
+        # Situation questions (A0 M04) have no built answer.
+        if getattr(original, "correct_text", None):
             # The canonical native sentence is also the private answer; joining modes
             # describe answer positions, so identical tiles remain interchangeable.
             base = next(

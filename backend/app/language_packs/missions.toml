@@ -282,3 +282,105 @@ purpose = "buildComparison"
 construction_id = "quantity-pair"
 target_ids = ["compare-counts"]
 prompt_labels = ["describe-compare"]
+
+[[missions]]
+mission_id = "M04"
+practice_level = "A0"
+content_version = 1
+required_constructions = [
+  { construction_id = "ownership-question", min_version = 1 },
+  { construction_id = "ownership-statement", min_version = 1 },
+  { construction_id = "owned-object", min_version = 1 },
+]
+required_possessors = ["first", "second"]
+
+[[missions.slots]]
+purpose = "askOwnership"
+construction_id = "ownership-question"
+target_ids = ["recognise-ownership"]
+
+[[missions.slots]]
+purpose = "answerOwnership"
+construction_id = "ownership-statement"
+target_ids = ["say-mine"]
+prompt_labels = ["yes-answer"]
+
+[[missions.slots]]
+purpose = "sayOwnedObject"
+construction_id = "owned-object"
+target_ids = ["say-mine"]
+
+[[missions]]
+mission_id = "M04"
+practice_level = "A1"
+content_version = 1
+required_constructions = [
+  { construction_id = "possessive-statement", min_version = 1 },
+  { construction_id = "whose-question", min_version = 1 },
+]
+required_possessors = ["first", "ana", "leo"]
+
+[[missions.slots]]
+purpose = "chooseOwner"
+construction_id = "possessive-statement"
+target_ids = ["choose-possessive"]
+prompt_labels = ["choose-sentence"]
+
+[[missions.slots]]
+purpose = "buildMine"
+construction_id = "possessive-statement"
+additional_constructions = ["whose-question"]
+target_ids = ["say-mine"]
+prompt_labels = ["answer-in-sentence"]
+
+[[missions.slots]]
+purpose = "buildTheirs"
+construction_id = "possessive-statement"
+additional_constructions = ["whose-question"]
+target_ids = ["say-theirs"]
+prompt_labels = ["answer-in-sentence"]
+
+[[missions]]
+mission_id = "M04"
+practice_level = "A2"
+content_version = 1
+required_constructions = [
+  { construction_id = "target-clue", min_version = 1 },
+  { construction_id = "owned-object", min_version = 1 },
+  { construction_id = "owned-description", min_version = 1 },
+  { construction_id = "possessive-statement", min_version = 1 },
+]
+required_possessors = ["first", "second", "ana"]
+
+[[missions.slots]]
+purpose = "chooseAssignedObject"
+construction_id = "target-clue"
+target_ids = ["identify-owned-object"]
+prompt_labels = ["which-is-yours"]
+
+[[missions.slots]]
+purpose = "choosePossessive"
+construction_id = "owned-object"
+target_ids = ["use-possessive"]
+prompt_labels = ["choose-possessive"]
+
+[[missions.slots]]
+purpose = "buildBelonging"
+construction_id = "owned-description"
+target_ids = ["describe-belonging"]
+prompt_labels = ["describe-your-object"]
+
+[[missions.slots]]
+purpose = "clarifyOwnership"
+construction_id = "owned-object"
+additional_constructions = ["possessive-statement"]
+target_ids = ["clarify-ownership"]
+prompt_labels = ["friend-points"]
+sentence_labels = ["no", "yes"]
+
+[[missions.slots]]
+purpose = "buildOwnershipDescription"
+construction_id = "owned-description"
+additional_constructions = ["owned-object"]
+target_ids = ["describe-belonging"]
+prompt_labels = ["clarify-and-describe"]

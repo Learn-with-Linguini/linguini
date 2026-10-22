@@ -226,8 +226,13 @@ class LearningTaskService:
         register="everyday",
         language_context=None,
         counted_groups=(),
+        mission_context=None,
     ):
-        """Normal pack-lesson workflow seam, sharing the routed provider and scoped cache."""
+        """Normal pack-lesson workflow seam, sharing the routed provider and scoped cache.
+
+        ``mission_context`` carries the saved plan's ``learner_facts`` and
+        ``roleplay_facts`` for this mission (M04's owner choices and role-play).
+        """
         from app.language_packs.model_source import ModelSource
         from app.language_packs.pipeline import generate_pilot
         from app.language_packs.runtime import session_inputs
@@ -262,6 +267,7 @@ class LearningTaskService:
                 cache=self._cache,
                 cache_scope=cache_scope,
                 mission_id=mission_id,
+                mission_context=mission_context,
             )
             return language_context.attach(generated.task)
         except ValueError as exc:

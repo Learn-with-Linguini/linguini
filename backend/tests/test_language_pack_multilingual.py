@@ -27,6 +27,7 @@ from app.repositories.postgres.workflow import (
     evaluate,
 )
 from app.schemas.tasks import SubmitVocabularyReviewAttemptRequest
+from app.services.mission_roleplay import assign_roleplay
 
 PACKS = Path(__file__).parents[1] / "app/language_packs/packs"
 SAMPLES = Path(__file__).parents[1] / "app/language_packs/samples"
@@ -35,7 +36,7 @@ LOCALES = {"es": "es-ES", "fr": "fr-FR", "de": "de-DE", "ko": "ko-KR"}
 ROMANIZED = {"ko"}
 COUNTS = {
     "M01": {"A0": 6, "A1": 4, "A2": 5}, "M02": {"A0": 6, "A1": 4, "A2": 5},
-    "M03": {"A0": 6, "A1": 3, "A2": 5},
+    "M03": {"A0": 6, "A1": 3, "A2": 5}, "M04": {"A0": 6, "A1": 3, "A2": 5},
 }
 MISSION_VERSIONS = {("M02", "A1"): 2}
 # A1 describes the second object, so its colour has a distinct Korean modifier form.
@@ -362,6 +363,133 @@ def _number(term, gender):
     return forms.get(f"with-noun-{gender}") or forms.get("with-noun-any") or term["targetText"]
 
 
+M04_CONSTRUCTIONS = {
+    "ownership-question", "ownership-statement", "owned-object", "possessive-statement",
+    "whose-question", "owned-description",
+}
+# Possessives as each pack writes them: determiner forms by gender, predicate forms.
+POSSESSIVES = {
+    "es": {"first": (("mi", "mi"), ("mío", "mía")), "second": (("tu", "tu"), ("tuyo", "tuya")),
+           "third": ("su", "su")},
+    "fr": {"first": (("mon", "ma"), "moi"), "second": (("ton", "ta"), "toi"),
+           "third": ("son", "sa")},
+    "de": {"first": (("mein", "meine", "mein"), "mir"),
+           "second": (("dein", "deine", "dein"), "dir"),
+           "leo": ("sein", "seine", "sein"), "ana": ("ihr", "ihre", "ihr")},
+    "ko": {"first": "제", "second": "본인"},
+}
+CAST = {"ko": {"ana": "아나", "leo": "레오"}}
+
+
+def _m04_sentence(language, construction, spec, terms):
+    """M04's ownership sentences in each pack's taught pattern, with realized surfaces."""
+    lex = LEXICON[language]
+    bindings = dict(spec["bindings"])
+    for role, term_id in spec["counterfactual"].items():
+        bindings[role] = terms[term_id]["factId"]
+    labels = spec["labels"]
+    source = terms[bindings.get("object", bindings.get("target"))]["sourceText"]
+    bare, article, gender = lex["nouns"][source]
+    owner = (terms[bindings["owner"]]["linguistic"]["possessor"]
+             if "owner" in bindings else None)
+    name = CAST.get(language, {}).get(owner, (owner or "").capitalize())
+    index = GENDER_INDEX.get(gender, 0)
+    attribute = terms[bindings["attribute"]]["sourceText"] if "attribute" in bindings else None
+    reference = (lex["nouns"][terms[bindings["reference"]]["sourceText"]]
+                 if "reference" in bindings else None)
+    relation = (lex["relations"][terms[bindings["relation"]]["sourceText"]]
+                if "relation" in bindings else None)
+    forms = POSSESSIVES[language]
+    realized = {}
+    if language == "ko":
+        def topic(word):
+            return _ko(word, "은", "는")
+
+        def copula(word):
+            return _ko(word, "이에요", "예요")
+
+        mine = forms.get(owner, name)
+        prefix = {"yes": "네, ", "no": "아니요, "}.get(next(iter(labels), ""), "")
+        text = {
+            "ownership-question": "이거 본인 거예요?",
+            "ownership-statement": "제 거예요." if spec["truth"] else "제 거 아니에요.",
+            "owned-object": f"{prefix}{topic(bare)} {mine} 거예요.",
+            "possessive-statement": f"{prefix}{forms.get(owner, name + '의')} {copula(bare)}.",
+            "whose-question": f"이 {topic(bare)} 누구 거예요?",
+        }.get(construction)
+        if construction == "owned-description":
+            text = (f"제 {topic(bare)} {copula(lex['colours'][attribute])}." if attribute
+                    else f"제 {topic(bare)} {reference[0]} {relation} 있어요.")
+        words = [word.strip(".,!?") for word in text.split()]
+        noun = next((w for w in words if w.startswith(bare) and w != bare), None)
+        if noun:
+            realized["object"] = noun
+        if attribute:
+            colour = lex["colours"][attribute]
+            realized["attribute"] = next(w for w in words if w.startswith(colour))
+        return text, realized
+    definite = f"{article} {bare}"
+    if language == "fr" and bare[0] in "aeiouéè":
+        definite = f"l'{bare}"
+    place = f"{relation} {reference[1]} {reference[0]}" if reference else ""
+    if language == "de" and reference:
+        place = f"{relation} {lex['dative'][reference[2]]} {reference[0]}"
+    if language == "es":
+        determiner = forms[owner][0][index] if owner in forms else forms["third"][index]
+        predicate = forms[owner][1][index] if owner in forms else f"de {name}"
+        yes, no = "Sí", "No"
+        texts = {
+            "ownership-question": f"¿Es {predicate}?",
+            "ownership-statement": f"Es {predicate}." if spec["truth"] else f"No es {predicate}.",
+            "owned-object": f"{_capitalised(definite)} es {predicate}.",
+            "possessive-statement": f"Es {determiner} {bare}.",
+            "whose-question": f"¿De quién es {definite}?",
+            "owned-description": (
+                f"{_capitalised(determiner)} {bare} es {_colour(language, attribute, gender)}."
+                if attribute else f"{_capitalised(determiner)} {bare} está {place}."
+            ),
+        }
+    elif language == "fr":
+        vowel = bare[0] in "aeiouéè"
+        mine = forms.get(owner, forms["third"])
+        determiner = (mine[0] if owner in forms else mine)[0 if vowel else index]
+        predicate = f"à {forms[owner][1]}" if owner in forms else f"à {name}"
+        yes, no = "Oui", "Non"
+        texts = {
+            "ownership-question": "C'est à toi ?",
+            "ownership-statement": "C'est à moi." if spec["truth"] else "Ce n'est pas à moi.",
+            "owned-object": f"{_capitalised(definite)} est {predicate}.",
+            "possessive-statement": f"C'est {determiner} {bare}.",
+            "whose-question": f"À qui est {definite} ?",
+            "owned-description": (
+                f"{_capitalised(determiner)} {bare} est {_colour(language, attribute, gender)}."
+                if attribute else f"{_capitalised(determiner)} {bare} est {place}."
+            ),
+        }
+    else:
+        mine = forms[owner][0] if owner in {"first", "second"} else forms.get(owner, ("",) * 3)
+        determiner = mine[index]
+        predicate = forms[owner][1] if owner in {"first", "second"} else name
+        yes, no = "Ja", "Nein"
+        texts = {
+            "ownership-question": "Gehört das dir?",
+            "ownership-statement": ("Das gehört mir." if spec["truth"]
+                                    else "Das gehört mir nicht."),
+            "owned-object": f"{_capitalised(definite)} gehört {predicate}.",
+            "possessive-statement": f"Das ist {determiner} {bare}.",
+            "whose-question": f"Wem gehört {definite}?",
+            "owned-description": (
+                f"{_capitalised(determiner)} {bare} ist {lex['base'][attribute]}."
+                if attribute else f"{_capitalised(determiner)} {bare} ist {place}."
+            ),
+        }
+    text = texts[construction]
+    if labels:
+        word = yes if labels[0] == "yes" else no
+        text = f"{word}, {text[:1].lower()}{text[1:]}"
+    return text, realized
+
+
 def _m03_sentence(language, construction, spec, terms):
     """M03's counting sentences in each pack's taught pattern, with realized surfaces."""
     lex = LEXICON[language]
@@ -544,6 +672,10 @@ class MockPackProvider:
                 text, realized = _m03_sentence(
                     self.language, spec["construction_id"], spec, {**terms, **terms_by_id},
                 )
+            elif spec["construction_id"] in M04_CONSTRUCTIONS:
+                text, realized = _m04_sentence(
+                    self.language, spec["construction_id"], spec, {**terms, **terms_by_id},
+                )
             else:
                 text, realized = _sentence(
                     self.language, spec["construction_id"], spec["use"], spec["truth"],
@@ -632,15 +764,20 @@ def _dispatch(language, level, scene, provider, monkeypatch, mission_id="M01"):
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_EXPERIMENTAL", "true")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", str(PACKS / LOCALES[language] / "everyday"))
     objects, relations, words, translated = scene
+    mission = get_mission(mission_id, level, MISSION_VERSIONS.get((mission_id, level), 1))
+    markers = {str(obj.id): index for index, obj in enumerate(objects, 1)}
+    # M04: the learner says the cup is theirs (A0); A1 assigns the saved role-play.
+    learner_facts = {"M04": {"ownedObjectId": str(objects[0].id), "pretend": False}}
+    roleplay_facts = {"M04": assign_roleplay(mission, UUID(int=100), objects, markers)}
     claim = SimpleNamespace(
         profile={"target_language_code": language},
         session_id=UUID(int=100),
-        missions=[get_mission(mission_id, level, MISSION_VERSIONS.get((mission_id, level), 1))],
+        missions=[mission],
         counted_groups=_counted_groups(objects),
         mission_progress={},
-        review_markers={},
-        roleplay_facts={},
-        learner_facts={},
+        review_markers=markers if mission_id == "M04" else {},
+        roleplay_facts=roleplay_facts if mission_id == "M04" else {},
+        learner_facts=learner_facts if mission_id == "M04" else {},
         cache_scope=CacheScope.user("mock-user"),
         language_context=resolve_language_context(language),
     )
@@ -656,7 +793,7 @@ def _dispatch(language, level, scene, provider, monkeypatch, mission_id="M01"):
     )
 
 
-@pytest.mark.parametrize("mission_id", ["M01", "M02", "M03"])
+@pytest.mark.parametrize("mission_id", ["M01", "M02", "M03", "M04"])
 @pytest.mark.parametrize("level", ["A0", "A1", "A2"])
 @pytest.mark.parametrize("language", list(LOCALES))
 def test_pack_missions_dispatch_for_every_pack_and_level(
@@ -697,7 +834,10 @@ def test_pack_missions_dispatch_for_every_pack_and_level(
             assert question.sentence_join_modes
         labels = [option.label for option in question.options]
         assert len({label.casefold() for label in labels}) == len(labels)
-        if pack.language.romanization_required:
+        shown = [question.prompt, *labels, *question.token_bank]
+        if pack.language.romanization_required and any(
+            char.isalpha() and not char.isascii() for text in shown for char in text
+        ):
             assert question.romanizations
     if pack.language.romanization_required and task.public_content.prep:
         assert all(card.romanization for card in task.public_content.prep)
@@ -723,7 +863,7 @@ def test_pack_missions_dispatch_for_every_pack_and_level(
         assert {o.label for o in followup.options} >= {"rot"}
 
 
-@pytest.mark.parametrize("mission_id", ["M01", "M02", "M03"])
+@pytest.mark.parametrize("mission_id", ["M01", "M02", "M03", "M04"])
 @pytest.mark.parametrize("level", ["A0", "A1", "A2"])
 @pytest.mark.parametrize("language", list(LOCALES))
 def test_sample_vocabulary_covers_every_valid_evaluation_sentence(language, level, mission_id):

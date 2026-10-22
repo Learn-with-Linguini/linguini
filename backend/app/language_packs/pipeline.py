@@ -142,9 +142,12 @@ def generate_pilot(
     session_id=None,
     cache_scope: CacheScope | None = _DEMO_CACHE_SCOPE,
     mission_id: str = "M01",
+    mission_context: dict[str, Any] | None = None,
 ) -> PilotGeneration:
     mission = pack_mission(mission_id)
-    vocabulary = mission.vocabulary(pack, facts, with_pack_vocabulary(pack, vocabulary))
+    vocabulary = with_pack_vocabulary(pack, vocabulary)
+    facts = mission.facts(pack, level, facts, vocabulary, mission_context or {})
+    vocabulary = mission.vocabulary(pack, facts, vocabulary)
     proposal_mode = isinstance(source, ModelSource) and source.propose
     if proposal_mode:
         vocabulary = source.prepare(pack, level, facts, vocabulary)

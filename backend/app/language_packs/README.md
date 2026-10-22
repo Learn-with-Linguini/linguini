@@ -1,13 +1,14 @@
 # Language-pack foundation
 
 This package supplies the default-off A0/A1/A2 runtime path for pack missions (M01,
-M02 and M03) as well as explicit local previews. Packs are loaded lazily only when the flag
+M02, M03 and M04) as well as explicit local previews. Packs are loaded lazily only when the flag
 is enabled or a command explicitly requests one. Other missions use their existing
 implementations.
 
 Packs live at `<root>/<locale>/<register>/` (for example `packs/es-ES/everyday/`). `pack.toml`
 holds metadata and references every content file: `labels.toml` (fixed learner-facing text keyed by
 semantic IDs), the optional `numbers.toml` (number words for counting missions),
+the optional `possessives.toml` (possessive words and a role-play cast for ownership missions),
 `constructions/*.toml` (grammar guidance, features, constraints, version),
 `examples/*.toml` (scene facts, bindings, sentences, chunks, alternatives, contrasts, mistakes) and
 `evaluations/*.toml` (held-out cases per mission level). Evaluations are loaded only through
@@ -34,7 +35,7 @@ The fixture pack is unreviewed test data and is not a claim of linguistic valida
 deterministic builders. On uses the existing mission eligibility/planning flow,
 then binds the actual session's confirmed object instances, attributes, relations,
 counts, translated vocabulary and register to the mission's slots. With the flag on,
-M01, M02 and M03 never use their legacy builders. No sample input or handwritten
+M01, M02, M03 and M04 never use their legacy builders. No sample input or handwritten
 `plan_specs` is used by the application.
 
 Set these values in the ignored **backend/.env.local** for a local experiment:
@@ -65,7 +66,7 @@ signing in for pack experiments, without assuming placement is pack-backed. Supp
 selecting a pack-only language; existing profiles can also be patched through the
 existing profile API to exercise another supported level.
 
-Pack availability extends mission candidates only with pack missions (M01, M02, M03)
+Pack availability extends mission candidates only with pack missions (M01-M04)
 that the app offers at the level and the pack has ready.
 Photo eligibility and release checks still apply. Other missions and I-Spy retain
 their existing language availability. Discovery does not constitute linguistic
@@ -153,6 +154,7 @@ lessons/
   m01.py        M01: plan_lesson, build_lesson, checks, MISSION
   m02.py        M02: same layout
   m03.py        M03: same layout, plus number_vocabulary
+  m04.py        M04: same layout, plus ownership_facts and possessive_vocabulary
 ```
 
 Every mission module has the same sections:
@@ -169,10 +171,13 @@ Every mission module has the same sections:
 3. **Checks**: `check_inputs` (before any model call), `check_lesson` (the assembled
    question count, order and interactions; `common.check_questions` covers the shared
    rules) and `photo_reasons` (replacing dictionary-based legacy photo rules; it also
-   receives the learner's `counted_groups`).
+   receives the learner's `counted_groups` and `mission_choices`).
 
 A mission may also set `vocabulary`, which adds closed pack words to the lesson
-vocabulary before proposals and planning (M03 adds the pack's number words).
+vocabulary before proposals and planning (M03 adds the pack's number words, M04 its
+possessives), and `facts`, which adds the lesson's own facts first (M04's owners). The
+`facts` hook receives the saved mission plan's `learner_facts` and `roleplay_facts`,
+which the workflow now passes to pack lessons as dev's builders already received them.
 
 To add a mission: add its templates to `missions.toml` (matching the content version
 of its `missions/definitions` file), write `lessons/mXX.py` in this layout, add it to
@@ -216,6 +221,29 @@ sentence). A0 and A2 reuse dev's builders; A1 builds dev's task here because dev
 A1 corrections are written per language. Proposals now also supply `plural` noun
 forms. As in dev, A0 counts the first learner-counted group of 2 or 3; further groups
 never block it. M03 evaluation cases are described under the evaluation section below.
+
+M04 (whose is it?) needs the pack's `possessives.toml`: reviewed possessive words for
+`first` (my), `second` (your) and `third-masculine`/`third-feminine`, each form a
+`determiner` (mi, ma, meine, 제, என்னோட) or a `predicate` (mía, moi, mir), limited to one
+noun gender where it agrees (French `before_vowel` marks mon before a feminine vowel),
+and a role-play `cast` (Ana and Leo, with the names each script uses). Templates list
+`required_possessors`. Who owns what is a lesson fact (`owners`): the object the learner
+says is theirs (A0, `learnerFacts`), the saved role-play (A1, `roleplayFacts`), or, at
+A2, an object a confirmed detail tells apart from another, assigned to the learner and
+the other to Ana. Each owner becomes a term written with its possessor's forms; the
+other possessors are alternatives (`possessor-second` for "is it yours?", the learner
+or a cast owner for wrong-owner options). Six constructions write the sentences:
+`ownership-question` (¿Es tuya?), `ownership-statement` (Es mía. / No es mía.),
+`owned-object` (La taza es mía. / El libro es de Ana.), `possessive-statement` (Es mi
+taza.), `whose-question` (¿De quién es la taza?) and `owned-description` (Mi taza es
+roja.); A2 also reuses M02's `target-clue`. The lessons reuse dev's M04 question sets
+and task builders: A0's six-question lost-and-found situation (dev's
+`a0_situation_lesson_task` now accepts content prepared elsewhere), A1's role-play and
+A2's five questions. A deterministic rule checks possessive agreement: when a sentence
+uses gendered forms of the bound possessive and none is the noun's own (mein Tasse, la
+taza es mío), it fails; forms for any gender (mi, mir) and genderless languages are not
+judged, and French mon/ma before a vowel is left to the model review. Possessive words
+are pack data, so proposals never change them (proposals v5).
 
 Several objects can share a target-language name (two cabinets). A question that only
 names the object accepts every marker on an object with that name: A0 marker questions
@@ -378,7 +406,7 @@ model proposals supply at runtime for counted nouns). Evaluate any pack locally
 
 ```powershell
 $packs = @{ es = 'es-ES'; fr = 'fr-FR'; de = 'de-DE'; ko = 'ko-KR' }
-foreach ($language in $packs.Keys) { foreach ($mission in 'M01','M02','M03') { 'A0','A1','A2' | ForEach-Object {
+foreach ($language in $packs.Keys) { foreach ($mission in 'M01','M02','M03','M04') { 'A0','A1','A2' | ForEach-Object {
   .\.venv\Scripts\python.exe -m app.language_packs.preview evaluate `
     --pack-dir "app/language_packs/packs/$($packs[$language])/everyday" `
     --language $language --register everyday --level $_ --mission $mission `
@@ -408,6 +436,14 @@ deterministic count-agreement rule: a bound number is written in the form the pa
 gives it next to that noun (`numbers.toml` `with_noun`: una manzana, 두 개), and a
 count above one takes the noun's `plural` form when the session has one that differs
 from the bare noun. Korean has no plural forms, so only its counter forms are judged.
+
+M04 cases declare who owns what as scene `owners` (`{ fact_id = "owner:bag",
+object = "object:bag", owner = "first" }`, or a cast owner such as `ana`); any case may
+bind a pack possessor (`owner = "possessor:second"`: "is it yours?"). Rejects add the
+wrong owner (`wrongOwner`) and possessive agreement where a pack's rule judges it
+(Spanish mío/mía, German mein/meine). Fixed frames with one natural wording
+(Gehört das dir?) use another valid wording in held-out cases, since evaluation
+sentences never repeat a generation example.
 
 ## Shared noun-phrase validator
 

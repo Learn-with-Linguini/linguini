@@ -35,23 +35,24 @@ def _ids(missions):
 
 
 def test_catalog_templates_resolve_through_the_registry():
-    assert PACK_MISSION_IDS == {"M01", "M02", "M03"}
+    assert PACK_MISSION_IDS == {"M01", "M02", "M03", "M04"}
     assert pack_mission_keys() == [
         ("M01", "A0", 1), ("M01", "A1", 1), ("M01", "A2", 1),
         ("M02", "A0", 1), ("M02", "A1", 2), ("M02", "A2", 1),
         ("M03", "A0", 1), ("M03", "A1", 1), ("M03", "A2", 1),
+        ("M04", "A0", 1), ("M04", "A1", 1), ("M04", "A2", 1),
     ]
     # Templates match dev's mission definitions (M02 A1 lessons are content version 2).
     assert mission_template_key("M02", "A1") == ("M02", "A1", 2)
     with pytest.raises(ValueError, match="no pack lesson implementation"):
-        pack_mission("M04")
+        pack_mission("M05")
 
 
 def test_context_records_ready_and_declared_missions(packs_on):
     context = resolve_language_context("es")
     assert context.ready_missions == (
         "M01:A0:1", "M01:A1:1", "M01:A2:1", "M02:A0:1", "M02:A1:2", "M02:A2:1",
-        "M03:A0:1", "M03:A1:1", "M03:A2:1",
+        "M03:A0:1", "M03:A1:1", "M03:A2:1", "M04:A0:1", "M04:A1:1", "M04:A2:1",
     )
     assert context.declared_missions == context.ready_missions
     assert context.ready_levels == ("A0", "A1", "A2")
@@ -78,9 +79,9 @@ def test_ready_pack_missions_replace_legacy_versions_first():
     )
     assert _ids(missions)[0] == ("M01", "A1")
     assert [mission_id for mission_id, _ in _ids(missions)].count("M01") == 1
-    # M02 and M03 have pack implementations but are not ready here: not offered.
-    assert not {"M02", "M03"} & {mission_id for mission_id, _ in _ids(missions)}
-    assert {"M04", "M05"} <= {mission_id for mission_id, _ in _ids(missions)}
+    # M02-M04 have pack implementations but are not ready here: not offered.
+    assert not {"M02", "M03", "M04"} & {mission_id for mission_id, _ in _ids(missions)}
+    assert "M05" in {mission_id for mission_id, _ in _ids(missions)}
 
 
 def test_declared_but_blocked_missions_never_fall_back_to_legacy():
@@ -93,9 +94,9 @@ def test_pack_missions_never_use_their_legacy_builder_when_packs_are_on():
     profile = {"proficiency_level": "A1", "target_language_code": "es"}
     missions = lesson_missions(SessionMode.LESSON, profile, _context(["M01:A0:1"], ["M01:A0:1"]))
     ids = {mission_id for mission_id, _ in _ids(missions)}
-    assert not ids & {"M01", "M02", "M03"}
+    assert not ids & {"M01", "M02", "M03", "M04"}
     # Missions without a pack implementation keep their legacy builders.
-    assert {"M04", "M05"} <= ids
+    assert "M05" in ids
 
 
 def test_pack_only_languages_get_every_ready_pack_mission():
@@ -156,7 +157,7 @@ def test_bind_plan_rejects_missions_without_a_pack_implementation():
         pack, [], [], [], SimpleNamespace(objects=[], attributes=[], relationships=[]), {},
     )
     with pytest.raises(ValueError, match="no pack lesson implementation"):
-        bind_plan(pack, "A1", facts, vocabulary, mission_id="M04")
+        bind_plan(pack, "A1", facts, vocabulary, mission_id="M05")
 
 
 def _counted_cups(quantity, label="cup"):
@@ -340,3 +341,106 @@ def test_m03_a0_counts_the_first_of_several_small_groups():
     plan = plan_lesson(pack, "A0", facts, vocabulary, "seed")
     counted = {spec["bindings"].get("count") for spec in plan["matchChunk-1"]} - {None}
     assert counted == {facts.scene_facts.counted_groups[0].fact_id}
+
+
+def _owned_scene(language_pack=PACK, colours=("red", "white", "green")):
+    """Cup, book and table, each with a colour; the shape M04 lessons plan from."""
+    pack = load_pack(language_pack)
+    labels = {1: ("cup", "taza", "feminine"), 2: ("book", "libro", "masculine"),
+              3: ("table", "mesa", "feminine")}
+    objects = [SimpleNamespace(id=UUID(int=n), label=label, attributes={"color": colour})
+               for (n, (label, _text, _gender)), colour in zip(labels.items(), colours,
+                                                                strict=True)]
+    translated = SimpleNamespace(
+        objects=[SimpleNamespace(key=str(UUID(int=n)), source=label, translation=text,
+                                 article="la" if gender == "feminine" else "el", gender=gender)
+                 for n, (label, text, gender) in labels.items()],
+        attributes=[SimpleNamespace(key=f"{UUID(int=n)}:color", source=colour,
+                                    translation={"red": "rojo", "white": "blanco",
+                                                 "green": "verde"}[colour])
+                    for n, colour in zip(labels, colours, strict=True)],
+        relationships=[],
+    )
+    words = [SimpleNamespace(id=UUID(int=n + 10)) for n in labels]
+    markers = {str(obj.id): index for index, obj in enumerate(objects, 1)}
+    facts, vocabulary = session_inputs(pack, objects, [], words, translated, markers)
+    return pack, objects, markers, facts, vocabulary
+
+
+def test_m04_owners_come_from_the_learner_choice_and_the_saved_roleplay():
+    from app.language_packs.lessons.m04 import ownership_facts
+    from app.language_packs.vocabulary import with_pack_vocabulary
+    from app.missions import get_mission
+    from app.services.mission_roleplay import assign_roleplay
+
+    pack, objects, markers, facts, vocabulary = _owned_scene()
+    vocabulary = with_pack_vocabulary(pack, vocabulary)
+    learner = {"learner_facts": {"ownedObjectId": str(objects[1].id), "pretend": True}}
+    (owner,) = ownership_facts(pack, "A0", facts, vocabulary, learner).scene_facts.owners
+    assert (owner.object_fact_id, owner.owner, owner.fictional) == (
+        f"object:{objects[1].id}", "first", True,
+    )
+    roleplay = assign_roleplay(get_mission("M04", "A1", 1), UUID(int=100), objects, markers)
+    owners = ownership_facts(pack, "A1", facts, vocabulary,
+                             {"roleplay_facts": roleplay}).scene_facts.owners
+    # The saved role-play's learner, Ana and Leo become the pack's first, ana and leo.
+    assert sorted(owner.owner for owner in owners) == ["ana", "first", "leo"]
+    assert {owner.object_fact_id for owner in owners} == {
+        obj.fact_id for obj in facts.scene_facts.objects
+    }
+    # No choice saved: no owner, and the A0 planner says what is missing.
+    assert ownership_facts(pack, "A0", facts, vocabulary, {}).scene_facts.owners == []
+
+
+def test_m04_a2_assigns_an_object_its_detail_tells_apart():
+    from app.language_packs.lessons.m04 import ownership_facts
+    from app.language_packs.vocabulary import with_pack_vocabulary
+
+    pack, _objects, _markers, facts, vocabulary = _owned_scene()
+    owners = ownership_facts(pack, "A2", facts, with_pack_vocabulary(pack, vocabulary),
+                             {}).scene_facts.owners
+    assert [owner.owner for owner in owners] == ["first", "ana"]
+    # Every object the same colour: nothing tells the learner's object apart.
+    pack, _objects, _markers, facts, vocabulary = _owned_scene(colours=("red",) * 3)
+    assert ownership_facts(pack, "A2", facts, with_pack_vocabulary(pack, vocabulary),
+                           {}).scene_facts.owners == []
+
+
+@pytest.mark.parametrize("text,agrees", [
+    ("La taza es mía.", True), ("Es mi taza.", True), ("La taza es mío.", False),
+])
+def test_m04_possessives_agree_with_the_owned_noun(text, agrees):
+    from app.language_packs.generation import _owner_agreement
+    from app.language_packs.lessons.m04 import ownership_facts, possessive_vocabulary
+    from app.language_packs.vocabulary import with_pack_vocabulary
+
+    pack, objects, _markers, facts, vocabulary = _owned_scene()
+    vocabulary = with_pack_vocabulary(pack, vocabulary)
+    facts = ownership_facts(pack, "A0", facts, vocabulary,
+                            {"learner_facts": {"ownedObjectId": str(objects[0].id)}})
+    vocabulary = possessive_vocabulary(pack, facts, vocabulary)
+    (owner,) = facts.scene_facts.owners
+    bindings = {"object": owner.object_fact_id, "owner": owner.fact_id}
+    assert (_owner_agreement(text, bindings, vocabulary) == []) is agrees
+
+
+def test_m04_photo_rules_need_the_learner_choice_and_a_telling_detail():
+    from app.language_packs.lessons.m04 import CHOICE_REASON, photo_reasons
+    from app.missions import get_mission
+    from app.services.mission_eligibility import photo_eligibility, scene_attributes
+
+    cup, book = (SimpleNamespace(id=UUID(int=n), label=label, attributes={"color": colour})
+                 for n, label, colour in ((1, "cup", "red"), (2, "book", "red")))
+    a0 = get_mission("M04", "A0", 1)
+    assert photo_reasons(a0, [cup, book], [], scene_attributes,
+                         mission_choices={"ownership": {}}) == [CHOICE_REASON]
+    chosen = {"ownership": {"sceneObjectId": str(cup.id)}}
+    assert photo_reasons(a0, [cup, book], [], scene_attributes, mission_choices=chosen) == []
+    context = _context(["M04:A0:1"], ["M04:A0:1"])
+    check = photo_eligibility(a0, [cup, book], (), (), {"ownership": {}}, context)
+    # The learner still has to choose; the photo itself lacks nothing.
+    assert check.missing == ("choices",)
+    a2 = get_mission("M04", "A2", 1)
+    assert photo_reasons(a2, [cup, book], [], scene_attributes)
+    book.attributes = {"color": "blue"}
+    assert photo_reasons(a2, [cup, book], [], scene_attributes) == []

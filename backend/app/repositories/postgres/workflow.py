@@ -2972,6 +2972,10 @@ class PostgresWorkflowRepository:
                     register=context.display.register_id,
                     language_context=context,
                     counted_groups=claim.counted_groups or (),
+                    mission_context={
+                        "roleplay_facts": (claim.roleplay_facts or {}).get(mission.mission_id),
+                        "learner_facts": (claim.learner_facts or {}).get(mission.mission_id),
+                    },
                 ))
                 continue
             spec = lesson_spec(mission)

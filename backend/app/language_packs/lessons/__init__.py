@@ -26,6 +26,7 @@ _MODULES = {
     "M01": "m01",
     "M02": "m02",
     "M03": "m03",
+    "M04": "m04",
 }
 PACK_MISSION_IDS = frozenset(_MODULES)
 

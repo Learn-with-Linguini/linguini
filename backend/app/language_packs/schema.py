@@ -161,6 +161,8 @@ class PackFiles(ApiModel):
     labels: NonEmptyText
     # Number words for counting missions (M03); packs without it do not offer them.
     numbers: NonEmptyText | None = None
+    # Possessive words and the role-play cast for ownership missions (M04).
+    possessives: NonEmptyText | None = None
     constructions: list[NonEmptyText] = Field(min_length=1)
     examples: list[NonEmptyText] = Field(min_length=1)
     evaluations: list[NonEmptyText] = Field(min_length=1)
@@ -227,6 +229,76 @@ class NumbersFile(ApiModel):
         return {number.value for number in self.numbers}
 
 
+Agreement = Literal["masculine", "feminine", "neuter"]
+# Who a possessive refers to: the speaker, the listener, or a third person by gender.
+Possessor = Literal["first", "second", "third-masculine", "third-feminine"]
+
+
+class PossessiveForm(ApiModel):
+    """One written possessive: before a noun (``determiner``: mi, ma, meine, 제) or as
+    the predicate (``predicate``: es mía, à moi, gehört mir, என்னோடது).
+
+    ``agreement`` limits the form to nouns of one gender; ``before_vowel`` marks a form
+    used before a vowel instead (French mon before a feminine noun such as assiette).
+    """
+
+    text: NonEmptyText
+    use: Literal["determiner", "predicate"]
+    agreement: Agreement | None = None
+    before_vowel: bool = False
+    romanization: NonEmptyText | None = None
+
+    @property
+    def key(self) -> str:
+        return f"{self.use}-{self.agreement or 'any'}" + ("-vowel" if self.before_vowel else "")
+
+
+class PackPossessor(ApiModel):
+    possessor: Possessor
+    meaning: NonEmptyText
+    # A language may name third-person owners only by name (Korean 아나의); then empty.
+    forms: list[PossessiveForm] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def require_unique_keys(self) -> PackPossessor:
+        keys = [form.key for form in self.forms]
+        if len(keys) != len(set(keys)):
+            raise ValueError(f"possessor {self.possessor} repeats a use and agreement")
+        return self
+
+
+class CastMember(ApiModel):
+    """A role-play owner: the name a lesson uses for someone else's things."""
+
+    owner_id: ContractId
+    english_name: NonEmptyText
+    name: NonEmptyText
+    gender: Literal["masculine", "feminine"]
+    romanization: NonEmptyText | None = None
+
+
+class PossessivesFile(ApiModel):
+    provenance: Provenance
+    possessors: list[PackPossessor] = Field(min_length=1)
+    cast: list[CastMember] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def require_unique_entries(self) -> PossessivesFile:
+        possessors = [item.possessor for item in self.possessors]
+        owners = [item.owner_id for item in self.cast]
+        if len(possessors) != len(set(possessors)) or len(owners) != len(set(owners)):
+            raise ValueError("possessors and cast owners must be unique")
+        if {"first", "second"} & set(owners):
+            raise ValueError("cast owner ids cannot be first or second")
+        return self
+
+    def get(self, possessor: str) -> PackPossessor | None:
+        return next((item for item in self.possessors if item.possessor == possessor), None)
+
+    def member(self, owner_id: str) -> CastMember | None:
+        return next((item for item in self.cast if item.owner_id == owner_id), None)
+
+
 class SceneObject(ApiModel):
     fact_id: NonEmptyText
     concept: NonEmptyText
@@ -258,12 +330,21 @@ class SceneCount(ApiModel):
     quantity: Annotated[int, Field(ge=1, le=20)]
 
 
+class SceneOwner(ApiModel):
+    """Who an object belongs to: ``first`` (the learner) or a cast owner ID."""
+
+    fact_id: NonEmptyText
+    object: NonEmptyText
+    owner: ContractId
+
+
 class ExampleScene(ApiModel):
     objects: list[SceneObject] = Field(default_factory=list)
     absent: list[SceneObject] = Field(default_factory=list)
     attributes: list[SceneAttribute] = Field(default_factory=list)
     relations: list[SceneRelation] = Field(default_factory=list)
     counts: list[SceneCount] = Field(default_factory=list)
+    owners: list[SceneOwner] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_references(self) -> ExampleScene:
@@ -273,6 +354,7 @@ class ExampleScene(ApiModel):
             *(item.fact_id for item in self.attributes),
             *(item.fact_id for item in self.relations),
             *(item.fact_id for item in self.counts),
+            *(item.fact_id for item in self.owners),
         ]
         if len(facts) != len(set(facts)):
             raise ValueError("scene fact IDs must be unique")
@@ -282,6 +364,7 @@ class ExampleScene(ApiModel):
             *(item.subject for item in self.relations),
             *(item.reference for item in self.relations),
             *(item.object for item in self.counts),
+            *(item.object for item in self.owners),
         } - object_ids:
             raise ValueError(f"scene references undeclared objects: {sorted(unknown)}")
         if any(item.subject == item.reference for item in self.relations):
@@ -296,6 +379,7 @@ class ExampleScene(ApiModel):
             *(item.fact_id for item in self.attributes),
             *(item.fact_id for item in self.relations),
             *(item.fact_id for item in self.counts),
+            *(item.fact_id for item in self.owners),
         }
 
     @property
@@ -306,7 +390,11 @@ class ExampleScene(ApiModel):
         # A pack number (``number:7``: a practice board, a friend's wrong count) is pack
         # data rather than a scene fact, so only false sentences may name one.
         numbers = {value for value in bindings.values() if re.fullmatch(r"number:\d+", value)}
-        if unknown := set(bindings.values()) - self.fact_ids - numbers:
+        # A pack possessor (``possessor:second``: "is it yours?") is pack data too.
+        possessors = {
+            value for value in bindings.values() if re.fullmatch(r"possessor:[a-z-]+", value)
+        }
+        if unknown := set(bindings.values()) - self.fact_ids - numbers - possessors:
             raise ValueError(f"bindings reference undeclared facts: {sorted(unknown)}")
         if truth and numbers:
             raise ValueError(f"true examples cannot bind pack numbers: {sorted(numbers)}")
@@ -490,6 +578,7 @@ class LanguagePack(ApiModel):
     # Data-driven forms derived from session translations, never a per-language lexicon.
     lexical: dict[str, dict[str, str]] = Field(default_factory=dict)
     numbers: NumbersFile | None = None
+    possessives: PossessivesFile | None = None
     _pack_dir: Path | None = PrivateAttr(default=None)
     _evaluation_files: list[Path] = PrivateAttr(default_factory=list)
 
@@ -575,6 +664,7 @@ class EvaluationReject(ApiModel):
         "wrongAttribute",
         "wrongRelation",
         "wrongCount",
+        "wrongOwner",
         "agreement",
         "wordOrder",
         "verbChoice",
@@ -595,6 +685,7 @@ class EvaluationCase(ApiModel):
         "wrongAttribute",
         "wrongRelation",
         "wrongCount",
+        "wrongOwner",
         "agreement",
         "wordOrder",
         "verbChoice",
@@ -671,6 +762,8 @@ class MissionTemplate(ApiModel):
     required_constructions: list[ConstructionRequirement]
     # Number words the pack must supply (counting missions).
     required_numbers: list[Annotated[int, Field(ge=1, le=20)]] = Field(default_factory=list)
+    # Possessors (first, second) and cast owners the pack must supply (ownership missions).
+    required_possessors: list[ContractId] = Field(default_factory=list)
     slots: list[MissionSlotTemplate] = Field(min_length=1)
 
     @property

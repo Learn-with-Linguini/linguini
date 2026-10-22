@@ -21,6 +21,7 @@ from .generation import (
     ConfirmedAttribute,
     ConfirmedCount,
     ConfirmedObject,
+    ConfirmedOwner,
     ConfirmedRelation,
     ConfirmedSceneFacts,
     assess,
@@ -33,7 +34,7 @@ from .model_source import GENERATOR_VERSION
 from .schema import EvaluationCase, LanguagePack
 from .validators import validator_versions
 
-RUNNER_VERSION = "language-pack-evaluator.v4"
+RUNNER_VERSION = "language-pack-evaluator.v5"
 DEFAULT_THRESHOLDS = {"valid_alternative_acceptance": 1.0, "missed_rejects": 0}
 
 
@@ -184,9 +185,14 @@ def _scene_facts(case: EvaluationCase) -> BoundSceneFacts:
         ConfirmedCount(fact_id=item.fact_id, object_fact_ids=[item.object], quantity=item.quantity)
         for item in case.scene.counts
     ]
+    owners = [
+        ConfirmedOwner(fact_id=item.fact_id, object_fact_id=item.object, owner=item.owner)
+        for item in case.scene.owners
+    ]
     return BoundSceneFacts(
         scene_facts=ConfirmedSceneFacts(
             objects=objects, attributes=attributes, relations=relations, counted_groups=counts,
+            owners=owners,
         )
     )
 
@@ -194,7 +200,8 @@ def _scene_facts(case: EvaluationCase) -> BoundSceneFacts:
 def _mission_vocabulary(
     pack: LanguagePack, mission_id: str, facts: BoundSceneFacts, vocabulary: ApprovedVocabulary,
 ) -> ApprovedVocabulary:
-    """The case's vocabulary as the mission's lessons see it (M03 adds number words)."""
+    """The case's vocabulary as the mission's lessons see it (M03's number words, M04's
+    possessives)."""
     from .lessons import PACK_MISSION_IDS, pack_mission
 
     if mission_id not in PACK_MISSION_IDS:

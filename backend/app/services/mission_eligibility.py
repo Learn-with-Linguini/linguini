@@ -405,7 +405,10 @@ PACK_SHORTFALLS = {
     "M01": ("attributes", "relations"),
     "M02": ("attributes", "relations"),
     "M03": ("counts",),
+    "M04": ("attributes", "relations"),
 }
+# Pack photo reasons that ask for a learner choice rather than more photo facts.
+PACK_CHOICE_REASONS = frozenset({"Tell Linguini which object is yours."})
 A0_OBJECTS_REASON = "Confirm at least 2 different objects with taught names."
 
 
@@ -595,10 +598,14 @@ def photo_eligibility(
 
         pack_reasons = pack_mission(mission.mission_id).photo_reasons(
             mission, objects, relations, scene_attributes, counted_groups=counted_groups,
+            mission_choices=mission_choices,
         )
         reasons += pack_reasons
-        if pack_reasons:
-            missing.extend(PACK_SHORTFALLS.get(mission.mission_id, ()))
+        for reason in pack_reasons:
+            missing.extend(
+                ("choices",) if reason in PACK_CHOICE_REASONS
+                else PACK_SHORTFALLS.get(mission.mission_id, ())
+            )
     if str(mission.practice_level) == "A0" and not pack:
         a0_reasons = a0_photo_reasons(mission, objects, counted_groups, mission_choices)
         reasons += a0_reasons

@@ -473,8 +473,10 @@ def _normalized_equivalents(value, language):
     return sorted(values)
 
 
-def a0_situation_lesson_task(session_id, mission, payload, result, vocabulary_ids):
-    prepared = build_a0_situation_payload(payload)
+def a0_situation_lesson_task(session_id, mission, payload, result, vocabulary_ids,
+                             prepared=None):
+    """The public situation lesson; ``prepared`` is content built elsewhere (a pack)."""
+    prepared = prepared or build_a0_situation_payload(payload)
     answers = {}
     accepted = {}
     evaluations = []

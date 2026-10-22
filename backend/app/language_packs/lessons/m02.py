@@ -553,7 +553,8 @@ def check_lesson(level, result, approved, pack):
     check_questions(result.questions, PURPOSES[level], MISSION_ID)
 
 
-def photo_reasons(mission, objects, relations, attributes_of, counted_groups=()):
+def photo_reasons(mission, objects, relations, attributes_of, counted_groups=(),
+                  mission_choices=None):
     """A2 needs one object a detail clue and a location clue identify together."""
     if str(mission.practice_level) != "A2":
         return []
