@@ -60,6 +60,10 @@ constructions = [
   "constructions/possessive-statement.toml",
   "constructions/whose-question.toml",
   "constructions/owned-description.toml",
+  "constructions/my-preference.toml",
+  "constructions/their-preference.toml",
+  "constructions/preference-question.toml",
+  "constructions/choice-statement.toml",
 ]
 examples = [
   "examples/target-location.toml",
@@ -84,6 +88,10 @@ examples = [
   "examples/possessive-statement.toml",
   "examples/whose-question.toml",
   "examples/owned-description.toml",
+  "examples/my-preference.toml",
+  "examples/their-preference.toml",
+  "examples/preference-question.toml",
+  "examples/choice-statement.toml",
 ]
 evaluations = [
   "evaluations/M01-A0.toml",
@@ -98,4 +106,6 @@ evaluations = [
   "evaluations/M04-A0.toml",
   "evaluations/M04-A1.toml",
   "evaluations/M04-A2.toml",
+  "evaluations/M05-A0.toml",
+  "evaluations/M05-A1.toml",
 ]

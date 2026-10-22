@@ -1,0 +1,26 @@
+construction_id = "their-preference"
+version = 1
+summary = "Say that a named person likes (or does not like) the object."
+guidance = "Say the person's name + aime + definite article + noun, or name + n'aime pas … when the use is dislike: Ana aime la tasse. Léo n'aime pas le livre."
+features = ["preference", "third-person"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun", preference = "other" }
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "preference-frame"
+message = "Name the person, then the like frame."
+must_contain = ["^\\S+ (aime|n'aime pas) ", "\\.$"]
+
+[[checks]]
+check_id = "dislike-negated"
+message = "A dislike sentence says the negative."
+must_contain = ["n'aime pas"]
+uses = ["dislike"]
+
+[[checks]]
+check_id = "like-not-negated"
+message = "A like sentence is not negated."
+must_not_contain = ["\\bpas\\b"]
+uses = ["like"]

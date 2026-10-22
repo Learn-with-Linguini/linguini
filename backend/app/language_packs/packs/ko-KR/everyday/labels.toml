@@ -285,3 +285,11 @@ romanization = "eoneu mulgeon-i bonin geonji malhago seolmyeonghae boseyo."
 meaning = "Say which object is yours and describe it."
 usage = "prompt"
 provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "what-choose"
+text = "뭐 골라요?"
+romanization = "mwo gollayo?"
+meaning = "What do you choose?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
