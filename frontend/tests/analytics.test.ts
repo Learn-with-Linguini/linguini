@@ -38,17 +38,17 @@ test("trackPageView pushes to Contentsquare _uxa queue and GA4 gtag", () => {
 
   trackPageView("/practice/sessions/123/learn", "Linguini - Practice");
 
-  assert.equal(mockUxa.length, 1);
-  assert.deepEqual(mockUxa[0], [
+  assert.equal(mockUxa.length, 2);
+  assert.deepEqual(mockUxa[0], ["setQuery", ""]);
+  assert.deepEqual(mockUxa[1], [
     "trackPageview",
     "/practice/sessions/123/learn",
   ]);
 
-  assert.equal(mockGtagCalls.length, 1);
-  assert.equal(mockGtagCalls[0][0], "event");
-  assert.equal(mockGtagCalls[0][1], "page_view");
+  const pageView = mockGtagCalls.find(call => call[0] === "event" && call[1] === "page_view");
+  assert.ok(pageView);
   assert.equal(
-    (mockGtagCalls[0][2] as { page_path: string }).page_path,
+    (pageView[2] as { page_path: string }).page_path,
     "/practice/sessions/123/learn",
   );
 });
@@ -80,5 +80,7 @@ test("trackAction pushes custom events to Contentsquare and GA4", () => {
   assert.deepEqual(mockGtagCalls[0][2], {
     taskId: "task-1",
     isCorrect: true,
+    page_location: "",
+    page_referrer: "",
   });
 });

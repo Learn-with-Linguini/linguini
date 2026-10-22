@@ -29,14 +29,17 @@ VITE_GA_MEASUREMENT_ID=G-ET4KFFXFMZ
 
 ## 2. Contentsquare Integration & SPA Pageview Tracking
 
-The Contentsquare tag script is loaded in `frontend/index.html`:
-```html
-<script async src="https://t.contentsquare.net/uxa/6a01544c67dfc.js"></script>
-```
+`initAnalytics()` loads the Contentsquare tag from `frontend/src/lib/analytics.ts` after queuing sanitized path/query overrides and referrer query removal. The script is no longer loaded directly from `frontend/index.html`, so its initial pageview uses those privacy settings.
 
 Because Linguini is a single-page application (SPA), route changes do not reload the document. The `<AnalyticsTracker />` component in `frontend/src/components/AnalyticsTracker.tsx` listens to router location changes and dispatches pageview events on every navigation:
-* **Contentsquare:** `window._uxa.push(["trackPageview", currentPath])`
+* **Contentsquare:** update `setQuery` with the sanitized query, then send `trackPageview` with the pathname
 * **GA4:** `gtag("event", "page_view", { page_path, page_title, page_location })`
+
+### URL privacy
+
+Analytics URLs omit fragments and query parameters other than campaign UTM fields and the fixed sign-in modes. This keeps OAuth/password-reset credentials, checkout session IDs and contact form text out of pageview URLs. The browser URL stays intact so authentication can consume its callback normally.
+
+GA4 initialization and custom events receive sanitized location/referrer defaults. Contentsquare's path/query overrides and referrer query removal are queued before its script loads, protecting the initial natural pageview as well as SPA views. Enhanced Measurement's automatic history pageviews must remain disabled in the GA4 property when using this manual SPA tracking; `send_page_view: false` alone does not disable them.
 
 ### Tracked Pages & Routes
 
