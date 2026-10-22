@@ -88,6 +88,9 @@ class StripeService:
             "metadata": {
                 "user_id": str(user_id),
             },
+            "subscription_data": {
+                "metadata": {"user_id": str(user_id)},
+            },
             "success_url": f"{base_url}?status=success&session_id={{CHECKOUT_SESSION_ID}}",
             "cancel_url": f"{base_url}?status=cancelled",
             "integration_identifier": f"linguini_sub_{ident_suffix}",

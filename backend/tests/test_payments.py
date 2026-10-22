@@ -134,3 +134,44 @@ def test_stripe_service_webhook_subscription_deleted(fake_user_repo, test_user):
     assert result["status"] == "processed"
     updated_user = fake_user_repo.get_by_id(test_user.id)
     assert updated_user.tier == AccountTier.FREE
+
+
+@pytest.mark.parametrize(
+    ("event_type", "subscription_status", "initial_tier", "expected_tier"),
+    [
+        ("customer.subscription.updated", "active", AccountTier.FREE, AccountTier.PLUS),
+        ("customer.subscription.updated", "past_due", AccountTier.PLUS, AccountTier.FREE),
+        ("customer.subscription.deleted", "canceled", AccountTier.PLUS, AccountTier.FREE),
+    ],
+)
+def test_checkout_subscription_events_keep_the_checkout_user(
+    fake_user_repo, test_user, monkeypatch,
+    event_type, subscription_status, initial_tier, expected_tier,
+):
+    monkeypatch.delenv("STRIPE_WEBHOOK_SECRET", raising=False)
+    other_user = fake_user_repo.get_or_create_by_auth_provider("other-learner", "other@example.com")
+    fake_user_repo.set_tier(test_user.id, initial_tier.value)
+    service = StripeService(fake_user_repo)
+    service._secret_key = "sk_test_fake"
+    service.client = MagicMock()
+    service.client.checkout.sessions.create.return_value.url = "https://checkout.stripe.com/test"
+
+    assert service.create_checkout_session(test_user.id, test_user.email) == "https://checkout.stripe.com/test"
+    params = service.client.checkout.sessions.create.call_args.kwargs["params"]
+    assert params["metadata"]["user_id"] == str(test_user.id)
+    # Stripe copies subscription_data.metadata to the subscription, not session metadata.
+    subscription_metadata = params.get("subscription_data", {}).get("metadata", {})
+    payload = {
+        "type": event_type,
+        "data": {"object": {
+            "id": "sub_test_checkout",
+            "metadata": subscription_metadata,
+            "status": subscription_status,
+        }},
+    }
+
+    result = service.handle_webhook_event(json.dumps(payload).encode(), None)
+
+    assert result == {"status": "processed", "type": event_type}
+    assert fake_user_repo.get_by_id(test_user.id).tier == expected_tier
+    assert fake_user_repo.get_by_id(other_user.id).tier == AccountTier.BETA
