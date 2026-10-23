@@ -323,12 +323,15 @@ def test_m03_counts_the_first_valid_group_when_several_are_counted():
     objects = _objects(["cup", "book", "apple", "sofa"])
     several = _groups(objects, ("cup", 2), ("book", 2), ("apple", 3))
     assert photo_eligibility(mission, objects, [], several).eligible
-    # A group without a taught noun, or out of range, does not block a later valid one.
-    mixed = _groups(objects, ("sofa", 2), ("cup", 1), ("book", 4), ("apple", 2))
+    # A group out of range does not block a later valid one.
+    mixed = _groups(objects, ("cup", 1), ("book", 4), ("apple", 2))
     assert photo_eligibility(mission, objects, [], mixed).eligible
-    unusable = _groups(objects, ("sofa", 2), ("cup", 1))
+    # Objects outside the reviewed list can be counted too.
+    assert photo_eligibility(mission, objects, [], _groups(objects, ("sofa", 2))).eligible
+    unusable = _groups(objects, ("sofa", 1), ("cup", 1))
     check = photo_eligibility(mission, objects, [], unusable)
-    assert check.reasons == ("Count a group of 2 or 3 matching objects.",)
+    assert not check.eligible
+    assert "Count a group of 2 or 3 matching objects." in check.reasons
     assert check.missing == ("counts",)
 
 
@@ -343,12 +346,13 @@ def test_m03_lesson_uses_the_first_valid_group():
     validate_a0_lesson(payload, result)
 
 
-def test_photo_eligibility_needs_reviewed_nouns():
+def test_photo_eligibility_needs_two_different_objects_not_reviewed_nouns():
     mission = get_mission("M01", "A0", 1)
-    one = _objects(["cup", "sofa"])
-    assert not photo_eligibility(mission, one, []).eligible
-    two = _objects(["cup", "book"])
-    assert photo_eligibility(mission, two, []).eligible
+    assert not photo_eligibility(mission, _objects(["sofa"]), []).eligible
+    assert not photo_eligibility(mission, _objects(["sofa", "sofa"]), []).eligible
+    # Any confirmed objects qualify; their nouns come from the scene translation.
+    assert photo_eligibility(mission, _objects(["cup", "sofa"]), []).eligible
+    assert photo_eligibility(mission, _objects(["cup", "book"]), []).eligible
 
 
 @pytest.mark.parametrize("mission_id", MISSIONS)

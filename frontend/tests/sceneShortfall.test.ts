@@ -33,7 +33,7 @@ const specific = {
   missions: [
     { missionId: "M03", title: "Count a small group", missing: ["counts"], reasons: ["Count a group of 2 or 3 matching objects."],
       steps: [{ kind: "counts", text: "Mark 1 more cup so there are 2 cups." }, { kind: "colours", text: "dropped" }] },
-    { missionId: "M01", title: "Name and identify", missing: ["objects"], reasons: ["Confirm at least 2 different objects with taught names."],
+    { missionId: "M01", title: "Name and identify", missing: ["objects"], reasons: ["Confirm at least 2 different objects."],
       steps: [{ kind: "objects", text: "Mark 1 more object with a name Linguini teaches at this level, such as a book." }] },
     { missionId: "M02", title: "Find a named object", missing: ["objects"], reasons: [],
       steps: [{ kind: "objects", text: "Mark 1 more object with a name Linguini teaches at this level, such as a book." }, { kind: "objects", text: "" }] },

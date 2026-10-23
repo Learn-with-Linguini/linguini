@@ -1,13 +1,17 @@
-"""Reviewed closed content for the A0 scene missions.
+"""Closed noun content for the A0 scene missions.
 
-Every noun form, gender, French elision and Korean final consonant here was
-reviewed by hand; nothing is inferred from English, the photo, colour or spelling.
-An object takes part in an A0 mission only when its English label is listed here.
+``REVIEWED_NOUNS`` holds hand-checked forms (noun, gender, plural, French
+elision, Korean final consonant) for common objects; they always win. Any other
+confirmed object takes part through ``translated_noun``, which reads the same facts
+from the session's AI scene translation and keeps the object out when one is
+missing or inconsistent.
 """
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
+from typing import Any
 
 A0_LANGUAGES = ("es", "fr", "de", "ko")
 
@@ -17,11 +21,14 @@ class Noun:
     noun: str
     # "masculine" / "feminine" / "neuter"; ``None`` for Korean, which has no gender.
     gender: str | None
-    plural: str
+    # ``None`` when the translation gave no plural; counting lessons then skip the noun.
+    plural: str | None
     # French: the definite form elides to l' (reviewed pronunciation, e.g. h muet).
     elides: bool = False
     # Korean: the noun ends in a final consonant (batchim).
     batchim: bool = False
+    # Hand-checked in ``REVIEWED_NOUNS``; ``False`` when read from the AI translation.
+    reviewed: bool = True
 
 
 def _n(noun, gender, plural, *, elides=False):
@@ -105,6 +112,90 @@ KOREAN_ENDINGS = ("이에요", "예요")
 def reviewed_noun(label: str, language: str) -> Noun | None:
     entry = REVIEWED_NOUNS.get(" ".join(label.casefold().split()))
     return entry.get(language) if entry else None
+
+
+_GENDERS = {"es": {M, F}, "fr": {M, F}, "de": {M, F, N}}
+_ARTICLE_GENDERS = {
+    "es": {"el": {M}, "la": {F}},
+    "fr": {"le": {M}, "la": {F}, "l'": {M, F}},
+    "de": {"der": {M}, "die": {F}, "das": {N}},
+}
+_PLURAL_ARTICLES = {"es": ("los", "las"), "fr": ("les",), "de": ("die",)}
+# A bare noun of at most three words: letters (any script), spaces, hyphens, apostrophes.
+_NOUN_TEXT = re.compile(r"^[^\W\d_]+(?:[ '\-][^\W\d_]+){0,2}$")
+_HANGUL = re.compile(r"^[가-힣]+(?: [가-힣]+){0,2}$")
+
+
+def _strip_article(text: str, articles) -> str:
+    text = " ".join(text.replace("’", "'").split())
+    lowered = text.casefold()
+    for article in sorted(articles, key=len, reverse=True):
+        if article.endswith("'") and lowered.startswith(article):
+            return text[len(article):].strip()
+        if lowered.startswith(f"{article} "):
+            return text[len(article) + 1:].strip()
+    return text
+
+
+def korean_batchim(noun: str) -> bool | None:
+    """Whether the last Hangul syllable has a final consonant; ``None`` if not Hangul."""
+    last = noun[-1:] if noun else ""
+    if not "가" <= last <= "힣":
+        return None
+    return (ord(last) - 0xAC00) % 28 != 0
+
+
+def _value(term: Any, name: str) -> Any:
+    if term is None:
+        return None
+    if isinstance(term, dict):
+        camel = re.sub(r"_(\w)", lambda match: match.group(1).upper(), name)
+        return term.get(name, term.get(camel))
+    return getattr(term, name, None)
+
+
+def translated_noun(language: str, term: Any) -> Noun | None:
+    """A noun read from one AI-translated scene object, or ``None`` when unusable.
+
+    The translation must be a bare noun; es/fr/de need a gender that agrees with
+    any article given, French elision needs the article ``l'``, and Korean needs
+    Hangul so the final consonant can be read from the spelling.
+    """
+    text = (_value(term, "translation") or "").strip()
+    if not text:
+        return None
+    if language == "ko":
+        noun = " ".join(text.split())
+        if not _HANGUL.match(noun):
+            return None
+        return Noun(noun, None, noun, batchim=bool(korean_batchim(noun)), reviewed=False)
+    if language not in _GENDERS:
+        return None
+    articles = _ARTICLE_GENDERS[language]
+    noun = _strip_article(text, articles)
+    gender = _value(term, "gender")
+    article = (_value(term, "article") or "").strip().replace("’", "'").casefold() or None
+    if not _NOUN_TEXT.match(noun) or gender not in _GENDERS[language]:
+        return None
+    if article is not None and gender not in articles.get(article, set()):
+        return None
+    if language == "fr" and article is None and noun[:1].casefold() in "aâeéèêiîoôuûhœy":
+        # Without the article we cannot tell l' (h muet) from le/la (h aspiré).
+        return None
+    plural = _value(term, "plural")
+    if plural:
+        plural = _strip_article(plural, _PLURAL_ARTICLES[language])
+        if not _NOUN_TEXT.match(plural):
+            plural = None
+    return Noun(noun, gender, plural or None, elides=article == "l'", reviewed=False)
+
+
+def row_noun(row: dict[str, Any]) -> Noun:
+    """The noun an approved A0 object row was built from."""
+    return Noun(
+        row["noun"], row["gender"], row["plural"], elides=row["elides"],
+        batchim=row["batchim"], reviewed=row.get("reviewed", True),
+    )
 
 
 def form(language: str, noun: Noun) -> str:

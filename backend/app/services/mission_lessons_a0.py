@@ -1,8 +1,9 @@
 """Closed-content payloads and lesson tasks for the A0 scene missions.
 
-Only confirmed objects whose English label has a reviewed noun, and whose
-session word teaches that same noun, are approved. Every target-language string
-a lesson may show is listed in the payload's ``approvedSentenceChunks``.
+Confirmed objects are approved when their noun is known — hand-reviewed in
+``a0_lexicon.REVIEWED_NOUNS`` or read from the session's AI scene translation —
+and their session word teaches that same noun. Every target-language string a
+lesson may show is listed in the payload's ``approvedSentenceChunks``.
 """
 
 from __future__ import annotations
@@ -72,7 +73,7 @@ def _object_row(language, obj, noun, marker, plurals_taught):
     return dict(
         key=str(obj.id), marker=marker, source=english, label=english.capitalize(),
         noun=noun.noun, gender=noun.gender, plural=noun.plural,
-        elides=noun.elides, batchim=noun.batchim,
+        elides=noun.elides, batchim=noun.batchim, reviewed=noun.reviewed,
         name=lex.name_chunk(language, noun),
         identify=lex.identify_sentence(language, noun),
         isIt=lex.is_it_question(language, noun),
@@ -100,15 +101,38 @@ def _translations(language, row):
     }
 
 
-def _approved(mission, language, objects, words, review_markers, plurals_taught):
-    """Confirmed objects with a reviewed noun the session taught, one per label."""
+def _translated_terms(translated_scene):
+    """``scene object id -> translated term`` from the session's scene translation."""
+    if translated_scene is None:
+        return {}
+    terms = (
+        translated_scene.get("objects", []) if isinstance(translated_scene, dict)
+        else getattr(translated_scene, "objects", []) or []
+    )
+    return {
+        str(term.get("key") if isinstance(term, dict) else term.key): term for term in terms
+    }
+
+
+def _approved(mission, language, objects, words, review_markers, plurals_taught,
+              translated_scene=None):
+    """Confirmed objects with a known noun the session taught, one per label."""
     _ordered, markers = scene_markers(objects, review_markers)
     numbers = {row["key"]: row["marker"] for row in markers}
+    terms = _translated_terms(translated_scene)
     rows, labels = [], set()
     for obj, word in zip(objects, words, strict=True):
-        noun = lex.reviewed_noun(_english(obj.label), language)
         label = _english(obj.label)
-        if noun is None or label in labels or taught_noun(word) != fold(noun.noun):
+        taught = taught_noun(word)
+        # The reviewed noun wins; the translated one is used when it is the noun taught.
+        noun = next((
+            candidate for candidate in (
+                lex.reviewed_noun(label, language),
+                lex.translated_noun(language, terms.get(str(obj.id))),
+            )
+            if candidate is not None and fold(candidate.noun) == taught
+        ), None)
+        if noun is None or label in labels:
             continue
         labels.add(label)
         rows.append(_object_row(language, obj, noun, numbers[str(obj.id)], plurals_taught))
@@ -116,12 +140,14 @@ def _approved(mission, language, objects, words, review_markers, plurals_taught)
 
 
 def a0_payload(
-    mission, language, objects, _relations, words, _translated_scene, counts, progress,
+    mission, language, objects, _relations, words, translated_scene, counts, progress,
     session_id, review_markers=None, context=None,
 ):
     language = language.lower()
     plurals_taught = bool((progress or {}).get("plurals_taught"))
-    rows = _approved(mission, language, objects, words, review_markers, plurals_taught)
+    rows = _approved(
+        mission, language, objects, words, review_markers, plurals_taught, translated_scene,
+    )
     payload = dict(
         targetLanguage=language, missionId=mission.mission_id,
         practiceLevel=str(mission.practice_level), contentVersion=mission.content_version,
@@ -186,8 +212,9 @@ def _focus(payload, rows):
 
 
 def _m03_group(payload, mission, language, rows, counts, translations):
-    """The first learner-counted group of 2 or 3 with an approved noun."""
-    by_key = {row["key"]: row for row in rows}
+    """The first learner-counted group of 2 or 3 with an approved noun and plural."""
+    # Counting shows "two cups", so a noun with no known plural cannot be counted.
+    by_key = {row["key"]: row for row in rows if language == "ko" or row["plural"]}
     for counted in countable_groups(mission, counts):
         object_ids = [str(item) for item in counted["sceneObjectIds"]]
         key = next((item for item in object_ids if item in by_key), None)
@@ -196,7 +223,7 @@ def _m03_group(payload, mission, language, rows, counts, translations):
     else:
         return []
     row = by_key[key]
-    noun = lex.reviewed_noun(row["source"], language)
+    noun = lex.row_noun(row)
     english = row["source"]
     words, chunks = {}, {}
     for number in (1, 2, 3):
