@@ -83,6 +83,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 ### Authentication & Account Management
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
+| `guest_preview_started` | `{ source: "signin" | "signup" }` | Visitor opens the sample photo lesson without signing in |
 | `login_submitted` | `{ method: "email" }` | User submits the email/password sign-in form |
 | `signup_submitted` | `{ method: "email" }` | User submits new account registration |
 | `google_signin_clicked` | — | User clicks "Continue with Google" button |
