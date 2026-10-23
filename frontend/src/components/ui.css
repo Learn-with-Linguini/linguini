@@ -1780,7 +1780,7 @@ p[role="alert"]::before { content: "!"; }
 
 .translation-preview__terms {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
   gap: var(--space-2);
 }
 
@@ -1788,6 +1788,7 @@ p[role="alert"]::before { content: "!"; }
   display: grid;
   gap: 2px;
   min-width: 0;
+  overflow-wrap: anywhere;
   padding: 10px 12px;
   border: 1px solid rgba(249, 178, 51, .34);
   border-radius: var(--radius-sm);
@@ -1797,6 +1798,22 @@ p[role="alert"]::before { content: "!"; }
 
 .translation-preview__term strong {
   color: var(--teal-dark);
+}
+
+@media (max-width: 520px) {
+  .translation-preview {
+    gap: var(--space-3);
+    padding: var(--space-3);
+  }
+
+  .translation-preview__group {
+    gap: var(--space-2);
+    padding: var(--space-2);
+  }
+
+  .translation-preview__term {
+    padding: var(--space-2);
+  }
 }
 
 .analysis-attribute-fields {
