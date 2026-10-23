@@ -39,8 +39,8 @@ def test_nested_pack_loads_and_evaluations_remain_separate():
 
     assert pack.pack_id == "es-es-everyday"
     assert pack.language.locale == "es-ES"
-    assert len(pack.constructions) == 26
-    assert len(cases) == 100
+    assert len(pack.constructions) == 34
+    assert len(cases) == 119
     assert not any(key in pack.model_dump() for key in ("evaluations", "evaluation_cases"))
     assert all("cases" not in item for item in guidance_for(pack, [
         "identify-object"
@@ -74,6 +74,8 @@ def test_held_out_evaluations_cover_the_required_categories():
         "M04-A2": 7,
         "M05-A0": 6,
         "M05-A1": 6,
+        "M06-A2": 13,
+        "M13-A0": 6,
     }
     categories = {
         category
@@ -151,6 +153,9 @@ def test_labels_match_current_builder_text():
         "describe-your-object": "Describe tu objeto con un detalle.",
         "clarify-and-describe": "Aclara cuál es tu objeto y descríbelo.",
         "what-choose": "¿Qué eliges?",
+        # Dev's M06 wrong request frames (mission_m06_request_details.WRONG_OPENERS).
+        "request-distractor-have": "Tengo",
+        "request-distractor-exists": "Hay",
     }
 
 

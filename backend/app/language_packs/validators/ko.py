@@ -2,7 +2,8 @@
 
 Only rules without exceptions are checked: after a syllable ending in a consonant
 (받침) the copula is 이에요 and the object particle is 을, so 예요 or 를 directly after
-such a syllable is always wrong (문예요 → 문이에요, 책를 → 책을).
+such a syllable is always wrong (문예요 → 문이에요, 책를 → 책을). After a vowel the copula
+is 예요, so 이에요 directly after an open syllable is wrong too (포크이에요 → 포크예요).
 """
 
 from __future__ import annotations
@@ -24,8 +25,13 @@ def _has_final_consonant(syllable: str) -> bool:
     return _FIRST_SYLLABLE <= code <= _LAST_SYLLABLE and (code - _FIRST_SYLLABLE) % 28 != 0
 
 
+_AFTER_VOWEL = (
+    ("이에요", "After a vowel the copula is 예요, not 이에요 (포크예요)."),
+)
+
+
 class KoreanValidator:
-    validator_id = "ko-targeted@1"
+    validator_id = "ko-targeted@2"
 
     def __init__(self, vocabulary: ApprovedVocabulary) -> None:
         self.vocabulary = vocabulary
@@ -36,5 +42,11 @@ class KoreanValidator:
             for match in re.finditer(form, candidate.text):
                 before = candidate.text[match.start() - 1] if match.start() else ""
                 if before and _has_final_consonant(before) and message not in messages:
+                    messages.append(message)
+        for form, message in _AFTER_VOWEL:
+            for match in re.finditer(form, candidate.text):
+                before = candidate.text[match.start() - 1] if match.start() else ""
+                if (before and _FIRST_SYLLABLE <= ord(before) <= _LAST_SYLLABLE
+                        and not _has_final_consonant(before) and message not in messages):
                     messages.append(message)
         return ValidatorResult(passed=not messages, messages=messages)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Sequence
-from typing import Annotated, Literal, Protocol
+from typing import Annotated, Any, Literal, Protocol
 from unicodedata import normalize
 from uuid import UUID
 
@@ -107,6 +107,29 @@ class ConfirmedPreference(ApiModel):
     compared_fact_id: NonEmptyText | None = None
 
 
+class ConfirmedOrder(ApiModel):
+    """The learner's role-play order (M06): the photo object they ask for and dev's
+    seeded M06 transaction (scenario, quantity, details, the server's one possible
+    mistake and how the reply is practised). It is never a fact about the photo.
+    """
+
+    fact_id: NonEmptyText
+    object_fact_id: NonEmptyText
+    scenario: Literal["cafe", "shop", "classroom", "home"]
+    transaction: dict[str, Any] = Field(default_factory=dict)
+
+
+class ConfirmedRequest(ApiModel):
+    """One detail of the order: its quantity, the requested size or the detail a
+    server asks about (``serviceSetting``: ``takeAway``)."""
+
+    fact_id: NonEmptyText
+    object_fact_id: NonEmptyText
+    field: Literal["quantity", "size", "serviceSetting", "temperature", "colour"]
+    value: NonEmptyText
+    fictional: bool = True
+
+
 class ConfirmedSceneFacts(ApiModel):
     objects: list[ConfirmedObject] = Field(default_factory=list)
     attributes: list[ConfirmedAttribute] = Field(default_factory=list)
@@ -114,6 +137,8 @@ class ConfirmedSceneFacts(ApiModel):
     counted_groups: list[ConfirmedCount] = Field(default_factory=list)
     owners: list[ConfirmedOwner] = Field(default_factory=list)
     preferences: list[ConfirmedPreference] = Field(default_factory=list)
+    orders: list[ConfirmedOrder] = Field(default_factory=list)
+    requests: list[ConfirmedRequest] = Field(default_factory=list)
 
     @property
     def all_fact_ids(self) -> set[str]:
@@ -121,7 +146,7 @@ class ConfirmedSceneFacts(ApiModel):
             fact.fact_id
             for group in (
                 self.objects, self.attributes, self.relations, self.counted_groups, self.owners,
-                self.preferences,
+                self.preferences, self.orders, self.requests,
             )
             for fact in group
         }
@@ -132,7 +157,7 @@ class ConfirmedSceneFacts(ApiModel):
             fact.fact_id
             for group in (
                 self.objects, self.attributes, self.relations, self.counted_groups, self.owners,
-                self.preferences,
+                self.preferences, self.orders, self.requests,
             )
             for fact in group
         ]
@@ -147,6 +172,8 @@ class ConfirmedSceneFacts(ApiModel):
             *(fact.object_fact_id for fact in self.owners),
             *(fact.object_fact_id for fact in self.preferences),
             *(fact.compared_fact_id for fact in self.preferences if fact.compared_fact_id),
+            *(fact.object_fact_id for fact in self.orders),
+            *(fact.object_fact_id for fact in self.requests),
         ]
         if unknown := set(references) - object_ids:
             raise ValueError(f"scene facts reference unknown objects: {sorted(unknown)}")
@@ -773,10 +800,11 @@ def _inflected_use(text, vocabulary, fact_id_value, part_of_speech, language):
     return None
 
 
-# Constructions that write a counted noun after a number or quantity word.
+# Constructions that write a counted noun after a number or quantity word (M06's
+# orders count their item too: dos cafés, drei Äpfel).
 _COUNTED_CONSTRUCTIONS = frozenset({
     "how-many-question", "quantity-chunk", "quantity-statement", "quantity-comparison",
-    "quantity-pair",
+    "quantity-pair", "polite-request", "order-phrase", "order-repeat",
 })
 
 

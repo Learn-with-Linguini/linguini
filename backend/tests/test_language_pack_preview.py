@@ -13,7 +13,7 @@ def test_validate_and_capability_cli(capsys):
         "valid": True,
         "pack_id": "es-es-everyday",
         "language": "es",
-        "evaluation_cases": 100,
+        "evaluation_cases": 119,
     }
 
     assert main([

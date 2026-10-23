@@ -12,7 +12,7 @@ from .generation import ApprovedTerm, ApprovedVocabulary
 logger = logging.getLogger(__name__)
 
 PROPOSAL_VERSION = "language-proposals.v6"
-REVIEW_VERSION = "language-content-review.v5"
+REVIEW_VERSION = "language-content-review.v6"
 
 PROPOSAL_PROMPT = """Supply candidate grammatical forms and distractors for a planned
 lesson. Packs are guidance and optional reference vocabulary, not exhaustive dictionaries.
@@ -58,7 +58,9 @@ other than the shown object, and its correct answer is no; a hidden-referent clu
 its target, while other constructions in the same lesson do name objects; in ownership lessons
 possessives follow the speaker (the learner says my for their own object, Linguini says your to
 the learner) and role-play owners are pretend; in preference lessons likes and dislikes are
-pretend too, and a false option deliberately says the opposite or names another object.
+pretend too, and a false option deliberately says the opposite or names another object; in
+request role-plays the order is pretend, a server's repeat with truth false deliberately gets one
+detail wrong, and wrong-quantity or wrong-detail options are deliberate distractors.
 Omission by a detector never proves absence. A false option may deny a confirmed-present object,
 but do not accept unsupported absence as a correct fact. For a rendered lesson, inspect every
 option against its question and answer key; exactly the intended answer(s) must be defensible.

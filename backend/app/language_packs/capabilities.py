@@ -23,6 +23,8 @@ class MissionCapability(MissionKey):
     missing_labels: list[str]
     missing_numbers: list[int] = Field(default_factory=list)
     missing_possessors: list[str] = Field(default_factory=list)
+    missing_requests: list[str] = Field(default_factory=list)
+    missing_paired_words: bool = False
     unreviewed_items: list[str]
     examples_present: bool
     review_complete: bool
@@ -70,6 +72,15 @@ def _required_material_review_status(
         or pack.possessives.provenance.review_status != "humanReviewed"
     ):
         unreviewed.append("possessives")
+    if template.required_requests and (
+        pack.requests is None or pack.requests.provenance.review_status != "humanReviewed"
+    ):
+        unreviewed.append("requests")
+    if template.requires_paired_words and (
+        pack.paired_words is None
+        or pack.paired_words.provenance.review_status != "humanReviewed"
+    ):
+        unreviewed.append("pairs")
     for label in pack.labels:
         if label.semantic in required_ids and label.provenance.review_status != "humanReviewed":
             unreviewed.append(f"label:{label.semantic}")
@@ -173,9 +184,20 @@ def mission_capability(
         possessor for possessor in template.required_possessors
         if not _possessor_usable(pack, possessor)
     ]
+    missing_requests = [
+        key for key in template.required_requests
+        if pack.requests is None or not pack.requests.has(key)
+    ]
+    # Paired words are offered as choices, spelled as the pack requires.
+    missing_paired_words = template.requires_paired_words and (
+        pack.paired_words is None or (
+            pack.language.romanization_required
+            and not all(word.romanization for word in pack.paired_words.words)
+        )
+    )
     supported = not (
         missing_constructions or outdated_constructions or missing_labels or missing_numbers
-        or missing_possessors
+        or missing_possessors or missing_requests or missing_paired_words
     )
     required_ids = {item.construction_id for item in template.required_constructions}
     required_ids.update(template.required_labels)
@@ -226,7 +248,8 @@ def mission_capability(
     blockers = []
     if not supported:
         blockers.append(
-            "required constructions, labels, numbers or possessives are missing or outdated"
+            "required constructions, labels, numbers, possessives, request or paired words "
+            "are missing or outdated"
         )
     if not examples_present:
         blockers.append("required constructions lack in-scope examples or mistakes")
@@ -252,6 +275,8 @@ def mission_capability(
         missing_labels=missing_labels,
         missing_numbers=missing_numbers,
         missing_possessors=missing_possessors,
+        missing_requests=missing_requests,
+        missing_paired_words=missing_paired_words,
         unreviewed_items=unreviewed_items,
         examples_present=examples_present,
         review_complete=review_complete,

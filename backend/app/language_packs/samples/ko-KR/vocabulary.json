@@ -634,6 +634,78 @@
       "position": null,
       "part_of_speech": "preposition",
       "provenance": "catalog"
+    },
+    {
+      "term_id": "coffee",
+      "fact_id": "object:coffee",
+      "source_text": "coffee",
+      "target_text": "커피",
+      "forms": [
+        "커피"
+      ],
+      "forms_by_key": {
+        "bare": "커피",
+        "definite": "커피"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "keopi"
+    },
+    {
+      "term_id": "tea",
+      "fact_id": "object:tea",
+      "source_text": "tea",
+      "target_text": "차",
+      "forms": [
+        "차"
+      ],
+      "forms_by_key": {
+        "bare": "차",
+        "definite": "차"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "cha"
+    },
+    {
+      "term_id": "apple",
+      "fact_id": "object:apple",
+      "source_text": "apple",
+      "target_text": "사과",
+      "forms": [
+        "사과"
+      ],
+      "forms_by_key": {
+        "bare": "사과",
+        "definite": "사과"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "sagwa"
+    },
+    {
+      "term_id": "pen",
+      "fact_id": "object:pen",
+      "source_text": "pen",
+      "target_text": "펜",
+      "forms": [
+        "펜"
+      ],
+      "forms_by_key": {
+        "bare": "펜",
+        "definite": "펜"
+      },
+      "agreement": null,
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "pen"
     }
   ]
 }

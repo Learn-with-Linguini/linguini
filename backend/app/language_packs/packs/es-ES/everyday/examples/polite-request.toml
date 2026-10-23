@@ -1,0 +1,55 @@
+construction_id = "polite-request"
+
+[[examples]]
+example_id = "order-two-small-coffees"
+levels = ["A2"]
+purposes = ["listenOrderCard"]
+meaning = "I would like two small coffees, please."
+scene = { objects = [{ fact_id = "object:coffee", concept = "coffee" }], requests = [{ fact_id = "request:quantity", object = "object:coffee", field = "quantity", value = "2" }, { fact_id = "request:size", object = "object:coffee", field = "size", value = "small" }, { fact_id = "request:serviceSetting", object = "object:coffee", field = "serviceSetting", value = "takeAway" }] }
+bindings = { object = "object:coffee", quantity = "request:quantity", size = "request:size" }
+truth = true
+labels = []
+sentence = "Quisiera dos cafés pequeños, por favor."
+translation = "I would like two small coffees, please."
+chunks = [{ text = "Quisiera", join = "none" }, { text = "dos", join = "space" }, { text = "cafés", join = "space" }, { text = "pequeños", join = "space" }, { text = ",", join = "none" }, { text = "por", join = "space" }, { text = "favor", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "borrow-a-pen"
+levels = ["A2"]
+purposes = ["listenOrderCard"]
+meaning = "Can you lend me a pen, please?"
+scene = { objects = [{ fact_id = "object:pen", concept = "pen" }], requests = [{ fact_id = "request:quantity", object = "object:pen", field = "quantity", value = "1" }, { fact_id = "request:colour", object = "object:pen", field = "colour", value = "blue" }] }
+bindings = { object = "object:pen", quantity = "request:quantity" }
+truth = true
+labels = []
+sentence = "¿Me prestas un bolígrafo, por favor?"
+translation = "Can you lend me a pen, please?"
+chunks = [{ text = "¿Me", join = "none" }, { text = "prestas", join = "space" }, { text = "un", join = "space" }, { text = "bolígrafo", join = "space" }, { text = ",", join = "none" }, { text = "por", join = "space" }, { text = "favor", join = "space" }, { text = "?", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "pass-a-cup"
+levels = ["A2"]
+purposes = ["listenOrderCard"]
+meaning = "Can you pass me a cup, please?"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }], requests = [{ fact_id = "request:quantity", object = "object:cup", field = "quantity", value = "1" }, { fact_id = "request:colour", object = "object:cup", field = "colour", value = "red" }] }
+bindings = { object = "object:cup", quantity = "request:quantity" }
+truth = true
+labels = []
+sentence = "¿Me pasas una taza, por favor?"
+translation = "Can you pass me a cup, please?"
+chunks = [{ text = "¿Me", join = "none" }, { text = "pasas", join = "space" }, { text = "una", join = "space" }, { text = "taza", join = "space" }, { text = ",", join = "none" }, { text = "por", join = "space" }, { text = "favor", join = "space" }, { text = "?", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "states-instead-of-asking"
+levels = ["A2"]
+purposes = ["listenOrderCard"]
+sentence = "Tengo dos cafés pequeños, por favor."
+correction = "Quisiera dos cafés pequeños, por favor."
+note = "A request asks for the item; Tengo says you already have it."
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }

@@ -1,0 +1,28 @@
+# The closed words a noun pairs with at A0 (M13). The generated chunk decides
+# the right one; the others, with the same noun, are the wrong choices.
+provenance = { source = "AI-authored original Linguini M13 draft, 2026-10-23; mirrors dev's a0_lexicon forms; not human-reviewed.", review_status = "generated" }
+explanation = "In French, each noun goes with le, la or l'. Learn them as a pair."
+
+[[words]]
+text = "le"
+position = "before"
+meaning = "the (masculine)"
+agreement = "masculine"
+
+[[words]]
+text = "la"
+position = "before"
+meaning = "the (feminine)"
+agreement = "feminine"
+
+[[words]]
+text = "l'"
+position = "before"
+meaning = "the (before a vowel sound)"
+elided = true
+
+[[words]]
+text = "les"
+position = "before"
+meaning = "the (plural)"
+plural = true

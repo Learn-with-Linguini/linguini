@@ -30,6 +30,7 @@ from .loader import (
     LanguagePackError,
     guidance_for,
     load_evaluation_cases,
+    load_mission_catalog,
     load_pack,
 )
 from .model_source import ModelSource
@@ -197,7 +198,10 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
                     mission_template_key(args.mission, level),
                     evaluation_record=evidence,
                 ).model_dump(mode="json", by_alias=False)
+                # Only the levels the mission has templates for (M05 A0/A1, M06 A2).
                 for level in ("A0", "A1", "A2")
+                if any(item.key[:2] == (args.mission, level)
+                       for item in load_mission_catalog().missions)
             },
         }
 
@@ -238,10 +242,12 @@ def _run(args: argparse.Namespace) -> dict[str, Any]:
             mission_id=args.mission,
         )
         evidence = _evidence(args.evidence)
+        tasks = [task.model_dump(mode="json", by_alias=True) for task in generated.tasks]
         output = {
             "source": getattr(source, "mode", "scripted responses (not a live model)"),
             "result": generated.result.model_dump(mode="json", by_alias=True),
-            "task": generated.task.model_dump(mode="json", by_alias=True),
+            # M06 builds its order as two tasks; other missions build one.
+            "task": tasks[0] if len(tasks) == 1 else tasks,
             "payload": generated.payload,
             "sentences": [
                 item.model_dump(mode="json", by_alias=False) for item in generated.sentences

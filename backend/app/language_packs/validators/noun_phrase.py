@@ -33,6 +33,12 @@ OWNING = frozenset({
 PREFERRING = frozenset({
     "my-preference", "their-preference", "preference-question", "choice-statement",
 })
+# Request constructions introduce the item with a quantity (dos cafés, einen Kaffee) or
+# leave it out (Para llevar, por favor.); quantities are pack request words.
+REQUESTING = frozenset({
+    "polite-request", "order-phrase", "detail-question", "detail-reply", "order-repeat",
+    "order-confirmation", "order-repair",
+})
 
 
 def _word(text: str) -> str:
@@ -107,14 +113,14 @@ def _required_family(candidate: CandidateSentence) -> str | None:
 
 
 class NounPhraseValidator:
-    validator_id = "noun-phrase.v4"
+    validator_id = "noun-phrase.v6"
 
     def __init__(self, vocabulary: ApprovedVocabulary) -> None:
         self.terms = {term.term_id: term for term in vocabulary.terms}
 
     def validate(self, candidate: CandidateSentence, _pack: LanguagePack) -> ValidatorResult:
         if candidate.proposed_realizations or candidate.construction_id in (
-            COUNTING | OWNING | PREFERRING
+            COUNTING | OWNING | PREFERRING | REQUESTING
         ):
             return ValidatorResult(passed=True)
         messages = []
@@ -145,6 +151,11 @@ class NounPhraseValidator:
                 f"Use one of this noun's own {kind}articles with {bare!r} "
                 f"(agreement={noun.agreement!r}): {', '.join(sorted(set(allowed)))}."
             )
+        definite = noun.forms_by_key.get("definite")
+        if (candidate.construction_id == "noun-word-pair" and definite
+                and candidate.text.casefold() != definite.casefold()):
+            # M13 teaches the noun with its own article (die Gabel), not another case of it.
+            messages.append(f"Write the noun with its own definite article: {definite}.")
         attribute_use = uses.get("attribute")
         attribute = self.terms.get(attribute_use.term_id) if attribute_use else None
         if attribute is not None and bare:

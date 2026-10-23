@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import random
+import re
 from unicodedata import name as unicode_name
 from uuid import NAMESPACE_URL, uuid5
 
@@ -72,6 +73,36 @@ def differently_named(objects, vocabulary):
             seen.add(name)
             named.append(obj)
     return named
+
+
+# ---------------------------------------------------------------- sentence parts
+
+# Words and punctuation, as written: two sentences are compared word by word.
+_WORD = re.compile(r"[^\s.,!?;:'’¿¡]+['’]?|[.,!?;:¿¡]")
+
+
+def _words(text):
+    return [(match.start(), match.end(), fold(match.group())) for match in _WORD.finditer(text)]
+
+
+def differing_parts(first, second):
+    """What two sentences with one frame write differently: their noun phrases.
+
+    "Me gusta la taza." and "Me gusta el libro." give ("la taza", "el libro");
+    "저는 컵을 좋아해요." and "저는 책을 좋아해요." give ("컵을", "책을").
+    """
+    a, b = _words(first), _words(second)
+    shortest = min(len(a), len(b))
+    start = 0
+    while start < shortest and a[start][2] == b[start][2]:
+        start += 1
+    end = 0
+    while end < shortest - start and a[-1 - end][2] == b[-1 - end][2]:
+        end += 1
+    if start + end >= shortest:
+        return None
+    return (first[a[start][0]:a[len(a) - 1 - end][1]],
+            second[b[start][0]:b[len(b) - 1 - end][1]])
 
 
 # ---------------------------------------------------------------- assembly
@@ -284,8 +315,9 @@ def with_romanization(task, result, pack, accepted, vocabulary, extra_spellings=
     questions = []
     for question, original in zip(task.public_content.questions, result.questions, strict=True):
         modes = None
-        # Situation questions (A0 M04) have no built answer.
-        if getattr(original, "correct_text", None):
+        # Situation questions (A0 M04) have no built answer; a typed cloze (M06) no tiles.
+        if (getattr(original, "correct_text", None)
+                and getattr(original, "interaction_type", None) != "textCloze"):
             # The canonical native sentence is also the private answer; joining modes
             # describe answer positions, so identical tiles remain interchangeable.
             base = next(
@@ -297,7 +329,8 @@ def with_romanization(task, result, pack, accepted, vocabulary, extra_spellings=
                 base = accepted[0].candidate.model_copy(
                     update={"text": original.correct_text, "romanization": []}
                 )
-            phrase = getattr(original, "answer_chunks", [])
+            phrase = (getattr(original, "answer_chunks", None)
+                      or getattr(original, "correct_chunks", None) or [])
             derived = derive_chunks(
                 base,
                 pack.language.word_separator,

@@ -281,7 +281,10 @@ def _corrections(payload, question, label):
         return [dict(mistake="wrongQuantity", answers=[option.option_id], correction=label,
                      explanation=note) for option in wrong], note
     if purpose in {"chooseChunk", "fillSlot"}:
-        if payload["targetLanguage"] == "ko":
+        if target.get("formNote"):
+            # A pack lesson writes the note from its own paired words (M13).
+            note = target["formNote"]
+        elif payload["targetLanguage"] == "ko":
             ending = "a consonant" if target["batchim"] else "a vowel"
             note = (
                 f"{target['noun']} ends in {ending}, so it takes {target['form']}: "
@@ -340,7 +343,7 @@ def a0_lesson_task(session_id, mission, payload, result, vocabulary_ids):
                           complete_chunk=question.complete_chunk)
         return fields
 
-    explanation = (
+    explanation = payload.get("explanation") or (
         _M13_EXPLANATIONS[payload["targetLanguage"]] if mission.mission_id == "M13"
         else _EXPLANATIONS[mission.mission_id]
     )

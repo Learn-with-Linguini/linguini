@@ -256,3 +256,21 @@ text = "Tu choisis quoi ?"
 meaning = "What do you choose?"
 usage = "prompt"
 provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "request-distractor-have"
+text = "J'ai"
+meaning = "I have"
+usage = "prompt"
+[labels.provenance]
+source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed."
+review_status = "generated"
+
+[[labels]]
+semantic = "request-distractor-exists"
+text = "Il y a"
+meaning = "There is"
+usage = "prompt"
+[labels.provenance]
+source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed."
+review_status = "generated"

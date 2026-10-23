@@ -406,6 +406,7 @@ PACK_SHORTFALLS = {
     "M02": ("attributes", "relations"),
     "M03": ("counts",),
     "M04": ("attributes", "relations"),
+    "M06": ("objects",),
 }
 # Pack photo reasons that ask for a learner choice rather than more photo facts.
 PACK_CHOICE_REASONS = frozenset({

@@ -578,6 +578,58 @@
       "position": "after",
       "part_of_speech": "adjective",
       "provenance": "catalog"
+    },
+    {
+      "term_id": "coffee",
+      "fact_id": "object:coffee",
+      "source_text": "coffee",
+      "target_text": "café",
+      "forms": [
+        "café",
+        "cafés",
+        "un",
+        "el",
+        "el café",
+        "un café"
+      ],
+      "forms_by_key": {
+        "bare": "café",
+        "plural": "cafés",
+        "article_indefinite": "un",
+        "article_definite": "el",
+        "definite": "el café",
+        "indefinite": "un café"
+      },
+      "agreement": "masculine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "tea",
+      "fact_id": "object:tea",
+      "source_text": "tea",
+      "target_text": "té",
+      "forms": [
+        "té",
+        "tés",
+        "un",
+        "el",
+        "el té",
+        "un té"
+      ],
+      "forms_by_key": {
+        "bare": "té",
+        "plural": "tés",
+        "article_indefinite": "un",
+        "article_definite": "el",
+        "definite": "el té",
+        "indefinite": "un té"
+      },
+      "agreement": "masculine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
     }
   ]
 }

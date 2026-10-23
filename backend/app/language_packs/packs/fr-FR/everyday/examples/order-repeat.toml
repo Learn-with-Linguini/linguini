@@ -1,0 +1,40 @@
+construction_id = "order-repeat"
+
+[[examples]]
+example_id = "repeat-two-small-coffees"
+levels = ["A2"]
+purposes = ["confirmOrRepair"]
+meaning = "So, two small coffees, to take away, right?"
+scene = { objects = [{ fact_id = "object:coffee", concept = "coffee" }], requests = [{ fact_id = "request:quantity", object = "object:coffee", field = "quantity", value = "2" }, { fact_id = "request:size", object = "object:coffee", field = "size", value = "small" }, { fact_id = "request:serviceSetting", object = "object:coffee", field = "serviceSetting", value = "takeAway" }] }
+bindings = { object = "object:coffee", quantity = "request:quantity", size = "request:size", detail = "request:serviceSetting" }
+truth = true
+labels = []
+sentence = "Alors, deux petits cafés, à emporter, c'est ça ?"
+translation = "So, two small coffees, to take away, right?"
+chunks = [{ text = "Alors", join = "none" }, { text = ",", join = "none" }, { text = "deux", join = "space" }, { text = "petits", join = "space" }, { text = "cafés", join = "space" }, { text = ",", join = "none" }, { text = "à", join = "space" }, { text = "emporter", join = "space" }, { text = ",", join = "none" }, { text = "c'", join = "space" }, { text = "est", join = "none" }, { text = "ça", join = "space" }, { text = "?", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "repeat-three-coffees-wrong"
+levels = ["A2"]
+purposes = ["confirmOrRepair"]
+meaning = "So, three small coffees, to take away, right? (the server's mistake)"
+scene = { objects = [{ fact_id = "object:coffee", concept = "coffee" }], requests = [{ fact_id = "request:quantity", object = "object:coffee", field = "quantity", value = "2" }, { fact_id = "request:size", object = "object:coffee", field = "size", value = "small" }, { fact_id = "request:serviceSetting", object = "object:coffee", field = "serviceSetting", value = "takeAway" }] }
+bindings = { object = "object:coffee", size = "request:size", detail = "request:serviceSetting", quantity = "number:3" }
+truth = false
+labels = []
+sentence = "Alors, trois petits cafés, à emporter, c'est ça ?"
+translation = "So, three small coffees, to take away, right?"
+chunks = [{ text = "Alors", join = "none" }, { text = ",", join = "none" }, { text = "trois", join = "space" }, { text = "petits", join = "space" }, { text = "cafés", join = "space" }, { text = ",", join = "none" }, { text = "à", join = "space" }, { text = "emporter", join = "space" }, { text = ",", join = "none" }, { text = "c'", join = "space" }, { text = "est", join = "none" }, { text = "ça", join = "space" }, { text = "?", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "repeat-without-tag"
+levels = ["A2"]
+purposes = ["confirmOrRepair"]
+sentence = "Alors, deux petits cafés, à emporter."
+correction = "Alors, deux petits cafés, à emporter, c'est ça ?"
+note = "The server checks the order with a tag question."
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }

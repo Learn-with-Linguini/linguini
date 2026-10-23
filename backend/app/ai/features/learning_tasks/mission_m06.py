@@ -147,12 +147,15 @@ def validate_m06_lesson(payload, result):
         raise LearningTaskGenerationError("M06 open cloze requires independent Q5 history.")
     if payload["q5Mode"] == "openCloze" and result.questions[4].interaction_type != "textCloze":
         raise LearningTaskGenerationError("M06 Q5 must follow the permitted history mode.")
+    # Pack lessons (packLesson) derive tiles from generated sentences; the Korean rules
+    # below describe this module's own reviewed chunks.
+    reviewed_chunks = not payload.get("packLesson")
     for question in result.questions:
         if question.interaction_type == "sentenceBuilding":
             for chunk in question.correct_chunks:
                 if not chunk:
                     raise LearningTaskGenerationError("M06 sentence chunks cannot be empty.")
-            if payload["targetLanguage"] == "ko":
+            if payload["targetLanguage"] == "ko" and reviewed_chunks:
                 # Korean request units stay intact; the number and counter are a single chunk.
                 if (
                     question.purpose in {"buildRequest", "confirmOrRepair"}
@@ -164,7 +167,7 @@ def validate_m06_lesson(payload, result):
                     and question.purpose == "buildRequest"
                 ):
                     raise LearningTaskGenerationError("Korean request chunks need a counter.")
-    if payload["targetLanguage"] == "ko":
+    if payload["targetLanguage"] == "ko" and reviewed_chunks:
         request = result.questions[2]
         item = ITEMS[payload["itemKey"]]
         noun, counter = item.nouns["ko"]
