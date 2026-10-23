@@ -35,6 +35,7 @@ globalThis.setInterval = ((...args: Parameters<typeof setInterval>) => {
 
 const user = { id: "u1", createdAt: "2026-01-01", updatedAt: "2026-01-01", authProviderId: "test", displayName: "Learner", email: null, timezone: "UTC", onboardingCompleted: true, learningGoal: "Travel confidently", microphoneEnabled: false, cameraEnabled: false };
 let profiles: LanguageProfile[] = [];
+let basilState: "ready" | "loading" | "error" = "ready";
 let profilePatches: { id: string; body: Record<string, unknown> }[] = [];
 
 function profile(id: string, targetLanguageCode: string, isActive: boolean): LanguageProfile {
@@ -47,6 +48,12 @@ globals.fetch = async (input: unknown, init?: RequestInit) => {
   const method = init?.method ?? "GET";
   if (path === "/api/v1/me") return Response.json(user);
   if (path === "/api/v1/me/language-profiles") return Response.json(profiles);
+  if (path === "/api/v1/me/progress") return Response.json({ xp: 2, leaderboard: [{ isYou: true, xp: 300 }] });
+  if (path.startsWith("/api/v1/me/gamification?")) {
+    if (basilState === "loading") return new Promise<Response>(() => {});
+    if (basilState === "error") return new Response("unavailable", { status: 503 });
+    return Response.json({ basil: { today: 10, weekly: 25, lifetime: 75, balance: 55 }, missions: [] });
+  }
   const patch = path.match(/^\/api\/v1\/me\/language-profiles\/([^/]+)$/);
   if (patch && method === "PATCH") {
     const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
@@ -199,3 +206,30 @@ test("choosing a language that has never been set up still starts onboarding", a
     assert.deepEqual(profilePatches, []);
   });
 });
+
+test("profile shows earned Basil from one ledger instead of legacy XP or spendable balance", async () => {
+  profiles = [profile("p1", "es", true), profile("p2", "fr", false)];
+  basilState = "ready";
+  await withProfilePage(async () => {
+    const totals = () => [...dom.window.document.querySelectorAll(".profile-basil__grid strong")].map(node => node.textContent);
+    assert.deepEqual(totals(), ["25", "75"]);
+    await chooseLanguage("fr");
+    await click("Switch to French");
+    assert.deepEqual(totals(), ["25", "75"]);
+  });
+});
+
+for (const pending of ["loading", "error"] as const) {
+  test(`profile does not substitute XP or zero when Basil is ${pending}`, async () => {
+    profiles = [profile("p1", "es", true)];
+    basilState = pending;
+    try {
+      await withProfilePage(async () => {
+        const section = dom.window.document.querySelector(".profile-basil");
+        assert.ok(section);
+        assert.equal(section.querySelectorAll("strong").length, 0);
+        assert.match(section.textContent ?? "", pending === "loading" ? /Loading your Basil/ : /couldn’t load your Basil/);
+      });
+    } finally { basilState = "ready"; }
+  });
+}
