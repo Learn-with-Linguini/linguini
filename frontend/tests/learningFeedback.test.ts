@@ -9,6 +9,7 @@ import { rolldown } from "rolldown";
 import { learningFeedback } from "../src/lib/learningFeedback.ts";
 import { queryKeys } from "../src/lib/queryKeys.ts";
 import type { LessonAnswerCheck, LatestClueAttempt, SessionTask, TaskActionResult } from "../src/lib/api.ts";
+import type { Scene } from "../src/data/types.ts";
 
 const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://app.test/", pretendToBeVisual: true });
 const globals = globalThis as Record<string, unknown>;
@@ -110,13 +111,13 @@ function action(task: SessionTask, isCorrect: boolean | null, message: string, x
     sessionProgress: { completedTaskCount: 1, skippedTaskCount: 0, terminalTaskCount: 1, totalTaskCount: 1 }, xpEarned,
     attempt: { id: "attempt1", attemptNumber: 1, isCorrect, feedback: { message } } };
 }
-async function mount(initialTask: SessionTask) {
+async function mount(initialTask: SessionTask, scenePatch: Partial<Scene> = {}) {
   let task = initialTask;
   const container = dom.window.document.createElement("div");
   dom.window.document.body.appendChild(container);
   const root = surface.createRoot(container);
   const client = new surface.QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0, refetchOnWindowFocus: false } } });
-  const scene = { id: "scene1", sessionId: "s1", imageUrl: null, mediaAssetId: "asset1", title: "Table", items: [], languageCode: "es" };
+  const scene = { id: "scene1", sessionId: "s1", imageUrl: null, mediaAssetId: "asset1", title: "Table", items: [], languageCode: "es", ...scenePatch };
   const render = () => surface.act(async () => root.render(surface.h(surface.QueryClientProvider, { client },
     surface.h(surface.AppStateContext.Provider, { value: {
       session: { session: { id: "s1", status: "inProgress" }, tasks: [task], sceneObjects: [] },
@@ -138,6 +139,68 @@ async function mount(initialTask: SessionTask) {
   await waitFor(() => assert.doesNotMatch(text(), /Restoring checked answers…|Restoring your place…/));
   return { close, render, client };
 }
+
+const descriptionScene: Partial<Scene> = {
+  imageUrl: "/table.jpg",
+  items: [{ id: "cup", word: "taza", translation: "cup", wordClass: "noun", gender: "la",
+    marker: 1, x: 25, y: 50, example: "Una taza.", exampleTranslation: "A cup." }],
+};
+
+for (const checkEachQuestion of [true, false]) {
+  const mode = checkEachQuestion ? "sequential" : "grouped";
+  test(`${mode} descriptions show the photo for choices and sentence building without revealing markers`, async () => {
+    for (const focus of ["sceneDescription", "chainedDescription"] as const) {
+      for (const interactionType of ["multipleChoice", "sentenceBuilding"] as const) {
+        const task = lesson();
+        if (task.publicContent.kind !== "grammarLesson") throw new Error("Expected grammar fixture");
+        task.publicContent.checkEachQuestion = checkEachQuestion;
+        task.publicContent.focus = focus;
+        task.publicContent.questions[0].interactionType = interactionType;
+        task.publicContent.questions[0].tokenBank = ["La", "taza", "está", "sobre", "la", "mesa"];
+        const view = await mount(task, descriptionScene);
+        const photos = dom.window.document.querySelectorAll('.scene img[alt="Table"]');
+        assert.equal(photos.length, 1, `${focus}: ${interactionType}`);
+        assert.equal(photos[0].getAttribute("src"), "/table.jpg");
+        assert.equal(dom.window.document.querySelector(".scene__marker"), null);
+        await view.close();
+      }
+    }
+  });
+
+  test(`${mode} description keeps one interactive photo when answers use markers`, async () => {
+    const task = lesson();
+    if (task.publicContent.kind !== "grammarLesson") throw new Error("Expected grammar fixture");
+    task.publicContent.checkEachQuestion = checkEachQuestion;
+    task.publicContent.focus = "sceneDescription";
+    task.publicContent.questions[0].options = [{ optionId: "cup-option", label: "1" }];
+    task.publicContent.questions[0].markerObjectIds = { "cup-option": "cup" };
+    await mount(task, descriptionScene);
+    assert.equal(dom.window.document.querySelectorAll('.scene img[alt="Table"]').length, 1);
+    const marker = dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Marker 1"]');
+    assert.ok(marker);
+    await surface.act(async () => { marker.dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true })); });
+    assert.equal(button("Check answer")?.disabled, false);
+  });
+
+  test(`${mode} unrelated grammar does not add a scene photo`, async () => {
+    const task = lesson();
+    if (task.publicContent.kind !== "grammarLesson") throw new Error("Expected grammar fixture");
+    task.publicContent.checkEachQuestion = checkEachQuestion;
+    await mount(task, descriptionScene);
+    assert.equal(dom.window.document.querySelector(".scene"), null);
+  });
+}
+
+test("a description with an object preview keeps its existing photo", async () => {
+  const task = lesson();
+  if (task.publicContent.kind !== "grammarLesson") throw new Error("Expected grammar fixture");
+  task.publicContent.checkEachQuestion = false;
+  task.publicContent.focus = "sceneDescription";
+  task.publicContent.questions[0].sceneObjectId = "cup";
+  await mount(task, descriptionScene);
+  assert.equal(dom.window.document.querySelectorAll('.scene img[alt="Table"]').length, 1);
+  assert.ok(dom.window.document.querySelector(".object-preview"));
+});
 
 test("A0 checked answers retain correctness, server feedback and notes across rerenders and restoration", async () => {
   let view = await mount(lesson());
