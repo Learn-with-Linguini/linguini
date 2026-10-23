@@ -4961,10 +4961,6 @@ p[role="alert"]::before { content: "!"; }
   touch-action: pan-y;
 }
 
-.vocabulary-learning-scene .scene {
-  max-height: min(42vh, 390px);
-}
-
 .vocabulary-learning-card {
   min-width: 0;
   padding: var(--space-4);
