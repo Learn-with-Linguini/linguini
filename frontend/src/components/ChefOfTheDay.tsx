@@ -1,8 +1,5 @@
-import { useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { gamificationKeys, getChefStandings } from "../lib/gamification";
 import { trackAction } from "../lib/analytics.ts";
-import { useAppState } from "../state/useAppState";
+import { useChefStandings } from "../state/gamification";
 import { BasilIcon } from "./icons";
 import { InlineLoader } from "./LoadingScreen";
 import { Button } from "./ui";
@@ -10,12 +7,7 @@ import "./gamification.css";
 import "./leaderboard.css";
 
 export function ChefOfTheDay() {
-  const { user } = useAppState();
-  const key = gamificationKeys.chefs(user?.id ?? "");
-  const pending = useRef(false);
-  const query = useQuery({ queryKey: key, queryFn: ({ signal }) => getChefStandings(signal), enabled: Boolean(user?.id),
-    refetchInterval: () => pending.current ? false : 60_000,
-    refetchOnWindowFocus: () => !pending.current, refetchOnReconnect: () => !pending.current });
+  const query = useChefStandings();
   const data = query.data;
   return <section className="stack" aria-labelledby="chef-day-title">
     <div className="ispy-chefs__heading"><div><h2 id="chef-day-title">Chefs of the Day</h2></div><BasilIcon size={30} /></div>
