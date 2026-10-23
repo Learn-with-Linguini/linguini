@@ -107,6 +107,15 @@ def test_provisional_count_never_exceeds_visible_instances():
     assert selected == [item.id for item in objects]
 
 
+def test_provisional_focus_shows_five_reliable_objects_when_available():
+    labels = ("cup", "book", "table", "chair", "lamp", "door")
+    objects = [obj(uuid4(), label) for label in labels]
+
+    _plan, selected = provisional_mission_focus([M01, M02, M03], objects, [])
+
+    assert selected == [item.id for item in objects[:5]]
+
+
 @pytest.mark.parametrize(("value", "expected"), [
     ("3", 3), ("three", 3), (" Two books", 2), ("10", 10), ("11", None), ("0", None),
     ("several", None), ("", None), (None, None), (3, None),

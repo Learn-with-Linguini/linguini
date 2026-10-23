@@ -309,9 +309,12 @@ def provisional_mission_focus(candidates, objects, relations):
                 add(obj.id)
                 distinct.add(label)
 
-    if not selected:
-        for obj in objects[:6]:
-            add(obj.id)
+    # Give the learner a useful vocabulary set even when the provisional
+    # mission itself needs fewer facts. Preserve analysis usefulness order.
+    for obj in objects:
+        if len(selected) >= min(5, len(objects)):
+            break
+        add(obj.id)
     return plan, selected
 
 

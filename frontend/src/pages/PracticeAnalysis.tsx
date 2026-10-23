@@ -16,7 +16,7 @@ import { abandonPractice, type PracticeReview, type ShortfallKind } from "../lib
 import { friendlyError } from "../lib/queryKeys";
 import { SHORTFALL_ACTIONS } from "../lib/sceneShortfall";
 import { countGroups, objectCounts } from "../lib/countGroups";
-import { initiallyHiddenObjectIds, sceneReviewPanels, type SceneReviewPanel } from "../lib/sceneReview";
+import { initialReviewMarkers, initiallyHiddenObjectIds, sceneReviewPanels, type SceneReviewPanel } from "../lib/sceneReview";
 import { trackAction } from "../lib/analytics.ts";
 import type { LanguageItem } from "../data/types";
 
@@ -55,7 +55,11 @@ export function PracticeAnalysis() {
   });
   const [explicitlyRemoved, setExplicitlyRemoved] = useState<string[]>([]);
   const [added, setAdded] = useState<AddedReviewObject[]>([]);
-  const nextMarker = useRef(Math.max(0, ...scene.items.map(item => item.marker)) + 1);
+  const reviewMarkers = initialReviewMarkers(
+    (session?.sceneObjects ?? []).map(item => item.id),
+    session?.suggestedSceneObjectIds,
+  );
+  const nextMarker = useRef(Object.keys(reviewMarkers).length + 1);
   const [relations, setRelations] = useState<PracticeReview["relations"]>(() => session?.sceneObjectRelations ?? []);
   const [sceneTitle, setSceneTitle] = useState(session?.session.sessionTitle ?? scene.title);
   const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>({});
@@ -91,7 +95,10 @@ export function PracticeAnalysis() {
     ));
     setExplicitlyRemoved([]);
     setAdded([]);
-    nextMarker.current = Math.max(0, ...scene.items.map(item => item.marker)) + 1;
+    nextMarker.current = Object.keys(initialReviewMarkers(
+      session.sceneObjects.map(item => item.id),
+      session.suggestedSceneObjectIds,
+    )).length + 1;
     setRelations(session.sceneObjectRelations);
     setAttributes(Object.fromEntries(session.sceneObjects.map(item => [item.id,
       Object.fromEntries(Object.entries(item.attributes ?? {}).filter((entry): entry is [string, string] => entry[0] !== "quantity" && typeof entry[1] === "string"))])));
@@ -162,7 +169,9 @@ export function PracticeAnalysis() {
     </>}
   </div>;
   const locked = session.tasks.some(task => task.status !== "pending");
-  const kept = scene.items.filter(item => !removed.includes(item.id));
+  const kept = scene.items
+    .filter(item => !removed.includes(item.id))
+    .map(item => ({ ...item, marker: reviewMarkers[item.id] ?? item.marker }));
   const custom: LanguageItem[] = added.map(item => ({ id: `custom-${item.id}`, word: item.label,
     translation: item.label, wordClass: "noun", gender: null, marker: item.marker,
     x: item.x * 100, y: item.y * 100, attributes: attributes[item.id] ?? {}, example: "", exampleTranslation: "" }));
