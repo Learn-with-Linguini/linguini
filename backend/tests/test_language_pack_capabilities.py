@@ -74,6 +74,7 @@ def test_catalog_loads_and_preserves_current_mission_purpose_order():
         ("M05", "A1"): mission_m05._ORDER,
         # dev's M06 question purposes, declared in order on its question model.
         ("M06", "A2"): list(get_args(mission_m06.M06Question.model_fields["purpose"].annotation)),
+        ("M13", "A0"): mission_a0.ORDERS["M13"] * 2,
     }
     for template in catalog.missions:
         key = (template.mission_id, template.practice_level.value)

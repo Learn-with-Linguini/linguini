@@ -148,7 +148,7 @@ def test_editing_a_check_invalidates_cache_and_evaluation_identity():
 def test_korean_targeted_validator_runs_with_pack_checks():
     pack = load_pack(PACKS / "ko-KR" / "everyday")
     assert validator_versions("ko", pack) == {
-        "ko": "ko-targeted@1", "pack-checks": PackChecksValidator.validator_id,
+        "ko": "ko-targeted@2", "pack-checks": PackChecksValidator.validator_id,
     }
     assessment = assess(_candidate("identify-object", "컵이에요."), pack, ApprovedVocabulary())
     assert assessment.status == "languageValidator"

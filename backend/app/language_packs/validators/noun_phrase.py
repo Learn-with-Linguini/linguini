@@ -113,7 +113,7 @@ def _required_family(candidate: CandidateSentence) -> str | None:
 
 
 class NounPhraseValidator:
-    validator_id = "noun-phrase.v5"
+    validator_id = "noun-phrase.v6"
 
     def __init__(self, vocabulary: ApprovedVocabulary) -> None:
         self.terms = {term.term_id: term for term in vocabulary.terms}
@@ -151,6 +151,11 @@ class NounPhraseValidator:
                 f"Use one of this noun's own {kind}articles with {bare!r} "
                 f"(agreement={noun.agreement!r}): {', '.join(sorted(set(allowed)))}."
             )
+        definite = noun.forms_by_key.get("definite")
+        if (candidate.construction_id == "noun-word-pair" and definite
+                and candidate.text.casefold() != definite.casefold()):
+            # M13 teaches the noun with its own article (die Gabel), not another case of it.
+            messages.append(f"Write the noun with its own definite article: {definite}.")
         attribute_use = uses.get("attribute")
         attribute = self.terms.get(attribute_use.term_id) if attribute_use else None
         if attribute is not None and bare:

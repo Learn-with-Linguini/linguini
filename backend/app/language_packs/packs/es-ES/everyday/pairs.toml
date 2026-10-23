@@ -1,0 +1,30 @@
+# The closed words a noun pairs with at A0 (M13). The generated chunk decides
+# the right one; the others, with the same noun, are the wrong choices.
+provenance = { source = "AI-authored original Linguini M13 draft, 2026-10-23; mirrors dev's a0_lexicon forms; not human-reviewed.", review_status = "generated" }
+explanation = "In Spanish, each noun goes with el or la. Learn them as a pair."
+
+[[words]]
+text = "el"
+position = "before"
+meaning = "the (masculine)"
+agreement = "masculine"
+
+[[words]]
+text = "la"
+position = "before"
+meaning = "the (feminine)"
+agreement = "feminine"
+
+[[words]]
+text = "los"
+position = "before"
+meaning = "the (masculine plural)"
+agreement = "masculine"
+plural = true
+
+[[words]]
+text = "las"
+position = "before"
+meaning = "the (feminine plural)"
+agreement = "feminine"
+plural = true

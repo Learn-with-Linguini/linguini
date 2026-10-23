@@ -165,6 +165,8 @@ class PackFiles(ApiModel):
     possessives: NonEmptyText | None = None
     # Order quantities and requested details for request role-plays (M06).
     requests: NonEmptyText | None = None
+    # The closed words a noun pairs with at A0 (M13): articles or Korean endings.
+    pairs: NonEmptyText | None = None
     constructions: list[NonEmptyText] = Field(min_length=1)
     examples: list[NonEmptyText] = Field(min_length=1)
     evaluations: list[NonEmptyText] = Field(min_length=1)
@@ -360,6 +362,53 @@ class RequestsFile(ApiModel):
         if field == "quantity":
             return value.isdigit() and self.quantity(int(value)) is not None
         return self.detail(key) is not None
+
+
+class PairedWord(ApiModel):
+    """A closed word a noun pairs with at A0 (M13): a definite article before it
+    (``la``, ``l'``) or a copula ending after it (Korean ``이에요``).
+
+    ``agreement`` and ``final`` describe which nouns take it (gender; a final consonant or
+    vowel). ``elided`` words (French l') attach without a space and only contrast with an
+    elided noun; ``plural`` words are offered once plurals were taught.
+    """
+
+    text: NonEmptyText
+    position: Literal["before", "after"]
+    meaning: NonEmptyText
+    agreement: Agreement | None = None
+    final: Literal["consonant", "vowel"] | None = None
+    elided: bool = False
+    plural: bool = False
+    romanization: NonEmptyText | None = None
+
+    def join(self, noun: str) -> str:
+        """The word with ``noun``: ``la taza``, ``l'assiette``, ``책이에요``."""
+        return pair_with(self.text, noun, self.position)
+
+
+def pair_with(word: str, noun: str, position: str) -> str:
+    if position == "after":
+        return f"{noun}{word}"
+    return f"{word}{noun}" if word.endswith(("'", "’")) else f"{word} {noun}"
+
+
+class PairedWordsFile(ApiModel):
+    provenance: Provenance
+    # The English note shown with the lesson (In Spanish, each noun goes with el or la…).
+    explanation: NonEmptyText
+    words: list[PairedWord] = Field(min_length=2)
+
+    @model_validator(mode="after")
+    def require_unique_words(self) -> PairedWordsFile:
+        texts = [word.text for word in self.words]
+        if len(texts) != len(set(texts)):
+            raise ValueError("paired words must be unique")
+        if any(normalize("NFC", text) != text for text in texts):
+            raise ValueError("paired words must be NFC")
+        if len({word.position for word in self.words}) != 1:
+            raise ValueError("paired words all go on one side of the noun")
+        return self
 
 
 class SceneObject(ApiModel):
@@ -676,6 +725,7 @@ class LanguagePack(ApiModel):
     numbers: NumbersFile | None = None
     possessives: PossessivesFile | None = None
     requests: RequestsFile | None = None
+    paired_words: PairedWordsFile | None = None
     _pack_dir: Path | None = PrivateAttr(default=None)
     _evaluation_files: list[Path] = PrivateAttr(default_factory=list)
 
@@ -864,6 +914,8 @@ class MissionTemplate(ApiModel):
     # Order quantities and details the pack must supply (request missions): ``quantity:2``,
     # ``size:small``.
     required_requests: list[NonEmptyText] = Field(default_factory=list)
+    # Whether the pack must supply the words a noun pairs with (``pairs.toml``, M13).
+    requires_paired_words: bool = False
     slots: list[MissionSlotTemplate] = Field(min_length=1)
 
     @property

@@ -1,7 +1,7 @@
 # Language-pack foundation
 
 This package supplies the default-off A0/A1/A2 runtime path for pack missions (M01,
-M02, M03, M04, M05 and M06) as well as explicit local previews. Packs are loaded lazily only when the flag
+M02, M03, M04, M05, M06 and M13) as well as explicit local previews. Packs are loaded lazily only when the flag
 is enabled or a command explicitly requests one. Other missions use their existing
 implementations.
 
@@ -10,7 +10,8 @@ holds metadata and references every content file: `labels.toml` (fixed learner-f
 semantic IDs), the optional `numbers.toml` (number words for counting missions),
 the optional `possessives.toml` (possessive words and a role-play cast for ownership and
 preference missions), the optional `requests.toml` (order quantities and requested details
-for request role-plays),
+for request role-plays), the optional `pairs.toml` (the closed words a noun pairs with at A0:
+articles or Korean endings),
 `constructions/*.toml` (grammar guidance, features, constraints, version),
 `examples/*.toml` (scene facts, bindings, sentences, chunks, alternatives, contrasts, mistakes) and
 `evaluations/*.toml` (held-out cases per mission level). Evaluations are loaded only through
@@ -37,7 +38,7 @@ The fixture pack is unreviewed test data and is not a claim of linguistic valida
 deterministic builders. On uses the existing mission eligibility/planning flow,
 then binds the actual session's confirmed object instances, attributes, relations,
 counts, translated vocabulary and register to the mission's slots. With the flag on,
-M01, M02, M03, M04, M05 and M06 never use their legacy builders. No sample input or handwritten
+M01, M02, M03, M04, M05, M06 and M13 never use their legacy builders. No sample input or handwritten
 `plan_specs` is used by the application.
 
 Set these values in the ignored **backend/.env.local** for a local experiment:
@@ -68,7 +69,7 @@ signing in for pack experiments, without assuming placement is pack-backed. Supp
 selecting a pack-only language; existing profiles can also be patched through the
 existing profile API to exercise another supported level.
 
-Pack availability extends mission candidates only with pack missions (M01-M06)
+Pack availability extends mission candidates only with pack missions (M01-M06, M13)
 that the app offers at the level and the pack has ready.
 Photo eligibility and release checks still apply. Other missions and I-Spy retain
 their existing language availability. Discovery does not constitute linguistic
@@ -159,7 +160,11 @@ lessons/
   m04.py        M04: same layout, plus ownership_facts and possessive_vocabulary
   m05.py        M05: same layout (A0 and A1), plus preference_facts and preference_vocabulary
   m06.py        M06: same layout (A2), plus order_facts and request_vocabulary; builds two tasks
+  m13.py        M13: same layout (A0), plus split_pair and form_choices
 ```
+
+Every mission the app implements now has a pack implementation, so with the flag on no
+mission falls back to a legacy builder.
 
 Every mission module has the same sections:
 
@@ -300,6 +305,20 @@ feedback and assistance steps. The polite-frame distractors are labels
 (`request-distractor-have`/`-exists`: Tengo, Hay). Choosing another item would need new
 sentences, so a pack lesson offers no alternatives on its scenario card. Request
 constructions recognise regular plurals after a quantity (cafés, Stifte) as counting ones do.
+
+M13 (choose the word that goes with the noun) exists at A0. One `noun-word-pair` chunk is
+generated per object (up to three differently named ones): the noun with the word it
+pairs with (la taza, l'assiette, die Tasse, 책이에요). The pack's `pairs.toml` lists the
+closed words a noun can pair with: definite articles by gender, French elided l', plural
+articles, or Korean 이에요/예요 by the noun's final sound, with the lesson's English
+explanation; templates set `requires_paired_words`. The generated chunk decides the right
+word; the other words, attached to the same noun, are the wrong choices (elided words only
+contrast with an elided noun, plural ones only once plurals were taught), as in dev's
+reviewed lessons. The lesson reuses dev's six A0 questions, validator and task builder
+(`a0_lesson_task` now accepts the pack's `explanation` and per-object `formNote`). The
+noun-phrase validator requires the chunk to be the noun's own definite form (die Gabel,
+not der Gabel; noun-phrase v6), and the Korean validator rejects 이에요 after a vowel
+(포크예요; ko-targeted@2).
 
 Several objects can share a target-language name (two cabinets). A question that only
 names the object accepts every marker on an object with that name: A0 marker questions
@@ -462,9 +481,10 @@ model proposals supply at runtime for counted nouns). Evaluate any pack locally
 
 ```powershell
 $packs = @{ es = 'es-ES'; fr = 'fr-FR'; de = 'de-DE'; ko = 'ko-KR' }
-foreach ($language in $packs.Keys) { foreach ($mission in 'M01','M02','M03','M04','M05','M06') { 'A0','A1','A2' | ForEach-Object {
+foreach ($language in $packs.Keys) { foreach ($mission in 'M01','M02','M03','M04','M05','M06','M13') { 'A0','A1','A2' | ForEach-Object {
   if ($mission -eq 'M05' -and $_ -eq 'A2') { return }  # M05 has A0 and A1 only
   if ($mission -eq 'M06' -and $_ -ne 'A2') { return }  # M06 has A2 only
+  if ($mission -eq 'M13' -and $_ -ne 'A0') { return }  # M13 has A0 only
   .\.venv\Scripts\python.exe -m app.language_packs.preview evaluate `
     --pack-dir "app/language_packs/packs/$($packs[$language])/everyday" `
     --language $language --register everyday --level $_ --mission $mission `
@@ -515,6 +535,10 @@ and set the spec `use` (`order`, `borrow`, `pass`, `request`, `askTemperature`, 
 "detail:size:small"` or `quantity = "number:3"`): the server's mistake. Rejects add the
 wrong quantity, size, detail and item, a statement instead of a request (Hay…, Es gibt…),
 a missing politeness tail, a reply or repair that confirms, and broken question marks.
+
+M13 cases bind the object and set `use = "name"`. Rejects add another article (el mesa, die
+Tisch, das Tür), the wrong ending (책예요, 포크이에요), another object, final punctuation, a
+space before a Korean ending and decomposed text.
 
 ## Shared noun-phrase validator
 
