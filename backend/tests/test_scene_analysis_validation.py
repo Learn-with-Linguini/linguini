@@ -252,7 +252,7 @@ def test_duplicate_relation_key() -> None:
     assert SceneAnalysisIssueCode.DUPLICATE_RELATION_KEY in issue_codes(raised.value)
 
 
-def test_repeated_objects_require_consistent_group_label_and_count() -> None:
+def test_repeated_object_counts_are_normalized_to_visible_instances() -> None:
     payload = valid_payload()
     payload["relations"] = []
     payload["objects"] = [
@@ -261,12 +261,21 @@ def test_repeated_objects_require_consistent_group_label_and_count() -> None:
     ]
     for item in payload["objects"]:
         item.update(label="cup", groupKey="cups", suggestedGroupCount=2)
-    parse_scene_analysis(payload)
-
     payload["objects"][1]["suggestedGroupCount"] = 3
-    with pytest.raises(SceneAnalysisValidationError) as raised:
-        parse_scene_analysis(payload)
-    assert SceneAnalysisIssueCode.INCONSISTENT_OBJECT_GROUP in issue_codes(raised.value)
+    parsed = parse_scene_analysis(payload)
+
+    assert [item.suggested_group_count for item in parsed.objects] == [2, 2]
+
+
+def test_group_key_reused_for_different_labels_is_repaired() -> None:
+    payload = valid_payload()
+    payload["relations"] = []
+    payload["objects"] = [object_payload("cup"), object_payload("plate", x=0.4)]
+    payload["objects"][1]["groupKey"] = payload["objects"][0]["groupKey"]
+
+    parsed = parse_scene_analysis(payload)
+
+    assert parsed.objects[0].group_key != parsed.objects[1].group_key
 
 
 def test_action_must_reference_a_detected_object() -> None:
