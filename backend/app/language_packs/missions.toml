@@ -442,3 +442,57 @@ construction_id = "their-preference"
 additional_constructions = ["preference-question"]
 target_ids = ["say-their-preference"]
 prompt_labels = ["answer-in-sentence"]
+
+[[missions]]
+mission_id = "M06"
+practice_level = "A2"
+content_version = 1
+required_constructions = [
+  { construction_id = "polite-request", min_version = 1 },
+  { construction_id = "order-phrase", min_version = 1 },
+  { construction_id = "detail-question", min_version = 1 },
+  { construction_id = "detail-reply", min_version = 1 },
+  { construction_id = "order-repeat", min_version = 1 },
+  { construction_id = "order-confirmation", min_version = 1 },
+  { construction_id = "order-repair", min_version = 1 },
+]
+required_requests = [
+  "quantity:1", "quantity:2", "quantity:3",
+  "size:small", "size:large",
+  "serviceSetting:eatIn", "serviceSetting:takeAway",
+  "temperature:hot", "temperature:cold",
+  "colour:blue", "colour:red", "colour:black",
+]
+
+[[missions.slots]]
+purpose = "listenOrderCard"
+construction_id = "polite-request"
+target_ids = ["understand-order"]
+
+[[missions.slots]]
+purpose = "politeChunkGap"
+construction_id = "order-phrase"
+target_ids = ["use-request-chunk"]
+prompt_labels = ["request-distractor-have", "request-distractor-exists"]
+
+[[missions.slots]]
+purpose = "buildRequest"
+construction_id = "order-phrase"
+target_ids = ["build-request"]
+prompt_labels = ["request-distractor-have"]
+
+[[missions.slots]]
+purpose = "identifyMissingDetail"
+construction_id = "detail-question"
+target_ids = ["identify-missing-detail"]
+
+[[missions.slots]]
+purpose = "replyWithDetail"
+construction_id = "detail-reply"
+target_ids = ["reply-with-detail"]
+
+[[missions.slots]]
+purpose = "confirmOrRepair"
+construction_id = "order-repeat"
+additional_constructions = ["order-confirmation", "order-repair"]
+target_ids = ["confirm-or-repair"]

@@ -35,18 +35,18 @@ def _ids(missions):
 
 
 def test_catalog_templates_resolve_through_the_registry():
-    assert PACK_MISSION_IDS == {"M01", "M02", "M03", "M04", "M05"}
+    assert PACK_MISSION_IDS == {"M01", "M02", "M03", "M04", "M05", "M06"}
     assert pack_mission_keys() == [
         ("M01", "A0", 1), ("M01", "A1", 1), ("M01", "A2", 1),
         ("M02", "A0", 1), ("M02", "A1", 2), ("M02", "A2", 1),
         ("M03", "A0", 1), ("M03", "A1", 1), ("M03", "A2", 1),
         ("M04", "A0", 1), ("M04", "A1", 1), ("M04", "A2", 1),
-        ("M05", "A0", 1), ("M05", "A1", 1),
+        ("M05", "A0", 1), ("M05", "A1", 1), ("M06", "A2", 1),
     ]
     # Templates match dev's mission definitions (M02 A1 lessons are content version 2).
     assert mission_template_key("M02", "A1") == ("M02", "A1", 2)
     with pytest.raises(ValueError, match="no pack lesson implementation"):
-        pack_mission("M06")
+        pack_mission("M13")
 
 
 def test_context_records_ready_and_declared_missions(packs_on):
@@ -54,7 +54,7 @@ def test_context_records_ready_and_declared_missions(packs_on):
     assert context.ready_missions == (
         "M01:A0:1", "M01:A1:1", "M01:A2:1", "M02:A0:1", "M02:A1:2", "M02:A2:1",
         "M03:A0:1", "M03:A1:1", "M03:A2:1", "M04:A0:1", "M04:A1:1", "M04:A2:1",
-        "M05:A0:1", "M05:A1:1",
+        "M05:A0:1", "M05:A1:1", "M06:A2:1",
     )
     assert context.declared_missions == context.ready_missions
     assert context.ready_levels == ("A0", "A1", "A2")
@@ -81,9 +81,8 @@ def test_ready_pack_missions_replace_legacy_versions_first():
     )
     assert _ids(missions)[0] == ("M01", "A2")
     assert [mission_id for mission_id, _ in _ids(missions)].count("M01") == 1
-    # M02-M04 have pack implementations but are not ready here: not offered.
-    assert not {"M02", "M03", "M04"} & {mission_id for mission_id, _ in _ids(missions)}
-    assert "M06" in {mission_id for mission_id, _ in _ids(missions)}
+    # M02-M06 have pack implementations but are not ready here: not offered.
+    assert _ids(missions) == [("M01", "A2")]
 
 
 def test_declared_but_blocked_missions_never_fall_back_to_legacy():
@@ -93,12 +92,12 @@ def test_declared_but_blocked_missions_never_fall_back_to_legacy():
 
 
 def test_pack_missions_never_use_their_legacy_builder_when_packs_are_on():
-    profile = {"proficiency_level": "A2", "target_language_code": "es"}
-    missions = lesson_missions(SessionMode.LESSON, profile, _context(["M01:A0:1"], ["M01:A0:1"]))
+    profile = {"proficiency_level": "A0", "target_language_code": "es"}
+    missions = lesson_missions(SessionMode.LESSON, profile, _context(["M01:A1:1"], ["M01:A1:1"]))
     ids = {mission_id for mission_id, _ in _ids(missions)}
-    assert not ids & {"M01", "M02", "M03", "M04", "M05"}
+    assert not ids & {"M01", "M02", "M03", "M04", "M05", "M06"}
     # Missions without a pack implementation keep their legacy builders.
-    assert "M06" in ids
+    assert "M13" in ids
 
 
 def test_pack_only_languages_get_every_ready_pack_mission():
@@ -159,7 +158,7 @@ def test_bind_plan_rejects_missions_without_a_pack_implementation():
         pack, [], [], [], SimpleNamespace(objects=[], attributes=[], relationships=[]), {},
     )
     with pytest.raises(ValueError, match="no pack lesson implementation"):
-        bind_plan(pack, "A2", facts, vocabulary, mission_id="M06")
+        bind_plan(pack, "A0", facts, vocabulary, mission_id="M13")
 
 
 def _counted_cups(quantity, label="cup"):

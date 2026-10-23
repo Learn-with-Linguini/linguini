@@ -1,0 +1,15 @@
+construction_id = "order-confirmation"
+version = 1
+summary = "Confirm that the repeated order is right."
+guidance = "Confirm an accurate repeat with a short fixed answer: 네, 맞아요. Name nothing."
+features = ["request", "confirmation"]
+constraints = ["Express only the bound order facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = {}
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "confirms"
+message = "A confirmation starts with 네."
+must_contain = ["^네\\b"]
+must_not_contain = ["^아니"]

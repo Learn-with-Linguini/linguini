@@ -31,7 +31,7 @@ from .schema import GuidanceBundle, LanguagePack
 
 logger = logging.getLogger(__name__)
 
-GENERATOR_VERSION = "lp-generator.v7"
+GENERATOR_VERSION = "lp-generator.v8"
 ASSESSOR_VERSION = "lp-assessor.v1"
 
 GENERATOR_SYSTEM_PROMPT = """You write sentences for one language-learning lesson. The user message is JSON with: language (code, locale, script, register,
@@ -51,6 +51,9 @@ Rules:
 - A like spec says its person likes the bound object; a dislike spec says they do not. The use always decides the
   polarity, even when it contradicts the bound preference: a like spec with truth false whose preference is a dislike is a
   deliberate wrong option, so write it affirmative (I like the book.), never the true negated sentence.
+- In a request role-play the bound order (quantity, size, asked detail) is in facts.requests. A target binding is
+  context for agreement and is never named. A repeat with truth false states its counterfactual detail, as a server's
+  deliberate mistake; a detail question offers the choices its use names without giving the answer.
 - Follow the construction guidance and the correct examples' structure. Do not copy an example unless its bindings match.
 - Write each spec with form "sentence" as one complete sentence or question exactly as the learner should see it
   (capitalisation, spacing and punctuation included). Write each spec with form "phrase" (a vocabulary name, a position,
@@ -173,7 +176,7 @@ class ModelSource:
                 c.model_dump(mode="json") for c in pack.constructions
                 if c.construction_id in used["constructions"]
             ],
-            "rendered_task": task.model_dump(mode="json") if task else None,
+            "rendered_task": _rendered(task),
         }
         review = self._call(
             REVIEW_PROMPT, payload, ContentReview, "language_content_review", REVIEW_VERSION,
@@ -371,6 +374,15 @@ class ModelSource:
             passed=passed,
             messages=list(output.issues),
         )
+
+
+def _rendered(task):
+    """The rendered task, or every task of a lesson built as several (M06)."""
+    if not task:
+        return None
+    if isinstance(task, list):
+        return [item.model_dump(mode="json") for item in task]
+    return task.model_dump(mode="json")
 
 
 def _lesson_scope(plan, vocabulary):

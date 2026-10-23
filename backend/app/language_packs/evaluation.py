@@ -24,6 +24,7 @@ from .generation import (
     ConfirmedOwner,
     ConfirmedPreference,
     ConfirmedRelation,
+    ConfirmedRequest,
     ConfirmedSceneFacts,
     assess,
     check_deterministic,
@@ -195,10 +196,15 @@ def _scene_facts(case: EvaluationCase) -> BoundSceneFacts:
                             person=item.person, likes=item.likes)
         for item in case.scene.preferences
     ]
+    requests = [
+        ConfirmedRequest(fact_id=item.fact_id, object_fact_id=item.object, field=item.field,
+                         value=item.value)
+        for item in case.scene.requests
+    ]
     return BoundSceneFacts(
         scene_facts=ConfirmedSceneFacts(
             objects=objects, attributes=attributes, relations=relations, counted_groups=counts,
-            owners=owners, preferences=preferences,
+            owners=owners, preferences=preferences, requests=requests,
         )
     )
 
@@ -207,7 +213,7 @@ def _mission_vocabulary(
     pack: LanguagePack, mission_id: str, facts: BoundSceneFacts, vocabulary: ApprovedVocabulary,
 ) -> ApprovedVocabulary:
     """The case's vocabulary as the mission's lessons see it (M03's number words, M04's
-    possessives, M05's cast names)."""
+    possessives, M05's cast names, M06's order words)."""
     from .lessons import PACK_MISSION_IDS, pack_mission
 
     if mission_id not in PACK_MISSION_IDS:

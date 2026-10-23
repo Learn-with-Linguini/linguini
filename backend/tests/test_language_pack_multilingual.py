@@ -1,4 +1,4 @@
-"""M01 normal dispatch for every bundled pack and level. Provider responses are mocked.
+"""Pack-mission normal dispatch for every bundled pack and level. Provider responses are mocked.
 
 The mocked sentences are test data shaped like each pack's examples; they are not
 model evidence or a claim that the generated language has been reviewed.
@@ -37,8 +37,10 @@ ROMANIZED = {"ko"}
 COUNTS = {
     "M01": {"A0": 6, "A1": 4, "A2": 5}, "M02": {"A0": 6, "A1": 4, "A2": 5},
     "M03": {"A0": 6, "A1": 3, "A2": 5}, "M04": {"A0": 6, "A1": 3, "A2": 5},
-    "M05": {"A0": 6, "A1": 3},
+    "M05": {"A0": 6, "A1": 3}, "M06": {"A2": 6},
 }
+# M06 builds its order as two tasks (place the order, finish it); others build one.
+TASKS = {"M06": 2}
 # Every pack mission at every level it has a template for.
 MISSION_LEVELS = [(mission, level) for mission, levels in COUNTS.items() for level in levels]
 MISSION_VERSIONS = {("M02", "A1"): 2}
@@ -84,7 +86,7 @@ def _ko(word, consonant, vowel):
 LEXICON = {
     "es": dict(
         nouns={"cup": ("taza", "la", "feminine"), "book": ("libro", "el", "masculine"),
-               "table": ("mesa", "la", "feminine")},
+               "table": ("mesa", "la", "feminine"), "coffee": ("café", "el", "masculine")},
         indefinite={"masculine": "un", "feminine": "una"},
         colours={"red": ("rojo", "roja"), "green": ("verde", "verde"),
                  "white": ("blanco", "blanca"), "blue": ("azul", "azul"),
@@ -94,7 +96,7 @@ LEXICON = {
     ),
     "fr": dict(
         nouns={"cup": ("tasse", "la", "feminine"), "book": ("livre", "le", "masculine"),
-               "table": ("table", "la", "feminine")},
+               "table": ("table", "la", "feminine"), "coffee": ("café", "le", "masculine")},
         indefinite={"masculine": "un", "feminine": "une"},
         colours={"red": ("rouge", "rouge"), "green": ("vert", "verte"),
                  "white": ("blanc", "blanche"), "blue": ("bleu", "bleue"),
@@ -104,7 +106,7 @@ LEXICON = {
     ),
     "de": dict(
         nouns={"cup": ("Tasse", "die", "feminine"), "book": ("Buch", "das", "neuter"),
-               "table": ("Tisch", "der", "masculine")},
+               "table": ("Tisch", "der", "masculine"), "coffee": ("Kaffee", "der", "masculine")},
         indefinite={"masculine": "ein", "feminine": "eine", "neuter": "ein"},
         dative={"masculine": "dem", "feminine": "der", "neuter": "dem"},
         colours={"red": ("roter", "rote", "rotes"), "green": ("grüner", "grüne", "grünes"),
@@ -119,7 +121,7 @@ LEXICON = {
     ),
     "ko": dict(
         nouns={"cup": ("컵", None, None), "book": ("책", None, None),
-               "table": ("탁자", None, None)},
+               "table": ("탁자", None, None), "coffee": ("커피", None, None)},
         colours={"red": "빨간색", "green": "초록색", "white": "흰색", "blue": "파란색",
                  "black": "검은색"},
         modifiers={"red": "빨간", "white": "하얀", "blue": "파란", "black": "검은"},
@@ -142,7 +144,7 @@ def _capitalised(text):
 
 
 # Constructions each pack marks with the "phrase" feature.
-PHRASES = {"location-phrase", "quantity-chunk"}
+PHRASES = {"location-phrase", "quantity-chunk", "order-phrase"}
 M02_CONSTRUCTIONS = {
     "find-object", "where-question", "location-phrase", "target-clue", "target-location",
 }
@@ -340,9 +342,9 @@ M03_CONSTRUCTIONS = {
     "quantity-pair",
 }
 PLURALS = {
-    "es": {"cup": "tazas", "book": "libros", "table": "mesas"},
-    "fr": {"cup": "tasses", "book": "livres", "table": "tables"},
-    "de": {"cup": "Tassen", "book": "Bücher", "table": "Tische"},
+    "es": {"cup": "tazas", "book": "libros", "table": "mesas", "coffee": "cafés"},
+    "fr": {"cup": "tasses", "book": "livres", "table": "tables", "coffee": "cafés"},
+    "de": {"cup": "Tassen", "book": "Bücher", "table": "Tische", "coffee": "Kaffees"},
 }
 COUNTING = {
     "es": dict(statement="Hay {n} {p}.", no="No, hay {n} {p}.",
@@ -553,6 +555,171 @@ def _m05_sentence(language, construction, spec, terms):
     return text, {}
 
 
+M06_CONSTRUCTIONS = {
+    "polite-request", "order-phrase", "detail-question", "detail-reply", "order-repeat",
+    "order-confirmation", "order-repair",
+}
+# Order words as each pack's examples write them: [one masculine, one feminine], 2, 3.
+M06_NUMBERS = {
+    "es": (("un", "una"), "dos", "tres"), "fr": (("un", "une"), "deux", "trois"),
+    "de": (("einen", "eine", "ein"), "zwei", "drei"), "ko": ("한", "두", "세"),
+}
+M06_COUNTERS = {"cup": "개", "book": "권", "coffee": "잔"}
+# Detail words by language: agreeing (masculine, feminine) for es/fr, base for de/ko.
+M06_DETAILS = {
+    "es": {"size:small": ("pequeño", "pequeña"), "size:large": ("grande", "grande"),
+           "serviceSetting:eatIn": "para tomar aquí", "serviceSetting:takeAway": "para llevar",
+           "temperature:hot": ("caliente", "caliente"), "temperature:cold": ("frío", "fría"),
+           "colour:blue": ("azul", "azul"), "colour:red": ("rojo", "roja"),
+           "colour:black": ("negro", "negra")},
+    "fr": {"size:small": ("petit", "petite"), "size:large": ("grand", "grande"),
+           "serviceSetting:eatIn": "sur place", "serviceSetting:takeAway": "à emporter",
+           "temperature:hot": ("chaud", "chaude"), "temperature:cold": ("froid", "froide"),
+           "colour:blue": ("bleu", "bleue"), "colour:red": ("rouge", "rouge"),
+           "colour:black": ("noir", "noire")},
+    "de": {"size:small": "klein", "size:large": "groß", "serviceSetting:eatIn": "für hier",
+           "serviceSetting:takeAway": "zum Mitnehmen", "temperature:hot": "heiß",
+           "temperature:cold": "kalt", "colour:blue": "blau", "colour:red": "rot",
+           "colour:black": "schwarz"},
+    "ko": {"size:small": "작은", "size:large": "큰", "serviceSetting:eatIn": "먹고 갈게요",
+           "serviceSetting:takeAway": "포장", "temperature:hot": "따뜻한",
+           "temperature:cold": "차가운", "colour:blue": "파란색", "colour:red": "빨간색",
+           "colour:black": "검은색"},
+}
+M06_QUESTIONS = {
+    "es": {"askColour": "¿De qué color?", "askServiceSetting": "¿Para tomar aquí o para llevar?",
+           "askTemperature": "¿Caliente o frío?", "askSize": "¿Grandes o pequeños?"},
+    "fr": {"askColour": "De quelle couleur ?", "askServiceSetting": "Sur place ou à emporter ?",
+           "askTemperature": "Chaud ou froid ?", "askSize": "Des grosses ou des petites ?"},
+    "de": {"askColour": "Welche Farbe?", "askServiceSetting": "Für hier oder zum Mitnehmen?",
+           "askTemperature": "Heiß oder kalt?", "askSize": "Große oder kleine?"},
+    "ko": {"askColour": "무슨 색이요?",
+           "askServiceSetting": "드시고 가세요, 아니면 포장이세요?",
+           "askTemperature": "따뜻한 걸로 드릴까요, 차가운 걸로 드릴까요?",
+           "askSize": "큰 걸로 드릴까요, 작은 걸로 드릴까요?"},
+}
+
+
+def _m06_sentence(language, construction, spec, terms):
+    """M06's order sentences in each pack's taught pattern (test data, not model output).
+
+    ``terms`` holds the vocabulary by fact and term ID: the order's own quantity and
+    details (``request-*``) and the alternatives a false spec binds (``number-N``,
+    ``detail-*``).
+    """
+    if construction == "order-confirmation":
+        return {"es": "Sí, eso es.", "fr": "Oui, c'est ça.", "de": "Ja, genau.",
+                "ko": "네, 맞아요."}[language], {}
+    bindings = dict(spec["bindings"])
+    for role, term_id in spec["counterfactual"].items():
+        bindings[role] = terms[term_id]["factId"]
+    source = terms[bindings.get("object", bindings.get("target"))]["sourceText"]
+    bare, _article, gender = LEXICON[language]["nouns"][source]
+    ordered = next(term for term in terms.values() if term["factId"] == "request:quantity")
+    count = int(ordered["linguistic"]["value"])
+
+    def value(role):
+        term = terms[bindings[role]]
+        if role == "quantity":
+            return int(term["linguistic"].get("quantity") or term["linguistic"]["value"])
+        return f"{term['linguistic']['field']}:{term['linguistic']['value']}"
+
+    def detail(role, quantity=count, capital=False):
+        word = M06_DETAILS[language][value(role)]
+        if isinstance(word, tuple):
+            word = word[gender == "feminine"]
+            if quantity > 1 and language in {"es", "fr"} and not word.endswith("s"):
+                word += "es" if language == "es" and word[-1] not in "aeiouáéó" else "s"
+        return _capitalised(word) if capital else word
+
+    quantity = value("quantity") if "quantity" in bindings else count
+    if language == "ko":
+        def phrase():
+            size = f"{M06_DETAILS['ko'][value('size')]} " if "size" in bindings else ""
+            return f"{size}{bare} {M06_NUMBERS['ko'][quantity - 1]} {M06_COUNTERS[source]}"
+
+        def reply(role):
+            word = M06_DETAILS["ko"][value(role)]
+            if value(role).split(":")[0] in {"temperature", "size"}:
+                return f"{word} 걸로 주세요"
+            return word if word.endswith("요") else f"{word}{_ko_tail(word)}"
+
+        text = {
+            "polite-request": lambda: f"{phrase()} "
+                              f"{'빌려 주세요' if spec['use'] == 'borrow' else '주세요'}.",
+            "order-phrase": phrase,
+            "detail-question": lambda: M06_QUESTIONS["ko"][spec["use"]],
+            "detail-reply": lambda: f"{reply('detail')}.",
+            "order-repeat": lambda: f"{phrase()}, {reply('detail')}?",
+            "order-confirmation": lambda: "네, 맞아요.",
+            "order-repair": lambda: (
+                f"아니요, {M06_NUMBERS['ko'][quantity - 1]} {M06_COUNTERS[source]}"
+                f"{_ko_tail(M06_COUNTERS[source])}." if "quantity" in bindings
+                else f"아니요, {reply(next(r for r in ('detail', 'size') if r in bindings))}."
+            ),
+        }[construction]()
+        return text, {}
+
+    noun = bare if quantity == 1 else PLURALS[language][source]
+    numbers = M06_NUMBERS[language]
+    if quantity == 1:
+        number = numbers[0][GENDER_INDEX[gender]] if language == "de" else numbers[0][
+            gender == "feminine"]
+    else:
+        number = numbers[quantity - 1]
+    if language == "es":
+        size = f" {detail('size', quantity)}" if "size" in bindings else ""
+        phrase = f"{number} {noun}{size}"
+        tail = "por favor"
+        frames = {"order": "Quisiera {np}, por favor.", "borrow": "¿Me prestas {np}, por favor?",
+                  "pass": "¿Me pasas {np}, por favor?"}
+        repeat = "Entonces, {np}, {detail}, ¿verdad?"
+        confirm, repair = "Sí, eso es.", "En realidad, {value}, por favor."
+    elif language == "fr":
+        size = f"{detail('size', quantity)} " if "size" in bindings else ""
+        phrase = f"{number} {size}{noun}"
+        tail = "s'il te plaît" if source in {"cup", "book"} else "s'il vous plaît"
+        frames = {"order": "Je voudrais {np}, s'il vous plaît.",
+                  "borrow": "Tu peux me prêter {np}, s'il te plaît ?",
+                  "pass": "Tu peux me passer {np}, s'il te plaît ?"}
+        repeat = "Alors, {np}, {detail}, c'est ça ?"
+        confirm, repair = "Oui, c'est ça.", "En fait, {value}, " + tail + "."
+    else:
+        ending = ("e" if quantity > 1 or gender == "feminine"
+                  else "es" if gender == "neuter" else "en")
+        size = f"{M06_DETAILS['de'][value('size')]}{ending} " if "size" in bindings else ""
+        phrase = f"{number} {size}{noun}"
+        tail = "bitte"
+        frames = {"order": "Ich hätte gern {np}, bitte.",
+                  "borrow": "Kannst du mir bitte {np} leihen?",
+                  "pass": "Kannst du mir bitte {np} geben?"}
+        repeat = "Also, {np}, {detail}, richtig?"
+        confirm, repair = "Ja, genau.", "Eigentlich {value}, bitte."
+    if construction == "polite-request":
+        text = frames[spec["use"]].format(np=phrase)
+    elif construction == "order-phrase":
+        text = phrase
+    elif construction == "detail-question":
+        text = M06_QUESTIONS[language][spec["use"]]
+    elif construction == "detail-reply":
+        text = f"{detail('detail', capital=True)}, {tail}."
+    elif construction == "order-repeat":
+        text = repeat.format(np=phrase, detail=detail("detail"))
+    elif construction == "order-confirmation":
+        text = confirm
+    elif "quantity" in bindings:
+        text = ("En fait, j'en voudrais {value}." if language == "fr" else repair).format(
+            value=number if quantity > 1 or language != "de" else "einen")
+    else:
+        text = repair.format(value=detail(next(r for r in ("detail", "size") if r in bindings)))
+    return text, {}
+
+
+def _ko_tail(word):
+    """이요 after a final consonant, 요 after a vowel."""
+    return "이요" if _batchim(word) else "요"
+
+
 def _m03_sentence(language, construction, spec, terms):
     """M03's counting sentences in each pack's taught pattern, with realized surfaces."""
     lex = LEXICON[language]
@@ -743,6 +910,10 @@ class MockPackProvider:
                 text, realized = _m05_sentence(
                     self.language, spec["construction_id"], spec, {**terms, **terms_by_id},
                 )
+            elif spec["construction_id"] in M06_CONSTRUCTIONS:
+                text, realized = _m06_sentence(
+                    self.language, spec["construction_id"], spec, {**terms, **terms_by_id},
+                )
             else:
                 text, realized = _sentence(
                     self.language, spec["construction_id"], spec["use"], spec["truth"],
@@ -777,10 +948,10 @@ class MockPackProvider:
         )
 
 
-def build_scene(language):
+def build_scene(language, items=SCENE):
     lex = LEXICON[language]
     objects, words, translated, attrs = [], [], [], []
-    for index, (source, colour) in enumerate(SCENE, 1):
+    for index, (source, colour) in enumerate(items, 1):
         bare, article, gender = lex["nouns"][source]
         oid = UUID(int=index)
         objects.append(SimpleNamespace(id=oid, label=source, attributes={"color": colour}))
@@ -820,10 +991,11 @@ def scene():
 def _counted_groups(objects):
     by_label = {obj.label: obj.id for obj in objects}
     return [dict(sceneObjectIds=[str(by_label[label])], quantity=quantity)
-            for label, quantity in COUNTED]
+            for label, quantity in COUNTED if label in by_label]
 
 
-def _dispatch(language, level, scene, provider, monkeypatch, mission_id="M01", reaction="like"):
+def _dispatch(language, level, scene, provider, monkeypatch, mission_id="M01", reaction="like",
+              progress=None):
     from app.language_packs.context import resolve_language_context
 
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "true")
@@ -853,7 +1025,7 @@ def _dispatch(language, level, scene, provider, monkeypatch, mission_id="M01", r
         session_id=UUID(int=100),
         missions=[mission],
         counted_groups=_counted_groups(objects),
-        mission_progress={},
+        mission_progress=progress or {},
         review_markers=markers if own_choice else {},
         roleplay_facts=roleplay_facts,
         learner_facts={mission_id: learner_facts[mission_id]} if own_choice else {},
@@ -872,28 +1044,9 @@ def _dispatch(language, level, scene, provider, monkeypatch, mission_id="M01", r
     )
 
 
-@pytest.mark.parametrize(("mission_id", "level"), MISSION_LEVELS)
-@pytest.mark.parametrize("language", list(LOCALES))
-def test_pack_missions_dispatch_for_every_pack_and_level(
-    language, level, mission_id, scene, monkeypatch,
-):
-    pack = load_pack(PACKS / LOCALES[language] / "everyday")
-    assert pack.lexical == {}
-    provider = MockPackProvider(language)
-    (task,) = _dispatch(language, level, scene(language), provider, monkeypatch, mission_id)
-
-    assert task.public_content.mission_id == mission_id
+def _assert_gradable(task):
+    """Every correct answer grades correct, and every wrong choice grades wrong."""
     questions = task.public_content.questions
-    assert len(questions) == COUNTS[mission_id][level]
-    assert len(provider.requests) == 1, "sentences should pass without repair"
-    data = json.loads(provider.requests[0].user_content)
-    assert data["language"]["code"] == language
-    # Names, positions and number-noun chunks are phrases; everything else is a sentence.
-    for spec in data["specs"]:
-        phrase = spec["use"] == "name" or spec["construction_id"] in PHRASES
-        assert spec["form"] == ("phrase" if phrase else "sentence"), spec["spec_id"]
-    assert "evaluations" not in data and "acceptable" not in data
-
     answers = task.answer_key.correct_option_ids
     assert all(
         _lesson_answer_is_correct(task, q.question_id, answers[q.question_id]) for q in questions
@@ -907,6 +1060,63 @@ def test_pack_missions_dispatch_for_every_pack_and_level(
         for q in questions
     }
     assert not evaluate(task, SubmitVocabularyReviewAttemptRequest(answers=wrong))
+
+
+def _assert_m06_order(tasks):
+    """Dev's two-task M06 contract: one transaction, the scenario card on task 1, and a
+    Q6 answer that confirms or repairs exactly as the transaction says."""
+    first, second = tasks
+    transaction = first.answer_key.mission_state["transaction"]
+    assert second.answer_key.mission_state["transaction"] == transaction
+    assert first.public_content.scenario is not None
+    assert first.public_content.scenario.alternatives == []
+    assert second.public_content.scenario is None
+    assert [q.question_id for q in first.public_content.questions] == [
+        "m06-q1", "m06-q2", "m06-q3",
+    ]
+    by_id = {q.question_id: q for task in tasks for q in task.public_content.questions}
+    q2 = by_id["m06-q2"]
+    assert q2.slot_template.count("___") == 1
+    assert transaction["answers"]["m06-q6"]["correct"] == (
+        second.answer_key.correct_option_ids["m06-q6"]
+    )
+    repaired = transaction["mismatch"]["flag"]
+    confirm = transaction["dialogue"][-1]["text"]
+    assert confirm == by_id["m06-q6"].audio_text
+    q6 = second.answer_key.mission_state["answers"]["m06-q6"]
+    assert repaired != any(chunk in q6["model"] for chunk in ("Sí", "Oui", "Ja", "네"))
+    assert set(q6["chunks"]) <= set(by_id["m06-q6"].token_bank)
+
+
+@pytest.mark.parametrize(("mission_id", "level"), MISSION_LEVELS)
+@pytest.mark.parametrize("language", list(LOCALES))
+def test_pack_missions_dispatch_for_every_pack_and_level(
+    language, level, mission_id, scene, monkeypatch,
+):
+    pack = load_pack(PACKS / LOCALES[language] / "everyday")
+    assert pack.lexical == {}
+    provider = MockPackProvider(language)
+    tasks = _dispatch(language, level, scene(language), provider, monkeypatch, mission_id)
+
+    assert len(tasks) == TASKS.get(mission_id, 1)
+    assert {task.public_content.mission_id for task in tasks} == {mission_id}
+    assert sum(len(task.public_content.questions) for task in tasks) == (
+        COUNTS[mission_id][level]
+    )
+    assert len(provider.requests) == 1, "sentences should pass without repair"
+    data = json.loads(provider.requests[0].user_content)
+    assert data["language"]["code"] == language
+    # Names, positions and number-noun chunks are phrases; everything else is a sentence.
+    for spec in data["specs"]:
+        phrase = spec["use"] == "name" or spec["construction_id"] in PHRASES
+        assert spec["form"] == ("phrase" if phrase else "sentence"), spec["spec_id"]
+    assert "evaluations" not in data and "acceptable" not in data
+
+    for task in tasks:
+        _assert_gradable(task)
+    task = tasks[0]
+    answers = task.answer_key.correct_option_ids
+    questions = [question for task in tasks for question in task.public_content.questions]
     for question in questions:
         if question.interaction_type == "sentenceBuilding":
             assert question.sentence_join_modes
@@ -919,6 +1129,8 @@ def test_pack_missions_dispatch_for_every_pack_and_level(
             assert question.romanizations
     if pack.language.romanization_required and task.public_content.prep:
         assert all(card.romanization for card in task.public_content.prep)
+    if mission_id == "M06":
+        _assert_m06_order(tasks)
 
     by_id = {q.question_id: q for q in questions}
     if mission_id == "M01" and level == "A1":
@@ -983,3 +1195,51 @@ def test_m05_a0_dislike_has_the_learner_take_another_object(language, scene, mon
     assert last.slot_template.count("___") == 1
     assert evaluate(task, SubmitVocabularyReviewAttemptRequest(answers=answers))
 
+
+
+CAFE = (("coffee", "black"), ("cup", "red"), ("table", "green"))
+
+
+@pytest.mark.parametrize("mode", ["chunkChoice", "wordBank", "openCloze"])
+@pytest.mark.parametrize("language", list(LOCALES))
+def test_m06_cafe_order_in_every_reply_mode(language, mode, monkeypatch):
+    """A café order (a size and a served detail) for every pack, practised as dev's
+    history decides: choose the reply, build it from tiles, or type it."""
+    provider = MockPackProvider(language)
+    tasks = _dispatch(language, "A2", build_scene(language, CAFE), provider, monkeypatch,
+                      "M06", progress={"m06Q5Mode": mode})
+    assert len(provider.requests) == 1, "sentences should pass without repair"
+    for task in tasks:
+        _assert_gradable(task)
+    _assert_m06_order(tasks)
+    transaction = tasks[0].answer_key.mission_state["transaction"]
+    assert transaction["scenario"] == "cafe" and transaction["itemKey"] == "coffee"
+    assert transaction["requestDetails"]["size"] in {"small", "large"}
+    assert transaction["q5Mode"] == mode
+    q5 = next(q for q in tasks[1].public_content.questions if q.question_id == "m06-q5")
+    assert q5.interaction_type == {
+        "chunkChoice": "multipleChoice", "wordBank": "sentenceBuilding",
+        "openCloze": "textCloze",
+    }[mode]
+    data = json.loads(provider.requests[0].user_content)
+    uses = {spec["spec_id"]: spec["use"] for spec in data["specs"]}
+    assert uses["listenOrderCard-request"] == "order"
+    replies = [spec_id for spec_id in uses if spec_id.startswith("replyWithDetail-")]
+    assert len(replies) == {"chunkChoice": 3, "wordBank": 2, "openCloze": 1}[mode]
+
+
+def test_m06_saved_order_is_reused(monkeypatch):
+    """A regenerated lesson keeps the saved transaction (dev's m06Transaction)."""
+    language = "es"
+    first = _dispatch(language, "A2", build_scene(language, CAFE), MockPackProvider(language),
+                      monkeypatch, "M06")
+    saved = dict(first[0].answer_key.mission_state["transaction"])
+    saved["quantity"] = 3 if saved["quantity"] == 2 else 2
+    saved["mismatch"] = {"flag": False, "field": None, "servedValue": None,
+                         "correctedValue": None}
+    again = _dispatch(language, "A2", build_scene(language, CAFE), MockPackProvider(language),
+                      monkeypatch, "M06", progress={"m06Transaction": saved})
+    transaction = again[0].answer_key.mission_state["transaction"]
+    assert transaction["quantity"] == saved["quantity"]
+    assert transaction["mismatch"]["flag"] is False
+    assert again[1].answer_key.correct_option_ids["m06-q6"] == "Sí, eso es."

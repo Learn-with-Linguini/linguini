@@ -163,6 +163,8 @@ class PackFiles(ApiModel):
     numbers: NonEmptyText | None = None
     # Possessive words and the role-play cast for ownership missions (M04).
     possessives: NonEmptyText | None = None
+    # Order quantities and requested details for request role-plays (M06).
+    requests: NonEmptyText | None = None
     constructions: list[NonEmptyText] = Field(min_length=1)
     examples: list[NonEmptyText] = Field(min_length=1)
     evaluations: list[NonEmptyText] = Field(min_length=1)
@@ -299,6 +301,67 @@ class PossessivesFile(ApiModel):
         return next((item for item in self.cast if item.owner_id == owner_id), None)
 
 
+# A detail a request role-play (M06) asks for, beside the item and its quantity.
+REQUEST_DETAIL = r"^(?:size|serviceSetting|temperature|colour):[a-z][A-Za-z]*$"
+
+
+class RequestQuantity(ApiModel):
+    """How an order writes a quantity, in every agreement and case it takes there
+    (un/una, einen/eine/ein, Korean 두 before its counter)."""
+
+    value: Annotated[int, Field(ge=1, le=20)]
+    forms: list[NonEmptyText] = Field(min_length=1)
+
+
+class RequestDetail(ApiModel):
+    """A detail an order states or a server asks about (``size:small``,
+    ``serviceSetting:takeAway``), with every form a reply or repeat writes it in."""
+
+    detail: Annotated[str, StringConstraints(pattern=REQUEST_DETAIL)]
+    meaning: NonEmptyText
+    forms: list[NonEmptyText] = Field(min_length=1)
+
+    @property
+    def field(self) -> str:
+        return self.detail.split(":", 1)[0]
+
+    @property
+    def value(self) -> str:
+        return self.detail.split(":", 1)[1]
+
+
+class RequestsFile(ApiModel):
+    provenance: Provenance
+    quantities: list[RequestQuantity] = Field(min_length=1)
+    details: list[RequestDetail] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def require_unique_entries(self) -> RequestsFile:
+        values = [item.value for item in self.quantities]
+        details = [item.detail for item in self.details]
+        if len(values) != len(set(values)) or len(details) != len(set(details)):
+            raise ValueError("request quantities and details must be unique")
+        for item in [*self.quantities, *self.details]:
+            if len(item.forms) != len(set(item.forms)):
+                raise ValueError("request forms must be unique")
+            if any(normalize("NFC", form) != form for form in item.forms):
+                raise ValueError("request forms must be NFC")
+        return self
+
+    def quantity(self, value: int) -> RequestQuantity | None:
+        return next((item for item in self.quantities if item.value == value), None)
+
+    def detail(self, key: str) -> RequestDetail | None:
+        return next((item for item in self.details if item.detail == key), None)
+
+    def has(self, key: str) -> bool:
+        """``quantity:2`` or a detail key such as ``size:small``."""
+        field, _, value = key.partition(":")
+        if field == "quantity":
+            return value.isdigit() and self.quantity(int(value)) is not None
+        return self.detail(key) is not None
+
+
 class SceneObject(ApiModel):
     fact_id: NonEmptyText
     concept: NonEmptyText
@@ -347,6 +410,15 @@ class ScenePreference(ApiModel):
     likes: bool
 
 
+class SceneRequest(ApiModel):
+    """One detail of a role-play order (M06): ``quantity`` or a request field and value."""
+
+    fact_id: NonEmptyText
+    object: NonEmptyText
+    field: Literal["quantity", "size", "serviceSetting", "temperature", "colour"]
+    value: NonEmptyText
+
+
 class ExampleScene(ApiModel):
     objects: list[SceneObject] = Field(default_factory=list)
     absent: list[SceneObject] = Field(default_factory=list)
@@ -355,6 +427,7 @@ class ExampleScene(ApiModel):
     counts: list[SceneCount] = Field(default_factory=list)
     owners: list[SceneOwner] = Field(default_factory=list)
     preferences: list[ScenePreference] = Field(default_factory=list)
+    requests: list[SceneRequest] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_references(self) -> ExampleScene:
@@ -366,6 +439,7 @@ class ExampleScene(ApiModel):
             *(item.fact_id for item in self.counts),
             *(item.fact_id for item in self.owners),
             *(item.fact_id for item in self.preferences),
+            *(item.fact_id for item in self.requests),
         ]
         if len(facts) != len(set(facts)):
             raise ValueError("scene fact IDs must be unique")
@@ -377,6 +451,7 @@ class ExampleScene(ApiModel):
             *(item.object for item in self.counts),
             *(item.object for item in self.owners),
             *(item.object for item in self.preferences),
+            *(item.object for item in self.requests),
         } - object_ids:
             raise ValueError(f"scene references undeclared objects: {sorted(unknown)}")
         if any(item.subject == item.reference for item in self.relations):
@@ -393,6 +468,7 @@ class ExampleScene(ApiModel):
             *(item.fact_id for item in self.counts),
             *(item.fact_id for item in self.owners),
             *(item.fact_id for item in self.preferences),
+            *(item.fact_id for item in self.requests),
         }
 
     @property
@@ -407,7 +483,14 @@ class ExampleScene(ApiModel):
         possessors = {
             value for value in bindings.values() if re.fullmatch(r"possessor:[a-z-]+", value)
         }
-        if unknown := set(bindings.values()) - self.fact_ids - numbers - possessors:
+        # A pack request detail (``detail:size:large``: a server's wrong repeat) is too.
+        details = {
+            value for value in bindings.values()
+            if re.fullmatch(r"detail:" + REQUEST_DETAIL[1:], value)
+        }
+        if truth and details:
+            raise ValueError(f"true examples cannot bind pack details: {sorted(details)}")
+        if unknown := set(bindings.values()) - self.fact_ids - numbers - possessors - details:
             raise ValueError(f"bindings reference undeclared facts: {sorted(unknown)}")
         if truth and numbers:
             raise ValueError(f"true examples cannot bind pack numbers: {sorted(numbers)}")
@@ -592,6 +675,7 @@ class LanguagePack(ApiModel):
     lexical: dict[str, dict[str, str]] = Field(default_factory=dict)
     numbers: NumbersFile | None = None
     possessives: PossessivesFile | None = None
+    requests: RequestsFile | None = None
     _pack_dir: Path | None = PrivateAttr(default=None)
     _evaluation_files: list[Path] = PrivateAttr(default_factory=list)
 
@@ -777,6 +861,9 @@ class MissionTemplate(ApiModel):
     required_numbers: list[Annotated[int, Field(ge=1, le=20)]] = Field(default_factory=list)
     # Possessors (first, second) and cast owners the pack must supply (ownership missions).
     required_possessors: list[ContractId] = Field(default_factory=list)
+    # Order quantities and details the pack must supply (request missions): ``quantity:2``,
+    # ``size:small``.
+    required_requests: list[NonEmptyText] = Field(default_factory=list)
     slots: list[MissionSlotTemplate] = Field(min_length=1)
 
     @property

@@ -29,6 +29,7 @@ from .schema import (
     NumbersFile,
     PackFiles,
     PossessivesFile,
+    RequestsFile,
 )
 
 
@@ -155,6 +156,9 @@ def _referenced_files(pack_dir: Path, source: Path, files: PackFiles) -> dict[st
         "possessives": [
             _relative_file(pack_dir, files.possessives, source, "/files/possessives")
         ] if files.possessives else [],
+        "requests": [
+            _relative_file(pack_dir, files.requests, source, "/files/requests")
+        ] if files.requests else [],
         "constructions": [
             _relative_file(
                 pack_dir, value, source, f"/files/constructions/{index}", "constructions"
@@ -253,6 +257,10 @@ def load_pack(path: Path) -> LanguagePack:
         possessives_file = _model_from_file(
             PossessivesFile, _load_toml(possessives_path), possessives_path,
         )
+    requests_file = None
+    if resolved["requests"]:
+        requests_path = resolved["requests"][0]
+        requests_file = _model_from_file(RequestsFile, _load_toml(requests_path), requests_path)
 
     definitions = {}
     for construction_path in resolved["constructions"]:
@@ -332,6 +340,8 @@ def load_pack(path: Path) -> LanguagePack:
         pack_data["numbers"] = numbers_file.model_dump(mode="python", by_alias=False)
     if possessives_file is not None:
         pack_data["possessives"] = possessives_file.model_dump(mode="python", by_alias=False)
+    if requests_file is not None:
+        pack_data["requests"] = requests_file.model_dump(mode="python", by_alias=False)
     try:
         pack = LanguagePack.model_validate(pack_data)
     except ValidationError as exc:

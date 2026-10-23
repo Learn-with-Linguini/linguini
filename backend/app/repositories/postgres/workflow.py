@@ -2969,7 +2969,7 @@ class PostgresWorkflowRepository:
                     )
                 # Missions reach this point through the existing eligibility/review flow.
                 # A pack failure propagates to the normal recoverable generation error state.
-                lessons.append(self.learning_task_generator.generate_pack_lesson(
+                built = self.learning_task_generator.generate_pack_lesson(
                     mission, language, objects, relations, words, translated_scene,
                     session_id=claim.session_id, review_markers=claim.review_markers or {},
                     cache_scope=claim.cache_scope,
@@ -2979,8 +2979,11 @@ class PostgresWorkflowRepository:
                     mission_context={
                         "roleplay_facts": (claim.roleplay_facts or {}).get(mission.mission_id),
                         "learner_facts": (claim.learner_facts or {}).get(mission.mission_id),
+                        # M06's saved order and reply history, as dev's builder reads them.
+                        "progress": claim.mission_progress or {},
                     },
-                ))
+                )
+                lessons.extend(built if isinstance(built, list) else [built])
                 continue
             spec = lesson_spec(mission)
             payload = spec.payload(

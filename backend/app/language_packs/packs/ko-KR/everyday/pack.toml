@@ -1,6 +1,6 @@
 format_version = 1
 pack_id = "ko-kr-everyday"
-pack_version = 2
+pack_version = 3
 instruction_language = "en"
 
 [language]
@@ -37,6 +37,7 @@ review_status = "generated"
 labels = "labels.toml"
 numbers = "numbers.toml"
 possessives = "possessives.toml"
+requests = "requests.toml"
 constructions = [
   "constructions/target-location.toml",
   "constructions/target-clue.toml",
@@ -64,6 +65,13 @@ constructions = [
   "constructions/their-preference.toml",
   "constructions/preference-question.toml",
   "constructions/choice-statement.toml",
+  "constructions/polite-request.toml",
+  "constructions/order-phrase.toml",
+  "constructions/detail-question.toml",
+  "constructions/detail-reply.toml",
+  "constructions/order-repeat.toml",
+  "constructions/order-confirmation.toml",
+  "constructions/order-repair.toml",
 ]
 examples = [
   "examples/target-location.toml",
@@ -92,6 +100,13 @@ examples = [
   "examples/their-preference.toml",
   "examples/preference-question.toml",
   "examples/choice-statement.toml",
+  "examples/polite-request.toml",
+  "examples/order-phrase.toml",
+  "examples/detail-question.toml",
+  "examples/detail-reply.toml",
+  "examples/order-repeat.toml",
+  "examples/order-confirmation.toml",
+  "examples/order-repair.toml",
 ]
 evaluations = [
   "evaluations/M01-A0.toml",
@@ -108,4 +123,5 @@ evaluations = [
   "evaluations/M04-A2.toml",
   "evaluations/M05-A0.toml",
   "evaluations/M05-A1.toml",
+  "evaluations/M06-A2.toml",
 ]

@@ -72,6 +72,11 @@ class PilotGeneration(ApiModel):
         "neither structural success nor model assessment proves grammatical correctness."
     )
 
+    @property
+    def tasks(self) -> list[Any]:
+        """Every task the lesson built: one, or several for a mission such as M06."""
+        return list(self.task) if isinstance(self.task, list) else [self.task]
+
 
 def _cached_candidates(
     source,
@@ -146,7 +151,9 @@ def generate_pilot(
 ) -> PilotGeneration:
     mission = pack_mission(mission_id)
     vocabulary = with_pack_vocabulary(pack, vocabulary)
-    facts = mission.facts(pack, level, facts, vocabulary, mission_context or {})
+    # The session seed lets a mission's own facts (M06's order) be chosen as dev does.
+    context = {"seed": str(session_id or ""), **(mission_context or {})}
+    facts = mission.facts(pack, level, facts, vocabulary, context)
     vocabulary = mission.vocabulary(pack, facts, vocabulary)
     proposal_mode = isinstance(source, ModelSource) and source.propose
     if proposal_mode:

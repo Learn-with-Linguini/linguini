@@ -762,6 +762,110 @@
       "position": null,
       "part_of_speech": "preposition",
       "provenance": "catalog"
+    },
+    {
+      "term_id": "coffee",
+      "fact_id": "object:coffee",
+      "source_text": "coffee",
+      "target_text": "Kaffee",
+      "forms": [
+        "Kaffee",
+        "Kaffees",
+        "ein",
+        "der",
+        "der Kaffee",
+        "ein Kaffee"
+      ],
+      "forms_by_key": {
+        "bare": "Kaffee",
+        "plural": "Kaffees",
+        "article_indefinite": "ein",
+        "article_definite": "der",
+        "definite": "der Kaffee",
+        "indefinite": "ein Kaffee"
+      },
+      "agreement": "masculine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "tea",
+      "fact_id": "object:tea",
+      "source_text": "tea",
+      "target_text": "Tee",
+      "forms": [
+        "Tee",
+        "Tees",
+        "ein",
+        "der",
+        "der Tee",
+        "ein Tee"
+      ],
+      "forms_by_key": {
+        "bare": "Tee",
+        "plural": "Tees",
+        "article_indefinite": "ein",
+        "article_definite": "der",
+        "definite": "der Tee",
+        "indefinite": "ein Tee"
+      },
+      "agreement": "masculine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "apple",
+      "fact_id": "object:apple",
+      "source_text": "apple",
+      "target_text": "Apfel",
+      "forms": [
+        "Apfel",
+        "Äpfel",
+        "ein",
+        "der",
+        "der Apfel",
+        "ein Apfel"
+      ],
+      "forms_by_key": {
+        "bare": "Apfel",
+        "plural": "Äpfel",
+        "article_indefinite": "ein",
+        "article_definite": "der",
+        "definite": "der Apfel",
+        "indefinite": "ein Apfel"
+      },
+      "agreement": "masculine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "pen",
+      "fact_id": "object:pen",
+      "source_text": "pen",
+      "target_text": "Stift",
+      "forms": [
+        "Stift",
+        "Stifte",
+        "ein",
+        "der",
+        "der Stift",
+        "ein Stift"
+      ],
+      "forms_by_key": {
+        "bare": "Stift",
+        "plural": "Stifte",
+        "article_indefinite": "ein",
+        "article_definite": "der",
+        "definite": "der Stift",
+        "indefinite": "ein Stift"
+      },
+      "agreement": "masculine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
     }
   ]
 }

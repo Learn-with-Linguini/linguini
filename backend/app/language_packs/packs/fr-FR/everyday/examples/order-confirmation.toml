@@ -1,0 +1,25 @@
+construction_id = "order-confirmation"
+
+[[examples]]
+example_id = "confirm-order"
+levels = ["A2"]
+purposes = ["confirmOrRepair"]
+meaning = "Yes, that's right."
+scene = { objects = [{ fact_id = "object:coffee", concept = "coffee" }], requests = [{ fact_id = "request:quantity", object = "object:coffee", field = "quantity", value = "2" }, { fact_id = "request:size", object = "object:coffee", field = "size", value = "small" }, { fact_id = "request:serviceSetting", object = "object:coffee", field = "serviceSetting", value = "takeAway" }] }
+bindings = {}
+truth = true
+labels = []
+sentence = "Oui, c'est ça."
+translation = "Yes, that's right."
+chunks = [{ text = "Oui", join = "none" }, { text = ",", join = "none" }, { text = "c'", join = "space" }, { text = "est", join = "none" }, { text = "ça", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "confirm-with-no"
+levels = ["A2"]
+purposes = ["confirmOrRepair"]
+sentence = "Non, c'est ça."
+correction = "Oui, c'est ça."
+note = "A confirmation says yes."
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }

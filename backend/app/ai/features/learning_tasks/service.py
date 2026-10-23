@@ -269,7 +269,9 @@ class LearningTaskService:
                 mission_id=mission_id,
                 mission_context=mission_context,
             )
-            return language_context.attach(generated.task)
+            tasks = [language_context.attach(task) for task in generated.tasks]
+            # A mission may build several tasks (M06's two halves of one order).
+            return tasks if len(tasks) > 1 else tasks[0]
         except ValueError as exc:
             raise LearningTaskGenerationError(
                 f"{mission.mission_id} pack generation could not validate a lesson. "

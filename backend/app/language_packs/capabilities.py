@@ -23,6 +23,7 @@ class MissionCapability(MissionKey):
     missing_labels: list[str]
     missing_numbers: list[int] = Field(default_factory=list)
     missing_possessors: list[str] = Field(default_factory=list)
+    missing_requests: list[str] = Field(default_factory=list)
     unreviewed_items: list[str]
     examples_present: bool
     review_complete: bool
@@ -70,6 +71,10 @@ def _required_material_review_status(
         or pack.possessives.provenance.review_status != "humanReviewed"
     ):
         unreviewed.append("possessives")
+    if template.required_requests and (
+        pack.requests is None or pack.requests.provenance.review_status != "humanReviewed"
+    ):
+        unreviewed.append("requests")
     for label in pack.labels:
         if label.semantic in required_ids and label.provenance.review_status != "humanReviewed":
             unreviewed.append(f"label:{label.semantic}")
@@ -173,9 +178,13 @@ def mission_capability(
         possessor for possessor in template.required_possessors
         if not _possessor_usable(pack, possessor)
     ]
+    missing_requests = [
+        key for key in template.required_requests
+        if pack.requests is None or not pack.requests.has(key)
+    ]
     supported = not (
         missing_constructions or outdated_constructions or missing_labels or missing_numbers
-        or missing_possessors
+        or missing_possessors or missing_requests
     )
     required_ids = {item.construction_id for item in template.required_constructions}
     required_ids.update(template.required_labels)
@@ -226,7 +235,8 @@ def mission_capability(
     blockers = []
     if not supported:
         blockers.append(
-            "required constructions, labels, numbers or possessives are missing or outdated"
+            "required constructions, labels, numbers, possessives or request words are "
+            "missing or outdated"
         )
     if not examples_present:
         blockers.append("required constructions lack in-scope examples or mistakes")
@@ -252,6 +262,7 @@ def mission_capability(
         missing_labels=missing_labels,
         missing_numbers=missing_numbers,
         missing_possessors=missing_possessors,
+        missing_requests=missing_requests,
         unreviewed_items=unreviewed_items,
         examples_present=examples_present,
         review_complete=review_complete,

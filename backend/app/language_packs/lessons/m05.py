@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import re
 
-from app.ai.features.learning_tasks.mission import fold
 from app.ai.features.learning_tasks.mission_a0_situations import (
     A0SituationLesson,
     validate_a0_situation_lesson,
@@ -34,6 +33,7 @@ from .common import (
     SpecBuilder,
     check_questions,
     differently_named,
+    differing_parts,
     latin_of,
     object_name,
     usable_objects,
@@ -44,8 +44,6 @@ PURPOSES = {"A1": ["choosePreference", "buildMyPreference", "buildTheirPreferenc
 LEARNER = "first"
 CHOICE_REASON = "Tell Linguini what you would choose."
 _FINAL = ".?!。？！"
-# Words and punctuation, as written: two sentences are compared word by word.
-_WORD = re.compile(r"[^\s.,!?;:'’¿¡]+['’]?|[.,!?;:¿¡]")
 
 
 # ---------------------------------------------------------------- vocabulary
@@ -215,30 +213,6 @@ _PLANNERS = {"A0": _plan_a0, "A1": _plan_a1}
 
 
 # ---------------------------------------------------------------- sentence parts
-
-
-def _words(text):
-    return [(match.start(), match.end(), fold(match.group())) for match in _WORD.finditer(text)]
-
-
-def differing_parts(first, second):
-    """What two sentences with one frame write differently: their noun phrases.
-
-    "Me gusta la taza." and "Me gusta el libro." give ("la taza", "el libro");
-    "저는 컵을 좋아해요." and "저는 책을 좋아해요." give ("컵을", "책을").
-    """
-    a, b = _words(first), _words(second)
-    shortest = min(len(a), len(b))
-    start = 0
-    while start < shortest and a[start][2] == b[start][2]:
-        start += 1
-    end = 0
-    while end < shortest - start and a[-1 - end][2] == b[-1 - end][2]:
-        end += 1
-    if start + end >= shortest:
-        return None
-    return (first[a[start][0]:a[len(a) - 1 - end][1]],
-            second[b[start][0]:b[len(b) - 1 - end][1]])
 
 
 def _around(text, phrase):

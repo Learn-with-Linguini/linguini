@@ -1,0 +1,40 @@
+construction_id = "order-repair"
+
+[[examples]]
+example_id = "repair-quantity-three"
+levels = ["A2"]
+purposes = ["confirmOrRepair"]
+meaning = "Actually, three, please."
+scene = { objects = [{ fact_id = "object:coffee", concept = "coffee" }], requests = [{ fact_id = "request:quantity", object = "object:coffee", field = "quantity", value = "3" }, { fact_id = "request:size", object = "object:coffee", field = "size", value = "small" }, { fact_id = "request:serviceSetting", object = "object:coffee", field = "serviceSetting", value = "takeAway" }] }
+bindings = { target = "object:coffee", quantity = "request:quantity" }
+truth = true
+labels = []
+sentence = "아니요, 세 잔이요."
+translation = "Actually, three, please."
+chunks = [{ text = "아니요", join = "none" }, { text = ",", join = "none" }, { text = "세", join = "space" }, { text = "잔이요", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "repair-take-away"
+levels = ["A2"]
+purposes = ["confirmOrRepair"]
+meaning = "Actually, to take away, please."
+scene = { objects = [{ fact_id = "object:coffee", concept = "coffee" }], requests = [{ fact_id = "request:quantity", object = "object:coffee", field = "quantity", value = "2" }, { fact_id = "request:size", object = "object:coffee", field = "size", value = "small" }, { fact_id = "request:serviceSetting", object = "object:coffee", field = "serviceSetting", value = "takeAway" }] }
+bindings = { target = "object:coffee", detail = "request:serviceSetting" }
+truth = true
+labels = []
+sentence = "아니요, 포장이요."
+translation = "Actually, to take away, please."
+chunks = [{ text = "아니요", join = "none" }, { text = ",", join = "none" }, { text = "포장이요", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "repair-with-yes"
+levels = ["A2"]
+purposes = ["confirmOrRepair"]
+sentence = "네, 세 잔이요."
+correction = "아니요, 세 잔이요."
+note = "A repair corrects the server; it does not start with yes."
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }

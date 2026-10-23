@@ -652,6 +652,110 @@
       "position": null,
       "part_of_speech": "preposition",
       "provenance": "catalog"
+    },
+    {
+      "term_id": "coffee",
+      "fact_id": "object:coffee",
+      "source_text": "coffee",
+      "target_text": "café",
+      "forms": [
+        "café",
+        "cafés",
+        "un",
+        "le",
+        "le café",
+        "un café"
+      ],
+      "forms_by_key": {
+        "bare": "café",
+        "plural": "cafés",
+        "article_indefinite": "un",
+        "article_definite": "le",
+        "definite": "le café",
+        "indefinite": "un café"
+      },
+      "agreement": "masculine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "tea",
+      "fact_id": "object:tea",
+      "source_text": "tea",
+      "target_text": "thé",
+      "forms": [
+        "thé",
+        "thés",
+        "un",
+        "le",
+        "le thé",
+        "un thé"
+      ],
+      "forms_by_key": {
+        "bare": "thé",
+        "plural": "thés",
+        "article_indefinite": "un",
+        "article_definite": "le",
+        "definite": "le thé",
+        "indefinite": "un thé"
+      },
+      "agreement": "masculine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "apple",
+      "fact_id": "object:apple",
+      "source_text": "apple",
+      "target_text": "pomme",
+      "forms": [
+        "pomme",
+        "pommes",
+        "une",
+        "la",
+        "la pomme",
+        "une pomme"
+      ],
+      "forms_by_key": {
+        "bare": "pomme",
+        "plural": "pommes",
+        "article_indefinite": "une",
+        "article_definite": "la",
+        "definite": "la pomme",
+        "indefinite": "une pomme"
+      },
+      "agreement": "feminine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
+    },
+    {
+      "term_id": "pen",
+      "fact_id": "object:pen",
+      "source_text": "pen",
+      "target_text": "stylo",
+      "forms": [
+        "stylo",
+        "stylos",
+        "un",
+        "le",
+        "le stylo",
+        "un stylo"
+      ],
+      "forms_by_key": {
+        "bare": "stylo",
+        "plural": "stylos",
+        "article_indefinite": "un",
+        "article_definite": "le",
+        "definite": "le stylo",
+        "indefinite": "un stylo"
+      },
+      "agreement": "masculine",
+      "position": null,
+      "part_of_speech": "noun",
+      "provenance": "catalog"
     }
   ]
 }
