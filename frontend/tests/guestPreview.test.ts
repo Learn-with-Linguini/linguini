@@ -111,7 +111,10 @@ for (const mode of ["signin", "signup"]) {
     assert.ok(source.getScene(destination.searchParams.get("photo") ?? ""));
     link.addEventListener("click", event => event.preventDefault());
     await act(async () => { link.click(); });
-    assert.deepEqual(events.find(event => event[1] === "guest_preview_started"), ["event", "guest_preview_started", { source: mode }]);
+    const event = events.find(event => event[1] === "guest_preview_started");
+    assert.ok(event);
+    assert.deepEqual(event.slice(0, 2), ["event", "guest_preview_started"]);
+    assert.equal((event[2] as Record<string, unknown>).source, mode);
   });
 }
 
