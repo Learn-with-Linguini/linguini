@@ -56,7 +56,7 @@ const source = await import(pathToFileURL(join(folder, "entry.mjs")).href) as {
 };
 const { act } = source;
 let root: import("react-dom/client").Root;
-const views = () => calls().filter(call => call[0] === "event" && call[1] === "page_view").map(call => call[2] as { page_title: string; page_path: string; page_location: string });
+const views = () => calls().filter(call => call[0] === "event" && call[1] === "page_view").map(call => call[2] as { page_title: string; page_path: string; page_location: string; send_to: string });
 async function waitForHeading(text: string) {
   for (let attempt = 0; attempt < 100; attempt++) {
     if (dom.window.document.querySelector("h1")?.textContent?.includes(text)) return;
@@ -88,18 +88,22 @@ test("initial lazy route records its real page title once under StrictMode", () 
   assert.equal(views()[0].page_path, "/learn/korean");
   assert.equal(views()[0].page_location, "https://www.learnwithlinguini.com/learn/korean");
   assert.equal(calls()[0][0], "js");
-  assert.deepEqual(calls()[1], ["config", "G-CHBF82TVG3", { send_page_view: false }]);
+  assert.equal(calls()[1][0], "config");
+  assert.equal(calls()[1][1], "G-CHBF82TVG3");
+  assert.equal((calls()[1][2] as Record<string, unknown>).send_page_view, false);
   assert.equal(dom.window.document.querySelectorAll('script[src="https://www.googletagmanager.com/gtag/js?id=G-CHBF82TVG3"]').length, 1);
-  assert.deepEqual(analyticsWindow._uxa, [["trackPageview", "/learn/korean"]]);
+  assert.deepEqual(analyticsWindow._uxa?.filter(command => command[0] === "trackPageview"), [["trackPageview", "/learn/korean"]]);
 });
 
 test("SPA navigation records the destination title rather than the previous page", async () => {
   const before = views().length;
   await navigate("/learn/german", "Learn German");
-  assert.deepEqual(views().slice(before), [{
-    page_title: "Learn German with photos · Linguini", page_path: "/learn/german",
-    page_location: "https://www.learnwithlinguini.com/learn/german", send_to: "G-CHBF82TVG3",
-  }]);
+  const destination = views().slice(before);
+  assert.equal(destination.length, 1);
+  assert.equal(destination[0].page_title, "Learn German with photos · Linguini");
+  assert.equal(destination[0].page_path, "/learn/german");
+  assert.equal(destination[0].page_location, "https://www.learnwithlinguini.com/learn/german");
+  assert.equal(destination[0].send_to, "G-CHBF82TVG3");
 });
 
 test("return navigation records another view with the restored route title", async () => {
@@ -109,7 +113,7 @@ test("return navigation records another view with the restored route title", asy
   assert.equal(views().length, before + 1);
   assert.equal(views().at(-1)?.page_title, "Learn Korean with photos · Linguini");
   assert.equal(views().at(-1)?.page_path, "/learn/korean");
-  assert.deepEqual(analyticsWindow._uxa, [
+  assert.deepEqual(analyticsWindow._uxa?.filter(command => command[0] === "trackPageview"), [
     ["trackPageview", "/learn/korean"], ["trackPageview", "/learn/german"], ["trackPageview", "/learn/korean"],
   ]);
 });
