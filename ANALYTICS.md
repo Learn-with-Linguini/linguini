@@ -116,6 +116,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `vocabulary_preview_started` | — | User starts "Learn the words" vocabulary preview |
 | `vocabulary_preview_continue_clicked` | `{ taskId }` | User continues from preview to individual word learning |
 | `vocabulary_preview_exit_clicked` | — | User exits from vocabulary preview |
+| `vocabulary_flashcard_viewed` | `{ taskId, position, termType, hasSceneObject }` | Learner views a vocabulary teaching card, including whether its object can be highlighted in the scene |
 | `home_continue_practice_clicked` | — | User resumes incomplete practice from dashboard |
 | `home_begin_practice_clicked` | — | User starts new practice from dashboard |
 | `home_explore_vocabulary_clicked` | — | User clicks vocabulary revisit card on home dashboard |

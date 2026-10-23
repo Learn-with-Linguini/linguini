@@ -187,6 +187,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
   const lastStep = useLastStepLabel();
   const scene = useScene();
   const { actOnTask, practiceSaving, practiceError, session } = useAppState();
+  const content = task.publicContent;
   const [stage, setStage] = useState<"review" | "quiz" | "typing">("review");
   const [page, setPage] = useState(0);
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -221,11 +222,23 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
       if (!checks.length) return;
       const questions = task.publicContent.kind === "vocabularyIntroduction" ? task.publicContent.questions : [];
       const first = questions.findIndex(item => !checks.some(check => check.questionId === item.questionId));
-      setQuestionIndex(first < 0 ? Math.max(0, questions.length - 1) : first);
+      // Typing progress is local, so resume from the second recognition answer
+      // before continuing through the interleaved recognition/typing sequence.
+      setQuestionIndex(first === 0 ? 0 : Math.min(1, Math.max(0, questions.length - 1)));
       setStage("quiz");
     }
   }, [restored.data, revisiting, task.publicContent]);
-  const content = task.publicContent;
+  useEffect(() => {
+    if (content.kind !== "vocabularyIntroduction" || stage !== "review") return;
+    const word = content.words[page];
+    if (!word) return;
+    trackAction("vocabulary_flashcard_viewed", {
+      taskId: task.id,
+      position: page + 1,
+      termType: word.termType,
+      hasSceneObject: Boolean(word.sceneObjectId),
+    });
+  }, [content, page, stage, task.id]);
   if (content.kind !== "vocabularyIntroduction") return null;
   const terminal = taskDone(task);
   const revision = task.status === "skipped";
@@ -261,7 +274,14 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
     if (horizontal < 0 && page < pageCount - 1) setPage(value => value + 1);
     if (horizontal > 0 && page > 0) setPage(value => value - 1);
   };
-  const finishQuestion = () => questionIndex < content.questions.length - 1 ? setQuestionIndex(value => value + 1) : setStage("typing");
+  const finishQuestion = () => {
+    if (questionIndex === 0 && content.questions.length > 1) {
+      setQuestionIndex(1);
+      return;
+    }
+    setTypingIndex(Math.max(0, questionIndex - 1));
+    setStage("typing");
+  };
   const chooseAnswer = async (optionId: string) => {
     if (!question || answers[question.questionId] || checkingQuestion || restored.isLoading || restored.isError) return;
     setCheckingQuestion(true);
@@ -297,8 +317,15 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
   };
   const advanceTyping = () => {
     setTypingCheck(null);
-    if (typingIndex < content.words.length - 1) setTypingIndex(value => value + 1);
-    else void submit();
+    const nextQuestionIndex = typingIndex + 2;
+    if (nextQuestionIndex < content.questions.length) {
+      setQuestionIndex(nextQuestionIndex);
+      setStage("quiz");
+    } else if (typingIndex < content.words.length - 1) {
+      setTypingIndex(value => value + 1);
+    } else {
+      void submit();
+    }
   };
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__header">
@@ -310,6 +337,9 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
     {questionError ? <div role="alert"><p>{questionError}</p><Button variant="secondary" disabled={checkingQuestion || !pendingOptionId} onClick={() => pendingOptionId && void chooseAnswer(pendingOptionId)}>Retry answer</Button></div> : null}
     {active && stage === "review" ? <>
       {revision ? <div className="panel-note" role="status"><strong>Saved for revision</strong><p className="small muted">You skipped this practice earlier, but these words will stay here whenever you want to review them.</p></div> : null}
+      {visibleWords[0]?.sceneObjectId ? <div className="vocabulary-learning-scene" aria-label={`Location of ${visibleWords[0].translation} in your photo`}>
+        <ScenePhoto scene={scene} hideWords activeItemId={visibleWords[0].sceneObjectId} />
+      </div> : null}
       <div className="vocabulary-learning-grid vocabulary-learning-grid--swipe" onTouchStart={handleCardTouchStart} onTouchEnd={handleCardTouchEnd}>{visibleWords.map(word => <VocabularyLearningCard key={word.learningKey ?? word.vocabularyItemId ?? word.targetText} word={word} languageCode={scene.languageCode} />)}</div>
       <div className="vocabulary-flow__actions">
         <Button disabled={page === 0} onClick={() => setPage(value => value - 1)}><ArrowLeftIcon size={18} /> Previous</Button>
@@ -339,7 +369,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
           return <>Incorrect. The correct answer is <strong>{answer}</strong>{answer ? sentenceEnding(answer) : ""}</>;
         })()}</p></div></Feedback>
       </> : null}
-      <Button block disabled={!answers[question.questionId]} onClick={finishQuestion}>{questionIndex < content.questions.length - 1 ? "Next question" : "Continue"}</Button>
+      <Button block disabled={!answers[question.questionId]} onClick={finishQuestion}>{questionIndex === 0 && content.questions.length > 1 ? "Next question" : "Type a word"}</Button>
     </div></Card></> : null}
     {active && stage === "typing" && typingWord ? <Card plain><div className="stack">
       <div><h2>Type “{typingWord.translation}”</h2><p className="muted">Word {typingIndex + 1} of {content.words.length}</p></div>
@@ -347,7 +377,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
       {checkingTyping ? <InlineLoader compact label="Checking your word…" /> : null}
       {typingCheck ? <Feedback tone={typingCheck.isCorrect ? "good" : typingCheck.revealed ? "neutral" : "warn"}><p role="status">{typingCheck.isCorrect ? "That’s right!" : typingCheck.revealed ? <>No worries, the answer is <strong>{typingCheck.correctAnswer}</strong>.</> : "Not quite. Give it another try."}</p></Feedback> : null}
       {typingCheck?.isCorrect || typingCheck?.revealed
-        ? <Button block disabled={practiceSaving} onClick={advanceTyping}>{typingIndex < content.words.length - 1 ? "Next word" : "Finish task"}</Button>
+        ? <Button block disabled={practiceSaving} onClick={advanceTyping}>{typingIndex + 2 < content.questions.length ? "Next question" : typingIndex < content.words.length - 1 ? "Next word" : "Finish task"}</Button>
         : <Button block disabled={!typedAnswers[typingKey]?.trim() || practiceSaving || checkingTyping} onClick={() => void checkTyping()}>Check answer</Button>}
       {!typingCheck?.isCorrect && !typingCheck?.revealed ? <Button variant="quiet" block className="typing-forgot-action" disabled={practiceSaving || checkingTyping} onClick={() => void checkTyping(true)}>I forgot, lift the lid</Button> : null}
     </div></Card> : null}
