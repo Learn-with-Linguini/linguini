@@ -1,34 +1,62 @@
 import { InlineLoader } from "./LoadingScreen";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { uploadImage } from "../lib/api";
-import type { UploadedImage } from "../lib/api";
+import type { ImageUploadAttempt, UploadedImage } from "../lib/api";
 import { Button } from "./ui";
 import { CameraIcon, UploadIcon } from "./icons";
 import { friendlyError } from "../lib/queryKeys";
+import { useAuth } from "../state/Auth";
+import { trackAction } from "../lib/analytics";
 
-export function ImageUpload({ onUploaded, cameraEnabled = true, disabled = false, onBusyChange, compact = false, dropzoneLabel }: {
+type ImageUploadProps = {
   compact?: boolean;
   dropzoneLabel?: string;
   onUploaded: (image: UploadedImage) => void;
   cameraEnabled?: boolean;
   disabled?: boolean;
   onBusyChange?: (busy: boolean) => void;
-}) {
+};
+
+export function ImageUpload(props: ImageUploadProps) {
+  const { session } = useAuth();
+  return <ImageUploadForAccount key={session?.user.id ?? "demo"} {...props} />;
+}
+
+function ImageUploadForAccount({ onUploaded, cameraEnabled = true, disabled = false, onBusyChange, compact = false, dropzoneLabel }: ImageUploadProps) {
   const fileInput = useRef<HTMLInputElement>(null);
   const cameraInput = useRef<HTMLInputElement>(null);
   const busyRef = useRef(false);
+  const mounted = useRef(true);
   const [busy, setBusy] = useState(false);
   const [phase, setPhase] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const select = async (file: File | undefined, source: "camera" | "userUpload") => {
+  const [retry, setRetry] = useState<ImageUploadAttempt | null>(null);
+  useEffect(() => {
+    mounted.current = true;
+    return () => { mounted.current = false; onBusyChange?.(false); };
+  }, [onBusyChange]);
+  const select = async (file: File | undefined, source: "camera" | "userUpload", previous?: ImageUploadAttempt) => {
     if (!file || busyRef.current) return;
+    const attempt = previous ?? { file, source, isCurrent: () => mounted.current };
     busyRef.current = true;
     setBusy(true);
     onBusyChange?.(true);
     setError(null);
-    try { onUploaded(await uploadImage(file, source, setPhase)); }
-    catch (e) { setError(friendlyError(e)); }
-    finally { busyRef.current = false; setBusy(false); setPhase(""); onBusyChange?.(false); }
+    setRetry(null);
+    try {
+      const image = await uploadImage(file, source, setPhase, attempt);
+      if (mounted.current) onUploaded(image);
+    }
+    catch (e) {
+      if (mounted.current) {
+        setError(friendlyError(e));
+        if (attempt.uploaded) setRetry(attempt);
+      }
+    }
+    finally {
+      busyRef.current = false;
+      if (mounted.current) { setBusy(false); setPhase(""); onBusyChange?.(false); }
+    }
   };
   return <div className="stack-2">
     <input ref={fileInput} type="file" hidden accept="image/jpeg,image/png,image/webp"
@@ -51,5 +79,9 @@ export function ImageUpload({ onUploaded, cameraEnabled = true, disabled = false
     </>}
     {busy ? <InlineLoader label={phase || "Preparing upload…"} /> : null}
     {error ? <p role="alert">{error}</p> : null}
+    {retry ? <Button variant="secondary" disabled={disabled || busy} onClick={() => {
+      trackAction("photo_upload_retried", { source: retry.source });
+      void select(retry.file, retry.source, retry);
+    }}>Retry upload</Button> : null}
   </div>;
 }

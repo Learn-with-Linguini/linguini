@@ -104,6 +104,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `practice_session_started` | `{ assetId }` | New photo lesson session initialized |
 | `practice_session_resumed` | — | User resumes an existing incomplete practice session |
 | `practice_photo_uploaded` | `{ assetId }` | User captures/uploads a personal camera roll photo |
+| `photo_upload_retried` | `{ source: "camera" | "userUpload" }` | Learner retries confirmation of an uploaded image after a connection or server failure |
 | `practice_scene_selected` | `{ sceneId, title }` | User selects a curated catalog scene |
 | `scene_review_confirmed` | `{ acceptedCount, addedCount }` | User confirms detected objects before generating lesson |
 | `scene_shortfall_shown` | `{ missing }` | Review shows that the photo lacks checkable objects, counts, adjectives or connections (`missing` is a comma-separated list) |

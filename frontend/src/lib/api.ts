@@ -17,6 +17,18 @@ export interface UploadedImage {
   height: number;
 }
 
+export interface ImageUploadAttempt {
+  file: File;
+  source: "camera" | "userUpload";
+  uploaded?: { assetId: string; storageKey: string };
+  isCurrent?: () => boolean;
+}
+
+function canRetryUploadConfirmation(error: unknown): boolean {
+  return !(error instanceof ApiError) || error.status < 400 || error.status >= 500
+    || error.status === 408 || error.status === 429;
+}
+
 export function mediaImageUrl(assetId: string, width: 320 | 640 | 1280): string {
   return `${apiBaseUrl ?? ""}/api/v1/media/${encodeURIComponent(assetId)}/image?width=${width}`;
 }
@@ -63,27 +75,47 @@ async function downscale(file: File): Promise<File> {
   }
 }
 
-export async function uploadImage(file: File, source: "camera" | "userUpload", onPhase: (phase: string) => void): Promise<UploadedImage> {
+export async function uploadImage(file: File, source: "camera" | "userUpload", onPhase: (phase: string) => void, attempt: ImageUploadAttempt = { file, source }): Promise<UploadedImage> {
+  const ensureCurrent = () => {
+    if (attempt.isCurrent?.() === false) throw new DOMException("Image upload canceled.", "AbortError");
+  };
+  ensureCurrent();
+  if (attempt.file !== file || attempt.source !== source) throw new Error("Choose the image again to start a new upload.");
   if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) throw new Error("Choose a JPEG, PNG or WebP image.");
   if (!file.size || file.size > 10 * 1024 * 1024) throw new Error("Choose an image between 1 byte and 10 MB.");
-  onPhase("Optimising image…");
-  const prepared = await downscale(file);
-  onPhase("Preparing upload…");
-  const upload = await write<{ assetId: string; storageKey: string; uploadUrl: string }>("/api/v1/media/upload-url", "POST", {
-    fileName: file.name, fileSize: prepared.size, mimeType: prepared.type, source,
-  });
-  onPhase("Uploading image…");
-  const response = await fetch(upload.uploadUrl, {
-    method: "PUT", headers: { "Content-Type": prepared.type, "x-upsert": "false" }, body: prepared,
-  });
-  if (!response.ok) throw new Error("Image upload failed. Please try again.");
+  if (!attempt.uploaded) {
+    onPhase("Optimising image…");
+    const prepared = await downscale(file);
+    ensureCurrent();
+    onPhase("Preparing upload…");
+    const upload = await write<{ assetId: string; storageKey: string; uploadUrl: string }>("/api/v1/media/upload-url", "POST", {
+      fileName: file.name, fileSize: prepared.size, mimeType: prepared.type, source,
+    });
+    ensureCurrent();
+    onPhase("Uploading image…");
+    const response = await fetch(upload.uploadUrl, {
+      method: "PUT", headers: { "Content-Type": prepared.type, "x-upsert": "false" }, body: prepared,
+    });
+    if (!response.ok) throw new Error("Image upload failed. Please try again.");
+    attempt.uploaded = { assetId: upload.assetId, storageKey: upload.storageKey };
+  }
+  ensureCurrent();
   onPhase("Checking image…");
   // Confirmation is idempotent; retry once if the server committed but its response was lost.
-  const confirm = () => write<UploadedImage>("/api/v1/media/confirm-upload", "POST", {
-    assetId: upload.assetId, storageKey: upload.storageKey, source,
-  });
+  const uploaded = attempt.uploaded;
+  const confirm = async () => {
+    ensureCurrent();
+    try {
+      return await write<UploadedImage>("/api/v1/media/confirm-upload", "POST", { ...uploaded, source });
+    } catch (error) {
+      // Validation failures can remove the object; authentication failures must not
+      // retain another account's pending upload for a later retry.
+      if (!canRetryUploadConfirmation(error)) attempt.uploaded = undefined;
+      throw error;
+    }
+  };
   try { return await confirm(); } catch (error) {
-    if (error instanceof Error && /HTTP 4\d\d/.test(error.message)) throw error;
+    if (!canRetryUploadConfirmation(error) || (error instanceof ApiError && error.status === 429)) throw error;
     return confirm();
   }
 }
