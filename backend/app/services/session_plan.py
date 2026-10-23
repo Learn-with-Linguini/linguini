@@ -378,7 +378,7 @@ def _ispy_description_task(
 
 def build_tasks(
     session_id, objects, words, translations, uploaded, translated_scene=None,
-    supplemental_vocabulary=None,
+    supplemental_vocabulary=None, scene_relations=(),
 ):
     # Two sets choose different focus objects and context, with the same public contract.
     index = min(1, len(words) - 1) if uploaded else 0
@@ -413,6 +413,8 @@ def build_tasks(
             )
         )
     if translated_scene:
+        relation_links = {str(row.id): row for row in scene_relations}
+        scene_object_ids = {str(scene_object.id): scene_object.id for scene_object in objects}
         supplemental_terms = [
             (term, "attribute", "adjective") for term in translated_scene.attributes
         ] + [
@@ -429,6 +431,15 @@ def build_tasks(
             if identity in seen_terms:
                 continue
             seen_terms.add(identity)
+            related_scene_object_ids = []
+            if term_type == "attribute":
+                object_id = scene_object_ids.get(term.key.rsplit(":", 1)[0])
+                related_scene_object_ids = [object_id] if object_id else []
+            elif relation := relation_links.get(str(term.key)):
+                related_scene_object_ids = [
+                    relation.subject_scene_object_id,
+                    relation.reference_scene_object_id,
+                ]
             learning_words.append(
                 dict(
                     learning_key=f"{term_type}:{term.key}",
@@ -438,6 +449,12 @@ def build_tasks(
                         if supplemental_vocabulary.get((term_type, str(term.key)))
                         else None
                     ),
+                    scene_object_id=(
+                        related_scene_object_ids[0]
+                        if term_type == "attribute" and related_scene_object_ids
+                        else None
+                    ),
+                    related_scene_object_ids=related_scene_object_ids,
                     target_text=term.translation,
                     translation=_display_source(term.source),
                     part_of_speech=part_of_speech,

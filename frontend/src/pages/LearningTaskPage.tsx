@@ -7,7 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { friendlyError, queryKeys } from "../lib/queryKeys";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { Button, Card, Feedback, IconButton, ProgressTrail } from "../components/ui";
-import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, CloseIcon, EyeIcon, EyeOffIcon, SpeakerIcon } from "../components/icons";
+import { ArrowLeftIcon, ArrowRightIcon, BasilIcon, CheckIcon, CloseIcon, EyeIcon, EyeOffIcon, SpeakerIcon } from "../components/icons";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { builtSentence, choiceOrder, finishesAfterLearning, markerChoices, nextLearningStep, optionText, practiceStages, questionOptions, sentenceEnding, taskDone, taskTitle } from "../lib/practiceTasks";
@@ -201,7 +201,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
   const [checkingQuestion, setCheckingQuestion] = useState(false);
   const [pendingOptionId, setPendingOptionId] = useState<string | null>(null);
   const [checkingTyping, setCheckingTyping] = useState(false);
-  const [typingCheck, setTypingCheck] = useState<{ isCorrect: boolean; correctAnswer: string; revealed: boolean } | null>(null);
+  const [typingCheck, setTypingCheck] = useState<{ isCorrect: boolean; correctAnswer: string; revealed: boolean; basilEarned: number } | null>(null);
   const requestKey = useRef(crypto.randomUUID());
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const [basilByQuestion, setBasilByQuestion] = useState<Record<string, number>>({});
@@ -308,6 +308,14 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
     try {
       const result = await checkVocabularyTyping(task.id, typingKey, typedAnswers[typingKey] ?? "", reveal);
       setTypingCheck(result);
+      trackAction("vocabulary_typing_checked", {
+        taskId: task.id,
+        termType: typingWord.termType,
+        isCorrect: result.isCorrect,
+        revealed: result.revealed,
+        basilEarned: result.basilEarned,
+      });
+      if (result.basilEarned > 0) refreshBasil();
       if (result.isCorrect) playAnswerSound(true);
     } catch (error) {
       setFeedback(friendlyError(error));
@@ -329,7 +337,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
   };
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__header">
-      <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} /><QuestionBasil amount={stage === "quiz" && question ? basilByQuestion[question.questionId] : undefined} /></div>
+      <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} /><QuestionBasil amount={stage === "quiz" && question ? basilByQuestion[question.questionId] : stage === "typing" ? typingCheck?.basilEarned : undefined} /></div>
       <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><ExitToHome onExit={onExit} /></div>
     </div>
     {restored.isLoading ? <InlineLoader compact label="Restoring word answers…" /> : null}
@@ -337,8 +345,14 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
     {questionError ? <div role="alert"><p>{questionError}</p><Button variant="secondary" disabled={checkingQuestion || !pendingOptionId} onClick={() => pendingOptionId && void chooseAnswer(pendingOptionId)}>Retry answer</Button></div> : null}
     {active && stage === "review" ? <>
       {revision ? <div className="panel-note" role="status"><strong>Saved for revision</strong><p className="small muted">You skipped this practice earlier, but these words will stay here whenever you want to review them.</p></div> : null}
-      {visibleWords[0]?.sceneObjectId ? <div className="vocabulary-learning-scene" aria-label={`Location of ${visibleWords[0].translation} in your photo`}>
-        <ScenePhoto scene={scene} hideWords activeItemId={visibleWords[0].sceneObjectId} />
+      {visibleWords[0] && (visibleWords[0].sceneObjectId || visibleWords[0].relatedSceneObjectIds?.length) ? <div className="vocabulary-learning-scene" aria-label={`${visibleWords[0].termType === "relationship" ? "Objects related by" : "Location of"} ${visibleWords[0].translation} in your photo`}>
+        <ScenePhoto
+          scene={scene}
+          items={visibleWords[0].termType === "relationship" ? scene.items.filter(item => visibleWords[0].relatedSceneObjectIds?.includes(item.id)) : undefined}
+          hideWords
+          activeItemId={visibleWords[0].sceneObjectId}
+          activeItemIds={visibleWords[0].relatedSceneObjectIds}
+        />
       </div> : null}
       <div className="vocabulary-learning-grid vocabulary-learning-grid--swipe" onTouchStart={handleCardTouchStart} onTouchEnd={handleCardTouchEnd}>{visibleWords.map(word => <VocabularyLearningCard key={word.learningKey ?? word.vocabularyItemId ?? word.targetText} word={word} languageCode={scene.languageCode} />)}</div>
       <div className="vocabulary-flow__actions">
@@ -375,7 +389,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
       <div><h2>Type “{typingWord.translation}”</h2><p className="muted">Word {typingIndex + 1} of {content.words.length}</p></div>
       <input className="input" aria-label={`Type ${typingWord.translation}`} value={typedAnswers[typingKey] ?? ""} disabled={typingCheck?.isCorrect || typingCheck?.revealed} onChange={event => { setTypedAnswers(value => ({ ...value, [typingKey]: event.target.value })); setTypingCheck(null); }} />
       {checkingTyping ? <InlineLoader compact label="Checking your word…" /> : null}
-      {typingCheck ? <Feedback tone={typingCheck.isCorrect ? "good" : typingCheck.revealed ? "neutral" : "warn"}><p role="status">{typingCheck.isCorrect ? "That’s right!" : typingCheck.revealed ? <>No worries, the answer is <strong>{typingCheck.correctAnswer}</strong>.</> : "Not quite. Give it another try."}</p></Feedback> : null}
+      {typingCheck ? <Feedback tone={typingCheck.isCorrect ? "good" : typingCheck.revealed ? "neutral" : "warn"}><div className="stack-2" role="status"><p>{typingCheck.isCorrect ? "That’s right!" : typingCheck.revealed ? <>No worries, the answer is <strong>{typingCheck.correctAnswer}</strong>.</> : "Not quite. Give it another try."}</p>{basilEarnedText(typingCheck.basilEarned) ? <strong className="basil-reward"><BasilIcon size={17} />{basilEarnedText(typingCheck.basilEarned)}</strong> : null}</div></Feedback> : null}
       {typingCheck?.isCorrect || typingCheck?.revealed
         ? <Button block disabled={practiceSaving} onClick={advanceTyping}>{typingIndex + 2 < content.questions.length ? "Next question" : typingIndex < content.words.length - 1 ? "Next word" : "Finish task"}</Button>
         : <Button block disabled={!typedAnswers[typingKey]?.trim() || practiceSaving || checkingTyping} onClick={() => void checkTyping()}>Check answer</Button>}

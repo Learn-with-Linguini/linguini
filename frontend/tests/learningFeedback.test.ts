@@ -369,9 +369,12 @@ test("teaching cards highlight their photo object and practice interleaves recog
     Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, "value")!.set!.call(typing, "taza");
     typing.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
   });
-  replies.push(() => Response.json({ learningKey: "cup", isCorrect: true, correctAnswer: "taza", revealed: false }));
+  replies.push(() => Response.json({ learningKey: "cup", isCorrect: true, correctAnswer: "taza", revealed: false, basilEarned: 10 }));
   await click("Check answer");
-  await waitFor(() => assert.ok(button("Next question")));
+  await waitFor(() => {
+    assert.ok(button("Next question"));
+    assert.match(text(), /\+10 Basil earned/);
+  });
   await click("Next question");
 
   assert.match(text(), /Which word means "chair"/);
