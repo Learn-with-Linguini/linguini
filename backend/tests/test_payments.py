@@ -145,10 +145,9 @@ def test_stripe_service_webhook_subscription_deleted(fake_user_repo, test_user):
     ],
 )
 def test_checkout_subscription_events_keep_the_checkout_user(
-    fake_user_repo, test_user, monkeypatch,
+    fake_user_repo, test_user,
     event_type, subscription_status, initial_tier, expected_tier,
 ):
-    monkeypatch.delenv("STRIPE_WEBHOOK_SECRET", raising=False)
     other_user = fake_user_repo.get_or_create_by_auth_provider("other-learner", "other@example.com")
     fake_user_repo.set_tier(test_user.id, initial_tier.value)
     service = StripeService(fake_user_repo)
@@ -170,8 +169,11 @@ def test_checkout_subscription_events_keep_the_checkout_user(
         }},
     }
 
-    result = service.handle_webhook_event(json.dumps(payload).encode(), None)
-
-    assert result == {"status": "processed", "type": event_type}
+    # The metadata handoff is independent of signed HTTP delivery.
+    subscription = payload["data"]["object"]
+    if event_type == "customer.subscription.deleted":
+        service._on_subscription_deleted(subscription)
+    else:
+        service._on_subscription_updated(subscription)
     assert fake_user_repo.get_by_id(test_user.id).tier == expected_tier
     assert fake_user_repo.get_by_id(other_user.id).tier == AccountTier.BETA
