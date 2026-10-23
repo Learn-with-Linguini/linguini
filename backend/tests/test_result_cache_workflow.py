@@ -3,6 +3,7 @@
 from types import SimpleNamespace
 from uuid import UUID, uuid4
 
+import pytest
 from test_postgres_sessions import create_run
 from test_postgres_sessions import database as database
 
@@ -10,6 +11,9 @@ from app.ai.cache import CacheScope
 from app.ai.features.translation import SceneTranslationError
 from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.schemas.sessions import ReviewPracticeRequest
+
+# A thin scene is rejected on mission profiles; these tests cover the regular lesson.
+pytestmark = pytest.mark.usefixtures("regular_lesson")
 
 
 def test_curated_reviews_share_and_learner_edits_stay_private(database):

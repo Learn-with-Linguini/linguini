@@ -46,7 +46,7 @@ export function PageMeta({
 }: PageMetadata) {
   useEffect(() => {
     const shareTitle = ogTitle ?? (article ? title : home ? site.title : `${title} · ${site.name}`);
-    const imageUrl = new URL(image?.url ?? "/og/home.png", site.url).toString();
+    const imageUrl = new URL(image?.url ?? site.ogImage, site.url).toString();
     const imageAlt = image?.alt ?? site.ogImageAlt;
     const canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]') ?? document.createElement("link");
 

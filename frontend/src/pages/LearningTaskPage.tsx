@@ -20,13 +20,14 @@ import { ReportIssueLink } from "../components/ReportIssueLink";
 import { ObjectPreview } from "../components/ObjectPreview";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useResolvedImageUrl } from "../components/SceneImage";
-import { boardRows, squareCrop } from "../lib/practiceBoard";
+import { boardRows, practiceBoardCrop } from "../lib/practiceBoard";
 import { questionMarkerObjects } from "../lib/missionMarkers";
 import { completeSlot, speechAvailable, writtenPromptShown } from "../lib/missionA0";
 import { trackAction } from "../lib/analytics.ts";
 import { fillMissionGap } from "../lib/missionGaps";
 import { playAnswerSound } from "../lib/answerSound";
 import { learningFeedback } from "../lib/learningFeedback";
+import { vocabularyRecapSteps } from "../lib/vocabularyRecap";
 
 export function LearningTaskPage() {
   const { taskId } = useParams();
@@ -188,7 +189,8 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
   const scene = useScene();
   const { actOnTask, practiceSaving, practiceError, session } = useAppState();
   const content = task.publicContent;
-  const [stage, setStage] = useState<"review" | "quiz" | "typing">("review");
+  const [stage, setStage] = useState<"review" | "quiz" | "typing" | "complete">("review");
+  const [recapIndex, setRecapIndex] = useState(0);
   const [page, setPage] = useState(0);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -258,7 +260,27 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
       setQuestionResults(reviewDetails(result.attempt)?.questionResults ?? {});
     }
   };
-  const finishReview = () => page < pageCount - 1 ? setPage(value => value + 1) : setStage("quiz");
+  const recap = vocabularyRecapSteps(content.questions.length, content.allowTypingPractice ? content.words.length : 0);
+  const advanceRecap = (nextIndex = recapIndex + 1) => {
+    setFeedback(null);
+    const next = recap[nextIndex];
+    if (!next) {
+      setStage("complete");
+      trackAction("vocabulary_recap_completed", { questionCount: content.questions.length, wordCount: content.words.length });
+      return;
+    }
+    setRecapIndex(nextIndex);
+    setStage(next.kind);
+    if (next.kind === "quiz") setQuestionIndex(next.index);
+    else setTypingIndex(next.index);
+  };
+  const finishReview = () => {
+    if (page < pageCount - 1) { setPage(value => value + 1); return; }
+    if (revisiting) {
+      trackAction("vocabulary_recap_started", { questionCount: content.questions.length, wordCount: content.words.length });
+      advanceRecap(0);
+    } else setStage("quiz");
+  };
   const handleCardTouchStart = (event: TouchEvent) => {
     const touch = event.changedTouches[0];
     swipeStart.current = { x: touch.clientX, y: touch.clientY };
@@ -275,6 +297,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
     if (horizontal > 0 && page > 0) setPage(value => value - 1);
   };
   const finishQuestion = () => {
+    if (revisiting) { advanceRecap(); return; }
     if (questionIndex === 0 && content.questions.length > 1) {
       setQuestionIndex(1);
       return;
@@ -294,6 +317,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
       setCorrectOptionIds(value => ({ ...value, [question.questionId]: result.correctOptionId }));
       setBasilByQuestion(value => ({ ...value, [question.questionId]: result.basilEarned }));
       setPendingOptionId(null);
+      if (revisiting) trackAction("vocabulary_recap_answer_checked", { kind: "recognition", isCorrect: result.isCorrect });
       refreshBasil();
       playAnswerSound(result.isCorrect);
     } catch {
@@ -304,6 +328,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
   };
   const checkTyping = async (reveal = false) => {
     if (!typingWord || checkingTyping) return;
+    if (revisiting) setFeedback(null);
     setCheckingTyping(true);
     try {
       const result = await checkVocabularyTyping(task.id, typingKey, typedAnswers[typingKey] ?? "", reveal);
@@ -316,6 +341,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
         basilEarned: result.basilEarned,
       });
       if (result.basilEarned > 0) refreshBasil();
+      if (revisiting) trackAction("vocabulary_recap_answer_checked", { kind: "recall", isCorrect: result.isCorrect, revealed: result.revealed });
       if (result.isCorrect) playAnswerSound(true);
     } catch (error) {
       setFeedback(friendlyError(error));
@@ -325,6 +351,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
   };
   const advanceTyping = () => {
     setTypingCheck(null);
+    if (revisiting) { advanceRecap(); return; }
     const nextQuestionIndex = typingIndex + 2;
     if (nextQuestionIndex < content.questions.length) {
       setQuestionIndex(nextQuestionIndex);
@@ -383,7 +410,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
           return <>Incorrect. The correct answer is <strong>{answer}</strong>{answer ? sentenceEnding(answer) : ""}</>;
         })()}</p></div></Feedback>
       </> : null}
-      <Button block disabled={!answers[question.questionId]} onClick={finishQuestion}>{questionIndex === 0 && content.questions.length > 1 ? "Next question" : "Type a word"}</Button>
+      <Button block disabled={!answers[question.questionId]} onClick={finishQuestion}>{revisiting ? recapIndex < recap.length - 1 ? "Continue" : "Finish review" : questionIndex === 0 && content.questions.length > 1 ? "Next question" : "Type a word"}</Button>
     </div></Card></> : null}
     {active && stage === "typing" && typingWord ? <Card plain><div className="stack">
       <div><h2>Type “{typingWord.translation}”</h2><p className="muted">Word {typingIndex + 1} of {content.words.length}</p></div>
@@ -391,9 +418,13 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
       {checkingTyping ? <InlineLoader compact label="Checking your word…" /> : null}
       {typingCheck ? <Feedback tone={typingCheck.isCorrect ? "good" : typingCheck.revealed ? "neutral" : "warn"}><div className="stack-2" role="status"><p>{typingCheck.isCorrect ? "That’s right!" : typingCheck.revealed ? <>No worries, the answer is <strong>{typingCheck.correctAnswer}</strong>.</> : "Not quite. Give it another try."}</p>{basilEarnedText(typingCheck.basilEarned) ? <strong className="basil-reward"><BasilIcon size={17} />{basilEarnedText(typingCheck.basilEarned)}</strong> : null}</div></Feedback> : null}
       {typingCheck?.isCorrect || typingCheck?.revealed
-        ? <Button block disabled={practiceSaving} onClick={advanceTyping}>{typingIndex + 2 < content.questions.length ? "Next question" : typingIndex < content.words.length - 1 ? "Next word" : "Finish task"}</Button>
+        ? <Button block disabled={practiceSaving} onClick={advanceTyping}>{revisiting ? recapIndex < recap.length - 1 ? "Continue" : "Finish review" : typingIndex + 2 < content.questions.length ? "Next question" : typingIndex < content.words.length - 1 ? "Next word" : "Finish task"}</Button>
         : <Button block disabled={!typedAnswers[typingKey]?.trim() || practiceSaving || checkingTyping} onClick={() => void checkTyping()}>Check answer</Button>}
       {!typingCheck?.isCorrect && !typingCheck?.revealed ? <Button variant="quiet" block className="typing-forgot-action" disabled={practiceSaving || checkingTyping} onClick={() => void checkTyping(true)}>I forgot, lift the lid</Button> : null}
+    </div></Card> : null}
+    {revisiting && stage === "complete" ? <Card plain><div className="stack">
+      <h2>Review complete</h2><p>You practised these words again.</p>
+      <Button block onClick={onNext}>Back to vocabulary</Button>
     </div></Card> : null}
     {actionResult || feedback || earnedText ? <Feedback><div className="stack-2" role="status" aria-atomic="true">
       {actionResult && task.status !== "skipped" ? <strong>{learningFeedback("saved", task.id)}</strong> : null}
@@ -823,7 +854,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
             setAnswers(value => ({ ...value, [question.questionId]: optionId }));
           }}
         /> : <>
-        {markers.length || questionObjects.length ? <div className="mission-markers"><ScenePhoto
+        {markers.length || questionObjects.length || content.focus === "sceneDescription" || content.focus === "chainedDescription" ? <div className="mission-markers"><ScenePhoto
           scene={scene} hideWords items={markers.length ? markers.map(marker => marker.item) : questionObjects}
           activeItemId={markers.find(marker => marker.option.optionId === (checks[question.questionId]?.isCorrect
             ? checks[question.questionId]?.answer
@@ -1094,6 +1125,10 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         graded={results[question.questionId] !== undefined}
         onReveal={() => setRevealed(value => ({ ...value, [question.questionId]: true }))}
         inlineAudio={Boolean(question.promptTranslation)} />
+      {(content.focus === "sceneDescription" || content.focus === "chainedDescription")
+        && !question.sceneObjectId && !question.displayCount && !question.boardCounts
+        && (!markers.length || question.interactionType === "sentenceBuilding")
+        ? <ScenePhoto scene={scene} items={[]} /> : null}
       {question.displayCount ? <CountBoard count={question.displayCount} sceneImageUrl={sceneImageUrl}
         imageSize={boardImageSize} onImageSize={setBoardImageSize}
         boardObject={session?.sceneObjects.find(object => object.id === question.boardObjectId)} /> : null}
@@ -1231,7 +1266,7 @@ function PracticeBoards({ question, sceneImageUrl, imageSize, onImageSize, board
   disabled: boolean;
   onChoose: (optionId: string) => void;
 }) {
-  const crop = imageSize ? squareCrop(boardObject?.boundingBox, imageSize.width, imageSize.height) : null;
+  const crop = imageSize ? practiceBoardCrop(boardObject, imageSize.width, imageSize.height) : null;
   return <div className="practice-boards">
     <p className="small muted">Choose the board that matches the sentence.</p>
     {sceneImageUrl && !imageSize ? <img className="practice-boards__preload" src={sceneImageUrl} alt="" aria-hidden="true"
@@ -1276,7 +1311,7 @@ function CountBoard({ count, sceneImageUrl, imageSize, onImageSize, boardObject 
   onImageSize: (size: { width: number; height: number }) => void;
   boardObject?: SceneObject;
 }) {
-  const crop = imageSize ? squareCrop(boardObject?.boundingBox, imageSize.width, imageSize.height) : null;
+  const crop = imageSize ? practiceBoardCrop(boardObject, imageSize.width, imageSize.height) : null;
   const tile = crop && sceneImageUrl && imageSize ? {
     width: COUNT_TILE, height: COUNT_TILE,
     backgroundImage: `url(${sceneImageUrl})`,

@@ -7,13 +7,16 @@ import { AnalysisScan } from "../components/AnalysisScan";
 import { TranslationPreview } from "../components/TranslationPreview";
 import { SessionPersonalization } from "../components/SessionPersonalization";
 import { LeaveSession } from "../components/LeaveSession";
+import { SceneShortfallNotice } from "../components/SceneShortfallNotice";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { sessionDestination } from "../lib/sessionRoute";
 import { humanizeTerm } from "../lib/termLabel";
-import { type PracticeReview } from "../lib/api";
+import { abandonPractice, type PracticeReview, type ShortfallKind } from "../lib/api";
+import { friendlyError } from "../lib/queryKeys";
+import { SHORTFALL_ACTIONS } from "../lib/sceneShortfall";
 import { countGroups, objectCounts } from "../lib/countGroups";
-import { initiallyHiddenObjectIds, sceneReviewPanels, type SceneReviewPanel } from "../lib/sceneReview";
+import { initialReviewMarkers, initiallyHiddenObjectIds, sceneReviewPanels, type SceneReviewPanel } from "../lib/sceneReview";
 import { trackAction } from "../lib/analytics.ts";
 import type { LanguageItem } from "../data/types";
 
@@ -43,7 +46,7 @@ function relationLabel(relation: string) {
 export function PracticeAnalysis() {
   const navigate = useNavigate();
   const scene = useScene();
-  const { session, saveReview, practiceSaving, practiceError, practiceStalled, retryProcessing, retryAnalysis } = useAppState();
+  const { session, saveReview, reviewShortfall, practiceSaving, practiceError, practiceStalled, retryProcessing, retryAnalysis } = useAppState();
   const [removed, setRemoved] = useState<string[]>(() => {
     return initiallyHiddenObjectIds(
       (session?.sceneObjects ?? []).map(item => item.id),
@@ -52,7 +55,11 @@ export function PracticeAnalysis() {
   });
   const [explicitlyRemoved, setExplicitlyRemoved] = useState<string[]>([]);
   const [added, setAdded] = useState<AddedReviewObject[]>([]);
-  const nextMarker = useRef(Math.max(0, ...scene.items.map(item => item.marker)) + 1);
+  const reviewMarkers = initialReviewMarkers(
+    (session?.sceneObjects ?? []).map(item => item.id),
+    session?.suggestedSceneObjectIds,
+  );
+  const nextMarker = useRef(Object.keys(reviewMarkers).length + 1);
   const [relations, setRelations] = useState<PracticeReview["relations"]>(() => session?.sceneObjectRelations ?? []);
   const [sceneTitle, setSceneTitle] = useState(session?.session.sessionTitle ?? scene.title);
   const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>({});
@@ -68,7 +75,15 @@ export function PracticeAnalysis() {
   const [label, setLabel] = useState("");
   const [pending, setPending] = useState<{ label: string; id?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [leavingPhoto, setLeavingPhoto] = useState(false);
   const photoRef = useRef<HTMLDivElement>(null);
+  const tabsRef = useRef<HTMLDivElement>(null);
+  const shortfallRef = useRef<HTMLDivElement>(null);
+  // A rejected review, or a generation that found nothing checkable, says what is short.
+  const shortfall = session?.session.status === "awaitingObjectReview"
+    ? reviewShortfall ?? session.sceneShortfall ?? null
+    : null;
+  const shortfallKey = shortfall?.missing.join(",") ?? "";
   const hydratedSessionId = useRef<string | null>(null);
   const base = `/practice/sessions/${scene.sessionId}`;
   useEffect(() => {
@@ -80,13 +95,21 @@ export function PracticeAnalysis() {
     ));
     setExplicitlyRemoved([]);
     setAdded([]);
-    nextMarker.current = Math.max(0, ...scene.items.map(item => item.marker)) + 1;
+    nextMarker.current = Object.keys(initialReviewMarkers(
+      session.sceneObjects.map(item => item.id),
+      session.suggestedSceneObjectIds,
+    )).length + 1;
     setRelations(session.sceneObjectRelations);
     setAttributes(Object.fromEntries(session.sceneObjects.map(item => [item.id,
       Object.fromEntries(Object.entries(item.attributes ?? {}).filter((entry): entry is [string, string] => entry[0] !== "quantity" && typeof entry[1] === "string"))])));
     setAttributeObjectId(session.sceneObjects[0]?.id ?? "");
     setSceneTitle(session.session.sessionTitle ?? scene.title);
   }, [scene.title, session]);
+  useEffect(() => {
+    if (!shortfallKey) return;
+    trackAction("scene_shortfall_shown", { missing: shortfallKey });
+    shortfallRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest" });
+  }, [shortfallKey]);
   useEffect(() => {
     if (!pending && !movingObjectId) return;
     const cancelOutside = (event: PointerEvent) => {
@@ -146,7 +169,9 @@ export function PracticeAnalysis() {
     </>}
   </div>;
   const locked = session.tasks.some(task => task.status !== "pending");
-  const kept = scene.items.filter(item => !removed.includes(item.id));
+  const kept = scene.items
+    .filter(item => !removed.includes(item.id))
+    .map(item => ({ ...item, marker: reviewMarkers[item.id] ?? item.marker }));
   const custom: LanguageItem[] = added.map(item => ({ id: `custom-${item.id}`, word: item.label,
     translation: item.label, wordClass: "noun", gender: null, marker: item.marker,
     x: item.x * 100, y: item.y * 100, attributes: attributes[item.id] ?? {}, example: "", exampleTranslation: "" }));
@@ -228,6 +253,27 @@ export function PracticeAnalysis() {
     setError(null);
     photoRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
   };
+  const addMissing = (kind: ShortfallKind) => {
+    trackAction("scene_shortfall_add_clicked", { kind });
+    setPanel(SHORTFALL_ACTIONS[kind].panel);
+    tabsRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    if (kind === "objects" || kind === "counts") requestAnimationFrame(() => document.getElementById("analysis-new-word")?.focus({ preventScroll: true }));
+  };
+  const tryAnotherPhoto = async () => {
+    if (leavingPhoto) return;
+    trackAction("scene_shortfall_new_photo", { missing: shortfallKey });
+    setLeavingPhoto(true); setError(null);
+    try {
+      // Nothing from this review was saved, so the session is left before choosing again.
+      await abandonPractice(session.session.id);
+      navigate("/practice", { replace: true, state: {
+        practiceNotice: "Take or choose a photo with a few objects you can count, describe or relate to each other.",
+      } });
+    } catch (reason) {
+      setError(friendlyError(reason));
+      setLeavingPhoto(false);
+    }
+  };
   const proceed = async () => {
     if (pending || practiceSaving || (!kept.length && !added.length)) return;
     const selectedAttributes = Object.fromEntries([...kept.map(item => item.id), ...added.map(item => item.id)]
@@ -267,7 +313,7 @@ export function PracticeAnalysis() {
           <ScenePhoto scene={scene} items={[...positionedKept, ...custom]} onLocationSelect={placementLabel ? place : undefined}
             locationLabel={placementLabel ? `Choose the location of ${placementLabel}` : undefined} />
         </div>
-        <div className="analysis-panel-tabs" role="tablist" aria-label="Scene analysis details">
+        <div ref={tabsRef} className="analysis-panel-tabs" role="tablist" aria-label="Scene analysis details">
           {panels.map(value => <button key={value} type="button" role="tab"
             aria-selected={panel === value} className={panel === value ? "is-active" : ""} onClick={() => setPanel(value)}>
             {value === "attributes" ? "Adjectives" : value[0].toUpperCase() + value.slice(1)}
@@ -395,8 +441,12 @@ export function PracticeAnalysis() {
             </form> : null}
           </Card>
         </section> : null}
+        {shortfall && !locked ? <div ref={shortfallRef}>
+          <SceneShortfallNotice shortfall={shortfall} busy={practiceSaving || leavingPhoto}
+            onAdd={addMissing} onTryAnotherPhoto={() => void tryAnotherPhoto()} />
+        </div> : null}
         {error || practiceError ? <p role="alert">{error ?? practiceError}</p> : null}
-        <Button block className="analysis-continue" disabled={practiceSaving || !!placementLabel || (!kept.length && !added.length)} onClick={() => void proceed()}>
+        <Button block className="analysis-continue" disabled={practiceSaving || leavingPhoto || !!placementLabel || (!kept.length && !added.length)} onClick={() => void proceed()}>
           {practiceSaving ? "Saving your review..." : "Confirm lesson facts"} <ArrowRightIcon />
         </Button>
       </div>

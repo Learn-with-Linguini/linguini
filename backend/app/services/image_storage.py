@@ -94,7 +94,7 @@ class ImageStorage:
             raise MediaUrlError("Unable to inspect hosted image.") from exc
 
     def put(self, key: str, data: bytes, content_type: str) -> None:
-        # Derivatives are regenerable, so overwrite is safe here unlike user uploads.
+        # Only the server may replace accepted upload bytes or regenerate derivatives.
         self._check()
         try:
             response = httpx.post(
@@ -110,7 +110,7 @@ class ImageStorage:
             )
             response.raise_for_status()
         except httpx.HTTPError as exc:
-            raise MediaUrlError("Unable to store derived image.") from exc
+            raise MediaUrlError("Unable to store image.") from exc
 
     def delete(self, key: str) -> None:
         self.delete_many([key])

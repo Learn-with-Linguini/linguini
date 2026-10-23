@@ -39,6 +39,12 @@ class TranslatedTerm(ApiModel):
     )
     article: Annotated[str, Field(min_length=1, max_length=20)] | None = None
     gender: Annotated[str, Field(pattern="^(masculine|feminine|neuter)$")] | None = None
+    plural: Annotated[str, Field(min_length=1, max_length=300)] | None = Field(
+        default=None,
+        description=("Objects only: the bare plural noun without an article (Spanish "
+                     "\"tazas\", French \"tasses\", German \"Tassen\"); for Korean, "
+                     "repeat the bare noun. Null for attributes and relationships."),
+    )
     phonetic_text: Annotated[str, Field(min_length=1, max_length=300)] | None = Field(
         default=None,
         description=("Approximate English-sound respelling of the translated word "

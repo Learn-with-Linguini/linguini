@@ -184,12 +184,12 @@ async function mount(which: "Room" | "Rooms" = "Room", source = surface) {
     try { await source.act(async () => root.unmount()); } finally { client.clear(); }
   });
   await source.act(async () => root.render(source.h(source.QueryClientProvider, { client },
-    source.h(source.AppStateContext.Provider, { value: state }, source.h(source.MemoryRouter, { initialEntries: [which === "Room" ? "/rooms/r1" : "/rooms"] },
+    source.h(source.AuthProvider, null, source.h(source.AppStateContext.Provider, { value: state }, source.h(source.MemoryRouter, { initialEntries: [which === "Room" ? "/rooms/r1" : "/rooms"] },
       source.h(source.Routes, null,
         source.h(source.Route, { path: "/rooms/:roomId", element: source.h(source.Room) }),
         source.h(source.Route, { path: "/rooms", element: source.h(source.Rooms) }),
         source.h(source.Route, { path: "/home", element: source.h("p", null, "Home destination") }),
-      ))))));
+      )))))));
   await waitFor(() => assert.match(text(), which === "Room" ? /I Spy together|Home destination/ : /I Spy with a friend|Home destination/), source);
   return { client, close };
 }

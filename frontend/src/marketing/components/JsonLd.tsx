@@ -51,7 +51,7 @@ export function JsonLd({ faq }: JsonLdProps) {
       installUrl: new URL(appLinks.signUp, site.url).toString(),
       applicationCategory: "EducationalApplication",
       operatingSystem: "Web",
-      image: `${site.url}/og/home.png`,
+      image: new URL(site.ogImage, site.url).toString(),
       publisher: { "@id": orgId },
       inLanguage: ["es", "fr"],
       featureList: pricing.beta,

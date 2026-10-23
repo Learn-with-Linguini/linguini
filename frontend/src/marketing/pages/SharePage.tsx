@@ -42,7 +42,7 @@ export default function SharePage() {
         ogUrl={`/share?${query}`}
         noIndex
         image={{
-          url: "/og/home.png",
+          url: site.ogImage,
           alt: `${journalTitle(card)} — a page from a Linguini journal in ${language}`,
         }}
       />

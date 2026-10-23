@@ -9,7 +9,7 @@ schema.
 """
 
 SCENE_TRANSLATION_PROMPT_VERSION = "scene-translation.v5"
-SCENE_TRANSLATION_SCHEMA_VERSION = "scene-translation-result.v2"
+SCENE_TRANSLATION_SCHEMA_VERSION = "scene-translation-result.v3"
 
 SCENE_TRANSLATION_SYSTEM_PROMPT = """Translate the supplied English scene vocabulary into the requested target language.
 

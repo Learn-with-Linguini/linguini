@@ -10,6 +10,7 @@ from app.schemas.base import ApiModel
 
 class BasilTotals(ApiModel):
     today: int = 0
+    weekly: int = 0
     lifetime: int = 0
     balance: int = 0
     competition_day: date

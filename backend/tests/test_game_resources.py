@@ -38,6 +38,9 @@ from app.schemas.sessions import CreateSessionRequest
 from app.schemas.users import LanguageProfile, User
 from app.services.background import InlineBackgroundRunner
 
+# A thin scene is rejected on mission profiles; these tests cover the regular lesson.
+pytestmark = pytest.mark.usefixtures("regular_lesson")
+
 
 @pytest.fixture
 def resources(monkeypatch):

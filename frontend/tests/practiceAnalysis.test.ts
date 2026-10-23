@@ -210,16 +210,25 @@ test("restoring removed objects keeps mission-hidden suggestions excluded from m
   await mount({ ...detail(), suggestedSceneObjectIds: ["object-1", "object-2"],
     provisionalMissionPlan: [{ missionId: "M03", practiceLevel: "A1" }] });
   assert.deepEqual([...dom.window.document.querySelectorAll('[role="tab"]')].map(tab => tab.textContent), ["Objects2", "Adjectives2", "Relations1"]);
-  assertMarkers([2, 3]);
+  assertMarkers([1, 2]);
   assert.deepEqual(counts(), { cup: 2 });
-  await click(dom.window.document.querySelector('[aria-label="Remove marker 2, cup"]'));
-  assertMarkers([3]);
+  await click(dom.window.document.querySelector('[aria-label="Remove marker 1, cup"]'));
+  assertMarkers([2]);
   assert.deepEqual(counts(), { cup: 1 });
   await click(button("Restore removed objects"));
-  assertMarkers([2, 3]);
+  assertMarkers([1, 2]);
   assert.deepEqual(counts(), { cup: 2 });
   await click(button("Confirm lesson facts"));
   assert.deepEqual(reviews[0].acceptedObjectIds, ["object-1", "object-2"]);
   assert.deepEqual(reviews[0].objectCounts, { "object-1": 2 });
   assert.deepEqual(reviews[0].relations, [relation]);
+});
+
+test("a learner-added object follows the visible suggestion numbers", async () => {
+  await mount({ ...detail(), suggestedSceneObjectIds: ["object-1", "object-2"] });
+  assertMarkers([1, 2]);
+
+  await addWord("window");
+
+  assertMarkers([1, 2, 3]);
 });

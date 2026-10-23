@@ -23,7 +23,6 @@ def _rng(payload, salt):
 
 def build_a0_situation_payload(payload):
     """Prepare reviewed phrases and learner facts for the closed lesson builder."""
-    language = payload["targetLanguage"].lower()
     mission_id = payload["missionId"]
     rows = {str(row["key"]): row for row in payload["approvedObjects"]}
     facts = payload.get("learnerFacts") or {}
@@ -46,12 +45,7 @@ def build_a0_situation_payload(payload):
     ordered.extend(row for key, row in rows.items() if key not in preferred)
     payload = {**payload, "approvedObjects": ordered[:3], "focusObjectId": focus_key}
     focus = rows[focus_key]
-    nouns = {
-        row["key"]: lex.reviewed_noun(row["source"], language)
-        for row in payload["approvedObjects"]
-    }
-    if any(noun is None for noun in nouns.values()):
-        return {**payload, "approvedObjects": [], "prep": [], "approvedTargetTexts": []}
+    nouns = {row["key"]: lex.row_noun(row) for row in payload["approvedObjects"]}
     facts = dict(facts)
     if mission_id == "M05":
         preference = dict(facts.get("preference") or facts)
@@ -241,7 +235,7 @@ def _build_ownership_payload(payload, x, nouns):
         **payload,
         "prep": prep,
         "approvedTargetTexts": approved,
-        "questions": questions,
+        "questions": _plain(questions),
     }
 
 
@@ -449,14 +443,21 @@ def _build_preference_payload(payload, focus, nouns):
     }
     questions.append(q6)
     approved = _target_texts(prep, questions)
-    return {**payload, "prep": prep, "approvedTargetTexts": approved, "questions": questions}
+    return {
+        **payload, "prep": prep, "approvedTargetTexts": approved,
+        "questions": _plain(questions),
+    }
+
+
+def _plain(questions):
+    """JSON-ready questions, so the payload can be sent to the model and cached."""
+    return [question.model_dump(mode="json", by_alias=True) for question in questions]
 
 
 def build_a0_situation_lesson(payload):
     prepared = build_a0_situation_payload(payload)
-    return A0SituationLesson(
-        title=prepared["title"],
-        questions=prepared["questions"],
+    return A0SituationLesson.model_validate(
+        dict(title=prepared["title"], questions=prepared["questions"]),
     )
 
 

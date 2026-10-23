@@ -30,6 +30,7 @@ export function friendlyError(error: unknown): string {
       active_session_limit_reached: "You can keep up to three unfinished practices open. Finish or leave one before starting another.",
       insufficient_basil: "Collect 20 Basil to unlock this accent.",
       practice_conflict: "This practice has changed. Refresh the page and try again.",
+      insufficient_scene: "This photo doesn't have enough for Linguini to check a lesson yet. Add more to it, or try another photo.",
       clue_names_target: "Your clue uses the word for this object. Describe it without naming it.",
       task_conflict: "That activity has already been updated. Refresh to see where you are now.",
       journal_conflict: "This journal entry changed while you were editing. Refresh and try again.",

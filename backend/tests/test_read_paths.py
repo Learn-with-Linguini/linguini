@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import timedelta
 from uuid import UUID
 
+import pytest
 from sqlalchemy import event, select
 from sqlalchemy.engine import Engine
 from test_postgres_sessions import age_session, analyze, create_run
@@ -12,6 +13,9 @@ from test_postgres_sessions import database as database
 from app.repositories.postgres.users import users
 from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.schemas.base import utc_now
+
+# A thin scene is rejected on mission profiles; these tests cover the regular lesson.
+pytestmark = pytest.mark.usefixtures("regular_lesson")
 
 
 def test_active_read_does_not_wait_on_user_write_lock(database):

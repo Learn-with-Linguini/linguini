@@ -629,9 +629,18 @@ lesson.
   confirmed, and plans every mission the photo supports, up to three. The plan is saved as
   `analysisDraft.missionPlan` before generation and generation reads only that snapshot.
   Sessions reviewed before plans were saved keep the regular lesson.
-- **No mission fits.** The regular lesson runs and `analysisDraft.missionGuidance`
-  (returned as `missionGuidance`) lists what each mission is missing; the lesson page
-  shows it as a short note. Nothing is inferred and no scene is substituted.
+- **No mission fits.** A profile with implemented missions never falls back to the
+  regular lesson, whose default tasks cannot all be checked. The review is rolled back and
+  rejected with 422 `insufficient_scene`, whose `detail` adds `missing` (any of `objects`,
+  `counts`, `attributes`, `relations`, for the missions closest to fitting) and `missions`
+  (each candidate's `missionId`, `title`, `missing`, `reasons` and `steps`: concrete
+  `{kind, text}` actions worded from the review, such as "Mark 1 more cup so there are 2 cups."). The review screen asks
+  the learner to add those facts or try another photo. If every planned mission is skipped
+  during generation, the partial tasks are dropped, the session returns to
+  `awaitingObjectReview` and the same shape is saved as `analysisDraft.sceneShortfall`
+  (returned as `sceneShortfall` while reviewing). Profiles without implemented missions
+  (for example B1–C2) keep the regular lesson. Nothing is inferred and no scene is
+  substituted.
 - **Shared teaching.** Translation and one vocabulary introduction are checkpointed first,
   as before. The introduction carries no mission fields because it teaches the nouns for
   every planned mission; its per-word evidence still follows each word's own result.
@@ -727,7 +736,7 @@ A2 location production.
    + `es` without accent changes; fr + `s`, excluding `-s/-x/-z/-au/-eu/-al/-ail` and the
    `-ou` exceptions) and must match any recorded plural. Otherwise the session records
    `analysisDraft.skippedMissions` and keeps its other tasks; with no mission task left
-   the regular lesson is used.
+   the session returns to review with a `sceneShortfall` instead of a regular lesson.
 2. **Lesson** (`app/ai/features/learning_tasks/mission_m03.py`). Exactly one
    `grammarLesson` with 2–4 questions: quantity comprehension, choosing the statement
    (distractors use a wrong number or the singular), then a word-bank statement whose
