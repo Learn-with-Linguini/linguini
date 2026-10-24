@@ -9,9 +9,8 @@ Every module follows the same layout (see ``m01.py``):
 3. checks: ``check_inputs``, ``check_lesson`` and ``photo_reasons``;
 4. ``MISSION = PackMission(...)``.
 
-A mission listed here is pack-owned whenever language packs are enabled: it is
-generated from the pack when ready and otherwise not offered, never built by its
-legacy builder. Missions not listed keep their legacy implementation.
+Mission lessons come only from here: a mission listed is generated from the pack when
+ready and otherwise not offered.
 """
 
 from __future__ import annotations

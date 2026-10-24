@@ -8,41 +8,41 @@ export function languageDisplayName(code: string): string {
   catch { return code; }
 }
 
-const isBuiltInLanguage = (code: string) => languages.some(language => language.code === code);
+export function languageFlag(code: string): string {
+  return languages.find(language => language.code === code)?.flag ?? "";
+}
 
-/** Built-in languages keep every level; packs only limit pack-only languages. */
+/** Practice languages come only from pack discovery: a language and level are selectable
+ * when a discovered pack offers them. */
 export function assertSelectableLanguage(code: string, level: string | undefined, packs: PackPracticeLanguage[]) {
-  if (isBuiltInLanguage(code)) return;
   const pack = packs.find(language => language.code === code);
-  if (!pack) throw new Error("Choose an available practice language.");
+  if (!pack?.levels.length) throw new Error("Choose an available practice language.");
   if (level && !pack.levels.includes(level as PackPracticeLanguage["levels"][number])) throw new Error("Choose a level available for this language pack.");
 }
 
-/** Validate before saving; only pack-only languages wait on pack discovery, so a
- * discovery failure never blocks onboarding or saves for built-in languages. */
+/** Validate before saving. Keeping the current language (``keep``) never waits on
+ * discovery, so name or goal edits still save while its pack is unavailable. */
 export async function checkSelectableLanguage(
-  code: string, level: string | undefined, loadPacks: () => Promise<PackPracticeLanguage[]>,
+  code: string, level: string | undefined, loadPacks: () => Promise<PackPracticeLanguage[]>, keep?: string,
 ) {
-  if (isBuiltInLanguage(code)) return;
+  if (keep && code === keep) return;
   assertSelectableLanguage(code, level, await loadPacks());
 }
 
+const knownOrder = (code: string) => {
+  const index = languages.findIndex(language => language.code === code);
+  return index < 0 ? languages.length : index;
+};
+
 export function profileLanguageChoices(packs: PackPracticeLanguage[], activeCode = "") {
-  const choices = languages.map(language => ({ ...language, levels: [] as PackPracticeLanguage["levels"], experimental: false }));
-  for (const pack of packs) {
-    if (!pack.levels.length) continue;
-    const existing = choices.find(choice => choice.code === pack.code);
-    if (existing) {
-      existing.levels = pack.levels;
-      existing.experimental = pack.experimental;
-      continue;
-    }
-    choices.push({ code: pack.code, name: languageDisplayName(pack.code), flag: "", levels: pack.levels, experimental: pack.experimental });
-  }
+  const choices = packs
+    .filter(pack => pack.levels.length)
+    .sort((a, b) => knownOrder(a.code) - knownOrder(b.code) || a.code.localeCompare(b.code))
+    .map(pack => ({ code: pack.code, name: languageDisplayName(pack.code), flag: languageFlag(pack.code), levels: pack.levels, experimental: pack.experimental }));
   // Preserve the selected profile if its pack becomes unavailable; do not select a
   // different language implicitly or claim that its lessons remain available.
   if (activeCode && !choices.some(choice => choice.code === activeCode)) {
-    choices.push({ code: activeCode, name: languageDisplayName(activeCode), flag: "", levels: [], experimental: false });
+    choices.push({ code: activeCode, name: languageDisplayName(activeCode), flag: languageFlag(activeCode), levels: [], experimental: false });
   }
   return choices;
 }

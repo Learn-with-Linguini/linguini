@@ -20,7 +20,6 @@ PACK = Path(__file__).parents[1] / "app/language_packs/packs/es-ES/everyday"
 
 @pytest.fixture
 def packs_on(monkeypatch):
-    monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "true")
     monkeypatch.setenv("APP_ENV", "test")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_EXPERIMENTAL", "true")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", str(PACK))
@@ -169,14 +168,13 @@ def _counted_cups(quantity, label="cup"):
     ("A0", 3, True), ("A0", 5, False), ("A2", 3, False),
 ])
 def test_m03_photo_rules(level, quantity, eligible):
-    from app.language_packs.lessons.m03 import photo_reasons
     from app.missions import get_mission
-    from app.services.mission_eligibility import scene_attributes
+    from app.services.mission_eligibility import photo_eligibility
 
     objects, groups = _counted_cups(quantity)
-    reasons = photo_reasons(get_mission("M03", level, 1), objects, [], scene_attributes,
-                            counted_groups=groups)
-    assert (reasons == []) is eligible
+    # A0's range is the definition's generic count rule; A2 adds the pack's comparison rule.
+    check = photo_eligibility(get_mission("M03", level, 1), objects, [], groups)
+    assert check.eligible is eligible
 
 
 def test_m03_a2_needs_two_groups_of_different_objects_and_counts():

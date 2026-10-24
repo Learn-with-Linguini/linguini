@@ -7,7 +7,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import Field
 
-from app.ai.features.learning_tasks.mission import MissionGeneration, fold
+from app.ai.features.learning_tasks.mission import fold
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.schemas.base import ApiModel, NonEmptyText
 
@@ -187,30 +187,7 @@ def validate_a0_situation_lesson(payload: dict[str, Any], result: A0SituationLes
             )
 
 
-def _fallback(payload: dict[str, Any]) -> A0SituationLesson:
-    from app.services.mission_lessons_a0_situations import build_a0_situation_lesson
-
-    result = build_a0_situation_lesson(payload)
-    validate_a0_situation_lesson(payload, result)
-    return result
 
 
-def _validate(payload: dict[str, Any], result: A0SituationLesson) -> None:
-    validate_a0_situation_lesson(payload, result)
 
 
-_GENERATION = {
-    mission_id: MissionGeneration(
-        prompt_version=f"a0-situation-{mission_id.lower()}-v1",
-        schema_version="a0-situation-result.v1",
-        validator_version="a0-situation-validator.v1",
-        system_prompt="",
-        result_model=A0SituationLesson,
-        validate=_validate,
-        fallback=_fallback,
-        json_schema_name=f"a0_situation_{mission_id.lower()}",
-        uses_model=False,
-    )
-    for mission_id in _ORDER
-}
-A0_SITUATION_GENERATIONS = _GENERATION

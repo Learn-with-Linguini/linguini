@@ -1,4 +1,8 @@
-"""Mission planning and per-mission photo eligibility from learner-confirmed scene facts."""
+"""Mission planning and per-mission photo eligibility from learner-confirmed scene facts.
+
+Every mission lesson comes from a language pack: the missions offered are the pack's
+ready ones, and photo rules are the generic requirements plus each pack mission's own.
+"""
 
 import re
 from collections import Counter
@@ -6,10 +10,6 @@ from dataclasses import dataclass
 
 from app.missions import get_mission
 from app.schemas.enums import SessionMode
-from app.services.ispy_clue_frames import COLOUR_ATTRIBUTE_TYPES, GENDERS, POSITIONS
-from app.services.mission_language_a2 import A2_ENABLED_LANGUAGES
-
-MISSION_LANGUAGES = {"es", "fr", "de"}
 
 M01_A0 = ("M01", "A0", 1)
 M02_A0 = ("M02", "A0", 1)
@@ -35,127 +35,22 @@ IMPLEMENTED_MISSIONS = {
     "A2": (M01_A2, M02_A2, M03_A2, M04_A2, M06_A2),
 }
 MAX_LESSON_MISSIONS = {"A0": 3, "A1": 3, "A2": 4}
-# A0 missions use reviewed closed content, which includes Korean.
-LEVEL_LANGUAGES = {
-    "A0": {"es", "fr", "de", "ko"},
-    "A2": A2_ENABLED_LANGUAGES | {"de", "ko"},
-}
 
-# Reviewed singular attributive colour forms for each supported lesson language.
-REVIEWED_COLOURS = {
-    "red": {"es": ("rojo", "roja"), "fr": ("rouge", "rouge"),
-            "de": ("roter", "rote", "rotes")},
-    "white": {"es": ("blanco", "blanca"), "fr": ("blanc", "blanche"),
-              "de": ("weißer", "weiße", "weißes")},
-    "black": {"es": ("negro", "negra"), "fr": ("noir", "noire"),
-              "de": ("schwarzer", "schwarze", "schwarzes")},
-    "yellow": {"es": ("amarillo", "amarilla"), "fr": ("jaune", "jaune"),
-               "de": ("gelber", "gelbe", "gelbes")},
-    "purple": {"es": ("morado", "morada"), "fr": ("violet", "violette"),
-               "de": ("lila", "lila", "lila")},
-    "gold": {"es": ("dorado", "dorada"), "fr": ("doré", "dorée"),
-             "de": ("goldener", "goldene", "goldenes")},
-    "silver": {"es": ("plateado", "plateada"), "fr": ("argenté", "argentée"),
-               "de": ("silberner", "silberne", "silbernes")},
-    "blue": {"es": ("azul", "azul"), "fr": ("bleu", "bleue"),
-             "de": ("blauer", "blaue", "blaues")},
-    "green": {"es": ("verde", "verde"), "fr": ("vert", "verte"),
-              "de": ("grüner", "grüne", "grünes")},
-    "grey": {"es": ("gris", "gris"), "fr": ("gris", "grise"),
-             "de": ("grauer", "graue", "graues")},
-    "gray": {"es": ("gris", "gris"), "fr": ("gris", "grise"),
-             "de": ("grauer", "graue", "graues")},
-    "brown": {"es": ("marrón", "marrón"), "fr": ("marron", "marron"),
-              "de": ("brauner", "braune", "braunes")},
-    "pink": {"es": ("rosa", "rosa"), "fr": ("rose", "rose"),
-             "de": ("rosa", "rosa", "rosa")},
-    "orange": {"es": ("naranja", "naranja"), "fr": ("orange", "orange"),
-               "de": ("orangefarbener", "orangefarbene", "orangefarbenes")},
-    "beige": {"es": ("beige", "beige"), "fr": ("beige", "beige"),
-              "de": ("beige", "beige", "beige")},
-}
-SUPPORTED_COLOURS = set(REVIEWED_COLOURS)
-
-# Reviewed singular (masculine, feminine) forms of the other confirmed attribute types.
-# ``before`` marks French adjectives placed before the noun; ``contrasts`` are values
-# clearly different in a photo, the only ones offered as distractors.
-REVIEWED_ATTRIBUTES = {
-    "size": {
-        "big": dict(aliases=("large", "huge"), es=("grande", "grande"), fr=("grand", "grande"),
-                    de=("großer", "große", "großes"), before=True, contrasts=("small",)),
-        "small": dict(aliases=("little", "tiny"), es=("pequeño", "pequeña"),
-                      fr=("petit", "petite"), de=("kleiner", "kleine", "kleines"),
-                      before=True, contrasts=("big",)),
-        "long": dict(es=("largo", "larga"), fr=("long", "longue"),
-                     de=("langer", "lange", "langes"), before=True, contrasts=("short",)),
-        "short": dict(es=("corto", "corta"), fr=("court", "courte"),
-                      de=("kurzer", "kurze", "kurzes"), before=True, contrasts=("long",)),
-    },
-    "shape": {
-        "round": dict(aliases=("circular",), es=("redondo", "redonda"), fr=("rond", "ronde"),
-                      de=("runder", "runde", "rundes"),
-                      contrasts=("square", "rectangular")),
-        "square": dict(es=("cuadrado", "cuadrada"), fr=("carré", "carrée"),
-                       de=("quadratischer", "quadratische", "quadratisches"),
-                       contrasts=("round",)),
-        "rectangular": dict(es=("rectangular", "rectangular"),
-                            fr=("rectangulaire", "rectangulaire"),
-                            de=("rechteckiger", "rechteckige", "rechteckiges"),
-                            contrasts=("round",)),
-    },
-    "material": {
-        "wooden": dict(aliases=("wood",), es=("de madera",) * 2, fr=("en bois",) * 2,
-                       de=("aus Holz",) * 3, contrasts=("metal", "plastic", "glass")),
-        "metal": dict(aliases=("metallic", "steel", "iron"), es=("de metal",) * 2,
-                      fr=("en métal",) * 2, de=("aus Metall",) * 3,
-                      contrasts=("wooden", "glass", "fabric")),
-        "plastic": dict(es=("de plástico",) * 2, fr=("en plastique",) * 2,
-                        de=("aus Plastik",) * 3, contrasts=("wooden", "metal", "fabric")),
-        "glass": dict(es=("de vidrio",) * 2, fr=("en verre",) * 2, de=("aus Glas",) * 3,
-                      contrasts=("wooden", "metal", "fabric")),
-        "fabric": dict(aliases=("cloth",), es=("de tela",) * 2, fr=("en tissu",) * 2,
-                       de=("aus Stoff",) * 3, contrasts=("wooden", "metal", "glass")),
-        "stone": dict(es=("de piedra",) * 2, fr=("en pierre",) * 2,
-                      de=("aus Stein",) * 3, contrasts=("wooden", "plastic", "fabric")),
-    },
-    "pattern": {
-        "striped": dict(es=("de rayas",) * 2, fr=("rayé", "rayée"),
-                        de=("gestreifter", "gestreifte", "gestreiftes"),
-                        contrasts=("spotted",)),
-        "spotted": dict(aliases=("polka-dot", "dotted"), es=("de lunares",) * 2,
-                        fr=("à pois",) * 2, de=("gepunkteter", "gepunktete", "gepunktetes"),
-                        contrasts=("striped",)),
-    },
-    "state": {
-        "open": dict(es=("abierto", "abierta"), fr=("ouvert", "ouverte"),
-                     de=("offener", "offene", "offenes"), contrasts=("closed",)),
-        "closed": dict(es=("cerrado", "cerrada"), fr=("fermé", "fermée"),
-                       de=("geschlossener", "geschlossene", "geschlossenes"),
-                       contrasts=("open",)),
-        "empty": dict(es=("vacío", "vacía"), fr=("vide", "vide"),
-                      de=("leerer", "leere", "leeres"), contrasts=("full",)),
-        "full": dict(es=("lleno", "llena"), fr=("plein", "pleine"),
-                     de=("voller", "volle", "volles"), contrasts=("empty",)),
-        "clean": dict(es=("limpio", "limpia"), fr=("propre", "propre"),
-                      de=("sauberer", "saubere", "sauberes"), contrasts=("dirty",)),
-        "dirty": dict(es=("sucio", "sucia"), fr=("sale", "sale"),
-                      de=("schmutziger", "schmutzige", "schmutziges"), contrasts=("clean",)),
-    },
-}
-ATTRIBUTE_ORDER = ("size", "shape", "material", "pattern", "state")
-
-
-# Relation types with reviewed location expressions, keyed by the I-Spy position meanings.
-POSITION_MEANINGS = {
-    "on": "on", "under": "under", "next_to": "next to",
-    "in_front_of": "in front of", "behind": "behind",
-}
-REVIEWED_POSITIONS = {
-    relation: {
-        language: next(expression for expression, sense, _ in positions if sense == meaning)
-        for language, positions in POSITIONS.items() if language in MISSION_LANGUAGES
-    }
-    for relation, meaning in POSITION_MEANINGS.items()
+# Confirmed attribute values clearly different in a photo, the only ones a lesson offers
+# as distractors. Values are the scene's English attribute values, not lesson words.
+ATTRIBUTE_CONTRASTS = {
+    "size": {"big": ("small",), "small": ("big",), "long": ("short",), "short": ("long",)},
+    "shape": {"round": ("square", "rectangular"), "square": ("round",),
+              "rectangular": ("round",)},
+    "material": {"wooden": ("metal", "plastic", "glass"),
+                 "metal": ("wooden", "glass", "fabric"),
+                 "plastic": ("wooden", "metal", "fabric"),
+                 "glass": ("wooden", "metal", "fabric"),
+                 "fabric": ("wooden", "metal", "glass"),
+                 "stone": ("wooden", "plastic", "fabric")},
+    "pattern": {"striped": ("spotted",), "spotted": ("striped",)},
+    "state": {"open": ("closed",), "closed": ("open",), "empty": ("full",),
+              "full": ("empty",), "clean": ("dirty",), "dirty": ("clean",)},
 }
 
 
@@ -163,49 +58,41 @@ _CONTEXT_UNSET = object()
 
 
 def lesson_missions(session_mode, profile, language_context=_CONTEXT_UNSET):
-    """Implemented missions a new lesson may plan from; empty keeps the existing lesson path."""
+    """Missions a new lesson may plan from: the language pack's ready missions that the app
+    offers at the profile's level. Empty (no pack, or none ready) keeps the regular lesson.
+    """
     if session_mode != SessionMode.LESSON:
         return []
     if language_context is _CONTEXT_UNSET:
         from app.language_packs.context import operation_context
 
         language_context = operation_context(session_mode, profile)
+    if language_context is None:
+        return []
     level = str(profile["proficiency_level"] or "").strip().upper()
-    languages = LEVEL_LANGUAGES.get(level, MISSION_LANGUAGES)
-    language = profile["target_language_code"].lower()
-    keys = IMPLEMENTED_MISSIONS.get(level, ()) if language in languages else ()
-    missions = [
-        mission for key in keys
-        if (mission := get_mission(*key)) is not None
-        and (
-            language in {"es", "fr"}
-            if mission.mission_id in {"M01", "M02", "M03", "M04"} and level == "A2"
-            else language in {"es", "fr", "de", "ko"}
-            if mission.mission_id == "M06" and level == "A2"
-            else True
-        )
+    offered = {key[0] for key in IMPLEMENTED_MISSIONS.get(level, ())}
+    return [
+        mission for key in language_context.ready_missions_at(level)
+        if key[0] in offered and (mission := get_mission(*key)) is not None
     ]
-    if language_context is not None:
-        # Missions with a pack implementation are pack-owned: ready versions are
-        # planned and others are not offered, never replaced by the legacy builder.
-        # Missions without one keep their legacy implementation. Packs bypass the
-        # legacy language gates but only offer missions implemented at this level.
-        missions = [
-            mission for mission in missions
-            if not language_context.owns(mission.mission_id)
-        ]
-        offered = {key[0] for key in IMPLEMENTED_MISSIONS.get(level, ())}
-        ready = [
-            mission for key in language_context.ready_missions_at(level)
-            if key[0] in offered and (mission := get_mission(*key)) is not None
-        ]
-        missions = [*ready, *missions]
-    return missions
 
 
-def _pack_mission(mission, language_context):
-    """Whether this mission's lesson is generated from the session's language pack."""
-    return language_context is not None and language_context.is_ready(mission)
+def lesson_mission(mission):
+    """``mission`` at its newest pack template version, keeping saved plans valid.
+
+    A plan saved for an older content version (M02 A1 version 1) is built at the
+    version its pack lessons now use.
+    """
+    from app.language_packs.capabilities import mission_template_key
+    from app.language_packs.loader import LanguagePackError
+
+    try:
+        key = mission_template_key(mission.mission_id, mission.practice_level)
+    except LanguagePackError:
+        return mission
+    if key[2] == mission.content_version:
+        return mission
+    return get_mission(*key) or mission
 
 
 def plan_missions(
@@ -309,9 +196,7 @@ def provisional_mission_focus(candidates, objects, relations, language_context=N
             seen = set()
             for obj in objects:
                 label = obj.label.strip().casefold()
-                has_detail = (scene_attributes(obj) if _pack_mission(mission, language_context)
-                              else confirmed_colour(obj))
-                if label not in seen and has_detail:
+                if label not in seen and scene_attributes(obj):
                     add(obj.id)
                     seen.add(label)
                     if len(seen) >= requirements.min_coloured_objects:
@@ -362,14 +247,6 @@ def snapshot_missions(snapshot):
     ]
 
 
-def confirmed_colour(obj):
-    """The object's confirmed supported colour; missing or unknown colours are never guessed."""
-    for key, value in (obj.attributes or {}).items():
-        if key.casefold() in COLOUR_ATTRIBUTE_TYPES and isinstance(value, str):
-            colour = value.strip().casefold()
-            if colour in SUPPORTED_COLOURS:
-                return colour
-    return None
 
 
 def relation_type(relation):
@@ -392,14 +269,6 @@ def confirmed_relations(mission, objects, relations):
 
 # What a learner can add on the review screen, in the order the screen offers it.
 SHORTFALL_KINDS = ("objects", "counts", "attributes", "relations")
-# A2 rules and the confirmed facts that can satisfy them.
-RULE_SHORTFALLS = {
-    "describeScene": ("attributes", "relations"),
-    "findTarget": ("attributes", "relations"),
-    "compareQuantities": ("counts",),
-    "fictionalOwnership": ("attributes", "relations"),
-    "requestableItem": ("objects",),
-}
 # Pack missions' own photo rules and the confirmed facts that can satisfy them.
 PACK_SHORTFALLS = {
     "M01": ("attributes", "relations"),
@@ -412,7 +281,6 @@ PACK_SHORTFALLS = {
 PACK_CHOICE_REASONS = frozenset({
     "Tell Linguini which object is yours.", "Tell Linguini what you would choose.",
 })
-A0_OBJECTS_REASON = "Confirm at least 2 different objects with taught names."
 
 
 @dataclass(frozen=True)
@@ -495,61 +363,25 @@ def countable_groups(mission, counted_groups):
     ]
 
 
-def _reviewed_value(kind, value):
-    text = value.strip().casefold()
-    return next((
-        name for name, entry in REVIEWED_ATTRIBUTES.get(kind, {}).items()
-        if text == name or text in entry.get("aliases", ())
-    ), None)
 
 
-def confirmed_attributes(obj):
-    """Confirmed attributes with reviewed forms as ``(key, type, value)``, colour first."""
-    found = []
-    attributes = obj.attributes or {}
-    if colour := confirmed_colour(obj):
-        key = next(key for key in attributes if key.casefold() in COLOUR_ATTRIBUTE_TYPES)
-        found.append((key, "colour", colour))
-    for kind in ATTRIBUTE_ORDER:
-        for key, value in attributes.items():
-            if key.casefold() == kind and isinstance(value, str):
-                if name := _reviewed_value(kind, value):
-                    found.append((key, kind, name))
-    return found
 
 
-def agreed_attribute(kind, value, language, gender):
-    """``(form agreeing with a singular noun, placed before it)``, or ``None`` when unknown."""
-    if kind == "colour":
-        form = agreed_colour(value, language, gender)
-        return (form, language == "de") if form else None
-    entry = REVIEWED_ATTRIBUTES.get(kind, {}).get(value) or {}
-    forms = entry.get(language)
-    if not forms:
-        return None
-    form = (
-        forms[0]
-        if len(set(forms)) == 1
-        else dict(zip(GENDERS, forms, strict=False)).get(gender)
-    )
-    before = (
-        language == "fr" and bool(entry.get("before"))
-        or language == "de" and not form.startswith("aus ")
-    ) if form else False
-    return (form, before) if form else None
 
 
 def attribute_contrasts(kind, value):
-    return REVIEWED_ATTRIBUTES.get(kind, {}).get(value, {}).get("contrasts", ())
+    return ATTRIBUTE_CONTRASTS.get(kind, {}).get(value.strip().casefold(), ())
 
 
 def photo_eligibility(
     mission, objects, relations=(), counted_groups=(), mission_choices=None,
     language_context=None,
 ):
-    """Check only the confirmed facts this mission's photo requirements name."""
+    """Check the confirmed facts this mission's photo requirements name, then the
+    mission's own pack rules (which read open session vocabulary, not a word list)."""
+    from app.language_packs.lessons import pack_mission
+
     requirements = mission.photo_requirements
-    pack = _pack_mission(mission, language_context)
     labels = {obj.label.strip().casefold() for obj in objects}
     reasons, missing = [], []
     if len(labels) < requirements.min_confirmed_objects:
@@ -557,9 +389,8 @@ def photo_eligibility(
             f"Confirm at least {requirements.min_confirmed_objects} different objects."
         )
         missing.append("objects")
-    # ``min_coloured_objects`` counts objects with any reviewed attribute, colour or other.
-    described = {obj.label.strip().casefold() for obj in objects
-                 if (scene_attributes(obj) if pack else confirmed_attributes(obj))}
+    # ``min_coloured_objects`` counts objects with any confirmed attribute, colour or other.
+    described = {obj.label.strip().casefold() for obj in objects if scene_attributes(obj)}
     if len(described) < requirements.min_coloured_objects:
         reasons.append(
             "Confirm a colour, size, shape, material, pattern or state of at least one object."
@@ -581,43 +412,16 @@ def photo_eligibility(
             "matching objects."
         )
         missing.append("counts")
-    if requirements.eligibility_rule and not pack:
-        from app.services.mission_eligibility_a2 import eligibility_reasons
-
-        rule_reasons = eligibility_reasons(
-            requirements.eligibility_rule, mission, objects, relations, counted_groups,
+    pack_reasons = pack_mission(mission.mission_id).photo_reasons(
+        mission, objects, relations, scene_attributes, counted_groups=counted_groups,
+        mission_choices=mission_choices,
+    )
+    reasons += pack_reasons
+    for reason in pack_reasons:
+        missing.extend(
+            ("choices",) if reason in PACK_CHOICE_REASONS
+            else PACK_SHORTFALLS.get(mission.mission_id, ())
         )
-        reasons.extend(rule_reasons)
-        if rule_reasons:
-            missing.extend(
-                ("objects",)
-                if requirements.eligibility_rule == "describeScene" and len(labels) < 3
-                else RULE_SHORTFALLS.get(requirements.eligibility_rule, ())
-            )
-    if pack:
-        # Dictionary-based rules above do not apply to open session vocabulary; the
-        # mission's pack implementation states its own photo requirements instead.
-        from app.language_packs.lessons import pack_mission
-
-        pack_reasons = pack_mission(mission.mission_id).photo_reasons(
-            mission, objects, relations, scene_attributes, counted_groups=counted_groups,
-            mission_choices=mission_choices,
-        )
-        reasons += pack_reasons
-        for reason in pack_reasons:
-            missing.extend(
-                ("choices",) if reason in PACK_CHOICE_REASONS
-                else PACK_SHORTFALLS.get(mission.mission_id, ())
-            )
-    if str(mission.practice_level) == "A0" and not pack:
-        a0_reasons = a0_photo_reasons(mission, objects, counted_groups, mission_choices)
-        reasons += a0_reasons
-        if a0_reasons:
-            missing.append(
-                "counts" if mission.mission_id == "M03"
-                else "objects" if a0_reasons == [A0_OBJECTS_REASON]
-                else "choices"
-            )
     return Eligibility(not reasons, tuple(reasons), tuple(dict.fromkeys(missing)))
 
 
@@ -631,14 +435,6 @@ def scene_attributes(obj):
             and isinstance(value, str) and value.strip()]
 
 
-def _choice_value(choice, name):
-    if not isinstance(choice, dict):
-        return None
-    return choice.get(name, choice.get({
-        "scene_object_id": "sceneObjectId",
-        "scene_object_ids": "sceneObjectIds",
-        "chosen_object_id": "chosenObjectId",
-    }.get(name, name)))
 
 
 def _mission_choice_supplied(mission, mission_choices):
@@ -652,56 +448,4 @@ def _mission_choice_supplied(mission, mission_choices):
     return False
 
 
-def a0_photo_reasons(mission, objects, counted_groups=(), mission_choices=None):
-    """A0 missions need reviewed nouns: 2-3 distinct objects, or a group of 2 or 3."""
-    from app.services.a0_lexicon import REVIEWED_NOUNS
 
-    def reviewed(label):
-        return re.sub(r"^(?:a|an|the)\s+", "", label.strip().casefold()) in REVIEWED_NOUNS
-
-    labels = {obj.label.strip().casefold() for obj in objects if reviewed(obj.label)}
-    if mission.mission_id == "M03":
-        groups = [
-            group for group in countable_groups(mission, counted_groups)
-            if reviewed(group.get("label", "")) or any(
-                reviewed(obj.label) for obj in objects
-                if str(obj.id) in {str(item) for item in group["sceneObjectIds"]}
-            )
-        ]
-        # Any group qualifies; the lesson counts the first one, so extra groups never block it.
-        if not groups:
-            return ["Count a group of 2 or 3 matching objects."]
-        return []
-    if len(labels) < 2:
-        return [A0_OBJECTS_REASON]
-    if mission.mission_id in {"M04", "M05"} and mission_choices is not None:
-        choices = mission_choices.get("missionChoices", mission_choices)
-        by_id = {str(obj.id): obj for obj in objects}
-        if mission.mission_id == "M04":
-            ownership = choices.get("ownership") or {}
-            object_id = str(_choice_value(ownership, "scene_object_id") or "")
-            if object_id not in by_id or not reviewed(by_id[object_id].label):
-                return ["Tell Linguini which object is yours."]
-        else:
-            preference = choices.get("preference") or {}
-            compared = _choice_value(preference, "scene_object_ids") or []
-            chosen = _choice_value(preference, "chosen_object_id")
-            focus_id = str(chosen if len(compared) == 2 else compared[0] if compared else "")
-            reaction = preference.get("reaction")
-            if (
-                focus_id not in by_id
-                or not reviewed(by_id[focus_id].label)
-                or reaction == "skip"
-            ):
-                return ["Tell Linguini what you would choose."]
-    return []
-
-
-def agreed_colour(colour, language, gender):
-    """The reviewed colour form agreeing with a singular noun, or ``None`` when unknown."""
-    forms = REVIEWED_COLOURS.get(colour, {}).get(language)
-    if forms is None:
-        return None
-    if len(set(forms)) == 1:
-        return forms[0]
-    return dict(zip(GENDERS, forms, strict=False)).get(gender)

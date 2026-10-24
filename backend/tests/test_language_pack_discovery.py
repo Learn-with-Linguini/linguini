@@ -20,7 +20,6 @@ def configured_spanish(tmp_path, monkeypatch):
     root = tmp_path / "packs"
     shutil.copytree(SPANISH, root / "es-ES" / "everyday")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", str(root / "*"))
-    monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "true")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_EXPERIMENTAL", "true")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_REGISTER", "everyday")
     monkeypatch.setenv("APP_ENV", "test")
@@ -60,13 +59,6 @@ def test_available_levels_and_endpoint_are_local_experimental(configured_spanish
             for row in response.json()] == expected
 
 
-def test_flag_off_does_not_discover_or_offer_packs(configured_spanish, monkeypatch):
-    monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "false")
-    monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", "nonexistent/*")
-    assert available_pack_languages() == []
-    assert TestClient(app).get("/api/v1/me/practice-languages").json() == []
-
-
 @pytest.mark.parametrize("environment,experimental", [("test", "false"), ("production", "true")])
 def test_local_switch_never_releases_unreviewed_pack(
     configured_spanish, monkeypatch, environment, experimental,
@@ -80,12 +72,7 @@ def test_local_switch_never_releases_unreviewed_pack(
 def test_pack_only_language_plans_only_pack_missions_through_existing_photo_flow(
     configured_spanish, monkeypatch, level,
 ):
-    # Exercise the generic extension with Spanish treated as absent from the
-    # legacy registry; no new-language pack or linguistic fixture is created.
-    import app.services.mission_eligibility as module
-
-    monkeypatch.setattr(module, "MISSION_LANGUAGES", set())
-    monkeypatch.setattr(module, "LEVEL_LANGUAGES", {})
+    # Missions come only from the discovered pack; no language list gates them.
     profile = {"target_language_code": "es", "proficiency_level": level}
     missions = lesson_missions(SessionMode.LESSON, profile)
     assert [(m.mission_id, str(m.practice_level)) for m in missions] == [
@@ -95,8 +82,6 @@ def test_pack_only_language_plans_only_pack_missions_through_existing_photo_flow
         *([("M13", level)] if level == "A0" else []),
     ]
     assert lesson_missions(SessionMode.ISPY, profile) == []
-    monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "false")
-    assert lesson_missions(SessionMode.LESSON, profile) == []
 
 
 def test_bad_discovery_configuration_is_recoverable(configured_spanish, monkeypatch):

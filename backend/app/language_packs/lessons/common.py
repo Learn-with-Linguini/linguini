@@ -338,7 +338,11 @@ def with_romanization(task, result, pack, accepted, vocabulary, extra_spellings=
                 phrase_boundaries=pack.language.phrase_boundaries,
             )
             modes = [chunk.join for chunk in derived.chunks]
-            question = question.model_copy(update={"token_bank": original.token_bank})
+            # As in dev's lessons, the task's public tiles leave out a final full stop
+            # (the app adds it back); its join mode goes with it.
+            if (derived.chunks and derived.chunks[-1].text == "."
+                    and "." not in question.token_bank):
+                modes = modes[:-1]
         for text in [question.prompt, *question.token_bank]:
             if text and not any(char.isalpha() for char in text):
                 spellings[text] = text

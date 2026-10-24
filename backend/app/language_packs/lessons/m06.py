@@ -20,16 +20,16 @@ from app.ai.features.learning_tasks.mission_m06 import (
     validate_m06_lesson,
 )
 from app.schemas.tasks import VocabularyChoice
-from app.services.mission_m06_lexicon import ITEMS, normalize_item_label, requestable_objects
-from app.services.mission_m06_request_details import (
+from app.services.lesson_tasks.m06 import (
     SCENARIO_PROMPTS,
-    _opposite_value,
-    _order_label,
-    _quantity_choices,
-    _scenario,
     build_m06_tasks,
+    opposite_value,
+    order_label,
+    quantity_choices,
+    scenario_of,
     select_transaction,
 )
+from app.services.mission_m06_lexicon import ITEMS, normalize_item_label, requestable_objects
 from app.services.quantities import ENGLISH_NUMBERS
 
 from ..generation import (
@@ -248,7 +248,7 @@ def _plan_a2(specs, pack, facts, vocabulary, _seed):
     # The order phrase as written inside the request locates its polite frame.
     specs.add("politeChunkGap", "request", "order-phrase", request, suffix="order")
     # The same phrase with another quantity: the wrong tiles of the built request.
-    wrong = next(number for number in _quantity_choices(order.scenario)
+    wrong = next(number for number in quantity_choices(order.scenario)
                  if number != transaction["quantity"])
     specs.add("buildRequest", "request", "order-phrase",
               {role: fact for role, fact in request.items() if role != "quantity"},
@@ -261,7 +261,7 @@ def _plan_a2(specs, pack, facts, vocabulary, _seed):
               {"target": target, "detail": roles["detail"]}, suffix="reply")
     mode = transaction["q5Mode"]
     if mode in {"chunkChoice", "wordBank"}:
-        opposite = _opposite_value(follow_type, follow_value)
+        opposite = opposite_value(follow_type, follow_value)
         specs.add("replyWithDetail", "reply", "detail-reply", {"target": target}, truth=False,
                   counterfactual={"detail": _alternative("detail", transaction, opposite)},
                   suffix="wrong-value")
@@ -284,7 +284,7 @@ def _plan_a2(specs, pack, facts, vocabulary, _seed):
               suffix="repair")
     # The served (or, without a mistake, the other) value: the wrong-value tile.
     wrong_value = (mismatch["servedValue"] if mismatch["flag"]
-                   else _opposite_value(follow_type, follow_value))
+                   else opposite_value(follow_type, follow_value))
     specs.add("confirmOrRepair", "repair", "order-repair", {"target": target}, truth=False,
               counterfactual={role: _alternative(role, transaction, wrong_value)},
               suffix="wrong-value")
@@ -385,18 +385,18 @@ def _build_a2(ctx):
 
     # Q1: the order heard, as dev's English order cards (one wrong field each).
     fields = {"item": item.key, "quantity": quantity, **transaction["requestDetails"]}
-    wrong_quantity = next(number for number in _quantity_choices(scenario) if number != quantity)
-    cards = [("correct", _order_label(quantity, item, size), fields),
-             ("wrong-quantity", _order_label(wrong_quantity, item, size),
+    wrong_quantity = next(number for number in quantity_choices(scenario) if number != quantity)
+    cards = [("correct", order_label(quantity, item, size), fields),
+             ("wrong-quantity", order_label(wrong_quantity, item, size),
               {**fields, "quantity": wrong_quantity})]
     if size:
         wrong_size = "large" if size == "small" else "small"
-        cards.append(("wrong-size", _order_label(quantity, item, wrong_size),
+        cards.append(("wrong-size", order_label(quantity, item, wrong_size),
                       {**fields, "size": wrong_size}))
     else:
         other = next(candidate for candidate in ITEMS.values()
                      if candidate.category == item.category and candidate.key != item.key)
-        cards.append(("wrong-item", _order_label(quantity, other), {**fields, "item": other.key}))
+        cards.append(("wrong-item", order_label(quantity, other), {**fields, "item": other.key}))
     cards, options = _choices(ctx, cards, "q1")
     q1 = M06Question(
         question_id="m06-q1", purpose="listenOrderCard", prompt="Which order did you hear?",
@@ -545,7 +545,7 @@ def _build_a2(ctx):
         distractorFields={q.question_id: q.distractor_fields for q in result.questions},
         gapKinds={q.question_id: q.gap_kind for q in result.questions},
     )
-    prompt = SCENARIO_PROMPTS[_scenario(item)]
+    prompt = SCENARIO_PROMPTS[scenario_of(item)]
     if scenario == "classroom":
         prompt = f"Imagine you need to borrow this {item.label}."
     payload = ctx.payload(

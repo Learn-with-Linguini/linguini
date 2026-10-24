@@ -31,7 +31,6 @@ from app.ai.cache import (
 from app.ai.contracts.errors import ProviderError, ProviderErrorCode
 from app.ai.contracts.schema import build_strict_json_schema
 from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelRequest
-from app.ai.features.learning_tasks.mission import MissionGeneration
 from app.ai.features.learning_tasks.prompt import (
     LEARNING_TASK_MEMORY_PROMPT_VERSION,
     LEARNING_TASK_MEMORY_SYSTEM_PROMPT,
@@ -325,44 +324,6 @@ class LearningTaskService:
             )
         except CacheWaitTimeout as error:
             raise LearningTaskGenerationError("Learning task generation failed.") from error
-
-    def generate_mission(
-        self, payload: dict[str, Any], generation: MissionGeneration, *,
-        mission_version: str, cache_scope: CacheScope | None = None,
-    ) -> Any:
-        """Generate one mission's lesson; its cache identity includes the mission version."""
-        version = FeatureVersion(
-            AiFeature.LEARNING_TASK.value,
-            f"{generation.prompt_version}:{mission_version}",
-            generation.schema_version,
-            generation.validator_version,
-        )
-
-        def decode(data: Any) -> Any:
-            result = generation.result_model.model_validate(data)
-            generation.validate(payload, result)
-            return result
-
-        try:
-            return run_cached(
-                self._cache,
-                self._client,
-                version=version,
-                scope=cache_scope,
-                payload=payload,
-                compute=lambda: self._generate(
-                    payload,
-                    (mission_version,),
-                    generation.result_model,
-                    prompt_version=version.prompt_version,
-                    system_prompt=generation.system_prompt,
-                    parse=lambda text: decode(json.loads(text)),
-                    json_schema_name=generation.json_schema_name,
-                ),
-                decode=decode,
-            )
-        except CacheWaitTimeout as error:
-            raise LearningTaskGenerationError("Mission lesson generation failed.") from error
 
     def _generate(
         self,

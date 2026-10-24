@@ -129,8 +129,9 @@ def test_one_relation_plans_one_m02_task_with_four_questions_on_it(curated):
     assert (choose.object_label, choose.reference_label) == ("Cup", "Table")
     assert (choose.scene_object_id, choose.reference_object_id) == (cup, table)
     assert ask.reference_object_id is None
+    # The pack's fixed prompt; its English translation names the object.
     assert (ask.prompt, ask.prompt_translation) == (
-        "Pregunta por la ubicación de la taza.", "Ask where the cup is.",
+        "Pregunta dónde está.", "Ask where the cup is.",
     )
     assert answer.reference_object_id == table
     key = _answer_key(engine, lesson.id)

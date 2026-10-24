@@ -16,7 +16,6 @@ from typing import Annotated, Any, Literal
 from pydantic import Field
 
 from app.ai.features.learning_tasks.mission import (
-    MissionGeneration,
     checked_answer,
     fold,
     tokens,
@@ -25,7 +24,9 @@ from app.ai.features.learning_tasks.mission import (
 from app.ai.features.learning_tasks.schemas import GeneratedChoice
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.schemas.base import ApiModel, NonEmptyText
-from app.services.a0_lexicon import KOREAN_ENDINGS
+
+# Korean names an object with a copula ending, never an article.
+KOREAN_ENDINGS = ("이에요", "예요")
 
 type A0Purpose = Literal[
     "matchName", "confirmName", "buildIdentify",
@@ -62,8 +63,6 @@ SLOT = "___"
 _DIGIT = re.compile(r"\d")
 MAX_OPTIONS = 3
 
-A0_SCHEMA_VERSION = "learning-tasks-a0-result.v1"
-A0_VALIDATOR_VERSION = "learning-tasks-a0-validator.v1"
 
 
 class A0Question(ApiModel):
@@ -111,7 +110,7 @@ def _objects(payload):
     return {row["key"]: row for row in payload["approvedObjects"]}
 
 
-def _marker_question(payload, purpose, section, target, prompt, *, listen_first=False,
+def marker_question(payload, purpose, section, target, prompt, *, listen_first=False,
                      index):
     objects = sorted(payload["approvedObjects"], key=lambda row: row["marker"])
     noun = fold(target["noun"])
@@ -143,7 +142,7 @@ def _marker_question(payload, purpose, section, target, prompt, *, listen_first=
     )
 
 
-def _choice_question(payload, purpose, section, target, prompt, labels, correct, *,
+def choice_question(payload, purpose, section, target, prompt, labels, correct, *,
                      index, shuffle=True, **extra):
     labels = list(dict.fromkeys(labels))
     if shuffle:
@@ -163,7 +162,7 @@ def _choice_question(payload, purpose, section, target, prompt, labels, correct,
     )
 
 
-def _build_question(payload, purpose, section, target, prompt, answer, extra_tile, *,
+def build_question(payload, purpose, section, target, prompt, answer, extra_tile, *,
                     index, **extra):
     bank = [*tokens(answer), extra_tile]
     _rng(payload, f"{purpose}-{index}").shuffle(bank)
@@ -177,12 +176,12 @@ def _build_question(payload, purpose, section, target, prompt, answer, extra_til
     )
 
 
-def _sections(payload):
+def task_sections(payload):
     focus = [_objects(payload)[key] for key in payload["focus"]]
     return [(f"Task {number} · {row['label']}", row) for number, row in enumerate(focus, 1)]
 
 
-def _other(payload, target, salt):
+def other_object(payload, target, salt):
     """Another approved object, named differently whenever the photo has one."""
     others = [row for row in payload["approvedObjects"] if row["key"] != target["key"]]
     named = [row for row in others if fold(row["noun"]) != fold(target["noun"])]
@@ -195,19 +194,19 @@ def _m01(payload):
     _rng(payload, "truth").shuffle(truths)
     questions = []
     for index, ((section, target), truth) in enumerate(
-        zip(_sections(payload), truths, strict=True), 1,
+        zip(task_sections(payload), truths, strict=True), 1,
     ):
-        stated = target if truth else _other(payload, target, f"stated-{index}")
+        stated = target if truth else other_object(payload, target, f"stated-{index}")
         questions += [
-            _marker_question(payload, "matchName", section, target, target["name"], index=index),
-            _choice_question(
+            marker_question(payload, "matchName", section, target, target["name"], index=index),
+            choice_question(
                 payload, "confirmName", section, target, stated["isIt"], [yes, no],
                 yes if truth else no, index=index, shuffle=False,
                 statement_true=truth, stated_key=stated["key"], audio_text=stated["isIt"],
             ),
-            _build_question(
+            build_question(
                 payload, "buildIdentify", section, target, payload["whatIsThis"],
-                target["identify"], _other(payload, target, f"tile-{index}")["noun"],
+                target["identify"], other_object(payload, target, f"tile-{index}")["noun"],
                 index=index,
             ),
         ]
@@ -216,15 +215,15 @@ def _m01(payload):
 
 def _m02(payload):
     questions = []
-    for index, (section, target) in enumerate(_sections(payload), 1):
-        other = _other(payload, target, f"name-{index}")
+    for index, (section, target) in enumerate(task_sections(payload), 1):
+        other = other_object(payload, target, f"name-{index}")
         questions += [
-            _marker_question(payload, "findNamed", section, target, target["find"], index=index),
-            _choice_question(
+            marker_question(payload, "findNamed", section, target, target["find"], index=index),
+            choice_question(
                 payload, "chooseName", section, target, INSTRUCTIONS["chooseName"],
                 [target["name"], other["name"]], target["name"], index=index,
             ),
-            _marker_question(
+            marker_question(
                 payload, "listenSelect", section, target, target["name"], index=index,
                 listen_first=True,
             ),
@@ -232,7 +231,7 @@ def _m02(payload):
     return questions
 
 
-def _m03(payload):
+def m03_questions(payload):
     group = payload["group"]
     target = _objects(payload)[group["key"]]
     words = payload["approvedNumberWords"]
@@ -247,17 +246,17 @@ def _m03(payload):
     for index, (section, quantity, shown) in enumerate(tasks, 1):
         other = 5 - quantity
         questions += [
-            _choice_question(
+            choice_question(
                 payload, "countGroup", section, target, payload["howMany"],
                 [words[str(number)] for number in (1, 2, 3)], words[str(quantity)],
                 index=index, audio_text=payload["howMany"], **shown,
             ),
-            _choice_question(
+            choice_question(
                 payload, "matchChunk", section, target, INSTRUCTIONS["matchChunk"],
                 [chunks[str(number)] for number in (1, 2, 3)], chunks[str(quantity)],
                 index=index, **shown,
             ),
-            _build_question(
+            build_question(
                 payload, "buildChunk", section, target, payload["howMany"],
                 chunks[str(quantity)], tokens(words[str(other)])[0], index=index, **shown,
             ),
@@ -267,16 +266,16 @@ def _m03(payload):
 
 def _m13(payload):
     questions = []
-    for index, (section, target) in enumerate(_sections(payload), 1):
+    for index, (section, target) in enumerate(task_sections(payload), 1):
         questions += [
-            _choice_question(
+            choice_question(
                 payload, "chooseChunk", section, target, INSTRUCTIONS["chooseChunk"],
                 [row["chunk"] for row in target["formChoices"]], target["chunk"], index=index,
             ),
-            _marker_question(
+            marker_question(
                 payload, "matchSpoken", section, target, target["chunk"], index=index,
             ),
-            _choice_question(
+            choice_question(
                 payload, "fillSlot", section, target, target["slotTemplate"],
                 [row["form"] for row in target["formChoices"]], target["form"], index=index,
                 slot_template=target["slotTemplate"], complete_chunk=target["chunk"],
@@ -285,10 +284,10 @@ def _m13(payload):
     return questions
 
 
-_BUILDERS = {"M01": _m01, "M02": _m02, "M03": _m03, "M13": _m13}
+_BUILDERS = {"M01": _m01, "M02": _m02, "M03": m03_questions, "M13": _m13}
 
 
-def fallback_a0_lesson(payload: dict[str, Any]) -> A0LessonResult:
+def assemble_a0_lesson(payload: dict[str, Any]) -> A0LessonResult:
     """The deterministic six-question lesson; a rebuilt lesson matches the saved one."""
     if not a0_ready(payload):
         raise LearningTaskGenerationError("The lesson needs approved, reviewed objects.")
@@ -480,18 +479,5 @@ def _validate_m03(payload, questions):
             _fail("The answer must match the count.")
 
 
-def _generation(mission_id):
-    return MissionGeneration(
-        prompt_version=f"learning-tasks.{mission_id.lower()}-a0.v1",
-        schema_version=A0_SCHEMA_VERSION,
-        validator_version=A0_VALIDATOR_VERSION,
-        system_prompt="A0 lessons are built deterministically from reviewed content.",
-        result_model=A0LessonResult,
-        validate=validate_a0_lesson,
-        fallback=fallback_a0_lesson,
-        json_schema_name=f"{mission_id.lower()}_a0_lesson_v1",
-        uses_model=False,
-    )
 
 
-A0_GENERATIONS = {mission_id: _generation(mission_id) for mission_id in ORDERS}

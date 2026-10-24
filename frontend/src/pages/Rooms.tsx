@@ -8,7 +8,7 @@ import { friendlyError } from "../lib/queryKeys";
 import { useAppState } from "../state/useAppState";
 import { Button, Card } from "../components/ui";
 import { EyeIcon } from "../components/icons";
-import { languages } from "../config/languages";
+import { languageDisplayName } from "../lib/languageChoices";
 import "../components/rooms.css";
 
 export function Rooms() {
@@ -29,8 +29,7 @@ function RoomLobby() {
   const busyRef = useRef(false);
   const owner = user?.id ?? "";
   const profile = activeProfile?.id ?? "";
-  const languageName = languages.find(language => language.code === activeProfile?.targetLanguageCode)?.name
-    ?? activeProfile?.targetLanguageCode.toUpperCase();
+  const languageName = activeProfile ? languageDisplayName(activeProfile.targetLanguageCode) : undefined;
   const active = useQuery({ queryKey: roomQueryKeys.active(owner, profile), queryFn: async ({ signal }) => {
     const current = await getActiveRoom(signal);
     if (current && current.meId !== owner) throw new Error("The room belongs to another signed-in account.");

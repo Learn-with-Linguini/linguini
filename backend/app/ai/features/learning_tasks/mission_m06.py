@@ -4,15 +4,10 @@ from typing import Annotated, Literal
 
 from pydantic import Field, model_validator
 
-from app.ai.features.learning_tasks.mission import MissionGeneration
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.schemas.base import ApiModel, NonEmptyText
 from app.schemas.tasks import VocabularyChoice
 from app.services.mission_m06_lexicon import ITEMS
-
-M06_PROMPT_VERSION = "learning-tasks.m06-a2.v1"
-M06_SCHEMA_VERSION = "learning-tasks-m06-a2-result.v1"
-M06_VALIDATOR_VERSION = "learning-tasks-m06-a2-validator.v1"
 
 
 class M06Question(ApiModel):
@@ -192,20 +187,5 @@ def validate_m06_lesson(payload, result):
     return result
 
 
-def _fallback(payload):
-    from app.services.mission_m06_request_details import build_m06_result
-
-    return build_m06_result(payload)
 
 
-M06_GENERATION = MissionGeneration(
-    prompt_version=M06_PROMPT_VERSION,
-    schema_version=M06_SCHEMA_VERSION,
-    validator_version=M06_VALIDATOR_VERSION,
-    system_prompt="Build only the deterministic, reviewed M06 A2 request lesson.",
-    result_model=MissionM06Result,
-    validate=validate_m06_lesson,
-    fallback=_fallback,
-    json_schema_name="mission_m06_a2_lesson",
-    uses_model=False,
-)

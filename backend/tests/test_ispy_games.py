@@ -4,6 +4,7 @@ from datetime import timedelta
 from uuid import uuid4
 
 import pytest
+from pack_translation import pack_shaped
 from sqlalchemy import func, insert, select, update
 from test_postgres_sessions import create_run, upload_asset
 from test_postgres_sessions import database as database
@@ -42,16 +43,16 @@ class Translator:
     def __init__(self):
         self.payloads = []
 
-    def translate(self, payload, cache_scope=None, **_options):
+    def translate(self, payload, cache_scope=None, **options):
         self.payloads.append(payload)
         prefix = payload["targetLanguage"]
-        return SceneTranslationResult.model_validate({
+        return SceneTranslationResult.model_validate(pack_shaped({
             kind: [
                 {**term, "translation": f"{prefix}-{term['source']}", "phoneticText": "AH"}
                 for term in payload[kind]
             ]
             for kind in ("objects", "attributes", "relationships")
-        })
+        }, options))
 
 
 class Clues:
@@ -408,9 +409,9 @@ SPANISH_COLOURS = {
 
 
 class SpanishTranslator(Translator):
-    def translate(self, payload, cache_scope=None, **_options):
+    def translate(self, payload, cache_scope=None, **options):
         self.payloads.append(payload)
-        return SceneTranslationResult.model_validate({
+        return SceneTranslationResult.model_validate(pack_shaped({
             "objects": [
                 {**term, "translation": f"es-{term['source']}", "phoneticText": "AH",
                  "gender": "masculine", "article": "el"}
@@ -428,7 +429,7 @@ class SpanishTranslator(Translator):
                 {**term, "translation": f"está cerca de {term['source']}", "phoneticText": "AH"}
                 for term in payload["relationships"]
             ],
-        })
+        }, options))
 
 
 def test_preloaded_catalog_facts_reference_their_own_items(database):

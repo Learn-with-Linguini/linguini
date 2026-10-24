@@ -60,7 +60,7 @@ class PackMission:
     check_lesson: CheckLesson = _no_check
     # Slots, per level, whose answers are built from phrase tiles instead of word tiles.
     phrase_slots: Mapping[str, frozenset[str]] = field(default_factory=dict)
-    # Replaces dictionary-based legacy photo rules, which do not fit open vocabulary.
+    # The mission's own photo rules, read from open session vocabulary, not word lists.
     photo_reasons: PhotoReasons = _no_photo_reasons
     # Closed pack words (M03's number words) added before proposals and planning.
     vocabulary: MissionVocabulary = _session_vocabulary

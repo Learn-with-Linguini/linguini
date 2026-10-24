@@ -86,7 +86,7 @@ def test_a2_rules_and_a0_choices_map_to_review_actions():
     compare = get_mission("M03", "A2", 1)
     assert "counts" in photo_eligibility(compare, [obj(BOOK, "book")]).missing
     describe = get_mission("M01", "A2", 1)
-    assert photo_eligibility(describe, [obj(BOOK, "book")]).missing[-1] == "objects"
+    assert photo_eligibility(describe, [obj(BOOK, "book")]).missing[0] == "objects"
     ownership = get_mission("M04", "A0", 1)
     reviewed = [obj(CUP, "cup"), obj(BOOK, "book")]
     check = photo_eligibility(ownership, reviewed, mission_choices={})
@@ -150,17 +150,18 @@ def test_steps_say_exactly_what_to_mark_from_the_review():
     }]
 
 
-def test_a0_steps_name_taught_nouns_and_trim_a_group_that_is_too_big():
+def test_a0_steps_ask_for_any_other_object_and_trim_a_group_that_is_too_big():
     m03 = get_mission("M03", "A0", 1)
     books = [obj(uuid4(), "book") for _ in range(4)]
     assert mission_steps(m03, books, [], _counts(books, ("book", 4)), ["counts"]) == [
         {"kind": "counts", "text": "Remove 1 book marker so there are 3 books."},
     ]
     m01 = get_mission("M01", "A0", 1)
-    scene = [obj(CUP, "cup"), obj(BOOK, "sofa")]
-    [step] = mission_steps(m01, scene, [], [], ["objects"])
-    assert step["text"].startswith("Mark 1 more object with a name Linguini teaches")
-    assert "such as a book" in step["text"] and step["text"].endswith("“sofa” is not taught yet.")
+    # Packs teach any confirmed name, so a second object of any kind is enough.
+    assert mission_steps(m01, [obj(CUP, "cup")], [], [], ["objects"]) == [{
+        "kind": "objects", "text": "Mark 1 more different object you can see (so far: cup).",
+    }]
+    assert mission_steps(m01, [obj(CUP, "cup"), obj(BOOK, "sofa")], [], [], ["objects"]) == []
 
 
 def test_a2_comparison_asks_for_a_different_number():

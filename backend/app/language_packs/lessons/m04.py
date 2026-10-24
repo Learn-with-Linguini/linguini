@@ -16,17 +16,17 @@ from app.ai.features.learning_tasks.mission_a0_situations import (
     validate_a0_situation_lesson,
 )
 from app.ai.features.learning_tasks.mission_a2 import MissionA2Question, MissionA2Result
-from app.ai.features.learning_tasks.mission_m04 import fallback_m04_lesson
+from app.ai.features.learning_tasks.mission_m04 import assemble_m04_lesson
 from app.schemas.roleplay import parse_roleplay_facts
-from app.services.mission_lessons_a0_situations import (
-    _choice_question,
-    _marker_question,
-    _prep_add,
-    _target_texts,
-    a0_situation_lesson_task,
+from app.services.lesson_tasks.a0_situations import (
+    choice_question,
+    marker_question,
+    prep_add,
+    situation_lesson_task,
+    target_texts,
 )
-from app.services.mission_lessons_a2 import m04_a2_task
-from app.services.mission_lessons_m04 import _premise, m04_lesson_task
+from app.services.lesson_tasks.a2 import m04_a2_task
+from app.services.lesson_tasks.m04 import m04_lesson_task, premise
 
 from ..generation import ApprovedTerm, ApprovedVocabulary, ConfirmedOwner
 from .base import PackMission, for_level
@@ -379,9 +379,9 @@ def _build_a0(ctx):
             ctx.extra_spellings[composed] = f"{yes_spelling} {latin_of(sentence)}"
     prep = []
     for sentence in (mine, not_mine, is_yours, x_mine, x_yours, y_mine):
-        _prep_add(prep, sentence.text, sentence.translation)
-    _prep_add(prep, q3, f"Yes. {mine.translation}")
-    _prep_add(prep, q6, f"Yes. {x_mine.translation}")
+        prep_add(prep, sentence.text, sentence.translation)
+    prep_add(prep, q3, f"Yes. {mine.translation}")
+    prep_add(prep, q6, f"Yes. {x_mine.translation}")
     rows = [x, y, *(row for row in ctx.rows if row["key"] not in {x["key"], y["key"]})][:3]
     payload = ctx.payload(
         title=ctx.mission.title, approvedObjects=rows, focusObjectId=x["key"],
@@ -390,22 +390,22 @@ def _build_a0(ctx):
     section = "Lost and found"
     typed = not ctx.pack.language.romanization_required
     questions = [
-        _marker_question(payload, rows, x, section,
+        marker_question(payload, rows, x, section,
                          "Linguini found something. Which one is yours?", "recognise-ownership"),
-        _choice_question(
+        choice_question(
             "M04-Q2", "Listen to Linguini. What does Linguini ask?",
             "Listen to Linguini. What does Linguini ask?", section, x["key"],
             ["It belongs to you", "You like it"], "It belongs to you", "recognise-ownership",
             payload, salt="q2", audio_text=is_yours.text, listen_first=True,
         ),
-        _choice_question(
+        choice_question(
             "M04-Q3", "Complete the answer.", "Choose the words that complete the answer.",
             section, x["key"], [mine.text, not_mine.text], mine.text, "say-mine", payload,
             salt="q3", gap_type="chunkChoice", slot_template=f"{yes} ___", complete_chunk=q3,
             complete_translation=f"Yes. {mine.translation}", typed_allowed=typed,
             accepted_text_answers=[mine.text, q3],
         ),
-        _choice_question(
+        choice_question(
             "M04-Q4", "Complete the sentence.", "Choose the words that complete the sentence.",
             section, x["key"], [mine_predicate, yours_predicate], mine_predicate, "say-mine",
             payload, salt="q4", gap_type="chunkChoice",
@@ -413,7 +413,7 @@ def _build_a0(ctx):
             complete_translation=x_mine.translation, typed_allowed=typed,
             accepted_text_answers=[mine_predicate, x_mine.text],
         ),
-        _choice_question(
+        choice_question(
             "M04-Q5", "Listen, then complete the sentence.", "Listen, then complete the sentence.",
             section, x["key"], [mine_word, yours_word], mine_word, "say-mine", payload,
             salt="q5", gap_type="audioGap",
@@ -422,7 +422,7 @@ def _build_a0(ctx):
             complete_chunk=x_mine.text, complete_translation=x_mine.translation,
             audio_text=x_mine.text, listen_first=True,
         ),
-        _choice_question(
+        choice_question(
             "M04-Q6", "Finish the conversation.",
             "Choose the answer that finishes the conversation.",
             section, x["key"], [x_mine.text, y_mine.text], x_mine.text, "say-mine", payload,
@@ -442,11 +442,11 @@ def _build_a0(ctx):
         option.option_id: "belongs" if option.label == "It belongs to you" else "likes"
         for option in questions[1].options
     }
-    payload["approvedTargetTexts"] = _target_texts(prep, questions)
+    payload["approvedTargetTexts"] = target_texts(prep, questions)
     result = A0SituationLesson(title=ctx.mission.title, questions=questions)
     validate_a0_situation_lesson(payload, result)
-    task = a0_situation_lesson_task(ctx.session_id, ctx.mission, payload, result,
-                                    ctx.vocabulary_ids, prepared=payload)
+    task = situation_lesson_task(ctx.session_id, ctx.mission, payload, result,
+                                 ctx.vocabulary_ids)
     return result, task, payload
 
 
@@ -477,7 +477,7 @@ def _build_a1(ctx):
         found = dict(
             objectKey=row["key"], marker=row["marker"], label=row["label"], noun=row["noun"],
             gender=row["gender"], sentence=sentence.text, contrast=contrast.text,
-            nounPhrase=row["name"], premise=_premise(parsed[row["key"]], row["label"]),
+            nounPhrase=row["name"], premise=premise(parsed[row["key"]], row["label"]),
             ownerType=parsed[row["key"]].owner_type, ownerNames=parsed[row["key"]].owner_names,
         )
         if slot:
@@ -506,7 +506,7 @@ def _build_a1(ctx):
         choose_prompt_translation=ctx.labels["choose-sentence"].meaning,
         explanation=_explanation(ctx),
     )
-    result = fallback_m04_lesson(payload)
+    result = assemble_m04_lesson(payload)
     task = m04_lesson_task(ctx.session_id, ctx.mission, payload, result, ctx.vocabulary_ids)
     return result, task, payload
 
@@ -553,7 +553,7 @@ def _build_a2(ctx):
                              for suffix in ("no", "yes", "wrong"))
     other = ctx.sentence_by_id("buildOwnershipDescription", "other")
     wrong_owner = ctx.sentence_by_id("buildOwnershipDescription", "wrong")
-    premise = (f"Role-play: marker {assigned['marker']} is yours. "
+    roleplay = (f"Role-play: marker {assigned['marker']} is yours. "
                f"Marker {alternative['marker']} belongs to {cast.english_name}.")
     third = (_determiner(ctx, f"third-{cast.gender}", assigned) or cast.name)
     word = _word(own.text, ctx.terms[mine.fact_id].forms)
@@ -609,7 +609,7 @@ def _build_a2(ctx):
         choice("m04-q1", "chooseAssignedObject", choose_prompt,
                [(assigned["key"], str(assigned["marker"])),
                 (alternative["key"], str(alternative["marker"]))],
-               assigned["key"], s1, assigned["key"], roleplay_premise=premise,
+               assigned["key"], s1, assigned["key"], roleplay_premise=roleplay,
                marker_object_ids={assigned["key"]: assigned["key"],
                                   alternative["key"]: alternative["key"]}),
         choice("m04-q2", "choosePossessive", possessive_prompt, possessives, "possessive-right",
@@ -618,7 +618,7 @@ def _build_a2(ctx):
                  [third], s1, assigned["key"]),
         choice("m04-q4", "clarifyOwnership", friend,
                [("owner-no", no.text), ("owner-yes", yes_answer.text), ("owner-wrong", wrong.text)],
-               "owner-no", s2, alternative["key"], roleplay_premise=premise,
+               "owner-no", s2, alternative["key"], roleplay_premise=roleplay,
                group_object_ids=[alternative["key"]]),
         building("m04-q5", "buildOwnershipDescription", ctx.label("clarify-and-describe"), final,
                  [wrong_owner.text], s3, assigned["key"], phrase=True),

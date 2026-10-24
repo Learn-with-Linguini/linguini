@@ -9,6 +9,7 @@ because dev's A1 corrections are written per language.
 from __future__ import annotations
 
 import random
+import re
 
 from app.ai.features.learning_tasks.mission import fold, tokens
 from app.ai.features.learning_tasks.mission_a0 import (
@@ -16,21 +17,21 @@ from app.ai.features.learning_tasks.mission_a0 import (
     validate_a0_lesson,
 )
 from app.ai.features.learning_tasks.mission_a0 import (
-    _m03 as a0_m03_questions,
+    m03_questions as a0_m03_questions,
 )
 from app.ai.features.learning_tasks.mission_a2 import MissionA2Question, MissionA2Result
 from app.ai.features.learning_tasks.mission_m03 import (
     SECTION_BOARD,
     SECTION_PHOTO,
     M03LessonResult,
-    _nearby,
+    nearby_quantities,
 )
 from app.missions import get_mission
-from app.services.mission_lessons import build_mission_task
-from app.services.mission_lessons_a0 import a0_lesson_task
-from app.services.mission_lessons_a2 import m03_a2_task
-from app.services.mission_lessons_m03 import _EVALUATIONS as A1_EVALUATIONS
-from app.services.mission_lessons_m03 import M03_FOCUS
+from app.services.lesson_tasks.a0 import a0_lesson_task
+from app.services.lesson_tasks.a2 import m03_a2_task
+from app.services.lesson_tasks.common import build_mission_task
+from app.services.lesson_tasks.m03 import EVALUATIONS as A1_EVALUATIONS
+from app.services.lesson_tasks.m03 import M03_FOCUS
 from app.services.quantities import ENGLISH_NUMBERS
 
 from ..generation import ApprovedTerm, ApprovedVocabulary
@@ -320,7 +321,7 @@ def _build_a1(ctx):
     rng = random.Random(f"{ctx.seed}:M03")
     word = {number: _number_word(ctx, number, row) for number in taught}
 
-    distractors = _nearby(count.quantity, taught, skip_first=True)
+    distractors = nearby_quantities(count.quantity, taught, skip_first=True)
     choices = [count.quantity, *distractors[:2]]
     rng.shuffle(choices)
     choose_options = [dict(option_id=f"number-{_BOARD_LETTERS[i]}", label=word[number])
@@ -333,7 +334,7 @@ def _build_a1(ctx):
     extras += [wrong_number] if wrong_number else []
     build = ctx.chunks(statement, extras, salt="build-quantity")
 
-    counts = [target, *_nearby(target, taught)[:2]]
+    counts = [target, *nearby_quantities(target, taught)[:2]]
     rng.shuffle(counts)
     board_options = [dict(option_id=f"board-{_BOARD_LETTERS[i]}",
                           label=f"Board {_BOARD_LETTERS[i].upper()}")
@@ -387,20 +388,33 @@ def _a1_task(ctx, result, group, word, question, statement, extras):
     }
     correct_note = f"You counted {group['quantity']}: {group['numberWord']}."
 
+    # The wrong answers the tiles allow, as dev names them: the extra singular noun in
+    # place of the plural, the extra number in place of the count, or both.
+    text = statement.text
+    singular = (re.sub(rf"(?<!\w){re.escape(group['singular'])}\w+", group["singular"], text,
+                       count=1) if group["singular"] in extras else text)
+    other = next((value for number, value in word.items() if number != group["quantity"]
+                  and any(fold(token) in {fold(extra) for extra in extras}
+                          for token in tokens(value))), None)
+    recount = text.replace(group["numberWord"], other, 1) if other else text
+    both = singular.replace(group["numberWord"], other, 1) if other else singular
+
+    def slips(*sentences):
+        return list(dict.fromkeys(item for item in sentences if fold(item) != fold(text)))
+
     def corrections(item, label):
         if item.purpose == "buildQuantity":
             found = [
-                dict(mistake="wordOrder", correction=statement.text,
-                     explanation=f"Build: {statement.text}"),
-                dict(mistake="wrongQuantity", correction=statement.text,
+                dict(mistake="wrongQuantity", correction=text, answers=slips(recount, both),
                      explanation=correct_note),
+                dict(mistake="wordOrder", correction=text, explanation=f"Build: {text}"),
             ]
             if group["singular"] in extras:
                 found.insert(0, dict(
-                    mistake="pluralForm", correction=statement.text,
+                    mistake="pluralForm", correction=text, answers=slips(singular, both),
                     explanation=f"After {group['numberWord']}, use the counted noun's plural.",
                 ))
-            return found, None
+            return [rule for rule in found if rule.get("answers", True)], None
         if item.purpose == "matchQuantity":
             target = (item.board_counts or {}).get(item.correct_option_id)
             note = f"“{item.quantity_word}” means {target}."
@@ -512,9 +526,15 @@ def _build_a2(ctx):
     ]
     questions[3].target_language_text.append(friend.text)
     payload = ctx.payload(
-        approvedFacts=dict(approvedObjects=ctx.rows,
-                           sceneFacts=ctx.facts.model_dump(mode="json"),
-                           approvedVocabulary=ctx.vocabulary.model_dump(mode="json")),
+        approvedFacts=dict(
+            approvedObjects=ctx.rows, sceneFacts=ctx.facts.model_dump(mode="json"),
+            approvedVocabulary=ctx.vocabulary.model_dump(mode="json"),
+            # The friend's count is fictional, as in dev: it stays in the mission state.
+            approvedRoleplayFacts=[dict(
+                kind="falseCount", groupKey=first.fact_id, quantity=false_count,
+                numberWord=word[false_count], isFictional=True, source="assignedRoleplay",
+            )],
+        ),
         selection=dict(firstGroupKey=first.fact_id, secondGroupKey=second.fact_id),
         quantityRange={"min": taught[0], "max": taught[-1]},
     )
@@ -556,7 +576,8 @@ def check_lesson(level, result, approved, pack):
 
 def photo_reasons(mission, objects, relations, attributes_of, counted_groups=(),
                   mission_choices=None):
-    """A0 counts the first small group; A2 compares two groups of different objects."""
+    """A2 compares two groups of different objects; the definition's generic count rule
+    already asks A0 and A1 for one group in range."""
     level = str(mission.practice_level)
     requirements = mission.photo_requirements
     labels = {str(obj.id): fold(obj.label) for obj in objects}
@@ -564,8 +585,6 @@ def photo_reasons(mission, objects, relations, attributes_of, counted_groups=(),
         group for group in counted_groups
         if requirements.min_quantity <= group["quantity"] <= requirements.max_quantity
     ]
-    if level == "A0" and not groups:
-        return ["Count a group of 2 or 3 matching objects."]
     if level == "A2":
         def label(group):
             return next((labels[str(item)] for item in group["sceneObjectIds"]

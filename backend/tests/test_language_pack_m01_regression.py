@@ -1,28 +1,18 @@
 from __future__ import annotations
 
-import json
 import subprocess
 import sys
 from collections import Counter
 from pathlib import Path
-from uuid import UUID
 
 import pytest
-import test_mission_a0
-import test_mission_m01
 import test_mission_m01_workflow as mission_workflow
-import test_missions_a2
 import test_postgres_sessions
 
 from app.language_packs.loader import load_pack
-from app.missions import get_mission
 from app.repositories.postgres.workflow import _lesson_answer_is_correct, evaluate
 from app.schemas.tasks import SubmitVocabularyReviewAttemptRequest
 from app.services import mission_eligibility
-from app.services.mission_lessons_a0 import a0_lesson_task
-from app.services.mission_lessons_a2 import m01_a2_task
-from app.services.mission_lessons_m01 import m01_lesson_task
-from app.services.mission_registry import A2_MISSION_LESSONS
 
 FIXTURE = Path(__file__).parent / "fixtures/m01_spanish_structure.json"
 PACK = Path(__file__).parents[1] / "app/language_packs/packs/es-ES/everyday"
@@ -139,44 +129,8 @@ def _structure(level, mission, result, task):
     }
 
 
-def current_structure(monkeypatch):
-    counter = iter(range(1, 100))
-    monkeypatch.setattr(test_mission_a0, "uuid4", lambda: UUID(int=next(counter)))
-    mission, _spec, payload, a0_result, _objects = test_mission_a0._result("M01", "es")
-    a0_task = a0_lesson_task(UUID(int=101), mission, payload, a0_result, {})
-    a0 = _structure("A0", mission, a0_result, a0_task)
-
-    a1_payload = test_mission_m01.build("es", session_id=UUID(int=202))
-    a1_mission = test_mission_m01.MISSION
-    a1_result = test_mission_m01.fallback_m01_lesson(a1_payload)
-    a1_task = m01_lesson_task(UUID(int=202), a1_mission, a1_payload, a1_result, {})
-    a1 = _structure("A1", a1_mission, a1_result, a1_task)
-
-    objects, words, relations, groups, translated, markers = test_missions_a2._scene()
-    a2_mission = get_mission("M01", "A2", 1)
-    spec = A2_MISSION_LESSONS["A2:M01"]
-    a2_payload = spec.payload(
-        a2_mission,
-        "es",
-        objects,
-        relations,
-        words,
-        translated,
-        groups,
-        {},
-        "language-pack-regression",
-        review_markers=markers,
-    )
-    a2_result = spec.generation.fallback(a2_payload)
-    a2_task = m01_a2_task(UUID(int=303), a2_mission, a2_payload, a2_result, {})
-    a2 = _structure("A2", a2_mission, a2_result, a2_task)
-    return {"A0": a0, "A1": a1, "A2": a2}
 
 
-def test_spanish_m01_structure_matches_current_builder_snapshot(monkeypatch):
-    expected = json.loads(FIXTURE.read_text("utf-8"))
-
-    assert current_structure(monkeypatch) == expected
 
 
 def test_language_pack_package_is_absent_from_application_import_graph():

@@ -6,12 +6,9 @@ are 2 cups." Steps describe the confirmed facts only; they never guess what else
 is in the photo.
 """
 
-import re
-
 from app.services.quantities import english_plural
 
 MAX_NAMED = 3
-A0_EXAMPLES = ("cup", "book", "chair", "bottle", "apple", "pen")
 REQUESTABLE_EXAMPLES = ("bottle", "apple", "cup")
 
 
@@ -48,18 +45,10 @@ def _quantities(objects, counted_groups):
     return quantities
 
 
-def _reviewed(label):
-    from app.services.a0_lexicon import REVIEWED_NOUNS
-
-    return re.sub(r"^(?:a|an|the)\s+", "", _key(label)) in REVIEWED_NOUNS
-
-
-def _count_step(low, high, quantities, allowed=lambda _name: True, example="cup"):
+def _count_step(low, high, quantities, example="cup"):
     """The smallest change that brings one named group into ``low``-``high``."""
     best = None
     for name, quantity in quantities.values():
-        if not allowed(name):
-            continue
         distance = low - quantity if quantity < low else quantity - high
         if distance > 0 and (best is None or distance < best[0]):
             best = (distance, name, quantity)
@@ -83,27 +72,14 @@ def _objects_step(need, labels):
     return f"Mark {need} more different {noun} you can see{have}."
 
 
-def _a0_objects_step(objects):
-    taught = {_key(label) for label in _labels(objects) if _reviewed(label)}
-    need = max(1, 2 - len(taught))
-    untaught = [label for label in _labels(objects) if not _reviewed(label)]
-    examples = [name for name in A0_EXAMPLES if name not in taught][:MAX_NAMED]
-    step = (
-        f"Mark {need} more object{'' if need == 1 else 's'} with a name Linguini teaches "
-        f"at this level, such as {_join([_article(name) for name in examples], 'or')}."
-    )
-    if untaught:
-        quoted = _join([f"“{label}”" for label in untaught[:MAX_NAMED]])
-        step += f" {quoted} {'is' if len(untaught) == 1 else 'are'} not taught yet."
-    return step
 
 
 def _attributes_step(need, objects):
-    from app.services.mission_eligibility import confirmed_attributes
+    from app.services.mission_eligibility import scene_attributes
 
     plain = [
         label for label in _labels(objects)
-        if not any(confirmed_attributes(obj) for obj in objects if _key(obj.label) == _key(label))
+        if not any(scene_attributes(obj) for obj in objects if _key(obj.label) == _key(label))
     ]
     adjective = "a colour, size, shape, material, pattern or state"
     if not plain:
@@ -155,7 +131,7 @@ def _compare_step(mission, quantities):
 
 def mission_steps(mission, objects, relations, counted_groups, kinds):
     """``[{"kind", "text"}]``: what to add for each kind this mission is short of."""
-    from app.services.mission_eligibility import confirmed_attributes
+    from app.services.mission_eligibility import scene_attributes
 
     requirements = mission.photo_requirements
     labels = _labels(objects)
@@ -168,16 +144,14 @@ def mission_steps(mission, objects, relations, counted_groups, kinds):
         if kind in kinds and text and {"kind": kind, "text": text} not in steps:
             steps.append({"kind": kind, "text": text})
 
+    need = max(requirements.min_confirmed_objects, 3 if rule == "describeScene" else 0)
+    if len(labels) < need:
+        add("objects", _objects_step(need - len(labels), labels))
     if level == "A0":
-        add("objects", _a0_objects_step(objects))
         add("counts", _count_step(
             requirements.min_quantity, requirements.max_quantity, quantities,
-            allowed=_reviewed,
         ))
     else:
-        need = max(requirements.min_confirmed_objects, 3 if rule == "describeScene" else 0)
-        if len(labels) < need:
-            add("objects", _objects_step(need - len(labels), labels))
         if rule == "requestableItem":
             examples = _join([_article(name) for name in REQUESTABLE_EXAMPLES], "or")
             add("objects", "Mark a food, drink or everyday object you could ask for, "
@@ -188,7 +162,7 @@ def mission_steps(mission, objects, relations, counted_groups, kinds):
             add("counts", _count_step(
                 requirements.min_quantity, requirements.max_quantity, quantities,
             ))
-        described = {_key(obj.label) for obj in objects if confirmed_attributes(obj)}
+        described = {_key(obj.label) for obj in objects if scene_attributes(obj)}
         add("attributes", _attributes_step(
             max(1, requirements.min_coloured_objects - len(described)), objects,
         ))

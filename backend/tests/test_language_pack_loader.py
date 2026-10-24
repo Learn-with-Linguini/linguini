@@ -7,7 +7,11 @@ from pathlib import Path
 
 import pytest
 
-from app.config import get_language_pack_dirs, get_language_pack_releases
+from app.config import (
+    BUNDLED_LANGUAGE_PACKS,
+    get_language_pack_dirs,
+    get_language_pack_releases,
+)
 from app.language_packs.fingerprint import pack_fingerprint
 from app.language_packs.loader import (
     LanguagePackError,
@@ -227,10 +231,10 @@ def test_pack_locale_and_register_match_nested_directory_names(tmp_path):
         load_packs([wrong_locale_root])
 
 
-def test_default_roots_are_empty_and_nested_roots_are_cached(monkeypatch):
+def test_default_roots_are_the_bundled_packs_and_nested_roots_are_cached(monkeypatch):
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", "")
-    assert load_packs().packs == ()
-    assert get_language_pack_dirs() == ()
+    assert get_language_pack_dirs() == (BUNDLED_LANGUAGE_PACKS,)
+    assert load_packs().get("es", "everyday").pack_id == "es-es-everyday"
 
     root = PACK.parents[2]
     first = load_packs([root])

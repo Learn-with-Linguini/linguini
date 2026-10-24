@@ -26,7 +26,8 @@ from app.repositories.postgres.workflow import (
     _lesson_answer_is_correct,
     evaluate,
 )
-from app.schemas.tasks import SubmitVocabularyReviewAttemptRequest
+from app.schemas.enums import SessionMode
+from app.schemas.tasks import SessionTaskPublic, SubmitVocabularyReviewAttemptRequest
 from app.services.mission_roleplay import assign_roleplay
 
 PACKS = Path(__file__).parents[1] / "app/language_packs/packs"
@@ -86,7 +87,8 @@ def _ko(word, consonant, vowel):
 LEXICON = {
     "es": dict(
         nouns={"cup": ("taza", "la", "feminine"), "book": ("libro", "el", "masculine"),
-               "table": ("mesa", "la", "feminine"), "coffee": ("café", "el", "masculine")},
+               "table": ("mesa", "la", "feminine"), "coffee": ("café", "el", "masculine"),
+               "chair": ("silla", "la", "feminine"), "toy": ("juguete", "el", "masculine")},
         indefinite={"masculine": "un", "feminine": "una"},
         colours={"red": ("rojo", "roja"), "green": ("verde", "verde"),
                  "white": ("blanco", "blanca"), "blue": ("azul", "azul"),
@@ -96,7 +98,8 @@ LEXICON = {
     ),
     "fr": dict(
         nouns={"cup": ("tasse", "la", "feminine"), "book": ("livre", "le", "masculine"),
-               "table": ("table", "la", "feminine"), "coffee": ("café", "le", "masculine")},
+               "table": ("table", "la", "feminine"), "coffee": ("café", "le", "masculine"),
+               "chair": ("chaise", "la", "feminine"), "toy": ("jouet", "le", "masculine")},
         indefinite={"masculine": "un", "feminine": "une"},
         colours={"red": ("rouge", "rouge"), "green": ("vert", "verte"),
                  "white": ("blanc", "blanche"), "blue": ("bleu", "bleue"),
@@ -106,7 +109,8 @@ LEXICON = {
     ),
     "de": dict(
         nouns={"cup": ("Tasse", "die", "feminine"), "book": ("Buch", "das", "neuter"),
-               "table": ("Tisch", "der", "masculine"), "coffee": ("Kaffee", "der", "masculine")},
+               "table": ("Tisch", "der", "masculine"), "coffee": ("Kaffee", "der", "masculine"),
+               "chair": ("Stuhl", "der", "masculine"), "toy": ("Spielzeug", "das", "neuter")},
         indefinite={"masculine": "ein", "feminine": "eine", "neuter": "ein"},
         dative={"masculine": "dem", "feminine": "der", "neuter": "dem"},
         colours={"red": ("roter", "rote", "rotes"), "green": ("grüner", "grüne", "grünes"),
@@ -121,7 +125,8 @@ LEXICON = {
     ),
     "ko": dict(
         nouns={"cup": ("컵", None, None), "book": ("책", None, None),
-               "table": ("탁자", None, None), "coffee": ("커피", None, None)},
+               "table": ("탁자", None, None), "coffee": ("커피", None, None),
+               "chair": ("의자", None, None), "toy": ("장난감", None, None)},
         colours={"red": "빨간색", "green": "초록색", "white": "흰색", "blue": "파란색",
                  "black": "검은색"},
         modifiers={"red": "빨간", "white": "하얀", "blue": "파란", "black": "검은"},
@@ -342,9 +347,12 @@ M03_CONSTRUCTIONS = {
     "quantity-pair",
 }
 PLURALS = {
-    "es": {"cup": "tazas", "book": "libros", "table": "mesas", "coffee": "cafés"},
-    "fr": {"cup": "tasses", "book": "livres", "table": "tables", "coffee": "cafés"},
-    "de": {"cup": "Tassen", "book": "Bücher", "table": "Tische", "coffee": "Kaffees"},
+    "es": {"cup": "tazas", "book": "libros", "table": "mesas", "coffee": "cafés",
+           "chair": "sillas", "toy": "juguetes"},
+    "fr": {"cup": "tasses", "book": "livres", "table": "tables", "coffee": "cafés",
+           "chair": "chaises", "toy": "jouets"},
+    "de": {"cup": "Tassen", "book": "Bücher", "table": "Tische", "coffee": "Kaffees",
+           "chair": "Stühle", "toy": "Spielzeuge"},
 }
 COUNTING = {
     "es": dict(statement="Hay {n} {p}.", no="No, hay {n} {p}.",
@@ -1008,7 +1016,6 @@ def _dispatch(language, level, scene, provider, monkeypatch, mission_id="M01", r
               progress=None):
     from app.language_packs.context import resolve_language_context
 
-    monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "true")
     monkeypatch.setenv("APP_ENV", "test")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_EXPERIMENTAL", "true")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", str(PACKS / LOCALES[language] / "everyday"))
@@ -1253,3 +1260,22 @@ def test_m06_saved_order_is_reused(monkeypatch):
     assert transaction["quantity"] == saved["quantity"]
     assert transaction["mismatch"]["flag"] is False
     assert again[1].answer_key.correct_option_ids["m06-q6"] == "Sí, eso es."
+
+
+@pytest.mark.parametrize(("language", "mission_id", "equivalent"), [
+    ("es", "M04", "Es mia."),
+    ("fr", "M05", "J’aime la tasse."),
+])
+def test_a0_situation_typed_answers_are_private_and_accept_equivalents(
+    language, mission_id, equivalent, scene, monkeypatch,
+):
+    (task,) = _dispatch(language, "A0", scene(language), MockPackProvider(language), monkeypatch,
+                        mission_id)
+    public = SessionTaskPublic.from_internal(task, mode=SessionMode.LESSON)
+    assert "answerKey" not in public.model_dump(mode="json", by_alias=True)
+    typed = task.answer_key.accepted_text_answers_by_question
+    question_id, accepted = next((key, answers) for key, answers in typed.items() if answers)
+    assert all(_lesson_answer_is_correct(task, question_id, answer) for answer in accepted)
+    # Typed answers forgive a missing accent (Spanish) and a curly apostrophe (French).
+    assert _lesson_answer_is_correct(task, question_id, equivalent)
+

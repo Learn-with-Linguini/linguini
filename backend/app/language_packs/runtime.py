@@ -7,10 +7,7 @@ import os
 import re
 from pathlib import Path
 
-from app.config import (
-    get_language_pack_experimental,
-    get_language_packs_enabled,
-)
+from app.config import get_language_pack_experimental
 
 from .capabilities import mission_capability
 from .generation import ApprovedTerm, ApprovedVocabulary, BoundSceneFacts
@@ -52,20 +49,15 @@ def check_pack_readiness(pack, level, content_version, mission_id="M01"):
 
 def available_pack_languages():
     """Discover languages with ready pack missions under the runtime/release gates."""
-    if not get_language_packs_enabled():
-        return []
     from .context import resolve_language_context
 
     languages = []
     for language in sorted({p.language.code for p in load_packs().packs}):
-        # Missing selected registers/ambiguous configurations are actionable.
-        # Unreviewed packs remain hidden outside explicit local experiments.
-        try:
-            context = resolve_language_context(language)
-        except ValueError as exc:
-            if "no ready mission levels" in str(exc):
-                continue
-            raise
+        # Missing selected registers/ambiguous configurations are actionable; a pack
+        # with no ready mission (unreviewed outside local experiments) is not offered.
+        context = resolve_language_context(language)
+        if context is None:
+            continue
         languages.append(dict(code=language, levels=list(context.ready_levels),
                               experimental=context.experimental, language_context=context.display))
     return sorted(languages, key=lambda language: language["code"])
