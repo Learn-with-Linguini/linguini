@@ -52,11 +52,13 @@ def test_an_unavailable_language_is_a_structured_409():
 def test_every_lesson_translates_with_its_pack_and_never_without_one():
     claim = SimpleNamespace(
         session_id=uuid4(), profile=_profile("it"), session=_session(), objects=[],
-        relations=[], language_context=None,
+        relations=[], language_context=None, missions=[get_mission("M01", "A1", 1)],
     )
     repository = SimpleNamespace(translator=object())
     with pytest.raises(LearningTaskGenerationError, match="No language pack"):
         PostgresWorkflowRepository._generate_tasks(repository, claim)
+    # Planned missions need the pack translator; only a lesson without missions may run
+    # without one (the deterministic default lesson, when no AI is configured).
     claim.language_context = resolve_language_context("es")
     with pytest.raises(LearningTaskGenerationError, match="scene translations"):
         PostgresWorkflowRepository._generate_tasks(SimpleNamespace(translator=None), claim)

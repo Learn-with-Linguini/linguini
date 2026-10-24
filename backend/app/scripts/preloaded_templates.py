@@ -143,57 +143,72 @@ def generate_row_templates(
     Templates for other languages are kept: each is keyed by its target language.
 
     Lessons and clues depend on the translation, so they run only when a
-    translation is generated or reused for the same scene facts.
+    translation is generated or reused for the same scene facts. A language with a
+    ready pack gets two sets: the pack translation with its lesson and clues (what
+    lessons use) and the unguided translation with its clues (I-Spy games and rooms).
+    Lessons no longer use an unguided translation, so none is stored for them.
     """
+    from app.language_packs.context import resolve_language_context
+
     payload, objects, relations = curated_generation_inputs(row, language)
     current = TemplateSet.from_content([row["content"]]).templates
     outcomes = []
-    translated = None
+    context = resolve_language_context(language)
+    passes = [("", None, ("translation", "clues") if context else STAGES)]
+    if context is not None:
+        passes.append(("pack-", context, STAGES))
 
-    def outcome(stage, status, reason=None):
-        outcomes.append(StageOutcome(row["slug"], language, stage, status, reason))
+    for prefix, language_context, pass_stages in passes:
+        translated = None
+        options = {"language_context": language_context} if language_context else {}
 
-    for stage in STAGES:
-        service = services.get(stage)
-        if service is None:
-            outcome(stage, "missing", "notConfigured")
-            continue
-        if stage != "translation" and translated is None:
-            outcome(stage, "missing", "translationMissing")
-            continue
-        selected = stage in stages
-        templates = TemplateSet(
-            current,
-            reuse=not (force and selected),
-            generate=selected and budget.allows(reserve[stage]),
-            record=True,
-        )
-        before = budget.used
-        try:
-            if stage == "translation":
-                translated = service.translate(payload, templates=templates)
-            elif stage == "lessons":
-                service.generate(
-                    learning_task_payload(payload, translated, relations), templates=templates
-                )
+        def outcome(stage, status, reason=None, prefix=prefix):
+            outcomes.append(StageOutcome(row["slug"], language, f"{prefix}{stage}", status, reason))
+
+        for stage in pass_stages:
+            service = services.get(stage)
+            if service is None:
+                outcome(stage, "missing", "notConfigured")
+                continue
+            if stage != "translation" and translated is None:
+                outcome(stage, "missing", "translationMissing")
+                continue
+            selected = stage in stages
+            # A pack translation also runs its meaning review.
+            calls = reserve[stage] * (2 if language_context and stage == "translation" else 1)
+            templates = TemplateSet(
+                current,
+                reuse=not (force and selected),
+                generate=selected and budget.allows(calls),
+                record=True,
+            )
+            before = budget.used
+            try:
+                if stage == "translation":
+                    translated = service.translate(payload, templates=templates, **options)
+                elif stage == "lessons":
+                    service.generate(
+                        learning_task_payload(payload, translated, relations),
+                        templates=templates,
+                    )
+                else:
+                    service.generate(
+                        ispy_clue_payload(payload, translated, objects, relations),
+                        templates=templates,
+                    )
+            except TemplateMissing:
+                outcome(stage, "missing", "callBudget" if selected else "notSelected")
+                continue
+            except Exception as error:
+                outcome(stage, "failed", error_code(error))
+                continue
+            current = templates.templates
+            if templates.recorded:
+                outcome(stage, "generated")
+            elif budget.used > before:
+                outcome(stage, "failed", "templateNotStored")
             else:
-                service.generate(
-                    ispy_clue_payload(payload, translated, objects, relations),
-                    templates=templates,
-                )
-        except TemplateMissing:
-            outcome(stage, "missing", "callBudget" if selected else "notSelected")
-            continue
-        except Exception as error:
-            outcome(stage, "failed", error_code(error))
-            continue
-        current = templates.templates
-        if templates.recorded:
-            outcome(stage, "generated")
-        elif budget.used > before:
-            outcome(stage, "failed", "templateNotStored")
-        else:
-            outcome(stage, "reused")
+                outcome(stage, "reused")
     if current:
         row["content"][GENERATED_CONTENT_KEY] = TemplateSet(current).content()
     return outcomes

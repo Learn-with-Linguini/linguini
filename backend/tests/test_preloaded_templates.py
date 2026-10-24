@@ -42,6 +42,17 @@ TERMS = {"cup": "taza", "table": "mesa", "red": "roja", "on": "sobre"}
 RESERVE = {"translation": 2, "lessons": 2, "clues": 2}
 
 
+@pytest.fixture(autouse=True)
+def target_language_without_a_pack(monkeypatch):
+    """These tests pin the unguided template set: the target language has no ready pack.
+
+    A language with one also gets pack templates; see test_preloaded_pack_templates.py.
+    """
+    from app.language_packs import context
+
+    monkeypatch.setattr(context, "resolve_language_context", lambda *args, **kwargs: None)
+
+
 def media_asset(**overrides) -> MediaAsset:
     values = {
         "media_type": "image", "source": "preloaded",

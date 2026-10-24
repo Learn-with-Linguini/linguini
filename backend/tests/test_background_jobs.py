@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from uuid import UUID
 
 import pytest
+from pack_translation import pack_shaped
 from test_postgres_sessions import create_run, vocabulary_answer
 from test_postgres_sessions import database as database
 
@@ -33,15 +34,15 @@ def test_translations_are_committed_before_lesson_generation(database):
     attempts = []
     completions = []
 
-    def translate(payload, cache_scope=None):
-        return SceneTranslationResult.model_validate({
+    def translate(payload, cache_scope=None, **options):
+        return SceneTranslationResult.model_validate(pack_shaped({
             kind: [
                 # A word no other test stores: the vocabulary catalogue is shared.
                 {**term, "translation": "pupitre", "phoneticText": "poo-PEE-treh"}
                 for term in payload[kind]
             ]
             for kind in ("objects", "attributes", "relationships")
-        })
+        }, options))
 
     def generate(_payload, cache_scope=None):
         # A separate reader must see the checkpoint before this slow call ends.

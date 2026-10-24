@@ -346,6 +346,8 @@ its attributes and relations. Each validated result is stored server-only in
 `preloaded_scenes.content.generated` (`version: preloaded-templates.v1`) with:
 
 - `feature`, `language` and `variant` (`prompt|schema|validator` versions);
+- `basis` (`pack` for lesson and clue templates built on a pack translation;
+  absent for those built on the unguided translation);
 - a `fingerprint` of the scene facts (title, summary, labels, attributes and
   relations) and language; changing labels stales templates, but moving marker
   positions alone does not;
@@ -354,6 +356,15 @@ its attributes and relations. Each validated result is stored server-only in
 
 A new variant is added next to older ones. The public scene API never returns
 `generated` (`CONTENT_FIELDS` in `repositories/postgres/scenes.py`).
+
+A language with a ready pack gets two sets per scene: the pack translation with
+its lesson and clues (what lessons use; the translation's meaning review runs
+once, when its template is made) and the unguided translation with its clues
+(I-Spy games and rooms). A language without one gets the unguided translation,
+lesson and clues as before. Pack templates match only while the pack's content
+is unchanged, so refresh them after a pack edit or review; until then lessons on
+curated scenes make live pack calls. Without a template, every language works
+through live calls.
 
 At review time, unchanged curated content checks the templates first. A match
 is mapped onto the session's own object, attribute and relation IDs, validated

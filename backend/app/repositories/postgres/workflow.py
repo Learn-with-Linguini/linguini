@@ -110,6 +110,7 @@ from app.schemas.tasks import (
     TaskAttempt,
     VocabularyChecksResponse,
 )
+from app.schemas.translation import SceneTranslationResult
 from app.schemas.vocabulary import (
     VocabularyEncounter,
     VocabularyItem,
@@ -542,6 +543,11 @@ def _timed(stage, session_id):
 
 def _scene_title(session, scene):
     return session.session_title or (scene["title"] if scene else "Your uploaded photo")
+
+
+def _translation_preview(session):
+    preview = (session.analysis_draft or {}).get("translationPreview")
+    return SceneTranslationResult.model_validate(preview) if preview else None
 
 
 def _ai_provider(name):
@@ -2545,13 +2551,15 @@ class PostgresWorkflowRepository:
         ispy_descriptions = None
         introduction_id = None
         objects, relations = list(claim.objects), claim.relations
-        # Every lesson, with or without missions, translates with its language pack.
+        # Every lesson, with or without missions, translates with its language pack. With
+        # no translator configured (tests, local runs without AI), a lesson without missions
+        # keeps the deterministic default lesson from catalog words; missions need the pack.
         context = getattr(claim, "language_context", None)
         if context is None:
             raise LearningTaskGenerationError(
                 f"No language pack is ready for {profile['target_language_code']!r} lessons."
             )
-        if not self.translator:
+        if not self.translator and claim.missions:
             raise LearningTaskGenerationError("Pack lessons require accepted scene translations.")
         payload = translation_payload(
             profile["target_language_code"],
@@ -2560,10 +2568,12 @@ class PostgresWorkflowRepository:
             objects,
             relations,
         )
-        with _timed("translation", session_id):
-            translated_scene = self.translator.translate(
-                payload, **claim.generation_options, language_context=context,
-            )
+        translated_scene = None
+        if self.translator:
+            with _timed("translation", session_id):
+                translated_scene = self.translator.translate(
+                    payload, **claim.generation_options, language_context=context,
+                )
 
         # Checkpoint: commit translations and task 1 before the slower lesson
         # and clue calls, so the learner can start while tasks are built.
@@ -2578,9 +2588,11 @@ class PostgresWorkflowRepository:
             c.execute(
                 update(sessions).where(sessions.c.id == session_id).values(analysis_draft=draft)
             )
-            supplemental_vocabulary = self._store_translation(
-                c, session, profile, objects, translated_scene
-            )
+            supplemental_vocabulary = {}
+            if self.translator:
+                supplemental_vocabulary = self._store_translation(
+                    c, session, profile, objects, translated_scene
+                )
             objects, relations = self._scene_objects(c, session)
             words, translations = self._words(c, session, objects)
             rebuilt = build_tasks(
@@ -2589,9 +2601,10 @@ class PostgresWorkflowRepository:
                 words,
                 translations,
                 False,
-                translated_scene,
+                translated_scene if self.translator else _translation_preview(session),
                 supplemental_vocabulary,
-                language_context=context,
+                # Without a translation the default lesson uses catalog words, not the pack.
+                language_context=context if self.translator else None,
             )
             introduction = next(task for task in rebuilt if task.kind == "vocabularyIntroduction")
             draft = dict(c.execute(select(sessions.c.analysis_draft).where(
@@ -2631,25 +2644,26 @@ class PostgresWorkflowRepository:
             introduction.order_index = 0
             c.execute(insert(session_tasks).values(**entity_values(introduction)))
             introduction_id = introduction.id
-            # Translation is the moment a learner has collected these
-            # words. Persist a "new" vocabulary record now, rather than
-            # waiting for task completion, so leaving the lesson does not
-            # discard their image vocabulary.
-            for word in _unique_by_id([*words, *supplemental_vocabulary.values()]):
-                record_vocabulary_evidence(
-                    c,
-                    user_id=self.user_id,
-                    vocabulary_item_id=word.id,
-                    encounter=VocabularyEncounter(
-                        id=uuid5(session_id, f"translated:{word.id}"),
+            if self.translator:
+                # Translation is the moment a learner has collected these
+                # words. Persist a "new" vocabulary record now, rather than
+                # waiting for task completion, so leaving the lesson does not
+                # discard their image vocabulary.
+                for word in _unique_by_id([*words, *supplemental_vocabulary.values()]):
+                    record_vocabulary_evidence(
+                        c,
                         user_id=self.user_id,
                         vocabulary_item_id=word.id,
-                        session_id=session_id,
-                        session_task_id=introduction.id,
-                        encounter_type=VocabularyEncounterType.INTRODUCED,
-                        outcome=VocabularyEncounterOutcome.COMPLETED,
-                    ),
-                )
+                        encounter=VocabularyEncounter(
+                            id=uuid5(session_id, f"translated:{word.id}"),
+                            user_id=self.user_id,
+                            vocabulary_item_id=word.id,
+                            session_id=session_id,
+                            session_task_id=introduction.id,
+                            encounter_type=VocabularyEncounterType.INTRODUCED,
+                            outcome=VocabularyEncounterOutcome.COMPLETED,
+                        ),
+                    )
 
         mission_lessons, skipped_missions = [], []
         if claim.missions:
@@ -2669,7 +2683,7 @@ class PostgresWorkflowRepository:
         if not mission_lessons and lesson_missions(session.mode, profile, context):
             # Mission profiles never fall back to the unchecked regular lesson.
             shortfall = self._generation_shortfall(claim, session, objects, relations)
-        if not mission_lessons and shortfall is None:
+        if not mission_lessons and self.translator and shortfall is None:
             # Profiles without implemented missions keep the regular lesson.
             lessons, ispy_clues = self._lessons_and_clues(
                 session_id,
@@ -2682,7 +2696,12 @@ class PostgresWorkflowRepository:
                 history=lesson_history(claim.learner_history, introduction),
                 history_scope=CacheScope.user(f"{self.user_id}:{claim.profile_id}"),
             )
-        if not mission_lessons and self.ispy_guess_generator and shortfall is None:
+        if (
+            not mission_lessons
+            and self.translator
+            and self.ispy_guess_generator
+            and shortfall is None
+        ):
             ispy_descriptions = build_ispy_description_tasks(
                 session_id,
                 objects,

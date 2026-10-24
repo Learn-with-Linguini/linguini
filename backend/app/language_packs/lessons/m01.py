@@ -10,6 +10,7 @@ from __future__ import annotations
 import random
 from collections import Counter
 
+from app.ai.features.learning_tasks.mission import fold
 from app.ai.features.learning_tasks.mission_a0 import (
     A0LessonResult,
     build_question,
@@ -764,6 +765,34 @@ def photo_reasons(mission, objects, relations, attributes_of, counted_groups=(),
     return []
 
 
+def least_familiar_first(pack, level, facts, vocabulary, context):
+    """A1 asks about the least familiar object-detail pairs first, as dev's builder did.
+
+    Familiarity adds the object word's mastery (``progress["objects"]``, by vocabulary
+    item) to its first detail's past correct ratio (``progress["terms"]``, by folded
+    target form). Unseen words count as 0, and ties keep scene order.
+    """
+    progress = (context or {}).get("progress") or {}
+    if str(level) != "A1" or not (progress.get("objects") or progress.get("terms")):
+        return facts
+    terms = {term.fact_id: term for term in vocabulary.terms}
+    known, results = progress.get("objects") or {}, progress.get("terms") or {}
+
+    def familiarity(obj):
+        word = terms.get(obj.fact_id)
+        score = known.get(str(word.vocabulary_item_id), 0.0) if word else 0.0
+        detail = next((terms[a.fact_id] for a in facts.scene_facts.attributes
+                       if a.object_fact_id == obj.fact_id and a.fact_id in terms), None)
+        if detail is not None:
+            score += max((results.get(fold(form), 0.0)
+                          for form in [detail.target_text, *detail.forms]), default=0.0)
+        return score
+
+    objects = sorted(facts.scene_facts.objects, key=familiarity)
+    scene = facts.scene_facts.model_copy(update={"objects": objects})
+    return facts.model_copy(update={"scene_facts": scene})
+
+
 MISSION = PackMission(
     mission_id=MISSION_ID,
     plan=plan_lesson,
@@ -772,4 +801,5 @@ MISSION = PackMission(
     check_lesson=check_lesson,
     phrase_slots={"A2": frozenset({"buildSceneDescription"})},
     photo_reasons=photo_reasons,
+    facts=least_familiar_first,
 )
