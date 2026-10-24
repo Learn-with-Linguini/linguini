@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button, Card, ProgressTrail } from "../components/ui";
 import { ArrowRightIcon, CheckIcon, CloseIcon, SpeakerIcon } from "../components/icons";
+import { languages as languageOptions } from "../config/languages";
 import { trackAction } from "../lib/analytics";
 import { speak } from "../marketing/lib/speech";
 import { getScene, scenes } from "../marketing/data/scenes";
@@ -10,7 +11,7 @@ import { staticGuestScene, type GuestScene, type GuestTerm, type GuestWord } fro
 import styles from "./GuestDemo.module.css";
 
 type Stage = "select" | "analyse" | "review" | "translate" | "task" | "done";
-const languages: Lang[] = ["es", "fr", "de", "ko"];
+const languages = languageOptions.map(option => option.code as Lang);
 
 export function GuestDemo() {
   const navigate = useNavigate();
@@ -90,15 +91,15 @@ export function GuestDemo() {
 
 function DemoPicker({ lang, setLang, onPick }: { lang: Lang; setLang: (lang: Lang) => void; onPick: (scene: (typeof scenes)[number]) => void }) {
   return <div className="stack practice-select">
-    <div className="stack-2"><p className={styles.eyebrow}>No account needed</p><h1>Try a photo lesson</h1><p className="muted">Choose a ready-made scene. You’ll review the objects, learn their translations and try one task.</p></div>
-    <label className="field"><span className="field__label">I want to learn</span><select className="input" value={lang} onChange={event => setLang(event.target.value as Lang)}>{languages.map(code => <option key={code} value={code}>{languageNames[code]}</option>)}</select></label>
+    <div className="stack-2"><p><span className={`chip chip--static ${styles.accountPill}`}>No account needed</span></p><h1>Try a photo lesson</h1><p className="muted">Choose a ready-made scene. You’ll review the objects, learn their translations and try one task.</p></div>
+    <label className={styles.languageField}><span className="field__label">I want to learn</span><span className={styles.languageControl}><select value={lang} onChange={event => setLang(event.target.value as Lang)}>{languageOptions.map(option => <option key={option.code} value={option.code}>{option.flag} {option.name}</option>)}</select></span></label>
     <div className="stack-3"><h2>Choose a scene</h2><div className="grid-2">{scenes.slice(0, 6).map(item => <button key={item.id} type="button" className="scene-pick" aria-label={`Choose ${item.title}`} onClick={() => onPick(item)}><img src={item.photo} alt="" /><span className={styles.sceneLabel}><b>{item.title}</b><span className="small muted">{item.place}</span></span></button>)}</div></div>
     <p className="small muted center-text">Nothing in the guest lesson is added to an account or counted toward progress.</p>
   </div>;
 }
 
 function ScenePhoto({ scene, scanning = false }: { scene: GuestScene; scanning?: boolean }) {
-  return <figure className={styles.figure}><div className={styles.photo}><img src={scene.photo} alt={scene.alt} />{scene.words.slice(0, 5).map((word, index) => <span key={word.id} className={styles.marker} data-demo-marker style={{ left: `${word.x}%`, top: `${word.y}%` }}>{index + 1}</span>)}{scanning ? <span className={styles.scan} aria-hidden="true" /> : null}</div><figcaption><b>{scene.title}</b> · {scene.place}</figcaption></figure>;
+  return <figure className={styles.figure}><div className={styles.photo}><img src={scene.photo} alt={scene.alt} />{scene.words.slice(0, 5).map((word, index) => <span key={word.id} className={styles.marker} data-demo-marker style={{ left: `${word.x}%`, top: `${word.y}%` }}>{index + 1}</span>)}{scanning ? <span className={styles.scan} aria-hidden="true" /> : null}</div><figcaption>{scene.title}</figcaption></figure>;
 }
 
 function Review({ scene, selected, setSelected, onBack, onContinue }: { scene: GuestScene; selected: string[]; setSelected: React.Dispatch<React.SetStateAction<string[]>>; onBack: () => void; onContinue: () => void }) {
