@@ -37,6 +37,7 @@ writeFileSync(entry, [
   'export { SessionSummary } from "../src/pages/SessionSummary";',
   'export { ISpyResults } from "../src/pages/ISpyResults";',
   'export { Home } from "../src/pages/Home";',
+  'export { PracticeSelect } from "../src/pages/PracticeSelect";',
 ].join("\n"));
 let bundled: unknown;
 try {
@@ -65,6 +66,7 @@ const source = bundled as {
   SessionSummary: typeof import("../src/pages/SessionSummary.tsx").SessionSummary;
   ISpyResults: typeof import("../src/pages/ISpyResults.tsx").ISpyResults;
   Home: typeof import("../src/pages/Home.tsx").Home;
+  PracticeSelect: typeof import("../src/pages/PracticeSelect.tsx").PracticeSelect;
 };
 const { h, act, createRoot, MemoryRouter, Route, Routes, Outlet, QueryClient, QueryClientProvider, AuthProvider, AppStateContext } = source;
 const scene: Scene = { id: "scene", sessionId: "session", mediaAssetId: "asset", imageUrl: "/photo.jpg",
@@ -83,6 +85,8 @@ async function mount(Page: typeof source.Learn, initial: AppState, hasSummary = 
   const root = createRoot(container);
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity, gcTime: 0 } } });
   client.setQueryData(queryKeys.vocabulary("profile"), []);
+  client.setQueryData(queryKeys.scenes, []);
+  client.setQueryData(queryKeys.activeSession("profile"), null);
   if (hasSummary) client.setQueryData(queryKeys.sessionSummary("session"), summary);
   const render = (value: AppState) => act(async () => {
     root.render(h(QueryClientProvider, { client }, h(AuthProvider, null,
@@ -123,6 +127,37 @@ for (const Page of [source.SessionSummary, source.ISpyResults]) {
 test("lesson summary stays neutral when its result details are unavailable", async () => {
   const view = await mount(source.SessionSummary, state(), false);
   assert.equal(view.container.querySelector("h1")?.textContent, "Your session");
+});
+
+test("photo selection describes AI before opening a camera or upload picker", async () => {
+  const originalFetch = globalThis.fetch;
+  let requestCount = 0;
+  globalThis.fetch = async () => { requestCount += 1; throw new Error("No upload was chosen."); };
+  try {
+    const view = await mount(source.PracticeSelect, state({ user: null,
+      learner: { cameraOn: true } as AppState["learner"] }));
+    const upload = view.container.querySelector('[role="group"][aria-label="Choose a photo"]');
+    assert.ok(upload);
+    const disclosureId = upload.getAttribute("aria-describedby");
+    const disclosure = disclosureId ? dom.window.document.getElementById(disclosureId) : null;
+    assert.ok(disclosure);
+    assert.match(disclosure.textContent ?? "", /AI.*objects.*translations.*practice/);
+    assert.match(disclosure.textContent ?? "", /wrong.*check.*report/);
+    const pickers = [...upload.querySelectorAll<HTMLInputElement>('input[type="file"]')];
+    assert.equal(pickers.length, 2);
+    let openedPickers = 0;
+    for (const picker of pickers) {
+      picker.addEventListener("click", () => {
+        assert.ok(disclosure.compareDocumentPosition(picker) & dom.window.Node.DOCUMENT_POSITION_FOLLOWING);
+        openedPickers += 1;
+      });
+    }
+    for (const button of upload.querySelectorAll("button")) await act(async () => { button.click(); });
+    assert.equal(openedPickers, 2);
+    assert.equal(requestCount, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test("lesson preparation keeps its factual task status beside the branded copy", async () => {

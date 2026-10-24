@@ -164,7 +164,7 @@ export function PracticeAnalysis() {
       <div className="analysis-loading__copy"><h2>Still working on your scene...</h2><p className="muted">This is taking longer than usual. You can check again.</p>{practiceError ? <p role="alert">{practiceError}</p> : null}<Button onClick={() => retryProcessing(session.session.id)}>Retry</Button></div>
     </section> : <section className="analysis-loading" aria-live="polite" aria-busy="true">
       <AnalysisScan scene={scene} />
-      <div className="analysis-loading__copy"><h2>{session.session.status === "generatingTasks" ? "Translating your scene..." : "Finding objects in your image..."}</h2><p className="muted">{session.session.status === "generatingTasks" ? "Turning your confirmed words into your learning language." : "This will only take a moment."}</p></div>
+      <div className="analysis-loading__copy"><h2>{session.session.status === "generatingTasks" ? "Translating your scene..." : "Finding objects in your image..."}</h2><p className="muted">{session.session.status === "generatingTasks" ? "Turning your confirmed words into your learning language." : "AI is suggesting objects for you to check before learning."}</p></div>
     </section>}
     </>}
   </div>;
@@ -324,7 +324,7 @@ export function PracticeAnalysis() {
       <div className="analysis-review-column">
         {panel === "objects" ? <section className="analysis-results" aria-labelledby="analysis-found-title">
           <div><h2 id="analysis-found-title">Check what this lesson will use</h2>
-            <p className="muted">{locked ? "Your lesson has started. Start a new practice to change its objects." : "Each row matches one numbered marker on the photo."}</p>
+            <p className="muted">{locked ? "Your lesson has started. Start a new practice to change its objects." : "AI suggestions can be wrong. Each row matches a numbered marker. Remove objects that aren't there, add missing ones, or move misplaced markers."}</p>
           </div>
           <label className="analysis-scene-title" htmlFor="analysis-scene-title">
             <span className="field__label">Scene title</span>
