@@ -1,6 +1,6 @@
 import type { Lang, Scene } from "../../data/types";
 
-export type GuestWord = { id: string; source: string; translation: string; phoneticText?: string | null; x: number; y: number };
+export type GuestWord = { id: string; source: string; translation: string; phoneticText?: string | null; gender?: string | null; x: number; y: number };
 export type GuestTerm = { source: string; translation: string };
 export type GuestScene = { id: string; photo: string; title: string; place: string; width: number; height: number; alt: string; words: GuestWord[]; adjectives: GuestTerm[]; prepositions: GuestTerm[] };
 
@@ -12,5 +12,5 @@ const supportingTerms: Record<Lang, { adjectives: GuestTerm[]; prepositions: Gue
 };
 
 export function staticGuestScene(scene: Scene, lang: Lang): GuestScene {
-  return { id: scene.id, photo: scene.photo, title: scene.title, place: scene.place, width: scene.width, height: scene.height, alt: scene.alt, words: scene.words.slice(0, 5).map(word => ({ id: word.id, source: word.en, translation: word[lang].word, phoneticText: word[lang].ipa, x: word.x, y: word.y })), ...supportingTerms[lang] };
+  return { id: scene.id, photo: scene.photo, title: scene.title, place: scene.place, width: scene.width, height: scene.height, alt: scene.alt, words: scene.words.slice(0, 5).map(word => ({ id: word.id, source: word.en, translation: word[lang].word, phoneticText: word[lang].ipa, gender: word[lang].gender === "none" ? null : word[lang].gender, x: word.x, y: word.y })), ...supportingTerms[lang] };
 }

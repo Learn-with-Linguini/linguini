@@ -1,11 +1,11 @@
-/* Word card — mirrors the app's “Learn the words in this scene” card */
+/* Word card — mirrors the app's vocabulary learning card */
 .wordCard {
   position: relative;
   display: grid;
   gap: 6px;
   padding: 22px 24px 24px;
   border-radius: 24px;
-  background: var(--cream);
+  background: #ffedb8;
   box-shadow: var(--shadow-card);
 }
 
@@ -27,15 +27,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 54px;
+  height: 54px;
   margin: -6px -6px -6px 0;
   border: 0;
   border-radius: 50%;
-  background: var(--paper);
+  background: #fff;
   color: var(--teal-dark);
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(86, 67, 34, 0.14);
+  box-shadow: 0 5px 14px rgba(86, 67, 34, 0.12);
   transition: transform 0.2s var(--ease-out), background-color 0.2s;
 }
 
@@ -91,34 +91,41 @@
   animation-delay: calc(var(--i) * 110ms + 120ms);
 }
 
+/* Numbered pills match the app's ScenePhoto markers: white, teal-outlined. */
 .markerDot {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 2px solid var(--ink);
-  border-radius: 50%;
-  background: var(--paper);
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  border: 2px solid var(--teal-dark);
+  border-radius: var(--radius-pill);
+  background: #fff;
   color: var(--ink);
   font-weight: 800;
   font-size: 15px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.28);
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 2px 5px rgba(20, 65, 62, 0.16);
   transition: background-color 0.2s, color 0.2s, transform 0.25s var(--ease-out);
 }
 
 .markerActive .markerDot {
-  background: var(--pasta);
+  border-color: var(--tomato);
+  background: var(--tomato);
+  color: #fff;
   transform: scale(1.18);
 }
 
 .markerLabel {
   position: absolute;
   left: calc(100% + 2px);
-  padding: 5px 10px;
-  border-radius: 10px;
-  background: rgba(38, 50, 56, 0.86);
-  color: #fff;
+  padding: 4px 10px;
+  border: 2px solid var(--teal-dark);
+  border-radius: var(--radius-pill);
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 2px 5px rgba(20, 65, 62, 0.16);
   font-weight: 800;
   font-size: 14px;
   white-space: nowrap;
@@ -237,14 +244,13 @@
 
 @media (max-width: 560px) {
   .markerDot {
-    width: 28px;
-    height: 28px;
+    min-width: 26px;
+    height: 26px;
     font-size: 13px;
   }
 
   .markerLabel {
-    padding: 3px 7px;
-    border-radius: 8px;
+    padding: 2px 7px;
     font-size: 12px;
   }
 }
