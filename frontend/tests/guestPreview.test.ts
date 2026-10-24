@@ -125,6 +125,8 @@ test("a guest can follow the entry and finish a sample lesson without authentica
   dom.reconfigure({ url: destination.href });
   await act(async () => root.render(h(MemoryRouter, { initialEntries: ["/demo"] }, h(source.GuestDemo))));
   assert.equal(container.querySelector("h1")?.textContent, "Try a photo lesson");
+  assert.equal(container.querySelector('input[type="file"]'), null);
+  assert.doesNotMatch(container.textContent ?? "", /Upload photo/);
   await click(button(container, `Choose ${scene.title}`));
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)); });
   assert.equal(container.querySelector("h1")?.textContent, "Review your scene");

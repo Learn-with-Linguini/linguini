@@ -196,12 +196,9 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 ### Marketing Site & Interactive Demo
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
-| `guest_demo_scene_selected` | `{ sceneId, language, source: "upload" | "sample" }` | Visitor starts a guest lesson from an uploaded or ready-made scene |
-| `guest_demo_photo_selected` | `{ language }` | Visitor selects their own photo for a guest lesson |
-| `guest_demo_photo_analyzed` | `{ language, objectCount }` | Guest photo analysis and translation completes |
-| `guest_demo_photo_failed` | `{ language }` | Guest photo analysis or translation fails |
-| `guest_demo_stage_viewed` | `{ stage, source: "upload" | "sample" }` | Guest lesson advances through review, translation, task, or completion |
-| `guest_demo_completed` | `{ language, source: "upload" | "sample" }` | Visitor finishes the guest lesson task |
+| `guest_demo_scene_selected` | `{ sceneId, language, source: "sample" }` | Visitor starts a guest lesson from a ready-made scene |
+| `guest_demo_stage_viewed` | `{ stage, source: "sample" }` | Guest lesson advances through review, translation, task, or completion |
+| `guest_demo_completed` | `{ language, source: "sample" }` | Visitor finishes the guest lesson task |
 | `guest_demo_signup_clicked` | `{ language }` | Visitor chooses account creation after finishing the guest lesson |
 | `pricing_cta_clicked` | `{ tier }` | User clicks plan call-to-action on the pricing page |
 

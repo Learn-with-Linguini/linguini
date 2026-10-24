@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button, Card, ProgressTrail } from "../components/ui";
-import { ArrowRightIcon, CameraIcon, CheckIcon, CloseIcon, SpeakerIcon, UploadIcon } from "../components/icons";
+import { ArrowRightIcon, CheckIcon, CloseIcon, SpeakerIcon } from "../components/icons";
 import { trackAction } from "../lib/analytics";
 import { speak } from "../marketing/lib/speech";
 import { getScene, scenes } from "../marketing/data/scenes";
 import { languageNames, type Lang } from "../marketing/data/types";
-import { analyzeGuestPhoto, staticGuestScene, type GuestScene, type GuestTerm, type GuestWord } from "../marketing/components/try/demoApi";
+import { staticGuestScene, type GuestScene, type GuestTerm, type GuestWord } from "../marketing/components/try/demoApi";
 import styles from "./GuestDemo.module.css";
 
 type Stage = "select" | "analyse" | "review" | "translate" | "task" | "done";
@@ -15,7 +15,6 @@ const languages: Lang[] = ["es", "fr", "de", "ko"];
 export function GuestDemo() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const fileInput = useRef<HTMLInputElement>(null);
   const [lang, setLang] = useState<Lang>(() => {
     const requested = searchParams.get("lang");
     return languages.includes(requested as Lang) ? requested as Lang : "es";
@@ -25,8 +24,6 @@ export function GuestDemo() {
   const [selected, setSelected] = useState<string[]>([]);
   const [wordIndex, setWordIndex] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const words = useMemo(() => scene?.words.filter(word => selected.includes(word.id)) ?? [], [scene, selected]);
 
@@ -53,42 +50,20 @@ export function GuestDemo() {
     // oxlint-disable-next-line react-hooks/exhaustive-deps
   }, [stage]);
 
-  useEffect(() => {
-    if (!scene?.photo.startsWith("blob:")) return;
-    return () => URL.revokeObjectURL(scene.photo);
-  }, [scene]);
-
   function go(next: Stage) {
-    trackAction("guest_demo_stage_viewed", { stage: next, source: scene?.uploaded ? "upload" : "sample" });
-    if (next === "done") trackAction("guest_demo_completed", { language: lang, source: scene?.uploaded ? "upload" : "sample" });
+    trackAction("guest_demo_stage_viewed", { stage: next, source: "sample" });
+    if (next === "done") trackAction("guest_demo_completed", { language: lang, source: "sample" });
     setStage(next);
     window.scrollTo({ top: 0, behavior: "instant" });
   }
 
-  function chooseScene(next: GuestScene, source: "sample" | "upload") {
+  function chooseScene(next: GuestScene, source: "sample") {
     setScene(next);
     setSelected(next.words.map(word => word.id));
     setWordIndex(0);
     setPicked(null);
-    setError(null);
     setStage("analyse");
     trackAction("guest_demo_scene_selected", { sceneId: next.id, language: lang, source });
-  }
-
-  async function upload(file: File) {
-    setUploading(true);
-    setError(null);
-    trackAction("guest_demo_photo_selected", { language: lang });
-    try {
-      const result = await analyzeGuestPhoto(file, lang);
-      trackAction("guest_demo_photo_analyzed", { language: lang, objectCount: result.words.length });
-      chooseScene(result, "upload");
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "We couldn't prepare that photo lesson.");
-      trackAction("guest_demo_photo_failed", { language: lang });
-    } finally {
-      setUploading(false);
-    }
   }
 
   function startOver() {
@@ -99,7 +74,7 @@ export function GuestDemo() {
     navigate("/demo", { replace: true });
   }
 
-  if (stage === "select" || !scene) return <DemoPicker lang={lang} setLang={setLang} uploading={uploading} error={error} fileInput={fileInput} onUpload={upload} onPick={item => chooseScene(staticGuestScene(item, lang), "sample")} />;
+  if (stage === "select" || !scene) return <DemoPicker lang={lang} setLang={setLang} onPick={item => chooseScene(staticGuestScene(item, lang), "sample")} />;
   if (stage === "analyse") return <div className="stack analysis-page"><h1>Scene analysis</h1><section className={`analysis-loading ${styles.analysis}`} aria-live="polite" aria-busy="true"><ScenePhoto scene={scene} scanning /><div className="analysis-loading__copy"><h2>Finding objects in your image...</h2><p className="muted">Linguini is looking for useful words to practise.</p></div></section></div>;
   if (stage === "review") return <Review scene={scene} selected={selected} setSelected={setSelected} onBack={startOver} onContinue={() => go("translate")} />;
   if (stage === "translate") return <Translation scene={scene} words={words} lang={lang} index={wordIndex} setIndex={setWordIndex} onBack={() => go("review")} onContinue={() => go("task")} />;
@@ -113,13 +88,11 @@ export function GuestDemo() {
   </div>;
 }
 
-function DemoPicker({ lang, setLang, uploading, error, fileInput, onUpload, onPick }: { lang: Lang; setLang: (lang: Lang) => void; uploading: boolean; error: string | null; fileInput: React.RefObject<HTMLInputElement | null>; onUpload: (file: File) => void; onPick: (scene: (typeof scenes)[number]) => void }) {
+function DemoPicker({ lang, setLang, onPick }: { lang: Lang; setLang: (lang: Lang) => void; onPick: (scene: (typeof scenes)[number]) => void }) {
   return <div className="stack practice-select">
-    <div className="stack-2"><p className={styles.eyebrow}>No account needed</p><h1>Try a photo lesson</h1><p className="muted">Upload a photo from your world or choose a ready-made scene. You’ll review the objects, learn their translations and try one task.</p></div>
+    <div className="stack-2"><p className={styles.eyebrow}>No account needed</p><h1>Try a photo lesson</h1><p className="muted">Choose a ready-made scene. You’ll review the objects, learn their translations and try one task.</p></div>
     <label className="field"><span className="field__label">I want to learn</span><select className="input" value={lang} onChange={event => setLang(event.target.value as Lang)}>{languages.map(code => <option key={code} value={code}>{languageNames[code]}</option>)}</select></label>
-    <div className="dashed-capture"><CameraIcon size={44} /><div className="stack-2 center-text"><h2>Use your own photo</h2><p className="muted small">JPEG, PNG or WebP · up to 10 MB</p></div><input ref={fileInput} className="visually-hidden" type="file" accept="image/jpeg,image/png,image/webp" disabled={uploading} onChange={event => { const file = event.target.files?.[0]; if (file) void onUpload(file); event.target.value = ""; }} /><Button variant="secondary" disabled={uploading} onClick={() => fileInput.current?.click()}><UploadIcon size={18} /> {uploading ? "Preparing lesson…" : "Upload photo"}</Button><p className="small muted">Guest photos are processed to build the demo and aren’t saved to an account.</p></div>
-    {error ? <p role="alert">{error}</p> : null}
-    <div className="stack-3"><h2>Or choose a ready-made scene</h2><div className="grid-2">{scenes.slice(0, 6).map(item => <button key={item.id} type="button" className="scene-pick" disabled={uploading} aria-label={`Choose ${item.title}`} onClick={() => onPick(item)}><img src={item.photo} alt="" /><span className={styles.sceneLabel}><b>{item.title}</b><span className="small muted">{item.place}</span></span></button>)}</div></div>
+    <div className="stack-3"><h2>Choose a scene</h2><div className="grid-2">{scenes.slice(0, 6).map(item => <button key={item.id} type="button" className="scene-pick" aria-label={`Choose ${item.title}`} onClick={() => onPick(item)}><img src={item.photo} alt="" /><span className={styles.sceneLabel}><b>{item.title}</b><span className="small muted">{item.place}</span></span></button>)}</div></div>
     <p className="small muted center-text">Nothing in the guest lesson is added to an account or counted toward progress.</p>
   </div>;
 }
