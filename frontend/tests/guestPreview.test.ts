@@ -135,6 +135,7 @@ test("a guest can follow the entry and finish a sample lesson without authentica
   assert.match(container.textContent ?? "", /Describing words/);
   assert.match(container.textContent ?? "", /Position words/);
   await click(button(container, "See translations"));
+  assert.equal(container.querySelectorAll('[data-demo-marker][data-active="true"]').length, 1);
   for (let index = 0; index < 5; index++) {
     assert.ok(container.textContent?.includes(scene.words[index].es.word));
     assert.match(container.textContent ?? "", /rojo/);
