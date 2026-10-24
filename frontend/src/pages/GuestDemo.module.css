@@ -1,4 +1,4 @@
-.accountPill { min-height: 34px; border-color: rgba(232, 93, 50, .35); background: #fff0e3; color: var(--tomato-pressed); }
+.accountPill { min-height: 34px; border-color: var(--ink); background: var(--paper); color: var(--teal-dark); }
 .languageField { display: grid; gap: var(--space-2); }
 .languageControl { position: relative; display: flex; align-items: center; }
 .languageControl select { width: 100%; min-height: 58px; padding: var(--space-3) 3rem var(--space-3) var(--space-4); appearance: none; border: var(--stroke) solid var(--teal-dark); border-radius: var(--radius-md); background: var(--paper); color: var(--ink); box-shadow: 0 4px 0 rgba(31, 122, 120, .18); font: inherit; font-weight: 800; cursor: pointer; }
