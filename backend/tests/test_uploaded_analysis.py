@@ -9,7 +9,7 @@ from pydantic import TypeAdapter
 from app.repositories.postgres.workflow import evaluate
 from app.repositories.practice import PracticeConflictError
 from app.schemas.enums import SessionMode, TaskKind
-from app.schemas.media import MediaAsset
+from app.schemas.media import MediaAsset, SceneObjectRelation
 from app.schemas.sessions import Session
 from app.schemas.tasks import SessionTaskPublic, SubmitTaskAttemptRequest
 from app.schemas.translation import SceneTranslationResult
@@ -117,6 +117,11 @@ def test_vocabulary_lesson_includes_translated_attributes_and_relationships():
     # Reuse the deterministic plan inputs while adding translated scene descriptors.
     vocabulary_task = base_tasks[0]
     assert all(word.term_type == "object" for word in vocabulary_task.public_content.words)
+    relation = SceneObjectRelation(
+        subject_scene_object_id=objects[0].id,
+        relation="nextTo",
+        reference_scene_object_id=objects[1].id,
+    )
     translated_scene = SceneTranslationResult(
         objects=[
             {
@@ -127,8 +132,10 @@ def test_vocabulary_lesson_includes_translated_attributes_and_relationships():
                 "gender": "feminine",
             }
         ],
-        attributes=[{"key": "object-1:color", "source": "blue", "translation": "azul"}],
-        relationships=[{"key": "relation-1", "source": "nextTo", "translation": "al lado de"}],
+        attributes=[{"key": f"{objects[0].id}:color", "source": "blue", "translation": "azul"}],
+        relationships=[
+            {"key": str(relation.id), "source": "nextTo", "translation": "al lado de"}
+        ],
     )
     adjective = VocabularyItem(
         language_code="es", lemma="azul", display_text="azul", part_of_speech="adjective"
@@ -165,9 +172,10 @@ def test_vocabulary_lesson_includes_translated_attributes_and_relationships():
         True,
         translated_scene,
         {
-            ("attribute", "object-1:color"): adjective,
-            ("relationship", "relation-1"): preposition,
+            ("attribute", f"{objects[0].id}:color"): adjective,
+            ("relationship", str(relation.id)): preposition,
         },
+        [relation],
     )[0].public_content
     assert enriched.words[0].target_text == "la silla"
     descriptors = [
@@ -178,6 +186,10 @@ def test_vocabulary_lesson_includes_translated_attributes_and_relationships():
         ("azul", "blue", "attribute"),
         ("al lado de", "next to", "relationship"),
     ]
+    assert enriched.words[-2].scene_object_id == objects[0].id
+    assert enriched.words[-2].related_scene_object_ids == [objects[0].id]
+    assert enriched.words[-1].scene_object_id is None
+    assert enriched.words[-1].related_scene_object_ids == [objects[0].id, objects[1].id]
     assert [word.vocabulary_item_id for word in enriched.words[-2:]] == [
         adjective.id, preposition.id,
     ]

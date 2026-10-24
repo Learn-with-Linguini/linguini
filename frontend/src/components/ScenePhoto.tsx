@@ -6,6 +6,7 @@ type Props = {
   scene: Scene;
   items?: LanguageItem[];
   activeItemId?: string | null;
+  activeItemIds?: string[];
   guessItemId?: string | null;
   onMarkerClick?: (item: LanguageItem) => void;
   onLocationSelect?: (position: { x: number; y: number }) => void;
@@ -21,6 +22,7 @@ export function ScenePhoto({
   scene,
   items,
   activeItemId,
+  activeItemIds,
   guessItemId,
   onMarkerClick,
   onLocationSelect,
@@ -60,7 +62,7 @@ export function ScenePhoto({
     >
       <SceneVisual scene={scene} className="scene__art" lazy={lazy} />
       {markers.map((item, index) => {
-        const active = item.id === activeItemId;
+        const active = item.id === activeItemId || Boolean(activeItemIds?.includes(item.id));
         const custom = item.id.startsWith("custom-");
         const className = [
           "scene__marker",

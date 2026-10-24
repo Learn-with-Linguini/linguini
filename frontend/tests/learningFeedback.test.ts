@@ -117,7 +117,11 @@ async function mount(initialTask: SessionTask, scenePatch: Partial<Scene> = {}) 
   dom.window.document.body.appendChild(container);
   const root = surface.createRoot(container);
   const client = new surface.QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0, refetchOnWindowFocus: false } } });
-  const scene = { id: "scene1", sessionId: "s1", imageUrl: null, mediaAssetId: "asset1", title: "Table", items: [], languageCode: "es", ...scenePatch };
+  const vocabularyWords = initialTask.publicContent.kind === "vocabularyIntroduction" ? initialTask.publicContent.words : [];
+  const scene = { id: "scene1", sessionId: "s1", imageUrl: null, mediaAssetId: "asset1", title: "Table",
+    items: vocabularyWords.flatMap((word, position) => word.sceneObjectId ? [{ id: word.sceneObjectId,
+      word: word.targetText, translation: word.translation, marker: position + 1, x: 20 + position * 20, y: 40,
+      wordClass: word.partOfSpeech, gender: null, example: "", exampleTranslation: "" }] : []), languageCode: "es", ...scenePatch };
   const render = () => surface.act(async () => root.render(surface.h(surface.QueryClientProvider, { client },
     surface.h(surface.AppStateContext.Provider, { value: {
       session: { session: { id: "s1", status: "inProgress" }, tasks: [task], sceneObjects: [] },
@@ -318,7 +322,7 @@ test("vocabulary feedback keeps the correct word and a locked answer", async () 
   assert.match(text(), /Incorrect\. The correct answer is cup/);
   assert.equal(button("cup")?.disabled, true);
   assert.equal(button("Try again"), undefined);
-  assert.equal(button("Continue")?.disabled, false);
+  assert.equal(button("Type a word")?.disabled, false);
 });
 
 function vocabularyTask(): SessionTask {
@@ -371,8 +375,8 @@ test("refreshing vocabulary checks keeps the learner's typing stage and unfinish
   const accepted = { questionId: "word1", acceptedOptionId: "cup", isCorrect: true, correctOptionId: "cup", basilEarned: 10 };
   replies.push(() => Response.json(accepted));
   await click("cup");
-  await waitFor(() => assert.ok(button("Continue")));
-  await click("Continue");
+  await waitFor(() => assert.ok(button("Type a word")));
+  await click("Type a word");
   const input = dom.window.document.querySelector<HTMLInputElement>('input[aria-label="Type cup"]');
   assert.ok(input);
   await surface.act(async () => {
@@ -386,6 +390,57 @@ test("refreshing vocabulary checks keeps the learner's typing stage and unfinish
   assert.equal(input.value, "taz");
   assert.equal(button("Check answer")?.disabled, false);
   assert.equal(requests.length, 1);
+});
+
+test("teaching cards highlight their photo object and practice interleaves recognition before typing", async () => {
+  const task = vocabularyTask();
+  if (task.publicContent.kind !== "vocabularyIntroduction") throw new Error("Expected vocabulary fixture");
+  task.publicContent.words = [
+    { ...task.publicContent.words[0], learningKey: "cup", sceneObjectId: "object-cup", targetText: "taza", translation: "cup" },
+    { ...task.publicContent.words[0], learningKey: "book", sceneObjectId: "object-book", targetText: "libro", translation: "book" },
+    { ...task.publicContent.words[0], learningKey: "chair", sceneObjectId: "object-chair", targetText: "silla", translation: "chair" },
+  ];
+  task.publicContent.questions = task.publicContent.words.map((word, index) => ({
+    questionId: `word-${index + 1}`,
+    prompt: `Which word means "${word.translation}"?`,
+    correctOptionId: word.targetText,
+    options: task.publicContent.kind === "vocabularyIntroduction"
+      ? task.publicContent.words.map(option => ({ optionId: option.targetText, label: option.targetText }))
+      : [],
+  }));
+  await mount(task);
+  await waitFor(() => assert.doesNotMatch(text(), /Restoring word answers/));
+
+  assert.equal(dom.window.document.querySelector(".scene__marker--active .scene__marker-label")?.textContent, "1");
+  await click("Next");
+  assert.equal(dom.window.document.querySelector(".scene__marker--active .scene__marker-label")?.textContent, "2");
+  await click("Next");
+  await click("Start quick quiz");
+
+  replies.push(() => Response.json({ questionId: "word-1", acceptedOptionId: "taza", isCorrect: true, correctOptionId: "taza", basilEarned: 10 }));
+  await click("taza");
+  await waitFor(() => assert.ok(button("Next question")));
+  await click("Next question");
+  replies.push(() => Response.json({ questionId: "word-2", acceptedOptionId: "libro", isCorrect: true, correctOptionId: "libro", basilEarned: 10 }));
+  await click("libro");
+  await waitFor(() => assert.ok(button("Type a word")));
+  await click("Type a word");
+
+  const typing = dom.window.document.querySelector<HTMLInputElement>('input[aria-label="Type cup"]');
+  assert.ok(typing);
+  await surface.act(async () => {
+    Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, "value")!.set!.call(typing, "taza");
+    typing.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
+  });
+  replies.push(() => Response.json({ learningKey: "cup", isCorrect: true, correctAnswer: "taza", revealed: false, basilEarned: 10 }));
+  await click("Check answer");
+  await waitFor(() => {
+    assert.ok(button("Next question"));
+    assert.match(text(), /\+10 Basil earned/);
+  });
+  await click("Next question");
+
+  assert.match(text(), /Which word means "chair"/);
 });
 
 test("a completed grouped lesson restores only server-awarded Basil alongside its saved review", async () => {

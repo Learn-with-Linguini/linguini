@@ -5043,6 +5043,24 @@ p[role="alert"]::before { content: "!"; }
   gap: var(--space-3);
 }
 
+/* Teaching markers may extend beyond the photo edge. Keep the complete source
+   image at its natural aspect ratio and reserve room instead of clipping it. */
+.vocabulary-learning-scene {
+  padding-top: 28px;
+}
+
+.vocabulary-learning-scene > .scene {
+  overflow: visible;
+}
+
+.vocabulary-learning-scene .scene__art {
+  width: 100%;
+  height: auto;
+  aspect-ratio: auto;
+  object-fit: contain;
+  border-radius: calc(var(--radius-md) - var(--stroke));
+}
+
 .vocabulary-learning-grid--swipe {
   touch-action: pan-y;
 }

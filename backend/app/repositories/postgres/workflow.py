@@ -766,7 +766,7 @@ class PostgresWorkflowRepository:
     def check_vocabulary_typing(
         self, task_id, learning_key, answer, reveal
     ) -> CheckVocabularyTypingResponse:
-        with self.read_connection() as c:
+        with self.transaction() as c:
             row = (
                 c.execute(
                     select(session_tasks)
@@ -792,13 +792,37 @@ class PostgresWorkflowRepository:
             accepted = task.answer_key.accepted_text_answers_by_vocabulary_id.get(learning_key)
             if not accepted:
                 raise PracticeConflictError("This word has no typing answer key.")
+            is_correct = not reveal and normalize_answer(answer) in {
+                normalize_answer(candidate) for candidate in accepted
+            }
+            session = self._session(c, task.session_id)
+            basil_earned = 0
+            if (
+                session.mode == "lesson"
+                and session.status in {"inProgress", "generatingTasks"}
+                and task.status not in {"completed", "skipped"}
+            ):
+                basil_earned = reward_basil(
+                    c,
+                    self.user_id,
+                    f"typing:{task.id}:{learning_key}",
+                    amount=10 if is_correct else 5,
+                    payload={
+                        "policyVersion": "basil-typing.v1",
+                        "languageProfileId": str(session.language_profile_id),
+                        "sessionId": str(session.id),
+                        "taskId": str(task.id),
+                        "learningKey": learning_key,
+                        "isCorrect": is_correct,
+                        "revealed": reveal,
+                    },
+                )
             return CheckVocabularyTypingResponse(
                 learning_key=learning_key,
-                is_correct=not reveal
-                and normalize_answer(answer)
-                in {normalize_answer(candidate) for candidate in accepted},
+                is_correct=is_correct,
                 correct_answer=accepted[0],
                 revealed=reveal,
+                basil_earned=basil_earned,
             )
 
     @staticmethod
@@ -2660,6 +2684,7 @@ class PostgresWorkflowRepository:
                 False,
                 translated_scene if self.translator else _translation_preview(session),
                 supplemental_vocabulary,
+                relations,
             )
             introduction = next(task for task in rebuilt if task.kind == "vocabularyIntroduction")
             introduction = personalize_introduction(introduction, claim.learner_history)
