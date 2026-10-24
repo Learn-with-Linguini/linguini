@@ -86,7 +86,7 @@ def test_a2_rules_and_a0_choices_map_to_review_actions():
     compare = get_mission("M03", "A2", 1)
     assert "counts" in photo_eligibility(compare, [obj(BOOK, "book")]).missing
     describe = get_mission("M01", "A2", 1)
-    assert photo_eligibility(describe, [obj(BOOK, "book")]).missing[-1] == "objects"
+    assert photo_eligibility(describe, [obj(BOOK, "book")]).missing[0] == "objects"
     ownership = get_mission("M04", "A0", 1)
     reviewed = [obj(CUP, "cup"), obj(BOOK, "book")]
     check = photo_eligibility(ownership, reviewed, mission_choices={})

@@ -3,9 +3,14 @@
 Templates are stored server-only under ``preloaded_scenes.content["generated"]``
 with references in ``ReferenceMap`` alias form, so one template applies to
 every session of the same scene. A template matches on feature, target
-language, prompt/schema/validator variant and a fingerprint of the canonical
-payload. Deployment and model are provenance only: a route change does not
-make a template stale.
+language, prompt/schema/validator variant, translation basis and a fingerprint
+of the canonical payload. Deployment and model are provenance only: a route
+change does not make a template stale.
+
+The basis tells apart results built on the two scene translations: a lesson's
+pack translation (its terms carry ``nativeDisplay``) and the unguided translation
+I-Spy games and rooms use. Lesson and clue templates for both are kept side by
+side; templates stored before the basis existed are unguided.
 """
 
 from __future__ import annotations
@@ -36,6 +41,18 @@ def template_variant(version: FeatureVersion) -> str:
     return f"{version.prompt_version}|{version.schema_version}|{version.validator_version}"
 
 
+PACK_BASIS = "pack"
+
+
+def translation_basis(payload: Mapping[str, Any]) -> str:
+    """``"pack"`` when ``payload`` carries a pack translation's terms, else ``""``."""
+    return PACK_BASIS if any(
+        isinstance(term, Mapping) and term.get("nativeDisplay")
+        for field in ("objects", "attributes", "relationships")
+        for term in payload.get(field) or ()
+    ) else ""
+
+
 def template_fingerprint(version: FeatureVersion, payload: Mapping[str, Any]) -> str:
     material = {
         "feature": version.feature,
@@ -56,16 +73,18 @@ class Template:
     deployment_id: str
     model: str
     created_at: str
+    basis: str = ""
 
     @property
-    def slot(self) -> tuple[str, str, str]:
-        return self.feature, self.language, self.variant
+    def slot(self) -> tuple[str, str, str, str]:
+        return self.feature, self.language, self.variant, self.basis
 
     def to_json(self) -> dict[str, Any]:
         return {
             "feature": self.feature,
             "language": self.language,
             "variant": self.variant,
+            **({"basis": self.basis} if self.basis else {}),
             "fingerprint": self.fingerprint,
             "result": self.result,
             "provenance": {
@@ -87,6 +106,7 @@ class Template:
             deployment_id=str(provenance["deploymentId"]),
             model=str(provenance["model"]),
             created_at=str(provenance["createdAt"]),
+            basis=str(data.get("basis") or ""),
         )
 
 
@@ -152,7 +172,10 @@ class TemplateSet:
         """The matching template mapped onto ``payload``'s references, if any."""
         if not self.reuse:
             return None
-        slot = (version.feature, str(payload.get("targetLanguage")), template_variant(version))
+        slot = (
+            version.feature, str(payload.get("targetLanguage")), template_variant(version),
+            translation_basis(payload),
+        )
         with self._lock:
             template = self._templates.get(slot)
         if template is None or template.fingerprint != template_fingerprint(version, payload):
@@ -180,6 +203,7 @@ class TemplateSet:
             deployment_id=generated.deployment_id or "",
             model=generated.model or "",
             created_at=datetime.now(UTC).isoformat(),
+            basis=translation_basis(payload),
         )
         with self._lock:
             self._templates[template.slot] = template

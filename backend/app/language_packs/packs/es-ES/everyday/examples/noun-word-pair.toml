@@ -1,0 +1,40 @@
+construction_id = "noun-word-pair"
+
+[[examples]]
+example_id = "pair-cup"
+levels = ["A0"]
+purposes = ["chooseChunk", "matchSpoken", "fillSlot"]
+meaning = "the cup"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }] }
+bindings = { object = "object:cup" }
+truth = true
+labels = []
+sentence = "la taza"
+translation = "the cup"
+chunks = [{ text = "la", join = "none" }, { text = "taza", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M13 draft, 2026-10-23; mirrors dev's a0_lexicon forms; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "pair-book"
+levels = ["A0"]
+purposes = ["chooseChunk", "matchSpoken", "fillSlot"]
+meaning = "the book"
+scene = { objects = [{ fact_id = "object:book", concept = "book" }] }
+bindings = { object = "object:book" }
+truth = true
+labels = []
+sentence = "el libro"
+translation = "the book"
+chunks = [{ text = "el", join = "none" }, { text = "libro", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M13 draft, 2026-10-23; mirrors dev's a0_lexicon forms; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "pair-wrong-word"
+levels = ["A0"]
+purposes = ["chooseChunk", "matchSpoken", "fillSlot"]
+sentence = "el taza"
+correction = "la taza"
+note = "Taza is feminine, so it goes with la."
+provenance = { source = "AI-authored original Linguini M13 draft, 2026-10-23; mirrors dev's a0_lexicon forms; not human-reviewed.", review_status = "generated" }

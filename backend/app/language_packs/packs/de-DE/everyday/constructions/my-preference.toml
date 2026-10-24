@@ -1,0 +1,26 @@
+construction_id = "my-preference"
+version = 1
+summary = "Say that I like (or do not like) the object."
+guidance = "Say Ich mag + accusative article + noun, and end with nicht when the use is dislike: Ich mag die Tasse. Ich mag den Schlüssel nicht. Masculine nouns take den."
+features = ["preference", "first-person"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun" }
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "preference-frame"
+message = "Say the first-person like frame."
+must_contain = ["^ich mag ", "\\.$"]
+
+[[checks]]
+check_id = "dislike-negated"
+message = "A dislike sentence says the negative."
+must_contain = [" nicht\\.$"]
+uses = ["dislike"]
+
+[[checks]]
+check_id = "like-not-negated"
+message = "A like sentence is not negated."
+must_not_contain = ["\\bnicht\\b"]
+uses = ["like"]

@@ -1,0 +1,128 @@
+format_version = 1
+pack_id = "es-es-everyday"
+pack_version = 3
+instruction_language = "en"
+
+[language]
+code = "es"
+articles = "required"
+grammatical_gender = "required"
+locale = "es-ES"
+script = "Latn"
+direction = "ltr"
+word_separator = "space"
+phrase_boundaries = ["y", "que", "pero", "también"]
+
+[language.speech]
+synthesis_locale = "es-ES"
+synthesis = "browserVoice"
+recognition = true
+
+[variety]
+variety_id = "es-es"
+description = "Peninsular Spanish forms as used by the existing app content; needs fluent Spanish review."
+
+[register]
+register_id = "everyday"
+description = "Neutral standard Spanish used in the existing lessons (tú imperatives in prompts); needs fluent review."
+
+[provenance]
+source = "Lead-authored for M01; needs fluent Spanish review."
+review_status = "unreviewed"
+
+[files]
+labels = "labels.toml"
+numbers = "numbers.toml"
+possessives = "possessives.toml"
+requests = "requests.toml"
+pairs = "pairs.toml"
+constructions = [
+  "constructions/target-location.toml",
+  "constructions/target-clue.toml",
+  "constructions/location-phrase.toml",
+  "constructions/where-question.toml",
+  "constructions/find-object.toml",
+  "constructions/identify-object.toml",
+  "constructions/yes-no-identification.toml",
+  "constructions/describe-attribute.toml",
+  "constructions/scene-existence.toml",
+  "constructions/scene-location.toml",
+  "constructions/connected-description.toml",
+  "constructions/how-many-question.toml",
+  "constructions/quantity-chunk.toml",
+  "constructions/quantity-statement.toml",
+  "constructions/quantity-comparison.toml",
+  "constructions/quantity-pair.toml",
+  "constructions/ownership-question.toml",
+  "constructions/ownership-statement.toml",
+  "constructions/owned-object.toml",
+  "constructions/possessive-statement.toml",
+  "constructions/whose-question.toml",
+  "constructions/owned-description.toml",
+  "constructions/my-preference.toml",
+  "constructions/their-preference.toml",
+  "constructions/preference-question.toml",
+  "constructions/choice-statement.toml",
+  "constructions/polite-request.toml",
+  "constructions/order-phrase.toml",
+  "constructions/detail-question.toml",
+  "constructions/detail-reply.toml",
+  "constructions/order-repeat.toml",
+  "constructions/order-confirmation.toml",
+  "constructions/order-repair.toml",
+  "constructions/noun-word-pair.toml",
+]
+examples = [
+  "examples/target-location.toml",
+  "examples/target-clue.toml",
+  "examples/location-phrase.toml",
+  "examples/where-question.toml",
+  "examples/find-object.toml",
+  "examples/identify-object.toml",
+  "examples/yes-no-identification.toml",
+  "examples/describe-attribute.toml",
+  "examples/scene-existence.toml",
+  "examples/scene-location.toml",
+  "examples/connected-description.toml",
+  "examples/how-many-question.toml",
+  "examples/quantity-chunk.toml",
+  "examples/quantity-statement.toml",
+  "examples/quantity-comparison.toml",
+  "examples/quantity-pair.toml",
+  "examples/ownership-question.toml",
+  "examples/ownership-statement.toml",
+  "examples/owned-object.toml",
+  "examples/possessive-statement.toml",
+  "examples/whose-question.toml",
+  "examples/owned-description.toml",
+  "examples/my-preference.toml",
+  "examples/their-preference.toml",
+  "examples/preference-question.toml",
+  "examples/choice-statement.toml",
+  "examples/polite-request.toml",
+  "examples/order-phrase.toml",
+  "examples/detail-question.toml",
+  "examples/detail-reply.toml",
+  "examples/order-repeat.toml",
+  "examples/order-confirmation.toml",
+  "examples/order-repair.toml",
+  "examples/noun-word-pair.toml",
+]
+evaluations = [
+  "evaluations/M01-A0.toml",
+  "evaluations/M01-A1.toml",
+  "evaluations/M01-A2.toml",
+  "evaluations/M03-A0.toml",
+  "evaluations/M03-A1.toml",
+  "evaluations/M03-A2.toml",
+  "evaluations/M02-A0.toml",
+  "evaluations/M02-A1.toml",
+  "evaluations/M02-A2.toml",
+  "evaluations/M04-A0.toml",
+  "evaluations/M04-A1.toml",
+  "evaluations/M04-A2.toml",
+  "evaluations/M05-A0.toml",
+  "evaluations/M05-A1.toml",
+  "evaluations/M06-A2.toml",
+  "evaluations/M13-A0.toml",
+]

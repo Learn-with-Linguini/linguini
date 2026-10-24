@@ -1,0 +1,18 @@
+# The closed words a noun pairs with at A0 (M13). The generated chunk decides
+# the right one; the others, with the same noun, are the wrong choices.
+provenance = { source = "AI-authored original Linguini M13 draft, 2026-10-23; mirrors dev's a0_lexicon forms; not human-reviewed.", review_status = "generated" }
+explanation = "In Korean, a noun ending in a consonant takes 이에요; one ending in a vowel takes 예요."
+
+[[words]]
+text = "이에요"
+position = "after"
+meaning = "it is (after a consonant)"
+final = "consonant"
+romanization = "ieyo"
+
+[[words]]
+text = "예요"
+position = "after"
+meaning = "it is (after a vowel)"
+final = "vowel"
+romanization = "yeyo"

@@ -1,0 +1,14 @@
+construction_id = "quantity-pair"
+version = 1
+summary = "Say how many objects two counted groups have, in one sentence."
+guidance = "Give both counts in one sentence: Es gibt + number + first plural noun + und + number + second plural noun: Es gibt fünf Bücher und zwei Tassen."
+features = ["quantity-statement", "coordination"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { first = "noun", first-count = "determiner", second = "noun", second-count = "determiner" }
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "pair-frame"
+message = "Give both counts with Es gibt … und …"
+must_contain = ["^es gibt ", " und "]

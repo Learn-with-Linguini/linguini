@@ -1,0 +1,33 @@
+construction_id = "identify-object"
+templates = { identify = "C'est {nounPhrase}.", question = "C'est {nounPhrase} ?", find = "Trouve : {name}.", slot = "___ {noun}" }
+version = 2
+summary = "Identify an object or name it with its lexical article."
+guidance = "Use the noun’s approved gender: la tasse/un livre are learned lexical facts, not guesses from spelling. Every name chunk (matchName, chooseName, listenSelect) is the short definite noun chunk alone, with no verb or final punctuation: la tasse; buildIdentify uses C'est + un/une + noun. Elide le/la before a vowel or mute h where appropriate, for example l'assiette and l'horloge. Keep C'est together as a word tile. The everyday question C'est une tasse ? is acceptable; a full Est-ce que c'est… question is another form. Do not add a colour or relation to a naming task."
+features = ["grammatical-gender", "article-agreement", "elision", "nominal-identification"]
+constraints = ["Express only the selected scene facts and preserve semantic role bindings.", "Use the declared variety/register and approved surfaces.", "Treat these rules as generation guidance; they do not constitute a grammar validator."]
+required_labels = ["what-is-this"]
+roles = { object = "noun" }
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+except_uses = ["name"]
+
+[[checks]]
+check_id = "name-without-punctuation"
+message = "A vocabulary name is a bare chunk without final punctuation."
+must_not_contain = ["[.?!]$"]
+uses = ["name"]
+
+[[checks]]
+check_id = "identify-frame"
+message = "Say what something is with C'est …"
+must_contain = ["^(c'est|ce sont|voici) "]
+uses = ["answer"]
+
+[[checks]]
+check_id = "elision"
+message = "Elide le/la/de/ne/que/ce before a vowel (l', d', n', qu', c')."
+must_not_contain = ["(^|\\s)(le|la|de|ne|que|ce) [aeiouéèêëàâîïôûù]"]

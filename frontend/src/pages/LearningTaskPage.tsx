@@ -12,8 +12,8 @@ import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { builtSentence, choiceOrder, finishesAfterLearning, markerChoices, nextLearningStep, optionText, practiceStages, questionOptions, sentenceEnding, taskDone, taskTitle } from "../lib/practiceTasks";
 import type { LearningStep } from "../lib/practiceTasks";
-import { speak } from "../lib/speech";
 import { checkLessonAnswer, checkVocabularyAnswer, checkVocabularyTyping, getVocabularyChecks, getLatestAttempt, getLessonChecks, requestLessonAssistance, reviewDetails, updateMissionScenario, type GrammarLessonQuestion, type LessonAnswerCheck, type SceneObject, type SessionTask, type QuestionOutcome, type TaskActionResult, type TaskAnswer, type TaskContent, type VocabularyLearningWord } from "../lib/api";
+import { TargetLanguageContext, useTargetLanguage } from "../state/targetLanguage";
 import { mergeLessonChecks, visibleLessonQuestionIndex } from "../lib/missionLessonFlow";
 import { isM06ScenarioVisible, lessonCheckFinished, nextAssistanceStep, retryTokens, unlockedRetryResumeIndex } from "../lib/missionM06";
 import { ReportIssueLink } from "../components/ReportIssueLink";
@@ -22,7 +22,7 @@ import { ScenePhoto } from "../components/ScenePhoto";
 import { useResolvedImageUrl } from "../components/SceneImage";
 import { boardRows, practiceBoardCrop } from "../lib/practiceBoard";
 import { questionMarkerObjects } from "../lib/missionMarkers";
-import { completeSlot, speechAvailable, writtenPromptShown } from "../lib/missionA0";
+import { completeSlot, writtenPromptShown } from "../lib/missionA0";
 import { trackAction } from "../lib/analytics.ts";
 import { fillMissionGap } from "../lib/missionGaps";
 import { playAnswerSound } from "../lib/answerSound";
@@ -55,7 +55,7 @@ export function LearningTaskPage() {
     goTo(nextLearningStep(session.tasks, lastM06.id, generating,
       item => taskDone(item) || item.publicContent.missionId === "M06"));
   };
-  return <div className="stack learning-task-page"><LearningTaskContent key={task.id} task={task} index={index} total={tasks.length}
+  return <TargetLanguageContext.Provider value={task.publicContent.languageContext ?? null}><div className="stack learning-task-page"><LearningTaskContent key={task.id} task={task} index={index} total={tasks.length}
     onScenarioChange={() => loadSession(session.session.id)}
     onSkipRolePlay={skipM06RolePlay}
     onNext={() => {
@@ -64,7 +64,7 @@ export function LearningTaskPage() {
         return;
       }
       goTo(nextLearningStep(session.tasks, task.id, generating));
-    }} onClose={() => navigate(isVocabularyTask ? `${base}/learn/vocabulary-preview` : `${base}/learn`)} onExit={() => navigate("/home")} /></div>;
+    }} onClose={() => navigate(isVocabularyTask ? `${base}/learn/vocabulary-preview` : `${base}/learn`)} onExit={() => navigate("/home")} /></div></TargetLanguageContext.Provider>;
 }
 
 /** A completed scene can be revisited without reopening its finished lesson. */
@@ -74,14 +74,15 @@ export function VocabularySceneReview() {
   if (!session) return null;
   const task = session.tasks.find(item => item.kind === "vocabularyIntroduction");
   if (!task) return <Navigate to="/vocabulary" replace />;
-  return <div className="stack learning-task-page"><VocabularyLearningFlow task={task} index={0} total={1} revisiting
-    onNext={() => navigate("/vocabulary")} onClose={() => navigate("/vocabulary")} onExit={() => navigate("/vocabulary")} /></div>;
+  return <TargetLanguageContext.Provider value={task.publicContent.languageContext ?? null}><div className="stack learning-task-page"><VocabularyLearningFlow task={task} index={0} total={1} revisiting
+    onNext={() => navigate("/vocabulary")} onClose={() => navigate("/vocabulary")} onExit={() => navigate("/vocabulary")} /></div></TargetLanguageContext.Provider>;
 }
 
 function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onScenarioChange, onSkipRolePlay }: {
   task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void;
   onScenarioChange: () => Promise<unknown>; onSkipRolePlay: () => void;
 }) {
+  const { speak } = useTargetLanguage();
   const lastStep = useLastStepLabel();
   const scene = useScene();
   const { actOnTask, practiceSaving, practiceError } = useAppState();
@@ -185,6 +186,7 @@ function ExitToHome({ onExit }: { onExit: () => void }) {
 
 function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, revisiting = false }: { task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void; revisiting?: boolean }) {
   const refreshBasil = useRefreshBasil();
+  const { nativeProps } = useTargetLanguage();
   const lastStep = useLastStepLabel();
   const scene = useScene();
   const { actOnTask, practiceSaving, practiceError, session } = useAppState();
@@ -399,7 +401,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
         const state = result !== undefined && isCorrectOption ? " choice--correct"
           : !selected ? ""
             : result === undefined ? " choice--selected" : result ? " choice--correct" : " choice--incorrect";
-        return <button key={option.optionId} className={`choice${state}`} aria-pressed={selected} disabled={!!answers[question.questionId] || checkingQuestion || !!feedback || restored.isLoading || restored.isError} onClick={() => void chooseAnswer(option.optionId)}>{option.label}</button>;
+        return <button key={option.optionId} className={`choice${state}`} aria-pressed={selected} disabled={!!answers[question.questionId] || checkingQuestion || !!feedback || restored.isLoading || restored.isError} onClick={() => void chooseAnswer(option.optionId)}><span {...nativeProps}>{option.label}</span>{question.romanizations?.[option.label] ? <small lang="und-Latn" dir="ltr"> {question.romanizations[option.label]}</small> : null}</button>;
       })}</div>
       {checkingQuestion ? <InlineLoader compact label="Checking your answer…" /> : null}
       {answers[question.questionId] ? <>
@@ -414,7 +416,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
     </div></Card></> : null}
     {active && stage === "typing" && typingWord ? <Card plain><div className="stack">
       <div><h2>Type “{typingWord.translation}”</h2><p className="muted">Word {typingIndex + 1} of {content.words.length}</p></div>
-      <input className="input" aria-label={`Type ${typingWord.translation}`} value={typedAnswers[typingKey] ?? ""} disabled={typingCheck?.isCorrect || typingCheck?.revealed} onChange={event => { setTypedAnswers(value => ({ ...value, [typingKey]: event.target.value })); setTypingCheck(null); }} />
+      <input {...nativeProps} className="input" aria-label={`Type ${typingWord.translation}`} value={typedAnswers[typingKey] ?? ""} disabled={typingCheck?.isCorrect || typingCheck?.revealed} onChange={event => { setTypedAnswers(value => ({ ...value, [typingKey]: event.target.value })); setTypingCheck(null); }} />
       {checkingTyping ? <InlineLoader compact label="Checking your word…" /> : null}
       {typingCheck ? <Feedback tone={typingCheck.isCorrect ? "good" : typingCheck.revealed ? "neutral" : "warn"}><div className="stack-2" role="status"><p>{typingCheck.isCorrect ? "That’s right!" : typingCheck.revealed ? <>No worries, the answer is <strong>{typingCheck.correctAnswer}</strong>.</> : "Not quite. Give it another try."}</p>{basilEarnedText(typingCheck.basilEarned) ? <strong className="basil-reward"><BasilIcon size={17} />{basilEarnedText(typingCheck.basilEarned)}</strong> : null}</div></Feedback> : null}
       {typingCheck?.isCorrect || typingCheck?.revealed
@@ -477,6 +479,7 @@ function LessonAudioPrompt({ question, languageCode, revealed, graded, onReveal,
   showAudioText?: boolean;
   inlineAudio?: boolean;
 }) {
+  const { speak, speechAvailable, nativeProps } = useTargetLanguage();
   const audio = speechAvailable();
   const written = writtenPromptShown(question, { revealed, graded, audio });
   if (!question.audioText) return null;
@@ -489,7 +492,7 @@ function LessonAudioPrompt({ question, languageCode, revealed, graded, onReveal,
     </div> : null}
     {question.listenFirst && !audio
       ? <p className="small muted" role="note">Audio isn't available here, so read the word instead.</p> : null}
-    {showAudioText && written ? <p lang={languageCode}>{question.audioText}</p> : null}
+    {showAudioText && written ? <p {...nativeProps} lang={nativeProps.lang ?? languageCode}>{question.audioText}</p> : null}
   </>;
 }
 
@@ -511,6 +514,7 @@ function A0MissionGapQuestion({ question, scene, sceneObjects, selectedOptionId,
   onRetry: (optionId: string, correct: boolean) => void;
 }) {
   const [revealed, setRevealed] = useState(false);
+  const { speak, speechAvailable, nativeProps } = useTargetLanguage();
   const solution = checked
     ? question.options.find(option => option.label === checked.correctAnswer)
     : undefined;
@@ -535,8 +539,8 @@ function A0MissionGapQuestion({ question, scene, sceneObjects, selectedOptionId,
     <LessonAudioPrompt question={question} languageCode={scene.languageCode} revealed={revealed}
       graded={Boolean(checked)} onReveal={() => setRevealed(true)} showAudioText />
     {question.translation
-      ? <PromptTranslation source={question.prompt} text={question.translation} lang={scene.languageCode} />
-      : <h2>{question.prompt}</h2>}
+      ? <PromptTranslation source={question.prompt} text={question.translation} lang={scene.languageCode} romanization={question.romanizations?.[question.prompt]} />
+      : <><h2 {...nativeProps}>{question.prompt}</h2>{question.romanizations?.[question.prompt] ? <p className="muted" lang="und-Latn" dir="ltr">{question.romanizations[question.prompt]}</p> : null}</>}
     {dialogue.length ? <div className="mission-dialogue" aria-label="Dialogue">
       {dialogue.map((turn, index) => <div className={`mission-dialogue__turn mission-dialogue__turn--${turn.speaker}`} key={`${turn.speaker}-${index}`}>
         <strong>{turn.speaker === "linguini" ? "Linguini" : "You"}</strong>
@@ -550,7 +554,7 @@ function A0MissionGapQuestion({ question, scene, sceneObjects, selectedOptionId,
       <Button variant="quiet" disabled={Boolean(checked) || checking} onClick={onTypedMode}>
         {typedMode ? "Choose an answer instead" : "Type it instead"}
       </Button>
-      {typedMode ? <input className="input" aria-label="Type the missing words" value={typedAnswer}
+      {typedMode ? <input {...nativeProps} className="input" aria-label="Type the missing words" value={typedAnswer}
         disabled={Boolean(checked) || checking} onChange={event => onTypedAnswer(event.target.value)} /> : null}
     </div> : null}
     <div className={`choice-grid${question.gapType === "pictureToBlank" ? " mission-gap__pictures" : ""}`}>
@@ -603,6 +607,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
   onScenarioChange: () => Promise<unknown>; onSkipRolePlay: () => void;
 }) {
   const refreshBasil = useRefreshBasil();
+  const { speak, speechAvailable, nativeProps } = useTargetLanguage();
   const lastStep = useLastStepLabel();
   const scene = useScene();
   const { actOnTask, practiceSaving, practiceError, session } = useAppState();
@@ -652,7 +657,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
   const isSituation = content.kind === "grammarLesson" && Boolean(content.missionSnapshot);
   const tokenIndexes = question ? builtTokenIndexes[question.questionId] ?? [] : [];
   const tokenAnswer = question?.interactionType === "sentenceBuilding"
-    ? builtSentence(tokenIndexes.map(position => question.tokenBank[position])) : "";
+    ? builtSentence(tokenIndexes.map(position => question.tokenBank[position]), question.sentenceJoinModes) : "";
   const answer = question?.typedAllowed && typedMode[question.questionId]
     ? typedAnswers[question.questionId] ?? ""
     : question?.interactionType === "multipleChoice" || question?.interactionType === "textCloze"
@@ -874,35 +879,35 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
         </div> : null}
         {question.audioText && !speechAvailable() ? <>
           <p className="small muted" role="note">Audio isn't available here, so read the phrase instead.</p>
-          <p lang={scene.languageCode}>{question.audioText}</p>
+          <p {...nativeProps} lang={nativeProps.lang ?? scene.languageCode}>{question.audioText}</p>
         </> : null}
         {question.listenFirst && !showWritten ? <Button variant="quiet" onClick={() => setRevealedPrompts(value => ({
           ...value, [question.questionId]: true,
         }))}>Show written prompt</Button> : null}
         {showWritten ? question.translation
-          ? <PromptTranslation source={question.prompt} text={question.translation} lang={scene.languageCode} />
-          : <h2>{question.prompt}</h2> : null}
+          ? <PromptTranslation source={question.prompt} text={question.translation} lang={scene.languageCode} romanization={question.romanizations?.[question.prompt]} />
+          : <><h2 {...nativeProps}>{question.prompt}</h2>{question.romanizations?.[question.prompt] ? <p className="muted" lang="und-Latn" dir="ltr">{question.romanizations[question.prompt]}</p> : null}</> : null}
         {slotText && showWritten ? <p className="mission-slot-template">
           {slotText}
         </p> : null}
         {question.interactionType === "sentenceBuilding" ? <>
-          <div className="sentence-builder__answer" aria-label="Your sentence">
+          <div {...nativeProps} className="sentence-builder__answer" aria-label="Your sentence">
             {tokenIndexes.length ? tokenIndexes.map((tokenIndex, position) => <button key={`${tokenIndex}-${position}`}
               className="sentence-builder__token" disabled={isChecked || checking}
               onClick={() => setBuiltTokenIndexes(value => ({
                 ...value, [question.questionId]: (value[question.questionId] ?? []).filter((_, itemIndex) => itemIndex !== position),
-              }))}>{question.tokenBank[tokenIndex]}</button>) : <span className="muted">Choose the words to build your sentence.</span>}
+              }))}><span {...nativeProps}>{question.tokenBank[tokenIndex]}</span>{question.romanizations?.[question.tokenBank[tokenIndex]] ? <small lang="und-Latn" dir="ltr"> {question.romanizations[question.tokenBank[tokenIndex]]}</small> : null}</button>) : <span className="muted" dir={nativeProps.dir ? "ltr" : undefined} lang={nativeProps.lang ? "en" : undefined}>Choose the words to build your sentence.</span>}
           </div>
-          <div className="chip-row" aria-label="Sentence building words">{question.tokenBank.map((token, tokenIndex) => {
+          <div {...nativeProps} className="chip-row" aria-label="Sentence building words">{question.tokenBank.map((token, tokenIndex) => {
             const used = tokenIndexes.includes(tokenIndex);
             return <button key={`${token}-${tokenIndex}`} className="chip" disabled={used || isChecked || checking}
               onClick={() => setBuiltTokenIndexes(value => ({
                 ...value, [question.questionId]: [...(value[question.questionId] ?? []), tokenIndex],
-              }))}>{token}</button>;
+              }))}><span {...nativeProps}>{token}</span>{question.romanizations?.[token] ? <small lang="und-Latn" dir="ltr"> {question.romanizations[token]}</small> : null}</button>;
           })}</div>
         </> : question.interactionType === "textCloze" ? <div className="field">
           <label className="field__label" htmlFor={`mission-answer-${question.questionId}`}>Your reply</label>
-          <input id={`mission-answer-${question.questionId}`} className="input"
+          <input {...nativeProps} id={`mission-answer-${question.questionId}`} className="input"
             placeholder={question.slotTemplate ?? ""}
             value={answers[question.questionId] ?? ""}
             disabled={isChecked || checking || saved.isLoading || saved.isError}
@@ -928,7 +933,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
             }}>
             {isSituation && question.optionIcons?.[option.optionId]
               ? <MissionGapIcon kind={question.optionIcons[option.optionId]} /> : null}
-            {optionText(question, option.label)}</button>;
+            <span {...nativeProps}>{optionText(question, option.label)}</span>{question.romanizations?.[option.label] ? <small lang="und-Latn" dir="ltr"> {question.romanizations[option.label]}</small> : null}</button>;
         })}</div>}
         {storedCheck && !retrying ? <>
           <Feedback tone={storedCheck.isCorrect || (isSituation && Boolean(retryPassed[question.questionId])) ? "good" : "warn"}>
@@ -995,6 +1000,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
 function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void }) {
   const refreshBasil = useRefreshBasil();
   const [questionBasil, setQuestionBasil] = useState<Record<string, number>>({});
+  const { speak, nativeProps, speechAvailable } = useTargetLanguage();
   const lastStep = useLastStepLabel();
   const scene = useScene();
   const { actOnTask, practiceSaving, practiceError, session } = useAppState();
@@ -1052,7 +1058,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
   }, [savedChecks.data, content, task.status]);
   if (content.kind !== "grammarLesson") return null;
   const answerFor = (question: typeof content.questions[number]) => question.interactionType === "sentenceBuilding"
-    ? builtSentence((builtTokenIndexes[question.questionId] ?? []).map(index => question.tokenBank[index]))
+    ? builtSentence((builtTokenIndexes[question.questionId] ?? []).map(index => question.tokenBank[index]), question.sentenceJoinModes)
     : answers[question.questionId] ?? "";
   const answered = content.questions.every(question => Boolean(answerFor(question)));
   const activeQuestion = content.questions[activeIndex];
@@ -1144,23 +1150,23 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
       </div> : null}
       {question.interactionType === "sentenceBuilding" ? <>
         {question.promptTranslation
-          ? <PromptTranslation source={question.prompt} text={question.promptTranslation} lang={scene.languageCode} audioText={question.audioText ?? question.prompt} />
+          ? <PromptTranslation source={question.prompt} text={question.promptTranslation} lang={scene.languageCode} audioText={question.audioText ?? question.prompt} romanization={question.romanizations?.[question.prompt]} />
           : question.translation ? <h2>{question.translation}</h2> : null}
-        <div className="sentence-builder__answer" aria-label="Your sentence">
-          {restored?.answers?.[question.questionId] ? <span>{restored.answers[question.questionId]}</span> : (builtTokenIndexes[question.questionId] ?? []).length ? (builtTokenIndexes[question.questionId] ?? []).map((tokenIndex, tokenPosition) => <button key={`${tokenIndex}-${tokenPosition}`} className="sentence-builder__token" disabled={terminal || practiceSaving}
-            onClick={() => setBuiltTokenIndexes(value => ({ ...value, [question.questionId]: (value[question.questionId] ?? []).filter((_, index) => index !== tokenPosition) }))}>{question.tokenBank[tokenIndex]}</button>) : <span className="muted">Choose the words to build your sentence.</span>}
+        <div {...nativeProps} className="sentence-builder__answer" aria-label="Your sentence">
+          {restored?.answers?.[question.questionId] ? <span {...nativeProps}>{restored.answers[question.questionId]}</span> : (builtTokenIndexes[question.questionId] ?? []).length ? (builtTokenIndexes[question.questionId] ?? []).map((tokenIndex, tokenPosition) => <button key={`${tokenIndex}-${tokenPosition}`} className="sentence-builder__token" disabled={terminal || practiceSaving}
+            onClick={() => setBuiltTokenIndexes(value => ({ ...value, [question.questionId]: (value[question.questionId] ?? []).filter((_, index) => index !== tokenPosition) }))}><span {...nativeProps}>{question.tokenBank[tokenIndex]}</span>{question.romanizations?.[question.tokenBank[tokenIndex]] ? <small lang="und-Latn" dir="ltr"> {question.romanizations[question.tokenBank[tokenIndex]]}</small> : null}</button>) : <span className="muted" dir={nativeProps.dir ? "ltr" : undefined} lang={nativeProps.lang ? "en" : undefined}>Choose the words to build your sentence.</span>}
         </div>
-        <div className="chip-row" aria-label="Sentence building words">{question.tokenBank.map((token, tokenIndex) => {
+        <div {...nativeProps} className="chip-row" aria-label="Sentence building words">{question.tokenBank.map((token, tokenIndex) => {
           const used = (builtTokenIndexes[question.questionId] ?? []).includes(tokenIndex);
           if (used) return null;
           return <button key={`${token}-${tokenIndex}`} className="chip" disabled={terminal || practiceSaving}
-            onClick={() => setBuiltTokenIndexes(value => ({ ...value, [question.questionId]: [...(value[question.questionId] ?? []), tokenIndex] }))}>{token}</button>;
+            onClick={() => setBuiltTokenIndexes(value => ({ ...value, [question.questionId]: [...(value[question.questionId] ?? []), tokenIndex] }))}><span {...nativeProps}>{token}</span>{question.romanizations?.[token] ? <small lang="und-Latn" dir="ltr"> {question.romanizations[token]}</small> : null}</button>;
         })}</div>
       </> : <>
         {writtenPromptShown(question, { revealed: Boolean(revealed[question.questionId]), graded: results[question.questionId] !== undefined, audio })
           ? question.promptTranslation
             ? <PromptTranslation source={content.focus === "sceneDescription" ? question.translation || "Choose the sentence that describes the scene." : question.prompt}
-              text={question.promptTranslation} lang={question.audioText ? scene.languageCode : undefined} audioText={question.audioText ?? question.prompt} />
+              text={question.promptTranslation} lang={question.audioText ? scene.languageCode : undefined} audioText={question.audioText ?? question.prompt} romanization={question.romanizations?.[question.prompt]} />
             : <h2 lang={question.audioText ? scene.languageCode : undefined}>{content.focus === "sceneDescription" ? question.translation || "Choose the sentence that describes the scene." : question.prompt}</h2>
           : <h2 className="muted">Listen to the word.</h2>}
         {question.boardCounts ? <PracticeBoards question={question} sceneImageUrl={sceneImageUrl}
@@ -1190,7 +1196,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
               : graded === undefined ? " choice--selected" : graded ? " choice--correct" : " choice--incorrect";
           return <button key={option.optionId} className={`choice${state}`} aria-pressed={selected} disabled={terminal || practiceSaving || checking || graded !== undefined}
             onClick={() => setAnswers(value => ({ ...value, [question.questionId]: option.optionId }))}>
-            {optionText(question, option.label)}</button>;
+            <span {...nativeProps}>{optionText(question, option.label)}</span>{question.romanizations?.[option.label] ? <small lang="und-Latn" dir="ltr"> {question.romanizations[option.label]}</small> : null}</button>;
         })}</div></>}
       </>}
       {results[question.questionId] !== undefined ? <>
@@ -1242,12 +1248,13 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
 }
 
 function VocabularyLearningCard({ word, languageCode }: { word: VocabularyLearningWord; languageCode: string }) {
+  const { speak, nativeProps, settings, speechAvailable } = useTargetLanguage();
   return <article className="flashcard learning-card vocabulary-learning-card">
     <div className="spread"><span className="label muted learning-card__meta">{word.termType === "relationship" ? "relationship" : word.partOfSpeech}{word.gender ? ` · ${word.gender}` : ""}</span>
-      <IconButton className="learning-card__audio" label={`Hear ${word.targetText}`} onClick={() => speak(word.targetText, languageCode)}><SpeakerIcon /></IconButton></div>
-    <div className="learning-card__word"><h2>{word.targetText}</h2><p className="muted">{word.translation}</p></div>
+      {(!settings || speechAvailable()) ? <IconButton className="learning-card__audio" label={`Hear ${word.targetText}`} onClick={() => speak(word.targetText, languageCode)}><SpeakerIcon /></IconButton> : null}</div>
+    <div className="learning-card__word"><h2 {...nativeProps}>{word.targetText}</h2>{word.romanization ? <p className="muted" lang="und-Latn" dir="ltr" aria-label="Latin spelling">{word.romanization}</p> : null}<p className="muted">{word.translation}</p></div>
     {word.pluralForm ? <p className="small"><strong>Plural:</strong> {word.pluralForm}</p> : null}
-    {word.phoneticText ? <p className="small muted" aria-label="Pronunciation">{word.phoneticText}</p> : null}
+    {word.phoneticText ? <p className="small muted" aria-label={settings ? "English-sound pronunciation" : "Pronunciation"}>{word.phoneticText}</p> : null}
   </article>;
 }
 
@@ -1357,7 +1364,8 @@ function roleplayScenario(text: string) {
   return direct ? direct.charAt(0).toUpperCase() + direct.slice(1) : text;
 }
 
-function PromptTranslation({ text, source, lang, audioText }: { text?: string | null; source?: ReactNode; lang?: string; audioText?: string }) {
+function PromptTranslation({ text, source, lang, audioText, romanization }: { text?: string | null; source?: ReactNode; lang?: string; audioText?: string; romanization?: string }) {
+  const { speak, speechAvailable, nativeProps } = useTargetLanguage();
   const [shown, setShown] = useState(false);
   if (!text) return null;
   const toggle = <IconButton className="prompt-translation__toggle" label={shown ? "Hide translation" : "Show translation"}
@@ -1367,7 +1375,8 @@ function PromptTranslation({ text, source, lang, audioText }: { text?: string | 
   const audio = audioText && lang && speechAvailable() ? <IconButton className="prompt-translation__toggle" label={`Hear ${audioText}`}
     onClick={() => speak(audioText, lang)}><SpeakerIcon size={20} /></IconButton> : null;
   if (source) return <span className="prompt-translation prompt-translation--with-source">
-    <span className="prompt-translation__source"><h2 lang={lang}>{source}</h2>{audio}{toggle}</span>
+    <span className="prompt-translation__source"><h2 lang={lang && (nativeProps.lang ?? lang)} dir={lang && nativeProps.dir}>{source}</h2>{audio}{toggle}</span>
+    {romanization ? <span className="muted" lang="und-Latn" dir="ltr">{romanization}</span> : null}
     {shown ? <span className="small muted">{text}</span> : null}
   </span>;
   return <span className="prompt-translation">

@@ -1,0 +1,25 @@
+construction_id = "target-clue"
+version = 1
+summary = "Describe a hidden object by a detail or its location."
+guidance = "A clue describes the hidden object without naming it: 빨간색이에요. (detail) / 창문 옆에 있어요. (location). A clarification starts with 아니요, and restates one true clue: 아니요, 창문 옆에 있어요. Never name the hidden object. Use polite -요 endings."
+features = ["hidden-referent", "pronoun"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { attribute = "adjective", relation = "preposition", reference = "noun" }
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "clarify-label"
+message = "A clarification starts with the no label."
+must_contain = ["^아니요, "]
+uses = ["clarify"]
+
+[[checks]]
+check_id = "polite-ending"
+message = "Use the polite -요 ending at the end of the sentence."
+must_contain = ["요[.?!]$"]

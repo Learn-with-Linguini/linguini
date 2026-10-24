@@ -1,0 +1,100 @@
+construction_id = "yes-no-identification"
+
+[[examples]]
+example_id = "ask-plate"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "Is it a plate?"
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }] }
+bindings = { object = "object:plate" }
+truth = true
+sentence = "¿Es un plato?"
+translation = "Is it a plate?"
+chunks = [{ text = "¿Es", join = "none" }, { text = "un", join = "space" }, { text = "plato", join = "space" }, { text = "?", join = "none" }]
+provenance = { source = "Lead-authored; noun from app/services/a0_lexicon.py REVIEWED_NOUNS.", review_status = "unreviewed" }
+
+[[examples]]
+example_id = "ask-bottle"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "Is it a bottle?"
+scene = { objects = [{ fact_id = "object:bottle", concept = "bottle" }] }
+bindings = { object = "object:bottle" }
+truth = true
+sentence = "¿Es una botella?"
+translation = "Is it a bottle?"
+chunks = [{ text = "¿Es", join = "none" }, { text = "una", join = "space" }, { text = "botella", join = "space" }, { text = "?", join = "none" }]
+provenance = { source = "Lead-authored; noun from app/services/a0_lexicon.py REVIEWED_NOUNS.", review_status = "unreviewed" }
+
+[[examples]]
+example_id = "ask-shoe"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "Is it a shoe?"
+scene = { objects = [{ fact_id = "object:shoe", concept = "shoe" }] }
+bindings = { object = "object:shoe" }
+truth = true
+sentence = "¿Es un zapato?"
+translation = "Is it a shoe?"
+chunks = [{ text = "¿Es", join = "none" }, { text = "un", join = "space" }, { text = "zapato", join = "space" }, { text = "?", join = "none" }]
+provenance = { source = "Lead-authored; noun from app/services/a0_lexicon.py REVIEWED_NOUNS.", review_status = "unreviewed" }
+
+[[examples]]
+example_id = "answer-chair-yes"
+levels = ["A1"]
+purposes = ["confirmObject"]
+meaning = "The shown object is a chair; the asked object is a chair."
+scene = { objects = [{ fact_id = "object:chair", concept = "chair" }] }
+bindings = { shown = "object:chair", asked = "object:chair" }
+truth = true
+labels = ["yes"]
+sentence = "Sí, es una silla."
+translation = "Yes, it is a chair."
+chunks = [{ text = "Sí", join = "none" }, { text = ",", join = "none" }, { text = "es", join = "space" }, { text = "una", join = "space" }, { text = "silla", join = "space" }, { text = ".", join = "none" }]
+provenance = { source = "Lead-authored; noun and answer form mirrored from app/services/a0_lexicon.py.", review_status = "unreviewed" }
+
+[[examples]]
+example_id = "answer-clock-no"
+levels = ["A1"]
+purposes = ["confirmObject"]
+meaning = "The shown object is a clock; the asked object is a lamp."
+scene = { objects = [{ fact_id = "object:clock", concept = "clock" }, { fact_id = "object:lamp", concept = "lamp" }] }
+bindings = { shown = "object:clock", asked = "object:lamp" }
+truth = false
+labels = ["no"]
+sentence = "No, es un reloj."
+translation = "No, it is a clock."
+chunks = [{ text = "No", join = "none" }, { text = ",", join = "none" }, { text = "es", join = "space" }, { text = "un", join = "space" }, { text = "reloj", join = "space" }, { text = ".", join = "none" }]
+provenance = { source = "Lead-authored; noun and answer form mirrored from app/services/a0_lexicon.py.", review_status = "unreviewed" }
+
+[[examples]]
+example_id = "answer-book-yes"
+levels = ["A1"]
+purposes = ["confirmObject"]
+meaning = "The shown object is a book; the asked object is a book."
+scene = { objects = [{ fact_id = "object:book", concept = "book" }] }
+bindings = { shown = "object:book", asked = "object:book" }
+truth = true
+labels = ["yes"]
+sentence = "Sí, es un libro."
+translation = "Yes, it is a book."
+chunks = [{ text = "Sí", join = "none" }, { text = ",", join = "none" }, { text = "es", join = "space" }, { text = "un", join = "space" }, { text = "libro", join = "space" }, { text = ".", join = "none" }]
+provenance = { source = "Lead-authored; noun and answer form mirrored from app/services/a0_lexicon.py.", review_status = "unreviewed" }
+
+[[mistakes]]
+example_id = "question-opening-mark"
+levels = ["A0"]
+purposes = ["confirmName"]
+sentence = "Es una botella?"
+correction = "¿Es una botella?"
+note = "Spanish questions open with ¿."
+provenance = { source = "Lead-authored for the M01 pilot; needs fluent Spanish review.", review_status = "unreviewed" }
+
+[[mistakes]]
+example_id = "answer-restate"
+levels = ["A1"]
+purposes = ["confirmObject"]
+sentence = "No es una lámpara."
+correction = "No, es un reloj."
+note = "Say what the object is after No."
+provenance = { source = "Lead-authored for the M01 pilot; needs fluent Spanish review.", review_status = "unreviewed" }

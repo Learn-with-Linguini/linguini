@@ -1,0 +1,315 @@
+[[labels]]
+semantic = "yes"
+text = "네"
+romanization = "ne"
+meaning = "yes"
+usage = "sentence"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "no"
+text = "아니요"
+romanization = "aniyo"
+meaning = "no"
+usage = "sentence"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "yes-answer"
+text = "네."
+romanization = "ne."
+meaning = "Yes."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "no-answer"
+text = "아니요."
+romanization = "aniyo."
+meaning = "No."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "what-is-this"
+text = "이건 뭐예요?"
+romanization = "igeon mwoyeyo?"
+meaning = "What is this?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "attribute-prompt-colour"
+text = "이건 무슨 색이에요?"
+romanization = "igeon museun saegieyo?"
+meaning = "What colour is this object?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "describe-object"
+text = "이 물건을 설명해 보세요."
+romanization = "i mulgeoneul seolmyeonghae boseyo."
+meaning = "Describe this object."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "touch-object"
+text = "이 문장에 맞는 물건을 눌러 보세요: «{f['first']}»."
+romanization = "i munjange manneun mulgeoneul nulleo boseyo: «{f['first']}»."
+meaning = "Tap the object matching this sentence: {f['first']}."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "build-second-fact"
+text = "두 번째 문장을 만들어 보세요."
+romanization = "du beonjjae munjangeul mandeureo boseyo."
+meaning = "Build the second sentence."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "choose-description"
+text = "어떤 설명이 사진과 맞아요?"
+romanization = "eotteon seolmyeongi sajingwa majayo?"
+meaning = "Which description matches the photo?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "describe-scene"
+text = "이 문장들로 사진을 설명해 보세요."
+romanization = "i munjangdeullo sajineul seolmyeonghae boseyo."
+meaning = "Describe the scene with these sentences."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "connector-distractor"
+text = "하지만"
+romanization = "hajiman"
+meaning = "but"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "attribute-prompt"
+text = "이 물건은 어때요?"
+romanization = "i mulgeoneun eottaeyo?"
+meaning = "What is this object like?"
+usage = "prompt"
+provenance = { source = "Generated shared-M01 compatibility addition; requires fluent review.", review_status = "generated" }
+
+[[labels]]
+semantic = "attribute-prompt-material"
+text = "이 물건은 무엇으로 만들어졌어요?"
+romanization = "i mulgeoneun mueoseuro mandeureojyeosseoyo?"
+meaning = "What material is this object made of?"
+usage = "prompt"
+provenance = { source = "Generated shared-M01 compatibility addition; requires fluent review.", review_status = "generated" }
+
+[[labels]]
+semantic = "vocabulary-unsure"
+text = "모르겠어요"
+romanization = "moreugesseoyo"
+meaning = "I don't know"
+usage = "prompt"
+provenance = { source = "Generated shared-M01 compatibility addition; requires fluent review.", review_status = "generated" }
+
+[[labels]]
+semantic = "vocabulary-other"
+text = "확실하지 않아요"
+romanization = "hwaksilhaji anayo"
+meaning = "I'm not sure"
+usage = "prompt"
+provenance = { source = "Generated shared-M01 compatibility addition; requires fluent review.", review_status = "generated" }
+
+[[labels]]
+semantic = "ask-where"
+text = "어디에 있는지 물어보세요."
+romanization = "eodie inneunji mureoboseyo."
+meaning = "Ask where it is."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "answer-where"
+text = "사진에 보이는 위치로 대답해 보세요."
+romanization = "sajine boineun wichiro daedaphae boseyo."
+meaning = "Answer with the position the photo shows."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "clue-meaning"
+text = "무슨 뜻이에요?"
+romanization = "museun tteusieyo?"
+meaning = "What does it mean?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "build-location-clue"
+text = "두 번째 힌트를 만들어 보세요."
+romanization = "du beonjjae hinteureul mandeureo boseyo."
+meaning = "Build the second clue."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "find-both-clues"
+text = "두 힌트에 맞는 물건을 눌러 보세요."
+romanization = "du hinteue manneun mulgeoneul nulleo boseyo."
+meaning = "Tap the object that matches both clues."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "friend-points"
+text = "친구가 {marker}번을 가리켜요. 뭐라고 말해요?"
+romanization = "chinguga {marker}beoneul garikyeoyo. mworago malhaeyo?"
+meaning = "Your friend points to number {marker}. What do you say?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "name-and-locate"
+text = "물건 이름과 위치를 말해 보세요."
+romanization = "mulgeon ireumgwa wichireul malhae boseyo."
+meaning = "Say the object's name and where it is."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "answer-in-sentence"
+text = "문장으로 대답하세요."
+romanization = "munjang-euro daedaphaseyo."
+meaning = "Answer with a sentence."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "build-group-sentence"
+text = "표시된 그룹에 대해 문장을 만드세요."
+romanization = "pyosidoen geurube daehae munjang-eul mandeuseyo."
+meaning = "Build a sentence about the highlighted group."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "choose-comparison"
+text = "맞는 비교를 고르세요."
+romanization = "manneun bigyoreul goreuseyo."
+meaning = "Choose the correct comparison."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "friend-says"
+text = "친구가 말해요: \"{statement}\" 뭐라고 대답해요?"
+romanization = "chinguga malhaeyo: \"{statement}\" mworago daedaphaeyo?"
+meaning = "Your friend says: “{statement}” What do you answer?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "friend-is-right"
+text = "네, 친구 말이 맞아요."
+romanization = "ne, chingu mari majayo."
+meaning = "Yes, your friend is right."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "describe-compare"
+text = "두 그룹을 설명하고 비교하세요."
+romanization = "du geurubeul seolmyeonghago bigyohaseyo."
+meaning = "Describe and compare the two groups."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "more"
+text = "많아요"
+romanization = "manayo"
+meaning = "more"
+usage = "sentence"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "fewer"
+text = "적어요"
+romanization = "jeogeoyo"
+meaning = "fewer"
+usage = "sentence"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "choose-sentence"
+text = "맞는 문장을 고르세요."
+romanization = "matneun munjang-eul goreuseyo."
+meaning = "Choose the correct sentence."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "which-is-yours"
+text = "어느 물건이 본인 거예요?"
+romanization = "eoneu mulgeon-i bonin geoyeyo?"
+meaning = "Which object is yours?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "choose-possessive"
+text = "본인이 말해요:"
+romanization = "bonin-i malhaeyo:"
+meaning = "You say:"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "describe-your-object"
+text = "본인 물건을 설명해 보세요."
+romanization = "bonin mulgeon-eul seolmyeonghae boseyo."
+meaning = "Describe your object."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "clarify-and-describe"
+text = "어느 물건이 본인 건지 말하고 설명해 보세요."
+romanization = "eoneu mulgeon-i bonin geonji malhago seolmyeonghae boseyo."
+meaning = "Say which object is yours and describe it."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "what-choose"
+text = "뭐 골라요?"
+romanization = "mwo gollayo?"
+meaning = "What do you choose?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "request-distractor-have"
+text = "있어요"
+meaning = "I have / there is"
+usage = "prompt"
+romanization = "isseoyo"
+[labels.provenance]
+source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed."
+review_status = "generated"
+
+[[labels]]
+semantic = "request-distractor-exists"
+text = "이에요"
+meaning = "It is"
+usage = "prompt"
+romanization = "ieyo"
+[labels.provenance]
+source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed."
+review_status = "generated"

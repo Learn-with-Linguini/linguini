@@ -1,0 +1,19 @@
+construction_id = "target-location"
+version = 1
+summary = "Name an object with its detail and location."
+guidance = "Name the object with its detail and say where it is: definite article + noun + colour adjective + está + position phrase + reference: La taza roja está al lado de la ventana. The colour follows the noun and agrees with it."
+features = ["located-description"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { subject = "noun", attribute = "adjective", relation = "preposition", reference = "noun" }
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "location-frame"
+message = "Say where it is with the taught verb."
+must_contain = ["\\sestá\\s"]

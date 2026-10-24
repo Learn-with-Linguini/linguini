@@ -1,0 +1,163 @@
+mission_id = "M03"
+practice_level = "A2"
+content_version = 1
+
+[[cases]]
+case_id = "m03-a2-how-many-doors"
+category = "wrongObject"
+construction_id = "how-many-question"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:door", concept = "door" }, { fact_id = "object:window", concept = "window" }], counts = [{ fact_id = "count:door", object = "object:door", quantity = 2 }, { fact_id = "count:window", object = "object:window", quantity = 3 }] }
+bindings = { object = "object:door" }
+truth = true
+input = "Ask how many doors there are."
+expected_meaning = "How many doors are there?"
+acceptable = ["¿Cuántas puertas hay?"]
+reject = [{ sentence = "¿Cuántas ventanas hay?", category = "wrongObject", reason = "The question is about the doors." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a2-three-windows"
+category = "wrongCount"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:window", concept = "window" }, { fact_id = "object:door", concept = "door" }], counts = [{ fact_id = "count:window", object = "object:window", quantity = 3 }, { fact_id = "count:door", object = "object:door", quantity = 2 }] }
+bindings = { object = "object:window", count = "count:window" }
+truth = true
+input = "Say there are three windows."
+expected_meaning = "There are three windows."
+acceptable = ["Hay tres ventanas."]
+reject = [{ sentence = "Hay dos ventanas.", category = "wrongCount", reason = "Three windows were counted." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a2-more-plates"
+category = "meaning"
+construction_id = "quantity-comparison"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }, { fact_id = "object:spoon", concept = "spoon" }], counts = [{ fact_id = "count:plate", object = "object:plate", quantity = 6 }, { fact_id = "count:spoon", object = "object:spoon", quantity = 2 }] }
+bindings = { first = "object:plate", second = "object:spoon" }
+truth = true
+labels = ["more"]
+input = "Say there are more plates than spoons."
+expected_meaning = "There are more plates than spoons."
+acceptable = ["Hay más platos que cucharas."]
+reject = [{ sentence = "Hay menos platos que cucharas.", category = "meaning", reason = "Six plates are more than two spoons." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a2-fewer-spoons"
+category = "wrongObject"
+construction_id = "quantity-comparison"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }, { fact_id = "object:spoon", concept = "spoon" }, { fact_id = "object:fork", concept = "fork" }], counts = [{ fact_id = "count:plate", object = "object:plate", quantity = 6 }, { fact_id = "count:spoon", object = "object:spoon", quantity = 2 }] }
+bindings = { first = "object:spoon", second = "object:plate" }
+truth = true
+labels = ["fewer"]
+input = "Say there are fewer spoons than plates."
+expected_meaning = "There are fewer spoons than plates."
+acceptable = ["Hay menos cucharas que platos."]
+reject = [{ sentence = "Hay menos cucharas que tenedores.", category = "wrongObject", reason = "The comparison is with the plates." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a2-correction"
+category = "wrongCount"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:key", concept = "key" }], counts = [{ fact_id = "count:key", object = "object:key", quantity = 4 }] }
+bindings = { object = "object:key", count = "count:key" }
+truth = true
+labels = ["no"]
+input = "Correct the friend: there are four keys."
+expected_meaning = "No, there are four keys."
+acceptable = ["No, hay cuatro llaves."]
+reject = [{ sentence = "No, hay dos llaves.", category = "wrongCount", reason = "Four keys were counted." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a2-correction-label"
+category = "meaning"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:key", concept = "key" }], counts = [{ fact_id = "count:key", object = "object:key", quantity = 4 }] }
+bindings = { object = "object:key", count = "count:key" }
+truth = true
+labels = ["no"]
+input = "Correct the friend: there are four keys."
+expected_meaning = "No, there are four keys."
+acceptable = ["No, hay cuatro llaves."]
+reject = [{ sentence = "Hay cuatro llaves.", category = "meaning", reason = "A correction starts with no." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a2-friend-count"
+category = "wrongCount"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:key", concept = "key" }], counts = [{ fact_id = "count:key", object = "object:key", quantity = 4 }] }
+bindings = { object = "object:key", count = "number:2" }
+truth = false
+use = "roleplay"
+input = "Write the friend's wrong count: two keys."
+expected_meaning = "There are two keys."
+acceptable = ["Hay dos llaves."]
+reject = [{ sentence = "Hay cuatro llaves.", category = "wrongCount", reason = "The friend says two, not the real count." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a2-pair"
+category = "wrongCount"
+construction_id = "quantity-pair"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }, { fact_id = "object:spoon", concept = "spoon" }], counts = [{ fact_id = "count:plate", object = "object:plate", quantity = 6 }, { fact_id = "count:spoon", object = "object:spoon", quantity = 2 }] }
+bindings = { first = "object:plate", first-count = "count:plate", second = "object:spoon", second-count = "count:spoon" }
+truth = true
+input = "Say there are six plates and two spoons."
+expected_meaning = "There are six plates and two spoons."
+acceptable = ["Hay seis platos y dos cucharas."]
+reject = [{ sentence = "Hay seis platos y tres cucharas.", category = "wrongCount", reason = "Two spoons were counted." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a2-held-pair-frame"
+category = "punctuation"
+construction_id = "quantity-pair"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }, { fact_id = "object:phone", concept = "phone" }], counts = [{ fact_id = "count:bag", object = "object:bag", quantity = 5 }, { fact_id = "count:phone", object = "object:phone", quantity = 3 }] }
+bindings = { first = "object:bag", first-count = "count:bag", second = "object:phone", second-count = "count:phone" }
+truth = true
+input = "Say there are five bags and three phones."
+expected_meaning = "There are five bags and three phones."
+acceptable = ["Hay cinco bolsos y tres teléfonos."]
+reject = [{ sentence = "Hay cinco bolsos, tres teléfonos.", category = "punctuation", reason = "The two counts are joined." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a2-held-more-bags"
+category = "meaning"
+construction_id = "quantity-comparison"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }, { fact_id = "object:phone", concept = "phone" }], counts = [{ fact_id = "count:bag", object = "object:bag", quantity = 5 }, { fact_id = "count:phone", object = "object:phone", quantity = 3 }] }
+bindings = { first = "object:bag", second = "object:phone" }
+truth = true
+labels = ["more"]
+input = "Say there are more bags than phones."
+expected_meaning = "There are more bags than phones."
+acceptable = ["Hay más bolsos que teléfonos."]
+reject = [{ sentence = "Hay menos bolsos que teléfonos.", category = "meaning", reason = "Five bags are more than three phones." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a2-held-pair-plural"
+category = "agreement"
+construction_id = "quantity-pair"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }], counts = [{ fact_id = "count:cup", object = "object:cup", quantity = 4 }, { fact_id = "count:book", object = "object:book", quantity = 2 }] }
+bindings = { first = "object:cup", first-count = "count:cup", second = "object:book", second-count = "count:book" }
+truth = true
+input = "Say there are four cups and two books."
+expected_meaning = "There are four cups and two books."
+acceptable = ["Hay cuatro tazas y dos libros."]
+reject = [{ sentence = "Hay cuatro taza y dos libros.", category = "agreement", reason = "After four, use the plural." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }

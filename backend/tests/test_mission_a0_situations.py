@@ -1,191 +1,21 @@
-"""Focused behavior tests for the fact-bound A0 M04 and M05 lessons."""
+"""Planning and role-play rules for the A0 M04 and M05 situation lessons.
+
+Pack-built lesson content is covered by the language-pack tests.
+"""
 
 from uuid import uuid4
 
 import pytest
-from test_mission_a0 import LABELS, WORDS, _lesson, _objects, _result
+from test_mission_a0 import LABELS, _objects
 
-from app.ai.features.learning_tasks.mission_a0_situations import (
-    validate_a0_situation_lesson,
-)
-from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.missions import get_mission
-from app.repositories.postgres.workflow import _lesson_answer_is_correct
-from app.schemas.enums import SessionMode
-from app.schemas.tasks import SessionTaskPublic
 from app.services.mission_eligibility import (
     lesson_missions,
     photo_eligibility,
     plan_missions,
     provisional_mission_focus,
 )
-from app.services.mission_lessons_a0_situations import a0_situation_lesson_task
 from app.services.mission_roleplay import assign_roleplay
-
-
-@pytest.mark.parametrize("language", ["es", "fr", "de", "ko"])
-@pytest.mark.parametrize(
-    ("mission_id", "gap_order"),
-    [
-        ("M04", [None, None, "chunkChoice", "chunkChoice", "audioGap", "dialogueGap"]),
-        ("M05", [None, None, "chunkChoice", "pictureToBlank", "dialogueGap", "dialogueGap"]),
-    ],
-)
-def test_situation_lessons_follow_specified_question_order_and_option_access(
-    mission_id, gap_order, language,
-):
-    _mission, _spec, payload, result, _objects = _result(mission_id, language)
-    validate_a0_situation_lesson(payload, result)
-    assert [question.gap_type for question in result.questions] == gap_order
-    typed_positions = [2, 3] if mission_id == "M04" else [2]
-    assert [index for index, question in enumerate(result.questions) if question.typed_allowed] == (
-        typed_positions if language != "ko" else []
-    )
-    assert all(
-        question.correct_option_id in {option.option_id for option in question.options}
-        for question in result.questions
-    )
-    assert sum(question.gap_type is not None for question in result.questions) >= 3
-    if language == "ko":
-        assert not any(question.typed_allowed for question in result.questions)
-
-
-@pytest.mark.parametrize("language", ["es", "fr", "de", "ko"])
-@pytest.mark.parametrize("reaction", ["like", "dislike"])
-def test_situation_translations_are_english_and_keep_blanks_aligned(language, reaction):
-    for mission_id in ("M04", "M05"):
-        _mission, _spec, _payload, result, _objects = _result(
-            mission_id, language, reaction=reaction,
-        )
-        for question in result.questions:
-            translations = [
-                (turn["text"], turn["translation"])
-                for turn in question.dialogue or []
-            ]
-            if question.complete_translation:
-                translations.append((
-                    question.complete_chunk or "", question.complete_translation,
-                ))
-            prompt_translation = getattr(question, "prompt_translation", None)
-            if prompt_translation:
-                translations.append((question.prompt, prompt_translation))
-
-            for target_text, translation in translations:
-                assert translation
-                if target_text not in {"No, ___"}:
-                    assert translation != target_text
-                assert all(char.isascii() for char in translation if char.isalpha())
-                assert "___" not in translation or "___" in target_text
-
-
-@pytest.mark.parametrize("language", ["es", "fr", "de", "ko"])
-def test_m04_prep_contains_the_closed_ownership_chunks(language):
-    _mission, _spec, payload, _lesson_result, _objects = _result(
-        "M04", language, labels=["cup", "book"], words=WORDS[language][:2],
-    )
-    texts = {item["text"] for item in payload["prep"]}
-    expected = {
-        "es": {"Es mía.", "No es mía.", "¿Es tuya?", "La taza es mía.", "La taza es tuya."},
-        "fr": {
-            "C'est à moi.", "Ce n'est pas à moi.", "C'est à toi ?",
-            "La tasse est à moi.", "La tasse est à toi.",
-        },
-        "de": {
-            "Das gehört mir.", "Das gehört mir nicht.", "Gehört das dir?",
-            "Die Tasse gehört mir.", "Die Tasse gehört dir.",
-        },
-        "ko": {
-            "제 거예요.", "제 거 아니에요.", "이거 본인 거예요?",
-            "컵은 제 거예요.", "컵은 본인 거예요.",
-        },
-    }
-    assert expected[language] <= texts
-
-
-@pytest.mark.parametrize("language", ["es", "fr", "de", "ko"])
-def test_m05_prep_contains_the_closed_preference_chunks(language):
-    _mission, _spec, payload, lesson_result, _objects = _result(
-        "M05",
-        language,
-        labels=["apple", "book"],
-        words=[WORDS[language][2], WORDS[language][1]],
-    )
-    texts = {item["text"] for item in payload["prep"]}
-    expected = {
-        "es": {
-            "Me gusta la manzana.", "No me gusta la manzana.",
-            "¿Te gusta la manzana?", "¿Qué eliges?",
-        },
-        "fr": {
-            "J'aime la pomme.", "Je n'aime pas la pomme.",
-            "Tu aimes la pomme ?", "Tu choisis quoi ?",
-        },
-        "de": {
-            "Ich mag den Apfel.", "Ich mag den Apfel nicht.",
-            "Magst du den Apfel?", "Was nimmst du?",
-        },
-        "ko": {"사과를 좋아해요.", "사과를 안 좋아해요.", "사과를 좋아해요?", "뭐 골라요?"},
-    }
-    assert expected[language] <= texts
-    _mission, _spec, dislike_payload, _dislike_result, _objects = _result(
-        "M05",
-        language,
-        labels=["apple", "book"],
-        words=[WORDS[language][2], WORDS[language][1]],
-        reaction="dislike",
-    )
-    choose_other = {
-        "es": "Elijo el libro.",
-        "fr": "Je choisis le livre.",
-        "de": "Ich nehme das Buch.",
-        "ko": "책을 골라요.",
-    }
-    assert choose_other[language] in {item["text"] for item in dislike_payload["prep"]}
-
-
-@pytest.mark.parametrize("language", ["es", "fr", "de", "ko"])
-def test_owned_object_drives_marker_and_mine_sentence(language):
-    first = _result("M04", language, labels=["cup", "book"], ownership_index=0)
-    second = _result("M04", language, labels=["cup", "book"], ownership_index=1)
-    first_result, second_result = first[3], second[3]
-    first_focus, second_focus = first[4][0], second[4][1]
-    first_question = first_result.questions[0]
-    second_question = second_result.questions[0]
-    first_marker = first_question.marker_keys[first_question.correct_option_id]
-    second_marker = second_question.marker_keys[second_question.correct_option_id]
-    assert first_marker == str(first_focus.id)
-    assert second_marker == str(second_focus.id)
-    assert first_result.questions[3].complete_chunk != second_result.questions[3].complete_chunk
-    if language == "es":
-        assert "mía" in first_result.questions[3].complete_chunk
-        assert "mío" in second_result.questions[3].complete_chunk
-
-
-@pytest.mark.parametrize("language", ["es", "fr", "de", "ko"])
-def test_preference_reaction_changes_answered_chunks(language):
-    words = [WORDS[language][2], WORDS[language][1]]
-    like = _result(
-        "M05", language, labels=["apple", "book"], words=words, reaction="like",
-    )[3]
-    dislike = _result(
-        "M05", language, labels=["apple", "book"], words=words, reaction="dislike",
-    )[3]
-    def correct_label(question):
-        return next(option.label for option in question.options
-                    if option.option_id == question.correct_option_id)
-    assert correct_label(like.questions[1]) != correct_label(dislike.questions[1])
-    assert like.questions[2].complete_chunk != dislike.questions[2].complete_chunk
-    assert correct_label(like.questions[4]) != correct_label(dislike.questions[4])
-    assert correct_label(like.questions[5]) != correct_label(dislike.questions[5])
-    assert ", " in dislike.questions[4].complete_chunk
-
-
-@pytest.mark.parametrize("mission_id", ["M04", "M05"])
-def test_situation_generation_is_deterministic_including_option_order(mission_id):
-    mission, spec, payload, _objects = _lesson(mission_id, "fr")
-    first = spec.generation.fallback(payload)
-    second = spec.generation.fallback(payload)
-    assert first.model_dump(mode="json") == second.model_dump(mode="json")
 
 
 @pytest.mark.parametrize("mission_id", ["M04", "M05"])
@@ -246,49 +76,7 @@ def test_a0_missions_never_get_a1_roleplay_facts(mission_id):
     assert len(assign_roleplay(get_mission(mission_id, "A1", 1), uuid4(), objects, markers)) == 3
 
 
-@pytest.mark.parametrize("mission_id", ["M04", "M05"])
-def test_answer_key_and_typed_answers_are_private_and_accepted(mission_id):
-    mission, _spec, payload, result, _objects = _result(mission_id, "es")
-    task = a0_situation_lesson_task(uuid4(), mission, payload, result, {})
-    public = SessionTaskPublic.from_internal(task, mode=SessionMode.LESSON)
-    assert "answerKey" not in public.model_dump(mode="json", by_alias=True)
-    typed = next(question for question in result.questions if question.typed_allowed)
-    accepted = task.answer_key.accepted_text_answers_by_question[typed.question_id]
-    assert all(_lesson_answer_is_correct(task, typed.question_id, answer) for answer in accepted)
 
 
-@pytest.mark.parametrize(
-    ("language", "mission_id", "equivalent"),
-    [
-        ("es", "M04", "Es mia."),
-        ("fr", "M04", "C’est à moi."),
-        ("de", "M04", "Das gehoert mir."),
-        ("fr", "M05", "J’aime la pomme."),
-    ],
-)
-def test_typed_answers_include_language_equivalents(language, mission_id, equivalent):
-    options = (
-        {"labels": ["apple", "book"], "words": [WORDS[language][2], WORDS[language][1]]}
-        if mission_id == "M05"
-        else {}
-    )
-    mission, _spec, payload, result, _objects = _result(
-        mission_id, language, **options,
-    )
-    task = a0_situation_lesson_task(uuid4(), mission, payload, result, {})
-    question = next(item for item in result.questions if item.typed_allowed)
-    accepted = task.answer_key.accepted_text_answers_by_question[question.question_id]
-    assert equivalent in accepted
-    assert _lesson_answer_is_correct(task, question.question_id, equivalent)
 
 
-def test_validator_rejects_missing_or_mismatched_learner_facts():
-    _mission, _spec, payload, result, objects = _result("M04", "es")
-    missing = {**payload, "learnerFacts": {}}
-    with pytest.raises(LearningTaskGenerationError):
-        validate_a0_situation_lesson(missing, result)
-    wrong_marker = result.model_copy(deep=True)
-    marker_question = wrong_marker.questions[0]
-    marker_question.marker_keys[marker_question.correct_option_id] = str(objects[1].id)
-    with pytest.raises(LearningTaskGenerationError):
-        validate_a0_situation_lesson(payload, wrong_marker)

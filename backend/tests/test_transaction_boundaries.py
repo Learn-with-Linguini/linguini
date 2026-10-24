@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from uuid import UUID, uuid4, uuid5
 
 import pytest
+from pack_translation import pack_shaped
 from sqlalchemy import event, func, select, update
 from test_postgres_sessions import create_run
 from test_postgres_sessions import database as database
@@ -133,17 +134,17 @@ def _stub_colours(payload):
 
 
 def translate_with(probe, before=None):
-    def translate(payload, cache_scope=None):
+    def translate(payload, cache_scope=None, **options):
         probe.check()
         if before:
             before.pop()()
-        return SceneTranslationResult.model_validate({
+        return SceneTranslationResult.model_validate(pack_shaped({
             kind: [
                 {**term, "translation": "mesa", "phoneticText": "MEH-sah"}
                 for term in payload[kind]
             ] + (_stub_colours(payload) if kind == "attributes" else [])
             for kind in ("objects", "attributes", "relationships")
-        })
+        }, options))
 
     return SimpleNamespace(translate=translate)
 
@@ -302,11 +303,11 @@ def test_stale_generation_failure_does_not_fail_the_newer_generation(database, p
     _engine, _owner, profile, _client = database
     newer = []
 
-    def translate(payload, cache_scope=None):
+    def translate(payload, cache_scope=None, **options):
         if newer:
             newer.pop()()
             raise RuntimeError("provider timed out after a newer claim")
-        return translate_with(probe).translate(payload)
+        return translate_with(probe).translate(payload, **options)
 
     runner = ManualRunner()
     repo = build_repo(

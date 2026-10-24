@@ -1,0 +1,40 @@
+construction_id = "quantity-comparison"
+
+[[examples]]
+example_id = "more-books-than-cups"
+levels = ["A2"]
+purposes = ["compareGroups"]
+meaning = "There are more books than cups."
+scene = { objects = [{ fact_id = "object:book", concept = "book" }, { fact_id = "object:cup", concept = "cup" }, { fact_id = "object:apple", concept = "apple" }], counts = [{ fact_id = "count:book", object = "object:book", quantity = 5 }, { fact_id = "count:cup", object = "object:cup", quantity = 2 }, { fact_id = "count:apple", object = "object:apple", quantity = 2 }] }
+bindings = { first = "object:book", second = "object:cup" }
+truth = true
+labels = ["more"]
+sentence = "Hay más libros que tazas."
+translation = "There are more books than cups."
+chunks = [{ text = "Hay", join = "none" }, { text = "más", join = "space" }, { text = "libros", join = "space" }, { text = "que", join = "space" }, { text = "tazas", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "fewer-cups-than-books"
+levels = ["A2"]
+purposes = ["compareGroups"]
+meaning = "There are fewer cups than books."
+scene = { objects = [{ fact_id = "object:book", concept = "book" }, { fact_id = "object:cup", concept = "cup" }, { fact_id = "object:apple", concept = "apple" }], counts = [{ fact_id = "count:book", object = "object:book", quantity = 5 }, { fact_id = "count:cup", object = "object:cup", quantity = 2 }, { fact_id = "count:apple", object = "object:apple", quantity = 2 }] }
+bindings = { first = "object:cup", second = "object:book" }
+truth = true
+labels = ["fewer"]
+sentence = "Hay menos tazas que libros."
+translation = "There are fewer cups than books."
+chunks = [{ text = "Hay", join = "none" }, { text = "menos", join = "space" }, { text = "tazas", join = "space" }, { text = "que", join = "space" }, { text = "libros", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "more-books-than-cups-form"
+levels = ["A2"]
+purposes = ["compareGroups"]
+sentence = "Hay más libros de tazas."
+correction = "Hay más libros que tazas."
+note = "Compare with que."
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }

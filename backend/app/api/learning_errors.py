@@ -23,6 +23,7 @@ from app.repositories.practice import (
     ClueNamesTargetError,
     DailyLessonLimitReachedError,
     InsufficientSceneError,
+    LessonLanguageUnavailableError,
     PracticeConflictError,
     PracticeNotFoundError,
     PracticeStorageError,
@@ -143,6 +144,11 @@ def register_learning_errors(app: FastAPI) -> None:
             422,
             "insufficient_scene",
             "This photo doesn't have enough for Linguini to check a lesson yet.",
+        ),
+        LessonLanguageUnavailableError: (
+            409,
+            "lesson_language_unavailable",
+            "Photo lessons aren't available for this language yet.",
         ),
         DailyLessonLimitReachedError: (
             403,
