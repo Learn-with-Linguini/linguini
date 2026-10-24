@@ -86,7 +86,8 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `guest_preview_started` | `{ source: "signin" | "signup" }` | Visitor opens the sample photo lesson without signing in |
 | `login_submitted` | `{ method: "email" }` | User submits the email/password sign-in form |
 | `signup_submitted` | `{ method: "email" }` | User submits new account registration |
-| `google_signin_clicked` | — | User clicks "Continue with Google" button |
+| `google_signin_completed` | — | Google ID token is successfully exchanged for a Supabase session |
+| `google_signin_failed` | — | Google Identity Services fails or Supabase rejects the Google ID token |
 | `forgot_password_requested` | — | User submits email to request password reset link |
 | `password_reset_completed` | — | User submits and sets a new password on `/reset-password` |
 | `profile_password_changed` | — | Authenticated user changes password from Profile page |
