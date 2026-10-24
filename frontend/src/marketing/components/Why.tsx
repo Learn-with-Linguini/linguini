@@ -18,12 +18,7 @@ export function Why() {
         <Reveal className={styles.copy}>
           <h2 id="why-title" className="section-title">Word lists don’t know where you live.</h2>
           <p className={styles.body}>
-            Most courses hand everyone the same list: apple, boy, the red car. You memorise it, walk outside, and still
-            can’t name the bench you’re sitting on.
-          </p>
-          <p className={styles.body}>
-            Linguini flips the order. It starts with the places you actually go and teaches the words that live there,
-            so your first Spanish is the Spanish for your commute, your café, your view.
+            While traditional language apps teach everyone the same vocabulary, Linguini turns your own surroundings into your classroom, making language learning personal, practical, and relevant to your everyday life.
           </p>
         </Reveal>
 
