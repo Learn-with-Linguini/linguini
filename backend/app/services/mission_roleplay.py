@@ -5,13 +5,8 @@ import random
 from app.schemas.roleplay import OwnershipFact, PreferenceFact
 
 
-def assign_roleplay(mission, session_id, objects, markers):
-    """Assign three distinct confirmed objects without making learner claims."""
-    if (
-        str(mission.practice_level) != "A1"
-        or mission.mission_id not in {"M04", "M05"}
-    ):
-        return []
+def _marked_objects(objects, markers):
+    """Confirmed objects with a review marker, one per label, in marker order."""
     candidates = []
     labels = set()
     for obj in objects:
@@ -23,11 +18,22 @@ def assign_roleplay(mission, session_id, objects, markers):
         labels.add(folded)
         candidates.append((marker, obj))
     candidates.sort(key=lambda item: (item[0], str(item[1].id)))
+    return [obj for _marker, obj in candidates]
+
+
+def assign_roleplay(mission, session_id, objects, markers):
+    """Assign three distinct confirmed objects without making learner claims."""
+    if (
+        str(mission.practice_level) != "A1"
+        or mission.mission_id not in {"M04", "M05"}
+    ):
+        return []
+    candidates = _marked_objects(objects, markers)
     if len(candidates) < 3:
         return []
     rng = random.Random(f"{session_id}:{mission.mission_id}:roleplay")
     rng.shuffle(candidates)
-    selected = [obj for _marker, obj in candidates[:3]]
+    selected = candidates[:3]
     facts = []
     for index, obj in enumerate(selected):
         if mission.mission_id == "M04":
@@ -53,3 +59,27 @@ def assign_roleplay(mission, session_id, objects, markers):
             )
         facts.append(fact.model_dump(mode="json", by_alias=True))
     return facts
+
+
+def assign_a0_scenario(mission, session_id, objects, markers):
+    """The A0 lesson's pretend scenario, in the learner-choice shape it replaces.
+
+    M04: one object is the learner's. M05: of two objects, the learner likes the first,
+    or does not like it and picks the second. ``None`` when the photo has too few.
+    """
+    if str(mission.practice_level) != "A0" or mission.mission_id not in {"M04", "M05"}:
+        return None
+    candidates = _marked_objects(objects, markers)
+    if len(candidates) < 2:
+        return None
+    rng = random.Random(f"{session_id}:{mission.mission_id}:scenario")
+    rng.shuffle(candidates)
+    focus, other = candidates[:2]
+    if mission.mission_id == "M04":
+        return {"ownedObjectId": str(focus.id), "pretend": True}
+    return {"preference": {
+        "sceneObjectIds": [str(focus.id), str(other.id)],
+        "chosenObjectId": str(focus.id),
+        "reaction": rng.choice(["like", "dislike"]),
+        "pretend": True,
+    }}

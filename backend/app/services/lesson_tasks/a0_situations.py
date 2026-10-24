@@ -152,6 +152,7 @@ def situation_lesson_task(session_id, mission, prepared, result, vocabulary_ids)
             outcome=question.outcome,
             correct_note=question.correct_note,
             typed_allowed=question.typed_allowed,
+            roleplay_premise=question.roleplay_premise,
             marker_object_ids=marker_objects or None,
             scene_object_id=object_id,
             object_label=next(
@@ -181,6 +182,7 @@ def situation_lesson_task(session_id, mission, prepared, result, vocabulary_ids)
                 if preference.get("chosenObjectId") else None
             ),
             reaction=preference["reaction"],
+            pretend=bool(preference.get("pretend", False)),
         )
     return SessionTask(
         id=uuid5(session_id, f"mission:{mission_version(mission)}:lesson"),

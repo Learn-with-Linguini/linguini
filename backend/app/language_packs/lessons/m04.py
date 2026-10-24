@@ -442,6 +442,10 @@ def _build_a0(ctx):
         option.option_id: "belongs" if option.label == "It belongs to you" else "likes"
         for option in questions[1].options
     }
+    # An assigned (pretend) owner is stated as the scenario on every question.
+    scenario = f"Let's pretend the {x['source']} is yours." if owned.fictional else None
+    for item in questions:
+        item.roleplay_premise = scenario
     payload["approvedTargetTexts"] = target_texts(prep, questions)
     result = A0SituationLesson(title=ctx.mission.title, questions=questions)
     validate_a0_situation_lesson(payload, result)
@@ -690,14 +694,15 @@ CHOICE_REASON = "Tell Linguini which object is yours."
 
 def photo_reasons(mission, objects, relations, attributes_of, counted_groups=(),
                   mission_choices=None):
-    """A0 needs the learner's own object; A2 an object a confirmed detail tells apart."""
+    """A0: a learner's own object, when they choose one, must be a photo object (without a
+    choice the lesson assigns a pretend owner). A2: an object a confirmed detail tells apart."""
     level = str(mission.practice_level)
     by_id = {str(obj.id): obj for obj in objects}
     if level == "A0" and mission_choices is not None:
         choices = mission_choices.get("missionChoices", mission_choices)
         ownership = choices.get("ownership") or {}
         chosen = ownership.get("sceneObjectId", ownership.get("scene_object_id"))
-        if str(chosen or "") not in by_id:
+        if ownership and str(chosen or "") not in by_id:
             return [CHOICE_REASON]
     if level == "A2" and not _distinguishable(objects, relations, attributes_of):
         return ["Confirm an object detail that distinguishes it from another photo object."]

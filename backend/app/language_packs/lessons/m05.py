@@ -105,8 +105,10 @@ def preference_facts(pack, level, facts, vocabulary, context):
         obj = objects.get(focus)
         other = next((objects[key] for key in compared if key != focus and key in objects), None)
         if obj is not None and reaction in {"like", "dislike"}:
+            pretend = bool(((context.get("learner_facts") or {}).get("preference") or {})
+                           .get("pretend", False))
             preferences.append(_preference_fact(obj, LEARNER, reaction == "like",
-                                                fictional=False, compared=other))
+                                                fictional=pretend, compared=other))
     elif level == "A1" and pack.possessives is not None:
         assigned = parse_roleplay_facts(context.get("roleplay_facts"), list(objects)) or []
         cast = {member.english_name: member.owner_id for member in pack.possessives.cast}
@@ -351,15 +353,20 @@ def _build_a0(ctx):
                                                                            other["key"]})][:3]
     payload = ctx.payload(
         title=ctx.mission.title, approvedObjects=rows, focusObjectId=focus["key"],
-        learnerFacts={"preference": _learner_choice(ctx, mine, focus, reaction)},
+        learnerFacts={"preference": {**_learner_choice(ctx, mine, focus, reaction),
+                                     "pretend": mine.fictional}},
         prep=prep, negativeMarker=dislike_chunk,
     )
     section = "Picnic choice"
     typed = not ctx.pack.language.romanization_required
     q3_correct = like_chunk if mine.likes else dislike_chunk
+    # An assigned (pretend) choice is stated as the scenario on every question.
+    scenario = a0_scenario(mine, focus, other)
+    pick = ("What did you pick? Tap it in your photo." if scenario is None
+            else "Which one do you like? Tap it in your photo." if mine.likes
+            else "Which one don't you like? Tap it in your photo.")
     questions = [
-        marker_question(payload, rows, focus, section,
-                         "What did you pick? Tap it in your photo.", "recognise-preference"),
+        marker_question(payload, rows, focus, section, pick, "recognise-preference"),
         choice_question(
             "M05-Q2", "Listen to the sentence. Like or don't like?",
             "Listen to the sentence. Like or don't like?", section, focus["key"],
@@ -417,12 +424,24 @@ def _build_a0(ctx):
     last.option_object_keys = {option.option_id: q6_keys[option.label]
                                for option in last.options}
     questions.append(last)
+    for item in questions:
+        item.roleplay_premise = scenario
     payload["approvedTargetTexts"] = target_texts(prep, questions)
     result = A0SituationLesson(title=ctx.mission.title, questions=questions)
     validate_a0_situation_lesson(payload, result)
     task = situation_lesson_task(ctx.session_id, ctx.mission, payload, result,
                                  ctx.vocabulary_ids)
     return result, task, payload
+
+
+def a0_scenario(mine, focus, other):
+    """The assigned A0 choice, said in English; ``None`` for the learner's own choice."""
+    if not mine.fictional:
+        return None
+    if mine.likes:
+        return f"Let's pretend you like the {focus['source']}."
+    return (f"Let's pretend you don't like the {focus['source']}, "
+            f"so you pick the {other['source']}.")
 
 
 def _learner_choice(ctx, mine, focus, reaction):
@@ -549,11 +568,14 @@ def check_lesson(level, result, approved, pack):
 
 def photo_reasons(mission, objects, relations, attributes_of, counted_groups=(),
                   mission_choices=None):
-    """A0 needs the learner's choice: a photo object and whether they like it."""
+    """A0: a learner's own choice, when they make one, names a photo object and whether they
+    like it (without a choice the lesson assigns a pretend scenario)."""
     if str(mission.practice_level) != "A0" or mission_choices is None:
         return []
     choices = mission_choices.get("missionChoices", mission_choices)
     preference = choices.get("preference") or {}
+    if not preference:
+        return []
     focus, _compared, reaction = a0_choice({"preference": preference})
     if focus not in {str(obj.id) for obj in objects} or reaction not in {"like", "dislike"}:
         return [CHOICE_REASON]

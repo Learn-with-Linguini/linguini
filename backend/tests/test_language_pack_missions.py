@@ -422,7 +422,7 @@ def test_m04_possessives_agree_with_the_owned_noun(text, agrees):
     assert (_owner_agreement(text, bindings, vocabulary) == []) is agrees
 
 
-def test_m04_photo_rules_need_the_learner_choice_and_a_telling_detail():
+def test_m04_photo_rules_check_a_sent_choice_and_need_a_telling_detail():
     from app.language_packs.lessons.m04 import CHOICE_REASON, photo_reasons
     from app.missions import get_mission
     from app.services.mission_eligibility import photo_eligibility, scene_attributes
@@ -430,13 +430,17 @@ def test_m04_photo_rules_need_the_learner_choice_and_a_telling_detail():
     cup, book = (SimpleNamespace(id=UUID(int=n), label=label, attributes={"color": colour})
                  for n, label, colour in ((1, "cup", "red"), (2, "book", "red")))
     a0 = get_mission("M04", "A0", 1)
+    # No choice: the plan assigns a pretend owner.
     assert photo_reasons(a0, [cup, book], [], scene_attributes,
-                         mission_choices={"ownership": {}}) == [CHOICE_REASON]
+                         mission_choices={"ownership": {}}) == []
     chosen = {"ownership": {"sceneObjectId": str(cup.id)}}
     assert photo_reasons(a0, [cup, book], [], scene_attributes, mission_choices=chosen) == []
+    elsewhere = {"ownership": {"sceneObjectId": str(UUID(int=9))}}
+    assert photo_reasons(a0, [cup, book], [], scene_attributes,
+                         mission_choices=elsewhere) == [CHOICE_REASON]
     context = _context(["M04:A0:1"], ["M04:A0:1"])
-    check = photo_eligibility(a0, [cup, book], (), (), {"ownership": {}}, context)
-    # The learner still has to choose; the photo itself lacks nothing.
+    check = photo_eligibility(a0, [cup, book], (), (), elsewhere, context)
+    # A choice of an object not in the photo is the learner's to fix, not the photo's.
     assert check.missing == ("choices",)
     a2 = get_mission("M04", "A2", 1)
     assert photo_reasons(a2, [cup, book], [], scene_attributes)
@@ -541,7 +545,7 @@ def test_m05_spec_use_sets_the_polarity_pack_checks_demand(use, text, passes):
     assert all(check.passes(text) for check in checks) is passes
 
 
-def test_m05_photo_rule_needs_the_learner_choice():
+def test_m05_photo_rule_checks_a_sent_choice():
     from app.language_packs.lessons.m05 import CHOICE_REASON, photo_reasons
     from app.missions import get_mission
     from app.services.mission_eligibility import photo_eligibility, scene_attributes
@@ -549,8 +553,9 @@ def test_m05_photo_rule_needs_the_learner_choice():
     cup, book = (SimpleNamespace(id=UUID(int=n), label=label, attributes={})
                  for n, label in ((1, "cup"), (2, "book")))
     a0 = get_mission("M05", "A0", 1)
+    # No choice: the plan assigns a pretend scenario.
     assert photo_reasons(a0, [cup, book], [], scene_attributes,
-                         mission_choices={"preference": {}}) == [CHOICE_REASON]
+                         mission_choices={"preference": {}}) == []
     skipped = {"preference": {"sceneObjectIds": [str(cup.id)], "reaction": "skip"}}
     assert photo_reasons(a0, [cup, book], [], scene_attributes,
                          mission_choices=skipped) == [CHOICE_REASON]
@@ -558,5 +563,5 @@ def test_m05_photo_rule_needs_the_learner_choice():
                              "chosenObjectId": str(book.id)}}
     assert photo_reasons(a0, [cup, book], [], scene_attributes, mission_choices=picked) == []
     context = _context(["M05:A0:1"], ["M05:A0:1"])
-    check = photo_eligibility(a0, [cup, book], (), (), {"preference": {}}, context)
+    check = photo_eligibility(a0, [cup, book], (), (), skipped, context)
     assert check.missing == ("choices",)

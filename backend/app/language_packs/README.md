@@ -249,8 +249,10 @@ M04 (whose is it?) needs the pack's `possessives.toml`: reviewed possessive word
 `determiner` (mi, ma, meine, 제) or a `predicate` (mía, moi, mir), limited to one
 noun gender where it agrees (French `before_vowel` marks mon before a feminine vowel),
 and a role-play `cast` (Ana and Leo, with the names each script uses). Templates list
-`required_possessors`. Who owns what is a lesson fact (`owners`): the object the learner
-says is theirs (A0, `learnerFacts`), the saved role-play (A1, `roleplayFacts`), or, at
+`required_possessors`. Who owns what is a lesson fact (`owners`): at A0 the object the
+learner says is theirs or, without that choice, a pretend owner the plan assigns
+(`learnerFacts`, shown on every question as the scenario "The cup is yours."), the saved
+role-play (A1, `roleplayFacts`), or, at
 A2, an object a confirmed detail tells apart from another, assigned to the learner and
 the other to Ana. Each owner becomes a term written with its possessor's forms; the
 other possessors are alternatives (`possessor-second` for "is it yours?", the learner
@@ -268,9 +270,10 @@ judged, and French mon/ma before a vowel is left to the model review. Possessive
 are pack data, so proposals never change them (proposals v5).
 
 M05 (say what you like) exists at A0 and A1. Who likes what is a lesson fact
-(`preferences`: an object, a `person` and `likes`): the learner's own choice at A0
-(`learnerFacts.preference`: the chosen object, the one it was compared with and the
-reaction) or the saved role-play at A1, where, as in dev, the learner and Leo like their
+(`preferences`: an object, a `person` and `likes`): at A0 the learner's own choice or,
+without one, a pretend scenario the plan assigns, stated on every question
+(`learnerFacts.preference`: the chosen object, the one it was compared with, the
+reaction and `pretend`) or the saved role-play at A1, where, as in dev, the learner and Leo like their
 objects and Ana does not. The cast comes from `possessives.toml`; each cast member's
 preference becomes a term with their name, so a sentence must name the bound person and
 naming another is an unbound fact. A spec's use is its polarity: `like` says the person
@@ -287,7 +290,8 @@ taza.), or the whole sentence when one side would be empty (Ich mag die Tasse [n
 The situation validator takes the lesson's own negative chunk (`negativeMarker`) for
 languages it has no fixed marker for. A1 reuses dev's three role-play questions and task;
 its explanation shows the lesson's frames with the noun taken out (Me gusta… = I like…),
-so no answer is shown whole. The A0 photo rule needs the learner's choice, as M04's does.
+so no answer is shown whole. At A0 (M04 and M05) a learner's choice, when one is sent,
+must name a photo object; without one the photo needs only two different objects.
 
 M06 (ask for the details) exists at A2. The order is a lesson fact (`orders` and
 `requests`): dev's seeded M06 transaction for the first requestable photo object (dev's

@@ -28,7 +28,7 @@ from app.repositories.postgres.workflow import (
 )
 from app.schemas.enums import SessionMode
 from app.schemas.tasks import SessionTaskPublic, SubmitVocabularyReviewAttemptRequest
-from app.services.mission_roleplay import assign_roleplay
+from app.services.mission_roleplay import assign_a0_scenario, assign_roleplay
 
 PACKS = Path(__file__).parents[1] / "app/language_packs/packs"
 SAMPLES = Path(__file__).parents[1] / "app/language_packs/samples"
@@ -1013,7 +1013,7 @@ def _counted_groups(objects):
 
 
 def _dispatch(language, level, scene, provider, monkeypatch, mission_id="M01", reaction="like",
-              progress=None):
+              progress=None, scenario=None):
     from app.language_packs.context import resolve_language_context
 
     monkeypatch.setenv("APP_ENV", "test")
@@ -1033,6 +1033,11 @@ def _dispatch(language, level, scene, provider, monkeypatch, mission_id="M01", r
         # The learner rates one object and does not like it: they take another instead.
         learner_facts["M05"] = {"preference": {"sceneObjectIds": [str(objects[0].id)],
                                                "reaction": "dislike"}}
+    if scenario is not None:
+        # No learner choice: the plan assigns the A0 scenario (``scenario`` its reaction).
+        learner_facts[mission_id] = assign_a0_scenario(mission, UUID(int=100), objects, markers)
+        if mission_id == "M05":
+            learner_facts[mission_id]["preference"]["reaction"] = scenario
     roleplay_facts = {
         mission_id: assign_roleplay(mission, UUID(int=100), objects, markers)
     } if mission_id in {"M04", "M05"} else {}
@@ -1212,6 +1217,54 @@ def test_m05_a0_dislike_has_the_learner_take_another_object(language, scene, mon
     assert last.slot_template.count("___") == 1
     assert evaluate(task, SubmitVocabularyReviewAttemptRequest(answers=answers))
 
+
+
+@pytest.mark.parametrize(("mission_id", "scenario"),
+                         [("M04", "like"), ("M05", "like"), ("M05", "dislike")])
+@pytest.mark.parametrize("language", list(LOCALES))
+def test_a0_situation_without_a_choice_states_the_assigned_scenario(
+    language, mission_id, scenario, scene, monkeypatch,
+):
+    objects = scene(language)[0]
+    (task,) = _dispatch(language, "A0", scene(language), MockPackProvider(language),
+                        monkeypatch, mission_id, scenario=scenario)
+    _assert_gradable(task)
+    questions = task.public_content.questions
+    premises = {question.roleplay_premise for question in questions}
+    assert len(premises) == 1
+    (premise,) = premises
+    assert premise.startswith("Let's pretend ")
+    facts = assign_a0_scenario(get_mission(mission_id, "A0", 1), UUID(int=100), objects,
+                               {str(obj.id): index for index, obj in enumerate(objects, 1)})
+    snapshot = task.public_content.mission_snapshot
+    assert snapshot.pretend is True
+    if mission_id == "M04":
+        owned = next(obj for obj in objects if str(obj.id) == facts["ownedObjectId"])
+        assert premise == f"Let's pretend the {owned.label} is yours."
+        assert str(snapshot.owned_object_id) == facts["ownedObjectId"]
+        return
+    focus, other = (next(obj for obj in objects if str(obj.id) == key)
+                    for key in facts["preference"]["sceneObjectIds"])
+    pick = questions[0]
+    answers = task.answer_key.correct_option_ids
+    assert str(pick.marker_object_ids[answers[pick.question_id]]) == str(focus.id)
+    if scenario == "like":
+        assert premise == f"Let's pretend you like the {focus.label}."
+        assert pick.prompt == "Which one do you like? Tap it in your photo."
+    else:
+        assert premise == (f"Let's pretend you don't like the {focus.label}, "
+                           f"so you pick the {other.label}.")
+        assert pick.prompt == "Which one don't you like? Tap it in your photo."
+        last = next(q for q in questions if q.question_id == "M05-Q6")
+        assert str(last.option_object_ids[answers["M05-Q6"]]) == str(other.id)
+
+
+@pytest.mark.parametrize("mission_id", ["M04", "M05"])
+def test_a0_situation_from_the_learner_choice_has_no_scenario(mission_id, scene, monkeypatch):
+    (task,) = _dispatch("es", "A0", scene("es"), MockPackProvider("es"), monkeypatch,
+                        mission_id)
+    assert all(q.roleplay_premise is None for q in task.public_content.questions)
+    assert not task.public_content.mission_snapshot.pretend
 
 
 CAFE = (("coffee", "black"), ("cup", "red"), ("table", "green"))

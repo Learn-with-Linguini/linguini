@@ -135,7 +135,7 @@ from app.services.mission_eligibility import (
     scene_shortfall,
     snapshot_missions,
 )
-from app.services.mission_roleplay import assign_roleplay
+from app.services.mission_roleplay import assign_a0_scenario, assign_roleplay
 from app.services.quantities import suggested_quantity
 from app.services.question_outcomes import (
     normalize_answer,
@@ -2490,14 +2490,18 @@ class PostgresWorkflowRepository:
                 key: value for key, value in previous.items()
                 if key not in entry and key not in {"roleplayFacts", "learnerFacts"}
             })
-            if str(mission.practice_level) == "A0" and mission.mission_id == "M04":
-                ownership = (mission_choices or {}).get("ownership") or {}
+            # A0: the learner's own choice when one was sent, else an assigned scenario.
+            ownership = (mission_choices or {}).get("ownership") or {}
+            preference = (mission_choices or {}).get("preference") or {}
+            if str(mission.practice_level) == "A0" and mission.mission_id == "M04" and ownership:
                 entry["learnerFacts"] = {
                     "ownedObjectId": ownership.get("sceneObjectId"),
                     "pretend": bool(ownership.get("pretend", False)),
                 }
-            elif str(mission.practice_level) == "A0" and mission.mission_id == "M05":
-                preference = (mission_choices or {}).get("preference") or {}
+            elif (
+                str(mission.practice_level) == "A0" and mission.mission_id == "M05"
+                and preference
+            ):
                 compared = preference.get("sceneObjectIds", [])
                 entry["learnerFacts"] = {
                     "preference": {
@@ -2508,6 +2512,10 @@ class PostgresWorkflowRepository:
                         ),
                     }
                 }
+            elif (
+                scenario := assign_a0_scenario(mission, session.id, objects, markers)
+            ) is not None:
+                entry["learnerFacts"] = scenario
             if (
                 str(mission.practice_level) == "A1"
                 and mission.mission_id in {"M04", "M05"}

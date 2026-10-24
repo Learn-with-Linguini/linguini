@@ -46,6 +46,8 @@ class SituationQuestion(ApiModel):
     outcome: dict[str, str] | None = None
     typed_allowed: bool = False
     accepted_text_answers: list[str] = Field(default_factory=list)
+    # An assigned (pretend) choice, shown as the lesson's scenario.
+    roleplay_premise: str | None = Field(default=None, max_length=240)
     target_group: Literal[
         "recognise-ownership", "say-mine", "recognise-preference", "say-preference",
     ]

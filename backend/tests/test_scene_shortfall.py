@@ -89,7 +89,11 @@ def test_a2_rules_and_a0_choices_map_to_review_actions():
     assert photo_eligibility(describe, [obj(BOOK, "book")]).missing[0] == "objects"
     ownership = get_mission("M04", "A0", 1)
     reviewed = [obj(CUP, "cup"), obj(BOOK, "book")]
-    check = photo_eligibility(ownership, reviewed, mission_choices={})
+    # Without a choice the plan assigns a scenario; a choice off the photo is the
+    # learner's to fix.
+    assert photo_eligibility(ownership, reviewed, mission_choices={}).eligible
+    elsewhere = {"ownership": {"sceneObjectId": "00000000-0000-0000-0000-000000000009"}}
+    check = photo_eligibility(ownership, reviewed, mission_choices=elsewhere)
     assert check.missing == ("choices",)
     # A missing learner choice is not something the photo can add.
     a0 = lesson_missions(SessionMode.LESSON, {
