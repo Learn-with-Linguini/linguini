@@ -1,10 +1,11 @@
-.accountPill { min-height: 34px; border-color: var(--ink); background: var(--paper); color: var(--teal-dark); }
+.accountPill { min-height: 28px; padding: 4px 10px; border-color: rgba(31, 122, 120, .24); background: color-mix(in srgb, var(--sage) 55%, var(--paper)); color: var(--teal-dark); font-size: .8rem; font-weight: 700; line-height: 1.15; }
 .languageField { display: grid; gap: var(--space-2); }
 .languageControl { position: relative; display: flex; align-items: center; }
 .languageControl select { width: 100%; min-height: 58px; padding: var(--space-3) 3rem var(--space-3) var(--space-4); appearance: none; border: var(--stroke) solid var(--teal-dark); border-radius: var(--radius-md); background: var(--paper); color: var(--ink); box-shadow: 0 4px 0 rgba(31, 122, 120, .18); font: inherit; font-weight: 800; cursor: pointer; }
 .languageControl::after { position: absolute; right: var(--space-4); content: "⌄"; color: var(--teal-dark); font-size: 1.4rem; font-weight: 900; pointer-events: none; transform: translateY(-2px); }
 .languageControl:focus-within select { outline: 3px solid rgba(46, 156, 153, .22); outline-offset: 2px; }
-.sceneLabel { display: flex; min-height: 58px; flex-direction: column; justify-content: center; gap: 2px; padding: 0 var(--space-2) var(--space-1); }
+.sceneCard { align-self: start; gap: 0; padding: 6px; }
+.sceneLabel { display: flex; min-height: 32px; align-items: center; padding: 5px 4px 2px; font-size: .9rem; font-weight: 800; line-height: 1.1; }
 .titleRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
 .titleRow h1 { min-width: 0; flex: 1; margin: 0; }
 .titleRow > :last-child { flex: 0 0 auto; white-space: nowrap; }
