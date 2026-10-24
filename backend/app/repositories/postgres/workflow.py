@@ -798,7 +798,8 @@ class PostgresWorkflowRepository:
             session = self._session(c, task.session_id)
             basil_earned = 0
             if (
-                session.mode == "lesson"
+                is_correct
+                and session.mode == "lesson"
                 and session.status in {"inProgress", "generatingTasks"}
                 and task.status not in {"completed", "skipped"}
             ):
@@ -806,7 +807,7 @@ class PostgresWorkflowRepository:
                     c,
                     self.user_id,
                     f"typing:{task.id}:{learning_key}",
-                    amount=10 if is_correct else 5,
+                    amount=10,
                     payload={
                         "policyVersion": "basil-typing.v1",
                         "languageProfileId": str(session.language_profile_id),

@@ -413,7 +413,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
           return <>Incorrect. The correct answer is <strong>{answer}</strong>{answer ? sentenceEnding(answer) : ""}</>;
         })()}</p></div></Feedback>
       </> : null}
-      <Button block disabled={!answers[question.questionId]} onClick={finishQuestion}>{revisiting ? recapIndex < recap.length - 1 ? "Continue" : "Finish review" : questionIndex === 0 && content.questions.length > 1 ? "Next question" : "Type a word"}</Button>
+      <Button block disabled={!answers[question.questionId]} onClick={finishQuestion}>{revisiting ? recapIndex < recap.length - 1 ? "Continue" : "Finish review" : "Next question"}</Button>
     </div></Card></> : null}
     {active && stage === "typing" && typingWord ? <Card plain><div className="stack">
       <div><h2>Type “{typingWord.translation}”</h2><p className="muted">Word {typingIndex + 1} of {content.words.length}</p></div>
@@ -421,7 +421,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
       {checkingTyping ? <InlineLoader compact label="Checking your word…" /> : null}
       {typingCheck ? <Feedback tone={typingCheck.isCorrect ? "good" : typingCheck.revealed ? "neutral" : "warn"}><div className="stack-2" role="status"><p>{typingCheck.isCorrect ? "That’s right!" : typingCheck.revealed ? <>No worries, the answer is <strong>{typingCheck.correctAnswer}</strong>.</> : "Not quite. Give it another try."}</p>{basilEarnedText(typingCheck.basilEarned) ? <strong className="basil-reward"><BasilIcon size={17} />{basilEarnedText(typingCheck.basilEarned)}</strong> : null}</div></Feedback> : null}
       {typingCheck?.isCorrect || typingCheck?.revealed
-        ? <Button block disabled={practiceSaving} onClick={advanceTyping}>{revisiting ? recapIndex < recap.length - 1 ? "Continue" : "Finish review" : typingIndex + 2 < content.questions.length ? "Next question" : typingIndex < content.words.length - 1 ? "Next word" : "Finish task"}</Button>
+        ? <Button block disabled={practiceSaving} onClick={advanceTyping}>{revisiting ? recapIndex < recap.length - 1 ? "Continue" : "Finish review" : typingIndex < content.words.length - 1 || typingIndex + 2 < content.questions.length ? "Next question" : "Finish task"}</Button>
         : <Button block disabled={!typedAnswers[typingKey]?.trim() || practiceSaving || checkingTyping} onClick={() => void checkTyping()}>Check answer</Button>}
       {!typingCheck?.isCorrect && !typingCheck?.revealed ? <Button variant="quiet" block className="typing-forgot-action" disabled={practiceSaving || checkingTyping} onClick={() => void checkTyping(true)}>I forgot, lift the lid</Button> : null}
     </div></Card> : null}

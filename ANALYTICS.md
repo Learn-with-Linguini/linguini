@@ -41,7 +41,8 @@ Because Linguini is a single-page application (SPA), route changes do not reload
 ### Tracked Pages & Routes
 
 #### Marketing Pages
-* `/` — Landing page with interactive hero demo and feature highlights
+* `/` — Landing page with guest-demo entry points and feature highlights
+* `/demo` — Stateless guest photo lesson with ready-made scenes and photo upload
 * `/blog` — Engineering & language learning blog index
 * `/blog/:slug` — Individual blog posts
 * `/pricing` — Pricing and plan comparison table
@@ -83,7 +84,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 ### Authentication & Account Management
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
-| `guest_preview_started` | `{ source: "signin" | "signup" }` | Visitor opens the sample photo lesson without signing in |
+| `guest_preview_started` | `{ source: "signin" | "signup" }` | Visitor opens the guest photo lesson without signing in |
 | `login_submitted` | `{ method: "email" }` | User submits the email/password sign-in form |
 | `signup_submitted` | `{ method: "email" }` | User submits new account registration |
 | `google_signin_completed` | — | Google ID token is successfully exchanged for a Supabase session |
@@ -197,8 +198,10 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 ### Marketing Site & Interactive Demo
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
-| `demo_stage_viewed` | `{ stage, xpGained }` | Landing page interactive hero demo advances to next stage |
-| `demo_completed` | `{ xp, lang }` | Interactive hero demo finished |
+| `guest_demo_scene_selected` | `{ sceneId, language, source: "sample" }` | Visitor starts a guest lesson from a ready-made scene |
+| `guest_demo_stage_viewed` | `{ stage, source: "sample" }` | Guest lesson advances through review, translation, task, or completion |
+| `guest_demo_completed` | `{ language, source: "sample" }` | Visitor finishes the guest lesson task |
+| `guest_demo_signup_clicked` | `{ language }` | Visitor chooses account creation after finishing the guest lesson |
 | `pricing_cta_clicked` | `{ tier }` | User clicks plan call-to-action on the pricing page |
 
 ---
