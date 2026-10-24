@@ -128,11 +128,16 @@ test("a guest can follow the entry and finish a sample lesson without authentica
   await click(button(container, `Choose ${scene.title}`));
   await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)); });
   assert.equal(container.querySelector("h1")?.textContent, "Review your scene");
-  assert.match(container.textContent ?? "", new RegExp(`found ${scene.words.length} useful objects`, "i"));
+  assert.match(container.textContent ?? "", /found five useful objects/i);
+  assert.equal(container.querySelectorAll("[data-demo-marker]").length, 5);
+  assert.match(container.textContent ?? "", /Describing words/);
+  assert.match(container.textContent ?? "", /Position words/);
   await click(button(container, "See translations"));
-  for (let index = 0; index < scene.words.length; index++) {
+  for (let index = 0; index < 5; index++) {
     assert.ok(container.textContent?.includes(scene.words[index].es.word));
-    await click(button(container, index === scene.words.length - 1 ? "Try a task" : "Next word"));
+    assert.match(container.textContent ?? "", /rojo/);
+    assert.match(container.textContent ?? "", /al lado de/);
+    await click(button(container, index === 4 ? "Try a task" : "Next word"));
   }
   assert.equal(container.querySelector("h1")?.textContent, "Choose the right word");
   await click(button(container, scene.words[0].es.word));

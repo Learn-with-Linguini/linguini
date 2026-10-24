@@ -25,10 +25,17 @@ class DemoWord(ApiModel):
     anchor_point: AnchorPoint | None = None
 
 
+class DemoTerm(ApiModel):
+    source: NonEmptyText
+    translation: NonEmptyText
+
+
 class DemoPhotoResponse(ApiModel):
     id: UUID
     title: NonEmptyText
     summary: str | None = None
     width: Annotated[int, Field(gt=0)]
     height: Annotated[int, Field(gt=0)]
-    words: Annotated[list[DemoWord], Field(min_length=3, max_length=8)]
+    words: Annotated[list[DemoWord], Field(min_length=5, max_length=5)]
+    adjectives: Annotated[list[DemoTerm], Field(max_length=3)] = Field(default_factory=list)
+    prepositions: Annotated[list[DemoTerm], Field(max_length=3)] = Field(default_factory=list)

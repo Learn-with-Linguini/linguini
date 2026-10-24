@@ -5,7 +5,7 @@ import binascii
 from uuid import uuid4
 
 from app.repositories.postgres.workflow import translation_payload
-from app.schemas.demo import DemoPhotoRequest, DemoPhotoResponse, DemoWord
+from app.schemas.demo import DemoPhotoRequest, DemoPhotoResponse, DemoTerm, DemoWord
 from app.schemas.enums import MediaSource, MediaType
 from app.schemas.media import MediaAsset
 from app.schemas.sessions import Session
@@ -57,9 +57,9 @@ class DemoLessonService:
         )
         try:
             analysis = self.analyzer.analyze_bytes(session, asset, clean)
-            objects = analysis.objects[:8]
-            if len(objects) < 3:
-                raise DemoLessonError("Choose a photo with at least three clear objects.")
+            objects = analysis.objects[:5]
+            if len(objects) < 5:
+                raise DemoLessonError("Choose a photo with at least five clear objects.")
             object_ids = {item.id for item in objects}
             payload = translation_payload(
                 request.target_language, uploaded_scene_title(analysis),
@@ -68,6 +68,20 @@ class DemoLessonService:
                  if row.subject_scene_object_id in object_ids
                  and row.reference_scene_object_id in object_ids],
             )
+            existing_attributes = {term["source"].strip().lower() for term in payload["attributes"]}
+            existing_relations = {
+                term["source"].strip().lower() for term in payload["relationships"]
+            }
+            for index, source in enumerate(("red", "small", "bright")):
+                if source not in existing_attributes:
+                    payload["attributes"].append(
+                        {"key": f"demo:adjective:{index}", "source": source}
+                    )
+            for index, source in enumerate(("next to", "in front of", "behind")):
+                if source not in existing_relations:
+                    payload["relationships"].append(
+                        {"key": f"demo:preposition:{index}", "source": source}
+                    )
             translated = self.translator.translate(payload)
         except DemoLessonError:
             raise
@@ -94,9 +108,29 @@ class DemoLessonService:
                     anchor_point=item.anchor_point,
                 )
             )
-        if len(words) < 3:
+        if len(words) < 5:
             raise DemoLessonError("We couldn't translate enough objects in that photo.")
+        adjectives = _unique_terms(
+            [term for term in translated.attributes if not term.key.endswith(":quantity")], 3
+        )
+        prepositions = _unique_terms(translated.relationships, 3)
         return DemoPhotoResponse(
             id=demo_id, title=uploaded_scene_title(analysis), summary=analysis.summary,
             width=width, height=height, words=words,
+            adjectives=adjectives, prepositions=prepositions,
         )
+
+
+def _unique_terms(terms, limit: int) -> list[DemoTerm]:
+    result: list[DemoTerm] = []
+    seen: set[tuple[str, str]] = set()
+    for term in terms:
+        pair = (term.source.strip(), term.translation.strip())
+        normalized = (pair[0].lower(), pair[1].lower())
+        if not all(pair) or normalized in seen:
+            continue
+        seen.add(normalized)
+        result.append(DemoTerm(source=pair[0], translation=pair[1]))
+        if len(result) == limit:
+            break
+    return result

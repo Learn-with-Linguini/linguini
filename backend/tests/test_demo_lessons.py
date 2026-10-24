@@ -19,7 +19,7 @@ def _image() -> str:
 
 class Analyzer:
     def analyze_bytes(self, session, _asset, _data):
-        labels = ["cup", "table", "window"]
+        labels = ["cup", "table", "window", "chair", "plant", "lamp"]
         return SceneAnalysisResult(
             title="A café table",
             summary="A cup on a table beside a window.",
@@ -28,7 +28,7 @@ class Analyzer:
                     id=uuid4(),
                     session_id=session.id,
                     label=label,
-                    anchor_point=AnchorPoint(x=(index + 1) / 4, y=0.5),
+                    anchor_point=AnchorPoint(x=(index + 1) / 7, y=0.5),
                     source_object_key=f"object-{index}",
                 )
                 for index, label in enumerate(labels)
@@ -38,7 +38,21 @@ class Analyzer:
 
 class Translator:
     def translate(self, payload):
-        translations = {"cup": "taza", "table": "mesa", "window": "ventana"}
+        translations = {
+            "cup": "taza",
+            "table": "mesa",
+            "window": "ventana",
+            "chair": "silla",
+            "plant": "planta",
+        }
+        supporting = {
+            "red": "rojo",
+            "small": "pequeño",
+            "bright": "luminoso",
+            "next to": "al lado de",
+            "in front of": "delante de",
+            "behind": "detrás de",
+        }
         return SceneTranslationResult(
             objects=[
                 TranslatedTerm(
@@ -51,8 +65,22 @@ class Translator:
                 )
                 for item in payload["objects"]
             ],
-            attributes=[],
-            relationships=[],
+            attributes=[
+                TranslatedTerm(
+                    key=item["key"],
+                    source=item["source"],
+                    translation=supporting[item["source"]],
+                )
+                for item in payload["attributes"]
+            ],
+            relationships=[
+                TranslatedTerm(
+                    key=item["key"],
+                    source=item["source"],
+                    translation=supporting[item["source"]],
+                )
+                for item in payload["relationships"]
+            ],
         )
 
 
@@ -64,9 +92,21 @@ def test_guest_demo_analyzes_and_translates_without_persistence():
     assert response.title == "A café table"
     assert response.width == 80
     assert response.height == 60
-    assert [word.source for word in response.words] == ["cup", "table", "window"]
+    assert [word.source for word in response.words] == ["cup", "table", "window", "chair", "plant"]
     assert [word.translation for word in response.words] == [
         "la taza",
         "la mesa",
         "la ventana",
+        "la silla",
+        "la planta",
+    ]
+    assert [(term.source, term.translation) for term in response.adjectives] == [
+        ("red", "rojo"),
+        ("small", "pequeño"),
+        ("bright", "luminoso"),
+    ]
+    assert [(term.source, term.translation) for term in response.prepositions] == [
+        ("next to", "al lado de"),
+        ("in front of", "delante de"),
+        ("behind", "detrás de"),
     ]
