@@ -26,7 +26,7 @@ Database configuration is required; authentication and AI integrations are not i
 The marketing home, blog, language pages, legal pages, credits, and share page live
 in `src/marketing/` and are served by this Vite deployment alongside learner routes.
 The two app roots lazy-load separate global stylesheets. Optional public settings are
-`VITE_SITE_URL`, `VITE_SUPPORT_EMAIL`, `VITE_PRODUCT_HUNT_URL`,
+`VITE_SITE_URL`, `VITE_SUPPORT_EMAIL`, `VITE_GOOGLE_CLIENT_ID`, `VITE_PRODUCT_HUNT_URL`,
 `VITE_PRODUCT_HUNT_POST_ID`, `GOOGLE_SITE_VERIFICATION`,
 `BING_SITE_VERIFICATION`, and `INDEXNOW_KEY`; learner API and Supabase variables are
 unchanged.
@@ -214,7 +214,7 @@ These are frontend routes, separate from the backend's `/api/v1` endpoints.
 | Route | Screen |
 | --- | --- |
 | `/onboarding` | Account, language, goal, and permission setup UI |
-| `/login` | Login UI |
+| `/login` | Email authentication and direct Google Identity Services sign-in through Supabase |
 | `/home` | Home and practice entry point |
 | `/practice` | Scene selection |
 | `/practice/:sceneId/analysis` | Scene analysis and word markers |

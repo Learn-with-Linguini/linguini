@@ -74,34 +74,12 @@
   box-shadow: none;
 }
 
-.btn--google {
+.google-signin {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-3);
   width: 100%;
-  min-height: 48px;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--paper);
-  color: var(--ink);
-  font-family: var(--font-ui);
-  font-size: var(--text-body);
-  font-weight: 700;
-  box-shadow: 0 3px 0 rgba(86, 67, 34, 0.08);
-  cursor: pointer;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.1s ease;
-}
-
-.btn--google:hover:not(:disabled) {
-  background: #ffffff;
-  border-color: #cbd5e1;
-}
-
-.btn--google:active:not(:disabled) {
-  transform: translateY(2px);
-  box-shadow: 0 1px 0 rgba(86, 67, 34, 0.08);
+  min-height: 44px;
 }
 
 .login-divider {
