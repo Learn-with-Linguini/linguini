@@ -341,6 +341,25 @@ class UploadedSceneAnalyzer:
                 "scene analysis model returned invalid output",
             )
 
+    def analyze_bytes(
+        self, session: Session, asset: MediaAsset, data: bytes
+    ) -> SceneAnalysisResult:
+        """Analyze validated in-memory bytes without persisting a guest upload."""
+
+        class InlineStorage:
+            def download(self, _key: str) -> bytes:
+                return data
+
+        return UploadedSceneAnalyzer(
+            InlineStorage(),
+            self._client,
+            self._config,
+            tracer=self._tracer,
+            provider=self._provider,
+            object_grounder=self._object_grounder,
+            image_moderator=self._image_moderator,
+        ).analyze(session, asset, {}, None)
+
 
 class RoutedSceneAnalyzer:
     """Keep curated scenes deterministic; send only user images to the model."""

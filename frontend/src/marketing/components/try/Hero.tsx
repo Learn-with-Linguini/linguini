@@ -8,7 +8,9 @@ import { appLinks } from "../../lib/site";
 import { ArrowRight } from "../icons";
 import { ProductHuntBadge } from "../ProductHuntBadge";
 import { LanguageToggle } from "./LanguageToggle";
-import { Session } from "./Session";
+import { GuestSession } from "./GuestSession";
+import { analyzeGuestPhoto, staticGuestScene, type GuestScene } from "./demoApi";
+import { trackAction } from "../../../lib/analytics";
 import styles from "./hero.module.css";
 
 /** Where each print sits around the headline on wide screens. */
@@ -35,8 +37,12 @@ export function Hero() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [returnId, setReturnId] = useState<string | null>(null);
   const [lang, setLang] = useState<Lang>("es");
+  const [uploadedScene, setUploadedScene] = useState<GuestScene | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const sectionRef = useRef<HTMLElement>(null);
-  const scene = activeId ? getScene(activeId) : undefined;
+  const sampleScene = activeId ? getScene(activeId) : undefined;
+  const scene = uploadedScene ?? (sampleScene ? staticGuestScene(sampleScene, lang) : undefined);
 
   const transition = useCallback((update: () => void) => {
     const doc = document as ViewTransitionDocument;
@@ -59,6 +65,7 @@ export function Hero() {
     (id: string, element?: HTMLElement | null) => {
       if (element) element.style.viewTransitionName = "picked-photo";
       setReturnId(null);
+      setUploadedScene(null);
       const vt = transition(() => setActiveId(id));
       vt?.finished.finally(() => {
         if (element) element.style.viewTransitionName = "";
@@ -72,10 +79,28 @@ export function Hero() {
     const vt = transition(() => {
       setReturnId(id);
       setActiveId(null);
+      setUploadedScene(null);
     });
     if (vt) vt.finished.finally(() => setReturnId(null));
     else setReturnId(null);
   }, [activeId, transition]);
+
+  const upload = useCallback(async (file: File) => {
+    setUploadError(null);
+    setUploading(true);
+    trackAction("guest_demo_photo_selected", { language: lang });
+    try {
+      const result = await analyzeGuestPhoto(file, lang);
+      setActiveId(null);
+      setUploadedScene(result);
+      trackAction("guest_demo_photo_analyzed", { language: lang, objectCount: result.words.length });
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "We couldn't prepare that photo lesson.");
+      trackAction("guest_demo_photo_failed", { language: lang });
+    } finally {
+      setUploading(false);
+    }
+  }, [lang]);
 
   // Deep link: /?photo=<id>#try opens a session straight away.
   useEffect(() => {
@@ -83,6 +108,11 @@ export function Hero() {
     // oxlint-disable-next-line react/set-state-in-effect -- the URL is only readable after hydration
     if (id && getScene(id)) setActiveId(id);
   }, []);
+
+  useEffect(() => {
+    if (!uploadedScene?.photo.startsWith("blob:")) return;
+    return () => URL.revokeObjectURL(uploadedScene.photo);
+  }, [uploadedScene]);
 
   // Gentle pointer parallax on the photo ring.
   useEffect(() => {
@@ -114,7 +144,7 @@ export function Hero() {
     >
       {scene ? (
         <div className={`container ${styles.sessionWrap}`}>
-          <Session scene={scene} lang={lang} onLangChange={setLang} onExit={exit} />
+          <GuestSession scene={scene} lang={lang} onLangChange={setLang} onExit={exit} />
         </div>
       ) : (
         <div className={`container ${styles.stage}`}>
@@ -132,14 +162,30 @@ export function Hero() {
               <a href={appLinks.signUp} className="btn">
                 Join the public beta
               </a>
+              <label className={`btn btn--teal ${styles.uploadCta}`}>
+                {uploading ? "Preparing your lesson…" : "Try your own photo"}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  disabled={uploading}
+                  className="visually-hidden"
+                  onChange={event => {
+                    const file = event.target.files?.[0];
+                    if (file) void upload(file);
+                    event.target.value = "";
+                  }}
+                />
+              </label>
             </div>
+            <p className="small">Guest photos are processed to build the demo and aren’t saved to your account.</p>
+            {uploadError ? <p role="alert" className={styles.uploadError}>{uploadError}</p> : null}
             <div className={styles.prompt}>
               <svg className={styles.noodle} viewBox="0 0 120 60" aria-hidden="true">
                 <path d="M4 50c18 4 30-6 30-18s-14-16-18-6 8 20 28 18 44-18 66-34" />
                 <path d="m100 6 12 4-8 10" />
               </svg>
               <p>
-                <b>Pick any photo</b> to start a mini session in
+                <b>Pick a sample or upload your own</b> to start a guest lesson in
               </p>
               <LanguageToggle value={lang} onChange={setLang} compact />
             </div>

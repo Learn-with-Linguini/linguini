@@ -118,7 +118,7 @@ for (const mode of ["signin", "signup"]) {
   });
 }
 
-test("a guest can follow the entry and finish the real sample lesson without authentication or API calls", async () => {
+test("a guest can follow the entry and finish a sample lesson without authentication or API calls", async () => {
   const { container, root } = await mountLogin();
   const destination = new URL(guestLink(container).href);
   const scene = source.getScene(destination.searchParams.get("photo") ?? "");
@@ -127,26 +127,16 @@ test("a guest can follow the entry and finish the real sample lesson without aut
   dom.reconfigure({ url: destination.href });
   await act(async () => root.render(h(source.Hero)));
   assert.equal(container.querySelector("h2")?.textContent, `Found ${scene.words.length} things to learn`);
-  await click(button(container, `Start learning ${scene.words.length} words`));
+  await click(button(container, "See the translations"));
   for (let index = 0; index < scene.words.length; index++) {
     assert.ok(container.textContent?.includes(scene.words[index].es.word));
-    await click(button(container, index === scene.words.length - 1 ? "Play I-Spy" : "Next word"));
+    await click(button(container, index === scene.words.length - 1 ? "Try a task" : "Next word"));
   }
-  assert.equal(container.querySelector("h2")?.textContent, "I-Spy with Linguini");
-  await click(button(container, scene.ispy.es.answer));
-  await click(button(container, "Next task"));
-  assert.equal(container.querySelector("h2")?.textContent, "Describe the scene");
-  await click(button(container, scene.blank.es.answer));
-  await click(button(container, "Next task"));
-  assert.equal(container.querySelector("h2")?.textContent, "Build a sentence");
-  const bank = [...container.querySelectorAll("fieldset")].find(fieldset => fieldset.querySelector("legend")?.textContent === "Word tiles");
-  assert.ok(bank);
-  for (const token of scene.build.es.tokens) await click(button(bank, token));
-  await click(button(container, "Check sentence"));
-  await click(button(container, "Write today’s journal"));
-  assert.equal(container.querySelector("h2")?.textContent, "Keep today in your journal");
-  await click(button(container, "Save to journal"));
-  assert.equal(container.querySelector("h2")?.textContent, "Saved. That’s a day well spent.");
-  assert.ok(events.some(event => event[1] === "demo_completed"));
-  assert.ok([...container.querySelectorAll("a")].some(link => link.textContent?.includes("Do this with your own photos")));
+  assert.equal(container.querySelector("h2")?.textContent, "Choose the right word");
+  await click(button(container, scene.words[0].es.word));
+  await click(button(container, "Finish demo"));
+  assert.equal(container.querySelector("h2")?.textContent, "You finished a photo lesson");
+  assert.match(container.textContent ?? "", /wasn’t saved and no points were awarded/);
+  assert.ok(events.some(event => event[1] === "guest_demo_completed"));
+  assert.ok([...container.querySelectorAll("a")].some(link => link.textContent?.includes("Create my free account")));
 });

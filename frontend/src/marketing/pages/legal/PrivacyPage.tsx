@@ -4,7 +4,7 @@ import { PageMeta } from "../../lib/seo";
 import { site } from "../../lib/site";
 import styles from "./legal.module.css";
 
-const effectiveDate = "13 October 2026";
+const effectiveDate = "24 October 2026";
 
 function Contact() {
   if (site.supportEmail) {
@@ -61,6 +61,11 @@ export default function PrivacyPage() {
               When you upload or capture a photo, we store the image and related technical information so we can identify
               scene objects and build a lesson. We also store the objects you confirm, translations, tasks, answers,
               vocabulary progress, Basil rewards, session history and journal entries that you create.
+            </p>
+            <p>
+              If you use the guest demo without an account, we process the photo and generated lesson in memory to show
+              the demo and do not save them to your account or private image storage. The photo may still be sent to the
+              AI and moderation providers described below, and limited security and technical logs may be retained.
             </p>
             <h3>Audio and device permissions</h3>
             <p>

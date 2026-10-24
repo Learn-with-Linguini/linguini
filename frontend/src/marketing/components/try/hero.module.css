@@ -93,6 +93,16 @@
   gap: 12px;
 }
 
+.uploadCta {
+  cursor: pointer;
+}
+
+.uploadError {
+  max-width: 42rem;
+  color: var(--danger);
+  font-weight: 700;
+}
+
 .prompt {
   position: relative;
   display: flex;

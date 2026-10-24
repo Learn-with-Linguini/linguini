@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from app.api.routes import (
     daily_challenges,
+    demo,
     friends,
     game_resources,
     gamification,
@@ -27,6 +28,7 @@ from app.api.routes import (
 
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(health.router)
+api_router.include_router(demo.router)
 api_router.include_router(payments.router)
 api_router.include_router(users.router)
 api_router.include_router(game_resources.router)
