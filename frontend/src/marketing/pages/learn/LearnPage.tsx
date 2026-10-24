@@ -79,7 +79,7 @@ export default function LearnLanguagePage() {
             <p className={styles.lede}>{page.lede}</p>
             <div className={styles.ctas}>
               <a href={appLinks.signUp} className="btn">Start learning free</a>
-              <Link href={`/?photo=${scene.id}#try`} className="btn btn--teal">
+              <Link href={`/demo?photo=${scene.id}&lang=${lang}`} className="btn btn--teal">
                 Try a lesson now <ArrowRight size={20} />
               </Link>
             </div>
@@ -135,7 +135,7 @@ export default function LearnLanguagePage() {
                         ))}
                       </tbody>
                     </table>
-                    <Link href={`/?photo=${item.id}#try`} className={`btn-quiet ${styles.play}`}>
+                    <Link href={`/demo?photo=${item.id}&lang=${lang}`} className={`btn-quiet ${styles.play}`}>
                       Play this scene <ArrowRight size={16} />
                     </Link>
                   </div>

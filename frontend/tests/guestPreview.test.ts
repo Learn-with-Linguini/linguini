@@ -35,7 +35,7 @@ writeFileSync(entry, [
   'export { QueryClient, QueryClientProvider } from "@tanstack/react-query";',
   'export { AuthProvider } from "../src/state/Auth";',
   'export { Login } from "../src/pages/Login";',
-  'export { Hero } from "../src/marketing/components/try/Hero";',
+  'export { GuestDemo } from "../src/pages/GuestDemo";',
   'export { getScene } from "../src/marketing/data/scenes";',
 ].join("\n"));
 let bundled: unknown;
@@ -59,7 +59,7 @@ const source = bundled as {
   QueryClientProvider: typeof import("@tanstack/react-query").QueryClientProvider;
   AuthProvider: typeof import("../src/state/Auth.tsx").AuthProvider;
   Login: typeof import("../src/pages/Login.tsx").Login;
-  Hero: typeof import("../src/marketing/components/try/Hero.tsx").Hero;
+  GuestDemo: typeof import("../src/pages/GuestDemo.tsx").GuestDemo;
   getScene: typeof import("../src/marketing/data/scenes.ts").getScene;
 };
 const { h, act, createRoot, MemoryRouter, QueryClient, QueryClientProvider, AuthProvider } = source;
@@ -86,8 +86,8 @@ async function click(element: Element) {
   await act(async () => { element.dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true, cancelable: true })); });
 }
 function button(container: Element, label: string) {
-  const found = [...container.querySelectorAll("button")].find(candidate => !candidate.disabled && candidate.textContent?.trim() === label);
-  assert.ok(found, `Expected enabled button: ${label}`);
+  const found = [...container.querySelectorAll("button")].find(candidate => !candidate.disabled && (candidate.textContent?.includes(label) || candidate.getAttribute("aria-label") === label));
+  assert.ok(found, `Expected enabled button: ${label}. Found: ${[...container.querySelectorAll("button")].map(candidate => `${candidate.textContent?.trim()} (${candidate.disabled ? "disabled" : "enabled"})`).join(", ")}`);
   return found;
 }
 test.beforeEach(() => { events.length = 0; requests.length = 0; dom.window.sessionStorage.clear(); });
@@ -106,9 +106,8 @@ for (const mode of ["signin", "signup"]) {
     assert.equal(link.target, "");
     assert.match(container.textContent ?? "", /Preview progress won’t be saved to an account\./);
     const destination = new URL(link.href);
-    assert.equal(destination.pathname, "/");
-    assert.equal(destination.hash, "#try");
-    assert.ok(source.getScene(destination.searchParams.get("photo") ?? ""));
+    assert.equal(destination.pathname, "/demo");
+    assert.equal(destination.hash, "");
     link.addEventListener("click", event => event.preventDefault());
     await act(async () => { link.click(); });
     const event = events.find(event => event[1] === "guest_preview_started");
@@ -121,22 +120,25 @@ for (const mode of ["signin", "signup"]) {
 test("a guest can follow the entry and finish a sample lesson without authentication or API calls", async () => {
   const { container, root } = await mountLogin();
   const destination = new URL(guestLink(container).href);
-  const scene = source.getScene(destination.searchParams.get("photo") ?? "");
+  const scene = source.getScene("hillside-street");
   assert.ok(scene);
-  // A normal anchor starts a new document at the public demo's real deep link.
   dom.reconfigure({ url: destination.href });
-  await act(async () => root.render(h(source.Hero)));
-  assert.equal(container.querySelector("h2")?.textContent, `Found ${scene.words.length} things to learn`);
-  await click(button(container, "See the translations"));
+  await act(async () => root.render(h(MemoryRouter, { initialEntries: ["/demo"] }, h(source.GuestDemo))));
+  assert.equal(container.querySelector("h1")?.textContent, "Try a photo lesson");
+  await click(button(container, `Choose ${scene.title}`));
+  await act(async () => { await new Promise(resolve => setTimeout(resolve, 0)); });
+  assert.equal(container.querySelector("h1")?.textContent, "Review your scene");
+  assert.match(container.textContent ?? "", new RegExp(`found ${scene.words.length} useful objects`, "i"));
+  await click(button(container, "See translations"));
   for (let index = 0; index < scene.words.length; index++) {
     assert.ok(container.textContent?.includes(scene.words[index].es.word));
     await click(button(container, index === scene.words.length - 1 ? "Try a task" : "Next word"));
   }
-  assert.equal(container.querySelector("h2")?.textContent, "Choose the right word");
+  assert.equal(container.querySelector("h1")?.textContent, "Choose the right word");
   await click(button(container, scene.words[0].es.word));
   await click(button(container, "Finish demo"));
-  assert.equal(container.querySelector("h2")?.textContent, "You finished a photo lesson");
-  assert.match(container.textContent ?? "", /wasn’t saved and no points were awarded/);
+  assert.equal(container.querySelector("h1")?.textContent, "You finished a photo lesson");
+  assert.match(container.textContent ?? "", /wasn’t saved and no Basil was awarded/);
   assert.ok(events.some(event => event[1] === "guest_demo_completed"));
   assert.ok([...container.querySelectorAll("a")].some(link => link.textContent?.includes("Create my free account")));
 });

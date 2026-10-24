@@ -1,7 +1,5 @@
 import type { Lang, Scene } from "../../data/types";
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, "") ?? "";
-
 export type GuestWord = { id: string; source: string; translation: string; phoneticText?: string | null; x: number; y: number };
 export type GuestScene = { id: string; photo: string; title: string; place: string; width: number; height: number; alt: string; words: GuestWord[]; uploaded?: boolean };
 type DemoResponse = { id: string; title: string; summary?: string | null; width: number; height: number; words: Array<{ id: string; source: string; translation: string; phoneticText?: string | null; boundingBox?: { x: number; y: number; width: number; height: number } | null; anchorPoint?: { x: number; y: number } | null }> };
@@ -22,6 +20,7 @@ function readAsBase64(file: File): Promise<string> {
 export async function analyzeGuestPhoto(file: File, language: Lang): Promise<GuestScene> {
   if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) throw new Error("Choose a JPEG, PNG or WebP image.");
   if (!file.size || file.size > 10 * 1024 * 1024) throw new Error("Choose an image between 1 byte and 10 MB.");
+  const apiBaseUrl = (import.meta.env?.VITE_API_BASE_URL ?? "").replace(/\/+$/, "");
   const response = await fetch(`${apiBaseUrl}/api/v1/demo/photo`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ imageBase64: await readAsBase64(file), targetLanguage: language }) });
   const payload = await response.json().catch(() => null) as DemoResponse | { detail?: { message?: string } } | null;
   if (!response.ok) {

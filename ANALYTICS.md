@@ -41,7 +41,8 @@ Because Linguini is a single-page application (SPA), route changes do not reload
 ### Tracked Pages & Routes
 
 #### Marketing Pages
-* `/` — Landing page with interactive hero demo and feature highlights
+* `/` — Landing page with guest-demo entry points and feature highlights
+* `/demo` — Stateless guest photo lesson with ready-made scenes and photo upload
 * `/blog` — Engineering & language learning blog index
 * `/blog/:slug` — Individual blog posts
 * `/pricing` — Pricing and plan comparison table
@@ -195,6 +196,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 ### Marketing Site & Interactive Demo
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
+| `guest_demo_scene_selected` | `{ sceneId, language, source: "upload" | "sample" }` | Visitor starts a guest lesson from an uploaded or ready-made scene |
 | `guest_demo_photo_selected` | `{ language }` | Visitor selects their own photo for a guest lesson |
 | `guest_demo_photo_analyzed` | `{ language, objectCount }` | Guest photo analysis and translation completes |
 | `guest_demo_photo_failed` | `{ language }` | Guest photo analysis or translation fails |
