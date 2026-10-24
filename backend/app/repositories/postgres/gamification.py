@@ -232,24 +232,25 @@ def record_question(c, user_id, session, task, question_id, answer, is_correct, 
 def basil_totals(c, user_id):
     now = utc_now().astimezone(UTC)
     start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    earned = game_resource_events.c.kind == "basilEarned"
-    lifetime = c.execute(
-        select(func.coalesce(func.sum(game_resource_events.c.basil_delta), 0)).where(
-            game_resource_events.c.user_id == user_id,
-            earned,
-        )
-    ).scalar_one()
-    today = c.execute(
-        select(func.coalesce(func.sum(game_resource_events.c.basil_delta), 0)).where(
-            game_resource_events.c.user_id == user_id,
-            earned,
-            game_resource_events.c.created_at >= start,
-            game_resource_events.c.created_at < start + timedelta(days=1),
-        )
-    ).scalar_one()
+    week_start = start - timedelta(days=start.weekday())
+    amount = game_resource_events.c.basil_delta
+    occurred_at = game_resource_events.c.created_at
+    totals = c.execute(select(
+        func.coalesce(func.sum(amount), 0).label("lifetime"),
+        func.coalesce(func.sum(amount).filter(
+            occurred_at >= start, occurred_at < start + timedelta(days=1),
+        ), 0).label("today"),
+        func.coalesce(func.sum(amount).filter(
+            occurred_at >= week_start, occurred_at < week_start + timedelta(days=7),
+        ), 0).label("weekly"),
+    ).where(
+        game_resource_events.c.user_id == user_id,
+        game_resource_events.c.kind == "basilEarned",
+    )).one()
     return BasilTotals(
-        today=today,
-        lifetime=lifetime,
+        today=totals.today,
+        weekly=totals.weekly,
+        lifetime=totals.lifetime,
         balance=resource_snapshot(c, user_id).basil_leaves,
         competition_day=start.date(),
         day_ends_at=start + timedelta(days=1),

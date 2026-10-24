@@ -1,0 +1,163 @@
+import assert from "node:assert/strict";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import test from "node:test";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { JSDOM } from "jsdom";
+import { rolldown } from "rolldown";
+import type { SessionTask } from "../src/lib/api.ts";
+
+const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://app.test/", pretendToBeVisual: true });
+const globals = globalThis as Record<string, unknown>;
+for (const key of Object.getOwnPropertyNames(dom.window)) {
+  if (globals[key] !== undefined) continue;
+  try { globals[key] = (dom.window as unknown as Record<string, unknown>)[key]; } catch { /* Node owns a few read-only globals. */ }
+}
+Object.defineProperty(globalThis, "window", { value: dom.window, configurable: true });
+Object.defineProperty(globalThis, "document", { value: dom.window.document, configurable: true });
+globals.IS_REACT_ACT_ENVIRONMENT = true;
+const here = dirname(fileURLToPath(import.meta.url));
+async function bundle() {
+  const folder = mkdtempSync(join(tmpdir(), "vocabulary-recap-"));
+  const entry = join(here, `.vocabularyRecap-${crypto.randomUUID()}.ts`);
+  writeFileSync(entry, [
+    'export { createElement as h, act } from "react";', 'export { createRoot } from "react-dom/client";',
+    'export { MemoryRouter, Outlet, Route, Routes } from "react-router-dom";',
+    'export { QueryClient, QueryClientProvider } from "@tanstack/react-query";',
+    'export { AppStateContext } from "../src/state/context";',
+    'export { VocabularySceneReview } from "../src/pages/LearningTaskPage";',
+  ].join("\n"));
+  try {
+    const bundler = await rolldown({ input: entry, platform: "node", resolve: { extensions: [".tsx", ".ts", ".js"] },
+      plugins: [{ name: "test-api", transform: code => code.replaceAll("import.meta.env?.VITE_API_BASE_URL", '"http://api.test"') },
+        { name: "test-css", resolveId: id => id.endsWith(".css") ? "\0empty-css" : null, load: id => id === "\0empty-css" ? "export default {};" : null }],
+    });
+    try {
+      const { output } = await bundler.generate({ format: "esm" });
+      const path = join(folder, "bundle.mjs");
+      writeFileSync(path, output[0].code);
+      return await import(pathToFileURL(path).href);
+    } finally { await bundler.close(); }
+  } finally { rmSync(entry, { force: true }); rmSync(folder, { recursive: true, force: true }); }
+}
+const surface = await bundle();
+const originalFetch = globals.fetch;
+const requests: { path: string; body: Record<string, unknown> }[] = [];
+let failNext = false;
+const text = () => dom.window.document.body.textContent ?? "";
+const button = (label: string) => [...dom.window.document.querySelectorAll("button")].find(item => item.textContent?.trim() === label);
+globals.fetch = async (input: unknown, init?: RequestInit) => {
+  const path = new URL(String(input)).pathname;
+  const body = JSON.parse(String(init?.body ?? "{}"));
+  requests.push({ path, body });
+  if (failNext) { failNext = false; throw new Error("Reply lost"); }
+  if (path.endsWith("/check-vocabulary-answer")) return Response.json({
+    questionId: body.questionId, acceptedOptionId: body.optionId, isCorrect: true,
+    correctOptionId: body.optionId, basilEarned: 0,
+  });
+  if (path.endsWith("/check-vocabulary-typing")) return Response.json({
+    learningKey: body.learningKey, isCorrect: true, correctAnswer: body.answer, revealed: false,
+  });
+  throw new Error(`Unexpected request: ${path}`);
+};
+const cleanups = new Set<() => Promise<void>>();
+test.beforeEach(() => { requests.length = 0; failNext = false; });
+test.afterEach(async () => { for (const close of [...cleanups]) await close(); });
+test.after(() => {
+  globals.fetch = originalFetch;
+  dom.window.close();
+  for (const handle of (process as unknown as { _getActiveHandles(): { constructor: { name: string }; unref?: () => void }[] })._getActiveHandles()) {
+    if (handle.constructor.name === "MessagePort") handle.unref?.();
+  }
+});
+async function click(label: string) {
+  await surface.act(async () => {
+    const element = button(label);
+    assert.ok(element, `expected ${label}`);
+    assert.equal(element.disabled, false, `${label} must be enabled`);
+    element.dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true }));
+  });
+}
+async function type(value: string) {
+  const input = dom.window.document.querySelector("input");
+  assert.ok(input);
+  await surface.act(async () => {
+    Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, "value")!.set!.call(input, value);
+    input.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
+  });
+}
+async function mount() {
+  const container = dom.window.document.createElement("div");
+  dom.window.document.body.appendChild(container);
+  const root = surface.createRoot(container);
+  const client = new surface.QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  const task: SessionTask = {
+    id: "t1", kind: "vocabularyIntroduction", phase: "learning", status: "completed", orderIndex: 0,
+    isSkippable: true, vocabularyItemId: null, sceneObjectId: null, xpReward: 0, xpBonus: 0,
+    publicContent: { kind: "vocabularyIntroduction", title: "Photo words", allowTypingPractice: true,
+      words: [["cup", "taza"], ["table", "mesa"]].map(([translation, targetText]) => ({
+        learningKey: translation, termType: "object", vocabularyItemId: null, sceneObjectId: null,
+        targetText, translation, partOfSpeech: "noun", gender: null, pluralForm: null,
+        phoneticText: null, pronunciationAudioAssetId: null, exampleSentence: null,
+      })),
+      questions: [
+        { questionId: "q-cup", prompt: "What is taza?", options: [{ optionId: "option-cup", label: "cup" }, { optionId: "wrong-cup", label: "plate" }] },
+        { questionId: "q-table", prompt: "What is mesa?", options: [{ optionId: "option-table", label: "table" }, { optionId: "wrong-table", label: "chair" }] },
+      ],
+    },
+  };
+  const close = async () => { await surface.act(async () => root.unmount()); client.clear(); container.remove(); cleanups.delete(close); };
+  cleanups.add(close);
+  const scene = { id: "scene1", sessionId: "s1", imageUrl: null, items: [], languageCode: "es" };
+  await surface.act(async () => root.render(surface.h(surface.QueryClientProvider, { client },
+    surface.h(surface.AppStateContext.Provider, { value: {
+      session: { session: { id: "s1", status: "completed" }, tasks: [task], sceneObjects: [] }, practiceSaving: false,
+      actOnTask: () => { throw new Error("Review must not submit the completed task"); },
+    } }, surface.h(surface.MemoryRouter, { initialEntries: ["/review"] }, surface.h(surface.Routes, null,
+      surface.h(surface.Route, { element: surface.h(surface.Outlet, { context: scene }) },
+        surface.h(surface.Route, { path: "/review", element: surface.h(surface.VocabularySceneReview) })),
+      surface.h(surface.Route, { path: "/vocabulary", element: surface.h("p", null, "Vocabulary collection") })))))));
+  await click("Next");
+  await click("Start quick quiz");
+}
+
+test("revisit alternates server-graded recognition and recall and can finish without new rewards", async () => {
+  await mount();
+  await click("cup");
+  assert.deepEqual(requests[0].body, { questionId: "q-cup", optionId: "option-cup", review: true });
+  await click("Continue");
+  assert.ok(dom.window.document.querySelector('input[aria-label="Type table"]'));
+  await type("mesa"); await click("Check answer"); await click("Continue");
+  assert.match(text(), /What is mesa/);
+  await click("table"); await click("Continue");
+  assert.ok(dom.window.document.querySelector('input[aria-label="Type cup"]'));
+  await type("taza"); await click("Check answer"); await click("Finish review");
+  assert.match(text(), /Review complete/);
+  assert.doesNotMatch(text(), /Basil earned|mastered/);
+  assert.equal(requests.length, 4);
+  assert.deepEqual(requests[1].body, { learningKey: "table", answer: "mesa", reveal: false });
+  assert.ok(requests.every(request => /check-vocabulary-(answer|typing)$/.test(request.path)));
+  await click("Back to vocabulary");
+  assert.match(text(), /Vocabulary collection/);
+});
+
+test("a failed recognition check can retry its original option before mixed recall", async () => {
+  await mount(); failNext = true;
+  await click("cup");
+  assert.match(text(), /couldn’t save this answer/);
+  await click("Retry answer");
+  assert.deepEqual(requests[0], requests[1]);
+  await click("Continue");
+  assert.ok(dom.window.document.querySelector('input[aria-label="Type table"]'));
+});
+
+test("a failed recall check preserves unfinished text and can continue after retry", async () => {
+  await mount(); await click("cup"); await click("Continue");
+  await type("mes"); failNext = true; await click("Check answer");
+  assert.equal(dom.window.document.querySelector("input")?.value, "mes");
+  await type("mesa"); await click("Check answer"); await click("Continue");
+  assert.match(text(), /What is mesa/);
+  await click("table");
+  assert.equal(requests.at(-1)?.body.optionId, "option-table");
+});

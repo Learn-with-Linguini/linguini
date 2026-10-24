@@ -150,18 +150,23 @@ def test_steps_say_exactly_what_to_mark_from_the_review():
     }]
 
 
-def test_a0_steps_ask_for_any_other_object_and_trim_a_group_that_is_too_big():
+def test_a0_steps_ask_for_any_object_and_trim_a_group_that_is_too_big():
     m03 = get_mission("M03", "A0", 1)
     books = [obj(uuid4(), "book") for _ in range(4)]
     assert mission_steps(m03, books, [], _counts(books, ("book", 4)), ["counts"]) == [
         {"kind": "counts", "text": "Remove 1 book marker so there are 3 books."},
     ]
+    sofas = [obj(uuid4(), "sofa") for _ in range(4)]
+    assert mission_steps(m03, sofas, [], _counts(sofas, ("sofa", 4)), ["counts"]) == [
+        {"kind": "counts", "text": "Remove 1 sofa marker so there are 3 sofas."},
+    ]
     m01 = get_mission("M01", "A0", 1)
-    # Packs teach any confirmed name, so a second object of any kind is enough.
-    assert mission_steps(m01, [obj(CUP, "cup")], [], [], ["objects"]) == [{
-        "kind": "objects", "text": "Mark 1 more different object you can see (so far: cup).",
-    }]
-    assert mission_steps(m01, [obj(CUP, "cup"), obj(BOOK, "sofa")], [], [], ["objects"]) == []
+    [step] = mission_steps(m01, [obj(BOOK, "sofa")], [], [], ["objects"])
+    assert step["text"] == (
+        "Mark 1 more different object you can see (so far: sofa), "
+        "such as a cup, a book or a chair."
+    )
+    assert "not taught" not in step["text"]
 
 
 def test_a2_comparison_asks_for_a_different_number():

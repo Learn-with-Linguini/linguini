@@ -417,7 +417,11 @@ def test_review_maps_manual_relation_endpoints_and_preserves_only_trusted_proven
         vocabulary_item_id=word.id, source_language_code="en", translated_text="table"
     )
     objects = [
-        SceneObject(session_id=session.id, label=label, vocabulary_item_id=word.id)
+        SceneObject(
+            session_id=session.id, label=label, vocabulary_item_id=word.id,
+            bounding_box={"x": 0.2, "y": 0.3, "width": 0.2, "height": 0.3},
+            source_object_key=f"detected-{label}",
+        )
         for label in ["chair", "table"]
     ]
     original = SceneObjectRelation(
@@ -460,6 +464,18 @@ def test_review_maps_manual_relation_endpoints_and_preserves_only_trusted_proven
         ],
     )
     repo.review(session.id, session.language_profile_id, request)
+    object_writes = [
+        call.args[0].compile().params
+        for call in connection.execute.call_args_list
+        if getattr(call.args[0], "is_insert", False)
+        and call.args[0].table.name == "scene_objects"
+    ]
+    manual = next(row for row in object_writes if row["label"] == "plant")
+    assert manual["bounding_box"] is None
+    assert manual["anchor_point"] == {"x": 0.1, "y": 0.2}
+    detected = next(row for row in object_writes if row["label"] == "chair")
+    assert detected["bounding_box"] == {"x": 0.2, "y": 0.3, "width": 0.2, "height": 0.3}
+    assert detected["source_object_key"] == "detected-chair"
     writes = [
         call.args[0].compile().params
         for call in connection.execute.call_args_list

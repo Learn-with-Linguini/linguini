@@ -29,7 +29,9 @@ from app.ai.cache import (
     run_cached,
 )
 from app.ai.contracts.errors import ProviderError, ProviderErrorCode
-from app.ai.contracts.schema import build_strict_json_schema
+from app.ai.contracts.schema import (
+    build_strict_json_schema,
+)
 from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelRequest
 from app.ai.features.learning_tasks.prompt import (
     LEARNING_TASK_MEMORY_PROMPT_VERSION,
@@ -335,6 +337,7 @@ class LearningTaskService:
         system_prompt: str = LEARNING_TASK_SYSTEM_PROMPT,
         parse: Callable[[str], Any] | None = None,
         json_schema_name: str = "learning_tasks_v2",
+        json_schema: dict[str, Any] | None = None,
     ) -> Generated[Any]:
         content = json.dumps(payload, ensure_ascii=False)
         request = TextModelRequest(
@@ -342,7 +345,7 @@ class LearningTaskService:
             user_content=content,
             json_schema_name=json_schema_name,
             # Per-payload: key enums are built from this scene's keys.
-            json_schema=build_strict_json_schema(response_model),
+            json_schema=json_schema or build_strict_json_schema(response_model),
             prompt_version=prompt_version,
         )
 

@@ -15,6 +15,7 @@ import { useAppState } from "../state/useAppState";
 import { savedPastaAvatar } from "../lib/onboardingDraft";
 import { useAuth } from "../state/Auth";
 import { MissionBadges } from "../components/MissionBadges";
+import { useGamification } from "../state/gamification";
 
 const socialIcons = {
   instagram: InstagramIcon,
@@ -39,10 +40,10 @@ export function Profile() {
   const [passwordUpdating, setPasswordUpdating] = useState(false);
   const [surveyOpen, setSurveyOpen] = useState(false);
   const [pendingLanguageCode, setPendingLanguageCode] = useState<string | null>(null);
-  const { learner, user, activeProfile, progress, progressLoading, progressError, profileError, profileSaving, saveLanguageProfile, saveUser, languageProfiles, activateLanguageProfile } = useAppState();
+  const { learner, user, activeProfile, profileError, profileSaving, saveLanguageProfile, saveUser, languageProfiles, activateLanguageProfile } = useAppState();
   const tier = accountTiers[user?.tier ?? "beta"];
   const practiceLanguages = usePracticeLanguages(learner.languageCode);
-  const weeklyBasil = progress?.leaderboard.find(row => row.isYou)?.xp ?? 0;
+  const basil = useGamification();
 
   useEffect(() => {
     if (!deleteOpen) return;
@@ -154,17 +155,20 @@ export function Profile() {
           <ChevronRightIcon size={20} />
         </button>
       </section>
-      {progressLoading ? <InlineLoader label="Loading your profile…" /> : null}
-      {progressError ? <p role="alert">{progressError} Reload to retry.</p> : null}
       {profileError ? <p role="alert">{profileError}</p> : null}
 
-      {!progressLoading && !progressError ? <section className="profile-basil" aria-labelledby="profile-basil-heading">
+      <section className="profile-basil" aria-labelledby="profile-basil-heading">
         <h2 id="profile-basil-heading">Your Basil</h2>
-        <div className="profile-basil__grid">
-          <div><span className="profile-basil__icon"><BasilIcon size={24} /></span><span>This week</span><strong>{weeklyBasil}</strong></div>
-          <div><span className="profile-basil__icon"><BasilIcon size={24} /></span><span>All time</span><strong>{progress?.xp ?? 0}</strong></div>
-        </div>
-      </section> : null}
+        {basil.isPending ? <InlineLoader compact label="Loading your Basil…" />
+          : basil.isError ? <p role="alert">We couldn’t load your Basil. Reload to retry.</p>
+          : <>
+            <p className="small muted">Across all languages. Weeks start Monday at 00:00 UTC.</p>
+            <div className="profile-basil__grid">
+              <div><span className="profile-basil__icon"><BasilIcon size={24} /></span><span>This week</span><strong>{basil.data.basil.weekly}</strong></div>
+              <div><span className="profile-basil__icon"><BasilIcon size={24} /></span><span>All time</span><strong>{basil.data.basil.lifetime}</strong></div>
+            </div>
+          </>}
+      </section>
 
       <section className="profile-section" aria-labelledby="account-tier-heading">
         <h2 id="account-tier-heading">Your plan</h2>

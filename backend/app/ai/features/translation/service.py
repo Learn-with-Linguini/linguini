@@ -192,7 +192,7 @@ class SceneTranslationService:
                 self._client,
                 version=_VERSION if language_context is None else FeatureVersion(
                     AiFeature.SCENE_TRANSLATION.value, PACK_TRANSLATION_PROMPT_VERSION,
-                    "pack-translation-result.v1", "pack-translation-validator.v3",
+                    "pack-translation-result.v2", "pack-translation-validator.v3",
                 ),
                 scope=cache_scope,
                 payload=payload if language_context is None else {
@@ -238,7 +238,7 @@ class SceneTranslationService:
             model=self._config.model_name,
             prompt_version=request.prompt_version,
             schema_version=SCENE_TRANSLATION_SCHEMA_VERSION if language_context is None
-            else "pack-translation-result.v1",
+            else "pack-translation-result.v2",
             model_parameters={
                 "maxOutputTokens": self._config.max_output_tokens,
                 "timeoutSeconds": self._config.timeout_seconds,

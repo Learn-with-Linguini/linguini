@@ -9,6 +9,7 @@ is in the photo.
 from app.services.quantities import english_plural
 
 MAX_NAMED = 3
+A0_EXAMPLES = ("cup", "book", "chair", "bottle", "apple", "pen")
 REQUESTABLE_EXAMPLES = ("bottle", "apple", "cup")
 
 
@@ -72,6 +73,16 @@ def _objects_step(need, labels):
     return f"Mark {need} more different {noun} you can see{have}."
 
 
+def _a0_objects_step(objects):
+    labels = _labels(objects)
+    named = {_key(label) for label in labels}
+    examples = [name for name in A0_EXAMPLES if name not in named][:MAX_NAMED]
+    need = max(1, 2 - len(named))
+    have = f" (so far: {_join(labels[:MAX_NAMED])})" if labels else ""
+    return (
+        f"Mark {need} more different object{'' if need == 1 else 's'} you can see{have}, "
+        f"such as {_join([_article(name) for name in examples], 'or')}."
+    )
 
 
 def _attributes_step(need, objects):
@@ -144,14 +155,15 @@ def mission_steps(mission, objects, relations, counted_groups, kinds):
         if kind in kinds and text and {"kind": kind, "text": text} not in steps:
             steps.append({"kind": kind, "text": text})
 
-    need = max(requirements.min_confirmed_objects, 3 if rule == "describeScene" else 0)
-    if len(labels) < need:
-        add("objects", _objects_step(need - len(labels), labels))
     if level == "A0":
+        add("objects", _a0_objects_step(objects))
         add("counts", _count_step(
             requirements.min_quantity, requirements.max_quantity, quantities,
         ))
     else:
+        need = max(requirements.min_confirmed_objects, 3 if rule == "describeScene" else 0)
+        if len(labels) < need:
+            add("objects", _objects_step(need - len(labels), labels))
         if rule == "requestableItem":
             examples = _join([_article(name) for name in REQUESTABLE_EXAMPLES], "or")
             add("objects", "Mark a food, drink or everyday object you could ask for, "

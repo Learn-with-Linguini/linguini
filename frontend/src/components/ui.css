@@ -74,34 +74,12 @@
   box-shadow: none;
 }
 
-.btn--google {
+.google-signin {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-3);
   width: 100%;
-  min-height: 48px;
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--paper);
-  color: var(--ink);
-  font-family: var(--font-ui);
-  font-size: var(--text-body);
-  font-weight: 700;
-  box-shadow: 0 3px 0 rgba(86, 67, 34, 0.08);
-  cursor: pointer;
-  transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.1s ease;
-}
-
-.btn--google:hover:not(:disabled) {
-  background: #ffffff;
-  border-color: #cbd5e1;
-}
-
-.btn--google:active:not(:disabled) {
-  transform: translateY(2px);
-  box-shadow: 0 1px 0 rgba(86, 67, 34, 0.08);
+  min-height: 44px;
 }
 
 .login-divider {
@@ -1780,7 +1758,7 @@ p[role="alert"]::before { content: "!"; }
 
 .translation-preview__terms {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
   gap: var(--space-2);
 }
 
@@ -1788,6 +1766,7 @@ p[role="alert"]::before { content: "!"; }
   display: grid;
   gap: 2px;
   min-width: 0;
+  overflow-wrap: anywhere;
   padding: 10px 12px;
   border: 1px solid rgba(249, 178, 51, .34);
   border-radius: var(--radius-sm);
@@ -1797,6 +1776,22 @@ p[role="alert"]::before { content: "!"; }
 
 .translation-preview__term strong {
   color: var(--teal-dark);
+}
+
+@media (max-width: 520px) {
+  .translation-preview {
+    gap: var(--space-3);
+    padding: var(--space-3);
+  }
+
+  .translation-preview__group {
+    gap: var(--space-2);
+    padding: var(--space-2);
+  }
+
+  .translation-preview__term {
+    padding: var(--space-2);
+  }
 }
 
 .analysis-attribute-fields {
@@ -5024,6 +5019,24 @@ p[role="alert"]::before { content: "!"; }
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
   gap: var(--space-3);
+}
+
+/* Teaching markers may extend beyond the photo edge. Keep the complete source
+   image at its natural aspect ratio and reserve room instead of clipping it. */
+.vocabulary-learning-scene {
+  padding-top: 28px;
+}
+
+.vocabulary-learning-scene > .scene {
+  overflow: visible;
+}
+
+.vocabulary-learning-scene .scene__art {
+  width: 100%;
+  height: auto;
+  aspect-ratio: auto;
+  object-fit: contain;
+  border-radius: calc(var(--radius-md) - var(--stroke));
 }
 
 .vocabulary-learning-grid--swipe {

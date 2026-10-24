@@ -375,7 +375,41 @@ def parse_scene_analysis(
         raise SceneAnalysisValidationError(issues) from exc
     if normalize_gemini_coordinates:
         result = _normalize_gemini_coordinates(result)
+    result = _normalize_object_groups(result)
     return validate_scene_analysis(result)
+
+
+def _normalize_object_groups(result: SceneAnalysisModelResult) -> SceneAnalysisModelResult:
+    """Repair repeated-object metadata that is advisory rather than structural.
+
+    Models occasionally give two instances of the same noun different counts, or
+    reuse a group key for two nouns. The individual detections are still useful,
+    so derive coherent groups from their normalized labels before semantic
+    validation instead of rejecting the whole image.
+    """
+    labels: dict[str, list[int]] = {}
+    for index, obj in enumerate(result.objects):
+        labels.setdefault(obj.label.strip().casefold(), []).append(index)
+
+    used_keys: set[str] = set()
+    group_keys: dict[str, str] = {}
+    for label, indexes in labels.items():
+        candidate = result.objects[indexes[0]].group_key
+        if candidate.casefold() in used_keys:
+            candidate = f"{candidate}-{result.objects[indexes[0]].object_key}"
+        used_keys.add(candidate.casefold())
+        group_keys[label] = candidate
+
+    objects = [
+        obj.model_copy(
+            update={
+                "group_key": group_keys[obj.label.strip().casefold()],
+                "suggested_group_count": len(labels[obj.label.strip().casefold()]),
+            }
+        )
+        for obj in result.objects
+    ]
+    return result.model_copy(update={"objects": objects})
 
 
 def _normalize_gemini_coordinates(result: SceneAnalysisModelResult) -> SceneAnalysisModelResult:

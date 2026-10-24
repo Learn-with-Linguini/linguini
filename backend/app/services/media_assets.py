@@ -1,14 +1,9 @@
 import re
-import warnings
-from io import BytesIO
 from uuid import UUID, uuid4
-
-from PIL import Image, ImageOps, UnidentifiedImageError
 
 from app.repositories.media_assets import MediaAssetConflictError, MediaAssetRepository
 from app.schemas.enums import MediaSource
 from app.schemas.media import (
-    MAX_IMAGE_BYTES,
     ConfirmMediaUploadRequest,
     CreateUploadUrlRequest,
     CreateUploadUrlResponse,
@@ -17,6 +12,7 @@ from app.schemas.media import (
 )
 from app.services.image_derivatives import ImageDerivatives
 from app.services.image_storage import ImageStorage, InvalidImageUpload
+from app.services.image_uploads import sanitize_image_upload
 from app.services.media_urls import MediaUrlError
 from app.services.users import UserService
 
@@ -87,33 +83,13 @@ class MediaAssetService:
         storage = self._storage()
         try:
             data = storage.download(request.storage_key)
-            if not data or len(data) > MAX_IMAGE_BYTES:
-                raise InvalidImageUpload("Image must be between 1 byte and 10 MB.")
-            try:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("error", Image.DecompressionBombWarning)
-                    with Image.open(BytesIO(data)) as image:
-                        mime = {"JPEG": "image/jpeg", "PNG": "image/png", "WEBP": "image/webp"}.get(
-                            image.format
-                        )
-                        if mime is None:
-                            raise InvalidImageUpload("Use a JPEG, PNG or WebP image.")
-                        image.verify()
-                    with Image.open(BytesIO(data)) as image:
-                        image.load()
-                        width, height = ImageOps.exif_transpose(image).size
-            except (
-                UnidentifiedImageError,
-                OSError,
-                ValueError,
-                SyntaxError,
-                Image.DecompressionBombError,
-                Image.DecompressionBombWarning,
-            ) as exc:
-                raise InvalidImageUpload("The uploaded file is not a valid image.") from exc
+            clean, mime, width, height = sanitize_image_upload(data)
         except InvalidImageUpload:
             storage.delete(request.storage_key)
             raise
+        if clean != data:
+            # Do not publish metadata or a readable URL until Storage has the clean bytes.
+            storage.put(request.storage_key, clean, mime)
         asset = MediaAsset(
             id=request.asset_id,
             owner_user_id=user.id,

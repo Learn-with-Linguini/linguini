@@ -9,7 +9,7 @@ schema.
 """
 
 SCENE_TRANSLATION_PROMPT_VERSION = "scene-translation.v5"
-SCENE_TRANSLATION_SCHEMA_VERSION = "scene-translation-result.v2"
+SCENE_TRANSLATION_SCHEMA_VERSION = "scene-translation-result.v3"
 
 PACK_TRANSLATION_PROMPT_VERSION = "pack-translation.v2"
 PACK_TRANSLATION_SYSTEM_PROMPT = """Translate the confirmed session vocabulary using language_context.

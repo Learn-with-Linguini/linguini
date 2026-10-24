@@ -1,4 +1,9 @@
-"""Closed, deterministic A0 ownership and preference lessons."""
+"""A0 ownership (M04) and preference (M05) lessons from closed, fact-bound content.
+
+A text model writes the lesson from the payload; it is accepted only through
+``validate_a0_situation_lesson``, and the deterministic lesson in the payload is the
+fallback whenever the model is unavailable or its lesson is rejected.
+"""
 
 from __future__ import annotations
 

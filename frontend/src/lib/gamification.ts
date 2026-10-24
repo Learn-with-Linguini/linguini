@@ -13,7 +13,7 @@ export interface MissionBatch {
 }
 export interface GamificationSummary {
   policyVersion: string;
-  basil: { today: number; lifetime: number; balance: number; competitionDay: string; dayEndsAt: string };
+  basil: { today: number; weekly: number; lifetime: number; balance: number; competitionDay: string; dayEndsAt: string };
   missions: MissionBadge[];
 }
 export interface ChefStandings {

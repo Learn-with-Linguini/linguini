@@ -286,14 +286,21 @@ def _m06_feedback(transaction, question_id, wrong_field):
 _REVIEW_STATUSES = {"created", "analyzingScene", "awaitingObjectReview"}
 
 
-def review_marker_numbers(detected, accepted_ids, added_ids):
-    """Review numbering: detected objects keep their place, added ones follow them in order."""
+def review_marker_numbers(detected, accepted_ids, added_ids, suggested_ids=None):
+    """Keep marker numbers from the initially visible review subset."""
     accepted = {str(item) for item in accepted_ids}
+    suggested = {str(item) for item in suggested_ids or []}
+    initially_visible = [
+        obj for obj in detected if not suggested or str(obj["id"]) in suggested
+    ]
     numbers = {
-        str(obj["id"]): number for number, obj in enumerate(detected, 1)
+        str(obj["id"]): number for number, obj in enumerate(initially_visible, 1)
         if str(obj["id"]) in accepted
     }
-    numbers.update({str(item): len(detected) + number for number, item in enumerate(added_ids, 1)})
+    numbers.update({
+        str(item): len(initially_visible) + number
+        for number, item in enumerate(added_ids, 1)
+    })
     return numbers
 
 
@@ -778,7 +785,7 @@ class PostgresWorkflowRepository:
     def check_vocabulary_typing(
         self, task_id, learning_key, answer, reveal
     ) -> CheckVocabularyTypingResponse:
-        with self.read_connection() as c:
+        with self.transaction() as c:
             row = (
                 c.execute(
                     select(session_tasks)
@@ -804,13 +811,37 @@ class PostgresWorkflowRepository:
             accepted = task.answer_key.accepted_text_answers_by_vocabulary_id.get(learning_key)
             if not accepted:
                 raise PracticeConflictError("This word has no typing answer key.")
+            is_correct = not reveal and normalize_answer(answer) in {
+                normalize_answer(candidate) for candidate in accepted
+            }
+            session = self._session(c, task.session_id)
+            basil_earned = 0
+            if (
+                session.mode == "lesson"
+                and session.status in {"inProgress", "generatingTasks"}
+                and task.status not in {"completed", "skipped"}
+            ):
+                basil_earned = reward_basil(
+                    c,
+                    self.user_id,
+                    f"typing:{task.id}:{learning_key}",
+                    amount=10 if is_correct else 5,
+                    payload={
+                        "policyVersion": "basil-typing.v1",
+                        "languageProfileId": str(session.language_profile_id),
+                        "sessionId": str(session.id),
+                        "taskId": str(task.id),
+                        "learningKey": learning_key,
+                        "isCorrect": is_correct,
+                        "revealed": reveal,
+                    },
+                )
             return CheckVocabularyTypingResponse(
                 learning_key=learning_key,
-                is_correct=not reveal
-                and normalize_answer(answer)
-                in {normalize_answer(candidate) for candidate in accepted},
+                is_correct=is_correct,
                 correct_answer=accepted[0],
                 revealed=reveal,
+                basil_earned=basil_earned,
             )
 
     @staticmethod
@@ -2020,7 +2051,7 @@ class PostgresWorkflowRepository:
                     vocabulary_item_id=(
                         None if self.translator else self._catalog_word(c, profile, added.label).id
                     ),
-                    bounding_box={"x": added.x, "y": added.y, "width": 0.01, "height": 0.01},
+                    anchor_point={"x": added.x, "y": added.y},
                     attributes=request.object_attributes.get(added.id) or None,
                 )
                 confirmed.append(obj)
@@ -2397,6 +2428,7 @@ class PostgresWorkflowRepository:
             draft.get("objects", []),
             request.accepted_object_ids,
             [manual_ids[item.id] for item in request.added_objects],
+            draft.get("suggestedSceneObjectIds", []),
         )
         c.execute(
             update(sessions)
@@ -2603,6 +2635,7 @@ class PostgresWorkflowRepository:
                 False,
                 translated_scene if self.translator else _translation_preview(session),
                 supplemental_vocabulary,
+                relations,
                 # Without a translation the default lesson uses catalog words, not the pack.
                 language_context=context if self.translator else None,
             )

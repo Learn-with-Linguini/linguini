@@ -1,9 +1,10 @@
 """A0 scene mission lessons: M01, M02, M03 and M13 at the A0 (pre-A1) level.
 
 Each lesson is two tasks of three questions on two focus objects (M03: the
-learner-counted group, then a practice board). Lessons are built
-deterministically from the payload's closed, reviewed content and accepted only
-through ``validate_a0_lesson``; no model call is made.
+learner-counted group, then a practice board). A text model writes the lesson
+from the payload's closed content; it is accepted only through
+``validate_a0_lesson``, and ``fallback_a0_lesson`` builds the same shape
+deterministically whenever the model is unavailable or its lesson is rejected.
 """
 
 from __future__ import annotations
