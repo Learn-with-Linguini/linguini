@@ -105,6 +105,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | :--- | :--- | :--- |
 | `practice_session_started` | `{ assetId }` | New photo lesson session initialized |
 | `practice_session_resumed` | — | User resumes an existing incomplete practice session |
+| `practice_session_limit_shown` | `{ openSessionCount }` | Practice page blocks a new photo before upload because three unfinished practices are open |
 | `practice_photo_uploaded` | `{ assetId }` | User captures/uploads a personal camera roll photo |
 | `photo_upload_retried` | `{ source: "camera" | "userUpload" }` | Learner retries confirmation of an uploaded image after a connection or server failure |
 | `practice_scene_selected` | `{ sceneId, title }` | User selects a curated catalog scene |
@@ -115,6 +116,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `scene_analysis_retried` | `{ sessionId }` | User requests AI re-analysis of a photo |
 | `task_answer_checked` | `{ taskId, isCorrect, kind }` | Learner checks answer on an interactive exercise |
 | `task_completed` | `{ taskId, kind }` | Learner completes reading or informational task |
+| `task_finished_to_list` | `{ taskId, kind }` | Learner finishes the final task and returns to the task list |
 | `task_opened` | `{ taskId }` | User opens a specific learning task from the task list |
 | `learning_exit_clicked` | — | User exits the learning task overview back to Home |
 | `finish_lesson_clicked` | — | User completes all learning tasks and clicks "Finish lesson" |

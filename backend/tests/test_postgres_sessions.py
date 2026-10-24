@@ -511,6 +511,7 @@ def test_multiple_active_sessions_and_owner_scope(database, monkeypatch):
     third_response = create_with_asset(client, profile, third_asset, "third-asset-key")
     assert third_response.status_code == 202, third_response.text
     third = third_response.json()["session"]["id"]
+    assert client.get("/api/v1/sessions/active").json()["activeSessionCount"] == 3
     fourth = create_with_asset(client, profile, upload_asset(engine, owner), "fourth-asset-key")
     assert fourth.status_code == 409
     assert fourth.json()["detail"]["code"] == "active_session_limit_reached"

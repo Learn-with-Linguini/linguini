@@ -186,12 +186,13 @@ for (const checkEachQuestion of [true, false]) {
     assert.equal(button("Check answer")?.disabled, false);
   });
 
-  test(`${mode} unrelated grammar does not add a scene photo`, async () => {
+  test(`${mode} grammar keeps the source photo available as context`, async () => {
     const task = lesson();
     if (task.publicContent.kind !== "grammarLesson") throw new Error("Expected grammar fixture");
     task.publicContent.checkEachQuestion = checkEachQuestion;
     await mount(task, descriptionScene);
-    assert.equal(dom.window.document.querySelector(".scene"), null);
+    assert.equal(dom.window.document.querySelectorAll('.scene img[alt="Table"]').length, 1);
+    assert.equal(dom.window.document.querySelector(".scene__marker"), null);
   });
 }
 

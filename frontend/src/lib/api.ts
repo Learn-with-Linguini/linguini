@@ -526,6 +526,7 @@ export interface PracticeDetail {
     relationships: TranslatedTerm[];
   } | null;
   tasks: SessionTask[]; nextTaskId: string | null; progress: SessionProgress;
+  activeSessionCount?: number;
   personalization?: SessionPersonalization | null;
   countedGroups?: CountedGroup[];
   missionGuidance?: string[];
