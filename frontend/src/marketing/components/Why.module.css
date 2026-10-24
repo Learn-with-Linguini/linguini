@@ -1,5 +1,6 @@
 .section {
   position: relative;
+  background: var(--cream);
 }
 
 .grid {

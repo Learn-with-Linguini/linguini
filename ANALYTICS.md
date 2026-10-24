@@ -41,7 +41,8 @@ Because Linguini is a single-page application (SPA), route changes do not reload
 ### Tracked Pages & Routes
 
 #### Marketing Pages
-* `/` — Landing page with interactive hero demo and feature highlights
+* `/` — Landing page with guest-demo entry points and feature highlights
+* `/demo` — Stateless guest photo lesson with ready-made scenes and photo upload
 * `/blog` — Engineering & language learning blog index
 * `/blog/:slug` — Individual blog posts
 * `/pricing` — Pricing and plan comparison table
@@ -83,7 +84,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 ### Authentication & Account Management
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
-| `guest_preview_started` | `{ source: "signin" | "signup" }` | Visitor opens the sample photo lesson without signing in |
+| `guest_preview_started` | `{ source: "signin" | "signup" }` | Visitor opens the guest photo lesson without signing in |
 | `login_submitted` | `{ method: "email" }` | User submits the email/password sign-in form |
 | `signup_submitted` | `{ method: "email" }` | User submits new account registration |
 | `google_signin_completed` | — | Google ID token is successfully exchanged for a Supabase session |
@@ -105,6 +106,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | :--- | :--- | :--- |
 | `practice_session_started` | `{ assetId }` | New photo lesson session initialized |
 | `practice_session_resumed` | — | User resumes an existing incomplete practice session |
+| `practice_session_limit_shown` | `{ openSessionCount }` | Practice page blocks a new photo before upload because three unfinished practices are open |
 | `practice_photo_uploaded` | `{ assetId }` | User captures/uploads a personal camera roll photo |
 | `photo_upload_retried` | `{ source: "camera" | "userUpload" }` | Learner retries confirmation of an uploaded image after a connection or server failure |
 | `practice_scene_selected` | `{ sceneId, title }` | User selects a curated catalog scene |
@@ -115,6 +117,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `scene_analysis_retried` | `{ sessionId }` | User requests AI re-analysis of a photo |
 | `task_answer_checked` | `{ taskId, isCorrect, kind }` | Learner checks answer on an interactive exercise |
 | `task_completed` | `{ taskId, kind }` | Learner completes reading or informational task |
+| `task_finished_to_list` | `{ taskId, kind }` | Learner finishes the final task and returns to the task list |
 | `task_opened` | `{ taskId }` | User opens a specific learning task from the task list |
 | `learning_exit_clicked` | — | User exits the learning task overview back to Home |
 | `finish_lesson_clicked` | — | User completes all learning tasks and clicks "Finish lesson" |
@@ -195,8 +198,10 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 ### Marketing Site & Interactive Demo
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
-| `demo_stage_viewed` | `{ stage, xpGained }` | Landing page interactive hero demo advances to next stage |
-| `demo_completed` | `{ xp, lang }` | Interactive hero demo finished |
+| `guest_demo_scene_selected` | `{ sceneId, language, source: "sample" }` | Visitor starts a guest lesson from a ready-made scene |
+| `guest_demo_stage_viewed` | `{ stage, source: "sample" }` | Guest lesson advances through review, translation, task, or completion |
+| `guest_demo_completed` | `{ language, source: "sample" }` | Visitor finishes the guest lesson task |
+| `guest_demo_signup_clicked` | `{ language }` | Visitor chooses account creation after finishing the guest lesson |
 | `pricing_cta_clicked` | `{ tier }` | User clicks plan call-to-action on the pricing page |
 
 ---

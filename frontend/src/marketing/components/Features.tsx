@@ -5,13 +5,6 @@ import { Check, Close, Mic, Plus, Speaker } from "./icons";
 import { Reveal } from "./Reveal";
 import styles from "./Features.module.css";
 
-const pastas = [
-  { id: "farfalle", name: "Farfalle", line: "Bow-tie ready. Here for the streaks.", w: 360, h: 281 },
-  { id: "fusilli", name: "Fusilli", line: "Twisty, tenacious, never skips a day.", w: 276, h: 360 },
-  { id: "penne", name: "Penne", line: "Straight to the point. Loves grammar.", w: 360, h: 341 },
-  { id: "macaroni", name: "Macaroni", line: "Small, cheerful, collects every word.", w: 360, h: 333 },
-];
-
 function AppShot({ src, alt, width, height, className = "" }: { src: string; alt: string; width: number; height: number; className?: string }) {
   return (
     <figure className={`${styles.shot} ${className}`}>
@@ -77,7 +70,6 @@ function MicCheck() {
 }
 
 export function Features() {
-  const [pasta, setPasta] = useState(pastas[1]);
   const [kept, setKept] = useState<Record<string, boolean>>({ "la taza": true, "el portátil": true, "la planta": false });
 
   return (
@@ -124,53 +116,6 @@ export function Features() {
 
           <Reveal className={styles.tile}>
             <div className={styles.text}>
-              <h3>Articles come attached</h3>
-              <p>Nouns arrive with their article and gender, so you learn <i lang="es">la mesa</i>, not just <i lang="es">mesa</i>.</p>
-            </div>
-            <ul className={styles.nouns}>
-              <li><b lang="es">la mesa</b><span>feminine</span></li>
-              <li><b lang="fr">le pont</b><span>masculine</span></li>
-              <li><b lang="es">las sillas</b><span>feminine · plural</span></li>
-            </ul>
-          </Reveal>
-
-          <Reveal className={`${styles.tile} ${styles.wide} ${styles.yellow}`} delay={80}>
-            <div className={styles.text}>
-              <h3>Hear it, then say it</h3>
-              <p>
-                Every word and clue has audio. A quick mic check gets you ready to answer out loud, so the words leave your head
-                through your mouth, not just your thumbs. Rather type? That works too.
-              </p>
-            </div>
-            <MicCheck />
-          </Reveal>
-
-          <Reveal className={`${styles.tile} ${styles.wide}`}>
-            <div className={styles.text}>
-              <h3>I-Spy, both ways</h3>
-              <p>Playing solo? First Linguini gives you a clue about your photo. Then it’s your turn to describe something and let Linguini guess.</p>
-            </div>
-            <div className={styles.chat}>
-              <div className={styles.spyPhoto}>
-                <Image
-                  src="/photos/desk-flatlay.jpg"
-                  alt="A white desk with a notebook, pencil, phone, laptop and a potted plant"
-                  fill
-                  sizes="(max-width: 720px) 90vw, 380px"
-                  className={styles.spyImg}
-                />
-                <span className={`${styles.spyMarker} ${styles.spyFound}`} style={{ left: "17%", top: "12%" }} aria-hidden="true">
-                  <Check size={14} />
-                </span>
-                <span className={styles.spyMarker} style={{ left: "11%", top: "65%" }} aria-hidden="true">?</span>
-              </div>
-              <p className={styles.bubbleThem} lang="es">Veo, veo… algo que es verde y está en la mesa.</p>
-              <p className={styles.bubbleYou} lang="es">¡La planta! Ahora yo: veo algo negro y pequeño.</p>
-            </div>
-          </Reveal>
-
-          <Reveal className={styles.tile} delay={80}>
-            <div className={styles.text}>
               <h3>You have the final say</h3>
               <p>AI suggests the words. You keep the useful ones, drop the rest, and tap the photo to add anything it missed.</p>
             </div>
@@ -189,73 +134,15 @@ export function Features() {
             </ul>
           </Reveal>
 
-          <Reveal className={styles.tile}>
+          <Reveal className={`${styles.tile} ${styles.wide} ${styles.yellow}`} delay={80}>
             <div className={styles.text}>
-              <h3>Every word, filed by place</h3>
-              <p>Your vocabulary bank keeps every word with the scene you learned it in, with audio, and filters by new, learning or mastered.</p>
-            </div>
-            <div className={styles.shotStack}>
-              <AppShot src="/app-shots/vocabulary-filters.webp" alt="Vocabulary filters: All, New, Learning, Mastered" width={686} height={98} />
-              <AppShot
-                src="/app-shots/vocabulary.webp"
-                alt="Linguini vocabulary bank: the At the market scene with 7 words, including el queso, la bolsa and el tomate"
-                width={686}
-                height={798}
-              />
-            </div>
-          </Reveal>
-
-          <Reveal className={`${styles.tile} ${styles.wide} ${styles.cream}`} delay={80}>
-            <div className={styles.text}>
-              <h3>Pick your pasta</h3>
-              <p>Your avatar is a pasta shape. It shows up on your profile, your streak and the leaderboard.</p>
-              <fieldset className={styles.pastaPicker}>
-                <legend className="visually-hidden">Choose a pasta avatar</legend>
-                {pastas.map(item => (
-                  <label key={item.id} className={styles.pastaOption}>
-                    <input
-                      type="radio"
-                      name="pasta-avatar"
-                      value={item.id}
-                      checked={pasta.id === item.id}
-                      onChange={() => setPasta(item)}
-                      className="visually-hidden"
-                    />
-                    <Image src={`/pasta/${item.id}.webp`} alt={item.name} width={item.w} height={item.h} />
-                  </label>
-                ))}
-              </fieldset>
-            </div>
-            <div className={styles.avatar} aria-live="polite">
-              <div className={styles.avatarDisc}>
-                <Image key={pasta.id} src={`/pasta/${pasta.id}.webp`} alt="" width={pasta.w} height={pasta.h} className={styles.avatarImg} />
-              </div>
-              <p className={styles.avatarName}>{pasta.name}</p>
-              <p className={styles.avatarLine}>{pasta.line}</p>
-            </div>
-          </Reveal>
-
-          <Reveal className={`${styles.tile} ${styles.full} ${styles.sage}`}>
-            <div className={styles.text}>
-              <h3>Watch it add up</h3>
+              <h3>Hear it, then say it</h3>
               <p>
-                Earn Basil for every task, I-Spy round and journal entry. Your progress page counts the words you’ve learned and mastered and the scenes you’ve played, and the weekly Chefs of the Day board shows where you stand.
+                Every word and clue has audio. A quick mic check gets you ready to answer out loud, so the words leave your head
+                through your mouth, not just your thumbs. Rather type? That works too.
               </p>
-              <AppShot
-                src="/app-shots/progress.webp"
-                alt="Linguini progress page: 28 words learned, 10 mastered, 4 scenes"
-                width={716}
-                height={266}
-                className={styles.statsShot}
-              />
             </div>
-            <AppShot
-              src="/app-shots/leaderboard.webp"
-              alt="Chefs of the Day weekly Basil leaderboard, with Sofia in third place on 405 Basil"
-              width={686}
-              height={1284}
-              className={styles.boardShot}
-            />
+            <MicCheck />
           </Reveal>
         </div>
       </div>

@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { getScene } from "../data/scenes";
 import { steps } from "../data/steps";
 import type { Scene } from "../data/types";
-import { JournalCard } from "./product/JournalCard";
 import { PhotoMarkers } from "./product/PhotoMarkers";
 import { WordCard } from "./product/WordCard";
 import { Camera, Check } from "./icons";
@@ -29,42 +28,23 @@ function StepVisual({ index, scene, desk }: { index: number; scene: Scene; desk:
   if (index === 1) {
     return <PhotoMarkers scene={scene} labels className={styles.markers} sizes="(max-width: 960px) 90vw, 520px" />;
   }
-  if (index === 2) {
-    const clue = desk.ispy.es;
-    return (
-      <div className={styles.play}>
-        <WordCard word={desk.words[0]} lang="es" className={styles.playCard} />
-        <div className={styles.playSpy}>
-          <p className={styles.playLabel}>Linguini says</p>
-          <p className={styles.playClue} lang="es">{clue.clue}</p>
-          <div className={styles.playChoices}>
-            {clue.choices.slice(0, 4).map(choice => (
-              <span key={choice} className={styles.playChoice} data-correct={choice === clue.answer} lang="es">
-                {choice === clue.answer ? <Check size={16} /> : null}
-                {choice}
-              </span>
-            ))}
-          </div>
+  const clue = desk.ispy.es;
+  return (
+    <div className={styles.play}>
+      <WordCard word={desk.words[0]} lang="es" className={styles.playCard} />
+      <div className={styles.playSpy}>
+        <p className={styles.playLabel}>Linguini says</p>
+        <p className={styles.playClue} lang="es">{clue.clue}</p>
+        <div className={styles.playChoices}>
+          {clue.choices.slice(0, 4).map(choice => (
+            <span key={choice} className={styles.playChoice} data-correct={choice === clue.answer} lang="es">
+              {choice === clue.answer ? <Check size={16} /> : null}
+              {choice}
+            </span>
+          ))}
         </div>
       </div>
-    );
-  }
-  return (
-    <JournalCard
-      photos={[
-        { src: scene.photo, alt: scene.alt },
-        { src: "/photos/hillside-street.jpg", alt: "Flower-lined hillside street with a red car" },
-        { src: "/photos/sunlit-promenade.jpg", alt: "Sunlit city square with street lamps" },
-        { src: "/photos/lake-shore.jpg", alt: "Lake shore" },
-      ]}
-      title={scene.journal.es.title}
-      body={scene.journal.es.body}
-      date="Saturday, 19 Sep"
-      lang="es"
-      highlight={scene.words.map(word => word.es.word)}
-      className={styles.journal}
-      headingLevel="p"
-    />
+    </div>
   );
 }
 
@@ -93,7 +73,7 @@ export function HowItWorks() {
         <div className={`section-head ${styles.head}`}>
           <h2 id="how-title" className="section-title">From snapshot to sentence</h2>
           <p className={`section-lede ${styles.lede}`}>
-            Every Linguini session follows the same small loop, from your own photo or a ready-made scene. It fits in a coffee break, fills your vocabulary bank and leaves you with a page to keep.
+            Every Linguini session follows the same small loop, from your own photo or a ready-made scene. It fits in a coffee break, and fills your vocabulary bank.
           </p>
         </div>
 

@@ -7,7 +7,7 @@ export const pricing = {
     "Learn from your own photos or ready-made scenes",
     "Spanish, French and German, plus beginner Korean, from English",
     "Word cards, I-Spy and sentence games",
-    "Vocabulary progress, journals, streaks and Basil",
+    "Vocabulary progress, streaks and Basil",
     "No payment card required",
   ],
   plusMonthly: 7.99,
@@ -17,7 +17,6 @@ export const pricing = {
   trialDays: 7,
   free: [
     "One new photo lesson every day",
-    "One journal page a day",
     "Unlimited replays of our curated scenes",
     "Spanish, French and German, plus beginner Korean, from English",
     "Word cards, I-Spy and sentence games",
@@ -27,8 +26,6 @@ export const pricing = {
     "Up to 10 photo lessons a day",
     "Pronunciation feedback when you speak",
     "Review mode for words that haven’t stuck yet",
-    "Up to 10 photos in each journal entry",
-    "Export your journal as a PDF keepsake",
     "Early access to new languages",
   ],
 } as const;

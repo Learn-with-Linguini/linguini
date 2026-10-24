@@ -7,9 +7,8 @@ import { Close, Menu } from "./icons";
 import styles from "./SiteHeader.module.css";
 
 const links = [
-  { href: "/#try", label: "Try it" },
+  { href: "/demo", label: "Try it" },
   { href: "/#features", label: "Features" },
-  { href: "/#journal", label: "Journal" },
   { href: "/#pricing", label: "Pricing" },
   { href: "/#faq", label: "FAQ" },
   { href: "/blog", label: "Blog" },

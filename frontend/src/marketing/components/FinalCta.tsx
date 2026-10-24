@@ -13,7 +13,7 @@ type FinalCtaProps = {
 
 export function FinalCta({
   title = "Your next photo is a lesson.",
-  lede = "Sign up in under a minute, pick Spanish, French, German or beginner Korean, and turn today into your first page.",
+  lede = "Sign up in under a minute, pick Spanish, French, German or beginner Korean, and turn today’s photo into your first lesson.",
   shareUrl = site.url,
 }: FinalCtaProps) {
   return (

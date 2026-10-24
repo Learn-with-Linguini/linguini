@@ -1,10 +1,7 @@
-import { BlogSection } from "../components/blog/BlogSection";
 import { Faq } from "../components/Faq";
 import { Features } from "../components/Features";
-import { Film } from "../components/Film";
 import { FinalCta } from "../components/FinalCta";
 import { HowItWorks } from "../components/HowItWorks";
-import { JournalWall } from "../components/JournalWall";
 import { JsonLd } from "../components/JsonLd";
 import { Pricing } from "../components/Pricing";
 import { SiteFooter } from "../components/SiteFooter";
@@ -23,15 +20,12 @@ export default function HomePage() {
       <SiteHeader />
       <main id="main">
         <Hero />
-        <Film />
         <Why />
         <HowItWorks />
         <Features />
-        <JournalWall />
         <Pricing />
         <Faq />
         <FinalCta />
-        <BlogSection />
       </main>
       <SiteFooter />
       <JsonLd faq={faq} />

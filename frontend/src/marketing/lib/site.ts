@@ -24,7 +24,7 @@ export const site = {
   title: "Linguini — Learn a language from the photos you take",
   shortTitle: "Linguini",
   description:
-    "Snap a café, a street, a sunset. Linguini turns the words in your photo into bite-size language games and a journal page. Learn Spanish, French, German or beginner Korean in the public beta.",
+    "Snap a café, a street, a sunset. Linguini turns the words in your photo into bite-size language games. Learn Spanish, French, German or beginner Korean in the public beta.",
   tagline: "Learn the language of your day.",
   locale: "en_US",
   ogImage: "/og/linguini-beta.png",
@@ -38,7 +38,6 @@ export const site = {
     "beginner Korean vocabulary",
     "learn a language with pictures",
     "photo vocabulary",
-    "language journal",
     "gamified language learning",
     "I-Spy language game",
   ],

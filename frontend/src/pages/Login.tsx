@@ -191,7 +191,7 @@ export function Login() {
       <div className="stack-2 center-text">
         <a
           className="btn btn--secondary"
-          href="/?photo=hillside-street#try"
+          href="/demo"
           onClick={() => trackAction("guest_preview_started", { source: mode })}
         >
           Try a photo lesson

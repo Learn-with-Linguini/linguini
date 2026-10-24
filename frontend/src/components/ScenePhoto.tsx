@@ -36,7 +36,8 @@ export function ScenePhoto({
   const selectLocation = (event: MouseEvent<HTMLDivElement>) => {
     if (!onLocationSelect || event.currentTarget.querySelector(".scene-image--error")) return;
 
-    const bounds = event.currentTarget.getBoundingClientRect();
+    const media = event.currentTarget.querySelector<HTMLElement>(".scene__media");
+    const bounds = media?.getBoundingClientRect() ?? event.currentTarget.getBoundingClientRect();
     if (!bounds.width || !bounds.height) return;
     onLocationSelect({
       x: Math.max(0, Math.min(100, ((event.clientX - bounds.left) / bounds.width) * 100)),
@@ -60,8 +61,9 @@ export function ScenePhoto({
       tabIndex={onLocationSelect ? 0 : undefined}
       aria-label={onLocationSelect ? locationLabel ?? "Choose a location in the scene" : undefined}
     >
-      <SceneVisual scene={scene} className="scene__art" lazy={lazy} />
-      {markers.map((item, index) => {
+      <div className="scene__media">
+        <SceneVisual scene={scene} className="scene__art" lazy={lazy} />
+        {markers.map((item, index) => {
         const active = item.id === activeItemId || Boolean(activeItemIds?.includes(item.id));
         const custom = item.id.startsWith("custom-");
         const className = [
@@ -104,7 +106,8 @@ export function ScenePhoto({
             <span className="scene__marker-label">{hideNumbers ? "" : item.marker}</span>
           </span>
         );
-      })}
+        })}
+      </div>
     </div>
   );
 }

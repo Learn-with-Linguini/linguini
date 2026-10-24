@@ -186,12 +186,13 @@ for (const checkEachQuestion of [true, false]) {
     assert.equal(button("Check answer")?.disabled, false);
   });
 
-  test(`${mode} unrelated grammar does not add a scene photo`, async () => {
+  test(`${mode} grammar keeps the source photo available as context`, async () => {
     const task = lesson();
     if (task.publicContent.kind !== "grammarLesson") throw new Error("Expected grammar fixture");
     task.publicContent.checkEachQuestion = checkEachQuestion;
     await mount(task, descriptionScene);
-    assert.equal(dom.window.document.querySelector(".scene"), null);
+    assert.equal(dom.window.document.querySelectorAll('.scene img[alt="Table"]').length, 1);
+    assert.equal(dom.window.document.querySelector(".scene__marker"), null);
   });
 }
 
@@ -322,7 +323,7 @@ test("vocabulary feedback keeps the correct word and a locked answer", async () 
   assert.match(text(), /Incorrect\. The correct answer is cup/);
   assert.equal(button("cup")?.disabled, true);
   assert.equal(button("Try again"), undefined);
-  assert.equal(button("Type a word")?.disabled, false);
+  assert.equal(button("Next question")?.disabled, false);
 });
 
 function vocabularyTask(): SessionTask {
@@ -375,8 +376,8 @@ test("refreshing vocabulary checks keeps the learner's typing stage and unfinish
   const accepted = { questionId: "word1", acceptedOptionId: "cup", isCorrect: true, correctOptionId: "cup", basilEarned: 10 };
   replies.push(() => Response.json(accepted));
   await click("cup");
-  await waitFor(() => assert.ok(button("Type a word")));
-  await click("Type a word");
+  await waitFor(() => assert.ok(button("Next question")));
+  await click("Next question");
   const input = dom.window.document.querySelector<HTMLInputElement>('input[aria-label="Type cup"]');
   assert.ok(input);
   await surface.act(async () => {
@@ -423,8 +424,8 @@ test("teaching cards highlight their photo object and practice interleaves recog
   await click("Next question");
   replies.push(() => Response.json({ questionId: "word-2", acceptedOptionId: "libro", isCorrect: true, correctOptionId: "libro", basilEarned: 10 }));
   await click("libro");
-  await waitFor(() => assert.ok(button("Type a word")));
-  await click("Type a word");
+  await waitFor(() => assert.ok(button("Next question")));
+  await click("Next question");
 
   const typing = dom.window.document.querySelector<HTMLInputElement>('input[aria-label="Type cup"]');
   assert.ok(typing);
