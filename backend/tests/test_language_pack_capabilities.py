@@ -1,7 +1,7 @@
 import shutil
 from pathlib import Path
 
-from app.ai.features.learning_tasks import mission_a0, mission_a2, mission_m01
+from app.ai.features.learning_tasks import mission_a0, mission_a2
 from app.language_packs.capabilities import lesson_plan, mission_capability
 from app.language_packs.evaluation import EvaluationRecord, evaluation_identity
 from app.language_packs.loader import load_mission_catalog, load_pack
@@ -47,24 +47,21 @@ def _human_reviewed_pack(pack):
 def test_catalog_loads_and_preserves_current_mission_purpose_order():
     from typing import get_args
 
-    from app.ai.features.learning_tasks import (
-        mission_m02,
-        mission_m03,
-        mission_m04,
-        mission_m05,
-        mission_m06,
-    )
+    from app.ai.features.learning_tasks import mission_m04, mission_m05, mission_m06
+    from app.language_packs.lessons import m01 as pack_mission_m01
+    from app.language_packs.lessons import m02 as pack_mission_m02
+    from app.language_packs.lessons import m03 as pack_mission_m03
 
     catalog = load_mission_catalog()
     expected = {
         ("M01", "A0"): mission_a0.ORDERS["M01"] * 2,
-        ("M01", "A1"): mission_m01._ORDER,
+        ("M01", "A1"): pack_mission_m01.PURPOSES["A1"],
         ("M01", "A2"): mission_a2._EXPECTED["M01"],
         ("M02", "A0"): mission_a0.ORDERS["M02"] * 2,
-        ("M02", "A1"): mission_m02._ORDER,
+        ("M02", "A1"): pack_mission_m02.PURPOSES["A1"],
         ("M02", "A2"): mission_a2._EXPECTED["M02"],
         ("M03", "A0"): mission_a0.ORDERS["M03"] * 2,
-        ("M03", "A1"): mission_m03._ORDER,
+        ("M03", "A1"): pack_mission_m03.PURPOSES["A1"],
         ("M03", "A2"): mission_a2._EXPECTED["M03"],
         # dev's A0 situation questions have no purposes; three sentence slots feed all six.
         ("M04", "A0"): ["askOwnership", "answerOwnership", "sayOwnedObject"],

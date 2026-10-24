@@ -1,9 +1,11 @@
 """Provider-neutral orchestrator for model-backed scene translation.
 
 Builds the shared versioned request, calls a ``TextModelClient``, validates
-the returned text locally, and returns the domain result. With a language pack,
-a second call reviews the meaning of each translation and sends confident
-mistranslations back for one repair before any vocabulary card is built. Contains no
+the returned text locally, and returns the domain result. Lessons always pass their
+language pack: a second call then reviews the meaning of each translation and sends
+confident mistranslations back for one repair before any vocabulary card is built.
+I-Spy games, room photos and the curated-template script translate without a pack
+(no ``language_context``), with the unguided prompt and optional curated templates. Contains no
 provider-specific logic. Learner-supplied content reaches the tracer only
 through ``record_content``, which is gated by the capture-content setting.
 """

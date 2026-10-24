@@ -39,6 +39,8 @@ globals.fetch = async (input: unknown, init?: RequestInit) => {
   const path = url.replace(/^https?:\/\/[^/]+/, "");
   const method = init?.method ?? "GET";
   if (path === "/api/v1/me") return Response.json(user);
+  // Practice languages come only from pack discovery.
+  if (path === "/api/v1/me/practice-languages") return Response.json(["es", "fr", "de", "ko"].map(code => ({ code, levels: ["A0", "A1", "A2"], experimental: true })));
   if (path === "/api/v1/onboarding/placement" && method === "POST") return Response.json({ proficiencyLevel: "A0", message: "ok" });
   if (path === "/api/v1/me/language-profiles" && method === "POST") {
     // The server activates a newly created profile, which changes the active profile id.

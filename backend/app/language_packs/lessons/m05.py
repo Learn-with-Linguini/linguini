@@ -14,17 +14,17 @@ from app.ai.features.learning_tasks.mission_a0_situations import (
     A0SituationLesson,
     validate_a0_situation_lesson,
 )
-from app.ai.features.learning_tasks.mission_m05 import fallback_m05_lesson
+from app.ai.features.learning_tasks.mission_m05 import assemble_m05_lesson
 from app.schemas.roleplay import parse_roleplay_facts
-from app.services.mission_lessons_a0_situations import (
-    _choice_question,
-    _lower_first,
-    _marker_question,
-    _prep_add,
-    _target_texts,
-    a0_situation_lesson_task,
+from app.services.lesson_tasks.a0_situations import (
+    choice_question,
+    lower_first,
+    marker_question,
+    prep_add,
+    situation_lesson_task,
+    target_texts,
 )
-from app.services.mission_lessons_m05 import _premise, m05_lesson_task
+from app.services.lesson_tasks.m05 import m05_lesson_task, premise
 
 from ..generation import ApprovedTerm, ApprovedVocabulary, ConfirmedPreference
 from .base import PackMission, for_level
@@ -304,7 +304,7 @@ def _build_a0(ctx):
     answer_word = ctx.label("yes-answer" if mine.likes else "no-answer")
     answer_word = answer_word.rstrip(".。")
     answer_spelling = ctx.labels["yes-answer" if mine.likes else "no-answer"].romanization
-    q5_complete = f"{answer_word}, {_lower_first(statement.text)}"
+    q5_complete = f"{answer_word}, {lower_first(statement.text)}"
     q5_translation = f"{'Yes' if mine.likes else 'No'}, {statement.translation}"
     what = ctx.label("what-choose")
     choice = None if mine.likes else ctx.sentence_by_id("sayChoice", "other")
@@ -333,42 +333,41 @@ def _build_a0(ctx):
 
     if answer_spelling and statement.romanization:
         ctx.extra_spellings[q5_complete] = (
-            f"{answer_spelling.rstrip('.')}, {_lower_first(latin_of(statement))}"
+            f"{answer_spelling.rstrip('.')}, {lower_first(latin_of(statement))}"
         )
     if choice is not None and (spelling := _joined_spelling(ctx, dislike, choice)):
         ctx.extra_spellings[q6_complete] = spelling
     prep = []
     for sentence in (like, dislike, question):
-        _prep_add(prep, sentence.text, sentence.translation)
-    _prep_add(prep, what, ctx.labels["what-choose"].meaning)
+        prep_add(prep, sentence.text, sentence.translation)
+    prep_add(prep, what, ctx.labels["what-choose"].meaning)
     if choice is not None:
-        _prep_add(prep, choice.text, choice.translation)
-    _prep_add(prep, q5_complete, q5_translation)
-    _prep_add(prep, q6_complete, q6_translation)
-    _prep_add(prep, other_statement.text, other_statement.translation)
+        prep_add(prep, choice.text, choice.translation)
+    prep_add(prep, q5_complete, q5_translation)
+    prep_add(prep, q6_complete, q6_translation)
+    prep_add(prep, other_statement.text, other_statement.translation)
 
     rows = [focus, other, *(row for row in ctx.rows if row["key"] not in {focus["key"],
                                                                            other["key"]})][:3]
     payload = ctx.payload(
         title=ctx.mission.title, approvedObjects=rows, focusObjectId=focus["key"],
-        learnerFacts={"preference": {"sceneObjectIds": [focus["key"], other["key"]],
-                                     "chosenObjectId": focus["key"], "reaction": reaction}},
+        learnerFacts={"preference": _learner_choice(ctx, mine, focus, reaction)},
         prep=prep, negativeMarker=dislike_chunk,
     )
     section = "Picnic choice"
     typed = not ctx.pack.language.romanization_required
     q3_correct = like_chunk if mine.likes else dislike_chunk
     questions = [
-        _marker_question(payload, rows, focus, section,
+        marker_question(payload, rows, focus, section,
                          "What did you pick? Tap it in your photo.", "recognise-preference"),
-        _choice_question(
+        choice_question(
             "M05-Q2", "Listen to the sentence. Like or don't like?",
             "Listen to the sentence. Like or don't like?", section, focus["key"],
             ["Like", "Don't like"], "Like" if mine.likes else "Don't like",
             "recognise-preference", payload, salt="q2", audio_text=statement.text,
             listen_first=True,
         ),
-        _choice_question(
+        choice_question(
             "M05-Q3", "Complete the sentence.", "Choose the words that complete the sentence.",
             section, focus["key"], [like_chunk, dislike_chunk], q3_correct, "say-preference",
             payload, salt="q3", gap_type="chunkChoice", slot_template=template,
@@ -380,7 +379,7 @@ def _build_a0(ctx):
         option.option_id: "like" if option.label == "Like" else "dislike"
         for option in questions[1].options
     }
-    picture = _choice_question(
+    picture = choice_question(
         "M05-Q4", "Choose the object that completes the sentence.",
         "Choose the object that completes the sentence.", section, focus["key"],
         [focus_phrase, other_phrase], focus_phrase, "say-preference", payload, salt="q4",
@@ -391,10 +390,10 @@ def _build_a0(ctx):
     picture.option_object_keys = {option.option_id: keys[option.label]
                                   for option in picture.options}
     questions.append(picture)
-    questions.append(_choice_question(
+    questions.append(choice_question(
         "M05-Q5", "Finish the conversation.", "Choose the answer that finishes the conversation.",
-        section, focus["key"], [_lower_first(like.text), _lower_first(dislike.text)],
-        _lower_first(statement.text), "say-preference", payload, salt="q5",
+        section, focus["key"], [lower_first(like.text), lower_first(dislike.text)],
+        lower_first(statement.text), "say-preference", payload, salt="q5",
         gap_type="dialogueGap", slot_template=f"{answer_word}, ___", complete_chunk=q5_complete,
         complete_translation=q5_translation,
         dialogue=[
@@ -403,7 +402,7 @@ def _build_a0(ctx):
              "translation": f"{'Yes' if mine.likes else 'No'}, ___"},
         ],
     ))
-    last = _choice_question(
+    last = choice_question(
         "M05-Q6", "Finish the conversation.", "Choose the answer that finishes the conversation.",
         section, focus["key"], q6_options, q6_correct, "say-preference", payload, salt="q6",
         gap_type="dialogueGap", slot_template=q6_template, complete_chunk=q6_complete,
@@ -418,12 +417,21 @@ def _build_a0(ctx):
     last.option_object_keys = {option.option_id: q6_keys[option.label]
                                for option in last.options}
     questions.append(last)
-    payload["approvedTargetTexts"] = _target_texts(prep, questions)
+    payload["approvedTargetTexts"] = target_texts(prep, questions)
     result = A0SituationLesson(title=ctx.mission.title, questions=questions)
     validate_a0_situation_lesson(payload, result)
-    task = a0_situation_lesson_task(ctx.session_id, ctx.mission, payload, result,
-                                    ctx.vocabulary_ids, prepared=payload)
+    task = situation_lesson_task(ctx.session_id, ctx.mission, payload, result,
+                                 ctx.vocabulary_ids)
     return result, task, payload
+
+
+def _learner_choice(ctx, mine, focus, reaction):
+    """What the learner chose, as dev records it: the objects compared, and the pick."""
+    compared = ctx.by_fact.get(mine.compared_fact_id) if mine.compared_fact_id else None
+    if compared is None:
+        return {"sceneObjectIds": [focus["key"]], "chosenObjectId": None, "reaction": reaction}
+    return {"sceneObjectIds": [focus["key"], compared["key"]], "chosenObjectId": focus["key"],
+            "reaction": reaction}
 
 
 def _build_a1(ctx):
@@ -456,7 +464,7 @@ def _build_a1(ctx):
         found = dict(
             objectKey=row["key"], marker=row["marker"], label=row["label"], noun=row["noun"],
             gender=row["gender"], sentence=sentence.text, contrast=contrast.text,
-            nounPhrase=row["name"], premise=_premise(assigned, row["label"]),
+            nounPhrase=row["name"], premise=premise(assigned, row["label"]),
             subjectType=assigned.subject_type, subjectNames=assigned.subject_names,
             preference=assigned.preference,
             person="first" if preference.person == LEARNER else "third",
@@ -489,7 +497,7 @@ def _build_a1(ctx):
         choose_prompt_translation=ctx.labels["choose-sentence"].meaning,
         explanation=_explanation(ctx, mine, choice, cast[1].english_name),
     )
-    result = fallback_m05_lesson(payload)
+    result = assemble_m05_lesson(payload)
     task = m05_lesson_task(ctx.session_id, ctx.mission, payload, result, ctx.vocabulary_ids)
     return result, task, payload
 

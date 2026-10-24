@@ -12,8 +12,8 @@ from __future__ import annotations
 import random
 
 from app.ai.features.learning_tasks.mission import fold
-from app.ai.features.learning_tasks.mission_a0 import ORDERS, SLOT, fallback_a0_lesson
-from app.services.mission_lessons_a0 import a0_lesson_task
+from app.ai.features.learning_tasks.mission_a0 import ORDERS, SLOT, assemble_a0_lesson
+from app.services.lesson_tasks.a0 import a0_lesson_task
 
 from ..schema import pair_with
 from .base import PackMission, for_level
@@ -137,7 +137,7 @@ def _build_a0(ctx):
         ])),
         explanation=paired.explanation,
     )
-    result = fallback_a0_lesson(payload)
+    result = assemble_a0_lesson(payload)
     task = a0_lesson_task(ctx.session_id, ctx.mission, payload, result, ctx.vocabulary_ids)
     return result, task, payload
 

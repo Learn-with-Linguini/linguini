@@ -1,9 +1,8 @@
 # Language-pack foundation
 
-This package supplies the default-off A0/A1/A2 runtime path for pack missions (M01,
-M02, M03, M04, M05, M06 and M13) as well as explicit local previews. Packs are loaded lazily only when the flag
-is enabled or a command explicitly requests one. Other missions use their existing
-implementations.
+This package supplies the only A0/A1/A2 mission-lesson path (M01, M02, M03, M04, M05,
+M06 and M13) as well as explicit local previews. Packs are loaded lazily, the first time
+a lesson or a command needs one.
 
 Packs live at `<root>/<locale>/<register>/` (for example `packs/es-ES/everyday/`). `pack.toml`
 holds metadata and references every content file: `labels.toml` (fixed learner-facing text keyed by
@@ -33,19 +32,22 @@ The fixture pack is unreviewed test data and is not a claim of linguistic valida
 
 ## Normal workflow and local switches
 
-`LINGUINI_LANGUAGE_PACKS` is a boolean switch, default `false`. Only `true`
-(case-insensitive) enables it. Off retains the legacy dispatch, including its
-deterministic builders. On uses the existing mission eligibility/planning flow,
-then binds the actual session's confirmed object instances, attributes, relations,
-counts, translated vocabulary and register to the mission's slots. With the flag on,
-M01, M02, M03, M04, M05, M06 and M13 never use their legacy builders. No sample input or handwritten
-`plan_specs` is used by the application.
+Mission lessons come only from language packs: there is no switch and no legacy
+dispatch. Lessons use the existing mission eligibility/planning flow, then bind the
+actual session's confirmed object instances, attributes, relations, counts, translated
+vocabulary and register to the mission's slots. A language with no pack, or whose pack
+has no ready mission (not human-reviewed and released, outside a local experiment), has
+no pack context, so its photo lessons are refused when created (409
+`lesson_language_unavailable`); the frontend offers only languages pack discovery returns.
+Every lesson translates its scene with its pack, including a lesson at a level with no
+ready mission (B1 and above), which keeps the regular lesson. No sample input
+or handwritten `plan_specs` is used by the application. Without
+`LINGUINI_LANGUAGE_PACK_DIRS` the bundled `app/language_packs/packs` are discovered.
 
 Set these values in the ignored **backend/.env.local** for a local experiment:
 
 ```dotenv
 APP_ENV=local
-LINGUINI_LANGUAGE_PACKS=true
 LINGUINI_LANGUAGE_PACK_DIRS=app/language_packs/packs/es-ES/everyday
 LINGUINI_LANGUAGE_PACK_REGISTER=everyday
 LINGUINI_LANGUAGE_PACK_EXPERIMENTAL=true
@@ -73,8 +75,8 @@ Pack availability extends mission candidates only with pack missions (M01-M06, M
 that the app offers at the level and the pack has ready.
 Photo eligibility and release checks still apply. Other missions and I-Spy retain
 their existing language availability. Discovery does not constitute linguistic
-validation or release approval. With the feature flag off no packs are discovered
-for the selector or mission planning. Invalid discovery configuration is exposed
+validation or release approval: a pack with no ready mission is neither offered in
+the selector nor planned. Invalid discovery configuration is exposed
 as a recoverable selector error with a retry action.
 
 Run from `backend/`, retaining the existing database/authentication/provider setup:
@@ -163,8 +165,8 @@ lessons/
   m13.py        M13: same layout (A0), plus split_pair and form_choices
 ```
 
-Every mission the app implements now has a pack implementation, so with the flag on no
-mission falls back to a legacy builder.
+Every mission the app implements has a pack implementation, and no mission falls back
+to a legacy builder.
 
 Every mission module has the same sections:
 
@@ -179,8 +181,9 @@ Every mission module has the same sections:
    romanization and tile join modes.
 3. **Checks**: `check_inputs` (before any model call), `check_lesson` (the assembled
    question count, order and interactions; `common.check_questions` covers the shared
-   rules) and `photo_reasons` (replacing dictionary-based legacy photo rules; it also
-   receives the learner's `counted_groups` and `mission_choices`).
+   rules) and `photo_reasons` (the mission's photo rules beyond the definition's generic
+   requirements, read from open vocabulary; it also receives the learner's
+   `counted_groups` and `mission_choices`).
 
 A mission may also set `vocabulary`, which adds closed pack words to the lesson
 vocabulary before proposals and planning (M03 adds the pack's number words, M04 its
@@ -188,6 +191,15 @@ possessives, M05 its cast names, M06 its order words), and `facts`, which adds t
 own facts first (M04's owners, M05's preferences, M06's order). The
 `facts` hook receives the saved mission plan's `learner_facts` and `roleplay_facts`,
 which the workflow now passes to pack lessons as dev's builders already received them.
+
+Pack lessons keep dev's lesson contract, so the frontend and grading are unchanged:
+result models, validators and assemblers (`assemble_m04_lesson`, `assemble_a0_lesson`,
+…) in `app/ai/features/learning_tasks/mission_*.py`, and task builders (answer keys,
+grading evidence, corrections) in `app/services/lesson_tasks/`. The legacy payload
+builders, closed word lists (`a0_lexicon`, reviewed colours and attributes, A2 language
+tables) and their model prompts are removed; photo rules are the definition's generic
+requirements plus each mission's `photo_reasons`, and review hints
+(`app/services/shortfall_steps.py`) name any confirmed object or detail.
 
 To add a mission: add its templates to `missions.toml` (matching the content version
 of its `missions/definitions` file), write `lessons/mXX.py` in this layout, add it to
@@ -199,9 +211,9 @@ sentences are not used by pack lessons.
 
 A session's language context records which mission templates are ready and which
 the pack declares (`readyMissions`, `declaredMissions`; older snapshots load as M01).
-With the flag on, every registered mission is pack-owned: its ready versions are
-planned and others are not offered, never replaced by the legacy builder. Missions
-without a pack implementation keep their legacy builders. Learner-confirmed counts
+Every registered mission is pack-owned: its ready versions are planned and others
+are not offered. A planned mission the session's pack does not own fails generation into
+the normal recoverable error state. Learner-confirmed counts
 are bound as `counted_groups` facts for missions that need them.
 
 M02 reuses dev's M02 task builders, grading and corrections at every level; the
@@ -247,8 +259,8 @@ or a cast owner for wrong-owner options). Six constructions write the sentences:
 `owned-object` (La taza es mía. / El libro es de Ana.), `possessive-statement` (Es mi
 taza.), `whose-question` (¿De quién es la taza?) and `owned-description` (Mi taza es
 roja.); A2 also reuses M02's `target-clue`. The lessons reuse dev's M04 question sets
-and task builders: A0's six-question lost-and-found situation (dev's
-`a0_situation_lesson_task` now accepts content prepared elsewhere), A1's role-play and
+and task builders: A0's six-question lost-and-found situation (the shared
+`situation_lesson_task` takes content prepared elsewhere), A1's role-play and
 A2's five questions. A deterministic rule checks possessive agreement: when a sentence
 uses gendered forms of the bound possessive and none is the noun's own (mein Tasse, la
 taza es mío), it fails; forms for any gender (mi, mir) and genderless languages are not

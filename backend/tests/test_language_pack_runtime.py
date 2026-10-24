@@ -154,7 +154,6 @@ class MockSpanishProvider:
 
 @pytest.fixture
 def runtime(monkeypatch):
-    monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "true")
     monkeypatch.setenv("APP_ENV", "test")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_EXPERIMENTAL", "true")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", str(PACK))
@@ -262,26 +261,18 @@ def test_normal_dispatch_flag_on_spanish_mocked(level, count, runtime):
         assert len(task.public_content.questions[3].planning_facts) == 3
 
 
-@pytest.mark.parametrize("level", ["A0", "A1", "A2"])
-def test_flag_off_uses_unchanged_legacy_dispatch(level, runtime, monkeypatch):
-    monkeypatch.delenv("LINGUINI_LANGUAGE_PACKS")
-    provider = MockSpanishProvider()
-    (task,) = dispatch(level, runtime, provider)
-    assert task.public_content.practice_level == level
-    assert not provider.requests
-    assert all(q.sentence_join_modes is None for q in task.public_content.questions)
-
-
-def test_release_gate_is_not_bypassed_by_feature_flag(runtime, monkeypatch):
+def test_unreleased_packs_never_generate_or_fall_back_to_legacy_lessons(runtime, monkeypatch):
+    # An unreviewed pack has no ready mission: no context, so no lesson and no model call.
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_EXPERIMENTAL", "false")
     provider = MockSpanishProvider()
-    with pytest.raises(LearningTaskGenerationError, match="human review"):
+    with pytest.raises(LearningTaskGenerationError, match="no language pack lesson"):
         dispatch("A0", runtime, provider)
     assert not provider.requests
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_EXPERIMENTAL", "true")
     monkeypatch.setenv("APP_ENV", "production")
-    with pytest.raises(LearningTaskGenerationError, match="human review"):
+    with pytest.raises(LearningTaskGenerationError, match="no language pack lesson"):
         dispatch("A0", runtime, provider)
+    assert not provider.requests
 
 
 def test_exhausted_repairs_recoverable_and_no_fallback(runtime):

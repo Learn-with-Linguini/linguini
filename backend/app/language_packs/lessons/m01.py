@@ -12,11 +12,11 @@ from collections import Counter
 
 from app.ai.features.learning_tasks.mission_a0 import (
     A0LessonResult,
-    _build_question,
-    _choice_question,
-    _marker_question,
-    _other,
-    _sections,
+    build_question,
+    choice_question,
+    marker_question,
+    other_object,
+    task_sections,
 )
 from app.ai.features.learning_tasks.mission_a2 import MissionA2Question, MissionA2Result
 from app.ai.features.learning_tasks.mission_m01 import (
@@ -26,9 +26,9 @@ from app.ai.features.learning_tasks.mission_m01 import (
     M01LessonResult,
     M01Question,
 )
-from app.services.mission_lessons_a0 import a0_lesson_task
-from app.services.mission_lessons_a2 import m01_a2_task
-from app.services.mission_lessons_m01 import m01_lesson_task
+from app.services.lesson_tasks.a0 import a0_lesson_task
+from app.services.lesson_tasks.a2 import m01_a2_task
+from app.services.lesson_tasks.m01 import m01_lesson_task
 
 from ..schema import join_pack_chunks
 from .base import PackMission, for_level
@@ -358,9 +358,9 @@ def _build_a0(ctx):
         approvedNumberWords={},
     )
     questions = []
-    for index, (section, target) in enumerate(_sections(payload), 1):
+    for index, (section, target) in enumerate(task_sections(payload), 1):
         spec = ctx.spec(f"confirmName-{index}")
-        other = _other(payload, target, f"tile-{index}")
+        other = other_object(payload, target, f"tile-{index}")
         extra_noun = next((
             term.forms_by_key.get("bare", term.target_text)
             for term in ctx.vocabulary.terms
@@ -368,15 +368,15 @@ def _build_a0(ctx):
             and term.linguistic.get("alternative-kind") == "noun"
             and term.linguistic.get("contrast-for") == target["fact_id"]
         ), other["noun"])
-        marker = _marker_question(payload, "matchName", section, target, target["name"],
+        marker = marker_question(payload, "matchName", section, target, target["name"],
                                   index=index)
-        confirm = _choice_question(
+        confirm = choice_question(
             payload, "confirmName", section, target, target["isIt"], payload["yesNo"],
             payload["yesNo"][0 if spec.truth else 1], index=index, shuffle=False,
             statement_true=spec.truth, stated_key=ctx.by_fact[spec.bindings["object"]]["key"],
             audio_text=target["isIt"],
         )
-        built = _build_question(payload, "buildIdentify", section, target, payload["whatIsThis"],
+        built = build_question(payload, "buildIdentify", section, target, payload["whatIsThis"],
                                 target["identify"], extra_noun, index=index)
         # Use only chunks derived after complete-sentence validation.
         built["token_bank"] = ctx.chunks(

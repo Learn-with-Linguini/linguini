@@ -683,6 +683,9 @@ def load_packs(roots: Sequence[Path] | None = None) -> PackSet:
                 continue
             expanded.append(str(Path(match).resolve()))
     resolved = tuple(dict.fromkeys(expanded))
-    revision = tuple((str(path), path.stat().st_mtime_ns, path.stat().st_size)
-                     for root in resolved for path in sorted(Path(root).rglob("*.toml")))
+    revision = tuple(
+        (str(path), stat.st_mtime_ns, stat.st_size)
+        for root in resolved for path in sorted(Path(root).rglob("*.toml"))
+        for stat in (path.stat(),)
+    )
     return _load_packs_for_roots(resolved, revision)

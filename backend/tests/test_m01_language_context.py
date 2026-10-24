@@ -143,7 +143,6 @@ def test_context_reaches_translation_cards_and_m01_without_reresolution(
     translated = translator(provider).translate(payload(runtime), language_context=context)
     intro, words = cards(context, runtime, translated)
     # Configuration changes after capture must not change the chosen language path.
-    monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "false")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", "missing/*")
     generator = MockSpanishProvider()
     task = service(generator).generate_pack_m01(
@@ -279,14 +278,11 @@ def test_scene_suitability_not_legacy_dictionary_membership(pack_dir, runtime, l
     assert mission in lesson_missions(
         "lesson", {"target_language_code": "es", "proficiency_level": level}, context
     )
-    if level == "A0":
-        assert not photo_eligibility(mission, runtime[0], runtime[1]).eligible
 
 
-def test_flag_off_and_old_saved_tasks_need_no_context(pack_dir, runtime, monkeypatch):
-    monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "false")
-    monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", "missing/*")
-    assert resolve_language_context("es") is None
+def test_languages_without_a_pack_and_old_saved_tasks_need_no_context(pack_dir, runtime):
+    # The configured folder holds only the Spanish pack.
+    assert resolve_language_context("it") is None
     # Legacy service retains its prompt and schema; optional additions stay absent.
     provider = MockTranslationProvider()
     translator(provider).translate(payload(runtime))
@@ -434,7 +430,6 @@ def test_saved_legacy_vocabulary_task_can_reload_without_new_metadata(
     serialized = intro.model_dump_json()
     assert "languageContext" not in serialized
     assert "romanization" not in serialized
-    monkeypatch.setenv("LINGUINI_LANGUAGE_PACKS", "true")
     restored = SessionTask.model_validate_json(serialized)
     assert restored.public_content.language_context is None
     assert restored.public_content.words[0].target_text == intro.public_content.words[0].target_text
@@ -460,19 +455,13 @@ def test_missing_target_preparation_label_has_no_english_fallback(pack_dir, runt
 
 
 @pytest.mark.parametrize("level", ["A0", "A1", "A2"])
-def test_pack_context_preserves_other_mission_availability(pack_dir, runtime, level):
+def test_missions_come_only_from_the_pack_context(pack_dir, runtime, level):
     context = resolve_language_context("es")
     profile = {"target_language_code": "es", "proficiency_level": level}
-    legacy = lesson_missions("lesson", profile, None)
-    enabled = lesson_missions("lesson", profile, context)
-    assert [m for m in enabled if m.mission_id != "M01"] == [
-        m for m in legacy if m.mission_id != "M01"
-    ]
-    for mission in legacy:
-        if mission.mission_id != "M01":
-            assert photo_eligibility(mission, runtime[0], runtime[1], language_context=context) == (
-                photo_eligibility(mission, runtime[0], runtime[1])
-            )
+    # Without a pack context there are no mission lessons: legacy builders are gone.
+    assert lesson_missions("lesson", profile, None) == []
+    planned = lesson_missions("lesson", profile, context)
+    assert planned and all(context.is_ready(mission) for mission in planned)
 
 
 def test_analysis_snapshot_is_reused_without_discovery(pack_dir, runtime, monkeypatch):

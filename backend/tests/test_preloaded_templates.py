@@ -83,19 +83,70 @@ def _remap(text: str, payload: dict) -> str:
     return text
 
 
+# Requests a pack lesson makes; the multilingual tests' mock answers them.
+PACK_SCHEMAS = frozenset({
+    "language_pack_candidates_v1", "language_vocabulary_proposals", "language_content_review",
+})
+
+
+def _pack_translation(payload):
+    """A pack-guided translation: each noun with its own article, gender and display."""
+    from test_language_pack_multilingual import LEXICON
+
+    lex = LEXICON[payload.get("targetLanguage", "es").lower()]
+
+    def colour(value):
+        forms = lex["colours"].get(value)
+        return (forms if isinstance(forms, str) else forms[0]) if forms else value
+
+    def row(field, item):
+        source = item["source"]
+        if field == "objects":
+            noun, article, gender = lex["nouns"].get(source, (source, None, None))
+            return dict(key=item["key"], source=source, translation=noun, article=article,
+                        gender=gender, native_display=" ".join(filter(None, [article, noun])))
+        translation = (colour(source) if field == "attributes"
+                       else lex["relations"].get(source, source))
+        return dict(key=item["key"], source=source, translation=translation,
+                    native_display=translation)
+
+    return json.dumps({
+        field: [row(field, item) for item in payload.get(field, [])]
+        for field in ("objects", "attributes", "relationships")
+    }, ensure_ascii=False)
+
+
 class SceneModel:
-    """A mocked provider answering translation, lesson and clue requests."""
+    """A mocked provider answering translation, lesson and clue requests.
+
+    Pack lessons (the only mission lessons) are answered by the multilingual tests'
+    deterministic pack mock, in the requested language.
+    """
 
     def __init__(self, error=None) -> None:
         self.requests = []
         self.error = error
+        self.pack_providers = {}
+
+    def _pack(self, request):
+        from test_language_pack_multilingual import MockPackProvider
+
+        content = json.loads(request.user_content)
+        language = (content.get("language") or {}).get("code", "es")
+        provider = self.pack_providers.setdefault(language, MockPackProvider(language))
+        return provider.generate(request)
 
     def generate(self, request, **_):
         self.requests.append(request.json_schema_name)
         if self.error is not None:
             raise self.error
-        payload = json.loads(request.user_content)
-        if request.json_schema_name == "scene_translation_v1":
+        if request.json_schema_name in PACK_SCHEMAS:
+            return self._pack(request)
+        # A repair request appends prose and the rejected response after the payload.
+        payload = json.JSONDecoder().raw_decode(request.user_content)[0]
+        if request.json_schema_name == "scene_translation_v1" and "language_context" in payload:
+            body = _pack_translation(payload)
+        elif request.json_schema_name == "scene_translation_v1":
             body = json.dumps({
                 field: [
                     {

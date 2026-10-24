@@ -39,17 +39,18 @@ def get_allowed_origins() -> list[str]:
     ]
 
 
+# The packs bundled with the app, discovered when no pack folders are configured.
+BUNDLED_LANGUAGE_PACKS = Path(__file__).parent / "language_packs" / "packs"
+
+
 def get_language_pack_dirs() -> tuple[Path, ...]:
-    return tuple(
+    """Configured pack folders, or the bundled packs when none are set."""
+    configured = tuple(
         Path(value.strip())
         for value in os.getenv("LINGUINI_LANGUAGE_PACK_DIRS", "").split(os.pathsep)
         if value.strip()
     )
-
-
-def get_language_packs_enabled() -> bool:
-    """Default-off runtime switch, independent of the release allowlist."""
-    return os.getenv("LINGUINI_LANGUAGE_PACKS", "false").strip().lower() == "true"
+    return configured or (BUNDLED_LANGUAGE_PACKS,)
 
 
 def get_language_pack_register() -> str:

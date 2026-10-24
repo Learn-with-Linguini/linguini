@@ -13,8 +13,8 @@ from app.ai.features.learning_tasks.mission import fold
 from app.ai.features.learning_tasks.mission_a0 import (
     INSTRUCTIONS,
     A0LessonResult,
-    _choice_question,
-    _marker_question,
+    choice_question,
+    marker_question,
 )
 from app.ai.features.learning_tasks.mission_a2 import MissionA2Question, MissionA2Result
 from app.ai.features.learning_tasks.mission_m02 import (
@@ -22,9 +22,9 @@ from app.ai.features.learning_tasks.mission_m02 import (
     FIND_SECTION,
     M02LessonResult,
 )
-from app.services.mission_lessons_a0 import a0_lesson_task
-from app.services.mission_lessons_a2 import m02_a2_task
-from app.services.mission_lessons_m02 import m02_lesson_task
+from app.services.lesson_tasks.a0 import a0_lesson_task
+from app.services.lesson_tasks.a2 import m02_a2_task
+from app.services.lesson_tasks.m02 import m02_lesson_task
 
 from .base import PackMission, for_level
 from .common import LessonContext, SpecBuilder, check_questions, latin_of, usable_objects
@@ -319,10 +319,10 @@ def _build_a0(ctx):
     for index, (row, other) in enumerate(focus, 1):
         section = f"Task {index} · {row['label']}"
         questions += [
-            _marker_question(payload, "findNamed", section, row, row["find"], index=index),
-            _choice_question(payload, "chooseName", section, row, INSTRUCTIONS["chooseName"],
+            marker_question(payload, "findNamed", section, row, row["find"], index=index),
+            choice_question(payload, "chooseName", section, row, INSTRUCTIONS["chooseName"],
                              [row["name"], other.text], row["name"], index=index),
-            _marker_question(payload, "listenSelect", section, row, row["name"],
+            marker_question(payload, "listenSelect", section, row, row["name"],
                              index=index, listen_first=True),
         ]
     result = A0LessonResult(title="Find the named objects", questions=questions)

@@ -198,7 +198,7 @@ export function Profile() {
             </select>
           </label>
 
-          {practiceLanguages.isError ? <p role="alert">Additional practice languages could not be loaded. <button type="button" onClick={() => void practiceLanguages.refetch()}>Retry</button></p> : null}
+          {practiceLanguages.isError ? <p role="alert">Practice languages could not be loaded. <button type="button" onClick={() => void practiceLanguages.refetch()}>Retry</button></p> : null}
 
           <label className="profile-setting">
             <span>

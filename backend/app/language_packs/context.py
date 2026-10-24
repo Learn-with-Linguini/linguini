@@ -2,15 +2,23 @@
 
 import hashlib
 import json
+import logging
+import os
 from dataclasses import dataclass
+from pathlib import Path
 
-from app.config import get_language_pack_register, get_language_packs_enabled
+from app.config import (
+    get_language_pack_experimental,
+    get_language_pack_register,
+    get_language_pack_releases,
+)
 from app.schemas.language_context import LanguageDisplayContext
 
 from .fingerprint import pack_fingerprint
 from .loader import load_packs
 from .schema import LanguagePack
 
+logger = logging.getLogger(__name__)
 
 def mission_key_text(key) -> str:
     mission_id, level, content_version = key
@@ -83,8 +91,8 @@ class LanguageContext:
         return any(key[0] == mission_id for key in self._keys(self.declared_missions, level))
 
     def owns(self, mission_id):
-        """With packs on, a mission that has a pack implementation never uses its legacy
-        builder: it is generated from the pack when ready and otherwise not offered."""
+        """Whether the mission has a pack implementation: it is generated from the pack
+        when ready and otherwise not offered."""
         from .lessons import PACK_MISSION_IDS
 
         return mission_id in PACK_MISSION_IDS
@@ -134,19 +142,50 @@ class LanguageContext:
         )
 
 
+# Resolved contexts by loaded pack set and release gates. Every request resolves one, and
+# readiness only changes with the packs, the gates or the evidence on disk. A loaded pack
+# set is cached for the process, so its id is stable.
+_CONTEXTS: dict[tuple, "LanguageContext | None"] = {}
+
+
+def _evidence_revision():
+    folder = os.getenv("LINGUINI_LANGUAGE_PACK_EVIDENCE_DIR", "")
+    if not folder or not Path(folder).is_dir():
+        return folder
+    return folder, tuple(
+        (path.name, path.stat().st_mtime_ns, path.stat().st_size)
+        for path in sorted(Path(folder).glob("*.json"))
+    )
+
+
 def resolve_language_context(language, register=None):
-    if not get_language_packs_enabled():
-        return None
+    """The language's pack context, or ``None`` when it has no pack with a ready mission.
+
+    Mission lessons come only from language packs, so ``None`` means the language has
+    no mission lessons. A broken or ambiguous pack configuration still raises.
+    """
+    packs = load_packs()
+    key = (
+        id(packs), language.casefold(), register or get_language_pack_register(),
+        get_language_pack_experimental(), get_language_pack_releases(), _evidence_revision(),
+    )
+    if key not in _CONTEXTS:
+        _CONTEXTS[key] = _resolve(packs, language, register)
+    return _CONTEXTS[key]
+
+
+def _resolve(packs, language, register):
     from .capabilities import pack_mission_keys
     from .runtime import check_pack_readiness, mission_capability_for
 
-    packs = load_packs()
     # Profiles historically normalize codes to lowercase; pack tags preserve
     # canonical BCP 47 casing. Compare tags without changing the pack's locale.
     canonical = next(
         (p.language.code for p in packs.packs if p.language.code.casefold() == language.casefold()),
         language,
     )
+    if not any(p.language.code == canonical for p in packs.packs):
+        return None
     selected_register = register or get_language_pack_register()
     if not selected_register:
         matches = [p for p in packs.packs if p.language.code == canonical]
@@ -176,9 +215,9 @@ def resolve_language_context(language, register=None):
             continue
         ready.append(mission_key_text(key))
     if not ready:
-        raise ValueError(
-            f"Pack {pack.pack_id!r} has no ready mission levels: " + "; ".join(errors)
-        )
+        # Unreviewed or unreleased packs stay hidden outside explicit local experiments.
+        logger.info("Pack %r has no ready mission levels: %s", pack.pack_id, "; ".join(errors))
+        return None
     ready_levels = tuple(
         level for level in ("A0", "A1", "A2") if any(f":{level}:" in key for key in ready)
     )

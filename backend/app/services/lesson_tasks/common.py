@@ -1,4 +1,4 @@
-"""Shared mission fields and the mission-tagged grammar lesson task."""
+"""Task-building helpers shared by every mission lesson."""
 
 import re
 from uuid import UUID, uuid5
@@ -20,51 +20,6 @@ def mission_fields(mission):
 
 def mission_version(mission):
     return f"{mission.mission_id}-{mission.practice_level}.v{mission.content_version}"
-
-
-def with_mission(task, mission):
-    """``task`` snapshotted to ``mission``'s ID, level and content version."""
-    data = task.model_dump(by_alias=False)
-    data["public_content"] = {**data["public_content"], **mission_fields(mission)}
-    return SessionTask.model_validate(data)
-
-
-def noun_gender(term, word):
-    if term is not None and term.gender:
-        return term.gender
-    return getattr(word.gender, "value", word.gender)
-
-
-# Catalog content may record a noun's gender as its definite article.
-_ARTICLE_GENDERS = {
-    "el": "masculine",
-    "le": "masculine",
-    "la": "feminine",
-    "der": "masculine",
-    "den": "masculine",
-    "dem": "masculine",
-    "des": "masculine",
-    "die": "feminine",
-    "das": "neuter",
-}
-
-
-def normalized_gender(value):
-    value = getattr(value, "value", value)
-    if not isinstance(value, str):
-        return None
-    gender = _ARTICLE_GENDERS.get(value.strip().casefold(), value.strip().casefold())
-    return gender if gender in {"masculine", "feminine", "neuter"} else None
-
-
-def mission_gender(term, word):
-    """``noun_gender`` with article-style genders mapped; elided ``l'`` falls back to the word."""
-    for gender in (term.gender if term is not None else None,
-                   getattr(word.gender, "value", word.gender)):
-        gender = normalized_gender(gender)
-        if gender in {"masculine", "feminine", "neuter"}:
-            return gender
-    return noun_gender(term, word)
 
 
 def correct_label(question):

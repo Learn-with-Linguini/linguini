@@ -1,7 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { languages } from "../config/languages";
-import { checkSelectableLanguage, languageDisplayName } from "../lib/languageChoices";
+import { checkSelectableLanguage, languageDisplayName, languageFlag } from "../lib/languageChoices";
 import { createLanguageProfile, getCurrentUser, getLanguageProfiles, getPackPracticeLanguages, updateLanguageProfile, updateUser } from "../lib/api";
 import { saveOnboardingProfile } from "../lib/onboardingProfile";
 import { clearStoredAttribution, getStoredAttribution } from "../lib/attribution";
@@ -27,8 +26,8 @@ async function loadAccount(signal?: AbortSignal) {
 
 type Account = Awaited<ReturnType<typeof loadAccount>>;
 
-async function saveProfileSettingsWork(code: string, patch: UserPatch, preferences: LanguageProfilePatch) {
-  await checkSelectableLanguage(code, preferences.proficiencyLevel, () => getPackPracticeLanguages());
+async function saveProfileSettingsWork(code: string, patch: UserPatch, preferences: LanguageProfilePatch, keep?: string) {
+  await checkSelectableLanguage(code, preferences.proficiencyLevel, () => getPackPracticeLanguages(), keep);
   await updateUser(patch);
   // A previous save may have created the profile before a later request failed.
   const profiles = await getLanguageProfiles();
@@ -51,7 +50,7 @@ export function useAccount() {
   });
   const profileSaving = save.isPending;
   const activeProfile = data?.profiles.find((profile) => profile.isActive) ?? null;
-  const option = languages.find((language) => language.code === activeProfile?.targetLanguageCode);
+  const activeCode = activeProfile?.targetLanguageCode;
 
   const run = useCallback(async (action: () => Promise<unknown>): Promise<boolean> => {
     if (inFlight.current) return false;
@@ -62,15 +61,15 @@ export function useAccount() {
   }, [save.mutateAsync]);
 
   const setLanguage = useCallback((code: string, minutes?: number, level?: ProficiencyLevel) => run(async () => {
-    await checkSelectableLanguage(code, level, () => getPackPracticeLanguages());
+    await checkSelectableLanguage(code, level, () => getPackPracticeLanguages(), activeCode);
     const profile = data?.profiles.find((row) => row.targetLanguageCode.toLowerCase() === code && row.sourceLanguageCode === "en");
     if (profile) return updateLanguageProfile(profile.id, { isActive: true, ...(minutes === undefined ? {} : { dailyGoalMinutes: minutes }), ...(level === undefined ? {} : { proficiencyLevel: level }) });
     return createLanguageProfile(code, minutes ?? 10, level ?? "A1");
-  }), [data, run]);
+  }), [activeCode, data, run]);
   const saveUser = useCallback((patch: UserPatch) => run(() => updateUser(patch)), [run]);
   const saveProfileSettings = useCallback((code: string, patch: UserPatch, preferences: LanguageProfilePatch) => run(
-    () => saveProfileSettingsWork(code, patch, preferences)
-  ), [run]);
+    () => saveProfileSettingsWork(code, patch, preferences, activeCode)
+  ), [activeCode, run]);
   // Optimistic variant: patches the cached account so callers can navigate immediately; rolls back on error.
   const startProfileSettingsSave = useCallback((code: string, userPatch: UserPatch, preferences: LanguageProfilePatch): boolean => {
     if (inFlight.current) return false;
@@ -90,14 +89,14 @@ export function useAccount() {
       };
     });
     setError(null);
-    save.mutate(() => saveProfileSettingsWork(code, userPatch, preferences), {
+    save.mutate(() => saveProfileSettingsWork(code, userPatch, preferences, activeCode), {
       onError: () => {
         if (snapshot !== undefined) queryClient.setQueryData(queryKeys.account, snapshot);
         void queryClient.invalidateQueries({ queryKey: queryKeys.account });
       },
     });
     return true;
-  }, [save.mutate, queryClient]);
+  }, [activeCode, save.mutate, queryClient]);
   const activateLanguageProfile = useCallback((id: string) => run(async () => {
     if (!data?.profiles.some((profile) => profile.id === id)) throw new Error("Language profile not found.");
     return updateLanguageProfile(id, { isActive: true });
@@ -134,8 +133,8 @@ export function useAccount() {
     learner: {
       name: data?.user.displayName ?? "",
       languageCode: activeProfile?.targetLanguageCode ?? "",
-      language: option?.name ?? (activeProfile ? languageDisplayName(activeProfile.targetLanguageCode) : "Choose a language"),
-      languageFlag: option?.flag ?? "",
+      language: activeCode ? languageDisplayName(activeCode) : "Choose a language",
+      languageFlag: activeCode ? languageFlag(activeCode) : "",
       level: activeProfile?.proficiencyLevel ?? "A1",
       dailyMinutes: activeProfile?.dailyGoalMinutes ?? null,
       goal: data?.user.learningGoal ?? "",
