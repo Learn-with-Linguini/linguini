@@ -31,6 +31,9 @@ from app.schemas.enums import SessionMode, TaskKind
 from app.schemas.media import MediaAsset
 from app.schemas.users import LanguageProfile, User
 
+# A thin scene is rejected on mission profiles; these tests cover the regular lesson.
+pytestmark = pytest.mark.usefixtures("regular_lesson")
+
 
 @pytest.fixture
 def database(monkeypatch):

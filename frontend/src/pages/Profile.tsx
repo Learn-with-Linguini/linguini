@@ -15,6 +15,7 @@ import { useAppState } from "../state/useAppState";
 import { savedPastaAvatar } from "../lib/onboardingDraft";
 import { useAuth } from "../state/Auth";
 import { MissionBadges } from "../components/MissionBadges";
+import { useGamification } from "../state/gamification";
 
 const socialIcons = {
   instagram: InstagramIcon,
@@ -39,9 +40,9 @@ export function Profile() {
   const [passwordUpdating, setPasswordUpdating] = useState(false);
   const [surveyOpen, setSurveyOpen] = useState(false);
   const [pendingLanguageCode, setPendingLanguageCode] = useState<string | null>(null);
-  const { learner, user, activeProfile, progress, progressLoading, progressError, profileError, profileSaving, saveLanguageProfile, saveUser } = useAppState();
+  const { learner, user, activeProfile, profileError, profileSaving, saveLanguageProfile, saveUser, languageProfiles, activateLanguageProfile } = useAppState();
   const tier = accountTiers[user?.tier ?? "beta"];
-  const weeklyBasil = progress?.leaderboard.find(row => row.isYou)?.xp ?? 0;
+  const basil = useGamification();
 
   useEffect(() => {
     if (!deleteOpen) return;
@@ -59,9 +60,17 @@ export function Profile() {
   };
 
   const pendingLanguage = languages.find(language => language.code === pendingLanguageCode);
-  const closeLanguageDialog = () => setPendingLanguageCode(null);
-  const confirmLanguageChange = () => {
+  // Profiles are only created by onboarding, so an existing one means this language is already set up.
+  const pendingProfile = pendingLanguage ? languageProfiles.find(profile =>
+    profile.targetLanguageCode.toLowerCase() === pendingLanguage.code && profile.sourceLanguageCode === "en") : undefined;
+  const closeLanguageDialog = () => { if (!profileSaving) setPendingLanguageCode(null); };
+  const confirmLanguageChange = async () => {
     if (!pendingLanguage) return;
+    if (pendingProfile) {
+      trackAction("language_switched", { language: pendingLanguage.code });
+      if (await activateLanguageProfile(pendingProfile.id)) setPendingLanguageCode(null);
+      return;
+    }
     trackAction("language_change_onboarding_started", { language: pendingLanguage.code });
     navigate("/onboarding", { state: { from: "/profile", languageChangeCode: pendingLanguage.code } });
   };
@@ -145,17 +154,20 @@ export function Profile() {
           <ChevronRightIcon size={20} />
         </button>
       </section>
-      {progressLoading ? <InlineLoader label="Loading your profile…" /> : null}
-      {progressError ? <p role="alert">{progressError} Reload to retry.</p> : null}
       {profileError ? <p role="alert">{profileError}</p> : null}
 
-      {!progressLoading && !progressError ? <section className="profile-basil" aria-labelledby="profile-basil-heading">
+      <section className="profile-basil" aria-labelledby="profile-basil-heading">
         <h2 id="profile-basil-heading">Your Basil</h2>
-        <div className="profile-basil__grid">
-          <div><span className="profile-basil__icon"><BasilIcon size={24} /></span><span>This week</span><strong>{weeklyBasil}</strong></div>
-          <div><span className="profile-basil__icon"><BasilIcon size={24} /></span><span>All time</span><strong>{progress?.xp ?? 0}</strong></div>
-        </div>
-      </section> : null}
+        {basil.isPending ? <InlineLoader compact label="Loading your Basil…" />
+          : basil.isError ? <p role="alert">We couldn’t load your Basil. Reload to retry.</p>
+          : <>
+            <p className="small muted">Across all languages. Weeks start Monday at 00:00 UTC.</p>
+            <div className="profile-basil__grid">
+              <div><span className="profile-basil__icon"><BasilIcon size={24} /></span><span>This week</span><strong>{basil.data.basil.weekly}</strong></div>
+              <div><span className="profile-basil__icon"><BasilIcon size={24} /></span><span>All time</span><strong>{basil.data.basil.lifetime}</strong></div>
+            </div>
+          </>}
+      </section>
 
       <section className="profile-section" aria-labelledby="account-tier-heading">
         <h2 id="account-tier-heading">Your plan</h2>
@@ -460,11 +472,16 @@ export function Profile() {
               </IconButton>
             </div>
             <p id={`${languageDialogTitleId}-description`}>
-              We’ll ask a few setup questions for {pendingLanguage.name} before making it your active language. Your progress in {learner.language} will stay saved.
+              {pendingProfile
+                ? `You’ve already set up ${pendingLanguage.name}, so you’ll pick up where you left off. Your progress in ${learner.language} will stay saved.`
+                : `We’ll ask a few setup questions for ${pendingLanguage.name} before making it your active language. Your progress in ${learner.language} will stay saved.`}
             </p>
+            {pendingProfile && profileError ? <p role="alert">{profileError}</p> : null}
             <div className="account-delete-actions">
-              <Button variant="quiet" block onClick={closeLanguageDialog}>Keep {learner.language}</Button>
-              <Button block onClick={confirmLanguageChange}>Set up {pendingLanguage.name}</Button>
+              <Button variant="quiet" block disabled={profileSaving} onClick={closeLanguageDialog}>Keep {learner.language}</Button>
+              <Button block disabled={profileSaving} onClick={() => void confirmLanguageChange()}>
+                {pendingProfile ? `Switch to ${pendingLanguage.name}` : `Set up ${pendingLanguage.name}`}
+              </Button>
             </div>
           </section>
         </div>

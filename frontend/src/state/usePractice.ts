@@ -5,6 +5,8 @@ import type { PracticeReview } from "../lib/api";
 import type { ConfirmGuessBody, PracticeDetail, SessionStatus, TaskAnswer, TaskActionResult } from "../lib/api";
 import { applyTaskResult, keepClientProgress } from "../lib/practiceUpdates";
 import { friendlyError, queryKeys } from "../lib/queryKeys";
+import { shortfallFromError } from "../lib/sceneShortfall";
+import type { SceneShortfall } from "../lib/api";
 import { gamificationKeys } from "../lib/gamification";
 import { gameResourceKeys } from "../lib/gameResources";
 
@@ -19,6 +21,8 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
   const [practiceSaving, setSaving] = useState(false);
   const [practiceError, setError] = useState<string | null>(null);
   const [practiceStalled, setStalled] = useState(false);
+  // What a rejected review said the scene still needs; cleared by the next review.
+  const [reviewShortfall, setReviewShortfall] = useState<SceneShortfall | null>(null);
   const busy = useRef(false);
   const completing = useRef(false);
   const learningDirty = useRef(false);
@@ -190,7 +194,7 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
   const retryCompletion = useCallback(() => { startCompletion(); }, [startCompletion]);
   const saveReview = useCallback(async (review: PracticeReview) => {
     if (!session || busy.current) return false;
-    busy.current = true; setSaving(true); setError(null);
+    busy.current = true; setSaving(true); setError(null); setReviewShortfall(null);
     const previous = session;
     applySession(current => current?.session.id === session.session.id
       ? { ...current, session: { ...current.session, status: "generatingTasks" } }
@@ -207,9 +211,12 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
       return true;
     } catch (error) {
       applySession(current => current?.session.id === previous.session.id ? previous : current);
-      setError(friendlyError(error));
+      const shortfall = shortfallFromError(error);
+      // The shortfall notice explains this rejection, so it replaces the generic alert.
+      if (shortfall) setReviewShortfall(shortfall);
+      else setError(friendlyError(error));
       return false;
     } finally { busy.current = false; setSaving(false); }
   }, [session, loadSession, applySession, withClientProgress]);
-  return { session, practiceSaving, practiceError, practiceStalled, startSession, loadSession, retryProcessing, retryAnalysis, actOnTask, completeSession, completionPending: completion.isPending, completionError, retryCompletion, flushLearningChanges, saveReview, micReady, setMicReady };
+  return { session, practiceSaving, practiceError, practiceStalled, startSession, loadSession, retryProcessing, retryAnalysis, actOnTask, completeSession, completionPending: completion.isPending, completionError, retryCompletion, flushLearningChanges, saveReview, reviewShortfall, micReady, setMicReady };
 }

@@ -24,6 +24,9 @@ from app.schemas.sessions import ReviewPracticeRequest
 from app.services.background import ThreadPoolBackgroundRunner
 from tests.test_learning_task_service import tasks as learning_tasks
 
+# A thin scene is rejected on mission profiles; these tests cover the regular lesson.
+pytestmark = pytest.mark.usefixtures("regular_lesson")
+
 CONFIGURED = {
     "AI_OPENAI_API_KEY": "sk-test",
     "AI_GEMINI_API_KEY": "gemini-test",

@@ -10,6 +10,9 @@ from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.repositories.practice import PracticeConflictError
 from app.schemas.sessions import ReviewPracticeRequest
 
+# A thin scene is rejected on mission profiles; these tests cover the regular lesson.
+pytestmark = pytest.mark.usefixtures("regular_lesson")
+
 
 def test_processing_transition_preserves_draft_and_records_timeout_clock():
     from datetime import datetime
@@ -183,7 +186,8 @@ def test_review_rebuilds_tasks_only_for_selected_objects():
         "id": profile_id,
         "source_language_code": "en",
         "target_language_code": "es",
-        "proficiency_level": "A2",
+        # B1 has no implemented missions, so it keeps the regular lesson's tasks.
+        "proficiency_level": "B1",
     }
 
     @contextmanager
@@ -394,7 +398,11 @@ def test_review_maps_manual_relation_endpoints_and_preserves_only_trusted_proven
         vocabulary_item_id=word.id, source_language_code="en", translated_text="table"
     )
     objects = [
-        SceneObject(session_id=session.id, label=label, vocabulary_item_id=word.id)
+        SceneObject(
+            session_id=session.id, label=label, vocabulary_item_id=word.id,
+            bounding_box={"x": 0.2, "y": 0.3, "width": 0.2, "height": 0.3},
+            source_object_key=f"detected-{label}",
+        )
         for label in ["chair", "table"]
     ]
     original = SceneObjectRelation(
@@ -437,6 +445,18 @@ def test_review_maps_manual_relation_endpoints_and_preserves_only_trusted_proven
         ],
     )
     repo.review(session.id, session.language_profile_id, request)
+    object_writes = [
+        call.args[0].compile().params
+        for call in connection.execute.call_args_list
+        if getattr(call.args[0], "is_insert", False)
+        and call.args[0].table.name == "scene_objects"
+    ]
+    manual = next(row for row in object_writes if row["label"] == "plant")
+    assert manual["bounding_box"] is None
+    assert manual["anchor_point"] == {"x": 0.1, "y": 0.2}
+    detected = next(row for row in object_writes if row["label"] == "chair")
+    assert detected["bounding_box"] == {"x": 0.2, "y": 0.3, "width": 0.2, "height": 0.3}
+    assert detected["source_object_key"] == "detected-chair"
     writes = [
         call.args[0].compile().params
         for call in connection.execute.call_args_list

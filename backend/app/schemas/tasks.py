@@ -87,6 +87,7 @@ class VocabularyLearningWord(ApiModel):
     term_type: Literal["object", "attribute", "relationship"] = "object"
     vocabulary_item_id: UUID | None = None
     scene_object_id: UUID | None = None
+    related_scene_object_ids: list[UUID] = Field(default_factory=list, max_length=2)
     target_text: NonEmptyText
     translation: NonEmptyText
     part_of_speech: PartOfSpeech
@@ -853,6 +854,7 @@ class CheckVocabularyTypingResponse(ApiModel):
     is_correct: bool
     correct_answer: NonEmptyText
     revealed: bool
+    basil_earned: int = 0
 
 
 class VocabularyChecksResponse(ApiModel):

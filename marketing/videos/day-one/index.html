@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Linguini — Day One (LinkedIn)</title>
+  <style>
+    @font-face {
+      font-family: 'Baloo';
+      src: url('assets/Baloo2-ExtraBold.ttf');
+      font-weight: 800;
+    }
+    @font-face {
+      font-family: 'Nunito';
+      src: url('assets/NunitoSans-Bold.ttf');
+      font-weight: 700;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #FFF9ED;
+      font-family: 'Nunito', sans-serif;
+      color: #263238;
+    }
+    #root {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: #FFF9ED;
+    }
+    .absolute { position: absolute; }
+    .scene {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      opacity: 0;
+      visibility: hidden;
+    }
+    .scene.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Cards */
+    .card {
+      background: #ffffff;
+      border: 2px solid #f0e6cf;
+      border-radius: 28px;
+      box-shadow: 0 20px 45px rgba(38, 50, 56, 0.08);
+      overflow: hidden;
+    }
+    .card--lifted {
+      box-shadow: 0 30px 60px rgba(38, 50, 56, 0.12);
+    }
+
+    /* Header */
+    .header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 110px;
+      padding: 36px 70px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 100;
+    }
+    .brand-pill {
+      background: #ffffff;
+      padding: 10px 24px;
+      border-radius: 999px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid #f0e6cf;
+    }
+    .brand-pill img {
+      height: 38px;
+      display: block;
+    }
+    .day-badge {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #E85D32;
+      color: #FFF9ED;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      padding: 12px 26px;
+      border-radius: 999px;
+      box-shadow: 0 6px 18px rgba(232, 93, 50, 0.3);
+    }
+
+    /* Step badge */
+    .number-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .number-badge .num {
+      font-family: 'Baloo', sans-serif;
+      font-size: 48px;
+      line-height: 1;
+      color: #E85D32;
+    }
+    .number-badge .label {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: 3px;
+      color: #21716F;
+      text-transform: uppercase;
+    }
+
+    /* Typography */
+    .headline-main {
+      font-family: 'Baloo', sans-serif;
+      font-size: 68px;
+      line-height: 1.12;
+      letter-spacing: -1.5px;
+      color: #263238;
+      margin: 0 0 16px 0;
+    }
+    .headline-accent { color: #E85D32; }
+    .headline-teal { color: #21716F; }
+    .subtext {
+      font-size: 29px;
+      line-height: 1.45;
+      color: #5b6670;
+      margin: 0;
+      max-width: 780px;
+    }
+
+    /* Subtitle bar */
+    .subtitle-bar-wrap {
+      position: absolute;
+      bottom: 40px;
+      left: 70px;
+      right: 70px;
+      display: flex;
+      justify-content: center;
+      z-index: 100;
+    }
+    .subtitle-bar {
+      background: rgba(38, 50, 56, 0.92);
+      color: #ffffff;
+      font-size: 26px;
+      font-weight: 700;
+      padding: 16px 36px;
+      border-radius: 999px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      letter-spacing: 0.5px;
+      text-align: center;
+    }
+
+    /* Progress */
+    .progress-bar-track {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 8px;
+      background: rgba(0, 0, 0, 0.08);
+      z-index: 100;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: #E85D32;
+    }
+
+    /* Mascot */
+    .mascot-host {
+      position: absolute;
+      bottom: 50px;
+      right: 70px;
+      width: 140px;
+      height: 140px;
+      z-index: 90;
+    }
+    .mascot-host img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    /* Word chips (app marker style) */
+    .word-chip {
+      position: absolute;
+      z-index: 5;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #FFF9ED;
+      border: 3px solid #263238;
+      color: #263238;
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-size: 24px;
+      font-weight: 800;
+      box-shadow: 5px 6px 0 #F9B233;
+      white-space: nowrap;
+    }
+    .word-chip .dot {
+      width: 12px;
+      height: 12px;
+      background: #E85D32;
+      border-radius: 50%;
+    }
+
+    /* Numbered photo markers (ScenePhoto style) */
+    .pmark {
+      position: absolute;
+      z-index: 5;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: #E85D32;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Baloo', sans-serif;
+      font-size: 26px;
+      border: 3px solid #ffffff;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    }
+    .pmark-ring {
+      position: absolute;
+      z-index: 4;
+      border-radius: 50%;
+      border: 4px solid #21716F;
+      box-shadow: 0 0 0 6px rgba(33, 113, 111, 0.25), 0 4px 14px rgba(0,0,0,0.2);
+      opacity: 0;
+    }
+
+    /* Scene-analysis word list (PracticeAnalysis) */
+    .analysis-card {
+      background: #ffffff;
+      border: 2px solid #f0e6cf;
+      border-radius: 24px;
+      box-shadow: 0 24px 50px rgba(38, 50, 56, 0.1);
+      overflow: hidden;
+    }
+    .analysis-card .ahead {
+      padding: 18px 26px 10px;
+      border-bottom: 2px solid #f6efdd;
+    }
+    .analysis-card .ahead strong {
+      display: block;
+      font-size: 24px;
+      font-weight: 800;
+      color: #263238;
+    }
+    .analysis-card .ahead small {
+      font-size: 18px;
+      color: #8a949b;
+    }
+    .rrow {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 11px 26px;
+      font-size: 25px;
+      font-weight: 800;
+      color: #263238;
+      border-bottom: 1px solid #f6efdd;
+      overflow: hidden;
+    }
+    .rrow:last-child { border-bottom: none; }
+    .rrow .mnum {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #E85D32;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Baloo', sans-serif;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .rrow .rmv {
+      margin-left: auto;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 2px solid #e9e2d0;
+      background: #fff;
+      color: #9aa4ab;
+      font-size: 19px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* I-Spy (ISpyPhase1) */
+    .clue-card {
+      background: #ffffff;
+      border: 2px solid #f0e6cf;
+      border-radius: 24px;
+      box-shadow: 0 24px 50px rgba(38, 50, 56, 0.1);
+      padding: 20px 28px;
+    }
+    .clue-card .clue-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .clue-card .clue-label {
+      font-size: 17px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #8a949b;
+    }
+    .clue-card .speaker {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid #e9e2d0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+    .clue-quote {
+      font-family: 'Baloo', sans-serif;
+      font-size: 33px;
+      color: #263238;
+      line-height: 1.2;
+      margin: 0;
+    }
+    .choice-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .choice {
+      padding: 15px 22px;
+      border-radius: 16px;
+      border: 2px solid #e9e2d0;
+      font-size: 24px;
+      font-weight: 800;
+      background: #ffffff;
+      color: #263238;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .choice .tick { opacity: 0; font-size: 22px; }
+
+    /* Revisit card (Vocabulary scene card) */
+    .revisit-card {
+      background: #ffffff;
+      border: 2px solid #f0e6cf;
+      border-radius: 28px;
+      box-shadow: 0 30px 60px rgba(38, 50, 56, 0.12);
+      overflow: hidden;
+    }
+    .revisit-photo {
+      position: relative;
+      height: 400px;
+      overflow: hidden;
+    }
+    .revisit-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .revisit-count {
+      position: absolute;
+      left: 20px;
+      top: 20px;
+      background: rgba(38, 50, 56, 0.88);
+      color: #FFF9ED;
+      font-size: 20px;
+      font-weight: 800;
+      padding: 8px 18px;
+      border-radius: 999px;
+    }
+    .revisit-btn {
+      position: absolute;
+      right: 20px;
+      bottom: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #E85D32;
+      color: #FFF9ED;
+      font-family: 'Baloo', sans-serif;
+      font-size: 24px;
+      padding: 12px 26px;
+      border-radius: 999px;
+      box-shadow: 0 8px 20px rgba(232, 93, 50, 0.4);
+    }
+    .revisit-body { padding: 22px 28px 26px; }
+    .revisit-title {
+      font-family: 'Baloo', sans-serif;
+      font-size: 34px;
+      color: #263238;
+      margin: 0 0 14px;
+    }
+    .vrow {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 9px 0;
+      border-bottom: 1px solid #f6efdd;
+    }
+    .vrow:last-child { border-bottom: none; }
+    .vrow .vw strong {
+      display: block;
+      font-size: 26px;
+      font-weight: 800;
+      color: #263238;
+    }
+    .vrow .vw small {
+      font-size: 19px;
+      color: #6f787d;
+    }
+    .vrow .vhear {
+      margin-left: auto;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 2px solid #e9e2d0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+  </style>
+  <script src="node_modules/gsap/dist/gsap.min.js"></script>
+</head>
+<body>
+  <div data-hf-id="hf-lz9r" id="root" data-composition-id="day-one" data-width="1920" data-height="1080" data-duration="30" data-fps="30">
+
+    <!-- Persistent header -->
+    <header data-hf-id="hf-hr6f" class="header">
+      <div data-hf-id="hf-9c95" class="brand-pill">
+        <img data-hf-id="hf-rd1t" src="assets/linguini-wordmark.png" alt="Linguini">
+      </div>
+      <div data-hf-id="hf-jtqg" class="day-badge">
+        <span data-hf-id="hf-h6x5">IN BETA</span>
+      </div>
+    </header>
+
+    <!-- Subtitle bar -->
+    <div data-hf-id="hf-4pop" class="subtitle-bar-wrap">
+      <div data-hf-id="hf-19ux" class="subtitle-bar" id="sub-bar">Day one. Your first lesson is already on the table.</div>
+    </div>
+
+    <!-- Progress -->
+    <div data-hf-id="hf-okbn" class="progress-bar-track">
+      <div data-hf-id="hf-g1d8" class="progress-bar-fill" id="progress-fill"></div>
+    </div>
+
+    <!-- Mascot -->
+    <div data-hf-id="hf-qcgn" class="mascot-host" id="mascot">
+      <img data-hf-id="hf-ixik" src="assets/linguini-logo.png" alt="Linguini Mascot">
+    </div>
+
+    <!-- SCENE 0: Hook (0–4s) -->
+    <section data-hf-id="hf-84cb" class="scene clip" id="scene-0" data-start="0" data-duration="4">
+      <div data-hf-id="hf-8js6" class="absolute" style="left: 120px; top: 220px; width: 850px;">
+        <h1 data-hf-id="hf-gayt" class="headline-main">
+          Your first lesson is<br data-hf-id="hf-x5px"><span data-hf-id="hf-yt5w" class="headline-accent">already on the table.</span>
+        </h1>
+        <p data-hf-id="hf-2ypd" class="subtext">
+          Linguini turns a photo of your morning into a bite-size Spanish lesson.
+        </p>
+      </div>
+      <div data-hf-id="hf-0z3x" class="card card--lifted absolute" id="hero-photo-card" style="right: 120px; top: 180px; width: 780px; height: 580px;">
+        <img data-hf-id="hf-p8fp" src="assets/day-one-key-art.jpg" style="width: 100%; height: 100%; object-fit: cover;" alt="Morning café table">
+      </div>
+    </section>
+
+    <!-- SCENE 1: Photo → words (4–10s) -->
+    <section data-hf-id="hf-uyys" class="scene clip" id="scene-1" data-start="4" data-duration="6">
+      <div data-hf-id="hf-2aay" class="absolute" style="left: 120px; top: 220px; width: 850px;">
+        <div data-hf-id="hf-p3zd" class="number-badge">
+          <span data-hf-id="hf-cshg" class="num">01</span>
+          <span data-hf-id="hf-gbty" class="label">SNAP A PHOTO</span>
+        </div>
+        <h1 data-hf-id="hf-gaeu" class="headline-main">
+          One photo.<br data-hf-id="hf-rsrt"><span data-hf-id="hf-d5hd" class="headline-teal">Linguini finds the words in it.</span>
+        </h1>
+        <p data-hf-id="hf-0rbs" class="subtext">
+          Vocabulary is suggested straight from the scene — no word lists, no guessing where to start.
+        </p>
+      </div>
+      <div data-hf-id="hf-kwvv" class="card card--lifted absolute" id="detect-card" style="right: 120px; top: 180px; width: 780px; height: 580px;">
+        <img data-hf-id="hf-36ec" src="assets/day-one-key-art.jpg" style="width: 100%; height: 100%; object-fit: cover;" alt="Café photo with words">
+        <span data-hf-id="hf-uqql" class="word-chip" id="chip-1" style="top: 40px; left: 40px;"><span data-hf-id="hf-9gry" class="dot"></span>el croissant</span>
+        <span data-hf-id="hf-c31x" class="word-chip" id="chip-2" style="top: 40px; right: 50px;"><span data-hf-id="hf-zcc2" class="dot"></span>la cámara</span>
+        <span data-hf-id="hf-pb0x" class="word-chip" id="chip-3" style="bottom: 110px; right: 80px;"><span data-hf-id="hf-zqn3" class="dot"></span>el café</span>
+        <span data-hf-id="hf-idvx" class="word-chip" id="chip-4" style="bottom: 46px; left: 110px;"><span data-hf-id="hf-04y4" class="dot"></span>el cuaderno</span>
+      </div>
+    </section>
+
+    <!-- SCENE 2: Review (10–15s) -->
+    <section data-hf-id="hf-gekf" class="scene clip" id="scene-2" data-start="10" data-duration="5">
+      <div data-hf-id="hf-2olz" class="absolute" style="left: 120px; top: 220px; width: 850px;">
+        <div data-hf-id="hf-qawg" class="number-badge">
+          <span data-hf-id="hf-blkd" class="num">02</span>
+          <span data-hf-id="hf-erh8" class="label">YOU DECIDE</span>
+        </div>
+        <h1 data-hf-id="hf-ast5" class="headline-main">
+          AI suggests.<br data-hf-id="hf-szow"><span data-hf-id="hf-8spt" class="headline-accent">You decide.</span>
+        </h1>
+        <p data-hf-id="hf-m5mb" class="subtext">
+          Review every suggested object before the lesson — remove mistakes, keep what matters.
+        </p>
+      </div>
+      <div data-hf-id="hf-vko1" class="absolute" id="s2-stage" style="right: 120px; top: 150px; width: 780px;">
+        <div class="card card--lifted" id="s2-photo" style="position: relative; width: 780px; height: 380px;">
+          <img src="assets/day-one-key-art.jpg" style="width: 100%; height: 100%; object-fit: cover;" alt="Café photo with numbered markers">
+          <span class="pmark" style="left: 60px; top: 56px;">1</span>
+          <span class="pmark" style="right: 70px; top: 46px;">2</span>
+          <span class="pmark" style="right: 140px; bottom: 100px;">3</span>
+          <span class="pmark" style="left: 335px; bottom: 60px;">4</span>
+        </div>
+        <div class="analysis-card" id="s2-list" style="margin-top: 18px;">
+          <div class="ahead"><strong>Check what this lesson will use</strong><small>Each row matches one numbered marker on the photo.</small></div>
+          <div class="rrow" data-layout-allow-overflow id="rr1"><span class="mnum">1</span>el croissant<span class="rmv">✕</span></div>
+          <div class="rrow" data-layout-allow-overflow id="rr2"><span class="mnum">2</span>la cámara<span class="rmv">✕</span></div>
+          <div class="rrow" data-layout-allow-overflow id="rr3"><span class="mnum">3</span>el café<span class="rmv">✕</span></div>
+          <div class="rrow" data-layout-allow-overflow id="rr4"><span class="mnum">4</span>el cuaderno<span class="rmv">✕</span></div>
+          <div class="rrow" data-layout-allow-overflow id="rr5" data-layout-allow-overlap><span class="mnum">5</span>el menú<span class="rmv">✕</span></div>
+          <div class="rrow" data-layout-allow-overflow id="rr6" data-layout-allow-overlap><span class="mnum">6</span>la silla<span class="rmv">✕</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENE 3: I-Spy (15–20s) -->
+    <section data-hf-id="hf-i3kx" class="scene clip" id="scene-3" data-start="15" data-duration="5">
+      <div data-hf-id="hf-08n7" class="absolute" style="left: 120px; top: 220px; width: 800px;">
+        <div data-hf-id="hf-pwlf" class="number-badge">
+          <span data-hf-id="hf-bzve" class="num">03</span>
+          <span data-hf-id="hf-g9lr" class="label">PLAY I-SPY</span>
+        </div>
+        <h1 data-hf-id="hf-vh5i" class="headline-main">
+          Find the word.<br data-hf-id="hf-sldv"><span data-hf-id="hf-w0bq" class="headline-teal">Then give the clue.</span>
+        </h1>
+        <p data-hf-id="hf-xzk5" class="subtext">
+          Linguini describes an object and you find it — then you describe one back.
+        </p>
+      </div>
+      <div data-hf-id="hf-lpy9" class="absolute" id="s3-stage" style="right: 110px; top: 150px; width: 800px;">
+        <div class="card card--lifted" id="s3-photo" style="position: relative; width: 800px; height: 340px;">
+          <img src="assets/day-one-key-art.jpg" style="width: 100%; height: 100%; object-fit: cover;" alt="Café photo with numbered markers">
+          <span class="pmark" style="left: 66px; top: 50px;">1</span>
+          <span class="pmark" style="right: 76px; top: 42px;">2</span>
+          <span class="pmark" style="right: 150px; bottom: 70px;">3</span>
+          <span class="pmark-ring" id="mark3-ring" style="right: 143px; bottom: 63px; width: 60px; height: 60px;"></span>
+          <span class="pmark" style="left: 340px; bottom: 150px;">4</span>
+        </div>
+        <div class="clue-card" id="s3-clue" style="margin-top: 16px;">
+          <div class="clue-top"><span class="clue-label">Linguini says</span><span class="speaker">🔊</span></div>
+          <p class="clue-quote">"Veo, veo, algo que empieza con C…"</p>
+        </div>
+        <div class="choice-grid" id="s3-choices" style="margin-top: 16px;">
+          <div class="choice">la mesa<span class="tick"></span></div>
+          <div class="choice" id="opt-correct">el café<span class="tick" id="opt-tick">✓</span></div>
+          <div class="choice">la taza<span class="tick"></span></div>
+          <div class="choice">el plato<span class="tick"></span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENE 4: Words stay (20–26s) -->
+    <section data-hf-id="hf-j8g3" class="scene clip" id="scene-4" data-start="20" data-duration="6">
+      <div data-hf-id="hf-9anr" class="absolute" style="left: 120px; top: 220px; width: 840px;">
+        <div data-hf-id="hf-nx2a" class="number-badge">
+          <span data-hf-id="hf-dzej" class="num">04</span>
+          <span data-hf-id="hf-9318" class="label">YOUR WORDS STAY</span>
+        </div>
+        <h1 data-hf-id="hf-gin7" class="headline-main">
+          Every photo<br data-hf-id="hf-qluq"><span data-hf-id="hf-6sah" class="headline-accent">keeps its words.</span>
+        </h1>
+        <p data-hf-id="hf-c711" class="subtext">
+          Vocabulary banks under the photo it came from. Revisit any scene and the words are still there, waiting to be replayed.
+        </p>
+      </div>
+      <div data-hf-id="hf-1x32" class="revisit-card absolute" id="revisit-card" style="right: 130px; top: 160px; width: 660px; z-index: 4;">
+        <div class="revisit-photo">
+          <img src="assets/day-one-key-art.jpg" alt="Morning café photo saved in Revisit">
+          <span class="revisit-count">4 words</span>
+          <span class="revisit-btn" id="revisit-btn">▶ Revisit</span>
+        </div>
+        <div class="revisit-body">
+          <h3 class="revisit-title">Morning café</h3>
+          <div class="vrow" id="v1"><span class="vw"><strong>el croissant</strong><small>the croissant</small></span><span class="vhear">🔊</span></div>
+          <div class="vrow" id="v2"><span class="vw"><strong>la cámara</strong><small>the camera</small></span><span class="vhear">🔊</span></div>
+          <div class="vrow" id="v3"><span class="vw"><strong>el café</strong><small>the coffee</small></span><span class="vhear">🔊</span></div>
+          <div class="vrow" id="v4"><span class="vw"><strong>el cuaderno</strong><small>the notebook</small></span><span class="vhear" data-layout-allow-occlusion>🔊</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCENE 5: CTA (26–30s) -->
+    <section data-hf-id="hf-fusi" class="scene clip" id="scene-5" data-start="26" data-duration="4">
+      <div data-hf-id="hf-zx1p" class="absolute" style="inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 100px;">
+        <img data-hf-id="hf-1pgj" src="assets/linguini-wordmark.png" style="height: 96px; margin-bottom: 22px;" alt="Linguini">
+        <h1 data-hf-id="hf-q154" style="font-family: 'Baloo', sans-serif; font-size: 78px; line-height: 1.1; margin: 0 0 18px 0; color: #263238;">
+          What would you photograph first?
+        </h1>
+        <p data-hf-id="hf-hjir" style="font-size: 30px; color: #5b6670; margin: 0 0 34px 0;">
+          Unlimited photo lessons during public beta. No credit card required.
+        </p>
+        <div data-hf-id="hf-nng0" style="display: inline-flex; align-items: center; gap: 20px; background: #E85D32; color: #FFF9ED; font-family: 'Baloo', sans-serif; font-size: 40px; padding: 18px 50px; border-radius: 999px; box-shadow: 0 12px 30px rgba(232, 93, 50, 0.35);">
+          <span data-hf-id="hf-gddt">learnwithlinguini.com</span>
+          <span data-hf-id="hf-o03m">↗</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Music -->
+    <audio data-hf-id="hf-wnvh" id="bgm" src="audio/music.wav" data-start="0" data-duration="30" preload="auto"></audio>
+  </div>
+
+  <script>
+    const tl = gsap.timeline({ paused: true });
+
+    tl.fromTo('#progress-fill', { width: '0%' }, { width: '100%', duration: 30, ease: 'none' }, 0);
+    tl.fromTo('#mascot', { y: 0, rotation: -2 }, { y: -12, rotation: 2, duration: 1.2, repeat: 24, yoyo: true, ease: 'sine.inOut' }, 0);
+
+    const scenes = [
+      { id: '#scene-0', start: 0, end: 4, sub: 'Your first lesson is already on the table.' },
+      { id: '#scene-1', start: 4, end: 10, sub: 'One photo — Linguini finds the words in it.' },
+      { id: '#scene-2', start: 10, end: 15, sub: 'AI suggests. You decide what enters the lesson.' },
+      { id: '#scene-3', start: 15, end: 20, sub: 'Two-way I-Spy. Find the word, then give the clue.' },
+      { id: '#scene-4', start: 20, end: 26, sub: 'Every photo keeps its words — revisit them any time.' },
+      { id: '#scene-5', start: 26, end: 30, sub: 'Public beta — unlimited photo lessons at learnwithlinguini.com.' }
+    ];
+
+    scenes.forEach(s => {
+      tl.to(s.id, { autoAlpha: 1, duration: 0.3, ease: 'power2.out' }, s.start);
+      tl.call(() => {
+        document.getElementById('sub-bar').textContent = s.sub;
+      }, null, s.start);
+      if (s.end < 30) {
+        tl.to(s.id, { autoAlpha: 0, duration: 0.3, ease: 'power2.in' }, s.end - 0.3);
+      }
+    });
+
+    // Scene 0
+    tl.fromTo('#hero-photo-card', { x: 80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.6, ease: 'power3.out' }, 0.4);
+
+    // Scene 1
+    tl.fromTo('#detect-card', { scale: 0.92, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: 'power3.out' }, 4.4);
+    tl.fromTo('#chip-1', { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: 'back.out(1.6)' }, 5.3);
+    tl.fromTo('#chip-2', { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: 'back.out(1.6)' }, 5.9);
+    tl.fromTo('#chip-3', { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: 'back.out(1.6)' }, 6.5);
+    tl.fromTo('#chip-4', { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: 'back.out(1.6)' }, 7.1);
+
+    // Scene 2 — photo + marker list in, rows stagger, then two rejects get removed
+    tl.fromTo('#s2-photo', { x: 80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: 'power3.out' }, 10.3);
+    tl.fromTo('#s2-list', { y: 50, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out' }, 10.7);
+    tl.fromTo('#rr1, #rr2, #rr3, #rr4, #rr5, #rr6', { x: 40, opacity: 0 }, { x: 0, opacity: 1, duration: 0.3, stagger: 0.22, ease: 'power2.out' }, 11.2);
+    tl.to('#rr5, #rr6', { autoAlpha: 0, x: 60, height: 0, paddingTop: 0, paddingBottom: 0, duration: 0.45, ease: 'power2.in' }, 13.4);
+
+    // Scene 3 — photo, clue card, choices; correct answer highlights + marker ring
+    tl.fromTo('#s3-photo', { scale: 0.94, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.5, ease: 'power3.out' }, 15.4);
+    tl.fromTo('#s3-clue', { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: 'power3.out' }, 15.9);
+    tl.fromTo('#s3-choices .choice', { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3, stagger: 0.15, ease: 'power2.out' }, 16.4);
+    tl.to('#opt-correct', { backgroundColor: '#eef6f3', borderColor: '#21716F', color: '#21716F', duration: 0.3 }, 17.8);
+    tl.to('#opt-tick', { opacity: 1, duration: 0.25 }, 17.9);
+    tl.to('#mark3-ring', { opacity: 1, duration: 0.3, ease: 'power2.out' }, 18.0);
+
+    // Scene 4 — revisit card in, word rows stagger, button pulses
+    tl.fromTo('#revisit-card', { rotationY: -12, opacity: 0 }, { rotationY: 0, opacity: 1, duration: 0.6, ease: 'power3.out' }, 20.4);
+    tl.fromTo('#v1, #v2, #v3, #v4', { x: 40, opacity: 0 }, { x: 0, opacity: 1, duration: 0.3, stagger: 0.25, ease: 'power2.out' }, 21.4);
+    tl.fromTo('#revisit-btn', { scale: 1 }, { scale: 1.06, duration: 0.4, yoyo: true, repeat: 1, ease: 'sine.inOut' }, 23.4);
+
+    window.__timelines = window.__timelines || {};
+    window.__timelines['day-one'] = tl;
+  </script>
+</body>
+</html>

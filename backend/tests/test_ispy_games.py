@@ -34,6 +34,9 @@ from app.schemas.sessions import (
 from app.schemas.tasks import LatestClueAttempt, SkipTaskRequest, TaskAttempt
 from app.schemas.users import LanguageProfile, User
 
+# A thin scene is rejected on mission profiles; these tests cover the regular lesson.
+pytestmark = pytest.mark.usefixtures("regular_lesson")
+
 
 class Translator:
     def __init__(self):

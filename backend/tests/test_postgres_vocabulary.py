@@ -17,6 +17,7 @@ from app.main import create_app
 from app.repositories.learning import LearningStorageError
 from app.repositories.postgres.language_profiles import (
     PostgresLanguageProfileRepository,
+    language_profiles,
 )
 from app.repositories.postgres.media_assets import (
     PostgresMediaAssetRepository,
@@ -771,3 +772,60 @@ def test_scene_and_topic_derived_from_latest_encounter(database, encounter_task)
     with engine.begin() as connection:
         connection.execute(delete(sessions).where(sessions.c.id == upload_session))
         connection.execute(delete(media_assets).where(media_assets.c.id == asset.id))
+
+
+@pytest.mark.parametrize(("language", "bare", "target", "gender", "meaning"), [
+    ("es", "mesa", "la mesa", "feminine", "table"),
+    ("fr", "arbre", "l’arbre", "masculine", "tree"),
+    ("de", "Buch", "das Buch", "neuter", "book"),
+    ("ko", "컵", "컵", None, "cup"),
+])
+def test_collection_displays_taught_noun_phrase_without_mutating_catalog(
+    database, encounter_task, language, bare, target, gender, meaning,
+):
+    engine, owner, ids, _, repository = database
+    item_id = ids[0]
+    with engine.begin() as connection:
+        profile_id = connection.execute(
+            select(sessions.c.language_profile_id).where(sessions.c.id == encounter_task.session_id)
+        ).scalar_one()
+        connection.execute(
+            update(vocabulary_items).where(vocabulary_items.c.id == item_id)
+            .values(language_code=language, lemma=bare, display_text=bare, gender=gender)
+        )
+        connection.execute(
+            update(language_profiles).where(language_profiles.c.id == profile_id)
+            .values(target_language_code=language)
+        )
+        connection.execute(
+            update(vocabulary_translations)
+            .where(vocabulary_translations.c.vocabulary_item_id == item_id)
+            .values(translated_text=meaning)
+        )
+        connection.execute(
+            update(session_tasks).where(session_tasks.c.id == encounter_task.id)
+            .values(kind="vocabularyIntroduction", public_content={
+                "kind": "vocabularyIntroduction", "title": "Your words",
+                "words": [{"vocabularyItemId": str(item_id), "targetText": target,
+                           "translation": meaning, "partOfSpeech": "noun", "gender": gender}],
+                "questions": [], "allowTypingPractice": True,
+            })
+        )
+    repository.record_encounter(VocabularyEncounter(
+        user_id=owner.id, vocabulary_item_id=item_id,
+        session_id=encounter_task.session_id, session_task_id=encounter_task.id,
+        encounter_type="introduced", outcome="completed",
+    ))
+    with TestClient(create_app()) as client:
+        response = client.get("/api/v1/me/vocabulary")
+    assert response.status_code == 200
+    shown = next(
+        row["vocabulary"] for row in response.json()["items"]
+        if row["vocabulary"]["id"] == str(item_id)
+    )
+    assert shown["displayText"] == target
+    assert shown["lemma"] == bare and shown["gender"] == gender
+    with engine.connect() as connection:
+        assert connection.execute(
+            select(vocabulary_items.c.display_text).where(vocabulary_items.c.id == item_id)
+        ).scalar_one() == bare

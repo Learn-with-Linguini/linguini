@@ -2,31 +2,30 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Linguini gallery 04 play</title>
+<title>Linguini gallery 04 vocabulary</title>
 <link rel="stylesheet" href="common.css">
 <style>
-  body { background: var(--sage); }
-  .top { position: absolute; left: 64px; right: 64px; top: 64px; display: flex; align-items: baseline; justify-content: space-between; gap: 32px; }
-  .headline { font-size: 82px; white-space: nowrap; }
-  .support { max-width: 520px; text-align: right; }
-  .photo { position: absolute; left: 64px; bottom: 64px; }
-  .right {
-    position: absolute; right: 64px; bottom: 64px; height: 464px;
-    width: 400px; display: flex; flex-direction: column; justify-content: space-between;
-  }
+  body { background:var(--teal-deep); }
+  .copy { position:absolute; left:64px; top:125px; width:530px; }
+  .eyebrow { color:var(--pasta); }
+  .headline { color:var(--paper); font-size:80px; }
+  .headline .hl { color:var(--pasta); }
+  .support { margin-top:25px; width:480px; color:var(--sage); }
+  .tags { display:flex; gap:12px; flex-wrap:wrap; margin-top:34px; }
+  .tags .pill { background:rgb(255 255 255 / .1); color:var(--paper); box-shadow:none; border:1px solid rgb(255 255 255 / .16); }
+  .phone { position:absolute; right:72px; top:150px; width:410px; }
+  .filters { position:absolute; right:44px; top:80px; width:490px; border-radius:20px; border-width:6px; transform:rotate(2deg); }
+  .filters img { width:100%; }
 </style>
 </head>
 <body>
-  <div class="top">
-    <h1 class="headline">I-Spy, <span class="hl">both ways.</span></h1>
-    <p class="support">Guess Linguini’s clue, then give one back.</p>
+  <div class="copy">
+    <p class="eyebrow">A vocabulary bank with context</p>
+    <h1 class="headline">Every word stays <span class="hl">attached.</span></h1>
+    <p class="support">Keep the word, meaning, article, audio and the scene where you learned it—then revisit it whenever you want.</p>
+    <div class="tags"><span class="pill">New</span><span class="pill">Learning</span><span class="pill">Mastered</span></div>
   </div>
-  <div class="photo"><img class="ui" src="assets/s-ispy-photo.png" data-pad="56" data-scale="1.307"></div>
-  <div class="right">
-    <div><img class="ui" src="assets/s-ispy-says.png" data-pad="48" data-scale="1.05"></div>
-    <div><img class="ui" src="assets/s-ispy-choices.png" data-pad="20" data-scale="1.05"></div>
-    <div><img class="ui" src="assets/s-ispy-feedback.png" data-pad="12" data-scale="1.05"></div>
-  </div>
-<script src="ui.js"></script>
+  <div class="device phone"><img src="../../../frontend/public/app-shots/vocabulary.webp" alt="Current Linguini vocabulary bank"></div>
+  <div class="device filters"><img src="../../../frontend/public/app-shots/vocabulary-filters.webp" alt="Current vocabulary filters"></div>
 </body>
 </html>

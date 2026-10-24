@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Linguini gallery 08 daily challenge</title>
+<link rel="stylesheet" href="common.css">
+<style>
+  body { background:var(--teal-deep); }
+  body::after { content:""; position:absolute; width:520px; height:520px; left:-260px; top:-260px; border-radius:50%; background:rgb(249 174 34 / .2); }
+  .copy { position:absolute; left:64px; top:98px; width:490px; color:var(--paper); z-index:1; }
+  .eyebrow { color:var(--pasta-soft); }
+  .headline { color:var(--paper); font-size:72px; line-height:.94; }
+  .headline .hl { color:var(--pasta-soft); }
+  .support { margin-top:26px; width:475px; color:#e9f4ec; }
+  .facts { display:flex; flex-wrap:wrap; gap:12px; margin-top:32px; }
+  .fact { display:inline-flex; align-items:center; gap:9px; min-height:48px; padding:10px 15px; border-radius:999px; background:rgb(255 253 248 / .12); color:var(--paper); font-size:17px; }
+  .fact svg { color:var(--pasta); }
+  .challenge { position:absolute; right:56px; top:42px; width:612px; overflow:hidden; border-radius:30px; background:var(--cream); box-shadow:0 32px 70px rgb(0 0 0 / .28); }
+  .timer { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:17px 22px 19px; background:var(--paper); border-bottom:3px solid var(--teal-dark); }
+  .timer strong { font-size:17px; }
+  .timer span { padding:5px 11px; border-radius:999px; background:var(--ink); color:white; font-size:13px; }
+  .body { display:grid; grid-template-columns:1.03fr .97fr; gap:19px; padding:22px; }
+  .join h2 { margin:0; font-family:"Baloo 2"; font-size:38px; line-height:1.02; }
+  .join h2 em { display:block; color:var(--teal-dark); font-style:normal; }
+  .join > p { margin:12px 0 0; color:var(--ink); font-size:16px; line-height:1.35; }
+  .prize-title { display:flex; align-items:center; gap:7px; margin-top:17px; color:var(--ink); font-size:14px; }
+  .prizes { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:8px; }
+  .prize { display:grid; justify-items:center; gap:1px; padding:7px 3px; border-radius:11px; background:var(--sage); }
+  .prize span { color:var(--teal-dark); font-size:10px; }
+  .prize b { font-family:"Baloo 2"; font-size:19px; line-height:1; }
+  .button { display:flex; align-items:center; justify-content:center; gap:8px; min-height:50px; margin-top:17px; border-radius:16px; background:var(--tomato); color:white; font-size:17px; box-shadow:0 5px 0 var(--tomato-pressed); }
+  .board { min-height:330px; padding:17px; border-radius:22px; background:var(--paper); box-shadow:0 10px 26px rgb(38 50 56 / .1); }
+  .board-head { display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+  .board h3 { margin:0; font-family:"Baloo 2"; color:var(--teal-dark); font-size:21px; }
+  .board-head span { color:var(--ink-muted); font-size:12px; white-space:nowrap; }
+  .empty { display:flex; align-items:center; min-height:152px; margin-top:14px; padding:18px; border:2px dashed #d9d2c3; border-radius:16px; }
+  .empty strong { display:block; color:var(--teal-dark); font-family:"Baloo 2"; font-size:21px; line-height:1.1; }
+  .empty p { margin:0; color:var(--ink); font-size:14px; line-height:1.35; }
+  .board-note { margin:16px 2px 0; color:var(--ink-muted); font-size:12px; line-height:1.35; }
+  .finisher { display:flex; align-items:center; gap:7px; margin:15px 0 0; color:var(--teal-dark); font-size:13px; }
+</style>
+</head>
+<body>
+  <div class="copy">
+    <p class="eyebrow">Today’s Treasure Hunt Challenge</p>
+    <h1 class="headline">A new scene to explore <span class="hl squiggle">every day.</span></h1>
+    <p class="support">Take a photo in today’s place, finish the lesson and add your confirmed words to the shared community board.</p>
+    <div class="facts">
+      <div class="fact"><svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true"><path d="M12 3 14.5 8l5.5.8-4 3.9.9 5.5L12 15.6l-4.9 2.6.9-5.5-4-3.9L9.5 8 12 3Z" fill="currentColor"/></svg>5 Basil for finishing</div>
+      <div class="fact"><svg viewBox="0 0 24 24" width="21" height="21" aria-hidden="true"><path d="M7 4h10v3c0 3-2 5-5 5S7 10 7 7V4Zm5 8v4m-4 4h8M5 5H3v2c0 2 1 3 4 3m12-5h2v2c0 2-1 3-4 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Rare finds earn more</div>
+    </div>
+  </div>
+  <section class="challenge" aria-label="Example of the current daily challenge before the first learner finishes">
+    <div class="timer"><strong>Today’s Treasure Hunt Challenge</strong><span>New scene each UTC day</span></div>
+    <div class="body">
+      <div class="join">
+        <h2>Find words <em>at the café</em></h2>
+        <p>Take a photo, do the lesson, and add it to today’s shared board.</p>
+        <div class="prize-title"><svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M7 4h10v3c0 3-2 5-5 5S7 10 7 7V4Zm5 8v4m-4 4h8" fill="none" stroke="#b07a00" stroke-width="2" stroke-linecap="round"/></svg><strong>Rare finds earn bonus Basil</strong></div>
+        <div class="prizes">
+          <div class="prize"><span>1st</span><b>50</b></div>
+          <div class="prize"><span>2nd</span><b>30</b></div>
+          <div class="prize"><span>3rd</span><b>20</b></div>
+          <div class="prize"><span>Top 10</span><b>10</b></div>
+        </div>
+        <div class="button"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4V8Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3" fill="none" stroke="currentColor" stroke-width="2"/></svg>Take a photo &amp; join</div>
+        <p class="finisher"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 3 14.5 8l5.5.8-4 3.9.9 5.5L12 15.6l-4.9 2.6.9-5.5-4-3.9L9.5 8 12 3Z" fill="#70a339"/></svg>Finish the lesson to earn at least 5 Basil.</p>
+      </div>
+      <div class="board">
+        <div class="board-head"><h3>Today’s community board</h3><span>0 finished</span></div>
+        <div class="empty"><p><strong>Be the first to add a word!</strong>Every word you keep shows up here for everyone.</p></div>
+        <p class="board-note">Shown in the real empty state—before the first learner finishes. No sample activity has been invented.</p>
+      </div>
+    </div>
+  </section>
+</body>
+</html>

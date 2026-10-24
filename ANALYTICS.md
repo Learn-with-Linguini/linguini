@@ -83,6 +83,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 ### Authentication & Account Management
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
+| `guest_preview_started` | `{ source: "signin" | "signup" }` | Visitor opens the sample photo lesson without signing in |
 | `login_submitted` | `{ method: "email" }` | User submits the email/password sign-in form |
 | `signup_submitted` | `{ method: "email" }` | User submits new account registration |
 | `google_signin_clicked` | — | User clicks "Continue with Google" button |
@@ -104,8 +105,12 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `practice_session_started` | `{ assetId }` | New photo lesson session initialized |
 | `practice_session_resumed` | — | User resumes an existing incomplete practice session |
 | `practice_photo_uploaded` | `{ assetId }` | User captures/uploads a personal camera roll photo |
+| `photo_upload_retried` | `{ source: "camera" | "userUpload" }` | Learner retries confirmation of an uploaded image after a connection or server failure |
 | `practice_scene_selected` | `{ sceneId, title }` | User selects a curated catalog scene |
 | `scene_review_confirmed` | `{ acceptedCount, addedCount }` | User confirms detected objects before generating lesson |
+| `scene_shortfall_shown` | `{ missing }` | Review shows that the photo lacks checkable objects, counts, adjectives or connections (`missing` is a comma-separated list) |
+| `scene_shortfall_add_clicked` | `{ kind }` | Learner chooses to add the missing kind of fact from the shortfall notice |
+| `scene_shortfall_new_photo` | `{ missing }` | Learner leaves a short scene to take or choose another photo |
 | `scene_analysis_retried` | `{ sessionId }` | User requests AI re-analysis of a photo |
 | `task_answer_checked` | `{ taskId, isCorrect, kind }` | Learner checks answer on an interactive exercise |
 | `task_completed` | `{ taskId, kind }` | Learner completes reading or informational task |
@@ -116,6 +121,8 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `vocabulary_preview_started` | — | User starts "Learn the words" vocabulary preview |
 | `vocabulary_preview_continue_clicked` | `{ taskId }` | User continues from preview to individual word learning |
 | `vocabulary_preview_exit_clicked` | — | User exits from vocabulary preview |
+| `vocabulary_flashcard_viewed` | `{ taskId, position, termType, hasSceneObject }` | Learner views a vocabulary teaching card, including whether its object can be highlighted in the scene |
+| `vocabulary_typing_checked` | `{ taskId, termType, isCorrect, revealed, basilEarned }` | Learner checks or reveals a typed vocabulary answer and receives any server-awarded Basil |
 | `home_continue_practice_clicked` | — | User resumes incomplete practice from dashboard |
 | `home_begin_practice_clicked` | — | User starts new practice from dashboard |
 | `home_explore_vocabulary_clicked` | — | User clicks vocabulary revisit card on home dashboard |
@@ -147,6 +154,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | :--- | :--- | :--- |
 | `chef_of_the_day_participation_toggled` | `{ participating }` | User opts in or out of the daily Chef of the Day leaderboard |
 | `chef_of_the_day_retry_clicked` | — | User retries loading the daily leaderboard |
+| `home_chef_standings_clicked` | — | Learner opens the daily Basil leaderboard from the Home standings card |
 | `daily_challenge_start_clicked` | `{ sceneKey }` | User opens today's daily challenge from the Play tab |
 | `daily_challenge_resumed` | `{ sceneKey }` | User continues an unfinished daily challenge session from the Play tab |
 | `daily_challenge_photo_uploaded` | `{ sceneKey, assetId }` | User uploads or captures a photo for today's challenge |
@@ -161,6 +169,9 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `revisit_empty_practice_started` | — | Learner starts their first practice session from the empty Revisit page |
 | `vocabulary_filters_applied` | `{ wordClass, category }` | Filter applied to vocabulary collection |
 | `vocabulary_audio_played` | `{ word }` | Learner plays audio pronunciation for a target word |
+| `vocabulary_recap_started` | `{ questionCount, wordCount }` | Learner starts a mixed review of a completed scene |
+| `vocabulary_recap_answer_checked` | `{ kind, isCorrect, revealed? }` | Server returns a recognition or recall check during scene review |
+| `vocabulary_recap_completed` | `{ questionCount, wordCount }` | Learner finishes the mixed scene review |
 
 ### Payments, Tiers & Subscriptions
 | Event Name | Parameters | Trigger Description |

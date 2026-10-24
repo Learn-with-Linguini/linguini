@@ -27,6 +27,7 @@ from app.repositories.learning import LearningStorageError
 from app.repositories.postgres.language_profiles import language_profiles
 from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.scenes import preloaded_scenes
+from app.repositories.postgres.tasks import session_tasks
 from app.repositories.postgres.users import users
 from app.repositories.postgres.xp import award
 from app.schemas.vocabulary import (
@@ -39,6 +40,27 @@ from app.schemas.vocabulary import (
 )
 
 metadata = MetaData()
+
+
+def _taught_noun_display(item: VocabularyItem, target: str | None) -> VocabularyItem:
+    """Use the noun phrase this learner was taught, without changing the catalog."""
+    if (
+        item.part_of_speech != "noun" or not isinstance(target, str) or len(target) > 200
+        or item.display_text.strip().casefold() != item.lemma.strip().casefold()
+    ):
+        return item
+    prefixes = {
+        "es": ("el ", "la "), "fr": ("le ", "la ", "l'"),
+        "de": ("der ", "die ", "das "),
+    }.get(item.language_code.lower(), ())
+    bare = item.display_text.strip().replace("’", "'").casefold()
+    if any(bare.startswith(prefix) for prefix in prefixes):
+        return item
+    shown = target.strip()
+    normalized = shown.replace("’", "'").casefold()
+    if any(normalized == prefix + bare for prefix in prefixes):
+        return item.model_copy(update={"display_text": shown})
+    return item
 
 
 def entity_columns():
@@ -266,6 +288,7 @@ class PostgresVocabularyRepository:
                     ).mappings()
                 }
                 encounters: dict[UUID, list[UUID]] = {}
+                encounter_tasks: dict[UUID, list[UUID]] = {}
                 latest_session: dict[UUID, UUID] = {}
                 word_sessions: dict[UUID, set[UUID]] = {}
                 for row in connection.execute(
@@ -277,10 +300,46 @@ class PostgresVocabularyRepository:
                     .order_by(vocabulary_encounters.c.occurred_at, vocabulary_encounters.c.id)
                 ).mappings():
                     encounters.setdefault(row["vocabulary_item_id"], []).append(row["id"])
+                    encounter_tasks.setdefault(row["vocabulary_item_id"], []).append(
+                        row["session_task_id"]
+                    )
                     latest_session[row["vocabulary_item_id"]] = row["session_id"]
                     word_sessions.setdefault(row["vocabulary_item_id"], set()).add(
                         row["session_id"]
                     )
+                # Introduction targetText retains the actual article, including French
+                # elision. Catalog gender alone cannot reconstruct that phrase safely.
+                taught = {
+                    row["id"]: {
+                        word.get("vocabularyItemId"): word.get("targetText")
+                        for word in row["public_content"].get("words", [])
+                    }
+                    for row in connection.execute(
+                        select(session_tasks.c.id, session_tasks.c.public_content)
+                        .join(sessions, sessions.c.id == session_tasks.c.session_id)
+                        .join(
+                            language_profiles,
+                            language_profiles.c.id == sessions.c.language_profile_id,
+                        )
+                        .where(
+                            session_tasks.c.id.in_(
+                                {tid for tids in encounter_tasks.values() for tid in tids}
+                            ),
+                            session_tasks.c.kind == "vocabularyIntroduction",
+                            sessions.c.user_id == user_id,
+                            func.lower(language_profiles.c.target_language_code)
+                            == profile["target_language_code"].lower(),
+                        )
+                    ).mappings()
+                } if encounter_tasks else {}
+                for item_id, task_ids in encounter_tasks.items():
+                    for task_id in reversed(task_ids):
+                        shown = _taught_noun_display(
+                            items[item_id], taught.get(task_id, {}).get(str(item_id))
+                        )
+                        if shown is not items[item_id]:
+                            items[item_id] = shown
+                            break
                 # scene_id/topic describe the word's most recent encounter scene.
                 scene_assets = (
                     {

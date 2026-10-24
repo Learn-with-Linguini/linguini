@@ -37,6 +37,9 @@ from app.services.ispy_descriptions import (
     interpret_guess,
 )
 
+# A thin scene is rejected on mission profiles; these tests cover the regular lesson.
+pytestmark = pytest.mark.usefixtures("regular_lesson")
+
 
 def result(guessed=None, *, ambiguous=False, alternatives=(), contradicted=()):
     return ISpyGuessResult(

@@ -1210,6 +1210,75 @@ p[role="alert"]::before { content: "!"; }
   gap: var(--space-1);
 }
 
+.scene-shortfall {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  border: 1px solid rgba(201, 78, 44, 0.24);
+  border-radius: var(--radius-md);
+  background: var(--cream);
+  padding: var(--space-4);
+  color: var(--ink);
+}
+
+.scene-shortfall h2 {
+  margin: 0;
+  font-size: var(--text-h3);
+}
+
+.scene-shortfall p {
+  margin: 0;
+}
+
+.scene-shortfall__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scene-shortfall__list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.scene-shortfall__list li > span {
+  display: flex;
+  flex: 1 1 14rem;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.scene-shortfall__list small,
+.scene-shortfall__missions {
+  color: var(--ink-muted);
+  font-size: var(--text-small);
+}
+
+/* A step worded from the learner's review is the instruction itself, so it reads at full contrast. */
+.scene-shortfall__list .scene-shortfall__step {
+  color: var(--ink);
+}
+
+.scene-shortfall__missions summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.scene-shortfall__missions ul {
+  margin: 0;
+  padding-left: var(--space-5);
+}
+
 .analysis-photo-stage {
   display: flex;
   flex-direction: column;
@@ -1711,7 +1780,7 @@ p[role="alert"]::before { content: "!"; }
 
 .translation-preview__terms {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
   gap: var(--space-2);
 }
 
@@ -1719,6 +1788,7 @@ p[role="alert"]::before { content: "!"; }
   display: grid;
   gap: 2px;
   min-width: 0;
+  overflow-wrap: anywhere;
   padding: 10px 12px;
   border: 1px solid rgba(249, 178, 51, .34);
   border-radius: var(--radius-sm);
@@ -1728,6 +1798,22 @@ p[role="alert"]::before { content: "!"; }
 
 .translation-preview__term strong {
   color: var(--teal-dark);
+}
+
+@media (max-width: 520px) {
+  .translation-preview {
+    gap: var(--space-3);
+    padding: var(--space-3);
+  }
+
+  .translation-preview__group {
+    gap: var(--space-2);
+    padding: var(--space-2);
+  }
+
+  .translation-preview__term {
+    padding: var(--space-2);
+  }
 }
 
 .analysis-attribute-fields {
@@ -4955,6 +5041,24 @@ p[role="alert"]::before { content: "!"; }
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
   gap: var(--space-3);
+}
+
+/* Teaching markers may extend beyond the photo edge. Keep the complete source
+   image at its natural aspect ratio and reserve room instead of clipping it. */
+.vocabulary-learning-scene {
+  padding-top: 28px;
+}
+
+.vocabulary-learning-scene > .scene {
+  overflow: visible;
+}
+
+.vocabulary-learning-scene .scene__art {
+  width: 100%;
+  height: auto;
+  aspect-ratio: auto;
+  object-fit: contain;
+  border-radius: calc(var(--radius-md) - var(--stroke));
 }
 
 .vocabulary-learning-grid--swipe {

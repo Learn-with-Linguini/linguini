@@ -65,8 +65,10 @@ function SessionLoader({ id }: { id: string }) {
     : data;
   const authoritative = session?.session.id === id ? session : detail;
   const canonical = authoritative ? sessionDestination(authoritative).path : null;
+  // A session reopened for review has dropped its early task, so that page forwards too.
   const revalidate = checked.current?.path !== location.pathname
-    || (checked.current.canonical !== canonical && isPreTaskStep(location.pathname));
+    || (checked.current.canonical !== canonical && isPreTaskStep(location.pathname))
+    || (authoritative?.session.status === "awaitingObjectReview" && checked.current.allowed);
   if (authoritative && revalidate) {
     checked.current = { path: location.pathname, canonical, allowed: isSessionRouteAllowed(authoritative, location.pathname) };
   }
