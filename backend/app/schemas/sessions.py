@@ -222,6 +222,7 @@ class SessionDetailResponse(ApiModel):
     tasks: list[SessionTaskPublic] = Field(default_factory=list)
     next_task_id: UUID | None = None
     progress: SessionProgress | None = None
+    active_session_count: Annotated[int, Field(ge=0)] = 0
 
 
 class SessionSummaryResponse(ApiModel):

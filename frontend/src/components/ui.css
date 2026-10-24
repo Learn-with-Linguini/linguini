@@ -775,12 +775,16 @@ p[role="alert"]::before { content: "!"; }
 
 /* Scene */
 .scene {
-  position: relative;
   border-radius: var(--radius-md);
   border: var(--stroke) solid var(--teal-dark);
   overflow: hidden;
   background: #e8f1e8;
   box-shadow: var(--shadow-paper);
+}
+
+/* Markers and pointer coordinates share this exact image-sized frame. */
+.scene__media {
+  position: relative;
 }
 
 .scene__art {

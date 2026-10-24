@@ -47,14 +47,18 @@ export function PracticeSelect() {
   });
   const activeSession = activeProfileId ? activeCheck.data ?? null : null;
   const activeSessionId = activeSession?.session.id ?? null;
-  const resumeDialogOpen = activeSessionId !== null && dismissedSessionId !== activeSessionId;
+  const sessionLimitReached = (activeSession?.activeSessionCount ?? 0) >= 3;
+  const resumeDialogOpen = activeSessionId !== null && dismissedSessionId !== activeSessionId && !sessionLimitReached;
   const activeCheckError = queryError(activeCheck.error);
   const activeFetch = useCallback(() => queryClient.fetchQuery({
     queryKey: queryKeys.activeSession(activeProfileId ?? ""),
     queryFn: () => getActivePractice(),
     staleTime: 0,
   }), [queryClient, activeProfileId]);
-  const interactionDisabled = selected || starting || !!activeCheckError || !activeProfile;
+  const interactionDisabled = selected || starting || sessionLimitReached || !!activeCheckError || !activeProfile;
+  useEffect(() => {
+    if (sessionLimitReached) trackAction("practice_session_limit_shown", { openSessionCount: activeSession?.activeSessionCount ?? 3 });
+  }, [activeSession?.activeSessionCount, sessionLimitReached]);
   useEffect(() => {
     if (!resumeDialogOpen) return;
     dialogRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
@@ -65,7 +69,7 @@ export function PracticeSelect() {
     return () => document.removeEventListener("keydown", closeOnEscape);
   }, [activeSessionId, resumeDialogOpen, starting]);
   const start = async (asset: string) => {
-    if (busy.current || !activeProfile || activeCheckError) return;
+    if (busy.current || !activeProfile || activeCheckError || sessionLimitReached) return;
     busy.current = true; setSelected(true); setStarting(true); setError(null);
     if (request.current?.asset !== asset) request.current = { asset, key: crypto.randomUUID() };
     trackAction("practice_session_started", { assetId: asset });
@@ -112,6 +116,7 @@ export function PracticeSelect() {
   const walkthroughOpen = !walkthroughDismissed
     && !activeCheck.isPending
     && !activeCheckError
+    && !sessionLimitReached
     && !resumeDialogOpen
     && Boolean(user?.onboardingCompleted)
     && needsFirstLessonWalkthrough(user?.walkthroughVersionSeen);
@@ -121,6 +126,11 @@ export function PracticeSelect() {
     {notice ? <div className="stack-2"><p role="alert">{notice}</p>{retrySessionId ? <Button variant="secondary" disabled={interactionDisabled || uploading} onClick={() => void retrySaved(retrySessionId)}>Try this photo again</Button> : null}</div> : null}
     <p className="muted">Take a photo of the world around you, or start from a ready scene.</p>
     {activeCheckError ? <p role="alert">{activeCheckError} Reload to resume an open practice.</p> : null}
+    {sessionLimitReached ? <div className="error-notice" role="alert">
+      <div className="error-notice__copy"><strong>Finish an open practice first</strong>
+        <p>You already have three unfinished practices. Continue one before uploading or choosing another scene.</p></div>
+      <Button variant="secondary" onClick={() => void continueActive()}>Continue practice</Button>
+    </div> : null}
     <div ref={captureRef} className="dashed-capture">
       <span style={{ color: "var(--teal-dark)" }}><CameraIcon size={44} /></span>
       <ImageUpload compact disabled={interactionDisabled} cameraEnabled={learner.cameraOn}

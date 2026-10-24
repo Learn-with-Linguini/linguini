@@ -18,7 +18,7 @@ function OnboardingSuccess({ onFinish }: { onFinish: () => void }) {
     const timer = window.setTimeout(onFinish, 1800);
     return () => window.clearTimeout(timer);
   }, [onFinish]);
-  return <div className="stack onboarding-success"><img src="/linguini-logo.svg" alt="" className="onboarding-success__mascot" /><h1>You’re all set!</h1><p className="muted">Great work—your first learning path is ready for you.</p><Button block onClick={onFinish}>Go to home</Button></div>;
+  return <div className="stack onboarding-success"><img src="/linguini-logo.png" alt="" className="onboarding-success__mascot" /><h1>You’re all set!</h1><p className="muted">Great work—your first learning path is ready for you.</p><Button block onClick={onFinish}>Go to home</Button></div>;
 }
 
 export function OnboardingSteps({ initial, saving = false, error, onComplete, onFinish, restartingForLanguage = false, userId }: {

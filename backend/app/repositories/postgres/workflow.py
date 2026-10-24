@@ -1476,6 +1476,14 @@ class PostgresWorkflowRepository:
             if suggestion.get("sceneObjectId") in object_ids
         ]
         tasks = self._tasks(c, session.id)
+        active_session_count = c.execute(
+            select(func.count()).select_from(sessions).where(
+                sessions.c.user_id == self.user_id,
+                sessions.c.language_profile_id == session.language_profile_id,
+                sessions.c.mode == SessionMode.LESSON,
+                sessions.c.status.not_in(TERMINAL),
+            )
+        ).scalar_one()
         return SessionDetailResponse(
             session=session,
             media_asset=asset,
@@ -1510,6 +1518,7 @@ class PostgresWorkflowRepository:
             next_task_id=next(
                 (t.id for t in tasks if t.status not in {"completed", "skipped"}), None
             ),
+            active_session_count=active_session_count,
         )
 
     def _active_row(self, c, profile_id, mode):
