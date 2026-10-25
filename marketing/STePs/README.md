@@ -15,6 +15,7 @@ Designed, animated promo posters in the style other STEPS projects use
 | `gif-3.gif` | "Veo, veo…" — mascot speech bubble types the clue, correct choice highlights | `gif-studio/compositions/gif-3-i-spy.html` |
 | `gif-4.gif` | Artisan-style 3-act recreating the real `/demo` flow: "Try a photo lesson" picker → cursor picks "Study day" (desk photo) → "Finding objects…" scan → 5 numbered markers + Objects list (real scene words) → wordmark/tagline/IN BETA URL bar | `gif-studio/compositions/gif-4-artisan-style.html` (11s) |
 | `gif-5.gif` | Same 3-act shape on the real `/practice` UI: "Capture a scene" dashed upload zone (Click / Upload buttons) → cursor uploads the desk photo → "Starting analysis…" → Scene analysis with 5 markers + "Check what this lesson will use" list → CTA | `gif-studio/compositions/gif-5-practice-upload.html` (11s) |
+| `gif-6.gif` | gif-5 zoomed to 70% inside the 16:9 frame (butter padding) — survives the uvents card's `background-size: cover` center-crop in both directions | derived from `renders/gif-5.mp4` via ffmpeg `scale + pad` (no composition) |
 
 Re-render after editing a composition:
 
@@ -25,6 +26,10 @@ npx --yes hyperframes@0.8.181 render -c compositions/gif-2-you-decide.html -o re
 # then MP4 → GIF:
 ffmpeg -y -i renders/gif-1.mp4 -vf "fps=15,scale=960:-1:flags=lanczos,palettegen=max_colors=128" pal.png
 ffmpeg -y -i renders/gif-1.mp4 -i pal.png -lavfi "fps=15,scale=960:-1:flags=lanczos [x]; [x][1:v] paletteuse=dither=bayer:bayer_scale=4" ../gif-1.gif
+
+# gif-6 (zoomed-out variant of gif-5):
+ffmpeg -y -i renders/gif-5.mp4 -vf "scale=896:504:flags=lanczos,pad=1280:720:(1280-896)/2:(720-504)/2:color=0xFFF9ED" -c:a copy renders/gif-6.mp4
+# then MP4 → GIF as above
 ```
 
 Note: `gif-1.gif` is ~4 MB (full-photo content); imgur allows 20 MB, but a 640px
