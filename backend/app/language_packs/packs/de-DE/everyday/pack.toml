@@ -36,6 +36,7 @@ numbers = "numbers.toml"
 possessives = "possessives.toml"
 requests = "requests.toml"
 pairs = "pairs.toml"
+clues = "clues.toml"
 constructions = [
   "constructions/target-location.toml",
   "constructions/target-clue.toml",

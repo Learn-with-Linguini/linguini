@@ -1,0 +1,158 @@
+# The closed grammar guided I-Spy clue frames and photo-room clues are built from.
+provenance = { source = "Moved unchanged from dev's hand-written I-Spy clue tables (app/services/ispy_clue_frames.py), 2026-10-25; not human-reviewed.", review_status = "unreviewed" }
+place = "{position} {reference}"
+location_verb_starts = ["est", "il est", "elle est"]
+
+[examples]
+colour = "La pomme est rouge."
+location = "Le livre est sur la table."
+
+[[prefixes]]
+frame = "colour"
+agreement = "feminine"
+text = "Elle est"
+
+[[prefixes]]
+frame = "colour"
+agreement = "masculine"
+text = "Il est"
+
+[[prefixes]]
+frame = "colour"
+text = "C'est"
+
+[[prefixes]]
+frame = "location"
+agreement = "feminine"
+text = "Elle est"
+
+[[prefixes]]
+frame = "location"
+agreement = "masculine"
+text = "Il est"
+
+[[prefixes]]
+frame = "location"
+text = "C'est"
+
+[[articles]]
+agreement = "masculine"
+text = "le"
+
+[[articles]]
+agreement = "feminine"
+text = "la"
+
+[[contractions]]
+preposition = "de"
+article = "le"
+text = "du"
+
+[[contractions]]
+preposition = "de"
+article = "les"
+text = "des"
+
+[[contractions]]
+preposition = "à"
+article = "le"
+text = "au"
+
+[[contractions]]
+preposition = "à"
+article = "les"
+text = "aux"
+
+# A clue also avoids the target with x after au or eu (gâteau → gâteaux).
+[[avoid_plurals]]
+after = ["au", "eu"]
+suffix = "x"
+
+[[positions]]
+text = "sur"
+meaning = "on"
+example = "Le livre est sur la table."
+
+[[positions]]
+text = "sous"
+meaning = "under"
+example = "Le chat est sous la chaise."
+
+[[positions]]
+text = "à côté de"
+meaning = "next to"
+example = "La chaise est à côté de la porte."
+
+[[positions]]
+text = "devant"
+meaning = "in front of"
+example = "Le chien est devant la maison."
+
+[[positions]]
+text = "derrière"
+meaning = "behind"
+example = "L'arbre est derrière la maison."
+
+# Singular (masculine, feminine) forms. A colour missing here is never suggested,
+# because its agreement with the target noun cannot be established safely.
+[[colours]]
+meaning = "black"
+forms = ["noir", "noire"]
+bank = true
+
+[[colours]]
+meaning = "green"
+forms = ["vert", "verte"]
+bank = true
+
+[[colours]]
+meaning = "blue"
+forms = ["bleu", "bleue"]
+bank = true
+
+[[colours]]
+meaning = "grey"
+forms = ["gris", "grise"]
+
+[[colours]]
+meaning = "white"
+forms = ["blanc", "blanche"]
+bank = true
+
+[[colours]]
+meaning = "violet"
+forms = ["violet", "violette"]
+
+[[colours]]
+meaning = "gold"
+forms = ["doré", "dorée"]
+
+[[colours]]
+meaning = "silver"
+forms = ["argenté", "argentée"]
+
+[[colours]]
+meaning = "red"
+forms = ["rouge"]
+bank = true
+
+[[colours]]
+meaning = "yellow"
+forms = ["jaune"]
+bank = true
+
+[[colours]]
+meaning = "pink"
+forms = ["rose"]
+
+[[colours]]
+meaning = "beige"
+forms = ["beige"]
+
+[[colours]]
+meaning = "orange"
+forms = ["orange"]
+
+[[colours]]
+meaning = "brown"
+forms = ["marron"]

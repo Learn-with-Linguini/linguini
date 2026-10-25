@@ -331,7 +331,7 @@ python -m app.scripts.precompute_preloaded_scenes --reground --dry-run --json ou
 `--slug` and `--language` are repeatable and default to all six scenes
 (`street`, `cafe`, `market`, `bedroom`, `kitchen`, `park`) and every released
 language pack (a pack still experimental is used only when named with `--language`);
-`--language` only selects which languages get templates and must name a ready pack. `--dry-run` computes and validates rows
+`--language` only selects which languages get templates. `--dry-run` computes and validates rows
 without writing to the database. `--json` dumps the computed rows and media
 assets for reuse; `--from-json` reloads that file (re-validating every row)
 instead of calling any AI provider, so SQL regeneration or the database write

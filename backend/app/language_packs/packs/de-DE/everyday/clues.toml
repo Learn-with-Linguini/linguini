@@ -1,0 +1,197 @@
+# The closed grammar guided I-Spy clue frames and photo-room clues are built from.
+provenance = { source = "Moved unchanged from dev's hand-written I-Spy clue tables (app/services/ispy_clue_frames.py), 2026-10-25; not human-reviewed.", review_status = "unreviewed" }
+place = "{position} {reference}"
+location_verb_starts = ["ist", "er ist", "sie ist", "es ist"]
+
+[examples]
+colour = "Der Apfel ist rot."
+location = "Das Buch ist auf dem Tisch."
+
+[[prefixes]]
+frame = "colour"
+agreement = "masculine"
+text = "Er ist"
+
+[[prefixes]]
+frame = "colour"
+agreement = "feminine"
+text = "Sie ist"
+
+[[prefixes]]
+frame = "colour"
+agreement = "neuter"
+text = "Es ist"
+
+[[prefixes]]
+frame = "colour"
+text = "Es ist"
+
+[[prefixes]]
+frame = "location"
+agreement = "masculine"
+text = "Er ist"
+
+[[prefixes]]
+frame = "location"
+agreement = "feminine"
+text = "Sie ist"
+
+[[prefixes]]
+frame = "location"
+agreement = "neuter"
+text = "Es ist"
+
+[[prefixes]]
+frame = "location"
+text = "Es ist"
+
+[[articles]]
+agreement = "masculine"
+text = "der"
+
+[[articles]]
+agreement = "feminine"
+text = "die"
+
+[[articles]]
+agreement = "neuter"
+text = "das"
+
+# After a position the reference takes the dative article.
+[[place_articles]]
+agreement = "masculine"
+text = "dem"
+
+[[place_articles]]
+agreement = "feminine"
+text = "der"
+
+[[place_articles]]
+agreement = "neuter"
+text = "dem"
+
+[[contractions]]
+preposition = "an"
+article = "dem"
+text = "am"
+
+[[contractions]]
+preposition = "in"
+article = "dem"
+text = "im"
+
+[[contractions]]
+preposition = "zu"
+article = "dem"
+text = "zum"
+
+[[contractions]]
+preposition = "zu"
+article = "der"
+text = "zur"
+
+[[contractions]]
+preposition = "von"
+article = "dem"
+text = "vom"
+
+[[contractions]]
+preposition = "bei"
+article = "dem"
+text = "beim"
+
+[[positions]]
+text = "auf"
+meaning = "on"
+example = "Das Buch ist auf dem Tisch."
+
+[[positions]]
+text = "unter"
+meaning = "under"
+example = "Die Katze ist unter dem Stuhl."
+
+[[positions]]
+text = "neben"
+meaning = "next to"
+example = "Der Stuhl ist neben der Tür."
+
+[[positions]]
+text = "vor"
+meaning = "in front of"
+example = "Der Hund ist vor dem Haus."
+
+[[positions]]
+text = "hinter"
+meaning = "behind"
+example = "Der Baum ist hinter dem Haus."
+
+# A predicate colour does not change with the noun's gender.
+[[colours]]
+meaning = "red"
+forms = ["rot"]
+bank = true
+
+[[colours]]
+meaning = "white"
+forms = ["weiß"]
+bank = true
+
+[[colours]]
+meaning = "black"
+forms = ["schwarz"]
+bank = true
+
+[[colours]]
+meaning = "yellow"
+forms = ["gelb"]
+bank = true
+
+[[colours]]
+meaning = "purple"
+forms = ["lila"]
+
+[[colours]]
+meaning = "gold"
+forms = ["golden"]
+
+[[colours]]
+meaning = "silver"
+forms = ["silbern"]
+
+[[colours]]
+meaning = "orange"
+forms = ["orange"]
+
+[[colours]]
+meaning = "blue"
+forms = ["blau"]
+bank = true
+
+[[colours]]
+meaning = "green"
+forms = ["grün"]
+bank = true
+
+[[colours]]
+meaning = "grey"
+forms = ["grau"]
+
+[[colours]]
+meaning = "brown"
+forms = ["braun"]
+
+[[colours]]
+meaning = "pink"
+forms = ["rosa"]
+
+[[colours]]
+meaning = "beige"
+forms = ["beige"]
+
+[[colours]]
+meaning = "turquoise"
+forms = ["türkis"]
+
+[[colours]]
+meaning = "violet"
+forms = ["violett"]

@@ -866,8 +866,8 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
         action="append",
         dest="languages",
         help=(
-            "template target language with a ready pack (repeatable; default: every "
-            "released pack language)"
+            "template target language (repeatable; default: every released pack "
+            "language)"
         ),
     )
     parser.add_argument(
@@ -957,19 +957,16 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
 
 
 def template_languages(requested, discovered):
-    """The languages that get templates: ``requested``, each with a ready pack, or by
-    default every released (non-experimental) pack language.
+    """The languages that get templates: ``requested``, or by default every released
+    (non-experimental) pack language.
 
     An experimental pack is used only when asked for by name, so a local experiment
-    never writes templates for it by default.
+    never writes templates for it by default. A named language without a ready pack gets
+    the unguided set.
     """
-    ready = {language["code"]: language for language in discovered}
     if requested:
-        unknown = sorted({code for code in requested if code not in ready})
-        if unknown:
-            raise ValueError(f"no ready language pack for {', '.join(unknown)}")
         return list(dict.fromkeys(requested))
-    return sorted(code for code, language in ready.items() if not language["experimental"])
+    return sorted(language["code"] for language in discovered if not language["experimental"])
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -989,10 +986,11 @@ def main(argv: list[str] | None = None) -> int:
     from app.language_packs.runtime import available_pack_languages
 
     try:
-        languages = template_languages(args.languages, available_pack_languages())
+        discovered = [] if args.languages else available_pack_languages()
     except ValueError as error:
         logger.error("%s", error)
         return 2
+    languages = template_languages(args.languages, discovered)
     if not languages and not args.skip_templates:
         logger.warning("no released language pack is ready; no templates will be made")
 

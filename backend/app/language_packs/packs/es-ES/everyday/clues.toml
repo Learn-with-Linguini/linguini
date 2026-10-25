@@ -1,0 +1,135 @@
+# The closed grammar guided I-Spy clue frames and photo-room clues are built from.
+provenance = { source = "Moved unchanged from dev's hand-written I-Spy clue tables (app/services/ispy_clue_frames.py), 2026-10-25; not human-reviewed.", review_status = "unreviewed" }
+place = "{position} {reference}"
+location_verb_starts = ["está", "es"]
+
+[examples]
+colour = "La manzana es roja."
+location = "El libro está sobre la mesa."
+
+[[prefixes]]
+frame = "colour"
+text = "Es"
+
+[[prefixes]]
+frame = "location"
+text = "Está"
+
+[[articles]]
+agreement = "masculine"
+text = "el"
+
+[[articles]]
+agreement = "feminine"
+text = "la"
+
+[[contractions]]
+preposition = "de"
+article = "el"
+text = "del"
+
+[[contractions]]
+preposition = "a"
+article = "el"
+text = "al"
+
+[[positions]]
+text = "sobre"
+meaning = "on"
+example = "El libro está sobre la mesa."
+
+[[positions]]
+text = "debajo de"
+meaning = "under"
+example = "El gato está debajo de la silla."
+
+[[positions]]
+text = "al lado de"
+meaning = "next to"
+example = "La silla está al lado de la puerta."
+
+[[positions]]
+text = "delante de"
+meaning = "in front of"
+example = "El perro está delante de la casa."
+
+[[positions]]
+text = "detrás de"
+meaning = "behind"
+example = "El árbol está detrás de la casa."
+
+# Singular (masculine, feminine) forms. A colour missing here is never suggested,
+# because its agreement with the target noun cannot be established safely.
+[[colours]]
+meaning = "red"
+forms = ["rojo", "roja"]
+bank = true
+
+[[colours]]
+meaning = "white"
+forms = ["blanco", "blanca"]
+bank = true
+
+[[colours]]
+meaning = "black"
+forms = ["negro", "negra"]
+bank = true
+
+[[colours]]
+meaning = "yellow"
+forms = ["amarillo", "amarilla"]
+bank = true
+
+[[colours]]
+meaning = "purple"
+forms = ["morado", "morada"]
+
+[[colours]]
+meaning = "gold"
+forms = ["dorado", "dorada"]
+
+[[colours]]
+meaning = "silver"
+forms = ["plateado", "plateada"]
+
+[[colours]]
+meaning = "orange"
+forms = ["anaranjado", "anaranjada"]
+
+[[colours]]
+meaning = "blue"
+forms = ["azul"]
+bank = true
+
+[[colours]]
+meaning = "green"
+forms = ["verde"]
+bank = true
+
+[[colours]]
+meaning = "grey"
+forms = ["gris"]
+
+[[colours]]
+meaning = "brown"
+forms = ["marrón"]
+
+[[colours]]
+meaning = "pink"
+forms = ["rosa"]
+
+[[colours]]
+meaning = "orange"
+forms = ["naranja"]
+
+[[colours]]
+meaning = "violet"
+forms = ["violeta"]
+
+[[colours]]
+meaning = "beige"
+forms = ["beige"]
+
+[[colours]]
+meaning = "turquoise"
+forms = ["turquesa"]

@@ -1,7 +1,5 @@
 """Which profiles can play photo rooms, and which languages get curated templates."""
 
-import pytest
-
 from app.scripts.precompute_preloaded_scenes import template_languages
 from app.services.room_languages import room_language_ready, room_profile_supported
 
@@ -48,6 +46,6 @@ DISCOVERED = [
 def test_templates_default_to_released_packs_and_name_experimental_ones():
     assert template_languages(None, DISCOVERED) == ["de", "es"]
     assert template_languages(["xx", "es", "xx"], DISCOVERED) == ["xx", "es"]
-    with pytest.raises(ValueError, match="no ready language pack for fr"):
-        template_languages(["fr"], DISCOVERED)
+    # A named language without a ready pack gets the unguided template set.
+    assert template_languages(["fr"], DISCOVERED) == ["fr"]
     assert template_languages(None, []) == []
