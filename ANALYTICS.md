@@ -98,6 +98,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 ### Onboarding & Setup
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
+| `onboarding_step_viewed` | `{ step }` | Learner views a specific step during onboarding (`profile`, `language`, `experience`, `placement`, `goals`, `permissions`, `success`) |
 | `onboarding_completed` | `{ language, minutes, level }` | Learner completes initial onboarding questionnaire |
 | `onboarding_resumed` | `{ stage }` | Learner returns to unfinished onboarding after leaving the app |
 
@@ -127,21 +128,18 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `vocabulary_preview_exit_clicked` | — | User exits from vocabulary preview |
 | `vocabulary_flashcard_viewed` | `{ taskId, position, termType, hasSceneObject }` | Learner views a vocabulary teaching card, including whether its object can be highlighted in the scene |
 | `vocabulary_typing_checked` | `{ taskId, termType, isCorrect, revealed, basilEarned }` | Learner checks or reveals a typed vocabulary answer and receives any server-awarded Basil |
-| `home_continue_practice_clicked` | — | User resumes incomplete practice from dashboard |
+| `home_continue_practice_clicked` | `{ sessionId }` | User resumes incomplete practice from dashboard |
 | `home_begin_practice_clicked` | — | User starts new practice from dashboard |
 | `home_explore_vocabulary_clicked` | — | User clicks vocabulary revisit card on home dashboard |
 | `home_explore_ispy_clicked` | — | User clicks I-Spy quick play card on home dashboard |
-| `session_summary_viewed` | `{ basilEarned, wordsLearnedCount, completedLessonsCount }` | Session summary screen displays upon finishing a lesson |
+| `session_summary_viewed` | `{ sessionId, basilEarned, wordsLearnedCount, completedLessonsCount }` | Session summary screen displays upon finishing a lesson |
 | `summary_back_home_clicked` | — | User clicks "Back home" on session summary |
-| `summary_journal_cta_clicked` | — | User clicks "Write today's journal entry" from summary |
-| `summary_review_words_cta_clicked` | — | User clicks "Review difficult words" from summary |
 | `summary_play_ispy_clicked` | — | User clicks "Play I-Spy with this scene" from summary |
 
 ### I-Spy & Multiplayer Rooms
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
 | `ispy_mode_selected` | `{ mode: "ai" \| "friend" }` | User selects AI solo play or Multiplayer friend mode |
-| `ispy_game_resumed` | — | User resumes an active I-Spy game session |
 | `ispy_clue_submitted` | `{ optionId, isCorrect }` | Learner chooses an object in response to Linguini's clue |
 | `ispy_description_submitted` | `{ outcome }` | Learner writes a description clue for Linguini to guess |
 | `ispy_match_confirmed` | — | Learner confirms Linguini guessed their object correctly |
@@ -168,6 +166,8 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 ### Vocabulary & Journal
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
+| `journal_new_entry_clicked` | — | User clicks "New entry" button on the journal calendar |
+| `journal_entry_viewed` | `{ entryId }` | User clicks an existing journal entry to read |
 | `journal_entry_saved` | `{ hasPhotos, wordCount, isNew }` | Daily journal entry saved or updated |
 | `vocabulary_view_toggled` | `{ view }` | Switched between journey tree and list views |
 | `revisit_empty_practice_started` | — | Learner starts their first practice session from the empty Revisit page |
@@ -180,6 +180,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 ### Payments, Tiers & Subscriptions
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
+| `payment_page_viewed` | `{ currentTier }` | User arrives on the `/payment` page |
 | `payment_checkout_started` | `{ tier, price, currency }` | User clicks "Upgrade to Plus" to open Stripe Checkout |
 | `payment_portal_opened` | `{ currentTier }` | Active subscriber opens Stripe Customer Portal |
 | `payment_checkout_completed` | `{ status: "success" }` | User successfully returns from Stripe Checkout |
@@ -206,7 +207,99 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 
 ---
 
-## 4. Requirement for New Functionality
+## 4. Recommended GA4 Funnels & Step-by-Step Setup Guide
+
+Google Analytics 4 allows creating **Funnel Explorations** under the **Explore** tab to track conversion rates and user drop-offs across multi-step flows.
+
+Below are the 4 primary funnels designed around Linguini's user journey, followed by step-by-step creation instructions.
+
+---
+
+### Funnel 1: User Acquisition & Activation Funnel
+> **Purpose:** Measure how many landing page visitors create an account and complete onboarding.
+
+| Step | Step Name | Event / Condition |
+| :--- | :--- | :--- |
+| **Step 1** | Landed on Marketing Page | Event: `page_view`<br>Parameter: `page_location` equals `https://www.learnwithlinguini.com/` (or page_path = `/`) |
+| **Step 2** | Engaged with Demo or Auth CTA | Event is one of:<br>• `demo_stage_viewed`<br>• `pricing_cta_clicked`<br>• `guest_demo_scene_selected`<br>• `guest_preview_started` |
+| **Step 3** | Visited Sign Up / Login | Event: `page_view`<br>Parameter: `page_path` matches regex `^/login.*` |
+| **Step 4** | Submitted Registration | Event is one of:<br>• `signup_submitted`<br>• `google_signin_completed` |
+| **Step 5** | Completed Onboarding | Event: `onboarding_completed` |
+
+---
+
+### Funnel 2: Core Learning Loop Funnel
+> **Purpose:** Measure how effectively learners go from choosing a photo to finishing all practice tasks and completing the lesson.
+
+| Step | Step Name | Event / Condition |
+| :--- | :--- | :--- |
+| **Step 1** | Open Practice / Scene Picker | Event: `page_view`<br>Parameter: `page_path` equals `/practice` (or event: `home_begin_practice_clicked`) |
+| **Step 2** | Select Scene or Upload Photo | Event is one of:<br>• `practice_scene_selected`<br>• `practice_photo_uploaded` |
+| **Step 3** | Review & Confirm Vocabulary | Event: `scene_review_confirmed` |
+| **Step 4** | Start Tasks / Practice | Event is one of:<br>• `practice_session_started`<br>• `vocabulary_preview_continue_clicked` |
+| **Step 5** | Complete Learning Tasks | Event is one of:<br>• `task_answer_checked`<br>• `ispy_clue_submitted` |
+| **Step 6** | Lesson Finished & Summary Viewed | Event: `session_summary_viewed` |
+
+---
+
+### Funnel 3: Monetization & Plus Upgrade Funnel
+> **Purpose:** Measure conversion through the Stripe checkout and subscription upgrade flow.
+
+| Step | Step Name | Event / Condition |
+| :--- | :--- | :--- |
+| **Step 1** | Visit Pricing / Payment Page | Event: `payment_page_viewed`<br>OR Event: `pricing_cta_clicked` |
+| **Step 2** | Initiate Stripe Checkout | Event: `payment_checkout_started` |
+| **Step 3** | Checkout Succeeded | Event: `payment_checkout_completed`<br>Parameter: `status` equals `success` |
+
+---
+
+### Funnel 4: Interactive I-Spy Engagement Funnel
+> **Purpose:** Measure how users interact with the two-way conversational gaming feature.
+
+| Step | Step Name | Event / Condition |
+| :--- | :--- | :--- |
+| **Step 1** | Open I-Spy Modes | Event: `page_view`<br>Parameter: `page_path` equals `/ispy` |
+| **Step 2** | Select Game Mode | Event: `ispy_mode_selected` |
+| **Step 3** | Guess Object from Clue | Event: `ispy_clue_submitted` |
+| **Step 4** | Submit Description Clue | Event: `ispy_description_submitted` |
+| **Step 5** | Confirm Match | Event: `ispy_match_confirmed` |
+
+---
+
+## 5. How to Create a Funnel in GA4 (Step-by-Step)
+
+Follow these steps in your [Google Analytics Dashboard](https://analytics.google.com/):
+
+1. **Navigate to Explorations:**
+   * In the left sidebar of GA4, click **Explore** (the compass icon).
+   * Click the **Funnel exploration** template card (or **Blank**).
+
+2. **Configure Exploration Settings (Tab Settings column):**
+   * **Technique:** Select `Funnel exploration`.
+   * **Visualization:** Choose `Standard funnel` (bar chart) or `Trended funnel`.
+   * **Make Open Funnel:**
+     * Leave **OFF (Closed Funnel)** if users must complete Step 1 before entering the funnel.
+     * Turn **ON (Open Funnel)** if users can enter at any step.
+
+3. **Add Steps:**
+   * In the **Tab Settings** panel, find **Steps** and click the **pencil edit icon**.
+   * Name each step (e.g. `1. Land on Home`, `2. Sign Up Submitted`, etc.).
+   * Under each step, choose the matching event name (e.g. `page_view`, `signup_submitted`, `onboarding_completed`).
+   * Add filters if needed (e.g. click **+ Add parameter**, select `page_path`, condition: `contains /login`).
+   * Set step transition to **is indirectly followed by** (recommended, allows intermediate clicks) or **is directly followed by** (strict consecutive).
+   * Click **Apply** in the top right.
+
+4. **Add Breakdown Dimensions (Optional):**
+   * Drag `First user source / medium` or `Session source / medium` into the **Breakdown** section to compare drop-offs by marketing channel (TikTok vs Instagram vs LinkedIn vs Organic).
+   * Drag `Device category` into Breakdown to compare mobile vs desktop conversion rates.
+
+5. **Save & Share:**
+   * Rename the exploration at the top left (e.g. `Linguini - Core Learning Funnel`).
+   * Click the share icon in the top right if you want other team members on the GA4 property to view it.
+
+---
+
+## 6. Requirement for New Functionality
 
 Whenever adding new user-facing features or workflows:
 1. **Instrument Actions:** Call `trackAction("feature_action_name", { ...relevantParams })` on key user interactions (CTA clicks, submits, completes, toggles).
