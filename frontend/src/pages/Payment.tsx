@@ -38,7 +38,10 @@ export function Payment() {
     let cancelled = false;
     getSubscriptionStatus()
       .then((data) => {
-        if (!cancelled) setStatus(data);
+        if (!cancelled) {
+          setStatus(data);
+          trackAction("payment_page_viewed", { currentTier: data.tier });
+        }
       })
       .catch((err) => {
         if (!cancelled) {

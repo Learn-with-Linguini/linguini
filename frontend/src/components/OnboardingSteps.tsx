@@ -59,6 +59,9 @@ export function OnboardingSteps({ initial, saving = false, error, onComplete, on
     if (resumed) trackAction("onboarding_resumed", { stage: resumed.stage });
   }, [resumed]);
   useEffect(() => {
+    trackAction("onboarding_step_viewed", { step: stage });
+  }, [stage]);
+  useEffect(() => {
     if (stage === "placement" || stage === "success") return;
     saveOnboardingProgress(userId, {
       draft: { name: name.trim(), languageCode: language.code, goal: joinGoals(selectedGoals), minutes, microphoneEnabled, cameraEnabled, avatar, proficiencyLevel: level },
