@@ -95,6 +95,12 @@ class _PhotoStorage:
         return self.data
 
 
+def _game_context(profile):
+    from app.language_packs.context import game_context
+
+    return game_context(profile)
+
+
 class RoomPhotoPreparer:
     """Prepare private room photos with the runtime analyzer and translator.
 
@@ -293,14 +299,18 @@ class RoomPhotoPreparer:
             "relationships": [{"key": str(row.id), "source": row.relation} for row in relations],
         }
         try:
+            # The owner's language pack guides the translation when one is ready.
+            context = _game_context(profile)
             translated = SceneTranslationResult.model_validate(
                 self.translator.translate(
                     payload,
                     cache_scope=CacheScope(f"user:{owner_id}:room:{room_id}"),
+                    language_context=context,
                 )
             )
-            translated = normalize_object_articles(translated, payload["targetLanguage"])
-            validate_translation_terms(payload, translated)
+            if context is None:
+                translated = normalize_object_articles(translated, payload["targetLanguage"])
+            validate_translation_terms(payload, translated, context)
             if any(
                 len(rows) != len({row.key for row in rows})
                 for rows in (translated.objects, translated.attributes, translated.relationships)

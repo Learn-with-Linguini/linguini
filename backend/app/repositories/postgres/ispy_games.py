@@ -3,7 +3,8 @@
 A game is a session with mode ``ispy``. Starting one copies the user's most
 recently confirmed lesson scene for the photo (or, for a preloaded scene the
 user has not reviewed, its curated facts) into game-scoped scene records, then
-generates only I-Spy clue and description rounds from that snapshot.
+generates only I-Spy clue and description rounds from that snapshot. The scene is
+translated with the learner's language pack when one is ready, as lessons are.
 """
 
 import base64
@@ -380,7 +381,11 @@ class PostgresISpyGameRepository:
         if preview:
             translated_scene = SceneTranslationResult.model_validate(preview)
         elif workflow.translator:
-            translated_scene = workflow.translator.translate(payload, **claim.generation_options)
+            from app.language_packs.context import game_context
+
+            translated_scene = workflow.translator.translate(
+                payload, **claim.generation_options, language_context=game_context(profile),
+            )
         else:
             raise ISpyGameUnavailableError("No translator is configured.")
         with workflow.transaction() as c:

@@ -144,9 +144,8 @@ def generate_row_templates(
 
     Lessons and clues depend on the translation, so they run only when a
     translation is generated or reused for the same scene facts. A language with a
-    ready pack gets two sets: the pack translation with its lesson and clues (what
-    lessons use) and the unguided translation with its clues (I-Spy games and rooms).
-    Lessons no longer use an unguided translation, so none is stored for them.
+    ready pack gets the pack translation with its lesson and clues, which lessons and
+    I-Spy games both use; a language without one gets the unguided set.
     """
     from app.language_packs.context import resolve_language_context
 
@@ -154,9 +153,7 @@ def generate_row_templates(
     current = TemplateSet.from_content([row["content"]]).templates
     outcomes = []
     context = resolve_language_context(language)
-    passes = [("", None, ("translation", "clues") if context else STAGES)]
-    if context is not None:
-        passes.append(("pack-", context, STAGES))
+    passes = [("pack-", context, STAGES) if context is not None else ("", None, STAGES)]
 
     for prefix, language_context, pass_stages in passes:
         translated = None

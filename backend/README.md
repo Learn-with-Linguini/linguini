@@ -357,11 +357,10 @@ its attributes and relations. Each validated result is stored server-only in
 A new variant is added next to older ones. The public scene API never returns
 `generated` (`CONTENT_FIELDS` in `repositories/postgres/scenes.py`).
 
-A language with a ready pack gets two sets per scene: the pack translation with
-its lesson and clues (what lessons use; the translation's meaning review runs
-once, when its template is made) and the unguided translation with its clues
-(I-Spy games and rooms). A language without one gets the unguided translation,
-lesson and clues as before. Pack templates match only while the pack's content
+A language with a ready pack gets one set per scene: the pack translation with its
+lesson and clues, which lessons and I-Spy games both use (the translation's meaning
+review runs once, when its template is made). A language without one gets the
+unguided translation, lesson and clues as before. Pack templates match only while the pack's content
 is unchanged, so refresh them after a pack edit or review; until then lessons on
 curated scenes make live pack calls. Without a template, every language works
 through live calls.
@@ -623,8 +622,9 @@ language with no ready pack is refused when it is created (409
 `lesson_language_unavailable`); I-Spy games and rooms are unaffected. Lessons plan the
 pack's ready missions at the profile's level; a level with none (B1 and above) keeps the
 regular lesson. Every lesson, with or without missions, translates its scene with the
-pack (`language_context`); I-Spy games, room photos and the curated-template script use
-the unguided translator.
+pack (`language_context`). I-Spy games, room photos and the curated-template script use
+the pack too when the language has a ready one (`game_context`), and the unguided
+translator otherwise.
 
 - **Photo requirements.** Each definition names only the confirmed facts it needs:
   `minConfirmedObjects` (different names), `minColouredObjects` (objects with a confirmed

@@ -2,10 +2,11 @@
 
 Builds the shared versioned request, calls a ``TextModelClient``, validates
 the returned text locally, and returns the domain result. Lessons always pass their
-language pack: a second call then reviews the meaning of each translation and sends
-confident mistranslations back for one repair before any vocabulary card is built.
-I-Spy games and room photos translate without a pack (no ``language_context``), with
-the unguided prompt. Either may be served from a curated scene's precomputed template;
+language pack, and I-Spy games and room photos pass it when one is ready: a second call
+then reviews the meaning of each translation and sends confident mistranslations back
+for one repair before any vocabulary card is built. Without a ready pack (no
+``language_context``) games use the unguided prompt. Either may be served from a curated
+scene's precomputed template;
 a template hit makes no call, so a pack translation template skips the review too. Contains no
 provider-specific logic. Learner-supplied content reaches the tracer only
 through ``record_content``, which is gated by the capture-content setting.
