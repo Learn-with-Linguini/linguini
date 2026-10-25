@@ -77,8 +77,8 @@ Rooms store random invitations privately in the database, so a host can recover
 an invitation after reload or an API restart without a separate room secret.
 The invite migration rotates existing live invitations; hosts should copy the
 new code after deployment. Rooms support two players learning from English at the
-same A1/A2 level, with 2–4 photos uploaded by either player, in a language with a ready
-pack that the guided room clues support (Spanish, French or German today;
+same A1/A2 level, with 2–4 photos uploaded by either player, in a language whose ready
+pack carries the clue grammar `clues.toml` (Spanish, French, German and Korean today;
 `app/services/room_languages.py`).
 Room photos use the configured scene analyzer and translator, then require the
 owner's fact review.

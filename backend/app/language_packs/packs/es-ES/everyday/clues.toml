@@ -1,6 +1,7 @@
 # The closed grammar guided I-Spy clue frames and photo-room clues are built from.
-provenance = { source = "Moved unchanged from dev's hand-written I-Spy clue tables (app/services/ispy_clue_frames.py), 2026-10-25; not human-reviewed.", review_status = "unreviewed" }
+provenance = { source = "Moved unchanged from dev's hand-written I-Spy clue and photo-room tables (app/services/ispy_clue_frames.py, room_clues.py), 2026-10-25; not human-reviewed.", review_status = "unreviewed" }
 place = "{position} {reference}"
+conjunction = "y"
 location_verb_starts = ["está", "es"]
 
 [examples]

@@ -144,6 +144,19 @@ def agree_colour(language, adjective, gender):
     return None if grammar is None else _agree_with(grammar, adjective, gender)
 
 
+def colour_key(language, text):
+    """One key for a colour however it is written: its gender form, a written clue
+    form (빨간색이에요) or a recognised spelling (빨간). ``None`` for an unknown colour."""
+    grammar = clue_grammar(language)
+    if grammar is None:
+        return None
+    folded = _fold(text.strip())
+    return next((
+        colour.forms[0] for colour in grammar.clues.colours
+        if folded in {_fold(form) for form in [*colour.forms, *colour.recognised]}
+    ), None)
+
+
 def _agree_with(grammar, adjective, gender):
     folded = _fold(adjective.strip())
     for colour in grammar.clues.colours:

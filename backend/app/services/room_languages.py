@@ -1,23 +1,21 @@
 """Which learner profiles can play photo rooms: one rule for rooms, friends and photos."""
 
-# Languages the guided room clue builder writes clues for. A room also needs the
-# language's ready pack (``room_profile_supported``).
-ROOM_CLUE_LANGUAGES = frozenset({"es", "fr", "de"})
 ROOM_LEVELS = frozenset({"A1", "A2"})
 
 
 def room_language_ready(language: str, register=None) -> bool:
-    """The language has a ready pack and room clues."""
+    """The language has a ready pack whose clue grammar (``clues.toml``) rooms can use."""
     from app.language_packs.context import resolve_language_context
+    from app.services.ispy_clue_frames import clue_grammar
 
     code = language.lower()
-    if code not in ROOM_CLUE_LANGUAGES:
-        return False
     try:
-        return resolve_language_context(code, register) is not None
+        if resolve_language_context(code, register) is None:
+            return False
     except ValueError:
         # A broken pack configuration offers no rooms rather than failing the request.
         return False
+    return clue_grammar(code) is not None
 
 
 def room_profile_supported(profile, *, check_level: bool = True) -> bool:

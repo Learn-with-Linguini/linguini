@@ -20,9 +20,14 @@ def test_a_ready_pack_with_room_clues_opens_rooms_at_a1_and_a2():
     assert room_profile_supported(profile(level="A0"), check_level=False)
 
 
-def test_rooms_need_both_the_pack_and_room_clues(monkeypatch):
-    # Korean has a pack but no guided room clues yet.
-    assert not room_language_ready("ko")
+def test_rooms_need_the_pack_clue_grammar(monkeypatch):
+    # Every clue language opens rooms once its pack carries clues.toml.
+    assert room_language_ready("ko")
+    monkeypatch.setattr("app.services.ispy_clue_frames.clue_grammar", lambda _language: None)
+    assert not room_language_ready("es")
+
+
+def test_rooms_need_a_ready_pack(monkeypatch):
     monkeypatch.setattr("app.language_packs.context.resolve_language_context",
                         lambda *_args: None)
     assert not room_profile_supported(profile("es"))

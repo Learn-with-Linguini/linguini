@@ -503,6 +503,12 @@ class CluesFile(ApiModel):
     # Translated positions that start with a verb (está sobre, ist auf) are not positions.
     location_verb_starts: list[NonEmptyText] = Field(default_factory=list)
     avoid_plurals: list[CluePlural] = Field(default_factory=list)
+    # Definite articles written joined to the noun (French l'); a room accepts these and
+    # ``articles`` as a translation's article.
+    elided_articles: list[NonEmptyText] = Field(default_factory=list)
+    # The word joining two room clues (Es roja y está sobre la mesa.); without one a room
+    # offers single clues only.
+    conjunction: NonEmptyText | None = None
 
     @model_validator(mode="after")
     def require_consistent_grammar(self) -> CluesFile:

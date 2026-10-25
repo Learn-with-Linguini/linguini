@@ -43,9 +43,13 @@ lists other spellings a translation may use), and how a location phrase is writt
 (German dative), `contractions` (de + el = del, zu + dem = zum),
 `location_verb_starts` (a translated position starting with a verb is not offered) and
 extra `avoid_plurals` for the words a clue must not use (French gâteaux). A language with
-`articles = "none"` names the reference bare.
+`articles = "none"` names the reference bare. Photo rooms also read the
+`elided_articles` they accept beside `articles` (French l') and the `conjunction` joining
+two clues (y, et, und); a pack without one, such as Korean today, offers single-clue
+room options only. Rooms open for every language whose ready pack has a usable clue
+grammar.
 
-The bundled files hold dev's former hand-written tables unchanged
+The bundled files hold dev's former hand-written I-Spy and room tables unchanged
 (`tests/test_ispy_clue_grammar.py` compares the frames, colours, location phrases and
 room clues they build with `tests/fixtures/ispy_clue_frames.json`, recorded from those
 tables). They are not human-reviewed, so outside a local experiment a pack's clue grammar
