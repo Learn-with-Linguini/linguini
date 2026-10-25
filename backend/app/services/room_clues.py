@@ -14,8 +14,7 @@ from app.services.ispy_clue_frames import (
     build_clue_support,
     mentions_target,
 )
-
-ROOM_LANGUAGES = {"es", "fr", "de"}
+from app.services.room_languages import ROOM_CLUE_LANGUAGES
 
 
 class RoomClueError(ValueError):
@@ -49,7 +48,7 @@ def build_room_pack(
     reference ID, so duplicate reference nouns cannot create false uniqueness.
     Marker coordinates never invent colour or spatial relationships.
     """
-    if language not in ROOM_LANGUAGES:
+    if language not in ROOM_CLUE_LANGUAGES:
         raise RoomClueError(
             "Guided photo rooms currently support Spanish, French and German."
         )

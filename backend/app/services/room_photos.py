@@ -20,6 +20,7 @@ from app.schemas.enums import MediaSource, MediaType, SceneRelationType
 from app.schemas.media import MediaAsset, SceneObject, SceneObjectRelation
 from app.schemas.sessions import Session
 from app.services.room_clues import RoomClueError, build_room_pack
+from app.services.room_languages import room_profile_supported
 from app.services.scene_analysis import SceneAnalysisResult
 
 
@@ -116,11 +117,12 @@ class RoomPhotoPreparer:
     @staticmethod
     def _language(profile: dict) -> str:
         language = str(profile.get("target_language_code", "")).lower()
-        source = str(profile.get("source_language_code", "en")).lower()
-        if language not in {"es", "fr", "de"} or source != "en":
+        if not room_profile_supported(
+            {"source_language_code": "en", **profile}, check_level=False,
+        ):
             raise RoomPhotoError(
                 "room_photo_unavailable",
-                "Photo rooms currently support English to Spanish, French or German.",
+                "Photo rooms aren't available for this learning language yet.",
                 retryable=False,
             )
         return language
