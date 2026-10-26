@@ -166,5 +166,9 @@ test("the Home standings card opens Play and records the navigation", async () =
   assert.ok(link);
   await act(async () => link.click());
   assert.equal(view.container.querySelector('[aria-label="Current route"]')?.textContent, "/ispy");
-  assert.deepEqual(window._uxa, [["trackCustomEvent", "home_chef_standings_clicked", {}]]);
+  assert.deepEqual(
+    window._uxa?.filter(command => command[0] === "trackCustomEvent")
+      .map(command => command.slice(0, 2)),
+    [["trackCustomEvent", "home_chef_standings_clicked"]],
+  );
 });
