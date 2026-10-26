@@ -577,6 +577,7 @@ def emit_migration_sql(rows: list[dict[str, Any]]) -> str:
         "-- Precomputed suggested scene vocabulary (items only; tasks, rounds and",
         "-- prompts are placeholders regenerated at runtime). Reuses existing media assets.",
         "BEGIN;",
+        "SET LOCAL standard_conforming_strings = on;",
         "",
     ]
     updates = ", ".join(
@@ -593,11 +594,14 @@ def emit_migration_sql(rows: list[dict[str, Any]]) -> str:
             else:
                 values.append(_sql_literal(row[column]))
         lines.append(
-            "INSERT INTO public.preloaded_scenes ("
+            # Offline SQL artifact, not executed here: identifiers come from the
+            # fixed column tuples, values escape single quotes, and this file
+            # forces standard_conforming_strings so backslashes stay literal.
+            "INSERT INTO public.preloaded_scenes ("  # nosec B608
             + ", ".join(_MIGRATION_COLUMNS)
             + ") VALUES (\n    "
             + ", ".join(values)
-            + f"\n) ON CONFLICT (slug) DO UPDATE SET {updates}, updated_at = now();\n"
+            + f"\n) ON CONFLICT (slug) DO UPDATE SET {updates}, updated_at = now();\n"  # nosec B608
         )
     lines.append("COMMIT;")
     return "\n".join(lines)

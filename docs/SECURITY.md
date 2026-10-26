@@ -39,6 +39,7 @@ boundary: their signature must be verified independently of user authentication.
 | High privacy risk | Langfuse context exit automatically records original exception messages and stack traces despite content capture being disabled. | Record a safe error class/code and close SDK contexts without passing application exceptions into the SDK. Verify exported OpenTelemetry data. |
 | Medium | Public support and survey submissions have no application rate limit, and JSON parsing has no request-size cap. | Bound actual streamed body bytes before parsing; add bounded process-local limits for public submissions. |
 | Medium | Checkout and portal return URLs accept arbitrary origins. | Require the configured frontend origin and reject credentials, fragments and malformed URLs. |
+| High, dependency-specific exposure | The locked Vite, Undici, source-map-js and Prisma dependency trees contain published advisories. The optional grounding model download follows an unpinned repository revision. | Refresh the affected lockfiles to patched releases; pin grounding downloads to publisher commit SHAs and require safe model formats. |
 | Visibility gap | Router calls are spans, so their token usage is ignored by the SDK; the enclosing generation can misattribute failover usage. A blanket mask also removes diagnostic metadata. | Make each outbound model call a generation, avoid duplicate usage on feature wrappers, and retain reviewed diagnostic metadata. |
 
 The review found existing ownership filters on sessions, tasks, journals,
