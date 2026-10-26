@@ -185,7 +185,6 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `payment_portal_opened` | `{ currentTier }` | Active subscriber opens Stripe Customer Portal |
 | `payment_checkout_completed` | `{ status: "success" }` | User successfully returns from Stripe Checkout |
 | `payment_checkout_cancelled` | `{ status: "cancelled" }` | User cancels Stripe Checkout and returns |
-| `payment_test_tier_switched` | `{ targetTier }` | Dev/test toolbox switches tier between beta/free/plus |
 
 ### Feedback, Support & Social
 | Event Name | Parameters | Trigger Description |

@@ -6,11 +6,16 @@ import logging
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from stripe import SignatureVerificationError
 
 from app.api.dependencies import get_stripe_service, get_user_service
-from app.schemas.enums import AccountTier
-from app.services.stripe_service import StripeConfigurationError, StripeService
+from app.services.stripe_service import (
+    BillingCustomerNotLinked,
+    InvalidPaymentReturnUrl,
+    StripeConfigurationError,
+    StripeService,
+)
 from app.services.users import UserService
 
 logger = logging.getLogger(__name__)
@@ -22,15 +27,11 @@ UserServiceDep = Annotated[UserService, Depends(get_user_service)]
 
 
 class CreateCheckoutSessionRequest(BaseModel):
-    returnUrl: str | None = None
+    returnUrl: str | None = Field(default=None, max_length=2048)
 
 
 class CreatePortalSessionRequest(BaseModel):
-    returnUrl: str | None = None
-
-
-class TestSetTierRequest(BaseModel):
-    tier: AccountTier
+    returnUrl: str | None = Field(default=None, max_length=2048)
 
 
 class CheckoutSessionResponse(BaseModel):
@@ -77,6 +78,8 @@ def create_checkout_session(
             return_url=request.returnUrl,
         )
         return CheckoutSessionResponse(checkoutUrl=url)
+    except InvalidPaymentReturnUrl as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except StripeConfigurationError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -104,6 +107,10 @@ def create_portal_session(
             return_url=request.returnUrl,
         )
         return PortalSessionResponse(portalUrl=url)
+    except BillingCustomerNotLinked as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except InvalidPaymentReturnUrl as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except StripeConfigurationError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -117,16 +124,6 @@ def create_portal_session(
         ) from exc
 
 
-@router.post("/test-set-tier")
-def test_set_tier(
-    request: TestSetTierRequest,
-    user_service: UserServiceDep,
-) -> dict[str, str]:
-    """Development testing endpoint to switch tier for the current user."""
-    user = user_service.set_user_tier(request.tier.value)
-    return {"tier": user.tier.value if hasattr(user.tier, "value") else str(user.tier)}
-
-
 @router.post("/webhook")
 async def stripe_webhook(
     request: Request,
@@ -136,8 +133,12 @@ async def stripe_webhook(
     payload = await request.body()
     try:
         return stripe_service.handle_webhook_event(payload, stripe_signature)
-    except Exception as exc:
-        logger.exception("Webhook signature verification or processing failed.")
+    except StripeConfigurationError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Payment webhook verification is not configured.",
+        ) from exc
+    except (ValueError, SignatureVerificationError) as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Webhook verification failed.",
