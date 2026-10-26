@@ -11,6 +11,7 @@ from app.ai import build_tracer, load_ai_settings
 from app.ai.features.object_grounding import ObjectGroundingError
 from app.ai.registry import build_image_moderator, build_object_grounder
 from app.api.learning_errors import register_learning_errors
+from app.api.request_security import RequestSecurityMiddleware
 from app.api.router import api_router
 from app.config import get_allowed_origins
 from app.database import create_database_engine
@@ -100,6 +101,7 @@ def create_app() -> FastAPI:
     )
     app.state.ai_settings = load_ai_settings()
     app.state.auth_settings = load_auth_settings()
+    app.add_middleware(RequestSecurityMiddleware)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=get_allowed_origins(),
