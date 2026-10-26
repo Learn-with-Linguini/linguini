@@ -9,9 +9,8 @@ cycle back onto ``app.services.scene_analysis``.
 from typing import Any
 
 __all__ = [
-    "SCENE_TRANSLATION_PROMPT_VERSION",
-    "SCENE_TRANSLATION_SCHEMA_VERSION",
-    "SCENE_TRANSLATION_SYSTEM_PROMPT",
+    "PACK_TRANSLATION_PROMPT_VERSION",
+    "PACK_TRANSLATION_SYSTEM_PROMPT",
     "SceneTranslationError",
     "SceneTranslationRequest",
     "SceneTranslationResult",
@@ -19,14 +18,12 @@ __all__ = [
     "TranslatedTerm",
     "TranslationTerm",
     "build_scene_translation_schema",
-    "normalize_object_articles",
     "validate_translation_terms",
 ]
 
 _IMPORTS = {
-    "SCENE_TRANSLATION_PROMPT_VERSION": "app.ai.features.translation.prompt",
-    "SCENE_TRANSLATION_SCHEMA_VERSION": "app.ai.features.translation.prompt",
-    "SCENE_TRANSLATION_SYSTEM_PROMPT": "app.ai.features.translation.prompt",
+    "PACK_TRANSLATION_PROMPT_VERSION": "app.ai.features.translation.prompt",
+    "PACK_TRANSLATION_SYSTEM_PROMPT": "app.ai.features.translation.prompt",
     "SceneTranslationRequest": "app.ai.features.translation.schemas",
     "SceneTranslationResult": "app.ai.features.translation.schemas",
     "TranslatedTerm": "app.ai.features.translation.schemas",
@@ -34,7 +31,6 @@ _IMPORTS = {
     "SceneTranslationService": "app.ai.features.translation.service",
     "build_scene_translation_schema": "app.ai.features.translation.service",
     "SceneTranslationError": "app.ai.features.translation.validation",
-    "normalize_object_articles": "app.ai.features.translation.validation",
     "validate_translation_terms": "app.ai.features.translation.validation",
 }
 

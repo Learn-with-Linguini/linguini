@@ -232,16 +232,15 @@ def test_owner_corrections_are_the_only_facts_translated_and_use_private_room_sc
     assert len(result["targets"]) == 2
 
 
-def test_a_language_without_a_ready_pack_keeps_the_unguided_translation(
-    setup_photo, monkeypatch,
-):
+def test_a_language_without_a_ready_pack_is_not_translated(setup_photo, monkeypatch):
     helper, photo_id, owner, asset, profile = setup_photo
-    monkeypatch.setattr("app.services.room_photos._game_context", lambda _profile: None)
     analysis = helper.analyze(photo_id, owner, asset, profile)
-    result = helper.build_pack(photo_id, owner, profile, analysis, review_of(analysis))
-    _payload, options = helper.translator.calls[0]
-    assert options["language_context"] is None
-    assert len(result["targets"]) == 2
+    monkeypatch.setattr("app.services.room_photos._game_context", lambda _profile: None)
+    with pytest.raises(RoomPhotoError) as caught:
+        helper.build_pack(photo_id, owner, profile, analysis, review_of(analysis))
+    assert caught.value.code == "room_photo_unavailable"
+    assert not caught.value.retryable
+    assert helper.translator.calls == []
 
 
 @pytest.mark.parametrize(

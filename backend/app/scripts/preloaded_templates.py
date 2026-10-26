@@ -143,9 +143,9 @@ def generate_row_templates(
     Templates for other languages are kept: each is keyed by its target language.
 
     Lessons and clues depend on the translation, so they run only when a
-    translation is generated or reused for the same scene facts. A language with a
-    ready pack gets the pack translation with its lesson and clues, which lessons and
-    I-Spy games both use; a language without one gets the unguided set.
+    translation is generated or reused for the same scene facts. Templates use the
+    language's ready pack, which lessons and I-Spy games share; a language without one
+    gets none (every stage is reported ``missing``/``noLanguagePack``).
     """
     from app.language_packs.context import resolve_language_context
 
@@ -153,11 +153,14 @@ def generate_row_templates(
     current = TemplateSet.from_content([row["content"]]).templates
     outcomes = []
     context = resolve_language_context(language)
-    passes = [("pack-", context, STAGES) if context is not None else ("", None, STAGES)]
+    if context is None:
+        return [StageOutcome(row["slug"], language, f"pack-{stage}", "missing", "noLanguagePack")
+                for stage in STAGES]
+    passes = [("pack-", context, STAGES)]
 
     for prefix, language_context, pass_stages in passes:
         translated = None
-        options = {"language_context": language_context} if language_context else {}
+        options = {"language_context": language_context}
 
         def outcome(stage, status, reason=None, prefix=prefix):
             outcomes.append(StageOutcome(row["slug"], language, f"{prefix}{stage}", status, reason))

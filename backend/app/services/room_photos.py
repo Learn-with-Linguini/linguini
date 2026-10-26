@@ -11,10 +11,7 @@ from app.ai.cache import CacheScope
 from app.ai.contracts import VisionImage
 from app.ai.features.scene_analysis import UploadedSceneAnalyzer
 from app.ai.features.translation.schemas import SceneTranslationResult
-from app.ai.features.translation.validation import (
-    normalize_object_articles,
-    validate_translation_terms,
-)
+from app.ai.features.translation.validation import validate_translation_terms
 from app.schemas.base import ApiModel
 from app.schemas.enums import MediaSource, MediaType, SceneRelationType
 from app.schemas.media import MediaAsset, SceneObject, SceneObjectRelation
@@ -300,9 +297,15 @@ class RoomPhotoPreparer:
             ],
             "relationships": [{"key": str(row.id), "source": row.relation} for row in relations],
         }
+        # The owner's language pack guides the translation; rooms open only with one.
+        context = _game_context(profile)
+        if context is None:
+            raise RoomPhotoError(
+                "room_photo_unavailable",
+                "Photo rooms aren't available for this learning language yet.",
+                retryable=False,
+            )
         try:
-            # The owner's language pack guides the translation when one is ready.
-            context = _game_context(profile)
             translated = SceneTranslationResult.model_validate(
                 self.translator.translate(
                     payload,
@@ -310,8 +313,6 @@ class RoomPhotoPreparer:
                     language_context=context,
                 )
             )
-            if context is None:
-                translated = normalize_object_articles(translated, payload["targetLanguage"])
             validate_translation_terms(payload, translated, context)
             if any(
                 len(rows) != len({row.key for row in rows})

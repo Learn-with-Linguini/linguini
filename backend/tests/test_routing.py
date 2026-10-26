@@ -6,7 +6,7 @@ from contextlib import contextmanager
 
 import httpx
 import pytest
-from test_scene_translation_service import PAYLOAD, VALID_OUTPUT
+from test_scene_translation_service import PAYLOAD, VALID_OUTPUT, PackTranslation
 
 from app.ai import registry
 from app.ai.adapters import gemini
@@ -315,9 +315,18 @@ def test_invocation_budget_is_shared_across_calls():
     assert len(route.order) == 2
 
 
+@pytest.fixture(autouse=True)
+def no_meaning_review(monkeypatch):
+    """These tests count routed translation calls; the meaning review that follows a
+    pack translation is covered by the translation service tests."""
+    monkeypatch.setattr(SceneTranslationService, "_review_meaning", lambda *_args: None)
+
+
 def translator(route):
     config = TextModelConfig(model_name="model-primary", max_retries=1)
-    return SceneTranslationService(route.client, config, tracer=route.tracer, provider="openrouter")
+    return PackTranslation(SceneTranslationService(
+        route.client, config, tracer=route.tracer, provider="openrouter",
+    ))
 
 
 def test_feature_repair_shares_the_route_budget():
@@ -380,9 +389,9 @@ def test_tracing_records_attempts_route_and_usage_without_secrets():
 def test_directly_injected_clients_keep_the_feature_call_count(max_retries):
     provider = FakeProvider([TIMEOUT, TIMEOUT, VALID_OUTPUT])
     config = TextModelConfig(model_name="m", max_retries=max_retries)
-    service = SceneTranslationService(
+    service = PackTranslation(SceneTranslationService(
         provider, config, tracer=RecordingTracer(), provider="openrouter"
-    )
+    ))
     with pytest.raises(SceneTranslationError):
         service.translate(PAYLOAD)
     assert len(provider.calls) == 1 + max_retries
@@ -432,7 +441,9 @@ def test_registry_builds_priority_routes_from_config(tmp_path, monkeypatch):
         return provider
 
     monkeypatch.setattr(registry, "OpenRouterTextClient", fake)
-    translator = registry.build_scene_translator(priority_settings(tmp_path), RecordingTracer())
+    translator = PackTranslation(
+        registry.build_scene_translator(priority_settings(tmp_path), RecordingTracer())
+    )
     assert translator.translate(PAYLOAD).objects[0].translation == "silla"
     assert built["sk-a"][0] == "model-primary"
     assert built["sk-c"][0] == "model-backup"

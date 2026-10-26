@@ -350,7 +350,8 @@ its attributes and relations. Each validated result is stored server-only in
 
 - `feature`, `language` and `variant` (`prompt|schema|validator` versions);
 - `basis` (`pack` for lesson and clue templates built on a pack translation;
-  absent for those built on the unguided translation);
+  absent only on older templates from the former unguided translation, which no
+  longer match);
 - a `fingerprint` of the scene facts (title, summary, labels, attributes and
   relations) and language; changing labels stales templates, but moving marker
   positions alone does not;
@@ -362,11 +363,11 @@ A new variant is added next to older ones. The public scene API never returns
 
 A language with a ready pack gets one set per scene: the pack translation with its
 lesson and clues, which lessons and I-Spy games both use (the translation's meaning
-review runs once, when its template is made). A language without one gets the
-unguided translation, lesson and clues as before. Pack templates match only while the pack's content
+review runs once, when its template is made). A language without one gets no
+templates (`noLanguagePack`). Pack templates match only while the pack's content
 is unchanged, so refresh them after a pack edit or review; until then lessons on
-curated scenes make live pack calls. Without a template, every language works
-through live calls.
+curated scenes make live pack calls. Without a template, every language with a ready
+pack works through live calls.
 
 At review time, unchanged curated content checks the templates first. A match
 is mapped onto the session's own object, attribute and relation IDs, validated
@@ -622,12 +623,14 @@ correctness, score, XP, vocabulary progress and learner history still come from
 
 Photo lessons come only from language packs (`app/language_packs/`). A lesson for a
 language with no ready pack is refused when it is created (409
-`lesson_language_unavailable`); I-Spy games and rooms are unaffected. Lessons plan the
+`lesson_language_unavailable`). Lessons plan the
 pack's ready missions at the profile's level; a level with none (B1 and above) keeps the
 regular lesson. Every lesson, with or without missions, translates its scene with the
-pack (`language_context`). I-Spy games, room photos and the curated-template script use
-the pack too when the language has a ready one (`game_context`), and the unguided
-translator otherwise.
+pack (`language_context`), and so do I-Spy games, room photos and the curated-template
+script (`game_context`). The translator requires a pack: a language without a ready one
+gets no new translation, so an I-Spy game that needs one fails, rooms stay closed and the
+script makes no templates. A game reusing a confirmed lesson's saved translation still
+starts.
 
 - **Photo requirements.** Each definition names only the confirmed facts it needs:
   `minConfirmedObjects` (different names), `minColouredObjects` (objects with a confirmed

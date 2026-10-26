@@ -280,18 +280,15 @@ def test_scene_suitability_not_legacy_dictionary_membership(pack_dir, runtime, l
     )
 
 
-def test_languages_without_a_pack_and_old_saved_tasks_need_no_context(pack_dir, runtime):
+def test_a_language_without_a_pack_is_not_translated(pack_dir, runtime):
     # The configured folder holds only the Spanish pack.
     assert resolve_language_context("it") is None
-    # Legacy service retains its prompt and schema; optional additions stay absent.
     provider = MockTranslationProvider()
-    translator(provider).translate(payload(runtime))
-    request = provider.requests[0]
-    assert "language_context" not in json.loads(request.user_content)
-    assert not provider.reviews
-    assert (
-        "nativeDisplay" not in request.json_schema["properties"]["objects"]["items"]["properties"]
-    )
+    with pytest.raises(SceneTranslationError, match="ready pack"):
+        translator(provider).translate(
+            payload(runtime), language_context=resolve_language_context("it"),
+        )
+    assert provider.requests == [] and not provider.reviews
 
 
 def test_session_forms_ignore_stale_catalog_gender(pack_dir, runtime):
@@ -425,7 +422,10 @@ def test_translation_rejects_a_different_context_language(pack_dir, runtime):
 def test_saved_legacy_vocabulary_task_can_reload_without_new_metadata(
     pack_dir, runtime, monkeypatch
 ):
-    translated = translator(MockTranslationProvider()).translate(payload(runtime))
+    translated = translator(MockTranslationProvider()).translate(
+        payload(runtime), language_context=resolve_language_context("es"),
+    )
+    # A task saved before language contexts existed has none.
     intro, _ = cards(None, runtime, translated)
     serialized = intro.model_dump_json()
     assert "languageContext" not in serialized

@@ -319,6 +319,19 @@ def test_preloaded_scene_uses_curated_facts_without_a_confirmed_lesson(database,
     assert {t.kind for t in game.tasks} <= {"ispyRound", "reflection"}
 
 
+def test_a_game_needing_a_translation_without_a_ready_pack_fails(
+    database, repos, monkeypatch,
+):
+    _, _, _, client = database
+    workflow, games, profile, translator, _ = repos
+    monkeypatch.setattr("app.language_packs.context.game_context", lambda _profile: None)
+    asset = create_run(client, profile, "preloaded-no-pack-key")["mediaAsset"]["id"]
+    game = workflow.get(start(games, profile, asset).session.id, profile.id)
+    # A curated scene has no saved translation to reuse, and nothing translates it.
+    assert game.session.status == "failed"
+    assert translator.payloads == []
+
+
 def test_another_language_retranslates_the_same_confirmed_facts(database, repos):
     engine, owner, _, _ = database
     workflow, games, profile, translator, _ = repos
