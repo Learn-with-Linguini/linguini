@@ -87,7 +87,9 @@ class UploadedSceneAnalyzer:
         image_moderator: ImageModerator | None = None,
     ) -> None:
         self._storage = storage
-        self._client = as_routed(client, config, kind="vision")
+        self._client = as_routed(
+            client, config, kind="vision", tracer=tracer, provider=provider
+        )
         self._config = config
         self._tracer = tracer
         self._provider = provider
@@ -167,18 +169,18 @@ class UploadedSceneAnalyzer:
             try:
                 for attempt in range(1, attempts + 1):
                     try:
-                        with self._tracer.generation(
+                        with self._tracer.span(
                             "scene-analysis-generation",
-                            feature=AiFeature.SCENE_ANALYSIS.value,
-                            provider=self._provider,
-                            model=self._config.model_name,
-                            prompt_version=SCENE_ANALYSIS_PROMPT_VERSION,
-                            schema_version=SCENE_ANALYSIS_SCHEMA_VERSION,
-                            model_parameters={
+                            metadata={
+                                "feature": AiFeature.SCENE_ANALYSIS.value,
+                                "provider": self._provider,
+                                "requestedModel": self._config.model_name,
+                                "promptVersion": SCENE_ANALYSIS_PROMPT_VERSION,
+                                "schemaVersion": SCENE_ANALYSIS_SCHEMA_VERSION,
                                 "maxOutputTokens": self._config.max_output_tokens,
                                 "timeoutSeconds": self._config.timeout_seconds,
+                                "attempt": attempt,
                             },
-                            metadata={"attempt": attempt},
                         ) as generation:
                             try:
                                 response = self._client.generate(request, invocation=invocation)

@@ -245,7 +245,18 @@ class RoutedModelClient:
         }
         if fallback_reason:
             attempt_metadata["fallbackReason"] = fallback_reason
-        with self._tracer.span("model-call", metadata=attempt_metadata) as span:
+        with self._tracer.generation(
+            "model-call",
+            feature=request.json_schema_name,
+            provider=target.provider,
+            model=target.config.model_name,
+            prompt_version=request.prompt_version,
+            model_parameters={
+                "temperature": target.config.temperature,
+                "maxOutputTokens": target.config.max_output_tokens,
+            },
+            metadata=attempt_metadata,
+        ) as span:
             start = time.perf_counter()
             remaining = invocation.remaining_seconds()
             if remaining is not None and remaining <= 0:
@@ -281,21 +292,32 @@ class RoutedModelClient:
                 raise
             self._credentials.report_success(lease)
             usage = response.metadata.usage if response.metadata else None
+            served_model = (
+                (response.metadata.model if response.metadata else None)
+                or target.config.model_name
+            )
             span.update(
+                model=served_model,
                 latency_ms=(time.perf_counter() - start) * 1000,
                 input_tokens=response.input_tokens,
                 output_tokens=response.output_tokens,
                 total_tokens=usage.total_tokens if usage else None,
                 metadata={
                     "outcome": "success",
-                    "servedModel": (response.metadata.model if response.metadata else None)
-                    or target.config.model_name,
+                    "servedModel": served_model,
                 },
             )
             return response
 
 
-def as_routed(client: Any, config: ModelConfig, *, kind: str) -> RoutedModelClient:
+def as_routed(
+    client: Any,
+    config: ModelConfig,
+    *,
+    kind: str,
+    tracer: AITracer | None = None,
+    provider: str = "direct",
+) -> RoutedModelClient:
     """Wrap a directly built or injected client as a one-deployment route.
 
     The budget matches the feature's own ``1 + max_retries`` calls and there
@@ -305,9 +327,10 @@ def as_routed(client: Any, config: ModelConfig, *, kind: str) -> RoutedModelClie
         return client
     return RoutedModelClient(
         kind,
-        (RouteTarget("direct", "direct", config, lambda _secret: client),),
+        (RouteTarget("direct", provider, config, lambda _secret: client),),
         FixedCredential(),
         max_model_calls=1 + config.max_retries,
+        tracer=tracer,
     )
 
 

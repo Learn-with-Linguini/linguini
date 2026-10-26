@@ -133,7 +133,8 @@ def test_history_uses_distinct_prompt_and_same_response_schema_with_one_call():
     assert body["requiredTaskFocuses"] == list(required_task_focuses(INPUT))
     assert [task.focus for task in result.tasks] == list(required_task_focuses(INPUT))
     assert (
-        enter_kwargs(tracer, "learning-task-generation")["prompt_version"] == request.prompt_version
+        enter_kwargs(tracer, "learning-task-generation")["metadata"]["promptVersion"]
+        == request.prompt_version
     )
     traced_metadata = enter_kwargs(tracer, "learning-task-generation")["metadata"]
     assert "learnerHistory" not in traced_metadata

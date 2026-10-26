@@ -732,10 +732,10 @@ def test_tracing_records_generation_and_validation() -> None:
     root = enter_kwargs(tracer, "learning-tasks")
     assert root["feature"] == "learningTask"
     generation = enter_kwargs(tracer, "learning-task-generation")
-    assert generation["provider"] == "openai"
-    assert generation["model"] == "test-text-model"
-    assert generation["prompt_version"] == LEARNING_TASK_PROMPT_VERSION
-    assert generation["schema_version"] == LEARNING_TASK_SCHEMA_VERSION
+    assert generation["metadata"]["provider"] == "openai"
+    assert generation["metadata"]["requestedModel"] == "test-text-model"
+    assert generation["metadata"]["promptVersion"] == LEARNING_TASK_PROMPT_VERSION
+    assert generation["metadata"]["schemaVersion"] == LEARNING_TASK_SCHEMA_VERSION
 
     gen_updates = updates_for(tracer, "learning-task-generation")
     assert gen_updates[0]["input_tokens"] == 100

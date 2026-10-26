@@ -9,7 +9,6 @@ attached to an observation by any other path.
 """
 
 import logging
-import sys
 import time
 from collections.abc import Mapping
 from contextlib import AbstractContextManager, ExitStack, contextmanager
@@ -31,6 +30,7 @@ class AIObservation(Protocol):
         input_tokens: int | None = None,
         output_tokens: int | None = None,
         total_tokens: int | None = None,
+        model: str | None = None,
         retry_count: int | None = None,
         validation_result: str | None = None,
         error_code: str | None = None,
@@ -127,21 +127,24 @@ class NoOpAITracer:
 class _TracedObservation:
     """Wraps one SDK observation with our scalar-only update surface."""
 
-    def __init__(self, observation: Any, capture_content: bool) -> None:
+    def __init__(self, observation: Any, capture_content: bool, *, as_type: str) -> None:
         self._observation = observation
         self._capture_content = capture_content
         self._latency_recorded = False
+        self._is_generation = as_type == "generation"
+        self._error_recorded = False
 
     def _update_raw(self, **kwargs: Any) -> None:
         try:
             self._observation.update(**kwargs)
         except Exception:
-            logger.warning("Langfuse observation update failed", exc_info=True)
+            logger.warning("Langfuse observation update failed")
 
     def _fail(self, exc: BaseException) -> None:
         # Only the exception type name is recorded: str(exc) can contain
         # learner text, URLs or other payloads.
-        self._update_raw(level="ERROR", status_message=type(exc).__name__)
+        if not self._error_recorded:
+            self._update_raw(level="ERROR", status_message=type(exc).__name__)
 
     def update(
         self,
@@ -150,6 +153,7 @@ class _TracedObservation:
         input_tokens: int | None = None,
         output_tokens: int | None = None,
         total_tokens: int | None = None,
+        model: str | None = None,
         retry_count: int | None = None,
         validation_result: str | None = None,
         error_code: str | None = None,
@@ -178,11 +182,18 @@ class _TracedObservation:
         if metadata:
             meta.update(metadata)
         kwargs: dict[str, Any] = {}
-        if usage:
+        if usage and self._is_generation:
             kwargs["usage_details"] = usage
+        elif usage:
+            # Feature spans retain summaries, but only outbound generations own
+            # billable usage. Langfuse ignores usage_details on ordinary spans.
+            meta.update({f"{key}Tokens": value for key, value in usage.items()})
+        if model is not None and self._is_generation:
+            kwargs["model"] = model
         if meta:
             kwargs["metadata"] = meta
         if error_code is not None:
+            self._error_recorded = True
             kwargs["level"] = "ERROR"
             kwargs["status_message"] = error_code
         if kwargs:
@@ -228,39 +239,42 @@ class LangfuseAITracer:
             )
             if session_id:
                 stack.enter_context(propagate_attributes(session_id=session_id))
-            observation = _TracedObservation(sdk_observation, self._capture_content)
+            observation = _TracedObservation(
+                sdk_observation, self._capture_content, as_type=as_type
+            )
         except Exception:
             logger.warning(
                 "Langfuse observation setup failed; running untraced",
-                exc_info=True,
             )
             if stack is not None:
                 try:
                     stack.close()
                 except Exception:
                     logger.warning(
-                        "Langfuse observation cleanup failed", exc_info=True
+                        "Langfuse observation cleanup failed"
                     )
                 stack = None
-        exc_info: tuple[Any, Any, Any] = (None, None, None)
         try:
             yield observation
-        except Exception as exc:
-            exc_info = sys.exc_info()
+        except BaseException as exc:
             if stack is not None:
                 observation._fail(exc)
             raise
         finally:
             if stack is not None:
-                if exc_info[0] is None and not observation._latency_recorded:
+                if not observation._latency_recorded:
                     observation.update(
                         latency_ms=(time.perf_counter() - started) * 1000
                     )
                 try:
-                    stack.__exit__(*exc_info)
+                    # The SDK's OTEL context manager records exception messages
+                    # and tracebacks independently of its input/output mask.
+                    # Close normally after our class/code-only error update; the
+                    # application's original exception still propagates above.
+                    stack.close()
                 except Exception:
                     logger.warning(
-                        "Langfuse observation exit failed", exc_info=True
+                        "Langfuse observation exit failed"
                     )
 
     def trace(
@@ -333,7 +347,31 @@ class LangfuseAITracer:
 
 
 def _drop_content(*, data: Any, **_: Any) -> Any:
-    return "[redacted]"
+    # SDK v4 applies the same hook to input, output AND metadata. Dropping all
+    # three hides the diagnostic dimensions along with content. No input/output
+    # is passed to the SDK in this mode; retain only the metadata fields our
+    # instrumentation uses, with bounded scalar values.
+    if not isinstance(data, Mapping):
+        return "[redacted]" if data is not None else None
+    return {
+        key: value for key, value in data.items()
+        if key in _DIAGNOSTIC_FIELDS
+        and (value is None or isinstance(value, (bool, int, float))
+             or (isinstance(value, str) and len(value) <= 200))
+    }
+
+
+_DIAGNOSTIC_FIELDS = frozenset({
+    "feature", "provider", "model", "promptVersion", "schemaVersion",
+    "maxOutputTokens", "timeoutSeconds", "temperature", "attempt",
+    "deployment", "credentialId", "requestedModel", "servedModel",
+    "fallbackReason", "scope", "statusCode", "outcome", "routeAttempts",
+    "latencyMs", "retryCount", "validationResult", "resultStatus",
+    "inputTokens", "outputTokens", "totalTokens", "learnerTextLength",
+    "targetLanguage", "assetSource", "imageByteCount", "mimeType",
+    "objectCount", "relationCount", "modelObjectCount", "taskCount",
+    "questionCount", "clueCount", "flagged",
+})
 
 
 def build_tracer(settings: AiSettings) -> AITracer:

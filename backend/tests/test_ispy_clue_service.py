@@ -445,10 +445,10 @@ def test_tracing_records_generation_and_validation() -> None:
     root = enter_kwargs(tracer, "ispy-clues")
     assert root["feature"] == "ispyClue"
     generation = enter_kwargs(tracer, "ispy-clue-generation")
-    assert generation["provider"] == "openai"
-    assert generation["model"] == "test-text-model"
-    assert generation["prompt_version"] == ISPY_CLUE_PROMPT_VERSION
-    assert generation["schema_version"] == ISPY_CLUE_SCHEMA_VERSION
+    assert generation["metadata"]["provider"] == "openai"
+    assert generation["metadata"]["requestedModel"] == "test-text-model"
+    assert generation["metadata"]["promptVersion"] == ISPY_CLUE_PROMPT_VERSION
+    assert generation["metadata"]["schemaVersion"] == ISPY_CLUE_SCHEMA_VERSION
 
     gen_updates = updates_for(tracer, "ispy-clue-generation")
     assert gen_updates[0]["input_tokens"] == 100

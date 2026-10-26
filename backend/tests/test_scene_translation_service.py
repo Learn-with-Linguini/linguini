@@ -718,10 +718,10 @@ def test_generation_observation_dimensions() -> None:
         for kind, name, kw in tracer.events
         if kind == "enter" and name == "scene-translation"
     )
-    assert enter["provider"] == "openai"
-    assert enter["model"] == "test-text-model"
-    assert enter["prompt_version"] == SCENE_TRANSLATION_PROMPT_VERSION
-    assert enter["schema_version"] == SCENE_TRANSLATION_SCHEMA_VERSION
+    assert enter["metadata"]["provider"] == "openai"
+    assert enter["metadata"]["requestedModel"] == "test-text-model"
+    assert enter["metadata"]["promptVersion"] == SCENE_TRANSLATION_PROMPT_VERSION
+    assert enter["metadata"]["schemaVersion"] == SCENE_TRANSLATION_SCHEMA_VERSION
 
     update = next(
         kw
@@ -872,7 +872,7 @@ def test_broken_tracer_cannot_fail_translation() -> None:
     # The real tracers swallow their own errors; a deliberately broken fake
     # proves the service adds no extra tracer dependence.
     class BrokenTracer:
-        def generation(self, *args, **kwargs):
+        def span(self, *args, **kwargs):
             raise RuntimeError("tracer down")
 
     with pytest.raises(RuntimeError):

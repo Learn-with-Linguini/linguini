@@ -440,9 +440,9 @@ def test_trace_records_scalar_dimensions_only() -> None:
     generation = next(
         e[2] for e in tracer.events if e[:2] == ("enter", "ispy-description-evaluation")
     )
-    assert generation["provider"] == "openai"
-    assert generation["model"] == "test-text-model"
-    assert generation["schema_version"] == ISPY_GUESS_SCHEMA_VERSION
+    assert generation["metadata"]["provider"] == "openai"
+    assert generation["metadata"]["requestedModel"] == "test-text-model"
+    assert generation["metadata"]["schemaVersion"] == ISPY_GUESS_SCHEMA_VERSION
     usage = next(
         e[2] for e in tracer.events
         if e[:2] == ("ispy-description-evaluation", "update") and "input_tokens" in e[2]

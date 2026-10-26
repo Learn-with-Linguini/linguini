@@ -158,7 +158,9 @@ def build_routed_client(
         client = build(
             feature_config.provider, settings, config, api_key=settings.secret_for(feature_config)
         )
-        return as_routed(client, config, kind=kind), config
+        return as_routed(
+            client, config, kind=kind, tracer=tracer, provider=feature_config.provider.value
+        ), config
     deployment_ids = (
         route.deployments
         if route.policy is SelectionPolicy.PRIORITY

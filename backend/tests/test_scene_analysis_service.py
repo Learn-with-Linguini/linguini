@@ -619,6 +619,7 @@ def test_tracer_shape_records_nested_dimensions() -> None:
         "scene-analysis",
         "image-retrieval",
         "scene-analysis-generation",
+        "model-call",
         "output-validation",
         "result-mapping",
     ]
@@ -652,10 +653,10 @@ def test_generation_dimensions() -> None:
         for kind, name, kw in tracer.events
         if kind == "enter" and name == "scene-analysis-generation"
     )
-    assert enter["provider"] == "openai"
-    assert enter["model"] == "test-vision-model"
-    assert enter["prompt_version"] == SCENE_ANALYSIS_PROMPT_VERSION
-    assert enter["schema_version"] == SCENE_ANALYSIS_SCHEMA_VERSION
+    assert enter["metadata"]["provider"] == "openai"
+    assert enter["metadata"]["requestedModel"] == "test-vision-model"
+    assert enter["metadata"]["promptVersion"] == SCENE_ANALYSIS_PROMPT_VERSION
+    assert enter["metadata"]["schemaVersion"] == SCENE_ANALYSIS_SCHEMA_VERSION
 
 
 def test_broken_tracer_cannot_fail_analyze() -> None:

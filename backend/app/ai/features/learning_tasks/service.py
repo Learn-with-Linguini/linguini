@@ -208,7 +208,9 @@ class LearningTaskService:
         provider: str,
         cache: ResultCache | None = None,
     ) -> None:
-        self._client = as_routed(client, config, kind="text")
+        self._client = as_routed(
+            client, config, kind="text", tracer=tracer, provider=provider
+        )
         self._cache = cache
         self._config = config
         self._tracer = tracer
@@ -343,18 +345,16 @@ class LearningTaskService:
                 )
                 call_start = time.perf_counter()
                 try:
-                    with self._tracer.generation(
+                    with self._tracer.span(
                         "learning-task-generation",
-                        feature=AiFeature.LEARNING_TASK.value,
-                        provider=self._provider,
-                        model=self._config.model_name,
-                        prompt_version=prompt_version,
-                        schema_version=LEARNING_TASK_SCHEMA_VERSION,
-                        model_parameters={
+                        metadata={
+                            "feature": AiFeature.LEARNING_TASK.value,
+                            "provider": self._provider,
+                            "requestedModel": self._config.model_name,
+                            "promptVersion": prompt_version,
+                            "schemaVersion": LEARNING_TASK_SCHEMA_VERSION,
                             "maxOutputTokens": self._config.max_output_tokens,
                             "timeoutSeconds": self._config.timeout_seconds,
-                        },
-                        metadata={
                             "attempt": attempt,
                             "taskFocuses": list(focuses),
                         },
