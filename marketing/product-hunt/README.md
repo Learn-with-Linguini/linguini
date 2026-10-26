@@ -1,5 +1,7 @@
 # Linguini Product Hunt launch kit
 
+This folder retains the September–October 2026 launch plan and its assets. Proposed launch slots and readiness checklists below are historical planning records, not confirmation of publication or current production status. Use the [project documentation](../../docs/README.md) for the application.
+
 **Status: prepared for team review; no Product Hunt post has been published and no message has been sent.** The public [landing page](https://www.learnwithlinguini.com/) offers a curated-photo mini session. The recommended next step is a supervised learner beta, followed by a Product Hunt launch once the checks in the [launch dashboard](plan.md) pass. The planning slot is **Saturday 17 October 2026 at 00:01 PDT / 15:01 SGT** (moved from Tuesday 13 October: Saturdays have about a third as many launches, and Product Hunt reports 15% more visit clicks on weekends). Move it if readiness slips.
 
 > **Open decision: launch date.** This kit merges two drafts. The newer one plans **Sat 17 October, 15:01 SGT**. The older readiness review proposed **Wed 14 October, 15:01 SGT** (a mid-week day with normal traffic, two weeks after 30 September to clear the must-fix list), with Tue 13 October or the following week as fallbacks if it clashes with midterms or CS3216 deadlines. Pick one, then check it against everyone's timetable. Don't launch on a day when two of the four of us have exams.
