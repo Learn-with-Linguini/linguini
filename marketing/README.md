@@ -11,6 +11,7 @@ Everything for launching and selling Linguini outside the app: the Product Hunt 
 | [`media/`](media/README.md) | Media kit: illustrated gallery, Product Hunt icon, social square, banners, the 50-second animated explainer (`export/explainer.mp4`, script in [explainer-script.md](media/explainer-script.md)) and the 18-second illustrated teaser |
 | [`landing-page/`](landing-page/milestone-landing-page.html) | Landing page milestone write-up: hero, features and pricing, SEO, Open Graph previews, GEO, team decisions and next steps. Open in a browser and paste into the Google Doc, like `business-model/milestone-business-model.html` |
 | [`analytics/`](analytics/milestone-analytics.html) | Analytics milestone write-up: Contentsquare set-up and checks, the Home redesign before and after, journeys from Home, mobile against desktop, data caveats and next metrics. Replace the yellow screenshot boxes before pasting into the Google Doc |
+| [`feature-posters/`](feature-posters/build.py) | Feature tour from real app captures (`docs/screenshots/features/`): 16 captioned posters, a click/scroll/keyboard HTML tour (`export/index.html`), a cross-fading MP4 and animated WebP showcase, and a contact sheet of every capture (`export/feature-map.png`). Captions live in `features.json` |
 | [`business-model/`](business-model/README.md) | Pricing proposal (Free, Plus, Founding Plus), reproducible AI cost model and charts. The model prices the five AI calls on the models chosen in the root [`MODEL_COMPARISON.md`](../MODEL_COMPARISON.md), all through OpenRouter, using the token counts measured there |
 
 ## Finished videos
@@ -43,6 +44,11 @@ bash marketing/media/build_video.sh && python3 marketing/media/banners.py
 
 # Animated explainer (needs the one-time venv and voice model in media/explainer.py)
 marketing/media/.venv/bin/python marketing/media/explainer.py
+
+# Feature posters, showcase video and HTML tour (Pillow + FFmpeg). Edit captions or the
+# shot list in feature-posters/features.json; captures come from docs/screenshots/features/.
+# --inline additionally writes a single self-contained tour you can send as one file.
+python3 marketing/feature-posters/build.py --inline /tmp/linguini-feature-tour.html
 
 # Business model numbers and charts
 python3 marketing/business-model/model/cost_model.py && python3 marketing/business-model/media/render.py
