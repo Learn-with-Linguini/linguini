@@ -7,8 +7,13 @@ title = "Find a described object"
 
 [[concepts]]
 concept_id = "recognise-adjective"
-title = "Check where the adjective goes"
-formula = "Most often: article + object + adjective"
+title = "Place the adjective before or after"
+explanation = "Most French adjectives go after the object. Common BAGS adjectives often go before it: beauty, age, goodness and size."
+formula = "Usually: article + object + adjective; BAGS: article + adjective + object"
+tips = [
+  "BAGS is a useful beginner guide, not a rule for every French adjective.",
+  "The adjective still matches the object: grand becomes grande with la tasse.",
+]
 
 [[concepts.pattern_parts]]
 part_id = "object"
@@ -37,7 +42,7 @@ note = "Colour words usually come after the object."
 [[concepts.examples]]
 target_text = "la grande tasse"
 translation = "the big cup"
-note = "Some common adjectives, including grand and petit, come before the object."
+note = "Grande describes size, so this common BAGS adjective comes before the object."
 
 [[concepts]]
 concept_id = "recognise-preposition"
