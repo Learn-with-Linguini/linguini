@@ -43,7 +43,7 @@ class CheatSheetConcept(ApiModel):
 
     concept_id: ContractId
     title: NonEmptyText
-    explanation: NonEmptyText
+    explanation: NonEmptyText | None = None
     formula: NonEmptyText | None = None
     examples: Annotated[list[CheatSheetExample], Field(min_length=1)]
     tips: list[NonEmptyText] = Field(default_factory=list)

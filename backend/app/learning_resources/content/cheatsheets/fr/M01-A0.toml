@@ -26,7 +26,6 @@ note = "The article shortens to l' before the vowel sound."
 [[concepts]]
 concept_id = "identify-object"
 title = "Say what the object is"
-explanation = "Start with C'est, choose un or une to match the noun, then add the object name."
 formula = "C'est + un/une + object."
 
 [[concepts.pattern_parts]]

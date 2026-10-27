@@ -66,11 +66,9 @@ export function MissionCheatSheetLauncher({
     {open ? <div className="cheatsheet-backdrop" onMouseDown={event => {
       if (event.target === event.currentTarget) close();
     }}>
-      <section className="cheatsheet-sheet" role="dialog" aria-modal="true" aria-labelledby="cheatsheet-title">
+      <section className="cheatsheet-sheet" role="dialog" aria-modal="true" aria-label="Mission cheatsheet">
+        <IconButton className="cheatsheet-sheet__close" label="Close cheatsheet" onClick={close}><CloseIcon /></IconButton>
         <div className="cheatsheet-sheet__handle" aria-hidden="true" />
-        <header className="cheatsheet-sheet__header">
-          <IconButton className="cheatsheet-sheet__close" label="Close cheatsheet" onClick={close}><CloseIcon /></IconButton>
-        </header>
         {sheet.isLoading ? <InlineLoader label="Opening your mission guide…" /> : null}
         {sheet.isError ? <div className="cheatsheet-unavailable" role="status">
           <h3>This cheatsheet is still being prepared</h3>
@@ -93,7 +91,7 @@ function CheatSheetConceptCard({ concept, languageCode, textDirection }: {
   textDirection: "ltr" | "rtl";
 }) {
   return <article className="cheatsheet-concept">
-    <div className="stack-2"><h3>{concept.title}</h3><p>{concept.explanation}</p></div>
+    <div className="stack-2"><h3>{concept.title}</h3>{concept.explanation ? <p>{concept.explanation}</p> : null}</div>
     {concept.patternParts.length ? <div className="cheatsheet-pattern" dir={textDirection} aria-label={concept.formula ?? concept.title}>
       {concept.patternParts.map(part => <div key={part.partId} className={`cheatsheet-pattern__part cheatsheet-pattern__part--${part.role}`}>
         <span className="cheatsheet-pattern__label">{part.label}</span>

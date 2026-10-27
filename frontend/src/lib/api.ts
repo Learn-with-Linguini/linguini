@@ -460,7 +460,7 @@ export interface MissionCheatSheet {
   missionId: string; practiceLevel: ProficiencyLevel; contentVersion: number; languageCode: string; textDirection: "ltr" | "rtl";
   title: string; summary?: string | null; characterReferenceId?: string | null; characterReferenceVersion?: number | null;
   concepts: {
-    conceptId: string; title: string; explanation: string; formula?: string | null;
+    conceptId: string; title: string; explanation?: string | null; formula?: string | null;
     examples: CheatSheetExample[]; tips: string[]; patternParts: CheatSheetPatternPart[];
     characterReferenceSectionIds: string[];
   }[];
