@@ -284,6 +284,13 @@ export const testSetTier = (tier: AccountTier) =>
   write<{ tier: AccountTier }>("/api/v1/payments/test-set-tier", "POST", { tier });
 
 export const getLanguageProfiles = (signal?: AbortSignal) => request<LanguageProfile[]>("/api/v1/me/language-profiles", signal);
+export interface PackPracticeLanguage {
+  code: string;
+  levels: ProficiencyLevel[];
+  experimental: boolean;
+  languageContext?: LanguageDisplayContext | null;
+}
+export const getPackPracticeLanguages = (signal?: AbortSignal) => request<PackPracticeLanguage[]>("/api/v1/me/practice-languages", signal);
 export const updateUser = (patch: UserPatch) => write<User>("/api/v1/me", "PATCH", patch);
 export const updateLanguageProfile = (id: string, patch: LanguageProfilePatch) => write<LanguageProfile>(`/api/v1/me/language-profiles/${id}`, "PATCH", patch);
 export const createLanguageProfile = (code: string, minutes: number, proficiencyLevel: ProficiencyLevel) => write<LanguageProfile>("/api/v1/me/language-profiles", "POST", {
@@ -449,7 +456,15 @@ export async function saveJournal(draft: JournalDraft, profileId: string, id?: s
 export type ProficiencyLevel = "A0" | "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 export const proficiencyLabel = (level: ProficiencyLevel) => (level === "A0" ? "Pre-A1" : level);
 /** Links task content to a versioned backend mission definition; absent on tasks without a mission. */
-export interface MissionTaskFields { missionId?: string; practiceLevel?: ProficiencyLevel; contentVersion?: number }
+export interface LanguageDisplayContext {
+  packId: string; packVersion: number; fingerprint: string;
+  languageCode: string; locale: string; variety: string; register: string; script: string;
+  direction: "ltr" | "rtl"; articles: "required" | "optional" | "none";
+  grammaticalGender: "required" | "optional" | "none";
+  romanizationRequired: boolean; romanizationConvention?: string | null;
+  speechLocale: string; speechSynthesis: "browserVoice" | "none"; speechRecognition: boolean;
+}
+export interface MissionTaskFields { missionId?: string; practiceLevel?: ProficiencyLevel; contentVersion?: number; languageContext?: LanguageDisplayContext | null }
 export interface RoleplayFact {
   sceneObjectId: string;
   source: "assignedRoleplay";
@@ -568,19 +583,22 @@ export interface SceneObjectRelation {
   referenceSceneObjectId: string; sourceRelationKey: string | null;
 }
 export interface VocabularyLearningWord {
+  romanization?: string | null;
   learningKey: string | null; termType: "object" | "attribute" | "relationship";
   vocabularyItemId: string | null; sceneObjectId: string | null; targetText: string; translation: string;
   relatedSceneObjectIds?: string[];
   partOfSpeech: WordClass; gender: string | null; pluralForm: string | null; phoneticText: string | null;
   pronunciationAudioAssetId: string | null; exampleSentence: string | null;
 }
-export interface VocabularyQuestion { questionId: string; prompt: string; options: { optionId: string; label: string }[]; correctOptionId?: string | null }
+export interface VocabularyQuestion { questionId: string; prompt: string; options: { optionId: string; label: string }[]; correctOptionId?: string | null; romanizations?: Record<string, string> | null }
 export interface GrammarLessonQuestion extends MissionQuestionFields {
   questionId: string;
   prompt: string;
   interactionType: "multipleChoice" | "sentenceBuilding" | "textCloze";
   options: { optionId: string; label: string }[];
   tokenBank: string[];
+  romanizations?: Record<string, string> | null;
+  sentenceJoinModes?: ("space" | "none")[] | null;
   gapKind?: string | null;
   assistanceSteps?: ("replayAudio" | "visualDetail" | "phraseOnset" | "chunkBank" | "fullModel")[] | null;
   allowRetry?: boolean | null;
@@ -615,7 +633,7 @@ export interface GrammarLessonQuestion extends MissionQuestionFields {
   completeChunk?: string | null;
 }
 /** A taught chunk shown with audio before a lesson's questions. */
-export interface LessonPrepCard { text: string; translation?: string | null; sceneObjectId?: string | null }
+export interface LessonPrepCard { text: string; romanization?: string | null; translation?: string | null; sceneObjectId?: string | null }
 export type TaskAnswer = { inputMode: "text"; text: string; assistance?: ClueAssistance } | { inputMode: "multipleChoice"; optionId: string } | { inputMode: "objectSelection"; sceneObjectId: string } | { inputMode: "vocabularyReview"; answers: Record<string, string>; typedAnswers: Record<string, string>; questionAssistance?: QuestionAssistance[] };
 export type ConfirmGuessBody = { attemptId: string };
 export type SupportKind = "translation" | "audio" | "example" | "wordBank" | "clueFrame" | "helpPhrase" | "hint" | "answerReveal";

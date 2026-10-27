@@ -1,0 +1,79 @@
+construction_id = "scene-existence"
+
+[[examples]]
+example_id = "exist-apple"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "There is a yellow apple in the scene."
+scene = { objects = [{ fact_id = "object:apple", concept = "apple" }], attributes = [{ fact_id = "attribute:apple-yellow", object = "object:apple", kind = "color", value = "yellow" }] }
+bindings = { object = "object:apple", attribute = "attribute:apple-yellow" }
+truth = true
+labels = []
+sentence = "Es gibt einen gelben Apfel."
+translation = "There is a yellow apple in the scene."
+chunks = [{ text = "Es", join = "none" }, { text = "gibt", join = "space" }, { text = "einen", join = "space" }, { text = "gelben", join = "space" }, { text = "Apfel.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "exist-plate"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "There is a white plate in the scene."
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }], attributes = [{ fact_id = "attribute:plate-white", object = "object:plate", kind = "color", value = "white" }] }
+bindings = { object = "object:plate", attribute = "attribute:plate-white" }
+truth = true
+labels = []
+sentence = "Es gibt einen weißen Teller."
+translation = "There is a white plate in the scene."
+chunks = [{ text = "Es", join = "none" }, { text = "gibt", join = "space" }, { text = "einen", join = "space" }, { text = "weißen", join = "space" }, { text = "Teller.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "exist-chair"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "There is a chair in the scene."
+scene = { objects = [{ fact_id = "object:chair", concept = "chair" }] }
+bindings = { object = "object:chair" }
+truth = true
+labels = []
+sentence = "Es gibt einen Stuhl."
+translation = "There is a chair in the scene."
+chunks = [{ text = "Es", join = "none" }, { text = "gibt", join = "space" }, { text = "einen", join = "space" }, { text = "Stuhl.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "absent-clock"
+levels = ["A2"]
+purposes = ["chooseSceneDescription"]
+meaning = "There is no clock in the scene."
+scene = { objects = [], absent = [{ fact_id = "object:clock", concept = "clock" }] }
+bindings = { object = "object:clock" }
+truth = false
+labels = []
+sentence = "Es gibt keine Uhr."
+translation = "There is no clock in the scene."
+chunks = [{ text = "Es", join = "none" }, { text = "gibt", join = "space" }, { text = "keine", join = "space" }, { text = "Uhr.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-07"
+levels = ["A2"]
+purposes = ["chooseSceneMarker"]
+sentence = "Es gibt ein gelber Apfel."
+correction = "Es gibt einen gelben Apfel."
+note = "Es gibt requires accusative: einen gelben Apfel."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-08"
+levels = ["A2"]
+purposes = ["chooseSceneDescription"]
+sentence = "Es gibt nicht Uhr."
+correction = "Es gibt keine Uhr."
+note = "Use the appropriate kein noun phrase for this absence frame."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }

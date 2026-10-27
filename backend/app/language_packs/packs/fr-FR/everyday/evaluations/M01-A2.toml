@@ -1,0 +1,168 @@
+mission_id = "M01"
+practice_level = "A2"
+content_version = 1
+
+[[cases]]
+case_id = "a2-phone-next-door"
+category = "wrongRelation"
+construction_id = "scene-location"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:phone", concept = "phone" }, { fact_id = "object:door", concept = "door" }], relations = [{ fact_id = "relation:phone-next_to-door", subject = "object:phone", reference = "object:door", relation = "next_to" }] }
+bindings = { subject = "object:phone", reference = "object:door", relation = "relation:phone-next_to-door" }
+truth = true
+labels = []
+input = "Locate the phone next to the door."
+expected_meaning = "The phone is next to the door."
+acceptable = ["Le téléphone est à côté de la porte."]
+reject = [{ sentence = "Le téléphone est sous la porte.", category = "wrongRelation", reason = "The bound relation is next_to, not under." }]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a2-window-next-phone-form"
+category = "contraction"
+construction_id = "scene-location"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:window", concept = "window" }, { fact_id = "object:phone", concept = "phone" }], relations = [{ fact_id = "relation:window-next_to-phone", subject = "object:window", reference = "object:phone", relation = "next_to" }] }
+bindings = { subject = "object:window", reference = "object:phone", relation = "relation:window-next_to-phone" }
+truth = true
+labels = []
+input = "Locate the window next to the phone."
+expected_meaning = "The window is next to the phone."
+acceptable = ["La fenêtre est à côté du téléphone."]
+reject = [{ sentence = "La fenêtre est à côté de le téléphone.", category = "contraction", reason = "Preserve the contraction, static case, locative marker or neutral order of this reference phrase." }]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a2-spoon-under-table"
+category = "wrongRelation"
+construction_id = "scene-location"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:spoon", concept = "spoon" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:spoon-under-table", subject = "object:spoon", reference = "object:table", relation = "under" }] }
+bindings = { subject = "object:spoon", reference = "object:table", relation = "relation:spoon-under-table" }
+truth = true
+labels = []
+input = "Locate the spoon under the table."
+expected_meaning = "The spoon is under the table."
+acceptable = ["La cuillère est sous la table."]
+reject = [{ sentence = "La cuillère est sur la table.", category = "wrongRelation", reason = "The selected relation is under, not on." }]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a2-fork-spoon"
+category = "wrongObject"
+construction_id = "connected-description"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:fork", concept = "fork" }, { fact_id = "object:spoon", concept = "spoon" }], attributes = [{ fact_id = "attribute:fork-green", object = "object:fork", kind = "color", value = "green" }] }
+bindings = { object = "object:fork", other-object = "object:spoon", attribute = "attribute:fork-green" }
+truth = true
+labels = []
+input = "Describe the green fork and the spoon."
+expected_meaning = "There is a green fork and there is also a spoon."
+acceptable = ["Il y a une fourchette verte et il y a aussi une cuillère."]
+reject = [{ sentence = "Il y a une fourchette verte et il y a aussi une assiette.", category = "wrongObject", reason = "The second selected object is the spoon, not a plate." }]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a2-absent-phone"
+category = "meaning"
+construction_id = "scene-existence"
+construction_version = 1
+scene = { objects = [], absent = [{ fact_id = "object:phone", concept = "phone" }] }
+bindings = { object = "object:phone" }
+truth = false
+labels = []
+input = "The phone is explicitly absent. State its absence."
+expected_meaning = "There is no phone in the scene."
+acceptable = ["Il n'y a pas de téléphone."]
+reject = [{ sentence = "Il y a un téléphone.", category = "meaning", reason = "The phone is explicitly absent." }]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a2-blue-bag"
+category = "valid"
+construction_id = "scene-existence"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }], attributes = [{ fact_id = "attribute:bag-blue", object = "object:bag", kind = "color", value = "blue" }] }
+bindings = { object = "object:bag", attribute = "attribute:bag-blue" }
+truth = true
+labels = []
+input = "State that a blue bag is present."
+expected_meaning = "There is a blue bag in the scene."
+acceptable = ["Il y a un sac bleu."]
+reject = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a2-door-colour-question"
+category = "meaning"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:door", concept = "door" }], attributes = [{ fact_id = "attribute:door-yellow", object = "object:door", kind = "color", value = "yellow" }] }
+bindings = { object = "object:door", attribute = "attribute:door-yellow" }
+truth = true
+labels = []
+input = "Ask the colour of the highlighted door, without answering it."
+expected_meaning = "What colour is the door?"
+acceptable = ["De quelle couleur est la porte ?"]
+reject = [{ sentence = "Où est la porte ?", category = "meaning", reason = "This asks for location rather than colour." }]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a2-key-on-table"
+category = "languageLeakage"
+construction_id = "scene-location"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:key", concept = "key" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:key-on-table", subject = "object:key", reference = "object:table", relation = "on" }] }
+bindings = { subject = "object:key", reference = "object:table", relation = "relation:key-on-table" }
+truth = true
+labels = []
+input = "Locate the key on the table."
+expected_meaning = "The key is on the table."
+acceptable = ["La clé est sur la table."]
+reject = [{ sentence = "The key is on the table.", category = "languageLeakage", reason = "The answer must use the target language." }]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[cases]]
+case_id = "a2-held-plate-on-table"
+category = "article"
+construction_id = "scene-location"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:plate-on-table", subject = "object:plate", reference = "object:table", relation = "on" }] }
+bindings = { subject = "object:plate", reference = "object:table", relation = "relation:plate-on-table" }
+truth = true
+labels = []
+input = "Locate the plate on the table."
+expected_meaning = "The plate is on the table."
+acceptable = ["L'assiette est sur la table."]
+reject = [{ sentence = "La assiette est sur la table.", category = "article", reason = "Elide la before a vowel." }, { sentence = "L'assiette est sous la table.", category = "wrongRelation", reason = "The plate is on it." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }
+
+[[cases]]
+case_id = "a2-held-bag-colour-question"
+category = "meaning"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }], attributes = [{ fact_id = "attribute:bag-green", object = "object:bag", kind = "color", value = "green" }] }
+bindings = { object = "object:bag", attribute = "attribute:bag-green" }
+truth = true
+labels = []
+input = "Ask the colour of the highlighted bag, without answering it."
+expected_meaning = "What colour is the bag?"
+acceptable = ["De quelle couleur est le sac ?"]
+reject = [{ sentence = "Où est le sac ?", category = "meaning", reason = "Ask about its colour, not its place." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }
+
+[[cases]]
+case_id = "a2-held-absent-window"
+category = "meaning"
+construction_id = "scene-existence"
+construction_version = 1
+scene = { objects = [], absent = [{ fact_id = "object:window", concept = "window" }] }
+bindings = { object = "object:window" }
+truth = false
+labels = []
+input = "The window is explicitly absent. State its absence."
+expected_meaning = "There is no window."
+acceptable = ["Il n'y a pas de fenêtre."]
+reject = [{ sentence = "Il y a une fenêtre.", category = "meaning", reason = "The window is absent." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }

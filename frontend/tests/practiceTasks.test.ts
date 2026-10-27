@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { learningProgress, nextLearningStep, practiceStages, taskDone, taskTitle, taskDescription, taskXp, xpEarnedText } from "../src/lib/practiceTasks.ts";
+import { builtSentence, learningProgress, nextLearningStep, practiceStages, taskDone, taskTitle, taskDescription, taskXp, xpEarnedText } from "../src/lib/practiceTasks.ts";
 import type { SessionTask, TaskContent } from "../src/lib/api.ts";
 
 const contents: TaskContent[] = [
@@ -78,4 +78,9 @@ test("the last learning task only finishes a mission once every learning task is
   assert.deepEqual(nextLearningStep(mission, last.id, false, task => task === vocabulary || task === first), { to: "finish" });
   assert.deepEqual(nextLearningStep(tasks.map(task => ({ ...task, status: "completed" })), "task-5", false), { to: "ispy" });
   assert.deepEqual(nextLearningStep(mission, "missing", false), { to: "tasks" });
+});
+
+test("pack sentence joins preserve canonical Spanish punctuation and Unicode", () => {
+  assert.equal(builtSentence(["El", "ni\u00f1o", "est\u00e1", "aqu\u00ed", "."], ["none", "space", "space", "space", "none"]), "El ni\u00f1o est\u00e1 aqu\u00ed.");
+  assert.equal(builtSentence(["la", "la"], ["none", "space"]), "la la");
 });

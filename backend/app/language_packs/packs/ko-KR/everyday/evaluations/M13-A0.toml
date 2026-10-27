@@ -1,0 +1,93 @@
+mission_id = "M13"
+practice_level = "A0"
+content_version = 1
+
+[[cases]]
+case_id = "m13-a0-a-book"
+category = "valid"
+construction_id = "noun-word-pair"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:book", concept = "book" }] }
+bindings = { object = "object:book" }
+truth = true
+use = "name"
+input = "Write the book with the word it goes with."
+expected_meaning = "It's a book."
+acceptable = ["책이에요"]
+reject = [{ sentence = "책예요", category = "agreement", reason = "책 ends in a consonant: 책이에요." }, { sentence = "책이에요.", category = "punctuation", reason = "A chunk has no final punctuation." }]
+provenance = { source = "Held-out M13 evaluation content, AI-authored 2026-10-23; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m13-a0-a-door"
+category = "valid"
+construction_id = "noun-word-pair"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:door", concept = "door" }] }
+bindings = { object = "object:door" }
+truth = true
+use = "name"
+input = "Write the door with the word it goes with."
+expected_meaning = "It's a door."
+acceptable = ["문이에요"]
+reject = [{ sentence = "문예요", category = "agreement", reason = "문 ends in a consonant: 문이에요." }, { sentence = "컵이에요", category = "wrongObject", reason = "The object is the door." }]
+provenance = { source = "Held-out M13 evaluation content, AI-authored 2026-10-23; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m13-a0-a-fork"
+category = "valid"
+construction_id = "noun-word-pair"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:fork", concept = "fork" }] }
+bindings = { object = "object:fork" }
+truth = true
+use = "name"
+input = "Write the fork with the word it goes with."
+expected_meaning = "It's a fork."
+acceptable = ["포크예요"]
+reject = [{ sentence = "포크이에요", category = "agreement", reason = "포크 ends in a vowel: 포크예요." }]
+provenance = { source = "Held-out M13 evaluation content, AI-authored 2026-10-23; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m13-a0-a-plate"
+category = "valid"
+construction_id = "noun-word-pair"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }] }
+bindings = { object = "object:plate" }
+truth = true
+use = "name"
+input = "Write the plate with the word it goes with."
+expected_meaning = "It's a plate."
+acceptable = ["접시예요"]
+reject = [{ sentence = "접시이에요", category = "agreement", reason = "접시 ends in a vowel: 접시예요." }]
+provenance = { source = "Held-out M13 evaluation content, AI-authored 2026-10-23; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m13-a0-held-a-bag"
+category = "valid"
+construction_id = "noun-word-pair"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }] }
+bindings = { object = "object:bag" }
+truth = true
+use = "name"
+input = "Write the bag with the word it goes with."
+expected_meaning = "It's a bag."
+acceptable = ["가방이에요"]
+reject = [{ sentence = "가방예요", category = "agreement", reason = "가방 ends in a consonant: 가방이에요." }, { sentence = "가방 이에요", category = "wordOrder", reason = "The ending attaches to the noun." }]
+provenance = { source = "Held-out M13 evaluation content, AI-authored 2026-10-23; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m13-a0-held-a-key"
+category = "valid"
+construction_id = "noun-word-pair"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:key", concept = "key" }] }
+bindings = { object = "object:key" }
+truth = true
+use = "name"
+input = "Write the key with the word it goes with."
+expected_meaning = "It's a key."
+acceptable = ["열쇠예요"]
+reject = [{ sentence = "열쇠이에요", category = "agreement", reason = "열쇠 ends in a vowel: 열쇠예요." }, { sentence = "책이에요", category = "wrongObject", reason = "The object is the key." }]
+provenance = { source = "Held-out M13 evaluation content, AI-authored 2026-10-23; nouns from the sample vocabulary.", review_status = "unreviewed" }

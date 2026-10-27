@@ -4,15 +4,10 @@ from typing import Annotated, Literal
 
 from pydantic import Field, model_validator
 
-from app.ai.features.learning_tasks.mission import MissionGeneration
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.schemas.base import ApiModel, NonEmptyText
 from app.schemas.tasks import VocabularyChoice
 from app.services.mission_m06_lexicon import ITEMS
-
-M06_PROMPT_VERSION = "learning-tasks.m06-a2.v1"
-M06_SCHEMA_VERSION = "learning-tasks-m06-a2-result.v1"
-M06_VALIDATOR_VERSION = "learning-tasks-m06-a2-validator.v1"
 
 
 class M06Question(ApiModel):
@@ -147,12 +142,15 @@ def validate_m06_lesson(payload, result):
         raise LearningTaskGenerationError("M06 open cloze requires independent Q5 history.")
     if payload["q5Mode"] == "openCloze" and result.questions[4].interaction_type != "textCloze":
         raise LearningTaskGenerationError("M06 Q5 must follow the permitted history mode.")
+    # Pack lessons (packLesson) derive tiles from generated sentences; the Korean rules
+    # below describe this module's own reviewed chunks.
+    reviewed_chunks = not payload.get("packLesson")
     for question in result.questions:
         if question.interaction_type == "sentenceBuilding":
             for chunk in question.correct_chunks:
                 if not chunk:
                     raise LearningTaskGenerationError("M06 sentence chunks cannot be empty.")
-            if payload["targetLanguage"] == "ko":
+            if payload["targetLanguage"] == "ko" and reviewed_chunks:
                 # Korean request units stay intact; the number and counter are a single chunk.
                 if (
                     question.purpose in {"buildRequest", "confirmOrRepair"}
@@ -164,7 +162,7 @@ def validate_m06_lesson(payload, result):
                     and question.purpose == "buildRequest"
                 ):
                     raise LearningTaskGenerationError("Korean request chunks need a counter.")
-    if payload["targetLanguage"] == "ko":
+    if payload["targetLanguage"] == "ko" and reviewed_chunks:
         request = result.questions[2]
         item = ITEMS[payload["itemKey"]]
         noun, counter = item.nouns["ko"]
@@ -189,20 +187,5 @@ def validate_m06_lesson(payload, result):
     return result
 
 
-def _fallback(payload):
-    from app.services.mission_m06_request_details import build_m06_result
-
-    return build_m06_result(payload)
 
 
-M06_GENERATION = MissionGeneration(
-    prompt_version=M06_PROMPT_VERSION,
-    schema_version=M06_SCHEMA_VERSION,
-    validator_version=M06_VALIDATOR_VERSION,
-    system_prompt="Build only the deterministic, reviewed M06 A2 request lesson.",
-    result_model=MissionM06Result,
-    validate=validate_m06_lesson,
-    fallback=_fallback,
-    json_schema_name="mission_m06_a2_lesson",
-    uses_model=False,
-)

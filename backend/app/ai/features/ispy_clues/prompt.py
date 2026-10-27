@@ -1,14 +1,14 @@
 # ruff: noqa: E501 — prompt text is user-approved and must stay verbatim.
 """Versioned prompt for I-Spy clue generation.
 
-``ispy-clues.v2`` asks a text model for grounded clue endings over the
+``ispy-clues.v3`` asks a text model for grounded clue endings over the
 translated scene vocabulary. The response model is dynamic — built per
 payload by ``scene_clue_response_model`` so answer and reference keys can
 only come from the supplied scene — with ``ISPY_CLUE_SCHEMA_VERSION`` as the
 contract version. Both providers use this exact prompt.
 """
 
-ISPY_CLUE_PROMPT_VERSION = "ispy-clues.v2"
+ISPY_CLUE_PROMPT_VERSION = "ispy-clues.v3"
 ISPY_CLUE_SCHEMA_VERSION = "ispy-clue-result.v2"
 
 ISPY_CLUE_SYSTEM_PROMPT = """Generate one or two I-Spy clue endings for different objects in the supplied scene,
@@ -34,6 +34,11 @@ Rules:
    list if none) in the response.
 8. Set `answerObjectKey` to the object the clue describes. This is the answer used by the
    application; do not return a separate answer label.
+   Compare the clue against every supplied object, especially repeated objects with the
+   same name. The clue must identify one specific instance using confirmed distinguishing
+   details. A fact shared by two cars does not identify either car. Add a distinguishing
+   position or relationship when supported; otherwise choose a different target. Never
+   use a marker number or object key in the clue to reveal which instance is correct.
 9. If fewer than two objects have at least two usable signal types (attributes + relation,
    or attributes + distinct position), return as many valid clues as possible rather than
    forcing a weak clue — minimum one, maximum two.

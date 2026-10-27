@@ -1,0 +1,299 @@
+[[labels]]
+semantic = "yes"
+text = "Sí"
+meaning = "yes"
+usage = "sentence"
+[labels.provenance]
+source = "app/ai/features/learning_tasks/mission_m01.py; mirrored label, not human-reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "no"
+text = "No"
+meaning = "no"
+usage = "sentence"
+[labels.provenance]
+source = "app/ai/features/learning_tasks/mission_m01.py; mirrored label, not human-reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "yes-answer"
+text = "Sí."
+meaning = "Yes."
+usage = "prompt"
+[labels.provenance]
+source = "app/services/a0_lexicon.py; mirrored A0 answer, not human-reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "no-answer"
+text = "No."
+meaning = "No."
+usage = "prompt"
+[labels.provenance]
+source = "app/services/a0_lexicon.py; mirrored A0 answer, not human-reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "what-is-this"
+text = "¿Qué es esto?"
+meaning = "What is this?"
+usage = "prompt"
+[labels.provenance]
+source = "app/services/a0_lexicon.py; mirrored prompt, not human-reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "attribute-prompt-colour"
+text = "¿De qué color es?"
+meaning = "What colour is it?"
+usage = "prompt"
+[labels.provenance]
+source = "app/services/mission_lessons_m01.py; mirrored prompt, not human-reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "describe-object"
+text = "Describe este objeto."
+meaning = "Describe this object."
+usage = "prompt"
+[labels.provenance]
+source = "app/services/mission_lessons_m01.py; mirrored prompt, not human-reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "touch-object"
+text = "Toca el objeto que corresponde a la frase: «{f['first']}»."
+meaning = "Tap the object that matches the sentence."
+usage = "prompt"
+[labels.provenance]
+source = "app/services/mission_lessons_a2.py; mirrored prompt, not human-reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "build-second-fact"
+text = "Construye la segunda frase."
+meaning = "Build the second sentence."
+usage = "prompt"
+[labels.provenance]
+source = "app/services/mission_lessons_a2.py; mirrored prompt, not human-reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "choose-description"
+text = "¿Qué descripción coincide con la foto?"
+meaning = "Which description matches the photo?"
+usage = "prompt"
+[labels.provenance]
+source = "app/services/mission_lessons_a2.py; mirrored prompt, not human-reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "describe-scene"
+text = "Describe la escena con estas frases."
+meaning = "Describe the scene with these sentences."
+usage = "prompt"
+[labels.provenance]
+source = "app/services/mission_lessons_a2.py; mirrored prompt, not human-reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "connector-distractor"
+text = "pero"
+meaning = "but"
+usage = "prompt"
+[labels.provenance]
+source = "app/services/mission_lessons_a2.py; mirrored distractor, not human-reviewed."
+review_status = "unreviewed"
+
+[[labels]]
+semantic = "attribute-prompt"
+text = "¿Cómo es?"
+meaning = "What is it like?"
+usage = "prompt"
+provenance = { source = "Mirrored existing M01 prompt; needs fluent review.", review_status = "unreviewed" }
+
+[[labels]]
+semantic = "attribute-prompt-material"
+text = "¿De qué material es?"
+meaning = "What is it made of?"
+usage = "prompt"
+provenance = { source = "Mirrored existing M01 prompt; needs fluent review.", review_status = "unreviewed" }
+[[labels]]
+semantic = "vocabulary-unsure"
+text = "No sé"
+meaning = "I don't know"
+usage = "prompt"
+provenance = { source = "Existing Spanish vocabulary fallback; needs fluent review.", review_status = "unreviewed" }
+
+[[labels]]
+semantic = "vocabulary-other"
+text = "No estoy seguro"
+meaning = "I'm not sure"
+usage = "prompt"
+provenance = { source = "Existing Spanish vocabulary fallback; needs fluent review.", review_status = "unreviewed" }
+
+[[labels]]
+semantic = "ask-where"
+text = "Pregunta dónde está."
+meaning = "Ask where it is."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "answer-where"
+text = "Responde con la posición que muestra la foto."
+meaning = "Answer with the position the photo shows."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "clue-meaning"
+text = "¿Qué significa?"
+meaning = "What does it mean?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "build-location-clue"
+text = "Construye la segunda pista."
+meaning = "Build the second clue."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "find-both-clues"
+text = "Toca el objeto que coincide con las dos pistas."
+meaning = "Tap the object that matches both clues."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "friend-points"
+text = "Tu amigo señala el marcador {marker}. ¿Qué aclaras?"
+meaning = "Your friend points to marker {marker}. What do you clarify?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "name-and-locate"
+text = "Nombra el objeto y di dónde está."
+meaning = "Name the object and say where it is."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "answer-in-sentence"
+text = "Responde con una frase."
+meaning = "Answer with a sentence."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "build-group-sentence"
+text = "Escribe una frase sobre el grupo marcado."
+meaning = "Write a sentence about the highlighted group."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "choose-comparison"
+text = "Elige la comparación correcta."
+meaning = "Choose the correct comparison."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "friend-says"
+text = "Tu amigo dice: «{statement}» ¿Qué respondes?"
+meaning = "Your friend says: “{statement}” What do you answer?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "friend-is-right"
+text = "Sí, tu amigo tiene razón."
+meaning = "Yes, your friend is right."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "describe-compare"
+text = "Describe y compara los dos grupos."
+meaning = "Describe and compare the two groups."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "more"
+text = "más"
+meaning = "more"
+usage = "sentence"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "fewer"
+text = "menos"
+meaning = "fewer"
+usage = "sentence"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "choose-sentence"
+text = "Elige la frase correcta."
+meaning = "Choose the correct sentence."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "which-is-yours"
+text = "¿Cuál es tu objeto?"
+meaning = "Which object is yours?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "choose-possessive"
+text = "Tú dices:"
+meaning = "You say:"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "describe-your-object"
+text = "Describe tu objeto con un detalle."
+meaning = "Describe your object with a detail."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "clarify-and-describe"
+text = "Aclara cuál es tu objeto y descríbelo."
+meaning = "Say which object is yours and describe it."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "what-choose"
+text = "¿Qué eliges?"
+meaning = "What do you choose?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "request-distractor-have"
+text = "Tengo"
+meaning = "I have"
+usage = "prompt"
+[labels.provenance]
+source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed."
+review_status = "generated"
+
+[[labels]]
+semantic = "request-distractor-exists"
+text = "Hay"
+meaning = "There is"
+usage = "prompt"
+[labels.provenance]
+source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed."
+review_status = "generated"

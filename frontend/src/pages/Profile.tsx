@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button, Card, IconButton } from "../components/ui";
 import { BasilIcon, ChevronRightIcon, CloseIcon, InstagramIcon, LinkedInIcon, TikTokIcon, XIcon } from "../components/icons";
 import { HelpImproveModal } from "../components/HelpImproveModal";
-import { languages } from "../config/languages";
+import { usePracticeLanguages } from "../state/usePracticeLanguages";
 import { deleteCurrentAccount } from "../lib/api";
 import { accountTiers } from "../lib/accountTiers";
 import { trackAction } from "../lib/analytics.ts";
@@ -42,6 +42,7 @@ export function Profile() {
   const [pendingLanguageCode, setPendingLanguageCode] = useState<string | null>(null);
   const { learner, user, activeProfile, profileError, profileSaving, saveLanguageProfile, saveUser, languageProfiles, activateLanguageProfile } = useAppState();
   const tier = accountTiers[user?.tier ?? "beta"];
+  const practiceLanguages = usePracticeLanguages(learner.languageCode);
   const basil = useGamification();
 
   useEffect(() => {
@@ -59,7 +60,7 @@ export function Profile() {
     setDeleteError("");
   };
 
-  const pendingLanguage = languages.find(language => language.code === pendingLanguageCode);
+  const pendingLanguage = practiceLanguages.choices.find(language => language.code === pendingLanguageCode);
   // Profiles are only created by onboarding, so an existing one means this language is already set up.
   const pendingProfile = pendingLanguage ? languageProfiles.find(profile =>
     profile.targetLanguageCode.toLowerCase() === pendingLanguage.code && profile.sourceLanguageCode === "en") : undefined;
@@ -189,16 +190,18 @@ export function Profile() {
               <strong>Target language</strong>
               <small>The language you are learning</small>
             </span>
-            <select disabled={profileSaving} value={learner.languageCode} onChange={event => {
+            <select disabled={profileSaving} aria-busy={practiceLanguages.isPending} value={learner.languageCode} onChange={event => {
               if (event.target.value !== learner.languageCode) setPendingLanguageCode(event.target.value);
             }}>
-              {languages.map(language => (
+              {practiceLanguages.choices.map(language => (
                 <option key={language.code} value={language.code}>
-                  {language.flag} {language.name}
+                  {language.flag} {language.name}{language.experimental ? " (experimental)" : ""}
                 </option>
               ))}
             </select>
           </label>
+
+          {practiceLanguages.isError ? <p role="alert">Practice languages could not be loaded. <button type="button" onClick={() => void practiceLanguages.refetch()}>Retry</button></p> : null}
 
           <label className="profile-setting">
             <span>

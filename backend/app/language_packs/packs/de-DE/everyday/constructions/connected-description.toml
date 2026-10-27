@@ -1,0 +1,27 @@
+construction_id = "connected-description"
+version = 2
+summary = "Connect selected facts with German clause order."
+guidance = "Use und to connect the selected facts. Complete clauses retain verb-second order: Es gibt … und es gibt auch … . A shared-predicate coordination can be natural, but do not drop words in a way that changes which colour or relation belongs to which object. A2 may combine an existence clause with a location clause. Do not copy Spanish adjective position or verb frames. Keep noun capitalisation and the case required by each clause."
+features = ["coordination-und", "verb-second", "case-by-clause"]
+constraints = ["Express only the selected scene facts and preserve semantic role bindings.", "Use the declared variety/register and approved surfaces.", "Treat these rules as generation guidance; they do not constitute a grammar validator."]
+required_labels = ["choose-description", "describe-scene", "connector-distractor"]
+roles = { object = "noun", other-object = "noun", subject = "noun", reference = "noun", attribute = "adjective", relation = "preposition" }
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+except_uses = ["name"]
+
+[[checks]]
+check_id = "location-dative"
+message = "After a location preposition use the dative (dem/der/einem/einer), not das/die/den/ein/eine."
+must_not_contain = ["\\b(auf|unter|neben|vor|hinter|über|in|an) (das|die|den|ein|eine|einen)\\b"]
+except_uses = ["followup"]
+
+[[checks]]
+check_id = "denied-existence"
+message = "The false existence option uses kein/keine/keinen or nicht."
+must_contain = ["\\b(kein|keine|keinen|nicht)\\b"]
+uses = ["wrongExistence"]

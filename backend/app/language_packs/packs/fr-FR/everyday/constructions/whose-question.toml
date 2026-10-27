@@ -1,0 +1,14 @@
+construction_id = "whose-question"
+version = 1
+summary = "Ask whose a named object is."
+guidance = "Ask À qui est + definite article + noun ? (space before ?): À qui est la tasse ?"
+features = ["ownership", "question"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun" }
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "whose-frame"
+message = "Ask À qui est … ?"
+must_contain = ["^à qui est ", " \\?$"]

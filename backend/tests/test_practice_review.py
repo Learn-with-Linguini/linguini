@@ -213,7 +213,25 @@ def test_review_rebuilds_tasks_only_for_selected_objects():
         side_effect=[(generated.scene_objects, []), (generated.scene_objects, [])]
     )
     repo._vocabulary = lambda *args: (generated.vocabulary, generated.translations)
+    # Lessons translate only with their language pack; the stub sees only accepted objects.
+    from app.ai.features.translation.schemas import SceneTranslationResult
+
+    seen = []
+
+    def translate(payload, **options):
+        seen.append((payload, options))
+        return SceneTranslationResult(objects=[
+            {"key": term["key"], "source": term["source"], "translation": "mesa",
+             "article": "la", "gender": "feminine", "native_display": "la mesa"}
+            for term in payload["objects"]
+        ], attributes=[], relationships=[])
+
+    repo.translator = SimpleNamespace(translate=translate)
+    repo._store_translation = lambda *args: {}
     repo.review(session_id, profile_id, ReviewPracticeRequest(accepted_object_ids=[objects[1].id]))
+    ((payload, options),) = seen
+    assert [term["key"] for term in payload["objects"]] == [str(objects[1].id)]
+    assert options["language_context"].display.language_code == "es"
     inserted = [
         call.args[0].compile().params
         for call in connection.execute.call_args_list
@@ -224,7 +242,8 @@ def test_review_rebuilds_tasks_only_for_selected_objects():
         task["scene_object_id"] in {None, objects[1].id} for task in inserted
     )
     introduction = next(task for task in inserted if task["kind"] == "vocabularyIntroduction")
-    assert introduction["public_content"]["words"][0]["targetText"] == "mesa"
+    # Pack translations show the noun with its article.
+    assert introduction["public_content"]["words"][0]["targetText"] == "la mesa"
     assert introduction["public_content"]["words"][0]["translation"] == "table"
     # Same pending session can be reviewed again without changing generated task identity.
     assert introduction["id"] == uuid5(session_id, "placeholder-v1:vocabularyIntroduction")

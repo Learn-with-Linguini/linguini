@@ -1,0 +1,8 @@
+construction_id = "identify-object"
+version = 1
+summary = "Identify an object."
+guidance = "Use Es + indefinite article + noun."
+features = ["indefinite-article"]
+constraints = ["Use the noun's approved article."]
+required_labels = ["yes"]
+provenance = { source = "Synthetic structural test fixture.", review_status = "unreviewed" }

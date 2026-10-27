@@ -1,0 +1,300 @@
+{
+  "facts": {
+    "scene_facts": {
+      "objects": [
+      {
+        "fact_id": "object:cup",
+        "scene_object_id": "11111111-1111-4111-8111-111111111111",
+        "label": "cup",
+        "marker": 1
+      },
+      {
+        "fact_id": "object:book",
+        "scene_object_id": "22222222-2222-4222-8222-222222222222",
+        "label": "book",
+        "marker": 2
+      },
+      {
+        "fact_id": "object:table",
+        "scene_object_id": "33333333-3333-4333-8333-333333333333",
+        "label": "table",
+        "marker": 3
+      }
+    ],
+      "attributes": [
+      {
+        "fact_id": "attribute:cup:colour:red",
+        "object_fact_id": "object:cup",
+        "kind": "colour",
+        "value": "red"
+      },
+      {
+        "fact_id": "attribute:book:colour:green",
+        "object_fact_id": "object:book",
+        "kind": "colour",
+        "value": "green"
+      }
+    ],
+      "relations": [
+      {
+        "fact_id": "relation:cup:table:on",
+        "subject_fact_id": "object:cup",
+        "reference_fact_id": "object:table",
+        "relation": "on"
+      }
+    ],
+      "counted_groups": []
+    },
+    "statements": []
+  },
+  "plan_specs": {
+    "A0": {
+      "matchName-1": [
+        {
+          "spec_id": "match-name-1-spec",
+          "construction_id": "identify-object",
+          "bindings": {"object": "object:cup"},
+          "use": "name"
+        }
+      ],
+      "confirmName-1": [
+        {
+          "spec_id": "confirm-name-1-spec",
+          "construction_id": "yes-no-identification",
+          "bindings": {"object": "object:cup", "shown": "object:cup"},
+          "use": "followup",
+          "truth": true,
+          "labels": []
+        }
+      ],
+      "buildIdentify-1": [
+        {
+          "spec_id": "build-identify-1-spec",
+          "construction_id": "identify-object",
+          "bindings": {"object": "object:cup"}
+        }
+      ],
+      "matchName-2": [
+        {
+          "spec_id": "match-name-2-spec",
+          "construction_id": "identify-object",
+          "bindings": {"object": "object:book"},
+          "use": "name"
+        }
+      ],
+      "confirmName-2": [
+        {
+          "spec_id": "confirm-name-2-spec",
+          "construction_id": "yes-no-identification",
+          "bindings": {"object": "object:cup", "shown": "object:book"},
+          "use": "question",
+          "truth": false,
+          "labels": []
+        }
+      ],
+      "buildIdentify-2": [
+        {
+          "spec_id": "build-identify-2-spec",
+          "construction_id": "identify-object",
+          "bindings": {"object": "object:book"}
+        }
+      ]
+    },
+    "A1": {
+      "confirmObject-1": [
+        {
+          "spec_id": "confirm-object-1-prompt",
+          "construction_id": "yes-no-identification",
+          "bindings": {"object": "object:cup", "shown": "object:cup"},
+          "use": "prompt",
+          "truth": true,
+          "labels": []
+        },
+        {
+          "spec_id": "confirm-object-1-answer",
+          "construction_id": "yes-no-identification",
+          "bindings": {"object": "object:cup", "shown": "object:cup"},
+          "use": "answer",
+          "truth": true,
+          "labels": ["yes"]
+        },
+        {
+          "spec_id": "confirm-object-1-contrast",
+          "construction_id": "yes-no-identification",
+          "bindings": {"object": "object:book", "shown": "object:cup"},
+          "use": "option",
+          "truth": false,
+          "labels": ["no"]
+        }
+      ],
+      "confirmObject-2": [
+        {
+          "spec_id": "confirm-object-2-prompt",
+          "construction_id": "yes-no-identification",
+          "bindings": {"object": "object:cup", "shown": "object:book"},
+          "use": "prompt",
+          "truth": false,
+          "labels": []
+        },
+        {
+          "spec_id": "confirm-object-2-answer",
+          "construction_id": "yes-no-identification",
+          "bindings": {"object": "object:book", "shown": "object:book"},
+          "use": "answer",
+          "truth": false,
+          "labels": ["no"]
+        },
+        {
+          "spec_id": "confirm-object-2-contrast",
+          "construction_id": "yes-no-identification",
+          "bindings": {"object": "object:cup", "shown": "object:book"},
+          "use": "option",
+          "truth": true,
+          "labels": ["yes"]
+        }
+      ],
+      "chooseAttribute": [
+        {
+          "spec_id": "choose-attribute-answer",
+          "construction_id": "describe-attribute",
+          "bindings": {
+            "object": "object:cup",
+        "attribute": "attribute:cup:colour:red"
+          },
+          "labels": []
+        }
+      ],
+      "describeObject": [
+        {
+          "spec_id": "describe-object-answer",
+          "construction_id": "describe-attribute",
+          "bindings": {
+            "object": "object:book",
+            "attribute": "attribute:book:colour:green"
+          },
+          "labels": []
+        }
+      ]
+    },
+    "A2": {
+      "chooseSceneMarker": [
+        {
+          "spec_id": "choose-scene-marker-fact1",
+          "construction_id": "scene-existence",
+        "bindings": {
+          "object": "object:cup",
+          "attribute": "attribute:cup:colour:red"
+        },
+          "use": "fact1",
+          "labels": []
+        }
+      ],
+      "buildSceneFact": [
+        {
+          "spec_id": "build-scene-fact-fact2",
+          "construction_id": "scene-location",
+          "bindings": {
+            "subject": "object:cup",
+            "reference": "object:table",
+            "relation": "relation:cup:table:on"
+          },
+          "use": "fact2",
+          "labels": []
+        }
+      ],
+      "chooseSceneDescription": [
+        {
+          "spec_id": "choose-scene-description-connected",
+          "construction_id": "connected-description",
+          "bindings": {
+            "object": "object:cup",
+            "attribute": "attribute:cup:colour:red",
+            "other-object": "object:book"
+          },
+          "use": "connected",
+          "labels": []
+        },
+        {
+          "spec_id": "choose-scene-description-wrong-attribute",
+          "construction_id": "connected-description",
+          "bindings": {
+            "object": "object:cup",
+            "attribute": "attribute:cup:colour:red",
+            "other-object": "object:book"
+          },
+          "counterfactual": {"attribute": "bag-blue"},
+          "truth": false,
+          "use": "wrongAttribute",
+          "labels": []
+        },
+        {
+          "spec_id": "choose-scene-description-false-first",
+          "construction_id": "scene-existence",
+          "bindings": {
+            "object": "object:cup",
+            "attribute": "attribute:cup:colour:red"
+          },
+          "use": "falseFirst",
+          "labels": [],
+          "truth": false,
+          "counterfactual": {
+            "attribute": "bag-blue"
+          }
+        },
+        {
+          "spec_id": "choose-scene-description-wrong-existence",
+          "construction_id": "connected-description",
+          "bindings": {
+            "object": "object:cup",
+            "attribute": "attribute:cup:colour:red"
+          },
+          "counterfactual": {"other-object": "book"},
+          "truth": false,
+          "use": "wrongExistence",
+          "labels": []
+        }
+      ],
+      "buildSceneDescription": [
+        {
+          "spec_id": "build-scene-description-fact1",
+          "construction_id": "scene-existence",
+          "bindings": {
+            "object": "object:cup",
+            "attribute": "attribute:cup:colour:red"
+          },
+          "use": "fact1",
+          "labels": []
+        },
+        {
+          "spec_id": "build-scene-description-fact2",
+          "construction_id": "scene-location",
+          "bindings": {
+            "subject": "object:cup",
+            "reference": "object:table",
+            "relation": "relation:cup:table:on"
+          },
+          "use": "fact2",
+          "labels": []
+        },
+        {
+          "spec_id": "build-scene-description-fact3",
+          "construction_id": "scene-existence",
+          "bindings": {"object": "object:book"},
+          "use": "fact3",
+          "labels": []
+        }
+      ],
+      "followUpSceneFact": [
+        {
+          "spec_id": "follow-up-scene-fact-spec",
+          "construction_id": "describe-attribute",
+          "bindings": {
+            "object": "object:cup"
+          },
+          "use": "followup",
+          "labels": []
+        }
+      ]
+    }
+  }
+}

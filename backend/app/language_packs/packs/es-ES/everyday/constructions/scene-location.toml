@@ -1,0 +1,18 @@
+construction_id = "scene-location"
+version = 1
+summary = "Locate a known object or ask where it is."
+guidance = """To say where a known object is, use definite article + noun + está + location phrase: La taza está sobre la mesa. / El zapato está debajo de la silla. Location always uses estar, never ser (not *La taza es sobre la mesa). The sentence starts with a capital letter, so El/La are capitalised. de + el contracts to del and a + el to al: La lámpara está al lado del libro; there is no contraction with la (al lado de la mesa). Both nouns keep their own definite articles. To ask where something is, use ¿Dónde está + definite article + noun?: ¿Dónde está el zapato?"""
+features = ["copula-estar", "definite-article", "location-phrase", "contraction"]
+constraints = ["Location uses está.", "de + el → del, a + el → al.", "Both nouns take definite articles."]
+required_labels = ["build-second-fact"]
+roles = { subject = "noun", relation = "preposition", reference = "noun", object = "noun" }
+
+[provenance]
+source = "Lead-authored; needs fluent Spanish review."
+review_status = "unreviewed"
+
+[[checks]]
+check_id = "location-estar"
+message = "Location uses está."
+must_contain = ["\\sestá\\s"]
+except_uses = ["followup"]

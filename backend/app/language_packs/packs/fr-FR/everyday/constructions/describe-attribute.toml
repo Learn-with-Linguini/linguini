@@ -1,0 +1,39 @@
+construction_id = "describe-attribute"
+templates = { word_order_feedback = "Use the noun phrase and the attribute form shown; a basic colour follows the noun." }
+version = 2
+summary = "Describe a bound colour or ask what colour an object is."
+guidance = "The neutral taught pattern is C'est + un/une + noun + colour: une tasse rouge, un livre vert. Use approved colour forms, including feminine verte, noire, bleue and blanche; rouge and jaune have the same singular masculine/feminine form. Do not generalize these endings to all colours or compound colour expressions. A predicative alternative is La tasse est rouge. A one-word colour option must fit its bound noun. Ask De quelle couleur est… ? Preserve accents, elision and the intended noun-colour binding."
+features = ["colour-agreement", "postnominal-colour", "copula-etre"]
+constraints = ["Express only the selected scene facts and preserve semantic role bindings.", "Use the declared variety/register and approved surfaces.", "Treat these rules as generation guidance; they do not constitute a grammar validator."]
+required_labels = ["attribute-prompt-colour", "describe-object"]
+roles = { object = "noun", attribute = "adjective" }
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+except_uses = ["name"]
+
+[[checks]]
+check_id = "question-mark"
+message = "French questions end with a space and ?."
+must_contain = [" \\?$"]
+uses = ["question", "prompt", "followup"]
+
+[[checks]]
+check_id = "elision"
+message = "Elide le/la/de/ne/que/ce before a vowel (l', d', n', qu', c')."
+must_not_contain = ["(^|\\s)(le|la|de|ne|que|ce) [aeiouéèêëàâîïôûù]"]
+
+[[checks]]
+check_id = "describe-verb"
+message = "Descriptions use être (c'est … / … est …)."
+must_contain = ["(^c'est |\\sest\\s)"]
+uses = ["answer"]
+
+[[checks]]
+check_id = "detail-question"
+message = "A detail follow-up asks about the detail itself, not where the object is (où belongs to the location question)."
+must_not_contain = ["(^| )où "]
+uses = ["followup"]

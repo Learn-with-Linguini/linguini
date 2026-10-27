@@ -1,0 +1,14 @@
+construction_id = "quantity-comparison"
+version = 1
+summary = "Say which of two counted groups has more or fewer objects."
+guidance = "Compare with first noun + 이/가 + second noun + 보다 + 많아요 (the more label) or 적어요 (the fewer label): 책이 컵보다 많아요. Use 많아요 when the first group is larger and 적어요 when it is smaller."
+features = ["quantity-comparison"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { first = "noun", second = "noun" }
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "comparison-frame"
+message = "Compare with 보다 … 많아요/적어요."
+must_contain = ["보다 ", "(많아요|적어요)\\.$"]

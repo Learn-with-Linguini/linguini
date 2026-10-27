@@ -1,0 +1,40 @@
+construction_id = "detail-question"
+
+[[examples]]
+example_id = "ask-eat-in-or-take-away"
+levels = ["A2"]
+purposes = ["identifyMissingDetail"]
+meaning = "To have here or to take away?"
+scene = { objects = [{ fact_id = "object:coffee", concept = "coffee" }], requests = [{ fact_id = "request:quantity", object = "object:coffee", field = "quantity", value = "2" }, { fact_id = "request:size", object = "object:coffee", field = "size", value = "small" }, { fact_id = "request:serviceSetting", object = "object:coffee", field = "serviceSetting", value = "takeAway" }] }
+bindings = { target = "object:coffee" }
+truth = true
+labels = []
+sentence = "드시고 가세요, 아니면 포장이세요?"
+translation = "To have here or to take away?"
+chunks = [{ text = "드시고", join = "none" }, { text = "가세요", join = "space" }, { text = ",", join = "none" }, { text = "아니면", join = "space" }, { text = "포장이세요", join = "space" }, { text = "?", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "ask-which-colour"
+levels = ["A2"]
+purposes = ["identifyMissingDetail"]
+meaning = "Which colour?"
+scene = { objects = [{ fact_id = "object:pen", concept = "pen" }], requests = [{ fact_id = "request:quantity", object = "object:pen", field = "quantity", value = "1" }, { fact_id = "request:colour", object = "object:pen", field = "colour", value = "blue" }] }
+bindings = { target = "object:pen" }
+truth = true
+labels = []
+sentence = "무슨 색이요?"
+translation = "Which colour?"
+chunks = [{ text = "무슨", join = "none" }, { text = "색이요", join = "space" }, { text = "?", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "question-gives-answer"
+levels = ["A2"]
+purposes = ["identifyMissingDetail"]
+sentence = "포장이세요?"
+correction = "드시고 가세요, 아니면 포장이세요?"
+note = "The server offers both choices; it does not know the answer yet."
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }

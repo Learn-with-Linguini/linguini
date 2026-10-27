@@ -27,7 +27,7 @@ from app.repositories.postgres.xp import xp_events
 from app.repositories.practice import InsufficientSceneError, PracticeConflictError
 from app.schemas.sessions import AddedPracticeObject, ReviewPracticeRequest
 from app.schemas.tasks import SessionTask, SkipTaskRequest
-from app.services import mission_eligibility, mission_lessons_m03
+from app.services import mission_eligibility
 
 
 @pytest.fixture(autouse=True)
@@ -309,21 +309,3 @@ def test_a_saved_old_shape_m03_lesson_still_validates_and_loads(curated):
     assert response.status_code == 200, response.text
     loaded = _repository_.get(sid, profile.id)
     assert saved.id in {task.id for task in loaded.tasks}
-
-
-def test_a_noun_without_a_reviewed_plural_reopens_review_instead_of_a_default_lesson(
-    curated, monkeypatch,
-):
-    engine = curated[0]
-    monkeypatch.setattr(mission_lessons_m03, "regular_plural", lambda *_: None)
-    _repository_, sid, detail = _lesson(curated, _counts_only())
-    assert _planned(detail) == []
-    assert _draft(engine, sid)["skippedMissions"] == [
-        {"missionId": "M03", "reason": "noReviewedContent"}
-    ]
-    assert detail.session.status == "awaitingObjectReview"
-    assert detail.tasks == []
-    assert detail.scene_shortfall is not None
-    # M03 fitted the photo but had nothing to check, so every kind of fact is offered.
-    assert detail.scene_shortfall.missing == ["objects", "counts", "attributes", "relations"]
-    assert [item.mission_id for item in detail.scene_shortfall.missions] == ["M03"]

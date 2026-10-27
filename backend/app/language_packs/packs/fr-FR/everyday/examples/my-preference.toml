@@ -1,0 +1,79 @@
+construction_id = "my-preference"
+
+[[examples]]
+example_id = "i-like-cup"
+levels = ["A0"]
+purposes = ["sayPreference"]
+meaning = "I like the cup."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }], preferences = [{ fact_id = "preference:cup", object = "object:cup", person = "first", likes = true }, { fact_id = "preference:book", object = "object:book", person = "ana", likes = false }, { fact_id = "preference:key", object = "object:key", person = "leo", likes = true }] }
+bindings = { object = "object:cup", preference = "preference:cup" }
+truth = true
+labels = []
+sentence = "J'aime la tasse."
+translation = "I like the cup."
+chunks = [{ text = "J'", join = "none" }, { text = "aime", join = "none" }, { text = "la", join = "space" }, { text = "tasse", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "i-dislike-cup"
+levels = ["A0"]
+purposes = ["sayPreference"]
+meaning = "I don't like the cup."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }], preferences = [{ fact_id = "preference:cup", object = "object:cup", person = "first", likes = true }, { fact_id = "preference:book", object = "object:book", person = "ana", likes = false }, { fact_id = "preference:key", object = "object:key", person = "leo", likes = true }] }
+bindings = { object = "object:cup", preference = "preference:cup" }
+truth = false
+labels = []
+sentence = "Je n'aime pas la tasse."
+translation = "I don't like the cup."
+chunks = [{ text = "Je", join = "none" }, { text = "n'", join = "space" }, { text = "aime", join = "none" }, { text = "pas", join = "space" }, { text = "la", join = "space" }, { text = "tasse", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "i-like-cup-answer"
+levels = ["A1"]
+purposes = ["buildMyPreference"]
+meaning = "I like the cup."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }], preferences = [{ fact_id = "preference:cup", object = "object:cup", person = "first", likes = true }, { fact_id = "preference:book", object = "object:book", person = "ana", likes = false }, { fact_id = "preference:key", object = "object:key", person = "leo", likes = true }] }
+bindings = { object = "object:cup", preference = "preference:cup" }
+truth = true
+labels = []
+sentence = "J'aime la tasse."
+translation = "I like the cup."
+chunks = [{ text = "J'", join = "none" }, { text = "aime", join = "none" }, { text = "la", join = "space" }, { text = "tasse", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "i-dislike-cup-contrast"
+levels = ["A1"]
+purposes = ["buildMyPreference"]
+meaning = "I don't like the cup."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }], preferences = [{ fact_id = "preference:cup", object = "object:cup", person = "first", likes = true }, { fact_id = "preference:book", object = "object:book", person = "ana", likes = false }, { fact_id = "preference:key", object = "object:key", person = "leo", likes = true }] }
+bindings = { object = "object:cup", preference = "preference:cup" }
+truth = false
+labels = []
+sentence = "Je n'aime pas la tasse."
+translation = "I don't like the cup."
+chunks = [{ text = "Je", join = "none" }, { text = "n'", join = "space" }, { text = "aime", join = "none" }, { text = "pas", join = "space" }, { text = "la", join = "space" }, { text = "tasse", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "i-like-cup-form"
+levels = ["A0"]
+purposes = ["sayPreference"]
+sentence = "Je aime la tasse."
+correction = "J'aime la tasse."
+note = "Je becomes j' before aime."
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "i-like-cup-answer-form"
+levels = ["A1"]
+purposes = ["buildMyPreference"]
+sentence = "Je aime la tasse."
+correction = "J'aime la tasse."
+note = "Je becomes j' before aime."
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }

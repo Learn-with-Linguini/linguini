@@ -1,0 +1,103 @@
+construction_id = "scene-location"
+
+[[examples]]
+example_id = "cup-on-table"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "The cup is on the table."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }] }
+bindings = { subject = "object:cup", reference = "object:table", relation = "relation:cup-on-table" }
+truth = true
+labels = []
+sentence = "컵이 탁자 위에 있어요."
+translation = "The cup is on the table."
+chunks = [{ text = "컵이", join = "none" }, { text = "탁자", join = "space" }, { text = "위에", join = "space" }, { text = "있어요.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "shoe-under-chair"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "The shoe is under the chair."
+scene = { objects = [{ fact_id = "object:shoe", concept = "shoe" }, { fact_id = "object:chair", concept = "chair" }], relations = [{ fact_id = "relation:shoe-under-chair", subject = "object:shoe", reference = "object:chair", relation = "under" }] }
+bindings = { subject = "object:shoe", reference = "object:chair", relation = "relation:shoe-under-chair" }
+truth = true
+labels = []
+sentence = "신발이 의자 아래에 있어요."
+translation = "The shoe is under the chair."
+chunks = [{ text = "신발이", join = "none" }, { text = "의자", join = "space" }, { text = "아래에", join = "space" }, { text = "있어요.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "lamp-next-to-book"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "The lamp is next to the book."
+scene = { objects = [{ fact_id = "object:lamp", concept = "lamp" }, { fact_id = "object:book", concept = "book" }], relations = [{ fact_id = "relation:lamp-next_to-book", subject = "object:lamp", reference = "object:book", relation = "next_to" }] }
+bindings = { subject = "object:lamp", reference = "object:book", relation = "relation:lamp-next_to-book" }
+truth = true
+labels = []
+sentence = "램프가 책 옆에 있어요."
+translation = "The lamp is next to the book."
+chunks = [{ text = "램프가", join = "none" }, { text = "책", join = "space" }, { text = "옆에", join = "space" }, { text = "있어요.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "ask-shoe-location"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+meaning = "Where is the shoe?"
+scene = { objects = [{ fact_id = "object:shoe", concept = "shoe" }, { fact_id = "object:chair", concept = "chair" }], relations = [{ fact_id = "relation:shoe-under-chair", subject = "object:shoe", reference = "object:chair", relation = "under" }] }
+bindings = { subject = "object:shoe" }
+truth = true
+labels = []
+sentence = "신발이 어디에 있어요?"
+translation = "Where is the shoe?"
+chunks = [{ text = "신발이", join = "none" }, { text = "어디에", join = "space" }, { text = "있어요?", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-09"
+levels = ["A2"]
+purposes = ["buildSceneFact"]
+sentence = "컵이 탁자 위 있어요."
+correction = "컵이 탁자 위에 있어요."
+note = "Retain locative 에 in the taught 위에 phrase."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-10"
+levels = ["A2"]
+purposes = ["buildSceneFact"]
+sentence = "탁자가 컵 위에 있어요."
+correction = "컵이 탁자 위에 있어요."
+note = "Do not swap the cup and table roles."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "m02-cup-on-table"
+levels = ["A1"]
+purposes = ["findObject", "answerWhere"]
+meaning = "The cup is on the table."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }] }
+bindings = { subject = "object:cup", reference = "object:table", relation = "relation:cup-on-table" }
+truth = true
+labels = []
+sentence = "컵이 탁자 위에 있어요."
+translation = "The cup is on the table."
+chunks = [{ text = "컵이", join = "none" }, { text = "탁자", join = "space" }, { text = "위에", join = "space" }, { text = "있어요", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "m02-location-form"
+levels = ["A1"]
+purposes = ["findObject", "answerWhere"]
+sentence = "컵이 탁자 위 있어요."
+correction = "컵이 탁자 위에 있어요."
+note = "Mark the location with 에: 위에."
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }

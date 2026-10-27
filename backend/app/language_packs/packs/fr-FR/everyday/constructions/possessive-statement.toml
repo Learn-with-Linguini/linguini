@@ -1,0 +1,14 @@
+construction_id = "possessive-statement"
+version = 1
+summary = "Say whose object it is with a possessive before the noun."
+guidance = "Say C'est + mon/ma/ton/ta/son/sa + noun; use mon/ton/son before a vowel even for feminine nouns: C'est ma tasse. C'est son livre. Answers to a friend start with the oui or non label."
+features = ["ownership", "possessive-determiner"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun", owner = "determiner" }
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "possessive-frame"
+message = "Say C'est + possessive + noun."
+must_contain = ["^((oui|non), )?c'est ", "\\.$"]
