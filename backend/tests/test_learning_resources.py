@@ -149,6 +149,26 @@ def test_french_a0_m01_cheatsheet_is_served_to_the_ui() -> None:
     ]
 
 
+@pytest.mark.parametrize(
+    ("language", "formula"),
+    [
+        ("es", "Es + un/una + object."),
+        ("de", "Das ist + ein/eine + object."),
+        ("ko", "이것은 + object + 이에요/예요."),
+    ],
+)
+def test_other_a0_m01_cheatsheets_are_served_to_the_ui(
+    language: str, formula: str
+) -> None:
+    response = TestClient(app).get(
+        "/api/v1/learning-resources/cheatsheets/M01",
+        params={"languageCode": language, "practiceLevel": "A0"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["concepts"][1]["formula"] == formula
+
+
 def test_missing_learning_resources_return_clear_404s() -> None:
     client = TestClient(app)
 
