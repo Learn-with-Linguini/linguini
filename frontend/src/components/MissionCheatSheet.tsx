@@ -4,7 +4,7 @@ import { getMissionCheatSheet, type MissionCheatSheet } from "../lib/api";
 import { trackAction } from "../lib/analytics";
 import { queryKeys } from "../lib/queryKeys";
 import { speak } from "../lib/speech";
-import { CloseIcon, SpeakerIcon } from "./icons";
+import { SpeakerIcon } from "./icons";
 import { InlineLoader } from "./LoadingScreen";
 import { IconButton } from "./ui";
 import "./MissionCheatSheet.css";
@@ -67,7 +67,6 @@ export function MissionCheatSheetLauncher({
       if (event.target === event.currentTarget) close();
     }}>
       <section className="cheatsheet-sheet" role="dialog" aria-modal="true" aria-label="Mission cheatsheet">
-        <IconButton className="cheatsheet-sheet__close" label="Close cheatsheet" onClick={close}><CloseIcon /></IconButton>
         <div className="cheatsheet-sheet__handle" aria-hidden="true" />
         {sheet.isLoading ? <InlineLoader label="Opening your mission guide…" /> : null}
         {sheet.isError ? <div className="cheatsheet-unavailable" role="status">

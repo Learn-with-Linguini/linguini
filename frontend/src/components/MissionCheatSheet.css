@@ -35,7 +35,6 @@
 }
 
 .cheatsheet-sheet {
-  position: relative;
   width: min(100%, 600px);
   max-height: 90vh;
   overflow-y: auto;
@@ -53,31 +52,7 @@
   background: var(--line);
 }
 
-.cheatsheet-sheet__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-
-.cheatsheet-sheet__close.icon-btn {
-  position: absolute;
-  top: var(--space-4);
-  right: var(--space-4);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
-  background: var(--paper);
-  color: var(--teal-dark);
-}
-
-.cheatsheet-sheet__close.icon-btn:hover:not(:disabled) {
-  border-color: var(--teal);
-  background: var(--cream);
-}
-
-.cheatsheet-sheet__header h2,
 .cheatsheet-concept h3,
-.cheatsheet-sheet__header p,
 .cheatsheet-concept p {
   margin: 0;
 }
