@@ -58,7 +58,7 @@ class MissionCheatSheet(ApiModel):
     language_code: LanguageCode
     text_direction: Literal["ltr", "rtl"] = "ltr"
     title: NonEmptyText
-    summary: NonEmptyText
+    summary: NonEmptyText | None = None
     concepts: Annotated[list[CheatSheetConcept], Field(min_length=1)]
     character_reference_id: ContractId | None = None
     character_reference_version: ContentVersion | None = None
@@ -92,7 +92,7 @@ class MissionCheatSheetSummary(ApiModel):
     language_code: LanguageCode
     text_direction: Literal["ltr", "rtl"] = "ltr"
     title: NonEmptyText
-    summary: NonEmptyText
+    summary: NonEmptyText | None = None
     character_reference_id: ContractId | None = None
     character_reference_version: ContentVersion | None = None
 

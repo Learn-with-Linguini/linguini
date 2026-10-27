@@ -3,30 +3,24 @@ practice_level = "A0"
 content_version = 1
 language_code = "fr"
 text_direction = "ltr"
-title = "Name and identify in French"
-summary = "Recognise an object's French name, ask what it is, and give a simple answer."
+title = "Name and identify"
 
 [[concepts]]
 concept_id = "recognise-name"
 title = "Learn the article with the object"
-explanation = "French object names are taught with their article. Keep the article and noun together when you learn a new word."
-tips = [
-  "Le introduces many masculine nouns; la introduces many feminine nouns.",
-  "Both le and la shorten to l' before a vowel sound, as in l'ordinateur and l'oreiller.",
-]
+explanation = "Keep the article and noun together when you learn a new word."
 
 [[concepts.examples]]
-target_text = "le canapé"
+target_text = "le canapé (m)"
 translation = "the sofa"
+
+[[concepts.examples]]
+target_text = "la tasse (f)"
+translation = "the cup"
 
 [[concepts.examples]]
 target_text = "l'ordinateur"
 translation = "the computer"
-note = "The article shortens to l' before the vowel sound."
-
-[[concepts.examples]]
-target_text = "l'oreiller"
-translation = "the pillow"
 note = "The article shortens to l' before the vowel sound."
 
 [[concepts]]
@@ -34,11 +28,6 @@ concept_id = "identify-object"
 title = "Say what the object is"
 explanation = "Start with C'est, choose un or une to match the noun, then add the object name."
 formula = "C'est + un/une + object."
-tips = [
-  "Use un with a masculine noun and une with a feminine noun.",
-  "Ask Qu'est-ce que c'est ? when you want to know what something is.",
-  "To check a guess, raise your voice at the end: C'est un oreiller ? Answer Oui or Non.",
-]
 
 [[concepts.pattern_parts]]
 part_id = "this-is"
@@ -70,10 +59,5 @@ target_text = "C'est un oreiller."
 translation = "This is a pillow."
 
 [[concepts.examples]]
-target_text = "C'est un ordinateur."
-translation = "This is a computer."
-
-[[concepts.examples]]
 target_text = "C'est une tasse."
 translation = "This is a cup."
-note = "Tasse is feminine, so it uses une."

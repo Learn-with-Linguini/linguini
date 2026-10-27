@@ -458,7 +458,7 @@ export interface CheatSheetPatternPart {
 }
 export interface MissionCheatSheet {
   missionId: string; practiceLevel: ProficiencyLevel; contentVersion: number; languageCode: string; textDirection: "ltr" | "rtl";
-  title: string; summary: string; characterReferenceId?: string | null; characterReferenceVersion?: number | null;
+  title: string; summary?: string | null; characterReferenceId?: string | null; characterReferenceVersion?: number | null;
   concepts: {
     conceptId: string; title: string; explanation: string; formula?: string | null;
     examples: CheatSheetExample[]; tips: string[]; patternParts: CheatSheetPatternPart[];
