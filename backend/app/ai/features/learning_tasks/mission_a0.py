@@ -174,16 +174,21 @@ def _other(payload, target, salt):
     return _rng(payload, salt).choice(others)
 
 
+def _interleave(tasks):
+    """Alternate two three-question threads while preserving each thread's progression."""
+    return [question for stage in range(3) for task in tasks for question in [task[stage]]]
+
+
 def _m01(payload):
     yes, no = payload["yesNo"]
     truths = [True, False]
     _rng(payload, "truth").shuffle(truths)
-    questions = []
+    tasks = []
     for index, ((section, target), truth) in enumerate(
         zip(_sections(payload), truths, strict=True), 1,
     ):
         stated = target if truth else _other(payload, target, f"stated-{index}")
-        questions += [
+        tasks.append([
             _marker_question(payload, "matchName", section, target, target["name"], index=index),
             _choice_question(
                 payload, "confirmName", section, target, stated["isIt"], [yes, no],
@@ -195,12 +200,12 @@ def _m01(payload):
                 target["identify"], _other(payload, target, f"tile-{index}")["noun"],
                 index=index,
             ),
-        ]
-    return questions
+        ])
+    return _interleave(tasks)
 
 
 def _m02(payload):
-    questions = []
+    tasks = []
     objects = _objects(payload)
     for index, task in enumerate(payload["descriptionTasks"], 1):
         target = objects[task["objectKey"]]
@@ -208,7 +213,7 @@ def _m02(payload):
             f"Task {index} · Adjective" if task["kind"] == "adjective"
             else f"Task {index} · Position"
         )
-        questions += [
+        tasks.append([
             _marker_question(
                 payload, "findDescribed", section, target, task["description"], index=index,
             ),
@@ -221,8 +226,8 @@ def _m02(payload):
                 task["buildSentence"], tokens(task["descriptorOptions"][1])[0],
                 index=index,
             ),
-        ]
-    return questions
+        ])
+    return _interleave(tasks)
 
 
 def _m03(payload):
@@ -325,9 +330,17 @@ def validate_a0_lesson(payload: dict[str, Any], result: A0LessonResult) -> None:
                        for token in tokens(item)}
     questions = result.questions
     unique_question_ids(questions)
-    if [question.purpose for question in questions] != ORDERS[mission_id] * 2:
+    interleaved = mission_id in {"M01", "M02"}
+    expected_purposes = (
+        [purpose for purpose in ORDERS[mission_id] for _task in range(2)]
+        if interleaved else ORDERS[mission_id] * 2
+    )
+    if [question.purpose for question in questions] != expected_purposes:
         _fail("A0 lessons are two tasks of three questions in the mission's order.")
-    first, second = questions[:3], questions[3:]
+    first, second = (
+        (questions[::2], questions[1::2]) if interleaved
+        else (questions[:3], questions[3:])
+    )
     for task in (first, second):
         if len({question.section for question in task}) != 1:
             _fail("Each task's questions share one section.")
@@ -498,8 +511,10 @@ Closed content:
 
 Shape:
 5. title is the payload title. There are exactly six questions: two tasks of three.
-   The three questions of a task share one section, one objectKey and appear in this
-   order of purposes: {orders}
+   The three questions of a task share one section and one objectKey and follow this
+   purpose progression: {orders}. M01 and M02 interleave the tasks at each stage:
+   purpose-1, purpose-2, nextPurpose-1, nextPurpose-2, and so on. Other missions keep
+   the three questions for task 1 before the three questions for task 2.
 6. instruction is exactly this English text for the purpose:
 {instructions}
 7. questionId is "<purpose>-<task number>", e.g. "matchName-1" and "matchName-2".
@@ -507,12 +522,12 @@ Shape:
    options. Leave fields a purpose does not use null, false or empty.
 
 Question types:
-- Marker questions (matchName, findDescribed, listenDescribed, matchSpoken): multipleChoice
+- Marker questions (matchName, findDescribed, matchSpoken): multipleChoice
   over up to three approvedObjects including the target, each option
   {{optionId: "marker-<marker>", label: "<marker>"}} using the row's marker number,
   sorted by marker; markerKeys maps each optionId to that row's key; no two shown rows
   share a noun; the correct option is the target's marker; audioText equals prompt.
-- Tile questions (buildIdentify, buildChunk): sentenceBuilding with correctText,
+- Tile questions (buildIdentify, buildDescription, buildChunk): sentenceBuilding with correctText,
   tokenBank = the answer split into tiles plus exactly one extra tile (shuffled), and
   translation from approvedTranslations. Split tiles at spaces and give each of
   . , ! ? ; : its own tile; an apostrophe stays on the word before it (l' is one tile).

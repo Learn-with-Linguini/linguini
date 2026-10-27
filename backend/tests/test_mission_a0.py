@@ -158,7 +158,15 @@ def test_each_lesson_is_two_tasks_of_three_questions(mission_id, language):
         assert len(set(sections)) == 1
         return
     assert len(set(sections)) == 2
-    assert sections[:3] == [sections[0]] * 3 and sections[3:] == [sections[3]] * 3
+    if mission_id in {"M01", "M02"}:
+        assert sections == [sections[0], sections[1]] * 3
+        assert [question.object_key for question in result.questions] == [
+            result.questions[0].object_key,
+            result.questions[1].object_key,
+        ] * 3
+    else:
+        assert sections[:3] == [sections[0]] * 3
+        assert sections[3:] == [sections[3]] * 3
 
 
 @pytest.mark.parametrize("mission_id", MISSIONS)
