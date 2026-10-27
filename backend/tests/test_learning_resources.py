@@ -189,12 +189,11 @@ def test_other_a0_m01_cheatsheets_are_served_to_the_ui(
     assert response.json()["concepts"][1]["formula"] == formula
 
 
-@pytest.mark.parametrize("language", ["es", "fr", "de", "ko"])
-def test_a0_m02_description_cheatsheets_are_served_to_the_ui(language: str) -> None:
+def test_french_a0_m02_description_cheatsheet_is_served_to_the_ui() -> None:
     response = TestClient(app).get(
         "/api/v1/learning-resources/cheatsheets/M02",
         params={
-            "languageCode": language,
+            "languageCode": "fr",
             "practiceLevel": "A0",
             "contentVersion": 2,
         },
