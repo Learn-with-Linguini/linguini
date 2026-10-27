@@ -1267,6 +1267,42 @@ def test_a0_situation_from_the_learner_choice_has_no_scenario(mission_id, scene,
     assert not task.public_content.mission_snapshot.pretend
 
 
+@pytest.mark.parametrize("language", list(LOCALES))
+@pytest.mark.parametrize("scenario", [None, "like"])
+def test_a0_ownership_prompts_answers_and_dialogue_agree(language, scenario, scene, monkeypatch):
+    (task,) = _dispatch(language, "A0", scene(language), MockPackProvider(language), monkeypatch,
+                        "M04", scenario=scenario)
+    questions = {question.question_id: question for question in task.public_content.questions}
+    answers = task.answer_key.correct_option_ids
+
+    def answer(question):
+        return next(option.label for option in question.options
+                    if option.option_id == answers[question.question_id])
+
+    heard = questions["M04-Q2"]
+    assert "What does Linguini ask?" in heard.prompt
+    assert {option.label for option in heard.options} == {"Is this yours?", "Do you like it?"}
+    assert answer(heard) == "Is this yours?"
+    assert heard.option_icons[answers[heard.question_id]] == "belongs"
+    assert heard.listen_first
+
+    for question_id in ("M04-Q3", "M04-Q4", "M04-Q6"):
+        question = questions[question_id]
+        assert "yours" in question.prompt
+        assert "yours" in question.instruction
+
+    # The graded words must actually complete the displayed sentence in each
+    # language, including its punctuation and object-specific ownership form.
+    for question_id in ("M04-Q3", "M04-Q4", "M04-Q5", "M04-Q6"):
+        question = questions[question_id]
+        assert question.slot_template.replace("___", answer(question)) == question.complete_chunk
+
+    dialogue = questions["M04-Q6"]
+    assert dialogue.dialogue[0].text == heard.audio_text
+    assert dialogue.dialogue[1].translation == dialogue.complete_translation
+    _assert_gradable(task)
+
+
 CAFE = (("coffee", "black"), ("cup", "red"), ("table", "green"))
 
 
