@@ -93,7 +93,7 @@
 
 .cheatsheet-pattern {
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: var(--space-2);
   overflow-x: auto;
   padding: var(--space-2) 0 var(--space-1);
@@ -109,10 +109,6 @@
 
 .cheatsheet-pattern__choice {
   min-width: 112px;
-  padding: var(--space-2);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--butter);
 }
 
 .cheatsheet-pattern__label,
@@ -124,17 +120,20 @@
 
 .cheatsheet-pattern__choice-label {
   max-width: 120px;
-  min-height: 2.4em;
   text-align: center;
 }
 
 .cheatsheet-pattern__choices {
   display: flex;
-  align-items: center;
+  align-items: start;
   gap: var(--space-2);
 }
 
 .cheatsheet-pattern__choice-divider {
+  align-self: start;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
   color: var(--ink-muted);
   font-size: var(--text-label);
   font-weight: 800;

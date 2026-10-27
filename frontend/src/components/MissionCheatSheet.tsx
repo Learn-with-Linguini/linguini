@@ -99,8 +99,8 @@ function CheatSheetConceptCard({ concept, languageCode, textDirection }: {
             <Fragment key={`${choice.text}-${choice.label}`}>
               {index > 0 ? <span className="cheatsheet-pattern__choice-divider" aria-hidden="true">or</span> : null}
               <span className="cheatsheet-pattern__choice">
-                <span className="cheatsheet-pattern__choice-label">{choice.label}</span>
                 <span className="cheatsheet-pattern__pill" lang={languageCode}>{choice.text}</span>
+                <span className="cheatsheet-pattern__choice-label">{choice.label}</span>
               </span>
             </Fragment>)}</span>}
       </div>)}
