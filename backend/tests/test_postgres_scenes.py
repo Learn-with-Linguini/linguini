@@ -50,42 +50,39 @@ def store_scene(connection, scene):
 
 
 @pytest.mark.parametrize("string_mode", ["on", "off"])
-def test_exported_migration_preserves_quoted_and_backslashed_scene_text(database, string_mode):
+def test_exported_migration_preserves_quoted_and_backslashed_scene_text(scene_record, string_mode):
     from app.scripts.precompute_preloaded_scenes import emit_migration_sql
 
-    engine, *_ = database
+    engine, _client, source = scene_record
     with engine.connect() as connection:
-        row = dict(connection.execute(select(preloaded_scenes).limit(1)).mappings().one())
+        row = dict(connection.execute(
+            select(preloaded_scenes).where(preloaded_scenes.c.slug == source["sceneId"])
+        ).mappings().one())
     row.update(
-        id=uuid4(),
-        slug=f"test-sql-export-{uuid4()}",
         title="O'Brien\\'; SELECT 123; --",
         description="A path C:\\photos\\ with 'quoted' text",
         content={**row["content"], "exportTest": "\\'; SELECT 456; --"},
     )
-    try:
-        with engine.connect().execution_options(
-            isolation_level="AUTOCOMMIT", no_parameters=True,
-        ) as connection:
-            # The generated file must not depend on the caller's string mode.
-            connection.exec_driver_sql(
-                "SET standard_conforming_strings = on"
-                if string_mode == "on"
-                else "SET standard_conforming_strings = off"
-            )
-            try:
-                connection.exec_driver_sql(emit_migration_sql([row]))
-                saved = connection.execute(
-                    select(preloaded_scenes).where(preloaded_scenes.c.id == row["id"])
-                ).mappings().one()
-                assert saved["title"] == row["title"]
-                assert saved["description"] == row["description"]
-                assert saved["content"]["exportTest"] == row["content"]["exportTest"]
-            finally:
-                connection.exec_driver_sql("RESET standard_conforming_strings")
-    finally:
-        with engine.begin() as connection:
-            connection.execute(delete(preloaded_scenes).where(preloaded_scenes.c.id == row["id"]))
+    with engine.connect().execution_options(
+        isolation_level="AUTOCOMMIT", no_parameters=True,
+    ) as connection:
+        # The generated file must not depend on the caller's string mode.
+        connection.exec_driver_sql(
+            "SET standard_conforming_strings = on"
+            if string_mode == "on"
+            else "SET standard_conforming_strings = off"
+        )
+        try:
+            connection.exec_driver_sql(emit_migration_sql([row]))
+            saved = connection.execute(
+                select(preloaded_scenes).where(preloaded_scenes.c.id == row["id"])
+            ).mappings().one()
+            assert saved["title"] == row["title"]
+            assert saved["description"] == row["description"]
+            assert saved["content"]["exportTest"] == row["content"]["exportTest"]
+        finally:
+            connection.exec_driver_sql("ROLLBACK")
+            connection.exec_driver_sql("RESET standard_conforming_strings")
 
 
 @pytest.fixture
