@@ -14,7 +14,17 @@ import re
 from app.ai.features.learning_tasks.mission import fold
 from app.ai.features.learning_tasks.mission_a0 import SLOT
 from app.services import a0_lexicon as lex
-from app.services.mission_eligibility import countable_groups
+from app.services.ispy_clue_frames import POSITIONS, _place
+from app.services.mission_eligibility import (
+    REVIEWED_COLOURS,
+    REVIEWED_POSITIONS,
+    agreed_attribute,
+    attribute_contrasts,
+    confirmed_attributes,
+    confirmed_relations,
+    countable_groups,
+    relation_type,
+)
 from app.services.mission_lessons import build_mission_task
 from app.services.mission_lessons_m02 import scene_markers
 from app.services.quantities import english_plural
@@ -25,7 +35,7 @@ _ARTICLE = re.compile(
 _ENGLISH_ARTICLE = re.compile(r"^(?:a|an|the)\s+", re.IGNORECASE)
 _EXPLANATIONS = {
     "M01": "Learn each object's name, then say what it is.",
-    "M02": "Learn the names, then find each object in your photo.",
+    "M02": "Use an adjective or a position phrase to find the object.",
     "M03": "Learn one, two and three, then say how many.",
 }
 _M13_EXPLANATIONS = {
@@ -39,9 +49,11 @@ _EVALUATIONS = {
     "matchName": (["recognise-name"], "recognition", ["name-matches-object"]),
     "confirmName": (["identify-object"], "recognition", ["identifies-object"]),
     "buildIdentify": (["identify-object"], "construction", ["identifies-object"]),
-    "findNamed": (["find-object"], "recognition", ["finds-named-object"]),
-    "chooseName": (["recognise-name"], "recognition", ["distinguishes-names"]),
-    "listenSelect": (["find-object"], "recognition", ["finds-named-object"]),
+    "findDescribed": (["find-described-object"], "recognition", ["finds-described-object"]),
+    "chooseDescriptor": ([], "recognition", []),
+    "listenDescribed": (
+        ["find-described-object"], "recognition", ["finds-described-object"],
+    ),
     "countGroup": (["count-small-group"], "recognition", ["count-matches-photo"]),
     "matchChunk": (["number-noun-chunk"], "recognition", ["chunk-matches-count"]),
     "buildChunk": (["number-noun-chunk"], "construction", ["chunk-matches-count"]),
@@ -49,8 +61,8 @@ _EVALUATIONS = {
     "matchSpoken": (["noun-word-pair"], "recognition", ["matches-spoken-chunk"]),
     "fillSlot": (["noun-word-pair"], "recognition", ["chooses-paired-word"]),
 }
-_NAME_PURPOSES = {"matchName", "findNamed", "chooseName", "listenSelect", "matchSpoken"}
-_MARKER_PURPOSES = {"matchName", "findNamed", "listenSelect", "matchSpoken"}
+_NAME_PURPOSES = {"matchName", "findDescribed", "listenDescribed", "matchSpoken"}
+_MARKER_PURPOSES = {"matchName", "findDescribed", "listenDescribed", "matchSpoken"}
 
 
 def taught_noun(word) -> str:
@@ -139,8 +151,119 @@ def _approved(mission, language, objects, words, review_markers, plurals_taught,
     return sorted(rows, key=lambda row: row["marker"])
 
 
+_KOREAN_ATTRIBUTIVE_ADJECTIVES = {
+    "red": "빨간", "blue": "파란", "green": "초록색", "white": "하얀",
+    "black": "검은", "yellow": "노란", "purple": "보라색", "gold": "금색",
+    "silver": "은색", "grey": "회색", "gray": "회색", "brown": "갈색",
+    "pink": "분홍색", "orange": "주황색", "beige": "베이지색",
+    "big": "큰", "small": "작은", "long": "긴", "short": "짧은",
+    "round": "둥근", "square": "네모난", "rectangular": "직사각형의",
+    "wooden": "나무로 된", "metal": "금속으로 된", "plastic": "플라스틱",
+    "glass": "유리", "fabric": "천으로 된", "stone": "돌로 된",
+    "striped": "줄무늬", "spotted": "물방울무늬",
+    "open": "열린", "closed": "닫힌", "empty": "빈", "full": "가득 찬",
+    "clean": "깨끗한", "dirty": "더러운",
+}
+
+
+def _attributive_phrase(language, row, kind, value):
+    if language == "ko":
+        adjective = _KOREAN_ATTRIBUTIVE_ADJECTIVES.get(value)
+        return (f"{adjective} {row['noun']}", adjective) if adjective else (None, None)
+    agreed = agreed_attribute(kind, value, language, row["gender"])
+    if not agreed:
+        return None, None
+    adjective, before = agreed
+    if language == "de" or before:
+        article, noun = row["name"].split(" ", 1)
+        return f"{article} {adjective} {noun}", adjective
+    return f"{row['name']} {adjective}", adjective
+
+
+def _attribute_options(language, row, kind, value, answer):
+    alternatives = list(attribute_contrasts(kind, value))
+    if kind == "colour":
+        alternatives += [colour for colour in REVIEWED_COLOURS if colour != value]
+    choices = [answer]
+    for other in alternatives:
+        _phrase, form = _attributive_phrase(language, row, kind, other)
+        if form and fold(form) not in {fold(item) for item in choices}:
+            choices.append(form)
+            break
+    return choices
+
+
+def _location_phrase(language, subject, reference, position):
+    expression = _position_expression(position, language)
+    if not expression:
+        return None
+    if language == "ko":
+        particle = "이" if subject["batchim"] else "가"
+        return f"{subject['noun']}{particle} {reference['noun']} {expression} 있어요."
+    place = _place(language, expression, {
+        "translation": reference["noun"], "gender": reference["gender"],
+        "article": reference["name"].split(" ", 1)[0],
+    })
+    if not place:
+        return None
+    verb = {"es": "está", "fr": "est", "de": "ist"}[language]
+    return f"{subject['name']} {verb} {place}."
+
+
+def _position_expression(position, language):
+    expression = REVIEWED_POSITIONS.get(position, {}).get(language)
+    if expression:
+        return expression
+    meaning = position.replace("_", " ")
+    return next((text for text, sense, _example in POSITIONS[language] if sense == meaning), None)
+
+
+def _m02_tasks(mission, language, objects, relations, rows):
+    by_key = {row["key"]: row for row in rows}
+    by_object = {str(obj.id): obj for obj in objects}
+    attribute_task = None
+    for row in rows:
+        obj = by_object[row["key"]]
+        for _key, kind, value in confirmed_attributes(obj):
+            phrase, word = _attributive_phrase(language, row, kind, value)
+            options = word and _attribute_options(language, row, kind, value, word)
+            if phrase and options and len(options) > 1:
+                attribute_task = dict(
+                    kind="adjective", objectKey=row["key"], description=phrase,
+                    descriptor=word, descriptorOptions=options,
+                    translation=f"the {value} {row['source']}",
+                )
+                break
+        if attribute_task:
+            break
+    location_task = None
+    for relation in confirmed_relations(mission, objects, relations):
+        subject = by_key.get(str(relation.subject_scene_object_id))
+        reference = by_key.get(str(relation.reference_scene_object_id))
+        position = relation_type(relation)
+        phrase = subject and reference and _location_phrase(
+            language, subject, reference, position,
+        )
+        if not phrase:
+            continue
+        options = [_position_expression(position, language)]
+        options += [
+            expression for key in ("on", "under", "next_to", "in_front_of", "behind")
+            if key != position and (expression := _position_expression(key, language))
+        ][:1]
+        location_task = dict(
+            kind="preposition", objectKey=subject["key"], description=phrase,
+            descriptor=options[0], descriptorOptions=options,
+            referenceKey=reference["key"],
+            translation=f"the {subject['source']} is {position.replace('_', ' ')} "
+                        f"the {reference['source']}",
+        )
+        break
+    return [task for task in (attribute_task, location_task) if task]
+
+
 def a0_payload(
-    mission, language, objects, _relations, words, translated_scene, counts, progress,
+    mission, language, objects, relations, words, translated_scene, counts, progress,
     session_id, review_markers=None, context=None,
 ):
     language = language.lower()
@@ -160,6 +283,18 @@ def a0_payload(
     translations = {lex.WHAT_IS_THIS[language]: "What is this?"}
     if mission.mission_id == "M03":
         rows = _m03_group(payload, mission, language, rows, counts, translations)
+    elif mission.mission_id == "M02" and mission.content_version >= 2:
+        payload["descriptionTasks"] = _m02_tasks(
+            mission, language, objects, relations, rows,
+        )
+        relevant = {
+            key for task in payload["descriptionTasks"]
+            for key in (task["objectKey"], task.get("referenceKey")) if key
+        }
+        rows = sorted(rows, key=lambda row: (row["key"] not in relevant, row["marker"]))[:3]
+        payload["focus"] = [task["objectKey"] for task in payload["descriptionTasks"]]
+        for task in payload["descriptionTasks"]:
+            translations[task["description"]] = task["translation"]
     else:
         learner_facts = context.get("learner_facts") or {}
         if mission.mission_id == "M04":
@@ -184,6 +319,11 @@ def a0_payload(
     for row in rows:
         translations.update(_translations(language, row))
     chunks = [*translations, *(row["chunk"] for row in rows)]
+    if mission.mission_id == "M02" and mission.content_version >= 2:
+        chunks += [
+            item for task in payload.get("descriptionTasks", [])
+            for item in [task["description"], *task["descriptorOptions"]]
+        ]
     if mission.mission_id == "M13":
         chunks += [item["chunk"] for row in rows for item in row["formChoices"]]
     payload.update(
@@ -274,7 +414,11 @@ def _prep(payload):
     if mission_id == "M01":
         return [*names, card(payload["whatIsThis"]), card(first["identify"], first["key"])]
     if mission_id == "M02":
-        return [*names, card(first["find"], first["key"])]
+        return [
+            *names,
+            *(card(task["description"], task["objectKey"])
+              for task in payload.get("descriptionTasks", [])),
+        ]
     return names
 
 
@@ -300,9 +444,9 @@ def _corrections(payload, question, label):
         meaning = f"This is {_a(target['source'])}: {target['identify']}"
         return [dict(mistake="wrongObject", answers=[option.option_id], correction=label,
                      explanation=meaning) for option in wrong], meaning
-    if purpose in {"chooseName"}:
+    if purpose == "chooseDescriptor":
         return [dict(mistake="wrongWord", answers=[option.option_id], correction=label,
-                     explanation=f"This is {target['name']}.") for option in wrong], None
+                     explanation=f"The description uses {label}.") for option in wrong], None
     if purpose in {"countGroup", "matchChunk"}:
         note = f"{label} — {payload['approvedTranslations'].get(label, label)}."
         return [dict(mistake="wrongQuantity", answers=[option.option_id], correction=label,
@@ -329,6 +473,18 @@ def a0_lesson_task(session_id, mission, payload, result, vocabulary_ids):
 
     def evaluate(question, label):
         target_ids, evidence_type, criteria = _EVALUATIONS[question.purpose]
+        if question.purpose == "chooseDescriptor":
+            task = next(
+                item for item in payload["descriptionTasks"]
+                if item["objectKey"] == question.object_key
+                and item["description"] == question.prompt
+            )
+            if task["kind"] == "adjective":
+                target_ids, criteria = ["recognise-adjective"], ["adjective-matches-object"]
+            else:
+                target_ids, criteria = ["recognise-preposition"], [
+                    "preposition-matches-relation"
+                ]
         vocabulary_id = vocabulary_ids.get(question.object_key)
         corrections, correct_note = _corrections(payload, question, label)
         if question.statement_true is not None:

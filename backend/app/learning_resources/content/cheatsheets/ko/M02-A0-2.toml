@@ -1,0 +1,74 @@
+mission_id = "M02"
+practice_level = "A0"
+content_version = 2
+language_code = "ko"
+text_direction = "ltr"
+title = "Find a described object"
+
+[[concepts]]
+concept_id = "recognise-adjective"
+title = "Place the adjective before the object"
+formula = "adjective + object"
+
+[[concepts.pattern_parts]]
+part_id = "adjective"
+label = "adjective"
+role = "choice"
+
+[[concepts.pattern_parts.choices]]
+text = "빨간"
+label = "red"
+
+[[concepts.pattern_parts.choices]]
+text = "큰"
+label = "big"
+
+[[concepts.pattern_parts]]
+part_id = "object"
+label = "object"
+role = "slot"
+text = "컵"
+
+[[concepts.examples]]
+target_text = "빨간 컵"
+translation = "the red cup"
+
+[[concepts]]
+concept_id = "recognise-preposition"
+title = "Place the reference object before the position"
+formula = "object + reference object + position + 있어요"
+
+[[concepts.pattern_parts]]
+part_id = "object"
+label = "object"
+role = "slot"
+text = "컵이"
+
+[[concepts.pattern_parts]]
+part_id = "reference"
+label = "reference object"
+role = "slot"
+text = "책상"
+
+[[concepts.pattern_parts]]
+part_id = "position"
+label = "position"
+role = "choice"
+
+[[concepts.pattern_parts.choices]]
+text = "위에"
+label = "on"
+
+[[concepts.pattern_parts.choices]]
+text = "아래에"
+label = "under"
+
+[[concepts.pattern_parts]]
+part_id = "verb"
+label = "is"
+role = "fixed"
+text = "있어요"
+
+[[concepts.examples]]
+target_text = "컵이 책상 위에 있어요."
+translation = "The cup is on the desk."

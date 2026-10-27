@@ -1,0 +1,85 @@
+mission_id = "M02"
+practice_level = "A0"
+content_version = 2
+title = "Find a described object"
+
+[photo_requirements]
+media_sources = ["preloaded", "camera", "userUpload"]
+min_confirmed_objects = 2
+min_coloured_objects = 1
+min_relations = 1
+relations = ["on", "under", "next_to", "in_front_of", "behind"]
+
+[objective]
+objective_id = "find-described-object"
+can_do = "I can find an object from a simple description of what it is like or where it is."
+
+[[objective.targets]]
+target_id = "recognise-adjective"
+summary = "Recognise a familiar adjective used with an object name."
+evidence_types = ["recognition"]
+
+[[objective.targets]]
+target_id = "recognise-preposition"
+summary = "Recognise a familiar position word used between two object names."
+evidence_types = ["recognition"]
+
+[[objective.targets]]
+target_id = "find-described-object"
+summary = "Find the object that a short adjective or location phrase describes."
+evidence_types = ["recognition"]
+
+[[language_patterns]]
+pattern_id = "adjective-description"
+target_id = "recognise-adjective"
+structure = "[article] [adjective] [noun] / [article] [noun] [adjective]"
+examples = { es = ["la taza roja"], fr = ["la tasse rouge"], de = ["die rote Tasse"], ko = ["빨간 컵"] }
+
+[[language_patterns]]
+pattern_id = "location-description"
+target_id = "recognise-preposition"
+structure = "[object] [position] [reference object]"
+examples = { es = ["la taza sobre la mesa"], fr = ["la tasse sur la table"], de = ["die Tasse auf dem Tisch"], ko = ["책상 위의 컵"] }
+
+[teaching]
+task_sequence = ["vocabularyIntroduction", "grammarLesson"]
+teach_before_assessment = ["recognise-adjective", "recognise-preposition", "find-described-object"]
+max_new_words = 3
+
+[[teaching.supports]]
+support = "translation"
+availability = "onRequest"
+counts_as_assistance = false
+
+[[teaching.supports]]
+support = "audio"
+availability = "always"
+counts_as_assistance = false
+
+[[evaluation_criteria]]
+criterion_id = "adjective-matches-object"
+target_id = "recognise-adjective"
+description = "Matches the taught adjective phrase to the confirmed object detail."
+evidence_types = ["recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "preposition-matches-relation"
+target_id = "recognise-preposition"
+description = "Matches the taught position phrase to the confirmed object relation."
+evidence_types = ["recognition"]
+
+[[evaluation_criteria]]
+criterion_id = "finds-described-object"
+target_id = "find-described-object"
+description = "Finds the object described by a taught adjective or location phrase."
+evidence_types = ["recognition"]
+
+[expected_performance]
+min_assessed_questions = 4
+min_correct_ratio = 0.67
+min_independent_correct = 2
+required_target_groups = [
+  ["recognise-adjective"],
+  ["recognise-preposition"],
+  ["find-described-object"],
+]

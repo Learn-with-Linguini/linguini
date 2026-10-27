@@ -1,0 +1,74 @@
+mission_id = "M02"
+practice_level = "A0"
+content_version = 2
+language_code = "fr"
+text_direction = "ltr"
+title = "Find a described object"
+
+[[concepts]]
+concept_id = "recognise-adjective"
+title = "Place the adjective after the object"
+formula = "article + object + adjective"
+
+[[concepts.pattern_parts]]
+part_id = "object"
+label = "object"
+role = "slot"
+text = "la tasse"
+
+[[concepts.pattern_parts]]
+part_id = "adjective"
+label = "adjective"
+role = "choice"
+
+[[concepts.pattern_parts.choices]]
+text = "rouge"
+label = "red"
+
+[[concepts.pattern_parts.choices]]
+text = "grande"
+label = "big"
+
+[[concepts.examples]]
+target_text = "la tasse rouge"
+translation = "the red cup"
+
+[[concepts]]
+concept_id = "recognise-preposition"
+title = "Place the position before the reference object"
+formula = "object + est + position + reference object"
+
+[[concepts.pattern_parts]]
+part_id = "object"
+label = "object"
+role = "slot"
+text = "la tasse"
+
+[[concepts.pattern_parts]]
+part_id = "verb"
+label = "is"
+role = "fixed"
+text = "est"
+
+[[concepts.pattern_parts]]
+part_id = "position"
+label = "position"
+role = "choice"
+
+[[concepts.pattern_parts.choices]]
+text = "sur"
+label = "on"
+
+[[concepts.pattern_parts.choices]]
+text = "sous"
+label = "under"
+
+[[concepts.pattern_parts]]
+part_id = "reference"
+label = "reference object"
+role = "slot"
+text = "la table"
+
+[[concepts.examples]]
+target_text = "La tasse est sur la table."
+translation = "The cup is on the table."

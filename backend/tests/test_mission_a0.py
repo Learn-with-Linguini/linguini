@@ -39,9 +39,17 @@ def _lesson(mission_id, language, *, labels=LABELS, words=None, quantity=2,
             plurals_taught=False, count_label="apple", ownership_index=0,
             compared_indices=(0,), reaction="like", groups=None):
     objects = _objects(labels)
+    relations = []
+    if mission_id == "M02":
+        objects[0].attributes = {"color": "red"}
+        relations = [SimpleNamespace(
+            relation="on",
+            subject_scene_object_id=objects[0].id,
+            reference_scene_object_id=objects[1].id,
+        )]
     words = [SimpleNamespace(display_text=word, id=uuid4())
              for word in (words or WORDS[language][:len(labels)])]
-    mission = get_mission(mission_id, "A0", 1)
+    mission = get_mission(mission_id, "A0", 2 if mission_id == "M02" else 1)
     spec = lesson_spec(mission)
     group = next((obj for obj in objects if obj.label == count_label), objects[0])
     counts = [{"label": count_label, "quantity": quantity, "sceneObjectIds": [str(group.id)]}]
@@ -66,7 +74,7 @@ def _lesson(mission_id, language, *, labels=LABELS, words=None, quantity=2,
             "reaction": reaction,
         }}
     payload = spec.payload(
-        mission, language, objects, [], words, None, counts,
+        mission, language, objects, relations, words, None, counts,
         {"plurals_taught": plurals_taught}, uuid4(), context=context,
     )
     return mission, spec, payload, objects
@@ -92,6 +100,7 @@ def test_a0_profiles_get_the_a0_missions_whatever_their_onboarding(language, onb
     assert [registry_key(mission) for mission in missions] == [
         "A0:M01", "A0:M02", "A0:M03", "A0:M04", "A0:M05", "A0:M13",
     ]
+    assert next(mission for mission in missions if mission.mission_id == "M02").content_version == 2
     assert all(str(mission.practice_level) == "A0" for mission in missions)
 
 
@@ -122,12 +131,15 @@ def test_a1_lessons_keep_their_own_builders():
     for mission_id in ("M01", "M02", "M03"):
         a1 = get_mission(mission_id, "A1", 1) or get_mission(mission_id, "A1", 2)
         assert lesson_spec(a1) is MISSION_LESSONS[mission_id]
-        assert lesson_spec(get_mission(mission_id, "A0", 1)) is not MISSION_LESSONS[mission_id]
+        version = 2 if mission_id == "M02" else 1
+        assert lesson_spec(get_mission(
+            mission_id, "A0", version,
+        )) is not MISSION_LESSONS[mission_id]
 
 
 def test_a0_definitions_store_the_canonical_level():
     for mission_id in MISSIONS:
-        mission = get_mission(mission_id, "A0", 1)
+        mission = get_mission(mission_id, "A0", 2 if mission_id == "M02" else 1)
         assert mission.practice_level == "A0"
         assert registry_key(mission) == f"A0:{mission_id}"
 
@@ -202,15 +214,19 @@ def test_unconfirmed_or_untaught_objects_are_never_approved():
     assert not lesson_spec(get_mission("M01", "A0", 1)).ready(payload)
 
 
-def test_m02_prompts_avoid_spatial_words_and_listen_first():
+def test_m02_teaches_an_adjective_and_a_preposition():
     _mission, _spec, payload, result, _objects = _result("M02", "es")
-    listening = [q for q in result.questions if q.purpose == "listenSelect"]
+    listening = [q for q in result.questions if q.purpose == "listenDescribed"]
     assert listening and all(q.listen_first and q.audio_text for q in listening)
-    spatial = {"on", "under", "next", "behind", "sobre", "debajo", "al lado", "detrás"}
-    for question in result.questions:
-        assert not spatial & set(question.prompt.casefold().replace(".", "").split())
-        if question.purpose == "chooseName":
-            assert len(question.options) == 2
+    assert [task["kind"] for task in payload["descriptionTasks"]] == [
+        "adjective", "preposition",
+    ]
+    assert "roja" in payload["descriptionTasks"][0]["description"]
+    assert "sobre" in payload["descriptionTasks"][1]["description"]
+    assert all(
+        len(question.options) == 2
+        for question in result.questions if question.purpose == "chooseDescriptor"
+    )
 
 
 @pytest.mark.parametrize("quantity", [2, 3])

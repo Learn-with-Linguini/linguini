@@ -1,0 +1,74 @@
+mission_id = "M02"
+practice_level = "A0"
+content_version = 2
+language_code = "es"
+text_direction = "ltr"
+title = "Find a described object"
+
+[[concepts]]
+concept_id = "recognise-adjective"
+title = "Place the adjective after the object"
+formula = "article + object + adjective"
+
+[[concepts.pattern_parts]]
+part_id = "object"
+label = "object"
+role = "slot"
+text = "la taza"
+
+[[concepts.pattern_parts]]
+part_id = "adjective"
+label = "adjective"
+role = "choice"
+
+[[concepts.pattern_parts.choices]]
+text = "roja"
+label = "red"
+
+[[concepts.pattern_parts.choices]]
+text = "grande"
+label = "big"
+
+[[concepts.examples]]
+target_text = "la taza roja"
+translation = "the red cup"
+
+[[concepts]]
+concept_id = "recognise-preposition"
+title = "Place the position before the reference object"
+formula = "object + está + position + reference object"
+
+[[concepts.pattern_parts]]
+part_id = "object"
+label = "object"
+role = "slot"
+text = "la taza"
+
+[[concepts.pattern_parts]]
+part_id = "verb"
+label = "is"
+role = "fixed"
+text = "está"
+
+[[concepts.pattern_parts]]
+part_id = "position"
+label = "position"
+role = "choice"
+
+[[concepts.pattern_parts.choices]]
+text = "sobre"
+label = "on"
+
+[[concepts.pattern_parts.choices]]
+text = "debajo de"
+label = "under"
+
+[[concepts.pattern_parts]]
+part_id = "reference"
+label = "reference object"
+role = "slot"
+text = "la mesa"
+
+[[concepts.examples]]
+target_text = "La taza está sobre la mesa."
+translation = "The cup is on the table."

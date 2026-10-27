@@ -189,6 +189,24 @@ def test_other_a0_m01_cheatsheets_are_served_to_the_ui(
     assert response.json()["concepts"][1]["formula"] == formula
 
 
+@pytest.mark.parametrize("language", ["es", "fr", "de", "ko"])
+def test_a0_m02_description_cheatsheets_are_served_to_the_ui(language: str) -> None:
+    response = TestClient(app).get(
+        "/api/v1/learning-resources/cheatsheets/M02",
+        params={
+            "languageCode": language,
+            "practiceLevel": "A0",
+            "contentVersion": 2,
+        },
+    )
+
+    assert response.status_code == 200
+    assert [concept["conceptId"] for concept in response.json()["concepts"]] == [
+        "recognise-adjective",
+        "recognise-preposition",
+    ]
+
+
 def test_missing_learning_resources_return_clear_404s() -> None:
     client = TestClient(app)
 

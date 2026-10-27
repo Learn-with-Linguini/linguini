@@ -12,7 +12,7 @@ from app.services.mission_language_a2 import A2_ENABLED_LANGUAGES
 MISSION_LANGUAGES = {"es", "fr", "de"}
 
 M01_A0 = ("M01", "A0", 1)
-M02_A0 = ("M02", "A0", 1)
+M02_A0 = ("M02", "A0", 2)
 M03_A0 = ("M03", "A0", 1)
 M04_A0 = ("M04", "A0", 1)
 M05_A0 = ("M05", "A0", 1)

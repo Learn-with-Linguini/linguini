@@ -147,6 +147,9 @@ A0_MISSION_LESSONS = {
     )
     for mission_id in ("M01", "M02", "M03", "M04", "M05", "M13")
 }
+A0_MISSION_LESSONS["A0:M02"] = MissionLessonSpec(
+    a0_payload, A0_GENERATIONS["M02"], a0_lesson_task, a0_ready, content_version=2,
+)
 
 
 A2_MISSION_LESSONS = {

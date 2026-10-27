@@ -30,18 +30,18 @@ from app.services.a0_lexicon import KOREAN_ENDINGS
 
 type A0Purpose = Literal[
     "matchName", "confirmName", "buildIdentify",
-    "findNamed", "chooseName", "listenSelect",
+    "findDescribed", "chooseDescriptor", "listenDescribed",
     "countGroup", "matchChunk", "buildChunk",
     "chooseChunk", "matchSpoken", "fillSlot",
 ]
 
 ORDERS: dict[str, list[str]] = {
     "M01": ["matchName", "confirmName", "buildIdentify"],
-    "M02": ["findNamed", "chooseName", "listenSelect"],
+    "M02": ["findDescribed", "chooseDescriptor", "listenDescribed"],
     "M03": ["countGroup", "matchChunk", "buildChunk"],
     "M13": ["chooseChunk", "matchSpoken", "fillSlot"],
 }
-MARKER_PURPOSES = {"matchName", "findNamed", "listenSelect", "matchSpoken"}
+MARKER_PURPOSES = {"matchName", "findDescribed", "listenDescribed", "matchSpoken"}
 BUILD_PURPOSES = {"buildIdentify", "buildChunk"}
 # English prompts and instructions an A0 question may show; target-language text
 # always comes from the payload's approved chunks.
@@ -49,9 +49,9 @@ INSTRUCTIONS = {
     "matchName": "Listen, then tap the marker for this word.",
     "confirmName": "Look at the highlighted object. Answer yes or no.",
     "buildIdentify": "Build the answer with the tiles.",
-    "findNamed": "Tap the marker for the object.",
-    "chooseName": "Which word names the highlighted object?",
-    "listenSelect": "Listen, then tap the marker for the object you hear.",
+    "findDescribed": "Read the description, then tap the object.",
+    "chooseDescriptor": "Which word completes the description?",
+    "listenDescribed": "Listen, then tap the object being described.",
     "countGroup": "Count the highlighted group. How many are there?",
     "matchChunk": "Which words match what you see?",
     "buildChunk": "Build the words with the tiles.",
@@ -201,17 +201,24 @@ def _m01(payload):
 
 def _m02(payload):
     questions = []
-    for index, (section, target) in enumerate(_sections(payload), 1):
-        other = _other(payload, target, f"name-{index}")
+    objects = _objects(payload)
+    for index, task in enumerate(payload["descriptionTasks"], 1):
+        target = objects[task["objectKey"]]
+        section = (
+            f"Task {index} · Adjective" if task["kind"] == "adjective"
+            else f"Task {index} · Position"
+        )
         questions += [
-            _marker_question(payload, "findNamed", section, target, target["find"], index=index),
+            _marker_question(
+                payload, "findDescribed", section, target, task["description"], index=index,
+            ),
             _choice_question(
-                payload, "chooseName", section, target, INSTRUCTIONS["chooseName"],
-                [target["name"], other["name"]], target["name"], index=index,
+                payload, "chooseDescriptor", section, target, task["description"],
+                task["descriptorOptions"], task["descriptor"], index=index,
             ),
             _marker_question(
-                payload, "listenSelect", section, target, target["name"], index=index,
-                listen_first=True,
+                payload, "listenDescribed", section, target, task["description"],
+                index=index, listen_first=True,
             ),
         ]
     return questions
@@ -329,7 +336,7 @@ def validate_a0_lesson(payload: dict[str, Any], result: A0LessonResult) -> None:
         _fail("The two tasks have their own sections.")
     if mission_id == "M03":
         _validate_m03(payload, questions)
-    elif first[0].object_key == second[0].object_key:
+    elif mission_id != "M02" and first[0].object_key == second[0].object_key:
         _fail("The two tasks focus on different objects.")
     if mission_id == "M13" and language == "ko" and not forms <= set(KOREAN_ENDINGS):
         _fail("Korean uses 이에요/예요 endings, never articles.")
@@ -366,12 +373,18 @@ def validate_a0_lesson(payload: dict[str, Any], result: A0LessonResult) -> None:
             _fail("Options use only taught words and chunks.")
         if question.purpose == "confirmName":
             _validate_yes_no(payload, question, labels, objects, target)
-        if question.purpose == "chooseName":
-            names = {fold(row["name"]): key for key, row in objects.items()}
-            if len(labels) != 2 or not all(fold(label) in names for label in labels.values()):
-                _fail("Distinguish exactly two taught names.")
-            if names[fold(labels[question.correct_option_id])] != target["key"]:
-                _fail("The correct name is the highlighted object's.")
+        if question.purpose == "chooseDescriptor":
+            task = next(
+                item for item in payload["descriptionTasks"]
+                if item["objectKey"] == question.object_key
+                and fold(item["description"]) == fold(question.prompt)
+            )
+            allowed_descriptors = {fold(item) for item in task["descriptorOptions"]}
+            shown_descriptors = {fold(item) for item in labels.values()}
+            if len(labels) != 2 or not shown_descriptors <= allowed_descriptors:
+                _fail("Choose between exactly two taught description words.")
+            if fold(labels[question.correct_option_id]) != fold(task["descriptor"]):
+                _fail("The correct word completes the confirmed description.")
         if question.purpose in {"chooseChunk", "fillSlot"}:
             _validate_m13(payload, question, labels, target)
 
@@ -485,7 +498,7 @@ Shape:
    options. Leave fields a purpose does not use null, false or empty.
 
 Question types:
-- Marker questions (matchName, findNamed, listenSelect, matchSpoken): multipleChoice
+- Marker questions (matchName, findDescribed, listenDescribed, matchSpoken): multipleChoice
   over up to three approvedObjects including the target, each option
   {{optionId: "marker-<marker>", label: "<marker>"}} using the row's marker number,
   sorted by marker; markerKeys maps each optionId to that row's key; no two shown rows
@@ -510,12 +523,13 @@ M01 (name and identify): the tasks are the two payload.focus objects, in order; 
 - buildIdentify: prompt = whatIsThis, audioText = prompt, correctText = target.identify,
   extra tile = the noun of another approved object.""",
     "M02": """
-M02 (find the object): the tasks are the two payload.focus objects, in order; section
-"Task <n> · <label>" uses the row's label.
-- findNamed: marker question, prompt = target.find.
-- chooseName: prompt = its instruction text; exactly two options: target.name and the
-  name of another approved object; the answer is target.name.
-- listenSelect: marker question, prompt = target.name, listenFirst true.""",
+M02 (find a described object): use payload.descriptionTasks in order. The adjective task
+has section "Task 1 · Adjective" and the preposition task has section
+"Task 2 · Position".
+- findDescribed: marker question, prompt = task.description.
+- chooseDescriptor: prompt = task.description; options = task.descriptorOptions and the
+  answer is task.descriptor.
+- listenDescribed: marker question, prompt = task.description, listenFirst true.""",
     "M03": """
 M03 (count): every question is about payload.group (objectKey = group.key).
 Task 1 has section "Task 1 · Count in your photo", counts group.quantity and sets

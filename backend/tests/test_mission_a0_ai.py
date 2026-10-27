@@ -61,7 +61,15 @@ def _scene(language, rows=None):
 
 def _payload(mission_id, language, rows=None, *, quantity=2):
     objects, words, translated = _scene(language, rows)
-    mission = get_mission(mission_id, "A0", 1)
+    relations = []
+    if mission_id == "M02":
+        objects[0].attributes = {"color": "red"}
+        relations = [SimpleNamespace(
+            relation="on",
+            subject_scene_object_id=objects[0].id,
+            reference_scene_object_id=objects[1].id,
+        )]
+    mission = get_mission(mission_id, "A0", 2 if mission_id == "M02" else 1)
     spec = lesson_spec(mission)
     counts = [{"label": objects[0].label, "quantity": quantity,
                "sceneObjectIds": [str(objects[0].id)]}]
@@ -74,7 +82,7 @@ def _payload(mission_id, language, rows=None, *, quantity=2):
             "reaction": "like",
         }}
     payload = spec.payload(
-        mission, language, objects, [], words, translated, counts, {}, uuid4(),
+        mission, language, objects, relations, words, translated, counts, {}, uuid4(),
         context=context,
     )
     return spec, payload
