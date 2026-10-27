@@ -69,6 +69,18 @@ def test_png_text_and_xmp_are_removed():
         assert not image.info
 
 
+def test_metadata_removal_preserves_16_bit_png_values():
+    output = BytesIO()
+    text = PngImagePlugin.PngInfo()
+    text.add_text("Comment", "private address")
+    Image.new("I;16", (12, 8), 60000).save(output, format="PNG", pnginfo=text)
+    clean, mime, width, height = sanitize_image_upload(output.getvalue())
+    assert (mime, width, height) == ("image/png", 12, 8)
+    with Image.open(BytesIO(clean)) as image:
+        assert image.getpixel((0, 0)) == 60000
+        assert "Comment" not in image.info
+
+
 def test_png_transparent_color_is_preserved_when_text_is_removed():
     output = BytesIO()
     text = PngImagePlugin.PngInfo()

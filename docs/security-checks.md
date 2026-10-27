@@ -26,6 +26,15 @@ audit the deployed environment separately to check its exact versions. Optional
 Grounding DINO dependencies (`.[grounding]`) and marketing production scripts
 are outside these jobs.
 
+The backend requires Pillow 13 for the decoder, EXIF and decompression fixes in
+the [13.0.0 release](https://pillow.readthedocs.io/en/stable/releasenotes/13.0.0.html).
+Its Python requirement remains compatible with this project's Python 3.12+
+baseline. The image paths use supported decoding, EXIF transpose, conversion,
+thumbnail and save APIs, without the removed methods or `fromarray` mode coercion.
+The image regressions cover metadata removal, orientation, transparency, pixel
+limits and 16-bit PNG preservation; CI installs the new major version before
+running them.
+
 The JavaScript checks read committed lockfiles without installing packages or
 running their lifecycle scripts. They include development dependencies: Vite
 builds the deployed frontend, and Prisma runs database migrations. A production
