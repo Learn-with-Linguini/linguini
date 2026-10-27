@@ -1,0 +1,121 @@
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getMissionCheatSheet, type MissionCheatSheet } from "../lib/api";
+import { trackAction } from "../lib/analytics";
+import { queryKeys } from "../lib/queryKeys";
+import { speak } from "../lib/speech";
+import { CloseIcon, SpeakerIcon } from "./icons";
+import { InlineLoader } from "./LoadingScreen";
+import { IconButton } from "./ui";
+import "./MissionCheatSheet.css";
+
+export function MissionCheatSheetLauncher({
+  missionId,
+  practiceLevel,
+  contentVersion,
+  languageCode,
+}: {
+  missionId?: string;
+  practiceLevel?: string;
+  contentVersion?: number;
+  languageCode: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const available = Boolean(missionId && practiceLevel && contentVersion);
+  const sheet = useQuery({
+    queryKey: queryKeys.missionCheatSheet(
+      missionId ?? "",
+      practiceLevel ?? "",
+      contentVersion ?? 0,
+      languageCode,
+    ),
+    queryFn: ({ signal }) => getMissionCheatSheet(
+      missionId!, practiceLevel!, contentVersion!, languageCode, signal,
+    ),
+    enabled: available && open,
+    retry: false,
+    staleTime: Infinity,
+  });
+
+  const close = () => setOpen(false);
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") close();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open]);
+
+  const tracking = {
+    missionId,
+    practiceLevel,
+    contentVersion,
+    languageCode,
+  };
+
+  if (!available) return null;
+  return <>
+    <button type="button" className="cheatsheet-trigger" aria-haspopup="dialog" aria-expanded={open}
+      onClick={() => {
+        setOpen(true);
+        trackAction("mission_cheatsheet_opened", tracking);
+      }}>
+      Cheatsheet
+    </button>
+    {open ? <div className="cheatsheet-backdrop" onMouseDown={event => {
+      if (event.target === event.currentTarget) close();
+    }}>
+      <section className="cheatsheet-sheet" role="dialog" aria-modal="true" aria-labelledby="cheatsheet-title">
+        <div className="cheatsheet-sheet__handle" aria-hidden="true" />
+        <header className="cheatsheet-sheet__header">
+          <div><p className="label muted">Mission guide</p><h2 id="cheatsheet-title">{sheet.data?.title ?? "Cheatsheet"}</h2></div>
+          <IconButton label="Close cheatsheet" onClick={close}><CloseIcon /></IconButton>
+        </header>
+        {sheet.isLoading ? <InlineLoader label="Opening your mission guide…" /> : null}
+        {sheet.isError ? <div className="cheatsheet-unavailable" role="status">
+          <h3>This cheatsheet is still being prepared</h3>
+          <p>It will appear here as soon as this mission and language are ready.</p>
+        </div> : null}
+        {sheet.data ? <><p className="cheatsheet-sheet__summary">{sheet.data.summary}</p>
+          <div className="cheatsheet-concepts">
+            {sheet.data.concepts.map(concept => <CheatSheetConceptCard
+              key={concept.conceptId} concept={concept} languageCode={sheet.data.languageCode}
+              textDirection={sheet.data.textDirection} />)}
+          </div></> : null}
+      </section>
+    </div> : null}
+  </>;
+}
+
+function CheatSheetConceptCard({ concept, languageCode, textDirection }: {
+  concept: MissionCheatSheet["concepts"][number];
+  languageCode: string;
+  textDirection: "ltr" | "rtl";
+}) {
+  return <article className="cheatsheet-concept">
+    <div className="stack-2"><h3>{concept.title}</h3><p>{concept.explanation}</p></div>
+    {concept.patternParts.length ? <div className="cheatsheet-pattern" dir={textDirection} aria-label={concept.formula ?? concept.title}>
+      {concept.patternParts.map(part => <div key={part.partId} className={`cheatsheet-pattern__part cheatsheet-pattern__part--${part.role}`}>
+        <span className="cheatsheet-pattern__label">{part.label}</span>
+        {part.text ? <span className="cheatsheet-pattern__pill" lang={languageCode}>{part.text}</span> :
+          <span className="cheatsheet-pattern__choices">{part.choices.map(choice =>
+            <span key={`${choice.text}-${choice.label}`} className="cheatsheet-pattern__choice">
+              <span className="cheatsheet-pattern__choice-label">{choice.label}</span>
+              <span className="cheatsheet-pattern__pill" lang={languageCode}>{choice.text}</span>
+            </span>)}</span>}
+      </div>)}
+    </div> : concept.formula ? <p className="cheatsheet-formula" lang={languageCode}>{concept.formula}</p> : null}
+    <div className="cheatsheet-examples">
+      {concept.examples.map(example => <div key={`${example.targetText}-${example.translation}`} className="cheatsheet-example">
+        <div><strong lang={languageCode} dir={textDirection}>{example.targetText}</strong><span>{example.translation}</span>
+          {example.note ? <small>{example.note}</small> : null}</div>
+        <IconButton label={`Hear ${example.targetText}`} onClick={() => {
+          trackAction("mission_cheatsheet_audio_played", { languageCode, conceptId: concept.conceptId });
+          speak(example.targetText, languageCode);
+        }}><SpeakerIcon size={18} /></IconButton>
+      </div>)}
+    </div>
+    {concept.tips.length ? <ul className="cheatsheet-tips">{concept.tips.map(tip => <li key={tip}>{tip}</li>)}</ul> : null}
+  </article>;
+}

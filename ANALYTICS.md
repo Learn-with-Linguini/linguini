@@ -195,6 +195,12 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `lesson_issue_reported` | `{ reportType, issue }` | Learner reports an error in a lesson translation/task |
 | `social_link_clicked` | `{ platform }` | User clicks LinkedIn, Instagram, X, or TikTok link |
 
+### Mission Cheatsheets
+| Event Name | Parameters | Trigger Description |
+| :--- | :--- | :--- |
+| `mission_cheatsheet_opened` | `{ missionId, practiceLevel, contentVersion, languageCode }` | Learner opens a mission cheatsheet from an active task |
+| `mission_cheatsheet_audio_played` | `{ languageCode, conceptId }` | Learner plays a target-language example from a cheatsheet |
+
 ### Marketing Site & Interactive Demo
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |

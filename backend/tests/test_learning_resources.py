@@ -80,7 +80,14 @@ def test_loads_cheatsheet_linked_to_mission_and_character_reference(tmp_path: Pa
 def test_all_committed_learning_resources_are_valid() -> None:
     references = load_character_references(CHARACTER_REFERENCES_DIR)
 
-    load_cheat_sheets(CHEAT_SHEETS_DIR, references)
+    cheat_sheets = load_cheat_sheets(CHEAT_SHEETS_DIR, references)
+
+    french_m01 = cheat_sheets[("M01", "A0", 1, "fr")]
+    article = french_m01.concepts[1].pattern_parts[1]
+    assert [(choice.text, choice.label) for choice in article.choices] == [
+        ("un", "masculine"),
+        ("une", "feminine"),
+    ]
 
 
 def test_rejects_a_concept_not_in_the_mission_definition(tmp_path: Path) -> None:
@@ -124,6 +131,22 @@ def test_learning_resource_routes_are_exposed() -> None:
     assert "/api/v1/learning-resources/cheatsheets/{mission_id}" in paths
     assert "/api/v1/learning-resources/character-references" in paths
     assert "/api/v1/learning-resources/character-references/{reference_id}" in paths
+
+
+def test_french_a0_m01_cheatsheet_is_served_to_the_ui() -> None:
+    response = TestClient(app).get(
+        "/api/v1/learning-resources/cheatsheets/M01",
+        params={"languageCode": "fr", "practiceLevel": "A0"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["textDirection"] == "ltr"
+    assert body["concepts"][1]["formula"] == "C'est + un/une + object."
+    assert body["concepts"][1]["patternParts"][1]["choices"] == [
+        {"text": "un", "label": "masculine"},
+        {"text": "une", "label": "feminine"},
+    ]
 
 
 def test_missing_learning_resources_return_clear_404s() -> None:

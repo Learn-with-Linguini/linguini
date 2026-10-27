@@ -13,6 +13,8 @@ export const queryKeys = {
   latestAttempt: (taskId: string) => ["task", taskId, "latest-attempt"] as const,
   lessonChecks: (taskId: string) => ["task", taskId, "lesson-checks"] as const,
   vocabularyChecks: (taskId: string) => ["task", taskId, "vocabulary-checks"] as const,
+  missionCheatSheet: (missionId: string, level: string, version: number, languageCode: string) =>
+    ["learning-resource", "cheatsheet", missionId, level, version, languageCode] as const,
   ispyPhotos: (profileId: string) => ["ispy", "photos", profileId] as const,
   activeGame: (profileId: string) => ["ispy", "active", profileId] as const,
 };

@@ -28,6 +28,7 @@ import { fillMissionGap } from "../lib/missionGaps";
 import { playAnswerSound } from "../lib/answerSound";
 import { learningFeedback } from "../lib/learningFeedback";
 import { vocabularyRecapSteps } from "../lib/vocabularyRecap";
+import { MissionCheatSheetLauncher } from "../components/MissionCheatSheet";
 
 export function LearningTaskPage() {
   const { taskId } = useParams();
@@ -805,7 +806,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
 
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} /></div>
-    <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><ExitToHome onExit={onExit} /></div>
+    <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><div className="learning-title-actions"><MissionCheatSheetLauncher missionId={content.missionId} practiceLevel={content.practiceLevel} contentVersion={content.contentVersion} languageCode={scene.languageCode} /><ExitToHome onExit={onExit} /></div></div>
     {saved.isLoading ? <InlineLoader compact label="Restoring checked answers…" /> : null}
     {saved.isError ? <div role="alert"><p>Unable to restore checked answers.</p>
       <Button variant="quiet" onClick={() => void refetchChecks()}>Retry</Button></div> : null}
@@ -1099,7 +1100,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
   };
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} /><QuestionBasil amount={activeQuestion ? questionBasil[activeQuestion.questionId] : undefined} /></div>
-    <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><ExitToHome onExit={onExit} /></div>
+    <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><div className="learning-title-actions"><MissionCheatSheetLauncher missionId={content.missionId} practiceLevel={content.practiceLevel} contentVersion={content.contentVersion} languageCode={scene.languageCode} /><ExitToHome onExit={onExit} /></div></div>
     {savedChecks.isLoading ? <InlineLoader compact label="Restoring your place…" /> : null}
     {savedChecks.isError ? <p role="alert">We couldn't restore your saved answers. Try refreshing this page.</p> : null}
     {content.questions.map((question, position) => {

@@ -450,6 +450,26 @@ export type ProficiencyLevel = "A0" | "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 export const proficiencyLabel = (level: ProficiencyLevel) => (level === "A0" ? "Pre-A1" : level);
 /** Links task content to a versioned backend mission definition; absent on tasks without a mission. */
 export interface MissionTaskFields { missionId?: string; practiceLevel?: ProficiencyLevel; contentVersion?: number }
+export interface CheatSheetExample { targetText: string; translation: string; note?: string | null }
+export interface CheatSheetPatternChoice { text: string; label: string }
+export interface CheatSheetPatternPart {
+  partId: string; label: string; role: "fixed" | "choice" | "slot" | "ending";
+  text?: string | null; choices: CheatSheetPatternChoice[];
+}
+export interface MissionCheatSheet {
+  missionId: string; practiceLevel: ProficiencyLevel; contentVersion: number; languageCode: string; textDirection: "ltr" | "rtl";
+  title: string; summary: string; characterReferenceId?: string | null; characterReferenceVersion?: number | null;
+  concepts: {
+    conceptId: string; title: string; explanation: string; formula?: string | null;
+    examples: CheatSheetExample[]; tips: string[]; patternParts: CheatSheetPatternPart[];
+    characterReferenceSectionIds: string[];
+  }[];
+}
+export const getMissionCheatSheet = (
+  missionId: string, practiceLevel: string, contentVersion: number, languageCode: string, signal?: AbortSignal,
+) => request<MissionCheatSheet>(`/api/v1/learning-resources/cheatsheets/${encodeURIComponent(missionId)}?${new URLSearchParams({
+  languageCode, practiceLevel, contentVersion: String(contentVersion),
+})}`, signal);
 export interface RoleplayFact {
   sceneObjectId: string;
   source: "assignedRoleplay";
