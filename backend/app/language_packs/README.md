@@ -25,7 +25,7 @@ python -m app.language_packs.preview capability --pack-dir app/language_packs/pa
 python -m app.language_packs.preview plan --pack-dir app/language_packs/packs/es-ES/everyday --language es --register everyday --level A0 --scene scene.json
 ```
 
-Release allowlists are explicit and default to empty. Structural validation checks
+Optional strict release allowlists are explicit and default to empty. Structural validation checks
 references, reviewed vocabulary forms, labels, chunk reconstruction, and Unicode
 normalization; it does not infer meaning, grammaticality, or learner readiness.
 
@@ -52,8 +52,9 @@ grammar.
 The bundled files hold dev's former hand-written I-Spy and room tables unchanged
 (`tests/test_ispy_clue_grammar.py` compares the frames, colours, location phrases and
 room clues they build with `tests/fixtures/ispy_clue_frames.json`, recorded from those
-tables). They are not human-reviewed, so outside a local experiment a pack's clue grammar
-is used only once it is `humanReviewed`. A language without a ready pack or without
+tables). Human review is recorded honestly but is optional at runtime. With
+`LINGUINI_LANGUAGE_PACK_REQUIRE_RELEASE=true`, a pack's clue grammar must be
+`humanReviewed` outside a local experiment. A language without a ready pack or without
 `clues.toml` gets no clue frames; its I-Spy games keep their clue rounds. Clue grammar is
 not part of the lesson fingerprint, because frames are built in code and never cached.
 
@@ -63,7 +64,7 @@ Mission lessons come only from language packs: there is no switch and no legacy
 dispatch. Lessons use the existing mission eligibility/planning flow, then bind the
 actual session's confirmed object instances, attributes, relations, counts, translated
 vocabulary and register to the mission's slots. A language with no pack, or whose pack
-has no ready mission (not human-reviewed and released, outside a local experiment), has
+has no structurally supported mission, has
 no pack context, so its photo lessons are refused when created (409
 `lesson_language_unavailable`); the frontend offers only languages pack discovery returns.
 Every lesson translates its scene with its pack, including a lesson at a level with no
@@ -100,7 +101,8 @@ existing profile API to exercise another supported level.
 
 Pack availability extends mission candidates only with pack missions (M01-M06, M13)
 that the app offers at the level and the pack has ready.
-Photo eligibility and release checks still apply. Other missions and I-Spy retain
+Photo eligibility and per-lesson validation still apply. Optional strict release checks
+apply only with `LINGUINI_LANGUAGE_PACK_REQUIRE_RELEASE=true`. Other missions and I-Spy retain
 their existing language availability. Discovery does not constitute linguistic
 validation or release approval: a pack with no ready mission is neither offered in
 the selector nor planned. Invalid discovery configuration is exposed
@@ -118,7 +120,7 @@ In another terminal, from `frontend/`:
 npm run dev
 ```
 
-The normal UI uses the configured `learningTask` provider when this flag is on;
+The normal UI uses the configured `learningTask` provider for pack missions;
 using a live provider there incurs model calls. The automated commands below use
 mocked responses and do not need AI credentials. Changing a flag does not rewrite
 saved tasks: start a new lesson after each change. Restart the backend after environment
@@ -157,14 +159,37 @@ A0/A1/A2, respectively. Mission selection still follows existing history and
 eligibility; use a fresh local test profile/account if previous mission history
 prioritizes other missions. No progression or mission selection override is added.
 
-Production/release use requires **all** existing review, current evaluation and
-release-allowlist gates. `LINGUINI_LANGUAGE_PACK_EXPERIMENTAL` is honored only for
-`APP_ENV=local`, `development` or `test`; it never grants production readiness.
-For release evidence, `LINGUINI_LANGUAGE_PACK_EVIDENCE_DIR` contains files named
-`<pack-id>-M01-<level>.json`; `LINGUINI_LANGUAGE_PACK_RELEASES` retains the explicit
-`es:M01:A0,es:M01:A1,es:M01:A2` allowlist syntax. The included Spanish pack remains
-**unreviewed**, so setting the flag and allowlist alone cannot release it. Do not
-create review metadata to make the gates pass.
+### Production deployment
+
+Bundled packs are available by default when their required constructions, labels,
+numbers and other mission resources are structurally supported. To add a language,
+deploy its pack under `app/language_packs/packs/<locale>/everyday/` and restart the
+backend. No database migration, frontend language allowlist, evaluation JSON or
+human-review metadata is required to enable it. Discovery returns its supported
+levels through `GET /api/v1/me/practice-languages`.
+
+```dotenv
+APP_ENV=production
+AI_MODE=real
+# Defaults; these settings can be omitted:
+LINGUINI_LANGUAGE_PACK_REGISTER=everyday
+LINGUINI_LANGUAGE_PACK_REQUIRE_RELEASE=false
+```
+
+Leave `LINGUINI_LANGUAGE_PACK_DIRS` unset for all bundled packs, or point it to the
+deployed pack root. Evidence and release variables may be unset or empty; they are
+ignored at runtime under the default policy. Structural validation, photo eligibility,
+translation validation, sentence checks and model content reviews still run. Existing
+tasks are not rewritten, and provenance is not changed to claim human review.
+
+For teams that want editorial release gates, opt in with
+`LINGUINI_LANGUAGE_PACK_REQUIRE_RELEASE=true`. This requires human-reviewed content,
+current evaluation records and the allowlist. `LINGUINI_LANGUAGE_PACK_EVIDENCE_DIR`
+contains `<pack-id>-<mission>-<level>.json`; `LINGUINI_LANGUAGE_PACK_RELEASES` uses
+`es:M01:A0,es:M01:A1,es:M01:A2` syntax. Capability/evaluation commands still report
+these checks for optional quality audits even when runtime enforcement is disabled.
+`LINGUINI_LANGUAGE_PACK_EXPERIMENTAL` remains a local/development/test-only bypass
+for strict gates and never bypasses structural checks. Do not invent review metadata.
 
 ## Pack missions
 

@@ -540,6 +540,7 @@ def test_analysis_snapshot_is_reused_without_discovery(pack_dir, runtime, monkey
     sent = json.loads(provider.requests[0].user_content)["language_context"]["context"]
     assert sent["fingerprint"] == context.display.fingerprint
     # Saved local experimental selection never becomes production approval.
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_REQUIRE_RELEASE", "true")
     monkeypatch.setenv("APP_ENV", "production")
     with pytest.raises(ValueError, match="unavailable"):
         operation_context("lesson", profile, draft["languageContext"])

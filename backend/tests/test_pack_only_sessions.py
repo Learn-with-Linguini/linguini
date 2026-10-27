@@ -90,6 +90,7 @@ def test_a_saved_snapshot_restores_while_its_pack_is_still_ready():
 
 
 def test_a_saved_pack_that_is_no_longer_ready_refuses_the_session(monkeypatch):
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_REQUIRE_RELEASE", "true")
     snapshot = resolve_language_context("es").snapshot()
     # The saved pack was a local experiment; without it the release gates now fail.
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_EXPERIMENTAL", "false")

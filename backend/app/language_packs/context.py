@@ -11,6 +11,7 @@ from app.config import (
     get_language_pack_experimental,
     get_language_pack_register,
     get_language_pack_releases,
+    get_language_pack_require_release,
 )
 from app.schemas.language_context import LanguageDisplayContext
 
@@ -149,6 +150,8 @@ _CONTEXTS: dict[tuple, "LanguageContext | None"] = {}
 
 
 def _evidence_revision():
+    if not get_language_pack_require_release():
+        return None
     folder = os.getenv("LINGUINI_LANGUAGE_PACK_EVIDENCE_DIR", "")
     if not folder or not Path(folder).is_dir():
         return folder
@@ -167,7 +170,8 @@ def resolve_language_context(language, register=None):
     packs = load_packs()
     key = (
         id(packs), language.casefold(), register or get_language_pack_register(),
-        get_language_pack_experimental(), get_language_pack_releases(), _evidence_revision(),
+        get_language_pack_experimental(), get_language_pack_require_release(),
+        get_language_pack_releases(), _evidence_revision(),
     )
     if key not in _CONTEXTS:
         _CONTEXTS[key] = _resolve(packs, language, register)
@@ -215,7 +219,7 @@ def _resolve(packs, language, register):
             continue
         ready.append(mission_key_text(key))
     if not ready:
-        # Unreviewed or unreleased packs stay hidden outside explicit local experiments.
+        # Unsupported packs (or packs blocked by opt-in release gates) stay hidden.
         logger.info("Pack %r has no ready mission levels: %s", pack.pack_id, "; ".join(errors))
         return None
     ready_levels = tuple(

@@ -65,7 +65,59 @@ def test_local_switch_never_releases_unreviewed_pack(
 ):
     monkeypatch.setenv("APP_ENV", environment)
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_EXPERIMENTAL", experimental)
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_REQUIRE_RELEASE", "true")
     assert available_pack_languages() == []
+
+
+def test_production_discovers_bundled_languages_without_release_metadata(monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    for name in ("LINGUINI_LANGUAGE_PACK_DIRS", "LINGUINI_LANGUAGE_PACK_REQUIRE_RELEASE",
+                 "LINGUINI_LANGUAGE_PACK_EXPERIMENTAL", "LINGUINI_LANGUAGE_PACK_RELEASES",
+                 "LINGUINI_LANGUAGE_PACK_EVIDENCE_DIR"):
+        monkeypatch.delenv(name, raising=False)
+    rows = {row["code"]: row for row in available_pack_languages()}
+    for code in ("es", "fr", "de", "ko"):
+        assert rows[code]["levels"] == ["A0", "A1", "A2"]
+        assert rows[code]["experimental"] is False
+
+
+def test_release_policy_changes_invalidate_discovery_context(configured_spanish, monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_REQUIRE_RELEASE", "false")
+    assert available_pack_languages()[0]["code"] == "es"
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_REQUIRE_RELEASE", "true")
+    assert available_pack_languages() == []
+
+
+def test_production_still_hides_structurally_unsupported_missions(configured_spanish, monkeypatch):
+    from app.language_packs.context import LanguageContext
+    from app.language_packs.loader import load_pack
+    from app.language_packs.runtime import check_pack_readiness
+
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_REQUIRE_RELEASE", "false")
+    pack = load_pack(configured_spanish / "es-ES" / "everyday")
+    broken = pack.model_copy(update={"constructions": []})
+    with pytest.raises(ValueError, match="unavailable") as error:
+        check_pack_readiness(broken, "A0", 1)
+    assert "review" not in str(error.value)
+    assert "evidence" not in str(error.value)
+    # Existing sessions still validate the saved pack, rather than resolving a new one.
+    from app.language_packs.context import resolve_language_context
+    snapshot = resolve_language_context("es").snapshot()
+    snapshot["pack"] = broken.model_dump_json()
+    with pytest.raises(ValueError, match="constructions"):
+        LanguageContext.from_snapshot(snapshot)
+
+
+def test_optional_evidence_files_do_not_block_default_discovery(configured_spanish, monkeypatch):
+    folder = configured_spanish / "evidence"
+    folder.mkdir()
+    (folder / "es-es-everyday-M01-A0.json").write_text("not json", encoding="utf-8")
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_REQUIRE_RELEASE", "false")
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_EVIDENCE_DIR", str(folder))
+    assert available_pack_languages()[0]["code"] == "es"
 
 
 @pytest.mark.parametrize("level", ["A0", "A1", "A2"])

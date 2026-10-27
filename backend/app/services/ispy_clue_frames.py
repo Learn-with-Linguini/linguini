@@ -72,19 +72,21 @@ class ClueGrammar:
 
 
 @lru_cache(maxsize=16)
-def _grammar_of(pack_json, experimental):
+def _grammar_of(pack_json, experimental, require_release=False):
     from app.language_packs.schema import LanguagePack
 
     pack = LanguagePack.model_validate_json(pack_json)
     clues = pack.clues
-    # Outside a local experiment, only a human-reviewed clue grammar is used.
-    if clues is None or (not experimental and clues.provenance.review_status != "humanReviewed"):
+    if clues is None or (
+        require_release and not experimental and clues.provenance.review_status != "humanReviewed"
+    ):
         return None
     return ClueGrammar(clues, articleless=pack.language.articles == "none")
 
 
 def clue_grammar(language):
     """The clue grammar of ``language``'s ready pack, or ``None`` (no clue frames)."""
+    from app.config import get_language_pack_require_release
     from app.language_packs.context import resolve_language_context
 
     if not language:
@@ -93,7 +95,9 @@ def clue_grammar(language):
         context = resolve_language_context(str(language).lower())
     except ValueError:
         return None
-    return None if context is None else _grammar_of(context.pack_json, context.experimental)
+    return None if context is None else _grammar_of(
+        context.pack_json, context.experimental, get_language_pack_require_release(),
+    )
 
 
 def _with_article(article, noun):
