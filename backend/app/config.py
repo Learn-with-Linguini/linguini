@@ -57,6 +57,11 @@ def get_language_pack_register() -> str:
     return os.getenv("LINGUINI_LANGUAGE_PACK_REGISTER", "everyday").strip()
 
 
+def get_language_pack_require_release() -> bool:
+    """Optional editorial release gates; structural and lesson checks always apply."""
+    return os.getenv("LINGUINI_LANGUAGE_PACK_REQUIRE_RELEASE", "false").lower() == "true"
+
+
 def get_language_pack_experimental() -> bool:
     """Explicit local experiment; never permits experiments in production."""
     return (

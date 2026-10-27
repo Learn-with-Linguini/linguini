@@ -42,13 +42,14 @@ def test_every_clue_language_pack_carries_its_grammar(language):
     assert any(colour.bank for colour in grammar.clues.colours)
 
 
-def test_a_pack_without_clues_or_an_unreleased_review_gets_no_frames():
+def test_clue_review_is_optional_but_missing_clues_get_no_frames():
     context = resolve_language_context("es")
     pack = json.loads(context.pack_json)
     assert _grammar_of(context.pack_json, True) is not None
-    # Outside a local experiment, the clue grammar must be human-reviewed.
+    # Human review is optional unless strict release policy is selected.
     assert pack["clues"]["provenance"]["review_status"] == "unreviewed"
-    assert _grammar_of(context.pack_json, False) is None
+    assert _grammar_of(context.pack_json, False) is not None
+    assert _grammar_of(context.pack_json, False, require_release=True) is None
     without = json.dumps({**pack, "clues": None}, ensure_ascii=False)
     assert _grammar_of(without, True) is None
     assert clue_grammar(None) is None and clue_grammar("xx") is None

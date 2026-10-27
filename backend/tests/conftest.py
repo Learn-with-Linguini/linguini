@@ -11,12 +11,12 @@ os.environ.setdefault("AUTH_MODE", "demo")
 
 @pytest.fixture(autouse=True)
 def bundled_packs_as_local_experiment(monkeypatch):
-    """Mission lessons come only from language packs, and the bundled packs are not yet
-    human-reviewed, so tests run them as a local experiment. Pack settings from a local
-    ``.env.local`` never leak in; a test may still set its own."""
+    """Isolate pack settings from local .env files. Tests retain their experimental
+    labels by default; individual tests select production or strict release policy."""
     from app.language_packs import context
 
     monkeypatch.setenv("APP_ENV", "test")
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_REQUIRE_RELEASE", "false")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_EXPERIMENTAL", "true")
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_REGISTER", "everyday")
     for name in ("LINGUINI_LANGUAGE_PACK_DIRS", "LINGUINI_LANGUAGE_PACK_RELEASES",

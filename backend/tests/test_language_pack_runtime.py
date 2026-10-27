@@ -261,7 +261,20 @@ def test_normal_dispatch_flag_on_spanish_mocked(level, count, runtime):
         assert len(task.public_content.questions[3].planning_facts) == 3
 
 
+def test_production_generates_without_editorial_release_gates(runtime, monkeypatch):
+    monkeypatch.setenv("APP_ENV", "production")
+    monkeypatch.delenv("LINGUINI_LANGUAGE_PACK_REQUIRE_RELEASE", raising=False)
+    monkeypatch.delenv("LINGUINI_LANGUAGE_PACK_EVIDENCE_DIR", raising=False)
+    monkeypatch.delenv("LINGUINI_LANGUAGE_PACK_RELEASES", raising=False)
+    monkeypatch.delenv("LINGUINI_LANGUAGE_PACK_EXPERIMENTAL", raising=False)
+    provider = MockSpanishProvider()
+    (task,) = dispatch("A0", runtime, provider)
+    assert task.public_content.mission_id == "M01"
+    assert provider.requests
+
+
 def test_unreleased_packs_never_generate_or_fall_back_to_legacy_lessons(runtime, monkeypatch):
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_REQUIRE_RELEASE", "true")
     # An unreviewed pack has no ready mission: no context, so no lesson and no model call.
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_EXPERIMENTAL", "false")
     provider = MockSpanishProvider()

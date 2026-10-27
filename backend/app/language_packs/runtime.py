@@ -7,7 +7,7 @@ import os
 import re
 from pathlib import Path
 
-from app.config import get_language_pack_experimental
+from app.config import get_language_pack_experimental, get_language_pack_require_release
 
 from .capabilities import mission_capability
 from .generation import ApprovedTerm, ApprovedVocabulary, BoundSceneFacts
@@ -25,7 +25,7 @@ def mission_capability_for(pack, level, content_version, mission_id="M01"):
     """Capability of one mission template, including any release evidence on disk."""
     evidence = None
     evidence_dir = os.getenv("LINGUINI_LANGUAGE_PACK_EVIDENCE_DIR", "")
-    if evidence_dir:
+    if get_language_pack_require_release() and evidence_dir:
         path = Path(evidence_dir) / f"{pack.pack_id}-{mission_id}-{level}.json"
         if path.is_file():
             evidence = json.loads(path.read_text("utf-8"))
@@ -39,22 +39,28 @@ def mission_capability_for(pack, level, content_version, mission_id="M01"):
 
 def check_pack_readiness(pack, level, content_version, mission_id="M01"):
     experimental = get_language_pack_experimental()
+    require_release = get_language_pack_require_release()
     capability = mission_capability_for(pack, level, content_version, mission_id)
-    if not capability.structurally_supported or not (experimental or capability.release_enabled):
+    if not capability.structurally_supported or (
+        require_release and not (experimental or capability.release_enabled)
+    ):
+        blockers = capability.blockers if require_release else [
+            "required mission resources are missing or outdated",
+        ]
         raise ValueError(
-            f"{mission_id} language pack unavailable: " + "; ".join(capability.blockers)
+            f"{mission_id} language pack unavailable: " + "; ".join(blockers)
         )
     return pack, experimental
 
 
 def available_pack_languages():
-    """Discover languages with ready pack missions under the runtime/release gates."""
+    """Discover structurally supported packs, with optional editorial release gates."""
     from .context import resolve_language_context
 
     languages = []
     for language in sorted({p.language.code for p in load_packs().packs}):
         # Missing selected registers/ambiguous configurations are actionable; a pack
-        # with no ready mission (unreviewed outside local experiments) is not offered.
+        # with no structurally supported mission is not offered.
         context = resolve_language_context(language)
         if context is None:
             continue

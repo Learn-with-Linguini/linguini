@@ -667,7 +667,7 @@ starts.
   substituted.
 - **Existing sessions.** No migration is needed. A session saved without a
   `languageContext` snapshot gets the profile's pack when it next generates. One whose
-  saved pack no longer passes the release gates is refused with the same 409, and a
+  saved pack is structurally unsupported (or fails opt-in strict release gates) is refused with the same 409, and a
   planned mission the pack does not have fails generation into the normal recoverable
   `taskGenerationFailed` state; neither is rebuilt by another builder. A plan saved at an
   older content version (M02 A1 version 1) is built at the pack template's version.
