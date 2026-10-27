@@ -41,11 +41,14 @@ builds the deployed frontend, and Prisma runs database migrations. A production
 only scan would omit Prisma entirely because it is a development dependency.
 
 Bandit's two `B608` exceptions in the precompute script apply only to migration
-file generation: column names are fixed, string values escape single quotes,
-and the generated transaction sets `standard_conforming_strings` explicitly.
+file generation: column names are fixed, and explicit PostgreSQL
+[`E'...'` literals](https://www.postgresql.org/docs/current/sql-syntax-lexical.html#SQL-SYNTAX-STRINGS-ESCAPE)
+escape both backslashes and single quotes. They work with
+either `standard_conforming_strings` setting, including when a migration runner
+parses the whole file as one request.
 The script does not execute those constructed statements. A PostgreSQL
 regression checks adversarial quotes and backslashes survive an export and
-import as data. No scanner-wide rules are disabled.
+import as data under both string modes. No scanner-wide rules are disabled.
 
 To reproduce locally from the repository root:
 

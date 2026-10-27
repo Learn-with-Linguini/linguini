@@ -543,7 +543,10 @@ def _sql_literal(value: Any) -> str:
         return "TRUE" if value else "FALSE"
     if isinstance(value, int):
         return str(value)
-    return "'" + str(value).replace("'", "''") + "'"
+    # Explicit escape strings work even if a migration runner parses the whole
+    # file before applying its statements or disables standard_conforming_strings.
+    escaped = str(value).replace("\\", "\\\\").replace("'", "''")
+    return "E'" + escaped + "'"
 
 
 _MIGRATION_COLUMNS = (
@@ -577,7 +580,6 @@ def emit_migration_sql(rows: list[dict[str, Any]]) -> str:
         "-- Precomputed suggested scene vocabulary (items only; tasks, rounds and",
         "-- prompts are placeholders regenerated at runtime). Reuses existing media assets.",
         "BEGIN;",
-        "SET LOCAL standard_conforming_strings = on;",
         "",
     ]
     updates = ", ".join(
@@ -590,13 +592,13 @@ def emit_migration_sql(rows: list[dict[str, Any]]) -> str:
                 values.append("now()")
             elif column == "content":
                 text = json.dumps(row["content"], ensure_ascii=False)
-                values.append(f"'{text.replace(chr(39), chr(39) * 2)}'::jsonb")
+                values.append(_sql_literal(text) + "::jsonb")
             else:
                 values.append(_sql_literal(row[column]))
         lines.append(
             # Offline SQL artifact, not executed here: identifiers come from the
-            # fixed column tuples, values escape single quotes, and this file
-            # forces standard_conforming_strings so backslashes stay literal.
+            # fixed column tuples; E-string values escape backslashes and quotes
+            # independently of the caller's standard_conforming_strings setting.
             "INSERT INTO public.preloaded_scenes ("  # nosec B608
             + ", ".join(_MIGRATION_COLUMNS)
             + ") VALUES (\n    "

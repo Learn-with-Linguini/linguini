@@ -49,7 +49,8 @@ def store_scene(connection, scene):
     )
 
 
-def test_exported_migration_preserves_quoted_and_backslashed_scene_text(database):
+@pytest.mark.parametrize("string_mode", ["on", "off"])
+def test_exported_migration_preserves_quoted_and_backslashed_scene_text(database, string_mode):
     from app.scripts.precompute_preloaded_scenes import emit_migration_sql
 
     engine, *_ = database
@@ -67,7 +68,11 @@ def test_exported_migration_preserves_quoted_and_backslashed_scene_text(database
             isolation_level="AUTOCOMMIT", no_parameters=True,
         ) as connection:
             # The generated file must not depend on the caller's string mode.
-            connection.exec_driver_sql("SET standard_conforming_strings = off")
+            connection.exec_driver_sql(
+                "SET standard_conforming_strings = on"
+                if string_mode == "on"
+                else "SET standard_conforming_strings = off"
+            )
             try:
                 connection.exec_driver_sql(emit_migration_sql([row]))
                 saved = connection.execute(
