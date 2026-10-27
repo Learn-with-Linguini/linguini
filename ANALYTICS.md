@@ -140,7 +140,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | :--- | :--- | :--- |
 | `ispy_mode_selected` | `{ mode: "ai" \| "friend" }` | User selects AI solo play or Multiplayer friend mode |
 | `ispy_game_resumed` | — | User resumes an active I-Spy game session |
-| `ispy_clue_submitted` | `{ optionId, isCorrect }` | Learner chooses an object in response to Linguini's clue |
+| `ispy_clue_submitted` | `{ optionId, isCorrect, source }` | Learner chooses an object in response to Linguini's clue; source is choice or photo_marker on lesson and standalone I-Spy clue pages |
 | `ispy_description_submitted` | `{ outcome }` | Learner writes a description clue for Linguini to guess |
 | `ispy_match_confirmed` | — | Learner confirms Linguini guessed their object correctly |
 | `room_created` | — | User creates a new multiplayer room |

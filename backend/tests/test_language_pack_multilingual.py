@@ -7,6 +7,7 @@ model evidence or a claim that the generated language has been reviewed.
 import json
 import re
 import unicodedata
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 from uuid import UUID
@@ -1350,6 +1351,41 @@ def test_a0_assigned_preference_disambiguates_repeated_objects(language, reactio
     for question in task.public_content.questions:
         assert f"{row.label} at marker {photo[0].index(row) + 1}" in question.roleplay_premise
     _assert_gradable(task)
+
+
+@pytest.mark.parametrize("language", list(LOCALES))
+def test_m03_ignores_a_redundant_count_id_on_a_bound_number_form(language, monkeypatch):
+    class CountIdProvider(MockPackProvider):
+        def generate(self, request):
+            response = super().generate(request)
+            if request.json_schema_name != "language_pack_candidates_v1":
+                return response
+            data, value = json.loads(request.user_content), json.loads(response.output_text)
+            terms = {term["termId"]: term for term in data["candidate_vocabulary"]["terms"]}
+            count = next(term for term in terms.values() if term["termId"].startswith("count-"))
+            for spec in data["specs"]:
+                if spec["slot_id"] != "matchChunk-1":
+                    continue
+                number_id = spec["counterfactual"].get("count")
+                if number_id is None or number_id == count["termId"]:
+                    continue
+                number = terms[number_id]
+                for candidate in value["candidates"]:
+                    if (candidate["slot_id"], candidate["spec_id"]) == (
+                        spec["slot_id"], spec["spec_id"],
+                    ):
+                        forms = sorted(number["forms"], key=len, reverse=True)
+                        surface = next(form for form in forms
+                                       if re.search(rf"(?<!\w){re.escape(form)}(?!\w)",
+                                                    candidate["text"]))
+                        candidate["realizations"] = [{"term_id": count["termId"],
+                                                      "surface": surface}]
+            return replace(response, output_text=json.dumps(value, ensure_ascii=False))
+
+    provider = CountIdProvider(language)
+    (task,) = _dispatch(language, "A0", build_scene(language), provider, monkeypatch, "M03")
+    _assert_gradable(task)
+    assert len(provider.requests) == 1, "redundant count metadata needs no model repair"
 
 
 CAFE = (("coffee", "black"), ("cup", "red"), ("table", "green"))

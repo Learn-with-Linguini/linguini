@@ -791,7 +791,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
   };
 
   const submit = async () => {
-    if (!allChecked || practiceSaving || checking) return;
+    if (!allChecked || practiceSaving || checking || saved.isLoading || saved.isError) return;
     setChecking(true);
     setCheckError(null);
     const lockedAnswers = Object.fromEntries(content.questions.map(item => [
@@ -987,9 +987,9 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
         ? <Button block disabled={!answer || checking || saved.isLoading || saved.isError || practiceSaving}
           onClick={() => void check()}>{retrying ? "Check again" : "Check answer"}</Button>
       : question && activeIndex < content.questions.length - 1
-        ? <Button block disabled={checking || practiceSaving || (isSituation && !checks[question.questionId]?.isCorrect && !retryPassed[question.questionId])}
+        ? <Button block disabled={checking || practiceSaving || saved.isLoading || saved.isError}
           onClick={() => setActiveIndex(activeIndex + 1)}>Next question</Button>
-        : <Button block disabled={!allChecked || checking || practiceSaving || (isSituation && !checks[question?.questionId ?? ""]?.isCorrect && !retryPassed[question?.questionId ?? ""])}
+        : <Button block disabled={!allChecked || checking || practiceSaving || saved.isLoading || saved.isError}
           onClick={() => void submit()}>Finish task</Button>}
     {!terminal ? <Button variant="quiet" block disabled={practiceSaving || checking}
       onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip task</Button> : null}

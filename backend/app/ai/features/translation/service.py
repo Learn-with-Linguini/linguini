@@ -60,7 +60,7 @@ _TRANSLATION_INVALID = "translationInvalid"
 PACK_TRANSLATION_SCHEMA_VERSION = "pack-translation-result.v2"
 _VERSION = FeatureVersion(
     AiFeature.SCENE_TRANSLATION.value, PACK_TRANSLATION_PROMPT_VERSION,
-    PACK_TRANSLATION_SCHEMA_VERSION, "pack-translation-validator.v3",
+    PACK_TRANSLATION_SCHEMA_VERSION, "pack-translation-validator.v4",
 )
 
 
@@ -387,6 +387,9 @@ class SceneTranslationService:
             for issue in review.issues:
                 term = terms.get((issue.group, issue.key))
                 if term is None:
+                    continue
+                if issue.issue_type == "formPreference":
+                    logger.info("ignoring a translation form preference")
                     continue
                 shown = term.native_display or term.translation
                 if _contradicts_itself(issue, term, shown):

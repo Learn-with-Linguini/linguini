@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from typing import Any
 
 from pydantic import Field
@@ -31,7 +32,7 @@ from .schema import GuidanceBundle, LanguagePack
 
 logger = logging.getLogger(__name__)
 
-GENERATOR_VERSION = "lp-generator.v8"
+GENERATOR_VERSION = "lp-generator.v9"
 ASSESSOR_VERSION = "lp-assessor.v1"
 
 GENERATOR_SYSTEM_PROMPT = """You write sentences for one language-learning lesson. The user message is JSON with: language (code, locale, script, register,
@@ -45,6 +46,8 @@ Rules:
   Realizations are unreviewed claims; do not change the meaning or object instance attached to an ID.
   For each spec, use only its realization_terms IDs. Do not use fact IDs, example IDs or vocabulary
   IDs from other specs. Omit realizations when reference forms already express the sentence.
+  For counting, count-K identifies a confirmed photo count; number-N identifies an alternative
+  numeral. They are different IDs. A counterfactual count uses its number-N ID, never count-K.
 - State exactly the bound facts. When truth is false, state the counterfactual binding exactly as given; never add facts.
 - A wrongExistence option denies the presence of its counterfactual object, while retaining the other bound facts.
   A wrongAttribute option replaces only the counterfactual detail or relation. A fact3 sentence adds another scene fact.
@@ -108,6 +111,26 @@ def _realization_terms(spec, vocabulary):
     if spec.use == "followup" and spec.construction_id == "describe-attribute":
         roles = {role: term for role, term in roles.items() if role in {"object", "subject"}}
     return roles
+
+
+def _redundant_number_claim(term, surface, allowed_terms):
+    """A foreign count annotation cannot override a spec's explicit number form.
+
+    Drop only redundant metadata for pack-defined numerals. Never infer a new
+    form, change a quantity, or transfer a photo count's fact to another spec.
+    """
+    def number(item):
+        return (item.provenance == "packData"
+                and item.part_of_speech == "determiner"
+                and item.linguistic.get("quantity") is not None)
+
+    return term is not None and number(term) and any(
+        number(allowed) and fold(surface) in {
+            fold(form) for form in [allowed.target_text, *allowed.forms,
+                                    *allowed.forms_by_key.values()]
+        }
+        for allowed in allowed_terms
+    )
 
 
 class CandidateResponse(ApiModel):
@@ -299,7 +322,8 @@ class ModelSource:
             from .generation import TermUse
 
             realization_issues = []
-            allowed_ids = sorted(term.term_id for term in _realization_terms(spec, vocabulary).values())
+            allowed_terms = list(_realization_terms(spec, vocabulary).values())
+            allowed_ids = sorted(term.term_id for term in allowed_terms)
             for realization in item.realizations:
                 term = terms_by_id.get(realization.term_id)
                 valid = term is not None and term.fact_id in preferred_facts
@@ -308,6 +332,13 @@ class ModelSource:
                     logger.info("ignoring a realization claim missing from its sentence")
                     continue
                 if not valid:
+                    if (_redundant_number_claim(term, realization.surface, allowed_terms)
+                            and re.search(
+                                rf"(?<!\w){re.escape(fold(realization.surface))}(?!\w)",
+                                fold(item.text),
+                            )):
+                        logger.info("ignoring redundant number realization with an unbound count ID")
+                        continue
                     realization_issues.append(
                         f"Invalid realization term_id={realization.term_id!r}, "
                         f"surface={realization.surface!r} for {item.slot_id}/{item.spec_id}. "

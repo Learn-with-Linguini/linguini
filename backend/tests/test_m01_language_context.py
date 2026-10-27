@@ -14,6 +14,7 @@ from test_language_pack_runtime import runtime as runtime
 from app.ai.cache.cache import ResultCache
 from app.ai.cache.store import CacheScope
 from app.ai.contracts.text import TextModelConfig, TextModelResponse
+from app.ai.features.translation.schemas import SceneTranslationResult
 from app.ai.features.translation.service import SceneTranslationService
 from app.ai.features.translation.validation import SceneTranslationError
 from app.ai.observability import NoOpAITracer
@@ -377,6 +378,63 @@ def test_self_contradicting_flags_are_ignored(pack_dir, runtime, review):
         payload(runtime), language_context=context
     )
     assert translated.objects and len(provider.requests) == 1
+
+
+@pytest.mark.parametrize("source,translation,suggestion,meaning", [
+    ("under", "கீழே", "கீழ்", "below; down; underneath in a general sense"),
+    ("on", "மேல", "மேல்", "top; upper side; above"),
+])
+def test_reported_tamil_form_preferences_do_not_fail_meaning_review(
+    source, translation, suggestion, meaning,
+):
+    def review(terms):
+        return {"issues": [
+            {"group": "relationships", "key": term["key"], "issueType": "formPreference",
+             "currentMeaning": meaning, "suggestion": suggestion,
+             "problem": "Prefer the relational root to the adverbial or colloquial form."}
+            for term in terms if term["group"] == "relationships"
+        ]}
+
+    provider = MockTranslationProvider(review=review)
+    translated = SceneTranslationResult(objects=[], attributes=[], relationships=[{
+        "key": "relation-form", "source": source, "translation": translation,
+        "nativeDisplay": translation, "article": None, "gender": None,
+        "romanization": "keezhe" if source == "under" else "mela",
+    }])
+    # Replay the exact review stage independently of vocabulary-card script checks.
+    context = SimpleNamespace(
+        display=SimpleNamespace(model_dump=lambda **kwargs: {"locale": "ta-IN"}),
+        pack=SimpleNamespace(variety=SimpleNamespace(
+            model_dump=lambda **kwargs: {"register": "everyday"},
+        )),
+    )
+    translator(provider, retries=0)._review_meaning(
+        {"sceneTitle": "Objects", "targetLanguage": "ta"}, translated, context, {},
+    )
+    assert translated.relationships[0].translation == translation
+    assert len(provider.reviews) == 1 and not provider.requests
+
+
+def test_form_preference_does_not_consume_translation_repair(pack_dir, runtime):
+    def review(terms):
+        issues = _flag("on", "encima de", meaning="on top")(terms)["issues"]
+        return {"issues": [{**issue, "issueType": "formPreference"} for issue in issues]}
+
+    provider = MockTranslationProvider(review=review)
+    result = translator(provider, retries=0).translate(
+        payload(runtime), language_context=resolve_language_context("es"),
+    )
+    assert result.relationships[0].translation == "sobre"
+    assert len(provider.requests) == 1
+
+
+def test_wrong_relation_meaning_still_requires_repair(pack_dir, runtime):
+    provider = MockTranslationProvider(overrides={"on": "debajo de"},
+                                       review=_flag("on", "sobre", meaning="underneath"))
+    with pytest.raises(SceneTranslationError, match="unusable output"):
+        translator(provider, retries=0).translate(
+            payload(runtime), language_context=resolve_language_context("es"),
+        )
 
 
 def test_a_reviewer_going_in_circles_keeps_the_repaired_word(pack_dir, runtime):
