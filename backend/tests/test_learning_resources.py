@@ -89,6 +89,26 @@ def test_all_committed_learning_resources_are_valid() -> None:
         ("une", "feminine"),
     ]
 
+    french_structure = [
+        (
+            concept.concept_id,
+            concept.explanation is not None,
+            len(concept.pattern_parts),
+        )
+        for concept in french_m01.concepts
+    ]
+    for language_code in ("es", "de"):
+        sheet = cheat_sheets[("M01", "A0", 1, language_code)]
+        assert sheet.summary is french_m01.summary is None
+        assert [
+            (
+                concept.concept_id,
+                concept.explanation is not None,
+                len(concept.pattern_parts),
+            )
+            for concept in sheet.concepts
+        ] == french_structure
+
 
 def test_rejects_a_concept_not_in_the_mission_definition(tmp_path: Path) -> None:
     references_dir = tmp_path / "character-references"
