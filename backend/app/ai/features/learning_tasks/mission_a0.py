@@ -30,19 +30,19 @@ from app.services.a0_lexicon import KOREAN_ENDINGS
 
 type A0Purpose = Literal[
     "matchName", "confirmName", "buildIdentify",
-    "findDescribed", "chooseDescriptor", "listenDescribed",
+    "findDescribed", "chooseDescriptor", "buildDescription",
     "countGroup", "matchChunk", "buildChunk",
     "chooseChunk", "matchSpoken", "fillSlot",
 ]
 
 ORDERS: dict[str, list[str]] = {
     "M01": ["matchName", "confirmName", "buildIdentify"],
-    "M02": ["findDescribed", "chooseDescriptor", "listenDescribed"],
+    "M02": ["findDescribed", "chooseDescriptor", "buildDescription"],
     "M03": ["countGroup", "matchChunk", "buildChunk"],
     "M13": ["chooseChunk", "matchSpoken", "fillSlot"],
 }
-MARKER_PURPOSES = {"matchName", "findDescribed", "listenDescribed", "matchSpoken"}
-BUILD_PURPOSES = {"buildIdentify", "buildChunk"}
+MARKER_PURPOSES = {"matchName", "findDescribed", "matchSpoken"}
+BUILD_PURPOSES = {"buildIdentify", "buildDescription", "buildChunk"}
 # English prompts and instructions an A0 question may show; target-language text
 # always comes from the payload's approved chunks.
 INSTRUCTIONS = {
@@ -51,7 +51,7 @@ INSTRUCTIONS = {
     "buildIdentify": "Build the answer with the tiles.",
     "findDescribed": "Read the description, then tap the object.",
     "chooseDescriptor": "Which word completes the description?",
-    "listenDescribed": "Listen, then tap the object being described.",
+    "buildDescription": "Build the description with the tiles.",
     "countGroup": "Count the highlighted group. How many are there?",
     "matchChunk": "Which words match what you see?",
     "buildChunk": "Build the words with the tiles.",
@@ -213,12 +213,13 @@ def _m02(payload):
                 payload, "findDescribed", section, target, task["description"], index=index,
             ),
             _choice_question(
-                payload, "chooseDescriptor", section, target, task["description"],
+                payload, "chooseDescriptor", section, target, task["blankPrompt"],
                 task["descriptorOptions"], task["descriptor"], index=index,
             ),
-            _marker_question(
-                payload, "listenDescribed", section, target, task["description"],
-                index=index, listen_first=True,
+            _build_question(
+                payload, "buildDescription", section, target, task["blankPrompt"],
+                task["buildSentence"], tokens(task["descriptorOptions"][1])[0],
+                index=index,
             ),
         ]
     return questions
@@ -357,6 +358,14 @@ def validate_a0_lesson(payload: dict[str, Any], result: A0LessonResult) -> None:
                 _fail("Building questions use word tiles.")
             if fold(question.correct_text or "") not in chunks:
                 _fail("Built answers are taught sentence chunks.")
+            if question.purpose == "buildDescription":
+                task = next(
+                    item for item in payload["descriptionTasks"]
+                    if item["objectKey"] == question.object_key
+                    and fold(item["blankPrompt"]) == fold(question.prompt)
+                )
+                if fold(question.correct_text or "") != fold(task["buildSentence"]):
+                    _fail("The built sentence uses the confirmed description.")
             _check_tiles(question, approved_tokens)
             continue
         checked_answer(question)
@@ -377,7 +386,7 @@ def validate_a0_lesson(payload: dict[str, Any], result: A0LessonResult) -> None:
             task = next(
                 item for item in payload["descriptionTasks"]
                 if item["objectKey"] == question.object_key
-                and fold(item["description"]) == fold(question.prompt)
+                and fold(item["blankPrompt"]) == fold(question.prompt)
             )
             allowed_descriptors = {fold(item) for item in task["descriptorOptions"]}
             shown_descriptors = {fold(item) for item in labels.values()}
@@ -527,9 +536,10 @@ M02 (find a described object): use payload.descriptionTasks in order. The adject
 has section "Task 1 · Adjective" and the preposition task has section
 "Task 2 · Position".
 - findDescribed: marker question, prompt = task.description.
-- chooseDescriptor: prompt = task.description; options = task.descriptorOptions and the
+- chooseDescriptor: prompt = task.blankPrompt; options = task.descriptorOptions and the
   answer is task.descriptor.
-- listenDescribed: marker question, prompt = task.description, listenFirst true.""",
+- buildDescription: sentenceBuilding, prompt = task.blankPrompt, correctText =
+  task.buildSentence and the extra tile comes from the other descriptor option.""",
     "M03": """
 M03 (count): every question is about payload.group (objectKey = group.key).
 Task 1 has section "Task 1 · Count in your photo", counts group.quantity and sets

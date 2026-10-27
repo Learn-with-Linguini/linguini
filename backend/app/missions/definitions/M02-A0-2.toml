@@ -17,12 +17,12 @@ can_do = "I can find an object from a simple description of what it is like or w
 [[objective.targets]]
 target_id = "recognise-adjective"
 summary = "Recognise a familiar adjective used with an object name."
-evidence_types = ["recognition"]
+evidence_types = ["recognition", "construction"]
 
 [[objective.targets]]
 target_id = "recognise-preposition"
 summary = "Recognise a familiar position word used between two object names."
-evidence_types = ["recognition"]
+evidence_types = ["recognition", "construction"]
 
 [[objective.targets]]
 target_id = "find-described-object"
@@ -60,13 +60,13 @@ counts_as_assistance = false
 criterion_id = "adjective-matches-object"
 target_id = "recognise-adjective"
 description = "Matches the taught adjective phrase to the confirmed object detail."
-evidence_types = ["recognition"]
+evidence_types = ["recognition", "construction"]
 
 [[evaluation_criteria]]
 criterion_id = "preposition-matches-relation"
 target_id = "recognise-preposition"
 description = "Matches the taught position phrase to the confirmed object relation."
-evidence_types = ["recognition"]
+evidence_types = ["recognition", "construction"]
 
 [[evaluation_criteria]]
 criterion_id = "finds-described-object"

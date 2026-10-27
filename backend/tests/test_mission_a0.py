@@ -216,17 +216,26 @@ def test_unconfirmed_or_untaught_objects_are_never_approved():
 
 def test_m02_teaches_an_adjective_and_a_preposition():
     _mission, _spec, payload, result, _objects = _result("M02", "es")
-    listening = [q for q in result.questions if q.purpose == "listenDescribed"]
-    assert listening and all(q.listen_first and q.audio_text for q in listening)
+    building = [q for q in result.questions if q.purpose == "buildDescription"]
+    assert len(building) == 2
     assert [task["kind"] for task in payload["descriptionTasks"]] == [
         "adjective", "preposition",
     ]
     assert "roja" in payload["descriptionTasks"][0]["description"]
     assert "sobre" in payload["descriptionTasks"][1]["description"]
+    assert all("___" in task["blankPrompt"] for task in payload["descriptionTasks"])
+    assert payload["descriptionTasks"][0]["buildSentence"] == "Es una taza roja."
     assert all(
         len(question.options) == 2
         for question in result.questions if question.purpose == "chooseDescriptor"
     )
+    for question in result.questions:
+        if question.purpose == "chooseDescriptor":
+            answer = next(
+                option.label for option in question.options
+                if option.option_id == question.correct_option_id
+            )
+            assert answer not in question.prompt
 
 
 @pytest.mark.parametrize("quantity", [2, 3])

@@ -51,9 +51,7 @@ _EVALUATIONS = {
     "buildIdentify": (["identify-object"], "construction", ["identifies-object"]),
     "findDescribed": (["find-described-object"], "recognition", ["finds-described-object"]),
     "chooseDescriptor": ([], "recognition", []),
-    "listenDescribed": (
-        ["find-described-object"], "recognition", ["finds-described-object"],
-    ),
+    "buildDescription": ([], "construction", []),
     "countGroup": (["count-small-group"], "recognition", ["count-matches-photo"]),
     "matchChunk": (["number-noun-chunk"], "recognition", ["chunk-matches-count"]),
     "buildChunk": (["number-noun-chunk"], "construction", ["chunk-matches-count"]),
@@ -61,8 +59,8 @@ _EVALUATIONS = {
     "matchSpoken": (["noun-word-pair"], "recognition", ["matches-spoken-chunk"]),
     "fillSlot": (["noun-word-pair"], "recognition", ["chooses-paired-word"]),
 }
-_NAME_PURPOSES = {"matchName", "findDescribed", "listenDescribed", "matchSpoken"}
-_MARKER_PURPOSES = {"matchName", "findDescribed", "listenDescribed", "matchSpoken"}
+_NAME_PURPOSES = {"matchName", "findDescribed", "matchSpoken"}
+_MARKER_PURPOSES = {"matchName", "findDescribed", "matchSpoken"}
 
 
 def taught_noun(word) -> str:
@@ -164,6 +162,11 @@ _KOREAN_ATTRIBUTIVE_ADJECTIVES = {
     "open": "열린", "closed": "닫힌", "empty": "빈", "full": "가득 찬",
     "clean": "깨끗한", "dirty": "더러운",
 }
+_INDEFINITE_ARTICLES = {
+    "es": {"masculine": "un", "feminine": "una"},
+    "fr": {"masculine": "un", "feminine": "une"},
+    "de": {"masculine": "ein", "feminine": "eine", "neuter": "ein"},
+}
 
 
 def _attributive_phrase(language, row, kind, value):
@@ -174,10 +177,21 @@ def _attributive_phrase(language, row, kind, value):
     if not agreed:
         return None, None
     adjective, before = agreed
+    article = _INDEFINITE_ARTICLES[language].get(row["gender"])
+    if not article:
+        return None, None
     if language == "de" or before:
-        article, noun = row["name"].split(" ", 1)
-        return f"{article} {adjective} {noun}", adjective
-    return f"{row['name']} {adjective}", adjective
+        return f"{article} {adjective} {row['noun']}", adjective
+    return f"{article} {row['noun']} {adjective}", adjective
+
+
+def _description_sentence(language, phrase):
+    if language == "ko":
+        noun = phrase.rsplit(" ", 1)[-1]
+        ending = "이에요" if lex.korean_batchim(noun) else "예요"
+        return f"이것은 {phrase}{ending}."
+    start = {"es": "Es", "fr": "C'est", "de": "Das ist"}[language]
+    return f"{start} {phrase}."
 
 
 def _attribute_options(language, row, kind, value, answer):
@@ -232,12 +246,20 @@ def _m02_tasks(mission, language, objects, relations, rows):
                     kind="adjective", objectKey=row["key"], description=phrase,
                     descriptor=word, descriptorOptions=options,
                     translation=f"the {value} {row['source']}",
+                    buildSentence=_description_sentence(language, phrase),
+                    buildTranslation=f"This is {_a(value + ' ' + row['source'])}.",
                 )
                 break
         if attribute_task:
             break
     location_task = None
-    for relation in confirmed_relations(mission, objects, relations):
+    usable_relations = confirmed_relations(mission, objects, relations)
+    if attribute_task:
+        usable_relations.sort(
+            key=lambda relation: str(relation.subject_scene_object_id)
+            == attribute_task["objectKey"]
+        )
+    for relation in usable_relations:
         subject = by_key.get(str(relation.subject_scene_object_id))
         reference = by_key.get(str(relation.reference_scene_object_id))
         position = relation_type(relation)
@@ -257,9 +279,15 @@ def _m02_tasks(mission, language, objects, relations, rows):
             referenceKey=reference["key"],
             translation=f"the {subject['source']} is {position.replace('_', ' ')} "
                         f"the {reference['source']}",
+            buildSentence=phrase,
+            buildTranslation=f"The {subject['source']} is {position.replace('_', ' ')} "
+                             f"the {reference['source']}.",
         )
         break
-    return [task for task in (attribute_task, location_task) if task]
+    tasks = [task for task in (attribute_task, location_task) if task]
+    for task in tasks:
+        task["blankPrompt"] = task["description"].replace(task["descriptor"], SLOT, 1)
+    return tasks
 
 
 def a0_payload(
@@ -295,6 +323,8 @@ def a0_payload(
         payload["focus"] = [task["objectKey"] for task in payload["descriptionTasks"]]
         for task in payload["descriptionTasks"]:
             translations[task["description"]] = task["translation"]
+            translations[task["blankPrompt"]] = task["translation"]
+            translations[task["buildSentence"]] = task["buildTranslation"]
     else:
         learner_facts = context.get("learner_facts") or {}
         if mission.mission_id == "M04":
@@ -322,7 +352,10 @@ def a0_payload(
     if mission.mission_id == "M02" and mission.content_version >= 2:
         chunks += [
             item for task in payload.get("descriptionTasks", [])
-            for item in [task["description"], *task["descriptorOptions"]]
+            for item in [
+                task["description"], task["blankPrompt"], task["buildSentence"],
+                *task["descriptorOptions"],
+            ]
         ]
     if mission.mission_id == "M13":
         chunks += [item["chunk"] for row in rows for item in row["formChoices"]]
@@ -473,11 +506,11 @@ def a0_lesson_task(session_id, mission, payload, result, vocabulary_ids):
 
     def evaluate(question, label):
         target_ids, evidence_type, criteria = _EVALUATIONS[question.purpose]
-        if question.purpose == "chooseDescriptor":
+        if question.purpose in {"chooseDescriptor", "buildDescription"}:
             task = next(
                 item for item in payload["descriptionTasks"]
                 if item["objectKey"] == question.object_key
-                and item["description"] == question.prompt
+                and item["blankPrompt"] == question.prompt
             )
             if task["kind"] == "adjective":
                 target_ids, criteria = ["recognise-adjective"], ["adjective-matches-object"]
