@@ -108,7 +108,8 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `practice_photo_uploaded` | `{ assetId }` | User captures/uploads a personal camera roll photo |
 | `photo_upload_retried` | `{ source: "camera" | "userUpload" }` | Learner retries confirmation of an uploaded image after a connection or server failure |
 | `practice_scene_selected` | `{ sceneId, title }` | User selects a curated catalog scene |
-| `scene_review_confirmed` | `{ acceptedCount, addedCount }` | User confirms detected objects before generating lesson |
+| `scene_review_confirmed` | `{ acceptedCount, addedCount, preferenceSource }` | User confirms detected objects before generating lesson; preferenceSource is personal or assigned |
+| `scene_preference_changed` | `{ action, reaction? }` | Optional beginner preference on `/practice/sessions/:sessionId/analysis`: select_object, select_reaction, or use_pretend; reaction is like or dislike when selected |
 | `scene_shortfall_shown` | `{ missing }` | Review shows that the photo lacks checkable objects, counts, adjectives or connections (`missing` is a comma-separated list) |
 | `scene_shortfall_add_clicked` | `{ kind }` | Learner chooses to add the missing kind of fact from the shortfall notice |
 | `scene_shortfall_new_photo` | `{ missing }` | Learner leaves a short scene to take or choose another photo |

@@ -449,12 +449,15 @@ function MissionSnapshotFacts({ task, scene }: { task: SessionTask; scene: Retur
   const content = task.publicContent;
   if (content.kind !== "grammarLesson" || !content.missionSnapshot) return null;
   const snapshot = content.missionSnapshot;
-  const objectLabel = (id?: string | null) => scene.items.find(item => item.id === id)?.translation ?? id;
+  const objectLabel = (id?: string | null) => {
+    const item = scene.items.find(item => item.id === id);
+    return item ? `${item.translation} (marker ${item.marker})` : id;
+  };
   const focus = snapshot.ownedObjectId ?? snapshot.chosenObjectId ?? snapshot.preferenceObjectIds?.[0];
   return <section className="mission-planning-facts" aria-label="Your mission facts">
-    <strong>{focus ? `Your choice: ${objectLabel(focus)}` : "Your choice"}</strong>
+    <strong>{focus ? `${snapshot.pretend ? "Practice scenario" : snapshot.missionId === "M05" ? "Your preference" : "Your choice"}: ${objectLabel(focus)}` : "Your choice"}</strong>
     <ul>
-      {focus ? <li>{snapshot.missionId === "M04" ? "It's yours." : "You chose this object."}</li> : null}
+      {focus && snapshot.missionId === "M04" ? <li>It's yours.</li> : null}
       {snapshot.pretend ? <li>It's pretend</li> : null}
       {snapshot.reaction ? <li>You {snapshot.reaction === "like" ? "like" : "don't like"} it</li> : null}
       {snapshot.taughtChunks.slice(0, 3).map(chunk => <li key={chunk.text}>

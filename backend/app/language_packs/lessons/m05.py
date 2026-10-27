@@ -20,6 +20,7 @@ from app.services.lesson_tasks.a0_situations import (
     choice_question,
     lower_first,
     marker_question,
+    object_reference,
     prep_add,
     situation_lesson_task,
     target_texts,
@@ -362,9 +363,11 @@ def _build_a0(ctx):
     q3_correct = like_chunk if mine.likes else dislike_chunk
     # An assigned (pretend) choice is stated as the scenario on every question.
     scenario = a0_scenario(mine, focus, other)
-    pick = ("What did you pick? Tap it in your photo." if scenario is None
-            else "Which one do you like? Tap it in your photo." if mine.likes
-            else "Which one don't you like? Tap it in your photo.")
+    feeling = "like" if mine.likes else "don't like"
+    question_feeling = "do you like" if mine.likes else "don't you like"
+    pick = (f"You said you {feeling} the {object_reference(focus)}. Tap it in your photo."
+            if scenario is None else
+            f"In this scenario, which object {question_feeling}? Tap it in your photo.")
     questions = [
         marker_question(payload, rows, focus, section, pick, "recognise-preference"),
         choice_question(
@@ -375,7 +378,8 @@ def _build_a0(ctx):
             listen_first=True,
         ),
         choice_question(
-            "M05-Q3", "Complete the sentence.", "Choose the words that complete the sentence.",
+            "M05-Q3", f"Say that you {feeling} this object.",
+            f"Complete the sentence to say you {feeling} this object.",
             section, focus["key"], [like_chunk, dislike_chunk], q3_correct, "say-preference",
             payload, salt="q3", gap_type="chunkChoice", slot_template=template,
             complete_chunk=statement.text, complete_translation=statement.translation,
@@ -409,8 +413,13 @@ def _build_a0(ctx):
              "translation": f"{'Yes' if mine.likes else 'No'}, ___"},
         ],
     ))
+    last_instruction = (
+        f"For this practice, choose the {object_reference(other)}. Complete the sentence."
+        if not mine.likes else
+        f"Complete the sentence about the {object_reference(focus)} you like."
+    )
     last = choice_question(
-        "M05-Q6", "Finish the conversation.", "Choose the answer that finishes the conversation.",
+        "M05-Q6", last_instruction, last_instruction,
         section, focus["key"], q6_options, q6_correct, "say-preference", payload, salt="q6",
         gap_type="dialogueGap", slot_template=q6_template, complete_chunk=q6_complete,
         complete_translation=q6_translation,
@@ -439,9 +448,9 @@ def a0_scenario(mine, focus, other):
     if not mine.fictional:
         return None
     if mine.likes:
-        return f"Let's pretend you like the {focus['source']}."
-    return (f"Let's pretend you don't like the {focus['source']}, "
-            f"so you pick the {other['source']}.")
+        return f"Let's pretend you like the {object_reference(focus)}."
+    return (f"Let's pretend you don't like the {object_reference(focus)}, "
+            f"so you pick the {object_reference(other)}.")
 
 
 def _learner_choice(ctx, mine, focus, reaction):

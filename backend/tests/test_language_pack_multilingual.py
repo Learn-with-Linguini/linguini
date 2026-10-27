@@ -1013,7 +1013,7 @@ def _counted_groups(objects):
 
 
 def _dispatch(language, level, scene, provider, monkeypatch, mission_id="M01", reaction="like",
-              progress=None, scenario=None):
+              progress=None, scenario=None, choice_object_id=None):
     from app.language_packs.context import resolve_language_context
 
     monkeypatch.setenv("APP_ENV", "test")
@@ -1033,6 +1033,9 @@ def _dispatch(language, level, scene, provider, monkeypatch, mission_id="M01", r
         # The learner rates one object and does not like it: they take another instead.
         learner_facts["M05"] = {"preference": {"sceneObjectIds": [str(objects[0].id)],
                                                "reaction": "dislike"}}
+    if choice_object_id is not None:
+        learner_facts["M05"] = {"preference": {"sceneObjectIds": [str(choice_object_id)],
+                                               "reaction": reaction}}
     if scenario is not None:
         # No learner choice: the plan assigns the A0 scenario (``scenario`` its reaction).
         learner_facts[mission_id] = assign_a0_scenario(mission, UUID(int=100), objects, markers)
@@ -1240,7 +1243,9 @@ def test_a0_situation_without_a_choice_states_the_assigned_scenario(
     assert snapshot.pretend is True
     if mission_id == "M04":
         owned = next(obj for obj in objects if str(obj.id) == facts["ownedObjectId"])
-        assert premise == f"Let's pretend the {owned.label} is yours."
+        assert premise == (
+            f"Let's pretend the {owned.label} at marker {objects.index(owned) + 1} is yours."
+        )
         assert str(snapshot.owned_object_id) == facts["ownedObjectId"]
         return
     focus, other = (next(obj for obj in objects if str(obj.id) == key)
@@ -1249,12 +1254,15 @@ def test_a0_situation_without_a_choice_states_the_assigned_scenario(
     answers = task.answer_key.correct_option_ids
     assert str(pick.marker_object_ids[answers[pick.question_id]]) == str(focus.id)
     if scenario == "like":
-        assert premise == f"Let's pretend you like the {focus.label}."
-        assert pick.prompt == "Which one do you like? Tap it in your photo."
+        assert premise == (
+            f"Let's pretend you like the {focus.label} at marker {objects.index(focus) + 1}."
+        )
+        assert pick.prompt == "In this scenario, which object do you like? Tap it in your photo."
     else:
-        assert premise == (f"Let's pretend you don't like the {focus.label}, "
-                           f"so you pick the {other.label}.")
-        assert pick.prompt == "Which one don't you like? Tap it in your photo."
+        assert premise == (f"Let's pretend you don't like the {focus.label} "
+                           f"at marker {objects.index(focus) + 1}, "
+                           f"so you pick the {other.label} at marker {objects.index(other) + 1}.")
+        assert pick.prompt == "In this scenario, which object don't you like? Tap it in your photo."
         last = next(q for q in questions if q.question_id == "M05-Q6")
         assert str(last.option_object_ids[answers["M05-Q6"]]) == str(other.id)
 
@@ -1300,6 +1308,47 @@ def test_a0_ownership_prompts_answers_and_dialogue_agree(language, scenario, sce
     dialogue = questions["M04-Q6"]
     assert dialogue.dialogue[0].text == heard.audio_text
     assert dialogue.dialogue[1].translation == dialogue.complete_translation
+    _assert_gradable(task)
+
+
+@pytest.mark.parametrize("language", list(LOCALES))
+@pytest.mark.parametrize("selected_marker", [1, 2])
+@pytest.mark.parametrize("reaction", ["like", "dislike"])
+def test_a0_preference_respects_either_same_name_object(
+    language, selected_marker, reaction, monkeypatch,
+):
+    photo = build_scene(language, (("cup", "red"), ("cup", "white"), ("table", "green")))
+    chosen_id = UUID(int=selected_marker)
+    (task,) = _dispatch(language, "A0", photo, MockPackProvider(language), monkeypatch,
+                        "M05", reaction=reaction, choice_object_id=chosen_id)
+    snapshot = task.public_content.mission_snapshot
+    assert snapshot.preference_object_ids == [chosen_id]
+    assert snapshot.reaction == reaction
+    assert not snapshot.pretend
+    first, *_, last = task.public_content.questions
+    assert f"cup at marker {selected_marker}" in first.prompt
+    correct_option = task.answer_key.correct_option_ids[first.question_id]
+    assert first.marker_object_ids[correct_option] == chosen_id
+    assert chosen_id in first.marker_object_ids.values()
+    assert all(q.roleplay_premise is None for q in task.public_content.questions)
+    if reaction == "dislike":
+        assert "For this practice, choose the table at marker 3" in last.instruction
+    _assert_gradable(task)
+
+
+@pytest.mark.parametrize("language", list(LOCALES))
+@pytest.mark.parametrize("reaction", ["like", "dislike"])
+def test_a0_assigned_preference_disambiguates_repeated_objects(language, reaction, monkeypatch):
+    photo = build_scene(language, (("cup", "red"), ("cup", "white"), ("table", "green")))
+    (task,) = _dispatch(language, "A0", photo, MockPackProvider(language), monkeypatch,
+                        "M05", scenario=reaction)
+    snapshot = task.public_content.mission_snapshot
+    first = task.public_content.questions[0]
+    focus = first.marker_object_ids[task.answer_key.correct_option_ids[first.question_id]]
+    row = next(obj for obj in photo[0] if obj.id == focus)
+    assert snapshot.pretend
+    for question in task.public_content.questions:
+        assert f"{row.label} at marker {photo[0].index(row) + 1}" in question.roleplay_premise
     _assert_gradable(task)
 
 

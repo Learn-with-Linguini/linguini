@@ -21,6 +21,7 @@ from app.schemas.roleplay import parse_roleplay_facts
 from app.services.lesson_tasks.a0_situations import (
     choice_question,
     marker_question,
+    object_reference,
     prep_add,
     situation_lesson_task,
     target_texts,
@@ -445,7 +446,11 @@ def _build_a0(ctx):
         for option in questions[1].options
     }
     # An assigned (pretend) owner is stated as the scenario on every question.
-    scenario = f"Let's pretend the {x['source']} is yours." if owned.fictional else None
+    scenario = f"Let's pretend the {object_reference(x)} is yours." if owned.fictional else None
+    if not owned.fictional:
+        questions[0].prompt = questions[0].instruction = (
+            f"You said the {object_reference(x)} is yours. Tap it in your photo."
+        )
     for item in questions:
         item.roleplay_premise = scenario
     payload["approvedTargetTexts"] = target_texts(prep, questions)
