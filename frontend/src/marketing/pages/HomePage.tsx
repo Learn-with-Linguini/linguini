@@ -1,10 +1,7 @@
-import { BlogSection } from "../components/blog/BlogSection";
 import { Faq } from "../components/Faq";
 import { Features } from "../components/Features";
-import { Film } from "../components/Film";
 import { FinalCta } from "../components/FinalCta";
 import { HowItWorks } from "../components/HowItWorks";
-import { JournalWall } from "../components/JournalWall";
 import { JsonLd } from "../components/JsonLd";
 import { Pricing } from "../components/Pricing";
 import { SiteFooter } from "../components/SiteFooter";
@@ -18,20 +15,17 @@ import { site } from "../lib/site";
 export default function HomePage() {
   return (
     <>
-      <PageMeta title={site.title} description={site.description} path="/" home />
+      <PageMeta title={site.title} documentTitle="Linguini" description={site.description} path="/" home />
       <a href="#main" className="skip-link">Skip to content</a>
       <SiteHeader />
       <main id="main">
         <Hero />
-        <Film />
         <Why />
         <HowItWorks />
         <Features />
-        <JournalWall />
         <Pricing />
         <Faq />
         <FinalCta />
-        <BlogSection />
       </main>
       <SiteFooter />
       <JsonLd faq={faq} />

@@ -70,7 +70,7 @@ export default function PostPage() {
             <h1 className={styles.title}>{post.title}</h1>
             <p className={styles.summary}>{post.summary}</p>
             <div className={styles.actions}>
-              <Link href="/#try" className="btn btn-gloss">
+              <Link href="/demo" className="btn btn-gloss">
                 Try a lesson <ArrowRight size={18} />
               </Link>
               {post.pdf ? (

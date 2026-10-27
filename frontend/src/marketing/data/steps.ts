@@ -1,4 +1,4 @@
-/** The four "How it works" steps. Read by the HowItWorks section and /llms.txt. */
+/** The three "How it works" steps. Read by the HowItWorks section and /llms.txt. */
 export const steps = [
   {
     title: "Snap a moment, or borrow one",
@@ -6,14 +6,10 @@ export const steps = [
   },
   {
     title: "Linguini spots the words",
-    body: "It finds the objects worth learning and labels each one with its article, meaning, pronunciation and audio. You decide which words stay.",
+    body: "It finds the objects worth learning, plus words for how they look and where they are, each with its article, pronunciation and audio. You decide which words stay.",
   },
   {
-    title: "Play with them for five minutes",
-    body: "Flip through word cards, play I-Spy solo with Linguini or with a friend in a private room, fill the gap in a sentence about your scene, then build one of your own.",
-  },
-  {
-    title: "Keep the day in your journal",
-    body: "Write a few lines with your new words. Linguini highlights the ones you used, files them in your vocabulary bank and adds Basil, and your progress page grows another farfalle on your streak.",
+    title: "Learn the words, then the grammar",
+    body: "Flip through word cards and play I-Spy, then take on grammar tasks built from your own scene: articles and gender, plurals, adjectives that agree, and saying where things are. Finish by building whole sentences about your photo.",
   },
 ];

@@ -9,6 +9,7 @@ import { useAppState } from "../state/useAppState";
 import { Button, Card } from "../components/ui";
 import { EyeIcon } from "../components/icons";
 import { languageDisplayName } from "../lib/languageChoices";
+import { trackAction } from "../lib/analytics.ts";
 import "../components/rooms.css";
 
 export function Rooms() {
@@ -46,6 +47,7 @@ function RoomLobby() {
     pending.current = command;
     setPendingKind(command.kind);
     try {
+      trackAction(command.kind === "create" ? "room_created" : "room_joined");
       const entry = command.kind === "create" ? await createRoom(command.profileId, command.commandId)
         : await joinRoom(command.profileId, command.code, command.commandId);
       if (entry.room.meId !== owner) throw new Error("This room changed accounts. Return home and open it again.");

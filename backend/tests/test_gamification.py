@@ -71,6 +71,24 @@ def test_vocabulary_first_answer_survives_changed_replay_and_concurrent_checks(c
         )
 
 
+def test_vocabulary_typing_only_rewards_a_correct_answer(curated):
+    engine, owner, _profile, _client, *_ = curated
+    repo, _sid, detail = _lesson(curated)
+    task = detail.tasks[0]
+    answers = _answer_key(engine, task.id)["acceptedTextAnswersByVocabularyId"]
+    learning_key, accepted = next(iter(answers.items()))
+
+    wrong = repo.check_vocabulary_typing(task.id, learning_key, "deliberately wrong", False)
+    assert not wrong.is_correct and wrong.basil_earned == 0
+    with engine.begin() as c:
+        assert resource_snapshot(c, owner.id).basil_leaves == 0
+
+    correct = repo.check_vocabulary_typing(task.id, learning_key, accepted[0], False)
+    assert correct.is_correct and correct.basil_earned == 10
+    with engine.begin() as c:
+        assert resource_snapshot(c, owner.id).basil_leaves == 10
+
+
 @pytest.mark.parametrize("correct", [False, True])
 def test_question_rewards_and_batch_submission_share_one_ledger(curated, correct):
     engine, _owner, profile, client, *_ = curated

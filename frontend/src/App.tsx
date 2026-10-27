@@ -28,6 +28,7 @@ import { Progress } from "./pages/Progress";
 import { Contact } from "./pages/Contact";
 import { Payment } from "./pages/Payment";
 import { ResetPassword } from "./pages/ResetPassword";
+import { GuestDemo } from "./pages/GuestDemo";
 import { AppStateProvider } from "./state/AppState";
 import { useAuth } from "./state/Auth";
 import { LoadingScreen } from "./components/LoadingScreen";
@@ -73,6 +74,7 @@ export default function App() {
       <Route element={<FocusShell />}>
         <Route path="/" element={<FullReload />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/demo" element={<GuestDemo />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/onboarding" element={<OnboardingRoute />} />
         <Route path="/contact" element={<Contact />} />

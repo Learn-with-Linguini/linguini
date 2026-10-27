@@ -1,0 +1,38 @@
+.accountPill { min-height: 28px; padding: 4px 10px; border-color: rgba(31, 122, 120, .24); background: color-mix(in srgb, var(--sage) 55%, var(--paper)); color: var(--teal-dark); font-size: .8rem; font-weight: 700; line-height: 1.15; }
+.languageField { display: grid; gap: var(--space-2); }
+.languageControl { position: relative; display: flex; align-items: center; }
+.languageControl select { width: 100%; min-height: 58px; padding: var(--space-3) 3rem var(--space-3) var(--space-4); appearance: none; border: var(--stroke) solid var(--teal-dark); border-radius: var(--radius-md); background: var(--paper); color: var(--ink); box-shadow: 0 4px 0 rgba(31, 122, 120, .18); font: inherit; font-weight: 800; cursor: pointer; }
+.languageControl::after { position: absolute; right: var(--space-4); content: "⌄"; color: var(--teal-dark); font-size: 1.4rem; font-weight: 900; pointer-events: none; transform: translateY(-2px); }
+.languageControl:focus-within select { outline: 3px solid rgba(46, 156, 153, .22); outline-offset: 2px; }
+.sceneCard { align-self: start; gap: 0; padding: 6px; }
+.sceneLabel { display: flex; min-height: 32px; align-items: center; padding: 5px 4px 2px; font-size: .9rem; font-weight: 800; line-height: 1.1; }
+.titleRow { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.titleRow h1 { min-width: 0; flex: 1; margin: 0; }
+.titleRow > :last-child { flex: 0 0 auto; white-space: nowrap; }
+.analysis { overflow: hidden; }
+.figure { width: 100%; margin: 0; }
+.figure figcaption { padding-top: var(--space-3); color: var(--ink); font-family: var(--font-heading); font-size: clamp(1.2rem, 3vw, 1.55rem); font-weight: 800; }
+.photo { position: relative; overflow: hidden; border: 2px solid var(--teal-dark); border-radius: var(--radius-lg); background: var(--cream); aspect-ratio: 8 / 5; }
+.photo img { width: 100%; height: 100%; object-fit: cover; }
+.marker { cursor: default; pointer-events: none; }
+.scan { position: absolute; inset: 0; background: linear-gradient(180deg, transparent 0 44%, rgba(249, 178, 51, .32) 49%, rgba(232, 93, 50, .85) 50%, rgba(249, 178, 51, .32) 51%, transparent 56%); animation: scan 1.4s ease-in-out infinite; }
+.objectList { display: grid; gap: var(--space-2); }
+.objectRow { display: grid; min-height: 52px; grid-template-columns: 38px 1fr auto; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--paper); color: var(--ink); font: inherit; font-weight: 800; text-align: left; cursor: pointer; }
+.objectRow[aria-pressed="true"] { border-color: var(--teal); background: var(--sage); }
+.objectRow:disabled { cursor: default; opacity: 1; }
+.number { display: grid; width: 32px; height: 32px; place-items: center; border: 2px solid var(--teal-dark); border-radius: 50%; }
+.keep { color: var(--teal-dark); font-size: var(--text-small); }
+.termSections { display: grid; gap: var(--space-4); }
+.termSections h2 { margin: 0; font-size: 1.05rem; }
+.termList { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.term { display: inline-flex; min-height: 42px; align-items: center; gap: var(--space-2); padding: var(--space-2) var(--space-3); border: 1px solid var(--line); border-radius: 999px; background: #fff; }
+.term small { color: var(--ink-muted); }
+.choices { display: grid; gap: var(--space-3); }
+.choice { display: flex; min-height: 54px; align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-4); border: 2px solid var(--line); border-radius: var(--radius-md); background: var(--paper); color: var(--ink); font: inherit; font-size: 1.05rem; font-weight: 800; cursor: pointer; }
+.choice[data-state="correct"] { border-color: var(--teal); background: var(--sage); }
+.choice[data-state="wrong"] { border-color: var(--danger); background: #fff0e9; }
+.done { max-width: 520px; margin: 0 auto; align-items: stretch; }
+.done > img { align-self: center; }
+@keyframes scan { 0% { transform: translateY(-55%); } 100% { transform: translateY(55%); } }
+@media (min-width: 700px) { .objectList, .choices { grid-template-columns: 1fr 1fr; } .termSections { grid-template-columns: 1fr 1fr; } }
+@media (prefers-reduced-motion: reduce) { .scan { animation: none; transform: none; } }

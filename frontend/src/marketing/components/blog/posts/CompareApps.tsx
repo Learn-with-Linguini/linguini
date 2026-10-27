@@ -85,7 +85,7 @@ export function CompareAppsPost() {
 
       <h2 id="try">See for yourself</h2>
       <p>
-        The <Link href="/#try">demo on our home page</Link> runs a whole lesson on a real photo, no sign-up needed. You
+        The <Link href="/demo">guest demo</Link> runs a short lesson on a real photo, no sign-up needed. You
         can also browse the words from every demo scene in <Link href="/learn/spanish">Spanish</Link> or{" "}
         <Link href="/learn/french">French</Link>, or compare <Link href="/#pricing">our plans</Link>. How we set our own
         price is in <Link href="/blog/linguini-business-model">the Linguini business model</Link>.

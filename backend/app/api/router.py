@@ -12,6 +12,7 @@ from app.api.routes import (
     ispy,
     journals,
     leaderboard,
+    learning_resources,
     media,
     onboarding,
     payments,
@@ -32,6 +33,7 @@ api_router.include_router(users.router)
 api_router.include_router(game_resources.router)
 api_router.include_router(gamification.router)
 api_router.include_router(leaderboard.router)
+api_router.include_router(learning_resources.router)
 api_router.include_router(daily_challenges.router)
 api_router.include_router(rooms.router)
 api_router.include_router(friends.router)

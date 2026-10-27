@@ -162,7 +162,6 @@ export function Profile() {
         {basil.isPending ? <InlineLoader compact label="Loading your Basil…" />
           : basil.isError ? <p role="alert">We couldn’t load your Basil. Reload to retry.</p>
           : <>
-            <p className="small muted">Across all languages. Weeks start Monday at 00:00 UTC.</p>
             <div className="profile-basil__grid">
               <div><span className="profile-basil__icon"><BasilIcon size={24} /></span><span>This week</span><strong>{basil.data.basil.weekly}</strong></div>
               <div><span className="profile-basil__icon"><BasilIcon size={24} /></span><span>All time</span><strong>{basil.data.basil.lifetime}</strong></div>

@@ -1,0 +1,8 @@
+{
+	"folders": [
+		{
+			"name": "SSH FS - gpu",
+			"uri": "ssh://gpu_cluster/home/a/ananyaj"
+		}
+	]
+}

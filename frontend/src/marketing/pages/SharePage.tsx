@@ -90,7 +90,7 @@ export default function SharePage() {
           )}
 
           <div className={styles.actions}>
-            <Link href="/#try" className="btn">
+            <Link href="/demo" className="btn">
               Try it with your own photo
             </Link>
             <a href={appLinks.signUp} className="btn btn--teal">

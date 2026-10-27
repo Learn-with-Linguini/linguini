@@ -817,7 +817,8 @@ class PostgresWorkflowRepository:
             session = self._session(c, task.session_id)
             basil_earned = 0
             if (
-                session.mode == "lesson"
+                is_correct
+                and session.mode == "lesson"
                 and session.status in {"inProgress", "generatingTasks"}
                 and task.status not in {"completed", "skipped"}
             ):
@@ -825,7 +826,7 @@ class PostgresWorkflowRepository:
                     c,
                     self.user_id,
                     f"typing:{task.id}:{learning_key}",
-                    amount=10 if is_correct else 5,
+                    amount=10,
                     payload={
                         "policyVersion": "basil-typing.v1",
                         "languageProfileId": str(session.language_profile_id),
@@ -1355,7 +1356,7 @@ class PostgresWorkflowRepository:
                     )
         return words, translations
 
-    def _detail(self, c, session):
+    def _detail(self, c, session, *, active_session_count=0):
         asset, scene = self._scene_media(c, session)
         objects, relations = self._scene_objects(c, session)
         words, translations = self._vocabulary(c, session, objects)
@@ -1406,6 +1407,7 @@ class PostgresWorkflowRepository:
             next_task_id=next(
                 (t.id for t in tasks if t.status not in {"completed", "skipped"}), None
             ),
+            active_session_count=active_session_count,
         )
 
     def _active_row(self, c, profile_id, mode):
@@ -1414,6 +1416,7 @@ class PostgresWorkflowRepository:
                 select(
                     sessions,
                     _stale_processing().label("is_stale"),
+                    func.count().over().label("active_session_count"),
                 )
                 .where(
                     sessions.c.user_id == self.user_id,
@@ -1460,12 +1463,24 @@ class PostgresWorkflowRepository:
                 if row is None:
                     return None
                 if not row["is_stale"]:
-                    return self._detail(c, parse_session(row))
+                    return self._detail(
+                        c,
+                        parse_session(row),
+                        active_session_count=row["active_session_count"],
+                    )
             # Only an expired processing session needs the write path.
             with self.transaction() as c:
                 self._reap(c, profile_id)
                 row = self._active_row(c, profile_id, mode)
-                return self._detail(c, parse_session(row)) if row else None
+                return (
+                    self._detail(
+                        c,
+                        parse_session(row),
+                        active_session_count=row["active_session_count"],
+                    )
+                    if row
+                    else None
+                )
         except PracticeNotFoundError:
             return None
 
