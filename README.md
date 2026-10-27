@@ -58,7 +58,7 @@ owns migrations; SQLAlchemy handles runtime queries.
 
 ## Local setup
 
-Use Python 3.12+ and Node.js 22.12+ on the Node 22 line, or Node 24.
+Use Python 3.12+ and Node.js 24 (the CI version), or Node.js 22.19+ on the Node 22 line.
 
 Frontend, from the repository root:
 

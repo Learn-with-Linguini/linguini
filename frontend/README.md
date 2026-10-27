@@ -6,7 +6,7 @@ The FastAPI backend runs separately under `/api/v1`.
 
 ## Run locally
 
-Use Node.js 22.12+ on the Node 22 line, or Node 24. From `frontend/`:
+Use Node.js 24 (the CI version), or Node.js 22.19+ on the Node 22 line. From `frontend/`:
 
 ```sh
 npm ci
