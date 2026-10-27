@@ -2,8 +2,12 @@
 
 from contextlib import contextmanager
 from typing import Any
+from uuid import uuid4
 
 import pytest
+from langfuse import Langfuse
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 from app.ai import (
     AIObservation,
@@ -219,3 +223,119 @@ def test_build_tracer_disabled_and_missing_keys_return_noop():
         }
     )
     assert isinstance(build_tracer(demo_missing_keys), NoOpAITracer)
+
+
+@pytest.fixture
+def sdk_tracer(monkeypatch):
+    """Exercise real SDK serialization with an exporter that never sends HTTP."""
+    exporter = InMemorySpanExporter()
+    provider = TracerProvider()
+
+    def create_client(**kwargs):
+        return Langfuse(**kwargs, tracer_provider=provider, span_exporter=exporter)
+
+    monkeypatch.setattr("app.ai.observability.Langfuse", create_client)
+    settings = load_ai_settings(env={
+        "AI_OBSERVABILITY_ENABLED": "true",
+        "AI_OBSERVABILITY_PUBLIC_KEY": f"pk-lf-test-{uuid4()}",
+        "AI_OBSERVABILITY_SECRET_KEY": "sk-lf-test-only",
+    })
+    tracer = build_tracer(settings)
+    assert isinstance(tracer, LangfuseAITracer)
+    yield tracer, exporter
+    tracer.shutdown()
+    provider.shutdown()
+
+
+def test_sdk_exports_diagnostics_without_payloads_or_exception_details(sdk_tracer):
+    tracer, exporter = sdk_tracer
+    secret = "learner-sentinel https://signed.example/photo?token=secret"
+    original = ValueError(secret)
+    with pytest.raises(ValueError) as caught:
+        with tracer.trace("scene-analysis", session_id="session-privacy", metadata={
+            "objectCount": 3, "rawLearnerText": secret,
+        }):
+            with tracer.generation(
+                "model-call", feature="sceneAnalysis", provider="openrouter",
+                model="requested-model", prompt_version="scene.v1",
+                metadata={"deployment": "primary", "attempt": 1},
+            ) as observation:
+                observation.record_content(input={"objectCount": secret}, output=secret)
+                observation.update(error_code="providerTimeout", retry_count=0)
+                raise original
+    assert caught.value is original
+    tracer.flush()
+    spans = exporter.get_finished_spans()
+    assert {span.name for span in spans} == {"scene-analysis", "model-call"}
+    root = next(span for span in spans if span.name == "scene-analysis")
+    child = next(span for span in spans if span.name == "model-call")
+    assert child.parent.span_id == root.context.span_id
+    assert root.context.trace_id == child.context.trace_id
+    assert root.attributes["langfuse.observation.metadata.objectCount"] == 3
+    assert child.attributes["langfuse.observation.metadata.deployment"] == "primary"
+    assert child.attributes["langfuse.observation.metadata.retryCount"] == 0
+    assert root.status.description == "ValueError"
+    assert child.status.description == "providerTimeout"
+    for span in spans:
+        assert span.attributes["session.id"] == "session-privacy"
+        assert not span.events
+        exported = repr((dict(span.attributes), span.status.description, span.events))
+        assert secret not in exported
+        assert "rawLearnerText" not in exported
+        assert "exception.stacktrace" not in exported
+
+
+def test_sdk_only_outbound_generations_own_usage_after_failover(sdk_tracer):
+    from test_routing import TIMEOUT, Route, translator
+    from test_scene_translation_service import PAYLOAD, VALID_OUTPUT
+
+    tracer, exporter = sdk_tracer
+    route = Route(
+        {"primary": ["a"], "backup": ["b"]},
+        {("primary", "a"): [TIMEOUT], ("backup", "b"): [VALID_OUTPUT]},
+    )
+    route.tracer = tracer
+    route.client._tracer = tracer
+    with tracer.trace("practice", session_id="session-usage"):
+        translator(route).translate(PAYLOAD)
+    tracer.flush()
+    spans = exporter.get_finished_spans()
+    generations = [span for span in spans
+                   if span.attributes.get("langfuse.observation.type") == "generation"]
+    assert len(generations) == 2
+    assert all(span.name == "model-call" for span in generations)
+    failed, served = generations
+    assert failed.attributes["langfuse.observation.model.name"] == "model-primary"
+    assert failed.status.description == "providerTimeout"
+    assert served.attributes["langfuse.observation.model.name"] == "served"
+    assert served.attributes["langfuse.observation.usage_details"] == (
+        '{"input": 3, "output": 4, "total": 7}'
+    )
+    feature = next(span for span in spans if span.name == "scene-translation")
+    assert feature.attributes["langfuse.observation.type"] == "span"
+    assert "langfuse.observation.usage_details" not in feature.attributes
+    assert feature.attributes["langfuse.observation.metadata.promptVersion"]
+    assert feature.attributes["langfuse.observation.metadata.totalTokens"] == 7
+    assert all(span.attributes["session.id"] == "session-usage" for span in spans)
+
+
+def test_sdk_update_and_exit_errors_preserve_the_application_exception(caplog):
+    class BrokenObservation:
+        def update(self, **kwargs):
+            raise RuntimeError("sdk-secret")
+
+    class BrokenClient:
+        @contextmanager
+        def start_as_current_observation(self, **kwargs):
+            try:
+                yield BrokenObservation()
+            finally:
+                raise RuntimeError("sdk-secret")
+
+    original = ValueError("learner-secret")
+    with pytest.raises(ValueError) as caught:
+        with LangfuseAITracer(BrokenClient()).span("work"):
+            raise original
+    assert caught.value is original
+    assert "sdk-secret" not in caplog.text
+    assert "learner-secret" not in caplog.text

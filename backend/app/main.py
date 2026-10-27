@@ -80,12 +80,20 @@ async def lifespan(app: FastAPI):
         yield
     finally:
         try:
-            app.state.ai_tracer.flush()
-            app.state.ai_tracer.shutdown()
-        except Exception:
-            logger.warning("AI tracer shutdown failed", exc_info=True)
-        app.state.background_runner.shutdown(wait=True)
-        engine.dispose()
+            # Jobs still use the database and can emit observations as they finish.
+            app.state.background_runner.shutdown(wait=True)
+        finally:
+            try:
+                try:
+                    app.state.ai_tracer.flush()
+                except Exception:
+                    logger.warning("AI tracer flush failed")
+                try:
+                    app.state.ai_tracer.shutdown()
+                except Exception:
+                    logger.warning("AI tracer shutdown failed")
+            finally:
+                engine.dispose()
 
 
 def create_app() -> FastAPI:

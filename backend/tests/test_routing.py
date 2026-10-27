@@ -362,8 +362,11 @@ def test_tracing_records_attempts_route_and_usage_without_secrets():
     assert calls[0]["updates"][0]["metadata"]["outcome"] == "failover"
     assert calls[1]["metadata"]["fallbackReason"] == "providerTimeout"
     assert calls[1]["updates"][0]["total_tokens"] == 7
+    assert all(call["kind"] == "generation" for call in calls)
+    assert calls[1]["updates"][0]["model"] == "served"
+    assert calls[1]["model"] == "model-backup"
 
-    generation = next(r for r in route.tracer.records if r["kind"] == "generation")
+    generation = next(r for r in route.tracer.records if r["name"] == "scene-translation")
     final = generation["updates"][-1]
     assert final["metadata"] == {
         "deployment": "backup",

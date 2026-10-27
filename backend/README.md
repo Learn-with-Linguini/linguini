@@ -934,11 +934,11 @@ before. OpenRouter's internal attempts on other hosts or models happen inside
 one HTTP request, so `max_model_calls` counts them as one call and cannot
 see or limit them; only the deadline bounds them.
 
-**Tracing:** each outbound call is a `model-call` span with the deployment,
+**Tracing:** each outbound call is a `model-call` generation with the deployment,
 credential ID (never the secret), provider, requested model, attempt number,
 the fallback reason so far, the outcome (`success`, `failover`, `terminal`),
 error code, scope and status, latency and token usage. The feature's
-generation records the deployment, credential ID and model that served it,
+operation span records the deployment, credential ID and model that served it,
 the route's attempts, the fallback reason and input/output/total tokens.
 `retry_count` counts every outbound call after the first.
 
@@ -987,25 +987,79 @@ interface for a shared store later.
 
 ### AI observability
 
-AI calls can be traced to Langfuse. Tracing is off by default and strictly
-best-effort: without keys the app runs a no-op tracer, and a tracing failure
-never affects a learner request or blocks the request path (export is
-asynchronous). Today exactly one operation is instrumented — I-Spy
-description evaluation (`ispy-description-evaluation`), recorded as a
-generation with provider/model dimensions, validation outcome, latency and
-error codes.
+The backend integrates Langfuse through `app/ai/observability.py`. The Python
+SDK major is v4; no browser SDK or frontend key is needed. Tracing is off by
+default. Runtime SDK setup, update and export failures do not replace application
+errors, and exports run asynchronously. With `AI_MODE=real`, enabling tracing
+without both Langfuse keys raises a startup configuration error. In demo mode,
+missing keys select the no-op tracer. Shutdown waits for background jobs before
+flushing and closing the tracer, then disposes database connections.
 
-Variables: `AI_OBSERVABILITY_ENABLED`,
-`AI_OBSERVABILITY_BASE_URL`, `AI_OBSERVABILITY_PUBLIC_KEY`,
-`AI_OBSERVABILITY_SECRET_KEY`, `AI_OBSERVABILITY_ENVIRONMENT`, and
-`AI_OBSERVABILITY_CAPTURE_CONTENT`.
+| Operation | Observations |
+| --- | --- |
+| Uploaded scene analysis | Image retrieval, analysis, output validation, result mapping, optional grounding and moderation verdict |
+| Scene translation | Translation, validation outcome, retries and serving deployment |
+| Learning tasks and I-Spy clues | Feature operation, model attempts, output validation and result counts |
+| I-Spy description evaluation | Learner-text length, model attempts, validation and result status |
+| Model router | One `model-call` generation per outbound request, with provider, requested/served model, deployment, credential ID, failover reason, latency and reported token usage |
+| Result cache | Hit, miss or shared in-flight result; no generation is emitted for a cache hit |
 
-Content capture is opt-in. With `AI_OBSERVABILITY_CAPTURE_CONTENT=false`
-(the default) no learner text or model output leaves the process: the
-client is constructed with a mask that redacts any input/output payload.
-Image bytes, base64, keys, signed URLs, raw learner text and full model
-responses are never traced by default; observations carry only scalar
-dimensions and caller-supplied metadata.
+Only outbound `model-call` generations own billable token usage. Enclosing
+feature spans retain usage summaries as metadata, so failover and validation
+repairs do not double count usage. Langfuse can infer costs when it recognizes
+the served model and its pricing; this is an estimate, not the provider bill.
+Failed calls without reported usage and OpenRouter's internal fallback attempts
+cannot be costed accurately here. Moderation verdicts are observed, but its
+separate provider call is not instrumented for token/cost accounting.
+
+With `AI_OBSERVABILITY_CAPTURE_CONTENT=false` (the default), learner text and
+model output are dropped before reaching the SDK. The SDK mask preserves only
+allowlisted, bounded scalar diagnostic metadata. Image bytes, base64, storage
+URLs and credentials are not attached. Errors record a stable error code or
+exception class, without forwarding exception messages or tracebacks to the
+SDK. `session.id` groups traces where the feature receives a session ID;
+other feature traces can appear separately. No email or user identity is sent.
+
+Set these variables only in the backend's ignored `.env.local` or deployment
+secret settings, then restart the API:
+
+```dotenv
+AI_OBSERVABILITY_ENABLED=true
+AI_OBSERVABILITY_BASE_URL=https://cloud.langfuse.com
+AI_OBSERVABILITY_PUBLIC_KEY=your-project-public-key
+AI_OBSERVABILITY_SECRET_KEY=your-project-secret-key
+AI_OBSERVABILITY_ENVIRONMENT=staging
+AI_OBSERVABILITY_CAPTURE_CONTENT=false
+```
+
+Choose the base URL for the Langfuse project/region or a self-hosted instance;
+the key pair must belong to that instance. Use separate projects or restricted
+access for staging and production. Set trace retention and project membership
+before enabling production exports. Content capture is intended for controlled
+debugging: when enabled, existing text-feature instrumentation can include
+learner text and model responses. It does not attach uploaded image bytes.
+
+To check the integration in staging:
+
+1. Upload a disposable photo and complete its analysis, then submit an I-Spy
+   description. Keep content capture off.
+2. Filter Langfuse by the configured environment. Open `scene-analysis` and
+   `ispy-guess`; inspect nested `model-call` generations, serving model, latency,
+   usage and validation spans. Search the session ID to inspect related traces.
+3. Repeat an eligible cached operation; expect a cache observation and no new
+   outbound generation when it hits. A controlled provider failure should show
+   the failed generation and any permitted failover, within the existing budget.
+4. Confirm traces contain no photo bytes, signed URLs, learner description or
+   exception message. Confirm a Langfuse outage leaves app behavior unchanged.
+
+`tests/test_ai_observability.py` exercises actual SDK exports with an in-memory
+OpenTelemetry exporter, including an exception containing private text and a
+signed URL. These tests never contact Langfuse. A real dashboard smoke test
+still requires project credentials and an enabled staging deployment.
+
+See [Langfuse instrumentation](https://langfuse.com/docs/observability/sdk/instrumentation)
+and [data masking](https://langfuse.com/docs/observability/features/masking).
+Check SDK-major compatibility before adopting examples from newer documentation.
 
 ## Remaining integration work
 

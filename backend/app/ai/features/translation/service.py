@@ -135,7 +135,9 @@ class SceneTranslationService:
         provider: str,
         cache: ResultCache | None = None,
     ) -> None:
-        self._client = as_routed(client, config, kind="text")
+        self._client = as_routed(
+            client, config, kind="text", tracer=tracer, provider=provider
+        )
         self._cache = cache
         self._config = config
         self._tracer = tracer
@@ -192,14 +194,14 @@ class SceneTranslationService:
         attempts = 1 + self._config.max_retries
         invocation = self._client.start_invocation()
         latency_ms = 0.0
-        with self._tracer.generation(
+        with self._tracer.span(
             "scene-translation",
-            feature=AiFeature.SCENE_TRANSLATION.value,
-            provider=self._provider,
-            model=self._config.model_name,
-            prompt_version=SCENE_TRANSLATION_PROMPT_VERSION,
-            schema_version=SCENE_TRANSLATION_SCHEMA_VERSION,
-            model_parameters={
+            metadata={
+                "feature": AiFeature.SCENE_TRANSLATION.value,
+                "provider": self._provider,
+                "requestedModel": self._config.model_name,
+                "promptVersion": SCENE_TRANSLATION_PROMPT_VERSION,
+                "schemaVersion": SCENE_TRANSLATION_SCHEMA_VERSION,
                 "maxOutputTokens": self._config.max_output_tokens,
                 "timeoutSeconds": self._config.timeout_seconds,
             },
