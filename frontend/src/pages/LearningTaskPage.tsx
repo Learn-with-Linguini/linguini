@@ -449,12 +449,15 @@ function MissionSnapshotFacts({ task, scene }: { task: SessionTask; scene: Retur
   const content = task.publicContent;
   if (content.kind !== "grammarLesson" || !content.missionSnapshot) return null;
   const snapshot = content.missionSnapshot;
-  const objectLabel = (id?: string | null) => scene.items.find(item => item.id === id)?.translation ?? id;
+  const objectLabel = (id?: string | null) => {
+    const item = scene.items.find(item => item.id === id);
+    return item ? `${item.translation} (marker ${item.marker})` : id;
+  };
   const focus = snapshot.ownedObjectId ?? snapshot.chosenObjectId ?? snapshot.preferenceObjectIds?.[0];
   return <section className="mission-planning-facts" aria-label="Your mission facts">
-    <strong>{focus ? `Your choice: ${objectLabel(focus)}` : "Your choice"}</strong>
+    <strong>{focus ? `${snapshot.pretend ? "Practice scenario" : snapshot.missionId === "M05" ? "Your preference" : "Your choice"}: ${objectLabel(focus)}` : "Your choice"}</strong>
     <ul>
-      {focus ? <li>{snapshot.missionId === "M04" ? "It's yours." : "You chose this object."}</li> : null}
+      {focus && snapshot.missionId === "M04" ? <li>It's yours.</li> : null}
       {snapshot.pretend ? <li>It's pretend</li> : null}
       {snapshot.reaction ? <li>You {snapshot.reaction === "like" ? "like" : "don't like"} it</li> : null}
       {snapshot.taughtChunks.slice(0, 3).map(chunk => <li key={chunk.text}>
@@ -788,7 +791,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
   };
 
   const submit = async () => {
-    if (!allChecked || practiceSaving || checking) return;
+    if (!allChecked || practiceSaving || checking || saved.isLoading || saved.isError) return;
     setChecking(true);
     setCheckError(null);
     const lockedAnswers = Object.fromEntries(content.questions.map(item => [
@@ -984,9 +987,9 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
         ? <Button block disabled={!answer || checking || saved.isLoading || saved.isError || practiceSaving}
           onClick={() => void check()}>{retrying ? "Check again" : "Check answer"}</Button>
       : question && activeIndex < content.questions.length - 1
-        ? <Button block disabled={checking || practiceSaving || (isSituation && !checks[question.questionId]?.isCorrect && !retryPassed[question.questionId])}
+        ? <Button block disabled={checking || practiceSaving || saved.isLoading || saved.isError}
           onClick={() => setActiveIndex(activeIndex + 1)}>Next question</Button>
-        : <Button block disabled={!allChecked || checking || practiceSaving || (isSituation && !checks[question?.questionId ?? ""]?.isCorrect && !retryPassed[question?.questionId ?? ""])}
+        : <Button block disabled={!allChecked || checking || practiceSaving || saved.isLoading || saved.isError}
           onClick={() => void submit()}>Finish task</Button>}
     {!terminal ? <Button variant="quiet" block disabled={practiceSaving || checking}
       onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip task</Button> : null}

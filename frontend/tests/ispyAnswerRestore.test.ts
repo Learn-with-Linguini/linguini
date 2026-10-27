@@ -132,8 +132,13 @@ const click = (button: HTMLButtonElement | undefined) => act(async () => {
   button.dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true }));
 });
 
-async function mount(mode: SessionMode) {
+async function mount(mode: SessionMode, patch: Partial<PracticeDetail> = {}, restoredOption?: string) {
   fixture = detail(mode); sessionReads = 0; requests.length = 0; taskReplies.length = 0; latestReply = null;
+  fixture = { ...fixture, ...patch };
+  if (restoredOption) latestReply = () => Response.json({ attempt: {
+    id: "answer1", attemptNumber: 1, text: "", optionId: restoredOption,
+    isCorrect: true, feedback: "Saved answer feedback.", evaluationDetails: null, assistance: null,
+  } });
   const container = dom.window.document.createElement("div");
   dom.window.document.body.appendChild(container);
   const root = createRoot(container);
@@ -153,7 +158,7 @@ async function mount(mode: SessionMode) {
       )),
     )));
   });
-  await until(() => Boolean(choice("taza")), "the real clue round should load");
+  await until(() => Boolean(dom.window.document.querySelector(".choice")), "the real clue round should load");
 }
 
 function commit(isCorrect: boolean) {
@@ -210,4 +215,70 @@ test("retrying an unanswered response reuses its command key and displays the ac
   assert.equal(requests[0].idempotencyKey, requests[1].idempotencyKey);
   assert.equal(typeof requests[0].idempotencyKey, "string");
   assert.equal(next()?.disabled, false);
+});
+
+function repeatedObjects(label: string): Partial<PracticeDetail> {
+  const round = structuredClone(clue);
+  if (round.publicContent.kind !== "ispyRound") throw new Error("Expected clue round");
+  round.publicContent.options = [
+    { optionId: "b", label, sceneObjectId: "object-b" },
+    { optionId: "a", label, sceneObjectId: "object-a" },
+  ];
+  return {
+    tasks: [round, { ...structuredClone(round), id: "clue2", orderIndex: 1 }],
+    reviewMarkers: { "object-a": 2, "object-b": 7 },
+    sceneObjects: ["object-a", "object-b"].map((id, index) => ({
+      id, sessionId: "s1", label: "car", vocabularyItemId: null,
+      boundingBox: null, anchorPoint: { x: index ? 0.7 : 0.2, y: 0.5 },
+      attributes: {}, confidenceScore: null, sourceObjectKey: id,
+    })),
+  };
+}
+
+for (const mode of ["ispy", "lesson"] as const) {
+  for (const label of ["coche", "voiture", "Auto", "자동차", "கார்"]) {
+    test(`${mode}: repeated ${label} choices retain photo marker identities after shuffling`, async () => {
+      await mount(mode, repeatedObjects(label));
+      assert.ok(choice(`Marker 2 · ${label}`));
+      assert.ok(choice(`Marker 7 · ${label}`));
+      assert.equal(choice(`Marker 7 · ${label}`)?.getAttribute("aria-label"), `Marker 7: ${label}`);
+      const markers = [...dom.window.document.querySelectorAll<HTMLButtonElement>("button.scene__marker")];
+      assert.deepEqual(markers.map(marker => marker.getAttribute("aria-label")), ["Marker 2", "Marker 7"]);
+      let release: ((response: Response) => void) | undefined;
+      taskReplies.push(() => new Promise<Response>(resolve => { release = resolve; }));
+      await click(markers[1]);
+      await until(() => Boolean(release), "marker submits the matching option");
+      assert.equal(requests[0].optionId, "b");
+      assert.equal(choice(`Marker 7 · ${label}`)?.disabled, true);
+      assert.equal(dom.window.document.querySelector("button.scene__marker"), null,
+        "photo submissions are blocked while checking");
+      await act(async () => {
+        const result = commit(true);
+        result.attempt.responsePayload.optionId = "b";
+        release!(Response.json(result));
+      });
+      await until(() => Boolean(choice(`Marker 7 · ${label}`)?.classList.contains("choice--correct")),
+        "the selected instance gets the saved grade");
+      assert.equal(requests.length, 1);
+      assert.equal(choice(`Marker 2 · ${label}`)?.getAttribute("aria-pressed"), "false");
+      assert.equal(dom.window.document.querySelector(".scene__marker--active")?.textContent, "7");
+    });
+  }
+}
+
+test("a restored repeated-object answer highlights its original marker without resubmission", async () => {
+  const patch = repeatedObjects("voiture");
+  await mount("ispy", patch, "b");
+  taskReplies.push(() => { commit(true); throw new Error("Lost response after the write"); });
+  taskReplies.push(() => Response.json({ detail: {
+    code: "task_conflict", message: "This task is already completed.",
+  } }, { status: 409 }));
+  await click(choice("Marker 7 · voiture"));
+  await until(() => Boolean(choice("Marker 7 · voiture") && !choice("Marker 7 · voiture")!.disabled),
+    "the interrupted answer can recover");
+  await click(choice("Marker 7 · voiture"));
+  await until(() => Boolean(choice("Marker 7 · voiture")?.classList.contains("choice--correct")),
+    "restore keeps the saved instance");
+  assert.equal(dom.window.document.querySelector(".scene__marker--active")?.textContent, "7");
+  assert.equal(requests.length, 2, "restoring the accepted answer never submits another answer");
 });

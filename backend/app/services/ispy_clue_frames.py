@@ -1,7 +1,13 @@
-"""Guided I-Spy clue frames built only from confirmed, translated scene facts."""
+"""Guided I-Spy clue frames built only from confirmed, translated scene facts.
+
+The grammar a frame needs (prefixes, articles, contractions, positions and colours) is
+the language pack's ``clues.toml``; a language whose ready pack has none gets no frames.
+"""
 
 import re
 import unicodedata
+from dataclasses import dataclass
+from functools import lru_cache
 
 from app.repositories.practice import ClueNamesTargetError, PracticeConflictError
 from app.schemas.enums import SYMMETRIC_SCENE_RELATION_TYPES
@@ -14,190 +20,148 @@ from app.schemas.tasks import (
 )
 
 GENDERS = ("masculine", "feminine", "neuter")
-ARTICLELESS_LANGUAGES = {"ko"}
-DEFINITE_ARTICLES = {
-    "es": {"masculine": "el", "feminine": "la"},
-    "fr": {"masculine": "le", "feminine": "la"},
-    "de": {"masculine": "der", "feminine": "die", "neuter": "das"},
-    "ko": {},
-}
-CONTRACTIONS = {
-    "es": {("de", "el"): "del", ("a", "el"): "al"},
-    "fr": {("de", "le"): "du", ("de", "les"): "des", ("à", "le"): "au", ("à", "les"): "aux"},
-    "de": {
-        ("an", "dem"): "am", ("in", "dem"): "im", ("zu", "dem"): "zum",
-        ("zu", "der"): "zur", ("von", "dem"): "vom", ("bei", "dem"): "beim",
-    },
-    "ko": {},
-}
-DATIVE_ARTICLES = {
-    "de": {"masculine": "dem", "feminine": "der", "neuter": "dem"},
-}
-_GERMAN_ARTICLE_GENDERS = {"der": "masculine", "die": "feminine", "das": "neuter"}
 MEANINGS = {
     "colour": "It is … — say what colour your object is.",
     "location": "It is … — say where your object is, using another object as a reference.",
 }
-# A small introduced bank: (expression, meaning, teaching example about other objects).
-POSITIONS = {
-    "es": [
-        ("sobre", "on", "El libro está sobre la mesa."),
-        ("debajo de", "under", "El gato está debajo de la silla."),
-        ("al lado de", "next to", "La silla está al lado de la puerta."),
-        ("delante de", "in front of", "El perro está delante de la casa."),
-        ("detrás de", "behind", "El árbol está detrás de la casa."),
-    ],
-    "fr": [
-        ("sur", "on", "Le livre est sur la table."),
-        ("sous", "under", "Le chat est sous la chaise."),
-        ("à côté de", "next to", "La chaise est à côté de la porte."),
-        ("devant", "in front of", "Le chien est devant la maison."),
-        ("derrière", "behind", "L'arbre est derrière la maison."),
-    ],
-    "de": [
-        ("auf", "on", "Das Buch ist auf dem Tisch."),
-        ("unter", "under", "Die Katze ist unter dem Stuhl."),
-        ("neben", "next to", "Der Stuhl ist neben der Tür."),
-        ("vor", "in front of", "Der Hund ist vor dem Haus."),
-        ("hinter", "behind", "Der Baum ist hinter dem Haus."),
-    ],
-    "ko": [
-        ("위에", "on", "책이 책상 위에 있어요."),
-        ("아래에", "under", "고양이가 의자 아래에 있어요."),
-        ("옆에", "next to", "의자가 문 옆에 있어요."),
-        ("앞에", "in front of", "개가 집 앞에 있어요."),
-        ("뒤에", "behind", "나무가 집 뒤에 있어요."),
-    ],
-}
-COLOUR_BANK = {
-    "es": [("rojo", "red"), ("azul", "blue"), ("verde", "green"), ("blanco", "white"),
-           ("negro", "black"), ("amarillo", "yellow")],
-    "fr": [("rouge", "red"), ("bleu", "blue"), ("vert", "green"), ("blanc", "white"),
-           ("noir", "black"), ("jaune", "yellow")],
-    "de": [("rot", "red"), ("blau", "blue"), ("grün", "green"), ("weiß", "white"),
-           ("schwarz", "black"), ("gelb", "yellow")],
-    "ko": [
-        ("빨간색이에요", "red"), ("파란색이에요", "blue"), ("초록색이에요", "green"),
-        ("하얀색이에요", "white"), ("검은색이에요", "black"), ("노란색이에요", "yellow"),
-    ],
-}
-TEACHING_EXAMPLES = {
-    "es": {"colour": "La manzana es roja.", "location": "El libro está sobre la mesa."},
-    "fr": {"colour": "La pomme est rouge.", "location": "Le livre est sur la table."},
-    "de": {"colour": "Der Apfel ist rot.", "location": "Das Buch ist auf dem Tisch."},
-    "ko": {"colour": "사과는 빨간색이에요.", "location": "책이 책상 위에 있어요."},
-}
-# Singular (masculine, feminine) forms. A colour missing here is never suggested,
-# because its agreement with the target noun cannot be established safely.
-COLOUR_FORMS = {
-    "es": [
-        ("rojo", "roja"), ("blanco", "blanca"), ("negro", "negra"),
-        ("amarillo", "amarilla"), ("morado", "morada"), ("dorado", "dorada"),
-        ("plateado", "plateada"), ("anaranjado", "anaranjada"),
-        ("azul", "azul"), ("verde", "verde"), ("gris", "gris"), ("marrón", "marrón"),
-        ("rosa", "rosa"), ("naranja", "naranja"), ("violeta", "violeta"),
-        ("beige", "beige"), ("turquesa", "turquesa"),
-    ],
-    "fr": [
-        ("noir", "noire"), ("vert", "verte"), ("bleu", "bleue"), ("gris", "grise"),
-        ("blanc", "blanche"), ("violet", "violette"), ("doré", "dorée"),
-        ("argenté", "argentée"), ("rouge", "rouge"), ("jaune", "jaune"),
-        ("rose", "rose"), ("beige", "beige"), ("orange", "orange"), ("marron", "marron"),
-    ],
-    "de": [
-        (form, form, form) for form in (
-            "rot", "weiß", "schwarz", "gelb", "lila", "golden", "silbern",
-            "orange", "blau", "grün", "grau", "braun", "rosa", "beige",
-            "türkis", "violett",
-        )
-    ],
-    "ko": [],
-}
-KOREAN_COLOUR_FORMS = {
-    "red": ("빨간색이에요", ("빨간색", "빨간", "빨강")),
-    "blue": ("파란색이에요", ("파란색", "파란", "파랑")),
-    "green": ("초록색이에요", ("초록색", "초록", "녹색")),
-    "white": ("하얀색이에요", ("하얀색", "하얀", "흰색", "하양")),
-    "black": ("검은색이에요", ("검은색", "검은", "검정", "검정색")),
-    "yellow": ("노란색이에요", ("노란색", "노란", "노랑")),
-    "purple": ("보라색이에요", ("보라색", "보라")),
-    "gold": ("금색이에요", ("금색",)),
-    "silver": ("은색이에요", ("은색",)),
-    "grey": ("회색이에요", ("회색",)),
-    "gray": ("회색이에요", ("회색",)),
-    "brown": ("갈색이에요", ("갈색",)),
-    "pink": ("분홍색이에요", ("분홍색", "분홍")),
-    "orange": ("주황색이에요", ("주황색", "주황")),
-    "beige": ("베이지색이에요", ("베이지색", "베이지")),
-}
-SUPPORTED_LANGUAGES = {"es", "fr", "de", "ko"}
 COLOUR_ATTRIBUTE_TYPES = {"color", "colour"}
-LOCATION_VERB_STARTS = (
-    "esta ", "es ", "est ", "il est ", "elle est ", "ist ", "er ist ",
-    "sie ist ", "es ist ",
-)
 
 
-def _prefixes(language, gender):
-    if language == "es":
-        return {"colour": "Es", "location": "Está"}
-    if language == "de":
-        subject = {
-            "masculine": "Er ist", "feminine": "Sie ist", "neuter": "Es ist",
-        }.get(gender, "Es ist")
-        return {"colour": subject, "location": subject}
-    if language == "ko":
-        return {"colour": "이것은", "location": "이것은"}
-    subject = {"feminine": "Elle est", "masculine": "Il est"}.get(gender, "C'est")
-    return {"colour": subject, "location": subject}
+@dataclass(frozen=True)
+class ClueGrammar:
+    """A language's clue grammar (its pack's ``clues.toml``), ready for lookups."""
+
+    clues: object
+    articleless: bool
+
+    def prefix(self, frame, gender):
+        prefixes = [item for item in self.clues.prefixes if item.frame == frame]
+        return next(
+            (item.text for item in prefixes if gender and item.agreement == gender),
+            next(item.text for item in prefixes if item.agreement is None),
+        )
+
+    def definite(self, gender):
+        return next((a.text for a in self.clues.articles if a.agreement == gender), None)
+
+    def place_article(self, article, gender):
+        """The article after a position: the term's own, or its ``place_articles`` form."""
+        if not self.clues.place_articles:
+            return article
+        gender = gender or next(
+            (a.agreement for a in self.clues.articles
+             if a.text.casefold() == article.casefold()), None,
+        )
+        return next((a.text for a in self.clues.place_articles if a.agreement == gender), None)
+
+    def contraction(self, preposition, article):
+        return next((
+            item.text for item in self.clues.contractions
+            if (item.preposition.casefold(), item.article.casefold())
+            == (preposition.casefold(), article.casefold())
+        ), None)
+
+    def starts_with_verb(self, text):
+        folded = _fold(text)
+        return any(folded.startswith(f"{_fold(start)} ")
+                   for start in self.clues.location_verb_starts)
+
+    @property
+    def reference_first(self):
+        return self.clues.place.index("{reference}") < self.clues.place.index("{position}")
+
+
+@lru_cache(maxsize=16)
+def _grammar_of(pack_json, experimental):
+    from app.language_packs.schema import LanguagePack
+
+    pack = LanguagePack.model_validate_json(pack_json)
+    clues = pack.clues
+    # Outside a local experiment, only a human-reviewed clue grammar is used.
+    if clues is None or (not experimental and clues.provenance.review_status != "humanReviewed"):
+        return None
+    return ClueGrammar(clues, articleless=pack.language.articles == "none")
+
+
+def clue_grammar(language):
+    """The clue grammar of ``language``'s ready pack, or ``None`` (no clue frames)."""
+    from app.language_packs.context import resolve_language_context
+
+    if not language:
+        return None
+    try:
+        context = resolve_language_context(str(language).lower())
+    except ValueError:
+        return None
+    return None if context is None else _grammar_of(context.pack_json, context.experimental)
 
 
 def _with_article(article, noun):
     return f"{article}{noun}" if article.endswith("'") else f"{article} {noun}"
 
 
-def _definite(language, term):
-    if language in ARTICLELESS_LANGUAGES:
+def _definite(grammar, term):
+    if grammar.articleless:
         return None
     if term.get("article"):
         return term["article"]
-    return DEFINITE_ARTICLES[language].get(term.get("gender"))
+    return grammar.definite(term.get("gender"))
 
 
-def _reference_phrase(language, term):
-    article = _definite(language, term)
+def _reference_phrase(grammar, term):
+    article = _definite(grammar, term)
     return _with_article(article, term["translation"]) if article else term["translation"]
 
 
 def _place(language, preposition, term):
-    if language == "ko":
-        return f"{term['translation']} {preposition} 있어요"
-    article = _definite(language, term)
-    folded = _fold(preposition)
-    if not article or folded.startswith(LOCATION_VERB_STARTS):
+    """The location phrase for ``preposition`` and a reference term, or ``None``."""
+    grammar = clue_grammar(language)
+    return None if grammar is None else _place_with(grammar, preposition, term)
+
+
+def _place_with(grammar, preposition, term):
+    place = grammar.clues.place
+    if grammar.articleless:
+        return place.format(position=preposition, reference=term["translation"])
+    article = _definite(grammar, term)
+    if not article or grammar.starts_with_verb(preposition):
         return None
     words = preposition.split()
-    if language == "de":
-        gender = term.get("gender") or _GERMAN_ARTICLE_GENDERS.get(article.casefold())
-        article = DATIVE_ARTICLES["de"].get(gender)
-        if not article:
-            return None
-    contracted = CONTRACTIONS[language].get((words[-1].casefold(), article.casefold()))
+    article = grammar.place_article(article, term.get("gender"))
+    if not article:
+        return None
+    contracted = grammar.contraction(words[-1], article)
     if contracted:
-        return " ".join([*words[:-1], contracted, term["translation"]])
-    return f"{preposition} {_with_article(article, term['translation'])}"
+        return place.format(position=" ".join([*words[:-1], contracted]),
+                            reference=term["translation"])
+    return place.format(position=preposition,
+                        reference=_with_article(article, term["translation"]))
 
 
 def agree_colour(language, adjective, gender):
     """The colour form agreeing with a singular noun, or None when it is not certain."""
+    grammar = clue_grammar(language)
+    return None if grammar is None else _agree_with(grammar, adjective, gender)
+
+
+def colour_key(language, text):
+    """One key for a colour however it is written: its gender form, a written clue
+    form (빨간색이에요) or a recognised spelling (빨간). ``None`` for an unknown colour."""
+    grammar = clue_grammar(language)
+    if grammar is None:
+        return None
+    folded = _fold(text.strip())
+    return next((
+        colour.forms[0] for colour in grammar.clues.colours
+        if folded in {_fold(form) for form in [*colour.forms, *colour.recognised]}
+    ), None)
+
+
+def _agree_with(grammar, adjective, gender):
     folded = _fold(adjective.strip())
-    if language == "ko":
-        return next((
-            form for form, aliases in KOREAN_COLOUR_FORMS.values()
-            if folded in {_fold(alias) for alias in aliases}
-        ), None)
-    for forms in COLOUR_FORMS.get(language, []):
-        if folded in {_fold(form) for form in forms}:
+    for colour in grammar.clues.colours:
+        if folded in {_fold(form) for form in colour.recognised or colour.forms}:
+            forms = colour.forms
             if len(set(forms)) == 1:
                 return forms[0]
             return dict(zip(GENDERS, forms, strict=False)).get(gender)
@@ -221,19 +185,21 @@ def build_clue_support(context, target, word, introduced_keys=()):
     Reference nouns come only from ``introduced_keys`` (this session's lesson words).
     """
     language = context.get("targetLanguage")
-    if language not in SUPPORTED_LANGUAGES:
+    grammar = clue_grammar(language)
+    if grammar is None:
         return [], []
+    clues = grammar.clues
     facts = context.get("sceneObjects", {})
     objects = {term["key"]: term for term in facts.get("objects", [])}
     target_key = str(target.id)
     target_term = objects.get(target_key, {})
     gender = target_term.get("gender")
-    forms = _target_forms(language, target, word, target_term)
-    prefixes = _prefixes(language, gender)
+    forms = _target_forms(grammar, target, word, target_term)
+    prefixes = {frame: grammar.prefix(frame, gender) for frame in ("colour", "location")}
     frames = []
 
     confirmed_colours = [
-        (agree_colour(language, term["translation"], gender), term.get("source"))
+        (_agree_with(grammar, term["translation"], gender), term.get("source"))
         for term in facts.get("attributes", [])
         if term.get("objectKey") == target_key
         and term["key"].rsplit(":", 1)[-1] in COLOUR_ATTRIBUTE_TYPES
@@ -241,7 +207,10 @@ def build_clue_support(context, target, word, introduced_keys=()):
     colour_help = _allowed([form for form, _ in confirmed_colours], forms)
     if colour_help:
         bank = {}
-        bank_colours = [(agree_colour(language, c, gender), m) for c, m in COLOUR_BANK[language]]
+        bank_colours = [
+            (_agree_with(grammar, colour.forms[0], gender), colour.meaning)
+            for colour in clues.colours if colour.bank
+        ]
         for form, meaning in [*bank_colours, *confirmed_colours]:
             if form and not mentions_target(form, forms):
                 bank.setdefault(_fold(form), (form, meaning))
@@ -249,7 +218,7 @@ def build_clue_support(context, target, word, introduced_keys=()):
             frame_id="colour",
             prefix=prefixes["colour"],
             meaning=MEANINGS["colour"],
-            example=TEACHING_EXAMPLES[language]["colour"],
+            example=clues.examples.colour,
             template=f"{prefixes['colour']} [colour]",
             slots=[ClueSlot(slot_id="colour", label="colour", chips=[
                 ClueSlotChip(text=form, meaning=meaning)
@@ -261,9 +230,9 @@ def build_clue_support(context, target, word, introduced_keys=()):
     references = {}
     for key in introduced_keys:
         term = objects.get(str(key))
-        article = term and _definite(language, term)
-        if str(key) != target_key and term and (article or language in ARTICLELESS_LANGUAGES):
-            text = _reference_phrase(language, term)
+        article = term and _definite(grammar, term)
+        if str(key) != target_key and term and (article or grammar.articleless):
+            text = _reference_phrase(grammar, term)
             if not mentions_target(text, forms):
                 references.setdefault(_fold(text), (text, term))
     location_help, extra_positions = [], []
@@ -277,30 +246,31 @@ def build_clue_support(context, target, word, introduced_keys=()):
         other = objects.get(other_key)
         if (
             other and other_key != target_key
-            and _fold(_reference_phrase(language, other)) in references
+            and _fold(_reference_phrase(grammar, other)) in references
         ):
-            location_help.append(_place(language, relation["translation"], other))
+            location_help.append(_place_with(grammar, relation["translation"], other))
             extra_positions.append((relation["translation"], relation.get("source"), None))
     location_help = _allowed(location_help, forms)
     if location_help and references:
         positions = {}
-        for text, meaning, example in [*POSITIONS[language], *extra_positions]:
-            if not _fold(text).startswith(LOCATION_VERB_STARTS):
+        bank_positions = [(item.text, item.meaning, item.example) for item in clues.positions]
+        for text, meaning, example in [*bank_positions, *extra_positions]:
+            if not grammar.starts_with_verb(text):
                 positions.setdefault(_fold(text), (text, meaning, example))
         phrases = {
             f"{position}|{reference}": phrase
             for position, _, _ in positions.values()
             for reference, term in references.values()
-            if (phrase := _place(language, position, term))
+            if (phrase := _place_with(grammar, position, term))
         }
         frames.append(ClueFrame(
             frame_id="location",
             prefix=prefixes["location"],
             meaning=MEANINGS["location"],
-            example=TEACHING_EXAMPLES[language]["location"],
+            example=clues.examples.location,
             template=(
                 f"{prefixes['location']} [reference object] [position]"
-                if language == "ko"
+                if grammar.reference_first
                 else f"{prefixes['location']} [position] [reference object]"
             ),
             slots=[
@@ -323,7 +293,7 @@ def _allowed(values, forms):
     return [value for value in _unique(values) if not mentions_target(value, forms)][:12]
 
 
-def _target_forms(language, target, word, target_term):
+def _target_forms(grammar, target, word, target_term):
     forms = [word.lemma, word.display_text, word.plural_form, target.label]
     forms.append(target_term.get("translation"))
     plurals = []
@@ -333,8 +303,9 @@ def _target_forms(language, target, word, target_term):
         plurals.append(f"{form}s")
         if _fold(form)[-1:] not in "aeiou":
             plurals.append(f"{form}es")
-        if language == "fr" and _fold(form).endswith(("au", "eu")):
-            plurals.append(f"{form}x")
+        for plural in grammar.clues.avoid_plurals:
+            if _fold(form).endswith(tuple(_fold(ending) for ending in plural.after)):
+                plurals.append(f"{form}{plural.suffix}")
     return _unique([form.strip() for form in [*forms, *plurals] if form and form.strip()])[:20]
 
 

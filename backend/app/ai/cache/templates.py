@@ -7,10 +7,10 @@ language, prompt/schema/validator variant, translation basis and a fingerprint
 of the canonical payload. Deployment and model are provenance only: a route
 change does not make a template stale.
 
-The basis tells apart results built on the two scene translations: a lesson's
-pack translation (its terms carry ``nativeDisplay``) and the unguided translation
-I-Spy games and rooms use. Lesson and clue templates for both are kept side by
-side; templates stored before the basis existed are unguided.
+The basis tells apart results built on a pack translation (its terms carry
+``nativeDisplay``), which lessons and I-Spy games use, from those built on the former
+unguided translation. Templates stored before the basis existed are unguided and no
+longer match.
 """
 
 from __future__ import annotations

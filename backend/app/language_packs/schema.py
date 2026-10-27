@@ -167,6 +167,8 @@ class PackFiles(ApiModel):
     requests: NonEmptyText | None = None
     # The closed words a noun pairs with at A0 (M13): articles or Korean endings.
     pairs: NonEmptyText | None = None
+    # The guided I-Spy clue grammar; packs without it offer no clue frames or rooms.
+    clues: NonEmptyText | None = None
     constructions: list[NonEmptyText] = Field(min_length=1)
     examples: list[NonEmptyText] = Field(min_length=1)
     evaluations: list[NonEmptyText] = Field(min_length=1)
@@ -408,6 +410,129 @@ class PairedWordsFile(ApiModel):
             raise ValueError("paired words must be NFC")
         if len({word.position for word in self.words}) != 1:
             raise ValueError("paired words all go on one side of the noun")
+        return self
+
+
+ClueFrameId = Literal["colour", "location"]
+
+
+class CluePrefix(ApiModel):
+    """How an I-Spy clue frame starts (Es / Está, Elle est, Er ist, 이것은).
+
+    ``agreement`` limits it to a target noun of one gender; the entry without one is used
+    for any other target.
+    """
+
+    frame: ClueFrameId
+    text: NonEmptyText
+    agreement: Agreement | None = None
+
+
+class ClueArticle(ApiModel):
+    agreement: Agreement
+    text: NonEmptyText
+
+
+class ClueContraction(ApiModel):
+    """A position's last word and an article written as one word (de + el = del)."""
+
+    preposition: NonEmptyText
+    article: NonEmptyText
+    text: NonEmptyText
+
+
+class CluePosition(ApiModel):
+    """A position chip offered in the location frame, with a teaching example."""
+
+    text: NonEmptyText
+    meaning: NonEmptyText
+    example: NonEmptyText
+
+
+class ClueColour(ApiModel):
+    """A colour a clue can say about its hidden object.
+
+    ``forms`` agree with a singular noun by gender (masculine, feminine[, neuter]); one
+    form serves every gender. A translated colour matches by ``recognised`` spellings
+    (Korean 빨간, 빨강), else by its forms. ``bank`` colours are offered as chips.
+    """
+
+    meaning: NonEmptyText
+    forms: list[NonEmptyText] = Field(min_length=1, max_length=3)
+    recognised: list[NonEmptyText] = Field(default_factory=list)
+    bank: bool = False
+
+
+class ClueExamples(ApiModel):
+    colour: NonEmptyText
+    location: NonEmptyText
+
+
+class CluePlural(ApiModel):
+    """A plural ending a clue must also avoid for the target noun (French gâteau → gâteaux).
+
+    Every language avoids the noun with s, and es after a consonant.
+    """
+
+    after: list[NonEmptyText] = Field(min_length=1)
+    suffix: NonEmptyText
+
+
+PLACE_POSITION = "{position}"
+PLACE_REFERENCE = "{reference}"
+
+
+class CluesFile(ApiModel):
+    """The closed grammar guided I-Spy clue frames and room clues are built from.
+
+    A location phrase is ``place`` with its position and reference noun; the reference
+    takes its definite article from the translation (else ``articles`` by gender), or the
+    ``place_articles`` form after a position (German dative), joined as a contraction
+    where one is listed. A language without articles names the reference bare.
+    """
+
+    provenance: Provenance
+    prefixes: list[CluePrefix] = Field(min_length=2)
+    examples: ClueExamples
+    positions: list[CluePosition] = Field(min_length=1)
+    colours: list[ClueColour] = Field(min_length=1)
+    place: NonEmptyText = f"{PLACE_POSITION} {PLACE_REFERENCE}"
+    articles: list[ClueArticle] = Field(default_factory=list)
+    place_articles: list[ClueArticle] = Field(default_factory=list)
+    contractions: list[ClueContraction] = Field(default_factory=list)
+    # Translated positions that start with a verb (está sobre, ist auf) are not positions.
+    location_verb_starts: list[NonEmptyText] = Field(default_factory=list)
+    avoid_plurals: list[CluePlural] = Field(default_factory=list)
+    # Definite articles written joined to the noun (French l'); a room accepts these and
+    # ``articles`` as a translation's article.
+    elided_articles: list[NonEmptyText] = Field(default_factory=list)
+    # The word joining two room clues (Es roja y está sobre la mesa.); without one a room
+    # offers single clues only.
+    conjunction: NonEmptyText | None = None
+
+    @model_validator(mode="after")
+    def require_consistent_grammar(self) -> CluesFile:
+        for frame in ("colour", "location"):
+            if not any(p.frame == frame and p.agreement is None for p in self.prefixes):
+                raise ValueError(f"clue prefixes need a {frame} entry without agreement")
+        keys = [(p.frame, p.agreement) for p in self.prefixes]
+        if len(keys) != len(set(keys)):
+            raise ValueError("clue prefixes repeat a frame and agreement")
+        for name, articles in (("articles", self.articles),
+                               ("place_articles", self.place_articles)):
+            if len({a.agreement for a in articles}) != len(articles):
+                raise ValueError(f"clue {name} repeat an agreement")
+        if self.place.count(PLACE_POSITION) != 1 or self.place.count(PLACE_REFERENCE) != 1:
+            raise ValueError("clue place needs one {position} and one {reference}")
+        pairs = [(c.preposition.casefold(), c.article.casefold()) for c in self.contractions]
+        if len(pairs) != len(set(pairs)):
+            raise ValueError("clue contractions repeat a preposition and article")
+        if not any(colour.bank for colour in self.colours):
+            raise ValueError("clue colours need at least one bank colour")
+        texts = [*(p.text for p in self.prefixes), *(p.text for p in self.positions),
+                 *(form for colour in self.colours for form in colour.forms)]
+        if any(normalize("NFC", text) != text for text in texts):
+            raise ValueError("clue words must be NFC")
         return self
 
 
@@ -726,6 +851,8 @@ class LanguagePack(ApiModel):
     possessives: PossessivesFile | None = None
     requests: RequestsFile | None = None
     paired_words: PairedWordsFile | None = None
+    # Not part of the lesson fingerprint: clue frames are built in code, never cached.
+    clues: CluesFile | None = None
     _pack_dir: Path | None = PrivateAttr(default=None)
     _evaluation_files: list[Path] = PrivateAttr(default_factory=list)
 

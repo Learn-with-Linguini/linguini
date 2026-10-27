@@ -256,9 +256,15 @@ def run_translation(cand: Candidate, overrides: Overrides, case: Any) -> dict:
     service = SceneTranslationService(
         client, config, tracer=NoOpAITracer(), provider=cand.provider
     )
+    from app.language_packs.context import resolve_language_context
+
     ok, error = False, None
     try:
-        service.translate(case.payload())
+        # Translation always runs with the language's pack; a language without a
+        # ready pack fails here like any other unusable case.
+        service.translate(
+            case.payload(), language_context=resolve_language_context(case.target_language),
+        )
         ok = True
     except Exception as exc:  # noqa: BLE001
         error = f"{type(exc).__name__}: {exc}"

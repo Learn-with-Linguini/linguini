@@ -266,3 +266,11 @@ def operation_context(mode, profile, snapshot=None):
     return resolve_language_context(
         profile["target_language_code"].lower(), profile.get("language_register")
     )
+
+
+def game_context(profile):
+    """The pack I-Spy games and room photos translate with, or ``None`` without a ready
+    one (they then make no new translation)."""
+    return resolve_language_context(
+        profile["target_language_code"].lower(), profile.get("language_register")
+    )

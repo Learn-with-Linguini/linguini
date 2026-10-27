@@ -1,4 +1,4 @@
-"""Curated-scene templates for a language with a ready pack: lessons and I-Spy games apart."""
+"""Curated-scene templates for a language with a ready pack, shared by lessons and I-Spy."""
 
 from uuid import uuid4
 
@@ -9,7 +9,7 @@ from app.language_packs.context import resolve_language_context
 from app.repositories.postgres.workflow import ispy_clue_payload, learning_task_payload
 from app.scripts.preloaded_templates import curated_generation_inputs, generate_row_templates
 
-STAGES = ["translation", "clues", "pack-translation", "pack-lessons", "pack-clues"]
+STAGES = ["pack-translation", "pack-lessons", "pack-clues"]
 
 
 def _precomputed(model=None):
@@ -38,7 +38,7 @@ def _session(row, model, language_context, *, lesson=True):
     return translated, lessons, clues
 
 
-def test_a_pack_language_stores_lesson_and_game_templates_side_by_side():
+def test_a_pack_language_stores_only_the_pack_template_set():
     row, model = _precomputed()
     stored = row["content"][GENERATED_CONTENT_KEY]["templates"]
     by_feature = {}
@@ -46,12 +46,10 @@ def test_a_pack_language_stores_lesson_and_game_templates_side_by_side():
         by_feature.setdefault(entry["feature"], set()).add(
             (entry["variant"].split("|")[0], entry.get("basis", ""))
         )
-    assert by_feature["sceneTranslation"] == {
-        ("scene-translation.v5", ""), ("pack-translation.v2", ""),
-    }
-    # Lessons only ever use the pack translation; clues serve lessons and I-Spy games.
+    assert by_feature["sceneTranslation"] == {("pack-translation.v2", "")}
+    # Lessons and I-Spy games both use the pack translation and its clues.
     assert {basis for _variant, basis in by_feature["learningTask"]} == {"pack"}
-    assert {basis for _variant, basis in by_feature["ispyClue"]} == {"", "pack"}
+    assert {basis for _variant, basis in by_feature["ispyClue"]} == {"pack"}
     # The pack translation was reviewed once, when its template was made.
     assert model.requests.count("pack_translation_review") == 1
 
@@ -65,16 +63,17 @@ def test_an_unchanged_scene_builds_a_pack_lesson_without_any_call():
     assert lessons.tasks and clues.clues
 
 
-def test_i_spy_games_keep_the_unguided_templates():
+def test_i_spy_games_reuse_the_pack_templates_without_any_call():
     row, _ = _precomputed()
     model = SceneModel(error=AssertionError("provider must not be called"))
-    translated, _lessons, clues = _session(row, model, None, lesson=False)
+    translated, _lessons, clues = _session(row, model, resolve_language_context("es"),
+                                           lesson=False)
     assert model.requests == []
-    assert not any(term.native_display for term in translated.objects)
+    assert all(term.native_display for term in translated.objects)
     assert clues.clues
 
 
-def test_a_rerun_reuses_both_template_sets_without_calls():
+def test_a_rerun_reuses_the_template_set_without_calls():
     row, _ = _precomputed()
     model = SceneModel()
     outcomes = generate_row_templates(row, "es", services(model), unlimited(), RESERVE)

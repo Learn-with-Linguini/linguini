@@ -10,7 +10,8 @@ semantic IDs), the optional `numbers.toml` (number words for counting missions),
 the optional `possessives.toml` (possessive words and a role-play cast for ownership and
 preference missions), the optional `requests.toml` (order quantities and requested details
 for request role-plays), the optional `pairs.toml` (the closed words a noun pairs with at A0:
-articles or Korean endings),
+articles or Korean endings), the optional `clues.toml` (the guided I-Spy clue grammar, see
+below),
 `constructions/*.toml` (grammar guidance, features, constraints, version),
 `examples/*.toml` (scene facts, bindings, sentences, chunks, alternatives, contrasts, mistakes) and
 `evaluations/*.toml` (held-out cases per mission level). Evaluations are loaded only through
@@ -29,6 +30,32 @@ references, reviewed vocabulary forms, labels, chunk reconstruction, and Unicode
 normalization; it does not infer meaning, grammaticality, or learner readiness.
 
 The fixture pack is unreviewed test data and is not a claim of linguistic validation.
+
+### I-Spy clue grammar (`clues.toml`)
+
+Guided I-Spy clue frames and photo-room clues are built in code from the pack's
+`clues.toml`: the frame `prefixes` by target gender (Es / Está, Elle est, Er ist,
+이것은), teaching `examples`, the five `positions` with meanings and examples, the
+`colours` with their agreeing forms (`bank` colours are offered as chips; `recognised`
+lists other spellings a translation may use), and how a location phrase is written:
+`place` (`{position} {reference}`, or Korean `{reference} {position} 있어요`), definite
+`articles` by gender for a reference without one, `place_articles` after a position
+(German dative), `contractions` (de + el = del, zu + dem = zum),
+`location_verb_starts` (a translated position starting with a verb is not offered) and
+extra `avoid_plurals` for the words a clue must not use (French gâteaux). A language with
+`articles = "none"` names the reference bare. Photo rooms also read the
+`elided_articles` they accept beside `articles` (French l') and the `conjunction` joining
+two clues (y, et, und); a pack without one, such as Korean today, offers single-clue
+room options only. Rooms open for every language whose ready pack has a usable clue
+grammar.
+
+The bundled files hold dev's former hand-written I-Spy and room tables unchanged
+(`tests/test_ispy_clue_grammar.py` compares the frames, colours, location phrases and
+room clues they build with `tests/fixtures/ispy_clue_frames.json`, recorded from those
+tables). They are not human-reviewed, so outside a local experiment a pack's clue grammar
+is used only once it is `humanReviewed`. A language without a ready pack or without
+`clues.toml` gets no clue frames; its I-Spy games keep their clue rounds. Clue grammar is
+not part of the lesson fingerprint, because frames are built in code and never cached.
 
 ## Normal workflow and local switches
 

@@ -64,6 +64,7 @@ class SceneTranslationResult(ApiModel):
 class TranslationReviewIssue(ApiModel):
     group: Literal["objects", "attributes", "relationships"]
     key: NonEmptyText
+    issue_type: Literal["meaningMismatch", "formPreference"] = "meaningMismatch"
     # What the current translation actually means, in English.
     current_meaning: NonEmptyText
     # The everyday native word for the source meaning.

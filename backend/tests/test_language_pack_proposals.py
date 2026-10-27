@@ -10,8 +10,9 @@ from test_language_pack_runtime import runtime as runtime
 from app.ai.cache.cache import ResultCache
 from app.ai.contracts.text import TextModelConfig
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
+from app.language_packs.generation import ApprovedTerm
 from app.language_packs.loader import load_pack
-from app.language_packs.model_source import ModelSource
+from app.language_packs.model_source import ModelSource, _redundant_number_claim
 from app.language_packs.pipeline import generate_pilot
 from app.language_packs.runtime import session_inputs
 from app.repositories.postgres.workflow import _lesson_answer_is_correct, evaluate
@@ -310,6 +311,29 @@ def test_realization_id_errors_use_bounded_repair_without_loosening_bindings(
     assert [spec["slot_id"] for spec in repair["specs"]] == ["describeObject"]
     reasons = repair["repair"]["describeObject/describeObject-answer"]
     assert any("Use only this spec's term IDs" in reason for reason in reasons)
+
+
+def test_redundant_tamil_count_claim_requires_an_approved_scoped_numeral():
+    one = ApprovedTerm(
+        term_id="number-1", fact_id="number:1", source_text="one", target_text="ஒன்று",
+        forms=["ஒன்று", "ஒரு"], forms_by_key={"with-noun-any": "ஒரு"},
+        part_of_speech="determiner", provenance="packData", linguistic={"quantity": "1"},
+    )
+    three = ApprovedTerm(
+        term_id="count-1", fact_id="count:1", source_text="three", target_text="மூன்று",
+        forms=["மூன்று"], part_of_speech="determiner", provenance="packData",
+        linguistic={"quantity": "3"},
+    )
+    # The wrong count ID adds no evidence: the one written in the sentence is
+    # already an approved form of the spec's bound number-1.
+    assert _redundant_number_claim(three, "ஒரு", [one])
+    assert not _redundant_number_claim(three, "மூன்று", [one])
+    assert not _redundant_number_claim(three, "unapproved-form", [one])
+    assert not _redundant_number_claim(None, "ஒரு", [one])
+    assert not _redundant_number_claim(three, "ஒரு", [])
+    obj = one.model_copy(update={"term_id": "object-one", "part_of_speech": "noun"})
+    assert not _redundant_number_claim(obj, "ஒரு", [one])
+    assert not _redundant_number_claim(three, "ஒரு", [obj])
 
 
 def test_review_notes_never_fail_when_every_criterion_passes():

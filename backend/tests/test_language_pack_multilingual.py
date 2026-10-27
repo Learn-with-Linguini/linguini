@@ -7,6 +7,7 @@ model evidence or a claim that the generated language has been reviewed.
 import json
 import re
 import unicodedata
+from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
 from uuid import UUID
@@ -1013,7 +1014,7 @@ def _counted_groups(objects):
 
 
 def _dispatch(language, level, scene, provider, monkeypatch, mission_id="M01", reaction="like",
-              progress=None, scenario=None):
+              progress=None, scenario=None, choice_object_id=None):
     from app.language_packs.context import resolve_language_context
 
     monkeypatch.setenv("APP_ENV", "test")
@@ -1033,6 +1034,9 @@ def _dispatch(language, level, scene, provider, monkeypatch, mission_id="M01", r
         # The learner rates one object and does not like it: they take another instead.
         learner_facts["M05"] = {"preference": {"sceneObjectIds": [str(objects[0].id)],
                                                "reaction": "dislike"}}
+    if choice_object_id is not None:
+        learner_facts["M05"] = {"preference": {"sceneObjectIds": [str(choice_object_id)],
+                                               "reaction": reaction}}
     if scenario is not None:
         # No learner choice: the plan assigns the A0 scenario (``scenario`` its reaction).
         learner_facts[mission_id] = assign_a0_scenario(mission, UUID(int=100), objects, markers)
@@ -1240,7 +1244,9 @@ def test_a0_situation_without_a_choice_states_the_assigned_scenario(
     assert snapshot.pretend is True
     if mission_id == "M04":
         owned = next(obj for obj in objects if str(obj.id) == facts["ownedObjectId"])
-        assert premise == f"Let's pretend the {owned.label} is yours."
+        assert premise == (
+            f"Let's pretend the {owned.label} at marker {objects.index(owned) + 1} is yours."
+        )
         assert str(snapshot.owned_object_id) == facts["ownedObjectId"]
         return
     focus, other = (next(obj for obj in objects if str(obj.id) == key)
@@ -1249,12 +1255,15 @@ def test_a0_situation_without_a_choice_states_the_assigned_scenario(
     answers = task.answer_key.correct_option_ids
     assert str(pick.marker_object_ids[answers[pick.question_id]]) == str(focus.id)
     if scenario == "like":
-        assert premise == f"Let's pretend you like the {focus.label}."
-        assert pick.prompt == "Which one do you like? Tap it in your photo."
+        assert premise == (
+            f"Let's pretend you like the {focus.label} at marker {objects.index(focus) + 1}."
+        )
+        assert pick.prompt == "In this scenario, which object do you like? Tap it in your photo."
     else:
-        assert premise == (f"Let's pretend you don't like the {focus.label}, "
-                           f"so you pick the {other.label}.")
-        assert pick.prompt == "Which one don't you like? Tap it in your photo."
+        assert premise == (f"Let's pretend you don't like the {focus.label} "
+                           f"at marker {objects.index(focus) + 1}, "
+                           f"so you pick the {other.label} at marker {objects.index(other) + 1}.")
+        assert pick.prompt == "In this scenario, which object don't you like? Tap it in your photo."
         last = next(q for q in questions if q.question_id == "M05-Q6")
         assert str(last.option_object_ids[answers["M05-Q6"]]) == str(other.id)
 
@@ -1265,6 +1274,118 @@ def test_a0_situation_from_the_learner_choice_has_no_scenario(mission_id, scene,
                         mission_id)
     assert all(q.roleplay_premise is None for q in task.public_content.questions)
     assert not task.public_content.mission_snapshot.pretend
+
+
+@pytest.mark.parametrize("language", list(LOCALES))
+@pytest.mark.parametrize("scenario", [None, "like"])
+def test_a0_ownership_prompts_answers_and_dialogue_agree(language, scenario, scene, monkeypatch):
+    (task,) = _dispatch(language, "A0", scene(language), MockPackProvider(language), monkeypatch,
+                        "M04", scenario=scenario)
+    questions = {question.question_id: question for question in task.public_content.questions}
+    answers = task.answer_key.correct_option_ids
+
+    def answer(question):
+        return next(option.label for option in question.options
+                    if option.option_id == answers[question.question_id])
+
+    heard = questions["M04-Q2"]
+    assert "What does Linguini ask?" in heard.prompt
+    assert {option.label for option in heard.options} == {"Is this yours?", "Do you like it?"}
+    assert answer(heard) == "Is this yours?"
+    assert heard.option_icons[answers[heard.question_id]] == "belongs"
+    assert heard.listen_first
+
+    for question_id in ("M04-Q3", "M04-Q4", "M04-Q6"):
+        question = questions[question_id]
+        assert "yours" in question.prompt
+        assert "yours" in question.instruction
+
+    # The graded words must actually complete the displayed sentence in each
+    # language, including its punctuation and object-specific ownership form.
+    for question_id in ("M04-Q3", "M04-Q4", "M04-Q5", "M04-Q6"):
+        question = questions[question_id]
+        assert question.slot_template.replace("___", answer(question)) == question.complete_chunk
+
+    dialogue = questions["M04-Q6"]
+    assert dialogue.dialogue[0].text == heard.audio_text
+    assert dialogue.dialogue[1].translation == dialogue.complete_translation
+    _assert_gradable(task)
+
+
+@pytest.mark.parametrize("language", list(LOCALES))
+@pytest.mark.parametrize("selected_marker", [1, 2])
+@pytest.mark.parametrize("reaction", ["like", "dislike"])
+def test_a0_preference_respects_either_same_name_object(
+    language, selected_marker, reaction, monkeypatch,
+):
+    photo = build_scene(language, (("cup", "red"), ("cup", "white"), ("table", "green")))
+    chosen_id = UUID(int=selected_marker)
+    (task,) = _dispatch(language, "A0", photo, MockPackProvider(language), monkeypatch,
+                        "M05", reaction=reaction, choice_object_id=chosen_id)
+    snapshot = task.public_content.mission_snapshot
+    assert snapshot.preference_object_ids == [chosen_id]
+    assert snapshot.reaction == reaction
+    assert not snapshot.pretend
+    first, *_, last = task.public_content.questions
+    assert f"cup at marker {selected_marker}" in first.prompt
+    correct_option = task.answer_key.correct_option_ids[first.question_id]
+    assert first.marker_object_ids[correct_option] == chosen_id
+    assert chosen_id in first.marker_object_ids.values()
+    assert all(q.roleplay_premise is None for q in task.public_content.questions)
+    if reaction == "dislike":
+        assert "For this practice, choose the table at marker 3" in last.instruction
+    _assert_gradable(task)
+
+
+@pytest.mark.parametrize("language", list(LOCALES))
+@pytest.mark.parametrize("reaction", ["like", "dislike"])
+def test_a0_assigned_preference_disambiguates_repeated_objects(language, reaction, monkeypatch):
+    photo = build_scene(language, (("cup", "red"), ("cup", "white"), ("table", "green")))
+    (task,) = _dispatch(language, "A0", photo, MockPackProvider(language), monkeypatch,
+                        "M05", scenario=reaction)
+    snapshot = task.public_content.mission_snapshot
+    first = task.public_content.questions[0]
+    focus = first.marker_object_ids[task.answer_key.correct_option_ids[first.question_id]]
+    row = next(obj for obj in photo[0] if obj.id == focus)
+    assert snapshot.pretend
+    for question in task.public_content.questions:
+        assert f"{row.label} at marker {photo[0].index(row) + 1}" in question.roleplay_premise
+    _assert_gradable(task)
+
+
+@pytest.mark.parametrize("language", list(LOCALES))
+def test_m03_ignores_a_redundant_count_id_on_a_bound_number_form(language, monkeypatch):
+    class CountIdProvider(MockPackProvider):
+        def generate(self, request):
+            response = super().generate(request)
+            if request.json_schema_name != "language_pack_candidates_v1":
+                return response
+            data, value = json.loads(request.user_content), json.loads(response.output_text)
+            terms = {term["termId"]: term for term in data["candidate_vocabulary"]["terms"]}
+            count = next(term for term in terms.values() if term["termId"].startswith("count-"))
+            for spec in data["specs"]:
+                if spec["slot_id"] != "matchChunk-1":
+                    continue
+                number_id = spec["counterfactual"].get("count")
+                if number_id is None or number_id == count["termId"]:
+                    continue
+                number = terms[number_id]
+                for candidate in value["candidates"]:
+                    if (candidate["slot_id"], candidate["spec_id"]) == (
+                        spec["slot_id"], spec["spec_id"],
+                    ):
+                        forms = sorted(number["forms"], key=len, reverse=True)
+                        surface = next(form for form in forms
+                                       if re.search(rf"(?<!\w){re.escape(form)}(?!\w)",
+                                                    candidate["text"]))
+                        candidate["realizations"] = [{"term_id": count["termId"],
+                                                      "surface": surface}]
+            return replace(response, output_text=json.dumps(value, ensure_ascii=False))
+
+    provider = CountIdProvider(language)
+    (task,) = _dispatch(language, "A0", build_scene(language), provider, monkeypatch, "M03")
+    _assert_gradable(task)
+    assert len(provider.requests) == 1, "redundant count metadata needs no model repair"
 
 
 CAFE = (("coffee", "black"), ("cup", "red"), ("table", "green"))

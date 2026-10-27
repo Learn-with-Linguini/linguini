@@ -22,6 +22,11 @@ def prep_add(prep, text, translation):
         prep.append({"text": text, "translation": translation})
 
 
+def object_reference(row):
+    """Name one photo instance even when several objects share the same noun."""
+    return f"{row['source']} at marker {row['marker']}"
+
+
 def choice_question(
     question_id, prompt, instruction, section, object_key, options, correct_label,
     target_group, payload, *, salt, gap_type=None, **extra,

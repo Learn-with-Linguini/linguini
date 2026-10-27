@@ -41,10 +41,11 @@ pytestmark = pytest.mark.usefixtures("regular_lesson")
 
 class Translator:
     def __init__(self):
-        self.payloads = []
+        self.payloads, self.options = [], []
 
     def translate(self, payload, cache_scope=None, **options):
         self.payloads.append(payload)
+        self.options.append(options)
         prefix = payload["targetLanguage"]
         return SceneTranslationResult.model_validate(pack_shaped({
             kind: [
@@ -318,6 +319,19 @@ def test_preloaded_scene_uses_curated_facts_without_a_confirmed_lesson(database,
     assert {t.kind for t in game.tasks} <= {"ispyRound", "reflection"}
 
 
+def test_a_game_needing_a_translation_without_a_ready_pack_fails(
+    database, repos, monkeypatch,
+):
+    _, _, _, client = database
+    workflow, games, profile, translator, _ = repos
+    monkeypatch.setattr("app.language_packs.context.game_context", lambda _profile: None)
+    asset = create_run(client, profile, "preloaded-no-pack-key")["mediaAsset"]["id"]
+    game = workflow.get(start(games, profile, asset).session.id, profile.id)
+    # A curated scene has no saved translation to reuse, and nothing translates it.
+    assert game.session.status == "failed"
+    assert translator.payloads == []
+
+
 def test_another_language_retranslates_the_same_confirmed_facts(database, repos):
     engine, owner, _, _ = database
     workflow, games, profile, translator, _ = repos
@@ -336,6 +350,9 @@ def test_another_language_retranslates_the_same_confirmed_facts(database, repos)
     game = workflow.get(start(games, french, asset).session.id, french.id)
     assert game.session.source_session_id == sid
     assert translator.payloads[-1]["targetLanguage"] == "fr"
+    # The game translates with the learner's ready French pack, as a lesson does.
+    assert translator.options[-1]["language_context"].display.language_code.casefold() == "fr"
+    assert all(term.native_display for term in game.translation_preview.objects)
     assert sorted(o["source"] for o in translator.payloads[-1]["objects"]) == sorted(
         o.label for o in lesson.scene_objects
     )

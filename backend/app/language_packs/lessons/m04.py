@@ -21,6 +21,7 @@ from app.schemas.roleplay import parse_roleplay_facts
 from app.services.lesson_tasks.a0_situations import (
     choice_question,
     marker_question,
+    object_reference,
     prep_add,
     situation_lesson_task,
     target_texts,
@@ -395,18 +396,19 @@ def _build_a0(ctx):
         choice_question(
             "M04-Q2", "Listen to Linguini. What does Linguini ask?",
             "Listen to Linguini. What does Linguini ask?", section, x["key"],
-            ["It belongs to you", "You like it"], "It belongs to you", "recognise-ownership",
+            ["Is this yours?", "Do you like it?"], "Is this yours?", "recognise-ownership",
             payload, salt="q2", audio_text=is_yours.text, listen_first=True,
         ),
         choice_question(
-            "M04-Q3", "Complete the answer.", "Choose the words that complete the answer.",
+            "M04-Q3", "Say that it is yours.", "Complete the answer to say it is yours.",
             section, x["key"], [mine.text, not_mine.text], mine.text, "say-mine", payload,
             salt="q3", gap_type="chunkChoice", slot_template=f"{yes} ___", complete_chunk=q3,
             complete_translation=f"Yes. {mine.translation}", typed_allowed=typed,
             accepted_text_answers=[mine.text, q3],
         ),
         choice_question(
-            "M04-Q4", "Complete the sentence.", "Choose the words that complete the sentence.",
+            "M04-Q4", "Say that this object is yours.",
+            "Complete the sentence to say this object is yours.",
             section, x["key"], [mine_predicate, yours_predicate], mine_predicate, "say-mine",
             payload, salt="q4", gap_type="chunkChoice",
             slot_template=f"{subject} ___{_final(x_mine.text)}", complete_chunk=x_mine.text,
@@ -423,15 +425,16 @@ def _build_a0(ctx):
             audio_text=x_mine.text, listen_first=True,
         ),
         choice_question(
-            "M04-Q6", "Finish the conversation.",
-            "Choose the answer that finishes the conversation.",
+            "M04-Q6", "Tell Linguini this object is yours.",
+            "Choose the answer that says this object is yours.",
             section, x["key"], [x_mine.text, y_mine.text], x_mine.text, "say-mine", payload,
             salt="q6", gap_type="dialogueGap", slot_template=f"{yes} ___", complete_chunk=q6,
             complete_translation=f"Yes. {x_mine.translation}",
             dialogue=[
-                {"speaker": "linguini", "text": is_yours.text, "translation": "Is this yours?"},
+                {"speaker": "linguini", "text": is_yours.text,
+                 "translation": is_yours.translation},
                 {"speaker": "learner", "text": f"{yes} ___",
-                 "translation": "Yes. The object is mine."},
+                 "translation": f"Yes. {x_mine.translation}"},
             ],
             correct_note=f"Yes—Linguini knows the {x['source']} is yours.",
             outcome={"text": "Great—Linguini knows it is yours.", "kind": "returned",
@@ -439,11 +442,15 @@ def _build_a0(ctx):
         ),
     ]
     questions[1].option_icons = {
-        option.option_id: "belongs" if option.label == "It belongs to you" else "likes"
+        option.option_id: "belongs" if option.label == "Is this yours?" else "likes"
         for option in questions[1].options
     }
     # An assigned (pretend) owner is stated as the scenario on every question.
-    scenario = f"Let's pretend the {x['source']} is yours." if owned.fictional else None
+    scenario = f"Let's pretend the {object_reference(x)} is yours." if owned.fictional else None
+    if not owned.fictional:
+        questions[0].prompt = questions[0].instruction = (
+            f"You said the {object_reference(x)} is yours. Tap it in your photo."
+        )
     for item in questions:
         item.roleplay_premise = scenario
     payload["approvedTargetTexts"] = target_texts(prep, questions)
