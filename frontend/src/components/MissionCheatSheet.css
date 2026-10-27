@@ -59,6 +59,20 @@
   gap: var(--space-3);
 }
 
+.cheatsheet-sheet__close.icon-btn {
+  flex: none;
+  margin-left: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--paper);
+  color: var(--teal-dark);
+}
+
+.cheatsheet-sheet__close.icon-btn:hover:not(:disabled) {
+  border-color: var(--teal);
+  background: var(--cream);
+}
+
 .cheatsheet-sheet__header h2,
 .cheatsheet-concept h3,
 .cheatsheet-sheet__header p,

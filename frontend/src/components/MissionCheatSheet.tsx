@@ -69,8 +69,7 @@ export function MissionCheatSheetLauncher({
       <section className="cheatsheet-sheet" role="dialog" aria-modal="true" aria-labelledby="cheatsheet-title">
         <div className="cheatsheet-sheet__handle" aria-hidden="true" />
         <header className="cheatsheet-sheet__header">
-          <div><p className="label muted">Mission guide</p><h2 id="cheatsheet-title">{sheet.data?.title ?? "Cheatsheet"}</h2></div>
-          <IconButton label="Close cheatsheet" onClick={close}><CloseIcon /></IconButton>
+          <IconButton className="cheatsheet-sheet__close" label="Close cheatsheet" onClick={close}><CloseIcon /></IconButton>
         </header>
         {sheet.isLoading ? <InlineLoader label="Opening your mission guide…" /> : null}
         {sheet.isError ? <div className="cheatsheet-unavailable" role="status">
