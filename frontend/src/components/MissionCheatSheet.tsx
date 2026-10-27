@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getMissionCheatSheet, type MissionCheatSheet } from "../lib/api";
 import { trackAction } from "../lib/analytics";
@@ -95,11 +95,14 @@ function CheatSheetConceptCard({ concept, languageCode, textDirection }: {
       {concept.patternParts.map(part => <div key={part.partId} className={`cheatsheet-pattern__part cheatsheet-pattern__part--${part.role}`}>
         <span className="cheatsheet-pattern__label">{part.label}</span>
         {part.text ? <span className="cheatsheet-pattern__pill" lang={languageCode}>{part.text}</span> :
-          <span className="cheatsheet-pattern__choices">{part.choices.map(choice =>
-            <span key={`${choice.text}-${choice.label}`} className="cheatsheet-pattern__choice">
-              <span className="cheatsheet-pattern__choice-label">{choice.label}</span>
-              <span className="cheatsheet-pattern__pill" lang={languageCode}>{choice.text}</span>
-            </span>)}</span>}
+          <span className="cheatsheet-pattern__choices">{part.choices.map((choice, index) =>
+            <Fragment key={`${choice.text}-${choice.label}`}>
+              {index > 0 ? <span className="cheatsheet-pattern__choice-divider" aria-hidden="true">or</span> : null}
+              <span className="cheatsheet-pattern__choice">
+                <span className="cheatsheet-pattern__choice-label">{choice.label}</span>
+                <span className="cheatsheet-pattern__pill" lang={languageCode}>{choice.text}</span>
+              </span>
+            </Fragment>)}</span>}
       </div>)}
     </div> : concept.formula ? <p className="cheatsheet-formula" lang={languageCode}>{concept.formula}</p> : null}
     <div className="cheatsheet-examples">

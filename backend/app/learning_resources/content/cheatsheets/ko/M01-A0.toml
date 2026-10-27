@@ -8,7 +8,7 @@ title = "Name and identify"
 [[concepts]]
 concept_id = "recognise-name"
 title = "Learn the object name"
-explanation = "Korean object names do not use an article like a or the."
+explanation = "Korean object names do not use articles like “the” or “a”."
 
 [[concepts.examples]]
 target_text = "소파"
