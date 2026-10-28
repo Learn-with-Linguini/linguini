@@ -7,13 +7,10 @@ title = "Find a described object"
 
 [[concepts]]
 concept_id = "recognise-adjective"
-title = "Place the adjective before or after"
-explanation = "Most French adjectives go after the object. Common BAGS adjectives often go before it: beauty, age, goodness and size."
-formula = "Usually: article + object + adjective; BAGS: article + adjective + object"
-tips = [
-  "BAGS is a useful beginner guide, not a rule for every French adjective.",
-  "The adjective still matches the object: grand becomes grande with la tasse.",
-]
+section_id = "adjective-after-object"
+title = "After the object"
+explanation = "Most French adjectives, including colours, go after the object."
+formula = "article + object + adjective"
 
 [[concepts.pattern_parts]]
 part_id = "object"
@@ -39,10 +36,48 @@ target_text = "la tasse rouge"
 translation = "the red cup"
 note = "Colour words usually come after the object."
 
+[[concepts]]
+concept_id = "recognise-adjective"
+section_id = "adjective-before-object"
+title = "Before the object"
+explanation = "BAGS adjectives go before the object."
+formula = "article + adjective + object"
+tips = [
+  "B — Beauty: un beau livre — a beautiful book",
+  "A — Age: un vieux livre — an old book",
+  "G — Goodness: un bon livre — a good book",
+  "S — Size: un grand livre — a big book",
+]
+
+[[concepts.pattern_parts]]
+part_id = "article"
+label = "article"
+role = "fixed"
+text = "la"
+
+[[concepts.pattern_parts]]
+part_id = "adjective"
+label = "BAGS adjective"
+role = "choice"
+
+[[concepts.pattern_parts.choices]]
+text = "grande"
+label = "big"
+
+[[concepts.pattern_parts.choices]]
+text = "belle"
+label = "beautiful"
+
+[[concepts.pattern_parts]]
+part_id = "object"
+label = "object"
+role = "slot"
+text = "tasse"
+
 [[concepts.examples]]
 target_text = "la grande tasse"
 translation = "the big cup"
-note = "Grande describes size, so this common BAGS adjective comes before the object."
+note = "Grande comes before tasse because size is the S in BAGS."
 
 [[concepts]]
 concept_id = "recognise-preposition"

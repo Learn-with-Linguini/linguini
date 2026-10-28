@@ -42,6 +42,7 @@ class CheatSheetConcept(ApiModel):
     """One teachable idea, linked to a target or pattern in the mission contract."""
 
     concept_id: ContractId
+    section_id: ContractId | None = None
     title: NonEmptyText
     explanation: NonEmptyText | None = None
     formula: NonEmptyText | None = None
@@ -65,9 +66,11 @@ class MissionCheatSheet(ApiModel):
 
     @model_validator(mode="after")
     def validate_unique_concepts(self) -> MissionCheatSheet:
-        concept_ids = [concept.concept_id for concept in self.concepts]
-        if len(concept_ids) != len(set(concept_ids)):
-            raise ValueError("conceptIds cannot repeat")
+        section_ids = [
+            concept.section_id or concept.concept_id for concept in self.concepts
+        ]
+        if len(section_ids) != len(set(section_ids)):
+            raise ValueError("sectionIds cannot repeat")
         reference_values = (self.character_reference_id, self.character_reference_version)
         if None in reference_values and any(value is not None for value in reference_values):
             raise ValueError(

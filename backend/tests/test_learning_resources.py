@@ -202,7 +202,12 @@ def test_french_a0_m02_description_cheatsheet_is_served_to_the_ui() -> None:
     assert response.status_code == 200
     assert [concept["conceptId"] for concept in response.json()["concepts"]] == [
         "recognise-adjective",
+        "recognise-adjective",
         "recognise-preposition",
+    ]
+    assert [concept["title"] for concept in response.json()["concepts"][:2]] == [
+        "After the object",
+        "Before the object",
     ]
 
 
