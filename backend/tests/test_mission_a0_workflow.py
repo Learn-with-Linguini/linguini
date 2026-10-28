@@ -20,7 +20,6 @@ from app.repositories.postgres.tasks import session_tasks, task_attempts
 from app.repositories.postgres.users import users
 from app.repositories.postgres.vocabulary import vocabulary_encounters
 from app.repositories.postgres.xp import xp_events
-from app.schemas.missions import MissionChoices, OwnershipChoice, PreferenceChoice
 
 
 @pytest.fixture
@@ -67,34 +66,24 @@ def test_a0_profiles_get_persisted_a0_lessons(beginner):
     ]
 
 
-def test_review_choices_are_persisted_restored_and_cleared_when_omitted(beginner):
+def test_review_assigns_pretend_ownership_and_preference_scenarios(beginner):
     _engine, _owner, profile, *_ = beginner
     repository = _repository(beginner, SceneModel())
     sid, analyzed = _analyzed(beginner, repository)
     first, second = analyzed.scene_objects[:2]
-    choices = MissionChoices(
-        ownership=OwnershipChoice(scene_object_id=first.id),
-        preference=PreferenceChoice(
-            scene_object_ids=[second.id], reaction="like",
-        ),
-    )
-    request = _review(analyzed).model_copy(update={"mission_choices": choices})
-    repository.review(sid, profile.id, request)
+    repository.review(sid, profile.id, _review(analyzed))
     reviewed = repository.get(sid, profile.id)
-    assert reviewed.mission_choices == choices
-    saved = reviewed.session.analysis_draft["missionChoices"]
-    assert saved["ownership"]["sceneObjectId"] == str(first.id)
-    assert saved["preference"]["sceneObjectIds"] == [str(second.id)]
+    assert reviewed.mission_choices is None
+    assert "missionChoices" not in reviewed.session.analysis_draft
     lessons = {task.public_content.mission_id: task for task in _a0_lessons(reviewed)}
     assert {"M04", "M05"} <= lessons.keys(), reviewed.session.analysis_draft.get("missionPlan")
     assert lessons["M04"].public_content.mission_snapshot.owned_object_id == first.id
+    assert lessons["M04"].public_content.mission_snapshot.pretend is True
     assert lessons["M05"].public_content.mission_snapshot.preference_object_ids == [second.id]
     restored = repository.get(sid, profile.id)
-    assert restored.mission_choices == choices
-    cleared = repository.review(sid, profile.id, _review(restored))
-    assert cleared.mission_choices is None
-    assert "missionChoices" not in cleared.session.analysis_draft
-    assert not {"M04", "M05"} & {task.public_content.mission_id for task in _a0_lessons(cleared)}
+    assert {"M04", "M05"} <= {
+        task.public_content.mission_id for task in _a0_lessons(restored)
+    }
 
 
 def test_a0_grading_is_idempotent_and_awards_once(beginner):

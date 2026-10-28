@@ -189,23 +189,14 @@ def test_situation_generation_is_deterministic_including_option_order(mission_id
 
 
 @pytest.mark.parametrize("mission_id", ["M04", "M05"])
-def test_final_a0_eligibility_requires_a_confirmed_choice(mission_id):
+def test_a0_situations_are_eligible_without_learner_choices(mission_id):
     mission = get_mission(mission_id, "A0", 1)
     objects = _objects(["cup", "book"])
     assert photo_eligibility(mission, objects).eligible
-    assert not photo_eligibility(mission, objects, mission_choices={}).eligible
-    if mission_id == "M04":
-        choices = {"ownership": {"scene_object_id": str(objects[0].id)}}
-    else:
-        choices = {"preference": {
-            "scene_object_ids": [str(objects[0].id)],
-            "chosen_object_id": None,
-            "reaction": "like",
-        }}
-    assert photo_eligibility(mission, objects, mission_choices=choices).eligible
+    assert photo_eligibility(mission, objects, mission_choices={}).eligible
 
 
-def test_provisional_plan_surfaces_both_opt_in_a0_situations_within_final_cap():
+def test_plan_surfaces_both_pretend_a0_situations_within_final_cap():
     candidates = lesson_missions(
         "lesson", {"proficiency_level": "A0", "target_language_code": "es"},
     )
@@ -225,14 +216,7 @@ def test_provisional_plan_surfaces_both_opt_in_a0_situations_within_final_cap():
     ]
     assert planned_order == sorted(planned_order)
 
-    choices = {
-        "ownership": {"scene_object_id": str(objects[0].id)},
-        "preference": {
-            "scene_object_ids": [str(objects[1].id)],
-            "reaction": "like",
-        },
-    }
-    final = plan_missions(candidates, objects, [], mission_choices=choices)
+    final = plan_missions(candidates, objects, [])
     final_ids = {mission.mission_id for mission in final}
     assert {"M04", "M05"} <= final_ids
     assert len(final) <= 3

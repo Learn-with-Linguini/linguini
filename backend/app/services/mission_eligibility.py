@@ -201,7 +201,6 @@ def plan_missions(
         for _index, mission in sorted(
             enumerate(eligible),
             key=lambda item: (
-                not _mission_choice_supplied(item[1], mission_choices),
                 counts[item[1].mission_id],
                 item[0],
             ),
@@ -562,27 +561,6 @@ def photo_eligibility(
     return Eligibility(not reasons, tuple(reasons), tuple(dict.fromkeys(missing)))
 
 
-def _choice_value(choice, name):
-    if not isinstance(choice, dict):
-        return None
-    return choice.get(name, choice.get({
-        "scene_object_id": "sceneObjectId",
-        "scene_object_ids": "sceneObjectIds",
-        "chosen_object_id": "chosenObjectId",
-    }.get(name, name)))
-
-
-def _mission_choice_supplied(mission, mission_choices):
-    if not isinstance(mission_choices, dict):
-        return False
-    choices = mission_choices.get("missionChoices", mission_choices)
-    if mission.mission_id == "M04":
-        return bool(choices.get("ownership"))
-    if mission.mission_id == "M05":
-        return bool(choices.get("preference"))
-    return False
-
-
 def a0_photo_reasons(mission, objects, counted_groups=(), mission_choices=None):
     """A0 missions need 2-3 distinct named objects, or a group of 2 or 3.
 
@@ -609,26 +587,6 @@ def a0_photo_reasons(mission, objects, counted_groups=(), mission_choices=None):
         return []
     if len(labels) < 2:
         return [A0_OBJECTS_REASON]
-    if mission.mission_id in {"M04", "M05"} and mission_choices is not None:
-        choices = mission_choices.get("missionChoices", mission_choices)
-        by_id = {str(obj.id): obj for obj in objects}
-        if mission.mission_id == "M04":
-            ownership = choices.get("ownership") or {}
-            object_id = str(_choice_value(ownership, "scene_object_id") or "")
-            if object_id not in by_id or not named(by_id[object_id].label):
-                return ["Tell Linguini which object is yours."]
-        else:
-            preference = choices.get("preference") or {}
-            compared = _choice_value(preference, "scene_object_ids") or []
-            chosen = _choice_value(preference, "chosen_object_id")
-            focus_id = str(chosen if len(compared) == 2 else compared[0] if compared else "")
-            reaction = preference.get("reaction")
-            if (
-                focus_id not in by_id
-                or not named(by_id[focus_id].label)
-                or reaction == "skip"
-            ):
-                return ["Tell Linguini what you would choose."]
     return []
 
 

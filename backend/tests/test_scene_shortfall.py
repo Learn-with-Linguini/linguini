@@ -82,7 +82,7 @@ def test_the_shortfall_asks_for_what_the_closest_missions_need():
     SceneShortfallSchema.model_validate(shortfall.as_json())
 
 
-def test_a2_rules_and_a0_choices_map_to_review_actions():
+def test_a2_rules_and_a0_pretend_scenarios_map_to_review_actions():
     compare = get_mission("M03", "A2", 1)
     assert "counts" in photo_eligibility(compare, [obj(BOOK, "book")]).missing
     describe = get_mission("M01", "A2", 1)
@@ -90,16 +90,19 @@ def test_a2_rules_and_a0_choices_map_to_review_actions():
     ownership = get_mission("M04", "A0", 1)
     reviewed = [obj(CUP, "cup"), obj(BOOK, "book")]
     check = photo_eligibility(ownership, reviewed, mission_choices={})
-    assert check.missing == ("choices",)
-    # A missing learner choice is not something the photo can add.
+    assert check.eligible
+    # Pretend ownership and preference are assigned after review, not requested.
     a0 = lesson_missions(SessionMode.LESSON, {
         "proficiency_level": "A0", "target_language_code": "es",
     })
     shortfall = scene_shortfall(a0, [obj(BOOK, "book")], mission_choices={})
     assert shortfall is not None
     assert set(shortfall.missing) <= set(SHORTFALL_KINDS)
-    assert all(item["missionId"] not in {"M04", "M05"} or item["missing"]
-               for item in shortfall.missions)
+    pretend_missions = {
+        item["missionId"]: item for item in shortfall.missions
+        if item["missionId"] in {"M04", "M05"}
+    }
+    assert all(item["missing"] == ["objects"] for item in pretend_missions.values())
 
 
 def test_the_rejection_is_a_structured_422():

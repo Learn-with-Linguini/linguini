@@ -2559,6 +2559,10 @@ class PostgresWorkflowRepository:
             if isinstance(item, dict)
         }
         markers = draft.get("reviewMarkers") or {}
+        scenario_objects = sorted(
+            objects,
+            key=lambda obj: (markers.get(str(obj.id), 10_000), str(obj.id)),
+        )
         mission_plan = []
         for mission in plan:
             entry = mission_snapshot(mission)
@@ -2570,21 +2574,17 @@ class PostgresWorkflowRepository:
                 if key not in entry and key not in {"roleplayFacts", "learnerFacts"}
             })
             if str(mission.practice_level) == "A0" and mission.mission_id == "M04":
-                ownership = (mission_choices or {}).get("ownership") or {}
                 entry["learnerFacts"] = {
-                    "ownedObjectId": ownership.get("sceneObjectId"),
-                    "pretend": bool(ownership.get("pretend", False)),
+                    "ownedObjectId": str(scenario_objects[0].id),
+                    "pretend": True,
                 }
             elif str(mission.practice_level) == "A0" and mission.mission_id == "M05":
-                preference = (mission_choices or {}).get("preference") or {}
-                compared = preference.get("sceneObjectIds", [])
+                liked = scenario_objects[1] if len(scenario_objects) > 1 else scenario_objects[0]
                 entry["learnerFacts"] = {
                     "preference": {
-                        "sceneObjectIds": compared,
-                        "chosenObjectId": preference.get("chosenObjectId"),
-                        "reaction": preference.get("reaction") or (
-                            "like" if len(compared) == 2 else None
-                        ),
+                        "sceneObjectIds": [str(liked.id)],
+                        "chosenObjectId": None,
+                        "reaction": "like",
                     }
                 }
             if (
