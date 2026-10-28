@@ -212,6 +212,47 @@ def test_french_a0_m02_description_cheatsheet_is_served_to_the_ui() -> None:
     ]
 
 
+@pytest.mark.parametrize(
+    ("language", "title", "adjective_example", "location_example"),
+    [
+        (
+            "es",
+            "Adjectives usually come after the object",
+            "la taza roja",
+            "La taza está sobre la mesa.",
+        ),
+        (
+            "de",
+            "Adjectives come before the object",
+            "die rote Tasse",
+            "Die Tasse ist auf dem Tisch.",
+        ),
+        ("ko", "Descriptors come before the object", "빨간 컵", "컵이 책상 위에 있어요."),
+    ],
+)
+def test_other_a0_m02_cheatsheets_are_served_to_the_ui(
+    language: str, title: str, adjective_example: str, location_example: str
+) -> None:
+    response = TestClient(app).get(
+        "/api/v1/learning-resources/cheatsheets/M02",
+        params={
+            "languageCode": language,
+            "practiceLevel": "A0",
+            "contentVersion": 2,
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["title"] == title
+    assert [concept["conceptId"] for concept in body["concepts"]] == [
+        "recognise-adjective",
+        "recognise-preposition",
+    ]
+    assert body["concepts"][0]["examples"][0]["targetText"] == adjective_example
+    assert body["concepts"][1]["examples"][0]["targetText"] == location_example
+
+
 def test_missing_learning_resources_return_clear_404s() -> None:
     client = TestClient(app)
 
