@@ -80,6 +80,7 @@ def test_review_assigns_pretend_ownership_and_preference_scenarios(beginner):
     assert lessons["M04"].public_content.mission_snapshot.owned_object_id == first.id
     assert lessons["M04"].public_content.mission_snapshot.pretend is True
     assert lessons["M05"].public_content.mission_snapshot.preference_object_ids == [second.id]
+    assert lessons["M05"].public_content.mission_snapshot.reaction in {"like", "dislike"}
     restored = repository.get(sid, profile.id)
     assert {"M04", "M05"} <= {
         task.public_content.mission_id for task in _a0_lessons(restored)

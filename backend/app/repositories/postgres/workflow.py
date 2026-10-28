@@ -2579,12 +2579,17 @@ class PostgresWorkflowRepository:
                     "pretend": True,
                 }
             elif str(mission.practice_level) == "A0" and mission.mission_id == "M05":
-                liked = scenario_objects[1] if len(scenario_objects) > 1 else scenario_objects[0]
+                preference_object = (
+                    scenario_objects[1] if len(scenario_objects) > 1 else scenario_objects[0]
+                )
+                reaction_seed = hashlib.sha256(
+                    f"{session.id}:A0:M05:reaction".encode()
+                ).digest()[0]
                 entry["learnerFacts"] = {
                     "preference": {
-                        "sceneObjectIds": [str(liked.id)],
+                        "sceneObjectIds": [str(preference_object.id)],
                         "chosenObjectId": None,
-                        "reaction": "like",
+                        "reaction": "like" if reaction_seed % 2 == 0 else "dislike",
                     }
                 }
             if (

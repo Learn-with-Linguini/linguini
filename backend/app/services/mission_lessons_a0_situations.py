@@ -275,7 +275,7 @@ def _build_preference_payload(payload, focus, nouns):
     target_group = "recognise-preference"
     questions = [
         _choice_question(
-            "M05-Q1", "Which phrase says you like it?",
+            "M05-Q1", "Which phrase matches the scenario?",
             "Choose the phrase that matches the scenario.", section, focus_key,
             [f["like"], f["dislike"]], statement, "say-preference",
             payload, salt="q1",
@@ -462,11 +462,12 @@ def a0_situation_lesson_task(session_id, mission, payload, result, vocabulary_id
         row for row in prepared["approvedObjects"]
         if row["key"] == prepared["focusObjectId"]
     )
-    scenario = (
-        f"Let's pretend the {focus['source']} is yours."
-        if mission.mission_id == "M04"
-        else f"Let's pretend you like the {focus['source']}."
-    )
+    if mission.mission_id == "M04":
+        scenario = f"Let's pretend the {focus['source']} is yours."
+    else:
+        reaction = prepared["learnerFacts"]["preference"]["reaction"]
+        preference = "like" if reaction == "like" else "don't like"
+        scenario = f"Let's pretend you {preference} the {focus['source']}."
     answers = {}
     accepted = {}
     evaluations = []

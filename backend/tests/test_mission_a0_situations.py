@@ -178,6 +178,25 @@ def test_preference_reaction_changes_answered_chunks(language):
     assert ", " in dislike.questions[4].complete_chunk
 
 
+@pytest.mark.parametrize(
+    ("reaction", "scenario_text"),
+    [
+        ("like", "Let's pretend you like the apple."),
+        ("dislike", "Let's pretend you don't like the apple."),
+    ],
+)
+def test_preference_reaction_controls_public_scenario(reaction, scenario_text):
+    mission, _spec, payload, result, _objects = _result(
+        "M05", "fr", labels=["apple", "book"],
+        words=[WORDS["fr"][2], WORDS["fr"][1]], reaction=reaction,
+    )
+    task = a0_situation_lesson_task(uuid4(), mission, payload, result, {})
+    assert {question.roleplay_premise for question in task.public_content.questions} == {
+        scenario_text
+    }
+    assert result.questions[0].prompt == "Which phrase matches the scenario?"
+
+
 @pytest.mark.parametrize("mission_id", ["M04", "M05"])
 def test_situation_generation_is_deterministic_including_option_order(mission_id):
     mission, spec, payload, _objects = _lesson(mission_id, "fr")
