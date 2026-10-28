@@ -219,6 +219,32 @@
   background: #ffedb8;
 }
 
+.cheatsheet-tip {
+  display: grid;
+  grid-template-columns: minmax(110px, auto) 1fr;
+  column-gap: var(--space-3);
+  align-items: baseline;
+}
+
+.cheatsheet-tip strong {
+  color: var(--ink);
+}
+
+.cheatsheet-tip span {
+  color: var(--teal-dark);
+  font-weight: 800;
+}
+
+.cheatsheet-tip small {
+  grid-column: 2;
+  color: var(--ink-muted);
+}
+
+@media (max-width: 440px) {
+  .cheatsheet-tip { grid-template-columns: 1fr; }
+  .cheatsheet-tip small { grid-column: 1; }
+}
+
 @media (min-width: 680px) {
   .cheatsheet-backdrop { align-items: center; padding: var(--space-6); }
   .cheatsheet-sheet { border-radius: var(--radius-lg); }

@@ -42,12 +42,30 @@ section_id = "adjective-before-object"
 title = "Before the object"
 explanation = "BAGS adjectives go before the object."
 formula = "article + adjective + object"
-tips = [
-  "B — Beauty: un beau livre — a beautiful book",
-  "A — Age: un vieux livre — an old book",
-  "G — Goodness: un bon livre — a good book",
-  "S — Size: un grand livre — a big book",
-]
+
+[[concepts.tips]]
+marker = "B"
+label = "Beauty"
+target_text = "un beau livre"
+translation = "a beautiful book"
+
+[[concepts.tips]]
+marker = "A"
+label = "Age"
+target_text = "un vieux livre"
+translation = "an old book"
+
+[[concepts.tips]]
+marker = "G"
+label = "Goodness"
+target_text = "un bon livre"
+translation = "a good book"
+
+[[concepts.tips]]
+marker = "S"
+label = "Size"
+target_text = "un grand livre"
+translation = "a big book"
 
 [[concepts.pattern_parts]]
 part_id = "article"

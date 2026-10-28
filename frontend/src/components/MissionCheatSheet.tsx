@@ -116,6 +116,12 @@ function CheatSheetConceptCard({ concept, languageCode, textDirection }: {
         }}><SpeakerIcon size={18} /></IconButton>
       </div>)}
     </div>
-    {concept.tips.length ? <ul className="cheatsheet-tips">{concept.tips.map(tip => <li key={tip}>{tip}</li>)}</ul> : null}
+    {concept.tips.length ? <ul className="cheatsheet-tips">{concept.tips.map(tip =>
+      typeof tip === "string" ? <li key={tip}>{tip}</li> :
+        <li key={`${tip.marker}-${tip.label}`} className="cheatsheet-tip">
+          <strong>{tip.marker} — {tip.label}</strong>
+          <span lang={languageCode}>{tip.targetText}</span>
+          <small>{tip.translation}</small>
+        </li>)}</ul> : null}
   </article>;
 }

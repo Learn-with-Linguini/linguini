@@ -452,6 +452,7 @@ export const proficiencyLabel = (level: ProficiencyLevel) => (level === "A0" ? "
 export interface MissionTaskFields { missionId?: string; practiceLevel?: ProficiencyLevel; contentVersion?: number }
 export interface CheatSheetExample { targetText: string; translation: string; note?: string | null }
 export interface CheatSheetPatternChoice { text: string; label: string }
+export interface CheatSheetTip { marker: string; label: string; targetText: string; translation: string }
 export interface CheatSheetPatternPart {
   partId: string; label: string; role: "fixed" | "choice" | "slot" | "ending";
   text?: string | null; choices: CheatSheetPatternChoice[];
@@ -461,7 +462,7 @@ export interface MissionCheatSheet {
   title: string; summary?: string | null; characterReferenceId?: string | null; characterReferenceVersion?: number | null;
   concepts: {
     conceptId: string; sectionId?: string | null; title: string; explanation?: string | null; formula?: string | null;
-    examples: CheatSheetExample[]; tips: string[]; patternParts: CheatSheetPatternPart[];
+    examples: CheatSheetExample[]; tips: (string | CheatSheetTip)[]; patternParts: CheatSheetPatternPart[];
     characterReferenceSectionIds: string[];
   }[];
 }

@@ -38,6 +38,15 @@ class CheatSheetPatternPart(ApiModel):
         return self
 
 
+class CheatSheetTip(ApiModel):
+    """A labelled memory aid with a target-language example."""
+
+    marker: NonEmptyText
+    label: NonEmptyText
+    target_text: NonEmptyText
+    translation: NonEmptyText
+
+
 class CheatSheetConcept(ApiModel):
     """One teachable idea, linked to a target or pattern in the mission contract."""
 
@@ -47,7 +56,7 @@ class CheatSheetConcept(ApiModel):
     explanation: NonEmptyText | None = None
     formula: NonEmptyText | None = None
     examples: Annotated[list[CheatSheetExample], Field(min_length=1)]
-    tips: list[NonEmptyText] = Field(default_factory=list)
+    tips: list[NonEmptyText | CheatSheetTip] = Field(default_factory=list)
     pattern_parts: list[CheatSheetPatternPart] = Field(default_factory=list)
     character_reference_section_ids: list[ContractId] = Field(default_factory=list)
 
