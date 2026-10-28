@@ -257,6 +257,34 @@ def test_other_a0_m02_cheatsheets_are_served_to_the_ui(
         ] == ["컵이 책상 위에 있어요.", "컵이 책상 아래에 있어요."]
 
 
+@pytest.mark.parametrize(
+    ("language", "two", "chunk"),
+    [
+        ("fr", "deux", "deux tasses"),
+        ("es", "dos", "dos tazas"),
+        ("de", "zwei", "zwei Tassen"),
+        ("ko", "두 개", "컵 두 개"),
+    ],
+)
+def test_a0_m03_cheatsheets_include_numbers_and_counted_objects(
+    language: str, two: str, chunk: str
+) -> None:
+    response = TestClient(app).get(
+        "/api/v1/learning-resources/cheatsheets/M03",
+        params={"languageCode": language, "practiceLevel": "A0"},
+    )
+
+    assert response.status_code == 200
+    concepts = response.json()["concepts"]
+    assert [concept["conceptId"] for concept in concepts] == [
+        "count-small-group",
+        "number-noun-chunk",
+    ]
+    assert len(concepts[0]["referenceItems"]) == 10
+    assert concepts[0]["referenceItems"][1]["targetText"] == two
+    assert concepts[1]["examples"][1]["targetText"] == chunk
+
+
 def test_missing_learning_resources_return_clear_404s() -> None:
     client = TestClient(app)
 

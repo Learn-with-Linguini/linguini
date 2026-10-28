@@ -453,6 +453,7 @@ export interface MissionTaskFields { missionId?: string; practiceLevel?: Profici
 export interface CheatSheetExample { targetText: string; translation: string; note?: string | null }
 export interface CheatSheetPatternChoice { text: string; label: string }
 export interface CheatSheetTip { marker: string; label: string; targetText: string; translation: string }
+export interface CheatSheetReferenceItem { label: string; targetText: string }
 export interface CheatSheetPatternPart {
   partId: string; label: string; role: "fixed" | "choice" | "slot" | "ending";
   text?: string | null; choices: CheatSheetPatternChoice[];
@@ -462,7 +463,8 @@ export interface MissionCheatSheet {
   title: string; summary?: string | null; characterReferenceId?: string | null; characterReferenceVersion?: number | null;
   concepts: {
     conceptId: string; sectionId?: string | null; title: string; explanation?: string | null; formula?: string | null;
-    examples: CheatSheetExample[]; tips: (string | CheatSheetTip)[]; patternParts: CheatSheetPatternPart[];
+    examples: CheatSheetExample[]; tips: (string | CheatSheetTip)[]; referenceItems: CheatSheetReferenceItem[];
+    patternParts: CheatSheetPatternPart[];
     characterReferenceSectionIds: string[];
   }[];
 }

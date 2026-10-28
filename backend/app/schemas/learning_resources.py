@@ -47,6 +47,13 @@ class CheatSheetTip(ApiModel):
     translation: NonEmptyText
 
 
+class CheatSheetReferenceItem(ApiModel):
+    """One compact entry in a visual reference grid, such as a number word."""
+
+    label: NonEmptyText
+    target_text: NonEmptyText
+
+
 class CheatSheetConcept(ApiModel):
     """One teachable idea, linked to a target or pattern in the mission contract."""
 
@@ -57,6 +64,7 @@ class CheatSheetConcept(ApiModel):
     formula: NonEmptyText | None = None
     examples: Annotated[list[CheatSheetExample], Field(min_length=1)]
     tips: list[NonEmptyText | CheatSheetTip] = Field(default_factory=list)
+    reference_items: list[CheatSheetReferenceItem] = Field(default_factory=list)
     pattern_parts: list[CheatSheetPatternPart] = Field(default_factory=list)
     character_reference_section_ids: list[ContractId] = Field(default_factory=list)
 

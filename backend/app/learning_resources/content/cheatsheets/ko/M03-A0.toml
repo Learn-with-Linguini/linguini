@@ -1,0 +1,84 @@
+mission_id = "M03"
+practice_level = "A0"
+content_version = 1
+language_code = "ko"
+text_direction = "ltr"
+title = "Count objects from one to ten"
+
+[[concepts]]
+concept_id = "count-small-group"
+title = "Numbers with the object counter 개"
+explanation = "Tap a number to hear it. This mission practises one, two, and three."
+
+[[concepts.reference_items]]
+label = "1"
+target_text = "한 개"
+[[concepts.reference_items]]
+label = "2"
+target_text = "두 개"
+[[concepts.reference_items]]
+label = "3"
+target_text = "세 개"
+[[concepts.reference_items]]
+label = "4"
+target_text = "네 개"
+[[concepts.reference_items]]
+label = "5"
+target_text = "다섯 개"
+[[concepts.reference_items]]
+label = "6"
+target_text = "여섯 개"
+[[concepts.reference_items]]
+label = "7"
+target_text = "일곱 개"
+[[concepts.reference_items]]
+label = "8"
+target_text = "여덟 개"
+[[concepts.reference_items]]
+label = "9"
+target_text = "아홉 개"
+[[concepts.reference_items]]
+label = "10"
+target_text = "열 개"
+
+[[concepts.examples]]
+target_text = "한 개, 두 개, 세 개"
+translation = "one, two, three objects"
+
+[[concepts]]
+concept_id = "number-noun-chunk"
+title = "Put the object before the number and counter"
+explanation = "The object does not change to a plural form. Use 개 to count objects."
+formula = "object + number + 개"
+tips = ["하나, 둘, 셋, 넷 become 한, 두, 세, 네 before a counter."]
+
+[[concepts.pattern_parts]]
+part_id = "object"
+label = "object"
+role = "slot"
+text = "컵"
+
+[[concepts.pattern_parts]]
+part_id = "number"
+label = "number + counter"
+role = "choice"
+
+[[concepts.pattern_parts.choices]]
+text = "두 개"
+label = "two"
+
+[[concepts.pattern_parts.choices]]
+text = "세 개"
+label = "three"
+
+[[concepts.examples]]
+target_text = "컵 한 개"
+translation = "one cup"
+
+[[concepts.examples]]
+target_text = "컵 두 개"
+translation = "two cups"
+
+[[concepts.examples]]
+target_text = "컵 세 개"
+translation = "three cups"

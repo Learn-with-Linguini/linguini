@@ -108,6 +108,51 @@
   padding: var(--space-2) 0 var(--space-1);
 }
 
+.cheatsheet-reference {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--line);
+  gap: 1px;
+}
+
+.cheatsheet-reference__item {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-width: 0;
+  min-height: 68px;
+  padding: var(--space-2) var(--space-1);
+  border: 0;
+  background: var(--cream);
+  color: var(--teal-dark);
+  font: inherit;
+  cursor: pointer;
+}
+
+.cheatsheet-reference__item:hover,
+.cheatsheet-reference__item:focus-visible {
+  background: var(--sage);
+}
+
+.cheatsheet-reference__item:nth-child(-n + 3) {
+  background: var(--sage);
+}
+
+.cheatsheet-reference__item strong {
+  color: var(--ink-muted);
+  font-size: var(--text-label);
+}
+
+.cheatsheet-reference__item span {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-weight: 800;
+  text-align: center;
+}
+
 .cheatsheet-pattern__part,
 .cheatsheet-pattern__choice {
   display: grid;
@@ -246,6 +291,10 @@
 }
 
 @media (max-width: 440px) {
+  .cheatsheet-reference {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .cheatsheet-pattern__part--choice {
     width: 100%;
   }

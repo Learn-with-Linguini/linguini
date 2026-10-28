@@ -1,0 +1,65 @@
+mission_id = "M03"
+practice_level = "A0"
+content_version = 1
+language_code = "de"
+text_direction = "ltr"
+title = "Count objects from one to ten"
+
+[[concepts]]
+concept_id = "count-small-group"
+title = "Numbers 1–10"
+explanation = "Tap a number to hear it. This mission practises one, two, and three."
+
+[[concepts.reference_items]]
+label = "1"
+target_text = "eins"
+[[concepts.reference_items]]
+label = "2"
+target_text = "zwei"
+[[concepts.reference_items]]
+label = "3"
+target_text = "drei"
+[[concepts.reference_items]]
+label = "4"
+target_text = "vier"
+[[concepts.reference_items]]
+label = "5"
+target_text = "fünf"
+[[concepts.reference_items]]
+label = "6"
+target_text = "sechs"
+[[concepts.reference_items]]
+label = "7"
+target_text = "sieben"
+[[concepts.reference_items]]
+label = "8"
+target_text = "acht"
+[[concepts.reference_items]]
+label = "9"
+target_text = "neun"
+[[concepts.reference_items]]
+label = "10"
+target_text = "zehn"
+
+[[concepts.examples]]
+target_text = "eins, zwei, drei"
+translation = "one, two, three"
+
+[[concepts]]
+concept_id = "number-noun-chunk"
+title = "Use a plural object after two or more"
+explanation = "The number comes before the object."
+formula = "number + object"
+tips = ["German plurals vary, so learn the plural with each object: Tasse → Tassen."]
+
+[[concepts.examples]]
+target_text = "eine Tasse"
+translation = "one cup"
+
+[[concepts.examples]]
+target_text = "zwei Tassen"
+translation = "two cups"
+
+[[concepts.examples]]
+target_text = "drei Tassen"
+translation = "three cups"

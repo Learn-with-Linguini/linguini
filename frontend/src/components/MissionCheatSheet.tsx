@@ -99,6 +99,16 @@ function CheatSheetConceptCard({ concept, languageCode, textDirection }: {
           <span lang={languageCode}>{tip.targetText}</span>
           <small>{tip.translation}</small>
         </li>)}</ul> : null}
+    {concept.referenceItems.length ? <div className="cheatsheet-reference" aria-label={`${concept.title} reference`}>
+      {concept.referenceItems.map(item => <button type="button" className="cheatsheet-reference__item"
+        key={`${item.label}-${item.targetText}`} onClick={() => {
+          trackAction("mission_cheatsheet_audio_played", { languageCode, conceptId: concept.conceptId });
+          speak(item.targetText, languageCode);
+        }}>
+        <strong>{item.label}</strong>
+        <span lang={languageCode}>{item.targetText}</span>
+      </button>)}
+    </div> : null}
     {concept.patternParts.length ? <div className="cheatsheet-pattern" dir={textDirection} aria-label={concept.formula ?? concept.title}>
       {concept.patternParts.map(part => <div key={part.partId} className={`cheatsheet-pattern__part cheatsheet-pattern__part--${part.role}`}>
         <span className="cheatsheet-pattern__label">{part.label}</span>
