@@ -251,6 +251,10 @@ def test_other_a0_m02_cheatsheets_are_served_to_the_ui(
     ]
     assert body["concepts"][0]["examples"][0]["targetText"] == adjective_example
     assert body["concepts"][1]["examples"][0]["targetText"] == location_example
+    if language == "ko":
+        assert [
+            example["targetText"] for example in body["concepts"][1]["examples"]
+        ] == ["컵이 책상 위에 있어요.", "컵이 책상 아래에 있어요."]
 
 
 def test_missing_learning_resources_return_clear_404s() -> None:

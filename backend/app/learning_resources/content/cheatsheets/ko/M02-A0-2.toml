@@ -61,10 +61,6 @@ role = "choice"
 text = "위에"
 label = "on"
 
-[[concepts.pattern_parts.choices]]
-text = "아래에"
-label = "under"
-
 [[concepts.pattern_parts]]
 part_id = "verb"
 label = "is"
@@ -74,3 +70,7 @@ text = "있어요"
 [[concepts.examples]]
 target_text = "컵이 책상 위에 있어요."
 translation = "The cup is on the desk."
+
+[[concepts.examples]]
+target_text = "컵이 책상 아래에 있어요."
+translation = "The cup is under the desk."
