@@ -100,8 +100,9 @@ def test_a2_rules_and_a0_pretend_scenarios_map_to_review_actions():
     assert set(shortfall.missing) <= set(SHORTFALL_KINDS)
     pretend_missions = {
         item["missionId"]: item for item in shortfall.missions
-        if item["missionId"] in {"M04", "M05"}
+        if item["missionId"] == "M05"
     }
+    assert "M04" not in {item["missionId"] for item in shortfall.missions}
     assert all(item["missing"] == ["objects"] for item in pretend_missions.values())
 
 

@@ -258,14 +258,15 @@ def test_a0_situations_are_eligible_without_learner_choices(mission_id):
     assert photo_eligibility(mission, objects, mission_choices={}).eligible
 
 
-def test_plan_surfaces_both_pretend_a0_situations_within_final_cap():
+def test_plan_surfaces_preference_but_omits_ownership_for_a0():
     candidates = lesson_missions(
         "lesson", {"proficiency_level": "A0", "target_language_code": "es"},
     )
     objects = _objects(["cup", "book"])
     provisional, _selected = provisional_mission_focus(candidates, objects, [])
     provisional_ids = [mission.mission_id for mission in provisional]
-    assert {"M04", "M05"} <= set(provisional_ids)
+    assert "M04" not in provisional_ids
+    assert "M05" in provisional_ids
     candidate_order = {
         (mission.mission_id, str(mission.practice_level), mission.content_version): index
         for index, mission in enumerate(candidates)
@@ -280,7 +281,8 @@ def test_plan_surfaces_both_pretend_a0_situations_within_final_cap():
 
     final = plan_missions(candidates, objects, [])
     final_ids = {mission.mission_id for mission in final}
-    assert {"M04", "M05"} <= final_ids
+    assert "M04" not in final_ids
+    assert "M05" in final_ids
     assert len(final) <= 3
 
 

@@ -101,7 +101,7 @@ def test_a0_profiles_get_the_a0_missions_whatever_their_onboarding(language, onb
         SessionMode.LESSON, _profile("A0", language, onboarding_completed=onboarded),
     )
     assert [registry_key(mission) for mission in missions] == [
-        "A0:M01", "A0:M02", "A0:M03", "A0:M04", "A0:M05", "A0:M13",
+        "A0:M01", "A0:M02", "A0:M03", "A0:M05", "A0:M13",
     ]
     assert next(mission for mission in missions if mission.mission_id == "M02").content_version == 2
     assert all(str(mission.practice_level) == "A0" for mission in missions)

@@ -47,7 +47,7 @@ def test_a0_profiles_get_persisted_a0_lessons(beginner):
     lessons = _a0_lessons(detail)
     assert lessons, detail.session.analysis_draft
     assert {task.public_content.mission_id for task in lessons} <= {
-        "M01", "M02", "M03", "M04", "M05", "M13",
+        "M01", "M02", "M03", "M05", "M13",
     }
     for task in lessons:
         content = task.public_content
@@ -66,23 +66,22 @@ def test_a0_profiles_get_persisted_a0_lessons(beginner):
     ]
 
 
-def test_review_assigns_pretend_ownership_and_preference_scenarios(beginner):
+def test_review_assigns_pretend_preference_scenario_but_not_ownership(beginner):
     _engine, _owner, profile, *_ = beginner
     repository = _repository(beginner, SceneModel())
     sid, analyzed = _analyzed(beginner, repository)
-    first, second = analyzed.scene_objects[:2]
+    _first, second = analyzed.scene_objects[:2]
     repository.review(sid, profile.id, _review(analyzed))
     reviewed = repository.get(sid, profile.id)
     assert reviewed.mission_choices is None
     assert "missionChoices" not in reviewed.session.analysis_draft
     lessons = {task.public_content.mission_id: task for task in _a0_lessons(reviewed)}
-    assert {"M04", "M05"} <= lessons.keys(), reviewed.session.analysis_draft.get("missionPlan")
-    assert lessons["M04"].public_content.mission_snapshot.owned_object_id == first.id
-    assert lessons["M04"].public_content.mission_snapshot.pretend is True
+    assert "M04" not in lessons
+    assert "M05" in lessons, reviewed.session.analysis_draft.get("missionPlan")
     assert lessons["M05"].public_content.mission_snapshot.preference_object_ids == [second.id]
     assert lessons["M05"].public_content.mission_snapshot.reaction in {"like", "dislike"}
     restored = repository.get(sid, profile.id)
-    assert {"M04", "M05"} <= {
+    assert "M05" in {
         task.public_content.mission_id for task in _a0_lessons(restored)
     }
 
