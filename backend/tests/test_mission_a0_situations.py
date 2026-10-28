@@ -197,6 +197,45 @@ def test_preference_reaction_controls_public_scenario(reaction, scenario_text):
     assert result.questions[0].prompt == "Which phrase matches the scenario?"
 
 
+@pytest.mark.parametrize(
+    ("language", "ownership_text", "preference_text"),
+    [
+        ("es", "Es de Ana.", "A Leo le gusta la manzana."),
+        ("fr", "C'est à Ana.", "Leo aime la pomme."),
+        ("de", "Das gehört Ana.", "Leo mag den Apfel."),
+        ("ko", "아나 거예요.", "레오는 사과를 좋아해요."),
+    ],
+)
+def test_named_characters_control_scenarios_and_target_phrases(
+    language, ownership_text, preference_text,
+):
+    ownership = _result(
+        "M04", language, labels=["cup", "book"], words=WORDS[language][:2],
+        owner_name="Ana",
+    )
+    ownership_task = a0_situation_lesson_task(
+        uuid4(), ownership[0], ownership[2], ownership[3], {},
+    )
+    assert ownership_text in {item["text"] for item in ownership[2]["prep"]}
+    assert ownership_task.public_content.questions[0].roleplay_premise == (
+        "Let's pretend the cup is Ana's."
+    )
+    assert ownership_task.public_content.mission_snapshot.owner_name == "Ana"
+
+    preference = _result(
+        "M05", language, labels=["apple", "book"],
+        words=[WORDS[language][2], WORDS[language][1]], subject_name="Leo",
+    )
+    preference_task = a0_situation_lesson_task(
+        uuid4(), preference[0], preference[2], preference[3], {},
+    )
+    assert preference_text in {item["text"] for item in preference[2]["prep"]}
+    assert preference_task.public_content.questions[0].roleplay_premise == (
+        "Let's pretend Leo likes the apple."
+    )
+    assert preference_task.public_content.mission_snapshot.subject_name == "Leo"
+
+
 @pytest.mark.parametrize("mission_id", ["M04", "M05"])
 def test_situation_generation_is_deterministic_including_option_order(mission_id):
     mission, spec, payload, _objects = _lesson(mission_id, "fr")

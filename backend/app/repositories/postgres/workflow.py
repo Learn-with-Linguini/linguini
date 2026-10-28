@@ -2574,9 +2574,14 @@ class PostgresWorkflowRepository:
                 if key not in entry and key not in {"roleplayFacts", "learnerFacts"}
             })
             if str(mission.practice_level) == "A0" and mission.mission_id == "M04":
+                owner_seed = hashlib.sha256(
+                    f"{session.id}:A0:M04:owner".encode()
+                ).digest()[0]
+                owner_name = (None, "Ana", "Leo")[owner_seed % 3]
                 entry["learnerFacts"] = {
                     "ownedObjectId": str(scenario_objects[0].id),
                     "pretend": True,
+                    "ownerName": owner_name,
                 }
             elif str(mission.practice_level) == "A0" and mission.mission_id == "M05":
                 preference_object = (
@@ -2585,11 +2590,16 @@ class PostgresWorkflowRepository:
                 reaction_seed = hashlib.sha256(
                     f"{session.id}:A0:M05:reaction".encode()
                 ).digest()[0]
+                subject_seed = hashlib.sha256(
+                    f"{session.id}:A0:M05:subject".encode()
+                ).digest()[0]
+                subject_name = (None, "Ana", "Leo")[subject_seed % 3]
                 entry["learnerFacts"] = {
                     "preference": {
                         "sceneObjectIds": [str(preference_object.id)],
                         "chosenObjectId": None,
                         "reaction": "like" if reaction_seed % 2 == 0 else "dislike",
+                        "subjectName": subject_name,
                     }
                 }
             if (

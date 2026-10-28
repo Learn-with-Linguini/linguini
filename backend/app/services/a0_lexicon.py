@@ -238,37 +238,69 @@ def situational_noun(language: str, noun: Noun, *, accusative=False, topic=False
     return f"{article} {noun.noun}"
 
 
-def ownership_chunks(language: str, noun: Noun, source: str) -> dict[str, str]:
+def ownership_chunks(
+    language: str, noun: Noun, source: str, owner_name: str | None = None,
+) -> dict[str, str]:
     """Closed M04 phrases for one reviewed noun."""
+    if owner_name and owner_name not in {"Ana", "Leo"}:
+        raise ValueError("Unsupported A0 story character.")
     if language == "ko":
-        mine, not_mine, is_yours, mine_predicate, yours_predicate = (
-            "제 거예요.", "제 거 아니에요.", "이거 본인 거예요?", "제 거예요", "본인 거예요"
-        )
+        owner = {"Ana": "아나", "Leo": "레오"}.get(owner_name)
+        if owner:
+            mine, not_mine, is_yours = (
+                f"{owner} 거예요.", f"{owner} 거 아니에요.", f"이거 {owner} 거예요?",
+            )
+            mine_predicate, yours_predicate = f"{owner} 거예요", "제 거예요"
+        else:
+            mine, not_mine, is_yours, mine_predicate, yours_predicate = (
+                "제 거예요.", "제 거 아니에요.", "이거 본인 거예요?",
+                "제 거예요", "본인 거예요",
+            )
         x_mine = f"{situational_noun(language, noun, topic=True)} {mine_predicate}."
         x_yours = f"{situational_noun(language, noun, topic=True)} {yours_predicate}."
     elif language == "es":
         gender = "o" if noun.gender == M else "a"
-        mine, not_mine, is_yours = (
-            f"Es mí{gender}.",
-            f"No es mí{gender}.",
-            f"¿Es tuy{gender}?",
-        )
-        mine_predicate, yours_predicate = f"es mí{gender}", f"es tuy{gender}"
+        if owner_name:
+            mine, not_mine, is_yours = (
+                f"Es de {owner_name}.", f"No es de {owner_name}.", f"¿Es de {owner_name}?",
+            )
+            mine_predicate, yours_predicate = f"es de {owner_name}", f"es mí{gender}"
+        else:
+            mine, not_mine, is_yours = (
+                f"Es mí{gender}.", f"No es mí{gender}.", f"¿Es tuy{gender}?",
+            )
+            mine_predicate, yours_predicate = f"es mí{gender}", f"es tuy{gender}"
         name = situational_noun(language, noun)
         name = name[:1].upper() + name[1:]
-        x_mine, x_yours = f"{name} es mí{gender}.", f"{name} es tuy{gender}."
+        x_mine, x_yours = f"{name} {mine_predicate}.", f"{name} {yours_predicate}."
     elif language == "fr":
-        mine, not_mine, is_yours = "C'est à moi.", "Ce n'est pas à moi.", "C'est à toi ?"
-        mine_predicate, yours_predicate = "est à moi", "est à toi"
+        if owner_name:
+            mine, not_mine, is_yours = (
+                f"C'est à {owner_name}.", f"Ce n'est pas à {owner_name}.",
+                f"C'est à {owner_name} ?",
+            )
+            mine_predicate, yours_predicate = f"est à {owner_name}", "est à moi"
+        else:
+            mine, not_mine, is_yours = "C'est à moi.", "Ce n'est pas à moi.", "C'est à toi ?"
+            mine_predicate, yours_predicate = "est à moi", "est à toi"
         name = situational_noun(language, noun)
         name = name[:1].upper() + name[1:]
-        x_mine, x_yours = f"{name} est à moi.", f"{name} est à toi."
+        x_mine, x_yours = f"{name} {mine_predicate}.", f"{name} {yours_predicate}."
     else:
-        mine, not_mine, is_yours = "Das gehört mir.", "Das gehört mir nicht.", "Gehört das dir?"
-        mine_predicate, yours_predicate = "gehört mir", "gehört dir"
+        if owner_name:
+            mine, not_mine, is_yours = (
+                f"Das gehört {owner_name}.", f"Das gehört {owner_name} nicht.",
+                f"Gehört das {owner_name}?",
+            )
+            mine_predicate, yours_predicate = f"gehört {owner_name}", "gehört mir"
+        else:
+            mine, not_mine, is_yours = "Das gehört mir.", "Das gehört mir nicht.", "Gehört das dir?"
+            mine_predicate, yours_predicate = "gehört mir", "gehört dir"
         name = situational_noun(language, noun)
         name = name[:1].upper() + name[1:]
-        x_mine, x_yours = f"{name} gehört mir.", f"{name} gehört dir."
+        x_mine, x_yours = f"{name} {mine_predicate}.", f"{name} {yours_predicate}."
+    english_owner = f"{owner_name}'s" if owner_name else "mine"
+    english_other = "mine" if owner_name else "yours"
     return {
         "mine": mine,
         "notMine": not_mine,
@@ -277,32 +309,65 @@ def ownership_chunks(language: str, noun: Noun, source: str) -> dict[str, str]:
         "yoursPredicate": yours_predicate,
         "xMine": x_mine,
         "xYours": x_yours,
-        "englishMine": f"The {source} is mine.",
-        "englishYours": f"The {source} is yours.",
+        "englishMine": f"The {source} is {english_owner}.",
+        "englishYours": f"The {source} is {english_other}.",
     }
 
 
-def preference_chunks(language: str, noun: Noun, source: str) -> dict[str, str]:
+def preference_chunks(
+    language: str, noun: Noun, source: str, subject_name: str | None = None,
+) -> dict[str, str]:
     """Closed M05 phrases for one reviewed noun."""
+    if subject_name and subject_name not in {"Ana", "Leo"}:
+        raise ValueError("Unsupported A0 story character.")
     n = situational_noun(language, noun)
     a = situational_noun(language, noun, accusative=True)
     o = situational_noun(language, noun)
     if language == "es":
-        like, dislike, question = f"Me gusta {n}.", f"No me gusta {n}.", f"¿Te gusta {n}?"
-        choose, choose_noun = "¿Qué eliges?", f"Elijo {n}."
-        like_frame, dislike_frame = "Me gusta ___", "No me gusta ___"
+        if subject_name:
+            like, dislike, question = (
+                f"A {subject_name} le gusta {n}.", f"A {subject_name} no le gusta {n}.",
+                f"¿A {subject_name} le gusta {n}?",
+            )
+            choose, choose_noun = f"¿Qué elige {subject_name}?", f"{subject_name} elige {n}."
+            like_frame = f"A {subject_name} le gusta ___"
+            dislike_frame = f"A {subject_name} no le gusta ___"
+        else:
+            like, dislike, question = f"Me gusta {n}.", f"No me gusta {n}.", f"¿Te gusta {n}?"
+            choose, choose_noun = "¿Qué eliges?", f"Elijo {n}."
+            like_frame, dislike_frame = "Me gusta ___", "No me gusta ___"
     elif language == "fr":
-        like, dislike, question = f"J'aime {n}.", f"Je n'aime pas {n}.", f"Tu aimes {n} ?"
-        choose, choose_noun = "Tu choisis quoi ?", f"Je choisis {n}."
-        like_frame, dislike_frame = "J'aime ___", "Je n'aime pas ___"
+        if subject_name:
+            like, dislike, question = (
+                f"{subject_name} aime {n}.", f"{subject_name} n'aime pas {n}.",
+                f"{subject_name} aime {n} ?",
+            )
+            choose, choose_noun = f"{subject_name} choisit quoi ?", f"{subject_name} choisit {n}."
+            like_frame, dislike_frame = f"{subject_name} aime ___", f"{subject_name} n'aime pas ___"
+        else:
+            like, dislike, question = f"J'aime {n}.", f"Je n'aime pas {n}.", f"Tu aimes {n} ?"
+            choose, choose_noun = "Tu choisis quoi ?", f"Je choisis {n}."
+            like_frame, dislike_frame = "J'aime ___", "Je n'aime pas ___"
     elif language == "de":
-        like, dislike, question = f"Ich mag {a}.", f"Ich mag {a} nicht.", f"Magst du {a}?"
-        choose, choose_noun = "Was nimmst du?", f"Ich nehme {a}."
-        like_frame, dislike_frame = "Ich mag ___", "Ich mag ___ nicht"
+        subject = subject_name or "Ich"
+        like, dislike = f"{subject} mag {a}.", f"{subject} mag {a} nicht."
+        question = f"Mag {subject_name} {a}?" if subject_name else f"Magst du {a}?"
+        choose = f"Was nimmt {subject_name}?" if subject_name else "Was nimmst du?"
+        choose_noun = f"{subject_name} nimmt {a}." if subject_name else f"Ich nehme {a}."
+        like_frame, dislike_frame = f"{subject} mag ___", f"{subject} mag ___ nicht"
     else:
-        like, dislike, question = f"{o} 좋아해요.", f"{o} 안 좋아해요.", f"{o} 좋아해요?"
-        choose, choose_noun = "뭐 골라요?", f"{o} 골라요."
-        like_frame, dislike_frame = "___ 좋아해요", "___ 안 좋아해요"
+        subject = {"Ana": "아나는", "Leo": "레오는"}.get(subject_name)
+        prefix = f"{subject} " if subject else ""
+        like, dislike, question = (
+            f"{prefix}{o} 좋아해요.",
+            f"{prefix}{o} 안 좋아해요.",
+            f"{prefix}{o} 좋아해요?",
+        )
+        choose = f"{subject} 뭐 골라요?" if subject else "뭐 골라요?"
+        choose_noun = f"{prefix}{o} 골라요."
+        like_frame, dislike_frame = f"{prefix}___ 좋아해요", f"{prefix}___ 안 좋아해요"
+    english_subject = subject_name or "I"
+    english_dislike = "doesn't like" if subject_name else "don't like"
     return {
         "like": like,
         "dislike": dislike,
@@ -311,9 +376,12 @@ def preference_chunks(language: str, noun: Noun, source: str) -> dict[str, str]:
         "iChoose": choose_noun,
         "likeFrame": like_frame,
         "dislikeFrame": dislike_frame,
-        "englishLike": f"I like the {source}.",
-        "englishDislike": f"I don't like the {source}.",
-        "englishDoYouLike": f"Do you like the {source}?",
+        "englishLike": f"{english_subject} {'likes' if subject_name else 'like'} the {source}.",
+        "englishDislike": f"{english_subject} {english_dislike} the {source}.",
+        "englishDoYouLike": (
+            f"Does {subject_name} like the {source}?" if subject_name
+            else f"Do you like the {source}?"
+        ),
     }
 
 

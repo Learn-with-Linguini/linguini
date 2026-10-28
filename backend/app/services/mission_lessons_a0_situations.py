@@ -108,15 +108,19 @@ def _build_ownership_payload(payload, x, nouns):
     rows = payload["approvedObjects"]
     target_id = x["key"]
     y = next(row for row in rows if row["key"] != target_id)
-    x_chunks = lex.ownership_chunks(language, nouns[target_id], x["source"])
-    y_chunks = lex.ownership_chunks(language, nouns[y["key"]], y["source"])
+    owner_name = payload["learnerFacts"].get("ownerName")
+    x_chunks = lex.ownership_chunks(language, nouns[target_id], x["source"], owner_name)
+    y_chunks = lex.ownership_chunks(language, nouns[y["key"]], y["source"], owner_name)
+    owner_label = owner_name or "you"
+    owner_possessive = f"{owner_name}'s" if owner_name else "yours"
     yes = lex.YES_NO[language][0]
     section = "Lost and found"
     prep = []
+    short_owner = f"{owner_name}'s" if owner_name else "mine"
     for key, english in (
-        ("mine", "It's mine."),
-        ("notMine", "It's not mine."),
-        ("isYours", "Is this yours?"),
+        ("mine", f"It's {short_owner}."),
+        ("notMine", f"It's not {short_owner}."),
+        ("isYours", f"Is this {owner_possessive}?"),
         ("xMine", x_chunks["englishMine"]),
         ("xYours", x_chunks["englishYours"]),
     ):
@@ -124,12 +128,12 @@ def _build_ownership_payload(payload, x, nouns):
     _prep_add(prep, y_chunks["xMine"], y_chunks["englishMine"])
     q3 = f"{yes} {x_chunks['mine']}"
     q6 = f"{yes} {x_chunks['xMine']}"
-    _prep_add(prep, q3, "Yes. It's mine.")
+    _prep_add(prep, q3, f"Yes. It's {short_owner}.")
     _prep_add(prep, q6, f"Yes. {x_chunks['englishMine']}")
     target_group = "recognise-ownership"
     questions = [
         _choice_question(
-            "M04-Q1", "Which phrase says it is yours?",
+            "M04-Q1", f"Which phrase says it is {owner_possessive}?",
             "Choose the phrase that matches the scenario.", section, target_id,
             [x_chunks["mine"], x_chunks["notMine"]], x_chunks["mine"], "say-mine",
             payload, salt="q1",
@@ -137,14 +141,15 @@ def _build_ownership_payload(payload, x, nouns):
         _choice_question(
             "M04-Q2", "Listen to Linguini. What does Linguini ask?",
             "Listen to Linguini. What does Linguini ask?", section, target_id,
-            ["It belongs to you", "You like it"], "It belongs to you", target_group,
+            [f"It belongs to {owner_label}", f"{owner_label.capitalize()} likes it"],
+            f"It belongs to {owner_label}", target_group,
             payload, salt="q2", option_icons={"option-1": "belongs", "option-2": "likes"},
             audio_text=x_chunks["isYours"], listen_first=True,
         ),
     ]
     # Re-key icon meanings after the stable seeded order is known.
     questions[1].option_icons = {
-        option.option_id: ("belongs" if option.label == "It belongs to you" else "likes")
+        option.option_id: ("belongs" if option.label.startswith("It belongs") else "likes")
         for option in questions[1].options
     }
     mine_pred = x_chunks["minePredicate"]
@@ -155,7 +160,7 @@ def _build_ownership_payload(payload, x, nouns):
         "M04-Q3", "Complete the answer.", "Choose the words that complete the answer.",
         section, target_id, q3_options, x_chunks["mine"], "say-mine", payload,
         salt="q3", gap_type="chunkChoice", slot_template=q3_template,
-        complete_chunk=q3, complete_translation="Yes. It's mine.",
+        complete_chunk=q3, complete_translation=f"Yes. It's {short_owner}.",
         typed_allowed=language != "ko",
         accepted_text_answers=[x_chunks["mine"], q3],
     ))
@@ -172,7 +177,11 @@ def _build_ownership_payload(payload, x, nouns):
     )
     questions.append(q4)
     x_n = lex.situational_noun(language, nouns[target_id], topic=True)
-    mine_word = {
+    localized_owner = (
+        {"Ana": "아나", "Leo": "레오"}.get(owner_name)
+        if language == "ko" else owner_name
+    )
+    mine_word = localized_owner or {
         "es": "mí" + ("o" if nouns[target_id].gender == lex.M else "a"),
         "fr": "moi", "de": "mir", "ko": "제",
     }[language]
@@ -200,12 +209,18 @@ def _build_ownership_payload(payload, x, nouns):
         slot_template=f"{yes} ___", complete_chunk=q6,
         complete_translation=f"Yes. {x_chunks['englishMine']}",
         dialogue=[
-            {"speaker": "linguini", "text": x_chunks["isYours"], "translation": "Is this yours?"},
-            {"speaker": "learner", "text": f"{yes} ___", "translation": "Yes. The object is mine."},
+            {
+                "speaker": "linguini", "text": x_chunks["isYours"],
+                "translation": f"Is this {owner_possessive}?",
+            },
+            {
+                "speaker": "learner", "text": f"{yes} ___",
+                "translation": f"Yes. The object is {owner_possessive}.",
+            },
         ],
-        correct_note=f"Yes—Linguini knows the {x['source']} is yours.",
+        correct_note=f"Yes—Linguini knows the {x['source']} is {owner_possessive}.",
         outcome={
-            "text": "Great—Linguini knows it is yours.",
+            "text": f"Great—Linguini knows it is {owner_possessive}.",
             "kind": "returned",
             "scene_object_id": target_id,
         },
@@ -230,6 +245,9 @@ def _build_preference_payload(payload, focus, nouns):
     compared = [str(item) for item in facts.get("sceneObjectIds", [])]
     focus_key = focus["key"]
     reaction = facts["reaction"]
+    subject_name = facts.get("subjectName")
+    subject = subject_name or "you"
+    subject_verb = "chooses" if subject_name else "choose"
     distractor_key = compared[1] if len(compared) > 1 else None
     if not distractor_key or distractor_key == focus_key or distractor_key not in nouns:
         candidates = [row["key"] for row in rows if row["key"] != focus_key]
@@ -237,8 +255,8 @@ def _build_preference_payload(payload, focus, nouns):
             return {**payload, "approvedObjects": [], "prep": [], "approvedTargetTexts": []}
         distractor_key = _rng(payload, "M05-other").choice(candidates)
     other = next(row for row in rows if row["key"] == distractor_key)
-    f = lex.preference_chunks(language, nouns[focus_key], focus["source"])
-    o = lex.preference_chunks(language, nouns[distractor_key], other["source"])
+    f = lex.preference_chunks(language, nouns[focus_key], focus["source"], subject_name)
+    o = lex.preference_chunks(language, nouns[distractor_key], other["source"], subject_name)
     yes = lex.YES_NO[language][0 if reaction == "like" else 1]
     section = "Picnic choice"
     statement = f[reaction]
@@ -247,12 +265,18 @@ def _build_preference_payload(payload, focus, nouns):
         (f["like"], f["englishLike"]),
         (f["dislike"], f["englishDislike"]),
         (f["doYouLike"], f["englishDoYouLike"]),
-        (f["whatChoose"], "What do you choose?"),
+        (
+            f["whatChoose"],
+            f"What does {subject_name} choose?" if subject_name else "What do you choose?",
+        ),
     ):
         _prep_add(prep, text, translation)
     if reaction == "dislike":
-        _prep_add(prep, o["iChoose"], f"I choose the {other['source']}.")
-    q5_statement = _lower_first(statement)
+        _prep_add(
+            prep, o["iChoose"],
+            f"{subject.capitalize()} {subject_verb} the {other['source']}.",
+        )
+    q5_statement = statement if subject_name else _lower_first(statement)
     q5_complete = f"{yes.rstrip('.')}, {q5_statement}"
     _prep_add(
         prep, q5_complete,
@@ -261,11 +285,13 @@ def _build_preference_payload(payload, focus, nouns):
     )
     q6_complete = statement if reaction == "like" else f"{f['dislike']} {o['iChoose']}"
     q6_translation = f["englishLike"] if reaction == "like" else (
-        f"{f['englishDislike']} I choose the {other['source']}."
+        f"{f['englishDislike']} {subject.capitalize()} {subject_verb} the {other['source']}."
     )
     _prep_add(prep, q6_complete, q6_translation)
     all_phrases = {
-        row["key"]: lex.preference_chunks(language, nouns[row["key"]], row["source"])
+        row["key"]: lex.preference_chunks(
+            language, nouns[row["key"]], row["source"], subject_name,
+        )
         for row in rows
     }
     for row in rows:
@@ -292,18 +318,8 @@ def _build_preference_payload(payload, focus, nouns):
         option.option_id: ("like" if option.label == "Like" else "dislike")
         for option in questions[1].options
     }
-    if language == "de":
-        q3_options = [f["like"], f["dislike"]]
-        q3_template = "___"
-    elif language == "ko":
-        q3_options = ["좋아해요", "안 좋아해요"]
-        q3_template = f"{lex.situational_noun(language, nouns[focus_key])} ___"
-    elif language == "es":
-        q3_options = ["Me gusta", "No me gusta"]
-        q3_template = f"___ {lex.situational_noun(language, nouns[focus_key])}."
-    else:
-        q3_options = ["J'aime", "Je n'aime pas"]
-        q3_template = f"___ {lex.situational_noun(language, nouns[focus_key])}."
+    q3_options = [f["like"], f["dislike"]]
+    q3_template = "___"
     q3_correct = (
         q3_options[0] if reaction == "like" else q3_options[1]
     )
@@ -319,14 +335,7 @@ def _build_preference_payload(payload, focus, nouns):
     ))
     n_f = lex.situational_noun(language, nouns[focus_key], accusative=language == "de")
     n_o = lex.situational_noun(language, nouns[distractor_key], accusative=language == "de")
-    q4_template = {
-        "es": f"{'Me gusta' if reaction == 'like' else 'No me gusta'} ___.",
-        "fr": "J'aime ___." if reaction == "like" else "Je n'aime pas ___.",
-        "de": "Ich mag ___.",
-        "ko": f"___ {'좋아해요' if reaction == 'like' else '안 좋아해요'}.",
-    }[language]
-    if language == "de":
-        q4_template = "Ich mag ___." if reaction == "like" else "Ich mag ___ nicht."
+    q4_template = f"{f['likeFrame' if reaction == 'like' else 'dislikeFrame']}."
     object_options = [(focus_key, n_f), (distractor_key, n_o)]
     second_key = compared[1] if len(compared) > 1 else None
     if second_key and second_key != focus_key and second_key in nouns and second_key not in {
@@ -368,8 +377,12 @@ def _build_preference_payload(payload, focus, nouns):
     ]
     questions.append(_choice_question(
         "M05-Q5", "Finish the conversation.", "Choose the answer that finishes the conversation.",
-        section, focus_key, [_lower_first(f["like"]), _lower_first(f["dislike"])],
-        _lower_first(q5_like), "say-preference", payload, salt="q5",
+        section, focus_key,
+        [f["like"], f["dislike"]] if subject_name else [
+            _lower_first(f["like"]), _lower_first(f["dislike"]),
+        ],
+        q5_like if subject_name else _lower_first(q5_like),
+        "say-preference", payload, salt="q5",
         gap_type="dialogueGap", slot_template=f"{yes.rstrip('.')}, ___",
         complete_chunk=q5_complete,
         complete_translation=f"{q5_response}, "
@@ -383,11 +396,11 @@ def _build_preference_payload(payload, focus, nouns):
         q6_complete = f["like"]
         q6_translation = f["englishLike"]
         outcome = {
-            "text": f"You chose the {focus['source']}.",
+            "text": f"{subject.capitalize()} {subject_verb} the {focus['source']}.",
             "kind": "basket",
             "scene_object_id": focus_key,
         }
-        correct_note = f"You chose the {focus['source']}."
+        correct_note = f"{subject.capitalize()} {subject_verb} the {focus['source']}."
         option_keys = {n_f: focus_key, n_o: distractor_key}
     else:
         i_choose = o["iChoose"].replace(n_o, "___")
@@ -396,17 +409,28 @@ def _build_preference_payload(payload, focus, nouns):
         q6_correct = n_o
         q6_complete = q6_translation = ""
         outcome = {
-            "text": f"The {focus['source']} stays behind. You chose the {other['source']}.",
+            "text": (
+                f"The {focus['source']} stays behind. "
+                f"{subject.capitalize()} {subject_verb} the {other['source']}."
+            ),
             "kind": "basket",
             "scene_object_id": distractor_key,
         }
-        correct_note = f"You chose the {other['source']}."
+        correct_note = f"{subject.capitalize()} {subject_verb} the {other['source']}."
         option_keys = {n_o: distractor_key, n_f: focus_key}
     if reaction == "dislike":
         q6_complete = f"{f['dislike']} {o['iChoose']}"
-        q6_translation = f"{f['englishDislike']} I choose the {other['source']}."
+        q6_translation = (
+            f"{f['englishDislike']} {subject.capitalize()} {subject_verb} "
+            f"the {other['source']}."
+        )
     q6_dialogue = [
-        {"speaker": "linguini", "text": f["whatChoose"], "translation": "What do you choose?"},
+        {
+            "speaker": "linguini", "text": f["whatChoose"],
+            "translation": (
+                f"What does {subject_name} choose?" if subject_name else "What do you choose?"
+            ),
+        },
         {"speaker": "learner", "text": q6_template, "translation": q6_translation},
     ]
     q6 = _choice_question(
@@ -463,11 +487,18 @@ def a0_situation_lesson_task(session_id, mission, payload, result, vocabulary_id
         if row["key"] == prepared["focusObjectId"]
     )
     if mission.mission_id == "M04":
-        scenario = f"Let's pretend the {focus['source']} is yours."
+        owner_name = prepared["learnerFacts"].get("ownerName")
+        owner = f"{owner_name}'s" if owner_name else "yours"
+        scenario = f"Let's pretend the {focus['source']} is {owner}."
     else:
-        reaction = prepared["learnerFacts"]["preference"]["reaction"]
+        preference_facts = prepared["learnerFacts"]["preference"]
+        reaction = preference_facts["reaction"]
+        subject_name = preference_facts.get("subjectName")
         preference = "like" if reaction == "like" else "don't like"
-        scenario = f"Let's pretend you {preference} the {focus['source']}."
+        if subject_name:
+            preference = "likes" if reaction == "like" else "doesn't like"
+        subject = subject_name or "you"
+        scenario = f"Let's pretend {subject} {preference} the {focus['source']}."
     answers = {}
     accepted = {}
     evaluations = []
@@ -532,6 +563,7 @@ def a0_situation_lesson_task(session_id, mission, payload, result, vocabulary_id
             taught_chunks=[TaughtChunk(**item) for item in prepared["prep"]],
             owned_object_id=UUID(facts["ownedObjectId"]),
             pretend=bool(facts.get("pretend", False)),
+            owner_name=facts.get("ownerName"),
         )
     else:
         preference = facts["preference"]
@@ -546,6 +578,7 @@ def a0_situation_lesson_task(session_id, mission, payload, result, vocabulary_id
                 if preference.get("chosenObjectId") else None
             ),
             reaction=preference["reaction"],
+            subject_name=preference.get("subjectName"),
         )
     return SessionTask(
         id=uuid5(session_id, f"mission:{mission_version(mission)}:lesson"),

@@ -37,7 +37,8 @@ def _objects(labels=LABELS):
 
 def _lesson(mission_id, language, *, labels=LABELS, words=None, quantity=2,
             plurals_taught=False, count_label="apple", ownership_index=0,
-            compared_indices=(0,), reaction="like", groups=None):
+            compared_indices=(0,), reaction="like", groups=None,
+            owner_name=None, subject_name=None):
     objects = _objects(labels)
     relations = []
     if mission_id == "M02":
@@ -64,6 +65,7 @@ def _lesson(mission_id, language, *, labels=LABELS, words=None, quantity=2,
     if mission_id == "M04":
         context["learner_facts"] = {
             "ownedObjectId": str(objects[ownership_index].id), "pretend": False,
+            "ownerName": owner_name,
         }
     elif mission_id == "M05":
         context["learner_facts"] = {"preference": {
@@ -72,6 +74,7 @@ def _lesson(mission_id, language, *, labels=LABELS, words=None, quantity=2,
                 str(objects[compared_indices[0]].id) if len(compared_indices) == 2 else None
             ),
             "reaction": reaction,
+            "subjectName": subject_name,
         }}
     payload = spec.payload(
         mission, language, objects, relations, words, None, counts,
