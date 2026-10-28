@@ -13,6 +13,7 @@ from app.missions import get_mission
 from app.repositories.postgres.workflow import _lesson_answer_is_correct
 from app.schemas.enums import SessionMode
 from app.schemas.tasks import SessionTaskPublic
+from app.services import a0_lexicon as lex
 from app.services.mission_eligibility import (
     lesson_missions,
     photo_eligibility,
@@ -152,6 +153,11 @@ def test_owned_object_drives_scenario_question_and_mine_sentence(language):
     second_question = second_result.questions[0]
     assert first_question.marker_keys is None
     assert second_question.marker_keys is None
+    assert first_question.instruction == "Answer yes or no."
+    assert first_question.audio_text == first_question.prompt
+    assert {
+        option.label for option in first_question.options
+    } == set(lex.YES_NO[language])
     assert first_question.object_key != second_question.object_key
     assert first_result.questions[3].complete_chunk != second_result.questions[3].complete_chunk
     if language == "es":

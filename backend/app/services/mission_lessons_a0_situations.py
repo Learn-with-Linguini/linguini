@@ -114,6 +114,7 @@ def _build_ownership_payload(payload, x, nouns):
     owner_label = owner_name or "you"
     owner_possessive = f"{owner_name}'s" if owner_name else "yours"
     yes = lex.YES_NO[language][0]
+    no = lex.YES_NO[language][1]
     section = "Lost and found"
     prep = []
     short_owner = f"{owner_name}'s" if owner_name else "mine"
@@ -133,10 +134,9 @@ def _build_ownership_payload(payload, x, nouns):
     target_group = "recognise-ownership"
     questions = [
         _choice_question(
-            "M04-Q1", f"Which phrase says it is {owner_possessive}?",
-            "Choose the phrase that matches the scenario.", section, target_id,
-            [x_chunks["mine"], x_chunks["notMine"]], x_chunks["mine"], "say-mine",
-            payload, salt="q1",
+            "M04-Q1", x_chunks["isYours"], "Answer yes or no.", section, target_id,
+            [yes, no], yes, "recognise-ownership", payload, salt="q1",
+            audio_text=x_chunks["isYours"],
         ),
         _choice_question(
             "M04-Q2", "Listen to Linguini. What does Linguini ask?",
