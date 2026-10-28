@@ -144,17 +144,15 @@ def test_m05_prep_contains_the_closed_preference_chunks(language):
 
 
 @pytest.mark.parametrize("language", ["es", "fr", "de", "ko"])
-def test_owned_object_drives_marker_and_mine_sentence(language):
+def test_owned_object_drives_scenario_question_and_mine_sentence(language):
     first = _result("M04", language, labels=["cup", "book"], ownership_index=0)
     second = _result("M04", language, labels=["cup", "book"], ownership_index=1)
     first_result, second_result = first[3], second[3]
-    first_focus, second_focus = first[4][0], second[4][1]
     first_question = first_result.questions[0]
     second_question = second_result.questions[0]
-    first_marker = first_question.marker_keys[first_question.correct_option_id]
-    second_marker = second_question.marker_keys[second_question.correct_option_id]
-    assert first_marker == str(first_focus.id)
-    assert second_marker == str(second_focus.id)
+    assert first_question.marker_keys is None
+    assert second_question.marker_keys is None
+    assert first_question.object_key != second_question.object_key
     assert first_result.questions[3].complete_chunk != second_result.questions[3].complete_chunk
     if language == "es":
         assert "mía" in first_result.questions[3].complete_chunk
@@ -236,6 +234,8 @@ def test_answer_key_and_typed_answers_are_private_and_accepted(mission_id):
     task = a0_situation_lesson_task(uuid4(), mission, payload, result, {})
     public = SessionTaskPublic.from_internal(task, mode=SessionMode.LESSON)
     assert "answerKey" not in public.model_dump(mode="json", by_alias=True)
+    assert all(question.roleplay_premise for question in task.public_content.questions)
+    assert task.public_content.questions[0].marker_object_ids is None
     typed = next(question for question in result.questions if question.typed_allowed)
     accepted = task.answer_key.accepted_text_answers_by_question[typed.question_id]
     assert all(_lesson_answer_is_correct(task, typed.question_id, answer) for answer in accepted)
@@ -266,13 +266,14 @@ def test_typed_answers_include_language_equivalents(language, mission_id, equiva
     assert _lesson_answer_is_correct(task, question.question_id, equivalent)
 
 
-def test_validator_rejects_missing_or_mismatched_learner_facts():
-    _mission, _spec, payload, result, objects = _result("M04", "es")
+def test_validator_rejects_missing_or_unknown_learner_facts():
+    _mission, _spec, payload, result, _objects = _result("M04", "es")
     missing = {**payload, "learnerFacts": {}}
     with pytest.raises(LearningTaskGenerationError):
         validate_a0_situation_lesson(missing, result)
-    wrong_marker = result.model_copy(deep=True)
-    marker_question = wrong_marker.questions[0]
-    marker_question.marker_keys[marker_question.correct_option_id] = str(objects[1].id)
+    wrong_facts = {
+        **payload,
+        "learnerFacts": {"ownedObjectId": str(uuid4()), "pretend": True},
+    }
     with pytest.raises(LearningTaskGenerationError):
-        validate_a0_situation_lesson(payload, wrong_marker)
+        validate_a0_situation_lesson(wrong_facts, result)

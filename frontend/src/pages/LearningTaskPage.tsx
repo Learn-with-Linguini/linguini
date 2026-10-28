@@ -447,25 +447,6 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
   </div>;
 }
 
-function MissionSnapshotFacts({ task, scene }: { task: SessionTask; scene: ReturnType<typeof useScene> }) {
-  const content = task.publicContent;
-  if (content.kind !== "grammarLesson" || !content.missionSnapshot) return null;
-  const snapshot = content.missionSnapshot;
-  const objectLabel = (id?: string | null) => scene.items.find(item => item.id === id)?.translation ?? id;
-  const focus = snapshot.ownedObjectId ?? snapshot.chosenObjectId ?? snapshot.preferenceObjectIds?.[0];
-  return <section className="mission-planning-facts" aria-label="Your mission facts">
-    <strong>{focus ? `Your choice: ${objectLabel(focus)}` : "Your choice"}</strong>
-    <ul>
-      {focus ? <li>{snapshot.missionId === "M04" ? "It's yours." : "You chose this object."}</li> : null}
-      {snapshot.pretend ? <li>It's pretend</li> : null}
-      {snapshot.reaction ? <li>You {snapshot.reaction === "like" ? "like" : "don't like"} it</li> : null}
-      {snapshot.taughtChunks.slice(0, 3).map(chunk => <li key={chunk.text}>
-        <span lang={scene.languageCode}>{chunk.text}</span> — {chunk.translation}
-      </li>)}
-    </ul>
-  </section>;
-}
-
 function MissionGapIcon({ kind }: { kind: NonNullable<GrammarLessonQuestion["optionIcons"]>[string] }) {
   const icon = kind === "belongs" ? "✓" : kind === "likes" || kind === "like" ? "♥" : "♡";
   const label = kind === "belongs" ? "belongs" : kind === "likes" || kind === "like" ? "likes" : "does not like";
@@ -837,7 +818,6 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
         {question.planningFacts?.length ? <section className="mission-planning-facts" aria-label="Your facts">
           <strong>Your facts</strong><ul>{question.planningFacts.map((fact, position) => <li key={`${position}-${fact}`}>{fact}</li>)}</ul>
         </section> : null}
-        <MissionSnapshotFacts task={task} scene={scene} />
         {isSituation && question.gapType ? <A0MissionGapQuestion key={question.questionId}
           question={question} scene={scene} sceneObjects={session?.sceneObjects ?? []}
           selectedOptionId={answers[question.questionId] ?? ""}

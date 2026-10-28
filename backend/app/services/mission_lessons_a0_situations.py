@@ -90,28 +90,6 @@ def _choice_question(
     )
 
 
-def _marker_question(payload, rows, focus, section, instruction, target_group):
-    shown = sorted(rows, key=lambda row: row["marker"])[:3]
-    if focus["key"] not in {row["key"] for row in shown}:
-        shown = [*shown[:2], focus]
-        shown.sort(key=lambda row: row["marker"])
-    options = [
-        {"option_id": f"marker-{row['marker']}", "label": str(row["marker"])}
-        for row in shown
-    ]
-    return SituationQuestion(
-        question_id=f"{payload['missionId']}-Q1",
-        prompt=instruction,
-        instruction=instruction,
-        section=section,
-        options=options,
-        correct_option_id=f"marker-{focus['marker']}",
-        object_key=focus["key"],
-        marker_keys={f"marker-{row['marker']}": row["key"] for row in shown},
-        target_group=target_group,
-    )
-
-
 def _target_texts(prep, questions):
     texts = [item["text"] for item in prep]
     for question in questions:
@@ -150,9 +128,11 @@ def _build_ownership_payload(payload, x, nouns):
     _prep_add(prep, q6, f"Yes. {x_chunks['englishMine']}")
     target_group = "recognise-ownership"
     questions = [
-        _marker_question(
-            payload, rows, x, section, "Linguini found something. Which one is yours?",
-            target_group,
+        _choice_question(
+            "M04-Q1", "Which phrase says it is yours?",
+            "Choose the phrase that matches the scenario.", section, target_id,
+            [x_chunks["mine"], x_chunks["notMine"]], x_chunks["mine"], "say-mine",
+            payload, salt="q1",
         ),
         _choice_question(
             "M04-Q2", "Listen to Linguini. What does Linguini ask?",
@@ -294,9 +274,11 @@ def _build_preference_payload(payload, focus, nouns):
         _prep_add(prep, phrase["dislike"], phrase["englishDislike"])
     target_group = "recognise-preference"
     questions = [
-        _marker_question(
-            payload, rows, focus, section, "What did you pick? Tap it in your photo.",
-            target_group,
+        _choice_question(
+            "M05-Q1", "Which phrase says you like it?",
+            "Choose the phrase that matches the scenario.", section, focus_key,
+            [f["like"], f["dislike"]], statement, "say-preference",
+            payload, salt="q1",
         ),
     ]
     questions.append(_choice_question(
@@ -476,6 +458,15 @@ def _normalized_equivalents(value, language):
 
 def a0_situation_lesson_task(session_id, mission, payload, result, vocabulary_ids):
     prepared = build_a0_situation_payload(payload)
+    focus = next(
+        row for row in prepared["approvedObjects"]
+        if row["key"] == prepared["focusObjectId"]
+    )
+    scenario = (
+        f"Let's pretend the {focus['source']} is yours."
+        if mission.mission_id == "M04"
+        else f"Let's pretend you like the {focus['source']}."
+    )
     answers = {}
     accepted = {}
     evaluations = []
@@ -524,6 +515,7 @@ def a0_situation_lesson_task(session_id, mission, payload, result, vocabulary_id
             outcome=question.outcome,
             correct_note=question.correct_note,
             typed_allowed=question.typed_allowed,
+            roleplay_premise=scenario,
             marker_object_ids=marker_objects or None,
             scene_object_id=object_id,
             object_label=next(
