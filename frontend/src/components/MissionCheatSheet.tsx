@@ -92,6 +92,13 @@ function CheatSheetConceptCard({ concept, languageCode, textDirection }: {
 }) {
   return <article className="cheatsheet-concept">
     <div className="stack-2"><h3>{concept.title}</h3>{concept.explanation ? <p>{concept.explanation}</p> : null}</div>
+    {concept.tips.length ? <ul className="cheatsheet-tips">{concept.tips.map(tip =>
+      typeof tip === "string" ? <li key={tip}>{tip}</li> :
+        <li key={`${tip.marker}-${tip.label}`} className="cheatsheet-tip">
+          <strong>{tip.marker}: {tip.label}</strong>
+          <span lang={languageCode}>{tip.targetText}</span>
+          <small>{tip.translation}</small>
+        </li>)}</ul> : null}
     {concept.patternParts.length ? <div className="cheatsheet-pattern" dir={textDirection} aria-label={concept.formula ?? concept.title}>
       {concept.patternParts.map(part => <div key={part.partId} className={`cheatsheet-pattern__part cheatsheet-pattern__part--${part.role}`}>
         <span className="cheatsheet-pattern__label">{part.label}</span>
@@ -116,12 +123,5 @@ function CheatSheetConceptCard({ concept, languageCode, textDirection }: {
         }}><SpeakerIcon size={18} /></IconButton>
       </div>)}
     </div>
-    {concept.tips.length ? <ul className="cheatsheet-tips">{concept.tips.map(tip =>
-      typeof tip === "string" ? <li key={tip}>{tip}</li> :
-        <li key={`${tip.marker}-${tip.label}`} className="cheatsheet-tip">
-          <strong>{tip.marker} — {tip.label}</strong>
-          <span lang={languageCode}>{tip.targetText}</span>
-          <small>{tip.translation}</small>
-        </li>)}</ul> : null}
   </article>;
 }
