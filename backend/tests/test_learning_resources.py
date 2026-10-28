@@ -200,6 +200,7 @@ def test_french_a0_m02_description_cheatsheet_is_served_to_the_ui() -> None:
     )
 
     assert response.status_code == 200
+    assert response.json()["title"] == "Adjectives can be before or after the object"
     assert [concept["conceptId"] for concept in response.json()["concepts"]] == [
         "recognise-adjective",
         "recognise-adjective",

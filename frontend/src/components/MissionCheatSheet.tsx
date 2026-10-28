@@ -73,7 +73,8 @@ export function MissionCheatSheetLauncher({
           <h3>This cheatsheet is still being prepared</h3>
           <p>It will appear here as soon as this mission and language are ready.</p>
         </div> : null}
-        {sheet.data ? <>{sheet.data.summary ? <p className="cheatsheet-sheet__summary">{sheet.data.summary}</p> : null}
+        {sheet.data ? <><h2 className="cheatsheet-sheet__title">{sheet.data.title}</h2>
+          {sheet.data.summary ? <p className="cheatsheet-sheet__summary">{sheet.data.summary}</p> : null}
           <div className="cheatsheet-concepts">
             {sheet.data.concepts.map(concept => <CheatSheetConceptCard
               key={concept.sectionId ?? concept.conceptId} concept={concept} languageCode={sheet.data.languageCode}

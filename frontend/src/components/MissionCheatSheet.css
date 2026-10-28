@@ -52,13 +52,20 @@
   background: var(--line);
 }
 
+.cheatsheet-sheet__title {
+  margin: 0 0 var(--space-5);
+  color: var(--ink);
+  font-size: var(--text-h2);
+  line-height: 1.15;
+}
+
 .cheatsheet-concept h3,
 .cheatsheet-concept p {
   margin: 0;
 }
 
 .cheatsheet-sheet__summary {
-  margin: var(--space-2) 0 var(--space-5);
+  margin: calc(-1 * var(--space-3)) 0 var(--space-5);
   color: var(--ink-muted);
 }
 

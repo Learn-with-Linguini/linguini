@@ -3,7 +3,7 @@ practice_level = "A0"
 content_version = 2
 language_code = "fr"
 text_direction = "ltr"
-title = "Find a described object"
+title = "Adjectives can be before or after the object"
 
 [[concepts]]
 concept_id = "recognise-adjective"
