@@ -81,6 +81,15 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 1. `gtag("event", action, params)` to GA4.
 2. `window._uxa.push(["trackCustomEvent", action, params])` to Contentsquare.
 
+### Photo camera
+
+| Event Name | Parameters | Trigger Description |
+| :--- | :--- | :--- |
+| `photo_camera_opened` | — | User opens the live camera preview |
+| `photo_camera_captured` | — | A JPEG photo is captured for the existing upload flow |
+| `photo_camera_cancelled` | — | User closes the preview with Cancel or Escape |
+| `photo_camera_failed` | `{ reason }` | Camera API unavailable, browser error name, or `capture_failed`; no image data is tracked |
+
 ### Authentication & Account Management
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |

@@ -36,6 +36,20 @@ using [its setup guide](../backend/README.md), with that exact origin in
 backend still enforces its configured authentication mode. Production learner
 routes require a Supabase session.
 
+## Photo capture
+
+“Click” / “Open camera” opens a live camera preview on laptops and phones. “Take
+photo” captures a JPEG and sends it through the existing photo upload flow; Cancel
+or Escape closes the preview. Camera tracks stop on capture, cancellation, or
+navigation, including when permission arrives after the preview closes.
+
+No camera environment variables or API keys are needed. Browsers require HTTPS
+(or localhost for development), an available camera, and the user's permission.
+Plain HTTP on a LAN address does not provide browser camera access. The existing
+in-app Camera preference still controls whether the camera button is enabled.
+Permission, missing-device, and device-in-use errors explain how to recover;
+Upload remains available for choosing an existing image.
+
 ## Structure
 
 | Path | Purpose |
