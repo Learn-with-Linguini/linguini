@@ -1,0 +1,24 @@
+construction_id = "find-object"
+version = 1
+summary = "Ask the learner to find a named object."
+guidance = "Ask the learner to find the object: noun + object particle 을/를 + 찾아보세요. (컵을 찾아보세요.). Choose 을 after a consonant and 를 after a vowel."
+features = ["imperative"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun" }
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "find-frame"
+message = "Use the taught find instruction."
+must_contain = ["찾아보세요[.]$"]
+
+[[checks]]
+check_id = "polite-ending"
+message = "Use the polite -요 ending at the end of the sentence."
+must_contain = ["요[.?!]$"]

@@ -17,7 +17,7 @@ export const faq = [
   },
   {
     q: "What happens to my photos?",
-    a: "They stay in your account and are only used to build your sessions and your journal. They are never shown to other learners, unless you choose to add them to a private I Spy room you share with a friend.",
+    a: "They stay in your account and are only used to build your sessions. They are never shown to other learners, unless you choose to add them to a private I Spy room you share with a friend.",
   },
   {
     q: "Can I play with a friend?",
@@ -33,6 +33,6 @@ export const faq = [
   },
   {
     q: "What does public beta access include?",
-    a: "Everyone who signs up during the public beta gets the Beta tier with unlimited photo lessons every day, plus ready-made scenes, vocabulary games, progress and journals. No payment card is required. Free and Plus tiers may be introduced after the beta.",
+    a: "Everyone who signs up during the public beta gets the Beta tier with unlimited photo lessons every day, plus ready-made scenes, vocabulary games and progress. No payment card is required. Free and Plus tiers may be introduced after the beta.",
   },
 ];

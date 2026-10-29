@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Linguini — STEPS promo GIF 4: Artisan-style demo flow → CTA</title>
+  <style>
+    @font-face { font-family: 'Baloo'; src: url('../assets/Baloo2-ExtraBold.ttf'); font-weight: 800; }
+    @font-face { font-family: 'Nunito'; src: url('../assets/NunitoSans-Bold.ttf'); font-weight: 700; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #FFF9ED; font-family: 'Nunito', sans-serif; color: #263238; }
+    #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: #FFF9ED; }
+    .clip { position: absolute; inset: 0; }
+    .absolute { position: absolute; }
+
+    /* Marker pill — mirrors the app's scene__marker */
+    .mk { position: absolute; transform: translate(-50%, -50%); }
+    .mkp {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: #E85D32; color: #FFF9ED;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 19px;
+      border: 3px solid #ffffff;
+      box-shadow: 0 4px 12px rgba(38,50,56,0.35);
+    }
+  </style>
+</head>
+<body>
+  <div id="root" data-composition-id="gif-4" data-width="1280" data-height="720" data-duration="11" data-fps="30">
+    <div class="clip" data-start="0" data-duration="11">
+
+      <!-- ===== PHASE A: real demo picker — "Try a photo lesson" ===== -->
+      <div id="picker" style="position: absolute; inset: 0;">
+        <div id="pk-chip" style="position: absolute; left: 0; top: 88px; width: 100%; text-align: center;">
+          <span style="display: inline-block; background: #eef6f3; color: #21716F; border: 2px solid #21716F; font-weight: 800; font-size: 17px; letter-spacing: 1.5px; padding: 6px 18px; border-radius: 999px;">NO ACCOUNT NEEDED</span>
+        </div>
+        <div id="pk-title" style="position: absolute; left: 0; top: 136px; width: 100%; text-align: center; font-family: 'Baloo', sans-serif; font-size: 50px; color: #263238;">Try a photo lesson</div>
+        <div id="pk-sub" style="position: absolute; left: 0; top: 224px; width: 100%; text-align: center; font-weight: 800; font-size: 21px; color: #8a7d5f; letter-spacing: 1px;">CHOOSE A SCENE</div>
+
+        <div id="pk-grid" style="position: absolute; left: 330px; top: 268px; width: 620px; height: 360px;">
+          <div class="pk-card" id="sc-1" style="position: absolute; left: 0; top: 0; width: 300px; height: 168px; border-radius: 18px; overflow: hidden; background: #fff; box-shadow: 0 12px 28px rgba(38,50,56,0.14);">
+            <img src="../assets/hillside-street.jpg" style="width: 100%; height: 126px; object-fit: cover; display: block;" alt="">
+            <div style="height: 42px; display: flex; align-items: center; padding: 0 18px; font-weight: 800; font-size: 18px;">Hillside drive</div>
+          </div>
+          <div class="pk-card" id="sc-2" style="position: absolute; left: 320px; top: 0; width: 300px; height: 168px; border-radius: 18px; overflow: hidden; background: #fff; box-shadow: 0 12px 28px rgba(38,50,56,0.14);">
+            <img src="../assets/golden-gate-bridge.jpg" style="width: 100%; height: 126px; object-fit: cover; display: block;" alt="">
+            <div style="height: 42px; display: flex; align-items: center; padding: 0 18px; font-weight: 800; font-size: 18px;">Across the bay</div>
+          </div>
+          <div class="pk-card" id="sc-3" style="position: absolute; left: 0; top: 190px; width: 300px; height: 168px; border-radius: 18px; overflow: hidden; background: #fff; box-shadow: 0 12px 28px rgba(38,50,56,0.14);">
+            <img src="../assets/cafe-interior.jpg" style="width: 100%; height: 126px; object-fit: cover; display: block;" alt="">
+            <div style="height: 42px; display: flex; align-items: center; padding: 0 18px; font-weight: 800; font-size: 18px;">Café morning</div>
+          </div>
+          <div class="pk-card" id="sc-4" style="position: absolute; left: 320px; top: 190px; width: 300px; height: 168px; border-radius: 18px; overflow: hidden; background: #fff; border: 3px solid #ffffff; box-shadow: 0 12px 28px rgba(38,50,56,0.14);">
+            <img src="../assets/desk-flatlay.jpg" style="width: 100%; height: 126px; object-fit: cover; display: block;" alt="">
+            <div style="height: 42px; display: flex; align-items: center; padding: 0 18px; font-weight: 800; font-size: 18px;">Study day</div>
+          </div>
+        </div>
+      </div>
+
+      <img id="mascot" src="../assets/mascot-180.png" style="position: absolute; right: 40px; bottom: 30px; width: 150px; opacity: 0;" alt="Linguini mascot">
+      <svg id="cursor" style="position: absolute; left: 1150px; top: 620px; opacity: 0;" width="42" height="42" viewBox="0 0 24 24"><path d="M4 2 L20 12 L12 14 L9 22 Z" fill="#263238" stroke="#ffffff" stroke-width="1.5"/></svg>
+
+      <!-- ===== PHASE B: scan → markers → objects list (Review your scene) ===== -->
+      <div id="product" style="position: absolute; inset: 0; opacity: 0;">
+        <div id="photo-card" style="position: absolute; left: 150px; top: 120px; width: 580px; height: 400px; background: #ffffff; border-radius: 26px; padding: 13px; box-shadow: 0 28px 56px rgba(38,50,56,0.16); transform: rotate(1.5deg);">
+          <div style="position: relative; width: 100%; height: 100%; border-radius: 16px; overflow: hidden;">
+            <img src="../assets/desk-flatlay.jpg" style="width: 100%; height: 100%; object-fit: cover;" alt="White desk with notebook, pencil, laptop, phone and plant">
+            <div id="scanbar" style="position: absolute; top: -20%; left: -40%; width: 34%; height: 140%; background: linear-gradient(100deg, transparent, rgba(232,93,50,0.28), rgba(255,255,255,0.55), rgba(232,93,50,0.28), transparent); transform: skewX(-12deg); opacity: 0;"></div>
+            <span class="mk" style="left: 38%; top: 52%;"><span class="mkp" id="mk1">1</span></span>
+            <span class="mk" style="left: 76%; top: 60%;"><span class="mkp" id="mk2">2</span></span>
+            <span class="mk" style="left: 90%; top: 24%;"><span class="mkp" id="mk3">3</span></span>
+            <span class="mk" style="left: 11%; top: 65%;"><span class="mkp" id="mk4">4</span></span>
+            <span class="mk" style="left: 17%; top: 10%;"><span class="mkp" id="mk5">5</span></span>
+          </div>
+        </div>
+        <div id="scan-text" style="position: absolute; left: 150px; top: 545px; width: 580px; text-align: center; font-weight: 800; font-size: 24px; color: #8a7d5f;">Finding objects in your image…</div>
+
+        <div id="objects-card" style="position: absolute; left: 790px; top: 120px; width: 350px; background: #ffffff; border: 2px solid #f0e6cf; border-radius: 20px; padding: 18px 20px; box-shadow: 0 18px 40px rgba(38,50,56,0.14);">
+          <div style="font-family: 'Baloo', sans-serif; font-size: 24px; color: #263238; margin-bottom: 12px;">Objects</div>
+          <div class="orow" style="display: flex; align-items: center; gap: 12px; padding: 9px 0; border-top: 2px solid #f4edda;">
+            <span style="width: 28px; height: 28px; border-radius: 50%; background: #fdeee6; color: #E85D32; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto;">1</span>
+            <span style="flex: 1;"><b style="font-size: 19px;">la libreta</b><br><span style="font-size: 14px; color: #8a7d5f;">notebook</span></span>
+            <span style="color: #21716F; font-weight: 800; font-size: 19px;">✓</span>
+          </div>
+          <div class="orow" style="display: flex; align-items: center; gap: 12px; padding: 9px 0; border-top: 2px solid #f4edda;">
+            <span style="width: 28px; height: 28px; border-radius: 50%; background: #fdeee6; color: #E85D32; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto;">2</span>
+            <span style="flex: 1;"><b style="font-size: 19px;">el lápiz</b><br><span style="font-size: 14px; color: #8a7d5f;">pencil</span></span>
+            <span style="color: #21716F; font-weight: 800; font-size: 19px;">✓</span>
+          </div>
+          <div class="orow" style="display: flex; align-items: center; gap: 12px; padding: 9px 0; border-top: 2px solid #f4edda;">
+            <span style="width: 28px; height: 28px; border-radius: 50%; background: #fdeee6; color: #E85D32; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto;">3</span>
+            <span style="flex: 1;"><b style="font-size: 19px;">el portátil</b><br><span style="font-size: 14px; color: #8a7d5f;">laptop</span></span>
+            <span style="color: #21716F; font-weight: 800; font-size: 19px;">✓</span>
+          </div>
+          <div class="orow" style="display: flex; align-items: center; gap: 12px; padding: 9px 0; border-top: 2px solid #f4edda;">
+            <span style="width: 28px; height: 28px; border-radius: 50%; background: #fdeee6; color: #E85D32; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto;">4</span>
+            <span style="flex: 1;"><b style="font-size: 19px;">el móvil</b><br><span style="font-size: 14px; color: #8a7d5f;">phone</span></span>
+            <span style="color: #21716F; font-weight: 800; font-size: 19px;">✓</span>
+          </div>
+          <div class="orow" style="display: flex; align-items: center; gap: 12px; padding: 9px 0; border-top: 2px solid #f4edda;">
+            <span style="width: 28px; height: 28px; border-radius: 50%; background: #fdeee6; color: #E85D32; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; flex: 0 0 auto;">5</span>
+            <span style="flex: 1;"><b style="font-size: 19px;">la planta</b><br><span style="font-size: 14px; color: #8a7d5f;">plant</span></span>
+            <span style="color: #21716F; font-weight: 800; font-size: 19px;">✓</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== PHASE C: clean CTA card ===== -->
+      <div id="cta" style="position: absolute; inset: 0; opacity: 0;">
+        <img id="cta-wordmark" src="../assets/linguini-wordmark.png" style="position: absolute; left: 480px; top: 160px; height: 80px;" alt="Linguini">
+        <div id="cta-tag" style="position: absolute; left: 290px; top: 290px; width: 700px; text-align: center; font-family: 'Baloo', sans-serif; font-size: 40px; white-space: nowrap; color: #263238;">
+          Your camera roll is <span style="color: #E85D32;">the textbook.</span>
+        </div>
+        <div id="cta-bar" style="position: absolute; left: 390px; top: 390px; width: 500px; height: 80px; background: #ffffff; border: 2px solid #e9e2d0; border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 18px; box-shadow: 0 14px 34px rgba(38,50,56,0.10);">
+          <span style="background: #E85D32; color: #FFF9ED; font-weight: 800; font-size: 18px; letter-spacing: 2px; padding: 7px 18px; border-radius: 999px;">IN BETA</span>
+          <span style="font-size: 27px; font-weight: 800; color: #21716F;">learnwithlinguini.com</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../node_modules/gsap/dist/gsap.min.js"></script>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    gsap.set('.mkp', { scale: 0, opacity: 0 });
+
+    // Phase A — the real demo picker assembles
+    tl.fromTo('#pk-chip', { y: -24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: 'power3.out' }, 0.2);
+    tl.fromTo('#pk-title', { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out' }, 0.4);
+    tl.fromTo('#pk-sub', { opacity: 0 }, { opacity: 1, duration: 0.4 }, 0.8);
+    tl.fromTo('.pk-card', { y: 40, opacity: 0, scale: 0.94 }, { y: 0, opacity: 1, scale: 1, duration: 0.45, stagger: 0.12, ease: 'back.out(1.4)' }, 0.9);
+    tl.fromTo('#mascot', { x: 160, opacity: 0 }, { x: 0, opacity: 1, duration: 0.6, ease: 'back.out(1.5)' }, 1.3);
+    tl.fromTo('#cursor', { opacity: 0 }, { opacity: 1, duration: 0.3 }, 1.7);
+
+    // Cursor flies to the "Study day" card (bottom-right, centre ≈ 800,544) and clicks
+    tl.to('#cursor', { left: 800, top: 540, duration: 0.8, ease: 'power2.inOut' }, 2.0);
+    tl.to('#sc-4', { scale: 0.94, duration: 0.12, yoyo: true, repeat: 1, ease: 'power2.inOut' }, 2.85);
+    tl.to('#sc-4', { borderColor: '#E85D32', duration: 0.2 }, 2.9);
+    tl.to('#cursor', { opacity: 0, duration: 0.2 }, 3.15);
+
+    // Phase B — picker out, photo + scan in
+    tl.to('#picker', { y: -60, opacity: 0, duration: 0.45, ease: 'power2.in' }, 3.35);
+    tl.to('#product', { opacity: 1, duration: 0.3 }, 3.6);
+    tl.fromTo('#photo-card', { scale: 0.8, rotation: 6, opacity: 0 }, { scale: 1, rotation: 1.5, opacity: 1, duration: 0.6, ease: 'back.out(1.4)' }, 3.6);
+    tl.fromTo('#scan-text', { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4, ease: 'power3.out' }, 4.0);
+    tl.fromTo('#scanbar', { opacity: 0, left: '-40%' }, { opacity: 1, left: '110%', duration: 1.1, ease: 'power1.inOut' }, 4.1);
+    tl.to('#scanbar', { opacity: 0, duration: 0.15 }, 5.2);
+    tl.to('#scan-text', { opacity: 0, duration: 0.3 }, 5.3);
+
+    // Numbered markers pop at the real scene coordinates
+    const mkOrder = ['#mk1', '#mk2', '#mk3', '#mk4', '#mk5'];
+    mkOrder.forEach((id, i) => {
+      tl.to(id, { scale: 1, opacity: 1, duration: 0.32, ease: 'back.out(2.2)' }, 4.9 + i * 0.22);
+    });
+
+    // Objects card slides in, rows stagger (Review-your-scene list)
+    tl.fromTo('#objects-card', { x: 60, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: 'power3.out' }, 5.4);
+    tl.fromTo('.orow', { x: 30, opacity: 0 }, { x: 0, opacity: 1, duration: 0.3, stagger: 0.14, ease: 'power2.out' }, 5.7);
+    tl.to('#mascot', { rotation: -5, duration: 0.22, yoyo: true, repeat: 3, ease: 'sine.inOut' }, 6.8);
+
+    // Phase C — clean CTA card
+    tl.to('#product', { y: 60, opacity: 0, duration: 0.5, ease: 'power2.in' }, 8.1);
+    tl.to('#cta', { opacity: 1, duration: 0.4 }, 8.5);
+    tl.fromTo('#cta-wordmark', { y: -30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out' }, 8.5);
+    tl.fromTo('#cta-tag', { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out' }, 8.7);
+    tl.fromTo('#cta-bar', { y: 30, opacity: 0, scale: 0.95 }, { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: 'back.out(1.6)' }, 9.0);
+    tl.to('#cta-bar', { scale: 1.04, duration: 0.5, yoyo: true, repeat: 1, ease: 'sine.inOut' }, 10.0);
+
+    window.__timelines = window.__timelines || {};
+    window.__timelines['gif-4'] = tl;
+  </script>
+</body>
+</html>

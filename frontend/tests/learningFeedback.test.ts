@@ -52,6 +52,7 @@ let latestAttempt: LatestClueAttempt | null = null;
 const replies: (() => Response | Promise<Response>)[] = [];
 const actions: (() => TaskActionResult | null)[] = [];
 const requests: Record<string, unknown>[] = [];
+const taskActions: { action: string; body: unknown }[] = [];
 const originalFetch = globals.fetch;
 globals.fetch = async (input: unknown, init?: RequestInit) => {
   const path = new URL(String(input)).pathname;
@@ -62,7 +63,7 @@ globals.fetch = async (input: unknown, init?: RequestInit) => {
   return replies.shift()?.() ?? new Response("Unexpected fixture request", { status: 500 });
 };
 const cleanups = new Set<() => Promise<void>>();
-test.beforeEach(() => { savedChecks = []; vocabularySaved = []; vocabularyRestoreFails = false; latestAttempt = null; replies.length = 0; actions.length = 0; requests.length = 0; });
+test.beforeEach(() => { savedChecks = []; vocabularySaved = []; vocabularyRestoreFails = false; latestAttempt = null; replies.length = 0; actions.length = 0; requests.length = 0; taskActions.length = 0; });
 test.afterEach(async () => { for (const cleanup of [...cleanups]) await cleanup(); });
 test.after(() => {
   globals.fetch = originalFetch;
@@ -126,7 +127,8 @@ async function mount(initialTask: SessionTask, scenePatch: Partial<Scene> = {}) 
     surface.h(surface.AppStateContext.Provider, { value: {
       session: { session: { id: "s1", status: "inProgress" }, tasks: [task], sceneObjects: [] },
       practiceSaving: false, practiceError: null, completeSession: () => false,
-      actOnTask: async () => {
+      actOnTask: async (_taskId: string, action: string, body: unknown) => {
+        taskActions.push({ action, body });
         const result = actions.shift()?.() ?? null;
         if (result) { task = result.task; await render(); }
         return result;
@@ -258,6 +260,76 @@ test("M06 preserves a saved retry and replaces encouragement only after the new 
   assert.match(text(), /The article matches taza/);
   assert.equal(requests[0].answer, "a");
   assert.equal(button("Try again"), undefined);
+});
+
+function situationLesson(missionId: "M04" | "M05") {
+  const task = lesson(missionId);
+  if (task.publicContent.kind !== "grammarLesson") throw new Error("Expected grammar fixture");
+  const content = task.publicContent;
+  content.focus = missionId === "M04" ? "ownership" : "preference";
+  content.missionSnapshot = {
+    missionId, level: "A0", situation: missionId === "M04" ? "lostAndFound" : "everydayChoice",
+    taughtChunks: [], pretend: true,
+  };
+  const positive = missionId === "M04" ? "Es mío" : "Me gusta";
+  const negative = missionId === "M04" ? "No es mío" : "No me gusta";
+  const question = content.questions[0];
+  delete question.allowRetry;
+  question.options = [{ optionId: "a", label: positive }, { optionId: "b", label: negative }];
+  question.gapType = "chunkChoice";
+  question.slotTemplate = "___.";
+  question.completeChunk = `${positive}.`;
+  content.questions = [question, { ...question, questionId: "q2" }];
+  const check = (questionId: string, correct: boolean): LessonAnswerCheck => {
+    const result = { ...checked(correct), questionId, correctAnswer: positive };
+    // These single-attempt questions omit both fields in real API responses.
+    delete result.attemptsLeft;
+    return result;
+  };
+  return { task, positive, negative, check };
+}
+
+for (const missionId of ["M04", "M05"] as const) {
+  test(`${missionId} finishes after correcting an earlier mistake and submits the original grades`, async () => {
+    const { task, positive, negative, check } = situationLesson(missionId);
+    await mount(task);
+    await click(negative);
+    replies.push(() => Response.json(check("q1", false)));
+    await click("Check answer");
+    await waitFor(() => assert.equal(button("Next question")?.disabled, false));
+    await click(positive);
+    await click("Next question");
+    await click(positive);
+    replies.push(() => Response.json(check("q2", true)));
+    await click("Check answer");
+    await waitFor(() => assert.equal(button("Finish task")?.disabled, false));
+    actions.push(() => action(task, false, "1 of 2 questions correct."));
+    await click("Finish task");
+    assert.deepEqual(taskActions, [{ action: "attempts", body: {
+      inputMode: "vocabularyReview", answers: { q1: "b", q2: "a" }, typedAnswers: {},
+    } }]);
+    assert.match(text(), /1 of 2 questions correct/);
+  });
+
+  test(`${missionId} can finish after reload with wrong saved answers and no local corrections`, async () => {
+    const { task, check } = situationLesson(missionId);
+    savedChecks = [check("q1", false), check("q2", false)];
+    await mount(task);
+    assert.equal(button("Finish task")?.disabled, false);
+    actions.push(() => action(task, false, "0 of 2 questions correct."));
+    await click("Finish task");
+    assert.equal(requests.length, 0, "restoring a lesson does not regrade or reward corrections");
+    assert.deepEqual(taskActions[0].body, {
+      inputMode: "vocabularyReview", answers: { q1: "b", q2: "b" }, typedAnswers: {},
+    });
+  });
+}
+
+test("an explicitly retryable lesson cannot finish while a saved retry is still open", async () => {
+  savedChecks = [checked(false, 2)];
+  await mount(lesson("M06"));
+  assert.equal(button("Finish task")?.disabled, true);
+  assert.equal(taskActions.length, 0);
 });
 
 test("a failed question check shows the error without an answer celebration", async () => {

@@ -3,6 +3,7 @@ import test from "node:test";
 import type { GrammarLessonQuestion, LessonAnswerCheck } from "../src/lib/api";
 import {
   isM06ScenarioVisible,
+  lessonCheckFinished,
   nextAssistanceStep,
   retryTokens,
   unlockedRetryResumeIndex,
@@ -38,6 +39,22 @@ test("an unlocked retry resumes on that question rather than the next one", () =
     q1: { questionId: "q1", answer: "x", isCorrect: false, correctAnswer: null, attemptsLeft: 2 },
   } as unknown as Record<string, LessonAnswerCheck>;
   assert.equal(unlockedRetryResumeIndex(questions, checks), 0);
+});
+
+test("a saved check finishes single-attempt questions when retry policy is omitted or null", () => {
+  const wrong = { isCorrect: false };
+  assert.equal(lessonCheckFinished(undefined), false);
+  assert.equal(lessonCheckFinished(wrong), true);
+  assert.equal(lessonCheckFinished(wrong, undefined), true);
+  assert.equal(lessonCheckFinished(wrong, null), true);
+  assert.equal(lessonCheckFinished(wrong, false), true);
+});
+
+test("explicit retries require a correct answer or exhausted server attempts", () => {
+  assert.equal(lessonCheckFinished(undefined, true), false);
+  assert.equal(lessonCheckFinished({ isCorrect: false, attemptsLeft: 2 }, true), false);
+  assert.equal(lessonCheckFinished({ isCorrect: false, attemptsLeft: 0 }, true), true);
+  assert.equal(lessonCheckFinished({ isCorrect: true, attemptsLeft: 2 }, true), true);
 });
 
 test("a correct first attempt resumes on the next question", () => {

@@ -84,7 +84,8 @@ def test_m06_builds_two_stable_tasks_and_records_scenario_assistance(curated):
         range(tasks[0].order_index, tasks[0].order_index + 2)
     )
     assert all(task.public_content.check_each_question for task in tasks)
-    assert tasks[0].public_content.scenario.alternatives
+    # A pack lesson's sentences are about its own item, so it offers no other item.
+    assert tasks[0].public_content.scenario.alternatives == []
     before = _mission_snapshot(engine, detail)
     first_get = client.get(f"/api/v1/sessions/{session_id}").json()
     second_get = client.get(f"/api/v1/sessions/{session_id}").json()
@@ -114,28 +115,13 @@ def test_m06_builds_two_stable_tasks_and_records_scenario_assistance(curated):
         for task in refreshed.tasks
         if task.public_content.mission_id == "M06"
     ]
-    original_ids = [task.id for task in tasks]
-    alternative = tasks[0].public_content.scenario.alternatives[0]
-    chosen = client.post(
+    other = next(obj for obj in detail.scene_objects
+                 if str(obj.id) != str(tasks[0].public_content.scenario.scene_object_id))
+    refused = client.post(
         f"/api/v1/tasks/{tasks[0].id}/mission-scenario",
-        json={
-            "action": "choose",
-            "sceneObjectId": str(alternative.scene_object_id),
-        },
+        json={"action": "choose", "sceneObjectId": str(other.id)},
     )
-    assert chosen.status_code == 200, chosen.text
-    assert [task["id"] for task in chosen.json()["tasks"]] == [str(item) for item in original_ids]
-    assert [task["orderIndex"] for task in chosen.json()["tasks"]] == [
-        task.order_index for task in tasks
-    ]
-    assert chosen.json()["tasks"][0]["publicContent"]["scenario"]["itemLabel"] == alternative.label
-    assert chosen.json()["tasks"][0]["publicContent"]["scenario"]["accepted"] is False
-    selected = repository.get(session_id, detail.session.language_profile_id)
-    assert [task["publicContent"] for task in chosen.json()["tasks"]] == [
-        task.public_content.model_dump(mode="json", by_alias=True)
-        for task in selected.tasks
-        if task.public_content.mission_id == "M06"
-    ]
+    assert refused.status_code == 409, refused.text
 
     accepted = client.post(
         f"/api/v1/tasks/{tasks[0].id}/mission-scenario", json={"action": "accept"}
@@ -235,8 +221,11 @@ def test_m06_builds_two_stable_tasks_and_records_scenario_assistance(curated):
             .scalars()
             .all()
         )
-    assert answer_key["missionState"]["transaction"]["itemKey"] == "book"
-    assert draft["missionPlan"][0]["transaction"]["itemLabel"] == alternative.label
+    # The refused switch left the lesson's own item in place.
+    item_label = tasks[0].public_content.scenario.item_label
+    assert answer_key["missionState"]["transaction"]["itemLabel"] == item_label
+    m06_plan = next(item for item in draft["missionPlan"] if item["missionId"] == "M06")
+    assert m06_plan["transaction"]["itemLabel"] == item_label
     assert final_attributes == initial_attributes
 
 

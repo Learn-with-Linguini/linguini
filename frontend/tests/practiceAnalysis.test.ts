@@ -158,7 +158,7 @@ test.after(() => {
   globalThis.MessageChannel = NativeMessageChannel;
 });
 
-test("removing and restoring objects keeps their review marker numbers stable", async () => {
+test("removed objects keep stable numbers while added markers follow kept objects", async () => {
   await mount();
   assertMarkers([1, 2, 3]);
   await click(dom.window.document.querySelector('[aria-label="Remove marker 1, table"]'));
@@ -167,9 +167,9 @@ test("removing and restoring objects keeps their review marker numbers stable", 
   await addWord("door");
   assertMarkers([2, 3, 4, 5]);
   await click(dom.window.document.querySelector('[aria-label="Remove marker 4, window"]'));
-  assertMarkers([2, 3, 5]);
+  assertMarkers([2, 3, 4]);
   await click(button("Restore removed objects"));
-  assertMarkers([1, 2, 3, 5]);
+  assertMarkers([1, 2, 3, 4]);
   await click(dom.window.document.querySelector('[aria-label="Remove marker 1, table"]'));
   await click(button("Confirm lesson facts"));
   assert.equal(reviews.length, 1);
@@ -231,4 +231,63 @@ test("a learner-added object follows the visible suggestion numbers", async () =
   await addWord("window");
 
   assertMarkers([1, 2, 3]);
+});
+
+test("added markers stay contiguous after removing an added object and are not saved", async () => {
+  await mount();
+  await addWord("window");
+  await addWord("door");
+  assertMarkers([1, 2, 3, 4, 5]);
+
+  await click(dom.window.document.querySelector('[aria-label="Remove marker 4, window"]'));
+
+  assertMarkers([1, 2, 3, 4]);
+  await click(button("Confirm lesson facts"));
+  assert.equal(reviews.length, 1);
+  assert.equal(reviews[0].addedObjects.length, 1);
+  assert.equal(reviews[0].addedObjects[0].label, "door");
+  assert.deepEqual(Object.keys(reviews[0].addedObjects[0]).sort(), ["id", "label", "x", "y"]);
+});
+
+const preferencePlan = [{ missionId: "M05", practiceLevel: "A0" }] as const;
+
+test("personal preference can select either matching object by its stable photo marker", async () => {
+  await mount({ ...detail(), provisionalMissionPlan: [...preferencePlan] });
+  await click(dom.window.document.getElementById("preference-object"));
+  const options = [...dom.window.document.querySelectorAll("#preference-object-options [role=option]")];
+  assert.deepEqual(options.map(option => option.textContent), ["1table", "2cup", "3cup"]);
+  await click(options[2]);
+  await click(button("I don't like it"));
+  await click(button("Confirm lesson facts"));
+  assert.deepEqual(reviews[0].missionChoices?.preference, {
+    sceneObjectIds: ["object-2"], chosenObjectId: null, reaction: "dislike",
+  });
+});
+
+test("a removed preference object is not sent as the learner's choice", async () => {
+  await mount({ ...detail(), provisionalMissionPlan: [...preferencePlan],
+    missionChoices: { preference: { sceneObjectIds: ["object-2"], chosenObjectId: null, reaction: "like" } } });
+  assert.match(dom.window.document.getElementById("preference-object")!.textContent!, /3cup/);
+  await click(dom.window.document.querySelector('[aria-label="Remove marker 3, cup"]'));
+  await click(button("Confirm lesson facts"));
+  assert.equal(reviews[0].missionChoices, undefined);
+});
+
+test("leaving preference empty or clearing a restored choice requests a pretend scenario", async () => {
+  await mount({ ...detail(), provisionalMissionPlan: [...preferencePlan] });
+  await click(button("Confirm lesson facts"));
+  assert.equal(reviews[0].missionChoices, undefined);
+  await act(async () => { root?.unmount(); });
+  root = null;
+  dom.window.document.body.replaceChildren();
+  await mount({ ...detail(), provisionalMissionPlan: [...preferencePlan],
+    missionChoices: { preference: { sceneObjectIds: ["object-1"], chosenObjectId: null, reaction: "like" } } });
+  await click(button("Use a pretend preference"));
+  await click(button("Confirm lesson facts"));
+  assert.equal(reviews[0].missionChoices, undefined);
+});
+
+test("preference picker is only shown for the beginner preference mission", async () => {
+  await mount({ ...detail(), provisionalMissionPlan: [{ missionId: "M05", practiceLevel: "A1" }] });
+  assert.equal(dom.window.document.getElementById("preference-object"), null);
 });

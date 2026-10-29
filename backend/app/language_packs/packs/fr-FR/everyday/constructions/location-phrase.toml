@@ -1,0 +1,19 @@
+construction_id = "location-phrase"
+version = 1
+summary = "Give a position phrase with its reference object."
+guidance = "Give only the position phrase and the reference noun phrase, no subject, verb or final punctuation: sur la table, sous la chaise, à côté de la fenêtre. Contract de + le to du and de + les to des."
+features = ["phrase", "position-phrase"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { reference = "noun", relation = "preposition" }
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "phrase-without-punctuation"
+message = "A position phrase is a choice, not a sentence: no final punctuation."
+must_not_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "contraction"
+message = "Contract de le/de les/à le/à les to du/des/au/aux."
+must_not_contain = ["(^|\\s)(de|à) (le|les)\\s"]

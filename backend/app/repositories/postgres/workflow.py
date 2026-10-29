@@ -72,6 +72,7 @@ from app.repositories.practice import (
     ActiveSessionLimitReachedError,
     DailyLessonLimitReachedError,
     InsufficientSceneError,
+    LessonLanguageUnavailableError,
     PracticeConflictError,
     PracticeNotFoundError,
     PracticeStorageError,
@@ -86,6 +87,7 @@ from app.schemas.enums import (
 )
 from app.schemas.media import MediaAsset, SceneObject, SceneObjectRelation
 from app.schemas.missions import MissionDefinition
+from app.schemas.roleplay import parse_roleplay_facts
 from app.schemas.sessions import (
     CountedGroup,
     Session,
@@ -125,6 +127,7 @@ from app.services.ispy_descriptions import (
 from app.services.mission_eligibility import (
     SHORTFALL_KINDS,
     SceneShortfall,
+    lesson_mission,
     lesson_missions,
     mission_snapshot,
     plan_missions,
@@ -133,15 +136,7 @@ from app.services.mission_eligibility import (
     scene_shortfall,
     snapshot_missions,
 )
-from app.services.mission_lessons import mission_version
-from app.services.mission_m06_lexicon import ITEMS, normalize_item_label
-from app.services.mission_m06_request_details import (
-    build_m06_result,
-    build_m06_tasks,
-    select_transaction,
-)
-from app.services.mission_registry import lesson_mission, lesson_spec
-from app.services.mission_roleplay import assign_roleplay
+from app.services.mission_roleplay import assign_a0_scenario, assign_roleplay
 from app.services.quantities import suggested_quantity
 from app.services.question_outcomes import (
     normalize_answer,
@@ -238,6 +233,7 @@ def _lesson_answer_is_correct(task, question_id, answer):
         normalize_answer(answer) == normalize_answer(expected)
         if interaction_type == "sentenceBuilding"
         else answer == expected
+        or answer in task.answer_key.accepted_option_ids.get(question_id, ())
     )
 
 
@@ -308,7 +304,7 @@ def review_marker_numbers(detected, accepted_ids, added_ids, suggested_ids=None)
         if str(obj["id"]) in accepted
     }
     numbers.update({
-        str(item): len(initially_visible) + number
+        str(item): max(numbers.values(), default=0) + number
         for number, item in enumerate(added_ids, 1)
     })
     return numbers
@@ -455,6 +451,28 @@ def _stale_processing(status=None):
     )
 
 
+_LANGUAGE_CONTEXT_UNSET = object()
+
+
+def session_language_context(session, profile):
+    """The pack context a session runs with: its saved snapshot, else the profile's pack.
+
+    A session saved with a pack that no longer passes its release gates cannot resume;
+    it is refused like a new lesson, never rebuilt by another builder.
+    """
+    from app.language_packs.context import operation_context
+
+    snapshot = (session.analysis_draft or {}).get("languageContext")
+    if snapshot is None:
+        return operation_context(session.mode, profile)
+    try:
+        return operation_context(session.mode, profile, snapshot)
+    except ValueError as error:
+        raise LessonLanguageUnavailableError(
+            "Photo lessons aren't available for this language yet."
+        ) from error
+
+
 @dataclass(frozen=True)
 class GenerationClaim:
     """An immutable snapshot taken when a task-generation revision was claimed."""
@@ -476,6 +494,7 @@ class GenerationClaim:
     roleplay_facts: dict[str, list[dict]] | None = None
     learner_facts: dict[str, dict] | None = None
     review_markers: dict[str, int] | None = None
+    language_context: object | None = None
 
     @property
     def generation_options(self) -> dict:
@@ -1176,7 +1195,6 @@ class PostgresWorkflowRepository:
             if len(tasks) != 2:
                 raise PracticeConflictError("The M06 scenario is not available.")
             draft = dict(session.analysis_draft or {})
-            mission_checks = draft.get("missionChecks") or {}
             if action == "accept":
                 for current in tasks:
                     content = current.public_content.model_dump(mode="json", by_alias=True)
@@ -1225,130 +1243,8 @@ class PostgresWorkflowRepository:
                     for current in tasks
                 ]
             else:
-                if scene_object_id is None:
-                    raise PracticeConflictError("Choose an alternative scene item.")
-                if any(mission_checks.get(str(current.id)) for current in tasks):
-                    raise PracticeConflictError("Choose an item before answering any question.")
-                state = tasks[0].answer_key.mission_state or {}
-                old_transaction = state.get("transaction", {})
-                alternatives = old_transaction.get("alternatives", [])
-                selected = next(
-                    (
-                        item
-                        for item in alternatives
-                        if str(item["sceneObjectId"]) == str(scene_object_id)
-                    ),
-                    None,
-                )
-                if selected is None:
-                    raise PracticeConflictError("Choose one of the offered alternatives.")
-                item = next(
-                    (
-                        item
-                        for item in ITEMS.values()
-                        if normalize_item_label(item.label)
-                        == normalize_item_label(selected["label"])
-                    ),
-                    None,
-                )
-                if item is None:
-                    raise PracticeConflictError("That item is not requestable.")
-                remaining = [
-                    item
-                    for item in alternatives
-                    if item["sceneObjectId"] != selected["sceneObjectId"]
-                    and normalize_item_label(item["label"])
-                    != normalize_item_label(selected["label"])
-                ][:2]
-                if normalize_item_label(old_transaction["itemLabel"]) != normalize_item_label(
-                    item.label
-                ):
-                    remaining = [
-                        {
-                            "sceneObjectId": old_transaction["sceneObjectId"],
-                            "label": old_transaction["itemLabel"],
-                        },
-                        *remaining,
-                    ][:2]
-                transaction = select_transaction(
-                    session.id, item, old_transaction["targetLanguage"]
-                )
-                transaction.update(
-                    {
-                        "sceneObjectId": str(scene_object_id),
-                        "itemKey": item.key,
-                        "itemLabel": item.label,
-                        "alternatives": remaining,
-                        "scenarioAccepted": False,
-                        "q5Mode": old_transaction.get("q5Mode", "chunkChoice"),
-                    }
-                )
-                payload = {
-                    "transaction": transaction,
-                    "targetLanguage": old_transaction["targetLanguage"],
-                    "itemKey": item.key,
-                    "q5Mode": transaction["q5Mode"],
-                    "scenarioPrompt": {
-                        "cafeDrink": "Practise ordering this drink at a café.",
-                        "cafeFood": "Practise ordering this food at a café.",
-                        "shop": "Practise buying this at a shop.",
-                        "classroom": "Imagine you need to borrow this pen.",
-                        "home": "Imagine you ask someone at home to pass you this.",
-                    }[
-                        {
-                            "cafe": "cafeDrink"
-                            if item.key in {"coffee", "tea", "juice"}
-                            else "cafeFood",
-                            "shop": "shop",
-                            "classroom": "classroom",
-                            "home": "home",
-                        }[item.category]
-                    ],
-                    "alternatives": [
-                        (
-                            None,
-                            next(
-                                (
-                                    candidate
-                                    for candidate in ITEMS.values()
-                                    if candidate.label == alt["label"]
-                                ),
-                                item,
-                            ),
-                        )
-                        for alt in remaining
-                    ],
-                }
-                mission = lesson_mission(get_mission("M06", "A2", 1))
-                questions = build_m06_result(payload)
-                rebuilt = build_m06_tasks(session.id, mission, payload, questions)
-                changed = []
-                for previous, replacement in zip(tasks, rebuilt, strict=True):
-                    replacement = replacement.model_copy(
-                        update={
-                            "id": previous.id,
-                            "order_index": previous.order_index,
-                            "created_at": previous.created_at,
-                            "status": previous.status,
-                            "started_at": previous.started_at,
-                        }
-                    )
-                    c.execute(
-                        update(session_tasks)
-                        .where(session_tasks.c.id == previous.id)
-                        .values(**entity_values(replacement))
-                    )
-                    changed.append(replacement)
-                for entry in draft.get("missionPlan", []):
-                    if entry.get("missionId") == "M06":
-                        entry["transaction"] = transaction
-                c.execute(
-                    update(sessions)
-                    .where(sessions.c.id == session.id)
-                    .values(
-                        analysis_draft=draft,
-                    )
-                )
+                # Pack M06 lessons offer no alternative items, so there is none to switch to.
+                raise PracticeConflictError("Choose one of the offered alternatives.")
             return MissionScenarioResponse(
                 accepted=all(
                     task.public_content.scenario.accepted
@@ -1700,6 +1596,7 @@ class PostgresWorkflowRepository:
                 return tagged(parse_session(existing))
             self._check_daily_tier_limit(c)
             self._check_active_limit(c, request.language_profile_id)
+            self._check_lesson_language(_profile)
             session = Session(
                 user_id=self.user_id,
                 language_profile_id=request.language_profile_id,
@@ -1708,6 +1605,16 @@ class PostgresWorkflowRepository:
             )
             c.execute(insert(sessions).values(**session.model_dump(by_alias=False)))
             return tagged(session)
+
+    @staticmethod
+    def _check_lesson_language(profile):
+        """Lessons come only from language packs: refuse one before it starts, not mid-way."""
+        from app.language_packs.context import operation_context
+
+        if operation_context(SessionMode.LESSON, dict(profile)) is None:
+            raise LessonLanguageUnavailableError(
+                "Photo lessons aren't available for this language yet."
+            )
 
     def _check_daily_tier_limit(self, c):
         user_row = (
@@ -1992,12 +1899,16 @@ class PostgresWorkflowRepository:
 
     @staticmethod
     def _analysis_draft(session, profile, result):
-        candidates = lesson_missions(session.mode, profile)
+        from app.language_packs.context import operation_context
+
+        context = operation_context(session.mode, profile)
+        candidates = lesson_missions(session.mode, profile, context)
         provisional, selected_ids = provisional_mission_focus(
-            candidates, result.objects, result.relations
+            candidates, result.objects, result.relations, context
         )
         return {
             "analysisAttempts": analysis_attempts(session),
+            **({"languageContext": context.snapshot()} if context else {}),
             "objects": [
                 obj.model_dump(mode="json", by_alias=False) for obj in result.objects
             ],
@@ -2048,12 +1959,18 @@ class PostgresWorkflowRepository:
 
     def check_word(self, session_id, profile_id, label):
         with self.engine.connect() as c:
-            self._session(c, session_id, profile_id)
+            session = self._session(c, session_id, profile_id)
             profile = (
                 c.execute(select(language_profiles).where(language_profiles.c.id == profile_id))
                 .mappings()
                 .one()
             )
+            if self.translator:
+                context = session_language_context(session, profile)
+                if context is not None:
+                    # Available to confirm as a scene candidate, not translated or
+                    # linguistically ready. The checkpoint validates translation later.
+                    return {"available": True, "translationReady": False}
             self._catalog_word(c, profile, label)
             return {"available": True}
 
@@ -2305,6 +2222,7 @@ class PostgresWorkflowRepository:
                 .mappings()
                 .one()
             )
+            language_context = session_language_context(session, profile)
             asset, scene = self._scene_media(c, session)
             objects, relations = self._scene_objects(c, session)
             history = None
@@ -2319,7 +2237,7 @@ class PostgresWorkflowRepository:
                 )
             if (
                 "missionPlan" not in (session.analysis_draft or {})
-                and lesson_missions(session.mode, dict(profile))
+                and lesson_missions(session.mode, dict(profile), language_context)
             ):
                 self._plan_missions(
                     c,
@@ -2329,9 +2247,20 @@ class PostgresWorkflowRepository:
                     saved_counted_groups(session.analysis_draft),
                     relations,
                     mission_choices=(session.analysis_draft or {}).get("missionChoices") or {},
+                    language_context=language_context,
                 )
                 session = self._session(c, session_id, profile_id)
-            missions = tuple(self._planned_missions(session, dict(profile)))
+            missions = tuple(self._planned_missions(session, dict(profile), language_context))
+            blocked = next((
+                lesson_mission(m) for m in missions
+                if language_context is not None
+                and language_context.owns(lesson_mission(m).mission_id)
+                and not language_context.is_ready(lesson_mission(m))
+            ), None)
+            if blocked is not None:
+                raise LearningTaskGenerationError(
+                    f"Selected {blocked.mission_id} level is not ready in this context"
+                )
             draft = session.analysis_draft or {}
             mission_progress = (
                 self._mission_progress(c, dict(profile), history) if missions else None
@@ -2372,6 +2301,7 @@ class PostgresWorkflowRepository:
                     if item.get("practiceLevel") == "A0" and "learnerFacts" in item
                 },
                 review_markers=draft.get("reviewMarkers") or {},
+                language_context=language_context,
             )
 
     def _mission_progress(self, c, profile, history):
@@ -2536,9 +2466,12 @@ class PostgresWorkflowRepository:
 
     def _plan_missions(
         self, c, session, profile, objects, counted_groups, relations, mission_choices=None,
+        language_context=_LANGUAGE_CONTEXT_UNSET,
     ):
         """Snapshot the lesson's mission plan from the confirmed facts before generation."""
-        candidates = lesson_missions(session.mode, profile)
+        if language_context is _LANGUAGE_CONTEXT_UNSET:
+            language_context = session_language_context(session, profile)
+        candidates = lesson_missions(session.mode, profile, language_context)
         if not candidates:
             return None
         history_drafts = c.execute(
@@ -2555,11 +2488,14 @@ class PostgresWorkflowRepository:
             if isinstance(item, dict) and isinstance(item.get("missionId"), str)
         ]
         plan = plan_missions(
-            candidates, objects, relations, counted_groups, history, mission_choices
+            candidates, objects, relations, counted_groups, history, mission_choices,
+            language_context,
         )
         draft = dict(c.execute(select(sessions.c.analysis_draft).where(
             sessions.c.id == session.id,
         )).scalar_one() or {})
+        if language_context is not None:
+            draft["languageContext"] = language_context.snapshot()
         previous_entries = {
             (
                 item.get("missionId"),
@@ -2570,10 +2506,6 @@ class PostgresWorkflowRepository:
             if isinstance(item, dict)
         }
         markers = draft.get("reviewMarkers") or {}
-        scenario_objects = sorted(
-            objects,
-            key=lambda obj: (markers.get(str(obj.id), 10_000), str(obj.id)),
-        )
         mission_plan = []
         for mission in plan:
             entry = mission_snapshot(mission)
@@ -2584,35 +2516,32 @@ class PostgresWorkflowRepository:
                 key: value for key, value in previous.items()
                 if key not in entry and key not in {"roleplayFacts", "learnerFacts"}
             })
-            if str(mission.practice_level) == "A0" and mission.mission_id == "M04":
-                owner_seed = hashlib.sha256(
-                    f"{session.id}:A0:M04:owner".encode()
-                ).digest()[0]
-                owner_name = (None, "Ana", "Leo")[owner_seed % 3]
+            # A0: the learner's own choice when one was sent, else an assigned scenario.
+            ownership = (mission_choices or {}).get("ownership") or {}
+            preference = (mission_choices or {}).get("preference") or {}
+            if str(mission.practice_level) == "A0" and mission.mission_id == "M04" and ownership:
                 entry["learnerFacts"] = {
-                    "ownedObjectId": str(scenario_objects[0].id),
-                    "pretend": True,
-                    "ownerName": owner_name,
+                    "ownedObjectId": ownership.get("sceneObjectId"),
+                    "pretend": bool(ownership.get("pretend", False)),
                 }
-            elif str(mission.practice_level) == "A0" and mission.mission_id == "M05":
-                preference_object = (
-                    scenario_objects[1] if len(scenario_objects) > 1 else scenario_objects[0]
-                )
-                reaction_seed = hashlib.sha256(
-                    f"{session.id}:A0:M05:reaction".encode()
-                ).digest()[0]
-                subject_seed = hashlib.sha256(
-                    f"{session.id}:A0:M05:subject".encode()
-                ).digest()[0]
-                subject_name = (None, "Ana", "Leo")[subject_seed % 3]
+            elif (
+                str(mission.practice_level) == "A0" and mission.mission_id == "M05"
+                and preference
+            ):
+                compared = preference.get("sceneObjectIds", [])
                 entry["learnerFacts"] = {
                     "preference": {
-                        "sceneObjectIds": [str(preference_object.id)],
-                        "chosenObjectId": None,
-                        "reaction": "like" if reaction_seed % 2 == 0 else "dislike",
-                        "subjectName": subject_name,
+                        "sceneObjectIds": compared,
+                        "chosenObjectId": preference.get("chosenObjectId"),
+                        "reaction": preference.get("reaction") or (
+                            "like" if len(compared) == 2 else None
+                        ),
                     }
                 }
+            elif (
+                scenario := assign_a0_scenario(mission, session.id, objects, markers)
+            ) is not None:
+                entry["learnerFacts"] = scenario
             if (
                 str(mission.practice_level) == "A1"
                 and mission.mission_id in {"M04", "M05"}
@@ -2629,11 +2558,13 @@ class PostgresWorkflowRepository:
         ))
         # No mission fits: report what is short instead of a lesson that cannot be checked.
         return None if plan else scene_shortfall(
-            candidates, objects, relations, counted_groups, mission_choices
+            candidates, objects, relations, counted_groups, mission_choices, language_context,
         )
 
-    def _planned_missions(self, session, profile):
-        if not lesson_missions(session.mode, profile):
+    def _planned_missions(self, session, profile, language_context=_LANGUAGE_CONTEXT_UNSET):
+        if language_context is _LANGUAGE_CONTEXT_UNSET:
+            language_context = session_language_context(session, profile)
+        if not lesson_missions(session.mode, profile, language_context):
             return []
         # Missing plans are rebuilt at claim time; a saved empty plan stays empty.
         return snapshot_missions((session.analysis_draft or {}).get("missionPlan"))
@@ -2686,16 +2617,29 @@ class PostgresWorkflowRepository:
         ispy_descriptions = None
         introduction_id = None
         objects, relations = list(claim.objects), claim.relations
-        if self.translator:
-            payload = translation_payload(
-                profile["target_language_code"],
-                claim.title,
-                session.session_summary or "Confirmed scene vocabulary.",
-                objects,
-                relations,
+        # Every lesson, with or without missions, translates with its language pack. With
+        # no translator configured (tests, local runs without AI), a lesson without missions
+        # keeps the deterministic default lesson from catalog words; missions need the pack.
+        context = getattr(claim, "language_context", None)
+        if context is None:
+            raise LearningTaskGenerationError(
+                f"No language pack is ready for {profile['target_language_code']!r} lessons."
             )
+        if not self.translator and claim.missions:
+            raise LearningTaskGenerationError("Pack lessons require accepted scene translations.")
+        payload = translation_payload(
+            profile["target_language_code"],
+            claim.title,
+            session.session_summary or "Confirmed scene vocabulary.",
+            objects,
+            relations,
+        )
+        translated_scene = None
+        if self.translator:
             with _timed("translation", session_id):
-                translated_scene = self.translator.translate(payload, **claim.generation_options)
+                translated_scene = self.translator.translate(
+                    payload, **claim.generation_options, language_context=context,
+                )
 
         # Checkpoint: commit translations and task 1 before the slower lesson
         # and clue calls, so the learner can start while tasks are built.
@@ -2705,12 +2649,12 @@ class PostgresWorkflowRepository:
                 return
             # Rebuild tasks from scratch for the accepted objects.
             c.execute(delete(session_tasks).where(session_tasks.c.session_id == session_id))
-            supplemental_vocabulary = {}
             draft = dict(session.analysis_draft or {})
             draft.pop("missionChecks", None)
             c.execute(
                 update(sessions).where(sessions.c.id == session_id).values(analysis_draft=draft)
             )
+            supplemental_vocabulary = {}
             if self.translator:
                 supplemental_vocabulary = self._store_translation(
                     c, session, profile, objects, translated_scene
@@ -2726,8 +2670,17 @@ class PostgresWorkflowRepository:
                 translated_scene if self.translator else _translation_preview(session),
                 supplemental_vocabulary,
                 relations,
+                # Without a translation the default lesson uses catalog words, not the pack.
+                language_context=context if self.translator else None,
             )
             introduction = next(task for task in rebuilt if task.kind == "vocabularyIntroduction")
+            draft = dict(c.execute(select(sessions.c.analysis_draft).where(
+                sessions.c.id == session_id,
+            )).scalar_one() or {})
+            draft["languageContext"] = context.snapshot()
+            c.execute(update(sessions).where(sessions.c.id == session_id).values(
+                analysis_draft=draft,
+            ))
             introduction = personalize_introduction(introduction, claim.learner_history)
             rebuilt = [introduction if task.id == introduction.id else task for task in rebuilt]
             summary = personalization_summary(
@@ -2789,12 +2742,12 @@ class PostgresWorkflowRepository:
                 objects,
                 relations,
                 words,
-                translated_scene if self.translator else None,
+                translated_scene,
                 skipped_missions,
             )
             mission_lessons = lesson()
         shortfall = None
-        if not mission_lessons and lesson_missions(session.mode, profile):
+        if not mission_lessons and lesson_missions(session.mode, profile, context):
             # Mission profiles never fall back to the unchecked regular lesson.
             shortfall = self._generation_shortfall(claim, session, objects, relations)
         if not mission_lessons and self.translator and shortfall is None:
@@ -2917,12 +2870,14 @@ class PostgresWorkflowRepository:
     def _generation_shortfall(claim, session, objects, relations):
         """What the confirmed scene lacks when no planned mission produced a lesson."""
         draft = session.analysis_draft or {}
+        context = getattr(claim, "language_context", None)
         shortfall = scene_shortfall(
-            lesson_missions(session.mode, claim.profile),
+            lesson_missions(session.mode, claim.profile, context),
             objects,
             relations,
             claim.counted_groups,
             draft.get("missionChoices") or {},
+            context,
         )
         if shortfall is not None:
             return shortfall
@@ -2956,72 +2911,47 @@ class PostgresWorkflowRepository:
         self._transition(c, session, "awaitingObjectReview", analysis_draft=draft)
 
     def _mission_lessons(self, claim, objects, relations, words, translated_scene, skipped):
-        """One validated lesson per planned mission; a generation failure uses its fallback.
+        """One validated lesson per planned mission, generated from the language pack.
 
-        A mission whose confirmed facts give no reviewed content is skipped and recorded.
+        Mission lessons come only from packs: a planned mission the session's pack does not
+        own fails generation into the normal recoverable error state. A role-play mission
+        whose saved facts are no longer valid is skipped and recorded in ``skipped``.
         """
         language = claim.profile["target_language_code"]
-        vocabulary_ids = {str(obj.id): word.id for obj, word in zip(objects, words, strict=True)}
+        context = getattr(claim, "language_context", None)
         lessons = []
         for planned in claim.missions:
             mission = lesson_mission(planned)
-            spec = lesson_spec(mission)
-            payload = spec.payload(
-                mission,
-                language,
-                objects,
-                relations,
-                words,
-                translated_scene,
-                claim.counted_groups,
-                claim.mission_progress or {},
-                claim.session_id,
-                review_markers=claim.review_markers or {},
-                context={
-                    "roleplay_facts": (claim.roleplay_facts or {}).get(mission.mission_id),
-                    "learner_facts": (claim.learner_facts or {}).get(mission.mission_id),
-                },
-            )
-            if str(mission.practice_level) == "A1" and payload.get("invalidRoleplay"):
+            if context is None or not context.owns(mission.mission_id):
+                raise LearningTaskGenerationError(
+                    f"{mission.mission_id} has no language pack lesson for {language!r}."
+                )
+            roleplay = (claim.roleplay_facts or {}).get(mission.mission_id)
+            if str(mission.practice_level) == "A1" and mission.mission_id in {"M04", "M05"} and (
+                len(parse_roleplay_facts(roleplay, [obj.id for obj in objects]) or []) != 3
+            ):
                 skipped.append(dict(missionId=mission.mission_id, reason="invalidRoleplay"))
                 continue
-            if not spec.ready(payload):
-                logger.warning(
-                    "%s has no reviewed content for session %s; skipping it.",
-                    mission.mission_id,
-                    claim.session_id,
+            if self.learning_task_generator is None:
+                raise LearningTaskGenerationError(
+                    f"{mission.mission_id} pack generation needs a configured provider."
                 )
-                skipped.append(dict(missionId=mission.mission_id, reason="noReviewedContent"))
-                continue
-            result = None
-            if self.learning_task_generator and spec.generation.uses_model:
-                try:
-                    with _timed("mission lesson generation", claim.session_id):
-                        result = self.learning_task_generator.generate_mission(
-                            payload,
-                            spec.generation,
-                            mission_version=mission_version(mission),
-                            cache_scope=claim.cache_scope,
-                        )
-                except Exception:
-                    logger.exception(
-                        "%s lesson generation failed for session %s; "
-                        "using the deterministic mission lesson.",
-                        mission.mission_id,
-                        claim.session_id,
-                    )
-            if result is None:
-                try:
-                    result = spec.generation.fallback(payload)
-                except LearningTaskGenerationError:
-                    logger.warning(
-                        "%s has no buildable lesson for session %s; skipping it.",
-                        mission.mission_id,
-                        claim.session_id,
-                    )
-                    skipped.append(dict(missionId=mission.mission_id, reason="noReviewedContent"))
-                    continue
-            built = spec.task(claim.session_id, mission, payload, result, vocabulary_ids)
+            # Missions reach this point through the existing eligibility/review flow.
+            # A pack failure propagates to the normal recoverable generation error state.
+            built = self.learning_task_generator.generate_pack_lesson(
+                mission, language, objects, relations, words, translated_scene,
+                session_id=claim.session_id, review_markers=claim.review_markers or {},
+                cache_scope=claim.cache_scope,
+                register=context.display.register_id,
+                language_context=context,
+                counted_groups=claim.counted_groups or (),
+                mission_context={
+                    "roleplay_facts": roleplay,
+                    "learner_facts": (claim.learner_facts or {}).get(mission.mission_id),
+                    # M06's saved order and reply history, as dev's builder reads them.
+                    "progress": claim.mission_progress or {},
+                },
+            )
             lessons.extend(built if isinstance(built, list) else [built])
         return lessons
 

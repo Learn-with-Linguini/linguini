@@ -64,6 +64,8 @@ export type Scene = {
   alt: string;
   words: SceneWord[];
   ispy: Record<Lang, ISpyRound>;
+  /** Word card retained for the fixed gap exercise in every language. */
+  blankWordId: string;
   blank: Record<Lang, BlankRound>;
   build: Record<Lang, BuildRound>;
   journal: Record<Lang, JournalDraft>;

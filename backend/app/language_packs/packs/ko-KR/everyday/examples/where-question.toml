@@ -1,0 +1,25 @@
+construction_id = "where-question"
+
+[[examples]]
+example_id = "where-cup"
+levels = ["A1"]
+purposes = ["askWhere"]
+meaning = "Where is the cup?"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }] }
+bindings = { subject = "object:cup" }
+truth = true
+labels = []
+sentence = "컵이 어디에 있어요?"
+translation = "Where is the cup?"
+chunks = [{ text = "컵이", join = "none" }, { text = "어디에", join = "space" }, { text = "있어요", join = "space" }, { text = "?", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "where-cup-form"
+levels = ["A1"]
+purposes = ["askWhere"]
+sentence = "컵이 어디에 있다?"
+correction = "컵이 어디에 있어요?"
+note = "Use the polite -어요 ending: 있어요?"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }

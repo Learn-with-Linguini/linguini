@@ -1,0 +1,1032 @@
+{
+  "A0": {
+    "mission_id": "M01",
+    "practice_level": "A0",
+    "content_version": 1,
+    "question_count": 6,
+    "option_counts": [3, 2, 0, 3, 2, 0],
+    "public_content_keys": ["missionId", "practiceLevel", "contentVersion", "kind", "focus", "title", "explanation", "prep", "questions"],
+    "support_shape": {"prep": 5},
+    "sections": [
+      "Task 1 · Apple",
+      "Task 2 · Cup"
+    ],
+    "section_counts": {
+      "Task 1 · Apple": 3,
+      "Task 2 · Cup": 3
+    },
+    "interaction_counts": {
+      "multipleChoice": 4,
+      "sentenceBuilding": 2
+    },
+    "questions": [
+      {
+        "purpose": "matchName",
+        "interaction_type": "multipleChoice",
+        "section": "Task 1 · Apple",
+        "target_ids": [
+          "recognise-name"
+        ],
+        "evidence_type": "recognition",
+        "criteria": [
+          "name-matches-object"
+        ],
+        "correct_answer": "3"
+      },
+      {
+        "purpose": "confirmName",
+        "interaction_type": "multipleChoice",
+        "section": "Task 1 · Apple",
+        "target_ids": [
+          "identify-object"
+        ],
+        "evidence_type": "recognition",
+        "criteria": [
+          "identifies-object"
+        ],
+        "correct_answer": "Sí."
+      },
+      {
+        "purpose": "buildIdentify",
+        "interaction_type": "sentenceBuilding",
+        "section": "Task 1 · Apple",
+        "target_ids": [
+          "identify-object"
+        ],
+        "evidence_type": "construction",
+        "criteria": [
+          "identifies-object"
+        ],
+        "correct_answer": "Es una manzana."
+      },
+      {
+        "purpose": "matchName",
+        "interaction_type": "multipleChoice",
+        "section": "Task 2 · Cup",
+        "target_ids": [
+          "recognise-name"
+        ],
+        "evidence_type": "recognition",
+        "criteria": [
+          "name-matches-object"
+        ],
+        "correct_answer": "1"
+      },
+      {
+        "purpose": "confirmName",
+        "interaction_type": "multipleChoice",
+        "section": "Task 2 · Cup",
+        "target_ids": [
+          "identify-object"
+        ],
+        "evidence_type": "recognition",
+        "criteria": [
+          "identifies-object"
+        ],
+        "correct_answer": "No."
+      },
+      {
+        "purpose": "buildIdentify",
+        "interaction_type": "sentenceBuilding",
+        "section": "Task 2 · Cup",
+        "target_ids": [
+          "identify-object"
+        ],
+        "evidence_type": "construction",
+        "criteria": [
+          "identifies-object"
+        ],
+        "correct_answer": "Es una taza."
+      }
+    ],
+    "answer_key": {
+      "acceptedTextAnswers": [],
+      "expectedTokenOrder": [],
+      "correctOptionIds": {
+        "matchName-1": "marker-3",
+        "confirmName-1": "option-1",
+        "buildIdentify-1": "Es una manzana.",
+        "matchName-2": "marker-1",
+        "confirmName-2": "option-2",
+        "buildIdentify-2": "Es una taza."
+      },
+      "acceptedTextAnswersByVocabularyId": {},
+      "questionEvaluations": [
+        {
+          "questionId": "matchName-1",
+          "objectiveId": "name-and-identify",
+          "targetIds": [
+            "recognise-name"
+          ],
+          "evidenceType": "recognition",
+          "acceptedAnswers": [],
+          "rubricCriterionIds": [
+            "name-matches-object"
+          ],
+          "vocabularyItemIds": [],
+          "sceneObjectId": "00000000-0000-0000-0000-000000000003",
+          "corrections": [
+            {
+              "mistake": "wrongObject",
+              "answers": [
+                "marker-1"
+              ],
+              "correction": "3",
+              "explanation": "Marker 1 is the cup; la manzana is marker 3."
+            },
+            {
+              "mistake": "wrongObject",
+              "answers": [
+                "marker-2"
+              ],
+              "correction": "3",
+              "explanation": "Marker 2 is the book; la manzana is marker 3."
+            }
+          ],
+          "correctNote": "la manzana: marker 3."
+        },
+        {
+          "questionId": "confirmName-1",
+          "objectiveId": "name-and-identify",
+          "targetIds": [
+            "identify-object"
+          ],
+          "evidenceType": "recognition",
+          "acceptedAnswers": [],
+          "rubricCriterionIds": [
+            "identifies-object"
+          ],
+          "vocabularyItemIds": [],
+          "sceneObjectId": "00000000-0000-0000-0000-000000000003",
+          "corrections": [
+            {
+              "mistake": "wrongObject",
+              "answers": [
+                "option-2"
+              ],
+              "correction": "Sí.",
+              "explanation": "This is an apple: Es una manzana."
+            }
+          ],
+          "correctNote": "This is an apple: Es una manzana."
+        },
+        {
+          "questionId": "buildIdentify-1",
+          "objectiveId": "name-and-identify",
+          "targetIds": [
+            "identify-object"
+          ],
+          "evidenceType": "construction",
+          "acceptedAnswers": [],
+          "rubricCriterionIds": [
+            "identifies-object"
+          ],
+          "vocabularyItemIds": [],
+          "sceneObjectId": "00000000-0000-0000-0000-000000000003",
+          "corrections": [
+            {
+              "mistake": "wordOrder",
+              "answers": [],
+              "correction": "Es una manzana.",
+              "explanation": "Build: Es una manzana."
+            }
+          ]
+        },
+        {
+          "questionId": "matchName-2",
+          "objectiveId": "name-and-identify",
+          "targetIds": [
+            "recognise-name"
+          ],
+          "evidenceType": "recognition",
+          "acceptedAnswers": [],
+          "rubricCriterionIds": [
+            "name-matches-object"
+          ],
+          "vocabularyItemIds": [],
+          "sceneObjectId": "00000000-0000-0000-0000-000000000001",
+          "corrections": [
+            {
+              "mistake": "wrongObject",
+              "answers": [
+                "marker-2"
+              ],
+              "correction": "1",
+              "explanation": "Marker 2 is the book; la taza is marker 1."
+            },
+            {
+              "mistake": "wrongObject",
+              "answers": [
+                "marker-3"
+              ],
+              "correction": "1",
+              "explanation": "Marker 3 is the apple; la taza is marker 1."
+            }
+          ],
+          "correctNote": "la taza: marker 1."
+        },
+        {
+          "questionId": "confirmName-2",
+          "objectiveId": "name-and-identify",
+          "targetIds": [
+            "identify-object"
+          ],
+          "evidenceType": "recognition",
+          "acceptedAnswers": [],
+          "rubricCriterionIds": [
+            "identifies-object"
+          ],
+          "vocabularyItemIds": [],
+          "sceneObjectId": "00000000-0000-0000-0000-000000000001",
+          "corrections": [
+            {
+              "mistake": "wrongObject",
+              "answers": [
+                "option-1"
+              ],
+              "correction": "No.",
+              "explanation": "This is a cup: Es una taza."
+            }
+          ],
+          "correctNote": "This is a cup: Es una taza."
+        },
+        {
+          "questionId": "buildIdentify-2",
+          "objectiveId": "name-and-identify",
+          "targetIds": [
+            "identify-object"
+          ],
+          "evidenceType": "construction",
+          "acceptedAnswers": [],
+          "rubricCriterionIds": [
+            "identifies-object"
+          ],
+          "vocabularyItemIds": [],
+          "sceneObjectId": "00000000-0000-0000-0000-000000000001",
+          "corrections": [
+            {
+              "mistake": "wordOrder",
+              "answers": [],
+              "correction": "Es una taza.",
+              "explanation": "Build: Es una taza."
+            }
+          ]
+        }
+      ],
+      "statementCorrect": {
+        "confirmName-1": true,
+        "confirmName-2": false
+      }
+    },
+    "grading": {
+      "all_correct": {
+        "question_results": {
+          "matchName-1": true,
+          "confirmName-1": true,
+          "buildIdentify-1": true,
+          "matchName-2": true,
+          "confirmName-2": true,
+          "buildIdentify-2": true
+        },
+        "score": 1,
+        "task_status_after_submission": "completed",
+        "met_threshold": true
+      },
+      "all_wrong": {
+        "question_results": {
+          "matchName-1": false,
+          "confirmName-1": false,
+          "buildIdentify-1": false,
+          "matchName-2": false,
+          "confirmName-2": false,
+          "buildIdentify-2": false
+        },
+        "score": 0,
+        "task_status_after_submission": "completed",
+        "met_threshold": false
+      }
+    }
+  },
+  "A1": {
+    "mission_id": "M01",
+    "practice_level": "A1",
+    "content_version": 1,
+    "question_count": 4,
+    "option_counts": [2, 2, 3, 0],
+    "public_content_keys": ["missionId", "practiceLevel", "contentVersion", "kind", "focus", "title", "questions"],
+    "support_shape": {},
+    "sections": [
+      "Task 1 · Identify objects in your photo",
+      "Task 2 · Describe them"
+    ],
+    "section_counts": {
+      "Task 1 · Identify objects in your photo": 2,
+      "Task 2 · Describe them": 2
+    },
+    "interaction_counts": {
+      "multipleChoice": 3,
+      "sentenceBuilding": 1
+    },
+    "questions": [
+      {
+        "purpose": "confirmObject",
+        "interaction_type": "multipleChoice",
+        "section": "Task 1 · Identify objects in your photo",
+        "target_ids": [
+          "identify-object",
+          "name-object"
+        ],
+        "evidence_type": "recognition",
+        "criteria": [
+          "selects-described-object",
+          "article-matches-noun"
+        ],
+        "correct_answer": "No, es una taza."
+      },
+      {
+        "purpose": "confirmObject",
+        "interaction_type": "multipleChoice",
+        "section": "Task 1 · Identify objects in your photo",
+        "target_ids": [
+          "identify-object",
+          "name-object"
+        ],
+        "evidence_type": "recognition",
+        "criteria": [
+          "selects-described-object",
+          "article-matches-noun"
+        ],
+        "correct_answer": "No, es un libro."
+      },
+      {
+        "purpose": "chooseAttribute",
+        "interaction_type": "multipleChoice",
+        "section": "Task 2 · Describe them",
+        "target_ids": [
+          "describe-colour"
+        ],
+        "evidence_type": "recognition",
+        "criteria": [
+          "colour-matches-photo"
+        ],
+        "correct_answer": "Roja"
+      },
+      {
+        "purpose": "describeObject",
+        "interaction_type": "sentenceBuilding",
+        "section": "Task 2 · Describe them",
+        "target_ids": [
+          "name-object",
+          "describe-colour"
+        ],
+        "evidence_type": "construction",
+        "criteria": [
+          "article-matches-noun",
+          "colour-matches-photo"
+        ],
+        "correct_answer": "Es un libro verde."
+      }
+    ],
+    "answer_key": {
+      "acceptedTextAnswers": [],
+      "expectedTokenOrder": [],
+      "correctOptionIds": {
+        "confirm-first": "confirm-1",
+        "confirm-second": "confirm-1",
+        "choose-attribute": "attribute-1",
+        "describe-object": "Es un libro verde."
+      },
+      "acceptedTextAnswersByVocabularyId": {},
+      "questionEvaluations": [
+        {
+          "questionId": "confirm-first",
+          "objectiveId": "identify-describe-object",
+          "targetIds": [
+            "identify-object",
+            "name-object"
+          ],
+          "evidenceType": "recognition",
+          "acceptedAnswers": [],
+          "rubricCriterionIds": [
+            "selects-described-object",
+            "article-matches-noun"
+          ],
+          "vocabularyItemIds": [],
+          "sceneObjectId": "11111111-1111-1111-1111-111111111111",
+          "corrections": [
+            {
+              "mistake": "wrongObject",
+              "answers": [
+                "confirm-2"
+              ],
+              "correction": "No, es una taza.",
+              "explanation": "No — this is una taza (cup).",
+              "note": "This is una taza (cup)."
+            }
+          ],
+          "correctNote": "This is una taza (cup)."
+        },
+        {
+          "questionId": "confirm-second",
+          "objectiveId": "identify-describe-object",
+          "targetIds": [
+            "identify-object",
+            "name-object"
+          ],
+          "evidenceType": "recognition",
+          "acceptedAnswers": [],
+          "rubricCriterionIds": [
+            "selects-described-object",
+            "article-matches-noun"
+          ],
+          "vocabularyItemIds": [],
+          "sceneObjectId": "22222222-2222-2222-2222-222222222222",
+          "corrections": [
+            {
+              "mistake": "wrongObject",
+              "answers": [
+                "confirm-2"
+              ],
+              "correction": "No, es un libro.",
+              "explanation": "No — this is un libro (book).",
+              "note": "This is un libro (book)."
+            }
+          ],
+          "correctNote": "This is un libro (book)."
+        },
+        {
+          "questionId": "choose-attribute",
+          "objectiveId": "identify-describe-object",
+          "targetIds": [
+            "describe-colour"
+          ],
+          "evidenceType": "recognition",
+          "acceptedAnswers": [],
+          "rubricCriterionIds": [
+            "colour-matches-photo"
+          ],
+          "vocabularyItemIds": [],
+          "sceneObjectId": "11111111-1111-1111-1111-111111111111",
+          "corrections": [
+            {
+              "mistake": "wrongColour",
+              "answers": [
+                "attribute-2"
+              ],
+              "correction": "Roja",
+              "explanation": "“Blanca” means white; the cup is red: roja.",
+              "note": "“Blanca” means white."
+            },
+            {
+              "mistake": "wrongColour",
+              "answers": [
+                "attribute-3"
+              ],
+              "correction": "Roja",
+              "explanation": "“Verde” means green; the cup is red: roja.",
+              "note": "“Verde” means green."
+            }
+          ],
+          "correctNote": "The cup is red: roja."
+        },
+        {
+          "questionId": "describe-object",
+          "objectiveId": "identify-describe-object",
+          "targetIds": [
+            "name-object",
+            "describe-colour"
+          ],
+          "evidenceType": "construction",
+          "acceptedAnswers": [],
+          "rubricCriterionIds": [
+            "article-matches-noun",
+            "colour-matches-photo"
+          ],
+          "vocabularyItemIds": [],
+          "sceneObjectId": "22222222-2222-2222-2222-222222222222",
+          "corrections": [
+            {
+              "mistake": "wordOrder",
+              "answers": [],
+              "correction": "Es un libro verde.",
+              "explanation": "Start with the verb, then the object and its detail."
+            }
+          ]
+        }
+      ],
+      "statementCorrect": {
+        "confirm-first": false,
+        "confirm-second": false
+      }
+    },
+    "grading": {
+      "all_correct": {
+        "question_results": {
+          "confirm-first": true,
+          "confirm-second": true,
+          "choose-attribute": true,
+          "describe-object": true
+        },
+        "score": 1,
+        "task_status_after_submission": "completed",
+        "met_threshold": true
+      },
+      "all_wrong": {
+        "question_results": {
+          "confirm-first": false,
+          "confirm-second": false,
+          "choose-attribute": false,
+          "describe-object": false
+        },
+        "score": 0,
+        "task_status_after_submission": "completed",
+        "met_threshold": false
+      }
+    }
+  },
+  "A2": {
+    "mission_id": "M01",
+    "practice_level": "A2",
+    "content_version": 1,
+    "question_count": 5,
+    "option_counts": [2, 0, 3, 0, 3],
+    "public_content_keys": ["missionId", "practiceLevel", "contentVersion", "kind", "focus", "title", "questions", "checkEachQuestion"],
+    "support_shape": {"checkEachQuestion": true},
+    "sections": [
+      "Task 1 · Notice the facts",
+      "Task 2 · Describe the scene",
+      "Task 3 · Check a detail"
+    ],
+    "section_counts": {
+      "Task 1 · Notice the facts": 2,
+      "Task 2 · Describe the scene": 2,
+      "Task 3 · Check a detail": 1
+    },
+    "interaction_counts": {
+      "multipleChoice": 3,
+      "sentenceBuilding": 2
+    },
+    "questions": [
+      {
+        "purpose": "chooseSceneMarker",
+        "interaction_type": "multipleChoice",
+        "section": "Task 1 · Notice the facts",
+        "target_ids": [
+          "identify-scene-object"
+        ],
+        "evidence_type": "objectSelection",
+        "criteria": [
+          "scene-object-matches-fact"
+        ],
+        "correct_answer": "1"
+      },
+      {
+        "purpose": "buildSceneFact",
+        "interaction_type": "sentenceBuilding",
+        "section": "Task 1 · Notice the facts",
+        "target_ids": [
+          "describe-scene-facts"
+        ],
+        "evidence_type": "construction",
+        "criteria": [
+          "scene-sentence-matches-facts"
+        ],
+        "correct_answer": "La taza está sobre la mesa."
+      },
+      {
+        "purpose": "chooseSceneDescription",
+        "interaction_type": "multipleChoice",
+        "section": "Task 2 · Describe the scene",
+        "target_ids": [
+          "describe-scene-facts"
+        ],
+        "evidence_type": "recognition",
+        "criteria": [
+          "scene-sentence-matches-facts"
+        ],
+        "correct_answer": "Hay una taza roja y también hay un libro."
+      },
+      {
+        "purpose": "buildSceneDescription",
+        "interaction_type": "sentenceBuilding",
+        "section": "Task 2 · Describe the scene",
+        "target_ids": [
+          "connect-scene-facts"
+        ],
+        "evidence_type": "construction",
+        "criteria": [
+          "scene-facts-connected"
+        ],
+        "correct_answer": "Hay una taza roja. La taza está sobre la mesa. También hay un libro."
+      },
+      {
+        "purpose": "followUpSceneFact",
+        "interaction_type": "multipleChoice",
+        "section": "Task 3 · Check a detail",
+        "target_ids": [
+          "follow-up-scene-fact"
+        ],
+        "evidence_type": "recognition",
+        "criteria": [
+          "scene-follow-up-matches"
+        ],
+        "correct_answer": "roja"
+      }
+    ],
+    "answer_key": {
+      "acceptedTextAnswers": [],
+      "expectedTokenOrder": [],
+      "correctOptionIds": {
+        "m01-q1": "00000000-0000-0000-0000-000000000001",
+        "m01-q2": "La taza está sobre la mesa.",
+        "m01-q3": "description-correct",
+        "m01-q4": "Hay una taza roja. La taza está sobre la mesa. También hay un libro.",
+        "m01-q5": "detail-correct"
+      },
+      "acceptedTextAnswersByVocabularyId": {},
+      "questionEvaluations": [
+        {
+          "questionId": "m01-q1",
+          "objectiveId": "describe-scene-a2",
+          "targetIds": [
+            "identify-scene-object"
+          ],
+          "evidenceType": "objectSelection",
+          "acceptedAnswers": [],
+          "rubricCriterionIds": [
+            "scene-object-matches-fact"
+          ],
+          "vocabularyItemIds": [],
+          "sceneObjectId": "00000000-0000-0000-0000-000000000001",
+          "corrections": []
+        },
+        {
+          "questionId": "m01-q2",
+          "objectiveId": "describe-scene-a2",
+          "targetIds": [
+            "describe-scene-facts"
+          ],
+          "evidenceType": "construction",
+          "acceptedAnswers": [],
+          "rubricCriterionIds": [
+            "scene-sentence-matches-facts"
+          ],
+          "vocabularyItemIds": [],
+          "sceneObjectId": "00000000-0000-0000-0000-000000000001",
+          "corrections": []
+        },
+        {
+          "questionId": "m01-q3",
+          "objectiveId": "describe-scene-a2",
+          "targetIds": [
+            "describe-scene-facts"
+          ],
+          "evidenceType": "recognition",
+          "acceptedAnswers": [],
+          "rubricCriterionIds": [
+            "scene-sentence-matches-facts"
+          ],
+          "vocabularyItemIds": [],
+          "sceneObjectId": "00000000-0000-0000-0000-000000000001",
+          "corrections": []
+        },
+        {
+          "questionId": "m01-q4",
+          "objectiveId": "describe-scene-a2",
+          "targetIds": [
+            "connect-scene-facts"
+          ],
+          "evidenceType": "construction",
+          "acceptedAnswers": [],
+          "rubricCriterionIds": [
+            "scene-facts-connected"
+          ],
+          "vocabularyItemIds": [],
+          "sceneObjectId": "00000000-0000-0000-0000-000000000001",
+          "corrections": []
+        },
+        {
+          "questionId": "m01-q5",
+          "objectiveId": "describe-scene-a2",
+          "targetIds": [
+            "follow-up-scene-fact"
+          ],
+          "evidenceType": "recognition",
+          "acceptedAnswers": [],
+          "rubricCriterionIds": [
+            "scene-follow-up-matches"
+          ],
+          "vocabularyItemIds": [],
+          "sceneObjectId": "00000000-0000-0000-0000-000000000001",
+          "corrections": []
+        }
+      ],
+      "missionState": {
+        "approvedFacts": {
+          "approvedObjects": [
+            {
+              "key": "00000000-0000-0000-0000-000000000001",
+              "englishLabel": "cup",
+              "marker": 1,
+              "article": "la",
+              "bareNoun": "taza",
+              "nounPhrase": "la taza",
+              "gender": "feminine",
+              "plural": "tazas",
+              "vocabularyItemId": "00000000-0000-0000-0000-00000000000b"
+            },
+            {
+              "key": "00000000-0000-0000-0000-000000000002",
+              "englishLabel": "table",
+              "marker": 2,
+              "article": "la",
+              "bareNoun": "mesa",
+              "nounPhrase": "la mesa",
+              "gender": "feminine",
+              "plural": "mesas",
+              "vocabularyItemId": "00000000-0000-0000-0000-00000000000c"
+            },
+            {
+              "key": "00000000-0000-0000-0000-000000000003",
+              "englishLabel": "book",
+              "marker": 3,
+              "article": "el",
+              "bareNoun": "libro",
+              "nounPhrase": "el libro",
+              "gender": "masculine",
+              "plural": "libros",
+              "vocabularyItemId": "00000000-0000-0000-0000-00000000000d"
+            }
+          ],
+          "approvedAttributes": [
+            {
+              "key": "00000000-0000-0000-0000-000000000001:color",
+              "objectKey": "00000000-0000-0000-0000-000000000001",
+              "kind": "colour",
+              "value": "red",
+              "form": "roja",
+              "before": false
+            },
+            {
+              "key": "00000000-0000-0000-0000-000000000002:color",
+              "objectKey": "00000000-0000-0000-0000-000000000002",
+              "kind": "colour",
+              "value": "red",
+              "form": "roja",
+              "before": false
+            },
+            {
+              "key": "00000000-0000-0000-0000-000000000003:size",
+              "objectKey": "00000000-0000-0000-0000-000000000003",
+              "kind": "size",
+              "value": "big",
+              "form": "grande",
+              "before": false
+            }
+          ],
+          "approvedRelationships": [
+            {
+              "key": "00000000-0000-0000-0000-00000000001e",
+              "subjectKey": "00000000-0000-0000-0000-000000000001",
+              "referenceKey": "00000000-0000-0000-0000-000000000002",
+              "position": "on",
+              "expression": "sobre",
+              "phrase": "sobre la mesa"
+            }
+          ],
+          "approvedCountedGroups": [],
+          "approvedRoleplayFacts": [],
+          "approvedVocabulary": [
+            "a",
+            "abierta",
+            "abierto",
+            "aclara",
+            "aclaras",
+            "al",
+            "amarilla",
+            "amarillo",
+            "amigo",
+            "azul",
+            "beige",
+            "blanca",
+            "blanco",
+            "cerrada",
+            "cerrado",
+            "cinco",
+            "coincide",
+            "color",
+            "compara",
+            "comparación",
+            "con",
+            "confirma",
+            "confirmado",
+            "construye",
+            "correcta",
+            "corresponde",
+            "corta",
+            "corto",
+            "cuadrada",
+            "cuadrado",
+            "cuantos",
+            "cuatro",
+            "cuál",
+            "cuántas",
+            "cuántos",
+            "cómo",
+            "de",
+            "debajo",
+            "delante",
+            "describe",
+            "descripción",
+            "descríbelo",
+            "detalle",
+            "detrás",
+            "di",
+            "dice",
+            "diez",
+            "dorada",
+            "dorado",
+            "dos",
+            "dónde",
+            "el",
+            "elige",
+            "es",
+            "esa",
+            "escena",
+            "escribe",
+            "ese",
+            "esta",
+            "estas",
+            "este",
+            "está",
+            "foto",
+            "frase",
+            "frases",
+            "grande",
+            "gris",
+            "grupo",
+            "grupos",
+            "hay",
+            "indica",
+            "la",
+            "lado",
+            "larga",
+            "largo",
+            "las",
+            "libro",
+            "libros",
+            "limpia",
+            "limpio",
+            "llena",
+            "lleno",
+            "los",
+            "lugar",
+            "lunares",
+            "madera",
+            "marcado",
+            "marcador",
+            "marrón",
+            "menos",
+            "mesa",
+            "mesas",
+            "metal",
+            "mi",
+            "mis",
+            "morada",
+            "morado",
+            "más",
+            "naranja",
+            "negra",
+            "negro",
+            "no",
+            "nombra",
+            "nueve",
+            "objeto",
+            "ocho",
+            "palabra",
+            "pequeña",
+            "pequeño",
+            "pero",
+            "pertenece",
+            "piedra",
+            "pista",
+            "pistas",
+            "plateada",
+            "plateado",
+            "plástico",
+            "pregunta",
+            "que",
+            "qué",
+            "rayas",
+            "razón",
+            "rectangular",
+            "redonda",
+            "redondo",
+            "respondes",
+            "roja",
+            "rojo",
+            "rosa",
+            "segunda",
+            "seis",
+            "señala",
+            "siete",
+            "significa",
+            "sobre",
+            "son",
+            "su",
+            "sucia",
+            "sucio",
+            "sí",
+            "también",
+            "taza",
+            "tazas",
+            "tela",
+            "tiene",
+            "toca",
+            "tres",
+            "tu",
+            "tuya",
+            "tuyo",
+            "un",
+            "una",
+            "vacía",
+            "vacío",
+            "verde",
+            "vidrio",
+            "y"
+          ],
+          "approvedSentencePatterns": [
+            {
+              "patternId": "mission-m01-a2",
+              "language": "es",
+              "frames": [
+                "hay",
+                "il y a",
+                "es",
+                "est",
+                "está",
+                "y",
+                "et",
+                "más",
+                "plus",
+                "menos",
+                "moins",
+                "que",
+                "de",
+                "mi",
+                "ma",
+                "mon",
+                "no",
+                "pas"
+              ]
+            }
+          ],
+          "approvedConnectors": [
+            "y",
+            "pero",
+            "también"
+          ],
+          "approvedComparatives": [
+            "más",
+            "menos",
+            "que"
+          ]
+        },
+        "selection": {
+          "attributeKey": "00000000-0000-0000-0000-000000000001:color",
+          "relationKey": "00000000-0000-0000-0000-00000000001e",
+          "firstFactKind": "attribute",
+          "secondObjectKey": "00000000-0000-0000-0000-00000000001e",
+          "thirdObjectKey": "00000000-0000-0000-0000-000000000003"
+        },
+        "seed": "language-pack-regression:M01-A2"
+      }
+    },
+    "grading": {
+      "all_correct": {
+        "question_results": {
+          "m01-q1": true,
+          "m01-q2": true,
+          "m01-q3": true,
+          "m01-q4": true,
+          "m01-q5": true
+        },
+        "score": 1,
+        "task_status_after_submission": "completed",
+        "met_threshold": true
+      },
+      "all_wrong": {
+        "question_results": {
+          "m01-q1": false,
+          "m01-q2": false,
+          "m01-q3": false,
+          "m01-q4": false,
+          "m01-q5": false
+        },
+        "score": 0,
+        "task_status_after_submission": "completed",
+        "met_threshold": false
+      }
+    }
+  }
+}

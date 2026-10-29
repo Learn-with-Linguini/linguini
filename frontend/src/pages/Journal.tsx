@@ -6,6 +6,7 @@ import { JournalPhotoMosaic } from "../components/JournalPhotoMosaic";
 import { LoadingScreen } from "../components/LoadingScreen";
 import { ErrorState } from "../components/ErrorState";
 import { useJournalsQuery } from "../state/queries";
+import { trackAction } from "../lib/analytics.ts";
 import type { JournalEntry } from "../data/types";
 
 function formatDate(date: string) {
@@ -69,7 +70,7 @@ function JournalMonths({ journal }: { journal: JournalEntry[] }) {
             <ChevronRightIcon />
           </IconButton>
         </div>
-        <Button className="journal-page__add" onClick={() => navigate("/journal/new")}>
+        <Button className="journal-page__add" onClick={() => { trackAction("journal_new_entry_clicked"); navigate("/journal/new"); }}>
           <PlusIcon size={18} /> New entry
         </Button>
       </header>
@@ -103,7 +104,7 @@ function JournalMonths({ journal }: { journal: JournalEntry[] }) {
               key={entry.id}
               type="button"
               className="journal-card"
-              onClick={() => navigate(`/journal/${entry.id}`)}
+              onClick={() => { trackAction("journal_entry_viewed", { entryId: entry.id }); navigate(`/journal/${entry.id}`); }}
             >
               <JournalPhotoMosaic photos={entry.photos} title={entry.title} />
               <span className="journal-card__body">

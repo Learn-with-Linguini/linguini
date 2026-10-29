@@ -1,0 +1,178 @@
+construction_id = "describe-attribute"
+
+[[examples]]
+example_id = "describe-red-cup"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a red cup."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }] }
+bindings = { object = "object:cup", attribute = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "Das ist eine rote Tasse."
+translation = "This is a red cup."
+chunks = [{ text = "Das", join = "none" }, { text = "ist", join = "space" }, { text = "eine", join = "space" }, { text = "rote", join = "space" }, { text = "Tasse.", join = "space" }]
+accepted_alternatives = ["Die Tasse ist rot."]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "describe-green-book"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a green book."
+scene = { objects = [{ fact_id = "object:book", concept = "book" }], attributes = [{ fact_id = "attribute:book-green", object = "object:book", kind = "color", value = "green" }] }
+bindings = { object = "object:book", attribute = "attribute:book-green" }
+truth = true
+labels = []
+sentence = "Das ist ein grünes Buch."
+translation = "This is a green book."
+chunks = [{ text = "Das", join = "none" }, { text = "ist", join = "space" }, { text = "ein", join = "space" }, { text = "grünes", join = "space" }, { text = "Buch.", join = "space" }]
+accepted_alternatives = ["Das Buch ist grün."]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "describe-black-shoe"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a black shoe."
+scene = { objects = [{ fact_id = "object:shoe", concept = "shoe" }], attributes = [{ fact_id = "attribute:shoe-black", object = "object:shoe", kind = "color", value = "black" }] }
+bindings = { object = "object:shoe", attribute = "attribute:shoe-black" }
+truth = true
+labels = []
+sentence = "Das ist ein schwarzer Schuh."
+translation = "This is a black shoe."
+chunks = [{ text = "Das", join = "none" }, { text = "ist", join = "space" }, { text = "ein", join = "space" }, { text = "schwarzer", join = "space" }, { text = "Schuh.", join = "space" }]
+accepted_alternatives = ["Der Schuh ist schwarz."]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "describe-blue-lamp"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a blue lamp."
+scene = { objects = [{ fact_id = "object:lamp", concept = "lamp" }], attributes = [{ fact_id = "attribute:lamp-blue", object = "object:lamp", kind = "color", value = "blue" }] }
+bindings = { object = "object:lamp", attribute = "attribute:lamp-blue" }
+truth = true
+labels = []
+sentence = "Das ist eine blaue Lampe."
+translation = "This is a blue lamp."
+chunks = [{ text = "Das", join = "none" }, { text = "ist", join = "space" }, { text = "eine", join = "space" }, { text = "blaue", join = "space" }, { text = "Lampe.", join = "space" }]
+accepted_alternatives = ["Die Lampe ist blau."]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "describe-white-plate"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a white plate."
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }], attributes = [{ fact_id = "attribute:plate-white", object = "object:plate", kind = "color", value = "white" }] }
+bindings = { object = "object:plate", attribute = "attribute:plate-white" }
+truth = true
+labels = []
+sentence = "Das ist ein weißer Teller."
+translation = "This is a white plate."
+chunks = [{ text = "Das", join = "none" }, { text = "ist", join = "space" }, { text = "ein", join = "space" }, { text = "weißer", join = "space" }, { text = "Teller.", join = "space" }]
+accepted_alternatives = ["Der Teller ist weiß."]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "describe-yellow-apple"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a yellow apple."
+scene = { objects = [{ fact_id = "object:apple", concept = "apple" }], attributes = [{ fact_id = "attribute:apple-yellow", object = "object:apple", kind = "color", value = "yellow" }] }
+bindings = { object = "object:apple", attribute = "attribute:apple-yellow" }
+truth = true
+labels = []
+sentence = "Das ist ein gelber Apfel."
+translation = "This is a yellow apple."
+chunks = [{ text = "Das", join = "none" }, { text = "ist", join = "space" }, { text = "ein", join = "space" }, { text = "gelber", join = "space" }, { text = "Apfel.", join = "space" }]
+accepted_alternatives = ["Der Apfel ist gelb."]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "choose-red-cup"
+levels = ["A1"]
+purposes = ["chooseAttribute"]
+meaning = "red (the colour of the cup)"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }] }
+bindings = { object = "object:cup", attribute = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "Rot"
+translation = "red (the colour of the cup)"
+chunks = [{ text = "Rot", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "choose-green-book"
+levels = ["A1"]
+purposes = ["chooseAttribute"]
+meaning = "green (the colour of the book)"
+scene = { objects = [{ fact_id = "object:book", concept = "book" }], attributes = [{ fact_id = "attribute:book-green", object = "object:book", kind = "color", value = "green" }] }
+bindings = { object = "object:book", attribute = "attribute:book-green" }
+truth = true
+labels = []
+sentence = "Grün"
+translation = "green (the colour of the book)"
+chunks = [{ text = "Grün", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "ask-cup-colour"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+meaning = "What colour is the cup?"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }] }
+bindings = { object = "object:cup", attribute = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "Welche Farbe hat die Tasse?"
+translation = "What colour is the cup?"
+chunks = [{ text = "Welche", join = "none" }, { text = "Farbe", join = "space" }, { text = "hat", join = "space" }, { text = "die", join = "space" }, { text = "Tasse?", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "ask-book-colour"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+meaning = "What colour is the book?"
+scene = { objects = [{ fact_id = "object:book", concept = "book" }], attributes = [{ fact_id = "attribute:book-green", object = "object:book", kind = "color", value = "green" }] }
+bindings = { object = "object:book", attribute = "attribute:book-green" }
+truth = true
+labels = []
+sentence = "Welche Farbe hat das Buch?"
+translation = "What colour is the book?"
+chunks = [{ text = "Welche", join = "none" }, { text = "Farbe", join = "space" }, { text = "hat", join = "space" }, { text = "das", join = "space" }, { text = "Buch?", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-05"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "Das ist eine rot Tasse."
+correction = "Das ist eine rote Tasse."
+note = "The attributive adjective needs feminine nominative -e."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-06"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "Das ist ein Buch grünes."
+correction = "Das ist ein grünes Buch."
+note = "The inflected attributive adjective precedes the noun."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-13"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+sentence = "Wo ist die Tasse?"
+correction = "Welche Farbe hat die Tasse?"
+note = "The follow-up requests the colour of the cup, not its location. This is an intent mismatch, not a claim that the location question is ungrammatical."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }

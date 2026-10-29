@@ -17,7 +17,6 @@ export function SiteFooter() {
           <h2 className={styles.heading}>Product</h2>
           <Link href="/demo">Try a session</Link>
           <Link href="/#features">Features</Link>
-          <Link href="/#journal">Journal</Link>
           <Link href="/#pricing">Pricing</Link>
           <Link href="/learn/spanish">Learn Spanish</Link>
           <Link href="/learn/french">Learn French</Link>

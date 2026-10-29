@@ -1,6 +1,6 @@
 # Linguini business model and pricing
 
-**Working draft, 24 September 2026.** This is a proposal for team review. Nothing here is live. Plus checkout, trials, pronunciation feedback, review mode and PDF export are not built yet (see [the launch kit's readiness audit](../product-hunt/plan.md#current-readiness-audit-24-september-2026)). Every price was checked on the date above and is linked under [Sources](#sources). The cost figures come from a reproducible model, [`model/cost_model.py`](model/cost_model.py), which uses the backend's actual AI call chain and the models the team chose in the [model comparison](https://github.com/CS3216-A3-G7/linguini/blob/main/MODEL_COMPARISON.md). Its token counts are the means measured in that comparison, on the app's own prompts and schemas. Production usage in Langfuse should confirm them once every feature is traced.
+**Historical pricing proposal, 24 September 2026.** Retained with its cost-model inputs for the final project. The feature status and prices below describe that proposal; use the [current project documentation](../../docs/README.md) for implementation and setup. At the time of this draft, Plus checkout, trials, pronunciation feedback, review mode and PDF export were not built (see [the launch kit's readiness audit](../product-hunt/plan.md#current-readiness-audit-24-september-2026)). Every price was checked on the date above and is linked under [Sources](#sources). The cost figures come from a reproducible model, [`model/cost_model.py`](model/cost_model.py), which uses the backend's actual AI call chain and the models the team chose in the [model comparison](../../MODEL_COMPARISON.md). Its token counts are the means measured in that comparison, on the app's own prompts and schemas. Production usage in Langfuse should confirm them once every feature is traced.
 
 ![Proposed Free, Plus and Founding Plus tiers](media/export/pricing-tiers.png)
 
@@ -96,7 +96,7 @@ Learning tasks are now the biggest share of a lesson (51%), followed by scene an
 
 ### Which model runs each call
 
-The team chose one model per call from a [comparison](https://github.com/CS3216-A3-G7/linguini/blob/main/MODEL_COMPARISON.md) that ran every candidate through the app's own prompts, schemas and validators: 14 labelled photos, 17 translation cases, 6 scenes and 22 learner descriptions. Temperature is 0 everywhere, because raising it hurt every call tested. Spreading calls across providers is deliberate: an outage at one provider downgrades one feature, not the app.
+The team chose one model per call from a [comparison](../../MODEL_COMPARISON.md) that ran every candidate through the app's own prompts, schemas and validators: 14 labelled photos, 17 translation cases, 6 scenes and 22 learner descriptions. Temperature is 0 everywhere, because raising it hurt every call tested. Spreading calls across providers is deliberate: an outage at one provider downgrades one feature, not the app.
 
 | Call | Chosen (via OpenRouter) | Main alternatives | Why |
 | --- | --- | --- | --- |
@@ -221,7 +221,7 @@ Every promotional asset is labelled as a proposed offer. Remove that label only 
 
 Checked 23–24 September 2026.
 
-- AI model prices: the [OpenRouter model catalogue](https://openrouter.ai/models) (provider list price), as snapshotted in the team's [model comparison](https://github.com/CS3216-A3-G7/linguini/blob/main/MODEL_COMPARISON.md), which is also the source of the measured tokens, quality and acceptance rates
+- AI model prices: the [OpenRouter model catalogue](https://openrouter.ai/models) (provider list price), as snapshotted in the team's [model comparison](../../MODEL_COMPARISON.md), which is also the source of the measured tokens, quality and acceptance rates
 - OpenAI transcription, TTS and moderation prices: [developers.openai.com/api/docs/pricing](https://developers.openai.com/api/docs/pricing)
 - Azure pronunciation assessment: [Azure Speech pricing](https://azure.microsoft.com/en-us/pricing/details/speech/) and a [Microsoft Q&A answer on pricing](https://learn.microsoft.com/en-us/answers/questions/5608069/pricing-and-usage-of-pronunciation-assessment-feat)
 - Supabase: [pricing](https://supabase.com/pricing), [storage overage](https://supabase.com/docs/guides/platform/manage-your-usage/storage-size). Vercel: [pricing](https://vercel.com/pricing). Render: [free tier limits](https://render.com/docs/free) and [Starter at $7](https://www.srvrlss.io/provider/render/)

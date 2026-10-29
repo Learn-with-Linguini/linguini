@@ -192,6 +192,7 @@ export const scenes: Scene[] = [
         ]
       }
     },
+    "blankWordId": "flower",
     "blank": {
       "es": {
         "sentence": "Hay muchas ___ al lado de la calle.",
@@ -483,6 +484,7 @@ export const scenes: Scene[] = [
         ]
       }
     },
+    "blankWordId": "car",
     "blank": {
       "es": {
         "sentence": "Hay muchos ___ en el puente.",
@@ -775,6 +777,7 @@ export const scenes: Scene[] = [
         ]
       }
     },
+    "blankWordId": "sofa",
     "blank": {
       "es": {
         "sentence": "Los ___ son marrones.",
@@ -1016,6 +1019,32 @@ export const scenes: Scene[] = [
           "gender": "none",
           "ipa": "ɕiŋ.mul"
         }
+      },
+      {
+        "id": "page",
+        "en": "page",
+        "x": 59,
+        "y": 65,
+        "es": {
+          "word": "la página",
+          "gender": "feminine",
+          "ipa": "ˈpaxina"
+        },
+        "fr": {
+          "word": "la page",
+          "gender": "feminine",
+          "ipa": "paʒ"
+        },
+        "de": {
+          "word": "die Seite",
+          "gender": "feminine",
+          "ipa": "ˈzaɪ̯tə"
+        },
+        "ko": {
+          "word": "페이지",
+          "gender": "none",
+          "ipa": "pʰe.i.dʑi"
+        }
       }
     ],
     "ispy": {
@@ -1064,6 +1093,7 @@ export const scenes: Scene[] = [
         ]
       }
     },
+    "blankWordId": "page",
     "blank": {
       "es": {
         "sentence": "La libreta tiene dos ___ blancas.",
@@ -1349,6 +1379,7 @@ export const scenes: Scene[] = [
         ]
       }
     },
+    "blankWordId": "bridge",
     "blank": {
       "es": {
         "sentence": "Dos ___ cruzan el río.",
@@ -1587,6 +1618,32 @@ export const scenes: Scene[] = [
           "gender": "none",
           "ipa": "ku.ɾɯm"
         }
+      },
+      {
+        "id": "tower",
+        "en": "tower",
+        "x": 31.5,
+        "y": 31,
+        "es": {
+          "word": "la torre",
+          "gender": "feminine",
+          "ipa": "ˈtore"
+        },
+        "fr": {
+          "word": "la tour",
+          "gender": "feminine",
+          "ipa": "tuʁ"
+        },
+        "de": {
+          "word": "der Turm",
+          "gender": "masculine",
+          "ipa": "tʊʁm"
+        },
+        "ko": {
+          "word": "탑",
+          "gender": "none",
+          "ipa": "tʰap̚"
+        }
       }
     ],
     "ispy": {
@@ -1635,6 +1692,7 @@ export const scenes: Scene[] = [
         ]
       }
     },
+    "blankWordId": "tower",
     "blank": {
       "es": {
         "sentence": "El castillo tiene muchas ___.",
@@ -1924,6 +1982,7 @@ export const scenes: Scene[] = [
         ]
       }
     },
+    "blankWordId": "palm-tree",
     "blank": {
       "es": {
         "sentence": "Hay dos ___ altas.",
@@ -2212,6 +2271,7 @@ export const scenes: Scene[] = [
         ]
       }
     },
+    "blankWordId": "tree",
     "blank": {
       "es": {
         "sentence": "Los ___ son muy altos.",

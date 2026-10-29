@@ -1,0 +1,25 @@
+construction_id = "where-question"
+
+[[examples]]
+example_id = "where-cup"
+levels = ["A1"]
+purposes = ["askWhere"]
+meaning = "Where is the cup?"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }] }
+bindings = { subject = "object:cup" }
+truth = true
+labels = []
+sentence = "¿Dónde está la taza?"
+translation = "Where is the cup?"
+chunks = [{ text = "¿Dónde", join = "none" }, { text = "está", join = "space" }, { text = "la", join = "space" }, { text = "taza", join = "space" }, { text = "?", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "where-cup-form"
+levels = ["A1"]
+purposes = ["askWhere"]
+sentence = "¿Dónde es la taza?"
+correction = "¿Dónde está la taza?"
+note = "Ask location with está."
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }

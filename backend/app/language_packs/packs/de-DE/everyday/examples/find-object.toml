@@ -1,0 +1,25 @@
+construction_id = "find-object"
+
+[[examples]]
+example_id = "find-cup"
+levels = ["A0"]
+purposes = ["findNamed"]
+meaning = "Find the cup."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }] }
+bindings = { object = "object:cup" }
+truth = true
+labels = []
+sentence = "Finde die Tasse."
+translation = "Find the cup."
+chunks = [{ text = "Finde", join = "none" }, { text = "die", join = "space" }, { text = "Tasse", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "find-cup-form"
+levels = ["A0"]
+purposes = ["findNamed"]
+sentence = "Finde Tasse."
+correction = "Finde die Tasse."
+note = "Use the article with the noun."
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }

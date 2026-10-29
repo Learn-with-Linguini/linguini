@@ -7,6 +7,7 @@ from types import SimpleNamespace
 from uuid import UUID
 
 import pytest
+from pack_translation import pack_shaped
 from sqlalchemy import event
 from test_postgres_sessions import create_run
 from test_postgres_sessions import database as database
@@ -70,11 +71,11 @@ class SlowModels:
             raise error
         return result
 
-    def translate(self, payload, cache_scope=None):
-        return SceneTranslationResult.model_validate({
+    def translate(self, payload, cache_scope=None, **options):
+        return SceneTranslationResult.model_validate(pack_shaped({
             kind: [{**term, "translation": "mesa"} for term in payload[kind]]
             for kind in ("objects", "attributes", "relationships")
-        })
+        }, options))
 
     def lessons(self, _payload, cache_scope=None):
         return self._run(

@@ -1,11 +1,17 @@
 # Linguini agent guide
 
-Linguini is a photo-led, speak-first language-learning app. The repository is a monorepo:
+Linguini is the CS3216 final project for Group 3: a photo-led, speak-first language-learning app. The repository is a monorepo:
 
 - `frontend/` — React 19 + TypeScript + Vite SPA. See `frontend/AGENTS.md` for UI conventions.
 - `backend/` — FastAPI + Pydantic + SQLAlchemy on PostgreSQL/Supabase, with Prisma owning migrations. API prefix `/api/v1`.
 - `frontend/src/marketing/` — marketing site routes, copy, assets and interactive demo, served by the Vite frontend alongside learner routes. The API remains separate; see `frontend/README.md`.
 - `marketing/` — not deployed. Product Hunt kit (`product-hunt/`), launch videos (`videos/launch-film`, `videos/promo-film`, `videos/campaign`), media kit and explainer (`media/`) and pricing/cost model (`business-model/`). See `marketing/README.md`. Its scripts read from and write into `frontend/public`.
+
+## Documentation and skills
+
+- Start with [docs/README.md](docs/README.md) for the project documentation.
+- Keep repository skills in `.agents/skills/`; [docs/skills.md](docs/skills.md) lists them and explains the compatibility paths.
+- Update the relevant setup, API or feature documentation when behavior changes. Keep dated planning material separate from current operating instructions.
 
 ## Branch and pull request conventions
 

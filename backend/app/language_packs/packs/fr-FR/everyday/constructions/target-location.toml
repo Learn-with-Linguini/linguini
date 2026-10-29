@@ -1,0 +1,24 @@
+construction_id = "target-location"
+version = 1
+summary = "Name an object with its detail and location."
+guidance = "Name the object with its detail and say where it is: article + noun + colour + est + position phrase + reference: La tasse rouge est à côté de la fenêtre. The colour follows the noun and agrees with it."
+features = ["located-description"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { subject = "noun", attribute = "adjective", relation = "preposition", reference = "noun" }
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "location-frame"
+message = "Say where it is with the taught verb."
+must_contain = ["\\sest\\s"]
+
+[[checks]]
+check_id = "contraction"
+message = "Contract de le/de les/à le/à les to du/des/au/aux."
+must_not_contain = ["(^|\\s)(de|à) (le|les)\\s"]

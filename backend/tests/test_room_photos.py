@@ -6,6 +6,7 @@ import json
 from uuid import uuid4, uuid5
 
 import pytest
+from pack_translation import pack_shaped
 from pydantic import ValidationError
 
 from app.ai.contracts import VisionModelConfig, VisionModelResponse
@@ -95,8 +96,8 @@ class FakeTranslator:
             "next_to": "al lado de",
             "under": "debajo de",
         }
-        return SceneTranslationResult(
-            objects=[
+        return SceneTranslationResult.model_validate(pack_shaped({
+            "objects": [
                 {
                     **row,
                     "translation": nouns[row["source"]][0],
@@ -111,7 +112,7 @@ class FakeTranslator:
                 ]
                 for field in ("attributes", "relationships")
             },
-        )
+        }, options))
 
 
 @pytest.fixture
@@ -221,12 +222,25 @@ def test_owner_corrections_are_the_only_facts_translated_and_use_private_room_sc
     assert payload["relationships"][0]["source"] == "under"
     assert "cup" not in payload["sceneSummary"]
     assert options["cache_scope"].owner == f"user:{owner}:room:{profile['room_id']}"
+    # The owner's ready Spanish pack guides the translation.
+    assert options["language_context"].display.language_code.casefold() == "es"
     assert result["objects"][0]["label"] == "bowl"
     assert result["objects"][0]["word"] == "el bol"
     assert (result["objects"][0]["x"], result["objects"][0]["y"]) == (91, 6)
     assert result["title"] == "My corrected desk"
     assert analysis["objects"][0]["label"] == "cup"
     assert len(result["targets"]) == 2
+
+
+def test_a_language_without_a_ready_pack_is_not_translated(setup_photo, monkeypatch):
+    helper, photo_id, owner, asset, profile = setup_photo
+    analysis = helper.analyze(photo_id, owner, asset, profile)
+    monkeypatch.setattr("app.services.room_photos._game_context", lambda _profile: None)
+    with pytest.raises(RoomPhotoError) as caught:
+        helper.build_pack(photo_id, owner, profile, analysis, review_of(analysis))
+    assert caught.value.code == "room_photo_unavailable"
+    assert not caught.value.retryable
+    assert helper.translator.calls == []
 
 
 @pytest.mark.parametrize(

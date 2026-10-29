@@ -18,6 +18,7 @@ import { SHORTFALL_ACTIONS } from "../lib/sceneShortfall";
 import { countGroups, objectCounts } from "../lib/countGroups";
 import { initialReviewMarkers, initiallyHiddenObjectIds, sceneReviewPanels, type SceneReviewPanel } from "../lib/sceneReview";
 import { trackAction } from "../lib/analytics.ts";
+import { serializeMissionChoices } from "../lib/missionGaps";
 import type { LanguageItem } from "../data/types";
 
 const ATTRIBUTE_TYPES = ["color", "size", "shape", "material", "pattern", "state"] as const;
@@ -28,7 +29,6 @@ const RELATION_OPTIONS = [
 ] as const;
 const RELATION_CHOICES = RELATION_OPTIONS.map(([value, label]) => ({ value, label }));
 type AnalysisPanel = SceneReviewPanel;
-type AddedReviewObject = PracticeReview["addedObjects"][number] & { marker: number };
 
 function canonicalRelationValue(relation: string) {
   const normalized = relation.trim().replace(/[\s_-]+/g, "").toLowerCase();
@@ -54,12 +54,11 @@ export function PracticeAnalysis() {
     );
   });
   const [explicitlyRemoved, setExplicitlyRemoved] = useState<string[]>([]);
-  const [added, setAdded] = useState<AddedReviewObject[]>([]);
+  const [added, setAdded] = useState<PracticeReview["addedObjects"]>([]);
   const reviewMarkers = initialReviewMarkers(
     (session?.sceneObjects ?? []).map(item => item.id),
     session?.suggestedSceneObjectIds,
   );
-  const nextMarker = useRef(Object.keys(reviewMarkers).length + 1);
   const [relations, setRelations] = useState<PracticeReview["relations"]>(() => session?.sceneObjectRelations ?? []);
   const [sceneTitle, setSceneTitle] = useState(session?.session.sessionTitle ?? scene.title);
   const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>({});
@@ -76,6 +75,13 @@ export function PracticeAnalysis() {
   const [pending, setPending] = useState<{ label: string; id?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [leavingPhoto, setLeavingPhoto] = useState(false);
+  const [preferenceObjectId, setPreferenceObjectId] = useState(
+    session?.missionChoices?.preference?.chosenObjectId
+      ?? session?.missionChoices?.preference?.sceneObjectIds[0] ?? "",
+  );
+  const [preferenceReaction, setPreferenceReaction] = useState<"like" | "dislike">(
+    session?.missionChoices?.preference?.reaction === "dislike" ? "dislike" : "like",
+  );
   const photoRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
   const shortfallRef = useRef<HTMLDivElement>(null);
@@ -95,15 +101,14 @@ export function PracticeAnalysis() {
     ));
     setExplicitlyRemoved([]);
     setAdded([]);
-    nextMarker.current = Object.keys(initialReviewMarkers(
-      session.sceneObjects.map(item => item.id),
-      session.suggestedSceneObjectIds,
-    )).length + 1;
     setRelations(session.sceneObjectRelations);
     setAttributes(Object.fromEntries(session.sceneObjects.map(item => [item.id,
       Object.fromEntries(Object.entries(item.attributes ?? {}).filter((entry): entry is [string, string] => entry[0] !== "quantity" && typeof entry[1] === "string"))])));
     setAttributeObjectId(session.sceneObjects[0]?.id ?? "");
     setSceneTitle(session.session.sessionTitle ?? scene.title);
+    setPreferenceObjectId(session.missionChoices?.preference?.chosenObjectId
+      ?? session.missionChoices?.preference?.sceneObjectIds[0] ?? "");
+    setPreferenceReaction(session.missionChoices?.preference?.reaction === "dislike" ? "dislike" : "like");
   }, [scene.title, session]);
   useEffect(() => {
     if (!shortfallKey) return;
@@ -148,15 +153,18 @@ export function PracticeAnalysis() {
       <TranslationPreview preview={session.translationPreview} scene={scene} />
       <SessionPersonalization personalization={session.personalization} languageCode={scene.languageCode} />
       <section role="status" className="panel-note">
-        {session.tasks.some(task => task.kind === "vocabularyIntroduction") ? <>
-          <Button block onClick={() => navigate(`${base}/learn/${session.tasks.find(task => task.kind === "vocabularyIntroduction")!.id}`)}>
+        <div className="stack-2">
+          {session.tasks.some(task => task.kind === "vocabularyIntroduction") ? <Button block onClick={() => navigate(`${base}/learn/${session.tasks.find(task => task.kind === "vocabularyIntroduction")!.id}`)}>
             Begin learning <ArrowRightIcon />
-          </Button>
-        </> : <>
-          <h2>Preparing your first task...</h2>
-          <p className="muted">Your translations are ready. Your first task will appear here shortly.</p>
-        </>}
-        {practiceStalled ? <Button onClick={() => retryProcessing(session.session.id)}>Check again</Button> : null}
+          </Button> : <>
+            <h2>Preparing your first task...</h2>
+            <p className="muted">Your translations are ready. Your first task will appear here shortly.</p>
+          </>}
+          {practiceStalled ? <>
+            <p>We're unable to generate more tasks right now. We'll keep working on them, so you can come back later.</p>
+            <Button variant="secondary" block onClick={() => retryProcessing(session.session.id)}>Check again</Button>
+          </> : null}
+        </div>
         {practiceError ? <p role="alert">{practiceError}</p> : null}
       </section>
     </> : <>
@@ -172,7 +180,9 @@ export function PracticeAnalysis() {
   const kept = scene.items
     .filter(item => !removed.includes(item.id))
     .map(item => ({ ...item, marker: reviewMarkers[item.id] ?? item.marker }));
-  const custom: LanguageItem[] = added.map(item => ({ id: `custom-${item.id}`, word: item.label,
+  const addedMarkerBase = Math.max(0, ...kept.map(item => item.marker));
+  const numberedAdded = added.map((item, index) => ({ ...item, marker: addedMarkerBase + index + 1 }));
+  const custom: LanguageItem[] = numberedAdded.map(item => ({ id: `custom-${item.id}`, word: item.label,
     translation: item.label, wordClass: "noun", gender: null, marker: item.marker,
     x: item.x * 100, y: item.y * 100, attributes: attributes[item.id] ?? {}, example: "", exampleTranslation: "" }));
   const positionedKept = kept.map(item => {
@@ -189,10 +199,14 @@ export function PracticeAnalysis() {
       label: session.sceneObjects.find(object => object.id === item.id)?.label ?? item.translation,
       marker: item.marker,
     })),
-    ...added,
+    ...numberedAdded,
   ];
   const relationObjects = rawRelationObjects;
   const selectedIds = new Set(relationObjects.map(item => item.id));
+  const showPreference = session.provisionalMissionPlan?.some(
+    mission => mission.missionId === "M05" && mission.practiceLevel === "A0",
+  );
+  const selectedPreferenceId = selectedIds.has(preferenceObjectId) ? preferenceObjectId : "";
   const attributeCount = [...selectedIds].reduce((sum, id) => sum + Object.values(attributes[id] ?? {}).filter(Boolean).length, 0);
   const activeAttributeObjectId = selectedIds.has(attributeObjectId) ? attributeObjectId : relationObjects[0]?.id ?? "";
   const groups = countGroups([
@@ -240,10 +254,10 @@ export function PracticeAnalysis() {
     if (!pending) return;
     setAdded(current => pending.id
       ? current.map(item => item.id === pending.id ? { ...item, ...location } : item)
-      : [...current, { id: crypto.randomUUID(), label: pending.label, marker: nextMarker.current++, ...location }]);
+      : [...current, { id: crypto.randomUUID(), label: pending.label, ...location }]);
     setPending(null); setLabel("");
   };
-  const replaceLocation = (item: AddedReviewObject) => {
+  const replaceLocation = (item: PracticeReview["addedObjects"][number]) => {
     setPending({ id: item.id, label: item.label });
     setError(null);
     photoRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
@@ -287,15 +301,23 @@ export function PracticeAnalysis() {
     trackAction("scene_review_confirmed", {
       acceptedCount: kept.length,
       addedCount: added.length,
+      preferenceSource: showPreference && selectedPreferenceId ? "personal" : "assigned",
     });
     await saveReview({
       sceneTitle: sceneTitle.trim() || undefined,
       acceptedObjectIds: kept.map(item => item.id),
-      addedObjects: added.map(({ marker: _marker, ...item }) => item),
+      addedObjects: added,
       relations: visibleRelations.map(row => ({ ...row, relation: canonicalRelationValue(row.relation) })),
       objectAttributes: selectedAttributes,
       objectCounts: objectCounts(groups, verifiedCounts),
       repositionedObjects: Object.entries(positions).map(([id, anchorPoint]) => ({ id, anchorPoint })),
+      missionChoices: serializeMissionChoices({
+        ownedObjectId: session.missionChoices?.ownership?.sceneObjectId ?? null,
+        ownershipPretend: session.missionChoices?.ownership?.pretend ?? false,
+        preferenceObjectIds: showPreference && selectedPreferenceId ? [selectedPreferenceId] : [],
+        chosenObjectId: null,
+        reaction: preferenceReaction,
+      }, selectedIds),
     });
   };
   return <div className={`stack analysis-page${placementLabel ? " analysis-page--placing" : ""}`}>
@@ -335,7 +357,7 @@ export function PracticeAnalysis() {
             <div className="analysis-word-list" aria-label="Words in this scene">
               {relationObjects.map(instance => {
                 const sceneItem = kept.find(row => row.id === instance.id);
-                const addedItem = added.find(row => row.id === instance.id);
+                const addedItem = numberedAdded.find(row => row.id === instance.id);
                 return <div className="analysis-word-row analysis-object-row" key={instance.id}>
                   <span className={`analysis-word-row__marker${addedItem ? " analysis-word-row__marker--custom" : ""}`}>{instance.marker}</span>
                   <strong>{humanizeTerm(instance.label)}</strong>
@@ -441,6 +463,33 @@ export function PracticeAnalysis() {
             </form> : null}
           </Card>
         </section> : null}
+        {showPreference && !locked ? <Card><div className="stack">
+          <div><h2>Your preference (optional)</h2>
+            <p className="muted">Choose an object and how you feel about it. Your lesson will use your choice. Leave this empty to practise a pretend preference.</p></div>
+          <label className="field__label" htmlFor="preference-object">Object in your photo</label>
+          <ComboBox id="preference-object" value={selectedPreferenceId} disabled={practiceSaving}
+            placeholder="Choose an object"
+            options={relationObjects.map(item => ({ value: item.id, label: item.label, marker: item.marker }))}
+            onChange={id => {
+              setPreferenceObjectId(id);
+              trackAction("scene_preference_changed", { action: "select_object", reaction: preferenceReaction });
+            }} />
+          {selectedPreferenceId ? <>
+            <div className="choice-grid" aria-label="How you feel about this object">
+              {(["like", "dislike"] as const).map(reaction => <button key={reaction} type="button"
+                className={`choice${preferenceReaction === reaction ? " choice--selected" : ""}`}
+                aria-pressed={preferenceReaction === reaction} disabled={practiceSaving}
+                onClick={() => {
+                  setPreferenceReaction(reaction);
+                  trackAction("scene_preference_changed", { action: "select_reaction", reaction });
+                }}>{reaction === "like" ? "I like it" : "I don't like it"}</button>)}
+            </div>
+            <Button variant="quiet" disabled={practiceSaving} onClick={() => {
+              setPreferenceObjectId("");
+              trackAction("scene_preference_changed", { action: "use_pretend" });
+            }}>Use a pretend preference</Button>
+          </> : null}
+        </div></Card> : null}
         {shortfall && !locked ? <div ref={shortfallRef}>
           <SceneShortfallNotice shortfall={shortfall} busy={practiceSaving || leavingPhoto}
             onAdd={addMissing} onTryAnotherPhoto={() => void tryAnotherPhoto()} />

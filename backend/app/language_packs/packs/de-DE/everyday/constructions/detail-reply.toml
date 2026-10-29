@@ -1,0 +1,14 @@
+construction_id = "detail-reply"
+version = 1
+summary = "Reply to the server with the ordered detail."
+guidance = "Reply with only the bound detail and bitte: Zum Mitnehmen, bitte. Blau, bitte. The target is never named."
+features = ["request", "reply"]
+constraints = ["Express only the bound order facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { detail = "phrase" }
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "polite-reply"
+message = "A reply ends with bitte."
+must_contain = ["bitte\\.$"]

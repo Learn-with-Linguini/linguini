@@ -9,7 +9,6 @@ from typing import Annotated, Any, Literal
 from pydantic import Field, model_validator
 
 from app.ai.features.learning_tasks.mission import (
-    MissionGeneration,
     fold,
     tokens,
     unique_question_ids,
@@ -18,10 +17,6 @@ from app.ai.features.learning_tasks.schemas import GeneratedChoice
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.schemas.base import ApiModel, NonEmptyText
 from app.schemas.roleplay import parse_roleplay_facts
-
-M05_PROMPT_VERSION = "learning-tasks.m05-a1.v1"
-M05_SCHEMA_VERSION = "learning-tasks-m05-result.v1"
-M05_VALIDATOR_VERSION = "learning-tasks-m05-validator.v1"
 
 type M05Purpose = Literal[
     "choosePreference", "buildMyPreference", "buildTheirPreference"
@@ -198,7 +193,7 @@ def validate_m05_lesson(payload: dict[str, Any], result: M05LessonResult) -> Non
         _validate_bank(question, expected["sentence"], expected["contrast"])
 
 
-def fallback_m05_lesson(payload: dict[str, Any]) -> M05LessonResult:
+def assemble_m05_lesson(payload: dict[str, Any]) -> M05LessonResult:
     """Build the deterministic M05 lesson from the saved roleplay plan."""
     _facts(payload)
     rng = random.Random(payload.get("seed") or "M05")
@@ -254,14 +249,3 @@ def fallback_m05_lesson(payload: dict[str, Any]) -> M05LessonResult:
     return result
 
 
-M05_GENERATION = MissionGeneration(
-    M05_PROMPT_VERSION,
-    M05_SCHEMA_VERSION,
-    M05_VALIDATOR_VERSION,
-    "",
-    M05LessonResult,
-    validate_m05_lesson,
-    fallback_m05_lesson,
-    "mission_lesson_m05_v1",
-    uses_model=False,
-)

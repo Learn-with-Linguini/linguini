@@ -18,24 +18,7 @@ export function Why() {
         <Reveal className={styles.copy}>
           <h2 id="why-title" className="section-title">Word lists don’t know where you live.</h2>
           <p className={styles.body}>
-            Most courses hand everyone the same list: apple, boy, the red car. You memorise it, walk outside, and still
-            can’t name the bench you’re sitting on.
-          </p>
-          <p className={styles.body}>
-            Linguini flips the order. It starts with the places you actually go and teaches the words that live there,
-            so your first Spanish is the Spanish for your commute, your café, your view.
-          </p>
-          <p className={styles.body}>
-            Because every word is pinned to a photo, it comes back each time you pass that place again. No photo to hand?
-            Start from a ready-made scene instead.
-          </p>
-          <p className={styles.body}>
-            Play I-Spy solo with Linguini or in a private room with a friend. Every word you keep lands in your vocabulary
-            bank, grouped by scene, and your progress page shows what you’ve mastered, your streak and your Basil.
-          </p>
-          <p className={styles.body}>
-            Language has nuance, and beta software can get an answer wrong. Every checked exercise includes a simple
-            report link, so learners can show us the exact prompt, answer, and solution that needs another look.
+            While traditional language apps teach everyone the same vocabulary, Linguini turns your own surroundings into your classroom, making language learning personal, practical, and relevant to your everyday life.
           </p>
         </Reveal>
 

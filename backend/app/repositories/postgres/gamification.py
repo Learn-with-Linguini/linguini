@@ -145,6 +145,9 @@ def question_fingerprint(task, question_id):
         "statementCorrect": task.answer_key.statement_correct.get(question_id),
         "mission": task.public_content.mission_key,
     }
+    # Only keys that accept alternatives carry them, so earlier fingerprints still match.
+    if accepted := task.answer_key.accepted_option_ids.get(question_id):
+        payload["acceptedOptionIds"] = accepted
     return hashlib.sha256(
         json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()

@@ -2,7 +2,8 @@ import { LoadingScreen } from "./LoadingScreen";
 import { useEffect, useState } from "react";
 import { Button, Card, IconButton, ProgressTrail, TopBar } from "./ui";
 import { CameraIcon, CheckIcon, EyeIcon, EyeOffIcon } from "./icons";
-import { languages } from "../config/languages";
+import { profileLanguageChoices } from "../lib/languageChoices";
+import { usePracticeLanguages } from "../state/usePracticeLanguages";
 import { clearOnboardingProgress, joinGoals, parseGoals, readOnboardingProgress, saveOnboardingProgress, PASTA_AVATARS, type OnboardingDraft, type OnboardingStage } from "../lib/onboardingDraft";
 import { checkPlacementAnswer, getPlacementTest, submitPlacement, type PlacementTest } from "../lib/api";
 import { nextPlacementDifficulty } from "../lib/placementPath";
@@ -38,7 +39,15 @@ export function OnboardingSteps({ initial, saving = false, error, onComplete, on
   const startingDraft = resumed?.draft ?? initial;
   const [stage, setStage] = useState<Stage>(resumed?.stage ?? (restartingForLanguage ? "experience" : "profile"));
   const [name, setName] = useState(startingDraft.name);
-  const [language, setLanguage] = useState(languages.find(option => option.code === startingDraft.languageCode) ?? languages[0]);
+  const practiceLanguages = usePracticeLanguages(startingDraft.languageCode);
+  // Only languages a discovered pack offers can be chosen.
+  const languages = practiceLanguages.choices.filter(option => option.levels.length);
+  const [chosenLanguage, setLanguage] = useState(() => profileLanguageChoices([], startingDraft.languageCode)[0]
+    ?? { code: "", name: "", flag: "", levels: [], experimental: false });
+  // Start on the first discovered language when the saved one is not offered.
+  const language = languages.some(option => option.code === chosenLanguage.code)
+    ? chosenLanguage : languages[0] ?? chosenLanguage;
+  const languageAvailable = languages.some(option => option.code === language.code);
   const [selectedGoals, setSelectedGoals] = useState(() => parseGoals(startingDraft.goal).filter(value => goals.includes(value)));
   const [minutes, setMinutes] = useState(startingDraft.minutes || 10);
   const [microphoneEnabled] = useState(startingDraft.microphoneEnabled);
@@ -58,6 +67,9 @@ export function OnboardingSteps({ initial, saving = false, error, onComplete, on
   useEffect(() => {
     if (resumed) trackAction("onboarding_resumed", { stage: resumed.stage });
   }, [resumed]);
+  useEffect(() => {
+    trackAction("onboarding_step_viewed", { step: stage });
+  }, [stage]);
   useEffect(() => {
     if (stage === "placement" || stage === "success") return;
     saveOnboardingProgress(userId, {
@@ -135,7 +147,9 @@ export function OnboardingSteps({ initial, saving = false, error, onComplete, on
     <TopBar title={stage === "placement" ? "A quick warm-up" : restartingForLanguage ? `Let’s set up your ${language.name}` : "Let’s get you ready"} />
     {stage !== "placement" ? <ProgressTrail value={progress} total={totalSteps} label={`Step ${progress} of ${totalSteps}`} /> : null}
     {stage === "profile" ? <div className="stack"><h1>Nice to meet you</h1><p className="muted">Choose a pasta pal and a name to cheer you on.</p><fieldset className="profile-avatar-picker"><legend>Your pasta pal</legend><div className="profile-avatar-options">{avatars.map(option => <button key={option} type="button" className={avatar === option ? "is-selected" : ""} aria-pressed={avatar === option} onClick={() => setAvatar(option)}><img src={`/pasta-assets/${option}.png`} alt={`${option} pasta`} /></button>)}</div></fieldset><div className="field"><label className="field__label" htmlFor="ob-name">Your name</label><input id="ob-name" className="input" value={name} placeholder="Alex" onChange={event => setName(event.target.value)} /></div><Button block onClick={() => setStage("language")}>Continue</Button></div> : null}
-    {stage === "language" ? <div className="stack"><h1>Which language today?</h1><p className="muted">You can add another language later.</p><div className="grid-2">{languages.map(option => <button key={option.code} type="button" className={`scene-pick${option.code === language.code ? " scene-pick--selected" : ""}`} onClick={() => setLanguage(option)}><span className="language-choice__flag">{option.flag}</span><strong>{option.name}</strong></button>)}</div><Button block onClick={() => setStage("experience")}>Continue</Button></div> : null}
+    {stage === "language" ? <div className="stack"><h1>Which language today?</h1><p className="muted">You can add another language later.</p>{languages.length ? <div className="grid-2">{languages.map(option => <button key={option.code} type="button" className={`scene-pick${option.code === language.code ? " scene-pick--selected" : ""}`} onClick={() => setLanguage(option)}><span className="language-choice__flag">{option.flag}</span><strong>{option.name}</strong></button>)}</div>
+      : practiceLanguages.isPending ? <p className="muted">Loading languages…</p>
+      : <p role="alert">No practice languages are available right now.{practiceLanguages.isError ? <> <button type="button" onClick={() => void practiceLanguages.refetch()}>Retry</button></> : null}</p>}<Button block disabled={!languageAvailable} onClick={() => setStage("experience")}>Continue</Button></div> : null}
     {stage === "experience" ? <div className="stack"><h1>How much {language.name} do you know?</h1><p className="muted">We’ll use this to choose a comfortable place to begin.</p><button className="onboarding-path" disabled={working} onClick={() => void chooseBeginner()}><strong>I’m a complete beginner</strong><span>Start with the essentials</span></button><button className="onboarding-path" disabled={working} onClick={() => void beginPlacement()}><strong>I know some {language.name}</strong><span>Take a short picture activity</span></button></div> : null}
     {stage === "placement" && currentQuestion && test ? <div className="stack placement-test"><ProgressTrail value={questionIndex + 1} total={3} label={`${questionIndex + 1} of 3`} /><img src={test.imagePath} alt="A café with two customers, a server, cups, apples, chairs, a bag and a dog" className="placement-test__image" /><div className="stack-2 placement-question"><div className="prompt-translation prompt-translation--with-source"><span className="prompt-translation__source"><h2>{currentQuestion.prompt}</h2><IconButton className="prompt-translation__toggle" label={showTranslation ? "Hide translation" : "Show translation"} aria-expanded={showTranslation} onClick={() => setShowTranslation(value => !value)}>{showTranslation ? <EyeIcon size={20} /> : <EyeOffIcon size={20} />}</IconButton></span>{showTranslation ? <p className="placement-question__translation">{currentQuestion.promptTranslation}</p> : null}</div><div className="choice-grid placement-choice-grid">{currentQuestion.options.map(option => { const state = feedback ? option.value === feedback.correctOption ? " choice--correct" : option.value === feedback.selected ? " choice--incorrect" : "" : ""; return <button className={`choice${state}`} type="button" aria-pressed={feedback?.selected === option.value} disabled={working || Boolean(feedback)} key={option.value} onClick={() => void answer(option.value)}>{option.label}{feedback && option.value === feedback.correctOption ? <span aria-hidden="true"> ✓</span> : null}</button>; })}</div><button className={`placement-unknown${feedback?.selected === "__unknown__" ? " placement-unknown--selected" : ""}`} type="button" disabled={working || Boolean(feedback)} onClick={() => void answer("__unknown__")}>I don’t know</button>{feedback ? <div className={`placement-feedback${feedback.correct ? " placement-feedback--correct" : " placement-feedback--incorrect"}`} role="status"><strong>{feedback.correct ? "Nice!" : "No worries, Linguini will help you learn this."}</strong></div> : null}{feedback ? <Button block onClick={() => void continuePlacement()}>{questionIndex === 2 ? "Finish" : "Continue"}</Button> : null}</div></div> : null}
     {stage === "goals" ? <div className="stack"><h1>What are you practising for?</h1><p className="muted">Pick as many as you like.</p><div className="stack-2">{goals.map(option => { const selected = selectedGoals.includes(option); return <button key={option} type="button" className={`task-row${selected ? " task-row--done" : ""}`} aria-pressed={selected} onClick={() => toggleGoal(option)}><span className="task-row__index">{selected ? <CheckIcon size={16} /> : ""}</span><span className="grow">{option}</span></button>; })}</div><h3>Minutes a day</h3><div className="row">{minutesOptions.map(option => <button key={option} type="button" className={`chip${option === minutes ? " chip--selected" : ""}`} onClick={() => setMinutes(option)}>{option} min</button>)}</div><Button block disabled={!selectedGoals.length} onClick={() => setStage("permissions")}>Continue</Button></div> : null}

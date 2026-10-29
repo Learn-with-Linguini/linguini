@@ -1,12 +1,10 @@
 
 import Image from "../Image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { scenes } from "../../data/scenes";
-import type { Lang } from "../../data/types";
 import { appLinks } from "../../lib/site";
 import { ArrowRight } from "../icons";
 import { ProductHuntBadge } from "../ProductHuntBadge";
-import { LanguageToggle } from "./LanguageToggle";
 import styles from "./hero.module.css";
 
 /** Where each print sits around the headline on wide screens. */
@@ -26,7 +24,6 @@ function reducedMotion() {
 }
 
 export function Hero() {
-  const [lang, setLang] = useState<Lang>("es");
   const sectionRef = useRef<HTMLElement>(null);
 
   // Gentle pointer parallax on the photo ring.
@@ -58,31 +55,21 @@ export function Hero() {
     >
         <div className={`container ${styles.stage}`}>
           <div className={styles.copy}>
+            <p className={styles.betaNote}>Free public beta</p>
             <h1 id="hero-title" className={styles.title}>
               Learn the language of <span className={styles.underline}>your day.</span>
             </h1>
             <p className={styles.lede}>
-              Photograph the café you’re sitting in, the street you walked, the view from the bridge. Linguini finds the
-              words inside the picture, turns them into a short language game, and keeps the day in your journal. The app
-              supports Spanish, French, German and beginner Korean.
+              Snap the café, the street, the view.
             </p>
-            <p className={styles.betaNote}>Public beta · Free access · Unlimited photo lessons</p>
+            <p>Linguini finds the words in your photo and turns them into a
+              five-minute game in <span className={styles.lang}>Spanish</span>, <span className={styles.lang}>French</span>,{" "}
+              <span className={styles.lang}>German</span> or <span className={styles.lang}>beginner Korean</span>.</p>
             <div className={styles.ctas}>
               <a href={appLinks.signUp} className="btn">
                 Join the public beta
               </a>
-              <a className={`btn btn--teal ${styles.uploadCta}`} href={`/demo?lang=${lang}`}>Try a photo lesson</a>
-            </div>
-            <p className="small">No account needed. Choose one of our scenes or upload your own on the next page.</p>
-            <div className={styles.prompt}>
-              <svg className={styles.noodle} viewBox="0 0 120 60" aria-hidden="true">
-                <path d="M4 50c18 4 30-6 30-18s-14-16-18-6 8 20 28 18 44-18 66-34" />
-                <path d="m100 6 12 4-8 10" />
-              </svg>
-              <p>
-                <b>Pick a sample or upload your own</b> to start a guest lesson in
-              </p>
-              <LanguageToggle value={lang} onChange={setLang} compact />
+              <a className={`btn btn--teal ${styles.uploadCta}`} href="/demo">Try a photo lesson</a>
             </div>
             <ProductHuntBadge />
           </div>
@@ -109,7 +96,7 @@ export function Hero() {
                   <button
                     type="button"
                     className={styles.print}
-                    onClick={() => window.location.assign(`/demo?photo=${encodeURIComponent(item.id)}&lang=${lang}`)}
+                    onClick={() => window.location.assign(`/demo?photo=${encodeURIComponent(item.id)}`)}
                     aria-label={`Learn from “${item.title}”, ${item.place}`}
                   >
                     <span

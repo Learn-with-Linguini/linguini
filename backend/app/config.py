@@ -1,6 +1,7 @@
 """Environment configuration for the temporary demo integration."""
 
 import os
+from pathlib import Path
 from uuid import UUID
 
 from app.services.media_urls import PrivateMediaUrls, SignedUrlCache
@@ -36,6 +37,46 @@ def get_allowed_origins() -> list[str]:
         for origin in os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:5173").split(",")
         if origin.strip()
     ]
+
+
+# The packs bundled with the app, discovered when no pack folders are configured.
+BUNDLED_LANGUAGE_PACKS = Path(__file__).parent / "language_packs" / "packs"
+
+
+def get_language_pack_dirs() -> tuple[Path, ...]:
+    """Configured pack folders, or the bundled packs when none are set."""
+    configured = tuple(
+        Path(value.strip())
+        for value in os.getenv("LINGUINI_LANGUAGE_PACK_DIRS", "").split(os.pathsep)
+        if value.strip()
+    )
+    return configured or (BUNDLED_LANGUAGE_PACKS,)
+
+
+def get_language_pack_register() -> str:
+    return os.getenv("LINGUINI_LANGUAGE_PACK_REGISTER", "everyday").strip()
+
+
+def get_language_pack_require_release() -> bool:
+    """Optional editorial release gates; structural and lesson checks always apply."""
+    return os.getenv("LINGUINI_LANGUAGE_PACK_REQUIRE_RELEASE", "false").lower() == "true"
+
+
+def get_language_pack_experimental() -> bool:
+    """Explicit local experiment; never permits experiments in production."""
+    return (
+        os.getenv("APP_ENV", "production").lower() in {"local", "development", "test"}
+        and os.getenv("LINGUINI_LANGUAGE_PACK_EXPERIMENTAL", "false").lower() == "true"
+    )
+
+
+def get_language_pack_releases() -> frozenset[tuple[str, str, str]]:
+    releases = set()
+    for value in os.getenv("LINGUINI_LANGUAGE_PACK_RELEASES", "").split(","):
+        parts = tuple(part.strip() for part in value.split(":"))
+        if len(parts) == 3 and all(parts):
+            releases.add(parts)
+    return frozenset(releases)
 
 
 def get_stripe_secret_key() -> str | None:

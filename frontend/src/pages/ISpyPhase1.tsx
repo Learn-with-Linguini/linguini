@@ -3,8 +3,8 @@ import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { sessionDestination, sessionPaths } from "../lib/sessionRoute";
-import { Button, Feedback, IconButton, ProgressTrail, XpPill } from "../components/ui";
-import { ArrowRightIcon, BasilIcon, CheckIcon, EyeIcon, EyeOffIcon, SpeakerIcon } from "../components/icons";
+import { BasilReward, Button, Feedback, IconButton, ProgressTrail, XpPill } from "../components/ui";
+import { ArrowRightIcon, CheckIcon, EyeIcon, EyeOffIcon, SpeakerIcon } from "../components/icons";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
@@ -20,16 +20,22 @@ import { basilEarnedText } from "../lib/gamification";
 import { learningFeedback } from "../lib/learningFeedback";
 
 export function ISpyPhase1() {
-  const { session, practiceStalled, practiceError, retryProcessing } = useAppState();
+  const navigate = useNavigate();
+  const { session, practiceStalled, practiceError, retryProcessing, completeSession } = useAppState();
   const [index, setIndex] = useState(() => {
     const clues = practiceStages(session?.tasks ?? []).clues;
     const next = clues.findIndex(task => !taskDone(task));
     return next < 0 ? Math.max(0, clues.length - 1) : next;
   });
   if (!session) return null;
-  const { learning, clues } = practiceStages(session.tasks);
+  const { learning, clues, reflection } = practiceStages(session.tasks);
   const paths = sessionPaths(session);
   const game = session.session.mode === "ispy";
+  const finishWithoutDescription = () => {
+    if (!completeSession()) return;
+    trackAction("describe_round_skipped", { mode: session.session.mode });
+    navigate(paths.done);
+  };
   if (session.session.status === "completed") return <Navigate to={paths.done} replace />;
   if (game && ["abandoned", "failed"].includes(session.session.status)) {
     const exit = sessionDestination(session);
@@ -45,10 +51,15 @@ export function ISpyPhase1() {
   </div>;
   const task = clues[index];
   if (!task) return <Navigate to={paths.describe} replace />;
-  return <ClueRound key={task.id} task={task} index={index} total={clues.length} describePath={paths.describe} onNext={() => setIndex(value => value + 1)} />;
+  return <ClueRound key={task.id} task={task} index={index} total={clues.length} describePath={paths.describe}
+    skipDescription={!reflection.length} finishLabel={game ? "See results" : "Finish session"}
+    onFinish={finishWithoutDescription} onNext={() => setIndex(value => value + 1)} />;
 }
 
-function ClueRound({ task, index, total, describePath, onNext }: { task: SessionTask; index: number; total: number; describePath: string; onNext: () => void }) {
+function ClueRound({ task, index, total, describePath, skipDescription, finishLabel, onFinish, onNext }: {
+  task: SessionTask; index: number; total: number; describePath: string;
+  skipDescription: boolean; finishLabel: string; onFinish: () => void; onNext: () => void;
+}) {
   const navigate = useNavigate();
   const scene = useScene();
   const { actOnTask, practiceSaving, practiceError } = useAppState();
@@ -75,7 +86,7 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
           ? "나는 무언가를 보고 있어요:"
           : "I spy with my little eye, something that";
   const answered = taskDone(task);
-  const choose = async (optionId: string) => {
+  const choose = async (optionId: string, source: "choice" | "photo_marker" = "choice") => {
     if (answered || practiceSaving || submitting.current) return;
     submitting.current = true;
     setChecking(true);
@@ -88,7 +99,7 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
       if (saved?.attempt?.isCorrect != null) playAnswerSound(saved.attempt.isCorrect);
       if (saved) {
         request.current = null;
-        trackAction("ispy_clue_submitted", { optionId, isCorrect: saved.attempt?.isCorrect });
+        trackAction("ispy_clue_submitted", { optionId, isCorrect: saved.attempt?.isCorrect, source });
       }
     } finally {
       submitting.current = false;
@@ -103,12 +114,19 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
   const shownPick = acceptedPick ?? restored?.optionId ?? (answered ? null : picked);
   const feedback = result?.attempt?.feedback?.message ?? restored?.feedback;
   const selected = content.options.find(option => option.optionId === shownPick);
+  const optionItems = scene.items.filter(item => content.options.some(option => option.sceneObjectId === item.id));
   const reward = !answered ? taskXp(task) : null;
   const earnedText = basilEarnedText(result?.basilEarned);
   return <div className="stack">
     <div className="spread"><h2 className="text-center">I-Spy · Linguini's clues</h2>{reward ? <XpPill {...reward} /> : null}</div>
     <ProgressTrail value={index + (answered ? 1 : 0)} total={total} label={`${index + 1} / ${total}`} />
-    <ScenePhoto scene={scene} activeItemId={isCorrect ? selected?.sceneObjectId : null} />
+    <ScenePhoto scene={scene} items={optionItems} hideWords
+      activeItemId={isCorrect ? selected?.sceneObjectId : null}
+      guessItemId={selected?.sceneObjectId}
+      onMarkerClick={!answered && !practiceSaving && !checking ? item => {
+        const option = content.options.find(candidate => candidate.sceneObjectId === item.id);
+        if (option) void choose(option.optionId, "photo_marker");
+      } : undefined} />
     <div className="card card--lifted stack-2">
       <div className="spread"><span className="label muted">Linguini says</span><IconButton label="Hear the clue" onClick={() => speak(`${opening} ${content.clue}`, scene.languageCode)}><SpeakerIcon /></IconButton></div>
       <span className="prompt-translation prompt-translation--with-source">
@@ -116,10 +134,14 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
         {content.clueTranslation && showTranslation ? <span className="small muted">{content.clueTranslation}</span> : null}
       </span>
     </div>
+    <p className="muted">Choose a numbered object below or tap its marker in the photo.</p>
     <div className="choice-grid">{choiceOrder(content.options, task.id, option => option.optionId).map(option => {
+      const item = optionItems.find(candidate => candidate.id === option.sceneObjectId);
+      const label = item ? `Marker ${item.marker}: ${option.label}` : option.label;
       const state = shownPick !== option.optionId ? "" : isCorrect != null ? (isCorrect ? " choice--correct" : " choice--incorrect") : " choice--selected";
-      return <button key={option.optionId} type="button" className={`choice${state}`} aria-pressed={shownPick === option.optionId} disabled={answered || practiceSaving || checking} onClick={() => void choose(option.optionId)}>
-        {isCorrect && shownPick === option.optionId ? <CheckIcon size={16} /> : null}{option.label}
+      return <button key={option.optionId} type="button" className={`choice${state}`} aria-label={label} aria-pressed={shownPick === option.optionId} disabled={answered || practiceSaving || checking} onClick={() => void choose(option.optionId)}>
+        {isCorrect && shownPick === option.optionId ? <CheckIcon size={16} /> : null}
+        {item ? <span>Marker {item.marker} · </span> : null}<span lang={scene.languageCode}>{option.label}</span>
       </button>;
     })}</div>
     {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
@@ -129,16 +151,20 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
           {isCorrect !== null ? <strong>{learningFeedback(isCorrect ? "correct" : "incorrect", task.id)}</strong> : null}
           <span>{feedback ?? "Answer saved."}</span>
         </>}
-        {content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}{earnedText ? <strong className="basil-reward"><BasilIcon size={17} />{earnedText}</strong> : null}
+        {content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}
       </div></Feedback>
+      <BasilReward text={earnedText} />
     </> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
-    <Button block disabled={!answered || practiceSaving} onClick={() => index === total - 1 ? navigate(describePath) : onNext()}>{index === total - 1 ? "Your turn" : "Next clue"} <ArrowRightIcon /></Button>
+    <Button block disabled={!answered || practiceSaving} onClick={() => index === total - 1
+      ? skipDescription ? onFinish() : navigate(describePath)
+      : onNext()}>{index === total - 1 ? skipDescription ? finishLabel : "Your turn" : "Next clue"} <ArrowRightIcon /></Button>
     {(answered || result) && task.status !== "skipped" ? <div className="learning-question-report"><ReportIssueLink reportType="I-Spy answer" fields={[
       ["Task ID", task.id],
       ["Clue", `${opening} ${content.clue}`],
       ["Clue translation", content.clueTranslation],
       ["Your answer", selected?.label],
+      ["Photo marker", optionItems.find(item => item.id === selected?.sceneObjectId)?.marker?.toString()],
       ["Displayed feedback", feedback],
       ["Language", scene.languageCode],
     ]} /></div> : null}

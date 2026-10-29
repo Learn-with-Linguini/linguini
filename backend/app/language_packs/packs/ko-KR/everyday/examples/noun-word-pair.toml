@@ -1,0 +1,40 @@
+construction_id = "noun-word-pair"
+
+[[examples]]
+example_id = "pair-cup"
+levels = ["A0"]
+purposes = ["chooseChunk", "matchSpoken", "fillSlot"]
+meaning = "It's a cup."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }] }
+bindings = { object = "object:cup" }
+truth = true
+labels = []
+sentence = "컵이에요"
+translation = "It's a cup."
+chunks = [{ text = "컵이에요", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M13 draft, 2026-10-23; mirrors dev's a0_lexicon forms; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "pair-table"
+levels = ["A0"]
+purposes = ["chooseChunk", "matchSpoken", "fillSlot"]
+meaning = "It's a table."
+scene = { objects = [{ fact_id = "object:table", concept = "table" }] }
+bindings = { object = "object:table" }
+truth = true
+labels = []
+sentence = "탁자예요"
+translation = "It's a table."
+chunks = [{ text = "탁자예요", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M13 draft, 2026-10-23; mirrors dev's a0_lexicon forms; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "pair-wrong-word"
+levels = ["A0"]
+purposes = ["chooseChunk", "matchSpoken", "fillSlot"]
+sentence = "탁자이에요"
+correction = "탁자예요"
+note = "탁자 ends in a vowel, so it takes 예요."
+provenance = { source = "AI-authored original Linguini M13 draft, 2026-10-23; mirrors dev's a0_lexicon forms; not human-reviewed.", review_status = "generated" }

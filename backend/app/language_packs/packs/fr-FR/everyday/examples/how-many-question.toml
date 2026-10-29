@@ -1,0 +1,49 @@
+construction_id = "how-many-question"
+
+[[examples]]
+example_id = "how-many-apples"
+levels = ["A0", "A2"]
+purposes = ["countGroup"]
+meaning = "How many apples are there?"
+scene = { objects = [{ fact_id = "object:book", concept = "book" }, { fact_id = "object:cup", concept = "cup" }, { fact_id = "object:apple", concept = "apple" }], counts = [{ fact_id = "count:book", object = "object:book", quantity = 5 }, { fact_id = "count:cup", object = "object:cup", quantity = 2 }, { fact_id = "count:apple", object = "object:apple", quantity = 2 }] }
+bindings = { object = "object:apple" }
+truth = true
+labels = []
+sentence = "Combien de pommes y a-t-il ?"
+translation = "How many apples are there?"
+chunks = [{ text = "Combien", join = "none" }, { text = "de", join = "space" }, { text = "pommes", join = "space" }, { text = "y", join = "space" }, { text = "a-t-il", join = "space" }, { text = "?", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "how-many-books"
+levels = ["A1"]
+purposes = ["chooseQuantity"]
+meaning = "How many books are there?"
+scene = { objects = [{ fact_id = "object:book", concept = "book" }, { fact_id = "object:cup", concept = "cup" }, { fact_id = "object:apple", concept = "apple" }], counts = [{ fact_id = "count:book", object = "object:book", quantity = 5 }, { fact_id = "count:cup", object = "object:cup", quantity = 2 }, { fact_id = "count:apple", object = "object:apple", quantity = 2 }] }
+bindings = { object = "object:book" }
+truth = true
+labels = []
+sentence = "Combien de livres y a-t-il ?"
+translation = "How many books are there?"
+chunks = [{ text = "Combien", join = "none" }, { text = "de", join = "space" }, { text = "livres", join = "space" }, { text = "y", join = "space" }, { text = "a-t-il", join = "space" }, { text = "?", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "how-many-books-form"
+levels = ["A0", "A2"]
+purposes = ["countGroup"]
+sentence = "Combien livres y a-t-il ?"
+correction = "Combien de livres y a-t-il ?"
+note = "Use de after combien."
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "how-many-books-choose-form"
+levels = ["A1"]
+purposes = ["chooseQuantity"]
+sentence = "Combien livres y a-t-il ?"
+correction = "Combien de livres y a-t-il ?"
+note = "Use de after combien."
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }

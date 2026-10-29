@@ -1,0 +1,198 @@
+mission_id = "M06"
+practice_level = "A2"
+content_version = 1
+
+[[cases]]
+case_id = "m06-a2-order-two-large-teas"
+category = "valid"
+construction_id = "polite-request"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:tea", concept = "tea" }], requests = [{ fact_id = "request:quantity", object = "object:tea", field = "quantity", value = "2" }, { fact_id = "request:size", object = "object:tea", field = "size", value = "large" }, { fact_id = "request:temperature", object = "object:tea", field = "temperature", value = "hot" }] }
+bindings = { object = "object:tea", quantity = "request:quantity", size = "request:size" }
+truth = true
+use = "order"
+input = "Order two large teas politely."
+expected_meaning = "I would like two large teas, please."
+acceptable = ["큰 차 두 잔 주세요."]
+reject = [{ sentence = "큰 차 세 잔 주세요.", category = "wrongCount", reason = "The order is for two teas." }, { sentence = "작은 차 두 잔 주세요.", category = "wrongAttribute", reason = "The teas are large." }, { sentence = "큰 차 두 잔 있어요.", category = "verbChoice", reason = "A request ends with 주세요." }]
+provenance = { source = "Held-out M06 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m06-a2-held-buy-three-apples"
+category = "valid"
+construction_id = "polite-request"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:apple", concept = "apple" }], requests = [{ fact_id = "request:quantity", object = "object:apple", field = "quantity", value = "3" }, { fact_id = "request:size", object = "object:apple", field = "size", value = "large" }] }
+bindings = { object = "object:apple", quantity = "request:quantity" }
+truth = true
+use = "order"
+input = "Ask to buy three apples."
+expected_meaning = "I would like three apples, please."
+acceptable = ["사과 세 개 주세요."]
+reject = [{ sentence = "사과 두 개 주세요.", category = "wrongCount", reason = "The order is for three apples." }, { sentence = "차 세 잔 주세요.", category = "wrongObject", reason = "The order is for apples." }]
+provenance = { source = "Held-out M06 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m06-a2-borrow-a-book"
+category = "valid"
+construction_id = "polite-request"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:book", concept = "book" }], requests = [{ fact_id = "request:quantity", object = "object:book", field = "quantity", value = "1" }, { fact_id = "request:colour", object = "object:book", field = "colour", value = "black" }] }
+bindings = { object = "object:book", quantity = "request:quantity" }
+truth = true
+use = "borrow"
+input = "Ask a classmate to lend you a book."
+expected_meaning = "Can you lend me a book, please?"
+acceptable = ["책 한 권 빌려 주세요."]
+reject = [{ sentence = "책 두 권 빌려 주세요.", category = "wrongCount", reason = "You need one book." }, { sentence = "책 한 권 빌려 있어요.", category = "verbChoice", reason = "A request ends with 주세요." }]
+provenance = { source = "Held-out M06 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m06-a2-held-pass-a-plate"
+category = "valid"
+construction_id = "polite-request"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }], requests = [{ fact_id = "request:quantity", object = "object:plate", field = "quantity", value = "1" }, { fact_id = "request:colour", object = "object:plate", field = "colour", value = "red" }] }
+bindings = { object = "object:plate", quantity = "request:quantity" }
+truth = true
+use = "pass"
+input = "Ask someone at home to pass you a plate."
+expected_meaning = "Can you pass me a plate, please?"
+acceptable = ["접시 한 개 주세요."]
+reject = [{ sentence = "컵 한 개 주세요.", category = "wrongObject", reason = "You need a plate." }]
+provenance = { source = "Held-out M06 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m06-a2-order-phrase-two-large-teas"
+category = "valid"
+construction_id = "order-phrase"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:tea", concept = "tea" }], requests = [{ fact_id = "request:quantity", object = "object:tea", field = "quantity", value = "2" }, { fact_id = "request:size", object = "object:tea", field = "size", value = "large" }, { fact_id = "request:temperature", object = "object:tea", field = "temperature", value = "hot" }] }
+bindings = { object = "object:tea", quantity = "request:quantity", size = "request:size" }
+truth = true
+use = "request"
+input = "Write the order phrase for two large teas."
+expected_meaning = "two large teas"
+acceptable = ["큰 차 두 잔"]
+reject = [{ sentence = "작은 차 두 잔", category = "wrongAttribute", reason = "The teas are large." }, { sentence = "큰 차 두 잔 주세요.", category = "punctuation", reason = "The phrase has no verb or final punctuation." }]
+provenance = { source = "Held-out M06 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m06-a2-ask-hot-or-cold"
+category = "valid"
+construction_id = "detail-question"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:tea", concept = "tea" }], requests = [{ fact_id = "request:quantity", object = "object:tea", field = "quantity", value = "2" }, { fact_id = "request:size", object = "object:tea", field = "size", value = "large" }, { fact_id = "request:temperature", object = "object:tea", field = "temperature", value = "hot" }] }
+bindings = { target = "object:tea" }
+truth = true
+use = "askTemperature"
+input = "Ask whether the tea is hot or cold."
+expected_meaning = "Hot or cold?"
+acceptable = ["따뜻한 걸로 드릴까요, 차가운 걸로 드릴까요?"]
+reject = [{ sentence = "따뜻한 걸로 드릴까요, 차가운 걸로 드릴까요.", category = "punctuation", reason = "The follow-up is a question." }]
+provenance = { source = "Held-out M06 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m06-a2-reply-hot"
+category = "valid"
+construction_id = "detail-reply"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:tea", concept = "tea" }], requests = [{ fact_id = "request:quantity", object = "object:tea", field = "quantity", value = "2" }, { fact_id = "request:size", object = "object:tea", field = "size", value = "large" }, { fact_id = "request:temperature", object = "object:tea", field = "temperature", value = "hot" }] }
+bindings = { target = "object:tea", detail = "request:temperature" }
+truth = true
+use = "reply"
+input = "Reply that you want the teas hot."
+expected_meaning = "Hot, please."
+acceptable = ["따뜻한 걸로 주세요."]
+reject = [{ sentence = "차가운 걸로 주세요.", category = "wrongAttribute", reason = "You want the teas hot." }]
+provenance = { source = "Held-out M06 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m06-a2-held-reply-eat-in"
+category = "valid"
+construction_id = "detail-reply"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:tea", concept = "tea" }], requests = [{ fact_id = "request:quantity", object = "object:tea", field = "quantity", value = "3" }, { fact_id = "request:size", object = "object:tea", field = "size", value = "small" }, { fact_id = "request:serviceSetting", object = "object:tea", field = "serviceSetting", value = "eatIn" }] }
+bindings = { target = "object:tea", detail = "request:serviceSetting" }
+truth = true
+use = "reply"
+input = "Reply that you will have the teas here."
+expected_meaning = "To have here, please."
+acceptable = ["먹고 갈게요."]
+reject = [{ sentence = "포장이요.", category = "wrongAttribute", reason = "You will have the teas here." }]
+provenance = { source = "Held-out M06 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m06-a2-repeat-three-large-apples"
+category = "valid"
+construction_id = "order-repeat"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:apple", concept = "apple" }], requests = [{ fact_id = "request:quantity", object = "object:apple", field = "quantity", value = "3" }, { fact_id = "request:size", object = "object:apple", field = "size", value = "large" }] }
+bindings = { object = "object:apple", quantity = "request:quantity", detail = "request:size" }
+truth = true
+use = "repeat"
+input = "Repeat the order of three large apples to check it."
+expected_meaning = "So, three apples, large ones, right?"
+acceptable = ["사과 세 개, 큰 걸로요?"]
+reject = [{ sentence = "사과 두 개, 큰 걸로요?", category = "wrongCount", reason = "The order is for three apples." }, { sentence = "사과 세 개, 큰 걸로요.", category = "punctuation", reason = "The repeat is a question." }]
+provenance = { source = "Held-out M06 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m06-a2-held-repeat-wrong-size"
+category = "valid"
+construction_id = "order-repeat"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:tea", concept = "tea" }], requests = [{ fact_id = "request:quantity", object = "object:tea", field = "quantity", value = "2" }, { fact_id = "request:size", object = "object:tea", field = "size", value = "large" }, { fact_id = "request:temperature", object = "object:tea", field = "temperature", value = "hot" }] }
+bindings = { object = "object:tea", quantity = "request:quantity", detail = "request:temperature", size = "detail:size:small" }
+truth = false
+use = "repeat"
+input = "Repeat the tea order with the wrong size, as the server's mistake."
+expected_meaning = "So, two small teas, hot, right? (wrong size)"
+acceptable = ["작은 차 두 잔, 따뜻한 걸로요?"]
+reject = [{ sentence = "큰 차 두 잔, 따뜻한 걸로요?", category = "wrongAttribute", reason = "The server's mistake is the small size." }]
+provenance = { source = "Held-out M06 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m06-a2-confirm"
+category = "valid"
+construction_id = "order-confirmation"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:tea", concept = "tea" }], requests = [{ fact_id = "request:quantity", object = "object:tea", field = "quantity", value = "2" }, { fact_id = "request:size", object = "object:tea", field = "size", value = "large" }, { fact_id = "request:temperature", object = "object:tea", field = "temperature", value = "hot" }] }
+bindings = {}
+truth = true
+use = "confirm"
+input = "Confirm that the server repeated your order correctly."
+expected_meaning = "Yes, that's right."
+acceptable = ["네, 그렇게 주세요."]
+reject = [{ sentence = "아니요, 그렇게 주세요.", category = "meaning", reason = "A confirmation says yes." }]
+provenance = { source = "Held-out M06 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m06-a2-repair-two"
+category = "valid"
+construction_id = "order-repair"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:tea", concept = "tea" }], requests = [{ fact_id = "request:quantity", object = "object:tea", field = "quantity", value = "2" }, { fact_id = "request:size", object = "object:tea", field = "size", value = "large" }, { fact_id = "request:temperature", object = "object:tea", field = "temperature", value = "hot" }] }
+bindings = { target = "object:tea", quantity = "request:quantity" }
+truth = true
+use = "repair"
+input = "Correct the server: you ordered two."
+expected_meaning = "Actually, two, please."
+acceptable = ["아니요, 두 잔이요."]
+reject = [{ sentence = "아니요, 세 잔이요.", category = "wrongCount", reason = "You ordered two." }, { sentence = "네, 두 잔이요.", category = "meaning", reason = "A repair does not start with yes." }]
+provenance = { source = "Held-out M06 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m06-a2-held-repair-eat-in"
+category = "valid"
+construction_id = "order-repair"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:tea", concept = "tea" }], requests = [{ fact_id = "request:quantity", object = "object:tea", field = "quantity", value = "3" }, { fact_id = "request:size", object = "object:tea", field = "size", value = "small" }, { fact_id = "request:serviceSetting", object = "object:tea", field = "serviceSetting", value = "eatIn" }] }
+bindings = { target = "object:tea", detail = "request:serviceSetting" }
+truth = true
+use = "repair"
+input = "Correct the server: you will have it here."
+expected_meaning = "Actually, to have here, please."
+acceptable = ["아니요, 먹고 갈게요."]
+reject = [{ sentence = "아니요, 포장이요.", category = "wrongAttribute", reason = "You will have it here." }]
+provenance = { source = "Held-out M06 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }

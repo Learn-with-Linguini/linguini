@@ -13,6 +13,7 @@ import { sessionDestination } from "../lib/sessionRoute";
 import { BasilIcon } from "../components/icons";
 import { gameStartError, queryError, queryKeys } from "../lib/queryKeys";
 import { learningFeedback } from "../lib/learningFeedback";
+import { trackAction } from "../lib/analytics.ts";
 
 export function SessionSummary() {
   const navigate = useNavigate();
@@ -38,6 +39,16 @@ export function SessionSummary() {
     (completedLessons > 1 && (completedLessons - 1) % 5 === 0);
 
   useEffect(() => {
+    if (!completed || !data) return;
+    trackAction("session_summary_viewed", {
+      sessionId: scene.sessionId,
+      basilEarned: data.basilEarned,
+      wordsLearnedCount: data.learnedVocabularyIds.length,
+      completedLessonsCount: data.completedLessonsCount,
+    });
+  }, [completed, data, scene.sessionId]);
+
+  useEffect(() => {
     if (!completed || !data || !isMilestone) return;
     const promptedKey = `linguini_survey_prompted_lesson_${completedLessons}`;
     if (localStorage.getItem(promptedKey)) return;
@@ -56,6 +67,7 @@ export function SessionSummary() {
     if (!session || !activeProfile || startingISpy) return;
     setStartingISpy(true);
     setStartError(null);
+    trackAction("summary_play_ispy_clicked");
     startKey.current ??= crypto.randomUUID();
     try {
       const detail = await startISpyGame(activeProfile.id, session.mediaAsset.id, startKey.current);
@@ -100,7 +112,7 @@ export function SessionSummary() {
       </div></Card>
     </> : null}
     <div className="stack-2">
-      <Button block variant="secondary" onClick={() => navigate("/home")}>Back home</Button>
+      <Button block variant="secondary" onClick={() => { trackAction("summary_back_home_clicked"); navigate("/home"); }}>Back home</Button>
       {missionSession ? <Button block disabled={startingISpy || !completed} onClick={() => void playISpy()}>
         {startingISpy ? "Setting up I-Spy..." : "Play I-Spy with this scene"}
       </Button> : <>

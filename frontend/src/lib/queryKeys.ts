@@ -1,5 +1,6 @@
 export const queryKeys = {
   account: ["account"] as const,
+  practiceLanguages: ["practice-languages"] as const,
   scenes: ["scenes"] as const,
   vocabulary: (profileId: string) => ["vocabulary", profileId] as const,
   progress: (profileId: string) => ["progress", profileId] as const,
@@ -30,6 +31,7 @@ export function friendlyError(error: unknown): string {
     const codeMessages: Record<string, string> = {
       no_active_language: "Choose a learning language in Profile, then try again.",
       active_session_limit_reached: "You can keep up to three unfinished practices open. Finish or leave one before starting another.",
+      lesson_language_unavailable: "Photo lessons aren't available for this language yet. Choose another language in Profile, or play I Spy.",
       insufficient_basil: "Collect 20 Basil to unlock this accent.",
       practice_conflict: "This practice has changed. Refresh the page and try again.",
       insufficient_scene: "This photo doesn't have enough for Linguini to check a lesson yet. Add more to it, or try another photo.",

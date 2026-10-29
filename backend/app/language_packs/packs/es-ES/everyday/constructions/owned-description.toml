@@ -1,0 +1,14 @@
+construction_id = "owned-description"
+version = 1
+summary = "Describe my object with a possessive and one confirmed detail."
+guidance = "Start with Mi + noun, then es + the agreeing detail, or está + the location: Mi taza es roja. Mi taza está sobre la mesa."
+features = ["ownership", "possessive-determiner"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun", owner = "determiner", attribute = "adjective", relation = "preposition", reference = "noun" }
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "description-frame"
+message = "Describe with es or está."
+must_contain = ["\\s(es|está)\\s", "\\.$"]

@@ -1,0 +1,92 @@
+mission_id = "M05"
+practice_level = "A0"
+content_version = 1
+
+[[cases]]
+case_id = "m05-a0-like-plate"
+category = "meaning"
+construction_id = "my-preference"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }, { fact_id = "object:cup", concept = "cup" }], preferences = [{ fact_id = "preference:plate", object = "object:plate", person = "first", likes = true }] }
+bindings = { object = "object:plate", preference = "preference:plate" }
+truth = true
+use = "like"
+input = "Say that you like the plate."
+expected_meaning = "I like the plate."
+acceptable = ["Me gusta el plato."]
+reject = [{ sentence = "No me gusta el plato.", category = "meaning", reason = "You like the plate; the sentence is not negated." }, { sentence = "Me gusta la taza.", category = "wrongObject", reason = "You like the plate, not the cup." }]
+provenance = { source = "Held-out M05 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m05-a0-dislike-bag"
+category = "meaning"
+construction_id = "my-preference"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }], preferences = [{ fact_id = "preference:bag", object = "object:bag", person = "first", likes = false }] }
+bindings = { object = "object:bag", preference = "preference:bag" }
+truth = true
+use = "dislike"
+input = "Say that you don't like the bag."
+expected_meaning = "I don't like the bag."
+acceptable = ["No me gusta el bolso."]
+reject = [{ sentence = "Me gusta el bolso.", category = "meaning", reason = "You don't like the bag; the sentence is negated." }]
+provenance = { source = "Held-out M05 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m05-a0-contrast"
+category = "meaning"
+construction_id = "my-preference"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }], preferences = [{ fact_id = "preference:plate", object = "object:plate", person = "first", likes = true }] }
+bindings = { object = "object:plate", preference = "preference:plate" }
+truth = false
+use = "dislike"
+input = "Say the opposite: that you don't like the plate."
+expected_meaning = "I don't like the plate."
+acceptable = ["No me gusta el plato."]
+reject = [{ sentence = "Me gusta el plato.", category = "meaning", reason = "The contrast option is negated." }]
+provenance = { source = "Held-out M05 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m05-a0-ask-door"
+category = "wrongObject"
+construction_id = "preference-question"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:door", concept = "door" }, { fact_id = "object:window", concept = "window" }] }
+bindings = { object = "object:door" }
+truth = true
+use = "question"
+input = "Ask whether the listener likes the door."
+expected_meaning = "Do you like the door?"
+acceptable = ["¿Te gusta la puerta?"]
+reject = [{ sentence = "¿Te gusta la ventana?", category = "wrongObject", reason = "The question is about the door." }, { sentence = "¿Te gusta la puerta", category = "punctuation", reason = "The question keeps its question mark." }]
+provenance = { source = "Held-out M05 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m05-a0-choose-key"
+category = "wrongObject"
+construction_id = "choice-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:key", concept = "key" }, { fact_id = "object:bag", concept = "bag" }] }
+bindings = { object = "object:key" }
+truth = true
+input = "Say that you choose the key."
+expected_meaning = "I choose the key."
+acceptable = ["Elijo la llave."]
+reject = [{ sentence = "Elijo el bolso.", category = "wrongObject", reason = "You choose the key." }, { sentence = "Elijo la llave", category = "punctuation", reason = "The statement ends with a full stop." }]
+provenance = { source = "Held-out M05 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m05-a0-held-unicode"
+category = "unicode"
+construction_id = "my-preference"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:phone", concept = "phone" }], preferences = [{ fact_id = "preference:phone", object = "object:phone", person = "first", likes = true }] }
+bindings = { object = "object:phone", preference = "preference:phone" }
+truth = true
+use = "like"
+input = "Say that you like the phone."
+expected_meaning = "I like the phone."
+acceptable = ["Me gusta el teléfono."]
+reject = [{ sentence = "Me gusta el tele\u0301fono.", category = "unicode", reason = "The rejected candidate contains decomposed characters." }]
+provenance = { source = "Held-out M05 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }

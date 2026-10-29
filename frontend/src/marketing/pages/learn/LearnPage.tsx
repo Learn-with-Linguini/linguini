@@ -16,6 +16,12 @@ import { appLinks, site } from "../../lib/site";
 import NotFoundPage from "../NotFoundPage";
 import styles from "./learn.module.css";
 
+/** Step 4 of the worked session — the landing `steps` list only holds the first three. */
+const journalStep = {
+  title: "Keep the day in your journal",
+  body: "Write a few lines with your new words. Linguini highlights the ones you used, files them in your vocabulary bank and adds Basil, and your progress page grows another farfalle on your streak.",
+};
+
 export default function LearnLanguagePage() {
   const { language = "" } = useParams();
   const page = getLanguagePage(language);
@@ -191,8 +197,8 @@ export default function LearnLanguagePage() {
                 </dl>
               </li>
               <li className={styles.step}>
-                <h3>{steps[3].title}</h3>
-                <p>{steps[3].body}</p>
+                <h3>{journalStep.title}</h3>
+                <p>{journalStep.body}</p>
                 <blockquote className={styles.journal} lang={lang}>
                   <b>{scene.journal[lang].title}</b>
                   <p>{scene.journal[lang].body}</p>

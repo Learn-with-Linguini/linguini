@@ -57,6 +57,7 @@ const apiFixtures: Record<string, unknown> = {
 };
 
 let resolveComplete: ((response: Response) => void) | null = null;
+let completionRequests = 0;
 const taskRequests: { path: string; body: Record<string, unknown> }[] = [];
 const taskReplies: (() => Response)[] = [];
 const latestReplies: (() => Response | Promise<Response>)[] = [];
@@ -69,7 +70,10 @@ globals.fetch = async (input: unknown, init?: RequestInit) => {
     taskRequests.push({ path, body: JSON.parse(String(init?.body ?? "{}")) });
     return taskReplies.shift()?.() ?? new Response("no reply", { status: 500 });
   }
-  if (path === `/api/v1/sessions/${SESSION_ID}/complete`) return new Promise<Response>(resolve => { resolveComplete = resolve; });
+  if (path === `/api/v1/sessions/${SESSION_ID}/complete`) {
+    completionRequests += 1;
+    return new Promise<Response>(resolve => { resolveComplete = resolve; });
+  }
   if (path === `/api/v1/sessions/${SESSION_ID}`) return Response.json(fixture);
   if (path === "/api/v1/media/asset") {
     return Response.json({ id: "asset", signedUrl: "http://test.local/img.jpg", mimeType: "image/jpeg", width: 100, height: 100 });
@@ -90,6 +94,7 @@ writeFileSync(entryPath, [
   'export { MemoryRouter, Route, Routes } from "react-router-dom";',
   'export { QueryClient, QueryClientProvider } from "@tanstack/react-query";',
   `export { SessionRoute } from "${pathToFileURL(join(here, "../src/components/SessionRoute")).href}";`,
+  `export { LearningTaskPage } from "${pathToFileURL(join(here, "../src/pages/LearningTaskPage")).href}";`,
   `export { ISpyPhase2 } from "${pathToFileURL(join(here, "../src/pages/ISpyPhase2")).href}";`,
   `export { AppStateProvider } from "${pathToFileURL(join(here, "../src/state/AppState")).href}";`,
   `export { useAppState } from "${pathToFileURL(join(here, "../src/state/useAppState")).href}";`,
@@ -125,7 +130,7 @@ try {
 }
 const {
   h, act, createRoot, MemoryRouter, Route, Routes,
-  QueryClient, QueryClientProvider, SessionRoute, ISpyPhase2, AppStateProvider, useAppState,
+  QueryClient, QueryClientProvider, SessionRoute, ISpyPhase2, LearningTaskPage, AppStateProvider, useAppState,
 } = bundled as Record<string, never> as {
   h: typeof import("react").createElement;
   act: typeof import("react").act;
@@ -136,6 +141,7 @@ const {
   QueryClient: typeof import("@tanstack/react-query").QueryClient;
   QueryClientProvider: typeof import("@tanstack/react-query").QueryClientProvider;
   SessionRoute: typeof import("../src/components/SessionRoute.tsx").SessionRoute;
+  LearningTaskPage: typeof import("../src/pages/LearningTaskPage.tsx").LearningTaskPage;
   ISpyPhase2: typeof import("../src/pages/ISpyPhase2.tsx").ISpyPhase2;
   AppStateProvider: typeof import("../src/state/AppState.tsx").AppStateProvider;
   useAppState: typeof import("../src/state/useAppState").useAppState;
@@ -510,7 +516,8 @@ test("a failed restore never looks like a fresh unanswered task", async () => {
   root.unmount();
 });
 
-test("a photo without description support explains why there is no describing round", async () => {
+test("a photo without description support completes directly to the summary", async () => {
+  const requestsBefore = completionRequests;
   fixture = detail("inProgress", [{ ...task("learn", "completed", 0), kind: "vocabularyIntroduction" } as SessionTask,
     { ...task("clues", "completed", 1), kind: "ispyRound" } as SessionTask]);
   const container = dom.window.document.createElement("div");
@@ -523,13 +530,17 @@ test("a photo without description support explains why there is no describing ro
       h(MemoryRouter, { initialEntries: [`${BASE}/ispy-2`] }, h(Routes, null,
         h(Route, { path: "/practice/sessions/:sessionId", element: h(SessionRoute) },
           h(Route, { path: "ispy-2", element: h(ISpyPhase2) }),
+          h(Route, { path: "summary", element: h(stub("summary")) }),
         ),
       )),
     )));
   });
   await flush();
-  assert.ok(dom.window.document.querySelector("[data-testid=no-description-round]"));
-  assert.ok(button("Finish session"));
+  assert.equal(completionRequests, requestsBefore + 1);
+  assert.equal(shown(), "page-summary");
+  await act(async () => { resolveComplete?.(Response.json({ id: SESSION_ID, status: "completed" })); await sleep(50); });
+  await flush();
+  assert.equal(shown(), "page-summary");
   root.unmount();
 });
 
@@ -637,4 +648,46 @@ test("selected slots, revealed help and free edits survive a reload", async () =
   await click("debajo de");
   assert.equal(clue().value, "Está debajo de la mesa. Es pequeña.", "the restored sentence is edited in place");
   root.unmount();
+});
+
+
+test("reloaded Spanish preparation renders saved native metadata and separate Latin spelling", async () => {
+  // Deliberate Spanish fixture variant: direction comes from persisted task data,
+  // rather than the current profile or any hard-coded language rule.
+  const intro = { ...task("vocabulary", "pending", 0), id: "pack-vocabulary", phase: "learning",
+    kind: "vocabularyIntroduction", publicContent: { kind: "vocabularyIntroduction", title: "Learn vocabulary",
+      languageContext: { packId: "es-test", packVersion: 1, fingerprint: "snapshot-es", languageCode: "es",
+        locale: "es-MX", variety: "test", register: "everyday", script: "Latn", direction: "rtl",
+        articles: "required", grammaticalGender: "required", romanizationRequired: true,
+        romanizationConvention: "Spanish Latin spelling", speechLocale: "es-MX",
+        speechSynthesis: "none", speechRecognition: false },
+      words: [{ targetText: "la taza", translation: "cup", romanization: "la taza (Latin)",
+        phoneticText: "TAH-sah", partOfSpeech: "noun", gender: "feminine", sceneObjectId: null,
+        vocabularyItemId: null }], questions: [] } } as SessionTask;
+  fixture = detail("inProgress", [intro]);
+  const container = dom.window.document.createElement("div");
+  dom.window.document.body.replaceChildren(container);
+  const root = createRoot(container);
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  mountedClients.push(client);
+  await act(async () => {
+    root.render(h(QueryClientProvider, { client }, h(AppStateProvider, null,
+      h(MemoryRouter, { initialEntries: [`${BASE}/learn/${intro.id}`] }, h(Routes, null,
+        h(Route, { path: "/practice/sessions/:sessionId", element: h(SessionRoute) },
+          h(Route, { path: "learn/:taskId", element: h(LearningTaskPage) })),
+      )),
+    )));
+  });
+  await flush();
+  const native = container.querySelector(".learning-card__word h2");
+  assert.equal(native?.textContent, "la taza");
+  assert.equal(native?.getAttribute("dir"), "rtl");
+  assert.equal(native?.getAttribute("lang"), "es-MX");
+  const latin = container.querySelector('[aria-label="Latin spelling"]');
+  assert.equal(latin?.textContent, "la taza (Latin)");
+  assert.equal(latin?.getAttribute("dir"), "ltr");
+  assert.equal(container.querySelector('[aria-label="English-sound pronunciation"]')?.textContent, "TAH-sah");
+  assert.equal(container.querySelector("h1")?.getAttribute("dir"), null, "English UI keeps its direction");
+  assert.equal(container.querySelector('[aria-label="Hear la taza"]'), null, "disabled speech has no audio control");
+  await act(async () => root.unmount());
 });

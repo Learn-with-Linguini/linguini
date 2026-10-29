@@ -9,7 +9,6 @@ from typing import Annotated, Any, Literal
 from pydantic import Field, model_validator
 
 from app.ai.features.learning_tasks.mission import (
-    MissionGeneration,
     fold,
     tokens,
     unique_question_ids,
@@ -18,10 +17,6 @@ from app.ai.features.learning_tasks.schemas import GeneratedChoice
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.schemas.base import ApiModel, NonEmptyText
 from app.schemas.roleplay import parse_roleplay_facts
-
-M04_PROMPT_VERSION = "learning-tasks.m04-a1.v1"
-M04_SCHEMA_VERSION = "learning-tasks-m04-result.v1"
-M04_VALIDATOR_VERSION = "learning-tasks-m04-validator.v1"
 
 type M04Purpose = Literal["chooseOwner", "buildMine", "buildTheirs"]
 
@@ -191,7 +186,7 @@ def validate_m04_lesson(payload: dict[str, Any], result: M04LessonResult) -> Non
         _fail("Every fact object must have a reviewed rendering.")
 
 
-def fallback_m04_lesson(payload: dict[str, Any]) -> M04LessonResult:
+def assemble_m04_lesson(payload: dict[str, Any]) -> M04LessonResult:
     """Build the deterministic M04 lesson from the saved roleplay plan."""
     _facts(payload)
     rng = random.Random(payload.get("seed") or "M04")
@@ -247,14 +242,3 @@ def fallback_m04_lesson(payload: dict[str, Any]) -> M04LessonResult:
     return result
 
 
-M04_GENERATION = MissionGeneration(
-    M04_PROMPT_VERSION,
-    M04_SCHEMA_VERSION,
-    M04_VALIDATOR_VERSION,
-    "",
-    M04LessonResult,
-    validate_m04_lesson,
-    fallback_m04_lesson,
-    "mission_lesson_m04_v1",
-    uses_model=False,
-)

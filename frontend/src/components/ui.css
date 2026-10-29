@@ -700,6 +700,7 @@
 .basil-reward {
   display: inline-flex;
   align-items: center;
+  align-self: flex-start;
   gap: var(--space-1);
   justify-self: start;
   padding: 4px var(--space-2);

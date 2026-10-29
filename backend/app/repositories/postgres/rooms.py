@@ -50,6 +50,7 @@ from app.schemas.rooms import (
     RoomSnapshot,
     RoomTurnPublic,
 )
+from app.services.room_languages import room_profile_supported
 
 metadata = MetaData()
 
@@ -452,14 +453,10 @@ class PostgresRoomRepository:
         )
         if row is None:
             raise RoomError("room_profile_invalid", "Choose your active learning language.", 422)
-        if (
-            row["source_language_code"].lower() != "en"
-            or row["target_language_code"].lower() not in {"es", "fr", "de"}
-            or row["proficiency_level"] not in {"A1", "A2"}
-        ):
+        if not room_profile_supported(row):
             raise RoomError(
                 "room_language_unsupported",
-                "Photo rooms support A1/A2 English to Spanish, French or German.",
+                "Photo rooms aren't available for this learning language and level yet.",
                 422,
             )
         return dict(row)

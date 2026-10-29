@@ -1,0 +1,276 @@
+[[labels]]
+semantic = "yes"
+text = "Oui"
+meaning = "yes"
+usage = "sentence"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "no"
+text = "Non"
+meaning = "no"
+usage = "sentence"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "yes-answer"
+text = "Oui."
+meaning = "Yes."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "no-answer"
+text = "Non."
+meaning = "No."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "what-is-this"
+text = "Qu'est-ce que c'est ?"
+meaning = "What is this?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "attribute-prompt-colour"
+text = "De quelle couleur est cet objet ?"
+meaning = "What colour is this object?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "describe-object"
+text = "Décris cet objet."
+meaning = "Describe this object."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "touch-object"
+text = "Appuie sur l’objet qui correspond à cette phrase : « {f['first']} »."
+meaning = "Tap the object matching this sentence: {f['first']}."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "build-second-fact"
+text = "Construis la deuxième phrase."
+meaning = "Build the second sentence."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "choose-description"
+text = "Quelle description correspond à la photo ?"
+meaning = "Which description matches the photo?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "describe-scene"
+text = "Décris la scène avec ces phrases."
+meaning = "Describe the scene with these sentences."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "connector-distractor"
+text = "mais"
+meaning = "but"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[labels]]
+semantic = "attribute-prompt"
+text = "Comment est cet objet ?"
+meaning = "What is this object like?"
+usage = "prompt"
+provenance = { source = "Generated shared-M01 compatibility addition; requires fluent review.", review_status = "generated" }
+
+[[labels]]
+semantic = "attribute-prompt-material"
+text = "En quelle matière est cet objet ?"
+meaning = "What material is this object made of?"
+usage = "prompt"
+provenance = { source = "Generated shared-M01 compatibility addition; requires fluent review.", review_status = "generated" }
+
+[[labels]]
+semantic = "vocabulary-unsure"
+text = "Je ne sais pas"
+meaning = "I don't know"
+usage = "prompt"
+provenance = { source = "Generated shared-M01 compatibility addition; requires fluent review.", review_status = "generated" }
+
+[[labels]]
+semantic = "vocabulary-other"
+text = "Je ne suis pas sûr"
+meaning = "I'm not sure"
+usage = "prompt"
+provenance = { source = "Generated shared-M01 compatibility addition; requires fluent review.", review_status = "generated" }
+
+[[labels]]
+semantic = "ask-where"
+text = "Demande où il se trouve."
+meaning = "Ask where it is."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "answer-where"
+text = "Réponds avec la position que montre la photo."
+meaning = "Answer with the position the photo shows."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "clue-meaning"
+text = "Que signifie cette phrase ?"
+meaning = "What does this sentence mean?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "build-location-clue"
+text = "Construis le deuxième indice."
+meaning = "Build the second clue."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "find-both-clues"
+text = "Touche l'objet qui correspond aux deux indices."
+meaning = "Tap the object that matches both clues."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "friend-points"
+text = "Ton ami montre le repère {marker}. Que dis-tu ?"
+meaning = "Your friend points to marker {marker}. What do you say?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "name-and-locate"
+text = "Nomme l'objet et indique où il se trouve."
+meaning = "Name the object and say where it is."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "answer-in-sentence"
+text = "Réponds avec une phrase."
+meaning = "Answer with a sentence."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "build-group-sentence"
+text = "Construis une phrase sur le groupe marqué."
+meaning = "Build a sentence about the highlighted group."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "choose-comparison"
+text = "Choisis la comparaison correcte."
+meaning = "Choose the correct comparison."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "friend-says"
+text = "Ton ami dit : « {statement} » Que réponds-tu ?"
+meaning = "Your friend says: “{statement}” What do you answer?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "friend-is-right"
+text = "Oui, ton ami a raison."
+meaning = "Yes, your friend is right."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "describe-compare"
+text = "Décris et compare les deux groupes."
+meaning = "Describe and compare the two groups."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "more"
+text = "plus"
+meaning = "more"
+usage = "sentence"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "fewer"
+text = "moins"
+meaning = "fewer"
+usage = "sentence"
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "choose-sentence"
+text = "Choisis la bonne phrase."
+meaning = "Choose the correct sentence."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "which-is-yours"
+text = "Quel objet est à toi ?"
+meaning = "Which object is yours?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "choose-possessive"
+text = "Tu dis :"
+meaning = "You say:"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "describe-your-object"
+text = "Décris ton objet avec un détail."
+meaning = "Describe your object with a detail."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "clarify-and-describe"
+text = "Précise quel objet est à toi et décris-le."
+meaning = "Say which object is yours and describe it."
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "what-choose"
+text = "Tu choisis quoi ?"
+meaning = "What do you choose?"
+usage = "prompt"
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[labels]]
+semantic = "request-distractor-have"
+text = "J'ai"
+meaning = "I have"
+usage = "prompt"
+[labels.provenance]
+source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed."
+review_status = "generated"
+
+[[labels]]
+semantic = "request-distractor-exists"
+text = "Il y a"
+meaning = "There is"
+usage = "prompt"
+[labels.provenance]
+source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed."
+review_status = "generated"
