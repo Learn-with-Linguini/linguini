@@ -223,6 +223,12 @@
   background: var(--sage);
 }
 
+.cheatsheet-pattern__part[data-part-id="negative-after"] .cheatsheet-pattern__pill {
+  border-color: #b97814;
+  background: #ffedb8;
+  color: #74480b;
+}
+
 .cheatsheet-pattern__part--slot .cheatsheet-pattern__pill {
   border-style: dashed;
   background: #fff;

@@ -39,10 +39,28 @@ explanation = "Put n' before aime and pas after it. Ne shortens to n' before the
 formula = "Je n'aime pas + object"
 
 [[concepts.pattern_parts]]
-part_id = "dislike"
-label = "I don't like"
+part_id = "subject"
+label = "subject"
 role = "fixed"
-text = "Je n'aime pas"
+text = "Je"
+
+[[concepts.pattern_parts]]
+part_id = "negative-before"
+label = "before aime"
+role = "choice"
+text = "n'"
+
+[[concepts.pattern_parts]]
+part_id = "verb"
+label = "verb"
+role = "fixed"
+text = "aime"
+
+[[concepts.pattern_parts]]
+part_id = "negative-after"
+label = "after aime"
+role = "ending"
+text = "pas"
 
 [[concepts.pattern_parts]]
 part_id = "object"

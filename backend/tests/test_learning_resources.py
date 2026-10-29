@@ -298,9 +298,20 @@ def test_french_a0_m05_cheatsheet_separates_like_and_dislike() -> None:
         "I like",
         "I don't like",
     ]
-    assert [concept["patternParts"][0]["text"] for concept in body["concepts"]] == [
-        "J'aime",
-        "Je n'aime pas",
+    assert body["concepts"][0]["patternParts"][0]["text"] == "J'aime"
+    assert [part["text"] for part in body["concepts"][1]["patternParts"]] == [
+        "Je",
+        "n'",
+        "aime",
+        "pas",
+        "la pomme",
+    ]
+    assert [part["role"] for part in body["concepts"][1]["patternParts"]] == [
+        "fixed",
+        "choice",
+        "fixed",
+        "ending",
+        "slot",
     ]
     assert body["concepts"][1]["examples"][1]["targetText"] == (
         "Leo n'aime pas le livre."

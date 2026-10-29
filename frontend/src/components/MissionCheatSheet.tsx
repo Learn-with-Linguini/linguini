@@ -112,7 +112,7 @@ function CheatSheetConceptCard({ concept, languageCode, textDirection }: {
       </button>)}
     </div> : null}
     {concept.patternParts.length ? <div className="cheatsheet-pattern" dir={textDirection} aria-label={concept.formula ?? concept.title}>
-      {concept.patternParts.map(part => <div key={part.partId} className={`cheatsheet-pattern__part cheatsheet-pattern__part--${part.role}`}>
+      {concept.patternParts.map(part => <div key={part.partId} data-part-id={part.partId} className={`cheatsheet-pattern__part cheatsheet-pattern__part--${part.role}`}>
         <span className="cheatsheet-pattern__label">{part.label}</span>
         {part.text ? <span className="cheatsheet-pattern__pill" lang={languageCode}>{part.text}</span> :
           <span className="cheatsheet-pattern__choices">{part.choices.map((choice, index) =>
