@@ -94,6 +94,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
+| `vocabulary_typing_skipped` | `{ taskId, termType, revisiting }` | Learner skips the current typing prompt without checking or revealing its answer |
 | `vocabulary_marker_clicked` | `{ taskId, marker, audioAvailable }` | Learner selects a photo marker to show its object card and play target-language pronunciation when available |
 | `vocabulary_pronunciation_clicked` | `{ termType }` | Learner replays a word using the review card's speaker button |
 

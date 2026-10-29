@@ -5074,7 +5074,7 @@ p[role="alert"]::before { content: "!"; }
 
 .vocabulary-flow__actions {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: 1fr 1fr;
   align-items: stretch;
   gap: var(--space-3);
 }

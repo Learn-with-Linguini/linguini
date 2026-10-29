@@ -62,8 +62,15 @@ During the object section, photo markers select their matching card and play its
 target-language pronunciation using the existing language-pack voice settings.
 Repeated instances retain their own markers. Adjective and relation cards highlight
 associated objects when supplied, with speaker controls for pronunciation. The
-photo stays visible throughout review. Marker buttons support keyboard activation;
+photo stays visible throughout review, quiz, typing, and completion. Outside active
+review, it shows without markers, word labels, or playback to avoid revealing answers.
+Marker buttons support keyboard activation;
 word cards remain readable when browser pronunciation is unavailable.
+
+Typing prompts offer “Skip typing” alongside the answer reveal action. Skipping
+moves to the next practice step without checking, revealing, or submitting that
+word's draft answer. Recognition questions and teaching cards have no typing-skip
+control. The option is disabled while an answer is being checked or saved.
 
 ## Scene processing progress
 

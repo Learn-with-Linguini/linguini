@@ -253,13 +253,12 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
   const terminal = taskDone(task);
   const revision = task.status === "skipped";
   const active = !terminal || revision || revisiting;
+  const reviewing = active && stage === "review";
   const reviewGroups = vocabularyReviewGroups(content.words);
   const pageCount = reviewGroups.length;
   const reviewWords = reviewGroups.map(group => group[0]);
   const visibleWords = reviewGroups[page] ?? [];
   const reviewWord = visibleWords[0];
-  const sectionWords = reviewWords.filter(word => word.termType === reviewWord?.termType);
-  const sectionPosition = reviewWord ? sectionWords.indexOf(reviewWord) + 1 : 0;
   const objectMarkers = scene.items.filter(item => reviewWords.some(word => wordMatchesMarker(word, item.id)));
   const markerSelectedForWord = reviewWord && selectedMarkerId && wordMatchesMarker(reviewWord, selectedMarkerId)
     ? selectedMarkerId : null;
@@ -267,9 +266,9 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
   const typingWord = content.words[typingIndex];
   const typingKey = typingWord ? typingWord.learningKey ?? typingWord.vocabularyItemId ?? typingWord.targetText : "";
   const earnedText = basilEarnedText(actionResult?.basilEarned);
-  const submit = async () => {
+  const submit = async (typingAnswers = typedAnswers) => {
     if (revisiting) { setFeedback("Review complete."); return; }
-    const result = await actOnTask(task.id, "attempts", { inputMode: "vocabularyReview", answers, typedAnswers }, requestKey.current);
+    const result = await actOnTask(task.id, "attempts", { inputMode: "vocabularyReview", answers, typedAnswers: typingAnswers }, requestKey.current);
     if (result) {
       setActionResult(result);
       setFeedback(result.attempt?.feedback?.message ?? "Vocabulary practice saved.");
@@ -367,8 +366,16 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
       setCheckingTyping(false);
     }
   };
-  const advanceTyping = () => {
+  const advanceTyping = (skip = false) => {
     setTypingCheck(null);
+    setFeedback(null);
+    const remainingAnswers = skip
+      ? Object.fromEntries(Object.entries(typedAnswers).filter(([key]) => key !== typingKey))
+      : typedAnswers;
+    if (skip) {
+      setTypedAnswers(remainingAnswers);
+      trackAction("vocabulary_typing_skipped", { taskId: task.id, termType: typingWord?.termType, revisiting });
+    }
     if (revisiting) { advanceRecap(); return; }
     const nextQuestionIndex = typingIndex + 2;
     if (nextQuestionIndex < content.questions.length) {
@@ -377,7 +384,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
     } else if (typingIndex < content.words.length - 1) {
       setTypingIndex(value => value + 1);
     } else {
-      void submit();
+      void submit(remainingAnswers);
     }
   };
   return <div className="stack vocabulary-flow">
@@ -391,18 +398,19 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
     {active && stage === "review" ? <>
       {revision ? <div className="panel-note" role="status"><strong>Saved for revision</strong><p className="small muted">You skipped this practice earlier, but these words will stay here whenever you want to review them.</p></div> : null}
       {reviewWord ? <div className="vocabulary-review-section">
-        <h2 aria-live="polite">{reviewWord.termType === "object" ? "Objects and adjectives" : VOCABULARY_SECTIONS[reviewWord.termType]} <span className="small muted">{sectionPosition} of {sectionWords.length}</span></h2>
+        <h2 aria-live="polite">{reviewWord.termType === "object" ? "Objects and adjectives" : VOCABULARY_SECTIONS[reviewWord.termType]}</h2>
         <p className="small muted">{reviewWord.termType === "object"
           ? speechAvailable() ? "Tap a number to see and hear its word, or use Next to keep exploring." : "Tap a number to see its word. Pronunciation isn't available in this browser for this language."
           : speechAvailable() ? "Listen with the speaker button. The photo shows the context." : "The photo shows the context. Pronunciation isn't available in this browser for this language."}</p>
       </div> : null}
-      <div className="vocabulary-learning-scene" aria-label={reviewWord ? `${reviewWord.termType === "relationship" ? "Objects related by" : "Location of"} ${reviewWord.translation} in your photo` : "Your photo"}>
+    </> : null}
+      <div className="vocabulary-learning-scene" aria-label={reviewing && reviewWord ? `${reviewWord.termType === "relationship" ? "Objects related by" : "Location of"} ${reviewWord.translation} in your photo` : "Your photo"}>
         <ScenePhoto
           scene={scene}
-          items={reviewWord?.termType === "object" ? objectMarkers : scene.items.filter(item => item.id === reviewWord?.sceneObjectId || reviewWord?.relatedSceneObjectIds?.includes(item.id))}
-          activeItemId={markerSelectedForWord ?? reviewWord?.sceneObjectId}
-          activeItemIds={markerSelectedForWord ? [] : reviewWord?.relatedSceneObjectIds}
-          onMarkerClick={reviewWord?.termType === "object" ? item => {
+          items={!reviewing ? [] : reviewWord?.termType === "object" ? objectMarkers : scene.items.filter(item => item.id === reviewWord?.sceneObjectId || reviewWord?.relatedSceneObjectIds?.includes(item.id))}
+          activeItemId={reviewing ? markerSelectedForWord ?? reviewWord?.sceneObjectId : null}
+          activeItemIds={reviewing && !markerSelectedForWord ? reviewWord?.relatedSceneObjectIds : []}
+          onMarkerClick={reviewing && reviewWord?.termType === "object" ? item => {
             const exactPage = reviewWords.findIndex(word => word.termType === "object" && word.sceneObjectId === item.id);
             const nextPage = exactPage >= 0 ? exactPage : reviewWords.findIndex(word => wordMatchesMarker(word, item.id));
             if (nextPage < 0) return;
@@ -414,17 +422,17 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
           } : undefined}
         />
       </div>
+    {reviewing ? <>
       <div className={`vocabulary-learning-grid vocabulary-learning-grid--swipe${visibleWords.length > 1 ? " vocabulary-learning-grid--paired" : ""}`} aria-live="polite" onTouchStart={handleCardTouchStart} onTouchEnd={handleCardTouchEnd}>{visibleWords.map((word, cardIndex) => <VocabularyLearningCard key={`${word.learningKey ?? word.vocabularyItemId ?? word.targetText}:${cardIndex}`} word={word} languageCode={scene.languageCode} />)}</div>
       <div className="vocabulary-flow__actions">
         <Button disabled={page === 0} onClick={() => { setSelectedMarkerId(null); setPage(value => value - 1); }}><ArrowLeftIcon size={18} /> Previous</Button>
-        <span className="vocabulary-flow__position" aria-live="polite">{page + 1} of {pageCount}</span>
         {revision && page === pageCount - 1
           ? <Button variant="secondary" onClick={onClose}>Back to tasks</Button>
           : <Button variant="secondary" onClick={finishReview}>{page < pageCount - 1 ? <>Next <ArrowRightIcon /></> : "Start quick quiz"}</Button>}
       </div>
     </> : null}
     {active && stage === "quiz" && question ? <><Card plain><div className="stack">
-      <span className="label muted">Question {questionIndex + 1} of {content.questions.length}</span><h2>{question.prompt}</h2>
+      <h2>{question.prompt}</h2>
       <div className="choice-grid">{choiceOrder(question.options, `${task.id}:${question.questionId}`, option => option.optionId).map(option => {
         const selected = answers[question.questionId] === option.optionId || pendingOptionId === option.optionId;
         const result = questionResults[question.questionId];
@@ -446,14 +454,15 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
       <Button block disabled={!answers[question.questionId]} onClick={finishQuestion}>{revisiting ? recapIndex < recap.length - 1 ? "Continue" : "Finish review" : "Next question"}</Button>
     </div></Card></> : null}
     {active && stage === "typing" && typingWord ? <Card plain><div className="stack">
-      <div><h2>Type “{typingWord.translation}”</h2><p className="muted">Word {typingIndex + 1} of {content.words.length}</p></div>
+      <div><h2>Type “{typingWord.translation}”</h2></div>
       <input {...nativeProps} className="input" aria-label={`Type ${typingWord.translation}`} value={typedAnswers[typingKey] ?? ""} disabled={typingCheck?.isCorrect || typingCheck?.revealed} onChange={event => { setTypedAnswers(value => ({ ...value, [typingKey]: event.target.value })); setTypingCheck(null); }} />
       {checkingTyping ? <InlineLoader compact label="Checking your word…" /> : null}
       {typingCheck ? <Feedback tone={typingCheck.isCorrect ? "good" : typingCheck.revealed ? "neutral" : "warn"}><div className="stack-2" role="status"><p>{typingCheck.isCorrect ? "That’s right!" : typingCheck.revealed ? <>No worries, the answer is <strong>{typingCheck.correctAnswer}</strong>.</> : "Not quite. Give it another try."}</p></div></Feedback> : null}
       {typingCheck?.isCorrect || typingCheck?.revealed
-        ? <Button block disabled={practiceSaving} onClick={advanceTyping}>{revisiting ? recapIndex < recap.length - 1 ? "Continue" : "Finish review" : typingIndex < content.words.length - 1 || typingIndex + 2 < content.questions.length ? "Next question" : "Finish task"}</Button>
+        ? <Button block disabled={practiceSaving} onClick={() => advanceTyping()}>{revisiting ? recapIndex < recap.length - 1 ? "Continue" : "Finish review" : typingIndex < content.words.length - 1 || typingIndex + 2 < content.questions.length ? "Next question" : "Finish task"}</Button>
         : <Button block disabled={!typedAnswers[typingKey]?.trim() || practiceSaving || checkingTyping} onClick={() => void checkTyping()}>Check answer</Button>}
       {!typingCheck?.isCorrect && !typingCheck?.revealed ? <Button variant="quiet" block className="typing-forgot-action" disabled={practiceSaving || checkingTyping} onClick={() => void checkTyping(true)}>I forgot, lift the lid</Button> : null}
+      {!typingCheck?.isCorrect && !typingCheck?.revealed ? <Button variant="quiet" block disabled={practiceSaving || checkingTyping} onClick={() => advanceTyping(true)}>Skip typing</Button> : null}
     </div></Card> : null}
     {revisiting && stage === "complete" ? <Card plain><div className="stack">
       <h2>Review complete</h2><p>You practised these words again.</p>
