@@ -285,6 +285,28 @@ def test_a0_m03_cheatsheets_include_numbers_and_counted_objects(
     assert concepts[1]["examples"][1]["targetText"] == chunk
 
 
+def test_french_a0_m05_cheatsheet_separates_like_and_dislike() -> None:
+    response = TestClient(app).get(
+        "/api/v1/learning-resources/cheatsheets/M05",
+        params={"languageCode": "fr", "practiceLevel": "A0"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["title"] == "Say what you like and don't like"
+    assert [concept["title"] for concept in body["concepts"]] == [
+        "I like",
+        "I don't like",
+    ]
+    assert [concept["patternParts"][0]["text"] for concept in body["concepts"]] == [
+        "J'aime",
+        "Je n'aime pas",
+    ]
+    assert body["concepts"][1]["examples"][1]["targetText"] == (
+        "Leo n'aime pas le livre."
+    )
+
+
 def test_missing_learning_resources_return_clear_404s() -> None:
     client = TestClient(app)
 
