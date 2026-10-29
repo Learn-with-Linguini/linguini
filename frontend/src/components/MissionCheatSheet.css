@@ -6,16 +6,8 @@
 }
 
 .cheatsheet-trigger {
-  min-height: 44px;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--teal);
-  border-radius: var(--radius-pill);
-  background: var(--paper);
+  flex: none;
   color: var(--teal-dark);
-  font: inherit;
-  font-size: var(--text-small);
-  font-weight: 800;
-  cursor: pointer;
 }
 
 .cheatsheet-trigger:hover,
@@ -318,7 +310,6 @@
 }
 
 @media (max-width: 440px) {
-  .cheatsheet-trigger { padding-inline: var(--space-2); }
   .learning-title-row { flex-wrap: wrap; }
   .learning-title-actions { margin-left: auto; }
 }

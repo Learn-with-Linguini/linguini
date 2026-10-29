@@ -4,7 +4,7 @@ import { getMissionCheatSheet, type MissionCheatSheet } from "../lib/api";
 import { trackAction } from "../lib/analytics";
 import { queryKeys } from "../lib/queryKeys";
 import { speak } from "../lib/speech";
-import { SpeakerIcon } from "./icons";
+import { HelpIcon, SpeakerIcon } from "./icons";
 import { InlineLoader } from "./LoadingScreen";
 import { IconButton } from "./ui";
 import "./MissionCheatSheet.css";
@@ -56,13 +56,14 @@ export function MissionCheatSheetLauncher({
 
   if (!available) return null;
   return <>
-    <button type="button" className="cheatsheet-trigger" aria-haspopup="dialog" aria-expanded={open}
+    <IconButton className="cheatsheet-trigger" label="Open cheatsheet" title="Open cheatsheet"
+      aria-haspopup="dialog" aria-expanded={open}
       onClick={() => {
         setOpen(true);
         trackAction("mission_cheatsheet_opened", tracking);
       }}>
-      Cheatsheet
-    </button>
+      <HelpIcon size={26} />
+    </IconButton>
     {open ? <div className="cheatsheet-backdrop" onMouseDown={event => {
       if (event.target === event.currentTarget) close();
     }}>
