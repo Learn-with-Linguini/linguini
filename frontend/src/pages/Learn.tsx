@@ -114,7 +114,10 @@ export function Learn() {
         <h2>{learningFeedback("preparing", session.session.id)}</h2>
         <p>Preparing the remaining tasks...</p>
         <p>You can learn and practise your words now.</p>
-        {practiceStalled ? <Button variant="secondary" onClick={() => retryProcessing(session.session.id)}>Check again</Button> : null}
+        {practiceStalled ? <div className="stack-2">
+          <p>We're unable to generate more tasks right now. We'll keep working on them, so you can come back later.</p>
+          <Button variant="secondary" block onClick={() => retryProcessing(session.session.id)}>Check again</Button>
+        </div> : null}
       </section> : null}
 
       {vocabularyDone && allDone ? (

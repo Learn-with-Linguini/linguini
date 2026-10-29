@@ -6,8 +6,8 @@ import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from "re
 import { useQuery } from "@tanstack/react-query";
 import { friendlyError, queryKeys } from "../lib/queryKeys";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
-import { Button, Card, Feedback, IconButton, ProgressTrail } from "../components/ui";
-import { ArrowLeftIcon, ArrowRightIcon, BasilIcon, CheckIcon, CloseIcon, EyeIcon, EyeOffIcon, SpeakerIcon } from "../components/icons";
+import { BasilReward, Button, Card, Feedback, IconButton, ProgressTrail } from "../components/ui";
+import { ArrowLeftIcon, ArrowRightIcon, CheckIcon, CloseIcon, EyeIcon, EyeOffIcon, SpeakerIcon } from "../components/icons";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
 import { builtSentence, choiceOrder, markerChoices, nextLearningStep, optionText, practiceStages, questionOptions, sentenceEnding, taskDone, taskTitle } from "../lib/practiceTasks";
@@ -164,11 +164,12 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onSc
     {content.kind === "sentenceBuilding" ? <><p>{content.sourceText}</p><div className="chip-row">{content.tokenBank.map((token, i) => <button key={i} className="chip" disabled={terminal || practiceSaving} onClick={() => setText(value => (value + " " + token).trim())}>{token}</button>)}</div></> : null}
     {!reading && content.kind !== "grammarPractice" ? <div className="field"><label className="field__label" htmlFor="task-answer">Your answer</label><input id="task-answer" className="input" value={text} maxLength={2000} disabled={terminal || practiceSaving} onChange={event => setText(event.target.value)} /></div> : null}
     {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
-    {actionResult || feedback || earnedText ? <>
+    {(actionResult && task.status !== "skipped") || feedback ? <>
       <Feedback tone={answerCorrect === false ? "warn" : "good"}><div className="stack-2" role="status" aria-atomic="true">
         {actionResult && task.status !== "skipped" ? <strong>{learningFeedback(answerCorrect === null ? "saved" : answerCorrect ? "correct" : "incorrect", task.id)}</strong> : null}
-        {feedback ? <p>{feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback>
+        {feedback ? <p>{feedback}</p> : null}</div></Feedback>
     </> : null}
+    <BasilReward text={earnedText} />
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {terminal ? <Button block disabled={practiceSaving} onClick={onNext}>{index < total - 1 ? "Next task" : "Finish task"}</Button> : <>
       <Button block disabled={practiceSaving || checking || (!reading && !(content.kind === "grammarPractice" ? choice : text.trim()))} onClick={() => void submit()}>{reading ? "Mark complete" : "Submit answer"}</Button>
@@ -421,7 +422,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
       <div><h2>Type “{typingWord.translation}”</h2><p className="muted">Word {typingIndex + 1} of {content.words.length}</p></div>
       <input {...nativeProps} className="input" aria-label={`Type ${typingWord.translation}`} value={typedAnswers[typingKey] ?? ""} disabled={typingCheck?.isCorrect || typingCheck?.revealed} onChange={event => { setTypedAnswers(value => ({ ...value, [typingKey]: event.target.value })); setTypingCheck(null); }} />
       {checkingTyping ? <InlineLoader compact label="Checking your word…" /> : null}
-      {typingCheck ? <Feedback tone={typingCheck.isCorrect ? "good" : typingCheck.revealed ? "neutral" : "warn"}><div className="stack-2" role="status"><p>{typingCheck.isCorrect ? "That’s right!" : typingCheck.revealed ? <>No worries, the answer is <strong>{typingCheck.correctAnswer}</strong>.</> : "Not quite. Give it another try."}</p>{basilEarnedText(typingCheck.basilEarned) ? <strong className="basil-reward"><BasilIcon size={17} />{basilEarnedText(typingCheck.basilEarned)}</strong> : null}</div></Feedback> : null}
+      {typingCheck ? <Feedback tone={typingCheck.isCorrect ? "good" : typingCheck.revealed ? "neutral" : "warn"}><div className="stack-2" role="status"><p>{typingCheck.isCorrect ? "That’s right!" : typingCheck.revealed ? <>No worries, the answer is <strong>{typingCheck.correctAnswer}</strong>.</> : "Not quite. Give it another try."}</p></div></Feedback> : null}
       {typingCheck?.isCorrect || typingCheck?.revealed
         ? <Button block disabled={practiceSaving} onClick={advanceTyping}>{revisiting ? recapIndex < recap.length - 1 ? "Continue" : "Finish review" : typingIndex < content.words.length - 1 || typingIndex + 2 < content.questions.length ? "Next question" : "Finish task"}</Button>
         : <Button block disabled={!typedAnswers[typingKey]?.trim() || practiceSaving || checkingTyping} onClick={() => void checkTyping()}>Check answer</Button>}
@@ -431,9 +432,10 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
       <h2>Review complete</h2><p>You practised these words again.</p>
       <Button block onClick={onNext}>Back to vocabulary</Button>
     </div></Card> : null}
-    {actionResult || feedback || earnedText ? <Feedback><div className="stack-2" role="status" aria-atomic="true">
+    {(actionResult && task.status !== "skipped") || feedback ? <Feedback><div className="stack-2" role="status" aria-atomic="true">
       {actionResult && task.status !== "skipped" ? <strong>{learningFeedback("saved", task.id)}</strong> : null}
-      {feedback ? <p>{feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback> : null}
+      {feedback ? <p>{feedback}</p> : null}</div></Feedback> : null}
+    <BasilReward text={earnedText} />
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {terminal && !revision && !revisiting ? <Button block onClick={onNext}>{session?.session.status === "generatingTasks" ? "Back to tasks" : index < total - 1 ? "Next task" : "Finish task"}</Button> : null}
     {!terminal ? <Button variant="quiet" block disabled={practiceSaving} onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip vocabulary review</Button> : null}
@@ -982,8 +984,8 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
     {actionResult && task.status !== "skipped" ? <Feedback><div className="stack-2" role="status" aria-atomic="true">
       <strong>{learningFeedback("saved", task.id)}</strong>
       {actionResult.attempt?.feedback?.message ? <p>{actionResult.attempt.feedback.message}</p> : null}
-      {earnedText ? <strong>{earnedText}</strong> : null}
     </div></Feedback> : null}
+    <BasilReward text={earnedText} />
     {terminal ? <Button block onClick={onNext}>{index < total - 1 ? "Next task" : "Finish task"}</Button>
       : question && !isChecked
         ? <Button block disabled={!answer || checking || saved.isLoading || saved.isError || practiceSaving}
@@ -1228,9 +1230,10 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
     })}
     {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
     {checkError ? <p role="alert">{checkError}</p> : null}
-    {actionResult || restored || feedback || earnedText ? <Feedback><div className="stack-2" role="status" aria-atomic="true">
+    {(task.status !== "skipped" && (actionResult || restored || feedback)) || feedback || restored?.feedback ? <Feedback><div className="stack-2" role="status" aria-atomic="true">
       {task.status !== "skipped" ? <strong>{learningFeedback("saved", task.id)}</strong> : null}
-      {feedback ?? restored?.feedback ? <p>{feedback ?? restored?.feedback}</p> : null}{earnedText ? <strong>{earnedText}</strong> : null}</div></Feedback> : null}
+      {feedback ?? restored?.feedback ? <p>{feedback ?? restored?.feedback}</p> : null}</div></Feedback> : null}
+    <BasilReward text={earnedText} />
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {terminal ? <Button block onClick={onNext}>{index < total - 1 ? "Next task" : "Finish task"}</Button> : <>
       {activeResult === undefined

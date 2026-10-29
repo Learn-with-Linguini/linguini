@@ -287,9 +287,13 @@ def test_happy_path_returns_translation() -> None:
 def test_translation_preserves_phonetic_pronunciation() -> None:
     output = json.loads(VALID_OUTPUT)
     output["objects"][0]["phoneticText"] = "SEE-yah"
+    output["attributes"][0]["phoneticText"] = "ROH-hoh"
+    output["relationships"][0]["phoneticText"] = "HOON-toh ah"
     client = FakeTextClient([json.dumps(output)])
     result = service(client).translate(PAYLOAD)
     assert result.objects[0].phonetic_text == "SEE-yah"
+    assert result.attributes[0].phonetic_text == "ROH-hoh"
+    assert result.relationships[0].phonetic_text == "HOON-toh ah"
 
 
 def test_request_uses_versioned_contract() -> None:
@@ -845,4 +849,3 @@ def test_adapter_invalid_output_receives_bounded_repair() -> None:
     ])
     service(client).translate(PAYLOAD)
     assert len(client.requests) == 2
-

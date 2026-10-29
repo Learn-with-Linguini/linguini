@@ -143,3 +143,13 @@ def test_review_numbers_follow_the_visible_suggestion_subset():
     assert review_marker_numbers(
         detected, [BOOK, CUP], added, suggested_ids=[BOOK, CUP]
     ) == {str(BOOK): 1, str(CUP): 2, str(added[0]): 3}
+
+
+def test_review_numbers_add_after_the_highest_accepted_marker():
+    from app.repositories.postgres.workflow import review_marker_numbers
+    detected = [{"id": str(TABLE)}, {"id": str(BOOK)}, {"id": str(CUP)}]
+    added = [uuid4()]
+
+    assert review_marker_numbers(
+        detected, [TABLE, BOOK], added
+    ) == {str(TABLE): 1, str(BOOK): 2, str(added[0]): 3}

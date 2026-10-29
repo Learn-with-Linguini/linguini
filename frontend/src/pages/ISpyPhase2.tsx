@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { sessionDestination, sessionPaths } from "../lib/sessionRoute";
-import { Button, Card, Feedback, ProgressTrail, TopBar } from "../components/ui";
-import { ArrowRightIcon, BasilIcon } from "../components/icons";
+import { BasilReward, Button, Card, Feedback, ProgressTrail, TopBar } from "../components/ui";
+import { ArrowRightIcon } from "../components/icons";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
@@ -22,11 +22,23 @@ import { learningFeedback } from "../lib/learningFeedback";
 export function ISpyPhase2() {
   const navigate = useNavigate();
   const { session, completeSession, completionPending, completionError, practiceError } = useAppState();
+  const completionStarted = useRef(false);
   const [index, setIndex] = useState(() => {
     const tasks = practiceStages(session?.tasks ?? []).reflection;
     const next = tasks.findIndex(task => !taskDone(task));
     return next < 0 ? Math.max(0, tasks.length - 1) : next;
   });
+  useEffect(() => {
+    if (!session || completionStarted.current) return;
+    const { learning, clues, reflection } = practiceStages(session.tasks);
+    if (reflection.length || !learning.every(taskDone) || !clues.every(taskDone)
+      || ["completed", "abandoned", "failed"].includes(session.session.status)) return;
+    completionStarted.current = true;
+    if (completeSession()) {
+      trackAction("describe_round_skipped", { mode: session.session.mode });
+      navigate(sessionPaths(session).done, { replace: true });
+    }
+  }, [session, completeSession, navigate]);
   if (!session) return null;
   const { learning, clues, reflection } = practiceStages(session.tasks);
   const paths = sessionPaths(session);
@@ -42,7 +54,16 @@ export function ISpyPhase2() {
   const finishLabel = game ? "See results" : "Finish session";
   const finish = () => { if (completeSession()) navigate(paths.done); };
   const alerts = [practiceError, completionError].filter(Boolean);
-  if (!task) return <div className="stack"><TopBar title={game ? "Game complete" : "Practice complete"} />{reflection.length ? null : <p data-testid="no-description-round">This photo doesn't have enough confirmed colours or positions for a describing round, so there's nothing to describe this time.</p>}{alerts.map((message, alertIndex) => <p key={alertIndex} role="alert">{message}</p>)}<Button disabled={completionPending} onClick={finish}>{finishLabel}</Button></div>;
+  if (!task && !reflection.length) return alerts.length
+    ? <div className="stack"><TopBar title={game ? "Game complete" : "Practice complete"} />
+      {alerts.map((message, alertIndex) => <p key={alertIndex} role="alert">{message}</p>)}
+      <Button disabled={completionPending} onClick={finish}>{finishLabel}</Button>
+    </div>
+    : <div className="stack"><InlineLoader label="Finishing your session…" /></div>;
+  if (!task) return <div className="stack"><TopBar title={game ? "Game complete" : "Practice complete"} />
+    {alerts.map((message, alertIndex) => <p key={alertIndex} role="alert">{message}</p>)}
+    <Button disabled={completionPending} onClick={finish}>{finishLabel}</Button>
+  </div>;
   return <Reflection key={task.id} task={task} index={index} total={reflection.length} finishLabel={finishLabel} onNext={() => index === reflection.length - 1 ? finish() : setIndex(value => value + 1)} />;
 }
 
@@ -229,9 +250,9 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
         {guess?.feedback ? <span>{guess.feedback}</span> : null}
         {outcome && !answered ? <span>{OUTCOME_PROMPTS[outcome]}</span> : null}
         {feedback || (answered && !guess) ? <span>{feedback ?? "Reflection saved."}</span> : null}
-        {basilEarnedText(basilEarned) ? <strong className="basil-reward"><BasilIcon size={17} />{basilEarnedText(basilEarned)}</strong> : null}
       </>}
     </div></Feedback> : null}
+    {answered || feedback || guess ? <BasilReward text={basilEarnedText(basilEarned)} /> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {!hydrated ? null : answered ? <Button block disabled={practiceSaving} onClick={onNext}>{index === total - 1 ? finishLabel : "Next item"} <ArrowRightIcon /></Button> : <>
       {!guess ? <Button block disabled={!text.trim() || namesTarget || practiceSaving} onClick={() => void submit()}>Send my response</Button> : null}

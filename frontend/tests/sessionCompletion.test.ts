@@ -57,6 +57,7 @@ const apiFixtures: Record<string, unknown> = {
 };
 
 let resolveComplete: ((response: Response) => void) | null = null;
+let completionRequests = 0;
 const taskRequests: { path: string; body: Record<string, unknown> }[] = [];
 const taskReplies: (() => Response)[] = [];
 const latestReplies: (() => Response | Promise<Response>)[] = [];
@@ -69,7 +70,10 @@ globals.fetch = async (input: unknown, init?: RequestInit) => {
     taskRequests.push({ path, body: JSON.parse(String(init?.body ?? "{}")) });
     return taskReplies.shift()?.() ?? new Response("no reply", { status: 500 });
   }
-  if (path === `/api/v1/sessions/${SESSION_ID}/complete`) return new Promise<Response>(resolve => { resolveComplete = resolve; });
+  if (path === `/api/v1/sessions/${SESSION_ID}/complete`) {
+    completionRequests += 1;
+    return new Promise<Response>(resolve => { resolveComplete = resolve; });
+  }
   if (path === `/api/v1/sessions/${SESSION_ID}`) return Response.json(fixture);
   if (path === "/api/v1/media/asset") {
     return Response.json({ id: "asset", signedUrl: "http://test.local/img.jpg", mimeType: "image/jpeg", width: 100, height: 100 });
@@ -512,7 +516,8 @@ test("a failed restore never looks like a fresh unanswered task", async () => {
   root.unmount();
 });
 
-test("a photo without description support explains why there is no describing round", async () => {
+test("a photo without description support completes directly to the summary", async () => {
+  const requestsBefore = completionRequests;
   fixture = detail("inProgress", [{ ...task("learn", "completed", 0), kind: "vocabularyIntroduction" } as SessionTask,
     { ...task("clues", "completed", 1), kind: "ispyRound" } as SessionTask]);
   const container = dom.window.document.createElement("div");
@@ -525,13 +530,17 @@ test("a photo without description support explains why there is no describing ro
       h(MemoryRouter, { initialEntries: [`${BASE}/ispy-2`] }, h(Routes, null,
         h(Route, { path: "/practice/sessions/:sessionId", element: h(SessionRoute) },
           h(Route, { path: "ispy-2", element: h(ISpyPhase2) }),
+          h(Route, { path: "summary", element: h(stub("summary")) }),
         ),
       )),
     )));
   });
   await flush();
-  assert.ok(dom.window.document.querySelector("[data-testid=no-description-round]"));
-  assert.ok(button("Finish session"));
+  assert.equal(completionRequests, requestsBefore + 1);
+  assert.equal(shown(), "page-summary");
+  await act(async () => { resolveComplete?.(Response.json({ id: SESSION_ID, status: "completed" })); await sleep(50); });
+  await flush();
+  assert.equal(shown(), "page-summary");
   root.unmount();
 });
 
