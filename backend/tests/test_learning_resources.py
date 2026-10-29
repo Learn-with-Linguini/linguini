@@ -285,7 +285,7 @@ def test_a0_m03_cheatsheets_include_numbers_and_counted_objects(
     assert concepts[1]["examples"][1]["targetText"] == chunk
 
 
-def test_french_a0_m05_cheatsheet_separates_like_and_dislike() -> None:
+def test_french_a0_m05_cheatsheet_teaches_like_and_negation() -> None:
     response = TestClient(app).get(
         "/api/v1/learning-resources/cheatsheets/M05",
         params={"languageCode": "fr", "practiceLevel": "A0"},
@@ -293,18 +293,21 @@ def test_french_a0_m05_cheatsheet_separates_like_and_dislike() -> None:
 
     assert response.status_code == 200
     body = response.json()
-    assert body["title"] == "Say what you like and don't like"
+    assert body["title"] == "Say what you like and use negation"
     assert [concept["title"] for concept in body["concepts"]] == [
-        "I like",
-        "I don't like",
+        "Positive: I like",
+        "Negative: ne ... pas",
     ]
-    assert [concept["patternParts"][0]["text"] for concept in body["concepts"]] == [
-        "J'aime",
-        "Je n'aime pas",
+    negative = body["concepts"][1]
+    assert negative["formula"] == "subject + ne/n' + verb + pas + rest"
+    assert negative["patternParts"][1]["choices"] == [
+        {"text": "ne", "label": "before a consonant"},
+        {"text": "n'", "label": "before a vowel sound"},
     ]
-    assert body["concepts"][1]["examples"][1]["targetText"] == (
-        "Leo n'aime pas le livre."
-    )
+    assert [example["targetText"] for example in negative["examples"]] == [
+        "Je n'aime pas la pomme.",
+        "Je ne choisis pas le livre.",
+    ]
 
 
 def test_missing_learning_resources_return_clear_404s() -> None:
