@@ -307,6 +307,31 @@ def test_answer_key_and_typed_answers_are_private_and_accepted(mission_id):
     assert all(_lesson_answer_is_correct(task, typed.question_id, answer) for answer in accepted)
 
 
+@pytest.mark.parametrize("language", ["es", "fr", "de", "ko"])
+def test_m05_finish_chat_is_a_sentence_builder(language):
+    mission, _spec, payload, result, _objects = _result(
+        "M05",
+        language,
+        labels=["apple", "book"],
+        words=[WORDS[language][2], WORDS[language][1]],
+    )
+    task = a0_situation_lesson_task(uuid4(), mission, payload, result, {})
+    question = next(
+        item for item in task.public_content.questions if item.question_id == "M05-Q5"
+    )
+
+    assert question.interaction_type == "sentenceBuilding"
+    assert question.dialogue and [turn.speaker for turn in question.dialogue] == [
+        "linguini",
+        "learner",
+    ]
+    assert question.options == []
+    assert sorted(question.token_bank) == sorted(question.complete_chunk.split())
+    assert question.token_bank != question.complete_chunk.split()
+    assert task.answer_key.correct_option_ids[question.question_id] == question.complete_chunk
+    assert _lesson_answer_is_correct(task, question.question_id, question.complete_chunk)
+
+
 @pytest.mark.parametrize(
     ("language", "mission_id", "equivalent"),
     [

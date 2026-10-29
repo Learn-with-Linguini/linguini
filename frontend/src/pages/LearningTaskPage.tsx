@@ -812,14 +812,15 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
         {question.dialogue?.length ? <div className="mission-dialogue" aria-label="Conversation so far">
           {question.dialogue.map((turn, turnIndex) => <p key={`${turn.speaker}-${turnIndex}`}
             className={`mission-dialogue__turn mission-dialogue__turn--${turn.speaker}`}>
-            <strong>{turn.speaker === "server" ? "Server" : "You"}</strong>
-            <span>{turn.text}</span>
+            <strong>{turn.speaker === "linguini" ? "Linguini" : turn.speaker === "server" ? "Server" : "You"}</strong>
+            <span lang={scene.languageCode}>{turn.text}</span>
+            {turn.translation ? <small>{turn.translation}</small> : null}
           </p>)}
         </div> : null}
         {question.planningFacts?.length ? <section className="mission-planning-facts" aria-label="Your facts">
           <strong>Your facts</strong><ul>{question.planningFacts.map((fact, position) => <li key={`${position}-${fact}`}>{fact}</li>)}</ul>
         </section> : null}
-        {isSituation && question.gapType ? <A0MissionGapQuestion key={question.questionId}
+        {isSituation && question.gapType && question.interactionType !== "sentenceBuilding" ? <A0MissionGapQuestion key={question.questionId}
           question={question} scene={scene} sceneObjects={session?.sceneObjects ?? []}
           selectedOptionId={answers[question.questionId] ?? ""}
           typedMode={Boolean(typedMode[question.questionId])}

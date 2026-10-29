@@ -480,6 +480,15 @@ def _normalized_equivalents(value, language):
     return sorted(values)
 
 
+def _shuffled_word_bank(value, payload, salt):
+    tokens = value.split()
+    shuffled = list(tokens)
+    _rng(payload, salt).shuffle(shuffled)
+    if len(shuffled) > 1 and shuffled == tokens:
+        shuffled = [*shuffled[1:], shuffled[0]]
+    return shuffled
+
+
 def a0_situation_lesson_task(session_id, mission, payload, result, vocabulary_ids):
     prepared = build_a0_situation_payload(payload)
     focus = next(
@@ -504,7 +513,12 @@ def a0_situation_lesson_task(session_id, mission, payload, result, vocabulary_id
     evaluations = []
     public_questions = []
     for question in result.questions:
-        answers[question.question_id] = question.correct_option_id
+        is_chat_builder = (
+            mission.mission_id == "M05" and question.question_id == "M05-Q5"
+        )
+        answers[question.question_id] = (
+            question.complete_chunk if is_chat_builder else question.correct_option_id
+        )
         if question.accepted_text_answers:
             accepted[question.question_id] = list(dict.fromkeys(
                 answer
@@ -531,18 +545,24 @@ def a0_situation_lesson_task(session_id, mission, payload, result, vocabulary_id
         public_questions.append(dict(
             question_id=question.question_id,
             prompt=question.prompt,
-            interaction_type="multipleChoice",
-            options=[option.model_dump(mode="json", by_alias=True) for option in question.options],
+            interaction_type="sentenceBuilding" if is_chat_builder else "multipleChoice",
+            options=[] if is_chat_builder else [
+                option.model_dump(mode="json", by_alias=True) for option in question.options
+            ],
+            token_bank=(
+                _shuffled_word_bank(question.complete_chunk, payload, "M05-Q5-builder")
+                if is_chat_builder else []
+            ),
             section=question.section,
             instruction=question.instruction,
             audio_text=question.audio_text,
             listen_first=question.listen_first,
-            slot_template=question.slot_template,
+            slot_template=None if is_chat_builder else question.slot_template,
             complete_chunk=question.complete_chunk,
             gap_type=question.gap_type,
             dialogue=question.dialogue,
-            option_object_ids=option_objects or None,
-            option_icons=question.option_icons,
+            option_object_ids=None if is_chat_builder else option_objects or None,
+            option_icons=None if is_chat_builder else question.option_icons,
             complete_translation=question.complete_translation,
             outcome=question.outcome,
             correct_note=question.correct_note,
