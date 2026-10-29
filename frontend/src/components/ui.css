@@ -5032,6 +5032,13 @@ p[role="alert"]::before { content: "!"; }
   padding-top: 28px;
 }
 
+.vocabulary-review-section h2 {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
 .vocabulary-learning-scene > .scene {
   overflow: visible;
 }

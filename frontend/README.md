@@ -50,6 +50,19 @@ in-app Camera preference still controls whether the camera button is enabled.
 Permission, missing-device, and device-in-use errors explain how to recover;
 Upload remains available for choosing an existing image.
 
+## Vocabulary review
+
+Teaching cards are grouped into Objects, Adjectives, then Relations, with a heading
+and position within each section. Previous, Next, and swipe navigation follow that
+order. Quiz and typing order and saved answer identities are preserved.
+
+During the object section, photo markers select their matching card and play its
+target-language pronunciation using the existing language-pack voice settings.
+Repeated instances retain their own markers. Adjective and relation cards highlight
+associated objects when supplied, with speaker controls for pronunciation. The
+photo stays visible throughout review. Marker buttons support keyboard activation;
+word cards remain readable when browser pronunciation is unavailable.
+
 ## Structure
 
 | Path | Purpose |

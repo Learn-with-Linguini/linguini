@@ -28,6 +28,7 @@ import { fillMissionGap } from "../lib/missionGaps";
 import { playAnswerSound } from "../lib/answerSound";
 import { learningFeedback } from "../lib/learningFeedback";
 import { vocabularyRecapSteps } from "../lib/vocabularyRecap";
+import { VOCABULARY_SECTIONS, vocabularyReviewWords, wordMatchesMarker } from "../lib/vocabularyReview";
 
 export function LearningTaskPage() {
   const { taskId } = useParams();
@@ -191,13 +192,14 @@ function ExitToHome({ onExit }: { onExit: () => void }) {
 
 function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, revisiting = false }: { task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void; revisiting?: boolean }) {
   const refreshBasil = useRefreshBasil();
-  const { nativeProps } = useTargetLanguage();
+  const { nativeProps, speak, speechAvailable } = useTargetLanguage();
   const scene = useScene();
   const { actOnTask, practiceSaving, practiceError, session } = useAppState();
   const content = task.publicContent;
   const [stage, setStage] = useState<"review" | "quiz" | "typing" | "complete">("review");
   const [recapIndex, setRecapIndex] = useState(0);
   const [page, setPage] = useState(0);
+  const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [typingIndex, setTypingIndex] = useState(0);
@@ -238,7 +240,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
   }, [restored.data, revisiting, task.publicContent]);
   useEffect(() => {
     if (content.kind !== "vocabularyIntroduction" || stage !== "review") return;
-    const word = content.words[page];
+    const word = vocabularyReviewWords(content.words)[page];
     if (!word) return;
     trackAction("vocabulary_flashcard_viewed", {
       taskId: task.id,
@@ -252,7 +254,14 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
   const revision = task.status === "skipped";
   const active = !terminal || revision || revisiting;
   const pageCount = content.words.length;
-  const visibleWords = content.words.slice(page, page + 1);
+  const reviewWords = vocabularyReviewWords(content.words);
+  const visibleWords = reviewWords.slice(page, page + 1);
+  const reviewWord = visibleWords[0];
+  const sectionWords = reviewWords.filter(word => word.termType === reviewWord?.termType);
+  const sectionPosition = reviewWord ? sectionWords.indexOf(reviewWord) + 1 : 0;
+  const objectMarkers = scene.items.filter(item => reviewWords.some(word => wordMatchesMarker(word, item.id)));
+  const markerSelectedForWord = reviewWord && selectedMarkerId && wordMatchesMarker(reviewWord, selectedMarkerId)
+    ? selectedMarkerId : null;
   const question = content.questions[questionIndex];
   const typingWord = content.words[typingIndex];
   const typingKey = typingWord ? typingWord.learningKey ?? typingWord.vocabularyItemId ?? typingWord.targetText : "";
@@ -281,6 +290,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
     else setTypingIndex(next.index);
   };
   const finishReview = () => {
+    setSelectedMarkerId(null);
     if (page < pageCount - 1) { setPage(value => value + 1); return; }
     if (revisiting) {
       trackAction("vocabulary_recap_started", { questionCount: content.questions.length, wordCount: content.words.length });
@@ -299,6 +309,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
     const horizontal = touch.clientX - start.x;
     const vertical = touch.clientY - start.y;
     if (Math.abs(horizontal) < 48 || Math.abs(horizontal) <= Math.abs(vertical)) return;
+    setSelectedMarkerId(null);
     if (horizontal < 0 && page < pageCount - 1) setPage(value => value + 1);
     if (horizontal > 0 && page > 0) setPage(value => value - 1);
   };
@@ -378,18 +389,33 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
     {questionError ? <div role="alert"><p>{questionError}</p><Button variant="secondary" disabled={checkingQuestion || !pendingOptionId} onClick={() => pendingOptionId && void chooseAnswer(pendingOptionId)}>Retry answer</Button></div> : null}
     {active && stage === "review" ? <>
       {revision ? <div className="panel-note" role="status"><strong>Saved for revision</strong><p className="small muted">You skipped this practice earlier, but these words will stay here whenever you want to review them.</p></div> : null}
-      {visibleWords[0] && (visibleWords[0].sceneObjectId || visibleWords[0].relatedSceneObjectIds?.length) ? <div className="vocabulary-learning-scene" aria-label={`${visibleWords[0].termType === "relationship" ? "Objects related by" : "Location of"} ${visibleWords[0].translation} in your photo`}>
+      {reviewWord ? <div className="vocabulary-review-section">
+        <h2 aria-live="polite">{VOCABULARY_SECTIONS[reviewWord.termType]} <span className="small muted">{sectionPosition} of {sectionWords.length}</span></h2>
+        <p className="small muted">{reviewWord.termType === "object"
+          ? speechAvailable() ? "Tap a number to see and hear its word, or use Next to keep exploring." : "Tap a number to see its word. Pronunciation isn't available in this browser for this language."
+          : speechAvailable() ? "Listen with the speaker button. The photo shows the context." : "The photo shows the context. Pronunciation isn't available in this browser for this language."}</p>
+      </div> : null}
+      <div className="vocabulary-learning-scene" aria-label={reviewWord ? `${reviewWord.termType === "relationship" ? "Objects related by" : "Location of"} ${reviewWord.translation} in your photo` : "Your photo"}>
         <ScenePhoto
           scene={scene}
-          items={visibleWords[0].termType === "relationship" ? scene.items.filter(item => visibleWords[0].relatedSceneObjectIds?.includes(item.id)) : undefined}
-          hideWords
-          activeItemId={visibleWords[0].sceneObjectId}
-          activeItemIds={visibleWords[0].relatedSceneObjectIds}
+          items={reviewWord?.termType === "object" ? objectMarkers : scene.items.filter(item => item.id === reviewWord?.sceneObjectId || reviewWord?.relatedSceneObjectIds?.includes(item.id))}
+          activeItemId={markerSelectedForWord ?? reviewWord?.sceneObjectId}
+          activeItemIds={markerSelectedForWord ? [] : reviewWord?.relatedSceneObjectIds}
+          onMarkerClick={reviewWord?.termType === "object" ? item => {
+            const exactPage = reviewWords.findIndex(word => word.termType === "object" && word.sceneObjectId === item.id);
+            const nextPage = exactPage >= 0 ? exactPage : reviewWords.findIndex(word => wordMatchesMarker(word, item.id));
+            if (nextPage < 0) return;
+            const word = reviewWords[nextPage];
+            setPage(nextPage);
+            setSelectedMarkerId(item.id);
+            if (speechAvailable()) speak(word.targetText, scene.languageCode);
+            trackAction("vocabulary_marker_clicked", { taskId: task.id, marker: item.marker, audioAvailable: speechAvailable() });
+          } : undefined}
         />
-      </div> : null}
-      <div className="vocabulary-learning-grid vocabulary-learning-grid--swipe" onTouchStart={handleCardTouchStart} onTouchEnd={handleCardTouchEnd}>{visibleWords.map(word => <VocabularyLearningCard key={word.learningKey ?? word.vocabularyItemId ?? word.targetText} word={word} languageCode={scene.languageCode} />)}</div>
+      </div>
+      <div className="vocabulary-learning-grid vocabulary-learning-grid--swipe" aria-live="polite" onTouchStart={handleCardTouchStart} onTouchEnd={handleCardTouchEnd}>{visibleWords.map(word => <VocabularyLearningCard key={word.learningKey ?? word.vocabularyItemId ?? word.targetText} word={word} languageCode={scene.languageCode} />)}</div>
       <div className="vocabulary-flow__actions">
-        <Button disabled={page === 0} onClick={() => setPage(value => value - 1)}><ArrowLeftIcon size={18} /> Previous</Button>
+        <Button disabled={page === 0} onClick={() => { setSelectedMarkerId(null); setPage(value => value - 1); }}><ArrowLeftIcon size={18} /> Previous</Button>
         <span className="vocabulary-flow__position" aria-live="polite">{page + 1} of {pageCount}</span>
         {revision && page === pageCount - 1
           ? <Button variant="secondary" onClick={onClose}>Back to tasks</Button>
@@ -1257,7 +1283,10 @@ function VocabularyLearningCard({ word, languageCode }: { word: VocabularyLearni
   const { speak, nativeProps, settings, speechAvailable } = useTargetLanguage();
   return <article className="flashcard learning-card vocabulary-learning-card">
     <div className="spread"><span className="label muted learning-card__meta">{word.termType === "relationship" ? "relationship" : word.partOfSpeech}{word.gender ? ` · ${word.gender}` : ""}</span>
-      {(!settings || speechAvailable()) ? <IconButton className="learning-card__audio" label={`Hear ${word.targetText}`} onClick={() => speak(word.targetText, languageCode)}><SpeakerIcon /></IconButton> : null}</div>
+      {(!settings || speechAvailable()) ? <IconButton className="learning-card__audio" label={`Hear ${word.targetText}`} onClick={() => {
+        speak(word.targetText, languageCode);
+        trackAction("vocabulary_pronunciation_clicked", { termType: word.termType });
+      }}><SpeakerIcon /></IconButton> : null}</div>
     <div className="learning-card__word"><h2 {...nativeProps}>{word.targetText}</h2>{word.romanization ? <p className="muted" lang="und-Latn" dir="ltr" aria-label="Latin spelling">{word.romanization}</p> : null}<p className="muted">{word.translation}</p></div>
     {word.pluralForm ? <p className="small"><strong>Plural:</strong> {word.pluralForm}</p> : null}
     {word.phoneticText ? <p className="small muted" aria-label={settings ? "English-sound pronunciation" : "Pronunciation"}>{word.phoneticText}</p> : null}

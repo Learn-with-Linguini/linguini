@@ -90,6 +90,17 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `photo_camera_cancelled` | — | User closes the preview with Cancel or Escape |
 | `photo_camera_failed` | `{ reason }` | Camera API unavailable, browser error name, or `capture_failed`; no image data is tracked |
 
+### Vocabulary review interactions
+
+| Event Name | Parameters | Trigger Description |
+| :--- | :--- | :--- |
+| `vocabulary_marker_clicked` | `{ taskId, marker, audioAvailable }` | Learner selects a photo marker to show its object card and play target-language pronunciation when available |
+| `vocabulary_pronunciation_clicked` | `{ termType }` | Learner replays a word using the review card's speaker button |
+
+Review cards appear in Objects, Adjectives, Relations order. Existing
+`vocabulary_flashcard_viewed` events track the displayed position and term type,
+including cards reached through markers.
+
 ### Authentication & Account Management
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
