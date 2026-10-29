@@ -158,7 +158,7 @@ test.after(() => {
   globalThis.MessageChannel = NativeMessageChannel;
 });
 
-test("removing and restoring objects keeps their review marker numbers stable", async () => {
+test("removed objects keep stable numbers while added markers follow kept objects", async () => {
   await mount();
   assertMarkers([1, 2, 3]);
   await click(dom.window.document.querySelector('[aria-label="Remove marker 1, table"]'));
@@ -167,9 +167,9 @@ test("removing and restoring objects keeps their review marker numbers stable", 
   await addWord("door");
   assertMarkers([2, 3, 4, 5]);
   await click(dom.window.document.querySelector('[aria-label="Remove marker 4, window"]'));
-  assertMarkers([2, 3, 5]);
+  assertMarkers([2, 3, 4]);
   await click(button("Restore removed objects"));
-  assertMarkers([1, 2, 3, 5]);
+  assertMarkers([1, 2, 3, 4]);
   await click(dom.window.document.querySelector('[aria-label="Remove marker 1, table"]'));
   await click(button("Confirm lesson facts"));
   assert.equal(reviews.length, 1);
@@ -231,6 +231,22 @@ test("a learner-added object follows the visible suggestion numbers", async () =
   await addWord("window");
 
   assertMarkers([1, 2, 3]);
+});
+
+test("added markers stay contiguous after removing an added object and are not saved", async () => {
+  await mount();
+  await addWord("window");
+  await addWord("door");
+  assertMarkers([1, 2, 3, 4, 5]);
+
+  await click(dom.window.document.querySelector('[aria-label="Remove marker 4, window"]'));
+
+  assertMarkers([1, 2, 3, 4]);
+  await click(button("Confirm lesson facts"));
+  assert.equal(reviews.length, 1);
+  assert.equal(reviews[0].addedObjects.length, 1);
+  assert.equal(reviews[0].addedObjects[0].label, "door");
+  assert.deepEqual(Object.keys(reviews[0].addedObjects[0]).sort(), ["id", "label", "x", "y"]);
 });
 
 const preferencePlan = [{ missionId: "M05", practiceLevel: "A0" }] as const;

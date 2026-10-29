@@ -298,7 +298,7 @@ def review_marker_numbers(detected, accepted_ids, added_ids, suggested_ids=None)
         if str(obj["id"]) in accepted
     }
     numbers.update({
-        str(item): len(initially_visible) + number
+        str(item): max(numbers.values(), default=0) + number
         for number, item in enumerate(added_ids, 1)
     })
     return numbers

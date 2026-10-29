@@ -311,3 +311,7 @@ export function Feedback({
 }) {
   return <div className={`feedback feedback--${tone}`}>{children}</div>;
 }
+
+export function BasilReward({ text }: { text: string | null }) {
+  return text === null ? null : <strong className="basil-reward" role="status"><BasilIcon size={17} />{text}</strong>;
+}

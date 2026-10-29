@@ -51,7 +51,7 @@ class TranslatedTerm(ApiModel):
         default=None,
         description=("Approximate English-sound respelling of the translated word "
                      "(not IPA, no slashes); the stressed syllable in caps, "
-                     "e.g. \"MEH-sah\". Supply for every object."),
+                     "e.g. \"MEH-sah\". Supply for every object, attribute and relationship."),
     )
 
 

@@ -29,7 +29,6 @@ const RELATION_OPTIONS = [
 ] as const;
 const RELATION_CHOICES = RELATION_OPTIONS.map(([value, label]) => ({ value, label }));
 type AnalysisPanel = SceneReviewPanel;
-type AddedReviewObject = PracticeReview["addedObjects"][number] & { marker: number };
 
 function canonicalRelationValue(relation: string) {
   const normalized = relation.trim().replace(/[\s_-]+/g, "").toLowerCase();
@@ -55,12 +54,11 @@ export function PracticeAnalysis() {
     );
   });
   const [explicitlyRemoved, setExplicitlyRemoved] = useState<string[]>([]);
-  const [added, setAdded] = useState<AddedReviewObject[]>([]);
+  const [added, setAdded] = useState<PracticeReview["addedObjects"]>([]);
   const reviewMarkers = initialReviewMarkers(
     (session?.sceneObjects ?? []).map(item => item.id),
     session?.suggestedSceneObjectIds,
   );
-  const nextMarker = useRef(Object.keys(reviewMarkers).length + 1);
   const [relations, setRelations] = useState<PracticeReview["relations"]>(() => session?.sceneObjectRelations ?? []);
   const [sceneTitle, setSceneTitle] = useState(session?.session.sessionTitle ?? scene.title);
   const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>({});
@@ -103,10 +101,6 @@ export function PracticeAnalysis() {
     ));
     setExplicitlyRemoved([]);
     setAdded([]);
-    nextMarker.current = Object.keys(initialReviewMarkers(
-      session.sceneObjects.map(item => item.id),
-      session.suggestedSceneObjectIds,
-    )).length + 1;
     setRelations(session.sceneObjectRelations);
     setAttributes(Object.fromEntries(session.sceneObjects.map(item => [item.id,
       Object.fromEntries(Object.entries(item.attributes ?? {}).filter((entry): entry is [string, string] => entry[0] !== "quantity" && typeof entry[1] === "string"))])));
@@ -159,15 +153,18 @@ export function PracticeAnalysis() {
       <TranslationPreview preview={session.translationPreview} scene={scene} />
       <SessionPersonalization personalization={session.personalization} languageCode={scene.languageCode} />
       <section role="status" className="panel-note">
-        {session.tasks.some(task => task.kind === "vocabularyIntroduction") ? <>
-          <Button block onClick={() => navigate(`${base}/learn/${session.tasks.find(task => task.kind === "vocabularyIntroduction")!.id}`)}>
+        <div className="stack-2">
+          {session.tasks.some(task => task.kind === "vocabularyIntroduction") ? <Button block onClick={() => navigate(`${base}/learn/${session.tasks.find(task => task.kind === "vocabularyIntroduction")!.id}`)}>
             Begin learning <ArrowRightIcon />
-          </Button>
-        </> : <>
-          <h2>Preparing your first task...</h2>
-          <p className="muted">Your translations are ready. Your first task will appear here shortly.</p>
-        </>}
-        {practiceStalled ? <Button onClick={() => retryProcessing(session.session.id)}>Check again</Button> : null}
+          </Button> : <>
+            <h2>Preparing your first task...</h2>
+            <p className="muted">Your translations are ready. Your first task will appear here shortly.</p>
+          </>}
+          {practiceStalled ? <>
+            <p>We're unable to generate more tasks right now. We'll keep working on them, so you can come back later.</p>
+            <Button variant="secondary" block onClick={() => retryProcessing(session.session.id)}>Check again</Button>
+          </> : null}
+        </div>
         {practiceError ? <p role="alert">{practiceError}</p> : null}
       </section>
     </> : <>
@@ -183,7 +180,9 @@ export function PracticeAnalysis() {
   const kept = scene.items
     .filter(item => !removed.includes(item.id))
     .map(item => ({ ...item, marker: reviewMarkers[item.id] ?? item.marker }));
-  const custom: LanguageItem[] = added.map(item => ({ id: `custom-${item.id}`, word: item.label,
+  const addedMarkerBase = Math.max(0, ...kept.map(item => item.marker));
+  const numberedAdded = added.map((item, index) => ({ ...item, marker: addedMarkerBase + index + 1 }));
+  const custom: LanguageItem[] = numberedAdded.map(item => ({ id: `custom-${item.id}`, word: item.label,
     translation: item.label, wordClass: "noun", gender: null, marker: item.marker,
     x: item.x * 100, y: item.y * 100, attributes: attributes[item.id] ?? {}, example: "", exampleTranslation: "" }));
   const positionedKept = kept.map(item => {
@@ -200,7 +199,7 @@ export function PracticeAnalysis() {
       label: session.sceneObjects.find(object => object.id === item.id)?.label ?? item.translation,
       marker: item.marker,
     })),
-    ...added,
+    ...numberedAdded,
   ];
   const relationObjects = rawRelationObjects;
   const selectedIds = new Set(relationObjects.map(item => item.id));
@@ -255,10 +254,10 @@ export function PracticeAnalysis() {
     if (!pending) return;
     setAdded(current => pending.id
       ? current.map(item => item.id === pending.id ? { ...item, ...location } : item)
-      : [...current, { id: crypto.randomUUID(), label: pending.label, marker: nextMarker.current++, ...location }]);
+      : [...current, { id: crypto.randomUUID(), label: pending.label, ...location }]);
     setPending(null); setLabel("");
   };
-  const replaceLocation = (item: AddedReviewObject) => {
+  const replaceLocation = (item: PracticeReview["addedObjects"][number]) => {
     setPending({ id: item.id, label: item.label });
     setError(null);
     photoRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
@@ -307,7 +306,7 @@ export function PracticeAnalysis() {
     await saveReview({
       sceneTitle: sceneTitle.trim() || undefined,
       acceptedObjectIds: kept.map(item => item.id),
-      addedObjects: added.map(({ marker: _marker, ...item }) => item),
+      addedObjects: added,
       relations: visibleRelations.map(row => ({ ...row, relation: canonicalRelationValue(row.relation) })),
       objectAttributes: selectedAttributes,
       objectCounts: objectCounts(groups, verifiedCounts),
@@ -358,7 +357,7 @@ export function PracticeAnalysis() {
             <div className="analysis-word-list" aria-label="Words in this scene">
               {relationObjects.map(instance => {
                 const sceneItem = kept.find(row => row.id === instance.id);
-                const addedItem = added.find(row => row.id === instance.id);
+                const addedItem = numberedAdded.find(row => row.id === instance.id);
                 return <div className="analysis-word-row analysis-object-row" key={instance.id}>
                   <span className={`analysis-word-row__marker${addedItem ? " analysis-word-row__marker--custom" : ""}`}>{instance.marker}</span>
                   <strong>{humanizeTerm(instance.label)}</strong>

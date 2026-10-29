@@ -3,8 +3,8 @@ import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { sessionDestination, sessionPaths } from "../lib/sessionRoute";
-import { Button, Feedback, IconButton, ProgressTrail, XpPill } from "../components/ui";
-import { ArrowRightIcon, BasilIcon, CheckIcon, EyeIcon, EyeOffIcon, SpeakerIcon } from "../components/icons";
+import { BasilReward, Button, Feedback, IconButton, ProgressTrail, XpPill } from "../components/ui";
+import { ArrowRightIcon, CheckIcon, EyeIcon, EyeOffIcon, SpeakerIcon } from "../components/icons";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
@@ -20,16 +20,22 @@ import { basilEarnedText } from "../lib/gamification";
 import { learningFeedback } from "../lib/learningFeedback";
 
 export function ISpyPhase1() {
-  const { session, practiceStalled, practiceError, retryProcessing } = useAppState();
+  const navigate = useNavigate();
+  const { session, practiceStalled, practiceError, retryProcessing, completeSession } = useAppState();
   const [index, setIndex] = useState(() => {
     const clues = practiceStages(session?.tasks ?? []).clues;
     const next = clues.findIndex(task => !taskDone(task));
     return next < 0 ? Math.max(0, clues.length - 1) : next;
   });
   if (!session) return null;
-  const { learning, clues } = practiceStages(session.tasks);
+  const { learning, clues, reflection } = practiceStages(session.tasks);
   const paths = sessionPaths(session);
   const game = session.session.mode === "ispy";
+  const finishWithoutDescription = () => {
+    if (!completeSession()) return;
+    trackAction("describe_round_skipped", { mode: session.session.mode });
+    navigate(paths.done);
+  };
   if (session.session.status === "completed") return <Navigate to={paths.done} replace />;
   if (game && ["abandoned", "failed"].includes(session.session.status)) {
     const exit = sessionDestination(session);
@@ -45,10 +51,15 @@ export function ISpyPhase1() {
   </div>;
   const task = clues[index];
   if (!task) return <Navigate to={paths.describe} replace />;
-  return <ClueRound key={task.id} task={task} index={index} total={clues.length} describePath={paths.describe} onNext={() => setIndex(value => value + 1)} />;
+  return <ClueRound key={task.id} task={task} index={index} total={clues.length} describePath={paths.describe}
+    skipDescription={!reflection.length} finishLabel={game ? "See results" : "Finish session"}
+    onFinish={finishWithoutDescription} onNext={() => setIndex(value => value + 1)} />;
 }
 
-function ClueRound({ task, index, total, describePath, onNext }: { task: SessionTask; index: number; total: number; describePath: string; onNext: () => void }) {
+function ClueRound({ task, index, total, describePath, skipDescription, finishLabel, onFinish, onNext }: {
+  task: SessionTask; index: number; total: number; describePath: string;
+  skipDescription: boolean; finishLabel: string; onFinish: () => void; onNext: () => void;
+}) {
   const navigate = useNavigate();
   const scene = useScene();
   const { actOnTask, practiceSaving, practiceError } = useAppState();
@@ -140,11 +151,14 @@ function ClueRound({ task, index, total, describePath, onNext }: { task: Session
           {isCorrect !== null ? <strong>{learningFeedback(isCorrect ? "correct" : "incorrect", task.id)}</strong> : null}
           <span>{feedback ?? "Answer saved."}</span>
         </>}
-        {content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}{earnedText ? <strong className="basil-reward"><BasilIcon size={17} />{earnedText}</strong> : null}
+        {content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}
       </div></Feedback>
+      <BasilReward text={earnedText} />
     </> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
-    <Button block disabled={!answered || practiceSaving} onClick={() => index === total - 1 ? navigate(describePath) : onNext()}>{index === total - 1 ? "Your turn" : "Next clue"} <ArrowRightIcon /></Button>
+    <Button block disabled={!answered || practiceSaving} onClick={() => index === total - 1
+      ? skipDescription ? onFinish() : navigate(describePath)
+      : onNext()}>{index === total - 1 ? skipDescription ? finishLabel : "Your turn" : "Next clue"} <ArrowRightIcon /></Button>
     {(answered || result) && task.status !== "skipped" ? <div className="learning-question-report"><ReportIssueLink reportType="I-Spy answer" fields={[
       ["Task ID", task.id],
       ["Clue", `${opening} ${content.clue}`],
