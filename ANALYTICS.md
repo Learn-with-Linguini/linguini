@@ -97,9 +97,9 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `vocabulary_marker_clicked` | `{ taskId, marker, audioAvailable }` | Learner selects a photo marker to show its object card and play target-language pronunciation when available |
 | `vocabulary_pronunciation_clicked` | `{ termType }` | Learner replays a word using the review card's speaker button |
 
-Review cards appear in Objects, Adjectives, Relations order. Existing
-`vocabulary_flashcard_viewed` events track the displayed position and term type,
-including cards reached through markers.
+Objects appear beside their linked adjectives, followed by unlinked adjectives and
+relations. `vocabulary_flashcard_viewed` is emitted for each visible card with the
+group's position, term type, and `groupedCardCount`, including marker navigation.
 
 ### Scene processing progress
 

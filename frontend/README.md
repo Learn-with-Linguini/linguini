@@ -52,9 +52,11 @@ Upload remains available for choosing an existing image.
 
 ## Vocabulary review
 
-Teaching cards are grouped into Objects, Adjectives, then Relations, with a heading
-and position within each section. Previous, Next, and swipe navigation follow that
-order. Quiz and typing order and saved answer identities are preserved.
+Each object is reviewed alongside its explicitly linked adjective cards (for
+example, apple beside green). Cards appear in two columns when at least 480px is
+available and stack on narrower screens. Adjectives without an object link remain
+available afterward, followed by Relations. Previous, Next, marker selection and
+swipes navigate these groups. Quiz and typing order and saved answers are preserved.
 
 During the object section, photo markers select their matching card and play its
 target-language pronunciation using the existing language-pack voice settings.

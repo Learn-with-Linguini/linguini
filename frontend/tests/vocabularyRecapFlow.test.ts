@@ -139,20 +139,20 @@ test("review groups mixed words while retaining photo context and optional image
     reviewWord("object", "silla", "chair"),
   ], items: ["table", "chair"].map((id, i) => ({ id, marker: i + 1, word: id, translation: id, wordClass: "noun", gender: null, x: 30 + i * 30, y: 50, example: "", exampleTranslation: "" })) });
   const section = () => dom.window.document.querySelector(".vocabulary-review-section h2")?.textContent;
-  assert.match(section() ?? "", /Objects.*1 of 2/);
+  assert.match(section() ?? "", /Objects and adjectives.*1 of 2/);
   assert.equal(dom.window.document.querySelectorAll("button.scene__marker").length, 2);
   await click("Next");
-  assert.match(section() ?? "", /Objects.*2 of 2/);
-  await click("Next");
-  assert.match(section() ?? "", /Adjectives.*1 of 1/);
+  assert.match(section() ?? "", /Objects and adjectives.*2 of 2/);
+  assert.deepEqual([...dom.window.document.querySelectorAll(".learning-card__word h2")].map(item => item.textContent), ["silla", "rojo"]);
+  assert.ok(dom.window.document.querySelector(".vocabulary-learning-grid--paired"));
   assert.ok(dom.window.document.querySelector(".vocabulary-learning-scene"));
-  assert.equal(dom.window.document.querySelectorAll("button.scene__marker").length, 0);
+  assert.equal(dom.window.document.querySelectorAll("button.scene__marker").length, 2);
   await click("Next");
   assert.match(section() ?? "", /Relations.*1 of 1/);
   assert.equal(dom.window.document.querySelectorAll(".scene__marker--active").length, 2);
   assert.ok(button("Start quick quiz"));
   await click("Previous");
-  assert.match(section() ?? "", /Adjectives/);
+  assert.match(section() ?? "", /Objects and adjectives.*2 of 2/);
   assert.deepEqual(requests, [], "Exploring teaching cards must not submit answers");
 });
 

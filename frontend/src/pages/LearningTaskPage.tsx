@@ -28,7 +28,7 @@ import { fillMissionGap } from "../lib/missionGaps";
 import { playAnswerSound } from "../lib/answerSound";
 import { learningFeedback } from "../lib/learningFeedback";
 import { vocabularyRecapSteps } from "../lib/vocabularyRecap";
-import { VOCABULARY_SECTIONS, vocabularyReviewWords, wordMatchesMarker } from "../lib/vocabularyReview";
+import { VOCABULARY_SECTIONS, vocabularyReviewGroups, wordMatchesMarker } from "../lib/vocabularyReview";
 
 export function LearningTaskPage() {
   const { taskId } = useParams();
@@ -240,22 +240,23 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
   }, [restored.data, revisiting, task.publicContent]);
   useEffect(() => {
     if (content.kind !== "vocabularyIntroduction" || stage !== "review") return;
-    const word = vocabularyReviewWords(content.words)[page];
-    if (!word) return;
-    trackAction("vocabulary_flashcard_viewed", {
+    const words = vocabularyReviewGroups(content.words)[page] ?? [];
+    words.forEach(word => trackAction("vocabulary_flashcard_viewed", {
       taskId: task.id,
       position: page + 1,
       termType: word.termType,
       hasSceneObject: Boolean(word.sceneObjectId),
-    });
+      groupedCardCount: words.length,
+    }));
   }, [content, page, stage, task.id]);
   if (content.kind !== "vocabularyIntroduction") return null;
   const terminal = taskDone(task);
   const revision = task.status === "skipped";
   const active = !terminal || revision || revisiting;
-  const pageCount = content.words.length;
-  const reviewWords = vocabularyReviewWords(content.words);
-  const visibleWords = reviewWords.slice(page, page + 1);
+  const reviewGroups = vocabularyReviewGroups(content.words);
+  const pageCount = reviewGroups.length;
+  const reviewWords = reviewGroups.map(group => group[0]);
+  const visibleWords = reviewGroups[page] ?? [];
   const reviewWord = visibleWords[0];
   const sectionWords = reviewWords.filter(word => word.termType === reviewWord?.termType);
   const sectionPosition = reviewWord ? sectionWords.indexOf(reviewWord) + 1 : 0;
@@ -390,7 +391,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
     {active && stage === "review" ? <>
       {revision ? <div className="panel-note" role="status"><strong>Saved for revision</strong><p className="small muted">You skipped this practice earlier, but these words will stay here whenever you want to review them.</p></div> : null}
       {reviewWord ? <div className="vocabulary-review-section">
-        <h2 aria-live="polite">{VOCABULARY_SECTIONS[reviewWord.termType]} <span className="small muted">{sectionPosition} of {sectionWords.length}</span></h2>
+        <h2 aria-live="polite">{reviewWord.termType === "object" ? "Objects and adjectives" : VOCABULARY_SECTIONS[reviewWord.termType]} <span className="small muted">{sectionPosition} of {sectionWords.length}</span></h2>
         <p className="small muted">{reviewWord.termType === "object"
           ? speechAvailable() ? "Tap a number to see and hear its word, or use Next to keep exploring." : "Tap a number to see its word. Pronunciation isn't available in this browser for this language."
           : speechAvailable() ? "Listen with the speaker button. The photo shows the context." : "The photo shows the context. Pronunciation isn't available in this browser for this language."}</p>
@@ -413,7 +414,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
           } : undefined}
         />
       </div>
-      <div className="vocabulary-learning-grid vocabulary-learning-grid--swipe" aria-live="polite" onTouchStart={handleCardTouchStart} onTouchEnd={handleCardTouchEnd}>{visibleWords.map(word => <VocabularyLearningCard key={word.learningKey ?? word.vocabularyItemId ?? word.targetText} word={word} languageCode={scene.languageCode} />)}</div>
+      <div className={`vocabulary-learning-grid vocabulary-learning-grid--swipe${visibleWords.length > 1 ? " vocabulary-learning-grid--paired" : ""}`} aria-live="polite" onTouchStart={handleCardTouchStart} onTouchEnd={handleCardTouchEnd}>{visibleWords.map((word, cardIndex) => <VocabularyLearningCard key={`${word.learningKey ?? word.vocabularyItemId ?? word.targetText}:${cardIndex}`} word={word} languageCode={scene.languageCode} />)}</div>
       <div className="vocabulary-flow__actions">
         <Button disabled={page === 0} onClick={() => { setSelectedMarkerId(null); setPage(value => value - 1); }}><ArrowLeftIcon size={18} /> Previous</Button>
         <span className="vocabulary-flow__position" aria-live="polite">{page + 1} of {pageCount}</span>
