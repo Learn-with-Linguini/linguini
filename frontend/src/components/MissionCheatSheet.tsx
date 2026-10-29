@@ -56,14 +56,15 @@ export function MissionCheatSheetLauncher({
 
   if (!available) return null;
   return <>
-    <IconButton className="cheatsheet-trigger" label="Open cheatsheet" title="Open cheatsheet"
-      aria-haspopup="dialog" aria-expanded={open}
+    <button type="button" className="cheatsheet-trigger" aria-label="Open cheatsheet"
+      title="Open cheatsheet" aria-haspopup="dialog" aria-expanded={open}
       onClick={() => {
         setOpen(true);
         trackAction("mission_cheatsheet_opened", tracking);
       }}>
-      <HelpIcon size={26} />
-    </IconButton>
+      <HelpIcon size={22} />
+      <span>Help</span>
+    </button>
     {open ? <div className="cheatsheet-backdrop" onMouseDown={event => {
       if (event.target === event.currentTarget) close();
     }}>

@@ -4921,6 +4921,11 @@ p[role="alert"]::before { content: "!"; }
 .learning-exit {
   flex: none;
   gap: var(--space-1);
+  min-height: 44px;
+  padding-inline: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--paper);
   color: var(--ink-muted);
 }
 
