@@ -63,6 +63,23 @@ associated objects when supplied, with speaker controls for pronunciation. The
 photo stays visible throughout review. Marker buttons support keyboard activation;
 word cards remain readable when browser pronunciation is unavailable.
 
+## Scene processing progress
+
+Scene analysis shows four stages: loading the photo, finding objects, checking
+results, and saving the review. The backend reports these milestones through the
+existing session polling response (`sceneAnalysisProgress`). Completed segments
+fill solidly; the active segment pulses, with reduced-motion support. Counts
+represent completed stages, never a percentage of elapsed or remaining time.
+Elapsed time uses the backend's processing start timestamp and survives refresh.
+The bar sits above the photo, with only the current stage and elapsed time visible;
+stage counts remain available to screen readers.
+
+After confirmation, a separate two-stage bar tracks translation and preparation
+of the first vocabulary task using committed session data. Older backend responses
+without analysis milestones show an indeterminate state. Polling pauses retain
+the last milestone and offer Check again; failures retain the existing retry flow.
+No additional environment variables are required.
+
 ## Structure
 
 | Path | Purpose |

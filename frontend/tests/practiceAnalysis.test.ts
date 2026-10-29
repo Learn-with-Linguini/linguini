@@ -96,9 +96,9 @@ function detail(): PracticeDetail {
 
 let root: ReturnType<typeof createRoot> | null = null;
 let reviews: PracticeReview[] = [];
-async function mount(session = detail()) {
+async function mount(session = detail(), stalled = false) {
   reviews = [];
-  const state = { session, practiceSaving: false, practiceError: null, practiceStalled: false,
+  const state = { session, practiceSaving: false, practiceError: null, practiceStalled: stalled,
     saveReview: async (review: PracticeReview) => { reviews.push(review); },
   } as unknown as AppState;
   const container = dom.window.document.createElement("div");
@@ -290,4 +290,55 @@ test("leaving preference empty or clearing a restored choice requests a pretend 
 test("preference picker is only shown for the beginner preference mission", async () => {
   await mount({ ...detail(), provisionalMissionPlan: [{ missionId: "M05", practiceLevel: "A1" }] });
   assert.equal(dom.window.document.getElementById("preference-object"), null);
+});
+
+for (const [stage, completed] of [["loadingImage", 0], ["findingObjects", 1], ["checkingResults", 2], ["savingResults", 3]] as const) {
+  test(`analysis progress reports ${completed} completed stages while ${stage} is active`, async () => {
+    const session = detail();
+    session.session.status = "analyzingScene";
+    session.sceneAnalysisProgress = { stage, startedAt: new Date(Date.now() - 5000).toISOString() };
+    await mount(session);
+    const progress = dom.window.document.querySelector('[role="progressbar"]');
+    assert.ok(progress);
+    assert.equal(progress.getAttribute("aria-valuenow"), String(completed));
+    assert.equal(progress.getAttribute("aria-valuemax"), "4");
+    assert.equal(dom.window.document.querySelectorAll(".scene-processing-progress__segment.is-complete").length, completed);
+    assert.equal(dom.window.document.querySelectorAll(".scene-processing-progress__segment.is-active").length, 1);
+    assert.match(dom.window.document.body.textContent ?? "", /Elapsed 0:0/);
+    assert.doesNotMatch(dom.window.document.body.textContent ?? "", /only take a moment/);
+  });
+}
+
+test("legacy analysis uses indeterminate progress and review readiness completes all stages", async () => {
+  const session = detail();
+  session.session.status = "analyzingScene";
+  await mount(session);
+  assert.equal(dom.window.document.querySelector('[role="progressbar"]')?.hasAttribute("aria-valuenow"), false);
+  await act(async () => { root?.unmount(); });
+  root = null;
+  dom.window.document.body.replaceChildren();
+  await mount(detail());
+  assert.equal(dom.window.document.querySelector('[role="progressbar"]')?.getAttribute("aria-valuenow"), "4");
+  assert.equal(dom.window.document.querySelectorAll(".scene-processing-progress__segment.is-active").length, 0);
+});
+
+test("paused polling retains completed milestones and stops the active pulse", async () => {
+  const session = detail();
+  session.session.status = "analyzingScene";
+  session.sceneAnalysisProgress = { stage: "checkingResults", startedAt: null };
+  await mount(session, true);
+  assert.equal(dom.window.document.querySelector('[role="progressbar"]')?.getAttribute("aria-valuenow"), "2");
+  assert.equal(dom.window.document.querySelectorAll(".scene-processing-progress__segment.is-active").length, 0);
+  assert.match(dom.window.document.body.textContent ?? "", /Updates paused/);
+});
+
+test("lesson progress advances only when translations and the first task are committed", async () => {
+  const session = detail();
+  session.session.status = "generatingTasks";
+  session.translationPreview = { objects: [], attributes: [], relationships: [] };
+  await mount(session);
+  const progress = dom.window.document.querySelector('[role="progressbar"]');
+  assert.equal(progress?.getAttribute("aria-valuemax"), "2");
+  assert.equal(progress?.getAttribute("aria-valuenow"), "1");
+  assert.match(dom.window.document.body.textContent ?? "", /Preparing your first task/);
 });

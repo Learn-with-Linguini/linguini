@@ -4,6 +4,21 @@ FastAPI/Pydantic API with SQLAlchemy persistence in Supabase PostgreSQL. Prisma
 owns schema migrations; it is not the Python runtime client. API JSON uses camelCase
 and Python attributes use snake_case. See the [project README](../README.md) for the frontend.
 
+## Scene analysis progress
+
+`GET /api/v1/sessions/{id}` returns optional `sceneAnalysisProgress` with `stage`
+(`loadingImage`, `findingObjects`, `checkingResults`, `savingResults`, or `ready`)
+and `startedAt`. Stages report actual processing milestones, not estimated AI
+completion percentages. Output validation, grounding and moderation must finish
+before saving begins; `ready` is exposed only once the review is committed.
+
+Milestones use the existing session `analysis_draft` JSON, so no migration or new
+environment setting is needed. Each update commits independently and is guarded
+by owner, active analysis status, and the attempt's start timestamp. Abandoned or
+superseded attempts cannot publish progress into a newer attempt. Progress write
+failures are logged without discarding a valid analysis. The existing polling
+endpoint retains its normal ownership and authentication checks.
+
 ## Setup
 
 Use Python 3.12+ and Node/npm. From `backend/` in PowerShell:

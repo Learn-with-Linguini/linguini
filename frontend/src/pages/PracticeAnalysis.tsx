@@ -4,6 +4,7 @@ import { Button, Card, ComboBox } from "../components/ui";
 import { ArrowRightIcon, CloseIcon, MarkerIcon } from "../components/icons";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { AnalysisScan } from "../components/AnalysisScan";
+import { SceneProcessingProgress } from "../components/SceneProcessingProgress";
 import { TranslationPreview } from "../components/TranslationPreview";
 import { SessionPersonalization } from "../components/SessionPersonalization";
 import { LeaveSession } from "../components/LeaveSession";
@@ -150,6 +151,7 @@ export function PracticeAnalysis() {
   if (["created", "analyzingScene", "generatingTasks"].includes(session.session.status)) return <div className="stack analysis-page">
     <h1>Scene analysis</h1>
     {session.session.status === "generatingTasks" && session.translationPreview ? <>
+      <SceneProcessingProgress detail={session} stalled={practiceStalled} />
       <TranslationPreview preview={session.translationPreview} scene={scene} />
       <SessionPersonalization personalization={session.personalization} languageCode={scene.languageCode} />
       <section role="status" className="panel-note">
@@ -169,10 +171,11 @@ export function PracticeAnalysis() {
       </section>
     </> : <>
     {practiceStalled ? <section className="analysis-loading" aria-live="polite">
+      <SceneProcessingProgress detail={session} stalled />
       <div className="analysis-loading__copy"><h2>Still working on your scene...</h2><p className="muted">This is taking longer than usual. You can check again.</p>{practiceError ? <p role="alert">{practiceError}</p> : null}<Button onClick={() => retryProcessing(session.session.id)}>Retry</Button></div>
-    </section> : <section className="analysis-loading" aria-live="polite" aria-busy="true">
+    </section> : <section className="analysis-loading">
+      <SceneProcessingProgress detail={session} />
       <AnalysisScan scene={scene} />
-      <div className="analysis-loading__copy"><h2>{session.session.status === "generatingTasks" ? "Translating your scene..." : "Finding objects in your image..."}</h2><p className="muted">{session.session.status === "generatingTasks" ? "Turning your confirmed words into your learning language." : "This will only take a moment."}</p></div>
     </section>}
     </>}
   </div>;
@@ -325,6 +328,7 @@ export function PracticeAnalysis() {
       <h1>Scene analysis</h1>
       <LeaveSession sessionId={session.session.id} warning={locked ? "Words you have already practised stay in your word bank, but this scene's remaining tasks are dropped." : "The words you picked for this scene will not be saved."} />
     </div>
+    {session.session.status === "awaitingObjectReview" ? <SceneProcessingProgress detail={session} /> : null}
     <div className="analysis-layout">
       <div className="analysis-stage-column">
         <div ref={photoRef} className={`analysis-photo-stage${placementLabel ? " analysis-photo-stage--placing" : ""}`}>

@@ -10,7 +10,7 @@ from __future__ import annotations
 import concurrent.futures
 import hashlib
 import logging
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from enum import StrEnum
 from typing import Any
 
@@ -101,8 +101,12 @@ class UploadedSceneAnalyzer:
         asset: MediaAsset,
         profile: Mapping[str, Any],
         scene: Mapping[str, Any] | None,
+        *,
+        on_progress: Callable[[str], None] | None = None,
     ) -> SceneAnalysisResult:
         del profile, scene
+        report = on_progress or (lambda _stage: None)
+        report("loadingImage")
         with self._tracer.trace(
             "scene-analysis",
             session_id=str(session.id),
@@ -167,6 +171,7 @@ class UploadedSceneAnalyzer:
             try:
                 for attempt in range(1, attempts + 1):
                     try:
+                        report("findingObjects")
                         with self._tracer.generation(
                             "scene-analysis-generation",
                             feature=AiFeature.SCENE_ANALYSIS.value,
@@ -195,6 +200,7 @@ class UploadedSceneAnalyzer:
                                 metadata=route_metadata(response),
                             )
 
+                        report("checkingResults")
                         with self._tracer.span(
                             "output-validation", metadata={"attempt": attempt}
                         ) as validation:
@@ -341,6 +347,9 @@ class UploadedSceneAnalyzer:
                 "scene analysis model returned invalid output",
             )
 
+    def analyze_with_progress(self, session, asset, profile, scene, on_progress):
+        return self.analyze(session, asset, profile, scene, on_progress=on_progress)
+
     def analyze_bytes(
         self, session: Session, asset: MediaAsset, data: bytes
     ) -> SceneAnalysisResult:
@@ -370,4 +379,11 @@ class RoutedSceneAnalyzer:
 
     def analyze(self, session, asset, profile, scene) -> SceneAnalysisResult:
         analyzer = self.curated if asset.source == "preloaded" else self.uploaded
+        return analyzer.analyze(session, asset, profile, scene)
+
+    def analyze_with_progress(self, session, asset, profile, scene, on_progress):
+        analyzer = self.curated if asset.source == "preloaded" else self.uploaded
+        progressive = getattr(analyzer, "analyze_with_progress", None)
+        if progressive is not None:
+            return progressive(session, asset, profile, scene, on_progress)
         return analyzer.analyze(session, asset, profile, scene)

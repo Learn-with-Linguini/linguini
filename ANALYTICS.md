@@ -101,6 +101,14 @@ Review cards appear in Objects, Adjectives, Relations order. Existing
 `vocabulary_flashcard_viewed` events track the displayed position and term type,
 including cards reached through markers.
 
+### Scene processing progress
+
+| Event Name | Parameters | Trigger Description |
+| :--- | :--- | :--- |
+| `scene_processing_progress_shown` | `{ sessionId, phase: "analysis" \| "lesson", stage, stalled }` | A processing stage becomes visible, including ready, legacy unknown, and paused polling states |
+
+The existing analysis and review routes show this progress; no new page is added.
+
 ### Authentication & Account Management
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
