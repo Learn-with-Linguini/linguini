@@ -6,6 +6,18 @@ and Python attributes use snake_case. See the [project README](../README.md) for
 
 ## Scene analysis progress
 
+Initial review suggestions target five unique object labels (case-insensitive,
+ignoring surrounding whitespace). Repeated detections share one vocabulary slot:
+three benches and two chairs count as two names. All detected instances of each
+selected name retain their markers, attributes and relations for counting and
+instance-specific questions. When fewer than five names are detected, all are kept.
+Mission-required facts are retained even if a mission needs a larger selection.
+
+Review confirmation persists only accepted and manually added objects. Translation,
+mission planning, vocabulary and task generation use that confirmed set, including
+the retained repeated instances; unselected detections do not enter the lesson.
+Existing saved selections are preserved; the new default applies on fresh analysis.
+
 `GET /api/v1/sessions/{id}` returns optional `sceneAnalysisProgress` with `stage`
 (`loadingImage`, `findingObjects`, `checkingResults`, `savingResults`, or `ready`)
 and `startedAt`. Stages report actual processing milestones, not estimated AI
