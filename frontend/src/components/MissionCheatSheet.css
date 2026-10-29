@@ -16,24 +16,17 @@
   border: 2px solid var(--teal-dark);
   border-radius: var(--radius-pill);
   background: var(--teal);
-  box-shadow: 0 3px 0 var(--teal-dark);
   color: #fffaf2;
   font: inherit;
   font-size: var(--text-small);
   font-weight: 800;
   cursor: pointer;
-  transition: transform 100ms ease-out, box-shadow 100ms ease-out,
-    background 120ms ease-out;
+  transition: background 120ms ease-out;
 }
 
 .cheatsheet-trigger:hover,
 .cheatsheet-trigger:focus-visible {
   background: #35aaa7;
-}
-
-.cheatsheet-trigger:active {
-  transform: translateY(2px);
-  box-shadow: 0 1px 0 var(--teal-dark);
 }
 
 .cheatsheet-backdrop {
