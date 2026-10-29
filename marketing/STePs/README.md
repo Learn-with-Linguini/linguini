@@ -16,6 +16,8 @@ Designed, animated promo posters in the style other STEPS projects use
 | `gif-4.gif` | Artisan-style 3-act recreating the real `/demo` flow: "Try a photo lesson" picker → cursor picks "Study day" (desk photo) → "Finding objects…" scan → 5 numbered markers + Objects list (real scene words) → wordmark/tagline/IN BETA URL bar | `gif-studio/compositions/gif-4-artisan-style.html` (11s) |
 | `gif-5.gif` | Same 3-act shape on the real `/practice` UI: "Capture a scene" dashed upload zone (Click / Upload buttons) → cursor uploads the desk photo → "Starting analysis…" → Scene analysis with 5 markers + "Check what this lesson will use" list → CTA | `gif-studio/compositions/gif-5-practice-upload.html` (11s) |
 | `gif-6.gif` | gif-5 zoomed to 70% inside the 16:9 frame (butter padding) — survives the uvents card's `background-size: cover` center-crop in both directions | derived from `renders/gif-5.mp4` via ffmpeg `scale + pad` (no composition) |
+| `gif-7.gif` | Full `/practice` page incl. the pasta-yellow wordmark header + enlarged text: cursor clicks Upload, desk photo lands in the dropzone → "Starting analysis…" → Scene analysis (5 markers + "Check what this lesson will use") → a practice task ("Choose the right word", `la libreta` correct, marker 1 rings) → CTA | `gif-studio/compositions/gif-7-practice-full.html` (13s) |
+| `gif-8.gif` | gif-7 zoomed to 70% inside the 16:9 frame — crop-safe variant | derived from `renders/gif-7.mp4` via ffmpeg `scale + pad` (no composition) |
 
 Re-render after editing a composition:
 
