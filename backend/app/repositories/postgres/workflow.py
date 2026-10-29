@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import time
+import unicodedata
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -169,6 +170,11 @@ from app.services.session_plan import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _without_accents(value: str) -> str:
+    normalized = unicodedata.normalize("NFKD", normalize_answer(value))
+    return "".join(character for character in normalized if not unicodedata.combining(character))
 
 
 def _unique_by_id(items):
@@ -795,6 +801,10 @@ class PostgresWorkflowRepository:
             is_correct = not reveal and normalize_answer(answer) in {
                 normalize_answer(candidate) for candidate in accepted
             }
+            accent_folded_answer = _without_accents(answer)
+            is_close = not reveal and not is_correct and accent_folded_answer in {
+                _without_accents(candidate) for candidate in accepted
+            }
             session = self._session(c, task.session_id)
             basil_earned = 0
             if (
@@ -821,6 +831,7 @@ class PostgresWorkflowRepository:
             return CheckVocabularyTypingResponse(
                 learning_key=learning_key,
                 is_correct=is_correct,
+                is_close=is_close,
                 correct_answer=accepted[0],
                 revealed=reveal,
                 basil_earned=basil_earned,

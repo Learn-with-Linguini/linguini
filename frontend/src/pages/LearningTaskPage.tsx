@@ -207,7 +207,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
   const [checkingQuestion, setCheckingQuestion] = useState(false);
   const [pendingOptionId, setPendingOptionId] = useState<string | null>(null);
   const [checkingTyping, setCheckingTyping] = useState(false);
-  const [typingCheck, setTypingCheck] = useState<{ isCorrect: boolean; correctAnswer: string; revealed: boolean; basilEarned: number } | null>(null);
+  const [typingCheck, setTypingCheck] = useState<{ isCorrect: boolean; isClose: boolean; correctAnswer: string; revealed: boolean; basilEarned: number } | null>(null);
   const requestKey = useRef(crypto.randomUUID());
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const [basilByQuestion, setBasilByQuestion] = useState<Record<string, number>>({});
@@ -341,6 +341,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
         taskId: task.id,
         termType: typingWord.termType,
         isCorrect: result.isCorrect,
+        isClose: result.isClose,
         revealed: result.revealed,
         basilEarned: result.basilEarned,
       });
@@ -418,13 +419,13 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
     </div></Card></> : null}
     {active && stage === "typing" && typingWord ? <Card plain><div className="stack">
       <div><h2>Type “{typingWord.translation}”</h2><p className="muted">Word {typingIndex + 1} of {content.words.length}</p></div>
-      <input className="input" aria-label={`Type ${typingWord.translation}`} value={typedAnswers[typingKey] ?? ""} disabled={typingCheck?.isCorrect || typingCheck?.revealed} onChange={event => { setTypedAnswers(value => ({ ...value, [typingKey]: event.target.value })); setTypingCheck(null); }} />
+      <input className="input" aria-label={`Type ${typingWord.translation}`} value={typedAnswers[typingKey] ?? ""} disabled={typingCheck?.isCorrect || typingCheck?.isClose || typingCheck?.revealed} onChange={event => { setTypedAnswers(value => ({ ...value, [typingKey]: event.target.value })); setTypingCheck(null); }} />
       {checkingTyping ? <InlineLoader compact label="Checking your word…" /> : null}
-      {typingCheck ? <Feedback tone={typingCheck.isCorrect ? "good" : typingCheck.revealed ? "neutral" : "warn"}><div className="stack-2" role="status"><p>{typingCheck.isCorrect ? "That’s right!" : typingCheck.revealed ? <>No worries, the answer is <strong>{typingCheck.correctAnswer}</strong>.</> : "Not quite. Give it another try."}</p>{basilEarnedText(typingCheck.basilEarned) ? <strong className="basil-reward"><BasilIcon size={17} />{basilEarnedText(typingCheck.basilEarned)}</strong> : null}</div></Feedback> : null}
-      {typingCheck?.isCorrect || typingCheck?.revealed
+      {typingCheck ? <Feedback tone={typingCheck.isCorrect ? "good" : typingCheck.isClose || typingCheck.revealed ? "neutral" : "warn"}><div className="stack-2" role="status"><p>{typingCheck.isCorrect ? "That’s right!" : typingCheck.isClose ? <>Close! You’re missing some accents. Write it as <strong>{typingCheck.correctAnswer}</strong>.</> : typingCheck.revealed ? <>No worries, the answer is <strong>{typingCheck.correctAnswer}</strong>.</> : "Not quite. Give it another try."}</p>{basilEarnedText(typingCheck.basilEarned) ? <strong className="basil-reward"><BasilIcon size={17} />{basilEarnedText(typingCheck.basilEarned)}</strong> : null}</div></Feedback> : null}
+      {typingCheck?.isCorrect || typingCheck?.isClose || typingCheck?.revealed
         ? <Button block disabled={practiceSaving} onClick={advanceTyping}>{revisiting ? recapIndex < recap.length - 1 ? "Continue" : "Finish review" : typingIndex < content.words.length - 1 || typingIndex + 2 < content.questions.length ? "Next question" : "Finish task"}</Button>
         : <Button block disabled={!typedAnswers[typingKey]?.trim() || practiceSaving || checkingTyping} onClick={() => void checkTyping()}>Check answer</Button>}
-      {!typingCheck?.isCorrect && !typingCheck?.revealed ? <Button variant="quiet" block className="typing-forgot-action" disabled={practiceSaving || checkingTyping} onClick={() => void checkTyping(true)}>I forgot, lift the lid</Button> : null}
+      {!typingCheck?.isCorrect && !typingCheck?.isClose && !typingCheck?.revealed ? <Button variant="quiet" block className="typing-forgot-action" disabled={practiceSaving || checkingTyping} onClick={() => void checkTyping(true)}>I forgot, lift the lid</Button> : null}
     </div></Card> : null}
     {revisiting && stage === "complete" ? <Card plain><div className="stack">
       <h2>Review complete</h2><p>You practised these words again.</p>

@@ -736,7 +736,7 @@ export const getVocabularyChecks = (id: string, signal?: AbortSignal) =>
 export const checkVocabularyAnswer = (id: string, questionId: string, optionId: string, review = false) =>
   write<VocabularyAnswerCheck>(`/api/v1/tasks/${id}/check-vocabulary-answer`, "POST", { questionId, optionId, review });
 export const checkVocabularyTyping = (id: string, learningKey: string, answer: string, reveal = false) =>
-  write<{ learningKey: string; isCorrect: boolean; correctAnswer: string; revealed: boolean; basilEarned: number }>(`/api/v1/tasks/${id}/check-vocabulary-typing`, "POST", { learningKey, answer, reveal });
+  write<{ learningKey: string; isCorrect: boolean; isClose: boolean; correctAnswer: string; revealed: boolean; basilEarned: number }>(`/api/v1/tasks/${id}/check-vocabulary-typing`, "POST", { learningKey, answer, reveal });
 export const completePractice = (id: string) => write<{ id: string; status: string }>(`/api/v1/sessions/${id}/complete`, "POST", {});
 export const abandonPractice = (id: string) => write<{ id: string; status: string }>(`/api/v1/sessions/${id}/abandon`, "POST", {});
 export const getPracticeSummary = (id: string) => request<{

@@ -852,6 +852,7 @@ class CheckVocabularyTypingRequest(ApiModel):
 class CheckVocabularyTypingResponse(ApiModel):
     learning_key: NonEmptyText
     is_correct: bool
+    is_close: bool = False
     correct_answer: NonEmptyText
     revealed: bool
     basil_earned: int = 0
