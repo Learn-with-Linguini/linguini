@@ -203,7 +203,7 @@ def test_m06_is_a2_only_and_language_scoped():
             for item in lesson_missions(
                 "lesson", {"proficiency_level": "A0", "target_language_code": language}
             )
-        ] == ["M01", "M02", "M03", "M05", "M13"]
+        ] == ["M01", "M02", "M03", "M05"]
 
 
 def test_transaction_is_deterministic_does_not_mutate_scene_and_repairs_one_field():

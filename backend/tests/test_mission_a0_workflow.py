@@ -47,7 +47,7 @@ def test_a0_profiles_get_persisted_a0_lessons(beginner):
     lessons = _a0_lessons(detail)
     assert lessons, detail.session.analysis_draft
     assert {task.public_content.mission_id for task in lessons} <= {
-        "M01", "M02", "M03", "M05", "M13",
+        "M01", "M02", "M03", "M05",
     }
     for task in lessons:
         content = task.public_content

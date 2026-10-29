@@ -251,6 +251,34 @@ def _with_article(text, translated_term):
     return f"{article}{separator}{text}"
 
 
+_ARTICLE_CHOICES = {
+    "es": ("el", "la"),
+    "fr": ("le", "la", "l'"),
+    "de": ("der", "die", "das"),
+}
+
+
+def _normalized_article(article):
+    return article.casefold().replace("’", "'").strip()
+
+
+def _article_question(learning_word, translated_term, language):
+    """Build a noun-article check only where the language uses reviewed articles."""
+    choices = _ARTICLE_CHOICES.get(language.casefold())
+    if not translated_term or not translated_term.article or not choices:
+        return None
+    correct = _normalized_article(translated_term.article)
+    if correct not in choices:
+        return None
+    question_id = f"article-{learning_word['learning_key']}"
+    return dict(
+        question_id=question_id,
+        prompt=f'Which article goes with "{translated_term.translation}"?',
+        options=[dict(option_id=article, label=article) for article in choices],
+        correct_option_id=correct,
+    )
+
+
 def build_grammar_lessons(session_id, result):
     """Turn generated grammar lessons into tasks; the caller assigns their order."""
     return [
@@ -491,6 +519,18 @@ def build_tasks(
             )
         )
         correct_option_ids[question_id] = learning_word["target_text"]
+    language = words[0].language_code.lower()
+    for learning_word in learning_words:
+        if learning_word["term_type"] != "object":
+            continue
+        translated_term = translated_objects.get(str(learning_word["scene_object_id"]))
+        article_question = _article_question(learning_word, translated_term, language)
+        if article_question is None:
+            continue
+        questions.append(article_question)
+        correct_option_ids[article_question["question_id"]] = article_question[
+            "correct_option_id"
+        ]
     contents = [
         dict(
             kind="vocabularyIntroduction",
