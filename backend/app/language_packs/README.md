@@ -320,6 +320,9 @@ uses gendered forms of the bound possessive and none is the noun's own (mein Tas
 taza es mío), it fails; forms for any gender (mi, mir) and genderless languages are not
 judged, and French mon/ma before a vowel is left to the model review. Possessive words
 are pack data, so proposals never change them (proposals v5).
+A0 ownership gap questions retain the complete translated noun phrase (for example,
+`banco de parque`) in the subject, including elided articles and attached particles;
+only the remaining predicate becomes the answer choice.
 
 M05 (say what you like) exists at A0 and A1. Who likes what is a lesson fact
 (`preferences`: an object, a `person` and `likes`): at A0 the learner's own choice or,
