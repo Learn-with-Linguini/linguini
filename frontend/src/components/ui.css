@@ -4784,29 +4784,118 @@ p[role="alert"]::before { content: "!"; }
 }
 
 .learn-words-intro {
-  display: grid;
-  gap: var(--space-4);
-  overflow: hidden;
-  padding: var(--space-4);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
-  background: var(--paper);
-}
-
-.learn-words-intro__photo {
   position: relative;
+  z-index: 1;
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-5);
+  border: 2px solid rgba(249, 178, 51, .62);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--cream), #fffaf0);
+  box-shadow: 0 8px 20px rgba(139, 90, 0, .08);
 }
 
-.learn-words-intro__photo > .scene {
-  width: 100%;
+.learn-words-intro--done {
+  border-color: rgba(46, 156, 153, .45);
+  background: var(--sage);
+  box-shadow: none;
 }
 
-.learn-words-intro__photo > .pill--xp {
+.learn-words-intro__heading {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.learn-words-intro__heading h2,
+.learn-words-intro__heading p,
+.lesson-scene-summary p,
+.learn-missions__heading h2,
+.learn-missions__heading p { margin: 0; }
+
+.learn-words-intro__start {
+  width: fit-content;
+  padding: 5px var(--space-3);
+  border-radius: var(--radius-pill);
+  background: #ffe39a;
+  color: #734b00;
+  font-size: var(--text-small);
+  font-weight: 900;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+
+.learn-words-intro--done .learn-words-intro__start {
+  background: rgba(255, 253, 247, .75);
+  color: var(--teal-dark);
+}
+
+.learn-words-intro__required {
+  flex: none;
+  padding: 5px var(--space-3);
+  border-radius: var(--radius-pill);
+  background: rgba(249, 178, 51, .22);
+  color: #734b00;
+  font-size: var(--text-small);
+  font-weight: 800;
+}
+
+.learn-words-intro__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  color: var(--teal-dark);
+  font-weight: 800;
+}
+
+.learn-words-intro__meta .pill--xp {
+  padding: 3px var(--space-2);
+  box-shadow: none;
+}
+
+.lesson-scene-summary {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.lesson-scene-summary .scene {
+  overflow: hidden;
+  max-height: 230px;
+  border-color: var(--teal-dark);
+}
+
+.lesson-scene-summary .scene__media,
+.lesson-scene-summary .scene__art,
+.lesson-scene-summary .scene__art img {
+  height: 100%;
+}
+
+.lesson-scene-summary .scene__art img {
+  object-fit: cover;
+}
+
+.lesson-scene-summary p {
+  color: var(--ink-muted);
+  font-size: var(--text-small);
+}
+
+.lesson-path {
+  position: relative;
+  display: grid;
+  gap: var(--space-8);
+  padding-left: var(--space-5);
+}
+
+.lesson-path::before {
+  content: "";
   position: absolute;
-  z-index: 2;
-  top: var(--space-3);
-  right: var(--space-3);
-  box-shadow: var(--shadow-card);
+  top: var(--space-6);
+  bottom: var(--space-6);
+  left: 4px;
+  width: 5px;
+  border-radius: var(--radius-pill);
+  background: var(--pasta);
+  opacity: .55;
 }
 
 .vocabulary-preview-page {
@@ -4825,14 +4914,13 @@ p[role="alert"]::before { content: "!"; }
 }
 
 .learn-missions {
-  padding: var(--space-4);
-  border: 1px solid rgba(154, 115, 50, 0.34);
-  border-radius: var(--radius-lg);
-  background: var(--paper);
+  position: relative;
+  z-index: 1;
 }
 
-.learn-missions h2 {
-  padding: var(--space-1);
+.learn-missions__heading {
+  display: grid;
+  gap: var(--space-1);
 }
 
 .learn-missions .task-list { gap: var(--space-3); }
@@ -4840,7 +4928,7 @@ p[role="alert"]::before { content: "!"; }
 .learn-missions .task-row {
   min-height: 76px;
   border: 1px solid var(--line);
-  background: var(--cream);
+  background: var(--paper);
   color: var(--ink);
   box-shadow: none;
 }
@@ -4857,6 +4945,15 @@ p[role="alert"]::before { content: "!"; }
   border-color: var(--teal);
   color: var(--ink);
   box-shadow: none;
+}
+
+@media (max-width: 520px) {
+  .lesson-scene-summary .scene { max-height: 170px; }
+  .lesson-path { gap: var(--space-6); padding-left: var(--space-3); }
+  .lesson-path::before { left: 1px; width: 4px; }
+  .learn-words-intro { padding: var(--space-4); }
+  .learn-words-intro__heading .spread { align-items: flex-start; }
+  .learn-words-intro__required { padding-inline: var(--space-2); }
 }
 
 .prompt-translation {

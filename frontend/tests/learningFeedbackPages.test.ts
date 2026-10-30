@@ -125,15 +125,40 @@ test("lesson summary stays neutral when its result details are unavailable", asy
   assert.equal(view.container.querySelector("h1")?.textContent, "Your session");
 });
 
-test("lesson preparation keeps its factual task status beside the branded copy", async () => {
+test("lesson preparation keeps its factual task status beside the lesson guidance", async () => {
   const current = state();
   current.session!.session.status = "generatingTasks";
   const view = await mount(source.Learn, current);
-  assert.ok(view.container.textContent?.includes(learningFeedback("start", "session")));
+  assert.match(view.container.textContent ?? "", /Review the words, then use them in short missions\./);
   const status = view.container.querySelector('[role="status"]');
   assert.ok(status?.textContent?.includes(learningFeedback("preparing", "session")));
   assert.match(status?.textContent ?? "", /Preparing the remaining tasks\.\.\./);
   assert.match(status?.textContent ?? "", /You can learn and practise your words now\./);
+});
+
+test("lesson overview leads with word review while keeping missions available", async () => {
+  const current = state();
+  current.session!.session.status = "inProgress";
+  current.session!.translationPreview = { words: [] } as unknown as PracticeDetail["translationPreview"];
+  current.session!.tasks = [
+    { id: "words", kind: "vocabularyIntroduction", status: "ready", orderIndex: 0, sceneObjectId: null,
+      publicContent: { kind: "vocabularyIntroduction", title: "Photo words", allowTypingPractice: true,
+        words: [{ learningKey: "cup", termType: "object", vocabularyItemId: "word", sceneObjectId: null,
+          targetText: "taza", translation: "cup", partOfSpeech: "noun", gender: null, pluralForm: null,
+          phoneticText: null, pronunciationAudioAssetId: null, exampleSentence: null }], questions: [] } },
+    { id: "mission", kind: "grammarLesson", status: "ready", orderIndex: 1, sceneObjectId: null,
+      publicContent: { kind: "grammarLesson", title: "Name and identify", missionId: "M01", practiceLevel: "A0",
+        contentVersion: "M01-A0.v1", focus: "a0M01", explanation: "", prepChunks: [], questions: [], checkEachQuestion: true } },
+  ] as unknown as PracticeDetail["tasks"];
+  const view = await mount(source.Learn, current);
+  assert.equal(view.container.querySelector("h1")?.textContent, "Your lesson");
+  assert.match(view.container.textContent ?? "", /Start here/i);
+  assert.match(view.container.textContent ?? "", /Review the words, then use them in short missions/);
+  assert.match(view.container.textContent ?? "", /Then practise with missions/);
+  assert.doesNotMatch(view.container.textContent ?? "", /unlock|Complete the word review first/i);
+  const mission = [...view.container.querySelectorAll<HTMLButtonElement>(".task-row")]
+    .find(button => button.textContent?.includes("Name and identify"));
+  assert.equal(mission?.disabled, false);
 });
 
 test("Home announces Basil loading and unavailable states without inventing a zero total", async () => {

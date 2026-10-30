@@ -36,6 +36,9 @@ export function Learn() {
   const vocabularyTask = learningTasks.find(task => task.kind === "vocabularyIntroduction");
   const vocabularyDone = vocabularyTask ? taskDone(vocabularyTask) : true;
   const vocabularySkipped = vocabularyTask?.status === "skipped";
+  const vocabularyWordCount = vocabularyTask?.publicContent.kind === "vocabularyIntroduction"
+    ? vocabularyTask.publicContent.words.length
+    : scene.items.length;
   const tasks = learningTasks.filter(task => task.kind !== "vocabularyIntroduction");
   const completed = tasks.filter(taskDone);
   const generating = session.session.status === "generatingTasks";
@@ -51,32 +54,41 @@ export function Learn() {
     <div className="stack learn-page">
       <div className="stack-2">
         <div className="learning-title-row">
-          <h1>Learning tasks</h1>
+          <h1>Your lesson</h1>
           <Button variant="quiet" className="learning-exit" onClick={() => { trackAction("learning_exit_clicked"); navigate("/home"); }}>
             <CloseIcon size={18} /> Exit
           </Button>
         </div>
-        {completed.length === 0 ? <p><strong>{learningFeedback("start", session.session.id)}</strong></p> : null}
-        <p className="muted">Build confidence with each short task.</p>
+        <p className="muted">Review the words, then use them in short missions.</p>
       </div>
 
       {practiceError ? <p role="alert">{practiceError}</p> : null}
 
-      {vocabularyTask && (!vocabularyDone || vocabularySkipped) ? <div className="learn-words-intro">
-        <div className="learn-words-intro__photo"><ScenePhoto scene={scene} items={[]} />{!vocabularySkipped && taskXp(vocabularyTask) ? <XpPill {...taskXp(vocabularyTask)!} /> : null}</div>
-        <Button block variant={vocabularySkipped ? "secondary" : undefined}
-          disabled={practiceSaving || (!vocabularySkipped && !session.translationPreview)}
+      <section className="lesson-scene-summary" aria-label={`${scene.title} lesson`}>
+        <ScenePhoto scene={scene} items={[]} />
+        <p><strong>{scene.title}</strong><span aria-hidden="true"> · </span><span>{learningTasks.length} {learningTasks.length === 1 ? "activity" : "activities"}</span></p>
+      </section>
+
+      <div className="lesson-path">
+      {vocabularyTask ? <section className={`learn-words-intro${vocabularyDone && !vocabularySkipped ? " learn-words-intro--done" : ""}`} aria-label="Word review">
+        <div className="learn-words-intro__heading">
+          <span className="learn-words-intro__start">{vocabularyDone && !vocabularySkipped ? "Words reviewed" : "Start here"}</span>
+          <div className="spread"><h2>Review the words</h2>{vocabularyDone && !vocabularySkipped ? <span className="pill pill--mastered"><CheckIcon size={16} /> Done</span> : <span className="learn-words-intro__required">Recommended first</span>}</div>
+          <p className="muted">Learn the vocabulary used in your missions.</p>
+          <p className="learn-words-intro__meta"><BookIcon size={18} /> {vocabularyWordCount} {vocabularyWordCount === 1 ? "word" : "words"}{taskXp(vocabularyTask) ? <><span aria-hidden="true"> · </span><XpPill {...taskXp(vocabularyTask)!} /></> : null}</p>
+        </div>
+        <Button block variant={vocabularyDone || vocabularySkipped ? "secondary" : undefined}
+          disabled={practiceSaving || (!vocabularyDone && !vocabularySkipped && !session.translationPreview)}
           onClick={() => {
             trackAction("vocabulary_preview_started");
-            navigate(vocabularySkipped ? `${base}/learn/${vocabularyTask.id}` : `${base}/learn/vocabulary-preview`);
+            navigate(vocabularyDone || vocabularySkipped ? `${base}/learn/${vocabularyTask.id}` : `${base}/learn/vocabulary-preview`);
           }}>
-          <PlayIcon /> {vocabularySkipped ? "Review words" : "Learn the words"}
+          <PlayIcon /> {vocabularyDone && !vocabularySkipped ? "Review again" : vocabularySkipped ? "Review words" : "Start word review"}
         </Button>
-        {vocabularySkipped ? <p className="small muted">Skipped</p> : null}
-      </div> : null}
+      </section> : null}
 
       {tasks.length ? <section className="stack-3 learn-missions" aria-label="Learning missions">
-        {!vocabularyDone ? <div><h2>Next missions</h2></div> : null}
+        <div className="learn-missions__heading"><h2>{vocabularyDone ? "Continue with missions" : "Then practise with missions"}</h2><p className="muted">Use the words in these short activities. You can open any mission.</p></div>
         <div className="task-list" aria-label="Learning tasks">
         {tasks.map(task => {
           const isDone = taskDone(task);
@@ -103,6 +115,7 @@ export function Learn() {
         })}
         </div>
       </section> : null}
+      </div>
 
       <SessionPersonalization personalization={session.personalization} languageCode={scene.languageCode} />
       {session.missionGuidance?.length ? <section className="panel-note" role="note">
