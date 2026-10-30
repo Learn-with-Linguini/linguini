@@ -71,7 +71,7 @@ export function LearningTaskPage() {
         return;
       }
       goTo(nextLearningStep(session.tasks, task.id, generating));
-    }} onClose={() => navigate(isVocabularyTask ? `${base}/learn/vocabulary-preview` : `${base}/learn`)} onExit={() => navigate("/home")} /></div></TargetLanguageContext.Provider>;
+    }} onClose={() => navigate(`${base}/learn`)} onExit={() => navigate("/home")} /></div></TargetLanguageContext.Provider>;
 }
 
 /** A completed scene can be revisited without reopening its finished lesson. */

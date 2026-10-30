@@ -87,7 +87,9 @@ async function mount(Page: typeof source.Learn, initial: AppState, hasSummary = 
   const render = (value: AppState) => act(async () => {
     root.render(h(QueryClientProvider, { client }, h(AuthProvider, null,
       h(AppStateContext.Provider, { value }, h(MemoryRouter, null, h(Routes, null,
-        h(Route, { element: h(Outlet, { context: scene }) }, h(Route, { path: "/", element: h(Page) }))))))));
+        h(Route, { element: h(Outlet, { context: scene }) },
+          h(Route, { path: "/", element: h(Page) }),
+          h(Route, { path: "/practice/sessions/:sessionId/learn/:taskId", element: h("div", { "data-testid": "vocabulary-review" }) }))))))));
   });
   const cleanup = async () => {
     await act(async () => { root.unmount(); });
@@ -139,7 +141,7 @@ test("lesson preparation keeps its factual task status beside the lesson guidanc
 test("lesson overview leads with word review while keeping missions available", async () => {
   const current = state();
   current.session!.session.status = "inProgress";
-  current.session!.translationPreview = { words: [] } as unknown as PracticeDetail["translationPreview"];
+  current.session!.translationPreview = null;
   current.session!.tasks = [
     { id: "words", kind: "vocabularyIntroduction", status: "ready", orderIndex: 0, sceneObjectId: null,
       publicContent: { kind: "vocabularyIntroduction", title: "Photo words", allowTypingPractice: true,
@@ -159,6 +161,11 @@ test("lesson overview leads with word review while keeping missions available", 
   const mission = [...view.container.querySelectorAll<HTMLButtonElement>(".task-row")]
     .find(button => button.textContent?.includes("Name and identify"));
   assert.equal(mission?.disabled, false);
+  const review = [...view.container.querySelectorAll<HTMLButtonElement>("button")]
+    .find(button => button.textContent?.includes("Start word review"));
+  assert.equal(review?.disabled, false);
+  await act(async () => review?.click());
+  assert.ok(view.container.querySelector('[data-testid="vocabulary-review"]'));
 });
 
 test("Home announces Basil loading and unavailable states without inventing a zero total", async () => {

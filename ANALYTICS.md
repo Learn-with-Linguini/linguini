@@ -56,7 +56,6 @@ Because Linguini is a single-page application (SPA), route changes do not reload
 * `/onboarding` — Language pairing and level selection
 * `/practice` — Photo capture / scene selector
 * `/practice/sessions/:sessionId/*` — Active lesson tasks (word cards, grammar, description)
-* `/practice/sessions/:sessionId/learn/vocabulary-preview` — Photo-level vocabulary introductory preview
 * `/practice/ispy` — Standalone I-Spy mode selector (Solo vs Friends)
 * `/practice/ispy/join` — Enter invite code to join a room
 * `/practice/ispy/room/:roomCode` — Multiplayer I-Spy gameplay room
@@ -153,9 +152,7 @@ The existing analysis and review routes show this progress; no new page is added
 | `learning_exit_clicked` | — | User exits the learning task overview back to Home |
 | `finish_lesson_clicked` | — | User completes all learning tasks and clicks "Finish lesson" |
 | `play_ispy_clicked` | — | User proceeds from learning tasks to play I-Spy |
-| `vocabulary_preview_started` | — | User starts "Learn the words" vocabulary preview |
-| `vocabulary_preview_continue_clicked` | `{ taskId }` | User continues from preview to individual word learning |
-| `vocabulary_preview_exit_clicked` | — | User exits from vocabulary preview |
+| `vocabulary_review_started` | `{ taskId, revisiting }` | User opens the interactive vocabulary review directly from the lesson overview |
 | `vocabulary_flashcard_viewed` | `{ taskId, position, termType, hasSceneObject }` | Learner views a vocabulary teaching card, including whether its object can be highlighted in the scene |
 | `vocabulary_typing_checked` | `{ taskId, termType, isCorrect, revealed, basilEarned }` | Learner checks or reveals a typed vocabulary answer and receives any server-awarded Basil |
 | `home_continue_practice_clicked` | `{ sessionId }` | User resumes incomplete practice from dashboard |
@@ -275,7 +272,7 @@ Below are the 4 primary funnels designed around Linguini's user journey, followe
 | **Step 1** | Open Practice / Scene Picker | Event: `page_view`<br>Parameter: `page_path` equals `/practice` (or event: `home_begin_practice_clicked`) |
 | **Step 2** | Select Scene or Upload Photo | Event is one of:<br>• `practice_scene_selected`<br>• `practice_photo_uploaded` |
 | **Step 3** | Review & Confirm Vocabulary | Event: `scene_review_confirmed` |
-| **Step 4** | Start Tasks / Practice | Event is one of:<br>• `practice_session_started`<br>• `vocabulary_preview_continue_clicked` |
+| **Step 4** | Start Tasks / Practice | Event is one of:<br>• `practice_session_started`<br>• `vocabulary_review_started` |
 | **Step 5** | Complete Learning Tasks | Event is one of:<br>• `task_answer_checked`<br>• `ispy_clue_submitted` |
 | **Step 6** | Lesson Finished & Summary Viewed | Event: `session_summary_viewed` |
 

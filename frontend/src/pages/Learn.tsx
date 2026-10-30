@@ -78,10 +78,10 @@ export function Learn() {
           <p className="learn-words-intro__meta"><BookIcon size={18} /> {vocabularyWordCount} {vocabularyWordCount === 1 ? "word" : "words"}{taskXp(vocabularyTask) ? <><span aria-hidden="true"> · </span><XpPill {...taskXp(vocabularyTask)!} /></> : null}</p>
         </div>
         <Button block variant={vocabularyDone || vocabularySkipped ? "secondary" : undefined}
-          disabled={practiceSaving || (!vocabularyDone && !vocabularySkipped && !session.translationPreview)}
+          disabled={practiceSaving}
           onClick={() => {
-            trackAction("vocabulary_preview_started");
-            navigate(vocabularyDone || vocabularySkipped ? `${base}/learn/${vocabularyTask.id}` : `${base}/learn/vocabulary-preview`);
+            trackAction("vocabulary_review_started", { taskId: vocabularyTask.id, revisiting: vocabularyDone || vocabularySkipped });
+            navigate(`${base}/learn/${vocabularyTask.id}`);
           }}>
           <PlayIcon /> {vocabularyDone && !vocabularySkipped ? "Review again" : vocabularySkipped ? "Review words" : "Start word review"}
         </Button>

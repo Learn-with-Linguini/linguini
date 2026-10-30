@@ -4898,11 +4898,6 @@ p[role="alert"]::before { content: "!"; }
   opacity: .55;
 }
 
-.vocabulary-preview-page {
-  width: min(100%, 760px);
-  margin-inline: auto;
-}
-
 .learn-page > .stack-2:first-child {
   margin-bottom: var(--space-1);
 }
