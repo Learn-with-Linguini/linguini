@@ -1,14 +1,14 @@
 import { InlineLoader } from "../components/LoadingScreen";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { sessionDestination, sessionPaths } from "../lib/sessionRoute";
 import { BasilReward, Button, Feedback, IconButton, ProgressTrail, XpPill } from "../components/ui";
-import { ArrowRightIcon, CheckIcon, EyeIcon, EyeOffIcon, SpeakerIcon } from "../components/icons";
+import { ArrowRightIcon, EyeIcon, EyeOffIcon, SpeakerIcon } from "../components/icons";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
-import { choiceOrder, practiceStages, taskDone, taskXp } from "../lib/practiceTasks";
+import { practiceStages, taskDone, taskXp } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
 import { trackAction } from "../lib/analytics.ts";
 import { getLatestAttempt } from "../lib/api";
@@ -18,6 +18,17 @@ import { ReportIssueLink } from "../components/ReportIssueLink";
 import { playAnswerSound } from "../lib/answerSound";
 import { basilEarnedText } from "../lib/gamification";
 import { learningFeedback } from "../lib/learningFeedback";
+import { ISpyLevelHelp } from "../components/ISpyLevelHelp";
+
+const clueOpening = (languageCode: string) => languageCode === "es"
+  ? "Veo, veo, algo que"
+  : languageCode === "fr"
+    ? "Je vois, je vois, quelque chose qui"
+    : languageCode === "de"
+      ? "Ich sehe etwas, das"
+      : languageCode === "ko"
+        ? "나는 무언가를 보고 있어요:"
+        : "I spy with my little eye, something that";
 
 export function ISpyPhase1() {
   const navigate = useNavigate();
@@ -65,7 +76,10 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
   const { actOnTask, practiceSaving, practiceError } = useAppState();
   const [picked, setPicked] = useState<string | null>(null);
   const [result, setResult] = useState<TaskActionResult | null>(null);
-  const [showTranslation, setShowTranslation] = useState(false);
+  const round = task.publicContent.kind === "ispyRound" ? task.publicContent : null;
+  // A0 reads the translation straight away; A2 hears the clue before reading it.
+  const [showTranslation, setShowTranslation] = useState(Boolean(round?.translationShown));
+  const [heard, setHeard] = useState(!round?.listenFirst || taskDone(task));
   const [checking, setChecking] = useState(false);
   const request = useRef<{ answer: string; key: string } | null>(null);
   const submitting = useRef(false);
@@ -74,19 +88,22 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
     queryFn: ({ signal }) => getLatestAttempt(task.id, signal),
     enabled: task.status === "completed" && !result?.attempt,
   }).data?.attempt;
+  const autoPlay = round?.learnerLevel === "A0" && !taskDone(task);
+  useEffect(() => {
+    if (autoPlay && round) speak(`${clueOpening(scene.languageCode)} ${round.clue}`, scene.languageCode);
+    // Played once when the round opens.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const content = task.publicContent;
   if (content.kind !== "ispyRound") return null;
-  const opening = scene.languageCode === "es"
-    ? "Veo, veo, algo que"
-    : scene.languageCode === "fr"
-      ? "Je vois, je vois, quelque chose qui"
-      : scene.languageCode === "de"
-        ? "Ich sehe etwas, das"
-        : scene.languageCode === "ko"
-          ? "나는 무언가를 보고 있어요:"
-          : "I spy with my little eye, something that";
+  const opening = clueOpening(scene.languageCode);
+  const hearClue = () => {
+    speak(`${opening} ${content.clue}`, scene.languageCode);
+    if (!heard) trackAction("ispy_clue_listened_first", { taskId: task.id });
+    setHeard(true);
+  };
   const answered = taskDone(task);
-  const choose = async (optionId: string, source: "choice" | "photo_marker" = "choice") => {
+  const choose = async (optionId: string) => {
     if (answered || practiceSaving || submitting.current) return;
     submitting.current = true;
     setChecking(true);
@@ -99,7 +116,7 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
       if (saved?.attempt?.isCorrect != null) playAnswerSound(saved.attempt.isCorrect);
       if (saved) {
         request.current = null;
-        trackAction("ispy_clue_submitted", { optionId, isCorrect: saved.attempt?.isCorrect, source });
+        trackAction("ispy_clue_submitted", { optionId, isCorrect: saved.attempt?.isCorrect, source: "photo_marker" });
       }
     } finally {
       submitting.current = false;
@@ -125,25 +142,23 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
       guessItemId={selected?.sceneObjectId}
       onMarkerClick={!answered && !practiceSaving && !checking ? item => {
         const option = content.options.find(candidate => candidate.sceneObjectId === item.id);
-        if (option) void choose(option.optionId, "photo_marker");
+        if (option) void choose(option.optionId);
       } : undefined} />
     <div className="card card--lifted stack-2">
-      <div className="spread"><span className="label muted">Linguini says</span><IconButton label="Hear the clue" onClick={() => speak(`${opening} ${content.clue}`, scene.languageCode)}><SpeakerIcon /></IconButton></div>
+      <div className="spread"><span className="label muted">Linguini says</span><IconButton label="Hear the clue" onClick={hearClue}><SpeakerIcon /></IconButton></div>
+      {heard ? <>
       <span className="prompt-translation prompt-translation--with-source">
         <span className="prompt-translation__source"><h3>{opening} {content.clue}</h3>{content.clueTranslation ? <IconButton className="prompt-translation__toggle" label={showTranslation ? "Hide translation" : "Show translation"} onClick={() => setShowTranslation(value => !value)}>{showTranslation ? <EyeIcon size={20} /> : <EyeOffIcon size={20} />}</IconButton> : null}</span>
         {content.clueTranslation && showTranslation ? <span className="small muted">{content.clueTranslation}</span> : null}
       </span>
+      </> : <div className="stack-2" data-testid="listen-first">
+        <p className="muted">Listen to Linguini's clue first, then find the object.</p>
+        <div className="spread"><Button variant="secondary" onClick={hearClue}><SpeakerIcon /> Play the clue</Button>
+          <Button variant="quiet" onClick={() => { trackAction("ispy_clue_text_revealed", { taskId: task.id }); setHeard(true); }}>Show the clue</Button></div>
+      </div>}
     </div>
-    <p className="muted">Choose a numbered object below or tap its marker in the photo.</p>
-    <div className="choice-grid">{choiceOrder(content.options, task.id, option => option.optionId).map(option => {
-      const item = optionItems.find(candidate => candidate.id === option.sceneObjectId);
-      const label = item ? `Marker ${item.marker}: ${option.label}` : option.label;
-      const state = shownPick !== option.optionId ? "" : isCorrect != null ? (isCorrect ? " choice--correct" : " choice--incorrect") : " choice--selected";
-      return <button key={option.optionId} type="button" className={`choice${state}`} aria-label={label} aria-pressed={shownPick === option.optionId} disabled={answered || practiceSaving || checking} onClick={() => void choose(option.optionId)}>
-        {isCorrect && shownPick === option.optionId ? <CheckIcon size={16} /> : null}
-        {item ? <span>Marker {item.marker} · </span> : null}<span lang={scene.languageCode}>{option.label}</span>
-      </button>;
-    })}</div>
+    <ISpyLevelHelp support={content} languageCode={scene.languageCode} />
+    {!answered ? <p className="muted">Tap the matching numbered marker in the photo.</p> : null}
     {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
     {answered || result ? <>
       <Feedback tone={isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status">

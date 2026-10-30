@@ -338,7 +338,31 @@ class ISpyChoice(ApiModel):
     scene_object_id: UUID | None = None
 
 
-class ISpyRoundContent(MissionTaskFields):
+class WordBankEntry(ApiModel):
+    text: NonEmptyText = Field(max_length=200)
+    translation: NonEmptyText = Field(max_length=200)
+
+
+class CheatSheetRef(ApiModel):
+    mission_id: MissionId
+    practice_level: ProficiencyLevel
+    content_version: ContentVersion
+
+
+class ISpyLevelSupport(ApiModel):
+    """The learner level an I-Spy task was built for and the help it offers.
+
+    Omitted from JSON when unset, so tasks saved before levelled I-Spy keep their shape.
+    """
+
+    learner_level: ProficiencyLevel | None = Field(default=None, exclude_if=_is_none)
+    word_bank: list[WordBankEntry] = Field(
+        default_factory=list, max_length=30, exclude_if=_is_empty
+    )
+    cheat_sheet: CheatSheetRef | None = Field(default=None, exclude_if=_is_none)
+
+
+class ISpyRoundContent(MissionTaskFields, ISpyLevelSupport):
     kind: Literal["ispyRound"] = "ispyRound"
     clue: NonEmptyText
     clue_translation: str | None = None
@@ -346,6 +370,10 @@ class ISpyRoundContent(MissionTaskFields):
     options: list[ISpyChoice] = Field(default_factory=list)
     encouragement: str | None = None
     hint_available: bool = True
+    # Show the English translation straight away (A0) rather than behind the toggle.
+    translation_shown: bool = False
+    # Play the clue before showing its text (A2).
+    listen_first: bool = False
 
 
 type ClueFrameId = Literal["name", "colour", "location"]
@@ -386,7 +414,7 @@ class ClueFrame(ApiModel):
     help: list[ClueChip] = Field(default_factory=list, max_length=12)
 
 
-class ReflectionContent(MissionTaskFields):
+class ReflectionContent(MissionTaskFields, ISpyLevelSupport):
     kind: Literal["reflection"] = "reflection"
     prompt: NonEmptyText
     suggested_vocabulary_ids: list[UUID] = Field(default_factory=list)
@@ -394,6 +422,8 @@ class ReflectionContent(MissionTaskFields):
     allow_text: bool = True
     clue_frames: list[ClueFrame] = Field(default_factory=list, max_length=3)
     avoid_words: list[ClueChip] = Field(default_factory=list, max_length=20)
+    # Keep the clue frames behind a "Need help?" control (A2).
+    help_collapsed: bool = False
 
     @model_validator(mode="after")
     def validate_frames(self) -> ReflectionContent:
@@ -476,6 +506,8 @@ class TaskAnswerKey(ApiModel):
         default_factory=dict, exclude_if=_is_empty
     )
     scene_description_context: JsonObject | None = None
+    # The level an I-Spy description is judged at; unset judges at A1.
+    learner_level: ProficiencyLevel | None = Field(default=None, exclude_if=_is_none)
     question_evaluations: list[QuestionEvaluation] = Field(
         default_factory=list, exclude_if=_is_empty
     )

@@ -100,6 +100,24 @@ credits separately from the spendable balance. Existing XP history is preserved.
 See [the reward and badge policy](../docs/gamification.md). Standalone AI I-Spy
 games remain free and do not award Basil, XP or vocabulary progress.
 
+### I-Spy by level
+
+I-Spy plays the same scene and confirmed words at every level; the learner's
+proficiency level changes the clue and the help (`app/services/ispy_levels.py`):
+
+| | A0 | A1 | A2 |
+|---|---|---|---|
+| Linguini's clue | one detail, 2–4 words (validated at 6 or fewer) | two details | two details, a relation when the object has one |
+| Choosing the object | three differently named choices; clue plays aloud with its translation shown | every object | every object; clue is heard before it is read |
+| Describing | one object, built from word tiles only | two objects, frames and typing | two objects, typing with frames behind "Need help?" |
+| A clear match | the right object, even with a shared detail | as before | two matching details, or as many as the object has |
+| Extra help | word bank and the M02 A0 cheatsheet | none | none |
+
+The clue prompt receives `learnerLevel` only for A0 and A2, so A1 clues keep
+their cached results and precomputed scene templates. Preloaded scenes generate A0
+and A2 clues on first play and cache them publicly; rerun the template precompute
+after deploying, since the clue prompt version changed. Photo rooms are unchanged.
+
 Rooms store random invitations privately in the database, so a host can recover
 an invitation after reload or an API restart without a separate room secret.
 The invite migration rotates existing live invitations; hosts should copy the

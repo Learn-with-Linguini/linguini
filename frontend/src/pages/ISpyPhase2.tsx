@@ -18,6 +18,7 @@ import { applyFrame, choicesFromSlots, fillSlot, mentionsTarget, nearTarget, res
 import type { LanguageItem } from "../data/types";
 import { ReportIssueLink } from "../components/ReportIssueLink";
 import { learningFeedback } from "../lib/learningFeedback";
+import { ISpyLevelHelp } from "../components/ISpyLevelHelp";
 
 export function ISpyPhase2() {
   const navigate = useNavigate();
@@ -93,6 +94,7 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
   const [sentences, setSentences] = useState<FrameSentences>({});
   const [choices, setChoices] = useState<SlotChoices>({});
   const [revealedHelp, setRevealedHelp] = useState<ClueFrameId[]>([]);
+  const [helpOpen, setHelpOpen] = useState(false);
   // A pending task has no attempts; any other task restores its latest one before taking input.
   const [hydrated, setHydrated] = useState(task.status === "pending");
   const latest = useQuery({
@@ -131,6 +133,9 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
   const guessed = guessedId ? scene.items.find(item => item.id === guessedId) ?? null : null;
   const content = task.publicContent;
   if (content.kind !== "reflection") return null;
+  // A0 builds the clue only from tiles; A2 keeps the frames behind "Need help?".
+  const tilesOnly = content.allowText === false;
+  const framesShown = !content.helpCollapsed || helpOpen || selectedFrameIds.length > 0;
   const frames = visibleFrames(content.clueFrames);
   const activeFrame = frames.find(frame => frame.frameId === activeFrameId) ?? null;
   const namesTarget = mentionsTarget(text, content.avoidWords ?? []);
@@ -216,8 +221,13 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
       ? `Linguini's guess is your object (marker ${target.marker}).`
       : `Your object: marker ${target.marker} · Linguini's guess: marker ${guessed.marker} (dashed)`}</p> : null}
     <Card><div className="stack-2"><div className="spread"><span className="label muted">Describe this object</span></div><h2>{target?.word}</h2><span className="small muted">{target?.translation}</span><p>{content.prompt}</p></div></Card>
-    {frames.length ? <div className="stack-2" data-testid="clue-frames">
-      <span className="label muted">Clue frames (optional)</span>
+    <ISpyLevelHelp support={content} languageCode={scene.languageCode} />
+    {frames.length && !framesShown ? <Button variant="quiet" disabled={locked} onClick={() => {
+      trackAction("ispy_clue_help_opened", { taskId: task.id });
+      setHelpOpen(true);
+    }}>Need help? Show clue frames</Button> : null}
+    {frames.length && framesShown ? <div className="stack-2" data-testid="clue-frames">
+      <span className="label muted">{tilesOnly ? "Pick a clue frame, then tap the word tiles" : "Clue frames (optional)"}</span>
       <div className="chip-row">{frames.map(frame => <button key={frame.frameId} type="button" className={`chip${frame.frameId === activeFrameId ? " chip--selected" : ""}`} aria-pressed={frame.frameId === activeFrameId} disabled={locked} onClick={() => chooseFrame(frame)}>{FRAME_LABELS[frame.frameId]}</button>)}</div>
       {activeFrame ? <div className="clue-frame stack-2" data-testid="clue-frame">
         <strong lang={scene.languageCode}>{activeFrame.template ?? `${activeFrame.prefix} …`}</strong>
@@ -237,7 +247,14 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
           : <Button variant="secondary" disabled={locked} onClick={() => setRevealedHelp(ids => [...ids, activeFrame.frameId])}>Help me</Button> : null}
       </div> : null}
     </div> : null}
-    <div className="field"><label className="field__label" htmlFor="reflection">Your clue</label><input id="reflection" ref={input} className="input" value={text} maxLength={2000} disabled={locked} onChange={event => setText(event.target.value)} /></div>
+    <div className="field"><label className="field__label" htmlFor="reflection">Your clue</label>
+      <input id="reflection" ref={input} className="input" value={text} maxLength={2000} disabled={locked}
+        readOnly={tilesOnly} placeholder={tilesOnly ? "Tap the word tiles to build your clue" : undefined}
+        onChange={event => setText(event.target.value)} />
+      {tilesOnly && text && !locked ? <Button variant="quiet" onClick={() => {
+        setText(""); setSentences({}); setChoices({}); setInsertedChips([]);
+      }}>Start my clue again</Button> : null}
+    </div>
     {!hydrated && !restoreFailed ? <InlineLoader compact testId="restoring" label="Loading your last clue…" /> : null}
     {restoreFailed ? <div className="stack-2" role="alert" data-testid="restore-error"><span>We couldn't load your saved clue, so this task can't continue yet.</span><Button variant="secondary" onClick={() => void latest.refetch()}>Try again</Button></div> : null}
     {nearName && !locked ? <p className="small muted" data-testid="clue-near-warning">One word looks close to this object's name. If it's a different word, you can still send it.</p> : null}

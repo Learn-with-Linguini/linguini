@@ -402,9 +402,10 @@ class PostgresISpyGameRepository:
                 workflow._store_translation(c, current, profile, objects, translated_scene)
             objects, relations = workflow._scene_objects(c, current)
             words, _translations = workflow._words(c, current, objects)
+        level = profile.get("proficiency_level")
         clues = workflow._clues(
             session.id, payload, translated_scene, objects, words, relations,
-            claim.generation_options,
+            claim.generation_options, level=level,
         )
         if not clues:
             raise ISpyGameUnavailableError("No I-Spy clue rounds were generated.")
@@ -412,6 +413,7 @@ class PostgresISpyGameRepository:
             build_ispy_description_tasks(
                 session.id, objects, words,
                 _ispy_guess_context(payload, translated_scene, objects, relations),
+                level=level,
             )
             if workflow.ispy_guess_generator
             else []

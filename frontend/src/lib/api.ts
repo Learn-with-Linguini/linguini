@@ -505,9 +505,13 @@ export type TaskContent = MissionTaskFields & (
   | { kind: "grammarPractice"; prompt: string; options: string[] }
   | { kind: "syntaxExplanation"; title: string; sentencePattern: string; explanation: string; examples: string[] }
   | { kind: "sentenceBuilding"; prompt: string; sourceText: string | null; tokenBank: string[] }
-  | { kind: "ispyRound"; clue: string; clueTranslation?: string | null; encouragement?: string | null; options: { optionId: string; label: string; sceneObjectId: string }[] }
-  | { kind: "reflection"; prompt: string; clueFrames?: ClueFrame[]; avoidWords?: string[] }
+  | ({ kind: "ispyRound"; clue: string; clueTranslation?: string | null; encouragement?: string | null; options: { optionId: string; label: string; sceneObjectId: string }[]; translationShown?: boolean; listenFirst?: boolean } & ISpyLevelSupport)
+  | ({ kind: "reflection"; prompt: string; clueFrames?: ClueFrame[]; avoidWords?: string[]; allowText?: boolean; helpCollapsed?: boolean } & ISpyLevelSupport)
 );
+export interface WordBankEntry { text: string; translation: string }
+export interface CheatSheetRef { missionId: string; practiceLevel: string; contentVersion: number }
+/** The level an I-Spy task was built for and the help it offers (A0 gets a word bank and cheatsheet). */
+export interface ISpyLevelSupport { learnerLevel?: "A0" | "A1" | "A2"; wordBank?: WordBankEntry[]; cheatSheet?: CheatSheetRef | null }
 export type ClueFrameId = "name" | "colour" | "location";
 export type ClueSlotId = "position" | "reference" | "colour";
 export interface ClueSlotChip { text: string; meaning?: string | null; example?: string | null }

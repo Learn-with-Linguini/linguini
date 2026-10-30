@@ -266,6 +266,7 @@ class SceneTranslationService:
                     validate_translation_terms(parsed_payload, result, language_context)
                     self._review_meaning(
                         compact_payload, compact_result, language_context, disputed,
+                        attempt > 1 and not (attempt < attempts and invocation.can_call()),
                     )
                 except (ValueError, SceneTranslationError) as error:
                     if attempt < attempts and invocation.can_call():
@@ -326,7 +327,7 @@ class SceneTranslationService:
 
     def _review_meaning(
         self, payload: dict[str, Any], result: SceneTranslationResult, language_context,
-        disputed: dict[tuple[str, str], str],
+        disputed: dict[tuple[str, str], str], final_repair: bool = False,
     ) -> None:
         """Raise when a reviewer is confident a translation does not mean its source.
 
@@ -337,6 +338,8 @@ class SceneTranslationService:
         word, or says the word already means its source, is dropped. When the
         translator keeps a flagged word after a repair, the two models disagree; the
         word is kept for the lesson's content review instead of failing the session.
+        A word first flagged on the final repair never had a repair of its own, so it
+        is kept for content review too.
         """
         terms = {
             (field, term.key): term
@@ -406,6 +409,11 @@ class SceneTranslationService:
                 suggested.add(_folded(issue.suggestion))
                 if disputed.get((issue.group, issue.key)) == shown:
                     logger.warning("translator kept a flagged word; leaving it to content review")
+                    continue
+                if final_repair and (issue.group, issue.key) not in disputed:
+                    logger.warning(
+                        "word first flagged after the last repair; leaving it to content review"
+                    )
                     continue
                 disputed[(issue.group, issue.key)] = shown
                 problems.append(

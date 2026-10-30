@@ -120,10 +120,11 @@ from app.schemas.vocabulary import (
 from app.services.background import InlineBackgroundRunner
 from app.services.ispy_clue_frames import check_clue
 from app.services.ispy_descriptions import (
-    EVALUATION_FAILED_MESSAGE,
     OUTCOME_CORRECTNESS,
+    guess_feedback,
     interpret_guess,
 )
+from app.services.ispy_levels import ispy_level
 from app.services.mission_eligibility import (
     SHORTFALL_KINDS,
     SceneShortfall,
@@ -2848,6 +2849,7 @@ class PostgresWorkflowRepository:
                 claim.generation_options,
                 history=lesson_history(claim.learner_history, introduction),
                 history_scope=CacheScope.user(f"{self.user_id}:{claim.profile_id}"),
+                level=claim.profile.get("proficiency_level"),
             )
         if (
             not mission_lessons
@@ -2860,6 +2862,7 @@ class PostgresWorkflowRepository:
                 objects,
                 words,
                 _ispy_guess_context(payload, translated_scene, objects, relations),
+                level=claim.profile.get("proficiency_level"),
             )
 
         with self.transaction() as c:
@@ -3143,19 +3146,24 @@ class PostgresWorkflowRepository:
         words,
         relations,
         options=None,
+        *,
+        level=None,
     ):
         if not self.ispy_clue_generator:
             return []
         try:
+            clue_payload = ispy_clue_payload(payload, translated_scene, objects, relations)
+            if ispy_level(level).level != "A1":
+                # A1 is the prompt's default, so its payload (and cached clues) stay unchanged.
+                clue_payload["learnerLevel"] = ispy_level(level).level
             with _timed("I-Spy clue generation", session_id):
                 return build_ispy_clue_tasks(
                     session_id,
-                    self.ispy_clue_generator.generate(
-                        ispy_clue_payload(payload, translated_scene, objects, relations),
-                        **(options or {}),
-                    ),
+                    self.ispy_clue_generator.generate(clue_payload, **(options or {})),
                     objects,
                     words,
+                    level=level,
+                    language=clue_payload.get("targetLanguage"),
                 )
         except ISpyClueGenerationError:
             logger.exception("I-Spy clue generation failed for session %s.", session_id)
@@ -3173,6 +3181,7 @@ class PostgresWorkflowRepository:
         *,
         history=None,
         history_scope=None,
+        level=None,
     ):
         """Run the two independent generation calls at once, each with its own fallback.
 
@@ -3200,6 +3209,7 @@ class PostgresWorkflowRepository:
             words,
             relations,
             options=options,
+            level=level,
         )
         return self._alongside_clues(lessons, clues)
 
@@ -3596,12 +3606,14 @@ class PostgresWorkflowRepository:
                                 "This task changed while your description was evaluated. "
                                 "Retry the action."
                             )
-                        interpretation = interpret_guess(evaluation.guess, task.scene_object_id)
+                        interpretation = interpret_guess(
+                            evaluation.guess, task.scene_object_id,
+                            level=task.answer_key.learner_level,
+                            context=task.answer_key.scene_description_context,
+                        )
                         correct = OUTCOME_CORRECTNESS[interpretation.outcome]
-                        feedback_message = (
-                            EVALUATION_FAILED_MESSAGE
-                            if evaluation.guess is None
-                            else evaluation.guess.feedback
+                        feedback_message = guess_feedback(
+                            evaluation.guess, interpretation, task.scene_object_id
                         )
                         evaluation_details = interpretation.model_dump(mode="json", by_alias=True)
                     else:

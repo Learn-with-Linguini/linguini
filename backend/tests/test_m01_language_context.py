@@ -375,6 +375,22 @@ def test_word_the_translator_keeps_after_repair_is_left_to_content_review(pack_d
     assert len(provider.requests) == 2
 
 
+def test_word_first_flagged_after_the_last_repair_is_left_to_content_review(pack_dir, runtime):
+    def review(terms):
+        # The repair fixes cup; only then does the reviewer flag book for the first time.
+        cup_fixed = any(term["source"] == "cup" and term["translation"] == "taza"
+                        for term in terms)
+        return _flag("book", "tomo")(terms) if cup_fixed else _flag_cup(terms)
+
+    context = resolve_language_context("es")
+    provider = MockTranslationProvider(overrides={"cup": "verdura blanca"}, review=review)
+    translated = translator(provider, retries=1).translate(
+        payload(runtime), language_context=context
+    )
+    assert [term.translation for term in translated.objects if term.source == "book"] == ["libro"]
+    assert len(provider.requests) == 2 and len(provider.reviews) == 2
+
+
 @pytest.mark.parametrize("review", [
     _flag("cup", "taza"),  # suggests the word already used
     _flag("cup", "copa", meaning="cup"),  # says the word already means its source
