@@ -36,6 +36,59 @@ using [its setup guide](../backend/README.md), with that exact origin in
 backend still enforces its configured authentication mode. Production learner
 routes require a Supabase session.
 
+## Photo capture
+
+“Click” / “Open camera” opens a live camera preview on laptops and phones. “Take
+photo” captures a JPEG and sends it through the existing photo upload flow; Cancel
+or Escape closes the preview. Camera tracks stop on capture, cancellation, or
+navigation, including when permission arrives after the preview closes.
+
+No camera environment variables or API keys are needed. Browsers require HTTPS
+(or localhost for development), an available camera, and the user's permission.
+Plain HTTP on a LAN address does not provide browser camera access. The existing
+in-app Camera preference still controls whether the camera button is enabled.
+Permission, missing-device, and device-in-use errors explain how to recover;
+Upload remains available for choosing an existing image.
+
+## Vocabulary review
+
+Each object is reviewed alongside its explicitly linked adjective cards (for
+example, apple beside green). Cards appear in two columns when at least 480px is
+available and stack on narrower screens. Adjectives without an object link remain
+available afterward, followed by Relations. Previous, Next, marker selection and
+swipes navigate these groups. Quiz and typing order and saved answers are preserved.
+
+During the object section, photo markers select their matching card and play its
+target-language pronunciation using the existing language-pack voice settings.
+Repeated instances retain their own markers. Adjective and relation cards highlight
+associated objects when supplied, with speaker controls for pronunciation. The
+photo stays visible throughout review, quiz, typing, and completion. Outside active
+review, it shows without markers, word labels, or playback to avoid revealing answers.
+Marker buttons support keyboard activation;
+word cards remain readable when browser pronunciation is unavailable.
+
+Typing prompts offer “Skip typing” alongside the answer reveal action. Skipping
+moves to the next practice step without checking, revealing, or submitting that
+word's draft answer. Recognition questions and teaching cards have no typing-skip
+control. The option is disabled while an answer is being checked or saved.
+
+## Scene processing progress
+
+Scene analysis shows four stages: loading the photo, finding objects, checking
+results, and saving the review. The backend reports these milestones through the
+existing session polling response (`sceneAnalysisProgress`). Completed segments
+fill solidly; the active segment pulses, with reduced-motion support. Counts
+represent completed stages, never a percentage of elapsed or remaining time.
+Elapsed time uses the backend's processing start timestamp and survives refresh.
+The bar sits above the photo, with only the current stage and elapsed time visible;
+stage counts remain available to screen readers.
+
+After confirmation, a separate two-stage bar tracks translation and preparation
+of the first vocabulary task using committed session data. Older backend responses
+without analysis milestones show an indeterminate state. Polling pauses retain
+the last milestone and offer Check again; failures retain the existing retry flow.
+No additional environment variables are required.
+
 ## Structure
 
 | Path | Purpose |

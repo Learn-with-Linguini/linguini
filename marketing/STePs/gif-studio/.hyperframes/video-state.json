@@ -1,7 +1,7 @@
 {
   "version": 1,
   "historyId": "6ef9bba5-d5f4-4a1b-b4b6-2814d7853dc0",
-  "currentRevision": "d3823015-b0f0-48c3-9646-13ab768f3404",
+  "currentRevision": "a49b0ffb-2b6a-4ff4-9b2a-aa7d09545427",
   "pendingChanges": false,
   "files": {
     "assets/Baloo2-ExtraBold.ttf": {
@@ -75,6 +75,22 @@
     "compositions/gif-5-practice-upload.html": {
       "hash": "13b82a9f8922d31b3b0dd85a2958bacfcb643372d11b1d84379cd04895abbc48",
       "content": "C:\\Users\\home\\.cache\\hyperframes\\history\\6ef9bba5-d5f4-4a1b-b4b6-2814d7853dc0\\blobs\\13\\13b82a9f8922d31b3b0dd85a2958bacfcb643372d11b1d84379cd04895abbc48"
+    },
+    "assets/scene-cafe.jpg": {
+      "hash": "426055d8e48b1ea3f3c96941c456b695fdde84fce54641185b53641c3a551f2b",
+      "content": "C:\\Users\\home\\.cache\\hyperframes\\history\\6ef9bba5-d5f4-4a1b-b4b6-2814d7853dc0\\blobs\\42\\426055d8e48b1ea3f3c96941c456b695fdde84fce54641185b53641c3a551f2b"
+    },
+    "assets/scene-downtown.jpg": {
+      "hash": "c607f5366a9d90ca8448c97768ecb43d6ec87d1b366071a720429a94e64c2c92",
+      "content": "C:\\Users\\home\\.cache\\hyperframes\\history\\6ef9bba5-d5f4-4a1b-b4b6-2814d7853dc0\\blobs\\c6\\c607f5366a9d90ca8448c97768ecb43d6ec87d1b366071a720429a94e64c2c92"
+    },
+    "assets/scene-market.jpg": {
+      "hash": "afd4b832a0bfb2e56f4390431dac97470ddb50f6295e9688ee99468f1639006b",
+      "content": "C:\\Users\\home\\.cache\\hyperframes\\history\\6ef9bba5-d5f4-4a1b-b4b6-2814d7853dc0\\blobs\\af\\afd4b832a0bfb2e56f4390431dac97470ddb50f6295e9688ee99468f1639006b"
+    },
+    "compositions/gif-7-practice-full.html": {
+      "hash": "2617943380ca6ecdf3b9ef61adbe9c76903a5f0866653563a8989a213f964fe0",
+      "content": "C:\\Users\\home\\.cache\\hyperframes\\history\\6ef9bba5-d5f4-4a1b-b4b6-2814d7853dc0\\blobs\\26\\2617943380ca6ecdf3b9ef61adbe9c76903a5f0866653563a8989a213f964fe0"
     }
   },
   "revisions": {
@@ -239,6 +255,48 @@
           "after": "C:\\Users\\home\\.cache\\hyperframes\\history\\6ef9bba5-d5f4-4a1b-b4b6-2814d7853dc0\\blobs\\13\\13b82a9f8922d31b3b0dd85a2958bacfcb643372d11b1d84379cd04895abbc48"
         }
       }
+    },
+    "e3417733-0420-41e9-8793-9ba5868a2c2a": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1792925244643,
+      "endedAt": 1792925244737,
+      "files": {
+        "assets/scene-cafe.jpg": {
+          "before": null,
+          "after": "C:\\Users\\home\\.cache\\hyperframes\\history\\6ef9bba5-d5f4-4a1b-b4b6-2814d7853dc0\\blobs\\42\\426055d8e48b1ea3f3c96941c456b695fdde84fce54641185b53641c3a551f2b"
+        },
+        "assets/scene-downtown.jpg": {
+          "before": null,
+          "after": "C:\\Users\\home\\.cache\\hyperframes\\history\\6ef9bba5-d5f4-4a1b-b4b6-2814d7853dc0\\blobs\\c6\\c607f5366a9d90ca8448c97768ecb43d6ec87d1b366071a720429a94e64c2c92"
+        },
+        "assets/scene-market.jpg": {
+          "before": null,
+          "after": "C:\\Users\\home\\.cache\\hyperframes\\history\\6ef9bba5-d5f4-4a1b-b4b6-2814d7853dc0\\blobs\\af\\afd4b832a0bfb2e56f4390431dac97470ddb50f6295e9688ee99468f1639006b"
+        },
+        "compositions/gif-7-practice-full.html": {
+          "before": null,
+          "after": "C:\\Users\\home\\.cache\\hyperframes\\history\\6ef9bba5-d5f4-4a1b-b4b6-2814d7853dc0\\blobs\\92\\92b76106bafac728d70644a2ff21880d28bf23b7790ad70222f4b66eb7b27efa"
+        }
+      }
+    },
+    "a49b0ffb-2b6a-4ff4-9b2a-aa7d09545427": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1793284017822,
+      "endedAt": 1793284017825,
+      "files": {
+        "compositions/gif-7-practice-full.html": {
+          "before": "C:\\Users\\home\\.cache\\hyperframes\\history\\6ef9bba5-d5f4-4a1b-b4b6-2814d7853dc0\\blobs\\92\\92b76106bafac728d70644a2ff21880d28bf23b7790ad70222f4b66eb7b27efa",
+          "after": "C:\\Users\\home\\.cache\\hyperframes\\history\\6ef9bba5-d5f4-4a1b-b4b6-2814d7853dc0\\blobs\\26\\2617943380ca6ecdf3b9ef61adbe9c76903a5f0866653563a8989a213f964fe0"
+        }
+      }
     }
   },
   "checks": {
@@ -277,15 +335,15 @@
   },
   "renders": {
     "latest": {
-      "id": "edd18f4d-7f8f-42af-8f7e-891beececc15",
-      "completedAt": 1792922927581,
-      "output": "C:\\Users\\home\\Desktop\\linguini\\marketing\\STePs\\gif-studio\\renders\\gif-5.mp4",
+      "id": "7fba0576-1e41-4a0b-a687-43be48827948",
+      "completedAt": 1793284057431,
+      "output": "C:\\Users\\home\\Desktop\\linguini\\marketing\\STePs\\gif-studio\\renders\\gif-7.mp4",
       "status": "completed",
-      "revision": "d3823015-b0f0-48c3-9646-13ab768f3404"
+      "revision": "a49b0ffb-2b6a-4ff4-9b2a-aa7d09545427"
     },
     "retainedRevisions": [
-      "d3823015-b0f0-48c3-9646-13ab768f3404",
-      "730c96c8-58de-4fa3-b2a4-1354ab5ba184"
+      "a49b0ffb-2b6a-4ff4-9b2a-aa7d09545427",
+      "e3417733-0420-41e9-8793-9ba5868a2c2a"
     ]
   },
   "pendingArtifactCleanup": []

@@ -80,6 +80,35 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 1. `gtag("event", action, params)` to GA4.
 2. `window._uxa.push(["trackCustomEvent", action, params])` to Contentsquare.
 
+### Photo camera
+
+| Event Name | Parameters | Trigger Description |
+| :--- | :--- | :--- |
+| `photo_camera_opened` | — | User opens the live camera preview |
+| `photo_camera_captured` | — | A JPEG photo is captured for the existing upload flow |
+| `photo_camera_cancelled` | — | User closes the preview with Cancel or Escape |
+| `photo_camera_failed` | `{ reason }` | Camera API unavailable, browser error name, or `capture_failed`; no image data is tracked |
+
+### Vocabulary review interactions
+
+| Event Name | Parameters | Trigger Description |
+| :--- | :--- | :--- |
+| `vocabulary_typing_skipped` | `{ taskId, termType, revisiting }` | Learner skips the current typing prompt without checking or revealing its answer |
+| `vocabulary_marker_clicked` | `{ taskId, marker, audioAvailable }` | Learner selects a photo marker to show its object card and play target-language pronunciation when available |
+| `vocabulary_pronunciation_clicked` | `{ termType }` | Learner replays a word using the review card's speaker button |
+
+Objects appear beside their linked adjectives, followed by unlinked adjectives and
+relations. `vocabulary_flashcard_viewed` is emitted for each visible card with the
+group's position, term type, and `groupedCardCount`, including marker navigation.
+
+### Scene processing progress
+
+| Event Name | Parameters | Trigger Description |
+| :--- | :--- | :--- |
+| `scene_processing_progress_shown` | `{ sessionId, phase: "analysis" \| "lesson", stage, stalled }` | A processing stage becomes visible, including ready, legacy unknown, and paused polling states |
+
+The existing analysis and review routes show this progress; no new page is added.
+
 ### Authentication & Account Management
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |

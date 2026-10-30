@@ -220,12 +220,19 @@ def provisional_mission_focus(candidates, objects, relations, language_context=N
                 add(obj.id)
                 distinct.add(label)
 
-    # Give the learner a useful vocabulary set even when the provisional
-    # mission itself needs fewer facts. Preserve analysis usefulness order.
+    # Fill to five noun labels, not five markers. Keep mission-required facts,
+    # then follow analysis usefulness order for additional vocabulary.
+    selected_labels = {obj.label.strip().casefold() for obj in objects if obj.id in selected}
     for obj in objects:
-        if len(selected) >= min(5, len(objects)):
+        if len(selected_labels) >= 5:
             break
-        add(obj.id)
+        label = obj.label.strip().casefold()
+        if label not in selected_labels:
+            selected_labels.add(label)
+
+    # Repeated instances share a vocabulary slot, but retain their own markers,
+    # attributes and relations for counting and object-specific lesson questions.
+    selected = [obj.id for obj in objects if obj.label.strip().casefold() in selected_labels]
     return plan, selected
 
 

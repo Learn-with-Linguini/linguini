@@ -337,15 +337,18 @@ def _word(text, forms):
 def _split_subject(text, row):
     """(subject, predicate) of an owned-object sentence: La taza | es mía, 컵은 | 제 거예요.
 
-    The subject ends with the word holding the owned noun (with any particle or elided
+    The subject ends with the phrase holding the owned noun (with any particle or elided
     article attached); the predicate is the rest without final punctuation.
     """
-    words = text.rstrip(_FINAL).rstrip().split(" ")
-    noun = fold(row["noun"])
-    for index, word in enumerate(words):
-        bare = fold(word).replace("\u2019", "'").split("'")[-1]
-        if bare.startswith(noun) and index + 1 < len(words):
-            return " ".join(words[:index + 1]), " ".join(words[index + 1:])
+    words = text.rstrip(_FINAL).rstrip().split()
+    noun_words = fold(row["noun"]).split()
+    if noun_words:
+        for start in range(len(words) - len(noun_words)):
+            end = start + len(noun_words)
+            phrase = [fold(word).replace("\u2019", "'").split("'")[-1]
+                      for word in words[start:end]]
+            if phrase[:-1] == noun_words[:-1] and phrase[-1].startswith(noun_words[-1]):
+                return " ".join(words[:end]), " ".join(words[end:])
     raise ValueError(f"M04 cannot find the owned noun in {text!r}")
 
 

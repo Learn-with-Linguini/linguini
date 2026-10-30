@@ -318,10 +318,19 @@ def test_analysis_saves_draft_without_scene_objects_or_tasks():
         call.args[0] for call in connection.execute.call_args_list if not call.args[0].is_select
     ]
     session_writes = [write for write in writes if write.table.name == "sessions"]
-    assert len(session_writes) == 2
+    session_updates = [write.compile().params for write in session_writes]
+    transitions = [params for params in session_updates if "status" in params]
+    progress_updates = [params for params in session_updates if "status" not in params]
+    assert len(transitions) == 2
+    assert len(progress_updates) == 1
+    assert {"analysisStage": "savingResults"} in progress_updates[0].values()
+    assert not any(
+        write.table.name in {"scene_objects", "scene_object_relations", "session_tasks"}
+        for write in writes
+    )
     assert any(write.table.name == "media_scene_analyses" for write in writes)
-    assert session_writes[0].compile().params["status"] == "analyzingScene"
-    persist = session_writes[1].compile().params
+    assert transitions[0]["status"] == "analyzingScene"
+    persist = transitions[1]
     assert persist["status"] == "awaitingObjectReview"
     assert persist["session_title"] == "A title"
     assert persist["session_summary"] == "A summary."

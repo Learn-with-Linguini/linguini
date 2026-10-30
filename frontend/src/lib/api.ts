@@ -545,6 +545,10 @@ export interface SessionPersonalization {
   practiceFocuses: PracticeFocus[];
 }
 export interface PracticeDetail {
+  sceneAnalysisProgress?: {
+    stage: "loadingImage" | "findingObjects" | "checkingResults" | "savingResults" | "ready";
+    startedAt: string | null;
+  } | null;
   session: { id: string; mode: SessionMode; sourceSessionId: string | null; status: SessionStatus; sceneMediaAssetId: string; sessionTitle: string | null; sessionSummary: string | null; failureCode: "imageUploadFailed" | "sceneAnalysisFailed" | "imageModerationFailed" | "noValidObjects" | "vocabularyMappingFailed" | "taskGenerationFailed" | null };
   mediaAsset: { id: string; source: "preloaded" | "camera" | "userUpload" };
   sceneId: string | null; title: string;
