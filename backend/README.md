@@ -4,6 +4,33 @@ FastAPI/Pydantic API with SQLAlchemy persistence in Supabase PostgreSQL. Prisma
 owns schema migrations; it is not the Python runtime client. API JSON uses camelCase
 and Python attributes use snake_case. See the [project README](../README.md) for the frontend.
 
+## Scene analysis progress
+
+Initial review suggestions target five unique object labels (case-insensitive,
+ignoring surrounding whitespace). Repeated detections share one vocabulary slot:
+three benches and two chairs count as two names. All detected instances of each
+selected name retain their markers, attributes and relations for counting and
+instance-specific questions. When fewer than five names are detected, all are kept.
+Mission-required facts are retained even if a mission needs a larger selection.
+
+Review confirmation persists only accepted and manually added objects. Translation,
+mission planning, vocabulary and task generation use that confirmed set, including
+the retained repeated instances; unselected detections do not enter the lesson.
+Existing saved selections are preserved; the new default applies on fresh analysis.
+
+`GET /api/v1/sessions/{id}` returns optional `sceneAnalysisProgress` with `stage`
+(`loadingImage`, `findingObjects`, `checkingResults`, `savingResults`, or `ready`)
+and `startedAt`. Stages report actual processing milestones, not estimated AI
+completion percentages. Output validation, grounding and moderation must finish
+before saving begins; `ready` is exposed only once the review is committed.
+
+Milestones use the existing session `analysis_draft` JSON, so no migration or new
+environment setting is needed. Each update commits independently and is guarded
+by owner, active analysis status, and the attempt's start timestamp. Abandoned or
+superseded attempts cannot publish progress into a newer attempt. Progress write
+failures are logged without discarding a valid analysis. The existing polling
+endpoint retains its normal ownership and authentication checks.
+
 ## Setup
 
 Use Python 3.12+ and Node/npm. From `backend/` in PowerShell:
@@ -998,6 +1025,11 @@ project as the test database. Pure schema/error-handling tests run without a dat
 use PostgreSQL, create their own records in Python, and clean up after themselves.
 Scene tests read the catalog installed by migrations; no test JSON files or alternate
 storage adapters are used. The tests exercise the production dependency graph.
+
+Parsing a language pack takes most of a second, so tests that only read a bundled pack
+use `bundled_pack(path)` from `tests/bundled_packs.py`, which parses each pack once per
+run and returns a private copy. Tests that edit pack files copy the pack to `tmp_path`
+and call `load_pack` on the copy; never point an editing test at the bundled packs.
 
 Production sources are under `app/`, migrations under `prisma/migrations/`,
 and database/schema tests under `tests/`.

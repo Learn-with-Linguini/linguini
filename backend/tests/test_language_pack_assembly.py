@@ -2,6 +2,7 @@ from pathlib import Path
 from uuid import UUID
 
 import pytest
+from bundled_packs import bundled_pack
 from pydantic import ValidationError
 
 from app.language_packs.assembly import AssembledItem, Tile, assemble, is_correct, join_chunks
@@ -21,7 +22,6 @@ from app.language_packs.generation import (
     clear_validators,
     register_validator,
 )
-from app.language_packs.loader import load_pack
 from app.language_packs.schema import Provenance, SentenceChunk, join_pack_chunks
 from app.schemas.enums import PartOfSpeech
 
@@ -84,7 +84,7 @@ def _vocabulary():
 
 
 def test_deterministic_checks_cover_slots_facts_vocabulary_labels_chunks_and_nfc():
-    pack = load_pack(FIXTURE)
+    pack = bundled_pack(FIXTURE)
     plan = lesson_plan(pack, ("M01", "A0", 1))
     vocabulary = _vocabulary()
     candidate = _candidate(
@@ -108,7 +108,7 @@ def test_deterministic_checks_cover_slots_facts_vocabulary_labels_chunks_and_nfc
 
 
 def test_exact_unreviewed_example_is_not_assessed_as_reviewed_or_approvable():
-    pack = load_pack(FIXTURE)
+    pack = bundled_pack(FIXTURE)
     plan = lesson_plan(pack, ("M01", "A0", 1))
     candidate = _candidate()
 
@@ -125,7 +125,7 @@ def test_exact_unreviewed_example_is_not_assessed_as_reviewed_or_approvable():
 
 
 def test_only_human_reviewed_exact_construction_example_grants_reviewed_form():
-    pack = load_pack(FIXTURE)
+    pack = bundled_pack(FIXTURE)
     construction = next(
         item for item in pack.constructions
         if item.construction_id == "identify-object"
@@ -159,7 +159,7 @@ def test_only_human_reviewed_exact_construction_example_grants_reviewed_form():
 
 
 def test_vocabulary_form_match_is_not_sentence_level_review_evidence():
-    pack = load_pack(FIXTURE)
+    pack = bundled_pack(FIXTURE)
     candidate = _candidate(
         text="taza",
         chunks=[SentenceChunk(text="taza", join="none")],
@@ -170,7 +170,7 @@ def test_vocabulary_form_match_is_not_sentence_level_review_evidence():
 
 
 def test_registered_validator_is_opt_in_and_model_output_provenance_is_generated():
-    pack = load_pack(FIXTURE)
+    pack = bundled_pack(FIXTURE)
     plan = lesson_plan(pack, ("M01", "A0", 1))
     candidate = _candidate(text="Parece una taza.", chunks=[
         SentenceChunk(text="Parece", join="none"),
@@ -215,7 +215,7 @@ def test_tile_order_is_compared_by_joined_text_and_duplicate_tiles_are_allowed()
 def test_assembly_preserves_chunk_join_behavior_and_non_space_separator():
     assert join_chunks is join_pack_chunks
 
-    pack = load_pack(FIXTURE)
+    pack = bundled_pack(FIXTURE)
     plan = lesson_plan(pack, ("M01", "A0", 1))
     candidate = _candidate()
     approval = approve(

@@ -5,11 +5,11 @@ from types import SimpleNamespace
 from uuid import UUID
 
 import pytest
+from bundled_packs import bundled_pack
 
 from app.language_packs.capabilities import mission_template_key, pack_mission_keys
 from app.language_packs.context import LanguageContext, resolve_language_context
 from app.language_packs.lessons import PACK_MISSION_IDS, pack_mission
-from app.language_packs.loader import load_pack
 from app.language_packs.plan import bind_plan
 from app.language_packs.runtime import session_inputs
 from app.schemas.enums import SessionMode
@@ -127,7 +127,7 @@ def test_m02_a2_photo_rule_needs_one_object_matching_both_clues():
 
 
 def test_counted_groups_become_facts_only_for_confirmed_objects():
-    pack = load_pack(PACK)
+    pack = bundled_pack(PACK)
     objects = [SimpleNamespace(id=UUID(int=i), label="cup", attributes={}) for i in (1, 2, 3)]
     words = [SimpleNamespace(id=UUID(int=i + 10)) for i in (1, 2, 3)]
     translated = SimpleNamespace(
@@ -151,7 +151,7 @@ def test_counted_groups_become_facts_only_for_confirmed_objects():
 
 
 def test_bind_plan_rejects_missions_without_a_pack_implementation():
-    pack = load_pack(PACK)
+    pack = bundled_pack(PACK)
     facts, vocabulary = session_inputs(
         pack, [], [], [], SimpleNamespace(objects=[], attributes=[], relationships=[]), {},
     )
@@ -199,7 +199,7 @@ def test_m03_a2_needs_two_groups_of_different_objects_and_counts():
 def test_m03_count_terms_take_the_counted_noun_form():
     from app.language_packs.lessons.m03 import number_vocabulary
 
-    pack = load_pack(PACK)
+    pack = bundled_pack(PACK)
     objects = [SimpleNamespace(id=UUID(int=1), label="apple", attributes={})]
     words = [SimpleNamespace(id=UUID(int=11))]
     translated = SimpleNamespace(
@@ -221,7 +221,7 @@ def test_one_word_can_realize_the_article_and_the_number_one():
     from app.language_packs.generation import _shared_word_use
     from app.language_packs.lessons.m03 import number_vocabulary
 
-    pack = load_pack(PACK)
+    pack = bundled_pack(PACK)
     objects = [SimpleNamespace(id=UUID(int=1), label="apple", attributes={})]
     translated = SimpleNamespace(
         objects=[SimpleNamespace(key=str(UUID(int=1)), source="apple", translation="manzana",
@@ -238,7 +238,7 @@ def test_one_word_can_realize_the_article_and_the_number_one():
 def test_m02_positions_fall_back_to_other_confirmed_relations():
     from app.language_packs.lessons.m02 import _relation_alternatives
 
-    pack = load_pack(PACK)
+    pack = bundled_pack(PACK)
     labels = {1: ("cup", "taza"), 2: ("table", "mesa"), 3: ("book", "libro")}
     objects = [SimpleNamespace(id=UUID(int=n), label=label, attributes={})
                for n, (label, _text) in labels.items()]
@@ -268,7 +268,7 @@ def test_m02_positions_fall_back_to_other_confirmed_relations():
 def _two_cabinets(*labels):
     """A scene with two cabinets: a name alone does not pick out one of them."""
     labels = labels or (("cabinet", "armario"), ("window", "ventana"), ("cabinet", "armario"))
-    pack = load_pack(PACK)
+    pack = bundled_pack(PACK)
     objects = [SimpleNamespace(id=UUID(int=n), label=label, attributes={})
                for n, (label, _text) in enumerate(labels, 1)]
     translated = SimpleNamespace(
@@ -319,7 +319,7 @@ def test_m03_a0_counts_the_first_of_several_small_groups():
     from app.missions import get_mission
     from app.services.mission_eligibility import scene_attributes
 
-    pack = load_pack(PACK)
+    pack = bundled_pack(PACK)
     labels = {1: ("chair", "silla", "feminine"), 2: ("table", "mesa", "feminine")}
     objects = [SimpleNamespace(id=UUID(int=n), label=label, attributes={})
                for n, (label, _text, _gender) in labels.items()]
@@ -343,7 +343,7 @@ def test_m03_a0_counts_the_first_of_several_small_groups():
 
 def _owned_scene(language_pack=PACK, colours=("red", "white", "green")):
     """Cup, book and table, each with a colour; the shape M04 lessons plan from."""
-    pack = load_pack(language_pack)
+    pack = bundled_pack(language_pack)
     labels = {1: ("cup", "taza", "feminine"), 2: ("book", "libro", "masculine"),
               3: ("table", "mesa", "feminine")}
     objects = [SimpleNamespace(id=UUID(int=n), label=label, attributes={"color": colour})
@@ -539,7 +539,7 @@ def test_m05_noun_phrases_are_what_two_same_frame_sentences_write_differently():
     ("dislike", "Me gusta la taza.", False),
 ])
 def test_m05_spec_use_sets_the_polarity_pack_checks_demand(use, text, passes):
-    construction = next(item for item in load_pack(PACK).constructions
+    construction = next(item for item in bundled_pack(PACK).constructions
                         if item.construction_id == "my-preference")
     checks = [check for check in construction.checks if check.applies(use, True)]
     assert all(check.passes(text) for check in checks) is passes

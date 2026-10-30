@@ -113,12 +113,26 @@ def _required_family(candidate: CandidateSentence) -> str | None:
 
 
 class NounPhraseValidator:
-    validator_id = "noun-phrase.v6"
+    validator_id = "noun-phrase.v7"
 
     def __init__(self, vocabulary: ApprovedVocabulary) -> None:
         self.terms = {term.term_id: term for term in vocabulary.terms}
 
     def validate(self, candidate: CandidateSentence, _pack: LanguagePack) -> ValidatorResult:
+        if candidate.construction_id == "noun-word-pair" and _pack.paired_words:
+            uses = {item.role: item for item in candidate.term_uses if item.role}
+            use = uses.get("object")
+            noun = self.terms.get(use.term_id) if use else None
+            if noun is not None:
+                expected = {
+                    pair.join(noun.target_text).casefold().replace("’", "'")
+                    for pair in _pack.paired_words.words
+                }
+                if candidate.text.strip().casefold().replace("’", "'") not in expected:
+                    return ValidatorResult(passed=False, messages=[
+                        f"M13 must keep the session noun and number {noun.target_text!r}; "
+                        "change only its paired article/ending, not its noun or number.",
+                    ])
         if candidate.proposed_realizations or candidate.construction_id in (
             COUNTING | OWNING | PREFERRING | REQUESTING
         ):

@@ -320,6 +320,9 @@ uses gendered forms of the bound possessive and none is the noun's own (mein Tas
 taza es mío), it fails; forms for any gender (mi, mir) and genderless languages are not
 judged, and French mon/ma before a vowel is left to the model review. Possessive words
 are pack data, so proposals never change them (proposals v5).
+A0 ownership gap questions retain the complete translated noun phrase (for example,
+`banco de parque`) in the subject, including elided articles and attached particles;
+only the remaining predicate becomes the answer choice.
 
 M05 (say what you like) exists at A0 and A1. Who likes what is a lesson fact
 (`preferences`: an object, a `person` and `likes`): at A0 the learner's own choice or,
@@ -373,6 +376,14 @@ feedback and assistance steps. The polite-frame distractors are labels
 (`request-distractor-have`/`-exists`: Tengo, Hay). Choosing another item would need new
 sentences, so a pack lesson offers no alternatives on its scenario card. Request
 constructions recognise regular plurals after a quantity (cafés, Stifte) as counting ones do.
+
+M13 keeps the session noun lexeme and grammatical number while changing its paired
+article/ending as the construction requires (`une banane` → `la banane`, `un vélo` →
+`le vélo`). Synonyms and unintended pluralization are rejected even for model-proposed
+realizations. Translation display phrases are not assumed definite: a phrase outside
+the pack's definite pairs is retained as `session_phrase` context instead. Generation
+and content review explicitly allow the intended article change; prompt and validator
+versions invalidate older cached results. Grammatical and content checks remain active.
 
 M13 (choose the word that goes with the noun) exists at A0. One `noun-word-pair` chunk is
 generated per object (up to three differently named ones): the noun with the word it
