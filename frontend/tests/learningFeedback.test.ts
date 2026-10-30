@@ -184,7 +184,9 @@ for (const checkEachQuestion of [true, false]) {
     assert.equal(dom.window.document.querySelectorAll('.scene img[alt="Table"]').length, 1);
     const marker = dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Marker 1"]');
     assert.ok(marker);
+    assert.equal(button("Marker 1"), undefined, "marker questions do not repeat photo markers as choices");
     await surface.act(async () => { marker.dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true })); });
+    assert.equal(marker.getAttribute("aria-pressed"), "true");
     assert.equal(button("Check answer")?.disabled, false);
   });
 

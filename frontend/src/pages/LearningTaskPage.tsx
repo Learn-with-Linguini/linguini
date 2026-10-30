@@ -914,13 +914,18 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
         /> : <>
         <div className="mission-markers"><ScenePhoto
           scene={scene} hideWords items={markers.length ? markers.map(marker => marker.item) : questionObjects}
-          activeItemId={markers.find(marker => marker.option.optionId === (checks[question.questionId]?.isCorrect
-            ? checks[question.questionId]?.answer
-            : question.options.find(option => option.label === checks[question.questionId]?.correctAnswer)?.optionId))?.item.id ?? null}
+          activeItemId={markers.find(marker => marker.option.optionId === (checks[question.questionId]
+            ? checks[question.questionId]?.isCorrect
+              ? checks[question.questionId]?.answer
+              : question.options.find(option => option.label === checks[question.questionId]?.correctAnswer)?.optionId
+            : answers[question.questionId]))?.item.id ?? null}
           onMarkerClick={!isChecked && !checking && markers.length
             ? item => {
               const marker = markers.find(candidate => candidate.item.id === item.id);
-              if (marker) setAnswers(value => ({ ...value, [question.questionId]: marker.option.optionId }));
+              if (marker) {
+                setAnswers(value => ({ ...value, [question.questionId]: marker.option.optionId }));
+                trackAction("lesson_marker_selected", { taskId: task.id, questionId: question.questionId, marker: item.marker });
+              }
             } : undefined}
         /></div>
         {question.roleplayPremise ? <div className="roleplay-premise" role="note" aria-label={`Scenario: ${roleplayScenario(question.roleplayPremise)}`}>
@@ -965,7 +970,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
             value={answers[question.questionId] ?? ""}
             disabled={isChecked || checking || saved.isLoading || saved.isError}
             onChange={event => setAnswers(value => ({ ...value, [question.questionId]: event.target.value }))} />
-        </div> : <div className="choice-grid">{questionOptions(question, `${task.id}:${question.questionId}`).map(option => {
+        </div> : markers.length ? null : <div className="choice-grid">{questionOptions(question, `${task.id}:${question.questionId}`).map(option => {
           const result = checks[question.questionId];
           const situationRetrying = Boolean(isSituation && result && !result.isCorrect);
           const selected = answers[question.questionId] === option.optionId || result?.answer === option.optionId;
@@ -1236,9 +1241,12 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
           onMarkerClick={terminal || practiceSaving || checking || results[question.questionId] !== undefined ? undefined
             : item => {
               const marker = markers.find(candidate => candidate.item.id === item.id);
-              if (marker) setAnswers(value => ({ ...value, [question.questionId]: marker.option.optionId }));
+              if (marker) {
+                setAnswers(value => ({ ...value, [question.questionId]: marker.option.optionId }));
+                trackAction("lesson_marker_selected", { taskId: task.id, questionId: question.questionId, marker: item.marker });
+              }
             }} /></div> : null}
-        <div className="choice-grid">{questionOptions(question, `${task.id}:${question.questionId}`).map(option => {
+        {!markers.length ? <div className="choice-grid">{questionOptions(question, `${task.id}:${question.questionId}`).map(option => {
           const selected = chosen[question.questionId] === option.optionId;
           const graded = results[question.questionId];
           const state = graded !== undefined && solutions[question.questionId] === option.optionId ? " choice--correct"
@@ -1247,7 +1255,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
           return <button key={option.optionId} className={`choice${state}`} aria-pressed={selected} disabled={terminal || practiceSaving || checking || graded !== undefined}
             onClick={() => setAnswers(value => ({ ...value, [question.questionId]: option.optionId }))}>
             <span {...nativeProps}>{optionText(question, option.label)}</span>{question.romanizations?.[option.label] ? <small lang="und-Latn" dir="ltr"> {question.romanizations[option.label]}</small> : null}</button>;
-        })}</div></>}
+        })}</div> : null}</>}
       </>}
       {results[question.questionId] !== undefined ? <>
         <Feedback tone={results[question.questionId] ? "good" : "warn"}><div className="stack-2" role={terminal ? undefined : "status"} aria-atomic={terminal ? undefined : true}>

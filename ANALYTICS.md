@@ -146,6 +146,7 @@ The existing analysis and review routes show this progress; no new page is added
 | `scene_shortfall_new_photo` | `{ missing }` | Learner leaves a short scene to take or choose another photo |
 | `scene_analysis_retried` | `{ sessionId }` | User requests AI re-analysis of a photo |
 | `task_answer_checked` | `{ taskId, isCorrect, kind }` | Learner checks answer on an interactive exercise |
+| `lesson_marker_selected` | `{ taskId, questionId, marker }` | Learner answers a marker-based lesson question by selecting its numbered marker directly on the photo |
 | `task_completed` | `{ taskId, kind }` | Learner completes reading or informational task |
 | `task_finished_to_list` | `{ taskId, kind }` | Learner finishes the final task and returns to the task list |
 | `task_opened` | `{ taskId }` | User opens a specific learning task from the task list |
