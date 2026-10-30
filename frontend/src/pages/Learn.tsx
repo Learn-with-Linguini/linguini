@@ -62,6 +62,7 @@ export function Learn() {
 
       {practiceError ? <p role="alert">{practiceError}</p> : null}
 
+      {/* The photo stays after the words are learned: the missions below are about it. */}
       {vocabularyTask && (!vocabularyDone || vocabularySkipped) ? <div className="learn-words-intro">
         <div className="learn-words-intro__photo"><ScenePhoto scene={scene} items={[]} />{!vocabularySkipped && taskXp(vocabularyTask) ? <XpPill {...taskXp(vocabularyTask)!} /> : null}</div>
         <Button block variant={vocabularySkipped ? "secondary" : undefined}
@@ -73,7 +74,9 @@ export function Learn() {
           <PlayIcon /> {vocabularySkipped ? "Review words" : "Learn the words"}
         </Button>
         {vocabularySkipped ? <p className="small muted">Skipped</p> : null}
-      </div> : null}
+      </div> : <div className="learn-words-intro">
+        <div className="learn-words-intro__photo"><ScenePhoto scene={scene} items={[]} /></div>
+      </div>}
 
       {tasks.length ? <section className="stack-3 learn-missions" aria-label="Learning missions">
         {!vocabularyDone ? <div><h2>Next missions</h2></div> : null}

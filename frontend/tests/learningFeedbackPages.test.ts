@@ -136,6 +136,24 @@ test("lesson preparation keeps its factual task status beside the branded copy",
   assert.match(status?.textContent ?? "", /You can learn and practise your words now\./);
 });
 
+test("the lesson photo stays on the task list after the words are learned", async () => {
+  const task = (id: string, kind: string, status: string, orderIndex: number) => ({ id, kind, status, orderIndex,
+    phase: "learning", isSkippable: true, xpReward: 10, xpBonus: 0, vocabularyItemId: null, sceneObjectId: null,
+    publicContent: { kind, title: kind === "vocabularyIntroduction" ? "Photo words" : "Describe the photo" } });
+  const current = state();
+  current.session!.session.status = "inProgress";
+  current.session!.tasks = [task("words", "vocabularyIntroduction", "pending", 0), task("mission", "grammarLesson", "pending", 1)] as unknown as PracticeDetail["tasks"];
+  const view = await mount(source.Learn, current);
+  const photo = () => view.container.querySelector(".learn-words-intro__photo .scene");
+  const learnWords = () => [...view.container.querySelectorAll("button")].some(button => button.textContent?.includes("Learn the words"));
+  assert.ok(photo());
+  assert.ok(learnWords());
+  current.session!.tasks = [task("words", "vocabularyIntroduction", "completed", 0), task("mission", "grammarLesson", "pending", 1)] as unknown as PracticeDetail["tasks"];
+  await view.render({ ...current });
+  assert.ok(photo(), "the photo is still shown once the vocabulary task is completed");
+  assert.equal(learnWords(), false);
+});
+
 test("Home announces Basil loading and unavailable states without inventing a zero total", async () => {
   const current = state({ user: null, learner: { name: "Learner" } as AppState["learner"],
     progress: null, progressLoading: true, progressError: null });
