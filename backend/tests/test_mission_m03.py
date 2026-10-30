@@ -98,6 +98,48 @@ def test_provisional_focus_shows_five_reliable_objects_when_available():
     assert selected == [item.id for item in objects[:5]]
 
 
+def test_provisional_focus_counts_unique_labels_and_retains_repeated_markers():
+    labels = ("bench", "bench", "bench", "chair", "chair", "lamp", "tree", "bin", "car")
+    objects = [obj(uuid4(), label) for label in labels]
+    _plan, selected = provisional_mission_focus([], objects, [])
+    kept = [item for item in objects if item.id in selected]
+    assert {item.label for item in kept} == {"bench", "chair", "lamp", "tree", "bin"}
+    assert selected == [item.id for item in objects[:-1]]
+
+
+def test_fewer_than_five_unique_labels_keep_all_available_instances():
+    objects = [obj(uuid4(), label) for label in ("bench", "bench", "bench", "chair", "chair")]
+    _plan, selected = provisional_mission_focus([], objects, [])
+    assert selected == [item.id for item in objects]
+
+
+def test_unique_selection_ignores_label_case_and_surrounding_whitespace():
+    labels = ("bench", " Bench ", "BENCH", "chair", "lamp", "tree", "bin", "car")
+    objects = [obj(uuid4(), label) for label in labels]
+    _plan, selected = provisional_mission_focus([], objects, [])
+    assert selected == [item.id for item in objects[:-1]]
+
+
+def test_tasks_plan_from_five_unique_names_with_counting_instances_and_relations():
+    objects = [obj(uuid4(), label, color="green", **({"quantity": "3"} if label == "bench" else {}))
+               for label in ("bench", "bench", "bench", "chair", "lamp", "tree", "bin", "car")]
+    relation = SimpleNamespace(
+        id=uuid4(), subject_scene_object_id=objects[0].id,
+        relation="on", reference_scene_object_id=objects[3].id,
+    )
+    candidates = [M01, M02, M03]
+    _provisional, selected = provisional_mission_focus(candidates, objects, [relation])
+    confirmed = [item for item in objects if item.id in selected]
+    assert {item.label for item in confirmed} == {"bench", "chair", "lamp", "tree", "bin"}
+    assert objects[-1].id not in selected
+    counts = suggested_counted_groups(confirmed)
+    bench = next(group for group in counts if group["label"] == "bench")
+    assert bench["quantity"] == 3
+    assert len(bench["sceneObjectIds"]) == 3
+    plan = plan_missions(candidates, confirmed, [relation], counts)
+    assert {mission.mission_id for mission in plan} == {"M01", "M02", "M03"}
+
+
 @pytest.mark.parametrize(("value", "expected"), [
     ("3", 3), ("three", 3), (" Two books", 2), ("10", 10), ("11", None), ("0", None),
     ("several", None), ("", None), (None, None), (3, None),

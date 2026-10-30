@@ -22,8 +22,8 @@ export function TranslationPreview({ preview, scene }: { preview: NonNullable<Pr
     <h2>Vocabulary preview</h2>
     {([
       ["Objects", preview.objects],
-      ["Attributes", preview.attributes],
-      ["Relationships", preview.relationships],
+      ["Adjectives", preview.attributes],
+      ["Relations", preview.relationships],
     ] as const).map(([label, terms]) => {
       const uniqueTerms = uniquePreviewTerms(terms);
       return uniqueTerms.length ? <section key={label} className="translation-preview__group">

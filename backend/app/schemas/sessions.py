@@ -195,7 +195,13 @@ class SceneShortfall(ApiModel):
     missions: list[MissionShortfall] = Field(default_factory=list)
 
 
+class SceneAnalysisProgress(ApiModel):
+    stage: Literal["loadingImage", "findingObjects", "checkingResults", "savingResults", "ready"]
+    started_at: AwareDatetime | None = None
+
+
 class SessionDetailResponse(ApiModel):
+    scene_analysis_progress: SceneAnalysisProgress | None = None
     analysis_mode: Literal["placeholder"] | None = None
     media_asset: MediaAsset
     scene_id: str | None = None

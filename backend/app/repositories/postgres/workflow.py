@@ -672,6 +672,7 @@ class PostgresWorkflowRepository:
             values["analysis_draft"] = {
                 **(extra.get("analysis_draft", session.analysis_draft) or {}),
                 "processingStartedAt": utc_now().isoformat(),
+                **({"analysisStage": "loadingImage"} if target == "analyzingScene" else {}),
             }
         if target == "inProgress":
             values["started_at"] = session.started_at or utc_now()
@@ -1374,6 +1375,16 @@ class PostgresWorkflowRepository:
         ]
         tasks = self._tasks(c, session.id)
         return SessionDetailResponse(
+            scene_analysis_progress=(
+                {
+                    "stage": "ready" if session.status == "awaitingObjectReview"
+                    else draft["analysisStage"],
+                    "startedAt": (draft or {}).get("processingStartedAt"),
+                }
+                if session.status == "awaitingObjectReview"
+                or (session.status == "analyzingScene" and (draft or {}).get("analysisStage"))
+                else None
+            ),
             session=session,
             media_asset=asset,
             scene_id=scene["slug"] if scene else None,
@@ -1809,10 +1820,39 @@ class PostgresWorkflowRepository:
         )
         return detail
 
+    def _record_analysis_stage(self, claimed, stage):
+        """Publish a milestone only for the still-current attempt, in a short transaction."""
+        try:
+            with self.transaction() as c:
+                c.execute(
+                    update(sessions)
+                    .where(
+                        sessions.c.id == claimed.id,
+                        sessions.c.user_id == self.user_id,
+                        sessions.c.status == "analyzingScene",
+                        sessions.c.analysis_draft["processingStartedAt"].astext
+                        == (claimed.analysis_draft or {}).get("processingStartedAt"),
+                    )
+                    .values(
+                        analysis_draft=sessions.c.analysis_draft.op("||")({"analysisStage": stage})
+                    )
+                )
+        except PracticeStorageError:
+            # Progress is advisory; a missed update must not discard a valid analysis.
+            logger.warning("Could not publish scene-analysis progress for %s.", claimed.id)
+
     def _run_scene_analysis(self, session_id, profile_id, claimed, asset, profile, scene):
         """Model round-trip, off the request path. Must never raise to its runner."""
         try:
-            result = self.analyzer.analyze(claimed, asset, profile, scene)
+            progressive = getattr(self.analyzer, "analyze_with_progress", None)
+            if progressive is not None:
+                result = progressive(
+                    claimed, asset, profile, scene,
+                    partial(self._record_analysis_stage, claimed),
+                )
+            else:
+                result = self.analyzer.analyze(claimed, asset, profile, scene)
+            self._record_analysis_stage(claimed, "savingResults")
             if asset.source in {"camera", "userUpload"}:
                 result = result.model_copy(update={"title": uploaded_scene_title(result)})
             with self.transaction() as c:
@@ -1897,6 +1937,7 @@ class PostgresWorkflowRepository:
         )
         return {
             "analysisAttempts": analysis_attempts(session),
+            "processingStartedAt": (session.analysis_draft or {}).get("processingStartedAt"),
             **({"languageContext": context.snapshot()} if context else {}),
             "objects": [
                 obj.model_dump(mode="json", by_alias=False) for obj in result.objects
