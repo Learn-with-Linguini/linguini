@@ -88,7 +88,7 @@ def test_m06_is_a2_only():
             for item in lesson_missions(
                 "lesson", {"proficiency_level": "A0", "target_language_code": language}
             )
-        ] == ["M01", "M02", "M03", "M04", "M05", "M13"]
+            ] == ["M01", "M02", "M03", "M05"]
 
 
 

@@ -18,6 +18,8 @@ class A0MissionSnapshot(ApiModel):
     taught_chunks: list[TaughtChunk]
     owned_object_id: UUID | None = None
     pretend: bool | None = None
+    owner_name: Literal["Ana", "Leo"] | None = None
     preference_object_ids: list[UUID] | None = None
     chosen_object_id: UUID | None = None
     reaction: Literal["like", "dislike"] | None = None
+    subject_name: Literal["Ana", "Leo"] | None = None

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import Field, model_validator
 
@@ -17,15 +17,55 @@ class CheatSheetExample(ApiModel):
     note: NonEmptyText | None = None
 
 
+class CheatSheetPatternChoice(ApiModel):
+    text: NonEmptyText
+    label: NonEmptyText
+
+
+class CheatSheetPatternPart(ApiModel):
+    """One visual part of a construction, kept in the language's natural order."""
+
+    part_id: ContractId
+    label: NonEmptyText
+    role: Literal["fixed", "choice", "slot", "ending"]
+    text: NonEmptyText | None = None
+    choices: list[CheatSheetPatternChoice] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_content(self) -> CheatSheetPatternPart:
+        if (self.text is None) == (not self.choices):
+            raise ValueError("pattern parts need exactly one of text or choices")
+        return self
+
+
+class CheatSheetTip(ApiModel):
+    """A labelled memory aid with a target-language example."""
+
+    marker: NonEmptyText
+    label: NonEmptyText
+    target_text: NonEmptyText
+    translation: NonEmptyText
+
+
+class CheatSheetReferenceItem(ApiModel):
+    """One compact entry in a visual reference grid, such as a number word."""
+
+    label: NonEmptyText
+    target_text: NonEmptyText
+
+
 class CheatSheetConcept(ApiModel):
     """One teachable idea, linked to a target or pattern in the mission contract."""
 
     concept_id: ContractId
+    section_id: ContractId | None = None
     title: NonEmptyText
-    explanation: NonEmptyText
+    explanation: NonEmptyText | None = None
     formula: NonEmptyText | None = None
     examples: Annotated[list[CheatSheetExample], Field(min_length=1)]
-    tips: list[NonEmptyText] = Field(default_factory=list)
+    tips: list[NonEmptyText | CheatSheetTip] = Field(default_factory=list)
+    reference_items: list[CheatSheetReferenceItem] = Field(default_factory=list)
+    pattern_parts: list[CheatSheetPatternPart] = Field(default_factory=list)
     character_reference_section_ids: list[ContractId] = Field(default_factory=list)
 
 
@@ -34,17 +74,20 @@ class MissionCheatSheet(ApiModel):
     practice_level: ProficiencyLevel
     content_version: ContentVersion
     language_code: LanguageCode
+    text_direction: Literal["ltr", "rtl"] = "ltr"
     title: NonEmptyText
-    summary: NonEmptyText
+    summary: NonEmptyText | None = None
     concepts: Annotated[list[CheatSheetConcept], Field(min_length=1)]
     character_reference_id: ContractId | None = None
     character_reference_version: ContentVersion | None = None
 
     @model_validator(mode="after")
     def validate_unique_concepts(self) -> MissionCheatSheet:
-        concept_ids = [concept.concept_id for concept in self.concepts]
-        if len(concept_ids) != len(set(concept_ids)):
-            raise ValueError("conceptIds cannot repeat")
+        section_ids = [
+            concept.section_id or concept.concept_id for concept in self.concepts
+        ]
+        if len(section_ids) != len(set(section_ids)):
+            raise ValueError("sectionIds cannot repeat")
         reference_values = (self.character_reference_id, self.character_reference_version)
         if None in reference_values and any(value is not None for value in reference_values):
             raise ValueError(
@@ -67,8 +110,9 @@ class MissionCheatSheetSummary(ApiModel):
     practice_level: ProficiencyLevel
     content_version: ContentVersion
     language_code: LanguageCode
+    text_direction: Literal["ltr", "rtl"] = "ltr"
     title: NonEmptyText
-    summary: NonEmptyText
+    summary: NonEmptyText | None = None
     character_reference_id: ContractId | None = None
     character_reference_version: ContentVersion | None = None
 

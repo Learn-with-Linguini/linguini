@@ -465,6 +465,29 @@ export interface LanguageDisplayContext {
   speechLocale: string; speechSynthesis: "browserVoice" | "none"; speechRecognition: boolean;
 }
 export interface MissionTaskFields { missionId?: string; practiceLevel?: ProficiencyLevel; contentVersion?: number; languageContext?: LanguageDisplayContext | null }
+export interface CheatSheetExample { targetText: string; translation: string; note?: string | null }
+export interface CheatSheetPatternChoice { text: string; label: string }
+export interface CheatSheetTip { marker: string; label: string; targetText: string; translation: string }
+export interface CheatSheetReferenceItem { label: string; targetText: string }
+export interface CheatSheetPatternPart {
+  partId: string; label: string; role: "fixed" | "choice" | "slot" | "ending";
+  text?: string | null; choices: CheatSheetPatternChoice[];
+}
+export interface MissionCheatSheet {
+  missionId: string; practiceLevel: ProficiencyLevel; contentVersion: number; languageCode: string; textDirection: "ltr" | "rtl";
+  title: string; summary?: string | null; characterReferenceId?: string | null; characterReferenceVersion?: number | null;
+  concepts: {
+    conceptId: string; sectionId?: string | null; title: string; explanation?: string | null; formula?: string | null;
+    examples: CheatSheetExample[]; tips: (string | CheatSheetTip)[]; referenceItems: CheatSheetReferenceItem[];
+    patternParts: CheatSheetPatternPart[];
+    characterReferenceSectionIds: string[];
+  }[];
+}
+export const getMissionCheatSheet = (
+  missionId: string, practiceLevel: string, contentVersion: number, languageCode: string, signal?: AbortSignal,
+) => request<MissionCheatSheet>(`/api/v1/learning-resources/cheatsheets/${encodeURIComponent(missionId)}?${new URLSearchParams({
+  languageCode, practiceLevel, contentVersion: String(contentVersion),
+})}`, signal);
 export interface RoleplayFact {
   sceneObjectId: string;
   source: "assignedRoleplay";
@@ -737,7 +760,7 @@ export const getVocabularyChecks = (id: string, signal?: AbortSignal) =>
 export const checkVocabularyAnswer = (id: string, questionId: string, optionId: string, review = false) =>
   write<VocabularyAnswerCheck>(`/api/v1/tasks/${id}/check-vocabulary-answer`, "POST", { questionId, optionId, review });
 export const checkVocabularyTyping = (id: string, learningKey: string, answer: string, reveal = false) =>
-  write<{ learningKey: string; isCorrect: boolean; correctAnswer: string; revealed: boolean; basilEarned: number }>(`/api/v1/tasks/${id}/check-vocabulary-typing`, "POST", { learningKey, answer, reveal });
+  write<{ learningKey: string; isCorrect: boolean; isClose: boolean; correctAnswer: string; revealed: boolean; basilEarned: number }>(`/api/v1/tasks/${id}/check-vocabulary-typing`, "POST", { learningKey, answer, reveal });
 export const completePractice = (id: string) => write<{ id: string; status: string }>(`/api/v1/sessions/${id}/complete`, "POST", {});
 export const abandonPractice = (id: string) => write<{ id: string; status: string }>(`/api/v1/sessions/${id}/abandon`, "POST", {});
 export const getPracticeSummary = (id: string) => request<{

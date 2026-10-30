@@ -40,9 +40,6 @@ variety), instruction_language, specs (each with slot_id, spec_id, construction_
 approved vocabulary forms, and required fixed labels), guidance (mandatory construction guidance, correct examples and incorrect examples
 with corrections), and optionally repair (previous failures with exact reasons).
 Rules:
-- For noun-word-pair (M13), preserve the bound session noun and its number. Apply the
-  construction's article/ending: un vélo -> le vélo, une banane -> la banane. Never
-  replace the noun with a synonym (vélo -> bicyclette) or pluralize singular fruit.
 - Write exactly one candidate for every spec, in the target language and register given. Vocabulary is meaning-anchored
   reference data, not an exhaustive dictionary. You may propose necessary grammatical forms and natural wording.
   Preserve fixed labels. Supply realizations (term_id, surface) when a bound term uses a new form, including agreement.

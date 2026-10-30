@@ -106,7 +106,7 @@ def test_a2_missions_leave_the_a1_and_a0_plans_unchanged():
     )
     assert [(mission.mission_id, mission.practice_level) for mission in a0] == [
         ("M01", "A0"), ("M02", "A0"), ("M03", "A0"),
-        ("M04", "A0"), ("M05", "A0"), ("M13", "A0"),
+            ("M05", "A0"),
     ]
 
 

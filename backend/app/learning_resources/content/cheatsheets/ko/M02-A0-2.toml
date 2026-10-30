@@ -1,0 +1,76 @@
+mission_id = "M02"
+practice_level = "A0"
+content_version = 2
+language_code = "ko"
+text_direction = "ltr"
+title = "Descriptors come before the object"
+
+[[concepts]]
+concept_id = "recognise-adjective"
+title = "Before the object"
+explanation = "Korean descriptors come before the object. There is no article like “a” or “the”."
+formula = "descriptor + object"
+
+[[concepts.pattern_parts]]
+part_id = "adjective"
+label = "descriptor"
+role = "choice"
+
+[[concepts.pattern_parts.choices]]
+text = "빨간"
+label = "red"
+
+[[concepts.pattern_parts.choices]]
+text = "파란"
+label = "blue"
+
+[[concepts.pattern_parts]]
+part_id = "object"
+label = "object"
+role = "slot"
+text = "컵"
+
+[[concepts.examples]]
+target_text = "빨간 컵"
+translation = "the red cup"
+
+[[concepts]]
+concept_id = "recognise-preposition"
+title = "Put the position after the reference object"
+explanation = "The position follows the reference object, then 있어요 completes the sentence."
+formula = "object + reference object + position + 있어요"
+
+[[concepts.pattern_parts]]
+part_id = "object"
+label = "object + subject marker"
+role = "slot"
+text = "컵이"
+
+[[concepts.pattern_parts]]
+part_id = "reference"
+label = "reference object"
+role = "slot"
+text = "책상"
+
+[[concepts.pattern_parts]]
+part_id = "position"
+label = "position"
+role = "choice"
+
+[[concepts.pattern_parts.choices]]
+text = "위에"
+label = "on"
+
+[[concepts.pattern_parts]]
+part_id = "verb"
+label = "is"
+role = "fixed"
+text = "있어요"
+
+[[concepts.examples]]
+target_text = "컵이 책상 위에 있어요."
+translation = "The cup is on the desk."
+
+[[concepts.examples]]
+target_text = "컵이 책상 아래에 있어요."
+translation = "The cup is under the desk."

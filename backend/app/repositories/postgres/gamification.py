@@ -44,7 +44,9 @@ from app.schemas.tasks import SessionTask
 from app.services.mission_eligibility import lesson_missions
 
 POLICY_VERSION = "basil-questions.v1"
-BADGE_POLICY_VERSION = "mission-badges.v1"
+BADGE_POLICY_VERSION = "mission-badges.v2"
+# A finished mission earns its badge when more than this share of answers is right.
+BADGE_MIN_CORRECT_RATIO = 0.5
 metadata = MetaData()
 question_events = Table(
     "learning_question_events",
@@ -109,6 +111,7 @@ CATALOGUE = (
     ("M11", "Pass It On", "Leave a practical message"),
     ("M12", "Make It Happen", "Arrange an activity"),
 )
+CATALOGUE_NAMES = {mission_id: name for mission_id, name, _ in CATALOGUE}
 
 
 def question_event(c, user_id, task_id, question_id):
@@ -364,23 +367,11 @@ def _batch(c, session, key, tasks):
     ]
     correct = [item for item in assessed if item["outcome"] == "correct"]
     independent = [item for item in correct if not item.get("assistanceUsed", True)]
-    targets = {target for item in correct for target in item.get("targetIds", [])}
     requirements = []
-    performance = mission.expected_performance
     if len(assessed) < len(expected_questions):
         requirements.append("Answer every assessed question in this mission.")
-    if len(assessed) < performance.min_assessed_questions:
-        requirements.append(
-            f"Complete at least {performance.min_assessed_questions} assessed questions."
-        )
-    if not assessed or len(correct) / len(assessed) < performance.min_correct_ratio:
-        requirements.append(f"Get at least {round(performance.min_correct_ratio * 100)}% correct.")
-    if len(independent) < performance.min_independent_correct:
-        requirements.append(
-            f"Answer {performance.min_independent_correct} questions correctly without assistance."
-        )
-    if any(not targets.intersection(group) for group in performance.required_target_groups):
-        requirements.append("Show the mission's required language targets correctly.")
+    if not assessed or len(correct) / len(assessed) <= BADGE_MIN_CORRECT_RATIO:
+        requirements.append(f"Get more than {round(BADGE_MIN_CORRECT_RATIO * 100)}% correct.")
     preparing = session["status"] == "generatingTasks"
     if preparing:
         requirements.append("Wait for the mission to finish preparing.")
@@ -458,6 +449,38 @@ def _batch(c, session, key, tasks):
     return public, record
 
 
+def _badge_level(successes):
+    """The badge a mission's successful batches earn: Taster, then Cook, else none."""
+    photos = {row["photo_identity"] for row in successes if row["photo_identity"]}
+    scenarios = {row["scenario_identity"] for row in successes if row["photo_identity"]}
+    independent_photos = {
+        row["photo_identity"]
+        for row in successes
+        if row["photo_identity"] and row["lower_assistance"]
+    }
+    cook = len(photos) >= 3 and len(scenarios) >= 2 and len(independent_photos) >= 2
+    return "Cook" if cook else "Taster" if successes else None
+
+
+def _newly_earned_badge(c, session, record):
+    """The badge level this session's batch adds for its mission, if any."""
+    if record is None or not record["successful"]:
+        return None
+    earlier = list(
+        c.execute(
+            select(mission_batches).where(
+                mission_batches.c.user_id == session["user_id"],
+                mission_batches.c.language_profile_id == session["language_profile_id"],
+                mission_batches.c.mission_id == record["mission_id"],
+                mission_batches.c.successful.is_(True),
+                mission_batches.c.session_id != session["id"],
+            )
+        ).mappings()
+    )
+    level = _badge_level([*earlier, record])
+    return level if level != _badge_level(earlier) else None
+
+
 def session_missions(c, user_id, session_id, *, persist=False):
     session = (
         c.execute(
@@ -484,7 +507,10 @@ def session_missions(c, user_id, session_id, *, persist=False):
     for key, tasks in groups.items():
         public, record = _batch(c, session, key, tasks)
         if public:
-            result.append(public)
+            result.append(public.model_copy(update={
+                "name": CATALOGUE_NAMES.get(key[0], key[0]),
+                "badge_earned": _newly_earned_badge(c, session, record),
+            }))
         if persist and record:
             c.execute(insert(mission_batches).values(**record).on_conflict_do_nothing())
     return result
@@ -518,16 +544,10 @@ def gamification_summary(c, user_id, profile):
     for mission_id, name, skill in catalogue:
         successes = [row for row in rows if row["mission_id"] == mission_id]
         photos = {row["photo_identity"] for row in successes if row["photo_identity"]}
-        scenarios = {row["scenario_identity"] for row in successes if row["photo_identity"]}
-        independent_photos = {
-            row["photo_identity"]
-            for row in successes
-            if row["photo_identity"] and row["lower_assistance"]
-        }
-        cook = len(photos) >= 3 and len(scenarios) >= 2 and len(independent_photos) >= 2
-        level = "Cook" if cook else "Taster" if successes else None
+        level = _badge_level(successes)
+        cook = level == "Cook"
         requirements = (
-            ["Complete a successful mission batch to earn Taster."]
+            ["Finish this mission with more than 50% correct to earn Taster."]
             if not successes
             else [
                 "Complete successful batches across three different photos and two target sets.",

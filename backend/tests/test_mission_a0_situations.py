@@ -64,14 +64,15 @@ def test_a0_scenario_is_stable_pretend_and_only_for_a0(mission_id):
     assert assign_a0_scenario(a0, session_id, objects, {}) is None
 
 
-def test_provisional_plan_surfaces_both_opt_in_a0_situations_within_final_cap():
+def test_provisional_plan_surfaces_the_a0_preference_situation_within_final_cap():
     candidates = lesson_missions(
         "lesson", {"proficiency_level": "A0", "target_language_code": "es"},
     )
     objects = _objects(["cup", "book"])
     provisional, _selected = provisional_mission_focus(candidates, objects, [])
     provisional_ids = [mission.mission_id for mission in provisional]
-    assert {"M04", "M05"} <= set(provisional_ids)
+    assert "M05" in provisional_ids
+    assert "M04" not in provisional_ids
     candidate_order = {
         (mission.mission_id, str(mission.practice_level), mission.content_version): index
         for index, mission in enumerate(candidates)
@@ -93,12 +94,13 @@ def test_provisional_plan_surfaces_both_opt_in_a0_situations_within_final_cap():
     }
     final = plan_missions(candidates, objects, [], mission_choices=choices)
     final_ids = {mission.mission_id for mission in final}
-    assert {"M04", "M05"} <= final_ids
+    assert "M05" in final_ids
+    assert "M04" not in final_ids
     assert len(final) <= 3
     # Without choices (no review screen sends them) they can still be planned.
     unchosen = {mission.mission_id for mission in plan_missions(
         candidates, objects, [], mission_choices={})}
-    assert unchosen & {"M04", "M05"}
+    assert "M05" in unchosen
 
 
 @pytest.mark.parametrize("mission_id", ["M04", "M05"])

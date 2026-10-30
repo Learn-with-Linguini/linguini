@@ -496,28 +496,3 @@ purpose = "confirmOrRepair"
 construction_id = "order-repeat"
 additional_constructions = ["order-confirmation", "order-repair"]
 target_ids = ["confirm-or-repair"]
-
-[[missions]]
-mission_id = "M13"
-practice_level = "A0"
-content_version = 1
-sequence_repeat = 2
-required_constructions = [
-  { construction_id = "noun-word-pair", min_version = 1 },
-]
-requires_paired_words = true
-
-[[missions.slots]]
-purpose = "chooseChunk"
-construction_id = "noun-word-pair"
-target_ids = ["noun-word-pair"]
-
-[[missions.slots]]
-purpose = "matchSpoken"
-construction_id = "noun-word-pair"
-target_ids = ["noun-word-pair"]
-
-[[missions.slots]]
-purpose = "fillSlot"
-construction_id = "noun-word-pair"
-target_ids = ["noun-word-pair"]

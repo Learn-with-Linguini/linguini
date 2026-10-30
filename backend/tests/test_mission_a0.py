@@ -21,7 +21,7 @@ WORDS = {
     "ko": ["컵", "책", "사과", "나무"],
 }
 LABELS = ["cup", "book", "apple", "tree"]
-MISSIONS = ("M01", "M02", "M03", "M04", "M05", "M13")
+MISSIONS = ("M01", "M02", "M03", "M04", "M05")
 
 
 def _objects(labels=LABELS):

@@ -80,7 +80,34 @@ def test_loads_cheatsheet_linked_to_mission_and_character_reference(tmp_path: Pa
 def test_all_committed_learning_resources_are_valid() -> None:
     references = load_character_references(CHARACTER_REFERENCES_DIR)
 
-    load_cheat_sheets(CHEAT_SHEETS_DIR, references)
+    cheat_sheets = load_cheat_sheets(CHEAT_SHEETS_DIR, references)
+
+    french_m01 = cheat_sheets[("M01", "A0", 1, "fr")]
+    article = french_m01.concepts[1].pattern_parts[1]
+    assert [(choice.text, choice.label) for choice in article.choices] == [
+        ("un", "masculine"),
+        ("une", "feminine"),
+    ]
+
+    french_structure = [
+        (
+            concept.concept_id,
+            concept.explanation is not None,
+            len(concept.pattern_parts),
+        )
+        for concept in french_m01.concepts
+    ]
+    for language_code in ("es", "de"):
+        sheet = cheat_sheets[("M01", "A0", 1, language_code)]
+        assert sheet.summary is french_m01.summary is None
+        assert [
+            (
+                concept.concept_id,
+                concept.explanation is not None,
+                len(concept.pattern_parts),
+            )
+            for concept in sheet.concepts
+        ] == french_structure
 
 
 def test_rejects_a_concept_not_in_the_mission_definition(tmp_path: Path) -> None:
@@ -124,6 +151,171 @@ def test_learning_resource_routes_are_exposed() -> None:
     assert "/api/v1/learning-resources/cheatsheets/{mission_id}" in paths
     assert "/api/v1/learning-resources/character-references" in paths
     assert "/api/v1/learning-resources/character-references/{reference_id}" in paths
+
+
+def test_french_a0_m01_cheatsheet_is_served_to_the_ui() -> None:
+    response = TestClient(app).get(
+        "/api/v1/learning-resources/cheatsheets/M01",
+        params={"languageCode": "fr", "practiceLevel": "A0"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["textDirection"] == "ltr"
+    assert body["concepts"][1]["formula"] == "C'est + un/une + object."
+    assert body["concepts"][1]["patternParts"][1]["choices"] == [
+        {"text": "un", "label": "masculine"},
+        {"text": "une", "label": "feminine"},
+    ]
+
+
+@pytest.mark.parametrize(
+    ("language", "formula"),
+    [
+        ("es", "Es + un/una + object."),
+        ("de", "Das ist + ein/eine + object."),
+        ("ko", "이것은 + object + 이에요/예요."),
+    ],
+)
+def test_other_a0_m01_cheatsheets_are_served_to_the_ui(
+    language: str, formula: str
+) -> None:
+    response = TestClient(app).get(
+        "/api/v1/learning-resources/cheatsheets/M01",
+        params={"languageCode": language, "practiceLevel": "A0"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["concepts"][1]["formula"] == formula
+
+
+def test_french_a0_m02_description_cheatsheet_is_served_to_the_ui() -> None:
+    response = TestClient(app).get(
+        "/api/v1/learning-resources/cheatsheets/M02",
+        params={
+            "languageCode": "fr",
+            "practiceLevel": "A0",
+            "contentVersion": 2,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["title"] == "Adjectives can be before or after the object"
+    assert [concept["conceptId"] for concept in response.json()["concepts"]] == [
+        "recognise-adjective",
+        "recognise-adjective",
+        "recognise-preposition",
+    ]
+    assert [concept["title"] for concept in response.json()["concepts"][:2]] == [
+        "After the object",
+        "Before the object",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("language", "title", "adjective_example", "location_example"),
+    [
+        (
+            "es",
+            "Adjectives usually come after the object",
+            "la taza roja",
+            "La taza está sobre la mesa.",
+        ),
+        (
+            "de",
+            "Adjectives come before the object",
+            "die rote Tasse",
+            "Die Tasse ist auf dem Tisch.",
+        ),
+        ("ko", "Descriptors come before the object", "빨간 컵", "컵이 책상 위에 있어요."),
+    ],
+)
+def test_other_a0_m02_cheatsheets_are_served_to_the_ui(
+    language: str, title: str, adjective_example: str, location_example: str
+) -> None:
+    response = TestClient(app).get(
+        "/api/v1/learning-resources/cheatsheets/M02",
+        params={
+            "languageCode": language,
+            "practiceLevel": "A0",
+            "contentVersion": 2,
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["title"] == title
+    assert [concept["conceptId"] for concept in body["concepts"]] == [
+        "recognise-adjective",
+        "recognise-preposition",
+    ]
+    assert body["concepts"][0]["examples"][0]["targetText"] == adjective_example
+    assert body["concepts"][1]["examples"][0]["targetText"] == location_example
+    if language == "ko":
+        assert [
+            example["targetText"] for example in body["concepts"][1]["examples"]
+        ] == ["컵이 책상 위에 있어요.", "컵이 책상 아래에 있어요."]
+
+
+@pytest.mark.parametrize(
+    ("language", "two", "chunk"),
+    [
+        ("fr", "deux", "deux tasses"),
+        ("es", "dos", "dos tazas"),
+        ("de", "zwei", "zwei Tassen"),
+        ("ko", "두 개", "컵 두 개"),
+    ],
+)
+def test_a0_m03_cheatsheets_include_numbers_and_counted_objects(
+    language: str, two: str, chunk: str
+) -> None:
+    response = TestClient(app).get(
+        "/api/v1/learning-resources/cheatsheets/M03",
+        params={"languageCode": language, "practiceLevel": "A0"},
+    )
+
+    assert response.status_code == 200
+    concepts = response.json()["concepts"]
+    assert [concept["conceptId"] for concept in concepts] == [
+        "count-small-group",
+        "number-noun-chunk",
+    ]
+    assert len(concepts[0]["referenceItems"]) == 10
+    assert concepts[0]["referenceItems"][1]["targetText"] == two
+    assert concepts[1]["examples"][1]["targetText"] == chunk
+
+
+def test_french_a0_m05_cheatsheet_separates_like_and_dislike() -> None:
+    response = TestClient(app).get(
+        "/api/v1/learning-resources/cheatsheets/M05",
+        params={"languageCode": "fr", "practiceLevel": "A0"},
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["title"] == "Say what you like and don't like"
+    assert [concept["title"] for concept in body["concepts"]] == [
+        "I like",
+        "I don't like",
+    ]
+    assert body["concepts"][0]["patternParts"][0]["text"] == "J'aime"
+    assert [part["text"] for part in body["concepts"][1]["patternParts"]] == [
+        "Je",
+        "n'",
+        "aime",
+        "pas",
+        "la pomme",
+    ]
+    assert [part["role"] for part in body["concepts"][1]["patternParts"]] == [
+        "fixed",
+        "choice",
+        "fixed",
+        "ending",
+        "slot",
+    ]
+    assert body["concepts"][1]["examples"][1]["targetText"] == (
+        "Leo n'aime pas le livre."
+    )
 
 
 def test_missing_learning_resources_return_clear_404s() -> None:

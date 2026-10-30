@@ -127,12 +127,18 @@ def test_pack_only_language_plans_only_pack_missions_through_existing_photo_flow
     # Missions come only from the discovered pack; no language list gates them.
     profile = {"target_language_code": "es", "proficiency_level": level}
     missions = lesson_missions(SessionMode.LESSON, profile)
-    assert [(m.mission_id, str(m.practice_level)) for m in missions] == [
-        ("M01", level), ("M02", level), ("M03", level), ("M04", level),
-        # M05 has pack templates at A0 and A1 only, M06 at A2 only, M13 at A0 only.
-        *([("M05", level)] if level != "A2" else [("M06", level)]),
-        *([("M13", level)] if level == "A0" else []),
-    ]
+    expected = {
+        "A0": [("M01", level), ("M02", level), ("M03", level), ("M05", level)],
+        "A1": [
+            ("M01", level), ("M02", level), ("M03", level), ("M04", level),
+            ("M05", level),
+        ],
+        "A2": [
+            ("M01", level), ("M02", level), ("M03", level), ("M04", level),
+            ("M06", level),
+        ],
+    }[level]
+    assert [(m.mission_id, str(m.practice_level)) for m in missions] == expected
     assert lesson_missions(SessionMode.ISPY, profile) == []
 
 

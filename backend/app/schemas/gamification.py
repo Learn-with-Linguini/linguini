@@ -7,6 +7,8 @@ from pydantic import AwareDatetime, Field
 
 from app.schemas.base import ApiModel
 
+type BadgeLevel = Literal["Taster", "Cook", "Chef", "Head Chef", "Master"]
+
 
 class BasilTotals(ApiModel):
     today: int = 0
@@ -28,6 +30,9 @@ class MissionBatchPublic(ApiModel):
     total_questions: int
     independent_correct: int
     requirements: list[str] = Field(default_factory=list)
+    name: str = ""
+    # The badge level this session newly earned for the mission, if any.
+    badge_earned: BadgeLevel | None = None
 
 
 class MissionBadgePublic(ApiModel):
@@ -36,7 +41,7 @@ class MissionBadgePublic(ApiModel):
     skill: str
     available: bool
     practice_level: str
-    badge_level: Literal["Taster", "Cook", "Chef", "Head Chef", "Master"] | None = None
+    badge_level: BadgeLevel | None = None
     successful_batches: int = 0
     distinct_photos: int = 0
     requirements: list[str] = Field(default_factory=list)

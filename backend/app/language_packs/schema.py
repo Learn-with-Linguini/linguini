@@ -165,7 +165,7 @@ class PackFiles(ApiModel):
     possessives: NonEmptyText | None = None
     # Order quantities and requested details for request role-plays (M06).
     requests: NonEmptyText | None = None
-    # The closed words a noun pairs with at A0 (M13): articles or Korean endings.
+    # The closed words a noun pairs with at A0: articles or Korean endings.
     pairs: NonEmptyText | None = None
     # The guided I-Spy clue grammar; packs without it offer no clue frames or rooms.
     clues: NonEmptyText | None = None
@@ -367,7 +367,7 @@ class RequestsFile(ApiModel):
 
 
 class PairedWord(ApiModel):
-    """A closed word a noun pairs with at A0 (M13): a definite article before it
+    """A closed word a noun pairs with at A0: a definite article before it
     (``la``, ``l'``) or a copula ending after it (Korean ``이에요``).
 
     ``agreement`` and ``final`` describe which nouns take it (gender; a final consonant or
@@ -1041,7 +1041,7 @@ class MissionTemplate(ApiModel):
     # Order quantities and details the pack must supply (request missions): ``quantity:2``,
     # ``size:small``.
     required_requests: list[NonEmptyText] = Field(default_factory=list)
-    # Whether the pack must supply the words a noun pairs with (``pairs.toml``, M13).
+    # Whether the pack must supply the words a noun pairs with (``pairs.toml``).
     requires_paired_words: bool = False
     slots: list[MissionSlotTemplate] = Field(min_length=1)
 

@@ -315,6 +315,20 @@ def with_romanization(task, result, pack, accepted, vocabulary, extra_spellings=
     questions = []
     for question, original in zip(task.public_content.questions, result.questions, strict=True):
         modes = None
+        situation_builder = (
+            question.interaction_type == "sentenceBuilding"
+            and getattr(original, "complete_chunk", None)
+        )
+        if situation_builder:
+            # A0 situation builders are assembled after sentence acceptance. Their tiles
+            # retain punctuation on the word, so they join with ordinary word spacing.
+            native_tokens = original.complete_chunk.split()
+            modes = ["none", *["space" for _ in native_tokens[1:]]]
+            latin = spellings.get(original.complete_chunk)
+            if latin:
+                latin_tokens = latin.split()
+                if len(latin_tokens) == len(native_tokens):
+                    spellings.update(zip(native_tokens, latin_tokens, strict=True))
         # Situation questions (A0 M04) have no built answer; a typed cloze (M06) no tiles.
         if (getattr(original, "correct_text", None)
                 and getattr(original, "interaction_type", None) != "textCloze"):

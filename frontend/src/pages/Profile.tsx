@@ -169,19 +169,6 @@ export function Profile() {
           </>}
       </section>
 
-      <section className="profile-section" aria-labelledby="account-tier-heading">
-        <h2 id="account-tier-heading">Your plan</h2>
-        <Card plain className="profile-tier-card">
-          <div>
-            <span className="profile-tier-badge">{tier.label}</span>
-            <strong>{tier.description}</strong>
-          </div>
-          <p>{(user?.tier ?? "beta") === "beta"
-            ? "Photo lessons and friend challenges are free to start during the beta."
-            : tier.allowance}</p>
-        </Card>
-      </section>     
-
       <section className="profile-section">
         <h2>Learning setup</h2>
         <Card plain className="profile-settings-card">
@@ -339,6 +326,19 @@ export function Profile() {
           </label>
         </Card>
       </section>
+
+      <section className="profile-section" aria-labelledby="account-tier-heading">
+        <h2 id="account-tier-heading">Your plan</h2>
+        <Card plain className="profile-tier-card">
+          <div>
+            <span className="profile-tier-badge">{tier.label}</span>
+            <strong>{tier.description}</strong>
+          </div>
+          <p>{(user?.tier ?? "beta") === "beta"
+            ? "Photo lessons and friend challenges are free to start during the beta."
+            : tier.allowance}</p>
+        </Card>
+      </section>     
 
       <aside className="profile-ai-note">
         <strong>How AI helps</strong>

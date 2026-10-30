@@ -76,13 +76,6 @@ export function PracticeAnalysis() {
   const [pending, setPending] = useState<{ label: string; id?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [leavingPhoto, setLeavingPhoto] = useState(false);
-  const [preferenceObjectId, setPreferenceObjectId] = useState(
-    session?.missionChoices?.preference?.chosenObjectId
-      ?? session?.missionChoices?.preference?.sceneObjectIds[0] ?? "",
-  );
-  const [preferenceReaction, setPreferenceReaction] = useState<"like" | "dislike">(
-    session?.missionChoices?.preference?.reaction === "dislike" ? "dislike" : "like",
-  );
   const photoRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<HTMLDivElement>(null);
   const shortfallRef = useRef<HTMLDivElement>(null);
@@ -107,9 +100,6 @@ export function PracticeAnalysis() {
       Object.fromEntries(Object.entries(item.attributes ?? {}).filter((entry): entry is [string, string] => entry[0] !== "quantity" && typeof entry[1] === "string"))])));
     setAttributeObjectId(session.sceneObjects[0]?.id ?? "");
     setSceneTitle(session.session.sessionTitle ?? scene.title);
-    setPreferenceObjectId(session.missionChoices?.preference?.chosenObjectId
-      ?? session.missionChoices?.preference?.sceneObjectIds[0] ?? "");
-    setPreferenceReaction(session.missionChoices?.preference?.reaction === "dislike" ? "dislike" : "like");
   }, [scene.title, session]);
   useEffect(() => {
     if (!shortfallKey) return;
@@ -216,10 +206,6 @@ export function PracticeAnalysis() {
   ];
   const relationObjects = rawRelationObjects;
   const selectedIds = new Set(relationObjects.map(item => item.id));
-  const showPreference = session.provisionalMissionPlan?.some(
-    mission => mission.missionId === "M05" && mission.practiceLevel === "A0",
-  );
-  const selectedPreferenceId = selectedIds.has(preferenceObjectId) ? preferenceObjectId : "";
   const attributeCount = [...selectedIds].reduce((sum, id) => sum + Object.values(attributes[id] ?? {}).filter(Boolean).length, 0);
   const activeAttributeObjectId = selectedIds.has(attributeObjectId) ? attributeObjectId : relationObjects[0]?.id ?? "";
   const groups = countGroups([
@@ -314,7 +300,6 @@ export function PracticeAnalysis() {
     trackAction("scene_review_confirmed", {
       acceptedCount: kept.length,
       addedCount: added.length,
-      preferenceSource: showPreference && selectedPreferenceId ? "personal" : "assigned",
     });
     await saveReview({
       sceneTitle: sceneTitle.trim() || undefined,
@@ -324,12 +309,13 @@ export function PracticeAnalysis() {
       objectAttributes: selectedAttributes,
       objectCounts: objectCounts(groups, verifiedCounts),
       repositionedObjects: Object.entries(positions).map(([id, anchorPoint]) => ({ id, anchorPoint })),
+      // Preference lessons use AI-generated scenarios, so no personal preference is sent.
       missionChoices: serializeMissionChoices({
         ownedObjectId: session.missionChoices?.ownership?.sceneObjectId ?? null,
         ownershipPretend: session.missionChoices?.ownership?.pretend ?? false,
-        preferenceObjectIds: showPreference && selectedPreferenceId ? [selectedPreferenceId] : [],
+        preferenceObjectIds: [],
         chosenObjectId: null,
-        reaction: preferenceReaction,
+        reaction: null,
       }, selectedIds),
     });
   };
@@ -480,33 +466,6 @@ export function PracticeAnalysis() {
             </form> : null}
           </Card>
         </section> : null}
-        {showPreference && !locked ? <Card><div className="stack">
-          <div><h2>Your preference (optional)</h2>
-            <p className="muted">Choose an object and how you feel about it. Your lesson will use your choice. Leave this empty to practise a pretend preference.</p></div>
-          <label className="field__label" htmlFor="preference-object">Object in your photo</label>
-          <ComboBox id="preference-object" value={selectedPreferenceId} disabled={practiceSaving}
-            placeholder="Choose an object"
-            options={relationObjects.map(item => ({ value: item.id, label: item.label, marker: item.marker }))}
-            onChange={id => {
-              setPreferenceObjectId(id);
-              trackAction("scene_preference_changed", { action: "select_object", reaction: preferenceReaction });
-            }} />
-          {selectedPreferenceId ? <>
-            <div className="choice-grid" aria-label="How you feel about this object">
-              {(["like", "dislike"] as const).map(reaction => <button key={reaction} type="button"
-                className={`choice${preferenceReaction === reaction ? " choice--selected" : ""}`}
-                aria-pressed={preferenceReaction === reaction} disabled={practiceSaving}
-                onClick={() => {
-                  setPreferenceReaction(reaction);
-                  trackAction("scene_preference_changed", { action: "select_reaction", reaction });
-                }}>{reaction === "like" ? "I like it" : "I don't like it"}</button>)}
-            </div>
-            <Button variant="quiet" disabled={practiceSaving} onClick={() => {
-              setPreferenceObjectId("");
-              trackAction("scene_preference_changed", { action: "use_pretend" });
-            }}>Use a pretend preference</Button>
-          </> : null}
-        </div></Card> : null}
         {shortfall && !locked ? <div ref={shortfallRef}>
           <SceneShortfallNotice shortfall={shortfall} busy={practiceSaving || leavingPhoto}
             onAdd={addMissing} onTryAnotherPhoto={() => void tryAnotherPhoto()} />

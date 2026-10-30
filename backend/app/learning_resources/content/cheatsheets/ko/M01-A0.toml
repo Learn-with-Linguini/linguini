@@ -1,0 +1,61 @@
+mission_id = "M01"
+practice_level = "A0"
+content_version = 1
+language_code = "ko"
+text_direction = "ltr"
+title = "Name and identify"
+
+[[concepts]]
+concept_id = "recognise-name"
+title = "Learn the object name"
+explanation = "Korean object names do not use articles like “the” or “a”."
+
+[[concepts.examples]]
+target_text = "소파"
+translation = "sofa"
+
+[[concepts.examples]]
+target_text = "책상"
+translation = "desk"
+
+[[concepts.examples]]
+target_text = "베개"
+translation = "pillow"
+
+[[concepts]]
+concept_id = "identify-object"
+title = "Say what the object is"
+formula = "이것은 + object + 이에요/예요."
+
+[[concepts.pattern_parts]]
+part_id = "this-is"
+label = "this"
+role = "fixed"
+text = "이것은"
+
+[[concepts.pattern_parts]]
+part_id = "object"
+label = "object"
+role = "slot"
+text = "object"
+
+[[concepts.pattern_parts]]
+part_id = "ending"
+label = "ending"
+role = "ending"
+
+[[concepts.pattern_parts.choices]]
+text = "이에요"
+label = "after a consonant"
+
+[[concepts.pattern_parts.choices]]
+text = "예요"
+label = "after a vowel"
+
+[[concepts.examples]]
+target_text = "이것은 책상이에요."
+translation = "This is a desk."
+
+[[concepts.examples]]
+target_text = "이것은 소파예요."
+translation = "This is a sofa."

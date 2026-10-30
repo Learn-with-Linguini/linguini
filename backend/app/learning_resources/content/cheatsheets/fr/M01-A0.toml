@@ -1,0 +1,62 @@
+mission_id = "M01"
+practice_level = "A0"
+content_version = 1
+language_code = "fr"
+text_direction = "ltr"
+title = "Name and identify"
+
+[[concepts]]
+concept_id = "recognise-name"
+title = "Learn the article with the object"
+explanation = "Keep the article and noun together when you learn a new word."
+
+[[concepts.examples]]
+target_text = "le canapé (m)"
+translation = "the sofa"
+
+[[concepts.examples]]
+target_text = "la tasse (f)"
+translation = "the cup"
+
+[[concepts.examples]]
+target_text = "l'ordinateur"
+translation = "the computer"
+note = "The article shortens to l' before the vowel sound."
+
+[[concepts]]
+concept_id = "identify-object"
+title = "Say what the object is"
+formula = "C'est + un/une + object."
+
+[[concepts.pattern_parts]]
+part_id = "this-is"
+label = "this is"
+role = "fixed"
+text = "C'est"
+
+[[concepts.pattern_parts]]
+part_id = "article"
+label = "article"
+role = "choice"
+
+[[concepts.pattern_parts.choices]]
+text = "un"
+label = "masculine"
+
+[[concepts.pattern_parts.choices]]
+text = "une"
+label = "feminine"
+
+[[concepts.pattern_parts]]
+part_id = "object"
+label = "object"
+role = "slot"
+text = "object"
+
+[[concepts.examples]]
+target_text = "C'est un oreiller."
+translation = "This is a pillow."
+
+[[concepts.examples]]
+target_text = "C'est une tasse."
+translation = "This is a cup."

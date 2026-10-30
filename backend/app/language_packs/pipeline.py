@@ -424,7 +424,7 @@ def generate_pilot(
             raise PipelineFailure(level, "assessment", "unassessed", attempts + 1, [assurance])
         mode = "experimentalPreview"
     if context.get("progress"):
-        # Learner history the lesson reads as dev's builders do (M13's plurals taught).
+        # Learner history the lesson reads as dev's builders do (e.g. whether plurals are taught).
         builder_selection = {"progress": context["progress"], **(builder_selection or {})}
     result, task, payload = mission.build(
         level,

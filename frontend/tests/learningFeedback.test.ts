@@ -184,7 +184,9 @@ for (const checkEachQuestion of [true, false]) {
     assert.equal(dom.window.document.querySelectorAll('.scene img[alt="Table"]').length, 1);
     const marker = dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Marker 1"]');
     assert.ok(marker);
+    assert.equal(button("Marker 1"), undefined, "marker questions do not repeat photo markers as choices");
     await surface.act(async () => { marker.dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true })); });
+    assert.equal(marker.getAttribute("aria-pressed"), "true");
     assert.equal(button("Check answer")?.disabled, false);
   });
 
@@ -293,12 +295,16 @@ for (const missionId of ["M04", "M05"] as const) {
   test(`${missionId} finishes after correcting an earlier mistake and submits the original grades`, async () => {
     const { task, positive, negative, check } = situationLesson(missionId);
     await mount(task);
+    const progress = () => dom.window.document.querySelector(".trail__label")?.textContent;
+    assert.equal(progress(), "Question 1 of 2");
+    assert.equal(dom.window.document.querySelectorAll(".question-progress .label").length, 0);
     await click(negative);
     replies.push(() => Response.json(check("q1", false)));
     await click("Check answer");
     await waitFor(() => assert.equal(button("Next question")?.disabled, false));
     await click(positive);
     await click("Next question");
+    assert.equal(progress(), "Question 2 of 2");
     await click(positive);
     replies.push(() => Response.json(check("q2", true)));
     await click("Check answer");
@@ -391,6 +397,7 @@ test("vocabulary feedback keeps the correct word and a locked answer", async () 
   replies.push(() => Response.json({ questionId: "word1", acceptedOptionId: "table", isCorrect: false, correctOptionId: "cup", basilEarned: 5 }));
   await click("table");
   await waitFor(() => assert.match(text(), /\+5 Basil earned/));
+  assert.ok(dom.window.document.querySelector(".question-basil.basil-reward"));
   assert.ok(text().includes(learningFeedback("incorrect", "t1:word1")));
   assert.match(text(), /Incorrect\. The correct answer is cup/);
   assert.equal(button("cup")?.disabled, true);
@@ -463,6 +470,38 @@ test("refreshing vocabulary checks keeps the learner's typing stage and unfinish
   assert.equal(input.value, "taz");
   assert.equal(button("Check answer")?.disabled, false);
   assert.equal(requests.length, 1);
+});
+
+test("an accent-only typing answer is accepted with yellow guidance", async () => {
+  const task = vocabularyTask();
+  if (task.publicContent.kind !== "vocabularyIntroduction") throw new Error("Expected vocabulary fixture");
+  task.publicContent.words[0].targetText = "canapé";
+  task.publicContent.words[0].translation = "sofa";
+  task.publicContent.questions[0].options[0] = { optionId: "canapé", label: "canapé" };
+  task.publicContent.questions[0].correctOptionId = "canapé";
+  await mount(task);
+  await waitFor(() => assert.doesNotMatch(text(), /Restoring word answers/));
+  await click("Start quick quiz");
+  replies.push(() => Response.json({ questionId: "word1", acceptedOptionId: "canapé", isCorrect: true, correctOptionId: "canapé", basilEarned: 10 }));
+  await click("canapé");
+  await waitFor(() => assert.ok(button("Next question")));
+  await click("Next question");
+
+  const input = dom.window.document.querySelector<HTMLInputElement>('input[aria-label="Type sofa"]');
+  assert.ok(input);
+  await surface.act(async () => {
+    Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, "value")!.set!.call(input, "canape");
+    input.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
+  });
+  replies.push(() => Response.json({ learningKey: "cup", isCorrect: false, isClose: true, correctAnswer: "canapé", revealed: false, basilEarned: 0 }));
+  await click("Check answer");
+
+  await waitFor(() => assert.match(text(), /Close! You’re missing some accents/));
+  assert.match(text(), /Write it as canapé/);
+  assert.ok(dom.window.document.querySelector(".feedback--neutral"));
+  assert.equal(input.disabled, true);
+  assert.ok(button("Finish task"));
+  assert.equal(button("I forgot, lift the lid"), undefined);
 });
 
 test("teaching cards highlight their photo object and practice interleaves recognition before typing", async () => {

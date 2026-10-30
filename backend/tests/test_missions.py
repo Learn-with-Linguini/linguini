@@ -153,10 +153,10 @@ def test_definition_files_are_named_by_their_mission(tmp_path):
         load_missions(tmp_path)
     assert sorted(path.name for path in Path(DEFINITIONS_DIR).glob("*.toml")) == [
         "M01-A0.toml", "M01-A1.toml", "M01-A2.toml",
-        "M02-A0.toml", "M02-A1-2.toml", "M02-A1.toml", "M02-A2.toml",
+        "M02-A0-2.toml", "M02-A0.toml", "M02-A1-2.toml", "M02-A1.toml", "M02-A2.toml",
         "M03-A0.toml", "M03-A1.toml", "M03-A2.toml",
         "M04-A0.toml", "M04-A1.toml", "M04-A2.toml",
-        "M05-A0.toml", "M05-A1.toml", "M06-A2.toml", "M13-A0.toml",
+        "M05-A0.toml", "M05-A1.toml", "M06-A2.toml",
     ]
 
 

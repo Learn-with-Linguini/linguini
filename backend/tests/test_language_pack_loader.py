@@ -43,8 +43,8 @@ def test_nested_pack_loads_and_evaluations_remain_separate():
 
     assert pack.pack_id == "es-es-everyday"
     assert pack.language.locale == "es-ES"
-    assert len(pack.constructions) == 34
-    assert len(cases) == 119
+    assert len(pack.constructions) == 33
+    assert len(cases) == 113
     assert not any(key in pack.model_dump() for key in ("evaluations", "evaluation_cases"))
     assert all("cases" not in item for item in guidance_for(pack, [
         "identify-object"
@@ -79,7 +79,6 @@ def test_held_out_evaluations_cover_the_required_categories():
         "M05-A0": 6,
         "M05-A1": 6,
         "M06-A2": 13,
-        "M13-A0": 6,
     }
     categories = {
         category

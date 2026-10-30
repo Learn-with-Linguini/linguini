@@ -12,11 +12,9 @@ from app.missions import get_mission
 from app.schemas.enums import SessionMode
 
 M01_A0 = ("M01", "A0", 1)
-M02_A0 = ("M02", "A0", 1)
+M02_A0 = ("M02", "A0", 2)
 M03_A0 = ("M03", "A0", 1)
-M04_A0 = ("M04", "A0", 1)
 M05_A0 = ("M05", "A0", 1)
-M13_A0 = ("M13", "A0", 1)
 M01_A1 = ("M01", "A1", 1)
 M02_A1 = ("M02", "A1", 2)
 M03_A1 = ("M03", "A1", 1)
@@ -30,7 +28,7 @@ M06_A2 = ("M06", "A2", 1)
 # Implemented variants per stored proficiency level, in catalogue order; a lesson
 # assesses at most three. Only the active profile's ``proficiency_level`` selects them.
 IMPLEMENTED_MISSIONS = {
-    "A0": (M01_A0, M02_A0, M03_A0, M04_A0, M05_A0, M13_A0),
+    "A0": (M01_A0, M02_A0, M03_A0, M05_A0),
     "A1": (M01_A1, M02_A1, M03_A1, M04_A1, M05_A1),
     "A2": (M01_A2, M02_A2, M03_A2, M04_A2, M06_A2),
 }
@@ -115,7 +113,6 @@ def plan_missions(
         for _index, mission in sorted(
             enumerate(eligible),
             key=lambda item: (
-                not _mission_choice_supplied(item[1], mission_choices),
                 counts[item[1].mission_id],
                 item[0],
             ),
