@@ -21,16 +21,13 @@ _EVALUATIONS = {
     "countGroup": (["count-small-group"], "recognition", ["count-matches-photo"]),
     "matchChunk": (["number-noun-chunk"], "recognition", ["chunk-matches-count"]),
     "buildChunk": (["number-noun-chunk"], "construction", ["chunk-matches-count"]),
-    "chooseChunk": (["noun-word-pair"], "recognition", ["chooses-paired-word"]),
-    "matchSpoken": (["noun-word-pair"], "recognition", ["matches-spoken-chunk"]),
-    "fillSlot": (["noun-word-pair"], "recognition", ["chooses-paired-word"]),
 }
 
 
-_NAME_PURPOSES = {"matchName", "findNamed", "chooseName", "listenSelect", "matchSpoken"}
+_NAME_PURPOSES = {"matchName", "findNamed", "chooseName", "listenSelect"}
 
 
-_MARKER_PURPOSES = {"matchName", "findNamed", "listenSelect", "matchSpoken"}
+_MARKER_PURPOSES = {"matchName", "findNamed", "listenSelect"}
 
 
 def with_article(noun):
@@ -54,8 +51,7 @@ def _prep(payload):
         ]
     focus = {key: row for row in rows for key in [row["key"]]}
     first = focus[payload["focus"][0]]
-    names = [card(row["chunk"] if mission_id == "M13" else row["name"], row["key"])
-             for row in rows]
+    names = [card(row["name"], row["key"]) for row in rows]
     if mission_id == "M01":
         return [*names, card(payload["whatIsThis"]), card(first["identify"], first["key"])]
     if mission_id == "M02":
@@ -92,22 +88,6 @@ def _corrections(payload, question, label):
         note = f"{label} — {payload['approvedTranslations'].get(label, label)}."
         return [dict(mistake="wrongQuantity", answers=[option.option_id], correction=label,
                      explanation=note) for option in wrong], note
-    if purpose in {"chooseChunk", "fillSlot"}:
-        if target.get("formNote"):
-            # A pack lesson writes the note from its own paired words (M13).
-            note = target["formNote"]
-        elif payload["targetLanguage"] == "ko":
-            ending = "a consonant" if target["batchim"] else "a vowel"
-            note = (
-                f"{target['noun']} ends in {ending}, so it takes {target['form']}: "
-                f"{target['chunk']}."
-            )
-        else:
-            note = f"{target['noun']} goes with {target['form']}: {target['chunk']}."
-        return [dict(mistake="wrongWord", answers=[option.option_id], correction=label,
-                     explanation=note) for option in wrong], (
-            target["chunk"] if purpose == "fillSlot" else note
-        )
     return [dict(mistake="wordOrder", correction=question.correct_text,
                  explanation=f"Build: {question.correct_text}")], None
 
@@ -150,18 +130,11 @@ def a0_lesson_task(session_id, mission, payload, result, vocabulary_ids):
                           group_object_ids=question.group_object_ids)
         else:
             fields["scene_object_id"] = question.object_key
-        if question.slot_template:
-            fields.update(slot_template=question.slot_template,
-                          complete_chunk=question.complete_chunk)
         return fields
 
-    # M13's explanation is the pack's own (``pairs.toml``): which words go with a noun.
-    explanation = payload.get("explanation") or _EXPLANATIONS.get(mission.mission_id)
-    if not explanation:
-        raise ValueError(f"{mission.mission_id} lessons need the pack's explanation")
     task = build_mission_task(
         session_id, mission, f"a0{mission.mission_id}", result, evaluate, shown,
-        content_fields=dict(prep=_prep(payload), explanation=explanation),
+        content_fields=dict(prep=_prep(payload), explanation=_EXPLANATIONS[mission.mission_id]),
     )
     return task.model_copy(update={
         "answer_key": task.answer_key.model_copy(update={"statement_correct": statement_correct}),

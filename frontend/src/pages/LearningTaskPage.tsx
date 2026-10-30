@@ -71,7 +71,7 @@ export function LearningTaskPage() {
         return;
       }
       goTo(nextLearningStep(session.tasks, task.id, generating));
-    }} onClose={() => navigate(isVocabularyTask ? `${base}/learn/vocabulary-preview` : `${base}/learn`)} onExit={() => navigate("/home")} /></div></TargetLanguageContext.Provider>;
+    }} onClose={() => navigate(`${base}/learn`)} onExit={() => navigate("/home")} /></div></TargetLanguageContext.Provider>;
 }
 
 /** A completed scene can be revisited without reopening its finished lesson. */
@@ -143,7 +143,7 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onSc
   };
   const earnedText = basilEarnedText(actionResult?.basilEarned);
   return <div className="stack">
-    <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} /></div>
+    <div className="vocabulary-flow__progress"><ProgressTrail value={1} total={1} label="Question 1 of 1" /></div>
     <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton></div><ExitToHome onExit={onExit} /></div>
     {card && content.kind === "vocabularyIntroduction" ? <div className="flashcard learning-card">
       <div className="spread"><span className="label muted">{card.wordClass}{card.gender ? " · " + card.gender : ""}</span>
@@ -277,6 +277,14 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
     }
   };
   const recap = vocabularyRecapSteps(content.questions.length, content.allowTypingPractice ? content.words.length : 0);
+  const questionTotal = Math.max(1, content.questions.length);
+  const questionPosition = stage === "complete"
+    ? questionTotal
+    : stage === "quiz"
+      ? Math.min(questionIndex + 1, questionTotal)
+      : stage === "typing"
+        ? Math.min(typingIndex + 2, questionTotal)
+        : 1;
   const advanceRecap = (nextIndex = recapIndex + 1) => {
     setFeedback(null);
     const next = recap[nextIndex];
@@ -391,7 +399,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
   };
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__header">
-      <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} /><QuestionBasil amount={stage === "quiz" && question ? basilByQuestion[question.questionId] : stage === "typing" ? typingCheck?.basilEarned : undefined} /></div>
+      <div className="vocabulary-flow__progress"><ProgressTrail value={questionPosition} total={questionTotal} label={`Question ${questionPosition} of ${questionTotal}`} /><QuestionBasil amount={stage === "quiz" && question ? basilByQuestion[question.questionId] : stage === "typing" ? typingCheck?.basilEarned : undefined} /></div>
       <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><ExitToHome onExit={onExit} /></div>
     </div>
     {restored.isLoading ? <InlineLoader compact label="Restoring word answers…" /> : null}
@@ -852,7 +860,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
   };
 
   return <div className="stack vocabulary-flow">
-    <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} /></div>
+    <div className="vocabulary-flow__progress"><ProgressTrail value={activeIndex + 1} total={content.questions.length} label={`Question ${activeIndex + 1} of ${content.questions.length}`} /><QuestionBasil amount={storedCheck?.basilEarned} /></div>
     <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><div className="learning-title-actions"><MissionCheatSheetLauncher missionId={content.missionId} practiceLevel={content.practiceLevel} contentVersion={content.contentVersion} languageCode={scene.languageCode} /><ExitToHome onExit={onExit} /></div></div>
     {saved.isLoading ? <InlineLoader compact label="Restoring checked answers…" /> : null}
     {saved.isError ? <div role="alert"><p>Unable to restore checked answers.</p>
@@ -873,7 +881,6 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
         </section>
       </Card> : null}
       <Card plain><div className="stack">
-        <div className="question-progress"><span className="label muted">Question {activeIndex + 1} of {content.questions.length}</span><QuestionBasil amount={storedCheck?.basilEarned} /></div>
         {question.dialogue?.length ? <div className="mission-dialogue" aria-label="Conversation so far">
           {question.dialogue.map((turn, turnIndex) => <p key={`${turn.speaker}-${turnIndex}`}
             className={`mission-dialogue__turn mission-dialogue__turn--${turn.speaker}`}>
@@ -907,13 +914,18 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
         /> : <>
         <div className="mission-markers"><ScenePhoto
           scene={scene} hideWords items={markers.length ? markers.map(marker => marker.item) : questionObjects}
-          activeItemId={markers.find(marker => marker.option.optionId === (checks[question.questionId]?.isCorrect
-            ? checks[question.questionId]?.answer
-            : question.options.find(option => option.label === checks[question.questionId]?.correctAnswer)?.optionId))?.item.id ?? null}
+          activeItemId={markers.find(marker => marker.option.optionId === (checks[question.questionId]
+            ? checks[question.questionId]?.isCorrect
+              ? checks[question.questionId]?.answer
+              : question.options.find(option => option.label === checks[question.questionId]?.correctAnswer)?.optionId
+            : answers[question.questionId]))?.item.id ?? null}
           onMarkerClick={!isChecked && !checking && markers.length
             ? item => {
               const marker = markers.find(candidate => candidate.item.id === item.id);
-              if (marker) setAnswers(value => ({ ...value, [question.questionId]: marker.option.optionId }));
+              if (marker) {
+                setAnswers(value => ({ ...value, [question.questionId]: marker.option.optionId }));
+                trackAction("lesson_marker_selected", { taskId: task.id, questionId: question.questionId, marker: item.marker });
+              }
             } : undefined}
         /></div>
         {question.roleplayPremise ? <div className="roleplay-premise" role="note" aria-label={`Scenario: ${roleplayScenario(question.roleplayPremise)}`}>
@@ -958,7 +970,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
             value={answers[question.questionId] ?? ""}
             disabled={isChecked || checking || saved.isLoading || saved.isError}
             onChange={event => setAnswers(value => ({ ...value, [question.questionId]: event.target.value }))} />
-        </div> : <div className="choice-grid">{questionOptions(question, `${task.id}:${question.questionId}`).map(option => {
+        </div> : markers.length ? null : <div className="choice-grid">{questionOptions(question, `${task.id}:${question.questionId}`).map(option => {
           const result = checks[question.questionId];
           const situationRetrying = Boolean(isSituation && result && !result.isCorrect);
           const selected = answers[question.questionId] === option.optionId || result?.answer === option.optionId;
@@ -1148,7 +1160,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
     }
   };
   return <div className="stack vocabulary-flow">
-    <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} /><QuestionBasil amount={activeQuestion ? questionBasil[activeQuestion.questionId] : undefined} /></div>
+    <div className="vocabulary-flow__progress"><ProgressTrail value={activeIndex + 1} total={content.questions.length} label={`Question ${activeIndex + 1} of ${content.questions.length}`} /><QuestionBasil amount={activeQuestion ? questionBasil[activeQuestion.questionId] : undefined} /></div>
     <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><div className="learning-title-actions"><MissionCheatSheetLauncher missionId={content.missionId} practiceLevel={content.practiceLevel} contentVersion={content.contentVersion} languageCode={scene.languageCode} /><ExitToHome onExit={onExit} /></div></div>
     {savedChecks.isLoading ? <InlineLoader compact label="Restoring your place…" /> : null}
     {savedChecks.isError ? <p role="alert">We couldn't restore your saved answers. Try refreshing this page.</p> : null}
@@ -1169,7 +1181,6 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
       const countQuestion = content.practiceLevel === "A0" && Boolean(groupObjects?.length || question.displayCount);
       return <div key={question.questionId} className="learning-section">
         <Card plain><div className="stack">
-      {content.questions.length > 1 ? <span className="label muted">Question {position + 1} of {content.questions.length}</span> : null}
       {question.instruction ? <p className="small lesson-instruction">{question.instruction}</p> : null}
       <LessonAudioPrompt question={question} languageCode={scene.languageCode}
         revealed={Boolean(revealed[question.questionId])}
@@ -1230,9 +1241,12 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
           onMarkerClick={terminal || practiceSaving || checking || results[question.questionId] !== undefined ? undefined
             : item => {
               const marker = markers.find(candidate => candidate.item.id === item.id);
-              if (marker) setAnswers(value => ({ ...value, [question.questionId]: marker.option.optionId }));
+              if (marker) {
+                setAnswers(value => ({ ...value, [question.questionId]: marker.option.optionId }));
+                trackAction("lesson_marker_selected", { taskId: task.id, questionId: question.questionId, marker: item.marker });
+              }
             }} /></div> : null}
-        <div className="choice-grid">{questionOptions(question, `${task.id}:${question.questionId}`).map(option => {
+        {!markers.length ? <div className="choice-grid">{questionOptions(question, `${task.id}:${question.questionId}`).map(option => {
           const selected = chosen[question.questionId] === option.optionId;
           const graded = results[question.questionId];
           const state = graded !== undefined && solutions[question.questionId] === option.optionId ? " choice--correct"
@@ -1241,7 +1255,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
           return <button key={option.optionId} className={`choice${state}`} aria-pressed={selected} disabled={terminal || practiceSaving || checking || graded !== undefined}
             onClick={() => setAnswers(value => ({ ...value, [question.questionId]: option.optionId }))}>
             <span {...nativeProps}>{optionText(question, option.label)}</span>{question.romanizations?.[option.label] ? <small lang="und-Latn" dir="ltr"> {question.romanizations[option.label]}</small> : null}</button>;
-        })}</div></>}
+        })}</div> : null}</>}
       </>}
       {results[question.questionId] !== undefined ? <>
         <Feedback tone={results[question.questionId] ? "good" : "warn"}><div className="stack-2" role={terminal ? undefined : "status"} aria-atomic={terminal ? undefined : true}>

@@ -184,7 +184,9 @@ for (const checkEachQuestion of [true, false]) {
     assert.equal(dom.window.document.querySelectorAll('.scene img[alt="Table"]').length, 1);
     const marker = dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Marker 1"]');
     assert.ok(marker);
+    assert.equal(button("Marker 1"), undefined, "marker questions do not repeat photo markers as choices");
     await surface.act(async () => { marker.dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true })); });
+    assert.equal(marker.getAttribute("aria-pressed"), "true");
     assert.equal(button("Check answer")?.disabled, false);
   });
 
@@ -293,12 +295,16 @@ for (const missionId of ["M04", "M05"] as const) {
   test(`${missionId} finishes after correcting an earlier mistake and submits the original grades`, async () => {
     const { task, positive, negative, check } = situationLesson(missionId);
     await mount(task);
+    const progress = () => dom.window.document.querySelector(".trail__label")?.textContent;
+    assert.equal(progress(), "Question 1 of 2");
+    assert.equal(dom.window.document.querySelectorAll(".question-progress .label").length, 0);
     await click(negative);
     replies.push(() => Response.json(check("q1", false)));
     await click("Check answer");
     await waitFor(() => assert.equal(button("Next question")?.disabled, false));
     await click(positive);
     await click("Next question");
+    assert.equal(progress(), "Question 2 of 2");
     await click(positive);
     replies.push(() => Response.json(check("q2", true)));
     await click("Check answer");
@@ -391,6 +397,7 @@ test("vocabulary feedback keeps the correct word and a locked answer", async () 
   replies.push(() => Response.json({ questionId: "word1", acceptedOptionId: "table", isCorrect: false, correctOptionId: "cup", basilEarned: 5 }));
   await click("table");
   await waitFor(() => assert.match(text(), /\+5 Basil earned/));
+  assert.ok(dom.window.document.querySelector(".question-basil.basil-reward"));
   assert.ok(text().includes(learningFeedback("incorrect", "t1:word1")));
   assert.match(text(), /Incorrect\. The correct answer is cup/);
   assert.equal(button("cup")?.disabled, true);

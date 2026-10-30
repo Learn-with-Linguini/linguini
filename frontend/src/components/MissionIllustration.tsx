@@ -13,7 +13,6 @@ const paths: Record<string, ReactNode> = {
   M10: <><path d="m5 27 11-11a8 8 0 0 1 10-11l-6 6 1 4 4 1 6-6a8 8 0 0 1-11 10L9 31Z" /></>,
   M11: <><rect x="4" y="7" width="24" height="19" rx="3" /><path d="m5 9 11 9L27 9" /></>,
   M12: <><rect x="4" y="7" width="24" height="22" rx="3" /><path d="M4 13h24M10 3v7M22 3v7m-11 10 4 4 7-7" /></>,
-  M13: <><path d="M5 25V9l11-6 11 6v16l-11 5-11-5Zm11-22v27M5 9l22 16M27 9 5 25" /></>,
 };
 
 export function MissionIllustration({ missionId }: { missionId: string }) {

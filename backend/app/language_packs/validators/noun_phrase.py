@@ -119,20 +119,6 @@ class NounPhraseValidator:
         self.terms = {term.term_id: term for term in vocabulary.terms}
 
     def validate(self, candidate: CandidateSentence, _pack: LanguagePack) -> ValidatorResult:
-        if candidate.construction_id == "noun-word-pair" and _pack.paired_words:
-            uses = {item.role: item for item in candidate.term_uses if item.role}
-            use = uses.get("object")
-            noun = self.terms.get(use.term_id) if use else None
-            if noun is not None:
-                expected = {
-                    pair.join(noun.target_text).casefold().replace("’", "'")
-                    for pair in _pack.paired_words.words
-                }
-                if candidate.text.strip().casefold().replace("’", "'") not in expected:
-                    return ValidatorResult(passed=False, messages=[
-                        f"M13 must keep the session noun and number {noun.target_text!r}; "
-                        "change only its paired article/ending, not its noun or number.",
-                    ])
         if candidate.proposed_realizations or candidate.construction_id in (
             COUNTING | OWNING | PREFERRING | REQUESTING
         ):
@@ -165,11 +151,6 @@ class NounPhraseValidator:
                 f"Use one of this noun's own {kind}articles with {bare!r} "
                 f"(agreement={noun.agreement!r}): {', '.join(sorted(set(allowed)))}."
             )
-        definite = noun.forms_by_key.get("definite")
-        if (candidate.construction_id == "noun-word-pair" and definite
-                and candidate.text.casefold() != definite.casefold()):
-            # M13 teaches the noun with its own article (die Gabel), not another case of it.
-            messages.append(f"Write the noun with its own definite article: {definite}.")
         attribute_use = uses.get("attribute")
         attribute = self.terms.get(attribute_use.term_id) if attribute_use else None
         if attribute is not None and bare:

@@ -56,7 +56,6 @@ Because Linguini is a single-page application (SPA), route changes do not reload
 * `/onboarding` — Language pairing and level selection
 * `/practice` — Photo capture / scene selector
 * `/practice/sessions/:sessionId/*` — Active lesson tasks (word cards, grammar, description)
-* `/practice/sessions/:sessionId/learn/vocabulary-preview` — Photo-level vocabulary introductory preview
 * `/practice/ispy` — Standalone I-Spy mode selector (Solo vs Friends)
 * `/practice/ispy/join` — Enter invite code to join a room
 * `/practice/ispy/room/:roomCode` — Multiplayer I-Spy gameplay room
@@ -139,22 +138,21 @@ The existing analysis and review routes show this progress; no new page is added
 | `practice_photo_uploaded` | `{ assetId }` | User captures/uploads a personal camera roll photo |
 | `photo_upload_retried` | `{ source: "camera" | "userUpload" }` | Learner retries confirmation of an uploaded image after a connection or server failure |
 | `practice_scene_selected` | `{ sceneId, title }` | User selects a curated catalog scene |
-| `scene_review_confirmed` | `{ acceptedCount, addedCount, preferenceSource }` | User confirms detected objects before generating lesson; preferenceSource is personal or assigned |
-| `scene_preference_changed` | `{ action, reaction? }` | Optional beginner preference on `/practice/sessions/:sessionId/analysis`: select_object, select_reaction, or use_pretend; reaction is like or dislike when selected |
+| `scene_review_confirmed` | `{ acceptedCount, addedCount }` | User confirms detected objects before generating lesson |
 | `scene_shortfall_shown` | `{ missing }` | Review shows that the photo lacks checkable objects, counts, adjectives or connections (`missing` is a comma-separated list) |
 | `scene_shortfall_add_clicked` | `{ kind }` | Learner chooses to add the missing kind of fact from the shortfall notice |
 | `scene_shortfall_new_photo` | `{ missing }` | Learner leaves a short scene to take or choose another photo |
 | `scene_analysis_retried` | `{ sessionId }` | User requests AI re-analysis of a photo |
 | `task_answer_checked` | `{ taskId, isCorrect, kind }` | Learner checks answer on an interactive exercise |
+| `lesson_marker_selected` | `{ taskId, questionId, marker }` | Learner answers a marker-based lesson question by selecting its numbered marker directly on the photo |
 | `task_completed` | `{ taskId, kind }` | Learner completes reading or informational task |
 | `task_finished_to_list` | `{ taskId, kind }` | Learner finishes the final task and returns to the task list |
-| `task_opened` | `{ taskId }` | User opens a specific learning task from the task list |
+| `task_opened` | `{ taskId }` | User opens a mission from the mission path (tapping its row, or the Start/Continue button) |
+| `mission_path_primary_clicked` | `{ label }` | User presses the mission path's bottom button (`Start`, `Continue`, `Done` or `Play I-Spy`) |
 | `learning_exit_clicked` | — | User exits the learning task overview back to Home |
-| `finish_lesson_clicked` | — | User completes all learning tasks and clicks "Finish lesson" |
+| `finish_lesson_clicked` | — | User completes every mission on the path and presses "Done" |
 | `play_ispy_clicked` | — | User proceeds from learning tasks to play I-Spy |
-| `vocabulary_preview_started` | — | User starts "Learn the words" vocabulary preview |
-| `vocabulary_preview_continue_clicked` | `{ taskId }` | User continues from preview to individual word learning |
-| `vocabulary_preview_exit_clicked` | — | User exits from vocabulary preview |
+| `vocabulary_review_started` | `{ taskId, revisiting }` | User opens the interactive vocabulary review directly from the lesson overview |
 | `vocabulary_flashcard_viewed` | `{ taskId, position, termType, hasSceneObject }` | Learner views a vocabulary teaching card, including whether its object can be highlighted in the scene |
 | `vocabulary_typing_checked` | `{ taskId, termType, isCorrect, revealed, basilEarned }` | Learner checks or reveals a typed vocabulary answer and receives any server-awarded Basil |
 | `home_continue_practice_clicked` | `{ sessionId }` | User resumes incomplete practice from dashboard |
@@ -163,6 +161,9 @@ The existing analysis and review routes show this progress; no new page is added
 | `home_explore_ispy_clicked` | — | User clicks I-Spy quick play card on home dashboard |
 | `session_summary_viewed` | `{ sessionId, basilEarned, wordsLearnedCount, completedLessonsCount }` | Session summary screen displays upon finishing a lesson |
 | `summary_back_home_clicked` | — | User clicks "Back home" on session summary |
+| `badge_earned_popup_shown` | `{ missionId, level }` | The summary opens the "New badge earned" popup; once per earned badge, once per session |
+| `badge_earned_popup_closed` | — | Learner closes the "New badge earned" popup |
+| `summary_badge_missed` | `{ missionId, accuracy }` | A finished mission didn't earn its badge (50% or less correct, or skipped tasks); logged once per session |
 | `summary_play_ispy_clicked` | — | User clicks "Play I-Spy with this scene" from summary |
 
 ### I-Spy & Multiplayer Rooms
@@ -274,7 +275,7 @@ Below are the 4 primary funnels designed around Linguini's user journey, followe
 | **Step 1** | Open Practice / Scene Picker | Event: `page_view`<br>Parameter: `page_path` equals `/practice` (or event: `home_begin_practice_clicked`) |
 | **Step 2** | Select Scene or Upload Photo | Event is one of:<br>• `practice_scene_selected`<br>• `practice_photo_uploaded` |
 | **Step 3** | Review & Confirm Vocabulary | Event: `scene_review_confirmed` |
-| **Step 4** | Start Tasks / Practice | Event is one of:<br>• `practice_session_started`<br>• `vocabulary_preview_continue_clicked` |
+| **Step 4** | Start Tasks / Practice | Event is one of:<br>• `practice_session_started`<br>• `vocabulary_review_started` |
 | **Step 5** | Complete Learning Tasks | Event is one of:<br>• `task_answer_checked`<br>• `ispy_clue_submitted` |
 | **Step 6** | Lesson Finished & Summary Viewed | Event: `session_summary_viewed` |
 
