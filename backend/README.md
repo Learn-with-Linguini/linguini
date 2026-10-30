@@ -1026,5 +1026,10 @@ use PostgreSQL, create their own records in Python, and clean up after themselve
 Scene tests read the catalog installed by migrations; no test JSON files or alternate
 storage adapters are used. The tests exercise the production dependency graph.
 
+Parsing a language pack takes most of a second, so tests that only read a bundled pack
+use `bundled_pack(path)` from `tests/bundled_packs.py`, which parses each pack once per
+run and returns a private copy. Tests that edit pack files copy the pack to `tmp_path`
+and call `load_pack` on the copy; never point an editing test at the bundled packs.
+
 Production sources are under `app/`, migrations under `prisma/migrations/`,
 and database/schema tests under `tests/`.

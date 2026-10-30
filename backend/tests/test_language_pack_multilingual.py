@@ -8,11 +8,13 @@ import json
 import re
 import unicodedata
 from dataclasses import replace
+from functools import cache
 from pathlib import Path
 from types import SimpleNamespace
 from uuid import UUID
 
 import pytest
+from bundled_packs import bundled_pack
 
 from app.ai.cache.store import CacheScope
 from app.ai.contracts.text import TextModelConfig, TextModelResponse
@@ -20,7 +22,6 @@ from app.ai.features.learning_tasks.service import LearningTaskService
 from app.ai.observability import NoOpAITracer
 from app.language_packs.evaluation import evaluate_pack
 from app.language_packs.generation import ApprovedVocabulary
-from app.language_packs.loader import load_pack
 from app.missions import get_mission
 from app.repositories.postgres.workflow import (
     PostgresWorkflowRepository,
@@ -34,6 +35,15 @@ from app.services.mission_roleplay import assign_a0_scenario, assign_roleplay
 PACKS = Path(__file__).parents[1] / "app/language_packs/packs"
 SAMPLES = Path(__file__).parents[1] / "app/language_packs/samples"
 LOCALES = {"es": "es-ES", "fr": "fr-FR", "de": "de-DE", "ko": "ko-KR"}
+
+
+@cache
+def sample_vocabulary(locale):
+    return ApprovedVocabulary.model_validate_json(
+        (SAMPLES / locale / "vocabulary.json").read_text("utf-8")
+    )
+
+
 # Mocked languages whose pack requires romanization of translations.
 ROMANIZED = {"ko"}
 COUNTS = {
@@ -1119,7 +1129,7 @@ def _assert_m06_order(tasks):
 def test_pack_missions_dispatch_for_every_pack_and_level(
     language, level, mission_id, scene, monkeypatch,
 ):
-    pack = load_pack(PACKS / LOCALES[language] / "everyday")
+    pack = bundled_pack(PACKS / LOCALES[language] / "everyday")
     assert pack.lexical == {}
     provider = MockPackProvider(language)
     tasks = _dispatch(language, level, scene(language), provider, monkeypatch, mission_id)
@@ -1183,10 +1193,8 @@ def test_pack_missions_dispatch_for_every_pack_and_level(
 @pytest.mark.parametrize("language", list(LOCALES))
 def test_sample_vocabulary_covers_every_valid_evaluation_sentence(language, level, mission_id):
     locale = LOCALES[language]
-    pack = load_pack(PACKS / locale / "everyday")
-    vocabulary = ApprovedVocabulary.model_validate_json(
-        (SAMPLES / locale / "vocabulary.json").read_text("utf-8")
-    )
+    pack = bundled_pack(PACKS / locale / "everyday")
+    vocabulary = sample_vocabulary(locale)
     report, record = evaluate_pack(pack, level, vocabulary, mission_id=mission_id)
     # Structure plus the pack's declared checks (and es.py for Spanish) must accept
     # every valid sentence: a check that rejects one would fail real lessons.

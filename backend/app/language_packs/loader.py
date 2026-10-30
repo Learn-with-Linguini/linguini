@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 import tomllib
 from collections.abc import Sequence
@@ -693,9 +694,24 @@ def load_packs(roots: Sequence[Path] | None = None) -> PackSet:
                 continue
             expanded.append(str(Path(match).resolve()))
     resolved = tuple(dict.fromkeys(expanded))
-    revision = tuple(
-        (str(path), stat.st_mtime_ns, stat.st_size)
-        for root in resolved for path in sorted(Path(root).rglob("*.toml"))
-        for stat in (path.stat(),)
-    )
+    revision = tuple(entry for root in resolved for entry in _toml_revision(root))
     return _load_packs_for_roots(resolved, revision)
+
+
+def _toml_revision(root: str) -> list[tuple[str, int, int]]:
+    """Path, mtime and size of every TOML file under ``root``, so edits reload the packs.
+
+    Runs on every context lookup; ``os.scandir`` reuses directory-listing metadata
+    instead of a separate ``stat`` per file, which ``Path.rglob`` would need.
+    """
+    found = []
+    pending = [root]
+    while pending:
+        with os.scandir(pending.pop()) as entries:
+            for entry in entries:
+                if entry.is_dir(follow_symlinks=False):
+                    pending.append(entry.path)
+                elif entry.name.endswith(".toml"):
+                    stat = entry.stat()
+                    found.append((entry.path, stat.st_mtime_ns, stat.st_size))
+    return sorted(found)

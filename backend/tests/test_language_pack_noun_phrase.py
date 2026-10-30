@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import pytest
+from bundled_packs import bundled_pack
 
 from app.language_packs.generation import (
     ApprovedVocabulary,
@@ -10,7 +11,6 @@ from app.language_packs.generation import (
     TermUse,
     infer_term_uses,
 )
-from app.language_packs.loader import load_pack
 from app.language_packs.validators import select_validator, validator_versions
 from app.language_packs.validators.noun_phrase import NounPhraseValidator
 
@@ -26,7 +26,7 @@ def _vocabulary(locale):
 
 def _check(locale, construction, text, roles, *, use="answer", truth=True, proposed=False):
     vocabulary = _vocabulary(locale)
-    pack = load_pack(PACKS / locale / "everyday")
+    pack = bundled_pack(PACKS / locale / "everyday")
     role_by_fact = {fact: role for role, fact in roles.items()}
     uses = [
         use_.model_copy(update={"role": role_by_fact.get(use_.fact_id)})
@@ -115,7 +115,7 @@ def test_noun_phrase_rules_apply_only_to_packs_with_required_articles():
         ("fr-FR", "fr", True), ("de-DE", "de", True), ("es-ES", "es", True),
         ("ko-KR", "ko", False),
     ):
-        pack = load_pack(PACKS / locale / "everyday")
+        pack = bundled_pack(PACKS / locale / "everyday")
         assert ("noun-phrase" in validator_versions(language, pack)) is expected
         validator = select_validator(language, _vocabulary(locale), pack)
         assert (NounPhraseValidator.validator_id in validator.validator_id) is expected
@@ -130,5 +130,5 @@ def test_term_use_roles_are_read_from_candidate_claims():
         term_uses=[TermUse(term_id=door.term_id, fact_id=door.fact_id, surface="Tür",
                            role="object")],
     )
-    pack = load_pack(PACKS / "de-DE" / "everyday")
+    pack = bundled_pack(PACKS / "de-DE" / "everyday")
     assert NounPhraseValidator(vocabulary).validate(candidate, pack).passed

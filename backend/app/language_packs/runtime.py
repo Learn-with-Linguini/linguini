@@ -89,8 +89,11 @@ def session_inputs(pack, objects, relations, words, translated_scene, markers, c
             raise ValueError(f"missing translated object {key}")
         bare = term.translation
         article = term.article
-        if article and bare.casefold().startswith(article.casefold() + separator):
-            bare = bare[len(article + separator) :]
+        article_prefix = (
+            article + ("" if article.endswith(("'", "’")) else separator) if article else ""
+        )
+        if article_prefix and bare.casefold().startswith(article_prefix.casefold()):
+            bare = bare[len(article_prefix) :]
         # Catalog metadata may predate this pack/register. Session translations
         # are canonical for this operation.
         gender = term.gender
@@ -100,6 +103,18 @@ def session_inputs(pack, objects, relations, words, translated_scene, markers, c
                  separator.join(filter(None, [article, bare]))}
         if article:
             forms["article_definite"] = article
+        before_pairs = [
+            pair for pair in (pack.paired_words.words if pack.paired_words else [])
+            if pair.position == "before"
+        ]
+        paired_articles = {pair.text.casefold() for pair in before_pairs}
+        definite_phrases = {pair.join(bare).casefold().replace("’", "'") for pair in before_pairs}
+        if before_pairs and forms["definite"].casefold().replace("’", "'") not in definite_phrases:
+            # A translation's display phrase may be indefinite (une banane).
+            # Keep it as supplied context, never assert it is a definite form.
+            forms["session_phrase"] = forms.pop("definite")
+        if paired_articles and (not article or article.casefold() not in paired_articles):
+            forms.pop("article_definite", None)
         indefinite = pack.lexical.get("indefinite_articles", {}).get(gender)
         if indefinite:
             forms["article_indefinite"] = indefinite

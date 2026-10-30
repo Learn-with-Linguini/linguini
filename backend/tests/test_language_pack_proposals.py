@@ -4,6 +4,7 @@ import json
 from dataclasses import replace
 
 import pytest
+from bundled_packs import bundled_pack
 from test_language_pack_runtime import PACK, MockSpanishProvider, dispatch
 from test_language_pack_runtime import runtime as runtime
 
@@ -11,7 +12,6 @@ from app.ai.cache.cache import ResultCache
 from app.ai.contracts.text import TextModelConfig
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.language_packs.generation import ApprovedTerm
-from app.language_packs.loader import load_pack
 from app.language_packs.model_source import ModelSource, _redundant_number_claim
 from app.language_packs.pipeline import generate_pilot
 from app.language_packs.runtime import session_inputs
@@ -169,7 +169,7 @@ def test_new_realization_is_model_assessed_never_reported_as_reviewed(runtime, m
     from test_language_pack_runtime import PACK
 
     outside_reference_scene(runtime, monkeypatch)
-    pack = load_pack(PACK).model_copy(update={"lexical": {}})
+    pack = bundled_pack(PACK).model_copy(update={"lexical": {}})
     facts, vocabulary = session_inputs(pack, *runtime, {})
 
     class MockRealizationProvider(MockOpenSpanishProvider):
@@ -386,4 +386,4 @@ def test_review_sees_only_the_lessons_constructions(runtime):
 
     planned = {construction(spec) for slot in review["plan"]["slots"] for spec in slot["specs"]}
     assert {construction(item) for item in review["guidance"]} == planned
-    assert len(review["guidance"]) < len(load_pack(PACK).constructions)
+    assert len(review["guidance"]) < len(bundled_pack(PACK).constructions)
