@@ -338,6 +338,39 @@ def test_analysis_saves_draft_without_scene_objects_or_tasks():
     assert persist["analysis_draft"]["relations"][0]["source_relation_key"] == "provider:0"
 
 
+def test_revisit_draft_marks_practised_objects_and_suggests_new_ones():
+    from app.schemas.media import SceneObject
+
+    session_id = uuid4()
+    objects = [
+        SceneObject(session_id=session_id, label=label, source_object_key=label)
+        for label in ("chair", "table", "lamp", "door", "rug", "plant")
+    ]
+    draft = PostgresWorkflowRepository._analysis_draft(
+        SimpleNamespace(mode="lesson", analysis_draft=None),
+        {"target_language_code": "es", "proficiency_level": "A1"},
+        SimpleNamespace(
+            objects=objects, relations=[], action_suggestions=[], price_suggestions=[],
+        ),
+        practised_labels={"Chair"},
+    )
+    assert draft["practisedSceneObjectIds"] == [str(objects[0].id)]
+    assert draft["suggestedSceneObjectIds"] == [str(item.id) for item in objects[1:]]
+
+
+def test_practised_labels_come_from_earlier_lessons_on_the_same_photo():
+    from app.schemas.sessions import Session
+
+    owner = uuid4()
+    session = Session(user_id=owner, language_profile_id=uuid4(), scene_media_asset_id=uuid4())
+    connection = MagicMock()
+    connection.execute.return_value.scalars.return_value = iter([" Chair", "table"])
+    repo = PostgresWorkflowRepository(None, owner)
+    assert repo._practised_labels(connection, session) == {"chair", "table"}
+    query = str(connection.execute.call_args.args[0])
+    assert "scene_media_asset_id" in query and "task_attempts" in query
+
+
 def test_relations_require_selected_distinct_endpoints_and_no_duplicates():
     subject, reference = uuid4(), uuid4()
     relation = {

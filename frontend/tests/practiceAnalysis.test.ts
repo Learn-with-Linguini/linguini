@@ -224,6 +224,25 @@ test("restoring removed objects keeps mission-hidden suggestions excluded from m
   assert.deepEqual(reviews[0].relations, [relation]);
 });
 
+test("a revisit marks words practised in an earlier lesson on the photo", async () => {
+  await mount({ ...detail(), practisedSceneObjectIds: ["object-0"] });
+  const practised = [...dom.window.document.querySelectorAll(".analysis-word-row__practised")];
+  assert.deepEqual(practised.map(element => element.closest(".analysis-word-row")?.querySelector(".analysis-word-row__marker")?.textContent), ["1"]);
+  assert.match(dom.window.document.body.textContent ?? "", /New words from this photo come first/);
+});
+
+test("a revisit with every word practised says so instead of promising new words", async () => {
+  await mount({ ...detail(), practisedSceneObjectIds: ["object-0", "object-1", "object-2"] });
+  assert.equal(dom.window.document.querySelectorAll(".analysis-word-row__practised").length, 3);
+  assert.match(dom.window.document.body.textContent ?? "", /practised every word here/);
+});
+
+test("a first lesson on a photo shows no practised marks", async () => {
+  await mount();
+  assert.equal(dom.window.document.querySelectorAll(".analysis-word-row__practised").length, 0);
+  assert.doesNotMatch(dom.window.document.body.textContent ?? "", /New words from this photo/);
+});
+
 test("a learner-added object follows the visible suggestion numbers", async () => {
   await mount({ ...detail(), suggestedSceneObjectIds: ["object-1", "object-2"] });
   assertMarkers([1, 2]);
@@ -249,47 +268,13 @@ test("added markers stay contiguous after removing an added object and are not s
   assert.deepEqual(Object.keys(reviews[0].addedObjects[0]).sort(), ["id", "label", "x", "y"]);
 });
 
-const preferencePlan = [{ missionId: "M05", practiceLevel: "A0" }] as const;
-
-test("personal preference can select either matching object by its stable photo marker", async () => {
-  await mount({ ...detail(), provisionalMissionPlan: [...preferencePlan] });
-  await click(dom.window.document.getElementById("preference-object"));
-  const options = [...dom.window.document.querySelectorAll("#preference-object-options [role=option]")];
-  assert.deepEqual(options.map(option => option.textContent), ["1table", "2cup", "3cup"]);
-  await click(options[2]);
-  await click(button("I don't like it"));
-  await click(button("Confirm lesson facts"));
-  assert.deepEqual(reviews[0].missionChoices?.preference, {
-    sceneObjectIds: ["object-2"], chosenObjectId: null, reaction: "dislike",
-  });
-});
-
-test("a removed preference object is not sent as the learner's choice", async () => {
-  await mount({ ...detail(), provisionalMissionPlan: [...preferencePlan],
-    missionChoices: { preference: { sceneObjectIds: ["object-2"], chosenObjectId: null, reaction: "like" } } });
-  assert.match(dom.window.document.getElementById("preference-object")!.textContent!, /3cup/);
-  await click(dom.window.document.querySelector('[aria-label="Remove marker 3, cup"]'));
-  await click(button("Confirm lesson facts"));
-  assert.equal(reviews[0].missionChoices, undefined);
-});
-
-test("leaving preference empty or clearing a restored choice requests a pretend scenario", async () => {
-  await mount({ ...detail(), provisionalMissionPlan: [...preferencePlan] });
-  await click(button("Confirm lesson facts"));
-  assert.equal(reviews[0].missionChoices, undefined);
-  await act(async () => { root?.unmount(); });
-  root = null;
-  dom.window.document.body.replaceChildren();
-  await mount({ ...detail(), provisionalMissionPlan: [...preferencePlan],
+test("the beginner preference mission uses an AI scenario instead of asking for a preference", async () => {
+  await mount({ ...detail(), provisionalMissionPlan: [{ missionId: "M05", practiceLevel: "A0" }],
     missionChoices: { preference: { sceneObjectIds: ["object-1"], chosenObjectId: null, reaction: "like" } } });
-  await click(button("Use a pretend preference"));
+  assert.equal(dom.window.document.getElementById("preference-object"), null);
+  assert.doesNotMatch(dom.window.document.body.textContent ?? "", /Your preference|pretend preference/);
   await click(button("Confirm lesson facts"));
   assert.equal(reviews[0].missionChoices, undefined);
-});
-
-test("preference picker is only shown for the beginner preference mission", async () => {
-  await mount({ ...detail(), provisionalMissionPlan: [{ missionId: "M05", practiceLevel: "A1" }] });
-  assert.equal(dom.window.document.getElementById("preference-object"), null);
 });
 
 for (const [stage, completed] of [["loadingImage", 0], ["findingObjects", 1], ["checkingResults", 2], ["savingResults", 3]] as const) {

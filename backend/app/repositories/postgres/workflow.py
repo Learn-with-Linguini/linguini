@@ -1424,6 +1424,7 @@ class PostgresWorkflowRepository:
             ),
             provisional_mission_plan=(draft or {}).get("provisionalMissionPlan", []),
             suggested_scene_object_ids=(draft or {}).get("suggestedSceneObjectIds", []),
+            practised_scene_object_ids=(draft or {}).get("practisedSceneObjectIds", []),
             tasks=[SessionTaskPublic.from_internal(t, mode=session.mode) for t in tasks],
             progress=task_progress(tasks),
             next_task_id=next(
@@ -1737,7 +1738,9 @@ class PostgresWorkflowRepository:
             )
             if cached is not None:
                 result = scene_result_from_inventory(claimed, cached["inventory"])
-                focused = self._analysis_draft(claimed, profile, result)
+                focused = self._analysis_draft(
+                    claimed, profile, result, **self._revisit_focus(c, claimed)
+                )
                 return self._detail(
                     c,
                     self._transition(
@@ -1910,7 +1913,9 @@ class PostgresWorkflowRepository:
                     "awaitingObjectReview",
                     session_title=result.title,
                     session_summary=result.summary,
-                    analysis_draft=self._analysis_draft(current, profile, result),
+                    analysis_draft=self._analysis_draft(
+                        current, profile, result, **self._revisit_focus(c, current)
+                    ),
                 )
         except Exception as error:
             error_code = getattr(error, "code", None)
@@ -1938,13 +1943,15 @@ class PostgresWorkflowRepository:
                 )
 
     @staticmethod
-    def _analysis_draft(session, profile, result):
+    def _analysis_draft(session, profile, result, *, history=(), practised_labels=()):
         from app.language_packs.context import operation_context
 
         context = operation_context(session.mode, profile)
         candidates = lesson_missions(session.mode, profile, context)
+        practised = {label.strip().casefold() for label in practised_labels}
         provisional, selected_ids = provisional_mission_focus(
-            candidates, result.objects, result.relations, context
+            candidates, result.objects, result.relations, context,
+            history=history, practised_labels=practised,
         )
         return {
             "analysisAttempts": analysis_attempts(session),
@@ -1966,7 +1973,57 @@ class PostgresWorkflowRepository:
             ],
             "provisionalMissionPlan": [mission_snapshot(item) for item in provisional],
             "suggestedSceneObjectIds": [str(item) for item in selected_ids],
+            "practisedSceneObjectIds": [
+                str(obj.id) for obj in result.objects
+                if obj.label.strip().casefold() in practised
+            ],
         }
+
+    def _revisit_focus(self, c, session):
+        """What a repeat lesson on a photo should steer its suggested review set away from."""
+        return {
+            "history": self._mission_history(c, session.language_profile_id, session.id),
+            "practised_labels": self._practised_labels(c, session),
+        }
+
+    def _practised_labels(self, c, session):
+        """Labels this learner confirmed in earlier lessons on the same photo.
+
+        Only lessons that reached practice count, so leaving at the review step
+        does not hide a word from the next visit.
+        """
+        rows = c.execute(
+            select(scene_objects.c.label)
+            .join(sessions, sessions.c.id == scene_objects.c.session_id)
+            .where(
+                sessions.c.user_id == self.user_id,
+                sessions.c.language_profile_id == session.language_profile_id,
+                sessions.c.scene_media_asset_id == session.scene_media_asset_id,
+                sessions.c.mode == SessionMode.LESSON,
+                sessions.c.id != session.id,
+                select(task_attempts.c.id)
+                .join(session_tasks, session_tasks.c.id == task_attempts.c.session_task_id)
+                .where(session_tasks.c.session_id == sessions.c.id)
+                .exists(),
+            )
+        ).scalars()
+        return {label.strip().casefold() for label in rows}
+
+    def _mission_history(self, c, profile_id, session_id):
+        """Mission ids planned by this profile's other lessons, for least-planned rotation."""
+        history_drafts = c.execute(
+            select(sessions.c.analysis_draft).where(
+                sessions.c.language_profile_id == profile_id,
+                sessions.c.id != session_id,
+                sessions.c.mode == SessionMode.LESSON,
+            )
+        ).scalars().all()
+        return [
+            item["missionId"]
+            for saved in history_drafts
+            for item in (saved or {}).get("missionPlan", [])
+            if isinstance(item, dict) and isinstance(item.get("missionId"), str)
+        ]
 
     def _catalog_word(self, c, profile, label):
         match = (
@@ -2515,19 +2572,7 @@ class PostgresWorkflowRepository:
         candidates = lesson_missions(session.mode, profile, language_context)
         if not candidates:
             return None
-        history_drafts = c.execute(
-            select(sessions.c.analysis_draft).where(
-                sessions.c.language_profile_id == profile["id"],
-                sessions.c.id != session.id,
-                sessions.c.mode == SessionMode.LESSON,
-            )
-        ).scalars().all()
-        history = [
-            item["missionId"]
-            for saved in history_drafts
-            for item in (saved or {}).get("missionPlan", [])
-            if isinstance(item, dict) and isinstance(item.get("missionId"), str)
-        ]
+        history = self._mission_history(c, profile["id"], session.id)
         plan = plan_missions(
             candidates, objects, relations, counted_groups, history, mission_choices,
             language_context,

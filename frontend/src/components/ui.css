@@ -1415,6 +1415,18 @@ p[role="alert"]::before { content: "!"; }
   overflow-wrap: anywhere;
 }
 
+.analysis-word-row__practised {
+  margin-left: var(--space-2);
+  font-size: var(--text-label);
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.analysis-revisit-note {
+  margin-top: var(--space-2);
+  color: var(--teal-dark);
+}
+
 .analysis-object-group {
   min-width: 0;
   padding: var(--space-3) 0;
@@ -2243,10 +2255,6 @@ p[role="alert"]::before { content: "!"; }
   .shell--focus > .shell__content {
     max-width: 680px;
     padding-inline: var(--space-8);
-  }
-
-  .shell--focus > .shell__content.shell__content--wide {
-    max-width: 760px;
   }
 
   .shell--app > .bottom-nav {
@@ -3206,6 +3214,14 @@ p[role="alert"]::before { content: "!"; }
   padding-inline: var(--space-4);
   border-radius: var(--radius-pill);
   box-shadow: 0 4px 0 var(--tomato-pressed), 0 5px 14px rgba(38, 50, 56, 0.24);
+}
+
+.revisit-stop__review {
+  flex: none;
+  gap: var(--space-2);
+  margin-right: calc(var(--space-3) * -1);
+  font-size: var(--text-small);
+  font-weight: 800;
 }
 
 .revisit-stop__action:disabled {
@@ -4785,195 +4801,6 @@ p[role="alert"]::before { content: "!"; }
 .task-row--done .task-row__icon {
   background: var(--teal);
   color: #fff;
-}
-
-.learn-words-intro {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  gap: var(--space-5);
-  padding: var(--space-5);
-  border: 2px solid rgba(249, 178, 51, .62);
-  border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, var(--cream), #fffaf0);
-  box-shadow: 0 8px 20px rgba(139, 90, 0, .08);
-}
-
-.learn-words-intro--done {
-  border-color: rgba(46, 156, 153, .45);
-  background: var(--sage);
-  box-shadow: none;
-}
-
-.learn-words-intro__heading {
-  display: grid;
-  gap: var(--space-2);
-}
-
-.learn-words-intro__heading h2,
-.learn-words-intro__heading p,
-.lesson-scene-summary p,
-.learn-missions__heading h2,
-.learn-missions__heading p { margin: 0; }
-
-.learn-words-intro__start {
-  width: fit-content;
-  padding: 5px var(--space-3);
-  border-radius: var(--radius-pill);
-  background: #ffe39a;
-  color: #734b00;
-  font-size: var(--text-small);
-  font-weight: 900;
-  letter-spacing: .02em;
-  text-transform: uppercase;
-}
-
-.learn-words-intro--done .learn-words-intro__start {
-  background: rgba(255, 253, 247, .75);
-  color: var(--teal-dark);
-}
-
-.learn-words-intro__required {
-  flex: none;
-  padding: 5px var(--space-3);
-  border-radius: var(--radius-pill);
-  background: rgba(249, 178, 51, .22);
-  color: #734b00;
-  font-size: var(--text-small);
-  font-weight: 800;
-}
-
-.learn-words-intro__meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  color: var(--teal-dark);
-  font-weight: 800;
-}
-
-.learn-words-intro__meta .pill--xp {
-  padding: 3px var(--space-2);
-  box-shadow: none;
-}
-
-.lesson-scene-summary {
-  display: grid;
-  gap: var(--space-3);
-}
-
-.lesson-scene-summary__heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-
-.lesson-scene-summary__heading p { min-width: 0; }
-
-.lesson-scene-summary__photo {
-  position: relative;
-}
-
-.lesson-scene-summary__photo > .pill--xp {
-  position: absolute;
-  z-index: 2;
-  top: var(--space-3);
-  right: var(--space-3);
-  box-shadow: var(--shadow-card);
-}
-
-.lesson-scene-summary .scene {
-  overflow: hidden;
-  max-height: 300px;
-  border-color: var(--teal-dark);
-}
-
-.lesson-scene-summary .scene__media,
-.lesson-scene-summary .scene__art,
-.lesson-scene-summary .scene__art img {
-  height: 100%;
-}
-
-.lesson-scene-summary .scene__art img {
-  object-fit: cover;
-}
-
-.lesson-scene-summary p {
-  color: var(--ink-muted);
-  font-size: var(--text-small);
-}
-
-.lesson-path {
-  position: relative;
-  display: grid;
-  gap: var(--space-8);
-  padding-left: var(--space-5);
-}
-
-.lesson-path::before {
-  content: "";
-  position: absolute;
-  top: var(--space-6);
-  bottom: var(--space-6);
-  left: 4px;
-  width: 5px;
-  border-radius: var(--radius-pill);
-  background: var(--pasta);
-  opacity: .55;
-}
-
-.learn-page > .stack-2:first-child {
-  margin-bottom: var(--space-1);
-}
-
-.task-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-}
-
-.learn-missions {
-  position: relative;
-  z-index: 1;
-}
-
-.learn-missions__heading {
-  display: grid;
-  gap: var(--space-1);
-}
-
-.learn-missions .task-list { gap: var(--space-3); }
-
-.learn-missions .task-row {
-  min-height: 76px;
-  border: 1px solid var(--line);
-  background: var(--paper);
-  color: var(--ink);
-  box-shadow: none;
-}
-
-.learn-missions .task-row:hover {
-  border-color: var(--teal);
-  background: var(--butter);
-  box-shadow: none;
-}
-
-.learn-missions .task-row--done { background: var(--sage); }
-
-.learn-missions .task-row--done {
-  border-color: var(--teal);
-  color: var(--ink);
-  box-shadow: none;
-}
-
-@media (max-width: 520px) {
-  .lesson-scene-summary .scene { max-height: 170px; }
-  .lesson-path { gap: var(--space-6); padding-left: var(--space-3); }
-  .lesson-path::before { left: 1px; width: 4px; }
-  .learn-words-intro { padding: var(--space-4); }
-  .learn-words-intro__heading .spread { align-items: flex-start; }
-  .learn-words-intro__required { padding-inline: var(--space-2); }
 }
 
 .prompt-translation {
