@@ -58,7 +58,7 @@ The supplied palette is the starting point. These refinements preserve its inten
 | `--teal` | `#2E9C99` | Correct states, secondary actions, progress confirmation |
 | `--teal-dark` | `#21716F` | Primary text on light surfaces, accessible teal labels |
 | `--basil` | `#21716F` | Basil rewards, totals, and leaf icons |
-| `--on-basil` | `#FFFDF7` | Text and icons on dark Basil surfaces |
+| `--basil-surface` | `#DCEBDD` | Light teal background behind Basil rewards |
 | `--ink` | `#263238` | High-contrast text, icons, photo markers |
 | `--ink-muted` | `#667579` | Supporting copy, inactive icons |
 | `--line` | `#D9D2C3` | Quiet boundaries, dashed capture areas, dividers |
@@ -193,7 +193,7 @@ Use a cream panel with a color-coded left detail and a concise human message: �
 
 ### Basil reward
 
-Every compact Basil amount or earned-reward message uses the shared dark-green `--basil` pill with cream text and the Basil leaf icon. Basil icons and totals on light surfaces use that same dark green; do not introduce pale or bright leaf-green variants. Apply the pill treatment on task lists, question progress, answer feedback, and completion states; never show a bare “+n Basil earned” text label beside the interface. Sage remains reserved for learned and completed states that are not Basil rewards.
+Every compact Basil amount or earned-reward message uses the shared light-teal `--basil-surface` pill with dark-green `--basil` text and the dark-green Basil leaf icon. Keep this orientation consistent: the leaf and label are dark while the background is light. Apply the pill treatment on task lists, question progress, answer feedback, and completion states; never show a bare “+n Basil earned” text label beside the interface.
 
 ## Key screens
 

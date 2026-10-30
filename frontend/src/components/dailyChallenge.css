@@ -81,9 +81,9 @@
 .daily-challenge__prizes > p { display: inline-flex; align-items: center; gap: var(--space-2); margin: 0; color: var(--ink); font-weight: 900; }
 .daily-challenge__prizes > p svg { color: #b07a00; }
 .daily-challenge__prizes ol { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-2); margin: 0; padding: 0; list-style: none; }
-.daily-challenge__prizes li { display: grid; justify-items: center; gap: 2px; padding: var(--space-2) var(--space-1); border-radius: var(--radius-sm); background: var(--basil); color: var(--on-basil); text-align: center; }
-.daily-challenge__prizes li span { color: var(--on-basil); font-size: var(--text-label); font-weight: 800; white-space: nowrap; }
-.daily-challenge__prizes li strong { display: inline-flex; align-items: center; gap: 4px; color: var(--on-basil); font-family: var(--font-display); font-size: 24px; line-height: 1; font-variant-numeric: tabular-nums; }
+.daily-challenge__prizes li { display: grid; justify-items: center; gap: 2px; padding: var(--space-2) var(--space-1); border-radius: var(--radius-sm); background: var(--basil-surface); color: var(--basil); text-align: center; }
+.daily-challenge__prizes li span { color: var(--basil); font-size: var(--text-label); font-weight: 800; white-space: nowrap; }
+.daily-challenge__prizes li strong { display: inline-flex; align-items: center; gap: 4px; color: var(--basil); font-family: var(--font-display); font-size: 24px; line-height: 1; font-variant-numeric: tabular-nums; }
 
 .daily-challenge__prizes li strong svg { flex: none; color: currentColor; }
 
