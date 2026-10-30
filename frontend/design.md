@@ -197,7 +197,7 @@ Every compact Basil amount or earned-reward message uses the shared light-teal `
 
 ### Mission badge
 
-Use the supplied square badge artwork for each mission, mapped by stable mission ID rather than display copy. Show the artwork in the Chef’s Badges collection beside the mission name and skill. Unearned badges keep the same recognizable image but appear muted and desaturated; the written status and accessible label continue to explain whether the badge is earned and at which level.
+Use the supplied square badge artwork for each mission, mapped by stable mission ID rather than display copy. Crop empty canvas from the source artwork so the badge fills its compact frame without excessive white space. Show the artwork in the Chef’s Badges collection beside the mission name and skill. Unearned badges keep the same recognizable image but appear muted and desaturated; the written status and accessible label continue to explain whether the badge is earned and at which level.
 
 ## Key screens
 

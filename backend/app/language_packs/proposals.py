@@ -27,10 +27,6 @@ Number words and possessive words are pack data: never propose forms for them. G
 one forms entry per session term_id, with every form for that term in it, and use only term_ids
 from the session.
 These are proposals, not reviewed forms. Do not change scene facts.
-For M13/noun-word-pair, keep the session's noun lexeme and grammatical number. Change
-only the determiner/ending required by the construction, never substitute a synonym:
-French un vélo becomes le vélo, not la bicyclette; une banane becomes la banane;
-singular fruit must not become plural fruits. Propose these definite forms explicitly.
 For every attribute/relation needing choices, propose two distinct alternatives, each tied to its
 for_fact_id, with meaning in the instruction language, native text and required agreement forms.
 Use natural words outside reference lists when appropriate to the level/register. Alternate nouns
@@ -51,12 +47,6 @@ IDs are authoritative; native session words are machine translations. Verify rea
 those meanings. If a session word does not express its English meaning, say so in issues as the
 cause (a translation error), rather than listing every criterion it affects. Romanization is
 checked mechanically elsewhere; do not assess it.
-For M13/noun-word-pair, assess the construction's required definite article, not literal
-equality with the session phrase's determiner: une banane -> la banane and un vélo ->
-le vélo are intended grammatical changes, not gender, meaning or register errors.
-Keep the taught noun lexeme and number: replacing vélo with bicyclette or singular
-fruit with plural fruits is not permitted for a bound M13 noun. Report the specific
-noun/number mismatch, rather than rejecting a valid definite/indefinite article change.
 Judge only the supplied candidates and, when present, the rendered task. Without a rendered
 task, the distractors are the candidates that are options or have truth false; set
 distractors_suitable, distinct and unambiguous true when those candidates meet the criteria.

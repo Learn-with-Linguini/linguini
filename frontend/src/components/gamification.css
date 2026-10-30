@@ -9,14 +9,28 @@
 .mission-badges__heading h3, .mission-badges__heading p { margin: 0; }
 .mission-badges details { margin-top: 12px; }
 .mission-badges summary { cursor: pointer; color: var(--teal-dark); min-height: 44px; display: flex; align-items: center; text-decoration: underline; }
-.chef-badge { width: 96px; min-width: 96px; height: 96px; display: block; overflow: hidden; border-radius: var(--radius-md); background: var(--cream); }
-.chef-badge img { display: block; width: 100%; height: 100%; object-fit: cover; transform: scale(1.18); }
-.chef-badge--empty { filter: grayscale(.72); opacity: .48; }
+.chef-badge { position: relative; width: 96px; min-width: 96px; height: 96px; display: block; overflow: hidden; border-radius: var(--radius-md); background: var(--cream); }
+.chef-badge img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.chef-badge--empty > :not(.chef-badge__lock) { filter: grayscale(.72); opacity: .48; }
+.chef-badge--small { width: 56px; min-width: 56px; height: 56px; border-radius: var(--radius-sm); }
+.summary-badge { display: flex; align-items: center; gap: 12px; }
+.summary-badge p { margin: 2px 0 0; }
+.badge-earned { text-align: center; }
+.badge-earned__list { display: flex; flex-wrap: wrap; justify-content: center; gap: 16px; margin: 16px 0 20px; }
+.badge-earned__item { display: grid; justify-items: center; gap: 4px; }
+.badge-earned__item .chef-badge { width: 120px; min-width: 120px; height: 120px; animation: badge-earned-pop 360ms cubic-bezier(0.22, 1, 0.36, 1); }
+@keyframes badge-earned-pop { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.chef-badge__lock { position: absolute; inset: 0; margin: auto; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--paper); color: var(--ink-muted); box-shadow: var(--shadow-card); }
+.mission-badges__heading .badge-level { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.badge-level__dots { display: inline-flex; gap: 4px; }
+.badge-level__dot { width: 8px; height: 8px; border: 1.5px solid var(--teal); border-radius: 50%; }
+.badge-level__dot.is-earned { background: var(--teal); }
+.badge-level__dot.is-coming { border-style: dashed; border-color: var(--ink-muted); opacity: .5; }
 .chef-standings { list-style: none; padding: 0; margin: 0; }
 .chef-standings li { display: grid; grid-template-columns: 3ch 36px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .chef-standings li > span { overflow-wrap: anywhere; }
 @media (min-width: 680px) { .mission-badges { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 420px) {
   .mission-badges__heading { align-items: flex-start; }
-  .chef-badge { width: 80px; min-width: 80px; height: 80px; }
+  .mission-badges .chef-badge { width: 80px; min-width: 80px; height: 80px; }
 }

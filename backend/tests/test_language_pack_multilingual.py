@@ -49,7 +49,7 @@ ROMANIZED = {"ko"}
 COUNTS = {
     "M01": {"A0": 6, "A1": 4, "A2": 5}, "M02": {"A0": 6, "A1": 4, "A2": 5},
     "M03": {"A0": 6, "A1": 3, "A2": 5}, "M04": {"A0": 6, "A1": 3, "A2": 5},
-    "M05": {"A0": 6, "A1": 3}, "M06": {"A2": 6}, "M13": {"A0": 6},
+    "M05": {"A0": 6, "A1": 3}, "M06": {"A2": 6},
 }
 # M06 builds its order as two tasks (place the order, finish it); others build one.
 TASKS = {"M06": 2}
@@ -160,7 +160,7 @@ def _capitalised(text):
 
 
 # Constructions each pack marks with the "phrase" feature.
-PHRASES = {"location-phrase", "quantity-chunk", "order-phrase", "noun-word-pair"}
+PHRASES = {"location-phrase", "quantity-chunk", "order-phrase"}
 M02_CONSTRUCTIONS = {
     "find-object", "where-question", "location-phrase", "target-clue", "target-location",
 }
@@ -929,16 +929,6 @@ class MockPackProvider:
                 text, realized = _m05_sentence(
                     self.language, spec["construction_id"], spec, {**terms, **terms_by_id},
                 )
-            elif spec["construction_id"] == "noun-word-pair":
-                bare, article, _gender = LEXICON[self.language]["nouns"][source("object")]
-                if self.language == "ko":
-                    # M13's Korean chunk: the noun with its copula ending, as one word.
-                    text = bare + ("이에요" if _batchim(bare) else "예요")
-                    realized = {"object": text}
-                else:
-                    text = (f"l'{bare}" if self.language == "fr" and bare[0] in "aeiouéè"
-                            else f"{article} {bare}")
-                    realized = {}
             elif spec["construction_id"] in M06_CONSTRUCTIONS:
                 text, realized = _m06_sentence(
                     self.language, spec["construction_id"], spec, {**terms, **terms_by_id},

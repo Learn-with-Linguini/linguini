@@ -161,6 +161,9 @@ The existing analysis and review routes show this progress; no new page is added
 | `home_explore_ispy_clicked` | — | User clicks I-Spy quick play card on home dashboard |
 | `session_summary_viewed` | `{ sessionId, basilEarned, wordsLearnedCount, completedLessonsCount }` | Session summary screen displays upon finishing a lesson |
 | `summary_back_home_clicked` | — | User clicks "Back home" on session summary |
+| `badge_earned_popup_shown` | `{ missionId, level }` | The summary opens the "New badge earned" popup; once per earned badge, once per session |
+| `badge_earned_popup_closed` | — | Learner closes the "New badge earned" popup |
+| `summary_badge_missed` | `{ missionId, accuracy }` | A finished mission didn't earn its badge (50% or less correct, or skipped tasks); logged once per session |
 | `summary_play_ispy_clicked` | — | User clicks "Play I-Spy with this scene" from summary |
 
 ### I-Spy & Multiplayer Rooms

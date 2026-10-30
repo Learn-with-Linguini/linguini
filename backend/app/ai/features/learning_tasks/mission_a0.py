@@ -1,4 +1,4 @@
-"""A0 scene mission lessons: M01, M02, M03 and M13 at the A0 (pre-A1) level.
+"""A0 scene mission lessons: M01, M02 and M03 at the A0 (pre-A1) level.
 
 Each lesson is two tasks of three questions on two focus objects (M03: the
 learner-counted group, then a practice board). A text model writes the lesson
@@ -26,23 +26,18 @@ from app.ai.features.learning_tasks.schemas import GeneratedChoice
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.schemas.base import ApiModel, NonEmptyText
 
-# Korean names an object with a copula ending, never an article.
-KOREAN_ENDINGS = ("이에요", "예요")
-
 type A0Purpose = Literal[
     "matchName", "confirmName", "buildIdentify",
     "findNamed", "chooseName", "listenSelect",
     "countGroup", "matchChunk", "buildChunk",
-    "chooseChunk", "matchSpoken", "fillSlot",
 ]
 
 ORDERS: dict[str, list[str]] = {
     "M01": ["matchName", "confirmName", "buildIdentify"],
     "M02": ["findNamed", "chooseName", "listenSelect"],
     "M03": ["countGroup", "matchChunk", "buildChunk"],
-    "M13": ["chooseChunk", "matchSpoken", "fillSlot"],
 }
-MARKER_PURPOSES = {"matchName", "findNamed", "listenSelect", "matchSpoken"}
+MARKER_PURPOSES = {"matchName", "findNamed", "listenSelect"}
 BUILD_PURPOSES = {"buildIdentify", "buildChunk"}
 # English prompts and instructions an A0 question may show; target-language text
 # always comes from the payload's approved chunks.
@@ -56,11 +51,7 @@ INSTRUCTIONS = {
     "countGroup": "Count the highlighted group. How many are there?",
     "matchChunk": "Which words match what you see?",
     "buildChunk": "Build the words with the tiles.",
-    "chooseChunk": "Which words go with the highlighted object?",
-    "matchSpoken": "Listen, then tap the marker for the object you hear.",
-    "fillSlot": "Choose the word that completes the noun.",
 }
-SLOT = "___"
 _DIGIT = re.compile(r"\d")
 MAX_OPTIONS = 3
 
@@ -93,9 +84,6 @@ class A0Question(ApiModel):
     group_object_ids: list[NonEmptyText] = []
     display_count: int | None = None
     board_object_id: str | None = None
-    slot_template: Annotated[str, Field(max_length=120)] | None = None
-    # The complete chunk shown and played once the slot is graded.
-    complete_chunk: Annotated[str, Field(max_length=120)] | None = None
 
 
 class A0LessonResult(ApiModel):
@@ -265,27 +253,7 @@ def m03_questions(payload):
     return questions
 
 
-def _m13(payload):
-    questions = []
-    for index, (section, target) in enumerate(task_sections(payload), 1):
-        questions += [
-            choice_question(
-                payload, "chooseChunk", section, target, INSTRUCTIONS["chooseChunk"],
-                [row["chunk"] for row in target["formChoices"]], target["chunk"], index=index,
-            ),
-            marker_question(
-                payload, "matchSpoken", section, target, target["chunk"], index=index,
-            ),
-            choice_question(
-                payload, "fillSlot", section, target, target["slotTemplate"],
-                [row["form"] for row in target["formChoices"]], target["form"], index=index,
-                slot_template=target["slotTemplate"], complete_chunk=target["chunk"],
-            ),
-        ]
-    return questions
-
-
-_BUILDERS = {"M01": _m01, "M02": _m02, "M03": m03_questions, "M13": _m13}
+_BUILDERS = {"M01": _m01, "M02": _m02, "M03": m03_questions}
 
 
 def assemble_a0_lesson(payload: dict[str, Any]) -> A0LessonResult:
@@ -324,7 +292,6 @@ def _check_tiles(question, approved_tokens):
 def validate_a0_lesson(payload: dict[str, Any], result: A0LessonResult) -> None:
     """Reject anything outside the payload's closed content or with more than one answer."""
     mission_id = payload["missionId"]
-    language = payload["targetLanguage"]
     objects = _objects(payload)
     chunks = {fold(item) for item in payload["approvedSentenceChunks"]}
     forms = {fold(item) for item in payload["approvedArticlesOrEndings"]}
@@ -346,8 +313,6 @@ def validate_a0_lesson(payload: dict[str, Any], result: A0LessonResult) -> None:
         _validate_m03(payload, questions)
     elif first[0].object_key == second[0].object_key:
         _fail("The two tasks focus on different objects.")
-    if mission_id == "M13" and language == "ko" and not forms <= set(KOREAN_ENDINGS):
-        _fail("Korean uses 이에요/예요 endings, never articles.")
     for question in questions:
         target = objects.get(question.object_key)
         if target is None:
@@ -387,8 +352,6 @@ def validate_a0_lesson(payload: dict[str, Any], result: A0LessonResult) -> None:
                 _fail("Distinguish exactly two taught names.")
             if names[fold(labels[question.correct_option_id])] != target["key"]:
                 _fail("The correct name is the highlighted object's.")
-        if question.purpose in {"chooseChunk", "fillSlot"}:
-            _validate_m13(payload, question, labels, target)
 
 
 def _check_markers(question, labels, objects):
@@ -424,28 +387,6 @@ def _validate_yes_no(payload, question, labels, objects, target):
         _fail("The yes/no truth value must match the photo.")
     if fold(labels[question.correct_option_id]) != fold(yes if truth else no):
         _fail("The answer must match the statement's truth.")
-
-
-def _validate_m13(payload, question, labels, target):
-    language = payload["targetLanguage"]
-    allowed = {fold(row["form"]) for row in target["formChoices"]}
-    if not payload["pluralsTaught"] and any(row["plural"] for row in target["formChoices"]):
-        _fail("Plural forms appear only after plurals are taught.")
-    if question.purpose == "fillSlot":
-        if not {fold(label) for label in labels.values()} <= allowed:
-            _fail("Slot options are reviewed forms for the noun.")
-        if fold(labels[question.correct_option_id]) != fold(target["form"]):
-            _fail("The slot answer is the noun's reviewed form.")
-        if question.slot_template != target["slotTemplate"] or SLOT not in question.prompt:
-            _fail("The slot template leaves only the form missing.")
-        if language == "ko" and not set(labels.values()) <= set(KOREAN_ENDINGS):
-            _fail("Korean slots choose 이에요 or 예요.")
-        return
-    by_chunk = {fold(row["chunk"]): row for row in target["formChoices"]}
-    if not {fold(label) for label in labels.values()} <= set(by_chunk):
-        _fail("Chunk options differ from the answer in the form only.")
-    if fold(labels[question.correct_option_id]) != fold(target["chunk"]):
-        _fail("The correct chunk uses the noun's reviewed form.")
 
 
 def _validate_m03(payload, questions):

@@ -74,7 +74,6 @@ constructions = [
   "constructions/order-repeat.toml",
   "constructions/order-confirmation.toml",
   "constructions/order-repair.toml",
-  "constructions/noun-word-pair.toml",
 ]
 examples = [
   "examples/target-location.toml",
@@ -110,7 +109,6 @@ examples = [
   "examples/order-repeat.toml",
   "examples/order-confirmation.toml",
   "examples/order-repair.toml",
-  "examples/noun-word-pair.toml",
 ]
 evaluations = [
   "evaluations/M01-A0.toml",
@@ -128,5 +126,4 @@ evaluations = [
   "evaluations/M05-A0.toml",
   "evaluations/M05-A1.toml",
   "evaluations/M06-A2.toml",
-  "evaluations/M13-A0.toml",
 ]
