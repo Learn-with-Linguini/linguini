@@ -60,9 +60,16 @@ def personalize_introduction(task, history):
 
     content = task.public_content
     words = sorted(content.words, key=priority)
-    by_question = {f"word-{word.learning_key}": index for index, word in enumerate(words)}
+    by_question = {
+        question_id: (section, index)
+        for index, word in enumerate(words)
+        for section, question_id in enumerate((
+            f"word-{word.learning_key}",
+            f"article-{word.learning_key}",
+        ))
+    }
     questions = sorted(content.questions, key=lambda question: by_question.get(
-        question.question_id, len(words),
+        question.question_id, (2, len(words)),
     ))
     return task.model_copy(update={
         "public_content": content.model_copy(update={"words": words, "questions": questions}),
