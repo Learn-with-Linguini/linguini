@@ -601,6 +601,14 @@ Before review, the backend compares the unconfirmed inventory with the implement
 missions for the learner's level. `provisionalMissionPlan` is presentation guidance,
 never grading evidence: `suggestedSceneObjectIds` limits the default review to the
 smallest useful mission-focused set. The learner may reveal other inventory objects.
+
+Revisiting a photo starts a new lesson on the same media asset. Uploaded photos reuse
+the saved `media_scene_analyses` inventory, so no model call runs. The provisional plan
+follows the same least-planned mission rotation as the confirmed plan. Labels the learner
+confirmed in earlier lessons on that photo which reached practice (any task attempt) go
+behind new ones when the five suggested words are chosen. They are only suggested when
+a mission needs them or the photo has too few new words. `practisedSceneObjectIds` lists
+those objects so the review can mark them.
 After review, mission eligibility is run again using only confirmed facts and that
 second result becomes the immutable `missionPlan` consumed by task generation.
 

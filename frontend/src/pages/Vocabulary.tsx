@@ -1,15 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button, Card, IconButton, Tabs } from "../components/ui";
 import { BookIcon, CameraIcon, CloseIcon, FilterIcon, PlayIcon, SpeakerIcon } from "../components/icons";
 import { SceneVisual } from "../components/SceneVisual";
 import { InlineLoader, LoadingScreen } from "../components/LoadingScreen";
 import { ErrorState } from "../components/ErrorState";
 import type { VocabStatus, WordClass } from "../data/types";
-import { mediaImageUrl } from "../lib/api";
+import { createPractice, mediaImageUrl } from "../lib/api";
 import { groupVocabularyByPhoto, vocabularyCategories, vocabularyLabel } from "../lib/vocabularyGroups";
 import { speak } from "../lib/speech";
 import { trackAction } from "../lib/analytics.ts";
+import { sessionDestination } from "../lib/sessionRoute";
+import { friendlyError, queryKeys } from "../lib/queryKeys";
+import { gameResourceKeys } from "../lib/gameResources";
 import { useAppState } from "../state/useAppState";
 import { useScenesQuery, useVocabularyQuery } from "../state/queries";
 
@@ -21,7 +25,8 @@ const statusLabels: { id: StatusFilter; label: string }[] = [
 
 export function Vocabulary() {
   const navigate = useNavigate();
-  const { learner, progress } = useAppState();
+  const { learner, progress, user, activeProfile } = useAppState();
+  const queryClient = useQueryClient();
   const { vocabulary, vocabularyLoading, vocabularyError } = useVocabularyQuery();
   const { scenes, scenesLoading, scenesError } = useScenesQuery();
   const [view, setView] = useState<"journey" | "list">("journey");
@@ -32,6 +37,9 @@ export function Vocabulary() {
   const [draftWordClass, setDraftWordClass] = useState<WordClass | "all">("all");
   const [draftCategory, setDraftCategory] = useState("all");
   const filterSheetRef = useRef<HTMLDivElement>(null);
+  const revisitRequest = useRef<{ asset: string; key: string } | null>(null);
+  const [revisitingAssetId, setRevisitingAssetId] = useState<string | null>(null);
+  const [revisitError, setRevisitError] = useState<{ assetId: string; message: string } | null>(null);
   const wordClasses: (WordClass | "all")[] = ["all", ...new Set(vocabulary.map((item) => item.wordClass))];
   const categories = useMemo(() => ["all", ...new Set(vocabulary.flatMap((item) => vocabularyCategories(item, scenes)))], [vocabulary, scenes]);
   const rows = vocabulary.filter((item) => (status === "all" || item.status === status)
@@ -43,6 +51,26 @@ export function Vocabulary() {
 
   const openFilters = () => { setDraftWordClass(wordClass); setDraftCategory(category); setShowFilters(true); };
   const closeFilters = () => setShowFilters(false);
+  // A revisit is a new lesson on the same photo: the saved scene inventory is
+  // reused and the review screen suggests words this learner has not practised yet.
+  const startRevisit = async (assetId: string, previousSessionId: string | null) => {
+    if (revisitingAssetId || !activeProfile) return;
+    setRevisitingAssetId(assetId); setRevisitError(null);
+    if (revisitRequest.current?.asset !== assetId) revisitRequest.current = { asset: assetId, key: crypto.randomUUID() };
+    try {
+      const detail = await createPractice(activeProfile.id, assetId, revisitRequest.current.key);
+      // Only a failed attempt retries with the same key; the next revisit is a new lesson.
+      revisitRequest.current = null;
+      trackAction("revisit_lesson_started", { mediaAssetId: assetId, previousSessionId, sessionId: detail.session.id });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.progress(activeProfile.id) });
+      navigate(sessionDestination(detail).path);
+    } catch (reason) {
+      setRevisitError({ assetId, message: friendlyError(reason) });
+    } finally {
+      setRevisitingAssetId(null);
+      void queryClient.invalidateQueries({ queryKey: gameResourceKeys(user?.id ?? "") });
+    }
+  };
   const applyFilters = () => {
     trackAction("vocabulary_filters_applied", { wordClass: draftWordClass, category: draftCategory });
     setWordClass(draftWordClass);
@@ -101,18 +129,26 @@ export function Vocabulary() {
               <span className="revisit-stop__word-count">
                 {words.length} {words.length === 1 ? "word" : "words"}
               </span>
-              <Button className="revisit-stop__action" disabled={!scenario?.sessionId}
-                aria-label={scenario?.sessionId ? `Revisit ${scene.title}` : `Revisit unavailable for ${scene.title}`}
+              {unfinished && scenario?.sessionId ? <Button className="revisit-stop__action" aria-label={`Continue ${scene.title}`}
                 onClick={() => {
-                  if (!scenario?.sessionId) return;
-                  trackAction(unfinished ? "scene_practice_continued" : "scene_vocabulary_review_started", { sessionId: scenario.sessionId });
-                  navigate(`/practice/sessions/${scenario.sessionId}/${unfinished ? "learn" : "review"}`);
+                  trackAction("scene_practice_continued", { sessionId: scenario.sessionId });
+                  navigate(`/practice/sessions/${scenario.sessionId}/learn`);
                 }}>
-                <PlayIcon size={18} /> {scenario?.sessionId ? unfinished ? "Continue" : "Revisit" : "Unavailable"}
-              </Button>
+                <PlayIcon size={18} /> Continue
+              </Button> : <Button className="revisit-stop__action" disabled={!activeProfile || revisitingAssetId !== null}
+                aria-label={`Revisit ${scene.title} with new words`}
+                onClick={() => void startRevisit(scene.id, scenario?.sessionId ?? null)}>
+                <PlayIcon size={18} /> {revisitingAssetId === scene.id ? "Starting…" : "Revisit"}
+              </Button>}
             </div>
             <div className="vocabulary-scene__content stack-2">
-              <div className="vocabulary-scene__heading"><h2>{scene.title}</h2></div>
+              <div className="vocabulary-scene__heading"><h2>{scene.title}</h2>
+                {scenario?.sessionId && !unfinished ? <Button variant="quiet" className="revisit-stop__review" onClick={() => {
+                  trackAction("scene_vocabulary_review_started", { sessionId: scenario.sessionId });
+                  navigate(`/practice/sessions/${scenario.sessionId}/review`);
+                }}><BookIcon size={16} /> Review words</Button> : null}
+              </div>
+              {revisitError?.assetId === scene.id ? <p role="alert" className="small">{revisitError.message}</p> : null}
               <div className="vocabulary-scene__words">{words.map((item) => {
                 const spokenWord = vocabularyLabel(item);
                 return <div key={item.id} className="vocabulary-scene__word">

@@ -120,6 +120,40 @@ def test_unique_selection_ignores_label_case_and_surrounding_whitespace():
     assert selected == [item.id for item in objects[:-1]]
 
 
+def test_revisit_suggests_words_not_yet_practised_on_the_photo_first():
+    labels = ("cup", "book", "table", "chair", "lamp", "door", "rug")
+    objects = [obj(uuid4(), label) for label in labels]
+    _plan, selected = provisional_mission_focus(
+        [], objects, [], practised_labels={" Cup ", "BOOK"},
+    )
+    # New words fill the five slots; the result keeps the photo's marker order.
+    assert selected == [item.id for item in objects[2:]]
+
+
+def test_revisit_falls_back_to_practised_words_when_the_photo_has_too_few_new_ones():
+    objects = [obj(uuid4(), label) for label in ("cup", "book", "table")]
+    _plan, selected = provisional_mission_focus([], objects, [], practised_labels={"cup"})
+    assert selected == [item.id for item in objects]
+
+
+def test_revisit_mission_facts_prefer_unpractised_objects():
+    labels = ("cup", "book", "plate", "table", "lamp", "door", "rug")
+    objects = [obj(uuid4(), label, color="green") for label in labels]
+    relations = [
+        SimpleNamespace(id=uuid4(), subject_scene_object_id=objects[0].id, relation="on",
+                        reference_scene_object_id=objects[1].id),
+        SimpleNamespace(id=uuid4(), subject_scene_object_id=objects[2].id, relation="on",
+                        reference_scene_object_id=objects[3].id),
+    ]
+    plan, selected = provisional_mission_focus(
+        [M01, M02, M03], objects, relations, practised_labels={"cup", "book"},
+    )
+    assert "M02" in {mission.mission_id for mission in plan}
+    assert {item.label for item in objects if item.id in selected} == {
+        "plate", "table", "lamp", "door", "rug",
+    }
+
+
 def test_tasks_plan_from_five_unique_names_with_counting_instances_and_relations():
     objects = [obj(uuid4(), label, color="green", **({"quantity": "3"} if label == "bench" else {}))
                for label in ("bench", "bench", "bench", "chair", "lamp", "tree", "bin", "car")]

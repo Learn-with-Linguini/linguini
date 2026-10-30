@@ -217,6 +217,11 @@ test("when every mission is done the path finishes the lesson", async () => {
   assert.equal(finished, 1);
 });
 
+test("the scene photo stays on the mission path after the words are learned", async () => {
+  const view = await mount(source.Learn, pathState(["completed", "ready", "ready"]));
+  assert.ok(view.container.querySelector(".mission-path__scene img.scene-image"), "the photo is still shown once the vocabulary task is completed");
+});
+
 test("Home announces Basil loading and unavailable states without inventing a zero total", async () => {
   const current = state({ user: null, learner: { name: "Learner" } as AppState["learner"],
     progress: null, progressLoading: true, progressError: null });

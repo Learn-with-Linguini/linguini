@@ -139,6 +139,7 @@ The existing analysis and review routes show this progress; no new page is added
 | `photo_upload_retried` | `{ source: "camera" | "userUpload" }` | Learner retries confirmation of an uploaded image after a connection or server failure |
 | `practice_scene_selected` | `{ sceneId, title }` | User selects a curated catalog scene |
 | `scene_review_confirmed` | `{ acceptedCount, addedCount }` | User confirms detected objects before generating lesson |
+| `revisit_review_shown` | `{ sessionId, newWordCount, practisedWordCount }` | Review of a repeat lesson on a photo shows which words were practised before (counts are distinct labels) |
 | `scene_shortfall_shown` | `{ missing }` | Review shows that the photo lacks checkable objects, counts, adjectives or connections (`missing` is a comma-separated list) |
 | `scene_shortfall_add_clicked` | `{ kind }` | Learner chooses to add the missing kind of fact from the shortfall notice |
 | `scene_shortfall_new_photo` | `{ missing }` | Learner leaves a short scene to take or choose another photo |
@@ -203,6 +204,9 @@ The existing analysis and review routes show this progress; no new page is added
 | `journal_entry_saved` | `{ hasPhotos, wordCount, isNew }` | Daily journal entry saved or updated |
 | `vocabulary_view_toggled` | `{ view }` | Switched between journey tree and list views |
 | `revisit_empty_practice_started` | — | Learner starts their first practice session from the empty Revisit page |
+| `revisit_lesson_started` | `{ mediaAssetId, previousSessionId, sessionId }` | Learner taps Revisit on a photo card and a new lesson on the same photo is created (or its unfinished one resumed); `previousSessionId` is the card's latest lesson |
+| `scene_practice_continued` | `{ sessionId }` | Learner taps Continue on a Revisit photo card with an unfinished lesson |
+| `scene_vocabulary_review_started` | `{ sessionId }` | Learner taps Review words on a Revisit photo card to replay that lesson's words |
 | `vocabulary_filters_applied` | `{ wordClass, category }` | Filter applied to vocabulary collection |
 | `vocabulary_audio_played` | `{ word }` | Learner plays audio pronunciation for a target word |
 | `vocabulary_recap_started` | `{ questionCount, wordCount }` | Learner starts a mixed review of a completed scene |
