@@ -53,20 +53,23 @@ export function Learn() {
   return (
     <div className="stack learn-page">
       <div className="stack-2">
-        <div className="learning-title-row">
-          <h1>Your lesson</h1>
-          <Button variant="quiet" className="learning-exit" onClick={() => { trackAction("learning_exit_clicked"); navigate("/home"); }}>
-            <CloseIcon size={18} /> Exit
-          </Button>
-        </div>
+        <h1>Your lesson</h1>
         <p className="muted">Review the words, then use them in short missions.</p>
       </div>
 
       {practiceError ? <p role="alert">{practiceError}</p> : null}
 
       <section className="lesson-scene-summary" aria-label={`${scene.title} lesson`}>
-        <ScenePhoto scene={scene} items={[]} />
-        <p><strong>{scene.title}</strong><span aria-hidden="true"> · </span><span>{learningTasks.length} {learningTasks.length === 1 ? "activity" : "activities"}</span></p>
+        <div className="lesson-scene-summary__heading">
+          <p><strong>{scene.title}</strong><span aria-hidden="true"> · </span><span>{learningTasks.length} {learningTasks.length === 1 ? "activity" : "activities"}</span></p>
+          <Button variant="quiet" className="learning-exit" onClick={() => { trackAction("learning_exit_clicked"); navigate("/home"); }}>
+            <CloseIcon size={18} /> Exit
+          </Button>
+        </div>
+        <div className="lesson-scene-summary__photo">
+          <ScenePhoto scene={scene} items={[]} />
+          {vocabularyTask && !vocabularyDone && !vocabularySkipped && taskXp(vocabularyTask) ? <XpPill {...taskXp(vocabularyTask)!} /> : null}
+        </div>
       </section>
 
       <div className="lesson-path">
@@ -75,7 +78,7 @@ export function Learn() {
           <span className="learn-words-intro__start">{vocabularyDone && !vocabularySkipped ? "Words reviewed" : "Start here"}</span>
           <div className="spread"><h2>Review the words</h2>{vocabularyDone && !vocabularySkipped ? <span className="pill pill--mastered"><CheckIcon size={16} /> Done</span> : <span className="learn-words-intro__required">Recommended first</span>}</div>
           <p className="muted">Learn the vocabulary used in your missions.</p>
-          <p className="learn-words-intro__meta"><BookIcon size={18} /> {vocabularyWordCount} {vocabularyWordCount === 1 ? "word" : "words"}{taskXp(vocabularyTask) ? <><span aria-hidden="true"> · </span><XpPill {...taskXp(vocabularyTask)!} /></> : null}</p>
+          <p className="learn-words-intro__meta"><BookIcon size={18} /> {vocabularyWordCount} {vocabularyWordCount === 1 ? "word" : "words"}</p>
         </div>
         <Button block variant={vocabularyDone || vocabularySkipped ? "secondary" : undefined}
           disabled={practiceSaving}

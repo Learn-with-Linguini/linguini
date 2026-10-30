@@ -2245,6 +2245,10 @@ p[role="alert"]::before { content: "!"; }
     padding-inline: var(--space-8);
   }
 
+  .shell--focus > .shell__content.shell__content--wide {
+    max-width: 760px;
+  }
+
   .shell--app > .bottom-nav {
     position: sticky;
     grid-column: 1;
@@ -4855,12 +4859,33 @@ p[role="alert"]::before { content: "!"; }
 
 .lesson-scene-summary {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-3);
+}
+
+.lesson-scene-summary__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.lesson-scene-summary__heading p { min-width: 0; }
+
+.lesson-scene-summary__photo {
+  position: relative;
+}
+
+.lesson-scene-summary__photo > .pill--xp {
+  position: absolute;
+  z-index: 2;
+  top: var(--space-3);
+  right: var(--space-3);
+  box-shadow: var(--shadow-card);
 }
 
 .lesson-scene-summary .scene {
   overflow: hidden;
-  max-height: 230px;
+  max-height: 300px;
   border-color: var(--teal-dark);
 }
 

@@ -143,7 +143,7 @@ test("lesson overview leads with word review while keeping missions available", 
   current.session!.session.status = "inProgress";
   current.session!.translationPreview = null;
   current.session!.tasks = [
-    { id: "words", kind: "vocabularyIntroduction", status: "ready", orderIndex: 0, sceneObjectId: null,
+    { id: "words", kind: "vocabularyIntroduction", status: "ready", orderIndex: 0, sceneObjectId: null, xpReward: 5, xpBonus: 0,
       publicContent: { kind: "vocabularyIntroduction", title: "Photo words", allowTypingPractice: true,
         words: [{ learningKey: "cup", termType: "object", vocabularyItemId: "word", sceneObjectId: null,
           targetText: "taza", translation: "cup", partOfSpeech: "noun", gender: null, pluralForm: null,
@@ -158,6 +158,9 @@ test("lesson overview leads with word review while keeping missions available", 
   assert.match(view.container.textContent ?? "", /Review the words, then use them in short missions/);
   assert.match(view.container.textContent ?? "", /Then practise with missions/);
   assert.doesNotMatch(view.container.textContent ?? "", /unlock|Complete the word review first/i);
+  const sceneHeading = view.container.querySelector(".lesson-scene-summary__heading");
+  assert.match(sceneHeading?.textContent ?? "", /Kitchen.*Exit/);
+  assert.match(view.container.querySelector(".lesson-scene-summary__photo .pill--xp")?.textContent ?? "", /\+5/);
   const mission = [...view.container.querySelectorAll<HTMLButtonElement>(".task-row")]
     .find(button => button.textContent?.includes("Name and identify"));
   assert.equal(mission?.disabled, false);

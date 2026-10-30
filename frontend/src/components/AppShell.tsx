@@ -67,12 +67,13 @@ function FocusShellView() {
   const { session } = useAuth();
   const backAction = useRegisteredBackAction();
   const usesWideCanvas = pathname.endsWith("/analysis");
+  const usesLearningCanvas = pathname.endsWith("/learn");
 
   return (
     <div className="shell shell--focus">
       <BrandBar back={pathname !== "/"} onBack={backAction.onBack} backLabel={backAction.backLabel} homeTo={session ? "/home" : "/"} />
       <main
-        className={`shell__content${usesWideCanvas ? " shell__content--desktop-wide" : ""}`}
+        className={`shell__content${usesWideCanvas ? " shell__content--desktop-wide" : usesLearningCanvas ? " shell__content--wide" : ""}`}
         style={{ paddingBottom: "var(--space-8)" }}
       >
         <Outlet />
