@@ -1,0 +1,77 @@
+mission_id = "M05"
+practice_level = "A0"
+content_version = 1
+language_code = "fr"
+text_direction = "ltr"
+title = "Say what you like and don't like"
+
+[[concepts]]
+concept_id = "say-preference"
+section_id = "like-object"
+title = "I like"
+formula = "J'aime + object"
+
+[[concepts.pattern_parts]]
+part_id = "like"
+label = "I like"
+role = "fixed"
+text = "J'aime"
+
+[[concepts.pattern_parts]]
+part_id = "object"
+label = "object"
+role = "slot"
+text = "la pomme"
+
+[[concepts.examples]]
+target_text = "J'aime la pomme."
+translation = "I like the apple."
+
+[[concepts.examples]]
+target_text = "Ana aime le livre."
+translation = "Ana likes the book."
+
+[[concepts]]
+concept_id = "say-preference"
+section_id = "dislike-object"
+title = "I don't like"
+explanation = "Put n' before aime and pas after it. Ne shortens to n' before the vowel sound."
+formula = "Je n'aime pas + object"
+
+[[concepts.pattern_parts]]
+part_id = "subject"
+label = "subject"
+role = "fixed"
+text = "Je"
+
+[[concepts.pattern_parts]]
+part_id = "negative-before"
+label = "before aime"
+role = "choice"
+text = "n'"
+
+[[concepts.pattern_parts]]
+part_id = "verb"
+label = "verb"
+role = "fixed"
+text = "aime"
+
+[[concepts.pattern_parts]]
+part_id = "negative-after"
+label = "after aime"
+role = "ending"
+text = "pas"
+
+[[concepts.pattern_parts]]
+part_id = "object"
+label = "object"
+role = "slot"
+text = "la pomme"
+
+[[concepts.examples]]
+target_text = "Je n'aime pas la pomme."
+translation = "I don't like the apple."
+
+[[concepts.examples]]
+target_text = "Leo n'aime pas le livre."
+translation = "Leo doesn't like the book."

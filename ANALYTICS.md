@@ -1,5 +1,4 @@
 # Linguini Analytics Documentation
-
 Linguini uses dual-dispatch analytics combining **Google Analytics 4 (GA4)** and **Contentsquare**.
 All tracking helpers are centralized in `frontend/src/lib/analytics.ts`.
 
@@ -218,6 +217,13 @@ The existing analysis and review routes show this progress; no new page is added
 | `payment_checkout_completed` | `{ status: "success" }` | User successfully returns from Stripe Checkout |
 | `payment_checkout_cancelled` | `{ status: "cancelled" }` | User cancels Stripe Checkout and returns |
 | `payment_test_tier_switched` | `{ targetTier }` | Dev/test toolbox switches tier between beta/free/plus |
+
+### Mission Cheatsheets
+
+| Event Name | Parameters | Trigger Description |
+| :--- | :--- | :--- |
+| `mission_cheatsheet_opened` | `{ missionId, practiceLevel, contentVersion, languageCode }` | Learner opens a mission cheatsheet from an active task |
+| `mission_cheatsheet_audio_played` | `{ languageCode, conceptId }` | Learner plays a target-language example from a cheatsheet |
 
 ### Feedback, Support & Social
 | Event Name | Parameters | Trigger Description |

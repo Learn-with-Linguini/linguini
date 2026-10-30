@@ -28,6 +28,7 @@ import { fillMissionGap } from "../lib/missionGaps";
 import { playAnswerSound } from "../lib/answerSound";
 import { learningFeedback } from "../lib/learningFeedback";
 import { vocabularyRecapSteps } from "../lib/vocabularyRecap";
+import { MissionCheatSheetLauncher } from "../components/MissionCheatSheet";
 import { VOCABULARY_SECTIONS, vocabularyReviewGroups, wordMatchesMarker } from "../lib/vocabularyReview";
 
 export function LearningTaskPage() {
@@ -211,7 +212,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
   const [checkingQuestion, setCheckingQuestion] = useState(false);
   const [pendingOptionId, setPendingOptionId] = useState<string | null>(null);
   const [checkingTyping, setCheckingTyping] = useState(false);
-  const [typingCheck, setTypingCheck] = useState<{ isCorrect: boolean; correctAnswer: string; revealed: boolean; basilEarned: number } | null>(null);
+  const [typingCheck, setTypingCheck] = useState<{ isCorrect: boolean; isClose: boolean; correctAnswer: string; revealed: boolean; basilEarned: number } | null>(null);
   const requestKey = useRef(crypto.randomUUID());
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const [basilByQuestion, setBasilByQuestion] = useState<Record<string, number>>({});
@@ -354,6 +355,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
         taskId: task.id,
         termType: typingWord.termType,
         isCorrect: result.isCorrect,
+        isClose: result.isClose,
         revealed: result.revealed,
         basilEarned: result.basilEarned,
       });
@@ -455,14 +457,14 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
     </div></Card></> : null}
     {active && stage === "typing" && typingWord ? <Card plain><div className="stack">
       <div><h2>Type “{typingWord.translation}”</h2></div>
-      <input {...nativeProps} className="input" aria-label={`Type ${typingWord.translation}`} value={typedAnswers[typingKey] ?? ""} disabled={typingCheck?.isCorrect || typingCheck?.revealed} onChange={event => { setTypedAnswers(value => ({ ...value, [typingKey]: event.target.value })); setTypingCheck(null); }} />
+      <input {...nativeProps} className="input" aria-label={`Type ${typingWord.translation}`} value={typedAnswers[typingKey] ?? ""} disabled={typingCheck?.isCorrect || typingCheck?.isClose || typingCheck?.revealed} onChange={event => { setTypedAnswers(value => ({ ...value, [typingKey]: event.target.value })); setTypingCheck(null); }} />
       {checkingTyping ? <InlineLoader compact label="Checking your word…" /> : null}
-      {typingCheck ? <Feedback tone={typingCheck.isCorrect ? "good" : typingCheck.revealed ? "neutral" : "warn"}><div className="stack-2" role="status"><p>{typingCheck.isCorrect ? "That’s right!" : typingCheck.revealed ? <>No worries, the answer is <strong>{typingCheck.correctAnswer}</strong>.</> : "Not quite. Give it another try."}</p></div></Feedback> : null}
-      {typingCheck?.isCorrect || typingCheck?.revealed
+      {typingCheck ? <Feedback tone={typingCheck.isCorrect ? "good" : typingCheck.isClose || typingCheck.revealed ? "neutral" : "warn"}><div className="stack-2" role="status"><p>{typingCheck.isCorrect ? "That’s right!" : typingCheck.isClose ? <>Close! You’re missing some accents. Write it as <strong>{typingCheck.correctAnswer}</strong>.</> : typingCheck.revealed ? <>No worries, the answer is <strong>{typingCheck.correctAnswer}</strong>.</> : "Not quite. Give it another try."}</p></div></Feedback> : null}
+      {typingCheck?.isCorrect || typingCheck?.isClose || typingCheck?.revealed
         ? <Button block disabled={practiceSaving} onClick={() => advanceTyping()}>{revisiting ? recapIndex < recap.length - 1 ? "Continue" : "Finish review" : typingIndex < content.words.length - 1 || typingIndex + 2 < content.questions.length ? "Next question" : "Finish task"}</Button>
         : <Button block disabled={!typedAnswers[typingKey]?.trim() || practiceSaving || checkingTyping} onClick={() => void checkTyping()}>Check answer</Button>}
-      {!typingCheck?.isCorrect && !typingCheck?.revealed ? <Button variant="quiet" block className="typing-forgot-action" disabled={practiceSaving || checkingTyping} onClick={() => void checkTyping(true)}>I forgot, lift the lid</Button> : null}
-      {!typingCheck?.isCorrect && !typingCheck?.revealed ? <Button variant="quiet" block disabled={practiceSaving || checkingTyping} onClick={() => advanceTyping(true)}>Skip typing</Button> : null}
+      {!typingCheck?.isCorrect && !typingCheck?.isClose && !typingCheck?.revealed ? <Button variant="quiet" block className="typing-forgot-action" disabled={practiceSaving || checkingTyping} onClick={() => void checkTyping(true)}>I forgot, lift the lid</Button> : null}
+      {!typingCheck?.isCorrect && !typingCheck?.isClose && !typingCheck?.revealed ? <Button variant="quiet" block disabled={practiceSaving || checkingTyping} onClick={() => advanceTyping(true)}>Skip typing</Button> : null}
     </div></Card> : null}
     {revisiting && stage === "complete" ? <Card plain><div className="stack">
       <h2>Review complete</h2><p>You practised these words again.</p>
@@ -851,7 +853,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
 
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} /></div>
-    <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><ExitToHome onExit={onExit} /></div>
+    <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><div className="learning-title-actions"><MissionCheatSheetLauncher missionId={content.missionId} practiceLevel={content.practiceLevel} contentVersion={content.contentVersion} languageCode={scene.languageCode} /><ExitToHome onExit={onExit} /></div></div>
     {saved.isLoading ? <InlineLoader compact label="Restoring checked answers…" /> : null}
     {saved.isError ? <div role="alert"><p>Unable to restore checked answers.</p>
       <Button variant="quiet" onClick={() => void refetchChecks()}>Retry</Button></div> : null}
@@ -875,15 +877,16 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
         {question.dialogue?.length ? <div className="mission-dialogue" aria-label="Conversation so far">
           {question.dialogue.map((turn, turnIndex) => <p key={`${turn.speaker}-${turnIndex}`}
             className={`mission-dialogue__turn mission-dialogue__turn--${turn.speaker}`}>
-            <strong>{turn.speaker === "server" ? "Server" : "You"}</strong>
-            <span>{turn.text}</span>
+            <strong>{turn.speaker === "linguini" ? "Linguini" : turn.speaker === "server" ? "Server" : "You"}</strong>
+            <span lang={scene.languageCode}>{turn.text}</span>
+            {turn.translation ? <small>{turn.translation}</small> : null}
           </p>)}
         </div> : null}
         {question.planningFacts?.length ? <section className="mission-planning-facts" aria-label="Your facts">
           <strong>Your facts</strong><ul>{question.planningFacts.map((fact, position) => <li key={`${position}-${fact}`}>{fact}</li>)}</ul>
         </section> : null}
         <MissionSnapshotFacts task={task} scene={scene} />
-        {isSituation && question.gapType ? <A0MissionGapQuestion key={question.questionId}
+        {isSituation && question.gapType && question.interactionType !== "sentenceBuilding" ? <A0MissionGapQuestion key={question.questionId}
           question={question} scene={scene} sceneObjects={session?.sceneObjects ?? []}
           selectedOptionId={answers[question.questionId] ?? ""}
           typedMode={Boolean(typedMode[question.questionId])}
@@ -1146,7 +1149,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
   };
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__progress"><ProgressTrail value={index + 1} total={total} label={`Task ${index + 1} of ${total}`} /><QuestionBasil amount={activeQuestion ? questionBasil[activeQuestion.questionId] : undefined} /></div>
-    <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><ExitToHome onExit={onExit} /></div>
+    <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><div className="learning-title-actions"><MissionCheatSheetLauncher missionId={content.missionId} practiceLevel={content.practiceLevel} contentVersion={content.contentVersion} languageCode={scene.languageCode} /><ExitToHome onExit={onExit} /></div></div>
     {savedChecks.isLoading ? <InlineLoader compact label="Restoring your place…" /> : null}
     {savedChecks.isError ? <p role="alert">We couldn't restore your saved answers. Try refreshing this page.</p> : null}
     {content.questions.map((question, position) => {

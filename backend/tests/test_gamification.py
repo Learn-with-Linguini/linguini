@@ -89,6 +89,32 @@ def test_vocabulary_typing_only_rewards_a_correct_answer(curated):
         assert resource_snapshot(c, owner.id).basil_leaves == 10
 
 
+def test_vocabulary_typing_accepts_accent_only_difference_as_close(curated):
+    engine, owner, _profile, _client, *_ = curated
+    repo, _sid, detail = _lesson(curated)
+    task = detail.tasks[0]
+    answer_key = _answer_key(engine, task.id)
+    learning_key = next(iter(answer_key["acceptedTextAnswersByVocabularyId"]))
+    answer_key["acceptedTextAnswersByVocabularyId"][learning_key] = ["le canapé"]
+    with engine.begin() as c:
+        c.execute(
+            update(session_tasks)
+            .where(session_tasks.c.id == task.id)
+            .values(answer_key=answer_key)
+        )
+
+    close = repo.check_vocabulary_typing(task.id, learning_key, "le canape", False)
+
+    assert close.is_close and not close.is_correct
+    assert close.correct_answer == "le canapé"
+    assert close.basil_earned == 0
+    with engine.begin() as c:
+        assert resource_snapshot(c, owner.id).basil_leaves == 0
+
+    exact = repo.check_vocabulary_typing(task.id, learning_key, "le canapé", False)
+    assert exact.is_correct and not exact.is_close and exact.basil_earned == 10
+
+
 @pytest.mark.parametrize("correct", [False, True])
 def test_question_rewards_and_batch_submission_share_one_ledger(curated, correct):
     engine, _owner, profile, client, *_ = curated

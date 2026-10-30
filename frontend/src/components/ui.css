@@ -4922,6 +4922,11 @@ p[role="alert"]::before { content: "!"; }
 .learning-exit {
   flex: none;
   gap: var(--space-1);
+  min-height: 44px;
+  padding-inline: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--paper);
   color: var(--ink-muted);
 }
 
@@ -6432,9 +6437,26 @@ p[role="alert"]::before { content: "!"; }
 .mission-gap__pictures .object-preview { width: 100%; }
 .mission-gap__pictures .object-preview__scene { width: 100%; }
 .mission-gap__icon { display: inline-grid; place-items: center; min-width: 26px; min-height: 26px; margin-right: var(--space-2); border-radius: var(--radius-pill); background: #f3ead7; font-size: 1.05rem; }
-.mission-dialogue { display: grid; gap: var(--space-2); }
-.mission-dialogue__turn { max-width: 92%; padding: var(--space-3); border: 1px solid var(--line); border-radius: var(--radius-card); background: #f3ead7; }
-.mission-dialogue__turn--learner { justify-self: end; background: var(--sage); }
+.mission-dialogue { display: grid; gap: var(--space-3); padding: var(--space-2) var(--space-2) var(--space-3); }
+.mission-dialogue__turn {
+  position: relative; max-width: 84%; padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line); border-radius: 20px 20px 20px 6px; background: #f3ead7;
+}
+.mission-dialogue__turn::after {
+  content: ""; position: absolute; bottom: -1px; left: -5px; width: 12px; height: 12px;
+  border-left: 1px solid var(--line); border-bottom: 1px solid var(--line);
+  background: inherit; transform: skewX(-28deg); border-bottom-left-radius: 3px;
+}
+.mission-dialogue__turn--learner {
+  justify-self: end; border-radius: 20px 20px 6px 20px; background: var(--sage);
+}
+.mission-dialogue__turn--learner::after {
+  right: -5px; left: auto; border-right: 1px solid var(--line); border-left: 0;
+  transform: skewX(28deg); border-radius: 0 0 3px 0;
+}
+.mission-dialogue__turn strong { color: var(--teal-dark); font-size: var(--text-label); }
+.mission-dialogue__turn span { display: block; font-weight: 700; }
+.mission-dialogue__turn small { display: block; margin-top: var(--space-1); color: var(--ink-muted); }
 .mission-dialogue__turn p { margin: var(--space-1) 0 0; }
 .mission-gap__completion, .mission-outcome { display: grid; gap: var(--space-2); padding: var(--space-3); border-radius: var(--radius-card); background: #f3ead7; }
 .mission-gap__completion p { margin: 0; }

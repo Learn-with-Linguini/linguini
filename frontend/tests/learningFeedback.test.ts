@@ -465,6 +465,38 @@ test("refreshing vocabulary checks keeps the learner's typing stage and unfinish
   assert.equal(requests.length, 1);
 });
 
+test("an accent-only typing answer is accepted with yellow guidance", async () => {
+  const task = vocabularyTask();
+  if (task.publicContent.kind !== "vocabularyIntroduction") throw new Error("Expected vocabulary fixture");
+  task.publicContent.words[0].targetText = "canapé";
+  task.publicContent.words[0].translation = "sofa";
+  task.publicContent.questions[0].options[0] = { optionId: "canapé", label: "canapé" };
+  task.publicContent.questions[0].correctOptionId = "canapé";
+  await mount(task);
+  await waitFor(() => assert.doesNotMatch(text(), /Restoring word answers/));
+  await click("Start quick quiz");
+  replies.push(() => Response.json({ questionId: "word1", acceptedOptionId: "canapé", isCorrect: true, correctOptionId: "canapé", basilEarned: 10 }));
+  await click("canapé");
+  await waitFor(() => assert.ok(button("Next question")));
+  await click("Next question");
+
+  const input = dom.window.document.querySelector<HTMLInputElement>('input[aria-label="Type sofa"]');
+  assert.ok(input);
+  await surface.act(async () => {
+    Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, "value")!.set!.call(input, "canape");
+    input.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
+  });
+  replies.push(() => Response.json({ learningKey: "cup", isCorrect: false, isClose: true, correctAnswer: "canapé", revealed: false, basilEarned: 0 }));
+  await click("Check answer");
+
+  await waitFor(() => assert.match(text(), /Close! You’re missing some accents/));
+  assert.match(text(), /Write it as canapé/);
+  assert.ok(dom.window.document.querySelector(".feedback--neutral"));
+  assert.equal(input.disabled, true);
+  assert.ok(button("Finish task"));
+  assert.equal(button("I forgot, lift the lid"), undefined);
+});
+
 test("teaching cards highlight their photo object and practice interleaves recognition before typing", async () => {
   const task = vocabularyTask();
   if (task.publicContent.kind !== "vocabularyIntroduction") throw new Error("Expected vocabulary fixture");
