@@ -1,0 +1,43 @@
+/* A0 word bank: the scene's words on soft pasta-cream chips, as on Home. */
+.ispy-help {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--paper);
+}
+
+.ispy-help__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.ispy-help__words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ispy-help__words li {
+  display: grid;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--cream);
+}
+
+.ispy-help__words strong {
+  color: var(--teal-dark);
+  font-size: var(--text-body);
+}
+
+.ispy-help__words span {
+  color: var(--ink-muted);
+  font-size: var(--text-label);
+}

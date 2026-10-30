@@ -14,6 +14,7 @@ from app.schemas.tasks import SessionTask
 from app.schemas.vocabulary import VocabularyItem, VocabularyTranslation
 from app.services.image_analysis import PlaceholderImageExtractor
 from app.services.ispy_clue_frames import build_clue_support
+from app.services.ispy_levels import ispy_cheat_sheet, ispy_level, word_bank
 
 # Fixed, deliberately small upload vocabulary. Unknown languages fail explicitly.
 UPLOAD_WORDS = {
@@ -319,13 +320,37 @@ def build_grammar_lessons(session_id, result):
     ]
 
 
-def build_ispy_clue_tasks(session_id, result: ISpyClueResult, objects, words):
-    """Make provider-selected Phase 1 clue rounds using server-side answer keys."""
-    by_key = {str(obj.id): (obj, word) for obj, word in zip(objects, words, strict=True)}
-    options = [
+def _clue_options(objects, words, answer_key, choices):
+    """All objects, or the answer plus differently named objects when a level limits choices."""
+    pairs = list(zip(objects, words, strict=True))
+    if choices is not None:
+        answer = next(pair for pair in pairs if str(pair[0].id) == answer_key)
+        names = {answer[1].display_text.casefold()}
+        kept = {answer_key}
+        for obj, word in pairs:
+            if len(kept) >= choices:
+                break
+            if word.display_text.casefold() not in names:
+                names.add(word.display_text.casefold())
+                kept.add(str(obj.id))
+        pairs = [pair for pair in pairs if str(pair[0].id) in kept]
+    return [
         dict(option_id=str(obj.id), label=word.display_text, scene_object_id=obj.id)
-        for obj, word in zip(objects, words, strict=True)
+        for obj, word in pairs
     ]
+
+
+def build_ispy_clue_tasks(
+    session_id, result: ISpyClueResult, objects, words, *, level=None, language=None,
+):
+    """Make provider-selected Phase 1 clue rounds using server-side answer keys."""
+    settings = ispy_level(level)
+    support = dict(
+        learner_level=settings.level,
+        word_bank=word_bank(objects, words) if settings.word_bank else [],
+        cheat_sheet=ispy_cheat_sheet(settings, language),
+    )
+    by_key = {str(obj.id): (obj, word) for obj, word in zip(objects, words, strict=True)}
     return [
         SessionTask(
             id=uuid5(session_id, f"ispy-clues-v1:{clue.answer_object_key}"),
@@ -340,9 +365,14 @@ def build_ispy_clue_tasks(session_id, result: ISpyClueResult, objects, words):
                 # has something to show.
                 clue_translation=clue.clue_translation.strip() or clue.clue,
                 interaction_mode="selectObject",
-                options=options,
+                options=_clue_options(
+                    objects, words, clue.answer_object_key, settings.clue_choices
+                ),
                 encouragement="Keep looking closely!",
                 hint_available=False,
+                translation_shown=settings.translation_shown,
+                listen_first=settings.listen_first,
+                **support,
             ),
             answer_key=dict(
                 correct_scene_object_id=by_key[clue.answer_object_key][0].id,
@@ -355,31 +385,49 @@ def build_ispy_clue_tasks(session_id, result: ISpyClueResult, objects, words):
     ]
 
 
-def build_ispy_description_tasks(session_id, objects, words, description_context):
-    """Choose up to two describable targets in code; the guess model never sees these IDs.
+def build_ispy_description_tasks(session_id, objects, words, description_context, *, level=None):
+    """Choose describable targets in code (one at A0, else two); the guess model never sees
+    these IDs.
 
     A target qualifies only with a confirmed colour, or a confirmed relation to another
     lesson word, so
     a photo without such facts yields no description tasks rather than invented ones.
     """
+    settings = ispy_level(level)
+    support = dict(
+        learner_level=settings.level,
+        word_bank=word_bank(objects, words) if settings.word_bank else [],
+        cheat_sheet=ispy_cheat_sheet(settings, description_context.get("targetLanguage")),
+    )
     tasks = []
     introduced = [str(obj.id) for obj in objects]
     for obj, word in zip(objects, words, strict=True):
         frames, avoid_words = build_clue_support(description_context, obj, word, introduced)
         if any(frame.help for frame in frames):
+            if not settings.typing:
+                # Tile-only clues need a frame with a confirmed answer to build.
+                frames = [frame for frame in frames if frame.help]
             tasks.append(
                 _ispy_description_task(
-                    session_id, obj, word, words, description_context, frames, avoid_words
+                    session_id, obj, word, words, description_context, frames, avoid_words,
+                    settings, support,
                 )
             )
-        if len(tasks) == 2:
+        if len(tasks) == settings.description_tasks:
             break
     return tasks
 
 
 def _ispy_description_task(
-    session_id, obj, word, words, description_context, frames, avoid_words
+    session_id, obj, word, words, description_context, frames, avoid_words, settings, support,
 ):
+    prompt = (
+        "Describe this object in your learning language without saying its word. "
+        "Pick a clue frame for help, or type your own clue."
+        if settings.typing
+        else "Describe this object without saying its word. "
+        "Pick a clue frame, then build your clue from the word tiles."
+    )
     return SessionTask(
         id=uuid5(session_id, f"ispy-descriptions-v1:{obj.id}"),
         session_id=session_id,
@@ -388,17 +436,18 @@ def _ispy_description_task(
         order_index=0,
         public_content=dict(
             kind="reflection",
-            prompt=(
-                "Describe this object in your learning language without saying its word. "
-                "Pick a clue frame for help, or type your own clue."
-            ),
+            prompt=prompt,
             suggested_vocabulary_ids=[item.id for item in words],
             allow_speech=False,
-            allow_text=True,
+            allow_text=settings.typing,
             clue_frames=frames,
             avoid_words=avoid_words,
+            help_collapsed=settings.help_collapsed,
+            **support,
         ),
-        answer_key=dict(scene_description_context=description_context),
+        answer_key=dict(
+            scene_description_context=description_context, learner_level=settings.level,
+        ),
         vocabulary_item_id=word.id,
         scene_object_id=obj.id,
     )

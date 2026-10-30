@@ -558,11 +558,12 @@ const slotFrames = [
       [`${position}|${reference}`, position.endsWith(" de") && reference.startsWith("el ") ? `${position.slice(0, -3)} del ${reference.slice(3)}` : `${position} ${reference}`]))),
     help: ["sobre la mesa"] },
 ] as NonNullable<Extract<SessionTask["publicContent"], { kind: "reflection" }>["clueFrames"]>;
-const slotTask = (status: SessionTask["status"]): SessionTask => ({ ...guessTask, status,
-  publicContent: { kind: "reflection", prompt: "Describe it", clueFrames: slotFrames, avoidWords: ["taza", "tazas", "cup"] } });
+type ReflectionContent = Extract<SessionTask["publicContent"], { kind: "reflection" }>;
+const slotTask = (status: SessionTask["status"], level: Partial<ReflectionContent> = {}): SessionTask => ({ ...guessTask, status,
+  publicContent: { kind: "reflection", prompt: "Describe it", clueFrames: slotFrames, avoidWords: ["taza", "tazas", "cup"], ...level } });
 
-async function mountSlots(status: SessionTask["status"]) {
-  fixture = { ...detail("inProgress", [task("learn", "completed", 0), task("clues", "completed", 1), slotTask(status)]),
+async function mountSlots(status: SessionTask["status"], level: Partial<ReflectionContent> = {}) {
+  fixture = { ...detail("inProgress", [task("learn", "completed", 0), task("clues", "completed", 1), slotTask(status, level)]),
     sceneObjects: [sceneObject("obj-target", "taza", 0.3), sceneObject("obj-other", "mesa", 0.7)] };
   const container = dom.window.document.createElement("div");
   dom.window.document.body.replaceChildren(container);
@@ -630,6 +631,28 @@ test("learners build a Location clue from separate position and reference chips,
   await click("Location");
   assert.equal(button("al lado de")?.getAttribute("aria-pressed"), "true", "revision keeps the selected slots");
   assert.equal(clue().value, "Está al lado del libro. Es azul y pequeña.");
+  root.unmount();
+});
+
+test("A0 builds the clue only from word tiles, beside a word bank", async () => {
+  const root = await mountSlots("pending", { learnerLevel: "A0", allowText: false,
+    wordBank: [{ text: "taza", translation: "cup" }, { text: "mesa", translation: "table" }] });
+  assert.equal(clue().readOnly, true, "A0 learners tap tiles instead of typing");
+  assert.deepEqual([...dom.window.document.querySelectorAll(".ispy-help__words strong")].map(item => item.textContent), ["taza", "mesa"]);
+  await click("Colour");
+  await click("roja");
+  assert.equal(clue().value, "Es roja");
+  await click("Start my clue again");
+  assert.equal(clue().value, "");
+  root.unmount();
+});
+
+test("A2 keeps the clue frames behind Need help?", async () => {
+  const root = await mountSlots("pending", { learnerLevel: "A2", helpCollapsed: true });
+  assert.equal(dom.window.document.querySelector("[data-testid=clue-frames]"), null);
+  assert.equal(clue().readOnly, false);
+  await click("Need help? Show clue frames");
+  assert.ok(dom.window.document.querySelector("[data-testid=clue-frames]"));
   root.unmount();
 });
 

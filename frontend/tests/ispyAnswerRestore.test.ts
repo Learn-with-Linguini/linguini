@@ -282,3 +282,40 @@ test("a restored repeated-object answer highlights its original marker without r
   assert.equal(dom.window.document.querySelector(".scene__marker--active")?.textContent, "7");
   assert.equal(requests.length, 2, "restoring the accepted answer never submits another answer");
 });
+
+function levelled(content: Partial<Extract<SessionTask["publicContent"], { kind: "ispyRound" }>>): Partial<PracticeDetail> {
+  const task = { ...structuredClone(clue), publicContent: { ...structuredClone(clue.publicContent), clueTranslation: "is red", ...content } } as SessionTask;
+  return { tasks: [task, { ...structuredClone(task), id: "clue2", orderIndex: 1 }] };
+}
+const body = () => dom.window.document.body.textContent ?? "";
+
+test("A0 rounds show the translation, a word bank and the cheatsheet", async () => {
+  await mount("ispy", levelled({
+    learnerLevel: "A0", translationShown: true,
+    wordBank: [{ text: "taza", translation: "cup" }, { text: "mesa", translation: "table" }],
+    cheatSheet: { missionId: "M02", practiceLevel: "A0", contentVersion: 2 },
+  }));
+  assert.match(body(), /es roja/);
+  assert.match(body(), /is red/, "the translation is open from the start");
+  const words = [...dom.window.document.querySelectorAll(".ispy-help__words li")].map(item => item.textContent);
+  assert.deepEqual(words, ["tazacup", "mesatable"]);
+  assert.ok(dom.window.document.querySelector('button[aria-label="Open cheatsheet"]'));
+});
+
+test("A1 rounds keep the translation behind its toggle and offer no word bank", async () => {
+  await mount("ispy", levelled({ learnerLevel: "A1" }));
+  assert.match(body(), /es roja/);
+  assert.doesNotMatch(body(), /is red/);
+  assert.equal(dom.window.document.querySelector(".ispy-help"), null);
+});
+
+test("A2 rounds play the clue before showing its text", async () => {
+  await mount("ispy", levelled({ learnerLevel: "A2", listenFirst: true }));
+  assert.ok(dom.window.document.querySelector('[data-testid="listen-first"]'));
+  assert.doesNotMatch(body(), /es roja/, "the clue text waits until it is heard");
+  const play = [...dom.window.document.querySelectorAll<HTMLButtonElement>("button")]
+    .find(button => button.textContent?.includes("Play the clue"));
+  await click(play);
+  assert.match(body(), /es roja/);
+  assert.equal(dom.window.document.querySelector('[data-testid="listen-first"]'), null);
+});

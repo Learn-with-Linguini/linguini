@@ -172,6 +172,9 @@ The existing analysis and review routes show this progress; no new page is added
 | `ispy_game_resumed` | — | User resumes an active I-Spy game session |
 | `ispy_clue_submitted` | `{ optionId, isCorrect, source }` | Learner chooses an object in response to Linguini's clue; source is choice or photo_marker on lesson and standalone I-Spy clue pages |
 | `ispy_description_submitted` | `{ outcome }` | Learner writes a description clue for Linguini to guess |
+| `ispy_clue_listened_first` | `{ taskId }` | An A2 learner plays a listen-first clue, which then shows its text |
+| `ispy_clue_text_revealed` | `{ taskId }` | An A2 learner shows a listen-first clue's text without playing it |
+| `ispy_clue_help_opened` | `{ taskId }` | An A2 learner opens the clue frames kept behind "Need help?" |
 | `describe_round_skipped` | `{ mode }` | Session skips the describing round because there is no reflection task and proceeds to results |
 | `ispy_match_confirmed` | — | Learner confirms Linguini guessed their object correctly |
 | `room_created` | — | User creates a new multiplayer room |
