@@ -344,6 +344,16 @@ AI_OBJECT_GROUNDING_PROVIDER=groundingDino
 AI_OBJECT_GROUNDING_MODEL=IDEA-Research/grounding-dino-tiny
 ```
 
+Both the processor and weights load the same immutable model revision, with
+remote code disabled and Safetensors required. The built-in defaults are
+[`grounding-dino-base` at `12bdfa3`](https://huggingface.co/IDEA-Research/grounding-dino-base/commit/12bdfa3120f3e7ec7b434d90674b3396eccf88eb)
+and
+[`grounding-dino-tiny` at `a2bb814`](https://huggingface.co/IDEA-Research/grounding-dino-tiny/commit/a2bb814dd30d776dcf7e30523b00659f4f141c71).
+To change revisions or use another model, set `AI_OBJECT_GROUNDING_REVISION` to
+the reviewed full lowercase 40-character commit SHA from that model's repository.
+Branches, tags, short SHAs, and missing revisions for custom models are rejected
+before model loading. The optional detector remains disabled by default.
+
 `--reground` updates stored item marker positions with Grounding DINO without
 calling the scene-analysis model; item labels, attributes and relations are
 retained. It queries one label at a time, then retries only unmatched items at

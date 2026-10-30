@@ -16,7 +16,7 @@ from app.ai import (
     ObjectGroundingProvider,
     load_ai_settings,
 )
-from app.ai.settings import DEFAULT_AI_CONFIG_FILE
+from app.ai.settings import DEFAULT_AI_CONFIG_FILE, GROUNDING_MODEL_REVISIONS
 from tests.test_ai_config import example, write
 
 
@@ -27,13 +27,42 @@ def test_object_grounding_is_off_by_default_and_can_use_grounding_dino():
         env={
             "AI_OBJECT_GROUNDING_PROVIDER": "groundingDino",
             "AI_OBJECT_GROUNDING_MODEL": "my-detector",
+            "AI_OBJECT_GROUNDING_REVISION": "a" * 40,
             "AI_OBJECT_GROUNDING_THRESHOLD": "0.6",
         }
     )
 
     assert settings.object_grounding.provider is ObjectGroundingProvider.GROUNDING_DINO
     assert settings.object_grounding.model_name == "my-detector"
+    assert settings.object_grounding.model_revision == "a" * 40
     assert settings.object_grounding.threshold == 0.6
+
+
+@pytest.mark.parametrize("model_name, revision", GROUNDING_MODEL_REVISIONS.items())
+def test_known_grounding_models_have_immutable_default_revisions(model_name, revision):
+    settings = load_ai_settings(env={
+        "AI_OBJECT_GROUNDING_PROVIDER": "groundingDino",
+        "AI_OBJECT_GROUNDING_MODEL": model_name,
+    })
+    assert settings.object_grounding.model_revision == revision
+
+
+@pytest.mark.parametrize("revision", ["", "main", "v1.0", "123abcd", "g" * 40])
+def test_custom_grounding_models_require_full_commit_revision(revision):
+    with pytest.raises(AiConfigurationError, match="AI_OBJECT_GROUNDING_REVISION"):
+        load_ai_settings(env={
+            "AI_OBJECT_GROUNDING_PROVIDER": "groundingDino",
+            "AI_OBJECT_GROUNDING_MODEL": "custom/detector",
+            "AI_OBJECT_GROUNDING_REVISION": revision,
+        })
+
+
+def test_grounding_default_revision_can_be_overridden_with_a_reviewed_commit():
+    settings = load_ai_settings(env={
+        "AI_OBJECT_GROUNDING_PROVIDER": "groundingDino",
+        "AI_OBJECT_GROUNDING_REVISION": "b" * 40,
+    })
+    assert settings.object_grounding.model_revision == "b" * 40
 
 
 def test_object_grounding_batch_and_resize_limits_parse_as_positive_ints():

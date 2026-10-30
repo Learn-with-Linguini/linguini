@@ -1,14 +1,22 @@
+import sys
 from contextlib import nullcontext
 from io import BytesIO
+from types import SimpleNamespace
 from unittest.mock import MagicMock
 from uuid import uuid4
 
+import pytest
 from PIL import Image
 
 from app.ai.contracts import VisionImage
 from app.ai.features.object_grounding import GroundedBox
 from app.ai.features.object_grounding.mapping import apply_object_grounding
-from app.ai.features.object_grounding.service import GroundingDinoObjectGrounder, _canonical_label
+from app.ai.features.object_grounding.service import (
+    GroundingDinoObjectGrounder,
+    ObjectGroundingError,
+    _canonical_label,
+)
+from app.ai.settings import GROUNDING_MODEL_REVISIONS, load_ai_settings
 from app.schemas.media import AnchorPoint, BoundingBox, SceneObject
 from app.services.scene_analysis import SceneAnalysisResult
 
@@ -21,6 +29,44 @@ class FakeGrounder:
     def ground(self, image, labels):
         self.calls.append((image, labels))
         return self.boxes
+
+
+def test_detector_pins_processor_and_safe_weights_to_the_same_commit(monkeypatch):
+    torch = MagicMock()
+    torch.cuda.is_available.return_value = False
+    torch.backends.mps = None
+    processor = MagicMock()
+    model = MagicMock()
+    monkeypatch.setitem(sys.modules, "torch", torch)
+    monkeypatch.setitem(sys.modules, "transformers", SimpleNamespace(
+        AutoProcessor=processor, AutoModelForZeroShotObjectDetection=model,
+    ))
+    revision = "a" * 40
+    GroundingDinoObjectGrounder("publisher/detector", 0.35, revision=revision)
+    processor.from_pretrained.assert_called_once_with(
+        "publisher/detector", revision=revision, trust_remote_code=False,
+    )
+    model.from_pretrained.assert_called_once_with(
+        "publisher/detector", revision=revision, trust_remote_code=False, use_safetensors=True,
+    )
+
+
+def test_registry_preserves_the_configured_grounding_revision(monkeypatch):
+    from app.ai import registry
+
+    build = MagicMock()
+    monkeypatch.setattr(registry, "GroundingDinoObjectGrounder", build)
+    settings = load_ai_settings(env={"AI_OBJECT_GROUNDING_PROVIDER": "groundingDino"})
+    assert registry.build_object_grounder(settings) is build.return_value
+    assert build.call_args.kwargs["revision"] == GROUNDING_MODEL_REVISIONS[
+        "IDEA-Research/grounding-dino-base"
+    ]
+
+
+@pytest.mark.parametrize("revision", ["", "main", "123abcd", "z" * 40])
+def test_detector_rejects_mutable_revision_before_loading_optional_dependencies(revision):
+    with pytest.raises(ObjectGroundingError, match="immutable model commit SHA"):
+        GroundingDinoObjectGrounder("publisher/detector", 0.35, revision=revision)
 
 
 def _result() -> SceneAnalysisResult:

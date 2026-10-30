@@ -31,6 +31,12 @@ logger = logging.getLogger(__name__)
 AI_CONFIG_FILE_VAR = "AI_CONFIG_FILE"
 DEFAULT_AI_CONFIG_FILE = Path(__file__).resolve().parents[2] / "ai.toml"
 
+# Immutable revisions from the model publishers' Hugging Face repositories.
+GROUNDING_MODEL_REVISIONS = {
+    "IDEA-Research/grounding-dino-base": "12bdfa3120f3e7ec7b434d90674b3396eccf88eb",
+    "IDEA-Research/grounding-dino-tiny": "a2bb814dd30d776dcf7e30523b00659f4f141c71",
+}
+
 
 class AiMode(StrEnum):
     REAL = "real"
@@ -79,6 +85,7 @@ class ObjectGroundingSettings(BaseModel):
 
     provider: ObjectGroundingProvider = ObjectGroundingProvider.NONE
     model_name: str = ""
+    model_revision: str = ""
     threshold: float = Field(default=0.35, ge=0, le=1)
     max_labels: int = Field(default=12, gt=0)
     max_image_side: int = Field(default=1024, gt=0)
@@ -225,10 +232,21 @@ def _parse_object_grounding(env: Mapping[str, str]) -> ObjectGroundingSettings:
         if provider is ObjectGroundingProvider.GROUNDING_DINO
         else ""
     )
+    model_revision = _read(env, "AI_OBJECT_GROUNDING_REVISION") or (
+        GROUNDING_MODEL_REVISIONS.get(model_name, "")
+    )
+    if provider is ObjectGroundingProvider.GROUNDING_DINO and not re.fullmatch(
+        r"[0-9a-f]{40}", model_revision
+    ):
+        raise AiConfigurationError(
+            "AI_OBJECT_GROUNDING_REVISION must be a full lowercase 40-character "
+            "commit SHA for the configured grounding model."
+        )
     try:
         return ObjectGroundingSettings(
             provider=provider,
             model_name=model_name,
+            model_revision=model_revision,
             threshold=threshold,
             max_labels=_parse_positive_int(
                 env,

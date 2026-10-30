@@ -70,6 +70,19 @@ def scene_row(asset=None, slug=None) -> dict:
     }
 
 
+@pytest.mark.parametrize(("value", "literal"), [
+    (None, "NULL"),
+    (True, "TRUE"),
+    (False, "FALSE"),
+    (123, "123"),
+    ("O'Brien", "E'O''Brien'"),
+    ("\\'; SELECT 123; --", "E'\\\\''; SELECT 123; --'"),
+    ("\\n", "E'\\\\n'"),
+])
+def test_migration_literals_preserve_data_and_escape_sql_delimiters(value, literal):
+    assert script._sql_literal(value) == literal
+
+
 def _remap(text: str, payload: dict) -> str:
     keys = {
         row["source"].removeprefix("the "): row["key"]

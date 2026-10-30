@@ -8,6 +8,7 @@ the vision model estimating normalized coordinates.
 from __future__ import annotations
 
 import logging
+import re
 import time
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -52,9 +53,12 @@ class GroundingDinoObjectGrounder:
         model_name: str,
         threshold: float,
         *,
+        revision: str,
         max_labels: int = 12,
         max_image_side: int = 1024,
     ) -> None:
+        if not re.fullmatch(r"[0-9a-f]{40}", revision):
+            raise ObjectGroundingError("Grounding DINO requires an immutable model commit SHA.")
         try:
             import torch
             from transformers import AutoModelForZeroShotObjectDetection, AutoProcessor
@@ -65,8 +69,12 @@ class GroundingDinoObjectGrounder:
             ) from error
 
         self._torch = torch
-        self._processor = AutoProcessor.from_pretrained(model_name)
-        self._model = AutoModelForZeroShotObjectDetection.from_pretrained(model_name)
+        self._processor = AutoProcessor.from_pretrained(
+            model_name, revision=revision, trust_remote_code=False,
+        )
+        self._model = AutoModelForZeroShotObjectDetection.from_pretrained(
+            model_name, revision=revision, trust_remote_code=False, use_safetensors=True,
+        )
         if torch.cuda.is_available():
             device = "cuda"
         elif getattr(torch.backends, "mps", None) is not None and torch.backends.mps.is_available():
@@ -80,7 +88,7 @@ class GroundingDinoObjectGrounder:
         self._max_labels = max_labels
         self._max_image_side = max_image_side
         logger.info(
-            "Grounding DINO loaded: model=%s device=%s", model_name, device
+            "Grounding DINO loaded: model=%s revision=%s device=%s", model_name, revision, device
         )
 
     def ground(
