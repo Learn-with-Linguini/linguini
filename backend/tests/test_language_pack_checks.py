@@ -3,12 +3,12 @@
 from pathlib import Path
 
 import pytest
+from bundled_packs import bundled_pack
 from pydantic import ValidationError
 
 from app.language_packs.evaluation import evaluation_identity
 from app.language_packs.fingerprint import pack_fingerprint
 from app.language_packs.generation import ApprovedVocabulary, CandidateSentence, assess
-from app.language_packs.loader import load_pack
 from app.language_packs.schema import Construction, ConstructionCheck
 from app.language_packs.validators import select_validator, validator_versions
 from app.language_packs.validators.checks import PackChecksValidator
@@ -38,7 +38,7 @@ def _candidate(construction_id, text, use="answer", truth=True):
 
 @pytest.mark.parametrize("locale", LOCALES)
 def test_checks_never_reject_a_pack_example_or_alternative(locale):
-    pack = load_pack(PACKS / locale / "everyday")
+    pack = bundled_pack(PACKS / locale / "everyday")
     assert any(construction.checks for construction in pack.constructions)
     failures = [
         (construction.construction_id, check.check_id, text)
@@ -67,7 +67,7 @@ def test_checks_never_reject_a_pack_example_or_alternative(locale):
     ],
 )
 def test_checks_reject_known_surface_mistakes(locale, construction_id, use, truth, text):
-    pack = load_pack(PACKS / locale / "everyday")
+    pack = bundled_pack(PACKS / locale / "everyday")
     result = PackChecksValidator().validate(_candidate(construction_id, text, use, truth), pack)
     assert not result.passed
     assert all("(pack check " in message for message in result.messages)
@@ -100,14 +100,14 @@ def test_invalid_checks_are_rejected_when_the_pack_loads(fields, error):
 
 def test_duplicate_check_ids_are_rejected():
     check = dict(check_id="same", message="M.", must_contain=["x"])
-    pack = load_pack(PACKS / "fr-FR" / "everyday")
+    pack = bundled_pack(PACKS / "fr-FR" / "everyday")
     data = pack.constructions[0].model_dump(mode="python", by_alias=False)
     with pytest.raises(ValidationError, match="unique"):
         Construction.model_validate({**data, "checks": [check, check]})
 
 
 def test_spanish_targeted_validator_and_pack_checks_both_run():
-    pack = load_pack(PACKS / "es-ES" / "everyday")
+    pack = bundled_pack(PACKS / "es-ES" / "everyday")
     vocabulary = ApprovedVocabulary()
     assert validator_versions("es", pack) == {
         "es": "es-targeted@7", "noun-phrase": NounPhraseValidator.validator_id,
@@ -128,7 +128,7 @@ def test_spanish_targeted_validator_and_pack_checks_both_run():
 
 
 def test_editing_a_check_invalidates_cache_and_evaluation_identity():
-    pack = load_pack(PACKS / "fr-FR" / "everyday")
+    pack = bundled_pack(PACKS / "fr-FR" / "everyday")
     constructions = [
         item.model_copy(update={"checks": item.checks[1:]})
         if item.construction_id == "identify-object"
@@ -146,7 +146,7 @@ def test_editing_a_check_invalidates_cache_and_evaluation_identity():
 
 
 def test_korean_targeted_validator_runs_with_pack_checks():
-    pack = load_pack(PACKS / "ko-KR" / "everyday")
+    pack = bundled_pack(PACKS / "ko-KR" / "everyday")
     assert validator_versions("ko", pack) == {
         "ko": "ko-targeted@2", "pack-checks": PackChecksValidator.validator_id,
     }

@@ -6,6 +6,7 @@ from types import SimpleNamespace
 from uuid import UUID
 
 import pytest
+from bundled_packs import bundled_pack
 
 from app.ai.cache.cache import ResultCache
 from app.ai.cache.store import CacheScope
@@ -14,7 +15,6 @@ from app.ai.features.learning_tasks.service import LearningTaskService
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.ai.observability import NoOpAITracer
 from app.language_packs.generation import check_deterministic, derive_chunks
-from app.language_packs.loader import load_pack
 from app.language_packs.model_source import ModelSource
 from app.language_packs.plan import bind_plan
 from app.language_packs.runtime import session_inputs
@@ -227,7 +227,7 @@ def dispatch(level, runtime, provider, *, cache=None, sid=100):
 
 @pytest.mark.parametrize("level,count", [("A0", 6), ("A1", 4), ("A2", 5)])
 def test_normal_dispatch_flag_on_spanish_mocked(level, count, runtime):
-    assert load_pack(PACK).lexical == {}
+    assert bundled_pack(PACK).lexical == {}
     provider = MockSpanishProvider()
     (task,) = dispatch(level, runtime, provider)
     assert task.session_id == UUID(int=100)
@@ -418,7 +418,7 @@ def test_spanish_noun_phrase_matching_case_spacing_and_boundaries(text, passes):
         text=text, origin="model",
         term_uses=[TermUse(term_id="cup", fact_id="object:cup", surface="Taza", role="object")],
     )
-    pack = load_pack(PACK)
+    pack = bundled_pack(PACK)
     # Article agreement now comes from the shared noun-phrase validator.
     result = select_validator("es", vocabulary, pack).validate(candidate, pack)
     assert result.passed is passes
@@ -430,7 +430,7 @@ def test_spanish_noun_phrase_matching_case_spacing_and_boundaries(text, passes):
 
 
 def test_binding_and_chunks_rejected_before_assembly(runtime):
-    pack = load_pack(PACK)
+    pack = bundled_pack(PACK)
     facts, vocabulary = session_inputs(pack, *runtime, {})
     source = ModelSource(MockSpanishProvider(), TextModelConfig(model_name="mocked-Spanish-only"))
     vocabulary = source.prepare(pack, "A1", facts, vocabulary)
@@ -508,7 +508,7 @@ def test_duplicate_object_names_are_not_contrasted_and_keep_instance_bindings(ru
 
 
 def test_incorrect_attribute_instance_and_claim_are_rejected(runtime):
-    pack = load_pack(PACK)
+    pack = bundled_pack(PACK)
     facts, vocabulary = session_inputs(pack, *runtime, {})
     source = ModelSource(MockSpanishProvider(), TextModelConfig(model_name="mocked-Spanish-only"))
     vocabulary = source.prepare(pack, "A1", facts, vocabulary)

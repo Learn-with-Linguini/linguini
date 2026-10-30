@@ -6,6 +6,7 @@ from types import SimpleNamespace
 from uuid import UUID
 
 import pytest
+from bundled_packs import bundled_pack
 from test_language_pack_m01_regression import _grading_scenarios
 
 from app.ai.cache.cache import ResultCache
@@ -23,7 +24,6 @@ from app.language_packs.generation import (
     fact_id,
 )
 from app.language_packs.lessons.m01 import check_lesson as validate_assembled_lesson
-from app.language_packs.loader import load_pack
 from app.language_packs.model_source import ModelSource
 from app.language_packs.pipeline import PipelineFailure, generate_pilot
 
@@ -35,7 +35,7 @@ def _reference_pack():
     # Explicit propose=False demos compare legacy finite choices. This fixture
     # is not loaded by normal generation or production pack discovery.
     reference = Path(__file__).parent / "fixtures/language_packs/es-reference-parity.toml"
-    return load_pack(PACK_DIR).model_copy(update={
+    return bundled_pack(PACK_DIR).model_copy(update={
         "lexical": tomllib.loads(reference.read_text("utf-8"))["lexical"],
     })
 
@@ -313,7 +313,7 @@ def test_evaluation_identity_tracks_generation_content_and_validator_version():
         changed_pack, "A0"
     ).generation_content_sha256
     assert identity.validator_versions == {
-        "es": "es-targeted@7", "noun-phrase": "noun-phrase.v6", "pack-checks": "pack-checks.v1",
+        "es": "es-targeted@7", "noun-phrase": "noun-phrase.v7", "pack-checks": "pack-checks.v1",
     }
 
 
