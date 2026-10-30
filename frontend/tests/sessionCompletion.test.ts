@@ -648,9 +648,15 @@ test("A0 builds the clue only from word tiles, beside a word bank", async () => 
 });
 
 test("A2 keeps the clue frames behind Need help?", async () => {
-  const root = await mountSlots("pending", { learnerLevel: "A2", helpCollapsed: true });
+  const root = await mountSlots("pending", { learnerLevel: "A2", helpCollapsed: true,
+    wordBank: [{ text: "taza", translation: "cup" }, { text: "mesa", translation: "table" }] });
   assert.equal(dom.window.document.querySelector("[data-testid=clue-frames]"), null);
   assert.equal(clue().readOnly, false);
+  assert.equal(dom.window.document.querySelector(".ispy-help__words"), null,
+    "the A2 word bank starts collapsed");
+  await click("Show word bank");
+  assert.deepEqual([...dom.window.document.querySelectorAll(".ispy-help__words strong")]
+    .map(item => item.textContent), ["taza", "mesa"]);
   await click("Need help? Show clue frames");
   assert.ok(dom.window.document.querySelector("[data-testid=clue-frames]"));
   root.unmount();

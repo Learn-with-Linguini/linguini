@@ -4,11 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { sessionDestination, sessionPaths } from "../lib/sessionRoute";
 import { BasilReward, Button, Feedback, IconButton, ProgressTrail, XpPill } from "../components/ui";
-import { ArrowRightIcon, CheckIcon, EyeIcon, EyeOffIcon, SpeakerIcon } from "../components/icons";
+import { ArrowRightIcon, EyeIcon, EyeOffIcon, SpeakerIcon } from "../components/icons";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
-import { choiceOrder, practiceStages, taskDone, taskXp } from "../lib/practiceTasks";
+import { practiceStages, taskDone, taskXp } from "../lib/practiceTasks";
 import { speak } from "../lib/speech";
 import { trackAction } from "../lib/analytics.ts";
 import { getLatestAttempt } from "../lib/api";
@@ -103,7 +103,7 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
     setHeard(true);
   };
   const answered = taskDone(task);
-  const choose = async (optionId: string, source: "choice" | "photo_marker" = "choice") => {
+  const choose = async (optionId: string) => {
     if (answered || practiceSaving || submitting.current) return;
     submitting.current = true;
     setChecking(true);
@@ -116,7 +116,7 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
       if (saved?.attempt?.isCorrect != null) playAnswerSound(saved.attempt.isCorrect);
       if (saved) {
         request.current = null;
-        trackAction("ispy_clue_submitted", { optionId, isCorrect: saved.attempt?.isCorrect, source });
+        trackAction("ispy_clue_submitted", { optionId, isCorrect: saved.attempt?.isCorrect, source: "photo_marker" });
       }
     } finally {
       submitting.current = false;
@@ -142,7 +142,7 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
       guessItemId={selected?.sceneObjectId}
       onMarkerClick={!answered && !practiceSaving && !checking ? item => {
         const option = content.options.find(candidate => candidate.sceneObjectId === item.id);
-        if (option) void choose(option.optionId, "photo_marker");
+        if (option) void choose(option.optionId);
       } : undefined} />
     <div className="card card--lifted stack-2">
       <div className="spread"><span className="label muted">Linguini says</span><IconButton label="Hear the clue" onClick={hearClue}><SpeakerIcon /></IconButton></div>
@@ -158,16 +158,7 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
       </div>}
     </div>
     <ISpyLevelHelp support={content} languageCode={scene.languageCode} />
-    <p className="muted">Choose a numbered object below or tap its marker in the photo.</p>
-    <div className="choice-grid">{choiceOrder(content.options, task.id, option => option.optionId).map(option => {
-      const item = optionItems.find(candidate => candidate.id === option.sceneObjectId);
-      const label = item ? `Marker ${item.marker}: ${option.label}` : option.label;
-      const state = shownPick !== option.optionId ? "" : isCorrect != null ? (isCorrect ? " choice--correct" : " choice--incorrect") : " choice--selected";
-      return <button key={option.optionId} type="button" className={`choice${state}`} aria-label={label} aria-pressed={shownPick === option.optionId} disabled={answered || practiceSaving || checking} onClick={() => void choose(option.optionId)}>
-        {isCorrect && shownPick === option.optionId ? <CheckIcon size={16} /> : null}
-        {item ? <span>Marker {item.marker} · </span> : null}<span lang={scene.languageCode}>{option.label}</span>
-      </button>;
-    })}</div>
+    {!answered ? <p className="muted">Tap the matching numbered marker in the photo.</p> : null}
     {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
     {answered || result ? <>
       <Feedback tone={isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status">

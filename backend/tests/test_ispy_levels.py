@@ -67,7 +67,7 @@ def test_a0_clues_offer_three_differently_named_choices_with_translation_and_hel
     assert public["publicContent"]["cheatSheet"]["missionId"] == "M02"
 
 
-def test_a1_keeps_every_choice_and_no_extra_help():
+def test_a1_keeps_every_choice_and_includes_the_scene_word_bank():
     objects, words = _scene(
         ["tasse", "table", "livre", "chaise"], ["cup", "table", "book", "chair"],
     )
@@ -76,11 +76,13 @@ def test_a1_keeps_every_choice_and_no_extra_help():
     content = task.public_content
     assert len(content.options) == 4
     assert not content.translation_shown and not content.listen_first
-    assert content.word_bank == [] and content.cheat_sheet is None
+    assert [entry.text for entry in content.word_bank] == ["tasse", "table", "livre", "chaise"]
+    assert content.cheat_sheet is None
     public = SessionTaskPublic.from_internal(
         task, mode=SessionMode.ISPY
     ).model_dump(mode="json")
-    assert "wordBank" not in public["publicContent"] and "cheatSheet" not in public["publicContent"]
+    assert len(public["publicContent"]["wordBank"]) == 4
+    assert "cheatSheet" not in public["publicContent"]
 
 
 def test_a2_clues_are_heard_before_they_are_read():
@@ -137,6 +139,7 @@ def test_a1_and_a2_describe_two_objects_by_typing():
     assert all(task.public_content.allow_text for task in [*a1, *a2])
     assert not any(task.public_content.help_collapsed for task in a1)
     assert all(task.public_content.help_collapsed for task in a2)
+    assert all(task.public_content.word_bank for task in [*a1, *a2])
     assert {task.answer_key.learner_level for task in a2} == {"A2"}
 
 

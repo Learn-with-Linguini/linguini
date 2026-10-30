@@ -42,12 +42,12 @@ LEVELS = {
     ),
     "A1": ISpyLevel(
         "A1", clue_choices=None, translation_shown=False, listen_first=False,
-        description_tasks=2, typing=True, help_collapsed=False, word_bank=False,
+        description_tasks=2, typing=True, help_collapsed=False, word_bank=True,
         cheat_sheet=False, min_clear_evidence=1, accept_ambiguous_match=False,
     ),
     "A2": ISpyLevel(
         "A2", clue_choices=None, translation_shown=False, listen_first=True,
-        description_tasks=2, typing=True, help_collapsed=True, word_bank=False,
+        description_tasks=2, typing=True, help_collapsed=True, word_bank=True,
         cheat_sheet=False, min_clear_evidence=2, accept_ambiguous_match=False,
     ),
 }

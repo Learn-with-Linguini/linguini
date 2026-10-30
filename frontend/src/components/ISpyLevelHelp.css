@@ -1,4 +1,4 @@
-/* A0 word bank: the scene's words on soft pasta-cream chips, as on Home. */
+/* Scene word bank: always available, but disclosed on demand beyond A0. */
 .ispy-help {
   display: grid;
   gap: var(--space-2);
@@ -13,6 +13,17 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
+}
+
+.ispy-help__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.ispy-help__actions .btn--quiet {
+  min-height: 44px;
+  padding-inline: var(--space-2);
 }
 
 .ispy-help__words {

@@ -77,7 +77,12 @@ function detail(mode: SessionMode): PracticeDetail {
     session: { id: "s1", mode, sourceSessionId: mode === "ispy" ? "lesson1" : null, status: "inProgress",
       sceneMediaAssetId: "asset", sessionTitle: "Table", sessionSummary: null, failureCode: null },
     mediaAsset: { id: "asset", source: "preloaded" }, sceneId: null, title: "Table", analysisMode: null, analysisRetryable: false,
-    sceneObjects: [], sceneObjectRelations: [], vocabulary: [], translations: [],
+    reviewMarkers: { "object-a": 1, "object-b": 2 },
+    sceneObjects: ["object-a", "object-b"].map((id, index) => ({
+      id, sessionId: "s1", label: index ? "table" : "cup", vocabularyItemId: null,
+      boundingBox: null, anchorPoint: { x: index ? 0.7 : 0.2, y: 0.5 },
+      attributes: {}, confidenceScore: null, sourceObjectKey: id,
+    })), sceneObjectRelations: [], vocabulary: [], translations: [],
     tasks: [structuredClone(clue), { ...structuredClone(clue), id: "clue2", orderIndex: 1 }], nextTaskId: "clue1",
     progress: { completedTaskCount: 0, skippedTaskCount: 0, terminalTaskCount: 0, totalTaskCount: 2 },
   };
@@ -122,8 +127,9 @@ async function until(predicate: () => boolean, message: string) {
   assert.ok(predicate(), `${message}: ${dom.window.document.body.textContent}`);
 }
 
-const choice = (label: string) => [...dom.window.document.querySelectorAll<HTMLButtonElement>(".choice")]
-  .find(button => button.textContent?.trim() === label);
+const marker = (number: number) => dom.window.document.querySelector<HTMLButtonElement>(
+  `button.scene__marker[aria-label="Marker ${number}"]`,
+);
 const next = () => [...dom.window.document.querySelectorAll<HTMLButtonElement>("button")]
   .find(button => button.textContent?.includes("Next clue"));
 const click = (button: HTMLButtonElement | undefined) => act(async () => {
@@ -158,7 +164,8 @@ async function mount(mode: SessionMode, patch: Partial<PracticeDetail> = {}, res
       )),
     )));
   });
-  await until(() => Boolean(dom.window.document.querySelector(".choice")), "the real clue round should load");
+  await until(() => Boolean(dom.window.document.querySelector("button.scene__marker")),
+    "the real clue round should load its photo markers");
 }
 
 function commit(isCorrect: boolean) {
@@ -176,20 +183,19 @@ for (const mode of ["ispy", "lesson"] as const) {
     latestReply = () => new Promise<Response>(resolve => { releaseLatest = resolve; });
     taskReplies.push(() => { commit(false); throw new Error("Lost response after the write"); });
     taskReplies.push(() => Response.json({ detail: { code: "task_conflict", message: "This task is already completed." } }, { status: 409 }));
-    await click(choice("taza"));
-    await until(() => Boolean(choice("mesa") && !choice("mesa")!.disabled), "a network failure should allow recovery");
+    await click(marker(1) ?? undefined);
+    await until(() => Boolean(marker(2) && !marker(2)!.disabled), "a network failure should allow recovery");
     assert.equal(requests.length, 1);
-    await click(choice("mesa"));
+    await click(marker(2) ?? undefined);
     await until(() => Boolean(releaseLatest), "the conflict should reload the saved task and request its answer");
     assert.ok(sessionReads >= 2, "a task conflict must refresh the session without reloading the page");
-    assert.equal(choice("mesa")?.getAttribute("aria-pressed"), "false", "the rejected tap must not stand in for a saved answer");
     await act(async () => { releaseLatest!(Response.json({ attempt: {
       id: "answer1", attemptNumber: 1, text: "", optionId: "a", isCorrect: false,
       feedback: "Saved answer feedback.", evaluationDetails: null, assistance: null,
     } })); });
-    await until(() => Boolean(choice("taza")?.classList.contains("choice--incorrect")), "the stored incorrect grade belongs to the stored option");
-    assert.equal(choice("taza")?.getAttribute("aria-pressed"), "true");
-    assert.equal(choice("mesa")?.classList.contains("choice--incorrect"), false);
+    await until(() => dom.window.document.querySelector(".scene__marker--guess")?.textContent === "1",
+      "the stored incorrect grade belongs to the stored marker");
+    assert.notEqual(dom.window.document.querySelector(".scene__marker--guess")?.textContent, "2");
     assert.match(dom.window.document.body.textContent ?? "", /Saved answer feedback\./);
     assert.ok(dom.window.document.body.textContent?.includes(learningFeedback("incorrect", clue.id)));
     assert.ok(!dom.window.document.body.textContent?.includes(learningFeedback("correct", clue.id)));
@@ -203,11 +209,12 @@ test("retrying an unanswered response reuses its command key and displays the ac
   await mount("ispy");
   taskReplies.push(() => { throw new Error("Reply interrupted"); });
   taskReplies.push(() => Response.json(commit(true)));
-  await click(choice("taza"));
-  await until(() => Boolean(choice("taza") && !choice("taza")!.disabled), "the interrupted answer should be retryable");
+  await click(marker(1) ?? undefined);
+  await until(() => Boolean(marker(1) && !marker(1)!.disabled), "the interrupted answer should be retryable");
   assert.ok(!dom.window.document.body.textContent?.includes(learningFeedback("correct", clue.id)));
-  await click(choice("taza"));
-  await until(() => Boolean(choice("taza")?.classList.contains("choice--correct")), "the accepted answer should show its saved grade");
+  await click(marker(1) ?? undefined);
+  await until(() => dom.window.document.querySelector(".scene__marker--active")?.textContent === "1",
+    "the accepted answer should highlight its saved marker");
   assert.match(dom.window.document.body.textContent ?? "", /\+1 Basil earned/);
   assert.ok(dom.window.document.body.textContent?.includes(learningFeedback("correct", clue.id)));
   assert.match(dom.window.document.body.textContent ?? "", /Saved answer feedback\./);
@@ -239,9 +246,8 @@ for (const mode of ["ispy", "lesson"] as const) {
   for (const label of ["coche", "voiture", "Auto", "자동차", "கார்"]) {
     test(`${mode}: repeated ${label} choices retain photo marker identities after shuffling`, async () => {
       await mount(mode, repeatedObjects(label));
-      assert.ok(choice(`Marker 2 · ${label}`));
-      assert.ok(choice(`Marker 7 · ${label}`));
-      assert.equal(choice(`Marker 7 · ${label}`)?.getAttribute("aria-label"), `Marker 7: ${label}`);
+      assert.equal(dom.window.document.querySelectorAll(".choice").length, 0,
+        "Linguini's clue uses only markers, without duplicate answer choices");
       const markers = [...dom.window.document.querySelectorAll<HTMLButtonElement>("button.scene__marker")];
       assert.deepEqual(markers.map(marker => marker.getAttribute("aria-label")), ["Marker 2", "Marker 7"]);
       let release: ((response: Response) => void) | undefined;
@@ -249,7 +255,6 @@ for (const mode of ["ispy", "lesson"] as const) {
       await click(markers[1]);
       await until(() => Boolean(release), "marker submits the matching option");
       assert.equal(requests[0].optionId, "b");
-      assert.equal(choice(`Marker 7 · ${label}`)?.disabled, true);
       assert.equal(dom.window.document.querySelector("button.scene__marker"), null,
         "photo submissions are blocked while checking");
       await act(async () => {
@@ -257,10 +262,9 @@ for (const mode of ["ispy", "lesson"] as const) {
         result.attempt.responsePayload.optionId = "b";
         release!(Response.json(result));
       });
-      await until(() => Boolean(choice(`Marker 7 · ${label}`)?.classList.contains("choice--correct")),
+      await until(() => dom.window.document.querySelector(".scene__marker--active")?.textContent === "7",
         "the selected instance gets the saved grade");
       assert.equal(requests.length, 1);
-      assert.equal(choice(`Marker 2 · ${label}`)?.getAttribute("aria-pressed"), "false");
       assert.equal(dom.window.document.querySelector(".scene__marker--active")?.textContent, "7");
     });
   }
@@ -273,11 +277,11 @@ test("a restored repeated-object answer highlights its original marker without r
   taskReplies.push(() => Response.json({ detail: {
     code: "task_conflict", message: "This task is already completed.",
   } }, { status: 409 }));
-  await click(choice("Marker 7 · voiture"));
-  await until(() => Boolean(choice("Marker 7 · voiture") && !choice("Marker 7 · voiture")!.disabled),
+  await click(marker(7) ?? undefined);
+  await until(() => Boolean(marker(7) && !marker(7)!.disabled),
     "the interrupted answer can recover");
-  await click(choice("Marker 7 · voiture"));
-  await until(() => Boolean(choice("Marker 7 · voiture")?.classList.contains("choice--correct")),
+  await click(marker(7) ?? undefined);
+  await until(() => dom.window.document.querySelector(".scene__marker--active")?.textContent === "7",
     "restore keeps the saved instance");
   assert.equal(dom.window.document.querySelector(".scene__marker--active")?.textContent, "7");
   assert.equal(requests.length, 2, "restoring the accepted answer never submits another answer");
@@ -302,11 +306,17 @@ test("A0 rounds show the translation, a word bank and the cheatsheet", async () 
   assert.ok(dom.window.document.querySelector('button[aria-label="Open cheatsheet"]'));
 });
 
-test("A1 rounds keep the translation behind its toggle and offer no word bank", async () => {
-  await mount("ispy", levelled({ learnerLevel: "A1" }));
+test("A1 rounds keep the translation and word bank behind their toggles", async () => {
+  await mount("ispy", levelled({ learnerLevel: "A1",
+    wordBank: [{ text: "taza", translation: "cup" }, { text: "mesa", translation: "table" }] }));
   assert.match(body(), /es roja/);
   assert.doesNotMatch(body(), /is red/);
-  assert.equal(dom.window.document.querySelector(".ispy-help"), null);
+  assert.equal(dom.window.document.querySelector(".ispy-help__words"), null);
+  const showWords = [...dom.window.document.querySelectorAll<HTMLButtonElement>("button")]
+    .find(button => button.textContent?.includes("Show word bank"));
+  await click(showWords);
+  assert.deepEqual([...dom.window.document.querySelectorAll(".ispy-help__words strong")]
+    .map(item => item.textContent), ["taza", "mesa"]);
 });
 
 test("A2 rounds play the clue before showing its text", async () => {
