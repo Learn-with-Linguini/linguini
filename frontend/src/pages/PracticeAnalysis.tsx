@@ -116,6 +116,16 @@ export function PracticeAnalysis() {
     trackAction("scene_shortfall_shown", { missing: shortfallKey });
     shortfallRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest" });
   }, [shortfallKey]);
+  const practisedIds = session?.practisedSceneObjectIds ?? [];
+  const practisedLabels = new Set((session?.sceneObjects ?? []).filter(item => practisedIds.includes(item.id)).map(item => item.label.trim().toLowerCase()));
+  const sceneLabels = new Set((session?.sceneObjects ?? []).map(item => item.label.trim().toLowerCase()));
+  const revisitSessionId = practisedLabels.size && session?.session.status === "awaitingObjectReview" ? session.session.id : null;
+  const revisitReviewShown = useRef<string | null>(null);
+  useEffect(() => {
+    if (!revisitSessionId || revisitReviewShown.current === revisitSessionId) return;
+    revisitReviewShown.current = revisitSessionId;
+    trackAction("revisit_review_shown", { sessionId: revisitSessionId, newWordCount: sceneLabels.size - practisedLabels.size, practisedWordCount: practisedLabels.size });
+  }, [practisedLabels.size, revisitSessionId, sceneLabels.size]);
   useEffect(() => {
     if (!pending && !movingObjectId) return;
     const cancelOutside = (event: PointerEvent) => {
@@ -351,6 +361,9 @@ export function PracticeAnalysis() {
         {panel === "objects" ? <section className="analysis-results" aria-labelledby="analysis-found-title">
           <div><h2 id="analysis-found-title">Check what this lesson will use</h2>
             <p className="muted">{locked ? "Your lesson has started. Start a new practice to change its objects." : "Each row matches one numbered marker on the photo."}</p>
+            {!locked && practisedLabels.size ? <p className="small analysis-revisit-note">{practisedLabels.size >= sceneLabels.size
+              ? "You've practised every word here. Keep the ones you want to go over again."
+              : "New words from this photo come first. Words marked Practised were in an earlier lesson."}</p> : null}
           </div>
           <label className="analysis-scene-title" htmlFor="analysis-scene-title">
             <span className="field__label">Scene title</span>
@@ -364,7 +377,7 @@ export function PracticeAnalysis() {
                 const addedItem = numberedAdded.find(row => row.id === instance.id);
                 return <div className="analysis-word-row analysis-object-row" key={instance.id}>
                   <span className={`analysis-word-row__marker${addedItem ? " analysis-word-row__marker--custom" : ""}`}>{instance.marker}</span>
-                  <strong>{humanizeTerm(instance.label)}</strong>
+                  <strong>{humanizeTerm(instance.label)}{practisedIds.includes(instance.id) ? <span className="pill pill--mastered analysis-word-row__practised">Practised</span> : null}</strong>
                   {!locked ? <div className="analysis-object-instance__actions">
                     <button className="analysis-marker-action" type="button" disabled={practiceSaving || !!placementLabel}
                       aria-label={`Change location of marker ${instance.marker}, ${instance.label}`} title="Change location"

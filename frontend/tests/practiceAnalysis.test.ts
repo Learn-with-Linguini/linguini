@@ -224,6 +224,25 @@ test("restoring removed objects keeps mission-hidden suggestions excluded from m
   assert.deepEqual(reviews[0].relations, [relation]);
 });
 
+test("a revisit marks words practised in an earlier lesson on the photo", async () => {
+  await mount({ ...detail(), practisedSceneObjectIds: ["object-0"] });
+  const practised = [...dom.window.document.querySelectorAll(".analysis-word-row__practised")];
+  assert.deepEqual(practised.map(element => element.closest(".analysis-word-row")?.querySelector(".analysis-word-row__marker")?.textContent), ["1"]);
+  assert.match(dom.window.document.body.textContent ?? "", /New words from this photo come first/);
+});
+
+test("a revisit with every word practised says so instead of promising new words", async () => {
+  await mount({ ...detail(), practisedSceneObjectIds: ["object-0", "object-1", "object-2"] });
+  assert.equal(dom.window.document.querySelectorAll(".analysis-word-row__practised").length, 3);
+  assert.match(dom.window.document.body.textContent ?? "", /practised every word here/);
+});
+
+test("a first lesson on a photo shows no practised marks", async () => {
+  await mount();
+  assert.equal(dom.window.document.querySelectorAll(".analysis-word-row__practised").length, 0);
+  assert.doesNotMatch(dom.window.document.body.textContent ?? "", /New words from this photo/);
+});
+
 test("a learner-added object follows the visible suggestion numbers", async () => {
   await mount({ ...detail(), suggestedSceneObjectIds: ["object-1", "object-2"] });
   assertMarkers([1, 2]);

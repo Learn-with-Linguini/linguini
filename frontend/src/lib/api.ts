@@ -553,6 +553,8 @@ export interface PracticeDetail {
   sceneShortfall?: SceneShortfall | null;
   provisionalMissionPlan?: MissionTaskFields[];
   suggestedSceneObjectIds?: string[];
+  /** Objects whose word the learner practised in an earlier lesson on this photo. */
+  practisedSceneObjectIds?: string[];
   missionChoices?: MissionChoices | null;
 }
 export type ShortfallKind = "objects" | "counts" | "attributes" | "relations";

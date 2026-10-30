@@ -152,14 +152,25 @@ def suggested_counted_groups(objects):
     ]
 
 
-def provisional_mission_focus(candidates, objects, relations, language_context=None):
+def provisional_mission_focus(
+    candidates, objects, relations, language_context=None, *, history=(), practised_labels=(),
+):
     """Mission candidates and the smallest suggested fact set worth confirming.
 
     The return value is presentation guidance over unconfirmed model output. It
     must never be used as the final mission plan or grading evidence.
+
+    ``history`` mirrors the confirmed plan's least-planned rotation, and
+    ``practised_labels`` (a revisit of the same photo) moves words the learner
+    already practised behind new ones without excluding them.
     """
     counts = suggested_counted_groups(objects)
-    plan = plan_missions(candidates, objects, relations, counts, language_context=language_context)
+    plan = plan_missions(
+        candidates, objects, relations, counts, history, language_context=language_context,
+    )
+    practised = {label.strip().casefold() for label in practised_labels}
+    labels = {obj.id: obj.label.strip().casefold() for obj in objects}
+    ordered = sorted(objects, key=lambda obj: labels[obj.id] in practised)
     if candidates and str(candidates[0].practice_level) == "A0":
         planned_keys = {
             (mission.mission_id, str(mission.practice_level), mission.content_version)
@@ -194,7 +205,7 @@ def provisional_mission_focus(candidates, objects, relations, language_context=N
         requirements = mission.photo_requirements
         if requirements.min_coloured_objects:
             seen = set()
-            for obj in objects:
+            for obj in ordered:
                 label = obj.label.strip().casefold()
                 if label not in seen and scene_attributes(obj):
                     add(obj.id)
@@ -202,9 +213,14 @@ def provisional_mission_focus(candidates, objects, relations, language_context=N
                     if len(seen) >= requirements.min_coloured_objects:
                         break
         if requirements.min_relations:
-            for relation in confirmed_relations(mission, objects, relations)[
-                : requirements.min_relations
-            ]:
+            usable_relations = sorted(
+                confirmed_relations(mission, objects, relations),
+                key=lambda row: (
+                    (labels.get(row.subject_scene_object_id) in practised)
+                    + (labels.get(row.reference_scene_object_id) in practised)
+                ),
+            )
+            for relation in usable_relations[: requirements.min_relations]:
                 add(relation.subject_scene_object_id)
                 add(relation.reference_scene_object_id)
         if requirements.min_counted_groups:
@@ -215,7 +231,7 @@ def provisional_mission_focus(candidates, objects, relations, language_context=N
                     if str(obj.id) in group_ids:
                         add(obj.id)
         distinct = {obj.label.strip().casefold() for obj in objects if obj.id in selected}
-        for obj in objects:
+        for obj in ordered:
             if len(distinct) >= requirements.min_confirmed_objects:
                 break
             label = obj.label.strip().casefold()
@@ -224,9 +240,9 @@ def provisional_mission_focus(candidates, objects, relations, language_context=N
                 distinct.add(label)
 
     # Fill to five noun labels, not five markers. Keep mission-required facts,
-    # then follow analysis usefulness order for additional vocabulary.
+    # then follow analysis usefulness order for additional vocabulary, new words first.
     selected_labels = {obj.label.strip().casefold() for obj in objects if obj.id in selected}
-    for obj in objects:
+    for obj in ordered:
         if len(selected_labels) >= 5:
             break
         label = obj.label.strip().casefold()
