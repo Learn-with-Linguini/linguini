@@ -195,6 +195,10 @@ Use a cream panel with a color-coded left detail and a concise human message: �
 
 Every compact Basil amount or earned-reward message uses the shared light-teal `--basil-surface` pill with dark-green `--basil` text and the dark-green Basil leaf icon. Keep this orientation consistent: the leaf and label are dark while the background is light. Apply the pill treatment on task lists, question progress, answer feedback, and completion states; never show a bare “+n Basil earned” text label beside the interface.
 
+### Mission badge
+
+Use the supplied square badge artwork for each mission, mapped by stable mission ID rather than display copy. Show the artwork in the Chef’s Badges collection beside the mission name and skill. Unearned badges keep the same recognizable image but appear muted and desaturated; the written status and accessible label continue to explain whether the badge is earned and at which level.
+
 ## Key screens
 
 ### Welcome
