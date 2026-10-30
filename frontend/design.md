@@ -189,6 +189,10 @@ An illustrated thumbnail, a strong target-language word, a smaller translation, 
 
 Use a cream panel with a color-coded left detail and a concise human message: “Nice catch—*árbol* means tree.” Include a next action only if it moves the learner forward.
 
+### Basil reward
+
+Every compact Basil amount or earned-reward message uses the shared sage-green pill with dark-teal text and the Basil leaf icon. Apply the same treatment on task lists, question progress, answer feedback, and completion states; never show a bare “+n Basil earned” text label beside the interface.
+
 ## Key screens
 
 ### Welcome

@@ -397,6 +397,7 @@ test("vocabulary feedback keeps the correct word and a locked answer", async () 
   replies.push(() => Response.json({ questionId: "word1", acceptedOptionId: "table", isCorrect: false, correctOptionId: "cup", basilEarned: 5 }));
   await click("table");
   await waitFor(() => assert.match(text(), /\+5 Basil earned/));
+  assert.ok(dom.window.document.querySelector(".question-basil.basil-reward"));
   assert.ok(text().includes(learningFeedback("incorrect", "t1:word1")));
   assert.match(text(), /Incorrect\. The correct answer is cup/);
   assert.equal(button("cup")?.disabled, true);
