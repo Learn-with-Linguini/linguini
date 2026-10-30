@@ -377,6 +377,14 @@ feedback and assistance steps. The polite-frame distractors are labels
 sentences, so a pack lesson offers no alternatives on its scenario card. Request
 constructions recognise regular plurals after a quantity (cafés, Stifte) as counting ones do.
 
+M13 keeps the session noun lexeme and grammatical number while changing its paired
+article/ending as the construction requires (`une banane` → `la banane`, `un vélo` →
+`le vélo`). Synonyms and unintended pluralization are rejected even for model-proposed
+realizations. Translation display phrases are not assumed definite: a phrase outside
+the pack's definite pairs is retained as `session_phrase` context instead. Generation
+and content review explicitly allow the intended article change; prompt and validator
+versions invalidate older cached results. Grammatical and content checks remain active.
+
 M13 (choose the word that goes with the noun) exists at A0. One `noun-word-pair` chunk is
 generated per object (up to three differently named ones): the noun with the word it
 pairs with (la taza, l'assiette, die Tasse, 책이에요). The pack's `pairs.toml` lists the
