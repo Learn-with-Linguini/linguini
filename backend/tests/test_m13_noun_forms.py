@@ -5,9 +5,9 @@ from types import SimpleNamespace
 from uuid import uuid4
 
 import pytest
+from bundled_packs import bundled_pack
 
 from app.language_packs.generation import CandidateSentence, TermUse
-from app.language_packs.loader import load_pack
 from app.language_packs.runtime import session_inputs
 from app.language_packs.validators.noun_phrase import NounPhraseValidator
 
@@ -15,7 +15,7 @@ PACK = Path(__file__).parents[1] / "app/language_packs/packs/fr-FR/everyday"
 
 
 def vocabulary(noun, article, gender):
-    pack = load_pack(PACK)
+    pack = bundled_pack(PACK)
     oid = uuid4()
     obj = SimpleNamespace(id=oid, label="object", attributes={})
     word = SimpleNamespace(id=uuid4())
@@ -74,7 +74,7 @@ def test_definite_translation_retains_its_definite_metadata():
 
 
 def test_indefinite_display_is_not_definite_even_when_article_metadata_is_definite():
-    pack = load_pack(PACK)
+    pack = bundled_pack(PACK)
     oid = uuid4()
     translated = SimpleNamespace(objects=[SimpleNamespace(
         key=str(oid), translation="vélo", article="le", gender="masculine",

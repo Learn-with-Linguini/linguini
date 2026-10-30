@@ -1,6 +1,8 @@
 import shutil
 from pathlib import Path
 
+from bundled_packs import bundled_pack
+
 from app.ai.features.learning_tasks import mission_a0, mission_a2
 from app.language_packs.capabilities import lesson_plan, mission_capability
 from app.language_packs.evaluation import EvaluationRecord, evaluation_identity
@@ -75,12 +77,12 @@ def test_catalog_loads_and_preserves_current_mission_purpose_order():
     }
     for template in catalog.missions:
         key = (template.mission_id, template.practice_level.value)
-        plan = lesson_plan(load_pack(FIXTURE), (*key, template.content_version))
+        plan = lesson_plan(bundled_pack(FIXTURE), (*key, template.content_version))
         assert [slot.purpose for slot in plan.slots] == expected[key]
 
 
 def test_capability_reports_support_but_blocks_unreviewed_fixture_from_release():
-    pack = load_pack(FIXTURE)
+    pack = bundled_pack(FIXTURE)
     capability = mission_capability(
         pack,
         ("M01", "A0", 1),
@@ -143,7 +145,7 @@ def test_release_requires_support_reviewed_material_evidence_and_allowlist(
 
 
 def test_capability_reports_missing_and_outdated_constructions():
-    pack = load_pack(FIXTURE)
+    pack = bundled_pack(FIXTURE)
     missing = pack.model_copy(
         update={
             "constructions": [
@@ -173,7 +175,7 @@ def test_capability_reports_missing_and_outdated_constructions():
 
 def test_plan_slots_keep_targets_labels_bindings_and_stable_ids():
     plan = lesson_plan(
-        load_pack(FIXTURE),
+        bundled_pack(FIXTURE),
         ("M01", "A0", 1),
         {"confirmName-1": {"identity": "object:cup"}},
     )
@@ -184,7 +186,7 @@ def test_plan_slots_keep_targets_labels_bindings_and_stable_ids():
     assert confirm.required_labels == ["yes-answer", "no-answer"]
     assert confirm.bindings == {"identity": "object:cup"}
 
-    a1_plan = lesson_plan(load_pack(FIXTURE), ("M01", "A1", 1))
+    a1_plan = lesson_plan(bundled_pack(FIXTURE), ("M01", "A1", 1))
     assert [slot.slot_id for slot in a1_plan.slots] == [
         "confirmObject-1",
         "confirmObject-2",

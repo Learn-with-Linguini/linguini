@@ -42,6 +42,7 @@ function task(kind: keyof typeof contents, status: SessionTask["status"], orderI
 }
 
 let fixture = detail("inProgress");
+let sessionFetches = 0;
 
 function detail(status: PracticeDetail["session"]["status"], tasks: SessionTask[] = []): PracticeDetail {
   return {
@@ -64,7 +65,10 @@ const apiFixtures: Record<string, unknown> = {
 globals.fetch = async (input: unknown) => {
   const url = typeof input === "string" ? input : (input as Request).url;
   const path = url.replace(/^https?:\/\/[^/]+/, "");
-  if (path === `/api/v1/sessions/${SESSION_ID}`) return Response.json(fixture);
+  if (path === `/api/v1/sessions/${SESSION_ID}`) {
+    sessionFetches += 1;
+    return Response.json(fixture);
+  }
   if (path === "/api/v1/media/asset") {
     return Response.json({ id: "asset", signedUrl: "http://test.local/img.jpg", mimeType: "image/jpeg", width: 100, height: 100 });
   }
@@ -210,6 +214,13 @@ const advance = async (next: PracticeDetail) => {
   fixture = next;
   await act(async () => { await controls.loadSession(SESSION_ID); });
 };
+// Background polling runs every 300ms (1500ms once a task exists); wait in
+// short steps so a test resumes as soon as the next poll lands.
+const waitFor = async (ready: () => boolean, timeoutMs = 5000) => {
+  for (let waited = 0; waited < timeoutMs && !ready(); waited += 50) {
+    await act(async () => { await new Promise(resolve => setTimeout(resolve, 50)); });
+  }
+};
 
 test("back into a stage that is no longer canonical redirects forward", async () => {
   fixture = detail("inProgress", [task("learn", "pending", 0), task("clues", "pending", 1), task("reflection", "pending", 2)]);
@@ -243,17 +254,7 @@ test("a completed session redirects every earlier stage to the summary", async (
   }
 });
 
-test("standing on a page is not re-validated when the session advances", async () => {
-  fixture = detail("inProgress", [task("learn", "pending", 0), task("clues", "pending", 1), task("reflection", "pending", 2)]);
-  await mount(`${BASE}/learn/learn-0`);
-  assert.equal(shown(), "page-learn-task");
-  await advance(detail("inProgress", [task("learn", "completed", 0), task("clues", "pending", 1), task("reflection", "pending", 2)]));
-  assert.equal(shown(), "page-learn-task");
-  await go(`${BASE}/learn`);
-  assert.equal(shown(), "page-ispy-1");
-});
-
-test("finishing the last learning task keeps the task page showing its feedback", async () => {
+test("finishing the last learning task keeps its page until the learner navigates", async () => {
   fixture = detail("inProgress", [task("learn", "pending", 0), task("clues", "pending", 1), task("reflection", "pending", 2)]);
   await mount(`${BASE}/learn/learn-0`);
   assert.equal(shown(), "page-learn-task");
@@ -261,15 +262,22 @@ test("finishing the last learning task keeps the task page showing its feedback"
   // I-Spy, but the learner is reading their result — no auto-forward.
   await advance(detail("inProgress", [task("learn", "completed", 0), task("clues", "pending", 1), task("reflection", "pending", 2)]));
   assert.equal(shown(), "page-learn-task");
+  await go(`${BASE}/learn`);
+  assert.equal(shown(), "page-ispy-1");
 });
 
 test("analysis stays visible during generation and forwards when ready", async () => {
   fixture = detail("awaitingObjectReview");
   await mount(`${BASE}/analysis`);
   assert.equal(shown(), "page-analysis");
-  await advance(detail("generatingTasks"));
+  // Generation keeps polling in the background; don't await the whole loop.
+  fixture = detail("generatingTasks");
+  let generating!: Promise<unknown>;
+  await act(async () => { generating = controls.loadSession(SESSION_ID); });
+  await flush();
   assert.equal(shown(), "page-analysis");
-  await advance(detail("ready"));
+  fixture = detail("ready");
+  await act(async () => { await generating; });
   assert.equal(shown(), "page-mic-test");
 });
 
@@ -282,20 +290,10 @@ test("an early task page returns to review when generation finds nothing checkab
   assert.equal(shown(), "page-analysis");
 });
 
-test("resuming generation forwards to mic check after generation finishes", async () => {
+test("resumed generation shows translations, then forwards to mic check when ready", async () => {
   fixture = detail("generatingTasks");
   await mount(`${BASE}/analysis`);
   assert.notEqual(shown(), "page-mic-test");
-  fixture = detail("ready");
-  for (let i = 0; i < 5 && shown() !== "page-mic-test"; i += 1) {
-    await act(async () => { await new Promise(resolve => setTimeout(resolve, 1000)); });
-  }
-  assert.equal(shown(), "page-mic-test");
-});
-
-test("translations appear during generation before tasks are ready", async () => {
-  fixture = detail("generatingTasks");
-  await mount(`${BASE}/analysis`);
   fixture = { ...detail("generatingTasks"), translationPreview: {
     objects: [
       { key: "object-1", source: "table", translation: "mesa", article: null, gender: null },
@@ -306,17 +304,13 @@ test("translations appear during generation before tasks are ready", async () =>
       { key: "attribute-2", source: "blue", translation: "azul", article: null, gender: null },
     ], relationships: [],
   } };
-  for (let i = 0; i < 5 && !document.body.textContent?.includes("mesa"); i += 1) {
-    await act(async () => { await new Promise(resolve => setTimeout(resolve, 1000)); });
-  }
+  await waitFor(() => Boolean(document.body.textContent?.includes("mesa")));
   assert.match(document.body.textContent ?? "", /mesa/);
   assert.equal(document.querySelectorAll(".translation-preview__term").length, 2);
   assert.match(document.body.textContent ?? "", /Generating tasks/);
   assert.notEqual(shown(), "page-mic-test");
   fixture = detail("ready");
-  for (let i = 0; i < 5 && shown() !== "page-mic-test"; i += 1) {
-    await act(async () => { await new Promise(resolve => setTimeout(resolve, 1000)); });
-  }
+  await waitFor(() => shown() === "page-mic-test");
   assert.equal(shown(), "page-mic-test");
 });
 
@@ -325,6 +319,9 @@ test("task 1 is accessible while generation continues and stays open when ready"
   await mount(`${BASE}/learn/learn-0`);
   assert.equal(shown(), "page-learn-task");
   fixture = detail("inProgress", [task("learn", "inProgress", 0), task("clues", "pending", 1)]);
-  await act(async () => { await new Promise(resolve => setTimeout(resolve, 2000)); });
+  const fetched = sessionFetches;
+  await waitFor(() => sessionFetches > fetched);
+  await flush();
+  assert.ok(sessionFetches > fetched, "the background poll never picked up the ready session");
   assert.equal(shown(), "page-learn-task");
 });

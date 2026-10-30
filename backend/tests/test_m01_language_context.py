@@ -31,7 +31,16 @@ SPANISH = Path(__file__).parents[1] / "app/language_packs/packs/es-ES/everyday"
 
 
 @pytest.fixture
-def pack_dir(runtime, tmp_path, monkeypatch):
+def pack_dir(runtime, monkeypatch):
+    """The bundled Spanish pack as the only root, read-only: its parsed pack stays cached."""
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", str(SPANISH))
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_REGISTER", "everyday")
+    return SPANISH
+
+
+@pytest.fixture
+def pack_copy(runtime, tmp_path, monkeypatch):
+    """A private copy of the Spanish pack for tests that edit pack files."""
     destination = tmp_path / "es-ES" / "everyday"
     shutil.copytree(SPANISH, destination)
     monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", str(destination))
@@ -173,7 +182,7 @@ def test_context_reaches_translation_cards_and_m01_without_reresolution(
     assert context.pack.pack_version != copy.pack_version
 
 
-def test_guidance_and_register_change_translation_cache_identity(pack_dir, runtime, monkeypatch):
+def test_guidance_and_register_change_translation_cache_identity(pack_copy, runtime, monkeypatch):
     provider, cache = MockTranslationProvider(), ResultCache()
     feature = translator(provider, cache)
     scope = CacheScope.user("Spanish-context-test")
@@ -181,7 +190,7 @@ def test_guidance_and_register_change_translation_cache_identity(pack_dir, runti
     for _ in range(2):
         feature.translate(payload(runtime), language_context=context, cache_scope=scope)
     assert len(provider.requests) == 1
-    path = pack_dir / "constructions" / "identify-object.toml"
+    path = pack_copy / "constructions" / "identify-object.toml"
     path.write_text(
         path.read_text("utf-8").replace('summary = "', 'summary = "Revised: ', 1), "utf-8"
     )
@@ -192,8 +201,8 @@ def test_guidance_and_register_change_translation_cache_identity(pack_dir, runti
     # The old operation remains pinned even after files changed.
     feature.translate(payload(runtime), language_context=context, cache_scope=scope)
     assert len(provider.requests) == 2
-    alternate = pack_dir.parent / "formal"
-    shutil.copytree(pack_dir, alternate)
+    alternate = pack_copy.parent / "formal"
+    shutil.copytree(pack_copy, alternate)
     manifest = alternate / "pack.toml"
     manifest.write_text(
         manifest.read_text("utf-8")
@@ -201,7 +210,7 @@ def test_guidance_and_register_change_translation_cache_identity(pack_dir, runti
         .replace('pack_id = "es-es-everyday"', 'pack_id = "es-test-formal"'),
         "utf-8",
     )
-    monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", str(pack_dir.parent))
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_DIRS", str(pack_copy.parent))
     formal = resolve_language_context("es", "formal")
     feature.translate(payload(runtime), language_context=formal, cache_scope=scope)
     assert len(provider.requests) == 3
@@ -240,8 +249,8 @@ def configure_requirements(pack_dir):
     labels.write_text("\n".join(lines) + "\n", "utf-8")
 
 
-def test_native_display_transliteration_and_metadata_survive_saved_task(pack_dir, runtime):
-    configure_requirements(pack_dir)
+def test_native_display_transliteration_and_metadata_survive_saved_task(pack_copy, runtime):
+    configure_requirements(pack_copy)
     context = resolve_language_context("es")
     result = translator(MockTranslationProvider()).translate(
         payload(runtime), language_context=context
@@ -259,8 +268,8 @@ def test_native_display_transliteration_and_metadata_survive_saved_task(pack_dir
 
 
 @pytest.mark.parametrize("missing", ["nativeDisplay", "romanization"])
-def test_required_preparation_fields_fail_before_cards_are_published(pack_dir, runtime, missing):
-    configure_requirements(pack_dir)
+def test_required_preparation_fields_fail_before_cards_are_published(pack_copy, runtime, missing):
+    configure_requirements(pack_copy)
     context = resolve_language_context("es")
     with pytest.raises(SceneTranslationError, match="unusable output"):
         translator(MockTranslationProvider(missing)).translate(
@@ -546,8 +555,8 @@ def test_analysis_snapshot_is_reused_without_discovery(pack_dir, runtime, monkey
         operation_context("lesson", profile, draft["languageContext"])
 
 
-def test_profile_code_casing_preserves_pack_locale(pack_dir, runtime):
-    manifest = pack_dir / "pack.toml"
+def test_profile_code_casing_preserves_pack_locale(pack_copy, runtime):
+    manifest = pack_copy / "pack.toml"
     manifest.write_text(
         manifest.read_text("utf-8").replace('code = "es"', 'code = "es-MX"'),
         "utf-8",
