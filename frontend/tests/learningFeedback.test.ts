@@ -293,12 +293,16 @@ for (const missionId of ["M04", "M05"] as const) {
   test(`${missionId} finishes after correcting an earlier mistake and submits the original grades`, async () => {
     const { task, positive, negative, check } = situationLesson(missionId);
     await mount(task);
+    const progress = () => dom.window.document.querySelector(".trail__label")?.textContent;
+    assert.equal(progress(), "Question 1 of 2");
+    assert.equal(dom.window.document.querySelectorAll(".question-progress .label").length, 0);
     await click(negative);
     replies.push(() => Response.json(check("q1", false)));
     await click("Check answer");
     await waitFor(() => assert.equal(button("Next question")?.disabled, false));
     await click(positive);
     await click("Next question");
+    assert.equal(progress(), "Question 2 of 2");
     await click(positive);
     replies.push(() => Response.json(check("q2", true)));
     await click("Check answer");
