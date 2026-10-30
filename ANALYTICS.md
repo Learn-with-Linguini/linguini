@@ -148,9 +148,10 @@ The existing analysis and review routes show this progress; no new page is added
 | `lesson_marker_selected` | `{ taskId, questionId, marker }` | Learner answers a marker-based lesson question by selecting its numbered marker directly on the photo |
 | `task_completed` | `{ taskId, kind }` | Learner completes reading or informational task |
 | `task_finished_to_list` | `{ taskId, kind }` | Learner finishes the final task and returns to the task list |
-| `task_opened` | `{ taskId }` | User opens a specific learning task from the task list |
+| `task_opened` | `{ taskId }` | User opens a mission from the mission path (tapping its row, or the Start/Continue button) |
+| `mission_path_primary_clicked` | `{ label }` | User presses the mission path's bottom button (`Start`, `Continue`, `Done` or `Play I-Spy`) |
 | `learning_exit_clicked` | — | User exits the learning task overview back to Home |
-| `finish_lesson_clicked` | — | User completes all learning tasks and clicks "Finish lesson" |
+| `finish_lesson_clicked` | — | User completes every mission on the path and presses "Done" |
 | `play_ispy_clicked` | — | User proceeds from learning tasks to play I-Spy |
 | `vocabulary_review_started` | `{ taskId, revisiting }` | User opens the interactive vocabulary review directly from the lesson overview |
 | `vocabulary_flashcard_viewed` | `{ taskId, position, termType, hasSceneObject }` | Learner views a vocabulary teaching card, including whether its object can be highlighted in the scene |
