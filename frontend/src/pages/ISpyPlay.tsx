@@ -55,9 +55,13 @@ export function ISpyPlay() {
     } finally { setStarting(false); }
   };
   return <div className="stack practice-select ispy-photo-picker">
-    <header className="ispy-photo-picker__header"><span className="ispy-photo-picker__icon"><EyeIcon size={28} /></span><div><span>I-Spy with Linguini</span><h1>Choose a photo</h1><p>Linguini will use the scenes you have already explored</p></div></header>
-    {notice ? <p role="alert">{notice}</p> : null}
-    <div className="ispy-photo-picker__tabs"><Tabs options={SOURCES} value={source} onChange={setSource} /></div>
+    <div className="row gap-10-px">
+      <h1>Choose a photo</h1>
+      <div className="ispy-photo-picker__tabs">
+        <Tabs options={SOURCES} value={source} onChange={setSource} />
+      </div>
+    </div>
+    
     {!activeProfile ? <p role="alert">Choose a learning language in Profile to start.</p> : null}
     {starting ? <LoadingScreen label="Setting up your game…" /> : null}
     {error ? <p role="alert">{error}</p> : null}
