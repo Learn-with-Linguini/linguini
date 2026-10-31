@@ -116,10 +116,10 @@ async function setValue(element: HTMLInputElement | HTMLTextAreaElement, value: 
   const setter = Object.getOwnPropertyDescriptor(prototype, "value")!.set!;
   await surface.act(async () => { setter.call(element, value); element.dispatchEvent(new dom.window.Event("input", { bubbles: true })); });
 }
-async function mount(which: "chat" | "list" = "chat") {
+async function mount(which: "chat" | "list" = "chat", staleTime = 0) {
   const container = dom.window.document.createElement("div"); dom.window.document.body.replaceChildren(container);
   const root = surface.createRoot(container);
-  const client = new surface.QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 }, mutations: { gcTime: 0 } } });
+  const client = new surface.QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0, staleTime }, mutations: { gcTime: 0 } } });
   let closed = false;
   const close = async () => { if (closed) return; closed = true; try { await surface.act(async () => root.unmount()); } finally { client.clear(); cleanups.delete(close); } };
   cleanups.add(close);
@@ -199,6 +199,42 @@ test("a compatible invitation is joined only after confirmation and does not req
   const join = writes.find(item => item.path.endsWith("/join"))!;
   assert.equal(join.body.languageProfileId, "profile1"); assert.equal(join.body.inviteToken, "private-invite-token");
   assert.equal("proficiencyLevel" in join.body, false); assert.equal(dom.window.sessionStorage.getItem(friendInviteStorageKey), null);
+});
+
+test("an inviter returning from sharing refreshes a fresh cached invitation without manually reloading", async () => {
+  let hidden = true;
+  Object.defineProperty(dom.window.document, "hidden", { configurable: true, get: () => hidden });
+  Object.defineProperty(dom.window.document, "visibilityState", { configurable: true, get: () => hidden ? "hidden" : "visible" });
+  snapshot = fixture({ status: "waiting", revision: 0, creator: { id: "u1", displayName: "Learner" }, partner: null, inviteStatus: "open", activeRound: null });
+  saveChatDraft(chatDraftKey("u1", "chat1", "invite"), "a".repeat(43));
+  try {
+    await mount("chat", 30_000);
+    await waitFor(() => assert.match(bodyText(), /Share this link with one friend/));
+    const before = reads.filter(path => path === `${apiPrefix}/chat1`).length;
+    snapshot = fixture({ status: "active", revision: 1, creator: { id: "u1", displayName: "Learner" }, activeRound: null });
+    hidden = false;
+    await surface.act(async () => dom.window.dispatchEvent(new dom.window.Event("visibilitychange")));
+    await waitFor(() => assert.ok(buttons("Start an I-Spy")[0]), 4500);
+    assert.doesNotMatch(bodyText(), /Share this link with one friend/);
+    assert.ok(reads.filter(path => path === `${apiPrefix}/chat1`).length > before);
+    assert.equal(writes.length, 0, "joining a friend is observed without a mutation from the inviter");
+  } finally {
+    delete (dom.window.document as unknown as { hidden?: boolean }).hidden;
+    delete (dom.window.document as unknown as { visibilityState?: string }).visibilityState;
+  }
+});
+
+test("polling notices a friend joining while the inviter stays on the invitation screen", async () => {
+  snapshot = fixture({ status: "waiting", revision: 0, creator: { id: "u1", displayName: "Learner" }, partner: null, inviteStatus: "open", activeRound: null });
+  saveChatDraft(chatDraftKey("u1", "chat1", "invite"), "a".repeat(43));
+  await mount("chat", 30_000);
+  await waitFor(() => assert.match(bodyText(), /Share this link with one friend/));
+  const before = reads.filter(path => path === `${apiPrefix}/chat1`).length;
+  snapshot = fixture({ status: "active", revision: 1, creator: { id: "u1", displayName: "Learner" }, activeRound: null });
+  await waitFor(() => assert.ok(buttons("Start an I-Spy")[0]), 4500);
+  assert.doesNotMatch(bodyText(), /Share this link with one friend/);
+  assert.ok(reads.filter(path => path === `${apiPrefix}/chat1`).length > before);
+  assert.equal(writes.length, 0);
 });
 
 test("choosing a detected object previews its identity and requires an explicit confirmation before changing server state", async () => {

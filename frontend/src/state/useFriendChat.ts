@@ -22,8 +22,8 @@ export function useFriendChat(owner: string, profile: string, chatId: string) {
       if (next.meId !== owner) throw new Error("This chat belongs to another account.");
       const previous = client.getQueryData<ChatSnapshot>(key);
       return previous && previous.revision > next.revision ? previous : next;
-    }, refetchInterval: query => busyRef.current || document.hidden || ["left", "blocked"].includes(query.state.data?.status ?? "") ? false : 3_000,
-    refetchIntervalInBackground: false, refetchOnWindowFocus: true, refetchOnReconnect: true });
+    }, refetchInterval: query => busy || ["left", "blocked"].includes(query.state.data?.status ?? "") ? false : 3_000,
+    refetchIntervalInBackground: false, refetchOnWindowFocus: "always", refetchOnReconnect: true });
 
   const refetch = query.refetch;
   useEffect(() => {
