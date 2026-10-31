@@ -131,7 +131,7 @@ def test_review_numbers_follow_detection_then_added_order():
     detected = [{"id": str(TABLE)}, {"id": str(BOOK)}, {"id": str(CUP)}]
     added = [uuid4(), uuid4()]
     assert review_marker_numbers(detected, [TABLE, CUP], added) == {
-        str(TABLE): 1, str(CUP): 3, str(added[0]): 4, str(added[1]): 5,
+        str(TABLE): 1, str(CUP): 2, str(added[0]): 3, str(added[1]): 4,
     }
 
 
@@ -141,15 +141,15 @@ def test_review_numbers_follow_the_visible_suggestion_subset():
     added = [uuid4()]
 
     assert review_marker_numbers(
-        detected, [BOOK, CUP], added, suggested_ids=[BOOK, CUP]
+        detected, [BOOK, CUP], added,
     ) == {str(BOOK): 1, str(CUP): 2, str(added[0]): 3}
 
 
-def test_review_numbers_add_after_the_highest_accepted_marker():
+def test_review_numbers_follow_scene_order_even_if_selection_ids_are_reordered():
     from app.repositories.postgres.workflow import review_marker_numbers
     detected = [{"id": str(TABLE)}, {"id": str(BOOK)}, {"id": str(CUP)}]
     added = [uuid4()]
 
     assert review_marker_numbers(
-        detected, [TABLE, BOOK], added
+        detected, [BOOK, TABLE], added
     ) == {str(TABLE): 1, str(BOOK): 2, str(added[0]): 3}
