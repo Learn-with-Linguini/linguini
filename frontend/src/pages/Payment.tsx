@@ -216,11 +216,11 @@ export function Payment() {
 
               {isPlus ? (
                 <Button variant="secondary" block onClick={handleManage} disabled={loading}>
-                  {loading ? "Opening Portal…" : "Manage Subscription & Invoices"}
+                  {loading ? "Opening Portal" : "Manage Subscription & Invoices"}
                 </Button>
               ) : (
                 <Button variant="primary" block onClick={handleUpgrade} disabled={loading}>
-                  {loading ? "Redirecting to Stripe…" : "Upgrade to Plus"}
+                  {loading ? "Redirecting to Stripe" : "Upgrade to Plus"}
                 </Button>
               )}
             </div>

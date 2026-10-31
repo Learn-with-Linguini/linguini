@@ -173,7 +173,7 @@ async function click(label: string) {
     assert.equal(element.disabled, false, `${label} should be usable`);
     element.dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true }));
   });
-  await waitFor(() => assert.doesNotMatch(text(), /Saving your action…|Creating your room…|Joining your friend…/));
+  await waitFor(() => assert.doesNotMatch(text(), /Saving your action|Creating your room|Joining your friend/));
 }
 async function mount(which: "Room" | "Rooms" = "Room", source = surface) {
   const container = dom.window.document.createElement("div");
@@ -328,7 +328,7 @@ test("refresh restores the retry and reveal phases rather than offering a new cl
   snapshot.members[0].acknowledged = true;
   view = await mount();
   assert.match(text(), /Marker 1: mesa/);
-  assert.equal(button("Waiting for your friend…")?.disabled, true);
+  assert.equal(button("Waiting for your friend")?.disabled, true);
   assert.equal(button("Check my guess"), undefined);
   await view.close();
 });

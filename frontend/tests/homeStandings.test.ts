@@ -128,7 +128,7 @@ test("pending standings never fall back to the weekly XP rank", async () => {
   let resolve!: (response: Response) => void;
   respond = () => new Promise(done => { resolve = done; });
   const view = await mount();
-  assert.equal(homeStanding(view.container), "Loading your standing…");
+  assert.equal(homeStanding(view.container), "Loading your standing");
   assert.equal(view.container.querySelector(".home-league")?.getAttribute("aria-busy"), "true");
   await act(async () => resolve(Response.json(standings(3))));
   await waitFor(() => assert.equal(homeStanding(view.container), "Your current standing: #3"));

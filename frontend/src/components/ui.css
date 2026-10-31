@@ -4736,6 +4736,8 @@ p[role="alert"]::before { content: "!"; }
 .ispy-photo-picker__empty h2, .ispy-photo-picker__empty p { margin: 0; }
 .ispy-photo-picker__empty a { color: var(--teal-dark); font-weight: 800; }
 .ispy-clue-card.card--lifted { background: var(--paper); }
+.learning-title-row h1.ispy-title { font-size: var(--text-h2); }
+.ispy-instruction { margin: 0; font-weight: 600; }
 
 @media (max-width: 520px) {
   .ispy-photo-picker__title-row { gap: var(--space-2); }

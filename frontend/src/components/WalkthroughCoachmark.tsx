@@ -110,7 +110,7 @@ export function WalkthroughCoachmark({
         <div className="walkthrough-coachmark__actions">
           <Button variant="quiet" disabled={saving} onClick={onSkip}>Skip guide</Button>
           {onBack ? <Button variant="secondary" disabled={saving} onClick={onBack}>Back</Button> : null}
-          <Button disabled={saving} onClick={onNext}>{saving ? "Saving…" : nextLabel}</Button>
+          <Button disabled={saving} onClick={onNext}>{saving ? "Saving" : nextLabel}</Button>
         </div>
       </section>
     </>,

@@ -124,7 +124,7 @@ export function SessionSummary() {
       <h1>{completed ? learningFeedback("completed", scene.sessionId!) : "Your session"}</h1>
       <p>{resultMessage}</p>
     </header>
-    {loading ? <LoadingScreen label="Loading your results…" /> : null}
+    {loading ? <LoadingScreen label="Loading your results" /> : null}
     {error || startError ? <p role="alert">{error || startError}</p> : null}
     {completionError ? <><p role="alert">{completionError}</p><Button onClick={retryCompletion}>Retry saving your session</Button></> : null}
     {data ? <>
@@ -145,7 +145,7 @@ export function SessionSummary() {
     <div className="stack-2">
       <Button block variant="secondary" onClick={() => { trackAction("summary_back_home_clicked"); navigate("/home"); }}>Back home</Button>
       {missionSession ? <Button block disabled={startingISpy || !completed} onClick={() => void playISpy()}>
-        {startingISpy ? "Setting up I-Spy..." : "Play I-Spy with this scene"}
+        {startingISpy ? "Setting up I-Spy" : "Play I-Spy with this scene"}
       </Button> : <>
       </>}
       

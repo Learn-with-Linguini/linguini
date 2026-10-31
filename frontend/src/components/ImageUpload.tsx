@@ -79,7 +79,7 @@ function ImageUploadForAccount({ onUploaded, cameraEnabled = true, disabled = fa
       </div>
       {!compact ? <p className="small muted">JPEG, PNG or WebP, up to 10 MB</p> : null}
     </>}
-    {busy ? <InlineLoader label={phase || "Preparing upload…"} /> : null}
+    {busy ? <InlineLoader label={phase || "Preparing upload"} /> : null}
     {error ? <p role="alert">{error}</p> : null}
     {retry ? <Button variant="secondary" disabled={disabled || busy} onClick={() => {
       trackAction("photo_upload_retried", { source: retry.source });

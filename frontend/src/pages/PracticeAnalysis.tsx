@@ -159,7 +159,7 @@ export function PracticeAnalysis() {
           {session.tasks.some(task => task.kind === "vocabularyIntroduction") ? <Button block onClick={() => navigate(`${base}/learn/${session.tasks.find(task => task.kind === "vocabularyIntroduction")!.id}`)}>
             Begin learning <ArrowRightIcon />
           </Button> : <>
-            <h2>Preparing your first task...</h2>
+            <h2>Preparing your first task</h2>
             <p className="muted">Your translations are ready. Your first task will appear here shortly.</p>
           </>}
           {practiceStalled ? <>
@@ -172,7 +172,7 @@ export function PracticeAnalysis() {
     </> : <>
     {practiceStalled ? <section className="analysis-loading" aria-live="polite">
       <SceneProcessingProgress detail={session} stalled />
-      <div className="analysis-loading__copy"><h2>Still working on your scene...</h2><p className="muted">This is taking longer than usual. You can check again.</p>{practiceError ? <p role="alert">{practiceError}</p> : null}<Button onClick={() => retryProcessing(session.session.id)}>Retry</Button></div>
+      <div className="analysis-loading__copy"><h2>Still working on your scene</h2><p className="muted">This is taking longer than usual. You can check again.</p>{practiceError ? <p role="alert">{practiceError}</p> : null}<Button onClick={() => retryProcessing(session.session.id)}>Retry</Button></div>
     </section> : <section className="analysis-loading">
       <SceneProcessingProgress detail={session} />
       <AnalysisScan scene={scene} />
@@ -472,7 +472,7 @@ export function PracticeAnalysis() {
         </div> : null}
         {error || practiceError ? <p role="alert">{error ?? practiceError}</p> : null}
         <Button block className="analysis-continue" disabled={practiceSaving || leavingPhoto || !!placementLabel || (!kept.length && !added.length)} onClick={() => void proceed()}>
-          {practiceSaving ? "Saving your review..." : "Confirm lesson facts"} <ArrowRightIcon />
+          {practiceSaving ? "Saving your review" : "Confirm lesson facts"} <ArrowRightIcon />
         </Button>
       </div>
     </div>

@@ -213,7 +213,7 @@ export function ShareBar({ url, text, label }: ShareBarProps) {
           <li>
             <button type="button" className={`${styles.button} ${styles.pill}`} onClick={onNativeShare}>
               <ShareGlyph />
-              <span>Share…</span>
+              <span>Share</span>
             </button>
           </li>
         ) : null}

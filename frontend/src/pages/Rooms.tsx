@@ -70,7 +70,7 @@ function RoomLobby() {
     </header>
     {!activeProfile ? <p role="alert">Choose your learning language in Profile before joining a room.</p> :
       <p className="rooms-lobby__language small">Playing in <strong>{languageName}</strong>. Your friend needs the same learning and explanation languages.</p>}
-    {active.isPending && activeProfile ? <InlineLoader label="Checking for an open room…" /> : active.error ?
+    {active.isPending && activeProfile ? <InlineLoader label="Checking for an open room" /> : active.error ?
       <div className="stack-2"><p role="alert">We couldn’t check your open room.</p>
         <Button variant="secondary" onClick={() => void active.refetch()}>Try again</Button></div> : active.data ?
       <Card className="stack rooms-lobby__open-room"><span className="rooms-lobby__card-label">Continue playing</span><h2>Your open room</h2><p>{active.data.status === "playing" ? "Your game is underway." : "Your photos and friend are waiting here."}</p>
@@ -83,7 +83,7 @@ function RoomLobby() {
         maxLength={100} disabled={busy || Boolean(pendingKind)} onChange={event => setCode(event.target.value)} placeholder="Paste your friend’s code" /></label>
       <Button variant="secondary" disabled={!activeProfile || !code.trim() || busy || Boolean(pendingKind) || active.isPending || Boolean(active.error)}
         onClick={() => void enter("join")}>Join room</Button></Card> : null}</div>}
-    {busy ? <LoadingScreen label={pendingKind === "join" ? "Joining your friend…" : "Creating your room…"} /> : null}
+    {busy ? <LoadingScreen label={pendingKind === "join" ? "Joining your friend" : "Creating your room"} /> : null}
     {error ? <div className="stack-2"><p role="alert">{error}</p>{pendingKind ?
       <Button variant="secondary" disabled={busy} onClick={() => void enter(pendingKind)}>Retry request</Button> : null}</div> : null}
   </div>;

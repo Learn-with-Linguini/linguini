@@ -68,7 +68,7 @@ export function LeaveSession({ sessionId, warning }: { sessionId: string; warnin
             ) : null}
             <div className="leave-session__actions">
               <Button variant="secondary" block disabled={leaving} onClick={() => void leave()}>
-                {leaving ? "Leaving..." : "Leave and start over"}
+                {leaving ? "Leaving" : "Leave and start over"}
               </Button>
               <Button variant="quiet" block disabled={leaving} onClick={() => setAsking(false)}>
                 Keep practising

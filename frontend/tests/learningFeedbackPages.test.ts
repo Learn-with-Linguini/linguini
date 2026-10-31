@@ -133,7 +133,7 @@ test("lesson preparation keeps its factual task status on the mission path", asy
   const view = await mount(source.Learn, current);
   const status = [...view.container.querySelectorAll('[role="status"]')]
     .find(item => item.textContent?.includes(learningFeedback("preparing", "session")));
-  assert.match(status?.textContent ?? "", /Preparing the remaining tasks\.\.\./);
+  assert.match(status?.textContent ?? "", /Preparing the remaining tasks/);
   assert.match(status?.textContent ?? "", /You can learn and practise your words now\./);
 });
 

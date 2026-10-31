@@ -109,7 +109,7 @@ export function ResetPassword() {
   if (checking) {
     return (
       <div className="stack center-text">
-        <p className="muted">Checking your reset link…</p>
+        <p className="muted">Checking your reset link</p>
       </div>
     );
   }
@@ -174,7 +174,7 @@ export function ResetPassword() {
             </p>
           ) : null}
           <Button type="submit" block disabled={submitting || success}>
-            {submitting ? "Updating password…" : success ? "Password updated" : "Update password"}
+            {submitting ? "Updating password" : success ? "Password updated" : "Update password"}
           </Button>
         </form>
       ) : null}

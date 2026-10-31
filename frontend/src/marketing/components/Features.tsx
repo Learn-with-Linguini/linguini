@@ -59,7 +59,7 @@ function MicCheck() {
           ))}
         </span>
         <span className={styles.heard} role="status">
-          {state === "idle" ? "Tap to test" : state === "listening" ? "Listening…" : state === "ready" ? <><Check size={16} /> Mic ready</> : "Typing is ready instead"}
+          {state === "idle" ? "Tap to test" : state === "listening" ? "Listening" : state === "ready" ? <><Check size={16} /> Mic ready</> : "Typing is ready instead"}
         </span>
       </div>
       <button type="button" className={styles.typeInstead} onClick={typeInstead} aria-pressed={state === "typing"}>

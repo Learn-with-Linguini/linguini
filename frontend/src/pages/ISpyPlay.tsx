@@ -60,10 +60,10 @@ export function ISpyPlay() {
     </div>
 
     {!activeProfile ? <p role="alert">Choose a learning language in Profile to start.</p> : null}
-    {starting ? <LoadingScreen label="Setting up your game…" /> : null}
+    {starting ? <LoadingScreen label="Setting up your game" /> : null}
     {error ? <p role="alert">{error}</p> : null}
     {source === "mine" ? <>
-      {photos.isPending && activeProfile ? <InlineLoader label="Loading your photos…" /> : null}
+      {photos.isPending && activeProfile ? <InlineLoader label="Loading your photos" /> : null}
       {photosError ? <div className="stack-2"><p role="alert">{photosError}</p><Button variant="secondary" onClick={() => void photos.refetch()}>Try again</Button></div> : null}
       {photos.isSuccess && !mine.length ? <Card className="ispy-photo-picker__empty"><h2>Your photos will appear here</h2><p>Use a photo in a lesson first, or choose a ready-made scene.</p><Link to="/practice">Start a photo lesson</Link></Card> : null}
       <div className="grid-2 ispy-photo-grid">
@@ -78,7 +78,7 @@ export function ISpyPlay() {
         </button>)}
       </div>
       {photos.hasNextPage ? <Button variant="secondary" disabled={photos.isFetchingNextPage} onClick={() => void photos.fetchNextPage()}>
-        {photos.isFetchingNextPage ? "Loading more photos..." : "Show more photos"}
+        {photos.isFetchingNextPage ? "Loading more photos" : "Show more photos"}
       </Button> : null}
     </> : <>
       <SceneCatalogStatus />
