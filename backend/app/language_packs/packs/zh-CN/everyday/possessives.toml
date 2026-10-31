@@ -1,0 +1,43 @@
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[possessors]]
+possessor = "first"
+meaning = "my / mine"
+
+[[possessors.forms]]
+text = "我的"
+use = "determiner"
+romanization = "wǒ de"
+
+[[possessors.forms]]
+text = "我的"
+use = "predicate"
+romanization = "wǒ de"
+
+[[possessors]]
+possessor = "second"
+meaning = "your / yours"
+
+[[possessors.forms]]
+text = "你的"
+use = "determiner"
+romanization = "nǐ de"
+
+[[possessors.forms]]
+text = "你的"
+use = "predicate"
+romanization = "nǐ de"
+
+[[cast]]
+owner_id = "ana"
+english_name = "Ana"
+name = "安娜"
+gender = "feminine"
+romanization = "Ānnà"
+
+[[cast]]
+owner_id = "leo"
+english_name = "Leo"
+name = "利奥"
+gender = "masculine"
+romanization = "Lì'ào"

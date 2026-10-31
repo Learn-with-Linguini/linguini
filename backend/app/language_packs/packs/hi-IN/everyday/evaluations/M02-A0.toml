@@ -1,0 +1,108 @@
+mission_id = "M02"
+practice_level = "A0"
+content_version = 1
+
+[[cases]]
+case_id = "m02-a0-find-bag"
+category = "valid"
+construction_id = "find-object"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }, { "fact_id" = "object:cup", "concept" = "cup" }] }
+bindings = { "object" = "object:bag" }
+truth = true
+input = "Tell the learner to find the bag."
+expected_meaning = "Find the bag."
+acceptable = ["बैग ढूँढ़िए."]
+reject = [{ "sentence" = "बैग ढूँढ़िए", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "आम ढूँढ़िए.", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m02-a0-find-punctuation"
+category = "valid"
+construction_id = "find-object"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }] }
+bindings = { "object" = "object:bag" }
+truth = true
+input = "Tell the learner to find the bag."
+expected_meaning = "Find the bag."
+acceptable = ["बैग ढूँढ़िए."]
+reject = [{ "sentence" = "बैग ढूँढ़िए", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "आम ढूँढ़िए.", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m02-a0-find-article"
+category = "valid"
+construction_id = "find-object"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }] }
+bindings = { "object" = "object:bag" }
+truth = true
+input = "Tell the learner to find the bag."
+expected_meaning = "Find the bag."
+acceptable = ["बैग ढूँढ़िए."]
+reject = [{ "sentence" = "बैग ढूँढ़िए", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "आम ढूँढ़िए.", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m02-a0-name-door"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }, { "fact_id" = "object:window", "concept" = "window" }] }
+bindings = { "object" = "object:door" }
+truth = true
+use = "name"
+input = "Name the door."
+expected_meaning = "the door"
+acceptable = ["दरवाज़ा"]
+reject = [{ "sentence" = "दरवाज़ा.", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "आम", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m02-a0-name-punctuation"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }] }
+bindings = { "object" = "object:door" }
+truth = true
+use = "name"
+input = "Name the door."
+expected_meaning = "the door"
+acceptable = ["दरवाज़ा"]
+reject = [{ "sentence" = "दरवाज़ा.", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "आम", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m02-a0-name-article"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }] }
+bindings = { "object" = "object:door" }
+truth = true
+use = "name"
+input = "Name the door."
+expected_meaning = "the door"
+acceptable = ["दरवाज़ा"]
+reject = [{ "sentence" = "दरवाज़ा.", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "आम", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m02-a0-held-find-unicode"
+category = "valid"
+construction_id = "find-object"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:phone", "concept" = "phone" }] }
+bindings = { "object" = "object:phone" }
+truth = true
+input = "Tell the learner to find the phone."
+expected_meaning = "Find the phone."
+acceptable = ["फ़ोन ढूँढ़िए."]
+reject = [{ "sentence" = "फ़ोन ढूँढ़िए", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "आम ढूँढ़िए.", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"

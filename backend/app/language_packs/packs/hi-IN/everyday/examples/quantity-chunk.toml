@@ -1,0 +1,58 @@
+construction_id = "quantity-chunk"
+
+[[examples]]
+example_id = "chunk-two-apples"
+levels = ["A0"]
+purposes = ["matchChunk", "buildChunk"]
+meaning = "two apples"
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:apple", "concept" = "apple" }], "counts" = [{ "fact_id" = "count:book", "object" = "object:book", "quantity" = 5 }, { "fact_id" = "count:cup", "object" = "object:cup", "quantity" = 2 }, { "fact_id" = "count:apple", "object" = "object:apple", "quantity" = 2 }] }
+bindings = { "object" = "object:apple", "count" = "count:apple" }
+truth = true
+labels = []
+sentence = "दो सेब"
+translation = "two apples"
+chunks = [{ "text" = "दो", "join" = "none" }, { "text" = "सेब", "join" = "space" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "chunk-one-apple"
+levels = ["A0"]
+purposes = ["matchChunk"]
+meaning = "one apple"
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:apple", "concept" = "apple" }], "counts" = [{ "fact_id" = "count:book", "object" = "object:book", "quantity" = 5 }, { "fact_id" = "count:cup", "object" = "object:cup", "quantity" = 2 }, { "fact_id" = "count:apple", "object" = "object:apple", "quantity" = 2 }] }
+bindings = { "object" = "object:apple" }
+truth = true
+labels = []
+sentence = "एक सेब"
+translation = "one apple"
+chunks = [{ "text" = "एक", "join" = "none" }, { "text" = "सेब", "join" = "space" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "chunk-two-apples-format"
+levels = ["A0"]
+purposes = ["matchChunk", "buildChunk"]
+sentence = "दो सेब."
+correction = "दो सेब"
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "chunk-one-apple-format"
+levels = ["A0"]
+purposes = ["matchChunk"]
+sentence = "एक सेब."
+correction = "एक सेब"
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "hi-grammar-quantity-chunk"
+levels = ["A0"]
+purposes = ["buildChunk"]
+sentence = "दो किताब"
+correction = "दो किताबें"
+note = "Counted feminine किताब takes its direct plural after two."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

@@ -1,0 +1,93 @@
+mission_id = "M05"
+practice_level = "A1"
+content_version = 1
+
+[[cases]]
+case_id = "m05-a1-ana-dislikes-plate"
+category = "meaning"
+construction_id = "their-preference"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }, { fact_id = "object:bag", concept = "bag" }], preferences = [{ fact_id = "preference:plate", object = "object:plate", person = "ana", likes = false }, { fact_id = "preference:bag", object = "object:bag", person = "leo", likes = true }] }
+bindings = { object = "object:plate", preference = "preference:plate" }
+truth = true
+use = "dislike"
+input = "Say that Ana doesn't like the plate."
+expected_meaning = "Ana doesn't like the plate."
+acceptable = ["அனாவுக்கு தட்டு பிடிக்காது."]
+reject = [{ sentence = "அனாவுக்கு தட்டு பிடிக்கும்.", category = "meaning", reason = "In the role-play Ana doesn't like the plate." }, { sentence = "லியோவுக்கு தட்டு பிடிக்காது.", category = "meaning", reason = "The sentence is about Ana." }]
+provenance = { source = "Held-out M05 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m05-a1-leo-likes-door"
+category = "wrongObject"
+construction_id = "their-preference"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:door", concept = "door" }, { fact_id = "object:bag", concept = "bag" }], preferences = [{ fact_id = "preference:door", object = "object:door", person = "leo", likes = true }] }
+bindings = { object = "object:door", preference = "preference:door" }
+truth = true
+use = "like"
+input = "Say that Leo likes the door."
+expected_meaning = "Leo likes the door."
+acceptable = ["லியோவுக்கு கதவு பிடிக்கும்."]
+reject = [{ sentence = "லியோவுக்கு பை பிடிக்கும்.", category = "wrongObject", reason = "In the role-play Leo likes the door." }]
+provenance = { source = "Held-out M05 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m05-a1-i-like-bag"
+category = "meaning"
+construction_id = "my-preference"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }], preferences = [{ fact_id = "preference:bag", object = "object:bag", person = "first", likes = true }] }
+bindings = { object = "object:bag", preference = "preference:bag" }
+truth = true
+use = "like"
+input = "Say that you like the bag."
+expected_meaning = "I like the bag."
+acceptable = ["எனக்கு பை பிடிக்கும்."]
+reject = [{ sentence = "அனாவுக்கு பை பிடிக்கும்.", category = "meaning", reason = "The sentence is about you, not Ana." }, { sentence = "எனக்கு பை பிடிக்காது.", category = "meaning", reason = "You like the bag." }]
+provenance = { source = "Held-out M05 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m05-a1-ana-key-question"
+category = "punctuation"
+construction_id = "preference-question"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:key", concept = "key" }, { fact_id = "object:door", concept = "door" }], preferences = [{ fact_id = "preference:key", object = "object:key", person = "ana", likes = false }, { fact_id = "preference:door", object = "object:door", person = "leo", likes = true }] }
+bindings = { object = "object:key", preference = "preference:key" }
+truth = true
+use = "question"
+input = "Ask whether Ana likes the key."
+expected_meaning = "Does Ana like the key?"
+acceptable = ["அனாவுக்கு சாவி பிடிக்குமா?"]
+reject = [{ sentence = "அனாவுக்கு சாவி பிடிக்குமா.", category = "punctuation", reason = "The question keeps its question mark." }, { sentence = "லியோவுக்கு சாவி பிடிக்குமா?", category = "meaning", reason = "The question is about Ana." }]
+provenance = { source = "Held-out M05 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m05-a1-ask-plate"
+category = "wrongObject"
+construction_id = "preference-question"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }, { fact_id = "object:door", concept = "door" }] }
+bindings = { object = "object:plate" }
+truth = true
+use = "question"
+input = "Ask whether the listener likes the plate."
+expected_meaning = "Do you like the plate?"
+acceptable = ["உங்களுக்கு தட்டு பிடிக்குமா?"]
+reject = [{ sentence = "உங்களுக்கு கதவு பிடிக்குமா?", category = "wrongObject", reason = "The question is about the plate." }]
+provenance = { source = "Held-out M05 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m05-a1-held-unicode"
+category = "unicode"
+construction_id = "their-preference"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:phone", concept = "phone" }], preferences = [{ fact_id = "preference:phone", object = "object:phone", person = "ana", likes = false }] }
+bindings = { object = "object:phone", preference = "preference:phone" }
+truth = true
+use = "dislike"
+input = "Say that Ana doesn't like the phone."
+expected_meaning = "Ana doesn't like the phone."
+acceptable = ["அனாவுக்கு போன் பிடிக்காது."]
+reject = [{ sentence = "\u0b85\u0ba9\u0bbe\u0bb5\u0bc1\u0b95\u0bcd\u0b95\u0bc1 \u0baa\u0bc7\u0bbe\u0ba9\u0bcd \u0baa\u0bbf\u0b9f\u0bbf\u0b95\u0bcd\u0b95\u0bbe\u0ba4\u0bc1.", category = "unicode", reason = "The rejected candidate contains decomposed characters." }]
+provenance = { source = "Held-out M05 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }

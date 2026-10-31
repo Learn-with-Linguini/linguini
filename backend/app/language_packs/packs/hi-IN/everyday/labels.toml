@@ -1,0 +1,311 @@
+[[labels]]
+semantic = "yes"
+text = "हाँ"
+romanization = "hāṃ"
+meaning = "yes"
+usage = "sentence"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "no"
+text = "नहीं"
+romanization = "nahīṃ"
+meaning = "no"
+usage = "sentence"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "yes-answer"
+text = "हाँ."
+romanization = "hāṃ."
+meaning = "Yes."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "no-answer"
+text = "नहीं."
+romanization = "nahīṃ."
+meaning = "No."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "what-is-this"
+text = "यह क्या है?"
+romanization = "yah kyā hai?"
+meaning = "What is this?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "attribute-prompt-colour"
+text = "इस चीज़ का रंग क्या है?"
+romanization = "is cīz kā raṃg kyā hai?"
+meaning = "What colour is this object?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "describe-object"
+text = "इस चीज़ के बारे में बताइए."
+romanization = "is cīz ke bāre meṃ batāie."
+meaning = "Describe this object."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "touch-object"
+text = "इस वाक्य से मेल खाने वाली चीज़ चुनिए: {f['first']}."
+romanization = "is vākya se mel khāne vālī cīz cunie: {f['first']}."
+meaning = "Tap the object matching this sentence: {f['first']}."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "build-second-fact"
+text = "दूसरा वाक्य बनाइए."
+romanization = "dūsrā vākya banāie."
+meaning = "Build the second sentence."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "choose-description"
+text = "कौन-सा वर्णन तस्वीर से मेल खाता है?"
+romanization = "kaun-sā varṇan tasvīr se mel khātā hai?"
+meaning = "Which description matches the photo?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "describe-scene"
+text = "इन वाक्यों से तस्वीर का वर्णन कीजिए."
+romanization = "in vākyoṃ se tasvīr kā varṇan kījie."
+meaning = "Describe the scene with these sentences."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "connector-distractor"
+text = "लेकिन"
+romanization = "lekin"
+meaning = "but"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "attribute-prompt"
+text = "यह चीज़ कैसी है?"
+romanization = "yah cīz kaisī hai?"
+meaning = "What is this object like?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "attribute-prompt-material"
+text = "यह चीज़ किससे बनी है?"
+romanization = "yah cīz kisse banī hai?"
+meaning = "What material is this object made of?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "vocabulary-unsure"
+text = "मुझे नहीं पता"
+romanization = "mujhe nahīṃ patā"
+meaning = "I don't know"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "vocabulary-other"
+text = "मुझे पक्का नहीं पता"
+romanization = "mujhe pakkā nahīṃ patā"
+meaning = "I'm not sure"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "ask-where"
+text = "पूछिए कि यह कहाँ है."
+romanization = "pūchie ki yah kahāṃ hai."
+meaning = "Ask where it is."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "answer-where"
+text = "तस्वीर में दिख रही जगह के अनुसार जवाब दीजिए."
+romanization = "tasvīr meṃ dikh rahī jagah ke anusār javāb dījie."
+meaning = "Answer with the position the photo shows."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "clue-meaning"
+text = "इसका क्या मतलब है?"
+romanization = "iskā kyā matlab hai?"
+meaning = "What does it mean?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "build-location-clue"
+text = "दूसरा संकेत बनाइए."
+romanization = "dūsrā saṃket banāie."
+meaning = "Build the second clue."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "find-both-clues"
+text = "दोनों संकेतों से मेल खाने वाली चीज़ चुनिए."
+romanization = "donoṃ saṃketoṃ se mel khāne vālī cīz cunie."
+meaning = "Tap the object that matches both clues."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "friend-points"
+text = "आपका दोस्त {marker} नंबर की चीज़ दिखा रहा है. आपका जवाब क्या है?"
+romanization = "āpkā dost {marker} naṃbar kī cīz dikhā rahā hai. āpkā javāb kyā hai?"
+meaning = "Your friend points to number {marker}. What do you say?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "name-and-locate"
+text = "चीज़ का नाम और उसकी जगह बताइए."
+romanization = "cīz kā nām aur uskī jagah batāie."
+meaning = "Say the object's name and where it is."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "answer-in-sentence"
+text = "पूरे वाक्य में जवाब दीजिए."
+romanization = "pūre vākya meṃ javāb dījie."
+meaning = "Answer with a sentence."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "build-group-sentence"
+text = "दिखाए गए समूह के बारे में वाक्य बनाइए."
+romanization = "dikhāe gae samūh ke bāre meṃ vākya banāie."
+meaning = "Build a sentence about the highlighted group."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "choose-comparison"
+text = "सही तुलना चुनिए."
+romanization = "sahī tulnā cunie."
+meaning = "Choose the correct comparison."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "friend-says"
+text = "आपका दोस्त कहता है: “{statement}” आपका जवाब क्या है?"
+romanization = "āpkā dost kahtā hai: “{statement}” āpkā javāb kyā hai?"
+meaning = "Your friend says: “{statement}” What do you answer?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "friend-is-right"
+text = "हाँ, आपके दोस्त की बात सही है."
+romanization = "hāṃ, āpke dost kī bāt sahī hai."
+meaning = "Yes, your friend is right."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "describe-compare"
+text = "दोनों समूहों का वर्णन कीजिए और उनकी तुलना कीजिए."
+romanization = "donoṃ samūhoṃ kā varṇan kījie aur unkī tulnā kījie."
+meaning = "Describe and compare the two groups."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "more"
+text = "ज़्यादा"
+romanization = "zyādā"
+meaning = "more"
+usage = "sentence"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "fewer"
+text = "कम"
+romanization = "kam"
+meaning = "fewer"
+usage = "sentence"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "choose-sentence"
+text = "सही वाक्य चुनिए."
+romanization = "sahī vākya cunie."
+meaning = "Choose the correct sentence."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "which-is-yours"
+text = "कौन-सी चीज़ आपकी है?"
+romanization = "kaun-sī cīz āpkī hai?"
+meaning = "Which object is yours?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "choose-possessive"
+text = "आपका जवाब क्या है?"
+romanization = "āpkā javāb kyā hai?"
+meaning = "You say:"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "describe-your-object"
+text = "अपनी चीज़ का वर्णन कीजिए."
+romanization = "apnī cīz kā varṇan kījie."
+meaning = "Describe your object."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "clarify-and-describe"
+text = "बताइए कि कौन-सी चीज़ आपकी है और उसका वर्णन कीजिए."
+romanization = "batāie ki kaun-sī cīz āpkī hai aur uskā varṇan kījie."
+meaning = "Say which object is yours and describe it."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "what-choose"
+text = "आपकी पसंद क्या है?"
+romanization = "āpkī pasaṃd kyā hai?"
+meaning = "What do you choose?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "request-distractor-have"
+text = "मेरे पास है"
+meaning = "I have"
+usage = "prompt"
+romanization = "mere pās hai"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "request-distractor-exists"
+text = "यहाँ है"
+meaning = "there is / it is here"
+usage = "prompt"
+romanization = "yahāṃ hai"
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

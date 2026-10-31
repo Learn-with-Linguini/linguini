@@ -1,0 +1,23 @@
+construction_id = "polite-request"
+version = 1
+summary = "Politely order, borrow or ask someone to pass an item."
+guidance = "Order with the object-marked item phrase + ください. e.g. 小さい サイズの コーヒーを 二 杯 ください. Borrow with Nを NUMBER COUNTER 貸してください.; pass with Nを NUMBER COUNTER 取ってください. The reusable item phrase has Nを NUMBER COUNTER, keeping the accusative before the count: コーヒーを 二 杯 ください. Keep the exact same item phrase as order-phrase for the gap interaction. Do not substitute an existence statement or です. One pen is ペン 一 本 (ippon); one coffee is コーヒー 一 杯 (ippai). Use the pack display convention consistently: one ASCII space between phrase units; keep particles/copulas attached to their word (コップは, 本です), separate number and counter (五 冊), and use ASCII . ? , in sentence tasks. This is learning-display spacing, not ordinary Japanese orthography. Supply aligned native/Latin spans; Hepburn uses wa for は, e for へ, o for を, and macrons for long vowels. "
+features = ["polite-japanese", "learner-spacing", "polite-request"]
+constraints = [
+  "Preserve every planned semantic binding and truth value.",
+  "Use only confirmed or explicitly assigned scene/role-play facts.",
+  "Romanization supports native text; it is not an alternative grading answer.",
+]
+required_labels = []
+roles = { "object" = "noun", "quantity" = "determiner", "size" = "phrase" }
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete tasks end with ASCII sentence punctuation."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "request-frame"
+message = "The request must be a polite action/request."
+must_contain = ["(ください|お願いします)[.]$"]

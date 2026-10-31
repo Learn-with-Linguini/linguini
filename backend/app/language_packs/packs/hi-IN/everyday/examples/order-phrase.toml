@@ -1,0 +1,73 @@
+construction_id = "order-phrase"
+
+[[examples]]
+example_id = "two-small-coffees"
+levels = ["A2"]
+purposes = ["politeChunkGap"]
+meaning = "two small coffees"
+scene = { "objects" = [{ "fact_id" = "object:coffee", "concept" = "coffee" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:coffee", "field" = "quantity", "value" = "2" }, { "fact_id" = "request:size", "object" = "object:coffee", "field" = "size", "value" = "small" }, { "fact_id" = "request:serviceSetting", "object" = "object:coffee", "field" = "serviceSetting", "value" = "takeAway" }] }
+bindings = { "object" = "object:coffee", "quantity" = "request:quantity", "size" = "request:size" }
+truth = true
+labels = []
+sentence = "दो छोटी कॉफ़ी"
+translation = "two small coffees"
+chunks = [{ "text" = "दो", "join" = "none" }, { "text" = "छोटी", "join" = "space" }, { "text" = "कॉफ़ी", "join" = "space" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "a-pen"
+levels = ["A2"]
+purposes = ["politeChunkGap"]
+meaning = "a pen"
+scene = { "objects" = [{ "fact_id" = "object:pen", "concept" = "pen" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:pen", "field" = "quantity", "value" = "1" }, { "fact_id" = "request:colour", "object" = "object:pen", "field" = "colour", "value" = "blue" }] }
+bindings = { "object" = "object:pen", "quantity" = "request:quantity" }
+truth = true
+labels = []
+sentence = "एक कलम"
+translation = "a pen"
+chunks = [{ "text" = "एक", "join" = "none" }, { "text" = "कलम", "join" = "space" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "three-small-coffees-wrong"
+levels = ["A2"]
+purposes = ["buildRequest"]
+meaning = "three small coffees (a wrong quantity tile)"
+scene = { "objects" = [{ "fact_id" = "object:coffee", "concept" = "coffee" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:coffee", "field" = "quantity", "value" = "2" }, { "fact_id" = "request:size", "object" = "object:coffee", "field" = "size", "value" = "small" }, { "fact_id" = "request:serviceSetting", "object" = "object:coffee", "field" = "serviceSetting", "value" = "takeAway" }] }
+bindings = { "object" = "object:coffee", "size" = "request:size", "quantity" = "number:3" }
+truth = false
+labels = []
+sentence = "तीन छोटी कॉफ़ी"
+translation = "three small coffees"
+chunks = [{ "text" = "तीन", "join" = "none" }, { "text" = "छोटी", "join" = "space" }, { "text" = "कॉफ़ी", "join" = "space" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "two-small-coffees-format"
+levels = ["A2"]
+purposes = ["politeChunkGap"]
+sentence = "दो छोटी कॉफ़ी."
+correction = "दो छोटी कॉफ़ी"
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "a-pen-format"
+levels = ["A2"]
+purposes = ["politeChunkGap"]
+sentence = "एक कलम."
+correction = "एक कलम"
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "three-small-coffees-wrong-format"
+levels = ["A2"]
+purposes = ["buildRequest"]
+sentence = "तीन छोटी कॉफ़ी."
+correction = "तीन छोटी कॉफ़ी"
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

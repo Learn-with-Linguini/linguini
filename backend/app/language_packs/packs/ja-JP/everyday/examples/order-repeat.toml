@@ -1,0 +1,49 @@
+construction_id = "order-repeat"
+
+[[examples]]
+example_id = "repeat-two-small-coffees"
+levels = ["A2"]
+purposes = ["confirmOrRepair"]
+meaning = "So, two small coffees, to take away, right?"
+scene = { "objects" = [{ "fact_id" = "object:coffee", "concept" = "coffee" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:coffee", "field" = "quantity", "value" = "2" }, { "fact_id" = "request:size", "object" = "object:coffee", "field" = "size", "value" = "small" }, { "fact_id" = "request:serviceSetting", "object" = "object:coffee", "field" = "serviceSetting", "value" = "takeAway" }] }
+bindings = { "object" = "object:coffee", "quantity" = "request:quantity", "size" = "request:size", "detail" = "request:serviceSetting" }
+truth = true
+labels = []
+sentence = "小さい サイズの コーヒー 二 杯で, 持ち帰りですね?"
+translation = "So, two small coffees, to take away, right?"
+chunks = [{ "text" = "小さい", "join" = "none" }, { "text" = "サイズの", "join" = "space" }, { "text" = "コーヒー", "join" = "space" }, { "text" = "二", "join" = "space" }, { "text" = "杯で", "join" = "space" }, { "text" = ",", "join" = "none" }, { "text" = "持ち帰りですね", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "repeat-three-coffees-wrong"
+levels = ["A2"]
+purposes = ["confirmOrRepair"]
+meaning = "So, three small coffees, to take away, right? (the server's mistake)"
+scene = { "objects" = [{ "fact_id" = "object:coffee", "concept" = "coffee" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:coffee", "field" = "quantity", "value" = "2" }, { "fact_id" = "request:size", "object" = "object:coffee", "field" = "size", "value" = "small" }, { "fact_id" = "request:serviceSetting", "object" = "object:coffee", "field" = "serviceSetting", "value" = "takeAway" }] }
+bindings = { "object" = "object:coffee", "size" = "request:size", "detail" = "request:serviceSetting", "quantity" = "number:3" }
+truth = false
+labels = []
+sentence = "小さい サイズの コーヒー 三 杯で, 持ち帰りですね?"
+translation = "So, three small coffees, to take away, right?"
+chunks = [{ "text" = "小さい", "join" = "none" }, { "text" = "サイズの", "join" = "space" }, { "text" = "コーヒー", "join" = "space" }, { "text" = "三", "join" = "space" }, { "text" = "杯で", "join" = "space" }, { "text" = ",", "join" = "none" }, { "text" = "持ち帰りですね", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "repeat-two-small-coffees-form"
+levels = ["A2"]
+purposes = ["confirmOrRepair"]
+sentence = "小さい サイズの コーヒー 二 杯で, 持ち帰りですね."
+correction = "小さい サイズの コーヒー 二 杯で, 持ち帰りですね?"
+note = "This task asks a question. Keep the interrogative frame and question mark."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "repeat-three-coffees-wrong-form"
+levels = ["A2"]
+purposes = ["confirmOrRepair"]
+sentence = "小さい サイズの コーヒー 三 杯で, 持ち帰りですね."
+correction = "小さい サイズの コーヒー 三 杯で, 持ち帰りですね?"
+note = "This task asks a question. Keep the interrogative frame and question mark."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }

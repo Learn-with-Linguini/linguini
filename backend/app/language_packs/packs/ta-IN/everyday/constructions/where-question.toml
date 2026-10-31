@@ -1,0 +1,24 @@
+construction_id = "where-question"
+version = 1
+summary = "Ask where an object is."
+guidance = "Ask where the object is: noun + எங்கே இருக்கு? (கோப்பை எங்கே இருக்கு?). Use the spoken form இருக்கு."
+features = ["where-question"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { subject = "noun" }
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "question-mark"
+message = "Questions end with ?."
+must_contain = ["\\?$"]
+
+[[checks]]
+check_id = "where-frame"
+message = "Ask with the taught where-question."
+must_contain = ["எங்கே", "\\?$"]
+
+[[checks]]
+check_id = "spoken-register"
+message = "Use the pack's spoken forms (இருக்கு), not formal இருக்கிறது."
+must_not_contain = ["இருக்கிறது|இருக்கின்றது"]

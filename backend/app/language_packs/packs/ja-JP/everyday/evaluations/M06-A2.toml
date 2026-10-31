@@ -1,0 +1,198 @@
+mission_id = "M06"
+practice_level = "A2"
+content_version = 1
+
+[[cases]]
+case_id = "m06-a2-order-two-large-teas"
+category = "valid"
+construction_id = "polite-request"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:tea", "concept" = "tea" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:tea", "field" = "quantity", "value" = "2" }, { "fact_id" = "request:size", "object" = "object:tea", "field" = "size", "value" = "large" }, { "fact_id" = "request:temperature", "object" = "object:tea", "field" = "temperature", "value" = "hot" }] }
+bindings = { "object" = "object:tea", "quantity" = "request:quantity", "size" = "request:size" }
+truth = true
+use = "order"
+input = "Order two large teas politely."
+expected_meaning = "I would like two large teas, please."
+acceptable = ["大きい サイズの お茶を 二 杯 ください."]
+reject = [{ "sentence" = "大きい サイズの お茶を 二 杯 ください", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m06-a2-held-buy-three-apples"
+category = "valid"
+construction_id = "polite-request"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:apple", "concept" = "apple" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:apple", "field" = "quantity", "value" = "3" }, { "fact_id" = "request:size", "object" = "object:apple", "field" = "size", "value" = "large" }] }
+bindings = { "object" = "object:apple", "quantity" = "request:quantity" }
+truth = true
+use = "order"
+input = "Ask to buy three apples."
+expected_meaning = "I would like three apples, please."
+acceptable = ["りんごを 三 個 ください."]
+reject = [{ "sentence" = "りんごを 三 個 ください", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m06-a2-borrow-a-book"
+category = "valid"
+construction_id = "polite-request"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:book", "field" = "quantity", "value" = "1" }, { "fact_id" = "request:colour", "object" = "object:book", "field" = "colour", "value" = "black" }] }
+bindings = { "object" = "object:book", "quantity" = "request:quantity" }
+truth = true
+use = "borrow"
+input = "Ask a classmate to lend you a book."
+expected_meaning = "Can you lend me a book, please?"
+acceptable = ["本を 一 冊 貸してください."]
+reject = [{ "sentence" = "本を 一 冊 貸してください", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m06-a2-held-pass-a-plate"
+category = "valid"
+construction_id = "polite-request"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:plate", "field" = "quantity", "value" = "1" }, { "fact_id" = "request:colour", "object" = "object:plate", "field" = "colour", "value" = "red" }] }
+bindings = { "object" = "object:plate", "quantity" = "request:quantity" }
+truth = true
+use = "pass"
+input = "Ask someone at home to pass you a plate."
+expected_meaning = "Can you pass me a plate, please?"
+acceptable = ["皿を 一 枚 取ってください."]
+reject = [{ "sentence" = "皿を 一 枚 取ってください", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m06-a2-order-phrase-two-large-teas"
+category = "valid"
+construction_id = "order-phrase"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:tea", "concept" = "tea" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:tea", "field" = "quantity", "value" = "2" }, { "fact_id" = "request:size", "object" = "object:tea", "field" = "size", "value" = "large" }, { "fact_id" = "request:temperature", "object" = "object:tea", "field" = "temperature", "value" = "hot" }] }
+bindings = { "object" = "object:tea", "quantity" = "request:quantity", "size" = "request:size" }
+truth = true
+use = "request"
+input = "Write the order phrase for two large teas."
+expected_meaning = "two large teas"
+acceptable = ["大きい サイズの お茶を 二 杯"]
+reject = [{ "sentence" = "大きい サイズの お茶を 二 杯.", "reason" = "A chunk has no final sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m06-a2-ask-hot-or-cold"
+category = "valid"
+construction_id = "detail-question"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:tea", "concept" = "tea" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:tea", "field" = "quantity", "value" = "2" }, { "fact_id" = "request:size", "object" = "object:tea", "field" = "size", "value" = "large" }, { "fact_id" = "request:temperature", "object" = "object:tea", "field" = "temperature", "value" = "hot" }] }
+bindings = { "target" = "object:tea" }
+truth = true
+use = "askTemperature"
+input = "Ask whether the tea is hot or cold."
+expected_meaning = "Hot or cold?"
+acceptable = ["温かいのですか, 冷たいのですか?"]
+reject = [{ "sentence" = "温かいのですか, 冷たいのですか", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m06-a2-reply-hot"
+category = "valid"
+construction_id = "detail-reply"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:tea", "concept" = "tea" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:tea", "field" = "quantity", "value" = "2" }, { "fact_id" = "request:size", "object" = "object:tea", "field" = "size", "value" = "large" }, { "fact_id" = "request:temperature", "object" = "object:tea", "field" = "temperature", "value" = "hot" }] }
+bindings = { "target" = "object:tea", "detail" = "request:temperature" }
+truth = true
+use = "reply"
+input = "Reply that you want the teas hot."
+expected_meaning = "Hot, please."
+acceptable = ["温かいので お願いします."]
+reject = [{ "sentence" = "温かいので お願いします", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m06-a2-held-reply-eat-in"
+category = "valid"
+construction_id = "detail-reply"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:tea", "concept" = "tea" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:tea", "field" = "quantity", "value" = "3" }, { "fact_id" = "request:size", "object" = "object:tea", "field" = "size", "value" = "small" }, { "fact_id" = "request:serviceSetting", "object" = "object:tea", "field" = "serviceSetting", "value" = "eatIn" }] }
+bindings = { "target" = "object:tea", "detail" = "request:serviceSetting" }
+truth = true
+use = "reply"
+input = "Reply that you will have the teas here."
+expected_meaning = "To have here, please."
+acceptable = ["店内で お願いします."]
+reject = [{ "sentence" = "店内で お願いします", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m06-a2-repeat-three-large-apples"
+category = "valid"
+construction_id = "order-repeat"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:apple", "concept" = "apple" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:apple", "field" = "quantity", "value" = "3" }, { "fact_id" = "request:size", "object" = "object:apple", "field" = "size", "value" = "large" }] }
+bindings = { "object" = "object:apple", "quantity" = "request:quantity", "detail" = "request:size" }
+truth = true
+use = "repeat"
+input = "Repeat the order of three large apples to check it."
+expected_meaning = "So, three apples, large ones, right?"
+acceptable = ["りんご 三 個で, 大きいのですね?"]
+reject = [{ "sentence" = "りんご 三 個で, 大きいのですね", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m06-a2-held-repeat-wrong-size"
+category = "valid"
+construction_id = "order-repeat"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:tea", "concept" = "tea" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:tea", "field" = "quantity", "value" = "2" }, { "fact_id" = "request:size", "object" = "object:tea", "field" = "size", "value" = "large" }, { "fact_id" = "request:temperature", "object" = "object:tea", "field" = "temperature", "value" = "hot" }] }
+bindings = { "object" = "object:tea", "quantity" = "request:quantity", "detail" = "request:temperature", "size" = "detail:size:small" }
+truth = false
+use = "repeat"
+input = "Repeat the tea order with the wrong size, as the server's mistake."
+expected_meaning = "So, two small teas, hot, right? (wrong size)"
+acceptable = ["小さい サイズの お茶 二 杯で, 温かいのですね?"]
+reject = [{ "sentence" = "小さい サイズの お茶 二 杯で, 温かいのですね", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m06-a2-confirm"
+category = "valid"
+construction_id = "order-confirmation"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:tea", "concept" = "tea" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:tea", "field" = "quantity", "value" = "2" }, { "fact_id" = "request:size", "object" = "object:tea", "field" = "size", "value" = "large" }, { "fact_id" = "request:temperature", "object" = "object:tea", "field" = "temperature", "value" = "hot" }] }
+bindings = {  }
+truth = true
+use = "confirm"
+input = "Confirm that the server repeated your order correctly."
+expected_meaning = "Yes, that's right."
+acceptable = ["はい, その 内容で お願いします."]
+reject = [{ "sentence" = "はい, その 内容で お願いします", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m06-a2-repair-two"
+category = "valid"
+construction_id = "order-repair"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:tea", "concept" = "tea" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:tea", "field" = "quantity", "value" = "2" }, { "fact_id" = "request:size", "object" = "object:tea", "field" = "size", "value" = "large" }, { "fact_id" = "request:temperature", "object" = "object:tea", "field" = "temperature", "value" = "hot" }] }
+bindings = { "target" = "object:tea", "quantity" = "request:quantity" }
+truth = true
+use = "repair"
+input = "Correct the server: you ordered two."
+expected_meaning = "Actually, two, please."
+acceptable = ["いいえ, 二 杯で お願いします."]
+reject = [{ "sentence" = "いいえ, 二 杯で お願いします", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m06-a2-held-repair-eat-in"
+category = "valid"
+construction_id = "order-repair"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:tea", "concept" = "tea" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:tea", "field" = "quantity", "value" = "3" }, { "fact_id" = "request:size", "object" = "object:tea", "field" = "size", "value" = "small" }, { "fact_id" = "request:serviceSetting", "object" = "object:tea", "field" = "serviceSetting", "value" = "eatIn" }] }
+bindings = { "target" = "object:tea", "detail" = "request:serviceSetting" }
+truth = true
+use = "repair"
+input = "Correct the server: you will have it here."
+expected_meaning = "Actually, to have here, please."
+acceptable = ["いいえ, 店内で お願いします."]
+reject = [{ "sentence" = "いいえ, 店内で お願いします", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }

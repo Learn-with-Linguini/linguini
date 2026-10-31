@@ -1,0 +1,78 @@
+mission_id = "M04"
+practice_level = "A1"
+content_version = 1
+
+[[cases]]
+case_id = "m04-a1-my-plate"
+category = "valid"
+construction_id = "possessive-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }], "owners" = [{ "fact_id" = "owner:plate", "object" = "object:plate", "owner" = "first" }] }
+bindings = { "object" = "object:plate", "owner" = "owner:plate" }
+truth = true
+input = "Say it is your plate."
+expected_meaning = "It's my plate."
+acceptable = ["这是 我的 盘子."]
+reject = [{ "sentence" = "这是 我的 盘子", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "这是 我的 香蕉.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m04-a1-anas-bag"
+category = "valid"
+construction_id = "possessive-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }], "owners" = [{ "fact_id" = "owner:bag", "object" = "object:bag", "owner" = "ana" }] }
+bindings = { "object" = "object:bag", "owner" = "owner:bag" }
+truth = true
+input = "Say it is Ana's bag."
+expected_meaning = "It's her bag."
+acceptable = ["这是 安娜 的 包."]
+reject = [{ "sentence" = "这是 安娜 的 包", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "这是 安娜 的 香蕉.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m04-a1-leos-door"
+category = "valid"
+construction_id = "possessive-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }, { "fact_id" = "object:bag", "concept" = "bag" }, { "fact_id" = "object:key", "concept" = "key" }], "owners" = [{ "fact_id" = "owner:door", "object" = "object:door", "owner" = "leo" }] }
+bindings = { "object" = "object:door", "owner" = "owner:door" }
+truth = true
+input = "Say it is Leo's door."
+expected_meaning = "It's his door."
+acceptable = ["这是 利奥 的 门."]
+reject = [{ "sentence" = "这是 利奥 的 门", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "这是 利奥 的 香蕉.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m04-a1-whose-book"
+category = "valid"
+construction_id = "whose-question"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }] }
+bindings = { "object" = "object:book" }
+truth = true
+input = "Ask whose the book is."
+expected_meaning = "Whose is the book?"
+acceptable = ["书 是 谁 的?"]
+reject = [{ "sentence" = "书 是 谁 的", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "question"
+
+[[cases]]
+case_id = "m04-a1-held-unicode"
+category = "valid"
+construction_id = "possessive-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:phone", "concept" = "phone" }], "owners" = [{ "fact_id" = "owner:phone", "object" = "object:phone", "owner" = "first" }] }
+bindings = { "object" = "object:phone", "owner" = "owner:phone" }
+truth = true
+input = "Say it is your phone."
+expected_meaning = "It's my phone."
+acceptable = ["这是 我的 电话机."]
+reject = [{ "sentence" = "这是 我的 电话机", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "这是 我的 香蕉.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import re
+import time
 import tomllib
 from collections.abc import Sequence
 from dataclasses import dataclass
@@ -14,7 +15,7 @@ from unicodedata import normalize
 
 from pydantic import ValidationError
 
-from app.config import get_language_pack_dirs
+from app.config import BUNDLED_LANGUAGE_PACKS, get_language_pack_dirs
 from app.missions import get_mission
 
 from .schema import (
@@ -694,14 +695,32 @@ def load_packs(roots: Sequence[Path] | None = None) -> PackSet:
                 continue
             expanded.append(str(Path(match).resolve()))
     resolved = tuple(dict.fromkeys(expanded))
-    revision = tuple(entry for root in resolved for entry in _toml_revision(root))
+    revision = tuple(entry for root in resolved for entry in _root_revision(root))
     return _load_packs_for_roots(resolved, revision)
+
+
+# Seconds a scan of the bundled packs stays current. They change only when someone edits
+# them in a checkout, yet every context lookup reaches here, and the scan grows with each
+# bundled language. Configured roots are still rescanned on every lookup.
+BUNDLED_REVISION_SECONDS = 1.0
+_bundled_revision: tuple[float, list[tuple[str, int, int]]] | None = None
+
+
+def _root_revision(root: str) -> list[tuple[str, int, int]]:
+    global _bundled_revision
+    if root != str(BUNDLED_LANGUAGE_PACKS.resolve()):
+        return _toml_revision(root)
+    now = time.monotonic()
+    cached = _bundled_revision
+    if cached is None or now - cached[0] >= BUNDLED_REVISION_SECONDS:
+        cached = _bundled_revision = (now, _toml_revision(root))
+    return cached[1]
 
 
 def _toml_revision(root: str) -> list[tuple[str, int, int]]:
     """Path, mtime and size of every TOML file under ``root``, so edits reload the packs.
 
-    Runs on every context lookup; ``os.scandir`` reuses directory-listing metadata
+    Runs on most context lookups; ``os.scandir`` reuses directory-listing metadata
     instead of a separate ``stat`` per file, which ``Path.rglob`` would need.
     """
     found = []

@@ -1,0 +1,14 @@
+construction_id = "owned-description"
+version = 1
+summary = "Describe my object with a possessive and one confirmed detail."
+guidance = "Start with என்னோட + noun, then the detail + ஆ or the location + இருக்கு.: என்னோட கோப்பை சிவப்பா இருக்கு. என்னோட கோப்பை மேசை மேல இருக்கு."
+features = ["ownership", "possessive-determiner"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun", owner = "determiner", attribute = "adjective", relation = "preposition", reference = "noun" }
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "description-frame"
+message = "End with இருக்கு."
+must_contain = ["இருக்கு\\.$"]

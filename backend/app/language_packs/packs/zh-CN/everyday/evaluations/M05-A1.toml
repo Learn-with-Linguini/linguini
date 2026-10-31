@@ -1,0 +1,93 @@
+mission_id = "M05"
+practice_level = "A1"
+content_version = 1
+
+[[cases]]
+case_id = "m05-a1-ana-dislikes-plate"
+category = "valid"
+construction_id = "their-preference"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }, { "fact_id" = "object:bag", "concept" = "bag" }], "preferences" = [{ "fact_id" = "preference:plate", "object" = "object:plate", "person" = "ana", "likes" = false }, { "fact_id" = "preference:bag", "object" = "object:bag", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:plate", "preference" = "preference:plate" }
+truth = true
+use = "dislike"
+input = "Say that Ana doesn't like the plate."
+expected_meaning = "Ana doesn't like the plate."
+acceptable = ["安娜 不 喜欢 盘子."]
+reject = [{ "sentence" = "安娜 不 喜欢 盘子", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "安娜 不 喜欢 香蕉.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }, { "sentence" = "安娜 喜欢 盘子.", "reason" = "Reverses the bound preference polarity.", "category" = "meaning" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m05-a1-leo-likes-door"
+category = "valid"
+construction_id = "their-preference"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }, { "fact_id" = "object:bag", "concept" = "bag" }], "preferences" = [{ "fact_id" = "preference:door", "object" = "object:door", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:door", "preference" = "preference:door" }
+truth = true
+use = "like"
+input = "Say that Leo likes the door."
+expected_meaning = "Leo likes the door."
+acceptable = ["利奥 喜欢 门."]
+reject = [{ "sentence" = "利奥 喜欢 门", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "利奥 喜欢 香蕉.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }, { "sentence" = "利奥 不 喜欢 门.", "reason" = "Reverses the bound preference polarity.", "category" = "meaning" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m05-a1-i-like-bag"
+category = "valid"
+construction_id = "my-preference"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }], "preferences" = [{ "fact_id" = "preference:bag", "object" = "object:bag", "person" = "first", "likes" = true }] }
+bindings = { "object" = "object:bag", "preference" = "preference:bag" }
+truth = true
+use = "like"
+input = "Say that you like the bag."
+expected_meaning = "I like the bag."
+acceptable = ["我 喜欢 包."]
+reject = [{ "sentence" = "我 喜欢 包", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "我 喜欢 香蕉.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }, { "sentence" = "我 不 喜欢 包.", "reason" = "Reverses the bound preference polarity.", "category" = "meaning" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m05-a1-ana-key-question"
+category = "valid"
+construction_id = "preference-question"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:key", "concept" = "key" }, { "fact_id" = "object:door", "concept" = "door" }], "preferences" = [{ "fact_id" = "preference:key", "object" = "object:key", "person" = "ana", "likes" = false }, { "fact_id" = "preference:door", "object" = "object:door", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:key", "preference" = "preference:key" }
+truth = true
+use = "question"
+input = "Ask whether Ana likes the key."
+expected_meaning = "Does Ana like the key?"
+acceptable = ["安娜 喜欢 钥匙 吗?"]
+reject = [{ "sentence" = "安娜 喜欢 钥匙 吗", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m05-a1-ask-plate"
+category = "valid"
+construction_id = "preference-question"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }, { "fact_id" = "object:door", "concept" = "door" }] }
+bindings = { "object" = "object:plate" }
+truth = true
+use = "question"
+input = "Ask whether the listener likes the plate."
+expected_meaning = "Do you like the plate?"
+acceptable = ["你 喜欢 盘子 吗?"]
+reject = [{ "sentence" = "你 喜欢 盘子 吗", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m05-a1-held-unicode"
+category = "valid"
+construction_id = "their-preference"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:phone", "concept" = "phone" }], "preferences" = [{ "fact_id" = "preference:phone", "object" = "object:phone", "person" = "ana", "likes" = false }] }
+bindings = { "object" = "object:phone", "preference" = "preference:phone" }
+truth = true
+use = "dislike"
+input = "Say that Ana doesn't like the phone."
+expected_meaning = "Ana doesn't like the phone."
+acceptable = ["安娜 不 喜欢 电话机."]
+reject = [{ "sentence" = "安娜 不 喜欢 电话机", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "安娜 不 喜欢 香蕉.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }, { "sentence" = "安娜 喜欢 电话机.", "reason" = "Reverses the bound preference polarity.", "category" = "meaning" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

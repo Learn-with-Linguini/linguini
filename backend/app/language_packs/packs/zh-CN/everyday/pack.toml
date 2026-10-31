@@ -1,0 +1,125 @@
+format_version = 1
+pack_id = "zh-cn-everyday"
+pack_version = 1
+instruction_language = "en"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[language]
+articles = "none"
+grammatical_gender = "none"
+phrase_boundaries = ["还有", "而且", "但是"]
+romanization_required = true
+inflection = "none"
+romanization_convention = "Hanyu Pinyin with lexical tone marks, neutral-tone syllables unmarked, ü rather than v, NFC Latin text and apostrophes where needed (e.g. Lì'ào). Keep underlying yī and bù consistently, including before classifiers and fourth tones; this is a written lexical-tone convention, not a claim that speech lacks tone sandhi. Compound words stay together in pinyin where appropriate. Align every complete Hanzi sentence and displayed support to Latin spans, preserving the pack's learning spaces and ASCII punctuation."
+code = "zh"
+locale = "zh-CN"
+script = "Hans"
+direction = "ltr"
+word_separator = "space"
+
+[language.speech]
+synthesis_locale = "zh-CN"
+synthesis = "browserVoice"
+recognition = false
+
+[variety]
+variety_id = "zh-cn"
+description = "Standard Mandarin (Putonghua), simplified Chinese characters, common mainland neutral teaching vocabulary."
+
+[register]
+register_id = "everyday"
+description = "Neutral polite daily-life Mandarin with 请 in requests. Hanzi learning spaces and ASCII punctuation are app display conventions, not normal Chinese orthography."
+
+[files]
+labels = "labels.toml"
+numbers = "numbers.toml"
+possessives = "possessives.toml"
+requests = "requests.toml"
+pairs = "pairs.toml"
+constructions = [
+  "constructions/target-location.toml",
+  "constructions/target-clue.toml",
+  "constructions/location-phrase.toml",
+  "constructions/where-question.toml",
+  "constructions/find-object.toml",
+  "constructions/identify-object.toml",
+  "constructions/yes-no-identification.toml",
+  "constructions/describe-attribute.toml",
+  "constructions/scene-existence.toml",
+  "constructions/scene-location.toml",
+  "constructions/connected-description.toml",
+  "constructions/how-many-question.toml",
+  "constructions/quantity-chunk.toml",
+  "constructions/quantity-statement.toml",
+  "constructions/quantity-comparison.toml",
+  "constructions/quantity-pair.toml",
+  "constructions/ownership-question.toml",
+  "constructions/ownership-statement.toml",
+  "constructions/owned-object.toml",
+  "constructions/possessive-statement.toml",
+  "constructions/whose-question.toml",
+  "constructions/owned-description.toml",
+  "constructions/my-preference.toml",
+  "constructions/their-preference.toml",
+  "constructions/preference-question.toml",
+  "constructions/choice-statement.toml",
+  "constructions/polite-request.toml",
+  "constructions/order-phrase.toml",
+  "constructions/detail-question.toml",
+  "constructions/detail-reply.toml",
+  "constructions/order-repeat.toml",
+  "constructions/order-confirmation.toml",
+  "constructions/order-repair.toml",
+]
+examples = [
+  "examples/target-location.toml",
+  "examples/target-clue.toml",
+  "examples/location-phrase.toml",
+  "examples/where-question.toml",
+  "examples/find-object.toml",
+  "examples/identify-object.toml",
+  "examples/yes-no-identification.toml",
+  "examples/describe-attribute.toml",
+  "examples/scene-existence.toml",
+  "examples/scene-location.toml",
+  "examples/connected-description.toml",
+  "examples/how-many-question.toml",
+  "examples/quantity-chunk.toml",
+  "examples/quantity-statement.toml",
+  "examples/quantity-comparison.toml",
+  "examples/quantity-pair.toml",
+  "examples/ownership-question.toml",
+  "examples/ownership-statement.toml",
+  "examples/owned-object.toml",
+  "examples/possessive-statement.toml",
+  "examples/whose-question.toml",
+  "examples/owned-description.toml",
+  "examples/my-preference.toml",
+  "examples/their-preference.toml",
+  "examples/preference-question.toml",
+  "examples/choice-statement.toml",
+  "examples/polite-request.toml",
+  "examples/order-phrase.toml",
+  "examples/detail-question.toml",
+  "examples/detail-reply.toml",
+  "examples/order-repeat.toml",
+  "examples/order-confirmation.toml",
+  "examples/order-repair.toml",
+]
+evaluations = [
+  "evaluations/M01-A0.toml",
+  "evaluations/M01-A1.toml",
+  "evaluations/M01-A2.toml",
+  "evaluations/M03-A0.toml",
+  "evaluations/M03-A1.toml",
+  "evaluations/M03-A2.toml",
+  "evaluations/M02-A0.toml",
+  "evaluations/M02-A1.toml",
+  "evaluations/M02-A2.toml",
+  "evaluations/M04-A0.toml",
+  "evaluations/M04-A1.toml",
+  "evaluations/M04-A2.toml",
+  "evaluations/M05-A0.toml",
+  "evaluations/M05-A1.toml",
+  "evaluations/M06-A2.toml",
+]

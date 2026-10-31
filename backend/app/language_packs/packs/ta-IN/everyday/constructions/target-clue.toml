@@ -1,0 +1,25 @@
+construction_id = "target-clue"
+version = 1
+summary = "Describe a hidden object by a detail or its location."
+guidance = "A clue describes the hidden object without naming it, with அது: அது சிவப்பா இருக்கு. / அது ஜன்னலுக்குப் பக்கத்துல இருக்கு. A clarification starts with இல்லை, and restates one true clue. Never name the hidden object. Use spoken forms."
+features = ["hidden-referent", "pronoun"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { attribute = "adjective", relation = "preposition", reference = "noun" }
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "clarify-label"
+message = "A clarification starts with the no label."
+must_contain = ["^இல்லை, "]
+uses = ["clarify"]
+
+[[checks]]
+check_id = "spoken-register"
+message = "Use the pack's spoken forms (இருக்கு), not formal இருக்கிறது."
+must_not_contain = ["இருக்கிறது|இருக்கின்றது"]

@@ -1,0 +1,18 @@
+construction_id = "scene-location"
+version = 2
+summary = "Locate an object relative to another."
+guidance = "Use subject + reference in its oblique form + postposition + है. e.g. कप मेज़ पर है.; फ़ोन दरवाज़े के पास है. Compound positions include के नीचे, के पास, के सामने, के पीछे; on is पर. A followup is subject कहाँ है? and must not give the location. आ-ending masculine references usually change to ए before the postposition. Use ordinary Hindi word spacing and ASCII . ? , in task strings for the current app contract. Require gender and direct/oblique forms for translated nouns where relevant. Supply exactly aligned Devanagari/Latin spans; native Hindi remains the answer and TTS input. Respect noun agreement, Unicode NFC and the declared polite register. "
+features = ["standard-hindi", "devanagari", "scene-location"]
+constraints = [
+  "Preserve all selected semantic roles, truth and assigned role-play facts.",
+  "Use polite आप-level requests and avoid guessing the learner's gender.",
+  "Transliteration is display support, not an alternate answer key.",
+]
+required_labels = ["build-second-fact"]
+roles = { "subject" = "noun", "reference" = "noun", "relation" = "preposition" }
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete task sentences need ASCII final punctuation."
+must_contain = ["[.?!]$"]

@@ -1,0 +1,58 @@
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[quantities]]
+value = 1
+forms = ["एक"]
+
+[[quantities]]
+value = 2
+forms = ["दो"]
+
+[[quantities]]
+value = 3
+forms = ["तीन"]
+
+[[details]]
+detail = "size:small"
+meaning = "small"
+forms = ["छोटा", "छोटी", "छोटे", "छोटे आकार"]
+
+[[details]]
+detail = "size:large"
+meaning = "large"
+forms = ["बड़ा", "बड़ी", "बड़े", "बड़े आकार"]
+
+[[details]]
+detail = "serviceSetting:eatIn"
+meaning = "to have here"
+forms = ["यहीं के लिए"]
+
+[[details]]
+detail = "serviceSetting:takeAway"
+meaning = "to take away"
+forms = ["पैक", "साथ ले जाने के लिए"]
+
+[[details]]
+detail = "temperature:hot"
+meaning = "hot"
+forms = ["गर्म"]
+
+[[details]]
+detail = "temperature:cold"
+meaning = "cold"
+forms = ["ठंडा", "ठंडी", "ठंडे"]
+
+[[details]]
+detail = "colour:blue"
+meaning = "blue"
+forms = ["नीला", "नीली", "नीले"]
+
+[[details]]
+detail = "colour:red"
+meaning = "red"
+forms = ["लाल"]
+
+[[details]]
+detail = "colour:black"
+meaning = "black"
+forms = ["काला", "काली", "काले"]

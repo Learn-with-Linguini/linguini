@@ -1,0 +1,18 @@
+construction_id = "quantity-chunk"
+version = 1
+summary = "Give a number and directly counted noun."
+guidance = "Write number + direct-count noun, without punctuation: दो किताबें. One takes the singular; larger counts use direct plural. Nouns ending in masculine आ often become ए (दो काँटे); feminine forms include किताबें and चाबियाँ. Do not use oblique plural किताबों unless a postposition licenses it. Use ordinary Hindi word spacing and ASCII . ? , in task strings for the current app contract. Require gender and direct/oblique forms for translated nouns where relevant. Supply exactly aligned Devanagari/Latin spans; native Hindi remains the answer and TTS input. Respect noun agreement, Unicode NFC and the declared polite register. "
+features = ["standard-hindi", "devanagari", "quantity-chunk"]
+constraints = [
+  "Preserve all selected semantic roles, truth and assigned role-play facts.",
+  "Use polite आप-level requests and avoid guessing the learner's gender.",
+  "Transliteration is display support, not an alternate answer key.",
+]
+required_labels = []
+roles = { "object" = "noun", "count" = "determiner" }
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "chunk-punctuation"
+message = "A phrase has no final sentence punctuation."
+must_not_contain = ["[.?!]$"]

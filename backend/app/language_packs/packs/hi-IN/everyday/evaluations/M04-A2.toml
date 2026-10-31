@@ -1,0 +1,110 @@
+mission_id = "M04"
+practice_level = "A2"
+content_version = 1
+
+[[cases]]
+case_id = "m04-a2-clue"
+category = "valid"
+construction_id = "target-clue"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }], "attributes" = [{ "fact_id" = "attribute:bag-green", "object" = "object:bag", "kind" = "color", "value" = "green" }] }
+bindings = { "target" = "object:bag", "attribute" = "attribute:bag-green" }
+truth = true
+use = "attribute"
+input = "Give the colour clue for your object without naming it: green."
+expected_meaning = "It is green."
+acceptable = ["हरा है."]
+reject = [{ "sentence" = "हरा है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m04-a2-describe-colour"
+category = "valid"
+construction_id = "owned-description"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }], "attributes" = [{ "fact_id" = "attribute:bag-green", "object" = "object:bag", "kind" = "color", "value" = "green" }], "owners" = [{ "fact_id" = "owner:bag", "object" = "object:bag", "owner" = "first" }] }
+bindings = { "object" = "object:bag", "owner" = "owner:bag", "attribute" = "attribute:bag-green" }
+truth = true
+input = "Describe your bag: green."
+expected_meaning = "My bag is green."
+acceptable = ["मेरा बैग हरा है."]
+reject = [{ "sentence" = "मेरा बैग हरा है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "मेरी बैग हरा है.", "category" = "agreement", "reason" = "The possessive has the wrong gender for the owned noun." }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m04-a2-describe-place"
+category = "valid"
+construction_id = "owned-description"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:key", "concept" = "key" }, { "fact_id" = "object:table", "concept" = "table" }], "relations" = [{ "fact_id" = "relation:key-on-table", "subject" = "object:key", "reference" = "object:table", "relation" = "on" }], "owners" = [{ "fact_id" = "owner:key", "object" = "object:key", "owner" = "first" }] }
+bindings = { "object" = "object:key", "owner" = "owner:key", "relation" = "relation:key-on-table", "reference" = "object:table" }
+truth = true
+input = "Describe your key: on the table."
+expected_meaning = "My key is on the table."
+acceptable = ["मेरी चाबी मेज़ पर है."]
+reject = [{ "sentence" = "मेरी चाबी मेज़ पर है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "मेरा चाबी मेज़ पर है.", "category" = "agreement", "reason" = "The possessive has the wrong gender for the owned noun." }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m04-a2-clarify"
+category = "valid"
+construction_id = "owned-object"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }], "owners" = [{ "fact_id" = "owner:plate", "object" = "object:plate", "owner" = "ana" }] }
+bindings = { "object" = "object:plate", "owner" = "owner:plate" }
+truth = true
+labels = ["no"]
+input = "Tell the friend no: the plate is Ana's."
+expected_meaning = "No, the plate is Ana's."
+acceptable = ["नहीं, प्लेट अना की है."]
+reject = [{ "sentence" = "नहीं, प्लेट अना की है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "नहीं, गाजर अना की है.", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m04-a2-yes-mine"
+category = "valid"
+construction_id = "possessive-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }], "owners" = [{ "fact_id" = "owner:door", "object" = "object:door", "owner" = "first" }] }
+bindings = { "object" = "object:door", "owner" = "owner:door" }
+truth = true
+labels = ["yes"]
+input = "Answer yes: it is your door."
+expected_meaning = "Yes, it's my door."
+acceptable = ["हाँ, यह मेरा दरवाज़ा है."]
+reject = [{ "sentence" = "हाँ, यह मेरा दरवाज़ा है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "हाँ, यह मेरा आम है.", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }, { "sentence" = "हाँ, यह मेरी दरवाज़ा है.", "category" = "agreement", "reason" = "The possessive has the wrong gender for the owned noun." }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m04-a2-yours"
+category = "valid"
+construction_id = "owned-object"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }], "owners" = [{ "fact_id" = "owner:door", "object" = "object:door", "owner" = "first" }] }
+bindings = { "object" = "object:door", "owner" = "possessor:second" }
+truth = true
+use = "statement"
+input = "Say the door is the listener's."
+expected_meaning = "The door is yours."
+acceptable = ["दरवाज़ा आपका है."]
+reject = [{ "sentence" = "दरवाज़ा आपका है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "आम आपका है.", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }, { "sentence" = "दरवाज़ा आपकी है.", "category" = "agreement", "reason" = "The possessive has the wrong gender for the owned noun." }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m04-a2-held-unicode"
+category = "valid"
+construction_id = "owned-description"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:phone", "concept" = "phone" }], "attributes" = [{ "fact_id" = "attribute:phone-red", "object" = "object:phone", "kind" = "color", "value" = "red" }], "owners" = [{ "fact_id" = "owner:phone", "object" = "object:phone", "owner" = "first" }] }
+bindings = { "object" = "object:phone", "owner" = "owner:phone", "attribute" = "attribute:phone-red" }
+truth = true
+input = "Describe your phone: red."
+expected_meaning = "My phone is red."
+acceptable = ["मेरा फ़ोन लाल है."]
+reject = [{ "sentence" = "मेरा फ़ोन लाल है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "मेरी फ़ोन लाल है.", "category" = "agreement", "reason" = "The possessive has the wrong gender for the owned noun." }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"

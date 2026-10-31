@@ -1,0 +1,25 @@
+construction_id = "target-location"
+
+[[examples]]
+example_id = "red-cup-next-window"
+levels = ["A2"]
+purposes = ["buildTargetSentence"]
+meaning = "The red cup is next to the window."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:window", "concept" = "window" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }], "relations" = [{ "fact_id" = "relation:cup-next_to-window", "subject" = "object:cup", "reference" = "object:window", "relation" = "next_to" }] }
+bindings = { "subject" = "object:cup", "attribute" = "attribute:cup-red", "reference" = "object:window", "relation" = "relation:cup-next_to-window" }
+truth = true
+labels = []
+sentence = "红色的 杯子 在 窗户 旁边."
+translation = "The red cup is next to the window."
+chunks = [{ "text" = "红色的", "join" = "none" }, { "text" = "杯子", "join" = "space" }, { "text" = "在", "join" = "space" }, { "text" = "窗户", "join" = "space" }, { "text" = "旁边", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "red-cup-next-window-format"
+levels = ["A2"]
+purposes = ["buildTargetSentence"]
+sentence = "红色的 杯子 在 窗户 旁边"
+correction = "红色的 杯子 在 窗户 旁边."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

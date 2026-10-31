@@ -1,0 +1,23 @@
+construction_id = "scene-location"
+version = 2
+summary = "State or ask the location of an object."
+guidance = "Use subject 在 reference relation. e.g. 杯子 在 桌子 上面. Spatial 上面/下面/旁边 follow the reference noun. Ask subject 在 哪里? for followup without giving the location. Do not use 是 instead of 在 or reverse the subject and reference. Display Hanzi with one ASCII learning space between word/phrase units and ASCII . ? , for dev compatibility; this is not ordinary Chinese orthography. Supply exact aligned Hanzi/pinyin spans. Pinyin uses lexical tones, neutral syllables without tone marks, ü (not v), and NFC Latin text. Keep lexical yī and bù in writing; explain spoken tone changes separately. "
+features = ["mandarin", "simplified-script", "scene-location"]
+constraints = [
+  "Preserve selected semantic role bindings, truth and assigned role-play facts.",
+  "Use simplified Hanzi and the declared neutral polite register.",
+  "Pinyin is a support, not an alternative grading answer.",
+]
+required_labels = ["build-second-fact"]
+roles = { "subject" = "noun", "reference" = "noun", "relation" = "preposition" }
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete task sentences need ASCII final punctuation."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "location-frame"
+message = "Location uses 在 with the reference or question."
+must_contain = ["\\s在\\s"]

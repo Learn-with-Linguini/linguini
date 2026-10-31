@@ -1,0 +1,91 @@
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[possessors]]
+possessor = "first"
+meaning = "my / mine"
+
+[[possessors.forms]]
+text = "मेरा"
+use = "determiner"
+romanization = "merā"
+agreement = "masculine"
+
+[[possessors.forms]]
+text = "मेरी"
+use = "determiner"
+romanization = "merī"
+agreement = "feminine"
+
+[[possessors.forms]]
+text = "मेरे"
+use = "determiner"
+romanization = "mere"
+
+[[possessors.forms]]
+text = "मेरा"
+use = "predicate"
+romanization = "merā"
+agreement = "masculine"
+
+[[possessors.forms]]
+text = "मेरी"
+use = "predicate"
+romanization = "merī"
+agreement = "feminine"
+
+[[possessors.forms]]
+text = "मेरे"
+use = "predicate"
+romanization = "mere"
+
+[[possessors]]
+possessor = "second"
+meaning = "your / yours (polite आप)"
+
+[[possessors.forms]]
+text = "आपका"
+use = "determiner"
+romanization = "āpkā"
+agreement = "masculine"
+
+[[possessors.forms]]
+text = "आपकी"
+use = "determiner"
+romanization = "āpkī"
+agreement = "feminine"
+
+[[possessors.forms]]
+text = "आपके"
+use = "determiner"
+romanization = "āpke"
+
+[[possessors.forms]]
+text = "आपका"
+use = "predicate"
+romanization = "āpkā"
+agreement = "masculine"
+
+[[possessors.forms]]
+text = "आपकी"
+use = "predicate"
+romanization = "āpkī"
+agreement = "feminine"
+
+[[possessors.forms]]
+text = "आपके"
+use = "predicate"
+romanization = "āpke"
+
+[[cast]]
+owner_id = "ana"
+english_name = "Ana"
+name = "अना"
+gender = "feminine"
+romanization = "Anā"
+
+[[cast]]
+owner_id = "leo"
+english_name = "Leo"
+name = "लियो"
+gender = "masculine"
+romanization = "Liyo"

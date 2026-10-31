@@ -1,0 +1,25 @@
+construction_id = "ownership-question"
+
+[[examples]]
+example_id = "is-it-yours"
+levels = ["A0"]
+purposes = ["askOwnership"]
+meaning = "Is it yours?"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }, { fact_id = "object:table", concept = "table" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }], owners = [{ fact_id = "owner:cup", object = "object:cup", owner = "first" }, { fact_id = "owner:book", object = "object:book", owner = "ana" }, { fact_id = "owner:key", object = "object:key", owner = "leo" }] }
+bindings = { object = "object:cup", owner = "possessor:second" }
+truth = true
+labels = []
+sentence = "இது உங்களோடதா?"
+translation = "Is it yours?"
+chunks = [{ text = "இது", join = "none" }, { text = "உங்களோடதா", join = "space" }, { text = "?", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "is-it-yours-form"
+levels = ["A0"]
+purposes = ["askOwnership"]
+sentence = "இது என்னோடதா?"
+correction = "இது உங்களோடதா?"
+note = "Ask about the listener with உங்களோட."
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }

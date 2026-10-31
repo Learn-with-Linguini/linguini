@@ -1,0 +1,25 @@
+construction_id = "order-confirmation"
+
+[[examples]]
+example_id = "confirm-order"
+levels = ["A2"]
+purposes = ["confirmOrRepair"]
+meaning = "Yes, that's right."
+scene = { "objects" = [{ "fact_id" = "object:coffee", "concept" = "coffee" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:coffee", "field" = "quantity", "value" = "2" }, { "fact_id" = "request:size", "object" = "object:coffee", "field" = "size", "value" = "small" }, { "fact_id" = "request:serviceSetting", "object" = "object:coffee", "field" = "serviceSetting", "value" = "takeAway" }] }
+bindings = {  }
+truth = true
+labels = []
+sentence = "はい, それで お願いします."
+translation = "Yes, that's right."
+chunks = [{ "text" = "はい", "join" = "none" }, { "text" = ",", "join" = "none" }, { "text" = "それで", "join" = "space" }, { "text" = "お願いします", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "confirm-order-form"
+levels = ["A2"]
+purposes = ["confirmOrRepair"]
+sentence = "はい, それで お願いします"
+correction = "はい, それで お願いします."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }

@@ -1,0 +1,97 @@
+construction_id = "scene-existence"
+
+[[examples]]
+example_id = "exist-apple"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "There is a yellow apple in the scene."
+scene = { "objects" = [{ "fact_id" = "object:apple", "concept" = "apple" }], "attributes" = [{ "fact_id" = "attribute:apple-yellow", "object" = "object:apple", "kind" = "color", "value" = "yellow" }] }
+bindings = { "object" = "object:apple", "attribute" = "attribute:apple-yellow" }
+truth = true
+labels = []
+sentence = "पीला सेब है."
+translation = "There is a yellow apple in the scene."
+chunks = [{ "text" = "पीला", "join" = "none" }, { "text" = "सेब", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "exist-plate"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "There is a white plate in the scene."
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }], "attributes" = [{ "fact_id" = "attribute:plate-white", "object" = "object:plate", "kind" = "color", "value" = "white" }] }
+bindings = { "object" = "object:plate", "attribute" = "attribute:plate-white" }
+truth = true
+labels = []
+sentence = "सफ़ेद प्लेट है."
+translation = "There is a white plate in the scene."
+chunks = [{ "text" = "सफ़ेद", "join" = "none" }, { "text" = "प्लेट", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "exist-chair"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "There is a chair in the scene."
+scene = { "objects" = [{ "fact_id" = "object:chair", "concept" = "chair" }] }
+bindings = { "object" = "object:chair" }
+truth = true
+labels = []
+sentence = "कुर्सी है."
+translation = "There is a chair in the scene."
+chunks = [{ "text" = "कुर्सी", "join" = "none" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "absent-clock"
+levels = ["A2"]
+purposes = ["chooseSceneDescription"]
+meaning = "There is no clock in the scene."
+scene = { "objects" = [], "absent" = [{ "fact_id" = "object:clock", "concept" = "clock" }] }
+bindings = { "object" = "object:clock" }
+truth = false
+labels = []
+sentence = "घड़ी नहीं है."
+translation = "There is no clock in the scene."
+chunks = [{ "text" = "घड़ी", "join" = "none" }, { "text" = "नहीं", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "exist-apple-format"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+sentence = "पीला सेब है"
+correction = "पीला सेब है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "exist-plate-format"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+sentence = "सफ़ेद प्लेट है"
+correction = "सफ़ेद प्लेट है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "exist-chair-format"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+sentence = "कुर्सी है"
+correction = "कुर्सी है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "absent-clock-format"
+levels = ["A2"]
+purposes = ["chooseSceneDescription"]
+sentence = "घड़ी नहीं है"
+correction = "घड़ी नहीं है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

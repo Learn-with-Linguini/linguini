@@ -1,0 +1,250 @@
+construction_id = "describe-attribute"
+
+[[examples]]
+example_id = "describe-red-cup"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a red cup."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }] }
+bindings = { "object" = "object:cup", "attribute" = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "यह लाल कप है."
+translation = "This is a red cup."
+chunks = [{ "text" = "यह", "join" = "none" }, { "text" = "लाल", "join" = "space" }, { "text" = "कप", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "describe-green-book"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a green book."
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }], "attributes" = [{ "fact_id" = "attribute:book-green", "object" = "object:book", "kind" = "color", "value" = "green" }] }
+bindings = { "object" = "object:book", "attribute" = "attribute:book-green" }
+truth = true
+labels = []
+sentence = "यह हरी किताब है."
+translation = "This is a green book."
+chunks = [{ "text" = "यह", "join" = "none" }, { "text" = "हरी", "join" = "space" }, { "text" = "किताब", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "describe-black-shoe"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a black shoe."
+scene = { "objects" = [{ "fact_id" = "object:shoe", "concept" = "shoe" }], "attributes" = [{ "fact_id" = "attribute:shoe-black", "object" = "object:shoe", "kind" = "color", "value" = "black" }] }
+bindings = { "object" = "object:shoe", "attribute" = "attribute:shoe-black" }
+truth = true
+labels = []
+sentence = "यह काला जूता है."
+translation = "This is a black shoe."
+chunks = [{ "text" = "यह", "join" = "none" }, { "text" = "काला", "join" = "space" }, { "text" = "जूता", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "describe-blue-lamp"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a blue lamp."
+scene = { "objects" = [{ "fact_id" = "object:lamp", "concept" = "lamp" }], "attributes" = [{ "fact_id" = "attribute:lamp-blue", "object" = "object:lamp", "kind" = "color", "value" = "blue" }] }
+bindings = { "object" = "object:lamp", "attribute" = "attribute:lamp-blue" }
+truth = true
+labels = []
+sentence = "यह नीला लैंप है."
+translation = "This is a blue lamp."
+chunks = [{ "text" = "यह", "join" = "none" }, { "text" = "नीला", "join" = "space" }, { "text" = "लैंप", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "describe-white-plate"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a white plate."
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }], "attributes" = [{ "fact_id" = "attribute:plate-white", "object" = "object:plate", "kind" = "color", "value" = "white" }] }
+bindings = { "object" = "object:plate", "attribute" = "attribute:plate-white" }
+truth = true
+labels = []
+sentence = "यह सफ़ेद प्लेट है."
+translation = "This is a white plate."
+chunks = [{ "text" = "यह", "join" = "none" }, { "text" = "सफ़ेद", "join" = "space" }, { "text" = "प्लेट", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "describe-yellow-apple"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a yellow apple."
+scene = { "objects" = [{ "fact_id" = "object:apple", "concept" = "apple" }], "attributes" = [{ "fact_id" = "attribute:apple-yellow", "object" = "object:apple", "kind" = "color", "value" = "yellow" }] }
+bindings = { "object" = "object:apple", "attribute" = "attribute:apple-yellow" }
+truth = true
+labels = []
+sentence = "यह पीला सेब है."
+translation = "This is a yellow apple."
+chunks = [{ "text" = "यह", "join" = "none" }, { "text" = "पीला", "join" = "space" }, { "text" = "सेब", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "choose-red-cup"
+levels = ["A1"]
+purposes = ["chooseAttribute"]
+meaning = "red (the colour of the cup)"
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }] }
+bindings = { "object" = "object:cup", "attribute" = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "लाल"
+translation = "red (the colour of the cup)"
+chunks = [{ "text" = "लाल", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "choose-green-book"
+levels = ["A1"]
+purposes = ["chooseAttribute"]
+meaning = "green (the colour of the book)"
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }], "attributes" = [{ "fact_id" = "attribute:book-green", "object" = "object:book", "kind" = "color", "value" = "green" }] }
+bindings = { "object" = "object:book", "attribute" = "attribute:book-green" }
+truth = true
+labels = []
+sentence = "हरी"
+translation = "green (the colour of the book)"
+chunks = [{ "text" = "हरी", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "ask-cup-colour"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+meaning = "What colour is the cup?"
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }] }
+bindings = { "object" = "object:cup", "attribute" = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "कप किस रंग का है?"
+translation = "What colour is the cup?"
+chunks = [{ "text" = "कप", "join" = "none" }, { "text" = "किस", "join" = "space" }, { "text" = "रंग", "join" = "space" }, { "text" = "का", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "ask-book-colour"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+meaning = "What colour is the book?"
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }], "attributes" = [{ "fact_id" = "attribute:book-green", "object" = "object:book", "kind" = "color", "value" = "green" }] }
+bindings = { "object" = "object:book", "attribute" = "attribute:book-green" }
+truth = true
+labels = []
+sentence = "किताब किस रंग की है?"
+translation = "What colour is the book?"
+chunks = [{ "text" = "किताब", "join" = "none" }, { "text" = "किस", "join" = "space" }, { "text" = "रंग", "join" = "space" }, { "text" = "की", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "describe-red-cup-format"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "यह लाल कप है"
+correction = "यह लाल कप है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "describe-green-book-format"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "यह हरी किताब है"
+correction = "यह हरी किताब है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "describe-black-shoe-format"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "यह काला जूता है"
+correction = "यह काला जूता है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "describe-blue-lamp-format"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "यह नीला लैंप है"
+correction = "यह नीला लैंप है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "describe-white-plate-format"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "यह सफ़ेद प्लेट है"
+correction = "यह सफ़ेद प्लेट है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "describe-yellow-apple-format"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "यह पीला सेब है"
+correction = "यह पीला सेब है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "choose-red-cup-format"
+levels = ["A1"]
+purposes = ["chooseAttribute"]
+sentence = "लाल."
+correction = "लाल"
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "choose-green-book-format"
+levels = ["A1"]
+purposes = ["chooseAttribute"]
+sentence = "हरी."
+correction = "हरी"
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "ask-cup-colour-format"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+sentence = "कप किस रंग का है"
+correction = "कप किस रंग का है?"
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "ask-book-colour-format"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+sentence = "किताब किस रंग की है"
+correction = "किताब किस रंग की है?"
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "hi-grammar-describe-attribute"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "यह हरा किताब है."
+correction = "यह हरी किताब है."
+note = "The marked adjective agrees with the feminine noun किताब."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

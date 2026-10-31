@@ -1,0 +1,311 @@
+[[labels]]
+semantic = "yes"
+text = "はい"
+romanization = "hai"
+meaning = "yes"
+usage = "sentence"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "no"
+text = "いいえ"
+romanization = "iie"
+meaning = "no"
+usage = "sentence"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "yes-answer"
+text = "はい."
+romanization = "hai."
+meaning = "Yes."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "no-answer"
+text = "いいえ."
+romanization = "iie."
+meaning = "No."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "what-is-this"
+text = "これは 何ですか?"
+romanization = "kore wa nan desu ka?"
+meaning = "What is this?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "attribute-prompt-colour"
+text = "これは 何色ですか?"
+romanization = "kore wa naniiro desu ka?"
+meaning = "What colour is this object?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "describe-object"
+text = "この 物を 説明してください."
+romanization = "kono mono o setsumei shite kudasai."
+meaning = "Describe this object."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "touch-object"
+text = "この 文に 合う 物を タップしてください: {f['first']}."
+romanization = "kono bun ni au mono o tappu shite kudasai: {f['first']}."
+meaning = "Tap the object matching this sentence: {f['first']}."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "build-second-fact"
+text = "二つ目の 文を 作ってください."
+romanization = "futatsume no bun o tsukutte kudasai."
+meaning = "Build the second sentence."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "choose-description"
+text = "どの 説明が 写真に 合っていますか?"
+romanization = "dono setsumei ga shashin ni atte imasu ka?"
+meaning = "Which description matches the photo?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "describe-scene"
+text = "これらの 文で 写真を 説明してください."
+romanization = "korera no bun de shashin o setsumei shite kudasai."
+meaning = "Describe the scene with these sentences."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "connector-distractor"
+text = "でも"
+romanization = "demo"
+meaning = "but"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "attribute-prompt"
+text = "これは どんな 物ですか?"
+romanization = "kore wa donna mono desu ka?"
+meaning = "What is this object like?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "attribute-prompt-material"
+text = "これは 何で できていますか?"
+romanization = "kore wa nani de dekite imasu ka?"
+meaning = "What material is this object made of?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "vocabulary-unsure"
+text = "わかりません"
+romanization = "wakarimasen"
+meaning = "I don't know"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "vocabulary-other"
+text = "よく わかりません"
+romanization = "yoku wakarimasen"
+meaning = "I'm not sure"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "ask-where"
+text = "どこに あるか 聞いてください."
+romanization = "doko ni aru ka kiite kudasai."
+meaning = "Ask where it is."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "answer-where"
+text = "写真に 写っている 場所を 答えてください."
+romanization = "shashin ni utsutte iru basho o kotaete kudasai."
+meaning = "Answer with the position the photo shows."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "clue-meaning"
+text = "どんな 意味ですか?"
+romanization = "donna imi desu ka?"
+meaning = "What does it mean?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "build-location-clue"
+text = "二つ目の ヒントを 作ってください."
+romanization = "futatsume no hinto o tsukutte kudasai."
+meaning = "Build the second clue."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "find-both-clues"
+text = "二つの ヒントに 合う 物を タップしてください."
+romanization = "futatsu no hinto ni au mono o tappu shite kudasai."
+meaning = "Tap the object that matches both clues."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "friend-points"
+text = "友達が {marker}番を 指しています. 何と 言いますか?"
+romanization = "tomodachi ga {marker}ban o sashite imasu. nan to iimasu ka?"
+meaning = "Your friend points to number {marker}. What do you say?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "name-and-locate"
+text = "物の 名前と 場所を 言ってください."
+romanization = "mono no namae to basho o itte kudasai."
+meaning = "Say the object's name and where it is."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "answer-in-sentence"
+text = "文で 答えてください."
+romanization = "bun de kotaete kudasai."
+meaning = "Answer with a sentence."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "build-group-sentence"
+text = "印の ある グループについて 文を 作ってください."
+romanization = "shirushi no aru gurūpu ni tsuite bun o tsukutte kudasai."
+meaning = "Build a sentence about the highlighted group."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "choose-comparison"
+text = "正しい 比較を 選んでください."
+romanization = "tadashii hikaku o erande kudasai."
+meaning = "Choose the correct comparison."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "friend-says"
+text = "友達は 「{statement}」と 言っています. 何と 答えますか?"
+romanization = "tomodachi wa 「{statement}」 to itte imasu. nan to kotaemasu ka?"
+meaning = "Your friend says: “{statement}” What do you answer?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "friend-is-right"
+text = "はい, 友達の 言うとおりです."
+romanization = "hai, tomodachi no iu tōri desu."
+meaning = "Yes, your friend is right."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "describe-compare"
+text = "二つの グループを 説明して 比べてください."
+romanization = "futatsu no gurūpu o setsumei shite kurabete kudasai."
+meaning = "Describe and compare the two groups."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "more"
+text = "多い"
+romanization = "ōi"
+meaning = "more"
+usage = "sentence"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "fewer"
+text = "少ない"
+romanization = "sukunai"
+meaning = "fewer"
+usage = "sentence"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "choose-sentence"
+text = "正しい 文を 選んでください."
+romanization = "tadashii bun o erande kudasai."
+meaning = "Choose the correct sentence."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "which-is-yours"
+text = "どの 物が あなたの 物ですか?"
+romanization = "dono mono ga anata no mono desu ka?"
+meaning = "Which object is yours?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "choose-possessive"
+text = "何と 言いますか?"
+romanization = "nan to iimasu ka?"
+meaning = "You say:"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "describe-your-object"
+text = "自分の 物を 説明してください."
+romanization = "jibun no mono o setsumei shite kudasai."
+meaning = "Describe your object."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "clarify-and-describe"
+text = "どれが 自分の 物か 言って 説明してください."
+romanization = "dore ga jibun no mono ka itte setsumei shite kudasai."
+meaning = "Say which object is yours and describe it."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "what-choose"
+text = "何を 選びますか?"
+romanization = "nani o erabimasu ka?"
+meaning = "What do you choose?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "request-distractor-have"
+text = "持っています"
+meaning = "I have"
+usage = "prompt"
+romanization = "motte imasu"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "request-distractor-exists"
+text = "です"
+meaning = "it is"
+usage = "prompt"
+romanization = "desu"
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }

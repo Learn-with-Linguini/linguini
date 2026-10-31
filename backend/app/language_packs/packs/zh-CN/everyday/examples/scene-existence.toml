@@ -1,0 +1,106 @@
+construction_id = "scene-existence"
+
+[[examples]]
+example_id = "exist-apple"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "There is a yellow apple in the scene."
+scene = { "objects" = [{ "fact_id" = "object:apple", "concept" = "apple" }], "attributes" = [{ "fact_id" = "attribute:apple-yellow", "object" = "object:apple", "kind" = "color", "value" = "yellow" }] }
+bindings = { "object" = "object:apple", "attribute" = "attribute:apple-yellow" }
+truth = true
+labels = []
+sentence = "有 黄色的 苹果."
+translation = "There is a yellow apple in the scene."
+chunks = [{ "text" = "有", "join" = "none" }, { "text" = "黄色的", "join" = "space" }, { "text" = "苹果", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "exist-plate"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "There is a white plate in the scene."
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }], "attributes" = [{ "fact_id" = "attribute:plate-white", "object" = "object:plate", "kind" = "color", "value" = "white" }] }
+bindings = { "object" = "object:plate", "attribute" = "attribute:plate-white" }
+truth = true
+labels = []
+sentence = "有 白色的 盘子."
+translation = "There is a white plate in the scene."
+chunks = [{ "text" = "有", "join" = "none" }, { "text" = "白色的", "join" = "space" }, { "text" = "盘子", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "exist-chair"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "There is a chair in the scene."
+scene = { "objects" = [{ "fact_id" = "object:chair", "concept" = "chair" }] }
+bindings = { "object" = "object:chair" }
+truth = true
+labels = []
+sentence = "有 椅子."
+translation = "There is a chair in the scene."
+chunks = [{ "text" = "有", "join" = "none" }, { "text" = "椅子", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "absent-clock"
+levels = ["A2"]
+purposes = ["chooseSceneDescription"]
+meaning = "There is no clock in the scene."
+scene = { "objects" = [], "absent" = [{ "fact_id" = "object:clock", "concept" = "clock" }] }
+bindings = { "object" = "object:clock" }
+truth = false
+labels = []
+sentence = "没有 钟."
+translation = "There is no clock in the scene."
+chunks = [{ "text" = "没有", "join" = "none" }, { "text" = "钟", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "exist-apple-format"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+sentence = "有 黄色的 苹果"
+correction = "有 黄色的 苹果."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "exist-plate-format"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+sentence = "有 白色的 盘子"
+correction = "有 白色的 盘子."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "exist-chair-format"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+sentence = "有 椅子"
+correction = "有 椅子."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "absent-clock-format"
+levels = ["A2"]
+purposes = ["chooseSceneDescription"]
+sentence = "没有 钟"
+correction = "没有 钟."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "zh-grammar-scene-existence"
+levels = ["A2"]
+purposes = ["chooseSceneDescription"]
+sentence = "不有 钟."
+correction = "没有 钟."
+note = "Negate existential 有 with 没有."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

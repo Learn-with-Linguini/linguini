@@ -1,0 +1,147 @@
+mission_id = "M01"
+practice_level = "A0"
+content_version = 1
+
+[[cases]]
+case_id = "a0-fork-identification"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:fork", "concept" = "fork" }] }
+bindings = { "object" = "object:fork" }
+truth = true
+labels = []
+input = "Identify the highlighted fork."
+expected_meaning = "This is a fork."
+acceptable = ["यह काँटा है."]
+reject = [{ "sentence" = "यह काँटा है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "यह आम है.", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a0-spoon-not-fork"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:spoon", "concept" = "spoon" }, { "fact_id" = "object:fork", "concept" = "fork" }] }
+bindings = { "object" = "object:spoon" }
+truth = true
+labels = []
+input = "Identify the highlighted spoon."
+expected_meaning = "This is a spoon."
+acceptable = ["यह चम्मच है."]
+reject = [{ "sentence" = "यह चम्मच है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "यह आम है.", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a0-door-form"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }] }
+bindings = { "object" = "object:door" }
+truth = true
+labels = []
+input = "Identify one highlighted door."
+expected_meaning = "This is a door."
+acceptable = ["यह दरवाज़ा है."]
+reject = [{ "sentence" = "यह दरवाज़ा है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "यह आम है.", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a0-window-question"
+category = "valid"
+construction_id = "yes-no-identification"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:window", "concept" = "window" }] }
+bindings = { "object" = "object:window", "shown" = "object:window" }
+truth = true
+labels = []
+input = "Ask whether this object is a window."
+expected_meaning = "Is this a window?"
+acceptable = ["क्या यह खिड़की है?"]
+reject = [{ "sentence" = "क्या यह खिड़की है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "question"
+
+[[cases]]
+case_id = "a0-phone-language"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:phone", "concept" = "phone" }] }
+bindings = { "object" = "object:phone" }
+truth = true
+labels = []
+input = "Identify the highlighted phone in the target language."
+expected_meaning = "This is a phone."
+acceptable = ["यह फ़ोन है."]
+reject = [{ "sentence" = "यह फ़ोन है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "यह आम है.", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a0-key-order"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:key", "concept" = "key" }] }
+bindings = { "object" = "object:key" }
+truth = true
+labels = []
+input = "Identify the highlighted key in the neutral taught frame."
+expected_meaning = "This is a key."
+acceptable = ["यह चाबी है."]
+reject = [{ "sentence" = "यह चाबी है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "यह गाजर है.", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a0-window-name"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:window", "concept" = "window" }] }
+bindings = { "object" = "object:window" }
+truth = true
+use = "name"
+labels = []
+input = "Give the vocabulary name for the window."
+expected_meaning = "the window (vocabulary label)"
+acceptable = ["खिड़की"]
+reject = [{ "sentence" = "खिड़की.", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "गाजर", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "a0-held-table"
+category = "valid"
+construction_id = "identify-object"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:table", "concept" = "table" }] }
+bindings = { "object" = "object:table" }
+truth = true
+labels = []
+input = "Identify the highlighted table."
+expected_meaning = "This is a table."
+acceptable = ["यह मेज़ है."]
+reject = [{ "sentence" = "यह मेज़ है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "यह गाजर है.", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a0-held-bag-question"
+category = "valid"
+construction_id = "yes-no-identification"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }] }
+bindings = { "object" = "object:bag", "shown" = "object:bag" }
+truth = true
+labels = []
+input = "Ask whether this object is a bag."
+expected_meaning = "Is it a bag?"
+acceptable = ["क्या यह बैग है?"]
+reject = [{ "sentence" = "क्या यह बैग है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "question"

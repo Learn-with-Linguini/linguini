@@ -1,0 +1,23 @@
+construction_id = "quantity-comparison"
+version = 1
+summary = "Compare two group quantities."
+guidance = "Use first direct-plural noun + second oblique-plural noun + से + ज़्यादा/कम + हैं. e.g. किताबें कपों से ज़्यादा हैं. and कप किताबों से कम हैं. Compare counts, not size. The reference group is oblique before से. Fixed labels are ज़्यादा and कम. Use ordinary Hindi word spacing and ASCII . ? , in task strings for the current app contract. Require gender and direct/oblique forms for translated nouns where relevant. Supply exactly aligned Devanagari/Latin spans; native Hindi remains the answer and TTS input. Respect noun agreement, Unicode NFC and the declared polite register. "
+features = ["standard-hindi", "devanagari", "quantity-comparison"]
+constraints = [
+  "Preserve all selected semantic roles, truth and assigned role-play facts.",
+  "Use polite आप-level requests and avoid guessing the learner's gender.",
+  "Transliteration is display support, not an alternate answer key.",
+]
+required_labels = []
+roles = { "first" = "noun", "second" = "noun" }
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete task sentences need ASCII final punctuation."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "quantity-comparison"
+message = "Use से and the bound more/fewer expression."
+must_contain = ["\\sसे\\s", "(ज़्यादा|कम)\\sहैं[.]$"]

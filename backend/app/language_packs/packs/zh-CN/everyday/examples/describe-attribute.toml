@@ -1,0 +1,250 @@
+construction_id = "describe-attribute"
+
+[[examples]]
+example_id = "describe-red-cup"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a red cup."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }] }
+bindings = { "object" = "object:cup", "attribute" = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "这是 红色的 杯子."
+translation = "This is a red cup."
+chunks = [{ "text" = "这是", "join" = "none" }, { "text" = "红色的", "join" = "space" }, { "text" = "杯子", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "describe-green-book"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a green book."
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }], "attributes" = [{ "fact_id" = "attribute:book-green", "object" = "object:book", "kind" = "color", "value" = "green" }] }
+bindings = { "object" = "object:book", "attribute" = "attribute:book-green" }
+truth = true
+labels = []
+sentence = "这是 绿色的 书."
+translation = "This is a green book."
+chunks = [{ "text" = "这是", "join" = "none" }, { "text" = "绿色的", "join" = "space" }, { "text" = "书", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "describe-black-shoe"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a black shoe."
+scene = { "objects" = [{ "fact_id" = "object:shoe", "concept" = "shoe" }], "attributes" = [{ "fact_id" = "attribute:shoe-black", "object" = "object:shoe", "kind" = "color", "value" = "black" }] }
+bindings = { "object" = "object:shoe", "attribute" = "attribute:shoe-black" }
+truth = true
+labels = []
+sentence = "这是 黑色的 鞋."
+translation = "This is a black shoe."
+chunks = [{ "text" = "这是", "join" = "none" }, { "text" = "黑色的", "join" = "space" }, { "text" = "鞋", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "describe-blue-lamp"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a blue lamp."
+scene = { "objects" = [{ "fact_id" = "object:lamp", "concept" = "lamp" }], "attributes" = [{ "fact_id" = "attribute:lamp-blue", "object" = "object:lamp", "kind" = "color", "value" = "blue" }] }
+bindings = { "object" = "object:lamp", "attribute" = "attribute:lamp-blue" }
+truth = true
+labels = []
+sentence = "这是 蓝色的 台灯."
+translation = "This is a blue lamp."
+chunks = [{ "text" = "这是", "join" = "none" }, { "text" = "蓝色的", "join" = "space" }, { "text" = "台灯", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "describe-white-plate"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a white plate."
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }], "attributes" = [{ "fact_id" = "attribute:plate-white", "object" = "object:plate", "kind" = "color", "value" = "white" }] }
+bindings = { "object" = "object:plate", "attribute" = "attribute:plate-white" }
+truth = true
+labels = []
+sentence = "这是 白色的 盘子."
+translation = "This is a white plate."
+chunks = [{ "text" = "这是", "join" = "none" }, { "text" = "白色的", "join" = "space" }, { "text" = "盘子", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "describe-yellow-apple"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a yellow apple."
+scene = { "objects" = [{ "fact_id" = "object:apple", "concept" = "apple" }], "attributes" = [{ "fact_id" = "attribute:apple-yellow", "object" = "object:apple", "kind" = "color", "value" = "yellow" }] }
+bindings = { "object" = "object:apple", "attribute" = "attribute:apple-yellow" }
+truth = true
+labels = []
+sentence = "这是 黄色的 苹果."
+translation = "This is a yellow apple."
+chunks = [{ "text" = "这是", "join" = "none" }, { "text" = "黄色的", "join" = "space" }, { "text" = "苹果", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "choose-red-cup"
+levels = ["A1"]
+purposes = ["chooseAttribute"]
+meaning = "red (the colour of the cup)"
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }] }
+bindings = { "object" = "object:cup", "attribute" = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "红色"
+translation = "red (the colour of the cup)"
+chunks = [{ "text" = "红色", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "choose-green-book"
+levels = ["A1"]
+purposes = ["chooseAttribute"]
+meaning = "green (the colour of the book)"
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }], "attributes" = [{ "fact_id" = "attribute:book-green", "object" = "object:book", "kind" = "color", "value" = "green" }] }
+bindings = { "object" = "object:book", "attribute" = "attribute:book-green" }
+truth = true
+labels = []
+sentence = "绿色"
+translation = "green (the colour of the book)"
+chunks = [{ "text" = "绿色", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "ask-cup-colour"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+meaning = "What colour is the cup?"
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }] }
+bindings = { "object" = "object:cup", "attribute" = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "杯子 是 什么 颜色 的?"
+translation = "What colour is the cup?"
+chunks = [{ "text" = "杯子", "join" = "none" }, { "text" = "是", "join" = "space" }, { "text" = "什么", "join" = "space" }, { "text" = "颜色", "join" = "space" }, { "text" = "的", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "ask-book-colour"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+meaning = "What colour is the book?"
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }], "attributes" = [{ "fact_id" = "attribute:book-green", "object" = "object:book", "kind" = "color", "value" = "green" }] }
+bindings = { "object" = "object:book", "attribute" = "attribute:book-green" }
+truth = true
+labels = []
+sentence = "书 是 什么 颜色 的?"
+translation = "What colour is the book?"
+chunks = [{ "text" = "书", "join" = "none" }, { "text" = "是", "join" = "space" }, { "text" = "什么", "join" = "space" }, { "text" = "颜色", "join" = "space" }, { "text" = "的", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "describe-red-cup-format"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "这是 红色的 杯子"
+correction = "这是 红色的 杯子."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "describe-green-book-format"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "这是 绿色的 书"
+correction = "这是 绿色的 书."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "describe-black-shoe-format"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "这是 黑色的 鞋"
+correction = "这是 黑色的 鞋."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "describe-blue-lamp-format"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "这是 蓝色的 台灯"
+correction = "这是 蓝色的 台灯."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "describe-white-plate-format"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "这是 白色的 盘子"
+correction = "这是 白色的 盘子."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "describe-yellow-apple-format"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "这是 黄色的 苹果"
+correction = "这是 黄色的 苹果."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "choose-red-cup-format"
+levels = ["A1"]
+purposes = ["chooseAttribute"]
+sentence = "红色."
+correction = "红色"
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "choose-green-book-format"
+levels = ["A1"]
+purposes = ["chooseAttribute"]
+sentence = "绿色."
+correction = "绿色"
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "ask-cup-colour-format"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+sentence = "杯子 是 什么 颜色 的"
+correction = "杯子 是 什么 颜色 的?"
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "ask-book-colour-format"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+sentence = "书 是 什么 颜色 的"
+correction = "书 是 什么 颜色 的?"
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "zh-grammar-describe-attribute"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "杯子 是 很 红色."
+correction = "杯子 是 红色的."
+note = "This colour-noun predicate uses 是 + 红色的, not 很 + the noun 红色."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

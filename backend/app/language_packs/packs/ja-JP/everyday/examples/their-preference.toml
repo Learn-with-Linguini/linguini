@@ -1,0 +1,73 @@
+construction_id = "their-preference"
+
+[[examples]]
+example_id = "leo-likes-key"
+levels = ["A1"]
+purposes = ["choosePreference"]
+meaning = "Leo likes the key."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }], "preferences" = [{ "fact_id" = "preference:cup", "object" = "object:cup", "person" = "first", "likes" = true }, { "fact_id" = "preference:book", "object" = "object:book", "person" = "ana", "likes" = false }, { "fact_id" = "preference:key", "object" = "object:key", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:key", "preference" = "preference:key" }
+truth = true
+labels = []
+sentence = "レオは 鍵が 好きです."
+translation = "Leo likes the key."
+chunks = [{ "text" = "レオは", "join" = "none" }, { "text" = "鍵が", "join" = "space" }, { "text" = "好きです", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "ana-dislikes-book"
+levels = ["A1"]
+purposes = ["buildTheirPreference", "choosePreference"]
+meaning = "Ana doesn't like the book."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }], "preferences" = [{ "fact_id" = "preference:cup", "object" = "object:cup", "person" = "first", "likes" = true }, { "fact_id" = "preference:book", "object" = "object:book", "person" = "ana", "likes" = false }, { "fact_id" = "preference:key", "object" = "object:key", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:book", "preference" = "preference:book" }
+truth = true
+labels = []
+sentence = "アナは 本が 好きではありません."
+translation = "Ana doesn't like the book."
+chunks = [{ "text" = "アナは", "join" = "none" }, { "text" = "本が", "join" = "space" }, { "text" = "好きではありません", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "ana-likes-book"
+levels = ["A1"]
+purposes = ["buildTheirPreference"]
+meaning = "Ana likes the book."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }], "preferences" = [{ "fact_id" = "preference:cup", "object" = "object:cup", "person" = "first", "likes" = true }, { "fact_id" = "preference:book", "object" = "object:book", "person" = "ana", "likes" = false }, { "fact_id" = "preference:key", "object" = "object:key", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:book", "preference" = "preference:book" }
+truth = false
+labels = []
+sentence = "アナは 本が 好きです."
+translation = "Ana likes the book."
+chunks = [{ "text" = "アナは", "join" = "none" }, { "text" = "本が", "join" = "space" }, { "text" = "好きです", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "leo-likes-key-form"
+levels = ["A1"]
+purposes = ["choosePreference"]
+sentence = "レオは 鍵が 好きです"
+correction = "レオは 鍵が 好きです."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "ana-dislikes-book-form"
+levels = ["A1"]
+purposes = ["buildTheirPreference", "choosePreference"]
+sentence = "アナは 本が 好きではありません"
+correction = "アナは 本が 好きではありません."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "ana-likes-book-form"
+levels = ["A1"]
+purposes = ["buildTheirPreference"]
+sentence = "アナは 本が 好きです"
+correction = "アナは 本が 好きです."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }

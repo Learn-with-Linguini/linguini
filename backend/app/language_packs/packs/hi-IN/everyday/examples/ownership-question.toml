@@ -1,0 +1,34 @@
+construction_id = "ownership-question"
+
+[[examples]]
+example_id = "is-it-yours"
+levels = ["A0"]
+purposes = ["askOwnership"]
+meaning = "Is it yours?"
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }, { "fact_id" = "object:table", "concept" = "table" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }], "relations" = [{ "fact_id" = "relation:cup-on-table", "subject" = "object:cup", "reference" = "object:table", "relation" = "on" }], "owners" = [{ "fact_id" = "owner:cup", "object" = "object:cup", "owner" = "first" }, { "fact_id" = "owner:book", "object" = "object:book", "owner" = "ana" }, { "fact_id" = "owner:key", "object" = "object:key", "owner" = "leo" }] }
+bindings = { "object" = "object:cup", "owner" = "possessor:second" }
+truth = true
+labels = []
+sentence = "क्या यह आपका है?"
+translation = "Is it yours?"
+chunks = [{ "text" = "क्या", "join" = "none" }, { "text" = "यह", "join" = "space" }, { "text" = "आपका", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "is-it-yours-format"
+levels = ["A0"]
+purposes = ["askOwnership"]
+sentence = "क्या यह आपका है"
+correction = "क्या यह आपका है?"
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "hi-grammar-ownership-question"
+levels = ["A0"]
+purposes = ["askOwnership"]
+sentence = "क्या यह मेरा है?"
+correction = "क्या यह आपका है?"
+note = "Ask about the listener's ownership, preserving the planned person."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
