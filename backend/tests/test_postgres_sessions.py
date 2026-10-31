@@ -12,6 +12,7 @@ from app.database import create_database_engine
 from app.main import create_app
 from app.repositories.postgres.language_profiles import (
     PostgresLanguageProfileRepository,
+    language_profiles,
 )
 from app.repositories.postgres.media_assets import media_assets
 from app.repositories.postgres.practice import sessions
@@ -154,11 +155,24 @@ def test_progress_returns_weekly_basil_leaderboard_and_current_player(database):
         )
         for index in range(6)
     ]
+    competitor_profiles = [
+        LanguageProfile(
+            user_id=chef.id,
+            source_language_code="en",
+            target_language_code="es",
+            proficiency_level="A1",
+        )
+        for chef in competitors
+    ]
     try:
         with engine.begin() as connection:
             connection.execute(
                 insert(users),
                 [chef.model_dump(by_alias=False) for chef in competitors],
+            )
+            connection.execute(
+                insert(language_profiles),
+                [profile.model_dump(by_alias=False) for profile in competitor_profiles],
             )
             award(
                 connection,
@@ -175,10 +189,13 @@ def test_progress_returns_weekly_basil_leaderboard_and_current_player(database):
                 idempotency_key="leaderboard-old",
                 occurred_at=utc_now() - timedelta(days=8),
             )
-            for index, chef in enumerate(competitors):
+            for index, (chef, chef_profile) in enumerate(zip(
+                competitors, competitor_profiles, strict=True,
+            )):
                 award(
                     connection,
                     user_id=chef.id,
+                    language_profile_id=chef_profile.id,
                     event_type="journalEntry",
                     idempotency_key=f"leaderboard-chef-{index}",
                 )
