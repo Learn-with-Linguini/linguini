@@ -16,6 +16,7 @@ from app.ai.features.moderation import ImageModerationResult
 from app.ai.features.scene_analysis import UploadedSceneAnalyzer
 from app.ai.observability import NoOpAITracer
 from app.ai.routing import as_routed
+from app.repositories.postgres.friend_chats import _public_clue_option
 from app.schemas.media import MediaAsset, SceneObject, SceneObjectRelation
 from app.services.friend_chat_content import FriendChatContent
 from app.services.friend_chat_realizer import FriendChatRealizer
@@ -291,6 +292,31 @@ def test_a0_offers_general_agreed_adjectives_and_canonical_sheet_refs(scene):
     assert payload["target"]["gender"] == "feminine"
     assert any(
         item["constructionId"] == "describe-attribute" for item in payload["languageGuidance"]
+    )
+
+
+def test_real_clue_options_publish_without_private_grounding_fields(scene):
+    target = scene.helper.select_target(
+        scene.content, scene.content["objects"][0]["key"], profile=scene.profile
+    )
+    original = copy.deepcopy(target)
+    assert all(option["factId"] for option in target["clueOptions"])
+    public = [
+        _public_clue_option(option).model_dump(mode="json", by_alias=True)
+        for option in target["clueOptions"]
+    ]
+    assert all(set(option) == {"id", "text", "translation", "concept", "cheatSheet"}
+               for option in public)
+    assert public[0]["cheatSheet"] == {
+        "missionId": "M02", "practiceLevel": "A0", "contentVersion": 2,
+    }
+    assert target == original, "publishing options must preserve private validation facts"
+    assert scene.helper.validate_clue(
+        public[0]["text"], target, scene.content, scene.profile
+    ) == public[0]["text"]
+    scene.helper.validate_clue(
+        public[1]["text"], target, scene.content, scene.profile,
+        previous_clues=[public[0]["text"]],
     )
 
 
