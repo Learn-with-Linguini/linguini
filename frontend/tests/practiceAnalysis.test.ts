@@ -274,8 +274,10 @@ test("reloading a saved review keeps custom objects and persisted marker identit
   session.suggestedSceneObjectIds = ["object-1", "object-2"];
   await mount(session, false, practiceScene(session, "/photo.jpg", "Spanish"));
   assertMarkers([1, 2, 3]);
-  assert.deepEqual([...dom.window.document.querySelectorAll(".analysis-object-row > strong")]
-    .map(element => element.textContent), ["cup", "cup", "door"]);
+  assert.deepEqual([...dom.window.document.querySelectorAll(".analysis-word-row__remove")]
+    .map(element => element.getAttribute("aria-label")), [
+      "Remove marker 1, cup", "Remove marker 2, cup", "Remove marker 3, door",
+    ]);
 });
 
 test("moving an object's marker does not renumber or reidentify it", async () => {
