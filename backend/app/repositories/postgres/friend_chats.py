@@ -62,7 +62,7 @@ chats = Table(
     Column("creator_user_id", Uuid, nullable=False),
     Column("partner_user_id", Uuid),
     Column("creator_profile", JSONB, nullable=False),
-    Column("partner_profile", JSONB),
+    Column("partner_profile", JSONB(none_as_null=True)),
     Column("target_language_code", String(35), nullable=False),
     Column("status", String(12), nullable=False),
     Column("revision", Integer, nullable=False),
