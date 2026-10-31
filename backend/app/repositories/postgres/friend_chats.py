@@ -166,6 +166,17 @@ def _fingerprint(kind, request):
     return _hash(json.dumps({"kind": kind, "body": body}, sort_keys=True, separators=(",", ":")))
 
 
+def _public_clue_option(option):
+    """Keep private grounding metadata out of the strict public option contract."""
+    return ChatClueOption(
+        id=option["id"],
+        text=option["text"],
+        translation=option["translation"],
+        concept=option["concept"],
+        cheat_sheet=option.get("cheatSheet"),
+    )
+
+
 @dataclass(frozen=True)
 class ChatPhotoJob:
     chat_id: UUID
@@ -1091,7 +1102,7 @@ class PostgresFriendChatRepository:
                 if visible and shared and item["target"]
                 else None,
                 clue_options=[
-                    ChatClueOption.model_validate(option) for option in item["clue_options"]
+                    _public_clue_option(option) for option in item["clue_options"]
                 ]
                 if sender and shared
                 else [],

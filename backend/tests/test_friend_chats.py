@@ -785,3 +785,114 @@ def test_chat_tables_enable_rls_and_grant_no_public_table_access(db):
         """), {"schema": schema, "names": names}).mappings().all()
     assert len(rows) == len(names)
     assert all(row["relrowsecurity"] and not row["public_access"] for row in rows)
+
+
+def test_real_content_can_confirm_send_follow_up_and_complete_through_the_api(db):
+    from typing import Annotated
+    from uuid import UUID
+
+    from fastapi import FastAPI, Header
+    from fastapi.testclient import TestClient
+    from test_friend_chat_content import Analyzer, Realizer, Storage, Translator
+
+    from app.api.dependencies import get_friend_chat_service
+    from app.api.routes.friend_chats import router
+    from app.services.friend_chat_content import FriendChatContent
+    from app.services.friend_chats import FriendChatService
+    from app.services.room_photos import RoomPhotoPreparer
+
+    # Use the real content helper and public routes; only external providers are deterministic.
+    with db.engine.begin() as c:
+        c.execute(update(language_profiles).where(language_profiles.c.user_id.in_(
+            [db.people[0].id, db.people[1].id]
+        )).values(target_language_code="fr"))
+    helper = FriendChatContent(
+        RoomPhotoPreparer(Analyzer(), Translator(), storage=Storage()), realizer=Realizer()
+    )
+    app = FastAPI()
+
+    def service(actor: Annotated[str, Header(alias="X-Test-Actor")]):
+        return FriendChatService(PostgresFriendChatRepository(db.engine, UUID(actor)), helper)
+
+    app.dependency_overrides[get_friend_chat_service] = service
+    app.include_router(router, prefix="/api/v1")
+    sender = {"X-Test-Actor": str(db.people[0].id)}
+    receiver = {"X-Test-Actor": str(db.people[1].id)}
+
+    with TestClient(app) as client:
+        created = client.post("/api/v1/friend-chats", headers=sender, json={
+            "commandId": str(uuid4()), "languageProfileId": str(db.profiles[0].id),
+        })
+        assert created.status_code == 201, created.text
+        access = created.json()
+        path = f"/api/v1/friend-chats/{access['chat']['id']}"
+        joined = client.post("/api/v1/friend-chats/join", headers=receiver, json={
+            "commandId": str(uuid4()), "languageProfileId": str(db.profiles[1].id),
+            "inviteToken": access["inviteToken"],
+        })
+        assert joined.status_code == 200, joined.text
+        started = client.post(path + "/rounds", headers=sender, json={
+            "commandId": str(uuid4()), "expectedRevision": joined.json()["revision"],
+            "mediaAssetId": str(db.assets[0][0].id),
+        })
+        assert started.status_code == 201, started.text
+        snapshot = started.json()
+        active = snapshot["activeRound"]
+        assert active["photoStatus"] == "ready"
+        round_path = path + f"/rounds/{active['id']}"
+        target = active["objects"][0]
+        confirm_body = {
+            "commandId": str(uuid4()), "expectedRevision": snapshot["revision"],
+            "objectKey": target["key"], "confirm": True,
+        }
+        confirmed = client.post(round_path + "/target", headers=sender, json=confirm_body)
+        assert confirmed.status_code == 200, confirmed.text
+        snapshot = confirmed.json()
+        assert snapshot["activeRound"]["status"] == "composingClue"
+        options = snapshot["activeRound"]["clueOptions"]
+        assert len(options) > 1
+        assert options[0]["cheatSheet"] == {
+            "missionId": "M02", "practiceLevel": "A0", "contentVersion": 2,
+        }
+        assert "factId" not in str(snapshot)
+        assert client.post(round_path + "/target", headers=sender,
+            json=confirm_body).json() == snapshot
+        with db.engine.connect() as c:
+            stored = c.execute(select(rounds.c.target, rounds.c.clue_options)
+                .where(rounds.c.id == UUID(active["id"]))).mappings().one()
+        assert stored["target"]["clueOptions"][0]["factId"]
+        assert stored["clue_options"][0]["factId"]
+
+        private = client.get(path, headers=receiver).json()["activeRound"]
+        assert private["objects"] == [] and private["target"] is None
+        assert private["clueOptions"] == [] and private["imageUrl"] is None
+
+        for index, option in enumerate(options[:2]):
+            sent = client.post(round_path + "/clue", headers=sender, json={
+                "commandId": str(uuid4()), "expectedRevision": snapshot["revision"],
+                "text": option["text"],
+            })
+            assert sent.status_code == 200, sent.text
+            snapshot = sent.json()
+            visible = client.get(path, headers=receiver).json()["activeRound"]
+            assert visible["objects"] == [] and visible["target"] is None
+            assert visible["clueOptions"] == [] and visible["imageUrl"]
+            assert visible["messages"][-1]["type"] == ("clue" if index == 0 else "followUpClue")
+            guess = {"x": .95, "y": .95} if index == 0 else {"x": target["x"], "y": target["y"]}
+            guessed = client.post(round_path + "/guess", headers=receiver, json={
+                "commandId": str(uuid4()), "expectedRevision": snapshot["revision"], **guess,
+            })
+            assert guessed.status_code == 200, guessed.text
+            snapshot = guessed.json()
+            if index == 0:
+                assert snapshot["activeRound"]["status"] == "awaitingFollowUp"
+                assert snapshot["activeRound"]["target"] is None
+
+        assert snapshot["activeRound"] is None
+        assert snapshot["rounds"][-1]["status"] == "completed"
+        assert snapshot["rounds"][-1]["target"]["key"] == target["key"]
+        for headers in (sender, receiver):
+            restored = client.get(path, headers=headers)
+            assert restored.status_code == 200, restored.text
+            assert restored.json()["rounds"][-1]["target"]["key"] == target["key"]
+            assert "factId" not in restored.text
