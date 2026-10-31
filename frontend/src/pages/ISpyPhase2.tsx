@@ -244,9 +244,8 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
           <span className="small muted">Choose a {slot.label}</span>
           <div className="chip-row">{slot.chips.map(chip => {
             const picked = choices[activeFrame.frameId]?.[slot.slotId] === chip.text;
-            return <button key={chip.text} type="button" lang={scene.languageCode} title={chip.meaning ?? undefined} className={`chip${picked ? " chip--selected" : ""}`} aria-pressed={picked} disabled={locked} onClick={() => chooseSlotChip(activeFrame, slot.slotId, chip.text)}>{chip.text}</button>;
+            return <button key={chip.text} type="button" lang={scene.languageCode} className={`chip${picked ? " chip--selected" : ""}`} aria-pressed={picked} disabled={locked} onClick={() => chooseSlotChip(activeFrame, slot.slotId, chip.text)}>{chip.text}</button>;
           })}</div>
-          {slot.slotId === "position" ? <ul className="small muted" data-testid="position-meanings">{slot.chips.filter(chip => chip.meaning).map(chip => <li key={chip.text}><span lang={scene.languageCode}>{chip.text}</span> — {chip.meaning}{chip.example ? <> · <span lang={scene.languageCode}>{chip.example}</span></> : null}</li>)}</ul> : null}
         </div>)}
         {activeFrame.help?.length ? revealedHelp.includes(activeFrame.frameId)
           ? <div className="stack-2" data-testid="clue-help"><span className="small muted">Suggested phrases (guided help)</span><div className="chip-row">{activeFrame.help.map(phrase => <button key={phrase} type="button" lang={scene.languageCode} className={`chip${insertedChips.includes(phrase) ? " chip--selected" : ""}`} disabled={locked} onClick={() => chooseHelp(activeFrame, phrase)}>{phrase}</button>)}</div></div>

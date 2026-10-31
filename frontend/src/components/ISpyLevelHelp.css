@@ -47,8 +47,3 @@
   color: var(--teal-dark);
   font-size: var(--text-body);
 }
-
-.ispy-help__words span {
-  color: var(--ink-muted);
-  font-size: var(--text-label);
-}
