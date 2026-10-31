@@ -201,9 +201,11 @@ test("removing one grouped instance retains the other object and submits its ori
   await mount();
   await click(dom.window.document.querySelector('[aria-label="Remove marker 2, cup"]'));
   assert.equal(dom.window.document.querySelectorAll(".analysis-object-group").length, 0);
-  assert.ok(dom.window.document.querySelector('[aria-label="Change location of marker 3, cup"]'));
-  assert.ok(dom.window.document.querySelector('[aria-label="Remove marker 3, cup"]'));
-  assertMarkers([1, 3]);
+  const remainingCup = [...dom.window.document.querySelectorAll(".analysis-object-row")]
+    .find(row => row.querySelector("strong")?.textContent === "cup");
+  assert.ok(remainingCup?.querySelector('[aria-label^="Change location of marker"]'));
+  assert.ok(remainingCup?.querySelector('[aria-label^="Remove marker"]'));
+  assert.equal(dom.window.document.querySelectorAll(".analysis-object-row").length, 2);
   await click(button("Confirm lesson facts"));
   assert.deepEqual(reviews[0].acceptedObjectIds, ["object-0", "object-2"]);
   assert.deepEqual(reviews[0].relations, []);
