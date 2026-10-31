@@ -1,0 +1,64 @@
+construction_id = "preference-question"
+
+[[examples]]
+example_id = "do-you-like-cup"
+levels = ["A0"]
+purposes = ["askPreference"]
+meaning = "Do you like the cup?"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }], preferences = [{ fact_id = "preference:cup", object = "object:cup", person = "first", likes = true }, { fact_id = "preference:book", object = "object:book", person = "ana", likes = false }, { fact_id = "preference:key", object = "object:key", person = "leo", likes = true }] }
+bindings = { object = "object:cup" }
+truth = true
+labels = []
+sentence = "உங்களுக்கு கோப்பை பிடிக்குமா?"
+translation = "Do you like the cup?"
+chunks = [{ text = "உங்களுக்கு", join = "none" }, { text = "கோப்பை", join = "space" }, { text = "பிடிக்குமா", join = "space" }, { text = "?", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "do-you-like-cup-build"
+levels = ["A1"]
+purposes = ["buildMyPreference"]
+meaning = "Do you like the cup?"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }], preferences = [{ fact_id = "preference:cup", object = "object:cup", person = "first", likes = true }, { fact_id = "preference:book", object = "object:book", person = "ana", likes = false }, { fact_id = "preference:key", object = "object:key", person = "leo", likes = true }] }
+bindings = { object = "object:cup" }
+truth = true
+labels = []
+sentence = "உங்களுக்கு கோப்பை பிடிக்குமா?"
+translation = "Do you like the cup?"
+chunks = [{ text = "உங்களுக்கு", join = "none" }, { text = "கோப்பை", join = "space" }, { text = "பிடிக்குமா", join = "space" }, { text = "?", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "does-ana-like-book"
+levels = ["A1"]
+purposes = ["buildTheirPreference"]
+meaning = "Does Ana like the book?"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }], preferences = [{ fact_id = "preference:cup", object = "object:cup", person = "first", likes = true }, { fact_id = "preference:book", object = "object:book", person = "ana", likes = false }, { fact_id = "preference:key", object = "object:key", person = "leo", likes = true }] }
+bindings = { object = "object:book", preference = "preference:book" }
+truth = true
+labels = []
+sentence = "அனாவுக்கு புத்தகம் பிடிக்குமா?"
+translation = "Does Ana like the book?"
+chunks = [{ text = "அனாவுக்கு", join = "none" }, { text = "புத்தகம்", join = "space" }, { text = "பிடிக்குமா", join = "space" }, { text = "?", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "do-you-like-cup-form"
+levels = ["A0"]
+purposes = ["askPreference"]
+sentence = "உங்களுக்கு கோப்பை பிடிக்கும்?"
+correction = "உங்களுக்கு கோப்பை பிடிக்குமா?"
+note = "A yes/no question ends in -ஆ: பிடிக்குமா."
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "do-you-like-cup-build-form"
+levels = ["A1"]
+purposes = ["buildMyPreference"]
+sentence = "உங்களுக்கு கோப்பை பிடிக்கும்?"
+correction = "உங்களுக்கு கோப்பை பிடிக்குமா?"
+note = "A yes/no question ends in -ஆ: பிடிக்குமா."
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }

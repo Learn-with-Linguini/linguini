@@ -1,0 +1,58 @@
+# Possessive words and the role-play cast for ownership missions (M04).
+# ``use`` is determiner (before a noun) or predicate (es mía, à moi, gehört mir);
+# ``before_vowel`` marks a form used before a vowel (French mon assiette).
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[possessors]]
+possessor = "first"
+meaning = "my"
+[[possessors.forms]]
+text = "என்னோட"
+use = "determiner"
+romanization = "eṉṉōṭa"
+[[possessors.forms]]
+text = "என்னோடது"
+use = "predicate"
+romanization = "eṉṉōṭatu"
+
+[[possessors]]
+possessor = "second"
+meaning = "your"
+[[possessors.forms]]
+text = "உங்களோட"
+use = "determiner"
+romanization = "uṅkaḷōṭa"
+[[possessors.forms]]
+text = "உங்களோடது"
+use = "predicate"
+romanization = "uṅkaḷōṭatu"
+
+[[possessors]]
+possessor = "third-masculine"
+meaning = "his"
+[[possessors.forms]]
+text = "அவனோட"
+use = "determiner"
+romanization = "avaṉōṭa"
+
+[[possessors]]
+possessor = "third-feminine"
+meaning = "her"
+[[possessors.forms]]
+text = "அவளோட"
+use = "determiner"
+romanization = "avaḷōṭa"
+
+[[cast]]
+owner_id = "ana"
+english_name = "Ana"
+name = "அனா"
+gender = "feminine"
+romanization = "aṉā"
+
+[[cast]]
+owner_id = "leo"
+english_name = "Leo"
+name = "லியோ"
+gender = "masculine"
+romanization = "liyō"

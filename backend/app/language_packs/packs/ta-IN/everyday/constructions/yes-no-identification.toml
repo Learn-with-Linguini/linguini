@@ -1,0 +1,32 @@
+construction_id = "yes-no-identification"
+version = 1
+summary = "Ask a positive identity question and answer it conversationally."
+guidance = "Use இது ஒரு கோப்பையா? with the interrogative -ஆ attached using the appropriate noun surface; கோப்பை becomes கோப்பையா, புத்தகம் becomes புத்தகமா. Do not simply separate ஆ as a universal word tile. Short A0 answers are ஆமாம்./இல்லை. A full answer may be ஆமாம், இது ஒரு புத்தகம். or இல்லை, இது ஒரு கடிகாரம்.; after a false question identify the shown object. Restrict this pack to positive identity questions and keep its spoken forms consistent rather than alternating with formal written இது … ஆகும்."
+features = ["interrogative-aa", "spoken-answer", "suffix-integrity"]
+constraints = ["Express only the selected scene facts and preserve semantic role bindings.", "Use the declared variety/register and approved surfaces.", "Treat these rules as generation guidance; they do not constitute a grammar validator."]
+required_labels = ["yes", "no", "yes-answer", "no-answer"]
+roles = { object = "noun", shown = "noun" }
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+except_uses = ["name"]
+
+[[checks]]
+check_id = "spoken-register"
+message = "Use the pack's spoken forms (இருக்கு), not formal இருக்கிறது."
+must_not_contain = ["இருக்கிறது|இருக்கின்றது|இருக்கின்றன"]
+
+[[checks]]
+check_id = "question-suffix"
+message = "Yes/no questions add the -ஆ suffix and end with ?."
+must_contain = ["ா\\?$"]
+uses = ["question", "prompt", "followup"]
+
+[[checks]]
+check_id = "answer-label"
+message = "Yes/no answers start with ஆமாம், or இல்லை, then name the object."
+must_contain = ["^(ஆமாம்|இல்லை)[,.]"]
+uses = ["answer", "option"]

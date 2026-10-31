@@ -1,0 +1,14 @@
+construction_id = "quantity-statement"
+version = 1
+summary = "Say how many of an object there are."
+guidance = "Say how many with number word + noun + இருக்கு.: அஞ்சு புத்தகம் இருக்கு. Use the bound count's number word, never a numeral. A correction starts with the no label: இல்லை, அஞ்சு புத்தகம் இருக்கு."
+features = ["quantity-statement"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun", count = "determiner" }
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "statement-frame"
+message = "Say how many with … இருக்கு."
+must_contain = ["இருக்கு\\.$"]

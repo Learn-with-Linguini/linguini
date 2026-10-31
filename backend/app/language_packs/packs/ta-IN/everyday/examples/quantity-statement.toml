@@ -1,0 +1,73 @@
+construction_id = "quantity-statement"
+
+[[examples]]
+example_id = "statement-five-books"
+levels = ["A1", "A2"]
+purposes = ["buildQuantity"]
+meaning = "There are five books."
+scene = { objects = [{ fact_id = "object:book", concept = "book" }, { fact_id = "object:cup", concept = "cup" }, { fact_id = "object:apple", concept = "apple" }], counts = [{ fact_id = "count:book", object = "object:book", quantity = 5 }, { fact_id = "count:cup", object = "object:cup", quantity = 2 }, { fact_id = "count:apple", object = "object:apple", quantity = 2 }] }
+bindings = { object = "object:book", count = "count:book" }
+truth = true
+labels = []
+sentence = "அஞ்சு புத்தகம் இருக்கு."
+translation = "There are five books."
+chunks = [{ text = "அஞ்சு", join = "none" }, { text = "புத்தகம்", join = "space" }, { text = "இருக்கு", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "statement-board"
+levels = ["A1"]
+purposes = ["matchQuantity"]
+meaning = "There are five books."
+scene = { objects = [{ fact_id = "object:book", concept = "book" }, { fact_id = "object:cup", concept = "cup" }, { fact_id = "object:apple", concept = "apple" }], counts = [{ fact_id = "count:book", object = "object:book", quantity = 5 }, { fact_id = "count:cup", object = "object:cup", quantity = 2 }, { fact_id = "count:apple", object = "object:apple", quantity = 2 }] }
+bindings = { object = "object:book", count = "count:book" }
+truth = true
+labels = []
+sentence = "அஞ்சு புத்தகம் இருக்கு."
+translation = "There are five books."
+chunks = [{ text = "அஞ்சு", join = "none" }, { text = "புத்தகம்", join = "space" }, { text = "இருக்கு", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "correction-five-books"
+levels = ["A2"]
+purposes = ["correctRoleplayCount"]
+meaning = "No, there are five books."
+scene = { objects = [{ fact_id = "object:book", concept = "book" }, { fact_id = "object:cup", concept = "cup" }, { fact_id = "object:apple", concept = "apple" }], counts = [{ fact_id = "count:book", object = "object:book", quantity = 5 }, { fact_id = "count:cup", object = "object:cup", quantity = 2 }, { fact_id = "count:apple", object = "object:apple", quantity = 2 }] }
+bindings = { object = "object:book", count = "count:book" }
+truth = true
+labels = ["no"]
+sentence = "இல்லை, அஞ்சு புத்தகம் இருக்கு."
+translation = "No, there are five books."
+chunks = [{ text = "இல்லை", join = "none" }, { text = ",", join = "none" }, { text = "அஞ்சு", join = "space" }, { text = "புத்தகம்", join = "space" }, { text = "இருக்கு", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "statement-five-books-form"
+levels = ["A1", "A2"]
+purposes = ["buildQuantity"]
+sentence = "புத்தகம் அஞ்சு இருக்கு."
+correction = "அஞ்சு புத்தகம் இருக்கு."
+note = "The number comes before the noun."
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "statement-board-form"
+levels = ["A1"]
+purposes = ["matchQuantity"]
+sentence = "புத்தகம் அஞ்சு இருக்கு."
+correction = "அஞ்சு புத்தகம் இருக்கு."
+note = "The number comes before the noun."
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "correction-five-books-count"
+levels = ["A2"]
+purposes = ["correctRoleplayCount"]
+sentence = "இல்லை, ரெண்டு புத்தகம் இருக்கு."
+correction = "இல்லை, அஞ்சு புத்தகம் இருக்கு."
+note = "Correct the friend with the confirmed count."
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }

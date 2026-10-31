@@ -1,0 +1,79 @@
+construction_id = "scene-existence"
+
+[[examples]]
+example_id = "exist-apple"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "There is a yellow apple in the scene."
+scene = { objects = [{ fact_id = "object:apple", concept = "apple" }], attributes = [{ fact_id = "attribute:apple-yellow", object = "object:apple", kind = "color", value = "yellow" }] }
+bindings = { object = "object:apple", attribute = "attribute:apple-yellow" }
+truth = true
+labels = []
+sentence = "இங்கே ஒரு மஞ்சள் ஆப்பிள் இருக்கு."
+translation = "There is a yellow apple in the scene."
+chunks = [{ text = "இங்கே", join = "none" }, { text = "ஒரு", join = "space" }, { text = "மஞ்சள்", join = "space" }, { text = "ஆப்பிள்", join = "space" }, { text = "இருக்கு.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "exist-plate"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "There is a white plate in the scene."
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }], attributes = [{ fact_id = "attribute:plate-white", object = "object:plate", kind = "color", value = "white" }] }
+bindings = { object = "object:plate", attribute = "attribute:plate-white" }
+truth = true
+labels = []
+sentence = "இங்கே ஒரு வெள்ளை தட்டு இருக்கு."
+translation = "There is a white plate in the scene."
+chunks = [{ text = "இங்கே", join = "none" }, { text = "ஒரு", join = "space" }, { text = "வெள்ளை", join = "space" }, { text = "தட்டு", join = "space" }, { text = "இருக்கு.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "exist-chair"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "There is a chair in the scene."
+scene = { objects = [{ fact_id = "object:chair", concept = "chair" }] }
+bindings = { object = "object:chair" }
+truth = true
+labels = []
+sentence = "இங்கே ஒரு நாற்காலி இருக்கு."
+translation = "There is a chair in the scene."
+chunks = [{ text = "இங்கே", join = "none" }, { text = "ஒரு", join = "space" }, { text = "நாற்காலி", join = "space" }, { text = "இருக்கு.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "absent-clock"
+levels = ["A2"]
+purposes = ["chooseSceneDescription"]
+meaning = "There is no clock in the scene."
+scene = { objects = [], absent = [{ fact_id = "object:clock", concept = "clock" }] }
+bindings = { object = "object:clock" }
+truth = false
+labels = []
+sentence = "இங்கே கடிகாரம் இல்லை."
+translation = "There is no clock in the scene."
+chunks = [{ text = "இங்கே", join = "none" }, { text = "கடிகாரம்", join = "space" }, { text = "இல்லை.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-07"
+levels = ["A2"]
+purposes = ["chooseSceneMarker"]
+sentence = "இங்கே ஒரு கருப்பு தட்டு இருக்கு."
+correction = "இங்கே ஒரு வெள்ளை தட்டு இருக்கு."
+note = "The confirmed plate is white, not black; this is a meaning error rather than an invented gender rule."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-08"
+levels = ["A2"]
+purposes = ["chooseSceneDescription"]
+sentence = "இங்கே ஒரு கடிகாரம் இருக்கு."
+correction = "இங்கே கடிகாரம் இல்லை."
+note = "The clock is explicitly absent in this negative case."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }

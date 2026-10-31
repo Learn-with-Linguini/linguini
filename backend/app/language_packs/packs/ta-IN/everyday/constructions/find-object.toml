@@ -1,0 +1,24 @@
+construction_id = "find-object"
+version = 1
+summary = "Ask the learner to find a named object."
+guidance = "Ask the learner to find the object: noun in the object form (-ஐ) + கண்டுபிடிங்க. (கோப்பையைக் கண்டுபிடிங்க.). Keep the courteous spoken -ங்க ending."
+features = ["imperative"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun" }
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "find-frame"
+message = "Use the taught find instruction."
+must_contain = ["கண்டுபிடிங்க[.]$"]
+
+[[checks]]
+check_id = "spoken-register"
+message = "Use the pack's spoken forms (இருக்கு), not formal இருக்கிறது."
+must_not_contain = ["இருக்கிறது|இருக்கின்றது"]

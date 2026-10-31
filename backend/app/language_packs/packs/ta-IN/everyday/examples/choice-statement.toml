@@ -1,0 +1,25 @@
+construction_id = "choice-statement"
+
+[[examples]]
+example_id = "i-choose-book"
+levels = ["A0"]
+purposes = ["sayChoice"]
+meaning = "I choose the book."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }], preferences = [{ fact_id = "preference:cup", object = "object:cup", person = "first", likes = true }, { fact_id = "preference:book", object = "object:book", person = "ana", likes = false }, { fact_id = "preference:key", object = "object:key", person = "leo", likes = true }] }
+bindings = { object = "object:book" }
+truth = true
+labels = []
+sentence = "நான் புத்தகத்தை எடுக்கிறேன்."
+translation = "I choose the book."
+chunks = [{ text = "நான்", join = "none" }, { text = "புத்தகத்தை", join = "space" }, { text = "எடுக்கிறேன்", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "i-choose-book-form"
+levels = ["A0"]
+purposes = ["sayChoice"]
+sentence = "நான் புத்தகம் எடுக்கிறேன்."
+correction = "நான் புத்தகத்தை எடுக்கிறேன்."
+note = "The chosen object takes -ஐ: புத்தகத்தை."
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }

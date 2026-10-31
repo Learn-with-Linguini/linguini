@@ -1,0 +1,27 @@
+construction_id = "scene-location"
+version = 2
+summary = "Use reference-specific Tamil postpositional forms."
+guidance = "Use subject + reference/postpositional phrase + இருக்கு. The drafted spoken phrases include மேசை மேல, நாற்காலிக்குக் கீழே and புத்தகத்துக்குப் பக்கத்துல. The exact oblique/dative surfaces must be approved; do not build them by prefix/suffix guessing. Keep postpositions after the reference and preserve the subject/reference roles. These colloquial spellings require Tamil Nadu fluent review; do not silently convert them to formal written genitive constructions. Ask the bound object’s location with எங்கே இருக்கு? No European article or noun gender field is required."
+features = ["postposition", "oblique-reference-form", "spoken-locative"]
+constraints = ["Express only the selected scene facts and preserve semantic role bindings.", "Use the declared variety/register and approved surfaces.", "Treat these rules as generation guidance; they do not constitute a grammar validator."]
+required_labels = ["build-second-fact"]
+# Role categories match the shared semantic-slot contract; native word order is in guidance.
+roles = { subject = "noun", reference = "noun", relation = "preposition" }
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+except_uses = ["name"]
+
+[[checks]]
+check_id = "spoken-register"
+message = "Use the pack's spoken forms (இருக்கு), not formal இருக்கிறது."
+must_not_contain = ["இருக்கிறது|இருக்கின்றது|இருக்கின்றன"]
+
+[[checks]]
+check_id = "location-verb-final"
+message = "Location sentences end with the verb இருக்கு."
+must_contain = ["இருக்கு[.?!]$"]
+except_uses = ["followup"]
