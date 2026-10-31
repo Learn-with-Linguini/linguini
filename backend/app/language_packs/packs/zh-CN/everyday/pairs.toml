@@ -1,0 +1,14 @@
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+explanation = "For these concrete object nouns, use 这是 (this is) to identify the object: 这是 杯子. 很 marks degree in adjective predicates; 这很 is not the noun-identity frame. Chinese has no gendered articles. Classifiers are taught separately in counting and requests."
+
+[[words]]
+text = "这是"
+position = "before"
+meaning = "this is (noun-identity frame)"
+romanization = "zhè shì"
+
+[[words]]
+text = "这很"
+position = "before"
+meaning = "this is very ... (adjective-degree frame, not the taught object-noun identity)"
+romanization = "zhè hěn"

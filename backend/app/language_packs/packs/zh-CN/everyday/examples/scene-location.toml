@@ -1,0 +1,130 @@
+construction_id = "scene-location"
+
+[[examples]]
+example_id = "cup-on-table"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "The cup is on the table."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:table", "concept" = "table" }], "relations" = [{ "fact_id" = "relation:cup-on-table", "subject" = "object:cup", "reference" = "object:table", "relation" = "on" }] }
+bindings = { "subject" = "object:cup", "reference" = "object:table", "relation" = "relation:cup-on-table" }
+truth = true
+labels = []
+sentence = "杯子 在 桌子 上面."
+translation = "The cup is on the table."
+chunks = [{ "text" = "杯子", "join" = "none" }, { "text" = "在", "join" = "space" }, { "text" = "桌子", "join" = "space" }, { "text" = "上面", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "shoe-under-chair"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "The shoe is under the chair."
+scene = { "objects" = [{ "fact_id" = "object:shoe", "concept" = "shoe" }, { "fact_id" = "object:chair", "concept" = "chair" }], "relations" = [{ "fact_id" = "relation:shoe-under-chair", "subject" = "object:shoe", "reference" = "object:chair", "relation" = "under" }] }
+bindings = { "subject" = "object:shoe", "reference" = "object:chair", "relation" = "relation:shoe-under-chair" }
+truth = true
+labels = []
+sentence = "鞋 在 椅子 下面."
+translation = "The shoe is under the chair."
+chunks = [{ "text" = "鞋", "join" = "none" }, { "text" = "在", "join" = "space" }, { "text" = "椅子", "join" = "space" }, { "text" = "下面", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "lamp-next-to-book"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "The lamp is next to the book."
+scene = { "objects" = [{ "fact_id" = "object:lamp", "concept" = "lamp" }, { "fact_id" = "object:book", "concept" = "book" }], "relations" = [{ "fact_id" = "relation:lamp-next_to-book", "subject" = "object:lamp", "reference" = "object:book", "relation" = "next_to" }] }
+bindings = { "subject" = "object:lamp", "reference" = "object:book", "relation" = "relation:lamp-next_to-book" }
+truth = true
+labels = []
+sentence = "台灯 在 书 旁边."
+translation = "The lamp is next to the book."
+chunks = [{ "text" = "台灯", "join" = "none" }, { "text" = "在", "join" = "space" }, { "text" = "书", "join" = "space" }, { "text" = "旁边", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "ask-shoe-location"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+meaning = "Where is the shoe?"
+scene = { "objects" = [{ "fact_id" = "object:shoe", "concept" = "shoe" }, { "fact_id" = "object:chair", "concept" = "chair" }], "relations" = [{ "fact_id" = "relation:shoe-under-chair", "subject" = "object:shoe", "reference" = "object:chair", "relation" = "under" }] }
+bindings = { "subject" = "object:shoe" }
+truth = true
+labels = []
+sentence = "鞋 在 哪里?"
+translation = "Where is the shoe?"
+chunks = [{ "text" = "鞋", "join" = "none" }, { "text" = "在", "join" = "space" }, { "text" = "哪里", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "m02-cup-on-table"
+levels = ["A1"]
+purposes = ["findObject", "answerWhere"]
+meaning = "The cup is on the table."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:table", "concept" = "table" }], "relations" = [{ "fact_id" = "relation:cup-on-table", "subject" = "object:cup", "reference" = "object:table", "relation" = "on" }] }
+bindings = { "subject" = "object:cup", "reference" = "object:table", "relation" = "relation:cup-on-table" }
+truth = true
+labels = []
+sentence = "杯子 在 桌子 上面."
+translation = "The cup is on the table."
+chunks = [{ "text" = "杯子", "join" = "none" }, { "text" = "在", "join" = "space" }, { "text" = "桌子", "join" = "space" }, { "text" = "上面", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "cup-on-table-format"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+sentence = "杯子 在 桌子 上面"
+correction = "杯子 在 桌子 上面."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "shoe-under-chair-format"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+sentence = "鞋 在 椅子 下面"
+correction = "鞋 在 椅子 下面."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "lamp-next-to-book-format"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+sentence = "台灯 在 书 旁边"
+correction = "台灯 在 书 旁边."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "ask-shoe-location-format"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+sentence = "鞋 在 哪里"
+correction = "鞋 在 哪里?"
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "m02-cup-on-table-format"
+levels = ["A1"]
+purposes = ["findObject", "answerWhere"]
+sentence = "杯子 在 桌子 上面"
+correction = "杯子 在 桌子 上面."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "zh-grammar-scene-location"
+levels = ["A2"]
+purposes = ["buildSceneFact"]
+sentence = "杯子 在 上面 桌子."
+correction = "杯子 在 桌子 上面."
+note = "Put the reference noun before the localizer."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

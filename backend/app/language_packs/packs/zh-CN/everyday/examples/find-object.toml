@@ -1,0 +1,25 @@
+construction_id = "find-object"
+
+[[examples]]
+example_id = "find-cup"
+levels = ["A0"]
+purposes = ["findNamed"]
+meaning = "Find the cup."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }] }
+bindings = { "object" = "object:cup" }
+truth = true
+labels = []
+sentence = "请 找到 杯子."
+translation = "Find the cup."
+chunks = [{ "text" = "请", "join" = "none" }, { "text" = "找到", "join" = "space" }, { "text" = "杯子", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "find-cup-format"
+levels = ["A0"]
+purposes = ["findNamed"]
+sentence = "请 找到 杯子"
+correction = "请 找到 杯子."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

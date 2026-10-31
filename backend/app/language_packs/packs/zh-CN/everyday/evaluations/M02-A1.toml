@@ -1,0 +1,108 @@
+mission_id = "M02"
+practice_level = "A1"
+content_version = 2
+
+[[cases]]
+case_id = "m02-a1-key-on-table"
+category = "valid"
+construction_id = "scene-location"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:key", "concept" = "key" }, { "fact_id" = "object:table", "concept" = "table" }], "relations" = [{ "fact_id" = "relation:key-on-table", "subject" = "object:key", "reference" = "object:table", "relation" = "on" }] }
+bindings = { "subject" = "object:key", "relation" = "relation:key-on-table", "reference" = "object:table" }
+truth = true
+input = "Say where the key is: on the table."
+expected_meaning = "The key is on the table."
+acceptable = ["钥匙 在 桌子 上面."]
+reject = [{ "sentence" = "钥匙 在 桌子 上面", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "香蕉 在 桌子 上面.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m02-a1-held-bag-under-table"
+category = "valid"
+construction_id = "scene-location"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }, { "fact_id" = "object:table", "concept" = "table" }], "relations" = [{ "fact_id" = "relation:bag-under-table", "subject" = "object:bag", "reference" = "object:table", "relation" = "under" }] }
+bindings = { "subject" = "object:bag", "relation" = "relation:bag-under-table", "reference" = "object:table" }
+truth = true
+input = "Say where the bag is: under the table."
+expected_meaning = "The bag is under the table."
+acceptable = ["包 在 桌子 下面."]
+reject = [{ "sentence" = "包 在 桌子 下面", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "香蕉 在 桌子 下面.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m02-a1-under-table-phrase"
+category = "valid"
+construction_id = "location-phrase"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:spoon", "concept" = "spoon" }, { "fact_id" = "object:table", "concept" = "table" }], "relations" = [{ "fact_id" = "relation:spoon-under-table", "subject" = "object:spoon", "reference" = "object:table", "relation" = "under" }] }
+bindings = { "target" = "object:spoon", "relation" = "relation:spoon-under-table", "reference" = "object:table" }
+truth = true
+input = "Give the position of the spoon: under the table."
+expected_meaning = "under the table"
+acceptable = ["在 桌子 下面"]
+reject = [{ "sentence" = "在 桌子 下面.", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m02-a1-held-next-to-door"
+category = "valid"
+construction_id = "location-phrase"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:phone", "concept" = "phone" }, { "fact_id" = "object:door", "concept" = "door" }], "relations" = [{ "fact_id" = "relation:phone-next_to-door", "subject" = "object:phone", "reference" = "object:door", "relation" = "next_to" }] }
+bindings = { "target" = "object:phone", "relation" = "relation:phone-next_to-door", "reference" = "object:door" }
+truth = true
+input = "Give the position of the phone: next to the door."
+expected_meaning = "next to the door"
+acceptable = ["在 门 旁边"]
+reject = [{ "sentence" = "在 门 旁边.", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m02-a1-where-key"
+category = "valid"
+construction_id = "where-question"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:key", "concept" = "key" }, { "fact_id" = "object:bag", "concept" = "bag" }] }
+bindings = { "subject" = "object:key" }
+truth = true
+input = "Ask where the key is."
+expected_meaning = "Where is the key?"
+acceptable = ["钥匙 在 哪里?"]
+reject = [{ "sentence" = "钥匙 在 哪里", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "question"
+
+[[cases]]
+case_id = "m02-a1-where-punctuation"
+category = "valid"
+construction_id = "where-question"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }] }
+bindings = { "subject" = "object:plate" }
+truth = true
+input = "Ask where the plate is."
+expected_meaning = "Where is the plate?"
+acceptable = ["盘子 在 哪里?"]
+reject = [{ "sentence" = "盘子 在 哪里", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "question"
+
+[[cases]]
+case_id = "m02-a1-held-unicode"
+category = "valid"
+construction_id = "scene-location"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:phone", "concept" = "phone" }, { "fact_id" = "object:door", "concept" = "door" }], "relations" = [{ "fact_id" = "relation:phone-next_to-door", "subject" = "object:phone", "reference" = "object:door", "relation" = "next_to" }] }
+bindings = { "subject" = "object:phone", "relation" = "relation:phone-next_to-door", "reference" = "object:door" }
+truth = true
+input = "Say where the phone is: next to the door."
+expected_meaning = "The phone is next to the door."
+acceptable = ["电话机 在 门 旁边."]
+reject = [{ "sentence" = "电话机 在 门 旁边", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "香蕉 在 门 旁边.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"

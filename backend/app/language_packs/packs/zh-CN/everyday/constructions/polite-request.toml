@@ -1,0 +1,23 @@
+construction_id = "polite-request"
+version = 1
+summary = "Politely order, borrow or ask someone to pass an item."
+guidance = "Order with 请 给我 item-phrase. e.g. 请 给我 两 杯 小杯 咖啡. Borrow with 请 借给我 item-phrase. Pass with 请 递给我 item-phrase. The exact number-classifier-modifier-noun phrase must also be returned as order-phrase for the gap task. Do not substitute 我有/有 statements for requests. Use 两 before classifiers. Display Hanzi with one ASCII learning space between word/phrase units and ASCII . ? , for dev compatibility; this is not ordinary Chinese orthography. Supply exact aligned Hanzi/pinyin spans. Pinyin uses lexical tones, neutral syllables without tone marks, ü (not v), and NFC Latin text. Keep lexical yī and bù in writing; explain spoken tone changes separately. "
+features = ["mandarin", "simplified-script", "polite-request"]
+constraints = [
+  "Preserve selected semantic role bindings, truth and assigned role-play facts.",
+  "Use simplified Hanzi and the declared neutral polite register.",
+  "Pinyin is a support, not an alternative grading answer.",
+]
+required_labels = []
+roles = { "object" = "noun", "quantity" = "determiner", "size" = "phrase" }
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete task sentences need ASCII final punctuation."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "polite-request"
+message = "Use 请 and the requested action."
+must_contain = ["^请\\s(给我|借给我|递给我)\\s"]

@@ -1,0 +1,108 @@
+mission_id = "M03"
+practice_level = "A1"
+content_version = 1
+
+[[cases]]
+case_id = "m03-a1-four-plates"
+category = "valid"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }], "counts" = [{ "fact_id" = "count:plate", "object" = "object:plate", "quantity" = 4 }] }
+bindings = { "object" = "object:plate", "count" = "count:plate" }
+truth = true
+input = "Say there are four plates."
+expected_meaning = "There are four plates."
+acceptable = ["有 四 个 盘子."]
+reject = [{ "sentence" = "有 四 个 盘子", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "有 四 个 香蕉.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }, { "sentence" = "有 两 个 盘子.", "reason" = "Contradicts the bound exact count.", "category" = "wrongCount" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m03-a1-statement-frame"
+category = "valid"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:key", "concept" = "key" }], "counts" = [{ "fact_id" = "count:key", "object" = "object:key", "quantity" = 6 }] }
+bindings = { "object" = "object:key", "count" = "count:key" }
+truth = true
+input = "Say there are six keys."
+expected_meaning = "There are six keys."
+acceptable = ["有 六 把 钥匙."]
+reject = [{ "sentence" = "有 六 把 钥匙", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "有 六 把 香蕉.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }, { "sentence" = "有 两 把 钥匙.", "reason" = "Contradicts the bound exact count.", "category" = "wrongCount" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m03-a1-board"
+category = "valid"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:fork", "concept" = "fork" }] }
+bindings = { "object" = "object:fork", "count" = "number:7" }
+truth = false
+use = "board"
+input = "Say the practice board shows seven forks."
+expected_meaning = "There are seven forks."
+acceptable = ["有 七 把 叉子."]
+reject = [{ "sentence" = "有 七 把 叉子", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "有 七 把 香蕉.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }, { "sentence" = "有 两 把 叉子.", "reason" = "Contradicts the bound exact count.", "category" = "wrongCount" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m03-a1-how-many-spoons"
+category = "valid"
+construction_id = "how-many-question"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:spoon", "concept" = "spoon" }, { "fact_id" = "object:plate", "concept" = "plate" }], "counts" = [{ "fact_id" = "count:spoon", "object" = "object:spoon", "quantity" = 5 }, { "fact_id" = "count:plate", "object" = "object:plate", "quantity" = 4 }] }
+bindings = { "object" = "object:spoon" }
+truth = true
+input = "Ask how many spoons there are."
+expected_meaning = "How many spoons are there?"
+acceptable = ["有 几 把 勺子?"]
+reject = [{ "sentence" = "有 几 把 勺子", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "question"
+
+[[cases]]
+case_id = "m03-a1-held-phones"
+category = "valid"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:phone", "concept" = "phone" }, { "fact_id" = "object:bag", "concept" = "bag" }], "counts" = [{ "fact_id" = "count:phone", "object" = "object:phone", "quantity" = 10 }, { "fact_id" = "count:bag", "object" = "object:bag", "quantity" = 2 }] }
+bindings = { "object" = "object:phone", "count" = "count:phone" }
+truth = true
+input = "Say there are ten phones."
+expected_meaning = "There are ten phones."
+acceptable = ["有 十 台 电话机."]
+reject = [{ "sentence" = "有 十 台 电话机", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "有 十 台 香蕉.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }, { "sentence" = "有 两 台 电话机.", "reason" = "Contradicts the bound exact count.", "category" = "wrongCount" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m03-a1-held-unicode"
+category = "valid"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }], "counts" = [{ "fact_id" = "count:door", "object" = "object:door", "quantity" = 5 }] }
+bindings = { "object" = "object:door", "count" = "count:door" }
+truth = true
+input = "Say there are five doors."
+expected_meaning = "There are five doors."
+acceptable = ["有 五 扇 门."]
+reject = [{ "sentence" = "有 五 扇 门", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "有 五 扇 香蕉.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }, { "sentence" = "有 两 扇 门.", "reason" = "Contradicts the bound exact count.", "category" = "wrongCount" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m03-a1-held-counter"
+category = "valid"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }], "counts" = [{ "fact_id" = "count:book", "object" = "object:book", "quantity" = 3 }] }
+bindings = { "object" = "object:book", "count" = "count:book" }
+truth = true
+input = "Say there are three books."
+expected_meaning = "There are three books."
+acceptable = ["有 三 本 书."]
+reject = [{ "sentence" = "有 三 本 书", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "有 三 本 香蕉.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }, { "sentence" = "有 两 本 书.", "reason" = "Contradicts the bound exact count.", "category" = "wrongCount" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"

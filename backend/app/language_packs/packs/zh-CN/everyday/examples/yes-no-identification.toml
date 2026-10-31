@@ -1,0 +1,154 @@
+construction_id = "yes-no-identification"
+
+[[examples]]
+example_id = "ask-cup"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "Is this a cup?"
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }] }
+bindings = { "object" = "object:cup", "shown" = "object:cup" }
+truth = true
+labels = []
+sentence = "这是 杯子 吗?"
+translation = "Is this a cup?"
+chunks = [{ "text" = "这是", "join" = "none" }, { "text" = "杯子", "join" = "space" }, { "text" = "吗", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "ask-plate"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "Is this a plate?"
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }] }
+bindings = { "object" = "object:plate", "shown" = "object:plate" }
+truth = true
+labels = []
+sentence = "这是 盘子 吗?"
+translation = "Is this a plate?"
+chunks = [{ "text" = "这是", "join" = "none" }, { "text" = "盘子", "join" = "space" }, { "text" = "吗", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "ask-bottle"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "Is this a bottle?"
+scene = { "objects" = [{ "fact_id" = "object:bottle", "concept" = "bottle" }] }
+bindings = { "object" = "object:bottle", "shown" = "object:bottle" }
+truth = true
+labels = []
+sentence = "这是 瓶子 吗?"
+translation = "Is this a bottle?"
+chunks = [{ "text" = "这是", "join" = "none" }, { "text" = "瓶子", "join" = "space" }, { "text" = "吗", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "answer-book-yes"
+levels = ["A1"]
+purposes = ["confirmObject"]
+meaning = "Yes, it is a book."
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }] }
+bindings = { "shown" = "object:book", "object" = "object:book" }
+truth = true
+labels = ["yes"]
+sentence = "对, 这是 书."
+translation = "Yes, it is a book."
+chunks = [{ "text" = "对", "join" = "none" }, { "text" = ",", "join" = "none" }, { "text" = "这是", "join" = "space" }, { "text" = "书", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "answer-chair-yes"
+levels = ["A1"]
+purposes = ["confirmObject"]
+meaning = "Yes, it is a chair."
+scene = { "objects" = [{ "fact_id" = "object:chair", "concept" = "chair" }] }
+bindings = { "shown" = "object:chair", "object" = "object:chair" }
+truth = true
+labels = ["yes"]
+sentence = "对, 这是 椅子."
+translation = "Yes, it is a chair."
+chunks = [{ "text" = "对", "join" = "none" }, { "text" = ",", "join" = "none" }, { "text" = "这是", "join" = "space" }, { "text" = "椅子", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "answer-clock-no"
+levels = ["A1"]
+purposes = ["confirmObject"]
+meaning = "No, it is a clock."
+scene = { "objects" = [{ "fact_id" = "object:clock", "concept" = "clock" }, { "fact_id" = "object:lamp", "concept" = "lamp" }] }
+bindings = { "shown" = "object:clock", "object" = "object:lamp" }
+truth = false
+labels = ["no"]
+sentence = "不对, 这是 钟."
+translation = "No, it is a clock."
+chunks = [{ "text" = "不对", "join" = "none" }, { "text" = ",", "join" = "none" }, { "text" = "这是", "join" = "space" }, { "text" = "钟", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "ask-cup-format"
+levels = ["A0"]
+purposes = ["confirmName"]
+sentence = "这是 杯子 吗"
+correction = "这是 杯子 吗?"
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "ask-plate-format"
+levels = ["A0"]
+purposes = ["confirmName"]
+sentence = "这是 盘子 吗"
+correction = "这是 盘子 吗?"
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "ask-bottle-format"
+levels = ["A0"]
+purposes = ["confirmName"]
+sentence = "这是 瓶子 吗"
+correction = "这是 瓶子 吗?"
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "answer-book-yes-format"
+levels = ["A1"]
+purposes = ["confirmObject"]
+sentence = "对, 这是 书"
+correction = "对, 这是 书."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "answer-chair-yes-format"
+levels = ["A1"]
+purposes = ["confirmObject"]
+sentence = "对, 这是 椅子"
+correction = "对, 这是 椅子."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "answer-clock-no-format"
+levels = ["A1"]
+purposes = ["confirmObject"]
+sentence = "不对, 这是 钟"
+correction = "不对, 这是 钟."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "zh-grammar-yes-no-identification"
+levels = ["A0"]
+purposes = ["confirmName"]
+sentence = "这是 杯子 吗 吗?"
+correction = "这是 杯子 吗?"
+note = "Use one question particle, not two."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

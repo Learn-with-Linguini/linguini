@@ -1,0 +1,24 @@
+construction_id = "describe-attribute"
+version = 2
+summary = "Describe a colour/material or ask about it."
+guidance = "Use 这是 红色的 杯子. or 杯子 是 红色的. for a colour. A material noun phrase uses 木制的 N / 金属制的 N, not gender agreement. Ask N 是 什么 颜色 的? for followup; do not reveal the bound colour. A colour chip is bare 红色. For a scalar adjective use N 很 大 / N 是 大的 in an appropriate contrast, never blindly put 是 before every adjective. Display Hanzi with one ASCII learning space between word/phrase units and ASCII . ? , for dev compatibility; this is not ordinary Chinese orthography. Supply exact aligned Hanzi/pinyin spans. Pinyin uses lexical tones, neutral syllables without tone marks, ü (not v), and NFC Latin text. Keep lexical yī and bù in writing; explain spoken tone changes separately. "
+features = ["mandarin", "simplified-script", "describe-attribute"]
+constraints = [
+  "Preserve selected semantic role bindings, truth and assigned role-play facts.",
+  "Use simplified Hanzi and the declared neutral polite register.",
+  "Pinyin is a support, not an alternative grading answer.",
+]
+required_labels = ["attribute-prompt-colour", "describe-object"]
+roles = { "object" = "noun", "attribute" = "adjective" }
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete task sentences need ASCII final punctuation."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "detail-followup"
+message = "Ask a colour/material question without giving the answer."
+must_contain = ["什么\\s(颜色|材料)", "[?]$"]
+uses = ["followup"]

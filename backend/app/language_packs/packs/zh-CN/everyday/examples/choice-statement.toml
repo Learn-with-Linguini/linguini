@@ -1,0 +1,25 @@
+construction_id = "choice-statement"
+
+[[examples]]
+example_id = "i-choose-book"
+levels = ["A0"]
+purposes = ["sayChoice"]
+meaning = "I choose the book."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }], "preferences" = [{ "fact_id" = "preference:cup", "object" = "object:cup", "person" = "first", "likes" = true }, { "fact_id" = "preference:book", "object" = "object:book", "person" = "ana", "likes" = false }, { "fact_id" = "preference:key", "object" = "object:key", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:book" }
+truth = true
+labels = []
+sentence = "我 选 书."
+translation = "I choose the book."
+chunks = [{ "text" = "我", "join" = "none" }, { "text" = "选", "join" = "space" }, { "text" = "书", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "i-choose-book-format"
+levels = ["A0"]
+purposes = ["sayChoice"]
+sentence = "我 选 书"
+correction = "我 选 书."
+note = "Keep vocabulary/counting chunks unpunctuated; complete task sentences retain their required ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

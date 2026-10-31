@@ -1,0 +1,311 @@
+[[labels]]
+semantic = "yes"
+text = "对"
+romanization = "duì"
+meaning = "yes / correct (affirming a statement)"
+usage = "sentence"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "no"
+text = "不对"
+romanization = "bù duì"
+meaning = "no / incorrect (correcting a statement)"
+usage = "sentence"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "yes-answer"
+text = "对."
+romanization = "duì."
+meaning = "yes / correct (affirming a statement)"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "no-answer"
+text = "不对."
+romanization = "bù duì."
+meaning = "no / incorrect (correcting a statement)"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "what-is-this"
+text = "这 是 什么?"
+romanization = "zhè shì shénme?"
+meaning = "What is this?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "attribute-prompt-colour"
+text = "这个 物品 是 什么 颜色 的?"
+romanization = "zhège wùpǐn shì shénme yánsè de?"
+meaning = "What colour is this object?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "describe-object"
+text = "请 描述 这个 物品."
+romanization = "qǐng miáoshù zhège wùpǐn."
+meaning = "Describe this object."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "touch-object"
+text = "请 点击 符合 这句话 的 物品: {f['first']}."
+romanization = "qǐng diǎnjī fúhé zhè jù huà de wùpǐn: {f['first']}."
+meaning = "Tap the object matching this sentence: {f['first']}."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "build-second-fact"
+text = "请 组成 第二 句话."
+romanization = "qǐng zǔchéng dì èr jù huà."
+meaning = "Build the second sentence."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "choose-description"
+text = "哪个 描述 符合 照片?"
+romanization = "nǎge miáoshù fúhé zhàopiàn?"
+meaning = "Which description matches the photo?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "describe-scene"
+text = "请 用 这些 句子 描述 照片."
+romanization = "qǐng yòng zhèxiē jùzi miáoshù zhàopiàn."
+meaning = "Describe the scene with these sentences."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "connector-distractor"
+text = "但是"
+romanization = "dànshì"
+meaning = "but"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "attribute-prompt"
+text = "这个 物品 是 什么 样 的?"
+romanization = "zhège wùpǐn shì shénme yàng de?"
+meaning = "What is this object like?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "attribute-prompt-material"
+text = "这个 物品 是 用 什么 材料 做 的?"
+romanization = "zhège wùpǐn shì yòng shénme cáiliào zuò de?"
+meaning = "What material is this object made of?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "vocabulary-unsure"
+text = "我 不 知道"
+romanization = "wǒ bù zhīdào"
+meaning = "I don't know"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "vocabulary-other"
+text = "我 不 确定"
+romanization = "wǒ bù quèdìng"
+meaning = "I'm not sure"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "ask-where"
+text = "请 问 它 在 哪里."
+romanization = "qǐng wèn tā zài nǎlǐ."
+meaning = "Ask where it is."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "answer-where"
+text = "请 根据 照片 回答 它 的 位置."
+romanization = "qǐng gēnjù zhàopiàn huídá tā de wèizhi."
+meaning = "Answer with the position the photo shows."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "clue-meaning"
+text = "这 是 什么 意思?"
+romanization = "zhè shì shénme yìsi?"
+meaning = "What does it mean?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "build-location-clue"
+text = "请 组成 第二 条 线索."
+romanization = "qǐng zǔchéng dì èr tiáo xiànsuǒ."
+meaning = "Build the second clue."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "find-both-clues"
+text = "请 点击 同时 符合 两条 线索 的 物品."
+romanization = "qǐng diǎnjī tóngshí fúhé liǎng tiáo xiànsuǒ de wùpǐn."
+meaning = "Tap the object that matches both clues."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "friend-points"
+text = "朋友 指着 {marker}号 物品. 你 会 怎么 说?"
+romanization = "péngyou zhǐzhe {marker} hào wùpǐn. nǐ huì zěnme shuō?"
+meaning = "Your friend points to number {marker}. What do you say?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "name-and-locate"
+text = "请 说出 物品 的 名称 和 位置."
+romanization = "qǐng shuōchū wùpǐn de míngchēng hé wèizhi."
+meaning = "Say the object's name and where it is."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "answer-in-sentence"
+text = "请 用 完整 的 句子 回答."
+romanization = "qǐng yòng wánzhěng de jùzi huídá."
+meaning = "Answer with a sentence."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "build-group-sentence"
+text = "请 用 句子 描述 标出 的 那组 物品."
+romanization = "qǐng yòng jùzi miáoshù biāochū de nà zǔ wùpǐn."
+meaning = "Build a sentence about the highlighted group."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "choose-comparison"
+text = "请 选择 正确 的 比较."
+romanization = "qǐng xuǎnzé zhèngquè de bǐjiào."
+meaning = "Choose the correct comparison."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "friend-says"
+text = "朋友 说: “{statement}” 你 会 怎么 回答?"
+romanization = "péngyou shuō: “{statement}” nǐ huì zěnme huídá?"
+meaning = "Your friend says: “{statement}” What do you answer?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "friend-is-right"
+text = "对, 朋友 说得对."
+romanization = "duì, péngyou shuō de duì."
+meaning = "Yes, your friend is right."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "describe-compare"
+text = "请 描述 并 比较 这 两组 物品."
+romanization = "qǐng miáoshù bìng bǐjiào zhè liǎng zǔ wùpǐn."
+meaning = "Describe and compare the two groups."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "more"
+text = "多"
+romanization = "duō"
+meaning = "more"
+usage = "sentence"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "fewer"
+text = "少"
+romanization = "shǎo"
+meaning = "fewer"
+usage = "sentence"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "choose-sentence"
+text = "请 选择 正确 的 句子."
+romanization = "qǐng xuǎnzé zhèngquè de jùzi."
+meaning = "Choose the correct sentence."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "which-is-yours"
+text = "哪个 物品 是 你的?"
+romanization = "nǎge wùpǐn shì nǐ de?"
+meaning = "Which object is yours?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "choose-possessive"
+text = "你 会 怎么 说?"
+romanization = "nǐ huì zěnme shuō?"
+meaning = "You say:"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "describe-your-object"
+text = "请 描述 你的 物品."
+romanization = "qǐng miáoshù nǐ de wùpǐn."
+meaning = "Describe your object."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "clarify-and-describe"
+text = "请 说出 哪个 是 你的 物品, 并 描述 它."
+romanization = "qǐng shuōchū nǎge shì nǐ de wùpǐn, bìng miáoshù tā."
+meaning = "Say which object is yours and describe it."
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "what-choose"
+text = "你 选 什么?"
+romanization = "nǐ xuǎn shénme?"
+meaning = "What do you choose?"
+usage = "prompt"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "request-distractor-have"
+text = "我 有"
+meaning = "I have"
+usage = "prompt"
+romanization = "wǒ yǒu"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[labels]]
+semantic = "request-distractor-exists"
+text = "有"
+meaning = "there is / there are"
+usage = "prompt"
+romanization = "yǒu"
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

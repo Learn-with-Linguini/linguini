@@ -1,0 +1,55 @@
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[numbers]]
+value = 1
+text = "一"
+romanization = "yī"
+
+[[numbers]]
+value = 2
+text = "二"
+romanization = "èr"
+
+[[numbers.with_noun]]
+text = "两"
+romanization = "liǎng"
+
+[[numbers]]
+value = 3
+text = "三"
+romanization = "sān"
+
+[[numbers]]
+value = 4
+text = "四"
+romanization = "sì"
+
+[[numbers]]
+value = 5
+text = "五"
+romanization = "wǔ"
+
+[[numbers]]
+value = 6
+text = "六"
+romanization = "liù"
+
+[[numbers]]
+value = 7
+text = "七"
+romanization = "qī"
+
+[[numbers]]
+value = 8
+text = "八"
+romanization = "bā"
+
+[[numbers]]
+value = 9
+text = "九"
+romanization = "jiǔ"
+
+[[numbers]]
+value = 10
+text = "十"
+romanization = "shí"

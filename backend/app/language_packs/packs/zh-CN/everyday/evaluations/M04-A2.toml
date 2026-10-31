@@ -1,0 +1,110 @@
+mission_id = "M04"
+practice_level = "A2"
+content_version = 1
+
+[[cases]]
+case_id = "m04-a2-clue"
+category = "valid"
+construction_id = "target-clue"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }], "attributes" = [{ "fact_id" = "attribute:bag-green", "object" = "object:bag", "kind" = "color", "value" = "green" }] }
+bindings = { "target" = "object:bag", "attribute" = "attribute:bag-green" }
+truth = true
+use = "attribute"
+input = "Give the colour clue for your object without naming it: green."
+expected_meaning = "It is green."
+acceptable = ["是 绿色的."]
+reject = [{ "sentence" = "是 绿色的", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m04-a2-describe-colour"
+category = "valid"
+construction_id = "owned-description"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }], "attributes" = [{ "fact_id" = "attribute:bag-green", "object" = "object:bag", "kind" = "color", "value" = "green" }], "owners" = [{ "fact_id" = "owner:bag", "object" = "object:bag", "owner" = "first" }] }
+bindings = { "object" = "object:bag", "owner" = "owner:bag", "attribute" = "attribute:bag-green" }
+truth = true
+input = "Describe your bag: green."
+expected_meaning = "My bag is green."
+acceptable = ["我的 包 是 绿色的."]
+reject = [{ "sentence" = "我的 包 是 绿色的", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m04-a2-describe-place"
+category = "valid"
+construction_id = "owned-description"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:key", "concept" = "key" }, { "fact_id" = "object:table", "concept" = "table" }], "relations" = [{ "fact_id" = "relation:key-on-table", "subject" = "object:key", "reference" = "object:table", "relation" = "on" }], "owners" = [{ "fact_id" = "owner:key", "object" = "object:key", "owner" = "first" }] }
+bindings = { "object" = "object:key", "owner" = "owner:key", "relation" = "relation:key-on-table", "reference" = "object:table" }
+truth = true
+input = "Describe your key: on the table."
+expected_meaning = "My key is on the table."
+acceptable = ["我的 钥匙 在 桌子 上面."]
+reject = [{ "sentence" = "我的 钥匙 在 桌子 上面", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m04-a2-clarify"
+category = "valid"
+construction_id = "owned-object"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }], "owners" = [{ "fact_id" = "owner:plate", "object" = "object:plate", "owner" = "ana" }] }
+bindings = { "object" = "object:plate", "owner" = "owner:plate" }
+truth = true
+labels = ["no"]
+input = "Tell the friend no: the plate is Ana's."
+expected_meaning = "No, the plate is Ana's."
+acceptable = ["不对, 盘子 是 安娜 的."]
+reject = [{ "sentence" = "不对, 盘子 是 安娜 的", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "不对, 香蕉 是 安娜 的.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m04-a2-yes-mine"
+category = "valid"
+construction_id = "possessive-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }], "owners" = [{ "fact_id" = "owner:door", "object" = "object:door", "owner" = "first" }] }
+bindings = { "object" = "object:door", "owner" = "owner:door" }
+truth = true
+labels = ["yes"]
+input = "Answer yes: it is your door."
+expected_meaning = "Yes, it's my door."
+acceptable = ["对, 这是 我的 门."]
+reject = [{ "sentence" = "对, 这是 我的 门", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "对, 这是 我的 香蕉.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m04-a2-yours"
+category = "valid"
+construction_id = "owned-object"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }], "owners" = [{ "fact_id" = "owner:door", "object" = "object:door", "owner" = "first" }] }
+bindings = { "object" = "object:door", "owner" = "possessor:second" }
+truth = true
+use = "statement"
+input = "Say the door is the listener's."
+expected_meaning = "The door is yours."
+acceptable = ["门 是 你的."]
+reject = [{ "sentence" = "门 是 你的", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }, { "sentence" = "香蕉 是 你的.", "reason" = "Substitutes an unbound object for the bound object.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m04-a2-held-unicode"
+category = "valid"
+construction_id = "owned-description"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:phone", "concept" = "phone" }], "attributes" = [{ "fact_id" = "attribute:phone-red", "object" = "object:phone", "kind" = "color", "value" = "red" }], "owners" = [{ "fact_id" = "owner:phone", "object" = "object:phone", "owner" = "first" }] }
+bindings = { "object" = "object:phone", "owner" = "owner:phone", "attribute" = "attribute:phone-red" }
+truth = true
+input = "Describe your phone: red."
+expected_meaning = "My phone is red."
+acceptable = ["我的 电话机 是 红色的."]
+reject = [{ "sentence" = "我的 电话机 是 红色的", "reason" = "Wrong phrase/sentence punctuation for this task slot.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Simplified Mandarin teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
