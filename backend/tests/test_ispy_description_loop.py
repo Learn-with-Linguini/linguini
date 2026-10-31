@@ -3,7 +3,7 @@
 from uuid import UUID, uuid4
 
 import pytest
-from sqlalchemy import delete, func, insert, select
+from sqlalchemy import delete, func, insert, select, update
 from test_postgres_sessions import database as database
 from test_transaction_boundaries import (
     attempt_count,
@@ -337,7 +337,7 @@ def test_a_clue_naming_the_target_is_rejected_before_any_model_call(database, lo
 
 
 def test_guided_support_is_recorded_per_attempt_and_restored_on_retry(database, loop):
-    repo, _sid, task_id, _guesser, target, other, replies = loop
+    repo, sid, task_id, _guesser, target, other, replies = loop
     engine = database[0]
     content = described_content(engine, task_id)
     colour = content.clue_frames[0]
@@ -368,6 +368,60 @@ def test_guided_support_is_recorded_per_attempt_and_restored_on_retry(database, 
                                        inserted_chips=["not offered"]),
         )
     assert correct_attempts(engine, database[1].id) == 0
+    # A later manually typed revision cannot erase assistance from this task's history.
+    confirmed = repo.confirm_guess(task_id, revised.attempt.id)
+    assert confirmed.task.status == "completed"
+    assert ispy_xp_count(engine, sid) == 0
+    assert xp_events_of(engine, sid, "taskCompleted") == 1
+    repo.confirm_guess(task_id, revised.attempt.id)
+    assert xp_events_of(engine, sid, "taskCompleted") == 1
+
+
+@pytest.mark.parametrize("support", [
+    {"selected_frame_ids": ["colour"], "inserted_chips": ["azul"]},
+    {"selected_frame_ids": ["colour"], "selected_slots": [
+        {"frameId": "colour", "slotId": "colour", "chip": "azul"},
+    ]},
+    {"revealed_help_frame_ids": ["colour"]},
+    {"revealed_meaning_frame_ids": ["colour"]},
+    {"word_bank_shown": True},
+    {"cheat_sheet_opened": True},
+])
+def test_optional_help_keeps_completion_credit_without_independent_bonus(database, loop, support):
+    repo, sid, task_id, _guesser, target, _other, replies = loop
+    engine = database[0]
+    data = described_content(engine, task_id).model_dump(mode="json", by_alias=True)
+    data["wordBank"] = [{"text": "azul", "translation": "blue"}]
+    data["cheatSheet"] = {"missionId": "M02", "practiceLevel": "A0", "contentVersion": 2}
+    content = ReflectionContent.model_validate(data)
+    with engine.begin() as connection:
+        connection.execute(update(session_tasks).where(session_tasks.c.id == task_id)
+            .values(public_content=data))
+    replies.append(result(target))
+    request = guided(content, "Es azul.", "assisted-bonus", **support)
+    saved = repo.task_action(task_id, "attempt", request)
+    restored = latest(database[3], task_id)
+    assert ClueAssistance.model_validate(restored["assistance"]) == request.assistance
+    assert repo.task_action(task_id, "attempt", request).attempt.id == saved.attempt.id
+    assert repo.confirm_guess(task_id, saved.attempt.id).task.status == "completed"
+    repo.confirm_guess(task_id, saved.attempt.id)
+    assert ispy_xp_count(engine, sid) == 0
+    assert xp_events_of(engine, sid, "taskCompleted") == 1
+
+
+@pytest.mark.parametrize("support", [{}, {"targetWordShown": True}])
+def test_empty_assistance_metadata_preserves_the_independent_bonus(database, loop, support):
+    repo, sid, task_id, _guesser, target, _other, replies = loop
+    replies.append(result(target))
+    request = SubmitTextAttemptRequest.model_validate({
+        "text": "Es marrón y está a la izquierda.", "idempotencyKey": "metadata-only",
+        "assistance": support,
+    })
+    saved = repo.task_action(task_id, "attempt", request)
+    repo.confirm_guess(task_id, saved.attempt.id)
+    repo.confirm_guess(task_id, saved.attempt.id)
+    assert ispy_xp_count(database[0], sid) == 1
+    assert xp_events_of(database[0], sid, "taskCompleted") == 1
 
 
 LATEST_FIELDS = {

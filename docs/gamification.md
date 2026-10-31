@@ -26,6 +26,16 @@ Today's Basil and lifetime Basil sum earned credits, including historical
 credits. Buying an accent reduces the available balance, not either earned
 total. Existing XP and Basil history are preserved.
 
+## I-Spy assistance and XP
+
+Lesson description practice keeps its task-completion XP when a learner uses
+optional support. The separate independent-correct bonus is awarded only when
+none of that task's saved attempts used a clue frame, inserted phrase, selected
+slot, English or phrase hint, word bank, or cheatsheet. Offering those controls
+or showing the target word alone does not count as help usage. Revising a clue
+does not erase support already recorded on an earlier attempt. Confirmation
+retries award credit only once. Standalone I-Spy continues to award no XP.
+
 ## Mission badges: `mission-badges.v1`
 
 A successful batch must meet its versioned mission definition's minimum assessed

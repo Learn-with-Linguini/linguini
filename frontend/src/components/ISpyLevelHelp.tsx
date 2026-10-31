@@ -6,11 +6,16 @@ import { Button } from "./ui";
 import "./ISpyLevelHelp.css";
 
 /** Scene vocabulary for every learner; A1/A2 may reveal it when they need support. */
-export function ISpyLevelHelp({ support, languageCode }: { support: ISpyLevelSupport; languageCode: string }) {
+export function ISpyLevelHelp({ support, languageCode, wordsShown: controlledWordsShown, onWordsShownChange, onAssistance }: {
+  support: ISpyLevelSupport; languageCode: string; wordsShown?: boolean;
+  onWordsShownChange?: (shown: boolean) => void;
+  onAssistance?: (kind: "wordBank" | "cheatSheet") => void;
+}) {
   const words = support.wordBank ?? [];
   const sheet = support.cheatSheet;
   const collapsible = support.learnerLevel === "A1" || support.learnerLevel === "A2";
-  const [wordsShown, setWordsShown] = useState(!collapsible);
+  const [localWordsShown, setLocalWordsShown] = useState(!collapsible);
+  const wordsShown = controlledWordsShown ?? localWordsShown;
   if (!words.length && !sheet) return null;
   return <section className="ispy-help" aria-label="Word help">
     <div className="ispy-help__heading">
@@ -18,11 +23,14 @@ export function ISpyLevelHelp({ support, languageCode }: { support: ISpyLevelSup
       <div className="ispy-help__actions">
         {words.length && collapsible ? <Button variant="quiet" aria-expanded={wordsShown} onClick={() => {
           const next = !wordsShown;
-          setWordsShown(next);
+          if (onWordsShownChange) onWordsShownChange(next);
+          else setLocalWordsShown(next);
+          if (next) onAssistance?.("wordBank");
           trackAction("ispy_word_bank_toggled", { learnerLevel: support.learnerLevel, shown: next });
         }}>{wordsShown ? "Hide word bank" : "Show word bank"}</Button> : null}
         {sheet ? <MissionCheatSheetLauncher missionId={sheet.missionId} practiceLevel={sheet.practiceLevel}
-          contentVersion={sheet.contentVersion} languageCode={languageCode} /> : null}
+          contentVersion={sheet.contentVersion} languageCode={languageCode}
+          onOpen={() => onAssistance?.("cheatSheet")} /> : null}
       </div>
     </div>
     {words.length && wordsShown ? <ul className="ispy-help__words">

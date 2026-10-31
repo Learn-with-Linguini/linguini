@@ -19,6 +19,7 @@ from app.services.ispy_clue_frames import (
     _place,
     build_clue_support,
     check_clue,
+    clue_assistance_used,
     clue_grammar,
     mentions_target,
 )
@@ -407,9 +408,34 @@ def test_check_clue_rejects_the_target_word_and_unoffered_assistance():
         dict(offered_frame_ids=offered, selected_frame_ids=["location"], selected_slots=[
             ClueSlotChoice(frame_id="location", slot_id="reference", chip="la taza")]),
         dict(offered_frame_ids=["colour"], revealed_help_frame_ids=["location"]),
+        dict(offered_frame_ids=["colour"], revealed_meaning_frame_ids=["location"]),
+        dict(word_bank_shown=True),
+        dict(cheat_sheet_opened=True),
     ]:
         with pytest.raises(PracticeConflictError):
             check_clue(content, attempt("Es roja", **bad))
+
+
+@pytest.mark.parametrize("support", [None, {}, {"targetWordShown": True}, {
+    "offeredFrameIds": ["colour", "location"], "practiceMode": "guided",
+}])
+def test_offered_clue_support_is_not_optional_assistance_usage(support):
+    assert clue_assistance_used(support) is False
+
+
+@pytest.mark.parametrize("support", [
+    {"selectedFrameIds": ["colour"]},
+    {"insertedChips": ["azul"]},
+    {"selectedSlots": [{"frameId": "colour", "slotId": "colour", "chip": "azul"}]},
+    {"revealedHelpFrameIds": ["location"]},
+    {"revealedMeaningFrameIds": ["location"]},
+    {"wordBankShown": True},
+    {"cheatSheetOpened": True},
+])
+def test_used_clue_support_is_assisted_in_api_and_stored_payloads(support):
+    parsed = ClueAssistance.model_validate(support)
+    assert clue_assistance_used(parsed)
+    assert clue_assistance_used(parsed.model_dump(by_alias=False))
 
 
 def test_legacy_name_frames_still_validate_whether_shown_or_hidden():

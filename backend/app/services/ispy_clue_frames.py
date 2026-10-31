@@ -348,11 +348,15 @@ def _check_assistance(content, assistance: ClueAssistance):
     selected_ids = set(assistance.selected_frame_ids)
     selected = [frames.get(frame_id) for frame_id in assistance.selected_frame_ids]
     revealed = set(assistance.revealed_help_frame_ids)
+    meanings = set(assistance.revealed_meaning_frame_ids)
     if (
         None in selected
         or offered != [frame_id for frame_id in frames if frame_id in offered]
         or not selected_ids <= set(offered)
         or not revealed <= set(offered)
+        or not meanings <= set(offered)
+        or (assistance.word_bank_shown and not content.word_bank)
+        or (assistance.cheat_sheet_opened and content.cheat_sheet is None)
     ):
         raise PracticeConflictError("Clue assistance does not match this task.")
     allowed = {
@@ -375,3 +379,24 @@ def _check_assistance(content, assistance: ClueAssistance):
     )
     if not set(assistance.inserted_chips) <= allowed or not slots_ok:
         raise PracticeConflictError("Clue assistance does not match this task.")
+
+
+def clue_assistance_used(assistance: ClueAssistance | dict | None) -> bool:
+    """Offering frames or displaying the target alone is not optional help usage."""
+    if assistance is None:
+        return False
+    if isinstance(assistance, dict):
+        try:
+            assistance = ClueAssistance.model_validate(assistance)
+        except ValueError:
+            # Malformed historical support must not become evidence of independence.
+            return True
+    return bool(
+        assistance.selected_frame_ids
+        or assistance.inserted_chips
+        or assistance.selected_slots
+        or assistance.revealed_help_frame_ids
+        or assistance.revealed_meaning_frame_ids
+        or assistance.word_bank_shown
+        or assistance.cheat_sheet_opened
+    )

@@ -751,7 +751,7 @@ class ClueSlotChoice(ApiModel):
 
 
 class ClueAssistance(ApiModel):
-    """Support visible while a clue was written: guided practice, never independent recall."""
+    """Offered support and the optional help actually used while writing a clue."""
 
     version: Literal["ispy-clue-assistance.v1"] = CLUE_ASSISTANCE_VERSION
     practice_mode: Literal["guided"] = "guided"
@@ -761,6 +761,9 @@ class ClueAssistance(ApiModel):
     inserted_chips: list[ClueChip] = Field(default_factory=list, max_length=20)
     selected_slots: list[ClueSlotChoice] = Field(default_factory=list, max_length=6)
     revealed_help_frame_ids: list[ClueFrameId] = Field(default_factory=list, max_length=3)
+    revealed_meaning_frame_ids: list[ClueFrameId] = Field(default_factory=list, max_length=3)
+    word_bank_shown: bool = False
+    cheat_sheet_opened: bool = False
 
 
 class LatestClueAttempt(ApiModel):

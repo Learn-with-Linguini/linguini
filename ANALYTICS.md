@@ -178,6 +178,7 @@ The existing analysis and review routes show this progress; no new page is added
 | `ispy_clue_listened_first` | `{ taskId }` | An A2 learner plays a listen-first clue, which then shows its text |
 | `ispy_clue_text_revealed` | `{ taskId }` | An A2 learner shows a listen-first clue's text without playing it |
 | `ispy_clue_help_opened` | `{ taskId }` | An A2 learner opens the clue frames kept behind "Need help?" |
+| `ispy_clue_help_revealed` | `{ kind, frame }` | A learner explicitly reveals English meanings/examples (`meanings`) or suggested phrases (`phrases`) for a clue frame; no clue text, translations or object names are sent |
 | `ispy_exit_clicked` | `{ phase: "clues" \| "describe" }` | Learner exits an active I-Spy round back to Home |
 | `describe_round_skipped` | `{ mode }` | Session skips the describing round because there is no reflection task and proceeds to results |
 | `ispy_match_confirmed` | — | Learner confirms Linguini guessed their object correctly |

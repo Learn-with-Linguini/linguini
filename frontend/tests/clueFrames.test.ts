@@ -85,16 +85,23 @@ test("the target word is found whole, ignoring case, accents and one-letter miss
 test("saved assistance is restored from the stored attempt payload", () => {
   assert.deepEqual(
     savedAssistance({ text: "Es roja", assistance: { selected_frame_ids: ["colour", "bogus"], inserted_chips: ["roja", 3] } }),
-    { selectedFrameIds: ["colour"], insertedChips: ["roja"], selectedSlots: [], revealedHelpFrameIds: [] },
+    { selectedFrameIds: ["colour"], insertedChips: ["roja"], selectedSlots: [], revealedHelpFrameIds: [],
+      revealedMeaningFrameIds: [], wordBankShown: false, cheatSheetOpened: false },
   );
   assert.deepEqual(
     savedAssistance({ text: "Está sobre la mesa", assistance: { selected_frame_ids: ["location"], inserted_chips: ["sobre", "la mesa"],
       selected_slots: [{ frame_id: "location", slot_id: "position", chip: "sobre" }, { frame_id: "location", slot_id: "bogus", chip: "x" }],
       revealed_help_frame_ids: ["location"] } }),
-    { selectedFrameIds: ["location"], insertedChips: ["sobre", "la mesa"], selectedSlots: [{ frameId: "location", slotId: "position", chip: "sobre" }], revealedHelpFrameIds: ["location"] },
+    { selectedFrameIds: ["location"], insertedChips: ["sobre", "la mesa"], selectedSlots: [{ frameId: "location", slotId: "position", chip: "sobre" }], revealedHelpFrameIds: ["location"],
+      revealedMeaningFrameIds: [], wordBankShown: false, cheatSheetOpened: false },
   );
   assert.equal(savedAssistance({ text: "free typing" }), null);
   assert.equal(savedAssistance(undefined), null);
+  assert.deepEqual(savedAssistance({ assistance: { revealed_meaning_frame_ids: ["location"],
+    word_bank_shown: true, cheat_sheet_opened: true } }), {
+    selectedFrameIds: [], insertedChips: [], selectedSlots: [], revealedHelpFrameIds: [],
+    revealedMeaningFrameIds: ["location"], wordBankShown: true, cheatSheetOpened: true,
+  });
 });
 
 const colourSlots: ClueFrame = { frameId: "colour", prefix: "Elle est", meaning: "m", example: "La pomme est rouge.", chips: [],

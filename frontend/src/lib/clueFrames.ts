@@ -119,7 +119,7 @@ const slotChoices = (value: unknown): ClueSlotChoice[] => Array.isArray(value) ?
     ? [{ frameId: frameId as ClueFrameId, slotId: slotId as ClueSlotId, chip }] : [];
 }) : [];
 
-type SavedAssistance = Pick<ClueAssistance, "selectedFrameIds" | "insertedChips"> & Required<Pick<ClueAssistance, "selectedSlots" | "revealedHelpFrameIds">>;
+type SavedAssistance = Pick<ClueAssistance, "selectedFrameIds" | "insertedChips"> & Required<Pick<ClueAssistance, "selectedSlots" | "revealedHelpFrameIds" | "revealedMeaningFrameIds" | "wordBankShown" | "cheatSheetOpened">>;
 
 /** Reads the assistance saved in an attempt's responsePayload (stored with snake_case keys). */
 export function savedAssistance(payload: Record<string, unknown> | null | undefined): SavedAssistance | null {
@@ -131,5 +131,8 @@ export function savedAssistance(payload: Record<string, unknown> | null | undefi
     insertedChips: strings(record.inserted_chips ?? record.insertedChips),
     selectedSlots: slotChoices(record.selected_slots ?? record.selectedSlots),
     revealedHelpFrameIds: frameIds(record.revealed_help_frame_ids ?? record.revealedHelpFrameIds),
+    revealedMeaningFrameIds: frameIds(record.revealed_meaning_frame_ids ?? record.revealedMeaningFrameIds),
+    wordBankShown: (record.word_bank_shown ?? record.wordBankShown) === true,
+    cheatSheetOpened: (record.cheat_sheet_opened ?? record.cheatSheetOpened) === true,
   };
 }

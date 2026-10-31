@@ -370,6 +370,8 @@ test("guided frames compose an editable clue, block the target word and restore 
 
   assert.equal(button("Name"), undefined, "saved Name frames from older tasks are hidden");
   await click("Colour");
+  assert.equal(dom.window.document.querySelector("[data-testid=frame-meanings]"), null);
+  await click("Show English hints");
   assert.match(dom.window.document.querySelector("[data-testid=clue-frame]")?.textContent ?? "", /colour meaning.*Example: Es roja/);
   assert.equal(button("sobre la silla"), undefined, "chips belong to the selected frame");
   await click("roja");
@@ -384,7 +386,8 @@ test("guided frames compose an editable clue, block the target word and restore 
   assert.equal(first.body.text, "Es roja. Está sobre la silla grande.", "the evaluator gets the displayed clue");
   assert.deepEqual(first.body.assistance, { version: "ispy-clue-assistance.v1", practiceMode: "guided", targetWordShown: true,
     offeredFrameIds: ["colour", "location"], selectedFrameIds: ["colour", "location"], insertedChips: ["roja", "sobre la silla"],
-    selectedSlots: [], revealedHelpFrameIds: [] });
+    selectedSlots: [], revealedHelpFrameIds: [], revealedMeaningFrameIds: ["colour"],
+    wordBankShown: false, cheatSheetOpened: false });
   assert.match(body(), /Linguini guessed: silla/);
 
   await click("Improve my clue");
@@ -596,6 +599,10 @@ test("learners build a Location clue from separate position and reference chips,
   const text = () => dom.window.document.body.textContent ?? "";
   await click("Location");
   assert.match(text(), /Está \[position\] \[reference object\]/);
+  assert.equal(dom.window.document.querySelector("[data-testid=position-meanings]"), null,
+    "English meanings wait for an explicit request");
+  assert.equal(button("sobre")?.getAttribute("title"), null, "hovering cannot disclose English hints");
+  await click("Show English hints");
   assert.match(dom.window.document.querySelector("[data-testid=position-meanings]")?.textContent ?? "", /sobre — on · El libro está sobre la mesa\./);
   assert.equal(button("la taza"), undefined, "the target is never a chip");
   assert.equal(button("sobre la mesa"), undefined, "the correct phrase stays behind Help me");
@@ -626,6 +633,7 @@ test("learners build a Location clue from separate position and reference chips,
   assert.deepEqual(assistance.selectedSlots, [{ frameId: "location", slotId: "position", chip: "al lado de" },
     { frameId: "location", slotId: "reference", chip: "el libro" }, { frameId: "colour", slotId: "colour", chip: "azul" }]);
   assert.deepEqual(assistance.revealedHelpFrameIds, ["colour"], "opening help is recorded as assistance");
+  assert.deepEqual(assistance.revealedMeaningFrameIds, ["location"], "English hints are recorded separately");
   assert.equal(assistance.practiceMode, "guided");
   await click("Improve my clue");
   await click("Location");
@@ -659,6 +667,12 @@ test("A2 keeps the clue frames behind Need help?", async () => {
     .map(item => item.textContent), ["taza", "mesa"]);
   await click("Need help? Show clue frames");
   assert.ok(dom.window.document.querySelector("[data-testid=clue-frames]"));
+  await type("Es pequeña.");
+  taskReplies.push(slotReply("word-bank", "Es pequeña.", { word_bank_shown: true }));
+  await click("Send my response");
+  const sent = taskRequests.splice(0).at(-1)!;
+  assert.equal((sent.body.assistance as Record<string, unknown>).wordBankShown, true,
+    "requested vocabulary help is saved even without selecting a frame");
   root.unmount();
 });
 
@@ -667,6 +681,7 @@ test("selected slots, revealed help and free edits survive a reload", async () =
     evaluationDetails: evaluation("noMatch", "obj-other"),
     assistance: { version: "ispy-clue-assistance.v1", practiceMode: "guided", targetWordShown: true, offeredFrameIds: ["colour", "location"],
       selectedFrameIds: ["location"], insertedChips: ["sobre", "la mesa"], revealedHelpFrameIds: ["location"],
+      revealedMeaningFrameIds: ["location"],
       selectedSlots: [{ frameId: "location", slotId: "position", chip: "sobre" }, { frameId: "location", slotId: "reference", chip: "la mesa" }] } } }));
   const root = await mountSlots("inProgress");
   assert.equal(clue().value, "Está sobre la mesa. Es pequeña.");
@@ -674,6 +689,8 @@ test("selected slots, revealed help and free edits survive a reload", async () =
   assert.equal(button("sobre")?.getAttribute("aria-pressed"), "true");
   assert.equal(button("la mesa")?.getAttribute("aria-pressed"), "true");
   assert.ok(button("sobre la mesa"), "revealed help stays revealed");
+  assert.ok(dom.window.document.querySelector("[data-testid=position-meanings]"),
+    "requested English hints stay revealed after reload");
   await click("debajo de");
   assert.equal(clue().value, "Está debajo de la mesa. Es pequeña.", "the restored sentence is edited in place");
   root.unmount();
