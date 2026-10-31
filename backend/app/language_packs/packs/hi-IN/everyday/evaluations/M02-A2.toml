@@ -1,0 +1,94 @@
+mission_id = "M02"
+practice_level = "A2"
+content_version = 1
+
+[[cases]]
+case_id = "m02-a2-attribute-clue"
+category = "valid"
+construction_id = "target-clue"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }], "attributes" = [{ "fact_id" = "attribute:bag-green", "object" = "object:bag", "kind" = "color", "value" = "green" }] }
+bindings = { "target" = "object:bag", "attribute" = "attribute:bag-green" }
+truth = true
+use = "attribute"
+input = "Give the colour clue for the bag without naming it: green."
+expected_meaning = "It is green."
+acceptable = ["हरा है."]
+reject = [{ "sentence" = "हरा है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m02-a2-location-clue"
+category = "valid"
+construction_id = "target-clue"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:spoon", "concept" = "spoon" }, { "fact_id" = "object:table", "concept" = "table" }], "relations" = [{ "fact_id" = "relation:spoon-under-table", "subject" = "object:spoon", "reference" = "object:table", "relation" = "under" }] }
+bindings = { "target" = "object:spoon", "relation" = "relation:spoon-under-table", "reference" = "object:table" }
+truth = true
+use = "location"
+input = "Give the location clue for the spoon without naming it: under the table."
+expected_meaning = "It is under the table."
+acceptable = ["मेज़ के नीचे है."]
+reject = [{ "sentence" = "मेज़ के नीचे है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m02-a2-clarify"
+category = "valid"
+construction_id = "target-clue"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:spoon", "concept" = "spoon" }, { "fact_id" = "object:table", "concept" = "table" }], "relations" = [{ "fact_id" = "relation:spoon-under-table", "subject" = "object:spoon", "reference" = "object:table", "relation" = "under" }] }
+bindings = { "target" = "object:spoon", "relation" = "relation:spoon-under-table", "reference" = "object:table" }
+truth = true
+labels = ["no"]
+use = "clarify"
+input = "Tell the friend no: it is under the table."
+expected_meaning = "No, it is under the table."
+acceptable = ["नहीं, मेज़ के नीचे है."]
+reject = [{ "sentence" = "नहीं, मेज़ के नीचे है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m02-a2-target-sentence"
+category = "valid"
+construction_id = "target-location"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }, { "fact_id" = "object:table", "concept" = "table" }], "attributes" = [{ "fact_id" = "attribute:plate-yellow", "object" = "object:plate", "kind" = "color", "value" = "yellow" }], "relations" = [{ "fact_id" = "relation:plate-on-table", "subject" = "object:plate", "reference" = "object:table", "relation" = "on" }] }
+bindings = { "subject" = "object:plate", "attribute" = "attribute:plate-yellow", "relation" = "relation:plate-on-table", "reference" = "object:table" }
+truth = true
+input = "Name and locate the yellow plate: on the table."
+expected_meaning = "The yellow plate is on the table."
+acceptable = ["पीली प्लेट मेज़ पर है."]
+reject = [{ "sentence" = "पीली प्लेट मेज़ पर है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m02-a2-held-green-bag"
+category = "valid"
+construction_id = "target-location"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }, { "fact_id" = "object:table", "concept" = "table" }], "attributes" = [{ "fact_id" = "attribute:bag-green", "object" = "object:bag", "kind" = "color", "value" = "green" }], "relations" = [{ "fact_id" = "relation:bag-under-table", "subject" = "object:bag", "reference" = "object:table", "relation" = "under" }] }
+bindings = { "subject" = "object:bag", "attribute" = "attribute:bag-green", "relation" = "relation:bag-under-table", "reference" = "object:table" }
+truth = true
+input = "Name and locate the green bag: under the table."
+expected_meaning = "The green bag is under the table."
+acceptable = ["हरा बैग मेज़ के नीचे है."]
+reject = [{ "sentence" = "हरा बैग मेज़ के नीचे है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m02-a2-held-unicode"
+category = "valid"
+construction_id = "target-location"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:phone", "concept" = "phone" }, { "fact_id" = "object:door", "concept" = "door" }], "attributes" = [{ "fact_id" = "attribute:phone-red", "object" = "object:phone", "kind" = "color", "value" = "red" }], "relations" = [{ "fact_id" = "relation:phone-next_to-door", "subject" = "object:phone", "reference" = "object:door", "relation" = "next_to" }] }
+bindings = { "subject" = "object:phone", "attribute" = "attribute:phone-red", "relation" = "relation:phone-next_to-door", "reference" = "object:door" }
+truth = true
+input = "Name and locate the red phone: next to the door."
+expected_meaning = "The red phone is next to the door."
+acceptable = ["लाल फ़ोन दरवाज़े के पास है."]
+reject = [{ "sentence" = "लाल फ़ोन दरवाज़े के पास है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"

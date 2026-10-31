@@ -1,0 +1,14 @@
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+explanation = "This standard-written-Hindi exercise uses the invariant form एक (one/a) before the singular noun: एक कप, एक किताब. The alternative इक is a real poetic/contracted variant of एक, but is outside the standard spelling requested in this exercise. It is not ungrammatical Hindi or an article-gender distinction."
+
+[[words]]
+text = "एक"
+position = "before"
+meaning = "one/a (standard form taught here)"
+romanization = "ek"
+
+[[words]]
+text = "इक"
+position = "before"
+meaning = "one (poetic/contracted variant, outside this exercise's standard form)"
+romanization = "ik"

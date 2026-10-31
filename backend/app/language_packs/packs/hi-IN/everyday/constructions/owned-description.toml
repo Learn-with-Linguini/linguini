@@ -1,0 +1,18 @@
+construction_id = "owned-description"
+version = 1
+summary = "Describe or locate an owned object."
+guidance = "Use मेरा कप लाल है. / मेरी किताब हरी है. / मेरा कप मेज़ पर है. First-person possessive and marked adjective agree with the possessed noun. Named owners use name + का/की/के. Do not introduce an unbound attribute/relation or infer the learner's gender. Use ordinary Hindi word spacing and ASCII . ? , in task strings for the current app contract. Require gender and direct/oblique forms for translated nouns where relevant. Supply exactly aligned Devanagari/Latin spans; native Hindi remains the answer and TTS input. Respect noun agreement, Unicode NFC and the declared polite register. "
+features = ["standard-hindi", "devanagari", "owned-description"]
+constraints = [
+  "Preserve all selected semantic roles, truth and assigned role-play facts.",
+  "Use polite आप-level requests and avoid guessing the learner's gender.",
+  "Transliteration is display support, not an alternate answer key.",
+]
+required_labels = []
+roles = { "object" = "noun", "owner" = "determiner", "attribute" = "adjective", "relation" = "preposition", "reference" = "noun" }
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete task sentences need ASCII final punctuation."
+must_contain = ["[.?!]$"]

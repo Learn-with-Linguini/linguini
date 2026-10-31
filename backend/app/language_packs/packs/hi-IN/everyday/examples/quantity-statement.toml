@@ -1,0 +1,82 @@
+construction_id = "quantity-statement"
+
+[[examples]]
+example_id = "statement-five-books"
+levels = ["A1", "A2"]
+purposes = ["buildQuantity"]
+meaning = "There are five books."
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:apple", "concept" = "apple" }], "counts" = [{ "fact_id" = "count:book", "object" = "object:book", "quantity" = 5 }, { "fact_id" = "count:cup", "object" = "object:cup", "quantity" = 2 }, { "fact_id" = "count:apple", "object" = "object:apple", "quantity" = 2 }] }
+bindings = { "object" = "object:book", "count" = "count:book" }
+truth = true
+labels = []
+sentence = "पाँच किताबें हैं."
+translation = "There are five books."
+chunks = [{ "text" = "पाँच", "join" = "none" }, { "text" = "किताबें", "join" = "space" }, { "text" = "हैं", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "statement-board"
+levels = ["A1"]
+purposes = ["matchQuantity"]
+meaning = "There are five books."
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:apple", "concept" = "apple" }], "counts" = [{ "fact_id" = "count:book", "object" = "object:book", "quantity" = 5 }, { "fact_id" = "count:cup", "object" = "object:cup", "quantity" = 2 }, { "fact_id" = "count:apple", "object" = "object:apple", "quantity" = 2 }] }
+bindings = { "object" = "object:book", "count" = "count:book" }
+truth = true
+labels = []
+sentence = "पाँच किताबें हैं."
+translation = "There are five books."
+chunks = [{ "text" = "पाँच", "join" = "none" }, { "text" = "किताबें", "join" = "space" }, { "text" = "हैं", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "correction-five-books"
+levels = ["A2"]
+purposes = ["correctRoleplayCount"]
+meaning = "No, there are five books."
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:apple", "concept" = "apple" }], "counts" = [{ "fact_id" = "count:book", "object" = "object:book", "quantity" = 5 }, { "fact_id" = "count:cup", "object" = "object:cup", "quantity" = 2 }, { "fact_id" = "count:apple", "object" = "object:apple", "quantity" = 2 }] }
+bindings = { "object" = "object:book", "count" = "count:book" }
+truth = true
+labels = ["no"]
+sentence = "नहीं, पाँच किताबें हैं."
+translation = "No, there are five books."
+chunks = [{ "text" = "नहीं", "join" = "none" }, { "text" = ",", "join" = "none" }, { "text" = "पाँच", "join" = "space" }, { "text" = "किताबें", "join" = "space" }, { "text" = "हैं", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "statement-five-books-format"
+levels = ["A1", "A2"]
+purposes = ["buildQuantity"]
+sentence = "पाँच किताबें हैं"
+correction = "पाँच किताबें हैं."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "statement-board-format"
+levels = ["A1"]
+purposes = ["matchQuantity"]
+sentence = "पाँच किताबें हैं"
+correction = "पाँच किताबें हैं."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "correction-five-books-format"
+levels = ["A2"]
+purposes = ["correctRoleplayCount"]
+sentence = "नहीं, पाँच किताबें हैं"
+correction = "नहीं, पाँच किताबें हैं."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "hi-grammar-quantity-statement"
+levels = ["A1", "A2"]
+purposes = ["buildQuantity"]
+sentence = "तीन किताबों हैं."
+correction = "तीन किताबें हैं."
+note = "The direct-count subject needs किताबें, not postposition-dependent oblique किताबों."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

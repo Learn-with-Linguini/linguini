@@ -1,0 +1,24 @@
+construction_id = "noun-word-pair"
+version = 1
+summary = "Pair a noun with the standard one/a form."
+guidance = "Use एक + bare singular noun, without punctuation: एक कप, एक किताब. This is standard-form practice, not article gender: एक is invariant. इक is a real poetic/contracted variant outside the explicitly taught standard spelling. Do not describe इक as meaningless or ungrammatical, and do not change the noun to plural. Use ordinary Hindi word spacing and ASCII . ? , in task strings for the current app contract. Require gender and direct/oblique forms for translated nouns where relevant. Supply exactly aligned Devanagari/Latin spans; native Hindi remains the answer and TTS input. Respect noun agreement, Unicode NFC and the declared polite register. "
+features = ["standard-hindi", "devanagari", "noun-word-pair"]
+constraints = [
+  "Preserve all selected semantic roles, truth and assigned role-play facts.",
+  "Use polite आप-level requests and avoid guessing the learner's gender.",
+  "Transliteration is display support, not an alternate answer key.",
+]
+required_labels = []
+roles = { "object" = "noun" }
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "chunk-punctuation"
+message = "A phrase has no final sentence punctuation."
+must_not_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "standard-ek"
+message = "Use the explicitly taught standard form एक."
+must_contain = ["^एक\\s"]
+must_not_contain = ["^इक\\s"]

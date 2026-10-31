@@ -1,0 +1,58 @@
+construction_id = "noun-word-pair"
+
+[[examples]]
+example_id = "pair-cup"
+levels = ["A0"]
+purposes = ["chooseChunk", "matchSpoken", "fillSlot"]
+meaning = "one cup (standard one/a phrase)"
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }] }
+bindings = { "object" = "object:cup" }
+truth = true
+labels = []
+sentence = "एक कप"
+translation = "one cup (standard one/a phrase)"
+chunks = [{ "text" = "एक", "join" = "none" }, { "text" = "कप", "join" = "space" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "pair-table"
+levels = ["A0"]
+purposes = ["chooseChunk", "matchSpoken", "fillSlot"]
+meaning = "one table (standard one/a phrase)"
+scene = { "objects" = [{ "fact_id" = "object:table", "concept" = "table" }] }
+bindings = { "object" = "object:table" }
+truth = true
+labels = []
+sentence = "एक मेज़"
+translation = "one table (standard one/a phrase)"
+chunks = [{ "text" = "एक", "join" = "none" }, { "text" = "मेज़", "join" = "space" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "pair-cup-format"
+levels = ["A0"]
+purposes = ["chooseChunk", "matchSpoken", "fillSlot"]
+sentence = "एक कप."
+correction = "एक कप"
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "pair-table-format"
+levels = ["A0"]
+purposes = ["chooseChunk", "matchSpoken", "fillSlot"]
+sentence = "एक मेज़."
+correction = "एक मेज़"
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "hi-grammar-noun-word-pair"
+levels = ["A0"]
+purposes = ["chooseChunk", "matchSpoken", "fillSlot"]
+sentence = "इक किताब"
+correction = "एक किताब"
+note = "इक is a real contracted/poetic variant. This particular task requests the standard spelling एक; it is a register/spelling contrast, not an ungrammatical-word claim."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

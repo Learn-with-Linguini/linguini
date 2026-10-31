@@ -1,0 +1,158 @@
+mission_id = "M03"
+practice_level = "A2"
+content_version = 1
+
+[[cases]]
+case_id = "m03-a2-how-many-doors"
+category = "valid"
+construction_id = "how-many-question"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }, { "fact_id" = "object:window", "concept" = "window" }], "counts" = [{ "fact_id" = "count:door", "object" = "object:door", "quantity" = 2 }, { "fact_id" = "count:window", "object" = "object:window", "quantity" = 3 }] }
+bindings = { "object" = "object:door" }
+truth = true
+input = "Ask how many doors there are."
+expected_meaning = "How many doors are there?"
+acceptable = ["कितने दरवाज़े हैं?"]
+reject = [{ "sentence" = "कितने दरवाज़े हैं", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "question"
+
+[[cases]]
+case_id = "m03-a2-three-windows"
+category = "valid"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:window", "concept" = "window" }, { "fact_id" = "object:door", "concept" = "door" }], "counts" = [{ "fact_id" = "count:window", "object" = "object:window", "quantity" = 3 }, { "fact_id" = "count:door", "object" = "object:door", "quantity" = 2 }] }
+bindings = { "object" = "object:window", "count" = "count:window" }
+truth = true
+input = "Say there are three windows."
+expected_meaning = "There are three windows."
+acceptable = ["तीन खिड़कियाँ हैं."]
+reject = [{ "sentence" = "तीन खिड़कियाँ हैं", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "तीन गाजरें हैं.", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }, { "sentence" = "दो खिड़कियाँ हैं.", "reason" = "Contradicts the bound exact count.", "category" = "wrongCount" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m03-a2-more-plates"
+category = "valid"
+construction_id = "quantity-comparison"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }, { "fact_id" = "object:spoon", "concept" = "spoon" }], "counts" = [{ "fact_id" = "count:plate", "object" = "object:plate", "quantity" = 6 }, { "fact_id" = "count:spoon", "object" = "object:spoon", "quantity" = 2 }] }
+bindings = { "first" = "object:plate", "second" = "object:spoon" }
+truth = true
+labels = ["more"]
+input = "Say there are more plates than spoons."
+expected_meaning = "There are more plates than spoons."
+acceptable = ["प्लेटें चम्मचों से ज़्यादा हैं."]
+reject = [{ "sentence" = "प्लेटें चम्मचों से ज़्यादा हैं", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m03-a2-fewer-spoons"
+category = "valid"
+construction_id = "quantity-comparison"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }, { "fact_id" = "object:spoon", "concept" = "spoon" }, { "fact_id" = "object:fork", "concept" = "fork" }], "counts" = [{ "fact_id" = "count:plate", "object" = "object:plate", "quantity" = 6 }, { "fact_id" = "count:spoon", "object" = "object:spoon", "quantity" = 2 }] }
+bindings = { "first" = "object:spoon", "second" = "object:plate" }
+truth = true
+labels = ["fewer"]
+input = "Say there are fewer spoons than plates."
+expected_meaning = "There are fewer spoons than plates."
+acceptable = ["चम्मच प्लेटों से कम हैं."]
+reject = [{ "sentence" = "चम्मच प्लेटों से कम हैं", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m03-a2-correction"
+category = "valid"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:key", "concept" = "key" }], "counts" = [{ "fact_id" = "count:key", "object" = "object:key", "quantity" = 4 }] }
+bindings = { "object" = "object:key", "count" = "count:key" }
+truth = true
+labels = ["no"]
+input = "Correct the friend: there are four keys."
+expected_meaning = "No, there are four keys."
+acceptable = ["नहीं, चार चाबियाँ हैं."]
+reject = [{ "sentence" = "नहीं, चार चाबियाँ हैं", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "नहीं, चार गाजरें हैं.", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }, { "sentence" = "नहीं, दो चाबियाँ हैं.", "reason" = "Contradicts the bound exact count.", "category" = "wrongCount" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m03-a2-correction-label"
+category = "valid"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:key", "concept" = "key" }], "counts" = [{ "fact_id" = "count:key", "object" = "object:key", "quantity" = 4 }] }
+bindings = { "object" = "object:key", "count" = "count:key" }
+truth = true
+labels = ["no"]
+input = "Correct the friend: there are four keys."
+expected_meaning = "No, there are four keys."
+acceptable = ["नहीं, चार चाबियाँ हैं."]
+reject = [{ "sentence" = "नहीं, चार चाबियाँ हैं", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "नहीं, चार गाजरें हैं.", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }, { "sentence" = "नहीं, दो चाबियाँ हैं.", "reason" = "Contradicts the bound exact count.", "category" = "wrongCount" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m03-a2-friend-count"
+category = "valid"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:key", "concept" = "key" }], "counts" = [{ "fact_id" = "count:key", "object" = "object:key", "quantity" = 4 }] }
+bindings = { "object" = "object:key", "count" = "number:2" }
+truth = false
+use = "roleplay"
+input = "Write the friend's wrong count: two keys."
+expected_meaning = "There are two keys."
+acceptable = ["दो चाबियाँ हैं."]
+reject = [{ "sentence" = "दो चाबियाँ हैं", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "दो गाजरें हैं.", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }, { "sentence" = "तीन चाबियाँ हैं.", "reason" = "Contradicts the bound exact count.", "category" = "wrongCount" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m03-a2-pair"
+category = "valid"
+construction_id = "quantity-pair"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }, { "fact_id" = "object:spoon", "concept" = "spoon" }], "counts" = [{ "fact_id" = "count:plate", "object" = "object:plate", "quantity" = 6 }, { "fact_id" = "count:spoon", "object" = "object:spoon", "quantity" = 2 }] }
+bindings = { "first" = "object:plate", "first-count" = "count:plate", "second" = "object:spoon", "second-count" = "count:spoon" }
+truth = true
+input = "Say there are six plates and two spoons."
+expected_meaning = "There are six plates and two spoons."
+acceptable = ["छह प्लेटें और दो चम्मच हैं."]
+reject = [{ "sentence" = "छह प्लेटें और दो चम्मच हैं", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m03-a2-held-pair-frame"
+category = "valid"
+construction_id = "quantity-pair"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }, { "fact_id" = "object:phone", "concept" = "phone" }], "counts" = [{ "fact_id" = "count:bag", "object" = "object:bag", "quantity" = 5 }, { "fact_id" = "count:phone", "object" = "object:phone", "quantity" = 3 }] }
+bindings = { "first" = "object:bag", "first-count" = "count:bag", "second" = "object:phone", "second-count" = "count:phone" }
+truth = true
+input = "Say there are five bags and three phones."
+expected_meaning = "There are five bags and three phones."
+acceptable = ["पाँच बैग और तीन फ़ोन हैं."]
+reject = [{ "sentence" = "पाँच बैग और तीन फ़ोन हैं", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m03-a2-held-more-bags"
+category = "valid"
+construction_id = "quantity-comparison"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }, { "fact_id" = "object:phone", "concept" = "phone" }], "counts" = [{ "fact_id" = "count:bag", "object" = "object:bag", "quantity" = 5 }, { "fact_id" = "count:phone", "object" = "object:phone", "quantity" = 3 }] }
+bindings = { "first" = "object:bag", "second" = "object:phone" }
+truth = true
+labels = ["more"]
+input = "Say there are more bags than phones."
+expected_meaning = "There are more bags than phones."
+acceptable = ["बैग फ़ोनों से ज़्यादा हैं."]
+reject = [{ "sentence" = "बैग फ़ोनों से ज़्यादा हैं", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"

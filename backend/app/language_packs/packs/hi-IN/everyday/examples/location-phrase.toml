@@ -1,0 +1,58 @@
+construction_id = "location-phrase"
+
+[[examples]]
+example_id = "phrase-on-table"
+levels = ["A1"]
+purposes = ["chooseLocation"]
+meaning = "on the table"
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:table", "concept" = "table" }], "relations" = [{ "fact_id" = "relation:cup-on-table", "subject" = "object:cup", "reference" = "object:table", "relation" = "on" }] }
+bindings = { "target" = "object:cup", "reference" = "object:table", "relation" = "relation:cup-on-table" }
+truth = true
+labels = []
+sentence = "मेज़ पर"
+translation = "on the table"
+chunks = [{ "text" = "मेज़", "join" = "none" }, { "text" = "पर", "join" = "space" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "phrase-next-window"
+levels = ["A1"]
+purposes = ["chooseLocation"]
+meaning = "next to the window"
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:window", "concept" = "window" }], "relations" = [{ "fact_id" = "relation:cup-next_to-window", "subject" = "object:cup", "reference" = "object:window", "relation" = "next_to" }] }
+bindings = { "target" = "object:cup", "reference" = "object:window", "relation" = "relation:cup-next_to-window" }
+truth = true
+labels = []
+sentence = "खिड़की के पास"
+translation = "next to the window"
+chunks = [{ "text" = "खिड़की", "join" = "none" }, { "text" = "के", "join" = "space" }, { "text" = "पास", "join" = "space" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "phrase-on-table-format"
+levels = ["A1"]
+purposes = ["chooseLocation"]
+sentence = "मेज़ पर."
+correction = "मेज़ पर"
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "phrase-next-window-format"
+levels = ["A1"]
+purposes = ["chooseLocation"]
+sentence = "खिड़की के पास."
+correction = "खिड़की के पास"
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "hi-grammar-location-phrase"
+levels = ["A1"]
+purposes = ["chooseLocation"]
+sentence = "दरवाज़ा के पास"
+correction = "दरवाज़े के पास"
+note = "The reference noun is oblique before के पास."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

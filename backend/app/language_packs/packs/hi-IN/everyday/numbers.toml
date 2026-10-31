@@ -1,0 +1,51 @@
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[numbers]]
+value = 1
+text = "एक"
+romanization = "ek"
+
+[[numbers]]
+value = 2
+text = "दो"
+romanization = "do"
+
+[[numbers]]
+value = 3
+text = "तीन"
+romanization = "tīn"
+
+[[numbers]]
+value = 4
+text = "चार"
+romanization = "cār"
+
+[[numbers]]
+value = 5
+text = "पाँच"
+romanization = "pāṃc"
+
+[[numbers]]
+value = 6
+text = "छह"
+romanization = "chah"
+
+[[numbers]]
+value = 7
+text = "सात"
+romanization = "sāt"
+
+[[numbers]]
+value = 8
+text = "आठ"
+romanization = "āṭh"
+
+[[numbers]]
+value = 9
+text = "नौ"
+romanization = "nau"
+
+[[numbers]]
+value = 10
+text = "दस"
+romanization = "das"

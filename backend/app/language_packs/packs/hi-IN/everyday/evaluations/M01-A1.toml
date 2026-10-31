@@ -1,0 +1,163 @@
+mission_id = "M01"
+practice_level = "A1"
+content_version = 1
+
+[[cases]]
+case_id = "a1-phone-red"
+category = "valid"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:phone", "concept" = "phone" }], "attributes" = [{ "fact_id" = "attribute:phone-red", "object" = "object:phone", "kind" = "color", "value" = "red" }] }
+bindings = { "object" = "object:phone", "attribute" = "attribute:phone-red" }
+truth = true
+labels = []
+input = "Describe the highlighted phone as red."
+expected_meaning = "This is a red phone."
+acceptable = ["यह लाल फ़ोन है."]
+reject = [{ "sentence" = "यह लाल फ़ोन है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a1-door-red-form"
+category = "valid"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }], "attributes" = [{ "fact_id" = "attribute:door-red", "object" = "object:door", "kind" = "color", "value" = "red" }] }
+bindings = { "object" = "object:door", "attribute" = "attribute:door-red" }
+truth = true
+labels = []
+input = "Describe one red door."
+expected_meaning = "This is a red door."
+acceptable = ["यह लाल दरवाज़ा है."]
+reject = [{ "sentence" = "यह लाल दरवाज़ा है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a1-spoon-yellow-order"
+category = "valid"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:spoon", "concept" = "spoon" }], "attributes" = [{ "fact_id" = "attribute:spoon-yellow", "object" = "object:spoon", "kind" = "color", "value" = "yellow" }] }
+bindings = { "object" = "object:spoon", "attribute" = "attribute:spoon-yellow" }
+truth = true
+labels = []
+input = "Describe a yellow spoon in the neutral taught frame."
+expected_meaning = "This is a yellow spoon."
+acceptable = ["यह पीला चम्मच है."]
+reject = [{ "sentence" = "यह पीला चम्मच है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a1-door-blue-describe"
+category = "valid"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }], "attributes" = [{ "fact_id" = "attribute:door-blue", "object" = "object:door", "kind" = "color", "value" = "blue" }] }
+bindings = { "object" = "object:door", "attribute" = "attribute:door-blue" }
+truth = true
+labels = []
+input = "Describe the highlighted door as blue."
+expected_meaning = "This is a blue door."
+acceptable = ["यह नीला दरवाज़ा है."]
+reject = [{ "sentence" = "यह नीला दरवाज़ा है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a1-key-positive-question"
+category = "valid"
+construction_id = "yes-no-identification"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:key", "concept" = "key" }] }
+bindings = { "object" = "object:key", "shown" = "object:key" }
+truth = true
+labels = []
+input = "Ask whether the highlighted key is a key."
+expected_meaning = "Is this a key?"
+acceptable = ["क्या यह चाबी है?"]
+reject = [{ "sentence" = "क्या यह चाबी है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "question"
+
+[[cases]]
+case_id = "a1-phone-yes"
+category = "valid"
+construction_id = "yes-no-identification"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:phone", "concept" = "phone" }] }
+bindings = { "object" = "object:phone", "shown" = "object:phone" }
+truth = true
+labels = ["yes"]
+input = "The question asks whether the shown phone is a phone. Answer yes and name it."
+expected_meaning = "Yes, it is a phone."
+acceptable = ["हाँ, यह फ़ोन है."]
+reject = [{ "sentence" = "हाँ, यह फ़ोन है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a1-spoon-no"
+category = "valid"
+construction_id = "yes-no-identification"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:spoon", "concept" = "spoon" }, { "fact_id" = "object:fork", "concept" = "fork" }] }
+bindings = { "object" = "object:spoon", "shown" = "object:spoon" }
+truth = false
+labels = ["no"]
+input = "A spoon is shown; the positive question proposes a fork. Answer no and name the spoon."
+expected_meaning = "No, it is a spoon."
+acceptable = ["नहीं, यह चम्मच है."]
+reject = [{ "sentence" = "नहीं, यह चम्मच है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a1-held-window-yes"
+category = "valid"
+construction_id = "yes-no-identification"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:window", "concept" = "window" }] }
+bindings = { "object" = "object:window", "shown" = "object:window" }
+truth = true
+labels = ["yes"]
+input = "The question asks whether the shown window is a window. Answer yes and name it."
+expected_meaning = "Yes, it is a window."
+acceptable = ["हाँ, यह खिड़की है."]
+reject = [{ "sentence" = "हाँ, यह खिड़की है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a1-held-book-red"
+category = "valid"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }], "attributes" = [{ "fact_id" = "attribute:book-red", "object" = "object:book", "kind" = "color", "value" = "red" }] }
+bindings = { "object" = "object:book", "attribute" = "attribute:book-red" }
+truth = true
+labels = []
+input = "Describe the highlighted book as red."
+expected_meaning = "This is a red book."
+acceptable = ["यह लाल किताब है."]
+reject = [{ "sentence" = "यह लाल किताब है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "a1-held-plate-yellow"
+category = "valid"
+construction_id = "describe-attribute"
+construction_version = 2
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }], "attributes" = [{ "fact_id" = "attribute:plate-yellow", "object" = "object:plate", "kind" = "color", "value" = "yellow" }] }
+bindings = { "object" = "object:plate", "attribute" = "attribute:plate-yellow" }
+truth = true
+labels = []
+input = "Describe the highlighted plate as yellow."
+expected_meaning = "This is a yellow plate."
+acceptable = ["यह पीली प्लेट है."]
+reject = [{ "sentence" = "यह पीली प्लेट है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"

@@ -1,0 +1,73 @@
+construction_id = "their-preference"
+
+[[examples]]
+example_id = "leo-likes-key"
+levels = ["A1"]
+purposes = ["choosePreference"]
+meaning = "Leo likes the key."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }], "preferences" = [{ "fact_id" = "preference:cup", "object" = "object:cup", "person" = "first", "likes" = true }, { "fact_id" = "preference:book", "object" = "object:book", "person" = "ana", "likes" = false }, { "fact_id" = "preference:key", "object" = "object:key", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:key", "preference" = "preference:key" }
+truth = true
+labels = []
+sentence = "लियो को चाबी पसंद है."
+translation = "Leo likes the key."
+chunks = [{ "text" = "लियो", "join" = "none" }, { "text" = "को", "join" = "space" }, { "text" = "चाबी", "join" = "space" }, { "text" = "पसंद", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "ana-dislikes-book"
+levels = ["A1"]
+purposes = ["buildTheirPreference", "choosePreference"]
+meaning = "Ana doesn't like the book."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }], "preferences" = [{ "fact_id" = "preference:cup", "object" = "object:cup", "person" = "first", "likes" = true }, { "fact_id" = "preference:book", "object" = "object:book", "person" = "ana", "likes" = false }, { "fact_id" = "preference:key", "object" = "object:key", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:book", "preference" = "preference:book" }
+truth = true
+labels = []
+sentence = "अना को किताब पसंद नहीं है."
+translation = "Ana doesn't like the book."
+chunks = [{ "text" = "अना", "join" = "none" }, { "text" = "को", "join" = "space" }, { "text" = "किताब", "join" = "space" }, { "text" = "पसंद", "join" = "space" }, { "text" = "नहीं", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "ana-likes-book"
+levels = ["A1"]
+purposes = ["buildTheirPreference"]
+meaning = "Ana likes the book."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }], "preferences" = [{ "fact_id" = "preference:cup", "object" = "object:cup", "person" = "first", "likes" = true }, { "fact_id" = "preference:book", "object" = "object:book", "person" = "ana", "likes" = false }, { "fact_id" = "preference:key", "object" = "object:key", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:book", "preference" = "preference:book" }
+truth = false
+labels = []
+sentence = "अना को किताब पसंद है."
+translation = "Ana likes the book."
+chunks = [{ "text" = "अना", "join" = "none" }, { "text" = "को", "join" = "space" }, { "text" = "किताब", "join" = "space" }, { "text" = "पसंद", "join" = "space" }, { "text" = "है", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "leo-likes-key-format"
+levels = ["A1"]
+purposes = ["choosePreference"]
+sentence = "लियो को चाबी पसंद है"
+correction = "लियो को चाबी पसंद है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "ana-dislikes-book-format"
+levels = ["A1"]
+purposes = ["buildTheirPreference", "choosePreference"]
+sentence = "अना को किताब पसंद नहीं है"
+correction = "अना को किताब पसंद नहीं है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "ana-likes-book-format"
+levels = ["A1"]
+purposes = ["buildTheirPreference"]
+sentence = "अना को किताब पसंद है"
+correction = "अना को किताब पसंद है."
+note = "This task distinguishes an unpunctuated noun/phrase from a complete punctuated sentence."
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }

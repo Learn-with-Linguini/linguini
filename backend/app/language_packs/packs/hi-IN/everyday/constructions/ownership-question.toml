@@ -1,0 +1,23 @@
+construction_id = "ownership-question"
+version = 1
+summary = "Ask whether it belongs to the listener."
+guidance = "Use क्या यह आपका/आपकी है? agreeing with the contextual object, not the listener's gender. Use आप politely and consistently. The bound object is contextual and does not need a new noun realization. Use ordinary Hindi word spacing and ASCII . ? , in task strings for the current app contract. Require gender and direct/oblique forms for translated nouns where relevant. Supply exactly aligned Devanagari/Latin spans; native Hindi remains the answer and TTS input. Respect noun agreement, Unicode NFC and the declared polite register. "
+features = ["standard-hindi", "devanagari", "ownership-question"]
+constraints = [
+  "Preserve all selected semantic roles, truth and assigned role-play facts.",
+  "Use polite आप-level requests and avoid guessing the learner's gender.",
+  "Transliteration is display support, not an alternate answer key.",
+]
+required_labels = []
+roles = { "owner" = "determiner" }
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete task sentences need ASCII final punctuation."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "question-mark"
+message = "A question ends in ?."
+must_contain = ["[?]$"]

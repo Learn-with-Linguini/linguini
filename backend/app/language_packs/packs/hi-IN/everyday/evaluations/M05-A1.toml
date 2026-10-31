@@ -1,0 +1,93 @@
+mission_id = "M05"
+practice_level = "A1"
+content_version = 1
+
+[[cases]]
+case_id = "m05-a1-ana-dislikes-plate"
+category = "valid"
+construction_id = "their-preference"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }, { "fact_id" = "object:bag", "concept" = "bag" }], "preferences" = [{ "fact_id" = "preference:plate", "object" = "object:plate", "person" = "ana", "likes" = false }, { "fact_id" = "preference:bag", "object" = "object:bag", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:plate", "preference" = "preference:plate" }
+truth = true
+use = "dislike"
+input = "Say that Ana doesn't like the plate."
+expected_meaning = "Ana doesn't like the plate."
+acceptable = ["अना को प्लेट पसंद नहीं है."]
+reject = [{ "sentence" = "अना को प्लेट पसंद नहीं है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "अना को गाजर पसंद नहीं है.", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }, { "sentence" = "अना को प्लेट पसंद है.", "reason" = "Reverses the planned preference polarity.", "category" = "meaning" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m05-a1-leo-likes-door"
+category = "valid"
+construction_id = "their-preference"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }, { "fact_id" = "object:bag", "concept" = "bag" }], "preferences" = [{ "fact_id" = "preference:door", "object" = "object:door", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:door", "preference" = "preference:door" }
+truth = true
+use = "like"
+input = "Say that Leo likes the door."
+expected_meaning = "Leo likes the door."
+acceptable = ["लियो को दरवाज़ा पसंद है."]
+reject = [{ "sentence" = "लियो को दरवाज़ा पसंद है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "लियो को आम पसंद है.", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }, { "sentence" = "लियो को दरवाज़ा पसंद नहीं है.", "reason" = "Reverses the planned preference polarity.", "category" = "meaning" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m05-a1-i-like-bag"
+category = "valid"
+construction_id = "my-preference"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }], "preferences" = [{ "fact_id" = "preference:bag", "object" = "object:bag", "person" = "first", "likes" = true }] }
+bindings = { "object" = "object:bag", "preference" = "preference:bag" }
+truth = true
+use = "like"
+input = "Say that you like the bag."
+expected_meaning = "I like the bag."
+acceptable = ["मुझे बैग पसंद है."]
+reject = [{ "sentence" = "मुझे बैग पसंद है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "मुझे आम पसंद है.", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }, { "sentence" = "मुझे बैग पसंद नहीं है.", "reason" = "Reverses the planned preference polarity.", "category" = "meaning" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m05-a1-ana-key-question"
+category = "valid"
+construction_id = "preference-question"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:key", "concept" = "key" }, { "fact_id" = "object:door", "concept" = "door" }], "preferences" = [{ "fact_id" = "preference:key", "object" = "object:key", "person" = "ana", "likes" = false }, { "fact_id" = "preference:door", "object" = "object:door", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:key", "preference" = "preference:key" }
+truth = true
+use = "question"
+input = "Ask whether Ana likes the key."
+expected_meaning = "Does Ana like the key?"
+acceptable = ["क्या अना को चाबी पसंद है?"]
+reject = [{ "sentence" = "क्या अना को चाबी पसंद है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m05-a1-ask-plate"
+category = "valid"
+construction_id = "preference-question"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }, { "fact_id" = "object:door", "concept" = "door" }] }
+bindings = { "object" = "object:plate" }
+truth = true
+use = "question"
+input = "Ask whether the listener likes the plate."
+expected_meaning = "Do you like the plate?"
+acceptable = ["क्या आपको प्लेट पसंद है?"]
+reject = [{ "sentence" = "क्या आपको प्लेट पसंद है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m05-a1-held-unicode"
+category = "valid"
+construction_id = "their-preference"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:phone", "concept" = "phone" }], "preferences" = [{ "fact_id" = "preference:phone", "object" = "object:phone", "person" = "ana", "likes" = false }] }
+bindings = { "object" = "object:phone", "preference" = "preference:phone" }
+truth = true
+use = "dislike"
+input = "Say that Ana doesn't like the phone."
+expected_meaning = "Ana doesn't like the phone."
+acceptable = ["अना को फ़ोन पसंद नहीं है."]
+reject = [{ "sentence" = "अना को फ़ोन पसंद नहीं है", "reason" = "Wrong phrase/sentence punctuation for this task.", "category" = "punctuation" }, { "sentence" = "अना को आम पसंद नहीं है.", "reason" = "Substitutes another object for the bound noun.", "category" = "wrongObject" }, { "sentence" = "अना को फ़ोन पसंद है.", "reason" = "Reverses the planned preference polarity.", "category" = "meaning" }]
+provenance = { "source" = "Original AI-authored Hindi teaching content, 2026-10-29. Mission semantic fixture structure adapted from Linguini dev 0104503cfbf11352a7441c05568d5628ead21542. Not human-reviewed.", "review_status" = "generated" }
