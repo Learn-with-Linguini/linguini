@@ -17,7 +17,7 @@ import { abandonPractice, type PracticeReview, type ShortfallKind } from "../lib
 import { friendlyError } from "../lib/queryKeys";
 import { SHORTFALL_ACTIONS } from "../lib/sceneShortfall";
 import { countGroups, objectCounts } from "../lib/countGroups";
-import { initialReviewMarkers, initiallyHiddenObjectIds, sceneReviewPanels, type SceneReviewPanel } from "../lib/sceneReview";
+import { initiallyHiddenObjectIds, sceneReviewPanels, type SceneReviewPanel } from "../lib/sceneReview";
 import { trackAction } from "../lib/analytics.ts";
 import { serializeMissionChoices } from "../lib/missionGaps";
 import type { LanguageItem } from "../data/types";
@@ -51,15 +51,11 @@ export function PracticeAnalysis() {
   const [removed, setRemoved] = useState<string[]>(() => {
     return initiallyHiddenObjectIds(
       (session?.sceneObjects ?? []).map(item => item.id),
-      session?.suggestedSceneObjectIds,
+      session?.session.status === "awaitingObjectReview" ? session.suggestedSceneObjectIds : undefined,
     );
   });
   const [explicitlyRemoved, setExplicitlyRemoved] = useState<string[]>([]);
   const [added, setAdded] = useState<PracticeReview["addedObjects"]>([]);
-  const reviewMarkers = initialReviewMarkers(
-    (session?.sceneObjects ?? []).map(item => item.id),
-    session?.suggestedSceneObjectIds,
-  );
   const [relations, setRelations] = useState<PracticeReview["relations"]>(() => session?.sceneObjectRelations ?? []);
   const [sceneTitle, setSceneTitle] = useState(session?.session.sessionTitle ?? scene.title);
   const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>({});
@@ -91,7 +87,7 @@ export function PracticeAnalysis() {
     hydratedSessionId.current = session.session.id;
     setRemoved(initiallyHiddenObjectIds(
       session.sceneObjects.map(item => item.id),
-      session.suggestedSceneObjectIds,
+      session.session.status === "awaitingObjectReview" ? session.suggestedSceneObjectIds : undefined,
     ));
     setExplicitlyRemoved([]);
     setAdded([]);
@@ -180,9 +176,10 @@ export function PracticeAnalysis() {
     </>}
   </div>;
   const locked = session.tasks.some(task => task.status !== "pending");
+  const reviewingObjects = session.session.status === "awaitingObjectReview";
   const kept = scene.items
     .filter(item => !removed.includes(item.id))
-    .map(item => ({ ...item, marker: reviewMarkers[item.id] ?? item.marker }));
+    .map((item, index) => ({ ...item, marker: reviewingObjects ? index + 1 : item.marker }));
   const addedMarkerBase = Math.max(0, ...kept.map(item => item.marker));
   const numberedAdded = added.map((item, index) => ({ ...item, marker: addedMarkerBase + index + 1 }));
   const custom: LanguageItem[] = numberedAdded.map(item => ({ id: `custom-${item.id}`, word: item.label,

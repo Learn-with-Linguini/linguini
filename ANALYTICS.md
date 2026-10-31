@@ -94,6 +94,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | :--- | :--- | :--- |
 | `vocabulary_typing_skipped` | `{ taskId, termType, revisiting }` | Learner skips the current typing prompt without checking or revealing its answer |
 | `vocabulary_marker_clicked` | `{ taskId, marker, audioAvailable }` | Learner selects a photo marker to show its object card and play target-language pronunciation when available |
+| `vocabulary_exercises_started` | `{ taskId, source, revisiting, questionCount, wordCount }` | Learner enters exercises through the flashcard shortcut (`source: shortcut`) or after the final card (`source: cardsComplete`); this transition does not submit answers or award credit |
 | `vocabulary_pronunciation_clicked` | `{ termType }` | Learner replays a word using the review card's speaker button |
 
 Objects appear beside their linked adjectives, followed by unlinked adjectives and
@@ -159,7 +160,9 @@ The existing analysis and review routes show this progress; no new page is added
 | `home_continue_practice_clicked` | `{ sessionId }` | User resumes incomplete practice from dashboard |
 | `home_begin_practice_clicked` | — | User starts new practice from dashboard |
 | `home_explore_vocabulary_clicked` | — | User clicks vocabulary revisit card on home dashboard |
-| `home_explore_ispy_clicked` | — | User clicks I-Spy quick play card on home dashboard |
+| `home_explore_ispy_clicked` | `{ action: "start" \| "resume" \| "retry" }` | Home quick play starts a game on a randomly selected playable personal photo, resumes an unfinished game, or retries the same start request |
+| `home_quick_play_retried` | `{ stage: "photos" \| "active" \| "start" }` | Learner retries loading quick play or starting its game |
+| `home_quick_play_photo_lesson_clicked` | — | Learner opens photo practice from quick play’s empty state |
 | `session_summary_viewed` | `{ sessionId, basilEarned, wordsLearnedCount, completedLessonsCount }` | Session summary screen displays upon finishing a lesson |
 | `summary_back_home_clicked` | — | User clicks "Back home" on session summary |
 | `badge_earned_popup_shown` | `{ missionId, level }` | The summary opens the "New badge earned" popup; once per earned badge, once per session |

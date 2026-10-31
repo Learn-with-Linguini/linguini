@@ -48,6 +48,7 @@ const surface = await bundle();
 let savedChecks: LessonAnswerCheck[] = [];
 let vocabularySaved: Record<string, unknown>[] = [];
 let vocabularyRestoreFails = false;
+let vocabularyRestoreReply: (() => Response | Promise<Response>) | null = null;
 let latestAttempt: LatestClueAttempt | null = null;
 const replies: (() => Response | Promise<Response>)[] = [];
 const actions: (() => TaskActionResult | null)[] = [];
@@ -56,14 +57,14 @@ const taskActions: { action: string; body: unknown }[] = [];
 const originalFetch = globals.fetch;
 globals.fetch = async (input: unknown, init?: RequestInit) => {
   const path = new URL(String(input)).pathname;
-  if (path.endsWith("/vocabulary-checks")) return vocabularyRestoreFails ? Response.json({ detail: { message: "Unavailable" } }, { status: 503 }) : Response.json({ checks: vocabularySaved });
+  if (path.endsWith("/vocabulary-checks")) return vocabularyRestoreReply?.() ?? (vocabularyRestoreFails ? Response.json({ detail: { message: "Unavailable" } }, { status: 503 }) : Response.json({ checks: vocabularySaved }));
   if (path.endsWith("/lesson-checks")) return Response.json({ checks: savedChecks, assistanceSteps: {} });
   if (path.endsWith("/latest-attempt")) return Response.json({ attempt: latestAttempt });
   requests.push(JSON.parse(String(init?.body ?? "{}")));
   return replies.shift()?.() ?? new Response("Unexpected fixture request", { status: 500 });
 };
 const cleanups = new Set<() => Promise<void>>();
-test.beforeEach(() => { savedChecks = []; vocabularySaved = []; vocabularyRestoreFails = false; latestAttempt = null; replies.length = 0; actions.length = 0; requests.length = 0; taskActions.length = 0; });
+test.beforeEach(() => { savedChecks = []; vocabularySaved = []; vocabularyRestoreFails = false; vocabularyRestoreReply = null; latestAttempt = null; replies.length = 0; actions.length = 0; requests.length = 0; taskActions.length = 0; });
 test.afterEach(async () => { for (const cleanup of [...cleanups]) await cleanup(); });
 test.after(() => {
   globals.fetch = originalFetch;
@@ -134,8 +135,11 @@ async function mount(initialTask: SessionTask, scenePatch: Partial<Scene> = {}) 
         return result;
       },
     } }, surface.h(surface.MemoryRouter, { initialEntries: ["/practice/sessions/s1/learn/t1"] },
-      surface.h(surface.Routes, null, surface.h(surface.Route, { path: "/practice/sessions/:sessionId", element: surface.h(surface.Outlet, { context: scene }) },
-        surface.h(surface.Route, { path: "learn/:taskId", element: surface.h(surface.LearningTaskPage) }))))))));
+      surface.h(surface.Routes, null,
+        surface.h(surface.Route, { path: "/home", element: surface.h("p", null, "Home destination") }),
+        surface.h(surface.Route, { path: "/practice/sessions/:sessionId", element: surface.h(surface.Outlet, { context: scene }) },
+          surface.h(surface.Route, { path: "learn", element: surface.h("p", null, "Task list destination") }),
+          surface.h(surface.Route, { path: "learn/:taskId", element: surface.h(surface.LearningTaskPage) }))))))));
   const close = async () => {
     cleanups.delete(close);
     try { await surface.act(async () => root.unmount()); } finally { client.clear(); container.remove(); }
@@ -246,6 +250,75 @@ test("a locked incorrect answer keeps its correction without promising another a
   assert.equal(button("Check again"), undefined);
   assert.equal(button("el")?.disabled, true);
   assert.equal(button("Finish task")?.disabled, false);
+});
+
+function a2DescriptionLesson(): SessionTask {
+  const task = lesson();
+  if (task.publicContent.kind !== "grammarLesson") throw new Error("Expected grammar fixture");
+  task.publicContent.practiceLevel = "A2";
+  task.publicContent.focus = "sceneDescription";
+  task.publicContent.title = "Describe the scene";
+  task.publicContent.questions = [
+    { questionId: "m01-q1", section: "Task 1 · Notice the facts", prompt: "Touch the object: La taza es roja.",
+      translation: "Touch the object: The cup is red.", interactionType: "multipleChoice", tokenBank: [],
+      options: [{ optionId: "cup-choice", label: "1" }, { optionId: "book-choice", label: "2" }],
+      markerObjectIds: { "cup-choice": "cup", "book-choice": "book" } },
+    { questionId: "m01-q2", section: "Task 1 · Notice the facts", prompt: "Build the second sentence.",
+      interactionType: "sentenceBuilding", options: [], tokenBank: ["La", "taza", "está", "sobre", "la", "mesa."] },
+    { questionId: "m01-q3", section: "Task 2 · Describe the scene", prompt: "Choose the matching description.",
+      interactionType: "multipleChoice", tokenBank: [], options: [
+        { optionId: "description-right", label: "Hay una taza roja junto al libro." },
+        { optionId: "description-wrong", label: "Hay una mesa roja debajo del libro." },
+      ], completeTranslation: "There is a red cup next to the book." },
+    { questionId: "m01-q4", section: "Task 2 · Describe the scene", prompt: "Describe the scene.",
+      interactionType: "sentenceBuilding", options: [], tokenBank: ["Hay", "un", "libro", "y", "una", "taza", "roja."] },
+    { questionId: "m01-q5", section: "Task 3 · Check a detail", prompt: "A later question should stay hidden.",
+      interactionType: "multipleChoice", tokenBank: [], options: [{ optionId: "later", label: "Future answer" }] },
+  ];
+  return task;
+}
+
+const a2Scene: Partial<Scene> = { ...descriptionScene, items: [...descriptionScene.items!, {
+  ...descriptionScene.items![0], id: "book", word: "libro", translation: "book", marker: 2, x: 70,
+}] };
+const contextCard = () => dom.window.document.querySelector('[aria-label="Previous checked sentence"]');
+
+test("A2 construction retains the checked photo sentence when advancing and after refresh", async () => {
+  let view = await mount(a2DescriptionLesson(), a2Scene);
+  assert.equal(contextCard(), null);
+  const marker = dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Marker 1"]');
+  assert.ok(marker);
+  await surface.act(async () => marker.click());
+  const result = { ...checked(true), questionId: "m01-q1", answer: "cup-choice", correctAnswer: "1" };
+  replies.push(() => Response.json(result));
+  await click("Check answer");
+  await click("Next question");
+  assert.match(contextCard()?.textContent ?? "", /La taza es roja/);
+  assert.match(contextCard()?.textContent ?? "", /The cup is red/);
+  assert.doesNotMatch(contextCard()?.textContent ?? "", /cup-choice|book-choice|^1$/);
+  assert.doesNotMatch(text(), /La taza está sobre la mesa\.|A later question should stay hidden|Future answer/);
+  await view.close();
+  savedChecks = [result];
+  view = await mount(a2DescriptionLesson(), a2Scene);
+  assert.match(text(), /Build the second sentence/);
+  assert.match(contextCard()?.textContent ?? "", /La taza es roja/);
+  assert.equal(requests.length, 1, "restoring context never submits another answer");
+  await view.close();
+});
+
+test("A2 description context uses the previous corrected sentence instead of a wrong answer or another section", async () => {
+  savedChecks = [
+    { ...checked(true), questionId: "m01-q1", answer: "cup-choice", correctAnswer: "1" },
+    { ...checked(true), questionId: "m01-q2", answer: "An earlier section's sentence.", correctAnswer: "An earlier section's sentence." },
+    { ...checked(false), questionId: "m01-q3", answer: "description-wrong", correctAnswer: "Hay una taza roja junto al libro." },
+    { ...checked(true), questionId: "m01-q5", answer: "later", correctAnswer: "Future answer" },
+  ];
+  await mount(a2DescriptionLesson(), a2Scene);
+  assert.match(contextCard()?.textContent ?? "", /Hay una taza roja junto al libro/);
+  assert.match(contextCard()?.textContent ?? "", /There is a red cup next to the book/);
+  assert.doesNotMatch(contextCard()?.textContent ?? "", /Hay una mesa roja|description-wrong|earlier section|Future answer/);
+  assert.doesNotMatch(text(), /Hay un libro y una taza roja\.|A later question should stay hidden|Future answer/);
+  assert.equal(requests.length, 0);
 });
 
 test("M06 preserves a saved retry and replaces encouragement only after the new grade arrives", async () => {
@@ -415,6 +488,76 @@ function vocabularyTask(): SessionTask {
   } };
 }
 
+test("returning home from word review leaves the task unchanged", async () => {
+  await mount(vocabularyTask());
+  await click("Return home");
+  assert.match(text(), /Home destination/);
+  assert.deepEqual(taskActions, []);
+  assert.deepEqual(requests, []);
+});
+
+test("skipping word review marks the whole activity skipped before returning to tasks", async () => {
+  const task = vocabularyTask();
+  await mount(task);
+  const skip = button("Skip this task");
+  assert.ok(skip);
+  const description = dom.window.document.getElementById(skip.getAttribute("aria-describedby") ?? "");
+  assert.match(description?.textContent ?? "", /whole word activity/);
+  actions.push(() => ({ ...action(task, null, "Skipped"), task: { ...task, status: "skipped" } }));
+  await click("Skip this task");
+  assert.deepEqual(taskActions, [{ action: "skip", body: undefined }]);
+  assert.match(text(), /Task list destination/);
+  assert.deepEqual(requests, []);
+});
+
+test("the flashcard shortcut opens exercises without submitting or rewarding the task", async () => {
+  const task = vocabularyTask();
+  if (task.publicContent.kind !== "vocabularyIntroduction") throw new Error("Expected vocabulary fixture");
+  task.publicContent.words.push({ ...task.publicContent.words[0], learningKey: "table", targetText: "mesa", translation: "table" });
+  await mount(task);
+  await waitFor(() => assert.equal(button("Go to exercises")?.disabled, false));
+  await click("Go to exercises");
+  assert.match(text(), /What is taza/);
+  assert.deepEqual(requests, []);
+  assert.deepEqual(taskActions, []);
+  assert.doesNotMatch(text(), /Basil earned/);
+  replies.push(() => Response.json({ questionId: "word1", acceptedOptionId: "cup", isCorrect: true, correctOptionId: "cup", basilEarned: 10 }));
+  await click("cup");
+  await waitFor(() => assert.match(text(), /\+10 Basil earned/));
+  assert.deepEqual(requests, [{ questionId: "word1", optionId: "cup", review: false }]);
+  assert.deepEqual(taskActions, []);
+});
+
+test("skipped vocabulary tasks and tasks without questions do not offer the exercise shortcut", async () => {
+  const skipped = vocabularyTask();
+  skipped.status = "skipped";
+  const revision = await mount(skipped);
+  assert.equal(button("Go to exercises"), undefined);
+  await revision.close();
+  const task = vocabularyTask();
+  if (task.publicContent.kind !== "vocabularyIntroduction") throw new Error("Expected vocabulary fixture");
+  task.publicContent.questions = [];
+  await mount(task);
+  assert.equal(button("Go to exercises"), undefined);
+  assert.deepEqual(requests, []);
+  assert.deepEqual(taskActions, []);
+});
+
+test("exercise entry waits for saved vocabulary answers before opening the quiz", async () => {
+  let finishRestore: (response: Response) => void = () => { throw new Error("Restore has not started"); };
+  vocabularyRestoreReply = () => new Promise<Response>(resolve => { finishRestore = resolve; });
+  await mount(vocabularyTask());
+  assert.equal(button("Go to exercises")?.disabled, true);
+  assert.equal(button("Start quick quiz")?.disabled, true);
+  assert.doesNotMatch(text(), /What is taza/);
+  await surface.act(async () => finishRestore(Response.json({ checks: [] })));
+  await waitFor(() => assert.equal(button("Go to exercises")?.disabled, false));
+  await click("Go to exercises");
+  assert.match(text(), /What is taza/);
+  assert.deepEqual(requests, []);
+  assert.deepEqual(taskActions, []);
+});
+
 test("saved vocabulary answers restore their accepted choice and Basil without another check", async () => {
   vocabularySaved = [{ questionId: "word1", acceptedOptionId: "table", isCorrect: false, correctOptionId: "cup", basilEarned: 5 }];
   await mount(vocabularyTask());
@@ -428,8 +571,9 @@ test("a failed vocabulary restore blocks checking rather than starting with empt
   vocabularyRestoreFails = true;
   await mount(vocabularyTask());
   await waitFor(() => assert.match(text(), /We couldn’t restore your word answers/));
-  await click("Start quick quiz");
-  assert.equal(button("table")?.disabled, true);
+  assert.equal(button("Go to exercises")?.disabled, true);
+  assert.equal(button("Start quick quiz")?.disabled, true);
+  assert.equal(button("table"), undefined);
   assert.doesNotMatch(text(), /\+\d+ Basil earned/);
   assert.equal(requests.length, 0);
 });
