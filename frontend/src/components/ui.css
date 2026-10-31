@@ -4365,6 +4365,22 @@ p[role="alert"]::before { content: "!"; }
   transform: translateY(-1px);
 }
 
+.home-revisit-state {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  cursor: default;
+  text-align: center;
+}
+
+.home-revisit-empty {
+  display: grid;
+  place-items: center;
+  color: var(--teal-dark);
+}
+
 .home-explore-card:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;

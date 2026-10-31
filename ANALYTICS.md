@@ -158,7 +158,8 @@ The existing analysis and review routes show this progress; no new page is added
 | `vocabulary_typing_checked` | `{ taskId, termType, isCorrect, revealed, basilEarned }` | Learner checks or reveals a typed vocabulary answer and receives any server-awarded Basil |
 | `home_continue_practice_clicked` | `{ sessionId }` | User resumes incomplete practice from dashboard |
 | `home_begin_practice_clicked` | — | User starts new practice from dashboard |
-| `home_explore_vocabulary_clicked` | — | User clicks vocabulary revisit card on home dashboard |
+| `home_explore_vocabulary_clicked` | `{ source: "photo" \| "all_words", position? }` | User opens one of the three completed-photo reviews on Home, or the general vocabulary fallback; `position` is the photo’s display position, without photo/session identifiers |
+| `home_revisit_retried` | — | User retries the Home revisit photo data after a failed request |
 | `home_explore_ispy_clicked` | — | User clicks I-Spy quick play card on home dashboard |
 | `session_summary_viewed` | `{ sessionId, basilEarned, wordsLearnedCount, completedLessonsCount }` | Session summary screen displays upon finishing a lesson |
 | `summary_back_home_clicked` | — | User clicks "Back home" on session summary |
