@@ -60,6 +60,8 @@ Because Linguini is a single-page application (SPA), route changes do not reload
 * `/practice/ispy/join` — Enter invite code to join a room
 * `/practice/ispy/room/:roomCode` — Multiplayer I-Spy gameplay room
 * `/ispy/challenge` — Daily photo challenge: take a photo of today's scene to start a lesson
+* `/ispy/friends` — Persistent private I-Spy chats and invitation preview
+* `/ispy/friends/:chatId` — Photo rounds, clues, guesses and completed-round history
 * `/rooms` — Active and previous multiplayer rooms list
 * `/vocabulary` — Learned words, audio pronunciation, and mastery filters
 * `/journal` — Calendar diary of daily practice entries and photo attachments
@@ -94,6 +96,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | :--- | :--- | :--- |
 | `vocabulary_typing_skipped` | `{ taskId, termType, revisiting }` | Learner skips the current typing prompt without checking or revealing its answer |
 | `vocabulary_marker_clicked` | `{ taskId, marker, audioAvailable }` | Learner selects a photo marker to show its object card and play target-language pronunciation when available |
+| `vocabulary_exercises_started` | `{ taskId, source, revisiting, questionCount, wordCount }` | Learner enters exercises through the flashcard shortcut (`source: shortcut`) or after the final card (`source: cardsComplete`); this transition does not submit answers or award credit |
 | `vocabulary_pronunciation_clicked` | `{ termType }` | Learner replays a word using the review card's speaker button |
 
 Objects appear beside their linked adjectives, followed by unlinked adjectives and
@@ -159,7 +162,9 @@ The existing analysis and review routes show this progress; no new page is added
 | `home_continue_practice_clicked` | `{ sessionId }` | User resumes incomplete practice from dashboard |
 | `home_begin_practice_clicked` | — | User starts new practice from dashboard |
 | `home_explore_vocabulary_clicked` | — | User clicks vocabulary revisit card on home dashboard |
-| `home_explore_ispy_clicked` | — | User clicks I-Spy quick play card on home dashboard |
+| `home_explore_ispy_clicked` | `{ action: "start" \| "resume" \| "retry" }` | Home quick play starts a game on a randomly selected playable personal photo, resumes an unfinished game, or retries the same start request |
+| `home_quick_play_retried` | `{ stage: "photos" \| "active" \| "start" }` | Learner retries loading quick play or starting its game |
+| `home_quick_play_photo_lesson_clicked` | — | Learner opens photo practice from quick play’s empty state |
 | `session_summary_viewed` | `{ sessionId, basilEarned, wordsLearnedCount, completedLessonsCount }` | Session summary screen displays upon finishing a lesson |
 | `summary_back_home_clicked` | — | User clicks "Back home" on session summary |
 | `badge_earned_popup_shown` | `{ missionId, level }` | The summary opens the "New badge earned" popup; once per earned badge, once per session |
@@ -188,6 +193,50 @@ The existing analysis and review routes show this progress; no new page is added
 | `room_friend_removed` | — | User removes a friend from challenges |
 | `room_action_executed` | `{ intent }` | Multiplayer game action dispatched (ready, turn, etc.) |
 | `game_accent_selected` | `{ appearance }` | Learner equips or buys an accent using Sauce/Basil |
+
+### Private I-Spy chats
+
+Invitation fragments are consumed before analytics scripts load and retained only for
+the explicit join flow. Events below contain action categories and the viewer's level;
+they never contain invite tokens, clue text, object names, photos, guess coordinates,
+or private-help content. Private help and audio activity do not enter the shared chat.
+
+| Event Name | Parameters | Trigger Description |
+| :--- | :--- | :--- |
+| `ispy_friend_chat_created` | — | A private chat is created successfully |
+| `ispy_friend_invite_created` | — | The creator generates a replacement invitation |
+| `ispy_friend_invite_copied` | — | Copying an invitation succeeds |
+| `ispy_friend_invite_shared` | — | Sharing an invitation succeeds |
+| `ispy_friend_invite_opened` | — | The invitation preview opens |
+| `ispy_friend_invite_revoked` | — | The creator revokes an invitation |
+| `ispy_friend_chat_joined` | — | A compatible learner explicitly joins |
+| `ispy_friend_photo_uploaded` | — | An owned photo is accepted for a round |
+| `ispy_friend_photo_retried` | — | The sender retries failed photo analysis |
+| `ispy_friend_detected_object_selected` | — | The sender selects a suggested object |
+| `ispy_friend_detected_object_confirmed` | — | The sender confirms a detected target |
+| `ispy_friend_custom_object_started` | — | The sender starts selecting another object |
+| `ispy_friend_custom_object_confirmed` | — | The sender confirms the checked custom target |
+| `ispy_friend_clue_builder_opened` | `{ level }` | The sender opens the clue builder |
+| `ispy_friend_cheatsheet_opened` | — | A shared canonical cheatsheet opens |
+| `ispy_friend_clue_suggested` | — | A suggested clue is returned for review |
+| `ispy_friend_clue_sent` | — | The sender explicitly sends a reviewed clue |
+| `ispy_friend_private_help_opened` | — | The receiver requests private assistance |
+| `ispy_friend_private_word_opened` | `{ shown }` | The receiver shows or hides a private word meaning |
+| `ispy_friend_guess_selected` | — | The receiver chooses a photo location |
+| `ispy_friend_guess_submitted` | — | A confirmed location guess is saved |
+| `ispy_friend_guess_correct` | — | A new saved correct result appears |
+| `ispy_friend_guess_incorrect` | — | A new saved incorrect result appears |
+| `ispy_friend_followup_clue_sent` | — | The sender saves an additional clue |
+| `ispy_friend_answer_revealed` | — | The sender deliberately reveals the answer |
+| `ispy_friend_round_completed` | — | A new correct result or revealed answer appears |
+| `ispy_friend_next_round_started` | — | Another round starts in a chat with history |
+| `ispy_friend_round_cancelled` | — | The sender cancels an unfinished round |
+| `ispy_friend_audio_played` | `{ kind }` | Object, option, preview, clue, word or answer audio is requested |
+| `ispy_friend_speech_started` | — | The sender starts speech input |
+| `ispy_friend_action_retried` | — | The learner retries an action whose response was lost |
+| `ispy_friend_chat_left` | — | A participant explicitly leaves |
+| `ispy_friend_chat_reported` | — | A private report is saved |
+| `ispy_friend_chat_blocked` | — | Blocking closes conversations with the other participant |
 
 ### Gamification & Leaderboards
 | Event Name | Parameters | Trigger Description |

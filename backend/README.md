@@ -18,6 +18,12 @@ mission planning, vocabulary and task generation use that confirmed set, includi
 the retained repeated instances; unselected detections do not enter the lesson.
 Existing saved selections are preserved; the new default applies on fresh analysis.
 
+During object review, markers are numbered consecutively across the visible
+detected objects and then manually added objects. Removing or restoring an object
+updates the photo, list and relation labels together; object IDs remain unchanged.
+Confirmation saves this numbering in `reviewMarkers` for lesson questions and
+reloads. Existing saved sessions retain their original marker identities.
+
 `GET /api/v1/sessions/{id}` returns optional `sceneAnalysisProgress` with `stage`
 (`loadingImage`, `findingObjects`, `checkingResults`, `savingResults`, or `ready`)
 and `startedAt`. Stages report actual processing milestones, not estimated AI

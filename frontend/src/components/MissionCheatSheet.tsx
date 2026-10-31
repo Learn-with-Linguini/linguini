@@ -14,11 +14,13 @@ export function MissionCheatSheetLauncher({
   practiceLevel,
   contentVersion,
   languageCode,
+  onOpen,
 }: {
   missionId?: string;
   practiceLevel?: string;
   contentVersion?: number;
   languageCode: string;
+  onOpen?: () => void;
 }) {
   const [open, setOpen] = useState(false);
   const available = Boolean(missionId && practiceLevel && contentVersion);
@@ -60,6 +62,7 @@ export function MissionCheatSheetLauncher({
       title="Open cheatsheet" aria-haspopup="dialog" aria-expanded={open}
       onClick={() => {
         setOpen(true);
+        onOpen?.();
         trackAction("mission_cheatsheet_opened", tracking);
       }}>
       <HelpIcon size={22} />

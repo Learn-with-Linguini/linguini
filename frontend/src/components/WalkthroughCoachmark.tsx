@@ -42,29 +42,94 @@ export function WalkthroughCoachmark({
   const titleId = useId();
   const descriptionId = useId();
   const maskId = useId().replace(/:/g, "");
+  const layerRef = useRef<HTMLDivElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
   const [rect, setRect] = useState<Rect | null>(null);
 
   useEffect(() => {
-    targetRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
-    dialogRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
-  }, [targetRef, step]);
+    const previousFocus = document.activeElement;
+    const bodyOverflow = document.body.style.overflow;
+    const pageOverflow = document.documentElement.style.overflow;
+    const bodyPadding = document.body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    const background = [...document.body.children]
+      .filter(element => element !== layerRef.current)
+      .map(element => ({ element, inert: element.getAttribute("inert") }));
+
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${parseFloat(getComputedStyle(document.body).paddingRight) + scrollbarWidth}px`;
+    }
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.overflow = "hidden";
+    for (const { element } of background) element.setAttribute("inert", "");
+
+    const trapFocus = (event: KeyboardEvent) => {
+      if (event.key !== "Tab") return;
+      const dialog = dialogRef.current;
+      if (!dialog) return;
+      const buttons = [...dialog.querySelectorAll<HTMLButtonElement>("button:not(:disabled)")];
+      const first = buttons[0];
+      const last = buttons.at(-1);
+      if (!first || !last) {
+        event.preventDefault();
+        dialog.focus({ preventScroll: true });
+      } else if (event.shiftKey && (document.activeElement === first || !buttons.includes(document.activeElement as HTMLButtonElement))) {
+        event.preventDefault();
+        last.focus({ preventScroll: true });
+      } else if (!event.shiftKey && (document.activeElement === last || !buttons.includes(document.activeElement as HTMLButtonElement))) {
+        event.preventDefault();
+        first.focus({ preventScroll: true });
+      }
+    };
+    document.addEventListener("keydown", trapFocus);
+    return () => {
+      document.removeEventListener("keydown", trapFocus);
+      document.body.style.overflow = bodyOverflow;
+      document.documentElement.style.overflow = pageOverflow;
+      document.body.style.paddingRight = bodyPadding;
+      for (const { element, inert } of background) {
+        if (inert === null) element.removeAttribute("inert");
+        else element.setAttribute("inert", inert);
+      }
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus({ preventScroll: true });
+    };
+  }, []);
 
   useEffect(() => {
     let frame = 0;
-    const track = () => {
+    const measure = () => {
+      frame = 0;
       const target = targetRef.current;
-      const next = target ? target.getBoundingClientRect() : null;
+      const bounds = target?.getBoundingClientRect();
+      const next = bounds ? { top: bounds.top, left: bounds.left, width: bounds.width, height: bounds.height } : null;
       setRect(prev => (sameRect(prev, next) ? prev : next));
-      frame = requestAnimationFrame(track);
     };
-    frame = requestAnimationFrame(track);
-    return () => cancelAnimationFrame(frame);
-  }, [targetRef]);
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(measure); };
+    // Focus must not start a second scroll while the highlighted target is positioned.
+    targetRef.current?.scrollIntoView({ block: "center", inline: "nearest", behavior: "instant" });
+    dialogRef.current?.focus({ preventScroll: true });
+    schedule();
+    window.addEventListener("scroll", schedule, true);
+    window.addEventListener("resize", schedule);
+    window.visualViewport?.addEventListener("resize", schedule);
+    window.visualViewport?.addEventListener("scroll", schedule);
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(schedule);
+    if (targetRef.current) observer?.observe(targetRef.current);
+    if (dialogRef.current) observer?.observe(dialogRef.current);
+    observer?.observe(document.body);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer?.disconnect();
+      window.removeEventListener("scroll", schedule, true);
+      window.removeEventListener("resize", schedule);
+      window.visualViewport?.removeEventListener("resize", schedule);
+      window.visualViewport?.removeEventListener("scroll", schedule);
+    };
+  }, [targetRef, step]);
 
   if (typeof document === "undefined") return null;
   return createPortal(
-    <>
+    <div ref={layerRef} className="walkthrough-layer">
       <svg className="walkthrough-overlay" aria-hidden="true">
         <defs>
           <mask id={maskId}>
@@ -99,6 +164,7 @@ export function WalkthroughCoachmark({
         ref={dialogRef}
         className="walkthrough-coachmark"
         role="dialog"
+        tabIndex={-1}
         aria-modal="true"
         aria-labelledby={titleId}
         aria-describedby={descriptionId}
@@ -113,7 +179,7 @@ export function WalkthroughCoachmark({
           <Button disabled={saving} onClick={onNext}>{saving ? "Saving" : nextLabel}</Button>
         </div>
       </section>
-    </>,
+    </div>,
     document.body,
   );
 }
