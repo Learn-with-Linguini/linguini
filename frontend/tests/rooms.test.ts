@@ -150,6 +150,7 @@ globals.fetch = async (input: unknown, init?: RequestInit) => {
   if (path === "/api/v1/me/progress") return Response.json({ xp: 0 });
   if (path === "/api/v1/ispy/games/active") return Response.json(null);
   if (path === "/api/v1/rooms/active") return Response.json(activeSnapshot);
+  if (path === "/api/v1/friend-chats") return Response.json([]);
   if (path === "/api/v1/rooms/r1") return Response.json(snapshot);
   return new Response("not found", { status: 404 });
 };
@@ -366,7 +367,7 @@ test("room entry retries creation with the same command identity", async () => {
   await view.close();
 });
 
-test("Play offers a working friend lobby without Sauce resources", async () => {
+test("Play opens persistent friend chats without Sauce resources", async () => {
   activeSnapshot = null;
   readPaths.length = 0;
   const view = await mountApp("/ispy");
@@ -374,9 +375,9 @@ test("Play offers a working friend lobby without Sauce resources", async () => {
   assert.equal(dom.window.document.querySelectorAll('nav[aria-label="Main"] a').length, 5);
   assert.doesNotMatch(text(), /Coming soon/);
   await click("Play with friends");
-  await waitFor(() => assert.ok(button("Create a room")));
+  await waitFor(() => assert.ok(button("Play with a friend")));
   assert.doesNotMatch(text(), /Sauce/);
-  assert.ok(readPaths.includes("/api/v1/rooms/active"));
+  assert.ok(readPaths.includes("/api/v1/friend-chats"));
   assert.ok(!readPaths.includes("/api/v1/me/game-resources"));
   assert.equal(dom.window.document.querySelector('nav[aria-label="Main"] a[aria-current="page"]')?.getAttribute("href"), "/ispy");
   assert.ok(dom.window.document.querySelector('button[aria-label="Go back"]'), "the friend lobby uses the shared back control");

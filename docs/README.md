@@ -16,6 +16,7 @@ application guides and the supporting project work.
 | Static and dependency scans | [Security checks](security-checks.md) (introduced in [#258](https://github.com/Learn-with-Linguini/linguini/pull/258)) |
 | Analytics events and pages | [Analytics](../ANALYTICS.md) |
 | Missions, Basil and reward accounting | [Gamification policy](gamification.md) |
+| Persistent private I-Spy conversations | [Friend I-Spy](friend-ispy.md) |
 | Model choices and evaluation results | [Model comparison](../MODEL_COMPARISON.md) |
 | Evaluation datasets and runners | [Backend evaluations](../backend/evals/README.md) |
 | Launch media, pricing model and milestone records | [Marketing](../marketing/README.md) |
