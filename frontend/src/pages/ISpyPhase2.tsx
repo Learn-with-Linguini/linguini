@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { sessionDestination, sessionPaths } from "../lib/sessionRoute";
 import { BasilReward, Button, Card, Feedback, ProgressTrail, TopBar } from "../components/ui";
-import { ArrowRightIcon } from "../components/icons";
+import { ArrowRightIcon, CloseIcon } from "../components/icons";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
@@ -65,7 +65,9 @@ export function ISpyPhase2() {
     {alerts.map((message, alertIndex) => <p key={alertIndex} role="alert">{message}</p>)}
     <Button disabled={completionPending} onClick={finish}>{finishLabel}</Button>
   </div>;
-  return <Reflection key={task.id} task={task} index={index} total={reflection.length} finishLabel={finishLabel} onNext={() => index === reflection.length - 1 ? finish() : setIndex(value => value + 1)} />;
+  return <Reflection key={task.id} task={task} index={index} total={reflection.length} finishLabel={finishLabel}
+    onExit={() => { trackAction("ispy_exit_clicked", { phase: "describe" }); navigate("/home"); }}
+    onNext={() => index === reflection.length - 1 ? finish() : setIndex(value => value + 1)} />;
 }
 
 const OUTCOME_PROMPTS: Record<ISpyDescriptionOutcome, string> = {
@@ -80,7 +82,7 @@ const FRAME_LABELS: Record<ClueFrameId, string> = { name: "Name", colour: "Colou
 
 type LatestGuess = { attemptId: string; evaluation: ISpyDescriptionEvaluation; feedback: string | null };
 
-function Reflection({ task, index, total, finishLabel, onNext }: { task: SessionTask; index: number; total: number; finishLabel: string; onNext: () => void }) {
+function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task: SessionTask; index: number; total: number; finishLabel: string; onExit: () => void; onNext: () => void }) {
   const scene = useScene();
   const { actOnTask, practiceSaving, practiceError } = useAppState();
   const [text, setText] = useState("");
@@ -214,7 +216,10 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
   const improve = () => { setGuess(null); setRevising(true); };
   const outcome = guess?.evaluation.outcome;
   return <div className="stack">
-    <TopBar title="I-Spy · Your turn" />
+    <div className="learning-title-row">
+      <h1>I-Spy · Your turn</h1>
+      <Button variant="quiet" className="learning-exit" onClick={onExit}><CloseIcon size={18} /> Exit</Button>
+    </div>
     <ProgressTrail value={index + (answered ? 1 : 0)} total={total} label={`${index + 1} / ${total}`} />
     <ScenePhoto scene={scene} items={markers} activeItemId={target?.id ?? null} guessItemId={guessed?.id ?? null} />
     {guessed && target ? <p className="small muted" data-testid="guess-legend">{guessed.id === target.id

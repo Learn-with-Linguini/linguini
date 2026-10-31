@@ -1,6 +1,6 @@
 import { InlineLoader, LoadingScreen } from "../components/LoadingScreen";
 import { useRef, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Button, Card, Tabs } from "../components/ui";
 import { MediaImage } from "../components/MediaImage";
@@ -21,8 +21,6 @@ const SOURCES: { id: PhotoSource; label: string }[] = [
 
 export function ISpyPlay() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const notice = (location.state as { practiceNotice?: string } | null)?.practiceNotice;
   const { activeProfile } = useAppState();
   const { scenes } = useScenesQuery();
   const [source, setSource] = useState<PhotoSource>("mine");
@@ -54,13 +52,13 @@ export function ISpyPlay() {
     } finally { setStarting(false); }
   };
   return <div className="stack practice-select ispy-photo-picker">
-    <div className="row gap-10-px">
+    <div className="ispy-photo-picker__title-row">
       <h1>Choose a photo</h1>
       <div className="ispy-photo-picker__tabs">
         <Tabs options={SOURCES} value={source} onChange={setSource} />
       </div>
     </div>
-    
+
     {!activeProfile ? <p role="alert">Choose a learning language in Profile to start.</p> : null}
     {starting ? <LoadingScreen label="Setting up your game…" /> : null}
     {error ? <p role="alert">{error}</p> : null}
