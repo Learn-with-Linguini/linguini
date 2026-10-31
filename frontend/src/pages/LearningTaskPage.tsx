@@ -14,7 +14,7 @@ import { builtSentence, choiceOrder, markerChoices, nextLearningStep, optionText
 import type { LearningStep } from "../lib/practiceTasks";
 import { checkLessonAnswer, checkVocabularyAnswer, checkVocabularyTyping, getVocabularyChecks, getLatestAttempt, getLessonChecks, requestLessonAssistance, reviewDetails, updateMissionScenario, type GrammarLessonQuestion, type LessonAnswerCheck, type SceneObject, type SessionTask, type QuestionOutcome, type TaskActionResult, type TaskAnswer, type TaskContent, type VocabularyLearningWord } from "../lib/api";
 import { TargetLanguageContext, useTargetLanguage } from "../state/targetLanguage";
-import { mergeLessonChecks, visibleLessonQuestionIndex } from "../lib/missionLessonFlow";
+import { mergeLessonChecks, previousLessonContext, visibleLessonQuestionIndex } from "../lib/missionLessonFlow";
 import { isM06ScenarioVisible, lessonCheckFinished, nextAssistanceStep, retryTokens, unlockedRetryResumeIndex } from "../lib/missionM06";
 import { ReportIssueLink } from "../components/ReportIssueLink";
 import { ObjectPreview } from "../components/ObjectPreview";
@@ -706,6 +706,8 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
   }, [task.id]);
   const question = questions[Math.min(activeIndex, questions.length - 1)];
   const storedCheck = question ? checks[question.questionId] : undefined;
+  const previousContext = previousLessonContext(questions, activeIndex, checks,
+    content.kind === "grammarLesson" ? content.practiceLevel : undefined);
   const retrying = question ? Boolean(retryReady[question.questionId]) : false;
   const isSituation = content.kind === "grammarLesson" && Boolean(content.missionSnapshot);
   const tokenIndexes = question ? builtTokenIndexes[question.questionId] ?? [] : [];
@@ -893,6 +895,13 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
           <strong>Your facts</strong><ul>{question.planningFacts.map((fact, position) => <li key={`${position}-${fact}`}>{fact}</li>)}</ul>
         </section> : null}
         <MissionSnapshotFacts task={task} scene={scene} />
+        {previousContext ? <section className="panel-note stack-2" aria-label="Previous checked sentence">
+          <strong>Previous checked sentence</strong>
+          <p>{previousContext.prompt}</p>
+          {previousContext.promptTranslation ? <p className="small muted">{previousContext.promptTranslation}</p> : null}
+          {previousContext.sentence ? <p {...nativeProps}>{previousContext.sentence}</p> : null}
+          {previousContext.sentenceTranslation ? <p className="small muted">{previousContext.sentenceTranslation}</p> : null}
+        </section> : null}
         {isSituation && question.gapType && question.interactionType !== "sentenceBuilding" ? <A0MissionGapQuestion key={question.questionId}
           question={question} scene={scene} sceneObjects={session?.sceneObjects ?? []}
           selectedOptionId={answers[question.questionId] ?? ""}
