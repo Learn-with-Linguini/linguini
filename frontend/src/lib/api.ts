@@ -523,11 +523,12 @@ export interface ClueFrame {
 }
 export interface ClueSlotChoice { frameId: ClueFrameId; slotId: ClueSlotId; chip: string }
 export const CLUE_ASSISTANCE_VERSION = "ispy-clue-assistance.v1";
-/** Support visible while writing a clue; recorded as guided practice, never as independent recall. */
+/** Offered support and the optional help actually used while writing a clue. */
 export interface ClueAssistance {
   version: typeof CLUE_ASSISTANCE_VERSION; practiceMode: "guided"; targetWordShown: true;
   offeredFrameIds: ClueFrameId[]; selectedFrameIds: ClueFrameId[]; insertedChips: string[];
   selectedSlots?: ClueSlotChoice[]; revealedHelpFrameIds?: ClueFrameId[];
+  revealedMeaningFrameIds?: ClueFrameId[]; wordBankShown?: boolean; cheatSheetOpened?: boolean;
 }
 export interface SessionTask {
   id: string; kind: TaskContent["kind"]; phase: "learning" | "ispy";

@@ -96,6 +96,10 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
   const [sentences, setSentences] = useState<FrameSentences>({});
   const [choices, setChoices] = useState<SlotChoices>({});
   const [revealedHelp, setRevealedHelp] = useState<ClueFrameId[]>([]);
+  const [revealedMeanings, setRevealedMeanings] = useState<ClueFrameId[]>([]);
+  const [wordBankShown, setWordBankShown] = useState(false);
+  const [wordBankOpen, setWordBankOpen] = useState(false);
+  const [cheatSheetOpened, setCheatSheetOpened] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   // A pending task has no attempts; any other task restores its latest one before taking input.
   const [hydrated, setHydrated] = useState(task.status === "pending");
@@ -121,6 +125,10 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
     const restored = choicesFromSlots(saved.assistance?.selectedSlots ?? []);
     setChoices(restored);
     setRevealedHelp(saved.assistance?.revealedHelpFrameIds ?? []);
+    setRevealedMeanings(saved.assistance?.revealedMeaningFrameIds ?? []);
+    setWordBankShown(saved.assistance?.wordBankShown ?? false);
+    setWordBankOpen(saved.assistance?.wordBankShown ?? false);
+    setCheatSheetOpened(saved.assistance?.cheatSheetOpened ?? false);
     setSentences(restoreSentences(saved.text, savedFrames, chips, restored));
     const evaluation = saved.evaluationDetails;
     if (evaluation) setGuess({ attemptId: saved.id, evaluation, feedback: saved.feedback });
@@ -175,10 +183,11 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
     const answer = text.trim();
     if (!answer || namesTarget || answered || practiceSaving || !hydrated || submitting.current) return;
     submitting.current = true;
-    const assistance: ClueAssistance | null = frames.length ? {
+    const assistance: ClueAssistance | null = frames.length || wordBankShown || cheatSheetOpened ? {
       version: CLUE_ASSISTANCE_VERSION, practiceMode: "guided", targetWordShown: true,
       offeredFrameIds: frames.map(frame => frame.frameId), selectedFrameIds, insertedChips,
       selectedSlots: slotsFromChoices(choices), revealedHelpFrameIds: revealedHelp,
+      revealedMeaningFrameIds: revealedMeanings, wordBankShown, cheatSheetOpened,
     } : null;
     const body: TaskAnswer = assistance ? { inputMode: "text", text: answer, assistance } : { inputMode: "text", text: answer };
     const fingerprint = JSON.stringify(body);
@@ -196,6 +205,9 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
           setActiveFrameId(saved.selectedFrameIds.at(-1) ?? null);
           setChoices(choicesFromSlots(saved.selectedSlots));
           setRevealedHelp(saved.revealedHelpFrameIds);
+          setRevealedMeanings(saved.revealedMeaningFrameIds);
+          setWordBankShown(saved.wordBankShown);
+          setCheatSheetOpened(saved.cheatSheetOpened);
         }
         const evaluation = descriptionEvaluation(result.attempt);
         trackAction("ispy_description_submitted", { outcome: evaluation?.outcome });
@@ -226,7 +238,10 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
       ? `Linguini's guess is your object (marker ${target.marker}).`
       : `Your object: marker ${target.marker} · Linguini's guess: marker ${guessed.marker} (dashed)`}</p> : null}
     <Card><div className="stack-2"><div className="spread"><span className="label muted">Describe this object</span></div><h2>{target?.word}</h2><span className="small muted">{target?.translation}</span><p>{content.prompt}</p></div></Card>
-    <ISpyLevelHelp support={content} languageCode={scene.languageCode} />
+    <ISpyLevelHelp support={content} languageCode={scene.languageCode}
+      wordsShown={content.learnerLevel === "A1" || content.learnerLevel === "A2" ? wordBankOpen : undefined}
+      onWordsShownChange={setWordBankOpen}
+      onAssistance={kind => kind === "wordBank" ? setWordBankShown(true) : setCheatSheetOpened(true)} />
     {frames.length && !framesShown ? <Button variant="quiet" disabled={locked} onClick={() => {
       trackAction("ispy_clue_help_opened", { taskId: task.id });
       setHelpOpen(true);
@@ -236,20 +251,29 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
       <div className="chip-row">{frames.map(frame => <button key={frame.frameId} type="button" className={`chip${frame.frameId === activeFrameId ? " chip--selected" : ""}`} aria-pressed={frame.frameId === activeFrameId} disabled={locked} onClick={() => chooseFrame(frame)}>{FRAME_LABELS[frame.frameId]}</button>)}</div>
       {activeFrame ? <div className="clue-frame stack-2" data-testid="clue-frame">
         <strong lang={scene.languageCode}>{activeFrame.template ?? `${activeFrame.prefix} …`}</strong>
-        <span className="small">{activeFrame.meaning}</span>
-        <span className="small muted">Example: <span lang={scene.languageCode}>{activeFrame.example}</span></span>
+        {revealedMeanings.includes(activeFrame.frameId) ? <div className="stack-2" data-testid="frame-meanings">
+          <span className="small">{activeFrame.meaning}</span>
+          <span className="small muted">Example: <span lang={scene.languageCode}>{activeFrame.example}</span></span>
+        </div> : <Button variant="quiet" disabled={locked} onClick={() => {
+          setRevealedMeanings(ids => [...ids, activeFrame.frameId]);
+          trackAction("ispy_clue_help_revealed", { kind: "meanings", frame: activeFrame.frameId });
+        }}>Show English hints</Button>}
         {activeFrame.chips.length ? <div className="chip-row">{activeFrame.chips.map(chip => <button key={chip} type="button" className={`chip${insertedChips.includes(chip) ? " chip--selected" : ""}`} disabled={locked} onClick={() => chooseChip(activeFrame, chip)}>{chip}</button>)}</div> : null}
         {(activeFrame.slots ?? []).map(slot => <div key={slot.slotId} className="stack-2" data-testid={`clue-slot-${slot.slotId}`}>
           <span className="small muted">Choose a {slot.label}</span>
           <div className="chip-row">{slot.chips.map(chip => {
             const picked = choices[activeFrame.frameId]?.[slot.slotId] === chip.text;
-            return <button key={chip.text} type="button" lang={scene.languageCode} title={chip.meaning ?? undefined} className={`chip${picked ? " chip--selected" : ""}`} aria-pressed={picked} disabled={locked} onClick={() => chooseSlotChip(activeFrame, slot.slotId, chip.text)}>{chip.text}</button>;
+            return <button key={chip.text} type="button" lang={scene.languageCode} className={`chip${picked ? " chip--selected" : ""}`} aria-pressed={picked} disabled={locked} onClick={() => chooseSlotChip(activeFrame, slot.slotId, chip.text)}>{chip.text}</button>;
           })}</div>
-          {slot.slotId === "position" ? <ul className="small muted" data-testid="position-meanings">{slot.chips.filter(chip => chip.meaning).map(chip => <li key={chip.text}><span lang={scene.languageCode}>{chip.text}</span> — {chip.meaning}{chip.example ? <> · <span lang={scene.languageCode}>{chip.example}</span></> : null}</li>)}</ul> : null}
+          {revealedMeanings.includes(activeFrame.frameId) && slot.chips.some(chip => chip.meaning)
+            ? <ul className="small muted" data-testid={`${slot.slotId}-meanings`}>{slot.chips.filter(chip => chip.meaning).map(chip => <li key={chip.text}><span lang={scene.languageCode}>{chip.text}</span> — {chip.meaning}{chip.example ? <> · <span lang={scene.languageCode}>{chip.example}</span></> : null}</li>)}</ul> : null}
         </div>)}
         {activeFrame.help?.length ? revealedHelp.includes(activeFrame.frameId)
           ? <div className="stack-2" data-testid="clue-help"><span className="small muted">Suggested phrases (guided help)</span><div className="chip-row">{activeFrame.help.map(phrase => <button key={phrase} type="button" lang={scene.languageCode} className={`chip${insertedChips.includes(phrase) ? " chip--selected" : ""}`} disabled={locked} onClick={() => chooseHelp(activeFrame, phrase)}>{phrase}</button>)}</div></div>
-          : <Button variant="secondary" disabled={locked} onClick={() => setRevealedHelp(ids => [...ids, activeFrame.frameId])}>Help me</Button> : null}
+          : <Button variant="secondary" disabled={locked} onClick={() => {
+            setRevealedHelp(ids => [...ids, activeFrame.frameId]);
+            trackAction("ispy_clue_help_revealed", { kind: "phrases", frame: activeFrame.frameId });
+          }}>Help me</Button> : null}
       </div> : null}
     </div> : null}
     <div className="field"><label className="field__label" htmlFor="reflection">Your clue</label>

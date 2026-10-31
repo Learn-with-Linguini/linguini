@@ -60,6 +60,7 @@ def test_standalone_replays_do_not_charge_sauce_or_earn_basil(database, repos, c
                 input_mode="text", text="Es rojo.", idempotency_key=str(uuid4()),
             ))
             assert answer.attempt.is_correct is True
+            workflow.confirm_guess(description.id, answer.attempt.id)
         current = workflow.get(game.session.id)
         for remaining in current.tasks:
             if remaining.status not in {"completed", "skipped"}:

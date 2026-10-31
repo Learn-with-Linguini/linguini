@@ -118,7 +118,7 @@ from app.schemas.vocabulary import (
     VocabularyTranslation,
 )
 from app.services.background import InlineBackgroundRunner
-from app.services.ispy_clue_frames import check_clue
+from app.services.ispy_clue_frames import check_clue, clue_assistance_used
 from app.services.ispy_descriptions import (
     OUTCOME_CORRECTNESS,
     guess_feedback,
@@ -3879,7 +3879,14 @@ class PostgresWorkflowRepository:
                     .where(session_tasks.c.id == task.id)
                     .values(status="completed", completed_at=now, started_at=task.started_at or now)
                 )
-                if session.mode == SessionMode.LESSON:
+                assisted = any(
+                    clue_assistance_used(payload.get("assistance"))
+                    for payload in c.execute(
+                        select(task_attempts.c.response_payload)
+                        .where(task_attempts.c.session_task_id == task.id)
+                    ).scalars()
+                )
+                if session.mode == SessionMode.LESSON and not assisted:
                     award(
                         c,
                         user_id=self.user_id,
