@@ -280,9 +280,6 @@ export const createCheckoutSession = (returnUrl?: string) =>
 export const createPortalSession = (returnUrl?: string) =>
   write<{ portalUrl: string }>("/api/v1/payments/create-portal-session", "POST", { returnUrl });
 
-export const testSetTier = (tier: AccountTier) =>
-  write<{ tier: AccountTier }>("/api/v1/payments/test-set-tier", "POST", { tier });
-
 export const getLanguageProfiles = (signal?: AbortSignal) => request<LanguageProfile[]>("/api/v1/me/language-profiles", signal);
 export interface PackPracticeLanguage {
   code: string;

@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 import logging
-import secrets
 from typing import Any
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from uuid import UUID
 
-from stripe import StripeClient
+from stripe import StripeClient, Webhook
 
 from app.config import (
     get_frontend_url,
@@ -30,6 +30,62 @@ DAILY_LESSON_LIMITS: dict[AccountTier, int | None] = {
 
 class StripeConfigurationError(Exception):
     """Raised when Stripe credentials or settings are missing."""
+
+
+class InvalidPaymentReturnUrl(ValueError):
+    """The payment return URL is outside the configured application origin."""
+
+
+class BillingCustomerNotLinked(Exception):
+    """No Stripe customer is linked to this authenticated application account."""
+
+
+def _url_origin(url: str) -> tuple[str, str, int]:
+    parsed = urlsplit(url)
+    if (
+        not parsed.hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or parsed.fragment
+        or "\\" in url
+        or any(ord(char) <= 32 or ord(char) == 127 for char in url)
+        or parsed.scheme not in {"http", "https"}
+        or (
+            parsed.scheme == "http"
+            and parsed.hostname not in {"localhost", "127.0.0.1", "::1"}
+        )
+    ):
+        raise ValueError("Invalid application URL")
+    port = parsed.port if parsed.port is not None else (443 if parsed.scheme == "https" else 80)
+    return parsed.scheme, parsed.hostname, port
+
+
+def _payment_return_url(return_url: str | None) -> str:
+    frontend_url = get_frontend_url()
+    try:
+        origin = _url_origin(frontend_url)
+    except ValueError as exc:
+        raise StripeConfigurationError("FRONTEND_URL must be a valid application URL.") from exc
+    candidate = return_url if return_url is not None else f"{frontend_url}/payment"
+    try:
+        if _url_origin(candidate) != origin:
+            raise ValueError("Untrusted origin")
+    except ValueError as exc:
+        raise InvalidPaymentReturnUrl("Return URL must use the application's origin.") from exc
+    return candidate
+
+
+def _checkout_return_url(base_url: str, status: str) -> str:
+    parsed = urlsplit(base_url)
+    query = [
+        (key, value) for key, value in parse_qsl(parsed.query, keep_blank_values=True)
+        if key not in {"status", "session_id"}
+    ]
+    query.append(("status", status))
+    encoded = urlencode(query)
+    if status == "success":
+        encoded += "&session_id={CHECKOUT_SESSION_ID}"
+    return urlunsplit(parsed._replace(query=encoded))
 
 
 class StripeService:
@@ -71,10 +127,10 @@ class StripeService:
         email: str | None,
         return_url: str | None = None,
     ) -> str:
+        base_url = _payment_return_url(return_url)
         client = self._require_client()
-        base_url = return_url or f"{get_frontend_url()}/payment"
+        customer_id = self._customer_for_user(user_id, email, create=True)
         price_id = get_stripe_plus_price_id()
-        ident_suffix = secrets.token_hex(4)
 
         session_params: dict[str, Any] = {
             "mode": "subscription",
@@ -88,12 +144,11 @@ class StripeService:
             "metadata": {
                 "user_id": str(user_id),
             },
-            "success_url": f"{base_url}?status=success&session_id={{CHECKOUT_SESSION_ID}}",
-            "cancel_url": f"{base_url}?status=cancelled",
-            "integration_identifier": f"linguini_sub_{ident_suffix}",
+            "subscription_data": {"metadata": {"user_id": str(user_id)}},
+            "customer": customer_id,
+            "success_url": _checkout_return_url(base_url, "success"),
+            "cancel_url": _checkout_return_url(base_url, "cancelled"),
         }
-        if email:
-            session_params["customer_email"] = email
 
         session = client.checkout.sessions.create(params=session_params)
         if not session.url:
@@ -106,32 +161,9 @@ class StripeService:
         email: str | None = None,
         return_url: str | None = None,
     ) -> str:
+        base_url = _payment_return_url(return_url)
         client = self._require_client()
-        base_url = return_url or f"{get_frontend_url()}/payment"
-
-        # Search for customer by metadata or email
-        customer_id: str | None = None
-        if email:
-            customers = client.customers.list(params={"email": email, "limit": 1})
-            if customers.data:
-                customer_id = customers.data[0].id
-
-        if not customer_id:
-            customers_search = client.customers.search(
-                params={"query": f"metadata['user_id']:'{user_id}'", "limit": 1}
-            )
-            if customers_search.data:
-                customer_id = customers_search.data[0].id
-
-        if not customer_id:
-            # Create a customer so portal can be opened
-            customer = client.customers.create(
-                params={
-                    "email": email,
-                    "metadata": {"user_id": str(user_id)},
-                }
-            )
-            customer_id = customer.id
+        customer_id = self._customer_for_user(user_id, email, create=False)
 
         portal_session = client.billing_portal.sessions.create(
             params={
@@ -141,33 +173,40 @@ class StripeService:
         )
         return portal_session.url
 
+    def _customer_for_user(self, user_id: UUID, email: str | None, *, create: bool) -> str:
+        client = self._require_client()
+        customers = client.customers.search(
+            params={"query": f"metadata['user_id']:'{user_id}'", "limit": 1}
+        )
+        if customers.data:
+            customer = customers.data[0]
+            if self._extract_metadata(customer).get("user_id") != str(user_id):
+                raise RuntimeError("Stripe customer does not belong to this account.")
+            return customer.id
+        if not create:
+            raise BillingCustomerNotLinked(
+                "Your billing profile is not linked to this account. Please contact support."
+            )
+        # An email address is contact data, not an account ownership proof.
+        customer = client.customers.create(
+            params={"email": email, "metadata": {"user_id": str(user_id)}},
+            options={"idempotency_key": f"linguini-customer-{user_id}"},
+        )
+        return customer.id
+
     def handle_webhook_event(self, payload: bytes, sig_header: str | None) -> dict[str, Any]:
         webhook_secret = get_stripe_webhook_secret()
-        client = self._require_client()
-
-        if webhook_secret and sig_header:
-            event = client.webhooks.construct_event(
-                payload=payload.decode("utf-8"),
-                sig_header=sig_header,
-                secret=webhook_secret,
-            )
-        else:
-            # In local development without webhook secret, parse payload JSON
-            import json
-            event_data = json.loads(payload.decode("utf-8"))
-            event = type("Event", (), event_data)()
-
-        if isinstance(event, dict):
-            event_type = event.get("type", "")
-        else:
-            event_type = getattr(event, "type", "")
-        data_object = getattr(event, "data", None)
-        if hasattr(data_object, "object"):
-            obj = data_object.object
-        elif isinstance(data_object, dict):
-            obj = data_object.get("object", {})
-        else:
-            obj = getattr(event, "data", {}).get("object", {}) if isinstance(event, dict) else {}
+        if not webhook_secret:
+            raise StripeConfigurationError("STRIPE_WEBHOOK_SECRET is required.")
+        if not sig_header:
+            raise ValueError("Stripe signature is required.")
+        event = Webhook.construct_event(
+            payload=payload,
+            sig_header=sig_header,
+            secret=webhook_secret,
+        ).to_dict()
+        event_type = event.get("type", "")
+        obj = event.get("data", {}).get("object", {})
 
         logger.info("Handling Stripe webhook event: %s", event_type)
 
@@ -183,7 +222,10 @@ class StripeService:
     def _extract_metadata(self, obj: Any) -> dict:
         if isinstance(obj, dict):
             return obj.get("metadata") or {}
-        return getattr(obj, "metadata", None) or {}
+        metadata = getattr(obj, "metadata", None)
+        if metadata is None:
+            return {}
+        return metadata if isinstance(metadata, dict) else metadata.to_dict()
 
     def _on_checkout_completed(self, session: Any) -> None:
         metadata = self._extract_metadata(session)
