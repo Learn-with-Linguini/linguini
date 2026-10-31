@@ -94,6 +94,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | :--- | :--- | :--- |
 | `vocabulary_typing_skipped` | `{ taskId, termType, revisiting }` | Learner skips the current typing prompt without checking or revealing its answer |
 | `vocabulary_marker_clicked` | `{ taskId, marker, audioAvailable }` | Learner selects a photo marker to show its object card and play target-language pronunciation when available |
+| `vocabulary_exercises_started` | `{ taskId, source, revisiting, questionCount, wordCount }` | Learner enters exercises through the flashcard shortcut (`source: shortcut`) or after the final card (`source: cardsComplete`); this transition does not submit answers or award credit |
 | `vocabulary_pronunciation_clicked` | `{ termType }` | Learner replays a word using the review card's speaker button |
 
 Objects appear beside their linked adjectives, followed by unlinked adjectives and

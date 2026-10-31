@@ -298,13 +298,24 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
     if (next.kind === "quiz") setQuestionIndex(next.index);
     else setTypingIndex(next.index);
   };
-  const finishReview = () => {
+  const hasExercises = revisiting ? recap.length > 0 : content.questions.length > 0;
+  const exercisesBlocked = practiceSaving || (!revisiting && !restored.isSuccess);
+  const startExercises = (source: "shortcut" | "cardsComplete") => {
+    if (revision || !hasExercises || exercisesBlocked) return;
     setSelectedMarkerId(null);
-    if (page < pageCount - 1) { setPage(value => value + 1); return; }
+    trackAction("vocabulary_exercises_started", {
+      taskId: task.id, source, revisiting,
+      questionCount: content.questions.length, wordCount: content.words.length,
+    });
     if (revisiting) {
       trackAction("vocabulary_recap_started", { questionCount: content.questions.length, wordCount: content.words.length });
       advanceRecap(0);
     } else setStage("quiz");
+  };
+  const finishReview = () => {
+    setSelectedMarkerId(null);
+    if (page < pageCount - 1) { setPage(value => value + 1); return; }
+    startExercises("cardsComplete");
   };
   const handleCardTouchStart = (event: TouchEvent) => {
     const touch = event.changedTouches[0];
@@ -438,8 +449,9 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
         <Button disabled={page === 0} onClick={() => { setSelectedMarkerId(null); setPage(value => value - 1); }}><ArrowLeftIcon size={18} /> Previous</Button>
         {revision && page === pageCount - 1
           ? <Button variant="secondary" onClick={onClose}>Back to tasks</Button>
-          : <Button variant="secondary" onClick={finishReview}>{page < pageCount - 1 ? <>Next <ArrowRightIcon /></> : "Start quick quiz"}</Button>}
+          : <Button variant="secondary" disabled={page === pageCount - 1 && (exercisesBlocked || !hasExercises)} onClick={finishReview}>{page < pageCount - 1 ? <>Next <ArrowRightIcon /></> : "Start quick quiz"}</Button>}
       </div>
+      {!revision && hasExercises ? <Button variant="quiet" block disabled={exercisesBlocked} onClick={() => startExercises("shortcut")}>Go to exercises</Button> : null}
     </> : null}
     {active && stage === "quiz" && question ? <><Card plain><div className="stack">
       <h2>{question.prompt}</h2>

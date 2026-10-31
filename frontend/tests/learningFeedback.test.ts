@@ -48,6 +48,7 @@ const surface = await bundle();
 let savedChecks: LessonAnswerCheck[] = [];
 let vocabularySaved: Record<string, unknown>[] = [];
 let vocabularyRestoreFails = false;
+let vocabularyRestoreReply: (() => Response | Promise<Response>) | null = null;
 let latestAttempt: LatestClueAttempt | null = null;
 const replies: (() => Response | Promise<Response>)[] = [];
 const actions: (() => TaskActionResult | null)[] = [];
@@ -56,14 +57,14 @@ const taskActions: { action: string; body: unknown }[] = [];
 const originalFetch = globals.fetch;
 globals.fetch = async (input: unknown, init?: RequestInit) => {
   const path = new URL(String(input)).pathname;
-  if (path.endsWith("/vocabulary-checks")) return vocabularyRestoreFails ? Response.json({ detail: { message: "Unavailable" } }, { status: 503 }) : Response.json({ checks: vocabularySaved });
+  if (path.endsWith("/vocabulary-checks")) return vocabularyRestoreReply?.() ?? (vocabularyRestoreFails ? Response.json({ detail: { message: "Unavailable" } }, { status: 503 }) : Response.json({ checks: vocabularySaved }));
   if (path.endsWith("/lesson-checks")) return Response.json({ checks: savedChecks, assistanceSteps: {} });
   if (path.endsWith("/latest-attempt")) return Response.json({ attempt: latestAttempt });
   requests.push(JSON.parse(String(init?.body ?? "{}")));
   return replies.shift()?.() ?? new Response("Unexpected fixture request", { status: 500 });
 };
 const cleanups = new Set<() => Promise<void>>();
-test.beforeEach(() => { savedChecks = []; vocabularySaved = []; vocabularyRestoreFails = false; latestAttempt = null; replies.length = 0; actions.length = 0; requests.length = 0; taskActions.length = 0; });
+test.beforeEach(() => { savedChecks = []; vocabularySaved = []; vocabularyRestoreFails = false; vocabularyRestoreReply = null; latestAttempt = null; replies.length = 0; actions.length = 0; requests.length = 0; taskActions.length = 0; });
 test.afterEach(async () => { for (const cleanup of [...cleanups]) await cleanup(); });
 test.after(() => {
   globals.fetch = originalFetch;
@@ -415,6 +416,54 @@ function vocabularyTask(): SessionTask {
   } };
 }
 
+test("the flashcard shortcut opens exercises without submitting or rewarding the task", async () => {
+  const task = vocabularyTask();
+  if (task.publicContent.kind !== "vocabularyIntroduction") throw new Error("Expected vocabulary fixture");
+  task.publicContent.words.push({ ...task.publicContent.words[0], learningKey: "table", targetText: "mesa", translation: "table" });
+  await mount(task);
+  await waitFor(() => assert.equal(button("Go to exercises")?.disabled, false));
+  await click("Go to exercises");
+  assert.match(text(), /What is taza/);
+  assert.deepEqual(requests, []);
+  assert.deepEqual(taskActions, []);
+  assert.doesNotMatch(text(), /Basil earned/);
+  replies.push(() => Response.json({ questionId: "word1", acceptedOptionId: "cup", isCorrect: true, correctOptionId: "cup", basilEarned: 10 }));
+  await click("cup");
+  await waitFor(() => assert.match(text(), /\+10 Basil earned/));
+  assert.deepEqual(requests, [{ questionId: "word1", optionId: "cup", review: false }]);
+  assert.deepEqual(taskActions, []);
+});
+
+test("skipped vocabulary tasks and tasks without questions do not offer the exercise shortcut", async () => {
+  const skipped = vocabularyTask();
+  skipped.status = "skipped";
+  const revision = await mount(skipped);
+  assert.equal(button("Go to exercises"), undefined);
+  await revision.close();
+  const task = vocabularyTask();
+  if (task.publicContent.kind !== "vocabularyIntroduction") throw new Error("Expected vocabulary fixture");
+  task.publicContent.questions = [];
+  await mount(task);
+  assert.equal(button("Go to exercises"), undefined);
+  assert.deepEqual(requests, []);
+  assert.deepEqual(taskActions, []);
+});
+
+test("exercise entry waits for saved vocabulary answers before opening the quiz", async () => {
+  let finishRestore: (response: Response) => void = () => { throw new Error("Restore has not started"); };
+  vocabularyRestoreReply = () => new Promise<Response>(resolve => { finishRestore = resolve; });
+  await mount(vocabularyTask());
+  assert.equal(button("Go to exercises")?.disabled, true);
+  assert.equal(button("Start quick quiz")?.disabled, true);
+  assert.doesNotMatch(text(), /What is taza/);
+  await surface.act(async () => finishRestore(Response.json({ checks: [] })));
+  await waitFor(() => assert.equal(button("Go to exercises")?.disabled, false));
+  await click("Go to exercises");
+  assert.match(text(), /What is taza/);
+  assert.deepEqual(requests, []);
+  assert.deepEqual(taskActions, []);
+});
+
 test("saved vocabulary answers restore their accepted choice and Basil without another check", async () => {
   vocabularySaved = [{ questionId: "word1", acceptedOptionId: "table", isCorrect: false, correctOptionId: "cup", basilEarned: 5 }];
   await mount(vocabularyTask());
@@ -428,8 +477,9 @@ test("a failed vocabulary restore blocks checking rather than starting with empt
   vocabularyRestoreFails = true;
   await mount(vocabularyTask());
   await waitFor(() => assert.match(text(), /We couldn’t restore your word answers/));
-  await click("Start quick quiz");
-  assert.equal(button("table")?.disabled, true);
+  assert.equal(button("Go to exercises")?.disabled, true);
+  assert.equal(button("Start quick quiz")?.disabled, true);
+  assert.equal(button("table"), undefined);
   assert.doesNotMatch(text(), /\+\d+ Basil earned/);
   assert.equal(requests.length, 0);
 });
