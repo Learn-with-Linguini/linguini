@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from app.schemas.base import ApiModel, NonEmptyText
 
@@ -38,7 +38,7 @@ class TranslatedTerm(ApiModel):
                      "relationship. Never empty or null, including for non-objects."),
     )
     article: Annotated[str, Field(min_length=1, max_length=20)] | None = None
-    gender: Annotated[str, Field(pattern="^(masculine|feminine|neuter)$")] | None = None
+    gender: Literal["masculine", "feminine", "neuter"] | None = None
     native_display: NonEmptyText | None = Field(default=None, exclude_if=lambda v: v is None)
     romanization: NonEmptyText | None = Field(default=None, exclude_if=lambda v: v is None)
     plural: Annotated[str, Field(min_length=1, max_length=300)] | None = Field(
@@ -53,6 +53,14 @@ class TranslatedTerm(ApiModel):
                      "(not IPA, no slashes); the stressed syllable in caps, "
                      "e.g. \"MEH-sah\". Supply for every object, attribute and relationship."),
     )
+
+    @field_validator("article", "gender", mode="before")
+    @classmethod
+    def normalize_string_null(cls, value):
+        """Accept a provider spelling JSON null as the literal string ``"null"``."""
+        if isinstance(value, str) and value.strip().casefold() == "null":
+            return None
+        return value
 
 
 class SceneTranslationResult(ApiModel):
