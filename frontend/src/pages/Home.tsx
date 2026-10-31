@@ -15,6 +15,7 @@ import { FIRST_LESSON_WALKTHROUGH_VERSION, needsFirstLessonWalkthrough } from ".
 import { learningProgress } from "../lib/practiceTasks";
 import { useChefStandings, useGamification } from "../state/gamification";
 import { trackAction } from "../lib/analytics.ts";
+import { HomeQuickPlay } from "../components/HomeQuickPlay";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -135,10 +136,7 @@ export function Home() {
                 <div className="home-explore-card__image">{revisitScene ? <MediaImage assetId={revisitScene.mediaAssetId} title={revisitScene.title} width={640} lazy /> : <img src="/photos/cafe-interior.jpg" alt="" />}</div>
                 <div className="home-explore-card__body"><span className="home-tag home-tag--revisit"><BookIcon size={14} /> Revisit</span><strong>{revisitScene?.title ?? "Your vocabulary"}</strong><span>{revisitScene ? `${revisitScene.count} ${revisitScene.count === 1 ? "word" : "words"} to practise` : "Review the words you've found"}</span></div>
               </button>
-              <button className="home-explore-card" type="button" onClick={() => { trackAction("home_explore_ispy_clicked"); navigate("/ispy"); }}>
-                <div className="home-explore-card__image"><img src="/scenes/grocery-store.jpg" alt="A colourful grocery store scene" /></div>
-                <div className="home-explore-card__body"><span className="home-tag home-tag--play"><EyeIcon size={14} /> Quick play</span><strong>I-Spy challenge</strong><span>Test what you can spot</span></div>
-              </button>
+              <HomeQuickPlay key={`${user?.id}:${profileId}`} owner={user?.id ?? ""} profileId={profileId} />
             </div>
             <button className="home-explore__next" type="button" aria-label="Show the next activity" onClick={() => {
               const rail = exploreRailRef.current;
