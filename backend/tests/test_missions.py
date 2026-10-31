@@ -139,6 +139,10 @@ def test_every_mission_ends_before_optional_ispy():
         ]
 
 
+def test_retired_article_pairing_mission_is_not_scheduled():
+    assert get_mission("M13", "A0", 1) is None
+
+
 def test_definition_files_are_named_by_their_mission(tmp_path):
     source = (DEFINITIONS_DIR / "M01-A1.toml").read_text()
     renamed = tmp_path / "M01-A1.v3.toml"
