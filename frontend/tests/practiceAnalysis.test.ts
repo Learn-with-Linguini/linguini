@@ -96,7 +96,7 @@ function detail(): PracticeDetail {
 
 let root: ReturnType<typeof createRoot> | null = null;
 let reviews: PracticeReview[] = [];
-async function mount(session = detail(), stalled = false) {
+async function mount(session = detail(), stalled = false, visibleScene = scene) {
   reviews = [];
   const state = { session, practiceSaving: false, practiceError: null, practiceStalled: stalled,
     saveReview: async (review: PracticeReview) => { reviews.push(review); },
@@ -107,7 +107,7 @@ async function mount(session = detail(), stalled = false) {
   await act(async () => {
     root!.render(h(MemoryRouter, { initialEntries: ["/analysis"] },
       h(AppStateContext.Provider, { value: state },
-        h(Routes, null, h(Route, { element: h(Outlet, { context: scene }) },
+        h(Routes, null, h(Route, { element: h(Outlet, { context: visibleScene }) },
           h(Route, { path: "/analysis", element: h(PracticeAnalysis) }))))));
   });
 }
@@ -181,6 +181,72 @@ test("removed objects keep stable numbers while added markers follow kept object
   assert.ok(reviews[0].addedObjects[0].id);
   assert.deepEqual(reviews[0].objectCounts, { "object-1": 2, [reviews[0].addedObjects[0].id]: 1 });
   assert.deepEqual(scene.items.map(item => item.marker), [1, 2, 3]);
+});
+
+test("matching objects share one compact heading while retaining each marker and its controls", async () => {
+  await mount();
+  const groups = [...dom.window.document.querySelectorAll(".analysis-object-group")];
+  assert.equal(groups.length, 1);
+  assert.equal(groups[0].querySelector(".analysis-object-group__header > strong")?.textContent, "cup");
+  assert.equal(groups[0].querySelector(".analysis-object-group__count")?.textContent, "×2");
+  assert.deepEqual([...groups[0].querySelectorAll(".analysis-word-row__marker")].map(element => element.textContent), ["2", "3"]);
+  assert.equal(groups[0].querySelectorAll(".analysis-object-instance").length, 2);
+  assert.ok(groups[0].querySelector('[aria-label="Change location of marker 2, cup"]'));
+  assert.ok(groups[0].querySelector('[aria-label="Remove marker 3, cup"]'));
+  assert.equal(dom.window.document.querySelectorAll(".analysis-word-row").length, 3);
+  assert.equal(reviews.length, 0);
+});
+
+test("removing one grouped instance retains the other object and submits its original identity", async () => {
+  await mount();
+  await click(dom.window.document.querySelector('[aria-label="Remove marker 2, cup"]'));
+  assert.equal(dom.window.document.querySelectorAll(".analysis-object-group").length, 0);
+  assert.ok(dom.window.document.querySelector('[aria-label="Change location of marker 3, cup"]'));
+  assert.ok(dom.window.document.querySelector('[aria-label="Remove marker 3, cup"]'));
+  assertMarkers([1, 3]);
+  await click(button("Confirm lesson facts"));
+  assert.deepEqual(reviews[0].acceptedObjectIds, ["object-0", "object-2"]);
+  assert.deepEqual(reviews[0].relations, []);
+  assert.deepEqual(reviews[0].objectCounts, { "object-0": 1, "object-2": 1 });
+});
+
+test("moving a grouped marker and choosing duplicate labels in relations retain individual IDs", async () => {
+  await mount();
+  await click(dom.window.document.querySelector('[aria-label="Change location of marker 3, cup"]'));
+  const photo = dom.window.document.querySelector('.scene[role="button"]')!;
+  await act(async () => photo.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true })));
+  await click([...dom.window.document.querySelectorAll('[role="tab"]')].find(tab => tab.textContent?.startsWith("Relations"))!);
+  await click(dom.window.document.getElementById("relation-subject"));
+  await click([...dom.window.document.querySelectorAll("#relation-subject-options [role=option]")].find(option => option.querySelector(".combobox__marker")?.textContent === "3")!);
+  await click(dom.window.document.getElementById("relation-text"));
+  await click(dom.window.document.querySelector("#relation-text-options [role=option]"));
+  await click(dom.window.document.getElementById("relation-reference"));
+  await click([...dom.window.document.querySelectorAll("#relation-reference-options [role=option]")].find(option => option.querySelector(".combobox__marker")?.textContent === "2")!);
+  await click(button("Add connection"));
+  await click(button("Confirm lesson facts"));
+  assert.deepEqual(reviews[0].repositionedObjects, [{ id: "object-2", anchorPoint: { x: .5, y: .5 } }]);
+  assert.equal(reviews[0].relations[1].subjectSceneObjectId, "object-2");
+  assert.equal(reviews[0].relations[1].referenceSceneObjectId, "object-1");
+  assert.equal(reviews[0].relations[1].relation, "leftOf");
+});
+
+test("one object keeps its ordinary row and original marker controls", async () => {
+  const single = detail(); single.sceneObjects = single.sceneObjects.slice(0, 1); single.sceneObjectRelations = [];
+  await mount(single, false, { ...scene, items: scene.items.slice(0, 1) });
+  assert.equal(dom.window.document.querySelectorAll(".analysis-object-group").length, 0);
+  assert.equal(dom.window.document.querySelectorAll(".analysis-word-row").length, 1);
+  assert.ok(dom.window.document.querySelector('[aria-label="Remove marker 1, table"]'));
+  await click(button("Confirm lesson facts"));
+  assert.deepEqual(reviews[0].acceptedObjectIds, ["object-0"]);
+});
+
+test("an empty object list keeps the add-object explanation and disables confirmation", async () => {
+  const empty = detail(); empty.sceneObjects = []; empty.sceneObjectRelations = [];
+  await mount(empty, false, { ...scene, items: [] });
+  assert.equal(dom.window.document.querySelectorAll(".analysis-object-group, .analysis-word-row").length, 0);
+  assert.match(dom.window.document.body.textContent ?? "", /Add a word you can see below/);
+  assert.equal((button("Confirm lesson facts") as HTMLButtonElement).disabled, true);
+  assert.equal(reviews.length, 0);
 });
 
 test("counts live in Objects and follow visible instances after switching details, removing and adding an object", async () => {

@@ -50,6 +50,13 @@ in-app Camera preference still controls whether the camera button is enabled.
 Permission, missing-device, and device-in-use errors explain how to recover;
 Upload remains available for choosing an existing image.
 
+## Scene object review
+
+Scene analysis groups matching object names under one heading and shows how many
+separate instances are visible. Each instance keeps its photo marker and individual
+move and remove controls. Grouping changes the presentation; adjectives, relations,
+and saved reviews continue to refer to individual object IDs.
+
 ## Vocabulary review
 
 Each object is reviewed alongside its explicitly linked adjective cards (for
