@@ -434,6 +434,9 @@
   left: 50%;
   bottom: max(var(--space-5), env(safe-area-inset-bottom));
   width: min(calc(100% - 2 * var(--space-4)), 480px);
+  max-height: calc(100dvh - 2 * var(--space-5));
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: var(--space-5);
   border-radius: var(--radius-lg);
   background: var(--paper);
