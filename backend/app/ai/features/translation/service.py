@@ -57,10 +57,10 @@ from app.ai.settings import AiFeature
 logger = logging.getLogger(__name__)
 
 _TRANSLATION_INVALID = "translationInvalid"
-PACK_TRANSLATION_SCHEMA_VERSION = "pack-translation-result.v2"
+PACK_TRANSLATION_SCHEMA_VERSION = "pack-translation-result.v3"
 _VERSION = FeatureVersion(
     AiFeature.SCENE_TRANSLATION.value, PACK_TRANSLATION_PROMPT_VERSION,
-    PACK_TRANSLATION_SCHEMA_VERSION, "pack-translation-validator.v4",
+    PACK_TRANSLATION_SCHEMA_VERSION, "pack-translation-validator.v5",
 )
 
 

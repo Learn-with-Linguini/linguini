@@ -310,6 +310,29 @@ def test_request_uses_versioned_contract() -> None:
     assert len(client.reviews) == 1
 
 
+def test_schema_restricts_gender_to_supported_values_or_null() -> None:
+    term_schema = build_scene_translation_schema()["properties"]["objects"]["items"]
+    gender_schema = term_schema["properties"]["gender"]
+
+    assert {tuple(branch.get("enum", [])) for branch in gender_schema["anyOf"]} == {
+        ("masculine", "feminine", "neuter"),
+        (),
+    }
+
+
+def test_literal_null_metadata_is_normalized_for_non_objects() -> None:
+    output = json.loads(VALID_OUTPUT)
+    output["attributes"][0].update(article="null", gender="null")
+    output["relationships"][0].update(article="null", gender="null")
+
+    result = service(FakeTextClient([json.dumps(output)])).translate(PAYLOAD)
+
+    assert result.attributes[0].article is None
+    assert result.attributes[0].gender is None
+    assert result.relationships[0].article is None
+    assert result.relationships[0].gender is None
+
+
 def test_repeated_terms_are_compacted_for_model_and_expanded_in_order() -> None:
     client = FakeTextClient([json.dumps(COMPACT_REPEATED_RESULT)])
 
@@ -676,7 +699,7 @@ def test_generation_observation_dimensions() -> None:
     assert enter["provider"] == "openai"
     assert enter["model"] == "test-text-model"
     assert enter["prompt_version"] == PACK_TRANSLATION_PROMPT_VERSION
-    assert enter["schema_version"] == "pack-translation-result.v2"
+    assert enter["schema_version"] == "pack-translation-result.v3"
 
     update = next(
         kw
