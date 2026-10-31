@@ -4708,7 +4708,7 @@ p[role="alert"]::before { content: "!"; }
 
 /* I-Spy photo picker */
 .ispy-photo-picker { width: min(100%, 900px); margin-inline: auto; gap: var(--space-5); }
-.ispy-photo-picker__title-row { display: flex; align-items: center; justify-content: flex-start; gap: var(--space-3); }
+.ispy-photo-picker__title-row { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
 .ispy-photo-picker__title-row h1 { flex: none; margin: 0; white-space: nowrap; }
 .ispy-photo-picker__header { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-5); border-radius: var(--radius-lg); background: var(--cream); }
 .ispy-photo-picker__header > div { min-width: 0; }
