@@ -316,6 +316,22 @@ export function PracticeAnalysis() {
       }, selectedIds),
     });
   };
+  const renderInstance = (instance: { id: string; label: string; marker: number }, repeated: boolean) => {
+    const sceneItem = kept.find(row => row.id === instance.id);
+    const addedItem = numberedAdded.find(row => row.id === instance.id);
+    const practised = practisedIds.includes(instance.id) ? <span className="pill pill--mastered analysis-word-row__practised">Practised</span> : null;
+    return <div className={`analysis-word-row analysis-object-row${repeated ? " analysis-object-instance" : ""}`} key={instance.id}>
+      <span className={`analysis-word-row__marker${addedItem ? " analysis-word-row__marker--custom" : ""}`}>{instance.marker}</span>
+      {repeated ? <span>Marker {instance.marker}{practised}</span> : <strong>{humanizeTerm(instance.label)}{practised}</strong>}
+      {!locked ? <div className="analysis-object-instance__actions">
+        <button className="analysis-marker-action" type="button" disabled={practiceSaving || !!placementLabel}
+          aria-label={`Change location of marker ${instance.marker}, ${instance.label}`} title="Change location"
+          onClick={() => sceneItem ? moveExistingObject(instance.id) : replaceLocation(addedItem!)}><MarkerIcon size={19} /></button>
+        <button className="analysis-word-row__remove" type="button" disabled={practiceSaving} aria-label={`Remove marker ${instance.marker}, ${instance.label}`}
+          onClick={() => removeObjects([instance.id])}><CloseIcon size={18} /></button>
+      </div> : null}
+    </div>;
+  };
   return <div className={`stack analysis-page${placementLabel ? " analysis-page--placing" : ""}`}>
     <div className="analysis-titlebar">
       <h1>Scene analysis</h1>
@@ -343,7 +359,7 @@ export function PracticeAnalysis() {
       <div className="analysis-review-column">
         {panel === "objects" ? <section className="analysis-results" aria-labelledby="analysis-found-title">
           <div><h2 id="analysis-found-title">Check what this lesson will use</h2>
-            <p className="muted">{locked ? "Your lesson has started. Start a new practice to change its objects." : "Each row matches one numbered marker on the photo."}</p>
+            <p className="muted">{locked ? "Your lesson has started. Start a new practice to change its objects." : "Matching objects are grouped. Each numbered marker refers to one object in the photo."}</p>
             {!locked && practisedLabels.size ? <p className="small analysis-revisit-note">{practisedLabels.size >= sceneLabels.size
               ? "You've practised every word here. Keep the ones you want to go over again."
               : "New words from this photo come first. Words marked Practised were in an earlier lesson."}</p> : null}
@@ -355,19 +371,15 @@ export function PracticeAnalysis() {
           </label>
           <Card plain className="analysis-word-card">
             <div className="analysis-word-list" aria-label="Words in this scene">
-              {relationObjects.map(instance => {
-                const sceneItem = kept.find(row => row.id === instance.id);
-                const addedItem = numberedAdded.find(row => row.id === instance.id);
-                return <div className="analysis-word-row analysis-object-row" key={instance.id}>
-                  <span className={`analysis-word-row__marker${addedItem ? " analysis-word-row__marker--custom" : ""}`}>{instance.marker}</span>
-                  <strong>{humanizeTerm(instance.label)}{practisedIds.includes(instance.id) ? <span className="pill pill--mastered analysis-word-row__practised">Practised</span> : null}</strong>
-                  {!locked ? <div className="analysis-object-instance__actions">
-                    <button className="analysis-marker-action" type="button" disabled={practiceSaving || !!placementLabel}
-                      aria-label={`Change location of marker ${instance.marker}, ${instance.label}`} title="Change location"
-                      onClick={() => sceneItem ? moveExistingObject(instance.id) : replaceLocation(addedItem!)}><MarkerIcon size={19} /></button>
-                    <button className="analysis-word-row__remove" type="button" disabled={practiceSaving} aria-label={`Remove marker ${instance.marker}, ${instance.label}`}
-                      onClick={() => removeObjects([instance.id])}><CloseIcon size={18} /></button>
-                  </div> : null}
+              {groups.map(group => {
+                const repeated = group.objectIds.length > 1;
+                return <div key={group.key} className={repeated ? "analysis-object-group" : "analysis-object-single"}
+                  role={repeated ? "group" : undefined} aria-label={repeated ? `${humanizeTerm(group.label)}, ${group.objectIds.length} objects` : undefined}>
+                  {repeated ? <div className="analysis-object-group__header"><strong>{humanizeTerm(group.label)}</strong>
+                    <span className="analysis-object-group__count" aria-label={`${group.objectIds.length} separate objects`}>×{group.objectIds.length}</span></div> : null}
+                  <div className={repeated ? "analysis-object-group__instances" : "analysis-object-single__instance"}>
+                    {group.objectIds.map(id => renderInstance(relationObjects.find(item => item.id === id)!, repeated))}
+                  </div>
                 </div>;
               })}
               {!kept.length && !added.length ? <p className="small muted">Add a word you can see below.</p> : null}

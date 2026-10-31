@@ -1482,6 +1482,10 @@ p[role="alert"]::before { content: "!"; }
   padding-left: var(--space-2);
 }
 
+.analysis-object-group__instances .analysis-word-row {
+  border-bottom: 0;
+}
+
 .analysis-object-instance {
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr) auto;
