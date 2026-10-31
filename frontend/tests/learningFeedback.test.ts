@@ -134,8 +134,11 @@ async function mount(initialTask: SessionTask, scenePatch: Partial<Scene> = {}) 
         return result;
       },
     } }, surface.h(surface.MemoryRouter, { initialEntries: ["/practice/sessions/s1/learn/t1"] },
-      surface.h(surface.Routes, null, surface.h(surface.Route, { path: "/practice/sessions/:sessionId", element: surface.h(surface.Outlet, { context: scene }) },
-        surface.h(surface.Route, { path: "learn/:taskId", element: surface.h(surface.LearningTaskPage) }))))))));
+      surface.h(surface.Routes, null,
+        surface.h(surface.Route, { path: "/home", element: surface.h("p", null, "Home destination") }),
+        surface.h(surface.Route, { path: "/practice/sessions/:sessionId", element: surface.h(surface.Outlet, { context: scene }) },
+          surface.h(surface.Route, { path: "learn", element: surface.h("p", null, "Task list destination") }),
+          surface.h(surface.Route, { path: "learn/:taskId", element: surface.h(surface.LearningTaskPage) }))))))));
   const close = async () => {
     cleanups.delete(close);
     try { await surface.act(async () => root.unmount()); } finally { client.clear(); container.remove(); }
@@ -414,6 +417,28 @@ function vocabularyTask(): SessionTask {
       options: [{ optionId: "cup", label: "cup" }, { optionId: "table", label: "table" }] }],
   } };
 }
+
+test("returning home from word review leaves the task unchanged", async () => {
+  await mount(vocabularyTask());
+  await click("Return home");
+  assert.match(text(), /Home destination/);
+  assert.deepEqual(taskActions, []);
+  assert.deepEqual(requests, []);
+});
+
+test("skipping word review marks the whole activity skipped before returning to tasks", async () => {
+  const task = vocabularyTask();
+  await mount(task);
+  const skip = button("Skip this task");
+  assert.ok(skip);
+  const description = dom.window.document.getElementById(skip.getAttribute("aria-describedby") ?? "");
+  assert.match(description?.textContent ?? "", /whole word activity/);
+  actions.push(() => ({ ...action(task, null, "Skipped"), task: { ...task, status: "skipped" } }));
+  await click("Skip this task");
+  assert.deepEqual(taskActions, [{ action: "skip", body: undefined }]);
+  assert.match(text(), /Task list destination/);
+  assert.deepEqual(requests, []);
+});
 
 test("saved vocabulary answers restore their accepted choice and Basil without another check", async () => {
   vocabularySaved = [{ questionId: "word1", acceptedOptionId: "table", isCorrect: false, correctOptionId: "cup", basilEarned: 5 }];

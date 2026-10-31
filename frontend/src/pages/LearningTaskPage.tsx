@@ -144,7 +144,7 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onSc
   const earnedText = basilEarnedText(actionResult?.basilEarned);
   return <div className="stack">
     <div className="vocabulary-flow__progress"><ProgressTrail value={1} total={1} label="Question 1 of 1" /></div>
-    <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton></div><ExitToHome onExit={onExit} /></div>
+    <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton></div><LearningExit onExit={onExit} /></div>
     {card && content.kind === "vocabularyIntroduction" ? <div className="flashcard learning-card">
       <div className="spread"><span className="label muted">{card.wordClass}{card.gender ? " · " + card.gender : ""}</span>
         <IconButton label={"Hear " + card.word} onClick={() => speak(card.word, scene.languageCode)}><SpeakerIcon /></IconButton></div>
@@ -175,7 +175,7 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onSc
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {terminal ? <Button block disabled={practiceSaving} onClick={onNext}>{index < total - 1 ? "Next task" : "Finish task"}</Button> : <>
       <Button block disabled={practiceSaving || checking || (!reading && !(content.kind === "grammarPractice" ? choice : text.trim()))} onClick={() => void submit()}>{reading ? "Mark complete" : "Submit answer"}</Button>
-      <Button variant="quiet" block disabled={practiceSaving} onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip task</Button>
+      <Button variant="quiet" block disabled={practiceSaving} onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip this task</Button>
     </>}
     {feedback || earnedText ? <div className="learning-question-report"><ReportIssueLink reportType={taskTitle(task)} fields={[
       ["Task ID", task.id],
@@ -187,8 +187,8 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onSc
   </div>;
 }
 
-function ExitToHome({ onExit }: { onExit: () => void }) {
-  return <Button variant="quiet" className="learning-exit" onClick={onExit}><CloseIcon size={18} /> Exit</Button>;
+function LearningExit({ onExit, label = "Return home" }: { onExit: () => void; label?: string }) {
+  return <Button variant="quiet" className="learning-exit" onClick={onExit}><CloseIcon size={18} /> {label}</Button>;
 }
 
 function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, revisiting = false }: { task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void; revisiting?: boolean }) {
@@ -400,7 +400,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__header">
       <div className="vocabulary-flow__progress"><ProgressTrail value={questionPosition} total={questionTotal} label={`Question ${questionPosition} of ${questionTotal}`} /><QuestionBasil amount={stage === "quiz" && question ? basilByQuestion[question.questionId] : stage === "typing" ? typingCheck?.basilEarned : undefined} /></div>
-      <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><ExitToHome onExit={onExit} /></div>
+      <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label={revisiting ? "Back to vocabulary" : "Back to tasks"} onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><LearningExit onExit={onExit} label={revisiting ? "Back to vocabulary" : "Return home"} /></div>
     </div>
     {restored.isLoading ? <InlineLoader compact label="Restoring word answers…" /> : null}
     {restored.isError ? <div role="alert"><p>We couldn’t restore your word answers.</p><Button variant="quiet" onClick={() => void restored.refetch()}>Retry saved answers</Button></div> : null}
@@ -484,7 +484,10 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
     <BasilReward text={earnedText} />
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {terminal && !revision && !revisiting ? <Button block onClick={onNext}>{session?.session.status === "generatingTasks" ? "Back to tasks" : index < total - 1 ? "Next task" : "Finish task"}</Button> : null}
-    {!terminal ? <Button variant="quiet" block disabled={practiceSaving} onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip vocabulary review</Button> : null}
+    {!terminal ? <div className="stack-2">
+      <Button variant="quiet" block disabled={practiceSaving} aria-describedby={`vocabulary-skip-${task.id}`} onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip this task</Button>
+      <p id={`vocabulary-skip-${task.id}`} className="small muted">Skip the whole word activity and return to the task list.</p>
+    </div> : null}
     {!terminal && stage === "quiz" && question && answers[question.questionId] ? <div className="learning-question-report"><ReportIssueLink reportType="Vocabulary answer" fields={[
       ["Task ID", task.id],
       ["Question ID", question.questionId],
@@ -861,7 +864,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
 
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__progress"><ProgressTrail value={activeIndex + 1} total={content.questions.length} label={`Question ${activeIndex + 1} of ${content.questions.length}`} /><QuestionBasil amount={storedCheck?.basilEarned} /></div>
-    <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><div className="learning-title-actions"><MissionCheatSheetLauncher missionId={content.missionId} practiceLevel={content.practiceLevel} contentVersion={content.contentVersion} languageCode={scene.languageCode} /><ExitToHome onExit={onExit} /></div></div>
+    <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><div className="learning-title-actions"><MissionCheatSheetLauncher missionId={content.missionId} practiceLevel={content.practiceLevel} contentVersion={content.contentVersion} languageCode={scene.languageCode} /><LearningExit onExit={onExit} /></div></div>
     {saved.isLoading ? <InlineLoader compact label="Restoring checked answers…" /> : null}
     {saved.isError ? <div role="alert"><p>Unable to restore checked answers.</p>
       <Button variant="quiet" onClick={() => void refetchChecks()}>Retry</Button></div> : null}
@@ -1047,7 +1050,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onClose, onEx
         : <Button block disabled={!allChecked || checking || practiceSaving || saved.isLoading || saved.isError}
           onClick={() => void submit()}>Finish task</Button>}
     {!terminal ? <Button variant="quiet" block disabled={practiceSaving || checking}
-      onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip task</Button> : null}
+      onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip this task</Button> : null}
     {question && storedCheck && (!storedCheck.isCorrect || storedCheck.correctAnswer) ? <div className="learning-question-report"><ReportIssueLink reportType="Grammar answer" fields={[
       ["Task ID", task.id], ["Question ID", question.questionId], ["Prompt", question.prompt],
       ["Your answer", storedCheck.answer], ["Displayed solution", storedCheck.correctAnswer],
@@ -1161,7 +1164,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
   };
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__progress"><ProgressTrail value={activeIndex + 1} total={content.questions.length} label={`Question ${activeIndex + 1} of ${content.questions.length}`} /><QuestionBasil amount={activeQuestion ? questionBasil[activeQuestion.questionId] : undefined} /></div>
-    <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><div className="learning-title-actions"><MissionCheatSheetLauncher missionId={content.missionId} practiceLevel={content.practiceLevel} contentVersion={content.contentVersion} languageCode={scene.languageCode} /><ExitToHome onExit={onExit} /></div></div>
+    <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label="Back to tasks" onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><div className="learning-title-actions"><MissionCheatSheetLauncher missionId={content.missionId} practiceLevel={content.practiceLevel} contentVersion={content.contentVersion} languageCode={scene.languageCode} /><LearningExit onExit={onExit} /></div></div>
     {savedChecks.isLoading ? <InlineLoader compact label="Restoring your place…" /> : null}
     {savedChecks.isError ? <p role="alert">We couldn't restore your saved answers. Try refreshing this page.</p> : null}
     {content.questions.map((question, position) => {
@@ -1294,7 +1297,7 @@ function GrammarLessonFlow({ task, index, total, onNext, onClose, onExit }: { ta
         : activeIndex < content.questions.length - 1
           ? <Button block disabled={checking} onClick={() => setActiveIndex(value => value + 1)}>Next question</Button>
           : <Button block disabled={!answered || !allChecked || practiceSaving || checking} onClick={() => void submit()}>Finish task</Button>}
-      <Button variant="quiet" block disabled={practiceSaving} onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip task</Button>
+      <Button variant="quiet" block disabled={practiceSaving} onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip this task</Button>
     </>}
     {activeQuestion && activeResult !== undefined ? <div className="learning-question-report"><ReportIssueLink reportType="Grammar answer" fields={[
       ["Task ID", task.id],
