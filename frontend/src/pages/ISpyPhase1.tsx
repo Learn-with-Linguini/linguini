@@ -56,8 +56,8 @@ export function ISpyPhase1() {
   if (game && !clues.length) return <div className="stack">
     <h2 className="text-center">I-Spy · Linguini's clues</h2>
     {practiceStalled
-      ? <><InlineLoader label="Linguini is still choosing objects to spy…" /><Button block onClick={() => void retryProcessing(session.session.id)}>Check again</Button></>
-      : <InlineLoader label="Linguini is choosing objects to spy…" />}
+      ? <><InlineLoader label="Still choosing objects…" /><Button block onClick={() => void retryProcessing(session.session.id)}>Check again</Button></>
+      : <InlineLoader label="Choosing objects…" />}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
   </div>;
   const task = clues[index];

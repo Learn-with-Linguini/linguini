@@ -105,14 +105,14 @@ export interface SessionLoadingCopy {
 }
 
 const loadingCopy: Record<string, SessionLoadingCopy> = {
-  analysis: { title: "Scene analysis", heading: "Finding objects in your image...", scan: true },
-  "mic-test": { title: "Mic check", heading: "Getting your microphone ready...", scan: false },
+  analysis: { title: "Scene analysis", heading: "Finding objects…", scan: true },
+  "mic-test": { title: "Mic check", heading: "Preparing microphone…", scan: false },
   learn: { title: "Learning", heading: "Loading your words...", scan: false },
-  "ispy-1": { title: "I-Spy", heading: "Setting up your I-Spy clue...", scan: false },
-  "ispy-2": { title: "I-Spy", heading: "Setting up your turn to describe...", scan: false },
+  "ispy-1": { title: "I-Spy", heading: "Preparing your clue…", scan: false },
+  "ispy-2": { title: "I-Spy", heading: "Preparing your turn…", scan: false },
   summary: { title: "Practice summary", heading: "Gathering your results...", scan: false },
-  clues: { title: "I-Spy", heading: "Linguini is choosing objects to spy...", support: "Clues come from the scene you confirmed.", scan: false },
-  describe: { title: "I-Spy", heading: "Setting up your turn to describe...", scan: false },
+  clues: { title: "I-Spy", heading: "Choosing objects…", support: "Clues come from the scene you confirmed.", scan: false },
+  describe: { title: "I-Spy", heading: "Preparing your turn…", scan: false },
   results: { title: "Game results", heading: "Gathering your results...", scan: false },
 };
 
