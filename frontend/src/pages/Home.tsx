@@ -15,6 +15,7 @@ import { FIRST_LESSON_WALKTHROUGH_VERSION, needsFirstLessonWalkthrough } from ".
 import { learningProgress } from "../lib/practiceTasks";
 import { useChefStandings, useGamification } from "../state/gamification";
 import { trackAction } from "../lib/analytics.ts";
+import { homeRevisitPhotos } from "../lib/homeRevisit";
 
 function greeting() {
   const hour = new Date().getHours();
@@ -67,15 +68,9 @@ export function Home() {
   const wordsThisWeek = vocabulary.filter(word => word.firstLearnedAt && weekDates.has(localDateKey(word.firstLearnedAt))).length;
   const exploredScenes = progress?.scenarios.filter(scene => scene.status !== "in-progress").length ?? 0;
   const leaderboardPosition = standings.data?.currentRank;
-  const revisitScene = useMemo(() => {
-    const groups = new Map<string, { mediaAssetId: string; title: string; count: number }>();
-    vocabulary.forEach(word => word.scenes?.forEach(scene => {
-      const existing = groups.get(scene.mediaAssetId);
-      if (existing) existing.count += 1;
-      else groups.set(scene.mediaAssetId, { mediaAssetId: scene.mediaAssetId, title: scene.title, count: 1 });
-    }));
-    return [...groups.values()].sort((a, b) => b.count - a.count)[0] ?? null;
-  }, [vocabulary]);
+  const revisitScenes = useMemo(() => homeRevisitPhotos(progress?.scenarios ?? [], vocabulary), [progress, vocabulary]);
+  const revisitLoading = progressLoading || vocabularyLoading;
+  const revisitError = progressError || vocabularyError;
   const { completed, total } = resume ? learningProgress(resume.tasks) : { completed: 0, total: 0 };
   const percent = total > 0 ? Math.min(100, Math.round((completed / total) * 100)) : 0;
 
@@ -131,10 +126,22 @@ export function Home() {
           <div className="home-section-heading"><h2 id="home-explore-title">Continue exploring</h2></div>
           <div className="home-explore__rail-wrap">
             <div ref={exploreRailRef} className="home-explore__rail">
-              <button className="home-explore-card" type="button" onClick={() => { trackAction("home_explore_vocabulary_clicked"); navigate("/vocabulary"); }}>
-                <div className="home-explore-card__image">{revisitScene ? <MediaImage assetId={revisitScene.mediaAssetId} title={revisitScene.title} width={640} lazy /> : <img src="/photos/cafe-interior.jpg" alt="" />}</div>
-                <div className="home-explore-card__body"><span className="home-tag home-tag--revisit"><BookIcon size={14} /> Revisit</span><strong>{revisitScene?.title ?? "Your vocabulary"}</strong><span>{revisitScene ? `${revisitScene.count} ${revisitScene.count === 1 ? "word" : "words"} to practise` : "Review the words you've found"}</span></div>
-              </button>
+              {revisitLoading ? <div className="home-explore-card home-revisit-state" role="status"><InlineLoader compact label="Loading revisit photos…" /></div> : revisitError ?
+                <div className="home-explore-card home-revisit-state"><p role="alert">We couldn’t load your revisit photos.</p><Button variant="quiet" onClick={() => {
+                  trackAction("home_revisit_retried");
+                  void queryClient.invalidateQueries({ queryKey: queryKeys.progress(profileId) });
+                  void queryClient.invalidateQueries({ queryKey: queryKeys.vocabulary(profileId) });
+                }}>Retry revisit photos</Button></div> : revisitScenes.length ? revisitScenes.map((scene, index) =>
+                <button key={scene.mediaAssetId} className="home-explore-card home-explore-card--revisit" type="button" aria-label={`Revisit words from ${scene.title}`} onClick={() => {
+                  trackAction("home_explore_vocabulary_clicked", { source: "photo", position: index + 1 });
+                  navigate(`/practice/sessions/${encodeURIComponent(scene.sessionId)}/review`);
+                }}>
+                  <div className="home-explore-card__image"><MediaImage assetId={scene.mediaAssetId} title={scene.title} width={640} lazy /></div>
+                  <div className="home-explore-card__body"><span className="home-tag home-tag--revisit"><BookIcon size={14} /> Revisit</span><strong>{scene.title}</strong><span>{scene.wordCount} {scene.wordCount === 1 ? "word" : "words"} to practise</span></div>
+                </button>) : <button className="home-explore-card" type="button" onClick={() => { trackAction("home_explore_vocabulary_clicked", { source: "all_words" }); navigate("/vocabulary"); }}>
+                  <div className="home-explore-card__image home-revisit-empty" aria-hidden="true"><BookIcon size={48} /></div>
+                  <div className="home-explore-card__body"><span className="home-tag home-tag--revisit"><BookIcon size={14} /> Revisit</span><strong>Your vocabulary</strong><span>{vocabulary.length ? "Review the words you've found" : "Your completed photo lessons will appear here"}</span></div>
+                </button>}
               <button className="home-explore-card" type="button" onClick={() => { trackAction("home_explore_ispy_clicked"); navigate("/ispy"); }}>
                 <div className="home-explore-card__image"><img src="/scenes/grocery-store.jpg" alt="A colourful grocery store scene" /></div>
                 <div className="home-explore-card__body"><span className="home-tag home-tag--play"><EyeIcon size={14} /> Quick play</span><strong>I-Spy challenge</strong><span>Test what you can spot</span></div>
