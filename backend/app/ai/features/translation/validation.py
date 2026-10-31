@@ -7,7 +7,6 @@ workflow and learning-error handling are unchanged.
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
 from app.ai.features.translation.schemas import (
@@ -16,46 +15,9 @@ from app.ai.features.translation.schemas import (
 )
 from app.services.scene_analysis import SceneAnalysisError
 
-SCENE_TRANSLATION_VALIDATOR_VERSION = "scene-translation-validator.v2"
-"""Bump when validation rules change, so cached results stop matching."""
-
 
 class SceneTranslationError(SceneAnalysisError):
     """The confirmed scene could not be translated reliably."""
-
-
-_LEADING_ARTICLE = re.compile(
-    r"^((?:el|la|los|las|le|les|der|die|das)\s+|l['’])", re.IGNORECASE
-)
-_GERMAN_ARTICLES = {"der", "die", "das"}
-
-
-def normalize_object_articles(
-    result: SceneTranslationResult,
-    language: str | None = None,
-) -> SceneTranslationResult:
-    """Move a definite article inlined in an object ``translation`` into ``article``.
-
-    Models sometimes return "el camino" alongside ``article="el"``; rendering
-    prepends the article again, producing "el el camino". Stripping here keeps
-    the stored term article-free so downstream rendering stays idempotent.
-    """
-    objects = []
-    language = (language or "").lower()
-    for term in result.objects:
-        match = _LEADING_ARTICLE.match(term.translation)
-        if match and match.group(1).strip().casefold() in _GERMAN_ARTICLES and language != "de":
-            match = None
-        remainder = term.translation[match.end():] if match else ""
-        if not match or not remainder:
-            objects.append(term)
-            continue
-        stripped = match.group(1).rstrip()
-        update: dict[str, Any] = {"translation": remainder}
-        if not term.article:
-            update["article"] = stripped.lower()
-        objects.append(term.model_copy(update=update))
-    return result.model_copy(update={"objects": objects})
 
 
 def _supplied_terms(payload: dict[str, Any] | SceneTranslationRequest, field: str) -> set:
@@ -70,7 +32,18 @@ def _supplied_terms(payload: dict[str, Any] | SceneTranslationRequest, field: st
 def validate_translation_terms(
     payload: dict[str, Any] | SceneTranslationRequest,
     result: SceneTranslationResult,
+    language_context,
 ) -> None:
+    """Every supplied term comes back once, unchanged, and as the language pack requires."""
+    validate_supplied_terms(payload, result)
+    validate_pack_translation(result, language_context)
+
+
+def validate_supplied_terms(
+    payload: dict[str, Any] | SceneTranslationRequest, result: SceneTranslationResult,
+) -> None:
+    """The language-independent contract: every supplied key and source comes back once,
+    and only objects carry an article or gender."""
     for field in ("objects", "attributes", "relationships"):
         supplied = _supplied_terms(payload, field)
         returned = {(row.key, row.source) for row in getattr(result, field)}
@@ -78,14 +51,6 @@ def validate_translation_terms(
             raise SceneTranslationError(
                 f"Translation changed or omitted supplied {field}."
             )
-    language = (
-        payload.target_language if isinstance(payload, SceneTranslationRequest)
-        else payload.get("targetLanguage", payload.get("target_language", ""))
-    ).lower()
-    if language != "ko" and any(not row.article for row in result.objects):
-        raise SceneTranslationError(
-            "Every translated object requires a definite article."
-        )
     if any(
         row.article or row.gender
         for row in [*result.attributes, *result.relationships]
@@ -93,3 +58,25 @@ def validate_translation_terms(
         raise SceneTranslationError(
             "Only object translations may include articles or gender."
         )
+
+
+def validate_pack_translation(result, context):
+    from unicodedata import name, normalize
+
+    settings = context.display
+    for term in result.objects:
+        for field, policy in (("article", settings.articles),
+                              ("gender", settings.grammatical_gender)):
+            value = getattr(term, field)
+            if (policy == "required" and not value) or (policy == "none" and value):
+                raise SceneTranslationError(f"Pack {field} policy {policy!r} failed for {term.key}")
+    for term in [*result.objects, *result.attributes, *result.relationships]:
+        if not term.native_display:
+            raise SceneTranslationError(f"Pack vocabulary requires nativeDisplay for {term.key}")
+        if normalize("NFC", term.native_display) != term.native_display:
+            raise SceneTranslationError("Vocabulary nativeDisplay must preserve NFC Unicode")
+        if settings.romanization_required and not term.romanization:
+            raise SceneTranslationError(f"Pack vocabulary requires romanization for {term.key}")
+        if term.romanization and any(c.isalpha() and "LATIN" not in name(c, "")
+                                     for c in term.romanization):
+            raise SceneTranslationError("Vocabulary romanization must use Latin letters")

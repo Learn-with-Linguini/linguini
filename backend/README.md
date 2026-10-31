@@ -4,6 +4,39 @@ FastAPI/Pydantic API with SQLAlchemy persistence in Supabase PostgreSQL. Prisma
 owns schema migrations; it is not the Python runtime client. API JSON uses camelCase
 and Python attributes use snake_case. See the [project README](../README.md) for the frontend.
 
+## Scene analysis progress
+
+Initial review suggestions target five unique object labels (case-insensitive,
+ignoring surrounding whitespace). Repeated detections share one vocabulary slot:
+three benches and two chairs count as two names. All detected instances of each
+selected name retain their markers, attributes and relations for counting and
+instance-specific questions. When fewer than five names are detected, all are kept.
+Mission-required facts are retained even if a mission needs a larger selection.
+
+Review confirmation persists only accepted and manually added objects. Translation,
+mission planning, vocabulary and task generation use that confirmed set, including
+the retained repeated instances; unselected detections do not enter the lesson.
+Existing saved selections are preserved; the new default applies on fresh analysis.
+
+During object review, markers are numbered consecutively across the visible
+detected objects and then manually added objects. Removing or restoring an object
+updates the photo, list and relation labels together; object IDs remain unchanged.
+Confirmation saves this numbering in `reviewMarkers` for lesson questions and
+reloads. Existing saved sessions retain their original marker identities.
+
+`GET /api/v1/sessions/{id}` returns optional `sceneAnalysisProgress` with `stage`
+(`loadingImage`, `findingObjects`, `checkingResults`, `savingResults`, or `ready`)
+and `startedAt`. Stages report actual processing milestones, not estimated AI
+completion percentages. Output validation, grounding and moderation must finish
+before saving begins; `ready` is exposed only once the review is committed.
+
+Milestones use the existing session `analysis_draft` JSON, so no migration or new
+environment setting is needed. Each update commits independently and is guarded
+by owner, active analysis status, and the attempt's start timestamp. Abandoned or
+superseded attempts cannot publish progress into a newer attempt. Progress write
+failures are logged without discarding a valid analysis. The existing polling
+endpoint retains its normal ownership and authentication checks.
+
 ## Setup
 
 Use Python 3.12+ and Node/npm. From `backend/` in PowerShell:
@@ -73,11 +106,31 @@ credits separately from the spendable balance. Existing XP history is preserved.
 See [the reward and badge policy](../docs/gamification.md). Standalone AI I-Spy
 games remain free and do not award Basil, XP or vocabulary progress.
 
+### I-Spy by level
+
+I-Spy plays the same scene and confirmed words at every level; the learner's
+proficiency level changes the clue and the help (`app/services/ispy_levels.py`):
+
+| | A0 | A1 | A2 |
+|---|---|---|---|
+| Linguini's clue | one detail, 2–4 words (validated at 6 or fewer) | two details | two details, a relation when the object has one |
+| Choosing the object | three differently named choices; clue plays aloud with its translation shown | every object | every object; clue is heard before it is read |
+| Describing | one object, built from word tiles only | two objects, frames and typing | two objects, typing with frames behind "Need help?" |
+| A clear match | the right object, even with a shared detail | as before | two matching details, or as many as the object has |
+| Extra help | word bank and the M02 A0 cheatsheet | none | none |
+
+The clue prompt receives `learnerLevel` only for A0 and A2, so A1 clues keep
+their cached results and precomputed scene templates. Preloaded scenes generate A0
+and A2 clues on first play and cache them publicly; rerun the template precompute
+after deploying, since the clue prompt version changed. Photo rooms are unchanged.
+
 Rooms store random invitations privately in the database, so a host can recover
 an invitation after reload or an API restart without a separate room secret.
 The invite migration rotates existing live invitations; hosts should copy the
-new code after deployment. Rooms support two players learning English to Spanish,
-French or German at the same A1/A2 level, with 2–4 photos uploaded by either player.
+new code after deployment. Rooms support two players learning from English at the
+same A1/A2 level, with 2–4 photos uploaded by either player, in a language whose ready
+pack carries the clue grammar `clues.toml` (Spanish, French, German and Korean today;
+`app/services/room_languages.py`).
 Room photos use the configured scene analyzer and translator, then require the
 owner's fact review.
 Rooms do not require or call OpenAI image moderation. Photos remain private to the
@@ -327,8 +380,9 @@ python -m app.scripts.precompute_preloaded_scenes --reground --dry-run --json ou
 ```
 
 `--slug` and `--language` are repeatable and default to all six scenes
-(`street`, `cafe`, `market`, `bedroom`, `kitchen`, `park`) and both template
-languages (`fr`, `es`); `--language` only selects which languages get templates. `--dry-run` computes and validates rows
+(`street`, `cafe`, `market`, `bedroom`, `kitchen`, `park`) and every released
+language pack (a pack still experimental is used only when named with `--language`);
+`--language` only selects which languages get templates. `--dry-run` computes and validates rows
 without writing to the database. `--json` dumps the computed rows and media
 assets for reuse; `--from-json` reloads that file (re-validating every row)
 instead of calling any AI provider, so SQL regeneration or the database write
@@ -346,6 +400,9 @@ its attributes and relations. Each validated result is stored server-only in
 `preloaded_scenes.content.generated` (`version: preloaded-templates.v1`) with:
 
 - `feature`, `language` and `variant` (`prompt|schema|validator` versions);
+- `basis` (`pack` for lesson and clue templates built on a pack translation;
+  absent only on older templates from the former unguided translation, which no
+  longer match);
 - a `fingerprint` of the scene facts (title, summary, labels, attributes and
   relations) and language; changing labels stales templates, but moving marker
   positions alone does not;
@@ -354,6 +411,14 @@ its attributes and relations. Each validated result is stored server-only in
 
 A new variant is added next to older ones. The public scene API never returns
 `generated` (`CONTENT_FIELDS` in `repositories/postgres/scenes.py`).
+
+A language with a ready pack gets one set per scene: the pack translation with its
+lesson and clues, which lessons and I-Spy games both use (the translation's meaning
+review runs once, when its template is made). A language without one gets no
+templates (`noLanguagePack`). Pack templates match only while the pack's content
+is unchanged, so refresh them after a pack edit or review; until then lessons on
+curated scenes make live pack calls. Without a template, every language with a ready
+pack works through live calls.
 
 At review time, unchanged curated content checks the templates first. A match
 is mapped onto the session's own object, attribute and relation IDs, validated
@@ -560,6 +625,14 @@ Before review, the backend compares the unconfirmed inventory with the implement
 missions for the learner's level. `provisionalMissionPlan` is presentation guidance,
 never grading evidence: `suggestedSceneObjectIds` limits the default review to the
 smallest useful mission-focused set. The learner may reveal other inventory objects.
+
+Revisiting a photo starts a new lesson on the same media asset. Uploaded photos reuse
+the saved `media_scene_analyses` inventory, so no model call runs. The provisional plan
+follows the same least-planned mission rotation as the confirmed plan. Labels the learner
+confirmed in earlier lessons on that photo which reached practice (any task attempt) go
+behind new ones when the five suggested words are chosen. They are only suggested when
+a mission needs them or the photo has too few new words. `practisedSceneObjectIds` lists
+those objects so the review can mark them.
 After review, mission eligibility is run again using only confirmed facts and that
 second result becomes the immutable `missionPlan` consumed by task generation.
 
@@ -607,16 +680,25 @@ correctness, score, XP, vocabulary progress and learner history still come from
 
 #### Mission lesson planning
 
-Mission lessons apply to lesson sessions whose active language profile is A1 and whose
-target language has reviewed forms (`es`, `fr`); every other session keeps the existing
-lesson.
+Photo lessons come only from language packs (`app/language_packs/`). A lesson for a
+language with no ready pack is refused when it is created (409
+`lesson_language_unavailable`). Lessons plan the
+pack's ready missions at the profile's level; a level with none (B1 and above) keeps the
+regular lesson. Every lesson, with or without missions, translates its scene with the
+pack (`language_context`), and so do I-Spy games, room photos and the curated-template
+script (`game_context`). The translator requires a pack: a language without a ready one
+gets no new translation, so an I-Spy game that needs one fails, rooms stay closed and the
+script makes no templates. A game reusing a confirmed lesson's saved translation still
+starts.
 
 - **Photo requirements.** Each definition names only the confirmed facts it needs:
-  `minConfirmedObjects` (different names), `minColouredObjects` (reviewed colours) and
+  `minConfirmedObjects` (different names), `minColouredObjects` (objects with a confirmed
+  colour, size, shape, material, pattern or state) and
   `minRelations` with the accepted `relations` types, and `minCountedGroups` with the
   `minQuantity`–`maxQuantity` range. M01 needs two objects with a colour each; M02 needs two
   objects and an on/under/next-to/in-front-of/behind relation; M03 needs one counted
-  group of 2–10.
+  group of 2–10. Each mission's pack implementation adds its own rules
+  (`photo_reasons`), such as a detail that tells one object apart.
 - **Counts.** The review's Counts tab sends `objectCounts` (object ID → 1–10). Each count
   is saved for the group of every confirmed object with the same name, so a group is
   counted once and a second count of it is a 409. Groups are stored in
@@ -625,8 +707,9 @@ lesson.
   as `countedGroups`. A scene-analysis quantity is only offered as a suggestion, and a
   detected label never implies a count. No migration is needed.
 - **Planner** (`app/services/mission_eligibility.py`). Confirming the scene checks every
-  implemented A1 mission (M01, M02, then M03) against only the facts the learner
-  confirmed, and plans every mission the photo supports, up to three. The plan is saved as
+  mission the pack has ready at the profile's level against only the facts the learner
+  confirmed, and plans the least-practised ones the photo supports, up to three (four at
+  A2). The plan is saved as
   `analysisDraft.missionPlan` before generation and generation reads only that snapshot.
   Sessions reviewed before plans were saved keep the regular lesson.
 - **No mission fits.** A profile with implemented missions never falls back to the
@@ -641,6 +724,15 @@ lesson.
   (returned as `sceneShortfall` while reviewing). Profiles without implemented missions
   (for example B1–C2) keep the regular lesson. Nothing is inferred and no scene is
   substituted.
+- **Existing sessions.** No migration is needed. A session saved without a
+  `languageContext` snapshot gets the profile's pack when it next generates. One whose
+  saved pack is structurally unsupported (or fails opt-in strict release gates) is refused with the same 409, and a
+  planned mission the pack does not have fails generation into the normal recoverable
+  `taskGenerationFailed` state; neither is rebuilt by another builder. A plan saved at an
+  older content version (M02 A1 version 1) is built at the pack template's version.
+  Tasks generated before packs keep their stored content and answer keys, so they still
+  render and grade; choosing an alternative M06 item, which only those lessons offered,
+  is now a 409.
 - **Shared teaching.** Translation and one vocabulary introduction are checkpointed first,
   as before. The introduction carries no mission fields because it teaches the nouns for
   every planned mission; its per-word evidence still follows each word's own result.
@@ -648,103 +740,35 @@ lesson.
   in plan order. Mission sessions end on their summary; choosing I-Spy there creates a
   separate game that reuses the confirmed scene inventory. Mission lessons publish no
   `explanation`, so the task page shows only the questions and, after submitting, the
-  feedback. `app/services/mission_registry.py` maps each mission to its payload builder,
-  generation spec and task builder.
+  feedback.
 
-#### M01 A1 lesson path
+#### Mission lesson content
 
-1. **Lesson** (`M01-A1.toml`; `app/ai/features/learning_tasks/mission_m01.py`,
-   `app/services/mission_lessons_m01.py`). M01 needs two differently named confirmed
-   objects that each have a confirmed colour with a reviewed form. Two object-colour
-   pairs are chosen when the lesson is generated and saved in the task, so resuming
-   keeps them. Pairs are ranked least familiar first: the object's
-   `user_vocabulary_progress.mastery_score` in the target language plus the colour's
-   past correct ratio from the learner-history snapshot (only when
-   `LEARNER_MEMORY_ENABLED=true`; colours have no word-progress rows). Words without
-   progress or history count as unseen; ties keep scene order. The `grammarLesson` has
-   exactly four questions: identify object 1 (`¿Qué es esto?` / `Qu'est-ce que c'est ?`,
-   choose `una taza` etc.), describe it with word tiles (`Es una taza roja.` /
-   `C'est une tasse rouge.`), then the same for object 2. Identification distractors
-   are nouns taught in this lesson or earlier for the same language, with a known
-   gender, without duplicates. Every question carries `sceneObjectId` and the English
-   `objectLabel`; the app crops the object from its bounding box or rings it on the
-   photo. The lesson is built and validated deterministically with no model call.
-2. **Bonus I-Spy.** The existing AI I-Spy clue and describing rounds are generated
-   alongside the lesson, as in the legacy path, and placed last without mission
-   fields. They unlock once the learning tasks are done and are labelled as the
-   bonus round.
-3. **Grading.** Answers are graded from the private answer key. Each
+Every mission lesson is generated from the session language's pack
+(`app/language_packs/`; see its README for missions, levels, generation and
+evaluation). The pack binds the learner's confirmed objects, details, relations and
+counts to the mission's slots, generates and checks the sentences, and assembles them
+into the mission's existing result model and task builder
+(`app/ai/features/learning_tasks/mission_*.py`, `app/services/lesson_tasks/`), so the
+task shape, grading and corrections below do not depend on the language.
+
+1. **Bonus I-Spy.** The existing AI I-Spy clue and describing rounds are generated
+   alongside the lesson and placed last without mission fields. They unlock once the
+   learning tasks are done and are labelled as the bonus round.
+2. **Grading.** Answers are graded from the private answer key. Each
    `questionOutcomes` entry names its targets; evidence type is derived from the
    interaction (`recognition` for multiple choice, `construction` for sentence
    building) and the word bank is always recorded as support, so a sentence counts as
    supported practice, not independent writing. Supports a question does not offer are
    rejected with a 409. Each word's vocabulary evidence uses only the questions that
    assess it. Replays with the same idempotency key return the saved attempt without
-   new results or XP.
-4. **Completion.** The session completes through the existing lifecycle and completion
+   new results or XP. `GET /tasks/{id}/latest-attempt` also returns the saved `answers`
+   and `reviewDetails` for mission lessons, so a reloaded graded lesson still shows its
+   answers, grades and corrections.
+3. **Completion.** The session completes through the existing lifecycle and completion
    XP once every task, including every mission task and the bonus rounds, is completed or
    skipped. If no I-Spy task was generated, the final learning step shows "Finish lesson"
    instead.
-
-#### M02 A1 lesson path
-
-`M02-A1.toml`, "Find and locate": say where a photo object is, ask where it is and
-check a short answer against the photo. This is supported A1 practice, not independent
-A2 location production.
-
-1. **Payload** (`app/services/mission_lessons_m02.py`). Each confirmed relation whose
-   position has a reviewed phrase and whose objects have reviewed articles, with its
-   statement tiles (`La` / `taza` / `está` / `al lado del` / `libro` / `.`; a contracted
-   or multiword phrase is one tile), `whereQuestion` (`¿Dónde está la taza?`), the
-   positions true for that pair (including inverse relations), the positions they
-   contradict (on/under, in front of/behind) and a proposed answer for the optional check.
-   Positions reuse the I-Spy reviewed bank.
-2. **Selection.** Relations are ranked by the learner-history correct ratio of their
-   position phrase (snapshot only with `LEARNER_MEMORY_ENABLED=true`; otherwise every
-   phrase is unseen), ties in photo order. The core questions use the least familiar. A
-   second relation is selected only if it has another object pair or position; otherwise
-   M02 has three questions. The selection is stored in the generated task.
-3. **Lesson** (`app/ai/features/learning_tasks/mission_m02.py`). Built without a model
-   call and validated: one `grammarLesson`, "Find and locate", with three core questions
-   about the first relation — pick the phrase from three, none of the wrong ones true for
-   the pair (`Elige la posición: la taza ___ la mesa.`); build the statement with one
-   extra phrase tile (`Describe la posición de la taza.`); build the where-question
-   (`Pregunta por la ubicación de la taza.`) — and, only with a second relation, a Yes/No
-   check on the photo (`“El libro está debajo de la mesa.” ¿Coincide con la foto?`). The
-   proposal is the true statement or, for about half the relations, an opposite position
-   the confirmed relation contradicts; the feedback gives the correct statement. Every
-   question uses the learner's photo with `sceneObjectId`/`objectLabel` (and
-   `referenceObjectId`/`referenceLabel` except the where-question). Prompts are in the
-   target language with an English `promptTranslation`, and never contain the sentence
-   the learner builds.
-4. **Grading.** The questions are one task attempt. Phrase and Yes/No choices are
-   recognition with `wrongPosition` corrections; the statement and question are supported
-   construction (`wordBank`), and only those name object words for evidence.
-   `GET /tasks/{id}/latest-attempt` also returns the saved `answers` and `reviewDetails`
-   for mission lessons, so a reloaded graded lesson still shows its answers, grades and
-   corrections.
-
-#### M03 A1 lesson path
-
-`M03-A1.toml`, "Say how many": say a confirmed quantity with the taught pattern
-(`Hay tres libros.`, `Il y a trois livres.`) and the noun's regular plural.
-
-1. **Payload** (`app/services/mission_lessons_m03.py`, `app/services/quantities.py`). The
-   first counted group of 2–10 whose translated noun has a reviewed regular plural, with
-   its reviewed number word, singular, plural, statement, English meaning and nearby
-   wrong quantities. Plurals come only from regular rules (es vowel + `s`, `-d/-l/-r/-j`
-   + `es` without accent changes; fr + `s`, excluding `-s/-x/-z/-au/-eu/-al/-ail` and the
-   `-ou` exceptions) and must match any recorded plural. Otherwise the session records
-   `analysisDraft.skippedMissions` and keeps its other tasks; with no mission task left
-   the session returns to review with a `sceneShortfall` instead of a regular lesson.
-2. **Lesson** (`app/ai/features/learning_tasks/mission_m03.py`). Exactly one
-   `grammarLesson` with 2–4 questions: quantity comprehension, choosing the statement
-   (distractors use a wrong number or the singular), then a word-bank statement whose
-   bank adds the singular and a wrong number. Its validator and fallback check the group, quantity
-   and plural, and its cache identity is `learning-tasks.m03-a1.v1:M03-A1.v1`.
-3. **Grading** follows M01. Corrections name `wrongQuantity` or `pluralForm` when the
-   answer shows which (both for a wrong number with a singular noun), and `wordOrder`
-   otherwise. A rule without listed answers applies only when no specific rule matches.
 
 ### Backend performance
 
@@ -1033,6 +1057,11 @@ project as the test database. Pure schema/error-handling tests run without a dat
 use PostgreSQL, create their own records in Python, and clean up after themselves.
 Scene tests read the catalog installed by migrations; no test JSON files or alternate
 storage adapters are used. The tests exercise the production dependency graph.
+
+Parsing a language pack takes most of a second, so tests that only read a bundled pack
+use `bundled_pack(path)` from `tests/bundled_packs.py`, which parses each pack once per
+run and returns a private copy. Tests that edit pack files copy the pack to `tmp_path`
+and call `load_pack` on the copy; never point an editing test at the bundled packs.
 
 Production sources are under `app/`, migrations under `prisma/migrations/`,
 and database/schema tests under `tests/`.

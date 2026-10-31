@@ -89,6 +89,32 @@ def test_vocabulary_typing_only_rewards_a_correct_answer(curated):
         assert resource_snapshot(c, owner.id).basil_leaves == 10
 
 
+def test_vocabulary_typing_accepts_accent_only_difference_as_close(curated):
+    engine, owner, _profile, _client, *_ = curated
+    repo, _sid, detail = _lesson(curated)
+    task = detail.tasks[0]
+    answer_key = _answer_key(engine, task.id)
+    learning_key = next(iter(answer_key["acceptedTextAnswersByVocabularyId"]))
+    answer_key["acceptedTextAnswersByVocabularyId"][learning_key] = ["le canapé"]
+    with engine.begin() as c:
+        c.execute(
+            update(session_tasks)
+            .where(session_tasks.c.id == task.id)
+            .values(answer_key=answer_key)
+        )
+
+    close = repo.check_vocabulary_typing(task.id, learning_key, "le canape", False)
+
+    assert close.is_close and not close.is_correct
+    assert close.correct_answer == "le canapé"
+    assert close.basil_earned == 0
+    with engine.begin() as c:
+        assert resource_snapshot(c, owner.id).basil_leaves == 0
+
+    exact = repo.check_vocabulary_typing(task.id, learning_key, "le canapé", False)
+    assert exact.is_correct and not exact.is_close and exact.basil_earned == 10
+
+
 @pytest.mark.parametrize("correct", [False, True])
 def test_question_rewards_and_batch_submission_share_one_ledger(curated, correct):
     engine, _owner, profile, client, *_ = curated
@@ -124,6 +150,9 @@ def test_question_rewards_and_batch_submission_share_one_ledger(curated, correct
     batch = client.get(f"/api/v1/sessions/{sid}/mission-progress").json()[0]
     assert batch["status"] == ("ready" if correct else "review")
     assert batch["percent"] == (100 if correct else 90)
+    assert batch["name"] == "Spot & Say"
+    assert batch["badgeEarned"] == ("Taster" if correct else None)
+    assert ("Get more than 50% correct." in batch["requirements"]) is not correct
     summary = client.get(f"/api/v1/me/gamification?languageProfileId={profile.id}").json()
     badge = next(item for item in summary["missions"] if item["missionId"] == "M01")
     assert badge["badgeLevel"] == ("Taster" if correct else None)
@@ -483,16 +512,17 @@ def test_m06_correct_after_targeted_feedback_is_assisted_without_another_reward(
     ).json() if item["missionId"] == "M06")
     assert batch["assessedQuestions"] == batch["correctQuestions"] == question_count
     assert batch["independentCorrect"] == 0
-    assert batch["status"] == "review" and batch["percent"] == 90
-    assert "Answer 2 questions correctly without assistance." in batch["requirements"]
+    # Hints don't block a badge: finishing with more than 50% right earns it.
+    assert batch["status"] == "ready" and batch["percent"] == 100
+    assert batch["badgeEarned"] == "Taster"
     summary = client.get(f"/api/v1/me/gamification?languageProfileId={profile.id}").json()
     badge = next(item for item in summary["missions"] if item["missionId"] == "M06")
-    assert badge["badgeLevel"] is None and badge["successfulBatches"] == 0
+    assert badge["badgeLevel"] == "Taster" and badge["successfulBatches"] == 1
     with engine.begin() as c:
         recorded = c.execute(select(mission_batches).where(
             mission_batches.c.session_id == sid, mission_batches.c.mission_id == "M06",
         )).mappings().one()
-        assert recorded["successful"] is False and recorded["lower_assistance"] is False
+        assert recorded["successful"] is True and recorded["lower_assistance"] is False
         assert resource_snapshot(c, owner.id).basil_leaves == question_count * 5
 
 

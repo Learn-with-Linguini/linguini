@@ -7,7 +7,7 @@ from app.ai.adapters.openai import OpenAITextClient
 from app.ai.contracts.errors import ProviderError, ProviderErrorCode
 from app.ai.contracts.text import TextModelConfig, TextModelRequest
 from app.ai.features.translation import (
-    SCENE_TRANSLATION_PROMPT_VERSION,
+    PACK_TRANSLATION_PROMPT_VERSION,
     build_scene_translation_schema,
 )
 
@@ -52,7 +52,7 @@ def request() -> TextModelRequest:
         user_content='{"targetLanguage":"es"}',
         json_schema_name="scene_translation_v1",
         json_schema=build_scene_translation_schema(),
-        prompt_version=SCENE_TRANSLATION_PROMPT_VERSION,
+        prompt_version=PACK_TRANSLATION_PROMPT_VERSION,
     )
 
 
@@ -68,7 +68,7 @@ def test_adapter_success_and_request_body() -> None:
     response = client.generate(request())
 
     assert response.output_text == VALID_OUTPUT
-    assert response.prompt_version == SCENE_TRANSLATION_PROMPT_VERSION
+    assert response.prompt_version == PACK_TRANSLATION_PROMPT_VERSION
     assert response.input_tokens == 100
     assert response.output_tokens == 50
     assert captured["authorization"] == f"Bearer {FAKE_API_KEY}"

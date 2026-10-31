@@ -128,9 +128,11 @@ export interface A0MissionSnapshot {
   taughtChunks: TaughtChunk[];
   ownedObjectId?: string | null;
   pretend?: boolean | null;
+  ownerName?: "Ana" | "Leo" | null;
   preferenceObjectIds?: string[] | null;
   chosenObjectId?: string | null;
   reaction?: "like" | "dislike" | null;
+  subjectName?: "Ana" | "Leo" | null;
 }
 
 export interface MissionDialogueTurn {

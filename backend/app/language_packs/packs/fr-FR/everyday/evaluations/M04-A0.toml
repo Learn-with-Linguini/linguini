@@ -1,0 +1,87 @@
+mission_id = "M04"
+practice_level = "A0"
+content_version = 1
+
+[[cases]]
+case_id = "m04-a0-is-it-yours"
+category = "wrongOwner"
+construction_id = "ownership-question"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }], owners = [{ fact_id = "owner:bag", object = "object:bag", owner = "first" }] }
+bindings = { object = "object:bag", owner = "possessor:second" }
+truth = true
+input = "Ask whether the bag is yours."
+expected_meaning = "Is it yours?"
+acceptable = ["C'est à toi, ça ?"]
+reject = [{ sentence = "C'est à moi ?", category = "wrongOwner", reason = "Linguini asks about the listener's things." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m04-a0-not-mine"
+category = "meaning"
+construction_id = "ownership-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }], owners = [{ fact_id = "owner:bag", object = "object:bag", owner = "first" }] }
+bindings = { object = "object:bag", owner = "owner:bag" }
+truth = false
+input = "Say that it is not yours."
+expected_meaning = "It's not mine."
+acceptable = ["Non, ce n'est pas à moi."]
+reject = [{ sentence = "Oui, c'est à moi.", category = "meaning", reason = "A false statement is negated." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m04-a0-statement-punctuation"
+category = "punctuation"
+construction_id = "ownership-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }], owners = [{ fact_id = "owner:bag", object = "object:bag", owner = "first" }] }
+bindings = { object = "object:bag", owner = "owner:bag" }
+truth = true
+input = "Say that it is yours."
+expected_meaning = "It's mine."
+acceptable = ["C'est bien à moi."]
+reject = [{ sentence = "C'est bien à moi", category = "punctuation", reason = "The statement ends with a full stop." }, { sentence = "La tasse est à moi.", category = "wrongObject", reason = "The statement is about the bag and names no other object." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m04-a0-plate-is-mine"
+category = "wrongOwner"
+construction_id = "owned-object"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }], owners = [{ fact_id = "owner:plate", object = "object:plate", owner = "first" }] }
+bindings = { object = "object:plate", owner = "owner:plate" }
+truth = true
+input = "Say that the plate is yours."
+expected_meaning = "The plate is mine."
+acceptable = ["L'assiette est à moi."]
+reject = [{ sentence = "L'assiette est à toi.", category = "wrongOwner", reason = "The plate is the speaker's, not the listener's." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m04-a0-held-key"
+category = "wrongObject"
+construction_id = "owned-object"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:key", concept = "key" }, { fact_id = "object:bag", concept = "bag" }], owners = [{ fact_id = "owner:key", object = "object:key", owner = "first" }] }
+bindings = { object = "object:key", owner = "owner:key" }
+truth = true
+input = "Say that the key is yours."
+expected_meaning = "The key is mine."
+acceptable = ["La clé est à moi."]
+reject = [{ sentence = "Le sac est à moi.", category = "wrongObject", reason = "The sentence is about the key." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m04-a0-held-unicode"
+category = "unicode"
+construction_id = "owned-object"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:phone", concept = "phone" }], owners = [{ fact_id = "owner:phone", object = "object:phone", owner = "first" }] }
+bindings = { object = "object:phone", owner = "owner:phone" }
+truth = true
+input = "Say that the phone is yours."
+expected_meaning = "The phone is mine."
+acceptable = ["Le téléphone est à moi."]
+reject = [{ sentence = "Le te\u0301le\u0301phone est a\u0300 moi.", category = "unicode", reason = "The rejected candidate contains decomposed characters." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }

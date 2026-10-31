@@ -19,6 +19,7 @@ from app.schemas.enums import (
     TaskPhase,
     TaskStatus,
 )
+from app.schemas.language_context import LanguageDisplayContext
 from app.schemas.mission_content import A0MissionSnapshot, TaughtChunk
 from app.schemas.roleplay import RoleplayFact
 
@@ -67,6 +68,7 @@ class MissionTaskFields(ApiModel):
     mission_id: MissionId | None = Field(default=None, exclude_if=_is_none)
     practice_level: ProficiencyLevel | None = Field(default=None, exclude_if=_is_none)
     content_version: ContentVersion | None = Field(default=None, exclude_if=_is_none)
+    language_context: LanguageDisplayContext | None = Field(default=None, exclude_if=_is_none)
 
     @model_validator(mode="after")
     def validate_mission(self) -> MissionTaskFields:
@@ -94,6 +96,7 @@ class VocabularyLearningWord(ApiModel):
     gender: str | None = None
     plural_form: str | None = None
     phonetic_text: str | None = None
+    romanization: str | None = Field(default=None, exclude_if=_is_none)
     pronunciation_audio_asset_id: UUID | None = None
     example_sentence: str | None = None
 
@@ -119,6 +122,7 @@ class MissionQuestionOutcome(ApiModel):
 
 
 class VocabularyQuestion(ApiModel):
+    romanizations: dict[str, str] | None = Field(default=None, exclude_if=_is_none)
     question_id: NonEmptyText
     prompt: NonEmptyText
     options: Annotated[list[VocabularyChoice], Field(min_length=2)]
@@ -163,6 +167,11 @@ class GrammarLessonQuestion(ApiModel):
     options: list[VocabularyChoice] = Field(default_factory=list)
     token_bank: list[NonEmptyText] = Field(default_factory=list)
     translation: str | None = None
+    # Display only. Native prompts, tiles and answer keys remain canonical.
+    romanizations: dict[str, str] | None = Field(default=None, exclude_if=_is_none)
+    sentence_join_modes: list[Literal["space", "none"]] | None = Field(
+        default=None, exclude_if=_is_none,
+    )
     # The photo object a question is about, shown with its English label.
     scene_object_id: UUID | None = Field(default=None, exclude_if=_is_none)
     object_label: str | None = Field(default=None, exclude_if=_is_none)
@@ -266,6 +275,7 @@ class LessonPrepCard(ApiModel):
     """A taught chunk shown, with audio, before a lesson's questions."""
 
     text: NonEmptyText
+    romanization: str | None = Field(default=None, exclude_if=_is_none)
     translation: str | None = None
     scene_object_id: UUID | None = Field(default=None, exclude_if=_is_none)
 
@@ -328,7 +338,31 @@ class ISpyChoice(ApiModel):
     scene_object_id: UUID | None = None
 
 
-class ISpyRoundContent(MissionTaskFields):
+class WordBankEntry(ApiModel):
+    text: NonEmptyText = Field(max_length=200)
+    translation: NonEmptyText = Field(max_length=200)
+
+
+class CheatSheetRef(ApiModel):
+    mission_id: MissionId
+    practice_level: ProficiencyLevel
+    content_version: ContentVersion
+
+
+class ISpyLevelSupport(ApiModel):
+    """The learner level an I-Spy task was built for and the help it offers.
+
+    Omitted from JSON when unset, so tasks saved before levelled I-Spy keep their shape.
+    """
+
+    learner_level: ProficiencyLevel | None = Field(default=None, exclude_if=_is_none)
+    word_bank: list[WordBankEntry] = Field(
+        default_factory=list, max_length=30, exclude_if=_is_empty
+    )
+    cheat_sheet: CheatSheetRef | None = Field(default=None, exclude_if=_is_none)
+
+
+class ISpyRoundContent(MissionTaskFields, ISpyLevelSupport):
     kind: Literal["ispyRound"] = "ispyRound"
     clue: NonEmptyText
     clue_translation: str | None = None
@@ -336,6 +370,10 @@ class ISpyRoundContent(MissionTaskFields):
     options: list[ISpyChoice] = Field(default_factory=list)
     encouragement: str | None = None
     hint_available: bool = True
+    # Show the English translation straight away (A0) rather than behind the toggle.
+    translation_shown: bool = False
+    # Play the clue before showing its text (A2).
+    listen_first: bool = False
 
 
 type ClueFrameId = Literal["name", "colour", "location"]
@@ -376,7 +414,7 @@ class ClueFrame(ApiModel):
     help: list[ClueChip] = Field(default_factory=list, max_length=12)
 
 
-class ReflectionContent(MissionTaskFields):
+class ReflectionContent(MissionTaskFields, ISpyLevelSupport):
     kind: Literal["reflection"] = "reflection"
     prompt: NonEmptyText
     suggested_vocabulary_ids: list[UUID] = Field(default_factory=list)
@@ -384,6 +422,8 @@ class ReflectionContent(MissionTaskFields):
     allow_text: bool = True
     clue_frames: list[ClueFrame] = Field(default_factory=list, max_length=3)
     avoid_words: list[ClueChip] = Field(default_factory=list, max_length=20)
+    # Keep the clue frames behind a "Need help?" control (A2).
+    help_collapsed: bool = False
 
     @model_validator(mode="after")
     def validate_frames(self) -> ReflectionContent:
@@ -456,11 +496,18 @@ class TaskAnswerKey(ApiModel):
     reference_text: str | None = None
     evaluation_notes: str | None = None
     correct_option_ids: dict[str, str] = Field(default_factory=dict)
+    # Other offered options that are equally right, such as a second object with the
+    # name a marker question asks for.
+    accepted_option_ids: dict[str, list[str]] = Field(
+        default_factory=dict, exclude_if=_is_empty
+    )
     accepted_text_answers_by_vocabulary_id: dict[str, list[str]] = Field(default_factory=dict)
     accepted_text_answers_by_question: dict[str, list[str]] = Field(
         default_factory=dict, exclude_if=_is_empty
     )
     scene_description_context: JsonObject | None = None
+    # The level an I-Spy description is judged at; unset judges at A1.
+    learner_level: ProficiencyLevel | None = Field(default=None, exclude_if=_is_none)
     question_evaluations: list[QuestionEvaluation] = Field(
         default_factory=list, exclude_if=_is_empty
     )
@@ -852,6 +899,7 @@ class CheckVocabularyTypingRequest(ApiModel):
 class CheckVocabularyTypingResponse(ApiModel):
     learning_key: NonEmptyText
     is_correct: bool
+    is_close: bool = False
     correct_answer: NonEmptyText
     revealed: bool
     basil_earned: int = 0

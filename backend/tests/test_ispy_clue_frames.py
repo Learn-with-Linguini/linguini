@@ -16,10 +16,10 @@ from app.schemas.tasks import (
 )
 from app.schemas.vocabulary import VocabularyItem
 from app.services.ispy_clue_frames import (
-    CONTRACTIONS,
     _place,
     build_clue_support,
     check_clue,
+    clue_grammar,
     mentions_target,
 )
 from app.services.session_plan import build_ispy_description_tasks
@@ -222,7 +222,7 @@ def test_german_locations_use_dative_articles_and_contractions():
     assert "auf dem Tisch" in location.help
     assert "neben der Tür" in location.help
     assert _place("de", "an", {"translation": "Tisch", "gender": "masculine"}) == "am Tisch"
-    assert CONTRACTIONS["de"][("an", "dem")] == "am"
+    assert clue_grammar("de").contraction("an", "dem") == "am"
 
 
 def test_korean_clue_frames_match_aliases_and_keep_references_articleless():

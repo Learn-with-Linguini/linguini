@@ -16,11 +16,10 @@ export function SessionPersonalization({ personalization, languageCode }: { pers
   return <aside aria-labelledby={titleId}>
     <Card plain className="stack-2">
       <h2 id={titleId} className="small">Building on earlier practice</h2>
-      <p className="small muted">{personalization.previousSessions > 0
-        ? `Based on ${personalization.previousSessions} completed ${personalization.previousSessions === 1 ? "session" : "sessions"}.`
-        : "Drawn from your earlier practice."}</p>
+      {personalization.previousSessions > 0
+        ? <p className="small muted">Based on {personalization.previousSessions} completed {personalization.previousSessions === 1 ? "session" : "sessions"}.</p>
+        : null}
       {personalization.returningWords.length ? <div className="stack-2">
-        <strong className="small">Words from earlier photos</strong>
         <div className="translation-preview__terms" role="list" aria-label="Words saved from earlier photos">
           {personalization.returningWords.map((item, index) => <span className="translation-preview__term" role="listitem" key={`${item.word}:${index}`}>
             <strong lang={languageCode}>{item.word}</strong><span className="small">{item.needsReview ? "Review again" : "Saved before"}</span>

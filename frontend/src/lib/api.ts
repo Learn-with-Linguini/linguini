@@ -284,6 +284,13 @@ export const testSetTier = (tier: AccountTier) =>
   write<{ tier: AccountTier }>("/api/v1/payments/test-set-tier", "POST", { tier });
 
 export const getLanguageProfiles = (signal?: AbortSignal) => request<LanguageProfile[]>("/api/v1/me/language-profiles", signal);
+export interface PackPracticeLanguage {
+  code: string;
+  levels: ProficiencyLevel[];
+  experimental: boolean;
+  languageContext?: LanguageDisplayContext | null;
+}
+export const getPackPracticeLanguages = (signal?: AbortSignal) => request<PackPracticeLanguage[]>("/api/v1/me/practice-languages", signal);
 export const updateUser = (patch: UserPatch) => write<User>("/api/v1/me", "PATCH", patch);
 export const updateLanguageProfile = (id: string, patch: LanguageProfilePatch) => write<LanguageProfile>(`/api/v1/me/language-profiles/${id}`, "PATCH", patch);
 export const createLanguageProfile = (code: string, minutes: number, proficiencyLevel: ProficiencyLevel) => write<LanguageProfile>("/api/v1/me/language-profiles", "POST", {
@@ -449,7 +456,38 @@ export async function saveJournal(draft: JournalDraft, profileId: string, id?: s
 export type ProficiencyLevel = "A0" | "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 export const proficiencyLabel = (level: ProficiencyLevel) => (level === "A0" ? "Pre-A1" : level);
 /** Links task content to a versioned backend mission definition; absent on tasks without a mission. */
-export interface MissionTaskFields { missionId?: string; practiceLevel?: ProficiencyLevel; contentVersion?: number }
+export interface LanguageDisplayContext {
+  packId: string; packVersion: number; fingerprint: string;
+  languageCode: string; locale: string; variety: string; register: string; script: string;
+  direction: "ltr" | "rtl"; articles: "required" | "optional" | "none";
+  grammaticalGender: "required" | "optional" | "none";
+  romanizationRequired: boolean; romanizationConvention?: string | null;
+  speechLocale: string; speechSynthesis: "browserVoice" | "none"; speechRecognition: boolean;
+}
+export interface MissionTaskFields { missionId?: string; practiceLevel?: ProficiencyLevel; contentVersion?: number; languageContext?: LanguageDisplayContext | null }
+export interface CheatSheetExample { targetText: string; translation: string; note?: string | null }
+export interface CheatSheetPatternChoice { text: string; label: string }
+export interface CheatSheetTip { marker: string; label: string; targetText: string; translation: string }
+export interface CheatSheetReferenceItem { label: string; targetText: string }
+export interface CheatSheetPatternPart {
+  partId: string; label: string; role: "fixed" | "choice" | "slot" | "ending";
+  text?: string | null; choices: CheatSheetPatternChoice[];
+}
+export interface MissionCheatSheet {
+  missionId: string; practiceLevel: ProficiencyLevel; contentVersion: number; languageCode: string; textDirection: "ltr" | "rtl";
+  title: string; summary?: string | null; characterReferenceId?: string | null; characterReferenceVersion?: number | null;
+  concepts: {
+    conceptId: string; sectionId?: string | null; title: string; explanation?: string | null; formula?: string | null;
+    examples: CheatSheetExample[]; tips: (string | CheatSheetTip)[]; referenceItems: CheatSheetReferenceItem[];
+    patternParts: CheatSheetPatternPart[];
+    characterReferenceSectionIds: string[];
+  }[];
+}
+export const getMissionCheatSheet = (
+  missionId: string, practiceLevel: string, contentVersion: number, languageCode: string, signal?: AbortSignal,
+) => request<MissionCheatSheet>(`/api/v1/learning-resources/cheatsheets/${encodeURIComponent(missionId)}?${new URLSearchParams({
+  languageCode, practiceLevel, contentVersion: String(contentVersion),
+})}`, signal);
 export interface RoleplayFact {
   sceneObjectId: string;
   source: "assignedRoleplay";
@@ -467,9 +505,13 @@ export type TaskContent = MissionTaskFields & (
   | { kind: "grammarPractice"; prompt: string; options: string[] }
   | { kind: "syntaxExplanation"; title: string; sentencePattern: string; explanation: string; examples: string[] }
   | { kind: "sentenceBuilding"; prompt: string; sourceText: string | null; tokenBank: string[] }
-  | { kind: "ispyRound"; clue: string; clueTranslation?: string | null; encouragement?: string | null; options: { optionId: string; label: string; sceneObjectId: string }[] }
-  | { kind: "reflection"; prompt: string; clueFrames?: ClueFrame[]; avoidWords?: string[] }
+  | ({ kind: "ispyRound"; clue: string; clueTranslation?: string | null; encouragement?: string | null; options: { optionId: string; label: string; sceneObjectId: string }[]; translationShown?: boolean; listenFirst?: boolean } & ISpyLevelSupport)
+  | ({ kind: "reflection"; prompt: string; clueFrames?: ClueFrame[]; avoidWords?: string[]; allowText?: boolean; helpCollapsed?: boolean } & ISpyLevelSupport)
 );
+export interface WordBankEntry { text: string; translation: string }
+export interface CheatSheetRef { missionId: string; practiceLevel: string; contentVersion: number }
+/** The level an I-Spy task was built for and the help it offers (A0 gets a word bank and cheatsheet). */
+export interface ISpyLevelSupport { learnerLevel?: "A0" | "A1" | "A2"; wordBank?: WordBankEntry[]; cheatSheet?: CheatSheetRef | null }
 export type ClueFrameId = "name" | "colour" | "location";
 export type ClueSlotId = "position" | "reference" | "colour";
 export interface ClueSlotChip { text: string; meaning?: string | null; example?: string | null }
@@ -507,6 +549,10 @@ export interface SessionPersonalization {
   practiceFocuses: PracticeFocus[];
 }
 export interface PracticeDetail {
+  sceneAnalysisProgress?: {
+    stage: "loadingImage" | "findingObjects" | "checkingResults" | "savingResults" | "ready";
+    startedAt: string | null;
+  } | null;
   session: { id: string; mode: SessionMode; sourceSessionId: string | null; status: SessionStatus; sceneMediaAssetId: string; sessionTitle: string | null; sessionSummary: string | null; failureCode: "imageUploadFailed" | "sceneAnalysisFailed" | "imageModerationFailed" | "noValidObjects" | "vocabularyMappingFailed" | "taskGenerationFailed" | null };
   mediaAsset: { id: string; source: "preloaded" | "camera" | "userUpload" };
   sceneId: string | null; title: string;
@@ -534,6 +580,8 @@ export interface PracticeDetail {
   sceneShortfall?: SceneShortfall | null;
   provisionalMissionPlan?: MissionTaskFields[];
   suggestedSceneObjectIds?: string[];
+  /** Objects whose word the learner practised in an earlier lesson on this photo. */
+  practisedSceneObjectIds?: string[];
   missionChoices?: MissionChoices | null;
 }
 export type ShortfallKind = "objects" | "counts" | "attributes" | "relations";
@@ -568,19 +616,22 @@ export interface SceneObjectRelation {
   referenceSceneObjectId: string; sourceRelationKey: string | null;
 }
 export interface VocabularyLearningWord {
+  romanization?: string | null;
   learningKey: string | null; termType: "object" | "attribute" | "relationship";
   vocabularyItemId: string | null; sceneObjectId: string | null; targetText: string; translation: string;
   relatedSceneObjectIds?: string[];
   partOfSpeech: WordClass; gender: string | null; pluralForm: string | null; phoneticText: string | null;
   pronunciationAudioAssetId: string | null; exampleSentence: string | null;
 }
-export interface VocabularyQuestion { questionId: string; prompt: string; options: { optionId: string; label: string }[]; correctOptionId?: string | null }
+export interface VocabularyQuestion { questionId: string; prompt: string; options: { optionId: string; label: string }[]; correctOptionId?: string | null; romanizations?: Record<string, string> | null }
 export interface GrammarLessonQuestion extends MissionQuestionFields {
   questionId: string;
   prompt: string;
   interactionType: "multipleChoice" | "sentenceBuilding" | "textCloze";
   options: { optionId: string; label: string }[];
   tokenBank: string[];
+  romanizations?: Record<string, string> | null;
+  sentenceJoinModes?: ("space" | "none")[] | null;
   gapKind?: string | null;
   assistanceSteps?: ("replayAudio" | "visualDetail" | "phraseOnset" | "chunkBank" | "fullModel")[] | null;
   allowRetry?: boolean | null;
@@ -615,7 +666,7 @@ export interface GrammarLessonQuestion extends MissionQuestionFields {
   completeChunk?: string | null;
 }
 /** A taught chunk shown with audio before a lesson's questions. */
-export interface LessonPrepCard { text: string; translation?: string | null; sceneObjectId?: string | null }
+export interface LessonPrepCard { text: string; romanization?: string | null; translation?: string | null; sceneObjectId?: string | null }
 export type TaskAnswer = { inputMode: "text"; text: string; assistance?: ClueAssistance } | { inputMode: "multipleChoice"; optionId: string } | { inputMode: "objectSelection"; sceneObjectId: string } | { inputMode: "vocabularyReview"; answers: Record<string, string>; typedAnswers: Record<string, string>; questionAssistance?: QuestionAssistance[] };
 export type ConfirmGuessBody = { attemptId: string };
 export type SupportKind = "translation" | "audio" | "example" | "wordBank" | "clueFrame" | "helpPhrase" | "hint" | "answerReveal";
@@ -713,7 +764,7 @@ export const getVocabularyChecks = (id: string, signal?: AbortSignal) =>
 export const checkVocabularyAnswer = (id: string, questionId: string, optionId: string, review = false) =>
   write<VocabularyAnswerCheck>(`/api/v1/tasks/${id}/check-vocabulary-answer`, "POST", { questionId, optionId, review });
 export const checkVocabularyTyping = (id: string, learningKey: string, answer: string, reveal = false) =>
-  write<{ learningKey: string; isCorrect: boolean; correctAnswer: string; revealed: boolean; basilEarned: number }>(`/api/v1/tasks/${id}/check-vocabulary-typing`, "POST", { learningKey, answer, reveal });
+  write<{ learningKey: string; isCorrect: boolean; isClose: boolean; correctAnswer: string; revealed: boolean; basilEarned: number }>(`/api/v1/tasks/${id}/check-vocabulary-typing`, "POST", { learningKey, answer, reveal });
 export const completePractice = (id: string) => write<{ id: string; status: string }>(`/api/v1/sessions/${id}/complete`, "POST", {});
 export const abandonPractice = (id: string) => write<{ id: string; status: string }>(`/api/v1/sessions/${id}/abandon`, "POST", {});
 export const getPracticeSummary = (id: string) => request<{

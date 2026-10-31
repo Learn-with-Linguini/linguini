@@ -90,3 +90,25 @@ test("reviewed sessions keep the marker numbers shown on the review screen", () 
   const reviewed = { ...two, reviewMarkers: { object: 3, lamp: 1 } };
   assert.deepEqual(practiceScene(reviewed, imageUrl, "Spanish").items.map(item => [item.id, item.marker]), [["object", 3], ["lamp", 1]]);
 });
+
+test("missing saved numbers cannot collide with a saved marker belonging to another object", () => {
+  const restored = { ...detail, sceneObjects: [detail.sceneObjects[0],
+    { ...detail.sceneObjects[0], id: "lamp" }, { ...detail.sceneObjects[0], id: "book" }],
+    reviewMarkers: { object: 2 } };
+  const scene = practiceScene(restored, imageUrl, "Spanish");
+  assert.deepEqual(scene.items.map(item => [item.id, item.marker]), [
+    ["object", 2], ["lamp", 1], ["book", 3],
+  ]);
+  assert.deepEqual(scene.items.filter(item => item.id !== "lamp").map(item => item.marker), [2, 3]);
+  assert.deepEqual(practiceScene(structuredClone(restored), imageUrl, "Spanish").items, scene.items);
+});
+
+test("duplicated saved marker values are repaired without changing object identities or locations", () => {
+  const restored = { ...detail, sceneObjects: [detail.sceneObjects[0],
+    { ...detail.sceneObjects[0], id: "lamp", anchorPoint: { x: .7, y: .4 } }],
+    reviewMarkers: { object: 5, lamp: 5 } };
+  const scene = practiceScene(restored, imageUrl, "Spanish");
+  assert.deepEqual(scene.items.map(item => [item.id, item.marker, item.x, item.y]), [
+    ["object", 5, 25, 40], ["lamp", 1, 70, 40],
+  ]);
+});

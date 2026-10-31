@@ -1,0 +1,25 @@
+construction_id = "choice-statement"
+
+[[examples]]
+example_id = "i-choose-book"
+levels = ["A0"]
+purposes = ["sayChoice"]
+meaning = "I choose the book."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }], preferences = [{ fact_id = "preference:cup", object = "object:cup", person = "first", likes = true }, { fact_id = "preference:book", object = "object:book", person = "ana", likes = false }, { fact_id = "preference:key", object = "object:key", person = "leo", likes = true }] }
+bindings = { object = "object:book" }
+truth = true
+labels = []
+sentence = "Ich nehme das Buch."
+translation = "I choose the book."
+chunks = [{ text = "Ich", join = "none" }, { text = "nehme", join = "space" }, { text = "das", join = "space" }, { text = "Buch", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "i-choose-book-form"
+levels = ["A0"]
+purposes = ["sayChoice"]
+sentence = "Ich nimm das Buch."
+correction = "Ich nehme das Buch."
+note = "With ich, nehmen is nehme."
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }

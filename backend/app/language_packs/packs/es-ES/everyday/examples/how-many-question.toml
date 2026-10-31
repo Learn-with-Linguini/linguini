@@ -1,0 +1,49 @@
+construction_id = "how-many-question"
+
+[[examples]]
+example_id = "how-many-apples"
+levels = ["A0", "A2"]
+purposes = ["countGroup"]
+meaning = "How many apples are there?"
+scene = { objects = [{ fact_id = "object:book", concept = "book" }, { fact_id = "object:cup", concept = "cup" }, { fact_id = "object:apple", concept = "apple" }], counts = [{ fact_id = "count:book", object = "object:book", quantity = 5 }, { fact_id = "count:cup", object = "object:cup", quantity = 2 }, { fact_id = "count:apple", object = "object:apple", quantity = 2 }] }
+bindings = { object = "object:apple" }
+truth = true
+labels = []
+sentence = "¿Cuántas manzanas hay?"
+translation = "How many apples are there?"
+chunks = [{ text = "¿Cuántas", join = "none" }, { text = "manzanas", join = "space" }, { text = "hay", join = "space" }, { text = "?", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "how-many-books"
+levels = ["A1"]
+purposes = ["chooseQuantity"]
+meaning = "How many books are there?"
+scene = { objects = [{ fact_id = "object:book", concept = "book" }, { fact_id = "object:cup", concept = "cup" }, { fact_id = "object:apple", concept = "apple" }], counts = [{ fact_id = "count:book", object = "object:book", quantity = 5 }, { fact_id = "count:cup", object = "object:cup", quantity = 2 }, { fact_id = "count:apple", object = "object:apple", quantity = 2 }] }
+bindings = { object = "object:book" }
+truth = true
+labels = []
+sentence = "¿Cuántos libros hay?"
+translation = "How many books are there?"
+chunks = [{ text = "¿Cuántos", join = "none" }, { text = "libros", join = "space" }, { text = "hay", join = "space" }, { text = "?", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "how-many-books-form"
+levels = ["A0", "A2"]
+purposes = ["countGroup"]
+sentence = "¿Cuánto libros hay?"
+correction = "¿Cuántos libros hay?"
+note = "Cuántos agrees with the plural noun."
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "how-many-books-choose-form"
+levels = ["A1"]
+purposes = ["chooseQuantity"]
+sentence = "¿Cuánto libros hay?"
+correction = "¿Cuántos libros hay?"
+note = "Cuántos agrees with the plural noun."
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }

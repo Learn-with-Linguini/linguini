@@ -1,0 +1,84 @@
+# Number words for counting missions (M03). ``with_noun`` gives the form used
+# next to a counted noun when it differs: agreement (Spanish un/una) or a
+# counter (Korean 두 개).
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[numbers]]
+value = 1
+text = "하나"
+romanization = "hana"
+[[numbers.with_noun]]
+text = "한 개"
+romanization = "han gae"
+
+[[numbers]]
+value = 2
+text = "둘"
+romanization = "dul"
+[[numbers.with_noun]]
+text = "두 개"
+romanization = "du gae"
+
+[[numbers]]
+value = 3
+text = "셋"
+romanization = "set"
+[[numbers.with_noun]]
+text = "세 개"
+romanization = "se gae"
+
+[[numbers]]
+value = 4
+text = "넷"
+romanization = "net"
+[[numbers.with_noun]]
+text = "네 개"
+romanization = "ne gae"
+
+[[numbers]]
+value = 5
+text = "다섯"
+romanization = "daseot"
+[[numbers.with_noun]]
+text = "다섯 개"
+romanization = "daseot gae"
+
+[[numbers]]
+value = 6
+text = "여섯"
+romanization = "yeoseot"
+[[numbers.with_noun]]
+text = "여섯 개"
+romanization = "yeoseot gae"
+
+[[numbers]]
+value = 7
+text = "일곱"
+romanization = "ilgop"
+[[numbers.with_noun]]
+text = "일곱 개"
+romanization = "ilgop gae"
+
+[[numbers]]
+value = 8
+text = "여덟"
+romanization = "yeodeol"
+[[numbers.with_noun]]
+text = "여덟 개"
+romanization = "yeodeol gae"
+
+[[numbers]]
+value = 9
+text = "아홉"
+romanization = "ahop"
+[[numbers.with_noun]]
+text = "아홉 개"
+romanization = "ahop gae"
+
+[[numbers]]
+value = 10
+text = "열"
+romanization = "yeol"
+[[numbers.with_noun]]
+text = "열 개"
+romanization = "yeol gae"

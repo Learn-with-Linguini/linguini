@@ -1,0 +1,15 @@
+construction_id = "order-repair"
+version = 1
+summary = "Correct the one detail the server got wrong."
+guidance = "Correct only the bound detail: Eigentlich + the corrected quantity or detail, + bitte. Do not name the item."
+features = ["request", "repair"]
+constraints = ["Express only the bound order facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { quantity = "determiner", size = "phrase", detail = "phrase" }
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "repairs"
+message = "A repair corrects the order; it does not confirm it."
+must_contain = ["\\bbitte\\b"]
+must_not_contain = ["^ja\\b"]

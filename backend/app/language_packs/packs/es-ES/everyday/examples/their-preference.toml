@@ -1,0 +1,55 @@
+construction_id = "their-preference"
+
+[[examples]]
+example_id = "leo-likes-key"
+levels = ["A1"]
+purposes = ["choosePreference"]
+meaning = "Leo likes the key."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }], preferences = [{ fact_id = "preference:cup", object = "object:cup", person = "first", likes = true }, { fact_id = "preference:book", object = "object:book", person = "ana", likes = false }, { fact_id = "preference:key", object = "object:key", person = "leo", likes = true }] }
+bindings = { object = "object:key", preference = "preference:key" }
+truth = true
+labels = []
+sentence = "A Leo le gusta la llave."
+translation = "Leo likes the key."
+chunks = [{ text = "A", join = "none" }, { text = "Leo", join = "space" }, { text = "le", join = "space" }, { text = "gusta", join = "space" }, { text = "la", join = "space" }, { text = "llave", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "ana-dislikes-book"
+levels = ["A1"]
+purposes = ["buildTheirPreference", "choosePreference"]
+meaning = "Ana doesn't like the book."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }], preferences = [{ fact_id = "preference:cup", object = "object:cup", person = "first", likes = true }, { fact_id = "preference:book", object = "object:book", person = "ana", likes = false }, { fact_id = "preference:key", object = "object:key", person = "leo", likes = true }] }
+bindings = { object = "object:book", preference = "preference:book" }
+truth = true
+labels = []
+sentence = "A Ana no le gusta el libro."
+translation = "Ana doesn't like the book."
+chunks = [{ text = "A", join = "none" }, { text = "Ana", join = "space" }, { text = "no", join = "space" }, { text = "le", join = "space" }, { text = "gusta", join = "space" }, { text = "el", join = "space" }, { text = "libro", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "ana-likes-book"
+levels = ["A1"]
+purposes = ["buildTheirPreference"]
+meaning = "Ana likes the book."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }], preferences = [{ fact_id = "preference:cup", object = "object:cup", person = "first", likes = true }, { fact_id = "preference:book", object = "object:book", person = "ana", likes = false }, { fact_id = "preference:key", object = "object:key", person = "leo", likes = true }] }
+bindings = { object = "object:book", preference = "preference:book" }
+truth = false
+labels = []
+sentence = "A Ana le gusta el libro."
+translation = "Ana likes the book."
+chunks = [{ text = "A", join = "none" }, { text = "Ana", join = "space" }, { text = "le", join = "space" }, { text = "gusta", join = "space" }, { text = "el", join = "space" }, { text = "libro", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "ana-dislikes-book-form"
+levels = ["A1"]
+purposes = ["buildTheirPreference", "choosePreference"]
+sentence = "A Ana le no gusta el libro."
+correction = "A Ana no le gusta el libro."
+note = "No comes before le."
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }

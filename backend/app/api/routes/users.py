@@ -1,3 +1,4 @@
+import logging
 from typing import Annotated
 from uuid import UUID
 
@@ -13,6 +14,7 @@ from app.repositories.users import UserRepositoryError
 from app.schemas.users import (
     CreateLanguageProfileRequest,
     LanguageProfile,
+    PackPracticeLanguage,
     UpdateLanguageProfileRequest,
     UpdateUserRequest,
     User,
@@ -27,6 +29,26 @@ from app.services.language_profiles import LanguageProfileService
 from app.services.users import UserNotFoundError, UserService
 
 router = APIRouter(tags=["users"])
+logger = logging.getLogger(__name__)
+
+
+@router.get("/me/practice-languages", response_model=list[PackPracticeLanguage])
+def list_pack_practice_languages(
+    _identity: Annotated[AuthenticatedIdentity | None, Depends(get_authenticated_identity)],
+):
+    from app.language_packs.runtime import available_pack_languages
+
+    try:
+        return available_pack_languages()
+    except ValueError as exc:
+        logger.warning("Configured practice language discovery failed: %s", exc)
+        raise HTTPException(status_code=503, detail={
+            "code": "language_packs_unavailable",
+            "message": (
+                "Configured practice languages could not be loaded. "
+                "Check backend pack configuration."
+            ),
+        }) from exc
 
 
 @router.get("/me", response_model=User)

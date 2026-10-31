@@ -1,0 +1,64 @@
+construction_id = "connected-description"
+
+[[examples]]
+example_id = "connect-cup-book"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+meaning = "There is a red cup and there is also a book."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }] }
+bindings = { object = "object:cup", other-object = "object:book", attribute = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "Il y a une tasse rouge et il y a aussi un livre."
+translation = "There is a red cup and there is also a book."
+chunks = [{ text = "Il", join = "none" }, { text = "y", join = "space" }, { text = "a", join = "space" }, { text = "une", join = "space" }, { text = "tasse", join = "space" }, { text = "rouge", join = "space" }, { text = "et", join = "space" }, { text = "il", join = "space" }, { text = "y", join = "space" }, { text = "a", join = "space" }, { text = "aussi", join = "space" }, { text = "un", join = "space" }, { text = "livre.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "connect-plate-apple"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+meaning = "There is a white plate and there is also a apple."
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }, { fact_id = "object:apple", concept = "apple" }], attributes = [{ fact_id = "attribute:plate-white", object = "object:plate", kind = "color", value = "white" }] }
+bindings = { object = "object:plate", other-object = "object:apple", attribute = "attribute:plate-white" }
+truth = true
+labels = []
+sentence = "Il y a une assiette blanche et il y a aussi une pomme."
+translation = "There is a white plate and there is also a apple."
+chunks = [{ text = "Il", join = "none" }, { text = "y", join = "space" }, { text = "a", join = "space" }, { text = "une", join = "space" }, { text = "assiette", join = "space" }, { text = "blanche", join = "space" }, { text = "et", join = "space" }, { text = "il", join = "space" }, { text = "y", join = "space" }, { text = "a", join = "space" }, { text = "aussi", join = "space" }, { text = "une", join = "space" }, { text = "pomme.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "connect-location-existence"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+meaning = "The shoe is under the chair. There is a bottle."
+scene = { objects = [{ fact_id = "object:shoe", concept = "shoe" }, { fact_id = "object:chair", concept = "chair" }, { fact_id = "object:bottle", concept = "bottle" }], relations = [{ fact_id = "relation:shoe-under-chair", subject = "object:shoe", reference = "object:chair", relation = "under" }] }
+bindings = { subject = "object:shoe", reference = "object:chair", other-object = "object:bottle", relation = "relation:shoe-under-chair" }
+truth = true
+labels = []
+sentence = "La chaussure est sous la chaise. Il y a une bouteille."
+translation = "The shoe is under the chair. There is a bottle."
+chunks = [{ text = "La", join = "none" }, { text = "chaussure", join = "space" }, { text = "est", join = "space" }, { text = "sous", join = "space" }, { text = "la", join = "space" }, { text = "chaise.", join = "space" }, { text = "Il", join = "space" }, { text = "y", join = "space" }, { text = "a", join = "space" }, { text = "une", join = "space" }, { text = "bouteille.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-11"
+levels = ["A2"]
+purposes = ["chooseSceneDescription"]
+sentence = "Il y a une tasse bleue et il y a aussi un livre."
+correction = "Il y a une tasse rouge et il y a aussi un livre."
+note = "Context: the cup is red, not blue. Preserve the colour binding."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-12"
+levels = ["A2"]
+purposes = ["buildSceneDescription"]
+sentence = "Il y a une tasse rouge et il y ont aussi un livre."
+correction = "Il y a une tasse rouge et il y a aussi un livre."
+note = "The existential expression is il y a; do not conjugate it with ont."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }

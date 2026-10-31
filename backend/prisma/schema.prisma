@@ -32,6 +32,16 @@ model User {
   gameResourceEvents  GameResourceEvent[]
   chefLeaderboardPreference ChefLeaderboardPreference?
   hostedRooms         LearningRoom[] @relation("RoomHost")
+  createdFriendChats FriendChat[] @relation("FriendChatCreator")
+  joinedFriendChats FriendChat[] @relation("FriendChatPartner")
+  sentFriendChatRounds FriendChatRound[]
+  friendChatMessages FriendChatMessage[]
+  friendChatCommands FriendChatCommand[]
+  initiatedBlocks UserBlock[] @relation("BlockOwner")
+  receivedBlocks UserBlock[] @relation("BlockTarget")
+  submittedChatReports FriendChatReport[] @relation("ChatReporter")
+  receivedChatReports FriendChatReport[] @relation("ChatReported")
+  friendChatAssistance FriendChatAssistance[]
   learningQuestionEvents LearningQuestionEvent[]
   missionBatchResults MissionBatchResult[]
   learningPhotoIdentities LearningPhotoIdentity[]
@@ -242,6 +252,7 @@ model MediaAsset {
   preloadedScene     PreloadedScene?
   sessions           Session[]
   roomPhotos         RoomPhoto[]
+  friendChatRounds   FriendChatRound[]
   sceneAnalysis      MediaSceneAnalysis?
   learningPhotoIdentity LearningPhotoIdentity?
 
@@ -907,4 +918,135 @@ model LearningPhotoIdentity {
 
   @@index([userId, contentHash], map: "learning_photo_identities_owner_hash_idx")
   @@map("learning_photo_identities")
+}
+
+
+model FriendChat {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  creatorUserId String @map("creator_user_id") @db.Uuid
+  creator User @relation("FriendChatCreator", fields: [creatorUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  partnerUserId String? @map("partner_user_id") @db.Uuid
+  partner User? @relation("FriendChatPartner", fields: [partnerUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  creatorProfile Json @map("creator_profile") @db.JsonB
+  partnerProfile Json? @map("partner_profile") @db.JsonB
+  targetLanguageCode String @map("target_language_code") @db.VarChar(35)
+  status String @db.VarChar(12)
+  revision Int @default(0)
+  inviteHash String @unique @map("invite_hash") @db.VarChar(64)
+  inviteStatus String @map("invite_status") @db.VarChar(12)
+  inviteExpiresAt DateTime @map("invite_expires_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  rounds FriendChatRound[]
+  messages FriendChatMessage[]
+  commands FriendChatCommand[]
+  reports FriendChatReport[]
+
+  @@index([creatorUserId,updatedAt(sort: Desc)], map: "friend_chats_creator_updated_idx")
+  @@index([partnerUserId,updatedAt(sort: Desc)], map: "friend_chats_partner_updated_idx")
+  @@map("friend_chats")
+}
+
+model FriendChatRound {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  chatId String @map("chat_id") @db.Uuid
+  chat FriendChat @relation(fields: [chatId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  senderUserId String @map("sender_user_id") @db.Uuid
+  sender User @relation(fields: [senderUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  mediaAssetId String? @map("media_asset_id") @db.Uuid
+  mediaAsset MediaAsset? @relation(fields: [mediaAssetId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  status String @db.VarChar(24)
+  photoStatus String @map("photo_status") @db.VarChar(12)
+  content Json? @db.JsonB
+  target Json? @db.JsonB
+  clueOptions Json @default("[]") @map("clue_options") @db.JsonB
+  claimId String? @map("claim_id") @db.Uuid
+  claimExpiresAt DateTime? @map("claim_expires_at") @db.Timestamptz(6)
+  analysisAttempts Int @default(0) @map("analysis_attempts")
+  retryable Boolean @default(false)
+  error String? @db.VarChar(300)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  completedAt DateTime? @map("completed_at") @db.Timestamptz(6)
+  messages FriendChatMessage[]
+  assistance FriendChatAssistance[]
+
+  @@unique([id,chatId])
+  @@index([chatId,createdAt,id], map: "friend_chat_rounds_history_idx")
+  @@index([senderUserId], map: "friend_chat_rounds_sender_idx")
+  @@index([mediaAssetId], map: "friend_chat_rounds_media_idx")
+  @@map("friend_chat_rounds")
+}
+
+model FriendChatMessage {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  chatId String @map("chat_id") @db.Uuid
+  chat FriendChat @relation(fields: [chatId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  roundId String? @map("round_id") @db.Uuid
+  round FriendChatRound? @relation(fields: [roundId,chatId], references: [id,chatId], onDelete: Cascade, onUpdate: Cascade)
+  senderUserId String? @map("sender_user_id") @db.Uuid
+  sender User? @relation(fields: [senderUserId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  type String @db.VarChar(24)
+  text String? @db.Text
+  x Float? @db.DoublePrecision
+  y Float? @db.DoublePrecision
+  isCorrect Int? @map("is_correct")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([chatId,createdAt,id], map: "friend_chat_messages_timeline_idx")
+  @@map("friend_chat_messages")
+}
+
+model FriendChatCommand {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  chatId String @map("chat_id") @db.Uuid
+  chat FriendChat @relation(fields: [chatId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String @map("user_id") @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  commandId String @map("command_id") @db.Uuid
+  kind String @db.VarChar(100)
+  fingerprint String @db.VarChar(64)
+  result Json? @db.JsonB
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([chatId,userId,commandId])
+  @@map("friend_chat_commands")
+}
+
+model UserBlock {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId String @map("user_id") @db.Uuid
+  user User @relation("BlockOwner", fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  blockedUserId String @map("blocked_user_id") @db.Uuid
+  blockedUser User @relation("BlockTarget", fields: [blockedUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([userId,blockedUserId])
+  @@index([blockedUserId], map: "user_blocks_blocked_user_idx")
+  @@map("user_blocks")
+}
+
+model FriendChatReport {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  chatId String @map("chat_id") @db.Uuid
+  chat FriendChat @relation(fields: [chatId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  reporterUserId String @map("reporter_user_id") @db.Uuid
+  reporter User @relation("ChatReporter", fields: [reporterUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  reportedUserId String @map("reported_user_id") @db.Uuid
+  reported User @relation("ChatReported", fields: [reportedUserId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  reason String @db.VarChar(500)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("friend_chat_reports")
+}
+
+model FriendChatAssistance {
+  id String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roundId String @map("round_id") @db.Uuid
+  round FriendChatRound @relation(fields: [roundId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId String @map("user_id") @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([roundId], map: "friend_chat_assistance_round_idx")
+  @@map("friend_chat_assistance")
 }

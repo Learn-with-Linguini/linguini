@@ -213,7 +213,25 @@ def test_review_rebuilds_tasks_only_for_selected_objects():
         side_effect=[(generated.scene_objects, []), (generated.scene_objects, [])]
     )
     repo._vocabulary = lambda *args: (generated.vocabulary, generated.translations)
+    # Lessons translate only with their language pack; the stub sees only accepted objects.
+    from app.ai.features.translation.schemas import SceneTranslationResult
+
+    seen = []
+
+    def translate(payload, **options):
+        seen.append((payload, options))
+        return SceneTranslationResult(objects=[
+            {"key": term["key"], "source": term["source"], "translation": "mesa",
+             "article": "la", "gender": "feminine", "native_display": "la mesa"}
+            for term in payload["objects"]
+        ], attributes=[], relationships=[])
+
+    repo.translator = SimpleNamespace(translate=translate)
+    repo._store_translation = lambda *args: {}
     repo.review(session_id, profile_id, ReviewPracticeRequest(accepted_object_ids=[objects[1].id]))
+    ((payload, options),) = seen
+    assert [term["key"] for term in payload["objects"]] == [str(objects[1].id)]
+    assert options["language_context"].display.language_code == "es"
     inserted = [
         call.args[0].compile().params
         for call in connection.execute.call_args_list
@@ -224,7 +242,8 @@ def test_review_rebuilds_tasks_only_for_selected_objects():
         task["scene_object_id"] in {None, objects[1].id} for task in inserted
     )
     introduction = next(task for task in inserted if task["kind"] == "vocabularyIntroduction")
-    assert introduction["public_content"]["words"][0]["targetText"] == "mesa"
+    # Pack translations show the noun with its article.
+    assert introduction["public_content"]["words"][0]["targetText"] == "la mesa"
     assert introduction["public_content"]["words"][0]["translation"] == "table"
     # Same pending session can be reviewed again without changing generated task identity.
     assert introduction["id"] == uuid5(session_id, "placeholder-v1:vocabularyIntroduction")
@@ -299,15 +318,57 @@ def test_analysis_saves_draft_without_scene_objects_or_tasks():
         call.args[0] for call in connection.execute.call_args_list if not call.args[0].is_select
     ]
     session_writes = [write for write in writes if write.table.name == "sessions"]
-    assert len(session_writes) == 2
+    session_updates = [write.compile().params for write in session_writes]
+    transitions = [params for params in session_updates if "status" in params]
+    progress_updates = [params for params in session_updates if "status" not in params]
+    assert len(transitions) == 2
+    assert len(progress_updates) == 1
+    assert {"analysisStage": "savingResults"} in progress_updates[0].values()
+    assert not any(
+        write.table.name in {"scene_objects", "scene_object_relations", "session_tasks"}
+        for write in writes
+    )
     assert any(write.table.name == "media_scene_analyses" for write in writes)
-    assert session_writes[0].compile().params["status"] == "analyzingScene"
-    persist = session_writes[1].compile().params
+    assert transitions[0]["status"] == "analyzingScene"
+    persist = transitions[1]
     assert persist["status"] == "awaitingObjectReview"
     assert persist["session_title"] == "A title"
     assert persist["session_summary"] == "A summary."
     assert persist["analysis_draft"]["objects"][0]["id"] == str(obj.id)
     assert persist["analysis_draft"]["relations"][0]["source_relation_key"] == "provider:0"
+
+
+def test_revisit_draft_marks_practised_objects_and_suggests_new_ones():
+    from app.schemas.media import SceneObject
+
+    session_id = uuid4()
+    objects = [
+        SceneObject(session_id=session_id, label=label, source_object_key=label)
+        for label in ("chair", "table", "lamp", "door", "rug", "plant")
+    ]
+    draft = PostgresWorkflowRepository._analysis_draft(
+        SimpleNamespace(mode="lesson", analysis_draft=None),
+        {"target_language_code": "es", "proficiency_level": "A1"},
+        SimpleNamespace(
+            objects=objects, relations=[], action_suggestions=[], price_suggestions=[],
+        ),
+        practised_labels={"Chair"},
+    )
+    assert draft["practisedSceneObjectIds"] == [str(objects[0].id)]
+    assert draft["suggestedSceneObjectIds"] == [str(item.id) for item in objects[1:]]
+
+
+def test_practised_labels_come_from_earlier_lessons_on_the_same_photo():
+    from app.schemas.sessions import Session
+
+    owner = uuid4()
+    session = Session(user_id=owner, language_profile_id=uuid4(), scene_media_asset_id=uuid4())
+    connection = MagicMock()
+    connection.execute.return_value.scalars.return_value = iter([" Chair", "table"])
+    repo = PostgresWorkflowRepository(None, owner)
+    assert repo._practised_labels(connection, session) == {"chair", "table"}
+    query = str(connection.execute.call_args.args[0])
+    assert "scene_media_asset_id" in query and "task_attempts" in query
 
 
 def test_relations_require_selected_distinct_endpoints_and_no_duplicates():

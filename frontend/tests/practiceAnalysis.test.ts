@@ -9,6 +9,7 @@ import { rolldown } from "rolldown";
 import type { PracticeDetail, PracticeReview } from "../src/lib/api.ts";
 import type { Scene } from "../src/data/types.ts";
 import type { AppState } from "../src/state/context.ts";
+import { practiceScene } from "../src/lib/practiceScene.ts";
 
 const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://localhost/" });
 Object.defineProperty(globalThis, "window", { value: dom.window, configurable: true });
@@ -96,9 +97,9 @@ function detail(): PracticeDetail {
 
 let root: ReturnType<typeof createRoot> | null = null;
 let reviews: PracticeReview[] = [];
-async function mount(session = detail()) {
+async function mount(session = detail(), stalled = false, currentScene = scene) {
   reviews = [];
-  const state = { session, practiceSaving: false, practiceError: null, practiceStalled: false,
+  const state = { session, practiceSaving: false, practiceError: null, practiceStalled: stalled,
     saveReview: async (review: PracticeReview) => { reviews.push(review); },
   } as unknown as AppState;
   const container = dom.window.document.createElement("div");
@@ -107,7 +108,7 @@ async function mount(session = detail()) {
   await act(async () => {
     root!.render(h(MemoryRouter, { initialEntries: ["/analysis"] },
       h(AppStateContext.Provider, { value: state },
-        h(Routes, null, h(Route, { element: h(Outlet, { context: scene }) },
+        h(Routes, null, h(Route, { element: h(Outlet, { context: currentScene }) },
           h(Route, { path: "/analysis", element: h(PracticeAnalysis) }))))));
   });
 }
@@ -158,19 +159,20 @@ test.after(() => {
   globalThis.MessageChannel = NativeMessageChannel;
 });
 
-test("removing and restoring objects keeps their review marker numbers stable", async () => {
+test("removing, adding and restoring objects keeps photo and list numbers contiguous by identity", async () => {
   await mount();
   assertMarkers([1, 2, 3]);
   await click(dom.window.document.querySelector('[aria-label="Remove marker 1, table"]'));
-  assertMarkers([2, 3]);
+  assertMarkers([1, 2]);
   await addWord("window");
   await addWord("door");
-  assertMarkers([2, 3, 4, 5]);
-  await click(dom.window.document.querySelector('[aria-label="Remove marker 4, window"]'));
-  assertMarkers([2, 3, 5]);
+  assertMarkers([1, 2, 3, 4]);
+  await click(dom.window.document.querySelector('[aria-label="Remove marker 3, window"]'));
+  assertMarkers([1, 2, 3]);
   await click(button("Restore removed objects"));
-  assertMarkers([1, 2, 3, 5]);
+  assertMarkers([1, 2, 3, 4]);
   await click(dom.window.document.querySelector('[aria-label="Remove marker 1, table"]'));
+  assertMarkers([1, 2, 3]);
   await click(button("Confirm lesson facts"));
   assert.equal(reviews.length, 1);
   assert.deepEqual(reviews[0].acceptedObjectIds, ["object-1", "object-2"]);
@@ -195,10 +197,10 @@ test("counts live in Objects and follow visible instances after switching detail
   await click(tabs[0]);
   assert.deepEqual(counts(), { table: 1, cup: 2 });
   await click(dom.window.document.querySelector('[aria-label="Remove marker 2, cup"]'));
-  assertMarkers([1, 3]);
+  assertMarkers([1, 2]);
   assert.deepEqual(counts(), { table: 1, cup: 1 });
   await addWord("cup");
-  assertMarkers([1, 3, 4]);
+  assertMarkers([1, 2, 3]);
   assert.deepEqual(counts(), { table: 1, cup: 2 });
   await click(button("Confirm lesson facts"));
   assert.deepEqual(reviews[0].acceptedObjectIds, ["object-0", "object-2"]);
@@ -213,7 +215,7 @@ test("restoring removed objects keeps mission-hidden suggestions excluded from m
   assertMarkers([1, 2]);
   assert.deepEqual(counts(), { cup: 2 });
   await click(dom.window.document.querySelector('[aria-label="Remove marker 1, cup"]'));
-  assertMarkers([2]);
+  assertMarkers([1]);
   assert.deepEqual(counts(), { cup: 1 });
   await click(button("Restore removed objects"));
   assertMarkers([1, 2]);
@@ -224,6 +226,25 @@ test("restoring removed objects keeps mission-hidden suggestions excluded from m
   assert.deepEqual(reviews[0].relations, [relation]);
 });
 
+test("a revisit marks words practised in an earlier lesson on the photo", async () => {
+  await mount({ ...detail(), practisedSceneObjectIds: ["object-0"] });
+  const practised = [...dom.window.document.querySelectorAll(".analysis-word-row__practised")];
+  assert.deepEqual(practised.map(element => element.closest(".analysis-word-row")?.querySelector(".analysis-word-row__marker")?.textContent), ["1"]);
+  assert.match(dom.window.document.body.textContent ?? "", /New words from this photo come first/);
+});
+
+test("a revisit with every word practised says so instead of promising new words", async () => {
+  await mount({ ...detail(), practisedSceneObjectIds: ["object-0", "object-1", "object-2"] });
+  assert.equal(dom.window.document.querySelectorAll(".analysis-word-row__practised").length, 3);
+  assert.match(dom.window.document.body.textContent ?? "", /practised every word here/);
+});
+
+test("a first lesson on a photo shows no practised marks", async () => {
+  await mount();
+  assert.equal(dom.window.document.querySelectorAll(".analysis-word-row__practised").length, 0);
+  assert.doesNotMatch(dom.window.document.body.textContent ?? "", /New words from this photo/);
+});
+
 test("a learner-added object follows the visible suggestion numbers", async () => {
   await mount({ ...detail(), suggestedSceneObjectIds: ["object-1", "object-2"] });
   assertMarkers([1, 2]);
@@ -231,4 +252,128 @@ test("a learner-added object follows the visible suggestion numbers", async () =
   await addWord("window");
 
   assertMarkers([1, 2, 3]);
+});
+
+test("relation endpoints keep the same object while its displayed marker changes", async () => {
+  await mount();
+  await click(dom.window.document.querySelector('[aria-label="Remove marker 1, table"]'));
+  await click([...dom.window.document.querySelectorAll('[role="tab"]')][2]);
+  assert.deepEqual(numbers(".analysis-relation-row .analysis-word-row__marker"), [1]);
+  assert.deepEqual(numbers(".analysis-relation-row .combobox__marker"), [2]);
+  await click(button("Confirm lesson facts"));
+  assert.deepEqual(reviews[0].relations, [relation]);
+});
+
+test("reloading a saved review keeps custom objects and persisted marker identities", async () => {
+  const session = detail();
+  session.session.status = "inProgress";
+  session.sceneObjects = [session.sceneObjects[1], session.sceneObjects[2], {
+    ...session.sceneObjects[0], id: "manual-door", label: "door", sourceObjectKey: null,
+  }];
+  session.reviewMarkers = { "object-1": 1, "object-2": 2, "manual-door": 3 };
+  session.suggestedSceneObjectIds = ["object-1", "object-2"];
+  await mount(session, false, practiceScene(session, "/photo.jpg", "Spanish"));
+  assertMarkers([1, 2, 3]);
+  assert.deepEqual([...dom.window.document.querySelectorAll(".analysis-word-row__remove")]
+    .map(element => element.getAttribute("aria-label")), [
+      "Remove marker 1, cup", "Remove marker 2, cup", "Remove marker 3, door",
+    ]);
+});
+
+test("moving an object's marker does not renumber or reidentify it", async () => {
+  await mount();
+  await click(dom.window.document.querySelector('[aria-label="Change location of marker 2, cup"]'));
+  const photo = dom.window.document.querySelector(".scene[role=button]")!;
+  await act(async () => {
+    photo.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+  });
+  assertMarkers([1, 2, 3]);
+  await click(button("Confirm lesson facts"));
+  assert.deepEqual(reviews[0].repositionedObjects, [{ id: "object-1", anchorPoint: { x: .5, y: .5 } }]);
+});
+
+test("older saved marker gaps stay authoritative without colliding with a newly added object", async () => {
+  const session = detail();
+  session.session.status = "inProgress";
+  session.reviewMarkers = { "object-0": 1, "object-1": 3, "object-2": 4 };
+  await mount(session, false, practiceScene(session, "/photo.jpg", "Spanish"));
+  assertMarkers([1, 3, 4]);
+  await addWord("door");
+  assertMarkers([1, 3, 4, 5]);
+});
+
+test("added markers stay contiguous after removing an added object and are not saved", async () => {
+  await mount();
+  await addWord("window");
+  await addWord("door");
+  assertMarkers([1, 2, 3, 4, 5]);
+
+  await click(dom.window.document.querySelector('[aria-label="Remove marker 4, window"]'));
+
+  assertMarkers([1, 2, 3, 4]);
+  await click(button("Confirm lesson facts"));
+  assert.equal(reviews.length, 1);
+  assert.equal(reviews[0].addedObjects.length, 1);
+  assert.equal(reviews[0].addedObjects[0].label, "door");
+  assert.deepEqual(Object.keys(reviews[0].addedObjects[0]).sort(), ["id", "label", "x", "y"]);
+});
+
+test("the beginner preference mission uses an AI scenario instead of asking for a preference", async () => {
+  await mount({ ...detail(), provisionalMissionPlan: [{ missionId: "M05", practiceLevel: "A0" }],
+    missionChoices: { preference: { sceneObjectIds: ["object-1"], chosenObjectId: null, reaction: "like" } } });
+  assert.equal(dom.window.document.getElementById("preference-object"), null);
+  assert.doesNotMatch(dom.window.document.body.textContent ?? "", /Your preference|pretend preference/);
+  await click(button("Confirm lesson facts"));
+  assert.equal(reviews[0].missionChoices, undefined);
+});
+
+for (const [stage, completed] of [["loadingImage", 0], ["findingObjects", 1], ["checkingResults", 2], ["savingResults", 3]] as const) {
+  test(`analysis progress reports ${completed} completed stages while ${stage} is active`, async () => {
+    const session = detail();
+    session.session.status = "analyzingScene";
+    session.sceneAnalysisProgress = { stage, startedAt: new Date(Date.now() - 5000).toISOString() };
+    await mount(session);
+    const progress = dom.window.document.querySelector('[role="progressbar"]');
+    assert.ok(progress);
+    assert.equal(progress.getAttribute("aria-valuenow"), String(completed));
+    assert.equal(progress.getAttribute("aria-valuemax"), "4");
+    assert.equal(dom.window.document.querySelectorAll(".scene-processing-progress__segment.is-complete").length, completed);
+    assert.equal(dom.window.document.querySelectorAll(".scene-processing-progress__segment.is-active").length, 1);
+    assert.match(dom.window.document.body.textContent ?? "", /Elapsed 0:0/);
+    assert.doesNotMatch(dom.window.document.body.textContent ?? "", /only take a moment/);
+  });
+}
+
+test("legacy analysis uses indeterminate progress and review readiness completes all stages", async () => {
+  const session = detail();
+  session.session.status = "analyzingScene";
+  await mount(session);
+  assert.equal(dom.window.document.querySelector('[role="progressbar"]')?.hasAttribute("aria-valuenow"), false);
+  await act(async () => { root?.unmount(); });
+  root = null;
+  dom.window.document.body.replaceChildren();
+  await mount(detail());
+  assert.equal(dom.window.document.querySelector('[role="progressbar"]')?.getAttribute("aria-valuenow"), "4");
+  assert.equal(dom.window.document.querySelectorAll(".scene-processing-progress__segment.is-active").length, 0);
+});
+
+test("paused polling retains completed milestones and stops the active pulse", async () => {
+  const session = detail();
+  session.session.status = "analyzingScene";
+  session.sceneAnalysisProgress = { stage: "checkingResults", startedAt: null };
+  await mount(session, true);
+  assert.equal(dom.window.document.querySelector('[role="progressbar"]')?.getAttribute("aria-valuenow"), "2");
+  assert.equal(dom.window.document.querySelectorAll(".scene-processing-progress__segment.is-active").length, 0);
+  assert.match(dom.window.document.body.textContent ?? "", /Updates paused/);
+});
+
+test("lesson progress advances only when translations and the first task are committed", async () => {
+  const session = detail();
+  session.session.status = "generatingTasks";
+  session.translationPreview = { objects: [], attributes: [], relationships: [] };
+  await mount(session);
+  const progress = dom.window.document.querySelector('[role="progressbar"]');
+  assert.equal(progress?.getAttribute("aria-valuemax"), "2");
+  assert.equal(progress?.getAttribute("aria-valuenow"), "1");
+  assert.match(dom.window.document.body.textContent ?? "", /Preparing your first task/);
 });

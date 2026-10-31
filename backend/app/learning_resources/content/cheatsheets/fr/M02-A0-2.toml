@@ -1,0 +1,138 @@
+mission_id = "M02"
+practice_level = "A0"
+content_version = 2
+language_code = "fr"
+text_direction = "ltr"
+title = "Adjectives can be before or after the object"
+
+[[concepts]]
+concept_id = "recognise-adjective"
+section_id = "adjective-after-object"
+title = "After the object"
+explanation = "Most French adjectives, including colours, go after the object."
+formula = "article + object + adjective"
+
+[[concepts.pattern_parts]]
+part_id = "object"
+label = "object"
+role = "slot"
+text = "la tasse"
+
+[[concepts.pattern_parts]]
+part_id = "adjective"
+label = "adjective"
+role = "choice"
+
+[[concepts.pattern_parts.choices]]
+text = "rouge"
+label = "red"
+
+[[concepts.pattern_parts.choices]]
+text = "bleue"
+label = "blue"
+
+[[concepts.examples]]
+target_text = "la tasse rouge"
+translation = "the red cup"
+note = "Colour words usually come after the object."
+
+[[concepts]]
+concept_id = "recognise-adjective"
+section_id = "adjective-before-object"
+title = "Before the object"
+explanation = "BAGS adjectives go before the object."
+formula = "article + adjective + object"
+
+[[concepts.tips]]
+marker = "B"
+label = "Beauty"
+target_text = "un beau livre"
+translation = "a beautiful book"
+
+[[concepts.tips]]
+marker = "A"
+label = "Age"
+target_text = "un vieux livre"
+translation = "an old book"
+
+[[concepts.tips]]
+marker = "G"
+label = "Goodness"
+target_text = "un bon livre"
+translation = "a good book"
+
+[[concepts.tips]]
+marker = "S"
+label = "Size"
+target_text = "un grand livre"
+translation = "a big book"
+
+[[concepts.pattern_parts]]
+part_id = "article"
+label = "article"
+role = "fixed"
+text = "la"
+
+[[concepts.pattern_parts]]
+part_id = "adjective"
+label = "BAGS adjective"
+role = "choice"
+
+[[concepts.pattern_parts.choices]]
+text = "grande"
+label = "big"
+
+[[concepts.pattern_parts.choices]]
+text = "belle"
+label = "beautiful"
+
+[[concepts.pattern_parts]]
+part_id = "object"
+label = "object"
+role = "slot"
+text = "tasse"
+
+[[concepts.examples]]
+target_text = "la grande tasse"
+translation = "the big cup"
+note = "Grande comes before tasse because size is the S in BAGS."
+
+[[concepts]]
+concept_id = "recognise-preposition"
+title = "Place the position before the reference object"
+formula = "object + est + position + reference object"
+
+[[concepts.pattern_parts]]
+part_id = "object"
+label = "object"
+role = "slot"
+text = "la tasse"
+
+[[concepts.pattern_parts]]
+part_id = "verb"
+label = "is"
+role = "fixed"
+text = "est"
+
+[[concepts.pattern_parts]]
+part_id = "position"
+label = "position"
+role = "choice"
+
+[[concepts.pattern_parts.choices]]
+text = "sur"
+label = "on"
+
+[[concepts.pattern_parts.choices]]
+text = "sous"
+label = "under"
+
+[[concepts.pattern_parts]]
+part_id = "reference"
+label = "reference object"
+role = "slot"
+text = "la table"
+
+[[concepts.examples]]
+target_text = "La tasse est sur la table."
+translation = "The cup is on the table."

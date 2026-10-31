@@ -1,0 +1,14 @@
+construction_id = "possessive-statement"
+version = 1
+summary = "Say whose object it is with a possessive before the noun."
+guidance = "Say Das ist + possessive + noun; the possessive agrees with the noun (mein/meine, sein/seine for Leo, ihr/ihre for Ana): Das ist meine Tasse. Das ist ihr Buch. Answers to a friend start with the ja or nein label."
+features = ["ownership", "possessive-determiner"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun", owner = "determiner" }
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "possessive-frame"
+message = "Say Das ist + possessive + noun."
+must_contain = ["^((ja|nein), )?das ist ", "\\.$"]

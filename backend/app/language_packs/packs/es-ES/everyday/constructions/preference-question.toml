@@ -1,0 +1,14 @@
+construction_id = "preference-question"
+version = 1
+summary = "Ask the listener, or about a named person, whether they like the object."
+guidance = "Ask the listener ¿Te gusta + definite article + noun? With a bound person, ask ¿A + name + le gusta + article + noun?: ¿Te gusta la taza? ¿A Ana le gusta el libro?"
+features = ["preference", "question"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun", preference = "other" }
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "question-frame"
+message = "Ask whether they like it."
+must_contain = ["^¿", "gusta ", "\\?$"]

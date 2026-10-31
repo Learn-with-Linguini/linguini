@@ -1,0 +1,65 @@
+mission_id = "M03"
+practice_level = "A0"
+content_version = 1
+language_code = "fr"
+text_direction = "ltr"
+title = "Count objects from one to ten"
+
+[[concepts]]
+concept_id = "count-small-group"
+title = "Numbers 1–10"
+explanation = "Tap a number to hear it. This mission practises one, two, and three."
+
+[[concepts.reference_items]]
+label = "1"
+target_text = "un / une"
+[[concepts.reference_items]]
+label = "2"
+target_text = "deux"
+[[concepts.reference_items]]
+label = "3"
+target_text = "trois"
+[[concepts.reference_items]]
+label = "4"
+target_text = "quatre"
+[[concepts.reference_items]]
+label = "5"
+target_text = "cinq"
+[[concepts.reference_items]]
+label = "6"
+target_text = "six"
+[[concepts.reference_items]]
+label = "7"
+target_text = "sept"
+[[concepts.reference_items]]
+label = "8"
+target_text = "huit"
+[[concepts.reference_items]]
+label = "9"
+target_text = "neuf"
+[[concepts.reference_items]]
+label = "10"
+target_text = "dix"
+
+[[concepts.examples]]
+target_text = "un, deux, trois"
+translation = "one, two, three"
+
+[[concepts]]
+concept_id = "number-noun-chunk"
+title = "Use a plural object after two or more"
+explanation = "The number comes before the object."
+formula = "number + object"
+tips = ["Most nouns add -s in the plural: tasse → tasses."]
+
+[[concepts.examples]]
+target_text = "une tasse"
+translation = "one cup"
+
+[[concepts.examples]]
+target_text = "deux tasses"
+translation = "two cups"
+
+[[concepts.examples]]
+target_text = "trois tasses"
+translation = "three cups"

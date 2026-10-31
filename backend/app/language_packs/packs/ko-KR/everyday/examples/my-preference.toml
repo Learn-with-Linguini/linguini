@@ -1,0 +1,79 @@
+construction_id = "my-preference"
+
+[[examples]]
+example_id = "i-like-cup"
+levels = ["A0"]
+purposes = ["sayPreference"]
+meaning = "I like the cup."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }], preferences = [{ fact_id = "preference:cup", object = "object:cup", person = "first", likes = true }, { fact_id = "preference:book", object = "object:book", person = "ana", likes = false }, { fact_id = "preference:key", object = "object:key", person = "leo", likes = true }] }
+bindings = { object = "object:cup", preference = "preference:cup" }
+truth = true
+labels = []
+sentence = "저는 컵을 좋아해요."
+translation = "I like the cup."
+chunks = [{ text = "저는", join = "none" }, { text = "컵을", join = "space" }, { text = "좋아해요", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "i-dislike-cup"
+levels = ["A0"]
+purposes = ["sayPreference"]
+meaning = "I don't like the cup."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }], preferences = [{ fact_id = "preference:cup", object = "object:cup", person = "first", likes = true }, { fact_id = "preference:book", object = "object:book", person = "ana", likes = false }, { fact_id = "preference:key", object = "object:key", person = "leo", likes = true }] }
+bindings = { object = "object:cup", preference = "preference:cup" }
+truth = false
+labels = []
+sentence = "저는 컵을 안 좋아해요."
+translation = "I don't like the cup."
+chunks = [{ text = "저는", join = "none" }, { text = "컵을", join = "space" }, { text = "안", join = "space" }, { text = "좋아해요", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "i-like-cup-answer"
+levels = ["A1"]
+purposes = ["buildMyPreference"]
+meaning = "I like the cup."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }], preferences = [{ fact_id = "preference:cup", object = "object:cup", person = "first", likes = true }, { fact_id = "preference:book", object = "object:book", person = "ana", likes = false }, { fact_id = "preference:key", object = "object:key", person = "leo", likes = true }] }
+bindings = { object = "object:cup", preference = "preference:cup" }
+truth = true
+labels = []
+sentence = "저는 컵을 좋아해요."
+translation = "I like the cup."
+chunks = [{ text = "저는", join = "none" }, { text = "컵을", join = "space" }, { text = "좋아해요", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "i-dislike-cup-contrast"
+levels = ["A1"]
+purposes = ["buildMyPreference"]
+meaning = "I don't like the cup."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }], preferences = [{ fact_id = "preference:cup", object = "object:cup", person = "first", likes = true }, { fact_id = "preference:book", object = "object:book", person = "ana", likes = false }, { fact_id = "preference:key", object = "object:key", person = "leo", likes = true }] }
+bindings = { object = "object:cup", preference = "preference:cup" }
+truth = false
+labels = []
+sentence = "저는 컵을 안 좋아해요."
+translation = "I don't like the cup."
+chunks = [{ text = "저는", join = "none" }, { text = "컵을", join = "space" }, { text = "안", join = "space" }, { text = "좋아해요", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "i-like-cup-form"
+levels = ["A0"]
+purposes = ["sayPreference"]
+sentence = "저는 컵이 좋아해요."
+correction = "저는 컵을 좋아해요."
+note = "좋아해요 takes the object particle 을/를."
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "i-like-cup-answer-form"
+levels = ["A1"]
+purposes = ["buildMyPreference"]
+sentence = "저는 컵이 좋아해요."
+correction = "저는 컵을 좋아해요."
+note = "좋아해요 takes the object particle 을/를."
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }

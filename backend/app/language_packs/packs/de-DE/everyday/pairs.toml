@@ -1,0 +1,22 @@
+# The closed words a noun pairs with at A0. The generated chunk decides
+# the right one; the others, with the same noun, are the wrong choices.
+provenance = { source = "AI-authored original Linguini M13 draft, 2026-10-23; mirrors dev's a0_lexicon forms; not human-reviewed.", review_status = "generated" }
+explanation = "In German, each noun goes with der, die or das. Learn them as a pair."
+
+[[words]]
+text = "der"
+position = "before"
+meaning = "the (masculine)"
+agreement = "masculine"
+
+[[words]]
+text = "die"
+position = "before"
+meaning = "the (feminine)"
+agreement = "feminine"
+
+[[words]]
+text = "das"
+position = "before"
+meaning = "the (neuter)"
+agreement = "neuter"

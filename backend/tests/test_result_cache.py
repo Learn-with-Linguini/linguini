@@ -7,6 +7,7 @@ from dataclasses import replace
 from uuid import uuid4, uuid5
 
 import pytest
+from test_scene_translation_service import PackTranslation
 
 from app.ai.cache import (
     CacheRequest,
@@ -61,10 +62,17 @@ def config(**overrides):
     return TextModelConfig(**{"model_name": "test-model", "max_retries": 1, **overrides})
 
 
+@pytest.fixture(autouse=True)
+def no_meaning_review(monkeypatch):
+    """These tests count cached and provider translation calls; the meaning review that
+    follows a pack translation is covered by the translation service tests."""
+    monkeypatch.setattr(SceneTranslationService, "_review_meaning", lambda *_args: None)
+
+
 def translator(client, cache, **overrides):
-    return SceneTranslationService(
+    return PackTranslation(SceneTranslationService(
         client, config(**overrides), tracer=NoOpAITracer(), provider="openai", cache=cache
-    )
+    ))
 
 
 def scene(chair, table, relation):
@@ -85,17 +93,18 @@ def translation_output(request):
     return json.dumps({
         "objects": [
             {"key": row["key"], "source": row["source"], "translation": words[row["source"]][0],
-             "article": words[row["source"]][1], "gender": words[row["source"]][2]}
+             "article": words[row["source"]][1], "gender": words[row["source"]][2],
+             "nativeDisplay": " ".join(words[row["source"]][1::-1])}
             for row in payload["objects"]
         ],
         "attributes": [
             {"key": row["key"], "source": row["source"], "translation": "rojo",
-             "article": None, "gender": None}
+             "article": None, "gender": None, "nativeDisplay": "rojo"}
             for row in payload["attributes"]
         ],
         "relationships": [
             {"key": row["key"], "source": row["source"], "translation": "junto a",
-             "article": None, "gender": None}
+             "article": None, "gender": None, "nativeDisplay": "junto a"}
             for row in payload["relationships"]
         ],
     })

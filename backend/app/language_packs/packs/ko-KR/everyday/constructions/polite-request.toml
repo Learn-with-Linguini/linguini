@@ -1,0 +1,19 @@
+construction_id = "polite-request"
+version = 1
+summary = "Ask politely for the ordered item and quantity."
+guidance = "A polite request: the size before the noun when bound (작은/큰), the noun, then the native number with the item's counter (커피 두 잔, 펜 한 자루, 책 한 권, 컵 한 개), then the verb. Use order or pass: … 주세요. Use borrow: … 빌려 주세요."
+features = ["request", "quantity"]
+constraints = ["Express only the bound order facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun", quantity = "determiner", size = "phrase" }
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "polite-verb"
+message = "A request ends with 주세요."
+must_contain = ["주세요[.!]?$"]
+
+[[checks]]
+check_id = "asks-not-states"
+message = "A request asks; it never says what you have or what something is."
+must_not_contain = ["(있어요|이에요|예요)[.?!]?$"]

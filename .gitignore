@@ -49,7 +49,6 @@ coverage/
 *.njsproj
 *.sln
 *.sw?
-.agents/
 .devin/
 
 # Regenerated media intermediates

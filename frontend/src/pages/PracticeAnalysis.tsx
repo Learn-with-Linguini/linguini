@@ -4,6 +4,7 @@ import { Button, Card, ComboBox } from "../components/ui";
 import { ArrowRightIcon, CloseIcon, MarkerIcon } from "../components/icons";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { AnalysisScan } from "../components/AnalysisScan";
+import { SceneProcessingProgress } from "../components/SceneProcessingProgress";
 import { TranslationPreview } from "../components/TranslationPreview";
 import { SessionPersonalization } from "../components/SessionPersonalization";
 import { LeaveSession } from "../components/LeaveSession";
@@ -16,8 +17,9 @@ import { abandonPractice, type PracticeReview, type ShortfallKind } from "../lib
 import { friendlyError } from "../lib/queryKeys";
 import { SHORTFALL_ACTIONS } from "../lib/sceneShortfall";
 import { countGroups, objectCounts } from "../lib/countGroups";
-import { initialReviewMarkers, initiallyHiddenObjectIds, sceneReviewPanels, type SceneReviewPanel } from "../lib/sceneReview";
+import { initiallyHiddenObjectIds, sceneReviewPanels, type SceneReviewPanel } from "../lib/sceneReview";
 import { trackAction } from "../lib/analytics.ts";
+import { serializeMissionChoices } from "../lib/missionGaps";
 import type { LanguageItem } from "../data/types";
 
 const ATTRIBUTE_TYPES = ["color", "size", "shape", "material", "pattern", "state"] as const;
@@ -28,7 +30,6 @@ const RELATION_OPTIONS = [
 ] as const;
 const RELATION_CHOICES = RELATION_OPTIONS.map(([value, label]) => ({ value, label }));
 type AnalysisPanel = SceneReviewPanel;
-type AddedReviewObject = PracticeReview["addedObjects"][number] & { marker: number };
 
 function canonicalRelationValue(relation: string) {
   const normalized = relation.trim().replace(/[\s_-]+/g, "").toLowerCase();
@@ -50,16 +51,11 @@ export function PracticeAnalysis() {
   const [removed, setRemoved] = useState<string[]>(() => {
     return initiallyHiddenObjectIds(
       (session?.sceneObjects ?? []).map(item => item.id),
-      session?.suggestedSceneObjectIds,
+      session?.session.status === "awaitingObjectReview" ? session.suggestedSceneObjectIds : undefined,
     );
   });
   const [explicitlyRemoved, setExplicitlyRemoved] = useState<string[]>([]);
-  const [added, setAdded] = useState<AddedReviewObject[]>([]);
-  const reviewMarkers = initialReviewMarkers(
-    (session?.sceneObjects ?? []).map(item => item.id),
-    session?.suggestedSceneObjectIds,
-  );
-  const nextMarker = useRef(Object.keys(reviewMarkers).length + 1);
+  const [added, setAdded] = useState<PracticeReview["addedObjects"]>([]);
   const [relations, setRelations] = useState<PracticeReview["relations"]>(() => session?.sceneObjectRelations ?? []);
   const [sceneTitle, setSceneTitle] = useState(session?.session.sessionTitle ?? scene.title);
   const [positions, setPositions] = useState<Record<string, { x: number; y: number }>>({});
@@ -91,14 +87,10 @@ export function PracticeAnalysis() {
     hydratedSessionId.current = session.session.id;
     setRemoved(initiallyHiddenObjectIds(
       session.sceneObjects.map(item => item.id),
-      session.suggestedSceneObjectIds,
+      session.session.status === "awaitingObjectReview" ? session.suggestedSceneObjectIds : undefined,
     ));
     setExplicitlyRemoved([]);
     setAdded([]);
-    nextMarker.current = Object.keys(initialReviewMarkers(
-      session.sceneObjects.map(item => item.id),
-      session.suggestedSceneObjectIds,
-    )).length + 1;
     setRelations(session.sceneObjectRelations);
     setAttributes(Object.fromEntries(session.sceneObjects.map(item => [item.id,
       Object.fromEntries(Object.entries(item.attributes ?? {}).filter((entry): entry is [string, string] => entry[0] !== "quantity" && typeof entry[1] === "string"))])));
@@ -110,6 +102,16 @@ export function PracticeAnalysis() {
     trackAction("scene_shortfall_shown", { missing: shortfallKey });
     shortfallRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest" });
   }, [shortfallKey]);
+  const practisedIds = session?.practisedSceneObjectIds ?? [];
+  const practisedLabels = new Set((session?.sceneObjects ?? []).filter(item => practisedIds.includes(item.id)).map(item => item.label.trim().toLowerCase()));
+  const sceneLabels = new Set((session?.sceneObjects ?? []).map(item => item.label.trim().toLowerCase()));
+  const revisitSessionId = practisedLabels.size && session?.session.status === "awaitingObjectReview" ? session.session.id : null;
+  const revisitReviewShown = useRef<string | null>(null);
+  useEffect(() => {
+    if (!revisitSessionId || revisitReviewShown.current === revisitSessionId) return;
+    revisitReviewShown.current = revisitSessionId;
+    trackAction("revisit_review_shown", { sessionId: revisitSessionId, newWordCount: sceneLabels.size - practisedLabels.size, practisedWordCount: practisedLabels.size });
+  }, [practisedLabels.size, revisitSessionId, sceneLabels.size]);
   useEffect(() => {
     if (!pending && !movingObjectId) return;
     const cancelOutside = (event: PointerEvent) => {
@@ -145,34 +147,42 @@ export function PracticeAnalysis() {
   if (["created", "analyzingScene", "generatingTasks"].includes(session.session.status)) return <div className="stack analysis-page">
     <h1>Scene analysis</h1>
     {session.session.status === "generatingTasks" && session.translationPreview ? <>
+      <SceneProcessingProgress detail={session} stalled={practiceStalled} />
       <TranslationPreview preview={session.translationPreview} scene={scene} />
       <SessionPersonalization personalization={session.personalization} languageCode={scene.languageCode} />
       <section role="status" className="panel-note">
-        {session.tasks.some(task => task.kind === "vocabularyIntroduction") ? <>
-          <Button block onClick={() => navigate(`${base}/learn/${session.tasks.find(task => task.kind === "vocabularyIntroduction")!.id}`)}>
+        <div className="stack-2">
+          {session.tasks.some(task => task.kind === "vocabularyIntroduction") ? <Button block onClick={() => navigate(`${base}/learn/${session.tasks.find(task => task.kind === "vocabularyIntroduction")!.id}`)}>
             Begin learning <ArrowRightIcon />
-          </Button>
-        </> : <>
-          <h2>Preparing your first task...</h2>
-          <p className="muted">Your translations are ready. Your first task will appear here shortly.</p>
-        </>}
-        {practiceStalled ? <Button onClick={() => retryProcessing(session.session.id)}>Check again</Button> : null}
+          </Button> : <>
+            <h2>Preparing your first task...</h2>
+            <p className="muted">Your translations are ready. Your first task will appear here shortly.</p>
+          </>}
+          {practiceStalled ? <>
+            <p>We're unable to generate more tasks right now. We'll keep working on them, so you can come back later.</p>
+            <Button variant="secondary" block onClick={() => retryProcessing(session.session.id)}>Check again</Button>
+          </> : null}
+        </div>
         {practiceError ? <p role="alert">{practiceError}</p> : null}
       </section>
     </> : <>
     {practiceStalled ? <section className="analysis-loading" aria-live="polite">
+      <SceneProcessingProgress detail={session} stalled />
       <div className="analysis-loading__copy"><h2>Still working on your scene...</h2><p className="muted">This is taking longer than usual. You can check again.</p>{practiceError ? <p role="alert">{practiceError}</p> : null}<Button onClick={() => retryProcessing(session.session.id)}>Retry</Button></div>
-    </section> : <section className="analysis-loading" aria-live="polite" aria-busy="true">
+    </section> : <section className="analysis-loading">
+      <SceneProcessingProgress detail={session} />
       <AnalysisScan scene={scene} />
-      <div className="analysis-loading__copy"><h2>{session.session.status === "generatingTasks" ? "Translating your scene..." : "Finding objects in your image..."}</h2><p className="muted">{session.session.status === "generatingTasks" ? "Turning your confirmed words into your learning language." : "This will only take a moment."}</p></div>
     </section>}
     </>}
   </div>;
   const locked = session.tasks.some(task => task.status !== "pending");
+  const reviewingObjects = session.session.status === "awaitingObjectReview";
   const kept = scene.items
     .filter(item => !removed.includes(item.id))
-    .map(item => ({ ...item, marker: reviewMarkers[item.id] ?? item.marker }));
-  const custom: LanguageItem[] = added.map(item => ({ id: `custom-${item.id}`, word: item.label,
+    .map((item, index) => ({ ...item, marker: reviewingObjects ? index + 1 : item.marker }));
+  const addedMarkerBase = Math.max(0, ...kept.map(item => item.marker));
+  const numberedAdded = added.map((item, index) => ({ ...item, marker: addedMarkerBase + index + 1 }));
+  const custom: LanguageItem[] = numberedAdded.map(item => ({ id: `custom-${item.id}`, word: item.label,
     translation: item.label, wordClass: "noun", gender: null, marker: item.marker,
     x: item.x * 100, y: item.y * 100, attributes: attributes[item.id] ?? {}, example: "", exampleTranslation: "" }));
   const positionedKept = kept.map(item => {
@@ -189,7 +199,7 @@ export function PracticeAnalysis() {
       label: session.sceneObjects.find(object => object.id === item.id)?.label ?? item.translation,
       marker: item.marker,
     })),
-    ...added,
+    ...numberedAdded,
   ];
   const relationObjects = rawRelationObjects;
   const selectedIds = new Set(relationObjects.map(item => item.id));
@@ -240,10 +250,10 @@ export function PracticeAnalysis() {
     if (!pending) return;
     setAdded(current => pending.id
       ? current.map(item => item.id === pending.id ? { ...item, ...location } : item)
-      : [...current, { id: crypto.randomUUID(), label: pending.label, marker: nextMarker.current++, ...location }]);
+      : [...current, { id: crypto.randomUUID(), label: pending.label, ...location }]);
     setPending(null); setLabel("");
   };
-  const replaceLocation = (item: AddedReviewObject) => {
+  const replaceLocation = (item: PracticeReview["addedObjects"][number]) => {
     setPending({ id: item.id, label: item.label });
     setError(null);
     photoRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "center" });
@@ -291,11 +301,19 @@ export function PracticeAnalysis() {
     await saveReview({
       sceneTitle: sceneTitle.trim() || undefined,
       acceptedObjectIds: kept.map(item => item.id),
-      addedObjects: added.map(({ marker: _marker, ...item }) => item),
+      addedObjects: added,
       relations: visibleRelations.map(row => ({ ...row, relation: canonicalRelationValue(row.relation) })),
       objectAttributes: selectedAttributes,
       objectCounts: objectCounts(groups, verifiedCounts),
       repositionedObjects: Object.entries(positions).map(([id, anchorPoint]) => ({ id, anchorPoint })),
+      // Preference lessons use AI-generated scenarios, so no personal preference is sent.
+      missionChoices: serializeMissionChoices({
+        ownedObjectId: session.missionChoices?.ownership?.sceneObjectId ?? null,
+        ownershipPretend: session.missionChoices?.ownership?.pretend ?? false,
+        preferenceObjectIds: [],
+        chosenObjectId: null,
+        reaction: null,
+      }, selectedIds),
     });
   };
   return <div className={`stack analysis-page${placementLabel ? " analysis-page--placing" : ""}`}>
@@ -303,6 +321,7 @@ export function PracticeAnalysis() {
       <h1>Scene analysis</h1>
       <LeaveSession sessionId={session.session.id} warning={locked ? "Words you have already practised stay in your word bank, but this scene's remaining tasks are dropped." : "The words you picked for this scene will not be saved."} />
     </div>
+    {session.session.status === "awaitingObjectReview" ? <SceneProcessingProgress detail={session} /> : null}
     <div className="analysis-layout">
       <div className="analysis-stage-column">
         <div ref={photoRef} className={`analysis-photo-stage${placementLabel ? " analysis-photo-stage--placing" : ""}`}>
@@ -325,6 +344,9 @@ export function PracticeAnalysis() {
         {panel === "objects" ? <section className="analysis-results" aria-labelledby="analysis-found-title">
           <div><h2 id="analysis-found-title">Check what this lesson will use</h2>
             <p className="muted">{locked ? "Your lesson has started. Start a new practice to change its objects." : "Each row matches one numbered marker on the photo."}</p>
+            {!locked && practisedLabels.size ? <p className="small analysis-revisit-note">{practisedLabels.size >= sceneLabels.size
+              ? "You've practised every word here. Keep the ones you want to go over again."
+              : "New words from this photo come first. Words marked Practised were in an earlier lesson."}</p> : null}
           </div>
           <label className="analysis-scene-title" htmlFor="analysis-scene-title">
             <span className="field__label">Scene title</span>
@@ -335,10 +357,10 @@ export function PracticeAnalysis() {
             <div className="analysis-word-list" aria-label="Words in this scene">
               {relationObjects.map(instance => {
                 const sceneItem = kept.find(row => row.id === instance.id);
-                const addedItem = added.find(row => row.id === instance.id);
+                const addedItem = numberedAdded.find(row => row.id === instance.id);
                 return <div className="analysis-word-row analysis-object-row" key={instance.id}>
                   <span className={`analysis-word-row__marker${addedItem ? " analysis-word-row__marker--custom" : ""}`}>{instance.marker}</span>
-                  <strong>{humanizeTerm(instance.label)}</strong>
+                  <strong>{humanizeTerm(instance.label)}{practisedIds.includes(instance.id) ? <span className="pill pill--mastered analysis-word-row__practised">Practised</span> : null}</strong>
                   {!locked ? <div className="analysis-object-instance__actions">
                     <button className="analysis-marker-action" type="button" disabled={practiceSaving || !!placementLabel}
                       aria-label={`Change location of marker ${instance.marker}, ${instance.label}`} title="Change location"

@@ -10,6 +10,24 @@ os.environ.setdefault("AUTH_MODE", "demo")
 
 
 @pytest.fixture(autouse=True)
+def bundled_packs_as_local_experiment(monkeypatch):
+    """Isolate pack settings from local .env files. Tests retain their experimental
+    labels by default; individual tests select production or strict release policy."""
+    from app.language_packs import context
+
+    monkeypatch.setenv("APP_ENV", "test")
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_REQUIRE_RELEASE", "false")
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_EXPERIMENTAL", "true")
+    monkeypatch.setenv("LINGUINI_LANGUAGE_PACK_REGISTER", "everyday")
+    for name in ("LINGUINI_LANGUAGE_PACK_DIRS", "LINGUINI_LANGUAGE_PACK_RELEASES",
+                 "LINGUINI_LANGUAGE_PACK_EVIDENCE_DIR"):
+        monkeypatch.delenv(name, raising=False)
+    context._CONTEXTS.clear()
+    yield
+    context._CONTEXTS.clear()
+
+
+@pytest.fixture(autouse=True)
 def deterministic_upload_analyzer_for_existing_tests(request, monkeypatch):
     if request.node.get_closest_marker("real_upload_analysis") is not None:
         monkeypatch.setenv("AI_MODE", "demo")

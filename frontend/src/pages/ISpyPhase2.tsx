@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { sessionDestination, sessionPaths } from "../lib/sessionRoute";
-import { Button, Card, Feedback, ProgressTrail, TopBar } from "../components/ui";
-import { ArrowRightIcon, BasilIcon } from "../components/icons";
+import { BasilReward, Button, Card, Feedback, ProgressTrail, TopBar } from "../components/ui";
+import { ArrowRightIcon, CloseIcon } from "../components/icons";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
 import { useAppState } from "../state/useAppState";
@@ -18,15 +18,28 @@ import { applyFrame, choicesFromSlots, fillSlot, mentionsTarget, nearTarget, res
 import type { LanguageItem } from "../data/types";
 import { ReportIssueLink } from "../components/ReportIssueLink";
 import { learningFeedback } from "../lib/learningFeedback";
+import { ISpyLevelHelp } from "../components/ISpyLevelHelp";
 
 export function ISpyPhase2() {
   const navigate = useNavigate();
   const { session, completeSession, completionPending, completionError, practiceError } = useAppState();
+  const completionStarted = useRef(false);
   const [index, setIndex] = useState(() => {
     const tasks = practiceStages(session?.tasks ?? []).reflection;
     const next = tasks.findIndex(task => !taskDone(task));
     return next < 0 ? Math.max(0, tasks.length - 1) : next;
   });
+  useEffect(() => {
+    if (!session || completionStarted.current) return;
+    const { learning, clues, reflection } = practiceStages(session.tasks);
+    if (reflection.length || !learning.every(taskDone) || !clues.every(taskDone)
+      || ["completed", "abandoned", "failed"].includes(session.session.status)) return;
+    completionStarted.current = true;
+    if (completeSession()) {
+      trackAction("describe_round_skipped", { mode: session.session.mode });
+      navigate(sessionPaths(session).done, { replace: true });
+    }
+  }, [session, completeSession, navigate]);
   if (!session) return null;
   const { learning, clues, reflection } = practiceStages(session.tasks);
   const paths = sessionPaths(session);
@@ -42,8 +55,19 @@ export function ISpyPhase2() {
   const finishLabel = game ? "See results" : "Finish session";
   const finish = () => { if (completeSession()) navigate(paths.done); };
   const alerts = [practiceError, completionError].filter(Boolean);
-  if (!task) return <div className="stack"><TopBar title={game ? "Game complete" : "Practice complete"} />{reflection.length ? null : <p data-testid="no-description-round">This photo doesn't have enough confirmed colours or positions for a describing round, so there's nothing to describe this time.</p>}{alerts.map((message, alertIndex) => <p key={alertIndex} role="alert">{message}</p>)}<Button disabled={completionPending} onClick={finish}>{finishLabel}</Button></div>;
-  return <Reflection key={task.id} task={task} index={index} total={reflection.length} finishLabel={finishLabel} onNext={() => index === reflection.length - 1 ? finish() : setIndex(value => value + 1)} />;
+  if (!task && !reflection.length) return alerts.length
+    ? <div className="stack"><TopBar title={game ? "Game complete" : "Practice complete"} />
+      {alerts.map((message, alertIndex) => <p key={alertIndex} role="alert">{message}</p>)}
+      <Button disabled={completionPending} onClick={finish}>{finishLabel}</Button>
+    </div>
+    : <div className="stack"><InlineLoader label="Finishing your session…" /></div>;
+  if (!task) return <div className="stack"><TopBar title={game ? "Game complete" : "Practice complete"} />
+    {alerts.map((message, alertIndex) => <p key={alertIndex} role="alert">{message}</p>)}
+    <Button disabled={completionPending} onClick={finish}>{finishLabel}</Button>
+  </div>;
+  return <Reflection key={task.id} task={task} index={index} total={reflection.length} finishLabel={finishLabel}
+    onExit={() => { trackAction("ispy_exit_clicked", { phase: "describe" }); navigate("/home"); }}
+    onNext={() => index === reflection.length - 1 ? finish() : setIndex(value => value + 1)} />;
 }
 
 const OUTCOME_PROMPTS: Record<ISpyDescriptionOutcome, string> = {
@@ -58,7 +82,7 @@ const FRAME_LABELS: Record<ClueFrameId, string> = { name: "Name", colour: "Colou
 
 type LatestGuess = { attemptId: string; evaluation: ISpyDescriptionEvaluation; feedback: string | null };
 
-function Reflection({ task, index, total, finishLabel, onNext }: { task: SessionTask; index: number; total: number; finishLabel: string; onNext: () => void }) {
+function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task: SessionTask; index: number; total: number; finishLabel: string; onExit: () => void; onNext: () => void }) {
   const scene = useScene();
   const { actOnTask, practiceSaving, practiceError } = useAppState();
   const [text, setText] = useState("");
@@ -72,6 +96,7 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
   const [sentences, setSentences] = useState<FrameSentences>({});
   const [choices, setChoices] = useState<SlotChoices>({});
   const [revealedHelp, setRevealedHelp] = useState<ClueFrameId[]>([]);
+  const [helpOpen, setHelpOpen] = useState(false);
   // A pending task has no attempts; any other task restores its latest one before taking input.
   const [hydrated, setHydrated] = useState(task.status === "pending");
   const latest = useQuery({
@@ -110,6 +135,9 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
   const guessed = guessedId ? scene.items.find(item => item.id === guessedId) ?? null : null;
   const content = task.publicContent;
   if (content.kind !== "reflection") return null;
+  // A0 builds the clue only from tiles; A2 keeps the frames behind "Need help?".
+  const tilesOnly = content.allowText === false;
+  const framesShown = !content.helpCollapsed || helpOpen || selectedFrameIds.length > 0;
   const frames = visibleFrames(content.clueFrames);
   const activeFrame = frames.find(frame => frame.frameId === activeFrameId) ?? null;
   const namesTarget = mentionsTarget(text, content.avoidWords ?? []);
@@ -188,15 +216,23 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
   const improve = () => { setGuess(null); setRevising(true); };
   const outcome = guess?.evaluation.outcome;
   return <div className="stack">
-    <TopBar title="I-Spy · Your turn" />
+    <div className="learning-title-row">
+      <h1>I-Spy · Your turn</h1>
+      <Button variant="quiet" className="learning-exit" onClick={onExit}><CloseIcon size={18} /> Exit</Button>
+    </div>
     <ProgressTrail value={index + (answered ? 1 : 0)} total={total} label={`${index + 1} / ${total}`} />
     <ScenePhoto scene={scene} items={markers} activeItemId={target?.id ?? null} guessItemId={guessed?.id ?? null} />
     {guessed && target ? <p className="small muted" data-testid="guess-legend">{guessed.id === target.id
       ? `Linguini's guess is your object (marker ${target.marker}).`
       : `Your object: marker ${target.marker} · Linguini's guess: marker ${guessed.marker} (dashed)`}</p> : null}
     <Card><div className="stack-2"><div className="spread"><span className="label muted">Describe this object</span></div><h2>{target?.word}</h2><span className="small muted">{target?.translation}</span><p>{content.prompt}</p></div></Card>
-    {frames.length ? <div className="stack-2" data-testid="clue-frames">
-      <span className="label muted">Clue frames (optional)</span>
+    <ISpyLevelHelp support={content} languageCode={scene.languageCode} />
+    {frames.length && !framesShown ? <Button variant="quiet" disabled={locked} onClick={() => {
+      trackAction("ispy_clue_help_opened", { taskId: task.id });
+      setHelpOpen(true);
+    }}>Need help? Show clue frames</Button> : null}
+    {frames.length && framesShown ? <div className="stack-2" data-testid="clue-frames">
+      <span className="label muted">{tilesOnly ? "Pick a clue frame, then tap the word tiles" : "Clue frames (optional)"}</span>
       <div className="chip-row">{frames.map(frame => <button key={frame.frameId} type="button" className={`chip${frame.frameId === activeFrameId ? " chip--selected" : ""}`} aria-pressed={frame.frameId === activeFrameId} disabled={locked} onClick={() => chooseFrame(frame)}>{FRAME_LABELS[frame.frameId]}</button>)}</div>
       {activeFrame ? <div className="clue-frame stack-2" data-testid="clue-frame">
         <strong lang={scene.languageCode}>{activeFrame.template ?? `${activeFrame.prefix} …`}</strong>
@@ -216,7 +252,14 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
           : <Button variant="secondary" disabled={locked} onClick={() => setRevealedHelp(ids => [...ids, activeFrame.frameId])}>Help me</Button> : null}
       </div> : null}
     </div> : null}
-    <div className="field"><label className="field__label" htmlFor="reflection">Your clue</label><input id="reflection" ref={input} className="input" value={text} maxLength={2000} disabled={locked} onChange={event => setText(event.target.value)} /></div>
+    <div className="field"><label className="field__label" htmlFor="reflection">Your clue</label>
+      <input id="reflection" ref={input} className="input" value={text} maxLength={2000} disabled={locked}
+        readOnly={tilesOnly} placeholder={tilesOnly ? "Tap the word tiles to build your clue" : undefined}
+        onChange={event => setText(event.target.value)} />
+      {tilesOnly && text && !locked ? <Button variant="quiet" onClick={() => {
+        setText(""); setSentences({}); setChoices({}); setInsertedChips([]);
+      }}>Start my clue again</Button> : null}
+    </div>
     {!hydrated && !restoreFailed ? <InlineLoader compact testId="restoring" label="Loading your last clue…" /> : null}
     {restoreFailed ? <div className="stack-2" role="alert" data-testid="restore-error"><span>We couldn't load your saved clue, so this task can't continue yet.</span><Button variant="secondary" onClick={() => void latest.refetch()}>Try again</Button></div> : null}
     {nearName && !locked ? <p className="small muted" data-testid="clue-near-warning">One word looks close to this object's name. If it's a different word, you can still send it.</p> : null}
@@ -229,9 +272,9 @@ function Reflection({ task, index, total, finishLabel, onNext }: { task: Session
         {guess?.feedback ? <span>{guess.feedback}</span> : null}
         {outcome && !answered ? <span>{OUTCOME_PROMPTS[outcome]}</span> : null}
         {feedback || (answered && !guess) ? <span>{feedback ?? "Reflection saved."}</span> : null}
-        {basilEarnedText(basilEarned) ? <strong className="basil-reward"><BasilIcon size={17} />{basilEarnedText(basilEarned)}</strong> : null}
       </>}
     </div></Feedback> : null}
+    {answered || feedback || guess ? <BasilReward text={basilEarnedText(basilEarned)} /> : null}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {!hydrated ? null : answered ? <Button block disabled={practiceSaving} onClick={onNext}>{index === total - 1 ? finishLabel : "Next item"} <ArrowRightIcon /></Button> : <>
       {!guess ? <Button block disabled={!text.trim() || namesTarget || practiceSaving} onClick={() => void submit()}>Send my response</Button> : null}
