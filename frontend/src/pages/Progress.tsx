@@ -10,7 +10,7 @@ export function Progress() {
   const navigate = useNavigate();
   const { progress, progressLoading, progressError } = useAppState();
   const { vocabulary, vocabularyLoading, vocabularyError } = useVocabularyQuery();
-  if (vocabularyLoading || progressLoading) return <LoadingScreen label="Loading progress..." />;
+  if (vocabularyLoading || progressLoading) return <LoadingScreen label="Loading progress" />;
   if (vocabularyError || progressError || !progress) return <ErrorState title="We couldn't load your progress" message={vocabularyError ?? progressError ?? "Your progress isn't available just now."} retry={() => window.location.reload()} />;
   const snapshot = { words: vocabulary.length, mastered: vocabulary.filter(item => item.status === "mastered").length,
     scenes: new Set(progress.scenarios.map(item => item.sceneId || item.mediaAssetId)).size };

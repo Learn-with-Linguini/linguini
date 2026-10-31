@@ -30,7 +30,7 @@ function BadgeLevelDots({ mission }: { mission: MissionBadge }) {
 export function MissionBadges() {
   const progress = useGamification();
   return <section className="stack" aria-labelledby="mission-badges-title"><h2 id="mission-badges-title">Your Chef Badges</h2>
-    {progress.isPending ? <p role="status">Loading your badges…</p> : progress.isError ? <div><p role="alert">We couldn’t load your badges.</p>
+    {progress.isPending ? <p role="status">Loading your badges</p> : progress.isError ? <div><p role="alert">We couldn’t load your badges.</p>
       <Button variant="quiet" onClick={() => void progress.refetch()}>Retry badges</Button></div> :
       <div className="mission-badges">{progress.data?.missions.map(mission => <Card plain key={mission.missionId}>
         <div className="mission-badges__heading"><ChefBadge mission={mission} /><div><h3>{mission.name}</h3><p className="small muted">{mission.skill}</p><BadgeLevelDots mission={mission} /></div></div>

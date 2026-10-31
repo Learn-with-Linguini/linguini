@@ -84,15 +84,15 @@ export async function uploadImage(file: File, source: "camera" | "userUpload", o
   if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) throw new Error("Choose a JPEG, PNG or WebP image.");
   if (!file.size || file.size > 10 * 1024 * 1024) throw new Error("Choose an image between 1 byte and 10 MB.");
   if (!attempt.uploaded) {
-    onPhase("Optimising image…");
+    onPhase("Optimising image");
     const prepared = await downscale(file);
     ensureCurrent();
-    onPhase("Preparing upload…");
+    onPhase("Preparing upload");
     const upload = await write<{ assetId: string; storageKey: string; uploadUrl: string }>("/api/v1/media/upload-url", "POST", {
       fileName: file.name, fileSize: prepared.size, mimeType: prepared.type, source,
     });
     ensureCurrent();
-    onPhase("Uploading image…");
+    onPhase("Uploading image");
     const response = await fetch(upload.uploadUrl, {
       method: "PUT", headers: { "Content-Type": prepared.type, "x-upsert": "false" }, body: prepared,
     });
@@ -100,7 +100,7 @@ export async function uploadImage(file: File, source: "camera" | "userUpload", o
     attempt.uploaded = { assetId: upload.assetId, storageKey: upload.storageKey };
   }
   ensureCurrent();
-  onPhase("Checking image…");
+  onPhase("Checking image");
   // Confirmation is idempotent; retry once if the server committed but its response was lost.
   const uploaded = attempt.uploaded;
   const confirm = async () => {

@@ -35,7 +35,7 @@ function JournalEntryDetail({ entryId }: { entryId: string }) {
   const error = queryError(queryErrorValue);
   const [editing, setEditing] = useState(false);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
-  if (loading) return <LoadingScreen label="Loading journal entry…" />;
+  if (loading) return <LoadingScreen label="Loading journal entry" />;
   if (error) return <ErrorState title="We couldn't open this entry" message={error} retry={() => window.location.reload()} backTo="/journal" />;
 
   if (!entry) {
@@ -141,7 +141,7 @@ function JournalEntryEditor({ entry, onSaved }: { entry: JournalEntry; onSaved: 
     queryFn: ({ signal }) => getJournalContext(entry.date, signal),
   });
   const error = queryError(queryErrorValue);
-  if (loading) return <LoadingScreen label="Loading journal…" />;
+  if (loading) return <LoadingScreen label="Loading journal" />;
   if (error || !data) return <ErrorState title="We couldn't open your journal" message={error ?? "Your journal isn't available right now."} retry={() => window.location.reload()} backTo="/journal" />;
   return <JournalForm entry={entry} date={entry.date} photoOptions={data.photoOptions} wordSuggestions={data.wordSuggestions} onSaved={onSaved} />;
 }

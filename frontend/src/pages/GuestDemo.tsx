@@ -76,7 +76,7 @@ export function GuestDemo() {
   }
 
   if (stage === "select" || !scene) return <DemoPicker lang={lang} setLang={setLang} onPick={item => chooseScene(staticGuestScene(item, lang), "sample")} />;
-  if (stage === "analyse") return <div className="stack analysis-page"><h1>Scene analysis</h1><section className={`analysis-loading ${styles.analysis}`} aria-live="polite" aria-busy="true"><ScenePhoto scene={scene} scanning /><div className="analysis-loading__copy"><h2>Finding objects in your image...</h2><p className="muted">Linguini is looking for useful words to practise.</p></div></section></div>;
+  if (stage === "analyse") return <div className="stack analysis-page"><h1>Scene analysis</h1><section className={`analysis-loading ${styles.analysis}`} aria-live="polite" aria-busy="true"><ScenePhoto scene={scene} scanning /><div className="analysis-loading__copy"><h2>Finding objects</h2><p className="muted">Looking for words to practise.</p></div></section></div>;
   if (stage === "review") return <Review scene={scene} selected={selected} setSelected={setSelected} onBack={startOver} onContinue={() => go("translate")} />;
   if (stage === "translate") return <Translation scene={scene} words={words} lang={lang} index={wordIndex} setIndex={setWordIndex} onBack={() => go("review")} onContinue={() => go("task")} />;
   if (stage === "task") return <Task scene={scene} words={words} lang={lang} picked={picked} setPicked={setPicked} onBack={() => go("translate")} onDone={() => go("done")} />;

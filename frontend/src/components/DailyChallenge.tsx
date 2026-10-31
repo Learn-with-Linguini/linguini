@@ -54,7 +54,7 @@ export function DailyChallenge() {
   const query = useQuery({ queryKey: dailyChallengeKey(user?.id ?? ""), queryFn: ({ signal }) => getDailyChallenge(signal),
     enabled: Boolean(user?.id), refetchInterval: 30_000 });
   const data = query.data;
-  if (query.isPending) return <div className="daily-challenge__pad"><InlineLoader label="Loading today’s challenge…" /></div>;
+  if (query.isPending) return <div className="daily-challenge__pad"><InlineLoader label="Loading today’s challenge" /></div>;
   if (!data) return <div className="daily-challenge__pad"><p role="alert">We couldn’t load today’s challenge.</p>
     <Button variant="quiet" onClick={() => { trackAction("daily_challenge_retry_clicked"); void query.refetch(); }}>Retry challenge</Button></div>;
   const resume = async (sessionId: string) => {

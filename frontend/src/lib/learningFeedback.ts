@@ -6,7 +6,7 @@ const phrases: Record<LearningFeedbackEvent, readonly string[]> = {
   saved: ["Every try adds flavor.", "Practice makes pasta."],
   start: ["Let’s get cooking!", "Your next dish awaits.", "Time to add a new flavor."],
   completed: ["Dish complete!", "That’s one for the recipe book.", "Come back hungry for more."],
-  preparing: ["Preparing your next course…", "Warming up the kitchen…"],
+  preparing: ["Preparing your next course", "Warming up the kitchen"],
 };
 
 /** Keep the same wording when a saved result is restored or a request is retried. */

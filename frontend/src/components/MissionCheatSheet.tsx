@@ -73,7 +73,7 @@ export function MissionCheatSheetLauncher({
     }}>
       <section className="cheatsheet-sheet" role="dialog" aria-modal="true" aria-label="Mission cheatsheet">
         <div className="cheatsheet-sheet__handle" aria-hidden="true" />
-        {sheet.isLoading ? <InlineLoader label="Opening your mission guide…" /> : null}
+        {sheet.isLoading ? <InlineLoader label="Opening your mission guide" /> : null}
         {sheet.isError ? <div className="cheatsheet-unavailable" role="status">
           <h3>This cheatsheet is still being prepared</h3>
           <p>It will appear here as soon as this mission and language are ready.</p>

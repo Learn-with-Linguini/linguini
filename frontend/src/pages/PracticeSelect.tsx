@@ -136,7 +136,7 @@ export function PracticeSelect() {
       <ImageUpload compact disabled={interactionDisabled} cameraEnabled={learner.cameraOn}
         onBusyChange={setUploading} onUploaded={image => { trackAction("practice_photo_uploaded", { assetId: image.id }); chooseAsset(image.id); }} />
     </div>
-    {starting ? <LoadingScreen label="Starting analysis…" /> : null}
+    {starting ? <LoadingScreen label="Starting analysis" /> : null}
     {error ? <div className="stack-2"><p role="alert">{error}</p><Button disabled={starting || uploading} onClick={() => request.current && void start(request.current.asset)}>Retry</Button></div> : null}
     {!activeProfile ? <p role="alert">Choose a learning language in Profile to start.</p> : null}
     <h2>Or practise with the below</h2>

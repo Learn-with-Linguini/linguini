@@ -44,7 +44,7 @@ export function DailyChallengePage() {
       void queryClient.invalidateQueries({ queryKey: gameResourceKeys(user?.id ?? "") });
     }
   };
-  if (query.isPending) return <InlineLoader label="Loading today’s challenge…" />;
+  if (query.isPending) return <InlineLoader label="Loading today’s challenge" />;
   if (!data) return <div className="stack"><p role="alert">We couldn’t load today’s challenge.</p>
     <Button variant="quiet" onClick={() => { trackAction("daily_challenge_retry_clicked"); void query.refetch(); }}>Retry challenge</Button></div>;
   return <div className="daily-challenge-page">
@@ -60,7 +60,7 @@ export function DailyChallengePage() {
             <ImageUpload compact disabled={starting || !activeProfile} cameraEnabled={learner.cameraOn} onBusyChange={setUploading}
               dropzoneLabel={`Add a photo taken ${data.scenePhrase}`}
               onUploaded={image => { trackAction("daily_challenge_photo_uploaded", { sceneKey: data.sceneKey, assetId: image.id }); void start(image.id); }} />
-            {starting && !uploading ? <InlineLoader label="Starting your challenge…" /> : null}
+            {starting && !uploading ? <InlineLoader label="Starting your challenge" /> : null}
             <p className="daily-challenge__note"><BasilIcon size={18} />Finish the lesson to earn at least {DAILY_CHALLENGE_FINISHER_BASIL} Basil. Rare finds earn more.</p>
           </>}
           {error ? <p role="alert">{error}</p> : null}

@@ -68,7 +68,7 @@ export function SceneImage({ scene, className, lazy }: Props) {
   if (isProtectedMediaUrl && !resolvedUrl) {
     return (
       <span className={`scene-image scene-image--loading${className ? ` ${className}` : ""}`}>
-        <InlineLoader compact className="scene-image__loading-label" label="Preparing photo…" />
+        <InlineLoader compact className="scene-image__loading-label" label="Preparing photo" />
       </span>
     );
   }

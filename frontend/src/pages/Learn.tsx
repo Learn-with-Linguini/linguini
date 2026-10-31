@@ -98,7 +98,7 @@ export function Learn() {
     </section> : null}
     {generating ? <section className="panel-note" role="status">
       <h2>{learningFeedback("preparing", session.session.id)}</h2>
-      <p>Preparing the remaining tasks...</p>
+      <p>Preparing the remaining tasks</p>
       <p>You can learn and practise your words now.</p>
       {practiceStalled ? <div className="stack-2">
         <p>We're unable to generate more tasks right now. We'll keep working on them, so you can come back later.</p>
@@ -134,7 +134,7 @@ function MissionPath({ sceneTitle, sceneImageUrl, sessionId, missions, generatin
     try { sessionStorage.setItem(seenKey, JSON.stringify(doneKey ? doneKey.split(",") : [])); } catch { /* animation is a nicety */ }
   }, [seenKey, doneKey]);
 
-  const primaryLabel = allDone ? finishLabel : !current ? "Preparing remaining tasks..." : doneIds.length === 0 ? "Start" : "Continue";
+  const primaryLabel = allDone ? finishLabel : !current ? "Preparing remaining tasks" : doneIds.length === 0 ? "Start" : "Continue";
 
   return <div className="mission-path-page">
     <div className="mission-path__topbar">

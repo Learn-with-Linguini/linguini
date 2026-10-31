@@ -596,7 +596,8 @@ test("learners build a Location clue from separate position and reference chips,
   const text = () => dom.window.document.body.textContent ?? "";
   await click("Location");
   assert.match(text(), /Está \[position\] \[reference object\]/);
-  assert.match(dom.window.document.querySelector("[data-testid=position-meanings]")?.textContent ?? "", /sobre — on · El libro está sobre la mesa\./);
+  assert.equal(dom.window.document.querySelector("[data-testid=clue-slot-position]")?.textContent?.includes(" on"), false, "the word bank shows only target-language words");
+  assert.equal(dom.window.document.querySelector("[data-testid=clue-slot-position] [title]"), null);
   assert.equal(button("la taza"), undefined, "the target is never a chip");
   assert.equal(button("sobre la mesa"), undefined, "the correct phrase stays behind Help me");
   await click("sobre");
