@@ -1,0 +1,49 @@
+construction_id = "detail-reply"
+
+[[examples]]
+example_id = "reply-take-away"
+levels = ["A2"]
+purposes = ["replyWithDetail"]
+meaning = "To take away, please."
+scene = { "objects" = [{ "fact_id" = "object:coffee", "concept" = "coffee" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:coffee", "field" = "quantity", "value" = "2" }, { "fact_id" = "request:size", "object" = "object:coffee", "field" = "size", "value" = "small" }, { "fact_id" = "request:serviceSetting", "object" = "object:coffee", "field" = "serviceSetting", "value" = "takeAway" }] }
+bindings = { "target" = "object:coffee", "detail" = "request:serviceSetting" }
+truth = true
+labels = []
+sentence = "持ち帰りで お願いします."
+translation = "To take away, please."
+chunks = [{ "text" = "持ち帰りで", "join" = "none" }, { "text" = "お願いします", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "reply-blue"
+levels = ["A2"]
+purposes = ["replyWithDetail"]
+meaning = "Blue, please."
+scene = { "objects" = [{ "fact_id" = "object:pen", "concept" = "pen" }], "requests" = [{ "fact_id" = "request:quantity", "object" = "object:pen", "field" = "quantity", "value" = "1" }, { "fact_id" = "request:colour", "object" = "object:pen", "field" = "colour", "value" = "blue" }] }
+bindings = { "target" = "object:pen", "detail" = "request:colour" }
+truth = true
+labels = []
+sentence = "青で お願いします."
+translation = "Blue, please."
+chunks = [{ "text" = "青で", "join" = "none" }, { "text" = "お願いします", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "reply-take-away-form"
+levels = ["A2"]
+purposes = ["replyWithDetail"]
+sentence = "持ち帰りで お願いします"
+correction = "持ち帰りで お願いします."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "reply-blue-form"
+levels = ["A2"]
+purposes = ["replyWithDetail"]
+sentence = "青で お願いします"
+correction = "青で お願いします."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }

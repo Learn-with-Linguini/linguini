@@ -1,0 +1,51 @@
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[numbers]]
+value = 1
+text = "一"
+romanization = "ichi"
+
+[[numbers]]
+value = 2
+text = "二"
+romanization = "ni"
+
+[[numbers]]
+value = 3
+text = "三"
+romanization = "san"
+
+[[numbers]]
+value = 4
+text = "四"
+romanization = "yon"
+
+[[numbers]]
+value = 5
+text = "五"
+romanization = "go"
+
+[[numbers]]
+value = 6
+text = "六"
+romanization = "roku"
+
+[[numbers]]
+value = 7
+text = "七"
+romanization = "nana"
+
+[[numbers]]
+value = 8
+text = "八"
+romanization = "hachi"
+
+[[numbers]]
+value = 9
+text = "九"
+romanization = "kyū"
+
+[[numbers]]
+value = 10
+text = "十"
+romanization = "jū"

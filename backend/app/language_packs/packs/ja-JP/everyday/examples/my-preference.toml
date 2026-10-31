@@ -1,0 +1,97 @@
+construction_id = "my-preference"
+
+[[examples]]
+example_id = "i-like-cup"
+levels = ["A0"]
+purposes = ["sayPreference"]
+meaning = "I like the cup."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }], "preferences" = [{ "fact_id" = "preference:cup", "object" = "object:cup", "person" = "first", "likes" = true }, { "fact_id" = "preference:book", "object" = "object:book", "person" = "ana", "likes" = false }, { "fact_id" = "preference:key", "object" = "object:key", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:cup", "preference" = "preference:cup" }
+truth = true
+labels = []
+sentence = "私は コップが 好きです."
+translation = "I like the cup."
+chunks = [{ "text" = "私は", "join" = "none" }, { "text" = "コップが", "join" = "space" }, { "text" = "好きです", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "i-dislike-cup"
+levels = ["A0"]
+purposes = ["sayPreference"]
+meaning = "I don't like the cup."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }], "preferences" = [{ "fact_id" = "preference:cup", "object" = "object:cup", "person" = "first", "likes" = true }, { "fact_id" = "preference:book", "object" = "object:book", "person" = "ana", "likes" = false }, { "fact_id" = "preference:key", "object" = "object:key", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:cup", "preference" = "preference:cup" }
+truth = false
+labels = []
+sentence = "私は コップが 好きではありません."
+translation = "I don't like the cup."
+chunks = [{ "text" = "私は", "join" = "none" }, { "text" = "コップが", "join" = "space" }, { "text" = "好きではありません", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "i-like-cup-answer"
+levels = ["A1"]
+purposes = ["buildMyPreference"]
+meaning = "I like the cup."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }], "preferences" = [{ "fact_id" = "preference:cup", "object" = "object:cup", "person" = "first", "likes" = true }, { "fact_id" = "preference:book", "object" = "object:book", "person" = "ana", "likes" = false }, { "fact_id" = "preference:key", "object" = "object:key", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:cup", "preference" = "preference:cup" }
+truth = true
+labels = []
+sentence = "私は コップが 好きです."
+translation = "I like the cup."
+chunks = [{ "text" = "私は", "join" = "none" }, { "text" = "コップが", "join" = "space" }, { "text" = "好きです", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "i-dislike-cup-contrast"
+levels = ["A1"]
+purposes = ["buildMyPreference"]
+meaning = "I don't like the cup."
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }], "preferences" = [{ "fact_id" = "preference:cup", "object" = "object:cup", "person" = "first", "likes" = true }, { "fact_id" = "preference:book", "object" = "object:book", "person" = "ana", "likes" = false }, { "fact_id" = "preference:key", "object" = "object:key", "person" = "leo", "likes" = true }] }
+bindings = { "object" = "object:cup", "preference" = "preference:cup" }
+truth = false
+labels = []
+sentence = "私は コップが 好きではありません."
+translation = "I don't like the cup."
+chunks = [{ "text" = "私は", "join" = "none" }, { "text" = "コップが", "join" = "space" }, { "text" = "好きではありません", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "i-like-cup-form"
+levels = ["A0"]
+purposes = ["sayPreference"]
+sentence = "私は コップが 好きです"
+correction = "私は コップが 好きです."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "i-dislike-cup-form"
+levels = ["A0"]
+purposes = ["sayPreference"]
+sentence = "私は コップが 好きではありません"
+correction = "私は コップが 好きではありません."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "i-like-cup-answer-form"
+levels = ["A1"]
+purposes = ["buildMyPreference"]
+sentence = "私は コップが 好きです"
+correction = "私は コップが 好きです."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "i-dislike-cup-contrast-form"
+levels = ["A1"]
+purposes = ["buildMyPreference"]
+sentence = "私は コップが 好きではありません"
+correction = "私は コップが 好きではありません."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }

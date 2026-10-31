@@ -1,0 +1,23 @@
+construction_id = "quantity-statement"
+version = 1
+summary = "State or correct a confirmed object count."
+guidance = "Use Nが NUMBER COUNTER あります. e.g. 本が 五 冊 あります. A correction starts いいえ, then gives the confirmed count. The NUMBER must be its own learning token, while the counter is chosen for the noun. Nouns do not change for plural. Use number-counter readings, not a mechanical concatenation of standalone cardinal readings. Use 一 本 with Latin ippon in an aligned span. Use the pack display convention consistently: one ASCII space between phrase units; keep particles/copulas attached to their word (コップは, 本です), separate number and counter (五 冊), and use ASCII . ? , in sentence tasks. This is learning-display spacing, not ordinary Japanese orthography. Supply aligned native/Latin spans; Hepburn uses wa for は, e for へ, o for を, and macrons for long vowels.  With the generic つ series, ten is 十 (とお, tō) alone, never 十つ. Ask いくつ, not 何つ."
+features = ["polite-japanese", "learner-spacing", "quantity-statement"]
+constraints = [
+  "Preserve every planned semantic binding and truth value.",
+  "Use only confirmed or explicitly assigned scene/role-play facts.",
+  "Romanization supports native text; it is not an alternative grading answer.",
+]
+required_labels = []
+roles = { "object" = "noun", "count" = "determiner" }
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete tasks end with ASCII sentence punctuation."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "quantity-frame"
+message = "State a number, counter and existence."
+must_contain = ["(あります|います)[.]$"]

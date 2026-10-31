@@ -1,0 +1,49 @@
+construction_id = "how-many-question"
+
+[[examples]]
+example_id = "how-many-apples"
+levels = ["A0", "A2"]
+purposes = ["countGroup"]
+meaning = "How many apples are there?"
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:apple", "concept" = "apple" }], "counts" = [{ "fact_id" = "count:book", "object" = "object:book", "quantity" = 5 }, { "fact_id" = "count:cup", "object" = "object:cup", "quantity" = 2 }, { "fact_id" = "count:apple", "object" = "object:apple", "quantity" = 2 }] }
+bindings = { "object" = "object:apple" }
+truth = true
+labels = []
+sentence = "りんごは 何 個 ありますか?"
+translation = "How many apples are there?"
+chunks = [{ "text" = "りんごは", "join" = "none" }, { "text" = "何", "join" = "space" }, { "text" = "個", "join" = "space" }, { "text" = "ありますか", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "how-many-books"
+levels = ["A1"]
+purposes = ["chooseQuantity"]
+meaning = "How many books are there?"
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:apple", "concept" = "apple" }], "counts" = [{ "fact_id" = "count:book", "object" = "object:book", "quantity" = 5 }, { "fact_id" = "count:cup", "object" = "object:cup", "quantity" = 2 }, { "fact_id" = "count:apple", "object" = "object:apple", "quantity" = 2 }] }
+bindings = { "object" = "object:book" }
+truth = true
+labels = []
+sentence = "本は 何 冊 ありますか?"
+translation = "How many books are there?"
+chunks = [{ "text" = "本は", "join" = "none" }, { "text" = "何", "join" = "space" }, { "text" = "冊", "join" = "space" }, { "text" = "ありますか", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "how-many-apples-form"
+levels = ["A0", "A2"]
+purposes = ["countGroup"]
+sentence = "りんごは 何 個 ありますか."
+correction = "りんごは 何 個 ありますか?"
+note = "This task asks a question. Keep the interrogative frame and question mark."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "how-many-books-form"
+levels = ["A1"]
+purposes = ["chooseQuantity"]
+sentence = "本は 何 冊 ありますか."
+correction = "本は 何 冊 ありますか?"
+note = "This task asks a question. Keep the interrogative frame and question mark."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }

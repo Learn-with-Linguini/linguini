@@ -1,0 +1,4167 @@
+{
+  "purpose": "Offline reference readings for the review worksheet. Not runtime provider responses or release evidence. Number-counter readings are contextual; new model sentences must supply their own aligned spans.",
+  "sentences": {
+    "本を 選びます.": {
+      "romanization": "hon o erabimasu.",
+      "spans": [
+        {
+          "native": "本を",
+          "latin": "hon o"
+        },
+        {
+          "native": " 選びます",
+          "latin": " erabimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "赤い コップが あります. そして 本も あります.": {
+      "romanization": "akai koppu ga arimasu. soshite hon mo arimasu.",
+      "spans": [
+        {
+          "native": "赤い",
+          "latin": "akai"
+        },
+        {
+          "native": " コップが",
+          "latin": " koppu ga"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        },
+        {
+          "native": " そして",
+          "latin": " soshite"
+        },
+        {
+          "native": " 本も",
+          "latin": " hon mo"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "白い 皿が あります. そして りんごも あります.": {
+      "romanization": "shiroi sara ga arimasu. soshite ringo mo arimasu.",
+      "spans": [
+        {
+          "native": "白い",
+          "latin": "shiroi"
+        },
+        {
+          "native": " 皿が",
+          "latin": " sara ga"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        },
+        {
+          "native": " そして",
+          "latin": " soshite"
+        },
+        {
+          "native": " りんごも",
+          "latin": " ringo mo"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "靴は 椅子の 下に あります. そして 瓶も あります.": {
+      "romanization": "kutsu wa isu no shita ni arimasu. soshite bin mo arimasu.",
+      "spans": [
+        {
+          "native": "靴は",
+          "latin": "kutsu wa"
+        },
+        {
+          "native": " 椅子の",
+          "latin": " isu no"
+        },
+        {
+          "native": " 下に",
+          "latin": " shita ni"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        },
+        {
+          "native": " そして",
+          "latin": " soshite"
+        },
+        {
+          "native": " 瓶も",
+          "latin": " bin mo"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "赤い コップです.": {
+      "romanization": "akai koppu desu.",
+      "spans": [
+        {
+          "native": "赤い",
+          "latin": "akai"
+        },
+        {
+          "native": " コップです",
+          "latin": " koppu desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "緑色の 本です.": {
+      "romanization": "midoriiro no hon desu.",
+      "spans": [
+        {
+          "native": "緑色の",
+          "latin": "midoriiro no"
+        },
+        {
+          "native": " 本です",
+          "latin": " hon desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "黒い 靴です.": {
+      "romanization": "kuroi kutsu desu.",
+      "spans": [
+        {
+          "native": "黒い",
+          "latin": "kuroi"
+        },
+        {
+          "native": " 靴です",
+          "latin": " kutsu desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "青い ランプです.": {
+      "romanization": "aoi ranpu desu.",
+      "spans": [
+        {
+          "native": "青い",
+          "latin": "aoi"
+        },
+        {
+          "native": " ランプです",
+          "latin": " ranpu desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "白い 皿です.": {
+      "romanization": "shiroi sara desu.",
+      "spans": [
+        {
+          "native": "白い",
+          "latin": "shiroi"
+        },
+        {
+          "native": " 皿です",
+          "latin": " sara desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "黄色い りんごです.": {
+      "romanization": "kiiroi ringo desu.",
+      "spans": [
+        {
+          "native": "黄色い",
+          "latin": "kiiroi"
+        },
+        {
+          "native": " りんごです",
+          "latin": " ringo desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "赤": {
+      "romanization": "aka",
+      "spans": [
+        {
+          "native": "赤",
+          "latin": "aka"
+        }
+      ]
+    },
+    "緑色": {
+      "romanization": "midoriiro",
+      "spans": [
+        {
+          "native": "緑色",
+          "latin": "midoriiro"
+        }
+      ]
+    },
+    "コップは 何色ですか?": {
+      "romanization": "koppu wa naniiro desu ka?",
+      "spans": [
+        {
+          "native": "コップは",
+          "latin": "koppu wa"
+        },
+        {
+          "native": " 何色ですか",
+          "latin": " naniiro desu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "本は 何色ですか?": {
+      "romanization": "hon wa naniiro desu ka?",
+      "spans": [
+        {
+          "native": "本は",
+          "latin": "hon wa"
+        },
+        {
+          "native": " 何色ですか",
+          "latin": " naniiro desu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "店内ですか, 持ち帰りですか?": {
+      "romanization": "tennai desu ka, mochikaeri desu ka?",
+      "spans": [
+        {
+          "native": "店内ですか",
+          "latin": "tennai desu ka"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 持ち帰りですか",
+          "latin": " mochikaeri desu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "何色ですか?": {
+      "romanization": "naniiro desu ka?",
+      "spans": [
+        {
+          "native": "何色ですか",
+          "latin": "naniiro desu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "持ち帰りで お願いします.": {
+      "romanization": "mochikaeri de onegai shimasu.",
+      "spans": [
+        {
+          "native": "持ち帰りで",
+          "latin": "mochikaeri de"
+        },
+        {
+          "native": " お願いします",
+          "latin": " onegai shimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "青で お願いします.": {
+      "romanization": "ao de onegai shimasu.",
+      "spans": [
+        {
+          "native": "青で",
+          "latin": "ao de"
+        },
+        {
+          "native": " お願いします",
+          "latin": " onegai shimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "コップを 探してください.": {
+      "romanization": "koppu o sagashite kudasai.",
+      "spans": [
+        {
+          "native": "コップを",
+          "latin": "koppu o"
+        },
+        {
+          "native": " 探してください",
+          "latin": " sagashite kudasai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "りんごは 何 個 ありますか?": {
+      "romanization": "ringo wa nanko arimasu ka?",
+      "spans": [
+        {
+          "native": "りんごは",
+          "latin": "ringo wa"
+        },
+        {
+          "native": " 何 個",
+          "latin": " nanko"
+        },
+        {
+          "native": " ありますか",
+          "latin": " arimasu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "本は 何 冊 ありますか?": {
+      "romanization": "hon wa nansatsu arimasu ka?",
+      "spans": [
+        {
+          "native": "本は",
+          "latin": "hon wa"
+        },
+        {
+          "native": " 何 冊",
+          "latin": " nansatsu"
+        },
+        {
+          "native": " ありますか",
+          "latin": " arimasu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "本": {
+      "romanization": "hon",
+      "spans": [
+        {
+          "native": "本",
+          "latin": "hon"
+        }
+      ]
+    },
+    "コップ": {
+      "romanization": "koppu",
+      "spans": [
+        {
+          "native": "コップ",
+          "latin": "koppu"
+        }
+      ]
+    },
+    "時計": {
+      "romanization": "tokei",
+      "spans": [
+        {
+          "native": "時計",
+          "latin": "tokei"
+        }
+      ]
+    },
+    "コップです.": {
+      "romanization": "koppu desu.",
+      "spans": [
+        {
+          "native": "コップです",
+          "latin": "koppu desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "本です.": {
+      "romanization": "hon desu.",
+      "spans": [
+        {
+          "native": "本です",
+          "latin": "hon desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "椅子です.": {
+      "romanization": "isu desu.",
+      "spans": [
+        {
+          "native": "椅子です",
+          "latin": "isu desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "瓶です.": {
+      "romanization": "bin desu.",
+      "spans": [
+        {
+          "native": "瓶です",
+          "latin": "bin desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "ボールです.": {
+      "romanization": "bōru desu.",
+      "spans": [
+        {
+          "native": "ボールです",
+          "latin": "bōru desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "かばんです.": {
+      "romanization": "kaban desu.",
+      "spans": [
+        {
+          "native": "かばんです",
+          "latin": "kaban desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "ランプ": {
+      "romanization": "ranpu",
+      "spans": [
+        {
+          "native": "ランプ",
+          "latin": "ranpu"
+        }
+      ]
+    },
+    "テーブルの 上に": {
+      "romanization": "tēburu no ue ni",
+      "spans": [
+        {
+          "native": "テーブルの",
+          "latin": "tēburu no"
+        },
+        {
+          "native": " 上に",
+          "latin": " ue ni"
+        }
+      ]
+    },
+    "窓の 隣に": {
+      "romanization": "mado no tonari ni",
+      "spans": [
+        {
+          "native": "窓の",
+          "latin": "mado no"
+        },
+        {
+          "native": " 隣に",
+          "latin": " tonari ni"
+        }
+      ]
+    },
+    "私は コップが 好きです.": {
+      "romanization": "watashi wa koppu ga suki desu.",
+      "spans": [
+        {
+          "native": "私は",
+          "latin": "watashi wa"
+        },
+        {
+          "native": " コップが",
+          "latin": " koppu ga"
+        },
+        {
+          "native": " 好きです",
+          "latin": " suki desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "私は コップが 好きではありません.": {
+      "romanization": "watashi wa koppu ga suki de wa arimasen.",
+      "spans": [
+        {
+          "native": "私は",
+          "latin": "watashi wa"
+        },
+        {
+          "native": " コップが",
+          "latin": " koppu ga"
+        },
+        {
+          "native": " 好きではありません",
+          "latin": " suki de wa arimasen"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "コップです": {
+      "romanization": "koppu desu",
+      "spans": [
+        {
+          "native": "コップです",
+          "latin": "koppu desu"
+        }
+      ]
+    },
+    "テーブルです": {
+      "romanization": "tēburu desu",
+      "spans": [
+        {
+          "native": "テーブルです",
+          "latin": "tēburu desu"
+        }
+      ]
+    },
+    "はい, それで お願いします.": {
+      "romanization": "hai, sore de onegai shimasu.",
+      "spans": [
+        {
+          "native": "はい",
+          "latin": "hai"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " それで",
+          "latin": " sore de"
+        },
+        {
+          "native": " お願いします",
+          "latin": " onegai shimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "小さい サイズの コーヒーを 二 杯": {
+      "romanization": "chiisai saizu no kōhī o nihai",
+      "spans": [
+        {
+          "native": "小さい",
+          "latin": "chiisai"
+        },
+        {
+          "native": " サイズの",
+          "latin": " saizu no"
+        },
+        {
+          "native": " コーヒーを",
+          "latin": " kōhī o"
+        },
+        {
+          "native": " 二 杯",
+          "latin": " nihai"
+        }
+      ]
+    },
+    "ペンを 一 本": {
+      "romanization": "pen o ippon",
+      "spans": [
+        {
+          "native": "ペンを",
+          "latin": "pen o"
+        },
+        {
+          "native": " 一 本",
+          "latin": " ippon"
+        }
+      ]
+    },
+    "小さい サイズの コーヒーを 三 杯": {
+      "romanization": "chiisai saizu no kōhī o sanbai",
+      "spans": [
+        {
+          "native": "小さい",
+          "latin": "chiisai"
+        },
+        {
+          "native": " サイズの",
+          "latin": " saizu no"
+        },
+        {
+          "native": " コーヒーを",
+          "latin": " kōhī o"
+        },
+        {
+          "native": " 三 杯",
+          "latin": " sanbai"
+        }
+      ]
+    },
+    "いいえ, 三 杯で お願いします.": {
+      "romanization": "iie, sanbai de onegai shimasu.",
+      "spans": [
+        {
+          "native": "いいえ",
+          "latin": "iie"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 三 杯で",
+          "latin": " sanbai de"
+        },
+        {
+          "native": " お願いします",
+          "latin": " onegai shimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "いいえ, 持ち帰りで お願いします.": {
+      "romanization": "iie, mochikaeri de onegai shimasu.",
+      "spans": [
+        {
+          "native": "いいえ",
+          "latin": "iie"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 持ち帰りで",
+          "latin": " mochikaeri de"
+        },
+        {
+          "native": " お願いします",
+          "latin": " onegai shimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "小さい サイズの コーヒー 二 杯で, 持ち帰りですね?": {
+      "romanization": "chiisai saizu no kōhī nihai de, mochikaeri desu ne?",
+      "spans": [
+        {
+          "native": "小さい",
+          "latin": "chiisai"
+        },
+        {
+          "native": " サイズの",
+          "latin": " saizu no"
+        },
+        {
+          "native": " コーヒー",
+          "latin": " kōhī"
+        },
+        {
+          "native": " 二 杯で",
+          "latin": " nihai de"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 持ち帰りですね",
+          "latin": " mochikaeri desu ne"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "小さい サイズの コーヒー 三 杯で, 持ち帰りですね?": {
+      "romanization": "chiisai saizu no kōhī sanbai de, mochikaeri desu ne?",
+      "spans": [
+        {
+          "native": "小さい",
+          "latin": "chiisai"
+        },
+        {
+          "native": " サイズの",
+          "latin": " saizu no"
+        },
+        {
+          "native": " コーヒー",
+          "latin": " kōhī"
+        },
+        {
+          "native": " 三 杯で",
+          "latin": " sanbai de"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 持ち帰りですね",
+          "latin": " mochikaeri desu ne"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "私の コップは 赤いです.": {
+      "romanization": "watashi no koppu wa akai desu.",
+      "spans": [
+        {
+          "native": "私の",
+          "latin": "watashi no"
+        },
+        {
+          "native": " コップは",
+          "latin": " koppu wa"
+        },
+        {
+          "native": " 赤いです",
+          "latin": " akai desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "私の コップは テーブルの 上に あります.": {
+      "romanization": "watashi no koppu wa tēburu no ue ni arimasu.",
+      "spans": [
+        {
+          "native": "私の",
+          "latin": "watashi no"
+        },
+        {
+          "native": " コップは",
+          "latin": " koppu wa"
+        },
+        {
+          "native": " テーブルの",
+          "latin": " tēburu no"
+        },
+        {
+          "native": " 上に",
+          "latin": " ue ni"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "コップは 私の 物です.": {
+      "romanization": "koppu wa watashi no mono desu.",
+      "spans": [
+        {
+          "native": "コップは",
+          "latin": "koppu wa"
+        },
+        {
+          "native": " 私の",
+          "latin": " watashi no"
+        },
+        {
+          "native": " 物です",
+          "latin": " mono desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "コップは あなたの 物です.": {
+      "romanization": "koppu wa anata no mono desu.",
+      "spans": [
+        {
+          "native": "コップは",
+          "latin": "koppu wa"
+        },
+        {
+          "native": " あなたの",
+          "latin": " anata no"
+        },
+        {
+          "native": " 物です",
+          "latin": " mono desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "本は アナの 物です.": {
+      "romanization": "hon wa Ana no mono desu.",
+      "spans": [
+        {
+          "native": "本は",
+          "latin": "hon wa"
+        },
+        {
+          "native": " アナの",
+          "latin": " Ana no"
+        },
+        {
+          "native": " 物です",
+          "latin": " mono desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "いいえ, 本は アナの 物です.": {
+      "romanization": "iie, hon wa Ana no mono desu.",
+      "spans": [
+        {
+          "native": "いいえ",
+          "latin": "iie"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 本は",
+          "latin": " hon wa"
+        },
+        {
+          "native": " アナの",
+          "latin": " Ana no"
+        },
+        {
+          "native": " 物です",
+          "latin": " mono desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "これは あなたの 物ですか?": {
+      "romanization": "kore wa anata no mono desu ka?",
+      "spans": [
+        {
+          "native": "これは",
+          "latin": "kore wa"
+        },
+        {
+          "native": " あなたの",
+          "latin": " anata no"
+        },
+        {
+          "native": " 物ですか",
+          "latin": " mono desu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "私の 物です.": {
+      "romanization": "watashi no mono desu.",
+      "spans": [
+        {
+          "native": "私の",
+          "latin": "watashi no"
+        },
+        {
+          "native": " 物です",
+          "latin": " mono desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "私の 物ではありません.": {
+      "romanization": "watashi no mono de wa arimasen.",
+      "spans": [
+        {
+          "native": "私の",
+          "latin": "watashi no"
+        },
+        {
+          "native": " 物ではありません",
+          "latin": " mono de wa arimasen"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "小さい サイズの コーヒーを 二 杯 ください.": {
+      "romanization": "chiisai saizu no kōhī o nihai kudasai.",
+      "spans": [
+        {
+          "native": "小さい",
+          "latin": "chiisai"
+        },
+        {
+          "native": " サイズの",
+          "latin": " saizu no"
+        },
+        {
+          "native": " コーヒーを",
+          "latin": " kōhī o"
+        },
+        {
+          "native": " 二 杯",
+          "latin": " nihai"
+        },
+        {
+          "native": " ください",
+          "latin": " kudasai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "ペンを 一 本 貸してください.": {
+      "romanization": "pen o ippon kashite kudasai.",
+      "spans": [
+        {
+          "native": "ペンを",
+          "latin": "pen o"
+        },
+        {
+          "native": " 一 本",
+          "latin": " ippon"
+        },
+        {
+          "native": " 貸してください",
+          "latin": " kashite kudasai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "コップを 一 個 取ってください.": {
+      "romanization": "koppu o ikko totte kudasai.",
+      "spans": [
+        {
+          "native": "コップを",
+          "latin": "koppu o"
+        },
+        {
+          "native": " 一 個",
+          "latin": " ikko"
+        },
+        {
+          "native": " 取ってください",
+          "latin": " totte kudasai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "私の コップです.": {
+      "romanization": "watashi no koppu desu.",
+      "spans": [
+        {
+          "native": "私の",
+          "latin": "watashi no"
+        },
+        {
+          "native": " コップです",
+          "latin": " koppu desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "アナの 本です.": {
+      "romanization": "Ana no hon desu.",
+      "spans": [
+        {
+          "native": "アナの",
+          "latin": "Ana no"
+        },
+        {
+          "native": " 本です",
+          "latin": " hon desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "レオの 鍵です.": {
+      "romanization": "Reo no kagi desu.",
+      "spans": [
+        {
+          "native": "レオの",
+          "latin": "Reo no"
+        },
+        {
+          "native": " 鍵です",
+          "latin": " kagi desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "はい, 私の コップです.": {
+      "romanization": "hai, watashi no koppu desu.",
+      "spans": [
+        {
+          "native": "はい",
+          "latin": "hai"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 私の",
+          "latin": " watashi no"
+        },
+        {
+          "native": " コップです",
+          "latin": " koppu desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "コップが 好きですか?": {
+      "romanization": "koppu ga suki desu ka?",
+      "spans": [
+        {
+          "native": "コップが",
+          "latin": "koppu ga"
+        },
+        {
+          "native": " 好きですか",
+          "latin": " suki desu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "アナは 本が 好きですか?": {
+      "romanization": "Ana wa hon ga suki desu ka?",
+      "spans": [
+        {
+          "native": "アナは",
+          "latin": "Ana wa"
+        },
+        {
+          "native": " 本が",
+          "latin": " hon ga"
+        },
+        {
+          "native": " 好きですか",
+          "latin": " suki desu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "りんご 二 個": {
+      "romanization": "ringo niko",
+      "spans": [
+        {
+          "native": "りんご",
+          "latin": "ringo"
+        },
+        {
+          "native": " 二 個",
+          "latin": " niko"
+        }
+      ]
+    },
+    "りんご 一 個": {
+      "romanization": "ringo ikko",
+      "spans": [
+        {
+          "native": "りんご",
+          "latin": "ringo"
+        },
+        {
+          "native": " 一 個",
+          "latin": " ikko"
+        }
+      ]
+    },
+    "本は コップより 多いです.": {
+      "romanization": "hon wa koppu yori ōi desu.",
+      "spans": [
+        {
+          "native": "本は",
+          "latin": "hon wa"
+        },
+        {
+          "native": " コップより",
+          "latin": " koppu yori"
+        },
+        {
+          "native": " 多いです",
+          "latin": " ōi desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "コップは 本より 少ないです.": {
+      "romanization": "koppu wa hon yori sukunai desu.",
+      "spans": [
+        {
+          "native": "コップは",
+          "latin": "koppu wa"
+        },
+        {
+          "native": " 本より",
+          "latin": " hon yori"
+        },
+        {
+          "native": " 少ないです",
+          "latin": " sukunai desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "本が 五 冊, コップが 二 個 あります.": {
+      "romanization": "hon ga gosatsu, koppu ga niko arimasu.",
+      "spans": [
+        {
+          "native": "本が",
+          "latin": "hon ga"
+        },
+        {
+          "native": " 五 冊",
+          "latin": " gosatsu"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " コップが",
+          "latin": " koppu ga"
+        },
+        {
+          "native": " 二 個",
+          "latin": " niko"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "本が 五 冊 あります.": {
+      "romanization": "hon ga gosatsu arimasu.",
+      "spans": [
+        {
+          "native": "本が",
+          "latin": "hon ga"
+        },
+        {
+          "native": " 五 冊",
+          "latin": " gosatsu"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "いいえ, 本が 五 冊 あります.": {
+      "romanization": "iie, hon ga gosatsu arimasu.",
+      "spans": [
+        {
+          "native": "いいえ",
+          "latin": "iie"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 本が",
+          "latin": " hon ga"
+        },
+        {
+          "native": " 五 冊",
+          "latin": " gosatsu"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "黄色い りんごが あります.": {
+      "romanization": "kiiroi ringo ga arimasu.",
+      "spans": [
+        {
+          "native": "黄色い",
+          "latin": "kiiroi"
+        },
+        {
+          "native": " りんごが",
+          "latin": " ringo ga"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "白い 皿が あります.": {
+      "romanization": "shiroi sara ga arimasu.",
+      "spans": [
+        {
+          "native": "白い",
+          "latin": "shiroi"
+        },
+        {
+          "native": " 皿が",
+          "latin": " sara ga"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "椅子が あります.": {
+      "romanization": "isu ga arimasu.",
+      "spans": [
+        {
+          "native": "椅子が",
+          "latin": "isu ga"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "時計は ありません.": {
+      "romanization": "tokei wa arimasen.",
+      "spans": [
+        {
+          "native": "時計は",
+          "latin": "tokei wa"
+        },
+        {
+          "native": " ありません",
+          "latin": " arimasen"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "コップは テーブルの 上に あります.": {
+      "romanization": "koppu wa tēburu no ue ni arimasu.",
+      "spans": [
+        {
+          "native": "コップは",
+          "latin": "koppu wa"
+        },
+        {
+          "native": " テーブルの",
+          "latin": " tēburu no"
+        },
+        {
+          "native": " 上に",
+          "latin": " ue ni"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "靴は 椅子の 下に あります.": {
+      "romanization": "kutsu wa isu no shita ni arimasu.",
+      "spans": [
+        {
+          "native": "靴は",
+          "latin": "kutsu wa"
+        },
+        {
+          "native": " 椅子の",
+          "latin": " isu no"
+        },
+        {
+          "native": " 下に",
+          "latin": " shita ni"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "ランプは 本の 隣に あります.": {
+      "romanization": "ranpu wa hon no tonari ni arimasu.",
+      "spans": [
+        {
+          "native": "ランプは",
+          "latin": "ranpu wa"
+        },
+        {
+          "native": " 本の",
+          "latin": " hon no"
+        },
+        {
+          "native": " 隣に",
+          "latin": " tonari ni"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "靴は どこに ありますか?": {
+      "romanization": "kutsu wa doko ni arimasu ka?",
+      "spans": [
+        {
+          "native": "靴は",
+          "latin": "kutsu wa"
+        },
+        {
+          "native": " どこに",
+          "latin": " doko ni"
+        },
+        {
+          "native": " ありますか",
+          "latin": " arimasu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "赤いです.": {
+      "romanization": "akai desu.",
+      "spans": [
+        {
+          "native": "赤いです",
+          "latin": "akai desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "窓の 隣に あります.": {
+      "romanization": "mado no tonari ni arimasu.",
+      "spans": [
+        {
+          "native": "窓の",
+          "latin": "mado no"
+        },
+        {
+          "native": " 隣に",
+          "latin": " tonari ni"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "いいえ, 窓の 隣に あります.": {
+      "romanization": "iie, mado no tonari ni arimasu.",
+      "spans": [
+        {
+          "native": "いいえ",
+          "latin": "iie"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 窓の",
+          "latin": " mado no"
+        },
+        {
+          "native": " 隣に",
+          "latin": " tonari ni"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "赤い コップは 窓の 隣に あります.": {
+      "romanization": "akai koppu wa mado no tonari ni arimasu.",
+      "spans": [
+        {
+          "native": "赤い",
+          "latin": "akai"
+        },
+        {
+          "native": " コップは",
+          "latin": " koppu wa"
+        },
+        {
+          "native": " 窓の",
+          "latin": " mado no"
+        },
+        {
+          "native": " 隣に",
+          "latin": " tonari ni"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "レオは 鍵が 好きです.": {
+      "romanization": "Reo wa kagi ga suki desu.",
+      "spans": [
+        {
+          "native": "レオは",
+          "latin": "Reo wa"
+        },
+        {
+          "native": " 鍵が",
+          "latin": " kagi ga"
+        },
+        {
+          "native": " 好きです",
+          "latin": " suki desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "アナは 本が 好きではありません.": {
+      "romanization": "Ana wa hon ga suki de wa arimasen.",
+      "spans": [
+        {
+          "native": "アナは",
+          "latin": "Ana wa"
+        },
+        {
+          "native": " 本が",
+          "latin": " hon ga"
+        },
+        {
+          "native": " 好きではありません",
+          "latin": " suki de wa arimasen"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "アナは 本が 好きです.": {
+      "romanization": "Ana wa hon ga suki desu.",
+      "spans": [
+        {
+          "native": "アナは",
+          "latin": "Ana wa"
+        },
+        {
+          "native": " 本が",
+          "latin": " hon ga"
+        },
+        {
+          "native": " 好きです",
+          "latin": " suki desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "コップは どこに ありますか?": {
+      "romanization": "koppu wa doko ni arimasu ka?",
+      "spans": [
+        {
+          "native": "コップは",
+          "latin": "koppu wa"
+        },
+        {
+          "native": " どこに",
+          "latin": " doko ni"
+        },
+        {
+          "native": " ありますか",
+          "latin": " arimasu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "コップは 誰の 物ですか?": {
+      "romanization": "koppu wa dare no mono desu ka?",
+      "spans": [
+        {
+          "native": "コップは",
+          "latin": "koppu wa"
+        },
+        {
+          "native": " 誰の",
+          "latin": " dare no"
+        },
+        {
+          "native": " 物ですか",
+          "latin": " mono desu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "コップですか?": {
+      "romanization": "koppu desu ka?",
+      "spans": [
+        {
+          "native": "コップですか",
+          "latin": "koppu desu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "皿ですか?": {
+      "romanization": "sara desu ka?",
+      "spans": [
+        {
+          "native": "皿ですか",
+          "latin": "sara desu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "瓶ですか?": {
+      "romanization": "bin desu ka?",
+      "spans": [
+        {
+          "native": "瓶ですか",
+          "latin": "bin desu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "はい, 本です.": {
+      "romanization": "hai, hon desu.",
+      "spans": [
+        {
+          "native": "はい",
+          "latin": "hai"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 本です",
+          "latin": " hon desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "はい, 椅子です.": {
+      "romanization": "hai, isu desu.",
+      "spans": [
+        {
+          "native": "はい",
+          "latin": "hai"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 椅子です",
+          "latin": " isu desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "いいえ, 時計です.": {
+      "romanization": "iie, tokei desu.",
+      "spans": [
+        {
+          "native": "いいえ",
+          "latin": "iie"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 時計です",
+          "latin": " tokei desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "フォークです.": {
+      "romanization": "fōku desu.",
+      "spans": [
+        {
+          "native": "フォークです",
+          "latin": "fōku desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "これは フォークです.": {
+      "romanization": "kore wa fōku desu.",
+      "spans": [
+        {
+          "native": "これは",
+          "latin": "kore wa"
+        },
+        {
+          "native": " フォークです",
+          "latin": " fōku desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "スプーンです.": {
+      "romanization": "supūn desu.",
+      "spans": [
+        {
+          "native": "スプーンです",
+          "latin": "supūn desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "これは スプーンです.": {
+      "romanization": "kore wa supūn desu.",
+      "spans": [
+        {
+          "native": "これは",
+          "latin": "kore wa"
+        },
+        {
+          "native": " スプーンです",
+          "latin": " supūn desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "ドアです.": {
+      "romanization": "doa desu.",
+      "spans": [
+        {
+          "native": "ドアです",
+          "latin": "doa desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "これは ドアです.": {
+      "romanization": "kore wa doa desu.",
+      "spans": [
+        {
+          "native": "これは",
+          "latin": "kore wa"
+        },
+        {
+          "native": " ドアです",
+          "latin": " doa desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "窓ですか?": {
+      "romanization": "mado desu ka?",
+      "spans": [
+        {
+          "native": "窓ですか",
+          "latin": "mado desu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "電話です.": {
+      "romanization": "denwa desu.",
+      "spans": [
+        {
+          "native": "電話です",
+          "latin": "denwa desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "これは 電話です.": {
+      "romanization": "kore wa denwa desu.",
+      "spans": [
+        {
+          "native": "これは",
+          "latin": "kore wa"
+        },
+        {
+          "native": " 電話です",
+          "latin": " denwa desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "鍵です.": {
+      "romanization": "kagi desu.",
+      "spans": [
+        {
+          "native": "鍵です",
+          "latin": "kagi desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "これは 鍵です.": {
+      "romanization": "kore wa kagi desu.",
+      "spans": [
+        {
+          "native": "これは",
+          "latin": "kore wa"
+        },
+        {
+          "native": " 鍵です",
+          "latin": " kagi desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "窓": {
+      "romanization": "mado",
+      "spans": [
+        {
+          "native": "窓",
+          "latin": "mado"
+        }
+      ]
+    },
+    "テーブルです.": {
+      "romanization": "tēburu desu.",
+      "spans": [
+        {
+          "native": "テーブルです",
+          "latin": "tēburu desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "これは テーブルです.": {
+      "romanization": "kore wa tēburu desu.",
+      "spans": [
+        {
+          "native": "これは",
+          "latin": "kore wa"
+        },
+        {
+          "native": " テーブルです",
+          "latin": " tēburu desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "かばんですか?": {
+      "romanization": "kaban desu ka?",
+      "spans": [
+        {
+          "native": "かばんですか",
+          "latin": "kaban desu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "赤い 電話です.": {
+      "romanization": "akai denwa desu.",
+      "spans": [
+        {
+          "native": "赤い",
+          "latin": "akai"
+        },
+        {
+          "native": " 電話です",
+          "latin": " denwa desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "赤い ドアです.": {
+      "romanization": "akai doa desu.",
+      "spans": [
+        {
+          "native": "赤い",
+          "latin": "akai"
+        },
+        {
+          "native": " ドアです",
+          "latin": " doa desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "黄色い スプーンです.": {
+      "romanization": "kiiroi supūn desu.",
+      "spans": [
+        {
+          "native": "黄色い",
+          "latin": "kiiroi"
+        },
+        {
+          "native": " スプーンです",
+          "latin": " supūn desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "青い ドアです.": {
+      "romanization": "aoi doa desu.",
+      "spans": [
+        {
+          "native": "青い",
+          "latin": "aoi"
+        },
+        {
+          "native": " ドアです",
+          "latin": " doa desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "鍵ですか?": {
+      "romanization": "kagi desu ka?",
+      "spans": [
+        {
+          "native": "鍵ですか",
+          "latin": "kagi desu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "はい, 電話です.": {
+      "romanization": "hai, denwa desu.",
+      "spans": [
+        {
+          "native": "はい",
+          "latin": "hai"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 電話です",
+          "latin": " denwa desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "いいえ, スプーンです.": {
+      "romanization": "iie, supūn desu.",
+      "spans": [
+        {
+          "native": "いいえ",
+          "latin": "iie"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " スプーンです",
+          "latin": " supūn desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "はい, 窓です.": {
+      "romanization": "hai, mado desu.",
+      "spans": [
+        {
+          "native": "はい",
+          "latin": "hai"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 窓です",
+          "latin": " mado desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "赤い 本です.": {
+      "romanization": "akai hon desu.",
+      "spans": [
+        {
+          "native": "赤い",
+          "latin": "akai"
+        },
+        {
+          "native": " 本です",
+          "latin": " hon desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "黄色い 皿です.": {
+      "romanization": "kiiroi sara desu.",
+      "spans": [
+        {
+          "native": "黄色い",
+          "latin": "kiiroi"
+        },
+        {
+          "native": " 皿です",
+          "latin": " sara desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "電話は ドアの 隣に あります.": {
+      "romanization": "denwa wa doa no tonari ni arimasu.",
+      "spans": [
+        {
+          "native": "電話は",
+          "latin": "denwa wa"
+        },
+        {
+          "native": " ドアの",
+          "latin": " doa no"
+        },
+        {
+          "native": " 隣に",
+          "latin": " tonari ni"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "窓は 電話の 隣に あります.": {
+      "romanization": "mado wa denwa no tonari ni arimasu.",
+      "spans": [
+        {
+          "native": "窓は",
+          "latin": "mado wa"
+        },
+        {
+          "native": " 電話の",
+          "latin": " denwa no"
+        },
+        {
+          "native": " 隣に",
+          "latin": " tonari ni"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "スプーンは テーブルの 下に あります.": {
+      "romanization": "supūn wa tēburu no shita ni arimasu.",
+      "spans": [
+        {
+          "native": "スプーンは",
+          "latin": "supūn wa"
+        },
+        {
+          "native": " テーブルの",
+          "latin": " tēburu no"
+        },
+        {
+          "native": " 下に",
+          "latin": " shita ni"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "緑色の フォークが あります. そして スプーンも あります.": {
+      "romanization": "midoriiro no fōku ga arimasu. soshite supūn mo arimasu.",
+      "spans": [
+        {
+          "native": "緑色の",
+          "latin": "midoriiro no"
+        },
+        {
+          "native": " フォークが",
+          "latin": " fōku ga"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        },
+        {
+          "native": " そして",
+          "latin": " soshite"
+        },
+        {
+          "native": " スプーンも",
+          "latin": " supūn mo"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "電話は ありません.": {
+      "romanization": "denwa wa arimasen.",
+      "spans": [
+        {
+          "native": "電話は",
+          "latin": "denwa wa"
+        },
+        {
+          "native": " ありません",
+          "latin": " arimasen"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "青い かばんが あります.": {
+      "romanization": "aoi kaban ga arimasu.",
+      "spans": [
+        {
+          "native": "青い",
+          "latin": "aoi"
+        },
+        {
+          "native": " かばんが",
+          "latin": " kaban ga"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "ドアは 何色ですか?": {
+      "romanization": "doa wa naniiro desu ka?",
+      "spans": [
+        {
+          "native": "ドアは",
+          "latin": "doa wa"
+        },
+        {
+          "native": " 何色ですか",
+          "latin": " naniiro desu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "鍵は テーブルの 上に あります.": {
+      "romanization": "kagi wa tēburu no ue ni arimasu.",
+      "spans": [
+        {
+          "native": "鍵は",
+          "latin": "kagi wa"
+        },
+        {
+          "native": " テーブルの",
+          "latin": " tēburu no"
+        },
+        {
+          "native": " 上に",
+          "latin": " ue ni"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "かばんは テーブルの 下に あります.": {
+      "romanization": "kaban wa tēburu no shita ni arimasu.",
+      "spans": [
+        {
+          "native": "かばんは",
+          "latin": "kaban wa"
+        },
+        {
+          "native": " テーブルの",
+          "latin": " tēburu no"
+        },
+        {
+          "native": " 下に",
+          "latin": " shita ni"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "皿は 何色ですか?": {
+      "romanization": "sara wa naniiro desu ka?",
+      "spans": [
+        {
+          "native": "皿は",
+          "latin": "sara wa"
+        },
+        {
+          "native": " 何色ですか",
+          "latin": " naniiro desu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "窓は ありません.": {
+      "romanization": "mado wa arimasen.",
+      "spans": [
+        {
+          "native": "窓は",
+          "latin": "mado wa"
+        },
+        {
+          "native": " ありません",
+          "latin": " arimasen"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "かばんを 探してください.": {
+      "romanization": "kaban o sagashite kudasai.",
+      "spans": [
+        {
+          "native": "かばんを",
+          "latin": "kaban o"
+        },
+        {
+          "native": " 探してください",
+          "latin": " sagashite kudasai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "ドア": {
+      "romanization": "doa",
+      "spans": [
+        {
+          "native": "ドア",
+          "latin": "doa"
+        }
+      ]
+    },
+    "電話を 探してください.": {
+      "romanization": "denwa o sagashite kudasai.",
+      "spans": [
+        {
+          "native": "電話を",
+          "latin": "denwa o"
+        },
+        {
+          "native": " 探してください",
+          "latin": " sagashite kudasai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "テーブルの 下に": {
+      "romanization": "tēburu no shita ni",
+      "spans": [
+        {
+          "native": "テーブルの",
+          "latin": "tēburu no"
+        },
+        {
+          "native": " 下に",
+          "latin": " shita ni"
+        }
+      ]
+    },
+    "ドアの 隣に": {
+      "romanization": "doa no tonari ni",
+      "spans": [
+        {
+          "native": "ドアの",
+          "latin": "doa no"
+        },
+        {
+          "native": " 隣に",
+          "latin": " tonari ni"
+        }
+      ]
+    },
+    "鍵は どこに ありますか?": {
+      "romanization": "kagi wa doko ni arimasu ka?",
+      "spans": [
+        {
+          "native": "鍵は",
+          "latin": "kagi wa"
+        },
+        {
+          "native": " どこに",
+          "latin": " doko ni"
+        },
+        {
+          "native": " ありますか",
+          "latin": " arimasu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "皿は どこに ありますか?": {
+      "romanization": "sara wa doko ni arimasu ka?",
+      "spans": [
+        {
+          "native": "皿は",
+          "latin": "sara wa"
+        },
+        {
+          "native": " どこに",
+          "latin": " doko ni"
+        },
+        {
+          "native": " ありますか",
+          "latin": " arimasu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "緑色です.": {
+      "romanization": "midoriiro desu.",
+      "spans": [
+        {
+          "native": "緑色です",
+          "latin": "midoriiro desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "テーブルの 下に あります.": {
+      "romanization": "tēburu no shita ni arimasu.",
+      "spans": [
+        {
+          "native": "テーブルの",
+          "latin": "tēburu no"
+        },
+        {
+          "native": " 下に",
+          "latin": " shita ni"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "いいえ, テーブルの 下に あります.": {
+      "romanization": "iie, tēburu no shita ni arimasu.",
+      "spans": [
+        {
+          "native": "いいえ",
+          "latin": "iie"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " テーブルの",
+          "latin": " tēburu no"
+        },
+        {
+          "native": " 下に",
+          "latin": " shita ni"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "黄色い 皿は テーブルの 上に あります.": {
+      "romanization": "kiiroi sara wa tēburu no ue ni arimasu.",
+      "spans": [
+        {
+          "native": "黄色い",
+          "latin": "kiiroi"
+        },
+        {
+          "native": " 皿は",
+          "latin": " sara wa"
+        },
+        {
+          "native": " テーブルの",
+          "latin": " tēburu no"
+        },
+        {
+          "native": " 上に",
+          "latin": " ue ni"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "緑色の かばんは テーブルの 下に あります.": {
+      "romanization": "midoriiro no kaban wa tēburu no shita ni arimasu.",
+      "spans": [
+        {
+          "native": "緑色の",
+          "latin": "midoriiro no"
+        },
+        {
+          "native": " かばんは",
+          "latin": " kaban wa"
+        },
+        {
+          "native": " テーブルの",
+          "latin": " tēburu no"
+        },
+        {
+          "native": " 下に",
+          "latin": " shita ni"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "赤い 電話は ドアの 隣に あります.": {
+      "romanization": "akai denwa wa doa no tonari ni arimasu.",
+      "spans": [
+        {
+          "native": "赤い",
+          "latin": "akai"
+        },
+        {
+          "native": " 電話は",
+          "latin": " denwa wa"
+        },
+        {
+          "native": " ドアの",
+          "latin": " doa no"
+        },
+        {
+          "native": " 隣に",
+          "latin": " tonari ni"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "皿は 何 枚 ありますか?": {
+      "romanization": "sara wa nanmai arimasu ka?",
+      "spans": [
+        {
+          "native": "皿は",
+          "latin": "sara wa"
+        },
+        {
+          "native": " 何 枚",
+          "latin": " nanmai"
+        },
+        {
+          "native": " ありますか",
+          "latin": " arimasu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "皿 三 枚": {
+      "romanization": "sara sanmai",
+      "spans": [
+        {
+          "native": "皿",
+          "latin": "sara"
+        },
+        {
+          "native": " 三 枚",
+          "latin": " sanmai"
+        }
+      ]
+    },
+    "スプーン 二 本": {
+      "romanization": "supūn nihon",
+      "spans": [
+        {
+          "native": "スプーン",
+          "latin": "supūn"
+        },
+        {
+          "native": " 二 本",
+          "latin": " nihon"
+        }
+      ]
+    },
+    "フォーク 三 本": {
+      "romanization": "fōku sanbon",
+      "spans": [
+        {
+          "native": "フォーク",
+          "latin": "fōku"
+        },
+        {
+          "native": " 三 本",
+          "latin": " sanbon"
+        }
+      ]
+    },
+    "鍵 一 本": {
+      "romanization": "kagi ippon",
+      "spans": [
+        {
+          "native": "鍵",
+          "latin": "kagi"
+        },
+        {
+          "native": " 一 本",
+          "latin": " ippon"
+        }
+      ]
+    },
+    "かばんは 何 個 ありますか?": {
+      "romanization": "kaban wa nanko arimasu ka?",
+      "spans": [
+        {
+          "native": "かばんは",
+          "latin": "kaban wa"
+        },
+        {
+          "native": " 何 個",
+          "latin": " nanko"
+        },
+        {
+          "native": " ありますか",
+          "latin": " arimasu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "電話 二 台": {
+      "romanization": "denwa nidai",
+      "spans": [
+        {
+          "native": "電話",
+          "latin": "denwa"
+        },
+        {
+          "native": " 二 台",
+          "latin": " nidai"
+        }
+      ]
+    },
+    "コップ 二 個": {
+      "romanization": "koppu niko",
+      "spans": [
+        {
+          "native": "コップ",
+          "latin": "koppu"
+        },
+        {
+          "native": " 二 個",
+          "latin": " niko"
+        }
+      ]
+    },
+    "皿が 四 枚 あります.": {
+      "romanization": "sara ga yonmai arimasu.",
+      "spans": [
+        {
+          "native": "皿が",
+          "latin": "sara ga"
+        },
+        {
+          "native": " 四 枚",
+          "latin": " yonmai"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "鍵が 六 本 あります.": {
+      "romanization": "kagi ga roppon arimasu.",
+      "spans": [
+        {
+          "native": "鍵が",
+          "latin": "kagi ga"
+        },
+        {
+          "native": " 六 本",
+          "latin": " roppon"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "フォークが 七 本 あります.": {
+      "romanization": "fōku ga nanahon arimasu.",
+      "spans": [
+        {
+          "native": "フォークが",
+          "latin": "fōku ga"
+        },
+        {
+          "native": " 七 本",
+          "latin": " nanahon"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "スプーンは 何 本 ありますか?": {
+      "romanization": "supūn wa nanbon arimasu ka?",
+      "spans": [
+        {
+          "native": "スプーンは",
+          "latin": "supūn wa"
+        },
+        {
+          "native": " 何 本",
+          "latin": " nanbon"
+        },
+        {
+          "native": " ありますか",
+          "latin": " arimasu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "電話が 十 台 あります.": {
+      "romanization": "denwa ga jūdai arimasu.",
+      "spans": [
+        {
+          "native": "電話が",
+          "latin": "denwa ga"
+        },
+        {
+          "native": " 十 台",
+          "latin": " jūdai"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "ドアが 五 枚 あります.": {
+      "romanization": "doa ga gomai arimasu.",
+      "spans": [
+        {
+          "native": "ドアが",
+          "latin": "doa ga"
+        },
+        {
+          "native": " 五 枚",
+          "latin": " gomai"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "本が 三 冊 あります.": {
+      "romanization": "hon ga sansatsu arimasu.",
+      "spans": [
+        {
+          "native": "本が",
+          "latin": "hon ga"
+        },
+        {
+          "native": " 三 冊",
+          "latin": " sansatsu"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "ドアは 何 枚 ありますか?": {
+      "romanization": "doa wa nanmai arimasu ka?",
+      "spans": [
+        {
+          "native": "ドアは",
+          "latin": "doa wa"
+        },
+        {
+          "native": " 何 枚",
+          "latin": " nanmai"
+        },
+        {
+          "native": " ありますか",
+          "latin": " arimasu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "窓が 三 つ あります.": {
+      "romanization": "mado ga mittsu arimasu.",
+      "spans": [
+        {
+          "native": "窓が",
+          "latin": "mado ga"
+        },
+        {
+          "native": " 三 つ",
+          "latin": " mittsu"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "皿は スプーンより 多いです.": {
+      "romanization": "sara wa supūn yori ōi desu.",
+      "spans": [
+        {
+          "native": "皿は",
+          "latin": "sara wa"
+        },
+        {
+          "native": " スプーンより",
+          "latin": " supūn yori"
+        },
+        {
+          "native": " 多いです",
+          "latin": " ōi desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "スプーンは 皿より 少ないです.": {
+      "romanization": "supūn wa sara yori sukunai desu.",
+      "spans": [
+        {
+          "native": "スプーンは",
+          "latin": "supūn wa"
+        },
+        {
+          "native": " 皿より",
+          "latin": " sara yori"
+        },
+        {
+          "native": " 少ないです",
+          "latin": " sukunai desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "いいえ, 鍵が 四 本 あります.": {
+      "romanization": "iie, kagi ga yonhon arimasu.",
+      "spans": [
+        {
+          "native": "いいえ",
+          "latin": "iie"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 鍵が",
+          "latin": " kagi ga"
+        },
+        {
+          "native": " 四 本",
+          "latin": " yonhon"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "鍵が 二 本 あります.": {
+      "romanization": "kagi ga nihon arimasu.",
+      "spans": [
+        {
+          "native": "鍵が",
+          "latin": "kagi ga"
+        },
+        {
+          "native": " 二 本",
+          "latin": " nihon"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "皿が 六 枚, スプーンが 二 本 あります.": {
+      "romanization": "sara ga rokumai, supūn ga nihon arimasu.",
+      "spans": [
+        {
+          "native": "皿が",
+          "latin": "sara ga"
+        },
+        {
+          "native": " 六 枚",
+          "latin": " rokumai"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " スプーンが",
+          "latin": " supūn ga"
+        },
+        {
+          "native": " 二 本",
+          "latin": " nihon"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "かばんが 五 個, 電話が 三 台 あります.": {
+      "romanization": "kaban ga goko, denwa ga sandai arimasu.",
+      "spans": [
+        {
+          "native": "かばんが",
+          "latin": "kaban ga"
+        },
+        {
+          "native": " 五 個",
+          "latin": " goko"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 電話が",
+          "latin": " denwa ga"
+        },
+        {
+          "native": " 三 台",
+          "latin": " sandai"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "かばんは 電話より 多いです.": {
+      "romanization": "kaban wa denwa yori ōi desu.",
+      "spans": [
+        {
+          "native": "かばんは",
+          "latin": "kaban wa"
+        },
+        {
+          "native": " 電話より",
+          "latin": " denwa yori"
+        },
+        {
+          "native": " 多いです",
+          "latin": " ōi desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "あなたの 物ですか?": {
+      "romanization": "anata no mono desu ka?",
+      "spans": [
+        {
+          "native": "あなたの",
+          "latin": "anata no"
+        },
+        {
+          "native": " 物ですか",
+          "latin": " mono desu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "これは 私の 物ではありません.": {
+      "romanization": "kore wa watashi no mono de wa arimasen.",
+      "spans": [
+        {
+          "native": "これは",
+          "latin": "kore wa"
+        },
+        {
+          "native": " 私の",
+          "latin": " watashi no"
+        },
+        {
+          "native": " 物ではありません",
+          "latin": " mono de wa arimasen"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "これは 私の 物です.": {
+      "romanization": "kore wa watashi no mono desu.",
+      "spans": [
+        {
+          "native": "これは",
+          "latin": "kore wa"
+        },
+        {
+          "native": " 私の",
+          "latin": " watashi no"
+        },
+        {
+          "native": " 物です",
+          "latin": " mono desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "皿は 私の 物です.": {
+      "romanization": "sara wa watashi no mono desu.",
+      "spans": [
+        {
+          "native": "皿は",
+          "latin": "sara wa"
+        },
+        {
+          "native": " 私の",
+          "latin": " watashi no"
+        },
+        {
+          "native": " 物です",
+          "latin": " mono desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "鍵は 私の 物です.": {
+      "romanization": "kagi wa watashi no mono desu.",
+      "spans": [
+        {
+          "native": "鍵は",
+          "latin": "kagi wa"
+        },
+        {
+          "native": " 私の",
+          "latin": " watashi no"
+        },
+        {
+          "native": " 物です",
+          "latin": " mono desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "電話は 私の 物です.": {
+      "romanization": "denwa wa watashi no mono desu.",
+      "spans": [
+        {
+          "native": "電話は",
+          "latin": "denwa wa"
+        },
+        {
+          "native": " 私の",
+          "latin": " watashi no"
+        },
+        {
+          "native": " 物です",
+          "latin": " mono desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "私の 皿です.": {
+      "romanization": "watashi no sara desu.",
+      "spans": [
+        {
+          "native": "私の",
+          "latin": "watashi no"
+        },
+        {
+          "native": " 皿です",
+          "latin": " sara desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "アナの かばんです.": {
+      "romanization": "Ana no kaban desu.",
+      "spans": [
+        {
+          "native": "アナの",
+          "latin": "Ana no"
+        },
+        {
+          "native": " かばんです",
+          "latin": " kaban desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "レオの ドアです.": {
+      "romanization": "Reo no doa desu.",
+      "spans": [
+        {
+          "native": "レオの",
+          "latin": "Reo no"
+        },
+        {
+          "native": " ドアです",
+          "latin": " doa desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "本は 誰の 物ですか?": {
+      "romanization": "hon wa dare no mono desu ka?",
+      "spans": [
+        {
+          "native": "本は",
+          "latin": "hon wa"
+        },
+        {
+          "native": " 誰の",
+          "latin": " dare no"
+        },
+        {
+          "native": " 物ですか",
+          "latin": " mono desu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "私の 電話です.": {
+      "romanization": "watashi no denwa desu.",
+      "spans": [
+        {
+          "native": "私の",
+          "latin": "watashi no"
+        },
+        {
+          "native": " 電話です",
+          "latin": " denwa desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "私の かばんは 緑色です.": {
+      "romanization": "watashi no kaban wa midoriiro desu.",
+      "spans": [
+        {
+          "native": "私の",
+          "latin": "watashi no"
+        },
+        {
+          "native": " かばんは",
+          "latin": " kaban wa"
+        },
+        {
+          "native": " 緑色です",
+          "latin": " midoriiro desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "私の 鍵は テーブルの 上に あります.": {
+      "romanization": "watashi no kagi wa tēburu no ue ni arimasu.",
+      "spans": [
+        {
+          "native": "私の",
+          "latin": "watashi no"
+        },
+        {
+          "native": " 鍵は",
+          "latin": " kagi wa"
+        },
+        {
+          "native": " テーブルの",
+          "latin": " tēburu no"
+        },
+        {
+          "native": " 上に",
+          "latin": " ue ni"
+        },
+        {
+          "native": " あります",
+          "latin": " arimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "いいえ, 皿は アナの 物です.": {
+      "romanization": "iie, sara wa Ana no mono desu.",
+      "spans": [
+        {
+          "native": "いいえ",
+          "latin": "iie"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 皿は",
+          "latin": " sara wa"
+        },
+        {
+          "native": " アナの",
+          "latin": " Ana no"
+        },
+        {
+          "native": " 物です",
+          "latin": " mono desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "はい, 私の ドアです.": {
+      "romanization": "hai, watashi no doa desu.",
+      "spans": [
+        {
+          "native": "はい",
+          "latin": "hai"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 私の",
+          "latin": " watashi no"
+        },
+        {
+          "native": " ドアです",
+          "latin": " doa desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "ドアは あなたの 物です.": {
+      "romanization": "doa wa anata no mono desu.",
+      "spans": [
+        {
+          "native": "ドアは",
+          "latin": "doa wa"
+        },
+        {
+          "native": " あなたの",
+          "latin": " anata no"
+        },
+        {
+          "native": " 物です",
+          "latin": " mono desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "私の 電話は 赤いです.": {
+      "romanization": "watashi no denwa wa akai desu.",
+      "spans": [
+        {
+          "native": "私の",
+          "latin": "watashi no"
+        },
+        {
+          "native": " 電話は",
+          "latin": " denwa wa"
+        },
+        {
+          "native": " 赤いです",
+          "latin": " akai desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "私は 皿が 好きです.": {
+      "romanization": "watashi wa sara ga suki desu.",
+      "spans": [
+        {
+          "native": "私は",
+          "latin": "watashi wa"
+        },
+        {
+          "native": " 皿が",
+          "latin": " sara ga"
+        },
+        {
+          "native": " 好きです",
+          "latin": " suki desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "私は かばんが 好きではありません.": {
+      "romanization": "watashi wa kaban ga suki de wa arimasen.",
+      "spans": [
+        {
+          "native": "私は",
+          "latin": "watashi wa"
+        },
+        {
+          "native": " かばんが",
+          "latin": " kaban ga"
+        },
+        {
+          "native": " 好きではありません",
+          "latin": " suki de wa arimasen"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "私は 皿が 好きではありません.": {
+      "romanization": "watashi wa sara ga suki de wa arimasen.",
+      "spans": [
+        {
+          "native": "私は",
+          "latin": "watashi wa"
+        },
+        {
+          "native": " 皿が",
+          "latin": " sara ga"
+        },
+        {
+          "native": " 好きではありません",
+          "latin": " suki de wa arimasen"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "ドアが 好きですか?": {
+      "romanization": "doa ga suki desu ka?",
+      "spans": [
+        {
+          "native": "ドアが",
+          "latin": "doa ga"
+        },
+        {
+          "native": " 好きですか",
+          "latin": " suki desu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "鍵を 選びます.": {
+      "romanization": "kagi o erabimasu.",
+      "spans": [
+        {
+          "native": "鍵を",
+          "latin": "kagi o"
+        },
+        {
+          "native": " 選びます",
+          "latin": " erabimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "私は 電話が 好きです.": {
+      "romanization": "watashi wa denwa ga suki desu.",
+      "spans": [
+        {
+          "native": "私は",
+          "latin": "watashi wa"
+        },
+        {
+          "native": " 電話が",
+          "latin": " denwa ga"
+        },
+        {
+          "native": " 好きです",
+          "latin": " suki desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "アナは 皿が 好きではありません.": {
+      "romanization": "Ana wa sara ga suki de wa arimasen.",
+      "spans": [
+        {
+          "native": "アナは",
+          "latin": "Ana wa"
+        },
+        {
+          "native": " 皿が",
+          "latin": " sara ga"
+        },
+        {
+          "native": " 好きではありません",
+          "latin": " suki de wa arimasen"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "レオは ドアが 好きです.": {
+      "romanization": "Reo wa doa ga suki desu.",
+      "spans": [
+        {
+          "native": "レオは",
+          "latin": "Reo wa"
+        },
+        {
+          "native": " ドアが",
+          "latin": " doa ga"
+        },
+        {
+          "native": " 好きです",
+          "latin": " suki desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "私は かばんが 好きです.": {
+      "romanization": "watashi wa kaban ga suki desu.",
+      "spans": [
+        {
+          "native": "私は",
+          "latin": "watashi wa"
+        },
+        {
+          "native": " かばんが",
+          "latin": " kaban ga"
+        },
+        {
+          "native": " 好きです",
+          "latin": " suki desu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "アナは 鍵が 好きですか?": {
+      "romanization": "Ana wa kagi ga suki desu ka?",
+      "spans": [
+        {
+          "native": "アナは",
+          "latin": "Ana wa"
+        },
+        {
+          "native": " 鍵が",
+          "latin": " kagi ga"
+        },
+        {
+          "native": " 好きですか",
+          "latin": " suki desu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "皿が 好きですか?": {
+      "romanization": "sara ga suki desu ka?",
+      "spans": [
+        {
+          "native": "皿が",
+          "latin": "sara ga"
+        },
+        {
+          "native": " 好きですか",
+          "latin": " suki desu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "アナは 電話が 好きではありません.": {
+      "romanization": "Ana wa denwa ga suki de wa arimasen.",
+      "spans": [
+        {
+          "native": "アナは",
+          "latin": "Ana wa"
+        },
+        {
+          "native": " 電話が",
+          "latin": " denwa ga"
+        },
+        {
+          "native": " 好きではありません",
+          "latin": " suki de wa arimasen"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "大きい サイズの お茶を 二 杯 ください.": {
+      "romanization": "ōkii saizu no ocha o nihai kudasai.",
+      "spans": [
+        {
+          "native": "大きい",
+          "latin": "ōkii"
+        },
+        {
+          "native": " サイズの",
+          "latin": " saizu no"
+        },
+        {
+          "native": " お茶を",
+          "latin": " ocha o"
+        },
+        {
+          "native": " 二 杯",
+          "latin": " nihai"
+        },
+        {
+          "native": " ください",
+          "latin": " kudasai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "りんごを 三 個 ください.": {
+      "romanization": "ringo o sanko kudasai.",
+      "spans": [
+        {
+          "native": "りんごを",
+          "latin": "ringo o"
+        },
+        {
+          "native": " 三 個",
+          "latin": " sanko"
+        },
+        {
+          "native": " ください",
+          "latin": " kudasai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "本を 一 冊 貸してください.": {
+      "romanization": "hon o issatsu kashite kudasai.",
+      "spans": [
+        {
+          "native": "本を",
+          "latin": "hon o"
+        },
+        {
+          "native": " 一 冊",
+          "latin": " issatsu"
+        },
+        {
+          "native": " 貸してください",
+          "latin": " kashite kudasai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "皿を 一 枚 取ってください.": {
+      "romanization": "sara o ichimai totte kudasai.",
+      "spans": [
+        {
+          "native": "皿を",
+          "latin": "sara o"
+        },
+        {
+          "native": " 一 枚",
+          "latin": " ichimai"
+        },
+        {
+          "native": " 取ってください",
+          "latin": " totte kudasai"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "大きい サイズの お茶を 二 杯": {
+      "romanization": "ōkii saizu no ocha o nihai",
+      "spans": [
+        {
+          "native": "大きい",
+          "latin": "ōkii"
+        },
+        {
+          "native": " サイズの",
+          "latin": " saizu no"
+        },
+        {
+          "native": " お茶を",
+          "latin": " ocha o"
+        },
+        {
+          "native": " 二 杯",
+          "latin": " nihai"
+        }
+      ]
+    },
+    "温かいのですか, 冷たいのですか?": {
+      "romanization": "atatakai no desu ka, tsumetai no desu ka?",
+      "spans": [
+        {
+          "native": "温かいのですか",
+          "latin": "atatakai no desu ka"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 冷たいのですか",
+          "latin": " tsumetai no desu ka"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "温かいので お願いします.": {
+      "romanization": "atatakai no de onegai shimasu.",
+      "spans": [
+        {
+          "native": "温かいので",
+          "latin": "atatakai no de"
+        },
+        {
+          "native": " お願いします",
+          "latin": " onegai shimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "店内で お願いします.": {
+      "romanization": "tennai de onegai shimasu.",
+      "spans": [
+        {
+          "native": "店内で",
+          "latin": "tennai de"
+        },
+        {
+          "native": " お願いします",
+          "latin": " onegai shimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "りんご 三 個で, 大きいのですね?": {
+      "romanization": "ringo sanko de, ōkii no desu ne?",
+      "spans": [
+        {
+          "native": "りんご",
+          "latin": "ringo"
+        },
+        {
+          "native": " 三 個で",
+          "latin": " sanko de"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 大きいのですね",
+          "latin": " ōkii no desu ne"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "小さい サイズの お茶 二 杯で, 温かいのですね?": {
+      "romanization": "chiisai saizu no ocha nihai de, atatakai no desu ne?",
+      "spans": [
+        {
+          "native": "小さい",
+          "latin": "chiisai"
+        },
+        {
+          "native": " サイズの",
+          "latin": " saizu no"
+        },
+        {
+          "native": " お茶",
+          "latin": " ocha"
+        },
+        {
+          "native": " 二 杯で",
+          "latin": " nihai de"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 温かいのですね",
+          "latin": " atatakai no desu ne"
+        },
+        {
+          "native": "?",
+          "latin": "?"
+        }
+      ]
+    },
+    "はい, その 内容で お願いします.": {
+      "romanization": "hai, sono naiyō de onegai shimasu.",
+      "spans": [
+        {
+          "native": "はい",
+          "latin": "hai"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " その",
+          "latin": " sono"
+        },
+        {
+          "native": " 内容で",
+          "latin": " naiyō de"
+        },
+        {
+          "native": " お願いします",
+          "latin": " onegai shimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "いいえ, 二 杯で お願いします.": {
+      "romanization": "iie, nihai de onegai shimasu.",
+      "spans": [
+        {
+          "native": "いいえ",
+          "latin": "iie"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 二 杯で",
+          "latin": " nihai de"
+        },
+        {
+          "native": " お願いします",
+          "latin": " onegai shimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "いいえ, 店内で お願いします.": {
+      "romanization": "iie, tennai de onegai shimasu.",
+      "spans": [
+        {
+          "native": "いいえ",
+          "latin": "iie"
+        },
+        {
+          "native": ",",
+          "latin": ","
+        },
+        {
+          "native": " 店内で",
+          "latin": " tennai de"
+        },
+        {
+          "native": " お願いします",
+          "latin": " onegai shimasu"
+        },
+        {
+          "native": ".",
+          "latin": "."
+        }
+      ]
+    },
+    "本です": {
+      "romanization": "hon desu",
+      "spans": [
+        {
+          "native": "本です",
+          "latin": "hon desu"
+        }
+      ]
+    },
+    "ドアです": {
+      "romanization": "doa desu",
+      "spans": [
+        {
+          "native": "ドアです",
+          "latin": "doa desu"
+        }
+      ]
+    },
+    "フォークです": {
+      "romanization": "fōku desu",
+      "spans": [
+        {
+          "native": "フォークです",
+          "latin": "fōku desu"
+        }
+      ]
+    },
+    "皿です": {
+      "romanization": "sara desu",
+      "spans": [
+        {
+          "native": "皿です",
+          "latin": "sara desu"
+        }
+      ]
+    },
+    "かばんです": {
+      "romanization": "kaban desu",
+      "spans": [
+        {
+          "native": "かばんです",
+          "latin": "kaban desu"
+        }
+      ]
+    },
+    "鍵です": {
+      "romanization": "kagi desu",
+      "spans": [
+        {
+          "native": "鍵です",
+          "latin": "kagi desu"
+        }
+      ]
+    }
+  }
+}

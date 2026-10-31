@@ -1,0 +1,49 @@
+construction_id = "quantity-chunk"
+
+[[examples]]
+example_id = "chunk-two-apples"
+levels = ["A0"]
+purposes = ["matchChunk", "buildChunk"]
+meaning = "two apples"
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:apple", "concept" = "apple" }], "counts" = [{ "fact_id" = "count:book", "object" = "object:book", "quantity" = 5 }, { "fact_id" = "count:cup", "object" = "object:cup", "quantity" = 2 }, { "fact_id" = "count:apple", "object" = "object:apple", "quantity" = 2 }] }
+bindings = { "object" = "object:apple", "count" = "count:apple" }
+truth = true
+labels = []
+sentence = "りんご 二 個"
+translation = "two apples"
+chunks = [{ "text" = "りんご", "join" = "none" }, { "text" = "二", "join" = "space" }, { "text" = "個", "join" = "space" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "chunk-one-apple"
+levels = ["A0"]
+purposes = ["matchChunk"]
+meaning = "one apple"
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:apple", "concept" = "apple" }], "counts" = [{ "fact_id" = "count:book", "object" = "object:book", "quantity" = 5 }, { "fact_id" = "count:cup", "object" = "object:cup", "quantity" = 2 }, { "fact_id" = "count:apple", "object" = "object:apple", "quantity" = 2 }] }
+bindings = { "object" = "object:apple" }
+truth = true
+labels = []
+sentence = "りんご 一 個"
+translation = "one apple"
+chunks = [{ "text" = "りんご", "join" = "none" }, { "text" = "一", "join" = "space" }, { "text" = "個", "join" = "space" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "chunk-two-apples-form"
+levels = ["A0"]
+purposes = ["matchChunk", "buildChunk"]
+sentence = "りんご 二 個."
+correction = "りんご 二 個"
+note = "This slot is a phrase/chunk, not a complete sentence."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "chunk-one-apple-form"
+levels = ["A0"]
+purposes = ["matchChunk"]
+sentence = "りんご 一 個."
+correction = "りんご 一 個"
+note = "This slot is a phrase/chunk, not a complete sentence."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }

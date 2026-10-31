@@ -1,0 +1,1240 @@
+{
+  "terms": [
+    {
+      "term_id": "object-book",
+      "fact_id": "object:book",
+      "source_text": "book",
+      "target_text": "本",
+      "forms": [
+        "本",
+        "本が",
+        "本は",
+        "本を",
+        "本の",
+        "本より",
+        "本も",
+        "本です"
+      ],
+      "forms_by_key": {
+        "bare": "本",
+        "definite": "本",
+        "subject": "本が",
+        "topic": "本は",
+        "object": "本を",
+        "genitive": "本の",
+        "comparison": "本より",
+        "also": "本も",
+        "copula": "本です"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "hon",
+      "linguistic": {
+        "counter": "冊"
+      }
+    },
+    {
+      "term_id": "object-cup",
+      "fact_id": "object:cup",
+      "source_text": "cup",
+      "target_text": "コップ",
+      "forms": [
+        "コップ",
+        "コップが",
+        "コップは",
+        "コップを",
+        "コップの",
+        "コップより",
+        "コップも",
+        "コップです"
+      ],
+      "forms_by_key": {
+        "bare": "コップ",
+        "definite": "コップ",
+        "subject": "コップが",
+        "topic": "コップは",
+        "object": "コップを",
+        "genitive": "コップの",
+        "comparison": "コップより",
+        "also": "コップも",
+        "copula": "コップです"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "koppu",
+      "linguistic": {
+        "counter": "個"
+      }
+    },
+    {
+      "term_id": "object-apple",
+      "fact_id": "object:apple",
+      "source_text": "apple",
+      "target_text": "りんご",
+      "forms": [
+        "りんご",
+        "りんごが",
+        "りんごは",
+        "りんごを",
+        "りんごの",
+        "りんごより",
+        "りんごも",
+        "りんごです"
+      ],
+      "forms_by_key": {
+        "bare": "りんご",
+        "definite": "りんご",
+        "subject": "りんごが",
+        "topic": "りんごは",
+        "object": "りんごを",
+        "genitive": "りんごの",
+        "comparison": "りんごより",
+        "also": "りんごも",
+        "copula": "りんごです"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "ringo",
+      "linguistic": {
+        "counter": "個"
+      }
+    },
+    {
+      "term_id": "object-key",
+      "fact_id": "object:key",
+      "source_text": "key",
+      "target_text": "鍵",
+      "forms": [
+        "鍵",
+        "鍵が",
+        "鍵は",
+        "鍵を",
+        "鍵の",
+        "鍵より",
+        "鍵も",
+        "鍵です"
+      ],
+      "forms_by_key": {
+        "bare": "鍵",
+        "definite": "鍵",
+        "subject": "鍵が",
+        "topic": "鍵は",
+        "object": "鍵を",
+        "genitive": "鍵の",
+        "comparison": "鍵より",
+        "also": "鍵も",
+        "copula": "鍵です"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "kagi",
+      "linguistic": {
+        "counter": "本"
+      }
+    },
+    {
+      "term_id": "object-plate",
+      "fact_id": "object:plate",
+      "source_text": "plate",
+      "target_text": "皿",
+      "forms": [
+        "皿",
+        "皿が",
+        "皿は",
+        "皿を",
+        "皿の",
+        "皿より",
+        "皿も",
+        "皿です"
+      ],
+      "forms_by_key": {
+        "bare": "皿",
+        "definite": "皿",
+        "subject": "皿が",
+        "topic": "皿は",
+        "object": "皿を",
+        "genitive": "皿の",
+        "comparison": "皿より",
+        "also": "皿も",
+        "copula": "皿です"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "sara",
+      "linguistic": {
+        "counter": "枚"
+      }
+    },
+    {
+      "term_id": "object-bottle",
+      "fact_id": "object:bottle",
+      "source_text": "bottle",
+      "target_text": "瓶",
+      "forms": [
+        "瓶",
+        "瓶が",
+        "瓶は",
+        "瓶を",
+        "瓶の",
+        "瓶より",
+        "瓶も",
+        "瓶です"
+      ],
+      "forms_by_key": {
+        "bare": "瓶",
+        "definite": "瓶",
+        "subject": "瓶が",
+        "topic": "瓶は",
+        "object": "瓶を",
+        "genitive": "瓶の",
+        "comparison": "瓶より",
+        "also": "瓶も",
+        "copula": "瓶です"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "bin",
+      "linguistic": {
+        "counter": "本"
+      }
+    },
+    {
+      "term_id": "object-chair",
+      "fact_id": "object:chair",
+      "source_text": "chair",
+      "target_text": "椅子",
+      "forms": [
+        "椅子",
+        "椅子が",
+        "椅子は",
+        "椅子を",
+        "椅子の",
+        "椅子より",
+        "椅子も",
+        "椅子です"
+      ],
+      "forms_by_key": {
+        "bare": "椅子",
+        "definite": "椅子",
+        "subject": "椅子が",
+        "topic": "椅子は",
+        "object": "椅子を",
+        "genitive": "椅子の",
+        "comparison": "椅子より",
+        "also": "椅子も",
+        "copula": "椅子です"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "isu",
+      "linguistic": {
+        "counter": "脚"
+      }
+    },
+    {
+      "term_id": "object-clock",
+      "fact_id": "object:clock",
+      "source_text": "clock",
+      "target_text": "時計",
+      "forms": [
+        "時計",
+        "時計が",
+        "時計は",
+        "時計を",
+        "時計の",
+        "時計より",
+        "時計も",
+        "時計です"
+      ],
+      "forms_by_key": {
+        "bare": "時計",
+        "definite": "時計",
+        "subject": "時計が",
+        "topic": "時計は",
+        "object": "時計を",
+        "genitive": "時計の",
+        "comparison": "時計より",
+        "also": "時計も",
+        "copula": "時計です"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "tokei",
+      "linguistic": {
+        "counter": "個"
+      }
+    },
+    {
+      "term_id": "object-lamp",
+      "fact_id": "object:lamp",
+      "source_text": "lamp",
+      "target_text": "ランプ",
+      "forms": [
+        "ランプ",
+        "ランプが",
+        "ランプは",
+        "ランプを",
+        "ランプの",
+        "ランプより",
+        "ランプも",
+        "ランプです"
+      ],
+      "forms_by_key": {
+        "bare": "ランプ",
+        "definite": "ランプ",
+        "subject": "ランプが",
+        "topic": "ランプは",
+        "object": "ランプを",
+        "genitive": "ランプの",
+        "comparison": "ランプより",
+        "also": "ランプも",
+        "copula": "ランプです"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "ranpu",
+      "linguistic": {
+        "counter": "台"
+      }
+    },
+    {
+      "term_id": "object-coffee",
+      "fact_id": "object:coffee",
+      "source_text": "coffee",
+      "target_text": "コーヒー",
+      "forms": [
+        "コーヒー",
+        "コーヒーが",
+        "コーヒーは",
+        "コーヒーを",
+        "コーヒーの",
+        "コーヒーより",
+        "コーヒーも",
+        "コーヒーです"
+      ],
+      "forms_by_key": {
+        "bare": "コーヒー",
+        "definite": "コーヒー",
+        "subject": "コーヒーが",
+        "topic": "コーヒーは",
+        "object": "コーヒーを",
+        "genitive": "コーヒーの",
+        "comparison": "コーヒーより",
+        "also": "コーヒーも",
+        "copula": "コーヒーです"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "kōhī",
+      "linguistic": {
+        "counter": "杯"
+      }
+    },
+    {
+      "term_id": "object-pen",
+      "fact_id": "object:pen",
+      "source_text": "pen",
+      "target_text": "ペン",
+      "forms": [
+        "ペン",
+        "ペンが",
+        "ペンは",
+        "ペンを",
+        "ペンの",
+        "ペンより",
+        "ペンも",
+        "ペンです"
+      ],
+      "forms_by_key": {
+        "bare": "ペン",
+        "definite": "ペン",
+        "subject": "ペンが",
+        "topic": "ペンは",
+        "object": "ペンを",
+        "genitive": "ペンの",
+        "comparison": "ペンより",
+        "also": "ペンも",
+        "copula": "ペンです"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "pen",
+      "linguistic": {
+        "counter": "本"
+      }
+    },
+    {
+      "term_id": "attribute-cup-red",
+      "fact_id": "attribute:cup-red",
+      "source_text": "red",
+      "target_text": "赤い",
+      "forms": [
+        "赤い",
+        "赤いです",
+        "赤"
+      ],
+      "forms_by_key": {
+        "predicative": "赤い",
+        "modifier": "赤い",
+        "name": "赤",
+        "polite": "赤いです"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "akai"
+    },
+    {
+      "term_id": "attribute-plate-white",
+      "fact_id": "attribute:plate-white",
+      "source_text": "white",
+      "target_text": "白い",
+      "forms": [
+        "白",
+        "白いです",
+        "白い"
+      ],
+      "forms_by_key": {
+        "predicative": "白い",
+        "modifier": "白い",
+        "name": "白",
+        "polite": "白いです"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "shiroi"
+    },
+    {
+      "term_id": "object-shoe",
+      "fact_id": "object:shoe",
+      "source_text": "shoe",
+      "target_text": "靴",
+      "forms": [
+        "靴",
+        "靴が",
+        "靴は",
+        "靴を",
+        "靴の",
+        "靴より",
+        "靴も",
+        "靴です"
+      ],
+      "forms_by_key": {
+        "bare": "靴",
+        "definite": "靴",
+        "subject": "靴が",
+        "topic": "靴は",
+        "object": "靴を",
+        "genitive": "靴の",
+        "comparison": "靴より",
+        "also": "靴も",
+        "copula": "靴です"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "kutsu",
+      "linguistic": {
+        "counter": "個"
+      }
+    },
+    {
+      "term_id": "relation-shoe-under-chair",
+      "fact_id": "relation:shoe-under-chair",
+      "source_text": "under",
+      "target_text": "下に",
+      "forms": [
+        "下に"
+      ],
+      "forms_by_key": {
+        "default": "下に"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "shita ni"
+    },
+    {
+      "term_id": "object-ball",
+      "fact_id": "object:ball",
+      "source_text": "ball",
+      "target_text": "ボール",
+      "forms": [
+        "ボール",
+        "ボールが",
+        "ボールは",
+        "ボールを",
+        "ボールの",
+        "ボールより",
+        "ボールも",
+        "ボールです"
+      ],
+      "forms_by_key": {
+        "bare": "ボール",
+        "definite": "ボール",
+        "subject": "ボールが",
+        "topic": "ボールは",
+        "object": "ボールを",
+        "genitive": "ボールの",
+        "comparison": "ボールより",
+        "also": "ボールも",
+        "copula": "ボールです"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "bōru",
+      "linguistic": {
+        "counter": "個"
+      }
+    },
+    {
+      "term_id": "object-bag",
+      "fact_id": "object:bag",
+      "source_text": "bag",
+      "target_text": "かばん",
+      "forms": [
+        "かばん",
+        "かばんが",
+        "かばんは",
+        "かばんを",
+        "かばんの",
+        "かばんより",
+        "かばんも",
+        "かばんです"
+      ],
+      "forms_by_key": {
+        "bare": "かばん",
+        "definite": "かばん",
+        "subject": "かばんが",
+        "topic": "かばんは",
+        "object": "かばんを",
+        "genitive": "かばんの",
+        "comparison": "かばんより",
+        "also": "かばんも",
+        "copula": "かばんです"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "kaban",
+      "linguistic": {
+        "counter": "個"
+      }
+    },
+    {
+      "term_id": "object-table",
+      "fact_id": "object:table",
+      "source_text": "table",
+      "target_text": "テーブル",
+      "forms": [
+        "テーブル",
+        "テーブルが",
+        "テーブルは",
+        "テーブルを",
+        "テーブルの",
+        "テーブルより",
+        "テーブルも",
+        "テーブルです"
+      ],
+      "forms_by_key": {
+        "bare": "テーブル",
+        "definite": "テーブル",
+        "subject": "テーブルが",
+        "topic": "テーブルは",
+        "object": "テーブルを",
+        "genitive": "テーブルの",
+        "comparison": "テーブルより",
+        "also": "テーブルも",
+        "copula": "テーブルです"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "tēburu",
+      "linguistic": {
+        "counter": "台"
+      }
+    },
+    {
+      "term_id": "relation-cup-on-table",
+      "fact_id": "relation:cup-on-table",
+      "source_text": "on",
+      "target_text": "上に",
+      "forms": [
+        "上に"
+      ],
+      "forms_by_key": {
+        "default": "上に"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "ue ni"
+    },
+    {
+      "term_id": "object-window",
+      "fact_id": "object:window",
+      "source_text": "window",
+      "target_text": "窓",
+      "forms": [
+        "窓",
+        "窓が",
+        "窓は",
+        "窓を",
+        "窓の",
+        "窓より",
+        "窓も",
+        "窓です"
+      ],
+      "forms_by_key": {
+        "bare": "窓",
+        "definite": "窓",
+        "subject": "窓が",
+        "topic": "窓は",
+        "object": "窓を",
+        "genitive": "窓の",
+        "comparison": "窓より",
+        "also": "窓も",
+        "copula": "窓です"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "mado",
+      "linguistic": {
+        "counter": "つ"
+      }
+    },
+    {
+      "term_id": "relation-cup-next-to-window",
+      "fact_id": "relation:cup-next_to-window",
+      "source_text": "next_to",
+      "target_text": "隣に",
+      "forms": [
+        "隣に"
+      ],
+      "forms_by_key": {
+        "default": "隣に"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "tonari ni"
+    },
+    {
+      "term_id": "attribute-book-green",
+      "fact_id": "attribute:book-green",
+      "source_text": "green",
+      "target_text": "緑色",
+      "forms": [
+        "緑色",
+        "緑色です",
+        "緑色の"
+      ],
+      "forms_by_key": {
+        "predicative": "緑色",
+        "modifier": "緑色の",
+        "name": "緑色",
+        "polite": "緑色です"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "midoriiro"
+    },
+    {
+      "term_id": "attribute-shoe-black",
+      "fact_id": "attribute:shoe-black",
+      "source_text": "black",
+      "target_text": "黒い",
+      "forms": [
+        "黒",
+        "黒い",
+        "黒いです"
+      ],
+      "forms_by_key": {
+        "predicative": "黒い",
+        "modifier": "黒い",
+        "name": "黒",
+        "polite": "黒いです"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "kuroi"
+    },
+    {
+      "term_id": "attribute-lamp-blue",
+      "fact_id": "attribute:lamp-blue",
+      "source_text": "blue",
+      "target_text": "青い",
+      "forms": [
+        "青いです",
+        "青",
+        "青い"
+      ],
+      "forms_by_key": {
+        "predicative": "青い",
+        "modifier": "青い",
+        "name": "青",
+        "polite": "青いです"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "aoi"
+    },
+    {
+      "term_id": "attribute-apple-yellow",
+      "fact_id": "attribute:apple-yellow",
+      "source_text": "yellow",
+      "target_text": "黄色い",
+      "forms": [
+        "黄色いです",
+        "黄色",
+        "黄色い"
+      ],
+      "forms_by_key": {
+        "predicative": "黄色い",
+        "modifier": "黄色い",
+        "name": "黄色",
+        "polite": "黄色いです"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "kiiroi"
+    },
+    {
+      "term_id": "relation-lamp-next-to-book",
+      "fact_id": "relation:lamp-next_to-book",
+      "source_text": "next_to",
+      "target_text": "隣に",
+      "forms": [
+        "隣に"
+      ],
+      "forms_by_key": {
+        "default": "隣に"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "tonari ni"
+    },
+    {
+      "term_id": "object-door",
+      "fact_id": "object:door",
+      "source_text": "door",
+      "target_text": "ドア",
+      "forms": [
+        "ドア",
+        "ドアが",
+        "ドアは",
+        "ドアを",
+        "ドアの",
+        "ドアより",
+        "ドアも",
+        "ドアです"
+      ],
+      "forms_by_key": {
+        "bare": "ドア",
+        "definite": "ドア",
+        "subject": "ドアが",
+        "topic": "ドアは",
+        "object": "ドアを",
+        "genitive": "ドアの",
+        "comparison": "ドアより",
+        "also": "ドアも",
+        "copula": "ドアです"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "doa",
+      "linguistic": {
+        "counter": "枚"
+      }
+    },
+    {
+      "term_id": "object-phone",
+      "fact_id": "object:phone",
+      "source_text": "phone",
+      "target_text": "電話",
+      "forms": [
+        "電話",
+        "電話が",
+        "電話は",
+        "電話を",
+        "電話の",
+        "電話より",
+        "電話も",
+        "電話です"
+      ],
+      "forms_by_key": {
+        "bare": "電話",
+        "definite": "電話",
+        "subject": "電話が",
+        "topic": "電話は",
+        "object": "電話を",
+        "genitive": "電話の",
+        "comparison": "電話より",
+        "also": "電話も",
+        "copula": "電話です"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "denwa",
+      "linguistic": {
+        "counter": "台"
+      }
+    },
+    {
+      "term_id": "object-fork",
+      "fact_id": "object:fork",
+      "source_text": "fork",
+      "target_text": "フォーク",
+      "forms": [
+        "フォーク",
+        "フォークが",
+        "フォークは",
+        "フォークを",
+        "フォークの",
+        "フォークより",
+        "フォークも",
+        "フォークです"
+      ],
+      "forms_by_key": {
+        "bare": "フォーク",
+        "definite": "フォーク",
+        "subject": "フォークが",
+        "topic": "フォークは",
+        "object": "フォークを",
+        "genitive": "フォークの",
+        "comparison": "フォークより",
+        "also": "フォークも",
+        "copula": "フォークです"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "fōku",
+      "linguistic": {
+        "counter": "本"
+      }
+    },
+    {
+      "term_id": "attribute-phone-red",
+      "fact_id": "attribute:phone-red",
+      "source_text": "red",
+      "target_text": "赤い",
+      "forms": [
+        "赤い",
+        "赤いです",
+        "赤"
+      ],
+      "forms_by_key": {
+        "predicative": "赤い",
+        "modifier": "赤い",
+        "name": "赤",
+        "polite": "赤いです"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "akai"
+    },
+    {
+      "term_id": "attribute-door-red",
+      "fact_id": "attribute:door-red",
+      "source_text": "red",
+      "target_text": "赤い",
+      "forms": [
+        "赤い",
+        "赤いです",
+        "赤"
+      ],
+      "forms_by_key": {
+        "predicative": "赤い",
+        "modifier": "赤い",
+        "name": "赤",
+        "polite": "赤いです"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "akai"
+    },
+    {
+      "term_id": "object-spoon",
+      "fact_id": "object:spoon",
+      "source_text": "spoon",
+      "target_text": "スプーン",
+      "forms": [
+        "スプーン",
+        "スプーンが",
+        "スプーンは",
+        "スプーンを",
+        "スプーンの",
+        "スプーンより",
+        "スプーンも",
+        "スプーンです"
+      ],
+      "forms_by_key": {
+        "bare": "スプーン",
+        "definite": "スプーン",
+        "subject": "スプーンが",
+        "topic": "スプーンは",
+        "object": "スプーンを",
+        "genitive": "スプーンの",
+        "comparison": "スプーンより",
+        "also": "スプーンも",
+        "copula": "スプーンです"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "supūn",
+      "linguistic": {
+        "counter": "本"
+      }
+    },
+    {
+      "term_id": "attribute-spoon-yellow",
+      "fact_id": "attribute:spoon-yellow",
+      "source_text": "yellow",
+      "target_text": "黄色い",
+      "forms": [
+        "黄色いです",
+        "黄色",
+        "黄色い"
+      ],
+      "forms_by_key": {
+        "predicative": "黄色い",
+        "modifier": "黄色い",
+        "name": "黄色",
+        "polite": "黄色いです"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "kiiroi"
+    },
+    {
+      "term_id": "attribute-door-blue",
+      "fact_id": "attribute:door-blue",
+      "source_text": "blue",
+      "target_text": "青い",
+      "forms": [
+        "青いです",
+        "青",
+        "青い"
+      ],
+      "forms_by_key": {
+        "predicative": "青い",
+        "modifier": "青い",
+        "name": "青",
+        "polite": "青いです"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "aoi"
+    },
+    {
+      "term_id": "attribute-book-red",
+      "fact_id": "attribute:book-red",
+      "source_text": "red",
+      "target_text": "赤い",
+      "forms": [
+        "赤い",
+        "赤いです",
+        "赤"
+      ],
+      "forms_by_key": {
+        "predicative": "赤い",
+        "modifier": "赤い",
+        "name": "赤",
+        "polite": "赤いです"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "akai"
+    },
+    {
+      "term_id": "attribute-plate-yellow",
+      "fact_id": "attribute:plate-yellow",
+      "source_text": "yellow",
+      "target_text": "黄色い",
+      "forms": [
+        "黄色いです",
+        "黄色",
+        "黄色い"
+      ],
+      "forms_by_key": {
+        "predicative": "黄色い",
+        "modifier": "黄色い",
+        "name": "黄色",
+        "polite": "黄色いです"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "kiiroi"
+    },
+    {
+      "term_id": "relation-key-on-table",
+      "fact_id": "relation:key-on-table",
+      "source_text": "on",
+      "target_text": "上に",
+      "forms": [
+        "上に"
+      ],
+      "forms_by_key": {
+        "default": "上に"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "ue ni"
+    },
+    {
+      "term_id": "relation-bag-under-table",
+      "fact_id": "relation:bag-under-table",
+      "source_text": "under",
+      "target_text": "下に",
+      "forms": [
+        "下に"
+      ],
+      "forms_by_key": {
+        "default": "下に"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "shita ni"
+    },
+    {
+      "term_id": "relation-spoon-under-table",
+      "fact_id": "relation:spoon-under-table",
+      "source_text": "under",
+      "target_text": "下に",
+      "forms": [
+        "下に"
+      ],
+      "forms_by_key": {
+        "default": "下に"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "shita ni"
+    },
+    {
+      "term_id": "relation-phone-next-to-door",
+      "fact_id": "relation:phone-next_to-door",
+      "source_text": "next_to",
+      "target_text": "隣に",
+      "forms": [
+        "隣に"
+      ],
+      "forms_by_key": {
+        "default": "隣に"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "tonari ni"
+    },
+    {
+      "term_id": "attribute-bag-green",
+      "fact_id": "attribute:bag-green",
+      "source_text": "green",
+      "target_text": "緑色",
+      "forms": [
+        "緑色",
+        "緑色です",
+        "緑色の"
+      ],
+      "forms_by_key": {
+        "predicative": "緑色",
+        "modifier": "緑色の",
+        "name": "緑色",
+        "polite": "緑色です"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "midoriiro"
+    },
+    {
+      "term_id": "relation-plate-on-table",
+      "fact_id": "relation:plate-on-table",
+      "source_text": "on",
+      "target_text": "上に",
+      "forms": [
+        "上に"
+      ],
+      "forms_by_key": {
+        "default": "上に"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "ue ni"
+    },
+    {
+      "term_id": "object-tea",
+      "fact_id": "object:tea",
+      "source_text": "tea",
+      "target_text": "お茶",
+      "forms": [
+        "お茶",
+        "お茶が",
+        "お茶は",
+        "お茶を",
+        "お茶の",
+        "お茶より",
+        "お茶も",
+        "お茶です"
+      ],
+      "forms_by_key": {
+        "bare": "お茶",
+        "definite": "お茶",
+        "subject": "お茶が",
+        "topic": "お茶は",
+        "object": "お茶を",
+        "genitive": "お茶の",
+        "comparison": "お茶より",
+        "also": "お茶も",
+        "copula": "お茶です"
+      },
+      "part_of_speech": "noun",
+      "provenance": "catalog",
+      "romanization": "ocha",
+      "linguistic": {
+        "counter": "杯"
+      }
+    },
+    {
+      "term_id": "relation-window-next-to-phone",
+      "fact_id": "relation:window-next_to-phone",
+      "source_text": "next_to",
+      "target_text": "隣に",
+      "forms": [
+        "隣に"
+      ],
+      "forms_by_key": {
+        "default": "隣に"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "tonari ni"
+    },
+    {
+      "term_id": "attribute-fork-green",
+      "fact_id": "attribute:fork-green",
+      "source_text": "green",
+      "target_text": "緑色",
+      "forms": [
+        "緑色",
+        "緑色です",
+        "緑色の"
+      ],
+      "forms_by_key": {
+        "predicative": "緑色",
+        "modifier": "緑色の",
+        "name": "緑色",
+        "polite": "緑色です"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "midoriiro"
+    },
+    {
+      "term_id": "attribute-bag-blue",
+      "fact_id": "attribute:bag-blue",
+      "source_text": "blue",
+      "target_text": "青い",
+      "forms": [
+        "青いです",
+        "青",
+        "青い"
+      ],
+      "forms_by_key": {
+        "predicative": "青い",
+        "modifier": "青い",
+        "name": "青",
+        "polite": "青いです"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "aoi"
+    },
+    {
+      "term_id": "attribute-door-yellow",
+      "fact_id": "attribute:door-yellow",
+      "source_text": "yellow",
+      "target_text": "黄色い",
+      "forms": [
+        "黄色いです",
+        "黄色",
+        "黄色い"
+      ],
+      "forms_by_key": {
+        "predicative": "黄色い",
+        "modifier": "黄色い",
+        "name": "黄色",
+        "polite": "黄色いです"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "kiiroi"
+    },
+    {
+      "term_id": "attribute-cup-colour-red",
+      "fact_id": "attribute:cup:colour:red",
+      "source_text": "red",
+      "target_text": "赤い",
+      "forms": [
+        "赤い",
+        "赤いです",
+        "赤"
+      ],
+      "forms_by_key": {
+        "predicative": "赤い",
+        "modifier": "赤い",
+        "name": "赤",
+        "polite": "赤いです"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "akai"
+    },
+    {
+      "term_id": "attribute-book-colour-green",
+      "fact_id": "attribute:book:colour:green",
+      "source_text": "green",
+      "target_text": "緑色",
+      "forms": [
+        "緑色",
+        "緑色です",
+        "緑色の"
+      ],
+      "forms_by_key": {
+        "predicative": "緑色",
+        "modifier": "緑色の",
+        "name": "緑色",
+        "polite": "緑色です"
+      },
+      "part_of_speech": "adjective",
+      "position": "before",
+      "provenance": "catalog",
+      "romanization": "midoriiro"
+    },
+    {
+      "term_id": "relation-cup-table-on",
+      "fact_id": "relation:cup:table:on",
+      "source_text": "on",
+      "target_text": "上に",
+      "forms": [
+        "上に"
+      ],
+      "forms_by_key": {
+        "default": "上に"
+      },
+      "part_of_speech": "preposition",
+      "provenance": "catalog",
+      "romanization": "ue ni"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+construction_id = "quantity-pair"
+version = 1
+summary = "State two confirmed group quantities."
+guidance = "Use firstが NUMBER COUNTER, secondが NUMBER COUNTER あります. e.g. 本が 五 冊, コップが 二 個 あります. Both bound counts and nouns must appear. Select each counter independently and use number-counter readings. Do not add a plural suffix. Use the pack display convention consistently: one ASCII space between phrase units; keep particles/copulas attached to their word (コップは, 本です), separate number and counter (五 冊), and use ASCII . ? , in sentence tasks. This is learning-display spacing, not ordinary Japanese orthography. Supply aligned native/Latin spans; Hepburn uses wa for は, e for へ, o for を, and macrons for long vowels.  With the generic つ series, ten is 十 (とお, tō) alone, never 十つ. Ask いくつ, not 何つ."
+features = ["polite-japanese", "learner-spacing", "quantity-pair"]
+constraints = [
+  "Preserve every planned semantic binding and truth value.",
+  "Use only confirmed or explicitly assigned scene/role-play facts.",
+  "Romanization supports native text; it is not an alternative grading answer.",
+]
+required_labels = []
+roles = { "first" = "noun", "first-count" = "determiner", "second" = "noun", "second-count" = "determiner" }
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete tasks end with ASCII sentence punctuation."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "pair-frame"
+message = "State both quantities in the scene."
+must_contain = ["(あります|います)[.]$", ","]

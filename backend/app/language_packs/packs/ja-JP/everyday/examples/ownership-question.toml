@@ -1,0 +1,25 @@
+construction_id = "ownership-question"
+
+[[examples]]
+example_id = "is-it-yours"
+levels = ["A0"]
+purposes = ["askOwnership"]
+meaning = "Is it yours?"
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:key", "concept" = "key" }, { "fact_id" = "object:table", "concept" = "table" }], "attributes" = [{ "fact_id" = "attribute:cup-red", "object" = "object:cup", "kind" = "color", "value" = "red" }], "relations" = [{ "fact_id" = "relation:cup-on-table", "subject" = "object:cup", "reference" = "object:table", "relation" = "on" }], "owners" = [{ "fact_id" = "owner:cup", "object" = "object:cup", "owner" = "first" }, { "fact_id" = "owner:book", "object" = "object:book", "owner" = "ana" }, { "fact_id" = "owner:key", "object" = "object:key", "owner" = "leo" }] }
+bindings = { "object" = "object:cup", "owner" = "possessor:second" }
+truth = true
+labels = []
+sentence = "これは あなたの 物ですか?"
+translation = "Is it yours?"
+chunks = [{ "text" = "これは", "join" = "none" }, { "text" = "あなたの", "join" = "space" }, { "text" = "物ですか", "join" = "space" }, { "text" = "?", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "is-it-yours-form"
+levels = ["A0"]
+purposes = ["askOwnership"]
+sentence = "これは あなたの 物ですか."
+correction = "これは あなたの 物ですか?"
+note = "This task asks a question. Keep the interrogative frame and question mark."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }

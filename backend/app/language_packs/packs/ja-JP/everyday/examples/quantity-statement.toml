@@ -1,0 +1,73 @@
+construction_id = "quantity-statement"
+
+[[examples]]
+example_id = "statement-five-books"
+levels = ["A1", "A2"]
+purposes = ["buildQuantity"]
+meaning = "There are five books."
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:apple", "concept" = "apple" }], "counts" = [{ "fact_id" = "count:book", "object" = "object:book", "quantity" = 5 }, { "fact_id" = "count:cup", "object" = "object:cup", "quantity" = 2 }, { "fact_id" = "count:apple", "object" = "object:apple", "quantity" = 2 }] }
+bindings = { "object" = "object:book", "count" = "count:book" }
+truth = true
+labels = []
+sentence = "本が 五 冊 あります."
+translation = "There are five books."
+chunks = [{ "text" = "本が", "join" = "none" }, { "text" = "五", "join" = "space" }, { "text" = "冊", "join" = "space" }, { "text" = "あります", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "statement-board"
+levels = ["A1"]
+purposes = ["matchQuantity"]
+meaning = "There are five books."
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:apple", "concept" = "apple" }], "counts" = [{ "fact_id" = "count:book", "object" = "object:book", "quantity" = 5 }, { "fact_id" = "count:cup", "object" = "object:cup", "quantity" = 2 }, { "fact_id" = "count:apple", "object" = "object:apple", "quantity" = 2 }] }
+bindings = { "object" = "object:book", "count" = "count:book" }
+truth = true
+labels = []
+sentence = "本が 五 冊 あります."
+translation = "There are five books."
+chunks = [{ "text" = "本が", "join" = "none" }, { "text" = "五", "join" = "space" }, { "text" = "冊", "join" = "space" }, { "text" = "あります", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[examples]]
+example_id = "correction-five-books"
+levels = ["A2"]
+purposes = ["correctRoleplayCount"]
+meaning = "No, there are five books."
+scene = { "objects" = [{ "fact_id" = "object:book", "concept" = "book" }, { "fact_id" = "object:cup", "concept" = "cup" }, { "fact_id" = "object:apple", "concept" = "apple" }], "counts" = [{ "fact_id" = "count:book", "object" = "object:book", "quantity" = 5 }, { "fact_id" = "count:cup", "object" = "object:cup", "quantity" = 2 }, { "fact_id" = "count:apple", "object" = "object:apple", "quantity" = 2 }] }
+bindings = { "object" = "object:book", "count" = "count:book" }
+truth = true
+labels = ["no"]
+sentence = "いいえ, 本が 五 冊 あります."
+translation = "No, there are five books."
+chunks = [{ "text" = "いいえ", "join" = "none" }, { "text" = ",", "join" = "none" }, { "text" = "本が", "join" = "space" }, { "text" = "五", "join" = "space" }, { "text" = "冊", "join" = "space" }, { "text" = "あります", "join" = "space" }, { "text" = ".", "join" = "none" }]
+accepted_alternatives = []
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "statement-five-books-form"
+levels = ["A1", "A2"]
+purposes = ["buildQuantity"]
+sentence = "本が 五 冊 あります"
+correction = "本が 五 冊 あります."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "statement-board-form"
+levels = ["A1"]
+purposes = ["matchQuantity"]
+sentence = "本が 五 冊 あります"
+correction = "本が 五 冊 あります."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[mistakes]]
+example_id = "correction-five-books-form"
+levels = ["A2"]
+purposes = ["correctRoleplayCount"]
+sentence = "いいえ, 本が 五 冊 あります"
+correction = "いいえ, 本が 五 冊 あります."
+note = "A complete sentence task uses the pack's ASCII final punctuation."
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }

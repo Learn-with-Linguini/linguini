@@ -1,0 +1,93 @@
+mission_id = "M05"
+practice_level = "A0"
+content_version = 1
+
+[[cases]]
+case_id = "m05-a0-like-plate"
+category = "valid"
+construction_id = "my-preference"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }, { "fact_id" = "object:cup", "concept" = "cup" }], "preferences" = [{ "fact_id" = "preference:plate", "object" = "object:plate", "person" = "first", "likes" = true }] }
+bindings = { "object" = "object:plate", "preference" = "preference:plate" }
+truth = true
+use = "like"
+input = "Say that you like the plate."
+expected_meaning = "I like the plate."
+acceptable = ["私は 皿が 好きです."]
+reject = [{ "sentence" = "私は 皿が 好きです", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }, { "sentence" = "私は バナナが 好きです.", "reason" = "The bound object is missing; a different object was substituted.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m05-a0-dislike-bag"
+category = "valid"
+construction_id = "my-preference"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }], "preferences" = [{ "fact_id" = "preference:bag", "object" = "object:bag", "person" = "first", "likes" = false }] }
+bindings = { "object" = "object:bag", "preference" = "preference:bag" }
+truth = true
+use = "dislike"
+input = "Say that you don't like the bag."
+expected_meaning = "I don't like the bag."
+acceptable = ["私は かばんが 好きではありません."]
+reject = [{ "sentence" = "私は かばんが 好きではありません", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }, { "sentence" = "私は バナナが 好きではありません.", "reason" = "The bound object is missing; a different object was substituted.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m05-a0-contrast"
+category = "valid"
+construction_id = "my-preference"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }], "preferences" = [{ "fact_id" = "preference:plate", "object" = "object:plate", "person" = "first", "likes" = true }] }
+bindings = { "object" = "object:plate", "preference" = "preference:plate" }
+truth = false
+use = "dislike"
+input = "Say the opposite: that you don't like the plate."
+expected_meaning = "I don't like the plate."
+acceptable = ["私は 皿が 好きではありません."]
+reject = [{ "sentence" = "私は 皿が 好きではありません", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }, { "sentence" = "私は バナナが 好きではありません.", "reason" = "The bound object is missing; a different object was substituted.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m05-a0-ask-door"
+category = "valid"
+construction_id = "preference-question"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:door", "concept" = "door" }, { "fact_id" = "object:window", "concept" = "window" }] }
+bindings = { "object" = "object:door" }
+truth = true
+use = "question"
+input = "Ask whether the listener likes the door."
+expected_meaning = "Do you like the door?"
+acceptable = ["ドアが 好きですか?"]
+reject = [{ "sentence" = "ドアが 好きですか", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[cases]]
+case_id = "m05-a0-choose-key"
+category = "valid"
+construction_id = "choice-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:key", "concept" = "key" }, { "fact_id" = "object:bag", "concept" = "bag" }] }
+bindings = { "object" = "object:key" }
+truth = true
+input = "Say that you choose the key."
+expected_meaning = "I choose the key."
+acceptable = ["鍵を 選びます."]
+reject = [{ "sentence" = "鍵を 選びます", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m05-a0-held-unicode"
+category = "valid"
+construction_id = "my-preference"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:phone", "concept" = "phone" }], "preferences" = [{ "fact_id" = "preference:phone", "object" = "object:phone", "person" = "first", "likes" = true }] }
+bindings = { "object" = "object:phone", "preference" = "preference:phone" }
+truth = true
+use = "like"
+input = "Say that you like the phone."
+expected_meaning = "I like the phone."
+acceptable = ["私は 電話が 好きです."]
+reject = [{ "sentence" = "私は 電話が 好きです", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }, { "sentence" = "私は バナナが 好きです.", "reason" = "The bound object is missing; a different object was substituted.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }

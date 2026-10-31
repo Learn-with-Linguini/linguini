@@ -1,0 +1,23 @@
+construction_id = "how-many-question"
+version = 1
+summary = "Ask a quantity using an appropriate Japanese counter."
+guidance = "Ask Nは 何 COUNTER ありますか? In this learning display separate 何 from its counter, e.g. 本は 何 冊 ありますか? For general discrete things such as window openings, use いくつ and the native つ series, not 何つ. Use 個 for small objects, 冊 for books, 本 for long objects, 枚 for flat items, 台 for equipment, 脚 for chairs, 杯 for drinks. Japanese counters have irregular readings; 何冊 is nansatsu, 何本 nanbon, 何杯 nanbai. Do not use a universal 個 for every noun. Use the pack display convention consistently: one ASCII space between phrase units; keep particles/copulas attached to their word (コップは, 本です), separate number and counter (五 冊), and use ASCII . ? , in sentence tasks. This is learning-display spacing, not ordinary Japanese orthography. Supply aligned native/Latin spans; Hepburn uses wa for は, e for へ, o for を, and macrons for long vowels.  With the generic つ series, ten is 十 (とお, tō) alone, never 十つ. Ask いくつ, not 何つ."
+features = ["polite-japanese", "learner-spacing", "how-many-question"]
+constraints = [
+  "Preserve every planned semantic binding and truth value.",
+  "Use only confirmed or explicitly assigned scene/role-play facts.",
+  "Romanization supports native text; it is not an alternative grading answer.",
+]
+required_labels = []
+roles = { "object" = "noun" }
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete tasks end with ASCII sentence punctuation."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "question-ending"
+message = "Use a polite Japanese question ending."
+must_contain = ["(ですか|ますか|ですね)[?]$"]

@@ -1,0 +1,93 @@
+mission_id = "M04"
+practice_level = "A0"
+content_version = 1
+
+[[cases]]
+case_id = "m04-a0-is-it-yours"
+category = "valid"
+construction_id = "ownership-question"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }], "owners" = [{ "fact_id" = "owner:bag", "object" = "object:bag", "owner" = "first" }] }
+bindings = { "object" = "object:bag", "owner" = "possessor:second" }
+truth = true
+input = "Ask whether the bag is yours."
+expected_meaning = "Is it yours?"
+acceptable = ["あなたの 物ですか?"]
+reject = [{ "sentence" = "あなたの 物ですか", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "question"
+
+[[cases]]
+case_id = "m04-a0-not-mine"
+category = "valid"
+construction_id = "ownership-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }], "owners" = [{ "fact_id" = "owner:bag", "object" = "object:bag", "owner" = "first" }] }
+bindings = { "object" = "object:bag", "owner" = "owner:bag" }
+truth = false
+input = "Say that it is not yours."
+expected_meaning = "It's not mine."
+acceptable = ["これは 私の 物ではありません."]
+reject = [{ "sentence" = "これは 私の 物ではありません", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m04-a0-statement-punctuation"
+category = "valid"
+construction_id = "ownership-statement"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }], "owners" = [{ "fact_id" = "owner:bag", "object" = "object:bag", "owner" = "first" }] }
+bindings = { "object" = "object:bag", "owner" = "owner:bag" }
+truth = true
+input = "Say that it is yours."
+expected_meaning = "It's mine."
+acceptable = ["これは 私の 物です."]
+reject = [{ "sentence" = "これは 私の 物です", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m04-a0-plate-is-mine"
+category = "valid"
+construction_id = "owned-object"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }], "owners" = [{ "fact_id" = "owner:plate", "object" = "object:plate", "owner" = "first" }] }
+bindings = { "object" = "object:plate", "owner" = "owner:plate" }
+truth = true
+input = "Say that the plate is yours."
+expected_meaning = "The plate is mine."
+acceptable = ["皿は 私の 物です."]
+reject = [{ "sentence" = "皿は 私の 物です", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }, { "sentence" = "バナナは 私の 物です.", "reason" = "The bound object is missing; a different object was substituted.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m04-a0-held-key"
+category = "valid"
+construction_id = "owned-object"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:key", "concept" = "key" }, { "fact_id" = "object:bag", "concept" = "bag" }], "owners" = [{ "fact_id" = "owner:key", "object" = "object:key", "owner" = "first" }] }
+bindings = { "object" = "object:key", "owner" = "owner:key" }
+truth = true
+input = "Say that the key is yours."
+expected_meaning = "The key is mine."
+acceptable = ["鍵は 私の 物です."]
+reject = [{ "sentence" = "鍵は 私の 物です", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }, { "sentence" = "バナナは 私の 物です.", "reason" = "The bound object is missing; a different object was substituted.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m04-a0-held-unicode"
+category = "valid"
+construction_id = "owned-object"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:phone", "concept" = "phone" }], "owners" = [{ "fact_id" = "owner:phone", "object" = "object:phone", "owner" = "first" }] }
+bindings = { "object" = "object:phone", "owner" = "owner:phone" }
+truth = true
+input = "Say that the phone is yours."
+expected_meaning = "The phone is mine."
+acceptable = ["電話は 私の 物です."]
+reject = [{ "sentence" = "電話は 私の 物です", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }, { "sentence" = "バナナは 私の 物です.", "reason" = "The bound object is missing; a different object was substituted.", "category" = "wrongObject" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"

@@ -1,0 +1,123 @@
+mission_id = "M03"
+practice_level = "A0"
+content_version = 1
+
+[[cases]]
+case_id = "m03-a0-how-many-plates"
+category = "valid"
+construction_id = "how-many-question"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }, { "fact_id" = "object:spoon", "concept" = "spoon" }], "counts" = [{ "fact_id" = "count:plate", "object" = "object:plate", "quantity" = 3 }, { "fact_id" = "count:spoon", "object" = "object:spoon", "quantity" = 2 }] }
+bindings = { "object" = "object:plate" }
+truth = true
+input = "Ask how many plates there are."
+expected_meaning = "How many plates are there?"
+acceptable = ["皿は 何 枚 ありますか?"]
+reject = [{ "sentence" = "皿は 何 枚 ありますか", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "question"
+
+[[cases]]
+case_id = "m03-a0-chunk-three-plates"
+category = "valid"
+construction_id = "quantity-chunk"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:plate", "concept" = "plate" }, { "fact_id" = "object:spoon", "concept" = "spoon" }], "counts" = [{ "fact_id" = "count:plate", "object" = "object:plate", "quantity" = 3 }, { "fact_id" = "count:spoon", "object" = "object:spoon", "quantity" = 2 }] }
+bindings = { "object" = "object:plate", "count" = "count:plate" }
+truth = true
+input = "Name the three plates."
+expected_meaning = "three plates"
+acceptable = ["皿 三 枚"]
+reject = [{ "sentence" = "皿 三 枚.", "reason" = "A chunk has no final sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m03-a0-chunk-count"
+category = "valid"
+construction_id = "quantity-chunk"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:spoon", "concept" = "spoon" }, { "fact_id" = "object:plate", "concept" = "plate" }], "counts" = [{ "fact_id" = "count:spoon", "object" = "object:spoon", "quantity" = 2 }, { "fact_id" = "count:plate", "object" = "object:plate", "quantity" = 3 }] }
+bindings = { "object" = "object:spoon", "count" = "count:spoon" }
+truth = true
+input = "Name the two spoons."
+expected_meaning = "two spoons"
+acceptable = ["スプーン 二 本"]
+reject = [{ "sentence" = "スプーン 二 本.", "reason" = "A chunk has no final sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m03-a0-chunk-not-sentence"
+category = "valid"
+construction_id = "quantity-chunk"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:fork", "concept" = "fork" }], "counts" = [{ "fact_id" = "count:fork", "object" = "object:fork", "quantity" = 3 }] }
+bindings = { "object" = "object:fork", "count" = "count:fork" }
+truth = true
+input = "Name the three forks."
+expected_meaning = "three forks"
+acceptable = ["フォーク 三 本"]
+reject = [{ "sentence" = "フォーク 三 本.", "reason" = "A chunk has no final sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m03-a0-one-with-noun"
+category = "valid"
+construction_id = "quantity-chunk"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:key", "concept" = "key" }] }
+bindings = { "object" = "object:key", "count" = "number:1" }
+truth = false
+input = "Name one key."
+expected_meaning = "one key"
+acceptable = ["鍵 一 本"]
+reject = [{ "sentence" = "鍵 一 本.", "reason" = "A chunk has no final sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m03-a0-how-many-punctuation"
+category = "valid"
+construction_id = "how-many-question"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:bag", "concept" = "bag" }], "counts" = [{ "fact_id" = "count:bag", "object" = "object:bag", "quantity" = 2 }] }
+bindings = { "object" = "object:bag" }
+truth = true
+input = "Ask how many bags there are."
+expected_meaning = "How many bags are there?"
+acceptable = ["かばんは 何 個 ありますか?"]
+reject = [{ "sentence" = "かばんは 何 個 ありますか", "reason" = "Missing required sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "question"
+
+[[cases]]
+case_id = "m03-a0-held-phones"
+category = "valid"
+construction_id = "quantity-chunk"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:phone", "concept" = "phone" }], "counts" = [{ "fact_id" = "count:phone", "object" = "object:phone", "quantity" = 2 }] }
+bindings = { "object" = "object:phone", "count" = "count:phone" }
+truth = true
+input = "Name the two phones."
+expected_meaning = "two phones"
+acceptable = ["電話 二 台"]
+reject = [{ "sentence" = "電話 二 台.", "reason" = "A chunk has no final sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
+
+[[cases]]
+case_id = "m03-a0-held-number-form"
+category = "valid"
+construction_id = "quantity-chunk"
+construction_version = 1
+scene = { "objects" = [{ "fact_id" = "object:cup", "concept" = "cup" }], "counts" = [{ "fact_id" = "count:cup", "object" = "object:cup", "quantity" = 2 }] }
+bindings = { "object" = "object:cup", "count" = "count:cup" }
+truth = true
+input = "Name the two cups."
+expected_meaning = "two cups"
+acceptable = ["コップ 二 個"]
+reject = [{ "sentence" = "コップ 二 個.", "reason" = "A chunk has no final sentence punctuation.", "category" = "punctuation" }]
+provenance = { "source" = "Original AI-authored Japanese learning content, 2026-10-28. Schema and mission coverage adapted from dev c2a11b6a727a0f1eafa1abeb5618ee1539494dec. Not human-reviewed.", "review_status" = "generated" }
+use = "answer"
