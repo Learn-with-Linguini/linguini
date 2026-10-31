@@ -131,6 +131,15 @@ function reviewWord(termType: VocabularyLearningWord["termType"], targetText: st
     gender: null, pluralForm: null, phoneticText: null, pronunciationAudioAssetId: null, exampleSentence: null };
 }
 
+test("leaving a completed-scene review returns to vocabulary without changing the task", async () => {
+  await mount({ stayInReview: true });
+  assert.equal(button("Return home"), undefined);
+  assert.equal(button("Skip this task"), undefined);
+  await click("Back to vocabulary");
+  assert.match(text(), /Vocabulary collection/);
+  assert.deepEqual(requests, []);
+});
+
 test("the completed-scene shortcut starts the same mixed review without a task submission", async () => {
   await mount({ stayInReview: true });
   await click("Go to exercises");
