@@ -293,22 +293,12 @@ def _m06_feedback(transaction, question_id, wrong_field):
 _REVIEW_STATUSES = {"created", "analyzingScene", "awaitingObjectReview"}
 
 
-def review_marker_numbers(detected, accepted_ids, added_ids, suggested_ids=None):
-    """Keep marker numbers from the initially visible review subset."""
+def review_marker_numbers(detected, accepted_ids, added_ids):
+    """Number the confirmed objects in visible review order, without removed-object gaps."""
     accepted = {str(item) for item in accepted_ids}
-    suggested = {str(item) for item in suggested_ids or []}
-    initially_visible = [
-        obj for obj in detected if not suggested or str(obj["id"]) in suggested
-    ]
-    numbers = {
-        str(obj["id"]): number for number, obj in enumerate(initially_visible, 1)
-        if str(obj["id"]) in accepted
-    }
-    numbers.update({
-        str(item): max(numbers.values(), default=0) + number
-        for number, item in enumerate(added_ids, 1)
-    })
-    return numbers
+    ordered = [str(obj["id"]) for obj in detected if str(obj["id"]) in accepted]
+    ordered.extend(str(item) for item in added_ids)
+    return {object_id: number for number, object_id in enumerate(dict.fromkeys(ordered), 1)}
 
 
 def task_progress(tasks):
@@ -2553,7 +2543,6 @@ class PostgresWorkflowRepository:
             draft.get("objects", []),
             request.accepted_object_ids,
             [manual_ids[item.id] for item in request.added_objects],
-            draft.get("suggestedSceneObjectIds", []),
         )
         c.execute(
             update(sessions)
