@@ -390,7 +390,7 @@ def test_guided_support_is_recorded_per_attempt_and_restored_on_retry(database, 
 def test_optional_help_keeps_completion_credit_without_independent_bonus(database, loop, support):
     repo, sid, task_id, _guesser, target, _other, replies = loop
     engine = database[0]
-    data = described_content(engine, task_id).model_dump(by_alias=True)
+    data = described_content(engine, task_id).model_dump(mode="json", by_alias=True)
     data["wordBank"] = [{"text": "azul", "translation": "blue"}]
     data["cheatSheet"] = {"missionId": "M02", "practiceLevel": "A0", "contentVersion": 2}
     content = ReflectionContent.model_validate(data)
