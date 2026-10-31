@@ -3,7 +3,6 @@ import { useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { Button, Card, Tabs } from "../components/ui";
-import { EyeIcon } from "../components/icons";
 import { MediaImage } from "../components/MediaImage";
 import { SceneVisual } from "../components/SceneVisual";
 import { SceneCatalogStatus } from "../components/SceneCatalogStatus";
