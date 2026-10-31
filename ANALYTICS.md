@@ -28,14 +28,36 @@ VITE_GA_MEASUREMENT_ID=G-ET4KFFXFMZ
 
 ## 2. Contentsquare Integration & SPA Pageview Tracking
 
-The Contentsquare tag script is loaded in `frontend/index.html`:
-```html
-<script async src="https://t.contentsquare.net/uxa/6a01544c67dfc.js"></script>
-```
+`initAnalytics()` loads the Contentsquare tag after queuing `setPath` with the
+current pathname, `setQuery` with an empty string, and
+`referrer:removeQueryString`. These overrides are in place before the tag can
+send its initial pageview and persist for the page's lifetime. SPA pageviews
+and action events refresh the path override.
 
 Because Linguini is a single-page application (SPA), route changes do not reload the document. The `<AnalyticsTracker />` component in `frontend/src/components/AnalyticsTracker.tsx` listens to router location changes and dispatches pageview events on every navigation:
 * **Contentsquare:** `window._uxa.push(["trackPageview", currentPath])`
 * **GA4:** `gtag("event", "page_view", { page_path, page_title, page_location })`
+
+### URL privacy
+
+Analytics URL dimensions exclude query strings and fragments. GA4 configuration,
+global defaults, pageviews and action events use the origin plus pathname for
+`page_location` and `page_referrer`; `page_path` contains only the pathname.
+Caller parameters cannot override these three dimensions. This excludes password
+recovery tokens, OAuth codes and room invitation codes from those fields without
+changing the browser URL needed by authentication and invitations. Both tag
+scripts also load with `referrerPolicy="no-referrer"`.
+
+UTM attribution is captured separately by `captureAttribution()` and stored with
+the account. It does not require sending the raw query string to analytics.
+Custom event parameters must still exclude credentials and personal content;
+these helpers do not inspect arbitrary parameter values. Contentsquare session
+replay masking and automatic collection settings require separate verification
+in the hosted project.
+
+The supported Contentsquare commands are documented in its
+[personal data handling guide](https://docs.contentsquare.com/en/web/personal-data-handling/)
+and [tag API reference](https://docs.contentsquare.com/en/web/command-reference/).
 
 ### Tracked Pages & Routes
 
@@ -75,9 +97,10 @@ Because Linguini is a single-page application (SPA), route changes do not reload
 
 ## 3. GA4 & Contentsquare Action Events Catalog
 
-Actions are logged via `trackAction(eventName, params)`. Each call sends:
-1. `gtag("event", action, params)` to GA4.
-2. `window._uxa.push(["trackCustomEvent", action, params])` to Contentsquare.
+Actions are logged via `trackAction(eventName, params)`. Each call adds the safe
+URL dimensions described above and sends the resulting parameters to GA4 and
+Contentsquare through `gtag("event", action, params)` and
+`window._uxa.push(["trackCustomEvent", action, params])`.
 
 ### Photo camera
 

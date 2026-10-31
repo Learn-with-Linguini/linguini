@@ -13,7 +13,7 @@ export function AnalyticsTracker() {
 
   useEffect(() => {
     captureAttribution(location.search);
-    const currentPath = location.pathname + location.search;
+    const currentPath = location.pathname;
     if (isFirstMount.current) {
       isFirstMount.current = false;
       trackPageView(currentPath);
