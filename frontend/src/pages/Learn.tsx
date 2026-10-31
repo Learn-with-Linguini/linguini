@@ -138,7 +138,7 @@ function MissionPath({ sceneTitle, sceneImageUrl, sessionId, missions, generatin
 
   return <div className="mission-path-page">
     <div className="mission-path__topbar">
-      <Button variant="quiet" className="learning-exit" onClick={onExit}><CloseIcon size={18} /> Exit</Button>
+      <Button variant="quiet" className="learning-exit" onClick={onExit}><CloseIcon size={18} /> Return home</Button>
       {total > 0 ? <span className={`pill pill--xp mission-path__leaves${justDone.size ? " is-updated" : ""}`} aria-label={`${earned} of ${total} Basil earned in this scene`}>
         <BasilIcon size={18} />{earned} / {total}
       </span> : null}

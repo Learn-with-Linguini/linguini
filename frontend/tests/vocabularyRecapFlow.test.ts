@@ -131,6 +131,15 @@ function reviewWord(termType: VocabularyLearningWord["termType"], targetText: st
     gender: null, pluralForm: null, phoneticText: null, pronunciationAudioAssetId: null, exampleSentence: null };
 }
 
+test("leaving a completed-scene review returns to vocabulary without changing the task", async () => {
+  await mount({ stayInReview: true });
+  assert.equal(button("Return home"), undefined);
+  assert.equal(button("Skip this task"), undefined);
+  await click("Back to vocabulary");
+  assert.match(text(), /Vocabulary collection/);
+  assert.deepEqual(requests, []);
+});
+
 test("review groups mixed words while retaining photo context and optional image interaction", async () => {
   await mount({ stayInReview: true, words: [
     reviewWord("relationship", "cerca", null, ["table", "chair"]),
