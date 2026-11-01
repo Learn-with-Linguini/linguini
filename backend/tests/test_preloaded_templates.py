@@ -1,6 +1,7 @@
 """Precomputed scene templates: generation, reuse, fallback and script controls.
 
-Mocked text providers only — no network.
+Mocked text providers only — no network. Templates are made with the target language's
+pack: a translation stage makes the translation and its meaning review (two calls).
 """
 
 import json
@@ -17,6 +18,7 @@ from app.ai.features.ispy_clues import ISpyClueService
 from app.ai.features.learning_tasks import LearningTaskResult, LearningTaskService
 from app.ai.features.translation import SceneTranslationService
 from app.ai.observability import NoOpAITracer
+from app.language_packs.context import resolve_language_context
 from app.repositories.postgres.workflow import ispy_clue_payload, learning_task_payload
 from app.schemas.media import MediaAsset
 from app.scripts import precompute_preloaded_scenes as script
@@ -38,8 +40,10 @@ ITEMS = [
     },
 ]
 RELATIONS = [{"subjectItemId": "cup", "relation": "on", "referenceItemId": "table"}]
-TERMS = {"cup": "taza", "table": "mesa", "red": "roja", "on": "sobre"}
 RESERVE = {"translation": 2, "lessons": 2, "clues": 2}
+# Translation (with its review, so twice its reserve), lessons and clues.
+FULL_BUDGET = 2 * RESERVE["translation"] + RESERVE["lessons"] + RESERVE["clues"]
+STAGES = ["pack-translation", "pack-lessons", "pack-clues"]
 
 
 def media_asset(**overrides) -> MediaAsset:
@@ -83,33 +87,74 @@ def _remap(text: str, payload: dict) -> str:
     return text
 
 
+# Requests a pack lesson makes; the multilingual tests' mock answers them.
+PACK_SCHEMAS = frozenset({
+    "language_pack_candidates_v1", "language_vocabulary_proposals", "language_content_review",
+})
+
+
+def _pack_translation(payload):
+    """A pack-guided translation: each noun with its own article, gender and display."""
+    from test_language_pack_multilingual import LEXICON
+
+    lex = LEXICON[payload.get("targetLanguage", "es").lower()]
+
+    def colour(value):
+        forms = lex["colours"].get(value)
+        return (forms if isinstance(forms, str) else forms[0]) if forms else value
+
+    def row(field, item):
+        source = item["source"]
+        if field == "objects":
+            # Re-grounded labels may read "the cup"; the noun is still a cup.
+            noun, article, gender = lex["nouns"].get(
+                source.removeprefix("the "), (source, None, None),
+            )
+            return dict(key=item["key"], source=source, translation=noun, article=article,
+                        gender=gender, native_display=" ".join(filter(None, [article, noun])))
+        translation = (colour(source) if field == "attributes"
+                       else lex["relations"].get(source, source))
+        return dict(key=item["key"], source=source, translation=translation,
+                    native_display=translation)
+
+    return json.dumps({
+        field: [row(field, item) for item in payload.get(field, [])]
+        for field in ("objects", "attributes", "relationships")
+    }, ensure_ascii=False)
+
+
 class SceneModel:
-    """A mocked provider answering translation, lesson and clue requests."""
+    """A mocked provider answering translation, lesson and clue requests.
+
+    Pack lessons (the only mission lessons) are answered by the multilingual tests'
+    deterministic pack mock, in the requested language.
+    """
 
     def __init__(self, error=None) -> None:
         self.requests = []
         self.error = error
+        self.pack_providers = {}
+
+    def _pack(self, request):
+        from test_language_pack_multilingual import MockPackProvider
+
+        content = json.loads(request.user_content)
+        language = (content.get("language") or {}).get("code", "es")
+        provider = self.pack_providers.setdefault(language, MockPackProvider(language))
+        return provider.generate(request)
 
     def generate(self, request, **_):
         self.requests.append(request.json_schema_name)
         if self.error is not None:
             raise self.error
-        payload = json.loads(request.user_content)
+        if request.json_schema_name in PACK_SCHEMAS:
+            return self._pack(request)
+        # A repair request appends prose and the rejected response after the payload.
+        payload = json.JSONDecoder().raw_decode(request.user_content)[0]
         if request.json_schema_name == "scene_translation_v1":
-            body = json.dumps({
-                field: [
-                    {
-                        "key": row["key"], "source": row["source"],
-                        "translation": TERMS.get(row["source"], row["source"]),
-                        **(
-                            {"article": "la", "gender": "feminine", "phoneticText": "TAH-sah"}
-                            if field == "objects" else {}
-                        ),
-                    }
-                    for row in payload.get(field, [])
-                ]
-                for field in ("objects", "attributes", "relationships")
-            })
+            body = _pack_translation(payload)
+        elif request.json_schema_name == "pack_translation_review":
+            body = json.dumps({"issues": []})
         elif request.json_schema_name == "learning_tasks_v2":
             body = _remap(response_body(LearningTaskResult.model_validate(tasks())), payload)
         else:
@@ -148,7 +193,9 @@ def run_session(row, model, session_id=None, edit=None):
         payload = edit(payload)
     templates = TemplateSet.from_content([row["content"]])
     feature = services(model)
-    translated = feature["translation"].translate(payload, templates=templates)
+    translated = feature["translation"].translate(
+        payload, templates=templates, language_context=resolve_language_context("es"),
+    )
     lessons = feature["lessons"].generate(
         learning_task_payload(payload, translated, relations), templates=templates
     )
@@ -199,7 +246,7 @@ def test_stale_variant_is_regenerated_and_old_variant_kept():
     model = SceneModel()
     outcomes = generate_row_templates(row, "es", services(model), unlimited(), RESERVE)
     assert [outcome.status for outcome in outcomes] == ["generated"] * 3
-    assert len(model.requests) == 3
+    assert len(model.requests) == 4
     assert len(row["content"][GENERATED_CONTENT_KEY]["templates"]) == 6
 
 
@@ -218,11 +265,11 @@ def test_regrounded_labels_regenerate_stale_templates_with_provider_budget():
         item["translation"] = item["translation"].removeprefix("the ")
 
     model = SceneModel()
-    budget = CallBudget(6, CallCountingTracer())
+    budget = CallBudget(FULL_BUDGET, CallCountingTracer())
     outcomes = generate_row_templates(row, "es", services(model), budget, RESERVE)
 
     assert [outcome.status for outcome in outcomes] == ["generated"] * 3
-    assert len(model.requests) == 3
+    assert len(model.requests) == 4
     new_fingerprints = {
         entry["feature"]: entry["fingerprint"]
         for entry in row["content"][GENERATED_CONTENT_KEY]["templates"]
@@ -271,7 +318,8 @@ def test_template_set_without_generation_raises_instead_of_calling():
     model = SceneModel()
     with pytest.raises(TemplateMissing):
         services(model)["translation"].translate(
-            payload, templates=TemplateSet(generate=False)
+            payload, templates=TemplateSet(generate=False),
+            language_context=resolve_language_context("es"),
         )
     assert model.requests == []
 
@@ -320,13 +368,13 @@ def test_from_json_dry_run_checks_templates_without_calls(tmp_path, monkeypatch)
     assert model.requests == []
     assert json.loads(report.read_text())["outcomes"][0]["reason"] == "callBudget"
 
-    assert script.main([*args, "--max-provider-calls", "6"]) == 0
-    assert len(model.requests) == 3
+    assert script.main([*args, "--max-provider-calls", str(FULL_BUDGET)]) == 0
+    assert len(model.requests) == 4
     stored, _, _ = script.load_json_artifact(state)
     assert GENERATED_CONTENT_KEY in stored[0]["content"]
 
     model.requests.clear()
-    assert script.main([*args, "--max-provider-calls", "6"]) == 0
+    assert script.main([*args, "--max-provider-calls", str(FULL_BUDGET)]) == 0
     assert model.requests == []
     statuses = {o["status"] for o in json.loads(report.read_text())["outcomes"]}
     assert statuses == {"reused"}
@@ -404,7 +452,7 @@ def test_reground_cli_updates_json_rows_without_scene_analysis(tmp_path, monkeyp
             "0.27",
             "--dry-run",
             "--max-provider-calls",
-            "6",
+            str(FULL_BUDGET),
             "--language",
             "es",
             "--json",
@@ -429,7 +477,7 @@ def test_reground_cli_updates_json_rows_without_scene_analysis(tmp_path, monkeyp
         "cup",
         "table",
     ]
-    assert len(template_model.requests) == 3
+    assert len(template_model.requests) == 4
     result = json.loads(report.read_text())
     assert result["outcomes"][0] == {
         "slug": row["slug"],
@@ -440,7 +488,18 @@ def test_reground_cli_updates_json_rows_without_scene_analysis(tmp_path, monkeyp
     assert [
         (outcome["stage"], outcome["status"])
         for outcome in result["outcomes"][1:]
-    ] == [("translation", "generated"), ("lessons", "generated"), ("clues", "generated")]
+    ] == [(stage, "generated") for stage in STAGES]
+
+
+def test_a_language_without_a_ready_pack_gets_no_templates():
+    row = scene_row()
+    model = SceneModel()
+    outcomes = generate_row_templates(row, "xx", services(model), unlimited(), RESERVE)
+    assert [(outcome.stage, outcome.status, outcome.reason) for outcome in outcomes] == [
+        (stage, "missing", "noLanguagePack") for stage in STAGES
+    ]
+    assert model.requests == []
+    assert GENERATED_CONTENT_KEY not in row["content"]
 
 
 def test_one_scene_row_keeps_templates_for_every_target_language():

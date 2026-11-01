@@ -1,0 +1,55 @@
+construction_id = "polite-request"
+
+[[examples]]
+example_id = "order-two-small-coffees"
+levels = ["A2"]
+purposes = ["listenOrderCard"]
+meaning = "I would like two small coffees, please."
+scene = { objects = [{ fact_id = "object:coffee", concept = "coffee" }], requests = [{ fact_id = "request:quantity", object = "object:coffee", field = "quantity", value = "2" }, { fact_id = "request:size", object = "object:coffee", field = "size", value = "small" }, { fact_id = "request:serviceSetting", object = "object:coffee", field = "serviceSetting", value = "takeAway" }] }
+bindings = { object = "object:coffee", quantity = "request:quantity", size = "request:size" }
+truth = true
+labels = []
+sentence = "작은 커피 두 잔 주세요."
+translation = "I would like two small coffees, please."
+chunks = [{ text = "작은", join = "none" }, { text = "커피", join = "space" }, { text = "두", join = "space" }, { text = "잔", join = "space" }, { text = "주세요", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "borrow-a-pen"
+levels = ["A2"]
+purposes = ["listenOrderCard"]
+meaning = "Can you lend me a pen, please?"
+scene = { objects = [{ fact_id = "object:pen", concept = "pen" }], requests = [{ fact_id = "request:quantity", object = "object:pen", field = "quantity", value = "1" }, { fact_id = "request:colour", object = "object:pen", field = "colour", value = "blue" }] }
+bindings = { object = "object:pen", quantity = "request:quantity" }
+truth = true
+labels = []
+sentence = "펜 한 자루 빌려 주세요."
+translation = "Can you lend me a pen, please?"
+chunks = [{ text = "펜", join = "none" }, { text = "한", join = "space" }, { text = "자루", join = "space" }, { text = "빌려", join = "space" }, { text = "주세요", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "pass-a-cup"
+levels = ["A2"]
+purposes = ["listenOrderCard"]
+meaning = "Can you pass me a cup, please?"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }], requests = [{ fact_id = "request:quantity", object = "object:cup", field = "quantity", value = "1" }, { fact_id = "request:colour", object = "object:cup", field = "colour", value = "red" }] }
+bindings = { object = "object:cup", quantity = "request:quantity" }
+truth = true
+labels = []
+sentence = "컵 한 개 주세요."
+translation = "Can you pass me a cup, please?"
+chunks = [{ text = "컵", join = "none" }, { text = "한", join = "space" }, { text = "개", join = "space" }, { text = "주세요", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "states-instead-of-asking"
+levels = ["A2"]
+purposes = ["listenOrderCard"]
+sentence = "작은 커피 두 잔 있어요."
+correction = "작은 커피 두 잔 주세요."
+note = "A request ends with 주세요; 있어요 says it is there."
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }

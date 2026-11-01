@@ -7,7 +7,6 @@ import { PracticeSelect } from "./pages/PracticeSelect";
 import { PracticeAnalysis } from "./pages/PracticeAnalysis";
 import { MicTest } from "./pages/MicTest";
 import { Learn } from "./pages/Learn";
-import { VocabularyPreview } from "./pages/VocabularyPreview";
 import { LearningTaskPage, VocabularySceneReview } from "./pages/LearningTaskPage";
 import { ISpyPhase1 } from "./pages/ISpyPhase1";
 import { ISpyPhase2 } from "./pages/ISpyPhase2";
@@ -34,6 +33,8 @@ import { useAuth } from "./state/Auth";
 import { LoadingScreen } from "./components/LoadingScreen";
 import { Rooms } from "./pages/Rooms";
 import { Room } from "./pages/Room";
+import { FriendChats } from "./pages/FriendChats";
+import { FriendChat } from "./pages/FriendChat";
 import { FullReload } from "./components/FullReload";
 import { isMarketingPath } from "./marketing/paths";
 
@@ -84,11 +85,11 @@ export default function App() {
           <Route element={<FocusShell />}>
             <Route path="/payment" element={<Payment />} />
             <Route path="/rooms/:roomId" element={<Room />} />
+            <Route path="/ispy/friends/:chatId" element={<FriendChat />} />
         <Route path="/practice/sessions/:sessionId" element={<SessionRoute />}>
           <Route path="analysis" element={<PracticeAnalysis />} />
           <Route path="mic-test" element={<MicTest />} />
           <Route path="learn" element={<Learn />} />
-          <Route path="learn/vocabulary-preview" element={<VocabularyPreview />} />
           <Route path="learn/:taskId" element={<LearningTaskPage />} />
           <Route path="review" element={<VocabularySceneReview />} />
           <Route path="ispy-1" element={<ISpyPhase1 />} />
@@ -109,7 +110,8 @@ export default function App() {
         <Route path="/ispy" element={<ISpyModes />} />
         <Route path="/ispy/play" element={<ISpyPlay />} />
         <Route path="/ispy/challenge" element={<DailyChallengePage />} />
-        <Route path="/ispy/friends" element={<Rooms />} />
+        <Route path="/ispy/friends" element={<FriendChats />} />
+        <Route path="/ispy/legacy-rooms" element={<Rooms />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/vocabulary" element={<Vocabulary />} />
         <Route path="/journal" element={<Journal />} />

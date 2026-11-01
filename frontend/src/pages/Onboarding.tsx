@@ -3,12 +3,12 @@ import { useState } from "react";
 import { OnboardingSteps } from "../components/OnboardingSteps";
 import { trackAction } from "../lib/analytics.ts";
 import { readOnboardingProgress, savedPastaAvatar, type OnboardingDraft } from "../lib/onboardingDraft";
-import { languages } from "../config/languages";
 import { AppStateProvider } from "../state/AppState";
 import { useAppState } from "../state/useAppState";
 
 const defaultDraft: OnboardingDraft = {
-  name: "", languageCode: languages[0].code, goal: "", minutes: 10,
+  // The language step starts on the first language pack discovery offers.
+  name: "", languageCode: "", goal: "", minutes: 10,
   microphoneEnabled: false, cameraEnabled: false, avatar: "farfalle", proficiencyLevel: "A0",
 };
 
@@ -23,15 +23,15 @@ export function Onboarding() {
   // Route state is intentionally ephemeral: a browser restore or reload drops it.
   // The in-progress draft is the durable source of truth for a language reset.
   const savedProgress = user ? readOnboardingProgress(user.id) : null;
+  // Which languages may be chosen is checked against pack discovery when the setup saves.
   const resumedLanguageCode = savedProgress?.restartingForLanguage
-    && languages.some(language => language.code === savedProgress.draft.languageCode)
-    ? savedProgress.draft.languageCode : undefined;
+    ? savedProgress.draft.languageCode || undefined : undefined;
   const languageChangeCode = navigationState?.languageChangeCode ?? resumedLanguageCode;
-  const restartingForLanguage = Boolean(languageChangeCode && languages.some(language => language.code === languageChangeCode));
+  const restartingForLanguage = Boolean(languageChangeCode);
   if (user?.onboardingCompleted && !completionStarted && !restartingForLanguage) return <Navigate to={destination} replace />;
   const initial: OnboardingDraft = {
     name: learner.name,
-    languageCode: restartingForLanguage ? languageChangeCode! : learner.languageCode || languages[0].code,
+    languageCode: restartingForLanguage ? languageChangeCode! : learner.languageCode || defaultDraft.languageCode,
     goal: learner.goal || defaultDraft.goal,
     minutes: learner.dailyMinutes ?? 10,
     microphoneEnabled: learner.micOn,

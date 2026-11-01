@@ -11,7 +11,7 @@ import { useAppState } from "../state/useAppState";
 import { Button, Card, Feedback } from "../components/ui";
 import { ImageUpload } from "../components/ImageUpload";
 import { BasilIcon } from "../components/icons";
-import { languages } from "../config/languages";
+import { languageDisplayName } from "../lib/languageChoices";
 import "../components/rooms.css";
 
 export function Room() {
@@ -103,8 +103,7 @@ function RoomSession({ roomId }: { roomId: string }) {
   const me = data.members.find(member => member.userId === owner);
   const partner = data.members.find(member => member.userId !== owner);
   const terminal = ["completed", "ended", "expired"].includes(data.status);
-  const languageName = languages.find(language => language.code === data.targetLanguageCode)?.name
-    ?? data.targetLanguageCode.toUpperCase();
+  const languageName = languageDisplayName(data.targetLanguageCode);
 
   return <div className="stack rooms-page">
     <header className="rooms-page__room-header"><div className="rooms-page__title"><div><span className="rooms-lobby__eyebrow">Private room</span><h1>I Spy together</h1></div>{!terminal ?

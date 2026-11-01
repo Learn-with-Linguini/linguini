@@ -1,0 +1,24 @@
+construction_id = "target-location"
+version = 1
+summary = "Name an object with its detail and location."
+guidance = "Name the object with its detail and say where it is: definite article + inflected adjective + noun + ist + preposition + dative reference: Die rote Tasse ist neben dem Fenster."
+features = ["located-description"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { subject = "noun", attribute = "adjective", relation = "preposition", reference = "noun" }
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "location-frame"
+message = "Say where it is with the taught verb."
+must_contain = ["\\bist\\b"]
+
+[[checks]]
+check_id = "location-dative"
+message = "After a location preposition use the dative (dem/der/einem/einer)."
+must_not_contain = ["\\b(auf|unter|neben|vor|hinter|über|in|an) (das|die|den|ein|eine|einen)\\b"]

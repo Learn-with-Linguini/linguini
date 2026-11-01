@@ -25,7 +25,7 @@ export function nextAssistanceStep(
 
 export function lessonCheckFinished(
   check: Pick<LessonAnswerCheck, "isCorrect" | "attemptsLeft"> | undefined,
-  allowRetry: boolean | null = true,
+  allowRetry: boolean | null = false,
 ): boolean {
   return Boolean(check && (!allowRetry || check.isCorrect || check.attemptsLeft === 0));
 }
@@ -36,7 +36,7 @@ export function unlockedRetryResumeIndex(
 ): number {
   const next = questions.findIndex(question => {
     const check = checks[question.questionId];
-    return !lessonCheckFinished(check);
+    return !lessonCheckFinished(check, true);
   });
   return next === -1 ? Math.max(0, questions.length - 1) : next;
 }

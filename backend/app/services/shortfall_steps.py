@@ -6,7 +6,6 @@ are 2 cups." Steps describe the confirmed facts only; they never guess what else
 is in the photo.
 """
 
-
 from app.services.quantities import english_plural
 
 MAX_NAMED = 3
@@ -47,12 +46,10 @@ def _quantities(objects, counted_groups):
     return quantities
 
 
-def _count_step(low, high, quantities, allowed=lambda _name: True, example="cup"):
+def _count_step(low, high, quantities, example="cup"):
     """The smallest change that brings one named group into ``low``-``high``."""
     best = None
     for name, quantity in quantities.values():
-        if not allowed(name):
-            continue
         distance = low - quantity if quantity < low else quantity - high
         if distance > 0 and (best is None or distance < best[0]):
             best = (distance, name, quantity)
@@ -89,11 +86,11 @@ def _a0_objects_step(objects):
 
 
 def _attributes_step(need, objects):
-    from app.services.mission_eligibility import confirmed_attributes
+    from app.services.mission_eligibility import scene_attributes
 
     plain = [
         label for label in _labels(objects)
-        if not any(confirmed_attributes(obj) for obj in objects if _key(obj.label) == _key(label))
+        if not any(scene_attributes(obj) for obj in objects if _key(obj.label) == _key(label))
     ]
     adjective = "a colour, size, shape, material, pattern or state"
     if not plain:
@@ -145,7 +142,7 @@ def _compare_step(mission, quantities):
 
 def mission_steps(mission, objects, relations, counted_groups, kinds):
     """``[{"kind", "text"}]``: what to add for each kind this mission is short of."""
-    from app.services.mission_eligibility import confirmed_attributes
+    from app.services.mission_eligibility import scene_attributes
 
     requirements = mission.photo_requirements
     labels = _labels(objects)
@@ -177,7 +174,7 @@ def mission_steps(mission, objects, relations, counted_groups, kinds):
             add("counts", _count_step(
                 requirements.min_quantity, requirements.max_quantity, quantities,
             ))
-        described = {_key(obj.label) for obj in objects if confirmed_attributes(obj)}
+        described = {_key(obj.label) for obj in objects if scene_attributes(obj)}
         add("attributes", _attributes_step(
             max(1, requirements.min_coloured_objects - len(described)), objects,
         ))

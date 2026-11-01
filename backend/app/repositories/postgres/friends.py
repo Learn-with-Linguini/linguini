@@ -28,6 +28,7 @@ from app.repositories.postgres.room_errors import RoomError
 from app.repositories.postgres.users import users
 from app.schemas.base import utc_now
 from app.schemas.friends import FriendInvite, FriendPublic
+from app.services.room_languages import room_profile_supported
 
 metadata = MetaData()
 friendships = Table(
@@ -63,12 +64,7 @@ def friendship_condition(user_id, friend_id):
 
 
 def compatible_profile(profile):
-    return bool(
-        profile
-        and profile["source_language_code"].lower() == "en"
-        and profile["target_language_code"].lower() in {"es", "fr", "de"}
-        and profile["proficiency_level"] in {"A1", "A2"}
-    )
+    return room_profile_supported(profile)
 
 
 def matching_profiles(first, second):

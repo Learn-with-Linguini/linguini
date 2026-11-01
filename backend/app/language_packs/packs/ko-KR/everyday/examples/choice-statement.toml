@@ -1,0 +1,25 @@
+construction_id = "choice-statement"
+
+[[examples]]
+example_id = "i-choose-book"
+levels = ["A0"]
+purposes = ["sayChoice"]
+meaning = "I choose the book."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }], preferences = [{ fact_id = "preference:cup", object = "object:cup", person = "first", likes = true }, { fact_id = "preference:book", object = "object:book", person = "ana", likes = false }, { fact_id = "preference:key", object = "object:key", person = "leo", likes = true }] }
+bindings = { object = "object:book" }
+truth = true
+labels = []
+sentence = "저는 책을 골라요."
+translation = "I choose the book."
+chunks = [{ text = "저는", join = "none" }, { text = "책을", join = "space" }, { text = "골라요", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "i-choose-book-form"
+levels = ["A0"]
+purposes = ["sayChoice"]
+sentence = "저는 책를 골라요."
+correction = "저는 책을 골라요."
+note = "After a consonant, use 을."
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }

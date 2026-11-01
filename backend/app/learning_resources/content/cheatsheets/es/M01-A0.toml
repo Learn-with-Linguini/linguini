@@ -1,0 +1,61 @@
+mission_id = "M01"
+practice_level = "A0"
+content_version = 1
+language_code = "es"
+text_direction = "ltr"
+title = "Name and identify"
+
+[[concepts]]
+concept_id = "recognise-name"
+title = "Learn the article with the object"
+explanation = "Keep the article and noun together when you learn a new word."
+
+[[concepts.examples]]
+target_text = "el sofá (m)"
+translation = "the sofa"
+
+[[concepts.examples]]
+target_text = "la almohada (f)"
+translation = "the pillow"
+
+[[concepts.examples]]
+target_text = "el portátil (m)"
+translation = "the laptop"
+
+[[concepts]]
+concept_id = "identify-object"
+title = "Say what the object is"
+formula = "Es + un/una + object."
+
+[[concepts.pattern_parts]]
+part_id = "this-is"
+label = "this is"
+role = "fixed"
+text = "Es"
+
+[[concepts.pattern_parts]]
+part_id = "article"
+label = "article"
+role = "choice"
+
+[[concepts.pattern_parts.choices]]
+text = "un"
+label = "masculine"
+
+[[concepts.pattern_parts.choices]]
+text = "una"
+label = "feminine"
+
+[[concepts.pattern_parts]]
+part_id = "object"
+label = "object"
+role = "slot"
+text = "object"
+
+[[concepts.examples]]
+target_text = "Es un sofá."
+translation = "This is a sofa."
+
+[[concepts.examples]]
+target_text = "Es una almohada."
+translation = "This is a pillow."

@@ -1,0 +1,93 @@
+mission_id = "M05"
+practice_level = "A1"
+content_version = 1
+
+[[cases]]
+case_id = "m05-a1-ana-dislikes-plate"
+category = "meaning"
+construction_id = "their-preference"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }, { fact_id = "object:bag", concept = "bag" }], preferences = [{ fact_id = "preference:plate", object = "object:plate", person = "ana", likes = false }, { fact_id = "preference:bag", object = "object:bag", person = "leo", likes = true }] }
+bindings = { object = "object:plate", preference = "preference:plate" }
+truth = true
+use = "dislike"
+input = "Say that Ana doesn't like the plate."
+expected_meaning = "Ana doesn't like the plate."
+acceptable = ["아나는 접시를 안 좋아해요."]
+reject = [{ sentence = "아나는 접시를 좋아해요.", category = "meaning", reason = "In the role-play Ana doesn't like the plate." }, { sentence = "레오는 접시를 안 좋아해요.", category = "meaning", reason = "The sentence is about Ana." }]
+provenance = { source = "Held-out M05 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m05-a1-leo-likes-door"
+category = "wrongObject"
+construction_id = "their-preference"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:door", concept = "door" }, { fact_id = "object:bag", concept = "bag" }], preferences = [{ fact_id = "preference:door", object = "object:door", person = "leo", likes = true }] }
+bindings = { object = "object:door", preference = "preference:door" }
+truth = true
+use = "like"
+input = "Say that Leo likes the door."
+expected_meaning = "Leo likes the door."
+acceptable = ["레오는 문을 좋아해요."]
+reject = [{ sentence = "레오는 가방을 좋아해요.", category = "wrongObject", reason = "In the role-play Leo likes the door." }]
+provenance = { source = "Held-out M05 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m05-a1-i-like-bag"
+category = "meaning"
+construction_id = "my-preference"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }], preferences = [{ fact_id = "preference:bag", object = "object:bag", person = "first", likes = true }] }
+bindings = { object = "object:bag", preference = "preference:bag" }
+truth = true
+use = "like"
+input = "Say that you like the bag."
+expected_meaning = "I like the bag."
+acceptable = ["저는 가방을 좋아해요."]
+reject = [{ sentence = "아나는 가방을 좋아해요.", category = "meaning", reason = "The sentence is about you, not Ana." }, { sentence = "저는 가방을 안 좋아해요.", category = "meaning", reason = "You like the bag." }]
+provenance = { source = "Held-out M05 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m05-a1-ana-key-question"
+category = "punctuation"
+construction_id = "preference-question"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:key", concept = "key" }, { fact_id = "object:door", concept = "door" }], preferences = [{ fact_id = "preference:key", object = "object:key", person = "ana", likes = false }, { fact_id = "preference:door", object = "object:door", person = "leo", likes = true }] }
+bindings = { object = "object:key", preference = "preference:key" }
+truth = true
+use = "question"
+input = "Ask whether Ana likes the key."
+expected_meaning = "Does Ana like the key?"
+acceptable = ["아나는 열쇠를 좋아해요?"]
+reject = [{ sentence = "아나는 열쇠를 좋아해요.", category = "punctuation", reason = "The question keeps its question mark." }, { sentence = "레오는 열쇠를 좋아해요?", category = "meaning", reason = "The question is about Ana." }]
+provenance = { source = "Held-out M05 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m05-a1-ask-plate"
+category = "wrongObject"
+construction_id = "preference-question"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }, { fact_id = "object:door", concept = "door" }] }
+bindings = { object = "object:plate" }
+truth = true
+use = "question"
+input = "Ask whether the listener likes the plate."
+expected_meaning = "Do you like the plate?"
+acceptable = ["접시를 좋아해요?"]
+reject = [{ sentence = "문을 좋아해요?", category = "wrongObject", reason = "The question is about the plate." }]
+provenance = { source = "Held-out M05 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m05-a1-held-unicode"
+category = "unicode"
+construction_id = "their-preference"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:phone", concept = "phone" }], preferences = [{ fact_id = "preference:phone", object = "object:phone", person = "ana", likes = false }] }
+bindings = { object = "object:phone", preference = "preference:phone" }
+truth = true
+use = "dislike"
+input = "Say that Ana doesn't like the phone."
+expected_meaning = "Ana doesn't like the phone."
+acceptable = ["아나는 휴대폰을 안 좋아해요."]
+reject = [{ sentence = "\u110b\u1161\u1102\u1161\u1102\u1173\u11ab \u1112\u1172\u1103\u1162\u1111\u1169\u11ab\u110b\u1173\u11af \u110b\u1161\u11ab \u110c\u1169\u11c2\u110b\u1161\u1112\u1162\u110b\u116d.", category = "unicode", reason = "The rejected candidate contains decomposed characters." }]
+provenance = { source = "Held-out M05 evaluation content, AI-authored 2026-10-23; facts from the sample vocabulary.", review_status = "unreviewed" }

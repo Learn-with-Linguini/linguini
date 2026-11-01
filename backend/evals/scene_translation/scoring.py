@@ -35,7 +35,7 @@ from typing import Any
 from app.ai.features.translation.schemas import SceneTranslationResult, TranslatedTerm
 from app.ai.features.translation.validation import (
     SceneTranslationError,
-    validate_translation_terms,
+    validate_supplied_terms,
 )
 
 from .ground_truth import TranslationCase
@@ -179,10 +179,10 @@ def score_case(
 
     score.parsed = True
 
-    # The production check: keys and sources preserved, articles present on
-    # objects and absent everywhere else.
+    # The production contract every language shares: keys and sources preserved, and
+    # articles or gender only on objects. Article accuracy is scored separately.
     try:
-        validate_translation_terms(case.payload(), result)
+        validate_supplied_terms(case.payload(), result)
         score.structurally_valid = True
     except SceneTranslationError as exc:
         score.error = str(exc)

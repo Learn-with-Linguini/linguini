@@ -61,10 +61,7 @@ design.md         Product and visual guidelines
 
 ## Analytics convention
 
-- Every new user-facing functionality and interactive feature MUST include analytics instrumentation.
-- Use `trackAction(eventName, params)` from `src/lib/analytics.ts` to log both GA4 (`gtag("event", ...)`) and Contentsquare (`_uxa.push(["trackCustomEvent", ...])`) events for key user actions (CTA clicks, form submissions, state transitions, checkout/payment actions, feature triggers).
-- For new pages/routes, pageview tracking is handled automatically across SPA route changes by `AnalyticsTracker` (Contentsquare `trackPageview` and GA4 `page_view`).
-- Document all tracked events and pages in `ANALYTICS.md`.
+Follow the root [analytics convention](../AGENTS.md#analytics-convention). Frontend actions use `trackAction` from `src/lib/analytics.ts`; event and page documentation lives in [ANALYTICS.md](../ANALYTICS.md).
 
 ## Review
 

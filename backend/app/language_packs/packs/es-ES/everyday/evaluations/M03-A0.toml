@@ -1,0 +1,115 @@
+mission_id = "M03"
+practice_level = "A0"
+content_version = 1
+
+[[cases]]
+case_id = "m03-a0-how-many-plates"
+category = "valid"
+construction_id = "how-many-question"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }, { fact_id = "object:spoon", concept = "spoon" }], counts = [{ fact_id = "count:plate", object = "object:plate", quantity = 3 }, { fact_id = "count:spoon", object = "object:spoon", quantity = 2 }] }
+bindings = { object = "object:plate" }
+truth = true
+input = "Ask how many plates there are."
+expected_meaning = "How many plates are there?"
+acceptable = ["¿Cuántos platos hay?"]
+reject = [{ sentence = "¿Cuántas cucharas hay?", category = "wrongObject", reason = "The question is about the plates." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a0-chunk-three-plates"
+category = "wrongObject"
+construction_id = "quantity-chunk"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }, { fact_id = "object:spoon", concept = "spoon" }], counts = [{ fact_id = "count:plate", object = "object:plate", quantity = 3 }, { fact_id = "count:spoon", object = "object:spoon", quantity = 2 }] }
+bindings = { object = "object:plate", count = "count:plate" }
+truth = true
+input = "Name the three plates."
+expected_meaning = "three plates"
+acceptable = ["tres platos"]
+reject = [{ sentence = "tres cucharas", category = "wrongObject", reason = "The counted objects are plates." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a0-chunk-count"
+category = "wrongCount"
+construction_id = "quantity-chunk"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:spoon", concept = "spoon" }, { fact_id = "object:plate", concept = "plate" }], counts = [{ fact_id = "count:spoon", object = "object:spoon", quantity = 2 }, { fact_id = "count:plate", object = "object:plate", quantity = 3 }] }
+bindings = { object = "object:spoon", count = "count:spoon" }
+truth = true
+input = "Name the two spoons."
+expected_meaning = "two spoons"
+acceptable = ["dos cucharas"]
+reject = [{ sentence = "tres cucharas", category = "wrongCount", reason = "Two spoons were counted, not three." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a0-chunk-not-sentence"
+category = "punctuation"
+construction_id = "quantity-chunk"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:fork", concept = "fork" }], counts = [{ fact_id = "count:fork", object = "object:fork", quantity = 3 }] }
+bindings = { object = "object:fork", count = "count:fork" }
+truth = true
+input = "Name the three forks."
+expected_meaning = "three forks"
+acceptable = ["tres tenedores"]
+reject = [{ sentence = "tres tenedores.", category = "punctuation", reason = "A chunk is not a sentence." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a0-one-with-noun"
+category = "agreement"
+construction_id = "quantity-chunk"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:key", concept = "key" }] }
+bindings = { object = "object:key", count = "number:1" }
+truth = false
+input = "Name one key."
+expected_meaning = "one key"
+acceptable = ["una llave"]
+reject = [{ sentence = "un llave", category = "agreement", reason = "The number one agrees with the noun." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a0-how-many-punctuation"
+category = "punctuation"
+construction_id = "how-many-question"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }], counts = [{ fact_id = "count:bag", object = "object:bag", quantity = 2 }] }
+bindings = { object = "object:bag" }
+truth = true
+input = "Ask how many bags there are."
+expected_meaning = "How many bags are there?"
+acceptable = ["¿Cuántos bolsos hay?"]
+reject = [{ sentence = "¿Cuántos bolsos hay", category = "punctuation", reason = "A question ends with a question mark." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a0-held-phones"
+category = "unicode"
+construction_id = "quantity-chunk"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:phone", concept = "phone" }], counts = [{ fact_id = "count:phone", object = "object:phone", quantity = 2 }] }
+bindings = { object = "object:phone", count = "count:phone" }
+truth = true
+input = "Name the two phones."
+expected_meaning = "two phones"
+acceptable = ["dos teléfonos"]
+reject = [{ sentence = "dos tele\u0301fonos", category = "unicode", reason = "The rejected candidate contains decomposed characters." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a0-held-plural"
+category = "agreement"
+construction_id = "quantity-chunk"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }], counts = [{ fact_id = "count:cup", object = "object:cup", quantity = 3 }] }
+bindings = { object = "object:cup", count = "count:cup" }
+truth = true
+input = "Name the three cups."
+expected_meaning = "three cups"
+acceptable = ["tres tazas"]
+reject = [{ sentence = "tres taza", category = "agreement", reason = "After three, use the plural." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }

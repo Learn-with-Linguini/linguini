@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { gameResourceKeys } from "../lib/gameResources";
-import { gamificationKeys, getChefStandings, getGamification } from "../lib/gamification";
+import { gamificationKeys, getChefStandings, getGamification, getMissionProgress } from "../lib/gamification";
 import { useAppState } from "./useAppState";
 
 export function useGamification() {
@@ -9,6 +9,15 @@ export function useGamification() {
     queryKey: gamificationKeys.summary(user?.id ?? "", activeProfile?.id ?? ""),
     queryFn: ({ signal }) => getGamification(activeProfile!.id, signal),
     enabled: Boolean(user?.id && activeProfile?.id), refetchInterval: 60_000,
+  });
+}
+
+export function useMissionProgress(sessionId: string, enabled = true) {
+  const { user } = useAppState();
+  return useQuery({
+    queryKey: gamificationKeys.mission(user?.id ?? "", sessionId),
+    queryFn: ({ signal }) => getMissionProgress(sessionId, signal),
+    enabled: Boolean(user?.id && sessionId) && enabled,
   });
 }
 

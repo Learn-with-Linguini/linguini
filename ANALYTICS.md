@@ -1,5 +1,4 @@
 # Linguini Analytics Documentation
-
 Linguini uses dual-dispatch analytics combining **Google Analytics 4 (GA4)** and **Contentsquare**.
 All tracking helpers are centralized in `frontend/src/lib/analytics.ts`.
 
@@ -57,11 +56,12 @@ Because Linguini is a single-page application (SPA), route changes do not reload
 * `/onboarding` — Language pairing and level selection
 * `/practice` — Photo capture / scene selector
 * `/practice/sessions/:sessionId/*` — Active lesson tasks (word cards, grammar, description)
-* `/practice/sessions/:sessionId/learn/vocabulary-preview` — Photo-level vocabulary introductory preview
 * `/practice/ispy` — Standalone I-Spy mode selector (Solo vs Friends)
 * `/practice/ispy/join` — Enter invite code to join a room
 * `/practice/ispy/room/:roomCode` — Multiplayer I-Spy gameplay room
 * `/ispy/challenge` — Daily photo challenge: take a photo of today's scene to start a lesson
+* `/ispy/friends` — Persistent private I-Spy chats and invitation preview
+* `/ispy/friends/:chatId` — Photo rounds, clues, guesses and completed-round history
 * `/rooms` — Active and previous multiplayer rooms list
 * `/vocabulary` — Learned words, audio pronunciation, and mastery filters
 * `/journal` — Calendar diary of daily practice entries and photo attachments
@@ -81,6 +81,36 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 1. `gtag("event", action, params)` to GA4.
 2. `window._uxa.push(["trackCustomEvent", action, params])` to Contentsquare.
 
+### Photo camera
+
+| Event Name | Parameters | Trigger Description |
+| :--- | :--- | :--- |
+| `photo_camera_opened` | — | User opens the live camera preview |
+| `photo_camera_captured` | — | A JPEG photo is captured for the existing upload flow |
+| `photo_camera_cancelled` | — | User closes the preview with Cancel or Escape |
+| `photo_camera_failed` | `{ reason }` | Camera API unavailable, browser error name, or `capture_failed`; no image data is tracked |
+
+### Vocabulary review interactions
+
+| Event Name | Parameters | Trigger Description |
+| :--- | :--- | :--- |
+| `vocabulary_typing_skipped` | `{ taskId, termType, revisiting }` | Learner skips the current typing prompt without checking or revealing its answer |
+| `vocabulary_marker_clicked` | `{ taskId, marker, audioAvailable }` | Learner selects a photo marker to show its object card and play target-language pronunciation when available |
+| `vocabulary_exercises_started` | `{ taskId, source, revisiting, questionCount, wordCount }` | Learner enters exercises through the flashcard shortcut (`source: shortcut`) or after the final card (`source: cardsComplete`); this transition does not submit answers or award credit |
+| `vocabulary_pronunciation_clicked` | `{ termType }` | Learner replays a word using the review card's speaker button |
+
+Objects appear beside their linked adjectives, followed by unlinked adjectives and
+relations. `vocabulary_flashcard_viewed` is emitted for each visible card with the
+group's position, term type, and `groupedCardCount`, including marker navigation.
+
+### Scene processing progress
+
+| Event Name | Parameters | Trigger Description |
+| :--- | :--- | :--- |
+| `scene_processing_progress_shown` | `{ sessionId, phase: "analysis" \| "lesson", stage, stalled }` | A processing stage becomes visible, including ready, legacy unknown, and paused polling states |
+
+The existing analysis and review routes show this progress; no new page is added.
+
 ### Authentication & Account Management
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
@@ -98,6 +128,7 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 ### Onboarding & Setup
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
+| `onboarding_step_viewed` | `{ step }` | Learner views a specific step during onboarding (`profile`, `language`, `experience`, `placement`, `goals`, `permissions`, `success`) |
 | `onboarding_completed` | `{ language, minutes, level }` | Learner completes initial onboarding questionnaire |
 | `onboarding_resumed` | `{ stage }` | Learner returns to unfinished onboarding after leaving the app |
 
@@ -111,30 +142,34 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `photo_upload_retried` | `{ source: "camera" | "userUpload" }` | Learner retries confirmation of an uploaded image after a connection or server failure |
 | `practice_scene_selected` | `{ sceneId, title }` | User selects a curated catalog scene |
 | `scene_review_confirmed` | `{ acceptedCount, addedCount }` | User confirms detected objects before generating lesson |
+| `revisit_review_shown` | `{ sessionId, newWordCount, practisedWordCount }` | Review of a repeat lesson on a photo shows which words were practised before (counts are distinct labels) |
 | `scene_shortfall_shown` | `{ missing }` | Review shows that the photo lacks checkable objects, counts, adjectives or connections (`missing` is a comma-separated list) |
 | `scene_shortfall_add_clicked` | `{ kind }` | Learner chooses to add the missing kind of fact from the shortfall notice |
 | `scene_shortfall_new_photo` | `{ missing }` | Learner leaves a short scene to take or choose another photo |
 | `scene_analysis_retried` | `{ sessionId }` | User requests AI re-analysis of a photo |
 | `task_answer_checked` | `{ taskId, isCorrect, kind }` | Learner checks answer on an interactive exercise |
+| `lesson_marker_selected` | `{ taskId, questionId, marker }` | Learner answers a marker-based lesson question by selecting its numbered marker directly on the photo |
 | `task_completed` | `{ taskId, kind }` | Learner completes reading or informational task |
 | `task_finished_to_list` | `{ taskId, kind }` | Learner finishes the final task and returns to the task list |
-| `task_opened` | `{ taskId }` | User opens a specific learning task from the task list |
+| `task_opened` | `{ taskId }` | User opens a mission from the mission path (tapping its row, or the Start/Continue button) |
+| `mission_path_primary_clicked` | `{ label }` | User presses the mission path's bottom button (`Start`, `Continue`, `Done` or `Play I-Spy`) |
 | `learning_exit_clicked` | — | User exits the learning task overview back to Home |
-| `finish_lesson_clicked` | — | User completes all learning tasks and clicks "Finish lesson" |
+| `finish_lesson_clicked` | — | User completes every mission on the path and presses "Done" |
 | `play_ispy_clicked` | — | User proceeds from learning tasks to play I-Spy |
-| `vocabulary_preview_started` | — | User starts "Learn the words" vocabulary preview |
-| `vocabulary_preview_continue_clicked` | `{ taskId }` | User continues from preview to individual word learning |
-| `vocabulary_preview_exit_clicked` | — | User exits from vocabulary preview |
+| `vocabulary_review_started` | `{ taskId, revisiting }` | User opens the interactive vocabulary review directly from the lesson overview |
 | `vocabulary_flashcard_viewed` | `{ taskId, position, termType, hasSceneObject }` | Learner views a vocabulary teaching card, including whether its object can be highlighted in the scene |
 | `vocabulary_typing_checked` | `{ taskId, termType, isCorrect, revealed, basilEarned }` | Learner checks or reveals a typed vocabulary answer and receives any server-awarded Basil |
-| `home_continue_practice_clicked` | — | User resumes incomplete practice from dashboard |
+| `home_continue_practice_clicked` | `{ sessionId }` | User resumes incomplete practice from dashboard |
 | `home_begin_practice_clicked` | — | User starts new practice from dashboard |
 | `home_explore_vocabulary_clicked` | — | User clicks vocabulary revisit card on home dashboard |
-| `home_explore_ispy_clicked` | — | User clicks I-Spy quick play card on home dashboard |
-| `session_summary_viewed` | `{ basilEarned, wordsLearnedCount, completedLessonsCount }` | Session summary screen displays upon finishing a lesson |
+| `home_explore_ispy_clicked` | `{ action: "start" \| "resume" \| "retry" }` | Home quick play starts a game on a randomly selected playable personal photo, resumes an unfinished game, or retries the same start request |
+| `home_quick_play_retried` | `{ stage: "photos" \| "active" \| "start" }` | Learner retries loading quick play or starting its game |
+| `home_quick_play_photo_lesson_clicked` | — | Learner opens photo practice from quick play’s empty state |
+| `session_summary_viewed` | `{ sessionId, basilEarned, wordsLearnedCount, completedLessonsCount }` | Session summary screen displays upon finishing a lesson |
 | `summary_back_home_clicked` | — | User clicks "Back home" on session summary |
-| `summary_journal_cta_clicked` | — | User clicks "Write today's journal entry" from summary |
-| `summary_review_words_cta_clicked` | — | User clicks "Review difficult words" from summary |
+| `badge_earned_popup_shown` | `{ missionId, level }` | The summary opens the "New badge earned" popup; once per earned badge, once per session |
+| `badge_earned_popup_closed` | — | Learner closes the "New badge earned" popup |
+| `summary_badge_missed` | `{ missionId, accuracy }` | A finished mission didn't earn its badge (50% or less correct, or skipped tasks); logged once per session |
 | `summary_play_ispy_clicked` | — | User clicks "Play I-Spy with this scene" from summary |
 
 ### I-Spy & Multiplayer Rooms
@@ -142,8 +177,14 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | :--- | :--- | :--- |
 | `ispy_mode_selected` | `{ mode: "ai" \| "friend" }` | User selects AI solo play or Multiplayer friend mode |
 | `ispy_game_resumed` | — | User resumes an active I-Spy game session |
-| `ispy_clue_submitted` | `{ optionId, isCorrect }` | Learner chooses an object in response to Linguini's clue |
+| `ispy_clue_submitted` | `{ optionId, isCorrect, source: "photo_marker" }` | Learner taps a photo marker in response to Linguini's clue on lesson and standalone I-Spy clue pages |
 | `ispy_description_submitted` | `{ outcome }` | Learner writes a description clue for Linguini to guess |
+| `ispy_word_bank_toggled` | `{ learnerLevel, shown }` | An A1 or A2 learner shows or hides the current scene's word bank during I-Spy |
+| `ispy_clue_listened_first` | `{ taskId }` | An A2 learner plays a listen-first clue, which then shows its text |
+| `ispy_clue_text_revealed` | `{ taskId }` | An A2 learner shows a listen-first clue's text without playing it |
+| `ispy_clue_help_opened` | `{ taskId }` | An A2 learner opens the clue frames kept behind "Need help?" |
+| `ispy_exit_clicked` | `{ phase: "clues" \| "describe" }` | Learner exits an active I-Spy round back to Home |
+| `describe_round_skipped` | `{ mode }` | Session skips the describing round because there is no reflection task and proceeds to results |
 | `ispy_match_confirmed` | — | Learner confirms Linguini guessed their object correctly |
 | `room_created` | — | User creates a new multiplayer room |
 | `room_joined` | — | User joins a friend's room using a room code |
@@ -152,6 +193,50 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `room_friend_removed` | — | User removes a friend from challenges |
 | `room_action_executed` | `{ intent }` | Multiplayer game action dispatched (ready, turn, etc.) |
 | `game_accent_selected` | `{ appearance }` | Learner equips or buys an accent using Sauce/Basil |
+
+### Private I-Spy chats
+
+Invitation fragments are consumed before analytics scripts load and retained only for
+the explicit join flow. Events below contain action categories and the viewer's level;
+they never contain invite tokens, clue text, object names, photos, guess coordinates,
+or private-help content. Private help and audio activity do not enter the shared chat.
+
+| Event Name | Parameters | Trigger Description |
+| :--- | :--- | :--- |
+| `ispy_friend_chat_created` | — | A private chat is created successfully |
+| `ispy_friend_invite_created` | — | The creator generates a replacement invitation |
+| `ispy_friend_invite_copied` | — | Copying an invitation succeeds |
+| `ispy_friend_invite_shared` | — | Sharing an invitation succeeds |
+| `ispy_friend_invite_opened` | — | The invitation preview opens |
+| `ispy_friend_invite_revoked` | — | The creator revokes an invitation |
+| `ispy_friend_chat_joined` | — | A compatible learner explicitly joins |
+| `ispy_friend_photo_uploaded` | — | An owned photo is accepted for a round |
+| `ispy_friend_photo_retried` | — | The sender retries failed photo analysis |
+| `ispy_friend_detected_object_selected` | — | The sender selects a suggested object |
+| `ispy_friend_detected_object_confirmed` | — | The sender confirms a detected target |
+| `ispy_friend_custom_object_started` | — | The sender starts selecting another object |
+| `ispy_friend_custom_object_confirmed` | — | The sender confirms the checked custom target |
+| `ispy_friend_clue_builder_opened` | `{ level }` | The sender opens the clue builder |
+| `ispy_friend_cheatsheet_opened` | — | A shared canonical cheatsheet opens |
+| `ispy_friend_clue_suggested` | — | A suggested clue is returned for review |
+| `ispy_friend_clue_sent` | — | The sender explicitly sends a reviewed clue |
+| `ispy_friend_private_help_opened` | — | The receiver requests private assistance |
+| `ispy_friend_private_word_opened` | `{ shown }` | The receiver shows or hides a private word meaning |
+| `ispy_friend_guess_selected` | — | The receiver chooses a photo location |
+| `ispy_friend_guess_submitted` | — | A confirmed location guess is saved |
+| `ispy_friend_guess_correct` | — | A new saved correct result appears |
+| `ispy_friend_guess_incorrect` | — | A new saved incorrect result appears |
+| `ispy_friend_followup_clue_sent` | — | The sender saves an additional clue |
+| `ispy_friend_answer_revealed` | — | The sender deliberately reveals the answer |
+| `ispy_friend_round_completed` | — | A new correct result or revealed answer appears |
+| `ispy_friend_next_round_started` | — | Another round starts in a chat with history |
+| `ispy_friend_round_cancelled` | — | The sender cancels an unfinished round |
+| `ispy_friend_audio_played` | `{ kind }` | Object, option, preview, clue, word or answer audio is requested |
+| `ispy_friend_speech_started` | — | The sender starts speech input |
+| `ispy_friend_action_retried` | — | The learner retries an action whose response was lost |
+| `ispy_friend_chat_left` | — | A participant explicitly leaves |
+| `ispy_friend_chat_reported` | — | A private report is saved |
+| `ispy_friend_chat_blocked` | — | Blocking closes conversations with the other participant |
 
 ### Gamification & Leaderboards
 | Event Name | Parameters | Trigger Description |
@@ -168,9 +253,14 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 ### Vocabulary & Journal
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
+| `journal_new_entry_clicked` | — | User clicks "New entry" button on the journal calendar |
+| `journal_entry_viewed` | `{ entryId }` | User clicks an existing journal entry to read |
 | `journal_entry_saved` | `{ hasPhotos, wordCount, isNew }` | Daily journal entry saved or updated |
 | `vocabulary_view_toggled` | `{ view }` | Switched between journey tree and list views |
 | `revisit_empty_practice_started` | — | Learner starts their first practice session from the empty Revisit page |
+| `revisit_lesson_started` | `{ mediaAssetId, previousSessionId, sessionId }` | Learner taps Revisit on a photo card and a new lesson on the same photo is created (or its unfinished one resumed); `previousSessionId` is the card's latest lesson |
+| `scene_practice_continued` | `{ sessionId }` | Learner taps Continue on a Revisit photo card with an unfinished lesson |
+| `scene_vocabulary_review_started` | `{ sessionId }` | Learner taps Review words on a Revisit photo card to replay that lesson's words |
 | `vocabulary_filters_applied` | `{ wordClass, category }` | Filter applied to vocabulary collection |
 | `vocabulary_audio_played` | `{ word }` | Learner plays audio pronunciation for a target word |
 | `vocabulary_recap_started` | `{ questionCount, wordCount }` | Learner starts a mixed review of a completed scene |
@@ -180,11 +270,19 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 ### Payments, Tiers & Subscriptions
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
+| `payment_page_viewed` | `{ currentTier }` | User arrives on the `/payment` page |
 | `payment_checkout_started` | `{ tier, price, currency }` | User clicks "Upgrade to Plus" to open Stripe Checkout |
 | `payment_portal_opened` | `{ currentTier }` | Active subscriber opens Stripe Customer Portal |
 | `payment_checkout_completed` | `{ status: "success" }` | User successfully returns from Stripe Checkout |
 | `payment_checkout_cancelled` | `{ status: "cancelled" }` | User cancels Stripe Checkout and returns |
 | `payment_test_tier_switched` | `{ targetTier }` | Dev/test toolbox switches tier between beta/free/plus |
+
+### Mission Cheatsheets
+
+| Event Name | Parameters | Trigger Description |
+| :--- | :--- | :--- |
+| `mission_cheatsheet_opened` | `{ missionId, practiceLevel, contentVersion, languageCode }` | Learner opens a mission cheatsheet from an active task |
+| `mission_cheatsheet_audio_played` | `{ languageCode, conceptId }` | Learner plays a target-language example from a cheatsheet |
 
 ### Feedback, Support & Social
 | Event Name | Parameters | Trigger Description |
@@ -206,7 +304,99 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 
 ---
 
-## 4. Requirement for New Functionality
+## 4. Recommended GA4 Funnels & Step-by-Step Setup Guide
+
+Google Analytics 4 allows creating **Funnel Explorations** under the **Explore** tab to track conversion rates and user drop-offs across multi-step flows.
+
+Below are the 4 primary funnels designed around Linguini's user journey, followed by step-by-step creation instructions.
+
+---
+
+### Funnel 1: User Acquisition & Activation Funnel
+> **Purpose:** Measure how many landing page visitors create an account and complete onboarding.
+
+| Step | Step Name | Event / Condition |
+| :--- | :--- | :--- |
+| **Step 1** | Landed on Marketing Page | Event: `page_view`<br>Parameter: `page_location` equals `https://www.learnwithlinguini.com/` (or page_path = `/`) |
+| **Step 2** | Engaged with Demo or Auth CTA | Event is one of:<br>• `demo_stage_viewed`<br>• `pricing_cta_clicked`<br>• `guest_demo_scene_selected`<br>• `guest_preview_started` |
+| **Step 3** | Visited Sign Up / Login | Event: `page_view`<br>Parameter: `page_path` matches regex `^/login.*` |
+| **Step 4** | Submitted Registration | Event is one of:<br>• `signup_submitted`<br>• `google_signin_completed` |
+| **Step 5** | Completed Onboarding | Event: `onboarding_completed` |
+
+---
+
+### Funnel 2: Core Learning Loop Funnel
+> **Purpose:** Measure how effectively learners go from choosing a photo to finishing all practice tasks and completing the lesson.
+
+| Step | Step Name | Event / Condition |
+| :--- | :--- | :--- |
+| **Step 1** | Open Practice / Scene Picker | Event: `page_view`<br>Parameter: `page_path` equals `/practice` (or event: `home_begin_practice_clicked`) |
+| **Step 2** | Select Scene or Upload Photo | Event is one of:<br>• `practice_scene_selected`<br>• `practice_photo_uploaded` |
+| **Step 3** | Review & Confirm Vocabulary | Event: `scene_review_confirmed` |
+| **Step 4** | Start Tasks / Practice | Event is one of:<br>• `practice_session_started`<br>• `vocabulary_review_started` |
+| **Step 5** | Complete Learning Tasks | Event is one of:<br>• `task_answer_checked`<br>• `ispy_clue_submitted` |
+| **Step 6** | Lesson Finished & Summary Viewed | Event: `session_summary_viewed` |
+
+---
+
+### Funnel 3: Monetization & Plus Upgrade Funnel
+> **Purpose:** Measure conversion through the Stripe checkout and subscription upgrade flow.
+
+| Step | Step Name | Event / Condition |
+| :--- | :--- | :--- |
+| **Step 1** | Visit Pricing / Payment Page | Event: `payment_page_viewed`<br>OR Event: `pricing_cta_clicked` |
+| **Step 2** | Initiate Stripe Checkout | Event: `payment_checkout_started` |
+| **Step 3** | Checkout Succeeded | Event: `payment_checkout_completed`<br>Parameter: `status` equals `success` |
+
+---
+
+### Funnel 4: Interactive I-Spy Engagement Funnel
+> **Purpose:** Measure how users interact with the two-way conversational gaming feature.
+
+| Step | Step Name | Event / Condition |
+| :--- | :--- | :--- |
+| **Step 1** | Open I-Spy Modes | Event: `page_view`<br>Parameter: `page_path` equals `/ispy` |
+| **Step 2** | Select Game Mode | Event: `ispy_mode_selected` |
+| **Step 3** | Guess Object from Clue | Event: `ispy_clue_submitted` |
+| **Step 4** | Submit Description Clue | Event: `ispy_description_submitted` |
+| **Step 5** | Confirm Match | Event: `ispy_match_confirmed` |
+
+---
+
+## 5. How to Create a Funnel in GA4 (Step-by-Step)
+
+Follow these steps in your [Google Analytics Dashboard](https://analytics.google.com/):
+
+1. **Navigate to Explorations:**
+   * In the left sidebar of GA4, click **Explore** (the compass icon).
+   * Click the **Funnel exploration** template card (or **Blank**).
+
+2. **Configure Exploration Settings (Tab Settings column):**
+   * **Technique:** Select `Funnel exploration`.
+   * **Visualization:** Choose `Standard funnel` (bar chart) or `Trended funnel`.
+   * **Make Open Funnel:**
+     * Leave **OFF (Closed Funnel)** if users must complete Step 1 before entering the funnel.
+     * Turn **ON (Open Funnel)** if users can enter at any step.
+
+3. **Add Steps:**
+   * In the **Tab Settings** panel, find **Steps** and click the **pencil edit icon**.
+   * Name each step (e.g. `1. Land on Home`, `2. Sign Up Submitted`, etc.).
+   * Under each step, choose the matching event name (e.g. `page_view`, `signup_submitted`, `onboarding_completed`).
+   * Add filters if needed (e.g. click **+ Add parameter**, select `page_path`, condition: `contains /login`).
+   * Set step transition to **is indirectly followed by** (recommended, allows intermediate clicks) or **is directly followed by** (strict consecutive).
+   * Click **Apply** in the top right.
+
+4. **Add Breakdown Dimensions (Optional):**
+   * Drag `First user source / medium` or `Session source / medium` into the **Breakdown** section to compare drop-offs by marketing channel (TikTok vs Instagram vs LinkedIn vs Organic).
+   * Drag `Device category` into Breakdown to compare mobile vs desktop conversion rates.
+
+5. **Save & Share:**
+   * Rename the exploration at the top left (e.g. `Linguini - Core Learning Funnel`).
+   * Click the share icon in the top right if you want other team members on the GA4 property to view it.
+
+---
+
+## 6. Requirement for New Functionality
 
 Whenever adding new user-facing features or workflows:
 1. **Instrument Actions:** Call `trackAction("feature_action_name", { ...relevantParams })` on key user interactions (CTA clicks, submits, completes, toggles).

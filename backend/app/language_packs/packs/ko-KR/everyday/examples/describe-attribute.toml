@@ -1,0 +1,178 @@
+construction_id = "describe-attribute"
+
+[[examples]]
+example_id = "describe-red-cup"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a red cup."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }] }
+bindings = { object = "object:cup", attribute = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "빨간 컵이에요."
+translation = "This is a red cup."
+chunks = [{ text = "빨간", join = "none" }, { text = "컵이에요.", join = "space" }]
+accepted_alternatives = ["컵은 빨간색이에요."]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "describe-green-book"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a green book."
+scene = { objects = [{ fact_id = "object:book", concept = "book" }], attributes = [{ fact_id = "attribute:book-green", object = "object:book", kind = "color", value = "green" }] }
+bindings = { object = "object:book", attribute = "attribute:book-green" }
+truth = true
+labels = []
+sentence = "초록색 책이에요."
+translation = "This is a green book."
+chunks = [{ text = "초록색", join = "none" }, { text = "책이에요.", join = "space" }]
+accepted_alternatives = ["책은 초록색이에요."]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "describe-black-shoe"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a black shoe."
+scene = { objects = [{ fact_id = "object:shoe", concept = "shoe" }], attributes = [{ fact_id = "attribute:shoe-black", object = "object:shoe", kind = "color", value = "black" }] }
+bindings = { object = "object:shoe", attribute = "attribute:shoe-black" }
+truth = true
+labels = []
+sentence = "검은 신발이에요."
+translation = "This is a black shoe."
+chunks = [{ text = "검은", join = "none" }, { text = "신발이에요.", join = "space" }]
+accepted_alternatives = ["신발은 검은색이에요."]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "describe-blue-lamp"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a blue lamp."
+scene = { objects = [{ fact_id = "object:lamp", concept = "lamp" }], attributes = [{ fact_id = "attribute:lamp-blue", object = "object:lamp", kind = "color", value = "blue" }] }
+bindings = { object = "object:lamp", attribute = "attribute:lamp-blue" }
+truth = true
+labels = []
+sentence = "파란 램프예요."
+translation = "This is a blue lamp."
+chunks = [{ text = "파란", join = "none" }, { text = "램프예요.", join = "space" }]
+accepted_alternatives = ["램프는 파란색이에요."]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "describe-white-plate"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a white plate."
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }], attributes = [{ fact_id = "attribute:plate-white", object = "object:plate", kind = "color", value = "white" }] }
+bindings = { object = "object:plate", attribute = "attribute:plate-white" }
+truth = true
+labels = []
+sentence = "하얀 접시예요."
+translation = "This is a white plate."
+chunks = [{ text = "하얀", join = "none" }, { text = "접시예요.", join = "space" }]
+accepted_alternatives = ["접시는 하얀색이에요."]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "describe-yellow-apple"
+levels = ["A1"]
+purposes = ["describeObject"]
+meaning = "This is a yellow apple."
+scene = { objects = [{ fact_id = "object:apple", concept = "apple" }], attributes = [{ fact_id = "attribute:apple-yellow", object = "object:apple", kind = "color", value = "yellow" }] }
+bindings = { object = "object:apple", attribute = "attribute:apple-yellow" }
+truth = true
+labels = []
+sentence = "노란 사과예요."
+translation = "This is a yellow apple."
+chunks = [{ text = "노란", join = "none" }, { text = "사과예요.", join = "space" }]
+accepted_alternatives = ["사과는 노란색이에요."]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "choose-red-cup"
+levels = ["A1"]
+purposes = ["chooseAttribute"]
+meaning = "red (the colour of the cup)"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }] }
+bindings = { object = "object:cup", attribute = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "빨간색"
+translation = "red (the colour of the cup)"
+chunks = [{ text = "빨간색", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "choose-green-book"
+levels = ["A1"]
+purposes = ["chooseAttribute"]
+meaning = "green (the colour of the book)"
+scene = { objects = [{ fact_id = "object:book", concept = "book" }], attributes = [{ fact_id = "attribute:book-green", object = "object:book", kind = "color", value = "green" }] }
+bindings = { object = "object:book", attribute = "attribute:book-green" }
+truth = true
+labels = []
+sentence = "초록색"
+translation = "green (the colour of the book)"
+chunks = [{ text = "초록색", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "ask-cup-colour"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+meaning = "What colour is the cup?"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }] }
+bindings = { object = "object:cup", attribute = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "컵은 무슨 색이에요?"
+translation = "What colour is the cup?"
+chunks = [{ text = "컵은", join = "none" }, { text = "무슨", join = "space" }, { text = "색이에요?", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "ask-book-colour"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+meaning = "What colour is the book?"
+scene = { objects = [{ fact_id = "object:book", concept = "book" }], attributes = [{ fact_id = "attribute:book-green", object = "object:book", kind = "color", value = "green" }] }
+bindings = { object = "object:book", attribute = "attribute:book-green" }
+truth = true
+labels = []
+sentence = "책은 무슨 색이에요?"
+translation = "What colour is the book?"
+chunks = [{ text = "책은", join = "none" }, { text = "무슨", join = "space" }, { text = "색이에요?", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-05"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "컵은 빨간이에요."
+correction = "컵은 빨간색이에요."
+note = "빨간 is adnominal, not a colour noun; use 빨간색 in this predicate."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-06"
+levels = ["A1"]
+purposes = ["describeObject"]
+sentence = "이에요 파란 램프."
+correction = "파란 램프예요."
+note = "The polite copula attaches to the noun phrase rather than preceding it."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-13"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+sentence = "컵이 어디에 있어요?"
+correction = "컵은 무슨 색이에요?"
+note = "The follow-up requests the colour of the cup, not its location. This is an intent mismatch, not a claim that the location question is ungrammatical."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }

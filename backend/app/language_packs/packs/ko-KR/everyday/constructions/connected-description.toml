@@ -1,0 +1,28 @@
+construction_id = "connected-description"
+version = 2
+summary = "Connect selected facts in the same polite register."
+guidance = "Coordinate existence/location predicates with -고 and end the final clause politely: 빨간 컵이 있고 책도 있어요. The additive particle 도 may replace 이/가 on the added noun; do not stack them mechanically. Preserve each clause’s object, colour and relation. A sequence of short polite sentences is also acceptable. Chunk suffix-bearing words together and use phrase chunks when useful. Do not impose a fixed subject-verb-object order or require a separate article tile."
+features = ["predicate-coordination", "additive-do", "polite-final-ending"]
+constraints = ["Express only the selected scene facts and preserve semantic role bindings.", "Use the declared variety/register and approved surfaces.", "Treat these rules as generation guidance; they do not constitute a grammar validator."]
+required_labels = ["choose-description", "describe-scene", "connector-distractor"]
+# Role categories match the shared semantic-slot contract; native word order is in guidance.
+roles = { object = "noun", other-object = "noun", subject = "noun", reference = "noun", attribute = "adjective", relation = "preposition" }
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+except_uses = ["name"]
+
+[[checks]]
+check_id = "polite-ending"
+message = "Use the polite -요 ending (haeyo-che) at the end of the sentence."
+must_contain = ["(요|^네)[.?!]$"]
+except_uses = ["name"]
+
+[[checks]]
+check_id = "denied-existence"
+message = "The false existence option denies the object with 없어요 (없고 when joined)."
+must_contain = ["없(어요|고)"]
+uses = ["wrongExistence"]

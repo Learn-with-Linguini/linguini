@@ -1,0 +1,28 @@
+construction_id = "yes-no-identification"
+templates = { question = "Ist das {noun}?", sentence_start = "Das ist" }
+version = 2
+summary = "Ask a verb-first positive identity question and answer it."
+guidance = "Use Ist das + indefinite nominative noun phrase + ? A0 uses short Ja./Nein. A1 may use Ja, das ist… / Nein, das ist…; the restatement names the shown object. Keep ist before das in the question, but das before ist in a statement. Use only positive identity questions in this pilot; negative questions can require doch and need separate reviewed treatment. Article and adjective case comes from the actual construction, not a universal default."
+features = ["verb-first-question", "yes-no-answer", "nominative"]
+constraints = ["Express only the selected scene facts and preserve semantic role bindings.", "Use the declared variety/register and approved surfaces.", "Treat these rules as generation guidance; they do not constitute a grammar validator."]
+required_labels = ["yes", "no", "yes-answer", "no-answer"]
+roles = { object = "noun", shown = "noun" }
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+except_uses = ["name"]
+
+[[checks]]
+check_id = "question-verb-first"
+message = "Yes/no questions start with the verb: Ist das …?"
+must_contain = ["^(ist|sind) ", "\\?$"]
+uses = ["question", "prompt", "followup"]
+
+[[checks]]
+check_id = "answer-label"
+message = "Yes/no answers start with Ja or Nein."
+must_contain = ["^(ja|nein)[,.]"]
+uses = ["answer", "option"]

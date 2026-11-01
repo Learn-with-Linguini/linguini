@@ -195,7 +195,13 @@ class SceneShortfall(ApiModel):
     missions: list[MissionShortfall] = Field(default_factory=list)
 
 
+class SceneAnalysisProgress(ApiModel):
+    stage: Literal["loadingImage", "findingObjects", "checkingResults", "savingResults", "ready"]
+    started_at: AwareDatetime | None = None
+
+
 class SessionDetailResponse(ApiModel):
+    scene_analysis_progress: SceneAnalysisProgress | None = None
     analysis_mode: Literal["placeholder"] | None = None
     media_asset: MediaAsset
     scene_id: str | None = None
@@ -213,6 +219,8 @@ class SessionDetailResponse(ApiModel):
     review_markers: dict[str, int] = Field(default_factory=dict)
     provisional_mission_plan: list[JsonObject] = Field(default_factory=list)
     suggested_scene_object_ids: list[UUID] = Field(default_factory=list)
+    # Objects whose word the learner already practised in an earlier lesson on this photo.
+    practised_scene_object_ids: list[UUID] = Field(default_factory=list)
     mission_choices: MissionChoices | None = None
     session: Session
     scene_object_relations: list[SceneObjectRelation] = Field(default_factory=list)

@@ -1,0 +1,26 @@
+construction_id = "their-preference"
+version = 1
+summary = "Say that a named person likes (or does not like) the object."
+guidance = "Say the person's name + 은/는 + noun + 을/를 + 좋아해요, or 안 좋아해요 when the use is dislike: 아나는 책을 안 좋아해요. 레오는 열쇠를 좋아해요."
+features = ["preference", "third-person"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun", preference = "other" }
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "preference-frame"
+message = "Name the person, then the like frame."
+must_contain = ["^\\S+(은|는) ", "좋아해요\\.$"]
+
+[[checks]]
+check_id = "dislike-negated"
+message = "A dislike sentence says the negative."
+must_contain = ["안 좋아해요\\.$"]
+uses = ["dislike"]
+
+[[checks]]
+check_id = "like-not-negated"
+message = "A like sentence is not negated."
+must_not_contain = ["안 좋아해요|않아요"]
+uses = ["like"]

@@ -1,0 +1,25 @@
+construction_id = "target-location"
+
+[[examples]]
+example_id = "red-cup-next-window"
+levels = ["A2"]
+purposes = ["buildTargetSentence"]
+meaning = "The red cup is next to the window."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:window", concept = "window" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }], relations = [{ fact_id = "relation:cup-next_to-window", subject = "object:cup", reference = "object:window", relation = "next_to" }] }
+bindings = { subject = "object:cup", attribute = "attribute:cup-red", reference = "object:window", relation = "relation:cup-next_to-window" }
+truth = true
+labels = []
+sentence = "빨간 컵이 창문 옆에 있어요."
+translation = "The red cup is next to the window."
+chunks = [{ text = "빨간", join = "none" }, { text = "컵이", join = "space" }, { text = "창문", join = "space" }, { text = "옆에", join = "space" }, { text = "있어요", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "target-order"
+levels = ["A2"]
+purposes = ["buildTargetSentence"]
+sentence = "컵이 빨간 창문 옆에 있어요."
+correction = "빨간 컵이 창문 옆에 있어요."
+note = "The colour modifier goes before its noun."
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }

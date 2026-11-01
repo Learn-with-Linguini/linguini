@@ -1,0 +1,14 @@
+construction_id = "quantity-comparison"
+version = 1
+summary = "Say which of two counted groups has more or fewer objects."
+guidance = "Compare with Il y a plus/moins de + first plural noun + que de + second plural noun: Il y a plus de livres que de tasses. Use plus (the more label) when the first group is larger and moins (the fewer label) when it is smaller. Elide de before a vowel."
+features = ["quantity-comparison"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { first = "noun", second = "noun" }
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "comparison-frame"
+message = "Compare with Il y a plus/moins de … que de …"
+must_contain = ["^il y a (plus|moins) d", " que d"]

@@ -11,15 +11,13 @@ from app.ai.cache import CacheScope
 from app.ai.contracts import VisionImage
 from app.ai.features.scene_analysis import UploadedSceneAnalyzer
 from app.ai.features.translation.schemas import SceneTranslationResult
-from app.ai.features.translation.validation import (
-    normalize_object_articles,
-    validate_translation_terms,
-)
+from app.ai.features.translation.validation import validate_translation_terms
 from app.schemas.base import ApiModel
 from app.schemas.enums import MediaSource, MediaType, SceneRelationType
 from app.schemas.media import MediaAsset, SceneObject, SceneObjectRelation
 from app.schemas.sessions import Session
 from app.services.room_clues import RoomClueError, build_room_pack
+from app.services.room_languages import room_profile_supported
 from app.services.scene_analysis import SceneAnalysisResult
 
 
@@ -95,6 +93,12 @@ class _PhotoStorage:
         return self.data
 
 
+def _game_context(profile):
+    from app.language_packs.context import game_context
+
+    return game_context(profile)
+
+
 class RoomPhotoPreparer:
     """Prepare private room photos with the runtime analyzer and translator.
 
@@ -110,11 +114,12 @@ class RoomPhotoPreparer:
     @staticmethod
     def _language(profile: dict) -> str:
         language = str(profile.get("target_language_code", "")).lower()
-        source = str(profile.get("source_language_code", "en")).lower()
-        if language not in {"es", "fr", "de"} or source != "en":
+        if not room_profile_supported(
+            {"source_language_code": "en", **profile}, check_level=False,
+        ):
             raise RoomPhotoError(
                 "room_photo_unavailable",
-                "Photo rooms currently support English to Spanish, French or German.",
+                "Photo rooms aren't available for this learning language yet.",
                 retryable=False,
             )
         return language
@@ -292,15 +297,23 @@ class RoomPhotoPreparer:
             ],
             "relationships": [{"key": str(row.id), "source": row.relation} for row in relations],
         }
+        # The owner's language pack guides the translation; rooms open only with one.
+        context = _game_context(profile)
+        if context is None:
+            raise RoomPhotoError(
+                "room_photo_unavailable",
+                "Photo rooms aren't available for this learning language yet.",
+                retryable=False,
+            )
         try:
             translated = SceneTranslationResult.model_validate(
                 self.translator.translate(
                     payload,
                     cache_scope=CacheScope(f"user:{owner_id}:room:{room_id}"),
+                    language_context=context,
                 )
             )
-            translated = normalize_object_articles(translated, payload["targetLanguage"])
-            validate_translation_terms(payload, translated)
+            validate_translation_terms(payload, translated, context)
             if any(
                 len(rows) != len({row.key for row in rows})
                 for rows in (translated.objects, translated.attributes, translated.relationships)

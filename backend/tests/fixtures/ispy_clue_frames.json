@@ -1,0 +1,7301 @@
+{
+ "de": {
+  "agreement": {
+   "Grün|None": "grün",
+   "Grün|feminine": "grün",
+   "Grün|masculine": "grün",
+   "Grün|neuter": "grün",
+   "lila|None": "lila",
+   "lila|feminine": "lila",
+   "lila|masculine": "lila",
+   "lila|neuter": "lila",
+   "pink|None": null,
+   "pink|feminine": null,
+   "pink|masculine": null,
+   "pink|neuter": null,
+   "rot|None": "rot",
+   "rot|feminine": "rot",
+   "rot|masculine": "rot",
+   "rot|neuter": "rot",
+   "silbern|None": "silbern",
+   "silbern|feminine": "silbern",
+   "silbern|masculine": "silbern",
+   "silbern|neuter": "silbern",
+   "türkis|None": "türkis",
+   "türkis|feminine": "türkis",
+   "türkis|masculine": "türkis",
+   "türkis|neuter": "türkis",
+   "weiß|None": "weiß",
+   "weiß|feminine": "weiß",
+   "weiß|masculine": "weiß",
+   "weiß|neuter": "weiß"
+  },
+  "frames": {
+   "all:book": {
+    "avoid": [
+     "Buch",
+     "book",
+     "Buchs",
+     "Buches",
+     "books",
+     "bookes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "Der Apfel ist rot.",
+      "frameId": "colour",
+      "help": [
+       "weiß"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "blau"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "gelb"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "grün"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rot"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "schwarz"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "weiß"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es ist [colour]"
+     },
+     {
+      "chips": [],
+      "example": "Das Buch ist auf dem Tisch.",
+      "frameId": "location",
+      "help": [
+       "bei der Tasse"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "auf|der Stuhl": "auf dem Stuhl",
+       "auf|der Tisch": "auf dem Tisch",
+       "auf|die Lampe": "auf der Lampe",
+       "auf|die Tasse": "auf der Tasse",
+       "bei|der Stuhl": "beim Stuhl",
+       "bei|der Tisch": "beim Tisch",
+       "bei|die Lampe": "bei der Lampe",
+       "bei|die Tasse": "bei der Tasse",
+       "hinter|der Stuhl": "hinter dem Stuhl",
+       "hinter|der Tisch": "hinter dem Tisch",
+       "hinter|die Lampe": "hinter der Lampe",
+       "hinter|die Tasse": "hinter der Tasse",
+       "neben|der Stuhl": "neben dem Stuhl",
+       "neben|der Tisch": "neben dem Tisch",
+       "neben|die Lampe": "neben der Lampe",
+       "neben|die Tasse": "neben der Tasse",
+       "unter|der Stuhl": "unter dem Stuhl",
+       "unter|der Tisch": "unter dem Tisch",
+       "unter|die Lampe": "unter der Lampe",
+       "unter|die Tasse": "unter der Tasse",
+       "vor|der Stuhl": "vor dem Stuhl",
+       "vor|der Tisch": "vor dem Tisch",
+       "vor|die Lampe": "vor der Lampe",
+       "vor|die Tasse": "vor der Tasse"
+      },
+      "prefix": "Es ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "Das Buch ist auf dem Tisch.",
+          "meaning": "on",
+          "text": "auf"
+         },
+         {
+          "example": "Die Katze ist unter dem Stuhl.",
+          "meaning": "under",
+          "text": "unter"
+         },
+         {
+          "example": "Der Stuhl ist neben der Tür.",
+          "meaning": "next to",
+          "text": "neben"
+         },
+         {
+          "example": "Der Hund ist vor dem Haus.",
+          "meaning": "in front of",
+          "text": "vor"
+         },
+         {
+          "example": "Der Baum ist hinter dem Haus.",
+          "meaning": "behind",
+          "text": "hinter"
+         },
+         {
+          "example": null,
+          "meaning": "near",
+          "text": "bei"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "chair",
+          "text": "der Stuhl"
+         },
+         {
+          "example": null,
+          "meaning": "table",
+          "text": "der Tisch"
+         },
+         {
+          "example": null,
+          "meaning": "lamp",
+          "text": "die Lampe"
+         },
+         {
+          "example": null,
+          "meaning": "cup",
+          "text": "die Tasse"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "Es ist [position] [reference object]"
+     }
+    ]
+   },
+   "all:chair": {
+    "avoid": [
+     "Stuhl",
+     "chair",
+     "Stuhls",
+     "Stuhles",
+     "chairs",
+     "chaires"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "Der Apfel ist rot.",
+      "frameId": "colour",
+      "help": [
+       "silbern"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "blau"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "gelb"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "grün"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rot"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "schwarz"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "silbern"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "weiß"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es ist [colour]"
+     }
+    ]
+   },
+   "all:cup": {
+    "avoid": [
+     "Tasse",
+     "cup",
+     "Tasses",
+     "cups",
+     "cupes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "Der Apfel ist rot.",
+      "frameId": "colour",
+      "help": [
+       "rot"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Sie ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "blau"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "gelb"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "grün"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rot"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "schwarz"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "weiß"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Sie ist [colour]"
+     },
+     {
+      "chips": [],
+      "example": "Das Buch ist auf dem Tisch.",
+      "frameId": "location",
+      "help": [
+       "auf dem Tisch",
+       "neben der Lampe",
+       "beim Buch",
+       "im Buch",
+       "vor dem Stuhl",
+       "zum Tisch"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "auf|das Buch": "auf dem Buch",
+       "auf|der Stuhl": "auf dem Stuhl",
+       "auf|der Tisch": "auf dem Tisch",
+       "auf|die Lampe": "auf der Lampe",
+       "bei|das Buch": "beim Buch",
+       "bei|der Stuhl": "beim Stuhl",
+       "bei|der Tisch": "beim Tisch",
+       "bei|die Lampe": "bei der Lampe",
+       "hinter|das Buch": "hinter dem Buch",
+       "hinter|der Stuhl": "hinter dem Stuhl",
+       "hinter|der Tisch": "hinter dem Tisch",
+       "hinter|die Lampe": "hinter der Lampe",
+       "in|das Buch": "im Buch",
+       "in|der Stuhl": "im Stuhl",
+       "in|der Tisch": "im Tisch",
+       "in|die Lampe": "in der Lampe",
+       "neben|das Buch": "neben dem Buch",
+       "neben|der Stuhl": "neben dem Stuhl",
+       "neben|der Tisch": "neben dem Tisch",
+       "neben|die Lampe": "neben der Lampe",
+       "unter|das Buch": "unter dem Buch",
+       "unter|der Stuhl": "unter dem Stuhl",
+       "unter|der Tisch": "unter dem Tisch",
+       "unter|die Lampe": "unter der Lampe",
+       "vor|das Buch": "vor dem Buch",
+       "vor|der Stuhl": "vor dem Stuhl",
+       "vor|der Tisch": "vor dem Tisch",
+       "vor|die Lampe": "vor der Lampe",
+       "zu|das Buch": "zum Buch",
+       "zu|der Stuhl": "zum Stuhl",
+       "zu|der Tisch": "zum Tisch",
+       "zu|die Lampe": "zur Lampe"
+      },
+      "prefix": "Sie ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "Das Buch ist auf dem Tisch.",
+          "meaning": "on",
+          "text": "auf"
+         },
+         {
+          "example": "Die Katze ist unter dem Stuhl.",
+          "meaning": "under",
+          "text": "unter"
+         },
+         {
+          "example": "Der Stuhl ist neben der Tür.",
+          "meaning": "next to",
+          "text": "neben"
+         },
+         {
+          "example": "Der Hund ist vor dem Haus.",
+          "meaning": "in front of",
+          "text": "vor"
+         },
+         {
+          "example": "Der Baum ist hinter dem Haus.",
+          "meaning": "behind",
+          "text": "hinter"
+         },
+         {
+          "example": null,
+          "meaning": "near",
+          "text": "bei"
+         },
+         {
+          "example": null,
+          "meaning": "inside",
+          "text": "in"
+         },
+         {
+          "example": null,
+          "meaning": "above",
+          "text": "zu"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "book",
+          "text": "das Buch"
+         },
+         {
+          "example": null,
+          "meaning": "chair",
+          "text": "der Stuhl"
+         },
+         {
+          "example": null,
+          "meaning": "table",
+          "text": "der Tisch"
+         },
+         {
+          "example": null,
+          "meaning": "lamp",
+          "text": "die Lampe"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "Sie ist [position] [reference object]"
+     }
+    ]
+   },
+   "all:door": {
+    "avoid": [
+     "Tür",
+     "door",
+     "Türs",
+     "Türes",
+     "doors",
+     "doores"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "Der Apfel ist rot.",
+      "frameId": "colour",
+      "help": [
+       "türkis"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "blau"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "gelb"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "grün"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rot"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "schwarz"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "türkis"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "weiß"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es ist [colour]"
+     }
+    ]
+   },
+   "all:lamp": {
+    "avoid": [
+     "Lampe",
+     "lamp",
+     "Lampes",
+     "lamps"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "Der Apfel ist rot.",
+      "frameId": "colour",
+      "help": [
+       "lila"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Sie ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "blau"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "gelb"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "grün"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "lila"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rot"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "schwarz"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "weiß"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Sie ist [colour]"
+     },
+     {
+      "chips": [],
+      "example": "Das Buch ist auf dem Tisch.",
+      "frameId": "location",
+      "help": [
+       "neben der Tasse"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "auf|das Buch": "auf dem Buch",
+       "auf|der Stuhl": "auf dem Stuhl",
+       "auf|der Tisch": "auf dem Tisch",
+       "auf|die Tasse": "auf der Tasse",
+       "hinter|das Buch": "hinter dem Buch",
+       "hinter|der Stuhl": "hinter dem Stuhl",
+       "hinter|der Tisch": "hinter dem Tisch",
+       "hinter|die Tasse": "hinter der Tasse",
+       "neben|das Buch": "neben dem Buch",
+       "neben|der Stuhl": "neben dem Stuhl",
+       "neben|der Tisch": "neben dem Tisch",
+       "neben|die Tasse": "neben der Tasse",
+       "unter|das Buch": "unter dem Buch",
+       "unter|der Stuhl": "unter dem Stuhl",
+       "unter|der Tisch": "unter dem Tisch",
+       "unter|die Tasse": "unter der Tasse",
+       "vor|das Buch": "vor dem Buch",
+       "vor|der Stuhl": "vor dem Stuhl",
+       "vor|der Tisch": "vor dem Tisch",
+       "vor|die Tasse": "vor der Tasse"
+      },
+      "prefix": "Sie ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "Das Buch ist auf dem Tisch.",
+          "meaning": "on",
+          "text": "auf"
+         },
+         {
+          "example": "Die Katze ist unter dem Stuhl.",
+          "meaning": "under",
+          "text": "unter"
+         },
+         {
+          "example": "Der Stuhl ist neben der Tür.",
+          "meaning": "next to",
+          "text": "neben"
+         },
+         {
+          "example": "Der Hund ist vor dem Haus.",
+          "meaning": "in front of",
+          "text": "vor"
+         },
+         {
+          "example": "Der Baum ist hinter dem Haus.",
+          "meaning": "behind",
+          "text": "hinter"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "book",
+          "text": "das Buch"
+         },
+         {
+          "example": null,
+          "meaning": "chair",
+          "text": "der Stuhl"
+         },
+         {
+          "example": null,
+          "meaning": "table",
+          "text": "der Tisch"
+         },
+         {
+          "example": null,
+          "meaning": "cup",
+          "text": "die Tasse"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "Sie ist [position] [reference object]"
+     }
+    ]
+   },
+   "all:table": {
+    "avoid": [
+     "Tisch",
+     "table",
+     "Tischs",
+     "Tisches",
+     "tables"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "Der Apfel ist rot.",
+      "frameId": "colour",
+      "help": [
+       "grün"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Er ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "blau"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "gelb"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "grün"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rot"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "schwarz"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "weiß"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Er ist [colour]"
+     }
+    ]
+   },
+   "first-two-introduced:book": {
+    "avoid": [
+     "Buch",
+     "book",
+     "Buchs",
+     "Buches",
+     "books",
+     "bookes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "Der Apfel ist rot.",
+      "frameId": "colour",
+      "help": [
+       "weiß"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "blau"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "gelb"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "grün"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rot"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "schwarz"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "weiß"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es ist [colour]"
+     },
+     {
+      "chips": [],
+      "example": "Das Buch ist auf dem Tisch.",
+      "frameId": "location",
+      "help": [
+       "bei der Tasse"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "auf|der Tisch": "auf dem Tisch",
+       "auf|die Tasse": "auf der Tasse",
+       "bei|der Tisch": "beim Tisch",
+       "bei|die Tasse": "bei der Tasse",
+       "hinter|der Tisch": "hinter dem Tisch",
+       "hinter|die Tasse": "hinter der Tasse",
+       "neben|der Tisch": "neben dem Tisch",
+       "neben|die Tasse": "neben der Tasse",
+       "unter|der Tisch": "unter dem Tisch",
+       "unter|die Tasse": "unter der Tasse",
+       "vor|der Tisch": "vor dem Tisch",
+       "vor|die Tasse": "vor der Tasse"
+      },
+      "prefix": "Es ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "Das Buch ist auf dem Tisch.",
+          "meaning": "on",
+          "text": "auf"
+         },
+         {
+          "example": "Die Katze ist unter dem Stuhl.",
+          "meaning": "under",
+          "text": "unter"
+         },
+         {
+          "example": "Der Stuhl ist neben der Tür.",
+          "meaning": "next to",
+          "text": "neben"
+         },
+         {
+          "example": "Der Hund ist vor dem Haus.",
+          "meaning": "in front of",
+          "text": "vor"
+         },
+         {
+          "example": "Der Baum ist hinter dem Haus.",
+          "meaning": "behind",
+          "text": "hinter"
+         },
+         {
+          "example": null,
+          "meaning": "near",
+          "text": "bei"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "table",
+          "text": "der Tisch"
+         },
+         {
+          "example": null,
+          "meaning": "cup",
+          "text": "die Tasse"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "Es ist [position] [reference object]"
+     }
+    ]
+   },
+   "first-two-introduced:chair": {
+    "avoid": [
+     "Stuhl",
+     "chair",
+     "Stuhls",
+     "Stuhles",
+     "chairs",
+     "chaires"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "Der Apfel ist rot.",
+      "frameId": "colour",
+      "help": [
+       "silbern"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "blau"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "gelb"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "grün"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rot"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "schwarz"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "silbern"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "weiß"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es ist [colour]"
+     }
+    ]
+   },
+   "first-two-introduced:cup": {
+    "avoid": [
+     "Tasse",
+     "cup",
+     "Tasses",
+     "cups",
+     "cupes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "Der Apfel ist rot.",
+      "frameId": "colour",
+      "help": [
+       "rot"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Sie ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "blau"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "gelb"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "grün"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rot"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "schwarz"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "weiß"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Sie ist [colour]"
+     },
+     {
+      "chips": [],
+      "example": "Das Buch ist auf dem Tisch.",
+      "frameId": "location",
+      "help": [
+       "auf dem Tisch",
+       "zum Tisch"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "auf|der Tisch": "auf dem Tisch",
+       "hinter|der Tisch": "hinter dem Tisch",
+       "neben|der Tisch": "neben dem Tisch",
+       "unter|der Tisch": "unter dem Tisch",
+       "vor|der Tisch": "vor dem Tisch",
+       "zu|der Tisch": "zum Tisch"
+      },
+      "prefix": "Sie ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "Das Buch ist auf dem Tisch.",
+          "meaning": "on",
+          "text": "auf"
+         },
+         {
+          "example": "Die Katze ist unter dem Stuhl.",
+          "meaning": "under",
+          "text": "unter"
+         },
+         {
+          "example": "Der Stuhl ist neben der Tür.",
+          "meaning": "next to",
+          "text": "neben"
+         },
+         {
+          "example": "Der Hund ist vor dem Haus.",
+          "meaning": "in front of",
+          "text": "vor"
+         },
+         {
+          "example": "Der Baum ist hinter dem Haus.",
+          "meaning": "behind",
+          "text": "hinter"
+         },
+         {
+          "example": null,
+          "meaning": "above",
+          "text": "zu"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "table",
+          "text": "der Tisch"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "Sie ist [position] [reference object]"
+     }
+    ]
+   },
+   "first-two-introduced:door": {
+    "avoid": [
+     "Tür",
+     "door",
+     "Türs",
+     "Türes",
+     "doors",
+     "doores"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "Der Apfel ist rot.",
+      "frameId": "colour",
+      "help": [
+       "türkis"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "blau"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "gelb"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "grün"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rot"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "schwarz"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "türkis"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "weiß"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es ist [colour]"
+     }
+    ]
+   },
+   "first-two-introduced:lamp": {
+    "avoid": [
+     "Lampe",
+     "lamp",
+     "Lampes",
+     "lamps"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "Der Apfel ist rot.",
+      "frameId": "colour",
+      "help": [
+       "lila"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Sie ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "blau"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "gelb"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "grün"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "lila"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rot"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "schwarz"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "weiß"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Sie ist [colour]"
+     },
+     {
+      "chips": [],
+      "example": "Das Buch ist auf dem Tisch.",
+      "frameId": "location",
+      "help": [
+       "neben der Tasse"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "auf|der Tisch": "auf dem Tisch",
+       "auf|die Tasse": "auf der Tasse",
+       "hinter|der Tisch": "hinter dem Tisch",
+       "hinter|die Tasse": "hinter der Tasse",
+       "neben|der Tisch": "neben dem Tisch",
+       "neben|die Tasse": "neben der Tasse",
+       "unter|der Tisch": "unter dem Tisch",
+       "unter|die Tasse": "unter der Tasse",
+       "vor|der Tisch": "vor dem Tisch",
+       "vor|die Tasse": "vor der Tasse"
+      },
+      "prefix": "Sie ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "Das Buch ist auf dem Tisch.",
+          "meaning": "on",
+          "text": "auf"
+         },
+         {
+          "example": "Die Katze ist unter dem Stuhl.",
+          "meaning": "under",
+          "text": "unter"
+         },
+         {
+          "example": "Der Stuhl ist neben der Tür.",
+          "meaning": "next to",
+          "text": "neben"
+         },
+         {
+          "example": "Der Hund ist vor dem Haus.",
+          "meaning": "in front of",
+          "text": "vor"
+         },
+         {
+          "example": "Der Baum ist hinter dem Haus.",
+          "meaning": "behind",
+          "text": "hinter"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "table",
+          "text": "der Tisch"
+         },
+         {
+          "example": null,
+          "meaning": "cup",
+          "text": "die Tasse"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "Sie ist [position] [reference object]"
+     }
+    ]
+   },
+   "first-two-introduced:table": {
+    "avoid": [
+     "Tisch",
+     "table",
+     "Tischs",
+     "Tisches",
+     "tables"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "Der Apfel ist rot.",
+      "frameId": "colour",
+      "help": [
+       "grün"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Er ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "blau"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "gelb"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "grün"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rot"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "schwarz"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "weiß"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Er ist [colour]"
+     }
+    ]
+   },
+   "no-introduced:book": {
+    "avoid": [
+     "Buch",
+     "book",
+     "Buchs",
+     "Buches",
+     "books",
+     "bookes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "Der Apfel ist rot.",
+      "frameId": "colour",
+      "help": [
+       "weiß"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "blau"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "gelb"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "grün"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rot"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "schwarz"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "weiß"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es ist [colour]"
+     }
+    ]
+   },
+   "no-introduced:chair": {
+    "avoid": [
+     "Stuhl",
+     "chair",
+     "Stuhls",
+     "Stuhles",
+     "chairs",
+     "chaires"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "Der Apfel ist rot.",
+      "frameId": "colour",
+      "help": [
+       "silbern"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "blau"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "gelb"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "grün"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rot"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "schwarz"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "silbern"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "weiß"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es ist [colour]"
+     }
+    ]
+   },
+   "no-introduced:cup": {
+    "avoid": [
+     "Tasse",
+     "cup",
+     "Tasses",
+     "cups",
+     "cupes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "Der Apfel ist rot.",
+      "frameId": "colour",
+      "help": [
+       "rot"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Sie ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "blau"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "gelb"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "grün"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rot"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "schwarz"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "weiß"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Sie ist [colour]"
+     }
+    ]
+   },
+   "no-introduced:door": {
+    "avoid": [
+     "Tür",
+     "door",
+     "Türs",
+     "Türes",
+     "doors",
+     "doores"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "Der Apfel ist rot.",
+      "frameId": "colour",
+      "help": [
+       "türkis"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "blau"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "gelb"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "grün"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rot"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "schwarz"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "türkis"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "weiß"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es ist [colour]"
+     }
+    ]
+   },
+   "no-introduced:lamp": {
+    "avoid": [
+     "Lampe",
+     "lamp",
+     "Lampes",
+     "lamps"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "Der Apfel ist rot.",
+      "frameId": "colour",
+      "help": [
+       "lila"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Sie ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "blau"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "gelb"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "grün"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "lila"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rot"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "schwarz"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "weiß"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Sie ist [colour]"
+     }
+    ]
+   },
+   "no-introduced:table": {
+    "avoid": [
+     "Tisch",
+     "table",
+     "Tischs",
+     "Tisches",
+     "tables"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "Der Apfel ist rot.",
+      "frameId": "colour",
+      "help": [
+       "grün"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Er ist",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "blau"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "gelb"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "grün"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rot"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "schwarz"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "weiß"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Er ist [colour]"
+     }
+    ]
+   },
+   "no-relations:book": {
+    "avoid": [
+     "Buch",
+     "book",
+     "Buchs",
+     "Buches",
+     "books",
+     "bookes"
+    ],
+    "frames": []
+   },
+   "no-relations:chair": {
+    "avoid": [
+     "Stuhl",
+     "chair",
+     "Stuhls",
+     "Stuhles",
+     "chairs",
+     "chaires"
+    ],
+    "frames": []
+   },
+   "no-relations:cup": {
+    "avoid": [
+     "Tasse",
+     "cup",
+     "Tasses",
+     "cups",
+     "cupes"
+    ],
+    "frames": []
+   },
+   "no-relations:door": {
+    "avoid": [
+     "Tür",
+     "door",
+     "Türs",
+     "Türes",
+     "doors",
+     "doores"
+    ],
+    "frames": []
+   },
+   "no-relations:lamp": {
+    "avoid": [
+     "Lampe",
+     "lamp",
+     "Lampes",
+     "lamps"
+    ],
+    "frames": []
+   },
+   "no-relations:table": {
+    "avoid": [
+     "Tisch",
+     "table",
+     "Tischs",
+     "Tisches",
+     "tables"
+    ],
+    "frames": []
+   }
+  },
+  "places": {
+   "an|Buch": "am Buch",
+   "an|Lampe": "an der Lampe",
+   "an|Stuhl": "am Stuhl",
+   "an|Tasse": "an der Tasse",
+   "an|Tisch": "am Tisch",
+   "an|Tür": null,
+   "auf|Buch": "auf dem Buch",
+   "auf|Lampe": "auf der Lampe",
+   "auf|Stuhl": "auf dem Stuhl",
+   "auf|Tasse": "auf der Tasse",
+   "auf|Tisch": "auf dem Tisch",
+   "auf|Tür": null,
+   "bei|Buch": "beim Buch",
+   "bei|Lampe": "bei der Lampe",
+   "bei|Stuhl": "beim Stuhl",
+   "bei|Tasse": "bei der Tasse",
+   "bei|Tisch": "beim Tisch",
+   "bei|Tür": null,
+   "hinter|Buch": "hinter dem Buch",
+   "hinter|Lampe": "hinter der Lampe",
+   "hinter|Stuhl": "hinter dem Stuhl",
+   "hinter|Tasse": "hinter der Tasse",
+   "hinter|Tisch": "hinter dem Tisch",
+   "hinter|Tür": null,
+   "in|Buch": "im Buch",
+   "in|Lampe": "in der Lampe",
+   "in|Stuhl": "im Stuhl",
+   "in|Tasse": "in der Tasse",
+   "in|Tisch": "im Tisch",
+   "in|Tür": null,
+   "ist auf|Buch": null,
+   "ist auf|Lampe": null,
+   "ist auf|Stuhl": null,
+   "ist auf|Tasse": null,
+   "ist auf|Tisch": null,
+   "ist auf|Tür": null,
+   "neben|Buch": "neben dem Buch",
+   "neben|Lampe": "neben der Lampe",
+   "neben|Stuhl": "neben dem Stuhl",
+   "neben|Tasse": "neben der Tasse",
+   "neben|Tisch": "neben dem Tisch",
+   "neben|Tür": null,
+   "unter|Buch": "unter dem Buch",
+   "unter|Lampe": "unter der Lampe",
+   "unter|Stuhl": "unter dem Stuhl",
+   "unter|Tasse": "unter der Tasse",
+   "unter|Tisch": "unter dem Tisch",
+   "unter|Tür": null,
+   "von|Buch": "vom Buch",
+   "von|Lampe": "von der Lampe",
+   "von|Stuhl": "vom Stuhl",
+   "von|Tasse": "von der Tasse",
+   "von|Tisch": "vom Tisch",
+   "von|Tür": null,
+   "vor|Buch": "vor dem Buch",
+   "vor|Lampe": "vor der Lampe",
+   "vor|Stuhl": "vor dem Stuhl",
+   "vor|Tasse": "vor der Tasse",
+   "vor|Tisch": "vor dem Tisch",
+   "vor|Tür": null,
+   "zu|Buch": "zum Buch",
+   "zu|Lampe": "zur Lampe",
+   "zu|Stuhl": "zum Stuhl",
+   "zu|Tasse": "zur Tasse",
+   "zu|Tisch": "zum Tisch",
+   "zu|Tür": null
+  },
+  "room": {
+   "objects": [
+    {
+     "key": "f51a4c3d-3daf-5bcc-a718-a7a8b2c039b7",
+     "label": "cup",
+     "marker": 1,
+     "translation": "cup",
+     "word": "die Tasse",
+     "x": 10.0,
+     "y": 50.0
+    },
+    {
+     "key": "189bd3d8-2a1a-5bf4-88c1-31a9a35472ff",
+     "label": "table",
+     "marker": 2,
+     "translation": "table",
+     "word": "der Tisch",
+     "x": 20.0,
+     "y": 50.0
+    },
+    {
+     "key": "f6ce35a3-48ff-5f75-be77-eb307f56533a",
+     "label": "book",
+     "marker": 3,
+     "translation": "book",
+     "word": "das Buch",
+     "x": 30.0,
+     "y": 50.0
+    }
+   ],
+   "targets": [
+    {
+     "clueOptions": [
+      {
+       "id": "8b8a1163-0199-5027-9d35-34bb8d865d27",
+       "text": "Sie ist rot und sie ist auf dem Tisch."
+      },
+      {
+       "id": "ded60a03-746f-5fde-9271-47166d252bee",
+       "text": "Sie ist rot."
+      },
+      {
+       "id": "75cd6f96-288a-56a5-acdb-8e2a59070a93",
+       "text": "Sie ist auf dem Tisch."
+      }
+     ],
+     "objectKey": "f51a4c3d-3daf-5bcc-a718-a7a8b2c039b7"
+    },
+    {
+     "clueOptions": [
+      {
+       "id": "a6a5b7c7-5e93-5564-80b8-043c1e5b5cd0",
+       "text": "Er ist neben dem Buch."
+      }
+     ],
+     "objectKey": "189bd3d8-2a1a-5bf4-88c1-31a9a35472ff"
+    },
+    {
+     "clueOptions": [
+      {
+       "id": "a21fa8ba-b9fb-5dc8-b7e3-c1cda7ca8094",
+       "text": "Es ist blau und es ist neben dem Tisch."
+      },
+      {
+       "id": "85a6c01c-75b5-585e-9db0-0e297a8c36e7",
+       "text": "Es ist blau."
+      },
+      {
+       "id": "6c9d9bed-e460-5888-8177-e0e79c4c1b81",
+       "text": "Es ist neben dem Tisch."
+      }
+     ],
+     "objectKey": "f6ce35a3-48ff-5f75-be77-eb307f56533a"
+    }
+   ],
+   "title": "My photo",
+   "version": 1
+  }
+ },
+ "es": {
+  "agreement": {
+   "Roja|None": null,
+   "Roja|feminine": "roja",
+   "Roja|masculine": "rojo",
+   "Roja|neuter": null,
+   "azul|None": "azul",
+   "azul|feminine": "azul",
+   "azul|masculine": "azul",
+   "azul|neuter": "azul",
+   "fucsia|None": null,
+   "fucsia|feminine": null,
+   "fucsia|masculine": null,
+   "fucsia|neuter": null,
+   "gris |None": "gris",
+   "gris |feminine": "gris",
+   "gris |masculine": "gris",
+   "gris |neuter": "gris",
+   "marrón|None": "marrón",
+   "marrón|feminine": "marrón",
+   "marrón|masculine": "marrón",
+   "marrón|neuter": "marrón",
+   "morado|None": null,
+   "morado|feminine": "morada",
+   "morado|masculine": "morado",
+   "morado|neuter": null,
+   "naranja|None": "naranja",
+   "naranja|feminine": "naranja",
+   "naranja|masculine": "naranja",
+   "naranja|neuter": "naranja",
+   "rojo|None": null,
+   "rojo|feminine": "roja",
+   "rojo|masculine": "rojo",
+   "rojo|neuter": null,
+   "turquesa|None": "turquesa",
+   "turquesa|feminine": "turquesa",
+   "turquesa|masculine": "turquesa",
+   "turquesa|neuter": "turquesa"
+  },
+  "frames": {
+   "all:book": {
+    "avoid": [
+     "libro",
+     "book",
+     "libros",
+     "books",
+     "bookes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La manzana es roja.",
+      "frameId": "colour",
+      "help": [
+       "gris"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "amarillo"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "azul"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanco"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "gris"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "negro"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rojo"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verde"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es [colour]"
+     },
+     {
+      "chips": [],
+      "example": "El libro está sobre la mesa.",
+      "frameId": "location",
+      "help": [
+       "cerca de la taza"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "al lado de|el lápiz": "al lado del lápiz",
+       "al lado de|el sofá": "al lado del sofá",
+       "al lado de|la lámpara": "al lado de la lámpara",
+       "al lado de|la mesa": "al lado de la mesa",
+       "al lado de|la taza": "al lado de la taza",
+       "cerca de|el lápiz": "cerca del lápiz",
+       "cerca de|el sofá": "cerca del sofá",
+       "cerca de|la lámpara": "cerca de la lámpara",
+       "cerca de|la mesa": "cerca de la mesa",
+       "cerca de|la taza": "cerca de la taza",
+       "debajo de|el lápiz": "debajo del lápiz",
+       "debajo de|el sofá": "debajo del sofá",
+       "debajo de|la lámpara": "debajo de la lámpara",
+       "debajo de|la mesa": "debajo de la mesa",
+       "debajo de|la taza": "debajo de la taza",
+       "delante de|el lápiz": "delante del lápiz",
+       "delante de|el sofá": "delante del sofá",
+       "delante de|la lámpara": "delante de la lámpara",
+       "delante de|la mesa": "delante de la mesa",
+       "delante de|la taza": "delante de la taza",
+       "detrás de|el lápiz": "detrás del lápiz",
+       "detrás de|el sofá": "detrás del sofá",
+       "detrás de|la lámpara": "detrás de la lámpara",
+       "detrás de|la mesa": "detrás de la mesa",
+       "detrás de|la taza": "detrás de la taza",
+       "sobre|el lápiz": "sobre el lápiz",
+       "sobre|el sofá": "sobre el sofá",
+       "sobre|la lámpara": "sobre la lámpara",
+       "sobre|la mesa": "sobre la mesa",
+       "sobre|la taza": "sobre la taza"
+      },
+      "prefix": "Está",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "El libro está sobre la mesa.",
+          "meaning": "on",
+          "text": "sobre"
+         },
+         {
+          "example": "El gato está debajo de la silla.",
+          "meaning": "under",
+          "text": "debajo de"
+         },
+         {
+          "example": "La silla está al lado de la puerta.",
+          "meaning": "next to",
+          "text": "al lado de"
+         },
+         {
+          "example": "El perro está delante de la casa.",
+          "meaning": "in front of",
+          "text": "delante de"
+         },
+         {
+          "example": "El árbol está detrás de la casa.",
+          "meaning": "behind",
+          "text": "detrás de"
+         },
+         {
+          "example": null,
+          "meaning": "near",
+          "text": "cerca de"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "pencil",
+          "text": "el lápiz"
+         },
+         {
+          "example": null,
+          "meaning": "sofa",
+          "text": "el sofá"
+         },
+         {
+          "example": null,
+          "meaning": "lamp",
+          "text": "la lámpara"
+         },
+         {
+          "example": null,
+          "meaning": "table",
+          "text": "la mesa"
+         },
+         {
+          "example": null,
+          "meaning": "cup",
+          "text": "la taza"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "Está [position] [reference object]"
+     }
+    ]
+   },
+   "all:cup": {
+    "avoid": [
+     "taza",
+     "cup",
+     "tazas",
+     "cups",
+     "cupes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La manzana es roja.",
+      "frameId": "colour",
+      "help": [
+       "roja"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "amarilla"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "azul"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanca"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "negra"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "roja"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verde"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es [colour]"
+     },
+     {
+      "chips": [],
+      "example": "El libro está sobre la mesa.",
+      "frameId": "location",
+      "help": [
+       "sobre la mesa",
+       "al lado del sofá",
+       "cerca del libro",
+       "delante del libro",
+       "junto al sofá",
+       "a la izquierda de la lámpara"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "a la izquierda de|el libro": "a la izquierda del libro",
+       "a la izquierda de|el lápiz": "a la izquierda del lápiz",
+       "a la izquierda de|el sofá": "a la izquierda del sofá",
+       "a la izquierda de|la lámpara": "a la izquierda de la lámpara",
+       "a la izquierda de|la mesa": "a la izquierda de la mesa",
+       "al lado de|el libro": "al lado del libro",
+       "al lado de|el lápiz": "al lado del lápiz",
+       "al lado de|el sofá": "al lado del sofá",
+       "al lado de|la lámpara": "al lado de la lámpara",
+       "al lado de|la mesa": "al lado de la mesa",
+       "cerca de|el libro": "cerca del libro",
+       "cerca de|el lápiz": "cerca del lápiz",
+       "cerca de|el sofá": "cerca del sofá",
+       "cerca de|la lámpara": "cerca de la lámpara",
+       "cerca de|la mesa": "cerca de la mesa",
+       "debajo de|el libro": "debajo del libro",
+       "debajo de|el lápiz": "debajo del lápiz",
+       "debajo de|el sofá": "debajo del sofá",
+       "debajo de|la lámpara": "debajo de la lámpara",
+       "debajo de|la mesa": "debajo de la mesa",
+       "delante de|el libro": "delante del libro",
+       "delante de|el lápiz": "delante del lápiz",
+       "delante de|el sofá": "delante del sofá",
+       "delante de|la lámpara": "delante de la lámpara",
+       "delante de|la mesa": "delante de la mesa",
+       "detrás de|el libro": "detrás del libro",
+       "detrás de|el lápiz": "detrás del lápiz",
+       "detrás de|el sofá": "detrás del sofá",
+       "detrás de|la lámpara": "detrás de la lámpara",
+       "detrás de|la mesa": "detrás de la mesa",
+       "junto a|el libro": "junto al libro",
+       "junto a|el lápiz": "junto al lápiz",
+       "junto a|el sofá": "junto al sofá",
+       "junto a|la lámpara": "junto a la lámpara",
+       "junto a|la mesa": "junto a la mesa",
+       "sobre|el libro": "sobre el libro",
+       "sobre|el lápiz": "sobre el lápiz",
+       "sobre|el sofá": "sobre el sofá",
+       "sobre|la lámpara": "sobre la lámpara",
+       "sobre|la mesa": "sobre la mesa"
+      },
+      "prefix": "Está",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "El libro está sobre la mesa.",
+          "meaning": "on",
+          "text": "sobre"
+         },
+         {
+          "example": "El gato está debajo de la silla.",
+          "meaning": "under",
+          "text": "debajo de"
+         },
+         {
+          "example": "La silla está al lado de la puerta.",
+          "meaning": "next to",
+          "text": "al lado de"
+         },
+         {
+          "example": "El perro está delante de la casa.",
+          "meaning": "in front of",
+          "text": "delante de"
+         },
+         {
+          "example": "El árbol está detrás de la casa.",
+          "meaning": "behind",
+          "text": "detrás de"
+         },
+         {
+          "example": null,
+          "meaning": "near",
+          "text": "cerca de"
+         },
+         {
+          "example": null,
+          "meaning": "inside",
+          "text": "junto a"
+         },
+         {
+          "example": null,
+          "meaning": "left_of",
+          "text": "a la izquierda de"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "book",
+          "text": "el libro"
+         },
+         {
+          "example": null,
+          "meaning": "pencil",
+          "text": "el lápiz"
+         },
+         {
+          "example": null,
+          "meaning": "sofa",
+          "text": "el sofá"
+         },
+         {
+          "example": null,
+          "meaning": "lamp",
+          "text": "la lámpara"
+         },
+         {
+          "example": null,
+          "meaning": "table",
+          "text": "la mesa"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "Está [position] [reference object]"
+     }
+    ]
+   },
+   "all:lamp": {
+    "avoid": [
+     "lámpara",
+     "lamp",
+     "lámparas",
+     "lamps",
+     "lampes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La manzana es roja.",
+      "frameId": "colour",
+      "help": [
+       "turquesa"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "amarilla"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "azul"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanca"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "negra"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "roja"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "turquesa"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verde"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es [colour]"
+     }
+    ]
+   },
+   "all:pencil": {
+    "avoid": [
+     "lápiz",
+     "pencil",
+     "lápizs",
+     "lápizes",
+     "pencils",
+     "penciles"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La manzana es roja.",
+      "frameId": "colour",
+      "help": [
+       "morado"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "amarillo"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "azul"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanco"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "morado"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "negro"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rojo"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verde"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es [colour]"
+     },
+     {
+      "chips": [],
+      "example": "El libro está sobre la mesa.",
+      "frameId": "location",
+      "help": [
+       "debajo de la taza"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "al lado de|el libro": "al lado del libro",
+       "al lado de|el sofá": "al lado del sofá",
+       "al lado de|la lámpara": "al lado de la lámpara",
+       "al lado de|la mesa": "al lado de la mesa",
+       "al lado de|la taza": "al lado de la taza",
+       "debajo de|el libro": "debajo del libro",
+       "debajo de|el sofá": "debajo del sofá",
+       "debajo de|la lámpara": "debajo de la lámpara",
+       "debajo de|la mesa": "debajo de la mesa",
+       "debajo de|la taza": "debajo de la taza",
+       "delante de|el libro": "delante del libro",
+       "delante de|el sofá": "delante del sofá",
+       "delante de|la lámpara": "delante de la lámpara",
+       "delante de|la mesa": "delante de la mesa",
+       "delante de|la taza": "delante de la taza",
+       "detrás de|el libro": "detrás del libro",
+       "detrás de|el sofá": "detrás del sofá",
+       "detrás de|la lámpara": "detrás de la lámpara",
+       "detrás de|la mesa": "detrás de la mesa",
+       "detrás de|la taza": "detrás de la taza",
+       "sobre|el libro": "sobre el libro",
+       "sobre|el sofá": "sobre el sofá",
+       "sobre|la lámpara": "sobre la lámpara",
+       "sobre|la mesa": "sobre la mesa",
+       "sobre|la taza": "sobre la taza"
+      },
+      "prefix": "Está",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "El libro está sobre la mesa.",
+          "meaning": "on",
+          "text": "sobre"
+         },
+         {
+          "example": "El gato está debajo de la silla.",
+          "meaning": "under",
+          "text": "debajo de"
+         },
+         {
+          "example": "La silla está al lado de la puerta.",
+          "meaning": "next to",
+          "text": "al lado de"
+         },
+         {
+          "example": "El perro está delante de la casa.",
+          "meaning": "in front of",
+          "text": "delante de"
+         },
+         {
+          "example": "El árbol está detrás de la casa.",
+          "meaning": "behind",
+          "text": "detrás de"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "book",
+          "text": "el libro"
+         },
+         {
+          "example": null,
+          "meaning": "sofa",
+          "text": "el sofá"
+         },
+         {
+          "example": null,
+          "meaning": "lamp",
+          "text": "la lámpara"
+         },
+         {
+          "example": null,
+          "meaning": "table",
+          "text": "la mesa"
+         },
+         {
+          "example": null,
+          "meaning": "cup",
+          "text": "la taza"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "Está [position] [reference object]"
+     }
+    ]
+   },
+   "all:sofa": {
+    "avoid": [
+     "sofá",
+     "sofa",
+     "sofás",
+     "sofas"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La manzana es roja.",
+      "frameId": "colour",
+      "help": [
+       "azul"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "amarillo"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "azul"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanco"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "negro"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rojo"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verde"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es [colour]"
+     },
+     {
+      "chips": [],
+      "example": "El libro está sobre la mesa.",
+      "frameId": "location",
+      "help": [
+       "al lado de la taza"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "al lado de|el libro": "al lado del libro",
+       "al lado de|el lápiz": "al lado del lápiz",
+       "al lado de|la lámpara": "al lado de la lámpara",
+       "al lado de|la mesa": "al lado de la mesa",
+       "al lado de|la taza": "al lado de la taza",
+       "debajo de|el libro": "debajo del libro",
+       "debajo de|el lápiz": "debajo del lápiz",
+       "debajo de|la lámpara": "debajo de la lámpara",
+       "debajo de|la mesa": "debajo de la mesa",
+       "debajo de|la taza": "debajo de la taza",
+       "delante de|el libro": "delante del libro",
+       "delante de|el lápiz": "delante del lápiz",
+       "delante de|la lámpara": "delante de la lámpara",
+       "delante de|la mesa": "delante de la mesa",
+       "delante de|la taza": "delante de la taza",
+       "detrás de|el libro": "detrás del libro",
+       "detrás de|el lápiz": "detrás del lápiz",
+       "detrás de|la lámpara": "detrás de la lámpara",
+       "detrás de|la mesa": "detrás de la mesa",
+       "detrás de|la taza": "detrás de la taza",
+       "sobre|el libro": "sobre el libro",
+       "sobre|el lápiz": "sobre el lápiz",
+       "sobre|la lámpara": "sobre la lámpara",
+       "sobre|la mesa": "sobre la mesa",
+       "sobre|la taza": "sobre la taza"
+      },
+      "prefix": "Está",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "El libro está sobre la mesa.",
+          "meaning": "on",
+          "text": "sobre"
+         },
+         {
+          "example": "El gato está debajo de la silla.",
+          "meaning": "under",
+          "text": "debajo de"
+         },
+         {
+          "example": "La silla está al lado de la puerta.",
+          "meaning": "next to",
+          "text": "al lado de"
+         },
+         {
+          "example": "El perro está delante de la casa.",
+          "meaning": "in front of",
+          "text": "delante de"
+         },
+         {
+          "example": "El árbol está detrás de la casa.",
+          "meaning": "behind",
+          "text": "detrás de"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "book",
+          "text": "el libro"
+         },
+         {
+          "example": null,
+          "meaning": "pencil",
+          "text": "el lápiz"
+         },
+         {
+          "example": null,
+          "meaning": "lamp",
+          "text": "la lámpara"
+         },
+         {
+          "example": null,
+          "meaning": "table",
+          "text": "la mesa"
+         },
+         {
+          "example": null,
+          "meaning": "cup",
+          "text": "la taza"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "Está [position] [reference object]"
+     }
+    ]
+   },
+   "all:table": {
+    "avoid": [
+     "mesa",
+     "table",
+     "mesas",
+     "tables"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La manzana es roja.",
+      "frameId": "colour",
+      "help": [
+       "roja"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "amarilla"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "azul"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanca"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "negra"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "roja"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verde"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es [colour]"
+     }
+    ]
+   },
+   "all:tree": {
+    "avoid": [
+     "árbol",
+     "tree",
+     "árbols",
+     "árboles",
+     "trees"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La manzana es roja.",
+      "frameId": "colour",
+      "help": [
+       "naranja"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "azul"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "naranja"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verde"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es [colour]"
+     }
+    ]
+   },
+   "first-two-introduced:book": {
+    "avoid": [
+     "libro",
+     "book",
+     "libros",
+     "books",
+     "bookes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La manzana es roja.",
+      "frameId": "colour",
+      "help": [
+       "gris"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "amarillo"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "azul"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanco"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "gris"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "negro"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rojo"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verde"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es [colour]"
+     },
+     {
+      "chips": [],
+      "example": "El libro está sobre la mesa.",
+      "frameId": "location",
+      "help": [
+       "cerca de la taza"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "al lado de|la mesa": "al lado de la mesa",
+       "al lado de|la taza": "al lado de la taza",
+       "cerca de|la mesa": "cerca de la mesa",
+       "cerca de|la taza": "cerca de la taza",
+       "debajo de|la mesa": "debajo de la mesa",
+       "debajo de|la taza": "debajo de la taza",
+       "delante de|la mesa": "delante de la mesa",
+       "delante de|la taza": "delante de la taza",
+       "detrás de|la mesa": "detrás de la mesa",
+       "detrás de|la taza": "detrás de la taza",
+       "sobre|la mesa": "sobre la mesa",
+       "sobre|la taza": "sobre la taza"
+      },
+      "prefix": "Está",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "El libro está sobre la mesa.",
+          "meaning": "on",
+          "text": "sobre"
+         },
+         {
+          "example": "El gato está debajo de la silla.",
+          "meaning": "under",
+          "text": "debajo de"
+         },
+         {
+          "example": "La silla está al lado de la puerta.",
+          "meaning": "next to",
+          "text": "al lado de"
+         },
+         {
+          "example": "El perro está delante de la casa.",
+          "meaning": "in front of",
+          "text": "delante de"
+         },
+         {
+          "example": "El árbol está detrás de la casa.",
+          "meaning": "behind",
+          "text": "detrás de"
+         },
+         {
+          "example": null,
+          "meaning": "near",
+          "text": "cerca de"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "table",
+          "text": "la mesa"
+         },
+         {
+          "example": null,
+          "meaning": "cup",
+          "text": "la taza"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "Está [position] [reference object]"
+     }
+    ]
+   },
+   "first-two-introduced:cup": {
+    "avoid": [
+     "taza",
+     "cup",
+     "tazas",
+     "cups",
+     "cupes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La manzana es roja.",
+      "frameId": "colour",
+      "help": [
+       "roja"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "amarilla"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "azul"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanca"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "negra"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "roja"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verde"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es [colour]"
+     },
+     {
+      "chips": [],
+      "example": "El libro está sobre la mesa.",
+      "frameId": "location",
+      "help": [
+       "sobre la mesa"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "al lado de|la mesa": "al lado de la mesa",
+       "debajo de|la mesa": "debajo de la mesa",
+       "delante de|la mesa": "delante de la mesa",
+       "detrás de|la mesa": "detrás de la mesa",
+       "sobre|la mesa": "sobre la mesa"
+      },
+      "prefix": "Está",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "El libro está sobre la mesa.",
+          "meaning": "on",
+          "text": "sobre"
+         },
+         {
+          "example": "El gato está debajo de la silla.",
+          "meaning": "under",
+          "text": "debajo de"
+         },
+         {
+          "example": "La silla está al lado de la puerta.",
+          "meaning": "next to",
+          "text": "al lado de"
+         },
+         {
+          "example": "El perro está delante de la casa.",
+          "meaning": "in front of",
+          "text": "delante de"
+         },
+         {
+          "example": "El árbol está detrás de la casa.",
+          "meaning": "behind",
+          "text": "detrás de"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "table",
+          "text": "la mesa"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "Está [position] [reference object]"
+     }
+    ]
+   },
+   "first-two-introduced:lamp": {
+    "avoid": [
+     "lámpara",
+     "lamp",
+     "lámparas",
+     "lamps",
+     "lampes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La manzana es roja.",
+      "frameId": "colour",
+      "help": [
+       "turquesa"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "amarilla"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "azul"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanca"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "negra"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "roja"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "turquesa"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verde"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es [colour]"
+     }
+    ]
+   },
+   "first-two-introduced:pencil": {
+    "avoid": [
+     "lápiz",
+     "pencil",
+     "lápizs",
+     "lápizes",
+     "pencils",
+     "penciles"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La manzana es roja.",
+      "frameId": "colour",
+      "help": [
+       "morado"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "amarillo"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "azul"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanco"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "morado"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "negro"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rojo"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verde"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es [colour]"
+     },
+     {
+      "chips": [],
+      "example": "El libro está sobre la mesa.",
+      "frameId": "location",
+      "help": [
+       "debajo de la taza"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "al lado de|la mesa": "al lado de la mesa",
+       "al lado de|la taza": "al lado de la taza",
+       "debajo de|la mesa": "debajo de la mesa",
+       "debajo de|la taza": "debajo de la taza",
+       "delante de|la mesa": "delante de la mesa",
+       "delante de|la taza": "delante de la taza",
+       "detrás de|la mesa": "detrás de la mesa",
+       "detrás de|la taza": "detrás de la taza",
+       "sobre|la mesa": "sobre la mesa",
+       "sobre|la taza": "sobre la taza"
+      },
+      "prefix": "Está",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "El libro está sobre la mesa.",
+          "meaning": "on",
+          "text": "sobre"
+         },
+         {
+          "example": "El gato está debajo de la silla.",
+          "meaning": "under",
+          "text": "debajo de"
+         },
+         {
+          "example": "La silla está al lado de la puerta.",
+          "meaning": "next to",
+          "text": "al lado de"
+         },
+         {
+          "example": "El perro está delante de la casa.",
+          "meaning": "in front of",
+          "text": "delante de"
+         },
+         {
+          "example": "El árbol está detrás de la casa.",
+          "meaning": "behind",
+          "text": "detrás de"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "table",
+          "text": "la mesa"
+         },
+         {
+          "example": null,
+          "meaning": "cup",
+          "text": "la taza"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "Está [position] [reference object]"
+     }
+    ]
+   },
+   "first-two-introduced:sofa": {
+    "avoid": [
+     "sofá",
+     "sofa",
+     "sofás",
+     "sofas"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La manzana es roja.",
+      "frameId": "colour",
+      "help": [
+       "azul"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "amarillo"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "azul"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanco"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "negro"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rojo"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verde"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es [colour]"
+     },
+     {
+      "chips": [],
+      "example": "El libro está sobre la mesa.",
+      "frameId": "location",
+      "help": [
+       "al lado de la taza"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "al lado de|la mesa": "al lado de la mesa",
+       "al lado de|la taza": "al lado de la taza",
+       "debajo de|la mesa": "debajo de la mesa",
+       "debajo de|la taza": "debajo de la taza",
+       "delante de|la mesa": "delante de la mesa",
+       "delante de|la taza": "delante de la taza",
+       "detrás de|la mesa": "detrás de la mesa",
+       "detrás de|la taza": "detrás de la taza",
+       "sobre|la mesa": "sobre la mesa",
+       "sobre|la taza": "sobre la taza"
+      },
+      "prefix": "Está",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "El libro está sobre la mesa.",
+          "meaning": "on",
+          "text": "sobre"
+         },
+         {
+          "example": "El gato está debajo de la silla.",
+          "meaning": "under",
+          "text": "debajo de"
+         },
+         {
+          "example": "La silla está al lado de la puerta.",
+          "meaning": "next to",
+          "text": "al lado de"
+         },
+         {
+          "example": "El perro está delante de la casa.",
+          "meaning": "in front of",
+          "text": "delante de"
+         },
+         {
+          "example": "El árbol está detrás de la casa.",
+          "meaning": "behind",
+          "text": "detrás de"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "table",
+          "text": "la mesa"
+         },
+         {
+          "example": null,
+          "meaning": "cup",
+          "text": "la taza"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "Está [position] [reference object]"
+     }
+    ]
+   },
+   "first-two-introduced:table": {
+    "avoid": [
+     "mesa",
+     "table",
+     "mesas",
+     "tables"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La manzana es roja.",
+      "frameId": "colour",
+      "help": [
+       "roja"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "amarilla"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "azul"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanca"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "negra"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "roja"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verde"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es [colour]"
+     }
+    ]
+   },
+   "first-two-introduced:tree": {
+    "avoid": [
+     "árbol",
+     "tree",
+     "árbols",
+     "árboles",
+     "trees"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La manzana es roja.",
+      "frameId": "colour",
+      "help": [
+       "naranja"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "azul"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "naranja"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verde"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es [colour]"
+     }
+    ]
+   },
+   "no-introduced:book": {
+    "avoid": [
+     "libro",
+     "book",
+     "libros",
+     "books",
+     "bookes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La manzana es roja.",
+      "frameId": "colour",
+      "help": [
+       "gris"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "amarillo"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "azul"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanco"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "gris"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "negro"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rojo"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verde"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es [colour]"
+     }
+    ]
+   },
+   "no-introduced:cup": {
+    "avoid": [
+     "taza",
+     "cup",
+     "tazas",
+     "cups",
+     "cupes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La manzana es roja.",
+      "frameId": "colour",
+      "help": [
+       "roja"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "amarilla"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "azul"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanca"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "negra"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "roja"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verde"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es [colour]"
+     }
+    ]
+   },
+   "no-introduced:lamp": {
+    "avoid": [
+     "lámpara",
+     "lamp",
+     "lámparas",
+     "lamps",
+     "lampes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La manzana es roja.",
+      "frameId": "colour",
+      "help": [
+       "turquesa"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "amarilla"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "azul"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanca"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "negra"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "roja"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "turquesa"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verde"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es [colour]"
+     }
+    ]
+   },
+   "no-introduced:pencil": {
+    "avoid": [
+     "lápiz",
+     "pencil",
+     "lápizs",
+     "lápizes",
+     "pencils",
+     "penciles"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La manzana es roja.",
+      "frameId": "colour",
+      "help": [
+       "morado"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "amarillo"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "azul"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanco"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "morado"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "negro"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rojo"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verde"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es [colour]"
+     }
+    ]
+   },
+   "no-introduced:sofa": {
+    "avoid": [
+     "sofá",
+     "sofa",
+     "sofás",
+     "sofas"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La manzana es roja.",
+      "frameId": "colour",
+      "help": [
+       "azul"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "amarillo"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "azul"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanco"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "negro"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rojo"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verde"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es [colour]"
+     }
+    ]
+   },
+   "no-introduced:table": {
+    "avoid": [
+     "mesa",
+     "table",
+     "mesas",
+     "tables"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La manzana es roja.",
+      "frameId": "colour",
+      "help": [
+       "roja"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "amarilla"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "azul"
+         },
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanca"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "negra"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "roja"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verde"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es [colour]"
+     }
+    ]
+   },
+   "no-introduced:tree": {
+    "avoid": [
+     "árbol",
+     "tree",
+     "árbols",
+     "árboles",
+     "trees"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La manzana es roja.",
+      "frameId": "colour",
+      "help": [
+       "naranja"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Es",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "azul"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "naranja"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verde"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Es [colour]"
+     }
+    ]
+   },
+   "no-relations:book": {
+    "avoid": [
+     "libro",
+     "book",
+     "libros",
+     "books",
+     "bookes"
+    ],
+    "frames": []
+   },
+   "no-relations:cup": {
+    "avoid": [
+     "taza",
+     "cup",
+     "tazas",
+     "cups",
+     "cupes"
+    ],
+    "frames": []
+   },
+   "no-relations:lamp": {
+    "avoid": [
+     "lámpara",
+     "lamp",
+     "lámparas",
+     "lamps",
+     "lampes"
+    ],
+    "frames": []
+   },
+   "no-relations:pencil": {
+    "avoid": [
+     "lápiz",
+     "pencil",
+     "lápizs",
+     "lápizes",
+     "pencils",
+     "penciles"
+    ],
+    "frames": []
+   },
+   "no-relations:sofa": {
+    "avoid": [
+     "sofá",
+     "sofa",
+     "sofás",
+     "sofas"
+    ],
+    "frames": []
+   },
+   "no-relations:table": {
+    "avoid": [
+     "mesa",
+     "table",
+     "mesas",
+     "tables"
+    ],
+    "frames": []
+   },
+   "no-relations:tree": {
+    "avoid": [
+     "árbol",
+     "tree",
+     "árbols",
+     "árboles",
+     "trees"
+    ],
+    "frames": []
+   }
+  },
+  "places": {
+   "al lado de|libro": "al lado del libro",
+   "al lado de|lámpara": "al lado de la lámpara",
+   "al lado de|lápiz": "al lado del lápiz",
+   "al lado de|mesa": "al lado de la mesa",
+   "al lado de|sofá": "al lado del sofá",
+   "al lado de|taza": "al lado de la taza",
+   "al lado de|árbol": null,
+   "a|libro": "al libro",
+   "a|lámpara": "a la lámpara",
+   "a|lápiz": "al lápiz",
+   "a|mesa": "a la mesa",
+   "a|sofá": "al sofá",
+   "a|taza": "a la taza",
+   "a|árbol": null,
+   "cerca de|libro": "cerca del libro",
+   "cerca de|lámpara": "cerca de la lámpara",
+   "cerca de|lápiz": "cerca del lápiz",
+   "cerca de|mesa": "cerca de la mesa",
+   "cerca de|sofá": "cerca del sofá",
+   "cerca de|taza": "cerca de la taza",
+   "cerca de|árbol": null,
+   "debajo de|libro": "debajo del libro",
+   "debajo de|lámpara": "debajo de la lámpara",
+   "debajo de|lápiz": "debajo del lápiz",
+   "debajo de|mesa": "debajo de la mesa",
+   "debajo de|sofá": "debajo del sofá",
+   "debajo de|taza": "debajo de la taza",
+   "debajo de|árbol": null,
+   "delante de|libro": "delante del libro",
+   "delante de|lámpara": "delante de la lámpara",
+   "delante de|lápiz": "delante del lápiz",
+   "delante de|mesa": "delante de la mesa",
+   "delante de|sofá": "delante del sofá",
+   "delante de|taza": "delante de la taza",
+   "delante de|árbol": null,
+   "detrás de|libro": "detrás del libro",
+   "detrás de|lámpara": "detrás de la lámpara",
+   "detrás de|lápiz": "detrás del lápiz",
+   "detrás de|mesa": "detrás de la mesa",
+   "detrás de|sofá": "detrás del sofá",
+   "detrás de|taza": "detrás de la taza",
+   "detrás de|árbol": null,
+   "de|libro": "del libro",
+   "de|lámpara": "de la lámpara",
+   "de|lápiz": "del lápiz",
+   "de|mesa": "de la mesa",
+   "de|sofá": "del sofá",
+   "de|taza": "de la taza",
+   "de|árbol": null,
+   "está sobre|libro": null,
+   "está sobre|lámpara": null,
+   "está sobre|lápiz": null,
+   "está sobre|mesa": null,
+   "está sobre|sofá": null,
+   "está sobre|taza": null,
+   "está sobre|árbol": null,
+   "junto a|libro": "junto al libro",
+   "junto a|lámpara": "junto a la lámpara",
+   "junto a|lápiz": "junto al lápiz",
+   "junto a|mesa": "junto a la mesa",
+   "junto a|sofá": "junto al sofá",
+   "junto a|taza": "junto a la taza",
+   "junto a|árbol": null,
+   "sobre|libro": "sobre el libro",
+   "sobre|lámpara": "sobre la lámpara",
+   "sobre|lápiz": "sobre el lápiz",
+   "sobre|mesa": "sobre la mesa",
+   "sobre|sofá": "sobre el sofá",
+   "sobre|taza": "sobre la taza",
+   "sobre|árbol": null
+  },
+  "room": {
+   "objects": [
+    {
+     "key": "d9eb1c0b-4006-52ff-9da8-d86b1660a690",
+     "label": "cup",
+     "marker": 1,
+     "translation": "cup",
+     "word": "la taza",
+     "x": 10.0,
+     "y": 50.0
+    },
+    {
+     "key": "ab43bfb5-13ea-5504-b8df-0e4a9efdd583",
+     "label": "book",
+     "marker": 2,
+     "translation": "book",
+     "word": "el libro",
+     "x": 20.0,
+     "y": 50.0
+    },
+    {
+     "key": "8ce1e782-468e-5ce5-9b4f-e27037b772d3",
+     "label": "table",
+     "marker": 3,
+     "translation": "table",
+     "word": "la mesa",
+     "x": 30.0,
+     "y": 50.0
+    }
+   ],
+   "targets": [
+    {
+     "clueOptions": [
+      {
+       "id": "41f86bce-4bad-5164-9333-824e28f11fb2",
+       "text": "Es roja y está sobre la mesa."
+      },
+      {
+       "id": "2ae86f73-bd44-52cc-9459-ccb91255343f",
+       "text": "Es roja y está al lado del libro."
+      },
+      {
+       "id": "5803cfe3-d2d1-511b-980f-0cdf975e1226",
+       "text": "Está sobre la mesa y está al lado del libro."
+      },
+      {
+       "id": "dd2d7d58-919e-5535-9da5-2bc24d0ff0b6",
+       "text": "Es roja."
+      }
+     ],
+     "objectKey": "d9eb1c0b-4006-52ff-9da8-d86b1660a690"
+    },
+    {
+     "clueOptions": [
+      {
+       "id": "6b278199-372a-533f-b11b-34be4fe15785",
+       "text": "Es azul y está al lado de la taza."
+      },
+      {
+       "id": "0caa84eb-3020-51a6-84f5-d4c788c928d0",
+       "text": "Es azul."
+      },
+      {
+       "id": "6622d607-3d44-5699-91af-7cb3cc9b8691",
+       "text": "Está al lado de la taza."
+      }
+     ],
+     "objectKey": "ab43bfb5-13ea-5504-b8df-0e4a9efdd583"
+    }
+   ],
+   "title": "My photo",
+   "version": 1
+  }
+ },
+ "fr": {
+  "agreement": {
+   "Blanche|None": null,
+   "Blanche|feminine": "blanche",
+   "Blanche|masculine": "blanc",
+   "Blanche|neuter": null,
+   "bleu|None": null,
+   "bleu|feminine": "bleue",
+   "bleu|masculine": "bleu",
+   "bleu|neuter": null,
+   "doré|None": null,
+   "doré|feminine": "dorée",
+   "doré|masculine": "doré",
+   "doré|neuter": null,
+   "fuchsia|None": null,
+   "fuchsia|feminine": null,
+   "fuchsia|masculine": null,
+   "fuchsia|neuter": null,
+   "marron|None": "marron",
+   "marron|feminine": "marron",
+   "marron|masculine": "marron",
+   "marron|neuter": "marron",
+   "orange|None": "orange",
+   "orange|feminine": "orange",
+   "orange|masculine": "orange",
+   "orange|neuter": "orange",
+   "rouge|None": "rouge",
+   "rouge|feminine": "rouge",
+   "rouge|masculine": "rouge",
+   "rouge|neuter": "rouge",
+   "violet|None": null,
+   "violet|feminine": "violette",
+   "violet|masculine": "violet",
+   "violet|neuter": null
+  },
+  "frames": {
+   "all:book": {
+    "avoid": [
+     "livre",
+     "book",
+     "livres",
+     "books",
+     "bookes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La pomme est rouge.",
+      "frameId": "colour",
+      "help": [
+       "blanc"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Il est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanc"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "bleu"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "jaune"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "noir"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rouge"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "vert"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Il est [colour]"
+     },
+     {
+      "chips": [],
+      "example": "Le livre est sur la table.",
+      "frameId": "location",
+      "help": [
+       "à côté de la tasse"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "derrière|l'arbre": "derrière l'arbre",
+       "derrière|la chaise": "derrière la chaise",
+       "derrière|la table": "derrière la table",
+       "derrière|la tasse": "derrière la tasse",
+       "derrière|le gâteau": "derrière le gâteau",
+       "devant|l'arbre": "devant l'arbre",
+       "devant|la chaise": "devant la chaise",
+       "devant|la table": "devant la table",
+       "devant|la tasse": "devant la tasse",
+       "devant|le gâteau": "devant le gâteau",
+       "sous|l'arbre": "sous l'arbre",
+       "sous|la chaise": "sous la chaise",
+       "sous|la table": "sous la table",
+       "sous|la tasse": "sous la tasse",
+       "sous|le gâteau": "sous le gâteau",
+       "sur|l'arbre": "sur l'arbre",
+       "sur|la chaise": "sur la chaise",
+       "sur|la table": "sur la table",
+       "sur|la tasse": "sur la tasse",
+       "sur|le gâteau": "sur le gâteau",
+       "à côté de|l'arbre": "à côté de l'arbre",
+       "à côté de|la chaise": "à côté de la chaise",
+       "à côté de|la table": "à côté de la table",
+       "à côté de|la tasse": "à côté de la tasse",
+       "à côté de|le gâteau": "à côté du gâteau"
+      },
+      "prefix": "Il est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "Le livre est sur la table.",
+          "meaning": "on",
+          "text": "sur"
+         },
+         {
+          "example": "Le chat est sous la chaise.",
+          "meaning": "under",
+          "text": "sous"
+         },
+         {
+          "example": "La chaise est à côté de la porte.",
+          "meaning": "next to",
+          "text": "à côté de"
+         },
+         {
+          "example": "Le chien est devant la maison.",
+          "meaning": "in front of",
+          "text": "devant"
+         },
+         {
+          "example": "L'arbre est derrière la maison.",
+          "meaning": "behind",
+          "text": "derrière"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "tree",
+          "text": "l'arbre"
+         },
+         {
+          "example": null,
+          "meaning": "chair",
+          "text": "la chaise"
+         },
+         {
+          "example": null,
+          "meaning": "table",
+          "text": "la table"
+         },
+         {
+          "example": null,
+          "meaning": "cup",
+          "text": "la tasse"
+         },
+         {
+          "example": null,
+          "meaning": "cake",
+          "text": "le gâteau"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "Il est [position] [reference object]"
+     }
+    ]
+   },
+   "all:cake": {
+    "avoid": [
+     "gâteau",
+     "cake",
+     "gâteaus",
+     "gâteaux",
+     "cakes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La pomme est rouge.",
+      "frameId": "colour",
+      "help": [
+       "marron"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Il est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanc"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "bleu"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "jaune"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "marron"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "noir"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rouge"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "vert"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Il est [colour]"
+     }
+    ]
+   },
+   "all:chair": {
+    "avoid": [
+     "chaise",
+     "chair",
+     "chaises",
+     "chairs",
+     "chaires"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La pomme est rouge.",
+      "frameId": "colour",
+      "help": [
+       "dorée"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Elle est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanche"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "bleue"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "dorée"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "jaune"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "noire"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rouge"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verte"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Elle est [colour]"
+     }
+    ]
+   },
+   "all:cup": {
+    "avoid": [
+     "tasse",
+     "cup",
+     "tasses",
+     "cups",
+     "cupes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La pomme est rouge.",
+      "frameId": "colour",
+      "help": [
+       "rouge"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Elle est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanche"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "bleue"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "jaune"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "noire"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rouge"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verte"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Elle est [colour]"
+     },
+     {
+      "chips": [],
+      "example": "Le livre est sur la table.",
+      "frameId": "location",
+      "help": [
+       "sur la table",
+       "à côté du livre",
+       "près de l'arbre",
+       "devant l'arbre",
+       "au livre"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "derrière|l'arbre": "derrière l'arbre",
+       "derrière|la chaise": "derrière la chaise",
+       "derrière|la table": "derrière la table",
+       "derrière|le gâteau": "derrière le gâteau",
+       "derrière|le livre": "derrière le livre",
+       "devant|l'arbre": "devant l'arbre",
+       "devant|la chaise": "devant la chaise",
+       "devant|la table": "devant la table",
+       "devant|le gâteau": "devant le gâteau",
+       "devant|le livre": "devant le livre",
+       "près de|l'arbre": "près de l'arbre",
+       "près de|la chaise": "près de la chaise",
+       "près de|la table": "près de la table",
+       "près de|le gâteau": "près du gâteau",
+       "près de|le livre": "près du livre",
+       "sous|l'arbre": "sous l'arbre",
+       "sous|la chaise": "sous la chaise",
+       "sous|la table": "sous la table",
+       "sous|le gâteau": "sous le gâteau",
+       "sous|le livre": "sous le livre",
+       "sur|l'arbre": "sur l'arbre",
+       "sur|la chaise": "sur la chaise",
+       "sur|la table": "sur la table",
+       "sur|le gâteau": "sur le gâteau",
+       "sur|le livre": "sur le livre",
+       "à côté de|l'arbre": "à côté de l'arbre",
+       "à côté de|la chaise": "à côté de la chaise",
+       "à côté de|la table": "à côté de la table",
+       "à côté de|le gâteau": "à côté du gâteau",
+       "à côté de|le livre": "à côté du livre",
+       "à|l'arbre": "à l'arbre",
+       "à|la chaise": "à la chaise",
+       "à|la table": "à la table",
+       "à|le gâteau": "au gâteau",
+       "à|le livre": "au livre"
+      },
+      "prefix": "Elle est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "Le livre est sur la table.",
+          "meaning": "on",
+          "text": "sur"
+         },
+         {
+          "example": "Le chat est sous la chaise.",
+          "meaning": "under",
+          "text": "sous"
+         },
+         {
+          "example": "La chaise est à côté de la porte.",
+          "meaning": "next to",
+          "text": "à côté de"
+         },
+         {
+          "example": "Le chien est devant la maison.",
+          "meaning": "in front of",
+          "text": "devant"
+         },
+         {
+          "example": "L'arbre est derrière la maison.",
+          "meaning": "behind",
+          "text": "derrière"
+         },
+         {
+          "example": null,
+          "meaning": "near",
+          "text": "près de"
+         },
+         {
+          "example": null,
+          "meaning": "inside",
+          "text": "à"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "tree",
+          "text": "l'arbre"
+         },
+         {
+          "example": null,
+          "meaning": "chair",
+          "text": "la chaise"
+         },
+         {
+          "example": null,
+          "meaning": "table",
+          "text": "la table"
+         },
+         {
+          "example": null,
+          "meaning": "cake",
+          "text": "le gâteau"
+         },
+         {
+          "example": null,
+          "meaning": "book",
+          "text": "le livre"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "Elle est [position] [reference object]"
+     }
+    ]
+   },
+   "all:pen": {
+    "avoid": [
+     "stylo",
+     "pen",
+     "stylos",
+     "pens",
+     "penes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La pomme est rouge.",
+      "frameId": "colour",
+      "help": [
+       "orange"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "C'est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "jaune"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "orange"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rouge"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "C'est [colour]"
+     }
+    ]
+   },
+   "all:table": {
+    "avoid": [
+     "table",
+     "tables"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La pomme est rouge.",
+      "frameId": "colour",
+      "help": [
+       "bleue"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Elle est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanche"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "bleue"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "jaune"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "noire"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rouge"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verte"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Elle est [colour]"
+     }
+    ]
+   },
+   "all:tree": {
+    "avoid": [
+     "arbre",
+     "tree",
+     "arbres",
+     "trees"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La pomme est rouge.",
+      "frameId": "colour",
+      "help": [
+       "violet"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Il est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanc"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "bleu"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "jaune"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "noir"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rouge"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "vert"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "violet"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Il est [colour]"
+     },
+     {
+      "chips": [],
+      "example": "Le livre est sur la table.",
+      "frameId": "location",
+      "help": [
+       "près de la tasse"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "derrière|la chaise": "derrière la chaise",
+       "derrière|la table": "derrière la table",
+       "derrière|la tasse": "derrière la tasse",
+       "derrière|le gâteau": "derrière le gâteau",
+       "derrière|le livre": "derrière le livre",
+       "devant|la chaise": "devant la chaise",
+       "devant|la table": "devant la table",
+       "devant|la tasse": "devant la tasse",
+       "devant|le gâteau": "devant le gâteau",
+       "devant|le livre": "devant le livre",
+       "près de|la chaise": "près de la chaise",
+       "près de|la table": "près de la table",
+       "près de|la tasse": "près de la tasse",
+       "près de|le gâteau": "près du gâteau",
+       "près de|le livre": "près du livre",
+       "sous|la chaise": "sous la chaise",
+       "sous|la table": "sous la table",
+       "sous|la tasse": "sous la tasse",
+       "sous|le gâteau": "sous le gâteau",
+       "sous|le livre": "sous le livre",
+       "sur|la chaise": "sur la chaise",
+       "sur|la table": "sur la table",
+       "sur|la tasse": "sur la tasse",
+       "sur|le gâteau": "sur le gâteau",
+       "sur|le livre": "sur le livre",
+       "à côté de|la chaise": "à côté de la chaise",
+       "à côté de|la table": "à côté de la table",
+       "à côté de|la tasse": "à côté de la tasse",
+       "à côté de|le gâteau": "à côté du gâteau",
+       "à côté de|le livre": "à côté du livre"
+      },
+      "prefix": "Il est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "Le livre est sur la table.",
+          "meaning": "on",
+          "text": "sur"
+         },
+         {
+          "example": "Le chat est sous la chaise.",
+          "meaning": "under",
+          "text": "sous"
+         },
+         {
+          "example": "La chaise est à côté de la porte.",
+          "meaning": "next to",
+          "text": "à côté de"
+         },
+         {
+          "example": "Le chien est devant la maison.",
+          "meaning": "in front of",
+          "text": "devant"
+         },
+         {
+          "example": "L'arbre est derrière la maison.",
+          "meaning": "behind",
+          "text": "derrière"
+         },
+         {
+          "example": null,
+          "meaning": "near",
+          "text": "près de"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "chair",
+          "text": "la chaise"
+         },
+         {
+          "example": null,
+          "meaning": "table",
+          "text": "la table"
+         },
+         {
+          "example": null,
+          "meaning": "cup",
+          "text": "la tasse"
+         },
+         {
+          "example": null,
+          "meaning": "cake",
+          "text": "le gâteau"
+         },
+         {
+          "example": null,
+          "meaning": "book",
+          "text": "le livre"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "Il est [position] [reference object]"
+     }
+    ]
+   },
+   "first-two-introduced:book": {
+    "avoid": [
+     "livre",
+     "book",
+     "livres",
+     "books",
+     "bookes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La pomme est rouge.",
+      "frameId": "colour",
+      "help": [
+       "blanc"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Il est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanc"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "bleu"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "jaune"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "noir"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rouge"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "vert"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Il est [colour]"
+     },
+     {
+      "chips": [],
+      "example": "Le livre est sur la table.",
+      "frameId": "location",
+      "help": [
+       "à côté de la tasse"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "derrière|la table": "derrière la table",
+       "derrière|la tasse": "derrière la tasse",
+       "devant|la table": "devant la table",
+       "devant|la tasse": "devant la tasse",
+       "sous|la table": "sous la table",
+       "sous|la tasse": "sous la tasse",
+       "sur|la table": "sur la table",
+       "sur|la tasse": "sur la tasse",
+       "à côté de|la table": "à côté de la table",
+       "à côté de|la tasse": "à côté de la tasse"
+      },
+      "prefix": "Il est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "Le livre est sur la table.",
+          "meaning": "on",
+          "text": "sur"
+         },
+         {
+          "example": "Le chat est sous la chaise.",
+          "meaning": "under",
+          "text": "sous"
+         },
+         {
+          "example": "La chaise est à côté de la porte.",
+          "meaning": "next to",
+          "text": "à côté de"
+         },
+         {
+          "example": "Le chien est devant la maison.",
+          "meaning": "in front of",
+          "text": "devant"
+         },
+         {
+          "example": "L'arbre est derrière la maison.",
+          "meaning": "behind",
+          "text": "derrière"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "table",
+          "text": "la table"
+         },
+         {
+          "example": null,
+          "meaning": "cup",
+          "text": "la tasse"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "Il est [position] [reference object]"
+     }
+    ]
+   },
+   "first-two-introduced:cake": {
+    "avoid": [
+     "gâteau",
+     "cake",
+     "gâteaus",
+     "gâteaux",
+     "cakes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La pomme est rouge.",
+      "frameId": "colour",
+      "help": [
+       "marron"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Il est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanc"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "bleu"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "jaune"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "marron"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "noir"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rouge"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "vert"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Il est [colour]"
+     }
+    ]
+   },
+   "first-two-introduced:chair": {
+    "avoid": [
+     "chaise",
+     "chair",
+     "chaises",
+     "chairs",
+     "chaires"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La pomme est rouge.",
+      "frameId": "colour",
+      "help": [
+       "dorée"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Elle est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanche"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "bleue"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "dorée"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "jaune"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "noire"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rouge"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verte"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Elle est [colour]"
+     }
+    ]
+   },
+   "first-two-introduced:cup": {
+    "avoid": [
+     "tasse",
+     "cup",
+     "tasses",
+     "cups",
+     "cupes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La pomme est rouge.",
+      "frameId": "colour",
+      "help": [
+       "rouge"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Elle est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanche"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "bleue"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "jaune"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "noire"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rouge"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verte"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Elle est [colour]"
+     },
+     {
+      "chips": [],
+      "example": "Le livre est sur la table.",
+      "frameId": "location",
+      "help": [
+       "sur la table"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "derrière|la table": "derrière la table",
+       "devant|la table": "devant la table",
+       "sous|la table": "sous la table",
+       "sur|la table": "sur la table",
+       "à côté de|la table": "à côté de la table"
+      },
+      "prefix": "Elle est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "Le livre est sur la table.",
+          "meaning": "on",
+          "text": "sur"
+         },
+         {
+          "example": "Le chat est sous la chaise.",
+          "meaning": "under",
+          "text": "sous"
+         },
+         {
+          "example": "La chaise est à côté de la porte.",
+          "meaning": "next to",
+          "text": "à côté de"
+         },
+         {
+          "example": "Le chien est devant la maison.",
+          "meaning": "in front of",
+          "text": "devant"
+         },
+         {
+          "example": "L'arbre est derrière la maison.",
+          "meaning": "behind",
+          "text": "derrière"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "table",
+          "text": "la table"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "Elle est [position] [reference object]"
+     }
+    ]
+   },
+   "first-two-introduced:pen": {
+    "avoid": [
+     "stylo",
+     "pen",
+     "stylos",
+     "pens",
+     "penes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La pomme est rouge.",
+      "frameId": "colour",
+      "help": [
+       "orange"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "C'est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "jaune"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "orange"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rouge"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "C'est [colour]"
+     }
+    ]
+   },
+   "first-two-introduced:table": {
+    "avoid": [
+     "table",
+     "tables"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La pomme est rouge.",
+      "frameId": "colour",
+      "help": [
+       "bleue"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Elle est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanche"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "bleue"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "jaune"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "noire"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rouge"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verte"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Elle est [colour]"
+     }
+    ]
+   },
+   "first-two-introduced:tree": {
+    "avoid": [
+     "arbre",
+     "tree",
+     "arbres",
+     "trees"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La pomme est rouge.",
+      "frameId": "colour",
+      "help": [
+       "violet"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Il est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanc"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "bleu"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "jaune"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "noir"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rouge"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "vert"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "violet"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Il est [colour]"
+     },
+     {
+      "chips": [],
+      "example": "Le livre est sur la table.",
+      "frameId": "location",
+      "help": [
+       "près de la tasse"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "derrière|la table": "derrière la table",
+       "derrière|la tasse": "derrière la tasse",
+       "devant|la table": "devant la table",
+       "devant|la tasse": "devant la tasse",
+       "près de|la table": "près de la table",
+       "près de|la tasse": "près de la tasse",
+       "sous|la table": "sous la table",
+       "sous|la tasse": "sous la tasse",
+       "sur|la table": "sur la table",
+       "sur|la tasse": "sur la tasse",
+       "à côté de|la table": "à côté de la table",
+       "à côté de|la tasse": "à côté de la tasse"
+      },
+      "prefix": "Il est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "Le livre est sur la table.",
+          "meaning": "on",
+          "text": "sur"
+         },
+         {
+          "example": "Le chat est sous la chaise.",
+          "meaning": "under",
+          "text": "sous"
+         },
+         {
+          "example": "La chaise est à côté de la porte.",
+          "meaning": "next to",
+          "text": "à côté de"
+         },
+         {
+          "example": "Le chien est devant la maison.",
+          "meaning": "in front of",
+          "text": "devant"
+         },
+         {
+          "example": "L'arbre est derrière la maison.",
+          "meaning": "behind",
+          "text": "derrière"
+         },
+         {
+          "example": null,
+          "meaning": "near",
+          "text": "près de"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "table",
+          "text": "la table"
+         },
+         {
+          "example": null,
+          "meaning": "cup",
+          "text": "la tasse"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "Il est [position] [reference object]"
+     }
+    ]
+   },
+   "no-introduced:book": {
+    "avoid": [
+     "livre",
+     "book",
+     "livres",
+     "books",
+     "bookes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La pomme est rouge.",
+      "frameId": "colour",
+      "help": [
+       "blanc"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Il est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanc"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "bleu"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "jaune"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "noir"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rouge"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "vert"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Il est [colour]"
+     }
+    ]
+   },
+   "no-introduced:cake": {
+    "avoid": [
+     "gâteau",
+     "cake",
+     "gâteaus",
+     "gâteaux",
+     "cakes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La pomme est rouge.",
+      "frameId": "colour",
+      "help": [
+       "marron"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Il est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanc"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "bleu"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "jaune"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "marron"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "noir"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rouge"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "vert"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Il est [colour]"
+     }
+    ]
+   },
+   "no-introduced:chair": {
+    "avoid": [
+     "chaise",
+     "chair",
+     "chaises",
+     "chairs",
+     "chaires"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La pomme est rouge.",
+      "frameId": "colour",
+      "help": [
+       "dorée"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Elle est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanche"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "bleue"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "dorée"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "jaune"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "noire"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rouge"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verte"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Elle est [colour]"
+     }
+    ]
+   },
+   "no-introduced:cup": {
+    "avoid": [
+     "tasse",
+     "cup",
+     "tasses",
+     "cups",
+     "cupes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La pomme est rouge.",
+      "frameId": "colour",
+      "help": [
+       "rouge"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Elle est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanche"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "bleue"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "jaune"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "noire"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rouge"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verte"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Elle est [colour]"
+     }
+    ]
+   },
+   "no-introduced:pen": {
+    "avoid": [
+     "stylo",
+     "pen",
+     "stylos",
+     "pens",
+     "penes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La pomme est rouge.",
+      "frameId": "colour",
+      "help": [
+       "orange"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "C'est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "jaune"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "orange"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rouge"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "C'est [colour]"
+     }
+    ]
+   },
+   "no-introduced:table": {
+    "avoid": [
+     "table",
+     "tables"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La pomme est rouge.",
+      "frameId": "colour",
+      "help": [
+       "bleue"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Elle est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanche"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "bleue"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "jaune"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "noire"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rouge"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "verte"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Elle est [colour]"
+     }
+    ]
+   },
+   "no-introduced:tree": {
+    "avoid": [
+     "arbre",
+     "tree",
+     "arbres",
+     "trees"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "La pomme est rouge.",
+      "frameId": "colour",
+      "help": [
+       "violet"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "Il est",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "white",
+          "text": "blanc"
+         },
+         {
+          "example": null,
+          "meaning": "blue",
+          "text": "bleu"
+         },
+         {
+          "example": null,
+          "meaning": "yellow",
+          "text": "jaune"
+         },
+         {
+          "example": null,
+          "meaning": "black",
+          "text": "noir"
+         },
+         {
+          "example": null,
+          "meaning": "red",
+          "text": "rouge"
+         },
+         {
+          "example": null,
+          "meaning": "green",
+          "text": "vert"
+         },
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "violet"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "Il est [colour]"
+     }
+    ]
+   },
+   "no-relations:book": {
+    "avoid": [
+     "livre",
+     "book",
+     "livres",
+     "books",
+     "bookes"
+    ],
+    "frames": []
+   },
+   "no-relations:cake": {
+    "avoid": [
+     "gâteau",
+     "cake",
+     "gâteaus",
+     "gâteaux",
+     "cakes"
+    ],
+    "frames": []
+   },
+   "no-relations:chair": {
+    "avoid": [
+     "chaise",
+     "chair",
+     "chaises",
+     "chairs",
+     "chaires"
+    ],
+    "frames": []
+   },
+   "no-relations:cup": {
+    "avoid": [
+     "tasse",
+     "cup",
+     "tasses",
+     "cups",
+     "cupes"
+    ],
+    "frames": []
+   },
+   "no-relations:pen": {
+    "avoid": [
+     "stylo",
+     "pen",
+     "stylos",
+     "pens",
+     "penes"
+    ],
+    "frames": []
+   },
+   "no-relations:table": {
+    "avoid": [
+     "table",
+     "tables"
+    ],
+    "frames": []
+   },
+   "no-relations:tree": {
+    "avoid": [
+     "arbre",
+     "tree",
+     "arbres",
+     "trees"
+    ],
+    "frames": []
+   }
+  },
+  "places": {
+   "derrière|arbre": "derrière l'arbre",
+   "derrière|chaise": "derrière la chaise",
+   "derrière|gâteau": "derrière le gâteau",
+   "derrière|livre": "derrière le livre",
+   "derrière|stylo": null,
+   "derrière|table": "derrière la table",
+   "derrière|tasse": "derrière la tasse",
+   "devant|arbre": "devant l'arbre",
+   "devant|chaise": "devant la chaise",
+   "devant|gâteau": "devant le gâteau",
+   "devant|livre": "devant le livre",
+   "devant|stylo": null,
+   "devant|table": "devant la table",
+   "devant|tasse": "devant la tasse",
+   "de|arbre": "de l'arbre",
+   "de|chaise": "de la chaise",
+   "de|gâteau": "du gâteau",
+   "de|livre": "du livre",
+   "de|stylo": null,
+   "de|table": "de la table",
+   "de|tasse": "de la tasse",
+   "est sur|arbre": null,
+   "est sur|chaise": null,
+   "est sur|gâteau": null,
+   "est sur|livre": null,
+   "est sur|stylo": null,
+   "est sur|table": null,
+   "est sur|tasse": null,
+   "près de|arbre": "près de l'arbre",
+   "près de|chaise": "près de la chaise",
+   "près de|gâteau": "près du gâteau",
+   "près de|livre": "près du livre",
+   "près de|stylo": null,
+   "près de|table": "près de la table",
+   "près de|tasse": "près de la tasse",
+   "sous|arbre": "sous l'arbre",
+   "sous|chaise": "sous la chaise",
+   "sous|gâteau": "sous le gâteau",
+   "sous|livre": "sous le livre",
+   "sous|stylo": null,
+   "sous|table": "sous la table",
+   "sous|tasse": "sous la tasse",
+   "sur|arbre": "sur l'arbre",
+   "sur|chaise": "sur la chaise",
+   "sur|gâteau": "sur le gâteau",
+   "sur|livre": "sur le livre",
+   "sur|stylo": null,
+   "sur|table": "sur la table",
+   "sur|tasse": "sur la tasse",
+   "à côté de|arbre": "à côté de l'arbre",
+   "à côté de|chaise": "à côté de la chaise",
+   "à côté de|gâteau": "à côté du gâteau",
+   "à côté de|livre": "à côté du livre",
+   "à côté de|stylo": null,
+   "à côté de|table": "à côté de la table",
+   "à côté de|tasse": "à côté de la tasse",
+   "à|arbre": "à l'arbre",
+   "à|chaise": "à la chaise",
+   "à|gâteau": "au gâteau",
+   "à|livre": "au livre",
+   "à|stylo": null,
+   "à|table": "à la table",
+   "à|tasse": "à la tasse"
+  },
+  "room": {
+   "objects": [
+    {
+     "key": "e9dae99f-6716-5724-bddb-0d0a752c801c",
+     "label": "cup",
+     "marker": 1,
+     "translation": "cup",
+     "word": "la tasse",
+     "x": 10.0,
+     "y": 50.0
+    },
+    {
+     "key": "1fb33f4c-e94e-5608-b195-1bd75e8df141",
+     "label": "book",
+     "marker": 2,
+     "translation": "book",
+     "word": "le livre",
+     "x": 20.0,
+     "y": 50.0
+    },
+    {
+     "key": "bd5f3796-8bf5-5de2-9dc0-e793e3ea1da9",
+     "label": "tree",
+     "marker": 3,
+     "translation": "tree",
+     "word": "l'arbre",
+     "x": 30.0,
+     "y": 50.0
+    }
+   ],
+   "targets": [
+    {
+     "clueOptions": [
+      {
+       "id": "29cf3f1c-d1b2-5ce1-9c1b-77cbad699495",
+       "text": "Elle est rouge et elle est à côté du livre."
+      },
+      {
+       "id": "9be90e9d-760c-5761-985c-dd8b5425da10",
+       "text": "Elle est rouge."
+      },
+      {
+       "id": "727f0d05-f0d6-5d11-aa42-933199148324",
+       "text": "Elle est à côté du livre."
+      }
+     ],
+     "objectKey": "e9dae99f-6716-5724-bddb-0d0a752c801c"
+    },
+    {
+     "clueOptions": [
+      {
+       "id": "9e8c94fa-9e40-58ee-9b4c-dbf70a6decb7",
+       "text": "Il est à côté de la tasse."
+      }
+     ],
+     "objectKey": "1fb33f4c-e94e-5608-b195-1bd75e8df141"
+    },
+    {
+     "clueOptions": [
+      {
+       "id": "2fdf931b-df88-517d-b10f-0f4bf76dfb53",
+       "text": "Il est vert et il est derrière le livre."
+      },
+      {
+       "id": "9b0d5859-31d3-5f62-9a4c-25bb3788d284",
+       "text": "Il est vert."
+      },
+      {
+       "id": "898677bd-646f-5794-8c87-7910efb6c348",
+       "text": "Il est derrière le livre."
+      }
+     ],
+     "objectKey": "bd5f3796-8bf5-5de2-9dc0-e793e3ea1da9"
+    }
+   ],
+   "title": "My photo",
+   "version": 1
+  }
+ },
+ "ko": {
+  "agreement": {
+   "녹색|None": "초록색이에요",
+   "녹색|feminine": "초록색이에요",
+   "녹색|masculine": "초록색이에요",
+   "녹색|neuter": "초록색이에요",
+   "베이지|None": "베이지색이에요",
+   "베이지|feminine": "베이지색이에요",
+   "베이지|masculine": "베이지색이에요",
+   "베이지|neuter": "베이지색이에요",
+   "빨간색|None": "빨간색이에요",
+   "빨간색|feminine": "빨간색이에요",
+   "빨간색|masculine": "빨간색이에요",
+   "빨간색|neuter": "빨간색이에요",
+   "빨간색이에요|None": null,
+   "빨간색이에요|feminine": null,
+   "빨간색이에요|masculine": null,
+   "빨간색이에요|neuter": null,
+   "연두색|None": null,
+   "연두색|feminine": null,
+   "연두색|masculine": null,
+   "연두색|neuter": null,
+   "파란|None": "파란색이에요",
+   "파란|feminine": "파란색이에요",
+   "파란|masculine": "파란색이에요",
+   "파란|neuter": "파란색이에요",
+   "회색|None": "회색이에요",
+   "회색|feminine": "회색이에요",
+   "회색|masculine": "회색이에요",
+   "회색|neuter": "회색이에요"
+  },
+  "frames": {
+   "all:book": {
+    "avoid": [
+     "책",
+     "book",
+     "책s",
+     "책es",
+     "books",
+     "bookes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "사과는 빨간색이에요.",
+      "frameId": "colour",
+      "help": [
+       "초록색이에요"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "이것은",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "초록색이에요"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "이것은 [colour]"
+     },
+     {
+      "chips": [],
+      "example": "책이 책상 위에 있어요.",
+      "frameId": "location",
+      "help": [
+       "컵 옆에 있어요"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "뒤에|의자": "의자 뒤에 있어요",
+       "뒤에|책상": "책상 뒤에 있어요",
+       "뒤에|컵": "컵 뒤에 있어요",
+       "아래에|의자": "의자 아래에 있어요",
+       "아래에|책상": "책상 아래에 있어요",
+       "아래에|컵": "컵 아래에 있어요",
+       "앞에|의자": "의자 앞에 있어요",
+       "앞에|책상": "책상 앞에 있어요",
+       "앞에|컵": "컵 앞에 있어요",
+       "옆에|의자": "의자 옆에 있어요",
+       "옆에|책상": "책상 옆에 있어요",
+       "옆에|컵": "컵 옆에 있어요",
+       "위에|의자": "의자 위에 있어요",
+       "위에|책상": "책상 위에 있어요",
+       "위에|컵": "컵 위에 있어요"
+      },
+      "prefix": "이것은",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "책이 책상 위에 있어요.",
+          "meaning": "on",
+          "text": "위에"
+         },
+         {
+          "example": "고양이가 의자 아래에 있어요.",
+          "meaning": "under",
+          "text": "아래에"
+         },
+         {
+          "example": "의자가 문 옆에 있어요.",
+          "meaning": "next to",
+          "text": "옆에"
+         },
+         {
+          "example": "개가 집 앞에 있어요.",
+          "meaning": "in front of",
+          "text": "앞에"
+         },
+         {
+          "example": "나무가 집 뒤에 있어요.",
+          "meaning": "behind",
+          "text": "뒤에"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "chair",
+          "text": "의자"
+         },
+         {
+          "example": null,
+          "meaning": "desk",
+          "text": "책상"
+         },
+         {
+          "example": null,
+          "meaning": "cup",
+          "text": "컵"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "이것은 [reference object] [position]"
+     }
+    ]
+   },
+   "all:chair": {
+    "avoid": [
+     "의자",
+     "chair",
+     "의자s",
+     "의자es",
+     "chairs",
+     "chaires"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "사과는 빨간색이에요.",
+      "frameId": "colour",
+      "help": [
+       "회색이에요"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "이것은",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "회색이에요"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "이것은 [colour]"
+     },
+     {
+      "chips": [],
+      "example": "책이 책상 위에 있어요.",
+      "frameId": "location",
+      "help": [
+       "컵 근처에 있어요"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "근처에|책": "책 근처에 있어요",
+       "근처에|책상": "책상 근처에 있어요",
+       "근처에|컵": "컵 근처에 있어요",
+       "뒤에|책": "책 뒤에 있어요",
+       "뒤에|책상": "책상 뒤에 있어요",
+       "뒤에|컵": "컵 뒤에 있어요",
+       "아래에|책": "책 아래에 있어요",
+       "아래에|책상": "책상 아래에 있어요",
+       "아래에|컵": "컵 아래에 있어요",
+       "앞에|책": "책 앞에 있어요",
+       "앞에|책상": "책상 앞에 있어요",
+       "앞에|컵": "컵 앞에 있어요",
+       "옆에|책": "책 옆에 있어요",
+       "옆에|책상": "책상 옆에 있어요",
+       "옆에|컵": "컵 옆에 있어요",
+       "위에|책": "책 위에 있어요",
+       "위에|책상": "책상 위에 있어요",
+       "위에|컵": "컵 위에 있어요"
+      },
+      "prefix": "이것은",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "책이 책상 위에 있어요.",
+          "meaning": "on",
+          "text": "위에"
+         },
+         {
+          "example": "고양이가 의자 아래에 있어요.",
+          "meaning": "under",
+          "text": "아래에"
+         },
+         {
+          "example": "의자가 문 옆에 있어요.",
+          "meaning": "next to",
+          "text": "옆에"
+         },
+         {
+          "example": "개가 집 앞에 있어요.",
+          "meaning": "in front of",
+          "text": "앞에"
+         },
+         {
+          "example": "나무가 집 뒤에 있어요.",
+          "meaning": "behind",
+          "text": "뒤에"
+         },
+         {
+          "example": null,
+          "meaning": "near",
+          "text": "근처에"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "book",
+          "text": "책"
+         },
+         {
+          "example": null,
+          "meaning": "desk",
+          "text": "책상"
+         },
+         {
+          "example": null,
+          "meaning": "cup",
+          "text": "컵"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "이것은 [reference object] [position]"
+     }
+    ]
+   },
+   "all:cup": {
+    "avoid": [
+     "컵",
+     "cup",
+     "컵s",
+     "컵es",
+     "cups",
+     "cupes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "사과는 빨간색이에요.",
+      "frameId": "colour",
+      "help": [
+       "빨간색이에요"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "이것은",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "빨간색이에요"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "이것은 [colour]"
+     },
+     {
+      "chips": [],
+      "example": "책이 책상 위에 있어요.",
+      "frameId": "location",
+      "help": [
+       "책상 위에 있어요",
+       "책 옆에 있어요",
+       "의자 근처에 있어요",
+       "의자 뒤에 있어요"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "근처에|의자": "의자 근처에 있어요",
+       "근처에|책": "책 근처에 있어요",
+       "근처에|책상": "책상 근처에 있어요",
+       "뒤에|의자": "의자 뒤에 있어요",
+       "뒤에|책": "책 뒤에 있어요",
+       "뒤에|책상": "책상 뒤에 있어요",
+       "아래에|의자": "의자 아래에 있어요",
+       "아래에|책": "책 아래에 있어요",
+       "아래에|책상": "책상 아래에 있어요",
+       "앞에|의자": "의자 앞에 있어요",
+       "앞에|책": "책 앞에 있어요",
+       "앞에|책상": "책상 앞에 있어요",
+       "옆에|의자": "의자 옆에 있어요",
+       "옆에|책": "책 옆에 있어요",
+       "옆에|책상": "책상 옆에 있어요",
+       "위에|의자": "의자 위에 있어요",
+       "위에|책": "책 위에 있어요",
+       "위에|책상": "책상 위에 있어요"
+      },
+      "prefix": "이것은",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "책이 책상 위에 있어요.",
+          "meaning": "on",
+          "text": "위에"
+         },
+         {
+          "example": "고양이가 의자 아래에 있어요.",
+          "meaning": "under",
+          "text": "아래에"
+         },
+         {
+          "example": "의자가 문 옆에 있어요.",
+          "meaning": "next to",
+          "text": "옆에"
+         },
+         {
+          "example": "개가 집 앞에 있어요.",
+          "meaning": "in front of",
+          "text": "앞에"
+         },
+         {
+          "example": "나무가 집 뒤에 있어요.",
+          "meaning": "behind",
+          "text": "뒤에"
+         },
+         {
+          "example": null,
+          "meaning": "near",
+          "text": "근처에"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "chair",
+          "text": "의자"
+         },
+         {
+          "example": null,
+          "meaning": "book",
+          "text": "책"
+         },
+         {
+          "example": null,
+          "meaning": "desk",
+          "text": "책상"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "이것은 [reference object] [position]"
+     }
+    ]
+   },
+   "all:desk": {
+    "avoid": [
+     "책상",
+     "desk",
+     "책상s",
+     "책상es",
+     "desks",
+     "deskes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "사과는 빨간색이에요.",
+      "frameId": "colour",
+      "help": [
+       "파란색이에요"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "이것은",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "파란색이에요"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "이것은 [colour]"
+     }
+    ]
+   },
+   "first-two-introduced:book": {
+    "avoid": [
+     "책",
+     "book",
+     "책s",
+     "책es",
+     "books",
+     "bookes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "사과는 빨간색이에요.",
+      "frameId": "colour",
+      "help": [
+       "초록색이에요"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "이것은",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "초록색이에요"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "이것은 [colour]"
+     },
+     {
+      "chips": [],
+      "example": "책이 책상 위에 있어요.",
+      "frameId": "location",
+      "help": [
+       "컵 옆에 있어요"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "뒤에|책상": "책상 뒤에 있어요",
+       "뒤에|컵": "컵 뒤에 있어요",
+       "아래에|책상": "책상 아래에 있어요",
+       "아래에|컵": "컵 아래에 있어요",
+       "앞에|책상": "책상 앞에 있어요",
+       "앞에|컵": "컵 앞에 있어요",
+       "옆에|책상": "책상 옆에 있어요",
+       "옆에|컵": "컵 옆에 있어요",
+       "위에|책상": "책상 위에 있어요",
+       "위에|컵": "컵 위에 있어요"
+      },
+      "prefix": "이것은",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "책이 책상 위에 있어요.",
+          "meaning": "on",
+          "text": "위에"
+         },
+         {
+          "example": "고양이가 의자 아래에 있어요.",
+          "meaning": "under",
+          "text": "아래에"
+         },
+         {
+          "example": "의자가 문 옆에 있어요.",
+          "meaning": "next to",
+          "text": "옆에"
+         },
+         {
+          "example": "개가 집 앞에 있어요.",
+          "meaning": "in front of",
+          "text": "앞에"
+         },
+         {
+          "example": "나무가 집 뒤에 있어요.",
+          "meaning": "behind",
+          "text": "뒤에"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "desk",
+          "text": "책상"
+         },
+         {
+          "example": null,
+          "meaning": "cup",
+          "text": "컵"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "이것은 [reference object] [position]"
+     }
+    ]
+   },
+   "first-two-introduced:chair": {
+    "avoid": [
+     "의자",
+     "chair",
+     "의자s",
+     "의자es",
+     "chairs",
+     "chaires"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "사과는 빨간색이에요.",
+      "frameId": "colour",
+      "help": [
+       "회색이에요"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "이것은",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "회색이에요"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "이것은 [colour]"
+     },
+     {
+      "chips": [],
+      "example": "책이 책상 위에 있어요.",
+      "frameId": "location",
+      "help": [
+       "컵 근처에 있어요"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "근처에|책상": "책상 근처에 있어요",
+       "근처에|컵": "컵 근처에 있어요",
+       "뒤에|책상": "책상 뒤에 있어요",
+       "뒤에|컵": "컵 뒤에 있어요",
+       "아래에|책상": "책상 아래에 있어요",
+       "아래에|컵": "컵 아래에 있어요",
+       "앞에|책상": "책상 앞에 있어요",
+       "앞에|컵": "컵 앞에 있어요",
+       "옆에|책상": "책상 옆에 있어요",
+       "옆에|컵": "컵 옆에 있어요",
+       "위에|책상": "책상 위에 있어요",
+       "위에|컵": "컵 위에 있어요"
+      },
+      "prefix": "이것은",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "책이 책상 위에 있어요.",
+          "meaning": "on",
+          "text": "위에"
+         },
+         {
+          "example": "고양이가 의자 아래에 있어요.",
+          "meaning": "under",
+          "text": "아래에"
+         },
+         {
+          "example": "의자가 문 옆에 있어요.",
+          "meaning": "next to",
+          "text": "옆에"
+         },
+         {
+          "example": "개가 집 앞에 있어요.",
+          "meaning": "in front of",
+          "text": "앞에"
+         },
+         {
+          "example": "나무가 집 뒤에 있어요.",
+          "meaning": "behind",
+          "text": "뒤에"
+         },
+         {
+          "example": null,
+          "meaning": "near",
+          "text": "근처에"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "desk",
+          "text": "책상"
+         },
+         {
+          "example": null,
+          "meaning": "cup",
+          "text": "컵"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "이것은 [reference object] [position]"
+     }
+    ]
+   },
+   "first-two-introduced:cup": {
+    "avoid": [
+     "컵",
+     "cup",
+     "컵s",
+     "컵es",
+     "cups",
+     "cupes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "사과는 빨간색이에요.",
+      "frameId": "colour",
+      "help": [
+       "빨간색이에요"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "이것은",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "빨간색이에요"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "이것은 [colour]"
+     },
+     {
+      "chips": [],
+      "example": "책이 책상 위에 있어요.",
+      "frameId": "location",
+      "help": [
+       "책상 위에 있어요"
+      ],
+      "meaning": "It is … — say where your object is, using another object as a reference.",
+      "phrases": {
+       "뒤에|책상": "책상 뒤에 있어요",
+       "아래에|책상": "책상 아래에 있어요",
+       "앞에|책상": "책상 앞에 있어요",
+       "옆에|책상": "책상 옆에 있어요",
+       "위에|책상": "책상 위에 있어요"
+      },
+      "prefix": "이것은",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": "책이 책상 위에 있어요.",
+          "meaning": "on",
+          "text": "위에"
+         },
+         {
+          "example": "고양이가 의자 아래에 있어요.",
+          "meaning": "under",
+          "text": "아래에"
+         },
+         {
+          "example": "의자가 문 옆에 있어요.",
+          "meaning": "next to",
+          "text": "옆에"
+         },
+         {
+          "example": "개가 집 앞에 있어요.",
+          "meaning": "in front of",
+          "text": "앞에"
+         },
+         {
+          "example": "나무가 집 뒤에 있어요.",
+          "meaning": "behind",
+          "text": "뒤에"
+         }
+        ],
+        "label": "position",
+        "slotId": "position"
+       },
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "desk",
+          "text": "책상"
+         }
+        ],
+        "label": "reference object",
+        "slotId": "reference"
+       }
+      ],
+      "template": "이것은 [reference object] [position]"
+     }
+    ]
+   },
+   "first-two-introduced:desk": {
+    "avoid": [
+     "책상",
+     "desk",
+     "책상s",
+     "책상es",
+     "desks",
+     "deskes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "사과는 빨간색이에요.",
+      "frameId": "colour",
+      "help": [
+       "파란색이에요"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "이것은",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "파란색이에요"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "이것은 [colour]"
+     }
+    ]
+   },
+   "no-introduced:book": {
+    "avoid": [
+     "책",
+     "book",
+     "책s",
+     "책es",
+     "books",
+     "bookes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "사과는 빨간색이에요.",
+      "frameId": "colour",
+      "help": [
+       "초록색이에요"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "이것은",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "초록색이에요"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "이것은 [colour]"
+     }
+    ]
+   },
+   "no-introduced:chair": {
+    "avoid": [
+     "의자",
+     "chair",
+     "의자s",
+     "의자es",
+     "chairs",
+     "chaires"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "사과는 빨간색이에요.",
+      "frameId": "colour",
+      "help": [
+       "회색이에요"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "이것은",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "회색이에요"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "이것은 [colour]"
+     }
+    ]
+   },
+   "no-introduced:cup": {
+    "avoid": [
+     "컵",
+     "cup",
+     "컵s",
+     "컵es",
+     "cups",
+     "cupes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "사과는 빨간색이에요.",
+      "frameId": "colour",
+      "help": [
+       "빨간색이에요"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "이것은",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "빨간색이에요"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "이것은 [colour]"
+     }
+    ]
+   },
+   "no-introduced:desk": {
+    "avoid": [
+     "책상",
+     "desk",
+     "책상s",
+     "책상es",
+     "desks",
+     "deskes"
+    ],
+    "frames": [
+     {
+      "chips": [],
+      "example": "사과는 빨간색이에요.",
+      "frameId": "colour",
+      "help": [
+       "파란색이에요"
+      ],
+      "meaning": "It is … — say what colour your object is.",
+      "phrases": {},
+      "prefix": "이것은",
+      "slots": [
+       {
+        "chips": [
+         {
+          "example": null,
+          "meaning": "color",
+          "text": "파란색이에요"
+         }
+        ],
+        "label": "colour",
+        "slotId": "colour"
+       }
+      ],
+      "template": "이것은 [colour]"
+     }
+    ]
+   },
+   "no-relations:book": {
+    "avoid": [
+     "책",
+     "book",
+     "책s",
+     "책es",
+     "books",
+     "bookes"
+    ],
+    "frames": []
+   },
+   "no-relations:chair": {
+    "avoid": [
+     "의자",
+     "chair",
+     "의자s",
+     "의자es",
+     "chairs",
+     "chaires"
+    ],
+    "frames": []
+   },
+   "no-relations:cup": {
+    "avoid": [
+     "컵",
+     "cup",
+     "컵s",
+     "컵es",
+     "cups",
+     "cupes"
+    ],
+    "frames": []
+   },
+   "no-relations:desk": {
+    "avoid": [
+     "책상",
+     "desk",
+     "책상s",
+     "책상es",
+     "desks",
+     "deskes"
+    ],
+    "frames": []
+   }
+  },
+  "places": {
+   "근처에|의자": "의자 근처에 있어요",
+   "근처에|책": "책 근처에 있어요",
+   "근처에|책상": "책상 근처에 있어요",
+   "근처에|컵": "컵 근처에 있어요",
+   "뒤에|의자": "의자 뒤에 있어요",
+   "뒤에|책": "책 뒤에 있어요",
+   "뒤에|책상": "책상 뒤에 있어요",
+   "뒤에|컵": "컵 뒤에 있어요",
+   "아래에|의자": "의자 아래에 있어요",
+   "아래에|책": "책 아래에 있어요",
+   "아래에|책상": "책상 아래에 있어요",
+   "아래에|컵": "컵 아래에 있어요",
+   "안에|의자": "의자 안에 있어요",
+   "안에|책": "책 안에 있어요",
+   "안에|책상": "책상 안에 있어요",
+   "안에|컵": "컵 안에 있어요",
+   "앞에|의자": "의자 앞에 있어요",
+   "앞에|책": "책 앞에 있어요",
+   "앞에|책상": "책상 앞에 있어요",
+   "앞에|컵": "컵 앞에 있어요",
+   "옆에|의자": "의자 옆에 있어요",
+   "옆에|책": "책 옆에 있어요",
+   "옆에|책상": "책상 옆에 있어요",
+   "옆에|컵": "컵 옆에 있어요",
+   "위에|의자": "의자 위에 있어요",
+   "위에|책": "책 위에 있어요",
+   "위에|책상": "책상 위에 있어요",
+   "위에|컵": "컵 위에 있어요"
+  }
+ }
+}

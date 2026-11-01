@@ -1,0 +1,14 @@
+construction_id = "owned-description"
+version = 1
+summary = "Describe my object with a possessive and one confirmed detail."
+guidance = "Start with 제 + noun + 은/는, then the detail + 이에요/예요 or the location + 있어요: 제 컵은 빨간색이에요. 제 컵은 탁자 위에 있어요."
+features = ["ownership", "possessive-determiner"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun", owner = "determiner", attribute = "adjective", relation = "preposition", reference = "noun" }
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "polite-ending"
+message = "End politely with 요."
+must_contain = ["요\\.$"]

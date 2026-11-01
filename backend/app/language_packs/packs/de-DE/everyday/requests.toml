@@ -1,0 +1,60 @@
+# Order words for request role-plays (M06): each quantity as an order writes it
+# (every agreement and case) and the details a server asks about or repeats.
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[quantities]]
+value = 1
+forms = ["ein", "eine", "einen", "eins"]
+
+[[quantities]]
+value = 2
+forms = ["zwei"]
+
+[[quantities]]
+value = 3
+forms = ["drei"]
+
+[[details]]
+detail = "size:small"
+meaning = "small"
+forms = ["klein", "kleine", "kleinen", "kleiner", "kleines"]
+
+[[details]]
+detail = "size:large"
+meaning = "large"
+forms = ["groß", "große", "großen", "großer", "großes"]
+
+[[details]]
+detail = "serviceSetting:eatIn"
+meaning = "to have here"
+forms = ["für hier"]
+
+[[details]]
+detail = "serviceSetting:takeAway"
+meaning = "to take away"
+forms = ["zum Mitnehmen"]
+
+[[details]]
+detail = "temperature:hot"
+meaning = "hot"
+forms = ["heiß", "heiße", "heißen", "heißer", "heißes"]
+
+[[details]]
+detail = "temperature:cold"
+meaning = "cold"
+forms = ["kalt", "kalte", "kalten", "kalter", "kaltes"]
+
+[[details]]
+detail = "colour:blue"
+meaning = "blue"
+forms = ["blau", "blaue", "blauen", "blauer", "blaues"]
+
+[[details]]
+detail = "colour:red"
+meaning = "red"
+forms = ["rot", "rote", "roten", "roter", "rotes"]
+
+[[details]]
+detail = "colour:black"
+meaning = "black"
+forms = ["schwarz", "schwarze", "schwarzen", "schwarzer", "schwarzes"]

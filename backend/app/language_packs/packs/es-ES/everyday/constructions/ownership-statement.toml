@@ -1,0 +1,26 @@
+construction_id = "ownership-statement"
+version = 1
+summary = "Say that the object is (or is not) mine, without naming it."
+guidance = "Say Es mío. for a masculine object (libro) and Es mía. for a feminine one (taza); when false, No es mío. / No es mía.; do not name the object."
+features = ["ownership", "predicate-possessive"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { owner = "determiner" }
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "End with a full stop."
+must_contain = ["\\.$"]
+
+[[checks]]
+check_id = "negated-when-false"
+message = "A false statement says no es."
+must_contain = ["^no "]
+truth = false
+
+[[checks]]
+check_id = "affirmed-when-true"
+message = "A true statement is not negated."
+must_not_contain = ["^no "]
+truth = true

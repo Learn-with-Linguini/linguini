@@ -30,12 +30,9 @@ from app.ai.cache import (
 )
 from app.ai.contracts.errors import ProviderError, ProviderErrorCode
 from app.ai.contracts.schema import (
-    build_pairs_json_schema,
     build_strict_json_schema,
-    restore_maps,
 )
 from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelRequest
-from app.ai.features.learning_tasks.mission import MissionGeneration
 from app.ai.features.learning_tasks.prompt import (
     LEARNING_TASK_MEMORY_PROMPT_VERSION,
     LEARNING_TASK_MEMORY_SYSTEM_PROMPT,
@@ -71,6 +68,7 @@ def _result_counts(result: Any) -> dict[str, int]:
         "taskCount": len(tasks),
         "questionCount": sum(len(task.questions) for task in tasks),
     }
+
 
 _LEARNING_TASKS_INVALID = "learningTasksInvalid"
 _VERSION = FeatureVersion(
@@ -214,6 +212,76 @@ class LearningTaskService:
         self._tracer = tracer
         self._provider = provider
 
+    def generate_pack_lesson(
+        self,
+        mission,
+        language,
+        objects,
+        relations,
+        words,
+        translated_scene,
+        *,
+        session_id,
+        review_markers,
+        cache_scope=None,
+        register="everyday",
+        language_context=None,
+        counted_groups=(),
+        mission_context=None,
+    ):
+        """Normal pack-lesson workflow seam, sharing the routed provider and scoped cache.
+
+        ``mission_context`` carries the saved plan's ``learner_facts`` and
+        ``roleplay_facts`` for this mission (M04's owner choices and role-play).
+        """
+        from app.language_packs.model_source import ModelSource
+        from app.language_packs.pipeline import generate_pilot
+        from app.language_packs.runtime import session_inputs
+
+        try:
+            mission_id = mission.mission_id
+            if language_context is None:
+                raise ValueError(f"{mission_id} requires the operation's resolved language context")
+            if language_context.display.language_code.casefold() != language.casefold():
+                raise ValueError(f"{mission_id} context does not match the session language")
+            if not language_context.is_ready(mission):
+                raise ValueError(f"{mission_id} pack is not ready for the selected level")
+            pack, experimental = language_context.pack, language_context.experimental
+            facts, vocabulary = session_inputs(
+                pack,
+                objects,
+                relations,
+                words,
+                translated_scene,
+                review_markers,
+                counted_groups,
+            )
+            generated = generate_pilot(
+                pack,
+                str(mission.practice_level),
+                facts,
+                vocabulary,
+                ModelSource(self._client, self._config, propose=True,
+                            language_context=language_context),
+                session_id=session_id,
+                preview=experimental,
+                cache=self._cache,
+                cache_scope=cache_scope,
+                mission_id=mission_id,
+                mission_context=mission_context,
+            )
+            tasks = [language_context.attach(task) for task in generated.tasks]
+            # A mission may build several tasks (M06's two halves of one order).
+            return tasks if len(tasks) > 1 else tasks[0]
+        except ValueError as exc:
+            raise LearningTaskGenerationError(
+                f"{mission.mission_id} pack generation could not validate a lesson. "
+                "Retry generation. " + str(exc)
+            ) from exc
+
+    # The original M01 seam; every pack mission now uses generate_pack_lesson.
+    generate_pack_m01 = generate_pack_lesson
+
     def generate(
         self, payload: dict[str, Any], *, cache_scope: CacheScope | None = None,
         templates: TemplateSet | None = None,
@@ -258,48 +326,6 @@ class LearningTaskService:
             )
         except CacheWaitTimeout as error:
             raise LearningTaskGenerationError("Learning task generation failed.") from error
-
-    def generate_mission(
-        self, payload: dict[str, Any], generation: MissionGeneration, *,
-        mission_version: str, cache_scope: CacheScope | None = None,
-    ) -> Any:
-        """Generate one mission's lesson; its cache identity includes the mission version."""
-        version = FeatureVersion(
-            AiFeature.LEARNING_TASK.value,
-            f"{generation.prompt_version}:{mission_version}",
-            generation.schema_version,
-            generation.validator_version,
-        )
-
-        def decode(data: Any) -> Any:
-            result = generation.result_model.model_validate(data)
-            generation.validate(payload, result)
-            return result
-
-        try:
-            return run_cached(
-                self._cache,
-                self._client,
-                version=version,
-                scope=cache_scope,
-                payload=payload,
-                compute=lambda: self._generate(
-                    payload,
-                    (mission_version,),
-                    generation.result_model,
-                    prompt_version=version.prompt_version,
-                    system_prompt=generation.system_prompt,
-                    # Maps travel as [{key, value}] lists; strict output rejects open maps.
-                    parse=lambda text: decode(
-                        restore_maps(generation.result_model, json.loads(text))
-                    ),
-                    json_schema_name=generation.json_schema_name,
-                    json_schema=build_pairs_json_schema(generation.result_model),
-                ),
-                decode=decode,
-            )
-        except CacheWaitTimeout as error:
-            raise LearningTaskGenerationError("Mission lesson generation failed.") from error
 
     def _generate(
         self,

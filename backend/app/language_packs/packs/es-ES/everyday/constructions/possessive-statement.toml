@@ -1,0 +1,14 @@
+construction_id = "possessive-statement"
+version = 1
+summary = "Say whose object it is with a possessive before the noun."
+guidance = "Say Es + mi/tu/su + noun without an article: Es mi taza. Es su libro. Answers to a friend start with the sí or no label."
+features = ["ownership", "possessive-determiner"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun", owner = "determiner" }
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "possessive-frame"
+message = "Say Es + possessive + noun."
+must_contain = ["^((sí|no), )?es ", "\\.$"]

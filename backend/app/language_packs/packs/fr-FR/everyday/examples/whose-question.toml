@@ -1,0 +1,25 @@
+construction_id = "whose-question"
+
+[[examples]]
+example_id = "whose-cup"
+levels = ["A1"]
+purposes = ["buildMine", "buildTheirs"]
+meaning = "Whose is the cup?"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }, { fact_id = "object:table", concept = "table" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }], owners = [{ fact_id = "owner:cup", object = "object:cup", owner = "first" }, { fact_id = "owner:book", object = "object:book", owner = "ana" }, { fact_id = "owner:key", object = "object:key", owner = "leo" }] }
+bindings = { object = "object:cup" }
+truth = true
+labels = []
+sentence = "À qui est la tasse ?"
+translation = "Whose is the cup?"
+chunks = [{ text = "À", join = "none" }, { text = "qui", join = "space" }, { text = "est", join = "space" }, { text = "la", join = "space" }, { text = "tasse", join = "space" }, { text = "?", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "whose-cup-form"
+levels = ["A1"]
+purposes = ["buildMine", "buildTheirs"]
+sentence = "À qui la tasse est ?"
+correction = "À qui est la tasse ?"
+note = "Est comes before the noun."
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }

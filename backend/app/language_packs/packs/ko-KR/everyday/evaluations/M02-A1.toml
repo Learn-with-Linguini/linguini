@@ -1,0 +1,101 @@
+mission_id = "M02"
+practice_level = "A1"
+content_version = 2
+
+[[cases]]
+case_id = "m02-a1-key-on-table"
+category = "wrongRelation"
+construction_id = "scene-location"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:key", concept = "key" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:key-on-table", subject = "object:key", reference = "object:table", relation = "on" }] }
+bindings = { subject = "object:key", relation = "relation:key-on-table", reference = "object:table" }
+truth = true
+input = "Say where the key is: on the table."
+expected_meaning = "The key is on the table."
+acceptable = ["열쇠가 탁자 위에 있어요."]
+reject = [{ sentence = "열쇠가 탁자 아래에 있어요.", category = "wrongRelation", reason = "The key is on the table, not under it." }]
+provenance = { source = "Held-out M02 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m02-a1-held-bag-under-table"
+category = "wrongObject"
+construction_id = "scene-location"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:bag-under-table", subject = "object:bag", reference = "object:table", relation = "under" }] }
+bindings = { subject = "object:bag", relation = "relation:bag-under-table", reference = "object:table" }
+truth = true
+input = "Say where the bag is: under the table."
+expected_meaning = "The bag is under the table."
+acceptable = ["가방이 탁자 아래에 있어요."]
+reject = [{ sentence = "숟가락이 탁자 아래에 있어요.", category = "wrongObject", reason = "The bag is under the table." }]
+provenance = { source = "Held-out M02 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m02-a1-under-table-phrase"
+category = "punctuation"
+construction_id = "location-phrase"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:spoon", concept = "spoon" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:spoon-under-table", subject = "object:spoon", reference = "object:table", relation = "under" }] }
+bindings = { target = "object:spoon", relation = "relation:spoon-under-table", reference = "object:table" }
+truth = true
+input = "Give the position of the spoon: under the table."
+expected_meaning = "under the table"
+acceptable = ["탁자 아래에"]
+reject = [{ sentence = "탁자 아래에.", category = "punctuation", reason = "A position phrase is not a sentence." }]
+provenance = { source = "Held-out M02 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m02-a1-held-next-to-door"
+category = "wrongRelation"
+construction_id = "location-phrase"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:phone", concept = "phone" }, { fact_id = "object:door", concept = "door" }], relations = [{ fact_id = "relation:phone-next_to-door", subject = "object:phone", reference = "object:door", relation = "next_to" }] }
+bindings = { target = "object:phone", relation = "relation:phone-next_to-door", reference = "object:door" }
+truth = true
+input = "Give the position of the phone: next to the door."
+expected_meaning = "next to the door"
+acceptable = ["문 옆에"]
+reject = [{ sentence = "문 위에", category = "wrongRelation", reason = "The phone is next to the door." }]
+provenance = { source = "Held-out M02 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m02-a1-where-key"
+category = "wrongObject"
+construction_id = "where-question"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:key", concept = "key" }, { fact_id = "object:bag", concept = "bag" }] }
+bindings = { subject = "object:key" }
+truth = true
+input = "Ask where the key is."
+expected_meaning = "Where is the key?"
+acceptable = ["열쇠가 어디에 있어요?"]
+reject = [{ sentence = "가방이 어디에 있어요?", category = "wrongObject", reason = "The question is about the key." }]
+provenance = { source = "Held-out M02 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m02-a1-where-punctuation"
+category = "punctuation"
+construction_id = "where-question"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }] }
+bindings = { subject = "object:plate" }
+truth = true
+input = "Ask where the plate is."
+expected_meaning = "Where is the plate?"
+acceptable = ["접시가 어디에 있어요?"]
+reject = [{ sentence = "접시가 어디에 있어요.", category = "punctuation", reason = "The question keeps its question frame." }]
+provenance = { source = "Held-out M02 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m02-a1-held-unicode"
+category = "unicode"
+construction_id = "scene-location"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:phone", concept = "phone" }, { fact_id = "object:door", concept = "door" }], relations = [{ fact_id = "relation:phone-next_to-door", subject = "object:phone", reference = "object:door", relation = "next_to" }] }
+bindings = { subject = "object:phone", relation = "relation:phone-next_to-door", reference = "object:door" }
+truth = true
+input = "Say where the phone is: next to the door."
+expected_meaning = "The phone is next to the door."
+acceptable = ["휴대폰이 문 옆에 있어요."]
+reject = [{ sentence = "\u1112\u1172\u1103\u1162\u1111\u1169\u11ab\u110b\u1175 \u1106\u116e\u11ab \u110b\u1167\u11c1\u110b\u1166 \u110b\u1175\u11bb\u110b\u1165\u110b\u116d.", category = "unicode", reason = "The rejected candidate contains decomposed characters." }]
+provenance = { source = "Held-out M02 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }

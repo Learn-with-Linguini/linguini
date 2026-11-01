@@ -15,7 +15,7 @@ import { site } from "../lib/site";
 export default function HomePage() {
   return (
     <>
-      <PageMeta title={site.title} description={site.description} path="/" home />
+      <PageMeta title={site.title} documentTitle="Linguini" description={site.description} path="/" home />
       <a href="#main" className="skip-link">Skip to content</a>
       <SiteHeader />
       <main id="main">

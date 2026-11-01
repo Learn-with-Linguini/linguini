@@ -1,0 +1,40 @@
+construction_id = "detail-reply"
+
+[[examples]]
+example_id = "reply-take-away"
+levels = ["A2"]
+purposes = ["replyWithDetail"]
+meaning = "To take away, please."
+scene = { objects = [{ fact_id = "object:coffee", concept = "coffee" }], requests = [{ fact_id = "request:quantity", object = "object:coffee", field = "quantity", value = "2" }, { fact_id = "request:size", object = "object:coffee", field = "size", value = "small" }, { fact_id = "request:serviceSetting", object = "object:coffee", field = "serviceSetting", value = "takeAway" }] }
+bindings = { target = "object:coffee", detail = "request:serviceSetting" }
+truth = true
+labels = []
+sentence = "포장이요."
+translation = "To take away, please."
+chunks = [{ text = "포장이요", join = "none" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "reply-blue"
+levels = ["A2"]
+purposes = ["replyWithDetail"]
+meaning = "Blue, please."
+scene = { objects = [{ fact_id = "object:pen", concept = "pen" }], requests = [{ fact_id = "request:quantity", object = "object:pen", field = "quantity", value = "1" }, { fact_id = "request:colour", object = "object:pen", field = "colour", value = "blue" }] }
+bindings = { target = "object:pen", detail = "request:colour" }
+truth = true
+labels = []
+sentence = "파란색이요."
+translation = "Blue, please."
+chunks = [{ text = "파란색이요", join = "none" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "reply-names-the-item"
+levels = ["A2"]
+purposes = ["replyWithDetail"]
+sentence = "커피 두 잔 포장."
+correction = "포장이요."
+note = "Reply with only the detail the server asked about."
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }

@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import type { LessonAnswerCheck } from "../src/lib/api.ts";
+import type { GrammarLessonQuestion, LessonAnswerCheck } from "../src/lib/api.ts";
 import { builtSentence } from "../src/lib/practiceTasks.ts";
-import { mergeLessonChecks, visibleLessonQuestionIndex } from "../src/lib/missionLessonFlow.ts";
+import { mergeLessonChecks, previousLessonContext, visibleLessonQuestionIndex } from "../src/lib/missionLessonFlow.ts";
 
 const checked = (questionId: string, answer: string): LessonAnswerCheck => ({
   questionId, answer, isCorrect: true, correctAnswer: answer,
@@ -37,4 +37,32 @@ test("sentence-builder chunks join punctuation and elided words", () => {
     builtSentence(["Il", "y", "a", "un", "livre", ",", "et", "c'est", "l'objet", "."]),
     "Il y a un livre, et c'est l'objet.",
   );
+});
+
+const contextQuestions: GrammarLessonQuestion[] = [
+  { questionId: "read", section: "Task 2 · Describe the scene", prompt: "Choose the matching description.",
+    interactionType: "multipleChoice", tokenBank: [], options: [
+      { optionId: "sentence-right", label: "Il y a une tasse rouge." },
+      { optionId: "sentence-wrong", label: "Il y a une table rouge." },
+    ] },
+  { questionId: "build", section: "Task 2 · Describe the scene", prompt: "Describe the scene.",
+    interactionType: "sentenceBuilding", options: [], tokenBank: ["La", "tasse", "est", "petite."] },
+];
+
+test("A2 sentence context resolves the checked correction and never displays an option identifier", () => {
+  const wrong = { ...checked("read", "sentence-wrong"), isCorrect: false, correctAnswer: "sentence-right" };
+  assert.equal(previousLessonContext(contextQuestions, 1, { read: wrong }, "A2")?.sentence, "Il y a une tasse rouge.");
+  const unrecognized = { ...wrong, correctAnswer: "private-unresolved-key" };
+  assert.equal(previousLessonContext(contextQuestions, 1, { read: unrecognized }, "A2")?.sentence, null);
+});
+
+test("context is limited to the finished predecessor in the same A2 construction section", () => {
+  const checks = { read: checked("read", "sentence-right"), build: checked("build", "Current solution must stay hidden.") };
+  assert.equal(previousLessonContext(contextQuestions, 0, checks, "A2"), null);
+  assert.equal(previousLessonContext(contextQuestions, 1, {}, "A2"), null);
+  assert.equal(previousLessonContext(contextQuestions, 1, checks, "A1"), null);
+  assert.equal(previousLessonContext([{ ...contextQuestions[0], section: "Other activity" }, contextQuestions[1]], 1, checks, "A2"), null);
+  assert.equal(previousLessonContext([{ ...contextQuestions[0], section: null }, { ...contextQuestions[1], section: null }], 1, checks, "A2"), null);
+  assert.equal(previousLessonContext(contextQuestions, 1, { read: { ...checks.read, attemptsLeft: 1 } }, "A2"), null);
+  assert.equal(previousLessonContext(contextQuestions, 1, checks, "A2")?.sentence, "Il y a une tasse rouge.");
 });

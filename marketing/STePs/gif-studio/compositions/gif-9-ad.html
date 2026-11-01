@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Linguini — STEPS promo GIF 9: 1-second looping ad preview</title>
+  <style>
+    @font-face { font-family: 'Baloo'; src: url('../assets/Baloo2-ExtraBold.ttf'); font-weight: 800; }
+    @font-face { font-family: 'Nunito'; src: url('../assets/NunitoSans-Bold.ttf'); font-weight: 700; }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; width: 100%; height: 100%; overflow: hidden;
+      background: #FFF6E6; font-family: 'Nunito', sans-serif; color: #263238;
+      -webkit-font-smoothing: antialiased;
+    }
+    #root {
+      position: relative; width: 1280px; height: 720px; overflow: hidden; background: #FFF6E6;
+    }
+    .clip { position: absolute; inset: 0; }
+    .absolute { position: absolute; }
+
+    /* RunSquad-style tagline pill bubbles */
+    .tag-pill {
+      display: inline-flex; align-items: center;
+      background: #FFFFFF; border-radius: 22px;
+      padding: 16px 34px;
+      font-family: 'Baloo', sans-serif; font-size: 46px; font-weight: 800;
+      color: #263238; line-height: 1;
+      box-shadow: 0 10px 24px rgba(38,50,56,0.10);
+      white-space: nowrap;
+    }
+    .tag-pill .accent { color: #E85D32; }
+
+    .photo-card {
+      width: 500px; height: 375px; background: #FFFFFF;
+      border-radius: 26px; padding: 13px;
+      box-shadow: 0 26px 54px rgba(38,50,56,0.18);
+    }
+    .photo-inner {
+      position: relative; width: 100%; height: 100%;
+      border-radius: 17px; overflow: hidden;
+    }
+    .photo-inner img {
+      width: 100%; height: 100%; object-fit: cover; object-position: center;
+    }
+
+    .vocab-chip {
+      position: absolute; display: flex; align-items: center; gap: 9px;
+      background: #FFFFFF; padding: 9px 19px; border-radius: 999px;
+      font-weight: 800; font-size: 21px; color: #263238;
+      box-shadow: 0 8px 22px rgba(38,50,56,0.28);
+      white-space: nowrap; z-index: 3;
+    }
+    .vocab-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: #E85D32; box-shadow: 0 0 0 3px #FFF1D2;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="root" data-composition-id="gif-9" data-width="1280" data-height="720" data-duration="1.0" data-fps="30">
+    <div id="main-clip" class="clip" data-start="0" data-duration="1.0">
+
+      <!-- Soft noodle curve, like past STEPs cream backgrounds -->
+      <svg id="bg-curve" style="position: absolute; left: 0; bottom: -30px; width: 100%; height: 300px; opacity: 0.4; pointer-events: none;" viewBox="0 0 1280 300" fill="none">
+        <path d="M-40 230 C 300 130, 600 300, 950 190 S 1220 80, 1340 150" stroke="#F9B233" stroke-width="14" stroke-linecap="round"/>
+      </svg>
+
+      <!-- Left: wordmark + split pill tagline (RunSquad-style) + URL -->
+      <div id="left-col" class="absolute" style="left: 100px; top: 120px;">
+        <img id="wordmark" src="../assets/linguini-wordmark.png" style="height: 58px; margin-bottom: 42px;" alt="Linguini">
+
+        <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 22px;">
+          <div id="tag-1" class="tag-pill" style="transform: rotate(-2deg);">
+            Turning your <span class="accent">&nbsp;photos</span>
+          </div>
+          <div id="tag-2" class="tag-pill" style="transform: rotate(1.5deg); margin-left: 90px;">
+            into <span class="accent">&nbsp;words</span>
+          </div>
+        </div>
+
+        <div id="url" style="margin-top: 52px; font-family: 'Baloo', sans-serif; font-size: 30px; color: #21716F; letter-spacing: 0.5px;">
+          learnwithlinguini.com
+        </div>
+      </div>
+
+      <!-- Right: tilted desk flatlay photo card + floating vocab chips -->
+      <div id="photo-card" class="photo-card absolute" style="right: 90px; top: 105px; transform: rotate(3deg);">
+        <div class="photo-inner">
+          <img src="../assets/desk-flatlay.jpg" alt="Table flatlay scene">
+          <span class="vocab-chip" id="chip-laptop" style="left: 285px; top: 28px;">
+            <span class="vocab-dot"></span>el port&aacute;til
+          </span>
+          <span class="vocab-chip" id="chip-notebook" style="left: 130px; top: 175px;">
+            <span class="vocab-dot"></span>la libreta
+          </span>
+          <span class="vocab-chip" id="chip-glasses" style="right: 28px; top: 265px;">
+            <span class="vocab-dot"></span>las gafas
+          </span>
+        </div>
+      </div>
+
+      <!-- Cool sunglasses mascot chilling by the card -->
+      <img id="cool-mascot" src="../assets/linguini-cool.png" class="absolute"
+           style="left: 575px; top: 505px; width: 165px; transform: rotate(-6deg);
+                  filter: drop-shadow(0 14px 26px rgba(38,50,56,0.22));" alt="Cool Mascot">
+
+    </div>
+  </div>
+
+  <script src="../node_modules/gsap/dist/gsap.min.js"></script>
+  <script>
+    // 1-second seamless looping timeline (t=0 and t=1 are mathematically identical)
+    const tl = gsap.timeline({ paused: true });
+
+    // Vocab chips gentle opposing float (seamless sine waves)
+    tl.to('#chip-laptop',   { y: -5, duration: 0.5, ease: 'sine.inOut', yoyo: true, repeat: 1 }, 0);
+    tl.to('#chip-notebook', { y: 5,  duration: 0.5, ease: 'sine.inOut', yoyo: true, repeat: 1 }, 0);
+    tl.to('#chip-glasses',  { y: -6, duration: 0.5, ease: 'sine.inOut', yoyo: true, repeat: 1 }, 0);
+
+    // Photo card subtle breathing tilt
+    tl.to('#photo-card', { rotation: 2.3, duration: 0.5, ease: 'sine.inOut', yoyo: true, repeat: 1 }, 0);
+
+    // Mascot cheerful bob + tiny rock
+    tl.to('#cool-mascot', { y: -8, rotation: -3, duration: 0.5, ease: 'sine.inOut', yoyo: true, repeat: 1 }, 0);
+
+    // Tagline pills gentle wobble (rotate slightly out and back)
+    tl.to('#tag-1', { rotation: -1.2, duration: 0.5, ease: 'sine.inOut', yoyo: true, repeat: 1 }, 0);
+    tl.to('#tag-2', { rotation: 2.3,  duration: 0.5, ease: 'sine.inOut', yoyo: true, repeat: 1 }, 0);
+
+    window.__timelines = window.__timelines || {};
+    window.__timelines['gif-9'] = tl;
+  </script>
+</body>
+</html>

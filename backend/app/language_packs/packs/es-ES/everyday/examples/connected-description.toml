@@ -1,0 +1,49 @@
+construction_id = "connected-description"
+
+[[examples]]
+example_id = "connect-cup-book"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+meaning = "There is a red cup and there is also a book."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }], attributes = [{ fact_id = "attribute:red", object = "object:cup", kind = "color", value = "red" }] }
+bindings = { first = "object:cup", second = "object:book", attribute = "attribute:red" }
+truth = true
+sentence = "Hay una taza roja y también hay un libro."
+translation = "There is a red cup and there is also a book."
+chunks = [{ text = "Hay", join = "none" }, { text = "una", join = "space" }, { text = "taza", join = "space" }, { text = "roja", join = "space" }, { text = "y", join = "space" }, { text = "también", join = "space" }, { text = "hay", join = "space" }, { text = "un", join = "space" }, { text = "libro", join = "space" }, { text = ".", join = "none" }]
+provenance = { source = "Lead-authored; nouns from REVIEWED_NOUNS and colour from app/services/mission_eligibility.py REVIEWED_COLOURS.", review_status = "unreviewed" }
+
+[[examples]]
+example_id = "connect-plate-apple"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+meaning = "There is a white plate and there is also an apple."
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }, { fact_id = "object:apple", concept = "apple" }], attributes = [{ fact_id = "attribute:white", object = "object:plate", kind = "color", value = "white" }] }
+bindings = { first = "object:plate", second = "object:apple", attribute = "attribute:white" }
+truth = true
+sentence = "Hay un plato blanco y también hay una manzana."
+translation = "There is a white plate and there is also an apple."
+chunks = [{ text = "Hay", join = "none" }, { text = "un", join = "space" }, { text = "plato", join = "space" }, { text = "blanco", join = "space" }, { text = "y", join = "space" }, { text = "también", join = "space" }, { text = "hay", join = "space" }, { text = "una", join = "space" }, { text = "manzana", join = "space" }, { text = ".", join = "none" }]
+provenance = { source = "Lead-authored; nouns from REVIEWED_NOUNS and colour from app/services/mission_eligibility.py REVIEWED_COLOURS.", review_status = "unreviewed" }
+
+[[examples]]
+example_id = "connect-shoe-bottle"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+meaning = "The shoe is under the chair and there is also a bottle."
+scene = { objects = [{ fact_id = "object:shoe", concept = "shoe" }, { fact_id = "object:chair", concept = "chair" }, { fact_id = "object:bottle", concept = "bottle" }], relations = [{ fact_id = "relation:under", subject = "object:shoe", reference = "object:chair", relation = "under" }] }
+bindings = { first = "object:shoe", second = "object:bottle", relation = "relation:under" }
+truth = true
+sentence = "El zapato está debajo de la silla y también hay una botella."
+translation = "The shoe is under the chair and there is also a bottle."
+chunks = [{ text = "El", join = "none" }, { text = "zapato", join = "space" }, { text = "está", join = "space" }, { text = "debajo de la silla", join = "space" }, { text = "y", join = "space" }, { text = "también hay una botella", join = "space" }, { text = ".", join = "none" }]
+provenance = { source = "Lead-authored; nouns from REVIEWED_NOUNS and position from app/services/ispy_clue_frames.py POSITIONS.", review_status = "unreviewed" }
+
+[[mistakes]]
+example_id = "wrong-second-clause-order"
+levels = ["A2"]
+purposes = ["chooseSceneDescription"]
+sentence = "Hay una taza roja y un libro también hay."
+correction = "Hay una taza roja y también hay un libro."
+note = "Keep the second clause's verb order."
+provenance = { source = "Lead-authored for the M01 pilot; needs fluent Spanish review.", review_status = "unreviewed" }

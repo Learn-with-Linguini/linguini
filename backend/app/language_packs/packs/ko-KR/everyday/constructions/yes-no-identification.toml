@@ -1,0 +1,33 @@
+construction_id = "yes-no-identification"
+version = 1
+summary = "Ask and answer positive identity questions politely."
+guidance = "An everyday identity question can keep the same nominal-copula form as a statement and use question intonation/punctuation: 컵이에요? Use 네./아니요. for A0 short answers. In a full A1 answer, 네, 컵이에요. confirms, while 아니요, 책이에요. corrects the identity and names the actually shown object. Do not mix -습니다 or banmal endings into this register. Keep positive questions only; Korean responses to negative questions need different contextual care and are outside this pilot."
+features = ["positive-question", "polite-answer", "nominal-copula"]
+constraints = ["Express only the selected scene facts and preserve semantic role bindings.", "Use the declared variety/register and approved surfaces.", "Treat these rules as generation guidance; they do not constitute a grammar validator."]
+required_labels = ["yes", "no", "yes-answer", "no-answer"]
+roles = { object = "noun", shown = "noun" }
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+except_uses = ["name"]
+
+[[checks]]
+check_id = "polite-ending"
+message = "Use the polite -요 ending (haeyo-che) at the end of the sentence."
+must_contain = ["(요|^네)[.?!]$"]
+except_uses = ["name"]
+
+[[checks]]
+check_id = "question-mark"
+message = "Questions end with ?."
+must_contain = ["\\?$"]
+uses = ["question", "prompt", "followup"]
+
+[[checks]]
+check_id = "answer-label"
+message = "Yes/no answers start with 네, or 아니요, then name the object."
+must_contain = ["^(네|아니요)[,.]"]
+uses = ["answer", "option"]

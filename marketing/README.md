@@ -1,6 +1,6 @@
 # Linguini marketing
 
-Everything for launching and selling Linguini outside the app: the Product Hunt kit, launch videos, the media kit and the business model. The public marketing site itself lives in [`frontend/src/marketing/`](../frontend/src/marketing), because it deploys on its own.
+Everything for launching and selling Linguini outside the app: the Product Hunt kit, launch videos, the media kit and the business model. The public marketing site itself lives in [`frontend/src/marketing/`](../frontend/src/marketing), and deploys with the learner app from the same Vite build.
 
 | Path | What it is |
 | --- | --- |
@@ -12,6 +12,8 @@ Everything for launching and selling Linguini outside the app: the Product Hunt 
 | [`landing-page/`](landing-page/milestone-landing-page.html) | Landing page milestone write-up: hero, features and pricing, SEO, Open Graph previews, GEO, team decisions and next steps. Open in a browser and paste into the Google Doc, like `business-model/milestone-business-model.html` |
 | [`analytics/`](analytics/milestone-analytics.html) | Analytics milestone write-up: Contentsquare set-up and checks, the Home redesign before and after, journeys from Home, mobile against desktop, data caveats and next metrics. Replace the yellow screenshot boxes before pasting into the Google Doc |
 | [`business-model/`](business-model/README.md) | Pricing proposal (Free, Plus, Founding Plus), reproducible AI cost model and charts. The model prices the five AI calls on the models chosen in the root [`MODEL_COMPARISON.md`](../MODEL_COMPARISON.md), all through OpenRouter, using the token counts measured there |
+
+Dated launch plans and milestone write-ups are retained as project evidence. Their dates, proposed prices and readiness notes are historical; the [project documentation](../docs/README.md) describes the current application.
 
 ## Finished videos
 

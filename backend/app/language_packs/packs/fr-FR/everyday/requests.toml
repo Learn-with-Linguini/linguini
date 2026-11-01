@@ -1,0 +1,60 @@
+# Order words for request role-plays (M06): each quantity as an order writes it
+# (every agreement and case) and the details a server asks about or repeats.
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[quantities]]
+value = 1
+forms = ["un", "une"]
+
+[[quantities]]
+value = 2
+forms = ["deux"]
+
+[[quantities]]
+value = 3
+forms = ["trois"]
+
+[[details]]
+detail = "size:small"
+meaning = "small"
+forms = ["petit", "petite", "petits", "petites"]
+
+[[details]]
+detail = "size:large"
+meaning = "large"
+forms = ["grand", "grande", "grands", "grandes", "gros", "grosse", "grosses"]
+
+[[details]]
+detail = "serviceSetting:eatIn"
+meaning = "to have here"
+forms = ["sur place"]
+
+[[details]]
+detail = "serviceSetting:takeAway"
+meaning = "to take away"
+forms = ["à emporter"]
+
+[[details]]
+detail = "temperature:hot"
+meaning = "hot"
+forms = ["chaud", "chaude", "chauds", "chaudes"]
+
+[[details]]
+detail = "temperature:cold"
+meaning = "cold"
+forms = ["froid", "froide", "froids", "froides"]
+
+[[details]]
+detail = "colour:blue"
+meaning = "blue"
+forms = ["bleu", "bleue", "bleus", "bleues"]
+
+[[details]]
+detail = "colour:red"
+meaning = "red"
+forms = ["rouge", "rouges"]
+
+[[details]]
+detail = "colour:black"
+meaning = "black"
+forms = ["noir", "noire", "noirs", "noires"]

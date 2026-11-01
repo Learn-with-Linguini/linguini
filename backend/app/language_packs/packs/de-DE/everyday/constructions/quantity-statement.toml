@@ -1,0 +1,14 @@
+construction_id = "quantity-statement"
+version = 1
+summary = "Say how many of an object there are."
+guidance = "Say how many with Es gibt + number word + plural noun: Es gibt fünf Bücher. Use the bound count's number word, never a numeral. A correction starts with the no label: Nein, es gibt fünf Bücher."
+features = ["quantity-statement"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun", count = "determiner" }
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "es-gibt-frame"
+message = "Say how many with Es gibt."
+must_contain = ["^(nein, )?es gibt ", "\\.$"]

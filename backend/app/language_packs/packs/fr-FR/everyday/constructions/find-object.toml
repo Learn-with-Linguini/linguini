@@ -1,0 +1,24 @@
+construction_id = "find-object"
+version = 1
+summary = "Ask the learner to find a named object."
+guidance = "Tell the learner to find the object: Trouve + definite article + noun + full stop (Trouve la tasse.). Use the tu imperative and elide le/la before a vowel (Trouve l'assiette.)."
+features = ["imperative"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun" }
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "find-frame"
+message = "Use the taught find instruction."
+must_contain = ["^trouve "]
+
+[[checks]]
+check_id = "contraction"
+message = "Contract de le/de les/à le/à les to du/des/au/aux."
+must_not_contain = ["(^|\\s)(de|à) (le|les)\\s"]

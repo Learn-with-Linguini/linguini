@@ -1,0 +1,24 @@
+construction_id = "find-object"
+version = 1
+summary = "Ask the learner to find a named object."
+guidance = "Tell the learner to find the object: Finde + accusative article + noun + full stop (Finde die Tasse. / Finde den Löffel.). Use the du imperative."
+features = ["imperative"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun" }
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "find-frame"
+message = "Use the taught find instruction."
+must_contain = ["^finde "]
+
+[[checks]]
+check_id = "location-dative"
+message = "After a location preposition use the dative (dem/der/einem/einer)."
+must_not_contain = ["\\b(auf|unter|neben|vor|hinter|über|in|an) (das|die|den|ein|eine|einen)\\b"]

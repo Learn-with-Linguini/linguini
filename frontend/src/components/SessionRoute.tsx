@@ -11,6 +11,7 @@ import type { Scene } from "../data/types";
 import { LoadingScreen } from "./LoadingScreen";
 import { ErrorState } from "./ErrorState";
 import { AnalysisScan } from "./AnalysisScan";
+import { SceneProcessingProgress } from "./SceneProcessingProgress";
 import { TranslationPreview } from "./TranslationPreview";
 
 export function SessionRoute() {
@@ -49,14 +50,16 @@ function SessionLoader({ id }: { id: string }) {
     && session.tasks.some(task => task.kind === "vocabularyIntroduction");
   if (loading && !earlyReady && session?.session.id === id && session.session.mode !== "ispy" && session.session.status === "generatingTasks" && session.translationPreview) return <div className="stack analysis-page">
     <h1>Scene analysis</h1>
+    <SceneProcessingProgress detail={session} />
     <TranslationPreview preview={session.translationPreview} scene={preview ?? undefined} />
     <section role="status" className="panel-note"><h2>Generating tasks...</h2><p className="muted">Explore your translations while we prepare your practice.</p></section>
   </div>;
   if (loading && !earlyReady) return copy.scan && preview ? <div className="stack analysis-page">
     <h1>{copy.title}</h1>
-    <section className="analysis-loading" aria-live="polite" aria-busy="true">
+    <section className="analysis-loading">
+      {session?.session.id === id ? <SceneProcessingProgress detail={session} />
+        : <div className="analysis-loading__copy"><h2>{copy.heading}</h2><p className="muted">{copy.support ?? "Your photo is saved while we prepare your review."}</p></div>}
       <AnalysisScan scene={preview} />
-      <div className="analysis-loading__copy"><h2>{copy.heading}</h2><p className="muted">{copy.support ?? "This will only take a moment."}</p></div>
     </section>
   </div> : <LoadingScreen label={copy.heading} />;
   if ((!data && !earlyReady) || error) return <ErrorState title="We couldn't open this practice" message={error ?? "This practice isn't available right now."} retry={() => window.location.reload()} backTo={location.pathname.startsWith("/ispy/") ? "/ispy/play" : "/practice"} backLabel={location.pathname.startsWith("/ispy/") ? "Choose another photo" : "Choose another image"} />;

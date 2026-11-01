@@ -83,7 +83,6 @@ MAX_OBJECTS = 6
 MAX_INSTANCES_PER_LABEL = 10
 MAX_PINS = 12
 REGROUND_FALLBACK_THRESHOLD = 0.25
-SUPPORTED_LANGUAGES = ("fr", "es", "de", "ko")
 
 SCENE_SLUGS = ("street", "cafe", "market", "bedroom", "kitchen", "park")
 
@@ -865,9 +864,11 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser.add_argument(
         "--language",
         action="append",
-        choices=SUPPORTED_LANGUAGES,
         dest="languages",
-        help="template target language (repeatable; default: fr, es, de and ko)",
+        help=(
+            "template target language with a ready pack (repeatable; default: every "
+            "released pack language)"
+        ),
     )
     parser.add_argument(
         "--dry-run",
@@ -955,6 +956,22 @@ def _parse_args(argv: list[str] | None) -> argparse.Namespace:
     return parser.parse_args(argv)
 
 
+def template_languages(requested, discovered):
+    """The languages that get templates: ``requested``, each with a ready pack, or by
+    default every released (non-experimental) pack language.
+
+    An experimental pack is used only when asked for by name, so a local experiment
+    never writes templates for it by default.
+    """
+    ready = {language["code"]: language for language in discovered}
+    if requested:
+        unknown = sorted({code for code in requested if code not in ready})
+        if unknown:
+            raise ValueError(f"no ready language pack for {', '.join(unknown)}")
+        return list(dict.fromkeys(requested))
+    return sorted(code for code, language in ready.items() if not language["experimental"])
+
+
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
     logging.basicConfig(level=logging.INFO, stream=sys.stderr, format="%(message)s")
@@ -969,7 +986,15 @@ def main(argv: list[str] | None = None) -> int:
         logger.error("--max-provider-calls must be 0 or more")
         return 2
     slugs = args.slugs or list(SCENE_SLUGS)
-    languages = args.languages or list(SUPPORTED_LANGUAGES)
+    from app.language_packs.runtime import available_pack_languages
+
+    try:
+        languages = template_languages(args.languages, available_pack_languages())
+    except ValueError as error:
+        logger.error("%s", error)
+        return 2
+    if not languages and not args.skip_templates:
+        logger.warning("no released language pack is ready; no templates will be made")
 
     def wanted(row):
         return row["slug"] in slugs

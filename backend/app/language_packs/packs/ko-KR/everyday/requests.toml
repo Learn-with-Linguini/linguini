@@ -1,0 +1,60 @@
+# Order words for request role-plays (M06): each quantity as an order writes it
+# (every agreement and case) and the details a server asks about or repeats.
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[quantities]]
+value = 1
+forms = ["한", "하나"]
+
+[[quantities]]
+value = 2
+forms = ["두", "둘"]
+
+[[quantities]]
+value = 3
+forms = ["세", "셋"]
+
+[[details]]
+detail = "size:small"
+meaning = "small"
+forms = ["작은"]
+
+[[details]]
+detail = "size:large"
+meaning = "large"
+forms = ["큰"]
+
+[[details]]
+detail = "serviceSetting:eatIn"
+meaning = "to have here"
+forms = ["먹고 갈게요", "먹고 가요", "드시고"]
+
+[[details]]
+detail = "serviceSetting:takeAway"
+meaning = "to take away"
+forms = ["포장", "가져갈게요"]
+
+[[details]]
+detail = "temperature:hot"
+meaning = "hot"
+forms = ["따뜻한", "뜨거운"]
+
+[[details]]
+detail = "temperature:cold"
+meaning = "cold"
+forms = ["차가운", "아이스"]
+
+[[details]]
+detail = "colour:blue"
+meaning = "blue"
+forms = ["파란색", "파란"]
+
+[[details]]
+detail = "colour:red"
+meaning = "red"
+forms = ["빨간색", "빨간"]
+
+[[details]]
+detail = "colour:black"
+meaning = "black"
+forms = ["검은색", "검은", "검정색"]

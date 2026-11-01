@@ -1,0 +1,178 @@
+construction_id = "identify-object"
+
+[[examples]]
+example_id = "name-book"
+levels = ["A0"]
+purposes = ["matchName"]
+meaning = "the book (vocabulary label)"
+scene = { objects = [{ fact_id = "object:book", concept = "book" }] }
+bindings = { object = "object:book" }
+truth = true
+labels = []
+sentence = "le livre"
+translation = "the book (vocabulary label)"
+chunks = [{ text = "le", join = "none" }, { text = "livre", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "name-cup"
+levels = ["A0"]
+purposes = ["matchName"]
+meaning = "the cup (vocabulary label)"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }] }
+bindings = { object = "object:cup" }
+truth = true
+labels = []
+sentence = "la tasse"
+translation = "the cup (vocabulary label)"
+chunks = [{ text = "la", join = "none" }, { text = "tasse", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "name-clock"
+levels = ["A0"]
+purposes = ["matchName"]
+meaning = "the clock (vocabulary label)"
+scene = { objects = [{ fact_id = "object:clock", concept = "clock" }] }
+bindings = { object = "object:clock" }
+truth = true
+labels = []
+sentence = "l'horloge"
+translation = "the clock (vocabulary label)"
+chunks = [{ text = "l'horloge", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "identify-cup"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+meaning = "This is a cup."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }] }
+bindings = { object = "object:cup" }
+truth = true
+labels = []
+sentence = "C'est une tasse."
+translation = "This is a cup."
+chunks = [{ text = "C'est", join = "none" }, { text = "une", join = "space" }, { text = "tasse.", join = "space" }]
+accepted_alternatives = ["C’est une tasse."]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "identify-book"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+meaning = "This is a book."
+scene = { objects = [{ fact_id = "object:book", concept = "book" }] }
+bindings = { object = "object:book" }
+truth = true
+labels = []
+sentence = "C'est un livre."
+translation = "This is a book."
+chunks = [{ text = "C'est", join = "none" }, { text = "un", join = "space" }, { text = "livre.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "identify-chair"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+meaning = "This is a chair."
+scene = { objects = [{ fact_id = "object:chair", concept = "chair" }] }
+bindings = { object = "object:chair" }
+truth = true
+labels = []
+sentence = "C'est une chaise."
+translation = "This is a chair."
+chunks = [{ text = "C'est", join = "none" }, { text = "une", join = "space" }, { text = "chaise.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "identify-bottle"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+meaning = "This is a bottle."
+scene = { objects = [{ fact_id = "object:bottle", concept = "bottle" }] }
+bindings = { object = "object:bottle" }
+truth = true
+labels = []
+sentence = "C'est une bouteille."
+translation = "This is a bottle."
+chunks = [{ text = "C'est", join = "none" }, { text = "une", join = "space" }, { text = "bouteille.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "identify-ball"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+meaning = "This is a ball."
+scene = { objects = [{ fact_id = "object:ball", concept = "ball" }] }
+bindings = { object = "object:ball" }
+truth = true
+labels = []
+sentence = "C'est une balle."
+translation = "This is a ball."
+chunks = [{ text = "C'est", join = "none" }, { text = "une", join = "space" }, { text = "balle.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "identify-bag"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+meaning = "This is a bag."
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }] }
+bindings = { object = "object:bag" }
+truth = true
+labels = []
+sentence = "C'est un sac."
+translation = "This is a bag."
+chunks = [{ text = "C'est", join = "none" }, { text = "un", join = "space" }, { text = "sac.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-01"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+sentence = "C'est un tasse."
+correction = "C'est une tasse."
+note = "The taught noun tasse is feminine; use une."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-02"
+levels = ["A0"]
+purposes = ["matchName"]
+sentence = "le horloge"
+correction = "l'horloge"
+note = "Apply elision to this mute-h noun."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "m02-name-lamp"
+levels = ["A0"]
+purposes = ["chooseName", "listenSelect"]
+meaning = "the lamp (vocabulary label)"
+scene = { objects = [{ fact_id = "object:lamp", concept = "lamp" }] }
+bindings = { object = "object:lamp" }
+truth = true
+labels = []
+sentence = "la lampe"
+translation = "the lamp (vocabulary label)"
+chunks = [{ text = "la", join = "none" }, { text = "lampe", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "m02-name-form"
+levels = ["A0"]
+purposes = ["chooseName", "listenSelect"]
+sentence = "La lampe."
+correction = "la lampe"
+note = "A name chunk is lower case, no full stop."
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }

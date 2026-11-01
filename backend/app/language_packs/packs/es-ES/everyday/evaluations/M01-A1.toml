@@ -1,0 +1,101 @@
+mission_id = "M01"
+practice_level = "A1"
+content_version = 1
+
+[[cases]]
+case_id = "a1-wrong-colour"
+category = "wrongAttribute"
+construction_id = "describe-attribute"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:phone", concept = "phone" }], attributes = [{ fact_id = "attribute:phone-red", object = "object:phone", kind = "color", value = "red" }] }
+bindings = { object = "object:phone", attribute = "attribute:phone-red" }
+truth = true
+input = "Describe the phone as red."
+expected_meaning = "The phone is red."
+acceptable = ["Es un teléfono rojo."]
+reject = [{ sentence = "Es un teléfono azul.", category = "wrongAttribute", reason = "The bound colour is red, not blue." }]
+provenance = { source = "Held-out M01 evaluation content; noun and colour from reviewed sources.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "a1-agreement"
+category = "agreement"
+construction_id = "describe-attribute"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:door", concept = "door" }], attributes = [{ fact_id = "attribute:door-red", object = "object:door", kind = "color", value = "red" }] }
+bindings = { object = "object:door", attribute = "attribute:door-red" }
+truth = true
+input = "Describe the door as red."
+expected_meaning = "The door is red."
+acceptable = ["Es una puerta roja."]
+reject = [{ sentence = "Es una puerta rojo.", category = "agreement", reason = "Roja agrees with the feminine noun puerta." }]
+provenance = { source = "Held-out M01 evaluation content; noun and colour from reviewed sources.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "a1-word-order"
+category = "wordOrder"
+construction_id = "describe-attribute"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:spoon", concept = "spoon" }], attributes = [{ fact_id = "attribute:spoon-yellow", object = "object:spoon", kind = "color", value = "yellow" }] }
+bindings = { object = "object:spoon", attribute = "attribute:spoon-yellow" }
+truth = true
+input = "Describe the spoon as yellow."
+expected_meaning = "The spoon is yellow."
+acceptable = ["Es una cuchara amarilla."]
+reject = [{ sentence = "Es una amarilla cuchara.", category = "wordOrder", reason = "The basic colour adjective follows the noun." }]
+provenance = { source = "Held-out M01 evaluation content; noun and colour from reviewed sources.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "a1-verb-choice"
+category = "verbChoice"
+construction_id = "describe-attribute"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }], attributes = [{ fact_id = "attribute:plate-blue", object = "object:plate", kind = "color", value = "blue" }] }
+bindings = { object = "object:plate" }
+truth = true
+input = "Ask what colour the plate is."
+expected_meaning = "What colour is the plate?"
+acceptable = ["¿De qué color es el plato?"]
+reject = [{ sentence = "¿De qué color está el plato?", category = "verbChoice", reason = "Colour questions use es in this construction." }]
+provenance = { source = "Held-out M01 evaluation content; noun and colour from reviewed sources.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "a1-unicode"
+category = "unicode"
+construction_id = "describe-attribute"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:phone", concept = "phone" }], attributes = [{ fact_id = "attribute:phone-yellow", object = "object:phone", kind = "color", value = "yellow" }] }
+bindings = { object = "object:phone", attribute = "attribute:phone-yellow" }
+truth = true
+input = "Describe the phone as yellow."
+expected_meaning = "The phone is yellow."
+acceptable = ["Es un teléfono amarillo."]
+reject = [{ sentence = "Es un telefo\u0301no amarillo.", category = "unicode", reason = "The rejected candidate contains a decomposed accent." }]
+provenance = { source = "Held-out M01 evaluation content; noun and colour from reviewed sources.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "a1-key-question"
+category = "valid"
+construction_id = "yes-no-identification"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:key", concept = "key" }] }
+bindings = { object = "object:key" }
+truth = true
+input = "Ask whether the highlighted object is a key."
+expected_meaning = "Is it a key?"
+acceptable = ["¿Es una llave?"]
+provenance = { source = "Held-out M01 evaluation content; noun from REVIEWED_NOUNS.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "a1-held-plate-white"
+category = "agreement"
+construction_id = "describe-attribute"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }], attributes = [{ fact_id = "attribute:plate:colour:white", object = "object:plate", kind = "color", value = "white" }] }
+bindings = { object = "object:plate", attribute = "attribute:plate:colour:white" }
+truth = true
+labels = []
+input = "Describe the highlighted plate as white."
+expected_meaning = "This is a white plate."
+acceptable = ["Es un plato blanco."]
+reject = [{ sentence = "Es un plato blanca.", category = "agreement", reason = "The article or ending must match the noun's gender." }, { sentence = "Es un blanco plato.", category = "wordOrder", reason = "The words are not in the taught order." }]
+provenance = { source = "AI-authored held-out M01 case, 2026-10-20, written after the noun-phrase and pack-check rules to test that they generalize; not human-reviewed.", review_status = "generated" }

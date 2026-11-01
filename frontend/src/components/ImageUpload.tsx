@@ -7,6 +7,7 @@ import { CameraIcon, UploadIcon } from "./icons";
 import { friendlyError } from "../lib/queryKeys";
 import { useAuth } from "../state/Auth";
 import { trackAction } from "../lib/analytics";
+import { CameraCapture } from "./CameraCapture";
 
 type ImageUploadProps = {
   compact?: boolean;
@@ -24,7 +25,7 @@ export function ImageUpload(props: ImageUploadProps) {
 
 function ImageUploadForAccount({ onUploaded, cameraEnabled = true, disabled = false, onBusyChange, compact = false, dropzoneLabel }: ImageUploadProps) {
   const fileInput = useRef<HTMLInputElement>(null);
-  const cameraInput = useRef<HTMLInputElement>(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
   const busyRef = useRef(false);
   const mounted = useRef(true);
   const [busy, setBusy] = useState(false);
@@ -61,8 +62,9 @@ function ImageUploadForAccount({ onUploaded, cameraEnabled = true, disabled = fa
   return <div className="stack-2">
     <input ref={fileInput} type="file" hidden accept="image/jpeg,image/png,image/webp"
       onChange={(e) => { void select(e.target.files?.[0], "userUpload"); e.target.value = ""; }} />
-    <input ref={cameraInput} type="file" hidden accept="image/jpeg,image/png,image/webp" capture="environment"
-      onChange={(e) => { void select(e.target.files?.[0], "camera"); e.target.value = ""; }} />
+    {cameraOpen && cameraEnabled && !disabled && !busy ? <CameraCapture
+      onClose={() => setCameraOpen(false)}
+      onCapture={file => { setCameraOpen(false); void select(file, "camera"); }} /> : null}
     {dropzoneLabel ? (
       <button type="button" className="dashed-capture journal-upload-dropzone" disabled={disabled || busy}
         onClick={() => fileInput.current?.click()}>
@@ -72,7 +74,7 @@ function ImageUploadForAccount({ onUploaded, cameraEnabled = true, disabled = fa
       </button>
     ) : <>
       <div className="row">
-        <Button disabled={disabled || busy || !cameraEnabled} onClick={() => cameraInput.current?.click()}><CameraIcon size={18} /> {compact ? "Click" : "Open camera"}</Button>
+        <Button disabled={disabled || busy || !cameraEnabled} onClick={() => { setError(null); setCameraOpen(true); }}><CameraIcon size={18} /> {compact ? "Click" : "Open camera"}</Button>
         <Button variant="secondary" disabled={disabled || busy} onClick={() => fileInput.current?.click()}><UploadIcon size={18} /> Upload</Button>
       </div>
       {!compact ? <p className="small muted">JPEG, PNG or WebP, up to 10 MB</p> : null}

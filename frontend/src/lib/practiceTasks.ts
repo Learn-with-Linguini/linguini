@@ -112,7 +112,8 @@ export const optionText = (question: Pick<GrammarLessonQuestion, "markerObjectId
   question.markerObjectIds ? `Marker ${label}` : label;
 
 /** The learner's sentence from word tiles: punctuation and elided words join their neighbour. */
-export const builtSentence = (tokens: readonly string[]) => tokens.reduce((value, token) => {
+export const builtSentence = (tokens: readonly string[], joinModes?: readonly ("space" | "none")[] | null) => tokens.reduce((value, token, index) => {
+  if (joinModes) return value + (index && joinModes[index] === "space" ? " " : "") + token;
   const joinsPrevious = /^[,.;:!?…]$/.test(token) || value.endsWith("'");
   return value ? `${value}${joinsPrevious ? "" : " "}${token}` : token;
 }, "");

@@ -1,0 +1,60 @@
+# Order words for request role-plays (M06): each quantity as an order writes it
+# (every agreement and case) and the details a server asks about or repeats.
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[quantities]]
+value = 1
+forms = ["un", "una", "uno"]
+
+[[quantities]]
+value = 2
+forms = ["dos"]
+
+[[quantities]]
+value = 3
+forms = ["tres"]
+
+[[details]]
+detail = "size:small"
+meaning = "small"
+forms = ["pequeño", "pequeña", "pequeños", "pequeñas"]
+
+[[details]]
+detail = "size:large"
+meaning = "large"
+forms = ["grande", "grandes"]
+
+[[details]]
+detail = "serviceSetting:eatIn"
+meaning = "to have here"
+forms = ["para tomar aquí"]
+
+[[details]]
+detail = "serviceSetting:takeAway"
+meaning = "to take away"
+forms = ["para llevar"]
+
+[[details]]
+detail = "temperature:hot"
+meaning = "hot"
+forms = ["caliente", "calientes"]
+
+[[details]]
+detail = "temperature:cold"
+meaning = "cold"
+forms = ["frío", "fría", "fríos", "frías"]
+
+[[details]]
+detail = "colour:blue"
+meaning = "blue"
+forms = ["azul", "azules"]
+
+[[details]]
+detail = "colour:red"
+meaning = "red"
+forms = ["rojo", "roja", "rojos", "rojas"]
+
+[[details]]
+detail = "colour:black"
+meaning = "black"
+forms = ["negro", "negra", "negros", "negras"]

@@ -1,0 +1,105 @@
+mission_id = "M04"
+practice_level = "A2"
+content_version = 1
+
+[[cases]]
+case_id = "m04-a2-clue"
+category = "wrongAttribute"
+construction_id = "target-clue"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }], attributes = [{ fact_id = "attribute:bag-green", object = "object:bag", kind = "color", value = "green" }] }
+bindings = { target = "object:bag", attribute = "attribute:bag-green" }
+truth = true
+use = "attribute"
+input = "Give the colour clue for your object without naming it: green."
+expected_meaning = "It is green."
+acceptable = ["초록색이에요."]
+reject = [{ sentence = "파란색이에요.", category = "wrongAttribute", reason = "Your bag is green." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m04-a2-describe-colour"
+category = "wrongAttribute"
+construction_id = "owned-description"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }], attributes = [{ fact_id = "attribute:bag-green", object = "object:bag", kind = "color", value = "green" }], owners = [{ fact_id = "owner:bag", object = "object:bag", owner = "first" }] }
+bindings = { object = "object:bag", owner = "owner:bag", attribute = "attribute:bag-green" }
+truth = true
+input = "Describe your bag: green."
+expected_meaning = "My bag is green."
+acceptable = ["제 가방은 초록색이에요."]
+reject = [{ sentence = "제 가방은 파란색이에요.", category = "wrongAttribute", reason = "Your bag is green." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m04-a2-describe-place"
+category = "wrongRelation"
+construction_id = "owned-description"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:key", concept = "key" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:key-on-table", subject = "object:key", reference = "object:table", relation = "on" }], owners = [{ fact_id = "owner:key", object = "object:key", owner = "first" }] }
+bindings = { object = "object:key", owner = "owner:key", relation = "relation:key-on-table", reference = "object:table" }
+truth = true
+input = "Describe your key: on the table."
+expected_meaning = "My key is on the table."
+acceptable = ["제 열쇠는 탁자 위에 있어요."]
+reject = [{ sentence = "제 열쇠는 탁자 아래에 있어요.", category = "wrongRelation", reason = "Your key is on the table." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m04-a2-clarify"
+category = "wrongOwner"
+construction_id = "owned-object"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }], owners = [{ fact_id = "owner:plate", object = "object:plate", owner = "ana" }] }
+bindings = { object = "object:plate", owner = "owner:plate" }
+truth = true
+labels = ["no"]
+input = "Tell the friend no: the plate is Ana's."
+expected_meaning = "No, the plate is Ana's."
+acceptable = ["아니요, 접시는 아나 거예요."]
+reject = [{ sentence = "아니요, 접시는 제 거예요.", category = "wrongOwner", reason = "In the role-play the plate is Ana's." }, { sentence = "접시는 아나 거예요.", category = "meaning", reason = "A clarification starts with no." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m04-a2-yes-mine"
+category = "wrongOwner"
+construction_id = "possessive-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:door", concept = "door" }], owners = [{ fact_id = "owner:door", object = "object:door", owner = "first" }] }
+bindings = { object = "object:door", owner = "owner:door" }
+truth = true
+labels = ["yes"]
+input = "Answer yes: it is your door."
+expected_meaning = "Yes, it's my door."
+acceptable = ["네, 제 문이에요."]
+reject = [{ sentence = "네, 아나의 문이에요.", category = "wrongOwner", reason = "In the role-play the door is yours." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m04-a2-yours"
+category = "wrongOwner"
+construction_id = "owned-object"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:door", concept = "door" }], owners = [{ fact_id = "owner:door", object = "object:door", owner = "first" }] }
+bindings = { object = "object:door", owner = "possessor:second" }
+truth = true
+use = "statement"
+input = "Say the door is the listener's."
+expected_meaning = "The door is yours."
+acceptable = ["문은 본인 거예요."]
+reject = [{ sentence = "문은 제 거예요.", category = "wrongOwner", reason = "The door is the listener's." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m04-a2-held-unicode"
+category = "unicode"
+construction_id = "owned-description"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:phone", concept = "phone" }], attributes = [{ fact_id = "attribute:phone-red", object = "object:phone", kind = "color", value = "red" }], owners = [{ fact_id = "owner:phone", object = "object:phone", owner = "first" }] }
+bindings = { object = "object:phone", owner = "owner:phone", attribute = "attribute:phone-red" }
+truth = true
+input = "Describe your phone: red."
+expected_meaning = "My phone is red."
+acceptable = ["제 휴대폰은 빨간색이에요."]
+reject = [{ sentence = "\u110c\u1166 \u1112\u1172\u1103\u1162\u1111\u1169\u11ab\u110b\u1173\u11ab \u1108\u1161\u11af\u1100\u1161\u11ab\u1109\u1162\u11a8\u110b\u1175\u110b\u1166\u110b\u116d.", category = "unicode", reason = "The rejected candidate contains decomposed characters." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }

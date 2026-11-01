@@ -6,12 +6,9 @@ from uuid import UUID, uuid4
 import pytest
 from sqlalchemy import func, select, update
 from test_postgres_sessions import database as database
-from test_preloaded_templates import SceneModel, TextModelResponse, services
+from test_preloaded_templates import SceneModel, services
 from test_preloaded_templates_workflow import curated as curated
 
-from app.ai.features.learning_tasks.mission_m01 import (
-    fallback_m01_lesson,
-)
 from app.repositories.postgres.language_profiles import language_profiles
 from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.tasks import session_tasks, task_attempts
@@ -22,7 +19,7 @@ from app.repositories.postgres.xp import xp_events
 from app.repositories.practice import InsufficientSceneError
 from app.schemas.sessions import ReviewPracticeRequest
 from app.schemas.tasks import SkipTaskRequest
-from app.services import mission_eligibility, mission_lessons_m01
+from app.services import mission_eligibility
 
 M01 = ("M01", "A1", 1)
 
@@ -33,21 +30,6 @@ def m01_only(monkeypatch):
     monkeypatch.setitem(mission_eligibility.IMPLEMENTED_MISSIONS, "A1", (M01,))
 
 
-class MissionModel(SceneModel):
-    """Answers the mission lesson request with valid content of its own."""
-
-    def generate(self, request, **options):
-        if request.json_schema_name != "mission_lesson_m01_v1":
-            return super().generate(request, **options)
-        self.requests.append(request.json_schema_name)
-        result = fallback_m01_lesson(json.loads(request.user_content))
-        body = result.model_copy(update={"title": "Model lesson"}).model_dump(
-            mode="json", by_alias=True
-        )
-        return TextModelResponse(
-            output_text=json.dumps(body), model_name="test-text-model",
-            prompt_version=request.prompt_version, input_tokens=10, output_tokens=10,
-        )
 
 
 def _repository(curated, model):
@@ -251,26 +233,6 @@ def test_an_empty_saved_mission_plan_stays_unplanned(curated):
     claim = repository._claim_generation(sid, profile.id)
     assert claim.missions == ()
 
-
-
-def test_a_colour_without_a_reviewed_form_reopens_review_instead_of_a_default_lesson(
-    curated, monkeypatch,
-):
-    monkeypatch.setattr(mission_lessons_m01, "agreed_attribute", lambda *_: None)
-    model = SceneModel()
-    _repository_, sid, detail = _lesson(curated, model)
-    assert detail.session.status == "awaitingObjectReview"
-    assert detail.session.analysis_draft["skippedMissions"] == [
-        {"missionId": "M01", "reason": "noReviewedContent"}
-    ]
-    # Neither the regular lesson nor the deterministic default tasks are built.
-    assert "learning_tasks_v2" not in model.requests
-    assert detail.tasks == []
-    assert detail.scene_shortfall is not None
-    assert detail.scene_shortfall.missing == ["objects", "counts", "attributes", "relations"]
-    assert [item.mission_id for item in detail.scene_shortfall.missions] == ["M01"]
-    response = curated[3].get(f"/api/v1/sessions/{sid}").json()
-    assert response["sceneShortfall"]["missing"] == detail.scene_shortfall.missing
 
 @pytest.mark.parametrize("level", ["B1"])
 def test_other_levels_keep_the_existing_lesson(curated, level):

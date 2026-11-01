@@ -1,0 +1,26 @@
+construction_id = "my-preference"
+version = 1
+summary = "Say that I like (or do not like) the object."
+guidance = "Say 저는 + noun + 을/를 + 좋아해요, or 안 좋아해요 when the use is dislike: 저는 컵을 좋아해요. 저는 책을 안 좋아해요. Consonant-final nouns take 을, vowel-final nouns take 를."
+features = ["preference", "first-person"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun" }
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "preference-frame"
+message = "Say the first-person like frame."
+must_contain = ["^저는 ", "좋아해요\\.$"]
+
+[[checks]]
+check_id = "dislike-negated"
+message = "A dislike sentence says the negative."
+must_contain = ["안 좋아해요\\.$"]
+uses = ["dislike"]
+
+[[checks]]
+check_id = "like-not-negated"
+message = "A like sentence is not negated."
+must_not_contain = ["안 좋아해요|않아요"]
+uses = ["like"]

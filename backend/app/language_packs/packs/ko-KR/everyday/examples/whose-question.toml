@@ -1,0 +1,25 @@
+construction_id = "whose-question"
+
+[[examples]]
+example_id = "whose-cup"
+levels = ["A1"]
+purposes = ["buildMine", "buildTheirs"]
+meaning = "Whose is the cup?"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }, { fact_id = "object:table", concept = "table" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }], owners = [{ fact_id = "owner:cup", object = "object:cup", owner = "first" }, { fact_id = "owner:book", object = "object:book", owner = "ana" }, { fact_id = "owner:key", object = "object:key", owner = "leo" }] }
+bindings = { object = "object:cup" }
+truth = true
+labels = []
+sentence = "이 컵은 누구 거예요?"
+translation = "Whose is the cup?"
+chunks = [{ text = "이", join = "none" }, { text = "컵은", join = "space" }, { text = "누구", join = "space" }, { text = "거예요", join = "space" }, { text = "?", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "whose-cup-form"
+levels = ["A1"]
+purposes = ["buildMine", "buildTheirs"]
+sentence = "이 컵은 누구예요?"
+correction = "이 컵은 누구 거예요?"
+note = "Ask whose with 누구 거."
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }

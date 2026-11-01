@@ -1,0 +1,103 @@
+construction_id = "scene-location"
+
+[[examples]]
+example_id = "cup-on-table"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "The cup is on the table."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }] }
+bindings = { subject = "object:cup", reference = "object:table", relation = "relation:cup-on-table" }
+truth = true
+labels = []
+sentence = "La tasse est sur la table."
+translation = "The cup is on the table."
+chunks = [{ text = "La", join = "none" }, { text = "tasse", join = "space" }, { text = "est", join = "space" }, { text = "sur", join = "space" }, { text = "la", join = "space" }, { text = "table.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "shoe-under-chair"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "The shoe is under the chair."
+scene = { objects = [{ fact_id = "object:shoe", concept = "shoe" }, { fact_id = "object:chair", concept = "chair" }], relations = [{ fact_id = "relation:shoe-under-chair", subject = "object:shoe", reference = "object:chair", relation = "under" }] }
+bindings = { subject = "object:shoe", reference = "object:chair", relation = "relation:shoe-under-chair" }
+truth = true
+labels = []
+sentence = "La chaussure est sous la chaise."
+translation = "The shoe is under the chair."
+chunks = [{ text = "La", join = "none" }, { text = "chaussure", join = "space" }, { text = "est", join = "space" }, { text = "sous", join = "space" }, { text = "la", join = "space" }, { text = "chaise.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "lamp-next-to-book"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "The lamp is next to the book."
+scene = { objects = [{ fact_id = "object:lamp", concept = "lamp" }, { fact_id = "object:book", concept = "book" }], relations = [{ fact_id = "relation:lamp-next_to-book", subject = "object:lamp", reference = "object:book", relation = "next_to" }] }
+bindings = { subject = "object:lamp", reference = "object:book", relation = "relation:lamp-next_to-book" }
+truth = true
+labels = []
+sentence = "La lampe est à côté du livre."
+translation = "The lamp is next to the book."
+chunks = [{ text = "La", join = "none" }, { text = "lampe", join = "space" }, { text = "est", join = "space" }, { text = "à", join = "space" }, { text = "côté", join = "space" }, { text = "du", join = "space" }, { text = "livre.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "ask-shoe-location"
+levels = ["A2"]
+purposes = ["followUpSceneFact"]
+meaning = "Where is the shoe?"
+scene = { objects = [{ fact_id = "object:shoe", concept = "shoe" }, { fact_id = "object:chair", concept = "chair" }], relations = [{ fact_id = "relation:shoe-under-chair", subject = "object:shoe", reference = "object:chair", relation = "under" }] }
+bindings = { subject = "object:shoe" }
+truth = true
+labels = []
+sentence = "Où est la chaussure ?"
+translation = "Where is the shoe?"
+chunks = [{ text = "Où", join = "none" }, { text = "est", join = "space" }, { text = "la", join = "space" }, { text = "chaussure", join = "space" }, { text = "?", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-09"
+levels = ["A2"]
+purposes = ["buildSceneFact"]
+sentence = "La lampe est à côté de le livre."
+correction = "La lampe est à côté du livre."
+note = "Contract de + le to du."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-10"
+levels = ["A2"]
+purposes = ["buildSceneFact"]
+sentence = "La table est sur la tasse."
+correction = "La tasse est sur la table."
+note = "The reference and subject were swapped; the cup is on the table."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "m02-cup-on-table"
+levels = ["A1"]
+purposes = ["findObject", "answerWhere"]
+meaning = "The cup is on the table."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }] }
+bindings = { subject = "object:cup", reference = "object:table", relation = "relation:cup-on-table" }
+truth = true
+labels = []
+sentence = "La tasse est sur la table."
+translation = "The cup is on the table."
+chunks = [{ text = "La", join = "none" }, { text = "tasse", join = "space" }, { text = "est", join = "space" }, { text = "sur", join = "space" }, { text = "la", join = "space" }, { text = "table", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "m02-location-form"
+levels = ["A1"]
+purposes = ["findObject", "answerWhere"]
+sentence = "La tasse sur la table."
+correction = "La tasse est sur la table."
+note = "Location needs the verb est."
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }

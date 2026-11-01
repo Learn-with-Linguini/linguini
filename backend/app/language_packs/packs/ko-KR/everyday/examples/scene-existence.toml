@@ -1,0 +1,79 @@
+construction_id = "scene-existence"
+
+[[examples]]
+example_id = "exist-apple"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "There is a yellow apple in the scene."
+scene = { objects = [{ fact_id = "object:apple", concept = "apple" }], attributes = [{ fact_id = "attribute:apple-yellow", object = "object:apple", kind = "color", value = "yellow" }] }
+bindings = { object = "object:apple", attribute = "attribute:apple-yellow" }
+truth = true
+labels = []
+sentence = "노란 사과가 있어요."
+translation = "There is a yellow apple in the scene."
+chunks = [{ text = "노란", join = "none" }, { text = "사과가", join = "space" }, { text = "있어요.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "exist-plate"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "There is a white plate in the scene."
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }], attributes = [{ fact_id = "attribute:plate-white", object = "object:plate", kind = "color", value = "white" }] }
+bindings = { object = "object:plate", attribute = "attribute:plate-white" }
+truth = true
+labels = []
+sentence = "하얀 접시가 있어요."
+translation = "There is a white plate in the scene."
+chunks = [{ text = "하얀", join = "none" }, { text = "접시가", join = "space" }, { text = "있어요.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "exist-chair"
+levels = ["A2"]
+purposes = ["chooseSceneMarker", "chooseSceneDescription", "buildSceneFact", "buildSceneDescription"]
+meaning = "There is a chair in the scene."
+scene = { objects = [{ fact_id = "object:chair", concept = "chair" }] }
+bindings = { object = "object:chair" }
+truth = true
+labels = []
+sentence = "의자가 있어요."
+translation = "There is a chair in the scene."
+chunks = [{ text = "의자가", join = "none" }, { text = "있어요.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "absent-clock"
+levels = ["A2"]
+purposes = ["chooseSceneDescription"]
+meaning = "There is no clock in the scene."
+scene = { objects = [], absent = [{ fact_id = "object:clock", concept = "clock" }] }
+bindings = { object = "object:clock" }
+truth = false
+labels = []
+sentence = "시계가 없어요."
+translation = "There is no clock in the scene."
+chunks = [{ text = "시계가", join = "none" }, { text = "없어요.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-07"
+levels = ["A2"]
+purposes = ["chooseSceneMarker"]
+sentence = "하얀 접시이에요 있어요."
+correction = "하얀 접시가 있어요."
+note = "Presence uses the noun + subject particle + 있어요 frame, not two stacked predicates."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-08"
+levels = ["A2"]
+purposes = ["chooseSceneDescription"]
+sentence = "시계가 아니에요."
+correction = "시계가 없어요."
+note = "This says it is not a clock; it does not state that a clock is absent."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }

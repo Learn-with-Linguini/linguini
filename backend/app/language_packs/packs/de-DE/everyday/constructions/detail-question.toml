@@ -1,0 +1,14 @@
+construction_id = "detail-question"
+version = 1
+summary = "A server asks which detail the order needs."
+guidance = "The server's follow-up question, offering the choices its use names without giving the answer: askServiceSetting Für hier oder zum Mitnehmen?; askTemperature Heiß oder kalt?; askSize Große oder kleine?; askColour Welche Farbe? The target is never named."
+features = ["request", "question"]
+constraints = ["Express only the bound order facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = {}
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "question-mark"
+message = "The follow-up is a question."
+must_contain = ["\\?$"]

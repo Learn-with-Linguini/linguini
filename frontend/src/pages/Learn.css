@@ -1,0 +1,225 @@
+/* Learning tasks: one vertical path of missions under the scene photo, built from design tokens. */
+.mission-path-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  min-height: calc(100dvh - 160px);
+}
+
+.mission-path__topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+/* Matches the Exit pill beside it: same 44px height, padding and label size. */
+.mission-path__leaves {
+  min-height: 44px;
+  padding-inline: var(--space-3);
+  font-size: var(--text-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.mission-path__leaves.is-updated { animation: mission-leaves-pulse 600ms 300ms ease-out; }
+
+/* Photo scene card: rounded photo with the dark-teal contour. */
+.mission-path__header {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.mission-path__scene {
+  overflow: hidden;
+  border: var(--stroke) solid var(--teal-dark);
+  border-radius: var(--radius-md);
+  background: var(--cream);
+  box-shadow: var(--shadow-paper);
+}
+
+.mission-path__photo {
+  display: block;
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+}
+
+.mission-path__title {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: var(--text-h1);
+  font-weight: 800;
+  line-height: 1.12;
+}
+
+.mission-path {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mission-step { position: relative; }
+
+.mission-step__button {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.mission-step__button:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 4px;
+}
+
+.mission-step__button:disabled { cursor: progress; }
+
+.mission-step:not(:last-child) { padding-bottom: var(--space-8); }
+
+/* The trail between missions: a quiet dashed line that turns teal once a mission is done. */
+.mission-step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 31px;
+  bottom: var(--space-1);
+  height: 24px;
+  border-left: var(--stroke) dashed var(--line);
+  transform-origin: top;
+}
+
+.mission-step--done:not(:last-child)::after { border-left-style: solid; border-left-color: var(--teal); }
+.mission-step.is-just-done:not(:last-child)::after { animation: mission-connector-fill 420ms 200ms ease-out both; }
+
+.mission-step__column {
+  display: grid;
+  place-items: center;
+}
+
+/* Tactile discs share the buttons' 4px press edge. */
+.mission-step__icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: var(--stroke) solid var(--line);
+  border-radius: 50%;
+  background: var(--cream);
+  color: var(--teal-dark);
+  box-shadow: 0 4px 0 var(--line);
+  transition: background-color 300ms ease, transform 120ms ease, box-shadow 120ms ease;
+}
+
+.mission-step__button:hover:not(:disabled) .mission-step__icon { background: var(--paper); }
+
+.mission-step__button:active:not(:disabled) .mission-step__icon {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--line);
+}
+
+.mission-step--current .mission-step__icon {
+  width: 60px;
+  height: 60px;
+  border-color: var(--tomato);
+  background: var(--tomato);
+  color: #fffaf2;
+  box-shadow: var(--shadow-action);
+}
+
+.mission-step--current .mission-step__button:hover:not(:disabled) .mission-step__icon { background: #ef6a3f; }
+.mission-step--current .mission-step__button:active:not(:disabled) .mission-step__icon { box-shadow: 0 2px 0 var(--tomato-pressed); }
+
+.mission-step--done .mission-step__icon {
+  border-color: var(--teal);
+  background: var(--teal);
+  color: #fffaf2;
+  box-shadow: 0 4px 0 var(--teal-dark);
+}
+
+.mission-step--done .mission-step__button:hover:not(:disabled) .mission-step__icon { background: var(--teal); }
+.mission-step--done .mission-step__button:active:not(:disabled) .mission-step__icon { box-shadow: 0 2px 0 var(--teal-dark); }
+
+/* Each mission's description sits on a soft paper card beside its disc. */
+.mission-step__text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--paper);
+  box-shadow: var(--shadow-paper);
+  transition: border-color 160ms ease;
+}
+
+.mission-step__button:hover:not(:disabled) .mission-step__text { border-color: var(--teal); }
+
+.mission-step__text strong {
+  color: var(--ink);
+  font-size: var(--text-body);
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.mission-step__text span {
+  color: var(--ink-muted);
+  font-size: var(--text-small);
+  line-height: 1.4;
+}
+
+.mission-step--current .mission-step__text strong { font-size: var(--text-h3); }
+.mission-step--done .mission-step__text span { color: var(--teal-dark); font-weight: 700; }
+
+.mission-step.is-just-done .mission-step__icon { animation: mission-pop 420ms ease-out; }
+.mission-step.is-just-next .mission-step__icon { animation: mission-grow 460ms 350ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+.mission-path__cta {
+  position: sticky;
+  bottom: max(var(--space-3), env(safe-area-inset-bottom));
+  z-index: 5;
+  margin-top: auto;
+  padding-top: var(--space-3);
+  background: linear-gradient(to bottom, transparent, var(--butter) 35%);
+}
+
+@keyframes mission-pop {
+  0% { transform: scale(0.8); }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@keyframes mission-grow {
+  from { transform: scale(0.85); }
+  to { transform: scale(1); }
+}
+
+@keyframes mission-connector-fill {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+@keyframes mission-leaves-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mission-step__icon,
+  .mission-step.is-just-done .mission-step__icon,
+  .mission-step.is-just-next .mission-step__icon,
+  .mission-step.is-just-done:not(:last-child)::after,
+  .mission-path__leaves.is-updated {
+    animation: none;
+    transition: none;
+  }
+}

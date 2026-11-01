@@ -1,0 +1,14 @@
+construction_id = "owned-object"
+version = 1
+summary = "Name the object and say whose it is."
+guidance = "Name the object with the topic particle 은/는, then 제 거예요, 본인 거예요, or the owner's name + 거예요: 컵은 제 거예요. 책은 아나 거예요. A clarification starts with the no label."
+features = ["ownership", "predicate-possessive"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun", owner = "determiner" }
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "owned-frame"
+message = "Say … 거예요."
+must_contain = ["거예요\\.$"]

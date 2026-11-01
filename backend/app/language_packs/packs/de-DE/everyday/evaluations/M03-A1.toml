@@ -1,0 +1,102 @@
+mission_id = "M03"
+practice_level = "A1"
+content_version = 1
+
+[[cases]]
+case_id = "m03-a1-four-plates"
+category = "wrongCount"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }], counts = [{ fact_id = "count:plate", object = "object:plate", quantity = 4 }] }
+bindings = { object = "object:plate", count = "count:plate" }
+truth = true
+input = "Say there are four plates."
+expected_meaning = "There are four plates."
+acceptable = ["Es gibt vier Teller."]
+reject = [{ sentence = "Es gibt drei Teller.", category = "wrongCount", reason = "Four plates were counted." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a1-statement-frame"
+category = "punctuation"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:key", concept = "key" }], counts = [{ fact_id = "count:key", object = "object:key", quantity = 6 }] }
+bindings = { object = "object:key", count = "count:key" }
+truth = true
+input = "Say there are six keys."
+expected_meaning = "There are six keys."
+acceptable = ["Es gibt sechs Schlüssel."]
+reject = [{ sentence = "Es gibt sechs Schlüssel", category = "punctuation", reason = "A statement ends with a full stop." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a1-board"
+category = "wrongCount"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:fork", concept = "fork" }] }
+bindings = { object = "object:fork", count = "number:7" }
+truth = false
+use = "board"
+input = "Say the practice board shows seven forks."
+expected_meaning = "There are seven forks."
+acceptable = ["Es gibt sieben Gabeln."]
+reject = [{ sentence = "Es gibt acht Gabeln.", category = "wrongCount", reason = "The board shows seven, not eight." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a1-how-many-spoons"
+category = "wrongObject"
+construction_id = "how-many-question"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:spoon", concept = "spoon" }, { fact_id = "object:plate", concept = "plate" }], counts = [{ fact_id = "count:spoon", object = "object:spoon", quantity = 5 }, { fact_id = "count:plate", object = "object:plate", quantity = 4 }] }
+bindings = { object = "object:spoon" }
+truth = true
+input = "Ask how many spoons there are."
+expected_meaning = "How many spoons are there?"
+acceptable = ["Wie viele Löffel gibt es?"]
+reject = [{ sentence = "Wie viele Teller gibt es?", category = "wrongObject", reason = "The question is about the spoons." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a1-held-phones"
+category = "wrongObject"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:phone", concept = "phone" }, { fact_id = "object:bag", concept = "bag" }], counts = [{ fact_id = "count:phone", object = "object:phone", quantity = 10 }, { fact_id = "count:bag", object = "object:bag", quantity = 2 }] }
+bindings = { object = "object:phone", count = "count:phone" }
+truth = true
+input = "Say there are ten phones."
+expected_meaning = "There are ten phones."
+acceptable = ["Es gibt zehn Handys."]
+reject = [{ sentence = "Es gibt zehn Taschen.", category = "wrongObject", reason = "The ten counted objects are phones." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a1-held-unicode"
+category = "unicode"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:door", concept = "door" }], counts = [{ fact_id = "count:door", object = "object:door", quantity = 5 }] }
+bindings = { object = "object:door", count = "count:door" }
+truth = true
+input = "Say there are five doors."
+expected_meaning = "There are five doors."
+acceptable = ["Es gibt fünf Türen."]
+reject = [{ sentence = "Es gibt fu\u0308nf Tu\u0308ren.", category = "unicode", reason = "The rejected candidate contains decomposed characters." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a1-held-plural"
+category = "agreement"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:book", concept = "book" }], counts = [{ fact_id = "count:book", object = "object:book", quantity = 3 }] }
+bindings = { object = "object:book", count = "count:book" }
+truth = true
+input = "Say there are three books."
+expected_meaning = "There are three books."
+acceptable = ["Es gibt drei Bücher."]
+reject = [{ sentence = "Es gibt drei Buch.", category = "agreement", reason = "After three, use the plural." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }

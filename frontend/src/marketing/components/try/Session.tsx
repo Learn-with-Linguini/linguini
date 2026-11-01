@@ -49,6 +49,11 @@ export function Session({ scene, lang, onLangChange, onExit }: SessionProps) {
   const visualRef = useRef<HTMLDivElement>(null);
 
   const words = useMemo(() => scene.words.filter(word => selected.includes(word.id)), [scene.words, selected]);
+  const requiredWordIds = new Set([
+    scene.blankWordId,
+    ...scene.words.filter(word => Object.entries(scene.ispy).some(([language, round]) =>
+      word[language as Lang].word === round.answer)).map(word => word.id),
+  ]);
   const scanLines = useMemo(
     () => [
       "Looking closely at your photo",
@@ -184,18 +189,19 @@ export function Session({ scene, lang, onLangChange, onExit }: SessionProps) {
                   Found {scene.words.length} things to learn
                 </h2>
                 <p className={styles.lede}>
-                  You’re in charge: untick anything you don’t want. Words appear in {languageNames[lang]} on the photo.
+                  Untick optional words you don’t want. Words used in the lesson stay selected and appear in {languageNames[lang]} on the photo.
                 </p>
                 <ul className={styles.found}>
                   {scene.words.map((word, index) => {
                     const on = selected.includes(word.id);
+                    const required = requiredWordIds.has(word.id);
                     return (
                       <li key={word.id}>
                         <button
                           type="button"
                           className={styles.foundChip}
                           aria-pressed={on}
-                          disabled={on && selected.length <= 3}
+                          disabled={required || (on && selected.length <= 3)}
                           onClick={() =>
                             setSelected(current => (on ? current.filter(id => id !== word.id) : [...current, word.id]))
                           }
@@ -207,7 +213,7 @@ export function Session({ scene, lang, onLangChange, onExit }: SessionProps) {
                           <span className={styles.foundNum}>{index + 1}</span>
                           <span className={styles.foundWord}>
                             <span lang={lang}>{word[lang].word}</span>
-                            <span className={styles.foundEn}>{word.en}</span>
+                            <span className={styles.foundEn}>{word.en}{required ? " · Used in this lesson" : ""}</span>
                           </span>
                           <span className={styles.foundTick} aria-hidden="true">{on ? <Check size={16} /> : null}</span>
                         </button>

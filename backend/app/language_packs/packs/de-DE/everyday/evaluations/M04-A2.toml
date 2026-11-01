@@ -1,0 +1,119 @@
+mission_id = "M04"
+practice_level = "A2"
+content_version = 1
+
+[[cases]]
+case_id = "m04-a2-clue"
+category = "wrongAttribute"
+construction_id = "target-clue"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }], attributes = [{ fact_id = "attribute:bag-green", object = "object:bag", kind = "color", value = "green" }] }
+bindings = { target = "object:bag", attribute = "attribute:bag-green" }
+truth = true
+use = "attribute"
+input = "Give the colour clue for your object without naming it: green."
+expected_meaning = "It is green."
+acceptable = ["Sie ist grün."]
+reject = [{ sentence = "Sie ist blau.", category = "wrongAttribute", reason = "Your bag is green." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m04-a2-describe-colour"
+category = "wrongAttribute"
+construction_id = "owned-description"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }], attributes = [{ fact_id = "attribute:bag-green", object = "object:bag", kind = "color", value = "green" }], owners = [{ fact_id = "owner:bag", object = "object:bag", owner = "first" }] }
+bindings = { object = "object:bag", owner = "owner:bag", attribute = "attribute:bag-green" }
+truth = true
+input = "Describe your bag: green."
+expected_meaning = "My bag is green."
+acceptable = ["Meine Tasche ist grün."]
+reject = [{ sentence = "Meine Tasche ist blau.", category = "wrongAttribute", reason = "Your bag is green." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m04-a2-describe-place"
+category = "wrongRelation"
+construction_id = "owned-description"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:key", concept = "key" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:key-on-table", subject = "object:key", reference = "object:table", relation = "on" }], owners = [{ fact_id = "owner:key", object = "object:key", owner = "first" }] }
+bindings = { object = "object:key", owner = "owner:key", relation = "relation:key-on-table", reference = "object:table" }
+truth = true
+input = "Describe your key: on the table."
+expected_meaning = "My key is on the table."
+acceptable = ["Mein Schlüssel ist auf dem Tisch."]
+reject = [{ sentence = "Mein Schlüssel ist unter dem Tisch.", category = "wrongRelation", reason = "Your key is on the table." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m04-a2-clarify"
+category = "wrongOwner"
+construction_id = "owned-object"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }], owners = [{ fact_id = "owner:plate", object = "object:plate", owner = "ana" }] }
+bindings = { object = "object:plate", owner = "owner:plate" }
+truth = true
+labels = ["no"]
+input = "Tell the friend no: the plate is Ana's."
+expected_meaning = "No, the plate is Ana's."
+acceptable = ["Nein, der Teller gehört Ana."]
+reject = [{ sentence = "Nein, der Teller gehört mir.", category = "wrongOwner", reason = "In the role-play the plate is Ana's." }, { sentence = "Der Teller gehört Ana.", category = "meaning", reason = "A clarification starts with no." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m04-a2-yes-mine"
+category = "wrongOwner"
+construction_id = "possessive-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:door", concept = "door" }], owners = [{ fact_id = "owner:door", object = "object:door", owner = "first" }] }
+bindings = { object = "object:door", owner = "owner:door" }
+truth = true
+labels = ["yes"]
+input = "Answer yes: it is your door."
+expected_meaning = "Yes, it's my door."
+acceptable = ["Ja, das ist meine Tür."]
+reject = [{ sentence = "Ja, das ist ihre Tür.", category = "wrongOwner", reason = "In the role-play the door is yours." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m04-a2-yours"
+category = "wrongOwner"
+construction_id = "owned-object"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:door", concept = "door" }], owners = [{ fact_id = "owner:door", object = "object:door", owner = "first" }] }
+bindings = { object = "object:door", owner = "possessor:second" }
+truth = true
+use = "statement"
+input = "Say the door is the listener's."
+expected_meaning = "The door is yours."
+acceptable = ["Die Tür gehört dir."]
+reject = [{ sentence = "Die Tür gehört mir.", category = "wrongOwner", reason = "The door is the listener's." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m04-a2-held-agreement"
+category = "agreement"
+construction_id = "owned-description"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }], attributes = [{ fact_id = "attribute:plate-yellow", object = "object:plate", kind = "color", value = "yellow" }], owners = [{ fact_id = "owner:plate", object = "object:plate", owner = "first" }] }
+bindings = { object = "object:plate", owner = "owner:plate", attribute = "attribute:plate-yellow" }
+truth = true
+input = "Describe your plate: yellow."
+expected_meaning = "My plate is yellow."
+acceptable = ["Mein Teller ist gelb."]
+reject = [{ sentence = "Meine Teller ist gelb.", category = "agreement", reason = "Mein agrees with the masculine Teller." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m04-a2-held-unicode"
+category = "unicode"
+construction_id = "owned-description"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:door", concept = "door" }], attributes = [{ fact_id = "attribute:door-red", object = "object:door", kind = "color", value = "red" }], owners = [{ fact_id = "owner:door", object = "object:door", owner = "first" }] }
+bindings = { object = "object:door", owner = "owner:door", attribute = "attribute:door-red" }
+truth = true
+input = "Describe your door: red."
+expected_meaning = "My door is red."
+acceptable = ["Meine Tür ist rot."]
+reject = [{ sentence = "Meine Tu\u0308r ist rot.", category = "unicode", reason = "The rejected candidate contains decomposed characters." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }

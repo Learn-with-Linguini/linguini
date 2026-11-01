@@ -1,0 +1,14 @@
+construction_id = "how-many-question"
+version = 1
+summary = "Ask how many of a counted object there are."
+guidance = "Ask ¿Cuántos/¿Cuántas + plural noun + hay?, agreeing with the noun: ¿Cuántos libros hay? ¿Cuántas tazas hay? Spanish questions open with ¿ and close with ?."
+features = ["quantity-question"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun" }
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "how-many-frame"
+message = "Ask with ¿Cuántos/¿Cuántas … hay?"
+must_contain = ["^¿cuánt[oa]s ", "\\?$"]

@@ -1,0 +1,14 @@
+construction_id = "quantity-statement"
+version = 1
+summary = "Say how many of an object there are."
+guidance = "Say how many with noun + 이/가 + number + 개 + 있어요.: 책이 다섯 개 있어요. Use the bound count's native Korean number with 개, never a numeral. A correction starts with the no label: 아니요, 책이 다섯 개 있어요."
+features = ["quantity-statement"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun", count = "determiner" }
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "statement-frame"
+message = "Say how many with … 개 있어요."
+must_contain = ["개 있어요\\.$"]

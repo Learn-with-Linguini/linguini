@@ -1,0 +1,40 @@
+construction_id = "order-repair"
+
+[[examples]]
+example_id = "repair-quantity-three"
+levels = ["A2"]
+purposes = ["confirmOrRepair"]
+meaning = "Actually, three, please."
+scene = { objects = [{ fact_id = "object:coffee", concept = "coffee" }], requests = [{ fact_id = "request:quantity", object = "object:coffee", field = "quantity", value = "3" }, { fact_id = "request:size", object = "object:coffee", field = "size", value = "small" }, { fact_id = "request:serviceSetting", object = "object:coffee", field = "serviceSetting", value = "takeAway" }] }
+bindings = { target = "object:coffee", quantity = "request:quantity" }
+truth = true
+labels = []
+sentence = "En fait, j'en voudrais trois."
+translation = "Actually, three, please."
+chunks = [{ text = "En", join = "none" }, { text = "fait", join = "space" }, { text = ",", join = "none" }, { text = "j'", join = "space" }, { text = "en", join = "none" }, { text = "voudrais", join = "space" }, { text = "trois", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "repair-take-away"
+levels = ["A2"]
+purposes = ["confirmOrRepair"]
+meaning = "Actually, to take away, please."
+scene = { objects = [{ fact_id = "object:coffee", concept = "coffee" }], requests = [{ fact_id = "request:quantity", object = "object:coffee", field = "quantity", value = "2" }, { fact_id = "request:size", object = "object:coffee", field = "size", value = "small" }, { fact_id = "request:serviceSetting", object = "object:coffee", field = "serviceSetting", value = "takeAway" }] }
+bindings = { target = "object:coffee", detail = "request:serviceSetting" }
+truth = true
+labels = []
+sentence = "En fait, à emporter, s'il vous plaît."
+translation = "Actually, to take away, please."
+chunks = [{ text = "En", join = "none" }, { text = "fait", join = "space" }, { text = ",", join = "none" }, { text = "à", join = "space" }, { text = "emporter", join = "space" }, { text = ",", join = "none" }, { text = "s'", join = "space" }, { text = "il", join = "none" }, { text = "vous", join = "space" }, { text = "plaît", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "repair-with-yes"
+levels = ["A2"]
+purposes = ["confirmOrRepair"]
+sentence = "Oui, trois."
+correction = "En fait, j'en voudrais trois."
+note = "A repair corrects the server; it does not start with yes."
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }

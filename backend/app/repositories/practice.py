@@ -27,6 +27,10 @@ class DailyLessonLimitReachedError(PracticeConflictError):
     """The user has reached their tier's daily photo lesson limit."""
 
 
+class LessonLanguageUnavailableError(PracticeConflictError):
+    """The profile's language has no language pack with a ready lesson yet."""
+
+
 INSUFFICIENT_SCENE_MESSAGE = (
     "This photo doesn't have enough for Linguini to check a lesson yet. "
     "Add more objects, counts, adjectives or connections, or try another photo."

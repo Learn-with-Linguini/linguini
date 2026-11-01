@@ -115,7 +115,8 @@ export function ProgressTrail({
   const pct = total === 0 ? 0 : Math.min(100, Math.round((value / total) * 100));
   return (
     <div className="trail">
-      <div className="trail__track">
+      <div className="trail__track" role="progressbar" aria-valuemin={0} aria-valuemax={total}
+        aria-valuenow={value} aria-valuetext={label ?? `${value} of ${total}`}>
         <div className="trail__fill" style={{ width: `${pct}%` }} />
       </div>
       <span className="trail__label">{label ?? `${value} of ${total}`}</span>
@@ -310,4 +311,8 @@ export function Feedback({
   children: ReactNode;
 }) {
   return <div className={`feedback feedback--${tone}`}>{children}</div>;
+}
+
+export function BasilReward({ text }: { text: string | null }) {
+  return text === null ? null : <strong className="basil-reward" role="status"><BasilIcon size={17} />{text}</strong>;
 }

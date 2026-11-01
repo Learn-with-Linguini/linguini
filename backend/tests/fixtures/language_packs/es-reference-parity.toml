@@ -1,0 +1,17 @@
+# Optional reference data only for scripted legacy-builder parity tests.
+# Normal runtime tests use the real Spanish pack with lexical = {} and mock
+# the model's form/distractor proposals instead.
+[lexical.choice_order]
+colour = "black|white|blue|green|red"
+
+[lexical.attribute_forms]
+"colour:red:masculine" = "rojo"
+"colour:red:feminine" = "roja"
+"colour:white:masculine" = "blanco"
+"colour:white:feminine" = "blanca"
+"colour:black:masculine" = "negro"
+"colour:black:feminine" = "negra"
+"colour:blue:masculine" = "azul"
+"colour:blue:feminine" = "azul"
+"colour:green:masculine" = "verde"
+"colour:green:feminine" = "verde"

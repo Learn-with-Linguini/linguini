@@ -1,0 +1,31 @@
+construction_id = "connected-description"
+version = 2
+summary = "Connect selected scene facts without adding details."
+guidance = "Connect complete facts with et or use a short sequence of sentences. For this pilot, repeat il y a or the appropriate subject/verb when doing so keeps the reference clear. Each clause must preserve its own noun, colour or location binding. Do not copy the colour of the first object onto the second. Aussi is an additive marker, not a reason to invent a third object. Keep clause-sized chunks where they help A2 construction; accepted wording may differ while expressing the same selected facts."
+features = ["coordination-et", "fact-binding", "clause-chunks"]
+constraints = ["Express only the selected scene facts and preserve semantic role bindings.", "Use the declared variety/register and approved surfaces.", "Treat these rules as generation guidance; they do not constitute a grammar validator."]
+required_labels = ["choose-description", "describe-scene", "connector-distractor"]
+roles = { object = "noun", other-object = "noun", subject = "noun", reference = "noun", attribute = "adjective", relation = "preposition" }
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+except_uses = ["name"]
+
+[[checks]]
+check_id = "elision"
+message = "Elide le/la/de/ne/que/ce before a vowel (l', d', n', qu', c')."
+must_not_contain = ["(^|\\s)(le|la|de|ne|que|ce) [aeiouéèêëàâîïôûù]"]
+
+[[checks]]
+check_id = "contraction"
+message = "Contract de le/de les/à le/à les to du/des/au/aux."
+must_not_contain = ["(^|\\s)(de|à) (le|les)\\s"]
+
+[[checks]]
+check_id = "denied-existence"
+message = "The false existence option denies the object with pas."
+must_contain = ["(^|\\s)pas\\s"]
+uses = ["wrongExistence"]

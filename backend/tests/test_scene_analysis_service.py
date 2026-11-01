@@ -272,6 +272,40 @@ def test_scene_inventory_rehydrates_with_session_specific_ids() -> None:
     assert reused.price_suggestions[0].scene_object_id == reused.objects[1].id
 
 
+def test_progress_reports_actual_milestones_and_restarts_on_invalid_output():
+    stages = []
+
+    class ObservedClient(FakeVisionClient):
+        def generate(self, request):
+            assert stages[-1] == "findingObjects"
+            return super().generate(request)
+
+    result = analyzer(ObservedClient(["not json", VALID_OUTPUT])).analyze_with_progress(
+        session(), asset(), {}, None, stages.append
+    )
+    assert result.objects
+    assert stages == [
+        "loadingImage", "findingObjects", "checkingResults",
+        "findingObjects", "checkingResults",
+    ]
+    # Completion is published by the persistence layer, never by the AI call.
+    assert "ready" not in stages
+
+
+def test_failed_image_load_never_reports_objects_or_completion():
+    stages = []
+
+    class MissingStorage:
+        def download(self, _key):
+            raise UploadObjectMissing("gone")
+
+    with pytest.raises(SceneAnalysisModelError):
+        analyzer(FakeVisionClient([]), storage=MissingStorage()).analyze_with_progress(
+            session(), asset(), {}, None, stages.append
+        )
+    assert stages == ["loadingImage"]
+
+
 def test_grounding_failure_keeps_the_valid_scene_analysis_result() -> None:
     class FailingGrounder:
         def ground(self, image, labels):

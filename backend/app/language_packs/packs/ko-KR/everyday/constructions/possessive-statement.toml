@@ -1,0 +1,14 @@
+construction_id = "possessive-statement"
+version = 1
+summary = "Say whose object it is with a possessive before the noun."
+guidance = "Say possessive + noun + 이에요/예요: 제 컵이에요. Another owner is named with 의: 아나의 책이에요. Answers to a friend start with the 네 or 아니요 label."
+features = ["ownership", "possessive-determiner"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun", owner = "determiner" }
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "possessive-frame"
+message = "End with 이에요/예요."
+must_contain = ["(이에요|예요)\\.$"]

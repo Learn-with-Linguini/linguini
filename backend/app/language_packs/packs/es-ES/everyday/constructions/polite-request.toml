@@ -1,0 +1,25 @@
+construction_id = "polite-request"
+version = 1
+summary = "Ask politely for the ordered item and quantity."
+guidance = "A polite request for the bound item: the quantity (un/una by gender for one), the noun (plural after dos or tres) and, when bound, its size after the noun, agreeing. Use order: Quisiera … , por favor. Use borrow: ¿Me prestas … , por favor? Use pass: ¿Me pasas … , por favor?"
+features = ["request", "quantity"]
+constraints = ["Express only the bound order facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun", quantity = "determiner", size = "phrase" }
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "polite-tail"
+message = "A request says por favor."
+must_contain = ["por favor"]
+
+[[checks]]
+check_id = "asks-not-states"
+message = "A request asks; it never says what you have or what there is."
+must_not_contain = ["^(tengo|hay)\\b"]
+
+[[checks]]
+check_id = "question-marks"
+message = "A ¿Me prestas…? or ¿Me pasas…? request is a question with both marks."
+must_contain = ["^¿", "\\?$"]
+uses = ["borrow", "pass"]

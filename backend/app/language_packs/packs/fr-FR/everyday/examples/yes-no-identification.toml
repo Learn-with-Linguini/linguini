@@ -1,0 +1,139 @@
+construction_id = "yes-no-identification"
+
+[[examples]]
+example_id = "ask-cup"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "Is this a cup?"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }] }
+bindings = { object = "object:cup", shown = "object:cup" }
+truth = true
+labels = []
+sentence = "C'est une tasse ?"
+translation = "Is this a cup?"
+chunks = [{ text = "C'est", join = "none" }, { text = "une", join = "space" }, { text = "tasse", join = "space" }, { text = "?", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "ask-plate"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "Is this a plate?"
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }] }
+bindings = { object = "object:plate", shown = "object:plate" }
+truth = true
+labels = []
+sentence = "C'est une assiette ?"
+translation = "Is this a plate?"
+chunks = [{ text = "C'est", join = "none" }, { text = "une", join = "space" }, { text = "assiette", join = "space" }, { text = "?", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "ask-bottle"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "Is this a bottle?"
+scene = { objects = [{ fact_id = "object:bottle", concept = "bottle" }] }
+bindings = { object = "object:bottle", shown = "object:bottle" }
+truth = true
+labels = []
+sentence = "C'est une bouteille ?"
+translation = "Is this a bottle?"
+chunks = [{ text = "C'est", join = "none" }, { text = "une", join = "space" }, { text = "bouteille", join = "space" }, { text = "?", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "answer-book-yes"
+levels = ["A1"]
+purposes = ["confirmObject"]
+meaning = "Yes, it is a book."
+scene = { objects = [{ fact_id = "object:book", concept = "book" }] }
+bindings = { shown = "object:book", object = "object:book" }
+truth = true
+labels = ["yes"]
+sentence = "Oui, c'est un livre."
+translation = "Yes, it is a book."
+chunks = [{ text = "Oui,", join = "none" }, { text = "c'est", join = "space" }, { text = "un", join = "space" }, { text = "livre.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "answer-chair-yes"
+levels = ["A1"]
+purposes = ["confirmObject"]
+meaning = "Yes, it is a chair."
+scene = { objects = [{ fact_id = "object:chair", concept = "chair" }] }
+bindings = { shown = "object:chair", object = "object:chair" }
+truth = true
+labels = ["yes"]
+sentence = "Oui, c'est une chaise."
+translation = "Yes, it is a chair."
+chunks = [{ text = "Oui,", join = "none" }, { text = "c'est", join = "space" }, { text = "une", join = "space" }, { text = "chaise.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "answer-clock-no"
+levels = ["A1"]
+purposes = ["confirmObject"]
+meaning = "No, it is a clock."
+scene = { objects = [{ fact_id = "object:clock", concept = "clock" }, { fact_id = "object:lamp", concept = "lamp" }] }
+bindings = { shown = "object:clock", object = "object:lamp" }
+truth = false
+labels = ["no"]
+sentence = "Non, c'est une horloge."
+translation = "No, it is a clock."
+chunks = [{ text = "Non,", join = "none" }, { text = "c'est", join = "space" }, { text = "une", join = "space" }, { text = "horloge.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "short-yes"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "Yes."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }] }
+bindings = { shown = "object:cup", object = "object:cup" }
+truth = true
+labels = []
+sentence = "Oui."
+translation = "Yes."
+chunks = [{ text = "Oui.", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "short-no"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "No."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }] }
+bindings = { shown = "object:cup", object = "object:book" }
+truth = false
+labels = []
+sentence = "Non."
+translation = "No."
+chunks = [{ text = "Non.", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-03"
+levels = ["A0"]
+purposes = ["confirmName"]
+sentence = "C'est une tasse."
+correction = "C'est une tasse ?"
+note = "The task requires a question; retain its question mark."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-04"
+levels = ["A1"]
+purposes = ["confirmObject"]
+sentence = "Non, c'est une lampe."
+correction = "Non, c'est une horloge."
+note = "Context: the shown object is a clock and the question proposed a lamp. Restate the shown object."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }

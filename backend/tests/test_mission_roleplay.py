@@ -8,8 +8,6 @@ from pydantic import ValidationError
 
 from app.schemas.roleplay import OwnershipFact, PreferenceFact, parse_roleplay_facts
 from app.services.mission_roleplay import assign_roleplay
-from app.services.possessives import possessive_sentence
-from app.services.preferences import preference_sentence
 
 
 def _ownership(object_id, **changes):
@@ -134,47 +132,9 @@ def test_non_missions_and_objects_without_review_markers_are_not_assigned():
     ) == []
 
 
-@pytest.mark.parametrize(("language", "person", "name", "noun", "gender", "expected"), [
-    ("es", "first", None, "libro", "el", "Es mi libro."),
-    ("es", "third", "Ana", "taza", "la", "Es su taza."),
-    ("fr", "first", None, "livre", "masculine", "C'est mon livre."),
-    ("fr", "third", "Ana", "tasse", "la", "C'est sa tasse."),
-    ("fr", "first", None, "assiette", "feminine", "C'est mon assiette."),
-    ("de", "first", None, "Buch", "das", "Das ist mein Buch."),
-    ("de", "first", None, "Tasse", "die", "Das ist meine Tasse."),
-    ("de", "third", "Leo", "Stuhl", "der", "Das ist sein Stuhl."),
-    ("de", "third", "Ana", "Tasse", "feminine", "Das ist ihre Tasse."),
-    ("ko", "first", None, "책", "masculine", "제 책이에요."),
-    ("ko", "third", "Leo", "사과", "feminine", "레오의 사과예요."),
-])
-def test_possessive_language_tables(language, person, name, noun, gender, expected):
-    assert possessive_sentence(language, person, name, noun, gender) == expected
 
 
-def test_possessives_refuse_unknown_gender_french_h_and_non_letter_nouns():
-    assert possessive_sentence("fr", "first", None, "livre", None) is None
-    assert possessive_sentence("fr", "first", None, "haricot", "masculine") is None
-    assert possessive_sentence("es", "first", None, "libro!", "masculine") is None
 
 
-@pytest.mark.parametrize(("language", "person", "name", "like", "noun", "gender", "expected"), [
-    ("es", "first", None, True, "libro", "el", "Me gusta el libro."),
-    ("es", "third", "Ana", False, "taza", "feminine", "A Ana no le gusta la taza."),
-    ("fr", "first", None, False, "tasse", "la", "Je n'aime pas la tasse."),
-    ("fr", "first", None, True, "assiette", "feminine", "J'aime l'assiette."),
-    ("fr", "third", "Ana", True, "tasse", "feminine", "Ana aime la tasse."),
-    ("de", "first", None, True, "Stuhl", "der", "Ich mag den Stuhl."),
-    ("de", "first", None, False, "Tasse", "die", "Ich mag die Tasse nicht."),
-    ("de", "third", "Leo", False, "Buch", "neuter", "Leo mag das Buch nicht."),
-    ("ko", "first", None, True, "책", "masculine", "저는 책을 좋아해요."),
-    ("ko", "first", None, False, "사과", "feminine", "저는 사과를 안 좋아해요."),
-    ("ko", "third", "Ana", False, "사과", "feminine", "아나는 사과를 안 좋아해요."),
-])
-def test_preference_language_tables(language, person, name, like, noun, gender, expected):
-    assert preference_sentence(language, person, name, like, noun, gender) == expected
 
 
-def test_preferences_refuse_unknown_gender_french_h_and_unknown_names():
-    assert preference_sentence("es", "first", None, True, "libro", None) is None
-    assert preference_sentence("fr", "first", None, True, "haricot", "masculine") is None
-    assert preference_sentence("de", "third", "Mina", True, "Buch", "das") is None

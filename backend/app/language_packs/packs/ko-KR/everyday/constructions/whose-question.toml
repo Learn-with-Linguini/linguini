@@ -1,0 +1,14 @@
+construction_id = "whose-question"
+version = 1
+summary = "Ask whose a named object is."
+guidance = "Ask 이 + noun + 은/는 누구 거예요?: 이 컵은 누구 거예요?"
+features = ["ownership", "question"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun" }
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "whose-frame"
+message = "Ask … 누구 거예요?"
+must_contain = ["누구 거예요\\?$"]

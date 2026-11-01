@@ -62,10 +62,10 @@ test("observed description practice appears without inventing returning words", 
 
 test("practice from incomplete sessions stays visible without inventing completed sessions", () => {
   const html = render({ previousSessions: 0, returningWords: [{ word: "taza", needsReview: true }], practiceFocuses: ["sceneDescription"] });
-  assert.match(html, /Drawn from your earlier practice\./);
   assert.match(html, /<strong>taza<\/strong>.*Review again/);
   assert.match(html, /describing what you see/);
   assert.doesNotMatch(html, /completed session/);
+  assert.doesNotMatch(html, /Drawn from your earlier practice|Based on \d+ completed/);
 });
 
 test("the practice API preserves provided personalization and supports older responses", async () => {

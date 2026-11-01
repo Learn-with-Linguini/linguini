@@ -57,6 +57,8 @@ The supplied palette is the starting point. These refinements preserve its inten
 | `--sage` | `#DCEBDD` | Learned-state fills and calm supporting surfaces |
 | `--teal` | `#2E9C99` | Correct states, secondary actions, progress confirmation |
 | `--teal-dark` | `#21716F` | Primary text on light surfaces, accessible teal labels |
+| `--basil` | `#21716F` | Basil rewards, totals, and leaf icons |
+| `--basil-surface` | `#DCEBDD` | Light teal background behind Basil rewards |
 | `--ink` | `#263238` | High-contrast text, icons, photo markers |
 | `--ink-muted` | `#667579` | Supporting copy, inactive icons |
 | `--line` | `#D9D2C3` | Quiet boundaries, dashed capture areas, dividers |
@@ -189,6 +191,14 @@ An illustrated thumbnail, a strong target-language word, a smaller translation, 
 
 Use a cream panel with a color-coded left detail and a concise human message: “Nice catch—*árbol* means tree.” Include a next action only if it moves the learner forward.
 
+### Basil reward
+
+Every compact Basil amount or earned-reward message uses the shared light-teal `--basil-surface` pill with dark-green `--basil` text and the dark-green Basil leaf icon. Keep this orientation consistent: the leaf and label are dark while the background is light. Apply the pill treatment on task lists, question progress, answer feedback, and completion states; never show a bare “+n Basil earned” text label beside the interface.
+
+### Mission badge
+
+Use the supplied square badge artwork for each mission, mapped by stable mission ID rather than display copy. Crop empty canvas from the source artwork and keep the surrounding card padding tight so the badge fills a compact row without excessive white space. Show the artwork in the Chef Badges collection beside the mission name, skill, and level progress. Unearned badges keep the same recognizable image but appear muted and desaturated; the written status and accessible label continue to explain whether the badge is earned and at which level.
+
 ## Key screens
 
 ### Welcome
@@ -215,9 +225,9 @@ Keep microphone setup short and visually quiet. Use the unnumbered title “Test
 
 ### Learning tasks
 
-The learning-task list is a launch page, not part of the task sequence itself. Do not show a phase label or progress trail there. Show the scene, a calm list of available tasks, and one filled action to begin the first task or continue the next incomplete one. Every task row may also open its task directly.
+The learning-task list is a launch page, not part of the task sequence itself. Do not show a phase label or progress trail there. Use the title “Your lesson” and explain the learning order in one line: review the words, then use them in missions. Keep the scene large enough to read comfortably, place its Basil reward over the image, and align Exit with the scene title so utility controls do not compress the image. Lead with a distinct “Start here” word-review card, followed by a connected mission section. Starting the review opens the first interactive vocabulary card directly; do not insert a separate translation-preview screen. This hierarchy recommends vocabulary first without gating the lesson: every mission row remains available and may open directly. Once vocabulary is complete, show its reviewed state and make the next unfinished mission the natural continuation.
 
-Each learning task has its own full page rather than opening in a bottom sheet. Put task progress at the top as “Task n of total,” followed by a title row with a compact “× Exit” control that returns home. Repeat this title-row exit on the task-list page so the learner can leave active practice at any time. Follow the title with guidance and one focused word card at a time. Give the card a warm pasta-yellow surface, set the target vocabulary in dark teal, and place the audio action in a generous white circular control so pronunciation remains easy to find. Use a small text counter for progress within the task so two progress bars never compete. Keep the underlined “Back to tasks” link beneath the filled orange action on individual tasks. Completing a task advances to the next task; the final task returns to the completed list, where I-Spy becomes the primary action.
+Each learning task has its own full page rather than opening in a bottom sheet. Put question progress at the top as “Question n of total,” followed by a title row with a compact “× Exit” control that returns home. The trail resets for every task, so it describes the learner's position inside the current activity rather than the number of tasks in the lesson. Repeat this title-row exit on the task-list page so the learner can leave active practice at any time. Follow the title with guidance and one focused word card at a time. Give the card a warm pasta-yellow surface, set the target vocabulary in dark teal, and place the audio action in a generous white circular control so pronunciation remains easy to find. Do not repeat the question counter inside the activity card. Keep the underlined “Back to tasks” link beneath the filled orange action on individual tasks. Completing a task advances to the next task; the final task returns to the completed list, where I-Spy becomes the primary action.
 
 ### Play I Spy
 

@@ -1,0 +1,7 @@
+.home-quick-play { cursor: default; }
+.home-quick-play__open { display: block; padding: 0; width: 100%; border: 0; background: transparent; color: inherit; text-align: left; font: inherit; cursor: pointer; }
+.home-quick-play__open:disabled { cursor: default; }
+.home-quick-play__open:focus-visible { outline: 3px solid var(--focus); outline-offset: -4px; }
+.home-quick-play__placeholder { display: grid; place-items: center; height: 100%; background: var(--cream); color: var(--teal-dark); }
+.home-quick-play__status { padding: 0 var(--space-4) var(--space-3); }
+.home-quick-play__status p { margin-top: 0; }

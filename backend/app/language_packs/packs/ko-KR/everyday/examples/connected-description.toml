@@ -1,0 +1,64 @@
+construction_id = "connected-description"
+
+[[examples]]
+example_id = "connect-cup-book"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+meaning = "There is a red cup and there is also a book."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }] }
+bindings = { object = "object:cup", other-object = "object:book", attribute = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "빨간 컵이 있고 책도 있어요."
+translation = "There is a red cup and there is also a book."
+chunks = [{ text = "빨간", join = "none" }, { text = "컵이", join = "space" }, { text = "있고", join = "space" }, { text = "책도", join = "space" }, { text = "있어요.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "connect-plate-apple"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+meaning = "There is a white plate and there is also a apple."
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }, { fact_id = "object:apple", concept = "apple" }], attributes = [{ fact_id = "attribute:plate-white", object = "object:plate", kind = "color", value = "white" }] }
+bindings = { object = "object:plate", other-object = "object:apple", attribute = "attribute:plate-white" }
+truth = true
+labels = []
+sentence = "하얀 접시가 있고 사과도 있어요."
+translation = "There is a white plate and there is also a apple."
+chunks = [{ text = "하얀", join = "none" }, { text = "접시가", join = "space" }, { text = "있고", join = "space" }, { text = "사과도", join = "space" }, { text = "있어요.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "connect-location-existence"
+levels = ["A2"]
+purposes = ["chooseSceneDescription", "buildSceneDescription"]
+meaning = "The shoe is under the chair. There is a bottle."
+scene = { objects = [{ fact_id = "object:shoe", concept = "shoe" }, { fact_id = "object:chair", concept = "chair" }, { fact_id = "object:bottle", concept = "bottle" }], relations = [{ fact_id = "relation:shoe-under-chair", subject = "object:shoe", reference = "object:chair", relation = "under" }] }
+bindings = { subject = "object:shoe", reference = "object:chair", other-object = "object:bottle", relation = "relation:shoe-under-chair" }
+truth = true
+labels = []
+sentence = "신발이 의자 아래에 있어요. 병이 있어요."
+translation = "The shoe is under the chair. There is a bottle."
+chunks = [{ text = "신발이", join = "none" }, { text = "의자", join = "space" }, { text = "아래에", join = "space" }, { text = "있어요.", join = "space" }, { text = "병이", join = "space" }, { text = "있어요.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-11"
+levels = ["A2"]
+purposes = ["chooseSceneDescription"]
+sentence = "파란 컵이 있고 책도 있어요."
+correction = "빨간 컵이 있고 책도 있어요."
+note = "The confirmed cup colour is red."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-12"
+levels = ["A2"]
+purposes = ["buildSceneDescription"]
+sentence = "빨간 컵이 있고 책도 있다."
+correction = "빨간 컵이 있고 책도 있어요."
+note = "The final plain-form 있다 breaks the selected polite haeyo register."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }

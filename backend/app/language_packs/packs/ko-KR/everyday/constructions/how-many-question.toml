@@ -1,0 +1,14 @@
+construction_id = "how-many-question"
+version = 1
+summary = "Ask how many of a counted object there are."
+guidance = "Ask noun + 이/가 + 몇 개 있어요?: 책이 몇 개 있어요? 컵이 몇 개 있어요? Choose 이 after a final consonant and 가 after a vowel."
+features = ["quantity-question"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun" }
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "how-many-frame"
+message = "Ask with 몇 개 … 있어요?"
+must_contain = ["몇 개", "있어요\\?$"]

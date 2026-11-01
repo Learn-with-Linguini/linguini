@@ -1,0 +1,119 @@
+# The closed grammar guided I-Spy clue frames and photo-room clues are built from.
+provenance = { source = "Moved unchanged from dev's hand-written I-Spy clue tables (app/services/ispy_clue_frames.py), 2026-10-25; not human-reviewed.", review_status = "unreviewed" }
+# Korean names the reference bare, before its position: 책상 위에 있어요.
+place = "{reference} {position} 있어요"
+
+[examples]
+colour = "사과는 빨간색이에요."
+location = "책이 책상 위에 있어요."
+
+[[prefixes]]
+frame = "colour"
+text = "이것은"
+
+[[prefixes]]
+frame = "location"
+text = "이것은"
+
+[[positions]]
+text = "위에"
+meaning = "on"
+example = "책이 책상 위에 있어요."
+
+[[positions]]
+text = "아래에"
+meaning = "under"
+example = "고양이가 의자 아래에 있어요."
+
+[[positions]]
+text = "옆에"
+meaning = "next to"
+example = "의자가 문 옆에 있어요."
+
+[[positions]]
+text = "앞에"
+meaning = "in front of"
+example = "개가 집 앞에 있어요."
+
+[[positions]]
+text = "뒤에"
+meaning = "behind"
+example = "나무가 집 뒤에 있어요."
+
+# A colour is said whole (빨간색이에요). A translated colour matches by the spellings
+# it is written in; the whole form itself is not one of them.
+[[colours]]
+meaning = "red"
+forms = ["빨간색이에요"]
+recognised = ["빨간색", "빨간", "빨강"]
+bank = true
+
+[[colours]]
+meaning = "blue"
+forms = ["파란색이에요"]
+recognised = ["파란색", "파란", "파랑"]
+bank = true
+
+[[colours]]
+meaning = "green"
+forms = ["초록색이에요"]
+recognised = ["초록색", "초록", "녹색"]
+bank = true
+
+[[colours]]
+meaning = "white"
+forms = ["하얀색이에요"]
+recognised = ["하얀색", "하얀", "흰색", "하양"]
+bank = true
+
+[[colours]]
+meaning = "black"
+forms = ["검은색이에요"]
+recognised = ["검은색", "검은", "검정", "검정색"]
+bank = true
+
+[[colours]]
+meaning = "yellow"
+forms = ["노란색이에요"]
+recognised = ["노란색", "노란", "노랑"]
+bank = true
+
+[[colours]]
+meaning = "purple"
+forms = ["보라색이에요"]
+recognised = ["보라색", "보라"]
+
+[[colours]]
+meaning = "gold"
+forms = ["금색이에요"]
+recognised = ["금색"]
+
+[[colours]]
+meaning = "silver"
+forms = ["은색이에요"]
+recognised = ["은색"]
+
+[[colours]]
+meaning = "grey"
+forms = ["회색이에요"]
+recognised = ["회색"]
+
+[[colours]]
+meaning = "brown"
+forms = ["갈색이에요"]
+recognised = ["갈색"]
+
+[[colours]]
+meaning = "pink"
+forms = ["분홍색이에요"]
+recognised = ["분홍색", "분홍"]
+
+[[colours]]
+meaning = "orange"
+forms = ["주황색이에요"]
+recognised = ["주황색", "주황"]
+
+[[colours]]
+meaning = "beige"
+forms = ["베이지색이에요"]
+recognised = ["베이지색", "베이지"]

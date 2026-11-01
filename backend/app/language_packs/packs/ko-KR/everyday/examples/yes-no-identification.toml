@@ -1,0 +1,139 @@
+construction_id = "yes-no-identification"
+
+[[examples]]
+example_id = "ask-cup"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "Is this a cup?"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }] }
+bindings = { object = "object:cup", shown = "object:cup" }
+truth = true
+labels = []
+sentence = "컵이에요?"
+translation = "Is this a cup?"
+chunks = [{ text = "컵이에요?", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "ask-plate"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "Is this a plate?"
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }] }
+bindings = { object = "object:plate", shown = "object:plate" }
+truth = true
+labels = []
+sentence = "접시예요?"
+translation = "Is this a plate?"
+chunks = [{ text = "접시예요?", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "ask-bottle"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "Is this a bottle?"
+scene = { objects = [{ fact_id = "object:bottle", concept = "bottle" }] }
+bindings = { object = "object:bottle", shown = "object:bottle" }
+truth = true
+labels = []
+sentence = "병이에요?"
+translation = "Is this a bottle?"
+chunks = [{ text = "병이에요?", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "answer-book-yes"
+levels = ["A1"]
+purposes = ["confirmObject"]
+meaning = "Yes, it is a book."
+scene = { objects = [{ fact_id = "object:book", concept = "book" }] }
+bindings = { shown = "object:book", object = "object:book" }
+truth = true
+labels = ["yes"]
+sentence = "네, 책이에요."
+translation = "Yes, it is a book."
+chunks = [{ text = "네,", join = "none" }, { text = "책이에요.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "answer-chair-yes"
+levels = ["A1"]
+purposes = ["confirmObject"]
+meaning = "Yes, it is a chair."
+scene = { objects = [{ fact_id = "object:chair", concept = "chair" }] }
+bindings = { shown = "object:chair", object = "object:chair" }
+truth = true
+labels = ["yes"]
+sentence = "네, 의자예요."
+translation = "Yes, it is a chair."
+chunks = [{ text = "네,", join = "none" }, { text = "의자예요.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "answer-clock-no"
+levels = ["A1"]
+purposes = ["confirmObject"]
+meaning = "No, it is a clock."
+scene = { objects = [{ fact_id = "object:clock", concept = "clock" }, { fact_id = "object:lamp", concept = "lamp" }] }
+bindings = { shown = "object:clock", object = "object:lamp" }
+truth = false
+labels = ["no"]
+sentence = "아니요, 시계예요."
+translation = "No, it is a clock."
+chunks = [{ text = "아니요,", join = "none" }, { text = "시계예요.", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "short-yes"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "Yes."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }] }
+bindings = { shown = "object:cup", object = "object:cup" }
+truth = true
+labels = []
+sentence = "네."
+translation = "Yes."
+chunks = [{ text = "네.", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "short-no"
+levels = ["A0"]
+purposes = ["confirmName"]
+meaning = "No."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }] }
+bindings = { shown = "object:cup", object = "object:book" }
+truth = false
+labels = []
+sentence = "아니요."
+translation = "No."
+chunks = [{ text = "아니요.", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-03"
+levels = ["A0"]
+purposes = ["confirmName"]
+sentence = "컵이에요."
+correction = "컵이에요?"
+note = "A question prompt must carry question punctuation."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-04"
+levels = ["A1"]
+purposes = ["confirmObject"]
+sentence = "아니요, 램프예요."
+correction = "아니요, 시계예요."
+note = "Context: the shown object is a clock, not the proposed lamp; restate 시계."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }

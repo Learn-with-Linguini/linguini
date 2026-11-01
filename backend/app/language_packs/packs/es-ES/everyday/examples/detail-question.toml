@@ -1,0 +1,40 @@
+construction_id = "detail-question"
+
+[[examples]]
+example_id = "ask-eat-in-or-take-away"
+levels = ["A2"]
+purposes = ["identifyMissingDetail"]
+meaning = "To have here or to take away?"
+scene = { objects = [{ fact_id = "object:coffee", concept = "coffee" }], requests = [{ fact_id = "request:quantity", object = "object:coffee", field = "quantity", value = "2" }, { fact_id = "request:size", object = "object:coffee", field = "size", value = "small" }, { fact_id = "request:serviceSetting", object = "object:coffee", field = "serviceSetting", value = "takeAway" }] }
+bindings = { target = "object:coffee" }
+truth = true
+labels = []
+sentence = "¿Para tomar aquí o para llevar?"
+translation = "To have here or to take away?"
+chunks = [{ text = "¿Para", join = "none" }, { text = "tomar", join = "space" }, { text = "aquí", join = "space" }, { text = "o", join = "space" }, { text = "para", join = "space" }, { text = "llevar", join = "space" }, { text = "?", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "ask-which-colour"
+levels = ["A2"]
+purposes = ["identifyMissingDetail"]
+meaning = "Which colour?"
+scene = { objects = [{ fact_id = "object:pen", concept = "pen" }], requests = [{ fact_id = "request:quantity", object = "object:pen", field = "quantity", value = "1" }, { fact_id = "request:colour", object = "object:pen", field = "colour", value = "blue" }] }
+bindings = { target = "object:pen" }
+truth = true
+labels = []
+sentence = "¿De qué color?"
+translation = "Which colour?"
+chunks = [{ text = "¿De", join = "none" }, { text = "qué", join = "space" }, { text = "color", join = "space" }, { text = "?", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "question-gives-answer"
+levels = ["A2"]
+purposes = ["identifyMissingDetail"]
+sentence = "¿Para llevar?"
+correction = "¿Para tomar aquí o para llevar?"
+note = "The server offers both choices; it does not know the answer yet."
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }

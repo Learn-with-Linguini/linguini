@@ -8,6 +8,7 @@ from sqlalchemy import delete, insert, select, update
 from test_background_jobs import DeferringRunner
 from test_postgres_sessions import database as database
 from test_preloaded_templates import (
+    PACK_SCHEMAS,
     RESERVE,
     SceneModel,
     scene_row,
@@ -126,7 +127,7 @@ def test_a2_lesson_reuses_unchanged_preloaded_templates(curated):
             .where(language_profiles.c.id == profile.id)
             .values(proficiency_level="A2")
         )
-    model = SceneModel(error=AssertionError("provider must not be called"))
+    model = SceneModel()
     response = client.post(
         "/api/v1/sessions",
         json={
@@ -160,7 +161,11 @@ def test_a2_lesson_reuses_unchanged_preloaded_templates(curated):
     tasks = repo.get(session_id, profile.id).tasks
     missions = {task.public_content.mission_id for task in tasks}
     assert "M04" in missions
-    assert model.requests == []
+    # Mission lessons come from the pack, which writes and reviews them with the model;
+    # every other stored template (I-Spy clues, the regular lesson) is still reused.
+    assert set(model.requests) <= {
+        "scene_translation_v1", "pack_translation_review", *PACK_SCHEMAS,
+    }
 
 
 def test_repeated_preloaded_objects_save_counted_group_and_plan_m03(curated, monkeypatch):

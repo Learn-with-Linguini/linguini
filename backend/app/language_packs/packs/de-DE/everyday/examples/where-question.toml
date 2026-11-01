@@ -1,0 +1,25 @@
+construction_id = "where-question"
+
+[[examples]]
+example_id = "where-cup"
+levels = ["A1"]
+purposes = ["askWhere"]
+meaning = "Where is the cup?"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }] }
+bindings = { subject = "object:cup" }
+truth = true
+labels = []
+sentence = "Wo ist die Tasse?"
+translation = "Where is the cup?"
+chunks = [{ text = "Wo", join = "none" }, { text = "ist", join = "space" }, { text = "die", join = "space" }, { text = "Tasse", join = "space" }, { text = "?", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "where-cup-form"
+levels = ["A1"]
+purposes = ["askWhere"]
+sentence = "Wo die Tasse ist?"
+correction = "Wo ist die Tasse?"
+note = "In a question the verb comes second: Wo ist die Tasse?"
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }

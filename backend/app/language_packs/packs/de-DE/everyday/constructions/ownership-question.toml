@@ -1,0 +1,14 @@
+construction_id = "ownership-question"
+version = 1
+summary = "Ask whether the object is the listener's, without naming it."
+guidance = "Ask Gehört das dir?; do not name the object."
+features = ["ownership", "question"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { owner = "determiner" }
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "question-frame"
+message = "Ask Gehört …?"
+must_contain = ["^gehört ", "\\?$"]

@@ -1,0 +1,68 @@
+mission_id = "M03"
+practice_level = "A0"
+content_version = 1
+language_code = "es"
+text_direction = "ltr"
+title = "Count objects from one to ten"
+
+[[concepts]]
+concept_id = "count-small-group"
+title = "Numbers 1–10"
+explanation = "Tap a number to hear it. This mission practises one, two, and three."
+
+[[concepts.reference_items]]
+label = "1"
+target_text = "uno / una"
+[[concepts.reference_items]]
+label = "2"
+target_text = "dos"
+[[concepts.reference_items]]
+label = "3"
+target_text = "tres"
+[[concepts.reference_items]]
+label = "4"
+target_text = "cuatro"
+[[concepts.reference_items]]
+label = "5"
+target_text = "cinco"
+[[concepts.reference_items]]
+label = "6"
+target_text = "seis"
+[[concepts.reference_items]]
+label = "7"
+target_text = "siete"
+[[concepts.reference_items]]
+label = "8"
+target_text = "ocho"
+[[concepts.reference_items]]
+label = "9"
+target_text = "nueve"
+[[concepts.reference_items]]
+label = "10"
+target_text = "diez"
+
+[[concepts.examples]]
+target_text = "uno, dos, tres"
+translation = "one, two, three"
+
+[[concepts]]
+concept_id = "number-noun-chunk"
+title = "Use a plural object after two or more"
+explanation = "The number comes before the object."
+formula = "number + object"
+tips = [
+  "After a vowel, usually add -s: taza → tazas.",
+  "After a consonant, usually add -es: color → colores.",
+]
+
+[[concepts.examples]]
+target_text = "una taza"
+translation = "one cup"
+
+[[concepts.examples]]
+target_text = "dos tazas"
+translation = "two cups"
+
+[[concepts.examples]]
+target_text = "tres tazas"
+translation = "three cups"

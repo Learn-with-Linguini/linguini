@@ -4,12 +4,9 @@ from __future__ import annotations
 
 import re
 from collections import Counter
-from collections.abc import Callable
-from dataclasses import dataclass
 from typing import Any
 
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
-from app.schemas.base import ApiModel
 
 _TOKEN = re.compile(r"[^\s.,!?;:'’]+['’]?|[.,!?;:]")
 
@@ -51,16 +48,3 @@ def unique_question_ids(questions: list[Any]) -> None:
         raise LearningTaskGenerationError("Question ids must be unique within the lesson.")
 
 
-@dataclass(frozen=True)
-class MissionGeneration:
-    """Prompt, schema, validator and fallback that generate one mission's lesson."""
-
-    prompt_version: str
-    schema_version: str
-    validator_version: str
-    system_prompt: str
-    result_model: type[ApiModel]
-    validate: Callable[[dict[str, Any], Any], None]
-    fallback: Callable[[dict[str, Any]], Any]
-    json_schema_name: str
-    uses_model: bool = True

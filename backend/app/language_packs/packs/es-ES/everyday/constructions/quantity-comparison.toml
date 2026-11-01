@@ -1,0 +1,14 @@
+construction_id = "quantity-comparison"
+version = 1
+summary = "Say which of two counted groups has more or fewer objects."
+guidance = "Compare with Hay más/menos + first plural noun + que + second plural noun: Hay más libros que tazas. Use más (the more label) when the first group is larger and menos (the fewer label) when it is smaller."
+features = ["quantity-comparison"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { first = "noun", second = "noun" }
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "comparison-frame"
+message = "Compare with Hay más/menos … que …"
+must_contain = ["^hay (más|menos) ", " que "]

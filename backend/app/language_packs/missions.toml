@@ -1,0 +1,498 @@
+[[missions]]
+mission_id = "M01"
+practice_level = "A0"
+content_version = 1
+sequence_repeat = 2
+required_constructions = [
+  { construction_id = "identify-object", min_version = 1 },
+  { construction_id = "yes-no-identification", min_version = 1 },
+]
+[[missions.slots]]
+purpose = "matchName"
+construction_id = "identify-object"
+target_ids = ["recognise-name"]
+
+[[missions.slots]]
+purpose = "confirmName"
+construction_id = "yes-no-identification"
+target_ids = ["identify-object"]
+prompt_labels = ["yes-answer", "no-answer"]
+
+[[missions.slots]]
+purpose = "buildIdentify"
+construction_id = "identify-object"
+target_ids = ["identify-object"]
+prompt_labels = ["what-is-this"]
+
+[[missions]]
+mission_id = "M01"
+practice_level = "A1"
+content_version = 1
+required_constructions = [
+  { construction_id = "yes-no-identification", min_version = 1 },
+  { construction_id = "describe-attribute", min_version = 1 },
+]
+
+[[missions.slots]]
+purpose = "confirmObject"
+construction_id = "yes-no-identification"
+target_ids = ["identify-object", "name-object"]
+repeat = 2
+sentence_labels = ["yes", "no"]
+
+[[missions.slots]]
+purpose = "chooseAttribute"
+construction_id = "describe-attribute"
+target_ids = ["describe-colour"]
+prompt_labels = ["attribute-prompt-colour"]
+
+[[missions.slots]]
+purpose = "describeObject"
+construction_id = "describe-attribute"
+target_ids = ["name-object", "describe-colour"]
+prompt_labels = ["describe-object"]
+
+[[missions]]
+mission_id = "M01"
+practice_level = "A2"
+content_version = 1
+required_constructions = [
+  { construction_id = "scene-existence", min_version = 1 },
+  { construction_id = "scene-location", min_version = 1 },
+  { construction_id = "connected-description", min_version = 1 },
+  { construction_id = "describe-attribute", min_version = 1 },
+]
+
+[[missions.slots]]
+purpose = "chooseSceneMarker"
+construction_id = "scene-existence"
+additional_constructions = ["scene-location"]
+target_ids = ["identify-scene-object"]
+prompt_labels = ["touch-object"]
+
+[[missions.slots]]
+purpose = "buildSceneFact"
+construction_id = "scene-location"
+additional_constructions = ["scene-existence"]
+target_ids = ["describe-scene-facts"]
+prompt_labels = ["build-second-fact"]
+
+[[missions.slots]]
+purpose = "chooseSceneDescription"
+construction_id = "connected-description"
+additional_constructions = ["scene-existence", "scene-location", "describe-attribute"]
+target_ids = ["describe-scene-facts"]
+prompt_labels = ["choose-description"]
+
+[[missions.slots]]
+purpose = "buildSceneDescription"
+construction_id = "connected-description"
+additional_constructions = ["scene-existence", "scene-location"]
+target_ids = ["connect-scene-facts"]
+prompt_labels = ["describe-scene"]
+
+[[missions.slots]]
+purpose = "followUpSceneFact"
+construction_id = "describe-attribute"
+additional_constructions = ["scene-location"]
+target_ids = ["follow-up-scene-fact"]
+
+[[missions]]
+mission_id = "M02"
+practice_level = "A0"
+content_version = 1
+sequence_repeat = 2
+required_constructions = [
+  { construction_id = "find-object", min_version = 1 },
+  { construction_id = "identify-object", min_version = 1 },
+]
+[[missions.slots]]
+purpose = "findNamed"
+construction_id = "find-object"
+target_ids = ["find-object"]
+
+[[missions.slots]]
+purpose = "chooseName"
+construction_id = "identify-object"
+target_ids = ["recognise-name"]
+
+[[missions.slots]]
+purpose = "listenSelect"
+construction_id = "identify-object"
+target_ids = ["find-object"]
+
+[[missions]]
+mission_id = "M02"
+practice_level = "A1"
+content_version = 2
+required_constructions = [
+  { construction_id = "scene-location", min_version = 1 },
+  { construction_id = "location-phrase", min_version = 1 },
+  { construction_id = "where-question", min_version = 1 },
+]
+[[missions.slots]]
+purpose = "findObject"
+construction_id = "scene-location"
+target_ids = ["understand-location"]
+
+[[missions.slots]]
+purpose = "chooseLocation"
+construction_id = "location-phrase"
+target_ids = ["recognise-position"]
+
+[[missions.slots]]
+purpose = "askWhere"
+construction_id = "where-question"
+target_ids = ["build-question", "name-object"]
+prompt_labels = ["ask-where"]
+
+[[missions.slots]]
+purpose = "answerWhere"
+construction_id = "scene-location"
+target_ids = ["describe-location", "name-object"]
+prompt_labels = ["answer-where"]
+
+[[missions]]
+mission_id = "M02"
+practice_level = "A2"
+content_version = 1
+required_constructions = [
+  { construction_id = "target-clue", min_version = 1 },
+  { construction_id = "target-location", min_version = 1 },
+]
+[[missions.slots]]
+purpose = "readAttributeClue"
+construction_id = "target-clue"
+target_ids = ["understand-target-clues"]
+prompt_labels = ["clue-meaning"]
+
+[[missions.slots]]
+purpose = "buildLocationClue"
+construction_id = "target-clue"
+target_ids = ["understand-target-clues"]
+prompt_labels = ["build-location-clue"]
+
+[[missions.slots]]
+purpose = "chooseUniqueTarget"
+construction_id = "target-clue"
+target_ids = ["find-target-object"]
+prompt_labels = ["find-both-clues"]
+
+[[missions.slots]]
+purpose = "clarifyDistractor"
+construction_id = "target-clue"
+target_ids = ["clarify-target"]
+prompt_labels = ["friend-points", "yes-answer"]
+sentence_labels = ["no"]
+
+[[missions.slots]]
+purpose = "buildTargetSentence"
+construction_id = "target-location"
+target_ids = ["name-located-target"]
+prompt_labels = ["name-and-locate", "connector-distractor"]
+
+[[missions]]
+mission_id = "M03"
+practice_level = "A0"
+content_version = 1
+sequence_repeat = 2
+required_constructions = [
+  { construction_id = "how-many-question", min_version = 1 },
+  { construction_id = "quantity-chunk", min_version = 1 },
+]
+required_numbers = [1, 2, 3]
+[[missions.slots]]
+purpose = "countGroup"
+construction_id = "how-many-question"
+target_ids = ["count-small-group"]
+
+[[missions.slots]]
+purpose = "matchChunk"
+construction_id = "quantity-chunk"
+target_ids = ["number-noun-chunk"]
+
+[[missions.slots]]
+purpose = "buildChunk"
+construction_id = "quantity-chunk"
+target_ids = ["number-noun-chunk"]
+
+[[missions]]
+mission_id = "M03"
+practice_level = "A1"
+content_version = 1
+required_constructions = [
+  { construction_id = "how-many-question", min_version = 1 },
+  { construction_id = "quantity-statement", min_version = 1 },
+]
+required_numbers = [2, 3, 4, 5, 6, 7, 8, 9, 10]
+[[missions.slots]]
+purpose = "chooseQuantity"
+construction_id = "how-many-question"
+target_ids = ["say-quantity"]
+
+[[missions.slots]]
+purpose = "buildQuantity"
+construction_id = "quantity-statement"
+target_ids = ["say-quantity", "plural-noun"]
+prompt_labels = ["answer-in-sentence"]
+
+[[missions.slots]]
+purpose = "matchQuantity"
+construction_id = "quantity-statement"
+target_ids = ["understand-quantity"]
+
+[[missions]]
+mission_id = "M03"
+practice_level = "A2"
+content_version = 1
+required_constructions = [
+  { construction_id = "how-many-question", min_version = 1 },
+  { construction_id = "quantity-statement", min_version = 1 },
+  { construction_id = "quantity-comparison", min_version = 1 },
+  { construction_id = "quantity-pair", min_version = 1 },
+]
+required_numbers = [2, 3, 4, 5, 6, 7, 8, 9, 10]
+[[missions.slots]]
+purpose = "countGroup"
+construction_id = "how-many-question"
+target_ids = ["understand-counts"]
+
+[[missions.slots]]
+purpose = "buildQuantity"
+construction_id = "quantity-statement"
+target_ids = ["describe-counts"]
+prompt_labels = ["build-group-sentence"]
+
+[[missions.slots]]
+purpose = "compareGroups"
+construction_id = "quantity-comparison"
+target_ids = ["compare-counts"]
+prompt_labels = ["choose-comparison"]
+sentence_labels = ["more", "fewer"]
+
+[[missions.slots]]
+purpose = "correctRoleplayCount"
+construction_id = "quantity-statement"
+target_ids = ["correct-count-mistake"]
+prompt_labels = ["friend-says", "friend-is-right"]
+sentence_labels = ["no"]
+
+[[missions.slots]]
+purpose = "buildComparison"
+construction_id = "quantity-pair"
+target_ids = ["compare-counts"]
+prompt_labels = ["describe-compare"]
+
+[[missions]]
+mission_id = "M04"
+practice_level = "A0"
+content_version = 1
+required_constructions = [
+  { construction_id = "ownership-question", min_version = 1 },
+  { construction_id = "ownership-statement", min_version = 1 },
+  { construction_id = "owned-object", min_version = 1 },
+]
+required_possessors = ["first", "second"]
+
+[[missions.slots]]
+purpose = "askOwnership"
+construction_id = "ownership-question"
+target_ids = ["recognise-ownership"]
+
+[[missions.slots]]
+purpose = "answerOwnership"
+construction_id = "ownership-statement"
+target_ids = ["say-mine"]
+prompt_labels = ["yes-answer"]
+
+[[missions.slots]]
+purpose = "sayOwnedObject"
+construction_id = "owned-object"
+target_ids = ["say-mine"]
+
+[[missions]]
+mission_id = "M04"
+practice_level = "A1"
+content_version = 1
+required_constructions = [
+  { construction_id = "possessive-statement", min_version = 1 },
+  { construction_id = "whose-question", min_version = 1 },
+]
+required_possessors = ["first", "ana", "leo"]
+
+[[missions.slots]]
+purpose = "chooseOwner"
+construction_id = "possessive-statement"
+target_ids = ["choose-possessive"]
+prompt_labels = ["choose-sentence"]
+
+[[missions.slots]]
+purpose = "buildMine"
+construction_id = "possessive-statement"
+additional_constructions = ["whose-question"]
+target_ids = ["say-mine"]
+prompt_labels = ["answer-in-sentence"]
+
+[[missions.slots]]
+purpose = "buildTheirs"
+construction_id = "possessive-statement"
+additional_constructions = ["whose-question"]
+target_ids = ["say-theirs"]
+prompt_labels = ["answer-in-sentence"]
+
+[[missions]]
+mission_id = "M04"
+practice_level = "A2"
+content_version = 1
+required_constructions = [
+  { construction_id = "target-clue", min_version = 1 },
+  { construction_id = "owned-object", min_version = 1 },
+  { construction_id = "owned-description", min_version = 1 },
+  { construction_id = "possessive-statement", min_version = 1 },
+]
+required_possessors = ["first", "second", "ana"]
+
+[[missions.slots]]
+purpose = "chooseAssignedObject"
+construction_id = "target-clue"
+target_ids = ["identify-owned-object"]
+prompt_labels = ["which-is-yours"]
+
+[[missions.slots]]
+purpose = "choosePossessive"
+construction_id = "possessive-statement"
+target_ids = ["use-possessive"]
+prompt_labels = ["choose-possessive"]
+
+[[missions.slots]]
+purpose = "buildBelonging"
+construction_id = "owned-description"
+target_ids = ["describe-belonging"]
+prompt_labels = ["describe-your-object"]
+
+[[missions.slots]]
+purpose = "clarifyOwnership"
+construction_id = "owned-object"
+additional_constructions = ["possessive-statement"]
+target_ids = ["clarify-ownership"]
+prompt_labels = ["friend-points"]
+sentence_labels = ["no", "yes"]
+
+[[missions.slots]]
+purpose = "buildOwnershipDescription"
+construction_id = "owned-description"
+additional_constructions = ["owned-object"]
+target_ids = ["describe-belonging"]
+prompt_labels = ["clarify-and-describe"]
+
+[[missions]]
+mission_id = "M05"
+practice_level = "A0"
+content_version = 1
+required_constructions = [
+  { construction_id = "preference-question", min_version = 1 },
+  { construction_id = "my-preference", min_version = 1 },
+  { construction_id = "choice-statement", min_version = 1 },
+]
+
+[[missions.slots]]
+purpose = "askPreference"
+construction_id = "preference-question"
+target_ids = ["recognise-preference"]
+
+[[missions.slots]]
+purpose = "sayPreference"
+construction_id = "my-preference"
+target_ids = ["say-preference"]
+prompt_labels = ["yes-answer", "no-answer"]
+
+[[missions.slots]]
+purpose = "sayChoice"
+construction_id = "choice-statement"
+target_ids = ["say-preference"]
+prompt_labels = ["what-choose"]
+
+[[missions]]
+mission_id = "M05"
+practice_level = "A1"
+content_version = 1
+required_constructions = [
+  { construction_id = "their-preference", min_version = 1 },
+  { construction_id = "my-preference", min_version = 1 },
+  { construction_id = "preference-question", min_version = 1 },
+]
+required_possessors = ["ana", "leo"]
+
+[[missions.slots]]
+purpose = "choosePreference"
+construction_id = "their-preference"
+target_ids = ["choose-preference"]
+prompt_labels = ["choose-sentence"]
+
+[[missions.slots]]
+purpose = "buildMyPreference"
+construction_id = "my-preference"
+additional_constructions = ["preference-question"]
+target_ids = ["say-my-preference"]
+prompt_labels = ["answer-in-sentence"]
+
+[[missions.slots]]
+purpose = "buildTheirPreference"
+construction_id = "their-preference"
+additional_constructions = ["preference-question"]
+target_ids = ["say-their-preference"]
+prompt_labels = ["answer-in-sentence"]
+
+[[missions]]
+mission_id = "M06"
+practice_level = "A2"
+content_version = 1
+required_constructions = [
+  { construction_id = "polite-request", min_version = 1 },
+  { construction_id = "order-phrase", min_version = 1 },
+  { construction_id = "detail-question", min_version = 1 },
+  { construction_id = "detail-reply", min_version = 1 },
+  { construction_id = "order-repeat", min_version = 1 },
+  { construction_id = "order-confirmation", min_version = 1 },
+  { construction_id = "order-repair", min_version = 1 },
+]
+required_requests = [
+  "quantity:1", "quantity:2", "quantity:3",
+  "size:small", "size:large",
+  "serviceSetting:eatIn", "serviceSetting:takeAway",
+  "temperature:hot", "temperature:cold",
+  "colour:blue", "colour:red", "colour:black",
+]
+
+[[missions.slots]]
+purpose = "listenOrderCard"
+construction_id = "polite-request"
+target_ids = ["understand-order"]
+
+[[missions.slots]]
+purpose = "politeChunkGap"
+construction_id = "order-phrase"
+target_ids = ["use-request-chunk"]
+prompt_labels = ["request-distractor-have", "request-distractor-exists"]
+
+[[missions.slots]]
+purpose = "buildRequest"
+construction_id = "order-phrase"
+target_ids = ["build-request"]
+prompt_labels = ["request-distractor-have"]
+
+[[missions.slots]]
+purpose = "identifyMissingDetail"
+construction_id = "detail-question"
+target_ids = ["identify-missing-detail"]
+
+[[missions.slots]]
+purpose = "replyWithDetail"
+construction_id = "detail-reply"
+target_ids = ["reply-with-detail"]
+
+[[missions.slots]]
+purpose = "confirmOrRepair"
+construction_id = "order-repeat"
+additional_constructions = ["order-confirmation", "order-repair"]
+target_ids = ["confirm-or-repair"]

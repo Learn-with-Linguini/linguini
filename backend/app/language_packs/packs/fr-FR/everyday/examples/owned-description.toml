@@ -1,0 +1,40 @@
+construction_id = "owned-description"
+
+[[examples]]
+example_id = "my-red-cup"
+levels = ["A2"]
+purposes = ["buildBelonging", "buildOwnershipDescription"]
+meaning = "My cup is red."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }, { fact_id = "object:table", concept = "table" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }], owners = [{ fact_id = "owner:cup", object = "object:cup", owner = "first" }, { fact_id = "owner:book", object = "object:book", owner = "ana" }, { fact_id = "owner:key", object = "object:key", owner = "leo" }] }
+bindings = { object = "object:cup", owner = "owner:cup", attribute = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "Ma tasse est rouge."
+translation = "My cup is red."
+chunks = [{ text = "Ma", join = "none" }, { text = "tasse", join = "space" }, { text = "est", join = "space" }, { text = "rouge", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "my-cup-on-table"
+levels = ["A2"]
+purposes = ["buildBelonging"]
+meaning = "My cup is on the table."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }, { fact_id = "object:table", concept = "table" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }], owners = [{ fact_id = "owner:cup", object = "object:cup", owner = "first" }, { fact_id = "owner:book", object = "object:book", owner = "ana" }, { fact_id = "owner:key", object = "object:key", owner = "leo" }] }
+bindings = { object = "object:cup", owner = "owner:cup", relation = "relation:cup-on-table", reference = "object:table" }
+truth = true
+labels = []
+sentence = "Ma tasse est sur la table."
+translation = "My cup is on the table."
+chunks = [{ text = "Ma", join = "none" }, { text = "tasse", join = "space" }, { text = "est", join = "space" }, { text = "sur", join = "space" }, { text = "la", join = "space" }, { text = "table", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "my-red-cup-form"
+levels = ["A2"]
+purposes = ["buildBelonging", "buildOwnershipDescription"]
+sentence = "Mon tasse est rouge."
+correction = "Ma tasse est rouge."
+note = "Ma agrees with the feminine tasse."
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }

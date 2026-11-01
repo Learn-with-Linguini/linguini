@@ -137,6 +137,13 @@ export const CheckIcon = ({ size = 20, className }: IconProps) => (
   </svg>
 );
 
+export const LockIcon = ({ size = 20, className }: IconProps) => (
+  <svg {...base(size)} className={className}>
+    <rect x="5" y="11" width="14" height="9" rx="2" />
+    <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+  </svg>
+);
+
 export const CloseIcon = ({ size = 20, className }: IconProps) => (
   <svg {...base(size)} className={className}>
     <path d="m7 7 10 10M17 7 7 17" />

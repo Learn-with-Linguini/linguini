@@ -1,0 +1,73 @@
+mission_id = "M04"
+practice_level = "A1"
+content_version = 1
+
+[[cases]]
+case_id = "m04-a1-my-plate"
+category = "wrongOwner"
+construction_id = "possessive-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }], owners = [{ fact_id = "owner:plate", object = "object:plate", owner = "first" }] }
+bindings = { object = "object:plate", owner = "owner:plate" }
+truth = true
+input = "Say it is your plate."
+expected_meaning = "It's my plate."
+acceptable = ["제 접시예요."]
+reject = [{ sentence = "아나의 접시예요.", category = "wrongOwner", reason = "In the role-play the plate is yours." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m04-a1-anas-bag"
+category = "wrongOwner"
+construction_id = "possessive-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }], owners = [{ fact_id = "owner:bag", object = "object:bag", owner = "ana" }] }
+bindings = { object = "object:bag", owner = "owner:bag" }
+truth = true
+input = "Say it is Ana's bag."
+expected_meaning = "It's her bag."
+acceptable = ["아나의 가방이에요."]
+reject = [{ sentence = "제 가방이에요.", category = "wrongOwner", reason = "In the role-play the bag is Ana's." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m04-a1-leos-door"
+category = "wrongOwner"
+construction_id = "possessive-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:door", concept = "door" }, { fact_id = "object:bag", concept = "bag" }, { fact_id = "object:key", concept = "key" }], owners = [{ fact_id = "owner:door", object = "object:door", owner = "leo" }] }
+bindings = { object = "object:door", owner = "owner:door" }
+truth = true
+input = "Say it is Leo's door."
+expected_meaning = "It's his door."
+acceptable = ["레오의 문이에요."]
+reject = [{ sentence = "아나의 문이에요.", category = "wrongOwner", reason = "In the role-play the door is Leo's." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m04-a1-whose-book"
+category = "wrongObject"
+construction_id = "whose-question"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }] }
+bindings = { object = "object:book" }
+truth = true
+input = "Ask whose the book is."
+expected_meaning = "Whose is the book?"
+acceptable = ["이 책은 누구 거예요?"]
+reject = [{ sentence = "이 컵은 누구 거예요?", category = "wrongObject", reason = "The question is about the book." }, { sentence = "이 책은 누구 거예요.", category = "punctuation", reason = "The question keeps its question frame." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m04-a1-held-unicode"
+category = "unicode"
+construction_id = "possessive-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:phone", concept = "phone" }], owners = [{ fact_id = "owner:phone", object = "object:phone", owner = "first" }] }
+bindings = { object = "object:phone", owner = "owner:phone" }
+truth = true
+input = "Say it is your phone."
+expected_meaning = "It's my phone."
+acceptable = ["제 휴대폰이에요."]
+reject = [{ sentence = "\u110c\u1166 \u1112\u1172\u1103\u1162\u1111\u1169\u11ab\u110b\u1175\u110b\u1166\u110b\u116d.", category = "unicode", reason = "The rejected candidate contains decomposed characters." }]
+provenance = { source = "Held-out M04 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }

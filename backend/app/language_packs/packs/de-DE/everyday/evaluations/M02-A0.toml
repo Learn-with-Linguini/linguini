@@ -1,0 +1,104 @@
+mission_id = "M02"
+practice_level = "A0"
+content_version = 1
+
+[[cases]]
+case_id = "m02-a0-find-bag"
+category = "wrongObject"
+construction_id = "find-object"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }, { fact_id = "object:cup", concept = "cup" }] }
+bindings = { object = "object:bag" }
+truth = true
+input = "Tell the learner to find the bag."
+expected_meaning = "Find the bag."
+acceptable = ["Finde die Tasche."]
+reject = [{ sentence = "Finde die Tasse.", category = "wrongObject", reason = "The learner looks for the bag." }]
+provenance = { source = "Held-out M02 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m02-a0-find-punctuation"
+category = "punctuation"
+construction_id = "find-object"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }] }
+bindings = { object = "object:bag" }
+truth = true
+input = "Tell the learner to find the bag."
+expected_meaning = "Find the bag."
+acceptable = ["Finde die Tasche."]
+reject = [{ sentence = "Finde die Tasche", category = "punctuation", reason = "The sentence ends with a full stop." }]
+provenance = { source = "Held-out M02 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m02-a0-find-article"
+category = "article"
+construction_id = "find-object"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }] }
+bindings = { object = "object:bag" }
+truth = true
+input = "Tell the learner to find the bag."
+expected_meaning = "Find the bag."
+acceptable = ["Finde die Tasche."]
+reject = [{ sentence = "Finde das Tasche.", category = "article", reason = "The noun takes its own definite article." }]
+provenance = { source = "Held-out M02 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m02-a0-name-door"
+category = "wrongObject"
+construction_id = "identify-object"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:door", concept = "door" }, { fact_id = "object:window", concept = "window" }] }
+bindings = { object = "object:door" }
+truth = true
+use = "name"
+input = "Name the door."
+expected_meaning = "the door"
+acceptable = ["die Tür"]
+reject = [{ sentence = "das Fenster", category = "wrongObject", reason = "The name is the door's." }]
+provenance = { source = "Held-out M02 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m02-a0-name-punctuation"
+category = "punctuation"
+construction_id = "identify-object"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:door", concept = "door" }] }
+bindings = { object = "object:door" }
+truth = true
+use = "name"
+input = "Name the door."
+expected_meaning = "the door"
+acceptable = ["die Tür"]
+reject = [{ sentence = "die Tür.", category = "punctuation", reason = "A name chunk has no final punctuation." }]
+provenance = { source = "Held-out M02 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m02-a0-name-article"
+category = "article"
+construction_id = "identify-object"
+construction_version = 2
+scene = { objects = [{ fact_id = "object:door", concept = "door" }] }
+bindings = { object = "object:door" }
+truth = true
+use = "name"
+input = "Name the door."
+expected_meaning = "the door"
+acceptable = ["die Tür"]
+reject = [{ sentence = "das Tür", category = "article", reason = "The noun takes its own definite article." }]
+provenance = { source = "Held-out M02 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m02-a0-held-find-unicode"
+category = "unicode"
+construction_id = "find-object"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:door", concept = "door" }] }
+bindings = { object = "object:door" }
+truth = true
+input = "Tell the learner to find the door."
+expected_meaning = "Find the door."
+acceptable = ["Finde die Tür."]
+reject = [{ sentence = "Finde die Tu\u0308r.", category = "unicode", reason = "The rejected candidate contains decomposed characters." }]
+provenance = { source = "Held-out M02 evaluation content, AI-authored 2026-10-22; facts from the sample vocabulary.", review_status = "unreviewed" }

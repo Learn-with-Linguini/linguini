@@ -1,0 +1,12 @@
+{
+  "candidates": [
+    {"slot_id": "confirmObject-1", "spec_id": "confirm-object-1-prompt", "text": "¿Es una taza?", "translation": "Is it a cup?"},
+    {"slot_id": "confirmObject-1", "spec_id": "confirm-object-1-answer", "text": "Sí, es una taza.", "translation": "Yes, it is a cup."},
+    {"slot_id": "confirmObject-1", "spec_id": "confirm-object-1-contrast", "text": "No, es un libro.", "translation": "No, it is a book."},
+    {"slot_id": "confirmObject-2", "spec_id": "confirm-object-2-prompt", "text": "¿Es una taza?", "translation": "Is it a cup?"},
+    {"slot_id": "confirmObject-2", "spec_id": "confirm-object-2-answer", "text": "No, es un libro.", "translation": "No, it is a book."},
+    {"slot_id": "confirmObject-2", "spec_id": "confirm-object-2-contrast", "text": "Sí, es una taza.", "translation": "Yes, it is a cup."},
+    {"slot_id": "chooseAttribute", "spec_id": "choose-attribute-answer", "text": "Es una taza roja.", "translation": "It is a red cup."},
+    {"slot_id": "describeObject", "spec_id": "describe-object-answer", "text": "Es un libro verde.", "translation": "It is a green book."}
+  ]
+}

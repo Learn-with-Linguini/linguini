@@ -1,0 +1,53 @@
+# Number words for counting missions (M03). ``with_noun`` gives the form used
+# next to a counted noun when it differs: agreement (Spanish un/una) or a
+# counter (Korean 두 개).
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[numbers]]
+value = 1
+text = "eins"
+[[numbers.with_noun]]
+agreement = "masculine"
+text = "ein"
+[[numbers.with_noun]]
+agreement = "feminine"
+text = "eine"
+[[numbers.with_noun]]
+agreement = "neuter"
+text = "ein"
+
+[[numbers]]
+value = 2
+text = "zwei"
+
+[[numbers]]
+value = 3
+text = "drei"
+
+[[numbers]]
+value = 4
+text = "vier"
+
+[[numbers]]
+value = 5
+text = "fünf"
+
+[[numbers]]
+value = 6
+text = "sechs"
+
+[[numbers]]
+value = 7
+text = "sieben"
+
+[[numbers]]
+value = 8
+text = "acht"
+
+[[numbers]]
+value = 9
+text = "neun"
+
+[[numbers]]
+value = 10
+text = "zehn"

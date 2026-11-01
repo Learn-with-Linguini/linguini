@@ -1,0 +1,55 @@
+construction_id = "polite-request"
+
+[[examples]]
+example_id = "order-two-small-coffees"
+levels = ["A2"]
+purposes = ["listenOrderCard"]
+meaning = "I would like two small coffees, please."
+scene = { objects = [{ fact_id = "object:coffee", concept = "coffee" }], requests = [{ fact_id = "request:quantity", object = "object:coffee", field = "quantity", value = "2" }, { fact_id = "request:size", object = "object:coffee", field = "size", value = "small" }, { fact_id = "request:serviceSetting", object = "object:coffee", field = "serviceSetting", value = "takeAway" }] }
+bindings = { object = "object:coffee", quantity = "request:quantity", size = "request:size" }
+truth = true
+labels = []
+sentence = "Je voudrais deux petits cafés, s'il vous plaît."
+translation = "I would like two small coffees, please."
+chunks = [{ text = "Je", join = "none" }, { text = "voudrais", join = "space" }, { text = "deux", join = "space" }, { text = "petits", join = "space" }, { text = "cafés", join = "space" }, { text = ",", join = "none" }, { text = "s'", join = "space" }, { text = "il", join = "none" }, { text = "vous", join = "space" }, { text = "plaît", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "borrow-a-pen"
+levels = ["A2"]
+purposes = ["listenOrderCard"]
+meaning = "Can you lend me a pen, please?"
+scene = { objects = [{ fact_id = "object:pen", concept = "pen" }], requests = [{ fact_id = "request:quantity", object = "object:pen", field = "quantity", value = "1" }, { fact_id = "request:colour", object = "object:pen", field = "colour", value = "blue" }] }
+bindings = { object = "object:pen", quantity = "request:quantity" }
+truth = true
+labels = []
+sentence = "Tu peux me prêter un stylo, s'il te plaît ?"
+translation = "Can you lend me a pen, please?"
+chunks = [{ text = "Tu", join = "none" }, { text = "peux", join = "space" }, { text = "me", join = "space" }, { text = "prêter", join = "space" }, { text = "un", join = "space" }, { text = "stylo", join = "space" }, { text = ",", join = "none" }, { text = "s'", join = "space" }, { text = "il", join = "none" }, { text = "te", join = "space" }, { text = "plaît", join = "space" }, { text = "?", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "pass-a-cup"
+levels = ["A2"]
+purposes = ["listenOrderCard"]
+meaning = "Can you pass me a cup, please?"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }], requests = [{ fact_id = "request:quantity", object = "object:cup", field = "quantity", value = "1" }, { fact_id = "request:colour", object = "object:cup", field = "colour", value = "red" }] }
+bindings = { object = "object:cup", quantity = "request:quantity" }
+truth = true
+labels = []
+sentence = "Tu peux me passer une tasse, s'il te plaît ?"
+translation = "Can you pass me a cup, please?"
+chunks = [{ text = "Tu", join = "none" }, { text = "peux", join = "space" }, { text = "me", join = "space" }, { text = "passer", join = "space" }, { text = "une", join = "space" }, { text = "tasse", join = "space" }, { text = ",", join = "none" }, { text = "s'", join = "space" }, { text = "il", join = "none" }, { text = "te", join = "space" }, { text = "plaît", join = "space" }, { text = "?", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "states-instead-of-asking"
+levels = ["A2"]
+purposes = ["listenOrderCard"]
+sentence = "J'ai deux petits cafés, s'il vous plaît."
+correction = "Je voudrais deux petits cafés, s'il vous plaît."
+note = "A request asks for the item; J'ai says you already have it."
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }

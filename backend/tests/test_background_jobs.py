@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from uuid import UUID
 
 import pytest
+from pack_translation import pack_shaped
 from test_postgres_sessions import create_run, vocabulary_answer
 from test_postgres_sessions import database as database
 
@@ -33,14 +34,15 @@ def test_translations_are_committed_before_lesson_generation(database):
     attempts = []
     completions = []
 
-    def translate(payload, cache_scope=None):
-        return SceneTranslationResult.model_validate({
+    def translate(payload, cache_scope=None, **options):
+        return SceneTranslationResult.model_validate(pack_shaped({
             kind: [
-                {**term, "translation": "mesa", "phoneticText": "MEH-sah"}
+                # A word no other test stores: the vocabulary catalogue is shared.
+                {**term, "translation": "pupitre", "phoneticText": "poo-PEE-treh"}
                 for term in payload[kind]
             ]
             for kind in ("objects", "attributes", "relationships")
-        })
+        }, options))
 
     def generate(_payload, cache_scope=None):
         # A separate reader must see the checkpoint before this slow call ends.
@@ -68,7 +70,7 @@ def test_translations_are_committed_before_lesson_generation(database):
     runner.jobs.pop()()
     assert len(observed) == 1
     assert observed[0].session.status == "generatingTasks"
-    assert observed[0].translation_preview.objects[0].translation == "mesa"
+    assert observed[0].translation_preview.objects[0].translation == "pupitre"
     assert len(observed[0].tasks) == 1
     assert observed[0].tasks[0].kind == "vocabularyIntroduction"
     assert attempts[0].status_code == 200, attempts[0].text
@@ -76,11 +78,11 @@ def test_translations_are_committed_before_lesson_generation(database):
     settled = repo.get(sid, profile.id)
     assert settled.session.status == "inProgress"
     assert settled.tasks
-    assert settled.vocabulary[0].phonetic_text == "MEH-sah"
+    assert settled.vocabulary[0].phonetic_text == "poo-PEE-treh"
     intro = next(task for task in settled.tasks if task.kind == "vocabularyIntroduction")
     assert intro.id == observed[0].tasks[0].id
     assert intro.status == "completed"
-    assert intro.public_content.words[0].phonetic_text == "MEH-sah"
+    assert intro.public_content.words[0].phonetic_text == "poo-PEE-treh"
 
 
 def test_preloaded_analysis_is_ready_without_a_background_job(database):

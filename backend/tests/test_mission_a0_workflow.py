@@ -48,12 +48,14 @@ def test_a0_profiles_get_persisted_a0_lessons(beginner):
     lessons = _a0_lessons(detail)
     assert lessons, detail.session.analysis_draft
     assert {task.public_content.mission_id for task in lessons} <= {
-        "M01", "M02", "M03", "M04", "M05", "M13",
+        "M01", "M02", "M03", "M05",
     }
     for task in lessons:
         content = task.public_content
         assert len(content.questions) == 6
-        assert len({q.section for q in content.questions}) == 2
+        # The M05 situation is one scene (picnic choice).
+        situation = content.mission_id == "M05"
+        assert len({q.section for q in content.questions}) == (1 if situation else 2)
         stored = _scalar(engine, select(session_tasks.c.public_content).where(
             session_tasks.c.id == task.id
         ))
@@ -86,15 +88,44 @@ def test_review_choices_are_persisted_restored_and_cleared_when_omitted(beginner
     assert saved["ownership"]["sceneObjectId"] == str(first.id)
     assert saved["preference"]["sceneObjectIds"] == [str(second.id)]
     lessons = {task.public_content.mission_id: task for task in _a0_lessons(reviewed)}
-    assert {"M04", "M05"} <= lessons.keys(), reviewed.session.analysis_draft.get("missionPlan")
-    assert lessons["M04"].public_content.mission_snapshot.owned_object_id == first.id
+    assert "M04" not in lessons, "A0 ownership practice is currently disabled"
+    assert "M05" in lessons, reviewed.session.analysis_draft.get("missionPlan")
     assert lessons["M05"].public_content.mission_snapshot.preference_object_ids == [second.id]
     restored = repository.get(sid, profile.id)
     assert restored.mission_choices == choices
     cleared = repository.review(sid, profile.id, _review(restored))
     assert cleared.mission_choices is None
     assert "missionChoices" not in cleared.session.analysis_draft
-    assert not {"M04", "M05"} & {task.public_content.mission_id for task in _a0_lessons(cleared)}
+    # Without a choice an M05 lesson uses an assigned, pretend scenario.
+    for task in _a0_lessons(cleared):
+        if task.public_content.mission_id == "M05":
+            assert task.public_content.mission_snapshot.pretend
+            assert all(q.roleplay_premise for q in task.public_content.questions)
+
+
+def test_a0_situations_without_review_choices_get_an_assigned_scenario(beginner):
+    _engine, _owner, profile, *_ = beginner
+    repository = _repository(beginner, SceneModel())
+    sid, analyzed = _analyzed(beginner, repository)
+    reviewed = repository.review(sid, profile.id, _review(analyzed))
+    assert reviewed.mission_choices is None
+    plan = reviewed.session.analysis_draft["missionPlan"]
+    ids = {str(obj.id) for obj in analyzed.scene_objects}
+    situations = [item for item in plan if item["missionId"] in {"M04", "M05"}]
+    assert situations, plan
+    for item in situations:
+        facts = item["learnerFacts"]
+        if item["missionId"] == "M04":
+            assert facts["ownedObjectId"] in ids and facts["pretend"] is True
+        else:
+            assert set(facts["preference"]["sceneObjectIds"]) <= ids
+            assert facts["preference"]["pretend"] is True
+    lessons = {task.public_content.mission_id: task
+               for task in _a0_lessons(repository.get(sid, profile.id))}
+    for item in situations:
+        content = lessons[item["missionId"]].public_content
+        assert content.mission_snapshot.pretend
+        assert {q.roleplay_premise for q in content.questions} != {None}
 
 
 def test_a0_grading_is_idempotent_and_awards_once(beginner):

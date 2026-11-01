@@ -1,0 +1,14 @@
+construction_id = "owned-object"
+version = 1
+summary = "Name the object and say whose it is."
+guidance = "Name the object with its nominative definite article, then gehört mir, gehört dir, or gehört + the owner's name: Die Tasse gehört mir. Das Buch gehört Ana. A clarification starts with the no label."
+features = ["ownership", "predicate-possessive"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun", owner = "determiner" }
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "owned-frame"
+message = "Name the object, then gehört + the owner."
+must_contain = ["\\bgehört\\b", "[.?!]$"]

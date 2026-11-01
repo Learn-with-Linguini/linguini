@@ -1,0 +1,25 @@
+construction_id = "target-location"
+
+[[examples]]
+example_id = "red-cup-next-window"
+levels = ["A2"]
+purposes = ["buildTargetSentence"]
+meaning = "The red cup is next to the window."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:window", concept = "window" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }], relations = [{ fact_id = "relation:cup-next_to-window", subject = "object:cup", reference = "object:window", relation = "next_to" }] }
+bindings = { subject = "object:cup", attribute = "attribute:cup-red", reference = "object:window", relation = "relation:cup-next_to-window" }
+truth = true
+labels = []
+sentence = "Die rote Tasse ist neben dem Fenster."
+translation = "The red cup is next to the window."
+chunks = [{ text = "Die", join = "none" }, { text = "rote", join = "space" }, { text = "Tasse", join = "space" }, { text = "ist", join = "space" }, { text = "neben", join = "space" }, { text = "dem", join = "space" }, { text = "Fenster", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "target-order"
+levels = ["A2"]
+purposes = ["buildTargetSentence"]
+sentence = "Die Tasse rote ist neben dem Fenster."
+correction = "Die rote Tasse ist neben dem Fenster."
+note = "An attributive adjective goes before the noun."
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }

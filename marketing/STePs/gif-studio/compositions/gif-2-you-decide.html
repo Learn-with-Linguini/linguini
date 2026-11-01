@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Linguini — STEPS promo GIF 2: AI suggests, you decide</title>
+  <style>
+    @font-face { font-family: 'Baloo'; src: url('../assets/Baloo2-ExtraBold.ttf'); font-weight: 800; }
+    @font-face { font-family: 'Nunito'; src: url('../assets/NunitoSans-Bold.ttf'); font-weight: 700; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #FFF9ED; font-family: 'Nunito', sans-serif; color: #263238; }
+    #root { position: relative; width: 1280px; height: 720px; overflow: hidden; background: #FFF9ED; }
+    .clip { position: absolute; inset: 0; }
+    .absolute { position: absolute; }
+
+    .sugg {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 20px;
+      font-size: 21px;
+      font-weight: 800;
+      color: #263238;
+      border-bottom: 1px solid #f6efdd;
+      overflow: hidden;
+    }
+    .sugg:last-child { border-bottom: none; }
+    .sugg .box {
+      width: 24px; height: 24px; border-radius: 8px;
+      border: 2px solid #21716F; color: #21716F;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: 15px; flex: 0 0 auto; background: #eef6f3;
+    }
+    .sugg.rejected .box { border-color: #E85D32; color: #E85D32; background: #fdf0ea; }
+  </style>
+</head>
+<body>
+  <div id="root" data-composition-id="gif-2" data-width="1280" data-height="720" data-duration="6" data-fps="30">
+    <div class="clip" data-start="0" data-duration="6">
+
+      <div class="absolute" style="left: 80px; top: 110px; width: 520px;">
+        <img id="wordmark" src="../assets/linguini-wordmark.png" style="height: 56px;" alt="Linguini">
+        <h1 id="headline" style="font-family: 'Baloo', sans-serif; font-size: 64px; line-height: 1.05; margin: 34px 0 18px 0; color: #263238;">
+          AI suggests.<br><span style="color: #21716F;">You decide.</span>
+        </h1>
+        <p id="tagline" style="font-size: 24px; font-weight: 700; color: #5b6670; margin: 0;">
+          review every word before it enters your lesson
+        </p>
+      </div>
+
+      <div id="list-card" class="absolute" style="right: 80px; top: 80px; width: 560px; background: #ffffff; border: 2px solid #f0e6cf; border-radius: 28px; box-shadow: 0 30px 60px rgba(38,50,56,0.14); overflow: hidden;">
+        <div style="padding: 18px 26px 14px; border-bottom: 2px solid #f6efdd; display: flex; justify-content: space-between; align-items: center;">
+          <strong style="font-size: 22px;">Suggestions from your photo</strong>
+          <span id="count" style="background: #F9B233; color: #263238; font-weight: 800; font-size: 18px; padding: 4px 14px; border-radius: 999px;">6 found</span>
+        </div>
+        <div class="sugg" id="s1"><span class="box">✓</span>el croissant</div>
+        <div class="sugg" id="s2"><span class="box">✓</span>la cámara</div>
+        <div class="sugg" id="s3"><span class="box">✓</span>el café</div>
+        <div class="sugg" id="s4"><span class="box">✓</span>el cuaderno</div>
+        <div class="sugg rejected" id="s5"><span class="box">✕</span>el menú</div>
+        <div class="sugg rejected" id="s6"><span class="box">✕</span>la silla</div>
+      </div>
+
+      <div id="verdict" style="position: absolute; right: 190px; bottom: 60px; background: #21716F; color: #FFF9ED; font-family: 'Baloo', sans-serif; font-size: 26px; padding: 14px 30px; border-radius: 999px; box-shadow: 0 10px 26px rgba(33,113,111,0.35); display: flex; align-items: center; gap: 12px;">
+        <span>✓</span> 4 words in your lesson
+      </div>
+    </div>
+  </div>
+
+  <script src="../node_modules/gsap/dist/gsap.min.js"></script>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    tl.fromTo('#wordmark', { y: -30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: 'power3.out' }, 0.1);
+    tl.fromTo('#headline', { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: 'power3.out' }, 0.3);
+    tl.fromTo('#tagline', { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.45, ease: 'power2.out' }, 0.7);
+    tl.fromTo('#list-card', { x: 120, opacity: 0 }, { x: 0, opacity: 1, duration: 0.6, ease: 'power3.out' }, 0.9);
+    tl.fromTo('#s1, #s2, #s3, #s4, #s5, #s6', { x: 40, opacity: 0 }, { x: 0, opacity: 1, duration: 0.3, stagger: 0.18, ease: 'power2.out' }, 1.5);
+    tl.to('#s5, #s6', { autoAlpha: 0, x: 70, height: 0, paddingTop: 0, paddingBottom: 0, duration: 0.4, ease: 'power2.in' }, 3.4);
+    tl.to('#count', { backgroundColor: '#21716F', color: '#FFF9ED', duration: 0.3 }, 3.9);
+    tl.call(() => { document.getElementById('count').textContent = '4 kept'; }, null, 3.9);
+    tl.fromTo('#verdict', { y: 40, opacity: 0, scale: 0.9 }, { y: 0, opacity: 1, scale: 1, duration: 0.45, ease: 'back.out(1.7)' }, 4.1);
+    window.__timelines = window.__timelines || {};
+    window.__timelines['gif-2'] = tl;
+  </script>
+</body>
+</html>

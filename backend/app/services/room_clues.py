@@ -10,12 +10,11 @@ from app.schemas.media import SceneObject, SceneObjectRelation
 from app.schemas.vocabulary import VocabularyItem
 from app.services.ispy_clue_frames import (
     _place,
-    agree_colour,
     build_clue_support,
+    clue_grammar,
+    colour_key,
     mentions_target,
 )
-
-ROOM_LANGUAGES = {"es", "fr", "de"}
 
 
 class RoomClueError(ValueError):
@@ -47,12 +46,13 @@ def build_room_pack(
     confirmed ``help`` phrases become room candidates. Match colour independently
     of grammatical gender, and location by its spoken phrase rather than opaque
     reference ID, so duplicate reference nouns cannot create false uniqueness.
-    Marker coordinates never invent colour or spatial relationships.
+    Marker coordinates never invent colour or spatial relationships. The language's
+    pack ``clues.toml`` gives the clue grammar, accepted articles and joining word.
     """
-    if language not in ROOM_LANGUAGES:
-        raise RoomClueError(
-            "Guided photo rooms currently support Spanish, French and German."
-        )
+    grammar = clue_grammar(language)
+    if grammar is None:
+        raise RoomClueError("Guided photo rooms aren't available for this language yet.")
+    clues = grammar.clues
     if not 2 <= len(objects) <= 6 or len({obj.id for obj in objects}) != len(objects):
         raise RoomClueError("Choose between two and six different objects in this photo.")
     selected = {obj.id for obj in objects}
@@ -66,20 +66,23 @@ def build_room_pack(
     terms = {row.key: row for row in translated.objects}
     if len(terms) != len(objects) or set(terms) != {str(obj.id) for obj in objects}:
         raise RoomClueError("Translate exactly the reviewed objects before starting the game.")
-    articles = {"es": {"el", "la"}, "fr": {"le", "la", "l'"},
-                "de": {"der", "die", "das"}}
-    if any(
-        (term.article or "").lower().replace("’", "'") not in articles[language]
-        for term in terms.values()
-    ):
-        raise RoomClueError(
-            "These guided clues need singular object names with a definite article. "
-            "Review the object labels, or choose another photo."
-        )
-    terms = {
-        key: term.model_copy(update={"article": term.article.lower().replace("’", "'")})
-        for key, term in terms.items()
-    }
+    if not grammar.articleless:
+        articles = {
+            text.casefold().replace("’", "'")
+            for text in [*(article.text for article in clues.articles), *clues.elided_articles]
+        }
+        if any(
+            (term.article or "").lower().replace("’", "'") not in articles
+            for term in terms.values()
+        ):
+            raise RoomClueError(
+                "These guided clues need singular object names with a definite article. "
+                "Review the object labels, or choose another photo."
+            )
+        terms = {
+            key: term.model_copy(update={"article": term.article.lower().replace("’", "'")})
+            for key, term in terms.items()
+        }
 
     facts = {
         "objects": [row.model_dump(mode="json", by_alias=True) for row in terms.values()],
@@ -125,9 +128,7 @@ def build_room_pack(
         for frame in frames:
             for phrase in frame.help:
                 canonical = (
-                    agree_colour(language, phrase, "masculine")
-                    if frame.frame_id == "colour"
-                    else phrase
+                    colour_key(language, phrase) if frame.frame_id == "colour" else phrase
                 )
                 if canonical:
                     item_cues.append(
@@ -168,7 +169,7 @@ def build_room_pack(
     for attribute in facts["attributes"]:
         if attribute["key"].rsplit(":", 1)[-1] not in {"color", "colour"}:
             continue
-        canonical = agree_colour(language, attribute["translation"], "masculine")
+        canonical = colour_key(language, attribute["translation"])
         if canonical and attribute["objectKey"] in signatures:
             signatures[attribute["objectKey"]].add(("colour", canonical.casefold()))
     # A provider can translate the same relation with synonyms in different rows.
@@ -190,14 +191,17 @@ def build_room_pack(
                 )
                 if phrase:
                     signatures[subject].add(("location", phrase.casefold()))
-    conjunction = {"es": " y ", "fr": " et ", "de": " und "}[language]
+    conjunction = f" {clues.conjunction} " if clues.conjunction else None
     targets = []
     for obj in objects:
         key = str(obj.id)
         choices = cues[key]
         # Prefer two-cue descriptions, while keeping a single verified cue when
-        # it already distinguishes the target within the reviewed photo pack.
-        compound = [pair for pair in combinations(choices, 2) if pair[0] != pair[1]]
+        # it already distinguishes the target within the reviewed photo pack. A
+        # language without a joining word offers single cues only.
+        compound = [
+            pair for pair in combinations(choices, 2) if pair[0] != pair[1]
+        ] if conjunction else []
         compound.sort(key=lambda pair: pair[0].kind == pair[1].kind)
         candidates = [*compound, *((cue,) for cue in choices)]
         options, used_texts = [], set()
@@ -207,7 +211,7 @@ def build_room_pack(
             if matches != {key}:
                 continue
             text = (
-                conjunction.join(
+                (conjunction or "").join(
                     cue.text if index == 0 else cue.text[:1].lower() + cue.text[1:]
                     for index, cue in enumerate(candidate)
                 )

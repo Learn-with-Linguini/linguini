@@ -1,0 +1,10 @@
+{
+  "candidates": [
+    {"slot_id": "matchName-1", "spec_id": "match-name-1-spec", "text": "la taza", "translation": "The cup."},
+    {"slot_id": "confirmName-1", "spec_id": "confirm-name-1-spec", "text": "¿Es una taza?", "translation": "Is it a cup?"},
+    {"slot_id": "buildIdentify-1", "spec_id": "build-identify-1-spec", "text": "Es una taza.", "translation": "It is a cup."},
+    {"slot_id": "matchName-2", "spec_id": "match-name-2-spec", "text": "el libro", "translation": "The book."},
+    {"slot_id": "confirmName-2", "spec_id": "confirm-name-2-spec", "text": "¿Es una taza?", "translation": "Is it a cup?"},
+    {"slot_id": "buildIdentify-2", "spec_id": "build-identify-2-spec", "text": "Es un libro.", "translation": "It is a book."}
+  ]
+}

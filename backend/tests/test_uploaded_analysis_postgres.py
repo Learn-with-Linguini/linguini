@@ -3,17 +3,68 @@ from concurrent.futures import ThreadPoolExecutor
 from uuid import UUID, uuid4
 
 import pytest
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, update
 from test_postgres_sessions import database as database
 
 from app.repositories.postgres.media_assets import PostgresMediaAssetRepository, media_assets
 from app.repositories.postgres.practice import sessions
 from app.repositories.postgres.scene_objects import scene_objects
 from app.repositories.postgres.tasks import session_tasks
+from app.repositories.postgres.workflow import PostgresWorkflowRepository
+from app.schemas.base import utc_now
 from app.schemas.media import MediaAsset
 
 # A thin scene is rejected on mission profiles; these tests cover the regular lesson.
 pytestmark = pytest.mark.usefixtures("regular_lesson")
+
+
+def test_progress_is_committed_and_scoped_to_the_current_attempt(database):
+    engine, owner, profile, client = database
+    asset = MediaAsset(
+        owner_user_id=owner.id, source="camera", media_type="image",
+        storage_key=f"test/{uuid4()}.jpg", mime_type="image/jpeg",
+    )
+    PostgresMediaAssetRepository(engine).create(asset)
+    try:
+        created = client.post("/api/v1/sessions", json={
+            "languageProfileId": str(profile.id), "mediaAssetId": str(asset.id),
+            "idempotencyKey": f"progress-{uuid4()}",
+        })
+        assert created.status_code == 202
+        sid = UUID(created.json()["session"]["id"])
+        repo = PostgresWorkflowRepository(engine, owner.id)
+        with repo.transaction() as c:
+            claimed = repo._transition(
+                c, repo._session(c, sid), "analyzingScene",
+                analysis_draft={"analysisAttempts": 1, "retainedFact": "unchanged"},
+            )
+        repo._record_analysis_stage(claimed, "findingObjects")
+        detail = client.get(f"/api/v1/sessions/{sid}").json()
+        assert detail["sceneAnalysisProgress"]["stage"] == "findingObjects"
+        assert detail["sceneAnalysisProgress"]["startedAt"]
+        assert detail["session"]["analysisDraft"]["retainedFact"] == "unchanged"
+        assert detail["session"]["status"] == "analyzingScene"
+
+        # A new attempt's start token rejects an old worker's delayed milestone.
+        fresh = {**claimed.analysis_draft, "processingStartedAt": utc_now().isoformat(),
+                 "analysisStage": "loadingImage"}
+        with engine.begin() as c:
+            c.execute(update(sessions).where(sessions.c.id == sid).values(analysis_draft=fresh))
+        repo._record_analysis_stage(claimed, "savingResults")
+        detail = client.get(f"/api/v1/sessions/{sid}").json()
+        assert detail["sceneAnalysisProgress"]["stage"] == "loadingImage"
+
+        with repo.transaction() as c:
+            current = repo._session(c, sid)
+            repo._transition(c, current, "awaitingObjectReview")
+        repo._record_analysis_stage(current, "checkingResults")
+        detail = client.get(f"/api/v1/sessions/{sid}").json()
+        assert detail["sceneAnalysisProgress"]["stage"] == "ready"
+        assert detail["session"]["analysisDraft"]["analysisStage"] == "loadingImage"
+    finally:
+        with engine.begin() as c:
+            c.execute(delete(sessions).where(sessions.c.scene_media_asset_id == asset.id))
+            c.execute(delete(media_assets).where(media_assets.c.id == asset.id))
 
 
 def test_analysis_persistence_concurrency_and_review(database):

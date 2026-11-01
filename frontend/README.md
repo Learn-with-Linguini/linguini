@@ -1,245 +1,167 @@
-﻿# Linguini
+# Linguini frontend
 
-A photo-led language-learning app: explore a scene, learn its words, then practise
-two-way scene description with Linguini.
-
-## Current status
-
-This repository contains a React/TypeScript frontend and a FastAPI/Pydantic backend.
-The home greeting loads the demo user from `GET /api/v1/me`. Progress and saved
-vocabulary load from `/api/v1/me/progress` and `/api/v1/me/vocabulary`.
-Scene summaries load from `/api/v1/preloaded-scenes`; practice routes fetch
-`/api/v1/preloaded-scenes/{sceneId}` before rendering their scene content.
-The shared user and active language profile load from `/api/v1/me` and
-`/api/v1/me/language-profiles`. Profile edits and onboarding save to PostgreSQL. Language selection filters scenes, vocabulary, and progress on the backend.
-Practice actions and XP persist in PostgreSQL, as do journal entries and
-edits. Vocabulary status changes remain in memory. Scene images are SVG placeholders; word playback uses browser speech synthesis
-when available.
-
-The backend defines API routes and validated request/response schemas. Its health
-endpoint, user/profile edits, progress, vocabulary, scenes, demo sessions, and journal reads/writes work; remaining business route handlers return
-`501 Not Implemented` when reached. The demo user is read from PostgreSQL through a service and repository.
-Database configuration is required; authentication and AI integrations are not implemented.
-
-## Landing site
-
-The marketing home, blog, language pages, legal pages, credits, and share page live
-in `src/marketing/` and are served by this Vite deployment alongside learner routes.
-The two app roots lazy-load separate global stylesheets. Optional public settings are
-`VITE_SITE_URL`, `VITE_SUPPORT_EMAIL`, `VITE_GOOGLE_CLIENT_ID`, `VITE_PRODUCT_HUNT_URL`,
-`VITE_PRODUCT_HUNT_POST_ID`, `GOOGLE_SITE_VERIFICATION`,
-`BING_SITE_VERIFICATION`, and `INDEXNOW_KEY`; learner API and Supabase variables are
-unchanged.
-
-Static Open Graph cards are in `public/og/`. They were pre-rendered from the former
-Next image routes before that project was removed. Keep replacements at 1200×630 PNG;
-the dynamic image renderer is no longer part of the app. Site utilities for SEO
-checks, IndexNow submissions, PDF exports, and the business-model video live in
-`scripts/`.
-
-## Repository layout
-
-```text
-linguini/
-|-- frontend/             React app and frontend tooling
-|   |-- src/
-|   |   |-- components/   Shared UI, app shells, and scene rendering
-|   |   |-- data/         Frontend types (mock.ts removed)
-|   |   |-- lib/          Browser speech helper
-|   |   |-- pages/        Screen components
-|   |   |-- state/        In-memory learner and session state
-|   |   `-- styles/       Global styles and design tokens
-|   |-- public/          Static assets
-|   |-- package.json     npm scripts and dependencies
-|   `-- vite.config.ts   Vite configuration
-|-- backend/
-|   |-- app/             FastAPI entrypoint, routes, and schemas
-|   |-- tests/           API contract and schema tests
-|   `-- pyproject.toml   Python dependencies and tooling
-|-- .oxlintrc.json       Frontend lint configuration
-|-- design.md            Product design and visual guidelines
-`-- README.md
-```
-
-Each app manages its own dependencies. Run npm commands in `frontend/` and Python
-commands in `backend/`. Keep the backend virtual environment in `backend/.venv/`,
-which is ignored by Git.
+React 19, TypeScript and Vite frontend for Linguini, the CS3216 final project for
+Group 3. The same build serves the learner app and the public marketing site.
+The FastAPI backend runs separately under `/api/v1`.
 
 ## Run locally
 
-### Frontend
-
-Use Node.js 22.12+ on the Node 22 line, or Node 24, with npm.
-
-From the repository root:
+Use Node.js 24 (the CI version), or Node.js 22.19+ on the Node 22 line. From `frontend/`:
 
 ```sh
-cd frontend
 npm ci
 cp .env.example .env.local
 npm run dev
 ```
 
-In PowerShell, use `Copy-Item .env.example .env.local` for the copy command.
-Open `http://localhost:5173/home` to load the demo greeting. The backend must be
-running for this request; failures appear on screen without a hardcoded fallback.
+Edit an existing `.env.local` rather than replacing it. Configure:
 
-### Backend
-
-Use Python 3.12 or newer. In a separate Windows PowerShell terminal, starting
-from the repository root:
-
-```powershell
-cd backend
-python -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
-Copy-Item .env.example .env.local
-# Fill DATABASE_URL and DIRECT_URL in .env.local before continuing.
-npm ci
-npm run db:deploy
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --env-file .env.local
-```
-
-Skip environment creation if `backend/.venv` already exists.
-Open `http://127.0.0.1:8000/docs` for the API documentation.
-See the [backend README](backend/README.md) for macOS/Linux setup and API details.
-
-`frontend/.env.local` sets `VITE_API_BASE_URL=http://127.0.0.1:8000` (the server
-origin, without `/api/v1`). Restart Vite after changing it. `backend/.env.local`
-sets `CORS_ALLOWED_ORIGINS=http://localhost:5173` and `DEMO_USER_ID` to the UUID
-of an existing row in PostgreSQL `users`. Allowed origins are comma-separated; include
-the exact frontend origin, including port, if using another host or Vite port.
-Restart the backend after changing its environment. Both example files use
-matching defaults. No authentication is performed; `/me` always uses this demo ID.
-
-If port 8000 is occupied by another project, add `--port 8001` to the backend
-command and set `VITE_API_BASE_URL=http://127.0.0.1:8001` in `frontend/.env.local`.
-Open `/progress` or `/vocabulary` to see the integrated screens. Restart the
-backend after code changes unless it was started with `--reload`.
-
-PostgreSQL stores users, language profiles, vocabulary, progress, sessions, tasks,
-media metadata, journals, and AI generation runs. Configure the database as described
-in the [backend README](backend/README.md). Runtime JSON storage and its environment
-switches have been removed. Vocabulary status changes remain temporary frontend
-state until that action is connected to a backend writer.
-
-The scene catalog, word markers, and bundled demo practice content live in PostgreSQL
-`preloaded_scenes`. Run `npm run db:deploy` from `backend/` to create the tables
-and seed missing catalog entries. No JSON imports are required.
-The SVG artwork remains in frontend components.
-
-The catalog retains the existing scene slugs, so practice links still work. Open
-`/practice` to select a scene or `/practice/street/analysis` to test a direct
-link. Loading, empty catalog, missing scene, and API failures have visible states.
-Unknown scene IDs no longer fall back to the first scene. Reload the browser after
-editing database scene content. Scene content remains static; camera uploads and AI generation
-are not implemented. Demo multiple-choice answers are scored on the backend.
-
-## Profile and language selection
-
-Open `/profile` to edit your name and learning goal, choose a target language,
-or change its level and daily minutes. Selections save immediately; name/goal
-edits use **Save profile**. Microphone and camera preferences are persisted too,
-but browser permissions remain separate. Onboarding configures this same demo
-user; it does not create an authenticated account.
-
-PostgreSQL `language_profiles` stores language profiles keyed by user ID, with at most one active profile per user. Switching language reloads content
-and reloads practice state for that profile. Your selection and per-language goals survive
-refreshes and backend restarts. Name changes appear in Home and the leaderboard.
-
-The demo contains Spanish content only. Choose French (or another language) to
-see empty scenes/vocabulary/progress, then return to Spanish to restore its data.
-Spanish practice URLs return 404 while another language is active. Speech playback
-uses the content language, and journal word suggestions use the filtered vocabulary.
-Changing the level saves a preference; adaptive difficulty/content generation is
-not implemented.
-
-## Saved practice and journals
-
-XP previously reset because it was only incremented in React state. Practice now
-creates/resumes a backend session and saves each action through
-`POST /api/v1/sessions/{id}/demo-events`. PostgreSQL stores sessions and XP
-in one transaction, keyed by user and target language. The backend calculates awards; retries
-of the same action in the same session award XP once. Reloads and backend restarts
-preserve totals, completed tasks, answers, and clues. **Practise again** explicitly
-starts a new session. The browser stores only the session ID, not XP.
-
-Analysis earns no XP. Tasks use the scene's configured XP, multiple-choice answers
-earn 5 XP when correct or 2 when incorrect, and a submitted clue earns 2 participation
-XP. Free-form clue feedback is still scripted; it is not AI evaluation. Failed saves
-show a retry action. The summary marks finished practice complete on the backend.
-
-Journal history/detail and Save entry use the backend. Entries retain their language
-profile; history includes this user's entries across languages. One journal per
-user/local day is enforced using the user's timezone. Editing appends a revision;
-retrying identical text does not append another revision. Journal illustrations
-are selected scene artwork, not photo uploads. Journals do not award XP.
-
-With existing dependencies and `.env.local` files, run in separate PowerShell terminals:
-
-```powershell
-cd backend
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --env-file .env.local
-```
-
-```powershell
-cd frontend
-npm run dev
-```
-
-Use `VITE_API_BASE_URL=http://localhost:8000` in `frontend/.env.local` and
-`CORS_ALLOWED_ORIGINS=http://localhost:5173` in `backend/.env.local`.
-Open `http://localhost:5173/practice`, complete an action, then refresh `/progress`
-to verify saved XP. Restart Vite after changing its environment configuration.
-
-## Frontend commands
-
-Run these inside `frontend/`:
-
-| Command | Purpose |
+| Variable | Purpose |
 | --- | --- |
-| `npm ci` | Install dependencies from the committed lockfile |
-| `npm run dev` | Start the development server |
-| `npm run build` | Typecheck and build production assets into `dist/` |
-| `npm run lint` | Run Oxlint |
-| `npm test` | Run frontend tests |
-| `npm run preview` | Preview an existing production build locally |
+| `VITE_API_BASE_URL` | API origin without `/api/v1`; normally `http://127.0.0.1:8000` |
+| `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` | Public Supabase authentication configuration |
+| `VITE_GOOGLE_CLIENT_ID` | Optional public Google OAuth web client ID |
+| `VITE_SITE_URL` | Canonical public site URL for metadata and generated site files |
+| `VITE_SUPPORT_EMAIL` | Public support contact |
+| `VITE_GA_MEASUREMENT_ID` | GA4 measurement ID; see [analytics](../ANALYTICS.md) |
+| `VITE_PRODUCT_HUNT_URL`, `VITE_PRODUCT_HUNT_POST_ID` | Optional Product Hunt links |
 
-Backend test and lint commands are documented in the [backend README](backend/README.md#checks).
+See [`.env.example`](.env.example) for all public settings. Only public
+configuration belongs in Vite variables; provider credentials and database URLs
+belong on the backend. Restart Vite after changing environment variables.
 
-## Screens
+The development server normally opens at `http://localhost:5173`. Start the backend
+using [its setup guide](../backend/README.md), with that exact origin in
+`CORS_ALLOWED_ORIGINS`. Development route guards allow local iteration, while the
+backend still enforces its configured authentication mode. Production learner
+routes require a Supabase session.
 
-These are frontend routes, separate from the backend's `/api/v1` endpoints.
+## Photo capture
+
+“Click” / “Open camera” opens a live camera preview on laptops and phones. “Take
+photo” captures a JPEG and sends it through the existing photo upload flow; Cancel
+or Escape closes the preview. Camera tracks stop on capture, cancellation, or
+navigation, including when permission arrives after the preview closes.
+
+No camera environment variables or API keys are needed. Browsers require HTTPS
+(or localhost for development), an available camera, and the user's permission.
+Plain HTTP on a LAN address does not provide browser camera access. The existing
+in-app Camera preference still controls whether the camera button is enabled.
+Permission, missing-device, and device-in-use errors explain how to recover;
+Upload remains available for choosing an existing image.
+
+## Vocabulary review
+
+Each object is reviewed alongside its explicitly linked adjective cards (for
+example, apple beside green). Cards appear in two columns when at least 480px is
+available and stack on narrower screens. Adjectives without an object link remain
+available afterward, followed by Relations. Previous, Next, marker selection and
+swipes navigate these groups. Quiz and typing order and saved answers are preserved.
+
+During the object section, photo markers select their matching card and play its
+target-language pronunciation using the existing language-pack voice settings.
+Repeated instances retain their own markers. Adjective and relation cards highlight
+associated objects when supplied, with speaker controls for pronunciation. The
+photo stays visible throughout review, quiz, typing, and completion. Outside active
+review, it shows without markers, word labels, or playback to avoid revealing answers.
+Marker buttons support keyboard activation;
+word cards remain readable when browser pronunciation is unavailable.
+
+Typing prompts offer “Skip typing” alongside the answer reveal action. Skipping
+moves to the next practice step without checking, revealing, or submitting that
+word's draft answer. Recognition questions and teaching cards have no typing-skip
+control. The option is disabled while an answer is being checked or saved.
+
+## Scene processing progress
+
+Scene analysis shows four stages: loading the photo, finding objects, checking
+results, and saving the review. The backend reports these milestones through the
+existing session polling response (`sceneAnalysisProgress`). Completed segments
+fill solidly; the active segment pulses, with reduced-motion support. Counts
+represent completed stages, never a percentage of elapsed or remaining time.
+Elapsed time uses the backend's processing start timestamp and survives refresh.
+The bar sits above the photo, with only the current stage and elapsed time visible;
+stage counts remain available to screen readers.
+
+After confirmation, a separate two-stage bar tracks translation and preparation
+of the first vocabulary task using committed session data. Older backend responses
+without analysis milestones show an indeterminate state. Polling pauses retain
+the last milestone and offer Check again; failures retain the existing retry flow.
+No additional environment variables are required.
+
+## Structure
+
+| Path | Purpose |
+| --- | --- |
+| `src/App.tsx` | Learner route definitions and route guards |
+| `src/marketing/` | Public home, blog, language, legal and share pages |
+| `src/pages/` | Learner screens |
+| `src/components/` | Shared controls, shells, scene and media renderers |
+| `src/lib/` | API client, query keys, analytics and browser speech helpers |
+| `src/state/` | Authentication, server queries and practice hooks |
+| `src/data/types.ts` | Frontend domain types |
+| `src/styles/` | Global styles and design tokens |
+| `tests/` | Frontend behavior tests |
+| `public/` | Bundled photos, brand assets and marketing media |
+| `scripts/` | SEO checks, exports and marketing utilities |
+
+The frontend uses Supabase for authentication and TanStack Query for server state.
+Profiles, sessions, grading, learning evidence, rewards and journals persist on the
+backend. Use `src/lib/api.ts` for requests and `src/lib/queryKeys.ts` for cache keys.
+Keep account and language boundaries when reading or invalidating learner data.
+
+## Routes
+
+[`src/App.tsx`](src/App.tsx) is the source of truth for learner routes.
 
 | Route | Screen |
 | --- | --- |
-| `/onboarding` | Account, language, goal, and permission setup UI |
-| `/login` | Email authentication and direct Google Identity Services sign-in through Supabase |
-| `/home` | Home and practice entry point |
-| `/practice` | Scene selection |
-| `/practice/:sceneId/analysis` | Scene analysis and word markers |
-| `/practice/:sceneId/mic-test` | Microphone setup UI and typing fallback |
-| `/practice/:sceneId/learn` | Learning tasks and flashcards |
-| `/practice/:sceneId/ispy-1` | I-Spy: Linguini gives clues |
-| `/practice/:sceneId/ispy-2` | I-Spy: the learner gives clues |
-| `/practice/:sceneId/summary` | Session summary |
-| `/progress` | Progress, scenarios, and leaderboard |
-| `/vocabulary` | Vocabulary and status filters |
-| `/journal`, `/journal/new`, `/journal/:entryId` | Journal list, creation, and entry |
-| `/profile` | Profile and preferences |
+| `/login`, `/reset-password`, `/onboarding` | Sign-in, account recovery and learner setup |
+| `/demo` | Public bundled-content demonstration |
+| `/contact` | Support form |
+| `/home`, `/practice` | Home and photo/scene selection |
+| `/practice/sessions/:sessionId/analysis` | Resumable scene analysis and fact review |
+| `/practice/sessions/:sessionId/learn` | Lesson overview and vocabulary |
+| `/practice/sessions/:sessionId/learn/:taskId` | Individual lesson task |
+| `/practice/sessions/:sessionId/ispy-1`, `ispy-2` | Two-way I-Spy within a lesson |
+| `/practice/sessions/:sessionId/summary` | Session results |
+| `/ispy`, `/ispy/play`, `/ispy/challenge`, `/ispy/friends` | Standalone I-Spy, daily challenge and friends lobby |
+| `/ispy/games/:sessionId/clues`, `describe`, `results` | Standalone game stages |
+| `/rooms/:roomId` | Private friend challenge |
+| `/progress`, `/vocabulary` | Learning progress and saved vocabulary |
+| `/journal`, `/journal/new`, `/journal/:entryId` | Journal history, creation and detail |
+| `/profile`, `/profile/edit`, `/payment` | Account, preferences and billing |
 
-## Development notes
+Catalog links under `/practice/:sceneId/*` resolve through `SceneRoute` into a
+session. Use `src/lib/sessionRoute.ts` to choose the correct resume destination.
+The `/rooms` route preserves existing invitation links and redirects to the
+friends lobby.
 
-Use [design.md](design.md) and `frontend/src/styles/tokens.css` for visual conventions.
-Frontend types and backend schemas are currently maintained separately. When
-connecting additional screens, align the UI with the backend OpenAPI contracts
-and use the centralized request helper in `frontend/src/lib/api.ts`.
+## Marketing and deployment
 
-- `src/styles/tokens.css` — design tokens from [`design.md`](./design.md)
-- `src/components/` — UI primitives, bottom-nav shell, scene illustrations and markers
-- `src/data/` — types plus the dummy scenes, vocabulary, journal and progress data
-- `src/state/` — in-memory app state (XP, task completion, vocabulary status, journal entries)
-- `src/pages/` — one file per screen
+`src/main.tsx` selects the learner or marketing root from the URL. The roots
+lazy-load separate global stylesheets. `vercel.json` rewrites routes to the Vite
+entry point, so refreshes work on both parts of the site. The API is a separate
+deployment; see the [root README](../README.md).
 
-The ready scenes use real photos where available, while `src/components/SceneArt.tsx` remains the
-fallback illustration system for journal entries and incomplete image states.
+Static Open Graph cards live in `public/og/`; replacements should be 1200×630 PNGs.
+SEO verification and IndexNow settings are listed in `.env.example`. Source files
+and regeneration steps for launch media live in [marketing/](../marketing/README.md).
+
+## Checks and conventions
+
+```sh
+npm run lint
+npm test
+npm run build
+npm run preview
+```
+
+`lint` runs Oxlint; `test` uses the Node test runner; `build` typechecks and writes
+production assets to `dist/`. `preview` serves an existing build.
+
+Read [AGENTS.md](AGENTS.md) and [design.md](design.md) before UI changes. Reuse shared
+controls and media components, preserve loading and retry states, and instrument
+interactive features with `trackAction`. Document events in
+[ANALYTICS.md](../ANALYTICS.md). Repository skills are indexed in
+[docs/skills.md](../docs/skills.md).

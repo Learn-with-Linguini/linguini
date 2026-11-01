@@ -69,6 +69,24 @@ def test_missed_words_then_new_words_then_familiar_words_keep_evaluation_identit
                                 if q.question_id == question.question_id)
 
 
+def test_article_questions_follow_the_personalized_word_order():
+    task = introduction()
+    article_questions = [
+        task.public_content.questions[index].model_copy(
+            update={"question_id": f"article-{source}"}
+        )
+        for index, source in enumerate(("cup", "chair", "table"))
+    ]
+    task.public_content.questions.extend(article_questions)
+
+    reordered = personalize_introduction(task, history())
+
+    assert [question.question_id for question in reordered.public_content.questions] == [
+        "word-table", "word-chair", "word-cup",
+        "article-table", "article-chair", "article-cup",
+    ]
+
+
 def test_summary_includes_only_current_words_and_applicable_observed_focuses():
     result = personalization_summary(history(), introduction(), has_relations=False)
     assert result.model_dump(mode="json", by_alias=True) == {

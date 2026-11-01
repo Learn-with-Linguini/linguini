@@ -5,20 +5,14 @@ from uuid import uuid4
 
 import pytest
 
-from app.ai.features.learning_tasks.mission_a0 import validate_a0_lesson
-from app.ai.features.learning_tasks.mission_a0_situations import (
-    validate_a0_situation_lesson,
-)
 from app.ai.features.learning_tasks.validation import LearningTaskGenerationError
 from app.missions import get_mission
 from app.schemas.enums import SessionMode
-from app.services import a0_lexicon as lex
 from app.services.mission_eligibility import (
     IMPLEMENTED_MISSIONS,
     lesson_missions,
     photo_eligibility,
 )
-from app.services.mission_registry import MISSION_LESSONS, lesson_spec, registry_key
 
 WORDS = {
     "es": ["la taza", "el libro", "la manzana", "el árbol"],
@@ -27,7 +21,7 @@ WORDS = {
     "ko": ["컵", "책", "사과", "나무"],
 }
 LABELS = ["cup", "book", "apple", "tree"]
-MISSIONS = ("M01", "M02", "M03", "M04", "M05", "M13")
+MISSIONS = ("M01", "M02", "M03", "M04", "M05")
 
 
 def _objects(labels=LABELS):
@@ -35,64 +29,14 @@ def _objects(labels=LABELS):
             for label in labels]
 
 
-def _lesson(mission_id, language, *, labels=LABELS, words=None, quantity=2,
-            plurals_taught=False, count_label="apple", ownership_index=0,
-            compared_indices=(0,), reaction="like", groups=None):
-    objects = _objects(labels)
-    words = [SimpleNamespace(display_text=word, id=uuid4())
-             for word in (words or WORDS[language][:len(labels)])]
-    mission = get_mission(mission_id, "A0", 1)
-    spec = lesson_spec(mission)
-    group = next((obj for obj in objects if obj.label == count_label), objects[0])
-    counts = [{"label": count_label, "quantity": quantity, "sceneObjectIds": [str(group.id)]}]
-    if groups is not None:
-        # ``(label, quantity)`` pairs, each counting the object with that label.
-        by_label = {obj.label: obj for obj in objects}
-        counts = [
-            {"label": label, "quantity": amount, "sceneObjectIds": [str(by_label[label].id)]}
-            for label, amount in groups
-        ]
-    context = {}
-    if mission_id == "M04":
-        context["learner_facts"] = {
-            "ownedObjectId": str(objects[ownership_index].id), "pretend": False,
-        }
-    elif mission_id == "M05":
-        context["learner_facts"] = {"preference": {
-            "sceneObjectIds": [str(objects[index].id) for index in compared_indices],
-            "chosenObjectId": (
-                str(objects[compared_indices[0]].id) if len(compared_indices) == 2 else None
-            ),
-            "reaction": reaction,
-        }}
-    payload = spec.payload(
-        mission, language, objects, [], words, None, counts,
-        {"plurals_taught": plurals_taught}, uuid4(), context=context,
-    )
-    return mission, spec, payload, objects
 
 
-def _result(mission_id, language, **options):
-    mission, spec, payload, objects = _lesson(mission_id, language, **options)
-    assert spec.ready(payload)
-    result = spec.generation.fallback(payload)
-    return mission, spec, payload, result, objects
 
 
 def _profile(level, language="es", **extra):
     return {"proficiency_level": level, "target_language_code": language, **extra}
 
 
-@pytest.mark.parametrize("language", ["es", "fr", "de", "ko"])
-@pytest.mark.parametrize("onboarded", [True, False])
-def test_a0_profiles_get_the_a0_missions_whatever_their_onboarding(language, onboarded):
-    missions = lesson_missions(
-        SessionMode.LESSON, _profile("A0", language, onboarding_completed=onboarded),
-    )
-    assert [registry_key(mission) for mission in missions] == [
-        "A0:M01", "A0:M02", "A0:M03", "A0:M04", "A0:M05", "A0:M13",
-    ]
-    assert all(str(mission.practice_level) == "A0" for mission in missions)
 
 
 @pytest.mark.parametrize("level", ["A1", "A2"])
@@ -102,8 +46,10 @@ def test_a1_and_a2_profiles_never_get_a0_missions(level):
     )
     assert all(str(mission.practice_level) != "A0" for mission in missions)
     korean_missions = lesson_missions(SessionMode.LESSON, _profile(level, "ko"))
+    # Korean gets every mission its pack has ready at the level.
     assert [mission.mission_id for mission in korean_missions] == (
-        ["M06"] if level == "A2" else []
+        ["M01", "M02", "M03", "M04", "M06"] if level == "A2"
+        else ["M01", "M02", "M03", "M04", "M05"]
     )
 
 
@@ -118,73 +64,16 @@ def test_a0_needs_a_lesson_and_a_stored_a0_level():
     assert "Pre-A1" not in IMPLEMENTED_MISSIONS
 
 
-def test_a1_lessons_keep_their_own_builders():
-    for mission_id in ("M01", "M02", "M03"):
-        a1 = get_mission(mission_id, "A1", 1) or get_mission(mission_id, "A1", 2)
-        assert lesson_spec(a1) is MISSION_LESSONS[mission_id]
-        assert lesson_spec(get_mission(mission_id, "A0", 1)) is not MISSION_LESSONS[mission_id]
 
 
-def test_a0_definitions_store_the_canonical_level():
-    for mission_id in MISSIONS:
-        mission = get_mission(mission_id, "A0", 1)
-        assert mission.practice_level == "A0"
-        assert registry_key(mission) == f"A0:{mission_id}"
 
 
-@pytest.mark.parametrize("language", ["es", "fr", "de", "ko"])
-@pytest.mark.parametrize("mission_id", MISSIONS)
-def test_each_lesson_is_two_tasks_of_three_questions(mission_id, language):
-    _mission, _spec, payload, result, _objects = _result(mission_id, language)
-    if mission_id in {"M04", "M05"}:
-        validate_a0_situation_lesson(payload, result)
-    else:
-        validate_a0_lesson(payload, result)
-    sections = [question.section for question in result.questions]
-    assert len(result.questions) == 6
-    if mission_id in {"M04", "M05"}:
-        assert len(set(sections)) == 1
-        return
-    assert len(set(sections)) == 2
-    assert sections[:3] == [sections[0]] * 3 and sections[3:] == [sections[3]] * 3
 
 
-@pytest.mark.parametrize("mission_id", MISSIONS)
-def test_generation_is_deterministic(mission_id):
-    first = _result(mission_id, "es")
-    payload = first[2]
-    again = first[1].generation.fallback(payload)
-    assert again == first[3]
 
 
-@pytest.mark.parametrize("language", ["es", "fr", "de", "ko"])
-def test_m01_markers_and_yes_no_truth(language):
-    _mission, _spec, payload, result, objects = _result("M01", language)
-    rows = {row["key"]: row for row in payload["approvedObjects"]}
-    taught = {row["key"] for row in payload["approvedObjects"]}
-    for question in result.questions:
-        if question.marker_keys:
-            for option in question.options:
-                assert rows[question.marker_keys[option.option_id]]["marker"] == int(option.label)
-            assert question.marker_keys[question.correct_option_id] == question.object_key
-        if question.purpose == "confirmName":
-            assert question.stated_key in taught
-            assert question.statement_true is (question.stated_key == question.object_key)
-            correct = next(o for o in question.options if o.option_id == question.correct_option_id)
-            yes, no = lex.YES_NO[language]
-            assert correct.label == (yes if question.statement_true else no)
 
 
-def test_m01_rejects_untaught_nouns_and_flipped_truth():
-    _mission, _spec, payload, result, _objects = _result("M01", "es")
-    question = next(q for q in result.questions if q.purpose == "confirmName")
-    position = result.questions.index(question)
-    flipped = question.model_copy(update={"statement_true": not question.statement_true})
-    with pytest.raises(LearningTaskGenerationError):
-        validate_a0_lesson(payload, _replace(result, position, flipped))
-    untaught = question.model_copy(update={"stated_key": str(uuid4())})
-    with pytest.raises(LearningTaskGenerationError):
-        validate_a0_lesson(payload, _replace(result, position, untaught))
 
 
 def _replace(result, position, question):
@@ -193,121 +82,22 @@ def _replace(result, position, question):
     return result.model_copy(update={"questions": questions})
 
 
-def test_unconfirmed_or_untaught_objects_are_never_approved():
-    # "sofa" has no reviewed noun; "book" was taught as a different word.
-    _m, _s, payload, _o = _lesson(
-        "M01", "es", labels=["cup", "book", "sofa"], words=["la taza", "la mesa", "el sofá"],
-    )
-    assert [row["source"] for row in payload["approvedObjects"]] == ["cup"]
-    assert not lesson_spec(get_mission("M01", "A0", 1)).ready(payload)
 
 
-def test_m02_prompts_avoid_spatial_words_and_listen_first():
-    _mission, _spec, payload, result, _objects = _result("M02", "es")
-    listening = [q for q in result.questions if q.purpose == "listenSelect"]
-    assert listening and all(q.listen_first and q.audio_text for q in listening)
-    spatial = {"on", "under", "next", "behind", "sobre", "debajo", "al lado", "detrás"}
-    for question in result.questions:
-        assert not spatial & set(question.prompt.casefold().replace(".", "").split())
-        if question.purpose == "chooseName":
-            assert len(question.options) == 2
 
 
-@pytest.mark.parametrize("quantity", [2, 3])
-@pytest.mark.parametrize("language", ["es", "fr", "de", "ko"])
-def test_m03_keeps_the_learner_count(language, quantity):
-    _mission, _spec, payload, result, _objects = _result("M03", language, quantity=quantity)
-    assert payload["group"]["quantity"] == payload["group"]["confirmedQuantity"] == quantity
-    first = result.questions[:3]
-    count = first[0]
-    correct = next(o for o in count.options if o.option_id == count.correct_option_id)
-    assert correct.label == payload["approvedNumberWords"][str(quantity)]
-    assert all(not any(ch.isdigit() for ch in o.label) for q in result.questions for o in q.options)
-    for question in result.questions:
-        if question.options:
-            labels = [o.label for o in question.options]
-            assert len(labels) == len(set(labels)) <= 3
-    assert first[2].correct_text == payload["quantityChunks"][str(quantity)]
-    for question in result.questions:
-        for text in (question.prompt, question.correct_text or ""):
-            assert not text.startswith(("Hay", "Il y a", "Es gibt", "있"))
 
 
-def test_m03_rejects_a_changed_count_and_bad_groups():
-    _mission, _spec, payload, result, _objects = _result("M03", "es", quantity=2)
-    changed = dict(payload, group=dict(payload["group"], quantity=3))
-    with pytest.raises(LearningTaskGenerationError):
-        validate_a0_lesson(changed, result)
-    _m, spec, too_many, _o = _lesson("M03", "es", quantity=4)
-    assert not spec.ready(too_many)
 
 
-@pytest.mark.parametrize(("language", "forms"), [
-    ("es", {"el", "la"}),
-    ("fr", {"le", "la", "l'"}),
-    ("de", {"der", "die", "das"}),
-    ("ko", {"이에요", "예요"}),
-])
-def test_m13_uses_the_reviewed_words_for_each_language(language, forms):
-    _mission, _spec, payload, result, _objects = _result("M13", language)
-    rows = {row["key"]: row for row in payload["approvedObjects"]}
-    for question in result.questions:
-        if question.purpose == "fillSlot":
-            labels = {o.label for o in question.options}
-            assert labels <= forms
-            correct = next(o for o in question.options if o.option_id == question.correct_option_id)
-            assert correct.label == rows[question.object_key]["form"]
-            assert question.complete_chunk == rows[question.object_key]["chunk"]
-        if question.purpose == "chooseChunk":
-            correct = [o for o in question.options
-                       if o.label == rows[question.object_key]["chunk"]]
-            assert len(correct) == 1
-    if language == "ko":
-        assert payload["approvedArticlesOrEndings"] == sorted(lex.KOREAN_ENDINGS)
-        assert rows and all(not row["gender"] for row in rows.values())
 
 
-def test_korean_endings_follow_the_reviewed_final_consonant():
-    _m, _s, payload, _o = _lesson("M13", "ko", labels=["cup", "book", "apple"])
-    chunks = {row["noun"]: row["chunk"] for row in payload["approvedObjects"]}
-    assert chunks["책"] == "책이에요"
-    assert chunks["컵"] == "컵이에요"
-    assert chunks["사과"] == "사과예요"
 
 
-def test_french_elision_comes_from_reviewed_metadata():
-    _m, _s, payload, _o = _lesson(
-        "M13", "fr", labels=["cup", "tree"], words=["la tasse", "l'arbre"],
-    )
-    rows = {row["noun"]: row for row in payload["approvedObjects"]}
-    assert rows["arbre"]["chunk"] == "l'arbre"
-    assert "l'" not in {item["form"] for item in rows["tasse"]["formChoices"]}
 
 
-@pytest.mark.parametrize("language", ["es", "fr"])
-def test_m13_plural_words_need_plurals_taught(language):
-    plural = {"es": {"los", "las"}, "fr": {"les"}}[language]
-    _m, _s, before, _o = _lesson("M13", language)
-    assert not plural & set(before["approvedArticlesOrEndings"])
-    _m, _s, after, _o = _lesson("M13", language, plurals_taught=True)
-    assert plural & set(after["approvedArticlesOrEndings"])
-    _mission, _spec, payload, result, _objects = _result("M13", language)
-    taught = dict(payload, pluralsTaught=True)
-    validate_a0_lesson(taught, result)
 
 
-def test_m13_rejects_multiple_correct_answers_and_endings_as_articles():
-    _mission, _spec, payload, result, _objects = _result("M13", "ko")
-    question = next(q for q in result.questions if q.purpose == "chooseChunk")
-    position = result.questions.index(question)
-    duplicate = question.model_copy(update={"options": [
-        o.model_copy(update={"label": question.options[0].label}) for o in question.options
-    ]})
-    with pytest.raises(LearningTaskGenerationError):
-        validate_a0_lesson(payload, _replace(result, position, duplicate))
-    articles = dict(payload, approvedArticlesOrEndings=["el", "la"])
-    with pytest.raises(LearningTaskGenerationError):
-        validate_a0_lesson(articles, result)
 
 
 def _groups(objects, *pairs):
@@ -323,51 +113,90 @@ def test_m03_counts_the_first_valid_group_when_several_are_counted():
     objects = _objects(["cup", "book", "apple", "sofa"])
     several = _groups(objects, ("cup", 2), ("book", 2), ("apple", 3))
     assert photo_eligibility(mission, objects, [], several).eligible
-    # A group out of range does not block a later valid one.
-    mixed = _groups(objects, ("cup", 1), ("book", 4), ("apple", 2))
+    # Any confirmed name can be counted; an out-of-range group does not block a valid one.
+    mixed = _groups(objects, ("sofa", 2), ("cup", 1), ("book", 4))
     assert photo_eligibility(mission, objects, [], mixed).eligible
-    # Objects outside the reviewed list can be counted too.
-    assert photo_eligibility(mission, objects, [], _groups(objects, ("sofa", 2))).eligible
-    unusable = _groups(objects, ("sofa", 1), ("cup", 1))
+    unusable = _groups(objects, ("cup", 1), ("book", 4))
     check = photo_eligibility(mission, objects, [], unusable)
-    assert not check.eligible
-    assert "Count a group of 2 or 3 matching objects." in check.reasons
+    assert check.reasons == ("Count a group of 2 to 3 matching objects.",)
     assert check.missing == ("counts",)
 
 
-def test_m03_lesson_uses_the_first_valid_group():
-    _m, _s, payload, result, objects = _result(
-        "M03", "es", labels=["cup", "book", "apple", "sofa"],
-        groups=[("sofa", 2), ("cup", 1), ("book", 3), ("apple", 2)],
-    )
-    book = next(obj for obj in objects if obj.label == "book")
-    assert payload["group"]["key"] == str(book.id)
-    assert payload["group"]["quantity"] == 3
-    validate_a0_lesson(payload, result)
 
 
-def test_photo_eligibility_needs_two_different_objects_not_reviewed_nouns():
+def test_photo_eligibility_takes_any_two_differently_named_objects():
     mission = get_mission("M01", "A0", 1)
-    assert not photo_eligibility(mission, _objects(["sofa"]), []).eligible
-    assert not photo_eligibility(mission, _objects(["sofa", "sofa"]), []).eligible
-    # Any confirmed objects qualify; their nouns come from the scene translation.
+    # Packs teach whatever the learner confirmed, not a fixed noun list.
     assert photo_eligibility(mission, _objects(["cup", "sofa"]), []).eligible
-    assert photo_eligibility(mission, _objects(["cup", "book"]), []).eligible
+    check = photo_eligibility(mission, _objects(["cup", "cup"]), [])
+    assert check.reasons == ("Confirm at least 2 different objects.",)
+    assert check.missing == ("objects",)
 
 
-@pytest.mark.parametrize("mission_id", MISSIONS)
-def test_tasks_persist_questions_answers_and_option_order(mission_id):
-    mission, spec, payload, result, _objects = _result(mission_id, "de")
-    session_id = uuid4()
-    task = spec.task(session_id, mission, payload, result, {})
-    again = spec.task(session_id, mission, payload, spec.generation.fallback(payload), {})
-    assert task.id == again.id and task.public_content == again.public_content
-    content = task.public_content
-    assert content.mission_id == mission_id and content.practice_level == "A0"
-    assert content.prep
-    assert set(task.answer_key.correct_option_ids) == {q.question_id for q in content.questions}
-    for question in content.questions:
-        if question.interaction_type == "multipleChoice":
-            assert len(question.options) <= 3
-            if mission_id not in {"M04", "M05"}:
-                assert question.keep_option_order
+
+
+def _named_rows(*nouns):
+    """Approved object rows with markers 1..n; repeated nouns are same-name objects."""
+    return [dict(key=str(uuid4()), marker=number, noun=noun, label=noun)
+            for number, noun in enumerate(nouns, 1)]
+
+
+def _marker(rows, target):
+    from app.ai.features.learning_tasks.mission_a0 import A0Question, marker_question
+
+    payload = {"approvedObjects": rows, "approvedTranslations": {}}
+    return A0Question.model_validate(
+        marker_question(payload, "findNamed", "Task 1", target, "Busca el armario.", index=1)
+    )
+
+
+def _check(question, rows):
+    from app.ai.features.learning_tasks.mission_a0 import _check_markers
+
+    _check_markers(question, {option.option_id: option.label for option in question.options},
+                   {row["key"]: row for row in rows})
+
+
+def test_a_name_alone_accepts_every_marker_on_an_object_with_that_name():
+    rows = _named_rows("armario", "ventana", "armario")
+    question = _marker(rows, rows[2])
+    assert question.correct_option_id == "marker-3"
+    assert question.accepted_option_ids == ["marker-1"]
+    _check(question, rows)
+    # Leaving out a same-name marker would mark a right answer wrong.
+    with pytest.raises(LearningTaskGenerationError, match="named word"):
+        _check(question.model_copy(update={"accepted_option_ids": []}), rows)
+
+
+def test_marker_choices_keep_a_differently_named_object():
+    rows = _named_rows("armario", "armario", "armario", "ventana")
+    question = _marker(rows, rows[0])
+    assert [option.label for option in question.options] == ["1", "2", "4"]
+    assert question.accepted_option_ids == ["marker-2"]
+    _check(question, rows)
+
+
+def test_distinct_names_accept_only_the_named_marker():
+    rows = _named_rows("taza", "libro", "manzana")
+    question = _marker(rows, rows[1])
+    assert question.accepted_option_ids == []
+    _check(question, rows)
+
+
+def test_accepted_alternatives_grade_as_correct_and_stay_out_of_other_keys():
+    from app.repositories.postgres.workflow import _lesson_answer_is_correct
+    from app.schemas.tasks import TaskAnswerKey
+
+    assert "acceptedOptionIds" not in TaskAnswerKey(
+        correct_option_ids={"q": "marker-3"}
+    ).model_dump(by_alias=True)
+    task = SimpleNamespace(
+        public_content=SimpleNamespace(questions=[
+            SimpleNamespace(question_id="q", interaction_type="multipleChoice"),
+        ]),
+        answer_key=TaskAnswerKey(correct_option_ids={"q": "marker-3"},
+                                 accepted_option_ids={"q": ["marker-1"]}),
+    )
+    assert _lesson_answer_is_correct(task, "q", "marker-3")
+    assert _lesson_answer_is_correct(task, "q", "marker-1")
+    assert not _lesson_answer_is_correct(task, "q", "marker-2")

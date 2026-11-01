@@ -2,7 +2,7 @@
 
 import json
 from types import SimpleNamespace
-from uuid import UUID
+from uuid import UUID, uuid4, uuid5
 
 import pytest
 from sqlalchemy import func, select, update
@@ -25,7 +25,8 @@ from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.repositories.postgres.xp import xp_events
 from app.repositories.practice import InsufficientSceneError, PracticeConflictError
 from app.schemas.enums import SessionMode
-from app.schemas.sessions import ReviewPracticeRequest
+from app.schemas.media import SceneObjectRelation
+from app.schemas.sessions import AddedPracticeObject, ReviewPracticeRequest
 from app.schemas.tasks import SkipTaskRequest
 from app.services import mission_eligibility
 
@@ -129,8 +130,9 @@ def test_one_relation_plans_one_m02_task_with_four_questions_on_it(curated):
     assert (choose.object_label, choose.reference_label) == ("Cup", "Table")
     assert (choose.scene_object_id, choose.reference_object_id) == (cup, table)
     assert ask.reference_object_id is None
+    # The pack's fixed prompt; its English translation names the object.
     assert (ask.prompt, ask.prompt_translation) == (
-        "Pregunta por la ubicación de la taza.", "Ask where the cup is.",
+        "Pregunta dónde está.", "Ask where the cup is.",
     )
     assert answer.reference_object_id == table
     key = _answer_key(engine, lesson.id)
@@ -149,6 +151,35 @@ def test_one_relation_plans_one_m02_task_with_four_questions_on_it(curated):
     ]
     resumed = repository.get(sid, profile.id)
     assert [t.public_content for t in _parts(resumed)] == [content]
+
+
+def test_review_removal_and_manual_addition_keep_contiguous_markers_after_reload(curated):
+    _engine, _owner, profile, client, *_ = curated
+    repository = _repository(curated, SceneModel())
+    sid, analyzed = _analyzed(curated, repository)
+    table = next(obj for obj in analyzed.scene_objects if obj.label == "table")
+    manual = AddedPracticeObject(id=uuid4(), label="cup", x=.2, y=.3)
+    request = ReviewPracticeRequest(
+        accepted_object_ids=[table.id], added_objects=[manual],
+        object_attributes={table.id: {"color": "white"}, manual.id: {"color": "red"}},
+        relations=[SceneObjectRelation(
+            subject_scene_object_id=manual.id, relation="on", reference_scene_object_id=table.id,
+        )],
+    )
+    repository.review(sid, profile.id, request)
+    expected = {str(table.id): 1, str(uuid5(sid, "manual:" + str(manual.id))): 2}
+    restored = _repository(curated, SceneModel()).get(sid, profile.id)
+    assert restored.review_markers == expected
+    assert client.get(f"/api/v1/sessions/{sid}").json()["reviewMarkers"] == expected
+    assert {str(obj.id) for obj in restored.scene_objects} == set(expected)
+    marker_questions = [question for task in _parts(restored)
+                        for question in task.public_content.questions if question.marker_object_ids]
+    assert marker_questions
+    for question in marker_questions:
+        assert {option.option_id: option.label for option in question.options} == {
+            option_id: str(expected[str(object_id)])
+            for option_id, object_id in question.marker_object_ids.items()
+        }
 
 
 @pytest.mark.parametrize("scenario", ["correct", "incorrect"])

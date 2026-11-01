@@ -6,7 +6,8 @@ import test from "node:test";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { JSDOM } from "jsdom";
 import { rolldown } from "rolldown";
-import type { SessionTask } from "../src/lib/api.ts";
+import type { SessionTask, VocabularyLearningWord } from "../src/lib/api.ts";
+import type { LanguageItem } from "../src/data/types.ts";
 
 const dom = new JSDOM("<!doctype html><html><body></body></html>", { url: "http://app.test/", pretendToBeVisual: true });
 const globals = globalThis as Record<string, unknown>;
@@ -87,7 +88,7 @@ async function type(value: string) {
     input.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
   });
 }
-async function mount() {
+async function mount(options: { words?: VocabularyLearningWord[]; items?: LanguageItem[]; stayInReview?: boolean } = {}) {
   const container = dom.window.document.createElement("div");
   dom.window.document.body.appendChild(container);
   const root = surface.createRoot(container);
@@ -96,7 +97,7 @@ async function mount() {
     id: "t1", kind: "vocabularyIntroduction", phase: "learning", status: "completed", orderIndex: 0,
     isSkippable: true, vocabularyItemId: null, sceneObjectId: null, xpReward: 0, xpBonus: 0,
     publicContent: { kind: "vocabularyIntroduction", title: "Photo words", allowTypingPractice: true,
-      words: [["cup", "taza"], ["table", "mesa"]].map(([translation, targetText]) => ({
+      words: options.words ?? [["cup", "taza"], ["table", "mesa"]].map(([translation, targetText]) => ({
         learningKey: translation, termType: "object", vocabularyItemId: null, sceneObjectId: null,
         targetText, translation, partOfSpeech: "noun", gender: null, pluralForm: null,
         phoneticText: null, pronunciationAudioAssetId: null, exampleSentence: null,
@@ -109,7 +110,7 @@ async function mount() {
   };
   const close = async () => { await surface.act(async () => root.unmount()); client.clear(); container.remove(); cleanups.delete(close); };
   cleanups.add(close);
-  const scene = { id: "scene1", sessionId: "s1", imageUrl: null, items: [], languageCode: "es" };
+  const scene = { id: "scene1", sessionId: "s1", imageUrl: null, items: options.items ?? [], languageCode: "es" };
   await surface.act(async () => root.render(surface.h(surface.QueryClientProvider, { client },
     surface.h(surface.AppStateContext.Provider, { value: {
       session: { session: { id: "s1", status: "completed" }, tasks: [task], sceneObjects: [] }, practiceSaving: false,
@@ -118,9 +119,93 @@ async function mount() {
       surface.h(surface.Route, { element: surface.h(surface.Outlet, { context: scene }) },
         surface.h(surface.Route, { path: "/review", element: surface.h(surface.VocabularySceneReview) })),
       surface.h(surface.Route, { path: "/vocabulary", element: surface.h("p", null, "Vocabulary collection") })))))));
-  await click("Next");
-  await click("Start quick quiz");
+  if (!options.stayInReview) {
+    await click("Next");
+    await click("Start quick quiz");
+  }
 }
+
+function reviewWord(termType: VocabularyLearningWord["termType"], targetText: string, sceneObjectId: string | null = null, relatedSceneObjectIds: string[] = []): VocabularyLearningWord {
+  return { learningKey: targetText, termType, targetText, translation: targetText, sceneObjectId, relatedSceneObjectIds,
+    vocabularyItemId: null, partOfSpeech: termType === "object" ? "noun" : termType === "attribute" ? "adjective" : "preposition",
+    gender: null, pluralForm: null, phoneticText: null, pronunciationAudioAssetId: null, exampleSentence: null };
+}
+
+test("leaving a completed-scene review returns to vocabulary without changing the task", async () => {
+  await mount({ stayInReview: true });
+  assert.equal(button("Return home"), undefined);
+  assert.equal(button("Skip this task"), undefined);
+  await click("Back to vocabulary");
+  assert.match(text(), /Vocabulary collection/);
+  assert.deepEqual(requests, []);
+});
+
+test("the completed-scene shortcut starts the same mixed review without a task submission", async () => {
+  await mount({ stayInReview: true });
+  await click("Go to exercises");
+  assert.match(text(), /What is taza/);
+  assert.deepEqual(requests, []);
+  await click("cup");
+  assert.deepEqual(requests[0].body, { questionId: "q-cup", optionId: "option-cup", review: true });
+  await click("Continue");
+  assert.ok(dom.window.document.querySelector('input[aria-label="Type table"]'));
+  assert.doesNotMatch(text(), /Basil earned/);
+});
+
+test("review groups mixed words while retaining photo context and optional image interaction", async () => {
+  await mount({ stayInReview: true, words: [
+    reviewWord("relationship", "cerca", null, ["table", "chair"]),
+    reviewWord("attribute", "rojo", "chair"),
+    reviewWord("object", "mesa", "table"),
+    reviewWord("object", "silla", "chair"),
+  ], items: ["table", "chair"].map((id, i) => ({ id, marker: i + 1, word: id, translation: id, wordClass: "noun", gender: null, x: 30 + i * 30, y: 50, example: "", exampleTranslation: "" })) });
+  const section = () => dom.window.document.querySelector(".vocabulary-review-section h2")?.textContent;
+  assert.equal(section(), "Objects and adjectives");
+  assert.equal(dom.window.document.querySelectorAll("button.scene__marker").length, 2);
+  await click("Next");
+  assert.equal(section(), "Objects and adjectives");
+  assert.deepEqual([...dom.window.document.querySelectorAll(".learning-card__word h2")].map(item => item.textContent), ["silla", "rojo"]);
+  assert.ok(dom.window.document.querySelector(".vocabulary-learning-grid--paired"));
+  assert.ok(dom.window.document.querySelector(".vocabulary-learning-scene"));
+  assert.equal(dom.window.document.querySelectorAll("button.scene__marker").length, 2);
+  await click("Next");
+  assert.equal(section(), "Relations");
+  assert.equal(dom.window.document.querySelectorAll(".scene__marker--active").length, 2);
+  assert.ok(button("Start quick quiz"));
+  await click("Previous");
+  assert.equal(section(), "Objects and adjectives");
+  assert.deepEqual(requests, [], "Exploring teaching cards must not submit answers");
+});
+
+test("repeated-object markers select the matching word, highlight the clicked instance and speak native text", async () => {
+  const spoken: { text: string; lang: string }[] = [];
+  const previousSpeech = dom.window.speechSynthesis;
+  const previousUtterance = globals.SpeechSynthesisUtterance;
+  Object.defineProperty(dom.window, "speechSynthesis", { configurable: true, value: {
+    cancel: () => {}, speak: (utterance: { text: string; lang: string }) => spoken.push(utterance),
+  } });
+  globals.SpeechSynthesisUtterance = class { text: string; constructor(text: string) { this.text = text; } };
+  try {
+    await mount({ stayInReview: true, words: [reviewWord("object", "mesa", "table"), reviewWord("object", "silla", "chair1", ["chair2"])],
+      items: ["table", "chair1", "chair2"].map((id, i) => ({ id, marker: i + 1, word: id, translation: id, wordClass: "noun", gender: null, x: 20 + i * 25, y: 50, example: "", exampleTranslation: "" })) });
+    const marker = dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Marker 3: chair2"]');
+    assert.ok(marker);
+    await surface.act(async () => marker.click());
+    assert.equal(dom.window.document.querySelector(".learning-card__word h2")?.textContent, "silla");
+    assert.equal(marker.getAttribute("aria-pressed"), "true");
+    assert.equal(dom.window.document.querySelectorAll(".scene__marker--active").length, 1);
+    assert.equal(spoken[0].text, "silla");
+    assert.equal(spoken[0].lang, "es-ES");
+    const replay = dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Hear silla"]');
+    assert.ok(replay);
+    await surface.act(async () => replay.click());
+    assert.equal(spoken.length, 2);
+    assert.deepEqual(requests, []);
+  } finally {
+    Object.defineProperty(dom.window, "speechSynthesis", { value: previousSpeech, configurable: true });
+    globals.SpeechSynthesisUtterance = previousUtterance;
+  }
+});
 
 test("revisit alternates server-graded recognition and recall and can finish without new rewards", async () => {
   await mount();
@@ -160,4 +245,30 @@ test("a failed recall check preserves unfinished text and can continue after ret
   assert.match(text(), /What is mesa/);
   await click("table");
   assert.equal(requests.at(-1)?.body.optionId, "option-table");
+});
+
+test("typing can be skipped without an answer request while recognition stays required", async () => {
+  await mount();
+  const assertPhoto = () => {
+    assert.equal(dom.window.document.querySelectorAll(".vocabulary-learning-scene").length, 1);
+    assert.equal(dom.window.document.querySelector(".vocabulary-learning-scene")?.getAttribute("aria-label"), "Your photo");
+    assert.equal(dom.window.document.querySelectorAll("button.scene__marker").length, 0);
+  };
+  assertPhoto();
+  assert.equal(button("Skip typing"), undefined);
+  await click("cup"); await click("Continue");
+  assertPhoto();
+  await type("unfinished");
+  const before = requests.length;
+  await click("Skip typing");
+  assertPhoto();
+  assert.equal(requests.length, before);
+  assert.match(text(), /What is mesa/);
+  assert.equal(button("Skip typing"), undefined);
+  await click("table"); await click("Continue");
+  await click("Skip typing");
+  assert.match(text(), /Review complete/);
+  assertPhoto();
+  assert.equal(requests.length, 2);
+  assert.ok(requests.every(request => request.path.endsWith("check-vocabulary-answer")));
 });

@@ -48,21 +48,23 @@ const surface = await bundle();
 let savedChecks: LessonAnswerCheck[] = [];
 let vocabularySaved: Record<string, unknown>[] = [];
 let vocabularyRestoreFails = false;
+let vocabularyRestoreReply: (() => Response | Promise<Response>) | null = null;
 let latestAttempt: LatestClueAttempt | null = null;
 const replies: (() => Response | Promise<Response>)[] = [];
 const actions: (() => TaskActionResult | null)[] = [];
 const requests: Record<string, unknown>[] = [];
+const taskActions: { action: string; body: unknown }[] = [];
 const originalFetch = globals.fetch;
 globals.fetch = async (input: unknown, init?: RequestInit) => {
   const path = new URL(String(input)).pathname;
-  if (path.endsWith("/vocabulary-checks")) return vocabularyRestoreFails ? Response.json({ detail: { message: "Unavailable" } }, { status: 503 }) : Response.json({ checks: vocabularySaved });
+  if (path.endsWith("/vocabulary-checks")) return vocabularyRestoreReply?.() ?? (vocabularyRestoreFails ? Response.json({ detail: { message: "Unavailable" } }, { status: 503 }) : Response.json({ checks: vocabularySaved }));
   if (path.endsWith("/lesson-checks")) return Response.json({ checks: savedChecks, assistanceSteps: {} });
   if (path.endsWith("/latest-attempt")) return Response.json({ attempt: latestAttempt });
   requests.push(JSON.parse(String(init?.body ?? "{}")));
   return replies.shift()?.() ?? new Response("Unexpected fixture request", { status: 500 });
 };
 const cleanups = new Set<() => Promise<void>>();
-test.beforeEach(() => { savedChecks = []; vocabularySaved = []; vocabularyRestoreFails = false; latestAttempt = null; replies.length = 0; actions.length = 0; requests.length = 0; });
+test.beforeEach(() => { savedChecks = []; vocabularySaved = []; vocabularyRestoreFails = false; vocabularyRestoreReply = null; latestAttempt = null; replies.length = 0; actions.length = 0; requests.length = 0; taskActions.length = 0; });
 test.afterEach(async () => { for (const cleanup of [...cleanups]) await cleanup(); });
 test.after(() => {
   globals.fetch = originalFetch;
@@ -126,14 +128,18 @@ async function mount(initialTask: SessionTask, scenePatch: Partial<Scene> = {}) 
     surface.h(surface.AppStateContext.Provider, { value: {
       session: { session: { id: "s1", status: "inProgress" }, tasks: [task], sceneObjects: [] },
       practiceSaving: false, practiceError: null, completeSession: () => false,
-      actOnTask: async () => {
+      actOnTask: async (_taskId: string, action: string, body: unknown) => {
+        taskActions.push({ action, body });
         const result = actions.shift()?.() ?? null;
         if (result) { task = result.task; await render(); }
         return result;
       },
     } }, surface.h(surface.MemoryRouter, { initialEntries: ["/practice/sessions/s1/learn/t1"] },
-      surface.h(surface.Routes, null, surface.h(surface.Route, { path: "/practice/sessions/:sessionId", element: surface.h(surface.Outlet, { context: scene }) },
-        surface.h(surface.Route, { path: "learn/:taskId", element: surface.h(surface.LearningTaskPage) }))))))));
+      surface.h(surface.Routes, null,
+        surface.h(surface.Route, { path: "/home", element: surface.h("p", null, "Home destination") }),
+        surface.h(surface.Route, { path: "/practice/sessions/:sessionId", element: surface.h(surface.Outlet, { context: scene }) },
+          surface.h(surface.Route, { path: "learn", element: surface.h("p", null, "Task list destination") }),
+          surface.h(surface.Route, { path: "learn/:taskId", element: surface.h(surface.LearningTaskPage) }))))))));
   const close = async () => {
     cleanups.delete(close);
     try { await surface.act(async () => root.unmount()); } finally { client.clear(); container.remove(); }
@@ -182,7 +188,9 @@ for (const checkEachQuestion of [true, false]) {
     assert.equal(dom.window.document.querySelectorAll('.scene img[alt="Table"]').length, 1);
     const marker = dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Marker 1"]');
     assert.ok(marker);
+    assert.equal(button("Marker 1"), undefined, "marker questions do not repeat photo markers as choices");
     await surface.act(async () => { marker.dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true })); });
+    assert.equal(marker.getAttribute("aria-pressed"), "true");
     assert.equal(button("Check answer")?.disabled, false);
   });
 
@@ -244,6 +252,75 @@ test("a locked incorrect answer keeps its correction without promising another a
   assert.equal(button("Finish task")?.disabled, false);
 });
 
+function a2DescriptionLesson(): SessionTask {
+  const task = lesson();
+  if (task.publicContent.kind !== "grammarLesson") throw new Error("Expected grammar fixture");
+  task.publicContent.practiceLevel = "A2";
+  task.publicContent.focus = "sceneDescription";
+  task.publicContent.title = "Describe the scene";
+  task.publicContent.questions = [
+    { questionId: "m01-q1", section: "Task 1 · Notice the facts", prompt: "Touch the object: La taza es roja.",
+      translation: "Touch the object: The cup is red.", interactionType: "multipleChoice", tokenBank: [],
+      options: [{ optionId: "cup-choice", label: "1" }, { optionId: "book-choice", label: "2" }],
+      markerObjectIds: { "cup-choice": "cup", "book-choice": "book" } },
+    { questionId: "m01-q2", section: "Task 1 · Notice the facts", prompt: "Build the second sentence.",
+      interactionType: "sentenceBuilding", options: [], tokenBank: ["La", "taza", "está", "sobre", "la", "mesa."] },
+    { questionId: "m01-q3", section: "Task 2 · Describe the scene", prompt: "Choose the matching description.",
+      interactionType: "multipleChoice", tokenBank: [], options: [
+        { optionId: "description-right", label: "Hay una taza roja junto al libro." },
+        { optionId: "description-wrong", label: "Hay una mesa roja debajo del libro." },
+      ], completeTranslation: "There is a red cup next to the book." },
+    { questionId: "m01-q4", section: "Task 2 · Describe the scene", prompt: "Describe the scene.",
+      interactionType: "sentenceBuilding", options: [], tokenBank: ["Hay", "un", "libro", "y", "una", "taza", "roja."] },
+    { questionId: "m01-q5", section: "Task 3 · Check a detail", prompt: "A later question should stay hidden.",
+      interactionType: "multipleChoice", tokenBank: [], options: [{ optionId: "later", label: "Future answer" }] },
+  ];
+  return task;
+}
+
+const a2Scene: Partial<Scene> = { ...descriptionScene, items: [...descriptionScene.items!, {
+  ...descriptionScene.items![0], id: "book", word: "libro", translation: "book", marker: 2, x: 70,
+}] };
+const contextCard = () => dom.window.document.querySelector('[aria-label="Previous checked sentence"]');
+
+test("A2 construction retains the checked photo sentence when advancing and after refresh", async () => {
+  let view = await mount(a2DescriptionLesson(), a2Scene);
+  assert.equal(contextCard(), null);
+  const marker = dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Marker 1"]');
+  assert.ok(marker);
+  await surface.act(async () => marker.click());
+  const result = { ...checked(true), questionId: "m01-q1", answer: "cup-choice", correctAnswer: "1" };
+  replies.push(() => Response.json(result));
+  await click("Check answer");
+  await click("Next question");
+  assert.match(contextCard()?.textContent ?? "", /La taza es roja/);
+  assert.match(contextCard()?.textContent ?? "", /The cup is red/);
+  assert.doesNotMatch(contextCard()?.textContent ?? "", /cup-choice|book-choice|^1$/);
+  assert.doesNotMatch(text(), /La taza está sobre la mesa\.|A later question should stay hidden|Future answer/);
+  await view.close();
+  savedChecks = [result];
+  view = await mount(a2DescriptionLesson(), a2Scene);
+  assert.match(text(), /Build the second sentence/);
+  assert.match(contextCard()?.textContent ?? "", /La taza es roja/);
+  assert.equal(requests.length, 1, "restoring context never submits another answer");
+  await view.close();
+});
+
+test("A2 description context uses the previous corrected sentence instead of a wrong answer or another section", async () => {
+  savedChecks = [
+    { ...checked(true), questionId: "m01-q1", answer: "cup-choice", correctAnswer: "1" },
+    { ...checked(true), questionId: "m01-q2", answer: "An earlier section's sentence.", correctAnswer: "An earlier section's sentence." },
+    { ...checked(false), questionId: "m01-q3", answer: "description-wrong", correctAnswer: "Hay una taza roja junto al libro." },
+    { ...checked(true), questionId: "m01-q5", answer: "later", correctAnswer: "Future answer" },
+  ];
+  await mount(a2DescriptionLesson(), a2Scene);
+  assert.match(contextCard()?.textContent ?? "", /Hay una taza roja junto al libro/);
+  assert.match(contextCard()?.textContent ?? "", /There is a red cup next to the book/);
+  assert.doesNotMatch(contextCard()?.textContent ?? "", /Hay una mesa roja|description-wrong|earlier section|Future answer/);
+  assert.doesNotMatch(text(), /Hay un libro y una taza roja\.|A later question should stay hidden|Future answer/);
+  assert.equal(requests.length, 0);
+});
+
 test("M06 preserves a saved retry and replaces encouragement only after the new grade arrives", async () => {
   savedChecks = [checked(false, 1)];
   await mount(lesson("M06"));
@@ -258,6 +335,80 @@ test("M06 preserves a saved retry and replaces encouragement only after the new 
   assert.match(text(), /The article matches taza/);
   assert.equal(requests[0].answer, "a");
   assert.equal(button("Try again"), undefined);
+});
+
+function situationLesson(missionId: "M04" | "M05") {
+  const task = lesson(missionId);
+  if (task.publicContent.kind !== "grammarLesson") throw new Error("Expected grammar fixture");
+  const content = task.publicContent;
+  content.focus = missionId === "M04" ? "ownership" : "preference";
+  content.missionSnapshot = {
+    missionId, level: "A0", situation: missionId === "M04" ? "lostAndFound" : "everydayChoice",
+    taughtChunks: [], pretend: true,
+  };
+  const positive = missionId === "M04" ? "Es mío" : "Me gusta";
+  const negative = missionId === "M04" ? "No es mío" : "No me gusta";
+  const question = content.questions[0];
+  delete question.allowRetry;
+  question.options = [{ optionId: "a", label: positive }, { optionId: "b", label: negative }];
+  question.gapType = "chunkChoice";
+  question.slotTemplate = "___.";
+  question.completeChunk = `${positive}.`;
+  content.questions = [question, { ...question, questionId: "q2" }];
+  const check = (questionId: string, correct: boolean): LessonAnswerCheck => {
+    const result = { ...checked(correct), questionId, correctAnswer: positive };
+    // These single-attempt questions omit both fields in real API responses.
+    delete result.attemptsLeft;
+    return result;
+  };
+  return { task, positive, negative, check };
+}
+
+for (const missionId of ["M04", "M05"] as const) {
+  test(`${missionId} finishes after correcting an earlier mistake and submits the original grades`, async () => {
+    const { task, positive, negative, check } = situationLesson(missionId);
+    await mount(task);
+    const progress = () => dom.window.document.querySelector(".trail__label")?.textContent;
+    assert.equal(progress(), "Question 1 of 2");
+    assert.equal(dom.window.document.querySelectorAll(".question-progress .label").length, 0);
+    await click(negative);
+    replies.push(() => Response.json(check("q1", false)));
+    await click("Check answer");
+    await waitFor(() => assert.equal(button("Next question")?.disabled, false));
+    await click(positive);
+    await click("Next question");
+    assert.equal(progress(), "Question 2 of 2");
+    await click(positive);
+    replies.push(() => Response.json(check("q2", true)));
+    await click("Check answer");
+    await waitFor(() => assert.equal(button("Finish task")?.disabled, false));
+    actions.push(() => action(task, false, "1 of 2 questions correct."));
+    await click("Finish task");
+    assert.deepEqual(taskActions, [{ action: "attempts", body: {
+      inputMode: "vocabularyReview", answers: { q1: "b", q2: "a" }, typedAnswers: {},
+    } }]);
+    assert.match(text(), /1 of 2 questions correct/);
+  });
+
+  test(`${missionId} can finish after reload with wrong saved answers and no local corrections`, async () => {
+    const { task, check } = situationLesson(missionId);
+    savedChecks = [check("q1", false), check("q2", false)];
+    await mount(task);
+    assert.equal(button("Finish task")?.disabled, false);
+    actions.push(() => action(task, false, "0 of 2 questions correct."));
+    await click("Finish task");
+    assert.equal(requests.length, 0, "restoring a lesson does not regrade or reward corrections");
+    assert.deepEqual(taskActions[0].body, {
+      inputMode: "vocabularyReview", answers: { q1: "b", q2: "b" }, typedAnswers: {},
+    });
+  });
+}
+
+test("an explicitly retryable lesson cannot finish while a saved retry is still open", async () => {
+  savedChecks = [checked(false, 2)];
+  await mount(lesson("M06"));
+  assert.equal(button("Finish task")?.disabled, true);
+  assert.equal(taskActions.length, 0);
 });
 
 test("a failed question check shows the error without an answer celebration", async () => {
@@ -319,6 +470,7 @@ test("vocabulary feedback keeps the correct word and a locked answer", async () 
   replies.push(() => Response.json({ questionId: "word1", acceptedOptionId: "table", isCorrect: false, correctOptionId: "cup", basilEarned: 5 }));
   await click("table");
   await waitFor(() => assert.match(text(), /\+5 Basil earned/));
+  assert.ok(dom.window.document.querySelector(".question-basil.basil-reward"));
   assert.ok(text().includes(learningFeedback("incorrect", "t1:word1")));
   assert.match(text(), /Incorrect\. The correct answer is cup/);
   assert.equal(button("cup")?.disabled, true);
@@ -336,6 +488,76 @@ function vocabularyTask(): SessionTask {
   } };
 }
 
+test("returning home from word review leaves the task unchanged", async () => {
+  await mount(vocabularyTask());
+  await click("Return home");
+  assert.match(text(), /Home destination/);
+  assert.deepEqual(taskActions, []);
+  assert.deepEqual(requests, []);
+});
+
+test("skipping word review marks the whole activity skipped before returning to tasks", async () => {
+  const task = vocabularyTask();
+  await mount(task);
+  const skip = button("Skip this task");
+  assert.ok(skip);
+  const description = dom.window.document.getElementById(skip.getAttribute("aria-describedby") ?? "");
+  assert.match(description?.textContent ?? "", /whole word activity/);
+  actions.push(() => ({ ...action(task, null, "Skipped"), task: { ...task, status: "skipped" } }));
+  await click("Skip this task");
+  assert.deepEqual(taskActions, [{ action: "skip", body: undefined }]);
+  assert.match(text(), /Task list destination/);
+  assert.deepEqual(requests, []);
+});
+
+test("the flashcard shortcut opens exercises without submitting or rewarding the task", async () => {
+  const task = vocabularyTask();
+  if (task.publicContent.kind !== "vocabularyIntroduction") throw new Error("Expected vocabulary fixture");
+  task.publicContent.words.push({ ...task.publicContent.words[0], learningKey: "table", targetText: "mesa", translation: "table" });
+  await mount(task);
+  await waitFor(() => assert.equal(button("Go to exercises")?.disabled, false));
+  await click("Go to exercises");
+  assert.match(text(), /What is taza/);
+  assert.deepEqual(requests, []);
+  assert.deepEqual(taskActions, []);
+  assert.doesNotMatch(text(), /Basil earned/);
+  replies.push(() => Response.json({ questionId: "word1", acceptedOptionId: "cup", isCorrect: true, correctOptionId: "cup", basilEarned: 10 }));
+  await click("cup");
+  await waitFor(() => assert.match(text(), /\+10 Basil earned/));
+  assert.deepEqual(requests, [{ questionId: "word1", optionId: "cup", review: false }]);
+  assert.deepEqual(taskActions, []);
+});
+
+test("skipped vocabulary tasks and tasks without questions do not offer the exercise shortcut", async () => {
+  const skipped = vocabularyTask();
+  skipped.status = "skipped";
+  const revision = await mount(skipped);
+  assert.equal(button("Go to exercises"), undefined);
+  await revision.close();
+  const task = vocabularyTask();
+  if (task.publicContent.kind !== "vocabularyIntroduction") throw new Error("Expected vocabulary fixture");
+  task.publicContent.questions = [];
+  await mount(task);
+  assert.equal(button("Go to exercises"), undefined);
+  assert.deepEqual(requests, []);
+  assert.deepEqual(taskActions, []);
+});
+
+test("exercise entry waits for saved vocabulary answers before opening the quiz", async () => {
+  let finishRestore: (response: Response) => void = () => { throw new Error("Restore has not started"); };
+  vocabularyRestoreReply = () => new Promise<Response>(resolve => { finishRestore = resolve; });
+  await mount(vocabularyTask());
+  assert.equal(button("Go to exercises")?.disabled, true);
+  assert.equal(button("Start quick quiz")?.disabled, true);
+  assert.doesNotMatch(text(), /What is taza/);
+  await surface.act(async () => finishRestore(Response.json({ checks: [] })));
+  await waitFor(() => assert.equal(button("Go to exercises")?.disabled, false));
+  await click("Go to exercises");
+  assert.match(text(), /What is taza/);
+  assert.deepEqual(requests, []);
+  assert.deepEqual(taskActions, []);
+});
+
 test("saved vocabulary answers restore their accepted choice and Basil without another check", async () => {
   vocabularySaved = [{ questionId: "word1", acceptedOptionId: "table", isCorrect: false, correctOptionId: "cup", basilEarned: 5 }];
   await mount(vocabularyTask());
@@ -349,8 +571,9 @@ test("a failed vocabulary restore blocks checking rather than starting with empt
   vocabularyRestoreFails = true;
   await mount(vocabularyTask());
   await waitFor(() => assert.match(text(), /We couldn’t restore your word answers/));
-  await click("Start quick quiz");
-  assert.equal(button("table")?.disabled, true);
+  assert.equal(button("Go to exercises")?.disabled, true);
+  assert.equal(button("Start quick quiz")?.disabled, true);
+  assert.equal(button("table"), undefined);
   assert.doesNotMatch(text(), /\+\d+ Basil earned/);
   assert.equal(requests.length, 0);
 });
@@ -391,6 +614,38 @@ test("refreshing vocabulary checks keeps the learner's typing stage and unfinish
   assert.equal(input.value, "taz");
   assert.equal(button("Check answer")?.disabled, false);
   assert.equal(requests.length, 1);
+});
+
+test("an accent-only typing answer is accepted with yellow guidance", async () => {
+  const task = vocabularyTask();
+  if (task.publicContent.kind !== "vocabularyIntroduction") throw new Error("Expected vocabulary fixture");
+  task.publicContent.words[0].targetText = "canapé";
+  task.publicContent.words[0].translation = "sofa";
+  task.publicContent.questions[0].options[0] = { optionId: "canapé", label: "canapé" };
+  task.publicContent.questions[0].correctOptionId = "canapé";
+  await mount(task);
+  await waitFor(() => assert.doesNotMatch(text(), /Restoring word answers/));
+  await click("Start quick quiz");
+  replies.push(() => Response.json({ questionId: "word1", acceptedOptionId: "canapé", isCorrect: true, correctOptionId: "canapé", basilEarned: 10 }));
+  await click("canapé");
+  await waitFor(() => assert.ok(button("Next question")));
+  await click("Next question");
+
+  const input = dom.window.document.querySelector<HTMLInputElement>('input[aria-label="Type sofa"]');
+  assert.ok(input);
+  await surface.act(async () => {
+    Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, "value")!.set!.call(input, "canape");
+    input.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
+  });
+  replies.push(() => Response.json({ learningKey: "cup", isCorrect: false, isClose: true, correctAnswer: "canapé", revealed: false, basilEarned: 0 }));
+  await click("Check answer");
+
+  await waitFor(() => assert.match(text(), /Close! You’re missing some accents/));
+  assert.match(text(), /Write it as canapé/);
+  assert.ok(dom.window.document.querySelector(".feedback--neutral"));
+  assert.equal(input.disabled, true);
+  assert.ok(button("Finish task"));
+  assert.equal(button("I forgot, lift the lid"), undefined);
 });
 
 test("teaching cards highlight their photo object and practice interleaves recognition before typing", async () => {

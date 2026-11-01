@@ -1,0 +1,20 @@
+construction_id = "target-clue"
+version = 1
+summary = "Describe a hidden object by a detail or its location."
+guidance = "A clue describes the hidden object without naming it, with its gender in the verb or adjective only: Es roja. (detail) / Está al lado de la ventana. (location). A clarification starts with No, and restates one true clue: No, está al lado de la ventana. Never name the hidden object."
+features = ["hidden-referent", "pronoun"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { attribute = "adjective", relation = "preposition", reference = "noun" }
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "final-punctuation"
+message = "Complete sentences end with . ? or !."
+must_contain = ["[.?!]$"]
+
+[[checks]]
+check_id = "clarify-label"
+message = "A clarification starts with the no label."
+must_contain = ["^no, "]
+uses = ["clarify"]

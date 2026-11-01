@@ -23,6 +23,7 @@ from app.repositories.journals import JournalRepository
 from app.repositories.language_profiles import LanguageProfileRepository
 from app.repositories.learning import LearningRepository
 from app.repositories.media_assets import MediaAssetRepository
+from app.repositories.postgres.friend_chats import PostgresFriendChatRepository
 from app.repositories.postgres.friends import PostgresFriendRepository
 from app.repositories.postgres.game_resources import reward_basil, spend_sauce
 from app.repositories.postgres.ispy_games import PostgresISpyGameRepository
@@ -44,6 +45,7 @@ from app.repositories.postgres.workflow import PostgresWorkflowRepository
 from app.repositories.scenes import SceneRepository
 from app.repositories.users import UserRepository
 from app.services.account_deletion import AccountDeletionService, SupabaseAuthAdmin
+from app.services.friend_chats import FriendChatService
 from app.services.image_derivatives import ImageDerivatives
 from app.services.image_storage import ImageStorage
 from app.services.ispy_games import ISpyGameService
@@ -329,3 +331,27 @@ def get_friend_repository(
     request: Request, user_id: Annotated[UUID, Depends(get_current_user_id)]
 ) -> PostgresFriendRepository:
     return PostgresFriendRepository(request.app.state.database_engine, user_id)
+
+
+def get_friend_chat_service(
+    request: Request, user_id: Annotated[UUID, Depends(get_current_user_id)]
+) -> FriendChatService:
+    from app.services.friend_chat_content import FriendChatContent, build_friend_chat_realizer
+
+    if not get_private_media_urls():
+        raise RoomUnavailableError()
+    runtime = get_ai_runtime(request)
+    storage = ImageStorage(
+        os.getenv("SUPABASE_URL", "").strip(),
+        os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip(),
+    )
+    preparer = RoomPhotoPreparer(
+        runtime.uploaded_scene_analyzer(), runtime.translator(), storage=storage,
+    )
+    return FriendChatService(
+        PostgresFriendChatRepository(request.app.state.database_engine, user_id),
+        FriendChatContent(preparer, moderator=get_image_moderator(request, runtime.settings),
+            realizer=build_friend_chat_realizer(runtime)),
+        background=getattr(request.app.state, "background_runner", None),
+        image_reader=lambda asset, width: get_image_derivatives().get(asset.storage_key, width),
+    )

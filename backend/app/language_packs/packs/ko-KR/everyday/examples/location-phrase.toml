@@ -1,0 +1,40 @@
+construction_id = "location-phrase"
+
+[[examples]]
+example_id = "phrase-on-table"
+levels = ["A1"]
+purposes = ["chooseLocation"]
+meaning = "on the table"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:table", concept = "table" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }] }
+bindings = { target = "object:cup", reference = "object:table", relation = "relation:cup-on-table" }
+truth = true
+labels = []
+sentence = "탁자 위에"
+translation = "on the table"
+chunks = [{ text = "탁자", join = "none" }, { text = "위에", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "phrase-next-window"
+levels = ["A1"]
+purposes = ["chooseLocation"]
+meaning = "next to the window"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:window", concept = "window" }], relations = [{ fact_id = "relation:cup-next_to-window", subject = "object:cup", reference = "object:window", relation = "next_to" }] }
+bindings = { target = "object:cup", reference = "object:window", relation = "relation:cup-next_to-window" }
+truth = true
+labels = []
+sentence = "창문 옆에"
+translation = "next to the window"
+chunks = [{ text = "창문", join = "none" }, { text = "옆에", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "phrase-form"
+levels = ["A1"]
+purposes = ["chooseLocation"]
+sentence = "위에 탁자"
+correction = "책 옆에"
+note = "The reference noun comes before the position word: 탁자 위에."
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }

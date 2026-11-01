@@ -1,0 +1,19 @@
+construction_id = "where-question"
+version = 1
+summary = "Ask where an object is."
+guidance = "Ask where the object is with ¿Dónde está + definite noun phrase?: ¿Dónde está la taza? Spanish questions open with ¿ and close with ?. Use está (estar) for location."
+features = ["where-question"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { subject = "noun" }
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "question-mark"
+message = "Questions end with ?."
+must_contain = ["\\?$"]
+
+[[checks]]
+check_id = "where-frame"
+message = "Ask with the taught where-question."
+must_contain = ["^¿dónde está ", "\\?$"]

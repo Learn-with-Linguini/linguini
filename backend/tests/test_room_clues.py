@@ -260,3 +260,32 @@ def test_foreign_photo_objects_and_unplaced_markers_are_rejected():
     parts[1][0].anchor_point = None
     with pytest.raises(RoomClueError, match="Place a marker"):
         pack(parts)
+
+
+def test_korean_photo_room_names_objects_bare_and_offers_single_clues():
+    parts = photo(
+        {"cup": ("컵", None, None), "book": ("책", None, None), "desk": ("책상", None, None)},
+        language="ko",
+        colours={"cup": "빨간색", "book": "파란"},
+        relations=[("cup", "on", "위에", "desk")],
+    )
+    result = pack(parts)
+    assert [obj["word"] for obj in result["objects"]] == ["컵", "책", "책상"]
+    cup, book = (str(obj.id) for obj in parts[1][:2])
+    # A recognised spelling (빨간색, 파란) matches the clue's written colour form.
+    assert set(clues(result, cup)) == {"이것은 빨간색이에요.", "이것은 책상 위에 있어요."}
+    assert clues(result, book) == ["이것은 파란색이에요."]
+    # The Korean pack has no joining word, so no clue joins two cues.
+    assert all(clue.count("이것은") == 1 for target in result["targets"]
+               for clue in clues(result, target["objectKey"]))
+    assert pack(parts) == result
+
+
+def test_a_language_without_clue_grammar_has_no_rooms(monkeypatch):
+    monkeypatch.setattr("app.services.room_clues.clue_grammar", lambda _language: None)
+    parts = photo(
+        {"cup": ("taza", "la", "feminine"), "book": ("libro", "el", "masculine")},
+        colours={"cup": "rojo", "book": "azul"},
+    )
+    with pytest.raises(RoomClueError, match="aren't available for this language"):
+        pack(parts)

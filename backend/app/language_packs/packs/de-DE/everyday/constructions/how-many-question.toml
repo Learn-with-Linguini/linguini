@@ -1,0 +1,14 @@
+construction_id = "how-many-question"
+version = 1
+summary = "Ask how many of a counted object there are."
+guidance = "Ask Wie viele + plural noun + gibt es?: Wie viele Bücher gibt es? Nouns keep their capital letter."
+features = ["quantity-question"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun" }
+provenance = { source = "AI-authored original Linguini M03 draft, 2026-10-21; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "how-many-frame"
+message = "Ask with Wie viele … gibt es?"
+must_contain = ["^wie viele ", "gibt es\\?$"]

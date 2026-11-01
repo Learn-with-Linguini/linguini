@@ -228,9 +228,14 @@ def test_next_session_revisits_missed_words_and_keeps_saved_summary_private(cura
     assert words[0].target_text == "la taza"
     assert words[-1].target_text == "la mesa"
     assert {word.translation for word in words[1:-1]} == {"red", "on"}
-    assert [question.question_id for question in introduction.public_content.questions] == [
-        f"word-{word.learning_key}" for word in words
-    ]
+    expected_question_ids = [f"word-{word.learning_key}" for word in words]
+    expected_question_ids.extend([
+        f"article-{words[0].learning_key}",
+        f"article-{words[-1].learning_key}",
+    ])
+    assert [
+        question.question_id for question in introduction.public_content.questions
+    ] == expected_question_ids
     history = _assert_private_grammar_only(records, owner, profile)
     observed = {word["term"]: word for word in history["words"]}
     assert observed["taza"]["lastOutcome"] == "incorrect"

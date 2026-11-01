@@ -1,0 +1,55 @@
+construction_id = "order-phrase"
+
+[[examples]]
+example_id = "two-small-coffees"
+levels = ["A2"]
+purposes = ["politeChunkGap"]
+meaning = "two small coffees"
+scene = { objects = [{ fact_id = "object:coffee", concept = "coffee" }], requests = [{ fact_id = "request:quantity", object = "object:coffee", field = "quantity", value = "2" }, { fact_id = "request:size", object = "object:coffee", field = "size", value = "small" }, { fact_id = "request:serviceSetting", object = "object:coffee", field = "serviceSetting", value = "takeAway" }] }
+bindings = { object = "object:coffee", quantity = "request:quantity", size = "request:size" }
+truth = true
+labels = []
+sentence = "작은 커피 두 잔"
+translation = "two small coffees"
+chunks = [{ text = "작은", join = "none" }, { text = "커피", join = "space" }, { text = "두", join = "space" }, { text = "잔", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "a-pen"
+levels = ["A2"]
+purposes = ["politeChunkGap"]
+meaning = "a pen"
+scene = { objects = [{ fact_id = "object:pen", concept = "pen" }], requests = [{ fact_id = "request:quantity", object = "object:pen", field = "quantity", value = "1" }, { fact_id = "request:colour", object = "object:pen", field = "colour", value = "blue" }] }
+bindings = { object = "object:pen", quantity = "request:quantity" }
+truth = true
+labels = []
+sentence = "펜 한 자루"
+translation = "a pen"
+chunks = [{ text = "펜", join = "none" }, { text = "한", join = "space" }, { text = "자루", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "three-small-coffees-wrong"
+levels = ["A2"]
+purposes = ["buildRequest"]
+meaning = "three small coffees (a wrong quantity tile)"
+scene = { objects = [{ fact_id = "object:coffee", concept = "coffee" }], requests = [{ fact_id = "request:quantity", object = "object:coffee", field = "quantity", value = "2" }, { fact_id = "request:size", object = "object:coffee", field = "size", value = "small" }, { fact_id = "request:serviceSetting", object = "object:coffee", field = "serviceSetting", value = "takeAway" }] }
+bindings = { object = "object:coffee", size = "request:size", quantity = "number:3" }
+truth = false
+labels = []
+sentence = "작은 커피 세 잔"
+translation = "three small coffees"
+chunks = [{ text = "작은", join = "none" }, { text = "커피", join = "space" }, { text = "세", join = "space" }, { text = "잔", join = "space" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "phrase-with-frame"
+levels = ["A2"]
+purposes = ["politeChunkGap", "buildRequest"]
+sentence = "작은 커피 두 잔 주세요"
+correction = "작은 커피 두 잔"
+note = "The order phrase has no verb."
+provenance = { source = "AI-authored original Linguini M06 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }

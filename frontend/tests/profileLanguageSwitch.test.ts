@@ -47,6 +47,8 @@ globals.fetch = async (input: unknown, init?: RequestInit) => {
   const path = url.replace(/^https?:\/\/[^/]+/, "");
   const method = init?.method ?? "GET";
   if (path === "/api/v1/me") return Response.json(user);
+  // Practice languages come only from pack discovery.
+  if (path === "/api/v1/me/practice-languages") return Response.json(["es", "fr", "de", "ko"].map(code => ({ code, levels: ["A0", "A1", "A2"], experimental: true })));
   if (path === "/api/v1/me/language-profiles") return Response.json(profiles);
   if (path === "/api/v1/me/progress") return Response.json({ xp: 2, leaderboard: [{ isYou: true, xp: 300 }] });
   if (path.startsWith("/api/v1/me/gamification?")) {
@@ -123,6 +125,12 @@ const { h, act, createRoot, MemoryRouter, Route, Routes, QueryClient, QueryClien
 };
 
 const flush = () => act(async () => { await new Promise(resolve => setTimeout(resolve, 30)); });
+// Basil loads only after the account does; wait for it rather than one fixed tick, so a
+// slower runner sees the same screen. On timeout the assertion reports what is shown.
+const waitFor = async (ready: () => boolean, timeoutMs = 2000) => {
+  const started = Date.now();
+  while (!ready() && Date.now() - started < timeoutMs) await flush();
+};
 const page = () => dom.window.document.querySelector("[data-testid]")?.getAttribute("data-testid") ?? "profile";
 const languageSelect = () => {
   const select = [...dom.window.document.querySelectorAll("select")].find(element => element.textContent?.includes("Spanish"));
@@ -212,9 +220,11 @@ test("profile shows earned Basil from one ledger instead of legacy XP or spendab
   basilState = "ready";
   await withProfilePage(async () => {
     const totals = () => [...dom.window.document.querySelectorAll(".profile-basil__grid strong")].map(node => node.textContent);
+    await waitFor(() => totals().length === 2);
     assert.deepEqual(totals(), ["25", "75"]);
     await chooseLanguage("fr");
     await click("Switch to French");
+    await waitFor(() => totals().length === 2);
     assert.deepEqual(totals(), ["25", "75"]);
   });
 });
@@ -227,6 +237,7 @@ for (const pending of ["loading", "error"] as const) {
       await withProfilePage(async () => {
         const section = dom.window.document.querySelector(".profile-basil");
         assert.ok(section);
+        if (pending === "error") await waitFor(() => /couldn’t load your Basil/.test(section.textContent ?? ""));
         assert.equal(section.querySelectorAll("strong").length, 0);
         assert.match(section.textContent ?? "", pending === "loading" ? /Loading your Basil/ : /couldn’t load your Basil/);
       });

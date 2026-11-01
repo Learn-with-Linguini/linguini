@@ -18,7 +18,7 @@ from typing import Any
 from app.ai.features.ispy_clues.schemas import ISpyClueResult
 from app.services.scene_analysis import SceneAnalysisError
 
-ISPY_CLUE_VALIDATOR_VERSION = "ispy-clues-validator.v1"
+ISPY_CLUE_VALIDATOR_VERSION = "ispy-clues-validator.v2"
 """Bump when validation rules change, so cached results stop matching."""
 
 
@@ -34,6 +34,8 @@ _LEADING_ARTICLES = frozenset(
 )
 _NON_ALPHANUMERIC = re.compile(r"[^\w]|_", re.UNICODE)
 _CLUE_OPENINGS = ("i spy", "je vois", "veo ", "ich sehe")
+# A0 clues use one signal in a few words ("está sobre la mesa").
+A0_MAX_CLUE_WORDS = 6
 
 
 def _tokens(text: str) -> list[str]:
@@ -81,6 +83,17 @@ def _check_answer_leakage(payload: dict[str, Any], clue) -> None:
             raise ISpyClueGenerationError("I-Spy clue names its own answer.")
 
 
+def _check_level(payload: dict[str, Any], clue) -> None:
+    if payload.get("learnerLevel") != "A0":
+        return
+    if len(clue.relationship_keys) > 1:
+        raise ISpyClueGenerationError("An A0 I-Spy clue uses one detail at most.")
+    if len(_tokens(clue.clue)) > A0_MAX_CLUE_WORDS:
+        raise ISpyClueGenerationError(
+            f"An A0 I-Spy clue must be {A0_MAX_CLUE_WORDS} words or fewer."
+        )
+
+
 def validate_ispy_clues(payload: dict[str, Any], result: ISpyClueResult) -> None:
     object_keys = {row["key"] for row in payload.get("objects", [])}
     relationship_keys = {row["key"] for row in payload.get("relationships", [])}
@@ -102,3 +115,4 @@ def validate_ispy_clues(payload: dict[str, Any], result: ISpyClueResult) -> None
                 "I-Spy clue translation must contain only the phrase ending."
             )
         _check_answer_leakage(payload, clue)
+        _check_level(payload, clue)

@@ -1,0 +1,178 @@
+construction_id = "identify-object"
+
+[[examples]]
+example_id = "name-book"
+levels = ["A0"]
+purposes = ["matchName"]
+meaning = "the book (vocabulary label)"
+scene = { objects = [{ fact_id = "object:book", concept = "book" }] }
+bindings = { object = "object:book" }
+truth = true
+labels = []
+sentence = "책"
+translation = "the book (vocabulary label)"
+chunks = [{ text = "책", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "name-cup"
+levels = ["A0"]
+purposes = ["matchName"]
+meaning = "the cup (vocabulary label)"
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }] }
+bindings = { object = "object:cup" }
+truth = true
+labels = []
+sentence = "컵"
+translation = "the cup (vocabulary label)"
+chunks = [{ text = "컵", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "name-clock"
+levels = ["A0"]
+purposes = ["matchName"]
+meaning = "the clock (vocabulary label)"
+scene = { objects = [{ fact_id = "object:clock", concept = "clock" }] }
+bindings = { object = "object:clock" }
+truth = true
+labels = []
+sentence = "시계"
+translation = "the clock (vocabulary label)"
+chunks = [{ text = "시계", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "identify-cup"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+meaning = "This is a cup."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }] }
+bindings = { object = "object:cup" }
+truth = true
+labels = []
+sentence = "컵이에요."
+translation = "This is a cup."
+chunks = [{ text = "컵이에요.", join = "none" }]
+accepted_alternatives = ["이건 컵이에요."]
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "identify-book"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+meaning = "This is a book."
+scene = { objects = [{ fact_id = "object:book", concept = "book" }] }
+bindings = { object = "object:book" }
+truth = true
+labels = []
+sentence = "책이에요."
+translation = "This is a book."
+chunks = [{ text = "책이에요.", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "identify-chair"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+meaning = "This is a chair."
+scene = { objects = [{ fact_id = "object:chair", concept = "chair" }] }
+bindings = { object = "object:chair" }
+truth = true
+labels = []
+sentence = "의자예요."
+translation = "This is a chair."
+chunks = [{ text = "의자예요.", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "identify-bottle"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+meaning = "This is a bottle."
+scene = { objects = [{ fact_id = "object:bottle", concept = "bottle" }] }
+bindings = { object = "object:bottle" }
+truth = true
+labels = []
+sentence = "병이에요."
+translation = "This is a bottle."
+chunks = [{ text = "병이에요.", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "identify-ball"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+meaning = "This is a ball."
+scene = { objects = [{ fact_id = "object:ball", concept = "ball" }] }
+bindings = { object = "object:ball" }
+truth = true
+labels = []
+sentence = "공이에요."
+translation = "This is a ball."
+chunks = [{ text = "공이에요.", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "identify-bag"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+meaning = "This is a bag."
+scene = { objects = [{ fact_id = "object:bag", concept = "bag" }] }
+bindings = { object = "object:bag" }
+truth = true
+labels = []
+sentence = "가방이에요."
+translation = "This is a bag."
+chunks = [{ text = "가방이에요.", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-01"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+sentence = "컵예요."
+correction = "컵이에요."
+note = "A consonant-final noun uses 이에요."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "mistake-02"
+levels = ["A0"]
+purposes = ["buildIdentify"]
+sentence = "의자이에요."
+correction = "의자예요."
+note = "A vowel-final noun uses 예요."
+provenance = { source = "AI-authored original Linguini M01 draft, 2026-10-19; not human-reviewed. See SOURCES.md for background references, not sentence endorsements.", review_status = "generated" }
+
+[[examples]]
+example_id = "m02-name-lamp"
+levels = ["A0"]
+purposes = ["chooseName", "listenSelect"]
+meaning = "the lamp (vocabulary label)"
+scene = { objects = [{ fact_id = "object:lamp", concept = "lamp" }] }
+bindings = { object = "object:lamp" }
+truth = true
+labels = []
+sentence = "램프"
+translation = "the lamp (vocabulary label)"
+chunks = [{ text = "램프", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "m02-name-form"
+levels = ["A0"]
+purposes = ["chooseName", "listenSelect"]
+sentence = "램프예요."
+correction = "램프"
+note = "A name chunk is the bare noun."
+provenance = { source = "AI-authored original Linguini M02 draft, 2026-10-20; not human-reviewed.", review_status = "generated" }

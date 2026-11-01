@@ -1,0 +1,40 @@
+construction_id = "owned-description"
+
+[[examples]]
+example_id = "my-red-cup"
+levels = ["A2"]
+purposes = ["buildBelonging", "buildOwnershipDescription"]
+meaning = "My cup is red."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }, { fact_id = "object:table", concept = "table" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }], owners = [{ fact_id = "owner:cup", object = "object:cup", owner = "first" }, { fact_id = "owner:book", object = "object:book", owner = "ana" }, { fact_id = "owner:key", object = "object:key", owner = "leo" }] }
+bindings = { object = "object:cup", owner = "owner:cup", attribute = "attribute:cup-red" }
+truth = true
+labels = []
+sentence = "제 컵은 빨간색이에요."
+translation = "My cup is red."
+chunks = [{ text = "제", join = "none" }, { text = "컵은", join = "space" }, { text = "빨간색이에요", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[examples]]
+example_id = "my-cup-on-table"
+levels = ["A2"]
+purposes = ["buildBelonging"]
+meaning = "My cup is on the table."
+scene = { objects = [{ fact_id = "object:cup", concept = "cup" }, { fact_id = "object:book", concept = "book" }, { fact_id = "object:key", concept = "key" }, { fact_id = "object:table", concept = "table" }], attributes = [{ fact_id = "attribute:cup-red", object = "object:cup", kind = "color", value = "red" }], relations = [{ fact_id = "relation:cup-on-table", subject = "object:cup", reference = "object:table", relation = "on" }], owners = [{ fact_id = "owner:cup", object = "object:cup", owner = "first" }, { fact_id = "owner:book", object = "object:book", owner = "ana" }, { fact_id = "owner:key", object = "object:key", owner = "leo" }] }
+bindings = { object = "object:cup", owner = "owner:cup", relation = "relation:cup-on-table", reference = "object:table" }
+truth = true
+labels = []
+sentence = "제 컵은 탁자 위에 있어요."
+translation = "My cup is on the table."
+chunks = [{ text = "제", join = "none" }, { text = "컵은", join = "space" }, { text = "탁자", join = "space" }, { text = "위에", join = "space" }, { text = "있어요", join = "space" }, { text = ".", join = "none" }]
+accepted_alternatives = []
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }
+
+[[mistakes]]
+example_id = "my-red-cup-form"
+levels = ["A2"]
+purposes = ["buildBelonging", "buildOwnershipDescription"]
+sentence = "제 컵이 빨간색 있어요."
+correction = "제 컵은 빨간색이에요."
+note = "A colour detail ends with 이에요."
+provenance = { source = "AI-authored original Linguini M04 draft, 2026-10-22; not human-reviewed.", review_status = "generated" }

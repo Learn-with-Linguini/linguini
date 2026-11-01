@@ -132,9 +132,11 @@ def test_vocabulary_lesson_includes_translated_attributes_and_relationships():
                 "gender": "feminine",
             }
         ],
-        attributes=[{"key": f"{objects[0].id}:color", "source": "blue", "translation": "azul"}],
+        attributes=[{"key": f"{objects[0].id}:color", "source": "blue", "translation": "azul",
+                     "phoneticText": "ah-SOOL"}],
         relationships=[
-            {"key": str(relation.id), "source": "nextTo", "translation": "al lado de"}
+            {"key": str(relation.id), "source": "nextTo", "translation": "al lado de",
+             "phoneticText": "ahl LAH-doh deh"}
         ],
     )
     adjective = VocabularyItem(
@@ -188,8 +190,10 @@ def test_vocabulary_lesson_includes_translated_attributes_and_relationships():
     ]
     assert enriched.words[-2].scene_object_id == objects[0].id
     assert enriched.words[-2].related_scene_object_ids == [objects[0].id]
+    assert enriched.words[-2].phonetic_text == "ah-SOOL"
     assert enriched.words[-1].scene_object_id is None
     assert enriched.words[-1].related_scene_object_ids == [objects[0].id, objects[1].id]
+    assert enriched.words[-1].phonetic_text == "ahl LAH-doh deh"
     assert [word.vocabulary_item_id for word in enriched.words[-2:]] == [
         adjective.id, preposition.id,
     ]

@@ -8,7 +8,8 @@ import { friendlyError } from "../lib/queryKeys";
 import { useAppState } from "../state/useAppState";
 import { Button, Card } from "../components/ui";
 import { EyeIcon } from "../components/icons";
-import { languages } from "../config/languages";
+import { languageDisplayName } from "../lib/languageChoices";
+import { trackAction } from "../lib/analytics.ts";
 import "../components/rooms.css";
 
 export function Rooms() {
@@ -29,8 +30,7 @@ function RoomLobby() {
   const busyRef = useRef(false);
   const owner = user?.id ?? "";
   const profile = activeProfile?.id ?? "";
-  const languageName = languages.find(language => language.code === activeProfile?.targetLanguageCode)?.name
-    ?? activeProfile?.targetLanguageCode.toUpperCase();
+  const languageName = activeProfile ? languageDisplayName(activeProfile.targetLanguageCode) : undefined;
   const active = useQuery({ queryKey: roomQueryKeys.active(owner, profile), queryFn: async ({ signal }) => {
     const current = await getActiveRoom(signal);
     if (current && current.meId !== owner) throw new Error("The room belongs to another signed-in account.");
@@ -47,6 +47,7 @@ function RoomLobby() {
     pending.current = command;
     setPendingKind(command.kind);
     try {
+      trackAction(command.kind === "create" ? "room_created" : "room_joined");
       const entry = command.kind === "create" ? await createRoom(command.profileId, command.commandId)
         : await joinRoom(command.profileId, command.code, command.commandId);
       if (entry.room.meId !== owner) throw new Error("This room changed accounts. Return home and open it again.");

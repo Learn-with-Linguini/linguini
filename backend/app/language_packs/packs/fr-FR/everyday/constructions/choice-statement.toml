@@ -1,0 +1,14 @@
+construction_id = "choice-statement"
+version = 1
+summary = "Say which object I choose."
+guidance = "Say Je choisis + definite article + noun: Je choisis le livre."
+features = ["preference", "choice"]
+constraints = ["Express only the selected scene facts and preserve role bindings.", "Treat these rules as generation guidance, not a grammar validator."]
+required_labels = []
+roles = { object = "noun" }
+provenance = { source = "AI-authored original Linguini M05 draft, 2026-10-23; not human-reviewed.", review_status = "generated" }
+
+[[checks]]
+check_id = "choice-frame"
+message = "Say Je choisis + noun."
+must_contain = ["^je choisis ", "\\.$"]

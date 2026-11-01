@@ -66,6 +66,8 @@ const standings = (currentRank: number | null): ChefStandings => ({
   personalBest: 50, currentRank, basilToNextRank: 5, top: [],
 });
 globalThis.fetch = async input => {
+  if (new URL(String(input)).pathname === "/api/v1/ispy/photos") return Response.json({ photos: [], nextCursor: null });
+  if (new URL(String(input)).pathname === "/api/v1/ispy/games/active") return Response.json(null);
   assert.equal(new URL(String(input)).pathname, "/api/v1/me/chef-of-the-day");
   calls += 1;
   return respond();

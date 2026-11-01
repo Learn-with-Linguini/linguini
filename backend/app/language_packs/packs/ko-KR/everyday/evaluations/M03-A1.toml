@@ -1,0 +1,102 @@
+mission_id = "M03"
+practice_level = "A1"
+content_version = 1
+
+[[cases]]
+case_id = "m03-a1-four-plates"
+category = "wrongCount"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:plate", concept = "plate" }], counts = [{ fact_id = "count:plate", object = "object:plate", quantity = 4 }] }
+bindings = { object = "object:plate", count = "count:plate" }
+truth = true
+input = "Say there are four plates."
+expected_meaning = "There are four plates."
+acceptable = ["접시가 네 개 있어요."]
+reject = [{ sentence = "접시가 세 개 있어요.", category = "wrongCount", reason = "Four plates were counted." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a1-statement-frame"
+category = "punctuation"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:key", concept = "key" }], counts = [{ fact_id = "count:key", object = "object:key", quantity = 6 }] }
+bindings = { object = "object:key", count = "count:key" }
+truth = true
+input = "Say there are six keys."
+expected_meaning = "There are six keys."
+acceptable = ["열쇠가 여섯 개 있어요."]
+reject = [{ sentence = "열쇠가 여섯 개 있어요", category = "punctuation", reason = "A statement ends with a full stop." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a1-board"
+category = "wrongCount"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:fork", concept = "fork" }] }
+bindings = { object = "object:fork", count = "number:7" }
+truth = false
+use = "board"
+input = "Say the practice board shows seven forks."
+expected_meaning = "There are seven forks."
+acceptable = ["포크가 일곱 개 있어요."]
+reject = [{ sentence = "포크가 여덟 개 있어요.", category = "wrongCount", reason = "The board shows seven, not eight." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a1-how-many-spoons"
+category = "wrongObject"
+construction_id = "how-many-question"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:spoon", concept = "spoon" }, { fact_id = "object:plate", concept = "plate" }], counts = [{ fact_id = "count:spoon", object = "object:spoon", quantity = 5 }, { fact_id = "count:plate", object = "object:plate", quantity = 4 }] }
+bindings = { object = "object:spoon" }
+truth = true
+input = "Ask how many spoons there are."
+expected_meaning = "How many spoons are there?"
+acceptable = ["숟가락이 몇 개 있어요?"]
+reject = [{ sentence = "접시가 몇 개 있어요?", category = "wrongObject", reason = "The question is about the spoons." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a1-held-phones"
+category = "wrongObject"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:phone", concept = "phone" }, { fact_id = "object:bag", concept = "bag" }], counts = [{ fact_id = "count:phone", object = "object:phone", quantity = 10 }, { fact_id = "count:bag", object = "object:bag", quantity = 2 }] }
+bindings = { object = "object:phone", count = "count:phone" }
+truth = true
+input = "Say there are ten phones."
+expected_meaning = "There are ten phones."
+acceptable = ["휴대폰이 열 개 있어요."]
+reject = [{ sentence = "가방이 열 개 있어요.", category = "wrongObject", reason = "The ten counted objects are phones." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a1-held-unicode"
+category = "unicode"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:door", concept = "door" }], counts = [{ fact_id = "count:door", object = "object:door", quantity = 5 }] }
+bindings = { object = "object:door", count = "count:door" }
+truth = true
+input = "Say there are five doors."
+expected_meaning = "There are five doors."
+acceptable = ["문이 다섯 개 있어요."]
+reject = [{ sentence = "\u1106\u116e\u11ab\u110b\u1175 \u1103\u1161\u1109\u1165\u11ba \u1100\u1162 \u110b\u1175\u11bb\u110b\u1165\u110b\u116d.", category = "unicode", reason = "The rejected candidate contains decomposed characters." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }
+
+[[cases]]
+case_id = "m03-a1-held-counter"
+category = "agreement"
+construction_id = "quantity-statement"
+construction_version = 1
+scene = { objects = [{ fact_id = "object:book", concept = "book" }], counts = [{ fact_id = "count:book", object = "object:book", quantity = 3 }] }
+bindings = { object = "object:book", count = "count:book" }
+truth = true
+input = "Say there are three books."
+expected_meaning = "There are three books."
+acceptable = ["책이 세 개 있어요."]
+reject = [{ sentence = "책이 셋 개 있어요.", category = "agreement", reason = "Before 개, three is 세, not 셋." }]
+provenance = { source = "Held-out M03 evaluation content, AI-authored 2026-10-22; nouns from the sample vocabulary.", review_status = "unreviewed" }

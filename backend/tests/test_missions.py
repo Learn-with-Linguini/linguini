@@ -139,6 +139,10 @@ def test_every_mission_ends_before_optional_ispy():
         ]
 
 
+def test_retired_article_pairing_mission_is_not_scheduled():
+    assert get_mission("M13", "A0", 1) is None
+
+
 def test_definition_files_are_named_by_their_mission(tmp_path):
     source = (DEFINITIONS_DIR / "M01-A1.toml").read_text()
     renamed = tmp_path / "M01-A1.v3.toml"
@@ -153,10 +157,10 @@ def test_definition_files_are_named_by_their_mission(tmp_path):
         load_missions(tmp_path)
     assert sorted(path.name for path in Path(DEFINITIONS_DIR).glob("*.toml")) == [
         "M01-A0.toml", "M01-A1.toml", "M01-A2.toml",
-        "M02-A0.toml", "M02-A1-2.toml", "M02-A1.toml", "M02-A2.toml",
+        "M02-A0-2.toml", "M02-A0.toml", "M02-A1-2.toml", "M02-A1.toml", "M02-A2.toml",
         "M03-A0.toml", "M03-A1.toml", "M03-A2.toml",
         "M04-A0.toml", "M04-A1.toml", "M04-A2.toml",
-        "M05-A0.toml", "M05-A1.toml", "M06-A2.toml", "M13-A0.toml",
+        "M05-A0.toml", "M05-A1.toml", "M06-A2.toml",
     ]
 
 
