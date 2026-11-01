@@ -136,6 +136,38 @@ def test_revisit_falls_back_to_practised_words_when_the_photo_has_too_few_new_on
     assert selected == [item.id for item in objects]
 
 
+def test_revisits_keep_rotating_after_every_word_on_the_photo_was_practised():
+    labels = ("cup", "book", "table", "chair", "lamp", "plant", "window", "clock")
+    objects = [obj(uuid4(), label) for label in labels]
+    practised, visits = {}, []
+    for visit in range(4):
+        _plan, selected = provisional_mission_focus([], objects, [], practised_labels=practised)
+        words = [item.label for item in objects if item.id in selected]
+        visits.append(words)
+        for word in words:
+            practised[word] = (practised.get(word, (0,))[0] + 1, visit)
+    assert visits == [
+        ["cup", "book", "table", "chair", "lamp"],
+        ["cup", "book", "plant", "window", "clock"],
+        # Every word is practised now: the ones practised once, longest ago, come back.
+        ["table", "chair", "lamp", "plant", "window"],
+        ["cup", "book", "table", "chair", "clock"],
+    ]
+    assert all(before != after for before, after in zip(visits, visits[1:], strict=False))
+
+
+def test_revisit_counted_group_prefers_the_less_practised_word():
+    cups = [obj(uuid4(), "cup", quantity="2") for _ in range(2)]
+    books = [obj(uuid4(), "book", quantity="2") for _ in range(2)]
+    others = [obj(uuid4(), label) for label in ("lamp", "door", "rug", "plate")]
+    objects = cups + books + others
+    plan, selected = provisional_mission_focus(
+        [M03], objects, [], practised_labels={"cup": (2, 1), "book": (1, 0)},
+    )
+    assert [mission.mission_id for mission in plan] == ["M03"]
+    assert selected == [item.id for item in books + others]
+
+
 def test_revisit_mission_facts_prefer_unpractised_objects():
     labels = ("cup", "book", "plate", "table", "lamp", "door", "rug")
     objects = [obj(uuid4(), label, color="green") for label in labels]

@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from datetime import UTC, datetime
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 from uuid import uuid4
@@ -363,12 +364,22 @@ def test_practised_labels_come_from_earlier_lessons_on_the_same_photo():
 
     owner = uuid4()
     session = Session(user_id=owner, language_profile_id=uuid4(), scene_media_asset_id=uuid4())
+    first, second = uuid4(), uuid4()
+    earlier, later = datetime(2026, 10, 1, tzinfo=UTC), datetime(2026, 10, 8, tzinfo=UTC)
     connection = MagicMock()
-    connection.execute.return_value.scalars.return_value = iter([" Chair", "table"])
+    connection.execute.return_value.all.return_value = [
+        (" Chair", first, earlier), ("table", first, earlier),
+        # Repeated markers of one word in a lesson count that lesson once.
+        ("chair", second, later), ("Chair", second, later),
+    ]
     repo = PostgresWorkflowRepository(None, owner)
-    assert repo._practised_labels(connection, session) == {"chair", "table"}
+    assert repo._practised_labels(connection, session) == {
+        "chair": (2, later), "table": (1, earlier),
+    }
     query = str(connection.execute.call_args.args[0])
     assert "scene_media_asset_id" in query and "task_attempts" in query
+    # Answering a question is practice, even if the task was never submitted.
+    assert "learning_question_events" in query
 
 
 def test_relations_require_selected_distinct_endpoints_and_no_duplicates():
