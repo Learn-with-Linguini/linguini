@@ -92,7 +92,7 @@ export function GuestDemo() {
 function DemoPicker({ lang, setLang, onPick }: { lang: Lang; setLang: (lang: Lang) => void; onPick: (scene: (typeof scenes)[number]) => void }) {
   return <div className="stack practice-select">
     <div className="stack-2"><p><span className={`chip chip--static ${styles.accountPill}`}>No account needed</span></p><h1>Try a photo lesson</h1></div>
-    <label className={styles.languageField}><span className="field__label">I want to learn</span><span className={styles.languageControl}><select value={lang} onChange={event => setLang(event.target.value as Lang)}>{languageOptions.map(option => <option key={option.code} value={option.code}>{option.flag} {option.name}</option>)}</select></span></label>
+    <fieldset className={styles.languageField}><legend className="field__label">I want to learn</legend><div className={styles.languageRadios}>{languageOptions.map(option => <label key={option.code} className={styles.languageRadio} data-checked={lang === option.code}><input type="radio" name="guest-demo-lang" value={option.code} checked={lang === option.code} onChange={() => setLang(option.code as Lang)} /><span className={styles.radioDot} aria-hidden="true" /><span>{option.flag} {option.name}</span></label>)}</div></fieldset>
     <div className="stack-3"><h2>Choose a scene</h2><div className="grid-2">{scenes.slice(0, 6).map(item => <button key={item.id} type="button" className={`scene-pick ${styles.sceneCard}`} aria-label={`Choose ${item.title}`} onClick={() => onPick(item)}><img src={item.photo} alt="" /><span className={styles.sceneLabel}><b>{item.title}</b></span></button>)}</div></div>
     <p className="small muted center-text">Nothing in the guest lesson is added to an account or counted toward progress.</p>
   </div>;

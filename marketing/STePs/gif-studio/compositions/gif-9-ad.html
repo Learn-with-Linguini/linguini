@@ -66,26 +66,28 @@
         <path d="M-40 230 C 300 130, 600 300, 950 190 S 1220 80, 1340 150" stroke="#F9B233" stroke-width="14" stroke-linecap="round"/>
       </svg>
 
-      <!-- Left: wordmark + split pill tagline (RunSquad-style) + URL -->
-      <div id="left-col" class="absolute" style="left: 100px; top: 120px;">
-        <img id="wordmark" src="../assets/linguini-wordmark.png" style="height: 58px; margin-bottom: 42px;" alt="Linguini">
+      <!-- Left: bigger wordmark + split pill tagline + URL -->
+      <div id="left-col" class="absolute" style="left: 100px; top: 105px;">
+        <div style="width: 470px; text-align: center; margin-bottom: 44px;">
+          <img id="wordmark" src="../assets/linguini-wordmark.png" style="height: 88px;" alt="Linguini">
+        </div>
 
         <div style="display: flex; flex-direction: column; align-items: flex-start; gap: 22px;">
-          <div id="tag-1" class="tag-pill" style="transform: rotate(-2deg);">
-            Turning your <span class="accent">&nbsp;photos</span>
+          <div id="tag-1" class="tag-pill">
+            Learn the <span class="accent">&nbsp;language</span>
           </div>
-          <div id="tag-2" class="tag-pill" style="transform: rotate(1.5deg); margin-left: 90px;">
-            into <span class="accent">&nbsp;words</span>
+          <div id="tag-2" class="tag-pill" style="margin-left: 70px;">
+            of <span class="accent">&nbsp;your day</span>
           </div>
         </div>
 
-        <div id="url" style="margin-top: 52px; font-family: 'Baloo', sans-serif; font-size: 30px; color: #21716F; letter-spacing: 0.5px;">
+        <div id="url" style="margin-top: 56px; margin-left: 71px; width: 212px; text-align: center; font-family: 'Baloo', sans-serif; font-size: 34px; color: #21716F; letter-spacing: 0.5px; white-space: nowrap;">
           learnwithlinguini.com
         </div>
       </div>
 
       <!-- Right: tilted desk flatlay photo card + floating vocab chips -->
-      <div id="photo-card" class="photo-card absolute" style="right: 90px; top: 105px; transform: rotate(3deg);">
+      <div id="photo-card" class="photo-card absolute" style="right: 90px; top: 120px; transform: rotate(3deg);">
         <div class="photo-inner">
           <img src="../assets/desk-flatlay.jpg" alt="Table flatlay scene">
           <span class="vocab-chip" id="chip-laptop" style="left: 285px; top: 28px;">
@@ -100,10 +102,15 @@
         </div>
       </div>
 
-      <!-- Cool sunglasses mascot chilling by the card -->
+      <!-- Cool sunglasses mascot hanging out beside the wordmark -->
       <img id="cool-mascot" src="../assets/linguini-cool.png" class="absolute"
-           style="left: 575px; top: 505px; width: 165px; transform: rotate(-6deg);
-                  filter: drop-shadow(0 14px 26px rgba(38,50,56,0.22));" alt="Cool Mascot">
+           style="left: 500px; top: 82px; width: 118px; transform: rotate(-8deg);
+                  filter: drop-shadow(0 12px 24px rgba(38,50,56,0.22));" alt="Cool Mascot">
+
+      <!-- Classic noodle mascot waving from the bottom-right -->
+      <img id="plain-mascot" src="../assets/mascot-180.png" class="absolute"
+           style="right: 105px; top: 545px; width: 130px; transform: rotate(6deg);
+                  filter: drop-shadow(0 12px 24px rgba(38,50,56,0.22));" alt="Linguini Mascot">
 
     </div>
   </div>
@@ -121,12 +128,9 @@
     // Photo card subtle breathing tilt
     tl.to('#photo-card', { rotation: 2.3, duration: 0.5, ease: 'sine.inOut', yoyo: true, repeat: 1 }, 0);
 
-    // Mascot cheerful bob + tiny rock
-    tl.to('#cool-mascot', { y: -8, rotation: -3, duration: 0.5, ease: 'sine.inOut', yoyo: true, repeat: 1 }, 0);
-
-    // Tagline pills gentle wobble (rotate slightly out and back)
-    tl.to('#tag-1', { rotation: -1.2, duration: 0.5, ease: 'sine.inOut', yoyo: true, repeat: 1 }, 0);
-    tl.to('#tag-2', { rotation: 2.3,  duration: 0.5, ease: 'sine.inOut', yoyo: true, repeat: 1 }, 0);
+    // Mascots cheerful bob + tiny rock (opposing phases keep it lively)
+    tl.to('#cool-mascot', { y: -8, rotation: -4, duration: 0.5, ease: 'sine.inOut', yoyo: true, repeat: 1 }, 0);
+    tl.to('#plain-mascot', { y: 7, rotation: 9, duration: 0.5, ease: 'sine.inOut', yoyo: true, repeat: 1 }, 0);
 
     window.__timelines = window.__timelines || {};
     window.__timelines['gif-9'] = tl;

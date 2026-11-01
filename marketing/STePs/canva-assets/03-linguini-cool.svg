@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" role="img" aria-label="Linguini mascot wearing sunglasses">
+  <title>Linguini mascot wearing sunglasses</title>
+  
+<defs>
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#FFE36A"/>
+    <stop offset="0.52" stop-color="#FFD84A"/>
+    <stop offset="1" stop-color="#FFAE16"/>
+  </linearGradient>
+  <linearGradient id="goldDeep" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#FFD458"/>
+    <stop offset="1" stop-color="#F58B2D"/>
+  </linearGradient>
+  <linearGradient id="mint" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#A9D7B6"/>
+    <stop offset="1" stop-color="#85BEA4"/>
+  </linearGradient>
+  <linearGradient id="lens" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#4C4649"/>
+    <stop offset="0.55" stop-color="#17181B"/>
+    <stop offset="1" stop-color="#302A2E"/>
+  </linearGradient>
+  <filter id="softShadow" x="-30%" y="-30%" width="160%" height="170%">
+    <feDropShadow dx="0" dy="12" stdDeviation="10" flood-color="#9B3E1E" flood-opacity="0.2"/>
+  </filter>
+</defs>
+
+  
+<g transform="translate(64 64)" filter="url(#softShadow)">
+  <g stroke="#E84B16" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="260" cy="243" r="156" fill="url(#gold)" stroke-width="16"/>
+    <circle cx="260" cy="243" r="140" fill="none" stroke="#FFF5D6" stroke-width="13"/>
+    <path d="M125 260c-27-108 51-201 159-189 104 11 170 109 135 207-28 78-111 125-190 101-42-13-75-44-92-82" fill="none" stroke-width="20"/>
+    <path d="M124 259c-42-28-88 8-74 53 12 39 65 43 84 12 17-28-7-60-38-49" fill="none" stroke-width="16"/>
+    <path d="M229 365c-41 27-77 62-101 105" fill="none" stroke-width="20"/>
+    <path d="M128 470c-14 23 10 40 30 25l41-35" fill="none" stroke-width="20"/>
+  </g>
+  <path d="M145 150c28-48 78-75 132-73" fill="none" stroke="#FFF6D8" stroke-width="13" stroke-linecap="round" opacity=".8"/>
+  
+<g>
+  <path d="M163 202c49-8 74-4 101 6 29-11 62-13 105-3l-8 55c-7 40-70 43-84 4l-9-25-9 25c-13 39-76 36-84-4z" fill="url(#lens)" stroke="#2D3336" stroke-width="13" stroke-linejoin="round"/>
+  <path d="M162 202l-22-6M369 205l25-8" stroke="#2D3336" stroke-width="13" stroke-linecap="round"/>
+  <path d="M189 214l39 2-37 30" fill="none" stroke="#F7A23B" stroke-width="10" stroke-linecap="round" opacity=".75"/>
+  <path d="M296 214l40 3-37 30" fill="none" stroke="#F7A23B" stroke-width="10" stroke-linecap="round" opacity=".75"/>
+  <path d="M214 295c18 35 66 35 87 0" fill="none" stroke="#E84B16" stroke-width="13" stroke-linecap="round"/>
+</g>
+  
+</g>
+</svg>
