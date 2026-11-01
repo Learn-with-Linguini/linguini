@@ -21,6 +21,9 @@ import { learningFeedback } from "../lib/learningFeedback";
 import { ISpyLevelHelp } from "../components/ISpyLevelHelp";
 import { clueOpening } from "../lib/ispyClue";
 
+// Matches the server's guesses per clue.
+const CLUE_GUESSES = 3;
+
 export function ISpyPhase1() {
   const navigate = useNavigate();
   const { session, practiceStalled, practiceError, retryProcessing, completeSession } = useAppState();
@@ -134,6 +137,10 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
     && content.options.some(option => option.sceneObjectId === item.id));
   const reward = !answered ? taskXp(task) : null;
   const earnedText = basilEarnedText(result?.basilEarned);
+  // A wrong guess with guesses left keeps the round open (the server allows three per clue);
+  // the attempt number keeps the count right after a reload.
+  const attemptNumber = result?.attempt?.attemptNumber ?? 0;
+  const triesLeft = !answered && isCorrect === false ? Math.max(0, CLUE_GUESSES - attemptNumber) : 0;
   return <div className="stack">
     <div className="vocabulary-flow__header">
       <div className="learning-title-row">
@@ -184,10 +191,14 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
     {answered || result ? <>
       <Feedback tone={isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status">
         {task.status === "skipped" ? <strong>Skipped.</strong> : <>
-          {isCorrect !== null ? <strong>{learningFeedback(isCorrect ? "correct" : "incorrect", task.id)}</strong> : null}
-          <span>{feedback ?? "Answer saved."}</span>
+          {triesLeft > 0 ? <div className="ispy-retry">
+            <strong>{learningFeedback("incorrect", `${task.id}:${attemptNumber}`)}</strong>
+            <span className="pill ispy-retry__pill">{triesLeft} {triesLeft === 1 ? "try" : "tries"} left</span>
+          </div> : <>
+            {isCorrect !== null ? <strong>{learningFeedback(isCorrect ? "correct" : "incorrect", task.id)}</strong> : null}
+            <span>{feedback ?? "Answer saved."}</span>
+          </>}
         </>}
-        {content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}
       </div></Feedback>
       <BasilReward text={earnedText} />
     </> : null}

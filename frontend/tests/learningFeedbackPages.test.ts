@@ -110,7 +110,7 @@ for (const Page of [source.SessionSummary, source.ISpyResults]) {
   test(`${Page.name} waits for accepted completion and keeps result details`, async () => {
     const view = await mount(Page, state({ completionPending: true }));
     const heading = () => view.container.querySelector("h1")?.textContent;
-    const completedHeading = Page === source.SessionSummary ? "Great work, keep it up!" : learningFeedback("completed", "session");
+    const completedHeading = Page === source.SessionSummary ? "Great work, keep it up!" : "Great game, keep it up!";
     assert.notEqual(heading(), completedHeading);
     assert.match(view.container.textContent ?? "", /12|1\/2/);
     await view.render(state({ completionError: "Your session could not be saved." }));
@@ -119,7 +119,7 @@ for (const Page of [source.SessionSummary, source.ISpyResults]) {
     assert.ok([...view.container.querySelectorAll("button")].some(button => button.textContent?.startsWith("Retry saving")));
     await view.render(state());
     assert.equal(heading(), completedHeading);
-    assert.match(view.container.textContent ?? "", /Basil collected|You played I-Spy with kitchen\./);
+    assert.match(view.container.textContent ?? "", /Basil collected|Clues solved/);
   });
 }
 

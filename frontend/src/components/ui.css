@@ -4804,6 +4804,22 @@ p[role="alert"]::before { content: "!"; }
 .ispy-target-card p { margin: var(--space-2) 0 0; color: var(--ink); }
 
 
+/* A wrong guess with tries left: the message, with the tries pill on the right. */
+.ispy-retry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.ispy-retry__pill {
+  flex: none;
+  border: 1px solid color-mix(in srgb, var(--tomato) 40%, transparent);
+  background: #fde8e0;
+  color: #b13c1c;
+  font-size: var(--text-small);
+}
+
 /* Inside the round card the word bank drops its own frame and sits under a divider. */
 .ispy-round-card .ispy-help {
   padding: var(--space-3) 0 0;
@@ -5105,8 +5121,8 @@ p[role="alert"]::before { content: "!"; }
 /* Tablet and desktop: the page uses the full width so the progress trail spans the screen,
    and the photo stays in view on the left while cards, quiz and typing run on the right. */
 @media (min-width: 768px) {
-  /* Lesson URLs end in /learn/<task>, so match the flashcard layout itself, not a route class. */
-  .shell--focus > .shell__content:has(.vocabulary-flow__body) {
+  /* Task routes are full width from the first render (see FocusShell), so nothing widens later. */
+  .shell--focus > .shell__content--task {
     max-width: none;
     padding-inline: var(--space-8);
   }
@@ -5157,10 +5173,11 @@ p[role="alert"]::before { content: "!"; }
 }
 
 @media (min-width: 768px) {
-  /* Questions without a photo keep the narrow single column. */
-  .shell--focus > .shell__content:has(.lesson-flow__scene) {
-    max-width: none;
-    padding-inline: var(--space-8);
+  /* Questions without a photo keep a narrow, centred column on the wide page. */
+  .lesson-flow__body:not(:has(> .lesson-flow__scene)) {
+    width: 100%;
+    max-width: 680px;
+    margin-inline: auto;
   }
 
   .lesson-flow__body:has(> .lesson-flow__scene) {
@@ -5205,8 +5222,12 @@ p[role="alert"]::before { content: "!"; }
     max-height: calc(100dvh - 300px);
   }
 
-  .lesson-flow__scene .scene-image.scene-image--loading {
+  /* Loading and not-yet-decoded photos hold the expected size so the frame never
+     starts collapsed and then expands. */
+  .lesson-flow__scene .scene-image.scene-image--loading,
+  .lesson-flow__scene .scene-image.scene-image--pending {
     width: min(100%, calc((100dvh - 300px) * 1.6));
+    aspect-ratio: 8 / 5;
   }
 }
 
@@ -5501,14 +5522,37 @@ p[role="alert"]::before { content: "!"; }
 
 /* One card holds the whole result so it reads as a single moment, not a scroll of panels. */
 .summary-card.card {
-  padding: var(--space-6);
+  position: relative;
+  overflow: hidden;
+  padding: 0 var(--space-6) var(--space-6);
+  border: var(--stroke) solid var(--teal-dark);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-paper);
+  box-shadow: 0 10px 28px rgba(33, 113, 111, 0.16);
+}
+
+/* A teal band with confetti across the top; Linguini sits on its lower edge. */
+.summary-card.card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 112px;
+  background:
+    radial-gradient(circle at 8% 28%, var(--tomato) 0 5px, transparent 6px),
+    radial-gradient(circle at 18% 72%, #f9b233 0 4px, transparent 5px),
+    radial-gradient(circle at 30% 22%, #fffdf7 0 3px, transparent 4px),
+    radial-gradient(circle at 70% 30%, #f9b233 0 5px, transparent 6px),
+    radial-gradient(circle at 82% 70%, var(--tomato) 0 4px, transparent 5px),
+    radial-gradient(circle at 93% 24%, #fffdf7 0 3px, transparent 4px),
+    radial-gradient(circle at 60% 78%, #fffdf7 0 2px, transparent 3px),
+    radial-gradient(circle at 42% 64%, var(--tomato) 0 3px, transparent 4px),
+    linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
 }
 
 .summary-card__body {
+  position: relative;
   display: grid;
   gap: var(--space-5);
+  padding-top: 56px;
 }
 
 /* Badges sit inside the summary card, so their own card frame is dropped. */
@@ -5527,8 +5571,39 @@ p[role="alert"]::before { content: "!"; }
 }
 
 .summary-hero__mascot {
-  width: 104px;
-  height: 104px;
+  box-sizing: border-box;
+  width: 112px;
+  height: 112px;
+  padding: var(--space-2);
+  border: var(--stroke) solid var(--teal-dark);
+  border-radius: 50%;
+  background: var(--paper);
+  box-shadow: 0 6px 16px rgba(33, 113, 111, 0.25);
+  animation: summary-pop 520ms cubic-bezier(0.22, 1.4, 0.36, 1) both;
+}
+
+.summary-hero h1 { color: var(--teal-dark); }
+
+.summary-results > .summary-result {
+  animation: summary-rise 420ms ease-out both;
+}
+
+.summary-results > .summary-result:nth-child(2) { animation-delay: 90ms; }
+.summary-results > .summary-result:nth-child(3) { animation-delay: 180ms; }
+
+@keyframes summary-pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes summary-rise {
+  0% { transform: translateY(10px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .summary-hero__mascot,
+  .summary-results > .summary-result { animation: none; }
 }
 
 .summary-hero h1,
@@ -5552,9 +5627,19 @@ p[role="alert"]::before { content: "!"; }
   gap: var(--space-3);
 }
 
+.summary-results--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.summary-note {
+  margin: 0;
+  text-align: center;
+}
+
 .summary-result {
   display: grid;
-  justify-items: start;
+  justify-items: center;
+  text-align: center;
   gap: var(--space-1);
   padding: var(--space-3) var(--space-4);
   border: 1px solid var(--line);
@@ -5625,8 +5710,10 @@ p[role="alert"]::before { content: "!"; }
 }
 
 @media (max-width: 520px) {
-  .summary-card.card { padding: var(--space-4); }
-  .summary-hero__mascot { width: 88px; height: 88px; }
+  .summary-card.card { padding: 0 var(--space-4) var(--space-4); }
+  .summary-card.card::before { height: 96px; }
+  .summary-card__body { padding-top: 48px; }
+  .summary-hero__mascot { width: 96px; height: 96px; }
   .summary-hero h1 { font-size: var(--text-h3); }
   .summary-result__value { font-size: 28px; }
 }
