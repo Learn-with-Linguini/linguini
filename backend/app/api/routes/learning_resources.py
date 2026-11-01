@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from app.learning_resources import (
     character_references,
+    get_available_a0_cheat_sheet,
     get_character_reference,
     get_mission_cheat_sheet,
     mission_cheat_sheets,
@@ -44,6 +45,8 @@ def read_mission_cheat_sheet(
     cheat_sheet = get_mission_cheat_sheet(
         mission_id, practice_level, content_version, language_code
     )
+    if cheat_sheet is None and practice_level == ProficiencyLevel.A0:
+        cheat_sheet = get_available_a0_cheat_sheet(mission_id, language_code)
     if cheat_sheet is None:
         raise HTTPException(404, detail={
             "code": "cheatsheet_not_found",

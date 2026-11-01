@@ -212,6 +212,39 @@ def test_french_a0_m02_description_cheatsheet_is_served_to_the_ui() -> None:
     ]
 
 
+def test_a0_activity_uses_the_available_sheet_when_its_version_differs() -> None:
+    response = TestClient(app).get(
+        "/api/v1/learning-resources/cheatsheets/M02",
+        params={
+            "languageCode": "es",
+            "practiceLevel": "A0",
+            "contentVersion": 1,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["contentVersion"] == 2
+
+
+@pytest.mark.parametrize(
+    ("mission_id", "practice_level"),
+    [("M02", "A1"), ("M04", "A0")],
+)
+def test_activity_without_an_available_sheet_keeps_the_preparing_state(
+    mission_id: str, practice_level: str
+) -> None:
+    response = TestClient(app).get(
+        f"/api/v1/learning-resources/cheatsheets/{mission_id}",
+        params={
+            "languageCode": "es",
+            "practiceLevel": practice_level,
+            "contentVersion": 1,
+        },
+    )
+
+    assert response.status_code == 404
+
+
 @pytest.mark.parametrize(
     ("language", "title", "adjective_example", "location_example"),
     [
