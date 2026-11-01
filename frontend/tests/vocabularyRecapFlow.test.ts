@@ -88,7 +88,7 @@ async function type(value: string) {
     input.dispatchEvent(new dom.window.Event("input", { bubbles: true }));
   });
 }
-async function mount(options: { words?: VocabularyLearningWord[]; items?: LanguageItem[]; stayInReview?: boolean } = {}) {
+async function mount(options: { words?: VocabularyLearningWord[]; items?: LanguageItem[]; stayInReview?: boolean; questionIds?: [string, string] } = {}) {
   const container = dom.window.document.createElement("div");
   dom.window.document.body.appendChild(container);
   const root = surface.createRoot(container);
@@ -103,8 +103,8 @@ async function mount(options: { words?: VocabularyLearningWord[]; items?: Langua
         phoneticText: null, pronunciationAudioAssetId: null, exampleSentence: null,
       })),
       questions: [
-        { questionId: "q-cup", prompt: "What is taza?", options: [{ optionId: "option-cup", label: "cup" }, { optionId: "wrong-cup", label: "plate" }] },
-        { questionId: "q-table", prompt: "What is mesa?", options: [{ optionId: "option-table", label: "table" }, { optionId: "wrong-table", label: "chair" }] },
+        { questionId: options.questionIds?.[0] ?? "q-cup", prompt: "What is taza?", options: [{ optionId: "option-cup", label: "cup" }, { optionId: "wrong-cup", label: "plate" }] },
+        { questionId: options.questionIds?.[1] ?? "q-table", prompt: "What is mesa?", options: [{ optionId: "option-table", label: "table" }, { optionId: "wrong-table", label: "chair" }] },
       ],
     },
   };
@@ -133,7 +133,7 @@ function reviewWord(termType: VocabularyLearningWord["termType"], targetText: st
 
 test("leaving a completed-scene review returns to vocabulary without changing the task", async () => {
   await mount({ stayInReview: true });
-  assert.equal(button("Return home"), undefined);
+  assert.equal(button("Exit"), undefined);
   assert.equal(button("Skip this task"), undefined);
   await click("Back to vocabulary");
   assert.match(text(), /Vocabulary collection/);
@@ -155,7 +155,7 @@ test("the completed-scene shortcut starts the same mixed review without a task s
 test("review groups mixed words while retaining photo context and optional image interaction", async () => {
   await mount({ stayInReview: true, words: [
     reviewWord("relationship", "cerca", null, ["table", "chair"]),
-    reviewWord("attribute", "rojo", "chair"),
+    { ...reviewWord("attribute", "roja", "chair"), agreement: "feminine", agreementForms: { masculine: "rojo", feminine: "roja" } },
     reviewWord("object", "mesa", "table"),
     reviewWord("object", "silla", "chair"),
   ], items: ["table", "chair"].map((id, i) => ({ id, marker: i + 1, word: id, translation: id, wordClass: "noun", gender: null, x: 30 + i * 30, y: 50, example: "", exampleTranslation: "" })) });
@@ -164,7 +164,10 @@ test("review groups mixed words while retaining photo context and optional image
   assert.equal(dom.window.document.querySelectorAll("button.scene__marker").length, 2);
   await click("Next");
   assert.equal(section(), "Objects and adjectives");
-  assert.deepEqual([...dom.window.document.querySelectorAll(".learning-card__word h2")].map(item => item.textContent), ["silla", "rojo"]);
+  assert.deepEqual([...dom.window.document.querySelectorAll(".learning-card__word h2")].map(item => item.textContent), ["silla", "roja"]);
+  assert.match(text(), /Adjectives change to match the noun/);
+  assert.match(text(), /femininethis nounroja/);
+  assert.match(text(), /masculinerojo/);
   assert.ok(dom.window.document.querySelector(".vocabulary-learning-grid--paired"));
   assert.ok(dom.window.document.querySelector(".vocabulary-learning-scene"));
   assert.equal(dom.window.document.querySelectorAll("button.scene__marker").length, 2);
@@ -245,6 +248,21 @@ test("a failed recall check preserves unfinished text and can continue after ret
   assert.match(text(), /What is mesa/);
   await click("table");
   assert.equal(requests.at(-1)?.body.optionId, "option-table");
+});
+
+test("quiz and typing questions highlight the asked object without naming it", async () => {
+  const items = ["cup", "table"].map((id, i) => ({ id, marker: i + 1, word: id, translation: id, wordClass: "noun", gender: null, x: 30 + i * 30, y: 50, example: "", exampleTranslation: "" }));
+  const words = [reviewWord("object", "taza", "cup"), reviewWord("object", "mesa", "table")];
+  await mount({ words, items, questionIds: ["word-taza", "article-mesa"] });
+  const scene = () => dom.window.document.querySelector(".vocabulary-learning-scene");
+  const markers = () => [...dom.window.document.querySelectorAll(".scene__marker--active")]
+    .map(item => item.getAttribute("aria-label") ?? item.textContent);
+  assert.equal(scene()?.getAttribute("aria-label"), "taza in your photo");
+  assert.equal(markers().length, 1);
+  await click("cup"); await click("Continue");
+  assert.equal(scene()?.getAttribute("aria-label"), "mesa in your photo");
+  assert.equal(markers().length, 1);
+  assert.doesNotMatch(scene()?.innerHTML ?? "", /Marker \d+: /);
 });
 
 test("typing can be skipped without an answer request while recognition stays required", async () => {

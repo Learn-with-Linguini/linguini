@@ -112,6 +112,18 @@ def _definite(grammar, term):
     return grammar.definite(term.get("gender"))
 
 
+def object_phrase(context, target):
+    """The target's word with its definite article (la chaise), as the language writes it.
+
+    ``None`` when the language has no clue grammar or the scene lacks the object's term.
+    """
+    grammar = clue_grammar(context.get("targetLanguage"))
+    term = {
+        item["key"]: item for item in context.get("sceneObjects", {}).get("objects", [])
+    }.get(str(target.id))
+    return _reference_phrase(grammar, term) if grammar and term else None
+
+
 def _reference_phrase(grammar, term):
     article = _definite(grammar, term)
     return _with_article(article, term["translation"]) if article else term["translation"]
@@ -342,7 +354,8 @@ def check_clue(content, request):
 
 
 def _check_assistance(content, assistance: ClueAssistance):
-    """Assistance must name offered frames, slots and chips; legacy Name frames stay valid."""
+    """Assistance must name offered frames, slots, chips or word-bank words; legacy Name
+    frames stay valid."""
     frames = {frame.frame_id: frame for frame in content.clue_frames}
     offered = assistance.offered_frame_ids
     selected_ids = set(assistance.selected_frame_ids)
@@ -364,7 +377,7 @@ def _check_assistance(content, assistance: ClueAssistance):
             *frame.phrases.values(),
             *(choice.text for slot in frame.slots for choice in slot.chips),
         ]
-    }
+    } | {entry.text for entry in getattr(content, "word_bank", [])}  # tapped word-bank words
     slots_ok = all(
         choice.frame_id in selected_ids
         and any(

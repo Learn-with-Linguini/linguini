@@ -85,6 +85,29 @@ def test_a1_keeps_every_choice_and_includes_the_scene_word_bank():
     assert "cheatSheet" not in public["publicContent"]
 
 
+def test_word_bank_adds_the_scenes_adjectives_and_prepositions_after_its_objects():
+    objects, words = _scene(["tasse", "table"], ["cup", "table"])
+    facts = {
+        "attributes": [
+            {"key": f"{objects[0].id}:colour", "source": "red", "translation": "rouge"},
+            {"key": f"{objects[1].id}:colour", "source": "red", "translation": "Rouge"},
+        ],
+        "relationships": [
+            {"key": "r1", "source": "nextTo", "translation": "à côté de"},
+            {"key": "r2", "source": "in_front_of", "translation": "devant"},
+            {"key": "r3", "source": "on"},
+        ],
+    }
+    [task] = build_ispy_clue_tasks(SESSION, _clue(objects[0]), objects, words, level="A1",
+                                   language="fr", scene_facts=facts)
+    assert [
+        (entry.text, entry.translation, entry.kind) for entry in task.public_content.word_bank
+    ] == [
+        ("tasse", "cup", "noun"), ("table", "table", "noun"), ("rouge", "red", "adjective"),
+        ("à côté de", "next to", "preposition"), ("devant", "in front of", "preposition"),
+    ]
+
+
 def test_a2_clues_are_heard_before_they_are_read():
     objects, words = _scene(["tasse", "table"], ["cup", "table"])
     [task] = build_ispy_clue_tasks(SESSION, _clue(objects[0]), objects, words, level="A2")
@@ -126,8 +149,10 @@ def test_a0_describes_one_object_by_building_from_tiles():
     content = tasks[0].public_content
     assert content.allow_text is False and not content.help_collapsed
     assert content.clue_frames and all(frame.help for frame in content.clue_frames)
-    assert "word tiles" in content.prompt
+    assert "word bank" in content.prompt
     assert content.word_bank and content.cheat_sheet is not None
+    # The object to describe is shown with its article.
+    assert content.target_phrase in {"la tasse", "le livre", "la table"}
     assert tasks[0].answer_key.learner_level == "A0"
 
 

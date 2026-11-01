@@ -6,16 +6,13 @@
   min-height: calc(100dvh - 160px);
 }
 
-.mission-path__topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-}
-
-/* Matches the Exit pill beside it: same 44px height, padding and label size. */
+/* Sits over the photo's top-right corner. */
 .mission-path__leaves {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
   min-height: 44px;
+  box-shadow: 0 2px 8px rgba(38, 50, 56, 0.18);
   padding-inline: var(--space-3);
   font-size: var(--text-small);
   font-variant-numeric: tabular-nums;
@@ -24,12 +21,23 @@
 .mission-path__leaves.is-updated { animation: mission-leaves-pulse 600ms 300ms ease-out; }
 
 /* Photo scene card: rounded photo with the dark-teal contour. */
-.mission-path__header {
-  display: grid;
-  gap: var(--space-3);
+/* Phones: the header and media wrappers dissolve so the earlier-practice note can follow the
+   mission list instead of pushing it down. */
+.mission-path__header,
+.mission-path__media {
+  display: contents;
+}
+
+.mission-path__aside {
+  order: 1;
+}
+
+.mission-path__aside:empty {
+  display: none;
 }
 
 .mission-path__scene {
+  position: relative;
   overflow: hidden;
   border: var(--stroke) solid var(--teal-dark);
   border-radius: var(--radius-md);
@@ -184,12 +192,81 @@
 .mission-step.is-just-next .mission-step__icon { animation: mission-grow 460ms 350ms cubic-bezier(0.22, 1, 0.36, 1) both; }
 
 .mission-path__cta {
+  order: 2;
   position: sticky;
   bottom: max(var(--space-3), env(safe-area-inset-bottom));
   z-index: 5;
   margin-top: auto;
   padding-top: var(--space-3);
   background: linear-gradient(to bottom, transparent, var(--butter) 35%);
+}
+
+.mission-path__extra {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.mission-path__extra:empty {
+  display: none;
+}
+
+/* Tablet and desktop: the title across the top, then the scene photo on the left and missions
+   on the right, using the full width. */
+@media (min-width: 768px) {
+  .shell--focus > .shell__content:has(.mission-path-page) {
+    max-width: none;
+    padding-inline: var(--space-8);
+  }
+
+  .mission-path-page {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    grid-template-rows: auto auto auto 1fr;
+    grid-template-areas:
+      "title  title"
+      "media  path"
+      "media  extra"
+      "media  cta";
+    column-gap: var(--space-8);
+    align-items: start;
+  }
+
+  .mission-path__title { grid-area: title; }
+  .mission-path { grid-area: path; }
+  .mission-path__extra { grid-area: extra; }
+
+  .mission-path-page:has(> .mission-path__extra:empty) {
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+      "title  title"
+      "media  path"
+      "media  cta";
+  }
+
+  /* Sits right under the mission list rather than at the bottom of the column. */
+  .mission-path__cta {
+    grid-area: cta;
+    align-self: start;
+    margin-top: 0;
+  }
+
+  .mission-path__media {
+    grid-area: media;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    position: sticky;
+    top: var(--space-6);
+  }
+
+  .mission-path__aside { order: 0; }
+  .mission-path__cta { order: 0; }
+
+  .mission-path__photo {
+    height: auto;
+    aspect-ratio: 4 / 3;
+  }
 }
 
 @keyframes mission-pop {

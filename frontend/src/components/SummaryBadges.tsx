@@ -11,8 +11,8 @@ export function SummaryBadges({ batches }: { batches: MissionBatch[] }) {
   const earned = batches.filter(batch => batch.badgeEarned);
   const missed = batches.filter(batch => batch.status === "review");
   if (!earned.length && !missed.length) return null;
-  return <Card><section className="stack-2" aria-labelledby="summary-badges-title">
-    <h2 id="summary-badges-title">Badges</h2>
+  return <Card plain><section className="stack-2" aria-labelledby="summary-badges-title">
+    <h2 id="summary-badges-title" className="summary-section-title">Badges</h2>
     {earned.map(batch => <div key={batch.missionId} className="summary-badge">
       <span className="chef-badge chef-badge--small"><BadgeArt missionId={batch.missionId} /></span>
       <div><strong>New badge: {batch.name}</strong><p className="small muted">{batch.badgeEarned} · {batchAccuracy(batch)}% correct</p></div>

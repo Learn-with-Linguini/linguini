@@ -96,6 +96,12 @@ class VocabularyLearningWord(ApiModel):
     translation: NonEmptyText
     part_of_speech: PartOfSpeech
     gender: str | None = None
+    agreement: Literal["masculine", "feminine", "neuter"] | None = Field(
+        default=None, exclude_if=_is_none
+    )
+    agreement_forms: dict[
+        Literal["masculine", "feminine", "neuter"], NonEmptyText
+    ] = Field(default_factory=dict, max_length=3, exclude_if=_is_empty)
     plural_form: str | None = None
     phonetic_text: str | None = None
     romanization: str | None = Field(default=None, exclude_if=_is_none)
@@ -343,6 +349,11 @@ class ISpyChoice(ApiModel):
 class WordBankEntry(ApiModel):
     text: NonEmptyText = Field(max_length=200)
     translation: NonEmptyText = Field(max_length=200)
+    # Lets the clue writer match each word to its place in a sentence pattern; absent on
+    # word banks saved before it existed.
+    kind: Literal["noun", "adjective", "preposition"] | None = Field(
+        default=None, exclude_if=_is_none
+    )
 
 
 class CheatSheetRef(ApiModel):
@@ -426,6 +437,8 @@ class ReflectionContent(MissionTaskFields, ISpyLevelSupport):
     avoid_words: list[ClueChip] = Field(default_factory=list, max_length=20)
     # Keep the clue frames behind a "Need help?" control (A2).
     help_collapsed: bool = False
+    # The object to describe with its article (la chaise); absent on older tasks.
+    target_phrase: str | None = Field(default=None, max_length=200, exclude_if=_is_none)
 
     @model_validator(mode="after")
     def validate_frames(self) -> ReflectionContent:

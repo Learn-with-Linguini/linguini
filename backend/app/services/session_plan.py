@@ -13,7 +13,7 @@ from app.schemas.media import SceneObject
 from app.schemas.tasks import SessionTask
 from app.schemas.vocabulary import VocabularyItem, VocabularyTranslation
 from app.services.image_analysis import PlaceholderImageExtractor
-from app.services.ispy_clue_frames import build_clue_support
+from app.services.ispy_clue_frames import build_clue_support, object_phrase
 from app.services.ispy_levels import ispy_cheat_sheet, ispy_level, word_bank
 
 # Fixed, deliberately small upload vocabulary. Unknown languages fail explicitly.
@@ -342,12 +342,20 @@ def _clue_options(objects, words, answer_key, choices):
 
 def build_ispy_clue_tasks(
     session_id, result: ISpyClueResult, objects, words, *, level=None, language=None,
+    scene_facts=None,
 ):
-    """Make provider-selected Phase 1 clue rounds using server-side answer keys."""
+    """Make provider-selected Phase 1 clue rounds using server-side answer keys.
+
+    ``scene_facts`` is the clue payload; its translated attributes and relationships join
+    the word bank.
+    """
     settings = ispy_level(level)
+    facts = scene_facts or {}
     support = dict(
         learner_level=settings.level,
-        word_bank=word_bank(objects, words) if settings.word_bank else [],
+        word_bank=word_bank(
+            objects, words, facts.get("attributes", ()), facts.get("relationships", ()),
+        ) if settings.word_bank else [],
         cheat_sheet=ispy_cheat_sheet(settings, language),
     )
     by_key = {str(obj.id): (obj, word) for obj, word in zip(objects, words, strict=True)}
@@ -394,9 +402,12 @@ def build_ispy_description_tasks(session_id, objects, words, description_context
     a photo without such facts yields no description tasks rather than invented ones.
     """
     settings = ispy_level(level)
+    facts = description_context.get("sceneObjects", {})
     support = dict(
         learner_level=settings.level,
-        word_bank=word_bank(objects, words) if settings.word_bank else [],
+        word_bank=word_bank(
+            objects, words, facts.get("attributes", ()), facts.get("relations", ()),
+        ) if settings.word_bank else [],
         cheat_sheet=ispy_cheat_sheet(settings, description_context.get("targetLanguage")),
     )
     tasks = []
@@ -423,10 +434,10 @@ def _ispy_description_task(
 ):
     prompt = (
         "Describe this object in your learning language without saying its word. "
-        "Pick a clue frame for help, or type your own clue."
+        "Use the word bank for help, or type your own clue."
         if settings.typing
         else "Describe this object without saying its word. "
-        "Pick a clue frame, then build your clue from the word tiles."
+        "Tap the word bank words to build your clue."
     )
     return SessionTask(
         id=uuid5(session_id, f"ispy-descriptions-v1:{obj.id}"),
@@ -443,6 +454,7 @@ def _ispy_description_task(
             clue_frames=frames,
             avoid_words=avoid_words,
             help_collapsed=settings.help_collapsed,
+            target_phrase=object_phrase(description_context, obj),
             **support,
         ),
         answer_key=dict(
@@ -521,9 +533,33 @@ def build_tasks(
                 continue
             seen_terms.add(identity)
             related_scene_object_ids = []
+            agreement = None
+            agreement_forms = {}
             if term_type == "attribute":
-                object_id = scene_object_ids.get(term.key.rsplit(":", 1)[0])
+                object_key, attribute_kind = term.key.rsplit(":", 1)
+                object_id = scene_object_ids.get(object_key)
                 related_scene_object_ids = [object_id] if object_id else []
+                if language_context:
+                    agreement_forms = dict(term.agreement_forms)
+                    pack = language_context.pack
+                    kind = {"color": "colour"}.get(
+                        attribute_kind.casefold(), attribute_kind.casefold()
+                    )
+                    value = term.source.strip().casefold()
+                    value = pack.lexical.get("attribute_aliases", {}).get(
+                        f"{kind}:{value}", value
+                    )
+                    prefix = f"{kind}:{value}:"
+                    pack_forms = {
+                        key[len(prefix):]: form
+                        for key, form in pack.lexical.get("attribute_forms", {}).items()
+                        if key.startswith(prefix)
+                        and key[len(prefix):] in {"masculine", "feminine", "neuter"}
+                    }
+                    agreement_forms = agreement_forms or pack_forms
+                    owner = translated_objects.get(object_key)
+                    if owner and owner.gender in agreement_forms:
+                        agreement = owner.gender
             elif relation := relation_links.get(str(term.key)):
                 related_scene_object_ids = [
                     relation.subject_scene_object_id,
@@ -544,10 +580,13 @@ def build_tasks(
                         else None
                     ),
                     related_scene_object_ids=related_scene_object_ids,
-                    target_text=term.native_display if language_context else term.translation,
+                    target_text=(agreement_forms.get(agreement, term.native_display)
+                                 if language_context else term.translation),
                     **({"romanization": term.romanization} if language_context else {}),
                     translation=_display_source(term.source),
                     part_of_speech=part_of_speech,
+                    **({"agreement": agreement, "agreement_forms": agreement_forms}
+                       if agreement_forms else {}),
                     phonetic_text=term.phonetic_text,
                 )
             )

@@ -15,15 +15,27 @@
   gap: var(--space-3);
 }
 
+.ispy-help__heading--collapsed {
+  justify-content: center;
+}
+
 .ispy-help__actions {
   display: flex;
   align-items: center;
   gap: var(--space-1);
 }
 
+.ispy-help__title {
+  color: var(--ink);
+  font-size: var(--text-h3);
+  font-weight: 800;
+}
+
+/* A small text action so the toggle doesn't outweigh the clue around it. */
 .ispy-help__actions .btn--quiet {
-  min-height: 44px;
+  min-height: 36px;
   padding-inline: var(--space-2);
+  font-size: var(--text-small);
 }
 
 .ispy-help__words {
@@ -37,10 +49,51 @@
 
 .ispy-help__words li {
   display: grid;
+}
+
+/* A button so a tap on phones (focus) shows the English the same way hover does. */
+.ispy-help__word {
+  position: relative;
   padding: var(--space-1) var(--space-3);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--cream);
+  font: inherit;
+  cursor: help;
+}
+
+.ispy-help__word:hover,
+.ispy-help__word:focus-visible {
+  border-color: var(--teal);
+}
+
+.ispy-help__word:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.ispy-help__meaning {
+  position: absolute;
+  z-index: 5;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: #fffdf7;
+  font-size: var(--text-small);
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 4px);
+  transition: opacity 120ms ease-out, transform 120ms ease-out;
+}
+
+.ispy-help__word:hover .ispy-help__meaning,
+.ispy-help__word:focus .ispy-help__meaning {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 .ispy-help__words strong {
@@ -48,7 +101,70 @@
   font-size: var(--text-body);
 }
 
-.ispy-help__words span {
-  color: var(--ink-muted);
-  font-size: var(--text-label);
+.ispy-help__hint { margin: 0; }
+
+.ispy-help__word:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
+
+/* Word kinds share colours with the clue patterns, so a word's colour shows where it goes. */
+.ispy-help__word--adjective {
+  border-color: color-mix(in srgb, var(--tomato) 40%, transparent);
+  background: #fde8e0;
+}
+
+.ispy-help__word--adjective strong { color: #b13c1c; }
+
+.ispy-help__word--preposition {
+  border-color: color-mix(in srgb, var(--teal) 40%, transparent);
+  background: var(--basil-surface);
+}
+
+.ispy-help__word--preposition strong { color: var(--teal-dark); }
+
+.ispy-help__word--noun strong { color: var(--ink); }
+
+/* Clue patterns: the sentence with coloured pills where the adjective and preposition go. */
+.clue-patterns {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.clue-patterns__list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.clue-patterns__item {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-sm);
+}
+
+.clue-patterns__item p { margin: 0; }
+
+.clue-patterns__sentence {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 800;
+}
+
+.clue-patterns__pill {
+  padding: 2px var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--cream);
+  font-size: var(--text-small);
+  font-weight: 800;
+}
+
+.clue-patterns__pill.ispy-help__word--adjective { color: #b13c1c; }
+.clue-patterns__pill.ispy-help__word--preposition { color: var(--teal-dark); }

@@ -695,7 +695,7 @@ def test_generation_observation_dimensions() -> None:
     assert enter["provider"] == "openai"
     assert enter["model"] == "test-text-model"
     assert enter["prompt_version"] == PACK_TRANSLATION_PROMPT_VERSION
-    assert enter["schema_version"] == "pack-translation-result.v3"
+    assert enter["schema_version"] == "pack-translation-result.v4"
 
     update = next(
         kw

@@ -84,15 +84,15 @@ export async function uploadImage(file: File, source: "camera" | "userUpload", o
   if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) throw new Error("Choose a JPEG, PNG or WebP image.");
   if (!file.size || file.size > 10 * 1024 * 1024) throw new Error("Choose an image between 1 byte and 10 MB.");
   if (!attempt.uploaded) {
-    onPhase("Optimising image…");
+    onPhase("Optimising image");
     const prepared = await downscale(file);
     ensureCurrent();
-    onPhase("Preparing upload…");
+    onPhase("Preparing upload");
     const upload = await write<{ assetId: string; storageKey: string; uploadUrl: string }>("/api/v1/media/upload-url", "POST", {
       fileName: file.name, fileSize: prepared.size, mimeType: prepared.type, source,
     });
     ensureCurrent();
-    onPhase("Uploading image…");
+    onPhase("Uploading image");
     const response = await fetch(upload.uploadUrl, {
       method: "PUT", headers: { "Content-Type": prepared.type, "x-upsert": "false" }, body: prepared,
     });
@@ -100,7 +100,7 @@ export async function uploadImage(file: File, source: "camera" | "userUpload", o
     attempt.uploaded = { assetId: upload.assetId, storageKey: upload.storageKey };
   }
   ensureCurrent();
-  onPhase("Checking image…");
+  onPhase("Checking image");
   // Confirmation is idempotent; retry once if the server committed but its response was lost.
   const uploaded = attempt.uploaded;
   const confirm = async () => {
@@ -506,9 +506,10 @@ export type TaskContent = MissionTaskFields & (
   | { kind: "syntaxExplanation"; title: string; sentencePattern: string; explanation: string; examples: string[] }
   | { kind: "sentenceBuilding"; prompt: string; sourceText: string | null; tokenBank: string[] }
   | ({ kind: "ispyRound"; clue: string; clueTranslation?: string | null; encouragement?: string | null; options: { optionId: string; label: string; sceneObjectId: string }[]; translationShown?: boolean; listenFirst?: boolean } & ISpyLevelSupport)
-  | ({ kind: "reflection"; prompt: string; clueFrames?: ClueFrame[]; avoidWords?: string[]; allowText?: boolean; helpCollapsed?: boolean } & ISpyLevelSupport)
+  | ({ kind: "reflection"; prompt: string; clueFrames?: ClueFrame[]; avoidWords?: string[]; allowText?: boolean; helpCollapsed?: boolean; targetPhrase?: string | null } & ISpyLevelSupport)
 );
-export interface WordBankEntry { text: string; translation: string }
+export type WordBankKind = "noun" | "adjective" | "preposition";
+export interface WordBankEntry { text: string; translation: string; kind?: WordBankKind | null }
 export interface CheatSheetRef { missionId: string; practiceLevel: string; contentVersion: number }
 /** The level an I-Spy task was built for and the help it offers (A0 gets a word bank and cheatsheet). */
 export interface ISpyLevelSupport { learnerLevel?: "A0" | "A1" | "A2"; wordBank?: WordBankEntry[]; cheatSheet?: CheatSheetRef | null }
@@ -621,6 +622,8 @@ export interface VocabularyLearningWord {
   vocabularyItemId: string | null; sceneObjectId: string | null; targetText: string; translation: string;
   relatedSceneObjectIds?: string[];
   partOfSpeech: WordClass; gender: string | null; pluralForm: string | null; phoneticText: string | null;
+  agreement?: "masculine" | "feminine" | "neuter" | null;
+  agreementForms?: Partial<Record<"masculine" | "feminine" | "neuter", string>>;
   pronunciationAudioAssetId: string | null; exampleSentence: string | null;
 }
 export interface VocabularyQuestion { questionId: string; prompt: string; options: { optionId: string; label: string }[]; correctOptionId?: string | null; romanizations?: Record<string, string> | null }
