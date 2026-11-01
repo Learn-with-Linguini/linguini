@@ -182,9 +182,10 @@ The existing analysis and review routes show this progress; no new page is added
 | :--- | :--- | :--- |
 | `ispy_mode_selected` | `{ mode: "ai" \| "friend" }` | User selects AI solo play or Multiplayer friend mode |
 | `ispy_game_resumed` | — | User resumes an active I-Spy game session |
-| `ispy_clue_submitted` | `{ optionId, isCorrect, source: "photo_marker" }` | Learner taps a photo marker in response to Linguini's clue on lesson and standalone I-Spy clue pages |
+| `ispy_clue_submitted` | `{ optionId, isCorrect, source: "photo_marker", guess }` | Learner taps a photo marker in response to Linguini's clue on lesson and standalone I-Spy clue pages; `guess` is 1–3, since each clue allows three different guesses |
 | `ispy_description_submitted` | `{ outcome }` | Learner writes a description clue for Linguini to guess |
 | `ispy_word_bank_toggled` | `{ learnerLevel, shown }` | An A1 or A2 learner shows or hides the current scene's word bank during I-Spy |
+| `ispy_word_bank_translation_viewed` | `{ learnerLevel }` | Learner hovers, focuses or taps an I-Spy word bank word to see its English (logged once per word per round) |
 | `ispy_clue_listened_first` | `{ taskId }` | An A2 learner plays a listen-first clue, which then shows its text |
 | `ispy_clue_text_revealed` | `{ taskId }` | An A2 learner shows a listen-first clue's text without playing it |
 | `ispy_clue_help_opened` | `{ taskId }` | An A2 learner opens the clue frames kept behind "Need help?" |

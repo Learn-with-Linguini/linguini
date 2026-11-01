@@ -507,7 +507,7 @@ test("a failed restore never looks like a fresh unanswered task", async () => {
   const { root } = await mountTask("inProgress");
   assert.ok(dom.window.document.querySelector("[data-testid=restore-error]"));
   assert.equal(button("Send my response"), undefined);
-  assert.equal(button("Skip task"), undefined);
+  assert.equal(button("Skip this task"), undefined);
   latestReplies.push(() => Response.json(savedClue("r8", "needsClarification", "obj-other")));
   await click("Try again");
   await flush();

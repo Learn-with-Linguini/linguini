@@ -619,6 +619,43 @@ def test_get_session_reaps_stale_processing(database):
     assert client.get(f"/api/v1/sessions/{third}").json()["session"]["status"] == "analyzingScene"
 
 
+def test_an_ispy_clue_allows_three_different_guesses(database):
+    engine, _, profile, client = database
+    sid = create_run(client, profile)["session"]["id"]
+    task = next(item for item in analyze(client, sid)["tasks"] if item["kind"] == "ispyRound")
+    with engine.connect() as c:
+        key = c.execute(
+            select(session_tasks.c.answer_key).where(session_tasks.c.id == UUID(task["id"]))
+        ).scalar_one()
+    wrong = [
+        option["sceneObjectId"] for option in task["publicContent"]["options"]
+        if option["sceneObjectId"] != key["correctSceneObjectId"]
+    ]
+    assert wrong, "the clue offers at least one wrong object"
+    endpoint = f"/api/v1/tasks/{task['id']}/attempts"
+
+    def guess(object_id, idempotency_key):
+        return client.post(endpoint, json={
+            "inputMode": "objectSelection", "sceneObjectId": object_id,
+            "idempotencyKey": idempotency_key,
+        })
+
+    missed = guess(wrong[0], "first-guess-key")
+    assert missed.status_code == 200, missed.text
+    assert missed.json()["attempt"]["isCorrect"] is False
+    assert missed.json()["attempt"]["feedback"]["message"].endswith("2 guesses left.")
+    assert missed.json()["task"]["status"] == "inProgress"
+    # The same object cannot be guessed twice.
+    assert guess(wrong[0], "repeat-guess-key").status_code == 409
+    found = guess(key["correctSceneObjectId"], "second-guess-key")
+    assert found.status_code == 200, found.text
+    assert found.json()["attempt"]["isCorrect"] is True
+    assert found.json()["task"]["status"] == "completed"
+    summary = client.get(f"/api/v1/sessions/{sid}/summary").json()
+    # The clue counts once, as correct, however many guesses it took.
+    assert summary["ispyCorrectCount"] == summary["ispyAttemptCount"] == 1
+
+
 def test_all_task_kinds_complete_with_server_evaluation(database):
     engine, owner, profile, client = database
     sid = create_run(client, profile)["session"]["id"]

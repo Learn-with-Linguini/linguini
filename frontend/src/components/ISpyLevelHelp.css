@@ -15,6 +15,10 @@
   gap: var(--space-3);
 }
 
+.ispy-help__heading--collapsed {
+  justify-content: center;
+}
+
 .ispy-help__actions {
   display: flex;
   align-items: center;
@@ -37,10 +41,51 @@
 
 .ispy-help__words li {
   display: grid;
+}
+
+/* A button so a tap on phones (focus) shows the English the same way hover does. */
+.ispy-help__word {
+  position: relative;
   padding: var(--space-1) var(--space-3);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--cream);
+  font: inherit;
+  cursor: help;
+}
+
+.ispy-help__word:hover,
+.ispy-help__word:focus-visible {
+  border-color: var(--teal);
+}
+
+.ispy-help__word:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.ispy-help__meaning {
+  position: absolute;
+  z-index: 5;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--ink);
+  color: #fffdf7;
+  font-size: var(--text-small);
+  font-weight: 700;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 4px);
+  transition: opacity 120ms ease-out, transform 120ms ease-out;
+}
+
+.ispy-help__word:hover .ispy-help__meaning,
+.ispy-help__word:focus .ispy-help__meaning {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 .ispy-help__words strong {

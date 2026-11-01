@@ -85,6 +85,27 @@ def test_a1_keeps_every_choice_and_includes_the_scene_word_bank():
     assert "cheatSheet" not in public["publicContent"]
 
 
+def test_word_bank_adds_the_scenes_adjectives_and_prepositions_after_its_objects():
+    objects, words = _scene(["tasse", "table"], ["cup", "table"])
+    facts = {
+        "attributes": [
+            {"key": f"{objects[0].id}:colour", "source": "red", "translation": "rouge"},
+            {"key": f"{objects[1].id}:colour", "source": "red", "translation": "Rouge"},
+        ],
+        "relationships": [
+            {"key": "r1", "source": "nextTo", "translation": "à côté de"},
+            {"key": "r2", "source": "in_front_of", "translation": "devant"},
+            {"key": "r3", "source": "on"},
+        ],
+    }
+    [task] = build_ispy_clue_tasks(SESSION, _clue(objects[0]), objects, words, level="A1",
+                                   language="fr", scene_facts=facts)
+    assert [(entry.text, entry.translation) for entry in task.public_content.word_bank] == [
+        ("tasse", "cup"), ("table", "table"), ("rouge", "red"),
+        ("à côté de", "next to"), ("devant", "in front of"),
+    ]
+
+
 def test_a2_clues_are_heard_before_they_are_read():
     objects, words = _scene(["tasse", "table"], ["cup", "table"])
     [task] = build_ispy_clue_tasks(SESSION, _clue(objects[0]), objects, words, level="A2")

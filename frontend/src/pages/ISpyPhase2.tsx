@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, useNavigate } from "react-router-dom";
 import { sessionDestination, sessionPaths } from "../lib/sessionRoute";
-import { BasilReward, Button, Card, Feedback, ProgressTrail, TopBar } from "../components/ui";
+import { BasilReward, Button, Feedback, ProgressTrail, TopBar } from "../components/ui";
 import { ArrowRightIcon, CloseIcon } from "../components/icons";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { useScene } from "../state/useScene";
@@ -216,19 +216,35 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
   const improve = () => { setGuess(null); setRevising(true); };
   const outcome = guess?.evaluation.outcome;
   return <div className="stack">
-    <div className="learning-title-row">
-      <h1 className="ispy-title">I-Spy · Your turn</h1>
-      <Button variant="quiet" className="learning-exit" onClick={onExit}><CloseIcon size={18} /> Exit</Button>
+    <div className="vocabulary-flow__header">
+      <div className="learning-title-row">
+        <div className="vocabulary-flow__title"><h1>Your Clues</h1></div>
+        <div className="learning-title-actions">
+          {hydrated && !answered ? <button type="button" className="vocabulary-flow__skip-pill" disabled={practiceSaving}
+            onClick={() => void actOnTask(task.id, "skip")}>Skip this task</button> : null}
+          <Button variant="quiet" className="learning-exit" onClick={onExit}><CloseIcon size={18} /> Exit</Button>
+        </div>
+      </div>
+      <div className="vocabulary-flow__progress"><ProgressTrail value={index + (answered ? 1 : 0)} total={total} label={`Object ${index + 1} of ${total}`} /></div>
     </div>
-    <ProgressTrail value={index + (answered ? 1 : 0)} total={total} label={`${index + 1} / ${total}`} />
-    {!answered ? <p className="ispy-instruction">Describe the highlighted object so Linguini can find it.</p> : null}
-    <ScenePhoto scene={scene} items={markers} activeItemId={target?.id ?? null} guessItemId={guessed?.id ?? null} />
-    {guessed && target ? <p className="small muted" data-testid="guess-legend">{guessed.id === target.id
-      ? `Linguini's guess is your object (marker ${target.marker}).`
-      : `Your object: marker ${target.marker} · Linguini's guess: marker ${guessed.marker} (dashed)`}</p> : null}
-    <Card><div className="stack-2"><div className="spread"><span className="label muted">Describe this object</span></div><h2>{target?.word}</h2><span className="small muted">{target?.translation}</span><p>{content.prompt}</p></div></Card>
+    {/* Desktop keeps the photo beside the clue writing; phones stack them. */}
+    <div className="lesson-flow__body">
+    <div className="lesson-flow__scene">
+      <ScenePhoto scene={scene} items={markers} activeItemId={target?.id ?? null} guessItemId={guessed?.id ?? null} />
+      {guessed && target ? <p className="small muted" data-testid="guess-legend">{guessed.id === target.id
+        ? `Linguini's guess is your object (marker ${target.marker}).`
+        : `Your object: marker ${target.marker} · Linguini's guess: marker ${guessed.marker} (dashed)`}</p> : null}
+    </div>
+    <div className="lesson-flow__panel stack">
+    {/* One card for the round: what to do, the object, word help, then the learner's clue. */}
+    <section className="ispy-round-card" aria-label="Describe your object">
+    {!answered ? <h2 className="ispy-instruction">Describe the highlighted object so Linguini can find it.</h2> : null}
+    <div className="ispy-target-card">
+      <strong className="ispy-target-card__word" lang={scene.languageCode}>{target?.word}</strong>
+      <span className="ispy-target-card__meaning">{target?.translation}</span>
+    </div>
     <ISpyLevelHelp support={content} languageCode={scene.languageCode} />
-    {frames.length && !framesShown ? <Button variant="quiet" disabled={locked} onClick={() => {
+    {frames.length && !framesShown ? <Button variant="quiet" className="ispy-round-card__help" disabled={locked} onClick={() => {
       trackAction("ispy_clue_help_opened", { taskId: task.id });
       setHelpOpen(true);
     }}>Need help? Show clue frames</Button> : null}
@@ -260,6 +276,7 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
         setText(""); setSentences({}); setChoices({}); setInsertedChips([]);
       }}>Start my clue again</Button> : null}
     </div>
+    </section>
     {!hydrated && !restoreFailed ? <InlineLoader compact testId="restoring" label="Loading your last clue" /> : null}
     {restoreFailed ? <div className="stack-2" role="alert" data-testid="restore-error"><span>We couldn't load your saved clue, so this task can't continue yet.</span><Button variant="secondary" onClick={() => void latest.refetch()}>Try again</Button></div> : null}
     {nearName && !locked ? <p className="small muted" data-testid="clue-near-warning">One word looks close to this object's name. If it's a different word, you can still send it.</p> : null}
@@ -281,7 +298,6 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
       {outcome === "clearMatch" ? <Button block disabled={practiceSaving} onClick={() => void confirm()}>That's it</Button> : null}
       {outcome === "evaluationFailed" ? <Button block disabled={practiceSaving} onClick={() => void submit()}>Retry guessing</Button> : null}
       {guess ? <Button variant="secondary" block disabled={practiceSaving} onClick={improve}>Improve my clue</Button> : null}
-      <Button variant="quiet" block disabled={practiceSaving} onClick={() => void actOnTask(task.id, "skip")}>Skip task</Button>
     </>}
     {(answered || guess) && task.status !== "skipped" ? <div className="learning-question-report"><ReportIssueLink label="Report a wrong guess" reportType="I-Spy guess" fields={[
       ["Task ID", task.id],
@@ -291,5 +307,7 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
       ["Displayed feedback", guess?.feedback ?? feedback],
       ["Language", scene.languageCode],
     ]} /></div> : null}
+    </div>
+    </div>
   </div>;
 }

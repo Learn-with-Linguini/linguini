@@ -342,12 +342,20 @@ def _clue_options(objects, words, answer_key, choices):
 
 def build_ispy_clue_tasks(
     session_id, result: ISpyClueResult, objects, words, *, level=None, language=None,
+    scene_facts=None,
 ):
-    """Make provider-selected Phase 1 clue rounds using server-side answer keys."""
+    """Make provider-selected Phase 1 clue rounds using server-side answer keys.
+
+    ``scene_facts`` is the clue payload; its translated attributes and relationships join
+    the word bank.
+    """
     settings = ispy_level(level)
+    facts = scene_facts or {}
     support = dict(
         learner_level=settings.level,
-        word_bank=word_bank(objects, words) if settings.word_bank else [],
+        word_bank=word_bank(
+            objects, words, facts.get("attributes", ()), facts.get("relationships", ()),
+        ) if settings.word_bank else [],
         cheat_sheet=ispy_cheat_sheet(settings, language),
     )
     by_key = {str(obj.id): (obj, word) for obj, word in zip(objects, words, strict=True)}
@@ -394,9 +402,12 @@ def build_ispy_description_tasks(session_id, objects, words, description_context
     a photo without such facts yields no description tasks rather than invented ones.
     """
     settings = ispy_level(level)
+    facts = description_context.get("sceneObjects", {})
     support = dict(
         learner_level=settings.level,
-        word_bank=word_bank(objects, words) if settings.word_bank else [],
+        word_bank=word_bank(
+            objects, words, facts.get("attributes", ()), facts.get("relations", ()),
+        ) if settings.word_bank else [],
         cheat_sheet=ispy_cheat_sheet(settings, description_context.get("targetLanguage")),
     )
     tasks = []

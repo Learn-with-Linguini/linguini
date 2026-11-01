@@ -6,6 +6,7 @@ the help shown and the answer format change. Unknown levels play the A1 game.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from app.learning_resources import get_mission_cheat_sheet
@@ -69,11 +70,25 @@ def ispy_cheat_sheet(settings: ISpyLevel, language: str | None) -> dict | None:
     )
 
 
-def word_bank(objects, words) -> list[dict]:
-    """The scene's words with their English labels, once each, in object order."""
+# Matches the public ``wordBank`` limit.
+WORD_BANK_LIMIT = 30
+
+
+def word_bank(objects, words, attributes=(), relations=()) -> list[dict]:
+    """The scene's words with their English labels, once each: the objects in object order,
+    then the adjectives and prepositions from the scene's translated facts."""
     entries = {}
     for obj, word in zip(objects, words, strict=True):
         entries.setdefault(word.display_text.casefold(), dict(
             text=word.display_text, translation=obj.label,
         ))
-    return list(entries.values())
+    for term in [*attributes, *relations]:
+        text, source = (term.get("translation") or "").strip(), term.get("source") or ""
+        if text and source:
+            entries.setdefault(text.casefold(), dict(text=text, translation=_english(source)))
+    return list(entries.values())[:WORD_BANK_LIMIT]
+
+
+def _english(source):
+    """Relation sources are keys such as ``nextTo`` or ``in_front_of``; show them as words."""
+    return re.sub(r"(?<=[a-z])(?=[A-Z])", " ", source).replace("_", " ").lower()
