@@ -52,6 +52,7 @@ from app.ai.features.translation.schemas import (
 )
 from app.ai.features.translation.validation import (
     SceneTranslationError,
+    normalize_non_object_metadata,
     validate_translation_terms,
 )
 from app.ai.observability import AITracer
@@ -71,28 +72,6 @@ _VERSION = FeatureVersion(
 def build_scene_translation_schema() -> dict[str, Any]:
     """Strict JSON schema for the shared translation output contract."""
     return build_pairs_json_schema(SceneTranslationResult)
-
-
-def _sanitize_term_metadata(result: SceneTranslationResult) -> SceneTranslationResult:
-    """Drop well-formed metadata when the model attaches it to the wrong term kind."""
-    return result.model_copy(
-        update={
-            "objects": [
-                term.model_copy(update={"agreement_forms": {}})
-                for term in result.objects
-            ],
-            "attributes": [
-                term.model_copy(update={"article": None, "gender": None})
-                for term in result.attributes
-            ],
-            "relationships": [
-                term.model_copy(
-                    update={"article": None, "gender": None, "agreement_forms": {}}
-                )
-                for term in result.relationships
-            ],
-        }
-    )
 
 
 def _compact_request(
@@ -193,7 +172,7 @@ class SceneTranslationService:
             raise SceneTranslationError("Translation language does not match the resolved pack.")
 
         def decode(data: Any) -> SceneTranslationResult:
-            result = SceneTranslationResult.model_validate(data)
+            result = normalize_non_object_metadata(SceneTranslationResult.model_validate(data))
             validate_translation_terms(parsed_payload, result, language_context)
             return result
 
@@ -266,7 +245,7 @@ class SceneTranslationService:
                 latency_ms += (time.perf_counter() - call_start) * 1000
 
                 try:
-                    compact_result = _sanitize_term_metadata(
+                    compact_result = normalize_non_object_metadata(
                         SceneTranslationResult.model_validate(
                             restore_maps(
                                 SceneTranslationResult,

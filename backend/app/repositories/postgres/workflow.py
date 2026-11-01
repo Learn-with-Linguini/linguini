@@ -705,7 +705,7 @@ class PostgresWorkflowRepository:
 
     def _tasks(self, c, session_id):
         return [
-            SessionTask.model_validate(dict(r))
+            SessionTask.model_validate_stored(r)
             for r in c.execute(
                 select(session_tasks)
                 .where(session_tasks.c.session_id == session_id)
@@ -804,7 +804,7 @@ class PostgresWorkflowRepository:
             )
             if row is None:
                 raise PracticeNotFoundError("Task not found.")
-            task = SessionTask.model_validate(dict(row))
+            task = SessionTask.model_validate_stored(row)
             if task.kind != "vocabularyIntroduction" or not task.answer_key:
                 raise PracticeConflictError("This task does not support typing checks.")
             accepted = task.answer_key.accepted_text_answers_by_vocabulary_id.get(learning_key)
@@ -1184,7 +1184,7 @@ class PostgresWorkflowRepository:
                 .mappings()
                 .all()
             )
-            tasks = [SessionTask.model_validate(dict(row)) for row in rows]
+            tasks = [SessionTask.model_validate_stored(row) for row in rows]
             if len(tasks) != 2:
                 raise PracticeConflictError("The M06 scenario is not available.")
             draft = dict(session.analysis_draft or {})
@@ -3403,7 +3403,7 @@ class PostgresWorkflowRepository:
         )
         if row is None:
             raise PracticeNotFoundError("Task not found.")
-        return SessionTask.model_validate(dict(row))
+        return SessionTask.model_validate_stored(row)
 
     def _evaluates_description(self, task):
         return bool(_describes_object(task) and self.ispy_guess_generator)

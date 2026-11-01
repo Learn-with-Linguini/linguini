@@ -500,7 +500,7 @@ def session_missions(c, user_id, session_id, *, persist=False):
             session_tasks.c.session_id == session_id,
         )
     ).mappings():
-        task = SessionTask.model_validate(dict(row))
+        task = SessionTask.model_validate_stored(row)
         if task.public_content.mission_key and task.kind == "grammarLesson":
             groups[task.public_content.mission_key].append(task)
     result = []

@@ -39,6 +39,26 @@ def validate_translation_terms(
     validate_pack_translation(result, language_context)
 
 
+def normalize_non_object_metadata(result: SceneTranslationResult) -> SceneTranslationResult:
+    """Discard well-formed metadata that a provider attached to the wrong term kind."""
+    return result.model_copy(update={
+        "objects": [
+            term.model_copy(update={"agreement_forms": {}})
+            for term in result.objects
+        ],
+        "attributes": [
+            term.model_copy(update={"article": None, "gender": None})
+            for term in result.attributes
+        ],
+        "relationships": [
+            term.model_copy(
+                update={"article": None, "gender": None, "agreement_forms": {}}
+            )
+            for term in result.relationships
+        ],
+    })
+
+
 def validate_supplied_terms(
     payload: dict[str, Any] | SceneTranslationRequest, result: SceneTranslationResult,
 ) -> None:

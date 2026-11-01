@@ -343,6 +343,19 @@ def test_literal_null_metadata_is_normalized_for_non_objects() -> None:
     assert result.relationships[0].gender is None
 
 
+def test_noun_metadata_on_non_objects_is_ignored() -> None:
+    output = json.loads(VALID_OUTPUT)
+    output["attributes"][0].update(article="el", gender="masculine")
+    output["relationships"][0].update(article="la", gender="feminine")
+
+    result = service(FakeTextClient([json.dumps(output)])).translate(PAYLOAD)
+
+    assert result.attributes[0].article is None
+    assert result.attributes[0].gender is None
+    assert result.relationships[0].article is None
+    assert result.relationships[0].gender is None
+
+
 def test_repeated_terms_are_compacted_for_model_and_expanded_in_order() -> None:
     client = FakeTextClient([json.dumps(COMPACT_REPEATED_RESULT)])
 
