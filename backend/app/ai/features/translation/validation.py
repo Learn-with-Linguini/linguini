@@ -39,6 +39,17 @@ def validate_translation_terms(
     validate_pack_translation(result, language_context)
 
 
+def normalize_non_object_metadata(result: SceneTranslationResult) -> SceneTranslationResult:
+    """Discard noun-only metadata that providers sometimes add to modifiers or relations."""
+    return result.model_copy(update={
+        field: [term.model_copy(update={"article": None, "gender": None}) for term in terms]
+        for field, terms in (
+            ("attributes", result.attributes),
+            ("relationships", result.relationships),
+        )
+    })
+
+
 def validate_supplied_terms(
     payload: dict[str, Any] | SceneTranslationRequest, result: SceneTranslationResult,
 ) -> None:
