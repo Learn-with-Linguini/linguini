@@ -155,7 +155,7 @@ test("the completed-scene shortcut starts the same mixed review without a task s
 test("review groups mixed words while retaining photo context and optional image interaction", async () => {
   await mount({ stayInReview: true, words: [
     reviewWord("relationship", "cerca", null, ["table", "chair"]),
-    { ...reviewWord("attribute", "roja", "chair"), agreement: "feminine", agreementForms: { masculine: "rojo", feminine: "roja" } },
+    { ...reviewWord("attribute", "roja", "chair"), phoneticText: "ROH-hah", agreement: "feminine", agreementForms: { masculine: "rojo", feminine: "roja", neuter: "rojo" } },
     reviewWord("object", "mesa", "table"),
     reviewWord("object", "silla", "chair"),
   ], items: ["table", "chair"].map((id, i) => ({ id, marker: i + 1, word: id, translation: id, wordClass: "noun", gender: null, x: 30 + i * 30, y: 50, example: "", exampleTranslation: "" })) });
@@ -165,9 +165,8 @@ test("review groups mixed words while retaining photo context and optional image
   await click("Next");
   assert.equal(section(), "Objects and adjectives");
   assert.deepEqual([...dom.window.document.querySelectorAll(".learning-card__word h2")].map(item => item.textContent), ["silla", "roja"]);
-  assert.match(text(), /Adjectives change to match the noun/);
-  assert.match(text(), /femininethis nounroja/);
-  assert.match(text(), /masculinerojo/);
+  assert.doesNotMatch(text(), /Adjectives change to match the noun|neuter|this noun/i);
+  assert.match(text(), /ROH-hahroja \(f\)rojo \(m\)/);
   assert.ok(dom.window.document.querySelector(".vocabulary-learning-grid--paired"));
   assert.ok(dom.window.document.querySelector(".vocabulary-learning-scene"));
   assert.equal(dom.window.document.querySelectorAll("button.scene__marker").length, 2);

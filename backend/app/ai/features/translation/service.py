@@ -33,7 +33,11 @@ from app.ai.cache import (
     run_cached,
 )
 from app.ai.contracts.errors import ProviderError, ProviderErrorCode
-from app.ai.contracts.schema import build_strict_json_schema
+from app.ai.contracts.schema import (
+    build_pairs_json_schema,
+    build_strict_json_schema,
+    restore_maps,
+)
 from app.ai.contracts.text import TextModelClient, TextModelConfig, TextModelRequest
 from app.ai.features.translation.prompt import (
     PACK_TRANSLATION_PROMPT_VERSION,
@@ -67,7 +71,7 @@ _VERSION = FeatureVersion(
 
 def build_scene_translation_schema() -> dict[str, Any]:
     """Strict JSON schema for the shared translation output contract."""
-    return build_strict_json_schema(SceneTranslationResult)
+    return build_pairs_json_schema(SceneTranslationResult)
 
 
 def _compact_request(
@@ -242,7 +246,12 @@ class SceneTranslationService:
 
                 try:
                     compact_result = normalize_non_object_metadata(
-                        SceneTranslationResult.model_validate_json(response.output_text)
+                        SceneTranslationResult.model_validate(
+                            restore_maps(
+                                SceneTranslationResult,
+                                json.loads(response.output_text),
+                            )
+                        )
                     )
                     validate_translation_terms(compact_request, compact_result, language_context)
                     compact_terms = {

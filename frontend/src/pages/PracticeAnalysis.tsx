@@ -5,7 +5,6 @@ import { ArrowRightIcon, CloseIcon, MarkerIcon } from "../components/icons";
 import { ScenePhoto } from "../components/ScenePhoto";
 import { AnalysisScan } from "../components/AnalysisScan";
 import { SceneProcessingProgress } from "../components/SceneProcessingProgress";
-import { TranslationPreview } from "../components/TranslationPreview";
 import { SessionPersonalization } from "../components/SessionPersonalization";
 import { LeaveSession } from "../components/LeaveSession";
 import { SceneShortfallNotice } from "../components/SceneShortfallNotice";
@@ -146,9 +145,8 @@ export function PracticeAnalysis() {
   }
   if (["created", "analyzingScene", "generatingTasks"].includes(session.session.status)) return <div className="stack analysis-page">
     <h1 className="analysis-progress-title">{session.session.status === "generatingTasks" ? "Translating your scene" : "Scene analysis"}</h1>
-    {session.session.status === "generatingTasks" && session.translationPreview ? <>
+    {session.session.status === "generatingTasks" ? <>
       <SceneProcessingProgress detail={session} stalled={practiceStalled} />
-      <TranslationPreview preview={session.translationPreview} scene={scene} />
       <SessionPersonalization personalization={session.personalization} languageCode={scene.languageCode} />
       <section role="status" className="panel-note">
         <div className="stack-2">
@@ -156,7 +154,7 @@ export function PracticeAnalysis() {
             Begin learning <ArrowRightIcon />
           </Button> : <>
             <h2>Preparing your first task</h2>
-            <p className="muted">Your translations are ready. Your first task will appear here shortly.</p>
+            <p className="muted">We're turning your words into a lesson. Your first task will appear here shortly.</p>
           </>}
           {practiceStalled ? <>
             <p>We're unable to generate more tasks right now. We'll keep working on them, so you can come back later.</p>

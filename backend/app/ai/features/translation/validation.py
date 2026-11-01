@@ -40,13 +40,22 @@ def validate_translation_terms(
 
 
 def normalize_non_object_metadata(result: SceneTranslationResult) -> SceneTranslationResult:
-    """Discard noun-only metadata that providers sometimes add to modifiers or relations."""
+    """Discard well-formed metadata that a provider attached to the wrong term kind."""
     return result.model_copy(update={
-        field: [term.model_copy(update={"article": None, "gender": None}) for term in terms]
-        for field, terms in (
-            ("attributes", result.attributes),
-            ("relationships", result.relationships),
-        )
+        "objects": [
+            term.model_copy(update={"agreement_forms": {}})
+            for term in result.objects
+        ],
+        "attributes": [
+            term.model_copy(update={"article": None, "gender": None})
+            for term in result.attributes
+        ],
+        "relationships": [
+            term.model_copy(
+                update={"article": None, "gender": None, "agreement_forms": {}}
+            )
+            for term in result.relationships
+        ],
     })
 
 

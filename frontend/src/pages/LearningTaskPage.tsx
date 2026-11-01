@@ -1429,8 +1429,10 @@ function GrammarLessonFlow({ task, index, total, onNext }: { task: SessionTask; 
 
 function VocabularyLearningCard({ word, languageCode }: { word: VocabularyLearningWord; languageCode: string }) {
   const { speak, nativeProps, settings, speechAvailable } = useTargetLanguage();
-  const agreementForms = Object.entries(word.agreementForms ?? {}).filter((entry): entry is ["masculine" | "feminine" | "neuter", string] => Boolean(entry[1]));
-  const distinctAgreementForms = new Set(agreementForms.map(([, form]) => form.toLocaleLowerCase(languageCode)));
+  const agreementForms = (["feminine", "masculine"] as const).flatMap(agreement => {
+    const form = word.agreementForms?.[agreement];
+    return form ? [[agreement, form] as const] : [];
+  });
   return <article className="flashcard learning-card vocabulary-learning-card">
     <div className="spread"><span className="label muted learning-card__meta">{word.termType === "relationship" ? "relationship" : word.partOfSpeech}{word.gender ? ` · ${word.gender}` : ""}</span>
       {(!settings || speechAvailable()) ? <IconButton className="learning-card__audio" label={`Hear ${word.targetText}`} onClick={() => {
@@ -1438,15 +1440,13 @@ function VocabularyLearningCard({ word, languageCode }: { word: VocabularyLearni
         trackAction("vocabulary_pronunciation_clicked", { termType: word.termType });
       }}><SpeakerIcon /></IconButton> : null}</div>
     <div className="learning-card__word"><h2 {...nativeProps}>{word.targetText}</h2>{word.romanization ? <p className="muted" lang="und-Latn" dir="ltr" aria-label="Latin spelling">{word.romanization}</p> : null}<p className="muted">{word.translation}</p></div>
-    {agreementForms.length > 1 ? <div className="learning-card__agreement">
-      {distinctAgreementForms.size === 1
-        ? <p className="small"><strong>Same form</strong> across grammatical genders.</p>
-        : <><p className="small muted">Adjectives change to match the noun.</p><dl>{agreementForms.map(([agreement, form]) => <div className={agreement === word.agreement ? "learning-card__agreement-row learning-card__agreement-row--current" : "learning-card__agreement-row"} key={agreement}>
-          <dt>{agreement}{agreement === word.agreement ? <span>this noun</span> : null}</dt><dd {...nativeProps}>{form}</dd>
-        </div>)}</dl></>}
-    </div> : null}
     {word.pluralForm ? <p className="small"><strong>Plural:</strong> {word.pluralForm}</p> : null}
     {word.phoneticText ? <p className="small muted" aria-label={settings ? "English-sound pronunciation" : "Pronunciation"}>{word.phoneticText}</p> : null}
+    {agreementForms.length > 1 ? <div className="learning-card__agreement">
+      {agreementForms.map(([agreement, form]) => <span className="learning-card__agreement-form" key={agreement} aria-label={`${form}, ${agreement}`}>
+        <b {...nativeProps}>{form}</b> <span aria-hidden="true">({agreement === "feminine" ? "f" : "m"})</span>
+      </span>)}
+    </div> : null}
   </article>;
 }
 

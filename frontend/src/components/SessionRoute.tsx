@@ -12,7 +12,6 @@ import { LoadingScreen } from "./LoadingScreen";
 import { ErrorState } from "./ErrorState";
 import { AnalysisScan } from "./AnalysisScan";
 import { SceneProcessingProgress } from "./SceneProcessingProgress";
-import { TranslationPreview } from "./TranslationPreview";
 
 export function SessionRoute() {
   const { sessionId = "" } = useParams();
@@ -48,12 +47,6 @@ function SessionLoader({ id }: { id: string }) {
   const copy = sessionLoadingCopy(location.pathname, session?.session.id === id ? session.session.status : undefined);
   const earlyReady = session?.session.id === id && ["generatingTasks", "ready", "inProgress"].includes(session.session.status)
     && session.tasks.some(task => task.kind === "vocabularyIntroduction");
-  if (loading && !earlyReady && session?.session.id === id && session.session.mode !== "ispy" && session.session.status === "generatingTasks" && session.translationPreview) return <div className="stack analysis-page">
-    <h1 className="analysis-progress-title">Translating your scene</h1>
-    <SceneProcessingProgress detail={session} />
-    <TranslationPreview preview={session.translationPreview} scene={preview ?? undefined} />
-    <section role="status" className="panel-note"><h2>Generating tasks</h2><p className="muted">Explore your translations while you wait.</p></section>
-  </div>;
   if (loading && !earlyReady) return copy.scan && preview ? <div className="stack analysis-page">
     <h1 className={session?.session.id === id ? "analysis-progress-title" : undefined}>{copy.title}</h1>
     <section className="analysis-loading">
