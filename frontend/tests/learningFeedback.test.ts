@@ -703,6 +703,38 @@ test("teaching cards highlight their photo object and practice interleaves recog
   assert.match(text(), /Which word means "chair"/);
 });
 
+test("questions beyond the typing words continue the quiz and then submit instead of going blank", async () => {
+  const task = vocabularyTask();
+  if (task.publicContent.kind !== "vocabularyIntroduction") throw new Error("Expected vocabulary fixture");
+  // One word with a word and an article question, plus another question: more questions than words.
+  task.publicContent.questions = ["word-cup", "article-cup", "word-extra"].map(questionId => ({
+    questionId, prompt: `Question ${questionId}`, correctOptionId: "la",
+    options: [{ optionId: "la", label: "la" }, { optionId: "el", label: "el" }],
+  }));
+  await mount(task);
+  await waitFor(() => assert.doesNotMatch(text(), /Restoring word answers/));
+  await click("Start quick quiz");
+  const answer = async (questionId: string) => {
+    replies.push(() => Response.json({ questionId, acceptedOptionId: "la", isCorrect: true, correctOptionId: "la", basilEarned: 10 }));
+    await click("la");
+    await waitFor(() => assert.equal(button("Next question")?.disabled, false));
+    await click("Next question");
+  };
+  await answer("word-cup");
+  await answer("article-cup");
+  replies.push(() => Response.json({ learningKey: "cup", isCorrect: false, isClose: false, correctAnswer: "taza", revealed: true, basilEarned: 0 }));
+  await click("I forgot, lift the lid");
+  await waitFor(() => assert.ok(button("Next question")));
+  await click("Next question");
+  assert.match(text(), /Question word-extra/);
+  actions.push(() => action(task, true, "3 of 3 questions correct."));
+  await answer("word-extra");
+
+  await waitFor(() => assert.equal(taskActions.length, 1));
+  assert.equal(taskActions[0].action, "attempts");
+  assert.deepEqual(Object.keys((taskActions[0].body as { answers: object }).answers), ["word-cup", "article-cup", "word-extra"]);
+});
+
 test("a completed grouped lesson restores only server-awarded Basil alongside its saved review", async () => {
   const task = lesson();
   task.status = "completed";

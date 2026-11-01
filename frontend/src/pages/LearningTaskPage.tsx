@@ -397,8 +397,18 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
       setQuestionIndex(1);
       return;
     }
-    setTypingIndex(Math.max(0, questionIndex - 1));
-    setStage("typing");
+    const nextTypingIndex = Math.max(0, questionIndex - 1);
+    if (nextTypingIndex < content.words.length) {
+      setTypingIndex(nextTypingIndex);
+      setStage("typing");
+      return;
+    }
+    // Article questions can outnumber typing words; finish the quiz without them.
+    if (questionIndex + 1 < content.questions.length) {
+      setQuestionIndex(questionIndex + 1);
+      return;
+    }
+    void submit();
   };
   const chooseAnswer = async (optionId: string) => {
     if (!question || answers[question.questionId] || checkingQuestion || restored.isLoading || restored.isError) return;
