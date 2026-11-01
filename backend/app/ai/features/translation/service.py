@@ -73,6 +73,28 @@ def build_scene_translation_schema() -> dict[str, Any]:
     return build_pairs_json_schema(SceneTranslationResult)
 
 
+def _sanitize_term_metadata(result: SceneTranslationResult) -> SceneTranslationResult:
+    """Drop well-formed metadata when the model attaches it to the wrong term kind."""
+    return result.model_copy(
+        update={
+            "objects": [
+                term.model_copy(update={"agreement_forms": {}})
+                for term in result.objects
+            ],
+            "attributes": [
+                term.model_copy(update={"article": None, "gender": None})
+                for term in result.attributes
+            ],
+            "relationships": [
+                term.model_copy(
+                    update={"article": None, "gender": None, "agreement_forms": {}}
+                )
+                for term in result.relationships
+            ],
+        }
+    )
+
+
 def _compact_request(
     payload: dict[str, Any],
 ) -> tuple[dict[str, Any], dict[tuple[str, str], str]]:
@@ -244,10 +266,12 @@ class SceneTranslationService:
                 latency_ms += (time.perf_counter() - call_start) * 1000
 
                 try:
-                    compact_result = SceneTranslationResult.model_validate(
-                        restore_maps(
-                            SceneTranslationResult,
-                            json.loads(response.output_text),
+                    compact_result = _sanitize_term_metadata(
+                        SceneTranslationResult.model_validate(
+                            restore_maps(
+                                SceneTranslationResult,
+                                json.loads(response.output_text),
+                            )
                         )
                     )
                     validate_translation_terms(compact_request, compact_result, language_context)

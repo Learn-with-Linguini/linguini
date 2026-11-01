@@ -509,20 +509,22 @@ def test_german_neuter_translation_gender_is_accepted():
 
 
 @pytest.mark.parametrize("field", ["attributes", "relationships"])
-def test_article_or_gender_on_non_object_is_rejected(field) -> None:
+def test_article_or_gender_on_non_object_is_discarded(field) -> None:
     result = json.loads(VALID_OUTPUT)
     result[field][0]["article"] = "la"
-    with pytest.raises(SceneTranslationError):
-        service(
-            FakeTextClient([json.dumps(result)]), cfg=config(max_retries=0)
-        ).translate(PAYLOAD)
+    translated = service(
+        FakeTextClient([json.dumps(result)]), cfg=config(max_retries=0)
+    ).translate(PAYLOAD)
+
+    assert getattr(translated, field)[0].article is None
 
     result = json.loads(VALID_OUTPUT)
     result[field][0]["gender"] = "feminine"
-    with pytest.raises(SceneTranslationError):
-        service(
-            FakeTextClient([json.dumps(result)]), cfg=config(max_retries=0)
-        ).translate(PAYLOAD)
+    translated = service(
+        FakeTextClient([json.dumps(result)]), cfg=config(max_retries=0)
+    ).translate(PAYLOAD)
+
+    assert getattr(translated, field)[0].gender is None
 
 
 def test_unparseable_model_output_is_rejected() -> None:
