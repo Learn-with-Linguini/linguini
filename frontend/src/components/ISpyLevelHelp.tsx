@@ -23,7 +23,7 @@ export function ISpyLevelHelp({ support, languageCode }: { support: ISpyLevelSup
   return <section className="ispy-help" aria-label="Word help">
     {/* Collapsed, only the centred "Show word bank" action shows; the title appears with the words. */}
     <div className={`ispy-help__heading${wordsShown && words.length ? "" : " ispy-help__heading--collapsed"}`}>
-      {wordsShown && words.length ? <span className="label muted">Word bank</span> : null}
+      {wordsShown && words.length ? <span className="ispy-help__title">Word bank</span> : null}
       <div className="ispy-help__actions">
         {words.length && collapsible ? <Button variant="quiet" aria-expanded={wordsShown} onClick={() => {
           const next = !wordsShown;

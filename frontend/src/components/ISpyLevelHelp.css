@@ -25,9 +25,17 @@
   gap: var(--space-1);
 }
 
+.ispy-help__title {
+  color: var(--ink);
+  font-size: var(--text-h3);
+  font-weight: 800;
+}
+
+/* A small text action so the toggle doesn't outweigh the clue around it. */
 .ispy-help__actions .btn--quiet {
-  min-height: 44px;
+  min-height: 36px;
   padding-inline: var(--space-2);
+  font-size: var(--text-small);
 }
 
 .ispy-help__words {
