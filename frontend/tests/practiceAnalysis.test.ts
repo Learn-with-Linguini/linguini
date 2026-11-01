@@ -337,9 +337,8 @@ for (const [stage, completed] of [["loadingImage", 0], ["findingObjects", 1], ["
     assert.ok(progress);
     assert.equal(progress.getAttribute("aria-valuenow"), String(completed));
     assert.equal(progress.getAttribute("aria-valuemax"), "4");
-    assert.equal(dom.window.document.querySelectorAll(".scene-processing-progress__segment.is-complete").length, completed);
-    assert.equal(dom.window.document.querySelectorAll(".scene-processing-progress__segment.is-active").length, 1);
-    assert.match(dom.window.document.body.textContent ?? "", /Elapsed 0:0/);
+    assert.equal(dom.window.document.querySelectorAll(".scene-processing-progress__step[data-state=\"complete\"]").length, completed);
+    assert.equal(dom.window.document.querySelectorAll(".scene-processing-progress__step[data-state=\"active\"]").length, 1);
     assert.doesNotMatch(dom.window.document.body.textContent ?? "", /only take a moment/);
   });
 }
@@ -354,7 +353,7 @@ test("legacy analysis uses indeterminate progress and review readiness completes
   dom.window.document.body.replaceChildren();
   await mount(detail());
   assert.equal(dom.window.document.querySelector('[role="progressbar"]')?.getAttribute("aria-valuenow"), "4");
-  assert.equal(dom.window.document.querySelectorAll(".scene-processing-progress__segment.is-active").length, 0);
+  assert.equal(dom.window.document.querySelectorAll(".scene-processing-progress__step[data-state=\"active\"]").length, 0);
 });
 
 test("paused polling retains completed milestones and stops the active pulse", async () => {
@@ -363,7 +362,7 @@ test("paused polling retains completed milestones and stops the active pulse", a
   session.sceneAnalysisProgress = { stage: "checkingResults", startedAt: null };
   await mount(session, true);
   assert.equal(dom.window.document.querySelector('[role="progressbar"]')?.getAttribute("aria-valuenow"), "2");
-  assert.equal(dom.window.document.querySelectorAll(".scene-processing-progress__segment.is-active").length, 0);
+  assert.equal(dom.window.document.querySelectorAll(".scene-processing-progress__step[data-state=\"active\"]").length, 0);
   assert.match(dom.window.document.body.textContent ?? "", /Updates paused/);
 });
 

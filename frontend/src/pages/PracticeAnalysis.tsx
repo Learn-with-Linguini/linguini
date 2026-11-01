@@ -342,18 +342,15 @@ export function PracticeAnalysis() {
       </div>
       <div className="analysis-review-column">
         {panel === "objects" ? <section className="analysis-results" aria-labelledby="analysis-found-title">
-          <div><h2 id="analysis-found-title">Check what this lesson will use</h2>
-            <p className="muted">{locked ? "Your lesson has started. Start a new practice to change its objects." : "Each row matches one numbered marker on the photo."}</p>
-            {!locked && practisedLabels.size ? <p className="small analysis-revisit-note">{practisedLabels.size >= sceneLabels.size
-              ? "You've practised every word here. Keep the ones you want to go over again."
-              : "New words from this photo come first. Words marked Practised were in an earlier lesson."}</p> : null}
-          </div>
+          {!locked && practisedLabels.size ? <p className="small analysis-revisit-note">{practisedLabels.size >= sceneLabels.size
+            ? "You've practised every word here. Keep the ones you want to go over again."
+            : "New words from this photo come first. Words marked Practised were in an earlier lesson."}</p> : null}
           <label className="analysis-scene-title" htmlFor="analysis-scene-title">
-            <span className="field__label">Scene title</span>
+            <h2 id="analysis-found-title">Scene title</h2>
             <input id="analysis-scene-title" className="input" maxLength={200} value={sceneTitle} disabled={locked || practiceSaving}
               onChange={event => setSceneTitle(event.target.value)} />
           </label>
-          <Card plain className="analysis-word-card">
+          <Card plain className="analysis-word-card analysis-word-card--objects">
             <div className="analysis-word-list" aria-label="Words in this scene">
               {relationObjects.map(instance => {
                 const sceneItem = kept.find(row => row.id === instance.id);

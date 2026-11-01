@@ -1,6 +1,20 @@
-.analysis-scan__trail-outline,
-.analysis-scan__trail-pasta,
-.analysis-scan__trail-shine {
-  stroke-dasharray: none;
-  animation: none;
+/* Pasta-tinted scanning sweep while the photo is read, based on the landing page try-it preview */
+.analysis-scan__sweep {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(249, 174, 34, 0) 0%, rgba(249, 174, 34, 0.22) 46%, rgba(255, 214, 120, 0.6) 50%, rgba(249, 174, 34, 0) 51%) 0 0 / 100% 200% no-repeat;
+  animation: analysis-sweep 1.6s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+  mix-blend-mode: screen;
+}
+
+@keyframes analysis-sweep {
+  from { background-position: 0 100%; }
+  to { background-position: 0 -100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .analysis-scan__sweep { animation: none; background-position: 0 50%; }
 }
