@@ -290,7 +290,7 @@ test("an early task page returns to review when generation finds nothing checkab
   assert.equal(shown(), "page-analysis");
 });
 
-test("resumed generation shows translations, then forwards to mic check when ready", async () => {
+test("resumed generation keeps translations private, then forwards when ready", async () => {
   fixture = detail("generatingTasks");
   await mount(`${BASE}/analysis`);
   assert.notEqual(shown(), "page-mic-test");
@@ -304,10 +304,9 @@ test("resumed generation shows translations, then forwards to mic check when rea
       { key: "attribute-2", source: "blue", translation: "azul", article: null, gender: null },
     ], relationships: [],
   } };
-  await waitFor(() => Boolean(document.body.textContent?.includes("mesa")));
-  assert.match(document.body.textContent ?? "", /mesa/);
-  assert.equal(document.querySelectorAll(".translation-preview__term").length, 2);
-  assert.match(document.body.textContent ?? "", /Generating tasks/);
+  await waitFor(() => Boolean(document.body.textContent?.includes("Translating your words")));
+  assert.doesNotMatch(document.body.textContent ?? "", /mesa/i);
+  assert.equal(document.querySelector(".translation-preview"), null);
   assert.notEqual(shown(), "page-mic-test");
   fixture = detail("ready");
   await waitFor(() => shown() === "page-mic-test");
