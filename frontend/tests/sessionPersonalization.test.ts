@@ -42,30 +42,16 @@ test("older sessions and empty history have no personalization panel", () => {
   assert.equal(render(null), "");
   assert.equal(render({ previousSessions: 0, returningWords: [], practiceFocuses: [] }), "");
   assert.equal(render({ previousSessions: 3, returningWords: [], practiceFocuses: [] }), "");
+  // Practice focuses alone have no words to show.
+  assert.equal(render({ previousSessions: 1, returningWords: [], practiceFocuses: ["sceneDescription"] }), "");
 });
 
-test("earlier words distinguish review from exposure without claiming mastery", () => {
+test("earlier words show as target-language pills under one title", () => {
   const html = render(context);
-  assert.match(html, /Based on 2 completed sessions/);
-  assert.match(html, /<strong>taza<\/strong>.*Review again/);
-  assert.match(html, /<strong>ventana<\/strong>.*Saved before/);
-  assert.match(html, /matching word endings, talking about more than one/);
-  assert.doesNotMatch(html, /mastered|you remembered|independent|genderNumberAgreement|pluralNounForm/i);
-});
-
-test("observed description practice appears without inventing returning words", () => {
-  const html = render({ previousSessions: 1, returningWords: [], practiceFocuses: ["sceneDescription", "chainedDescription"] });
-  assert.match(html, /Based on 1 completed session\./);
-  assert.match(html, /describing what you see, joining short descriptions/);
-  assert.doesNotMatch(html, /Words from earlier photos/);
-});
-
-test("practice from incomplete sessions stays visible without inventing completed sessions", () => {
-  const html = render({ previousSessions: 0, returningWords: [{ word: "taza", needsReview: true }], practiceFocuses: ["sceneDescription"] });
-  assert.match(html, /<strong>taza<\/strong>.*Review again/);
-  assert.match(html, /describing what you see/);
-  assert.doesNotMatch(html, /completed session/);
-  assert.doesNotMatch(html, /Drawn from your earlier practice|Based on \d+ completed/);
+  assert.match(html, /Words you already know/);
+  assert.match(html, /<li class="known-words__pill"[^>]*>taza<\/li>/);
+  assert.match(html, /<li class="known-words__pill"[^>]*>ventana<\/li>/);
+  assert.doesNotMatch(html, /Review again|Saved before|completed session|genderNumberAgreement|pluralNounForm/);
 });
 
 test("the practice API preserves provided personalization and supports older responses", async () => {

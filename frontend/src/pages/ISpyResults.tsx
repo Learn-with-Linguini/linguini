@@ -2,14 +2,13 @@ import { LoadingScreen } from "../components/LoadingScreen";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Button, Noodle } from "../components/ui";
+import { Button, Card } from "../components/ui";
 import { getPracticeSummary, startISpyGame } from "../lib/api";
 import { practiceStages } from "../lib/practiceTasks";
 import { gameStartError, queryError, queryKeys } from "../lib/queryKeys";
 import { sessionDestination } from "../lib/sessionRoute";
 import { useAppState } from "../state/useAppState";
 import { useScene } from "../state/useScene";
-import { learningFeedback } from "../lib/learningFeedback";
 
 export function ISpyResults() {
   const navigate = useNavigate();
@@ -38,27 +37,27 @@ export function ISpyResults() {
       setStartError(gameStartError(reason));
     } finally { setStarting(false); }
   };
-  return <div className="stack">
-    <div className="center-text stack-2" style={{ alignItems: "center" }}>
-      <img className="mascot" src="/linguini-logo.png" width={120} height={120} alt="Linguini mascot" />
-      <h1>{completed ? learningFeedback("completed", scene.sessionId!) : "Your game"}</h1>
-      <Noodle className="noodle-divider summary__noodle" />
-      <p className="muted">You played I-Spy with {scene.title.toLowerCase()}.</p>
-    </div>
+  return <div className="stack session-summary">
+    <Card plain className="summary-card"><div className="summary-card__body">
+    <header className="summary-hero">
+      <img className="summary-hero__mascot" src="/linguini-logo-sunglasses.png" width={104} height={104} alt="Linguini celebrating in sunglasses" />
+      <h1>{completed ? "Great game, keep it up!" : "Your game"}</h1>
+    </header>
     {isPending ? <LoadingScreen label="Loading your results" /> : null}
     {error ? <p role="alert">{error}</p> : null}
     {completionError ? <><p role="alert">{completionError}</p><Button onClick={retryCompletion}>Retry saving your game</Button></> : null}
-    {data ? <div className="stat-grid">
-      <div className="stat"><div className="stat__value">{data.ispyCorrectCount}/{data.ispyAttemptCount}</div><span className="stat__label">Correct answers</span></div>
-      <div className="stat"><div className="stat__value">{found}/{described.length}</div><span className="stat__label">Objects Linguini found</span></div>
-      <div className="stat"><div className="stat__value">{data.progress.skippedTaskCount}</div><span className="stat__label">Rounds skipped</span></div>
+    {data ? <div className="summary-results summary-results--three" aria-label="Game results">
+      <div className="summary-result summary-result--basil"><div className="summary-result__value">{data.ispyCorrectCount}/{data.ispyAttemptCount}</div><span>Clues solved</span></div>
+      <div className="summary-result"><div className="summary-result__value">{found}/{described.length}</div><span>Objects Linguini found</span></div>
+      <div className="summary-result"><div className="summary-result__value">{data.progress.skippedTaskCount}</div><span>Rounds skipped</span></div>
     </div> : null}
-    <p className="small muted">Games are just for fun: they don't earn Basil or change your word progress.</p>
+    
     {startError ? <p role="alert">{startError}</p> : null}
-    <div className="stack-2">
+    <div className="summary-actions">
+      <Button block variant="secondary" onClick={() => navigate("/ispy/play")}>Choose another photo</Button>
       <Button block disabled={starting || !session} onClick={() => void playAgain()}>{starting ? "Setting up" : "Play again"}</Button>
-      <Button variant="secondary" block onClick={() => navigate("/ispy/play")}>Choose another photo</Button>
-      <Button variant="quiet" block onClick={() => navigate("/home")}>Back home</Button>
     </div>
+    <Button variant="quiet" block onClick={() => navigate("/home")}>Back home</Button>
+    </div></Card>
   </div>;
 }

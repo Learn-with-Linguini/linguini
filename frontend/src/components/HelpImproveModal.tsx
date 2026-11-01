@@ -6,11 +6,11 @@ import { submitSurvey } from "../lib/api";
 import { useAuth } from "../state/Auth";
 
 const ratings = [
-  { value: 1, label: "Angry", src: "/ratings/rating-1.png", desc: "1 star — very unhappy" },
-  { value: 2, label: "Sad", src: "/ratings/rating-2.png", desc: "2 stars — disappointed" },
-  { value: 3, label: "Neutral", src: "/ratings/rating-3.png", desc: "3 stars — okay" },
-  { value: 4, label: "Happy", src: "/ratings/rating-4.png", desc: "4 stars — good" },
-  { value: 5, label: "Loved it", src: "/ratings/rating-5.png", desc: "5 stars — loved it" },
+  { value: 1, label: "Angry", src: "/ratings/rating-1.png", desc: "1 star, very unhappy" },
+  { value: 2, label: "Sad", src: "/ratings/rating-2.png", desc: "2 stars, disappointed" },
+  { value: 3, label: "Neutral", src: "/ratings/rating-3.png", desc: "3 stars, okay" },
+  { value: 4, label: "Happy", src: "/ratings/rating-4.png", desc: "4 stars, good" },
+  { value: 5, label: "Loved it", src: "/ratings/rating-5.png", desc: "5 stars, loved it" },
 ];
 
 interface HelpImproveModalProps {

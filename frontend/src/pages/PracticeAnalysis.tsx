@@ -145,7 +145,7 @@ export function PracticeAnalysis() {
     return <Navigate to={dest.path} replace state={dest.notice ? { practiceNotice: dest.notice } : undefined} />;
   }
   if (["created", "analyzingScene", "generatingTasks"].includes(session.session.status)) return <div className="stack analysis-page">
-    <h1>Scene analysis</h1>
+    <h1 className="analysis-progress-title">{session.session.status === "generatingTasks" ? "Translating your scene" : "Scene analysis"}</h1>
     {session.session.status === "generatingTasks" && session.translationPreview ? <>
       <SceneProcessingProgress detail={session} stalled={practiceStalled} />
       <TranslationPreview preview={session.translationPreview} scene={scene} />
@@ -321,7 +321,6 @@ export function PracticeAnalysis() {
       <h1>Scene analysis</h1>
       <LeaveSession sessionId={session.session.id} warning={locked ? "Words you have already practised stay in your word bank, but this scene's remaining tasks are dropped." : "The words you picked for this scene will not be saved."} />
     </div>
-    {session.session.status === "awaitingObjectReview" ? <SceneProcessingProgress detail={session} /> : null}
     <div className="analysis-layout">
       <div className="analysis-stage-column">
         <div ref={photoRef} className={`analysis-photo-stage${placementLabel ? " analysis-photo-stage--placing" : ""}`}>
@@ -332,6 +331,19 @@ export function PracticeAnalysis() {
           <ScenePhoto scene={scene} items={[...positionedKept, ...custom]} onLocationSelect={placementLabel ? place : undefined}
             locationLabel={placementLabel ? `Choose the location of ${placementLabel}` : undefined} />
         </div>
+        <label className="analysis-scene-title" htmlFor="analysis-scene-title">
+          <h2 id="analysis-found-title">Scene title</h2>
+          <input id="analysis-scene-title" className="input" maxLength={200} value={sceneTitle} disabled={locked || practiceSaving}
+            onChange={event => setSceneTitle(event.target.value)} />
+        </label>
+        <div className="analysis-confirm">
+          {error || practiceError ? <p role="alert">{error ?? practiceError}</p> : null}
+          <Button block className="analysis-continue" disabled={practiceSaving || leavingPhoto || !!placementLabel || (!kept.length && !added.length)} onClick={() => void proceed()}>
+            {practiceSaving ? "Saving your review" : "Create my lesson"} <ArrowRightIcon />
+          </Button>
+        </div>
+      </div>
+      <div className="analysis-review-column">
         <div ref={tabsRef} className="analysis-panel-tabs" role="tablist" aria-label="Scene analysis details">
           {panels.map(value => <button key={value} type="button" role="tab"
             aria-selected={panel === value} className={panel === value ? "is-active" : ""} onClick={() => setPanel(value)}>
@@ -339,21 +351,18 @@ export function PracticeAnalysis() {
             <span>{value === "objects" ? relationObjects.length : value === "attributes" ? attributeCount : visibleRelations.length}</span>
           </button>)}
         </div>
-      </div>
-      <div className="analysis-review-column">
         {panel === "objects" ? <section className="analysis-results" aria-labelledby="analysis-found-title">
-          <div><h2 id="analysis-found-title">Check what this lesson will use</h2>
-            <p className="muted">{locked ? "Your lesson has started. Start a new practice to change its objects." : "Each row matches one numbered marker on the photo."}</p>
-            {!locked && practisedLabels.size ? <p className="small analysis-revisit-note">{practisedLabels.size >= sceneLabels.size
-              ? "You've practised every word here. Keep the ones you want to go over again."
-              : "New words from this photo come first. Words marked Practised were in an earlier lesson."}</p> : null}
-          </div>
-          <label className="analysis-scene-title" htmlFor="analysis-scene-title">
-            <span className="field__label">Scene title</span>
-            <input id="analysis-scene-title" className="input" maxLength={200} value={sceneTitle} disabled={locked || practiceSaving}
-              onChange={event => setSceneTitle(event.target.value)} />
-          </label>
-          <Card plain className="analysis-word-card">
+          {!locked && practisedLabels.size ? <p className="small analysis-revisit-note">{practisedLabels.size >= sceneLabels.size
+            ? "You've practised every word here. Keep the ones you want to go over again."
+            : "New words from this photo come first. Words marked Practised were in an earlier lesson."}</p> : null}
+          {!locked ? <form className="analysis-add-word" onSubmit={event => { event.preventDefault(); startAdding(); }}>
+            <label className="field__label" htmlFor="analysis-new-word">Add another object you see</label>
+            <div className="analysis-add-word__controls">
+              <input id="analysis-new-word" className="input" maxLength={200} value={label} placeholder="e.g. window" disabled={practiceSaving || !!placementLabel} onChange={event => setLabel(event.target.value)} />
+              <Button variant="secondary" type="submit" disabled={!label.trim() || !!placementLabel || practiceSaving || added.length >= 20}>Select location</Button>
+            </div>
+          </form> : null}
+          <Card plain className="analysis-word-card analysis-word-card--objects">
             <div className="analysis-word-list" aria-label="Words in this scene">
               {relationObjects.map(instance => {
                 const sceneItem = kept.find(row => row.id === instance.id);
@@ -370,7 +379,7 @@ export function PracticeAnalysis() {
                   </div> : null}
                 </div>;
               })}
-              {!kept.length && !added.length ? <p className="small muted">Add a word you can see below.</p> : null}
+              {!kept.length && !added.length ? <p className="small muted">Add a word you can see above.</p> : null}
             </div>
             {explicitlyRemoved.length ? (
               <div className="analysis-restore">
@@ -383,17 +392,10 @@ export function PracticeAnalysis() {
               </div>
             ) : null}
           </Card>
-          {!locked ? <form className="analysis-add-word" onSubmit={event => { event.preventDefault(); startAdding(); }}>
-            <label className="field__label" htmlFor="analysis-new-word">Add another object you see</label>
-            <div className="analysis-add-word__controls">
-              <input id="analysis-new-word" className="input" maxLength={200} value={label} placeholder="e.g. window" disabled={practiceSaving || !!placementLabel} onChange={event => setLabel(event.target.value)} />
-              <Button variant="secondary" type="submit" disabled={!label.trim() || !!placementLabel || practiceSaving || added.length >= 20}>Select location</Button>
-            </div>
-          </form> : null}
           <section className="analysis-object-counts" aria-labelledby="analysis-object-counts-title">
             <div>
               <h3 id="analysis-object-counts-title">Count</h3>
-              <p className="small muted">Counts update when you add or remove objects.</p>
+              <p className="small muted">Updates when you add or remove objects</p>
             </div>
             <dl>
               {groups.map(group => <div key={group.key}>
@@ -403,11 +405,10 @@ export function PracticeAnalysis() {
             </dl>
           </section>
         </section> : null}
-        {panel === "attributes" ? <section className="analysis-results" aria-labelledby="analysis-attributes-title">
-          <div><h2 id="analysis-attributes-title">Visible adjectives</h2><p className="muted">Correct only what you can clearly see in the photo.</p></div>
+        {panel === "attributes" ? <section className="analysis-results" aria-label="Adjectives">
+          <p className="muted analysis-panel-hint">Add or edit adjectives for the selected object</p>
           <Card plain className="analysis-word-card analysis-attribute-card">
-            <label className="field__label" htmlFor="attribute-object">Object</label>
-            <ComboBox id="attribute-object" value={activeAttributeObjectId}
+            <ComboBox id="attribute-object" ariaLabel="Object" value={activeAttributeObjectId}
               options={relationObjects.map(item => ({ value: item.id, label: item.label, marker: item.marker }))}
               onChange={setAttributeObjectId} />
             <div className="analysis-attribute-fields">
@@ -417,10 +418,8 @@ export function PracticeAnalysis() {
             </div>
           </Card>
         </section> : null}
-        {panel === "relations" ? <section className="analysis-results" aria-labelledby="analysis-relations-title">
-          <h2 id="analysis-relations-title">How objects relate</h2>
-          <p className="muted">Keep or add connections you can see, such as a cup on a table. Removing a word also removes its connections.</p>
-          <Card plain className="analysis-word-card">
+        {panel === "relations" ? <section className="analysis-results" aria-label="Relations">
+          <Card plain className="analysis-word-card analysis-word-card--relations">
             <div className="analysis-word-list">
               {visibleRelations.map(row => {
                 const subjectObject = relationObjects.find(item => item.id === row.subjectSceneObjectId);
@@ -448,7 +447,11 @@ export function PracticeAnalysis() {
               })}
               {!visibleRelations.length ? <p className="small muted">No connections selected. You can continue without adding any.</p> : null}
             </div>
-            {!locked ? <form className="stack analysis-relation-form" onSubmit={event => { event.preventDefault(); addRelation(); }}>
+          </Card>
+          {!locked ? <>
+            <p className="muted analysis-panel-hint">Add any connections we missed such as a cup on a table.</p>
+            <Card plain className="analysis-word-card">
+            <form className="stack analysis-relation-form" onSubmit={event => { event.preventDefault(); addRelation(); }}>
               <label className="field__label" htmlFor="relation-subject">Object</label>
               <ComboBox id="relation-subject" value={subject} disabled={practiceSaving} placeholder="Choose an object"
                 options={relationObjects.map(item => ({ value: item.id, label: item.label, marker: item.marker }))} onChange={setSubject} />
@@ -460,17 +463,14 @@ export function PracticeAnalysis() {
                 options={relationObjects.filter(item => item.id !== subject).map(item => ({ value: item.id, label: item.label, marker: item.marker }))}
                 onChange={setReference} />
               <Button type="submit" variant="secondary" disabled={practiceSaving || !relationText.trim() || subject === reference || !selectedIds.has(subject) || !selectedIds.has(reference) || visibleRelations.length >= 100}>Add connection</Button>
-            </form> : null}
-          </Card>
+            </form>
+            </Card>
+          </> : null}
         </section> : null}
         {shortfall && !locked ? <div ref={shortfallRef}>
           <SceneShortfallNotice shortfall={shortfall} busy={practiceSaving || leavingPhoto}
             onAdd={addMissing} onTryAnotherPhoto={() => void tryAnotherPhoto()} />
         </div> : null}
-        {error || practiceError ? <p role="alert">{error ?? practiceError}</p> : null}
-        <Button block className="analysis-continue" disabled={practiceSaving || leavingPhoto || !!placementLabel || (!kept.length && !added.length)} onClick={() => void proceed()}>
-          {practiceSaving ? "Saving your review" : "Confirm lesson facts"} <ArrowRightIcon />
-        </Button>
       </div>
     </div>
   </div>;

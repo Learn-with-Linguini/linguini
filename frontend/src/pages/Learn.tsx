@@ -1,7 +1,7 @@
 import { useEffect, useState, type ComponentType, type ReactNode } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui";
-import { BasilIcon, BookIcon, ChatIcon, CheckIcon, CloseIcon, CountIcon, EyeIcon, HandIcon, HeartIcon, JournalIcon, MarkerIcon, PlayIcon } from "../components/icons";
+import { BasilIcon, BookIcon, ChatIcon, CheckIcon, CountIcon, EyeIcon, HandIcon, HeartIcon, JournalIcon, MarkerIcon, PlayIcon } from "../components/icons";
 import { SessionPersonalization } from "../components/SessionPersonalization";
 import { SceneImage } from "../components/SceneImage";
 import { useScene } from "../state/useScene";
@@ -70,7 +70,6 @@ export function Learn() {
     missions={missions}
     generating={generating}
     saving={practiceSaving}
-    onExit={() => { trackAction("learning_exit_clicked"); navigate("/home"); }}
     onOpen={mission => {
       if (mission.task.kind === "vocabularyIntroduction") {
         trackAction("vocabulary_review_started", { taskId: mission.task.id, revisiting: mission.state === "done" });
@@ -89,9 +88,9 @@ export function Learn() {
       }
     }}
     finishLabel={finishesAfterLearning(session.tasks) ? "Done" : "Play I-Spy"}
+    aside={<SessionPersonalization personalization={session.personalization} languageCode={scene.languageCode} />}
   >
     {practiceError ? <p role="alert">{practiceError}</p> : null}
-    <SessionPersonalization personalization={session.personalization} languageCode={scene.languageCode} />
     {session.missionGuidance?.length ? <section className="panel-note" role="note">
       <p><strong>This photo didn't fit a mission</strong>, so this is the regular lesson.</p>
       <p className="small muted">For a mission next time: {session.missionGuidance.join(" ")}</p>
@@ -108,10 +107,10 @@ export function Learn() {
   </MissionPath>;
 }
 
-function MissionPath({ sceneTitle, sceneImageUrl, sessionId, missions, generating, saving, onExit, onOpen, onFinish, finishLabel, children }: {
+function MissionPath({ sceneTitle, sceneImageUrl, sessionId, missions, generating, saving, onOpen, onFinish, finishLabel, aside, children }: {
   sceneTitle: string; sceneImageUrl: string | null; sessionId: string; missions: PathMission[];
-  generating: boolean; saving: boolean; finishLabel: string; children: ReactNode;
-  onExit: () => void; onOpen: (mission: PathMission) => void; onFinish: () => void;
+  generating: boolean; saving: boolean; finishLabel: string; aside?: ReactNode; children: ReactNode;
+  onOpen: (mission: PathMission) => void; onFinish: () => void;
 }) {
   const current = missions.find(mission => mission.state === "current");
   const doneIds = missions.filter(mission => mission.state === "done").map(mission => mission.task.id);
@@ -137,17 +136,17 @@ function MissionPath({ sceneTitle, sceneImageUrl, sessionId, missions, generatin
   const primaryLabel = allDone ? finishLabel : !current ? "Preparing remaining tasks" : doneIds.length === 0 ? "Start" : "Continue";
 
   return <div className="mission-path-page">
-    <div className="mission-path__topbar">
-      <Button variant="quiet" className="learning-exit" onClick={onExit}><CloseIcon size={18} /> Return home</Button>
-      {total > 0 ? <span className={`pill pill--xp mission-path__leaves${justDone.size ? " is-updated" : ""}`} aria-label={`${earned} of ${total} Basil earned in this scene`}>
-        <BasilIcon size={18} />{earned} / {total}
-      </span> : null}
-    </div>
-
     <header className="mission-path__header">
       <h1 className="mission-path__title">{sceneTitle}</h1>
-      <div className="mission-path__scene">
-        <SceneImage scene={{ title: sceneTitle, imageUrl: sceneImageUrl }} className="mission-path__photo" />
+      {/* Desktop keeps the photo and the earlier-practice note together in the left column. */}
+      <div className="mission-path__media">
+        <div className="mission-path__scene">
+          <SceneImage scene={{ title: sceneTitle, imageUrl: sceneImageUrl }} className="mission-path__photo" />
+          {total > 0 ? <span className={`pill pill--xp mission-path__leaves${justDone.size ? " is-updated" : ""}`} aria-label={`${earned} of ${total} Basil earned in this scene`}>
+            <BasilIcon size={18} />{earned} / {total}
+          </span> : null}
+        </div>
+        <div className="mission-path__aside">{aside}</div>
       </div>
     </header>
 
@@ -179,7 +178,7 @@ function MissionPath({ sceneTitle, sceneImageUrl, sessionId, missions, generatin
       })}
     </ol>
 
-    {children}
+    <div className="mission-path__extra">{children}</div>
 
     <div className="mission-path__cta">
       <Button block disabled={saving || (!allDone && !current)} onClick={() => {

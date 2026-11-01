@@ -13,6 +13,7 @@ from app.schemas.tasks import (
     ISpyRoundContent,
     ReflectionContent,
     SubmitTextAttemptRequest,
+    WordBankEntry,
 )
 from app.schemas.vocabulary import VocabularyItem
 from app.services.ispy_clue_frames import (
@@ -410,6 +411,20 @@ def test_check_clue_rejects_the_target_word_and_unoffered_assistance():
     ]:
         with pytest.raises(PracticeConflictError):
             check_clue(content, attempt("Es roja", **bad))
+
+
+def test_tapped_word_bank_words_count_as_offered_help():
+    content = content_with_frames().model_copy(update={"word_bank": [
+        WordBankEntry(text="roja", translation="red", kind="adjective"),
+        WordBankEntry(text="sobre", translation="on", kind="preposition"),
+    ]})
+    offered = ["colour", "location"]
+    # Word-bank words are offered without choosing a frame.
+    check_clue(content, attempt("Es roja, sobre", offered_frame_ids=offered,
+                                inserted_chips=["roja", "sobre"]))
+    with pytest.raises(PracticeConflictError):
+        check_clue(content, attempt("Es verde", offered_frame_ids=offered,
+                                    inserted_chips=["verde"]))
 
 
 def test_legacy_name_frames_still_validate_whether_shown_or_hidden():

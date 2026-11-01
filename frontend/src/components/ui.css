@@ -933,6 +933,21 @@ p[role="alert"]::before { content: "!"; }
   text-transform: capitalize;
 }
 
+/* Rows carry half the gap on each side and the card the other half, so the space
+   above the first object and below the last matches the space between objects. */
+.analysis-word-card.analysis-word-card--objects {
+  padding-block: var(--space-2);
+}
+
+.analysis-word-card--objects .analysis-object-row {
+  min-height: 0;
+  padding-block: var(--space-2);
+}
+
+.analysis-word-card--objects .analysis-object-row:last-of-type {
+  border-bottom: 0;
+}
+
 .scene__marker--left .scene__marker-label {
   right: calc(50% + 8px);
   left: auto;
@@ -1038,6 +1053,11 @@ p[role="alert"]::before { content: "!"; }
   gap: var(--space-2);
 }
 
+/* Pages showing the processing steps centre their title over the steps */
+.analysis-progress-title {
+  text-align: center;
+}
+
 .analysis-loading {
   display: flex;
   flex-direction: column;
@@ -1066,112 +1086,6 @@ p[role="alert"]::before { content: "!"; }
   background: linear-gradient(180deg, rgba(38, 50, 56, 0.02), rgba(38, 50, 56, 0.16));
   pointer-events: none;
 }
-
-.analysis-scan__trail {
-  position: absolute;
-  z-index: 3;
-  inset: 5px;
-  width: calc(100% - 10px);
-  height: calc(100% - 10px);
-  overflow: visible;
-  pointer-events: none;
-}
-
-.analysis-scan__trail rect {
-  fill: none;
-  vector-effect: non-scaling-stroke;
-}
-
-.analysis-scan__trail-track {
-  stroke: rgba(255, 250, 242, 0.44);
-  stroke-width: 7px;
-}
-
-.analysis-scan__trail-outline,
-.analysis-scan__trail-pasta,
-.analysis-scan__trail-shine {
-  stroke-dasharray: 24 76;
-  stroke-linecap: round;
-  animation: analysis-noodle-trace 4200ms linear infinite;
-}
-
-.analysis-scan__trail-outline {
-  stroke: var(--tomato);
-  stroke-width: 12px;
-}
-
-.analysis-scan__trail-pasta {
-  stroke: var(--pasta);
-  stroke-width: 8px;
-}
-
-.analysis-scan__trail-shine {
-  stroke: rgba(255, 250, 242, 0.72);
-  stroke-width: 2px;
-}
-
-.analysis-scan__spotlight {
-  position: absolute;
-  z-index: 4;
-  width: clamp(54px, 14%, 86px);
-  aspect-ratio: 1;
-  border: 3px solid rgba(249, 174, 34, 0.95);
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 250, 242, 0.34) 0 52%, rgba(249, 174, 34, 0.12) 70%, transparent 72%);
-  box-shadow: 0 0 0 4px rgba(255, 250, 242, 0.72), 0 7px 18px rgba(38, 50, 56, 0.2);
-  opacity: 0;
-  transform: translate(-50%, -50%) scale(0.68);
-  animation: analysis-spotlight-focus 4200ms ease-in-out infinite;
-}
-
-.analysis-scan__spotlight i {
-  position: absolute;
-  width: 10px;
-  height: 3px;
-  border-radius: var(--radius-pill);
-  background: var(--tomato);
-  box-shadow: 0 1px 0 rgba(255, 250, 242, 0.55);
-}
-
-.analysis-scan__spotlight i:nth-child(1) { top: -9px; right: 5%; transform: rotate(-58deg); }
-.analysis-scan__spotlight i:nth-child(2) { top: 8%; right: -13px; transform: rotate(-18deg); }
-.analysis-scan__spotlight i:nth-child(3) { top: 34%; right: -16px; transform: rotate(18deg); }
-
-.analysis-scan__spotlight--one { top: 34%; left: 27%; animation-delay: 250ms; }
-.analysis-scan__spotlight--two { top: 57%; left: 68%; animation-delay: 1250ms; }
-.analysis-scan__spotlight--three { top: 25%; left: 78%; animation-delay: 2250ms; }
-
-.analysis-scan__caption {
-  position: absolute;
-  z-index: 5;
-  left: 50%;
-  bottom: var(--space-3);
-  width: min(78%, 280px);
-  min-height: 36px;
-  transform: translateX(-50%);
-  border: 1px solid rgba(255, 250, 242, 0.7);
-  border-radius: var(--radius-pill);
-  background: rgba(255, 250, 242, 0.94);
-  color: var(--ink);
-  box-shadow: 0 4px 12px rgba(38, 50, 56, 0.16);
-  font-size: var(--text-small);
-  font-weight: 800;
-  text-align: center;
-  backdrop-filter: blur(3px);
-}
-
-.analysis-scan__caption span {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 0 var(--space-3);
-  opacity: 0;
-  animation: analysis-caption-cycle 6300ms ease-in-out infinite;
-}
-
-.analysis-scan__caption span:nth-child(2) { animation-delay: 2100ms; }
-.analysis-scan__caption span:nth-child(3) { animation-delay: 4200ms; }
 
 .analysis-loading__copy {
   display: flex;
@@ -1295,7 +1209,7 @@ p[role="alert"]::before { content: "!"; }
   gap: 4px;
   padding: 4px;
   border-radius: var(--radius-pill);
-  background: var(--cream);
+  background: var(--sage);
 }
 
 .analysis-panel-tabs button {
@@ -1324,9 +1238,13 @@ p[role="alert"]::before { content: "!"; }
   min-width: 20px;
   padding: 1px 6px;
   border-radius: var(--radius-pill);
-  background: rgba(255, 255, 255, 0.65);
+  background: var(--paper);
   color: var(--ink);
   font-size: 0.75rem;
+}
+
+.analysis-panel-tabs button.is-active span {
+  background: rgba(255, 255, 255, 0.85);
 }
 
 .analysis-placement-prompt {
@@ -1384,9 +1302,40 @@ p[role="alert"]::before { content: "!"; }
   max-height: 430px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: var(--line) transparent;
-  padding-right: 4px;
+  padding-right: var(--space-2);
+}
+
+/* Rows keep their height so a long list scrolls instead of squashing */
+.analysis-word-list > * {
+  flex-shrink: 0;
+}
+
+/* Styling the WebKit scrollbar keeps it on screen (macOS otherwise hides it until scrolling),
+   so learners can tell a long list continues. */
+.analysis-word-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.analysis-word-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.analysis-word-list::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--ink-muted) 45%, transparent);
+  border-radius: var(--radius-pill);
+}
+
+/* The list reaches into the card's side padding so the scrollbar sits by the card's edge */
+.analysis-word-card .analysis-word-list {
+  margin-right: calc(var(--space-4) * -1 + 4px);
+  padding-right: var(--space-3);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .analysis-word-list {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--ink-muted) 45%, transparent) transparent;
+  }
 }
 
 /* A relationship menu must be able to extend over the edit form below it. */
@@ -1649,6 +1598,50 @@ p[role="alert"]::before { content: "!"; }
   gap: var(--space-2);
 }
 
+.known-words__title {
+  font-size: var(--text-h3);
+}
+
+.known-words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.known-words__pill {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--teal) 30%, transparent);
+  border-radius: var(--radius-pill);
+  background: var(--basil-surface);
+  color: var(--teal-dark);
+  font-size: var(--text-body);
+  font-weight: 800;
+}
+
+.analysis-panel-hint {
+  margin: 0;
+}
+
+.analysis-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Stacked layout: confirm moves after the review panels so learners check before confirming */
+@media (max-width: 999px) {
+  .analysis-stage-column {
+    display: contents;
+  }
+
+  .analysis-confirm {
+    order: 1;
+  }
+}
+
 @media (max-width: 520px) {
   .analysis-relation-row { grid-template-columns: minmax(0, 1fr) 112px minmax(0, 1fr) 44px; gap: var(--space-1); }
   .analysis-relation-row__object { gap: 4px; }
@@ -1658,10 +1651,8 @@ p[role="alert"]::before { content: "!"; }
   .analysis-relation-row__relation { width: 112px; max-width: 112px; flex-basis: 112px; }
 }
 
-.analysis-relation-form {
-  margin-top: var(--space-4);
-  padding-top: var(--space-4);
-  border-top: 2px solid var(--line);
+.analysis-word-card--relations .analysis-relation-row:last-of-type {
+  border-bottom: 0;
 }
 
 .analysis-count-row {
@@ -1861,16 +1852,16 @@ p[role="alert"]::before { content: "!"; }
   cursor: default;
 }
 
+/* Fixed square box so the marker is a true circle and still fits two digits */
 .analysis-word-row__marker {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 27px;
-  width: auto;
-  height: 27px;
-  padding: 0 6px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   border: 2px solid var(--teal-dark);
-  border-radius: var(--radius-pill);
+  border-radius: 50%;
   background: #fffaf2;
   color: var(--ink);
   font-size: var(--text-label);
@@ -1932,7 +1923,7 @@ p[role="alert"]::before { content: "!"; }
   gap: var(--space-3);
   padding: var(--space-4);
   border-radius: var(--radius-sm);
-  background: var(--cream);
+  background: var(--sage);
 }
 
 .analysis-object-counts-title {
@@ -1960,7 +1951,7 @@ p[role="alert"]::before { content: "!"; }
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  border-top: 1px solid var(--line);
+  border-top: 1px solid color-mix(in srgb, var(--teal) 22%, transparent);
 }
 
 .analysis-object-counts dt {
@@ -1977,7 +1968,7 @@ p[role="alert"]::before { content: "!"; }
   flex: 0 0 32px;
   place-items: center;
   border-radius: var(--radius-pill);
-  background: var(--sage);
+  background: var(--paper);
   color: var(--teal-dark);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
@@ -2014,6 +2005,10 @@ p[role="alert"]::before { content: "!"; }
   .analysis-object-counts {
     padding: var(--space-3);
   }
+
+  .analysis-word-card .analysis-word-list {
+    margin-right: calc(var(--space-3) * -1 + 4px);
+  }
 }
 
 @keyframes analyse-scene {
@@ -2030,43 +2025,14 @@ p[role="alert"]::before { content: "!"; }
   to { background-position: 0 0, 0 0; }
 }
 
-@keyframes analysis-noodle-trace {
-  from { stroke-dashoffset: 0; }
-  to { stroke-dashoffset: -100; }
-}
-
-@keyframes analysis-spotlight-focus {
-  0%, 12% { opacity: 0; transform: translate(-50%, -50%) scale(0.72); }
-  19%, 56% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  68%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.12); }
-}
-
-@keyframes analysis-caption-cycle {
-  0%, 4% { opacity: 0; transform: translateY(4px); }
-  10%, 27% { opacity: 1; transform: translateY(0); }
-  32%, 100% { opacity: 0; transform: translateY(-4px); }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .scene-image.scene-image--loading,
-  .analysis-scan__trail-outline,
-  .analysis-scan__trail-pasta,
-  .analysis-scan__trail-shine,
-  .analysis-scan__spotlight,
-  .analysis-scan__caption span {
+  .scene-image.scene-image--loading {
     animation: none;
   }
 
   .home-words__fill {
     transition: none;
   }
-
-  .analysis-scan__trail-outline,
-  .analysis-scan__trail-pasta,
-  .analysis-scan__trail-shine { stroke-dasharray: none; }
-
-  .analysis-scan__spotlight { opacity: 1; transform: translate(-50%, -50%); }
-  .analysis-scan__caption span:first-child { opacity: 1; transform: none; }
 }
 
 /* Top bar */
@@ -2590,8 +2556,8 @@ p[role="alert"]::before { content: "!"; }
   min-height: 40px;
   padding: 5px 10px;
   border-radius: var(--radius-pill);
-  background: var(--sage);
-  color: var(--teal-dark);
+  background: #fdecc4;
+  color: #8a5a00;
   font-size: var(--text-small);
   font-weight: 800;
 }
@@ -4738,9 +4704,130 @@ p[role="alert"]::before { content: "!"; }
 .ispy-photo-picker__empty { display: grid; justify-items: start; gap: var(--space-2); padding: var(--space-5); }
 .ispy-photo-picker__empty h2, .ispy-photo-picker__empty p { margin: 0; }
 .ispy-photo-picker__empty a { color: var(--teal-dark); font-weight: 800; }
-.ispy-clue-card.card--lifted { background: var(--paper); }
-.learning-title-row h1.ispy-title { font-size: var(--text-h2); }
-.ispy-instruction { margin: 0; font-weight: 600; }
+.ispy-instruction { margin: 0; color: var(--ink); font-size: var(--text-h3); font-weight: 800; line-height: 1.3; }
+
+/* The clue round reads as one card: instruction, Linguini's speech bubble, then word help. */
+.ispy-round-card {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  box-shadow: var(--shadow-paper);
+}
+
+.ispy-clue-speaker {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+/* The app icon has a square cream tile, so it is rounded like a chat avatar. */
+.ispy-clue-speaker__avatar {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-md);
+}
+
+/* Linguini's clue is a teal speech bubble so it stands apart from the instruction. */
+.ispy-clue-card {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--teal-dark);
+  color: #fffdf7;
+}
+
+/* The bubble's tail points left at Linguini. */
+.ispy-clue-card::before {
+  content: "";
+  position: absolute;
+  top: var(--space-5);
+  left: -7px;
+  width: 16px;
+  height: 16px;
+  background: inherit;
+  transform: rotate(45deg);
+}
+
+.ispy-clue-card .label,
+.ispy-clue-card .small.muted { color: rgba(255, 253, 247, 0.82); }
+.ispy-clue-card h3 { color: #fffdf7; }
+
+.ispy-clue-card .icon-btn,
+.ispy-clue-card .prompt-translation__toggle.icon-btn { color: #fffdf7; }
+
+.ispy-clue-card .icon-btn:hover:not(:disabled),
+.ispy-clue-card .prompt-translation__toggle.icon-btn:hover:not(:disabled) { color: var(--butter); background: rgba(255, 253, 247, 0.12); }
+
+.ispy-clue-card .btn--secondary { border-color: #fffdf7; background: #fffdf7; color: var(--teal-dark); box-shadow: none; }
+.ispy-clue-card .btn--quiet { color: #fffdf7; }
+
+@media (max-width: 520px) {
+  .ispy-clue-speaker__avatar { width: 48px; height: 48px; }
+}
+
+/* Your turn: the object to describe, in the app's soft basil green so it reads as the
+   learner's side, apart from Linguini's teal speech bubble. */
+.ispy-target-card {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid color-mix(in srgb, var(--teal) 35%, transparent);
+  border-radius: var(--radius-md);
+  background: var(--basil-surface);
+}
+
+.ispy-target-card .label { color: var(--teal-dark); }
+
+/* The I-Spy opener labels the clue field, read as the start of the learner's sentence. */
+.ispy-clue-opening {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: var(--text-h3);
+  font-weight: 800;
+}
+
+.ispy-target-card__word {
+  color: var(--teal-dark);
+  font-family: var(--font-display);
+  font-size: var(--text-h2);
+  line-height: 1.15;
+}
+
+.ispy-target-card__meaning { color: var(--ink-muted); font-weight: 700; }
+
+.ispy-target-card p { margin: var(--space-2) 0 0; color: var(--ink); }
+
+
+/* A wrong guess with tries left: the message, with the tries pill on the right. */
+.ispy-retry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.ispy-retry__pill {
+  flex: none;
+  border: 1px solid color-mix(in srgb, var(--tomato) 40%, transparent);
+  background: #fde8e0;
+  color: #b13c1c;
+  font-size: var(--text-small);
+}
+
+/* Inside the round card the word bank drops its own frame and sits under a divider. */
+.ispy-round-card .ispy-help {
+  padding: var(--space-3) 0 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  background: none;
+}
 
 @media (max-width: 520px) {
   .ispy-photo-picker__title-row { gap: var(--space-2); }
@@ -4895,7 +4982,7 @@ p[role="alert"]::before { content: "!"; }
 
 .vocabulary-flow__header {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-2);
 }
 
 .vocabulary-flow__progress {
@@ -4905,25 +4992,13 @@ p[role="alert"]::before { content: "!"; }
   gap: var(--space-4);
 }
 
-.vocabulary-flow__progress .trail__track {
-  margin-top: 9px;
+/* The slide or question count reads above the bar */
+.vocabulary-flow__progress .trail {
+  flex-direction: column-reverse;
 }
 
 .vocabulary-flow__progress .pill--xp {
   align-self: start;
-}
-
-.vocabulary-flow__back.icon-btn {
-  flex: none;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
-  background: var(--paper);
-  color: var(--teal-dark);
-}
-
-.vocabulary-flow__back.icon-btn:hover:not(:disabled) {
-  border-color: var(--teal);
-  background: var(--cream);
 }
 
 .vocabulary-flow__title {
@@ -4935,7 +5010,12 @@ p[role="alert"]::before { content: "!"; }
 
 .learning-card {
   gap: var(--space-5);
-  background: #ffedb8;
+}
+
+/* Two classes so this beats the cream .flashcard base defined later in the file */
+.flashcard.vocabulary-learning-card {
+  border: 1px solid var(--line);
+  background: #ffffff;
 }
 
 .learning-card .learning-card__meta {
@@ -5023,6 +5103,134 @@ p[role="alert"]::before { content: "!"; }
   touch-action: pan-y;
 }
 
+.vocabulary-flow__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.vocabulary-flow__intro:empty {
+  display: none;
+}
+
+/* Holds only the screen-reader group name, so it takes no space in the card column. */
+.vocabulary-flow__panel > .vocabulary-review-section {
+  position: absolute;
+}
+
+/* Tablet and desktop: the page uses the full width so the progress trail spans the screen,
+   and the photo stays in view on the left while cards, quiz and typing run on the right. */
+@media (min-width: 768px) {
+  /* Task routes are full width from the first render (see FocusShell), so nothing widens later. */
+  .shell--focus > .shell__content--task {
+    max-width: none;
+    padding-inline: var(--space-8);
+  }
+
+  .vocabulary-flow__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(320px, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "scene intro"
+      "scene panel";
+    column-gap: var(--space-8);
+    row-gap: var(--space-4);
+    align-items: start;
+  }
+
+  .vocabulary-flow__body:has(> .vocabulary-flow__intro:empty) {
+    grid-template-rows: auto;
+    grid-template-areas: "scene panel";
+  }
+
+  .vocabulary-flow__intro { grid-area: intro; }
+
+  /* Matches the photo's top room for markers so the photo and first card start level. */
+  .vocabulary-flow__panel {
+    grid-area: panel;
+    padding-top: 28px;
+  }
+
+  .vocabulary-flow__body > .vocabulary-learning-scene {
+    grid-area: scene;
+    position: sticky;
+    top: var(--space-6);
+  }
+
+  /* The panel is narrower than the old single column, so word cards stack. */
+  .vocabulary-flow__panel .vocabulary-learning-grid.vocabulary-learning-grid--paired {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Grammar and mission lessons: the question's photo, object or count board sits beside the
+   question on tablet and desktop, the same split as the word activity. */
+.lesson-flow__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  /* Questions without a photo keep a narrow, centred column on the wide page. */
+  .lesson-flow__body:not(:has(> .lesson-flow__scene)) {
+    width: 100%;
+    max-width: 680px;
+    margin-inline: auto;
+  }
+
+  .lesson-flow__body:has(> .lesson-flow__scene) {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(320px, 1fr);
+    grid-template-areas: "scene panel";
+    column-gap: var(--space-8);
+    align-items: start;
+  }
+
+  .lesson-flow__scene {
+    grid-area: scene;
+    display: grid;
+    gap: var(--space-4);
+    position: sticky;
+    top: var(--space-6);
+  }
+
+  .lesson-flow__panel { grid-area: panel; }
+
+  /* Matches the marker photo's top room so the photo and the question card start level. */
+  .lesson-flow__body:has(> .lesson-flow__scene > :is(.mission-markers, .object-preview):first-child) > .lesson-flow__panel {
+    padding-top: var(--space-5);
+  }
+
+  /* The photo fills its column but stays short enough that the title, photo and caption fit on
+     one screen. The frame shrink-wraps the image so percentage markers stay aligned. */
+  .lesson-flow__scene .object-preview__scene {
+    width: auto;
+    max-width: 100%;
+  }
+
+  .lesson-flow__scene .scene {
+    width: fit-content;
+    max-width: 100%;
+    margin-inline: auto;
+  }
+
+  .lesson-flow__scene .scene-image {
+    width: auto;
+    max-width: 100%;
+    max-height: calc(100dvh - 300px);
+  }
+
+  /* Loading and not-yet-decoded photos hold the expected size so the frame never
+     starts collapsed and then expands. */
+  .lesson-flow__scene .scene-image.scene-image--loading,
+  .lesson-flow__scene .scene-image.scene-image--pending {
+    width: min(100%, calc((100dvh - 300px) * 1.6));
+    aspect-ratio: 8 / 5;
+  }
+}
+
 @media (min-width: 480px) {
   .vocabulary-learning-grid.vocabulary-learning-grid--paired {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -5102,6 +5310,65 @@ p[role="alert"]::before { content: "!"; }
 
 .vocabulary-flow__actions .btn {
   width: 100%;
+}
+
+.vocabulary-flow__side-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.vocabulary-flow__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  border: 0;
+  background: transparent;
+  color: var(--teal-dark);
+  font: inherit;
+  font-size: var(--text-small);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.vocabulary-flow__link:hover:not(:disabled) {
+  color: var(--ink);
+}
+
+/* Pill beside the lesson title, sized like the mission Help button next to it */
+.vocabulary-flow__skip-pill {
+  flex: none;
+  align-self: center;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: 2px solid color-mix(in srgb, var(--danger) 45%, transparent);
+  border-radius: var(--radius-pill);
+  background: #fdf0eb;
+  color: var(--danger);
+  font: inherit;
+  font-size: var(--text-small);
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.vocabulary-flow__skip-pill:hover:not(:disabled) {
+  border-color: var(--danger);
+  background: #fde4dc;
+}
+
+.vocabulary-flow__link:focus-visible,
+.vocabulary-flow__skip-pill:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-pill);
+}
+
+.vocabulary-flow__link:disabled,
+.vocabulary-flow__skip-pill:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .vocabulary-flow__position {
@@ -5296,35 +5563,98 @@ p[role="alert"]::before { content: "!"; }
   font-weight: 800;
 }
 
+/* Compact, high-contrast results: everything fits on one phone screen without scrolling. */
 .session-summary {
-  gap: var(--space-6);
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 640px;
+  margin-inline: auto;
+}
+
+/* One card holds the whole result so it reads as a single moment, not a scroll of panels. */
+.summary-card.card {
+  position: relative;
+  overflow: hidden;
+  padding: 0 var(--space-6) var(--space-6);
+  border: var(--stroke) solid var(--teal-dark);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 28px rgba(33, 113, 111, 0.16);
+}
+
+/* A teal band with confetti across the top; Linguini sits on its lower edge. */
+.summary-card.card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 112px;
+  background:
+    radial-gradient(circle at 8% 28%, var(--tomato) 0 5px, transparent 6px),
+    radial-gradient(circle at 18% 72%, #f9b233 0 4px, transparent 5px),
+    radial-gradient(circle at 30% 22%, #fffdf7 0 3px, transparent 4px),
+    radial-gradient(circle at 70% 30%, #f9b233 0 5px, transparent 6px),
+    radial-gradient(circle at 82% 70%, var(--tomato) 0 4px, transparent 5px),
+    radial-gradient(circle at 93% 24%, #fffdf7 0 3px, transparent 4px),
+    radial-gradient(circle at 60% 78%, #fffdf7 0 2px, transparent 3px),
+    radial-gradient(circle at 42% 64%, var(--tomato) 0 3px, transparent 4px),
+    linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+}
+
+.summary-card__body {
+  position: relative;
+  display: grid;
+  gap: var(--space-5);
+  padding-top: 56px;
+}
+
+/* Badges sit inside the summary card, so their own card frame is dropped. */
+.summary-card__body .card {
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
 }
 
 .summary-hero {
   display: grid;
   justify-items: center;
   gap: var(--space-2);
-  padding: var(--space-4) var(--space-5) var(--space-5);
-  border-radius: var(--radius-lg);
-  background: linear-gradient(180deg, #fff0bf 0%, var(--cream) 100%);
   text-align: center;
 }
 
 .summary-hero__mascot {
-  display: grid;
-  width: 148px;
-  height: 148px;
-  place-items: center;
+  box-sizing: border-box;
+  width: 112px;
+  height: 112px;
+  padding: var(--space-2);
+  border: var(--stroke) solid var(--teal-dark);
   border-radius: 50%;
-  background: rgba(255, 253, 247, 0.72);
+  background: var(--paper);
+  box-shadow: 0 6px 16px rgba(33, 113, 111, 0.25);
+  animation: summary-pop 520ms cubic-bezier(0.22, 1.4, 0.36, 1) both;
 }
 
-.summary-hero__eyebrow {
-  color: var(--tomato-pressed);
-  font-size: var(--text-label);
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+.summary-hero h1 { color: var(--teal-dark); }
+
+.summary-results > .summary-result {
+  animation: summary-rise 420ms ease-out both;
+}
+
+.summary-results > .summary-result:nth-child(2) { animation-delay: 90ms; }
+.summary-results > .summary-result:nth-child(3) { animation-delay: 180ms; }
+
+@keyframes summary-pop {
+  0% { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes summary-rise {
+  0% { transform: translateY(10px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .summary-hero__mascot,
+  .summary-results > .summary-result { animation: none; }
 }
 
 .summary-hero h1,
@@ -5332,10 +5662,14 @@ p[role="alert"]::before { content: "!"; }
   margin: 0;
 }
 
+.summary-hero h1 {
+  font-size: var(--text-h2);
+  line-height: 1.15;
+}
+
 .summary-hero p {
-  max-width: 600px;
-  color: var(--ink-muted);
-  font-size: var(--text-body);
+  max-width: 420px;
+  color: var(--ink);
 }
 
 .summary-results {
@@ -5344,50 +5678,95 @@ p[role="alert"]::before { content: "!"; }
   gap: var(--space-3);
 }
 
-.summary-result {
-  display: grid;
-  min-height: 128px;
-  place-items: center;
-  align-content: center;
-  gap: var(--space-2);
-  padding: var(--space-4);
-  border: 1px solid rgba(33, 113, 111, 0.22);
-  border-radius: var(--radius-md);
-  background: var(--sage);
+.summary-results--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.summary-note {
+  margin: 0;
   text-align: center;
 }
 
-.summary-result--basil {
-  border-color: rgba(33, 113, 111, .2);
-  background: var(--basil-surface);
-  color: var(--basil);
+.summary-result {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--paper);
 }
 
-.summary-result--basil .summary-result__value,
-.summary-result--basil span { color: var(--basil); }
+.summary-result--basil {
+  border-color: color-mix(in srgb, var(--teal) 35%, transparent);
+  background: var(--basil-surface);
+}
+
+.summary-result--basil .summary-result__value { color: var(--teal-dark); }
 
 .summary-result__value {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  color: var(--teal-dark);
+  color: var(--tomato);
   font-family: var(--font-display);
-  font-size: 42px;
+  font-size: 32px;
   font-weight: 800;
   line-height: 1;
 }
 
 .summary-result span {
   color: var(--ink);
+  font-size: var(--text-small);
   font-weight: 800;
 }
 
+.summary-section-title {
+  font-size: var(--text-h3);
+}
+
+.summary-fresh {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+}
+
+.summary-fresh .known-words {
+  justify-content: center;
+}
+
+.summary-fresh__title {
+  font-size: var(--text-small);
+  color: var(--ink-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.summary-actions {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--space-2);
+}
+
+/* Side by side once there is room, with the main action on the right. */
+@media (min-width: 520px) {
+  .summary-actions {
+    flex-direction: row;
+  }
+
+  .summary-actions > .btn {
+    flex: 1;
+  }
+}
+
 @media (max-width: 520px) {
-  .summary-hero { padding-inline: var(--space-4); }
-  .summary-hero__mascot { width: 124px; height: 124px; }
-  .summary-hero__mascot .mascot { width: 112px; height: 112px; }
-  .summary-result { min-height: 112px; padding: var(--space-3); }
-  .summary-result__value { font-size: 36px; }
+  .summary-card.card { padding: 0 var(--space-4) var(--space-4); }
+  .summary-card.card::before { height: 96px; }
+  .summary-card__body { padding-top: 48px; }
+  .summary-hero__mascot { width: 96px; height: 96px; }
+  .summary-hero h1 { font-size: var(--text-h3); }
+  .summary-result__value { font-size: 28px; }
 }
 
 /* Profile */
@@ -6331,29 +6710,10 @@ p[role="alert"]::before { content: "!"; }
     max-height: 430px;
     overflow-y: auto;
     overscroll-behavior: contain;
-    scrollbar-width: thin;
-    scrollbar-color: var(--line) transparent;
   }
 
   .analysis-word-list:has(.combobox--open) {
     overflow: visible;
-  }
-
-  .analysis-word-list::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .analysis-word-list::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .analysis-word-list::-webkit-scrollbar-thumb {
-    background: var(--line);
-    border-radius: var(--radius-pill);
-  }
-
-  .analysis-continue {
-    margin-top: var(--space-4);
   }
 
 }

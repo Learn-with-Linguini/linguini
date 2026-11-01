@@ -19,16 +19,10 @@ import { playAnswerSound } from "../lib/answerSound";
 import { basilEarnedText } from "../lib/gamification";
 import { learningFeedback } from "../lib/learningFeedback";
 import { ISpyLevelHelp } from "../components/ISpyLevelHelp";
+import { clueOpening } from "../lib/ispyClue";
 
-const clueOpening = (languageCode: string) => languageCode === "es"
-  ? "Veo, veo, algo que"
-  : languageCode === "fr"
-    ? "Je vois, je vois, quelque chose qui"
-    : languageCode === "de"
-      ? "Ich sehe etwas, das"
-      : languageCode === "ko"
-        ? "나는 무언가를 보고 있어요:"
-        : "I spy with my little eye, something that";
+// Matches the server's guesses per clue.
+const CLUE_GUESSES = 3;
 
 export function ISpyPhase1() {
   const navigate = useNavigate();
@@ -54,7 +48,7 @@ export function ISpyPhase1() {
   }
   if (!learning.every(taskDone) || ["abandoned", "failed"].includes(session.session.status)) return <Navigate to={paths.exit} replace />;
   if (game && !clues.length) return <div className="stack">
-    <h2 className="text-center">I-Spy · Linguini's clues</h2>
+    <h2 className="text-center">Linguini's clues</h2>
     {practiceStalled
       ? <><InlineLoader label="Still choosing objects" /><Button block onClick={() => void retryProcessing(session.session.id)}>Check again</Button></>
       : <InlineLoader label="Choosing objects to spy" />}
@@ -76,6 +70,8 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
   const scene = useScene();
   const { actOnTask, practiceSaving, practiceError } = useAppState();
   const [picked, setPicked] = useState<string | null>(null);
+  // Wrong guesses this round; the server allows three different guesses per clue.
+  const [missed, setMissed] = useState<string[]>([]);
   const [result, setResult] = useState<TaskActionResult | null>(null);
   const round = task.publicContent.kind === "ispyRound" ? task.publicContent : null;
   // A0 reads the translation straight away; A2 hears the clue before reading it.
@@ -105,7 +101,7 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
   };
   const answered = taskDone(task);
   const choose = async (optionId: string) => {
-    if (answered || practiceSaving || submitting.current) return;
+    if (answered || practiceSaving || submitting.current || missed.includes(optionId)) return;
     submitting.current = true;
     setChecking(true);
     if (request.current?.answer !== optionId) request.current = { answer: optionId, key: crypto.randomUUID() };
@@ -117,7 +113,8 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
       if (saved?.attempt?.isCorrect != null) playAnswerSound(saved.attempt.isCorrect);
       if (saved) {
         request.current = null;
-        trackAction("ispy_clue_submitted", { optionId, isCorrect: saved.attempt?.isCorrect, source: "photo_marker" });
+        if (saved.attempt?.isCorrect === false) setMissed(value => [...value, optionId]);
+        trackAction("ispy_clue_submitted", { optionId, isCorrect: saved.attempt?.isCorrect, source: "photo_marker", guess: missed.length + 1 });
       }
     } finally {
       submitting.current = false;
@@ -132,27 +129,50 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
   const shownPick = acceptedPick ?? restored?.optionId ?? (answered ? null : picked);
   const feedback = result?.attempt?.feedback?.message ?? restored?.feedback;
   const selected = content.options.find(option => option.optionId === shownPick);
-  const optionItems = scene.items.filter(item => content.options.some(option => option.sceneObjectId === item.id));
+  // Earlier wrong guesses leave the photo, so each new guess is a different object.
+  const ruledOut = new Set(content.options
+    .filter(option => missed.includes(option.optionId) && option.optionId !== shownPick)
+    .map(option => option.sceneObjectId));
+  const optionItems = scene.items.filter(item => !ruledOut.has(item.id)
+    && content.options.some(option => option.sceneObjectId === item.id));
   const reward = !answered ? taskXp(task) : null;
   const earnedText = basilEarnedText(result?.basilEarned);
+  // A wrong guess with guesses left keeps the round open (the server allows three per clue);
+  // the attempt number keeps the count right after a reload.
+  const attemptNumber = result?.attempt?.attemptNumber ?? 0;
+  const triesLeft = !answered && isCorrect === false ? Math.max(0, CLUE_GUESSES - attemptNumber) : 0;
   return <div className="stack">
-    <div className="learning-title-row">
-      <h1 className="ispy-title">I-Spy · Linguini's clues</h1>
-      <div className="learning-title-actions">
-        {reward ? <XpPill {...reward} /> : null}
-        <Button variant="quiet" className="learning-exit" onClick={onExit}><CloseIcon size={18} /> Exit</Button>
+    <div className="vocabulary-flow__header">
+      <div className="learning-title-row">
+        <div className="vocabulary-flow__title"><h1>Linguini's clues</h1></div>
+        <div className="learning-title-actions">
+          {reward ? <XpPill {...reward} /> : null}
+          {!answered ? <button type="button" className="vocabulary-flow__skip-pill" disabled={practiceSaving}
+            onClick={() => void actOnTask(task.id, "skip")}>Skip this task</button> : null}
+          <Button variant="quiet" className="learning-exit" onClick={onExit}><CloseIcon size={18} /> Exit</Button>
+        </div>
       </div>
+      <div className="vocabulary-flow__progress"><ProgressTrail value={index + (answered ? 1 : 0)} total={total} label={`Clue ${index + 1} of ${total}`} /></div>
     </div>
-    <ProgressTrail value={index + (answered ? 1 : 0)} total={total} label={`${index + 1} / ${total}`} />
-    {!answered ? <p className="ispy-instruction">{heard ? "Which object is Linguini describing? Tap its number in the photo." : "Play Linguini's clue, then tap the object it describes."}</p> : null}
-    <ScenePhoto scene={scene} items={optionItems} hideWords
-      activeItemId={isCorrect ? selected?.sceneObjectId : null}
-      guessItemId={selected?.sceneObjectId}
-      onMarkerClick={!answered && !practiceSaving && !checking ? item => {
-        const option = content.options.find(candidate => candidate.sceneObjectId === item.id);
-        if (option) void choose(option.optionId);
-      } : undefined} />
-    <div className="card card--lifted stack-2 ispy-clue-card">
+    {/* Desktop keeps the photo beside the clue; phones stack them. */}
+    <div className="lesson-flow__body">
+    <div className="lesson-flow__scene">
+      <ScenePhoto scene={scene} items={optionItems} hideWords
+        activeItemId={isCorrect ? selected?.sceneObjectId : null}
+        guessItemId={selected?.sceneObjectId}
+        onMarkerClick={!answered && !practiceSaving && !checking ? item => {
+          const option = content.options.find(candidate => candidate.sceneObjectId === item.id);
+          if (option) void choose(option.optionId);
+        } : undefined} />
+    </div>
+    <div className="lesson-flow__panel stack">
+    {/* One card for the round: what to do, Linguini's clue, then the word help. */}
+    <section className="ispy-round-card" aria-label="Linguini's clue">
+    {!answered ? <h2 className="ispy-instruction">{heard ? "Which object is Linguini describing? Tap its number in the photo." : "Play Linguini's clue, then tap the object it describes."}</h2> : null}
+    {/* Linguini beside the bubble, so the clue reads as Linguini speaking. */}
+    <div className="ispy-clue-speaker">
+    <img className="ispy-clue-speaker__avatar" src="/apple-touch-icon.png" width={64} height={64} alt="" />
+    <div className="stack-2 ispy-clue-card">
       <div className="spread"><span className="label muted">Linguini says</span><IconButton label="Hear the clue" onClick={hearClue}><SpeakerIcon /></IconButton></div>
       {heard ? <>
       <span className="prompt-translation prompt-translation--with-source">
@@ -164,15 +184,21 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
           <Button variant="quiet" onClick={() => { trackAction("ispy_clue_text_revealed", { taskId: task.id }); setHeard(true); }}>Show the clue</Button></div>
       </div>}
     </div>
+    </div>
     <ISpyLevelHelp support={content} languageCode={scene.languageCode} />
+    </section>
     {checking ? <InlineLoader compact label="Checking your answer" /> : null}
     {answered || result ? <>
       <Feedback tone={isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status">
-        {task.status === "skipped" ? <strong>Skipped — no Basil earned.</strong> : <>
-          {isCorrect !== null ? <strong>{learningFeedback(isCorrect ? "correct" : "incorrect", task.id)}</strong> : null}
-          <span>{feedback ?? "Answer saved."}</span>
+        {task.status === "skipped" ? <strong>Skipped.</strong> : <>
+          {triesLeft > 0 ? <div className="ispy-retry">
+            <strong>{learningFeedback("incorrect", `${task.id}:${attemptNumber}`)}</strong>
+            <span className="pill ispy-retry__pill">{triesLeft} {triesLeft === 1 ? "try" : "tries"} left</span>
+          </div> : <>
+            {isCorrect !== null ? <strong>{learningFeedback(isCorrect ? "correct" : "incorrect", task.id)}</strong> : null}
+            <span>{feedback ?? "Answer saved."}</span>
+          </>}
         </>}
-        {content.encouragement ? <span className="small muted">{content.encouragement}</span> : null}
       </div></Feedback>
       <BasilReward text={earnedText} />
     </> : null}
@@ -189,6 +215,7 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
       ["Displayed feedback", feedback],
       ["Language", scene.languageCode],
     ]} /></div> : null}
-    {!answered ? <Button variant="quiet" block disabled={practiceSaving} onClick={() => void actOnTask(task.id, "skip")}>Skip task</Button> : null}
+    </div>
+    </div>
   </div>;
 }

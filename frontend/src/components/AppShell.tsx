@@ -68,12 +68,16 @@ function FocusShellView() {
   const backAction = useRegisteredBackAction();
   const usesWideCanvas = pathname.endsWith("/analysis");
   const usesLearningCanvas = pathname.endsWith("/learn");
+  // Lesson tasks and I-Spy rounds put the photo beside the task on desktop. Choosing the
+  // width from the route, not the loaded content, keeps the page from starting narrow
+  // and then widening once the photo appears.
+  const usesTaskCanvas = /\/(learn\/[^/]+|review|ispy-1|ispy-2|clues|describe)$/.test(pathname);
 
   return (
     <div className="shell shell--focus">
       <BrandBar back={pathname !== "/"} onBack={backAction.onBack} backLabel={backAction.backLabel} homeTo={session ? "/home" : "/"} />
       <main
-        className={`shell__content${usesWideCanvas ? " shell__content--desktop-wide" : usesLearningCanvas ? " shell__content--wide" : ""}`}
+        className={`shell__content${usesWideCanvas ? " shell__content--desktop-wide" : usesLearningCanvas ? " shell__content--wide" : usesTaskCanvas ? " shell__content--task" : ""}`}
         style={{ paddingBottom: "var(--space-8)" }}
       >
         <Outlet />

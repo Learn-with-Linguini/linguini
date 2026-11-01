@@ -3170,6 +3170,7 @@ class PostgresWorkflowRepository:
                     words,
                     level=level,
                     language=clue_payload.get("targetLanguage"),
+                    scene_facts=clue_payload,
                 )
         except ISpyClueGenerationError:
             logger.exception("I-Spy clue generation failed for session %s.", session_id)
@@ -3331,17 +3332,19 @@ class PostgresWorkflowRepository:
             .join(session_tasks, session_tasks.c.id == task_attempts.c.session_task_id)
             .where(session_tasks.c.session_id == session_id, session_tasks.c.phase == "ispy")
         ).all()
-        graded = [
-            row.is_correct for row in rows if row.version != ISPY_DESCRIPTION_EVALUATION_VERSION
-        ]
+        # A clue allows several guesses, so it counts once: correct if any guess was.
+        clues = {}
+        for row in rows:
+            if row.version != ISPY_DESCRIPTION_EVALUATION_VERSION and row.is_correct is not None:
+                clues[row.id] = clues.get(row.id, False) or row.is_correct
         rounds = {
             row.id: row.status == "completed"
             for row in rows
             if row.version == ISPY_DESCRIPTION_EVALUATION_VERSION
         }
         return {
-            "ispy_correct_count": sum(outcome is True for outcome in graded) + sum(rounds.values()),
-            "ispy_attempt_count": sum(outcome is not None for outcome in graded) + len(rounds),
+            "ispy_correct_count": sum(clues.values()) + sum(rounds.values()),
+            "ispy_attempt_count": len(clues) + len(rounds),
         }
 
     def _encounter(
@@ -3593,6 +3596,7 @@ class PostgresWorkflowRepository:
                 elif action == "attempt":
                     evaluation_details = None
                     question_results = {}
+                    round_open = False
                     if self._evaluates_description(task):
                         if request.input_mode != "text":
                             raise PracticeConflictError(
@@ -3655,6 +3659,20 @@ class PostgresWorkflowRepository:
                                 else "Not quite. Review this word and try it in another session."
                             )
                         )
+                        if task.kind == "ispyRound":
+                            tried = _ispy_guesses(c, task.id)
+                            if _ispy_guess(request) in tried:
+                                raise PracticeConflictError(
+                                    "You already tried that object. Pick another one."
+                                )
+                            guesses_left = 0 if correct else ISPY_CLUE_GUESSES - len(tried) - 1
+                            if guesses_left:
+                                # A wrong guess with guesses left keeps the round open.
+                                round_open = True
+                                feedback_message = (
+                                    f"Not quite. Try again: {guesses_left} "
+                                    f"{'guess' if guesses_left == 1 else 'guesses'} left."
+                                )
                     if request.input_mode == "vocabularyReview":
                         question_results = {
                             question.question_id: _lesson_answer_is_correct(
@@ -3745,6 +3763,7 @@ class PostgresWorkflowRepository:
                         session.mode == SessionMode.LESSON
                         and request.input_mode != "vocabularyReview"
                         and (evaluation is None or evaluation.guess is not None)
+                        and not round_open
                     ):
                         reward_basil(
                             c,
@@ -3775,7 +3794,7 @@ class PostgresWorkflowRepository:
                             language_profile_id=session.language_profile_id,
                             session_id=task.session_id,
                         )
-                    if evaluation is None:
+                    if evaluation is None and not round_open:
                         self._encounter(
                             c,
                             task,
@@ -3816,7 +3835,9 @@ class PostgresWorkflowRepository:
                                 vocabulary_item_id=vocabulary_item_id,
                                 session=session,
                             )
-                    if evaluation is None:
+                    if round_open:
+                        values = dict(status="inProgress", started_at=task.started_at or utc_now())
+                    elif evaluation is None:
                         values = dict(
                             status="completed",
                             completed_at=utc_now(),
@@ -3949,6 +3970,28 @@ def _describes_object(task):
         and task.answer_key
         and task.answer_key.scene_description_context
     )
+
+
+# Guesses a learner gets at one of Linguini's clues before the round ends.
+ISPY_CLUE_GUESSES = 3
+
+
+def _ispy_guess(request):
+    return request.option_id if request.input_mode == "multipleChoice" else str(
+        request.scene_object_id
+    )
+
+
+def _ispy_guesses(c, task_id):
+    """Objects already guessed for this clue, by option or scene object id."""
+    payloads = c.execute(
+        select(task_attempts.c.response_payload).where(
+            task_attempts.c.session_task_id == task_id
+        )
+    ).scalars()
+    return {
+        str(payload.get("option_id") or payload.get("scene_object_id")) for payload in payloads
+    }
 
 
 def _next_attempt_number(c, task_id):
