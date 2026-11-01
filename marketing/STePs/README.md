@@ -18,6 +18,7 @@ Designed, animated promo posters in the style other STEPS projects use
 | `gif-6.gif` | gif-5 zoomed to 70% inside the 16:9 frame (butter padding) — survives the uvents card's `background-size: cover` center-crop in both directions | derived from `renders/gif-5.mp4` via ffmpeg `scale + pad` (no composition) |
 | `gif-7.gif` | Full `/practice` page incl. the pasta-yellow wordmark header + enlarged text: cursor clicks Upload, desk photo lands in the dropzone → "Starting analysis…" → Scene analysis (5 markers + "Check what this lesson will use") → a practice task ("Choose the right word", `la libreta` correct, marker 1 rings) → CTA | `gif-studio/compositions/gif-7-practice-full.html` (13s) |
 | `gif-8.gif` | gif-7 zoomed to 70% inside the 16:9 frame — crop-safe variant | derived from `renders/gif-7.mp4` via ffmpeg `scale + pad` (no composition) |
+| `gif-9.gif` | Single-screen marketing preview, past-STePs style (cf. `reference/runsquad.gif`): cream background, wordmark, split pill tagline "Turning your photos / into words" with orange accent words, tilted desk-flatlay photo card with floating vocab chips, cool sunglasses mascot, and `learnwithlinguini.com` — all with gentle looping motion | `gif-studio/compositions/gif-9-ad.html` (1.0s seamless loop) |
 
 Re-render after editing a composition:
 
