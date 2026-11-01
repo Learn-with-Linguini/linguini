@@ -173,7 +173,7 @@ test("removing, adding and restoring objects keeps photo and list numbers contig
   assertMarkers([1, 2, 3, 4]);
   await click(dom.window.document.querySelector('[aria-label="Remove marker 1, table"]'));
   assertMarkers([1, 2, 3]);
-  await click(button("Confirm lesson facts"));
+  await click(button("Create my lesson"));
   assert.equal(reviews.length, 1);
   assert.deepEqual(reviews[0].acceptedObjectIds, ["object-1", "object-2"]);
   assert.deepEqual(reviews[0].relations, [relation]);
@@ -202,7 +202,7 @@ test("counts live in Objects and follow visible instances after switching detail
   await addWord("cup");
   assertMarkers([1, 2, 3]);
   assert.deepEqual(counts(), { table: 1, cup: 2 });
-  await click(button("Confirm lesson facts"));
+  await click(button("Create my lesson"));
   assert.deepEqual(reviews[0].acceptedObjectIds, ["object-0", "object-2"]);
   assert.deepEqual(reviews[0].objectCounts, { "object-0": 1, "object-2": 2 });
   assert.deepEqual(reviews[0].relations, []);
@@ -220,7 +220,7 @@ test("restoring removed objects keeps mission-hidden suggestions excluded from m
   await click(button("Restore removed objects"));
   assertMarkers([1, 2]);
   assert.deepEqual(counts(), { cup: 2 });
-  await click(button("Confirm lesson facts"));
+  await click(button("Create my lesson"));
   assert.deepEqual(reviews[0].acceptedObjectIds, ["object-1", "object-2"]);
   assert.deepEqual(reviews[0].objectCounts, { "object-1": 2 });
   assert.deepEqual(reviews[0].relations, [relation]);
@@ -260,7 +260,7 @@ test("relation endpoints keep the same object while its displayed marker changes
   await click([...dom.window.document.querySelectorAll('[role="tab"]')][2]);
   assert.deepEqual(numbers(".analysis-relation-row .analysis-word-row__marker"), [1]);
   assert.deepEqual(numbers(".analysis-relation-row .combobox__marker"), [2]);
-  await click(button("Confirm lesson facts"));
+  await click(button("Create my lesson"));
   assert.deepEqual(reviews[0].relations, [relation]);
 });
 
@@ -288,7 +288,7 @@ test("moving an object's marker does not renumber or reidentify it", async () =>
     photo.dispatchEvent(new dom.window.KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
   });
   assertMarkers([1, 2, 3]);
-  await click(button("Confirm lesson facts"));
+  await click(button("Create my lesson"));
   assert.deepEqual(reviews[0].repositionedObjects, [{ id: "object-1", anchorPoint: { x: .5, y: .5 } }]);
 });
 
@@ -311,7 +311,7 @@ test("added markers stay contiguous after removing an added object and are not s
   await click(dom.window.document.querySelector('[aria-label="Remove marker 4, window"]'));
 
   assertMarkers([1, 2, 3, 4]);
-  await click(button("Confirm lesson facts"));
+  await click(button("Create my lesson"));
   assert.equal(reviews.length, 1);
   assert.equal(reviews[0].addedObjects.length, 1);
   assert.equal(reviews[0].addedObjects[0].label, "door");
@@ -323,7 +323,7 @@ test("the beginner preference mission uses an AI scenario instead of asking for 
     missionChoices: { preference: { sceneObjectIds: ["object-1"], chosenObjectId: null, reaction: "like" } } });
   assert.equal(dom.window.document.getElementById("preference-object"), null);
   assert.doesNotMatch(dom.window.document.body.textContent ?? "", /Your preference|pretend preference/);
-  await click(button("Confirm lesson facts"));
+  await click(button("Create my lesson"));
   assert.equal(reviews[0].missionChoices, undefined);
 });
 
@@ -343,7 +343,7 @@ for (const [stage, completed] of [["loadingImage", 0], ["findingObjects", 1], ["
   });
 }
 
-test("legacy analysis uses indeterminate progress and review readiness completes all stages", async () => {
+test("legacy analysis uses indeterminate progress and the review screen hides the progress bar", async () => {
   const session = detail();
   session.session.status = "analyzingScene";
   await mount(session);
@@ -352,8 +352,7 @@ test("legacy analysis uses indeterminate progress and review readiness completes
   root = null;
   dom.window.document.body.replaceChildren();
   await mount(detail());
-  assert.equal(dom.window.document.querySelector('[role="progressbar"]')?.getAttribute("aria-valuenow"), "4");
-  assert.equal(dom.window.document.querySelectorAll(".scene-processing-progress__step[data-state=\"active\"]").length, 0);
+  assert.equal(dom.window.document.querySelector('[role="progressbar"]'), null);
 });
 
 test("paused polling retains completed milestones and stops the active pulse", async () => {
