@@ -521,9 +521,33 @@ def build_tasks(
                 continue
             seen_terms.add(identity)
             related_scene_object_ids = []
+            agreement = None
+            agreement_forms = {}
             if term_type == "attribute":
-                object_id = scene_object_ids.get(term.key.rsplit(":", 1)[0])
+                object_key, attribute_kind = term.key.rsplit(":", 1)
+                object_id = scene_object_ids.get(object_key)
                 related_scene_object_ids = [object_id] if object_id else []
+                if language_context:
+                    agreement_forms = dict(term.agreement_forms)
+                    pack = language_context.pack
+                    kind = {"color": "colour"}.get(
+                        attribute_kind.casefold(), attribute_kind.casefold()
+                    )
+                    value = term.source.strip().casefold()
+                    value = pack.lexical.get("attribute_aliases", {}).get(
+                        f"{kind}:{value}", value
+                    )
+                    prefix = f"{kind}:{value}:"
+                    pack_forms = {
+                        key[len(prefix):]: form
+                        for key, form in pack.lexical.get("attribute_forms", {}).items()
+                        if key.startswith(prefix)
+                        and key[len(prefix):] in {"masculine", "feminine", "neuter"}
+                    }
+                    agreement_forms = agreement_forms or pack_forms
+                    owner = translated_objects.get(object_key)
+                    if owner and owner.gender in agreement_forms:
+                        agreement = owner.gender
             elif relation := relation_links.get(str(term.key)):
                 related_scene_object_ids = [
                     relation.subject_scene_object_id,
@@ -544,10 +568,13 @@ def build_tasks(
                         else None
                     ),
                     related_scene_object_ids=related_scene_object_ids,
-                    target_text=term.native_display if language_context else term.translation,
+                    target_text=(agreement_forms.get(agreement, term.native_display)
+                                 if language_context else term.translation),
                     **({"romanization": term.romanization} if language_context else {}),
                     translation=_display_source(term.source),
                     part_of_speech=part_of_speech,
+                    **({"agreement": agreement, "agreement_forms": agreement_forms}
+                       if agreement_forms else {}),
                     phonetic_text=term.phonetic_text,
                 )
             )

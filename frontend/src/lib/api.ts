@@ -621,6 +621,8 @@ export interface VocabularyLearningWord {
   vocabularyItemId: string | null; sceneObjectId: string | null; targetText: string; translation: string;
   relatedSceneObjectIds?: string[];
   partOfSpeech: WordClass; gender: string | null; pluralForm: string | null; phoneticText: string | null;
+  agreement?: "masculine" | "feminine" | "neuter" | null;
+  agreementForms?: Partial<Record<"masculine" | "feminine" | "neuter", string>>;
   pronunciationAudioAssetId: string | null; exampleSentence: string | null;
 }
 export interface VocabularyQuestion { questionId: string; prompt: string; options: { optionId: string; label: string }[]; correctOptionId?: string | null; romanizations?: Record<string, string> | null }

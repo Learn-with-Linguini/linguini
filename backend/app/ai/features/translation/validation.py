@@ -58,6 +58,8 @@ def validate_supplied_terms(
         raise SceneTranslationError(
             "Only object translations may include articles or gender."
         )
+    if any(row.agreement_forms for row in [*result.objects, *result.relationships]):
+        raise SceneTranslationError("Only attribute translations may include agreement forms.")
 
 
 def validate_pack_translation(result, context):

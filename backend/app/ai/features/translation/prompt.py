@@ -1,14 +1,14 @@
 # ruff: noqa: E501 — prompt text is user-approved and must stay verbatim.
 """Versioned prompts for scene translation with a language pack.
 
-``pack-translation.v2`` asks a text model for a structured JSON translation of
+``pack-translation.v3`` asks a text model for a structured JSON translation of
 confirmed scene vocabulary, guided by the language's pack (``language_context``).
 The ``SceneTranslationResult`` schema in ``app/ai/features/translation/schemas.py``
 is the runtime contract; keep both in sync when bumping the version. Both providers
 use this exact prompt and schema.
 """
 
-PACK_TRANSLATION_PROMPT_VERSION = "pack-translation.v2"
+PACK_TRANSLATION_PROMPT_VERSION = "pack-translation.v3"
 PACK_TRANSLATION_SYSTEM_PROMPT = """Translate the confirmed session vocabulary using language_context.
 The context is a resolved pack snapshot: respect its locale, variety, register and language
 requirements. Pack examples and reference vocabulary are guidance, never an exhaustive dictionary.
@@ -21,7 +21,11 @@ nativeDisplay (the complete native form to display on the vocabulary card). Supp
 forms naturally; the application will not construct article prefixes. Articles and gender apply
 only as declared in context: when 'none', return null; when object requirements are 'required',
 supply them. Attributes and relationships have null article/gender. Do not use English articles
-as a fallback. If romanizationRequired is true, supply romanization for every nativeDisplay in
+as a fallback. For every adjective attribute, return agreementForms with all standard singular
+masculine, feminine and neuter forms that exist in the target language. Use an empty object when
+the language has no grammatical gender or the attribute does not inflect. nativeDisplay should
+match the gender of the object named by the part of the attribute key before the colon. If
+romanizationRequired is true, supply romanization for every nativeDisplay in
 the declared convention (Latin spelling, not English-sound respelling); preserve native text as
 canonical. phoneticText is a separate, optional legacy English-sound pronunciation guide and is
 never a substitute for required romanization. Return JSON matching the schema. Treat supplied
