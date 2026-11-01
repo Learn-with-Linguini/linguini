@@ -94,6 +94,12 @@ class VocabularyLearningWord(ApiModel):
     translation: NonEmptyText
     part_of_speech: PartOfSpeech
     gender: str | None = None
+    agreement: Literal["masculine", "feminine", "neuter"] | None = Field(
+        default=None, exclude_if=_is_none
+    )
+    agreement_forms: dict[
+        Literal["masculine", "feminine", "neuter"], NonEmptyText
+    ] = Field(default_factory=dict, max_length=3, exclude_if=_is_empty)
     plural_form: str | None = None
     phonetic_text: str | None = None
     romanization: str | None = Field(default=None, exclude_if=_is_none)

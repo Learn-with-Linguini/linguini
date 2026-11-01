@@ -5040,6 +5040,57 @@ p[role="alert"]::before { content: "!"; }
   overflow-wrap: anywhere;
 }
 
+.learning-card__agreement {
+  display: grid;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid rgba(38, 50, 56, 0.16);
+}
+
+.learning-card__agreement dl {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+}
+
+.learning-card__agreement-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+}
+
+.learning-card__agreement-row--current {
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.learning-card__agreement dt,
+.learning-card__agreement dd {
+  margin: 0;
+}
+
+.learning-card__agreement dt {
+  color: var(--ink-muted);
+  font-size: var(--text-small);
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.learning-card__agreement dt span {
+  margin-left: var(--space-2);
+  color: var(--teal-dark);
+  font-size: var(--text-label);
+  text-transform: none;
+}
+
+.learning-card__agreement dd {
+  color: var(--teal-dark);
+  font-size: var(--text-body);
+  font-weight: 800;
+}
+
 .vocabulary-flow__actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
