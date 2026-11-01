@@ -213,7 +213,7 @@ The scene-selection page is not a staged task and must not show a progress trail
 
 ### Scene analysis
 
-Treat AI detection as a suggestion the learner reviews, not a completed decision. Start with a brief image-scanning state that says “Finding objects in your image…” without a card or progress bar. Then show the real photo with numbered markers, followed by a plain-text result count such as “2 words found.” Place the detected English words in one calm card below the count. Every suggestion must have a visible remove action, and the same card must let the learner add a word the analysis missed. Adding a word is a two-part action: the learner names it, then taps its location in the photo before it joins the list. User-added words receive their own orange numbered marker so the photo and list stay directly mapped. Continuing is disabled when no words remain or a new word is still awaiting placement.
+Treat AI detection as a suggestion the learner reviews, not a completed decision. Start with a brief image-scanning state that says “Finding objects” without a card or progress bar. Then show the real photo with numbered markers, followed by a plain-text result count such as “2 words found.” Place the detected English words in one calm card below the count. Every suggestion must have a visible remove action, and the same card must let the learner add a word the analysis missed. Adding a word is a two-part action: the learner names it, then taps its location in the photo before it joins the list. User-added words receive their own orange numbered marker so the photo and list stay directly mapped. Continuing is disabled when no words remain or a new word is still awaiting placement.
 
 ### Choose vocabulary
 

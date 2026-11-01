@@ -73,7 +73,7 @@ export function MicTest() {
           <span className={`mic-orb${state === "listening" ? " mic-orb--live" : ""}`}>
             <MicIcon size={48} />
           </span>
-          <strong>{state === "listening" ? "Listening…" : "Tap to test"}</strong>
+          <strong>{state === "listening" ? "Listening" : "Tap to test"}</strong>
         </button>
 
         {state === "working" ? (

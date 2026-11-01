@@ -159,7 +159,7 @@ export function Profile() {
 
       <section className="profile-basil" aria-labelledby="profile-basil-heading">
         <h2 id="profile-basil-heading">Your Basil</h2>
-        {basil.isPending ? <InlineLoader compact label="Loading your Basil…" />
+        {basil.isPending ? <InlineLoader compact label="Loading your Basil" />
           : basil.isError ? <p role="alert">We couldn’t load your Basil. Reload to retry.</p>
           : <>
             <div className="profile-basil__grid">
@@ -303,7 +303,7 @@ export function Profile() {
               ) : null}
               <div style={{ display: "flex", gap: "var(--space-2)", marginTop: "var(--space-1)" }}>
                 <Button type="submit" disabled={passwordUpdating}>
-                  {passwordUpdating ? "Updating…" : "Save new password"}
+                  {passwordUpdating ? "Updating" : "Save new password"}
                 </Button>
               </div>
             </form>
@@ -450,7 +450,7 @@ export function Profile() {
             <div className="account-delete-actions">
               <Button variant="quiet" block disabled={deleting} onClick={closeDeleteDialog}>Keep my account</Button>
               <Button block disabled={deleting} onClick={() => void deleteAccount()}>
-                {deleting ? "Deleting account…" : "Permanently delete account"}
+                {deleting ? "Deleting account" : "Permanently delete account"}
               </Button>
             </div>
           </section>

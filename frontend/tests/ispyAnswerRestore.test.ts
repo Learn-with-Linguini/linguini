@@ -302,7 +302,7 @@ test("A0 rounds show the translation, a word bank and the cheatsheet", async () 
   assert.match(body(), /es roja/);
   assert.match(body(), /is red/, "the translation is open from the start");
   const words = [...dom.window.document.querySelectorAll(".ispy-help__words li")].map(item => item.textContent);
-  assert.deepEqual(words, ["tazacup", "mesatable"]);
+  assert.deepEqual(words, ["taza", "mesa"], "the word bank shows only target-language words");
   assert.ok(dom.window.document.querySelector('button[aria-label="Open cheatsheet"]'));
 });
 

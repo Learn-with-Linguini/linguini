@@ -56,8 +56,8 @@ export function ISpyPhase1() {
   if (game && !clues.length) return <div className="stack">
     <h2 className="text-center">I-Spy · Linguini's clues</h2>
     {practiceStalled
-      ? <><InlineLoader label="Linguini is still choosing objects to spy…" /><Button block onClick={() => void retryProcessing(session.session.id)}>Check again</Button></>
-      : <InlineLoader label="Linguini is choosing objects to spy…" />}
+      ? <><InlineLoader label="Still choosing objects" /><Button block onClick={() => void retryProcessing(session.session.id)}>Check again</Button></>
+      : <InlineLoader label="Choosing objects to spy" />}
     {practiceError ? <p role="alert">{practiceError}</p> : null}
   </div>;
   const task = clues[index];
@@ -137,14 +137,14 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
   const earnedText = basilEarnedText(result?.basilEarned);
   return <div className="stack">
     <div className="learning-title-row">
-      <h1>I-Spy · Linguini's clues</h1>
+      <h1 className="ispy-title">I-Spy · Linguini's clues</h1>
       <div className="learning-title-actions">
         {reward ? <XpPill {...reward} /> : null}
         <Button variant="quiet" className="learning-exit" onClick={onExit}><CloseIcon size={18} /> Exit</Button>
       </div>
     </div>
     <ProgressTrail value={index + (answered ? 1 : 0)} total={total} label={`${index + 1} / ${total}`} />
-    {!answered ? <p className="muted">Tap the matching numbered marker in the photo.</p> : null}
+    {!answered ? <p className="ispy-instruction">{heard ? "Which object is Linguini describing? Tap its number in the photo." : "Play Linguini's clue, then tap the object it describes."}</p> : null}
     <ScenePhoto scene={scene} items={optionItems} hideWords
       activeItemId={isCorrect ? selected?.sceneObjectId : null}
       guessItemId={selected?.sceneObjectId}
@@ -160,13 +160,12 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
         {content.clueTranslation && showTranslation ? <span className="small muted">{content.clueTranslation}</span> : null}
       </span>
       </> : <div className="stack-2" data-testid="listen-first">
-        <p className="muted">Listen to Linguini's clue first, then find the object.</p>
         <div className="spread"><Button variant="secondary" onClick={hearClue}><SpeakerIcon /> Play the clue</Button>
           <Button variant="quiet" onClick={() => { trackAction("ispy_clue_text_revealed", { taskId: task.id }); setHeard(true); }}>Show the clue</Button></div>
       </div>}
     </div>
     <ISpyLevelHelp support={content} languageCode={scene.languageCode} />
-    {checking ? <InlineLoader compact label="Checking your answer…" /> : null}
+    {checking ? <InlineLoader compact label="Checking your answer" /> : null}
     {answered || result ? <>
       <Feedback tone={isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status">
         {task.status === "skipped" ? <strong>Skipped — no Basil earned.</strong> : <>

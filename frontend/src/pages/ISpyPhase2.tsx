@@ -60,7 +60,7 @@ export function ISpyPhase2() {
       {alerts.map((message, alertIndex) => <p key={alertIndex} role="alert">{message}</p>)}
       <Button disabled={completionPending} onClick={finish}>{finishLabel}</Button>
     </div>
-    : <div className="stack"><InlineLoader label="Finishing your session…" /></div>;
+    : <div className="stack"><InlineLoader label="Finishing your session" /></div>;
   if (!task) return <div className="stack"><TopBar title={game ? "Game complete" : "Practice complete"} />
     {alerts.map((message, alertIndex) => <p key={alertIndex} role="alert">{message}</p>)}
     <Button disabled={completionPending} onClick={finish}>{finishLabel}</Button>
@@ -217,10 +217,11 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
   const outcome = guess?.evaluation.outcome;
   return <div className="stack">
     <div className="learning-title-row">
-      <h1>I-Spy · Your turn</h1>
+      <h1 className="ispy-title">I-Spy · Your turn</h1>
       <Button variant="quiet" className="learning-exit" onClick={onExit}><CloseIcon size={18} /> Exit</Button>
     </div>
     <ProgressTrail value={index + (answered ? 1 : 0)} total={total} label={`${index + 1} / ${total}`} />
+    {!answered ? <p className="ispy-instruction">Describe the highlighted object so Linguini can find it.</p> : null}
     <ScenePhoto scene={scene} items={markers} activeItemId={target?.id ?? null} guessItemId={guessed?.id ?? null} />
     {guessed && target ? <p className="small muted" data-testid="guess-legend">{guessed.id === target.id
       ? `Linguini's guess is your object (marker ${target.marker}).`
@@ -243,9 +244,8 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
           <span className="small muted">Choose a {slot.label}</span>
           <div className="chip-row">{slot.chips.map(chip => {
             const picked = choices[activeFrame.frameId]?.[slot.slotId] === chip.text;
-            return <button key={chip.text} type="button" lang={scene.languageCode} title={chip.meaning ?? undefined} className={`chip${picked ? " chip--selected" : ""}`} aria-pressed={picked} disabled={locked} onClick={() => chooseSlotChip(activeFrame, slot.slotId, chip.text)}>{chip.text}</button>;
+            return <button key={chip.text} type="button" lang={scene.languageCode} className={`chip${picked ? " chip--selected" : ""}`} aria-pressed={picked} disabled={locked} onClick={() => chooseSlotChip(activeFrame, slot.slotId, chip.text)}>{chip.text}</button>;
           })}</div>
-          {slot.slotId === "position" ? <ul className="small muted" data-testid="position-meanings">{slot.chips.filter(chip => chip.meaning).map(chip => <li key={chip.text}><span lang={scene.languageCode}>{chip.text}</span> — {chip.meaning}{chip.example ? <> · <span lang={scene.languageCode}>{chip.example}</span></> : null}</li>)}</ul> : null}
         </div>)}
         {activeFrame.help?.length ? revealedHelp.includes(activeFrame.frameId)
           ? <div className="stack-2" data-testid="clue-help"><span className="small muted">Suggested phrases (guided help)</span><div className="chip-row">{activeFrame.help.map(phrase => <button key={phrase} type="button" lang={scene.languageCode} className={`chip${insertedChips.includes(phrase) ? " chip--selected" : ""}`} disabled={locked} onClick={() => chooseHelp(activeFrame, phrase)}>{phrase}</button>)}</div></div>
@@ -260,7 +260,7 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
         setText(""); setSentences({}); setChoices({}); setInsertedChips([]);
       }}>Start my clue again</Button> : null}
     </div>
-    {!hydrated && !restoreFailed ? <InlineLoader compact testId="restoring" label="Loading your last clue…" /> : null}
+    {!hydrated && !restoreFailed ? <InlineLoader compact testId="restoring" label="Loading your last clue" /> : null}
     {restoreFailed ? <div className="stack-2" role="alert" data-testid="restore-error"><span>We couldn't load your saved clue, so this task can't continue yet.</span><Button variant="secondary" onClick={() => void latest.refetch()}>Try again</Button></div> : null}
     {nearName && !locked ? <p className="small muted" data-testid="clue-near-warning">One word looks close to this object's name. If it's a different word, you can still send it.</p> : null}
     {namesTarget && !locked ? <p className="clue-warning" data-testid="clue-warning" role="alert">Your clue uses the word for this object. Change your clue to describe it without naming it.</p> : null}

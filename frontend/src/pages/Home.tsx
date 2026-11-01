@@ -150,12 +150,12 @@ export function Home() {
       </main>
 
       <aside className="home-dashboard__aside">
-        {progressLoading ? <div className="home-dashboard__loading"><InlineLoader label="Loading your progress…" /></div> : progressError ? <p className="home-dashboard__error" role="alert">{progressError}</p> : <PastaStreak days={progress?.streak.days ?? []} />}
+        {progressLoading ? <div className="home-dashboard__loading"><InlineLoader label="Loading your progress" /></div> : progressError ? <p className="home-dashboard__error" role="alert">{progressError}</p> : <PastaStreak days={progress?.streak.days ?? []} />}
         <section className="home-progress-card" aria-labelledby="home-progress-title">
           <div className="home-section-heading home-section-heading--compact"><div><span className="home-progress-card__eyebrow">This week</span><h2 id="home-progress-title">Your progress</h2></div></div>
-          {vocabularyLoading ? <InlineLoader compact label="Loading your words…" /> : vocabularyError ? <p role="alert">{vocabularyError}</p> : <div className="home-progress-card__stats"><div><span className="home-stat-icon home-stat-icon--words"><BookIcon /></span><strong>{wordsThisWeek}</strong><span>words</span></div><div><span className="home-stat-icon home-stat-icon--scenes"><EyeIcon /></span><strong>{exploredScenes}</strong><span>scenes</span></div></div>}
+          {vocabularyLoading ? <InlineLoader compact label="Loading your words" /> : vocabularyError ? <p role="alert">{vocabularyError}</p> : <div className="home-progress-card__stats"><div><span className="home-stat-icon home-stat-icon--words"><BookIcon /></span><strong>{wordsThisWeek}</strong><span>words</span></div><div><span className="home-stat-icon home-stat-icon--scenes"><EyeIcon /></span><strong>{exploredScenes}</strong><span>scenes</span></div></div>}
         </section>
-        {user?.id ? <button className="home-league" type="button" aria-busy={standings.isPending} onClick={() => { trackAction("home_chef_standings_clicked"); navigate("/ispy"); }}><span className="home-league__badge" aria-hidden="true"><TrophyIcon size={26} /></span><span><strong>Chefs of the Day</strong><small>{standings.isPending ? "Loading your standing…" : standings.isError ? "Your standing is unavailable." : leaderboardPosition ? `Your current standing: #${leaderboardPosition}` : "Earn Basil to join today’s board."}</small></span><ChevronRightIcon /></button> : null}
+        {user?.id ? <button className="home-league" type="button" aria-busy={standings.isPending} onClick={() => { trackAction("home_chef_standings_clicked"); navigate("/ispy"); }}><span className="home-league__badge" aria-hidden="true"><TrophyIcon size={26} /></span><span><strong>Chefs of the Day</strong><small>{standings.isPending ? "Loading your standing" : standings.isError ? "Your standing is unavailable." : leaderboardPosition ? `Your current standing: #${leaderboardPosition}` : "Earn Basil to join today’s board."}</small></span><ChevronRightIcon /></button> : null}
       </aside>
     </div>
 

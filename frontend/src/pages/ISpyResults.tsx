@@ -45,7 +45,7 @@ export function ISpyResults() {
       <Noodle className="noodle-divider summary__noodle" />
       <p className="muted">You played I-Spy with {scene.title.toLowerCase()}.</p>
     </div>
-    {isPending ? <LoadingScreen label="Loading your results…" /> : null}
+    {isPending ? <LoadingScreen label="Loading your results" /> : null}
     {error ? <p role="alert">{error}</p> : null}
     {completionError ? <><p role="alert">{completionError}</p><Button onClick={retryCompletion}>Retry saving your game</Button></> : null}
     {data ? <div className="stat-grid">
@@ -56,7 +56,7 @@ export function ISpyResults() {
     <p className="small muted">Games are just for fun: they don't earn Basil or change your word progress.</p>
     {startError ? <p role="alert">{startError}</p> : null}
     <div className="stack-2">
-      <Button block disabled={starting || !session} onClick={() => void playAgain()}>{starting ? "Setting up..." : "Play again"}</Button>
+      <Button block disabled={starting || !session} onClick={() => void playAgain()}>{starting ? "Setting up" : "Play again"}</Button>
       <Button variant="secondary" block onClick={() => navigate("/ispy/play")}>Choose another photo</Button>
       <Button variant="quiet" block onClick={() => navigate("/home")}>Back home</Button>
     </div>

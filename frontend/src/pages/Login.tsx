@@ -184,7 +184,7 @@ export function Login() {
       {error ? <p role="alert">{error}</p> : null}
       {message ? <p role="status">{message}</p> : null}
       <Button type="submit" block disabled={submitting}>
-        {submitting ? "Please wait…" : mode === "signin" ? "Sign in" : mode === "signup" ? "Create account" : "Send reset link"}
+        {submitting ? "Please wait" : mode === "signin" ? "Sign in" : mode === "signup" ? "Create account" : "Send reset link"}
       </Button>
     </form> : null}
     {mode !== "forgot" ? (

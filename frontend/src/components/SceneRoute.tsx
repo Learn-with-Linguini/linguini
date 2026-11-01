@@ -23,6 +23,6 @@ export function SceneRoute() {
   });
   const error = queryError(queryErrorValue);
   if (error) return <ErrorState title="We couldn't open that scene" message={error} retry={() => window.location.reload()} backTo="/practice" backLabel="Choose another image" />;
-  if (!data) return <LoadingScreen label="Loading session..." />;
+  if (!data) return <LoadingScreen label="Loading session" />;
   return <Navigate replace to={sessionDestination(data).path} />;
 }

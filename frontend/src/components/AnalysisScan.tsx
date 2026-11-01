@@ -14,9 +14,9 @@ export function AnalysisScan({ scene }: { scene: Scene }) {
         <rect className="analysis-scan__trail-shine" x="13" y="13" width="974" height="574" rx="30" pathLength="100" />
       </svg>
       <span className="analysis-scan__caption">
-        <span>Taking a look around…</span>
-        <span>Spotting useful words…</span>
-        <span>Getting your scene ready…</span>
+        <span>Taking a look around</span>
+        <span>Spotting useful words</span>
+        <span>Getting your scene ready</span>
       </span>
     </div>
   );

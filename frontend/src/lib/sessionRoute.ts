@@ -105,15 +105,15 @@ export interface SessionLoadingCopy {
 }
 
 const loadingCopy: Record<string, SessionLoadingCopy> = {
-  analysis: { title: "Scene analysis", heading: "Finding objects in your image...", scan: true },
-  "mic-test": { title: "Mic check", heading: "Getting your microphone ready...", scan: false },
-  learn: { title: "Learning", heading: "Loading your words...", scan: false },
-  "ispy-1": { title: "I-Spy", heading: "Setting up your I-Spy clue...", scan: false },
-  "ispy-2": { title: "I-Spy", heading: "Setting up your turn to describe...", scan: false },
-  summary: { title: "Practice summary", heading: "Gathering your results...", scan: false },
-  clues: { title: "I-Spy", heading: "Linguini is choosing objects to spy...", support: "Clues come from the scene you confirmed.", scan: false },
-  describe: { title: "I-Spy", heading: "Setting up your turn to describe...", scan: false },
-  results: { title: "Game results", heading: "Gathering your results...", scan: false },
+  analysis: { title: "Scene analysis", heading: "Finding objects", scan: true },
+  "mic-test": { title: "Mic check", heading: "Getting your mic ready", scan: false },
+  learn: { title: "Learning", heading: "Loading your words", scan: false },
+  "ispy-1": { title: "I-Spy", heading: "Setting up your clue", scan: false },
+  "ispy-2": { title: "I-Spy", heading: "Setting up your turn", scan: false },
+  summary: { title: "Practice summary", heading: "Gathering your results", scan: false },
+  clues: { title: "I-Spy", heading: "Choosing objects to spy", support: "Using the scene you confirmed.", scan: false },
+  describe: { title: "I-Spy", heading: "Setting up your turn", scan: false },
+  results: { title: "Game results", heading: "Gathering your results", scan: false },
 };
 
 const sessionStep = (pathname: string) => /^\/(?:practice\/sessions|ispy\/games)\/[^/]+\/([^/]+)/.exec(pathname)?.[1] ?? null;
@@ -126,13 +126,13 @@ export function isPreTaskStep(pathname: string): boolean {
 
 const translatingCopy: SessionLoadingCopy = {
   title: "Scene analysis",
-  heading: "Translating your scene...",
-  support: "Turning your confirmed words into your learning language.",
+  heading: "Translating your scene",
+  support: "Using the words you confirmed.",
   scan: true,
 };
 
 export function sessionLoadingCopy(pathname: string, status?: SessionStatus): SessionLoadingCopy {
   const step = sessionStep(pathname);
   if (step === "analysis" && status === "generatingTasks") return translatingCopy;
-  return (step && loadingCopy[step]) || { title: "Practice", heading: "Loading your practice...", scan: false };
+  return (step && loadingCopy[step]) || { title: "Practice", heading: "Loading your practice", scan: false };
 }

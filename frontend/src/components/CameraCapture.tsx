@@ -118,7 +118,7 @@ export function CameraCapture({ onCapture, onClose }: CameraCaptureProps) {
       {!ready && !error ? <p role="status">Waiting for your camera… Allow access when your browser asks.</p> : null}
       {error ? <p role="alert">{error}</p> : null}
       <div className={styles.actions}>
-        <Button disabled={!ready || saving} onClick={capture}>{saving ? "Capturing…" : "Take photo"}</Button>
+        <Button disabled={!ready || saving} onClick={capture}>{saving ? "Capturing" : "Take photo"}</Button>
         <Button variant="quiet" onClick={close}>Cancel</Button>
       </div>
     </div>

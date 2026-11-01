@@ -226,7 +226,7 @@ export function HelpImproveModal({
             {error ? <p role="alert">{error}</p> : null}
 
             <Button type="submit" block disabled={submitting || !rating}>
-              {submitting ? "Submitting feedback…" : "Send feedback"}
+              {submitting ? "Submitting feedback" : "Send feedback"}
             </Button>
           </form>
         )}

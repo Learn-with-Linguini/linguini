@@ -28,7 +28,6 @@ export function ISpyLevelHelp({ support, languageCode }: { support: ISpyLevelSup
     {words.length && wordsShown ? <ul className="ispy-help__words">
       {words.map(word => <li key={word.text}>
         <strong lang={languageCode}>{word.text}</strong>
-        <span>{word.translation}</span>
       </li>)}
     </ul> : null}
   </section>;

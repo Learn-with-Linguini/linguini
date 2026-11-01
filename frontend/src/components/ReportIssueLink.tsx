@@ -102,7 +102,7 @@ export function ReportIssueLink({
               <textarea id={`${titleId}-details`} className="input report-modal__details" maxLength={2000} value={details} onChange={event => setDetails(event.target.value)} placeholder="Tell us what you expected to see." />
             </div>
             {error ? <p className="contact-error" role="alert">{error}</p> : null}
-            <Button block disabled={!issue || sending} type="submit">{sending ? "Sending…" : "Send report"}</Button>
+            <Button block disabled={!issue || sending} type="submit">{sending ? "Sending" : "Send report"}</Button>
           </form>}
         </section>
       </div> : null}

@@ -6,7 +6,7 @@ let activeOverlays = 0;
 let restoreBackground: (() => void) | undefined;
 
 /** Mount while a page is loading; unmounting restores background interaction. */
-export function LoadingScreen({ label = "Loading…" }: { label?: string }) {
+export function LoadingScreen({ label = "Loading" }: { label?: string }) {
   const status = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

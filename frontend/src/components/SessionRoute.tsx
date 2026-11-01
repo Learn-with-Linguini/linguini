@@ -52,13 +52,13 @@ function SessionLoader({ id }: { id: string }) {
     <h1>Scene analysis</h1>
     <SceneProcessingProgress detail={session} />
     <TranslationPreview preview={session.translationPreview} scene={preview ?? undefined} />
-    <section role="status" className="panel-note"><h2>Generating tasks...</h2><p className="muted">Explore your translations while we prepare your practice.</p></section>
+    <section role="status" className="panel-note"><h2>Generating tasks</h2><p className="muted">Explore your translations while you wait.</p></section>
   </div>;
   if (loading && !earlyReady) return copy.scan && preview ? <div className="stack analysis-page">
     <h1>{copy.title}</h1>
     <section className="analysis-loading">
       {session?.session.id === id ? <SceneProcessingProgress detail={session} />
-        : <div className="analysis-loading__copy"><h2>{copy.heading}</h2><p className="muted">{copy.support ?? "Your photo is saved while we prepare your review."}</p></div>}
+        : <div className="analysis-loading__copy"><h2>{copy.heading}</h2><p className="muted">{copy.support ?? "Your photo is saved."}</p></div>}
       <AnalysisScan scene={preview} />
     </section>
   </div> : <LoadingScreen label={copy.heading} />;

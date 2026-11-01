@@ -146,7 +146,7 @@ async function mount(initialTask: SessionTask, scenePatch: Partial<Scene> = {}) 
   };
   cleanups.add(close);
   await render();
-  await waitFor(() => assert.doesNotMatch(text(), /Restoring checked answers…|Restoring your place…/));
+  await waitFor(() => assert.doesNotMatch(text(), /Restoring checked answers|Restoring your place/));
   return { close, render, client };
 }
 
