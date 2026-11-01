@@ -531,6 +531,9 @@ def check_deterministic(
                 ) or _counted_plural_use(
                     candidate.text, candidate.construction_id, vocabulary, fact_id_value,
                     expected_pos,
+                ) or _contracted_use(
+                    candidate.text, vocabulary, fact_id_value, expected_pos,
+                    pack.clues.contractions if pack.clues is not None else [],
                 )
                 if inflected is not None:
                     derived_uses.append(inflected)
@@ -826,6 +829,41 @@ def _counted_plural_use(text, construction_id, vocabulary, fact_id_value, part_o
         for word in words:
             if fold(word).startswith(bare) and 0 < len(fold(word)) - len(bare) <= 3:
                 return TermUse(term_id=term.term_id, surface=word, fact_id=term.fact_id)
+    return None
+
+
+def _contracted_use(text, vocabulary, fact_id_value, part_of_speech, contractions):
+    """A bound preposition whose last word joins the next article (à côté de + le = à côté du).
+
+    Only prepositions, and only the contractions the pack lists, so a sentence still has to
+    write the rest of the phrase exactly as reviewed.
+    """
+    if part_of_speech != "preposition" or not contractions:
+        return None
+    raw = [token.strip("¿¡«»") for token in tokens(text)]
+    words = [fold(token) for token in raw]
+    for term in vocabulary.terms:
+        if term.fact_id != fact_id_value or str(
+            getattr(term.part_of_speech, "value", term.part_of_speech)
+        ) != part_of_speech:
+            continue
+        for form in dict.fromkeys([*term.forms, *term.forms_by_key.values()]):
+            form_words = [fold(token) for token in tokens(form)]
+            if not form_words:
+                continue
+            for contraction in contractions:
+                if form_words[-1] != fold(contraction.preposition):
+                    continue
+                joined = [*form_words[:-1], fold(contraction.text)]
+                width = len(joined)
+                start = next(
+                    (start for start in range(len(words) - width + 1)
+                     if words[start:start + width] == joined),
+                    None,
+                )
+                if start is not None:
+                    surface = " ".join(raw[start:start + width])
+                    return TermUse(term_id=term.term_id, surface=surface, fact_id=term.fact_id)
     return None
 
 

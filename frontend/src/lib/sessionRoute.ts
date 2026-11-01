@@ -125,8 +125,8 @@ export function isPreTaskStep(pathname: string): boolean {
 }
 
 const translatingCopy: SessionLoadingCopy = {
-  title: "Scene analysis",
-  heading: "Translating your scene",
+  title: "Translating your scene",
+  heading: "Translating your words",
   support: "Using the words you confirmed.",
   scan: true,
 };

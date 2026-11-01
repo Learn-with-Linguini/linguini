@@ -97,6 +97,9 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `vocabulary_typing_skipped` | `{ taskId, termType, revisiting }` | Learner skips the current typing prompt without checking or revealing its answer |
 | `vocabulary_marker_clicked` | `{ taskId, marker, audioAvailable }` | Learner selects a photo marker to show its object card and play target-language pronunciation when available |
 | `vocabulary_exercises_started` | `{ taskId, source, revisiting, questionCount, wordCount }` | Learner enters exercises through the flashcard shortcut (`source: shortcut`) or after the final card (`source: cardsComplete`); this transition does not submit answers or award credit |
+| `vocabulary_skip_prompted` | `{ taskId, stage }` | Learner taps the "Skip this task" pill beside the word activity title, opening the skip confirmation |
+| `vocabulary_skip_confirmed` | `{ taskId, stage }` | Learner confirms skipping the whole word activity |
+| `vocabulary_skip_cancelled` | `{ taskId, stage }` | Learner closes the skip confirmation and keeps learning |
 | `vocabulary_pronunciation_clicked` | `{ termType }` | Learner replays a word using the review card's speaker button |
 
 Objects appear beside their linked adjectives, followed by unlinked adjectives and

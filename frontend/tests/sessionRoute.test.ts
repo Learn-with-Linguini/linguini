@@ -152,8 +152,8 @@ test("loading copy matches the destination segment", () => {
 test("analysis loading copy switches to translating while tasks generate", () => {
   const base = "/practice/sessions/s1";
   assert.deepEqual(sessionLoadingCopy(`${base}/analysis`, "generatingTasks"), {
-    title: "Scene analysis",
-    heading: "Translating your scene",
+    title: "Translating your scene",
+    heading: "Translating your words",
     support: "Using the words you confirmed.",
     scan: true,
   });

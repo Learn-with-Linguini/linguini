@@ -488,12 +488,10 @@ function vocabularyTask(): SessionTask {
   } };
 }
 
-test("returning home from word review leaves the task unchanged", async () => {
+test("word review shows only the flashcards, without an exit button", async () => {
   await mount(vocabularyTask());
-  await click("Return home");
-  assert.match(text(), /Home destination/);
+  assert.equal([...dom.window.document.querySelectorAll("button")].some(item => item.textContent?.trim() === "Exit"), false);
   assert.deepEqual(taskActions, []);
-  assert.deepEqual(requests, []);
 });
 
 test("skipping word review marks the whole activity skipped before returning to tasks", async () => {
@@ -503,8 +501,14 @@ test("skipping word review marks the whole activity skipped before returning to 
   assert.ok(skip);
   const description = dom.window.document.getElementById(skip.getAttribute("aria-describedby") ?? "");
   assert.match(description?.textContent ?? "", /whole word activity/);
+  // Skipping asks first; keeping on learning skips nothing.
+  await click("Skip this task");
+  assert.match(text(), /Skip all the words in this scene\?/);
+  await click("Keep learning");
+  assert.deepEqual(taskActions, []);
   actions.push(() => ({ ...action(task, null, "Skipped"), task: { ...task, status: "skipped" } }));
   await click("Skip this task");
+  await click("Skip all words");
   assert.deepEqual(taskActions, [{ action: "skip", body: undefined }]);
   assert.match(text(), /Task list destination/);
   assert.deepEqual(requests, []);

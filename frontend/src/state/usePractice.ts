@@ -55,14 +55,16 @@ export function usePractice(userId: string, profileId: string, onLearningChanged
     // Once task 1 is usable, keep checking in the background through slower
     // lesson/clue calls and their retries (up to five minutes).
     if (version === loadVersion.current) applySession(data);
-    // Scene analysis can legitimately take a little while for a phone photo.
-    // Keep its scan visible for two minutes; only a returned failure or that
-    // timeout should offer a retry.
-    const maxAttempts = data.session.status === "analyzingScene" ? 400 : patient(data) ? 200 : 40;
-    for (let attempt = 0; attempt < maxAttempts && PROCESSING.includes(data.session.status); attempt += 1) {
-      // Poll quickly until the first vocabulary task is committed, then use a
-      // slower cadence while the remaining AI calls finish in the background.
-      await new Promise(resolve => setTimeout(resolve, patient(data) ? 1500 : 300));
+    // Scene analysis can legitimately take a little while for a phone photo, and
+    // translation plus the first task routinely outlast a few seconds. Keep checking
+    // for two minutes of analysis or five of lesson preparation; only a returned
+    // failure or that timeout should offer a retry.
+    const started = Date.now();
+    const deadline = started + (data.session.status === "analyzingScene" ? 120_000 : 300_000);
+    while (Date.now() < deadline && PROCESSING.includes(data.session.status)) {
+      // Poll quickly at first and until the first vocabulary task is committed,
+      // then use a slower cadence while the remaining AI calls finish.
+      await new Promise(resolve => setTimeout(resolve, patient(data) || Date.now() - started > 15_000 ? 1500 : 300));
       if (version !== loadVersion.current) break;
       data = withClientProgress(await getPractice(id));
       if (version === loadVersion.current) applySession(data);

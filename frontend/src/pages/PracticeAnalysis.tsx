@@ -145,7 +145,7 @@ export function PracticeAnalysis() {
     return <Navigate to={dest.path} replace state={dest.notice ? { practiceNotice: dest.notice } : undefined} />;
   }
   if (["created", "analyzingScene", "generatingTasks"].includes(session.session.status)) return <div className="stack analysis-page">
-    <h1>Scene analysis</h1>
+    <h1 className="analysis-progress-title">{session.session.status === "generatingTasks" ? "Translating your scene" : "Scene analysis"}</h1>
     {session.session.status === "generatingTasks" && session.translationPreview ? <>
       <SceneProcessingProgress detail={session} stalled={practiceStalled} />
       <TranslationPreview preview={session.translationPreview} scene={scene} />

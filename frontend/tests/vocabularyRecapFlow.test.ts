@@ -133,7 +133,7 @@ function reviewWord(termType: VocabularyLearningWord["termType"], targetText: st
 
 test("leaving a completed-scene review returns to vocabulary without changing the task", async () => {
   await mount({ stayInReview: true });
-  assert.equal(button("Return home"), undefined);
+  assert.equal(button("Exit"), undefined);
   assert.equal(button("Skip this task"), undefined);
   await click("Back to vocabulary");
   assert.match(text(), /Vocabulary collection/);

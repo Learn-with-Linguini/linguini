@@ -2,7 +2,7 @@ import { useRefreshBasil } from "../state/gamification";
 import { QuestionBasil } from "../components/MissionProgress";
 import { basilEarnedText } from "../lib/gamification";
 import { InlineLoader } from "../components/LoadingScreen";
-import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode, type TouchEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { friendlyError, queryKeys } from "../lib/queryKeys";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
@@ -187,8 +187,31 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onSc
   </div>;
 }
 
-function LearningExit({ onExit, label = "Return home" }: { onExit: () => void; label?: string }) {
+function LearningExit({ onExit, label = "Exit" }: { onExit: () => void; label?: string }) {
   return <Button variant="quiet" className="learning-exit" onClick={onExit}><CloseIcon size={18} /> {label}</Button>;
+}
+
+/** Skipping drops the whole word activity, so it is confirmed rather than one click away. */
+function SkipTaskDialog({ busy, onConfirm, onCancel }: { busy: boolean; onConfirm: () => void; onCancel: () => void }) {
+  const titleId = useId();
+  const dialogRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    dialogRef.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape" && !busy) onCancel(); };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [busy, onCancel]);
+  return <div className="help-modal__backdrop" onMouseDown={() => { if (!busy) onCancel(); }}>
+    <section ref={dialogRef} className="help-modal leave-session__dialog" role="dialog" aria-modal="true" aria-labelledby={titleId}
+      onMouseDown={event => event.stopPropagation()}>
+      <h2 id={titleId}>Skip all the words in this scene?</h2>
+      <p>This activity will be marked as skipped and you'll go back to your task list. The words stay saved for revision.</p>
+      <div className="leave-session__actions">
+        <Button variant="secondary" block disabled={busy} onClick={onConfirm}>{busy ? "Skipping" : "Skip all words"}</Button>
+        <Button variant="quiet" block disabled={busy} onClick={onCancel}>Keep learning</Button>
+      </div>
+    </section>
+  </div>;
 }
 
 function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, revisiting = false }: { task: SessionTask; index: number; total: number; onNext: () => void; onClose: () => void; onExit: () => void; revisiting?: boolean }) {
@@ -198,6 +221,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
   const { actOnTask, practiceSaving, practiceError, session } = useAppState();
   const content = task.publicContent;
   const [stage, setStage] = useState<"review" | "quiz" | "typing" | "complete">("review");
+  const [confirmingSkip, setConfirmingSkip] = useState(false);
   const [recapIndex, setRecapIndex] = useState(0);
   const [page, setPage] = useState(0);
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
@@ -415,21 +439,28 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
   };
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__header">
-      <div className="vocabulary-flow__progress"><ProgressTrail value={questionPosition} total={questionTotal} label={`Question ${questionPosition} of ${questionTotal}`} /><QuestionBasil amount={stage === "quiz" && question ? basilByQuestion[question.questionId] : stage === "typing" ? typingCheck?.basilEarned : undefined} /></div>
-      <div className="learning-title-row"><div className="vocabulary-flow__title"><IconButton className="vocabulary-flow__back" label={revisiting ? "Back to vocabulary" : "Back to tasks"} onClick={onClose}><ArrowLeftIcon size={20} /></IconButton><h1>{content.title}</h1></div><LearningExit onExit={onExit} label={revisiting ? "Back to vocabulary" : "Return home"} /></div>
+      <div className="learning-title-row"><div className="vocabulary-flow__title"><h1>{content.title}</h1></div>{revisiting ? <LearningExit onExit={onExit} label="Back to vocabulary" />
+        : !terminal ? <button type="button" className="vocabulary-flow__skip-pill" disabled={practiceSaving}
+          aria-describedby={`vocabulary-skip-${task.id}`} onClick={() => {
+            trackAction("vocabulary_skip_prompted", { taskId: task.id, stage });
+            setConfirmingSkip(true);
+          }}>Skip this task</button> : null}</div>
+      {!terminal && !revisiting ? <p id={`vocabulary-skip-${task.id}`} className="visually-hidden">Skip the whole word activity and return to the task list.</p> : null}
+      <div className="vocabulary-flow__progress">{/* Cards count slides; the quiz and typing count questions. */}
+        {stage === "review" && pageCount > 0
+          ? <ProgressTrail value={page + 1} total={pageCount} label={`Slide ${page + 1} of ${pageCount}`} />
+          : <ProgressTrail value={questionPosition} total={questionTotal} label={`Question ${questionPosition} of ${questionTotal}`} />}<QuestionBasil amount={stage === "quiz" && question ? basilByQuestion[question.questionId] : stage === "typing" ? typingCheck?.basilEarned : undefined} /></div>
     </div>
+    {/* Desktop puts the photo beside the cards; phones keep intro, photo, cards stacked. */}
+    <div className="vocabulary-flow__body">
+    <div className="vocabulary-flow__intro stack">
     {restored.isLoading ? <InlineLoader compact label="Restoring word answers" /> : null}
     {restored.isError ? <div role="alert"><p>We couldn’t restore your word answers.</p><Button variant="quiet" onClick={() => void restored.refetch()}>Retry saved answers</Button></div> : null}
     {questionError ? <div role="alert"><p>{questionError}</p><Button variant="secondary" disabled={checkingQuestion || !pendingOptionId} onClick={() => pendingOptionId && void chooseAnswer(pendingOptionId)}>Retry answer</Button></div> : null}
     {active && stage === "review" ? <>
       {revision ? <div className="panel-note" role="status"><strong>Saved for revision</strong><p className="small muted">You skipped this practice earlier, but these words will stay here whenever you want to review them.</p></div> : null}
-      {reviewWord ? <div className="vocabulary-review-section">
-        <h2 aria-live="polite">{reviewWord.termType === "object" ? "Objects and adjectives" : VOCABULARY_SECTIONS[reviewWord.termType]}</h2>
-        <p className="small muted">{reviewWord.termType === "object"
-          ? speechAvailable() ? "Tap a number to see and hear its word, or use Next to keep exploring." : "Tap a number to see its word. Pronunciation isn't available in this browser for this language."
-          : speechAvailable() ? "Listen with the speaker button. The photo shows the context." : "The photo shows the context. Pronunciation isn't available in this browser for this language."}</p>
-      </div> : null}
     </> : null}
+    </div>
       <div className="vocabulary-learning-scene" aria-label={reviewing && reviewWord ? `${reviewWord.termType === "relationship" ? "Objects related by" : "Location of"} ${reviewWord.translation} in your photo` : askedItems.length && askedWord ? `${askedWord.translation} in your photo` : "Your photo"}>
         <ScenePhoto
           scene={scene}
@@ -449,6 +480,11 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
           } : undefined}
         />
       </div>
+    <div className="vocabulary-flow__panel stack">
+    {/* The cards carry the page; the group name is still announced for screen readers. */}
+    {active && stage === "review" && reviewWord ? <div className="vocabulary-review-section">
+      <h2 className="visually-hidden" aria-live="polite">{reviewWord.termType === "object" ? "Objects and adjectives" : VOCABULARY_SECTIONS[reviewWord.termType]}</h2>
+    </div> : null}
     {reviewing ? <>
       <div className={`vocabulary-learning-grid vocabulary-learning-grid--swipe${visibleWords.length > 1 ? " vocabulary-learning-grid--paired" : ""}`} aria-live="polite" onTouchStart={handleCardTouchStart} onTouchEnd={handleCardTouchEnd}>{visibleWords.map((word, cardIndex) => <VocabularyLearningCard key={`${word.learningKey ?? word.vocabularyItemId ?? word.targetText}:${cardIndex}`} word={word} languageCode={scene.languageCode} />)}</div>
       <div className="vocabulary-flow__actions">
@@ -457,7 +493,10 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
           ? <Button variant="secondary" onClick={onClose}>Back to tasks</Button>
           : <Button variant="secondary" disabled={page === pageCount - 1 && (exercisesBlocked || !hasExercises)} onClick={finishReview}>{page < pageCount - 1 ? <>Next <ArrowRightIcon /></> : "Start quick quiz"}</Button>}
       </div>
-      {!revision && hasExercises ? <Button variant="quiet" block disabled={exercisesBlocked} onClick={() => startExercises("shortcut")}>Go to exercises</Button> : null}
+      {!revision && hasExercises ? <div className="vocabulary-flow__side-actions">
+        <button type="button" className="vocabulary-flow__link" disabled={exercisesBlocked}
+          onClick={() => startExercises("shortcut")}>Go to exercises <ArrowRightIcon size={16} /></button>
+      </div> : null}
     </> : null}
     {active && stage === "quiz" && question ? <><Card plain><div className="stack">
       <h2>{question.prompt}</h2>
@@ -502,10 +541,13 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
     <BasilReward text={earnedText} />
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {terminal && !revision && !revisiting ? <Button block onClick={onNext}>{session?.session.status === "generatingTasks" ? "Back to tasks" : index < total - 1 ? "Next task" : "Finish task"}</Button> : null}
-    {!terminal ? <div className="stack-2">
-      <Button variant="quiet" block disabled={practiceSaving} aria-describedby={`vocabulary-skip-${task.id}`} onClick={async () => { if (await actOnTask(task.id, "skip")) onNext(); }}>Skip this task</Button>
-      <p id={`vocabulary-skip-${task.id}`} className="small muted">Skip the whole word activity and return to the task list.</p>
-    </div> : null}
+    {confirmingSkip ? <SkipTaskDialog busy={practiceSaving}
+      onCancel={() => { trackAction("vocabulary_skip_cancelled", { taskId: task.id, stage }); setConfirmingSkip(false); }}
+      onConfirm={async () => {
+        trackAction("vocabulary_skip_confirmed", { taskId: task.id, stage });
+        if (await actOnTask(task.id, "skip")) onNext();
+        else setConfirmingSkip(false);
+      }} /> : null}
     {!terminal && stage === "quiz" && question && answers[question.questionId] ? <div className="learning-question-report"><ReportIssueLink reportType="Vocabulary answer" fields={[
       ["Task ID", task.id],
       ["Question ID", question.questionId],
@@ -514,6 +556,8 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
       ["Displayed solution", question.options.find(option => option.optionId === correctOptionIds[question.questionId])?.label],
       ["Language", scene.languageCode],
     ]} /></div> : null}
+    </div>
+    </div>
   </div>;
 }
 

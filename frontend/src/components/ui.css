@@ -1053,6 +1053,11 @@ p[role="alert"]::before { content: "!"; }
   gap: var(--space-2);
 }
 
+/* Pages showing the processing steps centre their title over the steps */
+.analysis-progress-title {
+  text-align: center;
+}
+
 .analysis-loading {
   display: flex;
   flex-direction: column;
@@ -1297,9 +1302,40 @@ p[role="alert"]::before { content: "!"; }
   max-height: 430px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: var(--line) transparent;
-  padding-right: 4px;
+  padding-right: var(--space-2);
+}
+
+/* Rows keep their height so a long list scrolls instead of squashing */
+.analysis-word-list > * {
+  flex-shrink: 0;
+}
+
+/* Styling the WebKit scrollbar keeps it on screen (macOS otherwise hides it until scrolling),
+   so learners can tell a long list continues. */
+.analysis-word-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.analysis-word-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.analysis-word-list::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--ink-muted) 45%, transparent);
+  border-radius: var(--radius-pill);
+}
+
+/* The list reaches into the card's side padding so the scrollbar sits by the card's edge */
+.analysis-word-card .analysis-word-list {
+  margin-right: calc(var(--space-4) * -1 + 4px);
+  padding-right: var(--space-3);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  .analysis-word-list {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--ink-muted) 45%, transparent) transparent;
+  }
 }
 
 /* A relationship menu must be able to extend over the edit form below it. */
@@ -1945,6 +1981,10 @@ p[role="alert"]::before { content: "!"; }
   .analysis-word-card,
   .analysis-object-counts {
     padding: var(--space-3);
+  }
+
+  .analysis-word-card .analysis-word-list {
+    margin-right: calc(var(--space-3) * -1 + 4px);
   }
 }
 
@@ -4798,7 +4838,7 @@ p[role="alert"]::before { content: "!"; }
 
 .vocabulary-flow__header {
   display: grid;
-  gap: var(--space-5);
+  gap: var(--space-2);
 }
 
 .vocabulary-flow__progress {
@@ -4808,8 +4848,9 @@ p[role="alert"]::before { content: "!"; }
   gap: var(--space-4);
 }
 
-.vocabulary-flow__progress .trail__track {
-  margin-top: 9px;
+/* The slide or question count reads above the bar */
+.vocabulary-flow__progress .trail {
+  flex-direction: column-reverse;
 }
 
 .vocabulary-flow__progress .pill--xp {
@@ -4838,7 +4879,12 @@ p[role="alert"]::before { content: "!"; }
 
 .learning-card {
   gap: var(--space-5);
-  background: #ffedb8;
+}
+
+/* Two classes so this beats the cream .flashcard base defined later in the file */
+.flashcard.vocabulary-learning-card {
+  border: 1px solid var(--line);
+  background: #ffffff;
 }
 
 .learning-card .learning-card__meta {
@@ -4926,6 +4972,67 @@ p[role="alert"]::before { content: "!"; }
   touch-action: pan-y;
 }
 
+.vocabulary-flow__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.vocabulary-flow__intro:empty {
+  display: none;
+}
+
+/* Holds only the screen-reader group name, so it takes no space in the card column. */
+.vocabulary-flow__panel > .vocabulary-review-section {
+  position: absolute;
+}
+
+/* Tablet and desktop: the page uses the full width so the progress trail spans the screen,
+   and the photo stays in view on the left while cards, quiz and typing run on the right. */
+@media (min-width: 768px) {
+  /* Lesson URLs end in /learn/<task>, so match the flashcard layout itself, not a route class. */
+  .shell--focus > .shell__content:has(.vocabulary-flow__body) {
+    max-width: none;
+    padding-inline: var(--space-8);
+  }
+
+  .vocabulary-flow__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(320px, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "scene intro"
+      "scene panel";
+    column-gap: var(--space-8);
+    row-gap: var(--space-4);
+    align-items: start;
+  }
+
+  .vocabulary-flow__body:has(> .vocabulary-flow__intro:empty) {
+    grid-template-rows: auto;
+    grid-template-areas: "scene panel";
+  }
+
+  .vocabulary-flow__intro { grid-area: intro; }
+
+  /* Matches the photo's top room for markers so the photo and first card start level. */
+  .vocabulary-flow__panel {
+    grid-area: panel;
+    padding-top: 28px;
+  }
+
+  .vocabulary-flow__body > .vocabulary-learning-scene {
+    grid-area: scene;
+    position: sticky;
+    top: var(--space-6);
+  }
+
+  /* The panel is narrower than the old single column, so word cards stack. */
+  .vocabulary-flow__panel .vocabulary-learning-grid.vocabulary-learning-grid--paired {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (min-width: 480px) {
   .vocabulary-learning-grid.vocabulary-learning-grid--paired {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -4954,6 +5061,65 @@ p[role="alert"]::before { content: "!"; }
 
 .vocabulary-flow__actions .btn {
   width: 100%;
+}
+
+.vocabulary-flow__side-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.vocabulary-flow__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  border: 0;
+  background: transparent;
+  color: var(--teal-dark);
+  font: inherit;
+  font-size: var(--text-small);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.vocabulary-flow__link:hover:not(:disabled) {
+  color: var(--ink);
+}
+
+/* Small pill beside the lesson title */
+.vocabulary-flow__skip-pill {
+  flex: none;
+  align-self: center;
+  min-height: 36px;
+  padding: 0 var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
+  border-radius: var(--radius-pill);
+  background: #fdf0eb;
+  color: var(--danger);
+  font: inherit;
+  font-size: var(--text-small);
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.vocabulary-flow__skip-pill:hover:not(:disabled) {
+  border-color: var(--danger);
+  background: #fde4dc;
+}
+
+.vocabulary-flow__link:focus-visible,
+.vocabulary-flow__skip-pill:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--radius-pill);
+}
+
+.vocabulary-flow__link:disabled,
+.vocabulary-flow__skip-pill:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .vocabulary-flow__position {
@@ -6183,25 +6349,10 @@ p[role="alert"]::before { content: "!"; }
     max-height: 430px;
     overflow-y: auto;
     overscroll-behavior: contain;
-    scrollbar-width: thin;
-    scrollbar-color: var(--line) transparent;
   }
 
   .analysis-word-list:has(.combobox--open) {
     overflow: visible;
-  }
-
-  .analysis-word-list::-webkit-scrollbar {
-    width: 8px;
-  }
-
-  .analysis-word-list::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .analysis-word-list::-webkit-scrollbar-thumb {
-    background: var(--line);
-    border-radius: var(--radius-pill);
   }
 
 }
