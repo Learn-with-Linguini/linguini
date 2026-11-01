@@ -361,8 +361,13 @@ def test_task_action_xp_is_stable_on_replay_and_skips_earn_nothing(database):
     assert skipped.json()["xpEarned"] == 0
 
 
-@pytest.mark.parametrize(("correct", "expected_xp"), [(True, 25), (False, 10)])
-def test_ispy_attempt_action_reports_xp(database, correct, expected_xp):
+@pytest.mark.parametrize(
+    ("correct", "expected_xp", "expected_status"),
+    [(True, 25, "completed"), (False, 0, "inProgress")],
+)
+def test_ispy_attempt_action_reports_xp(
+    database, correct, expected_xp, expected_status
+):
     engine, _, profile, client = database
     sid = create_run(client, profile)["session"]["id"]
     detail = analyze(client, sid)
@@ -414,6 +419,7 @@ def test_ispy_attempt_action_reports_xp(database, correct, expected_xp):
     assert response.status_code == 200, response.text
     assert response.json()["attempt"]["isCorrect"] is correct
     assert response.json()["xpEarned"] == expected_xp
+    assert response.json()["task"]["status"] == expected_status
 
 
 def test_skip_all_adds_no_learning_credit(database):
@@ -631,7 +637,28 @@ def test_an_ispy_clue_allows_three_different_guesses(database):
         option["sceneObjectId"] for option in task["publicContent"]["options"]
         if option["sceneObjectId"] != key["correctSceneObjectId"]
     ]
-    assert wrong, "the clue offers at least one wrong object"
+    if len(wrong) < 2:
+        added = [str(uuid4()) for _ in range(2 - len(wrong))]
+        content = task["publicContent"] | {
+            "options": [
+                *task["publicContent"]["options"],
+                *[
+                    {
+                        "optionId": object_id,
+                        "label": f"Wrong object {index + 1}",
+                        "sceneObjectId": object_id,
+                    }
+                    for index, object_id in enumerate(added)
+                ],
+            ]
+        }
+        with engine.begin() as c:
+            c.execute(
+                update(session_tasks)
+                .where(session_tasks.c.id == UUID(task["id"]))
+                .values(public_content=content)
+            )
+        wrong.extend(added)
     endpoint = f"/api/v1/tasks/{task['id']}/attempts"
 
     def guess(object_id, idempotency_key):
@@ -647,7 +674,12 @@ def test_an_ispy_clue_allows_three_different_guesses(database):
     assert missed.json()["task"]["status"] == "inProgress"
     # The same object cannot be guessed twice.
     assert guess(wrong[0], "repeat-guess-key").status_code == 409
-    found = guess(key["correctSceneObjectId"], "second-guess-key")
+    missed_again = guess(wrong[1], "second-guess-key")
+    assert missed_again.status_code == 200, missed_again.text
+    assert missed_again.json()["attempt"]["isCorrect"] is False
+    assert missed_again.json()["attempt"]["feedback"]["message"].endswith("1 guess left.")
+    assert missed_again.json()["task"]["status"] == "inProgress"
+    found = guess(key["correctSceneObjectId"], "third-guess-key")
     assert found.status_code == 200, found.text
     assert found.json()["attempt"]["isCorrect"] is True
     assert found.json()["task"]["status"] == "completed"
