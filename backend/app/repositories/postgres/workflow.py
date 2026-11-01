@@ -141,6 +141,7 @@ from app.services.mission_eligibility import (
 from app.services.mission_roleplay import assign_a0_scenario, assign_roleplay
 from app.services.quantities import suggested_quantity
 from app.services.question_outcomes import (
+    default_evidence,
     normalize_answer,
     offered_supports,
     review_details,
@@ -900,8 +901,13 @@ class PostgresWorkflowRepository:
                 feedback = f"Check the quantity — the order was for {quantity}."
             elif wrong_field:
                 feedback = "Check that detail and try again."
+        # A task whose mission version was retired loads without its evaluations.
         evaluation = next(
-            item for item in task.answer_key.question_evaluations if item.question_id == question_id
+            (
+                item for item in task.answer_key.question_evaluations
+                if item.question_id == question_id
+            ),
+            None,
         )
         supports = []
         if task.public_content.mission_id == "M06":
@@ -924,10 +930,15 @@ class PostgresWorkflowRepository:
             assistance_steps_used=list((stored or {}).get("assistance", [])),
             outcome=QuestionOutcome(
                 question_id=question_id,
-                outcome="correct" if is_correct else "incorrect",
-                objective_id=evaluation.objective_id,
-                target_ids=evaluation.target_ids,
-                evidence_type=evaluation.evidence_type,
+                outcome=(
+                    "unassessed" if evaluation is None
+                    else "correct" if is_correct else "incorrect"
+                ),
+                objective_id=evaluation.objective_id if evaluation else None,
+                target_ids=evaluation.target_ids if evaluation else [],
+                evidence_type=(
+                    evaluation.evidence_type if evaluation else default_evidence(question)
+                ),
                 assistance=supports,
                 assistance_used=any(
                     mission is None or mission.counts_as_assistance(item) for item in supports
