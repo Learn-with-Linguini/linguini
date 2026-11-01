@@ -48,6 +48,7 @@ from app.ai.features.translation.schemas import (
 )
 from app.ai.features.translation.validation import (
     SceneTranslationError,
+    normalize_non_object_metadata,
     validate_translation_terms,
 )
 from app.ai.observability import AITracer
@@ -167,7 +168,7 @@ class SceneTranslationService:
             raise SceneTranslationError("Translation language does not match the resolved pack.")
 
         def decode(data: Any) -> SceneTranslationResult:
-            result = SceneTranslationResult.model_validate(data)
+            result = normalize_non_object_metadata(SceneTranslationResult.model_validate(data))
             validate_translation_terms(parsed_payload, result, language_context)
             return result
 
@@ -240,8 +241,8 @@ class SceneTranslationService:
                 latency_ms += (time.perf_counter() - call_start) * 1000
 
                 try:
-                    compact_result = SceneTranslationResult.model_validate_json(
-                        response.output_text
+                    compact_result = normalize_non_object_metadata(
+                        SceneTranslationResult.model_validate_json(response.output_text)
                     )
                     validate_translation_terms(compact_request, compact_result, language_context)
                     compact_terms = {
