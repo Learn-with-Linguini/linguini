@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
+from copy import deepcopy
 from typing import Annotated, Literal
 from uuid import UUID
 
@@ -557,6 +559,34 @@ class SessionTask(EntityModel):
     completed_at: AwareDatetime | None = None
     skipped_at: AwareDatetime | None = None
     skip_reason: Annotated[str, Field(max_length=500)] | None = None
+
+    @classmethod
+    def model_validate_stored(cls, value: Mapping) -> SessionTask:
+        """Load a task whose versioned mission definition may have been retired."""
+        data = deepcopy(dict(value))
+        content = data.get("public_content") or data.get("publicContent")
+        if not isinstance(content, dict):
+            return cls.model_validate(data)
+        mission_id = content.get("missionId", content.get("mission_id"))
+        practice_level = content.get("practiceLevel", content.get("practice_level"))
+        content_version = content.get("contentVersion", content.get("content_version"))
+        if mission_id is None or practice_level is None or content_version is None:
+            return cls.model_validate(data)
+
+        from app.missions import get_mission
+
+        if get_mission(mission_id, practice_level, content_version) is not None:
+            return cls.model_validate(data)
+        for name in (
+            "missionId", "mission_id", "practiceLevel", "practice_level",
+            "contentVersion", "content_version", "languageContext", "language_context",
+        ):
+            content.pop(name, None)
+        answer_key = data.get("answer_key") or data.get("answerKey")
+        if isinstance(answer_key, dict):
+            answer_key.pop("questionEvaluations", None)
+            answer_key.pop("question_evaluations", None)
+        return cls.model_validate(data)
 
     @model_validator(mode="after")
     def validate_task(self) -> SessionTask:

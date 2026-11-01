@@ -187,6 +187,20 @@ def test_legacy_tasks_keep_their_saved_json_shape():
     assert reloaded.answer_key == task.answer_key
 
 
+def test_stored_task_with_retired_mission_definition_loads_as_legacy():
+    task = mission_task()
+    stored = task.model_dump(mode="json")
+    stored["publicContent"]["contentVersion"] = 99
+
+    with pytest.raises(ValidationError, match="unknown mission definition"):
+        SessionTask.model_validate(stored)
+
+    restored = SessionTask.model_validate_stored(stored)
+    assert restored.public_content.mission_key is None
+    assert restored.answer_key.question_evaluations == []
+    assert restored.answer_key.correct_option_ids == task.answer_key.correct_option_ids
+
+
 @pytest.mark.parametrize(
     ("content", "key", "message"),
     [
