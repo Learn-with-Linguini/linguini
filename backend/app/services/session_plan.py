@@ -13,7 +13,7 @@ from app.schemas.media import SceneObject
 from app.schemas.tasks import SessionTask
 from app.schemas.vocabulary import VocabularyItem, VocabularyTranslation
 from app.services.image_analysis import PlaceholderImageExtractor
-from app.services.ispy_clue_frames import build_clue_support
+from app.services.ispy_clue_frames import build_clue_support, object_phrase
 from app.services.ispy_levels import ispy_cheat_sheet, ispy_level, word_bank
 
 # Fixed, deliberately small upload vocabulary. Unknown languages fail explicitly.
@@ -434,10 +434,10 @@ def _ispy_description_task(
 ):
     prompt = (
         "Describe this object in your learning language without saying its word. "
-        "Pick a clue frame for help, or type your own clue."
+        "Use the word bank for help, or type your own clue."
         if settings.typing
         else "Describe this object without saying its word. "
-        "Pick a clue frame, then build your clue from the word tiles."
+        "Tap the word bank words to build your clue."
     )
     return SessionTask(
         id=uuid5(session_id, f"ispy-descriptions-v1:{obj.id}"),
@@ -454,6 +454,7 @@ def _ispy_description_task(
             clue_frames=frames,
             avoid_words=avoid_words,
             help_collapsed=settings.help_collapsed,
+            target_phrase=object_phrase(description_context, obj),
             **support,
         ),
         answer_key=dict(

@@ -80,12 +80,15 @@ def word_bank(objects, words, attributes=(), relations=()) -> list[dict]:
     entries = {}
     for obj, word in zip(objects, words, strict=True):
         entries.setdefault(word.display_text.casefold(), dict(
-            text=word.display_text, translation=obj.label,
+            text=word.display_text, translation=obj.label, kind="noun",
         ))
-    for term in [*attributes, *relations]:
-        text, source = (term.get("translation") or "").strip(), term.get("source") or ""
-        if text and source:
-            entries.setdefault(text.casefold(), dict(text=text, translation=_english(source)))
+    for kind, terms in (("adjective", attributes), ("preposition", relations)):
+        for term in terms:
+            text, source = (term.get("translation") or "").strip(), term.get("source") or ""
+            if text and source:
+                entries.setdefault(text.casefold(), dict(
+                    text=text, translation=_english(source), kind=kind,
+                ))
     return list(entries.values())[:WORD_BANK_LIMIT]
 
 

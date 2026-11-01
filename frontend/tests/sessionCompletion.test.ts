@@ -235,7 +235,7 @@ const sceneObject = (id: string, label: string, x: number) => ({ id, sessionId: 
   boundingBox: null, anchorPoint: { x, y: 0.5 }, attributes: null, confidenceScore: null, sourceObjectKey: null });
 
 const buttons = () => [...dom.window.document.querySelectorAll("button")];
-const button = (label: string) => buttons().find(item => item.textContent?.trim() === label);
+const button = (label: string) => buttons().find(item => item.textContent?.trim() === label || item.getAttribute("aria-label") === label);
 const click = (label: string) => act(async () => {
   const target = button(label);
   assert.ok(target, `expected a "${label}" button`);
@@ -341,7 +341,7 @@ function framedReply(attemptId: string, text: string, assistance: Record<string,
   });
 }
 
-test("guided frames compose an editable clue, block the target word and restore saved support", async () => {
+test("the target word is blocked and the offered patterns are recorded as help", async () => {
   fixture = { ...detail("inProgress", [task("learn", "completed", 0), task("clues", "completed", 1), framedTask]),
     sceneObjects: [sceneObject("obj-target", "mesa", 0.3), sceneObject("obj-other", "silla", 0.7)] };
   const container = dom.window.document.createElement("div");
@@ -359,44 +359,21 @@ test("guided frames compose an editable clue, block the target word and restore 
     )));
   });
   await flush();
-  const body = () => dom.window.document.body.textContent ?? "";
   const send = () => button("Send my response")!;
 
+  assert.equal(button("Colour"), undefined, "clue frame chips are no longer offered");
   await type("Es una Mesa roja");
   assert.ok(dom.window.document.querySelector("[data-testid=clue-warning]"), "the target word triggers a warning");
   assert.equal(send().disabled, true);
-  await type("");
-  assert.equal(dom.window.document.querySelector("[data-testid=clue-warning]"), null);
+  await type("Es roja. Está sobre la silla grande.");
 
-  assert.equal(button("Name"), undefined, "saved Name frames from older tasks are hidden");
-  await click("Colour");
-  assert.match(dom.window.document.querySelector("[data-testid=clue-frame]")?.textContent ?? "", /colour meaning.*Example: Es roja/);
-  assert.equal(button("sobre la silla"), undefined, "chips belong to the selected frame");
-  await click("roja");
-  await click("Location");
-  await click("sobre la silla");
-  assert.equal(clue().value, "Es roja. Está sobre la silla");
-  await type(`${clue().value} grande.`);
-
-  taskReplies.push(framedReply("f1", "Es roja. Está sobre la silla grande.", { selected_frame_ids: ["colour"], inserted_chips: ["roja"] }));
+  taskReplies.push(framedReply("f1", "Es roja. Está sobre la silla grande.", {}));
   await click("Send my response");
   const [first] = taskRequests.splice(0);
   assert.equal(first.body.text, "Es roja. Está sobre la silla grande.", "the evaluator gets the displayed clue");
   assert.deepEqual(first.body.assistance, { version: "ispy-clue-assistance.v1", practiceMode: "guided", targetWordShown: true,
-    offeredFrameIds: ["colour", "location"], selectedFrameIds: ["colour", "location"], insertedChips: ["roja", "sobre la silla"],
-    selectedSlots: [], revealedHelpFrameIds: [] });
-  assert.match(body(), /Linguini guessed: silla/);
-
-  await click("Improve my clue");
-  assert.equal(button("Colour")?.getAttribute("aria-pressed"), "true", "the saved frame is restored");
-  assert.ok(button("roja")?.className.includes("chip--selected"));
-  await type("Es roja y pequeña.");
-  taskReplies.push(framedReply("f2", "Es roja y pequeña.", { selected_frame_ids: ["colour"], inserted_chips: ["roja"] }));
-  await click("Send my response");
-  const [revision] = taskRequests.splice(0);
-  assert.notEqual(revision.body.idempotencyKey, first.body.idempotencyKey);
-  assert.equal(revision.body.text, "Es roja y pequeña.");
-  assert.deepEqual((revision.body.assistance as { selectedFrameIds: string[] }).selectedFrameIds, ["colour"]);
+    offeredFrameIds: ["colour", "location"], selectedFrameIds: [], insertedChips: [],
+    selectedSlots: [], revealedHelpFrameIds: [] }, "showing the patterns is recorded as offered help");
   root.unmount();
 });
 
@@ -444,8 +421,6 @@ test("a reload restores a pending clear match and confirms its saved attempt", a
   assert.equal(dom.window.document.querySelector("[data-testid=restoring]"), null);
   assert.equal(clue().value, "Es roja. Está sobre la silla");
   assert.match(body(), /Linguini guessed: mesa/);
-  assert.equal(button("Location")?.getAttribute("aria-pressed"), "true", "the last saved frame is reopened");
-  assert.ok(button("sobre la silla")?.className.includes("chip--selected"), "saved assistance is restored");
 
   taskReplies.push(described("r1", "clearMatch", "obj-target", "completed"));
   await click("That's it");
@@ -488,7 +463,7 @@ test("a reload restores completed, skipped and legacy tasks without a fresh form
 
   latestReplies.push(() => Response.json(savedClue("r6", "noMatch", "obj-other")));
   const skipped = await mountTask("skipped");
-  assert.match(skipped.body(), /Skipped — no Basil earned\./);
+  assert.match(skipped.body(), /Skipped\./);
   assert.ok(!skipped.body().includes(learningFeedback("correct", guessTask.id)));
   assert.ok(!skipped.body().includes(learningFeedback("incorrect", guessTask.id)));
   assert.equal(button("Send my response"), undefined);
@@ -591,95 +566,71 @@ const slotReply = (attemptId: string, text: string, assistance: Record<string, u
     responsePayload: { input_mode: "text", text, assistance }, evaluationDetails: evaluation("noMatch", "obj-other") },
 });
 
-test("learners build a Location clue from separate position and reference chips, with optional help", async () => {
-  const root = await mountSlots("pending");
-  const text = () => dom.window.document.body.textContent ?? "";
-  await click("Location");
-  assert.match(text(), /Está \[position\] \[reference object\]/);
-  assert.equal(dom.window.document.querySelector("[data-testid=clue-slot-position]")?.textContent?.includes(" on"), false, "the word bank shows only target-language words");
-  assert.equal(dom.window.document.querySelector("[data-testid=clue-slot-position] [title]"), null);
-  assert.equal(button("la taza"), undefined, "the target is never a chip");
-  assert.equal(button("sobre la mesa"), undefined, "the correct phrase stays behind Help me");
-  await click("sobre");
-  assert.equal(clue().value, "Está sobre");
-  await click("la mesa");
-  assert.equal(clue().value, "Está sobre la mesa");
-  await click("debajo de");
-  assert.equal(clue().value, "Está debajo de la mesa", "changing the position keeps the reference");
-  await click("al lado de");
-  await click("el libro");
-  assert.equal(clue().value, "Está al lado del libro");
-  await click("Colour");
-  await click("azul");
-  assert.equal(clue().value, "Está al lado del libro. Es azul", "other sentences are preserved");
-  await click("Help me");
-  assert.ok(button("roja"), "help reveals the suggested phrase");
-  await type(`${clue().value} y pequeña.`);
+test("tapping word bank words adds them to the clue and records them as help", async () => {
+  const root = await mountSlots("pending", { wordBank: [
+    { text: "taza", translation: "cup", kind: "noun" }, { text: "roja", translation: "red", kind: "adjective" },
+    { text: "sobre", translation: "on", kind: "preposition" }, { text: "la mesa", translation: "table", kind: "noun" },
+  ] });
+  const pattern = [...dom.window.document.querySelectorAll(".clue-patterns__sentence")].map(item => item.textContent);
+  assert.deepEqual(pattern, ["Esadjective", "Estápreposition object"].map(text => text.replace(" ", "")),
+    "the patterns show where the adjective and preposition go");
+  assert.equal(button("Add taza to your clue")?.disabled, true, "the object's own name cannot be added");
+  await type("Es");
+  await click("Add roja to your clue");
+  await click("Add sobre to your clue");
+  await click("Add la mesa to your clue");
+  assert.equal(clue().value, "Es roja sobre la mesa");
 
-  taskReplies.push(slotReply("s1", "Está al lado del libro. Es azul y pequeña.", { selected_frame_ids: ["location", "colour"],
-    inserted_chips: ["al lado de", "el libro"], revealed_help_frame_ids: ["colour"],
-    selected_slots: [{ frame_id: "location", slot_id: "position", chip: "al lado de" }, { frame_id: "location", slot_id: "reference", chip: "el libro" },
-      { frame_id: "colour", slot_id: "colour", chip: "azul" }] }));
+  taskReplies.push(slotReply("s1", "Es roja sobre la mesa", { inserted_chips: ["roja", "sobre", "la mesa"] }));
   await click("Send my response");
   const [sent] = taskRequests.splice(0);
-  assert.equal(sent.body.text, "Está al lado del libro. Es azul y pequeña.", "an incorrect combination still reaches the evaluator");
+  assert.equal(sent.body.text, "Es roja sobre la mesa");
   const assistance = sent.body.assistance as Record<string, unknown>;
-  assert.deepEqual(assistance.selectedSlots, [{ frameId: "location", slotId: "position", chip: "al lado de" },
-    { frameId: "location", slotId: "reference", chip: "el libro" }, { frameId: "colour", slotId: "colour", chip: "azul" }]);
-  assert.deepEqual(assistance.revealedHelpFrameIds, ["colour"], "opening help is recorded as assistance");
+  assert.deepEqual(assistance.insertedChips, ["roja", "sobre", "la mesa"]);
   assert.equal(assistance.practiceMode, "guided");
-  await click("Improve my clue");
-  await click("Location");
-  assert.equal(button("al lado de")?.getAttribute("aria-pressed"), "true", "revision keeps the selected slots");
-  assert.equal(clue().value, "Está al lado del libro. Es azul y pequeña.");
   root.unmount();
 });
 
-test("A0 builds the clue only from word tiles, beside a word bank", async () => {
+test("A0 builds the clue only by tapping word bank words", async () => {
   const root = await mountSlots("pending", { learnerLevel: "A0", allowText: false,
-    wordBank: [{ text: "taza", translation: "cup" }, { text: "mesa", translation: "table" }] });
-  assert.equal(clue().readOnly, true, "A0 learners tap tiles instead of typing");
-  assert.deepEqual([...dom.window.document.querySelectorAll(".ispy-help__words strong")].map(item => item.textContent), ["taza", "mesa"]);
-  await click("Colour");
-  await click("roja");
-  assert.equal(clue().value, "Es roja");
+    wordBank: [{ text: "taza", translation: "cup" }, { text: "roja", translation: "red" }] });
+  assert.equal(clue().readOnly, true, "A0 learners tap words instead of typing");
+  assert.deepEqual([...dom.window.document.querySelectorAll(".ispy-help__words strong")].map(item => item.textContent), ["taza", "roja"]);
+  await click("Add roja to your clue");
+  assert.equal(clue().value, "roja");
   await click("Start my clue again");
   assert.equal(clue().value, "");
   root.unmount();
 });
 
-test("A2 keeps the clue frames behind Need help?", async () => {
+test("A2 types freely with the word bank collapsed", async () => {
   const root = await mountSlots("pending", { learnerLevel: "A2", helpCollapsed: true,
     wordBank: [{ text: "taza", translation: "cup" }, { text: "mesa", translation: "table" }] });
-  assert.equal(dom.window.document.querySelector("[data-testid=clue-frames]"), null);
+  assert.equal(button("Need help? Show clue frames"), undefined, "clue frames are no longer offered");
   assert.equal(clue().readOnly, false);
   assert.equal(dom.window.document.querySelector(".ispy-help__words"), null,
     "the A2 word bank starts collapsed");
   await click("Show word bank");
   assert.deepEqual([...dom.window.document.querySelectorAll(".ispy-help__words strong")]
     .map(item => item.textContent), ["taza", "mesa"]);
-  await click("Need help? Show clue frames");
-  assert.ok(dom.window.document.querySelector("[data-testid=clue-frames]"));
   root.unmount();
 });
 
-test("selected slots, revealed help and free edits survive a reload", async () => {
+test("a saved clue and its tapped words survive a reload", async () => {
   latestReplies.push(() => Response.json({ attempt: { id: "s2", attemptNumber: 2, text: "Está sobre la mesa. Es pequeña.", feedback: "Saved feedback.",
     evaluationDetails: evaluation("noMatch", "obj-other"),
     assistance: { version: "ispy-clue-assistance.v1", practiceMode: "guided", targetWordShown: true, offeredFrameIds: ["colour", "location"],
-      selectedFrameIds: ["location"], insertedChips: ["sobre", "la mesa"], revealedHelpFrameIds: ["location"],
-      selectedSlots: [{ frameId: "location", slotId: "position", chip: "sobre" }, { frameId: "location", slotId: "reference", chip: "la mesa" }] } } }));
-  const root = await mountSlots("inProgress");
+      selectedFrameIds: [], insertedChips: ["sobre"] } } }));
+  const root = await mountSlots("inProgress", { wordBank: [{ text: "sobre", translation: "on", kind: "preposition" }] });
   assert.equal(clue().value, "Está sobre la mesa. Es pequeña.");
   await click("Improve my clue");
-  assert.equal(button("sobre")?.getAttribute("aria-pressed"), "true");
-  assert.equal(button("la mesa")?.getAttribute("aria-pressed"), "true");
-  assert.ok(button("sobre la mesa"), "revealed help stays revealed");
-  await click("debajo de");
-  assert.equal(clue().value, "Está debajo de la mesa. Es pequeña.", "the restored sentence is edited in place");
+  await type(`${clue().value} Roja.`);
+  taskReplies.push(slotReply("s3", "Está sobre la mesa. Es pequeña. Roja.", { inserted_chips: ["sobre"] }));
+  await click("Send my response");
+  const [sent] = taskRequests.splice(0);
+  assert.deepEqual((sent.body.assistance as Record<string, unknown>).insertedChips, ["sobre"], "earlier tapped words stay recorded");
   root.unmount();
 });
-
 
 test("reloaded Spanish preparation renders saved native metadata and separate Latin spelling", async () => {
   // Deliberate Spanish fixture variant: direction comes from persisted task data,

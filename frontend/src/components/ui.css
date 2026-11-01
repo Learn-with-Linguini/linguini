@@ -4784,6 +4784,14 @@ p[role="alert"]::before { content: "!"; }
 
 .ispy-target-card .label { color: var(--teal-dark); }
 
+/* The I-Spy opener labels the clue field, read as the start of the learner's sentence. */
+.ispy-clue-opening {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: var(--text-h3);
+  font-weight: 800;
+}
+
 .ispy-target-card__word {
   color: var(--teal-dark);
   font-family: var(--font-display);
@@ -4795,7 +4803,6 @@ p[role="alert"]::before { content: "!"; }
 
 .ispy-target-card p { margin: var(--space-2) 0 0; color: var(--ink); }
 
-.ispy-round-card__help { justify-self: center; }
 
 /* Inside the round card the word bank drops its own frame and sits under a divider. */
 .ispy-round-card .ispy-help {

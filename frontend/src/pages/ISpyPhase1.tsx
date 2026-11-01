@@ -19,16 +19,7 @@ import { playAnswerSound } from "../lib/answerSound";
 import { basilEarnedText } from "../lib/gamification";
 import { learningFeedback } from "../lib/learningFeedback";
 import { ISpyLevelHelp } from "../components/ISpyLevelHelp";
-
-const clueOpening = (languageCode: string) => languageCode === "es"
-  ? "Veo, veo, algo que"
-  : languageCode === "fr"
-    ? "Je vois, je vois, quelque chose qui"
-    : languageCode === "de"
-      ? "Ich sehe etwas, das"
-      : languageCode === "ko"
-        ? "나는 무언가를 보고 있어요:"
-        : "I spy with my little eye, something that";
+import { clueOpening } from "../lib/ispyClue";
 
 export function ISpyPhase1() {
   const navigate = useNavigate();
@@ -192,7 +183,7 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
     {checking ? <InlineLoader compact label="Checking your answer" /> : null}
     {answered || result ? <>
       <Feedback tone={isCorrect === false ? "warn" : "good"}><div className="stack-2" role="status">
-        {task.status === "skipped" ? <strong>Skipped — no Basil earned.</strong> : <>
+        {task.status === "skipped" ? <strong>Skipped.</strong> : <>
           {isCorrect !== null ? <strong>{learningFeedback(isCorrect ? "correct" : "incorrect", task.id)}</strong> : null}
           <span>{feedback ?? "Answer saved."}</span>
         </>}

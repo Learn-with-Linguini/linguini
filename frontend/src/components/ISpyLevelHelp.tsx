@@ -5,8 +5,12 @@ import { MissionCheatSheetLauncher } from "./MissionCheatSheet";
 import { Button } from "./ui";
 import "./ISpyLevelHelp.css";
 
-/** Scene vocabulary for every learner; A1/A2 may reveal it when they need support. */
-export function ISpyLevelHelp({ support, languageCode }: { support: ISpyLevelSupport; languageCode: string }) {
+/** Scene vocabulary for every learner; A1/A2 may reveal it when they need support.
+ * With ``onPick`` (writing a clue) a tapped word is added to the learner's clue. */
+export function ISpyLevelHelp({ support, languageCode, onPick, canPick = () => true }: {
+  support: ISpyLevelSupport; languageCode: string;
+  onPick?: (text: string) => void; canPick?: (text: string) => boolean;
+}) {
   const words = support.wordBank ?? [];
   const sheet = support.cheatSheet;
   const collapsible = support.learnerLevel === "A1" || support.learnerLevel === "A2";
@@ -34,9 +38,17 @@ export function ISpyLevelHelp({ support, languageCode }: { support: ISpyLevelSup
           contentVersion={sheet.contentVersion} languageCode={languageCode} /> : null}
       </div>
     </div>
+    {words.length && wordsShown && onPick ? <p className="small muted ispy-help__hint">Tap a word to add it to your clue.</p> : null}
     {words.length && wordsShown ? <ul className="ispy-help__words">
       {words.map((word, index) => <li key={word.text}>
-        <button type="button" className="ispy-help__word" aria-describedby={`${idPrefix}-${index}`}
+        <button type="button" className={`ispy-help__word${word.kind ? ` ispy-help__word--${word.kind}` : ""}`}
+          aria-describedby={`${idPrefix}-${index}`}
+          aria-label={onPick ? `Add ${word.text} to your clue` : undefined}
+          disabled={onPick ? !canPick(word.text) : undefined}
+          onClick={onPick ? () => {
+            onPick(word.text);
+            trackAction("ispy_word_bank_word_added", { learnerLevel: support.learnerLevel, kind: word.kind ?? "unknown" });
+          } : undefined}
           onMouseEnter={() => showMeaning(word.text)} onFocus={() => showMeaning(word.text)}>
           <strong lang={languageCode}>{word.text}</strong>
           <span id={`${idPrefix}-${index}`} className="ispy-help__meaning" role="tooltip">{word.translation}</span>

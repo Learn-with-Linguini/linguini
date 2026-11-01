@@ -606,7 +606,7 @@ function MissionSnapshotFacts({ task, scene }: { task: SessionTask; scene: Retur
       {snapshot.pretend ? <li>It's pretend</li> : null}
       {snapshot.reaction ? <li>You {snapshot.reaction === "like" ? "like" : "don't like"} it</li> : null}
       {snapshot.taughtChunks.slice(0, 3).map(chunk => <li key={chunk.text}>
-        <span lang={scene.languageCode}>{chunk.text}</span> — {chunk.translation}
+        <span lang={scene.languageCode}>{chunk.text}</span>: {chunk.translation}
       </li>)}
     </ul>
   </section>;

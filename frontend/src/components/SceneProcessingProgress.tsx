@@ -58,7 +58,7 @@ export function SceneProcessingProgress({ detail, stalled = false }: { detail: P
       })}
     </div>
     <p className="scene-processing-progress__status" data-stalled={stalled || undefined}>
-      <span role="status">{stalled ? "Updates paused — check again" : label}</span>
+      <span role="status">{stalled ? "Updates paused. Check again" : label}</span>
     </p>
   </div>;
 }
