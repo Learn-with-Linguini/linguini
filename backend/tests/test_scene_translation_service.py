@@ -320,6 +320,16 @@ def test_schema_restricts_gender_to_supported_values_or_null() -> None:
     }
 
 
+def test_schema_encodes_agreement_forms_as_strict_pairs() -> None:
+    term_schema = build_scene_translation_schema()["properties"]["attributes"]["items"]
+    agreement_schema = term_schema["properties"]["agreementForms"]
+
+    assert agreement_schema["type"] == "array"
+    assert agreement_schema["items"]["additionalProperties"] is False
+    assert agreement_schema["items"]["required"] == ["key", "value"]
+    assert '"additionalProperties": {' not in json.dumps(build_scene_translation_schema())
+
+
 def test_literal_null_metadata_is_normalized_for_non_objects() -> None:
     output = json.loads(VALID_OUTPUT)
     output["attributes"][0].update(article="null", gender="null")
