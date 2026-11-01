@@ -9,12 +9,12 @@ import unicodedata
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from functools import partial
 from uuid import UUID, uuid5
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import DateTime, and_, delete, func, insert, select, update
+from sqlalchemy import DateTime, and_, delete, func, insert, or_, select, update
 from sqlalchemy.dialects.postgresql import insert as upsert
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -132,6 +132,7 @@ from app.services.mission_eligibility import (
     lesson_missions,
     mission_snapshot,
     plan_missions,
+    practice_ranks,
     provisional_mission_focus,
     saved_counted_groups,
     scene_shortfall,
@@ -1939,7 +1940,7 @@ class PostgresWorkflowRepository:
 
         context = operation_context(session.mode, profile)
         candidates = lesson_missions(session.mode, profile, context)
-        practised = {label.strip().casefold() for label in practised_labels}
+        practised = practice_ranks(practised_labels)
         provisional, selected_ids = provisional_mission_focus(
             candidates, result.objects, result.relations, context,
             history=history, practised_labels=practised,
@@ -1978,13 +1979,15 @@ class PostgresWorkflowRepository:
         }
 
     def _practised_labels(self, c, session):
-        """Labels this learner confirmed in earlier lessons on the same photo.
+        """Labels this learner confirmed in earlier lessons on the same photo, each
+        ranked by (lessons that practised it, when the latest of those confirmed it).
 
         Only lessons that reached practice count, so leaving at the review step
-        does not hide a word from the next visit.
+        does not hide a word from the next visit. An answered question is
+        practice even when the learner left before submitting the whole task.
         """
         rows = c.execute(
-            select(scene_objects.c.label)
+            select(scene_objects.c.label, sessions.c.id, sessions.c.scene_confirmed_at)
             .join(sessions, sessions.c.id == scene_objects.c.session_id)
             .where(
                 sessions.c.user_id == self.user_id,
@@ -1992,13 +1995,27 @@ class PostgresWorkflowRepository:
                 sessions.c.scene_media_asset_id == session.scene_media_asset_id,
                 sessions.c.mode == SessionMode.LESSON,
                 sessions.c.id != session.id,
-                select(task_attempts.c.id)
-                .join(session_tasks, session_tasks.c.id == task_attempts.c.session_task_id)
-                .where(session_tasks.c.session_id == sessions.c.id)
-                .exists(),
+                or_(
+                    select(task_attempts.c.id)
+                    .join(session_tasks, session_tasks.c.id == task_attempts.c.session_task_id)
+                    .where(session_tasks.c.session_id == sessions.c.id)
+                    .exists(),
+                    select(question_events.c.id)
+                    .where(
+                        question_events.c.user_id == self.user_id,
+                        question_events.c.session_id == sessions.c.id,
+                    )
+                    .exists(),
+                ),
             )
-        ).scalars()
-        return {label.strip().casefold() for label in rows}
+        ).all()
+        lessons, latest = {}, {}
+        for label, session_id, confirmed_at in rows:
+            label = label.strip().casefold()
+            confirmed_at = confirmed_at or datetime.min.replace(tzinfo=UTC)
+            lessons.setdefault(label, set()).add(session_id)
+            latest[label] = max(latest.get(label, confirmed_at), confirmed_at)
+        return {label: (len(ids), latest[label]) for label, ids in lessons.items()}
 
     def _mission_history(self, c, profile_id, session_id):
         """Mission ids planned by this profile's other lessons, for least-planned rotation."""
