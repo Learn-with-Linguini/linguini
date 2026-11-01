@@ -140,6 +140,7 @@ from app.services.mission_eligibility import (
 from app.services.mission_roleplay import assign_a0_scenario, assign_roleplay
 from app.services.quantities import suggested_quantity
 from app.services.question_outcomes import (
+    _default_evidence,
     normalize_answer,
     offered_supports,
     review_details,
@@ -900,7 +901,12 @@ class PostgresWorkflowRepository:
             elif wrong_field:
                 feedback = "Check that detail and try again."
         evaluation = next(
-            item for item in task.answer_key.question_evaluations if item.question_id == question_id
+            (
+                item
+                for item in task.answer_key.question_evaluations
+                if item.question_id == question_id
+            ),
+            None,
         )
         supports = []
         if task.public_content.mission_id == "M06":
@@ -910,6 +916,31 @@ class PostgresWorkflowRepository:
         mission = (
             get_mission(*task.public_content.mission_key)
             if task.public_content.mission_key else None
+        )
+        # Tasks stored before evaluation metadata covered every question grade
+        # normally but report an unassessed outcome (same as review_details).
+        outcome = (
+            QuestionOutcome(
+                question_id=question_id,
+                outcome="correct" if is_correct else "incorrect",
+                objective_id=evaluation.objective_id,
+                target_ids=evaluation.target_ids,
+                evidence_type=evaluation.evidence_type,
+                assistance=supports,
+                assistance_used=any(
+                    mission is None or mission.counts_as_assistance(item) for item in supports
+                ),
+            )
+            if evaluation
+            else QuestionOutcome(
+                question_id=question_id,
+                outcome="unassessed",
+                evidence_type=_default_evidence(question),
+                assistance=supports,
+                assistance_used=any(
+                    mission is None or mission.counts_as_assistance(item) for item in supports
+                ),
+            )
         )
         return LessonAnswerCheck(
             basil_earned=(stored or {}).get("basilEarned", 0),
@@ -921,17 +952,7 @@ class PostgresWorkflowRepository:
             feedback=feedback,
             wrong_field=wrong_field,
             assistance_steps_used=list((stored or {}).get("assistance", [])),
-            outcome=QuestionOutcome(
-                question_id=question_id,
-                outcome="correct" if is_correct else "incorrect",
-                objective_id=evaluation.objective_id,
-                target_ids=evaluation.target_ids,
-                evidence_type=evaluation.evidence_type,
-                assistance=supports,
-                assistance_used=any(
-                    mission is None or mission.counts_as_assistance(item) for item in supports
-                ),
-            ),
+            outcome=outcome,
         )
 
     def check_lesson_answer(self, task_id, question_id, answer):
