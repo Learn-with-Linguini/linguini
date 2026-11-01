@@ -100,6 +100,9 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `vocabulary_skip_prompted` | `{ taskId, stage }` | Learner taps the "Skip this task" pill beside the word activity title, opening the skip confirmation |
 | `vocabulary_skip_confirmed` | `{ taskId, stage }` | Learner confirms skipping the whole word activity |
 | `vocabulary_skip_cancelled` | `{ taskId, stage }` | Learner closes the skip confirmation and keeps learning |
+| `task_skip_prompted` | `{ taskId, kind }` | Learner taps the "Skip this task" pill beside a grammar, mission or other non-word task title, opening the skip confirmation |
+| `task_skip_confirmed` | `{ taskId, kind }` | Learner confirms skipping that task |
+| `task_skip_cancelled` | `{ taskId, kind }` | Learner closes that skip confirmation and keeps learning |
 | `vocabulary_pronunciation_clicked` | `{ termType }` | Learner replays a word using the review card's speaker button |
 
 Objects appear beside their linked adjectives, followed by unlinked adjectives and
@@ -156,7 +159,6 @@ The existing analysis and review routes show this progress; no new page is added
 | `task_finished_to_list` | `{ taskId, kind }` | Learner finishes the final task and returns to the task list |
 | `task_opened` | `{ taskId }` | User opens a mission from the mission path (tapping its row, or the Start/Continue button) |
 | `mission_path_primary_clicked` | `{ label }` | User presses the mission path's bottom button (`Start`, `Continue`, `Done` or `Play I-Spy`) |
-| `learning_exit_clicked` | — | User exits the learning task overview back to Home |
 | `finish_lesson_clicked` | — | User completes every mission on the path and presses "Done" |
 | `play_ispy_clicked` | — | User proceeds from learning tasks to play I-Spy |
 | `vocabulary_review_started` | `{ taskId, revisiting }` | User opens the interactive vocabulary review directly from the lesson overview |

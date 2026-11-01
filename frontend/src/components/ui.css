@@ -1598,6 +1598,29 @@ p[role="alert"]::before { content: "!"; }
   gap: var(--space-2);
 }
 
+.known-words__title {
+  font-size: var(--text-h3);
+}
+
+.known-words {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.known-words__pill {
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--teal) 30%, transparent);
+  border-radius: var(--radius-pill);
+  background: var(--basil-surface);
+  color: var(--teal-dark);
+  font-size: var(--text-body);
+  font-weight: 800;
+}
+
 .analysis-panel-hint {
   margin: 0;
 }
@@ -4857,19 +4880,6 @@ p[role="alert"]::before { content: "!"; }
   align-self: start;
 }
 
-.vocabulary-flow__back.icon-btn {
-  flex: none;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-pill);
-  background: var(--paper);
-  color: var(--teal-dark);
-}
-
-.vocabulary-flow__back.icon-btn:hover:not(:disabled) {
-  border-color: var(--teal);
-  background: var(--cream);
-}
-
 .vocabulary-flow__title {
   display: flex;
   align-items: center;
@@ -5033,6 +5043,68 @@ p[role="alert"]::before { content: "!"; }
   }
 }
 
+/* Grammar and mission lessons: the question's photo, object or count board sits beside the
+   question on tablet and desktop, the same split as the word activity. */
+.lesson-flow__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  /* Questions without a photo keep the narrow single column. */
+  .shell--focus > .shell__content:has(.lesson-flow__scene) {
+    max-width: none;
+    padding-inline: var(--space-8);
+  }
+
+  .lesson-flow__body:has(> .lesson-flow__scene) {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(320px, 1fr);
+    grid-template-areas: "scene panel";
+    column-gap: var(--space-8);
+    align-items: start;
+  }
+
+  .lesson-flow__scene {
+    grid-area: scene;
+    display: grid;
+    gap: var(--space-4);
+    position: sticky;
+    top: var(--space-6);
+  }
+
+  .lesson-flow__panel { grid-area: panel; }
+
+  /* Matches the marker photo's top room so the photo and the question card start level. */
+  .lesson-flow__body:has(> .lesson-flow__scene > :is(.mission-markers, .object-preview):first-child) > .lesson-flow__panel {
+    padding-top: var(--space-5);
+  }
+
+  /* The photo fills its column but stays short enough that the title, photo and caption fit on
+     one screen. The frame shrink-wraps the image so percentage markers stay aligned. */
+  .lesson-flow__scene .object-preview__scene {
+    width: auto;
+    max-width: 100%;
+  }
+
+  .lesson-flow__scene .scene {
+    width: fit-content;
+    max-width: 100%;
+    margin-inline: auto;
+  }
+
+  .lesson-flow__scene .scene-image {
+    width: auto;
+    max-width: 100%;
+    max-height: calc(100dvh - 300px);
+  }
+
+  .lesson-flow__scene .scene-image.scene-image--loading {
+    width: min(100%, calc((100dvh - 300px) * 1.6));
+  }
+}
+
 @media (min-width: 480px) {
   .vocabulary-learning-grid.vocabulary-learning-grid--paired {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -5087,13 +5159,13 @@ p[role="alert"]::before { content: "!"; }
   color: var(--ink);
 }
 
-/* Small pill beside the lesson title */
+/* Pill beside the lesson title, sized like the mission Help button next to it */
 .vocabulary-flow__skip-pill {
   flex: none;
   align-self: center;
-  min-height: 36px;
-  padding: 0 var(--space-4);
-  border: 1px solid color-mix(in srgb, var(--danger) 45%, transparent);
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: 2px solid color-mix(in srgb, var(--danger) 45%, transparent);
   border-radius: var(--radius-pill);
   background: #fdf0eb;
   color: var(--danger);
