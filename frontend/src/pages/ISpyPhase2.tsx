@@ -19,7 +19,6 @@ import type { LanguageItem } from "../data/types";
 import { ReportIssueLink } from "../components/ReportIssueLink";
 import { learningFeedback } from "../lib/learningFeedback";
 import { ISpyLevelHelp } from "../components/ISpyLevelHelp";
-import { ClueFramePatterns } from "../components/ClueFramePatterns";
 import { clueExample, clueOpening } from "../lib/ispyClue";
 
 export function ISpyPhase2() {
@@ -121,8 +120,6 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
   const guessed = guessedId ? scene.items.find(item => item.id === guessedId) ?? null : null;
   const content = task.publicContent;
   if (content.kind !== "reflection") return null;
-  // A0 builds the clue only by tapping word bank words; other levels can also type.
-  const tilesOnly = content.allowText === false;
   const frames = visibleFrames(content.clueFrames);
   const namesTarget = mentionsTarget(text, content.avoidWords ?? []);
   const nearName = !namesTarget && nearTarget(text, content.avoidWords ?? []);
@@ -207,7 +204,6 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
       <strong className="ispy-target-card__word" lang={scene.languageCode}>{content.targetPhrase ?? target?.word}</strong>
       <span className="ispy-target-card__meaning">{target?.translation}</span>
     </div>
-    {frames.length ? <ClueFramePatterns frames={frames} languageCode={scene.languageCode} /> : null}
     <ISpyLevelHelp support={content} languageCode={scene.languageCode} onPick={locked ? undefined : addWord}
       canPick={word => !mentionsTarget(word, content.avoidWords ?? [])} />
     {/* The clue carries on from the I-Spy opener, so the opener labels the field. */}
@@ -216,12 +212,9 @@ function Reflection({ task, index, total, finishLabel, onExit, onNext }: { task:
       <span lang={scene.languageCode}>{clueOpening(scene.languageCode)}</span>
     </label>
       <input id="reflection" ref={input} className="input" value={text} maxLength={2000} disabled={locked}
-        readOnly={tilesOnly} lang={scene.languageCode}
-        placeholder={`${tilesOnly ? "Tap words, e.g." : "e.g."} ${clueExample(scene.languageCode)}…`}
+        lang={scene.languageCode}
+        placeholder={`e.g. ${clueExample(scene.languageCode)}…`}
         onChange={event => setText(event.target.value)} />
-      {tilesOnly && text && !locked ? <Button variant="quiet" onClick={() => {
-        setText(""); setInsertedChips([]);
-      }}>Start my clue again</Button> : null}
     </div>
     </section>
     {!hydrated && !restoreFailed ? <InlineLoader compact testId="restoring" label="Loading your last clue" /> : null}

@@ -571,9 +571,7 @@ test("tapping word bank words adds them to the clue and records them as help", a
     { text: "taza", translation: "cup", kind: "noun" }, { text: "roja", translation: "red", kind: "adjective" },
     { text: "sobre", translation: "on", kind: "preposition" }, { text: "la mesa", translation: "table", kind: "noun" },
   ] });
-  const pattern = [...dom.window.document.querySelectorAll(".clue-patterns__sentence")].map(item => item.textContent);
-  assert.deepEqual(pattern, ["Esadjective", "Estápreposition object"].map(text => text.replace(" ", "")),
-    "the patterns show where the adjective and preposition go");
+  assert.doesNotMatch(dom.window.document.body.textContent ?? "", /How to build your clue/);
   assert.equal(button("Add taza to your clue")?.disabled, true, "the object's own name cannot be added");
   await type("Es");
   await click("Add roja to your clue");
@@ -591,15 +589,14 @@ test("tapping word bank words adds them to the clue and records them as help", a
   root.unmount();
 });
 
-test("A0 builds the clue only by tapping word bank words", async () => {
+test("A0 can type in the clue and use word bank words", async () => {
   const root = await mountSlots("pending", { learnerLevel: "A0", allowText: false,
     wordBank: [{ text: "taza", translation: "cup" }, { text: "roja", translation: "red" }] });
-  assert.equal(clue().readOnly, true, "A0 learners tap words instead of typing");
+  assert.equal(clue().readOnly, false, "the clue input stays editable at every level");
   assert.deepEqual([...dom.window.document.querySelectorAll(".ispy-help__words strong")].map(item => item.textContent), ["taza", "roja"]);
+  await type("Es");
   await click("Add roja to your clue");
-  assert.equal(clue().value, "roja");
-  await click("Start my clue again");
-  assert.equal(clue().value, "");
+  assert.equal(clue().value, "Es roja");
   root.unmount();
 });
 
