@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
-import { FullReload } from "../components/FullReload";
 import BlogIndex from "./pages/blog/BlogIndex";
 import BlogPost from "./pages/blog/BlogPost";
 import CreditsPage from "./pages/CreditsPage";
@@ -9,6 +8,7 @@ import LearnPage from "./pages/learn/LearnPage";
 import PrivacyPage from "./pages/legal/PrivacyPage";
 import SharePage from "./pages/SharePage";
 import TermsPage from "./pages/legal/TermsPage";
+import NotFoundPage from "./pages/NotFoundPage";
 import "./styles/globals.css";
 
 function ScrollToTop() {
@@ -42,7 +42,7 @@ export default function MarketingApp() {
         <Route path="/terms" element={<TermsPage />} />
         <Route path="/credits" element={<CreditsPage />} />
         <Route path="/share" element={<SharePage />} />
-        <Route path="*" element={<FullReload />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </>
   );

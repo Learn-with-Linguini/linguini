@@ -14,6 +14,8 @@ export type Post = {
   category: PostCategory;
   /** ISO date, YYYY-MM-DD. */
   date: string;
+  /** Date of a significant editorial change, when later than publication. */
+  updatedDate?: string;
   readMinutes: number;
   cover: PostCover;
   /** Public path of a downloadable PDF version, when there is one. */
@@ -26,9 +28,10 @@ export const posts: Post[] = [
     slug: "launch-week",
     title: "How we’re launching Linguini",
     summary:
-      "Tuesday 20 October, 12:01am PT. Our Product Hunt listing, who we’re telling, the launch-day shifts and how we plan to keep the people who show up.",
+      "Our October 2026 launch plan: the Product Hunt listing, outreach, launch-day shifts and how we planned to keep the people who showed up.",
     category: "Company",
     date: "2026-10-20",
+    updatedDate: "2026-11-03",
     readMinutes: 8,
     cover: { kind: "video", src: "/blog/launch/cover-loop.mp4", poster: "/blog/launch/cover-loop-poster.jpg" },
   },
@@ -36,9 +39,10 @@ export const posts: Post[] = [
     slug: "linguini-business-model",
     title: "The Linguini business model",
     summary:
-      "Free for a daily photo, Plus when one a day isn’t enough. How we priced Linguini around learners, competitors and the AI cost of every lesson.",
+      "Our October 2026 pricing proposal and the AI cost of a lesson. Free and Plus are proposed tiers; the current public beta includes unlimited photo lessons.",
     category: "Company",
     date: "2026-10-18",
+    updatedDate: "2026-11-03",
     readMinutes: 7,
     cover: { kind: "video", src: "/blog/business-model.mp4", poster: "/blog/business-model-poster.jpg" },
   },
@@ -49,6 +53,7 @@ export const posts: Post[] = [
       "A word sticks when it belongs to a moment you lived. The idea behind Linguini’s photo lessons, and what happens inside one, step by step and cent by cent.",
     category: "Insights",
     date: "2026-10-17",
+    updatedDate: "2026-11-03",
     readMinutes: 6,
     cover: { kind: "photo", scene: "golden-gate-bridge", words: ["bridge", "sea", "tower"] },
   },
@@ -59,6 +64,7 @@ export const posts: Post[] = [
       "What each app teaches, what its free plan gives you and what a year costs, side by side. Plus the cases where Linguini is the wrong pick.",
     category: "Insights",
     date: "2026-10-17",
+    updatedDate: "2026-11-03",
     readMinutes: 4,
     cover: { kind: "photo", scene: "desk-flatlay", words: ["laptop", "phone", "notebook"] },
   },

@@ -6,5 +6,167 @@
       "permanent": true
     }
   ],
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/:page(login|demo|reset-password|onboarding|contact|payment|home|rooms|practice|ispy|progress|vocabulary|journal|profile)",
+      "destination": "/app"
+    },
+    {
+      "source": "/rooms/:roomId",
+      "destination": "/app"
+    },
+    {
+      "source": "/practice/:path*",
+      "destination": "/app"
+    },
+    {
+      "source": "/ispy/:page(play|challenge|friends|legacy-rooms)",
+      "destination": "/app"
+    },
+    {
+      "source": "/ispy/friends/:chatId",
+      "destination": "/app"
+    },
+    {
+      "source": "/ispy/games/:sessionId",
+      "destination": "/app"
+    },
+    {
+      "source": "/ispy/games/:sessionId/:phase(clues|describe|results)",
+      "destination": "/app"
+    },
+    {
+      "source": "/journal/new/:date",
+      "destination": "/app"
+    },
+    {
+      "source": "/journal/:entryId",
+      "destination": "/app"
+    },
+    {
+      "source": "/profile/edit",
+      "destination": "/app"
+    }
+  ],
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "headers": [
+    {
+      "source": "/:page(login|demo|reset-password|onboarding|contact|payment|home|rooms|practice|ispy|progress|vocabulary|journal|profile)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/rooms/:roomId",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/practice/:path*",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/ispy/:page(play|challenge|friends|legacy-rooms)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/ispy/friends/:chatId",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/ispy/games/:sessionId",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/ispy/games/:sessionId/:phase(clues|describe|results)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/journal/new/:date",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/journal/:entryId",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/profile/edit",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/app",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/share",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    },
+    {
+      "source": "/404",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, follow"
+        }
+      ]
+    }
+  ]
 }

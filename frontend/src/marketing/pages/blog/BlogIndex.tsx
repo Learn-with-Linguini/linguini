@@ -1,19 +1,47 @@
 import Link from "../../components/Link";
 import { PostCover } from "../../components/blog/PostCover";
 import { ArrowRight } from "../../components/icons";
+import { serializeJsonLd } from "../../components/JsonLd";
 import { SiteFooter } from "../../components/SiteFooter";
 import { SiteHeader } from "../../components/SiteHeader";
 import { formatPostDate, posts } from "../../data/posts";
 import { PageMeta } from "../../lib/seo";
+import { site } from "../../lib/site";
+import { siteEntities } from "../../lib/structuredData";
 import styles from "./blog.module.css";
 
 export default function BlogPage() {
   const [featured, ...rest] = posts;
+  const description = "Notes from the Linguini team on learning from photos, how lessons are built, and our product and pricing decisions.";
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@graph": [
+      ...siteEntities(),
+      {
+        "@type": "CollectionPage",
+        "@id": `${site.url}/blog`,
+        url: `${site.url}/blog`,
+        name: "Linguini blog",
+        description,
+        inLanguage: "en",
+        isPartOf: { "@id": `${site.url}/#website` },
+        mainEntity: {
+          "@type": "ItemList",
+          itemListElement: posts.map((post, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: post.title,
+            url: `${site.url}/blog/${post.slug}`,
+          })),
+        },
+      },
+    ],
+  };
   return (
     <>
       <PageMeta
-        title="Blog"
-        description="Notes from the Linguini team on learning from photos, how lessons are built, and how we price the app."
+        title="Photo language learning blog"
+        description={description}
         path="/blog"
       />
       <a href="#main" className="skip-link">Skip to content</a>
@@ -69,6 +97,7 @@ export default function BlogPage() {
         </section>
       </main>
       <SiteFooter />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(jsonLd) }} />
     </>
   );
 }
