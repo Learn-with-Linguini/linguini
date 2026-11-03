@@ -28,7 +28,9 @@ function languageFaq(name: string, other: string, examples: string): LanguagePag
     },
     {
       q: `Which ${name} words will I learn?`,
-      a: `The names of the things in your photos, each with its article and gender (${examples}), plus the everyday adjectives and short sentences you need to talk about them. Because the words come from your own day, they are words you will actually use.`,
+      a: name === "Korean"
+        ? `The names of the things in your photos in Hangul (${examples}), with pronunciation and audio, plus everyday adjectives and short sentences. Korean has no grammatical gender or articles like Spanish, French or German.`
+        : `The names of the things in your photos, with their articles and grammatical gender (${examples}), plus the everyday adjectives and short sentences you need to talk about them.`,
     },
     {
       q: "Do I have to use my own photos?",
@@ -36,7 +38,7 @@ function languageFaq(name: string, other: string, examples: string): LanguagePag
     },
     {
       q: `Does Linguini teach ${other} too?`,
-      a: `Yes. The Linguini app teaches Spanish, French, German, and beginner Korean, from English.`,
+      a: "Yes. The Linguini app teaches Spanish, French, German and beginner Korean, from English.",
     },
   ];
 }
@@ -48,7 +50,7 @@ export const languagePages: LanguagePage[] = [
     name: "Spanish",
     sceneId: "hillside-street",
     description:
-      "Learn Spanish from photos of your day. Linguini names what’s in the picture, with the article and audio, and turns it into a five-minute game. Public beta access includes unlimited photo lessons.",
+      "Learn Spanish vocabulary from your photos, with articles, pronunciation and games. Try a photo lesson free, with unlimited lessons during the public beta.",
     lede: "Photograph the café you’re sitting in or the street you walked down. Linguini finds the things in the picture and teaches you their Spanish names, with the article, pronunciation and audio, then turns them into a five-minute game and a journal page.",
     other: { slug: "french", name: "French" },
     faq: languageFaq("Spanish", "French", "el coche, la calle"),
@@ -59,7 +61,7 @@ export const languagePages: LanguagePage[] = [
     name: "French",
     sceneId: "sunlit-promenade",
     description:
-      "Learn French from photos of your day. Linguini names what’s in the picture, with the article and audio, and turns it into a five-minute game. Public beta access includes unlimited photo lessons.",
+      "Learn French vocabulary from your photos, with articles, pronunciation and games. Try a photo lesson free, with unlimited lessons during the public beta.",
     lede: "Photograph the promenade on your evening walk or the view from your window. Linguini finds the things in the picture and teaches you their French names, with the article, pronunciation and audio, then turns them into a five-minute game and a journal page.",
     other: { slug: "spanish", name: "Spanish" },
     faq: languageFaq("French", "Spanish", "la voiture, le pont"),
@@ -70,7 +72,7 @@ export const languagePages: LanguagePage[] = [
     name: "German",
     sceneId: "alpine-castle",
     description:
-      "Learn German from photos of your day. Linguini names what’s in the picture, with the article, gender and audio, and turns it into a five-minute game. Public beta access includes unlimited photo lessons.",
+      "Learn German words from your photos, with der, die, das, pronunciation and games. Try a photo lesson free, with unlimited lessons during the public beta.",
     lede: "Photograph your study desk, a morning walk or an alpine view. Linguini finds the things in the picture and teaches you their German names, with the article (der, die, das), pronunciation and audio, then turns them into a five-minute game and a journal page.",
     other: { slug: "korean", name: "Korean" },
     faq: languageFaq("German", "Korean", "das Schloss, der Baum, die Straße"),
@@ -81,7 +83,7 @@ export const languagePages: LanguagePage[] = [
     name: "Korean",
     sceneId: "cafe-interior",
     description:
-      "Learn beginner Korean from photos of your day. Linguini names what’s in the picture, with pronunciation and audio, and turns it into a five-minute game. Public beta access includes unlimited photo lessons.",
+      "Learn beginner Korean words from your photos, with Hangul, pronunciation and games. Try a photo lesson free, with unlimited lessons during the public beta.",
     lede: "Photograph your morning coffee, your desk or your favorite meal. Linguini finds the things in the picture and teaches you their Korean names, with pronunciation and audio, then turns them into a five-minute game and a journal page.",
     other: { slug: "german", name: "German" },
     faq: languageFaq("Korean", "German", "탁자, 소파, 시계"),

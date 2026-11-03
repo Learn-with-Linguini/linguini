@@ -391,7 +391,7 @@
 
 /* ---------- Shared reveal for static figures ---------- */
 
-.reveal > * {
+:global(.js) .reveal > * {
   opacity: 0;
   transform: translateY(14px);
   transition: opacity 0.5s var(--ease-out), transform 0.6s var(--ease-out);
@@ -401,6 +401,36 @@
 .reveal[data-inview] > * {
   opacity: 1;
   transform: none;
+}
+
+/* Show complete figures when JavaScript is unavailable. */
+:global(html:not(.js)) .row,
+:global(html:not(.js)) .step .card,
+:global(html:not(.js)) .mapWin,
+:global(html:not(.js)) .map .point,
+:global(html:not(.js)) .map .callout {
+  opacity: 1;
+}
+
+:global(html:not(.js)) .row .range,
+:global(html:not(.js)) .row .dot,
+:global(html:not(.js)) .priceLine,
+:global(html:not(.js)) .mapWin,
+:global(html:not(.js)) .appBar i {
+  opacity: 1;
+  transform: none;
+}
+
+:global(html:not(.js)) .map .point {
+  transform: translate(-9px, -50%);
+}
+
+:global(html:not(.js)) .map .callout {
+  transform: translate(-50%, 0);
+}
+
+:global(html:not(.js)) .draw {
+  stroke-dashoffset: 0;
 }
 
 /* ---------- Break-even ---------- */

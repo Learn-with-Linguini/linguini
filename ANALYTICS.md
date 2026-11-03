@@ -2,6 +2,13 @@
 Linguini uses dual-dispatch analytics combining **Google Analytics 4 (GA4)** and **Contentsquare**.
 All tracking helpers are centralized in `frontend/src/lib/analytics.ts`.
 
+Public marketing routes (`/`, `/learn/spanish`, `/learn/french`, `/learn/german`,
+`/learn/korean`, `/blog`, its article routes, `/credits`, `/privacy`, `/terms` and
+`/share`) retain automatic SPA pageviews through `AnalyticsTracker`. Static HTML
+generation sends no events. `marketing_language_link` records comparison-article
+navigation to a language page with `{ source: "comparison_article", language }`,
+where `language` is `es`, `fr`, `de` or `ko`.
+
 ---
 
 ## 1. Environment Configuration
