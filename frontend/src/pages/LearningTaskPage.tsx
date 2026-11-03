@@ -25,7 +25,7 @@ import { questionMarkerObjects } from "../lib/missionMarkers";
 import { completeSlot, writtenPromptShown } from "../lib/missionA0";
 import { trackAction } from "../lib/analytics.ts";
 import { fillMissionGap } from "../lib/missionGaps";
-import { playAnswerSound } from "../lib/answerSound";
+import { celebrateAnswer } from "../lib/answerCelebration";
 import { learningFeedback } from "../lib/learningFeedback";
 import { vocabularyRecapSteps } from "../lib/vocabularyRecap";
 import { MissionCheatSheetLauncher } from "../components/MissionCheatSheet";
@@ -113,10 +113,10 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onSc
   const card = scene.items.find(item => item.id === task.sceneObjectId);
   const terminal = taskDone(task);
   const reading = ["vocabularyIntroduction", "grammarExplanation", "syntaxExplanation"].includes(task.kind);
-  const submit = async () => {
+  const submit = async (picked = choice) => {
     const answer: TaskAnswer | undefined = reading ? undefined : content.kind === "grammarPractice"
-      ? { inputMode: "multipleChoice", optionId: choice } : { inputMode: "text", text };
-    if (terminal || practiceSaving || busy.current || (!reading && !(content.kind === "grammarPractice" ? choice : text.trim()))) return;
+      ? { inputMode: "multipleChoice", optionId: picked } : { inputMode: "text", text };
+    if (terminal || practiceSaving || busy.current || (!reading && !(content.kind === "grammarPractice" ? picked : text.trim()))) return;
     busy.current = true;
     setChecking(true);
     const identity = JSON.stringify(answer ?? {});
@@ -133,7 +133,7 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onSc
           trackAction("task_answer_checked", { taskId: task.id, isCorrect: result.attempt?.isCorrect, kind: content.kind });
           setFeedback(result.attempt?.feedback?.message ?? "Saved.");
           setAnswerCorrect(result.attempt?.isCorrect ?? null);
-          if (result.attempt?.isCorrect != null) playAnswerSound(result.attempt.isCorrect);
+          if (result.attempt?.isCorrect != null) celebrateAnswer(result.attempt.isCorrect);
         }
       }
     } finally {
@@ -163,7 +163,10 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onSc
     {"prompt" in content ? <p className="muted">{content.prompt}</p> : null}
     {content.kind === "grammarPractice" ? <div className="choice-grid">{choiceOrder(content.options, task.id, option => option).map(option => {
       const state = choice !== option ? "" : answerCorrect === null ? " choice--selected" : answerCorrect ? " choice--correct" : " choice--incorrect";
-      return <button key={option} className={`choice${state}`} aria-pressed={choice === option} disabled={terminal || practiceSaving || checking || answerCorrect !== null} onClick={() => setChoice(option)}>{option}</button>;
+      return <button key={option} className={`choice${state}`} aria-pressed={choice === option} disabled={terminal || practiceSaving || checking || answerCorrect !== null} onClick={() => {
+        setChoice(option);
+        void submit(option);
+      }}>{option}</button>;
     })}</div> : null}
     {content.kind === "sentenceBuilding" ? <><p>{content.sourceText}</p><div className="chip-row">{content.tokenBank.map((token, i) => <button key={i} className="chip" disabled={terminal || practiceSaving} onClick={() => setText(value => (value + " " + token).trim())}>{token}</button>)}</div></> : null}
     {!reading && content.kind !== "grammarPractice" ? <div className="field"><label className="field__label" htmlFor="task-answer">Your answer</label><input id="task-answer" className="input" value={text} maxLength={2000} disabled={terminal || practiceSaving} onChange={event => setText(event.target.value)} /></div> : null}
@@ -176,6 +179,8 @@ function LearningTaskContent({ task, index, total, onNext, onClose, onExit, onSc
     <BasilReward text={earnedText} />
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {terminal ? <Button block disabled={practiceSaving} onClick={onNext}>{index < total - 1 ? "Next task" : "Finish task"}</Button>
+      // Choosing an option submits it, so the button only returns to retry an answer that did not save.
+      : content.kind === "grammarPractice" && (!choice || checking || answerCorrect !== null) ? null
       : <Button block disabled={practiceSaving || checking || (!reading && !(content.kind === "grammarPractice" ? choice : text.trim()))} onClick={() => void submit()}>{reading ? "Mark complete" : "Submit answer"}</Button>}
     {feedback || earnedText ? <div className="learning-question-report"><ReportIssueLink reportType={taskTitle(task)} fields={[
       ["Task ID", task.id],
@@ -424,7 +429,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
       setPendingOptionId(null);
       if (revisiting) trackAction("vocabulary_recap_answer_checked", { kind: "recognition", isCorrect: result.isCorrect });
       refreshBasil();
-      playAnswerSound(result.isCorrect);
+      celebrateAnswer(result.isCorrect);
     } catch {
       setQuestionError("We couldn’t save this answer. Try again when you’re connected.");
     } finally {
@@ -448,7 +453,7 @@ function VocabularyLearningFlow({ task, index, total, onNext, onClose, onExit, r
       });
       if (result.basilEarned > 0) refreshBasil();
       if (revisiting) trackAction("vocabulary_recap_answer_checked", { kind: "recall", isCorrect: result.isCorrect, revealed: result.revealed });
-      if (result.isCorrect) playAnswerSound(true);
+      if (result.isCorrect) celebrateAnswer(true);
     } catch (error) {
       setFeedback(friendlyError(error));
     } finally {
@@ -867,16 +872,16 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onScenarioCha
   }, [checks, isSituation, question, scene.languageCode]);
   if (content.kind !== "grammarLesson") return null;
 
-  const check = async () => {
-    if (!question || !answer || checking || saved.isLoading) return;
+  const check = async (picked = answer) => {
+    if (!question || !picked || checking || saved.isLoading) return;
     setChecking(true);
     setCheckError(null);
     try {
-      const result = await checkLessonAnswer(task.id, question.questionId, answer);
+      const result = await checkLessonAnswer(task.id, question.questionId, picked);
       refreshBasil();
       setLocalChecks(value => ({ ...value, [result.questionId]: result }));
       setRetryReady(value => ({ ...value, [result.questionId]: false }));
-      playAnswerSound(result.isCorrect);
+      celebrateAnswer(result.isCorrect);
     } catch (error) {
       setCheckError(friendlyError(error));
     } finally {
@@ -964,6 +969,10 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onScenarioCha
   };
 
   const gapQuestion = Boolean(isSituation && question?.gapType && question.interactionType !== "sentenceBuilding");
+  // Choosing an option checks it at once; the button only returns to retry a check that failed.
+  const choiceQuestion = question?.interactionType === "multipleChoice"
+    && !(question.typedAllowed && typedMode[question.questionId]);
+  const checkButtonShown = !choiceQuestion || Boolean(checkError && answer && !checking);
 
   return <div className="stack vocabulary-flow">
     <div className="vocabulary-flow__header">
@@ -989,6 +998,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onScenarioCha
             if (marker) {
               setAnswers(value => ({ ...value, [question.questionId]: marker.option.optionId }));
               trackAction("lesson_marker_selected", { taskId: task.id, questionId: question.questionId, marker: item.marker });
+              void check(marker.option.optionId);
             }
           } : undefined}
       /></div>}</div> : null}
@@ -1042,6 +1052,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onScenarioCha
           onSelect={optionId => {
             setTypedMode(value => ({ ...value, [question.questionId]: false }));
             setAnswers(value => ({ ...value, [question.questionId]: optionId }));
+            void check(optionId);
           }}
           onTypedMode={() => setTypedMode(value => ({ ...value, [question.questionId]: !value[question.questionId] }))}
           onTypedAnswer={value => setTypedAnswers(current => ({ ...current, [question.questionId]: value }))}
@@ -1109,6 +1120,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onScenarioCha
                 setRetryPassed(value => ({ ...value, [question.questionId]: option.label === result?.correctAnswer }));
               } else {
                 setAnswers(value => ({ ...value, [question.questionId]: option.optionId }));
+                void check(option.optionId);
               }
             }}>
             {isSituation && question.optionIcons?.[option.optionId]
@@ -1162,8 +1174,8 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onScenarioCha
     <BasilReward text={earnedText} />
     {terminal ? <Button block onClick={onNext}>{index < total - 1 ? "Next task" : "Finish task"}</Button>
       : question && !isChecked
-        ? <Button block disabled={!answer || checking || saved.isLoading || saved.isError || practiceSaving}
-          onClick={() => void check()}>{retrying ? "Check again" : "Check answer"}</Button>
+        ? checkButtonShown ? <Button block disabled={!answer || checking || saved.isLoading || saved.isError || practiceSaving}
+          onClick={() => void check()}>{retrying ? "Check again" : "Check answer"}</Button> : null
       : question && activeIndex < content.questions.length - 1
         ? <Button block disabled={checking || practiceSaving || saved.isLoading || saved.isError}
           onClick={() => setActiveIndex(activeIndex + 1)}>Next question</Button>
@@ -1245,12 +1257,12 @@ function GrammarLessonFlow({ task, index, total, onNext }: { task: SessionTask; 
   const activeAnswer = activeQuestion ? answerFor(activeQuestion) : "";
   const activeResult = activeQuestion ? results[activeQuestion.questionId] : undefined;
   const allChecked = content.questions.every(question => results[question.questionId] !== undefined);
-  const check = async () => {
-    if (!activeQuestion || !activeAnswer || checking) return;
+  const check = async (picked = activeAnswer) => {
+    if (!activeQuestion || !picked || checking) return;
     setChecking(true);
     setCheckError(null);
     try {
-      const result = await checkLessonAnswer(task.id, activeQuestion.questionId, activeAnswer);
+      const result = await checkLessonAnswer(task.id, activeQuestion.questionId, picked);
       setQuestionBasil(value => ({ ...value, [result.questionId]: result.basilEarned ?? 0 }));
       refreshBasil();
       setQuestionResults(value => ({ ...value, [result.questionId]: result.isCorrect }));
@@ -1259,7 +1271,7 @@ function GrammarLessonFlow({ task, index, total, onNext }: { task: SessionTask; 
         setCorrectAnswers(value => ({ ...value, [result.questionId]: correctAnswer }));
       }
       setOutcomes(value => ({ ...value, [result.questionId]: result.outcome }));
-      playAnswerSound(result.isCorrect);
+      celebrateAnswer(result.isCorrect);
     } catch (error) {
       setCheckError(friendlyError(error));
     } finally {
@@ -1331,6 +1343,7 @@ function GrammarLessonFlow({ task, index, total, onNext }: { task: SessionTask; 
             if (marker) {
               setAnswers(value => ({ ...value, [question.questionId]: marker.option.optionId }));
               trackAction("lesson_marker_selected", { taskId: task.id, questionId: question.questionId, marker: item.marker });
+              void check(marker.option.optionId);
             }
           }} /></div> : null}
     </div> : null}
@@ -1376,7 +1389,10 @@ function GrammarLessonFlow({ task, index, total, onNext }: { task: SessionTask; 
           chosen={chosen[question.questionId]} graded={results[question.questionId]}
           solution={solutions[question.questionId]}
           disabled={terminal || practiceSaving || checking || results[question.questionId] !== undefined}
-          onChoose={optionId => setAnswers(value => ({ ...value, [question.questionId]: optionId }))} />
+          onChoose={optionId => {
+            setAnswers(value => ({ ...value, [question.questionId]: optionId }));
+            void check(optionId);
+          }} />
         : <>{!markers.length ? <div className="choice-grid">{questionOptions(question, `${task.id}:${question.questionId}`).map(option => {
           const selected = chosen[question.questionId] === option.optionId;
           const graded = results[question.questionId];
@@ -1384,7 +1400,10 @@ function GrammarLessonFlow({ task, index, total, onNext }: { task: SessionTask; 
             : !selected ? ""
               : graded === undefined ? " choice--selected" : graded ? " choice--correct" : " choice--incorrect";
           return <button key={option.optionId} className={`choice${state}`} aria-pressed={selected} disabled={terminal || practiceSaving || checking || graded !== undefined}
-            onClick={() => setAnswers(value => ({ ...value, [question.questionId]: option.optionId }))}>
+            onClick={() => {
+              setAnswers(value => ({ ...value, [question.questionId]: option.optionId }));
+              void check(option.optionId);
+            }}>
             <span {...nativeProps}>{optionText(question, option.label)}</span>{question.romanizations?.[option.label] ? <small lang="und-Latn" dir="ltr"> {question.romanizations[option.label]}</small> : null}</button>;
         })}</div> : null}</>}
       </>}
@@ -1420,7 +1439,9 @@ function GrammarLessonFlow({ task, index, total, onNext }: { task: SessionTask; 
     {practiceError ? <p role="alert">{practiceError}</p> : null}
     {terminal ? <Button block onClick={onNext}>{index < total - 1 ? "Next task" : "Finish task"}</Button> : <>
       {activeResult === undefined
-        ? <Button block disabled={!activeAnswer || practiceSaving || checking} onClick={() => void check()}>Check answer</Button>
+        // Choosing an option checks it at once; the button only returns to retry a check that failed.
+        ? activeQuestion?.interactionType === "sentenceBuilding" || (checkError && activeAnswer && !checking)
+          ? <Button block disabled={!activeAnswer || practiceSaving || checking} onClick={() => void check()}>Check answer</Button> : null
         : activeIndex < content.questions.length - 1
           ? <Button block disabled={checking} onClick={() => setActiveIndex(value => value + 1)}>Next question</Button>
           : <Button block disabled={!answered || !allChecked || practiceSaving || checking} onClick={() => void submit()}>Finish task</Button>}

@@ -15,7 +15,7 @@ import { getLatestAttempt } from "../lib/api";
 import type { SessionTask, TaskActionResult } from "../lib/api";
 import { queryKeys } from "../lib/queryKeys";
 import { ReportIssueLink } from "../components/ReportIssueLink";
-import { playAnswerSound } from "../lib/answerSound";
+import { celebrateAnswer } from "../lib/answerCelebration";
 import { basilEarnedText } from "../lib/gamification";
 import { learningFeedback } from "../lib/learningFeedback";
 import { ISpyLevelHelp } from "../components/ISpyLevelHelp";
@@ -110,7 +110,7 @@ function ClueRound({ task, index, total, describePath, skipDescription, finishLa
     try {
       const saved = await actOnTask(task.id, "attempts", { inputMode: "multipleChoice", optionId }, request.current.key);
       setResult(saved);
-      if (saved?.attempt?.isCorrect != null) playAnswerSound(saved.attempt.isCorrect);
+      if (saved?.attempt?.isCorrect != null) celebrateAnswer(saved.attempt.isCorrect);
       if (saved) {
         request.current = null;
         if (saved.attempt?.isCorrect === false) setMissed(value => [...value, optionId]);

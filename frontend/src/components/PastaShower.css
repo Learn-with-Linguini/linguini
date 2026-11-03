@@ -1,0 +1,68 @@
+/* Decorative only: the overlay never takes a tap away from the next answer. */
+.pasta-shower {
+  position: fixed;
+  z-index: 130;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.pasta-shower__piece {
+  position: absolute;
+  top: 0;
+  left: var(--x);
+  width: var(--size);
+  height: auto;
+  opacity: 0;
+  transform: translate3d(-50%, -12vh, 0);
+  animation: pasta-shower-fall var(--duration) cubic-bezier(0.3, 0.55, 0.5, 1) var(--delay) forwards;
+  filter: drop-shadow(0 3px 2px rgb(38 50 56 / 0.18));
+  will-change: transform, opacity;
+}
+
+.pasta-shower__sauce {
+  height: var(--size);
+  border-radius: 50%;
+  filter: none;
+}
+
+/* A perfect finish adds a pasta-yellow glow and twinkling sauce dots. */
+.pasta-shower--perfect::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 0%, rgb(249 174 34 / 0.28), transparent 60%);
+  animation: pasta-shower-glow 3.6s ease-out forwards;
+}
+
+.pasta-shower--perfect .pasta-shower__sauce {
+  animation-name: pasta-shower-fall, pasta-shower-twinkle;
+  animation-duration: var(--duration), 480ms;
+  animation-timing-function: cubic-bezier(0.3, 0.55, 0.5, 1), ease-in-out;
+  animation-delay: var(--delay), var(--delay);
+  animation-iteration-count: 1, infinite;
+  animation-direction: normal, alternate;
+  animation-fill-mode: forwards, none;
+}
+
+@keyframes pasta-shower-fall {
+  0% { opacity: 0; transform: translate3d(-50%, -12vh, 0) rotate(0deg); }
+  8% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(calc(-50% + var(--drift)), 108vh, 0) rotate(var(--spin)); }
+}
+
+@keyframes pasta-shower-twinkle {
+  from { scale: 1; }
+  to { scale: 0.55; }
+}
+
+@keyframes pasta-shower-glow {
+  0% { opacity: 0; }
+  15% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pasta-shower { display: none; }
+}

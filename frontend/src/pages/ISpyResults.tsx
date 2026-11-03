@@ -1,9 +1,11 @@
 import { LoadingScreen } from "../components/LoadingScreen";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button, Card } from "../components/ui";
 import { getPracticeSummary, startISpyGame } from "../lib/api";
+import { trackAction } from "../lib/analytics.ts";
+import { celebrateFinish, type FinishScore } from "../lib/answerCelebration";
 import { practiceStages } from "../lib/practiceTasks";
 import { gameStartError, queryError, queryKeys } from "../lib/queryKeys";
 import { sessionDestination } from "../lib/sessionRoute";
@@ -25,6 +27,16 @@ export function ISpyResults() {
   const completed = session?.session.status === "completed" && !completionPending && !completionError && Boolean(data) && !error;
   const described = session ? practiceStages(session.tasks).reflection : [];
   const found = described.filter(task => task.status === "completed").length;
+  const celebrated = useRef(false);
+  useEffect(() => {
+    if (!completed || !data || celebrated.current) return;
+    celebrated.current = true;
+    // Every clue and description solved, with no rounds skipped, is a perfect game.
+    const score: FinishScore = data.ispyAttemptCount > 0 && data.ispyCorrectCount === data.ispyAttemptCount
+      && data.progress.skippedTaskCount === 0 ? "perfect" : "partial";
+    celebrateFinish(score);
+    trackAction("finish_celebration_shown", { screen: "ispy", score });
+  }, [completed, data]);
   const playAgain = async () => {
     if (!session || !activeProfile || starting) return;
     setStarting(true); setStartError(null);
