@@ -12,6 +12,7 @@ application guides and the supporting project work.
 | UI implementation conventions | [Frontend guide](../frontend/AGENTS.md) |
 | Product design and visual tokens | [Design guide](../frontend/design.md) |
 | Repository skills | [Skills index](skills.md) |
+| Submit published content changes to participating search engines | [IndexNow](indexnow.md) |
 | Security findings and staging checks | [Security review](SECURITY.md) (introduced in [#258](https://github.com/Learn-with-Linguini/linguini/pull/258)) |
 | Static and dependency scans | [Security checks](security-checks.md) (introduced in [#258](https://github.com/Learn-with-Linguini/linguini/pull/258)) |
 | Analytics events and pages | [Analytics](../ANALYTICS.md) |
