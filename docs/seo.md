@@ -23,7 +23,8 @@ not translated versions of the website, so these pages do not use `hreflang`.
 and runs `npm run check:seo`. This check reads HTML without executing JavaScript.
 It verifies content, unique metadata, canonical URLs, structured data, initial
 styles, asset existence, sitemap agreement and noindex shells. Existing CI runs it
-as part of the frontend build. Hydration/navigation regressions run with `npm test`.
+as part of the frontend build. CI also starts the built preview and checks its
+actual HTTP responses. Hydration/navigation regressions run with `npm test`.
 
 `vercel.json` uses clean URLs and rewrites only supported learner routes to the
 noindex app shell. `/share` remains a query-dependent, noindex browser page.
