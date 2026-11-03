@@ -1,9 +1,11 @@
 import { SiteFooter } from "../components/SiteFooter";
 import { SiteHeader } from "../components/SiteHeader";
+import { PageMeta } from "../lib/seo";
 
 export default function NotFoundPage() {
   return (
     <>
+      <PageMeta title="Page not found" description="That page may have moved. Return to Linguini to learn a language from everyday photos, explore the blog or try a photo lesson." path="/404" noIndex />
       <SiteHeader />
       <main className="container" id="main">
         <section aria-labelledby="not-found-title">
