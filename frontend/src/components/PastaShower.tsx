@@ -7,9 +7,9 @@ const SAUCE = ["var(--tomato)", "var(--pasta)", "var(--teal)"] as const;
 
 /** A correct answer gets a quick sprinkle; a perfect finish gets a long, dense, sparkling shower. */
 const SHOWERS: Record<PastaShowerVariant, { pieces: number; sparkles: number; size: [number, number]; duration: [number, number]; spread: number }> = {
-  answer: { pieces: 12, sparkles: 0, size: [26, 40], duration: [1100, 1600], spread: 250 },
-  partial: { pieces: 20, sparkles: 0, size: [32, 48], duration: [2200, 3000], spread: 900 },
-  perfect: { pieces: 46, sparkles: 28, size: [34, 56], duration: [2400, 3400], spread: 1600 },
+  answer: { pieces: 100, sparkles: 0, size: [26, 40], duration: [1100, 1600], spread: 900 },
+  partial: { pieces: 500, sparkles: 15, size: [32, 48], duration: [2200, 3000], spread: 1500 },
+  perfect: { pieces: 800, sparkles: 30, size: [34, 56], duration: [2400, 3400], spread: 1800 },
 };
 
 interface Drop { id: number; shape?: string; color?: string; style: CSSProperties }
