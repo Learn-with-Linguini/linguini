@@ -401,6 +401,42 @@ for (const missionId of ["M04", "M05"] as const) {
   });
 }
 
+test("M05 says the finished phrase only after the learner's own tap lands on the right answer", async () => {
+  const spoken: string[] = [];
+  Object.defineProperty(dom.window, "speechSynthesis", { configurable: true, value: {
+    speaking: false, pending: false, cancel() {}, getVoices: () => [], speak: (utterance: { text: string }) => spoken.push(utterance.text),
+  } });
+  globals.SpeechSynthesisUtterance = class { text: string; lang = ""; rate = 1; constructor(text: string) { this.text = text; } };
+  try {
+    const { task, positive, negative, check } = situationLesson("M05");
+    savedChecks = [check("q1", true)];
+    let view = await mount(task);
+    await waitFor(() => assert.equal(dom.window.document.querySelector(".trail__label")?.textContent, "Question 2 of 2"));
+    assert.deepEqual(spoken, [], "restoring a checked answer stays silent");
+    replies.push(() => Response.json(check("q2", false)));
+    await click(negative);
+    await waitFor(() => assert.match(text(), /The correct answer is/));
+    await new Promise(resolve => setTimeout(resolve, 800));
+    assert.deepEqual(spoken, [], "a wrong answer does not read anything aloud");
+    await click(positive);
+    await waitFor(() => assert.deepEqual(spoken, [`${positive}.`]));
+    await view.close();
+
+    savedChecks = [];
+    spoken.length = 0;
+    view = await mount(task);
+    replies.push(() => Response.json(check("q1", true)));
+    await click(positive);
+    await waitFor(() => assert.match(text(), /Correct!/));
+    assert.deepEqual(spoken, [], "the phrase waits for the answer chime");
+    await waitFor(() => assert.deepEqual(spoken, [`${positive}.`]));
+    await view.close();
+  } finally {
+    delete (dom.window as unknown as Record<string, unknown>).speechSynthesis;
+    delete globals.SpeechSynthesisUtterance;
+  }
+});
+
 test("an explicitly retryable lesson cannot finish while a saved retry is still open", async () => {
   savedChecks = [checked(false, 2)];
   await mount(lesson("M06"));

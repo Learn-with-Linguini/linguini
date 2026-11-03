@@ -3,6 +3,8 @@ import { playAnswerSound, playFinishSound } from "./answerSound";
 export type PastaShowerVariant = "answer" | "perfect" | "partial";
 export type FinishScore = "perfect" | "partial";
 export const PASTA_SHOWER_EVENT = "linguini:pasta-shower";
+/** How long the correct-answer chime rings, so speech that follows it can wait its turn. */
+export const ANSWER_CHIME_MS = 700;
 
 /** Asks the mounted `PastaShowerHost` to drop a shower of pasta over the page. */
 export function showPastaShower(variant: PastaShowerVariant) {

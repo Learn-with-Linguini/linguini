@@ -24,8 +24,8 @@ import { boardRows, practiceBoardCrop } from "../lib/practiceBoard";
 import { questionMarkerObjects } from "../lib/missionMarkers";
 import { completeSlot, writtenPromptShown } from "../lib/missionA0";
 import { trackAction } from "../lib/analytics.ts";
-import { fillMissionGap } from "../lib/missionGaps";
-import { celebrateAnswer } from "../lib/answerCelebration";
+import { fillMissionGap, situationPhrase } from "../lib/missionGaps";
+import { ANSWER_CHIME_MS, celebrateAnswer } from "../lib/answerCelebration";
 import { learningFeedback } from "../lib/learningFeedback";
 import { vocabularyRecapSteps } from "../lib/vocabularyRecap";
 import { MissionCheatSheetLauncher } from "../components/MissionCheatSheet";
@@ -795,7 +795,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onScenarioCha
   const [checkError, setCheckError] = useState<string | null>(null);
   const [actionResult, setActionResult] = useState<TaskActionResult | null>(null);
   const submitKey = useRef(crypto.randomUUID());
-  const playedCheck = useRef("");
+  const phraseTimer = useRef<number | undefined>(undefined);
   const checks = mergeLessonChecks(saved.data?.checks ?? [], localChecks);
   useEffect(() => {
     if (saved.data) setAssistanceSteps(saved.data.assistanceSteps ?? {});
@@ -855,22 +855,19 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onScenarioCha
       : slotFill || "___")
     : question?.slotTemplate;
 
-  useEffect(() => {
-    if (!isSituation || !question || !checks[question.questionId]) return;
-    const checkedAnswer = checks[question.questionId];
-    const key = `${question.questionId}:${checkedAnswer.answer}`;
-    if (playedCheck.current === key) return;
-    playedCheck.current = key;
-    const solution = question.options.find(option => option.label === checkedAnswer.correctAnswer)?.label
-      ?? checkedAnswer.correctAnswer ?? "";
-    const chunk = checkedAnswer.isCorrect
-      ? question.options.find(option => option.optionId === checkedAnswer.answer)?.label ?? solution
-      : solution;
-    const completed = question.completeChunk ?? (question.slotTemplate
-      ? fillMissionGap(question.slotTemplate, chunk) : chunk);
-    speak(checkedAnswer.isCorrect ? completed : question.audioText ?? completed, scene.languageCode);
-  }, [checks, isSituation, question, scene.languageCode]);
+  // A phrase still waiting on the answer chime belongs to the question it was checked on.
+  useEffect(() => () => window.clearTimeout(phraseTimer.current), [activeIndex]);
   if (content.kind !== "grammarLesson") return null;
+
+  // Situation missions say the finished phrase only when the learner's own tap lands on the
+  // right answer, never when saved answers are restored. After a graded check it waits for
+  // the answer chime so the two sounds do not talk over each other.
+  const sayPhrase = (item: GrammarLessonQuestion, answerLabel: string, delay = 0) => {
+    const phrase = isSituation ? situationPhrase(item, answerLabel) : null;
+    if (!phrase) return;
+    window.clearTimeout(phraseTimer.current);
+    phraseTimer.current = window.setTimeout(() => speak(phrase, scene.languageCode), delay);
+  };
 
   const check = async (picked = answer) => {
     if (!question || !picked || checking || saved.isLoading) return;
@@ -882,6 +879,9 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onScenarioCha
       setLocalChecks(value => ({ ...value, [result.questionId]: result }));
       setRetryReady(value => ({ ...value, [result.questionId]: false }));
       celebrateAnswer(result.isCorrect);
+      if (result.isCorrect) {
+        sayPhrase(question, question.options.find(option => option.optionId === picked)?.label ?? picked, ANSWER_CHIME_MS);
+      }
     } catch (error) {
       setCheckError(friendlyError(error));
     } finally {
@@ -1059,6 +1059,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onScenarioCha
           onRetry={(optionId, correct) => {
             setRetryPassed(value => ({ ...value, [question.questionId]: correct }));
             setAnswers(value => ({ ...value, [question.questionId]: optionId }));
+            if (correct) sayPhrase(question, question.options.find(option => option.optionId === optionId)?.label ?? "");
           }}
         /> : <>
         {question.roleplayPremise ? <div className="roleplay-premise" role="note" aria-label={`Scenario: ${roleplayScenario(question.roleplayPremise)}`}>
@@ -1118,6 +1119,7 @@ function SequentialGrammarLessonFlow({ task, index, total, onNext, onScenarioCha
               if (situationRetrying) {
                 setAnswers(value => ({ ...value, [question.questionId]: option.optionId }));
                 setRetryPassed(value => ({ ...value, [question.questionId]: option.label === result?.correctAnswer }));
+                if (option.label === result?.correctAnswer) sayPhrase(question, option.label);
               } else {
                 setAnswers(value => ({ ...value, [question.questionId]: option.optionId }));
                 void check(option.optionId);
