@@ -38,7 +38,7 @@ export function ProfileEdit() {
       </section>
 
       {profileError ? <p role="alert">{profileError} Your changes are still here.</p> : null}
-      {profileSaving ? <LoadingScreen label="Saving profile…" /> : null}
+      {profileSaving ? <LoadingScreen label="Saving profile" /> : null}
       <Button block disabled={profileSaving || !name.trim()} onClick={() => void saveProfile()}>Save changes</Button>
     </div>
   );

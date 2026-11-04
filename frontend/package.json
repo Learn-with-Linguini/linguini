@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && vite build --ssr src/prerender.tsx --outDir dist-ssr && node scripts/prerender.mjs && npm run check:seo",
+    "check:seo": "node scripts/check-seo-build.mjs",
     "lint": "oxlint",
     "test": "node --experimental-strip-types --test tests/*.test.ts",
     "preview": "vite preview"

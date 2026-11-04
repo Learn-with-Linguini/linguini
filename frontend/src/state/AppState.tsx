@@ -18,7 +18,7 @@ export function AppStateProvider({ children, resetOnLanguageChange = true }: {
   resetOnLanguageChange?: boolean;
 }) {
   const account = useAccount();
-  if (account.loading) return <LoadingScreen label="Loading your profile…" />;
+  if (account.loading) return <LoadingScreen label="Loading your profile" />;
   if (account.error) return <ErrorState title="We couldn't load your profile" message={account.error} retry={() => window.location.reload()} />;
   // Clear profile-scoped caches and practice state when the active account/language changes.
   const languageKey = resetOnLanguageChange ? account.activeProfile?.id ?? "no-language" : "any-language";

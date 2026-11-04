@@ -110,15 +110,16 @@ for (const Page of [source.SessionSummary, source.ISpyResults]) {
   test(`${Page.name} waits for accepted completion and keeps result details`, async () => {
     const view = await mount(Page, state({ completionPending: true }));
     const heading = () => view.container.querySelector("h1")?.textContent;
-    assert.notEqual(heading(), learningFeedback("completed", "session"));
+    const completedHeading = Page === source.SessionSummary ? "Great work, keep it up!" : "Great game, keep it up!";
+    assert.notEqual(heading(), completedHeading);
     assert.match(view.container.textContent ?? "", /12|1\/2/);
     await view.render(state({ completionError: "Your session could not be saved." }));
-    assert.notEqual(heading(), learningFeedback("completed", "session"));
+    assert.notEqual(heading(), completedHeading);
     assert.match(view.container.textContent ?? "", /Your session could not be saved\./);
     assert.ok([...view.container.querySelectorAll("button")].some(button => button.textContent?.startsWith("Retry saving")));
     await view.render(state());
-    assert.equal(heading(), learningFeedback("completed", "session"));
-    assert.match(view.container.textContent ?? "", /That’s a lesson well cooked\.|You played I-Spy with kitchen\./);
+    assert.equal(heading(), completedHeading);
+    assert.match(view.container.textContent ?? "", /Basil collected|Clues solved/);
   });
 }
 
@@ -133,7 +134,7 @@ test("lesson preparation keeps its factual task status on the mission path", asy
   const view = await mount(source.Learn, current);
   const status = [...view.container.querySelectorAll('[role="status"]')]
     .find(item => item.textContent?.includes(learningFeedback("preparing", "session")));
-  assert.match(status?.textContent ?? "", /Preparing the remaining tasks\.\.\./);
+  assert.match(status?.textContent ?? "", /Preparing the remaining tasks/);
   assert.match(status?.textContent ?? "", /You can learn and practise your words now\./);
 });
 

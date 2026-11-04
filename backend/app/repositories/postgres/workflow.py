@@ -9,12 +9,12 @@ import unicodedata
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from functools import partial
 from uuid import UUID, uuid5
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import DateTime, and_, delete, func, insert, select, update
+from sqlalchemy import DateTime, and_, delete, func, insert, or_, select, update
 from sqlalchemy.dialects.postgresql import insert as upsert
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -132,6 +132,7 @@ from app.services.mission_eligibility import (
     lesson_missions,
     mission_snapshot,
     plan_missions,
+    practice_ranks,
     provisional_mission_focus,
     saved_counted_groups,
     scene_shortfall,
@@ -140,7 +141,7 @@ from app.services.mission_eligibility import (
 from app.services.mission_roleplay import assign_a0_scenario, assign_roleplay
 from app.services.quantities import suggested_quantity
 from app.services.question_outcomes import (
-    _default_evidence,
+    default_evidence,
     normalize_answer,
     offered_supports,
     review_details,
@@ -705,7 +706,7 @@ class PostgresWorkflowRepository:
 
     def _tasks(self, c, session_id):
         return [
-            SessionTask.model_validate(dict(r))
+            SessionTask.model_validate_stored(r)
             for r in c.execute(
                 select(session_tasks)
                 .where(session_tasks.c.session_id == session_id)
@@ -804,7 +805,7 @@ class PostgresWorkflowRepository:
             )
             if row is None:
                 raise PracticeNotFoundError("Task not found.")
-            task = SessionTask.model_validate(dict(row))
+            task = SessionTask.model_validate_stored(row)
             if task.kind != "vocabularyIntroduction" or not task.answer_key:
                 raise PracticeConflictError("This task does not support typing checks.")
             accepted = task.answer_key.accepted_text_answers_by_vocabulary_id.get(learning_key)
@@ -900,10 +901,10 @@ class PostgresWorkflowRepository:
                 feedback = f"Check the quantity — the order was for {quantity}."
             elif wrong_field:
                 feedback = "Check that detail and try again."
+        # A task whose mission version was retired loads without its evaluations.
         evaluation = next(
             (
-                item
-                for item in task.answer_key.question_evaluations
+                item for item in task.answer_key.question_evaluations
                 if item.question_id == question_id
             ),
             None,
@@ -935,7 +936,7 @@ class PostgresWorkflowRepository:
             else QuestionOutcome(
                 question_id=question_id,
                 outcome="unassessed",
-                evidence_type=_default_evidence(question),
+                evidence_type=default_evidence(question),
                 assistance=supports,
                 assistance_used=any(
                     mission is None or mission.counts_as_assistance(item) for item in supports
@@ -1204,7 +1205,7 @@ class PostgresWorkflowRepository:
                 .mappings()
                 .all()
             )
-            tasks = [SessionTask.model_validate(dict(row)) for row in rows]
+            tasks = [SessionTask.model_validate_stored(row) for row in rows]
             if len(tasks) != 2:
                 raise PracticeConflictError("The M06 scenario is not available.")
             draft = dict(session.analysis_draft or {})
@@ -1960,7 +1961,7 @@ class PostgresWorkflowRepository:
 
         context = operation_context(session.mode, profile)
         candidates = lesson_missions(session.mode, profile, context)
-        practised = {label.strip().casefold() for label in practised_labels}
+        practised = practice_ranks(practised_labels)
         provisional, selected_ids = provisional_mission_focus(
             candidates, result.objects, result.relations, context,
             history=history, practised_labels=practised,
@@ -1999,13 +2000,15 @@ class PostgresWorkflowRepository:
         }
 
     def _practised_labels(self, c, session):
-        """Labels this learner confirmed in earlier lessons on the same photo.
+        """Labels this learner confirmed in earlier lessons on the same photo, each
+        ranked by (lessons that practised it, when the latest of those confirmed it).
 
         Only lessons that reached practice count, so leaving at the review step
-        does not hide a word from the next visit.
+        does not hide a word from the next visit. An answered question is
+        practice even when the learner left before submitting the whole task.
         """
         rows = c.execute(
-            select(scene_objects.c.label)
+            select(scene_objects.c.label, sessions.c.id, sessions.c.scene_confirmed_at)
             .join(sessions, sessions.c.id == scene_objects.c.session_id)
             .where(
                 sessions.c.user_id == self.user_id,
@@ -2013,13 +2016,27 @@ class PostgresWorkflowRepository:
                 sessions.c.scene_media_asset_id == session.scene_media_asset_id,
                 sessions.c.mode == SessionMode.LESSON,
                 sessions.c.id != session.id,
-                select(task_attempts.c.id)
-                .join(session_tasks, session_tasks.c.id == task_attempts.c.session_task_id)
-                .where(session_tasks.c.session_id == sessions.c.id)
-                .exists(),
+                or_(
+                    select(task_attempts.c.id)
+                    .join(session_tasks, session_tasks.c.id == task_attempts.c.session_task_id)
+                    .where(session_tasks.c.session_id == sessions.c.id)
+                    .exists(),
+                    select(question_events.c.id)
+                    .where(
+                        question_events.c.user_id == self.user_id,
+                        question_events.c.session_id == sessions.c.id,
+                    )
+                    .exists(),
+                ),
             )
-        ).scalars()
-        return {label.strip().casefold() for label in rows}
+        ).all()
+        lessons, latest = {}, {}
+        for label, session_id, confirmed_at in rows:
+            label = label.strip().casefold()
+            confirmed_at = confirmed_at or datetime.min.replace(tzinfo=UTC)
+            lessons.setdefault(label, set()).add(session_id)
+            latest[label] = max(latest.get(label, confirmed_at), confirmed_at)
+        return {label: (len(ids), latest[label]) for label, ids in lessons.items()}
 
     def _mission_history(self, c, profile_id, session_id):
         """Mission ids planned by this profile's other lessons, for least-planned rotation."""
@@ -3174,6 +3191,7 @@ class PostgresWorkflowRepository:
                     words,
                     level=level,
                     language=clue_payload.get("targetLanguage"),
+                    scene_facts=clue_payload,
                 )
         except ISpyClueGenerationError:
             logger.exception("I-Spy clue generation failed for session %s.", session_id)
@@ -3335,17 +3353,19 @@ class PostgresWorkflowRepository:
             .join(session_tasks, session_tasks.c.id == task_attempts.c.session_task_id)
             .where(session_tasks.c.session_id == session_id, session_tasks.c.phase == "ispy")
         ).all()
-        graded = [
-            row.is_correct for row in rows if row.version != ISPY_DESCRIPTION_EVALUATION_VERSION
-        ]
+        # A clue allows several guesses, so it counts once: correct if any guess was.
+        clues = {}
+        for row in rows:
+            if row.version != ISPY_DESCRIPTION_EVALUATION_VERSION and row.is_correct is not None:
+                clues[row.id] = clues.get(row.id, False) or row.is_correct
         rounds = {
             row.id: row.status == "completed"
             for row in rows
             if row.version == ISPY_DESCRIPTION_EVALUATION_VERSION
         }
         return {
-            "ispy_correct_count": sum(outcome is True for outcome in graded) + sum(rounds.values()),
-            "ispy_attempt_count": sum(outcome is not None for outcome in graded) + len(rounds),
+            "ispy_correct_count": sum(clues.values()) + sum(rounds.values()),
+            "ispy_attempt_count": len(clues) + len(rounds),
         }
 
     def _encounter(
@@ -3404,7 +3424,7 @@ class PostgresWorkflowRepository:
         )
         if row is None:
             raise PracticeNotFoundError("Task not found.")
-        return SessionTask.model_validate(dict(row))
+        return SessionTask.model_validate_stored(row)
 
     def _evaluates_description(self, task):
         return bool(_describes_object(task) and self.ispy_guess_generator)
@@ -3597,6 +3617,7 @@ class PostgresWorkflowRepository:
                 elif action == "attempt":
                     evaluation_details = None
                     question_results = {}
+                    round_open = False
                     if self._evaluates_description(task):
                         if request.input_mode != "text":
                             raise PracticeConflictError(
@@ -3659,6 +3680,20 @@ class PostgresWorkflowRepository:
                                 else "Not quite. Review this word and try it in another session."
                             )
                         )
+                        if task.kind == "ispyRound":
+                            tried = _ispy_guesses(c, task.id)
+                            if _ispy_guess(request) in tried:
+                                raise PracticeConflictError(
+                                    "You already tried that object. Pick another one."
+                                )
+                            guesses_left = 0 if correct else ISPY_CLUE_GUESSES - len(tried) - 1
+                            if guesses_left:
+                                # A wrong guess with guesses left keeps the round open.
+                                round_open = True
+                                feedback_message = (
+                                    f"Not quite. Try again: {guesses_left} "
+                                    f"{'guess' if guesses_left == 1 else 'guesses'} left."
+                                )
                     if request.input_mode == "vocabularyReview":
                         question_results = {
                             question.question_id: _lesson_answer_is_correct(
@@ -3749,6 +3784,7 @@ class PostgresWorkflowRepository:
                         session.mode == SessionMode.LESSON
                         and request.input_mode != "vocabularyReview"
                         and (evaluation is None or evaluation.guess is not None)
+                        and not round_open
                     ):
                         reward_basil(
                             c,
@@ -3779,7 +3815,7 @@ class PostgresWorkflowRepository:
                             language_profile_id=session.language_profile_id,
                             session_id=task.session_id,
                         )
-                    if evaluation is None:
+                    if evaluation is None and not round_open:
                         self._encounter(
                             c,
                             task,
@@ -3820,7 +3856,9 @@ class PostgresWorkflowRepository:
                                 vocabulary_item_id=vocabulary_item_id,
                                 session=session,
                             )
-                    if evaluation is None:
+                    if round_open:
+                        values = dict(status="inProgress", started_at=task.started_at or utc_now())
+                    elif evaluation is None:
                         values = dict(
                             status="completed",
                             completed_at=utc_now(),
@@ -3953,6 +3991,28 @@ def _describes_object(task):
         and task.answer_key
         and task.answer_key.scene_description_context
     )
+
+
+# Guesses a learner gets at one of Linguini's clues before the round ends.
+ISPY_CLUE_GUESSES = 3
+
+
+def _ispy_guess(request):
+    return request.option_id if request.input_mode == "multipleChoice" else str(
+        request.scene_object_id
+    )
+
+
+def _ispy_guesses(c, task_id):
+    """Objects already guessed for this clue, by option or scene object id."""
+    payloads = c.execute(
+        select(task_attempts.c.response_payload).where(
+            task_attempts.c.session_task_id == task_id
+        )
+    ).scalars()
+    return {
+        str(payload.get("option_id") or payload.get("scene_object_id")) for payload in payloads
+    }
 
 
 def _next_attempt_number(c, task_id):

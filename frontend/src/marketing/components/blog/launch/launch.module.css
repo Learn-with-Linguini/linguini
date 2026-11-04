@@ -10,9 +10,9 @@
 
 /* ---------- Shared reveal ---------- */
 
-.x .xPost,
-.ph .phPara,
-.wall li {
+:global(.js) .x .xPost,
+:global(.js) .ph .phPara,
+:global(.js) .wall li {
   opacity: 0;
   transform: translateY(14px);
   transition: opacity 0.5s var(--ease-out), transform 0.6s var(--ease-out);
@@ -1005,6 +1005,14 @@ button.action:hover {
 }
 
 .clock[data-inview] .dayBar {
+  clip-path: inset(0 0 0 0 round 14px);
+}
+
+:global(html:not(.js)) .x .thread {
+  transform: none;
+}
+
+:global(html:not(.js)) .clock .dayBar {
   clip-path: inset(0 0 0 0 round 14px);
 }
 

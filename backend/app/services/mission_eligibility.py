@@ -6,6 +6,7 @@ ready ones, and photo rules are the generic requirements plus each pack mission'
 
 import re
 from collections import Counter
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 from app.missions import get_mission
@@ -149,6 +150,24 @@ def suggested_counted_groups(objects):
     ]
 
 
+def practice_ranks(practised_labels):
+    """Each practised label's rotation key; a lower key is suggested sooner.
+
+    A mapping gives each label its own key, such as (lessons practised, last
+    practised); any other iterable ranks its labels equally. Unpractised labels
+    have no key and sort before every practised one.
+    """
+    if isinstance(practised_labels, Mapping):
+        items = ((label, tuple(key)) for label, key in practised_labels.items())
+    else:
+        items = ((label, (1,)) for label in practised_labels)
+    ranks = {}
+    for label, key in items:
+        label = label.strip().casefold()
+        ranks[label] = max(ranks.get(label, key), key)
+    return ranks
+
+
 def provisional_mission_focus(
     candidates, objects, relations, language_context=None, *, history=(), practised_labels=(),
 ):
@@ -159,15 +178,21 @@ def provisional_mission_focus(
 
     ``history`` mirrors the confirmed plan's least-planned rotation, and
     ``practised_labels`` (a revisit of the same photo) moves words the learner
-    already practised behind new ones without excluding them.
+    already practised behind new ones without excluding them. Ranked labels
+    (see ``practice_ranks``) rotate: the least practised words come back first,
+    so a photo whose words were all practised still changes between visits.
     """
     counts = suggested_counted_groups(objects)
     plan = plan_missions(
         candidates, objects, relations, counts, history, language_context=language_context,
     )
-    practised = {label.strip().casefold() for label in practised_labels}
+    ranks = practice_ranks(practised_labels)
     labels = {obj.id: obj.label.strip().casefold() for obj in objects}
-    ordered = sorted(objects, key=lambda obj: labels[obj.id] in practised)
+
+    def rank(label):
+        return ranks.get(label, ())
+
+    ordered = sorted(objects, key=lambda obj: rank(labels[obj.id]))
     if candidates and str(candidates[0].practice_level) == "A0":
         planned_keys = {
             (mission.mission_id, str(mission.practice_level), mission.content_version)
@@ -210,18 +235,26 @@ def provisional_mission_focus(
                     if len(seen) >= requirements.min_coloured_objects:
                         break
         if requirements.min_relations:
+            def relation_rank(row):
+                endpoints = [
+                    labels[row.subject_scene_object_id], labels[row.reference_scene_object_id],
+                ]
+                return (
+                    sum(label in ranks for label in endpoints),
+                    sorted((rank(label) for label in endpoints), reverse=True),
+                )
+
             usable_relations = sorted(
-                confirmed_relations(mission, objects, relations),
-                key=lambda row: (
-                    (labels.get(row.subject_scene_object_id) in practised)
-                    + (labels.get(row.reference_scene_object_id) in practised)
-                ),
+                confirmed_relations(mission, objects, relations), key=relation_rank,
             )
             for relation in usable_relations[: requirements.min_relations]:
                 add(relation.subject_scene_object_id)
                 add(relation.reference_scene_object_id)
         if requirements.min_counted_groups:
-            usable = countable_groups(mission, counts)[: requirements.min_counted_groups]
+            usable = sorted(
+                countable_groups(mission, counts),
+                key=lambda group: rank(group["label"].strip().casefold()),
+            )[: requirements.min_counted_groups]
             for group in usable:
                 group_ids = set(group["sceneObjectIds"])
                 for obj in objects:

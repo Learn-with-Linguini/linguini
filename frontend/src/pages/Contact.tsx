@@ -112,7 +112,7 @@ export function Contact() {
     }
   };
 
-  if (authLoading) return <LoadingScreen label="Preparing support…" />;
+  if (authLoading) return <LoadingScreen label="Preparing support" />;
 
   return (
     <div className="stack contact-page">
@@ -184,7 +184,7 @@ export function Contact() {
           </div>
 
           <Button block type="submit" disabled={submitting || !!attachmentError || (!session && !email.trim()) || subject.trim().length < 3 || details.trim().length < 10}>
-            {submitting ? "Sending message…" : "Send message"}
+            {submitting ? "Sending message" : "Send message"}
           </Button>
           {sent ? <Feedback tone="good"><p role="status">Thank you. Your request has been sent to Linguini Support. We’ll reply to {session ? "the email address on your account" : email.trim()}.</p></Feedback> : null}
           {submitError ? <Feedback tone="warn"><p role="alert">{submitError}</p></Feedback> : null}

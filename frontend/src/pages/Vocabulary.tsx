@@ -96,7 +96,7 @@ export function Vocabulary() {
     return () => { document.body.style.overflow = previousOverflow; document.removeEventListener("keydown", handleKeyDown); previousFocus?.focus(); };
   }, [showFilters]);
 
-  if (vocabularyLoading) return <LoadingScreen label="Loading your journey..." />;
+  if (vocabularyLoading) return <LoadingScreen label="Loading your journey" />;
   if (vocabularyError) return <ErrorState title="We couldn't load your journey" message={vocabularyError} retry={() => window.location.reload()} />;
 
   return <div className="stack vocabulary-page revisit-page">
@@ -115,7 +115,7 @@ export function Vocabulary() {
     </header>
 
     {view === "journey" ? <div className="revisit-scenes">
-      {scenesLoading ? <InlineLoader label="Loading places…" /> : null}
+      {scenesLoading ? <InlineLoader label="Loading places" /> : null}
       {scenesError ? <p role="alert">{scenesError} Your saved words are still available.</p> : null}
       {!hasRevisitHistory ? <Button onClick={() => { trackAction("revisit_empty_practice_started"); navigate("/practice"); }}>Begin practice</Button> : null}
       {sceneGroups.map(({ scene, words }, index) => {
@@ -138,7 +138,7 @@ export function Vocabulary() {
               </Button> : <Button className="revisit-stop__action" disabled={!activeProfile || revisitingAssetId !== null}
                 aria-label={`Revisit ${scene.title} with new words`}
                 onClick={() => void startRevisit(scene.id, scenario?.sessionId ?? null)}>
-                <PlayIcon size={18} /> {revisitingAssetId === scene.id ? "Starting…" : "Revisit"}
+                <PlayIcon size={18} /> {revisitingAssetId === scene.id ? "Starting" : "Revisit"}
               </Button>}
             </div>
             <div className="vocabulary-scene__content stack-2">

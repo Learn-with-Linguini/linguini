@@ -16,6 +16,7 @@ import { useScenesQuery } from "../state/queries";
 import { WalkthroughCoachmark } from "../components/WalkthroughCoachmark";
 import { FIRST_LESSON_WALKTHROUGH_VERSION, needsFirstLessonWalkthrough } from "../lib/walkthrough";
 import { gameResourceKeys } from "../lib/gameResources";
+import { canStartNewPractice } from "../lib/practiceAvailability";
 
 export function PracticeSelect() {
   const navigate = useNavigate();
@@ -55,7 +56,12 @@ export function PracticeSelect() {
     queryFn: () => getActivePractice(),
     staleTime: 0,
   }), [queryClient, activeProfileId]);
-  const interactionDisabled = selected || starting || sessionLimitReached || !!activeCheckError || !activeProfile;
+  const interactionDisabled = !canStartNewPractice({
+    hasActiveProfile: !!activeProfile,
+    selected,
+    starting,
+    sessionLimitReached,
+  });
   useEffect(() => {
     if (sessionLimitReached) trackAction("practice_session_limit_shown", { openSessionCount: activeSession?.activeSessionCount ?? 3 });
   }, [activeSession?.activeSessionCount, sessionLimitReached]);
@@ -69,7 +75,7 @@ export function PracticeSelect() {
     return () => document.removeEventListener("keydown", closeOnEscape);
   }, [activeSessionId, resumeDialogOpen, starting]);
   const start = async (asset: string) => {
-    if (busy.current || !activeProfile || activeCheckError || sessionLimitReached) return;
+    if (busy.current || !activeProfile || sessionLimitReached) return;
     busy.current = true; setSelected(true); setStarting(true); setError(null);
     if (request.current?.asset !== asset) request.current = { asset, key: crypto.randomUUID() };
     trackAction("practice_session_started", { assetId: asset });
@@ -125,7 +131,7 @@ export function PracticeSelect() {
     <h1>Capture a scene</h1>
     {notice ? <div className="stack-2"><p role="alert">{notice}</p>{retrySessionId ? <Button variant="secondary" disabled={interactionDisabled || uploading} onClick={() => void retrySaved(retrySessionId)}>Try this photo again</Button> : null}</div> : null}
     <p className="muted">Take a photo of the world around you, or start from a ready scene.</p>
-    {activeCheckError ? <p role="alert">{activeCheckError} Reload to resume an open practice.</p> : null}
+    {activeCheckError ? <p role="alert">{activeCheckError} You can still begin a new practice.</p> : null}
     {sessionLimitReached ? <div className="error-notice" role="alert">
       <div className="error-notice__copy"><strong>Finish an open practice first</strong>
         <p>You already have three unfinished practices. Continue one before uploading or choosing another scene.</p></div>
@@ -136,7 +142,7 @@ export function PracticeSelect() {
       <ImageUpload compact disabled={interactionDisabled} cameraEnabled={learner.cameraOn}
         onBusyChange={setUploading} onUploaded={image => { trackAction("practice_photo_uploaded", { assetId: image.id }); chooseAsset(image.id); }} />
     </div>
-    {starting ? <LoadingScreen label="Starting analysis…" /> : null}
+    {starting ? <LoadingScreen label="Starting analysis" /> : null}
     {error ? <div className="stack-2"><p role="alert">{error}</p><Button disabled={starting || uploading} onClick={() => request.current && void start(request.current.asset)}>Retry</Button></div> : null}
     {!activeProfile ? <p role="alert">Choose a learning language in Profile to start.</p> : null}
     <h2>Or practise with the below</h2>

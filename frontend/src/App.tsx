@@ -41,7 +41,7 @@ import { isMarketingPath } from "./marketing/paths";
 function RequireAuth() {
   const { session, loading } = useAuth();
   const location = useLocation();
-  if (loading) return <LoadingScreen label="Checking your account…" />;
+  if (loading) return <LoadingScreen label="Checking your account" />;
   if (import.meta.env.DEV) return <Outlet />;
   if (!session) return <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}` }} />;
   return <Outlet />;
@@ -59,7 +59,7 @@ function RoomInvitationRoute() {
 
 function OnboardingRoute() {
   const { session, loading } = useAuth();
-  if (loading) return <LoadingScreen label="Preparing onboarding…" />;
+  if (loading) return <LoadingScreen label="Preparing onboarding" />;
   if (!session) return <Navigate to="/login?mode=signup" replace />;
   return <OnboardingPage />;
 }

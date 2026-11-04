@@ -46,7 +46,7 @@ def test_a_pack_language_stores_only_the_pack_template_set():
         by_feature.setdefault(entry["feature"], set()).add(
             (entry["variant"].split("|")[0], entry.get("basis", ""))
         )
-    assert by_feature["sceneTranslation"] == {("pack-translation.v2", "")}
+    assert by_feature["sceneTranslation"] == {("pack-translation.v3", "")}
     # Lessons and I-Spy games both use the pack translation and its clues.
     assert {basis for _variant, basis in by_feature["learningTask"]} == {"pack"}
     assert {basis for _variant, basis in by_feature["ispyClue"]} == {"pack"}

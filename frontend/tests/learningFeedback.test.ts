@@ -146,7 +146,7 @@ async function mount(initialTask: SessionTask, scenePatch: Partial<Scene> = {}) 
   };
   cleanups.add(close);
   await render();
-  await waitFor(() => assert.doesNotMatch(text(), /Restoring checked answers…|Restoring your place…/));
+  await waitFor(() => assert.doesNotMatch(text(), /Restoring checked answers|Restoring your place/));
   return { close, render, client };
 }
 
@@ -488,12 +488,10 @@ function vocabularyTask(): SessionTask {
   } };
 }
 
-test("returning home from word review leaves the task unchanged", async () => {
+test("word review shows only the flashcards, without an exit button", async () => {
   await mount(vocabularyTask());
-  await click("Return home");
-  assert.match(text(), /Home destination/);
+  assert.equal([...dom.window.document.querySelectorAll("button")].some(item => item.textContent?.trim() === "Exit"), false);
   assert.deepEqual(taskActions, []);
-  assert.deepEqual(requests, []);
 });
 
 test("skipping word review marks the whole activity skipped before returning to tasks", async () => {
@@ -503,8 +501,14 @@ test("skipping word review marks the whole activity skipped before returning to 
   assert.ok(skip);
   const description = dom.window.document.getElementById(skip.getAttribute("aria-describedby") ?? "");
   assert.match(description?.textContent ?? "", /whole word activity/);
+  // Skipping asks first; keeping on learning skips nothing.
+  await click("Skip this task");
+  assert.match(text(), /Skip all the words in this scene\?/);
+  await click("Keep learning");
+  assert.deepEqual(taskActions, []);
   actions.push(() => ({ ...action(task, null, "Skipped"), task: { ...task, status: "skipped" } }));
   await click("Skip this task");
+  await click("Skip all words");
   assert.deepEqual(taskActions, [{ action: "skip", body: undefined }]);
   assert.match(text(), /Task list destination/);
   assert.deepEqual(requests, []);
@@ -697,6 +701,38 @@ test("teaching cards highlight their photo object and practice interleaves recog
   await click("Next question");
 
   assert.match(text(), /Which word means "chair"/);
+});
+
+test("questions beyond the typing words continue the quiz and then submit instead of going blank", async () => {
+  const task = vocabularyTask();
+  if (task.publicContent.kind !== "vocabularyIntroduction") throw new Error("Expected vocabulary fixture");
+  // One word with a word and an article question, plus another question: more questions than words.
+  task.publicContent.questions = ["word-cup", "article-cup", "word-extra"].map(questionId => ({
+    questionId, prompt: `Question ${questionId}`, correctOptionId: "la",
+    options: [{ optionId: "la", label: "la" }, { optionId: "el", label: "el" }],
+  }));
+  await mount(task);
+  await waitFor(() => assert.doesNotMatch(text(), /Restoring word answers/));
+  await click("Start quick quiz");
+  const answer = async (questionId: string) => {
+    replies.push(() => Response.json({ questionId, acceptedOptionId: "la", isCorrect: true, correctOptionId: "la", basilEarned: 10 }));
+    await click("la");
+    await waitFor(() => assert.equal(button("Next question")?.disabled, false));
+    await click("Next question");
+  };
+  await answer("word-cup");
+  await answer("article-cup");
+  replies.push(() => Response.json({ learningKey: "cup", isCorrect: false, isClose: false, correctAnswer: "taza", revealed: true, basilEarned: 0 }));
+  await click("I forgot, lift the lid");
+  await waitFor(() => assert.ok(button("Next question")));
+  await click("Next question");
+  assert.match(text(), /Question word-extra/);
+  actions.push(() => action(task, true, "3 of 3 questions correct."));
+  await answer("word-extra");
+
+  await waitFor(() => assert.equal(taskActions.length, 1));
+  assert.equal(taskActions[0].action, "attempts");
+  assert.deepEqual(Object.keys((taskActions[0].body as { answers: object }).answers), ["word-cup", "article-cup", "word-extra"]);
 });
 
 test("a completed grouped lesson restores only server-awarded Basil alongside its saved review", async () => {

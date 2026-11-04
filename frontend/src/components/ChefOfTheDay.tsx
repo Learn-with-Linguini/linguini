@@ -11,7 +11,7 @@ export function ChefOfTheDay() {
   const data = query.data;
   return <section className="stack" aria-labelledby="chef-day-title">
     <div className="ispy-chefs__heading"><div><h2 id="chef-day-title">Chefs of the Day</h2></div><BasilIcon size={30} /></div>
-    {query.isPending ? <InlineLoader label="Loading today’s chefs…" /> : !data ? <div><p role="alert">We couldn’t load today’s leaderboard.</p>
+    {query.isPending ? <InlineLoader label="Loading today’s chefs" /> : !data ? <div><p role="alert">We couldn’t load today’s leaderboard.</p>
       <Button variant="quiet" onClick={() => { trackAction("chef_of_the_day_retry_clicked"); void query.refetch(); }}>Retry leaderboard</Button></div> : <>
       <section className="ispy-chefs__comparison" aria-label="Your leaderboard position">
         <div><span>Your place</span><strong>#{data.currentRank ?? "—"}</strong></div>

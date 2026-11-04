@@ -39,6 +39,14 @@ class TranslatedTerm(ApiModel):
     )
     article: Annotated[str, Field(min_length=1, max_length=20)] | None = None
     gender: Literal["masculine", "feminine", "neuter"] | None = None
+    agreement_forms: dict[
+        Literal["masculine", "feminine", "neuter"], NonEmptyText
+    ] = Field(
+        default_factory=dict,
+        max_length=3,
+        description=("Attributes only: standard singular adjective forms by grammatical "
+                     "gender. Return every available gender form; otherwise an empty object."),
+    )
     native_display: NonEmptyText | None = Field(default=None, exclude_if=lambda v: v is None)
     romanization: NonEmptyText | None = Field(default=None, exclude_if=lambda v: v is None)
     plural: Annotated[str, Field(min_length=1, max_length=300)] | None = Field(

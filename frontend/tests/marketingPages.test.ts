@@ -81,6 +81,10 @@ after(() => {
   }
 });
 function renderRoute(path: string) {
+  for (const mountedPage of mounted.splice(0)) {
+    act(() => mountedPage.root.unmount());
+    mountedPage.container.remove();
+  }
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
@@ -131,7 +135,7 @@ test("an old blog slug redirects to its canonical post", () => {
   assert.match(h1Text("/blog/inside-a-linguini-lesson"), /Why we teach with your photos/i);
 });
 
-test("the home tab title is just the brand name", () => {
+test("the home title explains what Linguini teaches", () => {
   h1Text("/");
-  assert.equal(document.title, "Linguini");
+  assert.match(document.title, /^Linguini.*[Ll]earn.*photos/);
 });

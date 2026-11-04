@@ -84,6 +84,10 @@ const stages = {
 export function BusinessModel() {
   return (
     <div className={`${s.body} ${s.document}`}>
+      <p className={s.note}>
+        This is our 18 October 2026 pricing proposal. Free, Plus and Founding Plus describe planned tiers and modelled
+        costs. The current public beta includes unlimited photo lessons at no cost, with no payment card required.
+      </p>
       <InView as="p" className={story.lede}>
         Free gives every learner <mark>one photo lesson and one journal page a day</mark>. Plus is{" "}
         <mark>$49.99 a year</mark> for anyone who wants more. Each photo lesson costs us about <mark>2¢ in AI</mark>, so

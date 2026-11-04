@@ -2,6 +2,13 @@
 Linguini uses dual-dispatch analytics combining **Google Analytics 4 (GA4)** and **Contentsquare**.
 All tracking helpers are centralized in `frontend/src/lib/analytics.ts`.
 
+Public marketing routes (`/`, `/learn/spanish`, `/learn/french`, `/learn/german`,
+`/learn/korean`, `/blog`, its article routes, `/credits`, `/privacy`, `/terms` and
+`/share`) retain automatic SPA pageviews through `AnalyticsTracker`. Static HTML
+generation sends no events. `marketing_language_link` records comparison-article
+navigation to a language page with `{ source: "comparison_article", language }`,
+where `language` is `es`, `fr`, `de` or `ko`.
+
 ---
 
 ## 1. Environment Configuration
@@ -97,6 +104,12 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 | `vocabulary_typing_skipped` | `{ taskId, termType, revisiting }` | Learner skips the current typing prompt without checking or revealing its answer |
 | `vocabulary_marker_clicked` | `{ taskId, marker, audioAvailable }` | Learner selects a photo marker to show its object card and play target-language pronunciation when available |
 | `vocabulary_exercises_started` | `{ taskId, source, revisiting, questionCount, wordCount }` | Learner enters exercises through the flashcard shortcut (`source: shortcut`) or after the final card (`source: cardsComplete`); this transition does not submit answers or award credit |
+| `vocabulary_skip_prompted` | `{ taskId, stage }` | Learner taps the "Skip this task" pill beside the word activity title, opening the skip confirmation |
+| `vocabulary_skip_confirmed` | `{ taskId, stage }` | Learner confirms skipping the whole word activity |
+| `vocabulary_skip_cancelled` | `{ taskId, stage }` | Learner closes the skip confirmation and keeps learning |
+| `task_skip_prompted` | `{ taskId, kind }` | Learner taps the "Skip this task" pill beside a grammar, mission or other non-word task title, opening the skip confirmation |
+| `task_skip_confirmed` | `{ taskId, kind }` | Learner confirms skipping that task |
+| `task_skip_cancelled` | `{ taskId, kind }` | Learner closes that skip confirmation and keeps learning |
 | `vocabulary_pronunciation_clicked` | `{ termType }` | Learner replays a word using the review card's speaker button |
 
 Objects appear beside their linked adjectives, followed by unlinked adjectives and
@@ -153,7 +166,6 @@ The existing analysis and review routes show this progress; no new page is added
 | `task_finished_to_list` | `{ taskId, kind }` | Learner finishes the final task and returns to the task list |
 | `task_opened` | `{ taskId }` | User opens a mission from the mission path (tapping its row, or the Start/Continue button) |
 | `mission_path_primary_clicked` | `{ label }` | User presses the mission path's bottom button (`Start`, `Continue`, `Done` or `Play I-Spy`) |
-| `learning_exit_clicked` | — | User exits the learning task overview back to Home |
 | `finish_lesson_clicked` | — | User completes every mission on the path and presses "Done" |
 | `play_ispy_clicked` | — | User proceeds from learning tasks to play I-Spy |
 | `vocabulary_review_started` | `{ taskId, revisiting }` | User opens the interactive vocabulary review directly from the lesson overview |
@@ -177,12 +189,13 @@ The existing analysis and review routes show this progress; no new page is added
 | :--- | :--- | :--- |
 | `ispy_mode_selected` | `{ mode: "ai" \| "friend" }` | User selects AI solo play or Multiplayer friend mode |
 | `ispy_game_resumed` | — | User resumes an active I-Spy game session |
-| `ispy_clue_submitted` | `{ optionId, isCorrect, source: "photo_marker" }` | Learner taps a photo marker in response to Linguini's clue on lesson and standalone I-Spy clue pages |
+| `ispy_clue_submitted` | `{ optionId, isCorrect, source: "photo_marker", guess }` | Learner taps a photo marker in response to Linguini's clue on lesson and standalone I-Spy clue pages; `guess` is 1–3, since each clue allows three different guesses |
 | `ispy_description_submitted` | `{ outcome }` | Learner writes a description clue for Linguini to guess |
 | `ispy_word_bank_toggled` | `{ learnerLevel, shown }` | An A1 or A2 learner shows or hides the current scene's word bank during I-Spy |
+| `ispy_word_bank_translation_viewed` | `{ learnerLevel }` | Learner hovers, focuses or taps an I-Spy word bank word to see its English (logged once per word per round) |
+| `ispy_word_bank_word_added` | `{ learnerLevel, kind }` | Learner taps a word bank word on the I-Spy "Your turn" page to add it to their clue; `kind` is `noun`, `adjective`, `preposition` or `unknown` for older word banks |
 | `ispy_clue_listened_first` | `{ taskId }` | An A2 learner plays a listen-first clue, which then shows its text |
 | `ispy_clue_text_revealed` | `{ taskId }` | An A2 learner shows a listen-first clue's text without playing it |
-| `ispy_clue_help_opened` | `{ taskId }` | An A2 learner opens the clue frames kept behind "Need help?" |
 | `ispy_exit_clicked` | `{ phase: "clues" \| "describe" }` | Learner exits an active I-Spy round back to Home |
 | `describe_round_skipped` | `{ mode }` | Session skips the describing round because there is no reflection task and proceeds to results |
 | `ispy_match_confirmed` | — | Learner confirms Linguini guessed their object correctly |

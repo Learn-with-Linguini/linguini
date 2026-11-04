@@ -62,6 +62,10 @@ export function PhotoLessons() {
       <p>That’s what you see. Here’s what happens underneath.</p>
 
       <h2 id="underneath">What happens underneath</h2>
+      <p className={s.note}>
+        This walkthrough and its cost estimates describe our October 2026 prototype. The public beta now uses
+        language-specific mission lessons, and the cost of a photo lesson varies with the generated content.
+      </p>
       <p>
         When you start a lesson from your own photo, the learner app runs a short chain of AI steps. Each step has one
         job. Each returns structured data, and the app checks that data before you see it. Here is one lesson played out
@@ -113,21 +117,22 @@ export function PhotoLessons() {
 
       <h2 id="privacy">Your photos</h2>
       <p>
-        A lesson built from your street means we handle a picture of your street. So uploaded photos are kept in private
-        storage and shown only through short-lived signed links. AI tracing is off by default. When it is on, it records
-        timings and outcomes, not your photos or your text.
+        A lesson built from your street means we handle a picture of your street. Uploaded photos are kept in private
+        storage and shown through short-lived signed links. The app sends the photo to its configured AI provider to
+        suggest vocabulary. You review those suggestions before the lesson is built. Our{" "}
+        <Link href="/privacy">privacy policy</Link> explains how learning data is handled.
       </p>
       <p>All of that describes the learner app. Here’s what you can use right now.</p>
 
       <h2 id="today">What you can try today</h2>
       <p>
-        The <Link href="/">interactive demo on our home page</Link> takes you through a whole lesson in Spanish or French.
-        It uses curated real photos, like the street in the film. You explore the words, play I-Spy and a sentence game,
-        then see the day saved as a journal page.
+        The <Link href="/demo">guest demo</Link> lets you try a photo lesson without an account, in Spanish, French,
+        German or beginner Korean. It uses real photos from our curated scenes. You can also sign up for the public beta
+        to learn from your own photos and keep your vocabulary and journal.
       </p>
       <p className={s.note}>
-        <strong>Status:</strong> the demo on our home page uses curated scenes. The own-photo chain described above runs
-        in the learner app and is being verified in production with a small group of testers before a wider launch.
+        <strong>Public beta:</strong> everyone who signs up gets unlimited photo lessons during beta, with no payment
+        card required. The guest demo is available without signing up.
       </p>
       <p>
         We don’t know yet which part of the loop does the most work. It might be seeing a word on your own photo. It might

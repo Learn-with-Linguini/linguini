@@ -40,7 +40,8 @@ Guided I-Spy clue frames and photo-room clues are built in code from the pack's
 lists other spellings a translation may use), and how a location phrase is written:
 `place` (`{position} {reference}`, or Korean `{reference} {position} 있어요`), definite
 `articles` by gender for a reference without one, `place_articles` after a position
-(German dative), `contractions` (de + el = del, zu + dem = zum),
+(German dative), `contractions` (de + el = del, zu + dem = zum; lesson validation also accepts a bound
+preposition written with one of these, so à côté de + le bureau passes as à côté du bureau),
 `location_verb_starts` (a translated position starting with a verb is not offered) and
 extra `avoid_plurals` for the words a clue must not use (French gâteaux). A language with
 `articles = "none"` names the reference bare. Photo rooms also read the

@@ -133,7 +133,8 @@ class PostgresTaskRepository:
         try:
             with read_connection(self.engine) as connection:
                 return [
-                    model.model_validate(dict(row))
+                    (SessionTask.model_validate_stored(row)
+                     if model is SessionTask else model.model_validate(dict(row)))
                     for row in connection.execute(statement).mappings()
                 ]
         except (SQLAlchemyError, ValidationError) as exc:

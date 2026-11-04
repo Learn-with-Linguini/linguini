@@ -42,7 +42,7 @@ function wordCount(text: string) {
 
 export function Journal() {
   const { journal, journalLoading, journalError } = useJournalsQuery();
-  if (journalLoading) return <LoadingScreen label="Loading journal history..." />;
+  if (journalLoading) return <LoadingScreen label="Loading journal history" />;
   if (journalError) return <ErrorState title="We couldn't load your journal" message={journalError} retry={() => window.location.reload()} />;
   return <JournalMonths journal={journal} />;
 }

@@ -162,7 +162,7 @@ export function Session({ scene, lang, onLangChange, onExit }: SessionProps) {
           <div className={styles.stage} key={`${stage}-${lang}`}>
             {stage === "analyse" ? (
               <>
-                <h2 ref={headingRef} tabIndex={-1} className={styles.title}>Reading your photo…</h2>
+                <h2 ref={headingRef} tabIndex={-1} className={styles.title}>Reading your photo</h2>
                 <ol className={styles.prompter} aria-live="polite">
                   {scanLines.map((line, index) => (
                     <li

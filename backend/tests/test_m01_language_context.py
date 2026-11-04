@@ -101,6 +101,11 @@ class MockTranslationProvider:
                     romanization=display,
                     phoneticText="LEGACY sounds",
                 )
+                if field == "attributes":
+                    term["agreementForms"] = {
+                        "masculine": noun,
+                        "feminine": {"rojo": "roja", "blanco": "blanca"}.get(noun, noun),
+                    }
                 if self.missing:
                     term[self.missing] = None
                 result[field].append(term)
@@ -313,6 +318,26 @@ def test_session_forms_ignore_stale_catalog_gender(pack_dir, runtime):
     _, vocabulary = session_inputs(context.pack, runtime[0], runtime[1], words, translated, {})
     assert vocabulary.terms[0].agreement == translated.objects[0].gender
     assert intro.public_content.words[0].gender == translated.objects[0].gender
+
+
+def test_adjective_cards_teach_pack_forms_and_match_the_scene_noun(pack_dir, runtime):
+    context = resolve_language_context("es")
+    translated = translator(MockTranslationProvider()).translate(
+        payload(runtime),
+        language_context=context,
+    )
+
+    intro, _ = cards(context, runtime, translated)
+    red = next(word for word in intro.public_content.words if word.translation == "red")
+
+    assert red.target_text == "roja"
+    assert red.agreement == "feminine"
+    assert red.agreement_forms == {"masculine": "rojo", "feminine": "roja"}
+    restored = SessionTask.model_validate_json(intro.model_dump_json())
+    restored_red = next(
+        word for word in restored.public_content.words if word.translation == "red"
+    )
+    assert restored_red.agreement_forms == red.agreement_forms
 
 
 @pytest.mark.parametrize("field", ["article", "gender"])

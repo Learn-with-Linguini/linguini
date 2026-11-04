@@ -52,6 +52,9 @@ export function useResolvedImageUrl(imageUrl: string | null | undefined) {
 export function SceneImage({ scene, className, lazy }: Props) {
   const { resolvedUrl, failed } = useResolvedImageUrl(scene.imageUrl);
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  // Until the photo has loaded its size is unknown; layouts that size the frame from the
+  // photo hold a placeholder size meanwhile (``scene-image--pending``).
+  const [loadedUrl, setLoadedUrl] = useState<string | null>(null);
   const isProtectedMediaUrl = protectedMediaPath(scene.imageUrl) !== null;
 
   if (!scene.imageUrl || failed || failedUrl === scene.imageUrl) {
@@ -68,7 +71,7 @@ export function SceneImage({ scene, className, lazy }: Props) {
   if (isProtectedMediaUrl && !resolvedUrl) {
     return (
       <span className={`scene-image scene-image--loading${className ? ` ${className}` : ""}`}>
-        <InlineLoader compact className="scene-image__loading-label" label="Preparing photo…" />
+        <InlineLoader compact className="scene-image__loading-label" label="Preparing photo" />
       </span>
     );
   }
@@ -76,9 +79,10 @@ export function SceneImage({ scene, className, lazy }: Props) {
     <img
       src={resolvedUrl ?? undefined}
       alt={scene.title}
-      className={`scene-image${className ? ` ${className}` : ""}`}
+      className={`scene-image${loadedUrl === resolvedUrl ? "" : " scene-image--pending"}${className ? ` ${className}` : ""}`}
       decoding="async"
       {...imageLoadingAttrs(lazy)}
+      onLoad={() => setLoadedUrl(resolvedUrl)}
       onError={() => setFailedUrl(scene.imageUrl)}
     />
   );

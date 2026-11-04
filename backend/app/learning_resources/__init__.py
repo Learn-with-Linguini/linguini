@@ -192,6 +192,27 @@ def get_mission_cheat_sheet(
     )
 
 
+def get_available_a0_cheat_sheet(
+    mission_id: str,
+    language_code: str,
+) -> MissionCheatSheet | None:
+    """Return the single curated A0 sheet for a mission and language, if available.
+
+    A0 help is shared by some activities whose mission content versions differ from
+    the curated learning-resource version. Refuse an ambiguous choice if multiple A0
+    sheets are ever published for the same mission and language.
+    """
+    matches = [
+        cheat_sheet
+        for (sheet_mission_id, practice_level, _, sheet_language), cheat_sheet
+        in mission_cheat_sheets().items()
+        if sheet_mission_id == mission_id
+        and practice_level == ProficiencyLevel.A0
+        and sheet_language == language_code.casefold()
+    ]
+    return matches[0] if len(matches) == 1 else None
+
+
 def get_character_reference(
     reference_id: str, content_version: int
 ) -> CharacterReference | None:

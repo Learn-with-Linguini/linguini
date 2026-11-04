@@ -320,10 +320,33 @@ def test_schema_restricts_gender_to_supported_values_or_null() -> None:
     }
 
 
+def test_schema_encodes_agreement_forms_as_strict_pairs() -> None:
+    term_schema = build_scene_translation_schema()["properties"]["attributes"]["items"]
+    agreement_schema = term_schema["properties"]["agreementForms"]
+
+    assert agreement_schema["type"] == "array"
+    assert agreement_schema["items"]["additionalProperties"] is False
+    assert agreement_schema["items"]["required"] == ["key", "value"]
+    assert '"additionalProperties": {' not in json.dumps(build_scene_translation_schema())
+
+
 def test_literal_null_metadata_is_normalized_for_non_objects() -> None:
     output = json.loads(VALID_OUTPUT)
     output["attributes"][0].update(article="null", gender="null")
     output["relationships"][0].update(article="null", gender="null")
+
+    result = service(FakeTextClient([json.dumps(output)])).translate(PAYLOAD)
+
+    assert result.attributes[0].article is None
+    assert result.attributes[0].gender is None
+    assert result.relationships[0].article is None
+    assert result.relationships[0].gender is None
+
+
+def test_noun_metadata_on_non_objects_is_ignored() -> None:
+    output = json.loads(VALID_OUTPUT)
+    output["attributes"][0].update(article="el", gender="masculine")
+    output["relationships"][0].update(article="la", gender="feminine")
 
     result = service(FakeTextClient([json.dumps(output)])).translate(PAYLOAD)
 
@@ -499,20 +522,22 @@ def test_german_neuter_translation_gender_is_accepted():
 
 
 @pytest.mark.parametrize("field", ["attributes", "relationships"])
-def test_article_or_gender_on_non_object_is_rejected(field) -> None:
+def test_article_or_gender_on_non_object_is_discarded(field) -> None:
     result = json.loads(VALID_OUTPUT)
     result[field][0]["article"] = "la"
-    with pytest.raises(SceneTranslationError):
-        service(
-            FakeTextClient([json.dumps(result)]), cfg=config(max_retries=0)
-        ).translate(PAYLOAD)
+    translated = service(
+        FakeTextClient([json.dumps(result)]), cfg=config(max_retries=0)
+    ).translate(PAYLOAD)
+
+    assert getattr(translated, field)[0].article is None
 
     result = json.loads(VALID_OUTPUT)
     result[field][0]["gender"] = "feminine"
-    with pytest.raises(SceneTranslationError):
-        service(
-            FakeTextClient([json.dumps(result)]), cfg=config(max_retries=0)
-        ).translate(PAYLOAD)
+    translated = service(
+        FakeTextClient([json.dumps(result)]), cfg=config(max_retries=0)
+    ).translate(PAYLOAD)
+
+    assert getattr(translated, field)[0].gender is None
 
 
 def test_unparseable_model_output_is_rejected() -> None:
@@ -699,7 +724,7 @@ def test_generation_observation_dimensions() -> None:
     assert enter["provider"] == "openai"
     assert enter["model"] == "test-text-model"
     assert enter["prompt_version"] == PACK_TRANSLATION_PROMPT_VERSION
-    assert enter["schema_version"] == "pack-translation-result.v3"
+    assert enter["schema_version"] == "pack-translation-result.v4"
 
     update = next(
         kw
