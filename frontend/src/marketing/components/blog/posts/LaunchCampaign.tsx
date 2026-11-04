@@ -17,6 +17,10 @@ const IMG = "/blog/launch";
 export function LaunchCampaign() {
   return (
     <div className={s.body}>
+      <p className={s.note}>
+        This is the team’s 20 October 2026 launch plan, including draft posts, proposed outreach and retention goals.
+        It records what we planned at the time. The app is now available as a free public beta.
+      </p>
       <InView as="p" className={story.lede}>
         A launch is one day. Keeping the people who show up takes <mark>the two weeks after</mark>, so that’s where most
         of this plan goes. Here it is in the order it happens.

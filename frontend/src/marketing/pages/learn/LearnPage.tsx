@@ -13,6 +13,7 @@ import { getScene, scenes } from "../../data/scenes";
 import { steps } from "../../data/steps";
 import { PageMeta } from "../../lib/seo";
 import { appLinks, site } from "../../lib/site";
+import { siteEntities } from "../../lib/structuredData";
 import NotFoundPage from "../NotFoundPage";
 import styles from "./learn.module.css";
 
@@ -34,6 +35,7 @@ export default function LearnLanguagePage() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
+      ...siteEntities(),
       {
         "@type": "BreadcrumbList",
         itemListElement: [
@@ -45,13 +47,16 @@ export default function LearnLanguagePage() {
         "@type": "DefinedTermSet",
         "@id": `${url}#words`,
         name: `${name} words from Linguini photo lessons`,
+        url,
         inLanguage: lang,
         hasDefinedTerm: scenes.flatMap(item =>
           item.words.map(word => ({
             "@type": "DefinedTerm",
             name: word[lang].word,
-            description: `${word.en} (${word[lang].gender})`,
-            inLanguage: lang,
+            description: word[lang].gender && word[lang].gender !== "none"
+              ? `${word.en} (${word[lang].gender})`
+              : word.en,
+            inDefinedTermSet: { "@id": `${url}#words` },
           })),
         ),
       },
@@ -105,8 +110,9 @@ export default function LearnLanguagePage() {
             <div className="section-head">
               <h2 id="words-title" className="section-title">{wordCount} {name} words from {scenes.length} photos</h2>
               <p className="section-lede">
-                Every lesson starts like this. Linguini finds the things in a photo and teaches each one with its article,
-                gender and pronunciation. These are the words in our demo scenes; yours will come from your own day.
+                Every lesson starts like this. Linguini finds the things in a photo and teaches their {name} names
+                {lang === "ko" ? " in Hangul, with pronunciation and audio" : ", with articles, grammatical gender and pronunciation"}.
+                {" "}These are the words in our demo scenes; yours will come from your own day.
               </p>
             </div>
             <ul className={styles.scenes}>
