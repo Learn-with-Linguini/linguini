@@ -252,6 +252,7 @@ def build_object_grounder(settings: AiSettings) -> ObjectGrounder | None:
         return GroundingDinoObjectGrounder(
             config.model_name,
             config.threshold,
+            revision=config.model_revision,
             max_labels=config.max_labels,
             max_image_side=config.max_image_side,
         )

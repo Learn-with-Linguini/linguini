@@ -125,9 +125,13 @@ def label_key(label: str) -> str:
 
 
 def _day_lock(c, day, *, shared):
-    function = "pg_advisory_xact_lock_shared" if shared else "pg_advisory_xact_lock"
+    statement = (
+        "SELECT pg_advisory_xact_lock_shared(hashtextextended(:key, 0))"
+        if shared
+        else "SELECT pg_advisory_xact_lock(hashtextextended(:key, 0))"
+    )
     c.execute(
-        text(f"SELECT {function}(hashtextextended(:key, 0))"),
+        text(statement),
         {"key": f"daily-challenge:{day.isoformat()}"},
     )
 
