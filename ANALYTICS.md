@@ -160,8 +160,8 @@ The existing analysis and review routes show this progress; no new page is added
 | `scene_shortfall_add_clicked` | `{ kind }` | Learner chooses to add the missing kind of fact from the shortfall notice |
 | `scene_shortfall_new_photo` | `{ missing }` | Learner leaves a short scene to take or choose another photo |
 | `scene_analysis_retried` | `{ sessionId }` | User requests AI re-analysis of a photo |
-| `task_answer_checked` | `{ taskId, isCorrect, kind }` | Learner checks answer on an interactive exercise |
-| `lesson_marker_selected` | `{ taskId, questionId, marker }` | Learner answers a marker-based lesson question by selecting its numbered marker directly on the photo |
+| `task_answer_checked` | `{ taskId, isCorrect, kind }` | Learner checks answer on an interactive exercise; choosing a multiple-choice option submits it in the same tap |
+| `lesson_marker_selected` | `{ taskId, questionId, marker }` | Learner answers a marker-based lesson question by selecting its numbered marker directly on the photo; the selection is checked immediately |
 | `task_completed` | `{ taskId, kind }` | Learner completes reading or informational task |
 | `task_finished_to_list` | `{ taskId, kind }` | Learner finishes the final task and returns to the task list |
 | `task_opened` | `{ taskId }` | User opens a mission from the mission path (tapping its row, or the Start/Continue button) |
@@ -178,6 +178,7 @@ The existing analysis and review routes show this progress; no new page is added
 | `home_quick_play_retried` | `{ stage: "photos" \| "active" \| "start" }` | Learner retries loading quick play or starting its game |
 | `home_quick_play_photo_lesson_clicked` | — | Learner opens photo practice from quick play’s empty state |
 | `session_summary_viewed` | `{ sessionId, basilEarned, wordsLearnedCount, completedLessonsCount }` | Session summary screen displays upon finishing a lesson |
+| `finish_celebration_shown` | `{ screen: "lesson" \| "ispy", score: "perfect" \| "partial" }` | The lesson or I-Spy results screen plays its pasta shower and finish jingle once the completed results load; `perfect` means every graded answer was right and nothing was skipped |
 | `summary_back_home_clicked` | — | User clicks "Back home" on session summary |
 | `badge_earned_popup_shown` | `{ missionId, level }` | The summary opens the "New badge earned" popup; once per earned badge, once per session |
 | `badge_earned_popup_closed` | — | Learner closes the "New badge earned" popup |

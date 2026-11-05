@@ -3,7 +3,7 @@ import { existsSync } from "node:fs";
 import { join } from "node:path";
 import test from "node:test";
 import { MISSION_BADGE_ASSETS, missionBadgeAsset } from "../src/lib/missionBadges.ts";
-import { batchAccuracy, earnedBadgeLevels, type MissionBatch } from "../src/lib/gamification.ts";
+import { batchAccuracy, earnedBadgeLevels, lessonFinishScore, type MissionBatch } from "../src/lib/gamification.ts";
 
 test("every mission badge has a bundled image", () => {
   assert.deepEqual(Object.keys(MISSION_BADGE_ASSETS), Array.from({ length: 12 }, (_, index) => `M${String(index + 1).padStart(2, "0")}`));
@@ -25,4 +25,12 @@ test("batch accuracy is the share of assessed answers that were right", () => {
   assert.equal(batchAccuracy(batch(3, 6)), 50);
   assert.equal(batchAccuracy(batch(5, 6)), 83);
   assert.equal(batchAccuracy(batch(0, 0)), 0);
+});
+
+test("a lesson finish is perfect only when every graded answer was right and nothing was skipped", () => {
+  const batch = (correctQuestions: number, assessedQuestions: number) => ({ correctQuestions, assessedQuestions }) as MissionBatch;
+  assert.equal(lessonFinishScore([batch(4, 4), batch(2, 2)], 0), "perfect");
+  assert.equal(lessonFinishScore([batch(4, 4), batch(1, 2)], 0), "partial");
+  assert.equal(lessonFinishScore([batch(4, 4)], 1), "partial");
+  assert.equal(lessonFinishScore([], 0), "partial", "an ungraded lesson does not claim a perfect score");
 });

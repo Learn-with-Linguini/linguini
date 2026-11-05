@@ -189,9 +189,11 @@ for (const checkEachQuestion of [true, false]) {
     const marker = dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Marker 1"]');
     assert.ok(marker);
     assert.equal(button("Marker 1"), undefined, "marker questions do not repeat photo markers as choices");
+    replies.push(() => Response.json({ ...checked(true), answer: "cup-option", correctAnswer: "1" }));
     await surface.act(async () => { marker.dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true })); });
-    assert.equal(marker.getAttribute("aria-pressed"), "true");
-    assert.equal(button("Check answer")?.disabled, false);
+    await waitFor(() => assert.match(text(), /Correct!/));
+    assert.equal(requests[0].answer, "cup-option", "choosing a marker checks it without a second tap");
+    assert.equal(button("Check answer"), undefined);
   });
 
   test(`${mode} grammar keeps the source photo available as context`, async () => {
@@ -217,9 +219,8 @@ test("a description with an object preview keeps its existing photo", async () =
 
 test("A0 checked answers retain correctness, server feedback and notes across rerenders and restoration", async () => {
   let view = await mount(lesson());
-  await click("la");
   replies.push(() => Response.json(checked(true)));
-  await click("Check answer");
+  await click("la");
   const phrase = learningFeedback("correct", "t1:q1");
   await waitFor(() => assert.match(text(), /Correct!/));
   assert.ok(text().includes(phrase));
@@ -239,9 +240,8 @@ test("A0 checked answers retain correctness, server feedback and notes across re
 
 test("a locked incorrect answer keeps its correction without promising another attempt", async () => {
   await mount(lesson());
-  await click("el");
   replies.push(() => Response.json(checked(false)));
-  await click("Check answer");
+  await click("el");
   await waitFor(() => assert.match(text(), /The correct answer is la/));
   assert.ok(text().includes(learningFeedback("incorrect", "t1:q1")));
   assert.match(text(), /Keep the noun and check its article/);
@@ -288,10 +288,10 @@ test("A2 construction retains the checked photo sentence when advancing and afte
   assert.equal(contextCard(), null);
   const marker = dom.window.document.querySelector<HTMLButtonElement>('button[aria-label="Marker 1"]');
   assert.ok(marker);
-  await surface.act(async () => marker.click());
   const result = { ...checked(true), questionId: "m01-q1", answer: "cup-choice", correctAnswer: "1" };
   replies.push(() => Response.json(result));
-  await click("Check answer");
+  await surface.act(async () => marker.click());
+  await waitFor(() => assert.ok(button("Next question")));
   await click("Next question");
   assert.match(contextCard()?.textContent ?? "", /La taza es roja/);
   assert.match(contextCard()?.textContent ?? "", /The cup is red/);
@@ -328,9 +328,8 @@ test("M06 preserves a saved retry and replaces encouragement only after the new 
   assert.match(text(), /Keep the noun and check its article/);
   await click("Try again");
   assert.equal(dom.window.document.querySelector('.feedback'), null);
-  await click("la");
   replies.push(() => Response.json(checked(true)));
-  await click("Check again");
+  await click("la");
   await waitFor(() => assert.ok(text().includes(learningFeedback("correct", "t1:q1"))));
   assert.match(text(), /The article matches taza/);
   assert.equal(requests[0].answer, "a");
@@ -371,16 +370,14 @@ for (const missionId of ["M04", "M05"] as const) {
     const progress = () => dom.window.document.querySelector(".trail__label")?.textContent;
     assert.equal(progress(), "Question 1 of 2");
     assert.equal(dom.window.document.querySelectorAll(".question-progress .label").length, 0);
-    await click(negative);
     replies.push(() => Response.json(check("q1", false)));
-    await click("Check answer");
+    await click(negative);
     await waitFor(() => assert.equal(button("Next question")?.disabled, false));
     await click(positive);
     await click("Next question");
     assert.equal(progress(), "Question 2 of 2");
-    await click(positive);
     replies.push(() => Response.json(check("q2", true)));
-    await click("Check answer");
+    await click(positive);
     await waitFor(() => assert.equal(button("Finish task")?.disabled, false));
     actions.push(() => action(task, false, "1 of 2 questions correct."));
     await click("Finish task");
@@ -404,6 +401,42 @@ for (const missionId of ["M04", "M05"] as const) {
   });
 }
 
+test("M05 says the finished phrase only after the learner's own tap lands on the right answer", async () => {
+  const spoken: string[] = [];
+  Object.defineProperty(dom.window, "speechSynthesis", { configurable: true, value: {
+    speaking: false, pending: false, cancel() {}, getVoices: () => [], speak: (utterance: { text: string }) => spoken.push(utterance.text),
+  } });
+  globals.SpeechSynthesisUtterance = class { text: string; lang = ""; rate = 1; constructor(text: string) { this.text = text; } };
+  try {
+    const { task, positive, negative, check } = situationLesson("M05");
+    savedChecks = [check("q1", true)];
+    let view = await mount(task);
+    await waitFor(() => assert.equal(dom.window.document.querySelector(".trail__label")?.textContent, "Question 2 of 2"));
+    assert.deepEqual(spoken, [], "restoring a checked answer stays silent");
+    replies.push(() => Response.json(check("q2", false)));
+    await click(negative);
+    await waitFor(() => assert.match(text(), /The correct answer is/));
+    await new Promise(resolve => setTimeout(resolve, 800));
+    assert.deepEqual(spoken, [], "a wrong answer does not read anything aloud");
+    await click(positive);
+    await waitFor(() => assert.deepEqual(spoken, [`${positive}.`]));
+    await view.close();
+
+    savedChecks = [];
+    spoken.length = 0;
+    view = await mount(task);
+    replies.push(() => Response.json(check("q1", true)));
+    await click(positive);
+    await waitFor(() => assert.match(text(), /Correct!/));
+    assert.deepEqual(spoken, [], "the phrase waits for the answer chime");
+    await waitFor(() => assert.deepEqual(spoken, [`${positive}.`]));
+    await view.close();
+  } finally {
+    delete (dom.window as unknown as Record<string, unknown>).speechSynthesis;
+    delete globals.SpeechSynthesisUtterance;
+  }
+});
+
 test("an explicitly retryable lesson cannot finish while a saved retry is still open", async () => {
   savedChecks = [checked(false, 2)];
   await mount(lesson("M06"));
@@ -413,13 +446,17 @@ test("an explicitly retryable lesson cannot finish while a saved retry is still 
 
 test("a failed question check shows the error without an answer celebration", async () => {
   await mount(lesson());
-  await click("la");
+  assert.equal(button("Check answer"), undefined, "choices check on tap, without a separate button");
   replies.push(() => Response.json({ detail: { message: "Check interrupted" } }, { status: 500 }));
-  await click("Check answer");
+  await click("la");
   await waitFor(() => assert.ok(dom.window.document.querySelector('[role="alert"]')));
   assert.equal(dom.window.document.querySelector('.feedback'), null);
-  assert.equal(button("Check answer")?.disabled, false);
+  assert.equal(button("Check answer")?.disabled, false, "a failed check can be retried");
   assert.equal(button("la")?.getAttribute("aria-pressed"), "true");
+  replies.push(() => Response.json(checked(true)));
+  await click("Check answer");
+  await waitFor(() => assert.match(text(), /Correct!/));
+  assert.deepEqual(requests.map(item => item.answer), ["a", "a"]);
 });
 
 test("reading completion stays neutral and does not turn XP into Basil", async () => {

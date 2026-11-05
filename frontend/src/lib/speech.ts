@@ -25,6 +25,7 @@ export function speak(text: string, lang: string, settings?: SpeechPreferences |
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = settings?.speechLocale ?? speechLocale(lang);
   utterance.rate = 0.9;
-  window.speechSynthesis.cancel();
+  // Chrome can drop an utterance queued straight after an idle cancel(), so only cut off real speech.
+  if (window.speechSynthesis.speaking || window.speechSynthesis.pending) window.speechSynthesis.cancel();
   window.speechSynthesis.speak(utterance);
 }
