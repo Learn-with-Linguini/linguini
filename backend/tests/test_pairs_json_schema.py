@@ -1,8 +1,9 @@
 """Free-form maps travel as [{key, value}] lists in strict structured output."""
 
 import json
+from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.ai.contracts.schema import build_pairs_json_schema, restore_maps
 
@@ -30,3 +31,15 @@ def test_maps_are_sent_as_pairs_and_restored():
     restored = Lesson.model_validate(restore_maps(Lesson, reply))
     assert restored.markers == {"marker-1": "cup", "marker-2": "book"}
     assert restored.options[0].scores == {"a": 1}
+
+
+class Card(BaseModel):
+    forms: dict[Literal["masculine", "feminine"], str] = Field(description="Forms by gender.")
+
+
+def test_literal_map_keys_and_description_survive_as_pairs():
+    forms = build_pairs_json_schema(Card)["properties"]["forms"]
+    assert forms["items"]["properties"]["key"] == {
+        "type": "string", "enum": ["masculine", "feminine"],
+    }
+    assert forms["description"] == "Forms by gender."
