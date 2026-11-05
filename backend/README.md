@@ -837,8 +837,9 @@ There is no per-feature environment fallback. Variables such as
 environment supplies only:
 
 - secrets, from the variables each credential names (`AI_OPENROUTER_API_KEY`,
-  `AI_OPENAI_API_KEY`, `AI_GEMINI_API_KEY` in the default file). OpenAI image
-  moderation uses the first `openai` credential with a secret;
+  `AI_OPENAI_API_KEY_1` to `_3` with `AI_OPENAI_API_KEY` as key 1's fallback,
+  and `AI_GEMINI_API_KEY` in the default file). OpenAI image moderation uses the
+  first `openai` credential with a secret;
 - `AI_MODE` and, optionally, `AI_CONFIG_FILE`;
 - result cache, observability, image moderation and object grounding settings.
 
@@ -905,6 +906,16 @@ Every model call leases a credential from the app-wide `CredentialPool`
   skipping any without a secret, disabled, or cooling down (itself or its
   `quota_group`). A lock guards only selection and health updates; it is
   never held during a model call.
+- **Several keys for one provider:** the default `ai.toml` defines three
+  OpenAI credentials (`openai-1` to `openai-3`, read from
+  `AI_OPENAI_API_KEY_1` to `_3`), and every OpenAI deployment lists all three,
+  so successive calls use each key in turn. Set as many of the variables as
+  you have keys; empty ones are skipped. Each key has its own `quota_group`,
+  which assumes each comes from a different OpenAI organisation, because OpenAI
+  rate-limits and bills per organisation. Keys from one organisation should
+  share a `quota_group`; spreading calls across them adds no capacity. The
+  rotation position lives in each process's memory, so several workers or
+  instances each rotate on their own, and it balances calls, not spend.
 - **Clients:** one immutable client per deployment, credential and model
   config, built on first use and reused. A shared client's key or model is
   never changed.

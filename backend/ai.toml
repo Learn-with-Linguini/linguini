@@ -22,11 +22,29 @@ env = ["AI_OPENROUTER_API_KEY"]
 quota_group = "openrouter"
 billing_group = "openrouter"
 
-[credentials.openai]
+# Three OpenAI keys share the load: every OpenAI deployment takes them in turn,
+# skipping a key that is missing, invalid or cooling down. OpenAI limits and
+# bills per organisation, so each key has its own quota_group on the assumption
+# that each comes from a different organisation. Keys from one organisation must
+# share a quota_group, since a rate limit on one then applies to all of them.
+# Key 1 falls back to AI_OPENAI_API_KEY so a single-key .env.local still works.
+[credentials.openai-1]
 adapter = "openai"
-env = ["AI_OPENAI_API_KEY"]
-quota_group = "openai"
-billing_group = "openai"
+env = ["AI_OPENAI_API_KEY_1", "AI_OPENAI_API_KEY"]
+quota_group = "openai-1"
+billing_group = "openai-1"
+
+[credentials.openai-2]
+adapter = "openai"
+env = ["AI_OPENAI_API_KEY_2"]
+quota_group = "openai-2"
+billing_group = "openai-2"
+
+[credentials.openai-3]
+adapter = "openai"
+env = ["AI_OPENAI_API_KEY_3"]
+quota_group = "openai-3"
+billing_group = "openai-3"
 
 [credentials.gemini]
 adapter = "gemini"
@@ -39,7 +57,7 @@ adapter = "openai"
 api = "responses"
 model = "gpt-4.1-mini"
 capabilities = ["vision", "jsonSchema"]
-credentials = ["openai"]
+credentials = ["openai-1", "openai-2", "openai-3"]
 defaults = { timeout_seconds = 120, max_output_tokens = 5000, max_retries = 0 }
 
 [deployments.translation-gpt-4o-mini]
@@ -47,7 +65,7 @@ adapter = "openai"
 api = "responses"
 model = "gpt-5.4-mini"
 capabilities = ["text", "jsonSchema"]
-credentials = ["openai"]
+credentials = ["openai-1", "openai-2", "openai-3"]
 defaults = { timeout_seconds = 60, max_retries = 1 }
 
 [deployments.lessons-gpt-5-4-mini]
@@ -55,7 +73,7 @@ adapter = "openai"
 api = "responses"
 model = "gpt-5.4-mini"
 capabilities = ["text", "jsonSchema"]
-credentials = ["openai"]
+credentials = ["openai-1", "openai-2", "openai-3"]
 defaults = { timeout_seconds = 60, max_output_tokens = 4000, max_retries = 1 }
 
 [deployments.clues-gemini-flash-lite]
@@ -71,7 +89,7 @@ adapter = "openai"
 api = "responses"
 model = "gpt-4.1-mini"
 capabilities = ["text", "jsonSchema"]
-credentials = ["openai"]
+credentials = ["openai-1", "openai-2", "openai-3"]
 defaults = { timeout_seconds = 60, max_retries = 0 }
 
 [routes.sceneAnalysis]
