@@ -10,6 +10,8 @@ from typing import Annotated
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
+from app.ai.contracts.config import ReasoningEffort
+
 
 class AiProvider(StrEnum):
     OPENAI = "openai"
@@ -95,6 +97,7 @@ class GenerationDefaults(_Config):
     max_output_tokens: int | None = Field(default=None, gt=0)
     max_retries: int = Field(default=0, ge=0)
     temperature: float = Field(default=0.0, ge=0, le=2)
+    reasoning_effort: ReasoningEffort | None = None
 
 
 class UpstreamFallback(_Config):

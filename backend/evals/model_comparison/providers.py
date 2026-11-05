@@ -11,6 +11,7 @@ called directly, so their latency excludes OpenRouter's routing hop.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from functools import cache
 
@@ -102,7 +103,9 @@ PRODUCTION_DEFAULTS = {
 JUDGE = Candidate("openrouter", "anthropic/claude-sonnet-5")
 
 TIMEOUTS = {"scene_analysis": 180, "learning_tasks": 120}
-MAX_OUTPUT_TOKENS = {"learning_tasks": 8000, "scene_analysis": 3000}
+# Scene analysis matches production's cap: a 20-object inventory is ~2,300 JSON
+# tokens, and reasoning models spend thinking tokens from the same budget.
+MAX_OUTPUT_TOKENS = {"learning_tasks": 8000, "scene_analysis": 5000}
 
 
 def all_catalogue_ids() -> set[str]:
@@ -117,12 +120,15 @@ def facts() -> dict[str, pricing.ModelFacts]:
 
 @cache
 def settings() -> AiSettings:
-    loaded = load_ai_settings()
-    for provider in (AiProvider.OPENAI, AiProvider.GEMINI, AiProvider.OPENROUTER):
-        if not loaded.api_key_for(provider):
-            name = f"AI_{provider.value.upper()}_API_KEY"
+    return load_ai_settings()
+
+
+def require_keys(providers: Iterable[str]) -> None:
+    """Exit unless every provider this run calls has a key; others may be unset."""
+    for provider in sorted(set(providers)):
+        if not settings().api_key_for(AiProvider(provider)):
+            name = f"AI_{provider.upper()}_API_KEY"
             raise SystemExit(f"{name} is not set; load backend/.env.local first")
-    return loaded
 
 
 def text_config(call: str, cand: Candidate, overrides: Overrides) -> TextModelConfig:

@@ -3,6 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
+
+ReasoningEffort = Literal["none", "minimal", "low", "medium", "high"]
+REASONING_EFFORTS: tuple[str, ...] = ("none", "minimal", "low", "medium", "high")
 
 
 @dataclass(frozen=True)
@@ -14,6 +18,9 @@ class ModelConfig:
     # Sampling temperature. Zero keeps structured extraction repeatable;
     # a higher value is only useful where variety is wanted, such as clues.
     temperature: float = 0.0
+    # Thinking effort for reasoning models. None sends nothing, so the model
+    # uses its provider default; non-reasoning models must leave it unset.
+    reasoning_effort: ReasoningEffort | None = None
 
     def __post_init__(self) -> None:
         if not self.model_name:
@@ -26,3 +33,5 @@ class ModelConfig:
             raise ValueError("max_retries must be 0 or 1: retry at most once")
         if not 0 <= self.temperature <= 2:
             raise ValueError("temperature must be between 0 and 2")
+        if self.reasoning_effort is not None and self.reasoning_effort not in REASONING_EFFORTS:
+            raise ValueError(f"reasoning_effort must be one of {', '.join(REASONING_EFFORTS)}")

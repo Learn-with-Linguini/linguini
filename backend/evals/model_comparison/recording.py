@@ -31,6 +31,7 @@ class Overrides:
 
     temperature: float | None = None
     max_output_tokens: int | None = None
+    reasoning_effort: str | None = None
 
     def label(self) -> str:
         parts = [f"{k}={v}" for k, v in self.__dict__.items() if v is not None]

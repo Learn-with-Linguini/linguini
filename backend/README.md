@@ -816,8 +816,12 @@ directory. The file holds no secrets. It has three sections:
 - `[deployments.<id>]`: `adapter`, `api` (`responses` or `generateContent`),
   `model`, `capabilities` (`text`, `vision`, `jsonSchema`), the eligible
   `credentials`, generation `defaults` (`timeout_seconds`,
-  `max_output_tokens`, `max_retries`, `temperature`), and, for OpenRouter
-  only, a required `upstream_fallback` (see [AI routing](#ai-routing)).
+  `max_output_tokens`, `max_retries`, `temperature`, and an optional
+  `reasoning_effort` of `none`, `minimal`, `low`, `medium` or `high` for
+  reasoning models only: Responses API hosts receive `reasoning.effort` and no
+  temperature unless the effort is `none`; Gemini receives the matching thinking
+  level, with `none` as `minimal`), and, for OpenRouter only, a required
+  `upstream_fallback` (see [AI routing](#ai-routing)).
 - `[routes.<feature>]`, one for each of `sceneAnalysis`, `sceneTranslation`,
   `learningTask`, `ispyClue` and `ispyGuess`:
   - `enabled`;

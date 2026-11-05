@@ -130,6 +130,20 @@ def test_route_uses_first_eligible_credential_with_a_secret(tmp_path, monkeypatc
     assert seen["options"] == {"allow_fallbacks": True, "fallback_models": ()}
 
 
+def test_deployment_reasoning_effort_reaches_the_model_config():
+    from pydantic import ValidationError
+
+    from app.ai.config.models import GenerationDefaults
+
+    defaults = GenerationDefaults(timeout_seconds=30, reasoning_effort="low")
+    assert registry._model_config("m", defaults, 1500).reasoning_effort == "low"
+    assert registry._model_config(
+        "m", GenerationDefaults(timeout_seconds=30), 1500
+    ).reasoning_effort is None
+    with pytest.raises(ValidationError):
+        GenerationDefaults(timeout_seconds=30, reasoning_effort="extreme")
+
+
 def test_first_non_empty_variable_supplies_the_secret():
     data = example()
     data["credentials"]["openrouter"]["env"] = ["AI_OPENROUTER_API_KEY", "TEAM_KEY"]
