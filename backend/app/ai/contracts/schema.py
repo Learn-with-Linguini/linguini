@@ -79,18 +79,27 @@ def _pairs(node: Any) -> Any:
     if not isinstance(node, dict):
         return node
     if _is_map(node):
-        return {
+        # Keep the map's allowed keys (``dict[Literal[...], X]``) and its description, or
+        # the model sees an unconstrained string key and guesses one.
+        key = {"type": "string"}
+        allowed = node.get("propertyNames", {}).get("enum")
+        if allowed:
+            key["enum"] = list(allowed)
+        pairs = {
             "type": "array",
             "items": {
                 "type": "object",
                 "properties": {
-                    "key": {"type": "string"},
+                    "key": key,
                     "value": _pairs(node["additionalProperties"]),
                 },
                 "required": ["key", "value"],
                 "additionalProperties": False,
             },
         }
+        if "description" in node:
+            pairs["description"] = node["description"]
+        return pairs
     return {
         key: (
             {name: _pairs(value) for name, value in child.items()}
