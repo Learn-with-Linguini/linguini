@@ -219,7 +219,11 @@ def dispatch(level, runtime, provider, *, cache=None, sid=100):
         cache_scope=CacheScope.user("mock-user"),
         language_context=context,
     )
-    repo = SimpleNamespace(learning_task_generator=service(provider, cache))
+    # One model call per mission, as before automatic retries.
+    repo = SimpleNamespace(
+        learning_task_generator=service(provider, cache),
+        _with_retry=lambda _stage, _claim, call: call(),
+    )
     return PostgresWorkflowRepository._mission_lessons(
         repo, claim, objects, relations, words, translated, []
     )

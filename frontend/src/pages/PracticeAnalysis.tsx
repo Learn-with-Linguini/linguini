@@ -46,7 +46,7 @@ function relationLabel(relation: string) {
 export function PracticeAnalysis() {
   const navigate = useNavigate();
   const scene = useScene();
-  const { session, saveReview, reviewShortfall, practiceSaving, practiceError, practiceStalled, retryProcessing, retryAnalysis } = useAppState();
+  const { session, saveReview, reviewShortfall, practiceSaving, practiceError, practiceStalled, retryProcessing, retryAnalysis, retryGeneration } = useAppState();
   const [removed, setRemoved] = useState<string[]>(() => {
     return initiallyHiddenObjectIds(
       (session?.sceneObjects ?? []).map(item => item.id),
@@ -111,6 +111,10 @@ export function PracticeAnalysis() {
     revisitReviewShown.current = revisitSessionId;
     trackAction("revisit_review_shown", { sessionId: revisitSessionId, newWordCount: sceneLabels.size - practisedLabels.size, practisedWordCount: practisedLabels.size });
   }, [practisedLabels.size, revisitSessionId, sceneLabels.size]);
+  const generationFailedId = session?.session.status === "failed" && session.generationRetryable ? session.session.id : null;
+  useEffect(() => {
+    if (generationFailedId) trackAction("lesson_build_failed_shown", { sessionId: generationFailedId });
+  }, [generationFailedId]);
   useEffect(() => {
     if (!pending && !movingObjectId) return;
     const cancelOutside = (event: PointerEvent) => {
@@ -135,6 +139,26 @@ export function PracticeAnalysis() {
             practiceNotice: "Your last photo is still saved. You can try it again or choose another one.",
             retrySessionId: session.session.id,
           } })}>Choose another photo</Button>
+        </div>
+      </div>
+    </section>
+  </div>;
+  if (session.session.status === "failed" && session.generationRetryable) return <div className="stack analysis-page">
+    <h1>Building your lesson</h1>
+    <section className="analysis-loading" aria-live="polite">
+      <div className="analysis-loading__copy">
+        <h2>We couldn't finish your lesson</h2>
+        <p className="muted">Something went wrong while building your lesson. Your photo and the words you picked are saved, so you can try again without starting over.</p>
+        {practiceError ? <p role="alert">{practiceError}</p> : null}
+        <div className="stack-2">
+          <Button disabled={practiceSaving} onClick={() => {
+            trackAction("lesson_build_retry_clicked", { sessionId: session.session.id });
+            void retryGeneration(session.session.id);
+          }}>Try again</Button>
+          <Button variant="secondary" disabled={practiceSaving} onClick={() => {
+            trackAction("lesson_build_new_photo_clicked", { sessionId: session.session.id });
+            navigate("/practice", { state: { practiceNotice: "Choose a photo to start a new practice." } });
+          }}>Choose another photo</Button>
         </div>
       </div>
     </section>

@@ -157,6 +157,9 @@ The existing analysis and review routes show this progress; no new page is added
 | `scene_review_confirmed` | `{ acceptedCount, addedCount }` | User confirms detected objects before generating lesson |
 | `revisit_review_shown` | `{ sessionId, newWordCount, practisedWordCount }` | Review of a repeat lesson on a photo shows which words were practised before (counts are distinct labels) |
 | `scene_shortfall_shown` | `{ missing }` | Review shows that the photo lacks checkable objects, counts, adjectives or connections (`missing` is a comma-separated list) |
+| `lesson_build_failed_shown` | `{ sessionId }` | The analysis step shows that building the lesson failed and offers a retry |
+| `lesson_build_retry_clicked` | `{ sessionId }` | Learner retries building a failed lesson from the saved photo and reviewed words |
+| `lesson_build_new_photo_clicked` | `{ sessionId }` | Learner leaves a failed lesson build to choose another photo |
 | `scene_shortfall_add_clicked` | `{ kind }` | Learner chooses to add the missing kind of fact from the shortfall notice |
 | `scene_shortfall_new_photo` | `{ missing }` | Learner leaves a short scene to take or choose another photo |
 | `scene_analysis_retried` | `{ sessionId }` | User requests AI re-analysis of a photo |
