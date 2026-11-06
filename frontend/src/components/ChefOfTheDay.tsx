@@ -6,11 +6,11 @@ import { Button } from "./ui";
 import "./gamification.css";
 import "./leaderboard.css";
 
-export function ChefOfTheDay() {
+export function ChefOfTheDay({ as: Heading = "h2" }: { as?: "h1" | "h2" }) {
   const query = useChefStandings();
   const data = query.data;
   return <section className="stack" aria-labelledby="chef-day-title">
-    <div className="ispy-chefs__heading"><div><h2 id="chef-day-title">Chefs of the Day</h2></div><BasilIcon size={30} /></div>
+    <div className="ispy-chefs__heading"><div><Heading id="chef-day-title">Chefs of the Day</Heading></div><BasilIcon size={30} /></div>
     {query.isPending ? <InlineLoader label="Loading today’s chefs" /> : !data ? <div><p role="alert">We couldn’t load today’s leaderboard.</p>
       <Button variant="quiet" onClick={() => { trackAction("chef_of_the_day_retry_clicked"); void query.refetch(); }}>Retry leaderboard</Button></div> : <>
       <section className="ispy-chefs__comparison" aria-label="Your leaderboard position">
@@ -20,8 +20,7 @@ export function ChefOfTheDay() {
       </section>
       {data.top.length ? <ol className="ispy-chefs__list" aria-label="Today’s chefs">{data.top.map((entry, index) => <li key={`${entry.rank}:${index}`} className="ispy-chefs__entry">
         <span className="ispy-chefs__rank">{entry.rank}</span><img className="leaderboard-avatar" src={`/pasta-assets/${entry.avatar}.png`} alt="" /><strong>{entry.displayName}</strong>
-        <span className="ispy-chefs__basil"><BasilIcon size={17} />{entry.basil} Basil</span></li>)}</ol> : <p className="muted">A fresh day in the kitchen. There’s room for everyone.</p>}
-      <p className="small muted">Today ends {new Date(data.dayEndsAt).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}. Your total Basil stays with you.</p>
+        <span className="ispy-chefs__basil"><BasilIcon size={17} />{entry.basil} Basil</span></li>)}</ol> : <p className="muted"></p>}
     </>}
     
   </section>;

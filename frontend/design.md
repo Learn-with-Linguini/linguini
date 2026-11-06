@@ -70,6 +70,7 @@ The supplied palette is the starting point. These refinements preserve its inten
 - Butter is the default page background; cream is the default elevated surface.
 - Tomato is reserved for the most important action on a screen. Do not use it as general decoration.
 - Teal means confidence, confirmation, or an alternate positive route; it should not compete with tomato in the same action group.
+- On Home, weekly progress uses sage and other cards stay on paper, so no surface colour repeats on every card.
 - Pasta yellow is a highlight, not a body-text color. Use dark teal or ink for text on yellow.
 - Use the full-color wordmark on butter/cream. Use a one-color tomato or cream version only where contrast requires it.
 
@@ -239,7 +240,7 @@ Treat the journal as proof of progress, not a dense database. Put a soft pasta-y
 
 ### Vocabulary library
 
-Vocabulary replaces Progress as a primary navigation destination. Open with a scene-first library: each real scene image introduces the words collected from that place, with target words, translations, and pronunciation controls grouped directly beneath it. A prominent teal book action at the top switches to the complete vocabulary list. Present that full list as calm paper cards, matching the journal’s card language rather than a divided utility list. Give the target-language word clear teal emphasis on the left, align its translation to the right, and keep the example, word type, and topic together below. Use soft teal-green pills for word type and topic so they remain distinct from pasta-yellow actions and surfaces. Anchor pronunciation in a circular control at the card’s bottom-right corner. Open vocabulary filters in a bottom sheet rather than expanding the page; changes stay temporary until the learner selects the filled “Apply filters” action, while close, backdrop, or Escape dismisses the sheet without applying them.
+Vocabulary replaces Progress as a primary navigation destination. Open with a scene-first library: each real scene image introduces the words collected from that place, with target words, translations, and pronunciation controls grouped directly beneath it. A teal book action beside the Revisit title, icon-only on phones and labelled on wider screens, switches to the complete vocabulary list, and a chevron aligned with the speaker controls opens or closes its word list, which starts open, so the photo and Revisit action stay in view. Present that full list as calm paper cards, matching the journal’s card language rather than a divided utility list. Give the target-language word clear teal emphasis on the left, align its translation to the right, and keep the example, word type, and topic together below. Use soft teal-green pills for word type and topic so they remain distinct from pasta-yellow actions and surfaces. Anchor pronunciation in a circular control at the card’s bottom-right corner. Open vocabulary filters in a bottom sheet rather than expanding the page; changes stay temporary until the learner selects the filled “Apply filters” action, while close, backdrop, or Escape dismisses the sheet without applying them.
 
 ### Session summary
 

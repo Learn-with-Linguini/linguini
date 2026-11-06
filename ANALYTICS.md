@@ -66,7 +66,8 @@ Because Linguini is a single-page application (SPA), route changes do not reload
 * `/practice/ispy` — Standalone I-Spy mode selector (Solo vs Friends)
 * `/practice/ispy/join` — Enter invite code to join a room
 * `/practice/ispy/room/:roomCode` — Multiplayer I-Spy gameplay room
-* `/ispy/challenge` — Daily photo challenge: take a photo of today's scene to start a lesson
+* `/ispy/challenge` — Daily photo challenge: take a photo of today's scene to start a lesson, with the prize ranking and community board
+* `/ispy/chefs` — Today's full Chefs of the Day leaderboard
 * `/ispy/friends` — Persistent private I-Spy chats and invitation preview
 * `/ispy/friends/:chatId` — Photo rounds, clues, guesses and completed-round history
 * `/rooms` — Active and previous multiplayer rooms list
@@ -135,6 +136,7 @@ The existing analysis and review routes show this progress; no new page is added
 | `forgot_password_requested` | — | User submits email to request password reset link |
 | `password_reset_completed` | — | User submits and sets a new password on `/reset-password` |
 | `profile_password_changed` | — | Authenticated user changes password from Profile page |
+| `profile_note_toggled` | `{ note, open }` | User opens or closes the "How AI helps" or "Your privacy" note on the Profile page |
 | `logout_clicked` | — | User clicks "Log Out" in Profile |
 | `account_deleted` | — | User confirms account deletion request |
 
@@ -258,7 +260,9 @@ or private-help content. Private help and audio activity do not enter the shared
 | `chef_of_the_day_participation_toggled` | `{ participating }` | User opts in or out of the daily Chef of the Day leaderboard |
 | `chef_of_the_day_retry_clicked` | — | User retries loading the daily leaderboard |
 | `home_chef_standings_clicked` | — | Learner opens the daily Basil leaderboard from the Home standings card |
+| `ispy_chefs_board_clicked` | — | Learner opens the daily Basil leaderboard from the Play page row |
 | `daily_challenge_start_clicked` | `{ sceneKey }` | User opens today's daily challenge from the Play tab |
+| `daily_challenge_details_clicked` | `{ sceneKey }` | User opens the prizes and community board from the Play page challenge summary |
 | `daily_challenge_resumed` | `{ sceneKey }` | User continues an unfinished daily challenge session from the Play tab |
 | `daily_challenge_photo_uploaded` | `{ sceneKey, assetId }` | User uploads or captures a photo for today's challenge |
 | `daily_challenge_session_started` | `{ sceneKey, assetId }` | User starts a lesson session tagged as today's challenge entry |
@@ -271,6 +275,7 @@ or private-help content. Private help and audio activity do not enter the shared
 | `journal_entry_viewed` | `{ entryId }` | User clicks an existing journal entry to read |
 | `journal_entry_saved` | `{ hasPhotos, wordCount, isNew }` | Daily journal entry saved or updated |
 | `vocabulary_view_toggled` | `{ view }` | Switched between journey tree and list views |
+| `revisit_scene_toggled` | `{ mediaAssetId, expanded }` | Learner opens or closes a scene's word list on the Revisit page |
 | `revisit_empty_practice_started` | — | Learner starts their first practice session from the empty Revisit page |
 | `revisit_lesson_started` | `{ mediaAssetId, previousSessionId, sessionId }` | Learner taps Revisit on a photo card and a new lesson on the same photo is created (or its unfinished one resumed); `previousSessionId` is the card's latest lesson |
 | `scene_practice_continued` | `{ sessionId }` | Learner taps Continue on a Revisit photo card with an unfinished lesson |

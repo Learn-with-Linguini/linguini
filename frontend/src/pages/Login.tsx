@@ -130,9 +130,9 @@ export function Login() {
     }
   }
 
-  return <div className="stack">
+  return <div className="stack login-page">
     <div className="center-text stack-2" style={{ alignItems: "center" }}>
-      <img className="mascot" src="/linguini-logo.png" width={120} height={120} alt="Linguini mascot" />
+      <img className="mascot" src="/linguini-logo.png" width={100} height={100} alt="Linguini mascot" />
       <h1>
         {mode === "signin" ? "Welcome back" : mode === "signup" ? "Create your account" : "Reset your password"}
       </h1>
@@ -140,7 +140,7 @@ export function Login() {
         {mode === "signin"
           ? "Sign in to continue learning."
           : mode === "signup"
-            ? "Start learning words from your world."
+            ? "Start learning words from your world"
             : "Enter your email and we’ll send you a link to reset your password."}
       </p>
     </div>
@@ -187,18 +187,6 @@ export function Login() {
         {submitting ? "Please wait" : mode === "signin" ? "Sign in" : mode === "signup" ? "Create account" : "Send reset link"}
       </Button>
     </form> : null}
-    {mode !== "forgot" ? (
-      <div className="stack-2 center-text">
-        <a
-          className="btn btn--secondary"
-          href="/demo"
-          onClick={() => trackAction("guest_preview_started", { source: mode })}
-        >
-          Try a photo lesson
-        </a>
-        <p className="small muted">No account needed. Preview progress won’t be saved to an account.</p>
-      </div>
-    ) : null}
     <p className="small muted center-text">
       {mode === "forgot" ? (
         <>

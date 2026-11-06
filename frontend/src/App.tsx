@@ -13,6 +13,7 @@ import { ISpyPhase2 } from "./pages/ISpyPhase2";
 import { ISpyModes } from "./pages/ISpyModes";
 import { ISpyPlay } from "./pages/ISpyPlay";
 import { DailyChallengePage } from "./pages/DailyChallengePage";
+import { ChefsBoard } from "./pages/ChefsBoard";
 import { ISpyResults } from "./pages/ISpyResults";
 import { SessionSummary } from "./pages/SessionSummary";
 import { Vocabulary } from "./pages/Vocabulary";
@@ -110,6 +111,7 @@ export default function App() {
         <Route path="/ispy" element={<ISpyModes />} />
         <Route path="/ispy/play" element={<ISpyPlay />} />
         <Route path="/ispy/challenge" element={<DailyChallengePage />} />
+        <Route path="/ispy/chefs" element={<ChefsBoard />} />
         <Route path="/ispy/friends" element={<FriendChats />} />
         <Route path="/ispy/legacy-rooms" element={<Rooms />} />
         <Route path="/progress" element={<Progress />} />

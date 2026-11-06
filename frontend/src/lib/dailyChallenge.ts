@@ -30,10 +30,16 @@ export function timeLeft(dayEndsAt: string, now: number) {
 
 export function countdownText(remaining: number): string {
   if (remaining <= 0) return "Ended";
-  if (remaining < 60_000) return "Ends in under a minute";
+  if (remaining < 60_000) return "Under a minute left";
   const minutes = Math.floor(remaining / 60_000);
   const hours = Math.floor(minutes / 60);
-  return hours ? `Ends in ${hours}h ${String(minutes % 60).padStart(2, "0")}m` : `Ends in ${minutes}m`;
+  return hours ? `${hours}h ${String(minutes % 60).padStart(2, "0")}m left` : `${minutes}m left`;
+}
+
+/** The day's scene changes, so the one-line instruction is built from its title. */
+export function scenePhotoPrompt(title: string): string {
+  const place = title.toLowerCase();
+  return `Photograph ${/^[aeiou]/.test(place) ? "an" : "a"} ${place} and complete the lesson.`;
 }
 
 /** Splits "at the library" so the place itself can be emphasised. */

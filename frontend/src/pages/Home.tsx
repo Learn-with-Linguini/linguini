@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { InlineLoader } from "../components/LoadingScreen";
 import { MediaImage } from "../components/MediaImage";
-import { BasilIcon, BookIcon, ChevronRightIcon, EyeIcon, PlayIcon, TrophyIcon } from "../components/icons";
+import { BasilIcon, BookIcon, ChevronRightIcon, PlayIcon } from "../components/icons";
 import { Button } from "../components/ui";
 import { getActivePractice } from "../lib/api";
 import { sessionDestination } from "../lib/sessionRoute";
@@ -68,6 +68,9 @@ export function Home() {
   const wordsThisWeek = vocabulary.filter(word => word.firstLearnedAt && weekDates.has(localDateKey(word.firstLearnedAt))).length;
   const exploredScenes = progress?.scenarios.filter(scene => scene.status !== "in-progress").length ?? 0;
   const leaderboardPosition = standings.data?.currentRank;
+  // Today's leading chefs, or the learner's own pasta until the board has anyone on it.
+  const leadingChefs = standings.isError ? [] : standings.data?.top.slice(0, 3).map(entry => entry.avatar) ?? [];
+  const leagueAvatars = leadingChefs.length ? leadingChefs : user?.avatar ? [user.avatar] : [];
   const revisitScene = useMemo(() => {
     const groups = new Map<string, { mediaAssetId: string; title: string; count: number }>();
     vocabulary.forEach(word => word.scenes?.forEach(scene => {
@@ -133,8 +136,8 @@ export function Home() {
           <div className="home-explore__rail-wrap">
             <div ref={exploreRailRef} className="home-explore__rail">
               <button className="home-explore-card" type="button" onClick={() => { trackAction("home_explore_vocabulary_clicked"); navigate("/vocabulary"); }}>
-                <div className="home-explore-card__image">{revisitScene ? <MediaImage assetId={revisitScene.mediaAssetId} title={revisitScene.title} width={640} lazy /> : <img src="/photos/cafe-interior.jpg" alt="" />}</div>
-                <div className="home-explore-card__body"><span className="home-tag home-tag--revisit"><BookIcon size={14} /> Revisit</span><strong>{revisitScene?.title ?? "Your vocabulary"}</strong><span>{revisitScene ? `${revisitScene.count} ${revisitScene.count === 1 ? "word" : "words"} to practise` : "Review the words you've found"}</span></div>
+                <div className="home-explore-card__image">{revisitScene ? <MediaImage assetId={revisitScene.mediaAssetId} title={revisitScene.title} width={640} lazy /> : <img src="/photos/cafe-interior.jpg" alt="" />}<span className="home-tag home-tag--revisit"><BookIcon size={14} /> Revisit</span></div>
+                <div className="home-explore-card__body"><strong>{revisitScene?.title ?? "Your vocabulary"}</strong><span>{revisitScene ? `${revisitScene.count} ${revisitScene.count === 1 ? "word" : "words"} to practise` : "Review the words you've found"}</span></div>
               </button>
               <HomeQuickPlay key={`${user?.id}:${profileId}`} owner={user?.id ?? ""} profileId={profileId} />
             </div>
@@ -152,10 +155,10 @@ export function Home() {
       <aside className="home-dashboard__aside">
         {progressLoading ? <div className="home-dashboard__loading"><InlineLoader label="Loading your progress" /></div> : progressError ? <p className="home-dashboard__error" role="alert">{progressError}</p> : <PastaStreak days={progress?.streak.days ?? []} />}
         <section className="home-progress-card" aria-labelledby="home-progress-title">
-          <div className="home-section-heading home-section-heading--compact"><div><span className="home-progress-card__eyebrow">This week</span><h2 id="home-progress-title">Your progress</h2></div></div>
-          {vocabularyLoading ? <InlineLoader compact label="Loading your words" /> : vocabularyError ? <p role="alert">{vocabularyError}</p> : <div className="home-progress-card__stats"><div><span className="home-stat-icon home-stat-icon--words"><BookIcon /></span><strong>{wordsThisWeek}</strong><span>words</span></div><div><span className="home-stat-icon home-stat-icon--scenes"><EyeIcon /></span><strong>{exploredScenes}</strong><span>scenes</span></div></div>}
+          <h2 id="home-progress-title">Your progress this week</h2>
+          {vocabularyLoading ? <InlineLoader compact label="Loading your words" /> : vocabularyError ? <p role="alert">{vocabularyError}</p> : <div className="home-progress-card__stats"><div><img src="/pasta-assets/penne.png" width={40} height={40} alt="" /><strong>{wordsThisWeek}</strong><span>{wordsThisWeek === 1 ? "new word" : "new words"}</span></div><div><img src="/pasta-assets/fusilli.png" width={40} height={40} alt="" /><strong>{exploredScenes}</strong><span>{exploredScenes === 1 ? "scene explored" : "scenes explored"}</span></div></div>}
         </section>
-        {user?.id ? <button className="home-league" type="button" aria-busy={standings.isPending} onClick={() => { trackAction("home_chef_standings_clicked"); navigate("/ispy"); }}><span className="home-league__badge" aria-hidden="true"><TrophyIcon size={26} /></span><span><strong>Chefs of the Day</strong><small>{standings.isPending ? "Loading your standing" : standings.isError ? "Your standing is unavailable." : leaderboardPosition ? `Your current standing: #${leaderboardPosition}` : "Earn Basil to join today’s board."}</small></span><ChevronRightIcon /></button> : null}
+        {user?.id ? <button className="home-league" type="button" aria-busy={standings.isPending} onClick={() => { trackAction("home_chef_standings_clicked"); navigate("/ispy/chefs"); }}><span className="home-league__chefs" aria-hidden="true">{leagueAvatars.map((avatar, index) => <img key={index} src={`/pasta-assets/${avatar}.png`} width={44} height={44} alt="" />)}</span><span><strong>Chefs of the Day</strong><small>{standings.isPending ? "Loading your standing" : standings.isError ? "Your standing is unavailable." : leaderboardPosition ? `Your current standing: #${leaderboardPosition}` : "Earn Basil to join today’s board."}</small></span><ChevronRightIcon /></button> : null}
       </aside>
     </div>
 

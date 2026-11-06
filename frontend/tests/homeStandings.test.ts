@@ -32,6 +32,7 @@ writeFileSync(entry, [
   'export { AppStateContext } from "../src/state/context";',
   'export { Home } from "../src/pages/Home";',
   'export { ChefOfTheDay } from "../src/components/ChefOfTheDay";',
+  'export { ISpyModes } from "../src/pages/ISpyModes";',
 ].join("\n"));
 let bundled: unknown;
 try {
@@ -47,7 +48,7 @@ try {
     bundled = await import(pathToFileURL(path).href);
   } finally { await bundler.close(); }
 } finally { rmSync(entry, { force: true }); rmSync(folder, { recursive: true, force: true }); }
-const { h, act, createRoot, MemoryRouter, useLocation, QueryClient, QueryClientProvider, AppStateContext, Home, ChefOfTheDay } = bundled as {
+const { h, act, createRoot, MemoryRouter, useLocation, QueryClient, QueryClientProvider, AppStateContext, Home, ChefOfTheDay, ISpyModes } = bundled as {
   h: typeof import("react").createElement; act: typeof import("react").act;
   createRoot: typeof import("react-dom/client").createRoot;
   MemoryRouter: typeof import("react-router-dom").MemoryRouter;
@@ -57,6 +58,7 @@ const { h, act, createRoot, MemoryRouter, useLocation, QueryClient, QueryClientP
   AppStateContext: typeof import("../src/state/context.ts").AppStateContext;
   Home: typeof import("../src/pages/Home.tsx").Home;
   ChefOfTheDay: typeof import("../src/components/ChefOfTheDay.tsx").ChefOfTheDay;
+  ISpyModes: typeof import("../src/pages/ISpyModes.tsx").ISpyModes;
 };
 const originalFetch = globalThis.fetch;
 let calls = 0;
@@ -68,6 +70,10 @@ const standings = (currentRank: number | null): ChefStandings => ({
 globalThis.fetch = async input => {
   if (new URL(String(input)).pathname === "/api/v1/ispy/photos") return Response.json({ photos: [], nextCursor: null });
   if (new URL(String(input)).pathname === "/api/v1/ispy/games/active") return Response.json(null);
+  if (new URL(String(input)).pathname === "/api/v1/me/daily-challenge") return Response.json({
+    challengeDay: "2026-10-21", sceneKey: "cafe", sceneTitle: "Café", scenePhrase: "at the café", dayEndsAt: "2026-10-22T00:00:00Z",
+    status: "notStarted", sessionId: null, participantCount: 0, joinedCount: 0, words: [], yourWordCount: 0, lastResult: null,
+  });
   assert.equal(new URL(String(input)).pathname, "/api/v1/me/chef-of-the-day");
   calls += 1;
   return respond();
@@ -86,7 +92,7 @@ function CurrentRoute() {
   return h("output", { "aria-label": "Current route" }, useLocation().pathname);
 }
 
-async function mount() {
+async function mount(page?: () => unknown) {
   const container = dom.window.document.createElement("div");
   dom.window.document.body.appendChild(container);
   const root = createRoot(container);
@@ -99,7 +105,7 @@ async function mount() {
     progress: { streak: { days: [] }, scenarios: [], leaderboard: [{ rank: 42, isYou: true }] },
   } as unknown as AppState;
   await act(async () => root.render(h(QueryClientProvider, { client }, h(AppStateContext.Provider, { value: state },
-    h(MemoryRouter, null, h(Home), h(ChefOfTheDay), h(CurrentRoute))))));
+    h(MemoryRouter, null, ...(page ? [h(page as () => null)] : [h(Home), h(ChefOfTheDay)]), h(CurrentRoute))))));
   const cleanup = async () => {
     await act(async () => root.unmount());
     client.clear(); container.remove(); cleanups.delete(cleanup);
@@ -161,12 +167,27 @@ test("Basil invalidation refreshes both surfaces through their shared account qu
   assert.equal(calls, 2);
 });
 
-test("the Home standings card opens Play and records the navigation", async () => {
+test("Play leads with I-Spy, summarises the challenge and links to the board", async () => {
+  const view = await mount(ISpyModes);
+  await waitFor(() => assert.match(view.container.textContent ?? "", /Join challenge/));
+  assert.equal(view.container.querySelector("h1")?.textContent, "Play I-Spy");
+  const sections = [...view.container.querySelector(".ispy-modes")!.children].map(item => item.className);
+  assert.match(sections[0], /play-card/);
+  assert.match(sections[1], /challenge/);
+  assert.match(sections[2], /chefs/);
+  assert.match(view.container.textContent ?? "", /50 Basil prize/);
+  assert.doesNotMatch(view.container.textContent ?? "", /Community board|1st/, "details live on the challenge page");
+  await waitFor(() => assert.match(view.container.querySelector(".ispy-modes__chefs")?.textContent ?? "", /#7 · 20 Basil/));
+  await act(async () => view.container.querySelector<HTMLButtonElement>(".ispy-modes__chefs")!.click());
+  assert.equal(view.container.querySelector('[aria-label="Current route"]')?.textContent, "/ispy/chefs");
+});
+
+test("the Home standings card opens the board and records the navigation", async () => {
   const view = await mount();
   await waitFor(() => assert.equal(homeStanding(view.container), "Your current standing: #7"));
   const link = view.container.querySelector<HTMLButtonElement>(".home-league");
   assert.ok(link);
   await act(async () => link.click());
-  assert.equal(view.container.querySelector('[aria-label="Current route"]')?.textContent, "/ispy");
+  assert.equal(view.container.querySelector('[aria-label="Current route"]')?.textContent, "/ispy/chefs");
   assert.deepEqual(window._uxa, [["trackCustomEvent", "home_chef_standings_clicked", {}]]);
 });

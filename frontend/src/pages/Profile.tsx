@@ -1,8 +1,8 @@
 import { InlineLoader } from "../components/LoadingScreen";
-import { useEffect, useId, useState, type FormEvent } from "react";
+import { useEffect, useId, useState, type FormEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card, IconButton } from "../components/ui";
-import { BasilIcon, ChevronRightIcon, CloseIcon, InstagramIcon, LinkedInIcon, TikTokIcon, XIcon } from "../components/icons";
+import { BasilIcon, ChevronDownIcon, ChevronRightIcon, CloseIcon, InstagramIcon, LinkedInIcon, TikTokIcon, XIcon } from "../components/icons";
 import { HelpImproveModal } from "../components/HelpImproveModal";
 import { usePracticeLanguages } from "../state/usePracticeLanguages";
 import { deleteCurrentAccount } from "../lib/api";
@@ -23,6 +23,14 @@ const socialIcons = {
   x: XIcon,
   linkedin: LinkedInIcon,
 };
+
+/** Longer explanations stay one tap away so they don't fill the page. */
+function ProfileNote({ id, title, children }: { id: string; title: string; children: ReactNode }) {
+  return <details className="profile-note" onToggle={event => trackAction("profile_note_toggled", { note: id, open: event.currentTarget.open })}>
+    <summary className="profile-note__summary"><strong>{title}</strong><ChevronDownIcon size={20} /></summary>
+    <p>{children}</p>
+  </details>;
+}
 
 export function Profile() {
   const navigate = useNavigate();
@@ -340,22 +348,20 @@ export function Profile() {
         </Card>
       </section>     
 
-      <aside className="profile-ai-note">
-        <strong>How AI helps</strong>
-        <p>
-          Linguini uses AI in a few specific places: it detects the objects in your scene
-          photos, translates that vocabulary into your learning language, and writes the
-          I-Spy clues and practice tasks from the words you keep. Every suggestion is yours
-          to review: you decide what to keep, change, or remove before a lesson starts.
-        </p>
-      </aside>
-
-      <aside className="profile-ai-note">
-        <strong>Your privacy</strong>
-        <p>
-          Your photos are stored securely for learning. Photos you add to a private room are shared with the friend in that room. Your solo photos stay private and are never used to train AI models.
-        </p>
-      </aside>
+      <section className="profile-section" aria-labelledby="ai-privacy-heading">
+        <h2 id="ai-privacy-heading">AI and privacy</h2>
+        <Card plain className="profile-settings-card">
+          <ProfileNote id="ai" title="How AI helps">
+            Linguini uses AI in a few specific places: it detects the objects in your scene
+            photos, translates that vocabulary into your learning language, and writes the
+            I-Spy clues and practice tasks from the words you keep. Every suggestion is yours
+            to review: you decide what to keep, change, or remove before a lesson starts.
+          </ProfileNote>
+          <ProfileNote id="privacy" title="Your privacy">
+            Your photos are stored securely for learning. Photos you add to a private room are shared with the friend in that room. Your solo photos stay private and are never used to train AI models.
+          </ProfileNote>
+        </Card>
+      </section>
 
       <section className="profile-section">
         <h2>Help and feedback</h2>

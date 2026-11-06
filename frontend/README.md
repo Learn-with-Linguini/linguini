@@ -125,7 +125,7 @@ Keep account and language boundaries when reading or invalidating learner data.
 | `/practice/sessions/:sessionId/learn/:taskId` | Individual lesson task |
 | `/practice/sessions/:sessionId/ispy-1`, `ispy-2` | Two-way I-Spy within a lesson |
 | `/practice/sessions/:sessionId/summary` | Session results |
-| `/ispy`, `/ispy/play`, `/ispy/challenge`, `/ispy/friends` | Standalone I-Spy, daily challenge and friends lobby |
+| `/ispy`, `/ispy/play`, `/ispy/challenge`, `/ispy/chefs`, `/ispy/friends` | Standalone I-Spy, daily challenge, leaderboard and friends lobby |
 | `/ispy/games/:sessionId/clues`, `describe`, `results` | Standalone game stages |
 | `/rooms/:roomId` | Private friend challenge |
 | `/progress`, `/vocabulary` | Learning progress and saved vocabulary |
