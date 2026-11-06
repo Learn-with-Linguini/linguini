@@ -93,8 +93,8 @@ Actions are logged via `trackAction(eventName, params)`. Each call sends:
 
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
-| `photo_camera_opened` | — | User opens the live camera preview |
-| `photo_camera_captured` | — | A JPEG photo is captured for the existing upload flow |
+| `photo_camera_opened` | `{ camera? }` | User opens the live camera preview on desktop, or the device's own camera app on a touch device (`camera: "device"`) |
+| `photo_camera_captured` | `{ camera? }` | A photo is captured for the existing upload flow; `camera: "device"` when it came from the device's own camera app |
 | `photo_camera_cancelled` | — | User closes the preview with Cancel or Escape |
 | `photo_camera_failed` | `{ reason }` | Camera API unavailable, browser error name, or `capture_failed`; no image data is tracked |
 

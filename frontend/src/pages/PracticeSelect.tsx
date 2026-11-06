@@ -157,7 +157,7 @@ export function PracticeSelect() {
     {resumeDialogOpen && activeSession ? <div className="help-modal__backdrop" onMouseDown={() => !starting && setDismissedSessionId(activeSessionId)}>
       <section ref={dialogRef} className="help-modal leave-session__dialog" role="dialog" aria-modal="true" aria-labelledby={dialogTitleId} onMouseDown={event => event.stopPropagation()}>
         <h2 id={dialogTitleId}>Continue your practice?</h2>
-        <p>You have a practice waiting for you. Continue where you left off, or choose a new photo.</p>
+       
         <div className="leave-session__actions">
            <Button variant="secondary" block disabled={starting} onClick={() => setDismissedSessionId(activeSessionId)}>Begin New Practice</Button>
       
