@@ -231,6 +231,23 @@ SessionTasks -> attempts/completion/skipping -> progress`. The source is read fr
    objects, clears the draft and builds tasks. Unknown added words are rejected;
    task activity locks further editing. Apply the session-analysis-draft migration
    with `npm run db:deploy` before running this version of the API.
+   Task generation runs off the request path and is built to finish rather than fail:
+   - **Heartbeat.** The running job refreshes `analysis_draft.heartbeatAt` every 30 s
+     (for at most 15 minutes). A `generatingTasks` session expires only when neither
+     `processingStartedAt` nor `heartbeatAt` is recent, so a slow multi-mission build
+     is no longer expired after two minutes while it is still working; a job lost to a
+     crash or restart stops beating and is expired.
+   - **Automatic retry.** Translation and each mission lesson are retried once after a
+     short pause (`TASK_GENERATION_RETRY_DELAY_SECONDS`, default 2). The job stops
+     without retrying once the session was abandoned, failed or re-claimed.
+   - **Per-mission isolation.** A mission that still fails is skipped and recorded in
+     `analysis_draft.skippedMissions` with reason `generationFailed`; the learner keeps
+     the missions that built. Generation fails only when none built.
+   - **Learner retry.** A `taskGenerationFailed` lesson sets `generationRetryable`.
+     `POST /api/v1/sessions/{id}/retry-generation` rebuilds it from the saved photo,
+     reviewed objects and mission plan, up to three attempts per session
+     (`analysis_draft.generationAttempts`). It checks ownership and the open-practice
+     limit, and concurrent retries claim the job once.
 3. Preloaded images use curated catalog objects. Uploaded photos use chair, table,
    and plant samples with fixed positions, explicitly labeled in the UI. No pixels
    are inspected. Vocabulary covers all six UI target languages with English as
@@ -731,7 +748,7 @@ starts.
   `languageContext` snapshot gets the profile's pack when it next generates. One whose
   saved pack is structurally unsupported (or fails opt-in strict release gates) is refused with the same 409, and a
   planned mission the pack does not have fails generation into the normal recoverable
-  `taskGenerationFailed` state; neither is rebuilt by another builder. A plan saved at an
+  `taskGenerationFailed` state (retryable through `retry-generation`); neither is rebuilt by another builder. A plan saved at an
   older content version (M02 A1 version 1) is built at the pack template's version.
   Tasks generated before packs keep their stored content and answer keys, so they still
   render and grade; choosing an alternative M06 item, which only those lessons offered,

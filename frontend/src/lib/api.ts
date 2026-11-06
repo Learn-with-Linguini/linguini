@@ -559,6 +559,8 @@ export interface PracticeDetail {
   sceneId: string | null; title: string;
   analysisMode: "placeholder" | null;
   analysisRetryable: boolean;
+  /** A failed lesson build can rerun on the saved, reviewed scene. */
+  generationRetryable?: boolean;
   sceneObjects: SceneObject[];
   /** Reviewed sessions: scene object id -> its marker number on the review screen. */
   reviewMarkers?: Record<string, number>;
@@ -744,6 +746,7 @@ export const reviewDetails = (attempt: TaskAttemptResult | null): VocabularyRevi
 };
 export const analyzePractice = (id: string) => write<PracticeDetail>(`/api/v1/sessions/${id}/analyze`, "POST", {});
 export const retryPracticeAnalysis = (id: string) => write<PracticeDetail>(`/api/v1/sessions/${id}/retry-analysis`, "POST", {});
+export const retryPracticeGeneration = (id: string) => write<PracticeDetail>(`/api/v1/sessions/${id}/retry-generation`, "POST", {});
 export interface PracticeReview {
   sceneTitle?: string;
   acceptedObjectIds: string[];
