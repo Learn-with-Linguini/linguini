@@ -128,7 +128,6 @@ The existing analysis and review routes show this progress; no new page is added
 ### Authentication & Account Management
 | Event Name | Parameters | Trigger Description |
 | :--- | :--- | :--- |
-| `guest_preview_started` | `{ source: "signin" | "signup" }` | Visitor opens the guest photo lesson without signing in |
 | `login_submitted` | `{ method: "email" }` | User submits the email/password sign-in form |
 | `signup_submitted` | `{ method: "email" }` | User submits new account registration |
 | `google_signin_completed` | — | Google ID token is successfully exchanged for a Supabase session |
@@ -338,7 +337,7 @@ Below are the 4 primary funnels designed around Linguini's user journey, followe
 | Step | Step Name | Event / Condition |
 | :--- | :--- | :--- |
 | **Step 1** | Landed on Marketing Page | Event: `page_view`<br>Parameter: `page_location` equals `https://www.learnwithlinguini.com/` (or page_path = `/`) |
-| **Step 2** | Engaged with Demo or Auth CTA | Event is one of:<br>• `demo_stage_viewed`<br>• `pricing_cta_clicked`<br>• `guest_demo_scene_selected`<br>• `guest_preview_started` |
+| **Step 2** | Engaged with Demo or Auth CTA | Event is one of:<br>• `demo_stage_viewed`<br>• `pricing_cta_clicked`<br>• `guest_demo_scene_selected` |
 | **Step 3** | Visited Sign Up / Login | Event: `page_view`<br>Parameter: `page_path` matches regex `^/login.*` |
 | **Step 4** | Submitted Registration | Event is one of:<br>• `signup_submitted`<br>• `google_signin_completed` |
 | **Step 5** | Completed Onboarding | Event: `onboarding_completed` |

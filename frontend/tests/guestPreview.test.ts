@@ -76,11 +76,6 @@ async function mountLogin(mode = "signin") {
   cleanups.add(cleanup);
   return { container, root };
 }
-function guestLink(container: HTMLElement) {
-  const link = [...container.querySelectorAll("a")].find(anchor => anchor.textContent?.trim() === "Try a photo lesson");
-  assert.ok(link, "Guests should have a visible way to try the existing sample lesson");
-  return link;
-}
 async function click(element: Element) {
   assert.equal((element as HTMLButtonElement).disabled, false);
   await act(async () => { element.dispatchEvent(new dom.window.MouseEvent("click", { bubbles: true, cancelable: true })); });
@@ -99,27 +94,9 @@ test.after(() => {
   globalThis.fetch = originalFetch;
 });
 
-for (const mode of ["signin", "signup"]) {
-  test(`${mode} offers an unauthenticated sample lesson and tracks its entry`, async () => {
-    const { container } = await mountLogin(mode);
-    const link = guestLink(container);
-    assert.equal(link.target, "");
-    assert.match(container.textContent ?? "", /Preview progress won’t be saved to an account\./);
-    const destination = new URL(link.href);
-    assert.equal(destination.pathname, "/demo");
-    assert.equal(destination.hash, "");
-    link.addEventListener("click", event => event.preventDefault());
-    await act(async () => { link.click(); });
-    const event = events.find(event => event[1] === "guest_preview_started");
-    assert.ok(event);
-    assert.deepEqual(event.slice(0, 2), ["event", "guest_preview_started"]);
-    assert.equal((event[2] as Record<string, unknown>).source, mode);
-  });
-}
-
-test("a guest can follow the entry and finish a sample lesson without authentication or API calls", async () => {
+test("a guest can finish a sample lesson without authentication or API calls", async () => {
   const { container, root } = await mountLogin();
-  const destination = new URL(guestLink(container).href);
+  const destination = new URL("/demo", dom.window.location.href);
   const scene = source.getScene("hillside-street");
   assert.ok(scene);
   dom.reconfigure({ url: destination.href });

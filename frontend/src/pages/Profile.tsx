@@ -1,8 +1,7 @@
-import { InlineLoader } from "../components/LoadingScreen";
 import { useEffect, useId, useState, type FormEvent, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Card, IconButton } from "../components/ui";
-import { CalendarIcon, ChevronDownIcon, ChevronRightIcon, CloseIcon, InstagramIcon, LinkedInIcon, TikTokIcon, TrophyIcon, XIcon } from "../components/icons";
+import { ChevronDownIcon, ChevronRightIcon, CloseIcon, InstagramIcon, LinkedInIcon, TikTokIcon, XIcon } from "../components/icons";
 import { HelpImproveModal } from "../components/HelpImproveModal";
 import { usePracticeLanguages } from "../state/usePracticeLanguages";
 import { deleteCurrentAccount } from "../lib/api";
@@ -15,7 +14,6 @@ import { useAppState } from "../state/useAppState";
 import { savedPastaAvatar } from "../lib/onboardingDraft";
 import { useAuth } from "../state/Auth";
 import { MissionBadges } from "../components/MissionBadges";
-import { useGamification } from "../state/gamification";
 
 const socialIcons = {
   instagram: InstagramIcon,
@@ -51,7 +49,6 @@ export function Profile() {
   const { learner, user, activeProfile, profileError, profileSaving, saveLanguageProfile, saveUser, languageProfiles, activateLanguageProfile } = useAppState();
   const tier = accountTiers[user?.tier ?? "beta"];
   const practiceLanguages = usePracticeLanguages(learner.languageCode);
-  const basil = useGamification();
 
   useEffect(() => {
     if (!deleteOpen) return;
